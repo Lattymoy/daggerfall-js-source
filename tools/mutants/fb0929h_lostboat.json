@@ -1,92 +1,92 @@
 [
   {
     "name": "LOST-BOAT-the-ground-never-asked",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    recoverLostBoats();   // FIELD BUGS 29h (LOST-BOAT): the port's own\n",
     "new": "",
     "tests": [
-      "test/fb0929h_lostboat.test.js"
+      "test/systems/comeSailAway/fb0929h_lostboat.test.js"
     ]
   },
   {
     "name": "LOST-BOAT-the-seabed-forgotten",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "      if (!(ground > p[1] + LOST_UNDER_M || p[1] < seaTop() - LOST_UNDER_M) || boat.crewed) continue;",
     "new": "      if (!(ground > p[1] + LOST_UNDER_M) || boat.crewed) continue;",
     "tests": [
-      "test/fb0929h_lostboat.test.js"
+      "test/systems/comeSailAway/fb0929h_lostboat.test.js"
     ]
   },
   {
     "name": "LOST-BOAT-a-keel-on-a-beach-lost",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "      if (!(ground > p[1] + LOST_UNDER_M || p[1] < seaTop() - LOST_UNDER_M) || boat.crewed) continue;",
     "new": "      if (!(ground >= p[1] + LOST_UNDER_M || p[1] < seaTop() - LOST_UNDER_M) || boat.crewed) continue;",
     "tests": [
-      "test/fb0929h_lostboat.test.js"
+      "test/systems/comeSailAway/fb0929h_lostboat.test.js"
     ]
   },
   {
     "name": "LOST-BOAT-a-crewed-hull-packed",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "      if (!(ground > p[1] + LOST_UNDER_M || p[1] < seaTop() - LOST_UNDER_M) || boat.crewed) continue;",
     "new": "      if (!(ground > p[1] + LOST_UNDER_M || p[1] < seaTop() - LOST_UNDER_M)) continue;",
     "tests": [
-      "test/fb0929h_lostboat.test.js"
+      "test/systems/comeSailAway/fb0929h_lostboat.test.js"
     ]
   },
   {
     "name": "LOST-BOAT-asked-every-frame",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "      boat.groundAsked = true;\n",
     "new": "",
     "tests": [
-      "test/fb0929h_lostboat.test.js"
+      "test/systems/comeSailAway/fb0929h_lostboat.test.js"
     ]
   },
   {
     "name": "LOST-BOAT-the-sailed-boat-judged",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "      if (boat.groundAsked || boat.inside || boat === state.CurrentBoat || !boat.GameObject?.activeSelf) continue;",
     "new": "      if (boat.groundAsked || boat.inside || !boat.GameObject?.activeSelf) continue;",
     "tests": [
-      "test/fb0929h_lostboat.test.js"
+      "test/systems/comeSailAway/fb0929h_lostboat.test.js"
     ]
   },
   {
     "name": "LOST-BOAT-a-dungeon-boat-judged",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "      if (boat.groundAsked || boat.inside || boat === state.CurrentBoat || !boat.GameObject?.activeSelf) continue;",
     "new": "      if (boat.groundAsked || boat === state.CurrentBoat || !boat.GameObject?.activeSelf) continue;",
     "tests": [
-      "test/fb0929h_lostboat.test.js"
+      "test/systems/comeSailAway/fb0929h_lostboat.test.js"
     ]
   },
   {
     "name": "LOST-BOAT-indoors-judged",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    if (state.AllBoats.length < 1 || deps.isPlayerInside()) return;\n    const t0 = deps.playerTerrain?.();",
     "new": "    if (state.AllBoats.length < 1) return;\n    const t0 = deps.playerTerrain?.();",
     "tests": [
-      "test/fb0929h_lostboat.test.js"
+      "test/systems/comeSailAway/fb0929h_lostboat.test.js"
     ]
   },
   {
     "name": "LOST-BOAT-the-pixel-row-read-with-the-scene",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "t0.mapPixelY - Math.floor((p[2] - o[2]) / TERRAIN_EDGE));",
     "new": "t0.mapPixelY + Math.floor((p[2] - o[2]) / TERRAIN_EDGE));",
     "tests": [
-      "test/fb0929h_lostboat.test.js"
+      "test/systems/comeSailAway/fb0929h_lostboat.test.js"
     ]
   },
   {
     "name": "LOST-BOAT-the-terrain's-own-y-dropped",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "      const ground = f(f(t.position[1]) + f(t.sampleHeight(p)));",
     "new": "      const ground = f(t.sampleHeight(p));",
     "tests": [
-      "test/fb0929h_lostboat.test.js"
+      "test/systems/comeSailAway/fb0929h_lostboat.test.js"
     ]
   }
 ]

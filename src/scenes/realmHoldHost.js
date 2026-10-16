@@ -4,15 +4,15 @@
 // (systems/realmSaves.js) hears two things from a landed checkpoint: the hold on the character's trade as it moves
 // (onTradeHeld - the law's piece named, or a timed hold's end) and the pieces the ledger locked (onPiecesLocked - copies
 // found, locked piece by piece; the character trades on). bootWorld wires both here, one line (HOST-SPLIT) - and, AUDIT
-// AUTO-HOLD, what the client does with them: the locked pieces bound while they are (systems/itemBound.js
+// AUTO-HOLD, what the client does with them: the locked pieces bound while they are (systems/item/itemBound.js
 // setRealmLocked), and the pieces the character stowed read off the last save the realm took for the shop's shelf
-// (systems/itemIds.js setStowedKeys).
-import { tradeHeldNotice, lockedPiecesOf, ledgerKeyOf, setStowedKeys, carriedPieces } from '../systems/itemIds.js';
-import { itemLongName } from '../systems/itemInfo.js';
-import { setRealmLocked } from '../systems/itemBound.js';
-import { possessedItemLists } from '../systems/possessedItems.js';
+// (systems/item/itemIds.js setStowedKeys).
+import { tradeHeldNotice, lockedPiecesOf, ledgerKeyOf, setStowedKeys, carriedPieces } from '../systems/item/itemIds.js';
+import { itemLongName } from '../systems/item/itemInfo.js';
+import { setRealmLocked } from '../systems/item/itemBound.js';
+import { possessedItemLists } from '../systems/item/possessedItems.js';
 import { setCarriedFilter } from '../systems/peerWord.js';   // AUDIT AUTO-HOLD: a peer's word never hands the reader a piece it carries
-import { withoutCarried } from '../world/interiorShared.js';
+import { withoutCarried } from '../world/interior/interiorShared.js';
 import { t } from '../systems/textManager.js';   // L10N4: the notice in the player's language
 
 /** How many locked pieces one notice names; the rest are counted. */
@@ -38,7 +38,7 @@ export function piecesLockedNotice(/** @type {string[]} */ names, /** @type {num
 }
 
 /** AUDIT AUTO-HOLD: the ledger keys of the pieces a save holds BEYOND the character's own five lists - a room's chest, a
- *  ship's hold, a companion's pack (systems/possessedItems.js, the judge's own reading) - the own lists being the live
+ *  ship's hold, a companion's pack (systems/item/possessedItems.js, the judge's own reading) - the own lists being the live
  *  pack's to say (a piece sold since the save is no longer held, and its shelf must show it). */
 export function stowedKeysOf(/** @type {any} */ save) {
   const stowed = new Set();

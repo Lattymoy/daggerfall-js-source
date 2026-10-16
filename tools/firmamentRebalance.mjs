@@ -1,16 +1,16 @@
-// FIRM2 balance tool (2026-10-15): reads the authored SKY of src/net/firmamentTree.js and finds every channel whose stars,
+// FIRM2 balance tool (2026-10-15): reads the authored SKY of src/net/firmament/firmamentTree.js and finds every channel whose stars,
 // summed over ONE sign's whole sky (starts, roads, small stars, notables, keystones, the Wayfarer's road beside it), pass
 // the channel's cap (firmamentLaw.js STAT_DEFS). Such a channel makes some stars worth nothing - the cap eats them. The
 // tool scales the stars of an over-full channel down, in proportion and in whole numbers (never under 1), until the sum
 // fits - so every star in the sign counts. A keystone keeps its stars in step (its prices are left alone).
 //   node tools/firmamentRebalance.mjs            the report: what passes its cap now, what the fix would be
-//   node tools/firmamentRebalance.mjs --write    put the fixed table back into src/net/firmamentTree.js
+//   node tools/firmamentRebalance.mjs --write    put the fixed table back into src/net/firmament/firmamentTree.js
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import path from 'node:path';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const file = path.join(root, 'src/net/firmamentTree.js');
+const file = path.join(root, 'src/net/firmament/firmamentTree.js');
 const text = readFileSync(file, 'utf8');
 const a = text.indexOf('const SKY = {');
 const b = text.indexOf('\n};\n', a) + 4;
@@ -51,8 +51,8 @@ export function serialise(sky) {
   return out.join('\n');
 }
 
-const T = await import(pathToFileURL(path.join(root, 'src/net/firmamentTree.js')).href);
-const L = await import(pathToFileURL(path.join(root, 'src/net/firmamentLaw.js')).href);
+const T = await import(pathToFileURL(path.join(root, 'src/net/firmament/firmamentTree.js')).href);
+const L = await import(pathToFileURL(path.join(root, 'src/net/firmament/firmamentLaw.js')).href);
 const { smallStats } = T;
 
 if (process.argv.includes('--roundtrip')) { console.log(serialise(SKY) === block ? 'roundtrip: identical' : 'roundtrip: DIFFERS'); if (serialise(SKY) !== block) writeFileSync(process.argv[3] ?? 'roundtrip.out', serialise(SKY)); process.exit(0); }

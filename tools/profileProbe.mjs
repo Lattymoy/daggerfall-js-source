@@ -1,7 +1,7 @@
 // INSPECT1, MEASURED (2026-09-23, kurkku: "a profile page that you can bring up when you're near them"; Mac: "a new
 // enhanced UI element for the player inspect interaction. Showing their glyph, name, title, stats and worn gear").
 //
-// test/inspect1.test.js holds the law on a fake document; this stands the REAL card (ui/profileWindow.js) over the real
+// test/ui/inspect1.test.js holds the law on a fake document; this stands the REAL card (ui/profileWindow.js) over the real
 // sheet in Chromium and reads back what a fake cannot. At a desktop's width, a narrow window's and a phone's, the WIDEST
 // card a player can be shown - a name at NAME_MAX, the longest title, every glyph, the widest numbers the wire admits,
 // and every slot the look can carry filled with the longest names the pack gives an item - must stand inside the
@@ -41,19 +41,19 @@ for (const [W, H, width] of [[1440, 900, 'desktop'], [480, 800, 'narrow'], [390,
     const { createProfileWindow, profileView, GEAR_ROWS } = await import('/src/ui/profileWindow.js');
     const { NAME_MAX, CARD_LEVEL_MAX, CARD_STAT_MAX, CARD_VITAL_MAX } = await import('/src/net/wire.js');
     const { TITLES, GLYPHS, RENOWN_MAX } = await import('/src/net/identityToken.js');
-    const { itemLongName } = await import('/src/systems/itemInfo.js');
+    const { itemLongName } = await import('/src/systems/item/itemInfo.js');
     document.body.innerHTML = '';
     document.body.style.cssText = 'margin:0;background:repeating-linear-gradient(45deg,#2a2721 0 14px,#231f1a 14px 28px);height:100vh';
-    // online is the enhanced lane (systems/onlineLane.js forces the skin), so the card stands over the enhanced sheet in
+    // online is the enhanced lane (systems/online/onlineLane.js forces the skin), so the card stands over the enhanced sheet in
     // play; bare, it must stand as well - it leans on none of the sheet's global rules (a `* { box-sizing }` among them)
-    if (sheet === 'enhanced') (await import('/src/ui/enhancedStyle.js')).injectEnhancedStyle();
+    if (sheet === 'enhanced') (await import('/src/ui/enhanced/enhancedStyle.js')).injectEnhancedStyle();
     // THE WIDEST OUTFIT A PLAYER CAN WEAR: for every slot, the longest name the pack gives an item that EQUIPS there -
     // every template of the look's groups in every material its group takes, placed by DFU's own GetEquipSlot
     // (systems/equip.js) and named by the pack's own namer (itemLongName). The second of a pair wears what the first can;
     // a slot nothing equips stays bare, as it is on a real player.
-    const { groupTemplates } = await import('/src/systems/itemTemplates.js');
+    const { groupTemplates } = await import('/src/systems/item/itemTemplates.js');
     const { getEquipSlot } = await import('/src/systems/equip.js');
-    const { EQUIP_SLOTS } = await import('/src/characters/paperdoll.js');
+    const { EQUIP_SLOTS } = await import('/src/characters/paperdoll/paperdoll.js');
     const MATERIALS = { Weapons: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], Armor: [0, 0x0100, 0x0200, 0x0201, 0x0202, 0x0203, 0x0204, 0x0205, 0x0206, 0x0207, 0x0208, 0x0209] };
     const best = new Map();
     for (const group of ['Armor', 'Weapons', 'Jewellery', 'MensClothing', 'WomensClothing']) {

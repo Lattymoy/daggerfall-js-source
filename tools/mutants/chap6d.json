@@ -5,7 +5,7 @@
     "old": "export const CHAPTER_HALL_SERVICES = Object.freeze(['training', 'spells']);",
     "new": "export const CHAPTER_HALL_SERVICES = Object.freeze(['training']);",
     "tests": [
-      "test/chap6d_halls.test.js"
+      "test/systems/livingWorld/chap6d_halls.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  if (!chapter) return 1;\n  const s = chapterSeasonOf(chapter);",
     "new": "  const s = chapterSeasonOf(chapter);",
     "tests": [
-      "test/chap6d_halls.test.js"
+      "test/systems/livingWorld/chap6d_halls.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "const band = chapterPatronMember(chapter, guildId) ? Math.min(own, CHAPTER_PATRON_PRICE) : own;",
     "new": "const band = chapterPatronMember(chapter, guildId) ? Math.min(own, CHAPTER_PATRON_PRICE) : 1;",
     "tests": [
-      "test/chap6d_halls.test.js"
+      "test/systems/livingWorld/chap6d_halls.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "* (service === 'training' && s.doctrine === 'training' ? CHAPTER_DOCTRINE_EFFECTS.training : 1);",
     "new": "* (s.doctrine === 'training' ? CHAPTER_DOCTRINE_EFFECTS.training : 1);",
     "tests": [
-      "test/chap6d_halls.test.js"
+      "test/systems/livingWorld/chap6d_halls.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "* (service === 'training' && s.doctrine === 'training' ? CHAPTER_DOCTRINE_EFFECTS.training : 1);",
     "new": "* 1;",
     "tests": [
-      "test/chap6d_halls.test.js"
+      "test/systems/livingWorld/chap6d_halls.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "const step = chapterBandOf(strength).shelf + extra;",
     "new": "const step = chapterBandOf(strength).shelf;",
     "tests": [
-      "test/chap6d_halls.test.js"
+      "test/systems/livingWorld/chap6d_halls.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "chapterSeasonOf(chapter).doctrine === 'shelf' ? CHAPTER_DOCTRINE_EFFECTS.shelf : 0) : quality);",
     "new": "0) : quality);",
     "tests": [
-      "test/chap6d_halls.test.js"
+      "test/systems/livingWorld/chap6d_halls.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "export const chapterHallShelf = (/** @type {number} */ quality, /** @type {any} */ chapter) => (chapter\n  ? chapterShelfQuality(",
     "new": "export const chapterHallShelf = (/** @type {number} */ quality, /** @type {any} */ chapter) => (true\n  ? chapterShelfQuality(",
     "tests": [
-      "test/chap6d_halls.test.js"
+      "test/systems/livingWorld/chap6d_halls.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "export const chapterHallShut = (/** @type {any} */ chapter) => chapterSeasonOf(chapter).shut;",
     "new": "export const chapterHallShut = (/** @type {any} */ chapter) => !!chapter?.shut;",
     "tests": [
-      "test/chap6d_halls.test.js"
+      "test/systems/livingWorld/chap6d_halls.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "export const CHAPTER_HALL_SHUT_LINE = 'The hall is shut this Season, by the watch\\'s order.';",
     "new": "export const CHAPTER_HALL_SHUT_LINE = 'The hall is shut.';",
     "tests": [
-      "test/chap6d_halls.test.js"
+      "test/systems/livingWorld/chap6d_halls.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "  if (band === 'shut') return GUILD_DAYS_SHUT;   // CHAP6d: a hall a Crackdown shut keeps no evenings\n",
     "new": "",
     "tests": [
-      "test/chap6d_halls.test.js"
+      "test/systems/livingWorld/chap6d_halls.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "export const GUILD_DAYS_SHUT = 0;",
     "new": "export const GUILD_DAYS_SHUT = 1;",
     "tests": [
-      "test/chap6d_halls.test.js"
+      "test/systems/livingWorld/chap6d_halls.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "const at = job === 'guildsman' && work && hallGuildDays(places, work, bandOf) === GUILD_DAYS_SHUT ? home : work ?? home;",
     "new": "const at = work ?? home;",
     "tests": [
-      "test/chap6d_halls.test.js"
+      "test/systems/livingWorld/chap6d_halls.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "      if (hallGuildDays(places, fav.guild, bandOf) !== GUILD_DAYS_SHUT) I('guild', fav.guild, h(15), stay);",
     "new": "      I('guild', fav.guild, h(15), stay);",
     "tests": [
-      "test/chap6d_halls.test.js"
+      "test/systems/livingWorld/chap6d_halls.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "      if (hallGuildDays(places, fav.guild, bandOf) !== GUILD_DAYS_SHUT) I('guild', fav.guild, h(11.5), 60);",
     "new": "      I('guild', fav.guild, h(11.5), 60);",
     "tests": [
-      "test/chap6d_halls.test.js"
+      "test/systems/livingWorld/chap6d_halls.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "const b = c?.shut ? 'shut' : c?.band;",
     "new": "const b = c?.band;",
     "tests": [
-      "test/chap6d_halls.test.js"
+      "test/systems/livingWorld/chap6d_halls.test.js"
     ]
   },
   {
@@ -149,8 +149,8 @@
     "old": "    const shutBox = () => (chapterHallShut(host.chapterHere?.(guild.factionId) ?? null) ? { rows: [CHAPTER_HALL_SHUT_LINE] } : null);",
     "new": "    const shutBox = () => null;",
     "tests": [
-      "test/chap6d_halls.test.js",
-      "test/audit_chap5.test.js"
+      "test/systems/livingWorld/chap6d_halls.test.js",
+      "test/net/audit_chap5.test.js"
     ],
     "note": "AUDIT CHAP5 D2: the gate moved into the services, the popup standing."
   },
@@ -160,7 +160,7 @@
     "old": "const bookFactor = chapterFactor('spells');",
     "new": "const bookFactor = chapterFactor('training');",
     "tests": [
-      "test/chap6d_halls.test.js"
+      "test/systems/livingWorld/chap6d_halls.test.js"
     ]
   },
   {
@@ -169,7 +169,7 @@
     "old": "const makerFactor = chapterFactor('spells');",
     "new": "const makerFactor = chapterFactor('training');",
     "tests": [
-      "test/chap6d_halls.test.js"
+      "test/systems/livingWorld/chap6d_halls.test.js"
     ]
   },
   {
@@ -178,7 +178,7 @@
     "old": "priceFactor: chapterFactor('training'),",
     "new": "priceFactor: chapterFactor('spells'),",
     "tests": [
-      "test/chap6d_halls.test.js"
+      "test/systems/livingWorld/chap6d_halls.test.js"
     ]
   },
   {
@@ -187,7 +187,7 @@
     "old": "const chapterFactor = (/** @type {string} */ service) => chapterHallFactor(chapterHere(), service, host.guildId?.() ?? null);",
     "new": "const chapterFactor = (/** @type {string} */ service) => chapterHallFactor(null, service, host.guildId?.() ?? null);",
     "tests": [
-      "test/chap6d_halls.test.js"
+      "test/systems/livingWorld/chap6d_halls.test.js"
     ]
   },
   {
@@ -196,7 +196,7 @@
     "old": "const shelfQuality = () => chapterHallShelf(b?.quality ?? 0, chapterHere());",
     "new": "const shelfQuality = () => chapterHallShelf(b?.quality ?? 0, null);",
     "tests": [
-      "test/chap6d_halls.test.js"
+      "test/systems/livingWorld/chap6d_halls.test.js"
     ]
   }
 ]

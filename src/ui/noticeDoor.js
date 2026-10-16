@@ -1,12 +1,12 @@
 // @ts-check
 // NOTICE1: THE NOTICE BOARD'S DOOR - the one place a host opens the board through (THE ONE CONSTRUCTION SEAM, PROF0
-// 17.2). The bounty board's shape (ui/bountyDoor.js): a lazy chunk (ui/noticeWindow.js) mounted through the one home
-// (ui/enhancedChunk.js) in a host of its own, wrapped in the generic overlay shape every host's frame drives,
+// 17.2). The bounty board's shape (ui/bounty/bountyDoor.js): a lazy chunk (ui/noticeWindow.js) mounted through the one home
+// (ui/enhanced/enhancedChunk.js) in a host of its own, wrapped in the generic overlay shape every host's frame drives,
 // registered with the overlay stack, and handed to the host's overlay slot (townTalk.showOverlay) - so the game stands
 // still while it is up. THE SLOT IS EMPTIED BEFORE THE OCCUPANT IS TOLD: `done` reads true only once the DOM is gone,
 // and the host's `onClose` runs last.
-import { mountEnhancedChunk } from './enhancedChunk.js';
-import { registerOverlay } from './enhancedOverlays.js';
+import { mountEnhancedChunk } from './enhanced/enhancedChunk.js';
+import { registerOverlay } from './enhanced/enhancedOverlays.js';
 import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
 
 /** @type {any} */ let _open = null;

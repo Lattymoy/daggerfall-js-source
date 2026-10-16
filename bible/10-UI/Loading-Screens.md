@@ -117,7 +117,7 @@ cap raced by two presses, an armed Delete outliving its pane, the keyboard dropp
 dead for the tab, unread imports silent, the higher HUD over the screen; and the record's own overclaims (the
 `finally`, "from the menu's choice", the thumbnail's width, the counts), corrected here.
 
-Pinned in `test/load1_loading.test.js` (18 tests); every law's mutant is in `tools/mutants/load1.json` - 53, all dead
+Pinned in `test/ui/load1_loading.test.js` (18 tests); every law's mutant is in `tools/mutants/load1.json` - 53, all dead
 (`node tools/mutate.mjs tools/mutants/load1.json`).
 
 ## SHOT1 (2026-10-07): the black shots
@@ -161,7 +161,7 @@ THE FOUR HOSTS:
 - `scenes/interior.js` (the `?interior` dev host) routes no PrintScreen of its own. Its one foot pays anyway, so
   every drawn foot in the tree keeps the same law.
 
-Pinned in `test/shot1_frame_foot.test.js` (3 tests). The model is a canvas whose buffer holds the frame only
+Pinned in `test/scenes/shot1_frame_foot.test.js` (3 tests). The model is a canvas whose buffer holds the frame only
 between a draw and its present, driven by a host frame that the cap can hold or that a pad's press can come from
 inside. The source sweep checks that every `renderer.resolveFrame();` in the hosts is followed by the delivery,
 with only notes and SS1's save shot between; that the cap's held line never pays; that `ui/screenshot.js` takes

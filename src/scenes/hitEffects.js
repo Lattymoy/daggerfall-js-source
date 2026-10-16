@@ -40,10 +40,10 @@
 
 import { FlatAnim, isAnimatedFlat, IMPACT_FPS, MISSILE_FPS } from '../render/flatAnimation.js';   // AUDIT 26 F033: ImpactBillboardFramesPerSecond   // FIELD-GUN14: a flying flat's own rate, which is the missile's
 import { billboardSize, centredBase } from '../world/rmbFlats.js';
-import { BLOODLESS_INDEX } from '../combat/bloodDecals.js';   // BLOOD1a: which foes bleed, for the art hand-off below
+import { BLOODLESS_INDEX } from '../combat/blood/bloodDecals.js';   // BLOOD1a: which foes bleed, for the art hand-off below
 
 /** EnemyBlood.cs:23. */
-import { createBleedLedger } from '../combat/bloodBleed.js';   // BLOOD2c
+import { createBleedLedger } from '../combat/blood/bloodBleed.js';   // BLOOD2c
 import { flashPlayerBleed } from '../ui/damageFlash.js';   // BLOOD2e: the reference's subtle flash with each of the player's own drips
 export const BLOOD_ARCHIVE = 380;
 /** BLOOD2d: the player's key in the marks' tracking table (a foe's is its own record). */
@@ -88,7 +88,7 @@ export function bloodCentre(feet, height) {
  * `tick(dt)` advances them and destroys the ones that have finished;
  * `batches()` hands the host what to draw, on the flats' axis.
  */
-/** PEERFX1: ONE OBSERVER OF EVERY BLOOD SPLASH, whichever host's pool drew it - the online layer (net/peerFx.js)
+/** PEERFX1: ONE OBSERVER OF EVERY BLOOD SPLASH, whichever host's pool drew it - the online layer (net/peer/peerFx.js)
  *  hears the player's own weapon blows here (a hit marked `fromPlayer`: melee, arrows, never a spell - no spell site
  *  splashes) to tell the players who can see it, and every splash to know one was already drawn. Null offline. */
 let _splashObserver = null;
@@ -265,7 +265,7 @@ export function createHitEffects({
     bleedPlayer: (dt, feet, entity) => {
       if (!marks || !feet || !entity) return 0;
       const health = entity.health ?? 0, maxHealth = entity.maxHealth ?? 0;
-      const view = () => ({ feet, health, maxHealth, bloodIndex: 0, dead: !(health > 0), corpse: false, strides: false, wound: !!entity.bleed });   // AUDIT TELL: a sweep's bleed drips (combat/bloodBleed.js WOUND_*)
+      const view = () => ({ feet, health, maxHealth, bloodIndex: 0, dead: !(health > 0), corpse: false, strides: false, wound: !!entity.bleed });   // AUDIT TELL: a sweep's bleed drips (combat/blood/bloodBleed.js WOUND_*)
       let n = 0;
       for (const a of bleeding.tick(dt, [PLAYER_WALKER], view)) {
         if (a.kind === 'drip' && marks.drip?.(a.bloodIndex, a.pos, a.count)) { n++; flashPlayerBleed(); }

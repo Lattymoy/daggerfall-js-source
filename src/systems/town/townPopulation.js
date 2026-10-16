@@ -1,0 +1,211 @@
+// T1 towns: PopulationManager (DFU, MIT Daggerfall Workshop) - the
+// wandering-NPC pool. Verbatim laws: 10 ticks/s; max population =
+// clamp(totalBlocks/16, 1, 4) * 24; spawns on the navgrid within 96
+// cells of the player; recycled past 150 world units, after 4 failed
+// seeks, or at NIGHT (townsfolk are daytime-only); pop-in/pop-out is
+// hidden - activation changes are allowed only beyond 120 units OR
+// outside the player's 180-degree view; a spawned mobile stays
+// INVISIBLE until its first completed tile move (the anti-skate
+// rule); spawns only while the player is inside the location rect +
+// 2500 classic units; identity (RandomiseNPC) re-rolls at EVERY
+// spawn - 1/32 are guards (texture 399, male), the rest flip gender
+// and draw one of four outfit variants. Race rides the climate's
+// people (the scene passes the tables); the guard crime RESPONSE
+// pends the crime system (they spawn and walk now).
+
+import { PERSON_TEXTURES, PERSON_FACE_RECORDS, NUM_PERSON_FACE_VARIANTS, GUARD_TEXTURE, MobilePerson } from '../../characters/mobile/mobilePerson.js';
+import { NAV_CELL } from '../../world/city/cityNavigation.js';
+import { fullName, getNameBank, GENDERS } from '../../characters/nameHelper.js';
+
+export const POP_TICKS_PER_SECOND = 10;
+export const POP_PER_16_BLOCKS = 24;           // populationIndexPer16Blocks
+export const POP_SPAWN_RADIUS = 96;            // navGridSpawnRadius (cells)
+export const POP_RECYCLE_DISTANCE = 150;       // recycleDistance
+export const POP_VISIBLE_RANGE = 120;          // allowVisiblePopRange
+export const POP_MAX_SEEKS = 4;
+// maxPlayerDistanceOutsideRect: 2500 classic units past the location
+// rect - beyond it no spawns happen at all (audit 2026-08-17).
+export const POP_SPAWN_RANGE_OUTSIDE_RECT = 2500 * 0.025;   // 62.5
+export const GUARD_CHANCE_DENOM = 32;          // Random.Range(0,32) == 0 -> a guard
+
+export function maxPopulationFor(totalBlocks) {
+  return Math.max(1, Math.min(4, Math.floor(totalBlocks / 16))) * POP_PER_16_BLOCKS;
+}
+
+/** UpdateMobiles' `allowChange` - the one law that hides a pop: a body may come on or go only beyond
+ *  allowVisiblePopRange, or outside the player's 180-degree forward view (behind them). `dx`, `dz` the body off the
+ *  player, `viewYaw` the camera's; `dist` the caller's measure (this manager's own is 3D). One home for every reader:
+ *  this pool, the living town's (livingTown.js `_hidden`) and the town watch's defenders walking off (cityGuards.js). */
+export function popAllowChange(dx, dz, viewYaw, dist = Math.hypot(dx, dz)) {
+  return dist > POP_VISIBLE_RANGE || !(dx * Math.sin(viewYaw) + dz * Math.cos(viewYaw) > 0);
+}
+
+export class TownPopulation {
+  /**
+   * @param nav CityNavigation
+   * @param opts { totalBlocks, race, makePerson(archive, guard) ->
+   *   MobilePerson (the scene owns textures/collider/ground), rand }
+   */
+  constructor(nav, { totalBlocks, race = 'Breton', nameBank = null, makePerson, rand = Math.random, suppressSpawns = () => false } = {}) {
+    // V4: PopulationManager.cs:174-176 - a racial override can
+    // suppress population (the transformed lycanthrope); the gate
+    // holds the PROMOTE arm (:186-191), so pending walkers wait and
+    // the ones already out keep walking, DFU's own shape.
+    this.suppressSpawns = suppressSpawns;
+    this.nav = nav;
+    this.race = race;
+    // AUDIT 23 (characters-5) - MobilePersonNPC.cs:214-215: the NAME
+    // bank is the REGION's (MapsFile.RegionRaces), independent of the
+    // billboard race (the climate's, or REGIONAL-FOLK's Redguard region's -
+    // characters/mobile/mobilePerson.js walkerRace); null falls back to the race bank.
+    this.nameBank = nameBank;
+    this.makePerson = makePerson;
+    this.rand = rand;
+    this.maxPopulation = maxPopulationFor(totalBlocks);
+    this.pool = [];   // { person, active, scheduleEnable, scheduleRecycle, visible }
+    this._timer = 0;
+  }
+
+  _freeItem() {
+    for (const item of this.pool) if (!item.active) return item;
+    if (this.pool.length >= this.maxPopulation) return null;
+    // Pool items are IDENTITY-LESS shells; RandomiseNPC rolls at every
+    // spawn (audit 2026-08-17 - recycled walkers come back as someone
+    // else, and 1/32 of them as guards).
+    const item = { person: this.makePerson(GUARD_TEXTURE, false), active: false, scheduleEnable: false, scheduleRecycle: false, visible: false };
+    this.pool.push(item);
+    return item;
+  }
+
+  /** RandomiseNPC, verbatim: Random.Range(0,32)==0 -> a GUARD (male,
+   *  variant 0 - texture 399); else gender flip (Range(0,2)==1 ->
+   *  female) + one of the four outfit variants. BOTH arms then run
+   *  SetPerson (MobilePersonNPC.cs:162), which mints the walker's NAME
+   *  from the region's name bank: `nameNPC = FullName(nameBankType,
+   *  gender)` (:217). AUDIT 18 F5 - nothing minted it before, so the
+   *  talk window's name plate and the %n greeting macro both fell back
+   *  to the People-of-region FACTION name ("People of Daggerfall").
+   *  The name draws ride DFRandom (NameHelper), NOT this.rand - the
+   *  same split DFU has between UnityEngine.Random and DFRandom - so
+   *  the RandomiseNPC roll stream is untouched. */
+  _randomiseNPC(person) {
+    const bank = this.nameBank ?? getNameBank(this.race);
+    if (Math.floor(this.rand() * GUARD_CHANCE_DENOM) === 0) {
+      person.setIdentity(GUARD_TEXTURE, true);
+      person.gender = GENDERS.Male;
+      person.nameNPC = fullName(bank, GENDERS.Male);
+      this._setFaceRecord(person, GENDERS.Male, 0);   // the guard arm is personOutfitVariant 0 (:147-149)
+      return;
+    }
+    const tables = PERSON_TEXTURES[this.race] ?? PERSON_TEXTURES.Breton;
+    const female = Math.floor(this.rand() * 2) === 1;
+    const genderTable = female ? tables.female : tables.male;
+    const variant = Math.floor(this.rand() * genderTable.length);   // personOutfitVariant
+    person.setIdentity(genderTable[variant], false);
+    person.gender = female ? GENDERS.Female : GENDERS.Male;
+    person.nameNPC = fullName(bank, person.gender);
+    this._setFaceRecord(person, person.gender, variant);
+  }
+
+  /** ROAD-D D10 - SetPerson's tail (MobilePersonNPC.cs:218-224): the
+   *  walker's TALK PORTRAIT record, `recordIndices[outfitVariant] +
+   *  Random.Range(0, numPersonFaceVariants)` into TFAC00I0.RCI. The
+   *  draw is on the ENGINE stream (UnityEngine.Random, this.rand),
+   *  and it falls AFTER the name because SetPerson orders it that way
+   *  - the name rides DFRandom, so the two streams never interleave.
+   *  Nothing minted this before, so every mobile conversation showed
+   *  the talk window's empty portrait frame. */
+  _setFaceRecord(person, gender, variant) {
+    const faces = PERSON_FACE_RECORDS[this.race] ?? PERSON_FACE_RECORDS.Breton;
+    const table = gender === GENDERS.Female ? faces.female : faces.male;
+    person.personFaceRecordId = table[variant] + Math.floor(this.rand() * NUM_PERSON_FACE_VARIANTS);
+  }
+
+  /** One 10Hz tick (SpawnAvailableMobile + UpdateMobiles). playerPos =
+   *  world feet; viewYaw = the camera yaw for the 180-degree gate;
+   *  isDay from the world clock. */
+  _tick(playerPos, viewYaw, isDay) {
+    // SpawnAvailableMobile: nothing spawns unless the player is inside
+    // the location rect + 2500 classic units (62.5) - verbatim
+    // maxPlayerDistanceOutsideRect (audit 2026-08-17). The rect IS the
+    // navgrid extent in the pool's frame.
+    const m = POP_SPAWN_RANGE_OUTSIDE_RECT;
+    const inRange =
+      playerPos[0] >= -m && playerPos[0] <= this.nav.width * NAV_CELL + m &&
+      playerPos[2] >= -m && playerPos[2] <= this.nav.height * NAV_CELL + m;
+    if (inRange) {
+      const [pgx, pgy] = this.nav.worldToNav(playerPos[0], playerPos[2]);
+      const item = this._freeItem();
+      if (item) {
+        const spawn = this.nav.getRandomSpawnPosition(pgx, pgy, POP_SPAWN_RADIUS, 10, this.rand);
+        if (spawn) {
+          this._randomiseNPC(item.person);   // identity re-rolls EVERY spawn
+          item.person.place(spawn[0], spawn[1]);
+          item.active = true;
+          item.scheduleEnable = true;
+          item.visible = false;
+        }
+      }
+    }
+    // Promote/recycle
+    for (const it of this.pool) {
+      if (!it.active) continue;
+      const dx = it.person.pos[0] - playerPos[0], dz = it.person.pos[2] - playerPos[2];
+      const dist = Math.hypot(dx, it.person.pos[1] - playerPos[1], dz);
+      const allowChange = popAllowChange(dx, dz, viewYaw, dist);
+      if (it.scheduleEnable && allowChange && isDay && !this.suppressSpawns()) { it.scheduleEnable = false; it.visible = true; }   // V4: SuppressPopulationSpawns holds the promote
+      if (it.person.seekCount > POP_MAX_SEEKS || dist > POP_RECYCLE_DISTANCE || !isDay) it.scheduleRecycle = true;
+      if (it.scheduleRecycle && allowChange) {
+        it.person.release();
+        it.active = false; it.scheduleEnable = false; it.scheduleRecycle = false; it.visible = false;
+      }
+    }
+  }
+
+  /** RR2: `mobileNpc.Motor.gameObject.SetActive(false)` (EnhancedRiding.cs
+   *  :161) - the trampled walker leaves the street at once, and its
+   *  pool slot is free for the next spawn (DFU's recycle sees an
+   *  inactive object and reuses it). Answers whether the person was
+   *  in this pool. */
+  retire(person) {
+    for (const it of this.pool) {
+      if (it.person !== person) continue;
+      if (it.active) it.person.release();
+      it.active = false; it.scheduleEnable = false; it.scheduleRecycle = false; it.visible = false;
+      return true;
+    }
+    return false;
+  }
+
+  /** Per-frame drive; ticks at 10Hz internally. Returns the LIVE
+   *  renderable persons (active + visible + moveCount > 0 per the
+   *  anti-skate rule; the person.update itself runs per frame). */
+  update(dt, playerPos, viewYaw, cameraPos, isDay, wantsToStopFn = () => false) {
+    // PopulationManager.Update verbatim: the timer RESETS to zero on
+    // fire - at most ONE tick per frame, remainder dropped (audit
+    // 2026-08-17: the accumulator catch-up burst was a departure - a
+    // slow frame must not spawn a crowd).
+    this._timer += dt;
+    if (this._timer >= 1 / POP_TICKS_PER_SECOND) {
+      this._timer = 0;
+      this._tick(playerPos, viewYaw, isDay);
+    }
+    // PERF-TOWN1: the LIST and its rows are this pool's own, refilled
+    // rather than rebuilt. The caller walks it within the frame and
+    // keeps nothing, so a new array and a new row per visible person
+    // per frame bought nothing.
+    const out = this._live ??= [];
+    out.length = 0;
+    const seats = this._rows ??= [];
+    for (const it of this.pool) {
+      if (!it.active || !it.visible) continue;
+      const frameOut = it.person.update(dt, cameraPos, wantsToStopFn(it.person));
+      if (it.person.moveCount > 0) {
+        const seat = seats[out.length] ??= { person: null, out: null };
+        seat.person = it.person; seat.out = frameOut;
+        out.push(seat);
+      }
+    }
+    return out;
+  }
+}

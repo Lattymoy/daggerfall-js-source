@@ -1,6 +1,6 @@
 // FIELD BUGS 2026-10-06b / AUDIT 637 (Mac: "theres a lot of player desync online, including players appearing to run in
 // place"): THE PLAY-OUT PROBE - how another player's body is drawn while their poses arrive late, or stop, or come
-// sparse. bible/01-Overview/Field-Bugs-2026-10-06b.md, bible/01-Overview/Audit-637.md (AUDIT 637 D13: the record's
+// sparse. bible/01-Overview/bugs/Field-Bugs-2026-10-06b.md, bible/01-Overview/audits/Audit-637.md (AUDIT 637 D13: the record's
 // tables came from a harness in a session's scratch, and nothing in the tree could make them again).
 //
 // Two REAL OnlineSessions on one fake clock, over fake sockets: Eve, the sender, walks at 5 m/s and says her poses through

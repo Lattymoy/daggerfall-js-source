@@ -110,7 +110,7 @@
 // kept one an account for a day); the level rides the token when the
 // mint names one:
 //   POST /v1/renown/xp { character, xp, name?, rid?, region? } -> { character, xp, level, credited, rose, order, max?, repeat? }   (SEAT1b: `region` where it was earned)
-// FIRM1, THE FIRMAMENT (firmament.js; the law src/net/firmamentLaw.js): a character's passive tree, its Stars the Renown
+// FIRM1, THE FIRMAMENT (firmament.js; the law src/net/firmament/firmamentLaw.js): a character's passive tree, its Stars the Renown
 // track's and its Craft points the profession tracks', every change the whole tree judged by the law, a refund's silver
 // burnt in the change's batch. Behind FIRMAMENT_OPEN:
 //   POST /v1/firmament/state { character }            -> { tree, renown, stars, craft, ranks, left, refund }
@@ -208,7 +208,7 @@ import { claimGambit, gambitBoardOf } from './gambit.js';   // KG6: The King's G
 import { titleWorn, glyphsOf, glyphsHidden, auraWorn } from './titles.js';
 import { withHonours } from './honours.js';   // SIGN-BATCH: the three games' honours on a badge's row, in one batch
 import { claimArena, arenaAttempt, arenaBoardOf, arenaTeam, arenaRatingOf, ARENA_HONOUR_PATHS, ARENA_RENOWN_REGION } from './arena.js';   // ARENA4: the arena's records, its board, its banners, and the honours the mint reads
-import { arenaSeasonOf } from '../../src/net/arenaLaw.js';
+import { arenaSeasonOf } from '../../src/net/arena/arenaLaw.js';
 import { BUSY_RETRY_AFTER_S } from '../../src/net/busyLaw.js';   // BUSY-GATE: how long an overload answer tells a client to stand back
 import { sendLetter, inboxOf, readLetter, deleteLetter } from './letters.js';   // MAIL1: the letters' routes
 import { postBoxOf, readPost, claimPost, deletePost } from './post.js';   // SERVER-POST: the server's post
@@ -271,7 +271,7 @@ import {
 } from './realm.js';   // REALM P1: the realm's characters; ARENA4b: the level on a realm character's tile, the token's `cl`
 import { grantSpoils } from './budget.js';   // INT5: a signed win's spoils fill the playing character's budget
 import { reviewAct } from './review.js';   // INT6: the review of the judge's verdicts
-import { isGzip, gzipSizeOf, gunzipText, REALM_TEXT_MAX_BYTES } from '../../src/net/realmSaveCodec.js';   // REALM-GZIP: a save rides packed
+import { isGzip, gzipSizeOf, gunzipText, REALM_TEXT_MAX_BYTES } from '../../src/net/realm/realmSaveCodec.js';   // REALM-GZIP: a save rides packed
 import { tradeRealm, REALM_TRADE_BODY_MAX } from './realmTrade.js';   // REALM P2.1: a trade, settled here
 import { wildFall, wildCollect, wildReclaim, wildEscrows } from './wild.js';   // INT9: a death in the open zone's drop, taken off the record; MAC (2026-10-14): its killer's piece in escrow - collected, taken back, listed
 import { listLineages, putLineage, realmDie, realmWed, listUnions, LINEAGE_BODY_MAX, isTombstone } from './legacy.js';   // LEGACY7: Project Legacy's lines and the tombstone
@@ -989,7 +989,7 @@ const service = {
         // (RENOWN-CHAR: the named character's again - RENOWN-ACCOUNT read
         // the account's one track whichever was named.)
         // RENOWN4: and the track's TOTAL beside it in the answer (never in the token - a room needs the level, not the
-        // XP): the page's own bar is drawn from it the moment the character comes online (ui/hudRenown.js).
+        // XP): the page's own bar is drawn from it the moment the character comes online (ui/hud/hudRenown.js).
         const track = renownCharacterOk(body.character) ? ((await renownTrackOf(ctx, who.player.id, body.character)) ?? { xp: 0, level: 1 }) : null;
         const lv = track ? track.level : undefined;
         // GUILD1c: AND THE GUILD, the named character's - its id, its tag and its member row off the roster as it
@@ -1014,7 +1014,7 @@ const service = {
         // INT7: AND THAT REALM CHARACTER'S ARMS, `wa` - the most reach of its judged pack's lawful weapons and its bow
         // (realm.js realmMintFacts), every referee's clip of a blow between players. Absent before its first judged checkpoint.
         const wa = facts.wa;
-        // ARENA4: AND THE ACCOUNT'S ARENA RATING this season, for a registered account - the hall queues by it (net/arenaLaw.js
+        // ARENA4: AND THE ACCOUNT'S ARENA RATING this season, for a registered account - the hall queues by it (net/arena/arenaLaw.js
         // pairQueue), off the signature, never a word of the client's. A guest's token carries none (a guest is not queued).
         const ar = who.player.handle ? (await arenaRatingOf(ctx, who.player.id, arenaSeasonOf(nowS))).rating : undefined;
         // LEGACY7 part two: AND THAT REALM CHARACTER'S HOUSE (realm.js realmMintFacts, by legacy.js houseOn: its line's
@@ -1100,7 +1100,7 @@ const service = {
 
       if (path === '/v1/duel/claim' && request.method === 'POST') {
         // INT8 (bible/06-Systems/Integrity-Arc.md lane 2): A DUEL'S RESULT, THE RELAY'S - either fighter carries the receipt
-        // the referee handed it (src/net/duelReceipt.js `d1`); the session must be one of its two, never the body's word,
+        // the referee handed it (src/net/duel/duelReceipt.js `d1`); the session must be one of its two, never the body's word,
         // and accounts.js `claimDuel` counts it once (its bout's id) inside its bounds. No public half here yet: 503, and
         // the client keeps the receipt for its day.
         const r = await claimDuel(ctx, who.player, body.receipt, await gatePublicKey(env, subtle));
@@ -1110,7 +1110,7 @@ const service = {
 
       if (path === '/v1/wild/fall' && request.method === 'POST') {
         // INT9 (bible/06-Systems/Integrity-Arc.md lane 2): A DEATH IN THE OPEN ZONE'S DROP, TAKEN OFF THE FALLEN'S JUDGED
-        // RECORD (wild.js `wildFall`) - against the fall the relay signed (src/net/wildReceipt.js `f1`: the fallen's own tab
+        // RECORD (wild.js `wildFall`) - against the fall the relay signed (src/net/wild/wildReceipt.js `f1`: the fallen's own tab
         // with its record's `at`, its killer's after the grace), or none (a death to a foe: the caller's own record). The
         // answer's `order` is the service's word on the records, the room's to keep a deposit on.
         const r = await wildFall({ ...ctx, bucket: env.SAVES }, who.player, body, { gateKey: body.receipt !== undefined ? await gatePublicKey(env, subtle) : null, signing: await signingKey(env, subtle) });
@@ -1146,7 +1146,7 @@ const service = {
 
       if (path === '/v1/gate/claim' && request.method === 'POST') {
         // WB5b: THE ACCOUNT THE RECEIPT NAMES CARRIES IT HERE. The
-        // relay signed it at the kill (src/net/gateReceipt.js); the
+        // relay signed it at the kill (src/net/gate/gateReceipt.js); the
         // session says who is asking, never the body, and accounts.js
         // `claimGate` holds the rest - the signature, the account, the
         // one row a (day, account). No public half here yet is the
@@ -1180,7 +1180,7 @@ const service = {
 
       if (path === '/v1/raid/claim' && request.method === 'POST') {
         // RAID4: THE ACCOUNT A RAID'S RECEIPT NAMES CARRIES IT HERE, with the character that fought it. The relay signed
-        // it at the cleanse (src/net/raidReceipt.js); the session says who is asking, never the body, and raids.js
+        // it at the cleanse (src/net/raid/raidReceipt.js); the session says who is asking, never the body, and raids.js
         // `claimRaid` holds the rest - the signature, the account, one row a (raid, account), the day's bound, the
         // Renown (RENOWN-CHAR: the fighting character's again). A level that ROSE comes back with a signed order, as a
         // Renown report's does.
@@ -1214,7 +1214,7 @@ const service = {
 
       if (path === '/v1/serpent/claim' && request.method === 'POST') {
         // SERPENT1: A SERPENT'S RECEIPT, CARRIED HERE BY THE ACCOUNT IT NAMES, with the character that fought it. The relay
-        // signed it at the kill (src/net/serpentReceipt.js); the session says who is asking, never the body, and serpents.js
+        // signed it at the kill (src/net/serpent/serpentReceipt.js); the session says who is asking, never the body, and serpents.js
         // `claimSerpent` holds the rest - the signature, the account, one row a (day, account), the Renown, the device's
         // hoard. A level that ROSE comes back with a signed order, as a raid's does.
         // SERPENT-SET: and its silver, a combat strike in the row's own batch (marks.js serpentStrikeStatement - 40, a ship
@@ -1233,7 +1233,7 @@ const service = {
 
       if (path === '/v1/sd/claim' && request.method === 'POST') {
         // SD9b: A BRASS REMNANT'S RECEIPT, CARRIED HERE BY THE ACCOUNT IT NAMES. The relay signed it at the fall
-        // (src/net/sdReceipt.js); the session says who is asking, never the body, and sds.js `claimSd` holds the rest - the
+        // (src/net/superDungeon/sdReceipt.js); the session says who is asking, never the body, and sds.js `claimSd` holds the rest - the
         // signature, the account, one row a (slot, account), and on that first write the Hour's grants off its seed. A
         // refusal says its rung, as the gate's does (AUDIT WB A5): the client keeps a receipt the service can mend.
         const r = await claimSd(ctx, who.player, body.receipt, await gatePublicKey(env, subtle));
@@ -1249,7 +1249,7 @@ const service = {
 
       if (path === '/v1/arena/claim' && request.method === 'POST') {
         // ARENA4: A BOUT'S RECEIPT, CARRIED HERE BY AN ACCOUNT IT NAMES. The relay refereed the bout and signed its result
-        // (src/net/arenaReceipt.js); arena.js `claimArena` holds the rest - the signature, the account, one row a bout, a
+        // (src/net/arena/arenaReceipt.js); arena.js `claimArena` holds the rest - the signature, the account, one row a bout, a
         // ladder win only as the account's next bout, both ratings for a bout between players. A refusal says its rung, as
         // the gate's does (AUDIT WB A5): the client keeps a receipt the service can mend and lets go of one it cannot.
         // ARENA4b: and a won bout's Renown to the character the claim names (arena.js arenaRenownFor - the renown law's own

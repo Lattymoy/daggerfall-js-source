@@ -3,7 +3,7 @@
     "name": "TN-dev-glyph-narrates",
     "file": "server/src/index.js",
     "tests": [
-      "test/titlen.test.js"
+      "test/net/titlen.test.js"
     ],
     "old": "if (!Array.isArray(a.glyphs) || !a.glyphs.includes('dm')) return;   // silently, as /red is",
     "new": "if (!Array.isArray(a.glyphs) || !a.glyphs.some((g) => g === 'dm' || g === 'dev')) return;   // silently, as /red is"
@@ -12,7 +12,7 @@
     "name": "TN-anyone-narrates",
     "file": "server/src/index.js",
     "tests": [
-      "test/titlen.test.js"
+      "test/net/titlen.test.js"
     ],
     "old": "if (!Array.isArray(a.glyphs) || !a.glyphs.includes('dm')) return;   // silently, as /red is",
     "new": "if (!Array.isArray(a.glyphs)) return;   // silently, as /red is"
@@ -21,7 +21,7 @@
     "name": "TN-the-red-bucket-shared",
     "file": "server/src/index.js",
     "tests": [
-      "test/titlen.test.js"
+      "test/net/titlen.test.js"
     ],
     "old": "      const gate = dmGate(meters.dbucket, now);   // its own bucket: narrating spends none of the server line's\n      meters.dbucket = gate.bucket;",
     "new": "      const gate = dmGate(meters.rbucket, now);   // its own bucket: narrating spends none of the server line's\n      meters.rbucket = gate.bucket;"
@@ -30,7 +30,7 @@
     "name": "TN-a-speaker-on-the-line",
     "file": "server/src/index.js",
     "tests": [
-      "test/titlen.test.js"
+      "test/net/titlen.test.js"
     ],
     "old": "const said = JSON.stringify({ t: 'dm', text: m.text, at: now });",
     "new": "const said = JSON.stringify({ t: 'dm', id: a.id, name: a.name, text: m.text, at: now });"
@@ -39,7 +39,7 @@
     "name": "TN-sent-to-an-older-relay",
     "file": "src/net/online.js",
     "tests": [
-      "test/titlen.test.js"
+      "test/net/titlen.test.js"
     ],
     "old": "    if (!line || !this.dmOk) return false;",
     "new": "    if (!line) return false;"
@@ -48,7 +48,7 @@
     "name": "TN-the-gate-not-run-at-home",
     "file": "src/net/online.js",
     "tests": [
-      "test/titlen.test.js"
+      "test/net/titlen.test.js"
     ],
     "old": "    const gate = dmGate(this._dbucket, this._now());\n    if (!gate.pass) return false;\n    if (!this._send({ t: 'narrate', text: line })) return false;",
     "new": "    const gate = dmGate(this._dbucket, this._now());\n    if (!this._send({ t: 'narrate', text: line })) return false;"
@@ -57,7 +57,7 @@
     "name": "TN-the-dm-line-not-a-system-line",
     "file": "src/net/chat.js",
     "tests": [
-      "test/titlen.test.js"
+      "test/net/titlen.test.js"
     ],
     "old": "    const sys = !!system || !!red || !!dm;",
     "new": "    const sys = !!system || !!red;"
@@ -66,7 +66,7 @@
     "name": "TN-drawn-red",
     "file": "src/ui/chatPanel.js",
     "tests": [
-      "test/titlen.test.js"
+      "test/net/titlen.test.js"
     ],
     "old": ".dfchat-line.dm .dfchat-text { color: ${cssRgba(TITLE_RGBA.dungeonmaster)};",
     "new": ".dfchat-line.dm .dfchat-text { color: #e2453a;"
@@ -75,7 +75,7 @@
     "name": "TN-the-lists-crossed",
     "file": "server-account/src/titles.js",
     "tests": [
-      "test/titlen.test.js"
+      "test/net/titlen.test.js"
     ],
     "old": "  dungeonmaster: 'DUNGEON_MASTER_HANDLES',\n  disciple: 'DISCIPLE_HANDLES',",
     "new": "  dungeonmaster: 'DISCIPLE_HANDLES',\n  disciple: 'DUNGEON_MASTER_HANDLES',"
@@ -84,7 +84,7 @@
     "name": "TN-the-glyph-without-the-title",
     "file": "server-account/src/titles.js",
     "tests": [
-      "test/titlen.test.js"
+      "test/net/titlen.test.js"
     ],
     "old": "  for (const t of Object.keys(TIER_LISTS)) if (holdsTier(t, player, env)) held.push(t);   // TITLE-N\n",
     "new": ""
@@ -93,7 +93,7 @@
     "name": "TN-a-guest-granted",
     "file": "server-account/src/titles.js",
     "tests": [
-      "test/titlen.test.js"
+      "test/net/titlen.test.js"
     ],
     "old": "  typeof player?.handle === 'string' && !!player.handle && Object.hasOwn(TIER_LISTS, title)",
     "new": "  Object.hasOwn(TIER_LISTS, title)"
@@ -102,7 +102,7 @@
     "name": "TN-the-dungeon-master-not-orange",
     "file": "src/ui/playerBadge.js",
     "tests": [
-      "test/titlen.test.js"
+      "test/net/titlen.test.js"
     ],
     "old": "  dungeonmaster: Object.freeze([1, 0.549, 0.102, 1]), // #ff8c1a",
     "new": "  dungeonmaster: Object.freeze([1, 0.784, 0.29, 1]), // #ff8c1a"
@@ -111,7 +111,7 @@
     "name": "TN-a-glyph-wearing-another-colour",
     "file": "src/ui/playerBadge.js",
     "tests": [
-      "test/titlen.test.js"
+      "test/net/titlen.test.js"
     ],
     "old": "  disciple: TITLE_RGBA.disciple,",
     "new": "  disciple: TITLE_RGBA.apostle,"
@@ -120,7 +120,7 @@
     "name": "TN-two-glyphs-share-a-mark",
     "file": "src/ui/playerBadge.js",
     "tests": [
-      "test/titlen.test.js"
+      "test/net/titlen.test.js"
     ],
     "old": "  apostle: '^',",
     "new": "  apostle: '~',"
@@ -129,7 +129,7 @@
     "name": "TN-the-host-guards-dm",
     "file": "src/scenes/world.js",
     "tests": [
-      "test/titlen.test.js"
+      "test/net/titlen.test.js"
     ],
     "old": "        if (dm) return chatLinks.get('world')?.sendDm(dm[1]) ?? false;",
     "new": "        if (dm && identity?.glyphs?.includes('dm')) return chatLinks.get('world')?.sendDm(dm[1]) ?? false;"
@@ -138,8 +138,8 @@
     "name": "TR-the-title-back-on-the-roster",
     "file": "src/ui/chatPanel.js",
     "tests": [
-      "test/acc3wear.test.js",
-      "test/chatfit.test.js"
+      "test/ui/enhanced/acc3wear.test.js",
+      "test/ui/chatfit.test.js"
     ],
     "old": "      line.append(nameEl);\n      const gt = guildTagText(r.gt);",
     "new": "      if (r.title) line.append(el('span', 'dfchat-who-title', String(r.title)));\n      line.append(nameEl);\n      const gt = guildTagText(r.gt);"
@@ -148,7 +148,7 @@
     "name": "TR-founder-cutoff-moved-forward",
     "file": "server-account/src/titles.js",
     "tests": [
-      "test/titlen.test.js"
+      "test/net/titlen.test.js"
     ],
     "old": "export const FOUNDER_UNTIL = 1_790_337_600;",
     "new": "export const FOUNDER_UNTIL = 1_790_380_800;",
@@ -160,7 +160,7 @@
     "old": "DEVELOPER_HANDLES = \"Lattymoy,LostMyLeg,Tabby,RookieG,Roderic\"",
     "new": "DEVELOPER_HANDLES = \"Lattymoy,LostMyLeg,RookieG,Roderic\"",
     "tests": [
-      "test/titlen.test.js"
+      "test/net/titlen.test.js"
     ],
     "note": "DEV4 (re-aimed by content): the list gained RookieG. DEV5 (re-aimed by content): trashBattery left it. DEV6 (re-aimed by content): the list gained Roderic."
   },
@@ -170,7 +170,7 @@
     "old": "DEVELOPER_HANDLES = \"Lattymoy,LostMyLeg,Tabby,RookieG,Roderic\"",
     "new": "DEVELOPER_HANDLES = \"Lattymoy,LostMyLeg,Tabby,RookieG(Dev),Roderic\"",
     "tests": [
-      "test/titlen.test.js"
+      "test/net/titlen.test.js"
     ],
     "note": "The bracketed handle listed for the account RookieG (the owner: \"Change RookieG(Dev) to RookieG\"): RookieG holds nothing, and the developer's rights go to whoever registers the other name. DEV5 (re-aimed by content): trashBattery left the list. DEV6 (re-aimed by content): the list gained Roderic."
   },
@@ -180,7 +180,7 @@
     "old": "DEVELOPER_HANDLES = \"Lattymoy,LostMyLeg,Tabby,RookieG,Roderic\"",
     "new": "DEVELOPER_HANDLES = \"Lattymoy,trashBattery,LostMyLeg,Tabby,RookieG,Roderic\"",
     "tests": [
-      "test/titlen.test.js"
+      "test/net/titlen.test.js"
     ],
     "note": "DEV5 (Mac: \"Remove trashBattery ingame as a dev\"): the handle left on the list keeps the whole developer set. DEV6 (re-aimed by content): the list gained Roderic."
   },
@@ -190,7 +190,7 @@
     "old": "DEVELOPER_HANDLES = \"Lattymoy,LostMyLeg,Tabby,RookieG,Roderic\"",
     "new": "DEVELOPER_HANDLES = \"Lattymoy,LostMyLeg,Tabby,RookieG\"",
     "tests": [
-      "test/titlen.test.js"
+      "test/net/titlen.test.js"
     ],
     "note": "DEV6 (Mac: \"Give roderic the developer access ingame (title/glyph)\"): Roderic left off the list holds no title, glyph, wings or moderating."
   },
@@ -200,7 +200,7 @@
     "old": "DISCIPLE_HANDLES = \"Dutchess,Satranath,Skibbster,Flylighter,valenvalarys\"",
     "new": "DISCIPLE_HANDLES = \"Dutchess,Satranath,Skibbster,valenvalarys\"",
     "tests": [
-      "test/titlen.test.js"
+      "test/net/titlen.test.js"
     ]
   },
   {
@@ -209,7 +209,7 @@
     "old": "DISCIPLE_HANDLES = \"Dutchess,Satranath,Skibbster,Flylighter,valenvalarys\"",
     "new": "DISCIPLE_HANDLES = \"Dutchess,Satranath,Skibbster,Flylighter\"",
     "tests": [
-      "test/titlen.test.js"
+      "test/net/titlen.test.js"
     ]
   },
   {
@@ -218,7 +218,7 @@
     "old": "DISCIPLE_HANDLES = \"Dutchess,Satranath,Skibbster,Flylighter,valenvalarys\"",
     "new": "DISCIPLE_HANDLES = \"Dutchess,Satranath,Skibbster,Flylighter,valenvalary\"",
     "tests": [
-      "test/titlen.test.js"
+      "test/net/titlen.test.js"
     ]
   }
 ]

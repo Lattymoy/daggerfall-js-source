@@ -10,7 +10,7 @@
 //            the sea that spreads and fades (drawn flat, `flat: true`)
 //   debris - splinters of a hull struck: dark wood chips thrown out along the shot and down, spinning, under gravity
 //   ember  - a burning ship's sparks, rising; its FIRE is Daggerfall's own fire flat stood on her deck
-//            (scenes/navalFlames.js - TEXTURE.210, the camp's), its smoke this module's
+//            (scenes/naval/navalFlames.js - TEXTURE.210, the camp's), its smoke this module's
 //   glint  - AUDIT NAV1 (the guns): a battery running out - a warm point at each port, flickering and brightening as the
 //            guns come out, the tell before her broadside (added); and SHREDS - canvas torn by a ball passing through
 //            her rig: pale scraps fluttering down (blended)

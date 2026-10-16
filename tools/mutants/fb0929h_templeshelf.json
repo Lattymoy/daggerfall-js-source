@@ -4,20 +4,20 @@
     "file": "src/scenes/worldModes.js",
     "old": "    const guild = bf ? createGuildForGroup(guildGroupOfFaction(dict, b.factionId), b.factionId, dict) : null;",
     "new": "    const guild = bf ? createGuildForGroup(bf.ggroup, b.factionId, dict) : null;",
-    "tests": ["test/fb0929h_templeshelf.test.js", "test/bookshelf.test.js"]
+    "tests": ["test/systems/guild/fb0929h_templeshelf.test.js", "test/systems/bookshelf.test.js"]
   },
   {
     "name": "TEMPLE-SHELF-the-divine-never-walked-to-its-child",
-    "file": "src/systems/guilds.js",
+    "file": "src/systems/guild/guilds.js",
     "old": "  if (f.type === FACTION_TYPES.God && f.ggroup === GUILD_GROUPS.None && f.children?.length) {",
     "new": "  if (false && f.type === FACTION_TYPES.God && f.ggroup === GUILD_GROUPS.None && f.children?.length) {",
-    "tests": ["test/fb0929h_templeshelf.test.js"]
+    "tests": ["test/systems/guild/fb0929h_templeshelf.test.js"]
   },
   {
     "name": "TEMPLE-SHELF-any-temple's-member",
-    "file": "src/systems/guilds.js",
+    "file": "src/systems/guild/guilds.js",
     "old": "  return m && m.guild === guild.name ? m : null;",
     "new": "  return m ? m : null;",
-    "tests": ["test/fb0929h_templeshelf.test.js"]
+    "tests": ["test/systems/guild/fb0929h_templeshelf.test.js"]
   }
 ]

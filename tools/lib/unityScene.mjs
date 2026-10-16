@@ -1,7 +1,7 @@
 // CSA-A (2026-09-27): A UNITY BUNDLE'S PREFABS, MESHES, MATERIALS AND ANIMATION,
 // READ OFF ITS TYPE TREES INTO PLAIN DATA (tools/comeSailAwayExtract.mjs).
 //
-// src/formats/unityBundle.js reads any object through its type tree; this
+// src/formats/unity/unityBundle.js reads any object through its type tree; this
 // module knows what a few classes MEAN, so a prefab comes out as the tree
 // the mod's C# walks by name (GameObject, Transform, the components on each
 // node) and the assets it points at come out as data the port can draw and
@@ -31,7 +31,7 @@
 //   controller's own id table (m_TOS).
 
 import zlib from 'node:zlib';
-import { readUnityFs, readSerializedFile } from '../../src/formats/unityBundle.js';
+import { readUnityFs, readSerializedFile } from '../../src/formats/unity/unityBundle.js';
 
 /** Unity's class ids this module reads. */
 export const UCLASS = Object.freeze({

@@ -1,8 +1,8 @@
 <!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"><title>Soulbound regression fixture</title></head><body style="margin:0;background:#17181d"><div id="inventory"></div><script type="module">
-import { mountEnhancedInventory } from '/src/ui/enhancedInventory.js';
+import { mountEnhancedInventory } from '/src/ui/enhanced/enhancedInventory.js';
 import { ENCHANTMENT_TYPES as T, setDefaultEnchantCtx } from '/src/systems/enchantments.js';
 import { lowerCondition } from '/src/systems/equip.js';
-import { snapshotPlayer, restorePlayer } from '/src/systems/save.js';
+import { snapshotPlayer, restorePlayer } from '/src/systems/save/save.js';
 const item = { name: 'Soulbound Blade', group: 'Weapons', templateIndex: 119, material: 2, currentCondition: 1, maxCondition: 100, isIdentified: true, enchantments: [{ type: T.SoulBound, param: 28 }] };
 const plain = { name: 'Ordinary Blade', group: 'Weapons', templateIndex: 119, material: 2, currentCondition: 1, maxCondition: 100 };
 const entity = { name:'Tester', gender:'male', race:0, isPlayer:true, level:5, career:{}, items:[item,plain], stats:{strength:50}, skills:[], spells:[], activeEffects:[] };

@@ -8,7 +8,9 @@
 
 Newest first.
 
-**2026-10-14 - AUDIT DEPS1 (the lean codebase audit).** Mac: *"Can we do a comprehensive codebase audit that wouldn't kill my usuage?"*, then *"I wanna take all of this head on and do this right"*. Tooling first, eyes on what it flagged: lint and types clean; the suite 27299/27631 with one failure (sd25_arena S7, an allocation measure that raced the compiler under the four shards - its own record, ALLOC1 in `09-Testing/Testing.md`); SQL bound in every statement (each `${...}` in a query is a constant fragment); no innerHTML sink fed by a peer; no secret in the tree; the workflows on scoped permissions with the one third-party action pinned by sha. The finding that shipped here: six advisories in the dev toolchain, five under Vite 5 (esbuild 0.21's dev server answering any page open beside it; Windows path tricks past `server.fs.deny`; nanoid, postcss and source-map-js beneath it) and brace-expansion (beneath eslint, through minimatch) - none in the deployed site, which is static. FIXED: Vite 5.4 -> 8.3 (Rolldown; the config unchanged, the same 20 pages and the same non-script assets built, the dev server and the gun lab's own build smoke-tested; Vite 6.4 or 7.3 would most likely have cleared the audit on Rollup - the move to Rolldown is the choice to take the bundler to its current line, not the audit's demand), `npm audit fix` for the rest, `npm audit` 0. AUDIT DEPS1's review (a Vite 5 and a Vite 8 build compared): every non-script asset byte-identical, every chunk ES2022 with no lookbehind, the build's peak memory 3.2 -> 2.1 GB; the pages' HTML is not the same text - Vite 8 minifies every inline `<style>` with Lightning CSS for `cssTarget`, which read es2022 as Safari 16.4 and would drop a prefix the game's Safari 15 floor needs, so `build.cssTarget` names that floor (`test/csstarget.test.js`); Node 20.19 / 22.12 is Vite 8's floor (`engines`); and Rolldown runs modules in another order than Rollup did (four import cycles flipped, none reading the other's values at load - a play-through on real ARENA2 data is the check no build can make). `esbuild` is now a devDependency of its own at wrangler's 0.28.1: `test/accountdeploy.test.js` bundles the Workers as wrangler does and had been importing the copy Vite 5 happened to install. Left standing: PBKDF2 at 100,000 iterations (`server-account/src/password.js` - the Workers cap, recorded there), and the four hosts' size (`bootWorld` one function of 35,251 lines) - a refactor plan of its own.
+**2026-10-15 - BUILD-LEFTOVERS (AUDIT DEPS1's remainder).** Mac: *"2, 3 and 5"* - 5 being the small things the Vite 8 review left. `tools/staleChunkProbe.mjs` stamped `src/buildTag.js` with BUILD_TAG alone after REL8 added UPDATE, so every build it made failed to bundle (on Vite 5 and 8 alike): the stamp is one function now, `scripts/buildTag.mjs` `tagSource`, which the probe calls, and `test/tooling/rel8_updates.test.js` holds every name the game imports from the file to it. The build's warnings are worth reading again: `mwFirstPerson.js`'s dynamic import of `mwAnim.js`, which it already imported statically, is gone; `hudLayout.js` -> `revenantCard.js`'s is the design (the dynamic edge keeps the two out of a cycle) and `vite.config.js`'s onLog quiets that pair alone (`test/tooling/buildwarn.test.js` builds a scratch tree through it); and the chunk-size line stands just over the world chunk (2,500 kB then; 2,750 now - see below). A full build now prints no warning. AUDIT BUILD-LEFTOVERS (the review, 2026-10-15): the first filter was anchored to the start of the message - which, in a real build, a colour code precedes - so it never matched, and the build still warned; its test built its tree from outside it, so only ever tried prefixed paths. The module is matched by the log's `id` now, the importer anywhere in the message, and the test builds from inside its tree as a real build does (a fifth mutant: the importer anchored again). AUDIT BUILD-LEFTOVERS, THE SECOND READ (2026-10-15, folded into HOST-SPLIT 2's pull request): a full build still printed three warnings - `src/formats/worldData/worldDataPatch.js` and `worldDataPack.js`'s `import('node:crypto')` fallback, stubbed out of every bundle (dead wherever the game runs: every browser's secure context and Node from 19 have WebCrypto, so it is gone and a missing `crypto.subtle` says so), and the world chunk at 2,662 kB over the 2,500 line once main's POI editor joined it. The line is 2,750, just over the world again - and HOST-SPLIT does not bring it down: a module the host imports statically joins the host's chunk (`pixelBuild.js` is in it); only a dynamic import takes code out. The filter quieted two real warnings - hudLayout importing the card statically too (mwFirstPerson's mistake, and the cycle back) and the same tail path in another tree - and its test's pair WAS the first shape: it reads this tree's card now, hudLayout its only dynamic importer and no static one, and the test builds the HUD's real shape and two that must warn. `scripts/buildTag.mjs`'s run guard was held by nothing (imported, a lost guard rewrote the tracked stamp under node --test), and the stray-stamp sweep read one spelling in two folders. Four mutants, dead; a real `npm run build` prints nothing. (Left as found: `tools/staleChunkProbe.mjs` builds now but scores 8/10 - its mount check predates the intro screen that now stands before the menu.)
+
+**2026-10-14 - AUDIT DEPS1 (the lean codebase audit).** Mac: *"Can we do a comprehensive codebase audit that wouldn't kill my usuage?"*, then *"I wanna take all of this head on and do this right"*. Tooling first, eyes on what it flagged: lint and types clean; the suite 27299/27631 with one failure (sd25_arena S7, an allocation measure that raced the compiler under the four shards - its own record, ALLOC1 in `09-Testing/Testing.md`); SQL bound in every statement (each `${...}` in a query is a constant fragment); no innerHTML sink fed by a peer; no secret in the tree; the workflows on scoped permissions with the one third-party action pinned by sha. The finding that shipped here: six advisories in the dev toolchain, five under Vite 5 (esbuild 0.21's dev server answering any page open beside it; Windows path tricks past `server.fs.deny`; nanoid, postcss and source-map-js beneath it) and brace-expansion (beneath eslint, through minimatch) - none in the deployed site, which is static. FIXED: Vite 5.4 -> 8.3 (Rolldown; the config unchanged, the same 20 pages and the same non-script assets built, the dev server and the gun lab's own build smoke-tested; Vite 6.4 or 7.3 would most likely have cleared the audit on Rollup - the move to Rolldown is the choice to take the bundler to its current line, not the audit's demand), `npm audit fix` for the rest, `npm audit` 0. AUDIT DEPS1's review (a Vite 5 and a Vite 8 build compared): every non-script asset byte-identical, every chunk ES2022 with no lookbehind, the build's peak memory 3.2 -> 2.1 GB; the pages' HTML is not the same text - Vite 8 minifies every inline `<style>` with Lightning CSS for `cssTarget`, which read es2022 as Safari 16.4 and would drop a prefix the game's Safari 15 floor needs, so `build.cssTarget` names that floor (`test/tree/csstarget.test.js`); Node 20.19 / 22.12 is Vite 8's floor (`engines`); and Rolldown runs modules in another order than Rollup did (four import cycles flipped, none reading the other's values at load - a play-through on real ARENA2 data is the check no build can make). `esbuild` is now a devDependency of its own at wrangler's 0.28.1: `test/server/accountdeploy.test.js` bundles the Workers as wrangler does and had been importing the copy Vite 5 happened to install. Left standing: PBKDF2 at 100,000 iterations (`server-account/src/password.js` - the Workers cap, recorded there), and the four hosts' size (`bootWorld` one function of 35,251 lines) - a refactor plan of its own.
 
 **2026-10-11 - AUDIT BR5.** Mac: *"Audit everything"* - PR #786, the rebrand to DFO Online. Four cold lanes and a live
 one on the frozen branch. Mac's four calls: the downloads keep their new names with copies under the old ones on every
@@ -58,19 +60,19 @@ Mutants: `questshelf.json` 58 (22 new), all dead; `guide1.json` and `time3.json`
 WITHDRAWN, MEDIUM-DISTINCT, WED-GATE, KVAR-HOLD, UNSTUCK-OUT, WATER-OFF, MERC-SLOPE. One review over the whole diff
 (nineteen findings), every one read against the tree, the tree untouched while it read (17l's rule). FIXED:
 - **A crash on the boot's load** - the landing's rock check asked `tvSeaY`, a const declared after the boot's
-  `await worldQuickLoad` (its dead zone): declared beside `state` now, pinned before the load (`test/unstuckout.test.js`).
+  `await worldQuickLoad` (its dead zone): declared beside `state` now, pinned before the load (`test/player/unstuckout.test.js`).
 - **MERC-SLOPE paid nothing** for a lot whose half is one gold - a gold at least where the half and Daggerfall's offer
-  both reach one, as MERC-RISE paid (`test/fb0929d_mercantile.test.js`); and P0.4's pins in `test/realm0.test.js`,
+  both reach one, as MERC-RISE paid (`test/systems/fb0929d_mercantile.test.js`); and P0.4's pins in `test/systems/realm0.test.js`,
   weakened to inequalities in the slope's own change, are the law exactly again.
 - **The moved-layout relay** read an unlinked dungeon offline on the settings' size, and every dungeon at every load:
   only a build that MOVED (`distinct`) is read now, and offline only one a link holds (`questRepair.js
   relayQuestMovedLayout`); a shared copy arriving is laid too (`questShare.js`); the size test is `portSize`, exported;
-  its pin builds on the producer's own moved build (`test/mediumdistinct.test.js`).
+  its pin builds on the producer's own moved build (`test/systems/quest/mediumdistinct.test.js`).
 - **KVAR-HOLD's re-seat** enumerated the new stronghold before its link stood there (the settings' size, then the
   quest's): fitted after the link moves (`Place.fitSiteToBuild`, machine.js `_reseatMovedOf`); drew near this client's
   player - every shared copy elsewhere: drawn among the nearest the Hold it leaves; left a `local dungeon` stuck:
   rescued as the remote one it is; a reveal that throws left the link behind: the reveal is best-effort
-  (`test/kvarhold.test.js`, 3).
+  (`test/systems/quest/kvarhold.test.js`, 3).
 - **`/unstuck` outdoors** moved a body at a helm, aboard, on a deck, mounted or mid-door, and said "no open ground" for
   every refusal: refused by `playerAfloat`, `isOnFoot` and `modes.transitioning`, each in its own words
   (`UNSTUCK_OUT_WORDS`); the ring search asks `heldInSolid`, the one probe law.
@@ -324,7 +326,7 @@ the ETA, the mod's fare scaling never billed on the enhanced skin (one
 pure export now, both skins), the info box's click reaching the button
 under it, the junction disc reading the mark off the wrong window, and
 the small ones (wheel modes, fonts, onload order, fade-from-current).
-Five departures recorded. `test/heldmap.test.js` +20 (67),
+Five departures recorded. `test/ui/heldmap.test.js` +20 (67),
 `tools/mutants/auditmap.json` 26 dead. `10-UI/Held-Map-Arc.md`,
 AUDIT-MAP.
 
@@ -384,7 +386,7 @@ unavailable)", "(the travel map art is unavailable)"). A door that
 declines in silence is indistinguishable from a press that never
 landed, which is precisely how this arrived: "it will fail to open".
 
-THE FIX IS ONE HOME, `ui/enhancedChunk.js`, and all seven doors go
+THE FIX IS ONE HOME, `ui/enhanced/enhancedChunk.js`, and all seven doors go
 through it: retry once (a transient fetch costs one round trip to rule
 out), then SPEAK in the door's own host element with inline style only
 - the error path must not depend on anything that could be the thing
@@ -414,7 +416,7 @@ layering the new build over the live one would leave stale tabs able to
 fetch the chunks they still believe in. The port cannot decide that
 from here.
 
-`test/menu1_enhanced_chunk.test.js` (9), driven against the one home
+`test/ui/enhanced/menu1_enhanced_chunk.test.js` (9), driven against the one home
 with an injected failing loader - no browser and no game data needed.
 Three mutants, three killed: close silently again, drop the retry, let
 one door fetch its own chunk.
@@ -451,7 +453,7 @@ the one line that carried no behaviour of its own to test.
 
 FOUND ON THE WAY, at the same seam: `crimeCommitted` had TWO
 representations. Every writer in the port sets the numeric `CRIMES` id
-except `systems/talk.js`'s pickpocket law, which wrote the STRING
+except `systems/talk/talk.js`'s pickpocket law, which wrote the STRING
 `'Pickpocketing'` - because `court.js` imports `talk.js`, so `talk.js`
 could reach neither the one setter nor the enum. `arrestFlow.crimeId()`
 had grown a `typeof c === 'string'` arm to translate it back;
@@ -463,11 +465,11 @@ it so no other caller moved, and both sides of the cycle can have it.
 Two existing pins had read the string back and so held the defect in
 place; both were re-aimed.
 
-WHY NOTHING CAUGHT EITHER. `test/cityguards.test.js` - the watch's own
+WHY NOTHING CAUGHT EITHER. `test/scenes/cityguards.test.js` - the watch's own
 suite - is ARENA2-gated end to end, so CI has never executed a line of
 the pool's behaviour. It does not need to be: the pool's records are
 its public `guards` array and the despawn arm runs long before anything
-wants art. `test/guard1_watch_despawn.test.js` (7) takes no ARENA2 and
+wants art. `test/systems/guard1_watch_despawn.test.js` (7) takes no ARENA2 and
 runs everywhere: the three clauses that were there, the fourth that was
 not (and that the term is the TRANSFORMATION, not the lycanthropy), the
 mortal's untouched path, the spawn chain still answering after a
@@ -485,8 +487,8 @@ is why a report like this cannot be answered from the text alone.
 
 
 **2026-08-25 - THE ENHANCED-MENU AUDIT (U49 and everything under it).**
-Mac's call the day the front door shipped. Scope: `ui/enhancedMenu.js`,
-`ui/enhancedStyle.js`, `systems/uiSkin.js`, the `main.js` routing and
+Mac's call the day the front door shipped. Scope: `ui/enhanced/enhancedMenu.js`,
+`ui/enhanced/enhancedStyle.js`, `systems/uiSkin.js`, the `main.js` routing and
 the two front doors, read adversarially against the port's own standing
 laws rather than against DFU - none of this HAS a DFU original, which
 is exactly why it needed reading. EIGHT findings, all fixed at root and
@@ -557,7 +559,7 @@ nothing; the classic path is byte-for-byte untouched; every control is
 a real `<button>` so tab focus and Enter work with the browser's own
 focus ring.
 
-**2026-08-23 - AUDIT 25, THE COMPLETENESS AUDIT.** `01-Overview/Audit-25.md`.
+**2026-08-23 - AUDIT 25, THE COMPLETENESS AUDIT.** `01-Overview/audits/Audit-25.md`.
 Mac asked what we need to complete the 1:1 port. AUDIT 23 and 24 were
 PARITY audits - they read `src/` against its C# originals and asked
 whether what shipped was right. This one inverts the denominator: a
@@ -580,7 +582,7 @@ that drops quest + conversation state, and four of the talk window's
 five pages. THE PATTERN WORTH NAMING: the port repeatedly translates a
 law correctly and never wires it - `systems/mysticism.js` carries the
 whole Mysticism school and only `silenceBlocksCast` has a production
-consumer; `test/mysticism.test.js:"ride along by construction".."const src = read(host);"` *asserts* the host does not call
+consumer; `test/scenes/mysticism.test.js:"ride along by construction".."const src = read(host);"` *asserts* the host does not call
 the rest. Exact counts where a surface was countable: quest actions 61
 of 82 (21 are `PendingTrigger` guards), the classic effect library 60
 of 82 keys landed (22 fall to `out.skipped++`), FormulaHelper ~80 of 97
@@ -830,7 +832,7 @@ their intent correct.
 17m proved a false "recorded in the Ledger" claim actively hid a live defect
 from the person checking whether it was known. This pass audited the bible
 AGAINST the code and fixed what was false, with the checks that keep it that
-way in test/audit18_bible_docs.test.js.
+way in test/bible/audit18_bible_docs.test.js.
 
 Present-tense lies, corrected: `06-Systems/Systems.md` and `10-UI/UI.md` both
 said "Not started" through S1-S22/E1-E3 and U1-U20b (37 and 19 live modules);
@@ -1152,7 +1154,7 @@ bonuses in the port, and they do in DFU too - the effects are applied
 at game start, after the entity setup that computes them. The 18
 BIOG files loaded at boot mirror the 18 CLASS files already loaded
 beside them, and only when chargen actually runs.
-Pins: test/audit17h.test.js, four tests, each mutation-proven.
+Pins: test/systems/audit17h.test.js, four tests, each mutation-proven.
 Probed + eyeballed: the reflex screen's text now sits in its parchment
 panel.
 
@@ -1209,7 +1211,7 @@ FLAGGED, not fixed: the class picker's scrollbar THUMB. The geometry
 is verbatim and simple (height = rail x displayed/total, min 10) but
 the thumb art is three texture slices this port has not identified,
 and inventing a colour would break the NATIVE-WINDOW RULE.
-Pins: test/audit17g.test.js, six tests, each mutation-proven.
+Pins: test/ui/audit17g.test.js, six tests, each mutation-proven.
 Probed: all seven exterior probes green; the keyboard confirm now
 opens the Khajiit description at 9 rows, live.
 
@@ -1253,7 +1255,7 @@ slot 19 by hand, so S3d's WORN starting clothes rode along and its
 count assertion was reading four where it meant three.
 (F5) ONE DFU MEMBER, ONE EXPORT, again. 17e F32 collapsed the armor
 material tables from equip.js and paperDoll.js and stopped one file
-short: characters/paperdollArt.js still held a third copy of the
+short: characters/paperdoll/paperdollArt.js still held a third copy of the
 SetVariant clamps and a SECOND export named `armorArchive` whose
 second argument was a RACE where the other's was a MORPHOLOGY - the
 same DFU member, same name, incompatible arguments. Collapsed onto the
@@ -1307,7 +1309,7 @@ list - retiring the port's S2 shape touches goldAmount, trade and
 loot, and is its own slice); a REMOTE list drawing its clothing on the
 PLAYER's morphology (shop stock carries no owner identity yet);
 quicksave living only in the dungeon host.
-Pins: test/audit17f.test.js, ten tests, each mutation-proven - a
+Pins: test/systems/audit17f.test.js, ten tests, each mutation-proven - a
 one-character change to the law it names turns it red.
 Probed + eyeballed: chargen -> the Khajiit female in real clothes,
 the bag reading Spellbook / Short Shirt / Casual Pants / Shortsword /
@@ -1837,7 +1839,7 @@ green, build clean, manifest math verified BOTH directions (doc rows
 == real files, doc total == real tests). Fixed at root: (1) the
 verbatim treasure DATA (archive 216, icon table, marker record 19,
 the 19-row dungeon-key table) lived in a SCENE file - moved to
-systems/loot.js, its DFU-shaped home; rdbLayout's 216 now imports the
+systems/loot/loot.js, its DFU-shaped home; rdbLayout's 216 now imports the
 single source (cycle-checked through the full suite). (2)
 dungeonContext double-sourced floorLanding + playerEntity (static
 imports AND the foeDeps dynamic pair) - dynamics dropped; an unused

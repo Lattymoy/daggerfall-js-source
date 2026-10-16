@@ -1,29 +1,29 @@
 [
   {
     "name": "AUDIT-BRANCH-IL1-horse-mode-forced",
-    "file": "src/systems/horseCart.js",
+    "file": "src/systems/horse/horseCart.js",
     "old": "      const hm = (entryMode === TRANSPORT.Cart && wagonState.HorseMode !== HORSE_MODE.None) ? HORSE_MODE.HitchedToWagon : wagonState.HorseMode;",
     "new": "      const hm = (entryMode === TRANSPORT.Cart && wagonState.HorseMode === HORSE_MODE.None) ? HORSE_MODE.None : HORSE_MODE.HitchedToWagon;",
     "tests": [
-      "test/audit_hcc_branch.test.js"
+      "test/scenes/audit_hcc_branch.test.js"
     ]
   },
   {
     "name": "AUDIT-BRANCH-IL2-old-ground-kept",
-    "file": "src/systems/horseCart.js",
+    "file": "src/systems/horse/horseCart.js",
     "old": "    if (wagonVisual) { wagonVisual.pose.active = false; wagonVisual.pose.hasLastValid = false; }",
     "new": "    if (wagonVisual) { wagonVisual.pose.active = false; }",
     "tests": [
-      "test/audit_hcc_branch.test.js"
+      "test/scenes/audit_hcc_branch.test.js"
     ]
   },
   {
     "name": "AUDIT-BRANCH-IL3-seed-forgets-wagon",
-    "file": "src/systems/horseCart.js",
+    "file": "src/systems/horse/horseCart.js",
     "old": "      seed = wagonActive() ? [...wagonPosition()] : null;",
     "new": "      seed = null;",
     "tests": [
-      "test/audit_hcc_branch.test.js"
+      "test/scenes/audit_hcc_branch.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    runtime?.lateUpdate(gameDt);",
     "new": "    runtime?.lateUpdate(dt);",
     "tests": [
-      "test/audit_hcc_branch.test.js"
+      "test/scenes/audit_hcc_branch.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "hcc.frame(dt, cam.pos, gamePaused() ? 0 : dt * worldTimeScale());",
     "new": "hcc.frame(dt, cam.pos, dt);",
     "tests": [
-      "test/audit_hcc_branch.test.js"
+      "test/scenes/audit_hcc_branch.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "      if (w) townTalk.showOverlay(w);\n      else hccRuntime.consumeWagonSelectionRequest();\n",
     "new": "      if (w) townTalk.showOverlay(w);\n",
     "tests": [
-      "test/audit_hcc_branch.test.js"
+      "test/scenes/audit_hcc_branch.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "      if (w) townTalk.showOverlay(w);\n      else hccRuntime.consumeWagonSelectionRequest();\n",
     "new": "      if (w) townTalk.showOverlay(w);\n",
     "tests": [
-      "test/audit_hcc_branch.test.js"
+      "test/scenes/audit_hcc_branch.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "try { if (hccPostDue) hccRuntimeOn()?.handlePostFastTravel(); }",
     "new": "try { void hccPostDue; }",
     "tests": [
-      "test/audit_hcc_branch.test.js"
+      "test/scenes/audit_hcc_branch.test.js"
     ]
   }
 ]

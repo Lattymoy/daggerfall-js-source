@@ -5,7 +5,7 @@
     "old": "if (sharedClockOn()) { if (tickInFlight()) { advanceOwnMinutes(minutes); _raiseWaiting = true; return null; } return this.tick(0, undefined, 0, minutes); }",
     "new": "if (sharedClockOn()) { if (tickInFlight()) { advanceOwnMinutes(minutes); _raiseWaiting = true; return null; } return this.tick(0, undefined, 0); }",
     "tests": [
-      "test/restrounds.test.js"
+      "test/systems/restrounds.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  const rounds = runMagicRoundsFor(entity, magicRoundWindow.from, magicRoundWindow.to, { sinks, rolls, say, skyMinutes: _sharedClock ? skyMinutes() : null });",
     "new": "  const rounds = runMagicRoundsFor(entity, magicRoundWindow.from, raiseMinutes > 0 ? magicRoundWindow.from : magicRoundWindow.to, { sinks, rolls, say, skyMinutes: _sharedClock ? skyMinutes() : null });",
     "tests": [
-      "test/restrounds.test.js"
+      "test/systems/restrounds.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    for (const fn of subscribers) fn(r.magicRoundWindow.from, r.magicRoundWindow.to, dt);\n",
     "new": "",
     "tests": [
-      "test/restrounds.test.js"
+      "test/systems/restrounds.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    advanceMinutes: (n) => { playerTicker.advance(n); runEncounterTick(walkMode && playerSpawned ? player.pos : cam.pos, true); },   // CAMP1-REST",
     "new": "    advanceMinutes: (n) => { runEncounterTick(walkMode && playerSpawned ? player.pos : cam.pos, true); },   // CAMP1-REST",
     "tests": [
-      "test/restrounds.test.js"
+      "test/systems/restrounds.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    advanceMinutes: (n) => { playerTicker.advance(n); runEncounterTick(walkMode && playerSpawned ? player.pos : cam.pos, true, { spawns: false }); },",
     "new": "    advanceMinutes: (n) => { runEncounterTick(walkMode && playerSpawned ? player.pos : cam.pos, true, { spawns: false }); },",
     "tests": [
-      "test/restrounds.test.js"
+      "test/systems/restrounds.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "    advanceMinutes: (n) => { interiorTicker.advance(n); host.encounterTick?.(); },   // LIVED1",
     "new": "    advanceMinutes: (n) => { host.encounterTick?.(); },   // LIVED1",
     "tests": [
-      "test/restrounds.test.js"
+      "test/systems/restrounds.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "  if (survival && nowMinutes > lastMinutes) {",
     "new": "  if (survival && nowMinutes > lastMinutes && !(raiseMinutes > 0)) {",
     "tests": [
-      "test/restrounds.test.js"
+      "test/systems/restrounds.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "    felt = runSurvivalMinutes(entity, lastMinutes, nowMinutes, survival.env ?? {},",
     "new": "    felt = runSurvivalMinutes(entity, _sharedClock ? Math.floor(worldFrom) : lastMinutes, _sharedClock ? Math.floor(worldTo) : nowMinutes, survival.env ?? {},",
     "tests": [
-      "test/restrounds.test.js"
+      "test/systems/restrounds.test.js"
     ]
   }
 ]

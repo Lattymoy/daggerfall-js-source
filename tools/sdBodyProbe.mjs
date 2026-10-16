@@ -1,10 +1,10 @@
 // SD17 - THE BODY MOVED, DRAWN IN A REAL BROWSER (the motes' and the sparks' probes' method, tools/sdFxProbe.mjs; on
 // Vite's own server - the scene's graph reaches `import.meta.glob`).
 //
-// node holds the rig's law (test/sd17_body.test.js - the states, the joints kept, every blow moved); what node cannot
+// node holds the rig's law (test/scenes/superDungeon/sd17_body.test.js - the states, the joints kept, every blow moved); what node cannot
 // answer is what the body LOOKS like in each pose, and whether the beam's pass compiles, links and lights the frame. So:
-// the Remnant's own seven parts (world/sdRemnantModel.js buildRemnantParts) stood by the rig's own matrices
-// (scenes/sdRemnantRig.js) in a plain lit pass, one pose a tile - and the Hour-Hand's beam (render/sdBeam.js) out of its
+// the Remnant's own seven parts (world/superDungeon/sdRemnantModel.js buildRemnantParts) stood by the rig's own matrices
+// (scenes/superDungeon/sdRemnantRig.js) in a plain lit pass, one pose a tile - and the Hour-Hand's beam (render/superDungeon/sdBeam.js) out of its
 // hand mid-sweep. Each pose must draw its body and differ from its rest; the beam must light the frame along its line.
 // SD_BODY_SHOT=<file.png> writes the tiles.
 //
@@ -23,11 +23,11 @@ const ROWS = Math.ceil(POSES.length / COLS);
 const PAGE_NAME = 'sdbody-probe.tmp.html', PAGE_PATH = join(ROOT, 'tools', PAGE_NAME);
 
 const PAGE = `<!doctype html><html><body style="margin:0;background:#000"><canvas id=c width=${TW * COLS} height=${TH * ROWS}></canvas><script type=module>
-import { buildRemnantParts, SD_REMNANT_PARTS } from '/src/world/sdRemnantModel.js';
-import { remnantRig, rigMatrices, arenaBase, sdBeamDraws, gearFlightOf, SD_WAKE_MS, SD_SLIP_EVERY_MS } from '/src/scenes/sdRemnantRig.js';
-import { SdBeamRenderer } from '/src/render/sdBeam.js';
-import { SD_BLOWS, SD_BODY } from '/src/net/sdRemnant.js';
-import { SD_ARENA, realmToDungeon } from '/src/net/sdBrain.js';
+import { buildRemnantParts, SD_REMNANT_PARTS } from '/src/world/superDungeon/sdRemnantModel.js';
+import { remnantRig, rigMatrices, arenaBase, sdBeamDraws, gearFlightOf, SD_WAKE_MS, SD_SLIP_EVERY_MS } from '/src/scenes/superDungeon/sdRemnantRig.js';
+import { SdBeamRenderer } from '/src/render/superDungeon/sdBeam.js';
+import { SD_BLOWS, SD_BODY } from '/src/net/superDungeon/sdRemnant.js';
+import { SD_ARENA, realmToDungeon } from '/src/net/superDungeon/sdBrain.js';
 const gl = document.getElementById('c').getContext('webgl2', { alpha: false, preserveDrawingBuffer: true, antialias: true });
 const VS = \`#version 300 es
 layout(location=0) in vec3 aP; layout(location=1) in vec3 aN;

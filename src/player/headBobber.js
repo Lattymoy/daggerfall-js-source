@@ -20,7 +20,7 @@
 // and the bobber Rotates on top, so the nod does not accumulate; the
 // port removes last frame's nod before adding this frame's.
 
-import { getBool } from '../systems/settings.js';
+import { getBool } from '../systems/settings/settings.js';
 import { WALK_STEP_INTERVAL } from '../systems/footsteps.js';
 
 /** bobSpeed = WalkStepInterval / 2 (:41). */

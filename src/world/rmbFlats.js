@@ -41,7 +41,7 @@ import { flatFieldFor, sowField } from './flatFields.js';   // WD3: a scene mode
 import { PROPS_OFFSET_Y } from './rmbLayout.js';   // FIELD BUGS 2026-10-04d CROPS: a field's batch stands where its misc model does
 
 /** RMBLayout's blockFlatsOffsetY: a block's flats stand this far (native units) below their records - and their lights
- *  do not (AddLight hangs at the record's -YPos plus the picture's height - world/cityLights.js). AUDIT YARD-LIGHT: so a
+ *  do not (AddLight hangs at the record's -YPos plus the picture's height - world/city/cityLights.js). AUDIT YARD-LIGHT: so a
  *  yard's lamp hangs the town's distance above its picture (scenes/homeYards.js yardLampOf). */
 export const BLOCK_FLATS_OFFSET_Y = -6;
 const NATURE_FLATS_OFFSET_Y = -2;

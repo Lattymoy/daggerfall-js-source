@@ -5,7 +5,7 @@
     "old": "    const step = fm.update(f, { grounded: true,",
     "new": "    const step = fm.update([shown.x, shown.y, shown.z], { grounded: true,",
     "tests": [
-      "test/peerstride.test.js"
+      "test/net/peerstride.test.js"
     ]
   },
   {
@@ -14,8 +14,8 @@
     "old": "    for (const fm of this._footsteps.values()) fm.rebase();",
     "new": "    for (const fm of this._footsteps.values()) void fm;",
     "tests": [
-      "test/peerstride.test.js",
-      "test/auditdrops.test.js"
+      "test/net/peerstride.test.js",
+      "test/systems/quest/auditdrops.test.js"
     ]
   },
   {
@@ -24,7 +24,7 @@
     "old": "      remotePlayers?.rebaseFootsteps?.();   // PEER-BUZZ",
     "new": "      // remotePlayers?.rebaseFootsteps?.();   // PEER-BUZZ",
     "tests": [
-      "test/peerstride.test.js"
+      "test/net/peerstride.test.js"
     ]
   }
 ]

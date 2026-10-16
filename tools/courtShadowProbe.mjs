@@ -6,26 +6,26 @@
 // shadow maps are drawn INSIDE beginFrame (renderer.js _renderPasses, render/shadowPass.js), from the last frame's records
 // under this frame's lights, so what the boss's own lights and the crowd cost there never entered its numbers. This
 // counts it: the real Renderer and ShadowPass on a counting GL (counts, not milliseconds - no load moves them), the
-// Burning Court's own mesh as its static caster (world/gateArena.js buildCourtModel, through renderer.createMesh), the
-// court's own light composition (world/gateArena.js withCourtLights over courtLightsNear - the dungeon arm's, worldModes.js
+// Burning Court's own mesh as its static caster (world/gate/gateArena.js buildCourtModel, through renderer.createMesh), the
+// court's own light composition (world/gate/gateArena.js withCourtLights over courtLightsNear - the dungeon arm's, worldModes.js
 // `const _court = withCourtLights`), under everyLightCasts as that arm asks, Steady shadows (the default). His glow at his
-// chest (world/gateBoss.js GLOW_RANGE) in ONE kept record as the court keeps it (scenes/gateCourt.js `_glow`), a
-// Hellfire's landing flashes (render/gateFx.js FX_KINDS.hellfire.light, for FX_LIGHT_MS) each its burst's record, and the
+// chest (world/gate/gateBoss.js GLOW_RANGE) in ONE kept record as the court keeps it (scenes/gate/gateCourt.js `_glow`), a
+// Hellfire's landing flashes (render/gate/gateFx.js FX_KINDS.hellfire.light, for FX_LIGHT_MS) each its burst's record, and the
 // crowd's Morrowind bodies recorded as renderer.recordShadowBody records them, a new pose every frame (WB9h's budget
 // poses four of eight a frame, so the bodies in a light's reach change every frame either way), of BODY_CORNERS corners
 // (the committed horse's, the AOE-PERF crowd's stand-in).
 //
 // Two arms: `before` - the pass with LIGHT-ID's two laws off (render/shadowPass.js SHADOW_TUNING `moverDirect` and
 // `loUnread` false, the pins' oracles: a light that moved through its static cache, and a lo map for every light that may
-// cast) - and `now`. test/lightid.test.js pins the counts (`courtShadowCounts`).
+// cast) - and `now`. test/render/lightid.test.js pins the counts (`courtShadowCounts`).
 //
 // Usage: node tools/courtShadowProbe.mjs [bodies=8]
 import { Renderer, WORLD_FRAME } from '../src/render/renderer.js';
 import { EL_LANE } from '../src/render/enhancedLighting.js';
 import { SHADOW_TUNING } from '../src/render/shadowPass.js';
-import { courtLightsNear, withCourtLights, courtToDungeon, buildCourtModel } from '../src/world/gateArena.js';
-import { GLOW_RANGE, LANDING_LIGHT_Y } from '../src/world/gateBoss.js';
-import { FX_KINDS, FX_LIGHT_MS } from '../src/render/gateFx.js';
+import { courtLightsNear, withCourtLights, courtToDungeon, buildCourtModel } from '../src/world/gate/gateArena.js';
+import { GLOW_RANGE, LANDING_LIGHT_Y } from '../src/world/gate/gateBoss.js';
+import { FX_KINDS, FX_LIGHT_MS } from '../src/render/gate/gateFx.js';
 import { lookAt, perspective, mirrorProjectionX } from '../src/world/mat4.js';
 import { isMain } from './lib/isMain.mjs';
 
@@ -90,7 +90,7 @@ export function courtShadowCounts(name, arm = 'now', { bodies: nBodies = 8, fram
     const proj = mirrorProjectionX(perspective((60 * Math.PI) / 180, 16 / 9, 0.05, 500));
     const bodies = Array.from({ length: nBodies }, (_, i) => ({ vao: { id: `body${i}` }, count: BODY_CORNERS, ranges: [{ first: 0, count: BODY_CORNERS }], _poseGen: 0 }));
     const model = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
-    // his glow, one kept record (scenes/gateCourt.js `_glow`); each flash its burst's (`b.light`)
+    // his glow, one kept record (scenes/gate/gateCourt.js `_glow`); each flash its burst's (`b.light`)
     const glow = { x: 0, y: 0, z: 0, range: 0, color: [1.2, 0.5, 0.15] };
     const flashes = FLASH_MARKS.map(([x, z]) => { const p = courtToDungeon(x, LANDING_LIGHT_Y, z); return { x: p[0], y: p[1], z: p[2], range: FX_KINDS.hellfire.light[1], color: [1.2, 0.6, 0.2] }; });
     const rows = [];

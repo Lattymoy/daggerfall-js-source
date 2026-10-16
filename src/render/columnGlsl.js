@@ -14,7 +14,7 @@
 // A leaf over one leaf, so the classic page's graph grows by these two.
 // The caller declares uCamPos, uFogColor and FOG_GLSL first.
 
-import { SURFACE_TEXTURE_TILING } from '../world/deepWaterLook.js';
+import { SURFACE_TEXTURE_TILING } from '../world/deepWater/deepWaterLook.js';
 
 // what the top covers, carried toward the top's colour by min(behind /
 // vision, 1); the top's colour is the one the top draws at the ray's entry,

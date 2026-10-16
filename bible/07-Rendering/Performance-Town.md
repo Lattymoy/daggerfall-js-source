@@ -121,7 +121,7 @@ of lines below. Handing the pool function over directly reads it in its
 dead zone and throws *"Cannot access 'enchantFoes' before
 initialization"* the moment the scene runs — the exterior would not
 have booted at all. Lint passed. The vite build passed. The whole suite
-passed. `test/tdz.test.js` is the one thing that caught it, which is
+passed. `test/tree/tdz.test.js` is the one thing that caught it, which is
 exactly what it was written for. Both hosts wrap their pool in a thunk
 now, and a mutant holds the shape.
 
@@ -147,7 +147,7 @@ and 3rd sounds which are null."*
 
 **The sound hypothesis was read first and does not hold here.** The
 watch's row is DFU's own - move 243, bark 456, attack 245 - and the port
-plays them through `characters/enemySounds.js` (EnemySounds.cs whole:
+plays them through `characters/enemy/enemySounds.js` (EnemySounds.cs whole:
 the 3-9 s attract cadence, the city watch the one class enemy the human
 mute spares). A clip whose DAGGER.SND record is missing or empty costs
 one lookup: `audio.js`'s `_buffer` caches the null and every later ask
@@ -207,7 +207,7 @@ Seven to eight times less, and the same cut reaches everything the
 collider moves - the player's own capsule, every exterior foe, every
 peer body online, the dungeon's foes over their one big bucket less so.
 
-**Pinned** in `test/perfcol1.test.js` (6) as a DIFFERENTIAL AGAINST THE
+**Pinned** in `test/player/perfcol1.test.js` (6) as a DIFFERENTIAL AGAINST THE
 OLD WALK ITSELF: a twin collider with the same triangles in the same
 buckets in the same order and every bucket's bounds widened to infinity
 - its broad phase passes everything, which IS the old walk - must answer
@@ -297,7 +297,7 @@ identical across all three builds. With no door buckets the same bench is 6.2
 ms on main and 2.4 with this - the sphere walks' stamp and Y reject; the
 filing takes the other 7.7 ms the doors cost.
 
-Pinned: test/fb0930_frame.test.js - 1,200 probes of every query against the
+Pinned: test/player/fb0930_frame.test.js - 1,200 probes of every query against the
 same collider with every box widened past the grid (the old walk), the work
 (27 x 63 bucket asks for one probe before, at most 27 x 12 after), the tie
 order for a filed and an unfiled bucket both ways and after a re-registration,

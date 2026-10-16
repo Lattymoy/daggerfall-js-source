@@ -5,7 +5,7 @@
     "old": "material, rid || ':stock' FROM prof_stock WHERE player = ?1 AND rid = ?3 AND n = ?4",
     "new": "material, rid FROM prof_stock WHERE player = ?1 AND rid = ?3 AND n = ?4",
     "tests": [
-      "test/audit30_service.test.js"
+      "test/net/audit30_service.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "rid || ':filltax'",
     "new": "rid || ':tax'",
     "tests": [
-      "test/audit30_service.test.js"
+      "test/net/audit30_service.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "        AND NOT EXISTS (SELECT 1 FROM marks_ledger WHERE actor = ?1 AND rid IN (?2 || ':sale', ?2 || ':tax', ?2 || ':tithe'))   -- AUDIT 30 S3; MARKET-AUDIT S1: a sale paying its seller nothing spends its id by its tax's or Tithe's line\n",
     "new": "",
     "tests": [
-      "test/audit30_service.test.js"
+      "test/net/audit30_service.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "\n        AND NOT EXISTS (SELECT 1 FROM marks_ledger WHERE actor = ?1 AND rid = ?11 || ':escrow')`)",
     "new": "`)",
     "tests": [
-      "test/audit30_service.test.js"
+      "test/net/audit30_service.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "\n        AND NOT EXISTS (SELECT 1 FROM marks_ledger WHERE actor = ?1 AND rid = ?14 || ':fee')`)",
     "new": "`)",
     "tests": [
-      "test/audit30_service.test.js"
+      "test/net/audit30_service.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "    db.prepare(`INSERT INTO marks_ledger (src_kind, src_id, dst_kind, dst_id, kind, amount, day, at, actor, who, rid)\n      SELECT 'account', ?1, 'burn', NULL, 'respec'",
     "new": "    db.prepare(`INSERT OR IGNORE INTO marks_ledger (src_kind, src_id, dst_kind, dst_id, kind, amount, day, at, actor, who, rid)\n      SELECT 'account', ?1, 'burn', NULL, 'respec'",
     "tests": [
-      "test/audit30_service.test.js"
+      "test/net/audit30_service.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "const tax = saleTaxOn(before, total), tithe",
     "new": "const tax = saleTax(total), tithe",
     "tests": [
-      "test/audit30_service.test.js"
+      "test/net/audit30_service.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "            AND NOT EXISTS (SELECT 1 FROM market_deliveries WHERE provenance = ?7 AND collected = 0)\n",
     "new": "",
     "tests": [
-      "test/audit30_service.test.js"
+      "test/net/audit30_service.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "\n      AND EXISTS (SELECT 1 FROM products WHERE provenance = market_deliveries.provenance AND owner = ?2)`)",
     "new": "`)",
     "tests": [
-      "test/audit30_service.test.js"
+      "test/net/audit30_service.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "\n            AND NOT EXISTS (SELECT 1 FROM home_decor WHERE json_extract(item, '$.pv') = ?7)))",
     "new": "))",
     "tests": [
-      "test/audit30_service.test.js"
+      "test/net/audit30_service.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "&& Number(row.listed) === 0 && !elsewhere;",
     "new": "&& Number(row.listed) === 0;",
     "tests": [
-      "test/audit30_service.test.js"
+      "test/net/audit30_service.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "    if (made && !pieceListable(made.recipe)) return { error: 'market-not-listable' };\n",
     "new": "",
     "tests": [
-      "test/audit30_service.test.js"
+      "test/net/audit30_service.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "      AND (kind IN ('piece', 'item') OR COALESCE((SELECT SUM(qty) FROM prof_stores WHERE player = market_listings.seller AND char_id = market_listings.char_id\n        AND material = market_listings.material), 0) + own + bought <= ?2)\n    ORDER BY closed_at",
     "new": "\n    ORDER BY closed_at",
     "tests": [
-      "test/audit30_service.test.js"
+      "test/net/audit30_service.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "    provenance = null; wear = null;   // AUDIT 30 S9",
     "new": "    // AUDIT 30 S9",
     "tests": [
-      "test/audit30_service.test.js"
+      "test/net/audit30_service.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "  if (UNYIELDED.includes(key)) return { error: 'market-unyielded' };",
     "new": "  if (false) return { error: 'market-unyielded' };",
     "tests": [
-      "test/audit30_service.test.js"
+      "test/net/audit30_service.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "  if (units * price > MARKET_WORTH_MAX) return { error: 'bad-price' };",
     "new": "  if (false) return { error: 'bad-price' };",
     "tests": [
-      "test/audit30_service.test.js"
+      "test/net/audit30_service.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "      : Array.isArray(materials) ? materials.filter",
     "new": "      : false ? materials.filter",
     "tests": [
-      "test/audit30_service.test.js"
+      "test/net/audit30_service.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "'sold', kind, material, provenance, units, price, MAX(0, total - tax - tithe - fee), at",
     "new": "'sold', kind, material, provenance, units, price, total, at",
     "tests": [
-      "test/audit30_service.test.js"
+      "test/net/audit30_service.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "a: marked === 1 && maker !== null, u, f: hand, v: MINT_VERSION }",
     "new": "a: false, u, f: hand, v: MINT_VERSION }",
     "tests": [
-      "test/audit30_service.test.js"
+      "test/net/audit30_service.test.js"
     ],
     "note": "PROF9 (RE-AIMED by content): the fire's code beside it."
   },
@@ -177,7 +177,7 @@
     "old": "/^(p1|p2):(0|[1-9]\\d{0,2})$/",
     "new": "/^(p1|p2):(\\d{1,3})$/",
     "tests": [
-      "test/audit30_laws.test.js"
+      "test/net/audit30_laws.test.js"
     ]
   },
   {
@@ -186,7 +186,7 @@
     "old": ".filter((ch) => !/^[\\ud800-\\udfff]$/.test(ch)).join('').trim();",
     "new": ".join('').trim();",
     "tests": [
-      "test/audit30_laws.test.js"
+      "test/net/audit30_laws.test.js"
     ]
   },
   {
@@ -195,7 +195,7 @@
     "old": "  if (/[\\ud800-\\udbff]$/.test(n)) n = n.slice(0, -1);\n",
     "new": "",
     "tests": [
-      "test/audit30_laws.test.js"
+      "test/net/audit30_laws.test.js"
     ]
   },
   {
@@ -204,7 +204,7 @@
     "old": "  if (rec.length > PRODUCT_RECORD_MAX) throw new RangeError",
     "new": "  if (false) throw new RangeError",
     "tests": [
-      "test/audit30_laws.test.js"
+      "test/net/audit30_laws.test.js"
     ]
   },
   {
@@ -213,7 +213,7 @@
     "old": "c.m === null || !(c.q === MASTERWORK || r.family === 'furniture')",
     "new": "c.m === null",
     "tests": [
-      "test/audit30_laws.test.js"
+      "test/net/audit30_laws.test.js"
     ]
   },
   {
@@ -222,7 +222,7 @@
     "old": "Math.min(99, Math.round(wear / 10))",
     "new": "Math.round(wear / 10)",
     "tests": [
-      "test/audit30_laws.test.js"
+      "test/net/audit30_laws.test.js"
     ]
   },
   {
@@ -231,8 +231,8 @@
     "old": "export const saleTaxOn = (before, total) => saleTax(before + total) - saleTax(before);",
     "new": "export const saleTaxOn = (before, total) => saleTax(total);",
     "tests": [
-      "test/audit30_laws.test.js",
-      "test/audit30_service.test.js"
+      "test/net/audit30_laws.test.js",
+      "test/net/audit30_service.test.js"
     ]
   },
   {
@@ -241,7 +241,7 @@
     "old": ".filter((k) => !UNYIELDED.includes(k)).map((k) => material(k))",
     "new": ".map((k) => material(k))",
     "tests": [
-      "test/audit30_laws.test.js"
+      "test/net/audit30_laws.test.js"
     ]
   },
   {
@@ -250,8 +250,8 @@
     "old": "export const pieceListable = (recipeId) => CRAFTED_FAMILIES.some(([f]) => f === recipeById(recipeId)?.family);",
     "new": "export const pieceListable = (recipeId) => !!recipeById(recipeId);",
     "tests": [
-      "test/audit30_laws.test.js",
-      "test/audit30_service.test.js"
+      "test/net/audit30_laws.test.js",
+      "test/net/audit30_service.test.js"
     ]
   },
   {
@@ -260,7 +260,7 @@
     "old": "  if (item.rarity !== 'rare') return e.length === 0;",
     "new": "  if (item.rarity !== 'rare') return true;",
     "tests": [
-      "test/audit30_laws.test.js"
+      "test/net/audit30_laws.test.js"
     ]
   },
   {
@@ -269,7 +269,7 @@
     "old": "        if (st.t0 == null) st.t0 = t;\n",
     "new": "",
     "tests": [
-      "test/audit30_laws.test.js"
+      "test/net/audit30_laws.test.js"
     ]
   },
   {
@@ -278,7 +278,7 @@
     "old": "const n = Math.max(1, Math.ceil((x1 - x0) / PLANE_ACT.step - 1e-9));",
     "new": "const n = 1;",
     "tests": [
-      "test/audit30_laws.test.js"
+      "test/net/audit30_laws.test.js"
     ]
   },
   {
@@ -287,7 +287,7 @@
     "old": "const kept = (r) => RETRY.includes(r?.error) || WAIT.includes(r?.error);",
     "new": "const kept = (r) => RETRY.includes(r?.error);",
     "tests": [
-      "test/audit30_client.test.js"
+      "test/net/audit30_client.test.js"
     ]
   },
   {
@@ -296,7 +296,7 @@
     "old": "const RETRY = Object.freeze(['offline', 'server', 'rate']);",
     "new": "const RETRY = Object.freeze(['offline', 'server']);",
     "tests": [
-      "test/audit30_client.test.js"
+      "test/net/audit30_client.test.js"
     ]
   },
   {
@@ -305,7 +305,7 @@
     "old": "try { drop?.(l.item, l.where); } catch (e) { console.warn('[market] drop', e); } settled++;",
     "new": "settled++;",
     "tests": [
-      "test/audit30_client.test.js"
+      "test/net/audit30_client.test.js"
     ]
   },
   {
@@ -314,7 +314,7 @@
     "old": "    if (_busy) return _busyKey === key ? _busy : Promise.resolve({ ok: false, error: 'market-busy' });",
     "new": "    if (_busy) return _busy;",
     "tests": [
-      "test/audit30_client.test.js"
+      "test/net/audit30_client.test.js"
     ]
   },
   {
@@ -323,7 +323,7 @@
     "old": "      if (g !== gen) return null;\n",
     "new": "",
     "tests": [
-      "test/audit30_client.test.js"
+      "test/net/audit30_client.test.js"
     ]
   },
   {
@@ -332,7 +332,7 @@
     "old": "if (st && typeof st.material === 'string') { try { stores?.apply?.(st); }",
     "new": "if (false) { try { stores?.apply?.(st); }",
     "tests": [
-      "test/audit30_client.test.js"
+      "test/net/audit30_client.test.js"
     ]
   },
   {
@@ -341,7 +341,7 @@
     "old": "    if (MOVED.includes(r?.error)) forget();\n",
     "new": "",
     "tests": [
-      "test/audit30_client.test.js"
+      "test/net/audit30_client.test.js"
     ]
   },
   {
@@ -350,7 +350,7 @@
     "old": "now() - _shut >= MARKET_CLOSED_RECHECK_MS ? null : this._open",
     "new": "false ? null : this._open",
     "tests": [
-      "test/audit30_client.test.js"
+      "test/net/audit30_client.test.js"
     ]
   },
   {
@@ -359,7 +359,7 @@
     "old": "if (!ui.alive() || mine !== seq) return;",
     "new": "if (!ui.alive()) return;",
     "tests": [
-      "test/audit30_client.test.js"
+      "test/net/audit30_client.test.js"
     ]
   },
   {
@@ -368,7 +368,7 @@
     "old": " ...(found ? { materials: found } : {}),",
     "new": "",
     "tests": [
-      "test/audit30_client.test.js"
+      "test/net/audit30_client.test.js"
     ]
   },
   {
@@ -377,7 +377,7 @@
     "old": "      n.oninput = () => { st.qty = intOf(n.value, 1, row.units); refresh(); };",
     "new": "      n.oninput = () => { st.qty = intOf(n.value, 1, row.units); ui.rerender(); };",
     "tests": [
-      "test/audit30_client.test.js"
+      "test/net/audit30_client.test.js"
     ]
   },
   {
@@ -386,7 +386,7 @@
     "old": "    redraw();\n    collectArrived();\n",
     "new": "    redraw();\n",
     "tests": [
-      "test/audit30_client.test.js"
+      "test/net/audit30_client.test.js"
     ]
   },
   {
@@ -395,7 +395,7 @@
     "old": "b.disabled = ui.busy() || full || !can() || (!gold && short(fee));",
     "new": "b.disabled = ui.busy() || !can();",
     "tests": [
-      "test/audit30_client.test.js"
+      "test/net/audit30_client.test.js"
     ]
   },
   {
@@ -404,7 +404,7 @@
     "old": "b.disabled = ui.busy() || short(w.marks * count());",
     "new": "b.disabled = ui.busy();",
     "tests": [
-      "test/audit30_client.test.js"
+      "test/net/audit30_client.test.js"
     ]
   },
   {
@@ -413,7 +413,7 @@
     "old": ".sort((a, b) => landed(a) - landed(b) || a.price - b.price);\n      const list = el('div', 'market-rows');\n      if (rows.length) list.append(st.view === 'materials'",
     "new": ".sort((a, b) => a.price - b.price);\n      const list = el('div', 'market-rows');\n      if (rows.length) list.append(st.view === 'materials'",
     "tests": [
-      "test/audit30_client.test.js"
+      "test/net/audit30_client.test.js"
     ]
   },
   {
@@ -422,70 +422,70 @@
     "old": "      for (const o of orders) ul.append(orderRow(o));\n      if (st.data && !orders.length)",
     "new": "      for (const o of orders.filter((x) => !x.mine)) ul.append(orderRow(o));\n      if (st.data && !orders.length)",
     "tests": [
-      "test/audit30_client.test.js"
+      "test/net/audit30_client.test.js"
     ]
   },
   {
     "name": "AUDIT30-U13-the-purse-unasked",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "  if (have >= station.fee) return null;\n  const a = { fee: station.fee, have };",
     "new": "  return null;\n  const a = { fee: station.fee, have };",
     "tests": [
-      "test/audit30_client.test.js"
+      "test/net/audit30_client.test.js"
     ]
   },
   {
     "name": "AUDIT30-U20-every-row-busy",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "state.busy && _workingOn === r.id ? busyVerb : verb",
     "new": "state.busy ? busyVerb : verb",
     "tests": [
-      "test/audit30_client.test.js"
+      "test/net/audit30_client.test.js"
     ]
   },
   {
     "name": "AUDIT30-A2-a-hover-planes",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "    if (!((e.buttons ?? 1) & 1)) { act.release(); rerender(); return; }\n",
     "new": "",
     "tests": [
-      "test/audit30_client.test.js"
+      "test/net/audit30_client.test.js"
     ]
   },
   {
     "name": "AUDIT30-A2-a-lost-drag-kept",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "  if (act.state.planing) act.release();\n",
     "new": "",
     "tests": [
-      "test/audit30_client.test.js"
+      "test/net/audit30_client.test.js"
     ]
   },
   {
     "name": "AUDIT30-A3-the-bench-s-rows-open-mid-pass",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "word: (x, s) => (x.later ? LATER_WORDS.SEAT2 : s.open ? makeWord(s.can, s.raw) : rankWord(x.rank)), locked: planing });",
     "new": "word: (x, s) => (x.later ? LATER_WORDS.SEAT2 : s.open ? makeWord(s.can, s.raw) : rankWord(x.rank)), locked: false });",
     "tests": [
-      "test/audit30_client.test.js"
+      "test/net/audit30_client.test.js"
     ]
   },
   {
     "name": "AUDIT30-A3-the-quick-craft-s-heartwood-dropped",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "    const finish = craftOf(r.id, _bench.heartwood && takesHeartwood(r));",
     "new": "    const finish = craftOf(r.id, false);",
     "tests": [
-      "test/audit30_client.test.js"
+      "test/net/audit30_client.test.js"
     ]
   },
   {
     "name": "AUDIT30-A9-a-field-s-space-struck",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "  if (isTextEntryTarget(e.target) || (isDomControlTarget(e.target) && e.target !== ownButton)) return;   // AUDIT 30 A9",
     "new": "  // AUDIT 30 A9",
     "tests": [
-      "test/audit30_client.test.js"
+      "test/net/audit30_client.test.js"
     ]
   },
   {
@@ -494,16 +494,16 @@
     "old": "      try { mint(r.data, w); }",
     "new": "      try { mint(r.data); }",
     "tests": [
-      "test/audit30_client.test.js"
+      "test/net/audit30_client.test.js"
     ]
   },
   {
     "name": "AUDIT30-C7-any-mark-a-name",
-    "file": "src/systems/itemInfo.js",
+    "file": "src/systems/item/itemInfo.js",
     "old": "item.maker && makerMark(item.maker) === item.maker\n    && typeof item.provenance === 'string' && PROVENANCE_RE.test(item.provenance))",
     "new": "item.maker && typeof item.provenance === 'string')",
     "tests": [
-      "test/audit30_client.test.js"
+      "test/net/audit30_client.test.js"
     ]
   },
   {
@@ -512,7 +512,7 @@
     "old": "text: `${named ? long : `The ${long}`} is mended:",
     "new": "text: `The ${long} is mended:",
     "tests": [
-      "test/audit30_client.test.js"
+      "test/net/audit30_client.test.js"
     ]
   },
   {
@@ -521,7 +521,7 @@
     "old": "${chopsFor(node.tier, lumberjack)} chops",
     "new": "${chopsFor(node.tier)} chops",
     "tests": [
-      "test/audit30_host.test.js"
+      "test/net/audit30_host.test.js"
     ]
   },
   {
@@ -530,7 +530,7 @@
     "old": "    if (!info) { bare(); return; }",
     "new": "    if (!info) return;",
     "tests": [
-      "test/audit30_host.test.js"
+      "test/net/audit30_host.test.js"
     ]
   },
   {
@@ -539,7 +539,7 @@
     "old": "if (!t || LOGS_RECORD >= t.recordCount || torn.has(entry)) return;",
     "new": "if (!t || LOGS_RECORD >= t.recordCount) return;",
     "tests": [
-      "test/audit30_host.test.js"
+      "test/net/audit30_host.test.js"
     ]
   },
   {
@@ -548,7 +548,7 @@
     "old": "const now = s?.nodes.find((x) => x.key === a.node.key) ?? null;",
     "new": "const now = s ? a.node : null;",
     "tests": [
-      "test/audit30_host.test.js"
+      "test/net/audit30_host.test.js"
     ]
   },
   {
@@ -557,7 +557,7 @@
     "old": "batch._place = !batch._dyn && count > 1 ? placementGrid(count === centers.length ? centers : centers.slice(0, count)) : null;",
     "new": "batch._place = null;",
     "tests": [
-      "test/audit30_host.test.js"
+      "test/net/audit30_host.test.js"
     ]
   },
   {
@@ -566,7 +566,7 @@
     "old": "    if (!batch._dyn) batch._shId = undefined;\n",
     "new": "",
     "tests": [
-      "test/audit30_host.test.js"
+      "test/net/audit30_host.test.js"
     ]
   }
 ]

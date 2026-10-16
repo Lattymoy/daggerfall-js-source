@@ -46,7 +46,7 @@
 // spawner), isResting(), allowMagicRepairs (a DFU setting, default
 // false), say(msg).
 
-import { ENEMY_BASICS } from '../characters/enemyBasics.js';
+import { ENEMY_BASICS } from '../characters/enemy/enemyBasics.js';
 import { equipTableOf, lowerCondition, setEnchantmentHooks } from './equip.js';
 import { MINUTES_PER_DAY } from './gameDate.js';   // the canonical home - worldTick re-exports it and imports the pump below, so this leaf must not close the cycle
 import { syntheticTimeIncrease } from './effectBroker.js';   // AUDIT 63 F13: EntityEffectBroker.SyntheticTimeIncrease - a LEAF, for the same reason
@@ -63,7 +63,7 @@ import { applyDressStanding } from './clothingStanding.js';   // DRESS1 (2026-09
 import { ENCHANTMENT_TYPES } from '../formats/magicDef.js';
 import { SOCIAL_GROUP_COUNT } from '../formats/factionFile.js';   // AUDIT 63 F6: PlayerEntity.cs:128-129 sizes reactionMods at socialGroupCount = 11
 import { regenBarred } from './courtRules.js';   // WBX6: the Burning Court keeps no regeneration
-import { ITEM_TEMPLATES, templateByIndex, mendOrder, mintCondition, TRANSPORT_HORSE, TRANSPORT_SMALL_CART } from './itemTemplates.js';   // MEND-WORN: the mend order's one home, and the smith's refusal
+import { ITEM_TEMPLATES, templateByIndex, mendOrder, mintCondition, TRANSPORT_HORSE, TRANSPORT_SMALL_CART } from './item/itemTemplates.js';   // MEND-WORN: the mend order's one home, and the smith's refusal
 import { WEAPONS, WEAPON_CONDITION_POOL } from '../characters/weapons.js';   // MEND-WORN: a pool weapon's tick is the classic Dagger's share
 import { repoolWeapon } from './conditionRepair.js';   // MEND-WORN: a weapon on its row's pool moves before a mend on the pool, as before a wear
 export { ENCHANTMENT_TYPES };
@@ -164,7 +164,7 @@ export const isEnchantedItem = (item) => !!itemEnchantments(item);
 // ported" - and M4's catalogue is that sum's missing half, so it
 // closed here and stays closed: legacyEnchantmentValue (:222-238) is
 // the sum, over VALUE_COUNTS_BELOW (:179), spellEnchantPtCost (:214)
-// and the SoulBound/CastWhen arms, and systems/loot.js:"value: legacyEnchantmentValue" prices
+// and the SoulBound/CastWhen arms, and systems/loot/loot.js:"value: legacyEnchantmentValue" prices
 // every minted legacy item through it.
 //
 // THE BOUND IS THE ENUM'S OWN ORDER (:604-605): only
@@ -837,7 +837,7 @@ export function doItemEnchantmentPayloads(flags, item, { entity = null, target =
     if ((flags & PAYLOAD.Strikes) && (row.flags & PAYLOAD.Strikes)) {
       const r = row.strikes?.(env);
       if (r?.strikesModulateDamage) damageOut += r.strikesModulateDamage;
-      // AUDIT WBX F2 (2026-09-26): a blow on the Oblivion Gate's boss wears no gear (WBX6 - world/gateBoss.js's stand-in
+      // AUDIT WBX F2 (2026-09-26): a blow on the Oblivion Gate's boss wears no gear (WBX6 - world/gate/gateBoss.js's stand-in
       // carries `spareGear`), and that is every Strikes payload's bill too: a Cast When Strikes blade paid 10 a blow and
       // the Mace of Molag Bal the blow's damage, and a fight of hundreds of blows destroyed them
       applyResults(target?.spareGear && r?.durabilityLoss ? { ...r, durabilityLoss: 0 } : r, env);

@@ -4,7 +4,7 @@
 // as a lamp model. Anybody that interacts with the lamp model should earn the 'I Love Lamp' title. Implement exclusive
 // dialogue and ensure there is a loot popup for obtaining the title"): THE LAMP KEEPER, ITS LAW.
 //
-// THE BUG IT WAS (LAMP-KEEPER, FIELD BUGS 2026-09-26 - bible/01-Overview/Field-Bugs-2026-09-26.md report 15): Roleplay &
+// THE BUG IT WAS (LAMP-KEEPER, FIELD BUGS 2026-09-26 - bible/01-Overview/bugs/Field-Bugs-2026-09-26.md report 15): Roleplay &
 // Realism swaps a quality-13-plus shop's 182_2 keeper onto its own 197_6, registered lazy, and nothing asked for it - so
 // the classic TEXTURE.197 record 6 drew in its place, Kludge Town's street lamp, stretched by the mod's XML scale
 // (3 x 0.8), and a click on the lamp opened the shop. The fix (scenes/interiorContext.js standPerson's ask) stays.
@@ -31,7 +31,7 @@
 
 import { t } from './textManager.js';
 import { isShop } from './shopStock.js';
-import { seededRng } from './wind.js';
+import { seededRng } from './wind/wind.js';
 
 /** One day in this many a shop's keeper stands as the lamp. */
 export const LAMP_KEEPER_ODDS = 25;

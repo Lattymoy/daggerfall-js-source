@@ -7,7 +7,7 @@ the enhanced tab."
 
 ## The decisions, locked
 
-1. **The classic motor is untouched.** `characters/enemyMotor.js` is a
+1. **The classic motor is untouched.** `characters/enemy/enemyMotor.js` is a
    verbatim port of DFU's classic path and stays byte-for-byte. Enhanced
    AI never edits it; it replaces one step - how an enemy MOVES toward
    its target - behind a switch, and falls back to the classic step
@@ -21,11 +21,11 @@ the enhanced tab."
    the one it plays; the classic motor is one press away and All off's.
    An unstamped shelf's materialised Off adopts it once (`uiPrefs.js`
    PREF1_ADOPT_NEW_DEFAULT).
-3. **The navmesh is project-final's, ported whole.** `src/ai/navmesh.js`
+3. **The navmesh is project-final's, ported whole.** `src/ai/nav/navmesh.js`
    is Mac's file from `// Agent params` to the end; the header differs
    only by the four-line `surfaceY` inlined verbatim from project-final's
    terrain.js and a linter global. A change is made in both repos and
-   said in both - the body is pinned by DIGEST (`test/enhancedAI.test.js`,
+   said in both - the body is pinned by DIGEST (`test/ai/nav/enhancedAI.test.js`,
    AUDIT 62 F4: the old pin read only the two head lines), re-recorded
    deliberately with the commit the change was made in. AUDIT 62 F1
    (2026-09-07) is the first body change, made here first and owed to
@@ -77,7 +77,7 @@ the reason in its own idiom.
 
 ## ENHANCED AI 3 - a level bakes from its own collider (2026-09-02)
 
-`src/ai/navBake.js`, pure: the Collider's buckets hold every triangle
+`src/ai/nav/navBake.js`, pure: the Collider's buckets hold every triangle
 in world space - the ones the player collides with - and the bake
 reads them back, so the nav's ground and the game's ground are one
 source. An anchor is required, always. THE PHANTOM FLOOR: his buildNav
@@ -132,7 +132,7 @@ without asking - which is how three lanes each filed an Audit 49 on
 2026-09-02 and two of them silently overwrote a predecessor. Both are
 recovered from history (52 the roads calibration, 53 the road-to-1:1
 campaign; 49 stays with the grass audit that holds the file now). The
-law: before filing an audit, `ls bible/01-Overview/Audit-*.md` and take
+law: before filing an audit, `ls bible/01-Overview/audits/Audit-*.md` and take
 the next free number; never write an audit file that already exists.
 
 ## ENHANCED AI 4 - the motor reads the switch (2026-09-02)
@@ -188,7 +188,7 @@ the foe was still turning in place; the fault pin used a mesh-less chf,
 which `findPath` answers with null - that is never-traps working - and
 needed a Proxy that throws.
 
-Pins: 14 in `test/enhancedAI4.test.js`. Campaign: 20 mutants, 20
+Pins: 14 in `test/ai/nav/enhancedAI4.test.js`. Campaign: 20 mutants, 20
 killed against a green baseline; two survived the first pass (a stale
 route steering one tick after the bake vanished; a route surviving
 non-pursuit) and are pinned.
@@ -275,7 +275,7 @@ first playtest is Mac's, with the switch on and then off.
 
 ### AUDIT 59 - before the merge (2026-09-04)
 
-`01-Overview/Audit-59.md`. The arc read against the production build
+`01-Overview/audits/Audit-59.md`. The arc read against the production build
 and the host's lifecycle for the first time. THE WORKER NEVER SHIPPED
 (F1): Vite bundles a module worker only from the literal `new
 Worker(new URL(...), { type: 'module' })`, and 3b spelled it through a
@@ -353,12 +353,12 @@ floor, and the layout's foes on the mesh. It skips without the archives.
 
 A player's console carried `navmesh bake looks degenerate (11 polys from
 17592 triangles)` in the dungeon of map id 1204685
-(`01-Overview/Field-Bugs-2026-09-27-field-console.md`). It reproduced
+(`01-Overview/bugs/Field-Bugs-2026-09-27-field-console.md`). It reproduced
 exactly in node, and it was every classic dungeon's: Privateer's Hold
 baked 130 polys from 9,079 triangles, and 11 of 12 sampled dungeons
 tripped the guard. Four faults in the soup bake compounded, and the
-one-anchor cull finished the job (`src/ai/navBake.js`,
-`src/ai/triRaster.js`, `src/ai/navClient.js`):
+one-anchor cull finished the job (`src/ai/nav/navBake.js`,
+`src/ai/triRaster.js`, `src/ai/nav/navClient.js`):
 
 - The cell was coarsened. His budget rule (`coarsenAgent`) is for open
   terrain and sizes by the soup's box; every classic dungeon's box is
@@ -391,12 +391,12 @@ F1's freeze several times over - and the classic motor stands, as it
 did behind a degenerate bake. NAV_BAKE_VERSION is 4: main's
 DUNGEON-SEAMS took 3 for the corners it moved under the same key, this
 bake took 3 on its branch, and the merge renumbered it so each
-invalidates the other's caches. Pinned in `test/enhancedAI.test.js`
+invalidates the other's caches. Pinned in `test/ai/nav/enhancedAI.test.js`
 (DEGENERATE-BAKE ROOT) and `tools/mutants/navbake.json`.
 
 ### AUDIT PRE-MERGE 0928 - the bake read again before the merge (2026-09-28)
 
-Lens N's findings, each pinned red first in `test/audit0928_nav.test.js`
+Lens N's findings, each pinned red first in `test/ai/nav/audit0928_nav.test.js`
 and mutation-proven (`tools/mutants/navbake.json`,
 `tools/mutants/audit0928_nav.json`):
 

@@ -5,7 +5,7 @@
 // DFU's controller cursor (InputManager.UpdateControllerCursorPosition :1558-1562, ported as systems/gamepad.js
 // cursorStep) is LINEAR: JoystickCursorSensitivity * 900 px a second times the raw axis, no ramp, no pull - fast
 // enough to cross the screen, too fast to stop on a button. Destiny's cursor is the model the player named, and its
-// feel is four things, each pure here so the poller (ui/gamepadInput.js) and the front door (ui/menuPad.js) share
+// feel is four things, each pure here so the poller (ui/gamepadInput.js) and the front door (ui/menu/menuPad.js) share
 // one law:
 //
 //   1. A RESPONSE CURVE: the throw past the dead zone, rescaled to 0..1 and raised to CURVE - a light lean is a fine
@@ -19,7 +19,7 @@
 //      it is over - or of one within PULL_RADIUS - at PULL per second, the lighter the stick the stronger. The pull
 //      never fights a deliberate push.
 //
-// The targets are whatever the caller can see: the DOM's controls (ui/plusPad.js interactiveAt/nearestControl), and
+// The targets are whatever the caller can see: the DOM's controls (ui/plus/plusPad.js interactiveAt/nearestControl), and
 // any canvas window that publishes its buttons through `setPadCursorTargets` (none yet - the classic native windows
 // are a slice of their own; over them the curve, the ramp and the boost still apply).
 //
@@ -122,7 +122,7 @@ export function pullTargetAmong(rects, x, y, radius = PAD_CURSOR.PULL_RADIUS) {
   return best;
 }
 
-/** The front door's cursor law, handed IN to ui/menuPad.js (a leaf the desktop launcher serves alone - DA12 - so it
+/** The front door's cursor law, handed IN to ui/menu/menuPad.js (a leaf the desktop launcher serves alone - DA12 - so it
  *  imports nothing): the switch, the state, the step, DFU's step, the pull's target, its radius and the full speed. */
 export const padDoorCursorLaw = Object.freeze({
   assist: padCursorAssist, createState: createPadCursorState, step: stepPadCursor, linear: linearPadCursorStep,

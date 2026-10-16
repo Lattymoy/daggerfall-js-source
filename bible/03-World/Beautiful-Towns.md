@@ -16,7 +16,7 @@ Provenance and what is carried: `vendor/beautiful-villages/README.md`,
 format they ship in - one pack of the authors' edits over the player's own
 `MAPS.BSA` and `BLOCKS.BSA` - is WD3, `02-Formats/World-Data-Patches.md`.
 The audit (AUDIT WD3, 2026-10-02 - the IDs the code and the tests cite) is
-`01-Overview/Audit-WD3.md`.
+`01-Overview/audits/Audit-WD3.md`.
 
 ## What the player sees
 
@@ -39,7 +39,7 @@ a house bought behind it is stamped with the Daggerfall town it stands in.
 
 Both mods ship `FIGHBM00.RMB` and the two differ: Daggerfall Unity serves the
 file of the mod loaded later, Beautiful Cities, and so does the port
-(`WORLD_DATA_PRIORITY`, the door's per-name list - `formats/worldDataReplacement.js`
+(`WORLD_DATA_PRIORITY`, the door's per-name list - `formats/worldData/worldDataReplacement.js`
 keeps every mod's entry of a name, highest load priority first, and the first
 whose switch is on answers; a mod switched off never hides the one under it).
 
@@ -79,7 +79,7 @@ DFU itself lets them wake in the wrong building. The port does not
    alone). Everything else in the world follows the switches as they stand.
 3. **The world-data door serves a pinned town its layout**: its location and
    the blocks laid out in it come with exactly the mods its pin names
-   (`formats/worldDataReplacement.js`, the door asks the pin oracle; the
+   (`formats/worldData/worldDataReplacement.js`, the door asks the pin oracle; the
    block reads ask for the town whose grid named them - `MapsFile.getRmbBlockName`
    notes it, `systems/worldDataVariants.js` `readingLocationKeyOf`).
 4. **A pinned town is read again and built again** when a load changes its
@@ -116,7 +116,7 @@ Two stores that are not records get the same law:
 
 ## Online
 
-The two switches are the ROOM's (`systems/onlineLane.js`
+The two switches are the ROOM's (`systems/online/onlineLane.js`
 `ONLINE_ROOM_MOD_KEYS`, forced on): two players who disagreed would walk two
 towns, one through the other's houses, and a building key - an online home's,
 a shared quest's - would name two buildings.
@@ -188,7 +188,7 @@ once the towns' layouts are known and their pins stand. A town with no such
 building keeps the record as it was, and the questor's hall is unseated
 (QUEST-AUDIT II HOUSE-HALL).
 
-QUEST-AUDIT II (`01-Overview/Quest-Audit-II.md`, with its AUDIT QA2) closed
+QUEST-AUDIT II (`01-Overview/audits/Quest-Audit-II.md`, with its AUDIT QA2) closed
 four holes of this and reworked one law. A GUILD's questor - a guild-service
 faction, the Thieves Guild's and the Dark Brotherhood's contacts in their House2
 halls among them - is seated by that service in any building of the quest's own
@@ -217,7 +217,7 @@ names none is a build from before the town mods, and is refused (426
 for the town's layout counts against no hour's claims, and the client asks the
 layouts again at most once in `HOME_LAYOUTS_WAIT_MS`. A building's online ROOM
 is its layout's: the layout mods serving its town ride in the room key's high
-bits (`world/interiorShared.js` `layoutRoomKey` - Daggerfall's own town keeps
+bits (`world/interior/interiorShared.js` `layoutRoomKey` - Daggerfall's own town keeps
 the rooms it always had), so two players whose towns stand in two layouts never
 share a room, and a relay memory from before the mods lands on no other
 building.
@@ -234,7 +234,7 @@ elsewhere.
   room, its door facing out as every exterior door does. Where that door is the interior door nearest the enter
   marker, TransitionInterior's landing (the door, 0.75 along its normal) stood the player outside the room's
   one-sided shell over nothing, falling for good in the black: 146 of the packs' 10,309 entries (Warvale's `GENRAS00`
-  #1, #2 and #7), and 16 of Daggerfall's own 11,452 (18 until TOWER-FLOORS, `01-Overview/Field-Bugs-2026-10-07b.md`). Each of DFU's two landing arms takes only a spot with a floor
+  #1, #2 and #7), and 16 of Daggerfall's own 11,452 (18 until TOWER-FLOORS, `01-Overview/bugs/Field-Bugs-2026-10-07b.md`). Each of DFU's two landing arms takes only a spot with a floor
   under it now, in DFU's own order, so no landing DFU makes on a floor moves (`player/enterExit.js` `interiorLanding`'s
   `standsAt`); a room with nowhere to stand is refused in DFU's own words, "This house has nothing of value."; and a
   body ten metres under a room's lowest triangle is stood back at its door (FIELD BUGS 2026-10-04d VOID-ENTRY).
@@ -296,7 +296,7 @@ elsewhere.
   Wayrest, whose castles are dungeons. A location served from JSON keeps its
   dungeon's `RecordElement` (DFU's `LocationDungeon.RecordElement`), whose
   `LocationId` every dungeon reader asks - the castles are entered, and saved
-  in, as in Daggerfall (`formats/worldDataReplacement.js` `dungeonFromJson`).
+  in, as in Daggerfall (`formats/worldData/worldDataReplacement.js` `dungeonFromJson`).
 
 - **Windmills.** Kamer's mill is DFU's replacement of model `41600` wherever it
   stands. Six of Beautiful Villages' farms (FARMAA04/05/07, FARMBA05/08/09) and
@@ -307,7 +307,7 @@ elsewhere.
   Windmills of Daggerfall; its farms are the ones read) - `world/rmbLayout.js`. [FIELD BUGS 2026-10-05c: a
   player's "windmill has disappeared" is this law - five of Kamer's seven farms (FARMAA00/01/02/06/09) stand no mill
   in either mod's own, so online, where both mods are everyone's (WD3), those mills went on 2026-10-03. Kept as DFU
-  reads it (`01-Overview/Field-Bugs-2026-10-05c.md`).]
+  reads it (`01-Overview/bugs/Field-Bugs-2026-10-05c.md`).]
 - **The Order of the Raven.** A block served from JSON keeps its
   `FldHeader.OtherNames`, so RMBLayout's `KRAVE01.HS2` guild hall fires in a
   knightly block of Beautiful Cities as it does in DFU.
@@ -315,7 +315,7 @@ elsewhere.
   cell in the three classic towns; Beautiful Villages moves `ARMRAM03` in two
   of them (Penmore's to (2,2), Pjiga's to (0,1)), and in DFU the two mods
   together name a neighbour's house "Dharjen Custom Armor". The key is read off
-  the town's grid (`systems/rrQuestLine.js` `rrMasterArmBuildingKeyIn`) - a
+  the town's grid (`systems/roleplayRealism/rrQuestLine.js` `rrMasterArmBuildingKeyIn`) - a
   recorded departure.
 - **The decor catalogue** reads `BLOCKS.BSA` past the door (`decorScan.js`),
   so 1,400 redecorated interiors never renumber it. DECOR-MODS (FIELD BUGS
@@ -324,7 +324,7 @@ elsewhere.
   Daggerfall's - every one whatever is on, so none renumbers it, and offered
   while the port stands it (asked as the offer is made, AUDIT 05b A3) -
   measured over both packs and Detailed Ships' ships, never the town's own
-  structure (`systems/decorMods.js`; `01-Overview/Field-Bugs-2026-10-05b.md`).
+  structure (`systems/decor/decorMods.js`; `01-Overview/bugs/Field-Bugs-2026-10-05b.md`).
 - **Houses for sale.** Every building the bank or a door can sell in either
   mod stands on a classic model (measured: 1,658 village houses and 3,358 city
   houses), so every price reads the ARCH3D record: the bank's DFU's own `GetHousePrice` over its radius, a door's
@@ -381,7 +381,7 @@ one stand-in, on while either mod that places it is loaded.
 | its city-wall piece | `53210` | 224 | the middle 128 units of Daggerfall's own wall segment (`445`) out of the player's ARCH3D - its stone, its climate - cut and moved onto the piece's line (FIELD BUGS 2026-10-03c, below) |
 
 **The city walls' corners** (FIELD BUGS 2026-10-03c,
-`01-Overview/Field-Bugs-2026-10-03c.md`; Discord: "missing holes in the out
+`01-Overview/bugs/Field-Bugs-2026-10-03c.md`; Discord: "missing holes in the out
 walls of Alik'ra", "Saw the same thing in Chesterwark"). Beautiful Cities turns
 its walls round corners of its own - `WALLAA12` to `WALLAA15`, the 112
 composites built on them. Each stands its corner tower (`444`) where
@@ -430,13 +430,13 @@ statics and its collider bucket, both freed with the pixel; the fixed city (`?ex
 its life; TREES-SEATED's seat reads them. Every point of every such footprint stands within 0.15 m of what is drawn -
 the hills, the pads, or the author's own models under it (a temple on its foundations, a stair on its landing) - but
 two, named: Merdale's third stair, whose pad would bury the second, and TEMPASH4's temple's back edge, 2.27 m over the
-pack's own hill too (`test/fb1013e_hillseat.test.js`; the whole packs swept with the player's ARCH3D on `ARENA2_PATH`).
+pack's own hill too (`test/world/fb1013e_hillseat.test.js`; the whole packs swept with the player's ARCH3D on `ARENA2_PATH`).
 
 ### Not stood in
 
 What follows draws nothing, as in DFU without the peers - each because no
 stand-in could be MADE for it from what is known, not because it was missed
-(`test/wd3_standins.test.js` pins this list against every placement of both
+(`test/world/wd3_standins.test.js` pins this list against every placement of both
 packs):
 
 | ids | placed | why |
@@ -494,23 +494,23 @@ layout pins above, and by four more things the stand-ins needed:
 
 ## Proved
 
-- `test/wd3_pack.test.js` - the pack's rows, reader, refusals and bytes; the
+- `test/formats/worldData/wd3_pack.test.js` - the pack's rows, reader, refusals and bytes; the
   vendored packs' form; with ARENA2 every one of the 8,547 files rebuilt
   sha256-exact.
-- `test/wd3_door.test.js` - load priority, the packs on the door, the online
+- `test/systems/wd3_door.test.js` - load priority, the packs on the door, the online
   gate, pinned towns and the reading town, OtherNames, the windmills, the
   Master Armorer, the decor catalogue, the loader.
-- `test/wd3_layoutPins.test.js` - the stamps, the pins, every record stamped
+- `test/systems/wd3_layoutPins.test.js` - the stamps, the pins, every record stamped
   where it is made, the cached scenes and the discoveries, the load.
-- `test/wd3_online.test.js` - the service's layouts on the real service over
+- `test/net/wd3_online.test.js` - the service's layouts on the real service over
   SQLite, the client's ask and the room's switches.
-- `test/fb1003c_citywall.test.js` - the city walls' corners: the law off the
+- `test/world/fb1003c_citywall.test.js` - the city walls' corners: the law off the
   pack (all 224 pieces filling 448-576 units off the crossing of their two
   lines, the tower 64 units in from it; the 210 on lines of the author's own
   segments, the segments beginning where it ends), the stand-in cut from a
   445 and its faces on the cuts, its install, and the real pipeline building
   it from ARCH3D for the renderer and the collider.
-- `test/wd3_standins.test.js` - every stand-in above, its install and gates;
+- `test/world/wd3_standins.test.js` - every stand-in above, its install and gates;
   with ARENA2 the coverage of both packs' every placement, the housing names,
   and the alias beds built from the player's own ARCH3D.
 - Renders (the headless probe over the player's data): the beds in their six

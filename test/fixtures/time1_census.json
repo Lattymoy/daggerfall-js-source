@@ -1,26 +1,26 @@
 {
- "_": "TIME1 (bible/06-Systems/Online-Time-Arc.md section 8): every line in src/ that reads a shared clock, the clock it means and why. test/time1_census.test.js holds src/ to it both ways.",
+ "_": "TIME1 (bible/06-Systems/Online-Time-Arc.md section 8): every line in src/ that reads a shared clock, the clock it means and why. test/scenes/time1_census.test.js holds src/ to it both ways.",
  "rows": [
   {
-   "file": "src/net/gateLaw.js",
+   "file": "src/net/gate/gateLaw.js",
    "has": "export const gameDayAt = (nowMs) => Math.floor(sharedClassicMinutes(nowMs) / GATE_DAY_MINUTES);",
    "clock": "event",
    "why": "the gate's day - its number, its room, its marks"
   },
   {
-   "file": "src/net/gateLaw.js",
+   "file": "src/net/gate/gateLaw.js",
    "has": "const at = (minute) => Math.round(wallMsForClassicMinutes(base + minute));",
    "clock": "event",
    "why": "the gate's phases as relay ms"
   },
   {
-   "file": "src/net/serpentLaw.js",
+   "file": "src/net/serpent/serpentLaw.js",
    "has": "export const serpentDayAt = (nowMs) => Math.floor(sharedClassicMinutes(nowMs) / SERPENT_DAY_MINUTES);",
    "clock": "event",
    "why": "the sea serpent's day - the gate's own, which days hold a serpent"
   },
   {
-   "file": "src/net/serpentLaw.js",
+   "file": "src/net/serpent/serpentLaw.js",
    "has": "const at = (minute) => Math.round(wallMsForClassicMinutes(base + minute));",
    "clock": "event",
    "why": "the serpent's sighting, rising, storm and sounding as relay ms"
@@ -428,7 +428,7 @@
    "why": "a banishment's term"
   },
   {
-   "file": "src/scenes/world.js",
+   "file": "src/scenes/pixelBuild.js",
    "has": "known: knownCriminal(playerEntity, region, { ownNow: ownMinutes(), worldNow: trustedWorldMinutes() })",
    "clock": "event",
    "why": "a banishment's term - the living watch's word (WATCH-KNOWS)"
@@ -774,37 +774,37 @@
    "why": "the timers window's next game day (TIMERS1) - the gate's day turning over, as relay ms"
   },
   {
-   "file": "src/systems/lootCodex.js",
+   "file": "src/systems/loot/lootCodex.js",
    "has": "const _day = () => Math.max(0, Math.floor((Number(worldMinutes()) || 0) / 1440));",
    "clock": "event",
    "why": "the day a find is dated"
   },
   {
-   "file": "src/systems/lootPowers.js",
+   "file": "src/systems/loot/lootPowers.js",
    "has": "case 'moon': if (isNight(skyMinutes())) pct += p.pct + (group === 'animal' ? p.beast : 0); break;",
    "clock": "sky",
    "why": "a moon power's night"
   },
   {
-   "file": "src/systems/revenant.js",
+   "file": "src/systems/revenant/revenant.js",
    "has": "const skyIsNight = () => { try { return isNight(skyMinutes()); }",
    "clock": "sky",
    "why": "RVN1/RVN2: whether a fight with a revenant began by night (its ledger's night scar), and a Night-stalker's night - its return and its blows"
   },
   {
-   "file": "src/systems/revenant.js",
+   "file": "src/systems/revenant/revenant.js",
    "has": "const skyIsDay = () => { try { return !isNight(skyMinutes()); }",
    "clock": "sky",
    "why": "RVN3: whether the sky reads day - a daylight weakness bites"
   },
   {
-   "file": "src/systems/save.js",
+   "file": "src/systems/save/save.js",
    "has": "? Math.floor(worldMinutes()), worldMinutes",
    "clock": "event",
    "why": "a save without a clock of its own"
   },
   {
-   "file": "src/systems/save.js",
+   "file": "src/systems/save/save.js",
    "has": "const own = Math.floor(snap.classicMinutes ?? 0), at = worldMinutes();",
    "clock": "event",
    "why": "an absence measured on the event clock"
@@ -882,25 +882,25 @@
    "why": "the nightfall words"
   },
   {
-   "file": "src/ui/enhancedMenu.js",
+   "file": "src/ui/enhanced/enhancedMenu.js",
    "has": "const copy = onlineCopyOf(snap, sharedClassicMinutes(Date.now()));",
    "clock": "event",
    "why": "the event minute a character joins at"
   },
   {
-   "file": "src/ui/enhancedMenu.js",
+   "file": "src/ui/enhanced/enhancedMenu.js",
    "has": "const d = dateFromClassicMinutes(Math.floor(skyMinutes()));",
    "clock": "sky",
    "why": "the menu's date and time"
   },
   {
-   "file": "src/ui/enhancedMenu.js",
+   "file": "src/ui/enhanced/enhancedMenu.js",
    "has": "export function statsLaw(detail, entity, { worldNow = trustedWorldMinutes() } = {}) {",
    "clock": "event",
    "why": "a banishment's term"
   },
   {
-   "file": "src/ui/enhancedMenu.js",
+   "file": "src/ui/enhanced/enhancedMenu.js",
    "has": "const midnight = wallMsForSkyMinutes(Math.ceil(skyClassicMinutes(turn) / 1440) * 1440);",
    "clock": "sky",
    "why": "the Online pane's sentence: the sky's first midnight after its switch, said in local minutes (TIME4)"
@@ -915,7 +915,7 @@
    "file": "src/scenes/exterior.js",
    "has": "playerEntity, gameMinutes: () => worldMinutes(), showOverlay",
    "clock": "event",
-   "why": "ARENA3: the gate's hour - the bookmaker's book and the Herald's doors; ARENA4b: and, through the gate, the Herald's choice at the hour and the banner the pause window's door reads (scenes/arenaGate.js heraldChoice / joined)"
+   "why": "ARENA3: the gate's hour - the bookmaker's book and the Herald's doors; ARENA4b: and, through the gate, the Herald's choice at the hour and the banner the pause window's door reads (scenes/arena/arenaGate.js heraldChoice / joined)"
   },
   {
    "file": "src/scenes/exterior.js",
@@ -934,7 +934,7 @@
    "file": "src/scenes/world.js",
    "has": "playerEntity, gameMinutes: () => worldMinutes(), showOverlay",
    "clock": "event",
-   "why": "ARENA3: the gate's hour - the bookmaker's book and the Herald's doors; ARENA4b: and, through the gate, the Herald's choice at the hour and the banner the pause window's door reads (scenes/arenaGate.js heraldChoice / joined)"
+   "why": "ARENA3: the gate's hour - the bookmaker's book and the Herald's doors; ARENA4b: and, through the gate, the Herald's choice at the hour and the banner the pause window's door reads (scenes/arena/arenaGate.js heraldChoice / joined)"
   },
   {
    "file": "src/scenes/world.js",

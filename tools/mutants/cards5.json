@@ -5,8 +5,8 @@
     "old": "t.hand.seats.map((s, k) => ({ to: t.seats[live[k]].id, frame: { hole:",
     "new": "t.hand.seats.map((s, k) => ({ to: null, frame: { hole:",
     "tests": [
-      "test/cards5_relay.test.js",
-      "test/cards5_client.test.js"
+      "test/net/cards5_relay.test.js",
+      "test/systems/cards5_client.test.js"
     ]
   },
   {
@@ -15,8 +15,8 @@
     "old": "hand: t.hand ? viewFor(t.hand, -1) : null, clockAt:",
     "new": "hand: t.hand ? viewFor(t.hand, 0) : null, clockAt:",
     "tests": [
-      "test/cards5_relay.test.js",
-      "test/cards5_client.test.js"
+      "test/net/cards5_relay.test.js",
+      "test/systems/cards5_client.test.js"
     ]
   },
   {
@@ -25,8 +25,8 @@
     "old": "  if (t.seats[t.handSeats[k]]?.id !== id) return 'not your turn';\n",
     "new": "\n",
     "tests": [
-      "test/cards5_relay.test.js",
-      "test/cards5_client.test.js"
+      "test/net/cards5_relay.test.js",
+      "test/systems/cards5_client.test.js"
     ]
   },
   {
@@ -35,8 +35,8 @@
     "old": "    if (t.hand.toAct < 0 || now < t.clockAt) return [];",
     "new": "    if (t.hand.toAct < 0 || true) return [];",
     "tests": [
-      "test/cards5_relay.test.js",
-      "test/cards5_client.test.js"
+      "test/net/cards5_relay.test.js",
+      "test/systems/cards5_client.test.js"
     ]
   },
   {
@@ -45,8 +45,8 @@
     "old": "    if (s && (s.leaving || s.stack <= 0)) {",
     "new": "    if (s && s.stack <= 0) {",
     "tests": [
-      "test/cards5_relay.test.js",
-      "test/cards5_client.test.js"
+      "test/net/cards5_relay.test.js",
+      "test/systems/cards5_client.test.js"
     ]
   },
   {
@@ -55,8 +55,8 @@
     "old": "  t.hand = foldSeat(prev, k);\n",
     "new": "  t.hand = prev;\n",
     "tests": [
-      "test/cards5_relay.test.js",
-      "test/cards5_client.test.js"
+      "test/net/cards5_relay.test.js",
+      "test/systems/cards5_client.test.js"
     ]
   },
   {
@@ -65,8 +65,8 @@
     "old": "  if (t.seats[chair]) return 'taken';\n",
     "new": "\n",
     "tests": [
-      "test/cards5_relay.test.js",
-      "test/cards5_client.test.js"
+      "test/net/cards5_relay.test.js",
+      "test/systems/cards5_client.test.js"
     ]
   },
   {
@@ -75,8 +75,8 @@
     "old": "t.nextDealAt = Math.max(t.nextDealAt, now + HOLDEM_FIRST_MS);\n  return [room(t, [{ t: 'sit', seat: chair,",
     "new": "t.nextDealAt = now;\n  return [room(t, [{ t: 'sit', seat: chair,",
     "tests": [
-      "test/cards5_relay.test.js",
-      "test/cards5_client.test.js"
+      "test/net/cards5_relay.test.js",
+      "test/systems/cards5_client.test.js"
     ]
   },
   {
@@ -85,8 +85,8 @@
     "old": "  t.seed = rand32() >>> 0;\n",
     "new": "  t.seed = 0;\n",
     "tests": [
-      "test/cards5_relay.test.js",
-      "test/cards5_client.test.js"
+      "test/net/cards5_relay.test.js",
+      "test/systems/cards5_client.test.js"
     ]
   },
   {
@@ -95,8 +95,8 @@
     "old": "|| m.chair >= m.chairs) return null;",
     "new": ") return null;",
     "tests": [
-      "test/cards5_relay.test.js",
-      "test/cards5_client.test.js"
+      "test/net/cards5_relay.test.js",
+      "test/systems/cards5_client.test.js"
     ]
   },
   {
@@ -105,8 +105,8 @@
     "old": "    if (a.type === 'raise' && !chipsOk(a.to)) return null;\n",
     "new": "\n",
     "tests": [
-      "test/cards5_relay.test.js",
-      "test/cards5_client.test.js"
+      "test/net/cards5_relay.test.js",
+      "test/systems/cards5_client.test.js"
     ]
   },
   {
@@ -115,8 +115,8 @@
     "old": "m.hole.cards.every((c) => Number.isInteger(c) && c >= 0 && c < 52)",
     "new": "m.hole.cards.every((c) => Number.isInteger(c))",
     "tests": [
-      "test/cards5_relay.test.js",
-      "test/cards5_client.test.js"
+      "test/net/cards5_relay.test.js",
+      "test/systems/cards5_client.test.js"
     ]
   },
   {
@@ -125,8 +125,8 @@
     "old": "      if (!String(a.key ?? '').startsWith('interior:')) return;\n      if (!this._spend(ws, now, holdemGate, 'holdemBucket'",
     "new": "      if (!this._spend(ws, now, holdemGate, 'holdemBucket'",
     "tests": [
-      "test/cards5_relay.test.js",
-      "test/cards5_client.test.js"
+      "test/net/cards5_relay.test.js",
+      "test/systems/cards5_client.test.js"
     ]
   },
   {
@@ -135,8 +135,8 @@
     "old": "    if (a.id && String(a.key ?? '').startsWith('interior:')) { try { await this._holdemLeave(a, Date.now()); }",
     "new": "    if (false) { try { await this._holdemLeave(a, Date.now()); }",
     "tests": [
-      "test/cards5_relay.test.js",
-      "test/cards5_client.test.js"
+      "test/net/cards5_relay.test.js",
+      "test/systems/cards5_client.test.js"
     ]
   },
   {
@@ -145,8 +145,8 @@
     "old": "    const held = await this._holdemTick();   // CARDS5:",
     "new": "    const held = false;   // CARDS5:",
     "tests": [
-      "test/cards5_relay.test.js",
-      "test/cards5_client.test.js"
+      "test/net/cards5_relay.test.js",
+      "test/systems/cards5_client.test.js"
     ]
   },
   {
@@ -155,8 +155,8 @@
     "old": "      const out = JSON.stringify({ t: 'holdem', table: index, now, ...frame });\n      for (const [w, b] of this._all()) if (b.id && (to == null || b.id === to)) this._send(w, out);",
     "new": "      const out = JSON.stringify({ t: 'holdem', table: index, now, ...frame });\n      for (const [w, b] of this._all()) if (b.id) this._send(w, out);",
     "tests": [
-      "test/cards5_relay.test.js",
-      "test/cards5_client.test.js"
+      "test/net/cards5_relay.test.js",
+      "test/systems/cards5_client.test.js"
     ]
   },
   {
@@ -165,8 +165,8 @@
     "old": "    if (tables.size) await this.state.storage.put('holdem', Object.fromEntries(tables));",
     "new": "    if (false) await this.state.storage.put('holdem', Object.fromEntries(tables));",
     "tests": [
-      "test/cards5_relay.test.js",
-      "test/cards5_client.test.js"
+      "test/net/cards5_relay.test.js",
+      "test/systems/cards5_client.test.js"
     ]
   },
   {
@@ -175,48 +175,48 @@
     "old": "      if (!validHoldemOut(m) || (!primary && m.cashout === undefined)) return;",
     "new": "      if (!validHoldemOut(m)) return;",
     "tests": [
-      "test/cards5_relay.test.js",
-      "test/cards5_client.test.js"
+      "test/net/cards5_relay.test.js",
+      "test/systems/cards5_client.test.js"
     ]
   },
   {
     "name": "C5-remote-no-shift",
-    "file": "src/systems/cardRemoteTable.js",
+    "file": "src/systems/card/cardRemoteTable.js",
     "old": "    const shift = (t) => (Number.isFinite(t) && Number.isFinite(f.now) ? t - f.now + local : local);",
     "new": "    const shift = (t) => t;",
     "tests": [
-      "test/cards5_relay.test.js",
-      "test/cards5_client.test.js"
+      "test/net/cards5_relay.test.js",
+      "test/systems/cards5_client.test.js"
     ]
   },
   {
     "name": "C5-remote-turn-always",
-    "file": "src/systems/cardRemoteTable.js",
+    "file": "src/systems/card/cardRemoteTable.js",
     "old": "    return h.toAct >= 0 && st.handSeats[h.toAct] === this.chair ? this.turn.legal : null;",
     "new": "    return this.turn.legal;",
     "tests": [
-      "test/cards5_relay.test.js",
-      "test/cards5_client.test.js"
+      "test/net/cards5_relay.test.js",
+      "test/systems/cards5_client.test.js"
     ]
   },
   {
     "name": "C5-remote-no-catchup",
-    "file": "src/systems/cardRemoteTable.js",
+    "file": "src/systems/card/cardRemoteTable.js",
     "old": "    else if (st.hand && st.handNo !== this.seenHand) {",
     "new": "    else if (false) {",
     "tests": [
-      "test/cards5_relay.test.js",
-      "test/cards5_client.test.js"
+      "test/net/cards5_relay.test.js",
+      "test/systems/cards5_client.test.js"
     ]
   },
   {
     "name": "C5-remote-holes-all",
-    "file": "src/systems/cardRemoteTable.js",
+    "file": "src/systems/card/cardRemoteTable.js",
     "old": "    if (chair !== this.chair || !this.hole || this.hole.handNo !== this.state?.handNo) return -1;",
     "new": "    if (!this.hole) return -1;",
     "tests": [
-      "test/cards5_relay.test.js",
-      "test/cards5_client.test.js"
+      "test/net/cards5_relay.test.js",
+      "test/systems/cards5_client.test.js"
     ]
   },
   {
@@ -225,8 +225,8 @@
     "old": "    if (g.remote) cardStand(g.table);",
     "new": "    if (false) cardStand(g.table);",
     "tests": [
-      "test/cards5_relay.test.js",
-      "test/cards5_client.test.js"
+      "test/net/cards5_relay.test.js",
+      "test/systems/cards5_client.test.js"
     ]
   },
   {
@@ -235,8 +235,8 @@
     "old": "      if (w.remote.state && w.remote.seated === 0 && !w.remote.state.hand) closeCardWatch(i);",
     "new": "      if (false) closeCardWatch(i);",
     "tests": [
-      "test/cards5_relay.test.js",
-      "test/cards5_client.test.js"
+      "test/net/cards5_relay.test.js",
+      "test/systems/cards5_client.test.js"
     ]
   },
   {
@@ -245,8 +245,8 @@
     "old": "        cardStand(game.table);\n        game.remote = null;",
     "new": "        game.remote = null;",
     "tests": [
-      "test/cards5_relay.test.js",
-      "test/cards5_client.test.js"
+      "test/net/cards5_relay.test.js",
+      "test/systems/cards5_client.test.js"
     ]
   }
 ]

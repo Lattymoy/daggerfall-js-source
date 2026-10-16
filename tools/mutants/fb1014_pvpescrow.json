@@ -5,16 +5,16 @@
     "old": "const kin = wildKin({ duel: duelKin, guilds: [a.gi, tb.gi] }) || wildKin({ party: await this._wdunKinOf(a.sub, tb.sub, now) });",
     "new": "const kin = wildKin({ duel: duelKin }) || wildKin({ party: await this._wdunKinOf(a.sub, tb.sub, now) });",
     "tests": [
-      "test/fb1014_pvpescrow.test.js"
+      "test/systems/fb1014_pvpescrow.test.js"
     ]
   },
   {
     "name": "GUILD-KIN-the-guild-unread-by-the-law",
-    "file": "src/net/wildRef.js",
+    "file": "src/net/wild/wildRef.js",
     "old": "  return !!party || !!duel || (Array.isArray(guilds) && sameGuild(guilds[0], guilds[1]));",
     "new": "  return !!party || !!duel || (Array.isArray(guilds) && false && sameGuild(guilds[0], guilds[1]));",
     "tests": [
-      "test/fb1014_pvpescrow.test.js"
+      "test/systems/fb1014_pvpescrow.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  const collect = body?.collect === 1;",
     "new": "  const collect = false;",
     "tests": [
-      "test/fb1014_pvpescrow.test.js"
+      "test/systems/fb1014_pvpescrow.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    const ask = rec ? collectAsk(rec, d.i, a.sub ?? null) : null;",
     "new": "    const ask = null;",
     "tests": [
-      "test/fb1014_pvpescrow.test.js"
+      "test/systems/fb1014_pvpescrow.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  return endEscrow(ctx, player.id, side.at, row, 'collected');",
     "new": "  return { r: row.r, item: parse(row.rec) };",
     "tests": [
-      "test/fb1014_pvpescrow.test.js"
+      "test/systems/fb1014_pvpescrow.test.js"
     ]
   },
   {
@@ -50,16 +50,16 @@
     "old": "export const escrowBackAt = (/** @type {number} */ until) => until + WILD_COLLECT_TTL_S;",
     "new": "export const escrowBackAt = (/** @type {number} */ until) => until;",
     "tests": [
-      "test/fb1014_pvpescrow.test.js"
+      "test/systems/fb1014_pvpescrow.test.js"
     ]
   },
   {
     "name": "ESCROW-a-second-collect-signed",
-    "file": "src/net/wildLaw.js",
+    "file": "src/net/wild/wildLaw.js",
     "old": "  if (typeof rec.wc === 'string' && rec.wc) return 'again';",
     "new": "  if (false) return 'again';",
     "tests": [
-      "test/fb1014_pvpescrow.test.js"
+      "test/systems/fb1014_pvpescrow.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "  if (row.state === 'collected') return row.to_char === side.at.id ? { r: row.r, item: parse(row.rec), again: true } : { error: 'escrow-collected' };",
     "new": "  if (row.state === 'collected' && row.to_char !== side.at.id) return { error: 'escrow-collected' };",
     "tests": [
-      "test/fb1014_pvpescrow.test.js"
+      "test/systems/fb1014_pvpescrow.test.js"
     ]
   },
   {
@@ -77,25 +77,25 @@
     "old": "  if (row.state === 'returned') return { r, item: parse(row.rec), again: true };",
     "new": "  if (false) return { r, item: parse(row.rec), again: true };",
     "tests": [
-      "test/fb1014_pvpescrow.test.js"
+      "test/systems/fb1014_pvpescrow.test.js"
     ]
   },
   {
     "name": "ESCROW-the-escrows-word-lost-in-a-wake",
-    "file": "src/net/wildLaw.js",
+    "file": "src/net/wild/wildLaw.js",
     "old": "    we: v.we === true, wc: typeof v.wc === 'string' && v.wc ? v.wc : null };",
     "new": "    we: false, wc: typeof v.wc === 'string' && v.wc ? v.wc : null };",
     "tests": [
-      "test/fb1014_pvpescrow.test.js"
+      "test/systems/fb1014_pvpescrow.test.js"
     ]
   },
   {
     "name": "ESCROW-the-collect-lost-in-a-wake",
-    "file": "src/net/wildLaw.js",
+    "file": "src/net/wild/wildLaw.js",
     "old": "    we: v.we === true, wc: typeof v.wc === 'string' && v.wc ? v.wc : null };",
     "new": "    we: v.we === true, wc: null };",
     "tests": [
-      "test/fb1014_pvpescrow.test.js"
+      "test/systems/fb1014_pvpescrow.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "    if (await dropIfUnnamed(ctx.db, ctx.bucket, playerId, at.id, prep.key)) return { r: row.r, item, realm: { seq: prep.seq } };   // landed, its answer lost",
     "new": "    if ((await dropIfUnnamed(ctx.db, ctx.bucket, playerId, at.id, prep.key)) || true) return { r: row.r, item, realm: { seq: prep.seq } };   // landed, its answer lost",
     "tests": [
-      "test/fb1014_pvpescrow.test.js"
+      "test/systems/fb1014_pvpescrow.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "  return { escrows: results.map(escrowView) };",
     "new": "  return { escrows: [] };",
     "tests": [
-      "test/fb1014_pvpescrow.test.js"
+      "test/systems/fb1014_pvpescrow.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "realm: at, room: lay, ...(online?.wildCollectAt?.(lay) ? { collect: 1 } : {}), ...wildCartWord(",
     "new": "realm: at, room: lay, collect: 1, ...wildCartWord(",
     "tests": [
-      "test/fb1014_pvpescrow.test.js"
+      "test/systems/fb1014_pvpescrow.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "  if (burnt) { w = -1; wt = null; }",
     "new": "  if (false) { w = -1; wt = null; }",
     "tests": [
-      "test/int9_wild_ref.test.js"
+      "test/net/int9_wild_ref.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "export const WILD_COLLECT_RELAY_MIN = 205;",
     "new": "export const WILD_COLLECT_RELAY_MIN = 201;",
     "tests": [
-      "test/fb1014_pvpescrow.test.js"
+      "test/systems/fb1014_pvpescrow.test.js"
     ]
   },
   {
@@ -149,16 +149,16 @@
     "old": "export const WILD_COLLECT_RELAY_MIN = 205;",
     "new": "export const WILD_COLLECT_RELAY_MIN = 204;",
     "tests": [
-      "test/fb1014_pvpescrow.test.js"
+      "test/systems/fb1014_pvpescrow.test.js"
     ]
   },
   {
     "name": "ESCROW-the-death-screen-says-taken",
-    "file": "src/systems/wildZone.js",
+    "file": "src/systems/wild/wildZone.js",
     "old": "(d.held ? WILD_TEXT.deathHeld : WILD_TEXT.deathClaim)",
     "new": "WILD_TEXT.deathClaim",
     "tests": [
-      "test/fb1014_pvpescrow.test.js"
+      "test/systems/fb1014_pvpescrow.test.js"
     ]
   }
 ]

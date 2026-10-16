@@ -5,7 +5,7 @@
     "old": "export const answersPress = (p) => !!p && !yieldsRay(p) && p.distance <= p.reach;",
     "new": "export const answersPress = (p) => !!p && !yieldsRay(p);",
     "tests": [
-      "test/fb1012d_allyyields.test.js"
+      "test/scenes/fb1012d_allyyields.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "export const answersPress = (p) => !!p && !yieldsRay(p) && p.distance <= p.reach;",
     "new": "export const answersPress = (p) => !!p && p.distance <= p.reach;",
     "tests": [
-      "test/fb1012d_allyyields.test.js"
+      "test/scenes/fb1012d_allyyields.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "export const allyYields = (foe, behind) => isCompanion(foe) && answersPress(behind);",
     "new": "export const allyYields = (foe, behind) => !!foe && answersPress(behind);",
     "tests": [
-      "test/fb1012d_allyyields.test.js"
+      "test/scenes/fb1012d_allyyields.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "export const isCompanion = (f) => !!f && f.companion != null;",
     "new": "export const isCompanion = (f) => !!f && f.companion != null && !String(f.companion).startsWith('peer:');",
     "tests": [
-      "test/fb1012d_allyyields.test.js"
+      "test/scenes/fb1012d_allyyields.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "      ...(isCompanion(f) ? { ally: true } : {}),",
     "new": "      ...({}),",
     "tests": [
-      "test/fb1012d_allyyields.test.js"
+      "test/scenes/fb1012d_allyyields.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "  if (foeHit && targets.find((t) => t.key === foeHit.key)?.ally === true) return { ...foeHit, ally: true };",
     "new": "  if (foeHit && targets.find((t) => t.key === foeHit.key)?.ally === true) return foeHit;",
     "tests": [
-      "test/fb1012d_allyyields.test.js"
+      "test/scenes/fb1012d_allyyields.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "  if (allyYields(hit.foe, deps.behind)) return false;",
     "new": "  if (allyYields(hit.foe, null)) return false;",
     "tests": [
-      "test/fb1012d_allyyields.test.js"
+      "test/scenes/fb1012d_allyyields.test.js"
     ]
   },
   {
@@ -68,8 +68,8 @@
     "old": "    ground: door ?? ground,",
     "new": "    ground,",
     "tests": [
-      "test/fb1012d_allyyields.test.js",
-      "test/hard2_activationrace.test.js"
+      "test/scenes/fb1012d_allyyields.test.js",
+      "test/scenes/hard2_activationrace.test.js"
     ]
   },
   {
@@ -78,8 +78,8 @@
     "old": "doorDistance = door?.distance ?? Infinity,",
     "new": "doorDistance = Infinity,",
     "tests": [
-      "test/fb1012d_allyyields.test.js",
-      "test/hard2_activationrace.test.js"
+      "test/scenes/fb1012d_allyyields.test.js",
+      "test/scenes/hard2_activationrace.test.js"
     ]
   },
   {
@@ -88,7 +88,7 @@
     "old": "{ key: PERSON_KEY, distance: nearPerson, reach: MOBILE_NPC_ACTIVATION_DISTANCE }",
     "new": "{ key: PERSON_KEY, distance: nearPerson }",
     "tests": [
-      "test/fb1012d_allyyields.test.js"
+      "test/scenes/fb1012d_allyyields.test.js"
     ]
   },
   {
@@ -97,8 +97,8 @@
     "old": "  if (foe?.ally === true) {",
     "new": "  if (foe?.ally === false) {",
     "tests": [
-      "test/fb1012d_allyyields.test.js",
-      "test/worldhover.test.js"
+      "test/scenes/fb1012d_allyyields.test.js",
+      "test/systems/worldhover.test.js"
     ]
   },
   {
@@ -107,7 +107,7 @@
     "old": "    if (answersPress(next)) return next;",
     "new": "    if (next) return next;",
     "tests": [
-      "test/fb1012d_allyyields.test.js"
+      "test/scenes/fb1012d_allyyields.test.js"
     ]
   },
   {
@@ -116,7 +116,7 @@
     "old": "behind: _race.next,   // FB1012d ALLY-YIELDS: what the press takes past him",
     "new": "behind: null,   // FB1012d ALLY-YIELDS: what the press takes past him",
     "tests": [
-      "test/fb1012d_allyyields.test.js"
+      "test/scenes/fb1012d_allyyields.test.js"
     ]
   },
   {
@@ -125,7 +125,7 @@
     "old": "behind: _race.next,   // FB1012d ALLY-YIELDS: what the press takes past a companion",
     "new": "behind: null,   // FB1012d ALLY-YIELDS: what the press takes past a companion",
     "tests": [
-      "test/fb1012d_allyyields.test.js"
+      "test/scenes/fb1012d_allyyields.test.js"
     ]
   },
   {
@@ -134,7 +134,7 @@
     "old": "behind: _pick,   // FB1012d ALLY-YIELDS: the ladder's winner (read when the arm runs)",
     "new": "behind: null,   // FB1012d ALLY-YIELDS: the ladder's winner (read when the arm runs)",
     "tests": [
-      "test/fb1012d_allyyields.test.js"
+      "test/scenes/fb1012d_allyyields.test.js"
     ]
   },
   {
@@ -143,7 +143,7 @@
     "old": "behind: _pick,   // FB1012d ALLY-YIELDS: the ladder's winner, underground",
     "new": "behind: null,   // FB1012d ALLY-YIELDS: the ladder's winner, underground",
     "tests": [
-      "test/fb1012d_allyyields.test.js"
+      "test/scenes/fb1012d_allyyields.test.js"
     ]
   },
   {
@@ -152,7 +152,7 @@
     "old": "behind: _pick,   // FB1012d ALLY-YIELDS",
     "new": "behind: null,   // FB1012d ALLY-YIELDS",
     "tests": [
-      "test/fb1012d_allyyields.test.js"
+      "test/scenes/fb1012d_allyyields.test.js"
     ]
   },
   {
@@ -161,9 +161,9 @@
     "old": "door: modes.exteriorActivationHit(cam.pos, useFwd),",
     "new": "door: null,",
     "tests": [
-      "test/fb1012d_allyyields.test.js",
-      "test/hard2_activationrace.test.js",
-      "test/audit66_handheldtorches.test.js"
+      "test/scenes/fb1012d_allyyields.test.js",
+      "test/scenes/hard2_activationrace.test.js",
+      "test/systems/audit66_handheldtorches.test.js"
     ]
   },
   {
@@ -172,9 +172,9 @@
     "old": "door: modes.exteriorActivationHit(cam.pos, useFwd),",
     "new": "door: null,",
     "tests": [
-      "test/fb1012d_allyyields.test.js",
-      "test/hard2_activationrace.test.js",
-      "test/audit66_handheldtorches.test.js"
+      "test/scenes/fb1012d_allyyields.test.js",
+      "test/scenes/hard2_activationrace.test.js",
+      "test/systems/audit66_handheldtorches.test.js"
     ]
   },
   {
@@ -183,7 +183,7 @@
     "old": "    return pickActivatableHit(eye, dir, exteriorActivationTargets().targets, baseCollider());",
     "new": "    return null;",
     "tests": [
-      "test/fb1012d_allyyields.test.js"
+      "test/scenes/fb1012d_allyyields.test.js"
     ]
   },
   {
@@ -192,7 +192,7 @@
     "old": "    return exteriorActivationHit(eye, dir)?.distance ?? Infinity;",
     "new": "    return Infinity;",
     "tests": [
-      "test/fb1012d_allyyields.test.js"
+      "test/scenes/fb1012d_allyyields.test.js"
     ]
   }
 ]

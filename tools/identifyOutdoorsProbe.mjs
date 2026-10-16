@@ -80,7 +80,7 @@ check('an unidentified magic item is in the pack', staged.identified === false, 
 // CAST IT. Through the shipped effect and the shipped cast engine -
 // nothing here reaches into the window directly.
 const cast = await page.evaluate(async () => {
-  const { buildCustomSpell, blankEffectSettings } = await import('/src/systems/spellMaker.js');
+  const { buildCustomSpell, blankEffectSettings } = await import('/src/systems/spell/spellMaker.js');
   const spell = buildCustomSpell({
     slots: [{ type: 40, subType: 255, settings: { ...blankEffectSettings(), chanceBase: 100 } }],
     rangeType: 0,

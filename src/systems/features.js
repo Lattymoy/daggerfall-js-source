@@ -1,12 +1,12 @@
 // FT0 (2026-09-14, Mac: "merging mods, certain setting toggles and
 // enhanced pane toggles into one universal place to toggle enhanceable
 // features"): THE FEATURES REGISTRY - the one declared list behind the
-// FEATURES home on the menu rail (ui/enhancedMenu.js paneFeatures).
+// FEATURES home on the menu rail (ui/enhanced/enhancedMenu.js paneFeatures).
 //
 // A feature is a ROW: a title, a note, the kinds it wears as coloured
 // labels, and ONE control that names the store and key already
 // backing it. The three stores stay where they are - DFU's 171-key
-// settings (systems/settings.js), the port's own prefs
+// settings (systems/settings/settings.js), the port's own prefs
 // (systems/uiPrefs.js), the vendored mods' modsettings
 // (systems/modSettings.js) - and this list is the presentation over
 // them: nothing here holds a LIVE value (RF4: a prefs row does declare
@@ -19,7 +19,7 @@
 // THE LIST IS EMPTY AT FT0 AND FILLS ONE SLICE AT A TIME
 // (bible/10-UI/Features-Arc.md - the inventory is the work list; a row
 // is audited and fixed before it moves here). checkFeatures() is the
-// registry's own law, pinned by test/features.test.js: every row's
+// registry's own law, pinned by test/systems/features.test.js: every row's
 // control must name a key its store really has, so a typo cannot ship
 // a switch wired to nothing.
 
@@ -37,13 +37,13 @@
 // (resolveControl), which is what keeps world/landView.js -> uiPrefs ->
 // features from closing a cycle on this file's constants.
 
-import { ALL_KEYS } from './settings.js';
+import { ALL_KEYS } from './settings/settings.js';
 import { MOD_SETTINGS } from './modSettings.js';
-import { declareOnlinePrefs } from './onlineLane.js';   // RF4: the lane learns its answers from the rows
+import { declareOnlinePrefs } from './online/onlineLane.js';   // RF4: the lane learns its answers from the rows
 import { t, localizedText } from './textManager.js';   // L10N4: the screen's words in the player's language, read as they are read
 
 /** The three kinds, in label order. `label` is what the row wears and
- *  the chip says; the colour is the skin's (ui/enhancedStyle.js .kind).
+ *  the chip says; the colour is the skin's (ui/enhanced/enhancedStyle.js .kind).
  *  L10N4: every word on this page is a getter over t(), so a reader reads
  *  the player's language at the moment it reads - never English frozen at
  *  load, before the boot has chosen the language. */
@@ -236,7 +236,7 @@ export const MOD_CURATED = Object.freeze({
   // OW-TOGGLE: and the port's own first-person switch, on the tile for the same reason.
   // TO-ROADS: and its roads, beside it - a first-person journey that follows them.
   // TO-LIVE (2026-10-02, Discord: "both cautious and reckless travel initiate time accelerated travel"): and Inns,
-  // beside Cautiously - the other half of the mod's rule (ui/travelPopUp.js isPlayerControlledTravel). TO-FIELD2 turned
+  // beside Cautiously - the other half of the mod's rule (ui/travel/travelPopUp.js isPlayerControlledTravel). TO-FIELD2 turned
   // it on and FT14 took the pane it could be turned off in, so a trip stopping at inns - Recklessly's too - was always
   // a journey and no dial on any screen said why.
   // IT1: the four a player reaches for first - whether the carriage is the only fast travel, what the driver charges,
@@ -376,7 +376,7 @@ export const FEATURES = Object.freeze([
   // HORSE-TIERS (2026-10-15, Mac: "Allow turn off. Rework this system to be more in line with how we handle climates and
   // calories boons."): TIERS ON THE ONE KEY, as Climates & Calories' row has them - Off (DFU's horse, stored as the old
   // switch's own `false`), Boons (the default, never stored - BOONS-DEFAULT's way) and Hard (the system as it stood, by
-  // name); systems/upkeepTiers.js HORSE_CARE_STORED and HORSE_CARE_DEFAULT, which test/horsetiers.test.js holds the
+  // name); systems/upkeep/upkeepTiers.js HORSE_CARE_STORED and HORSE_CARE_DEFAULT, which test/systems/horsetiers.test.js holds the
   // row to. The player's online, every tier, as every Climates & Calories tier is (MODS-ONLINE-3's reading: a tier
   // decides only what THIS player's horse pays) - the lane forced it on there until Mac's word.
   Object.freeze({
@@ -389,9 +389,9 @@ export const FEATURES = Object.freeze([
     get effect() { return t('features.horseCare.effect', 'Takes effect at once. Online, each player picks their own.'); },
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({
-      store: 'prefs', key: 'horseCare', initial: 'boons', online: 'player',   // systems/upkeepSwitch.js HORSE_CARE_PREF; HORSE-TIERS: upkeepTiers.js HORSE_CARE_DEFAULT
+      store: 'prefs', key: 'horseCare', initial: 'boons', online: 'player',   // systems/upkeep/upkeepSwitch.js HORSE_CARE_PREF; HORSE-TIERS: upkeepTiers.js HORSE_CARE_DEFAULT
       tiers: Object.freeze([tier(false, OFF), tier('boons', () => t('features.horseCare.boons', 'Boons')), tier('hard', () => t('features.horseCare.hard', 'Hard'))]),
-      // UI-CALM (2026-10-14): when the saddle panel stands (ui/enhancedSaddle.js saddleShown) - the player's own, offline
+      // UI-CALM (2026-10-14): when the saddle panel stands (ui/enhanced/enhancedSaddle.js saddleShown) - the player's own, offline
       // and online: When needed (its key, F2; a need; the first seconds in the saddle), Always (STEED-UI's), Off
       also: Object.freeze([Object.freeze({ store: 'prefs', key: 'saddlePanel', initial: 'auto', online: 'player' })]),
       parts: Object.freeze([Object.freeze({
@@ -401,11 +401,11 @@ export const FEATURES = Object.freeze([
     }),
   }),
   // WAGONS4 (2026-10-11, the owner: "Wagons have durability and require upkeep to keep from breaking down and becoming
-  // unusable"): WAGON UPKEEP (bible/06-Systems/Wagon-Upkeep.md, systems/wagonUpkeep.js).
+  // unusable"): WAGON UPKEEP (bible/06-Systems/Wagon-Upkeep.md, systems/wagon/wagonUpkeep.js).
   // WAGON-TIERS (2026-10-15, Mac: "Yes, same tiers"): horse care's model on its own key - Off (DFU's plain wagon, stored
   // as the old switch's own `false`), Boons (the default, never stored: it wears and is mended, and wear costs nothing)
-  // and Hard (the system as it stood, by name); systems/upkeepTiers.js WAGON_UPKEEP_STORED and WAGON_UPKEEP_DEFAULT,
-  // which test/wagontiers.test.js holds the row to. The player's online, every tier (MODS-ONLINE-3's reading).
+  // and Hard (the system as it stood, by name); systems/upkeep/upkeepTiers.js WAGON_UPKEEP_STORED and WAGON_UPKEEP_DEFAULT,
+  // which test/systems/wagontiers.test.js holds the row to. The player's online, every tier (MODS-ONLINE-3's reading).
   Object.freeze({
     id: 'wagon-upkeep',
     group: 'world',
@@ -415,7 +415,7 @@ export const FEATURES = Object.freeze([
     get effect() { return t('features.wagonUpkeep.effect', 'Takes effect at once. Online, each player picks their own.'); },
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({
-      store: 'prefs', key: 'wagonUpkeep', initial: 'boons', online: 'player',   // systems/upkeepSwitch.js WAGON_UPKEEP_PREF; WAGON-TIERS: upkeepTiers.js WAGON_UPKEEP_DEFAULT
+      store: 'prefs', key: 'wagonUpkeep', initial: 'boons', online: 'player',   // systems/upkeep/upkeepSwitch.js WAGON_UPKEEP_PREF; WAGON-TIERS: upkeepTiers.js WAGON_UPKEEP_DEFAULT
       tiers: Object.freeze([tier(false, OFF), tier('boons', () => t('features.wagonUpkeep.boons', 'Boons')), tier('hard', () => t('features.wagonUpkeep.hard', 'Hard'))]),
     }),
   }),
@@ -474,7 +474,7 @@ export const FEATURES = Object.freeze([
   // "smarter AI and elites offline") turned it ON offline as it always
   // was online: the port's game is the one it plays, the classic motor
   // one choice away and All off's. The words are AUDIT 59 F3's, kept
-  // true by test/ft5_enhancedai.test.js against the arc's own list of
+  // true by test/systems/ft5_enhancedai.test.js against the arc's own list of
   // what is still ahead. NOT a merge with DFU's Enhancements/
   // EnhancedCombatAI ("Smarter Enemies", UNAVAILABLE in settings.js: the port runs the
   // classic path only) - a different thing that shares half a name,
@@ -748,7 +748,7 @@ export const FEATURES = Object.freeze([
     }),
   }),
   // LR1 (2026-09-14): LOOT RARITY - the port's own item ladder
-  // (systems/lootRarity.js): Common, Magic, Rare, Legendary, with
+  // (systems/loot/lootRarity.js): Common, Magic, Rare, Legendary, with
   // DFU's artifacts as the ceiling. Enhanced, and ON (LR5, 2026-09-15,
   // Mac: "I want to mod on by default"). It shipped off beside
   // enhancedAI on the reasoning that a row changing the RULES waits to
@@ -770,7 +770,7 @@ export const FEATURES = Object.freeze([
   }),
   // WIND3 (2026-09-14, Mac: wisps that show the wind, a quiet wind, the
   // trees moving with it): THE WIND SEEN AND HEARD - three rows over the
-  // one wind (systems/windDrive.js), each the player's own online (a
+  // one wind (systems/wind/windDrive.js), each the player's own online (a
   // look and a sound, nothing the room shares), each read every frame
   // by the exterior hosts. Kill doors `?wisps=off`, `?windaudio=off`,
   // `?sway=off`.
@@ -786,7 +786,7 @@ export const FEATURES = Object.freeze([
     get effect() { return t('features.effect.atOnce', 'Takes effect at once.'); },
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({
-      store: 'prefs', key: 'floraSway', initial: true, online: 'player', lane: 'wind',   // WIND3: systems/windDrive.js floraSwayOn; render/renderer.js BB_VS uSway
+      store: 'prefs', key: 'floraSway', initial: true, online: 'player', lane: 'wind',   // WIND3: systems/wind/windDrive.js floraSwayOn; render/renderer.js BB_VS uSway
       also: Object.freeze([Object.freeze({ store: 'prefs', key: 'windWisps', initial: true, online: 'player' })]),   // WIND3: render/windWisps.js wispsOn
       parts: Object.freeze([Object.freeze({ key: 'floraSway', get label() { return t('features.wind.sway', 'Sway'); } }),   // AUDIT MEADOW1: the sway is the grass's too (labGrass.js draw), so the part is not the trees' alone
         Object.freeze({ key: 'windWisps', get label() { return t('features.wind.wisps', 'Wisps'); } })]),
@@ -831,12 +831,12 @@ export const FEATURES = Object.freeze([
       + 'hands, the torch in your off hand and the Morrowind arms.'); },
     get effect() { return t('features.effect.atOnce', 'Takes effect at once.'); },
     kinds: Object.freeze(['enhanced', 'classic']),
-    control: Object.freeze({ store: 'prefs', key: 'firstPersonLighting', initial: true, online: 'player' }),   // MAC-I: combat/weaponRig.js fpLightingOn
+    control: Object.freeze({ store: 'prefs', key: 'firstPersonLighting', initial: true, online: 'player' }),   // MAC-I: combat/weapon/weaponRig.js fpLightingOn
   }),
   // MAP-TOGGLE (2026-09-22, Mac: "is the enhanced map a toggle?" - "Yes
   // needs to be a toggle"): the held sheet was the enhanced skin's alone,
   // with no way to keep the skin and take DFU's own maps back. The three
-  // map doors read this beside the skin now (ui/mapSkin.js heldMapWorn).
+  // map doors read this beside the skin now (ui/map/mapSkin.js heldMapWorn).
   Object.freeze({
     id: 'enhanced-map',
     group: 'interface',   // FT18: was sight
@@ -848,9 +848,9 @@ export const FEATURES = Object.freeze([
     control: Object.freeze({ store: 'prefs', key: 'heldMap', initial: true, online: 'player' }),   // the player's own: what THEIR map looks like
   }),
   // EM3-3D (2026-09-27, Mac: "The dungeon map becomes the new default option, the current 2d enhanced becomes an
-  // option, not removed"): the held map's dungeon sheet in the round (ui/inkDungeonSolid.js, ui/inkDungeonGL.js) -
+  // option, not removed"): the held map's dungeon sheet in the round (ui/ink/inkDungeonSolid.js, ui/ink/inkDungeonGL.js) -
   // turned, tilted and zoomed as DFU's 3D automap is - is the default; off is EM3's flat plan, whole. Read where the
-  // sheet is built (ui/mapSkin.js dungeonMap3dOn), so a change takes the next map opened; `?dungeonmap=flat` stays
+  // sheet is built (ui/map/mapSkin.js dungeonMap3dOn), so a change takes the next map opened; `?dungeonmap=flat` stays
   // the kill door. The held map's own row above still decides whether there is a held map at all.
   Object.freeze({
     id: 'dungeon-map-3d',
@@ -865,7 +865,7 @@ export const FEATURES = Object.freeze([
   // TAMRIEL1 (2026-10-08, Mac: "building the entirety of tamriel that connects accurately to Daggerfall. Not actually
   // traversalable but used and connected as a gigantic map ... seen by players ingame"): the held map's world sheet
   // zooms out past the Bay onto the whole continent, authored in the same hand (ui/tamrielInk.js,
-  // world/tamrielGeography.js, bible/03-World/Tamriel.md). Read where the window is built (ui/mapSkin.js
+  // world/tamriel/tamrielGeography.js, bible/03-World/Tamriel.md). Read where the window is built (ui/map/mapSkin.js
   // tamrielMapOn), so a change takes the next map opened; `?tamriel=off` is the kill door.
   Object.freeze({
     id: 'tamriel-map',
@@ -878,7 +878,7 @@ export const FEATURES = Object.freeze([
     control: Object.freeze({ store: 'prefs', key: 'tamrielMap', initial: true, online: 'player' }),
   }),
   // TAMRIEL2 (2026-10-08, Mac: "only implement the land mass"): the streamed world goes on past the Bay's edge over the
-  // authored continent - its ground, its climate's textures and trees, nothing built on it (world/tamrielGround.js;
+  // authored continent - its ground, its climate's textures and trees, nothing built on it (world/tamriel/tamrielGround.js;
   // scenes/shared.js tamrielLandOn, read once as the world mounts). `?tamrielland=off` the kill door.
   Object.freeze({
     id: 'tamriel-land',
@@ -892,7 +892,7 @@ export const FEATURES = Object.freeze([
   }),
   // WEATHER2b (2026-09-14, Mac: "a dynamic world space event system where
   // weather can be traveled out of and into"): THE WEATHER FIELD - the
-  // day's words as places (systems/weatherField.js), read by the sim
+  // day's words as places (systems/weather/weatherField.js), read by the sim
   // every exterior frame (weatherSim.js weatherFieldOn). FORCED ON
   // ONLINE: one field for every player under the shared day's roll.
   // `?wxfield=off` the kill door.
@@ -908,7 +908,7 @@ export const FEATURES = Object.freeze([
   }),
   // FOREST1 (2026-10-01, the Discord's "Real Forests" thread): REAL
   // FORESTS - the wilderness's trees gathered into woods with open land
-  // between them, in place of DFU's even scatter (world/terrainNature.js
+  // between them, in place of DFU's even scatter (world/terrain/terrainNature.js
   // layoutForests). FORCED ON ONLINE: the woods are where Logging's trees
   // stand (scenes/treeHost.js standTrees), so a room has one forest.
   // `?forests=off` the kill door; scenes/shared.js realForestsOn composes it.
@@ -940,7 +940,7 @@ export const FEATURES = Object.freeze([
   }),
   // VERGE1 (2026-10-07, Mac: "Making sure objects, like trees, avoid pathways and roads. Currently they slightly
   // overlap"): THE VERGE - a wilderness flat stands only where nothing of it reaches over a road or a track: the disc of
-  // its widest picture, a Low Poly tree's crown among them, against the painted network (world/roadVerge.js). FORCED ON
+  // its widest picture, a Low Poly tree's crown among them, against the painted network (world/road/roadVerge.js). FORCED ON
   // ONLINE: where the wild's flats stand is the room's ground - Logging's trees, the herbs, the veins. `?verges=off` the
   // kill door, offline; scenes/shared.js roadVergesOn composes it.
   Object.freeze({
@@ -1174,7 +1174,7 @@ export const FEATURES = Object.freeze([
   // type"): the steel plate's helm, two ways - closed (a visor and a plume) or open (a nasal helm, the face showing).
   // Mac's answers: a switch here beside Weapon Sheathing, closed by default. The VIEWER'S, as the sheathing is: it is
   // how this machine draws a steel helm - the player's and every peer's - and it never reaches the wire. Read where the
-  // worn set is composed (combat/fpArm.js); the tile rebuilds the body at once (ui/enhancedMenu.js TILE_AFTER).
+  // worn set is composed (combat/fpArm.js); the tile rebuilds the body at once (ui/enhanced/enhancedMenu.js TILE_AFTER).
   Object.freeze({
     id: 'steel-helm',
     group: 'combat',
@@ -1294,7 +1294,7 @@ export const FEATURES = Object.freeze([
     control: Object.freeze({ store: 'settings', key: 'Enhancements/CombatVoices' }),
   }),
   // UI-CALM (2026-10-14, a player: "Not everything needs to be visible constantly. Show information when it's
-  // relevant."): THE CALM HUD (ui/enhancedHud.js HUD_CALM_PREF) - the vitals rest while full and untouched, and come
+  // relevant."): THE CALM HUD (ui/enhanced/enhancedHud.js HUD_CALM_PREF) - the vitals rest while full and untouched, and come
   // back with the first point lost or spent. On by default; the player's own, online too.
   Object.freeze({
     id: 'calm-hud',
@@ -1367,8 +1367,8 @@ export const FEATURES = Object.freeze([
     get effect() { return t('features.effect.atOnce', 'Takes effect at once.'); },
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({
-      store: 'prefs', key: 'quickbarStyle', initial: 'hotbar', online: 'player', lane: 'quickSlots',   // HB1: ui/enhancedHotbar.js HOTBAR_PREF
-      also: Object.freeze([Object.freeze({ store: 'prefs', key: 'quickslots', initial: true, online: 'player' })]),   // QS: ui/enhancedHud.js hides the diamond on false
+      store: 'prefs', key: 'quickbarStyle', initial: 'hotbar', online: 'player', lane: 'quickSlots',   // HB1: ui/enhanced/enhancedHotbar.js HOTBAR_PREF
+      also: Object.freeze([Object.freeze({ store: 'prefs', key: 'quickslots', initial: true, online: 'player' })]),   // QS: ui/enhanced/enhancedHud.js hides the diamond on false
     }),
   }),
   // LOAD1 (2026-10-05, Mac: "add loading screens where needed for the game in an enhanced UI type fashion, maybe make
@@ -1391,7 +1391,7 @@ export const FEATURES = Object.freeze([
     }),
   }),
   // GUIDE3 (2026-09-29, Mac: "...make it more accessible", then "This is your baby"): THE HERALD - a quest's news as
-  // a notice in the enhanced stack (ui/questHerald.js), fed by the quest bridge's tick. On by default (the arc's
+  // a notice in the enhanced stack (ui/quest/questHerald.js), fed by the quest bridge's tick. On by default (the arc's
   // DECISIONS: the silence it answers is DISC6's report); the player's own online, since news is no one else's.
   Object.freeze({
     id: 'quest-herald',
@@ -1401,9 +1401,9 @@ export const FEATURES = Object.freeze([
       + 'under a day left, and when it ends. Off is the classic silence: the journal changes without a word.'); },   // AUDIT GUIDE H1
     get effect() { return t('features.effect.atOnce', 'Takes effect at once.'); },
     kinds: Object.freeze(['enhanced']),
-    control: Object.freeze({ store: 'prefs', key: 'questHerald', initial: true, online: 'player' }),   // ui/questHerald.js HERALD_PREF
+    control: Object.freeze({ store: 'prefs', key: 'questHerald', initial: true, online: 'player' }),   // ui/quest/questHerald.js HERALD_PREF
   }),
-  // GUIDE4 (2026-09-29): THE TRACKER - the quest you follow as a card at the HUD's right-upper edge (ui/questTracker.js),
+  // GUIDE4 (2026-09-29): THE TRACKER - the quest you follow as a card at the HUD's right-upper edge (ui/quest/questTracker.js),
   // fed by the same look. On by default but quiet (DECISIONS 2): it follows the quest the journal last changed until
   // the player tracks one from the journal, and shows nothing with no quest to follow. The player's own online.
   Object.freeze({
@@ -1414,9 +1414,9 @@ export const FEATURES = Object.freeze([
       + 'the time left - or the one you track from the journal. Off is the classic HUD, which says nothing of quests.'); },
     get effect() { return t('features.effect.atOnce', 'Takes effect at once.'); },
     kinds: Object.freeze(['enhanced']),
-    control: Object.freeze({ store: 'prefs', key: 'questTracker', initial: true, online: 'player' }),   // ui/questTracker.js TRACKER_PREF
+    control: Object.freeze({ store: 'prefs', key: 'questTracker', initial: true, online: 'player' }),   // ui/quest/questTracker.js TRACKER_PREF
   }),
-  // GUIDE5 (2026-09-29): THE MARKS - where a quest points, on the held map and the enhanced compass (ui/questMarks.js):
+  // GUIDE5 (2026-09-29): THE MARKS - where a quest points, on the held map and the enhanced compass (ui/quest/questMarks.js):
   // only a place the player's map already holds, never the quest debugger's knowledge. On by default (DECISIONS 7).
   Object.freeze({
     id: 'quest-marks',
@@ -1426,12 +1426,12 @@ export const FEATURES = Object.freeze([
       + 'already holds. Off is the classic map and compass, which mark nothing for a quest.'); },
     get effect() { return t('features.effect.atOnce', 'Takes effect at once.'); },
     kinds: Object.freeze(['enhanced']),
-    control: Object.freeze({ store: 'prefs', key: 'questMarks', initial: true, online: 'player' }),   // ui/questMarks.js MARKS_PREF
+    control: Object.freeze({ store: 'prefs', key: 'questMarks', initial: true, online: 'player' }),   // ui/quest/questMarks.js MARKS_PREF
   }),
   // GUIDE8 (2026-10-05, the delve arc - Quest-Guide-Arc.md DECISIONS 3, "a player who cannot read a dungeon should be
   // able to ask for it"): THE GUIDANCE TIERS. Journal is GUIDE5's law; Exact is the quest debugger's knowledge - every
   // quest resource in a dungeon on its map (its floor on the strip) and the followed one on the compass
-  // (systems/questGuidance.js, read by scenes/worldModes.js for scenes/dungeonContext.js), and AUDIT DELVE inside
+  // (systems/quest/questGuidance.js, read by scenes/worldModes.js for scenes/dungeonContext.js), and AUDIT DELVE inside
   // buildings too; Town between them - the building an entry names, ringed on the town map and on the compass while the
   // player is in its town (scenes/world.js). Exact is the one tier that can spoil: off by default, its own row.
   Object.freeze({
@@ -1443,10 +1443,10 @@ export const FEATURES = Object.freeze([
       + 'can spoil a search.',
     effect: 'Takes effect at once.',
     kinds: Object.freeze(['enhanced']),
-    control: Object.freeze({ store: 'prefs', key: 'questGuidance', initial: 'journal', online: 'player', classic: 'journal', tiers: Object.freeze([['journal', 'Journal'], ['town', 'Town'], ['exact', 'Exact']]) }),   // systems/questGuidance.js GUIDANCE_PREF, GUIDANCE_TIERS
+    control: Object.freeze({ store: 'prefs', key: 'questGuidance', initial: 'journal', online: 'player', classic: 'journal', tiers: Object.freeze([['journal', 'Journal'], ['town', 'Town'], ['exact', 'Exact']]) }),   // systems/quest/questGuidance.js GUIDANCE_PREF, GUIDANCE_TIERS
   }),
   // SENSE1 (2026-10-05, the delve arc - bible/03-World/Delve-Arc.md): THE LOOK ROUND. Asking for Info mode underground
-  // lights what is near, in sight, and named by the plaque (systems/dungeonSense.js, read by scenes/dungeonContext.js
+  // lights what is near, in sight, and named by the plaque (systems/dungeon/dungeonSense.js, read by scenes/dungeonContext.js
   // at the ask). On by default: it lights nothing a press or the plaque would not reach. The secrets tier lights what
   // nothing else names - a wall only a lever moves - so it is the player's own ask.
   Object.freeze({
@@ -1457,11 +1457,11 @@ export const FEATURES = Object.freeze([
       + 'a few seconds. With secrets, walls that only a lever moves glow too.',
     effect: 'Takes effect at once.',
     kinds: Object.freeze(['enhanced']),
-    control: Object.freeze({ store: 'prefs', key: 'dungeonSense', initial: 'on', online: 'player', tiers: Object.freeze([['off', 'Off'], ['on', 'On'], ['secrets', 'With secrets']]) }),   // systems/dungeonSense.js SENSE_PREF
+    control: Object.freeze({ store: 'prefs', key: 'dungeonSense', initial: 'on', online: 'player', tiers: Object.freeze([['off', 'Off'], ['on', 'On'], ['secrets', 'With secrets']]) }),   // systems/dungeon/dungeonSense.js SENSE_PREF
   }),
   // ECHO1 (2026-10-05, the delve arc): THE CHAIN'S ECHO - a press that moves something out of sight says which way, marks
   // it on the dungeon map and lights it when it is reached; and in Info mode a lever's plaque says which way its work
-  // lies (systems/dungeonEcho.js, read by scenes/dungeonContext.js). On by default: it says only what the press itself
+  // lies (systems/dungeon/dungeonEcho.js, read by scenes/dungeonContext.js). On by default: it says only what the press itself
   // set going - the sound a room away the classic game never gives a direction to.
   Object.freeze({
     id: 'dungeon-echoes',
@@ -1471,7 +1471,7 @@ export const FEATURES = Object.freeze([
       + 'it glows when you reach it. In Info mode, a lever\u2019s World Tooltips label says which way it works.',
     effect: 'Takes effect at once.',
     kinds: Object.freeze(['enhanced']),
-    control: Object.freeze({ store: 'prefs', key: 'dungeonEchoes', initial: true, online: 'player' }),   // systems/dungeonEcho.js ECHO_PREF
+    control: Object.freeze({ store: 'prefs', key: 'dungeonEchoes', initial: true, online: 'player' }),   // systems/dungeon/dungeonEcho.js ECHO_PREF
   }),
   // WAYOUT1 (2026-10-05, the delve arc): THE WAY OUT ON THE COMPASS - the walked trail walked back to the way in, once
   // the way in has been found (systems/wayOut.js, read by scenes/dungeonContext.js). On by default: it points only
@@ -1516,7 +1516,7 @@ export const FEATURES = Object.freeze([
     control: Object.freeze({ store: 'prefs', key: 'roadEncounters', initial: true, online: 'player' }),
   }),
   // DISC19-F (2026-09-24, Discord through Mac: "enhance guard
-  // interaction"): THE WATCH DEFENDS THE TOWN (systems/townWatch.js) -
+  // interaction"): THE WATCH DEFENDS THE TOWN (systems/town/townWatch.js) -
   // the port's own. DFU's combat watch exists only for a crime; this
   // brings it, as the player's ally, when a monster hunts the player
   // inside a town. Off is DFU's watch alone.
@@ -1571,7 +1571,7 @@ export const FEATURES = Object.freeze([
     // are PARTS, each its own in the drawer. ONLINE THEY ARE THE PLAYER'S: a mark is a local picture with no
     // gameplay in it, so every player answers for themselves.
     control: Object.freeze({
-      store: 'prefs', key: 'blood-gore', initial: 'normal', online: 'player', lane: 'blood',   // BLOOD2g: combat/bloodSwitch.js GORE_TIERS
+      store: 'prefs', key: 'blood-gore', initial: 'normal', online: 'player', lane: 'blood',   // BLOOD2g: combat/blood/bloodSwitch.js GORE_TIERS
       also: Object.freeze([
         Object.freeze({ store: 'prefs', key: 'blood-marks', initial: true, online: 'player' }),
         Object.freeze({ store: 'prefs', key: 'blood-overkill', initial: true, online: 'player' }),
@@ -1624,7 +1624,7 @@ export const FEATURES = Object.freeze([
     // write difficulty.js SURVIVAL_STORED - Off as the old switch's own
     // `false` (AUDIT SURV-TIERS: an older build reading the same shelf
     // still sees Off as off), Casual and Hard by name - and the default
-    // is its SURVIVAL_DEFAULT (test/survtiers.test.js holds the row to
+    // is its SURVIVAL_DEFAULT (test/systems/survival/survtiers.test.js holds the row to
     // them, as the Gore row is held to GORE_TIERS).
     //
     // SURV-BOONS (2026-10-12, the owner: "Players would still be able to switch between CAC versions"): A FOURTH SEGMENT ON
@@ -1633,7 +1633,7 @@ export const FEATURES = Object.freeze([
     // the same reading holds: a boon is MY body's, so the tier is the player's online.
     //
     // TEMP-UI (2026-10-12, the owner: "add a temperature widget to the UI"): THE TEMPERATURE PLATE IS A PART - shown by
-    // default beside the compass (ui/enhancedHud.js), a picture with no gameplay in it, so each player's own online.
+    // default beside the compass (ui/enhanced/enhancedHud.js), a picture with no gameplay in it, so each player's own online.
     control: Object.freeze({
       store: 'prefs', key: 'survival', initial: 'boons', online: 'player',   // BOONS-DEFAULT: difficulty.js SURVIVAL_DEFAULT
       tiers: Object.freeze([tier(false, OFF), tier('boons', () => t('features.mod.climatesCalories.boons', 'Boons')), tier('casual', () => t('features.mod.climatesCalories.casual', 'Casual')), tier('hard', () => t('features.mod.climatesCalories.hard', 'Hard'))]),
@@ -1644,7 +1644,7 @@ export const FEATURES = Object.freeze([
   // NAV (2026-09-28, Mac: "proper naval combat with a huge reference to assassins creed black flag ... directly integrate
   // into online mode"): THE SEA FIGHT (bible/03-World/Naval-Combat.md) - the port's own, on Come Sail Away's hulls, so
   // it stands nothing without that mod. ONE SWITCH, FORCED ON ONLINE: the ships at sea are the room's world (one player
-  // stands the sea for everyone near - scenes/navalHost.js), and a room where one player sees the pirate boarding another
+  // stands the sea for everyone near - scenes/naval/navalHost.js), and a room where one player sees the pirate boarding another
   // and the other does not is two worlds. The rest is each player's own: the traffic the sea they stand is filled with,
   // whether pirates grapple THEIR boat, and whether THEIR voyage's beaten raiders leave a hold to plunder.
   Object.freeze({

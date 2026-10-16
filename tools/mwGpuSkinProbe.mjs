@@ -1,7 +1,7 @@
 // MWNPC1 LIVE PROOF: THE SKIN IN THE VERTEX SHADER DRAWS THE BODY THE CPU SKIN DREW - IN A REAL BROWSER.
 //
-// test/mwnpc1_gpuskin.test.js holds the GPU skin's law to the CPU skin in node: the stream, the palette and the
-// shader's law in JS (formats/mwGpuSkin.js skinStreamCorner) against poseAssembly + packFpArm, the fragment's face
+// test/formats/morrowind/mwnpc1_gpuskin.test.js holds the GPU skin's law to the CPU skin in node: the stream, the palette and the
+// shader's law in JS (formats/morrowind/mwGpuSkin.js skinStreamCorner) against poseAssembly + packFpArm, the fragment's face
 // normal in JS against the packed path's lit normal, and the GLSL's TEXT against both. What node cannot do is run
 // the GLSL. This does: the same fixture body built twice in one page on one Renderer - one rig on the renderer
 // itself (the GPU skin), one on a view of it with the skinned path hidden (gpuSkinOn answers false: the CPU skin) -
@@ -39,7 +39,7 @@ try {
       import('/src/render/renderer.js'),
       import('/src/combat/fpArm.js'),
       import('/src/world/mat4.js'),
-      import('/src/formats/mwFirstPerson.js'),
+      import('/src/formats/morrowind/mwFirstPerson.js'),
       import('/test/fixtures/mw/bodyRigBrowser.mjs'),
     ]);
     const cv = document.createElement('canvas');

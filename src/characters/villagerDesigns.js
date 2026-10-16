@@ -12,7 +12,7 @@
 // THE ROSTER IS NOT OURS TO CHOOSE: mobilePerson.js's PERSON_TEXTURES
 // is 3 races x 2 genders x 4 archives, plus the city guard. Every
 // archive needs a design or the town spawns a villager with none, and
-// test/villagerdesigns.test.js fails if the two ever drift apart.
+// test/characters/villagerdesigns.test.js fails if the two ever drift apart.
 //
 // ── the format ────────────────────────────────────────────────────
 // Each design is consumed by buildNeutralBody(ramps, opts):
@@ -72,7 +72,7 @@
  *    from it shades in speckles rather than a ramp. The colour proof
  *    (tools/villagerDesignSheet.mjs) showed it immediately where the
  *    numbers had not, and the pin now measures HUE coherence too.
- *  The pin in test/villagerdesigns.test.js walks every span on the real
+ *  The pin in test/characters/villagerdesigns.test.js walks every span on the real
  *  palette and fails on a non-monotone or flat ramp, so this cannot
  *  quietly regress. */
 export const RAMPS = Object.freeze({

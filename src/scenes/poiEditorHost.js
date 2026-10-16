@@ -27,7 +27,7 @@
 // THE FOUR HOSTS (bible/Home.md): scenes/world.js - WIRED (`?editor`, a builder's alone - mountPoiEditor: the motor held
 // and the eye the frame's while it is open, its drafts laid over the feed before the POI host's frame, its lines after the
 // translucent pass, leaving back to the body or onto what is under the eye; refused online with the other powers,
-// systems/onlineLane.js). scenes/worldModes.js - its interiors stand no POI: the editor opens outdoors alone.
+// systems/online/onlineLane.js). scenes/worldModes.js - its interiors stand no POI: the editor opens outdoors alone.
 // scenes/exterior.js - stands no POI (scenes/poiHost.js's flag): nothing here reaches it.
 // scenes/dungeonContext.js - stands no street: nothing here reaches it.
 //
@@ -39,7 +39,7 @@ import {
 } from '../poi/poiEdit.js';
 import { gizmoSize, gizmoShape, pickHandle, beginGizmoDrag, dragResult, POI_SNAP_DEFAULT, POI_GIZMO_PX } from '../poi/poiGizmo.js';
 import { quatRotate } from '../world/quat.js';
-import { lookDir } from './decorTool.js';
+import { lookDir } from './decor/decorTool.js';
 import { rayDirFromScreen } from '../player/tapRay.js';
 import { canvasPoint } from '../player/travelPick.js';
 

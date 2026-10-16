@@ -3,26 +3,26 @@
 Mac, 2026-09-27: *"making the map like the og one in 3d again but only handrawn"*, then, merging it: *"The dungeon map
 becomes the new default option, the current 2d enhanced becomes an option, not removed."*
 
-The held map's dungeon sheet (EM3's `ui/automapSheet.js`) has a second mode, `solid`: the level drawn in the round, the
+The held map's dungeon sheet (EM3's `ui/automap/automapSheet.js`) has a second mode, `solid`: the level drawn in the round, the
 way DFU's 3D automap draws it, but inked by hand on the same parchment. It is the default. EM3's flat plan, one floor at a
 time with its floor list, is the Off of the Features row `dungeon-map-3d` ("3D dungeon map", the interface group, under
-the Enhanced map row). `?dungeonmap=flat` is the kill door. Both are read where the sheet is built (`ui/mapSkin.js`
+the Enhanced map row). `?dungeonmap=flat` is the kill door. Both are read where the sheet is built (`ui/map/mapSkin.js`
 `dungeonMap3dOn`, `ui/heldMap.js`), so a change takes the next map opened. The classic skin keeps DFU's own automap
 window. Port-Ledger section A carries the departure.
 
 ## What it draws
 
-- **The revealed rows' own triangles** (`ui/inkDungeonGL.js`, WebGL2 - ONE ink a page, `dungeonInkFor`, every sheet's rows
+- **The revealed rows' own triangles** (`ui/ink/inkDungeonGL.js`, WebGL2 - ONE ink a page, `dungeonInkFor`, every sheet's rows
   keyed by the sheet; it was a context a map open, never freed: GL-LEAK, FIELD BUGS 2026-10-03), culled as the world pass culls - a face is drawn
   when its wound normal, after placement, faces the eye (proved through `world/mat4.js`'s own functions) - and cut above
-  the player's feet by the classic window's slicing law (`systems/automap.js` `slicingPositionY`). Pass one lays facing,
+  the player's feet by the classic window's slicing law (`systems/automap/automap.js` `slicingPositionY`). Pass one lays facing,
   washes, flagstones (running bond, a level of detail by zoom) and water (`waterLevel` per row: a darkening wash, waves,
   level lines on walls, a waterline); pass two inks creases, cuts and outlines from the depth's curvature, with a wobble.
   A short upright face (`RISER_MAX`) is a riser, inked as part of its slope, so a flight is never a black band.
   A face is a FLOOR by the plan's own law - leaning up no further than the motor walks (`FLOOR_FACE_NY`, automapFloors'
   `FLOOR_NY`): a literal 0.6 (53 degrees) inked Daggerfall's 55-degree ramps as walls, a hallway's climb never the grey
-  of ground walked (RAMP-INK, `01-Overview/Field-Bugs-2026-10-05c.md`).
-- **Without WebGL2** (node, the pins) the cell model draws instead (`ui/inkDungeonSolid.js`): the walkable floor seeded at
+  of ground walked (RAMP-INK, `01-Overview/bugs/Field-Bugs-2026-10-05c.md`).
+- **Without WebGL2** (node, the pins) the cell model draws instead (`ui/ink/inkDungeonSolid.js`): the walkable floor seeded at
   each storey and grown across a climbable rise, thin walls, ramps for flights, a cutaway by turn step.
 - **All floors** (L): every explored storey, each row cut at its own storey's slice; the player's storey in full and the
   rest at `OTHER_FLOOR`. A row's storey is the height with the most level-face area.
@@ -58,7 +58,7 @@ The patch arrived as whole files cut from main at `b27721a1` (#396), not a diff.
 (`git merge-file`: main's file, the base, the patch's) onto main `43c8762d`: no conflicts, since main had not touched the
 map files and only lightly the rest. Done at the merge:
 
-- **The switch**: the Features row, `dungeonMap3dOn` reading it beside the kill door, `test/em3_mapchoice.test.js`
+- **The switch**: the Features row, `dungeonMap3dOn` reading it beside the kill door, `test/ui/map/em3_mapchoice.test.js`
   driven through the real automap door, `tools/mutants/em3mapchoice.json`.
 - **Types**: 22 `tsc` errors - the trail's record fields, the sheet's `domTools`/`portals`, the solid options, the orbit's
   literal types.

@@ -5,7 +5,7 @@
     "old": "    level: Math.min(CAST_LEVEL_MAX, Math.max(1, Math.trunc(Number(level) || 1))),",
     "new": "    level: Math.max(1, Math.trunc(Number(level) || 1)),",
     "tests": [
-      "test/allycast.test.js"
+      "test/systems/allycast.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    level: Math.min(CAST_LEVEL_MAX, Math.max(1, Math.trunc(Number(level) || 1))),",
     "new": "    level: Math.min(CAST_LEVEL_MAX + 1, Math.max(1, Math.trunc(Number(level) || 1))),",
     "tests": [
-      "test/allycast.test.js"
+      "test/systems/allycast.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    level: Math.min(CAST_LEVEL_MAX, Math.max(1, Math.trunc(Number(level) || 1))),",
     "new": "    level: Math.min(CAST_LEVEL_MAX - 1, Math.max(1, Math.trunc(Number(level) || 1))),",
     "tests": [
-      "test/allycast.test.js"
+      "test/systems/allycast.test.js"
     ]
   }
 ]

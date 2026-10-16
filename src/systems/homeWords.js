@@ -6,8 +6,8 @@
 // one spelling for the door, the rent, the decorator and the arena's letter,
 // so one door never says "45,000 gold ... your account at the Bank of the
 // Empire" beside "10000 gold a day ... this region's bank account". Pure, and
-// imports nothing: systems/onlineHomes.js, systems/homeRent.js,
-// systems/arenaText.js and scenes/decorTool.js all read it, and onlineHomes
+// imports nothing: systems/online/onlineHomes.js, systems/homeRent.js,
+// systems/arena/arenaText.js and scenes/decor/decorTool.js all read it, and onlineHomes
 // already imports homeRent and arenaText.
 // ═══════════════════════════════════════════════════════════════════
 

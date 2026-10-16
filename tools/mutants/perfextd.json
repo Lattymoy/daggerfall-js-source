@@ -5,7 +5,7 @@
     "old": "  if (_CloudTopOpacity > 0.0) {\n  float cloudTop1",
     "new": "  {\n  float cloudTop1",
     "tests": [
-      "test/perfextd.test.js"
+      "test/render/perfextd.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  if (_CloudOpacity > 0.0) {\n  vec2 cloudUV",
     "new": "  {\n  vec2 cloudUV",
     "tests": [
-      "test/perfextd.test.js"
+      "test/render/perfextd.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  if (_CloudTopOpacity > 0.0) {\n",
     "new": "  if (_CloudOpacity > 0.0) {\n",
     "tests": [
-      "test/perfextd.test.js"
+      "test/render/perfextd.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  if (_CloudOpacity > 0.0) {\n",
     "new": "  if (_CloudOpacity >= 0.0) {\n",
     "tests": [
-      "test/perfextd.test.js"
+      "test/render/perfextd.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  float cloudThickness;\n  float pos;\n  float cloudLerpValue;\n  if (_CloudTopOpacity > 0.0) {\n",
     "new": "  if (_CloudTopOpacity > 0.0) {\n  float cloudThickness;\n  float pos;\n  float cloudLerpValue;\n",
     "tests": [
-      "test/perfextd.test.js"
+      "test/render/perfextd.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "  col.rgb = mix(col.rgb, cloudTopColor, cloudsTop * _CloudTopOpacity);\n  }\n",
     "new": "  }\n  col.rgb = mix(col.rgb, cloudTopColor, cloudsTop * _CloudTopOpacity);\n",
     "tests": [
-      "test/perfextd.test.js"
+      "test/render/perfextd.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "this.cloudsExternal && (name === '_CloudTopOpacity' || name === '_CloudOpacity') ? 0 :",
     "new": "false ? 0 :",
     "tests": [
-      "test/perfextd.test.js"
+      "test/render/perfextd.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "  if (dir.y > 0.0 && uCloudCover > 0.0) {",
     "new": "  if (dir.y > 0.0) {",
     "tests": [
-      "test/perfextd.test.js"
+      "test/render/perfextd.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "  if (dir.y > 0.0 && uCloudCover > 0.0) {",
     "new": "  if (dir.y > 0.0 && uCloudCover >= 0.0) {",
     "tests": [
-      "test/perfextd.test.js"
+      "test/render/perfextd.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "p = p * 2.0 + vec2(17.1, 9.7); a *= 0.5; }",
     "new": "p = p * 2.0 + vec2(17.1, 9.7); a *= 0.6; }",
     "tests": [
-      "test/perfextd.test.js"
+      "test/render/perfextd.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "    vec2 lo = deck(dir, 1.9, uDrift, uCloudCover, uCloudSoft, 0.0);",
     "new": "    vec2 lo = deck(dir, 1.9, uDrift, uCloudCover, uCloudSoft, 0.05);",
     "tests": [
-      "test/perfextd.test.js"
+      "test/render/perfextd.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "${glow ? '    c += airDecode(texture(uVol, wuv).rgb);",
     "new": "${1 ? '    c += airDecode(texture(uVol, wuv).rgb);",
     "tests": [
-      "test/perfextd.test.js"
+      "test/render/perfextd.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "${glow ? '    c += airDecode(texture(uVol, wuv).rgb);",
     "new": "${0 ? '    c += airDecode(texture(uVol, wuv).rgb);",
     "tests": [
-      "test/perfextd.test.js"
+      "test/render/perfextd.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "${shafts ? ' + texture(uShaft, wuv).rgb * uGrade.y' : ''}",
     "new": "${1 ? ' + texture(uShaft, wuv).rgb * uGrade.y' : ''}",
     "tests": [
-      "test/perfextd.test.js"
+      "test/render/perfextd.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "${shafts ? ' + texture(uShaft, wuv).rgb * uGrade.y' : ''}",
     "new": "${shafts ? ' + texture(uShaft, wuv).rgb * uGrade.y' : ' + vec3(0.0) * uGrade.y'}",
     "tests": [
-      "test/perfextd.test.js"
+      "test/render/perfextd.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "${glow ? ' + airDecode(texture(uVol, vUV).rgb)' : ''}",
     "new": "${1 ? ' + airDecode(texture(uVol, vUV).rgb)' : ''}",
     "tests": [
-      "test/perfextd.test.js"
+      "test/render/perfextd.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "const glow = this.stats.vol ? 1 : 0,",
     "new": "const glow = 1,",
     "tests": [
-      "test/perfextd.test.js"
+      "test/render/perfextd.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "const glow = this.stats.vol ? 1 : 0,",
     "new": "const glow = 0,",
     "tests": [
-      "test/perfextd.test.js"
+      "test/render/perfextd.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "shafts = this.stats.shafts || this.stats.haze ? 1 : 0;",
     "new": "shafts = this.stats.shafts ? 1 : 0;",
     "tests": [
-      "test/perfextd.test.js"
+      "test/render/perfextd.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "shafts = this.stats.shafts || this.stats.haze ? 1 : 0;",
     "new": "shafts = 0;",
     "tests": [
-      "test/perfextd.test.js"
+      "test/render/perfextd.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "    const prepared = !!this.f && this.fresh;\n    if (prepared) this._images();\n    else { this._blank(quad); this.measured = false; }\n    this.fresh = false;\n    // PERF-EXT31: the passes built for what the images hold, final now that _images or _blank has run - the glow marched\n    // or cleared black, the shafts drawn (the beams or the haze) or cleared black (resolveFs says why). The luminance\n    // image reads the glow either way: sixteen taps a texel of a 32x32 image is 16,384 a frame, nothing to save.\n    const glow = this.stats.vol ? 1 : 0, shafts = this.stats.shafts || this.stats.haze ? 1 : 0;\n",
     "new": "    const glow = this.stats.vol ? 1 : 0, shafts = this.stats.shafts || this.stats.haze ? 1 : 0;\n    const prepared = !!this.f && this.fresh;\n    if (prepared) this._images();\n    else { this._blank(quad); this.measured = false; }\n    this.fresh = false;\n    // PERF-EXT31: the passes built for what the images hold, final now that _images or _blank has run - the glow marched\n    // or cleared black, the shafts drawn (the beams or the haze) or cleared black (resolveFs says why). The luminance\n    // image reads the glow either way: sixteen taps a texel of a 32x32 image is 16,384 a frame, nothing to save.\n",
     "tests": [
-      "test/perfextd.test.js"
+      "test/render/perfextd.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "const PB = P.bright[glow],",
     "new": "const PB = P.bright[1],",
     "tests": [
-      "test/perfextd.test.js"
+      "test/render/perfextd.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "PR = P.resolve[glow][shafts];",
     "new": "PR = P.resolve[1][1];",
     "tests": [
-      "test/perfextd.test.js"
+      "test/render/perfextd.test.js"
     ]
   },
   {
@@ -212,7 +212,7 @@
     "old": "PR = P.resolve[glow][shafts];",
     "new": "PR = P.resolve[glow][1];",
     "tests": [
-      "test/perfextd.test.js"
+      "test/render/perfextd.test.js"
     ]
   }
 ]

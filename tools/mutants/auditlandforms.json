@@ -5,7 +5,7 @@
     "old": "      if (chan > 0 && !layers[li].water && (layers[li].ford || dmins[li] > layers[li].dial.flat)) a *= 1 - chan;\n",
     "new": "",
     "tests": [
-      "test/auditlandforms.test.js"
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    if (segs.length) layers.push({ dial, reach, segs, water: LAYERS[li].water, ford: !!LAYERS[li].ford,",
     "new": "    if (segs.length) layers.push({ dial, reach, segs, water: false, ford: !!LAYERS[li].ford,",
     "tests": [
-      "test/auditlandforms.test.js"
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "      dmins[li] = dmin;\n",
     "new": "",
     "tests": [
-      "test/auditlandforms.test.js"
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "if (chan > 0 && !layers[li].water && (layers[li].ford || dmins[li] > layers[li].dial.flat)) a *= 1 - chan;",
     "new": "if (chan > 0 && !layers[li].water) a *= 1 - chan;",
     "tests": [
-      "test/auditlandforms.test.js"
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "const d = layers[li].dial, c = 1 - smoothstep(d.flat, d.flat + d.bank, dmins[li]);",
     "new": "const d = layers[li].dial, c = 1 - smoothstep(d.flat, d.flat + d.bank + d.verge, dmins[li]);",
     "tests": [
-      "test/auditlandforms.test.js"
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "const top = dial.drop > 0 && !(smoothLand > floor + dial.drop) ? floor + dial.drop : smoothLand;",
     "new": "const top = smoothLand > floor + dial.drop ? smoothLand : floor + dial.drop;",
     "tests": [
-      "test/auditlandforms.test.js"
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -59,8 +59,8 @@
     "old": "export const LANDFORM_FLOOR = LANDFORM_KNEE + 0.5;",
     "new": "export const LANDFORM_FLOOR = LANDFORM_KNEE;",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -69,8 +69,8 @@
     "old": "const least = raw < LANDFORM_FLOOR ? raw : LANDFORM_FLOOR;",
     "new": "const least = LANDFORM_FLOOR;",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -79,8 +79,8 @@
     "old": "  coast: 12,",
     "new": "  coast: 2,",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -89,8 +89,8 @@
     "old": "const fade = smoothstep(LANDFORM_KNEE, LANDFORM_KNEE + LANDFORM_DIALS.coast, land);",
     "new": "const fade = smoothstep(LANDFORM_KNEE, LANDFORM_KNEE + LANDFORM_DIALS.coast, h);",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ],
     "equivalent": true,
     "why": "land and h part only where reliefLift(low) > 0, and on the real WOODS.WLD no lifted sample stands under 184 units (the large-map term x4 never under -76.4), far over the coast band (41.5..53.5); 0 changed samples on 120 real coastal path pixels"
@@ -101,8 +101,8 @@
     "old": "    for (let li = 0; li < layers.length; li++) {\n      let a = weights[li] * fade;",
     "new": "    for (let li = layers.length - 1; li >= 0; li--) {\n      let a = weights[li] * fade;",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -111,8 +111,8 @@
     "old": "weights[li] = 1 - smoothstep(edge, reach, dmin);",
     "new": "weights[li] = 1;",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -121,8 +121,8 @@
     "old": "        : top + (land - top) * smoothstep(edge, reach, dmin);",
     "new": "        : top;",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -131,8 +131,8 @@
     "old": "        ? floor + (top - floor) * smoothstep(dial.flat, edge, dmin)",
     "new": "        ? floor + (top - floor) * Math.min(1, Math.max(0, (dmin - dial.flat) / dial.bank))",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -141,8 +141,8 @@
     "old": "const edge = dial.flat + dial.bank;",
     "new": "const edge = dial.flat;",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -151,8 +151,8 @@
     "old": "const smoothLand = land - g * keep;",
     "new": "const smoothLand = land;",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -161,8 +161,8 @@
     "old": "const floor = wf / ws - dial.drop;",
     "new": "const floor = wf / ws;",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -171,8 +171,8 @@
     "old": "if (dmin === Infinity) { weights[li] = 0; continue; }",
     "new": "if (dmin === Infinity) { continue; }",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -181,8 +181,8 @@
     "old": "if (!(d < reach)) continue;",
     "new": "if (!(d < 2 * reach)) continue;",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -191,8 +191,8 @@
     "old": "const q = d * d + 0.25, r = 1 - d / reach;",
     "new": "const q = d + 0.25, r = 1 - d / reach;",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -201,8 +201,8 @@
     "old": "const w = ((r * r) / (q * q))",
     "new": "const w = ((r) / (q * q))",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -211,8 +211,8 @@
     "old": "const past = t < 0 ? -t : t > s.len ? t - s.len : 0;",
     "new": "const past = t < 0 ? -t : 0;",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -221,8 +221,8 @@
     "old": "const past = t < 0 ? -t : t > s.len ? t - s.len : 0;",
     "new": "const past = t > s.len ? t - s.len : 0;",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -231,8 +231,8 @@
     "old": "        if (t < 0) t = 0; else if (t > s.len) t = s.len;\n",
     "new": "\n",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -241,8 +241,8 @@
     "old": "const gx = ox + x, gy = oy + y;",
     "new": "const gx = ox + x, gy = oy - y;",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -251,8 +251,8 @@
     "old": "const ox = px * span;",
     "new": "const ox = px * hDim;",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -261,8 +261,8 @@
     "old": "const cx = qx * span + half;",
     "new": "const cx = qx * hDim + half;",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -271,8 +271,8 @@
     "old": "const cy = (MAP_H - qy) * span + half;",
     "new": "const cy = (MAP_H - qy) * span - half;",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -281,8 +281,8 @@
     "old": "for (let qy = py - 1; qy <= py + 1; qy++) {",
     "new": "for (let qy = py - 1; qy <= py; qy++) {",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -291,8 +291,8 @@
     "old": "for (let qx = px - 1; qx <= px + 1; qx++) {",
     "new": "for (let qx = px; qx <= px + 1; qx++) {",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -301,8 +301,8 @@
     "old": "if (Math.max(cx, ex) < ox - reach || Math.min(cx, ex) > ox + span + reach",
     "new": "if (Math.max(cx, ex) < ox || Math.min(cx, ex) > ox + span",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ],
     "equivalent": true,
     "why": "every arm the 3x3 gather finds within reach of the pixel either touches its box (it ends on the shared edge or corner) or lies 54+ samples off it, so the reach padding never binds; 0 changed samples on 240 real bend and coastal path pixels"
@@ -313,8 +313,8 @@
     "old": "|| Math.max(cy, ey) < oy - reach || Math.min(cy, ey) > oy + span + reach) continue;",
     "new": "|| Math.max(cy, ey) < oy || Math.min(cy, ey) > oy + span) continue;",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ],
     "equivalent": true,
     "why": "as AUDIT-LANDFORMS-D-box-x-no-reach, in y"
@@ -325,8 +325,8 @@
     "old": "const len = half * Math.sqrt(dx * dx + dy * dy);",
     "new": "const len = half;",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -335,8 +335,8 @@
     "old": "ux: (dx * half) / len, uy: (dy * half) / len,",
     "new": "ux: dx, uy: dy,",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -345,8 +345,8 @@
     "old": "for (let k = 0; k <= half; k++) {",
     "new": "for (let k = 0; k < half; k++) {",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -355,8 +355,8 @@
     "old": "const i = Math.min(half - 1, Math.floor(f));",
     "new": "const i = Math.min(half, Math.floor(f));",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -365,8 +365,8 @@
     "old": "return prof[i] + (prof[i + 1] - prof[i]) * (f - i);",
     "new": "return prof[Math.round(f)];",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -375,8 +375,8 @@
     "old": "const { base, noise, cliff } = termsOf(s.qx, s.qy);",
     "new": "const { base, noise, cliff } = termsOf(px, py);",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -385,8 +385,8 @@
     "old": "const macro = Math.min(Math.max(low + noise(lx, ly) * NOISE_MAP_SCALE, SCALED_OCEAN_ELEVATION), MAX_TERRAIN_HEIGHT);",
     "new": "const macro = Math.min(low + noise(lx, ly) * NOISE_MAP_SCALE, MAX_TERRAIN_HEIGHT);",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ],
     "equivalent": true,
     "why": "a grade read off a profile point under the ocean reaches only samples inside the coast fade, where it moves nothing (the written-out law floors the profile and agrees to 1e-9 either way): 0 changed samples on the fixture coasts and 120 real coastal path pixels"
@@ -397,8 +397,8 @@
     "old": "(l.water && !cutRivers ? null : roads?.[l.key] ?? null)",
     "new": "(!cutRivers ? null : roads?.[l.key] ?? null)",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -407,8 +407,8 @@
     "old": "    const l = h + reliefLift(low) * fade + hh;",
     "new": "    const l = h + reliefLift(h) * fade + hh;",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -417,8 +417,8 @@
     "old": "    f = (x, y) => field[x * hDim + y];",
     "new": "    f = (x, y) => field[y * hDim + x];",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -427,8 +427,8 @@
     "old": "blendLocationTerrain(field, sum / field.length, locationRect, hDim);",
     "new": "blendLocationTerrain(field, 0, locationRect, hDim);",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -437,8 +437,8 @@
     "old": "return f(ix, iy) * (1 - fx) * (1 - fy) + f(ix + 1, iy) * fx * (1 - fy) + f(ix, iy + 1) * (1 - fx) * fy + f(ix + 1, iy + 1) * fx * fy;",
     "new": "return f(ix, iy) * (1 - fx) * (1 - fy) + f(ix + 1, iy) * (1 - fx) * fy + f(ix, iy + 1) * fx * (1 - fy) + f(ix + 1, iy + 1) * fx * fy;",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -447,8 +447,8 @@
     "old": "return f(ix, iy) * (1 - fx) * (1 - fy) + f(ix + 1, iy) * fx * (1 - fy) + f(ix, iy + 1) * (1 - fx) * fy + f(ix + 1, iy + 1) * fx * fy;",
     "new": "return f(Math.round(cx), Math.round(cy));",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -457,8 +457,8 @@
     "old": "const ix = Math.min(span - 1, Math.floor(cx)), iy = Math.min(span - 1, Math.floor(cy));",
     "new": "const ix = Math.floor(cx), iy = Math.floor(cy);",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -467,8 +467,8 @@
     "old": "const cx = Math.max(0, Math.min(span, sx)), cy = Math.max(0, Math.min(span, sy));",
     "new": "const cx = sx, cy = sy;",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -477,9 +477,9 @@
     "old": "const nx = heightOf(px - 1, py) - heightOf(px + 1, py);",
     "new": "const nx = ringHeight(byteAt(px - 1, py)) - ringHeight(byteAt(px + 1, py));",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js",
-      "test/farring.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js",
+      "test/ui/farring.test.js"
     ]
   },
   {
@@ -488,9 +488,9 @@
     "old": "const nz = heightOf(px, py + 1) - heightOf(px, py - 1);",
     "new": "const nz = ringHeight(byteAt(px, py + 1)) - ringHeight(byteAt(px, py - 1));",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js",
-      "test/farring.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js",
+      "test/ui/farring.test.js"
     ]
   },
   {
@@ -499,9 +499,9 @@
     "old": "const key = `${px},${py},${landform && terrainGen.roads() ? 1 : 0}`;",
     "new": "const key = `${px},${py}`;",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js",
-      "test/gateseen.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js",
+      "test/scenes/gateseen.test.js"
     ]
   },
   {
@@ -510,9 +510,9 @@
     "old": "    const py = state.mapOrigin.y - Math.floor((z - c[2]) / TERRAIN_SIZE);\n    if (!woods || px < 0",
     "new": "    const py = state.mapOrigin.y + Math.floor((z - c[2]) / TERRAIN_SIZE);\n    if (!woods || px < 0",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js",
-      "test/terrainscale1.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js",
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
@@ -521,9 +521,9 @@
     "old": "return field((x - t[0]) / heightCell, (z - t[2]) / heightCell) * STREAMING_TERRAIN_SCALE;",
     "new": "return field(x / heightCell, z / heightCell) * STREAMING_TERRAIN_SCALE;",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js",
-      "test/terrainscale1.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js",
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
@@ -532,9 +532,9 @@
     "old": "return field((x - t[0]) / heightCell, (z - t[2]) / heightCell) * STREAMING_TERRAIN_SCALE;",
     "new": "return field((z - t[2]) / heightCell, (x - t[0]) / heightCell) * STREAMING_TERRAIN_SCALE;",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js",
-      "test/terrainscale1.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js",
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
@@ -543,9 +543,9 @@
     "old": "return field((x - t[0]) / heightCell, (z - t[2]) / heightCell) * STREAMING_TERRAIN_SCALE;",
     "new": "return field((x - t[0]) / heightCell, (z - t[2]) / heightCell);",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js",
-      "test/terrainscale1.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js",
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
@@ -554,9 +554,9 @@
     "old": "const key = `${px},${py},${rect ? `${rect.xMin},${rect.xMax},${rect.yMin},${rect.yMax}` : '-'},${terrainGen.roads() ? 1 : 0}`;",
     "new": "const key = `${px},${py},${terrainGen.roads() ? 1 : 0}`;",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js",
-      "test/terrainscale1.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js",
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
@@ -565,47 +565,47 @@
     "old": "const r = was > 0 ? was / STREAMING_TERRAIN_SCALE : 1;",
     "new": "const r = was / STREAMING_TERRAIN_SCALE;",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js",
-      "test/terrainscale1.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js",
+      "test/world/terrain/terrainscale1.test.js"
     ],
     "equivalent": true,
     "why": "every caller passes a scale that is never 0 or undefined - world.js its scaleOf(...) at each of its six, and worldModes its legacy interior cache's own (data.terrainScale > 0 ? data.terrainScale : DEFAULT_TERRAIN_SCALE) through the host's restandSceneHeight: the was > 0 guard cannot bind (AUDIT LANDFORMS II J13: this named world.js's alone)"
   },
   {
     "name": "AUDIT-LANDFORMS-D-promotion-ghosts-uncut",
-    "file": "src/world/terrainGen.js",
+    "file": "src/world/terrain/terrainGen.js",
     "old": "const lf = landforms ?? (landform ? createLandforms({ woods, roads, sites, climates }) : null);",
     "new": "const lf = landforms ?? (landform ? createLandforms({ woods, sites, climates }) : null);",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js",
-      "test/restrideworker.test.js",
-      "test/distantland.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js",
+      "test/world/terrain/restrideworker.test.js",
+      "test/world/terrain/distantland.test.js"
     ]
   },
   {
     "name": "AUDIT-LANDFORMS-D-worker-wait-after-the-answer",
-    "file": "src/world/terrainGenWorker.js",
+    "file": "src/world/terrain/terrainGenWorker.js",
     "old": "    if (m.t === 'grid' && m.landform && pendingRoads) { pendingRoads.then(() => handle(m)); return; }\n    if (m.t === 'grid') { answerGrid(m); return; }",
     "new": "    if (m.t === 'grid') { answerGrid(m); return; }\n    if (m.t === 'grid' && m.landform && pendingRoads) { pendingRoads.then(() => handle(m)); return; }",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js",
-      "test/restrideworker.test.js",
-      "test/roads.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js",
+      "test/world/terrain/restrideworker.test.js",
+      "test/world/road/roads.test.js"
     ]
   },
   {
     "name": "AUDIT-LANDFORMS-D-client-fallback-grid-uncut",
-    "file": "src/world/terrainGenClient.js",
+    "file": "src/world/terrain/terrainGenClient.js",
     "old": "if (!this._worker) return Promise.resolve(restrideGrid({ woods: this._woods, roads: this._roads ?? null, sites: this._sites, climates: this._climates, ...job }));",
     "new": "if (!this._worker) return Promise.resolve(restrideGrid({ woods: this._woods, sites: this._sites, climates: this._climates, ...job }));",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js",
-      "test/roads.test.js",
-      "test/restrideworker.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js",
+      "test/world/road/roads.test.js",
+      "test/world/terrain/restrideworker.test.js"
     ]
   },
   {
@@ -614,28 +614,28 @@
     "old": "  const row = onlineForcedPref('landforms', search) ?? getPref('landforms');",
     "new": "  const row = getPref('landforms');",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
     "name": "AUDIT-LANDFORMS-D-kernel-hands-no-ground-noise",
-    "file": "src/world/terrainSampler.js",
+    "file": "src/world/terrain/terrainSampler.js",
     "old": "return Math.max(0, shape(x, y, h, baseHeight * BASE_HEIGHT_SCALE, ground) / MAX_TERRAIN_HEIGHT);",
     "new": "return Math.max(0, shape(x, y, h, baseHeight * BASE_HEIGHT_SCALE, 0) / MAX_TERRAIN_HEIGHT);",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
     "name": "AUDIT-LANDFORMS-D-kernel-no-zero-floor",
-    "file": "src/world/terrainSampler.js",
+    "file": "src/world/terrain/terrainSampler.js",
     "old": "return Math.max(0, shape(x, y, h, baseHeight * BASE_HEIGHT_SCALE, ground) / MAX_TERRAIN_HEIGHT);",
     "new": "return (shape(x, y, h, baseHeight * BASE_HEIGHT_SCALE, ground) / MAX_TERRAIN_HEIGHT);",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ],
     "equivalent": true,
     "why": "the shaper returns h (>= the ocean) at or under the knee and never less than min(land, LANDFORM_FLOOR) over it, so the floor at 0 never binds"
@@ -646,8 +646,8 @@
     "old": "let rect = at ? at.locationRect ?? null : null;",
     "new": "let rect = null;",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -656,9 +656,9 @@
     "old": "const today = was === STREAMING_TERRAIN_SCALE && !landform;",
     "new": "const today = was === STREAMING_TERRAIN_SCALE;",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js",
-      "test/terrainscale1.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js",
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
@@ -667,9 +667,9 @@
     "old": "const rows = savedScale === STREAMING_TERRAIN_SCALE && !landform ? outer : outer.map((r) => {",
     "new": "const rows = savedScale === STREAMING_TERRAIN_SCALE ? outer : outer.map((r) => {",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js",
-      "test/auditrest3.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js",
+      "test/systems/auditrest3.test.js"
     ]
   },
   {
@@ -678,9 +678,9 @@
     "old": "if (Number.isFinite(h)) return y - (h - state.compensation[1] - now) * (r - 1) + now;",
     "new": "if (Number.isFinite(h)) return y - (h - state.compensation[1]) * (r - 1) + now;",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js",
-      "test/terrainscale1.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js",
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
@@ -689,9 +689,9 @@
     "old": "const now = landform ? landformLiftAt(x, z) : 0;",
     "new": "const now = landformLiftAt(x, z);",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js",
-      "test/terrainscale1.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js",
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
@@ -700,8 +700,8 @@
     "old": "const groundFrameHeight = (y, x, z) => (landform && Number.isFinite(y) ? y - landformLiftAt(x, z) : y);",
     "new": "const groundFrameHeight = (y, x, z) => y;",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -710,8 +710,8 @@
     "old": "    const [x, z] = state.localFromWorld(nx, nz);\n    return groundFrameHeight(y, x, z);",
     "new": "    return groundFrameHeight(y, nx, nz);",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -720,8 +720,8 @@
     "old": "nativeX: wc.x, nativeZ: wc.z, y: groundFrameHeight(pf[1] - state.compensation[1], pf[0], pf[2]),",
     "new": "nativeX: wc.x, nativeZ: wc.z, y: pf[1] - state.compensation[1],",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -730,8 +730,8 @@
     "old": "piles: droppedLoot.snapshotWorld((pos) => state.worldCoords(pos)).map((sp) => ({ ...sp, y: groundFrameNative(sp.nativeX, sp.nativeZ, sp.y - state.compensation[1]) })),",
     "new": "piles: droppedLoot.snapshotWorld((pos) => state.worldCoords(pos)).map((sp) => ({ ...sp, y: sp.y - state.compensation[1] })),",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -740,8 +740,8 @@
     "old": "return [wc.x, groundFrameHeight(pos[1] - state.compensation[1], pos[0], pos[2]), wc.z]; }),\n        camps:",
     "new": "return [wc.x, pos[1] - state.compensation[1], wc.z]; }),\n        camps:",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -750,8 +750,8 @@
     "old": "const campToRecord = (pos) => { const n = campToNatives(pos); return [n[0], groundFrameHeight(n[1], pos[0], pos[2]), n[2]]; };",
     "new": "const campToRecord = (pos) => campToNatives(pos);",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -760,8 +760,8 @@
     "old": "({ ...sf, y: groundFrameNative(sf.nativeX, sf.nativeZ, sf.y - state.compensation[1]) })",
     "new": "({ ...sf, y: sf.y - state.compensation[1] })",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -770,8 +770,8 @@
     "old": "({ ...sg, y: groundFrameNative(sg.nativeX, sg.nativeZ, sg.y - state.compensation[1]) })",
     "new": "({ ...sg, y: sg.y - state.compensation[1] })",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -780,8 +780,8 @@
     "old": "({ ...r, y: groundFrameNative(r.nativeX, r.nativeZ, r.y - state.compensation[1]) })",
     "new": "({ ...r, y: r.y - state.compensation[1] })",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -790,8 +790,8 @@
     "old": "containerType: LOOT_CONTAINER_TYPES.DroppedLoot, y: groundFrameNative(sp.nativeX, sp.nativeZ, sp.y - state.compensation[1]) })),",
     "new": "containerType: LOOT_CONTAINER_TYPES.DroppedLoot, y: sp.y - state.compensation[1] })),",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -800,8 +800,8 @@
     "old": "return [wc.x, groundFrameHeight(pos[1] - state.compensation[1], pos[0], pos[2]), wc.z]; }),\n      terrainScale:",
     "new": "return [wc.x, pos[1] - state.compensation[1], wc.z]; }),\n      terrainScale:",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -810,9 +810,9 @@
     "old": "y: inDungeon ? pf[1] - state.compensation[1] : groundFrameHeight(pf[1] - state.compensation[1], pf[0], pf[2]),\n      terrainScale",
     "new": "y: pf[1] - state.compensation[1],\n      terrainScale",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js",
-      "test/a10_world_misc.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js",
+      "test/world/a10_world_misc.test.js"
     ]
   },
   {
@@ -821,9 +821,9 @@
     "old": "pos: [player.pos[0], groundFrameHeight(player.pos[1] - state.compensation[1], player.pos[0], player.pos[2]) + state.compensation[1], player.pos[2]]",
     "new": "pos: [...player.pos]",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js",
-      "test/terrainscale1.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js",
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
@@ -832,9 +832,9 @@
     "old": "(scaleOf(t.restore?.terrainScale) !== STREAMING_TERRAIN_SCALE || landform)",
     "new": "(scaleOf(t.restore?.terrainScale) !== STREAMING_TERRAIN_SCALE)",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js",
-      "test/terrainscale1.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js",
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
@@ -843,8 +843,8 @@
     "old": "    if (!at) {\n      const loc = _liftLocationAt(px, py)",
     "new": "    if (false) {\n      const loc = _liftLocationAt(px, py)",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -853,8 +853,8 @@
     "old": "if (had && had.loc === loc) rect = had.rect;",
     "new": "if (had) rect = had.rect;",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -863,8 +863,8 @@
     "old": "_liftLocationAt = (x, y) => (locationIndex.get(`${x},${y}`)?.spawned && tvSpawnGone(x, y) ? null : tvLocationAt(x, y));",
     "new": "_liftLocationAt = (x, y) => tvLocationAt(x, y);",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -873,48 +873,48 @@
     "old": "  const _liftLocationAt = (x, y) => (locationIndex.get(`${x},${y}`)?.spawned && tvSpawnGone(x, y) ? null : tvLocationAt(x, y));\n",
     "new": "  const _liftLocationAt = (x, y) => locationIndex.get(`${x},${y}`);\n",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
     "name": "AUDIT-LANDFORMS-D3-tiles-off-the-shaped-blend",
-    "file": "src/world/terrainGen.js",
+    "file": "src/world/terrain/terrainGen.js",
     "old": "const tileData = generateTileData(classic ?? samples, px, py);",
     "new": "const tileData = generateTileData(samples, px, py);",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
     "name": "AUDIT-LANDFORMS-D3-classic-never-written",
-    "file": "src/world/terrainSampler.js",
+    "file": "src/world/terrain/terrainSampler.js",
     "old": "        if (classic) classic[x * hDim + y] = h / MAX_TERRAIN_HEIGHT;",
     "new": "        if (classic) classic[x * hDim + y] = h;",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
     "name": "AUDIT-LANDFORMS-D3-classic-unblended",
-    "file": "src/world/terrainGen.js",
+    "file": "src/world/terrain/terrainGen.js",
     "old": "    if (classic) blendLocationTerrain(classic, calcAvgMaxHeight(classic)[0], locationRect);\n",
     "new": "\n",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
     "name": "AUDIT-LANDFORMS-D3-classic-blended-to-the-shaped-mean",
-    "file": "src/world/terrainGen.js",
+    "file": "src/world/terrain/terrainGen.js",
     "old": "if (classic) blendLocationTerrain(classic, calcAvgMaxHeight(classic)[0], locationRect);",
     "new": "if (classic) blendLocationTerrain(classic, avg, locationRect);",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -923,7 +923,7 @@
     "old": "    if (params.has('online')) {\n      retryModRoads(",
     "new": "    if (false) {\n      retryModRoads(",
     "tests": [
-      "test/auditlandforms.test.js"
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -932,7 +932,7 @@
     "old": "const ms = Math.min(60000, 5000 * 2 ** tries);",
     "new": "const ms = 5000;",
     "tests": [
-      "test/auditlandforms.test.js"
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -941,7 +941,7 @@
     "old": "export const MOD_ROADS_RETRY_MAX = 12;",
     "new": "export const MOD_ROADS_RETRY_MAX = 1;",
     "tests": [
-      "test/auditlandforms.test.js"
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -950,16 +950,16 @@
     "old": "        if (late) { terrainGen.setRoadsData({ ...late, ...roadSwitches }",
     "new": "        if (false) { terrainGen.setRoadsData({ ...late, ...roadSwitches }",
     "tests": [
-      "test/auditlandforms.test.js"
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
     "name": "AUDIT-LANDFORMS-C4-rivers-unnamed",
-    "file": "src/ui/enhancedMenu.js",
+    "file": "src/ui/enhanced/enhancedMenu.js",
     "old": "(roads, rivers, camp sites,",
     "new": "(roads, camp sites,",
     "tests": [
-      "test/auditlandforms.test.js"
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -968,8 +968,8 @@
     "old": "  const lf = landforms ?? createLandforms({ woods, hDim });",
     "new": "  const lf = createLandforms({ woods, hDim });",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -978,8 +978,8 @@
     "old": "shaped = generateSamples(woods, px, py, hDim, lf, classic);",
     "new": "shaped = generateSamples(woods, px, py, hDim, createLandforms({ woods, hDim }), classic);",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -988,8 +988,8 @@
     "old": "      const k = x * hDim + y;\n      let v = memo.get(k);",
     "new": "      const k = x;\n      let v = memo.get(k);",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -998,8 +998,8 @@
     "old": "landformLiftField(woods, px, py, rect, HEIGHTMAP_DIMENSION, landformsHere())",
     "new": "landformLiftField(woods, px, py, rect)",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -1008,8 +1008,8 @@
     "old": ": '-'},${terrainGen.roads() ? 1 : 0}`;",
     "new": ": '-'}`;",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -1018,7 +1018,7 @@
     "old": "?.spawned && tvSpawnGone(x, y) ? null : tvLocationAt(x, y));",
     "new": "?.spawned && tvSpawnGone(x, y) ? null : locationIndex.get(`${x},${y}`));",
     "tests": [
-      "test/auditlandforms.test.js"
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -1027,7 +1027,7 @@
     "old": "      if (_liftFields.size >= LIFT_FIELDS_KEPT) _liftFields.delete(_liftFields.keys().next().value);   // the longest unasked\n",
     "new": "      if (_liftFields.size >= LIFT_FIELDS_KEPT) _liftFields.clear();\n",
     "tests": [
-      "test/auditlandforms.test.js"
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -1036,7 +1036,7 @@
     "old": "    if (field) _liftFields.delete(key);   // asked again: the last to be let go\n    else {",
     "new": "    if (field) { /* kept where it stood */ } else {",
     "tests": [
-      "test/auditlandforms.test.js"
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -1045,7 +1045,7 @@
     "old": "  const LIFT_FIELDS_KEPT = 32;",
     "new": "  const LIFT_FIELDS_KEPT = 8;",
     "tests": [
-      "test/auditlandforms.test.js"
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -1054,7 +1054,7 @@
     "old": "        if (_liftRects.size >= LIFT_FIELDS_KEPT) _liftRects.delete(_liftRects.keys().next().value);   // the longest unasked\n",
     "new": "        if (_liftRects.size >= 8) _liftRects.clear();\n",
     "tests": [
-      "test/auditlandforms.test.js"
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -1063,7 +1063,7 @@
     "old": "y: inDungeon ? pf[1] - state.compensation[1] : groundFrameHeight(",
     "new": "y: groundFrameHeight(",
     "tests": [
-      "test/auditlandforms.test.js"
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -1072,8 +1072,8 @@
     "old": "  Object.freeze({ key: 'tracks', dial: LANDFORM_DIALS.track, water: false, ford: true }),",
     "new": "  Object.freeze({ key: 'tracks', dial: LANDFORM_DIALS.track, water: false }),",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -1082,8 +1082,8 @@
     "old": "(layers[li].ford || dmins[li] > layers[li].dial.flat)",
     "new": "(dmins[li] > layers[li].dial.flat)",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -1092,8 +1092,8 @@
     "old": "  Object.freeze({ key: 'streams', dial: LANDFORM_DIALS.stream, water: true }),",
     "new": "  Object.freeze({ key: 'streams', dial: LANDFORM_DIALS.stream, water: false }),",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -1102,8 +1102,8 @@
     "old": "  Object.freeze({ key: 'streams', dial: LANDFORM_DIALS.stream, water: true }),\n  Object.freeze({ key: 'rivers', dial: LANDFORM_DIALS.river, water: true }),",
     "new": "  Object.freeze({ key: 'rivers', dial: LANDFORM_DIALS.river, water: true }),\n  Object.freeze({ key: 'streams', dial: LANDFORM_DIALS.stream, water: true }),",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -1112,8 +1112,8 @@
     "old": "      if (dmin <= edge) {\n        const hold = layers[li].hold;",
     "new": "      if (false) {\n        const hold = layers[li].hold;",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -1122,8 +1122,8 @@
     "old": "  bankGrade: 0.5,",
     "new": "  bankGrade: 1,",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -1132,8 +1132,8 @@
     "old": "if (targets[li] > smoothLand + hold) targets[li] = smoothLand + hold;",
     "new": "if (targets[li] > land + hold) targets[li] = land + hold;",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -1142,8 +1142,8 @@
     "old": "hold: LAYERS[li].water ? Infinity : bankHold(dial, span)",
     "new": "hold: bankHold(dial, span)",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -1152,8 +1152,8 @@
     "old": "* dial.bank) / 1.5;",
     "new": "* dial.bank) / 1;",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -1162,7 +1162,7 @@
     "old": "let land = landAt(gx, gy, h, h - g, low, cliff ? cliff(x, y) : 1, near);",
     "new": "let land = landAt(gx, gy, h, h - g, low, 1, near);",
     "tests": [
-      "test/auditlandforms.test.js"
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -1171,7 +1171,7 @@
     "old": "landAt(sox + lx, soy + ly, macro, macro, low, cliff ? cliff(lx, ly) : 1, around)",
     "new": "landAt(sox + lx, soy + ly, macro, macro, low, 1, around)",
     "tests": [
-      "test/auditlandforms.test.js"
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -1180,7 +1180,7 @@
     "old": "cliff: Object.freeze({ from: 1, full: 3 }),",
     "new": "cliff: Object.freeze({ from: 0, full: 3 }),",
     "tests": [
-      "test/auditlandforms.test.js"
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -1189,7 +1189,7 @@
     "old": "cliff: Object.freeze({ from: 1, full: 3 }),",
     "new": "cliff: Object.freeze({ from: 1, full: 2 }),",
     "tests": [
-      "test/auditlandforms.test.js"
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -1198,7 +1198,7 @@
     "old": "byteAt(qx + dx, qy + dy) * BASE_HEIGHT_SCALE <= LANDFORM_KNEE",
     "new": "byteAt(qx + dx, qy + dy) * BASE_HEIGHT_SCALE < SCALED_BEACH_ELEVATION",
     "tests": [
-      "test/auditlandforms.test.js"
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -1207,7 +1207,7 @@
     "old": "out[d2] = Math.round(smooth01((Math.sqrt(d2) - from) / (full - from)) * 1024) / 1024;",
     "new": "out[d2] = smooth01((Math.sqrt(d2) - from) / (full - from));",
     "tests": [
-      "test/auditlandforms.test.js"
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -1216,7 +1216,7 @@
     "old": "const v = cliffFadeAt(byteAt, px - 2 + r, py - 2 + c);",
     "new": "const v = cliffFadeAt(byteAt, px - 1 + r, py - 2 + c);",
     "tests": [
-      "test/auditlandforms.test.js"
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -1225,7 +1225,7 @@
     "old": "  if (whole) return null;",
     "new": "  if (true) return null;",
     "tests": [
-      "test/auditlandforms.test.js"
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -1234,7 +1234,7 @@
     "old": "let heightOf = relief ? (x, y) => ringHeight(byteAt(x, y), true, cliffFadeAt(byteAt, clampX(x), clampY(y))) :",
     "new": "let heightOf = relief ? (x, y) => ringHeight(byteAt(x, y), true) :",
     "tests": [
-      "test/auditlandforms.test.js"
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -1243,8 +1243,8 @@
     "old": "return [x, ringHeight(byte, !!landform, fade)",
     "new": "return [x, ringHeight(byte, !!landform)",
     "tests": [
-      "test/auditlandforms.test.js",
-      "test/landform.test.js"
+      "test/world/terrain/auditlandforms.test.js",
+      "test/systems/landform.test.js"
     ]
   },
   {
@@ -1253,8 +1253,8 @@
     "old": "const floorReach = Math.max(STEP_OFFSET, Math.hypot(feet[0] - beforeX, feet[2] - beforeZ) * TAN_SLOPE_LIMIT);",
     "new": "const floorReach = STEP_OFFSET;",
     "tests": [
-      "test/auditlandforms.test.js",
-      "test/mac3_downhill.test.js"
+      "test/world/terrain/auditlandforms.test.js",
+      "test/player/mac3_downhill.test.js"
     ]
   },
   {
@@ -1263,7 +1263,7 @@
     "old": "const TAN_SLOPE_LIMIT = Math.tan((SLOPE_LIMIT_DEG * Math.PI) / 180);",
     "new": "const TAN_SLOPE_LIMIT = 1;",
     "tests": [
-      "test/auditlandforms.test.js"
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -1272,25 +1272,25 @@
     "old": "    if (!collectLoose && p.samples) {   // AUDIT LANDFORMS II G1: the ground the rebuild will carry the pools off",
     "new": "    if (false) {   // AUDIT LANDFORMS II G1: the ground the rebuild will carry the pools off",
     "tests": [
-      "test/auditlandforms.test.js"
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
     "name": "AUDIT-LANDFORMS-II-G1-never-carried",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "    const groundWas = _groundBefore.get(key);",
     "new": "    const groundWas = null;",
     "tests": [
-      "test/auditlandforms.test.js"
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
     "name": "AUDIT-LANDFORMS-II-G1-carried-the-wrong-way",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "const moved = (x, z) => groundIn(now, x, z) - groundIn(groundWas, x, z);",
     "new": "const moved = (x, z) => groundIn(groundWas, x, z) - groundIn(now, x, z);",
     "tests": [
-      "test/auditlandforms.test.js"
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -1299,7 +1299,7 @@
     "old": "for (const ride of [droppedLoot.groundMoved, droppedTorches.groundMoved,",
     "new": "for (const ride of [droppedTorches.groundMoved,",
     "tests": [
-      "test/auditlandforms.test.js"
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -1308,7 +1308,7 @@
     "old": "      p.pos[1] += d;\n      if (p.batch) {",
     "new": "      if (p.batch) {",
     "tests": [
-      "test/auditlandforms.test.js"
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -1317,7 +1317,7 @@
     "old": "    if (_seasonHoldKey === key && walkMode && playerSpawned && player.grounded) player.pos[1] += moved(player.pos[0], player.pos[2]);\n",
     "new": "",
     "tests": [
-      "test/auditlandforms.test.js"
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -1326,17 +1326,17 @@
     "old": "&& playerSpawned && player.grounded) player.pos[1] += moved(",
     "new": "&& playerSpawned) player.pos[1] += moved(",
     "tests": [
-      "test/auditlandforms.test.js"
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
     "name": "AUDIT-LANDFORMS-II-K1-the-publish-reads-the-pools",
-    "file": "src/scenes/world.js",
-    "old": "      rideGround?.(t, key, moved);\n",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "      host.rideGround?.(t, key, moved);\n",
     "new": "      for (const ride of [droppedLoot.groundMoved, droppedTorches.groundMoved, camps.groundMoved, exteriorFoes.groundMoved, cityGuards.groundMoved]) ride?.(t[0], t[2], t[0] + TERRAIN_SIZE, t[2] + TERRAIN_SIZE, moved);\n",
     "tests": [
-      "test/bootorder.test.js",
-      "test/auditlandforms.test.js"
+      "test/scenes/bootorder.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -1345,7 +1345,7 @@
     "old": "const r = await Promise.race([fetchFn(url, ac ? { signal: ac.signal } : undefined), late]);",
     "new": "const r = await fetchFn(url, ac ? { signal: ac.signal } : undefined);",
     "tests": [
-      "test/auditlandforms.test.js"
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -1354,7 +1354,7 @@
     "old": "const b = new Uint8Array(await Promise.race([r.arrayBuffer(), late]));",
     "new": "const b = new Uint8Array(await r.arrayBuffer());",
     "tests": [
-      "test/auditlandforms.test.js"
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -1363,88 +1363,88 @@
     "old": "timer = setTimeout(() => { ac?.abort(); no(",
     "new": "timer = setTimeout(() => { no(",
     "tests": [
-      "test/auditlandforms.test.js"
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
     "name": "AUDIT-LANDFORMS-II-H2-gathering-asks-the-shaped",
-    "file": "src/world/terrainNature.js",
+    "file": "src/world/terrain/terrainNature.js",
     "old": "if (sampleHeight((beach ?? heightmapData)[hy + hx * hDim]) < SCALED_BEACH_ELEVATION) return null;   // AUDIT LANDFORMS II H2",
     "new": "if (sampleHeight(heightmapData[hy + hx * hDim]) < SCALED_BEACH_ELEVATION) return null;   // AUDIT LANDFORMS II H2",
     "tests": [
-      "test/auditlandforms.test.js"
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
     "name": "AUDIT-LANDFORMS-II-H2-scatter-asks-the-shaped",
-    "file": "src/world/terrainNature.js",
+    "file": "src/world/terrain/terrainNature.js",
     "old": "      const height = sampleHeight((opts.beach ?? heightmapData)[hy + hx * hDim]);",
     "new": "      const height = sampleHeight(heightmapData[hy + hx * hDim]);",
     "tests": [
-      "test/auditlandforms.test.js"
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
     "name": "AUDIT-LANDFORMS-II-H2-woods-ask-the-shaped",
-    "file": "src/world/terrainNature.js",
+    "file": "src/world/terrain/terrainNature.js",
     "old": "    if (sampleHeight((opts.beach ?? heightmapData)[hy + hx * hDim]) < SCALED_BEACH_ELEVATION) return null;   // AUDIT LANDFORMS II H2\n\n    const wood",
     "new": "    if (sampleHeight(heightmapData[hy + hx * hDim]) < SCALED_BEACH_ELEVATION) return null;   // AUDIT LANDFORMS II H2\n\n    const wood",
     "tests": [
-      "test/auditlandforms.test.js"
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
     "name": "AUDIT-LANDFORMS-II-H2-border-asks-the-shaped",
-    "file": "src/world/terrainNature.js",
+    "file": "src/world/terrain/terrainNature.js",
     "old": "    if (sampleHeight((opts.beach ?? heightmapData)[hy + hx * hDim]) < SCALED_BEACH_ELEVATION) return null;   // AUDIT LANDFORMS II H2\n    return { record:",
     "new": "    if (sampleHeight(heightmapData[hy + hx * hDim]) < SCALED_BEACH_ELEVATION) return null;   // AUDIT LANDFORMS II H2\n    return { record:",
     "tests": [
-      "test/auditlandforms.test.js"
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
     "name": "AUDIT-LANDFORMS-II-H2-nature-handed-none",
-    "file": "src/world/terrainGen.js",
+    "file": "src/world/terrain/terrainGen.js",
     "old": "    beach: classic,\n  });",
     "new": "    beach: null,\n  });",
     "tests": [
-      "test/auditlandforms.test.js"
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
     "name": "AUDIT-LANDFORMS-II-H2-job-returns-none",
-    "file": "src/world/terrainGen.js",
+    "file": "src/world/terrain/terrainGen.js",
     "old": "    beach: classic,   // AUDIT LANDFORMS II H2: DFU's own blend in a location's pixel (null else)",
     "new": "    beach: null,   // AUDIT LANDFORMS II H2: DFU's own blend in a location's pixel (null else)",
     "tests": [
-      "test/auditlandforms.test.js"
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
     "name": "AUDIT-LANDFORMS-II-H2-blend-unsmoothed",
-    "file": "src/world/terrainGen.js",
+    "file": "src/world/terrain/terrainGen.js",
     "old": "    if (roads.smooth !== false && classic) smoothRoadHeights(classic, tilemap, 129, locationRect);",
     "new": "",
     "tests": [
-      "test/auditlandforms.test.js"
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
     "name": "AUDIT-LANDFORMS-II-H2-site-unlevelled",
-    "file": "src/world/terrainGen.js",
+    "file": "src/world/terrain/terrainGen.js",
     "old": "  if (classic && wodResult) applyPicks(classic, wod.picks);",
     "new": "  if (false) applyPicks(classic, wod.picks);",
     "tests": [
-      "test/auditlandforms.test.js"
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
     "name": "AUDIT-LANDFORMS-II-H3-nature-on-dfu",
-    "file": "src/world/terrainGen.js",
+    "file": "src/world/terrain/terrainGen.js",
     "old": "  const nature = layoutNature(samples, tilemap, {",
     "new": "  const nature = layoutNature(classic ?? samples, tilemap, {",
     "tests": [
-      "test/auditlandforms.test.js"
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -1453,7 +1453,7 @@
     "old": "        camps: camps.snapshot(campToRecord),   // SURV3: my camps, in natives",
     "new": "        lanterns: droppedTorches.snapshot((q) => { const wc = state.worldCoords(q); return [wc.x, q[1] - state.compensation[1], wc.z]; }),\n        camps: camps.snapshot(campToRecord),   // SURV3: my camps, in natives",
     "tests": [
-      "test/auditlandforms.test.js"
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -1462,7 +1462,7 @@
     "old": "?.spawned && tvSpawnGone(x, y) ? null : tvLocationAt(x, y));",
     "new": "?.spawned && tvSpawnGone(x, y) ? null : tvLocationAt(y, x));",
     "tests": [
-      "test/auditlandforms.test.js"
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -1471,7 +1471,7 @@
     "old": "  const _liftLocationAt = (x, y) => (locationIndex.get(`${x},${y}`)?.spawned",
     "new": "  const _liftLocationAt = (x, y) => (locationIndex.get(`${y},${x}`)?.spawned",
     "tests": [
-      "test/auditlandforms.test.js"
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -1480,7 +1480,7 @@
     "old": "?.spawned && tvSpawnGone(x, y) ? null :",
     "new": "?.spawned && tvSpawnGone(y, x) ? null :",
     "tests": [
-      "test/auditlandforms.test.js"
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -1489,8 +1489,8 @@
     "old": "export const LANDFORM_FLOOR = LANDFORM_KNEE + 0.5;",
     "new": "export const LANDFORM_FLOOR = LANDFORM_KNEE + 5;",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -1499,8 +1499,8 @@
     "old": "export const LANDFORM_FLOOR = LANDFORM_KNEE + 0.5;",
     "new": "export const LANDFORM_FLOOR = LANDFORM_KNEE + 0.05;",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -1509,7 +1509,7 @@
     "old": "    const py = state.mapOrigin.y - Math.floor((z - c[2]) / TERRAIN_SIZE);\n    if (!woods || px < 0",
     "new": "    const py = state.mapOrigin.y - Math.floor((z + c[2]) / TERRAIN_SIZE);\n    if (!woods || px < 0",
     "tests": [
-      "test/auditlandforms.test.js"
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -1518,7 +1518,7 @@
     "old": "if (!woods || px < 0 || py < 0 || px >= MAP_WIDTH || py >= MAP_HEIGHT) return 0;",
     "new": "if (!woods || px < 0 || py <= 0 || px >= MAP_WIDTH || py >= MAP_HEIGHT) return 0;",
     "tests": [
-      "test/auditlandforms.test.js"
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -1527,7 +1527,7 @@
     "old": "export async function retryModRoads({ fetchFn = globalThis.fetch,",
     "new": "export async function retryModRoads({ fetchFn = null,",
     "tests": [
-      "test/auditlandforms.test.js"
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -1536,7 +1536,7 @@
     "old": "wait = (ms) => new Promise((r) => setTimeout(r, ms)), max = MOD_ROADS_RETRY_MAX",
     "new": "wait = (ms) => new Promise((r) => setTimeout(r, 0)), max = MOD_ROADS_RETRY_MAX",
     "tests": [
-      "test/auditlandforms.test.js"
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -1545,7 +1545,7 @@
     "old": "      retryModRoads({ onTry: (n, ms) =>",
     "new": "      retryModRoads({ max: 0, onTry: (n, ms) =>",
     "tests": [
-      "test/auditlandforms.test.js"
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -1554,8 +1554,8 @@
     "old": "  const lf = landforms ?? createLandforms({ woods, hDim });",
     "new": "  const lf = landforms ?? createLandforms({ woods, hDim, roads: { roads: new Uint8Array(500000).fill(15), tracks: new Uint8Array(500000) } });",
     "tests": [
-      "test/landform.test.js",
-      "test/auditlandforms.test.js"
+      "test/systems/landform.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -1564,7 +1564,7 @@
     "old": "v = (Math.fround(shaped(x, y)) - Math.fround(plain(x, y))) * MAX_TERRAIN_HEIGHT",
     "new": "v = (shaped(x, y) - plain(x, y)) * MAX_TERRAIN_HEIGHT",
     "tests": [
-      "test/auditlandforms.test.js"
+      "test/world/terrain/auditlandforms.test.js"
     ]
   }
 ]

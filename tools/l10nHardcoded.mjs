@@ -6,7 +6,7 @@
 // have not yet: every string or template literal in src/ that reads as prose (two words of letters or more) and is not
 // the argument of a text-core call, a console line, a thrown error, an import's source or an object's key. It is a
 // heuristic - a data table's English (an item's canonical name, a key) counts too - so it is held as a RATCHET, file by
-// file (test/l10n4_hardcoded.test.js): a file's count may fall, as its words are routed, and may not rise, so a new
+// file (test/systems/l10n4_hardcoded.test.js): a file's count may fall, as its words are routed, and may not rise, so a new
 // hard-coded sentence fails the suite where it is written instead of reaching a player in English.
 //
 //   node tools/l10nHardcoded.mjs           the counts, file by file (the ratchet's HARDCODED map), and the total

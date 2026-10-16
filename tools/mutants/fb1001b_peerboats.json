@@ -5,7 +5,7 @@
     "old": "for (const boat of peers.length ? [...csaColliderBoats(), ...peers] : csaColliderBoats()) {",
     "new": "for (const boat of csaColliderBoats()) {",
     "tests": [
-      "test/fb1001b_peerboats.test.js"
+      "test/scenes/fb1001b_peerboats.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "const peers = (modes?.mode ?? 'exterior') === 'exterior' || modes?.sailingCabin ? csa.peerBoats : [];",
     "new": "const peers = csaAboard.aboard?.boat ? [csaAboard.aboard.boat] : [];",
     "tests": [
-      "test/fb1001b_peerboats.test.js"
+      "test/scenes/fb1001b_peerboats.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "const peers = (modes?.mode ?? 'exterior') === 'exterior' || modes?.sailingCabin ? csa.peerBoats : [];",
     "new": "const peers = (modes?.mode ?? 'exterior') === 'exterior' || modes?.sailingCabin ? csa.seaBoats : [];",
     "tests": [
-      "test/fb1001b_peerboats.test.js"
+      "test/scenes/fb1001b_peerboats.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "const peers = (modes?.mode ?? 'exterior') === 'exterior' || modes?.sailingCabin ? csa.peerBoats : [];",
     "new": "const peers = csa.peerBoats;",
     "tests": [
-      "test/fb1001b_peerboats.test.js"
+      "test/scenes/fb1001b_peerboats.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "const peers = (modes?.mode ?? 'exterior') === 'exterior' || modes?.sailingCabin ? csa.peerBoats : [];",
     "new": "const peers = (modes?.mode ?? 'exterior') !== 'exterior' || modes?.sailingCabin ? csa.peerBoats : [];",
     "tests": [
-      "test/fb1001b_peerboats.test.js"
+      "test/scenes/fb1001b_peerboats.test.js"
     ]
   },
   {
@@ -50,36 +50,36 @@
     "old": "const peers = (modes?.mode ?? 'exterior') === 'exterior' || modes?.sailingCabin ? csa.peerBoats : [];",
     "new": "const peers = (modes?.mode ?? 'interior') === 'exterior' || modes?.sailingCabin ? csa.peerBoats : [];",
     "tests": [
-      "test/fb1001b_peerboats.test.js"
+      "test/scenes/fb1001b_peerboats.test.js"
     ]
   },
   {
     "name": "PEER-DECK-a-landing-alone-boards-the-old-door",
-    "file": "src/scenes/comeSailAwayAboard.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayAboard.js",
     "old": "if (on(s.boat, me)) { board(s.boat); break; }",
     "new": "if (me.ground(s.boat) == null && deckUnder(s.boat, feet, me.height)) { board(s.boat); break; }",
     "tests": [
-      "test/fb1001b_peerboats.test.js"
+      "test/scenes/fb1001b_peerboats.test.js"
     ]
   },
   {
     "name": "PEER-DECK-standing-alone-boards-the-landing-lost",
-    "file": "src/scenes/comeSailAwayAboard.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayAboard.js",
     "old": "if (on(s.boat, me)) { board(s.boat); break; }",
     "new": "if (me.ground(s.boat) === 'boat') { board(s.boat); break; }",
     "tests": [
-      "test/fb1001b_peerboats.test.js",
-      "test/csa_together.test.js"
+      "test/scenes/fb1001b_peerboats.test.js",
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "PEER-DECK-a-boat-past-her-reach-asked",
-    "file": "src/scenes/comeSailAwayAboard.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayAboard.js",
     "old": "if (!s?.boat?.GameObject?.activeSelf || !near(s.boat, feet)) continue;",
     "new": "if (!s?.boat?.GameObject?.activeSelf) continue;",
     "tests": [
-      "test/fb1001b_peerboats.test.js",
-      "test/csa_together.test.js"
+      "test/scenes/fb1001b_peerboats.test.js",
+      "test/systems/csa_together.test.js"
     ]
   }
 ]

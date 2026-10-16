@@ -1,181 +1,181 @@
 [
   {
     "name": "AUDIT-GALLEON-2-RG1-every-rope-on-the-tenth-at-the-rig",
-    "file": "src/world/galleonRig.js",
+    "file": "src/world/ships/galleonRig.js",
     "old": "rope: Object.freeze({ everyFrame: true })",
     "new": "rope: Object.freeze({ everyFrame: false })",
     "tests": [
-      "test/auditgalleon2_rig.test.js"
+      "test/systems/comeSailAway/auditgalleon2_rig.test.js"
     ],
     "why": "her rope's cadence says the tenth: its drawn end trails its spar 1.2-1.7 m at the auto-trim's 100 degrees a second"
   },
   {
     "name": "AUDIT-GALLEON-2-RG1-the-walk-drops-every-frame",
-    "file": "src/systems/comeSailAwayBoat.js",
+    "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
     "old": "...(cadence?.everyFrame ? { everyFrame: true } : {})",
     "new": "...({})",
     "tests": [
-      "test/auditgalleon2_rig.test.js"
+      "test/systems/comeSailAway/auditgalleon2_rig.test.js"
     ],
     "why": "the walk leaves the rope's cadence off its holder: the tenth of a second again"
   },
   {
     "name": "AUDIT-GALLEON-2-RG1-the-pool-on-the-tenth",
-    "file": "src/scenes/comeSailAwayPool.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
     "old": "if (script.everyFrame ? !(dt > 0) : !fixDeformationsTick(script, dt)) return;",
     "new": "if (!fixDeformationsTick(script, dt)) return;",
     "tests": [
-      "test/auditgalleon2_rig.test.js"
+      "test/systems/comeSailAway/auditgalleon2_rig.test.js"
     ],
     "why": "the pool times every holder on the tenth, as before the fix"
   },
   {
     "name": "AUDIT-GALLEON-2-RG1-every-frame-even-paused",
-    "file": "src/scenes/comeSailAwayPool.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
     "old": "script.everyFrame ? !(dt > 0) :",
     "new": "script.everyFrame ? false :",
     "tests": [
-      "test/auditgalleon2_rig.test.js"
+      "test/systems/comeSailAway/auditgalleon2_rig.test.js"
     ],
     "why": "her rope baked on a paused frame, where the mod's timer bakes nothing"
   },
   {
     "name": "AUDIT-GALLEON-2-RG1-a-still-rope-baked-again",
-    "file": "src/scenes/comeSailAwayPool.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
     "old": "if (script.everyFrame && rigStill(k, boneWorld, pose)) return;",
     "new": "if (false && rigStill(k, boneWorld, pose)) return;",
     "tests": [
-      "test/auditgalleon2_rig.test.js"
+      "test/systems/comeSailAway/auditgalleon2_rig.test.js"
     ],
     "why": "a rope standing as it was baked baked and uploaded again every frame (a moored or a sea galleon's eleven)"
   },
   {
     "name": "AUDIT-GALLEON-2-RG1-a-metre-unbaked",
-    "file": "src/scenes/comeSailAwayPool.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
     "old": "export const RIG_STILL_M = 0.001;",
     "new": "export const RIG_STILL_M = 1;",
     "tests": [
-      "test/auditgalleon2_rig.test.js"
+      "test/systems/comeSailAway/auditgalleon2_rig.test.js"
     ],
     "why": "a rope still to a metre: its end trails its spar up to a metre"
   },
   {
     "name": "AUDIT-GALLEON-2-RG1-still-against-last-frame",
-    "file": "src/scenes/comeSailAwayPool.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
     "old": "    if (still) return true;\n    k.rig.set(now); k.rigBaked = true;",
     "new": "    k.rig.set(now); k.rigBaked = true;\n    if (still) return true;",
     "tests": [
-      "test/auditgalleon2_rig.test.js"
+      "test/systems/comeSailAway/auditgalleon2_rig.test.js"
     ],
     "why": "the still check against last frame, not the last bake: a creep under a millimetre a frame never bakes (6 cm off in two seconds at 0.2 degrees a second)"
   },
   {
     "name": "AUDIT-GALLEON-2-RG1-the-mods-timer-moved",
-    "file": "src/systems/comeSailAwayBoat.js",
+    "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
     "old": "timer: cadence?.timer ?? 0,",
     "new": "timer: cadence?.timer ?? 0.05,",
     "tests": [
-      "test/auditgalleon2_rig.test.js"
+      "test/systems/comeSailAway/auditgalleon2_rig.test.js"
     ],
     "why": "the mod's own holders off their verbatim nought"
   },
   {
     "name": "AUDIT-GALLEON-2-RG2-the-course-sheets-under-the-hull",
-    "file": "src/world/galleonRig.js",
+    "file": "src/world/ships/galleonRig.js",
     "old": "sail.children.push(running(`ForeCourseSheet",
     "new": "kids.push(running(`ForeCourseSheet",
     "tests": [
-      "test/auditgalleon2_rig.test.js"
+      "test/systems/comeSailAway/auditgalleon2_rig.test.js"
     ],
     "why": "the course's sheets under her hull: drawn with the course hidden, ending 4.4 m under its yard"
   },
   {
     "name": "AUDIT-GALLEON-2-RG2-the-jib-sheets-under-the-hull",
-    "file": "src/world/galleonRig.js",
+    "file": "src/world/ships/galleonRig.js",
     "old": "jib.sail.children.push(running(`JibSheet",
     "new": "kids.push(running(`JibSheet",
     "tests": [
-      "test/auditgalleon2_rig.test.js"
+      "test/systems/comeSailAway/auditgalleon2_rig.test.js"
     ],
     "why": "the jib's sheets under her hull: drawn with the jib hidden, ending over her bow"
   },
   {
     "name": "AUDIT-GALLEON-2-RG2-the-rope-out-of-its-frame",
-    "file": "src/world/galleonRig.js",
+    "file": "src/world/ships/galleonRig.js",
     "old": "const geometry = ropeGeometry(sub(a.world, at), sub(b.world, at), 0.028);",
     "new": "const geometry = ropeGeometry(a.world, b.world, 0.028);",
     "tests": [
-      "test/auditgalleon2_rig.test.js"
+      "test/systems/comeSailAway/auditgalleon2_rig.test.js"
     ],
     "why": "a sheet's mesh in her frame under its sail's: the course's sheets baked 15.0 m off their bones (its boom's place)"
   },
   {
     "name": "AUDIT-GALLEON-2-RG7-a-stale-name",
-    "file": "test/auditgalleon_rig.test.js",
+    "file": "test/systems/naval/auditgalleon_rig.test.js",
     "old": "'ratline:main:1 x running:MainGaffSheet',   // AUDIT GALLEON-2 RG7",
     "new": "'ratline:main:1 x running:MainGaffSheet', 'ratline:main:-1 x running:MainGaffSheet',   // AUDIT GALLEON-2 RG7",
     "tests": [
-      "test/auditgalleon_rig.test.js"
+      "test/systems/naval/auditgalleon_rig.test.js"
     ],
     "why": "the name that never clashed, back in PAST_AUTO"
   },
   {
     "name": "AUDIT-GALLEON-2-RG9-her-canvases-on-one-phase",
-    "file": "src/world/galleonRig.js",
+    "file": "src/world/ships/galleonRig.js",
     "old": "canvasTimer: (k) => Math.fround(k * FIX_DEFORMATIONS_INTERVAL / SAILS.length)",
     "new": "canvasTimer: (k) => Math.fround(0 * k)",
     "tests": [
-      "test/auditgalleon2_rig.test.js"
+      "test/systems/comeSailAway/auditgalleon2_rig.test.js"
     ],
     "why": "her five canvases from one timer: all baked on the one frame"
   },
   {
     "name": "AUDIT-GALLEON-2-RG9-the-phase-dropped-from-the-holder",
-    "file": "src/systems/comeSailAwayBoat.js",
+    "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
     "old": "timer: cadence?.timer ?? 0,",
     "new": "timer: 0,",
     "tests": [
-      "test/auditgalleon2_rig.test.js"
+      "test/systems/comeSailAway/auditgalleon2_rig.test.js"
     ],
     "why": "the walk drops her canvas's phase: all five on the one frame"
   },
   {
     "name": "AUDIT-GALLEON-2-TS6-square-aback-and-full-swapped",
-    "file": "src/world/galleonRig.js",
+    "file": "src/world/ships/galleonRig.js",
     "old": "left: squareSailPose(s, d, m.r, 'aback'),\n      center: squareSailPose(s, d, m.r, 'center'), right: squareSailPose(s, d, m.r, 'full'),",
     "new": "left: squareSailPose(s, d, m.r, 'full'),\n      center: squareSailPose(s, d, m.r, 'center'), right: squareSailPose(s, d, m.r, 'aback'),",
     "tests": [
-      "test/auditgalleon2_rig.test.js"
+      "test/systems/comeSailAway/auditgalleon2_rig.test.js"
     ],
     "why": "a square sail's Left full and Right aback - against the mod's Large Square, whose Left is \"Unstowed Backward\""
   },
   {
     "name": "AUDIT-GALLEON-2-TS6-gaff-sides-swapped",
-    "file": "src/world/galleonRig.js",
+    "file": "src/world/ships/galleonRig.js",
     "old": "left: gaffSailPose(g, mm.r, 'port'), center: gaffSailPose(g, mm.r, 'center'), right: gaffSailPose(g, mm.r, 'starboard')",
     "new": "left: gaffSailPose(g, mm.r, 'starboard'), center: gaffSailPose(g, mm.r, 'center'), right: gaffSailPose(g, mm.r, 'port')",
     "tests": [
-      "test/auditgalleon2_rig.test.js"
+      "test/systems/comeSailAway/auditgalleon2_rig.test.js"
     ],
     "why": "the gaff's Left to starboard - against the mod's Large Gaff, Left to port"
   },
   {
     "name": "AUDIT-GALLEON-2-TS6-jib-sides-swapped",
-    "file": "src/world/galleonRig.js",
+    "file": "src/world/ships/galleonRig.js",
     "old": "left: jibPose('port'), centerLeft: jibPose('port', 0.5), center: jibPose('center'), centerRight: jibPose('starboard', 0.5), right: jibPose('starboard')",
     "new": "left: jibPose('starboard'), centerLeft: jibPose('starboard', 0.5), center: jibPose('center'), centerRight: jibPose('port', 0.5), right: jibPose('port')",
     "tests": [
-      "test/auditgalleon2_rig.test.js"
+      "test/systems/comeSailAway/auditgalleon2_rig.test.js"
     ],
     "why": "the jib's Left to starboard - against the mod's Large Staysail, Left to port"
   },
   {
     "name": "AUDIT-GALLEON-2-TS6-jib-halves-full",
-    "file": "src/world/galleonRig.js",
+    "file": "src/world/ships/galleonRig.js",
     "old": "['Center Left', poses.centerLeft], ['Center', poses.center], ['Center Right', poses.centerRight]",
     "new": "['Center Left', poses.left], ['Center', poses.center], ['Center Right', poses.right]",
     "tests": [
-      "test/auditgalleon2_rig.test.js"
+      "test/systems/comeSailAway/auditgalleon2_rig.test.js"
     ],
     "why": "the jib's Center Left and Center Right slots given its full Left and Right"
   }

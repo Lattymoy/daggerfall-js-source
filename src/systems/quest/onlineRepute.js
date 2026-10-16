@@ -1,4 +1,4 @@
-// REPUTE-GATE (2026-10-16, bible/01-Overview/Field-Bugs-2026-10-15g.md; AUDIT GUILD-WORDS II; a Discord report: "The
+// REPUTE-GATE (2026-10-16, bible/01-Overview/bugs/Field-Bugs-2026-10-15g.md; AUDIT GUILD-WORDS II; a Discord report: "The
 // very first quest i did for them dropped my rep by 25 points"; Mac, asked: "Gate by reputation"). ONLINE, TWO MAGES
 // GUILD QUESTS WAIT FOR THE STANDING THEIR OWN HEADERS NAME. The Mages Guild offers its quests by the player's level
 // (offerFlow.js offerGuildQuest, MagesGuild.cs IsSatisfyQuestReqByLevel), and the list's rank column (QuestList-Classic

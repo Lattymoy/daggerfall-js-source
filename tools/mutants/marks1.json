@@ -5,7 +5,7 @@
     "old": "    WHERE ${combatEarnedSql('?1', '?3')} < ?6\n",
     "new": "    WHERE ${combatEarnedSql('?1', '?3')} <= ?6\n",
     "tests": [
-      "test/marks1.test.js"
+      "test/net/marks1.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    WHERE ${combatEarnedSql('?1', '?3')} < ?6\n      AND COALESCE((SELECT balance FROM marks WHERE account = ?1), 0) + ${pay} <= ?7\n      AND NOT EXISTS",
     "new": "    WHERE ${combatEarnedSql('?1', '?3')} < ?6\n      AND 1\n      AND NOT EXISTS",
     "tests": [
-      "test/marks1.test.js"
+      "test/net/marks1.test.js"
     ],
     "note": "SILVER-FINDS (MUT-AIM): the finds' strike carries the same purse line - aimed at the combat strike's by its own line above."
   },
@@ -24,8 +24,8 @@
     "old": "const strikesFor = (player, env) => accountKind(player) === 'linked' && marksOpenFor(player, env);",
     "new": "const strikesFor = (player, env) => marksOpenFor(player, env);",
     "tests": [
-      "test/marks1.test.js",
-      "test/audit28_marks.test.js"
+      "test/net/marks1.test.js",
+      "test/net/audit28_marks.test.js"
     ]
   },
   {
@@ -34,7 +34,7 @@
     "old": "  return s === 'on' || (s === 'dev' && isDeveloper(player, env));",
     "new": "  return s === 'on' || s === 'dev';",
     "tests": [
-      "test/marks1.test.js"
+      "test/net/marks1.test.js"
     ]
   },
   {
@@ -43,7 +43,7 @@
     "old": "    WHERE COALESCE((SELECT balance FROM marks WHERE account = ?1), 0) >= ?2\n      AND COALESCE((SELECT SUM(amount) FROM marks_ledger WHERE src_id = ?1 AND kind = 'exchange'",
     "new": "    WHERE 1\n      AND COALESCE((SELECT SUM(amount) FROM marks_ledger WHERE src_id = ?1 AND kind = 'exchange'",
     "tests": [
-      "test/marks1.test.js"
+      "test/net/marks1.test.js"
     ]
   },
   {
@@ -52,7 +52,7 @@
     "old": "kind = 'exchange' AND day = ?3), 0) + ?2 <= ?6`)",
     "new": "kind = 'exchange' AND day = ?3), 0) + ?2 <= ?6 + 1000`)",
     "tests": [
-      "test/marks1.test.js"
+      "test/net/marks1.test.js"
     ]
   },
   {
@@ -61,7 +61,7 @@
     "old": "(line.kind !== 'exchange' ? { error: 'marks-rid' }",
     "new": "(false ? { error: 'marks-rid' }",
     "tests": [
-      "test/marks1.test.js"
+      "test/net/marks1.test.js"
     ]
   },
   {
@@ -70,7 +70,7 @@
     "old": "export const MARKS_BANK = Object.freeze({ goldPerMark: 8, perDay: 300 });",
     "new": "export const MARKS_BANK = Object.freeze({ goldPerMark: 10, perDay: 300 });",
     "tests": [
-      "test/marks1.test.js"
+      "test/net/marks1.test.js"
     ]
   },
   {
@@ -79,7 +79,7 @@
     "old": "  if (!guildMay(a.me.rank, deposit ? 'deposit' : 'withdraw')) return { error: 'guild-rank' };",
     "new": "  if (!guildMay(a.me.rank, 'deposit')) return { error: 'guild-rank' };",
     "tests": [
-      "test/marks1.test.js"
+      "test/net/marks1.test.js"
     ]
   },
   {
@@ -88,7 +88,7 @@
     "old": "      WHERE COALESCE((SELECT balance FROM marks WHERE account = ?1), 0) >= ?3\n        AND COALESCE((SELECT balance FROM guild_marks WHERE guild_id = ?2), 0) + ?3 <= ?8",
     "new": "      WHERE 1\n        AND COALESCE((SELECT balance FROM guild_marks WHERE guild_id = ?2), 0) + ?3 <= ?8",
     "tests": [
-      "test/marks1.test.js"
+      "test/net/marks1.test.js"
     ]
   },
   {
@@ -97,8 +97,8 @@
     "old": " AND NOT EXISTS (SELECT 1 FROM guild_marks WHERE guild_id = ?1 AND balance > 0)\n      AND NOT ${guildKeepsSql('?1')}\n      AND (?2 = 0",
     "new": "\n      AND NOT ${guildKeepsSql('?1')}\n      AND (?2 = 0",
     "tests": [
-      "test/marks1.test.js",
-      "test/audit28_marks.test.js"
+      "test/net/marks1.test.js",
+      "test/net/audit28_marks.test.js"
     ]
   },
   {
@@ -107,7 +107,7 @@
     "old": "  if (!isDeveloper(player, env)) return { error: 'not-developer' };\n",
     "new": "",
     "tests": [
-      "test/marks1.test.js"
+      "test/net/marks1.test.js"
     ]
   },
   {
@@ -116,8 +116,8 @@
     "old": "    ON CONFLICT (account) DO UPDATE SET balance = balance + excluded.balance;",
     "new": "    ON CONFLICT (account) DO NOTHING;",
     "tests": [
-      "test/marks1.test.js",
-      "test/accountworker.test.js"
+      "test/net/marks1.test.js",
+      "test/server/accountworker.test.js"
     ]
   },
   {
@@ -126,7 +126,7 @@
     "old": "        return json(r.recorded && !r.rite ? { ...answer, marks: await gateStrikeAnswer(ctx, who.player, env, !!r.struck, r.day) } : answer, 200, origin);",
     "new": "        return json(answer, 200, origin);",
     "tests": [
-      "test/marks1.test.js"
+      "test/net/marks1.test.js"
     ]
   },
   {
@@ -135,7 +135,7 @@
     "old": "        if (!MARKS_FINAL.includes(r?.error)) return { ok: false, text: MARKS_TEXT.kept };   // the line may be there: kept\n        keep(null, key);",
     "new": "        keep(null, key);",
     "tests": [
-      "test/marks1.test.js"
+      "test/net/marks1.test.js"
     ]
   },
   {
@@ -144,8 +144,8 @@
     "old": "  const slot = () => `${account() ?? ''}|${character() ?? ''}`;",
     "new": "  const slot = () => `${account() ?? ''}|`;",
     "tests": [
-      "test/marks1.test.js",
-      "test/audit28_marks.test.js"
+      "test/net/marks1.test.js",
+      "test/net/audit28_marks.test.js"
     ]
   },
   {
@@ -154,8 +154,8 @@
     "old": "Number.isSafeInteger(region) ? region : here()",
     "new": "here()",
     "tests": [
-      "test/marks1.test.js",
-      "test/audit28_marks.test.js"
+      "test/net/marks1.test.js",
+      "test/net/audit28_marks.test.js"
     ]
   },
   {
@@ -164,7 +164,7 @@
     "old": "    if (this.box?.waiting) return;   // MARKS1: the counting box stays until the service answers\n",
     "new": "",
     "tests": [
-      "test/marks1.test.js"
+      "test/net/marks1.test.js"
     ]
   },
   {
@@ -173,16 +173,16 @@
     "old": "      return !!m && m.open() === true && (m.balance() ?? 0) > 0 && !m.pending()",
     "new": "      return !!m && m.open() === true && !m.pending()",
     "tests": [
-      "test/marks1.test.js"
+      "test/net/marks1.test.js"
     ]
   },
   {
     "name": "MARKS1-20-the-gate-says-no-marks",
-    "file": "src/net/gateClaims.js",
+    "file": "src/net/gate/gateClaims.js",
     "old": "          for (const line of Array.isArray(marksLine) ? marksLine : [marksLine]) if (typeof line === 'string' && line) say(line);\n",
     "new": "",
     "tests": [
-      "test/marks1.test.js"
+      "test/net/marks1.test.js"
     ]
   }
 ]

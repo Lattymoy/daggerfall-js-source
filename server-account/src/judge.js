@@ -31,7 +31,7 @@
 //     table holds, both its schools mastered, and no signature spell but its own path's (arcanePaths.js pathFindings).
 //   - EVERY ITEM IT HOLDS (possessedItemLists) - the pack, the wagon, the bag, the furnisher's and the repairer's lists,
 //     what it set out or stored in its own rooms, a rented room's and a deed's chests, a boat's hold, a companion's pack -
-//     through the item law (systems/itemLaw.js), and a crafted piece against the service's own `products` (judgeProducts:
+//     through the item law (systems/item/itemLaw.js), and a crafted piece against the service's own `products` (judgeProducts:
 //     a provenance the service never minted, one minted for another template or material, or one it holds at a lower
 //     quality than the piece claims, is no craft). Never a list the world fills: a shop's shelf, a dungeon's chest, a
 //     body - the scene cache keeps a place's loot from the moment it is entered, and a piece sold to a counter stands on
@@ -41,11 +41,11 @@
 //     piles it dropped - picked up again, a pile is no gain). INT5's budget reads it.
 // ═══════════════════════════════════════════════════════════════════
 
-import { itemFindings, itemWorth, lawTemplate, classicPiece, PROVENANCE_RE, ITEM_LAW_VERSION, GOLD_INT_MAX } from '../../src/systems/itemLaw.js';
-import { ledgerKeyOf } from '../../src/systems/itemIds.js';
-import { armsOf } from '../../src/net/siegeRef.js';   // INT7: the arms the token signs
-import { liquidWorthOf, deedsOf } from '../../src/net/realmGoldLaw.js';
-import { possessedItemLists } from '../../src/systems/possessedItems.js';   // AUDIT AUTO-HOLD: one home, the client's shelf reads it too
+import { itemFindings, itemWorth, lawTemplate, classicPiece, PROVENANCE_RE, ITEM_LAW_VERSION, GOLD_INT_MAX } from '../../src/systems/item/itemLaw.js';
+import { ledgerKeyOf } from '../../src/systems/item/itemIds.js';
+import { armsOf } from '../../src/net/siege/siegeRef.js';   // INT7: the arms the token signs
+import { liquidWorthOf, deedsOf } from '../../src/net/realm/realmGoldLaw.js';
+import { possessedItemLists } from '../../src/systems/item/possessedItems.js';   // AUDIT AUTO-HOLD: one home, the client's shelf reads it too
 import { MAX_STAT_VALUE } from '../../src/systems/statMods.js';
 import { SKILL_HARD_CAP } from '../../src/systems/skillSoftcap.js';
 import { STAT_KEYS_ORDER } from '../../src/systems/statMods.js';
@@ -72,7 +72,7 @@ const arrayOf = (/** @type {unknown} */ x) => (Array.isArray(x) ? x : []);
  *  nothing (AUDIT INT: `goldPieces: 1e999` read as Infinity, and the verdict's NOT NULL threw the save away). */
 const goldOf = (/** @type {unknown} */ v) => (Number.isSafeInteger(v) && /** @type {number} */ (v) > 0 ? /** @type {number} */ (v) : 0);
 
-/** THE LISTS THE CHARACTER HOLDS (possessedItemLists) - systems/possessedItems.js, their one home since AUDIT AUTO-HOLD
+/** THE LISTS THE CHARACTER HOLDS (possessedItemLists) - systems/item/possessedItems.js, their one home since AUDIT AUTO-HOLD
  *  (the client's shelf reads them too: a piece stowed in a ship's hold came back to its holder off a stale shelf), handed
  *  on here for the service's own readers. */
 export { possessedItemLists };
@@ -89,13 +89,13 @@ export function groundItemLists(/** @type {any} */ save) {
 
 /** The most a realm character of `level` can owe the Empire's bank: the Empire lends a tenth of DFU's level x 50,000
  *  (banking.js calculateMaxBankLoan online - Roleplay & Realism's per-level choice is never more), and the debt is the
- *  loan and its tenth (calculateBankLoanRepayment) - pinned equal by test/int2_judge.test.js; the Worker bundles no
+ *  loan and its tenth (calculateBankLoanRepayment) - pinned equal by test/server/int2_judge.test.js; the Worker bundles no
  *  banking.js. A loan the save claims past it lends the wealth nothing (AUDIT INT: a forged loan of ten million hid ten
  *  million of forged gold from the budget). */
 export const realmLoanOwedMax = (/** @type {number} */ level) => Math.trunc(Math.max(1, Math.trunc(level) || 1) * 5_000 * 1.1);
 
 /** Whether a piece is worth nothing to the economy: bound to its owner (the Broker's wares, a Sigil Stone - never sold or
- *  handed over, systems/itemBound.js) or a quest's (never sold). */
+ *  handed over, systems/item/itemBound.js) or a quest's (never sold). */
 const worthless = (/** @type {any} */ it) => it?.bound === true || lawTemplate(it?.templateIndex)?.bound === true || it?.questItem === true;
 
 /**
@@ -167,7 +167,7 @@ const findingsOf = (/** @type {any} */ it) => { try { return itemFindings(it); }
  * count, wealth, items, provenances, pieces, arms }` - `findings` the first FINDINGS_KEPT of them (`{ code, list, at, t }`
  * an item's), `items` the count judged, `provenances` every crafted piece's provenance, template, material and quality
  * (judgeProducts reads them), `pieces` INT4's: every valuable piece it holds, by its ledger key (ledgerPieces); `arms`
- * INT7's `[reach, bow]` (net/siegeRef.js armsOf - the pack's lawful weapons alone).
+ * INT7's `[reach, bow]` (net/siege/siegeRef.js armsOf - the pack's lawful weapons alone).
  * @param {any} save @param {{ level?: unknown } | null} [summary] @param {{ level?: number }} [o] the level its wealth's debt is read at
  */
 export function judgeSave(save, summary = null, o = {}) {
@@ -188,12 +188,12 @@ export function judgeSave(save, summary = null, o = {}) {
     });
   });
   // INT7: THE ARMS - the most reach of the weapons in the pack the law takes, and whether a lawful bow is among them
-  // (net/siegeRef.js armsOf); the identity mint signs them (`wa`), and every referee clips a blow between players to them
+  // (net/siege/siegeRef.js armsOf); the identity mint signs them (`wa`), and every referee clips a blow between players to them
   const arms = armsOf(save.items, (it) => findingsOf(it).length === 0);
   return { findings, count, wealth: wealthOf(save, o), items, provenances, pieces: ledgerPieces(save), arms };
 }
 
-/** INT4: A PIECE'S KEY IN THE LEDGER - systems/itemIds.js ledgerKeyOf, its one home since AUTO-HOLD (the client's room
+/** INT4: A PIECE'S KEY IN THE LEDGER - systems/item/itemIds.js ledgerKeyOf, its one home since AUTO-HOLD (the client's room
  *  word reads it too), handed on here for the service's own readers. */
 export { ledgerKeyOf };
 /** What a piece IS, as the ledger keeps it beside its key: its template and its material - an id on another piece is no

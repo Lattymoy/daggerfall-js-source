@@ -1,7 +1,7 @@
 // @ts-check
 // TAVERN-TABLE (2026-10-08, the owner: "Lets instead place a specific table in each inn. A new property specifficaly used
 // for the card table"): WHERE A TAVERN'S CARD TABLE STANDS - pure, DOM-free. Every tavern stands the card table's own prop
-// (world/cardTableProp.js); this finds its floor, and the host (scenes/interiorContext.js, asked by scenes/worldModes.js
+// (world/card/cardTableProp.js); this finds its floor, and the host (scenes/interiorContext.js, asked by scenes/worldModes.js
 // for a tavern) stands it there - one of the room's `tables`, its seats round its own box through the host's probe.
 //
 // THE SPOT IS FOUND, not guessed: the room's own floor is walked from its entrance on a grid (PLACE_CELL), a cell walkable

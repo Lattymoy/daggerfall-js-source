@@ -1,4 +1,4 @@
-// GUIDE (2026-09-29): THE QUEST GUIDE SUITES' ONE WORLD - moved out of test/guide1_questLens.test.js when GUIDE2 needed
+// GUIDE (2026-09-29): THE QUEST GUIDE SUITES' ONE WORLD - moved out of test/ui/quest/guide1_questLens.test.js when GUIDE2 needed
 // the same producer-minted Places. Importing it loads the vendored quest tables (the machine's own parse needs them)
 // and hands over the crafted world, its region and a seeded rolls stream that counts its draws.
 import { readFileSync, readdirSync } from 'node:fs';
@@ -18,7 +18,7 @@ const read = (p) => readFileSync(p, 'utf8').replace(/^\uFEFF/, '');
 
 // ---------------------------------------------------------------
 // The crafted world - the MapsFile/BlocksFile shapes Place resolves
-// against (test/questplaces.test.js's, cut to what these quests use):
+// against (test/systems/quest/questplaces.test.js's, cut to what these quests use):
 // Bigtown, one block of a tavern (spawn + item markers) and a house
 // (a spawn marker, a questor's home); Llugwych, the FIXED town at
 // Quests-Places p1 0xc352; Smallville, the same block, for a questor

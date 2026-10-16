@@ -20,7 +20,7 @@ Read with the real ARENA2 through the dev server's mount (a scratch probe drew t
 
 **The pictures.** Every enhanced item picture is an `<img>` holding a PNG data URL, made on a canvas at a fixed
 whole-number scale - 2 for a tile, 4 for the card (`requestIcon`, `ui/textureCanvas.js`) - and then CAPPED by CSS:
-`.tile img { max-width: 30px; max-height: 30px }` (`ui/enhancedStyle.js`). The pack's grid slot is 56px; its picture is
+`.tile img { max-width: 30px; max-height: 30px }` (`ui/enhanced/enhancedStyle.js`). The pack's grid slot is 56px; its picture is
 at most 30. The real records, measured over the 282 templates the game mints (their longest side):
 
 | group | median | range |
@@ -37,13 +37,13 @@ which at a ratio like that DROPS pixels unevenly - and a gem's 2x canvas stood a
 computed a scale that fits the slot. The grid also never showed a stack's count (`itemRow` never made the element its
 sheet has a rule for).
 
-**The hotbar** (`ui/enhancedHotbar.js`, the model `systems/quickslots.js` HB1): ten slots (sixteen on the pad's
+**The hotbar** (`ui/enhanced/enhancedHotbar.js`, the model `systems/quickslots.js` HB1): ten slots (sixteen on the pad's
 crossbar). A spell's slot shows the spell's INITIALS - "A spell has no ARENA2 icon this skin reads" - though the art is
-there: ICON00I0.IMG, 69 spell icons of 16px (`ui/spellIcons.js`), and a DOM door already cuts them
-(`ui/enhancedArt.js spellIconUrl`). Items: four KINDS alone - a consumable, a light, a shield, a weapon
+there: ICON00I0.IMG, 69 spell icons of 16px (`ui/spell/spellIcons.js`), and a DOM door already cuts them
+(`ui/enhanced/enhancedArt.js spellIconUrl`). Items: four KINDS alone - a consumable, a light, a shield, a weapon
 (`hotbarKindOf`, and again in the save's restore) - and a press of any other kind would fall to the light's arm.
 
-**The status row** (`ui/enhancedHud.js`): the HUD's effects are TEXT chips - "Wrath 10s" - in one row at the foot of the
+**The status row** (`ui/enhanced/enhancedHud.js`): the HUD's effects are TEXT chips - "Wrath 10s" - in one row at the foot of the
 centred column, under the vitals and the Renown row: spells (`effectRows` - their ICON00I0 index dropped on the
 way), the sets' powers, and the survival needs ("Hungry", "Freezing" - `survivalHudChips`). A poison, a disease and an
 infection never show there at all (they carry no bundle). The Renown bar is an 8px track with no words: the numbers
@@ -109,7 +109,7 @@ panel's box is smaller below a desktop) takes its picture the moment it lands - 
 ## UI2 - the hotbar: every spell's icon, every item (2026-09-27)
 
 **A SPELL'S SLOT SHOWS ITS ICON** - the ICON00I0 tile its record names (SPELLS.STD's `icon` byte, a made spell's
-SetIcon), cut from the real sheet (`ui/enhancedArt.js spellIconPicture`) and fitted to the slot by UI1's law, whole and
+SetIcon), cut from the real sheet (`ui/enhanced/enhancedArt.js spellIconPicture`) and fitted to the slot by UI1's law, whole and
 untrimmed (a spell icon is a square tile, its dark border part of it), to the spell face's own 34px box inside its
 ring: whole pixels at every ratio - 32px at 1x, 1.5x, 2x and 3x, and where 32 is not whole the whole size under it
 that keeps three quarters of the box (25.6px at 1.25x, 27.4 at 1.75x, 30.5 at a phone's 2.625x; AUDIT UI B2). The
@@ -142,7 +142,7 @@ every picture fitted and unresampled, the counts, the diamond's cells and its sp
 
 ## UI3 - the status widget, and the XP in the bar (2026-09-27)
 
-**THE EFFECTS LEAVE THE FOOT** (`ui/hudStatus.js`, drawn by `ui/enhancedHud.js`). The row of text chips under the
+**THE EFFECTS LEAVE THE FOOT** (`ui/hud/hudStatus.js`, drawn by `ui/enhanced/enhancedHud.js`). The row of text chips under the
 vitals and the Renown row is gone from the HUD's bottom column; what it said is a column of SQUARE tiles at the left
 edge, standing on the quickslot block's caption - the block's first child, so it rides the block's corner and scale,
 grows UP from the caption and can never meet the diamond. One tile an effect, in the foot row's old order:
@@ -307,7 +307,7 @@ dead.
 > just two tooltips side-by-side or a straight up + or - stat next to the items stats in green and red so we can quickly
 > see what is better or worse."
 
-The enhanced pack alone (`ui/armourCard.js`, composed by `ui/enhancedInventory.js`); the classic window keeps DFU's doll
+The enhanced pack alone (`ui/armourCard.js`, composed by `ui/enhanced/enhancedInventory.js`); the classic window keeps DFU's doll
 and its seven labels. NOTHING IN IT IS A NEW LAW: every number is one the port already computed, read through the member
 that computes it.
 
@@ -354,7 +354,7 @@ over two weapons, a shield over a two-hander and clothing boots over iron ones, 
 - A weapon's rarity damage affix stays its own line on both cards: the Damage delta compares the Damage rows.
 - The shop's and a player trade's detail strips draw no comparison.
 
-Pinned: `test/fb0929d_accompare.test.js` (5), `tools/mutants/fb0929d_accompare.json` (35 mutants, 35 dead). Seen in
+Pinned: `test/systems/fb0929d_accompare.test.js` (5), `tools/mutants/fb0929d_accompare.json` (35 mutants, 35 dead). Seen in
 Chromium with the real ARENA2's icons at 1366x768 and on a phone (a scratch probe, not committed).
 
 ## HB-LYCFREE - the curse's spell free from the bar, and the hotbar by default (2026-09-30)
@@ -375,5 +375,5 @@ have stored the old 'quickbar' (PREF1 writes no default), so a player who had tu
 `quickslots: false` alone. That shelf keeps the diamond's style and stays Off, and is written as rev 2 at its next
 save. A player who had chosen Diamond left no trace and moves to the hotbar with everyone else.
 
-Pinned: `test/hb_lycfree.test.js` (8). The diamond's own suites choose the diamond now that it is not the default
+Pinned: `test/systems/hb_lycfree.test.js` (8). The diamond's own suites choose the diamond now that it is not the default
 (Testing.md's row names them).

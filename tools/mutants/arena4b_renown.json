@@ -5,7 +5,7 @@
     "old": "export const ARENA_RENOWN_QUESTS = Object.freeze({ bout: 1, champion: 2, grand: 3, pvp: 1 });",
     "new": "export const ARENA_RENOWN_QUESTS = Object.freeze({ bout: 1, champion: 1, grand: 3, pvp: 1 });",
     "tests": [
-      "test/arena4b_renown.test.js"
+      "test/net/arena/arena4b_renown.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "return q * renownQuestXp(ARENA_RENOWN_TIER_LEVEL(bout?.tier), renown);",
     "new": "return q * renownQuestXp(ARENA_RENOWN_TIER_LEVEL(bout?.tier), 99);",
     "tests": [
-      "test/arena4b_renown.test.js"
+      "test/net/arena/arena4b_renown.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "Math.trunc(Number(tier) || 0))) + 3;",
     "new": "Math.trunc(Number(tier) || 0))) + 2;",
     "tests": [
-      "test/arena4b_renown.test.js"
+      "test/net/arena/arena4b_renown.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "(r.recorded ? r.won : r.why === 'claimed' && c.r === 1)",
     "new": "(r.recorded ? true : r.why === 'claimed' && c.r === 1)",
     "tests": [
-      "test/arena4b_renown.test.js"
+      "test/net/arena/arena4b_renown.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": ": r.result === 'won' && r.rated === true;",
     "new": ": r.recorded === true && r.result === 'won' && r.rated === true;",
     "tests": [
-      "test/arena4b_renown.test.js"
+      "test/net/arena/arena4b_renown.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": ": r.result === 'won' && r.rated === true;",
     "new": ": r.result === 'won';",
     "tests": [
-      "test/arena4b_renown.test.js"
+      "test/net/arena/arena4b_renown.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "if (!(Number(took?.meta?.changes ?? 0) > 0)) return null;",
     "new": "if (false) return null;",
     "tests": [
-      "test/arena4b_renown.test.js"
+      "test/net/arena/arena4b_renown.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "  if (r.error) { await db.prepare('DELETE FROM arena_renown WHERE bout = ?1 AND player = ?2').bind(boutId, player.id).run(); return null; }\n  return r;\n",
     "new": "  if (r.error) { await db.prepare('DELETE FROM arena_renown WHERE bout = ?1 AND player = ?2').bind(boutId, player.id).run(); return null; }\n  return { ...r, credited: xp };\n",
     "tests": [
-      "test/arena4b_renown.test.js"
+      "test/net/arena/arena4b_renown.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "const order = key ? await mintRenownOrder(",
     "new": "const order = false ? await mintRenownOrder(",
     "tests": [
-      "test/arena4b_renown.test.js"
+      "test/net/arena/arena4b_renown.test.js"
     ]
   },
   {
@@ -86,25 +86,25 @@
     "old": "region: ARENA_RENOWN_REGION, xp: r.renown.credited",
     "new": "region: body.region, xp: r.renown.credited",
     "tests": [
-      "test/arena4b_renown.test.js"
+      "test/net/arena/arena4b_renown.test.js"
     ]
   },
   {
     "name": "ARENA4B-CLAIMS-FIGHTER",
-    "file": "src/net/arenaClaims.js",
+    "file": "src/net/arena/arenaClaims.js",
     "old": "keep([...list, arenaKeptEntry(r, character(), name())]",
     "new": "keep([...list, r]",
     "tests": [
-      "test/arena4b_renown.test.js"
+      "test/net/arena/arena4b_renown.test.js"
     ]
   },
   {
     "name": "ARENA4B-CLAIMS-RENOWN-UNTOLD",
-    "file": "src/net/arenaClaims.js",
+    "file": "src/net/arena/arenaClaims.js",
     "old": "if (answer?.ok && answer.data?.renown) onRenown(answer.data);",
     "new": "if (answer?.ok && answer.data?.recorded && answer.data?.renown) onRenown(answer.data);",
     "tests": [
-      "test/arena4b_renown.test.js"
+      "test/net/arena/arena4b_renown.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "post('/v1/arena/claim', { receipt, ...(character ? { character } : {}), ...(name ? { name } : {}) })",
     "new": "post('/v1/arena/claim', { receipt })",
     "tests": [
-      "test/arena4b_renown.test.js"
+      "test/net/arena/arena4b_renown.test.js"
     ]
   },
   {
@@ -123,7 +123,7 @@
     "new": "      const a = renownAnswer(",
     "note": "The merge of ARENA4b's streams (re-aimed by content): the relay stream's verdictHeard follows the hook, so the record names the check's own line.",
     "tests": [
-      "test/arena4b_renown.test.js"
+      "test/net/arena/arena4b_renown.test.js"
     ]
   }
 ]

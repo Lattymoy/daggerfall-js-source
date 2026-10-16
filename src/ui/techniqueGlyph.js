@@ -2,10 +2,10 @@
 // TECH-CARD (2026-10-10, the owner: "it needs its own unique glyph as its own element. Like how set pieces and sigils
 // get their own sections"): THE TECHNIQUE'S GLYPH - three strokes of a strike on the diagonal, the long one between two
 // short, each sharp at both ends. The one picture a technique wears: its block on the card (ui/techniqueCard.js) and
-// its chip on the HUD (ui/enhancedHud.js statTile). A leaf with no imports, as the sigil's rune is (ui/sigilRune.js), so
+// its chip on the HUD (ui/enhanced/enhancedHud.js statTile). A leaf with no imports, as the sigil's rune is (ui/sigilRune.js), so
 // a stylesheet or a test may read it without the roster.
 //
-// Not the sigil's ring, nor the open zone's two crossed blades (ui/hudStatus.js STATUS_GLYPHS.wild): a shape no other
+// Not the sigil's ring, nor the open zone's two crossed blades (ui/hud/hudStatus.js STATUS_GLYPHS.wild): a shape no other
 // mark in the kit has, so the chip and the block are known for the same thing at a glance.
 
 /** The glyph on the 16px grid, a row a string - `#` a pixel. */

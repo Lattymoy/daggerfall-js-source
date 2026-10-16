@@ -23,24 +23,24 @@ import { RACES } from '../systems/races.js';   // C2-slice: the player grunt's r
 import { assignEnemyStartingEquipment, equipmentVariantFor, equipmentItems } from '../combat/enemyEquipment.js';   // RRI2: EnemyEntity.AssignEnemyEquipment, the delegate
 import { rollEnemyWeaponPoison } from '../systems/poisons.js';
 import { EQUIP_SLOTS, equipTableOf, getEquipSlot } from '../systems/equip.js';
-import { generateItems, addEnemyLootExtras, enemyLootTableKey, createRandomWeapon, createRandomArmor } from '../systems/loot.js';   // RF2: the spawn chain's DFU half, in its one home; RRI2: MobLootKeys; LOOT7: a champion's minted piece
-import { isAmmunition } from '../systems/itemTemplates.js';   // LOOT7: a champion's minted piece is never ammunition
-import { enemyLootSpawned } from '../characters/enemyEntity.js';   // OH-E: EnemyEntity.OnLootSpawned
-import { conditionBasedPricesOn, randomConditionLootItems } from '../systems/rriRealism.js';   // RRI2: EnemyEntity.OnLootSpawned's subscriber
+import { generateItems, addEnemyLootExtras, enemyLootTableKey, createRandomWeapon, createRandomArmor } from '../systems/loot/loot.js';   // RF2: the spawn chain's DFU half, in its one home; RRI2: MobLootKeys; LOOT7: a champion's minted piece
+import { isAmmunition } from '../systems/item/itemTemplates.js';   // LOOT7: a champion's minted piece is never ammunition
+import { enemyLootSpawned } from '../characters/enemy/enemyEntity.js';   // OH-E: EnemyEntity.OnLootSpawned
+import { conditionBasedPricesOn, randomConditionLootItems } from '../systems/roleplayRealismItems/rriRealism.js';   // RRI2: EnemyEntity.OnLootSpawned's subscriber
 import { isHumanoid } from '../systems/survival/loot.js';   // MOD: the same humanoid test SURV2's corpse food already draws its line with
-import { rollCorpseLoot, lootRarityOn, rarityRank, RARITIES, rarityEligible, applyRarity, lastPass, stampWonWeapons } from '../systems/lootRarity.js';   // RF2: and the port's, after it; LOOT7: a champion's guarantee
+import { rollCorpseLoot, lootRarityOn, rarityRank, RARITIES, rarityEligible, applyRarity, lastPass, stampWonWeapons } from '../systems/loot/lootRarity.js';   // RF2: and the port's, after it; LOOT7: a champion's guarantee
 import { championOf } from '../systems/champions.js';   // LOOT7: the champions' traits register at import
 import { isGoldPieces, ARROW_TEMPLATE } from '../systems/inventory.js';   // PLAIN-LOOT: a plain foe's gold all of it; PARTY-LOOT: a shaft is never counted under the cap
 import { bonusShare, rollBonusSupplies, ROOM_BASE_QUARTERS } from '../systems/roomLoot.js';   // PARTY-LOOT: a player's own layer over a room's shared base
-import { wildFoeLoot } from '../systems/wildZone.js';   // WILD1: the open zone's gold (wildLootAfter)
+import { wildFoeLoot } from '../systems/wild/wildZone.js';   // WILD1: the open zone's gold (wildLootAfter)
 import { liveStat, FATIGUE_DRAIN_SCALE } from '../systems/statMods.js';   // RF2: the player's live luck for the roll   // AUDIT 58: ItemHelper's EquipItem half - a foe's equip table is what DamageEquipment's struck side reads
 import { GLOBAL_SCALE } from '../world/meshReader.js';
 import { swingSoundFor, hitSoundFor, ENEMY_HIT_VOLUME, SOUND } from '../systems/soundClips.js';
 import { bloodCentre } from './hitEffects.js';   // AUDIT 62 F19: EnemyAttack.cs:326-328's one home, the same law the four player-melee sites cite
-import { bloodHit } from '../combat/bloodDecals.js';   // BLOOD1b: the blow, in the shape the mark's ladder reads
-import { KNIGHT_CITY_WATCH } from '../characters/mobileTypes.js';
-import { ATTRACT_RADIUS, ignoreHumanSounds } from '../characters/enemySounds.js';   // AUDIT 24 (wave 41); TELL2: a person's wind-up is a swing, not a voice
-import { enemyDisplayName, ENEMY_BASICS } from '../characters/enemyBasics.js';   // AUDIT 24 (wave 42); TELL1: the bark a breaking blow wrings out
+import { bloodHit } from '../combat/blood/bloodDecals.js';   // BLOOD1b: the blow, in the shape the mark's ladder reads
+import { KNIGHT_CITY_WATCH } from '../characters/mobile/mobileTypes.js';
+import { ATTRACT_RADIUS, ignoreHumanSounds } from '../characters/enemy/enemySounds.js';   // AUDIT 24 (wave 41); TELL2: a person's wind-up is a swing, not a voice
+import { enemyDisplayName, ENEMY_BASICS } from '../characters/enemy/enemyBasics.js';   // AUDIT 24 (wave 42); TELL1: the bark a breaking blow wrings out
 import { getLocalizedEnemyName } from '../systems/textManager.js';   // L10N3e: the enemy's name in the player's language
 import { windupHolds, windupStruck, tacticsNow, overreachOpen, poiseTrack, LOCAL_TARGET } from '../ai/tactics.js';   // TELL1: poise and the stagger (bible/12-Enhanced-AI/Feud-Arc.md section 3); TELL2: the cues' clock; TELL4: the punish window
 import { blowK, blowWeight, behind, TELL } from '../ai/tells.js';   // TELL1: a blow's weight on the poise meter; TELL2: the cues' numbers
@@ -48,7 +48,7 @@ import { noteFeud, feudWeakBlow } from '../systems/feudLedger.js';   // RVN1: my
 import { BLOW } from '../ai/blowShapes.js';   // TELL6d: the aimed shot's speed
 import { blowEffectOf, queueBlowEffect, drainBlowEffects, tickBleed } from '../systems/blowEffects.js';   // TELL6e: what a landing does to the player
 import { BLOW_VERDICT_LIFE } from '../ai/foeBlows.js';   // TELL6e: a landing's effect, only within its verdict's life
-import { markFoeThreat, setFoePoiseReader } from '../ui/hudFoeTarget.js';   // TELL9: the bar's foe on a threat, its poise track
+import { markFoeThreat, setFoePoiseReader } from '../ui/hud/hudFoeTarget.js';   // TELL9: the bar's foe on a threat, its poise track
 import { HIT_TAGS, tagHit, showWord } from '../ui/hitNumbers.js';   // TELL9: the words on the hit
 import { comprehendLanguagesChance } from '../systems/effects.js';   // X11: the pacification bonus DFU reads inside its own formula
 
@@ -62,7 +62,7 @@ import { comprehendLanguagesChance } from '../systems/effects.js';   // X11: the
  *  rest of the game. DaggerfallUnityItem.cs:910-941 + :943-962,
  *  keyed on Weapons (ItemEnums.cs:113..130). */
 // AUDIT-THUNDERLOCK: this was a SECOND COPY of the table - the very
-// duplicate test/audit24_onehome.test.js's ratchet has been naming
+// duplicate test/systems/talk/audit24_onehome.test.js's ratchet has been naming
 // (`weaponSkillUsed  src/characters/weapons.js src/scenes/hostCombat.js`)
 // - and the port's own weapon is what made it cost something: adding
 // the Dwarven Thunderlock to characters/weapons.js left THIS copy
@@ -175,7 +175,7 @@ export function spawnEnemyLoot(entity, mobileType, basics, player, { rolls = Mat
   return entity.items;
 }
 
-/** WILD1 (systems/wildZone.js, the owner's "twice gold" - WILD2: at its ring's multiplier): a foe of the open zone's coin - after its chain
+/** WILD1 (systems/wild/wildZone.js, the owner's "twice gold" - WILD2: at its ring's multiplier): a foe of the open zone's coin - after its chain
  *  (spawnEnemyLoot, given wildLootOpts), so the cap, which folds and keeps the gold whole, has had its word. */
 /** PARTY-LOOT (bible/06-Systems/Online-Arc.md PARTY-LOOT; Mac: "Shared base + personal bonus"): A PLAYER'S OWN LAYER OVER
  *  A ROOM'S SHARED BASE, read at their own RENOWN-LOOT stage and their Luck - the knobs' one home, as the base's are
@@ -376,7 +376,7 @@ export const enemyMissSound = (weapon) => swingSoundFor(weapon);
 
 /** MobileTypes.Knight_CityWatch - the one class id whose voice is
  *  FORCED male whatever the mobile rolled (EnemyAttack.cs:220/:357). */
-export { KNIGHT_CITY_WATCH } from '../characters/mobileTypes.js';   // AUDIT 24 (wave 41): one home
+export { KNIGHT_CITY_WATCH } from '../characters/mobile/mobileTypes.js';   // AUDIT 24 (wave 41): one home
 
 /** The foe's voice gender per the source's pick: the mobile's
  *  gender, with the city-watch knight forced male. */
@@ -461,7 +461,7 @@ export function playerAttackGrunt(playerEntity, isBow, rolls = Math.random) {
  *  from a hang, a leap's launch, a fall caught, the grip gone - in the attack grunt's own voice: the port's departure
  *  (DFU's climber climbs in silence), so it rides the attack grunt's gates exactly (the CombatVoices switch, a
  *  transformed lycanthrope's silence) and its clip (a vampire's override, else GetRaceGenderAttackSound by race and
- *  gender). WHEN is the caller's (player/climbSounds.js: a chance per move, never two within seconds). Returns
+ *  gender). WHEN is the caller's (player/climb/climbSounds.js: a chance per move, never two within seconds). Returns
  *  { clip, pitchLift } or null. */
 export function playerClimbStrain(playerEntity, rolls = Math.random) {
   if (!playerEntity || !combatVoicesEnabled() || suppressOptionalCombatVoices(playerEntity)) return null;
@@ -534,7 +534,7 @@ export function playPlayerVoice(audio, voice) {
 export { CORPSE_ACTIVATION_DISTANCE } from '../player/activate.js';
 
 // ---- EnemySounds through the host's devices (AUDIT 24, wave 41) ----
-// The decisions and the clock live in characters/enemySounds.js; these
+// The decisions and the clock live in characters/enemy/enemySounds.js; these
 // two are the seam where a pool's collider and audio device meet them,
 // so all three pools cast the same ray and play at the same rolloff.
 
@@ -795,7 +795,7 @@ const NO_CUES = Object.freeze([]);   // AUDIT TELL U9: what a foe with nothing t
 let _windupAtMe = null;
 export function setWindupAtMeListener(fn) { _windupAtMe = typeof fn === 'function' ? fn : null; }
 /**
- * A telegraphed blow's three cues, in the world boss's order (world/gateBoss.js BOSS_CUES), each once, through the
+ * A telegraphed blow's three cues, in the world boss's order (world/gate/gateBoss.js BOSS_CUES), each once, through the
  * foes' own device settings (playEnemyClip's: a metre above the feet, linear to the attract radius by `hearing`):
  *   WIND as it winds up - the kind's bark at TELL.WIND_PITCH (a person, whom DFU keeps mute, a low swing instead);
  *   RELEASE TELL.RELEASE_LEAD before its landing - the low swing at TELL.RELEASE_PITCH;

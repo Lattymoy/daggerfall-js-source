@@ -46,7 +46,7 @@ import { MARKS_MAX, utcDay } from '../../src/net/marksLaw.js';
 import { STORES_MAX } from '../../src/net/professionLaw.js';
 import { material, regionOk } from '../../src/net/nodeLaw.js';
 import { HANDLE_RE } from '../../src/net/handleShape.js';
-import { GUILD_RANK_MASTER } from '../../src/net/guildLaw.js';
+import { GUILD_RANK_MASTER } from '../../src/net/guild/guildLaw.js';
 import { fortMaterialOk, RAM_KIT_KEY } from '../../src/net/fortLaw.js';   // SEAT2b: what a seat writ may ask; part two: a Siege Camp's Ram Kits
 import { seatKeyOk } from '../../src/net/townSeatLaw.js';
 import { confirmedSeats } from './townSeats.js';

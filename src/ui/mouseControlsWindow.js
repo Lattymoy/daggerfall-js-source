@@ -14,7 +14,7 @@
 // named "advancedControlsMainPanelBackgroundColor" (SetBackground
 // :322-332, TextureReplacement). The port has no mod texture layer, so
 // the colour arm is the only arm - recorded exactly as
-// ui/travelPopUp.js records the same shape for its green checkbox, and
+// ui/travel/travelPopUp.js records the same shape for its green checkbox, and
 // not a departure of behaviour.
 //
 // THE NATIVE-WINDOW RULE, element by element (all rects panel-relative
@@ -109,7 +109,7 @@
 // has no port counterpart and needs none: every one of these ten
 // settings is read at its point of use, so a write is already live.
 
-import { nativeMetrics, drawRect } from './nativePanel.js';
+import { nativeMetrics, drawRect } from './native/nativePanel.js';
 import { drawMenuBackdrop } from './chargenArt.js';
 import { drawText, measureText } from './text.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';
@@ -124,7 +124,7 @@ import {
   sliderThumb, indicatorText, SLIDER_HEIGHT, SLIDER_INDICATOR_OFFSET, TROUGH_COLOR, TINT,
 } from './horizontalSlider.js';
 import { ToolTip } from './toolTip.js';
-import { getBool, getFloat, getInt, setValue, saveSettings, effectiveSettings } from '../systems/settings.js';
+import { getBool, getFloat, getInt, setValue, saveSettings, effectiveSettings } from '../systems/settings/settings.js';
 import { localizedText, localizedTextList, localizedStrings, TextCollections } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Settings, read in the player's language
 import { hotkeyHit } from '../systems/dialogShortcuts.js';   // L10N3f: the prompts' Yes/No are DaggerfallShortcut's
 
@@ -293,7 +293,7 @@ export class MouseControlsWindow {
     this.tip = new ToolTip();
     this._drag = null;
     // The LAST hovered point is what the wheel acts on
-    // (ui/automapWindow.js's shape). AUDIT 65 UI-5 put the live point
+    // (ui/automap/automapWindow.js's shape). AUDIT 65 UI-5 put the live point
     // on the overlay wheel seam; this window does not read it yet.
     this._mouse = [0, 0];
     // Checkbox.cs:103-105 needs the label's measured width, which only

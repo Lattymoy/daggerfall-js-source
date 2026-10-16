@@ -5,7 +5,7 @@
     "old": "  const pieceHeld = kind === 'piece' ? await craftHoldOf(db, me, provenance) : null;",
     "new": "  const pieceHeld = null;",
     "tests": [
-      "test/crafthold.test.js"
+      "test/server/crafthold.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  const held = (await realmHoldOf(db, me, character)) ?? (await craftHoldOf(db, me, provenance));   // INT3 (AUDIT INT): a held character auctions nothing",
     "new": "  const held = await realmHoldOf(db, me, character);   // INT3 (AUDIT INT): a held character auctions nothing",
     "tests": [
-      "test/crafthold.test.js"
+      "test/server/crafthold.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  const held = (await realmHoldOf(db, me, character)) ?? (await craftHoldOf(db, me, provenance));\n  if (held) return held;\n  if (!commissionFilledBy(",
     "new": "  if (!commissionFilledBy(",
     "tests": [
-      "test/crafthold.test.js"
+      "test/server/crafthold.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  if (pieceHeld) return pieceHeld;\n  const r = recipeById(p.recipe);",
     "new": "  const r = recipeById(p.recipe);",
     "tests": [
-      "test/crafthold.test.js"
+      "test/server/crafthold.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  const row = await db.prepare(`SELECT r.held FROM products p JOIN realm_characters r ON (r.id = p.char_id OR r.origin_id = p.char_id) AND r.player = ?2",
     "new": "  const row = await db.prepare(`SELECT r.held FROM products p JOIN realm_characters r ON (r.id = p.owner OR r.origin_id = p.owner) AND r.player = ?2",
     "tests": [
-      "test/crafthold.test.js"
+      "test/server/crafthold.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "  if (row.held && await db.prepare('SELECT 1 FROM products WHERE owner = ?1 AND (char_id = ?2 OR char_id = ?3) LIMIT 1')\n",
     "new": "  if (false && await db.prepare('SELECT 1 FROM products WHERE owner = ?1 AND (char_id = ?2 OR char_id = ?3) LIMIT 1')\n",
     "tests": [
-      "test/crafthold.test.js"
+      "test/server/crafthold.test.js"
     ]
   },
   {
@@ -60,7 +60,7 @@
     "old": "    WHERE p.provenance = ?1 AND ${holdStandsSql('r', '?3')}`).bind(provenance, playerId, Math.floor(Date.now() / 1000)).first();\n  return row?.held ? { error: 'trade-held', held: row.held } : null;",
     "new": "    WHERE p.provenance = ?1`).bind(provenance, playerId).first();\n  return row ? (row.held ? { error: 'trade-held', held: row.held } : { error: 'record-unjudged' }) : null;",
     "tests": [
-      "test/crafthold.test.js"
+      "test/server/crafthold.test.js"
     ]
   },
   {
@@ -69,7 +69,7 @@
     "old": "(r.id = p.char_id OR r.origin_id = p.char_id) AND r.player = ?2\n",
     "new": "(r.id = p.char_id OR r.origin_id = p.char_id)\n",
     "tests": [
-      "test/crafthold.test.js"
+      "test/server/crafthold.test.js"
     ]
   },
   {
@@ -78,7 +78,7 @@
     "old": "(r.id = p.char_id OR r.origin_id = p.char_id) AND r.player = ?2\n",
     "new": "r.id = p.char_id AND r.player = ?2\n",
     "tests": [
-      "test/crafthold.test.js"
+      "test/server/crafthold.test.js"
     ]
   },
   {
@@ -87,7 +87,7 @@
     "old": "  const pieceHeld = side.at ? null : await craftHoldOf(db, player.id, provenance);",
     "new": "  const pieceHeld = await craftHoldOf(db, player.id, provenance);",
     "tests": [
-      "test/crafthold.test.js"
+      "test/server/crafthold.test.js"
     ]
   },
   {
@@ -96,7 +96,7 @@
     "old": "  const frozen = await realmHoldOf(db, me, character);\n  if (frozen) return frozen;\n  const total = units * Number(w.pay);",
     "new": "  const total = units * Number(w.pay);",
     "tests": [
-      "test/crafthold.test.js"
+      "test/server/crafthold.test.js"
     ]
   },
   {
@@ -105,7 +105,7 @@
     "old": "  if (kind === 'deposit') { const held = await realmHoldOf(db, me, character); if (held) return held; }\n",
     "new": "",
     "tests": [
-      "test/crafthold.test.js"
+      "test/server/crafthold.test.js"
     ]
   },
   {
@@ -114,9 +114,9 @@
     "old": "  if (row.held && await db.prepare('SELECT 1 FROM products WHERE owner = ?1 AND (char_id = ?2 OR char_id = ?3) LIMIT 1')\n",
     "new": "  if (row.held && (true || await db.prepare('SELECT 1 FROM products WHERE owner = ?1 AND (char_id = ?2 OR char_id = ?3) LIMIT 1'))\n",
     "tests": [
-      "test/crafthold.test.js",
-      "test/realm1.test.js",
-      "test/auditrealm2_client.test.js"
+      "test/server/crafthold.test.js",
+      "test/server/realm1.test.js",
+      "test/systems/auditrealm2_client.test.js"
     ]
   },
   {
@@ -125,8 +125,8 @@
     "old": "export const ACCOUNT_VERSION = 'acct145';",
     "new": "export const ACCOUNT_VERSION = 'acct123';",
     "tests": [
-      "test/legacy7_service.test.js",
-      "test/founder5.test.js"
+      "test/server/legacy7_service.test.js",
+      "test/server/founder5.test.js"
     ],
     "note": "YARD-SWEEP + HANDLE-EMAIL (PIN MOVED): acct117, and the mutant is the version main left. acct115 on its branch, renumbered past BR5 at the merge: acct116, and the mutant is the version main left. GATHER-SPEED + MARKET-SPEED (PIN MOVED): acct119, the version moved on (acct118 on its branch, renumbered past SEAT-LEASE at the merge). NAME-AS (PIN MOVED): acct122 (acct121 on its branch, renumbered past BAL9 at the merge), and the mutant is the version main left."
   },
@@ -136,8 +136,8 @@
     "old": "ACCOUNT_VERSION = \"acct145\"\n",
     "new": "ACCOUNT_VERSION = \"acct123\"\n",
     "tests": [
-      "test/realm1.test.js",
-      "test/founder5.test.js"
+      "test/server/realm1.test.js",
+      "test/server/founder5.test.js"
     ],
     "note": "YARD-SWEEP + HANDLE-EMAIL (PIN MOVED): acct117, and the mutant is the version main left.  GATHER-SPEED + MARKET-SPEED (PIN MOVED): acct119, the version moved on (acct118 on its branch, renumbered past SEAT-LEASE at the merge). NAME-AS (PIN MOVED): acct122 (acct121 on its branch, renumbered past BAL9 at the merge), and the mutant is the version main left."
   }

@@ -6,7 +6,7 @@
 // the tools and the translators read; the English the game shows is the code's own, so it is never loaded here.
 //
 // import.meta.glob is Vite's compile-time macro, absent under bare node - so node sees no files (worldOfDaggerfall.js's
-// door), the module still loads (test/moduleload_smoke.test.js runs every body), and the tests feed the same files off
+// door), the module still loads (test/tree/moduleload_smoke.test.js runs every body), and the tests feed the same files off
 // the disk (_useLocaleFilesForTests) to run the boot's laws. Nothing here may stop the game: a language whose text
 // fails to load leaves English standing.
 
@@ -243,7 +243,7 @@ export function browserLanguages() {
 
 /** THE BOOT'S LANGUAGE: `?lang=` for one visit, else the player's own choice (uiPrefs `language`). While English
  *  stands and the front door has not yet offered the browser's own language, that language's text is fetched too, so
- *  the offer can ask in it (ui/enhancedMenu.js languageOffer). A failure leaves English standing and the game starts. */
+ *  the offer can ask in it (ui/enhanced/enhancedMenu.js languageOffer). A failure leaves English standing and the game starts. */
 export async function initLocale(params = null, { languages = browserLanguages() } = {}) {
   try {
     _packs = await packStore.installedPacks();   // L10N3b: before anything is registered, so a pack's language is offered

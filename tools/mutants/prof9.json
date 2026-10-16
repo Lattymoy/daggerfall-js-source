@@ -5,8 +5,8 @@
     "old": "templateIndex: 685, tier: 1, herb: 13",
     "new": "templateIndex: 685, tier: 2, herb: 13",
     "tests": [
-      "test/prof9_law.test.js",
-      "test/prof9_service.test.js"
+      "test/net/prof9_law.test.js",
+      "test/net/prof9_service.test.js"
     ]
   },
   {
@@ -15,8 +15,8 @@
     "old": "templateIndex: 688, tier: 6, herb: null",
     "new": "templateIndex: 688, tier: 5, herb: null",
     "tests": [
-      "test/prof9_law.test.js",
-      "test/prof9_service.test.js"
+      "test/net/prof9_law.test.js",
+      "test/net/prof9_service.test.js"
     ]
   },
   {
@@ -25,8 +25,8 @@
     "old": "name: 'Hunter\\'s Stew', templateIndex: 685,",
     "new": "name: 'Hunter\\'s Stew', templateIndex: 684,",
     "tests": [
-      "test/prof9_law.test.js",
-      "test/prof9_client.test.js"
+      "test/net/prof9_law.test.js",
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -35,9 +35,9 @@
     "old": "inputs: Object.freeze([Object.freeze(['food:meat', 2]), Object.freeze(['food:mushroom', 1])]),",
     "new": "inputs: Object.freeze([Object.freeze(['food:meat', 1]), Object.freeze(['food:mushroom', 1])]),",
     "tests": [
-      "test/prof9_law.test.js",
-      "test/prof9_service.test.js",
-      "test/prof9_client.test.js"
+      "test/net/prof9_law.test.js",
+      "test/net/prof9_service.test.js",
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -46,7 +46,7 @@
     "old": "Object.freeze(['food:fish', 2]), Object.freeze(['food:egg', 1])",
     "new": "Object.freeze(['food:meat', 2]), Object.freeze(['food:egg', 1])",
     "tests": [
-      "test/prof9_law.test.js"
+      "test/net/prof9_law.test.js"
     ]
   },
   {
@@ -55,7 +55,7 @@
     "old": "Object.freeze(['food:apple', 2]), Object.freeze(['food:egg', 1])",
     "new": "Object.freeze(['food:orange', 2]), Object.freeze(['food:egg', 1])",
     "tests": [
-      "test/prof9_law.test.js"
+      "test/net/prof9_law.test.js"
     ]
   },
   {
@@ -64,7 +64,7 @@
     "old": "Object.freeze(['food:mushroom', 2]), Object.freeze(['food:egg', 2])]),",
     "new": "Object.freeze(['food:mushroom', 2]), Object.freeze(['food:egg', 1])]),",
     "tests": [
-      "test/prof9_law.test.js"
+      "test/net/prof9_law.test.js"
     ]
   },
   {
@@ -73,8 +73,8 @@
     "old": "stats: Object.freeze({ endurance: 5 }), minutes: 120",
     "new": "stats: Object.freeze({ strength: 5 }), minutes: 120",
     "tests": [
-      "test/prof9_law.test.js",
-      "test/prof9_client.test.js"
+      "test/net/prof9_law.test.js",
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -83,7 +83,7 @@
     "old": "stats: Object.freeze({ agility: 5 }), minutes: 120",
     "new": "stats: Object.freeze({ agility: 5 }), minutes: 60",
     "tests": [
-      "test/prof9_law.test.js"
+      "test/net/prof9_law.test.js"
     ]
   },
   {
@@ -92,8 +92,8 @@
     "old": "effect: Object.freeze({ stamina: 20, minutes: 240 })",
     "new": "effect: Object.freeze({ stamina: 20, minutes: 120 })",
     "tests": [
-      "test/prof9_law.test.js",
-      "test/prof9_client.test.js"
+      "test/net/prof9_law.test.js",
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -102,8 +102,8 @@
     "old": "minutes: 1440, party: true })",
     "new": "minutes: 1440, party: false })",
     "tests": [
-      "test/prof9_law.test.js",
-      "test/prof9_client.test.js"
+      "test/net/prof9_law.test.js",
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -112,8 +112,8 @@
     "old": "minutes: 1440, party: true })",
     "new": "minutes: 720, party: true })",
     "tests": [
-      "test/prof9_law.test.js",
-      "test/prof9_client.test.js"
+      "test/net/prof9_law.test.js",
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -122,8 +122,8 @@
     "old": "dishRecipe(d, 'north', `p1:${d.herb}`, 'northern')",
     "new": "dishRecipe(d, 'north', `p2:${d.herb}`, 'northern')",
     "tests": [
-      "test/prof9_law.test.js",
-      "test/prof9_client.test.js"
+      "test/net/prof9_law.test.js",
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -132,8 +132,8 @@
     "old": "tier: d.tier, rank: TIER_RANKS[d.tier - 1],",
     "new": "tier: d.tier, rank: 0,",
     "tests": [
-      "test/prof9_law.test.js",
-      "test/prof9_service.test.js"
+      "test/net/prof9_law.test.js",
+      "test/net/prof9_service.test.js"
     ]
   },
   {
@@ -142,7 +142,7 @@
     "old": "kind: 'dish', family: 'dishes',",
     "new": "kind: 'dish', family: 'furniture',",
     "tests": [
-      "test/prof9_law.test.js"
+      "test/net/prof9_law.test.js"
     ]
   },
   {
@@ -151,9 +151,9 @@
     "old": "kind: 'dish', family: 'dishes',",
     "new": "kind: 'garment', family: 'dishes',",
     "tests": [
-      "test/prof9_law.test.js",
-      "test/prof9_service.test.js",
-      "test/prof9_client.test.js"
+      "test/net/prof9_law.test.js",
+      "test/net/prof9_service.test.js",
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -162,9 +162,9 @@
     "old": "...MASONRY_RECIPES, ...COOKING_RECIPES, ...JEWELCRAFTING_RECIPES]",
     "new": "...MASONRY_RECIPES, ...JEWELCRAFTING_RECIPES]",
     "tests": [
-      "test/prof9_law.test.js",
-      "test/prof9_service.test.js",
-      "test/prof9_client.test.js"
+      "test/net/prof9_law.test.js",
+      "test/net/prof9_service.test.js",
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -173,9 +173,9 @@
     "old": "r.kind !== 'siege' && r.kind !== 'dish';",
     "new": "r.kind !== 'siege';",
     "tests": [
-      "test/prof9_law.test.js",
-      "test/prof9_service.test.js",
-      "test/prof9_client.test.js"
+      "test/net/prof9_law.test.js",
+      "test/net/prof9_service.test.js",
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -184,8 +184,8 @@
     "old": "(r.kind === 'dish' && spec50 === COOK) ? 2 : 1",
     "new": "(r.kind === 'dish' && spec50 === 'chef') ? 2 : 1",
     "tests": [
-      "test/prof9_law.test.js",
-      "test/prof9_service.test.js"
+      "test/net/prof9_law.test.js",
+      "test/net/prof9_service.test.js"
     ]
   },
   {
@@ -194,8 +194,8 @@
     "old": "if (spec100 === PROVISIONER) return HAND_PROVISIONER;",
     "new": "if (spec100 === PROVISIONER) return HAND_CHEF;",
     "tests": [
-      "test/prof9_law.test.js",
-      "test/prof9_service.test.js"
+      "test/net/prof9_law.test.js",
+      "test/net/prof9_service.test.js"
     ]
   },
   {
@@ -204,8 +204,8 @@
     "old": "if (spec100 === CHEF && dishOf(r.id)?.effect.party === true) return HAND_CHEF;",
     "new": "if (spec100 === CHEF) return HAND_CHEF;",
     "tests": [
-      "test/prof9_law.test.js",
-      "test/prof9_service.test.js"
+      "test/net/prof9_law.test.js",
+      "test/net/prof9_service.test.js"
     ]
   },
   {
@@ -214,8 +214,8 @@
     "old": "export const CHEF_FEAST = 1.5;",
     "new": "export const CHEF_FEAST = 1.25;",
     "tests": [
-      "test/prof9_law.test.js",
-      "test/prof9_client.test.js"
+      "test/net/prof9_law.test.js",
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -224,8 +224,8 @@
     "old": "hand === HAND_CHEF ? Math.round(d.effect.minutes * CHEF_FEAST)",
     "new": "hand === HAND_PROVISIONER ? Math.round(d.effect.minutes * CHEF_FEAST)",
     "tests": [
-      "test/prof9_law.test.js",
-      "test/prof9_client.test.js"
+      "test/net/prof9_law.test.js",
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -234,8 +234,8 @@
     "old": "agility: 3, endurance: 4, personality: 5",
     "new": "agility: 3, endurance: 6, personality: 5",
     "tests": [
-      "test/prof9_law.test.js",
-      "test/prof9_client.test.js"
+      "test/net/prof9_law.test.js",
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -244,8 +244,8 @@
     "old": "export const DISH_LEVEL = 30;",
     "new": "export const DISH_LEVEL = 20;",
     "tests": [
-      "test/prof9_law.test.js",
-      "test/prof9_client.test.js"
+      "test/net/prof9_law.test.js",
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -254,8 +254,8 @@
     "old": "durationMod: Math.round(minutes / DISH_LEVEL), durationPerLevel: 1,",
     "new": "durationMod: Math.round(minutes / 20), durationPerLevel: 1,",
     "tests": [
-      "test/prof9_law.test.js",
-      "test/prof9_client.test.js"
+      "test/net/prof9_law.test.js",
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -264,7 +264,7 @@
     "old": "magnitudeBaseLow: n, magnitudeBaseHigh: n,",
     "new": "magnitudeBaseLow: n, magnitudeBaseHigh: n + 1,",
     "tests": [
-      "test/prof9_law.test.js"
+      "test/net/prof9_law.test.js"
     ]
   },
   {
@@ -273,7 +273,7 @@
     "old": "name: d.name, element: 4, rangeType: 0, icon: DISH_ICON,",
     "new": "name: d.name, element: 0, rangeType: 0, icon: DISH_ICON,",
     "tests": [
-      "test/prof9_law.test.js"
+      "test/net/prof9_law.test.js"
     ]
   },
   {
@@ -282,8 +282,8 @@
     "old": "${d.effect.party ? ', for the whole party at your table' : ''}",
     "new": "",
     "tests": [
-      "test/prof9_law.test.js",
-      "test/prof9_client.test.js"
+      "test/net/prof9_law.test.js",
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -292,8 +292,8 @@
     "old": "PAN_ACT = Object.freeze({ pans: 3,",
     "new": "PAN_ACT = Object.freeze({ pans: 4,",
     "tests": [
-      "test/prof9_law.test.js",
-      "test/prof9_client.test.js"
+      "test/net/prof9_law.test.js",
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -302,7 +302,7 @@
     "old": "feastPans: 5, burnS: 3.0, lo: 0.6, w: 0.12",
     "new": "feastPans: 3, burnS: 3.0, lo: 0.6, w: 0.12",
     "tests": [
-      "test/prof9_law.test.js"
+      "test/net/prof9_law.test.js"
     ]
   },
   {
@@ -311,7 +311,7 @@
     "old": "feastPans: 5, burnS: 3.0, lo: 0.6, w: 0.12",
     "new": "feastPans: 5, burnS: 4.0, lo: 0.6, w: 0.12",
     "tests": [
-      "test/prof9_law.test.js"
+      "test/net/prof9_law.test.js"
     ]
   },
   {
@@ -320,8 +320,8 @@
     "old": "feastPans: 5, burnS: 3.0, lo: 0.6, w: 0.12",
     "new": "feastPans: 5, burnS: 3.0, lo: 0.5, w: 0.12",
     "tests": [
-      "test/prof9_law.test.js",
-      "test/prof9_client.test.js"
+      "test/net/prof9_law.test.js",
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -330,8 +330,8 @@
     "old": "feastPans: 5, burnS: 3.0, lo: 0.6, w: 0.12",
     "new": "feastPans: 5, burnS: 3.0, lo: 0.6, w: 0.15",
     "tests": [
-      "test/prof9_law.test.js",
-      "test/prof9_client.test.js"
+      "test/net/prof9_law.test.js",
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -340,8 +340,8 @@
     "old": "w: 0.12, masterWiden: 0.5, skillet: 1.5,",
     "new": "w: 0.12, masterWiden: 0, skillet: 1.5,",
     "tests": [
-      "test/prof9_law.test.js",
-      "test/prof9_client.test.js"
+      "test/net/prof9_law.test.js",
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -350,8 +350,8 @@
     "old": "w: 0.12, masterWiden: 0.5, skillet: 1.5,",
     "new": "w: 0.12, masterWiden: 0.5, skillet: 1,",
     "tests": [
-      "test/prof9_law.test.js",
-      "test/prof9_client.test.js"
+      "test/net/prof9_law.test.js",
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -360,7 +360,7 @@
     "old": "paceLo: 0.85, paceHi: 1.2, gapS: 0.3 });",
     "new": "paceLo: 0.85, paceHi: 1.2, gapS: 0 });",
     "tests": [
-      "test/prof9_law.test.js"
+      "test/net/prof9_law.test.js"
     ]
   },
   {
@@ -369,7 +369,7 @@
     "old": "actBand(Math.trunc((intelligence + personality) / 2));",
     "new": "actBand(Math.trunc((intelligence + intelligence) / 2));",
     "tests": [
-      "test/prof9_law.test.js"
+      "test/net/prof9_law.test.js"
     ]
   },
   {
@@ -378,7 +378,7 @@
     "old": "=== true ? PAN_ACT.feastPans : PAN_ACT.pans);",
     "new": "=== true ? PAN_ACT.pans : PAN_ACT.pans);",
     "tests": [
-      "test/prof9_law.test.js"
+      "test/net/prof9_law.test.js"
     ]
   },
   {
@@ -387,7 +387,7 @@
     "old": "return [PAN_ACT.lo, Math.min(0.95, PAN_ACT.lo + w)];",
     "new": "return [PAN_ACT.lo, Math.min(1, PAN_ACT.lo + w)];",
     "tests": [
-      "test/prof9_law.test.js"
+      "test/net/prof9_law.test.js"
     ]
   },
   {
@@ -396,9 +396,9 @@
     "old": "const xp = CRAFT_XP_PER_TIER * topTierOf(rank);",
     "new": "const xp = CRAFT_XP_PER_TIER * 1;",
     "tests": [
-      "test/prof9_law.test.js",
-      "test/prof9_service.test.js",
-      "test/prof9_client.test.js"
+      "test/net/prof9_law.test.js",
+      "test/net/prof9_service.test.js",
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -407,9 +407,9 @@
     "old": "  const n = (clean ? 1 : 0) + (Number.isSafeInteger(steps) && steps > 0 ? steps : 0);",
     "new": "  const n = 0 + (Number.isSafeInteger(steps) && steps > 0 ? steps : 0);",
     "tests": [
-      "test/prof9_law.test.js",
-      "test/prof9_service.test.js",
-      "test/prof9_client.test.js"
+      "test/net/prof9_law.test.js",
+      "test/net/prof9_service.test.js",
+      "test/systems/prof9_client.test.js"
     ],
     "note": "PROF12 (PIN MOVED): re-aimed by content."
   },
@@ -419,7 +419,7 @@
     "old": "    if (item.noRot === true) out.push('Never spoils');\n",
     "new": "",
     "tests": [
-      "test/prof9_law.test.js"
+      "test/net/prof9_law.test.js"
     ]
   },
   {
@@ -428,7 +428,7 @@
     "old": "dishEffectText(dishOf(item.recipe), item.chef === true ? HAND_CHEF : null)",
     "new": "dishEffectText(dishOf(item.recipe), null)",
     "tests": [
-      "test/prof9_law.test.js"
+      "test/net/prof9_law.test.js"
     ]
   },
   {
@@ -437,8 +437,8 @@
     "old": "...(f == null ? {} : { f })",
     "new": "...{}",
     "tests": [
-      "test/prof9_law.test.js",
-      "test/prof9_service.test.js"
+      "test/net/prof9_law.test.js",
+      "test/net/prof9_service.test.js"
     ]
   },
   {
@@ -447,7 +447,7 @@
     "old": "  if (c.f !== undefined && !handOk(r, c.f)) return false;   // PROF9: a dish's cook's hand; PROF10: a jeweller's\n",
     "new": "",
     "tests": [
-      "test/prof9_law.test.js"
+      "test/net/prof9_law.test.js"
     ]
   },
   {
@@ -456,7 +456,7 @@
     "old": "f === HAND_PROVISIONER || (f === HAND_CHEF && dishOf(r.id)?.effect.party === true)",
     "new": "f === HAND_PROVISIONER || f === HAND_CHEF",
     "tests": [
-      "test/prof9_law.test.js"
+      "test/net/prof9_law.test.js"
     ]
   },
   {
@@ -465,7 +465,7 @@
     "old": "  if (r.kind !== 'dish') return false;\n",
     "new": "",
     "tests": [
-      "test/prof9_law.test.js"
+      "test/net/prof9_law.test.js"
     ]
   },
   {
@@ -474,8 +474,8 @@
     "old": "  Object.freeze(['dishes', 'Dishes']),\n",
     "new": "",
     "tests": [
-      "test/prof9_law.test.js",
-      "test/prof9_service.test.js"
+      "test/net/prof9_law.test.js",
+      "test/net/prof9_service.test.js"
     ]
   },
   {
@@ -484,7 +484,7 @@
     "old": "export const COOK_FIRE = Object.freeze({ kind: 'fire', fee: 0 });",
     "new": "export const COOK_FIRE = Object.freeze({ kind: 'fire', fee: 50 });",
     "tests": [
-      "test/prof9_law.test.js"
+      "test/net/prof9_law.test.js"
     ]
   },
   {
@@ -493,7 +493,7 @@
     "old": "  const count = craftCount(r, specs[100], specs[50]);   // PROF9: a Cook's dish two\n",
     "new": "  const count = craftCount(r, specs[100]);\n",
     "tests": [
-      "test/prof9_service.test.js"
+      "test/net/prof9_service.test.js"
     ]
   },
   {
@@ -502,8 +502,8 @@
     "old": "const xp = scaleXp(r.kind === 'dish' ? cookXp(rank, { clean: clean === true, steps: halls }) : craftXp(r.tier, rank, false),",
     "new": "const xp = scaleXp(r.kind === 'dish' ? cookXp(rank, { clean: false, steps: halls }) : craftXp(r.tier, rank, false),",
     "tests": [
-      "test/prof9_service.test.js",
-      "test/prof9_client.test.js"
+      "test/net/prof9_service.test.js",
+      "test/systems/prof9_client.test.js"
     ],
     "note": "PROF12 (PIN MOVED): re-aimed by content."
   },
@@ -513,8 +513,8 @@
     "old": "const xp = scaleXp(r.kind === 'dish' ? cookXp(rank, { clean: clean === true, steps: halls }) : craftXp(r.tier, rank, false),",
     "new": "const xp = scaleXp(craftXp(r.tier, rank, false),",
     "tests": [
-      "test/prof9_service.test.js",
-      "test/prof9_client.test.js"
+      "test/net/prof9_service.test.js",
+      "test/systems/prof9_client.test.js"
     ],
     "note": "PROF12 (PIN MOVED): re-aimed by content."
   },
@@ -524,8 +524,8 @@
     "old": "  const hand = dishHand(r, specs[100]) ?? jewelHand(r, specs[50]);",
     "new": "  const hand = null ?? jewelHand(r, specs[50]);",
     "tests": [
-      "test/prof9_service.test.js",
-      "test/prof9_client.test.js"
+      "test/net/prof9_service.test.js",
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -534,7 +534,7 @@
     "old": "u, f: hand, v: MINT_VERSION }, key, { subtle, nowS })",
     "new": "u, v: MINT_VERSION }, key, { subtle, nowS })",
     "tests": [
-      "test/prof9_service.test.js"
+      "test/net/prof9_service.test.js"
     ]
   },
   {
@@ -543,7 +543,7 @@
     "old": "records[i], marked, hand, ...inputs",
     "new": "records[i], marked, null, ...inputs",
     "tests": [
-      "test/prof9_service.test.js"
+      "test/net/prof9_service.test.js"
     ],
     "note": "AUDIT PROF-541 (RE-AIMED by content): the inputs' keys bound after it."
   },
@@ -553,8 +553,8 @@
     "old": "...(r?.kind === 'dish' || r?.kind === 'jewel' ? { hand:",
     "new": "...(r?.kind === 'never' || r?.kind === 'jewel' ? { hand:",
     "tests": [
-      "test/prof9_service.test.js",
-      "test/prof9_client.test.js"
+      "test/net/prof9_service.test.js",
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -563,7 +563,7 @@
     "old": "  ...(p.hand == null ? {} : { hand: Number(p.hand) }),",
     "new": "",
     "tests": [
-      "test/prof9_service.test.js"
+      "test/net/prof9_service.test.js"
     ]
   },
   {
@@ -572,7 +572,7 @@
     "old": "p.marked, p.dye, p.hand, p.record, p.template, p.material AS dfu_material\n      FROM market_listings l JOIN products p",
     "new": "p.marked, p.dye, p.record, p.template, p.material AS dfu_material\n      FROM market_listings l JOIN products p",
     "tests": [
-      "test/prof9_service.test.js"
+      "test/net/prof9_service.test.js"
     ]
   },
   {
@@ -581,8 +581,8 @@
     "old": "CHECK (hand IS NULL OR hand IN (1, 2))",
     "new": "CHECK (hand IS NULL OR hand IN (1, 2, 3))",
     "tests": [
-      "test/prof9_service.test.js",
-      "test/prof9_client.test.js"
+      "test/net/prof9_service.test.js",
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -591,7 +591,7 @@
     "old": "  if (hand === HAND_PROVISIONER) item.noRot = true;",
     "new": "",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -600,7 +600,7 @@
     "old": "  if (hand === HAND_CHEF && dishOf(r.id)?.effect.party === true) item.chef = true;",
     "new": "  if (hand === HAND_CHEF) item.chef = true;",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -609,7 +609,7 @@
     "old": "if (!r || r.kind !== 'dish' || typeof provenance",
     "new": "if (!r || typeof provenance",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -618,7 +618,7 @@
     "old": "  if (ids.size) entity.activeEffects = entity.activeEffects.filter((a) => !ids.has(a.bundleId));",
     "new": "  if (false) entity.activeEffects = entity.activeEffects.filter((a) => !ids.has(a.bundleId));",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -627,7 +627,7 @@
     "old": "  const rounds = dishMinutes(d, hand);",
     "new": "  const rounds = dishMinutes(d, null);",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -636,7 +636,7 @@
     "old": "roundsRemaining: rounds - 1, bundleId: first.bundleId,",
     "new": "roundsRemaining: rounds, bundleId: first.bundleId,",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -645,7 +645,7 @@
     "old": "bundleIcon: DISH_ICON, bundleSelfCast: true };",
     "new": "bundleIcon: DISH_ICON, bundleSelfCast: false };",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -654,7 +654,7 @@
     "old": "    (entity.activeEffects ??= []).push(e);\n",
     "new": "",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -663,7 +663,7 @@
     "old": "export const DISH_STAMINA_DIVISOR = 1.2;",
     "new": "export const DISH_STAMINA_DIVISOR = 1.25;",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -672,7 +672,7 @@
     "old": "&& !a.ended && a.roundsRemaining > 0)",
     "new": "&& !a.ended)",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -681,7 +681,7 @@
     "old": "  if (survivalOn()) {",
     "new": "  if (false) {",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -690,7 +690,7 @@
     "old": "if (!out || out.kind !== 'ate') return out ?? { kind: 'none' };",
     "new": "if (!out) return { kind: 'none' };",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -699,7 +699,7 @@
     "old": "    if (i >= 0) collection.splice(i, 1);",
     "new": "",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -708,7 +708,7 @@
     "old": "  if (d.effect.party === true) {",
     "new": "  if (d.effect.party === false) {",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -717,7 +717,7 @@
     "old": "for (const t of DISH_TEMPLATES) registerItemUseHandler(t, dishUse);",
     "new": "for (const t of DISH_TEMPLATES.slice(1)) registerItemUseHandler(t, dishUse);",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -726,7 +726,7 @@
     "old": "DISH_TEMPLATES.includes(item.templateIndex) && recipeById(item.recipe)?.kind === 'dish'",
     "new": "DISH_TEMPLATES.includes(item.templateIndex)",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -735,7 +735,7 @@
     "old": "[...new Set((names ?? []).filter(Boolean))]",
     "new": "(names ?? []).filter(Boolean)",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -744,7 +744,7 @@
     "old": "const inWindow = (h) => !gentle && h >= st.lo && h <= st.hi;",
     "new": "const inWindow = (h) => h >= st.lo && h <= st.hi;",
     "tests": [
-      "test/prof9_law.test.js"
+      "test/net/prof9_law.test.js"
     ]
   },
   {
@@ -753,7 +753,7 @@
     "old": "st.burnt++; st.heat = 1; off(false, st.t);",
     "new": "st.burnt++; st.heat = 1; off(true, st.t);",
     "tests": [
-      "test/prof9_law.test.js"
+      "test/net/prof9_law.test.js"
     ]
   },
   {
@@ -762,7 +762,7 @@
     "old": "if (st.done || at - st.lastAt < PAN_ACT.gapS) return null;",
     "new": "if (st.done) return null;",
     "tests": [
-      "test/prof9_law.test.js"
+      "test/net/prof9_law.test.js"
     ]
   },
   {
@@ -771,7 +771,7 @@
     "old": "Math.max(0, Math.min(PRESS_LEAD_MAX_S, Number(lead) || 0))",
     "new": "Math.max(0, Number(lead) || 0)",
     "tests": [
-      "test/prof9_law.test.js"
+      "test/net/prof9_law.test.js"
     ]
   },
   {
@@ -780,7 +780,7 @@
     "old": "const ok = inWindow(Math.min(1, st.heat + st.rate * l));",
     "new": "const ok = inWindow(st.heat);",
     "tests": [
-      "test/prof9_law.test.js"
+      "test/net/prof9_law.test.js"
     ]
   },
   {
@@ -789,7 +789,7 @@
     "old": "    st.heat = 0;\n    st.rate = pace() / PAN_ACT.burnS;",
     "new": "    st.rate = pace() / PAN_ACT.burnS;",
     "tests": [
-      "test/prof9_law.test.js"
+      "test/net/prof9_law.test.js"
     ]
   },
   {
@@ -798,7 +798,7 @@
     "old": "clean: st.takes.length >= st.need && hits === st.takes.length",
     "new": "clean: hits === st.takes.length",
     "tests": [
-      "test/prof9_law.test.js"
+      "test/net/prof9_law.test.js"
     ]
   },
   {
@@ -807,7 +807,7 @@
     "old": "PAN_ACT.paceLo + (PAN_ACT.paceHi - PAN_ACT.paceLo) *",
     "new": "PAN_ACT.paceLo + 0 *",
     "tests": [
-      "test/prof9_law.test.js"
+      "test/net/prof9_law.test.js"
     ]
   },
   {
@@ -816,7 +816,7 @@
     "old": "    if (item.noRot === true) continue;\n",
     "new": "",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -825,7 +825,7 @@
     "old": "(FOOD[item.templateIndex] ?? MORE_FOOD.get(item.templateIndex)) != null",
     "new": "FOOD[item.templateIndex] != null",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -834,7 +834,7 @@
     "old": "export const foodOf = (item) => (item ? FOOD[item.templateIndex] ?? MORE_FOOD.get(item.templateIndex) ?? null : null);",
     "new": "export const foodOf = (item) => (item ? FOOD[item.templateIndex] ?? null : null);",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -843,7 +843,7 @@
     "old": "const r = spendCampNight(best.rec, now(), fieldCook?.() === true);",
     "new": "const r = spendCampNight(best.rec, now(), false);",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ],
     "note": "PIN MOVED - AUDIT REST-PARTY (the Field Cook given again): under REST2 a placing spends nothing, so the perk keeps a night's fuel at the Field Cook's own Campfire."
   },
@@ -853,7 +853,7 @@
     "old": "    if (r.kept) return true;\n",
     "new": "",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ],
     "note": "AUDIT REST-PARTY (the Field Cook given again): under REST2 a placing spends nothing, so the perk keeps a night's fuel at the Field Cook's own Campfire."
   },
@@ -863,7 +863,7 @@
     "old": "  if (fieldCook && fieldCookKeeps(camp)) return",
     "new": "  if (false && fieldCookKeeps(camp)) return",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ],
     "note": "AUDIT REST-PARTY (the Field Cook given again): under REST2 a placing spends nothing, so the perk keeps a night's fuel at the Field Cook's own Campfire."
   },
@@ -873,7 +873,7 @@
     "old": "export const fieldCookKeeps = (camp) => camp?.kind === CAMP_KIND.Fire && !!camp.fuel && !camp.jar;",
     "new": "export const fieldCookKeeps = (camp) => !!camp && !camp.jar;",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ],
     "note": "AUDIT REST-PARTY (the Field Cook given again): under REST2 a placing spends nothing, so the perk keeps a night's fuel at the Field Cook's own Campfire."
   },
@@ -883,7 +883,7 @@
     "old": "camp?.kind === CAMP_KIND.Fire && !!camp.fuel && !camp.jar;",
     "new": "camp?.kind === CAMP_KIND.Fire && !!camp.fuel;",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ],
     "note": "AUDIT REST-PARTY (the Field Cook given again): under REST2 a placing spends nothing, so the perk keeps a night's fuel at the Field Cook's own Campfire.",
     "equivalent": true,
@@ -895,80 +895,80 @@
     "old": "camp?.kind === CAMP_KIND.Fire && !!camp.fuel && !camp.jar;",
     "new": "camp?.kind === CAMP_KIND.Fire && !camp.jar;",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ],
     "note": "AUDIT REST-PARTY (the Field Cook given again): under REST2 a placing spends nothing, so the perk keeps a night's fuel at the Field Cook's own Campfire."
   },
   {
     "name": "PROF9-withdraw-noRot-on-herbs",
-    "file": "src/systems/profItems.js",
+    "file": "src/systems/professions/profItems.js",
     "old": "if (noRot === true && key.startsWith('food:')) item.noRot = true;",
     "new": "if (noRot === true) item.noRot = true;",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
     "name": "PROF9-withdraw-noRot-never",
-    "file": "src/systems/profItems.js",
+    "file": "src/systems/professions/profItems.js",
     "old": "if (noRot === true && key.startsWith('food:')) item.noRot = true;",
     "new": "",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
     "name": "PROF9-rows-stew-on-fish",
-    "file": "src/systems/profTemplates.js",
+    "file": "src/systems/professions/profTemplates.js",
     "old": "stew: CC.Meat, supper: CC.CookedFish",
     "new": "stew: CC.CookedFish, supper: CC.CookedFish",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
     "name": "PROF9-rows-price-twice",
-    "file": "src/systems/profTemplates.js",
+    "file": "src/systems/professions/profTemplates.js",
     "old": "food.basePrice * (feast ? 12 : 3)",
     "new": "food.basePrice * (feast ? 12 : 2)",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
     "name": "PROF9-rows-feast-light",
-    "file": "src/systems/profTemplates.js",
+    "file": "src/systems/professions/profTemplates.js",
     "old": "food.baseWeight * (feast ? 4 : 1)",
     "new": "food.baseWeight * (feast ? 2 : 1)",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
     "name": "PROF9-rows-stacking",
-    "file": "src/systems/profTemplates.js",
+    "file": "src/systems/professions/profTemplates.js",
     "old": "playerTextureRecord: 0, stackable: false,   // each serving its own piece, its own provenance",
     "new": "playerTextureRecord: 0, stackable: true,   // each serving its own piece, its own provenance",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
     "name": "PROF9-rows-no-food-law",
-    "file": "src/systems/profTemplates.js",
+    "file": "src/systems/professions/profTemplates.js",
     "old": "registerFoods(DISH_FOOD_ROWS);",
     "new": "",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
     "name": "PROF9-rows-food-unnamed",
-    "file": "src/systems/profTemplates.js",
+    "file": "src/systems/professions/profTemplates.js",
     "old": "{ ...FOOD[DISH_FOODS[d.id]], name: d.name }",
     "new": "{ ...FOOD[DISH_FOODS[d.id]] }",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -977,7 +977,7 @@
     "old": "if (r.kind === 'dish') return mintDish({ recipe, maker, hand }, provenance);",
     "new": "if (r.kind === 'dish') return mintDish({ recipe, maker, hand: null }, provenance);",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -986,7 +986,7 @@
     "old": "  if ((item.foodStage ?? 0) > 0) return false;",
     "new": "",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -995,16 +995,16 @@
     "old": "pieces.length > 1 ? `You cooked ${pieces.length} servings of",
     "new": "pieces.length > 2 ? `You cooked ${pieces.length} servings of",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
     "name": "PROF9-field-noRot-unsaved",
-    "file": "src/systems/itemFields.js",
+    "file": "src/systems/item/itemFields.js",
     "old": "  noRot: bool(),\n  chef: bool(),",
     "new": "  noRot: str(),\n  chef: bool(),",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -1013,7 +1013,7 @@
     "old": "if (!hasSpecialAbility(entity?.career, SPECIAL_ABILITY.Athleticism)) return 1.0 * tart;",
     "new": "if (!hasSpecialAbility(entity?.career, SPECIAL_ABILITY.Athleticism)) return 1.0;",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -1022,7 +1022,7 @@
     "old": "return (entityImprovedAthleticism(entity) ? 0.8 : 0.9) * tart;",
     "new": "return (entityImprovedAthleticism(entity) ? 0.8 : 0.9);",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -1031,125 +1031,125 @@
     "old": "  installCooking();   // PROF9",
     "new": "  // installCooking();   // PROF9",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
     "name": "PROF9-pages-cooking-unpractised",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "  cooking: () => [[t('prof.page.unlocks.cooking1', 'Hunter\\'s Stew, Fisherman\\'s Supper'), 1],",
     "new": "  cookery: () => [[t('prof.page.unlocks.cooking1', 'Hunter\\'s Stew, Fisherman\\'s Supper'), 1],",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ],
     "note": "PROF12 (PIN MOVED): re-aimed by content. CRAFT3: re-aimed by content."
   },
   {
     "name": "PROF9-pages-feast-unlock-55",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "  cooking: () => [[t('prof.page.unlocks.cooking1', 'Hunter\\'s Stew, Fisherman\\'s Supper'), 1], [t('prof.page.unlocks.cooking2', 'Orchard Tart'), 2], [t('prof.page.unlocks.cooking6', 'Feast of the Hearth'), 6]],",
     "new": "  cooking: () => [[t('prof.page.unlocks.cooking1', 'Hunter\\'s Stew, Fisherman\\'s Supper'), 1], [t('prof.page.unlocks.cooking2', 'Orchard Tart'), 2], [t('prof.page.unlocks.cooking6', 'Feast of the Hearth'), 5]],",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
     "name": "PROF9-pages-skillet-unread",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "done: panWindow(rank, p.panBand?.() ?? 1, skillet) });",
     "new": "done: panWindow(rank, p.panBand?.() ?? 1, false) });",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
     "name": "PROF9-pages-always-clean",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "const res = await p.craft(id, { clean: clean === true && getPref('gentleActs') !== true });",
     "new": "const res = await p.craft(id, { clean: true });",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
     "name": "PROF9-pages-gentle-pan",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "      if (gentle) { void finishFor(r.id)(false); return; }   // Gentle acts: a plain dish, no pan\n",
     "new": "",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
     "name": "PROF9-pages-hands-not-at-the-fire",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": ": me !== _cook && (_cook.act || _cook.crafting) ? 'fire' : me !== _jewel",
     "new": ": me !== _jewel",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
     "name": "PROF9-pages-escape-leaves-the-pan",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "  if (_cook.act) { _cook.act.cancel(); endPan(); _cook.word = panDownLine(); return true; }   // PROF9\n",
     "new": "",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
     "name": "PROF9-pages-burnt-never-ends",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "      if (_cook.act.state.done) { ended(); return; }   // the last pan burnt on the fire\n",
     "new": "",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
     "name": "PROF9-pages-shut-page-holds-the-pan",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "      if (!els?.bar || els.bar.isConnected === false) { _cook.act.cancel(); endPan(); return; }   // the page shut under the act: nothing spent",
     "new": "      if (!els?.bar || els.bar.isConnected === false) { return; }   // the page shut under the act: nothing spent",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
     "name": "PROF9-pages-repeat-takes",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "  const key = (e) => actKey(e, _cook.els?.hit, take);",
     "new": "  const key = (e) => { if (e.code === 'Space') take(e); };",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
     "name": "PROF9-pages-fire-away-offers",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "    detail.append(el('p', 'px-note', fireAwayLine()));\n    return;",
     "new": "    detail.append(el('p', 'px-note', fireAwayLine()));",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
     "name": "PROF9-pages-servings-unsaid",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "${serves > 1 ? t('prof.page.fire.servesTwo', 'Two servings (a Cook\\'s), into your pack.') : t('prof.page.fire.servesOne', 'One serving, into your pack.')}",
     "new": "${t('prof.page.fire.servesOne', 'One serving, into your pack.')}",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
     "name": "PROF9-pages-no-pan-css",
-    "file": "src/ui/enhancedPlusStyle.js",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
     "old": ".prof-heatbar.prof-panbar { background: linear-gradient(",
     "new": ".prof-heatbar.prof-pan-bar { background: linear-gradient(",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -1158,7 +1158,7 @@
     "old": ": profession === 'cooking'   // PROF9: the fire - any lit one, a campfire, a hearth, a brazier; no fee",
     "new": ": profession === 'cookery'   // PROF9: the fire - any lit one, a campfire, a hearth, a brazier; no fee",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -1167,7 +1167,7 @@
     "old": "    ? (camps.fireNear(walkMode && playerSpawned ? player.pos : cam.pos) ? COOK_FIRE : null)",
     "new": "    ? (camps.byFire(walkMode && playerSpawned ? player.pos : cam.pos) ? COOK_FIRE : null)",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -1176,7 +1176,7 @@
     "old": "noRot: profBook?.track('cooking')?.specs?.[100] === 'provisioner' });",
     "new": "noRot: false });",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -1185,7 +1185,7 @@
     "old": "profBook.track('cooking')?.specs?.[50] === 'field-cook';",
     "new": "profBook.track('cooking')?.specs?.[100] === 'field-cook';",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -1194,7 +1194,7 @@
     "old": "    if (!isMate(peer.id)) continue;\n",
     "new": "",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -1203,7 +1203,7 @@
     "old": "      if (mode === 'interior') return interiorCamps.fireNear(player.pos) ? COOK_FIRE : null;",
     "new": "      if (mode === 'interior') return null;",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -1212,7 +1212,7 @@
     "old": "    cookFire: () => !!(_fpFeet && camps.fireNear(_fpFeet)),",
     "new": "    cookFire: () => false,",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -1221,7 +1221,7 @@
     "old": "    if (item.noRot === true) continue;\n",
     "new": "    if (item.noRot === true && item.slowRot !== true) continue;\n",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -1230,7 +1230,7 @@
     "old": "DISHES.some((d) => d.effect.party === true && d.name === name)",
     "new": "DISHES.some((d) => d.name === name)",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -1239,7 +1239,7 @@
     "old": "  return renewDish(entity, spell.name, Math.max(0,",
     "new": "  return true || renewDish(entity, spell.name, Math.max(0,",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -1248,7 +1248,7 @@
     "old": "  if (!mate) return false;\n",
     "new": "",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -1257,8 +1257,8 @@
     "old": "`members' jewellery here ${t === 1 ? 'a quality step' : `${t} quality steps`} better, their dishes",
     "new": "`members' alchemy, cooking and jewelcrafting here ${t === 1 ? 'a quality step' : `${t} quality steps`} better, their dishes",
     "tests": [
-      "test/prof12_client.test.js",
-      "test/seat2b_client.test.js"
+      "test/systems/prof12_client.test.js",
+      "test/net/seat2b_client.test.js"
     ]
   },
   {
@@ -1267,8 +1267,8 @@
     "old": "t === 2 ? 'twice' :",
     "new": "t === 2 ? 'half again' :",
     "tests": [
-      "test/prof12_client.test.js",
-      "test/seat2b_client.test.js"
+      "test/systems/prof12_client.test.js",
+      "test/net/seat2b_client.test.js"
     ]
   },
   {
@@ -1277,8 +1277,8 @@
     "old": "their brews +${10 * t}% Potent chance",
     "new": "their brews +${5 * t}% Potent chance",
     "tests": [
-      "test/prof12_client.test.js",
-      "test/seat2b_client.test.js"
+      "test/systems/prof12_client.test.js",
+      "test/net/seat2b_client.test.js"
     ]
   },
   {
@@ -1287,7 +1287,7 @@
     "old": "      if (!takeFeastGift(playerEntity, spell, d.level, mate)) return;",
     "new": "      if (!takeFeastGift(playerEntity, spell, d.level, true)) return;",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -1296,7 +1296,7 @@
     "old": "a.roundsRemaining >= rounds)) return false;",
     "new": "a.roundsRemaining >= rounds && false)) return false;",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -1305,7 +1305,7 @@
     "old": "a.roundsRemaining >= rounds)) return false;",
     "new": "a.roundsRemaining > rounds)) return false;",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -1314,7 +1314,7 @@
     "old": "  if (!renewDish(entity, d.name, rounds)) return [];",
     "new": "  if (!renewDish(entity, d.name, Infinity)) return [];",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -1323,7 +1323,7 @@
     "old": "return shareFeastWith(peersNear(), {",
     "new": "return shareFeastWith(online.peers.values(), {",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -1332,27 +1332,27 @@
     "old": "  DISH_STAMINA_KIND,   // AUDIT PROF-541 K6:",
     "new": "  // AUDIT PROF-541 K6:",
     "tests": [
-      "test/prof9_client.test.js",
-      "test/buffend.test.js"
+      "test/systems/prof9_client.test.js",
+      "test/ui/hud/buffend.test.js"
     ]
   },
   {
     "name": "AUDIT-PROF-541-K7-steps-unsaid",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "xp: steps > 0 ? cookXp(rank, { steps }) : cookXp(rank),",
     "new": "xp: cookXp(rank),",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ],
     "note": "CRAFT3: re-aimed by content."
   },
   {
     "name": "AUDIT-PROF-541-K7-steps-unread",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "const steps = Math.max(0, Math.trunc(Number(p.cookSteps?.()) || 0));",
     "new": "const steps = 0;",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -1361,7 +1361,7 @@
     "old": "cookSteps: () => myHall('cooking').steps,",
     "new": "cookSteps: () => myHall('alchemy').steps,",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -1370,7 +1370,7 @@
     "old": "'Your hands are busy with another craft.'",
     "new": "'Your last brew is still in the cauldron.'",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -1379,7 +1379,7 @@
     "old": "    if (send(peer.id)) out.push(nameOf(peer.id) ?? 'a party member');",
     "new": "    send(peer.id); out.push(nameOf(peer.id) ?? 'a party member');",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -1388,7 +1388,7 @@
     "old": "  if (!isFeastRecord(spell)) return false;",
     "new": "  if (false) return false;",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -1397,7 +1397,7 @@
     "old": "FEAST_FORMS.get(spell?.name)?.records.has(recordKey(spell)) === true;",
     "new": "FEAST_FORMS.has(spell?.name);",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -1406,7 +1406,7 @@
     "old": "const recs = [null, HAND_CHEF].map((h) => dishSpell(d, h))",
     "new": "const recs = [null].map((h) => dishSpell(d, h))",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -1415,7 +1415,7 @@
     "old": "a.bundleName === name && dishEntry(a, name));",
     "new": "a.bundleName === name);",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -1424,7 +1424,7 @@
     "old": "return a.bundleAlly === true && FEAST_FORMS.get(name)?.entries.has(",
     "new": "return a.bundleAlly === true || FEAST_FORMS.get(name)?.entries.has(",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -1433,7 +1433,7 @@
     "old": "  if (a.kind !== 'fortifyAttribute' && a.kind !== DISH_STAMINA_KIND) return false;\n",
     "new": "",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -1442,7 +1442,7 @@
     "old": "  if (entity && !laid.length) lines.push(dishStandsLine(d));",
     "new": "  if (false) lines.push(dishStandsLine(d));",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -1451,7 +1451,7 @@
     "old": "  if (entity && !laid.length) lines.push(dishStandsLine(d));",
     "new": "  if (!laid.length) lines.push(dishStandsLine(d));",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -1460,7 +1460,7 @@
     "old": "'The feast you already enjoy lasts longer.'",
     "new": "'You are already full.'",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -1469,7 +1469,7 @@
     "old": "`The ${d?.name ?? 'dish'} you already enjoy lasts longer.`",
     "new": "'The feast you already enjoy lasts longer.'",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -1478,7 +1478,7 @@
     "old": "const steps = !!guild && seat?.holder?.guild?.id === guild ? stationSteps(",
     "new": "const steps = !!guild && !!seat ? stationSteps(",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -1487,7 +1487,7 @@
     "old": "const steps = !!guild && seat?.holder?.guild?.id === guild ? stationSteps(",
     "new": "const steps = seat?.holder?.guild?.id === guild ? stationSteps(",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -1496,7 +1496,7 @@
     "old": "return { steps, seat: steps > 0 ? seat.key ?? null : null };",
     "new": "return { steps, seat: seat?.key ?? null };",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -1505,7 +1505,7 @@
     "old": "stationSteps(profession, seat.forts ?? {})",
     "new": "stationSteps('cooking', seat.forts ?? {})",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -1514,7 +1514,7 @@
     "old": "const { seat } = myHall(recipeById(recipe)?.profession);",
     "new": "const { seat } = myHall('alchemy');",
     "tests": [
-      "test/prof9_client.test.js"
+      "test/systems/prof9_client.test.js"
     ]
   },
   {
@@ -1523,8 +1523,8 @@
     "old": "export const firstCraftKey = (r) => (!r ? null : `${r.product}@${r.tier}`);",
     "new": "export const firstCraftKey = (r) => (!r ? null : r.kind === 'dish' ? r.id : `${r.product}@${r.tier}`);",
     "tests": [
-      "test/prof9_law.test.js",
-      "test/prof9_service.test.js"
+      "test/net/prof9_law.test.js",
+      "test/net/prof9_service.test.js"
     ],
     "note": "AUDIT PROF-541 R2-S7: a dish's first craft its dish's."
   },
@@ -1534,7 +1534,7 @@
     "old": "  const kin = firstCraftKin(r);",
     "new": "  const kin = r.kind === 'dish' ? [r.id] : firstCraftKin(r);",
     "tests": [
-      "test/prof9_service.test.js"
+      "test/net/prof9_service.test.js"
     ],
     "note": "AUDIT PROF-541 R2-S7: the dish's key asked by its prefix."
   },
@@ -1544,7 +1544,7 @@
     "old": "  const kin = firstCraftKin(r);",
     "new": "  const kin = r.kind === 'jewel' && !r.gem ? [r.id] : firstCraftKin(r);",
     "tests": [
-      "test/prof10_service.test.js"
+      "test/net/prof10_service.test.js"
     ],
     "note": "AUDIT PROF-541 R2-S7: a plain ring's key its own id, its gems' base all the same."
   }

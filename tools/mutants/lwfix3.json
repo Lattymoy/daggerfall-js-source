@@ -5,8 +5,8 @@
     "old": "      if (w.pending) { const gap = walkGap(w.e, playerPos); if (gap < LIVING_RANGE + WALK_STRAY_M) pending.push({ res, gap }); continue; }\n",
     "new": "",
     "tests": [
-      "test/lwfix3_town.test.js",
-      "test/lw2_livingTown.test.js"
+      "test/systems/livingWorld/lwfix3_town.test.js",
+      "test/systems/livingWorld/lw2_livingTown.test.js"
     ]
   },
   {
@@ -15,8 +15,8 @@
     "old": "        if (d < LIVING_RANGE) wanted.push({ res, d });",
     "new": "        wanted.push({ res, d });",
     "tests": [
-      "test/lwfix3_town.test.js",
-      "test/lw2_livingTown.test.js"
+      "test/systems/livingWorld/lwfix3_town.test.js",
+      "test/systems/livingWorld/lw2_livingTown.test.js"
     ]
   },
   {
@@ -25,8 +25,8 @@
     "old": "  return Math.hypot(gx, gz);\n}",
     "new": "  return gx;\n}",
     "tests": [
-      "test/lwfix3_town.test.js",
-      "test/lw2_livingTown.test.js"
+      "test/systems/livingWorld/lwfix3_town.test.js",
+      "test/systems/livingWorld/lw2_livingTown.test.js"
     ]
   },
   {
@@ -35,8 +35,8 @@
     "old": "export const WALK_STRAY_M = 48;",
     "new": "export const WALK_STRAY_M = 47;",
     "tests": [
-      "test/lwfix3_town.test.js",
-      "test/lw2_livingTown.test.js"
+      "test/systems/livingWorld/lwfix3_town.test.js",
+      "test/systems/livingWorld/lw2_livingTown.test.js"
     ]
   },
   {
@@ -45,8 +45,8 @@
     "old": "export const CENSUS_PATHS = 4;",
     "new": "export const CENSUS_PATHS = 5;",
     "tests": [
-      "test/lwfix3_town.test.js",
-      "test/lw2_livingTown.test.js"
+      "test/systems/livingWorld/lwfix3_town.test.js",
+      "test/systems/livingWorld/lw2_livingTown.test.js"
     ]
   },
   {
@@ -55,9 +55,9 @@
     "old": "    const dur = rollInt(rng, PATROL_STOP_MIN, PATROL_STOP_MAX);",
     "new": "    const dur = rollInt(rng, 3, 8);",
     "tests": [
-      "test/lwfix3_town.test.js",
-      "test/lw2_livingTown.test.js",
-      "test/watchday_watch.test.js"
+      "test/systems/livingWorld/lwfix3_town.test.js",
+      "test/systems/livingWorld/lw2_livingTown.test.js",
+      "test/systems/livingWorld/watchday_watch.test.js"
     ],
     "note": "WATCH-DAY (re-aimed by content): the law in its new home."
   },
@@ -67,9 +67,9 @@
     "old": "  for (let t = from, i = first; beat.length && t < until; i++) {",
     "new": "  for (let t = from, i = first, n = 0; beat.length && t < until && n < 2; i++, n++) {",
     "tests": [
-      "test/lwfix3_town.test.js",
-      "test/lw2_livingTown.test.js",
-      "test/watchday_watch.test.js"
+      "test/systems/livingWorld/lwfix3_town.test.js",
+      "test/systems/livingWorld/lw2_livingTown.test.js",
+      "test/systems/livingWorld/watchday_watch.test.js"
     ],
     "note": "WATCH-DAY (re-aimed by content): the law in its new home - patrolStops counts no stops of its own, the shift's end ends the beat, so a bound that cuts it short dies (the old 64, past any shift's stops, was recorded equivalent)."
   },
@@ -79,8 +79,8 @@
     "old": "(Math.abs(eased(a[1], day)) - Math.abs(eased(b[1], day)))",
     "new": "(Math.abs(a[1].r) - Math.abs(b[1].r))",
     "tests": [
-      "test/lwfix3_town.test.js",
-      "test/lw2_livingTown.test.js"
+      "test/systems/livingWorld/lwfix3_town.test.js",
+      "test/systems/livingWorld/lw2_livingTown.test.js"
     ]
   },
   {
@@ -89,18 +89,18 @@
     "old": ".filter(([id]) => id !== keep)",
     "new": ".filter(() => true)",
     "tests": [
-      "test/lwfix3_town.test.js",
-      "test/lw2_livingTown.test.js"
+      "test/systems/livingWorld/lwfix3_town.test.js",
+      "test/systems/livingWorld/lw2_livingTown.test.js"
     ]
   },
   {
     "name": "LW-FIX3-sections",
-    "file": "src/ui/enhancedChronicle.js",
+    "file": "src/ui/enhanced/enhancedChronicle.js",
     "old": "    const list = chronicleSections(deps);",
     "new": "    const list = CHRONICLE_SECTIONS;",
     "tests": [
-      "test/lwfix3_town.test.js",
-      "test/lw2_livingTown.test.js"
+      "test/systems/livingWorld/lwfix3_town.test.js",
+      "test/systems/livingWorld/lw2_livingTown.test.js"
     ]
   },
   {
@@ -109,8 +109,8 @@
     "old": "    if (back > 0 && Math.max(cursor, t1) + halt + back > D1) t1 = D1;\n",
     "new": "",
     "tests": [
-      "test/lwfix3_town.test.js",
-      "test/lw2_livingTown.test.js"
+      "test/systems/livingWorld/lwfix3_town.test.js",
+      "test/systems/livingWorld/lw2_livingTown.test.js"
     ]
   }
 ]

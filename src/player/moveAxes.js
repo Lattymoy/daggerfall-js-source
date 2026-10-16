@@ -25,7 +25,7 @@
 // With acceleration both forces sum to zero change and both impulses
 // hold the axis where it is, which is exactly DFU's arithmetic.
 
-import { getBool } from '../systems/settings.js';
+import { getBool } from '../systems/settings/settings.js';
 
 /** InputManager.cs:50. */
 export const MOVE_ACCELERATION_CONST = 9.8;
@@ -55,7 +55,7 @@ export class MoveAxes {
    * One Update: flags cleared, forces for the held actions, friction.
    * @param {number} dt - Time.deltaTime
    * @param {{forwards?:boolean, backwards?:boolean, left?:boolean, right?:boolean, autorun?:boolean, analog?:{x:number,y:number}|null}} held
-   *   `analog` is TI2's stick reading (ui/touchLook.js analogAxes): x
+   *   `analog` is TI2's stick reading (ui/touch/touchLook.js analogAxes): x
    *   strafe right +, y forward +, each -1..1. InputManager.Update's
    *   JOYSTICK arm, beside :548's FindKeyboardActions: the force's
    *   scale is the axis's own reading rather than the keyboard's +/-1,

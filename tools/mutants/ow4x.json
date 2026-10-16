@@ -5,7 +5,7 @@
     "old": "{ x: tw.x, y: tw.y }, { door, water });\n",
     "new": "{ x: tw.x, y: tw.y }, { door: null, water });\n",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "A member walks an unfound place (or a spawn) as a bare spot - refused for the peaks."
   },
@@ -15,7 +15,7 @@
     "old": "      const door = there ? locationWorldRect(there, tw.x, tw.y) : null;",
     "new": "      const door = null;",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "The member never looks for a place in the walk's pixel."
   },
@@ -25,7 +25,7 @@
     "old": "r.point.pixel, { door: r.point.door ?? null, roads });",
     "new": "r.point.pixel, { door: null, roads });",
     "tests": [
-      "test/tv2_click_to_move.test.js"
+      "test/systems/travel/tv2_click_to_move.test.js"
     ],
     "note": "A spawn's walk resumed is a bare spot - refused for the peaks."
   }

@@ -53,8 +53,8 @@
 import { rand } from '../formats/dfRandom.js';
 import { skillValue, tallySkill, SKILLS } from './skills.js';
 import { goldPiecesOf, addGoldPieces, LETTER_OF_CREDIT_TEMPLATE } from './inventory.js';   // E4: the counter's two members; B1: letters are tender
-import { getPeopleOfCurrentRegion } from './talk.js';   // T3a shipped the lookup
-import { changeReputation } from './factionRep.js';     // S25
+import { getPeopleOfCurrentRegion } from './talk/talk.js';   // T3a shipped the lookup
+import { changeReputation } from './faction/factionRep.js';     // S25
 
 /** PlayerEntity.CrimeCommitted's SETTER (:2345-2355), the ONE home
  *  every crime write goes through (V4): a transformed lycanthrope is

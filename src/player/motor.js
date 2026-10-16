@@ -46,7 +46,7 @@ export const JUMP_SPEED = 4.5;
 // PlayerMotor.systemTimerUpdatesDivisor (the 0x46C memory-timer
 // divisor) - the ONE member both EnemySenses' target timer and
 // ClimbingMotor's check cadences divide by. M3: moved to its DFU
-// home (a PlayerMotor field); characters/enemyMotor.js re-exports.
+// home (a PlayerMotor field); characters/enemy/enemyMotor.js re-exports.
 export const SYSTEM_TIMER_UPDATES_DIVISOR = 0.0549254;
 // P14 jump/fall parity (AcrobatMotor + PlayerMotor.GroundedTime,
 // verbatim): the jump fires only after 0.1 s of grounded time (the
@@ -333,13 +333,13 @@ import {
 // runtime-only cycle shape as climbing.js above - moveScanner.js reads
 // CAPSULE_RADIUS inside its constructor, never at module level.
 import { PlayerMoveScanner } from './moveScanner.js';
-import { getBool } from '../systems/settings.js';   // AUDIT 28 W5: Controls/ToggleSneak (StartGameBehaviour :277)
+import { getBool } from '../systems/settings/settings.js';   // AUDIT 28 W5: Controls/ToggleSneak (StartGameBehaviour :277)
 import { localizedText } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 import { TRANSPORT_MODES, isRiding, rideBaseFor, canRunUnlessRiding, rideWalks } from '../systems/transport.js';   // TR1: the mount's speed, run and climb laws; HORSE-WALK: horse care's walk
 import { timeScale } from '../systems/timeScale.js';   // TO1: Unity's Time.fixedDeltaTime rides Time.timeScale (see update())
 import { CLIMB_MOVE_KINDS, CLIMB_MOVE_RISE_MAX, CLIMB_MOVE_TIME_MAX } from '../net/wire.js';   // CLIMB6: a move on the wire, its kinds and bounds the wire's
-import { clampToRing } from '../net/duelSession.js';   // AUDIT DUEL1 D4: the ring's one clamp
-import { MAX_TERRAIN_HEIGHT, STREAMING_TERRAIN_SCALE } from '../world/terrainSampler.js';   // FALL-KEPT: the world's tallest drop bounds a carried fall
+import { clampToRing } from '../net/duel/duelSession.js';   // AUDIT DUEL1 D4: the ring's one clamp
+import { MAX_TERRAIN_HEIGHT, STREAMING_TERRAIN_SCALE } from '../world/terrain/terrainSampler.js';   // FALL-KEPT: the world's tallest drop bounds a carried fall
 
 /** PlayerSpeedChanger.GetWalkSpeed, verbatim (audit 2026-08-16e F1):
  *  drag = 0.5 x (100 - max(30, LiveSpeed)) rides the WALK base only -
@@ -442,7 +442,7 @@ export class PlayerMotor {
   constructor(collider, stats = { speed: 50, running: 30, swimming: 30 }, { jumpBoost = null, enhancedJumping = null, climbing = null, carriedWeight = null, parkour = null, travelling = null } = {}) {
     this.collider = collider;
     this.stats = stats;
-    /** @type {number[]|null} WAGONS2: where the body is DRAWN instead of its capsule (bodyFeetAt) - a seat of a wagon drawn grown under the Overworld (scenes/wagonRiders.js drawAt); null, the capsule's own */
+    /** @type {number[]|null} WAGONS2: where the body is DRAWN instead of its capsule (bodyFeetAt) - a seat of a wagon drawn grown under the Overworld (scenes/wagon/wagonRiders.js drawAt); null, the capsule's own */
     this.drawFeet = null;
     /** @type {number|null} WAGONS3: the way the body is DRAWN facing instead (bodyYawFor) - a wagon's bench, the way it is driven (scenes/world.js); null, the body's own */
     this.drawYaw = null;
@@ -549,7 +549,7 @@ export class PlayerMotor {
     this._airVelX = 0;
     this._airVelZ = 0;
     // DUEL1: THE DUEL'S RING - { centre: [x, y, z] in THIS scene's frame, radius } while a duel holds the player in it,
-    // null otherwise. The host sets it every frame from the live duel (net/duelSession.js); the motor keeps the body
+    // null otherwise. The host sets it every frame from the live duel (net/duel/duelSession.js); the motor keeps the body
     // inside it after every step (_keepInArena), shifts it with the world (offsetOrigin) and drops it on any placement
     // (spawn) - a teleport is not a walk, and the duel's own law ends a duel whose duellist was carried off.
     this.arena = null;
@@ -561,7 +561,7 @@ export class PlayerMotor {
     this.waterWalking = false;
     this.waterSurfaceY = null;   // the current block's water surface (world y), null when dry
     this.swimSpeedScale = 1;     // DW-D: Iliac Puddle No More's swim speed multiplier (a walk speed modifier while swimming - swimSpeedNow)
-    this.rideSpeedScale = 1;     // STEED1/WAGONS4: the ride's pace - a horse's Speed, a wagon's soundness and its team's Strength (systems/upkeepRuntime.js rideScale; 1 with both off)
+    this.rideSpeedScale = 1;     // STEED1/WAGONS4: the ride's pace - a horse's Speed, a wagon's soundness and its team's Strength (systems/upkeep/upkeepRuntime.js rideScale; 1 with both off)
     this.rideWalking = false;    // HORSE-WALK: the step's ride took the walk (horse care's horse, not galloping) - the gait the clop, the riding sprite's clock, the 3D horse and the saddle panel read
     this.jumped = false;         // set for the frame a jump actually starts (fatigue/tally consumer)
     this.crouching = false;      // P12: toggled via input.crouch (edge); standing needs headroom
@@ -1137,14 +1137,14 @@ export class PlayerMotor {
     const a = this.arena;
     const c = a?.centre;
     if (!c || !(a.radius > 0)) return;
-    // AUDIT ARENA-LADDER: A CEILING OVER THE SAND (the owner's kit law, 'No cheese spells or potions' - systems/arenaKit.js
+    // AUDIT ARENA-LADDER: A CEILING OVER THE SAND (the owner's kit law, 'No cheese spells or potions' - systems/arena/arenaKit.js
     // SAND_CEILING_M): a ring that names one (`ceilAbove`, metres over its centre - the sand) holds the body under it, its
     // rise taken away; the duel's and the gate's rings name none, and their height is never touched
     if (Number.isFinite(a.ceilAbove) && this.pos[1] > c[1] + a.ceilAbove) { this.pos[1] = c[1] + a.ceilAbove; if (this.velY > 0) this.velY = 0; }
     // WB9b: an arena with a clamp of its own - the gate's three courts and the walkways laid between them
-    // (world/gateArena.js courtArena, net/gateBrain.js clampToFloor - the relay's law of the floor)
+    // (world/gate/gateArena.js courtArena, net/gate/gateBrain.js clampToFloor - the relay's law of the floor)
     if (typeof a.clamp === 'function') { this._putBack(a.clamp(this.pos, CAPSULE_RADIUS)); return; }
-    // AUDIT DUEL1 D4: THE ONE CLAMP (net/duelSession.js clampToRing), the geometry the duel's own pins drive
+    // AUDIT DUEL1 D4: THE ONE CLAMP (net/duel/duelSession.js clampToRing), the geometry the duel's own pins drive
     const to = clampToRing(this.pos, c, a.radius, CAPSULE_RADIUS);
     this._putBack(to);
   }

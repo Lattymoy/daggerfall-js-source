@@ -1,5 +1,5 @@
 // The pure half of tools/extract-enemy-basics.mjs, so the SAME code
-// that regenerates src/characters/enemyBasics.js can be re-run inside
+// that regenerates src/characters/enemy/enemyBasics.js can be re-run inside
 // a test and diffed against the checked-in module.
 //
 // AUDIT 24 (wave 23) split this out. The generator asserted C3 parity

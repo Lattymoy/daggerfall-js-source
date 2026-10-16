@@ -5,8 +5,8 @@
     "old": "    sheetWindowUp: () => townTalk.overlay?.holdsScreen === true,",
     "new": "    sheetWindowUp: () => townTalk.overlay?.isTravelMap === true,",
     "tests": [
-      "test/map3_heldpose.test.js",
-      "test/heldmap.test.js"
+      "test/combat/map3_heldpose.test.js",
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -15,8 +15,8 @@
     "old": "    sheetWindowUp: () => activeOverlay?.holdsScreen === true,\n",
     "new": "",
     "tests": [
-      "test/map3_heldpose.test.js",
-      "test/heldmap.test.js"
+      "test/combat/map3_heldpose.test.js",
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -25,8 +25,8 @@
     "old": "    sheetWindowUp: () => interiorOverlay?.holdsScreen === true,\n",
     "new": "",
     "tests": [
-      "test/map3_heldpose.test.js",
-      "test/heldmap.test.js"
+      "test/combat/map3_heldpose.test.js",
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -35,8 +35,8 @@
     "old": "    sheetWindowUp: () => townTalk.overlay?.holdsScreen === true,\n",
     "new": "",
     "tests": [
-      "test/map3_heldpose.test.js",
-      "test/heldmap.test.js"
+      "test/combat/map3_heldpose.test.js",
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -45,8 +45,8 @@
     "old": "    this.holdsScreen = true;",
     "new": "    this.holdsScreen = false;",
     "tests": [
-      "test/map3_heldpose.test.js",
-      "test/heldmap.test.js"
+      "test/combat/map3_heldpose.test.js",
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -55,18 +55,18 @@
     "old": "    this.isTravelMap = this._slot.ids.includes('world');",
     "new": "    this.isTravelMap = true;",
     "tests": [
-      "test/map3_heldpose.test.js",
-      "test/heldmap.test.js"
+      "test/combat/map3_heldpose.test.js",
+      "test/ui/heldmap.test.js"
     ]
   },
   {
     "name": "EMBUG1-the-rig-stops-asking-at-all",
-    "file": "src/combat/weaponRig.js",
+    "file": "src/combat/weapon/weaponRig.js",
     "old": "      if (sheetWindowUp()) return;",
     "new": "      if (false) return;",
     "tests": [
-      "test/map3_heldpose.test.js",
-      "test/heldmap.test.js"
+      "test/combat/map3_heldpose.test.js",
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -75,8 +75,8 @@
     "old": "    if (code === 'Escape' || _acts.includes('TravelMap') || _acts.includes('AutoMap')) {",
     "new": "    if (code === 'Escape' || _acts.includes('TravelMap')) {",
     "tests": [
-      "test/map3_heldpose.test.js",
-      "test/heldmap.test.js"
+      "test/combat/map3_heldpose.test.js",
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -85,8 +85,8 @@
     "old": "    if (code === 'Escape' || _acts.includes('TravelMap') || _acts.includes('AutoMap')) {",
     "new": "    if (code === 'Escape' || _acts.includes('AutoMap')) {",
     "tests": [
-      "test/map3_heldpose.test.js",
-      "test/heldmap.test.js"
+      "test/combat/map3_heldpose.test.js",
+      "test/ui/heldmap.test.js"
     ]
   }
 ]

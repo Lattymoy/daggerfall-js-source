@@ -16,9 +16,9 @@
 //   living game needs ARENA2, and this check runs with none, on
 //   purpose: the whole premise of the enhanced skin is that its
 //   screens read no game data. The host wiring is held by the source
-//   pins in test/enhancedPause.test.js (every host gates on
+//   pins in test/ui/enhanced/enhancedPause.test.js (every host gates on
 //   pauseDoorReady and imports the door, none imports the classic
-//   window past the fork) and by test/pausewindow.test.js's I3 pin.
+//   window past the fork) and by test/systems/pausewindow.test.js's I3 pin.
 //
 // The page is index.html driven to the moment a game starts - the
 // front door pressed through to Begin, so the boot menu is torn down

@@ -1,47 +1,47 @@
 [
   {
     "name": "PORT-MAP-far-again",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "    if (opts.ports && m.port) harbours.push([ink, ...toPaper(view, m.x, m.y)]);",
     "new": "    if (opts.ports && m.port && band !== 'far') harbours.push([ink, ...toPaper(view, m.x, m.y)]);",
     "tests": [
-      "test/portmap.test.js"
+      "test/ui/ink/portmap.test.js"
     ]
   },
   {
     "name": "PORT-MAP-only-where-inked",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "    if (opts.ports && m.port) harbours.push([ink, ...toPaper(view, m.x, m.y)]);",
     "new": "    if (opts.ports && m.port && ink) harbours.push([ink, ...toPaper(view, m.x, m.y)]);",
     "tests": [
-      "test/portmap.test.js"
+      "test/ui/ink/portmap.test.js"
     ]
   },
   {
     "name": "PORT-MAP-never-on-the-place",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "  const ax = beside ? x + 8 : x, ay = beside ? y - 1 : y;",
     "new": "  const ax = x + 8, ay = y - 1;",
     "tests": [
-      "test/portmap.test.js"
+      "test/ui/ink/portmap.test.js"
     ]
   },
   {
     "name": "PORT-MAP-no-halo",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "  ctx.strokeStyle = PEN.halo; ctx.lineWidth = HARBOUR_HALO;\n  anchorPath(ctx, ax, ay);\n  ctx.stroke();\n",
     "new": "",
     "tests": [
-      "test/portmap.test.js"
+      "test/ui/ink/portmap.test.js"
     ]
   },
   {
     "name": "PORT-MAP-the-soft-pen",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "  ctx.strokeStyle = PEN.line; ctx.lineWidth = HARBOUR_PEN;",
     "new": "  ctx.strokeStyle = PEN.soft; ctx.lineWidth = HARBOUR_PEN;",
     "tests": [
-      "test/portmap.test.js"
+      "test/ui/ink/portmap.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "          ports: true,",
     "new": "          ports: this._portsShown(),",
     "tests": [
-      "test/portmap.test.js"
+      "test/ui/ink/portmap.test.js"
     ]
   }
 ]

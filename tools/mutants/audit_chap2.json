@@ -5,10 +5,10 @@
     "old": "CHAPTERS_SWITCH.includes(v) ? v : 'off')",
     "new": "CHAPTERS_SWITCH.includes(v) ? v : 'dev')",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -17,10 +17,10 @@
     "old": "Math.max(MIN_REPUTATION, Math.min(cap, whole(v)))",
     "new": "Math.max(MIN_REPUTATION, Math.min(MAX_REPUTATION, whole(v)))",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -29,10 +29,10 @@
     "old": "for (let i = 0; i < RANK_REQ_REPUTATION.length; i++) if (r >=",
     "new": "for (let i = 0; i < RANK_REQ_REPUTATION.length - 1; i++) if (r >=",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -41,10 +41,10 @@
     "old": "if (keys.length < min ||",
     "new": "if (keys.length <= min ||",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -53,10 +53,10 @@
     "old": "(x) => x >= MIN_REPUTATION && x <= MAX_REPUTATION",
     "new": "(x) => x > MIN_REPUTATION && x <= MAX_REPUTATION",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -65,10 +65,10 @@
     "old": "Math.abs(x) <= ROLL_DELTA_MAX, 1)",
     "new": "Math.abs(x) < ROLL_DELTA_MAX, 1)",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -77,10 +77,10 @@
     "old": "owed: owedUnder(rep, owed - fromOwed), credited",
     "new": "owed: owedUnder(rep, owed), credited",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -89,10 +89,10 @@
     "old": "const take = Math.min(owed, Math.max(0, ROLL_GAIN_DAY_MAX - today));",
     "new": "const take = Math.min(owed, ROLL_GAIN_DAY_MAX);",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -101,10 +101,10 @@
     "old": "if (d !== 0) out[f] = d;",
     "new": "out[f] = d;",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -113,10 +113,10 @@
     "old": ".sort((a, b) => a[0] - b[0]).map(",
     "new": ".sort((a, b) => b[0] - a[0]).map(",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -125,10 +125,10 @@
     "old": "(list ? list.map((m) => `${m.f}:${m.rank}${m.d === 1 ? 'd' : ''}`).join(',') : null)",
     "new": "((list ?? []).map((m) => `${m.f}:${m.rank}${m.d === 1 ? 'd' : ''}`).join(','))",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -137,11 +137,11 @@
     "old": "  return own ? own() : String(f);",
     "new": "  return String(f);",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js",
-      "test/fb1015g_guildwords.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js",
+      "test/systems/fb1015g_guildwords.test.js"
     ]
   },
   {
@@ -150,10 +150,10 @@
     "old": "`h:${day}:${region}:${faction}:${slot}`",
     "new": "`h:${day}:${region}:${slot}:${faction}`",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -162,10 +162,10 @@
     "old": "(Object.values(ORDERS)).includes(faction)) return ['metals', 'wood'];",
     "new": "(Object.values(ORDERS)).includes(faction)) return ['metals'];",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -174,10 +174,10 @@
     "old": "(Object.values(DIVINES)).includes(faction)) return ['herbs'];",
     "new": "(Object.values(DIVINES)).includes(faction)) return ['herbs', 'stone'];",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -186,10 +186,10 @@
     "old": "if (faction === GUILD_FACTION_IDS.ThievesGuild) return 'Thieves Guild';",
     "new": "if (faction === GUILD_FACTION_IDS.ThievesGuild) return 'The Thieves Guild';",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -198,10 +198,10 @@
     "old": "if (!isRollFaction(faction) || !table?.length) return [];",
     "new": "if (!table?.length) return [];",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -210,10 +210,10 @@
     "old": "return h && hallReportText(h) === text ? h : null;",
     "new": "return h;",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -222,10 +222,10 @@
     "old": "export const HALL_WITNESS_HOUR = 24;",
     "new": "export const HALL_WITNESS_HOUR = 25;",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -234,10 +234,10 @@
     "old": "rand(new Uint8Array(12))",
     "new": "rand(new Uint8Array(11))",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -246,10 +246,10 @@
     "old": "if (row) out[f] = rollRep(row.rep);",
     "new": "out[f] = rollRep(row?.rep);",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -258,10 +258,10 @@
     "old": "    nextAt = now() + wait;",
     "new": "    nextAt = now();",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -270,10 +270,10 @@
     "old": "    write(a.local);\n",
     "new": "",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -282,10 +282,10 @@
     "old": "heldKey = rollMembersKey(membersOf(roll.members));",
     "new": "heldKey = null;",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -294,10 +294,10 @@
     "old": "    lastSentAt = now();\n",
     "new": "",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -306,10 +306,10 @@
     "old": "const credited = r.data.credited ?? {};",
     "new": "const credited = {};",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -318,10 +318,10 @@
     "old": "if (paced.length) onCeiling(paced);",
     "new": "onCeiling(paced);",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -330,10 +330,10 @@
     "old": "      if (!values) return;\n",
     "new": "",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -342,10 +342,10 @@
     "old": "if (stopped || busy || now() < nextAt) return;",
     "new": "if (stopped || busy || now() <= nextAt) return;",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -354,10 +354,10 @@
     "old": "      write(t);\n      let r = null;",
     "new": "      let r = null;",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -366,10 +366,10 @@
     "old": "Math.floor(nowMs() / 86_400_000)",
     "new": "Math.floor(nowMs() / 3_600_000)",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -378,10 +378,10 @@
     "old": "if (!h || stopped) return false;",
     "new": "if (!h) return false;",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -390,10 +390,10 @@
     "old": "b?.buildingType !== BUILDING_TYPES.GuildHall && b?.buildingType !== BUILDING_TYPES.Temple",
     "new": "b?.buildingType !== BUILDING_TYPES.GuildHall",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -402,10 +402,10 @@
     "old": "rank: x.rank == null ? null : Number(x.rank)",
     "new": "rank: Number(x.rank)",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -414,10 +414,10 @@
     "old": "!(empty || rollDeltasOk(deltas))",
     "new": "!rollDeltasOk(deltas)",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -426,10 +426,10 @@
     "old": "const lines = changed.filter(([, , asked]) => asked);",
     "new": "const lines = changed;",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -438,10 +438,10 @@
     "old": "nowMs - kept.at < CHAPTERS_KEPT_MS",
     "new": "nowMs - kept.at <= CHAPTERS_KEPT_MS",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -450,10 +450,10 @@
     "old": "  if (r?.meta?.changes) _kept.delete(h.region);   // AUDIT CHAP2 E9: a report that changed nothing is no news\n",
     "new": "  if (r?.meta?.changes) { /* forgets nothing */ }\n",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ],
     "note": "AUDIT CHAP2: re-aimed by content at the code the audit's fixes moved. AUDIT CHAP5 T1-T3: re-aimed - the mutant failed for its own reason (a name it does not import, a statement that does not parse), never the law's."
   },
@@ -463,10 +463,10 @@
     "old": "  _kept.set(region, { at: nowMs, chapters });\n",
     "new": "",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -475,11 +475,11 @@
     "old": ".bind(key, player.id, hallReportText(h), h.region, nowS, h.key),",
     "new": ".bind(key, player.id, hallReportText(h), null, nowS, h.key),",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js",
-      "test/audit_chap3.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js",
+      "test/net/audit_chap3.test.js"
     ],
     "note": "AUDIT CHAP2: re-aimed by content at the code the audit's fixes moved."
   },
@@ -489,10 +489,10 @@
     "old": "  if (!h) return { error: 'bad-hall' };\n",
     "new": "",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -501,11 +501,11 @@
     "old": "if (courtDone && hallDone) return;",
     "new": "if (courtDone) return;",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js",
-      "test/prof1_service.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js",
+      "test/net/prof1_service.test.js"
     ]
   },
   {
@@ -514,11 +514,11 @@
     "old": "'SELECT 1 FROM hall_writ_days WHERE day = ?1 AND region = ?2').bind(day, region)",
     "new": "'SELECT 1 FROM hall_writ_days WHERE day = ?1 AND region = ?2').bind(region, day)",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js",
-      "test/prof1_service.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js",
+      "test/net/prof1_service.test.js"
     ]
   },
   {
@@ -527,11 +527,11 @@
     "old": "      db.prepare('INSERT OR IGNORE INTO hall_writ_days (day, region, posted, at) VALUES (?1, ?2, ?3, ?4)').bind(day, region, halls.length, nowS),\n",
     "new": "",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js",
-      "test/prof1_service.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js",
+      "test/net/prof1_service.test.js"
     ]
   },
   {
@@ -540,11 +540,11 @@
     "old": "ORDER BY kind, faction, slot",
     "new": "ORDER BY kind, slot",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js",
-      "test/prof1_service.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js",
+      "test/net/prof1_service.test.js"
     ]
   },
   {
@@ -553,11 +553,11 @@
     "old": ".bind(character, player).all();\n  return new Set(",
     "new": ".bind(player, character).all();\n  return new Set(",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js",
-      "test/prof1_service.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js",
+      "test/net/prof1_service.test.js"
     ]
   },
   {
@@ -566,10 +566,10 @@
     "old": "'halls-need-account': 403, 'halls-rate': 429",
     "new": "'halls-rate': 429",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -578,10 +578,10 @@
     "old": "'halls-rate': 429,",
     "new": "'halls-rate': 400,",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -590,10 +590,10 @@
     "old": "'no-data': 404, lease: 409, 'roll-unseeded'",
     "new": "'no-data': 400, lease: 409, 'roll-unseeded'",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -602,10 +602,10 @@
     "old": "        if (!chaptersOpenFor(who.player, env)) return no('chapters-closed', 403, origin);\n        // CHAP2a",
     "new": "        // CHAP2a",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -614,10 +614,10 @@
     "old": "'seat', 'npchall'))",
     "new": "'seat'))",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -626,10 +626,10 @@
     "old": "UNIQUE (day, region, kind, faction, owner, slot)",
     "new": "UNIQUE (day, region, kind, owner, slot)",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -638,11 +638,11 @@
     "old": "const shown = (w) => w.kind === 'court' || (halls &&",
     "new": "const shown = (w) => (halls &&",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js",
-      "test/prof1_service.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js",
+      "test/net/prof1_service.test.js"
     ]
   },
   {
@@ -651,10 +651,10 @@
     "old": "typeof id === 'number' && ROLL_SET.has(id)",
     "new": "ROLL_SET.has(id)",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ],
     "equivalent": true,
     "why": "Set.has is SameValueZero: no string id ever matches a number in the set"
@@ -665,10 +665,10 @@
     "old": "(typeof v === 'number' && Number.isFinite(v) ? Math.trunc(v) : 0)",
     "new": "(typeof v === 'number' ? Math.trunc(v) : 0)",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -677,10 +677,10 @@
     "old": "typeof row?.origin === 'string' && row.origin !== ''",
     "new": "typeof row?.origin === 'string'",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -689,10 +689,10 @@
     "old": "keys.length > ROLL_FACTIONS.length) return false;",
     "new": "keys.length >= ROLL_FACTIONS.length) return false;",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -701,11 +701,11 @@
     "old": "base && Object.hasOwn(base, f) ?",
     "new": "base ?",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js",
-      "test/audit_chap3.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js",
+      "test/net/audit_chap3.test.js"
     ]
   },
   {
@@ -714,10 +714,10 @@
     "old": "return Object.hasOwn(table, m[2]) ?",
     "new": "return m[2] in table ?",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -726,10 +726,10 @@
     "old": "if (f == null || !(rank >= 0)) continue;",
     "new": "if (f == null || !(rank > 0)) continue;",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -738,10 +738,10 @@
     "old": "if (!Array.isArray(v) || v.length > ROLL_FACTIONS.length) return false;",
     "new": "if (!Array.isArray(v) || v.length >= ROLL_FACTIONS.length) return false;",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ],
     "equivalent": true,
     "why": "AUDIT CHAP2 E3 refuses a third temple or order, and only twenty-two distinct ids exist (a repeat is refused), so no list of twenty-two or more is ever a book - the length guard is the early way out"
@@ -752,10 +752,10 @@
     "old": "!Number.isSafeInteger(rank) || rank < 0 || rank > ROLL_RANK_MAX) return false;",
     "new": "!Number.isSafeInteger(rank) || rank > ROLL_RANK_MAX) return false;",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -764,10 +764,10 @@
     "old": "typeof rank !== 'number' || !Number.isSafeInteger(rank) ||",
     "new": "typeof rank !== 'number' ||",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -776,10 +776,10 @@
     "old": "export const HIDDEN_HALL_FACTIONS = Object.freeze([GUILD_FACTION_IDS.ThievesGuild, GUILD_FACTION_IDS.DarkBrotherhood]);",
     "new": "export const HIDDEN_HALL_FACTIONS = Object.freeze([GUILD_FACTION_IDS.DarkBrotherhood]);",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -788,10 +788,10 @@
     "old": "Owl: 'Knights of the Owl'",
     "new": "Owl: 'Knights of the Owls'",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -800,10 +800,10 @@
     "old": "Hawk: 'Knights of the Hawk'",
     "new": "Hawk: 'Order of the Hawk'",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -812,10 +812,10 @@
     "old": "Scarab: 'Order of the Scarab'",
     "new": "Scarab: 'Knights of the Scarab'",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -824,10 +824,10 @@
     "old": "gateHash(HALL_WRIT_SALT, day, region, faction, slot, k)",
     "new": "gateHash(HALL_WRIT_SALT, day, 0, faction, slot, k)",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -836,10 +836,10 @@
     "old": "export const HALL_WRIT_SALT = 0x4a11;",
     "new": "export const HALL_WRIT_SALT = 0x4a12;",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -848,10 +848,10 @@
     "old": "key < 0 || key > 0xffffffff",
     "new": "key < 1 || key > 0xffffffff",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -860,10 +860,10 @@
     "old": "key < 0 || key > 0xffffffff",
     "new": "key < 0 || key >= 0xffffffff",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -872,10 +872,10 @@
     "old": "if (!factions.every(isRollFaction)) return null;",
     "new": "if (!factions.some(isRollFaction)) return null;",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -884,10 +884,10 @@
     "old": "factions.length > ROLL_FACTIONS.length) return null;",
     "new": "factions.length >= ROLL_FACTIONS.length) return null;",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -896,10 +896,10 @@
     "old": "'chapters-closed', 'lease', 'no-realm-character'",
     "new": "'chapters-closed', 'no-realm-character'",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -908,10 +908,10 @@
     "old": "'no-data', 'dead', 'auth'",
     "new": "'no-data', 'auth'",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -920,10 +920,10 @@
     "old": "'roll-seed', 'roll-claim']",
     "new": "'roll-seed']",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -932,10 +932,10 @@
     "old": "const from = r.data.seeded ? values :",
     "new": "const from = false ? values :",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -944,10 +944,10 @@
     "old": "if (stopped || !base) return;",
     "new": "if (stopped) return;",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -956,10 +956,10 @@
     "old": "if (stopped || !base) return;",
     "new": "if (!base) return;",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ],
     "equivalent": true,
     "why": "tick returns on a stop before the refresh is read"
@@ -970,10 +970,10 @@
     "old": "if (store) for (const [f, rep] of Object.entries(values))",
     "new": "for (const [f, rep] of Object.entries(values))",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -982,10 +982,10 @@
     "old": "export const HALL_REPORTED_KEY = 'chap2.halls';",
     "new": "export const HALL_REPORTED_KEY = 'chap2.hall';",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -994,10 +994,10 @@
     "old": "export const HALL_REPORTED_MAX = 200;",
     "new": "export const HALL_REPORTED_MAX = 2;",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -1006,10 +1006,10 @@
     "old": ".sort((a, b) => b[1] - a[1]).slice(0, HALL_REPORTED_MAX)",
     "new": ".sort((a, b) => a[1] - b[1]).slice(0, HALL_REPORTED_MAX)",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -1018,10 +1018,10 @@
     "old": ".slice(0, HALL_REPORTED_MAX)",
     "new": "",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -1030,10 +1030,10 @@
     "old": "try { r = await door.witness(h); } catch { /* the next day asks again */ }",
     "new": "r = await door.witness(h);",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -1042,10 +1042,10 @@
     "old": "if (v && typeof v === 'object' && !Array.isArray(v)) reported = v;",
     "new": "if (v) reported = v;",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -1054,10 +1054,10 @@
     "old": "if (row.owed > 0) owed[f] = row.owed;",
     "new": "owed[f] = row.owed;",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -1066,10 +1066,10 @@
     "old": "if (d.credited !== 0 || d.owed !== row.owed) paid.push(",
     "new": "if (d.credited !== 0) paid.push(",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -1078,10 +1078,10 @@
     "old": "    if (!paid.length) return { roll: viewOf(kseq, rows), from: kseq, paid: drained };",
     "new": "    if (false) return { roll: viewOf(kseq, rows), from: kseq, paid: drained };",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ],
     "note": "AUDIT CHAP2: re-aimed by content at the code the audit's fixes moved."
   },
@@ -1091,10 +1091,10 @@
     "old": "    if (!moved?.meta?.changes) {\n      const why = await heldUnder(db, player.id, who.character, who.lease);\n      return 'error' in why ? why : { error: 'roll-busy' };\n    }\n    for (const [f, r] of paid)",
     "new": "    for (const [f, r] of paid)",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -1103,10 +1103,10 @@
     "old": "!(seed?.members === null || rollMembersOk(seed?.members))",
     "new": "!rollMembersOk(seed?.members)",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -1115,10 +1115,10 @@
     "old": "  if (!after) {\n    const why = await heldUnder(db, player.id, who.character, who.lease);\n    return 'error' in why ? why : { error: 'roll-busy' };\n  }\n",
     "new": "",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -1127,10 +1127,10 @@
     "old": "return { roll: viewOf(kseq + (lines.length > 0 ? 1 : 0), rows), credited, paid: drained };",
     "new": "return { roll: viewOf(kseq, rows), credited, paid: drained };",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ],
     "note": "AUDIT CHAP2: re-aimed by content at the code the audit's fixes moved."
   },
@@ -1140,10 +1140,10 @@
     "old": "!REALM_ID_RE.test(character) || typeof lease",
     "new": "typeof lease",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -1152,10 +1152,10 @@
     "old": "HALL_WITNESS_HOUR, 3600)",
     "new": "HALL_WITNESS_HOUR, 60)",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -1164,10 +1164,10 @@
     "old": "`hall-witness:${player.id}`",
     "new": "`hall-witness:`",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -1176,10 +1176,10 @@
     "old": "AND key IN (SELECT key FROM world_witness WHERE kind = '${HALL_WITNESS_KIND}' AND region = ? AND key LIKE ?)`)",
     "new": "AND region = ? AND key LIKE ?`)",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ],
     "note": "AUDIT CHAP2: re-aimed by content at the code the audit's fixes moved."
   },
@@ -1189,11 +1189,11 @@
     "old": "  return [...factions].sort((a, b) => a - b);\n}",
     "new": "  return [...factions];\n}",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js",
-      "test/audit_chap3.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js",
+      "test/net/audit_chap3.test.js"
     ]
   },
   {
@@ -1202,11 +1202,11 @@
     "old": "  if (courtDone && hallDone) return;\n",
     "new": "",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js",
-      "test/prof1_service.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js",
+      "test/net/prof1_service.test.js"
     ],
     "note": "AUDIT CHAP2: the pins lens recorded it equivalent; the audit's own pins kill it.",
     "equivalent": true,
@@ -1218,11 +1218,11 @@
     "old": "hallWrits(day, region, f, doctrineWritCount(hallWritCountIn(active, strengths.get(f)), events.get(f)?.doctrine), table, focuses.get(f) ?? null)",
     "new": "hallWrits(day, region, f, doctrineWritCount(hallWritCountIn(0, strengths.get(f)), events.get(f)?.doctrine), table, focuses.get(f) ?? null)",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js",
-      "test/prof1_service.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js",
+      "test/net/prof1_service.test.js"
     ],
     "note": "CHAP6b: re-aimed by content (the doctrine and the backing beside it)."
   },
@@ -1232,11 +1232,11 @@
     "old": "w.faction, w.slot, w.material, w.tier, w.units,",
     "new": "w.faction, w.slot, w.material, w.units, w.tier,",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js",
-      "test/prof1_service.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js",
+      "test/net/prof1_service.test.js"
     ]
   },
   {
@@ -1245,11 +1245,11 @@
     "old": "const chapters = hallDone ? [] : await regionChapters(",
     "new": "const chapters = await regionChapters(",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js",
-      "test/prof1_service.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js",
+      "test/net/prof1_service.test.js"
     ],
     "note": "AUDIT CHAP2: the pins lens recorded it equivalent; the audit's own pins kill it.",
     "equivalent": true,
@@ -1261,11 +1261,11 @@
     "old": "(halls && (w.filled_by === player.id || (w.kind",
     "new": "(halls && ((w.kind",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js",
-      "test/prof1_service.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js",
+      "test/net/prof1_service.test.js"
     ]
   },
   {
@@ -1274,11 +1274,11 @@
     "old": "faction_id IN (${GUILD_FACTION_IDS.ThievesGuild}, ${GUILD_FACTION_IDS.DarkBrotherhood})",
     "new": "faction_id IN (${GUILD_FACTION_IDS.DarkBrotherhood})",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js",
-      "test/prof1_service.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js",
+      "test/net/prof1_service.test.js"
     ]
   },
   {
@@ -1287,11 +1287,11 @@
     "old": "WHERE char_id = ?2 AND player = ?1 AND EXISTS (SELECT 1 FROM writs WHERE id = ?5 AND n = ?3)",
     "new": "WHERE char_id = ?2 AND EXISTS (SELECT 1 FROM writs WHERE id = ?5 AND n = ?3)",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js",
-      "test/prof1_service.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js",
+      "test/net/prof1_service.test.js"
     ],
     "equivalent": true,
     "why": "AUDIT CHAP2 S5's death check on the same statement asks the realm character by id AND player, so the head's own player clause is the second of two"
@@ -1302,11 +1302,11 @@
     "old": "WHERE char_id = ?2 AND player = ?1 AND faction_id = (SELECT faction",
     "new": "WHERE char_id = ?2 AND faction_id = (SELECT faction",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js",
-      "test/prof1_service.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js",
+      "test/net/prof1_service.test.js"
     ],
     "equivalent": true,
     "why": "the npc_roll UPDATE asks the head's tag, which only the player-scoped head UPDATE sets"
@@ -1317,11 +1317,11 @@
     "old": "AND player = ?1 AND EXISTS (SELECT 1 FROM writs WHERE id = ?5 AND n = ?3)\n",
     "new": "AND player = ?1 AND (?5 IS NOT NULL)\n",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js",
-      "test/prof1_service.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js",
+      "test/net/prof1_service.test.js"
     ],
     "note": "AUDIT CHAP2: re-aimed by content at the code the audit's fixes moved."
   },
@@ -1331,11 +1331,11 @@
     "old": "\n          AND EXISTS (SELECT 1 FROM npc_roll_heads WHERE char_id = ?2 AND tag = ?6)`)",
     "new": " AND (?6 IS NOT NULL)`)",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js",
-      "test/prof1_service.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js",
+      "test/net/prof1_service.test.js"
     ],
     "note": "AUDIT CHAP2: the pins lens recorded it equivalent; the audit's own pins kill it."
   },
@@ -1345,12 +1345,12 @@
     "old": "${poster ? 'seal-guild' : 'seal-court'}",
     "new": "${poster ? 'seal-court' : 'seal-court'}",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/board_ui.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js",
-      "test/prof1_client.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/ui/board_ui.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js",
+      "test/systems/prof1_client.test.js"
     ]
   },
   {
@@ -1359,12 +1359,12 @@
     "old": "poster ? 'Chapter writ' : 'Court writ'",
     "new": "poster ? 'Court writ' : 'Court writ'",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/board_ui.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js",
-      "test/prof1_client.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/ui/board_ui.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js",
+      "test/systems/prof1_client.test.js"
     ]
   },
   {
@@ -1373,12 +1373,12 @@
     "old": " : poster ? ` and standing with the ${poster}` : ''}`",
     "new": " : ''}`",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/board_ui.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js",
-      "test/prof1_client.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/ui/board_ui.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js",
+      "test/systems/prof1_client.test.js"
     ]
   },
   {
@@ -1387,12 +1387,12 @@
     "old": "`Writs today: ${today.filled} of ${today.max}",
     "new": "`Court writs today: ${today.filled} of ${today.max}",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/board_ui.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js",
-      "test/prof1_client.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/ui/board_ui.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js",
+      "test/systems/prof1_client.test.js"
     ],
     "note": "AUDIT CHAP2: re-aimed by content at the code the audit's fixes moved."
   },
@@ -1402,10 +1402,10 @@
     "old": "getSaveData: () => rollKept,",
     "new": "getSaveData: () => null,",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -1414,10 +1414,10 @@
     "old": "character: () => realmSession.id,",
     "new": "character: () => null,",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -1426,10 +1426,10 @@
     "old": "const hallBook = hallDoor ? createHallBook({ door: hallDoor, storage: appStorage() }) : null;",
     "new": "const hallBook = hallDoor ? createHallBook({ door: hallDoor, storage: null }) : null;",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ],
     "note": "AUDIT CHAP2: re-aimed by content at the code the audit's fixes moved."
   },
@@ -1439,10 +1439,10 @@
     "old": "${hall ? ` The ${hall} will remember it${merit}.` : ''}",
     "new": "",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -1451,10 +1451,10 @@
     "old": "io: accountRoll({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() }),\n    character: () => realmSession.id,",
     "new": "io: accountRoll({ fetch: (u, i) => globalThis.fetch(u, i), storage: null }),\n    character: () => realmSession.id,",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -1463,10 +1463,10 @@
     "old": "char_id     TEXT PRIMARY KEY,",
     "new": "char_id     TEXT,",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -1475,10 +1475,10 @@
     "old": ",\n  PRIMARY KEY (char_id, faction_id)\n);",
     "new": "\n);",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ],
     "note": "AUDIT CHAP2: the pins lens recorded it equivalent; the audit's own pins kill it.",
     "equivalent": true,
@@ -1490,10 +1490,10 @@
     "old": "const from = own.length ? own : table;",
     "new": "const from = own;",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -1502,10 +1502,10 @@
     "old": "witness: (hall) => post('/v1/chapters/witness', { hall }),",
     "new": "witness: (hall) => post('/v1/chapters/witnes', { hall }),",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -1514,10 +1514,10 @@
     "old": "witness: (hall) => post('/v1/chapters/witness', { hall }),",
     "new": "witness: (hall) => post('/v1/chapters/witness', hall),",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -1526,10 +1526,10 @@
     "old": ".bind(claimed ? 1 : 0, tag, rid, nowS, who.character, seq, who.character, who.player, who.lease);",
     "new": ".bind(1, tag, rid, nowS, who.character, seq, who.character, who.player, who.lease);",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -1538,10 +1538,10 @@
     "old": "    if (!paid.length) return { roll: viewOf(kseq, rows), from: kseq, paid: drained };",
     "new": "    if (!paid.length) return { roll: viewOf(seq, rows), from: seq, paid: drained };",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -1550,10 +1550,10 @@
     "old": "    return { roll: viewOf(kseq, rows), from: kseq, paid: drained };   // AUDIT CHAP2 C1: owed paid is the service's own credit",
     "new": "    return { roll: viewOf(seq + 1, rows), from: seq, paid: drained };",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -1562,10 +1562,10 @@
     "old": "  const head = await db.prepare('SELECT kseq FROM npc_roll_heads WHERE char_id = ?').bind(character).first();\n  return head ? viewOf(Number(head.kseq), await rowsOf(db, character)) : null;",
     "new": "  const head = await db.prepare('SELECT seq FROM npc_roll_heads WHERE char_id = ?').bind(character).first();\n  return head ? viewOf(Number(head.seq), await rowsOf(db, character)) : null;",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -1574,13 +1574,13 @@
     "old": "    const said = r?.ok ? work.onTaken?.(r) : null;\n    if (!alive) { if (said) work.sayLate?.(said); return; }",
     "new": "    if (!alive) return;\n    const said = r?.ok ? work.onTaken?.(r) : null;",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/board_ui.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js",
-      "test/prof1_client.test.js",
-      "test/audit_chap3.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/ui/board_ui.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js",
+      "test/systems/prof1_client.test.js",
+      "test/net/audit_chap3.test.js"
     ]
   },
   {
@@ -1589,10 +1589,10 @@
     "old": "    if (isChapterWrit(d.writ?.kind)) rollTracker?.refresh();",
     "new": "    if (isChapterWrit(d.writ?.kind) && !d.repeat) rollTracker?.refresh();",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -1601,10 +1601,10 @@
     "old": "    if (c.members) heldKey = rollMembersKey(c.members);\n",
     "new": "",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -1613,10 +1613,10 @@
     "old": "    doneGen = Math.max(doneGen, g);",
     "new": "    doneGen = askGen;",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -1625,10 +1625,10 @@
     "old": "      if (stopped === 'lease' && lease() && lease() !== stoppedLease) { stopped = null; nextAt = 0; }\n",
     "new": "",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -1637,10 +1637,10 @@
     "old": "const hall = isChapterWrit(d.writ?.kind) && !d.repeat && rollTracker?.held ? hallPosterName",
     "new": "const hall = isChapterWrit(d.writ?.kind) && !d.repeat ? hallPosterName",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -1649,10 +1649,10 @@
     "old": " || (r?.ok && r.data?.why === 'young')) stopped = true;",
     "new": ") stopped = true;",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -1661,10 +1661,10 @@
     "old": "      if ((r?.ok && r.data?.counted === true) || HALL_DONE_ERRORS.includes(r?.error)) { t[String(h.key)] = HALL_DONE + dayNow(); write(t); }\n",
     "new": "",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -1673,10 +1673,10 @@
     "old": "      if (at === dayNow() || at >= HALL_DONE) return false;",
     "new": "      if (at === dayNow()) return false;",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -1685,10 +1685,10 @@
     "old": "=> hallHidden(faction) || rollRep(rep) >= RANK_REQ_REPUTATION[0];",
     "new": "=> rollRep(rep) >= RANK_REQ_REPUTATION[0];",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -1697,10 +1697,10 @@
     "old": "line.rep + line.owed), f)",
     "new": "line.rep), f)",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -1709,10 +1709,10 @@
     "old": "  return Math.min(ROLL_SEAT_LINE - 1, Math.max(RANK_REQ_REPUTATION[r], top));",
     "new": "  return Math.max(RANK_REQ_REPUTATION[r], top);",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -1721,23 +1721,23 @@
     "old": "  const top = r < ROLL_RANK_MAX ? RANK_REQ_REPUTATION[r + 1] - 1 : MAX_REPUTATION;",
     "new": "  const top = RANK_REQ_REPUTATION[r];",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
     "name": "AUDIT-CHAP2-D4-EITHER-BOOK",
-    "file": "src/systems/guildHallReveal.js",
+    "file": "src/systems/guild/guildHallReveal.js",
     "old": "    for (const g of REVEALING_GUILDS) if (!hasJoined(out, g) && hasJoined(book, g)) out[g.guildGroup] = book[g.guildGroup];",
     "new": "    for (const g of REVEALING_GUILDS) if (!hasJoined(out, g) && hasJoined(book, g)) void book;",
     "tests": [
-      "test/audit63_guilds_court.test.js",
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/systems/audit63_guilds_court.test.js",
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -1746,11 +1746,11 @@
     "old": "  if (await db.prepare('SELECT 1 FROM npc_hall_strikes WHERE map_id = ?').bind(h.key).first()) return { error: 'hall-struck' };\n",
     "new": "",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js",
-      "test/audit_chap4.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js",
+      "test/net/audit_chap4.test.js"
     ],
     "note": "AUDIT CHAP4 T: since AUDIT CHAP3 S5 asks the strike again inside the write, this first check is told apart only by a witness the age refuses - pinned there (a young account at a struck town is answered struck)."
   },
@@ -1760,10 +1760,10 @@
     "old": "    db.prepare(`DELETE FROM world_witness WHERE kind = '${HALL_WITNESS_KIND}' AND key LIKE ?`).bind(`%:${key}`),",
     "new": "    db.prepare('SELECT ?').bind(`%:${key}`),",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -1772,10 +1772,10 @@
     "old": "    db.prepare('INSERT OR IGNORE INTO npc_hall_strikes (map_id, by, at) VALUES (?, ?, ?)').bind(key, dev.handle ?? null, nowS),",
     "new": "    db.prepare('SELECT ?, ?, ?').bind(key, dev.handle ?? null, nowS),",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -1784,10 +1784,10 @@
     "old": "export async function strikeHall({ db, nowS }, dev, env, { key } = {}) {\n  if (!isDeveloper(dev, env)) return { error: 'not-developer' };",
     "new": "export async function strikeHall({ db, nowS }, dev, env, { key } = {}) {",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -1796,10 +1796,10 @@
     "old": "export async function listHalls({ db, nowS }, dev, env, { region } = {}) {\n  if (!isDeveloper(dev, env)) return { error: 'not-developer' };",
     "new": "export async function listHalls({ db, nowS }, dev, env, { region } = {}) {",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -1808,10 +1808,10 @@
     "old": "    const kept = list.filter((r) => !ignored.has(r.account));\n    const f = /** @type {any} */ (witnessedFact(kept, parseHallReport));",
     "new": "    const kept = list;\n    const f = /** @type {any} */ (witnessedFact(kept, parseHallReport));",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -1820,10 +1820,10 @@
     "old": "  if (hallFacts(await regionRows(db, h.region), nowS).ignored.has(player.id)) return { ok: true, counted: false, why: 'ignored' };\n",
     "new": "",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -1832,10 +1832,10 @@
     "old": "      audit: (factConfirmed(f) && agreeing === SEAT_WITNESSES_AUDIT) || f.state === 'disputed' });",
     "new": "      audit: f.state === 'disputed' });",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -1844,10 +1844,10 @@
     "old": "  if (await overRate({ db, nowS }, `roll-claim:${who.character}`, ROLL_CLAIMS_HOUR, 3600)) return { error: 'roll-rate' };\n",
     "new": "",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -1856,10 +1856,10 @@
     "old": "export const ROLL_CLAIMS_HOUR = 120;",
     "new": "export const ROLL_CLAIMS_HOUR = 121;",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -1868,10 +1868,10 @@
     "old": "  'roll-rate': 429,   // AUDIT CHAP2 E2: the claims' hour\n",
     "new": "",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -1880,10 +1880,10 @@
     "old": "  return temples <= ROLL_BOOKS && orders <= ROLL_BOOKS;",
     "new": "  return true;",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -1892,10 +1892,10 @@
     "old": "export const ROLL_BOOKS = 2;",
     "new": "export const ROLL_BOOKS = 3;",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -1904,10 +1904,10 @@
     "old": "const drawn = courtWrits(day, region, count + 1, from, dice).slice(1);",
     "new": "const drawn = courtWrits(day, region, count + 1, from, dice).slice(0, count);",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -1916,10 +1916,10 @@
     "old": "AND region = ? AND key LIKE ?)`).bind(region, `${HALL_REPORT_V}:%`).all();",
     "new": "AND region = ? AND ? IS NOT NULL)`).bind(region, `${HALL_REPORT_V}:%`).all();",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -1928,10 +1928,10 @@
     "old": "export const hallWitnessKey = (/** @type {number} */ mapId) => `${HALL_REPORT_V}:${mapId}`;",
     "new": "export const hallWitnessKey = (/** @type {number} */ mapId) => `${mapId}`;",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -1940,10 +1940,10 @@
     "old": "    } else if (line.member && line.rank != null && line.rank > rollBookRankOf(line.rank, line.rep)) {",
     "new": "    } else if (false) {",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -1952,11 +1952,11 @@
     "old": "  if (courtDone && !chapters.length) return;\n",
     "new": "",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js",
-      "test/prof1_service.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js",
+      "test/net/prof1_service.test.js"
     ]
   },
   {
@@ -1965,11 +1965,11 @@
     "old": "  if (w.kind !== 'court' && hallHidden(Number(w.faction)) && !(await hiddenMemberships(db, player.id, character)).has(Number(w.faction))) return { error: 'no-writ' };\n  if (w.kind !== 'court' && !chaptersOpenFor(player, env)) return { error: 'chapters-closed' };   // CHAP2a\n  if (Number(w.day) !== day || Number(w.expires_at) <= nowS) return { error: 'writ-expired' };\n  if (w.filled_by) return { error: 'writ-taken' };",
     "new": "  if (Number(w.day) !== day || Number(w.expires_at) <= nowS) return { error: 'writ-expired' };\n  if (w.filled_by) return { error: 'writ-taken' };\n  if (w.kind !== 'court' && hallHidden(Number(w.faction)) && !(await hiddenMemberships(db, player.id, character)).has(Number(w.faction))) return { error: 'no-writ' };\n  if (w.kind !== 'court' && !chaptersOpenFor(player, env)) return { error: 'chapters-closed' };   // CHAP2a",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js",
-      "test/prof1_service.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js",
+      "test/net/prof1_service.test.js"
     ]
   },
   {
@@ -1978,10 +1978,10 @@
     "old": "  'chapters-closed': 403,   // AUDIT CHAP2 S3",
     "new": "  'chapters-closed-x': 403,   // AUDIT CHAP2 S3",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -1990,11 +1990,11 @@
     "old": "\n        AND EXISTS (SELECT 1 FROM realm_characters WHERE id = ?2 AND player = ?1 AND dead_at IS NULL)`)",
     "new": "`)",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js",
-      "test/prof1_service.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js",
+      "test/net/prof1_service.test.js"
     ]
   },
   {
@@ -2003,10 +2003,10 @@
     "old": "  const record = lines.length ? lines.map(([f, , asked]) => [f, asked, credited[f]]) : [[0, 0, 0]];",
     "new": "  const record = lines.map(([f, , asked]) => [f, asked, credited[f]]);",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -2015,10 +2015,10 @@
     "old": "if (witness && hallBook && (!homeLayoutsOnline || (_homeLayoutsApplied && !worldDataPacksMissing().length))) {",
     "new": "if (witness && hallBook) {",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -2027,10 +2027,10 @@
     "old": "if (factions.length && Number.isInteger(region)) hallBook.witness({ key: dfLoc.mapTableData.mapId >>> 0, region, factions });",
     "new": "if (factions.length && Number.isInteger(region)) hallBook.witness({ key: dfLoc.mapTableData.mapId >>> 0, region: dfLoc.regionIndex, factions });",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -2039,11 +2039,11 @@
     "old": "CREATE TABLE IF NOT EXISTS npc_hall_strikes (",
     "new": "CREATE TABLE IF NOT EXISTS npc_hall_strikes_x (",
     "tests": [
-      "test/accountworker.test.js",
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/server/accountworker.test.js",
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   },
   {
@@ -2052,10 +2052,10 @@
     "old": "  return Math.min(ROLL_SEAT_LINE - 1, Math.max(RANK_REQ_REPUTATION[r], top));",
     "new": "  return Math.max(RANK_REQ_REPUTATION[r], Math.min(ROLL_SEAT_LINE - 1, top));",
     "tests": [
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js",
-      "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js",
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/chap2_halls.test.js"
     ]
   }
 ]

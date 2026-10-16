@@ -10,7 +10,7 @@ from the author's own Lua, vendored whole in
 `vendor/oblivion-remaster-leveling/`. The port is
 `src/systems/oblivionLeveling.js` (the law), `src/ui/virtueLevelUp.js`
 (the level-up window) and `src/ui/levelingChoice.js` (the question a new
-character answers). Pinned by `test/orl1_leveling.test.js` (44); mutants in
+character answers). Pinned by `test/systems/orl1_leveling.test.js` (44); mutants in
 `tools/mutants/orl1.json` (72: 67 dead, 5 equivalent as recorded). Registry row: `01-Overview/Mod-Registry.md`.
 
 ---
@@ -30,7 +30,7 @@ Morrowind** - the first vendored MOD that is not a Daggerfall Unity one
    Lua member and line it restates, and a reader can check any of them
    against a file in this tree.
 2. **The registry's manifest gate does not cover this row.**
-   `test/hard4_registry.test.js` reads `*.dfmod.json` for the version
+   `test/systems/hard4_registry.test.js` reads `*.dfmod.json` for the version
    and author cells and skips a directory that has none. So the version
    cell (`0.5.3`) is an unchecked assertion in that gate - and is
    checked instead by this mod's own suite, against the author's
@@ -295,9 +295,9 @@ this page named them and it named one, which ORL1's deep audit caught.
 | `ui/charSheetDoor.js` | mounts `VirtueLevelUpScreen` in BOTH lanes for a virtue character (Oghma excepted) |
 | `ui/charsheet.js` | the classic sheet's rollout stands down while a virtue level-up is owed; its Level box reads the bar as a percent (`levelProgressPercent`, LEVEL-PCT) |
 | `systems/oblivionLeveling.js` `levelBarProgress` | the bar held to 0..100, the one reading the Ascension's crown, the classic Level box and the mod's canvas window draw (LEVEL-PCT; the canvas since AUDIT 28e) |
-| `ui/levelUpView.js` `levelProgress` | the crown reads the CHARACTER's law, not the screen's lane - the Oghma Infinium mounts the classic rollout for a character the bar levels (AUDIT 28e) |
+| `ui/levelUp/levelUpView.js` `levelProgress` | the crown reads the CHARACTER's law, not the screen's lane - the Oghma Infinium mounts the classic rollout for a character the bar levels (AUDIT 28e) |
 | `systems/chargenSession.js` | the question, wrapped around the wizard so every chargen host gets it; `finishChargen` sets the answer beside the DFU level anchor |
-| `systems/save.js` | `levelingSystem`, `levelProgress`, `levelRollUp` |
+| `systems/save/save.js` | `levelingSystem`, `levelProgress`, `levelRollUp` |
 | `systems/classicSave.js` | a classic import is a classic character |
 | `systems/modSettings.js`, `systems/features.js` | the eight knobs and the tile, under the new `character` group |
 

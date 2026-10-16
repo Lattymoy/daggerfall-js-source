@@ -5,7 +5,7 @@
     "old": "  return (it.g === DECOR_WEAPONS_GROUP && it.t !== DECOR_ARROW_TEMPLATE) || it.g === DECOR_ARMOR_GROUP;",
     "new": "  return (it.g === DECOR_WEAPONS_GROUP && it.t !== DECOR_ARROW_TEMPLATE) || (it.g === DECOR_ARMOR_GROUP && it.t >= 109 && it.t <= 112);",
     "tests": [
-      "test/armormount.test.js"
+      "test/systems/item/armormount.test.js"
     ]
   },
   {
@@ -14,16 +14,16 @@
     "old": "  return (it.g === DECOR_WEAPONS_GROUP && it.t !== DECOR_ARROW_TEMPLATE) || it.g === DECOR_ARMOR_GROUP;",
     "new": "  return (it.g === DECOR_WEAPONS_GROUP && it.t !== DECOR_ARROW_TEMPLATE);",
     "tests": [
-      "test/armormount.test.js"
+      "test/systems/item/armormount.test.js"
     ]
   },
   {
     "name": "ARMORMOUNT-armour-stands-as-a-billboard",
-    "file": "src/systems/decorItems.js",
+    "file": "src/systems/decor/decorItems.js",
     "old": "new Set(['Weapons', 'Armor', 'Transportation',",
     "new": "new Set(['Weapons', 'Transportation',",
     "tests": [
-      "test/armormount.test.js"
+      "test/systems/item/armormount.test.js"
     ]
   }
 ]

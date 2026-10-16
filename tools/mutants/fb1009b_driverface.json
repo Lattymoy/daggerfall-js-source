@@ -5,7 +5,7 @@
     "old": "  setFlatFaceOverride(IT_DRIVER_FACE.archive, IT_DRIVER_FACE.record, IT_DRIVER_FACE.faceIndex);   // DRIVER-FACE\n",
     "new": "",
     "tests": [
-      "test/fb1009b_driverface.test.js"
+      "test/systems/fb1009b_driverface.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  _installed = true;\n  if (!latchModLoaded(",
     "new": "  _installed = true;\n  setFlatFaceOverride(IT_DRIVER_FACE.archive, IT_DRIVER_FACE.record, IT_DRIVER_FACE.faceIndex);\n  if (!latchModLoaded(",
     "tests": [
-      "test/fb1009b_driverface.test.js"
+      "test/systems/fb1009b_driverface.test.js"
     ]
   }
 ]

@@ -6,7 +6,7 @@
 //             more than 2 m (player/motor.js blowPush);
 //   RATTLE    the slam, the ring, the leap: 0.6 s at 60% of the walk, and the camera dips (the host's shake);
 //   BLEED     the sweep: 30% of the blow's damage again over 3 s, in three ticks through the host's hurt, the harm mark
-//             naming its foe (REVENANT-HARM credits a death to it); shown with the debuffs (ui/hudActiveSpells.js);
+//             naming its foe (REVENANT-HARM credits a death to it); shown with the debuffs (ui/hud/hudActiveSpells.js);
 //             any healing ends it - a spell, a potion, a bandage, a rest;
 //   KNOCKDOWN an iron slam, ring or charge (OPEN 6): 0.9 s down - the eye drops 0.6 m and rises, no move, no swing, no
 //             cast - and 5 s before another.

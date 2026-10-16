@@ -1,6 +1,6 @@
 // @ts-check
 // ═══════════════════════════════════════════════════════════════════
-// STANDING-WORDS and SEAT-WORDS (2026-10-16, bible/01-Overview/Field-Bugs-2026-10-15g.md; Mac, asked what the guild
+// STANDING-WORDS and SEAT-WORDS (2026-10-16, bible/01-Overview/bugs/Field-Bugs-2026-10-15g.md; Mac, asked what the guild
 // system still left unsaid: "Seat-locked services", "Standing changes shown", "Tutorial + guide words") - WHAT THE
 // ROLL'S TRACKER SAYS, as the streaming host wires it (scenes/world.js; the shape is fishHost.js's: the host hands its
 // doors in and spreads what comes back into createRollTracker).
@@ -23,8 +23,8 @@
 import { bookCappedLine, ROLL_FACTIONS, rollFactionOfGuild } from '../net/npcChapterLaw.js';
 import { t, intlLocale } from '../systems/textManager.js';
 import { noteFirstUse } from '../systems/tutorials.js';
-import { activeMemberships } from '../systems/guilds.js';
-import { GUILD_FACTION_IDS as G, DIVINES as D, ORDERS as O, MAX_REPUTATION } from '../systems/guildFactions.js';
+import { activeMemberships } from '../systems/guild/guilds.js';
+import { GUILD_FACTION_IDS as G, DIVINES as D, ORDERS as O, MAX_REPUTATION } from '../systems/guild/guildFactions.js';
 import { standingOwedOf } from '../systems/standingOwed.js';
 
 /** AUDIT GUILD-WORDS II B-7: THE TWENTY-TWO BY THE PORT'S OWN NAMES (npcChapterLaw.js hallPosterName's - a temple its

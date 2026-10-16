@@ -54,18 +54,18 @@ import {
 import {
   GUILD_FOUND_RENOWN, GUILD_MEMBERS_MAX, GUILD_NAME_MIN, GUILD_NAME_MAX, GUILD_RANK_NAME_MAX, GUILD_MOVE_MAX,
   GUILD_RENAME_GOLD,
-} from './guildLaw.js';   // GUILD1: the bounds its refusals name; GUILD2a: a new name's price
-import { GUILD_VAULT_SLOTS, GUILD_VAULT_HALL_SLOTS } from './guildVaultLaw.js';   // GUILD2b: the vault's shelf, in its refusal's own sentence
+} from './guild/guildLaw.js';   // GUILD1: the bounds its refusals name; GUILD2a: a new name's price
+import { GUILD_VAULT_SLOTS, GUILD_VAULT_HALL_SLOTS } from './guild/guildVaultLaw.js';   // GUILD2b: the vault's shelf, in its refusal's own sentence
 import { MARKET_PRICE_MAX, MARKET_UNITS_MAX, MARKET_LISTINGS_MAX, MARKET_ORDERS_MAX, AUCTION_BID_MAX } from './marketLaw.js';   // PROF5: the bounds its refusals name
 import { GUILD_WRITS_MAX, GUILD_STORES_MAX, COMMISSIONS_MAX, COMMISSIONS_FOR_MAX, WRIT_POSTS_MAX, WRIT_OPS_MAX, GUILD_CONTRACTS_MAX, CONTRACT_PAY_MAX, CONTRACT_DEEDS_MAX } from './writLaw.js';   // PROF6: the bounds its refusals name; SILVER-WAYS: a contract's
 import { RENOWN_TRACKS_MAX } from './renown.js';   // RENOWN1: the tracks' bound, in its refusal's own sentence (RENOWN-CHAR: back with the tracks)
-import { SERPENT_EMBERS } from './serpentHoardLaw.js';   // AUDIT 625 P4: the embers this build's serpent hoard mints, said with its claim
+import { SERPENT_EMBERS } from './serpent/serpentHoardLaw.js';   // AUDIT 625 P4: the embers this build's serpent hoard mints, said with its claim
 import { HERALDRY_CHANGE_DRAKES } from './heraldryLaw.js';   // GUILD1d: a change's cost, in its refusal's own sentence
 import { t, localizedTable } from '../systems/textManager.js';   // L10N4: the refusals in the player's language, each read when it is said
 import { VENDOR_REFUSAL_WORDS } from './vendorLaw.js';   // HOME-VENDOR: a trader's refusals
 import { busyRead, busyAnswer, busyWaitMs, retryAfterMs, BUSY_HOLD_MS } from './busyLaw.js';   // BUSY-GATE: the reads that stand back while the service is overloaded
-import { ARENA_TEXT } from '../systems/arenaText.js';   // ARENA4b: the arena's refusals, in its own frozen table
-import { cardById } from './iliacCards.js';   // AUDIT CARDS-6 D7: the card a short deck lacks, said by its name
+import { ARENA_TEXT } from '../systems/arena/arenaText.js';   // ARENA4b: the arena's refusals, in its own frozen table
+import { cardById } from './iliac/iliacCards.js';   // AUDIT CARDS-6 D7: the card a short deck lacks, said by its name
 import { jittered } from './backoff.js';   // STORM-SHED: a failed mint's hold, jittered as every book's wait is
 
 /** WHERE THE SERVICE IS. Its own constant beside the relay's
@@ -320,7 +320,7 @@ const REFUSAL_WORDS = {
   // (FIELD BUGS 2026-09-30): the words say that rule. They named only "before the realm" - but the old lane's deposits
   // made since are held the same - and never said what a realm character may still take out
   'guild-treasury-old': () => t('account.refusal.guildTreasuryOld', 'A realm character takes out only the gold realm characters put in, and not that much of theirs is left. The rest came in before the realm or from a character outside it - it stays in the treasury.'),
-  // WB5b: a gate's kill receipt carried to the service. net/gateClaims.js says nothing of these to the player - it keeps
+  // WB5b: a gate's kill receipt carried to the service. net/gate/gateClaims.js says nothing of these to the player - it keeps
   // what they do not settle and lets go of what they do - but a word the service can say is a word with a sentence.
   'no-gate-key': () => t('account.refusal.noGateKey', 'The account service cannot check a gate\'s receipt right now. It is kept and tried again.'),
   receipt: () => t('account.refusal.receipt', 'That gate\'s receipt was not signed by the gate, or it has run out.'),
@@ -630,7 +630,7 @@ const REFUSAL_WORDS = {
   'commission-not-made': () => t('account.refusal.commissionNotMade', 'A commission is filled with a piece of your own make.'),
   'commission-worn': () => t('account.refusal.commissionWorn', 'A commission is new work: that piece is worn.'),
   // HOME-CROSSED (FIELD BUGS 2026-09-30): a home customs carried in - RESTORE's words for a crossed deed
-  // (systems/onlineHomes.js HOME_CROSSED_LINES, pinned equal), and a realm act asked while the last is still out
+  // (systems/online/onlineHomes.js HOME_CROSSED_LINES, pinned equal), and a realm act asked while the last is still out
   'home-crossed': () => t('account.refusal.homeCrossed', 'That came into the realm through customs. The bank of the Empire does not buy it back. It stays your home.'),
   busy: () => t('account.refusal.busy', 'Your last dealing with the realm is still being settled. Try again in a moment.'),
   server: () => t('account.refusal.server', 'The account service had a problem. Try again.'),
@@ -1432,7 +1432,7 @@ export function accountPlayBeat({ fetch, storage }) {
   };
 }
 
-/** INT8: a duel's result, the relay's signed receipt (net/duelReceipt.js
+/** INT8: a duel's result, the relay's signed receipt (net/duel/duelReceipt.js
  *  `d1`) carried by either of its fighters - `{ recorded, wins, losses }`
  *  (or `{ recorded: false, why }`). DUEL1's loser's own report retired. */
 export const claimDuelReceipt = (io, receipt) => call(io, '/v1/duel/claim', { receipt });
@@ -1481,7 +1481,7 @@ export const claimGateReceipt = (io, receipt, extra = null) => call(io, '/v1/gat
  * WB5b: THE GATES' ONE CALL, bound to this device's stored session (read
  * at each call, as the duels' are). With no session there is no account
  * to claim for: `{ ok: false, error: 'no-session' }`, never a knock - and
- * net/gateClaims.js keeps the receipt for when there is one.
+ * net/gate/gateClaims.js keeps the receipt for when there is one.
  */
 export function accountGates({ fetch, storage }) {
   const io = () => { const s = storedSession(storage); return s ? { fetch, base: serviceBase(storage), secret: s.secret } : null; };
@@ -1498,7 +1498,7 @@ export const claimRaidReceipt = (io, receipt, character, name = null, cid = null
 
 /**
  * RAID4: THE TOWNS' ONE CALL, bound to this device's stored session (the gates' own shape). With no session there is
- * no account to claim for: `{ ok: false, error: 'no-session' }`, never a knock - and net/raidClaims.js keeps the
+ * no account to claim for: `{ ok: false, error: 'no-session' }`, never a knock - and net/raid/raidClaims.js keeps the
  * receipt for when there is one.
  */
 export function accountRaids({ fetch, storage }) {
@@ -1514,13 +1514,13 @@ export function accountRaids({ fetch, storage }) {
  *  fought it and this device's claim id (the hoard's key) - `{ recorded, slain, renown, spoils, order }` (SERPENT5: and
  *  `title`, `aura`, `titleNew`, `auraNew` - the Old Coil's grants on its first write, acct135), or
  *  `{ recorded: false, why }` (`claimed`, `guest`). */
-// AUDIT 625 P4: and the embers this build's hoard mints (systems/serpentSpoils.js serpentEmbers) - the row counts what the
+// AUDIT 625 P4: and the embers this build's hoard mints (systems/serpent/serpentSpoils.js serpentEmbers) - the row counts what the
 // claim says, so a build from before them, saying none, is counted none
 export const claimSerpentReceipt = (io, receipt, character, name = null, cid = null) => call(io, '/v1/serpent/claim', { receipt, character, name, ...(cid ? { cid } : {}), stones: SERPENT_EMBERS });
 
 /**
  * SERPENT1: THE SERPENTS' ONE CALL, bound to this device's stored session (the raids' own shape). With no session there
- * is no account to claim for: `{ ok: false, error: 'no-session' }`, never a knock - and net/serpentClaims.js keeps the
+ * is no account to claim for: `{ ok: false, error: 'no-session' }`, never a knock - and net/serpent/serpentClaims.js keeps the
  * receipt for when there is one.
  */
 export function accountSerpents({ fetch, storage }) {
@@ -1537,7 +1537,7 @@ export const claimSdReceipt = (io, receipt) => call(io, '/v1/sd/claim', { receip
 
 /**
  * SD9b: THE HOURS' ONE CALL, bound to this device's stored session (the gates' own shape). With no session there is no
- * account to claim for: `{ ok: false, error: 'no-session' }`, never a knock - and net/sdClaims.js keeps the receipt for
+ * account to claim for: `{ ok: false, error: 'no-session' }`, never a knock - and net/superDungeon/sdClaims.js keeps the receipt for
  * when there is one.
  */
 export function accountSds({ fetch, storage }) {

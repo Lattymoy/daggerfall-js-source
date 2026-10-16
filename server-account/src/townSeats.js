@@ -6,7 +6,7 @@
 //
 // bible/11-Multiplayer/Seats-Arc.md 3.2 (Mac: "Figure it out"): the
 // servers never hold ARENA2, so they learn the seats from the clients
-// that derived them (src/systems/townSeats.js), and trust a seat only
+// that derived them (src/systems/town/townSeats.js), and trust a seat only
 // when enough agree. ONE TABLE, ONE LAW: a seat is witnessed as the
 // professions' pixels are - `world_witness`, the kind `seat`, keyed by
 // its map id, its report the seat's canonical bytes

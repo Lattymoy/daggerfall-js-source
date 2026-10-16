@@ -5,7 +5,7 @@
     "old": "export const CUBE_REACH = 1 + Math.SQRT2;",
     "new": "export const CUBE_REACH = 1;",
     "tests": [
-      "test/perfshadow1.test.js"
+      "test/render/perfshadow1.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  return 1e-3 + 1e-5 * s + CUBE_F32_FAR * far * s;",
     "new": "  return 0;",
     "tests": [
-      "test/perfshadow1.test.js"
+      "test/render/perfshadow1.test.js"
     ],
     "note": "AUDIT 637 (re-aimed by content): B1 made cubeSlack a block with the far plane's own term; the mutant still answers no slack at all."
   },
@@ -24,7 +24,7 @@
     "old": "  return !(d > R) || d === Infinity;",
     "new": "  return d <= R || d === Infinity;",
     "tests": [
-      "test/perfshadow1.test.js"
+      "test/render/perfshadow1.test.js"
     ],
     "note": "AUDIT 637 (re-aimed by content): B5 named the farthest axis `d` and keeps a centre at infinity; the mutant still culls a NaN."
   },
@@ -34,7 +34,7 @@
     "old": "  return !(d > R) || d === Infinity;",
     "new": "  return !(Math.abs(x - lim[o]) > R || Math.abs(y - lim[o + 1]) > R || Math.abs(z - lim[o + 2]) > R) || d === Infinity;",
     "tests": [
-      "test/perfshadow1.test.js"
+      "test/render/perfshadow1.test.js"
     ],
     "note": "AUDIT 637 (re-aimed by content): B5 named the farthest axis `d`; the mutant still asks axis by axis, so a NaN on one is culled by another."
   },
@@ -44,7 +44,7 @@
     "old": "cube[4] = lim[o + 3] + cubeReach(rad) - rad + lim[o + 4];",
     "new": "cube[4] = lim[o + 3];",
     "tests": [
-      "test/perfshadow1.test.js"
+      "test/render/perfshadow1.test.js"
     ],
     "note": "AUDIT 637 (re-aimed by content): the cube's reach is one home now (cubeReach); the mutant still asks the quads by the far alone."
   },
@@ -54,7 +54,7 @@
     "old": "            if (c && c[0] === c[0] && c[1] === c[1] && c[2] === c[2] && c[3] === c[3]) {",
     "new": "            if (c) {",
     "tests": [
-      "test/perfshadow1.test.js"
+      "test/render/perfshadow1.test.js"
     ]
   },
   {
@@ -63,7 +63,7 @@
     "old": "              if (rad === rad) {   // PERF-ALLOC2",
     "new": "              if (true) {   // PERF-ALLOC2",
     "tests": [
-      "test/perfshadow1.test.js"
+      "test/render/perfshadow1.test.js"
     ]
   },
   {
@@ -72,7 +72,7 @@
     "old": "if (out[k] && (!r.bounded || cubeKeeps(lim, k, sx, sy, sz, sr))) add(k, i);",
     "new": "if (out[k] && cubeKeeps(lim, k, sx, sy, sz, sr)) add(k, i);",
     "tests": [
-      "test/perfshadow1.test.js"
+      "test/render/perfshadow1.test.js"
     ]
   },
   {
@@ -81,7 +81,7 @@
     "old": "        for (const b of (cand ? cand.bb[j] : r.batches)) {\n          if (!b?.vao",
     "new": "        for (const b of r.batches) {\n          if (!b?.vao",
     "tests": [
-      "test/perfshadow1.test.js"
+      "test/render/perfshadow1.test.js"
     ]
   },
   {
@@ -90,7 +90,7 @@
     "old": "        for (const b of (cand ? cand.bb[j] : r.batches)) {\n          if (!b?._shDyn",
     "new": "        for (const b of r.batches) {\n          if (!b?._shDyn",
     "tests": [
-      "test/perfshadow1.test.js"
+      "test/render/perfshadow1.test.js"
     ]
   },
   {
@@ -99,7 +99,7 @@
     "old": "    return this._candOf[rank];\n  }",
     "new": "    return null;\n  }",
     "tests": [
-      "test/perfshadow1.test.js"
+      "test/render/perfshadow1.test.js"
     ],
     "note": "AUDIT 637 (re-aimed by content): B3 makes the walk on the first lantern's ask (_candFor); the mutant still hands every lantern none."
   },
@@ -109,7 +109,7 @@
     "old": "SHADOW_TUNING.facePrepass !== false && Number.isFinite(x) && Number.isFinite(y) && Number.isFinite(z) && Number.isFinite(far);",
     "new": "SHADOW_TUNING.facePrepass !== false;",
     "tests": [
-      "test/perfshadow1.test.js"
+      "test/render/perfshadow1.test.js"
     ]
   },
   {
@@ -118,7 +118,7 @@
     "old": "      for (let k = 0; k < nC; k++) open[k] = -1;",
     "new": "      open[0] = -1;",
     "tests": [
-      "test/perfshadow1.test.js"
+      "test/render/perfshadow1.test.js"
     ]
   },
   {
@@ -127,7 +127,7 @@
     "old": "    if (!cand || !this._candQuads[rank]) return;",
     "new": "    return;",
     "tests": [
-      "test/perfshadow1.test.js"
+      "test/render/perfshadow1.test.js"
     ]
   },
   {
@@ -136,7 +136,7 @@
     "old": "          if (b._place) quads[k] = 1;",
     "new": "          if (b._place) quads[k] = 0;",
     "tests": [
-      "test/perfshadow1.test.js"
+      "test/render/perfshadow1.test.js"
     ]
   },
   {
@@ -145,8 +145,8 @@
     "old": "    if (!this._candWalked) this._casterCandidates(L, casters, farOf);",
     "new": "    if (!this._candWalked) { this._casterCandidates(L, casters, farOf); for (let k = 0; k < casters.length; k++) this._candidateQuads(k); }",
     "tests": [
-      "test/perfexta.test.js",
-      "test/audit637_shadow.test.js"
+      "test/render/perfexta.test.js",
+      "test/render/audit637_shadow.test.js"
     ],
     "note": "AUDIT 637 (re-aimed by content): B3 makes the walk on the first lantern's ask (_candFor); the mutant still asks every lantern's quads with it. PIN MOVED: with no walk in a still frame the review's still room no longer sees it - audit637_shadow's mixed frame does (a cached lantern beside a wood while another lantern walks)."
   },
@@ -156,7 +156,7 @@
     "old": "        if (m === 0) continue;",
     "new": "",
     "tests": [
-      "test/perfshadow1.test.js"
+      "test/render/perfshadow1.test.js"
     ]
   },
   {
@@ -165,7 +165,7 @@
     "old": "const t = bb[w]; bb[w] = bb[j]; bb[j] = t;",
     "new": "",
     "tests": [
-      "test/perfshadow1.test.js"
+      "test/render/perfshadow1.test.js"
     ]
   },
   {
@@ -174,7 +174,7 @@
     "old": "        list.length = m;",
     "new": "",
     "tests": [
-      "test/perfshadow1.test.js"
+      "test/render/perfshadow1.test.js"
     ]
   },
   {
@@ -183,7 +183,7 @@
     "old": "      if (c.n === c.rec.length) { const g = new Int32Array(c.rec.length * 2); g.set(c.rec); c.rec = g; }",
     "new": "      if (c.n === c.rec.length) { const g = new Int32Array(c.rec.length * 2); c.rec = g; }",
     "tests": [
-      "test/perfshadow1.test.js"
+      "test/render/perfshadow1.test.js"
     ],
     "note": "AUDIT PERF-ON4 (sun lens 1): the list's growth was never walked - the pins' towns held about twenty records; a crowd of 80 about the nearest lantern now grows it"
   }

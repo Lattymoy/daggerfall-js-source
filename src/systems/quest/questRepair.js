@@ -28,7 +28,7 @@
 // Not a DFU member: DFU has no such pass (its quest debugger is a developer's console). Ledger A (QREPAIR).
 import { MARKER_PREFERENCE, SITE_TYPES } from './place.js';
 import { SMALLER_DUNGEONS_STATE, portSize } from '../../world/smallerDungeons.js';   // AUDIT DELVE E1 / INSTANCES: the size a quest's markers know online (the whole dungeon's); MEDIUM-DISTINCT: the two stamps whose builds are medium
-import { isOnlinePage } from '../onlineLane.js';   // MEDIUM-DISTINCT's audit: offline a dungeon no link holds is built by the settings
+import { isOnlinePage } from '../online/onlineLane.js';   // MEDIUM-DISTINCT's audit: offline a dungeon no link holds is built by the settings
 import { isShelved } from './quest.js';   // QUEST-SHELF's audit: the repair mends no quest set aside
 
 const PLACEMENTS = Object.freeze({ PlaceNpc: 'npcSymbol', PlaceItem: 'itemSymbol', PlaceFoe: 'foeSymbol' });
@@ -153,7 +153,7 @@ export function relayOnlineDungeons(machine, env = {}) {
 }
 
 /** One quest's re-lay (relayOnlineDungeons, above): whether its markers moved. AUDIT SD III (D5): asked of a quest a
- *  party member shares online too (systems/questShare.js receiveSharedQuest) - an older page lays every dungeon whole,
+ *  party member shares online too (systems/quest/questShare.js receiveSharedQuest) - an older page lays every dungeon whole,
  *  and its copy pointed into blocks this page's world-sized build has not; the load's pass alone re-laid it, the next
  *  time this player loaded online. */
 export function relayQuestOnline(quest, env = {}) {
@@ -246,7 +246,7 @@ export function relayMovedLayouts(machine, env = {}, online = isOnlinePage()) {
   return relaid;
 }
 /**
- * One quest's half of relayMovedLayouts - and a shared copy's on arrival (systems/questShare.js: a party member on an
+ * One quest's half of relayMovedLayouts - and a shared copy's on arrival (systems/quest/questShare.js: a party member on an
  * older page lays the old layout, and their copy's markers point into it). MEDIUM-DISTINCT's audit: only a dungeon
  * whose build MOVED (`distinct` - the clone says it took a block again) is compared, so a load reads no block of a
  * dungeon the law never touched; and offline only a dungeon a link holds - with none, the build is the settings' (the

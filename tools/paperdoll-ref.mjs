@@ -6,8 +6,8 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { PNG } from 'pngjs';
 import { TextureFile } from '../src/formats/textureFile.js';
 import { DFPalette } from '../src/formats/dfPalette.js';
-import { getTemplate } from '../src/characters/paperdoll.js';
-import { resolvePaperdollRecord } from '../src/characters/paperdollArt.js';
+import { getTemplate } from '../src/characters/paperdoll/paperdoll.js';
+import { resolvePaperdollRecord } from '../src/characters/paperdoll/paperdollArt.js';
 import { DYE_COLORS, DYE_TARGETS, CLOTHING_DYES, applyDyeToIndex } from '../src/characters/dyes.js';
 
 const A = process.env.ARENA2_PATH;
@@ -20,7 +20,7 @@ if (!tpl) { console.error('unknown template', tplIndex); process.exit(1); }
 // leather + chain rows undyed on their own variant rows; plate designs
 // x the ten metal tables. Gender/race pick the archive (human male
 // default). Clothing keeps the ten clothing dyes.
-import { armorArchive, armorVariant, MATERIAL_FAMILY } from '../src/characters/paperdollArt.js';
+import { armorArchive, armorVariant, MATERIAL_FAMILY } from '../src/characters/paperdoll/paperdollArt.js';
 const isArmor = tplIndex >= 102 && tplIndex <= 112;
 const gender = process.env.PD_GENDER || 'male';
 const race = process.env.PD_RACE || 'Breton';

@@ -40,7 +40,7 @@ Three stores back these rows and all three stay where they are:
 
 | Store | File | Why it cannot merge |
 |---|---|---|
-| DFU settings | `src/systems/settings.js` | DFU's ini, pinned at exactly 171 keys (`test/settings.test.js`); `SmallerDungeons` is stamped into quest saves through it |
+| DFU settings | `src/systems/settings/settings.js` | DFU's ini, pinned at exactly 171 keys (`test/systems/settings.test.js`); `SmallerDungeons` is stamped into quest saves through it |
 | Port prefs | `src/systems/uiPrefs.js` | the port's own shelf, kept OUT of DFU's file on purpose |
 | Mod settings | `src/systems/modSettings.js` | each mod's own modsettings, keyed by vendor folder |
 
@@ -159,7 +159,7 @@ the menu probe) were widened by the one word.
 **Known at FT0, for FT1+.** A `settings`-store row's main button opens
 the settings help sheet (`pickedKey`), which only the Settings pane
 draws; the first settings row to move (Smaller Dungeons) decides what
-that click does on the home. `test/features.test.js`.
+that click does on the home. `test/systems/features.test.js`.
 
 ## FT1 - SMALLER DUNGEONS (2026-09-14)
 
@@ -209,7 +209,7 @@ struck Ledger C row already says. Building on the feature (Mac's
 "genuine enhanced feature we can build on"): the SIZE TIER is DSIZE1's
 (2026-10-05, `03-World/Delve-Arc.md` - Medium dungeons, its own Enhanced
 row beside this one, which stays DFU's switch); a shape other than the
-plus, or a seed the player picks, would each earn the Enhanced label. `test/ft1_smallerdungeons.test.js`.
+plus, or a seed the player picks, would each earn the Enhanced label. `test/systems/ft1_smallerdungeons.test.js`.
 
 ## FT2 - LAND VIEW DISTANCE, THE FIRST CONDENSED ROW (2026-09-14)
 
@@ -241,7 +241,7 @@ its copy.
 
 **Not done, by name.** DFU's Video category still lists
 `TerrainDistance` (the map is total; the row there was a pointer until FT13 took it off the pane).
-`test/ft2_landview.test.js`.
+`test/systems/ft2_landview.test.js`.
 
 ## FT3 - THE PIXELATED SKY, REMOVED (2026-09-14)
 
@@ -299,7 +299,7 @@ it is a tier (the pref's own value, `true`, is no tier here).
 
 **Not done, by name.** The Enhanced category still holds the AI, the
 water, the grass, the clouds and the combat visuals - each its own
-slice. `test/ft4_outdoors.test.js`.
+slice. `test/systems/ft4_outdoors.test.js`.
 
 ## FT5 - ENHANCED AI (2026-09-14)
 
@@ -325,7 +325,7 @@ still calls ahead.
 two things, one dead. The DFU key stays in Settings as the unavailable
 row it is - a row for it on the home would be a lie with a switch. The
 readers pin (AUDIT 55) moved its menu reader to the registry.
-`test/ft5_enhancedai.test.js`.
+`test/systems/ft5_enhancedai.test.js`.
 
 ## FT6 - ENHANCED WATER (2026-09-14)
 
@@ -341,7 +341,7 @@ exterior hosts read the switch; `worldModes.js` (interiors) and
 pinned as knowing nothing of it.
 
 **The row.** Enhanced, over the pref, on by default; the words are
-WATER1's. `test/ft6_water.test.js`.
+WATER1's. `test/systems/ft6_water.test.js`.
 
 ## FT7 - GRASS DENSITY AND CLOUD QUALITY (2026-09-14)
 
@@ -353,7 +353,7 @@ the grass on `enhancedEnvironments`, the clouds ride the enhanced lane
 as the march table's own keys, both ways, so a QUALITY the clouds can be
 built at is always a tier and a tier is always a QUALITY. **The rows.**
 Enhanced, over their prefs, PERF1's tiers and defaults.
-`test/ft7_quality.test.js`.
+`test/systems/ft7_quality.test.js`.
 
 What is left in the Enhanced category of Settings: the combat visuals,
 and the outdoors test door (a test door, not a switch).
@@ -376,7 +376,7 @@ outdoors (with Dynamic Skies' switch), the AI, the water, the grass,
 the clouds, the combat visuals - and land view distance beside them.
 Left on the inventory: the Mods pane's packs and Dynamic Skies' five
 knobs (Mod Authored), and DFU's own Enhancements (DFU Classic), one
-by one. `test/ft8_combatvisuals.test.js`.
+by one. `test/systems/ft8_combatvisuals.test.js`.
 
 ## FT9 - THE FIVE PACKS WITH A SWITCH (2026-09-14)
 
@@ -399,7 +399,7 @@ row is not drawn (FT13; a pointer until then). **Windmills** has no switch and s
 row: a row needs a control. Pinned both ways: every vendored mod with a
 switch has a row, and every mod row names a real switch, so a mod
 vendored tomorrow fails the pin rather than sitting off the home.
-`test/ft9_mods.test.js`.
+`test/systems/ft9_mods.test.js`.
 
 Left on the inventory: DFU's own Enhancements (DFU Classic), one by
 one, and the mods' knobs if Mac wants them on the home too.
@@ -420,7 +420,7 @@ and the row here say one name. Each note ends with what DFU ships it
 as, PINNED against the baked default, so a re-bake cannot make the
 note lie. The effects are the port's word: at once; the next dungeon;
 at once with new gear and the next stocking following.
-`test/ft10_dfu_dungeon.test.js`.
+`test/systems/ft10_dfu_dungeon.test.js`.
 
 ## FT11 - THE REST OF DFU'S SWITCHES (2026-09-14)
 
@@ -436,7 +436,7 @@ table is chosen), each note ending with DFU's own default pinned
 against the baked ini. **Decided:** the section's DIALS - the wait
 limit, the two ambient light scales, the torch light scale (stored,
 not read) - are settings, not features, and stay in Settings; the pin
-says so by name. `test/ft11_dfu_rest.test.js`.
+says so by name. `test/ui/settings/ft11_dfu_rest.test.js`.
 
 THE INVENTORY IS CLOSED. Every row on it is moved, condensed, removed
 or decided. The home holds 21 rows: 7 Enhanced, 6 Mod Authored, 10 DFU
@@ -485,7 +485,7 @@ feature built in house for the home: `loot-rarity`, over the pref
 `lootRarity`, off by default (it changes what drops, and DFU's loot is
 the 1:1 law), forced on online (OL1). The ladder, the roll, the affixes,
 the fold, the identify loop, the skins and the drop chime are one
-module (`src/systems/lootRarity.js`) with its own page,
+module (`src/systems/loot/lootRarity.js`) with its own page,
 `bible/06-Systems/Loot-Rarity.md`; the record here is the row's.
 
 The row's note says the whole law in the player's words: the ladder
@@ -501,7 +501,7 @@ id list, FT2's and FT8's counts.
 
 The Test Room gains a door beside the ride: "The loot ladder", one of
 everything the ladder can mint in the pack, the switch turned on for
-the session. `test/lr1_lootrarity.test.js` (16, after the LR4 audit -
+the session. `test/systems/lr1_lootrarity.test.js` (16, after the LR4 audit -
 `bible/06-Systems/Loot-Rarity.md`).
 
 ## RF4 - ONE FEATURE DECLARATION (2026-09-14)
@@ -528,7 +528,7 @@ read the row through `resolveControl`, which folds the lane in at use;
 the menu loads both lanes so a row is never drawn before its lane
 stands. The registry's law grew three checks: a prefs row declares
 its initial value, its online answer, and a lane it names must be
-registered. `test/rf4_featuredecl.test.js` (3); FT0's, FT2's and FT4's
+registered. `test/systems/rf4_featuredecl.test.js` (3); FT0's, FT2's and FT4's
 pins re-aimed at the resolved control; the graph proved from three
 entry points (the shelf, a lane, the mod store).
 
@@ -553,7 +553,7 @@ where a key LIVES; the pane shows the keys that live on it). The walk
 (`goFeatures`) went with the rows. Off the pane: Experimental/
 SmallerDungeons and TerrainDistance, Video/RandomDungeonTextures, the
 seven Enhancements rows the home carries, and every vendored mod's
-`Enabled` on its card. `test/ft13_movedrows.test.js`; FT1's pointer
+`Enabled` on its card. `test/systems/ft13_movedrows.test.js`; FT1's pointer
 pin re-aimed.
 
 ## WIND3 - THE WIND'S THREE ROWS (2026-09-14)
@@ -573,11 +573,11 @@ row became `enhanced-sounds` / `soundEnhancements`, the port's own sounds
 under one switch - see below); `flora-sway`
 (`floraSway`, `?sway=off`) - the trees and plants leaning with the
 wind, the crown moving and the root still. The three drive off ONE
-mapping of the wind into working units (`systems/windDrive.js`), which
+mapping of the wind into working units (`systems/wind/windDrive.js`), which
 the rain and the grass now read too - the record is
 `bible/07-Rendering/Rendering.md` WIND3. The home holds 26 rows now: 11
 Enhanced, 7 Mod Authored, 10 DFU Classic. Pins re-aimed: FT0's id list,
-FT2's and FT8's counts. `test/wind3_windworld.test.js`.
+FT2's and FT8's counts. `test/systems/wind3_windworld.test.js`.
 
 ## WEATHER2b - WEATHER AS PLACES, THE ROW (2026-09-14)
 
@@ -590,7 +590,7 @@ exterior frame by the sim (`weatherSim.js` weatherFieldOn), so a press
 takes effect at once; `?wxfield=off` the kill door. The record is
 `bible/07-Rendering/Weather-Arc.md` B. The home holds 27 rows now: 12
 Enhanced, 7 Mod Authored, 10 DFU Classic. Pins re-aimed: FT0's id
-list, FT2's and FT8's counts. `test/weather2b_weatherfield.test.js`.
+list, FT2's and FT8's counts. `test/systems/weather/weather2b_weatherfield.test.js`.
 
 ## LR5 + PREF1 - A DEFAULT THAT CAN ACTUALLY CHANGE (2026-09-15)
 
@@ -643,16 +643,16 @@ and it is the right trade against a shelf that freezes every default
 for ever.
 
 **The trap this class of change sets for the suite**, met twice:
-`test/lr1_lootrarity.test.js` and `test/rf2_spawnloot.test.js` both
+`test/systems/lr1_lootrarity.test.js` and `test/systems/rf2_spawnloot.test.js` both
 drove their OFF half through a bare `_resetForTests()`. With the row
 shipping ON that stops meaning "off" - those pins would have gone on
 testing the ON path, in silence, and passing. Both press the switch off
 explicitly now.
 
-Pins: `test/pref1_shelf.test.js` (6, two mutants killed - `savePrefs`
+Pins: `test/systems/pref1_shelf.test.js` (6, two mutants killed - `savePrefs`
 writing the whole shelf again, and the adoption ignoring the stamp so a
 real "off" is overwritten on every load), plus the re-aimed LR5 switch
-pin and `test/rf4_featuredecl.test.js`.
+pin and `test/systems/rf4_featuredecl.test.js`.
 
 ## FT14 - ONE ROOF (2026-09-15)
 
@@ -782,11 +782,11 @@ the title. Loot rarity's affix vocabulary (damage, armour, an
 attribute, a resistance, a skill, carrying capacity) is the kind of
 thing that went: true, and the item itself says it.
 
-Nothing that a pin guards was dropped. `test/ft1_smallerdungeons.test.js`
+Nothing that a pin guards was dropped. `test/systems/ft1_smallerdungeons.test.js`
 still finds "Main-story dungeons never shrink" and "online every dungeon
-is full size", `test/ft5_enhancedai.test.js` still finds the three
+is full size", `test/systems/ft5_enhancedai.test.js` still finds the three
 slices the arc lists as ahead and the "Smarter Enemies" name collision,
-`test/ft10_dfu_dungeon.test.js` and `test/ft11_dfu_rest.test.js` still
+`test/systems/ft10_dfu_dungeon.test.js` and `test/ui/settings/ft11_dfu_rest.test.js` still
 find each DFU row's default as the note's last sentence, and the five
 words of the Dungeon Wall Style enum are all still named. That was the
 constraint the shortening worked inside, and it is why the rewrite is
@@ -803,7 +803,7 @@ band-aid: two strings for one sentence, and a second place to forget.
 The descriptions themselves are port-authored prose about each mod's
 switch, not text vendored from the mod. So the trim went **to the
 description**, in `modSettings.js`, and `modFeature` is untouched -
-`test/ft9_mods.test.js`'s `f.note === mod.keys.Enabled.description`
+`test/systems/ft9_mods.test.js`'s `f.note === mod.keys.Enabled.description`
 still passes, unchanged, which is the check that this stayed one
 source.
 
@@ -813,7 +813,7 @@ The Enhanced environments note ended: *"The mod's fog density and
 pixel-snow knobs stay on the Mods page."* FT14 deleted the Mods page
 the day before - those knobs open in the row's own tile drawer now
 (AUDIT FT14's `MOD_CURATED['dynamic-skies']`). The sentence had been
-directing players to nothing for a day, and `test/ft4_outdoors.test.js`
+directing players to nothing for a day, and `test/systems/ft4_outdoors.test.js`
 was pinning it there.
 
 Reading every note closely enough to shorten it is what found it. Three
@@ -915,7 +915,7 @@ Audio and back and lands on a Continue the player never meant.
 Mac, on the loot-cue patch (MAC-O6): "lump this in as a new enhanced
 toggle. Enhanced Sounds, add the wind noise to it."
 
-**MAC-O6** (Mac's patch, `src/ui/enhancedInventory.js`): "looting
+**MAC-O6** (Mac's patch, `src/ui/enhanced/enhancedInventory.js`): "looting
 gold/items makes no sound." DoTransferItem plays a cue - the gold
 clink at :1569, the button click at :1583 - and the classic window
 plays it (`nativeInventory.js`); the enhanced window took the same
@@ -927,7 +927,7 @@ return.
 **ES1**: one row over the port's own sounds. WIND3's `wind-sound` row
 IS this row now - `enhanced-sounds`, pref `soundEnhancements`, on by
 default, the player's own online, in the wind row's place on the home
-- and two things ride it: the wind loop (`systems/windAudio.js`'s
+- and two things ride it: the wind loop (`systems/wind/windAudio.js`'s
 `windSoundOn` composes the switch with its own `?windaudio=off` kill
 door) and the enhanced inventory's two transfer cues. The switch is
 `systems/enhancedSounds.js`'s `enhancedSoundsOn`: the enhanced skin
@@ -936,7 +936,7 @@ nothing more, which is why the classic window's cue is not behind it.
 A player who had turned `windSound` off starts with the new switch on;
 the old key is read by nothing.
 
-Pins: `test/enhancedsounds.test.js` (the row, the switch executed over
+Pins: `test/systems/enhancedsounds.test.js` (the row, the switch executed over
 skin and pref, the wind riding it with its door, both cues behind it
 by source, the classic window's cue unchanged); `wind3_windworld` and
 `features` re-pinned on the new id and key.
@@ -950,7 +950,7 @@ the three keys, the tooltip's slot buttons and the row chips keep
 working, because a player who turns the picture off has not asked to
 lose the presses; the HUD reads it each frame, guarded, and toggles one
 class. The home holds 34 rows now: 13 Enhanced, 13 Mod Authored, 10 DFU
-Classic. Pins re-aimed: FT0's id list. `test/qs3_hud.test.js` pins the
+Classic. Pins re-aimed: FT0's id list. `test/ui/enhanced/qs3_hud.test.js` pins the
 read and the rule.
 
 ## FT18 - ALL OFF, THE SEARCH, AND THE HOME REORGANIZED (2026-09-25)
@@ -1056,13 +1056,13 @@ decide what All off does with it: the row had no `classic`, so All off
 skipped it and a player at 50% stayed there - the one enhancement still
 redrawing every frame after "Every mod and enhancement goes to Off, or to
 Daggerfall's own". Decided: 100% is its `classic` - Daggerfall's own frame
-is the whole window (`systems/settings.js` leaves DFU's resolution to the
+is the whole window (`systems/settings/settings.js` leaves DFU's resolution to the
 browser's canvas), and 100% is today's frame call for call
 (`07-Rendering/Rendering.md` PERF-SCALE). The All off pin drives a 50%
 tile to 100% and back on Restore, the renderer's source reading both
 (`tools/mutants/perfscale.json`: the `classic` dropped, dead).
 
-Pins: `test/ft18_features.test.js` (12 - the groups, the condensed rows and
+Pins: `test/systems/ft18_features.test.js` (12 - the groups, the condensed rows and
 what they still declare, the model's laws, each lane executed, the search,
 All off and Restore driven over the real stores, online locks, the outdoors
 labels, the drawer pressed through the real tile builder, the pane and the
@@ -1084,7 +1084,7 @@ descriptions and menus, reduce bloat and overall make it less AI".
 **Mac's words are used as he wrote them** (`systems/overhauls.js`), with one
 typo mended ("Daggefall Online"). The controller window's "Activate ·
 Select" and "Inventory · Back", and the d-pad legend's tap-and-hold join,
-take a slash (`ui/plusPadBinds.js`).
+take a slash (`ui/plus/plusPadBinds.js`).
 
 **Every Features note was rewritten.** What went: the engine's vocabulary
 (navmesh, tonemap, linear colour, SKY*.DAT, mipmaps, "the crowd slice
@@ -1126,18 +1126,18 @@ clicking 'restore' just puts it back to the post-modified feature settings ... A
 values would be nice." FT18's pair is a round trip by design - Restore returns what All off moved, the player's own -
 so nothing on the home ever reached the game's own values again.
 
-**Defaults**, the third button beside All off and Restore (`ui/enhancedMenu.js` `featuresDefaults`, asked first with
+**Defaults**, the third button beside All off and Restore (`ui/enhanced/enhancedMenu.js` `featuresDefaults`, asked first with
 `DEFAULTS_ASK` - there is no keep to undo it):
 
 - every tile to the segment it ships at (`defaultSegment`): a prefs row's `default` (a lane's, in its tiers'
   vocabulary) else its `initial` else the shelf's `PREF_DEFAULTS`; a settings row's `defaultOf` (the port's default
-  over DFU's - `systems/settings.js`, now exported for it); a mod's shipped `Enabled`;
+  over DFU's - `systems/settings/settings.js`, now exported for it); a mod's shipped `Enabled`;
 - its drawer with it: a condensed row's parts to `PREF_DEFAULTS`, a mod's modules and curated dials to their
   declared defaults;
 - online, a tile or key the room decides is not touched - its shelf keeps the player's own for offline;
 - All off's keep is spent.
 
-Pins: `test/ft18_features.test.js` (2, FEATURES-DEFAULTS) - the issue's own path (tinker, All off, Restore, then
+Pins: `test/systems/ft18_features.test.js` (2, FEATURES-DEFAULTS) - the issue's own path (tinker, All off, Restore, then
 Defaults), a fresh shelf reading every tile's default segment, the online lock read back offline, the confirm.
 
 ## ORG1 - ONE GROUP AT A TIME, IN SECTIONS (2026-10-09)
@@ -1168,7 +1168,7 @@ above and the footer's four cards below stood around whichever part the player w
 
 World measured at 1440x900 after the change: 2,605 pixels (was the whole home's 8,010); Combat 1,358; Your
 character fits the screen. Pins: `test/org1_sections.test.js` (5, DELETED by ORG2); FT0/FT14's source pins
-(`test/features.test.js`) and FT18's (`test/ft18_features.test.js`) re-aimed at the groups, the sections and the
+(`test/systems/features.test.js`) and FT18's (`test/systems/ft18_features.test.js`) re-aimed at the groups, the sections and the
 files page.
 
 ## ORG2 - THE HOME IS SETTINGS' TABS (2026-10-09)
@@ -1190,10 +1190,10 @@ under Combat. `10-UI/Settings-Screen-Spec.md` section 11 is the screen's record;
 - **Graphics' quality preset** sets five of these rows at once (`systems/graphicsPresets.js`); High is their defaults.
 - **The files and packs** are the Mods & files tab's, with Every mod - each mod, where its options live, its switch.
 - `GROUPS`/`GROUP_ORDER` stay the registry's fields (the search reads a row's group); ORG1's `FEATURE_SECTIONS`,
-  `featureSections` and `sectionOfFeature` are gone - `ui/settingsMap.js` places every row.
+  `featureSections` and `sectionOfFeature` are gone - `ui/settings/settingsMap.js` places every row.
 
 In Chromium (`tools/featuresProbe.mjs`, rewritten for the screen, 33 checks): all 96 rows drawn once across the nine
 tabs, each wearing a label, each tab's rail count the rows it drew; Low writes the five rows and DFU's TerrainDistance;
 a row moved off reads Custom; the search finds Immersive Footsteps under Audio > Sounds. `tools/featureRailProbe.mjs`
-reads all 96 rows' help panes (tallest note 242px). Pins: `test/org2_options.test.js`; FT0/FT14/FT16/FT18's pins
+reads all 96 rows' help panes (tallest note 242px). Pins: `test/systems/org2_options.test.js`; FT0/FT14/FT16/FT18's pins
 re-aimed at the one screen.

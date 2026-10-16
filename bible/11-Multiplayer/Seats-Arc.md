@@ -53,16 +53,16 @@ so balance is an edit to one file, pinned by its own tests, never a hunt.
    keeping of the town - and everything a seat changes is layered over the game, never written into it.
 3. **A SEAT IS DECIDED WHERE NO CLIENT CAN LIE.** FACT: almost everything online trusts the client - gold and items
    live in the save, Renown XP is client-reported (bounded, never verified; `server-account/src/renownTracks.js`), a
-   duel is resolved by the defender's own machine (`src/net/duelSession.js` - INT8, 2026-10-09: refereed by the relay
+   duel is resolved by the defender's own machine (`src/net/duel/duelSession.js` - INT8, 2026-10-09: refereed by the relay
    since, `06-Systems/Integrity-Arc.md` 5), and no pose is speed-checked
    (`validPose`, `src/net/wire.js`). A seat is a prize other guilds lose, so:
    - every influence source is **witnessed by a server** or **bounded** and worth less (4.2);
-   - every siege is **refereed by the relay**, as the Oblivion Gate's boss is (`src/net/gateBrain.js`,
+   - every siege is **refereed by the relay**, as the Oblivion Gate's boss is (`src/net/gate/gateBrain.js`,
      `11-Multiplayer/World-Bosses.md`) - never by a fighter's client (6.1);
-   - every scheduled moment is **a pure function of the clock**, as the gate's is (`src/net/gateLaw.js`);
+   - every scheduled moment is **a pure function of the clock**, as the gate's is (`src/net/gate/gateLaw.js`);
    - every seat cost and payment is in **Marks**, the server's currency (PROF0 10.5) - never purse gold.
 4. **DERIVED OVER ENUMERATED** (`server-account/src/titles.js`). Which locations are seats is read off the game's
-   own data as the hubs are (`src/systems/regionHubs.js`); titles from a seat are derived from who holds it; **the
+   own data as the hubs are (`src/systems/region/regionHubs.js`); titles from a seat are derived from who holds it; **the
    week settles itself when first read after its boundary**, never on a cron (AUDIT-ACC F9, restated in
    `titles.js`: "a cron is a thing that can stop running while everything looks fine").
 5. **NOTHING OF ARENA2 IS COMMITTED** ("a render of game data is game data"). Heraldry and devices are the port's own
@@ -75,16 +75,16 @@ so balance is an edit to one file, pinned by its own tests, never a hunt.
 
 | Foundation | Where | What the arc uses |
 |---|---|---|
-| Region hubs, capitals | `src/systems/regionHubs.js` (HUB1), built at boot in `scenes/world.js` over MAPS.BSA's own rows | The boot pass over every location; `HUB_CAPITALS` = Daggerfall, Wayrest, Sentinel; base rows only (a world-data mod's rows never count) |
+| Region hubs, capitals | `src/systems/region/regionHubs.js` (HUB1), built at boot in `scenes/world.js` over MAPS.BSA's own rows | The boot pass over every location; `HUB_CAPITALS` = Daggerfall, Wayrest, Sentinel; base rows only (a world-data mod's rows never count) |
 | Building records | `readBuildingData` (`src/formats/blocksFile.js`), `loc.exterior.buildings[]` | `buildingType` 16 is a Palace (`src/world/buildingNames.js`) - readable for every location without loading a block |
 | Castles | `castleBlockAt` / `insideDungeonCastle` (`scenes/dungeonContext.js`) | Castle Daggerfall, Wayrest and Sentinel are RDB dungeon rooms (`dungeon:m<id>`) |
 | Town furniture | `src/world/rmbLayout.js`: `BULLETIN_BOARD_MODEL_ID`, the city gate models | Banner anchors (3.4) and the Notice Board (PROF0 10.1) |
 | Region names | `REGION_NAMES` (`src/formats/mapsFile.js`, DFU's own table, MIT) | The kingdom map's names and indices (4.3) |
-| Guilds | `server-account/src/guilds.js`, `0013_guilds.sql`, `src/net/guildLaw.js` | 50 members; ranks 0 Guildmaster, 1 Officer, 2 Member, 3 Recruit; a gold treasury and its trigger-written ledger; `gi`/`gt`/`gm` on the signed token |
+| Guilds | `server-account/src/guilds.js`, `0013_guilds.sql`, `src/net/guild/guildLaw.js` | 50 members; ranks 0 Guildmaster, 1 Officer, 2 Member, 3 Recruit; a gold treasury and its trigger-written ledger; `gi`/`gt`/`gm` on the signed token |
 | Homes, decor, stations | `server-account/src/homes.js`, `decor.js`; `src/net/homeLaw.js`, `decorLaw.js` | One owner a building (map_id, building_key); `HOME_CAP` 3; entry private/party/public; stations for a licence |
 | Renown | `renown_tracks` (0009), `src/net/renown.js`, `renownTracker.js` | Online level to 50, signed into the token (`lv`); client-reported XP, 5,000 a report, 15,000 an hour an account (SILVER-WAYS: it said 20,000 - RENOWN-ACCOUNT's three quarters made it 15,000, `renown.js` RENOWN_XP_HOUR_MAX); no region recorded |
 | The Oblivion Gate | `gateLaw.js`, `gateBrain.js`, `gateReceipt.js`, relay `_gate*`, `0014_gate_kills.sql` | Relay-refereed HP, reach, rate and damage buckets; phases; `r1.` Ed25519 receipts; the day's region from a pure shuffle bag |
-| Duels | `duelSession.js`, `duelCombat.js`, `0008_duels.sql` | 1v1 on a ring 12 m in radius (`DUEL_RADIUS_M`), defender-resolved - so no duel can award anything the server keeps (INT8, 2026-10-09: relay-refereed since, `net/duelRef.js`, its result a signed `d1` receipt - still no prize beyond the K/D record) |
+| Duels | `duelSession.js`, `duelCombat.js`, `0008_duels.sql` | 1v1 on a ring 12 m in radius (`DUEL_RADIUS_M`), defender-resolved - so no duel can award anything the server keeps (INT8, 2026-10-09: relay-refereed since, `net/duel/duelRef.js`, its result a signed `d1` receipt - still no prize beyond the K/D record) |
 | Parties | the hub (`chat:world` Durable Object) | `PARTY_MAX` 8 |
 | Rooms | `roomKeyFor` (`src/net/online.js`), `wire.js` | A town online is inside a 16x16-pixel cell room; `SOCKETS_MAX` 256; 32 nearest hear every pose; 8 full bodies drawn |
 | The shared clock | `sharedClassicMinutes` (`wire.js`) | A game day is 2 real hours; the relay imports the same function |
@@ -104,7 +104,7 @@ table; the Marks currency (PROF0).
   dungeon beside it; the city is fought over, the castle is the holder's hall.
 - **Palace seats** - DECIDED (Mac): **every location with a Palace**, hub or not.
 - **No palace, no seat** - DECIDED (Mac). A hub without a palace is still a hub (HUB1's ring), not a seat.
-- **The derivation** - DECIDED, src/systems/townSeats.js, run in the same boot pass as
+- **The derivation** - DECIDED, src/systems/town/townSeats.js, run in the same boot pass as
   `pickRegionHubs`, over the same rows:
 
 ```
@@ -122,7 +122,7 @@ seat = { key: unsigned mapId, name: l.name, region: r, kingdom: KINGDOM_OF[r], t
   economy is built so the count does not break it: every cost is per seat, and the influence a guild can earn is
   capped per account, not per seat, so twenty seats or two hundred leave the balance where it is.
 
-BUILT (SEAT1a, 2026-09-30; `06-Systems/Online-Arc.md` SEAT1a): src/systems/townSeats.js `deriveTownSeats`, run in the
+BUILT (SEAT1a, 2026-09-30; `06-Systems/Online-Arc.md` SEAT1a): src/systems/town/townSeats.js `deriveTownSeats`, run in the
 boot pass over the rows `pickRegionHubs` reads; tools/seatCount.mjs is SEAT-COUNT (it tallies each seat's boards as
 BOARD-COUNT does).
 
@@ -202,7 +202,7 @@ The ring is drawn in HUB1's order (under the glyph, before any halo) and names a
 BUILT (SEAT1a): the unheld words (townSeatLaw.js charterName, seatArrivalLine - an unheld crown "Wayrest, capital of the
 Kingdom of Wayrest. Its Crown Charter is unheld.", the record naming only a held one) said in HUB1's place at a seat
 town's gate (a hub that is no seat keeps HUB1's line); the unheld ring, a crown's crown, a March's and a Free Land's
-second ring on the held map (ui/inkMap.js paintSeatRing, under the glyph, round a hub's circle), and the Charter in the
+second ring on the held map (ui/ink/inkMap.js paintSeatRing, under the glyph, round a hub's circle), and the Charter in the
 map's box. The held, Contested and siege-week marks come with their slices.
 
 ### 3.4 Banners and heraldry in the town
@@ -213,7 +213,7 @@ DECIDED (Mac, the Holdings plan: "the holder's banners and colours in the city")
   1. one beside each city gate model (the gate's two posts, the banner on the town side);
   2. two flanking the palace's door (the building record's position and facing);
   3. one pennant above each Notice Board - a town's rumour boards, every board BOUNTY1 did not take for its bounty
-     board (PROF0 10.1, `systems/bountyBoard.js` questBoardIndices; AUDIT 28: this said "each bulletin board";
+     board (PROF0 10.1, `systems/bounty/bountyBoard.js` questBoardIndices; AUDIT 28: this said "each bulletin board";
      ONE-BOARD made it one a town, reverted - Professions-Arc 10.11);
   4. crown seats: two more at the castle's entrance in the city.
 - **The banner**: the port's own cloth quad, 1 wide by 3 tall (in DFU's scale, a man's height and a half), its
@@ -249,7 +249,7 @@ A region may hold several seats, so a guild's work in a region needs a target.
 | Source | Trust | Influence | Detail |
 |---|---|---|---|
 | **The Watch** | Relay-witnessed socket; the position is the client's own claim, so it is bounded | 1 per 2 minutes, capped **60 an account a day** | A registered member's socket in the seat's cell room whose pose lies in the seat's map pixel (FACT: a pose is an absolute world position inside `POSE_BOUND`; the relay maps it to its map pixel as `cellRoomOfWire` already does - x / `PIXEL_UNITS`, and 499 - z / `PIXEL_UNITS`, the map's y running the other way - with no game data; the registry carries the seat's pixel) and has moved in the last 5 minutes (a pose carries no rest state, and a resting player does not move). A client can lie about where it stands; the daily cap is what bounds the lie (420 a week, a fifth of an account's cap) |
-| **Gate kills** | Relay-signed receipt; its region witnessed | **300** a receipt | An `r1.` receipt claimed with the region the fighter's client derived for that day. FACT, the rhythm: a gate rises every game day (`GATE_EVERY_DAYS` 1), which is every **2 real hours** - twelve a real day, drawn from a shuffle bag of some forty regions - so a region sees a gate about **twice a week**. FACT: the gate's region is NOT a pure function of the day alone - `pickGateRegion(day, regions)` (`src/net/gateLaw.js`) draws from `gateRegions(scan)`, a client-side scan of MAPS.BSA (`src/systems/gateSite.js`) - so the service takes the day's region from the claims themselves: the region at least **3** of that day's receipts agree on. A claim naming another region earns nothing. **Attribution**: a receipt counts for the week holding its game day, only if claimed before that week's Turning (receipts live 7 days, so none is banked for a later week), and for its account's war-guild (a receipt names an account, not a character); at most **900 an account a week** (three receipts) |
+| **Gate kills** | Relay-signed receipt; its region witnessed | **300** a receipt | An `r1.` receipt claimed with the region the fighter's client derived for that day. FACT, the rhythm: a gate rises every game day (`GATE_EVERY_DAYS` 1), which is every **2 real hours** - twelve a real day, drawn from a shuffle bag of some forty regions - so a region sees a gate about **twice a week**. FACT: the gate's region is NOT a pure function of the day alone - `pickGateRegion(day, regions)` (`src/net/gate/gateLaw.js`) draws from `gateRegions(scan)`, a client-side scan of MAPS.BSA (`src/systems/gate/gateSite.js`) - so the service takes the day's region from the claims themselves: the region at least **3** of that day's receipts agree on. A claim naming another region earns nothing. **Attribution**: a receipt counts for the week holding its game day, only if claimed before that week's Turning (receipts live 7 days, so none is banked for a later week), and for its account's war-guild (a receipt names an account, not a character); at most **900 an account a week** (three receipts) |
 | **Writs** | Service-witnessed | **1 per Mark of the materials' value** | Materials delivered from the Stores to the seat's stockpile at its board (PROF0 section 11): to the holder as defence, to a pledged challenger as its Siege Camp. The **value** is the delivered materials' Marks value by PROF0 4.8's table - never the writ's pay, so a guild paying itself mints no influence. **Only** a delivery by a character 7 days in the posting guild, whose account is bound to it for the week, counts, and only its **own** units (PROF0 7: harvested or crafted by that character, Essence from a provenance item it made, a Siege Honour's Spoils, or its own deposit withdrawn from the guild Stores); **bought** units count at Tribute's rate inside Tribute's cap; a counter's goods never count. Anyone else's delivery earns the pay alone and binds nobody's war |
 | **Homes** | Bounded, not witnessed | **25 a home a day**, at most 5 homes a guild a seat | Members' homes in the seat's town (`homes.map_id`). FACT: `homeLaw.js` checks only the ranges of the map id and building key, and a home is bought with save gold, so a modified client could register homes that do not exist; the cap (875 a week) is the defence, and a home counts only for a 7-day member bound to the guild |
 | **Renown in the region** | Client-reported, bounded | **1 per 20 Renown XP**, capped **400 an account a week** | The Renown report grows `region` (0-61); the service keeps a per-account, per-region, per-week sum beside the tracks |
@@ -276,7 +276,7 @@ A region may hold several seats, so a guild's work in a region needs a target.
 ### 4.3 The kingdoms, the Marches and the Free Lands
 
 DECIDED (Mac: "You"). FACT, why drawn and not derived: nothing in the tree maps a region to a kingdom, and DFU's
-`borderRegions` (`BORDER_REGIONS`, `src/systems/factionRelations.js`, transcribed 1:1) is not laid out in region
+`borderRegions` (`BORDER_REGIONS`, `src/systems/faction/factionRelations.js`, transcribed 1:1) is not laid out in region
 order - its row commented "Daggerfall" is its eighth and names Betony, Tulune, Glenpoint, Shalgora and Ilessan Hills
 (Daggerfall's real neighbourhood), while its eighteenth row, Daggerfall's index in `REGION_NAMES`, names Alcaire's.
 So the map is drawn from the Iliac Bay itself - High Rock north of the bay, Hammerfell south - using the labelled
@@ -398,7 +398,7 @@ referees up to 256 fighters against one foe.
   bows 60 m) plus `POSE_SLACK`; the
   striker is under **4 blows a second** (the gate's `GATE_HIT_HZ_MAX` shape); and the damage is within the weapon
   kind's bucket - DFU's own damage range for that weapon at that material, doubled for a critical, never more
-  (the table lives in src/net/siegeRef.js - PVP-REF: copied from `WEAPON_MATERIALS` and the weapon templates, and
+  (the table lives in src/net/siege/siegeRef.js - PVP-REF: copied from `WEAPON_MATERIALS` and the weapon templates, and
   pinned equal to them, since the relay bundles what it imports). Excess is
   clipped, as the gate clips it.
 - **Spells** - at most **3 damaging casts in 5 seconds**, each clamped to **60** damage; Teleport, Recall and
@@ -414,12 +414,12 @@ referees up to 256 fighters against one foe.
   relay-run guards (a crown siege at its largest; a revolt's 13 rebels stand in the guards' place) - with headless
   clients, the SLAM probes' way, at or under 60% of every room budget (`FOES_ROOM_BYTES_PER_S`, `HIT_ROOM_BYTES_PER_S`, the pose fan).
   If it cannot, siege sizes drop to 8 against 8 and 16 against 16 until it can.
-  MEASURED (PVP-REF, 2026-10-01, `test/pvpref_measure.test.js` - the real Room on the fake object, 106 headless
+  MEASURED (PVP-REF, 2026-10-01, `test/net/pvpref_measure.test.js` - the real Room on the fake object, 106 headless
   sockets all moving at 4 Hz, every fighter striking at four a second and casting at the window's): the pose fan 36% of
   its design point (21,293 sends a second against SLAM6's 59,000), the siege's fanned frames 26% of
   `FOES_ROOM_BYTES_PER_S`, the busiest socket's 4% of `HIT_ROOM_BYTES_PER_S`. **The sizes stand.**
 
-BUILT (PVP-REF, 2026-10-01; `06-Systems/Online-Arc.md` PVP-REF): `src/net/siegeRef.js` (the law, its DFU tables
+BUILT (PVP-REF, 2026-10-01; `06-Systems/Online-Arc.md` PVP-REF): `src/net/siege/siegeRef.js` (the law, its DFU tables
 pinned equal to `characters/weapons.js` and `combat/formulas.js`), the relay's siege room (`world146` - the
 developers alone until SEAT2a). The bucket's bonuses DECIDED there: Strength 100's stock modifier, the heaviest swing,
 an expert's proficiency and a racial bonus at level 30 (a fighter's character level is not on the wire) - a Daedric
@@ -455,7 +455,7 @@ a spell's reach 60 m.
 BUILT (SEAT2a part two, 2026-10-01; `06-Systems/Online-Arc.md` SEAT2a part two): the relay's battle (`world147`) - the
 room admits by the service's pass (`net/identityToken.js`'s `siege` order, the field it signs), from ten minutes before
 the start (DECIDED there: the door opens as the signing closes); the banners, the Throne, the clock and the waves at the
-camp as written (`net/siegeRef.js` battleStep, a beat a second). DECIDED there: until SEAT2b raises the Gatehouse, a
+camp as written (`net/siege/siegeRef.js` battleStep, a beat a second). DECIDED there: until SEAT2b raises the Gatehouse, a
 crown's Throne opens on its 3 of 4 banners alone.
 
 BUILT (SEAT2b part two (b), 2026-10-01, `world150`, migration 0063; `06-Systems/Online-Arc.md` SEAT2b part two (b)): the
@@ -499,7 +499,7 @@ the door's centre (as DFU's landing), and a door too narrow to face is passed ov
 BUILT (SEAT2a part one, 2026-10-01; `06-Systems/Online-Arc.md` SEAT2a): the window, the schedule and the move - DECIDED
 there: a palace siege and a Tourney hold their two-hour window of their guilds' week, a crown siege the hour its slot
 keeps; a battle no start can hold is void. The announcements in the server's voice are the relay half's. BUILT
-(AUDIT-SEATS G1) on the client instead - `src/net/siegeHerald.js`: each battle in red at the Turning, 24 h, 1 h and 5
+(AUDIT-SEATS G1) on the client instead - `src/net/siege/siegeHerald.js`: each battle in red at the Turning, 24 h, 1 h and 5
 min before, off the seats' list (no relay keeps the week's clock).
 
 ### 6.4 Sides and sizes
@@ -556,7 +556,7 @@ Ed25519 shape), claimed at the account service: **50 Marks and 2,000 Renown XP**
 1,000 Renown XP** on the losing side, and one roll on the **Spoils of War** table (PROF0 4.7: a rare material only war
 yields - Warforged Steel ingot, a Standard-bearer's silk, a Siege-cracked gem).
 
-BUILT (SEAT2a part two): the `s1` receipt (`net/siegeReceipt.js`) - DECIDED there: one a fighter, each carrying the
+BUILT (SEAT2a part two): the `s1` receipt (`net/siege/siegeReceipt.js`) - DECIDED there: one a fighter, each carrying the
 battle's result, whether a banner was raised and the fighter's own Honours (stood half the battle in the room, or felled
 a foe), so the result reaches the service in whichever fighter's client carries it first (the relay cannot post - 17's
 "keeps and posts" is the gate's carried shape); the room keeps them a receipt's week for a fighter who returns. Claimed
@@ -750,7 +750,7 @@ the Forge's and the Workshop's route - `server-account/src/professions.js` seatS
 jewellery** a quality step (the Forge's law, nothing past Masterwork). DECIDED, a **dish** - which takes no quality - its XP
 half again a step (the clean pan's own step, Professions-Arc 35; `recipeLaw.js` cookXp). DECIDED, a **brew** its Potent
 chance +10 a step (`alchemyLaw.js` potentChance; the brew carries its town as a craft does). Nobody else's, no other town's,
-no other hall's. Pinned through the real Worker: `test/prof12_apothecary.test.js`. AUDITED (2026-10-03, AUDIT PROF12 P1):
+no other hall's. Pinned through the real Worker: `test/net/prof12_apothecary.test.js`. AUDITED (2026-10-03, AUDIT PROF12 P1):
 the Seat tab's line for it said every tier made "members' alchemy, cooking and jewelcrafting here" a quality step better -
 true of jewellery alone; it says each profession's own now (`fortLaw.js` FORT_EFFECT_WORDS): "members' jewellery here a
 quality step better, their dishes half again the XP, their brews +10% Potent chance" (tier 2: two steps, twice the XP,
@@ -764,7 +764,7 @@ Edict may be proclaimed two weeks running except Market Day.
 | Edict | Tier | Effect | Cost |
 |---|---|---|---|
 | **Market Day** | any | the seat town's shop prices -10% for everyone (client-applied, the discount's seam, 7.2) | - |
-| **Bounty** | any | World of Daggerfall camps in the region (WOD7's shared camps, `src/world/wodShared.js`) pay double loot; the treasury pays 20 Marks per camp cleared, up to the sum set aside - a transfer, never a mint. **Bounded**: a camp's clearing is validated at the reader, never the relay (`wodShared.js`), so an account is paid for at most **5 camps a UTC day** | the set-aside, escrowed |
+| **Bounty** | any | World of Daggerfall camps in the region (WOD7's shared camps, `src/world/worldOfDaggerfall/wodShared.js`) pay double loot; the treasury pays 20 Marks per camp cleared, up to the sum set aside - a transfer, never a mint. **Bounded**: a camp's clearing is validated at the reader, never the relay (`wodShared.js`), so an account is paid for at most **5 camps a UTC day** | the set-aside, escrowed |
 | **Levy** | any | 10% of gathering yields goes to the seat's stockpile, from the nodes of the region nearer this seat than any other seat of the region (the bailiwick's rule, by pixel), so two holders' Levies never share a node | Standing -2 |
 | **Open Gates** | any | homes in the town may not be set private this week | Standing +3 |
 | **Curfew** | any | the town's guards are stronger at night and crime there costs double legal reputation (each player's own, client-side) | Standing -2 |
@@ -991,7 +991,7 @@ relay stamps on every row naming its wearer and both name faces draw as a thin b
 `net/remotePlayers.js`). DECIDED: a member who joined after that Turning wears none, and one who leaves the guild loses
 it at the next token; the colours are the guild's as they are now (a banner changed is a ribbon changed), Argent
 bordered Ash for a guild with no heraldry; AUDIT-SEATS: the Overworld travel view's badge draws it too (a band under
-the row, `ui/travelViewHud.js` TRAVEL_VIEW_RIBBON), and a guild taken off a socket takes its ribbon (the relay's
+the row, `ui/travel/travelViewHud.js` TRAVEL_VIEW_RIBBON), and a guild taken off a socket takes its ribbon (the relay's
 `_unguild`, the client's guild frame). The Chronicle as a book is part three's (9.2). The fortifications'
 wear - BUILT (SEAT2b part one; `server-account/src/seatForts.js` fortsSeasonStatements, every work a tier down at the
 Turning that ends a Season, in `seatTurning.js`; Season 0's wipe takes them instead).
@@ -1008,7 +1008,7 @@ from templates in the law module:
 - "Anticlere rose against the Silver Hand. The rebel captain fell at the palace door, and the Charter held."
 - "Under the Silver Hand, Anticlere proclaimed a Festival."
 
-The book is read through the enhanced book window the port already has (`src/ui/enhancedBook.js`).
+The book is read through the enhanced book window the port already has (`src/ui/enhanced/enhancedBook.js`).
 
 BUILT (SEASON1 part three, 2026-10-01, `acct59`; `06-Systems/Online-Arc.md` SEASON1 part three): the Chronicle in its
 Season's words (`townSeatLaw.js` `chronicleWhen` - "In the third week of the Season of Morning Star", the week's number
@@ -1144,8 +1144,8 @@ Season with titles at the end; a Chronicle that remembers; and the Professions e
   the Rebel Captain's brain; `{t:'siege'}` frames (AUDIT-SEATS G22; this said `{t:'tseat'}`) for banner state, the
   Throne, the Gatehouse, the Ram.
 - **Law modules, pure, shared by client, relay and service**: src/net/townSeatLaw.js (Appendix B, the week, the
-  phases, the windows, the Chronicle's templates, `KINGDOM_OF`), src/net/siegeRef.js (PVP-REF) (6.1's buckets),
-  src/systems/townSeats.js (the client's derivation); SEAT2b: src/net/fortLaw.js (7.5's works, the drops, the Gatehouse,
+  phases, the windows, the Chronicle's templates, `KINGDOM_OF`), src/net/siege/siegeRef.js (PVP-REF) (6.1's buckets),
+  src/systems/town/townSeats.js (the client's derivation); SEAT2b: src/net/fortLaw.js (7.5's works, the drops, the Gatehouse,
   the Ram, the Siege Camp, the revolt).
 - **Versions**: each relay change a new `RELAY_VERSION` with its LAW row; every token vocabulary change relay-first.
 
@@ -1199,7 +1199,7 @@ its record - each either wired or FLAGGED by name." Every SEAT slice's record ca
 |---|---|
 | `scenes/world.js` - the streaming world | The seats' derivation (the boot pass beside `pickRegionHubs`); the map rings; the arrival lines; the banners at their anchors; the Notice Boards; the Watch's poses; the siege and the Royal Tourney - fought in the town as the streaming world draws it, in their own `siege:` rooms |
 | `scenes/exterior.js` - the fixed city (`?exterior`) | The banners of the one city it loads, if that city is a seat - and DFU's own board, never the Notice Board or a bounty board (PROF0 10.7, Bounty-Boards 8: the fixed city keeps DFU's board; AUDIT 28 corrected "the board"). **FLAGGED by name**: no siege, no Watch, no Turning notice - the fixed city is a development host that mints its own `town:` room and runs no streamer, the way it already says so about travel (Home.md's open flags, `exterior.js` TP2) |
-| `scenes/worldModes.js` - building interiors | The palace hall: the Charter Room's decor (the building host's own decor pool, `scenes/decorRoom.js`), the roster board, the guild Stores chest (the vault's since GUILD2b - GUILD3a), the Hall of Records book; guild halls (GUILD1d); the members' discount and Market Day at the seat town's shops (the `calculateCost` call sites, 7.2) |
+| `scenes/worldModes.js` - building interiors | The palace hall: the Charter Room's decor (the building host's own decor pool, `scenes/decor/decorRoom.js`), the roster board, the guild Stores chest (the vault's since GUILD2b - GUILD3a), the Hall of Records book; guild halls (GUILD1d); the members' discount and Market Day at the seat town's shops (the `calculateCost` call sites, 7.2) |
 | `scenes/dungeonContext.js` - dungeons | The three castles (crown halls): the holder's banners in the throne room, the chest, the roster board and the Hall of Records book; **no decor, no siege, no revolt, no Tourney** inside - a castle is DFU's quest ground, and every seat act happens in its city |
 
 ### 15.2 The process laws, applied
@@ -1210,13 +1210,13 @@ Every law in Home.md's Process section, and what it demands of this arc:
 |---|---|
 | **THE MODAL CONTRACT** | The board's window and the siege's result card gate a host frame: each returns the same type from every exit, asserted in a test, not a comment |
 | **THE SLOT IS EMPTIED BEFORE THE OCCUPANT IS TOLD** | The board's window lives in the host's overlay slot: the slot is nulled before the window is disposed, and its close dispatches its callback once however many doors call it |
-| **ONE DFU MEMBER, ONE EXPORT** | Nothing DFU owns is re-typed: `REGION_NAMES`, `BUILDING_TYPES.Palace`, `BULLETIN_BOARD_MODEL_ID`, `DEFAULT_WEAPON_REACH`, `WEAPON_MATERIALS` are imported; the kingdom map is the one new table, and it lives in townSeatLaw.js alone. PVP-REF, recorded: the relay's referee (`siegeRef.js`) is a leaf the relay bundles, so it COPIES DFU's damage tables and the reach, pinned equal to their homes by test (`test/pvpref_law.test.js` - the gate's way, `test/wb4b_gate_blows.test.js`) |
+| **ONE DFU MEMBER, ONE EXPORT** | Nothing DFU owns is re-typed: `REGION_NAMES`, `BUILDING_TYPES.Palace`, `BULLETIN_BOARD_MODEL_ID`, `DEFAULT_WEAPON_REACH`, `WEAPON_MATERIALS` are imported; the kingdom map is the one new table, and it lives in townSeatLaw.js alone. PVP-REF, recorded: the relay's referee (`siegeRef.js`) is a leaf the relay bundles, so it COPIES DFU's damage tables and the reach, pinned equal to their homes by test (`test/systems/pvpref_law.test.js` - the gate's way, `test/net/gate/wb4b_gate_blows.test.js`) |
 | **A PIN MUST FAIL** | Every number in Appendix B is pinned by `deepEqual` against the law module's table, and each slice's mutants (`tools/mutants/seat*.json`) prove a one-character change of any rule reddens a test |
 | **TEST THE SHAPE THE PRODUCER MINTS** | Seats in tests come from the derivation run over a fixture MAPS set, never hand-built rows; receipts come from the relay's own signer; a settled week from `settleWeek` itself |
 | **ASYNC NEVER DROPS** | Every service call (pledge, tribute, window, edict, sign) carries a request id; a second press while one is in flight coalesces; a lost answer is re-asked with the same id (Renown's `last_rid` pattern). DECIDED (the audit of the arc, recording the departure): only two seat calls carry a request id - Tribute and a work's funding (`net/accountClient.js` accountSeats `tribute`, `fortFund`); the set-state acts carry none, because a re-asked one is idempotent or refused as a repeat: a pledge, a window and an Edict are upserts (`seatInfluence.js` pledgeSeat, `seatBattles.js` setWindow, `seatHolding.js` proclaimEdict - the same row written again, another of the hour's rate spent; a taking-down asked twice answers `seat-no-pledge`/`seat-no-edict`); a signing answers `sign-twice` and a hire `hire-twice` (`seatBattles.js` signBattle, hireSellsword). The second press is the Seat tab's one-at-a-time door (`ui.run`). NOT YET: a lost answer to a set-state act re-asked by itself - the player presses again |
 | **EVERY ALLOCATION HAS AN OWNER** | Banner quads are owned by the town's layout and freed with it; the siege HUD's elements by the siege room's session; the relay's siege state by its room, dropped when the window closes - all but its unposted result and Honours receipts, which it keeps with their ids until the service accepts them (17) |
 | **THE ONE CONSTRUCTION SEAM** | One constructor builds the board's window for every host; a test sweeps the source so no host `new`s it |
-| **THE NATIVE-WINDOW RULE** | It governs DFU's native windows: the offline bulletin board's parchment stays native, its ROAD A9 cites intact. The Seat tab and the siege HUD are the port's own Enhanced Plus windows and cite `src/ui/enhancedStyle.js`, not DFU rects |
+| **THE NATIVE-WINDOW RULE** | It governs DFU's native windows: the offline bulletin board's parchment stays native, its ROAD A9 cites intact. The Seat tab and the siege HUD are the port's own Enhanced Plus windows and cite `src/ui/enhanced/enhancedStyle.js`, not DFU rects |
 | **A SLICE CLOSES ITS LEDGER ROW** | SEAT1a adds Port-Ledger section A's row (EVERY PALACE A SEAT, online's own) with its first visible departures - the map rings, the arrival lines, the banners; each later slice narrows it; none leaves it stale |
 | **RETIRING A FLAG DELETES THE SENTENCE** | The fixed-city FLAGGED site above is listed in Home.md's open flags by the regenerator; the day it is wired, the sentence goes |
 | **DO NOT FIX WHILE THE VERIFIER IS READING** | Every slice's pre-merge audit runs on a frozen tree |
@@ -1292,7 +1292,7 @@ Every law in Home.md's Process section, and what it demands of this arc:
   granted no other challenge.
 - **The Turning's settle fails.** It is one D1 transaction: it rolls back whole, and the next read settles it again.
   A read before the batch that throws is not caught, so it fails every seat route until it stops throwing - SEAT-CAP
-  (`01-Overview/Field-Bugs-2026-10-11h.md`, from play: "Time to take a castle and nothing happens") found one: every
+  (`01-Overview/bugs/Field-Bugs-2026-10-11h.md`, from play: "Time to take a castle and nothing happens") found one: every
   guild pledged anywhere bound in one statement, past D1's 100 parameters. Every guild list the seats bind is read
   IN_CHUNK (90) at a time (`seatInfluence.js` allIn), and the tests' fake refuses a statement D1 would. And a week due is
   settled by ONE caller at a time (SEAT-LEASE, the same page): every request had run the whole settle at once, each
@@ -1409,9 +1409,9 @@ note:
 ```
 
 BUILT (SEAT2a part four, 2026-10-01; `06-Systems/Online-Arc.md` SEAT2a part four): the bar, the sides, the vitality and
-the wave, the spectator's count and the result card as drawn above (`ui/siegeHud.js`, its words `net/siegeLink.js`).
+the wave, the spectator's count and the result card as drawn above (`ui/siegeHud.js`, its words `net/siege/siegeLink.js`).
 DECIDED there: `~` marks a banner being raised from the other side (the field's frame says who raises it, not who
-contests it); the card's Claim carries the fighter's receipt (`net/siegeClaims.js`).
+contests it); the card's Claim carries the fighter's receipt (`net/siege/siegeClaims.js`).
 
 ## Appendix A - a week in Anticlere
 

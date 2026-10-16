@@ -3,7 +3,7 @@
 // lists them. The law that reads them is systems/tutorials.js; the box is ui/tutorialPopup.js; the menu's pane is
 // ui/tutorialsPane.js.
 //
-// THE RULES A PAGE KEEPS (test/tut1_tutorials.test.js holds every page to them):
+// THE RULES A PAGE KEEPS (test/ui/tut1_tutorials.test.js holds every page to them):
 // - The game is DFO. A page never names the old game it grew from - not the game, not its capital.
 // - A key is written `{Action}` (an action of systems/inputActions.js) and filled with the key the player has bound
 //   now, never a key's name: a rebound key would make the page lie.

@@ -42,7 +42,7 @@ export const SOUND = {
   // WIND3: the wind's clips by name - DFU draws these only as dungeon
   // one-shots (AMBIENT_SOUNDS.dungeon, SoundClips.cs:94-103). The port's
   // wind loop played the moan and the blow end to end until FIELD-WIND1
-  // (systems/windAudio.js makes its own bed); the Deadlands' air and the
+  // (systems/wind/windAudio.js makes its own bed); the Deadlands' air and the
   // gate's veil play the deep moan.
   AmbientWindMoan: 65,
   AmbientWindMoanDeep: 66,

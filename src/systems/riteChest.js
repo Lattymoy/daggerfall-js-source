@@ -8,11 +8,11 @@
 // beside it, the rite's memory (AUDIT WB12d: which of the day's faithful fell, whether the Summoner did).
 //
 // Not a DFU member. Ledger A (WB).
-import { createRandomArmor } from './loot.js';
-import { setItemFields, mintCondition } from './itemTemplates.js';
-import { applyRarity } from './lootRarity.js';
+import { createRandomArmor } from './loot/loot.js';
+import { setItemFields, mintCondition } from './item/itemTemplates.js';
+import { applyRarity } from './loot/lootRarity.js';
 import { goldStack } from './inventory.js';
-import { sigilParty } from './sigil.js';
+import { sigilParty } from './sigil/sigil.js';
 import { registerModSaveData } from './modSaveData.js';
 
 /** Gold a level of the opener's, the low and high of the roll. */
@@ -31,7 +31,7 @@ export const RITE_HEART = Object.freeze({ templateIndex: 53, group: 'CreatureIng
 export const RITE_HEART_CHANCE = 0.08;
 /** A piece of Dagon's Brand, one chest in this many. */
 export const RITE_BRAND_IN = 20;
-/** The set the brand bears (systems/sigilSets.js). */
+/** The set the brand bears (systems/sigil/sigilSets.js). */
 export const RITE_BRAND_SET = 'dagon';
 
 /**

@@ -4,7 +4,7 @@
 // real and the player's to turn. Mac: NPCs "can encounter enemies in the overworld ... make friends or enemies".
 //
 // The trouble is pure (systems/livingWorld/trouble.js): every reader's world holds the same caravan beset at the same
-// bend by the same foes, with the same end, and the roads' layer shows it fought (scenes/livingRoads.js). A player ON
+// bend by the same foes, with the same end, and the roads' layer shows it fought (scenes/livingWorld/livingRoads.js). A player ON
 // THE GROUND within LIVE_M of a party at its fight, and the one standing it (the camps' own election online - the
 // lowest id near it, campEncounters.js amGroupRollOwner; offline always), stands it LIVE:
 //  - THE FOES as the encounter pool's own (exteriorFoes.js spawnFoe - loose, transient: never a save's), each its kind,

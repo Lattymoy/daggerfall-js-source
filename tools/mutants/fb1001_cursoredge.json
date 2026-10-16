@@ -5,7 +5,7 @@
     "old": "cursorEl.style.height = plusNow ? '32px'",
     "new": "cursorEl.style.height = plusNow ? '34px'",
     "tests": [
-      "test/fb1001_cursoredge.test.js"
+      "test/ui/enhanced/fb1001_cursoredge.test.js"
     ]
   },
   {
@@ -14,34 +14,34 @@
     "old": "  const arrow = `url(\"${url}\") ${DFU_CURSOR_HOTSPOT[0]} ${DFU_CURSOR_HOTSPOT[1]}, auto`;",
     "new": "  const arrow = `image-set(url(\"${url}\") 2x) ${DFU_CURSOR_HOTSPOT[0]} ${DFU_CURSOR_HOTSPOT[1]}, auto`;",
     "tests": [
-      "test/fb1001_cursoredge.test.js"
+      "test/ui/enhanced/fb1001_cursoredge.test.js"
     ]
   },
   {
     "name": "CURSOR-EDGE-scrollbar-color-on-the-menus-again",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": "@supports not selector(::-webkit-scrollbar) {\n  .shell, .px-win { scrollbar-width: thin; scrollbar-color: rgba(125,116,96,0.6) rgba(0,0,0,0.3); } }",
     "new": ".shell, .px-win { scrollbar-width: thin; scrollbar-color: rgba(125,116,96,0.6) rgba(0,0,0,0.3); }",
     "tests": [
-      "test/fb1001_cursoredge.test.js"
+      "test/ui/enhanced/fb1001_cursoredge.test.js"
     ]
   },
   {
     "name": "CURSOR-EDGE-the-card-body-native-again",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": "@supports not selector(::-webkit-scrollbar) {\n  .pack-shell .packtip.packdetail .card-body { scrollbar-width: thin; scrollbar-color: rgba(125,116,96,0.7) transparent; } }",
     "new": ".pack-shell .packtip.packdetail .card-body { scrollbar-width: thin; scrollbar-color: rgba(125,116,96,0.7) transparent; }",
     "tests": [
-      "test/fb1001_cursoredge.test.js"
+      "test/ui/enhanced/fb1001_cursoredge.test.js"
     ]
   },
   {
     "name": "CURSOR-EDGE-the-dress-scoped-to-the-menus",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": "\n::-webkit-scrollbar { width: 10px; height: 10px; }",
     "new": "\n.shell ::-webkit-scrollbar, .px-win ::-webkit-scrollbar { width: 10px; height: 10px; }",
     "tests": [
-      "test/fb1001_cursoredge.test.js"
+      "test/ui/enhanced/fb1001_cursoredge.test.js"
     ]
   }
 ]

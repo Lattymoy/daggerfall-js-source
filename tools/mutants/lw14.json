@@ -5,7 +5,7 @@
     "old": "    .filter((m) => !m.archive && (m.record === STOP_FOE || m.record === STOP_TREASURE))",
     "new": "    .filter((m) => m.record === STOP_FOE || m.record === STOP_TREASURE || m.record === 16)",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    .filter((m) => !m.archive && (m.record === STOP_FOE || m.record === STOP_TREASURE))",
     "new": "    .filter((m) => (m.record === STOP_FOE || m.record === STOP_TREASURE))",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {",
     "new": "    for (const [dx, dz] of [[0, 1], [1, 0], [-1, 0], [0, -1]]) {",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "        if (d < -1e-9 || (Math.abs(d) <= 1e-9 && left[i].key < left[best].key)) best = i;",
     "new": "        if (d > 1e-9 || (Math.abs(d) <= 1e-9 && left[i].key < left[best].key)) best = i;",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  let first = blocks.findIndex((b) => from.x >= b.originX",
     "new": "  let first = 0 * blocks.findIndex((b) => from.x >= b.originX",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "export const DEEP_FOE_MIN = Object.freeze([25, 40]);",
     "new": "export const DEEP_FOE_MIN = Object.freeze([20, 40]);",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "export const DEEP_TREASURE_MIN = 10;",
     "new": "export const DEEP_TREASURE_MIN = 15;",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "export const DEEP_DETOUR = 1.6;",
     "new": "export const DEEP_DETOUR = 1;",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "export const DEEP_WALK_M = 30;",
     "new": "export const DEEP_WALK_M = 40;",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "  const mid = dive.t0 + (dive.t1 - dive.t0) / 2;",
     "new": "  const mid = dive.t1;",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "export const DEEP_RISK = 0.5;",
     "new": "export const DEEP_RISK = 0.3;",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "export const DEEP_FIGHT_MIN = 20;",
     "new": "export const DEEP_FIGHT_MIN = 15;",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "  if (trip.enc?.inside) return null;",
     "new": "  if (false) return null;",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "export const DIVE_CLEAR_MIN = DAY_MIN;",
     "new": "export const DIVE_CLEAR_MIN = 2 * DAY_MIN;",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "for (const l of r?.legs ?? []) if (l.tOut <= t && t - l.tOut < DIVE_CLEAR_MIN) out.add(l.stop.key);",
     "new": "for (const l of r?.legs ?? []) if (l.tIn <= t && t - l.tOut < DIVE_CLEAR_MIN) out.add(l.stop.key);",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "  const path = [...legs.map((l) => ({ x: l.stop.x, z: l.stop.z, ...yOf(l.stop) })).reverse(), { x: entry.x, z: entry.z, ...yOf(entry) }];",
     "new": "  const path = [...legs.map((l) => ({ x: l.stop.x, z: l.stop.z, ...yOf(l.stop) })).reverse()];",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ],
     "note": "AUDIT LW-II (re-aimed by content)."
   },
@@ -150,7 +150,7 @@
     "old": "return s.f >= 0.5 || !a.key ? b : a;",
     "new": "return b;",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ]
   },
   {
@@ -159,7 +159,7 @@
     "old": "!(trip.dive.t0 < t1 && trip.dive.t1 > t0)",
     "new": "!(trip.dive.t0 < t1)",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ]
   },
   {
@@ -168,7 +168,7 @@
     "old": "export const DEEP_NEAR_M = 15;",
     "new": "export const DEEP_NEAR_M = 25;",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ]
   },
   {
@@ -177,7 +177,7 @@
     "old": "(d <= DEEP_NEAR_M || (d <= DEEP_SEE_M && (deps.clearLine?.(L.feet, at) ?? false)))",
     "new": "(d <= DEEP_NEAR_M || d <= DEEP_SEE_M)",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ],
     "note": "AUDIT LW-II (re-aimed by content)."
   },
@@ -187,7 +187,7 @@
     "old": "        if (rec.ai && !at) rec.ai.follow = heelOf(i);",
     "new": "        if (rec.ai) rec.ai.follow = heelOf(i);",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ]
   },
   {
@@ -196,7 +196,7 @@
     "old": "export const DEEP_HEAR_M = 60;",
     "new": "export const DEEP_HEAR_M = 80;",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ]
   },
   {
@@ -205,7 +205,7 @@
     "old": "          if (!heard.has(trip.id)) { heard.add(trip.id); deps.say?.('You hear fighting ahead.'); }",
     "new": "          deps.say?.('You hear fighting ahead.');",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ]
   },
   {
@@ -214,7 +214,7 @@
     "old": "          if (now >= (rings.get(trip.id) ?? 0)) { rings.set(trip.id, now + DEEP_RING_S); deps.ring?.(at); }",
     "new": "          deps.ring?.(at);",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ]
   },
   {
@@ -223,7 +223,7 @@
     "old": "const heelOf = (i) => ({ feet: () => deps.leader()?.feet ?? null, stop: DIVER_HEEL_M + i * DIVER_HEEL_STEP_M, trail: () => trail });",
     "new": "const heelOf = (i) => ({ feet: () => deps.leader()?.feet ?? null, stop: DIVER_HEEL_M + i * DIVER_HEEL_STEP_M });",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ]
   },
   {
@@ -232,7 +232,7 @@
     "old": "export const DIVER_TRAIL_MAX = 64;",
     "new": "export const DIVER_TRAIL_MAX = 32;",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ]
   },
   {
@@ -241,7 +241,7 @@
     "old": "    if (c.mode === 'lead' && c.going && standing.every(",
     "new": "    if (false && c.going && standing.every(",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ]
   },
   {
@@ -250,7 +250,7 @@
     "old": "          { code: 'KeyJ', label: 'J - join us', action: () => join(c) },",
     "new": "          { code: 'KeyJ', label: 'J - join us', action: () => {} },",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ]
   },
   {
@@ -259,7 +259,7 @@
     "old": "          { code: 'KeyP', label: 'P - part ways', action: () => { c.parted = true; c.mode = 'hold'; } },",
     "new": "          { code: 'KeyP', label: 'P - part ways', action: () => { c.mode = 'hold'; } },",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ]
   },
   {
@@ -268,7 +268,7 @@
     "old": "        if (!c.allies.has(id) || c.parted || c.mode === 'join') continue;",
     "new": "        if (!c.allies.has(id) || c.parted) continue;",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ]
   },
   {
@@ -277,7 +277,7 @@
     "old": "export const RETREAT_HP = 0.3;",
     "new": "export const RETREAT_HP = 0.1;",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ]
   },
   {
@@ -286,7 +286,7 @@
     "old": "export const RETREAT_BACK_M = 4;",
     "new": "export const RETREAT_BACK_M = 2;",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ]
   },
   {
@@ -295,7 +295,7 @@
     "old": "if (!c.pending && c.size > 1 && standing.length * 2 < c.size)",
     "new": "if (!c.pending && c.size > 1 && standing.length === 0)",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ],
     "note": "AUDIT LW-II (re-aimed by content)."
   },
@@ -305,7 +305,7 @@
     "old": "          if (away > DEEP_KEEP_M) letGo(id);",
     "new": "",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ]
   },
   {
@@ -314,7 +314,7 @@
     "old": "          if (c.pile && head && rel?.standing(head.id, deps.day()) !== 'friend') {",
     "new": "          if (c.pile && head) {",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ]
   },
   {
@@ -323,7 +323,7 @@
     "old": "            if (taken.length && near) {",
     "new": "            if (taken.length) {",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ]
   },
   {
@@ -332,7 +332,7 @@
     "old": "kind === 'poached' ? 'poach' : null;",
     "new": "null;",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ]
   },
   {
@@ -341,7 +341,7 @@
     "old": "        if (e.poach != null) people[id].poach = e.poach;   // LW14: only once counted\n",
     "new": "",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ]
   },
   {
@@ -350,16 +350,16 @@
     "old": "  poached: -4,",
     "new": "  poached: -2,",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ]
   },
   {
     "name": "LW14-remains-place",
-    "file": "src/scenes/deepRemains.js",
+    "file": "src/scenes/livingWorld/deepRemains.js",
     "old": "        const at = deps.placeOf?.(r) ?? (spots.length ? spots[restAt(r.key, spots.length)] : null);",
     "new": "        const at = spots.length ? spots[restAt(r.key, spots.length)] : null;",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ],
     "note": "AUDIT LW-II (re-aimed by content)."
   },
@@ -369,7 +369,7 @@
     "old": "  if (mode !== 'steal' && mode !== 'info' && openLiving && foe.living?.res && foe.shipmate === true) {",
     "new": "  if (mode !== 'info' && openLiving && foe.living?.res && foe.shipmate === true) {",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ],
     "note": "AUDIT LW-II (re-aimed by content)."
   },
@@ -379,7 +379,7 @@
     "old": "    f.entity.items = [];\n    setFoeDead(f, true);\n  }\n  for (const [i, p] of lootPiles",
     "new": "    setFoeDead(f, true);\n  }\n  for (const [i, p] of lootPiles",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ],
     "note": "AUDIT LW-II (re-aimed by content)."
   },
@@ -389,7 +389,7 @@
     "old": "        if (stopKey && _deepCleared.has(stopKey)) items.length = 0;   // LW14: a pile a company passed, picked over\n",
     "new": "",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ]
   },
   {
@@ -398,7 +398,7 @@
     "old": "          deepCleared: (loc, stops, entry) => host.deepCleared?.(loc, stops, entry) ?? null,",
     "new": "          deepCleared: () => null,",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ]
   },
   {
@@ -407,7 +407,7 @@
     "old": "        route: livingDeepRoute,\n",
     "new": "\n",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ]
   },
   {
@@ -416,7 +416,7 @@
     "old": "    return deepClearedOf(dives.map((tr) => deepRouteOf(stops, from, tr)), tBuild);",
     "new": "    return deepClearedOf([], tBuild);",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ]
   },
   {
@@ -425,7 +425,7 @@
     "old": "        c.size++;\n",
     "new": "",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ]
   },
   {
@@ -434,7 +434,7 @@
     "old": "if (!c.pending && c.size > 1 && standing.length * 2 < c.size)",
     "new": "if (c.size > 1 && standing.length * 2 < c.size)",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ]
   },
   {
@@ -443,7 +443,7 @@
     "old": "< (rec.ai.follow?.stop ?? DIVER_HEEL_M) + DIVER_ARRIVE_SLACK_M)) {",
     "new": "< 3)) {",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ]
   },
   {
@@ -452,7 +452,7 @@
     "old": "rec.ai.follow = { feet: () => feet, stop: 1.5 + (rec.heel ?? 0) * 0.8 }; rec.fellBack = false; }",
     "new": "rec.ai.follow = { feet: () => feet, stop: 1.5 + (rec.heel ?? 0) * 0.8 }; }",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ]
   },
   {
@@ -461,7 +461,7 @@
     "old": "    if (!s?.at && !s?.between) return null;",
     "new": "",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ]
   },
   {
@@ -470,7 +470,7 @@
     "old": "const floor = Math.abs(at[1] - L.feet[1]) <= DEEP_FLOOR_DY;",
     "new": "const floor = true;",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ]
   },
   {
@@ -479,7 +479,7 @@
     "old": "parted: !!was?.parted, said: new Set() };",
     "new": "parted: false, said: new Set() };",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ]
   },
   {
@@ -488,7 +488,7 @@
     "old": "        if (hp != null && rec.entity?.maxHealth > 0) rec.entity.health",
     "new": "        if (false) rec.entity.health",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ]
   },
   {
@@ -497,7 +497,7 @@
     "old": "if (c.at && L && c.mode !== 'join' && ![...c.foes.values()].some((rec) => !rec.dead)) {",
     "new": "if (c.at && L && c.mode !== 'join') {",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ]
   },
   {
@@ -506,16 +506,16 @@
     "old": "if (!c.said.has(c.pile.at.key)) { c.said.add(c.pile.at.key); deps.say?.(POACHED_LINE(firstNameOf(head.name))); }",
     "new": "deps.say?.(POACHED_LINE(firstNameOf(head.name)));",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ]
   },
   {
     "name": "LW14-AUDIT-D13-no-spots",
-    "file": "src/scenes/deepRemains.js",
+    "file": "src/scenes/livingWorld/deepRemains.js",
     "old": "        if (!at) continue;   // AUDIT LW-II D13",
     "new": "        if (!at && false) continue;   // AUDIT LW-II D13",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ]
   },
   {
@@ -524,7 +524,7 @@
     "old": "    if (far) { midScreen?.(tooFarAwayText()); return true; }\n    if (openLiving(foe)) return true;",
     "new": "    if (openLiving(foe)) return true;",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ],
     "note": ""
   },
@@ -534,7 +534,7 @@
     "old": "if (mode !== 'steal' && mode !== 'info' && openLiving",
     "new": "if (mode !== 'steal' && openLiving",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ]
   },
   {
@@ -543,7 +543,7 @@
     "old": "return s.out ? { x: s.out.x, z: s.out.z, y: s.out.y } : null;",
     "new": "return s.out ? { x: s.out.x, z: s.out.z, y: undefined } : null;",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ]
   },
   {
@@ -552,7 +552,7 @@
     "old": "  for (const [i, p] of lootPiles.entries()) if (p.stopKey && _deepCleared.has(p.stopKey) && !p.items.length) settleLootFlat(i);\n",
     "new": "",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ]
   },
   {
@@ -561,7 +561,7 @@
     "old": ".map((s) => `${s.block}:${s.loadID}`));",
     "new": ".map((s) => `${s.loadID}`));",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ]
   },
   {
@@ -570,7 +570,7 @@
     "old": "if (!livingWorldOn() || params.has('online') || !stops?.length",
     "new": "if (!livingWorldOn() || !stops?.length",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ]
   },
   {
@@ -579,7 +579,7 @@
     "old": "          if (_livingRemainsPlace.has(r.key)) return _livingRemainsPlace.get(r.key);\n",
     "new": "",
     "tests": [
-      "test/lw14_deep.test.js"
+      "test/scenes/lw14_deep.test.js"
     ]
   }
 ]

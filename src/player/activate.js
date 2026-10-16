@@ -16,13 +16,13 @@ import { isActionDoorObject } from '../world/actionSystem.js';   // MC-2: Action
 import { noteBodyStack } from './lootStack.js';   // LOOT-STACK: the ray notes the pile of bodies its winner stands at the front of
 import { localizedText } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 /** The pick's pardon (m): a surface met this far outside a target's box is still that target's own face (the box is
- *  the mesh's, rounded). AUDIT DELVE C8: one home - the dungeon's look round reads it (systems/dungeonSense.js). */
+ *  the mesh's, rounded). AUDIT DELVE C8: one home - the dungeon's look round reads it (systems/dungeon/dungeonSense.js). */
 export const PICK_PARDON_M = 0.15;
 
 export { GLOBAL_SCALE };
 
 // PlayerActivate.cs:76-88, the WHOLE set. Three of these used to live
-// in systems/talk.js instead, and wave 22 of this audit added a fourth
+// in systems/talk/talk.js instead, and wave 22 of this audit added a fourth
 // there without noticing the first three - which is how a duplicate
 // set gets built one honest commit at a time. talk.js re-exports these
 // now.

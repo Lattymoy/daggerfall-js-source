@@ -4,27 +4,27 @@
     "file": "src/scenes/world.js",
     "old": "const walkRaise = sharedClockOn() && travelScale > 1 ? dt * CLASSIC_MINUTES_PER_SECOND * (travelScale - 1) : 0;",
     "new": "const walkRaise = 0;",
-    "tests": ["test/fb0929h_walkclock.test.js"]
+    "tests": ["test/systems/fb0929h_walkclock.test.js"]
   },
   {
     "name": "WALK-CLOCK-raised-offline-too",
     "file": "src/scenes/world.js",
     "old": "const walkRaise = sharedClockOn() && travelScale > 1 ? dt * CLASSIC_MINUTES_PER_SECOND * (travelScale - 1) : 0;",
     "new": "const walkRaise = travelScale > 1 ? dt * CLASSIC_MINUTES_PER_SECOND * (travelScale - 1) : 0;",
-    "tests": ["test/fb0929h_walkclock.test.js"]
+    "tests": ["test/systems/fb0929h_walkclock.test.js"]
   },
   {
     "name": "WALK-CLOCK-the-world's-minute-counted-twice",
     "file": "src/scenes/world.js",
     "old": "const walkRaise = sharedClockOn() && travelScale > 1 ? dt * CLASSIC_MINUTES_PER_SECOND * (travelScale - 1) : 0;",
     "new": "const walkRaise = sharedClockOn() && travelScale > 1 ? dt * CLASSIC_MINUTES_PER_SECOND * travelScale : 0;",
-    "tests": ["test/fb0929h_walkclock.test.js"]
+    "tests": ["test/systems/fb0929h_walkclock.test.js"]
   },
   {
     "name": "WALK-CLOCK-the-tick-never-handed-it",
     "file": "src/scenes/world.js",
     "old": "      }, dt * timeScaleMult * travelScale, walkRaise);",
     "new": "      });",
-    "tests": ["test/fb0929h_walkclock.test.js"]
+    "tests": ["test/systems/fb0929h_walkclock.test.js"]
   }
 ]

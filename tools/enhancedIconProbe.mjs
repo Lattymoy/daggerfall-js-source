@@ -180,8 +180,8 @@ check('a record past the end of the archive answers null', past === null, String
 // ── 4. THE PACK SHOWS THE REAL THING ───────────────────────────────
 const addr = await page.evaluate(async () => {
   const { createInventoryWindow } = await import('/src/ui/inventoryDoor.js');
-  const { ITEM_TEMPLATES } = await import('/src/characters/paperdoll.js');
-  const { inventoryItemImage } = await import('/src/systems/itemTemplates.js');
+  const { ITEM_TEMPLATES } = await import('/src/characters/paperdoll/paperdoll.js');
+  const { inventoryItemImage } = await import('/src/systems/item/itemTemplates.js');
   const t = (n) => ITEM_TEMPLATES.find((x) => x.name === n);
   const mk = (n, g = 'Weapons') => {
     const tp = t(n);
@@ -253,7 +253,7 @@ await ctx.close();
   await bootSettled(p2);
   await p2.evaluate(async () => {
     const { createInventoryWindow } = await import('/src/ui/inventoryDoor.js');
-    const { ITEM_TEMPLATES } = await import('/src/characters/paperdoll.js');
+    const { ITEM_TEMPLATES } = await import('/src/characters/paperdoll/paperdoll.js');
     const tp = ITEM_TEMPLATES.find((x) => x.name === 'Longsword');
     const e = { name: 'A', career: { name: 'Spellsword' }, stats: { strength: 50, endurance: 48 },
       items: [{ name: tp.name, templateIndex: tp.index, group: 'Weapons', stackCount: 1,

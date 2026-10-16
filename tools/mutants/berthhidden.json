@@ -1,38 +1,38 @@
 [
   {
     "name": "BERTH-HIDDEN-only-the-shown",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "  const berthBoats = () => (csa()?.state?.AllBoats ?? []).filter((b) => b.GameObject && !b.inside);",
     "new": "  const berthBoats = () => (csa()?.state?.AllBoats ?? []).filter((b) => b.GameObject?.activeSelf && !b.inside);",
     "tests": [
-      "test/berthhidden.test.js"
+      "test/systems/naval/berthhidden.test.js"
     ]
   },
   {
     "name": "BERTH-HIDDEN-a-dungeons-boat-takes-a-berth",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "  const berthBoats = () => (csa()?.state?.AllBoats ?? []).filter((b) => b.GameObject && !b.inside);",
     "new": "  const berthBoats = () => (csa()?.state?.AllBoats ?? []).filter((b) => b.GameObject);",
     "tests": [
-      "test/berthhidden.test.js"
+      "test/systems/naval/berthhidden.test.js"
     ]
   },
   {
     "name": "BERTH-HIDDEN-the-berth-asks-the-shown",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    for (const m of berthBoats()) {\n      if (m === except || Math.hypot(m.GameObject.position[0] - b.pos[0], m.GameObject.position[2] - b.pos[1]) > BERTH_SNAP_M) continue;",
     "new": "    for (const m of myBoats()) {\n      if (m === except || Math.hypot(m.GameObject.position[0] - b.pos[0], m.GameObject.position[2] - b.pos[1]) > BERTH_SNAP_M) continue;",
     "tests": [
-      "test/berthhidden.test.js"
+      "test/systems/naval/berthhidden.test.js"
     ]
   },
   {
     "name": "BERTH-HIDDEN-a-hidden-owners-boat-no-berth",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    for (const m of deps.pool?.peerBoats ?? []) if (m !== except && m.GameObject && Math.hypot(",
     "new": "    for (const m of deps.pool?.peerBoats ?? []) if (m !== except && m.GameObject?.activeSelf !== false && Math.hypot(",
     "tests": [
-      "test/berthhidden.test.js"
+      "test/systems/naval/berthhidden.test.js"
     ]
   }
 ]

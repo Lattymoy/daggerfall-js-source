@@ -15,7 +15,7 @@ on the port's Basic Roads (`vendor/roads-hazelnut/`, also Hazelnut's).
 **Licence.** The mod's CODE is MIT ("Copyright (C) 2020 Hazelnut", the
 header of every script; `PlayerAutoPilot.cs` is "Copyright (C) 2019
 Jedidia" under the same licence). The port's implementation is written
-from that source - `src/systems/travelOptions.js` and the files beside
+from that source - `src/systems/travel/travelOptions.js` and the files beside
 it cite it line by line. The three TEXTURES below are the mod's own
 art and carry no licence text of their own.
 
@@ -57,11 +57,11 @@ roads-hazelnut/README.md`) records a permission from the same author.]**
   **These three are RE-ENCODES, not the author's own files.** The zip
   ships one `traveloptions.dfmod`, a Unity 2019.4.40f1 AssetBundle, and
   the PNGs the mod was built from are not in it: the bundle carries
-  them as `Texture2D` objects in RGB24. `src/formats/unityBundle.js`
+  them as `Texture2D` objects in RGB24. `src/formats/unity/unityBundle.js`
   read the bundle and the three were written back out as PNG, pixel for
   pixel (`tools/travelOptionsAssets.mjs` reproduces them from a copy of
   the zip). The PIXELS are the author's; the file bytes are the port's
-  encoder, which is why the hashes in `test/vendorIntegrity.test.js`
+  encoder, which is why the hashes in `test/tooling/vendorIntegrity.test.js`
   are of the re-encodes and this note says so rather than claiming a
   byte-for-byte carry.
 
@@ -86,16 +86,16 @@ roads-hazelnut/README.md`) records a permission from the same author.]**
 
 ## The port
 
-`src/systems/travelOptions.js` is the mod (`TravelOptionsMod.cs`),
-`src/systems/travelAutopilot.js` is Jedidia's `PlayerAutoPilot.cs`,
-`src/systems/travelPaths.js` the path-following geometry,
-`src/ui/travelControlUI.js` the control panel (`TravelControlUI.cs`),
-`src/ui/travelJunctionMap.js` the junction mini-map, and
-`src/ui/travelPathsOverlay.js` the map window's path and dot drawing
+`src/systems/travel/travelOptions.js` is the mod (`TravelOptionsMod.cs`),
+`src/systems/travel/travelAutopilot.js` is Jedidia's `PlayerAutoPilot.cs`,
+`src/systems/travel/travelPaths.js` the path-following geometry,
+`src/ui/travel/travelControlUI.js` the control panel (`TravelControlUI.cs`),
+`src/ui/travel/travelJunctionMap.js` the junction mini-map, and
+`src/ui/travel/travelPathsOverlay.js` the map window's path and dot drawing
 (`TravelOptionsMapWindow.DrawPath` / `DrawLocation` /
 `DrawMapSection`). The travel map and popup overrides live in the
-port's own `src/ui/travelMapWindow.js` and `src/ui/travelPopUp.js`.
+port's own `src/ui/travel/travelMapWindow.js` and `src/ui/travel/travelPopUp.js`.
 The enhanced lane's control panel and junction map are
-`src/ui/enhancedTravelControl.js` - the port's own, not the mod's.
+`src/ui/enhanced/enhancedTravelControl.js` - the port's own, not the mod's.
 
 See `bible/06-Systems/Travel-Options.md`. Thank you, Hazelnut.

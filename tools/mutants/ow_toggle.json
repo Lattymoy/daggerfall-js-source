@@ -5,7 +5,7 @@
     "old": "function tvOwnsJourneys() { return !!travelOptions && !modSetting(TRAVEL_OPTIONS_VENDOR, 'GeneralOptions.FirstPersonTravel') && isEnhanced() && !!travelView; }",
     "new": "function tvOwnsJourneys() { return !!travelOptions && isEnhanced() && !!travelView; }",
     "tests": [
-      "test/ow_toggle.test.js"
+      "test/systems/travel/ow_toggle.test.js"
     ],
     "note": "First-Person Travel on, the map's pick is still the Overworld's journey (OW-ONLY exactly)."
   },
@@ -15,7 +15,7 @@
     "old": "function tvOwnsJourneys() { return !!travelOptions && !modSetting(TRAVEL_OPTIONS_VENDOR, 'GeneralOptions.FirstPersonTravel') && isEnhanced() && !!travelView; }",
     "new": "function tvOwnsJourneys() { return !!travelOptions && !!modSetting(TRAVEL_OPTIONS_VENDOR, 'GeneralOptions.FirstPersonTravel') && isEnhanced() && !!travelView; }",
     "tests": [
-      "test/ow_toggle.test.js"
+      "test/systems/travel/ow_toggle.test.js"
     ],
     "note": "Off by default reads as on: every journey is walked on the ground and the Overworld owns none."
   },
@@ -25,7 +25,7 @@
     "old": "    if (!tvOwnsJourneys() || travelView.state !== 'off' || !travelOptions.isTravelActive || !travelOptions.state?.autopilot) return;",
     "new": "    if (!isEnhanced() || !travelView || travelView.state !== 'off' || !travelOptions?.isTravelActive || !travelOptions.state?.autopilot) return;",
     "tests": [
-      "test/ow_toggle.test.js"
+      "test/systems/travel/ow_toggle.test.js"
     ],
     "note": "A first-person journey still raises the Overworld the first frame nothing forbids it."
   },
@@ -35,7 +35,7 @@
     "old": "&& travelOptions?.isTravelActive && tvOwnsJourneys()) travelOptions.messages.pauseTravel(); },",
     "new": "&& travelOptions?.isTravelActive) travelOptions.messages.pauseTravel(); },",
     "tests": [
-      "test/ow_toggle.test.js"
+      "test/systems/travel/ow_toggle.test.js"
     ],
     "note": "Raising the view over a first-person journey and bringing it down again stops the journey."
   },
@@ -45,7 +45,7 @@
     "old": "      'GeneralOptions.FirstPersonTravel': Object.freeze({ default: false,",
     "new": "      'GeneralOptions.FirstPersonTravel': Object.freeze({ default: true,",
     "tests": [
-      "test/ow_toggle.test.js"
+      "test/systems/travel/ow_toggle.test.js"
     ],
     "note": "Mac: \"Off by default\" - the Overworld's journeys are gone for everyone who never touched the switch."
   },
@@ -55,7 +55,7 @@
     "old": "    'GeneralOptions.AvoidObstacles', 'GeneralOptions.FirstPersonTravel',\n    'GeneralOptions.FirstPersonTravelFollowsRoads',\n  ]),",
     "new": "    'GeneralOptions.AvoidObstacles',\n    'GeneralOptions.FirstPersonTravelFollowsRoads',\n  ]),",
     "tests": [
-      "test/ow_toggle.test.js"
+      "test/systems/travel/ow_toggle.test.js"
     ],
     "note": "Declared but on no screen: a key nobody can turn (TORCH-BIND's lesson)."
   },
@@ -65,7 +65,7 @@
     "old": "!modSetting(TRAVEL_OPTIONS_VENDOR, 'GeneralOptions.FirstPersonTravel')",
     "new": "!modSetting(TRAVEL_OPTIONS_VENDOR, 'GeneralOptions.AvoidObstacles')",
     "tests": [
-      "test/ow_toggle.test.js"
+      "test/systems/travel/ow_toggle.test.js"
     ],
     "note": "The switch reads another key - AvoidObstacles, on by default: the Overworld owns nothing."
   }

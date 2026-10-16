@@ -1,29 +1,29 @@
 [
   {
     "name": "FGH2H-hand-to-hand-dropped-from-the-guild-skills",
-    "file": "src/systems/guilds.js",
+    "file": "src/systems/guild/guilds.js",
     "old": "      SKILLS.HandToHand, SKILLS.LongBlade, SKILLS.Orcish, SKILLS.ShortBlade],",
     "new": "      SKILLS.LongBlade, SKILLS.Orcish, SKILLS.ShortBlade],",
     "tests": [
-      "test/fgh2h_fighters_handtohand.test.js"
+      "test/systems/guild/fgh2h_fighters_handtohand.test.js"
     ]
   },
   {
     "name": "FGH2H-hand-to-hand-in-giantish-place",
-    "file": "src/systems/guilds.js",
+    "file": "src/systems/guild/guilds.js",
     "old": "    skills: [SKILLS.Archery, SKILLS.Axe, SKILLS.BluntWeapon, SKILLS.Giantish,\n      SKILLS.HandToHand, SKILLS.LongBlade,",
     "new": "    skills: [SKILLS.Archery, SKILLS.Axe, SKILLS.BluntWeapon,\n      SKILLS.HandToHand, SKILLS.LongBlade,",
     "tests": [
-      "test/fgh2h_fighters_handtohand.test.js"
+      "test/systems/guild/fgh2h_fighters_handtohand.test.js"
     ]
   },
   {
     "name": "FGH2H-the-hall-never-trains-it",
-    "file": "src/systems/guildServices.js",
+    "file": "src/systems/guild/guildServices.js",
     "old": "    SKILLS.Giantish, SKILLS.HandToHand, SKILLS.Jumping,",
     "new": "    SKILLS.Giantish, SKILLS.Jumping,",
     "tests": [
-      "test/fgh2h_fighters_handtohand.test.js"
+      "test/systems/guild/fgh2h_fighters_handtohand.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    if (!held || !Object.hasOwn(held, key)) continue;\n    delete held[key];\n    changed = true;\n  }\n  for (const { vendor, key, was } of KEY_MIGRATIONS) {",
     "new": "    if (!held || !Object.hasOwn(held, key)) continue;\n  }\n  for (const { vendor, key, was } of KEY_MIGRATIONS) {",
     "tests": [
-      "test/fgh2h_fighters_handtohand.test.js"
+      "test/systems/guild/fgh2h_fighters_handtohand.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    if (!held || !Object.hasOwn(held, key)) continue;\n    delete held[key];\n    changed = true;\n  }\n  for (const { vendor, key, was } of KEY_MIGRATIONS) {",
     "new": "    if (!held || !Object.hasOwn(held, key)) continue;\n    delete m[vendor];\n    changed = true;\n  }\n  for (const { vendor, key, was } of KEY_MIGRATIONS) {",
     "tests": [
-      "test/fgh2h_fighters_handtohand.test.js"
+      "test/systems/guild/fgh2h_fighters_handtohand.test.js"
     ]
   }
 ]

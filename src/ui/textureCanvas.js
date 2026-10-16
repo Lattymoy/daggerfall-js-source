@@ -138,7 +138,7 @@ export function requestIcon(archive, record, { scale = 2, onReady = null, dye = 
   const key = iconKey(archive, record, scale, dye, dyeTarget);
   // UI1: EVERY SCREEN THAT ASKS WHILE IT IS IN FLIGHT HEARS IT LAND, not the first alone. A slot's fitted picture is
   // made from this record at scale 1 (requestFittedPicture below), which the world's loot billboard asks for too
-  // (ui/itemIconColor32.js): the second ask's onReady was dropped, and its screen kept its initials until some other
+  // (ui/item/itemIconColor32.js): the second ask's onReady was dropped, and its screen kept its initials until some other
   // repaint. A landed record or a miss has no list, so it hears nothing - a repaint still cannot loop.
   if (icons.has(key)) { hear(waiting.get(key), onReady); return icons.get(key); }
   // IN FLIGHT. Without this the next repaint finds nothing cached and
@@ -327,7 +327,7 @@ export function iconName(archive, record, dye = null, dyeTarget = null) {
 }
 
 /** A texture record fitted to its slot - requestFittedPicture over requestIcon at scale 1, by the item's dye and the
- *  swatch it changes (DYE-ICON's `dyeTarget`, systems/itemDye.js itemDyeTarget). */
+ *  swatch it changes (DYE-ICON's `dyeTarget`, systems/item/itemDye.js itemDyeTarget). */
 export function requestFittedIcon(archive, record, { box, dpr = 1, cap = ICON_CAP, dye = null, dyeTarget = null, onReady = null } = /** @type {any} */ ({})) {
   if (!Number.isInteger(archive) || !Number.isInteger(record) || record < 0) return null;
   return requestFittedPicture(iconName(archive, record, dye, dyeTarget),

@@ -309,7 +309,7 @@ function tellHurt(entity, dmg, before, after, saved = false) {
 }
 
 /**
- * INT9 (AUDIT): A DEATH ANOTHER'S WORD DECIDED - the open zone's referee's fall (net/wildRef.js): no withholding, no guild's
+ * INT9 (AUDIT): A DEATH ANOTHER'S WORD DECIDED - the open zone's referee's fall (net/wild/wildRef.js): no withholding, no guild's
  * AvoidDeath, no death save - the referee called it, and its drop follows it whatever this machine says (hurtPlayer's
  * doors turned it aside, and the fallen stood up with a fall already called on it). OnDeath's subscribers and the
  * presenter, as the transition always tells them. Answers whether it was a death.

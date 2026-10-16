@@ -1,6 +1,6 @@
 // @ts-check
 // CAPT-LOG (2026-10-11, bible/03-World/Captains-Sea.md) - THE CAPTAIN PAGE, on the pause menu's Holdings rail
-// (ui/enhancedMenu.js pauseHoldings), after the Fleet: a captain's standing with each of the Bay's three crowns - the
+// (ui/enhanced/enhancedMenu.js pauseHoldings), after the Fleet: a captain's standing with each of the Bay's three crowns - the
 // rank it has named them and what that rank brings in its harbours, how far the next lies, and whether its harbours keep
 // no favours for them (their notoriety in its waters PERKS_REFUSED_AT and over) - the letter of marque held, the contracts
 // under way, and the captain's log. It stands beside the Fleet's page, wherever there are ships to captain (AUDIT

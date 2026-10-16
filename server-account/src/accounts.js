@@ -44,8 +44,8 @@ import { insigniaById, insigniaHeld } from '../../src/net/insignia.js';   // WB9
 import { ID_RE, nameIsIssuable } from '../../src/net/identityToken.js';
 import { PLAY_GRACE_S } from '../../src/net/playClock.js';   // ACC4: the widest gap one beat may credit - one home both ends
 import { MUTE_MAX_MIN } from '../../src/net/moderation.js';   // MOD1: the longest mute - the command and the service agree in one place
-import { verifyReceipt } from '../../src/net/gateReceipt.js';   // WB5b: the relay's kill receipt, verified with its public half
-import { verifyDuelReceipt } from '../../src/net/duelReceipt.js';   // INT8: a duel's result, the relay's
+import { verifyReceipt } from '../../src/net/gate/gateReceipt.js';   // WB5b: the relay's kill receipt, verified with its public half
+import { verifyDuelReceipt } from '../../src/net/duel/duelReceipt.js';   // INT8: a duel's result, the relay's
 import { TERMS_VERSION, PRIVACY_VERSION, LEGAL_VERSION_RE } from '../../src/net/legalLaw.js';   // TERMS1: the documents a new account agrees to - one home both ends
 import {
   hashPassword, verifyPassword, needsRehash, passwordRefusal,
@@ -162,7 +162,7 @@ export function wornNameRefusal(name) {
  *
  * THE CHARACTER'S NAME IS THE SERVICE'S, NEVER THE CLIENT'S: `character` is the realm character's own name, off the row
  * the token is minted for (realm.js realmMintFacts - a realm character of this account, standing and in play), never a
- * word of the request (test/accountworker.test.js: a name in the body never reaches the token). None - no character
+ * word of the request (test/server/accountworker.test.js: a name in the body never reaches the token). None - no character
  * named, an offline one, another account's, a tombstone - is the account's, and silently: there is nothing to wear.
  *
  * AND NEVER ANOTHER ACCOUNT'S USERNAME. A handle is unique (0001's handle_lc index) and is how an account is found - a
@@ -254,7 +254,7 @@ export async function openSession({ db, subtle, rand, nowS }, playerId, deviceLa
 /** SCALE4a (2026-10-08, Mac: "Do 1 2 and 3" - the session and its player were two reads in a row, 4.86 and 4.73 million
  *  of the database's 17.4 million the day before YARD-SHED): THE SESSION'S COLUMNS, named, each read under a `s.` prefix
  *  no column of `players` can carry, so one row holds both without a name in common (`id`, `created_at`, `last_seen`).
- *  The table's own six (0001_accounts.sql; no migration has altered it) - test/scale4a.test.js holds this list to the
+ *  The table's own six (0001_accounts.sql; no migration has altered it) - test/server/scale4a.test.js holds this list to the
  *  migrations' table, so a column added there is a pin that fails until it is named here. */
 export const SESSION_COLUMNS = Object.freeze(['id', 'player_id', 'secret_hash', 'device_label', 'created_at', 'last_seen']);
 /** SCALE4a: the session by its hash and its player beside it, in ONE statement. LEFT, so a session whose player is gone
@@ -976,8 +976,8 @@ export async function duelRecordOf({ db }, playerId) {
 // want to do everything and do it properly"). DUEL1's record was the
 // LOSER's own report - a client that never said it lost never did, and
 // a double knockout was two reports racing. Now the relay that refereed
-// the bout (src/net/duelRef.js) hands BOTH fighters a receipt naming the
-// winner (src/net/duelReceipt.js `d1`), signed with the key the gates'
+// the bout (src/net/duel/duelRef.js) hands BOTH fighters a receipt naming the
+// winner (src/net/duel/duelReceipt.js `d1`), signed with the key the gates'
 // receipts are; either fighter carries it here, and it is counted ONCE -
 // its bout's id is the row's (`rk`, unique). A draw mints nothing.
 //
@@ -1027,7 +1027,7 @@ export async function claimDuel({ db, nowS, subtle }, player, receipt, publicKey
 // Mac: "a gate of oblivion which takes place in a large boss arena", and
 // Option B - the relay's object is the authority over the boss, stamps
 // the kill and signs a receipt for each account that earned it
-// (src/net/gateReceipt.js: dealt its share of the health its own level
+// (src/net/gate/gateReceipt.js: dealt its share of the health its own level
 // claim brought, or stood half the fight). THE ACCOUNT THE RECEIPT NAMES
 // carries it here and it is counted: the relay is the only party that
 // saw the kill, so its signature - verified with the public half this

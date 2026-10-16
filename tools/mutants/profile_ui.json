@@ -5,7 +5,7 @@
     "old": "export const gearPartOf = (slot, it) => (HAND_SLOTS.has(slot) || it?.group === 'Weapons' ? 'hand'",
     "new": "export const gearPartOf = (slot, it) => (false ? 'hand'",
     "tests": [
-      "test/profile_ui.test.js"
+      "test/net/profile_ui.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "Object.freeze([['hand', 'In hand'], ['armour', 'Armour'],",
     "new": "Object.freeze([['armour', 'Armour'], ['hand', 'In hand'],",
     "tests": [
-      "test/profile_ui.test.js"
+      "test/net/profile_ui.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    if (last && last.one === r.slot) {",
     "new": "    if (false) {",
     "tests": [
-      "test/profile_ui.test.js"
+      "test/net/profile_ui.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": " last.slot = `${r.slot}s`; continue; }",
     "new": " continue; }",
     "tests": [
-      "test/profile_ui.test.js"
+      "test/net/profile_ui.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "      head.append(glyphs);",
     "new": "      nm.append(glyphs);",
     "tests": [
-      "test/profile_ui.test.js"
+      "test/net/profile_ui.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "      for (const [cls, t] of facts) record.append(el('div', `dfprofile-fact ${cls}`, t));",
     "new": "      for (const [cls, t] of facts) head.append(el('div', `dfprofile-line ${cls}`, t));",
     "tests": [
-      "test/profile_ui.test.js"
+      "test/net/profile_ui.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "    if (v.note) card.append(el('div', 'dfprofile-note', v.note));\n",
     "new": "",
     "tests": [
-      "test/profile_ui.test.js"
+      "test/net/profile_ui.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": ".dfprofile-name { display: inline-flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 2px 6px;",
     "new": ".dfprofile-name { display: inline-flex; align-items: center; gap: 6px;",
     "tests": [
-      "test/profile_ui.test.js"
+      "test/net/profile_ui.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "  width: min(560px, calc(100vw - 28px)); pointer-events: none;",
     "new": "  width: min(480px, calc(100vw - 28px)); pointer-events: none;",
     "tests": [
-      "test/profile_ui.test.js"
+      "test/net/profile_ui.test.js"
     ]
   }
 ]

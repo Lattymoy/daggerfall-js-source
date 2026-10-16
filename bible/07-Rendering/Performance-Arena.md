@@ -3,7 +3,7 @@
 *The owner: "Exterior performance is really bad" - "Interior is fine. It's exterior that's the issue" - "If you need
 to, pull the freeware online and do it yourself".*
 
-The audit (AUDIT PERF-ARENA, "Audit everything") is `01-Overview/Audit-Perf-Arena.md`; what it changed is written into the
+The audit (AUDIT PERF-ARENA, "Audit everything") is `01-Overview/audits/Audit-Perf-Arena.md`; what it changed is written into the
 sections below as they now stand.
 
 Every slice below leaves the picture as it was: the same triangles in the same order from the same floats, or the same
@@ -102,16 +102,16 @@ flats bind one VAO where each bound its own.
   the last pass left bound - with an arena that is every still flat's indices cut away. It binds no array first now,
   through the renderer. Every other element-buffer bind in src/ binds an array of its own first (audited, 27 sites).
 
-Pins: `test/perfarena.test.js` (5 of its 8) - the allocator over 6,000 random takes and gives; THE PICTURE: a GL that keeps what is
+Pins: `test/render/perfarena.test.js` (5 of its 8) - the allocator over 6,000 random takes and gives; THE PICTURE: a GL that keeps what is
 written into its buffers resolves every triangle a draw rasterises (each corner's five floats, at the draw's uOrigin and
 uSize), and a town of forty batches (woods, single flats, three records and a lamp, scaled flats, five pixels) drawn
 through the main pass, the air pass's emitters and the shadow replay resolves to the base's triangles draw for draw,
 with ONE VAO bound for the main pass's forty draws (the base: forty); a batch's life (freed once, the range reused, a
 move, a gib's own buffers, a batch bigger than an arena); the spill and the let-go; the stray array state, both halves.
-Mutants: `tools/mutants/perfarena.json` (15 of its 27, all dead; the audit's nine AUDIT-ARENA-* beside them). Pins moved: `test/hard3_types.test.js` (58 fields), `test/la_cost.test.js`
-(a billboard call 108 -> 107 GL calls, the frame's second 31 -> 30: one VAO bind fewer), `test/blood1_decals.test.js` (the move's write), and three
-harnesses that named a draw by its VAO alone and now name it by VAO and offset (`test/perfexta.test.js`,
-`test/perfextb.test.js`, `test/lpt1_lowpolytrees.test.js`).
+Mutants: `tools/mutants/perfarena.json` (15 of its 27, all dead; the audit's nine AUDIT-ARENA-* beside them). Pins moved: `test/systems/save/hard3_types.test.js` (58 fields), `test/render/la_cost.test.js`
+(a billboard call 108 -> 107 GL calls, the frame's second 31 -> 30: one VAO bind fewer), `test/combat/blood1_decals.test.js` (the move's write), and three
+harnesses that named a draw by its VAO alone and now name it by VAO and offset (`test/render/perfexta.test.js`,
+`test/render/perfextb.test.js`, `test/systems/lpt1_lowpolytrees.test.js`).
 
 ## PERF-ARENA2 — the arenas grown, and a record's batches together (2026-10-11)
 
@@ -140,7 +140,7 @@ Measured (the same probe, Knightstale by night, the base the PERF-CROWD head, th
 | - the shadow pass | 5.2 | 4.0 | 3.7 |
 | allocated a frame | 1.42 MB | 1.17 MB | 1.09 MB |
 
-The draws are the same draws in the same order; only where a batch's corners live moved. Pins: `test/perfarena.test.js`
+The draws are the same draws in the same order; only where a batch's corners live moved. Pins: `test/render/perfarena.test.js`
 (the spill test's growth and the record's home, and - AUDIT PERF-ARENA A1-A3 - the let-go's homes, a batch bigger than
 the arena the doubling would open and the first fit's home; the growth's bound, its sixth; the one index buffer and
 the homes' bound, its seventh and eighth); mutants PERFARENA2-no-growth, PERFARENA2-unbounded, PERFARENA2-no-home
@@ -152,7 +152,7 @@ the homes' bound, its seventh and eighth); mutants PERFARENA2-no-growth, PERFARE
 their twenty-four arrays each time: lookAt alone was 47 KB of the 1.4 MB the night frame allocated. It writes into two
 scratches now through `lookAtInto` and `perspectiveInto` - twins of `world/mat4.js` lookAt and perspective that write
 into a given array, with mat4.js's arithmetic in its order, so its floats. They live in shadowPass.js and NOT in
-mat4.js: mat4.js is in the relay's bundle (`test/relayversion.test.js` RELAY_GRAPH), and a byte of it changed is a
+mat4.js: mat4.js is in the relay's bundle (`test/net/relayversion.test.js` RELAY_GRAPH), and a byte of it changed is a
 relay deploy that drops every player - the first cut put the twins there and SLAM8 caught it; mat4.js is main's, byte
 for byte.
 
@@ -162,7 +162,7 @@ before and 862 after (Node 22, optimised). The pin holds NO TYPED ARRAY, not no 
 two of its three arguments are not zero would take it to ~290 B with the same floats in V8, but the spec leaves
 `hypot`'s rounding to the engine, and the twins' law is mat4.js's arithmetic as written - left.
 
-Pins: `test/perfalloc1.test.js` (3 of its 4) - every face of 4,000 random lights against the base's formulas, element
+Pins: `test/render/perfalloc1.test.js` (3 of its 4) - every face of 4,000 random lights against the base's formulas, element
 for element (`Object.is`), and lookAt and perspective likewise; (AUDIT PERF-ARENA L2/L3) the twin on translations that
 CANCEL (an eye nearly perpendicular to the view's axis, at 1e3-1e7), an eye at the origin and each face's view before
 the product; twelve lanterns' faces make no typed array. Mutants: `tools/mutants/perfalloc1.json` (12 of its 14, all
@@ -176,7 +176,7 @@ float: it is a dead record now, beside five more of the twin's arithmetic (LA-*)
 doubles each time - 153 KB of the 1.4 MB the night frame allocated, because a double handed to a call V8 does not
 inline is a heap number. It writes the cube into its own Float64Array now and asks `placementsInCubeOf` (bounds.js),
 which reads the same doubles back exactly; `placementsInCube` is that with a scratch, for its other callers. Pins:
-`test/perfalloc1.test.js` (its third) - the cube test against a brute-force oracle over random woods and cubes, through
+`test/render/perfalloc1.test.js` (its third) - the cube test against a brute-force oracle over random woods and cubes, through
 both doors, and the walk's call by its source and its own scratch (AUDIT PERF-ARENA L4: an array a call survived).
 Mutants: `tools/mutants/perfalloc1.json` (PERFALLOC2-*, WALK-scratch-module: dead); three older records re-aimed by
 content onto the moved expression (AUDIT637-B2b, PERF-SHADOW1-d, PERF-SHADOW1-f). AUDIT PERF-ARENA L5: the wrapper's
@@ -250,7 +250,7 @@ The kept answers cost more here than in Node (a kept answer about 0.4 us on this
 so PERF-VOL is the smaller of the two in the game: a tenth of a millisecond at twelve lamps, growing with the lamps and
 the swaying woods by them. PERF-ORDER is 0.3-0.5 ms.
 
-Pins (both slices): `test/perfvol.test.js` (6) - the kept answer against `placementsInVolume` and a walk of every
+Pins (both slices): `test/render/perfvol.test.js` (6) - the kept answer against `placementsInVolume` and a walk of every
 placement over random woods, lantern faces and cascades, frame after frame through one reused Float32Array with the
 radius, each origin axis, the height, a lantern and the grid each moved alone (each flipped answers), the smallest
 move of the radius and the origin and the height's sign each flipping an answer kept a moment before, and a still

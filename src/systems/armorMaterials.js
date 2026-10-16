@@ -84,7 +84,7 @@ export const isShieldTemplate = (templateIndex) => SHIELD_VALUES.has(templateInd
  *    FOOTWEAR window (MensClothing/WomensClothing), and C# excludes it.
  *
  *  `item.artifact` is IsArtifact, the flags word's artifactMask bit
- *  (:308-311), written by createArtifact (systems/loot.js) where DFU
+ *  (:308-311), written by createArtifact (systems/loot/loot.js) where DFU
  *  writes the word (SetArtifact :617) and read back out of the classic
  *  flags on import (systems/classicSave.js).
  *

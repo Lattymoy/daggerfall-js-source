@@ -5,7 +5,7 @@
     "old": "  const open = (backTurned && dist <= ring + TACT.RING_SLACK) || dist < ring - TACT.RING_SLACK;",
     "new": "  const open = (backTurned && dist <= ring + TACT.RING_SLACK);",
     "tests": [
-      "test/tact5_feedback.test.js"
+      "test/characters/enemy/tact5_feedback.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    s.backUntil = now + TACT.RECOVER_HOP;   // FEEDBACK: a hop out, not a retreat",
     "new": "    s.backUntil = s.until;   // FEEDBACK: a hop out, not a retreat",
     "tests": [
-      "test/tact5_feedback.test.js"
+      "test/characters/enemy/tact5_feedback.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  if (dist < ring - TACT.RING_SLACK) { ai.moving = false; return true; }   // FEEDBACK: its back-step spent, it stands",
     "new": "  if (dist < ring - TACT.RING_SLACK) { ai._tacDir = [-ux, -uz]; ai._tacSpeed = TACT.STEP_SPEED; ai.moving = true; return true; }",
     "tests": [
-      "test/tact5_feedback.test.js"
+      "test/characters/enemy/tact5_feedback.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    if (s.state === 'backoff') return walkAway(ai, -ux, -uz, TACT.STEP_SPEED);",
     "new": "    if (false) return walkAway(ai, -ux, -uz, TACT.STEP_SPEED);",
     "tests": [
-      "test/tact5_feedback.test.js"
+      "test/characters/enemy/tact5_feedback.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "      return walkAway(ai, -ux, -uz, TACT.STEP_SPEED);\n    }\n    if (s.kiting)",
     "new": "      ai._tacDir = [-ux, -uz]; ai._tacSpeed = TACT.STEP_SPEED; ai.moving = true; face();\n      return true;\n    }\n    if (s.kiting)",
     "tests": [
-      "test/tact5_feedback.test.js"
+      "test/characters/enemy/tact5_feedback.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "  if (Math.abs(d) > TACT.WALK_FACE_DEG * Math.PI / 180) { ai.moving = false; return true; }",
     "new": "  if (false) { ai.moving = false; return true; }",
     "tests": [
-      "test/tact5_feedback.test.js"
+      "test/characters/enemy/tact5_feedback.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": " && s.state !== 'backoff' && now >= (s.backoffReady ?? 0)) {",
     "new": " && s.state !== 'backoff') {",
     "tests": [
-      "test/tact5_feedback.test.js"
+      "test/characters/enemy/tact5_feedback.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "      if (ai._tacBlocked || now >= s.kiteUntil) {",
     "new": "      if (ai._tacBlocked) {",
     "tests": [
-      "test/tact5_feedback.test.js"
+      "test/characters/enemy/tact5_feedback.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "(dist >= TACT.KITE_IN || s.kiting || now >= (s.kiteReady ?? 0))",
     "new": "(dist >= TACT.KITE_IN || s.kiting || true)",
     "tests": [
-      "test/tact5_feedback.test.js"
+      "test/characters/enemy/tact5_feedback.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "  if (s.kind === 'ranged') b.melee.delete(ai); else b.ranged.delete(ai);",
     "new": "  if (false) b.melee.delete(ai); else if (false) b.ranged.delete(ai);",
     "tests": [
-      "test/tact5_feedback.test.js"
+      "test/characters/enemy/tact5_feedback.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "    // (it holds its fire), never circling the target\n    return false;",
     "new": "    // (it holds its fire), never circling the target\n    return holdRing(ai, s, b, ux, uz, dist, ring + 2, now, face);",
     "tests": [
-      "test/tact5_feedback.test.js"
+      "test/characters/enemy/tact5_feedback.test.js"
     ]
   },
   {
@@ -104,16 +104,16 @@
     "old": "  const away = s.key != null && (s.kiting || s.state === 'backoff' || now < (s.faceUntil ?? 0));",
     "new": "  const away = false;",
     "tests": [
-      "test/tact5_feedback.test.js"
+      "test/characters/enemy/tact5_feedback.test.js"
     ]
   },
   {
     "name": "TACT5-blocked-walks-on",
-    "file": "src/characters/enemyMotor.js",
+    "file": "src/characters/enemy/enemyMotor.js",
     "old": "        if (this._tacDir) { this._tacDir = null; this._tacBlocked = true; this.moving = false; }",
     "new": "        if (this._tacDir) { this._tacDir = null; this._tacBlocked = true; }",
     "tests": [
-      "test/tact5_feedback.test.js"
+      "test/characters/enemy/tact5_feedback.test.js"
     ]
   }
 ]

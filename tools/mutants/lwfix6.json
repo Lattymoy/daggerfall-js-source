@@ -5,7 +5,7 @@
     "old": "ctx.ownedRoom = !!(restore?.privateRoom || hit.sailingCabin || (building && (home !== null || houseOwnedAt(",
     "new": "ctx.ownedRoom = !!(restore?.privateRoom || hit.sailingCabin || (building && (houseOwnedAt(",
     "tests": [
-      "test/lwfix6_rooms.test.js"
+      "test/systems/livingWorld/lwfix6_rooms.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "(building && (home !== null || houseOwnedAt(building, building.buildingKey))));",
     "new": "(building && (home !== null)));",
     "tests": [
-      "test/lwfix6_rooms.test.js"
+      "test/systems/livingWorld/lwfix6_rooms.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "ctx.ownedRoom = !!(restore?.privateRoom || hit.sailingCabin ||",
     "new": "ctx.ownedRoom = !!(hit.sailingCabin ||",
     "tests": [
-      "test/lwfix6_rooms.test.js"
+      "test/systems/livingWorld/lwfix6_rooms.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "ctx.ownedRoom = !!(restore?.privateRoom || hit.sailingCabin ||",
     "new": "ctx.ownedRoom = !!(restore?.privateRoom ||",
     "tests": [
-      "test/lwfix6_rooms.test.js"
+      "test/systems/livingWorld/lwfix6_rooms.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "        return modes?.interiorCtx?.ownedRoom ? null : { key: b.buildingKey, town };",
     "new": "        return { key: b.buildingKey, town };",
     "tests": [
-      "test/lwfix6_rooms.test.js"
+      "test/systems/livingWorld/lwfix6_rooms.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "      ctx.landing = [...(waysIn[0] ?? landing)];",
     "new": "      ctx.landing = [...landing];",
     "tests": [
-      "test/lwfix6_rooms.test.js"
+      "test/systems/livingWorld/lwfix6_rooms.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "      ctx.landing = [...(waysIn[0] ?? landing)];",
     "new": "      ctx.landing = [...(waysIn[0] ?? [0, 0, 0])];",
     "tests": [
-      "test/lwfix6_rooms.test.js"
+      "test/systems/livingWorld/lwfix6_rooms.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "      origin: () => modes?.interiorCtx?.landing ?? null,",
     "new": "      origin: () => null,",
     "tests": [
-      "test/lwfix6_rooms.test.js"
+      "test/systems/livingWorld/lwfix6_rooms.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "      livingWays.frame(); livingMemoFresh();   // AUDIT-E2",
     "new": "      void 0;   // AUDIT-E2",
     "tests": [
-      "test/lwfix6_rooms.test.js"
+      "test/systems/livingWorld/lwfix6_rooms.test.js"
     ]
   },
   {
@@ -86,26 +86,26 @@
     "old": "      livingIndoorsStep(townTalk.overlayActive ? 0 : dt);",
     "new": "      livingIndoorsStep(dt);",
     "tests": [
-      "test/lwfix6_rooms.test.js"
+      "test/systems/livingWorld/lwfix6_rooms.test.js"
     ]
   },
   {
     "name": "LW-FIX6-empty-table",
-    "file": "src/scenes/livingIndoors.js",
+    "file": "src/scenes/livingWorld/livingIndoors.js",
     "old": "      for (const ti of [...company.keys()]) if (!tables.has(ti)) company.delete(ti);",
     "new": "        void 0;",
     "tests": [
-      "test/lwfix6_rooms.test.js"
+      "test/systems/livingWorld/lwfix6_rooms.test.js"
     ],
     "note": "LW-TALK (re-aimed by content): a table emptied forgets its company - two who come to it meet anew, never in an old company's round."
   },
   {
     "name": "LW-FIX6-room-clock-back",
-    "file": "src/scenes/livingIndoors.js",
+    "file": "src/scenes/livingWorld/livingIndoors.js",
     "old": "last && t >= last.t && t - last.t < GREET_REST_MIN && (last.said || !stopped)",
     "new": "last && t - last.t < GREET_REST_MIN && (last.said || !stopped)",
     "tests": [
-      "test/lwfix6_rooms.test.js"
+      "test/systems/livingWorld/lwfix6_rooms.test.js"
     ],
     "note": "LW-TALK (re-aimed by content): the law in its new home."
   },
@@ -115,17 +115,17 @@
     "old": "last && this._now >= last.t && this._now - last.t < GREET_REST_MIN",
     "new": "last && this._now - last.t < GREET_REST_MIN",
     "tests": [
-      "test/lwfix6_rooms.test.js"
+      "test/systems/livingWorld/lwfix6_rooms.test.js"
     ],
     "note": "LW-TALK (re-aimed by content): the law in its new home."
   },
   {
     "name": "LW-FIX6-road-clock-back",
-    "file": "src/scenes/livingRoads.js",
+    "file": "src/scenes/livingWorld/livingRoads.js",
     "old": "      if (last != null && t >= last && t - last < ROAD_GREET_REST_MIN) continue;",
     "new": "      if (last != null && t - last < ROAD_GREET_REST_MIN) continue;",
     "tests": [
-      "test/lwfix6_rooms.test.js"
+      "test/systems/livingWorld/lwfix6_rooms.test.js"
     ]
   },
   {
@@ -134,7 +134,7 @@
     "old": "      questFeet: () => modes?.interiorQuestFeet?.() ?? [],",
     "new": "      questFeet: () => [],",
     "tests": [
-      "test/lwfix6_rooms.test.js"
+      "test/systems/livingWorld/lwfix6_rooms.test.js"
     ]
   },
   {
@@ -143,7 +143,7 @@
     "old": "    interiorQuestFeet: () => (mode === 'interior' ? questFlats.filter(",
     "new": "    interiorQuestFeet: () => (false ? questFlats.filter(",
     "tests": [
-      "test/lwfix6_rooms.test.js"
+      "test/systems/livingWorld/lwfix6_rooms.test.js"
     ]
   },
   {
@@ -152,25 +152,25 @@
     "old": "questFlats.filter((q) => !q.dead && q.active !== false && Number.isFinite(q.x)",
     "new": "questFlats.filter((q) => q.active !== false && Number.isFinite(q.x)",
     "tests": [
-      "test/lwfix6_rooms.test.js"
+      "test/systems/livingWorld/lwfix6_rooms.test.js"
     ]
   },
   {
     "name": "LW-FIX6-ways-in-unkept",
-    "file": "src/scenes/livingIndoors.js",
+    "file": "src/scenes/livingWorld/livingIndoors.js",
     "old": " || !far(p, waysIn, INDOOR_DOOR_M)) continue;",
     "new": ") continue;",
     "tests": [
-      "test/lwfix6_rooms.test.js"
+      "test/systems/livingWorld/lwfix6_rooms.test.js"
     ]
   },
   {
     "name": "LW-FIX6-ways-in-unpassed",
-    "file": "src/scenes/livingIndoors.js",
+    "file": "src/scenes/livingWorld/livingIndoors.js",
     "old": "...beds.map((x) => x.feet)], deps.waysIn?.() ?? []) : [];",
     "new": "...beds.map((x) => x.feet)], []) : [];",
     "tests": [
-      "test/lwfix6_rooms.test.js"
+      "test/systems/livingWorld/lwfix6_rooms.test.js"
     ]
   },
   {
@@ -179,7 +179,7 @@
     "old": "      waysIn: () => modes?.interiorCtx?.waysIn ?? [],",
     "new": "      waysIn: () => [],",
     "tests": [
-      "test/lwfix6_rooms.test.js"
+      "test/systems/livingWorld/lwfix6_rooms.test.js"
     ]
   },
   {
@@ -188,7 +188,7 @@
     "old": "      ctx.waysIn = waysIn.filter(Boolean);",
     "new": "      ctx.waysIn = waysIn;",
     "tests": [
-      "test/lwfix6_rooms.test.js"
+      "test/systems/livingWorld/lwfix6_rooms.test.js"
     ]
   },
   {
@@ -197,7 +197,7 @@
     "old": "      const waysIn = siblings.map((s) => interiorLanding(",
     "new": "      const waysIn = siblings.slice(0, 1).map((s) => interiorLanding(",
     "tests": [
-      "test/lwfix6_rooms.test.js"
+      "test/systems/livingWorld/lwfix6_rooms.test.js"
     ]
   }
 ]

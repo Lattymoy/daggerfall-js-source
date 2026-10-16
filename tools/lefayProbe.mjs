@@ -1,6 +1,6 @@
 // LEFAY1 - THE MONUMENT TO JULIAN LEFAY, DRAWN IN A REAL BROWSER.
 //
-// node holds its law (test/lefay1_monument.test.js: the spot, the faces outward, the plaque's corners, the art); what
+// node holds its law (test/world/lefay1_monument.test.js: the spot, the faces outward, the plaque's corners, the art); what
 // node cannot answer is what lands on the pixels drawn AS THE GAME DRAWS (world/mat4.js THE HANDEDNESS LAW: the
 // projection mirrored in x, the front faces clockwise on screen) with the back faces culled: its steps, its pedestal,
 // the cornice's underside and its obelisk all drawn from outside, and the plaque's inscription READING the right way

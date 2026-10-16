@@ -30,7 +30,7 @@ await page.waitForSelector('.px-menu button', { timeout: 15000 });
 
 const out = await page.evaluate(async () => {
   const { Renderer } = await import('/src/render/renderer.js');
-  const P = await import('/src/formats/mwParticles.js');
+  const P = await import('/src/formats/morrowind/mwParticles.js');
   const canvas = document.createElement('canvas');
   canvas.width = 128; canvas.height = 128;
   document.body.append(canvas);

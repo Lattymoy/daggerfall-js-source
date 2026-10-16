@@ -16,7 +16,7 @@ import { srand, rand, randomRange } from '../formats/dfRandom.js';
 import { firstName, GENDERS } from '../characters/nameHelper.js';
 import { localizedText, localizedTable, localizedTextList } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 import { getLocalizedFactionName } from '../systems/textManager.js';   // L10N3e: a guild hall's and a temple's faction names, as shown
-import { isOnlinePage } from '../systems/onlineLane.js';   // EMPIRE-BANK: online, every bank is the Empire's
+import { isOnlinePage } from '../systems/online/onlineLane.js';   // EMPIRE-BANK: online, every bank is the Empire's
 
 /** EMPIRE-BANK (2026-09-27, Discord: "For online mode, the bank of daggerfall becomes the bank of the empire"): what an
  *  online page's banks are "of" - every one of them, whatever region it stands in ("The Bank of the Empire"). A
@@ -46,7 +46,7 @@ export const BUILDING_TYPES = Object.freeze({
  *  player could neither see nor ask after. DFU keeps its type off the Where-is page (TalkManager
  *  CheckBuildingTypeInSkipList) and groups its automap byte with the houses (ExteriorAutomap.cs:1482-1541); the port
  *  asks after it under its group's word (systems/topicTree.js, scenes/townTalk.js) and draws it in the shop's colour on
- *  both town maps (ui/townQuarters.js). DFU's own tables stay as they are. */
+ *  both town maps (ui/town/townQuarters.js). DFU's own tables stay as they are. */
 export const OPENED_SHOP_TYPES = Object.freeze([BUILDING_TYPES.FurnitureStore]);
 /** Each opened shop's Where-is group, worded as DFU's are ("Clothing stores", "General stores"). */
 export const OPENED_SHOP_GROUPS = Object.freeze({ [BUILDING_TYPES.FurnitureStore]: 'Furniture stores' });

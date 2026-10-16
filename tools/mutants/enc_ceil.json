@@ -1,11 +1,11 @@
 [
   {
     "name": "ENC-CEIL-bare-formula",
-    "file": "src/systems/rrInstall.js",
+    "file": "src/systems/roleplayRealism/rrInstall.js",
     "old": "    maxEncumbrance: entityMaxEncumbrance(entity),",
     "new": "    maxEncumbrance: Math.floor(liveStat(entity, 'strength') * 1.5),",
     "tests": [
-      "test/rr1_realism.test.js"
+      "test/systems/rr1_realism.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  return mult > 0 ? amount + Math.trunc(amount * mult) : amount;",
     "new": "  return amount;",
     "tests": [
-      "test/rr1_realism.test.js"
+      "test/systems/rr1_realism.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  return mult > 0 ? amount + Math.trunc(amount * mult) : amount;",
     "new": "  return mult > 0 ? amount + Math.ceil(amount * mult + 0.5) : amount;",
     "tests": [
-      "test/rr1_realism.test.js"
+      "test/systems/rr1_realism.test.js"
     ]
   }
 ]

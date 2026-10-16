@@ -7,7 +7,7 @@
 // Mac: "Server-owned" (bible/11-Multiplayer/Chapters-Arc.md section 3).
 // net/npcChapterLaw.js holds the law; server-account/src/npcRoll.js keeps
 // the Roll; this file decides WHEN to ask and what to hold. Its audit is
-// bible/01-Overview/Audit-Chapters.md (AUDIT CHAP).
+// bible/01-Overview/audits/Audit-Chapters.md (AUDIT CHAP).
 //
 // ═══ THE SERVICE'S WORD IS THE STANDING ════════════════════════════
 //
@@ -69,7 +69,7 @@ import {
   rollBookCap, rollSeatsOf, ROLL_SEATS_MS, ROLL_BOOK_RANK_MAX, rollPromoteCeiling, rollPaceWait,   // ROLL-PACE
   rollMovesOf,   // STANDING-WORDS
 } from './npcChapterLaw.js';
-import { setReputation } from '../systems/factionRep.js';
+import { setReputation } from '../systems/faction/factionRep.js';
 import { setStandingOwed } from '../systems/standingOwed.js';   // STANDING-WORDS: the owed, kept for the windows
 
 /** The refusals that end the tracker for this page - the Roll shut, the character no longer this tab's, the account

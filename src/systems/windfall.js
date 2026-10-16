@@ -20,13 +20,13 @@
 //     lerped toward Gust by the gust and eased 1 - e^(-3 dt) a frame; the sway's and the shiver's phases run on its
 //     frequencies.
 // Single precision as the C# runs it (Math.fround at every float operation the assembly makes in float) - pinned
-// against the reference harness's trace (test/windfall1_model.test.js).
+// against the reference harness's trace (test/systems/windfall1_model.test.js).
 //
 // ENHANCED ENVIRONMENTS (Mac: "integrate into our enhanced environments seamlessly"): Windfall is the enhanced
 // outdoors' - the hosts tick it under the enhanced sky only (sky.enhanced), as WIND1's wind and every consumer of it
 // are - and it does not stand beside the port's own sway, it IS the sway while it is on (render/renderer.js BB_VS
 // takes one law or the other, never both). ONE WIND, ONE WAY: the heading the trees lean and the leaves blow is the
-// outdoors' own wind's (systems/windDrive.js `dir` - the wisps', the rain's, the clouds'), Windfall's slow wander and
+// outdoors' own wind's (systems/wind/windDrive.js `dir` - the wisps', the rain's, the clouds'), Windfall's slow wander and
 // its gusts' swing turned about it; the mod's daily heading (HashUnit x 360 + WindDirectionDegrees) stands only where
 // the host hands no wind (a test, a frame with none). The port's eighth weather, the sandstorm (WEATHER2d, a gale's
 // wind - WIND1's VIOLENCE 0.95), is a storm here as Thunder is; DFU has no such word.

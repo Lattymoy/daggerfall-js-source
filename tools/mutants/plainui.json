@@ -5,7 +5,7 @@
     "old": "    return seatMay(mine.rank, 'pledge')\n",
     "new": "    return seatMay(mine.rank, 'tribute')\n",
     "tests": [
-      "test/plainui.test.js"
+      "test/systems/legacy/plainui.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  const here = (mine.pledges ?? []).find((/** @type {any} */ p) => p.region === seat.region) ?? null;\n  if (!here) {",
     "new": "  const here = (mine.pledges ?? []).find((/** @type {any} */ p) => p.key === seat.key) ?? null;\n  if (!here) {",
     "tests": [
-      "test/plainui.test.js"
+      "test/systems/legacy/plainui.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "export const seatGuideOpen = (seat, data) => !(data?.mine",
     "new": "export const seatGuideOpen = (seat, data) => (data?.mine",
     "tests": [
-      "test/plainui.test.js"
+      "test/systems/legacy/plainui.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "SEAT_PANELS.guide, guideOpen ?? seatGuideOpen(seat, data), (o) => { guideOpen = o; });",
     "new": "SEAT_PANELS.guide, seatGuideOpen(seat, data), (o) => { guideOpen = o; });",
     "tests": [
-      "test/plainui.test.js"
+      "test/systems/legacy/plainui.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "(and at least ${CLAIM_THRESHOLD[t].toLocaleString('en-US')} influence)",
     "new": "(and at least ${CLAIM_THRESHOLD.palace.toLocaleString('en-US')} influence)",
     "tests": [
-      "test/plainui.test.js"
+      "test/systems/legacy/plainui.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "challengers earn ${Math.round(UNREST_BONUS * 100)}% more influence",
     "new": "challengers earn 20% more influence",
     "tests": [
-      "test/plainui.test.js"
+      "test/systems/legacy/plainui.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "1 for every ${TRIBUTE_MARKS_PER_INFLUENCE} silver",
     "new": "1 for every 7 silver",
     "tests": [
-      "test/plainui.test.js"
+      "test/systems/legacy/plainui.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "          const next = el('p', 'seat-next', seatNextStep(seat, data, { nameOf, nowS: ui.nowS() }));",
     "new": "          const next = el('p', 'seat-next', '');",
     "tests": [
-      "test/plainui.test.js"
+      "test/systems/legacy/plainui.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "chapterGuideOpen ?? !(writs?.merit ?? []).some((m) => Number(m?.merit) > 0)",
     "new": "chapterGuideOpen ?? (writs?.merit ?? []).some((m) => Number(m?.merit) > 0)",
     "tests": [
-      "test/plainui.test.js"
+      "test/systems/legacy/plainui.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "at most ${n(MERIT_CAP_WEEK)} an account a week",
     "new": "at most 500 an account a week",
     "tests": [
-      "test/plainui.test.js"
+      "test/systems/legacy/plainui.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "Strength rises 1 for each mark its members' Merit reached that week, up to ${STRENGTH_STEP_MAX}.",
     "new": "Strength rises 1 for each mark its members' Merit reached that week, up to 5.",
     "tests": [
-      "test/plainui.test.js"
+      "test/systems/legacy/plainui.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "    if (writs?.chapters?.length) {\n      const guide",
     "new": "    if (writs) {\n      const guide",
     "tests": [
-      "test/plainui.test.js"
+      "test/systems/legacy/plainui.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "  const death = model === MODELS.bloodline ? bloodline : model === MODELS.enduring ? enduring :",
     "new": "  const death = model === MODELS.enduring ? bloodline : model === MODELS.bloodline ? enduring :",
     "tests": [
-      "test/plainui.test.js"
+      "test/systems/legacy/plainui.test.js"
     ]
   },
   {
@@ -122,16 +122,16 @@
     "old": "Arkay's toll takes ${pct(tollShare)} of your race's lifespan",
     "new": "Arkay's toll takes 6% of your race's lifespan",
     "tests": [
-      "test/plainui.test.js"
+      "test/systems/legacy/plainui.test.js"
     ]
   },
   {
     "name": "PLAINUI-family-page-undrawn",
-    "file": "src/ui/enhancedMenu.js",
+    "file": "src/ui/enhanced/enhancedMenu.js",
     "old": "hall: drawHallPage, guide: drawGuidePage })[famSec]",
     "new": "hall: drawHallPage, guide: drawHallPage })[famSec]",
     "tests": [
-      "test/plainui.test.js"
+      "test/systems/legacy/plainui.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "share: (r + REGARD_MAX) / (2 * REGARD_MAX),",
     "new": "share: r / REGARD_MAX,",
     "tests": [
-      "test/plainui.test.js"
+      "test/systems/legacy/plainui.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "neutral: 'Known',",
     "new": "neutral: 'Neutral',",
     "tests": [
-      "test/plainui.test.js"
+      "test/systems/legacy/plainui.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "        regard: () => (_toneTarget ? livingTalk?.regard?.(_toneTarget) ?? null : null),\n",
     "new": "",
     "tests": [
-      "test/plainui.test.js"
+      "test/systems/legacy/plainui.test.js"
     ]
   },
   {
@@ -167,16 +167,16 @@
     "old": "    return { regard: rel.regard(id, day), standing: rel.standing(id, day) };",
     "new": "    return { regard: rel.regard(id, day), standing: rel.standing(id, day + 1) };",
     "tests": [
-      "test/plainui.test.js"
+      "test/systems/legacy/plainui.test.js"
     ]
   },
   {
     "name": "PLAINUI-panel-size-back",
-    "file": "src/ui/enhancedPlusStyle.js",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
     "old": ".notice-panel { margin: 0 0 12px; padding: 12px 14px; font-size: 15px;",
     "new": ".notice-panel { margin: 0 0 12px; padding: 12px 14px; font-size: 13px;",
     "tests": [
-      "test/plainui.test.js"
+      "test/systems/legacy/plainui.test.js"
     ]
   }
 ]

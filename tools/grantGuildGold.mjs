@@ -16,7 +16,7 @@
 // the service holds unique - so "empire of tamriel" typed into the workflow is the Empire of Tamriel, and no other.
 
 import { isMain } from './lib/isMain.mjs';
-import { guildNameOf, guildNameKey, GUILD_TREASURY_MAX } from '../src/net/guildLaw.js';
+import { guildNameOf, guildNameKey, GUILD_TREASURY_MAX } from '../src/net/guild/guildLaw.js';
 
 /** Who the guild's ledger says put the gold in - never a registered player's handle (a handle has no space). */
 export const GRANT_BY = 'The developers';

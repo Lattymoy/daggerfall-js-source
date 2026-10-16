@@ -28,7 +28,7 @@ await page.waitForSelector('.px-menu button', { timeout: 15000 });
 const out = await page.evaluate(async () => {
   const { ChatLog } = await import('/src/net/chat.js');
   const { createChatPanel } = await import('/src/ui/chatPanel.js');
-  const { injectEnhancedStyle } = await import('/src/ui/enhancedStyle.js');
+  const { injectEnhancedStyle } = await import('/src/ui/enhanced/enhancedStyle.js');
   injectEnhancedStyle();   // the skin online forces (OL1) - the other half of the collision
   const session = {
     id: 'me-0001', name: 'Janome', roomCount: 5,

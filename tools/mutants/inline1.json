@@ -5,9 +5,9 @@
     "old": "assetsInlineLimit: (filePath) => (/[\\\\/]vendor[\\\\/]/.test(filePath) ? false : undefined),",
     "new": "assetsInlineLimit: (filePath) => (/[\\\\/]vendor[\\\\/](?:eye-of-the-beholder|immersive-footsteps|weapon-sheathing)[\\\\/]/.test(filePath) ? false : undefined),",
     "tests": [
-      "test/vendorinline.test.js",
-      "test/eotb_body.test.js",
-      "test/if1_immersivefootsteps.test.js"
+      "test/ui/vendorinline.test.js",
+      "test/player/eyeOfTheBeholder/eotb_body.test.js",
+      "test/systems/if1_immersivefootsteps.test.js"
     ]
   },
   {
@@ -16,8 +16,8 @@
     "old": "assetsInlineLimit: (filePath) => (/[\\\\/]vendor[\\\\/]/.test(filePath) ? false : undefined),",
     "new": "assetsInlineLimit: (filePath) => (/[\\\\/]vendor[\\\\/]/.test(filePath) ? false : false),",
     "tests": [
-      "test/vendorinline.test.js",
-      "test/eotb_body.test.js"
+      "test/ui/vendorinline.test.js",
+      "test/player/eyeOfTheBeholder/eotb_body.test.js"
     ]
   }
 ]

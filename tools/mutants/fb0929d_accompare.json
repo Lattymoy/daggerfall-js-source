@@ -5,8 +5,8 @@
     "old": "if (item.group === 'Weapons' && getItemHands(item) === ITEM_HANDS.Both) out.push(EQUIP_SLOTS.LeftHand, EQUIP_SLOTS.RightHand);",
     "new": "if (item.group === 'Weapons' && getItemHands(item) === ITEM_HANDS.Both) out.push(EQUIP_SLOTS.RightHand);",
     "tests": [
-      "test/fb0929d_accompare.test.js",
-      "test/equipmechanics.test.js"
+      "test/systems/fb0929d_accompare.test.js",
+      "test/ui/equipmechanics.test.js"
     ]
   },
   {
@@ -15,7 +15,7 @@
     "old": "if (right && getItemHands(right) === ITEM_HANDS.Both) out.push(EQUIP_SLOTS.RightHand);   // a shield bumps a held 2H",
     "new": "if (right) out.push(EQUIP_SLOTS.RightHand);   // a shield bumps a held 2H",
     "tests": [
-      "test/fb0929d_accompare.test.js"
+      "test/systems/fb0929d_accompare.test.js"
     ]
   },
   {
@@ -24,7 +24,7 @@
     "old": "  out.push(slot);   // swap the occupant out (alwaysEquip)\n",
     "new": "",
     "tests": [
-      "test/fb0929d_accompare.test.js"
+      "test/systems/fb0929d_accompare.test.js"
     ]
   },
   {
@@ -33,7 +33,7 @@
     "old": "for (const s of wearLeavers(entity, item, slot)) {",
     "new": "for (const s of [slot]) {",
     "tests": [
-      "test/fb0929d_accompare.test.js"
+      "test/systems/fb0929d_accompare.test.js"
     ]
   },
   {
@@ -42,7 +42,7 @@
     "old": "export const bodyPartForSlot = (slot) => SLOT_BODY_PART.get(slot) ?? -1;",
     "new": "export const bodyPartForSlot = (slot) => SLOT_BODY_PART.get(slot) ?? 0;",
     "tests": [
-      "test/fb0929d_accompare.test.js"
+      "test/systems/fb0929d_accompare.test.js"
     ]
   },
   {
@@ -51,7 +51,7 @@
     "old": "export const STRUCK_BODY_PARTS = Object.freeze([0, 0, 1, 1, 1,",
     "new": "export const STRUCK_BODY_PARTS = Object.freeze([0, 1, 1, 1, 1,",
     "tests": [
-      "test/fb0929d_accompare.test.js"
+      "test/systems/fb0929d_accompare.test.js"
     ]
   },
   {
@@ -60,7 +60,7 @@
     "old": "_overrides.get('struckBodyPartTable')?.()",
     "new": "_overrides.get('struckBodyParts')?.()",
     "tests": [
-      "test/fb0929d_accompare.test.js"
+      "test/systems/fb0929d_accompare.test.js"
     ]
   },
   {
@@ -69,7 +69,7 @@
     "old": "registerFormulaOverride('struckBodyPartTable', () => (modules().armorHitFormulaRedone ? PCAAO_BODY_PARTS : undefined));",
     "new": "registerFormulaOverride('struckBodyPartTable', () => PCAAO_BODY_PARTS);",
     "tests": [
-      "test/fb0929d_accompare.test.js"
+      "test/systems/fb0929d_accompare.test.js"
     ]
   },
   {
@@ -78,7 +78,7 @@
     "old": "registerFormulaOverride('struckBodyPartTable', () => (modules().armorHitFormulaRedone ? PCAAO_BODY_PARTS : undefined));",
     "new": "",
     "tests": [
-      "test/fb0929d_accompare.test.js"
+      "test/systems/fb0929d_accompare.test.js"
     ]
   },
   {
@@ -87,16 +87,16 @@
     "old": "  registerFormulaOverride('struckBodyPartTable', null);   // AC-COMPARE\n",
     "new": "",
     "tests": [
-      "test/fb0929d_accompare.test.js"
+      "test/systems/fb0929d_accompare.test.js"
     ]
   },
   {
     "name": "ACCOMPARE-wdm-min-without-its-material",
-    "file": "src/systems/itemInfo.js",
+    "file": "src/systems/item/itemInfo.js",
     "old": "return [weaponMinDamage(item.templateIndex) + mod, weaponMaxDamage(item.templateIndex) + mod];",
     "new": "return [weaponMinDamage(item.templateIndex), weaponMaxDamage(item.templateIndex) + mod];",
     "tests": [
-      "test/fb0929d_accompare.test.js"
+      "test/systems/fb0929d_accompare.test.js"
     ]
   },
   {
@@ -105,7 +105,7 @@
     "old": "  .map((k) => k.replace(/([a-z])([A-Z])/g, (_, lo, up) => `${lo} ${up.toLowerCase()}`)));",
     "new": "  .map((k) => k));",
     "tests": [
-      "test/fb0929d_accompare.test.js"
+      "test/systems/fb0929d_accompare.test.js"
     ]
   },
   {
@@ -114,7 +114,7 @@
     "old": "(_, part) => armorLabelValue(entity?.armorValues?.[part] ?? 100, entityArmorDisplayMod(entity, part)));",
     "new": "(_, part) => armorLabelValue(entity?.armorValues?.[part] ?? 100));",
     "tests": [
-      "test/fb0929d_accompare.test.js"
+      "test/systems/fb0929d_accompare.test.js"
     ]
   },
   {
@@ -123,7 +123,7 @@
     "old": "for (const part of table) out[part]++;",
     "new": "for (const part of table) out[part] = 1;",
     "tests": [
-      "test/fb0929d_accompare.test.js"
+      "test/systems/fb0929d_accompare.test.js"
     ]
   },
   {
@@ -132,7 +132,7 @@
     "old": "return parts.reduce((sum, v, part) => sum + v * counts[part], 0) / table.length;",
     "new": "return parts.reduce((sum, v, part) => sum + v * counts[part], 0) / NUMBER_BODY_PARTS;",
     "tests": [
-      "test/fb0929d_accompare.test.js"
+      "test/systems/fb0929d_accompare.test.js"
     ]
   },
   {
@@ -141,7 +141,7 @@
     "old": "return parts.reduce((sum, v, part) => sum + v * counts[part], 0) / table.length;",
     "new": "return parts.reduce((sum, v) => sum + v, 0) / table.length;",
     "tests": [
-      "test/fb0929d_accompare.test.js"
+      "test/systems/fb0929d_accompare.test.js"
     ]
   },
   {
@@ -150,7 +150,7 @@
     "old": "export const tenth = (x) => Math.round(x * 10) / 10;",
     "new": "export const tenth = (x) => Math.round(x);",
     "tests": [
-      "test/fb0929d_accompare.test.js"
+      "test/systems/fb0929d_accompare.test.js"
     ]
   },
   {
@@ -159,7 +159,7 @@
     "old": "if (isBrokenItem(item) || isForbiddenEquip(entity.career, item)) return null;",
     "new": "if (isBrokenItem(item)) return null;",
     "tests": [
-      "test/fb0929d_accompare.test.js"
+      "test/systems/fb0929d_accompare.test.js"
     ]
   },
   {
@@ -168,7 +168,7 @@
     "old": "slotsThen[slot] = asKnown(item);",
     "new": "slotsThen[slot] = item;",
     "tests": [
-      "test/fb0929d_accompare.test.js"
+      "test/systems/fb0929d_accompare.test.js"
     ]
   },
   {
@@ -177,7 +177,7 @@
     "old": "armorLabelValue(now[p]) + pointsThen[p] - pointsNow[p]);",
     "new": "armorLabelValue(now[p]));",
     "tests": [
-      "test/fb0929d_accompare.test.js"
+      "test/systems/fb0929d_accompare.test.js"
     ]
   },
   {
@@ -186,7 +186,7 @@
     "old": "  for (const it of replaces) updateEquippedArmorValues(then, it, false);\n",
     "new": "",
     "tests": [
-      "test/fb0929d_accompare.test.js"
+      "test/systems/fb0929d_accompare.test.js"
     ]
   },
   {
@@ -195,7 +195,7 @@
     "old": "if (covered.has(part) || after[part] !== before[part]) parts.push",
     "new": "if (covered.has(part)) parts.push",
     "tests": [
-      "test/fb0929d_accompare.test.js"
+      "test/systems/fb0929d_accompare.test.js"
     ]
   },
   {
@@ -204,7 +204,7 @@
     "old": "const rival = [table[slot], ...replaces].find(",
     "new": "const rival = replaces.find(",
     "tests": [
-      "test/fb0929d_accompare.test.js"
+      "test/systems/fb0929d_accompare.test.js"
     ]
   },
   {
@@ -213,7 +213,7 @@
     "old": "before: weaponDamageRange(rival), after: weaponDamageRange(item) };",
     "new": "before: weaponDamageRange(rival), after: weaponDamageRange(rival) };",
     "tests": [
-      "test/fb0929d_accompare.test.js"
+      "test/systems/fb0929d_accompare.test.js"
     ]
   },
   {
@@ -222,7 +222,7 @@
     "old": "if (it && !replaces.includes(it)) replaces.push(it);",
     "new": "if (it) replaces.push(it);",
     "tests": [
-      "test/fb0929d_accompare.test.js"
+      "test/systems/fb0929d_accompare.test.js"
     ]
   },
   {
@@ -231,7 +231,7 @@
     "old": "  if (!cmp.parts.length && !cmp.damage && item.group !== 'Armor' && itemDamageLine(item) == null) return null;\n",
     "new": "",
     "tests": [
-      "test/fb0929d_accompare.test.js"
+      "test/systems/fb0929d_accompare.test.js"
     ]
   },
   {
@@ -240,7 +240,7 @@
     "old": "`cmp-d ${r > 0 ? 'up' : r < 0 ? 'down' : 'same'}`",
     "new": "`cmp-d ${r > 0 ? 'down' : r < 0 ? 'up' : 'same'}`",
     "tests": [
-      "test/fb0929d_accompare.test.js"
+      "test/systems/fb0929d_accompare.test.js"
     ]
   },
   {
@@ -249,7 +249,7 @@
     "old": "row('Overall', `${b.toFixed(1)} → ${a.toFixed(1)}`, delta(a - b, 1));",
     "new": "row('Overall', `${b.toFixed(1)} → ${a.toFixed(1)}`, delta(a - b));",
     "tests": [
-      "test/fb0929d_accompare.test.js"
+      "test/systems/fb0929d_accompare.test.js"
     ]
   },
   {
@@ -258,62 +258,62 @@
     "old": "el('span', `wornac${v ? '' : ' nil'}`, String(v));",
     "new": "el('span', 'wornac', String(v));",
     "tests": [
-      "test/fb0929d_accompare.test.js"
+      "test/systems/fb0929d_accompare.test.js"
     ]
   },
   {
     "name": "ACCOMPARE-an-empty-panels-number",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "    if (part >= 0) d.append(armourBadge(deps.entity, part));   // AC-COMPARE\n",
     "new": "",
     "tests": [
-      "test/fb0929d_accompare.test.js"
+      "test/systems/fb0929d_accompare.test.js"
     ]
   },
   {
     "name": "ACCOMPARE-a-filled-panels-number",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "  if (part >= 0) b.append(armourBadge(deps.entity, part));   // AC-COMPARE: the part's armour, as on the empty panel\n",
     "new": "",
     "tests": [
-      "test/fb0929d_accompare.test.js"
+      "test/systems/fb0929d_accompare.test.js"
     ]
   },
   {
     "name": "ACCOMPARE-the-head-panel-loses-its-part",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "const part = rows.map((r) => bodyPartForSlot(r.slot)).find((p) => p >= 0) ?? -1;",
     "new": "const part = rows.map((r) => bodyPartForSlot(r.slot)).find((p) => p > 0) ?? -1;",
     "tests": [
-      "test/fb0929d_accompare.test.js"
+      "test/systems/fb0929d_accompare.test.js"
     ]
   },
   {
     "name": "ACCOMPARE-the-plaque-never-stands",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "  plaques.append(armourPlaque(deps.entity));\n",
     "new": "",
     "tests": [
-      "test/fb0929d_accompare.test.js"
+      "test/systems/fb0929d_accompare.test.js"
     ]
   },
   {
     "name": "ACCOMPARE-the-card-carries-no-comparison",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "wear); if (cmp) into.append(cmp);",
     "new": "wear);",
     "tests": [
-      "test/fb0929d_accompare.test.js"
+      "test/systems/fb0929d_accompare.test.js"
     ],
     "note": "Re-aimed by content (AUDIT LOOT II B6): the card makes one comparison and hands it to both its blocks; the law unmoved."
   },
   {
     "name": "ACCOMPARE-the-sheet-without-the-rules",
-    "file": "src/ui/enhancedPlusStyle.js",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
     "old": "${LAYOUT_CSS}\n${ARMOUR_CSS}\n",
     "new": "${LAYOUT_CSS}\n",
     "tests": [
-      "test/fb0929d_accompare.test.js"
+      "test/systems/fb0929d_accompare.test.js"
     ]
   }
 ]

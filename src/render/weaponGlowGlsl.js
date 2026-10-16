@@ -74,7 +74,7 @@ export function glowPad(look, rows) {
  *  weaponGlowProbe.mjs). An ember stands at the front of the rings. AUDIT WEAPON-GLOW MW-2: the sprite target's depth is
  *  DEPTH_COMPONENT16, a step of 1/65535 in window depth - the rings were 1e-5 apart there, and the two inner ones fell on
  *  one value, so the hottest band never drew; GLOW_RING_STEP keeps every neighbour at least GLOW_DEPTH_STEPS steps apart
- *  (test/weaponglow1.test.js). The pass's own geometry stands nearer than GLOW_RING_FAR everywhere it draws (the
+ *  (test/systems/weaponglow1.test.js). The pass's own geometry stands nearer than GLOW_RING_FAR everywhere it draws (the
  *  first-person arm's far plane is four reaches, and the arm reaches 0.999 only past 2.8 of them; a third-person
  *  picture's ortho holds its box well inside). The charge's pull is toward the eye, a hair - its vertex shader is
  *  another program's arithmetic, and LEQUAL alone would lose a texel where the two round apart. */

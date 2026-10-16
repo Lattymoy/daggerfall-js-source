@@ -5,7 +5,7 @@
     "old": "    holds: () => !_releasing && (pending() || !!_win || _held.length > 0),",
     "new": "    holds: () => pending() || !!_win || _held.length > 0,",
     "tests": [
-      "test/fb0930_chopwait.test.js"
+      "test/systems/quest/fb0930_chopwait.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    _releasing = true;\n",
     "new": "",
     "tests": [
-      "test/fb0930_chopwait.test.js"
+      "test/systems/quest/fb0930_chopwait.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    } finally { _releasing = false; }",
     "new": "    } finally { /* never reset */ }",
     "tests": [
-      "test/fb0930_chopwait.test.js"
+      "test/systems/quest/fb0930_chopwait.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "      for (let n = _held.length; n > 0 && _held.length && ",
     "new": "      for (let n = _held.length; _held.length && ",
     "tests": [
-      "test/fb0930_chopwait.test.js"
+      "test/systems/quest/fb0930_chopwait.test.js"
     ]
   }
 ]

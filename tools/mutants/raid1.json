@@ -4,482 +4,482 @@
     "file": "src/systems/raidingParties.js",
     "old": "      if (!row || !types.has(row.locationType)) continue;",
     "new": "      if (!row) continue;",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-region-list-a-mod's-rows-counted",
     "file": "src/systems/raidingParties.js",
     "old": "const base = typeof maps.baseLocationCount === 'function' ? Math.min(table.length, maps.baseLocationCount(r)) : table.length;",
     "new": "const base = table.length;",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-region-list-reversed",
     "file": "src/systems/raidingParties.js",
     "old": "  for (let r = 0; r < count; r++) {\n    if (!onMap.has(r)) continue;",
     "new": "  for (let r = count - 1; r >= 0; r--) {\n    if (!onMap.has(r)) continue;",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-roll-town-not-struck-off",
-    "file": "src/net/raidLaw.js",
+    "file": "src/net/raid/raidLaw.js",
     "old": "    g.towns.splice(j, 1);\n",
     "new": "",
-    "tests": ["test/raid1_raidingParties.test.js", "test/raidroll.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js", "test/systems/raidroll.test.js"]
   },
   {
     "name": "RAID1-roll-emptied-region-kept",
-    "file": "src/net/raidLaw.js",
+    "file": "src/net/raid/raidLaw.js",
     "old": "    if (g.towns.length === 0) lists.splice(i, 1);\n",
     "new": "",
-    "tests": ["test/raid1_raidingParties.test.js", "test/raidroll.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js", "test/systems/raidroll.test.js"]
   },
   {
     "name": "RAID1-roll-start-span-short",
-    "file": "src/net/raidLaw.js",
+    "file": "src/net/raid/raidLaw.js",
     "old": "    if (g.towns.length === 0) lists.splice(i, 1);\n    const st = day * RAID_DAY_MINUTES + rangeInt(0, RAID_START_LAST + 1, random);",
     "new": "    if (g.towns.length === 0) lists.splice(i, 1);\n    const st = day * RAID_DAY_MINUTES + rangeInt(0, RAID_START_LAST, random);",
-    "tests": ["test/raid1_raidingParties.test.js", "test/raidroll.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js", "test/systems/raidroll.test.js"]
   },
   {
     "name": "RAID1-roll-two-parties",
-    "file": "src/net/raidLaw.js",
+    "file": "src/net/raid/raidLaw.js",
     "old": "    const ty = rangeInt(0, RAID_TYPES, random);\n    const tg = rangeInt(RAID_TARGET_MIN, RAID_TARGET_MAX + 1, random);\n    out.push(",
     "new": "    const ty = rangeInt(0, RAID_TYPES - 1, random);\n    const tg = rangeInt(RAID_TARGET_MIN, RAID_TARGET_MAX + 1, random);\n    out.push(",
-    "tests": ["test/raid1_raidingParties.test.js", "test/raidroll.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js", "test/systems/raidroll.test.js"]
   },
   {
     "name": "RAID1-roll-a-minute-short",
     "file": "src/systems/raidingParties.js",
     "old": "type: ty, startMinute: st, endMinute: st + RAID_DURATION_MINUTES,",
     "new": "type: ty, startMinute: st, endMinute: st + RAID_DURATION_MINUTES - 1,",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-roll-target-to-24",
-    "file": "src/net/raidLaw.js",
+    "file": "src/net/raid/raidLaw.js",
     "old": "    const tg = rangeInt(RAID_TARGET_MIN, RAID_TARGET_MAX + 1, random);\n    out.push(",
     "new": "    const tg = rangeInt(RAID_TARGET_MIN, RAID_TARGET_MAX, random);\n    out.push(",
-    "tests": ["test/raid1_raidingParties.test.js", "test/raidroll.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js", "test/systems/raidroll.test.js"]
   },
   {
     "name": "RAID1-pace-three-hours",
-    "file": "src/net/raidLaw.js",
+    "file": "src/net/raid/raidLaw.js",
     "old": "* RAID_GAME_DAY_HOURS) / RAID_REGION_HOURS);",
     "new": "* RAID_GAME_DAY_HOURS) / 3);",
-    "tests": ["test/raid1_raidingParties.test.js", "test/raidroll.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js", "test/systems/raidroll.test.js"]
   },
   {
     "name": "RAID1-fix1-the-prices'-salt",
-    "file": "src/net/raidLaw.js",
+    "file": "src/net/raid/raidLaw.js",
     "old": "export const RAID_DAY_SALT = 5;",
     "new": "export const RAID_DAY_SALT = 1;",
-    "tests": ["test/raid1_raidingParties.test.js", "test/raidroll.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js", "test/systems/raidroll.test.js"]
   },
   {
     "name": "RAID1-fix1-back-to-the-engine's-roll",
     "file": "src/systems/raidingParties.js",
     "old": "raidsPerDay(regions?.length ?? 0), raidDayRandom(day));",
     "new": "raidsPerDay(regions?.length ?? 0), Math.random);",
-    "tests": ["test/raid1_raidingParties.test.js", "test/raidroll.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js", "test/systems/raidroll.test.js"]
   },
   {
     "name": "RAID1-fix1-a-shared-salt",
     "file": "src/systems/worldTick.js",
     "old": "conditions: 4, raids: 5 });",
     "new": "conditions: 4, raids: 4 });",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-choose-knights-not-knights",
     "file": "src/systems/raidingParties.js",
     "old": "  if (type === 0) return MOBILE_TYPES.Knight;\n",
     "new": "",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-choose-rogue-threshold",
     "file": "src/systems/raidingParties.js",
     "old": "roll < 50 ? MOBILE_TYPES.Rogue",
     "new": "roll <= 50 ? MOBILE_TYPES.Rogue",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-choose-thief-threshold",
     "file": "src/systems/raidingParties.js",
     "old": "roll < 80 ? MOBILE_TYPES.Thief",
     "new": "roll <= 80 ? MOBILE_TYPES.Thief",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-choose-orc-threshold",
     "file": "src/systems/raidingParties.js",
     "old": "roll < 70 ? MOBILE_TYPES.Orc",
     "new": "roll <= 70 ? MOBILE_TYPES.Orc",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-choose-sergeant-threshold",
     "file": "src/systems/raidingParties.js",
     "old": "roll < 95 ? MOBILE_TYPES.OrcSergeant",
     "new": "roll <= 95 ? MOBILE_TYPES.OrcSergeant",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-fix11-the-orcs-attack",
     "file": "src/systems/raidingParties.js",
     "old": "has been cleansed of the ${raidTypeAdjective(type)} attack!",
     "new": "has been cleansed of the ${raidTypeName(type)} attack!",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-grant-legal-unclamped",
     "file": "src/systems/raidingParties.js",
     "old": "Math.min(LEGAL_REP_MAX, Math.max(LEGAL_REP_MIN, rep + RAID_LEGAL_REP)) - rep,",
     "new": "RAID_LEGAL_REP,",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-grant-people-fallback-taken",
     "file": "src/systems/raidingParties.js",
     "old": "if (people && people.region === region) changeReputation(store, people.id, RAID_PEOPLE_REP, false);",
     "new": "if (people) changeReputation(store, people.id, RAID_PEOPLE_REP, false);",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-grant-people-propagates",
     "file": "src/systems/raidingParties.js",
     "old": "if (people && people.region === region) changeReputation(store, people.id, RAID_PEOPLE_REP, false);",
     "new": "if (people && people.region === region) changeReputation(store, people.id, RAID_PEOPLE_REP, true);",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-grant-every-order-paid",
     "file": "src/systems/raidingParties.js",
     "old": "      changeReputation(store, f.id, RAID_ORDER_REP, false);\n      break;",
     "new": "      changeReputation(store, f.id, RAID_ORDER_REP, false);",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-grant-any-group-nine",
     "file": "src/systems/raidingParties.js",
     "old": "f.ggroup === GUILD_GROUPS.KnightlyOrder && orders.has(f.id)) {",
     "new": "f.ggroup === GUILD_GROUPS.KnightlyOrder) {",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-grant-no-fighters-guild",
     "file": "src/systems/raidingParties.js",
     "old": "  changeReputation(store, GUILDS.FightersGuild.factionId, RAID_GUILD_REP, false);\n",
     "new": "",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-restore-zero-length-kept",
     "file": "src/systems/raidingParties.js",
     "old": "if (r.endMinute <= r.startMinute || r.killed < 0) continue;",
     "new": "if (r.killed < 0) continue;",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-fix3-announced-forgotten-at-load",
     "file": "src/systems/raidingParties.js",
     "old": "cleansed: r.cleansed === true, announced: r.announced === true, struck: r.struck === true, px: r.px, py: r.py,",
     "new": "cleansed: r.cleansed === true, announced: false, struck: r.struck === true, px: r.px, py: r.py,",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-rolls-without-the-picker",
     "file": "src/systems/raidingParties.js",
     "old": "    if (!regions) return null;   // no picker, no Update [IL_04b5]\n",
     "new": "",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-fix9-old-day-thrown-away-first",
     "file": "src/systems/raidingParties.js",
     "old": "    expire(now, region);\n    for (const r of state.raids) routRaid(r);",
     "new": "    for (const r of state.raids) routRaid(r);",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-fix2-withdrawn-untold",
     "file": "src/systems/raidingParties.js",
     "old": "if (!r.cleansed && r.announced && region >= 0 && r.regionIndex === region)",
     "new": "if (!r.cleansed && region >= 0 && r.regionIndex === region)",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-fix3-announced-again",
     "file": "src/systems/raidingParties.js",
     "old": "if (!raidActive(r, now) || r.regionIndex !== region || r.announced) continue;",
     "new": "if (!raidActive(r, now) || r.regionIndex !== region) continue;",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-fix3-never-marked",
     "file": "src/systems/raidingParties.js",
     "old": "      r.announced = true;\n",
     "new": "",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-current-raid-any-town-of-the-region",
     "file": "src/systems/raidingParties.js",
     "old": "r.regionIndex === town.regionIndex && r.locationIndex === town.locationIndex) : null;",
     "new": "r.regionIndex === town.regionIndex) : null;",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-current-raid-any-region",
     "file": "src/systems/raidingParties.js",
     "old": "r.regionIndex === town.regionIndex && r.locationIndex === town.locationIndex) : null;",
     "new": "r.locationIndex === town.locationIndex) : null;",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-leaving-keeps-the-spawn",
     "file": "src/systems/raidingParties.js",
     "old": "if (!raid) { cancelPending(); _myClaims.clear(); return 'idle'; }",
     "new": "if (!raid) { _myClaims.clear(); return 'idle'; }",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-lapse-at-eight",
     "file": "src/systems/raidingParties.js",
     "old": "if (_pending.age <= PENDING_TIMEOUT_S) return 'waiting';",
     "new": "if (_pending.age < PENDING_TIMEOUT_S) return 'waiting';",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-lapse-no-back-off",
     "file": "src/systems/raidingParties.js",
     "old": "    _nextSpawnIn = PENDING_BACKOFF_S;\n    _nextDefenderIn = PENDING_BACKOFF_S;\n",
     "new": "",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-a-ninth-defender",
     "file": "src/systems/raidingParties.js",
     "old": "(h.defenderCount?.() ?? 0) < MAX_RAID_DEFENDERS",
     "new": "(h.defenderCount?.() ?? 0) <= MAX_RAID_DEFENDERS",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-defenders-for-a-wanted-player",
     "file": "src/systems/raidingParties.js",
     "old": "if (h.defendersAllowed?.() !== false && ",
     "new": "if (",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-a-raider-beside-the-defender",
     "file": "src/systems/raidingParties.js",
     "old": "      spawn(raid, 'defender');\n      return 'defender';",
     "new": "      spawn(raid, 'defender');",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-a-twenty-sixth-raider",
     "file": "src/systems/raidingParties.js",
     "old": "if (liveRaiders(raidKey(raid)).length < MAX_RAID_ENEMIES) {",
     "new": "if (liveRaiders(raidKey(raid)).length <= MAX_RAID_ENEMIES) {",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-the-fallen-still-counted",
     "file": "src/systems/raidingParties.js",
     "old": "&& !e.foe.dead && (e.foe.entity?.health ?? 1) > 0);",
     "new": "&& !e.foe.dead);",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-every-party-on-the-orc-clock",
     "file": "src/systems/raidingParties.js",
     "old": "rangeFloat(SPAWN_INTERVAL_MIN_S, type === 2 ? ORC_SPAWN_INTERVAL_MAX_S : SPAWN_INTERVAL_MAX_S, rnd());",
     "new": "rangeFloat(SPAWN_INTERVAL_MIN_S, ORC_SPAWN_INTERVAL_MAX_S, rnd());",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-defender-clock-not-rescheduled",
     "file": "src/systems/raidingParties.js",
     "old": "    scheduleNextDefender();\n    if (h.defendersAllowed",
     "new": "    if (h.defendersAllowed",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-raider-clock-not-rescheduled",
     "file": "src/systems/raidingParties.js",
     "old": "    scheduleNextSpawn(raid.type);\n",
     "new": "",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-a-removal-counted",
     "file": "src/systems/raidingParties.js",
     "old": "if (!e.foe.corpse || !raid || !raidActive(raid, now)) continue;",
     "new": "if (!raid || !raidActive(raid, now)) continue;",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-a-death-counted-twice",
     "file": "src/systems/raidingParties.js",
     "old": "    e.counted = true;\n",
     "new": "",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-fix5-the-pixel-alone-pays",
     "file": "src/systems/raidingParties.js",
     "old": "if (raid.struck && px && px.x === raid.px && px.y === raid.py)",
     "new": "if (px && px.x === raid.px && px.y === raid.py)",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-the-pixel's-column-ignored",
     "file": "src/systems/raidingParties.js",
     "old": "if (raid.struck && px && px.x === raid.px && px.y === raid.py)",
     "new": "if (raid.struck && px && px.y === raid.py)",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-fix5-a-blow-never-read",
     "file": "src/systems/raidingParties.js",
     "old": "    if (raid && !raid.struck && renownStruckAt(e.foe) != null) raid.struck = true;\n",
     "new": "",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-fix5-the-stamp-unread",
     "file": "src/net/renownTracker.js",
     "old": "  return e ? e.at : null;\n",
     "new": "  return null;\n",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-fix6-taken-in-view",
     "file": "src/systems/raidingParties.js",
     "old": "(h.outOfSight?.(e.foe) ?? true)",
     "new": "true",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-fix6-a-raid-still-on-swept",
     "file": "src/systems/raidingParties.js",
     "old": "if (e.kind === 'raider' && e.routed && !e.foe.dead",
     "new": "if (e.kind === 'raider' && !e.foe.dead",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-fix6-never-routed",
     "file": "src/systems/raidingParties.js",
     "old": "  for (const e of _live) if (e.key === key && e.kind === 'raider') e.routed = true;\n",
     "new": "",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-fix6-no-margin",
     "file": "src/systems/raidingParties.js",
     "old": "return off > ((fovDegrees / 2) + SIGHT_MARGIN_DEGREES) * Math.PI / 180;",
     "new": "return off > (fovDegrees / 2) * Math.PI / 180;",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-fix6-seen-from-indoors",
     "file": "src/systems/raidingParties.js",
     "old": "if (!outdoors || !feet || !eye) return true;",
     "new": "if (!feet || !eye) return true;",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-a-cancelled-raider-kept",
     "file": "src/systems/raidingParties.js",
     "old": "    if (p.cancelled && kind === 'raider') { h.removeFoe?.(foe); return; }\n",
     "new": "",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-never-cleansed",
     "file": "src/systems/raidingParties.js",
     "old": "  raid.cleansed = true;\n  routRaid(raid);",
     "new": "  routRaid(raid);",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-watch-kept-up-after-the-raid",
     "file": "src/systems/raidingParties.js",
     "old": "return state.raids.some((r) => raidActive(r, now) && r.regionIndex === town.regionIndex",
     "new": "return state.raids.some((r) => r.regionIndex === town.regionIndex",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-no-save-slot",
     "file": "src/systems/raidingParties.js",
     "old": "  registerModSaveData(RAIDING_PARTIES_VENDOR, { newSaveData: newRaidSaveData, getSaveData: getRaidSaveData, restoreSaveData: restoreRaidSaveData });\n",
     "new": "",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-picker-never-at-hand",
-    "file": "src/ui/travelMapWindow.js",
+    "file": "src/ui/travel/travelMapWindow.js",
     "old": "export const travelMapPickerData = () => _art?.pickerBitmap?.data ?? null;",
     "new": "export const travelMapPickerData = () => null;",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-host-raiders-saved",
     "file": "src/scenes/world.js",
     "old": "spawn: (mt, pos, o) => exteriorFoes.spawnFoe(mt, pos, { yaw: o.yawRad, loose: true, transient: true }),",
     "new": "spawn: (mt, pos, o) => exteriorFoes.spawnFoe(mt, pos, { yaw: o.yawRad, loose: true }),",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-host-fix7-the-pause-spends-time",
     "file": "src/scenes/world.js",
     "old": "if (playerSpawned) raidingPartiesFrame(gamePaused() ? 0 : foeDt);",
     "new": "if (playerSpawned) raidingPartiesFrame(foeDt);",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-host-watch-sends-the-raid's-defenders-home",
     "file": "src/scenes/world.js",
     "old": "enabled: (getPref('townWatch') !== false || raidDefendingHere()) && !isTransformedLycanthrope(playerEntity),",
     "new": "enabled: getPref('townWatch') !== false && !isTransformedLycanthrope(playerEntity),",
-    "tests": ["test/raid1_raidingParties.test.js", "test/auditdisc19.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js", "test/systems/auditdisc19.test.js"]
   },
   {
     "name": "RAID1-host-fix8-the-sea-a-province",
     "file": "src/scenes/world.js",
     "old": "return !(etherSea && inEther(px.x, px.y)) && politicClaimed(maps.getPoliticIndex(px.x, px.y)) ? _questRegionIndex() : -1;",
     "new": "return !(etherSea && inEther(px.x, px.y)) ? _questRegionIndex() : -1;",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-host-indoors-is-the-street",
     "file": "src/scenes/world.js",
     "old": "townHere: () => ((modes?.mode ?? 'exterior') === 'exterior' && _musicInLocationRect() ? _questLoc() : null),",
     "new": "townHere: () => (_musicInLocationRect() ? _questLoc() : null),",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-guards-defender-indoors",
     "file": "src/scenes/cityGuards.js",
     "old": "    if (!playerFeet || where?.isPlayerInsideDungeon || where?.isPlayerInside) return null;",
     "new": "    if (!playerFeet) return null;",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-guards-defender-is-the-watch",
     "file": "src/scenes/cityGuards.js",
     "old": "null, { defender: true, threat: foe });",
     "new": "null, { defender: false, threat: foe });",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-no-install-at-boot",
     "file": "src/scenes/shared.js",
     "old": "  installRaidingParties();   // RAID1:",
     "new": "  // installRaidingParties();   // RAID1:",
-    "tests": ["test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js"]
   }
 ]

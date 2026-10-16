@@ -3,7 +3,7 @@
 // (`?dress=grimoire`), and driven by a probe. Everything but the purses is the SHIPPING code: the tree, the law and the
 // window are the game's own; a confirm here is kept in this browser's storage alone.
 import { mountFirmamentWindow } from '../ui/firmamentWindow.js';
-import { starsFor, craftPointsFor, unpackTree, packTree } from '../net/firmamentLaw.js';
+import { starsFor, craftPointsFor, unpackTree, packTree } from '../net/firmament/firmamentLaw.js';
 
 const KEY = 'firm1.lab';
 const read = () => { try { return JSON.parse(localStorage.getItem(KEY) ?? '{}') ?? {}; } catch { return {}; } };

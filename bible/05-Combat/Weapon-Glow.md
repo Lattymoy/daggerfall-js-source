@@ -2,10 +2,10 @@
 
 `src/systems/weaponGlow.js` (the law) + `src/render/weaponGlowGlsl.js` (the drawing, a leaf) + `src/render/renderer.js`
 (`drawScreenQuadGlow`, `_glowField`, `_drawWeaponGlow`) + `src/render/characterSprite.js` (`drawRigSpriteBox`'s
-`glowLook`) + the hands: `src/combat/weaponRig.js`, `src/combat/fpsWeapon.js`, `src/combat/weaponWidget.js`,
-`src/combat/diverseWeapons.js`, `src/combat/fpArm.js` + the wire: `src/net/wire.js` (`LOOK_GLOW_RE`, `lookGlowOk`),
-`src/net/remotePlayers.js`, `src/net/peerBodies.js` + the switch: `src/systems/features.js` (`weapon-glow`),
-`src/ui/settingsMap.js` (the owner, 2026-10-16; audited the same day - `01-Overview/Audit-Weapon-Glow.md`)
+`glowLook`) + the hands: `src/combat/weapon/weaponRig.js`, `src/combat/fpsWeapon.js`, `src/combat/weapon/weaponWidget.js`,
+`src/combat/diverseWeapons/diverseWeapons.js`, `src/combat/fpArm.js` + the wire: `src/net/wire.js` (`LOOK_GLOW_RE`, `lookGlowOk`),
+`src/net/remotePlayers.js`, `src/net/peer/peerBodies.js` + the switch: `src/systems/features.js` (`weapon-glow`),
+`src/ui/settings/settingsMap.js` (the owner, 2026-10-16; audited the same day - `01-Overview/audits/Audit-Weapon-Glow.md`)
 
 > "So you know how theres the weapons that have that magic outline with the sprites? What if we designed our own sort
 > of animated outline for each element? And even introduced the same, more detailed design for the morrowind
@@ -85,7 +85,7 @@ elite foes' glow is: a look, the same in every pass.
 ## The two drawers
 
 **The classic sprite** (`Renderer.drawScreenQuadGlow` - THE FOURTH 2D PRIMITIVE, beside `drawScreenQuad`,
-`drawScreenQuadRun` and `drawScreenOverlayQuad`; `test/glstate.test.js`'s source law lists it and its bake,
+`drawScreenQuadRun` and `drawScreenOverlayQuad`; `test/render/glstate.test.js`'s source law lists it and its bake,
 `_glowField`). Drawn over the frame `drawScreenQuad` just drew, on the same rect and mirror; premultiplied, blended ONE,
 ONE_MINUS_SRC_ALPHA; emissive - the room's light (MAC-I's tint) never dims it. All three classic drawers take it: the
 sprite (`drawFpsWeapon`), Weapon Widget's clone (`weaponWidget.js` `draw`) and the Thunderlock (`weaponRig.js`
@@ -185,7 +185,7 @@ NOW (`peerBodies.js` `_arm` - the same template in the same hand is a new look),
 gatherer's tool, a werewolf's claws or a creature, and glows by the VIEWER's switch; the stand-in entity keeps it by the
 wire's one law (`peerStubEntity`, `lookGlowOk`).
 
-**Relay world209** (`src/net/wire.js` RELAY_VERSION; its law row in `test/relayversion.test.js`; world208 on its branch, renumbered past main's INSTANCES world208 at the merge), NOT YET DEPLOYED. The
+**Relay world209** (`src/net/wire.js` RELAY_VERSION; its law row in `test/net/relayversion.test.js`; world208 on its branch, renumbered past main's INSTANCES world208 at the merge), NOT YET DEPLOYED. The
 order does not matter: an older relay builds its look items from the fields it knows and strips the word (a peer's
 weapon draws bare until the relay is deployed, and nothing else changes), and an older client never says it and drops
 it on receipt (AUDIT DOC-8).
@@ -230,7 +230,7 @@ and hands the arm its spec in every one. A peer's body glows wherever `peerBodie
 
 ## Verification
 
-- `test/weaponglow1.test.js` (21 tests) - the law off producer-minted weapons (`applyRarity`, `addProcLine`, `setGem`,
+- `test/systems/weaponglow1.test.js` (21 tests) - the law off producer-minted weapons (`applyRarity`, `addProcLine`, `setGem`,
   `exaltLegendary`, `mintHourlock`, `mintGilded`, DFU's own `createRegularMagicItem` off MAGIC.DEF bytes), the plain
   sheet, the sprite drawer's order, rect and measure, the fourth primitive's bake and its field cache, the windows
   against the reach, the Morrowind pass against a recording GL stub (the instanced rows, the unit, a tile's origin),

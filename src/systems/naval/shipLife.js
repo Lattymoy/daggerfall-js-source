@@ -1,6 +1,6 @@
 // @ts-check
 // SHIP-LIFE (2026-09-30, Mac's item 1 of the six-part sea ask: ships that berth at ports, depart, voyage and keep
-// their own errands; `01-Overview/Handoff-Naval-Crew-and-Ship-Life.md` slice E) - A SHIP GOING SOMEWHERE. The port's
+// their own errands; `01-Overview/handoffs/Handoff-Naval-Crew-and-Ship-Life.md` slice E) - A SHIP GOING SOMEWHERE. The port's
 // own; pure - the host hands the water, a town's footprint and the ships' clocks, and gets back berths, paths and the
 // plan a captain sails by when no fight is hers.
 //
@@ -35,7 +35,7 @@
 // of the dark, where the last ships in of the evening pass.
 
 import { hash32 } from '../../world/spawnedDungeons.js';
-import { mulberry32 } from '../../combat/bloodArt.js';
+import { mulberry32 } from '../../combat/blood/bloodArt.js';
 import { hullBuild, MOD_CARRACK_BUILD } from './navalShips.js';
 
 /** How far past the town's rect a berth may lie (m), the shore scan's grid (m), the water kept between a berth's hull

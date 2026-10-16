@@ -48,7 +48,7 @@ gold, or come with me."* (or *"You are banished from ..."*).
 
 - **P - pay**: the court's own Criminal Conspiracy penalty at that standing, every unit in coin and no days (520 at -11,
   720 at -50, 1,000 at -100; double for a banished face). The fine mends the name a penance's five points, never past
-  the -10 line (FINE-MENDS, `01-Overview/Field-Bugs-2026-10-14.md`), and a day's grace follows. Offered only to a purse
+  the -10 line (FINE-MENDS, `01-Overview/bugs/Field-Bugs-2026-10-14.md`), and a day's grace follows. Offered only to a purse
   that can pay.
 - **S - come quietly**: a Criminal Conspiracy, charged once, and the court - whose sentence gives the charge back.
 - **R - refuse**: the Conspiracy held and the watch called as a seen crime calls it; the chase is DFU's from there.
@@ -129,7 +129,7 @@ review 28 days on, the popup's box saying so. A review that finds a member alrea
 warned first. A review that finds the standing at zero or above ends the probation - where the guild skills also meet
 rank 0's bars (a member short of them is held on probation at any standing - AUDIT GUILD-WORDS L1-3, recorded for Mac),
 and in a guild that never expels at any standing (its review clamps to rank 0).
-STANDING-WORDS (2026-10-16, `01-Overview/Field-Bugs-2026-10-15g.md`; AUDIT GUILD-WORDS, `01-Overview/Audit-Guild-Words.md`):
+STANDING-WORDS (2026-10-16, `01-Overview/bugs/Field-Bugs-2026-10-15g.md`; AUDIT GUILD-WORDS, `01-Overview/audits/Audit-Guild-Words.md`):
 the stakes are said, not only the state - "On probation: your review is at the guild's hall in 8 days or later. Below
 -10 you are expelled there, below 0 it runs 28 days more, and at 0 or more it ends." - first in the hall's line (online)
 and under the guild on the enhanced Standing page (both lanes), the days on the character's own date (`guilds.js`
@@ -148,7 +148,7 @@ that -2 was what players read as standing decaying. A success still pays +5; off
 ## REPUTE-GATE - online, two Mages Guild quests wait for the standing their headers name
 
 `quest/onlineRepute.js`, read by `quest/offerFlow.js` offerGuildQuest (2026-10-16, AUDIT GUILD-WORDS II,
-`01-Overview/Audit-Guild-Words.md`; a Discord report: "The very first quest i did for them dropped my rep by 25 points";
+`01-Overview/audits/Audit-Guild-Words.md`; a Discord report: "The very first quest i did for them dropped my rep by 25 points";
 Mac: "Gate by reputation"). QFAIL-FREE spared a quest's END; a quest's own script still costs its guild, and the Mages
 Guild offers its quests by the player's level (MagesGuild.cs IsSatisfyQuestReqByLevel), so a level-2 apprentice was
 handed "Guard the Guild" (N0B10Y03: -30 for taking the guarded treasure, which the quest then makes the player's) and
@@ -175,10 +175,10 @@ faction's charges, Vagrancy's resting law, Roleplay Realism's squads.
 
 ## Pins
 
-`test/rep1_watchstop.test.js` (7), `test/rep2_sentences.test.js` (8), `test/rep3_banishment.test.js` (5),
-`test/rep4_recovery.test.js` (5), `test/rep5_notices.test.js` (4), `test/rep6_probation.test.js` (3).
-`tools/mutants/rep{1..6}_*.json`: 64 records, 64 dead. AUDIT REP (`01-Overview/Audit-REP.md`, 2026-09-30):
-`test/auditrep.test.js` (8), `tools/mutants/auditrep.json` 19/19 dead; two pins moved (REP3's short purse, F4;
+`test/systems/rep1_watchstop.test.js` (7), `test/scenes/rep2_sentences.test.js` (8), `test/systems/rep3_banishment.test.js` (5),
+`test/systems/rep4_recovery.test.js` (5), `test/systems/rep5_notices.test.js` (4), `test/systems/guild/rep6_probation.test.js` (3).
+`tools/mutants/rep{1..6}_*.json`: 64 records, 64 dead. AUDIT REP (`01-Overview/audits/Audit-REP.md`, 2026-09-30):
+`test/systems/auditrep.test.js` (8), `tools/mutants/auditrep.json` 19/19 dead; two pins moved (REP3's short purse, F4;
 audit39_guildstravel's F99, the court's banishment on the trusted calendar, F2). Fifteen older pin files moved with the law (each marked PIN
 MOVED): court, prisonrelease, guilds, rr1_realism, guildrep, auditdisc28_time, disc28_fatigue, auditlived1b, lived1,
 audit26_dungeonfoes, exteriorfoes, beastform, audit39_guildstravel, audit39_worldlegaltalk, auditrr; seven older mutant

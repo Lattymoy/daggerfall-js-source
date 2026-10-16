@@ -5,7 +5,7 @@
     "old": "      if (i === 0 && err.retryable && !err.overloaded) continue;",
     "new": "",
     "tests": [
-      "test/doask.test.js"
+      "test/server/doask.test.js"
     ],
     "note": "a room reset before it ran the upgrade never asked again"
   },
@@ -15,7 +15,7 @@
     "old": "&& err.retryable && !err.overloaded) continue;",
     "new": "&& err.retryable) continue;",
     "tests": [
-      "test/doask.test.js"
+      "test/server/doask.test.js"
     ],
     "note": "an overloaded room asked again - its queue lengthened"
   },
@@ -25,7 +25,7 @@
     "old": "if (i === 0 && err.retryable",
     "new": "if (err.retryable",
     "tests": [
-      "test/doask.test.js"
+      "test/server/doask.test.js"
     ],
     "note": "a retryable room asked again without end"
   },
@@ -35,7 +35,7 @@
     "old": "      console.warn('[worker] a room did not answer', name, err.message ?? e);",
     "new": "      throw e;",
     "tests": [
-      "test/doask.test.js"
+      "test/server/doask.test.js"
     ],
     "note": "the failure thrown out of the Worker"
   },
@@ -45,7 +45,7 @@
     "old": "    return askRoom(env.ROOMS, key, request);   // DO-ASK",
     "new": "    return env.ROOMS.get(env.ROOMS.idFromName(key)).fetch(request);   // DO-ASK",
     "tests": [
-      "test/doask.test.js"
+      "test/server/doask.test.js"
     ],
     "note": "the Worker's own door asks a room bare"
   },
@@ -55,7 +55,7 @@
     "old": "res = await askRoom(rooms, layerName(key, ly), new Request(request, { headers }));",
     "new": "res = await rooms.get(rooms.idFromName(layerName(key, ly))).fetch(new Request(request, { headers }));",
     "tests": [
-      "test/doask.test.js"
+      "test/server/doask.test.js"
     ],
     "note": "a crowded place's walk asks its layers bare"
   }

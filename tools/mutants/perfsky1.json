@@ -4,13 +4,13 @@
     "file": "src/render/dynamicSkiesRenderer.js",
     "old": "  vec3 stars = vec3(0.0);\n  if (night > 0.0) {\n",
     "new": "  vec3 stars = vec3(0.0);\n  if (true) {\n",
-    "tests": ["test/perfsky1.test.js"]
+    "tests": ["test/render/perfsky1.test.js"]
   },
   {
     "name": "PERF-SKY1-a-branch-on-the-pixel-s-own-place",
     "file": "src/render/dynamicSkiesRenderer.js",
     "old": "  vec3 stars = vec3(0.0);\n  if (night > 0.0) {\n",
     "new": "  vec3 stars = vec3(0.0);\n  if (normWorldPos.y > 0.0) {\n",
-    "tests": ["test/perfsky1.test.js"]
+    "tests": ["test/render/perfsky1.test.js"]
   }
 ]

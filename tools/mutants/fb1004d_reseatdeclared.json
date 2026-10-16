@@ -5,7 +5,7 @@
     "old": "    let { p2, p3 } = this.declaredSiteLaw();\n    let { found } = this._searchTownSites(world, location, p2, p3);",
     "new": "    let { p2, p3 } = this;\n    let { found } = this._searchTownSites(world, location, p2, p3);",
     "tests": [
-      "test/fb1004d_reseatdeclared.test.js"
+      "test/systems/quest/fb1004d_reseatdeclared.test.js"
     ],
     "note": "the fault itself: the -1 the house fallback wrote reads as `random` and a House1 site moves into a tavern or a shop"
   },
@@ -15,7 +15,7 @@
     "old": "    if (!this.name || !table.hasValue(this.name)) return { p2: this.p2, p3: this.p3 };",
     "new": "    if (this.name || !table.hasValue(this.name)) return { p2: this.p2, p3: this.p3 };",
     "tests": [
-      "test/fb1004d_reseatdeclared.test.js"
+      "test/systems/quest/fb1004d_reseatdeclared.test.js"
     ],
     "note": "the declared law is the place's row of Quests-Places, read by its name"
   },
@@ -25,7 +25,7 @@
     "old": "    return { p2: customParseInt(table.getValue('p2', this.name)), p3: customParseInt(table.getValue('p3', this.name)) };",
     "new": "    return { p2: customParseInt(table.getValue('p1', this.name)), p3: customParseInt(table.getValue('p3', this.name)) };",
     "tests": [
-      "test/fb1004d_reseatdeclared.test.js"
+      "test/systems/quest/fb1004d_reseatdeclared.test.js"
     ],
     "note": "the row's p2 column, not another"
   },
@@ -35,7 +35,7 @@
     "old": "    if (!found.length && p2 >= BT_HOUSE1 && p2 <= BT_HOUSE6) {\n      return { found:",
     "new": "    if (!found.length && p2 >= BT_HOUSE1 && p2 < BT_HOUSE1) {\n      return { found:",
     "tests": [
-      "test/fb1004d_reseatdeclared.test.js"
+      "test/systems/quest/fb1004d_reseatdeclared.test.js"
     ],
     "note": "the search's own house fallback (SetupLocalSite) is the re-seat's too - any house where none of the declared kind stands"
   },
@@ -45,7 +45,7 @@
     "old": "    if (houseFallback) this.p2 = -1;",
     "new": "",
     "tests": [
-      "test/fb1004d_reseatdeclared.test.js"
+      "test/systems/quest/fb1004d_reseatdeclared.test.js"
     ],
     "note": "DFU's own write of P2 = -1 at the fallback (Place.cs:735) is kept - the fix reads past it, never removes it"
   }

@@ -50,7 +50,7 @@ async function toGamePage(page) {
 async function openPack(page, mode = 'ground') {
   await page.evaluate(async (m) => {
     const { createInventoryWindow } = await import('/src/ui/inventoryDoor.js');
-    const { ITEM_TEMPLATES } = await import('/src/characters/paperdoll.js');
+    const { ITEM_TEMPLATES } = await import('/src/characters/paperdoll/paperdoll.js');
     const t = (n) => ITEM_TEMPLATES.find((x) => x.name === n);
     const mk = (n, group = 'Weapons', stackCount = 1) => {
       const tp = t(n);

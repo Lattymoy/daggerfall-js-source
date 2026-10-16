@@ -61,7 +61,7 @@ left that mod's exported PNGs out for the same reason. So the textures
 reach the game the way ARENA2 does, from the player's own copy of the
 mod, through the **Your own textures** pick:
 
-1. **the `.dfmod` itself** - `src/formats/unityBundle.js` reads the
+1. **the `.dfmod` itself** - `src/formats/unity/unityBundle.js` reads the
    UnityFS container (version 7, LZ4/LZ4HC blocks via `formats/lz4.js`),
    the SerializedFile inside (version 21, little-endian, the object
    layout taken FROM the type tree the bundle carries, so the reader is
@@ -186,7 +186,7 @@ mod is inert.
    and nature batch keep their season until the pixel re-streams. The
    port's `tickSeason` rebuilds the whole standing grid on a CLIMATE
    season change - the ROAD A1 season law, older than this mod and
-   pinned by `test/seasoncalendar.test.js` - and on the mod's own
+   pinned by `test/scenes/seasoncalendar.test.js` - and on the mod's own
    refresh it rebuilds every standing pixel the filter marks, whether
    that pixel is the one under the player or one at the far edge of the
    ring, active or not; this host has no pooled batch and no cached
@@ -196,7 +196,7 @@ mod is inert.
 
 ## Verification
 
-`test/seasonsIliacBay.test.js` (17 tests): the tables, the filename
+`test/systems/seasonsIliacBay.test.js` (17 tests): the tables, the filename
 parse, the record-set checks with the mod's own messages, the size law,
 the state machine (install once, force, failed build retried, the
 racing applies), the events, the LZ4 and DXT vectors, the UnityFS
@@ -218,7 +218,7 @@ uploads as-is with `UNPACK_FLIP_Y_WEBGL` off (`renderer.js:"if (!this.charQuadPr
 (`renderer.js:"Textures are bottom-up"`). The seasonal record arrived in PNG raster
 order instead - `decodeTexture2D` flips Unity's bottom-up rows to
 top-down for its own consumers, and the loose arm is a canvas
-`getImageData` - and `world.js:"const { sib, proto"` / `exterior.js` handed that
+`getImageData` - and `pixelBuild.js:"const { sib, proto"` / `exterior.js` handed that
 straight to `uploadTexture` (the one upload site is `naturePicture.js:"renderer.uploadTexture"`
 now - AUDIT 05b A12). So a seasonal flat drew mirrored against
 the classic flat uploaded five lines later in the same batch loop. In
@@ -298,7 +298,7 @@ order is getColor32, pointing at the seasons door that converts, the
 way the door's own header already points back at the reader; the
 door's closing line drops "for their other consumers" with it, and so
 does F26's paragraph above. The BEHAVIOUR is untouched: the reader's
-row-order pin (`test/seasonsIliacBay.test.js:"flipped: the top"`, which asserts
+row-order pin (`test/systems/seasonsIliacBay.test.js:"flipped: the top"`, which asserts
 the top row of the image is the LAST row Unity stored) still holds and
 was rightly left alone by F26, and the end-to-end
 `texImage2D`-vs-`getColor32` pin is what fixes the order that reaches
@@ -384,11 +384,11 @@ question at all. `refreshSeason()` returning true calls `markAll`.
 once and answers `refresh` with `() => {}`, as it did - there is no
 grid there to narrow.
 
-**Pinned** in `test/roadh_seasons_tex.test.js`, behaviourally, through
+**Pinned** in `test/systems/roadh_seasons_tex.test.js`, behaviourally, through
 the seam: a three-pixel grid at the moment of `OnUpdateTerrainsEnd`'s
 after-travel refresh - one stale on a managed archive, one stale on the
 unmanaged 503, one built under the current install - yields exactly one
-key, and `markAll` then yields all three. `test/seasonsIliacBay.test.js`'s
+key, and `markAll` then yields all three. `test/systems/seasonsIliacBay.test.js`'s
 F4 pin drives the same collector rather than restating the seam.
 Mutation-proven both ways: `markStale` raising the whole-grid flag, and
 `markAll` marking nothing, each kill it.
@@ -426,7 +426,7 @@ stated-wrong reason on the generation half.
 **R2 (low) - the motor-hold guard shipped unpinned.** The narrowing
 arms `_seasonHoldKey` only when the player's own key is among the keys
 going down, and the draft deferred a behavioural pin claiming the
-source-order pin covered it. It did not: `test/seasoncalendar.test.js`
+source-order pin covered it. It did not: `test/scenes/seasoncalendar.test.js`
 matched only the assignment substring, which survives deleting the
 guard (mutation: rewrite the line back to `if (walkMode &&
 playerSpawned)`; 34/34 stayed green). The ROAD-Ar R0 pin now matches

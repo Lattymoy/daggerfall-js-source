@@ -22,7 +22,7 @@ Provenance: https://github.com/Interkarma/daggerfall-unity
 `Assets/Resources/Icons/` at commit
 `2343305d1d83ccc0de57a81e3b1e61188a997e34`, byte for byte.
 `dfu-icons.files.json` is the listing (paths, sha256, pixel sizes). It was
-generated from those files, not written by hand, and test/doctrine.test.js
+generated from those files, not written by hand, and test/tooling/doctrine.test.js
 reads it as the authority for what may stand under public/art/dfu-icons/.
 
-Read by `src/ui/modeIcons.js`; drawn by `src/ui/hudCrosshair.js` (HUD-ICON1).
+Read by `src/ui/modeIcons.js`; drawn by `src/ui/hud/hudCrosshair.js` (HUD-ICON1).

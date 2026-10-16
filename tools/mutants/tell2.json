@@ -1,115 +1,115 @@
 [
   {
     "name": "TELL2-held-minus-one-consumed",
-    "file": "src/characters/mobileUnit.js",
+    "file": "src/characters/mobile/mobileUnit.js",
     "old": "      if (this.state === 'attack' && this._underHold && this._hold === true && this._attackFrames[this._iter] === -1) return;",
     "new": "",
     "tests": [
-      "test/tell2_tell.test.js"
+      "test/characters/enemy/tell2_tell.test.js"
     ]
   },
   {
     "name": "TELL2-second-strike-held",
-    "file": "src/characters/mobileUnit.js",
+    "file": "src/characters/mobile/mobileUnit.js",
     "old": "        else { this.doMeleeDamage = true; this.meleeSeq++; this._underHold = false; this._struck = this._heldSwing; }",
     "new": "        else { this.doMeleeDamage = true; this.meleeSeq++; this._struck = this._heldSwing; }",
     "tests": [
-      "test/tell2_tell.test.js"
+      "test/characters/enemy/tell2_tell.test.js"
     ]
   },
   {
     "name": "TELL2-cancel-ignored",
-    "file": "src/characters/mobileUnit.js",
+    "file": "src/characters/mobile/mobileUnit.js",
     "old": "    if (this._underHold && this.state === 'attack' && hold === 'cancel') { this._underHold = false; this._change('idle'); }",
     "new": "",
     "tests": [
-      "test/tell2_tell.test.js"
+      "test/characters/enemy/tell2_tell.test.js"
     ]
   },
   {
     "name": "TELL2-cancel-any-swing",
-    "file": "src/characters/mobileUnit.js",
+    "file": "src/characters/mobile/mobileUnit.js",
     "old": "    if (this._underHold && this.state === 'attack' && hold === 'cancel') {",
     "new": "    if (this.state === 'attack' && hold === 'cancel') {",
     "tests": [
-      "test/tell2_tell.test.js"
+      "test/characters/enemy/tell2_tell.test.js"
     ]
   },
   {
     "name": "TELL2-any-swing-held",
-    "file": "src/characters/mobileUnit.js",
+    "file": "src/characters/mobile/mobileUnit.js",
     "old": "      this._underHold = this._hold === true;\n      this._heldSwing",
     "new": "      this._underHold = true;\n      this._heldSwing",
     "tests": [
-      "test/tell2_tell.test.js"
+      "test/characters/enemy/tell2_tell.test.js"
     ]
   },
   {
     "name": "TELL2-head-strike-under-hold",
-    "file": "src/characters/mobileUnit.js",
+    "file": "src/characters/mobile/mobileUnit.js",
     "old": "        if (this._hold === true) { this.frame = 0; this._iter = 0; }",
     "new": "        if (false) { this.frame = 0; this._iter = 0; }",
     "tests": [
-      "test/tell2_tell.test.js"
+      "test/characters/enemy/tell2_tell.test.js"
     ]
   },
   {
     "name": "TELL2-old-swing-kept",
-    "file": "src/characters/mobileUnit.js",
+    "file": "src/characters/mobile/mobileUnit.js",
     "old": "    } else if (striking && (this.state !== 'attack' || (hold === true && !this._underHold))) this._change('attack');",
     "new": "    } else if (striking && this.state !== 'attack') this._change('attack');",
     "tests": [
-      "test/tell2_tell.test.js"
+      "test/characters/enemy/tell2_tell.test.js"
     ]
   },
   {
     "name": "TELL2-no-meleeseq",
-    "file": "src/characters/mobileUnit.js",
+    "file": "src/characters/mobile/mobileUnit.js",
     "old": "        else { this.doMeleeDamage = true; this.meleeSeq++; this._underHold = false; this._struck = this._heldSwing; }",
     "new": "        else { this.doMeleeDamage = true; this._underHold = false; this._struck = this._heldSwing; }",
     "tests": [
-      "test/tell2_tell.test.js"
+      "test/characters/enemy/tell2_tell.test.js"
     ]
   },
   {
     "name": "TELL2-no-swing-at-start",
-    "file": "src/characters/enemyAttack.js",
+    "file": "src/characters/enemy/enemyAttack.js",
     "old": "        if (machineAttack(this.machine, strike)) { this.firedRanged = false; this.swingSeq++; this._held = true; this._heldStrike = strike; }",
     "new": "        if (machineAttack(this.machine, strike)) { this.firedRanged = false; this._held = true; this._heldStrike = strike; }",
     "tests": [
-      "test/tell2_tell.test.js",
-      "test/tact4.test.js"
+      "test/characters/enemy/tell2_tell.test.js",
+      "test/characters/enemy/tact4.test.js"
     ]
   },
   {
     "name": "TELL2-second-swing-at-landing",
-    "file": "src/characters/enemyAttack.js",
+    "file": "src/characters/enemy/enemyAttack.js",
     "old": "        else if (this._held) {",
     "new": "        else if (false) {",
     "tests": [
-      "test/tell2_tell.test.js",
-      "test/tact4.test.js",
-      "test/audittact.test.js"
+      "test/characters/enemy/tell2_tell.test.js",
+      "test/characters/enemy/tact4.test.js",
+      "test/scenes/audittact.test.js"
     ]
   },
   {
     "name": "TELL2-held-uncounted",
-    "file": "src/characters/enemyAttack.js",
+    "file": "src/characters/enemy/enemyAttack.js",
     "old": "          ai._tacSwung = (ai._tacSwung ?? 0) + 1;\n          this.meleeTimer",
     "new": "          this.meleeTimer",
     "tests": [
-      "test/tell2_tell.test.js",
-      "test/tact4.test.js",
-      "test/audittact.test.js"
+      "test/characters/enemy/tell2_tell.test.js",
+      "test/characters/enemy/tact4.test.js",
+      "test/scenes/audittact.test.js"
     ]
   },
   {
     "name": "TELL2-machine-left-swinging",
-    "file": "src/characters/enemyAttack.js",
+    "file": "src/characters/enemy/enemyAttack.js",
     "old": "      if (this._held && ai._blowHold === 'cancel') { this._held = false; this.machine.state = 'Idle'; this.machine.acc = 0; }",
     "new": "",
     "tests": [
-      "test/tell2_tell.test.js"
+      "test/characters/enemy/tell2_tell.test.js"
     ]
   },
   {
@@ -118,7 +118,7 @@
     "old": "function dropSwing(ai) { ai._blowHold = 'cancel'; ai._blowWind = false; }",
     "new": "function dropSwing(ai) { }",
     "tests": [
-      "test/tell2_tell.test.js"
+      "test/characters/enemy/tell2_tell.test.js"
     ]
   },
   {
@@ -127,7 +127,7 @@
     "old": "if (ai._tac.state === 'windup') { ai._tac.state = 'wait'; dropSwing(ai); }",
     "new": "if (ai._tac.state === 'windup') { ai._tac.state = 'wait'; }",
     "tests": [
-      "test/tell2_tell.test.js"
+      "test/characters/enemy/tell2_tell.test.js"
     ]
   },
   {
@@ -136,8 +136,8 @@
     "old": "  ai._blowHold = false;   // TELL2: the held swing strikes on its next frame\n  s.blowReady = cooled; s.blow = null;",
     "new": "  s.blowReady = cooled; s.blow = null;",
     "tests": [
-      "test/tell2_tell.test.js",
-      "test/tact4.test.js"
+      "test/characters/enemy/tell2_tell.test.js",
+      "test/characters/enemy/tact4.test.js"
     ]
   },
   {
@@ -146,8 +146,8 @@
     "old": "  ai._blowHold = swings; ai._blowWind = swings;   // TELL2",
     "new": "  ai._blowHold = swings; ai._blowWind = false;   // TELL2",
     "tests": [
-      "test/tell2_tell.test.js",
-      "test/tact4.test.js"
+      "test/characters/enemy/tell2_tell.test.js",
+      "test/characters/enemy/tact4.test.js"
     ]
   },
   {
@@ -156,7 +156,7 @@
     "old": "  if (!b || b.feint || unseen(s, now)) return null;",
     "new": "  if (!b || unseen(s, now)) return null;",
     "tests": [
-      "test/tell2_tell.test.js"
+      "test/characters/enemy/tell2_tell.test.js"
     ]
   },
   {
@@ -165,7 +165,7 @@
     "old": "  const c = b.color ?? BLOW_COLOR;",
     "new": "  const c = BLOW_COLOR;",
     "tests": [
-      "test/tell2_tell.test.js"
+      "test/characters/enemy/tell2_tell.test.js"
     ]
   },
   {
@@ -174,7 +174,7 @@
     "old": "    ai._blowLandedAt = now;   // TELL2",
     "new": "    // TELL2",
     "tests": [
-      "test/tell2_tell.test.js"
+      "test/characters/enemy/tell2_tell.test.js"
     ]
   },
   {
@@ -183,8 +183,8 @@
     "old": "  GLINT_PULSE: 0.9,",
     "new": "  GLINT_PULSE: 0.8,",
     "tests": [
-      "test/tell2_tell.test.js",
-      "test/tell1_poise.test.js"
+      "test/characters/enemy/tell2_tell.test.js",
+      "test/systems/tell1_poise.test.js"
     ]
   },
   {
@@ -193,8 +193,8 @@
     "old": "  GLINT_STEADY: 0.2,",
     "new": "  GLINT_STEADY: 0.25,",
     "tests": [
-      "test/tell2_tell.test.js",
-      "test/tell1_poise.test.js"
+      "test/characters/enemy/tell2_tell.test.js",
+      "test/systems/tell1_poise.test.js"
     ]
   },
   {
@@ -203,8 +203,8 @@
     "old": "  GLINT_REDUCED: 0.45,",
     "new": "  GLINT_REDUCED: 0.4,",
     "tests": [
-      "test/tell2_tell.test.js",
-      "test/tell1_poise.test.js"
+      "test/characters/enemy/tell2_tell.test.js",
+      "test/systems/tell1_poise.test.js"
     ]
   },
   {
@@ -213,8 +213,8 @@
     "old": "  RELEASE_LEAD: 0.25,",
     "new": "  RELEASE_LEAD: 0.3,",
     "tests": [
-      "test/tell2_tell.test.js",
-      "test/tell1_poise.test.js"
+      "test/characters/enemy/tell2_tell.test.js",
+      "test/systems/tell1_poise.test.js"
     ]
   },
   {
@@ -223,8 +223,8 @@
     "old": "  WIND_PITCH: 0.85,",
     "new": "  WIND_PITCH: 1,",
     "tests": [
-      "test/tell2_tell.test.js",
-      "test/tell1_poise.test.js"
+      "test/characters/enemy/tell2_tell.test.js",
+      "test/systems/tell1_poise.test.js"
     ]
   },
   {
@@ -233,7 +233,7 @@
     "old": "  if (reduced) return TELL.GLINT_REDUCED;\n",
     "new": "",
     "tests": [
-      "test/tell2_tell.test.js"
+      "test/characters/enemy/tell2_tell.test.js"
     ]
   },
   {
@@ -242,7 +242,7 @@
     "old": "  if (toLand < TELL.TELL_NOW) k = Math.max(",
     "new": "  if (false) k = Math.max(",
     "tests": [
-      "test/tell2_tell.test.js"
+      "test/characters/enemy/tell2_tell.test.js"
     ]
   },
   {
@@ -251,7 +251,7 @@
     "old": "  if (sinceStart < TELL.GLINT_PULSE_S) k = Math.max(",
     "new": "  if (false) k = Math.max(",
     "tests": [
-      "test/tell2_tell.test.js"
+      "test/characters/enemy/tell2_tell.test.js"
     ]
   },
   {
@@ -260,7 +260,7 @@
     "old": "  if (!(sinceStart >= 0) || !(toLand >= 0)) return 0;",
     "new": "  if (!(sinceStart >= 0)) return 0;",
     "tests": [
-      "test/tell2_tell.test.js"
+      "test/characters/enemy/tell2_tell.test.js"
     ]
   },
   {
@@ -269,7 +269,7 @@
     "old": "  if (b && c.blow !== b) {\n    c.blow = b;",
     "new": "  if (b) {\n    c.blow = b;",
     "tests": [
-      "test/tell2_tell.test.js"
+      "test/characters/enemy/tell2_tell.test.js"
     ]
   },
   {
@@ -278,7 +278,7 @@
     "old": "now >= b.land - TELL.RELEASE_LEAD) { c.released = true;",
     "new": "now >= b.land - 2 * TELL.RELEASE_LEAD) { c.released = true;",
     "tests": [
-      "test/tell2_tell.test.js"
+      "test/characters/enemy/tell2_tell.test.js"
     ]
   },
   {
@@ -287,7 +287,7 @@
     "old": "    if (!b.feint) {\n      // RVN5 (Feud-Arc.md 16.1): a signature's WIND deeper (`b.windPitch`)\n      if (ignoreHumanSounds",
     "new": "    if (true) {\n      // RVN5 (Feud-Arc.md 16.1): a signature's WIND deeper (`b.windPitch`)\n      if (ignoreHumanSounds",
     "tests": [
-      "test/tell2_tell.test.js"
+      "test/characters/enemy/tell2_tell.test.js"
     ]
   },
   {
@@ -296,7 +296,7 @@
     "old": "      if (ignoreHumanSounds(f.mobileType) || f.quietVoice) play(SOUND.SwingMediumPitch",
     "new": "      if (false) play(SOUND.SwingMediumPitch",
     "tests": [
-      "test/tell2_tell.test.js"
+      "test/characters/enemy/tell2_tell.test.js"
     ]
   },
   {
@@ -305,7 +305,7 @@
     "old": "    c.land = (landed && c.blow.kind !== 'aimed' && c.blow.kind !== 'pyre' && (ai._blowHold === false || ai._blowHold === 'spent'))",
     "new": "    c.land = (true)",
     "tests": [
-      "test/tell2_tell.test.js"
+      "test/characters/enemy/tell2_tell.test.js"
     ]
   },
   {
@@ -314,7 +314,7 @@
     "old": "  if (c.land && (f.mobile?.meleeSeq ?? 0) !== c.seq) {\n    c.land = false;",
     "new": "  if (c.land && (f.mobile?.meleeSeq ?? 0) !== c.seq) {\n    c.seq = f.mobile?.meleeSeq ?? 0;",
     "tests": [
-      "test/tell2_tell.test.js"
+      "test/characters/enemy/tell2_tell.test.js"
     ]
   },
   {
@@ -323,7 +323,7 @@
     "old": "  if (c.land && (f.mobile?.meleeSeq ?? 0) !== c.seq) {",
     "new": "  if (c.land) {",
     "tests": [
-      "test/tell2_tell.test.js"
+      "test/characters/enemy/tell2_tell.test.js"
     ]
   },
   {
@@ -332,7 +332,7 @@
     "old": "  if (b) c.seq = f.mobile?.meleeSeq ?? 0;",
     "new": "  if (b && c.seq == null) c.seq = f.mobile?.meleeSeq ?? 0;",
     "tests": [
-      "test/tell2_tell.test.js"
+      "test/characters/enemy/tell2_tell.test.js"
     ]
   },
   {
@@ -341,7 +341,7 @@
     "old": "{ maxDistance: ATTRACT_RADIUS * hearing, distanceModel: 'linear', pitch }",
     "new": "{ maxDistance: ATTRACT_RADIUS, distanceModel: 'linear', pitch }",
     "tests": [
-      "test/tell2_tell.test.js"
+      "test/characters/enemy/tell2_tell.test.js"
     ]
   },
   {
@@ -350,7 +350,7 @@
     "old": "    if (!ignoreHumanSounds(f.mobileType)) play(row?.attackSound, 1);",
     "new": "    play(row?.attackSound, 1);",
     "tests": [
-      "test/tell2_tell.test.js"
+      "test/characters/enemy/tell2_tell.test.js"
     ]
   },
   {
@@ -359,7 +359,7 @@
     "old": "  if (cur && cur[0] === g[0] && cur[1] === g[1] && cur[2] === g[2] && cur[3] === g[3]) return;\n",
     "new": "",
     "tests": [
-      "test/tell2_tell.test.js"
+      "test/characters/enemy/tell2_tell.test.js"
     ]
   },
   {
@@ -368,7 +368,7 @@
     "old": "  if (!g || !(g[3] > 0)) { if (cur) batch.glint = undefined; return; }",
     "new": "  if (!g || !(g[3] > 0)) return;",
     "tests": [
-      "test/tell2_tell.test.js"
+      "test/characters/enemy/tell2_tell.test.js"
     ]
   },
   {
@@ -377,7 +377,7 @@
     "old": "  if (nowMs - _reducedAt < 1000) return _reduced;\n",
     "new": "",
     "tests": [
-      "test/tell2_tell.test.js"
+      "test/characters/enemy/tell2_tell.test.js"
     ]
   },
   {
@@ -386,7 +386,7 @@
     "old": "  lit = glintLit(lit, albedo + emission, uGlint);   // TELL2: the body lifted toward its blow's colour as it winds up\n  lit = hitFlashLit(lit, albedo + emission, uHitFlash);",
     "new": "  lit = hitFlashLit(lit, albedo + emission, uHitFlash);\n  lit = glintLit(lit, albedo + emission, uGlint);",
     "tests": [
-      "test/tell2_tell.test.js"
+      "test/characters/enemy/tell2_tell.test.js"
     ]
   },
   {
@@ -395,7 +395,7 @@
     "old": "const ep = eg !== 0 ? b.elitePad : (gt ? TELL_GLINT_PAD : null);",
     "new": "const ep = eg !== 0 ? b.elitePad : null;",
     "tests": [
-      "test/tell2_tell.test.js"
+      "test/characters/enemy/tell2_tell.test.js"
     ]
   },
   {
@@ -404,7 +404,7 @@
     "old": "vec4(elDecode(uGlint.rgb), uGlint.a)",
     "new": "uGlint",
     "tests": [
-      "test/tell2_tell.test.js"
+      "test/characters/enemy/tell2_tell.test.js"
     ]
   },
   {
@@ -413,7 +413,7 @@
     "old": "gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);",
     "new": "gl.blendFunc(gl.ONE, gl.ONE);",
     "tests": [
-      "test/tell2_tell.test.js"
+      "test/characters/enemy/tell2_tell.test.js"
     ]
   },
   {
@@ -422,7 +422,7 @@
     "old": "  float fogK = max(fogFactorAt(vWorld), uNearFloor);",
     "new": "  float fogK = fogFactorAt(vWorld);",
     "tests": [
-      "test/tell2_tell.test.js"
+      "test/characters/enemy/tell2_tell.test.js"
     ]
   },
   {
@@ -431,7 +431,7 @@
     "old": "  return Math.max(0, Math.min(1, 1 - toLand / TELL_NOW));",
     "new": "  return Math.max(0, Math.min(1, 1 - toLand / (2 * TELL_NOW)));",
     "tests": [
-      "test/tell2_tell.test.js"
+      "test/characters/enemy/tell2_tell.test.js"
     ]
   },
   {
@@ -440,7 +440,7 @@
     "old": "out.push({ blow: b, phase, nearFloor: d <= TELL_NEAR_M ? TELL_NEAR_FLOOR : 0 });",
     "new": "out.push({ blow: b, phase, nearFloor: d <= 2 * TELL_NEAR_M ? TELL_NEAR_FLOOR : 0 });",
     "tests": [
-      "test/tell2_tell.test.js"
+      "test/characters/enemy/tell2_tell.test.js"
     ]
   },
   {
@@ -449,7 +449,7 @@
     "old": "        hold: f.ai._blowHold,   // TELL2",
     "new": "        // TELL2",
     "tests": [
-      "test/tell2_tell.test.js"
+      "test/characters/enemy/tell2_tell.test.js"
     ]
   },
   {
@@ -458,7 +458,7 @@
     "old": "        hold: g.ai._blowHold,   // TELL2",
     "new": "        // TELL2",
     "tests": [
-      "test/tell2_tell.test.js"
+      "test/characters/enemy/tell2_tell.test.js"
     ]
   },
   {
@@ -467,7 +467,7 @@
     "old": "          tellCues(f, audio, acuteHearingMultiplier(playerEntity));   // TELL2: its wind, its release and its landing in the ear (TELL8: a puppet's too)",
     "new": "",
     "tests": [
-      "test/tell2_tell.test.js"
+      "test/characters/enemy/tell2_tell.test.js"
     ],
     "note": "TELL8 (PIN MOVED): re-aimed by content - the owner winds up at a peer it hunts (`tf` its target's feet, `atMe` the damage's gate), a peer's blow carries its class, the relay moved to world162."
   },
@@ -477,7 +477,7 @@
     "old": "      setBatchGlint(g.batch, foeGlint(g.ai, undefined, prefersReducedMotion()));",
     "new": "",
     "tests": [
-      "test/tell2_tell.test.js"
+      "test/characters/enemy/tell2_tell.test.js"
     ]
   },
   {
@@ -486,17 +486,17 @@
     "old": "if (strikeEdge && f.ai._blowHold !== true) playEnemyClip",
     "new": "if (strikeEdge) playEnemyClip",
     "tests": [
-      "test/tell2_tell.test.js"
+      "test/characters/enemy/tell2_tell.test.js"
     ]
   },
   {
     "name": "TELL2-machine-not-restarted",
-    "file": "src/characters/enemyAttack.js",
+    "file": "src/characters/enemy/enemyAttack.js",
     "old": "          machineAttack(this.machine, this._heldStrike);\n",
     "new": "",
     "tests": [
-      "test/tell2_tell.test.js",
-      "test/audittact.test.js"
+      "test/characters/enemy/tell2_tell.test.js",
+      "test/scenes/audittact.test.js"
     ]
   }
 ]

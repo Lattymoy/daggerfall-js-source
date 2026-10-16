@@ -5,7 +5,7 @@
 //
 //   ARENA2_PATH=/path/to/arena2 node tools/tamrielFitProbe.mjs [--out tamriel-shots]
 //
-// Three readings, each a number the frame's authored constants (world/tamrielFrame.js BAY_ORIGIN,
+// Three readings, each a number the frame's authored constants (world/tamriel/tamrielFrame.js BAY_ORIGIN,
 // PIXELS_PER_PICTURE_UNIT) and the geography's vertices can be corrected by:
 //
 //   1. THE OVERLAY: TMAP00I0.IMG (320 x 200, the race screen's Tamriel) as grey, with the authored coast in white,
@@ -26,13 +26,13 @@ import { PakFile } from '../src/formats/pakFile.js';
 import { raceAtPickerPoint } from '../src/ui/chargenArt.js';
 import { DFPalette } from '../src/formats/dfPalette.js';
 import { traceTamrielPicture, paletteReader } from '../src/ui/tamrielTrace.js';   // TAMRIEL3: the trace the world host makes
-import { fitBayToPicture, setTamrielTrace, provinceKeyAt, PROVINCE_OF_ID } from '../src/world/tamrielLand.js';
-import { setTamrielFit, tamrielFit } from '../src/world/tamrielFrame.js';
+import { fitBayToPicture, setTamrielTrace, provinceKeyAt, PROVINCE_OF_ID } from '../src/world/tamriel/tamrielLand.js';
+import { setTamrielFit, tamrielFit } from '../src/world/tamriel/tamrielFrame.js';
 import { isWaterPixel } from '../src/ui/overworldModel.js';
-import { PROVINCES, CITIES, COAST, ISLANDS, BORDERS, closedRing, pts, provinceAt } from '../src/world/tamrielGeography.js';
-import { bayPictureRect, bayToPicture, BAY_W, BAY_H, BAY_ORIGIN, PIXELS_PER_PICTURE_UNIT } from '../src/world/tamrielFrame.js';
+import { PROVINCES, CITIES, COAST, ISLANDS, BORDERS, closedRing, pts, provinceAt } from '../src/world/tamriel/tamrielGeography.js';
+import { bayPictureRect, bayToPicture, BAY_W, BAY_H, BAY_ORIGIN, PIXELS_PER_PICTURE_UNIT } from '../src/world/tamriel/tamrielFrame.js';
 import { buildTamrielInk, STITCH_REACH } from '../src/ui/tamrielInk.js';
-import { landAt, coastChains } from '../src/ui/inkMap.js';
+import { landAt, coastChains } from '../src/ui/ink/inkMap.js';
 
 const A2 = process.env.ARENA2_PATH;
 if (!A2 || !existsSync(A2)) { console.error('ARENA2_PATH not set or missing'); process.exit(2); }

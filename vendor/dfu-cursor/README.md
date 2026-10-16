@@ -17,7 +17,7 @@ Provenance: https://github.com/Interkarma/daggerfall-unity
 `Assets/Resources/Cursor2.png` at commit
 `2343305d1d83ccc0de57a81e3b1e61188a997e34`, byte for byte.
 `dfu-cursor.files.json` is the listing (path, sha256, pixel size). It was
-generated from that file, not written by hand, and test/doctrine.test.js
+generated from that file, not written by hand, and test/tooling/doctrine.test.js
 reads it as the authority for what may stand under public/art/dfu-cursor/.
 
 Worn by `src/ui/cursor.js` on the classic skin (CLASSIC-CURSOR, FIELD BUGS

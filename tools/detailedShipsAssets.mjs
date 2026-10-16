@@ -8,7 +8,7 @@
 // is what it is:
 //
 // - `WorldDataPatches/SHIPAA0x.RMB-<index>-building0.json` - the author's
-//   edit of each ship's building record (formats/worldDataPatch.js); the
+//   edit of each ship's building record (formats/worldData/worldDataPatch.js); the
 //   record itself is the player's classic block.
 // - `Textures/derived.json` - the pictures that ARE classic records, or
 //   classic records with the author's paint on them, as specs
@@ -30,7 +30,7 @@ import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { PNG } from 'pngjs';
 import { isMain } from './lib/isMain.mjs';
-import { readUnityBundle } from '../src/formats/unityBundle.js';
+import { readUnityBundle } from '../src/formats/unity/unityBundle.js';
 import { BlocksFile } from '../src/formats/blocksFile.js';
 import { TextureFile } from '../src/formats/textureFile.js';
 import { DFPalette } from '../src/formats/dfPalette.js';

@@ -120,7 +120,7 @@ export function toScreenOrder(image) {
  * while a save screenshot (SAV3, IMAGE.RAW) is opaque edge to edge and
  * passes -1.
  *
- * It lived in ui/hud.js, and eleven modules imported it from there - among
+ * It lived in ui/hud/hud.js, and eleven modules imported it from there - among
  * them ui/cursor.js, which the ENTRY imports to install the document
  * cursor. That one edge, `cursor.js -> hud.js` for one pure function, put
  * the HUD, the enhanced HUD, the world tick and everything the tick

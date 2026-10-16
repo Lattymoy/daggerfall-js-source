@@ -3,7 +3,7 @@ import { chromium } from 'playwright';
 import { readFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import { resolve, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { ENHANCED_CSS, ENHANCED_TOKENS } from '../src/ui/enhancedStyle.js';
+import { ENHANCED_CSS, ENHANCED_TOKENS } from '../src/ui/enhanced/enhancedStyle.js';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 const out = resolve(process.env.PARTY_PROBE_OUT ?? 'tools/shots/party-arrival');
@@ -28,8 +28,8 @@ try {
     });
     await page.goto('http://probe.local/');
     const checks = await page.evaluate(async () => {
-      const { HudText } = await import('/src/ui/hudText.js');
-      const { PARTY_ARRIVAL_TEXT } = await import('/src/systems/partyArrival.js');
+      const { HudText } = await import('/src/ui/hud/hudText.js');
+      const { PARTY_ARRIVAL_TEXT } = await import('/src/systems/party/partyArrival.js');
       const hud = new HudText('town');
       for (const text of Object.values(PARTY_ARRIVAL_TEXT)) hud.add(text);
       hud.draw(null, null, null);

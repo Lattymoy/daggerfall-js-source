@@ -22,7 +22,7 @@
 //
 // THESE ARE A CONTRACT, checked at both ends: app/package.json's
 // artifactName templates must produce exactly these names
-// (test/rel4_release.test.js), and the release workflow's publish job
+// (test/tooling/rel4_release.test.js), and the release workflow's publish job
 // refuses a set that lacks any of them (scripts/desktopRelease.mjs
 // check) - so a naming change in electron-builder fails the release
 // before a single dead link goes live.

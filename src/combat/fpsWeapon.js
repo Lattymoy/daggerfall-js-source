@@ -23,14 +23,14 @@
 // symmetric states, as FPSWeapon :378-388 and :459-464 have them.
 
 import { CifRciFile } from '../formats/cifRciFile.js';
-import { getInt } from '../systems/settings.js';   // AUDIT 28 W13: Controls/Handedness
+import { getInt } from '../systems/settings/settings.js';   // AUDIT 28 W13: Controls/Handedness
 import { getPref } from '../systems/uiPrefs.js';   // MAC-I: the first-person lighting switch
 import { isEnchanted } from '../systems/inventory.js';   // AUDIT 17e C2
 import { WEAPONS, WEAPON_MATERIALS, weaponDyeColor } from '../characters/weapons.js';
-import { atlasFileName } from './diverseWeapons.js';   // DW1: FPSWeapon.cs:637-644 - the per-template name under Diverse Weapons' flag
-import { customWeaponImage } from './diverseWeaponsAssets.js';   // DW1: TryImportCifRci's answer, off the player's own bundles
-import { MATERIAL_NAMES } from '../systems/itemInfo.js';   // MetalTypes' names, for GetNameCifRci's suffix
-import { customItemClass } from '../systems/rriItems.js';   // RRI1: GetWeaponType is a virtual a custom class answers
+import { atlasFileName } from './diverseWeapons/diverseWeapons.js';   // DW1: FPSWeapon.cs:637-644 - the per-template name under Diverse Weapons' flag
+import { customWeaponImage } from './diverseWeapons/diverseWeaponsAssets.js';   // DW1: TryImportCifRci's answer, off the player's own bundles
+import { MATERIAL_NAMES } from '../systems/item/itemInfo.js';   // MetalTypes' names, for GetNameCifRci's suffix
+import { customItemClass } from '../systems/roleplayRealismItems/rriItems.js';   // RRI1: GetWeaponType is a virtual a custom class answers
 import { THUNDERLOCK_TEMPLATE } from '../characters/thunderlockIds.js';   // the port's own weapon (a leaf - see the file)
 import { applyDyeToIndex, DYE_TARGETS } from '../characters/dyes.js';
 
@@ -67,17 +67,17 @@ export const WEAPON_FILE = Object.freeze({
   [WEAPON_TYPES.Werecreature]: 'WEAPON11.CIF',
 });
 
-// WeaponBasics' Alignment - a leaf now (combat/weaponAlign.js), so a
+// WeaponBasics' Alignment - a leaf now (combat/weapon/weaponAlign.js), so a
 // reader that wants only the enum does not take this module's world
 // with it. Re-exported here: this is still the enum's front door.
-export { ALIGN } from './weaponAlign.js';
-import { ALIGN } from './weaponAlign.js';
+export { ALIGN } from './weapon/weaponAlign.js';
+import { ALIGN } from './weapon/weaponAlign.js';
 
 // The classic 320x200 design surface every weapon image overlays.
 // AUDIT 24 (wave 24): the classic 320x200 panel has one home in
-// ui/nativePanel.js.
-import { NATIVE_W, NATIVE_H } from '../ui/nativePanel.js';
-import { weaponOffsetHeight } from '../ui/hudLarge.js';   // ROAD-D D10: LargeHUDUndockedOffsetWeapon / the docked force
+// ui/native/nativePanel.js.
+import { NATIVE_W, NATIVE_H } from '../ui/native/nativePanel.js';
+import { weaponOffsetHeight } from '../ui/hud/hudLarge.js';   // ROAD-D D10: LargeHUDUndockedOffsetWeapon / the docked force
 import { pageParam } from '../systems/pageQuery.js';   // PERF-URL: the page's query, parsed once a search
 
 export { NATIVE_W, NATIVE_H };
@@ -384,7 +384,7 @@ export function drawFpsWeapon(renderer, canvas, art, state, frame, {
   // ROAD-D D10: weaponOffsetHeight (FPSWeapon.cs:146-155). Read
   // through the ONE home for the large HUD's laws rather than
   // recomputed - and DEFAULTED here, so the single caller
-  // (combat/weaponRig.js) does not have to know the bar exists.
+  // (combat/weapon/weaponRig.js) does not have to know the bar exists.
   offsetHeight = weaponOffsetHeight(),
   // MAC-I: FPSWeapon.Tint (FPSWeapon.cs:108), which DFU passes to its
   // own draw (:182) and never writes - the port writes it from the
@@ -405,7 +405,7 @@ export function drawFpsWeapon(renderer, canvas, art, state, frame, {
 /**
  * TWO-HANDS: drawFpsWeapon's placement without the draw - the frame's texture, its rect on the canvas, its source
  * rect (undefined unflipped) and its record (WEAPON-GLOW1's outline is measured in the record's own pixels) - so the
- * second hand of a pair (combat/twoHands.js) is placed by the very arithmetic the first is, and then mirrored whole.
+ * second hand of a pair (combat/twoHands/twoHands.js) is placed by the very arithmetic the first is, and then mirrored whole.
  * Null when the art has no such record.
  */
 export function fpsWeaponQuad(canvas, art, state, frame, {

@@ -433,7 +433,7 @@ and the wiring; the horizon itself is owed to a data-bearing session
 AUDIT EV (2026-08-31): the whole arc audited by three adversarial
 lanes - simulation/async, rendering, test/pin/doc integrity - and
 every confirmed finding fixed in the same change. The full record is
-`01-Overview/Audit-EV.md`; the headline pair: MOONLIGHT LEAKED
+`01-Overview/audits/Audit-EV.md`; the headline pair: MOONLIGHT LEAKED
 INDOORS (one shared renderer, the modal frames never cleared it - the
 AUDIT 26 F001 windowEmission class exactly; both modal arms and the
 automap now go dark explicitly, the stale R12 indirect with them) and
@@ -466,7 +466,7 @@ under Enhanced environments; off is the smooth dome; it takes effect
 when the world next loads like its neighbours. ~~Under Dynamic Skies (on
 by default again since MO1) the mod draws its own 512-pixel sheets
 whatever the switch says - the mod's look, 1:1.~~ PS2 below. Ledger row PS1. Pinned:
-`test/macfive.test.js` PS1, `test/enhancedSky.test.js` ES1e.
+`test/player/macfive.test.js` PS1, `test/render/enhancedSky.test.js` ES1e.
 
 **REMOVED (FT3, 2026-09-14, Mac: "Remove our version of pixelated sky").** PS2 (2026-09-12, Mac: "Volumetric clouds and pixelated should be
 compatible with dynamic skies though"): THE PIXEL ON EVERY SKY. The
@@ -486,9 +486,9 @@ rule, so its sun, moons, stars and sheets all land on the grid, the
 encoded colour posterised last, and 0/0 is the mod's shader exactly as
 written (its NEAREST sheets and REDUCE_COLOR are its own and stay).
 The host decides one `retro` and hands it to whichever passes it built;
-the lab likewise. Ledger row PS2. Pinned: `test/macfive.test.js` PS2,
-`test/enhancedSky.test.js` (the shader-text pins read the shared
-module too), `test/volumetricClouds.test.js` (every declared uniform
+the lab likewise. Ledger row PS2. Pinned: `test/player/macfive.test.js` PS2,
+`test/render/enhancedSky.test.js` (the shader-text pins read the shared
+module too), `test/render/volumetricClouds.test.js` (every declared uniform
 fetched, on all three).
 
 LV1 (2026-09-12, Mac: "I wanna push the draw distance as far as we
@@ -510,7 +510,7 @@ ONCE (`fogDistance`) for both the fog scale and `StreamingWorldState`.
 NOT MEASURED on a GPU in this session - no ARENA2 here; `npm run perf`
 (PERF9) before and after on Mac's machine is the number that matters,
 and the tier drops back to 3 or 4 in the pane if it says so. Ledger row
-LV1. Pinned: `test/macfive.test.js` LV1, `test/streaming.test.js`.
+LV1. Pinned: `test/player/macfive.test.js` LV1, `test/world/streaming.test.js`.
 
 **REMOVED (FT3, 2026-09-14, Mac: "Remove our version of pixelated sky"); `ringSnap` outlives it in `render/orderedDither.js` for PS3's dither alone.** ES1g (2026-09-12, Mac: "the returning pixelated sky look exposes the
 frame of a square skybox"): THE GRID IS RINGS. It did expose one, and
@@ -597,5 +597,5 @@ constant and compared it to itself, an assertion no shader could fail,
 which is the same disease one layer up. The seam sweep runs to 89.99
 degrees and over every ring boundary, and the wrap's dither phase is
 checked on all 512 rings. Four mutants run, four killed. Ledger row
-ES1g. Pinned: `test/enhancedSky.test.js` ES1g, `test/macfive.test.js`
-PS2, `test/audit39_render.test.js` F53.
+ES1g. Pinned: `test/render/enhancedSky.test.js` ES1g, `test/player/macfive.test.js`
+PS2, `test/render/audit39_render.test.js` F53.

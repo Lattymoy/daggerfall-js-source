@@ -7,7 +7,7 @@
 import { bindings } from '../ui/input.js';
 import { getBinding } from '../systems/inputActions.js';
 import { isEnhancedPlus } from '../systems/uiSkin.js';
-import { plusDpadMap, DPAD_CODES } from '../ui/plusPad.js';
+import { plusDpadMap, DPAD_CODES } from '../ui/plus/plusPad.js';
 import { hdGlyphName } from '../ui/padGlyphsHD.js';
 
 /** AUDIT CAPTAIN'S SEA S3: the pad's press for the glass, as its foot names it - the button chosen for it, else the

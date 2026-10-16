@@ -5,7 +5,7 @@
     "old": "    if (mine && foe?.entity && foe.entity.team !== 'PlayerAlly') noteSkillChallenge(playerEntity, foe.entity);",
     "new": "",
     "tests": [
-      "test/bal9_destruction.test.js"
+      "test/systems/bal9_destruction.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    if (mine && foe?.entity && foe.entity.team !== 'PlayerAlly') noteSkillChallenge(playerEntity, foe.entity);",
     "new": "    if (mine && foe?.entity) noteSkillChallenge(playerEntity, foe.entity);",
     "tests": [
-      "test/bal9_destruction.test.js"
+      "test/systems/bal9_destruction.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    if (mine && foe?.entity && foe.entity.team !== 'PlayerAlly') noteSkillChallenge(playerEntity, foe.entity);",
     "new": "    if (foe?.entity && foe.entity.team !== 'PlayerAlly') noteSkillChallenge(playerEntity, foe.entity);",
     "tests": [
-      "test/bal9_destruction.test.js"
+      "test/systems/bal9_destruction.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "!caster.entity.isPlayer) noteSkillChallenge(playerEntity, caster.entity);   // BAL9:",
     "new": "!caster.entity.isPlayer) void 0;   // BAL9:",
     "tests": [
-      "test/bal9_destruction.test.js"
+      "test/systems/bal9_destruction.test.js"
     ]
   },
   {
@@ -41,61 +41,61 @@
     "old": "q = Math.max(UNCHALLENGED_MAGIC_WEIGHT, ch ? challengeQuality(ch.tier, skill) : 0);",
     "new": "q = ch ? challengeQuality(ch.tier, skill) : UNCHALLENGED_MAGIC_WEIGHT;",
     "tests": [
-      "test/bal9_destruction.test.js"
+      "test/systems/bal9_destruction.test.js"
     ]
   },
   {
     "name": "BAL9b-potency-offline-too",
-    "file": "src/systems/spellPower.js",
+    "file": "src/systems/spell/spellPower.js",
     "old": "  if (!online || !caster?.isPlayer || caster._mentor) return 1;",
     "new": "  if (!caster?.isPlayer || caster._mentor) return 1;",
     "tests": [
-      "test/bal9_destruction.test.js"
+      "test/systems/bal9_destruction.test.js"
     ]
   },
   {
     "name": "BAL9b-two-a-point",
-    "file": "src/systems/spellPower.js",
+    "file": "src/systems/spell/spellPower.js",
     "old": "export const DESTRUCTION_POTENCY_PER_POINT = 0.01;",
     "new": "export const DESTRUCTION_POTENCY_PER_POINT = 0.02;",
     "tests": [
-      "test/bal9_destruction.test.js"
+      "test/systems/bal9_destruction.test.js"
     ]
   },
   {
     "name": "BAL9b-at-a-player",
-    "file": "src/systems/spellPower.js",
+    "file": "src/systems/spell/spellPower.js",
     "old": "!caster.peer && !!target && !target.isPlayer;",
     "new": "!caster.peer && !!target;",
     "tests": [
-      "test/bal9_destruction.test.js"
+      "test/systems/bal9_destruction.test.js"
     ]
   },
   {
     "name": "BAL9b-a-peers",
-    "file": "src/systems/spellPower.js",
+    "file": "src/systems/spell/spellPower.js",
     "old": "!!caster?.isPlayer && !caster.peer && !!target",
     "new": "!!caster?.isPlayer && !!target",
     "tests": [
-      "test/bal9_destruction.test.js"
+      "test/systems/bal9_destruction.test.js"
     ]
   },
   {
     "name": "BAL9b-the-worn-line-strikes",
-    "file": "src/systems/spellPower.js",
+    "file": "src/systems/spell/spellPower.js",
     "old": "  const climbed = climbedSkill(caster, school);",
     "new": "  const climbed = climbedSkill(caster, school) + (caster._mods?.skills?.[school] ?? 0);",
     "tests": [
-      "test/bal9_destruction.test.js"
+      "test/systems/bal9_destruction.test.js"
     ]
   },
   {
     "name": "BAL9b-while-mentoring",
-    "file": "src/systems/spellPower.js",
+    "file": "src/systems/spell/spellPower.js",
     "old": "if (!online || !caster?.isPlayer || caster._mentor) return 1;",
     "new": "if (!online || !caster?.isPlayer) return 1;",
     "tests": [
-      "test/bal9_destruction.test.js"
+      "test/systems/bal9_destruction.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "    if (p !== 1) v = Math.max(1, Math.round(v * p));",
     "new": "    if (p === 0) v = Math.max(1, Math.round(v * p));",
     "tests": [
-      "test/bal9_destruction.test.js"
+      "test/systems/bal9_destruction.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "  if (v > 0) {\n    const p = spellPowerMult(ent, target, school == null ? {} : { school });",
     "new": "  if (v >= 0) {\n    const p = spellPowerMult(ent, target, school == null ? {} : { school });",
     "tests": [
-      "test/bal9_destruction.test.js"
+      "test/systems/bal9_destruction.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "isDamageHealthEffect(e) ? spellPierce(caster, target) : 0",
     "new": "0",
     "tests": [
-      "test/bal9_destruction.test.js"
+      "test/systems/bal9_destruction.test.js"
     ]
   },
   {
@@ -131,80 +131,80 @@
     "old": "  saving += biographyMod + modifier;",
     "new": "  saving += biographyMod + modifier - pierce;",
     "tests": [
-      "test/bal9_destruction.test.js"
+      "test/systems/bal9_destruction.test.js"
     ]
   },
   {
     "name": "BAL9c-potency-cap-at-40",
-    "file": "src/systems/lootPowers.js",
+    "file": "src/systems/loot/lootPowers.js",
     "old": "export const POTENCY_CAP = 30;",
     "new": "export const POTENCY_CAP = 40;",
     "tests": [
-      "test/bal9_destruction.test.js"
+      "test/systems/bal9_destruction.test.js"
     ]
   },
   {
     "name": "BAL9c-the-whole-at-60",
-    "file": "src/systems/lootPowers.js",
+    "file": "src/systems/loot/lootPowers.js",
     "old": "export const SPELL_POWER_MOST = 50;",
     "new": "export const SPELL_POWER_MOST = 60;",
     "tests": [
-      "test/bal9_destruction.test.js"
+      "test/systems/bal9_destruction.test.js"
     ]
   },
   {
     "name": "BAL9c-the-surge-always",
-    "file": "src/systems/lootPowers.js",
+    "file": "src/systems/loot/lootPowers.js",
     "old": "entity.magicka > (entity.maxMagicka * surge.above) / 100) pct += surge.pct;",
     "new": "true) pct += surge.pct;",
     "tests": [
-      "test/bal9_destruction.test.js"
+      "test/systems/bal9_destruction.test.js"
     ]
   },
   {
     "name": "BAL9c-wellspring-uncapped",
-    "file": "src/systems/lootPowers.js",
+    "file": "src/systems/loot/lootPowers.js",
     "old": "Math.min(WELLSPRING_CAP, wornSum(me, 'wellspring'))",
     "new": "wornSum(me, 'wellspring')",
     "tests": [
-      "test/bal9_destruction.test.js"
+      "test/systems/bal9_destruction.test.js"
     ]
   },
   {
     "name": "BAL9c-the-rings-low-arm",
-    "file": "src/systems/lootPowers.js",
+    "file": "src/systems/loot/lootPowers.js",
     "old": "entity.magicka < entity.maxMagicka / 2 ? well.low : well.pct",
     "new": "entity.magicka < entity.maxMagicka / 2 ? well.pct : well.pct",
     "tests": [
-      "test/bal9_destruction.test.js"
+      "test/systems/bal9_destruction.test.js"
     ]
   },
   {
     "name": "BAL9c-the-career-ignored",
-    "file": "src/systems/lootPowers.js",
+    "file": "src/systems/loot/lootPowers.js",
     "old": "    && !(hasSpecialAbility(entity.career, SPECIAL_ABILITY.NoRegenSpellPoints) && !restIgnoresNoRegen())) {",
     "new": "    ) {",
     "tests": [
-      "test/bal9_destruction.test.js"
+      "test/systems/bal9_destruction.test.js"
     ]
   },
   {
     "name": "BAL9c-wellspring-on-a-blade",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "  wellspring: Object.freeze({ slot: 'suffix', groups: Object.freeze(['Jewellery']), params: null, proc: true,",
     "new": "  wellspring: Object.freeze({ slot: 'suffix', groups: Object.freeze(['Jewellery', 'Weapons']), params: null, proc: true,",
     "tests": [
-      "test/bal9_destruction.test.js"
+      "test/systems/bal9_destruction.test.js"
     ]
   },
   {
     "name": "BAL9c-the-law-unmoved",
-    "file": "src/systems/itemLaw.js",
+    "file": "src/systems/item/itemLaw.js",
     "old": "export const ITEM_LAW_VERSION = 5;",
     "new": "export const ITEM_LAW_VERSION = 2;",
     "tests": [
-      "test/tech1_roster.test.js",
-      "test/int1_itemlaw.test.js"
+      "test/systems/tech1_roster.test.js",
+      "test/systems/item/int1_itemlaw.test.js"
     ]
   },
   {
@@ -213,7 +213,7 @@
     "old": "export const ACCOUNT_VERSION = 'acct145';",
     "new": "export const ACCOUNT_VERSION = 'acct120';",
     "tests": [
-      "test/tech1_roster.test.js"
+      "test/systems/tech1_roster.test.js"
     ]
   }
 ]

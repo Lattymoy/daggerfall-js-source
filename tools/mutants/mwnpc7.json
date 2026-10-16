@@ -5,7 +5,7 @@
   "old": "  const { role, cut } = FOLK_DRESS[gender][folkVariant(person.archive, race)];",
   "new": "  const { role, cut } = FOLK_DRESS[gender][0];",
   "tests": [
-   "test/mwnpc7_folk.test.js"
+   "test/characters/mwnpc7_folk.test.js"
   ]
  },
  {
@@ -14,7 +14,7 @@
   "old": "  const j = t.female.indexOf(archive);\n  return j >= 0 ? j : 0;",
   "new": "  return 0;",
   "tests": [
-   "test/mwnpc7_folk.test.js"
+   "test/characters/mwnpc7_folk.test.js"
   ]
  },
  {
@@ -23,7 +23,7 @@
   "old": "  const female = person.gender === GENDERS.Female;",
   "new": "  const female = false;",
   "tests": [
-   "test/mwnpc7_folk.test.js"
+   "test/characters/mwnpc7_folk.test.js"
   ]
  },
  {
@@ -32,7 +32,7 @@
   "old": "    items.push({ templateIndex: pickOf(/** @type {number[]} */ (S.legs), wmix(s ^ 0xc2)), group, equipSlot: EQUIP_SLOTS.LegsClothes, dye: lowDye });",
   "new": "",
   "tests": [
-   "test/mwnpc7_folk.test.js"
+   "test/characters/mwnpc7_folk.test.js"
   ]
  },
  {
@@ -41,7 +41,7 @@
   "old": "  const dye = (salt) => pickOf(R.dyes, wmix(s ^ salt));",
   "new": "  const dye = (salt) => R.dyes[0];",
   "tests": [
-   "test/mwnpc7_folk.test.js"
+   "test/characters/mwnpc7_folk.test.js"
   ]
  },
  {
@@ -50,7 +50,7 @@
   "old": "  if (person.guard || person.archive === GUARD_TEXTURE) {",
   "new": "  if (false) {",
   "tests": [
-   "test/mwnpc7_folk.test.js"
+   "test/characters/mwnpc7_folk.test.js"
   ]
  },
  {
@@ -59,7 +59,7 @@
   "old": "equipSlot: EQUIP_SLOTS[slot], material: ARMOR_MATERIAL.Steel });",
   "new": "equipSlot: EQUIP_SLOTS[slot], material: ARMOR_MATERIAL.Iron });",
   "tests": [
-   "test/mwnpc7_folk.test.js"
+   "test/characters/mwnpc7_folk.test.js"
   ]
  },
  {
@@ -68,7 +68,7 @@
   "old": "  return (person._mwFolk = { key, n, id: `${shell}.${n}`, seed,",
   "new": "  return (person._mwFolk = { key, n, id: `${shell}`, seed,",
   "tests": [
-   "test/mwnpc7_folk.test.js"
+   "test/characters/mwnpc7_folk.test.js"
   ]
  },
  {
@@ -77,7 +77,7 @@
   "old": "  if (person._mwFolk && person._mwFolk.key === key) return person._mwFolk;",
   "new": "  if (person._mwFolk) return person._mwFolk;",
   "tests": [
-   "test/mwnpc7_folk.test.js"
+   "test/characters/mwnpc7_folk.test.js"
   ]
  },
  {
@@ -86,7 +86,7 @@
   "old": "  if (person._mwFolk && person._mwFolk.key === key) return person._mwFolk;",
   "new": "  if (false) return person._mwFolk;",
   "tests": [
-   "test/mwnpc7_folk.test.js"
+   "test/characters/mwnpc7_folk.test.js"
   ]
  },
  {
@@ -95,7 +95,7 @@
   "old": "  a.yaw = Number.isFinite(person.yaw) ? person.yaw : (person.facingYaw ?? 0);",
   "new": "  a.yaw = Number.isFinite(person.yaw) ? person.yaw : 0;",
   "tests": [
-   "test/mwnpc7_folk.test.js"
+   "test/characters/mwnpc7_folk.test.js"
   ]
  },
  {
@@ -104,7 +104,7 @@
   "old": "  a.moving = person.state === 'move';",
   "new": "  a.moving = true;",
   "tests": [
-   "test/mwnpc7_folk.test.js"
+   "test/characters/mwnpc7_folk.test.js"
   ]
  },
  {
@@ -113,7 +113,7 @@
   "old": "  const a = person._mwActor ??= {",
   "new": "  const a = {",
   "tests": [
-   "test/mwnpc7_folk.test.js"
+   "test/characters/mwnpc7_folk.test.js"
   ]
  },
  {
@@ -122,7 +122,7 @@
   "old": "      if (batch) batch.castOnly = false;\n      if (!lane || !offered) return;",
   "new": "      if (!lane || !offered) return;",
   "tests": [
-   "test/mwnpc7_folk.test.js"
+   "test/characters/mwnpc7_folk.test.js"
   ]
  },
  {
@@ -131,7 +131,7 @@
   "old": "      if (!want()) { if (lane) { lane.destroy(); lane = null; } offered = false; return false; }",
   "new": "      if (!want()) { offered = false; return false; }",
   "tests": [
-   "test/mwnpc7_folk.test.js"
+   "test/characters/mwnpc7_folk.test.js"
   ]
  },
  {
@@ -140,7 +140,7 @@
   "old": "      if (!lane || !offered) return;\n      offered = false;\n      lane.end(dt, eye);",
   "new": "      if (!lane) return;\n      offered = false;\n      lane.end(dt, eye);",
   "tests": [
-   "test/mwnpc7_folk.test.js"
+   "test/characters/mwnpc7_folk.test.js"
   ]
  },
  {
@@ -149,7 +149,7 @@
   "old": "if (batches[i]) batches[i].castOnly = lane.has(laneName, ids[i]);",
   "new": "if (batches[i]) batches[i].castOnly = false;",
   "tests": [
-   "test/mwnpc7_folk.test.js"
+   "test/characters/mwnpc7_folk.test.js"
   ]
  },
  {
@@ -158,7 +158,7 @@
   "old": "      offered = false;\n      lane.end(dt, eye);\n      for (let i = 0;",
   "new": "      offered = false;\n      for (let i = 0;",
   "tests": [
-   "test/mwnpc7_folk.test.js"
+   "test/characters/mwnpc7_folk.test.js"
   ]
  },
  {
@@ -167,7 +167,7 @@
   "old": "        if (_folkOn) { const a = person.living?.res ? residentWalkerActor(",
   "new": "        if (false) { const a = person.living?.res ? residentWalkerActor(",
   "tests": [
-   "test/mwnpc7_folk.test.js"
+   "test/characters/mwnpc7_folk.test.js"
   ]
  },
  {
@@ -176,7 +176,7 @@
   "old": "    folkStreet.draw(canvas, proj, view, mwv.eye, townTalk.overlayActive ? 0 : dt);",
   "new": "",
   "tests": [
-   "test/mwnpc7_folk.test.js"
+   "test/characters/mwnpc7_folk.test.js"
   ]
  },
  {
@@ -185,7 +185,7 @@
   "old": "folkStreet.destroy();   // MWNPC7: indoors",
   "new": "// MWNPC7: indoors",
   "tests": [
-   "test/mwnpc7_folk.test.js"
+   "test/characters/mwnpc7_folk.test.js"
   ]
  },
  {
@@ -194,7 +194,7 @@
   "old": "        if (_folkOn) folkStreet.offer(folkActor(person, batch.origin, population.race), batch);",
   "new": "        if (false) folkStreet.offer(folkActor(person, batch.origin, population.race), batch);",
   "tests": [
-   "test/mwnpc7_folk.test.js"
+   "test/characters/mwnpc7_folk.test.js"
   ]
  }
 ]

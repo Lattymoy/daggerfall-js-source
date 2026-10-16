@@ -49,20 +49,20 @@ names the departure (TV1, 2026-09-28).
 
 ## The seams it stands on (measured 2026-09-27, four read-only lanes)
 
-- **The journey exists.** `systems/travelOptions.js` runs Travel Options' Update in its
-  own order: the autopilot (`systems/travelAutopilot.js`) turns and drives the real
-  motor, `systems/travelSteer.js` casts three feelers round obstacles (TRAVEL-NAV),
+- **The journey exists.** `systems/travel/travelOptions.js` runs Travel Options' Update in its
+  own order: the autopilot (`systems/travel/travelAutopilot.js`) turns and drives the real
+  motor, `systems/travel/travelSteer.js` casts three feelers round obstacles (TRAVEL-NAV),
   `systems/timeScale.js` scales the step, and a journey stops for enemies, a window, a
   disease, the ocean, arrival (`interruptTravel` keeps the destination for the resume
   prompt). The held map already starts a walked journey at a bare pixel
   (`beginTravelToCoords`, MAP2).
 - **Roads exist; a route planner does not.** Hazelnut's four 500,000-byte masks, one
-  compass byte per map pixel (`vendor/roads-hazelnut/`, `systems/travelPaths.js`), and
+  compass byte per map pixel (`vendor/roads-hazelnut/`, `systems/travel/travelPaths.js`), and
   the follow key walks junction to junction; a named trip goes straight
   (`Travel-Options.md` TO-FIELD: "The mod does not route along roads to a named
   destination and never did"). The pieces for a planner are in the tree:
   `ui/overworldModel.js traceChains` (1,508 road chains, 4,289 track chains) and
-  `world/roadNetwork.js route()` (a pixel-grid A* that refuses water and prices climbs).
+  `world/road/roadNetwork.js route()` (a pixel-grid A* that refuses water and prices climbs).
 - **The raised eye exists.** The render eye (`mwv.eye`) is already separate from
   `cam.pos` (`scenes/world.js`), and `cam.pos` is what streaming, the ±500 m vertical
   re-centre, the weather sample, rain, grass and the wind follow. The travel camera is a
@@ -70,7 +70,7 @@ names the departure (TV1, 2026-09-28).
   weather keeps being read where the player is. The tap ray unprojects through the last
   frame's projection and view, so a click works from any camera.
 - **The weather is a field.** WEATHER3's `weatherAt(x, z, minute)`
-  (`systems/weatherMap.js`): 400-700 systems born, drifting, growing and dying over the
+  (`systems/weather/weatherMap.js`): 400-700 systems born, drifting, growing and dying over the
   bay, calibrated to DFU's odds table. A player query is 0.12 ms, the sky's 40 km read
   0.2 ms. Cloud shadows (VC4) are already a world-space map that reads correctly from
   above.
@@ -202,7 +202,7 @@ as lead and are recorded as such; each is one line to change if Mac calls otherw
 - `src/scenes/travelView.js` - the HOST'S MACHINE: `createTravelView(deps)` owning the
   state (`off` / `rising` / `up` / `falling`), the input while up, and every way out. Its
   header is THE FOUR HOSTS RULE's record.
-- `src/ui/travelViewHud.js` - the READOUT: the traveller's ring and chevron on the
+- `src/ui/travel/travelViewHud.js` - the READOUT: the traveller's ring and chevron on the
   projected feet, the compass, the bar (title, place, hints, Return). Keyed marks
   (`marks`) are its seam for TV2's route and TV3's travellers.
 - `src/render/fogGlsl.js` `FOCUS_GLSL` + `renderer.setFocus` - THE FOCUS: one uniform
@@ -275,7 +275,7 @@ the walk is the keys' way while it turns) while no journey drives - and,
 since TV-WASD (below), at the travel speed. The DOM beside the canvas keeps its own
 events.
 
-**Proof.** `test/tv1_travel_view.test.js` (18), the heldmap door pin (+1),
+**Proof.** `test/render/tv1_travel_view.test.js` (18), the heldmap door pin (+1),
 `tools/mutants/tv1.json` (17 dead), and `tools/travelViewProbe.mjs` (17 checks in a real
 browser on a synthetic valley - CI has no ARENA2 - including the fog and shadow
 discriminations read off pixels, real pointer events, and the bar on a phone).
@@ -324,11 +324,11 @@ The known places about the traveller wear PLATES (the grid's own radius, rebuilt
 change), and a plate's click is the same journey as a click on the town. No Travel Options
 (the mod switched off) is said, not silently ignored; foes near refuse it in the mod's words.
 
-**By the roads** (`systems/travelRoute.js`). A* over the 1000x500 grid on Hazelnut's bytes -
+**By the roads** (`systems/travel/travelRoute.js`). A* over the 1000x500 grid on Hazelnut's bytes -
 the very bytes Travel Options' follow key walks - with a step ON the road only where both
 ends carry the edge; a road 1, a track 1.6, the open 3.5 (x sqrt 2 diagonally); the sea
 refused (roadsProducer's WATER_BYTE); a straight run on one kind of ground folded into one
-leg. It walks roads; `world/roadNetwork.js route()` lays them - two laws, one compass.
+leg. It walks roads; `world/road/roadNetwork.js route()` lays them - two laws, one compass.
 
 **The journeys are Travel Options'.** Two of the port's own (Ledger A, "THE TRAVEL VIEW'S
 JOURNEYS"), built from the mod's parts: `beginTravelAlongRoute` (each leg a pixel's middle,
@@ -339,7 +339,7 @@ resumes from the nearest leg ahead) and `beginTravelToPoint` (a path's width abo
 Every stop the mod's Update makes still stops them. Under the view the arrival is SAID on the
 notice line, not boxed: a box is a window, and a window brings the view down.
 
-**The cap, measured live** (`systems/travelGovernor.js`). TV0 planned a probe riding a long
+**The cap, measured live** (`systems/travel/travelGovernor.js`). TV0 planned a probe riding a long
 road for the highest clean rate; the probe needs ARENA2, CI has none, and one machine's
 number is wrong on every slower one. So the measurement runs on the player's machine, every
 journey: while the view is up over a running journey the host counts the pixels inside the
@@ -354,7 +354,7 @@ four times on the ground), broken behind the eye, under the plates and the desti
 - a readout, never occluded by the hills it crosses (a world-space line would need a line
 pass the renderer does not have; handheldTorches.js says the same).
 
-**Proof.** `test/tv2_click_to_move.test.js` (17), `tools/mutants/tv2.json` (20 dead),
+**Proof.** `test/systems/travel/tv2_click_to_move.test.js` (17), `tools/mutants/tv2.json` (20 dead),
 `tools/travelViewProbe.mjs` (TV2's four checks: the plate's click is a journey and not a
 pick, the route drawn, the trip in the bar, the held clock on the panel).
 
@@ -436,9 +436,9 @@ refresh (`TRAV_KEEPALIVE_MS`) - the cost table above is what set them.
 drops every connected player for a moment. Until world122 is live every client sends no mark
 and draws none - nothing closes.
 
-**Proof.** `test/tv3_travellers.test.js` (15, over a real Room through `test/fakeRoom.mjs`),
+**Proof.** `test/scenes/tv3_travellers.test.js` (15, over a real Room through `test/fakeRoom.mjs`),
 `tools/mutants/tv3.json` (20 dead), the SLAM8 row for world122 in
-`test/relayversion.test.js`.
+`test/net/relayversion.test.js`.
 
 ## TV4 - SHIPPED (2026-09-28)
 
@@ -485,7 +485,7 @@ built from - and under the travel view round the traveller's head; the ribbons s
 view's eye); EV6 and PERF2 count the world host's foreign seams at twelve; AUDIT 39r counts
 seventeen host call sites across thirteen passes.
 
-**Proof.** `test/tv4_weather_above.test.js` (8), `tools/mutants/tv4.json` (12 dead),
+**Proof.** `test/render/tv4_weather_above.test.js` (8), `tools/mutants/tv4.json` (12 dead),
 `tools/travelViewProbe.mjs` (TV4's four checks).
 
 ## AUDIT TV - the lead's audit before the arc closed (2026-09-28)
@@ -506,7 +506,7 @@ fixed; every fix pinned and every pin made to FAIL (`tools/mutants/tv1.json` 30,
 - **B2 a refused hold stuck.** `mwViewHoldThird(true)` answers false when no body can leave
   the head (a mount) but keeps an empty hold; the view released only a hold that answered
   true, so every later ask was refused for good. The view now releases what it ASKED.
-- **B3 touch.** The view takes pointer events; `ui/touch.js` listens to TOUCH events on the
+- **B3 touch.** The view takes pointer events; `ui/touch/touch.js` listens to TOUCH events on the
   same canvas, so a drag that orbited the view also swung the weapon or walked the stick. The
   view takes a canvas `touchstart` in the capture phase while up - the START only, so a
   finger down before the rise ends as the touch layer's own and its stick lets go.
@@ -555,7 +555,7 @@ Five read-only reviewers, one lane each (the view and its input; click to move; 
 travellers, the relay and privacy; rendering; the seams, the evidence and the docs), each
 told what AUDIT TV had already fixed. Every finding was re-read in the source before it was
 fixed; each fix is pinned and each pin made to fail. The Proof lines above are each slice
-AS SHIPPED; the arc's evidence now: `test/tv1_travel_view.test.js` 26,
+AS SHIPPED; the arc's evidence now: `test/render/tv1_travel_view.test.js` 26,
 `tv2_click_to_move` 20, `tv3_travellers` 18, `tv4_weather_above` 10; `tools/mutants/tv1.json`
 63, `tv2` 40, `tv3` 37, `tv4` 29 - all dead; `tools/travelViewProbe.mjs` 26 checks, B1's
 street-fog leak among them.
@@ -662,7 +662,7 @@ writes the far plane for every fragment. The build, in order:
 1. **The ring writes its OWN depth** in its own projection (a second depth attachment, or the
    ring's fragments at a depth mapped into the far slice the world never reaches), so
    anything else drawn in that span is occluded by the ring's hills. Pinned by the EV8
-   tests that hold its far-plane law today (`test/farring.test.js`, `test/perf2.test.js`).
+   tests that hold its far-plane law today (`test/ui/farring.test.js`, `test/render/perf2.test.js`).
 2. **The towns**: for every location whose pixel lies between the grid's edge and
    `RING_RADIUS`, a cluster of boxes in its own rect (`locationWorldRect`), seeded by its map
    id, its block count its footprint, the climate's roof colour, lit by the frame's sun, in
@@ -703,7 +703,7 @@ roads - TV2's own planner and route; the journey's own end wears the flag, not a
 The grid's own places keep TV2's plates on the land; the far places start where the grid
 ends, so no town is marked twice.
 
-**How** (`systems/travelFarPlaces.js`, pure): `settlementPixels` gathers the world's
+**How** (`systems/travel/travelFarPlaces.js`, pure): `settlementPixels` gathers the world's
 settlements once from the host's pixel index; `farPlaces` picks them by Chebyshev distance
 (beyond the grid's radius, within the range), keeps the discovered ones (`tvPlaceSummary`,
 DFU's discovery law: an undiscovered place has no name to go to), nearest first. The host
@@ -735,7 +735,7 @@ pinned against the style sheet, so a rename cannot leave a mark under one unseen
 the browser probe against the real bar - and since AUDIT DEEP2 against the HUD's real vitals
 too; the readout stays inside PERF-TV's budgets. (AUDIT DEEP2 grew the measure: below.)
 
-**Proof.** `test/tv5_far_places.test.js`, `tools/mutants/tv5.json` (the TV5, EDGE-DECLUTTER and
+**Proof.** `test/ui/travel/tv5_far_places.test.js`, `tools/mutants/tv5.json` (the TV5, EDGE-DECLUTTER and
 EDGE-FURNITURE records), `tools/travelViewProbe.mjs` (a far place held at the right edge, its
 plate on the screen, a click on it a journey).
 
@@ -758,7 +758,7 @@ held mark. 256 travellers cost two frames.
 
 **What changed.**
 - **One canvas.** Every mark - dots, plates, edge arrows, the destination's ring - is drawn
-  on the readout's one canvas (`ui/travelViewHud.js` `drawMarks`); each label is a sprite
+  on the readout's one canvas (`ui/travel/travelViewHud.js` `drawMarks`); each label is a sprite
   drawn once and reused (`SPRITES_MAX` 512, dropped when the display face arrives). The
   screen's size is read ONCE a frame, before any write. A picture that did not change (a
   camera at rest) is not drawn again - the frame's signature is compared first.
@@ -774,7 +774,7 @@ held mark. 256 travellers cost two frames.
   centre drifts into a new `CURTAIN_MEMO_M` (32 m) cell.
 
 **Proof.** `tools/travelViewPerf.mjs` (the budgets; exits 1 on a blown one),
-`test/tv5_far_places.test.js` (the screen read counted, the redraw skipped at rest and taken
+`test/ui/travel/tv5_far_places.test.js` (the screen read counted, the redraw skipped at rest and taken
 on a move, the click boxes, the curtains' samples counted), `tools/mutants/tv5.json` (the
 PERF-TV records).
 
@@ -793,7 +793,7 @@ same line on the screen - byte for byte when it lies wholly there, its first str
 from the feet to the edge, dashes and all - and the far pick at 16.7 ms a frame. Where the line
 comes back onto the screen its dash pattern starts at the edge. The readout is world.js's alone
 (travelView.js names the FOUR HOSTS).
-**Proof.** `test/fb0929_farroute.test.js` (4: the planner on the vendored roads, the host's line
+**Proof.** `test/world/fb0929_farroute.test.js` (4: the planner on the vendored roads, the host's line
 lifted from world.js, the view's own camera and the readout), `tools/mutants/fb0929_farroute.json`
 (13, all dead), `tools/travelViewPerf.mjs` (a journey's line timed by its frames: 20 ms).
 
@@ -884,7 +884,7 @@ Five order pins that passed on a missing line (`indexOf` of -1) now demand both 
 - The chord across the ground plane (D9), and the air's haze marched from the raised eye (D-S3,
   estimated three display levels or fewer).
 
-**Proof.** `test/tv1_travel_view.test.js` 30, `tv2_click_to_move` 21, `tv3_travellers` 21,
+**Proof.** `test/render/tv1_travel_view.test.js` 30, `tv2_click_to_move` 21, `tv3_travellers` 21,
 `tv4_weather_above` 11, `tv5_far_places` 16; `tools/mutants/tv1.json` 80, `tv2` 47, `tv3` 45,
 `tv4` 36, `tv5` 61 - all dead; `tools/travelViewProbe.mjs` 35 checks (the HUD's vitals among
 them); `tools/travelViewPerf.mjs` inside its budgets.
@@ -909,7 +909,7 @@ them) - is a marker over their head as the region's travellers are, held
 at the edge off the picture; the names over the heads STAND DOWN while the view is up
 (`drawPeerNames`: one name a player, never two - and with them the chat bubbles over the heads:
 under the view a line said nearby reads in the chat log alone); and every player's marker is their name as it
-reads in play (`badgeSprite`, off `ui/playerBadge.js`, `net/renown.js`, `net/guildLaw.js` - the
+reads in play (`badgeSprite`, off `ui/playerBadge.js`, `net/renown.js`, `net/guild/guildLaw.js` - the
 same law both name faces read): the title its own line ABOVE in its own colour (a gradient title
 across its letters; never the party's green - ACC3), then one row centred - the Renown in its amber
 box, the name (my party's in `PARTY_GREEN_CSS`, a stranger's the bone), the guild's tag in steel,
@@ -961,8 +961,8 @@ And the marker's face, measured in a browser with the real fonts (N1):
 Measured after: 64 moving 0.33 ms, 256 moving 1.39 ms, 64 at rest 0.05 ms (budgets 0.60 / 1.50 /
 0.15; `tools/travelViewPerf.mjs`).
 
-**Proof.** `test/tv3_travellers.test.js` (the wire, the book, the host's marks and the names
-standing down), `test/tv5_far_places.test.js` (the marker's face: the title above in its colour,
+**Proof.** `test/scenes/tv3_travellers.test.js` (the wire, the book, the host's marks and the names
+standing down), `test/ui/travel/tv5_far_places.test.js` (the marker's face: the title above in its colour,
 the Renown amber, the party's green, the tag's steel, a stranger's bone, a title won at rest
 redrawn); `tools/mutants/tv3.json` and `tv5.json` (the OVERWORLD-NAMES records).
 
@@ -974,32 +974,32 @@ redrawn); `tools/mutants/tv3.json` and `tv5.json` (the OVERWORLD-NAMES records).
   journey through the mod's own `ClearTravelDestination` (`onForgetTravel`); Resume and Not now are the mod's.
 - **OW-THEME** ("The overworld ui needs to follow enhanced ui theme"): the bar (`.tview-bar`, the journey bar's
   window role), its Return (`.tview-back`, a button) and its compass (`.tview-compass`, a well) are in the Enhanced
-  Plus frame roles (`ui/enhancedFrame.js` FRAME_ROLES - paint only), and the canvas's plates are drawn in the
+  Plus frame roles (`ui/enhanced/enhancedFrame.js` FRAME_ROLES - paint only), and the canvas's plates are drawn in the
   theme's own stone (`themePlate`: the page's `--slate` at 0.78 alpha, read at each open; a new stone lets
   the old plate images go).
 - **OW-BIG** ("The player sprite needs to appear larger. Like it shouldnt be at the tiny scale"): under the view the
   traveller's own sprite is drawn `tvOwnGrow(distance)` times its size (`player/travelCamera.js`: one more for every
   `TV_OWN_GROW_M` = 32 m from the eye to the feet, never past `TV_OWN_GROW_MAX` = 12, 1 near the ground) - about
   40-50 px tall at 1080p at every zoom, a Mount & Blade party's icon. The view hands the step (`frame().grow`), the
-  host passes it on the body's `face`, and the sprite lane (`player/eotbBody.js`) makes its batch again at each whole
+  host passes it on the body's `face`, and the sprite lane (`player/eyeOfTheBeholder/eotbBody.js`) makes its batch again at each whole
   step; a grown sprite casts no giant's shadow (`selfCard` off) and hangs no lantern on a waist that moved.
 - **OW-PEERS** (FIELD BUGS 2026-10-01 #11, "you cannot see other player's sprites"): OW-BIG grew the traveller
   alone, so every other player stood at their own size - a speck at 330 m under the name that stood over them. Each
   is grown by the same law at their own feet (world.js `peerGrow`, `tvOwnGrow` of the view's eye to them): the
-  riders, the beasts and the walkers (`net/peerRiders.js`, its size, offset and reach), the dolls and the class
-  sprites (`net/remotePlayers.js`), the Morrowind bodies (`net/peerBodies.js`, `drawThird`'s `grow` and the view's
+  riders, the beasts and the walkers (`net/peer/peerRiders.js`, its size, offset and reach), the dolls and the class
+  sprites (`net/remotePlayers.js`), the Morrowind bodies (`net/peer/peerBodies.js`, `drawThird`'s `grow` and the view's
   lean, culled by their grown reach); their names over the grown heads; none casts a giant's shadow, no walker hangs
-  a lantern. `test/fb1001_overworld.test.js`.
+  a lantern. `test/net/peer/fb1001_overworld.test.js`.
 - **OW-WAGON** (WAGON-HITCH, 2026-10-04, Mac: "the wagon when attached to the horse should show in the overworld if
   attached"): the cart's trailing wagon is drawn grown with its rider, about the point it hangs from - mine by the
   view's own step (`frame().grow`, handed to `hcc.draw` as `selfGrow`), another player's by `peerGrow` at their rider.
   A wagon at its own size hung a speck under the grown horse. Only the draw grows; the pose the runtime keeps, parks,
   saves and sends is the wagon's own. Its AUDIT (WAGON-HITCH B1/B2/B7): the grown wagon casts no giant's shadow (the law
   above), finds its ground with a probe that rises with its reach (a hill its own length tall swallowed the mod's fixed
-  8 m), and its grown wheels turn g times slower for the same road. `06-Systems/Horse-Cart-And-Cargo.md` WAGON-HITCH, `test/wagonhitch.test.js`.
+  8 m), and its grown wheels turn g times slower for the same road. `06-Systems/Horse-Cart-And-Cargo.md` WAGON-HITCH, `test/systems/horse/wagonhitch.test.js`.
 
-**Proof.** `test/heldmap.test.js`, `test/tv5_far_places.test.js`, `test/eotb_body.test.js`,
-`test/tv1_travel_view.test.js`; `tools/mutants/ow1.json` (14 records, all dead).
+**Proof.** `test/ui/heldmap.test.js`, `test/ui/travel/tv5_far_places.test.js`, `test/player/eyeOfTheBeholder/eotb_body.test.js`,
+`test/render/tv1_travel_view.test.js`; `tools/mutants/ow1.json` (14 records, all dead).
 
 ## OW ROUND 2 - no ground travel, the road walked on, no mountains (2026-09-28, Mac)
 
@@ -1027,7 +1027,7 @@ redrawn); `tools/mutants/tv3.json` and `tv5.json` (the OVERWORLD-NAMES records).
   no step and the ground calls no pixel a peak - the mountains are walked on foot everywhere
   (`11-Multiplayer/Wild-Zone.md` section 19).
 
-**Proof.** `test/tv2_click_to_move.test.js` (three more), `tools/mutants/ow2.json` (18 records, all dead).
+**Proof.** `test/systems/travel/tv2_click_to_move.test.js` (three more), `tools/mutants/ow2.json` (18 records, all dead).
 
 ## THE OVERHAUL - a living Overworld (TV6-TV8, DESIGN, 2026-09-28)
 
@@ -1074,14 +1074,14 @@ PARTY-REST5's `restEnemyAt` is; the leader's resume resumes them. A band that ma
 
 **Order of the build:** TV6 (self-contained), TV7 (the bands, no relay change), TV8 (the party's journey, world124).
 
-**TV6 BUILT (2026-09-28).** `systems/travelDungeons.js` (pure: `dungeonPixels`, `nearDungeons`, `dungeonToFind`,
+**TV6 BUILT (2026-09-28).** `systems/travel/travelDungeons.js` (pure: `dungeonPixels`, `nearDungeons`, `dungeonToFind`,
 `TV_DUNGEON_MAX` 12, `TV_DUNGEON_FIND_M` 1000); the host's `travelViewDungeons` (kept between pixels and finds, a load
 forgets it) and `dungeonFindFrame` (four times a second, the enhanced interface outdoors: `discoverLocation`, then
 "You have found <name>." on the screen); a found dungeon past the grid is a far plate (its name, its distance, a
 journey - within the grid TV2's own plate), the rest are the readout's LAIR look - a dull red point and a "?", no
-journey, never held at the edge. Proof: `test/tv6_dungeons.test.js`, `tools/mutants/tv6.json` (14 records, all dead).
+journey, never held at the edge. Proof: `test/systems/travel/tv6_dungeons.test.js`, `tools/mutants/tv6.json` (14 records, all dead).
 
-**TV7 BUILT (2026-09-28).** `systems/travelBands.js` (pure): a cell of BAND_CELL_PX (2) map pixels holds a band in a
+**TV7 BUILT (2026-09-28).** `systems/travel/travelBands.js` (pure): a cell of BAND_CELL_PX (2) map pixels holds a band in a
 life of BAND_LIFE_MS (12 real minutes on the shared clock) at 0.30 by day and 0.45 by night, born at a seeded point
 the land allows (the host's `bandOk`: no water, no place's pixel); it WANDERS 75 s legs at 1.3 m/s, each bent up to a
 quarter turn, turned back off the land's edge - every client computes the same bands in the same places, nothing sent.
@@ -1094,7 +1094,7 @@ minutes without closing a metre, it loses the trail and is gone for its life. Se
 number ("Orc, 4"); a chaser held at the edge. **Online** the bands themselves are shared - born, placed and wandering the same for everyone - and TV7b (below) shares
 the chase. What a band IS scales to who sees it, as Daggerfall's encounters do (`rollGroupComposition` reads the
 viewer's level): two players of different levels can read different members off one band; the fight is the chaser's.
-Proof: `test/tv7_bands.test.js`, `tools/mutants/tv7.json` (19 records, all dead).
+Proof: `test/systems/travel/tv7_bands.test.js`, `tools/mutants/tv7.json` (19 records, all dead).
 
 **TV7b BUILT (2026-09-28) - THE CHASE, SHARED.** The chaser's client says its chases on its own cell foes frame under
 `bd` (`[[id, x, z, 1]]`, the band's place in native units) and the bands spent there (`[[id, 0, 0, 2]]`), at most
@@ -1103,9 +1103,9 @@ the relay (NO relay change). A chase asks for a frame (`bandMoved`, as a moving 
 peer's chase where it runs (for BAND_WORD_MS after the word; then the band wanders on), never starts its own chase of
 that band, and spends every band a peer spent - one band, one fight, everyone's. Two players who saw one band in the
 same breath: the lower id keeps it (`chaseYields`), alike on every client.
-Proof: `test/tv7_bands.test.js`, `tools/mutants/tv7.json` (33 records, all dead).
+Proof: `test/systems/travel/tv7_bands.test.js`, `tools/mutants/tv7.json` (33 records, all dead).
 
-**TV8 BUILT (2026-09-28) - GROUP TRAVEL, THE LEADER DRIVES.** `systems/partyWalk.js` (pure). A party leader's Overworld
+**TV8 BUILT (2026-09-28) - GROUP TRAVEL, THE LEADER DRIVES.** `systems/party/partyWalk.js` (pure). A party leader's Overworld
 journey (a place, or a spot) with a member gathered within PARTY_WALK_RADIUS_M (60 m) is a WALK on the leader's party
 pose - `tw` `{x, y, sx?, sz?, at, go, h}` (net/wire.js validPartyPose, **world124**, PARTY_WALK_RELAY_MIN 124 - AUDIT OW5: it read world123, the raids' relay: offered
 only through a hub that carries it). A gathered member is asked ("<leader> leads the party to <place>. Travel with
@@ -1116,7 +1116,7 @@ again (`go`) and every member who said yes takes theirs up again, from where the
 band's contact - is said on their pose (`ts`), and the leader halts on a stop newer than the last set-out: a stop for
 one is a stop for all. An arrival ends the walk; a member's arrival is never a stop. **Deploy:** world124 must ship to
 the relay before the walk is offered (an older relay strips `tw` and `ts`; nothing breaks).
-Proof: `test/tv8_party_walk.test.js`, `tools/mutants/tv8.json` (17 records, all dead), `test/relayversion.test.js`
+Proof: `test/systems/travel/tv8_party_walk.test.js`, `tools/mutants/tv8.json` (17 records, all dead), `test/net/relayversion.test.js`
 (the world124 law).
 
 **AUDIT OW3 (2026-09-28) - everything since the merge, audited in five lanes, verified, fixed.**
@@ -1153,8 +1153,8 @@ Proof: `test/tv8_party_walk.test.js`, `tools/mutants/tv8.json` (17 records, all 
   every full frame). Members' paces are their own clients' (a member at x1 behind a leader at x10 falls behind).
   A band's make reads the viewer's level (TV7 BUILT). A traveller on a plateau ringed by cliffs outside the mountains,
   with no road off it, is told there is no way by land.
-- Proof: `test/tv2_click_to_move.test.js` (28), `test/tv6_dungeons.test.js` (11), `test/tv7_bands.test.js` (10),
-  `test/tv8_party_walk.test.js` (12), `prbow1_bow`, `mwhead1_window`, `eotb_view` (+1 each); `tools/mutants/ow3j.json`
+- Proof: `test/systems/travel/tv2_click_to_move.test.js` (28), `test/systems/travel/tv6_dungeons.test.js` (11), `test/systems/travel/tv7_bands.test.js` (10),
+  `test/systems/travel/tv8_party_walk.test.js` (12), `prbow1_bow`, `mwhead1_window`, `eotb_view` (+1 each); `tools/mutants/ow3j.json`
   (28), `ow3d.json` (27), `ow3t.json` (18), `ow3p.json` (36) - all dead; the older sets re-aimed.
 
 **AUDIT OW4 (2026-09-28) - the second full audit of the branch (five lanes, the OW3 fixes included), verified, fixed.**
@@ -1183,8 +1183,8 @@ Proof: `test/tv8_party_walk.test.js`, `tools/mutants/tv8.json` (17 records, all 
   the window stack, withdrawn if buried, and an answer counts only while the round stands; nobody sets out mid-arrival.
   A member walking to a place they have not found, or to a spawn, walks it as its door. The wire is unchanged (world124).
 - *Known, not changed:* some towns among the peaks with no road reaching them are now "no way by land" (the peaks' law
-  holds); the "historical" example numbers in test/citedrift.test.js move with every citation shift, as they always have.
-- Proof: `test/tv2_click_to_move.test.js` (32), `tv6_dungeons` (19), `tv7_bands` (15), `tv8_party_walk` (22),
+  holds); the "historical" example numbers in test/scenes/citedrift.test.js move with every citation shift, as they always have.
+- Proof: `test/systems/travel/tv2_click_to_move.test.js` (32), `tv6_dungeons` (19), `tv7_bands` (15), `tv8_party_walk` (22),
   `to1_travelOptions` (+1), `prbow1_bow` (+2); `tools/mutants/ow4j.json` (26), `ow4d.json` (38), `ow4t.json` (14),
   `ow4p.json` (25), `ow4x.json` (3) - all dead; the older sets re-aimed.
 
@@ -1229,9 +1229,9 @@ so away from row 250 none comes within sight - recorded here for that branch; th
   a route a boat would have made is said ("There is no way there by land - a boat would carry you across the water.").
   SHIP-SAIL (2026-09-28, Mac: "Shouldn't it already function as such?"): unless the place is one the map's ship
   passage sails to from here - then the passage is OFFERED ("Sail there by ship?", its fare and days) and, on Yes,
-  taken as the map takes it (`01-Overview/Field-Bugs-2026-09-28e.md`). The passage is Daggerfall's, so it is offered
+  taken as the map takes it (`01-Overview/bugs/Field-Bugs-2026-09-28e.md`). The passage is Daggerfall's, so it is offered
   with this mod off too (AUDIT 28e); the boat's line is this mod's, said only with it on.
-- **The planner's sea** (`systems/travelRoute.js`, `sea`): three layers of the grid - ashore with the boat to hand,
+- **The planner's sea** (`systems/travel/travelRoute.js`, `sea`): three layers of the grid - ashore with the boat to hand,
   afloat, ashore with it left behind. A step from a land pixel into the water is the LAUNCH (`embark`), steps between
   water pixels are SAILED (`sea`: 1.2 a step - a little dearer than a road; 1.5 beside the land, so a route stands off a
   wide sea's shore and still threads a strait), a step out onto land the LANDFALL (`landfall`); each launch and landfall
@@ -1281,7 +1281,7 @@ so away from row 250 none comes within sight - recorded here for that branch; th
   | Small Ship (two lateens, crewed) | 207 | 219 | 202 | 275 | 366 | 237 | 176 | 190 |
   | Large Galley (the crew rows) | 220 | 220 | 220 | 220 | 220 | 220 | 220 | 220 |
 
-  Pinned at 600 m in `test/ows2_crossing.test.js`.
+  Pinned at 600 m in `test/systems/travel/ows2_crossing.test.js`.
 
 ### OWS3 - the raiders, seen coming
 
@@ -1328,7 +1328,7 @@ the marks, FAR-CLIP1) and all four stopped at a usage limit before reporting; th
   `shipMemory`), so Leave Ship sets them back on their boat's deck - if the pool has not stood the boat again by the
   time the ground is built, they land in the water beside it and climb its ladder. Not verified in a browser.
   FAR-CLIP1's lens did not report; its own tests and 27 mutants stand.
-Each pinned (`test/ows2_crossing.test.js`, `test/ows3_raiders.test.js`) and each pin made to fail.
+Each pinned (`test/systems/travel/ows2_crossing.test.js`, `test/systems/ows3_raiders.test.js`) and each pin made to fail.
 
 ### What it is not
 
@@ -1346,7 +1346,7 @@ under a view whose cursor is its own - the mouse captured, Y refused under the v
 browser's own Escape ended it. The map's Overworld button never raced: its commit raises the view a frame before the
 gate asks, and the freed cursor refuses. `player/pointerLock.js` now lets go of a lock that lands while the cursor is
 free. AUDIT OW5 V1 (below) landed the same law on main the same day, in `requestLook`'s one page-wide listener; the
-merge kept that one and dropped this branch's copy in the toggle's listener, and `test/fb0929_overworld_mouse.test.js`
+merge kept that one and dropped this branch's copy in the toggle's listener, and `test/scenes/fb0929_overworld_mouse.test.js`
 (3) drives it in every host that binds the toggle (world.js, with worldModes.js and dungeonContext.js under it;
 exterior.js; dungeon.js), every pin made to fail.
 
@@ -1378,7 +1378,7 @@ key runs the world's clock at the travel speed, and the traveller covers the lan
   "to walk". Each is one line to change.
 
 Pieces: `scenes/travelView.js` `travelWalkRate`, `TRAVEL_VIEW_TEXT.travelling`; `scenes/world.js` `travelViewGovern`,
-`tvWalking`, `tvWalkHoldsTimeScale`, the two nets, the trip line, the keys' ground gate. Proof: `test/tv_wasd.test.js`
+`tvWalking`, `tvWalkHoldsTimeScale`, the two nets, the trip line, the keys' ground gate. Proof: `test/systems/travel/tv_wasd.test.js`
 (6: the law gate by gate, the words, the world's own governor MOUNTED over the real governor and clock, the nets and the
 gate by source), `tools/mutants/tv_wasd.json` (13 dead - two of them on to1's K2 pin, re-aimed because the one strafe
 zero in the host is now this gate's, never the journey's). TV2's three pins on the governor's lines and the trip line, and its A2
@@ -1409,7 +1409,7 @@ overworld travel"* - OW-ROUND 2's OW-ONLY. It comes back as a switch; OW-ONLY st
   never takes a walked trip) - a routed one leads, TO-ROADS; a click in the view raised by hand still leads the party.
 - **Off:** OW-ONLY exactly.
 
-Proof: `test/ow_toggle.test.js` (6: the key; the host's doors MOUNTED from their own source over the real settings
+Proof: `test/systems/travel/ow_toggle.test.js` (6: the key; the host's doors MOUNTED from their own source over the real settings
 store, both ways; the live read; the governor mounted both ways), `tools/mutants/ow_toggle.json` (7 dead). TV2's three
 OW-ONLY pins (`tvOwnsJourneys`, `onLower`, `tvJourneyUp`), to1's key-set pin, and four mutant records (ow2
 OW-ONLY-down-and-on, ow3j J1 and J2, travelnav TN-switch-off-the-tile) re-aimed to the grown lines, never loosened.
@@ -1456,7 +1456,7 @@ exactly that - so it stays the default, and the road is a second switch.
   refused in the view's words ("You cannot survey the land from under the water."), as the Resume of any route already
   is (AUDIT OW5 J1); and a spot's panel reads the Overworld's "The marked spot", not the mod's map coordinates.
 
-Proof: `test/fb0929d_toroads.test.js` (6: the key; REPRODUCED and fixed on world.js's doors and the Overworld's route
+Proof: `test/systems/travel/fb0929d_toroads.test.js` (6: the key; REPRODUCED and fixed on world.js's doors and the Overworld's route
 LIFTED from its source and run over the real planner, a real Travel Options and the real settings store, on a map of its
 own - a road bent round a square of forest, a peak, an island; the journey's life and the governor; the refusal; both
 switches both ways, the classic skin and the live read; the seam swept in the source), `tools/mutants/fb0929d_toroads.json`
@@ -1469,7 +1469,7 @@ lines, never loosened. Not seen in a browser.
 Seven read-only reviewers on one snapshot (`ce2b154d`): journeys and routing, the clock and the load, the view's life
 and its input, the living map, online and the party, rendering and cost, and the toggle with the words and the record.
 Every finding was verified by the lead against the code before it was fixed; each fix is pinned where it can be run
-(`test/ow5_audit.test.js`, 14, beside the suites below) and each pin fails under its mutation (`tools/mutants/ow5.json`).
+(`test/player/eyeOfTheBeholder/ow5_audit.test.js`, 14, beside the suites below) and each pin fails under its mutation (`tools/mutants/ow5.json`).
 
 **Fixed.**
 - **D1 THE FIND ASKS EVERY UNFOUND DUNGEON IN REACH** (MAJOR). The find searched the plates' list, TV_DUNGEON_MAX with the
@@ -1632,7 +1632,7 @@ dungeons, the sea) were sent over the tree, and every finding was verified again
   BUILT); a band stood 140 m off with the view down sees 60 m, so it waits to be come across as a camp does. A wanderer's
   position stays a quarter second old when the shared clock steps backward (`_bandPos`), and the marks' preventEnemySpawns
   hide seldom fires (the flag lives a frame) - both harmless.
-- Proof: `test/to1_travelOptions.test.js` (+1), `tv7_bands` (+7: the contact asked first, an x40 journey stopped the
+- Proof: `test/systems/travel/to1_travelOptions.test.js` (+1), `tv7_bands` (+7: the contact asked first, an x40 journey stopped the
   frame the band reaches it on foot, riding and at x100 at 30 fps, the full pool, the frame's clock, the ring, where it
   stands, a held patience), `encounterplace` (+1), `tv6_dungeons` (+1), `spawneddungeons` (+1), `tv2_click_to_move`
   (+1), `tv8_party_walk` (+1), `ows3_raiders` (+6: the host's raider code lifted and RUN); `tools/mutants/ow5e.json`
@@ -1649,7 +1649,7 @@ close. If a camp is spawned, it should show in the overworld."* Five research la
 generation, the camps' life, the online transport, the speed governor, and every rule of Mac's on record - CAMP-FAR,
 CAMP-SIGHT, CAMP-TRAVEL, CAMP-NOTIMER, TTL1, WORLD1's "True persistance"); the design keeps every one of them.
 
-- **The bands vary and roam (systems/travelBands.js).** BAND_CHANCE_DAY 0.3 -> 0.45 and BAND_CHANCE_NIGHT 0.45 -> 0.6
+- **The bands vary and roam (systems/travel/travelBands.js).** BAND_CHANCE_DAY 0.3 -> 0.45 and BAND_CHANCE_NIGHT 0.45 -> 0.6
   (half as many again by day, a third more by night); BAND_WANDER_MPS 1.3 -> 2 on BAND_LEG_MS 75 s -> 50 s legs (a band
   at 1.3 m/s read as standing still from 150-450 m up). A band's NUMBER is its own roll now, `bandSizeOf` off its own
   stream, one to six by BAND_SIZE_WEIGHTS [12, 20, 24, 20, 14, 10] - it was the camp's or the pack's range (2-5); the
@@ -1663,7 +1663,7 @@ CAMP-SIGHT, CAMP-TRAVEL, CAMP-NOTIMER, TTL1, WORLD1's "True persistance"); the d
   BAND's own level now - `bandLevelOf`, 1 + floor(20 u^2) off its own stream: half of all bands level 6 or under, a
   quarter 12 or over, the label saying which is which - and its label its own number (PSCALE1's growth still comes at
   the stand, with the party that meets it). Offline there is one player, and the band reads theirs, as Daggerfall does.
-- **The journey slows as enemies close (systems/travelThreat.js; the third ask).** The clock is held so the traveller
+- **The journey slows as enemies close (systems/travel/travelThreat.js; the third ask).** The clock is held so the traveller
   always has THREAT_WARN_S (0.6 s: 5 at launch, 2 at OW6-LATE, 1.2 at OW6-NEAR, FB 29g, 0.6 at OW6-HALF, FB 2026-10-01c) of real time before the nearest enemy's REACH along their way - a band's sight, a
   raider's lookout (at sea), any hostile foe's sight (a camp's sixty metres, CAMP-SIGHT), or, for a chaser, its contact
   ring from any side at its own pace too (`metresToReach`, `threatCap`); stepped down the spinner's own ladder (1, 2, 3,
@@ -1711,7 +1711,7 @@ CAMP-SIGHT, CAMP-TRAVEL, CAMP-NOTIMER, TTL1, WORLD1's "True persistance"); the d
   players disagreed for days whether a spawn stood). Each CELL ROOM now keeps a ledger: the spent ids (their own life
   and the next), and a row a spawned pixel - `[px, py, seen, cleared?]` in shared classic minutes, MIN-MERGED, so the
   earliest sight and the earliest clear anyone had win (the spawn ledger's `merge`), kept sixty real days (SPAWN-REBIRTH,
-  2026-10-12, `01-Overview/Field-Bugs-2026-10-12h.md`: a row is a first ENTRY now, kept until its spawn stands again -
+  2026-10-12, `01-Overview/bugs/Field-Bugs-2026-10-12h.md`: a row is a first ENTRY now, kept until its spawn stands again -
   its death and twenty-four real hours - and the same dungeon stands then on fresh clocks). A player's
   spends and first sights and clears are owed to the cell until it takes them (world.js `overworldLedgerFrame`: said a
   second apart, what was not taken said again, nothing to an older relay), and every change is said to everyone in the
@@ -1729,7 +1729,7 @@ CAMP-SIGHT, CAMP-TRAVEL, CAMP-NOTIMER, TTL1, WORLD1's "True persistance"); the d
   out what the cell would strike). A camp is shared with the players its owner's frames reach (the relay's three
   pixels), and its mark is drawn where its living members stand. One pre-existing mutant survivor was found on the way,
   outside this work: auditqp.json's AQP-touched-cell-my-roll (the owner's record already carries the maximum it resets).
-- Proof: `test/ow6_bands.test.js` (6), `ow6_slowdown` (8: the law, a rider at x40, the host governor run on both skins),
+- Proof: `test/systems/travel/ow6_bands.test.js` (6), `ow6_slowdown` (8: the law, a rider at x40, the host governor run on both skins),
   `ow6_camps` (7: two real pools over their frames, the handover, the walk-away), `ows3_raiders` (+4: the raider word,
   the host's run), `ow6_ledger` (18: the law, the wire, the relay over the real Room, the session, the spawn ledger's
   merge, the host's owed and heard words, END TO END - A spends, B hears, C is told in its welcome);
@@ -1753,13 +1753,13 @@ the rock scaled by a million 83 km under it (`03-World/World-Of-Daggerfall.md`, 
   carries its own 3-D box and each bucket a bounding-volume tree over its wide faces (binned surface-area splits;
   `player/collider.js` wideTree), which a sphere or a ray walks for the faces it can reach: 0.1 to 0.37 ms a `move()` on
   the same bench. Exact as the grid was - 0 mismatches against brute force over spheres, rays and a body standing on
-  the faces, the giant's included (`test/audit_wod_branch.test.js`, `test/colliderkeys.test.js`, `test/ow_wod.test.js`).
+  the faces, the giant's included (`test/world/worldOfDaggerfall/audit_wod_branch.test.js`, `test/player/colliderkeys.test.js`, `test/world/worldOfDaggerfall/ow_wod.test.js`).
   One entry a face however wide, so B1's memory law holds. The tree is built inside the pixel's build
   (`collider.settle`, 7 to 32 ms warm on the stand-in's 2,880 and 11,497 faces), never by a frame in play; a later mesh
-  raises it again on the query that needs it. And the road-clearance walk (`world/roadClearance.js boxNearPath`) asks
+  raises it again on the query that needs it. And the road-clearance walk (`world/road/roadClearance.js boxNearPath`) asks
   only the map's own pixels: the giant's box spans thousands of pixels each way, mostly off the map, and the walk took
   46 to 121 ms of main thread a mountain pixel's build.
-- **OW-WOD-PATH, the route through the massif (2).** The Overworld's planner (`systems/travelRoute.js`) knew only the
+- **OW-WOD-PATH, the route through the massif (2).** The Overworld's planner (`systems/travel/travelRoute.js`) knew only the
   MAPS climate's peaks (OW-MOUNTAINS: Mountain, 226, and a steep step), so a route walked straight into a WOD massif and
   the walker ground against its rocks - where the lag was. `WodWorld.mountainPixels` marks the pixels a Mountains
   instance names (2,492 on the shipped list; three more lie off the map), the host drops those a road or a track crosses
@@ -1787,8 +1787,8 @@ a rise under 16 a pixel however long, and the large heightmap's relief inside a 
 player's own (WOODS.WLD); none is in this workspace, so no threshold was tuned blind. A journey that starts inside a
 town joins its first road from the pixel's middle, as before.
 
-**Proof.** `test/ow_wod.test.js` (10), `tools/mutants/owwod.json` (18, all dead); the collider's own pins moved to the
-tree (`test/audit_wod_branch.test.js`, `test/colliderkeys.test.js`), the hosts' lifted code and pins to the new lines.
+**Proof.** `test/world/worldOfDaggerfall/ow_wod.test.js` (10), `tools/mutants/owwod.json` (18, all dead); the collider's own pins moved to the
+tree (`test/world/worldOfDaggerfall/audit_wod_branch.test.js`, `test/player/colliderkeys.test.js`), the hosts' lifted code and pins to the new lines.
 
 ## Open, for Mac
 
@@ -1808,22 +1808,22 @@ Mac: *"allow them to appear in the overworld without being overwhelming, maybe a
 them are"*; asked, "Groups nearby". One mark a profession a stood pixel (`gather <profession>`): a diamond in the
 profession's compass colour (`ui/nodeMarks.js`) at the middle of its nodes not yet worked today, its count beside it,
 the nearest twelve within 3 km, read again twice a second (`scenes/gatherHost.js` overworldGroups); a sixth filter,
-Gathering (`systems/travelViewFilters.js`); drawn by `ui/travelViewHud.js` (look `gather`, `m.color`); fed beside the
+Gathering (`systems/travel/travelViewFilters.js`); drawn by `ui/travel/travelViewHud.js` (look `gather`, `m.color`); fed beside the
 camps in `scenes/travelViewMarks.js` travelViewMarks (HOST-SPLIT 1 moved it out of world.js). Not pickable - a click there falls to the ground and walks to it. See
-`06-Systems/Professions-Arc.md` (MORE-NODES, GATHER-OW). Pins `test/gatherow.test.js`.
+`06-Systems/Professions-Arc.md` (MORE-NODES, GATHER-OW). Pins `test/scenes/gatherow.test.js`.
 
 ## OW-CROWD - the region's travellers decluttered (2026-10-02, Mac)
 
 Mac: *"Can we also find a way to reduce the overwhelming player markers that flood the screen? I like it, dont get me
 wrong, but there must be a way to make it where its not overwhelming"*. Every player of the region was their own mark
 wearing their whole badge (the title, the Renown, the name, the guild's tag, the glyphs - OVERWORLD NAMES), and each off
-the picture their own arrow at the edge. Now, as the marks are placed on the screen (`ui/travelViewHud.js`
+the picture their own arrow at the edge. Now, as the marks are placed on the screen (`ui/travel/travelViewHud.js`
 declutterTravellers, between the placement and the edges' spread): travellers drawn within TV_CROWD_PX (36 px) of one
 another are one mark at their middle, a larger dot named "N travellers"; arrows at the edge within TV_CROWD_EDGE_PX
 (56 px) one arrow, the nearest's place and way; and of those still alone in the picture only the TV_BADGES_MAX (6)
 nearest my own mark wear their badge - the rest their name. My party (kind `party`), the places, the dungeons, the
 enemies, the gathering groups and the journey's end are never folded nor stripped. The Travellers filter's count is
-still every traveller. Pins `test/owcrowd.test.js`; mutants `tools/mutants/owcrowd.json`.
+still every traveller. Pins `test/ui/travel/owcrowd.test.js`; mutants `tools/mutants/owcrowd.json`.
 
 AUDIT OW-CROWD (Mac: "Audit thid"): the badges were made before the crowds were folded - the frame's sixteen builds
 (BADGE_BUILDS_PER_FRAME) spent on players a crowd or the cap then dropped, the badges kept late a frame or more, and a
@@ -1843,14 +1843,14 @@ my party's - every mark keeps its order now, a crowd where its first member stoo
 ## OW-NODE-KM, OW-HUBS, OW-KIN, OW-WHO, SEAT-TIP, HORSE-FACE (FIELD BUGS 2026-10-04e)
 
 The Overworld's block gains a Players section (Friends, Guild, Others, the least Renown) and the node reach (any, 0.5,
-1, 2 km) - one store with the travel map's (`systems/travelViewFilters.js`); a friend's name is drawn in the friends'
+1, 2 km) - one store with the travel map's (`systems/travel/travelViewFilters.js`); a friend's name is drawn in the friends'
 blue and a guild-mate's in violet; a town whose gate stands a carriage driver wears a brass wheel; a seat's plate under
 the pointer shows its card (who holds it, this week's battle) - made only for the hovered plate, measured once, never
 over the block's own controls, and not on a touch screen (no hover there). On a touch screen the filters scroll within
 their section. Every new field a mark carries rides `scenes/travelView.js`
 through to the readout. The rider's Eye Of The Beholder sprite faces its travel again: a gallop under the time scale had
 been read as a placing every frame (ARENA-FIX 14's -1, painted as orientation 7). The record:
-`01-Overview/Field-Bugs-2026-10-04e.md`.
+`01-Overview/bugs/Field-Bugs-2026-10-04e.md`.
 
 ## WILD-ALERT - the wilderness notices a fast traveller, or it does not (2026-10-04, Mac)
 
@@ -1860,7 +1860,7 @@ band chased the moment the traveller crossed its sight (TV7: distance alone), ev
 journey's clock for its sight whether it had seen anyone or not (OW6), and DFU's own sweep stopped a journey for any foe
 within the classic band (27 m) unaware or not. Now:
 
-- **The check** (`systems/wildAlert.js`, the port's own). An enemy within its reach of a fast traveller - a band's sight
+- **The check** (`systems/wild/wildAlert.js`, the port's own). An enemy within its reach of a fast traveller - a band's sight
   (320 m by day, 190 by night), a foe's own (a camp's 60 m, a wanderer's 102.4) - is UNAWARE until it NOTICES them, on a
   stealth check a classic game minute apart on the traveller's clock (`WILD_ROLL_S`, five scaled seconds: at x60 a
   twelfth of a real second, so a fast traveller is checked as often per metre as a walker), the first the moment it
@@ -1886,14 +1886,14 @@ within the classic band (27 m) unaware or not. Now:
   down as they do now"). The journey's own enemy stop and the view's `danger` count no gated foe (`wildSeen`).
 - **The "!"** (`WILD_MARK`). On the Overworld a chase's mark reads "! Orc, 4" and a camp a member of which is alerted
   "! Orc camp, 4" (mine, or a peer's by its frames' tag - `wildCampKeys`). In play, over each alerted wilderness foe's
-  head (`ui/wildMarks.js`, both skins, the HUD lines' outlined gold in the pixel face): it pops in as the foe notices,
+  head (`ui/wild/wildMarks.js`, both skins, the HUD lines' outlined gold in the pixel face): it pops in as the foe notices,
   stands while a fast traveller's clock is held for it, and in plain play for `WILD_MARK_S` (3 s) from the notice; never
   in a town, under a window or under the Overworld (whose marks carry it). The layer owns its own end: a standing mark
   arms a watchdog each frame, and a frame that does not come (a host's loop gone) takes it down.
 
 Not changed: the sea's raiders and hostile ships (their lookout is the sea fight's own reach, NAV-H/OWS3), the rest's
 enemy check and the travel map's refusal (no journey runs - DFU's own sweep), the city watch. Pins
-`test/wildalert.test.js` (10: the law, the store, `foeAlerted`, the gate, the band's notice, the marks lifted and run, the
+`test/scenes/wildalert.test.js` (10: the law, the store, `foeAlerted`, the gate, the band's notice, the marks lifted and run, the
 layer); re-aimed `ow6_slowdown` (a wandering band holds nothing, a chase does; an unaware foe holds nothing), `tv7_bands`,
 `encounterplace` (the wanderer's placement check), `camproll`, `camp1_groups`, `waterfoes`, `ow6_camps`, `nav_h_host`,
 `tv1_travel_view`, `roadh_missiles`, `exteriorfoes`; `tools/mutants/wildalert.json` (32, all dead); seven older records
@@ -1902,12 +1902,12 @@ re-aimed by content and dead, OW6-S-spent-band-slows retired with the wandering 
 INVIS-SWING (2026-10-15): the notice is EnemySenses' stealth roll, which DFU makes behind BlockedByIllusionEffect - an
 Invisibility blinds every enemy but the thirteen seers. The gate rolled the stealth formula alone; `wildAlert.js`
 noticeRoll now passes the illusion gate first, and both of world.js's checks hand it the traveller's concealment and the
-enemy's sight through it. `01-Overview/Field-Bugs-2026-10-15f.md`.
+enemy's sight through it. `01-Overview/bugs/Field-Bugs-2026-10-15f.md`.
 
 ## WILD-ALERT-FIX - the deep audit's five (2026-10-05)
 
 The deep audit of the branch (each finding verified against the code before the fix) found WILD-ALERT's notice half
-done; each is fixed and pinned (`test/wildalertfix.test.js`, `tools/mutants/wildalertfix.json`).
+done; each is fixed and pinned (`test/systems/wildalertfix.test.js`, `tools/mutants/wildalertfix.json`).
 
 - **A foe that notices comes** (`exteriorFoes.js noticedPlayer`, `wildFoesFrame`). The check only lifted the gate; the
   "!", the hold of the clock and the meeting all read `foeAlerted` - the foe already on the player - and nothing put it
@@ -1937,7 +1937,7 @@ Shabalako on the Discord, "Overworld Travel can be used to exploit climbing leve
 cities where if you keep walking forward into a home can make your character climb and let go of the surface at an
 extremely fast rate, making levelling climbing a joke. An easy fix could be disabling climbing during overworld
 travel."* - and Sahh, of House R'is: *"would also reduce the mortality rate of travellers falling from mountains at
-60x speed"*. `01-Overview/Field-Bugs-2026-10-07b.md`.
+60x speed"*. `01-Overview/bugs/Field-Bugs-2026-10-07b.md`.
 
 The time scale grows the motor's fixed step, never its count (`systems/timeScale.js`): at x60 a step is a second of
 game time, and every climb timer - the classic climb's 0.77 s start and 0.82 s checks, the free climb's start and its
@@ -1956,13 +1956,13 @@ wall (TV-WASD's `onFoot`), so a climber is never put to a journey's pace by the 
 own motor and has no travel; dungeonContext.js builds no motor (the standalone `scenes/dungeon.js` builds its own and
 writes no time scale).
 
-AUDIT FB1007b (`01-Overview/Audit-FB1007b.md`): the motor's journey is out of doors alone (`travellingOutdoors`, C1 -
+AUDIT FB1007b (`01-Overview/audits/Audit-FB1007b.md`): the motor's journey is out of doors alone (`travellingOutdoors`, C1 -
 only the exterior frame's governor clears the keys' travel, so a load taken with the keys held left it standing and no
 wall indoors climbed); a hold a load carried is no body on foot until the step takes it again (the motor's
 `holdPending`, C3 - the keys' travel sped up under it and let it go); and no journey sets out from a wall
 (`climbingNow`, C2 - the view's click and the map's walked trip refuse it, `TRAVEL_VIEW_TEXT.climbing`).
 
-- **Pinned**: `test/fb1007b_climbtravel.test.js` (7); `tools/mutants/fb1007b.json` (its CLIMB / ENHANCED / HOST / KEYS
+- **Pinned**: `test/systems/fb1007b_climbtravel.test.js` (7); `tools/mutants/fb1007b.json` (its CLIMB / ENHANCED / HOST / KEYS
   records and the audit's C records).
 
 ## OW-DUNGEONS - each dungeon's own model, enlarged (2026-10-08, Mac)
@@ -1980,7 +1980,7 @@ TV_DUNGEON_TYPES), the spawned dungeons online the Overworld knows of (AUDIT OW3
 standing Abyss Dungeon (known from its rise - its column of light stands from then). The plates and "?" are TV6's as
 they were. Down in play nothing changes: the world's own entrance is the model.
 
-**The law** (`systems/travelDungeonModels.js`, pure):
+**The law** (`systems/travel/travelDungeonModels.js`, pure):
 - *The set* (`dungeonModelSet`): TV6's own law (`travelDungeons.js nearDungeons`, uncapped) with nothing left to TV2's
   grid - a found dungeon in the grid is a speck from the eye too - the nearest TV_DUNGEON_MODELS_MAX (12), ties by key.
 - *The model* (`dungeonEntranceModel`): of the location's laid blocks (`world/locationLayout.js layoutLocation`, the
@@ -2014,7 +2014,7 @@ sky - a door closes the view before either draws a frame.
 **Not measured on real ARENA2 data** (none in this container): the models' look in each climate and the grow's feel
 are the law's; Mac's eye is the check. Each model is one draw (a texture's run each); twelve at most.
 
-**Proof.** `test/owdungeons.test.js` (9 - the door law and the reader's doors through it; a mesh's way in against the
+**Proof.** `test/world/owdungeons.test.js` (9 - the door law and the reader's doors through it; a mesh's way in against the
 reader's own doors; the model's pick and place; the grow; the matrix and the drawn rule; the set; the host's list, load
 and draw run over stubs); `tools/mutants/owdungeons.json` (45, all dead). RE-AIMED BY CONTENT, each still dead: `ow3d.json`
 (`OW3D3-spawns-snapshotted`) and `ow4d.json` (`OW4D4-filed-dropped`) - TV6's spawns line has a twin in the models' list,
@@ -2023,25 +2023,25 @@ so each names TV6's own by the `isFound, spawns:` beside it.
 **TV-BURST and TV-PIN (FIELD BUGS 2026-10-09, Shabalako: "The first time I open the overworld travel the game has a big
 freeze").** The view's first frame started all twelve loads at once, inside its draw - each one's blocks laid and its
 ARCH3D meshes read on that frame, then its model built and its pictures and its climate's uploaded. Now the loads start
-ONE A FRAME, the nearest first, and none until the view is fully up (`systems/travelDungeonModels.js`
+ONE A FRAME, the nearest first, and none until the view is fully up (`systems/travel/travelDungeonModels.js`
 `startDungeonLoads`, `TV_DUNGEON_LOADS_PER_FRAME`; the host hands the view frame's `fullyUp`); what left the set is
 still let go every frame. The view down lets every model go to its place's shelf (`dropTvDungeonModels` - they were
 held, undrawn, until a load), so the next view starts its own. And the climate's pictures went up through the host's
 PINNED door (`dataPipeline.js` pinnedUpload): every climate and season picture of every dungeon the view ever stood
 stayed on the GPU for the session. They go through the place's own hold now (`remapSubMeshes` handed `getTexture` and
 the hold's `uploadRecord`), and are freed with it - proved on the real pipeline and renderer over a counting GL in
-`test/fb1009_travelperf.test.js` (with `tools/mutants/fb1009_travelperf.json`); `owdungeons.test.js`'s draw pin and
+`test/scenes/fb1009_travelperf.test.js` (with `tools/mutants/fb1009_travelperf.json`); `owdungeons.test.js`'s draw pin and
 four of its records re-aimed by content, each still dead.
 
 **TV-BEYOND (FIELD BUGS 2026-10-09 #9, maya: "CRASH (2) RangeError: invalid array length" from a click on the Overworld
 past the Alik'r).** The planner's search box was clamped to the map, and TAMRIEL2 streams the land past it: two ends
 past one edge turned the box inside out and its typed arrays threw; one end past it began the route on the box's far
-side. The box's bounds are the map and the two ends now (`systems/travelRoute.js` `planRoute`); `routeGround` asks the
+side. The box's bounds are the map and the two ends now (`systems/travel/travelRoute.js` `planRoute`); `routeGround` asks the
 host's `beyond` for the ground past its table (kept a pixel at a time, `BEYOND_CACHE_MAX`) where it called it all the
 sea; `apart` leaves an end past the table to the search; a step past the table reads no road's byte. The host hands it
 `tvWater`'s own answer, which is the ground's where TAMRIEL2 composed the reader and the sea off the map where it did
-not (`scenes/world.js`). The record, and the wire's half: `01-Overview/Field-Bugs-2026-10-09.md` TV-BEYOND;
-`test/fb1009_beyond.test.js`, `tools/mutants/fb1009_beyond.json`.
+not (`scenes/world.js`). The record, and the wire's half: `01-Overview/bugs/Field-Bugs-2026-10-09.md` TV-BEYOND;
+`test/systems/travel/fb1009_beyond.test.js`, `tools/mutants/fb1009_beyond.json`.
 
 ## ETHER-OW - the Overworld past the Veil (2026-10-13, the owner)
 
@@ -2062,7 +2062,7 @@ the world map just like in the bay"*. The record is `03-World/Eltheric-Ocean.md`
 - **What is known** (AUDIT ETHER-OW C2-2). The lists' keys (`tvPlates`, `tvFar`, `tvDng`, `tvFind`, `tvDngModels`) are
   `tvKnownGen` - DFU's finds and the captain's charts - so an isle charted on the pixel the traveller stands on is a
   plate at once, as AUDIT DEEP2 B-3 made a find.
-`test/ether_ow.test.js`, `tools/mutants/ether_ow.json`; the pins moved are the Eltheric page's list.
+`test/systems/travel/ether_ow.test.js`, `tools/mutants/ether_ow.json`; the pins moved are the Eltheric page's list.
 
 ## LOAD-OWED - the land loading is what the stream owes (2026-10-14, the bug-reports channel)
 
@@ -2112,7 +2112,7 @@ nothing). A hold for the land ends when its build does, whichever way it ends. T
 streams nothing (one fixed city) and has no Overworld, so no governor; `scenes/worldModes.js` (a building) and
 `scenes/dungeonContext.js` (a dungeon) run no journey - a door ends one (AUDIT-TO1 G2).
 
-`test/ow_loadowed.test.js` (2), `tools/mutants/ow_loadowed.json` (4, all dead). PIN MOVED: `ether_ow` (the count's line
+`test/systems/travel/ow_loadowed.test.js` (2), `tools/mutants/ow_loadowed.json` (4, all dead). PIN MOVED: `ether_ow` (the count's line
 run over a real stream), `tv2_click_to_move` (the line's text) and `tv_wasd` (its rig's grid on the stream's books);
 `tools/mutants/ether_ow.json` EOW-governor-off-map-built re-aimed by content. The lists naming those suites (audit_etherow,
 ether_ow, ow2, ow3j, ow4j, ow4x, ow5, ow5d, ow6s, ratelaw, tv2, tv3, tv5, tv_wasd and this one) re-run: 435 dead; the five
@@ -2148,7 +2148,7 @@ TAMRIEL2's frame, and the Eltheric Ocean's isles and open sea past the Veil.
   down by its own law inside two seconds - SwiftShader's frames on a shared box ran one to three seconds apart, and two
   silent 600 ms heartbeats lower it (travelView.js:"function stalled", AUDIT DEEP X-9). The journey's own path - the
   stream, the pump, the frame's re-ask and the governor at x100 - is run on the host's own code in Node instead
-  (`test/ow_loadowed.test.js`, `test/ow_buildretry.test.js`).
+  (`test/systems/travel/ow_loadowed.test.js`, `test/scenes/ow_buildretry.test.js`).
 - **A read refused** (`--fail TEXTURE.002 --fail-count 1`: the first read of the desert's ground archive dropped, as a
   dropped fetch drops it), six desert pixels: all six threw `Failed to fetch` (getBytes, under loadGroundSet) - the
   five after the first without reading at all. Now the first throws and the five after it read again and stand.
@@ -2196,6 +2196,6 @@ pictures). `scenes/exterior.js` (one fixed city, built once), `scenes/worldModes
 `scenes/dungeonContext.js` (a dungeon) stream no pixels; the texture and the store are the shared pipeline's and the
 data source's, every host's.
 
-`test/ow_buildretry.test.js` (5), `tools/mutants/ow_buildretry.json` (11, all dead). PIN MOVED: `audit_wod_branch` (WOD6: the
+`test/scenes/ow_buildretry.test.js` (5), `tools/mutants/ow_buildretry.json` (11, all dead). PIN MOVED: `audit_wod_branch` (WOD6: the
 catch's last line is `state.fail`), `tools/mutants/auditwod.json` WOD6-failed-build-stays-arrival and
 `tools/mutants/ow_loadowed.json` LOAD-OWED-failed-kept-on-the-books re-aimed by content.

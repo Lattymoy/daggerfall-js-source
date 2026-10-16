@@ -5,7 +5,7 @@
     "old": "      seenAt: Number.isSafeInteger(m.seen_at) ? m.seen_at : null,",
     "new": "      seenAt: null,",
     "tests": [
-      "test/guildseen.test.js"
+      "test/net/guildseen.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "COALESCE(p.played_at, p.last_seen) AS seen_at",
     "new": "COALESCE(p.last_seen, p.played_at) AS seen_at",
     "tests": [
-      "test/guildseen.test.js"
+      "test/net/guildseen.test.js"
     ]
   },
   {
@@ -23,52 +23,52 @@
     "old": "COALESCE(p.played_at, p.last_seen) AS seen_at",
     "new": "p.last_seen AS seen_at",
     "tests": [
-      "test/guildseen.test.js"
+      "test/net/guildseen.test.js"
     ]
   },
   {
     "name": "GUILD-SEEN-the-grace-edge-off-by-one",
-    "file": "src/net/guildBook.js",
+    "file": "src/net/guild/guildBook.js",
     "old": "  return m.you === true || nowMs - m.seenAt * 1000 <= PLAY_GRACE_S * 1000;",
     "new": "  return m.you === true || nowMs - m.seenAt * 1000 < PLAY_GRACE_S * 1000;",
     "tests": [
-      "test/guildseen.test.js"
+      "test/net/guildseen.test.js"
     ]
   },
   {
     "name": "GUILD-SEEN-the-reader-read-off-the-clock",
-    "file": "src/net/guildBook.js",
+    "file": "src/net/guild/guildBook.js",
     "old": "  return m.you === true || nowMs - m.seenAt * 1000 <= PLAY_GRACE_S * 1000;",
     "new": "  return nowMs - m.seenAt * 1000 <= PLAY_GRACE_S * 1000;",
     "tests": [
-      "test/guildseen.test.js"
+      "test/net/guildseen.test.js"
     ]
   },
   {
     "name": "GUILD-SEEN-seconds-as-milliseconds",
-    "file": "src/net/guildBook.js",
+    "file": "src/net/guild/guildBook.js",
     "old": "  return m.you === true || nowMs - m.seenAt * 1000 <= PLAY_GRACE_S * 1000;",
     "new": "  return m.you === true || nowMs - m.seenAt <= PLAY_GRACE_S * 1000;",
     "tests": [
-      "test/guildseen.test.js"
+      "test/net/guildseen.test.js"
     ]
   },
   {
     "name": "GUILD-SEEN-no-stamp-read-as-offline",
-    "file": "src/net/guildBook.js",
+    "file": "src/net/guild/guildBook.js",
     "old": "  if (!Number.isSafeInteger(m?.seenAt)) return null;",
     "new": "  if (!Number.isSafeInteger(m?.seenAt)) return false;",
     "tests": [
-      "test/guildseen.test.js"
+      "test/net/guildseen.test.js"
     ]
   },
   {
     "name": "GUILD-SEEN-the-stamp-compared-with-the-rest",
-    "file": "src/net/guildBook.js",
+    "file": "src/net/guild/guildBook.js",
     "old": "{ ...guild, members: guild.members.map((m) => ({ ...m, seenAt: undefined })) }",
     "new": "{ ...guild }",
     "tests": [
-      "test/guildseen.test.js"
+      "test/net/guildseen.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "sub: `${rankName(v, m.rank)}${standing}`, online, seen: guildSeenText(m, g.now()) });",
     "new": "sub: `${rankName(v, m.rank)}${standing}`, seen: guildSeenText(m, g.now()) });",
     "tests": [
-      "test/guildseen.test.js"
+      "test/net/guildseen.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "sub: `${rankName(v, m.rank)}${standing}`, online, seen: guildSeenText(m, g.now()) });",
     "new": "sub: `${rankName(v, m.rank)}${standing}`, online });",
     "tests": [
-      "test/guildseen.test.js"
+      "test/net/guildseen.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "      if (r.seenNode) liveSubs.push(",
     "new": "      if (false) liveSubs.push(",
     "tests": [
-      "test/guildseen.test.js"
+      "test/net/guildseen.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "      if (r.dotNode) liveDots.push(",
     "new": "      if (false) liveDots.push(",
     "tests": [
-      "test/guildseen.test.js"
+      "test/net/guildseen.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "    for (const d of liveDots) { const c = dotClass(d.of()); if (d.el.className !== c) d.el.className = c; }",
     "new": "    for (const d of []) { const c = dotClass(d.of()); if (d.el.className !== c) d.el.className = c; }",
     "tests": [
-      "test/guildseen.test.js"
+      "test/net/guildseen.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "      const fresh = () => g.guild?.members?.find((x) => x?.member === m.member) ?? m;",
     "new": "      const fresh = () => m;",
     "tests": [
-      "test/guildseen.test.js"
+      "test/net/guildseen.test.js"
     ]
   }
 ]

@@ -5,7 +5,7 @@
     "old": "&& (key >> 16) === HOME_ARENA_CELL[0] && ((key >> 8) & 0xff) === HOME_ARENA_CELL[1];",
     "new": "&& (key >> 16) === HOME_ARENA_CELL[1] && ((key >> 8) & 0xff) === HOME_ARENA_CELL[0];",
     "tests": [
-      "test/arena4b_homes.test.js"
+      "test/net/arena4b_homes.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "export const homeInArenaCell = (mapId, key) => mapId === HOME_ARENA_MAP_ID && homeBuildingKeyOk(key)",
     "new": "export const homeInArenaCell = (mapId, key) => mapId === HOME_ARENA_MAP_ID && Number.isSafeInteger(key)",
     "tests": [
-      "test/arena4b_homes.test.js"
+      "test/net/arena4b_homes.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "'rent_due', 'look', 'layout', 'deed']);",
     "new": "'rent_due', 'layout', 'deed']);",
     "tests": [
-      "test/arena4b_homes.test.js"
+      "test/net/arena4b_homes.test.js"
     ],
     "note": "FIELD BUGS 2026-10-04d KNIGHT-HOUSE (PIN MOVED, re-aimed by content): the carried list names `deed` last now."
   },
@@ -33,7 +33,7 @@
     "old": "WHERE map_id = ? AND building_key = ? AND tenant IS NOT NULL AND until > ?')",
     "new": "WHERE map_id = ? AND building_key = ? AND tenant IS NOT NULL AND until > ? AND 0')",
     "tests": [
-      "test/arena4b_homes.test.js"
+      "test/net/arena4b_homes.test.js"
     ]
   },
   {
@@ -42,7 +42,7 @@
     "old": "'UPDATE home_rooms SET building_key = ?, listed = 0, anchor = ?",
     "new": "'UPDATE home_rooms SET building_key = ?, listed = 1, anchor = ?",
     "tests": [
-      "test/arena4b_homes.test.js"
+      "test/net/arena4b_homes.test.js"
     ]
   },
   {
@@ -51,7 +51,7 @@
     "old": "const refund = Math.max(0, Number(d?.paid) || 0);",
     "new": "const refund = Math.trunc(Math.max(0, Number(d?.paid) || 0) / 2);",
     "tests": [
-      "test/arena4b_homes.test.js"
+      "test/net/arena4b_homes.test.js"
     ]
   },
   {
@@ -60,7 +60,7 @@
     "old": "COALESCE(SUM(CASE WHEN item IS NULL THEN paid ELSE 0 END), 0) AS paid,",
     "new": "COALESCE(SUM(paid), 0) AS paid,",
     "tests": [
-      "test/arena4b_homes.test.js"
+      "test/net/arena4b_homes.test.js"
     ]
   },
   {
@@ -69,7 +69,7 @@
     "old": "if (!homeInArenaCell(mapId, from)) return { error: 'home-unmoved' };",
     "new": "if (false) return { error: 'home-unmoved' };",
     "tests": [
-      "test/arena4b_homes.test.js"
+      "test/net/arena4b_homes.test.js"
     ]
   },
   {
@@ -78,7 +78,7 @@
     "old": "if (homeInArenaCell(mapId, to)) return { error: 'home-arena' };",
     "new": "if (false) return { error: 'home-arena' };",
     "tests": [
-      "test/arena4b_homes.test.js"
+      "test/net/arena4b_homes.test.js"
     ]
   },
   {
@@ -87,7 +87,7 @@
     "old": "if (!owns) return { error: 'no-home' };",
     "new": "if (!home) return { error: 'no-home' };",
     "tests": [
-      "test/arena4b_homes.test.js"
+      "test/net/arena4b_homes.test.js"
     ]
   },
   {
@@ -96,7 +96,7 @@
     "old": "if (!side.at) return { error: 'realm-needed' };",
     "new": "if (false) return { error: 'realm-needed' };",
     "tests": [
-      "test/arena4b_homes.test.js"
+      "test/net/arena4b_homes.test.js"
     ]
   },
   {
@@ -105,7 +105,7 @@
     "old": "        AND (SELECT COUNT(*) FROM home_decor WHERE map_id = ?1 AND building_key = ?2) = ?3\n        AND (SELECT COALESCE(SUM(CASE WHEN item IS NULL THEN paid ELSE 0 END), 0) FROM home_decor WHERE map_id = ?1 AND building_key = ?2) = ?4`)",
     "new": "        AND ?3 = ?3 AND ?4 = ?4`)",
     "tests": [
-      "test/arena4b_homes.test.js"
+      "test/net/arena4b_homes.test.js"
     ]
   },
   {
@@ -114,7 +114,7 @@
     "old": "SELECT map_id, ?, ${cols}, NULL FROM homes",
     "new": "SELECT map_id, ?, ${cols}, guild_id FROM homes",
     "tests": [
-      "test/arena4b_homes.test.js"
+      "test/net/arena4b_homes.test.js"
     ]
   },
   {
@@ -123,7 +123,7 @@
     "old": "if (refund > 0 && gid == null) {",
     "new": "if (refund > 0) {",
     "tests": [
-      "test/arena4b_homes.test.js"
+      "test/net/arena4b_homes.test.js"
     ]
   },
   {
@@ -132,7 +132,7 @@
     "old": "if (was) return was.player === player.id ? { ok: true, repeat: true, ...moveOf(was) } : { error: 'no-home' };",
     "new": "if (false) return was.player === player.id ? { ok: true, repeat: true, ...moveOf(was) } : { error: 'no-home' };",
     "tests": [
-      "test/arena4b_homes.test.js"
+      "test/net/arena4b_homes.test.js"
     ]
   },
   {
@@ -141,7 +141,7 @@
     "old": "if (homeInArenaCell(mapId, buildingKey)) return { error: 'home-arena' };\n  // WD3 (AUDIT WD3 B2)",
     "new": "if (false) return { error: 'home-arena' };\n  // WD3 (AUDIT WD3 B2)",
     "tests": [
-      "test/arena4b_homes.test.js"
+      "test/net/arena4b_homes.test.js"
     ],
     "note": "FIELD BUGS 2026-10-04d KNIGHT-HOUSE (PIN MOVED, re-aimed by content): holdDeed asks the same cell's question - aimed at the claim's, whose next line is WD3 B2's."
   },
@@ -151,7 +151,7 @@
     "old": "if (homeInArenaCell(mapId, buildingKey)) return { error: 'home-arena' };",
     "new": "if (false) return { error: 'home-arena' };",
     "tests": [
-      "test/arena4b_homes.test.js"
+      "test/net/arena4b_homes.test.js"
     ]
   },
   {
@@ -160,7 +160,7 @@
     "old": "WHERE player = ? AND char_id = ? AND seen_at IS NULL ORDER BY",
     "new": "WHERE player = ? AND ? IS NOT NULL AND seen_at IS NULL ORDER BY",
     "tests": [
-      "test/arena4b_homes.test.js"
+      "test/net/arena4b_homes.test.js"
     ]
   },
   {
@@ -169,7 +169,7 @@
     "old": "AND char_id = ? AND seen_at IS NULL ORDER BY moved_at",
     "new": "AND char_id = ? ORDER BY moved_at",
     "tests": [
-      "test/arena4b_homes.test.js"
+      "test/net/arena4b_homes.test.js"
     ]
   },
   {
@@ -178,7 +178,7 @@
     "old": "if (!anchor && !moved) continue;",
     "new": "if (!anchor) continue;",
     "tests": [
-      "test/arena4b_homes.test.js"
+      "test/net/arena4b_homes.test.js"
     ]
   }
 ]

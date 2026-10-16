@@ -96,7 +96,7 @@ an artifact's name. The full table, with each record's power and signature, is L
 ## 6. LOOT4 - five affix kinds that do things
 
 The six kinds LR1 shipped are numbers a wearer carries. Five more DO something, through the seams the Sigil Sets
-opened (SET2), in one module (`systems/lootPowers.js`):
+opened (SET2), in one module (`systems/loot/lootPowers.js`):
 
 | kind | on | slot | Magic | Rare | Legendary | does |
 |---|---|---|---|---|---|---|
@@ -125,7 +125,7 @@ turns it only into another of its family's, and a line added after the mint is s
 BAL9c (2026-10-12, the owner: "introduce some new magic/mage perks to the rarity loot pool ... still dont make it
 overpowered"; `05-Combat/Balance-Arc.md` section 15) set two more after `castSpeed` and before `technique`, so the
 numbers' pass draws as it did: `potency`, jewellery and weapons, prefix, 3-6 / 6-10 / 10-15, "+N% spell damage" - a
-damage spell's landing at a foe, all you wear at most 30% (`systems/spellPower.js`); and `wellspring`, jewellery,
+damage spell's landing at a foe, all you wear at most 30% (`systems/spell/spellPower.js`); and `wellspring`, jewellery,
 suffix, 2-4 / 4-7 / 7-10, "N% magicka on a kill" - the caster's leech, all you wear at most 10% a kill. The last pass
 moved as CAST-SPEED's did: a jewel's proc pick lands in four kinds where it landed in two, a blade's in five where four.
 
@@ -242,7 +242,7 @@ fogged, no light, no new program), a Legendary's and better pulsing. The nearest
 the street and a building; gone the moment its best is taken below Rare. A peer's body in the street shows none: its
 list lives on its owner's side (the street's own law). Off, nothing draws for a tier. A find that carries its own mark
 draws its own line, the row on or off, each kind under its own word (`lootLines.js setLootMarksLive(on, by)`): the open
-zone's remains (WILD1) and the house's fallen (`01-Overview/Field-Bugs-2026-10-13d.md` REMAINS-STAND; AUDIT FB1013d C13).
+zone's remains (WILD1) and the house's fallen (`01-Overview/bugs/Field-Bugs-2026-10-13d.md` REMAINS-STAND; AUDIT FB1013d C13).
 
 ## 14. The slices
 
@@ -266,7 +266,7 @@ zone's remains (WILD1) and the house's fallen (`01-Overview/Field-Bugs-2026-10-1
 
 ### LOOT1 - a skill affix leans to the item's own skills (2026-10-01)
 
-`systems/lootRarity.js`: `skillKin(item)` answers `{ own, kin }` - a weapon's own skill by `weaponSkillUsed` (the
+`systems/loot/lootRarity.js`: `skillKin(item)` answers `{ own, kin }` - a weapon's own skill by `weaponSkillUsed` (the
 skill that swings it, so a mod's weapon class and the Thunderlock answer their own) and the strike's three; the
 body's twelve; the mind's thirteen. `pickSkill` is the one draw `rollAffixes` makes for a skill affix's param, and it
 takes ONE roll, as the `pick(free, rolls)` it replaced did: the roll's place in [0, 1) chooses the step - under
@@ -287,11 +287,11 @@ Measured over 1,500 seeded warhammer Rares (1,833 skill affixes): the own skill 
 35, 0.257). Over 1,200 Rares each: greaves 0.891 to the body, an amulet 0.900 to the mind, a language 0.035 on either -
 above the 0.85 because the open draw lands on a kin skill too, now and then.
 
-Pinned: `test/loot1_kin.test.js` (6); `tools/mutants/loot1.json` (11, all dead).
+Pinned: `test/systems/loot1_kin.test.js` (6); `tools/mutants/loot1.json` (11, all dead).
 
 ### LOOT2 - the roll seen, and the Exalted (2026-10-01)
 
-`systems/lootRarity.js`: `affixBand(item, i)` - the band line `i` was rolled in (a Magic's or a Rare's by its tier; an
+`systems/loot/lootRarity.js`: `affixBand(item, i)` - the band line `i` was rolled in (a Magic's or a Rare's by its tier; an
 Exalted Legendary's extra line - past its record's count - by the Legendary band; else null) - and `affixLine`, the
 line as the card and the tooltip read it, `+18% damage [10-25]`; `rarityLines` prints every line through it.
 `isPerfect` (a Rare, every line at its top) and `tierLabel` - the first line's words: "Exalted Legendary" (said while
@@ -317,11 +317,11 @@ SET6's pin that the gate's earlier spoils are their seed's compares a piece's RE
 line is appended after every draw) - the law it pins, every earlier draw the seed's, unmoved; LOOT2's own pin holds it
 against the same seeds with the chance at zero, for the gate and a town alike.
 
-Pinned: `test/loot2_exalted.test.js` (6); `tools/mutants/loot2.json` (20, all dead).
+Pinned: `test/systems/loot2_exalted.test.js` (6); `tools/mutants/loot2.json` (20, all dead).
 
 ### LOOT3 - thirty Legendaries (2026-10-01)
 
-`systems/lootRarity.js` `LEGENDARIES`: the first ten stand as LR2 shipped them, and twenty more follow them - twelve
+`systems/loot/lootRarity.js` `LEGENDARIES`: the first ten stand as LR2 shipped them, and twenty more follow them - twelve
 weapons, ten pieces of armour, eight of jewellery in all. Every weapon template but the arrow, every armour place and
 every kind of jewellery but the wand is NAMED by a record (a wand, as before, takes the three that name none:
 Foxglove, King's Mark, the Archmage's Loop); every weapon family - by the skill that swings it - has two or more.
@@ -355,13 +355,13 @@ the West, King Lysandus and Cryngaine Field, Wayrest's couriers and its Knights 
 Camlorn's Order of the Raven, the Night Mother, the gate Daggerfall was named for, the Nine, a Glenmoril coven, Sentinel's
 duels, the Hist, the Reach. No name takes one of DFU's 23 artifacts' (`loot.js` ARTIFACT_SUB_TYPE_NAMES).
 
-Every record keeps LR2's law (`test/lr1_lootrarity.test.js` reads them all - its bases are every jewellery template
+Every record keeps LR2's law (`test/systems/lr1_lootrarity.test.js` reads them all - its bases are every jewellery template
 now, not the amulet and the ring it was written with, so a bracer's, a mark's and a torc's record are each shown to
 land). A held spell is a cheap one - Slowfalling (240), Shadow Form (150), Water Breathing (170) - since DFU bills a
 CastWhenHeld's casting cost in condition at the first equip (LR4's watch item 9); the first ten's Aegis of Dawn keeps
 its Spell Resistance as LR2 shipped it. LEGEND-HELD (FIELD BUGS 2026-10-11b, a departure): a Legendary's equip now bills
 nothing at all - the Aegis's Spell Resistance cost a leather Buckler a third of its condition the first time it went on
-(`01-Overview/Field-Bugs-2026-10-11b.md`); every other held piece keeps DFU's bill.
+(`01-Overview/bugs/Field-Bugs-2026-10-11b.md`); every other held piece keeps DFU's bill.
 
 What moved with the pool: the Sigil Broker's Legendaries are drawn from the thirty (`baseLegendaries` - the port's
 own records, the same on every machine, so the stock is still the day's alone), and the gate's spoils and a town's
@@ -369,11 +369,11 @@ thanks pick from the thirty - one roll a pick, as before, so no seed draws more.
 dagger's pool as Wyrmbane and Nightwhisper alone; it reads Worm's Tooth beside them now (and a longsword's Ansei's
 Edge), the gun's exclusive claim unmoved.
 
-Pinned: `test/loot3_legendaries.test.js` (4); `tools/mutants/loot3.json` (10, all dead).
+Pinned: `test/systems/loot3_legendaries.test.js` (4); `tools/mutants/loot3.json` (10, all dead).
 
 ### LOOT4 - five affix kinds that do things (2026-10-01)
 
-`systems/lootRarity.js`: five kinds join the six, marked `proc` - `elemental` (fire, frost, shock) and `slayer` (the
+`systems/loot/lootRarity.js`: five kinds join the six, marked `proc` - `elemental` (fire, frost, shock) and `slayer` (the
 undead, daedra, humanoids, animals) and `leech` on a weapon, `thorns` on armour, `focus` on jewellery - each banded
 Magic / Rare / Legendary as section 6 says, each a word (`Burning`, `of the Leech`, `Barbed`, `Adept's`, `of the
 Gravewatch` ...) and a label (`+5 Fire damage`, `5% life leech`, `4 thorns`, `-6% spell cost`, `+15% damage vs the
@@ -393,7 +393,7 @@ something - a jewel none of its four, the caster's lines. It takes the pass now,
 with `lastPass`'s `on` set: the switch is not asked, because the piece is its record's on every client and the line's
 reader asks it. A record made before mints as it was (`Professions-Arc.md` 9.2, the record's `v`).
 
-**What they do** - `systems/lootPowers.js` (new, the kit), registered at import under one name (`lootPowers`) and
+**What they do** - `systems/loot/lootPowers.js` (new, the kit), registered at import under one name (`lootPowers`) and
 imported by the game beside the sets' own (`scenes/world.js`, folded onto the sets' import line - line-neutral):
 
 - the BLOW modifier: the slayer's per cents of the whole blow at its kind of foe (`foeGroup` - DFU's own four groups,
@@ -413,12 +413,12 @@ imported by the game beside the sets' own (`scenes/world.js`, folded onto the se
 Never at a player (a duel's blow refused by the blow modifier, a duel's blow at me never asking the port), never a
 peer's blow resolved here, never the Warden's ward; off, nothing (`linesOf` reads none).
 
-Pinned: `test/loot4_procs.test.js` (8); `tools/mutants/loot4.json` (26, all dead). LR2's six-kinds pin reads the six
+Pinned: `test/systems/loot4_procs.test.js` (8); `tools/mutants/loot4.json` (26, all dead). LR2's six-kinds pin reads the six
 numbers and the five after them; SET6's earlier-spoils pin passes the appended lines by.
 
 ### LOOT5 - every Legendary a power (2026-10-01)
 
-`systems/lootRarity.js` `LEGENDARY_POWERS`: one power a record, keyed by its id (the records keep LR2's own shape; a
+`systems/loot/lootRarity.js` `LEGENDARY_POWERS`: one power a record, keyed by its id (the records keep LR2's own shape; a
 mod's record may carry its own `power`, and `powerOf` reads both) - a name, a brief inside CARD-FIT's 32 characters, a
 sentence, a `kind` and its numbers. The card and the tooltip say it after the enchantment (`powerLine`, "Dragonsbane:
 +50% vs dragons and giants"), the lore still last.
@@ -456,7 +456,7 @@ sentence, a `kind` and its numbers. The card and the tooltip say it after the en
 | The Mark of the Hist | Hist-Sap | Each magic round you regenerate 2% of your health, 4% while you are under half |
 | The Reachman's Torc | Hagraven's Pact | A Destruction spell that strikes you is absorbed 15 times in a hundred, as Spell Absorption is |
 
-**Who.** `systems/lootPowers.js` `wornPowers(entity)`: MY entity's worn pieces - a Legendary's record (a piece that is
+**Who.** `systems/loot/lootPowers.js` `wornPowers(entity)`: MY entity's worn pieces - a Legendary's record (a piece that is
 a Legendary; an id on anything else wakes nothing) and, from LOOT10, a Rare's imprint - ONE entry a power, however many
 pieces carry it. A WEAPON's power rides that weapon's own blows (`blowPowers`: the one that struck); the rest of it
 while it is wielded; armour's and jewellery's ride every blow of mine, my fists' too. Asleep in a duel (the sets' own
@@ -479,17 +479,17 @@ threshold, past its cap but never past the Rare threshold; `rarityChances` takes
 a wall, as Cleave and the Nova do.
 
 **Seen.** `lootHudChips` - Flow's and Bedrock's stacks, Dawnward's charges, a recovery running - beside the sets' chips
-(`scenes/world.js` hands the HUD both, line-neutral), in the Legendary's orange (`ui/enhancedHud.js`).
+(`scenes/world.js` hands the HUD both, line-neutral), in the Legendary's orange (`ui/enhanced/enhancedHud.js`).
 
 **What it moved.** SET5's pin on the HUD's wiring reads both lists; five mutant records whose anchors the arc's edits
 moved were re-aimed by content (DISC29-B's unguarded name, SET3's import and its fall, SET5's chips, LOOT4's focus
-cap) and still die (`test/mutantdrift.test.js`).
+cap) and still die (`test/tooling/mutantdrift.test.js`).
 
-Pinned: `test/loot5_powers.test.js` (7); `tools/mutants/loot5.json` (38, all dead).
+Pinned: `test/systems/loot5_powers.test.js` (7); `tools/mutants/loot5.json` (38, all dead).
 
 ### LOOT6 - signature drops (2026-10-01)
 
-`systems/lootRarity.js`: `FOE_FAMILIES` groups the foe table in eight - the **undead** (15, 17, 18, 19, 23, the two
+`systems/loot/lootRarity.js`: `FOE_FAMILIES` groups the foe table in eight - the **undead** (15, 17, 18, 19, 23, the two
 vampires 28 and 30, the two liches), the **daedra** (the five Daedra, the four atronachs, the imp and the gargoyle),
 **dragons** (the two dragonlings), **beasts** (the animals, the werecreatures, the spriggan, centaur, nymph and harpy,
 the slaughterfish, dreugh and lamia), **brutes** (the four orcs and the giant), and the class foes by their own teams
@@ -512,7 +512,7 @@ Measured: a vampire's two pieces (a dagger, whose pool holds no undead record, a
 Graveward beside Wyrmbane and Gortwog's Cleaver) gave the undead's own over a quarter of their Legendaries in 3,000
 seeded kills - a third of the axe's would be the even pick; five sevenths is the weighed one.
 
-Pinned: `test/loot6_signatures.test.js` (4); `tools/mutants/loot6.json` (11, all dead). LR1's corpse-source pin
+Pinned: `test/systems/loot/loot6_signatures.test.js` (4); `tools/mutants/loot6.json` (11, all dead). LR1's corpse-source pin
 reads the family (null without a type), and its four-hosts pin the pile's.
 
 ### LOOT7 - champion foes (2026-10-01)
@@ -542,7 +542,7 @@ save keeps it (`champion` on the pool's record) and a load stands it again, neve
 relay's and never a pool foe.
 
 **Its name** is the trait's and its own - `Mighty Orc` - on the hover over it alive (`worldTooltips.js`
-`liveEntityName`, every pool's one namer), the HUD's target bar (`ui/hudFoeTarget.js`), its body (both pools) and
+`liveEntityName`, every pool's one namer), the HUD's target bar (`ui/hud/hudFoeTarget.js`), its body (both pools) and
 its death line (`corpseMarker.js` `sayEnemyDied`). LOOT7-CHECK (section 17) found two of the four untrue as
 shipped - the hover never named a HOSTILE champion (the plaque's own law) and no dungeon death was ever said - and
 fixed both.
@@ -559,11 +559,11 @@ rings over a body carrying a Rare, so it rings at every champion's fall.
 on foot - and its attack roll (`attackRollPasses`) passes likelier. The table says what it does. The Thorned answers
 any blow of mine that lands (a bare hand's too), not a weapon's alone - the strike tail's own law.
 
-**Along the way.** LOOT6's `pickRecord` shared its name with `world/underwaterDecorations.js`'s, past audit24's
+**Along the way.** LOOT6's `pickRecord` shared its name with `world/underwater/underwaterDecorations.js`'s, past audit24's
 one-home ratchet: renamed `pickLegendary`. WORLD8's pile pin read LOOT6's family. The relay's version pins re-chained
 ("LOOT7 moved it on last (world138 ...); KEPT-KILL moved it on (world137 ..."), soc1.json's S38 and BOUNTY1 B4.
 
-Pinned: `test/loot7_champions.test.js` (7) - the traits, the dungeon's marks (about one in twenty, golden marks for
+Pinned: `test/systems/loot7_champions.test.js` (7) - the traits, the dungeon's marks (about one in twenty, golden marks for
 two locations so a client on another build cannot stand others), the street's hash (never a draw; golden for one street) and the record, the scaling and
 its refusals, the name in all four places, the two traits on their tails, the guarantee over 600 seeded kills of an
 orc, a rat and a Fire Daedra, its most valuable piece, the mint's mix, and the corpse door against the boosted source
@@ -571,7 +571,7 @@ seed by seed; `tools/mutants/loot7.json` (44, all dead - CHAMP-LOOT retired the 
 
 ### LOOT8 - the drought (2026-10-01)
 
-`systems/lootDrought.js` (new): the character's DROUGHT - one more for every piece taken below Legendary, none again
+`systems/loot/lootDrought.js` (new): the character's DROUGHT - one more for every piece taken below Legendary, none again
 when a Legendary or better is taken. `droughtMult` - `1 + 0.2 x floor(drought / 25)`, at most x3 - is a FINDER
 (LOOT5's `registerLegendaryFind`), so at every door that ladders a list (`rollLootRarity`: a body, a dungeon's pile, a
 house's, a camp's) it multiplies the Legendary threshold beside Foxglove's, and `rarityChances` keeps the product under
@@ -597,7 +597,7 @@ chest and taken again would have counted every time) - the mark on the piece its
 Measured: 4,000 seeded tier-8 corpse rolls gave 42 Legendaries with no drought, 51 at 25, 78 at 100 and 127 at 250
 (the threshold 10.6 per mille to 31.8, still under the Rare's 63).
 
-Pinned: `test/loot8_drought.test.js` (7) - the multiplier and its cap, the finder (off 1), the mark on every eligible
+Pinned: `test/systems/loot8_drought.test.js` (7) - the multiplier and its cap, the finder (off 1), the mark on every eligible
 piece of 60 seeded piles (never gold or arrows; none off; it rides the wire, a forged one refused), the take (once; a
 Rare one more, a Legendary none, the ceiling; unmarked, gold and off nothing), every take seam (into the pack, never
 out; a throwing listener never stops a take; the body's bulk take), the record (save, load, forged, a new game), the
@@ -606,9 +606,9 @@ doors in play (sixty bodies taken, sixty counted; three times the Legendaries at
 
 ### LOOT9 - salvage, and the Reforge (2026-10-01)
 
-**The Welkynd Shard** (`systems/gateSpoils.js`, template 571 beside the Sigil Stone's 570): `WELKYND_SHARD_TEMPLATES`,
+**The Welkynd Shard** (`systems/gate/gateSpoils.js`, template 571 beside the Sigil Stone's 570): `WELKYND_SHARD_TEMPLATES`,
 a gem's row that stacks with its own kind alone and is BOUND - so itemBound.js's whole law holds it (never sold, traded,
-dropped or listed) and the realm's service refuses it too (`net/realmTradeLaw.js` `BOUND_TEMPLATES` now `[570, 571]`,
+dropped or listed) and the realm's service refuses it too (`net/realm/realmTradeLaw.js` `BOUND_TEMPLATES` now `[570, 571]`,
 AUDIT REALM F1's pin reading the new row). The Sapphire's art (TEXTURE.254 record 2). `welkyndShards(n)` mints a stack.
 
 **`systems/reforge.js`** (new) holds every law the faces call:
@@ -642,9 +642,9 @@ set's share stays).
   Broker's own classes, so both skins dress it as they dress his.
 - THE MAGES GUILD (`scenes/worldModes.js` `openGuildService`): the Identify NPC's popup carries a `reforge` hook (the
   Mages Guild's group, the Identify service, the row on) - a dispatch, as a service's is. On the Enhanced Plus face
-  (`ui/enhancedPorts.js`) it is a row beside the service; on the classic popup (`ui/guildServiceWindow.js`) a port-drawn
+  (`ui/enhanced/enhancedPorts.js`) it is a row beside the service; on the classic popup (`ui/guildServiceWindow.js`) a port-drawn
   row UNDER DFU's 130x51 panel (`REFORGE_RECT`, its key F, its click the ButtonClick its four sisters play).
-- THE PACK CARD (`ui/enhancedInventory.js`): Salvage beside the Broker's Dismantle, for a graded piece that will break
+- THE PACK CARD (`ui/enhanced/enhancedInventory.js`): Salvage beside the Broker's Dismantle, for a graded piece that will break
   and is not worn, asked first in the dismantle's own question slot (Keep, N, Enter, Escape or a press outside keep it).
 
 **What moved from the design.** "At the Mages Guild (both skins)": the salvage's guild face is the Reforge's window, which
@@ -656,7 +656,7 @@ port's own strip under it.
 their one site - the Salvage's question wears its own lines, the shard's row its own order; AUDIT REALM F1's record
 re-aimed to the two-row list; F141's click roster counts the fifth; UI.md counts 270 modules, Systems.md 339.
 
-Pinned: `test/loot9_reforge.test.js` (9) - the shard (its row, bound, stacking, at least one), salvage (the yields, every
+Pinned: `test/systems/loot9_reforge.test.js` (9) - the shard (its row, bound, stacking, at least one), salvage (the yields, every
 refusal, all or nothing, a locked stack never joined, off), the purse, the lines (and the mark on the wire, a forged one
 refused), the roll over 600 seeded pieces (never a carried kind, a proc a proc, a Rare's slot and name, the name and the
 price, the same kind back and another), the price and the press (refused with nothing taken, paid shards then gold, a
@@ -678,11 +678,11 @@ Stone). The faces say so now: `reforge.js` `salvageRefusal` answers `'classic'` 
 grade and no `provenance` (a made piece stays `'not'` - the Enchanting Station's disenchant is its door, as F2 below
 says); the Salvage page lists it after every piece that breaks, its press "Classic magic" and disabled, "No shards",
 the reason its title; the pack card's Salvage, pressed, says why (`enhancedInventory.js` `SALVAGE_CLASSIC`) and asks
-nothing. `test/fb1012d_salvageclassic.test.js` (4), `tools/mutants/fb1012d_salvageclassic.json` (11, all dead).
+nothing. `test/systems/fb1012d_salvageclassic.test.js` (4), `tools/mutants/fb1012d_salvageclassic.json` (11, all dead).
 
 ### LOOT10 - the codex, and the imprint (2026-10-01)
 
-**`systems/lootCodex.js`** (new): the character's CODEX - every Legendary record and every Aetheric piece taken, with
+**`systems/loot/lootCodex.js`** (new): the character's CODEX - every Legendary record and every Aetheric piece taken, with
 the world's day it was first found (`worldTick.js` `worldMinutes`, a shared realm's clock online). `codexKey` names
 what a piece is to it (a Legendary's record, an Aetheric piece's - never a Rare, never an id the tables do not hold).
 `noteFind` puts a piece in it once: the first find is said on the HUD's line - *"Wyrmbane - a Legendary! It joins your
@@ -700,7 +700,7 @@ negative day or a fraction is dropped, and junk is none.
 **The page.** The Reforge's window gains its third and fourth pages (`ui/reforgeWindow.js`): IMPRINT (below) and CODEX -
 the thirty in the table's order, a found record whole (its lines, its power, its lore, the day), an unfound one by its
 group and where it is said to be (`FAMILY_HINT`, by LOOT6's family - *"Said to be carried by the undead"*), then the
-Aetheric sets piece by piece. The pack opens the Codex alone (`ui/enhancedInventory.js`: a Codex button in its header
+Aetheric sets piece by piece. The pack opens the Codex alone (`ui/enhanced/enhancedInventory.js`: a Codex button in its header
 while the row is on - the same window, its one page, no tabs).
 
 **The imprint.** At the Reforge, a Rare (known, not worn, not imprinted already) takes the POWER of a found Legendary of
@@ -718,7 +718,7 @@ pack anywhere and from the Mages Guild beside the Reforge.
 **Along the way.** PACK-PHONE's header pin reads the Codex before Body (Body still beside Close); nine struck-row cites
 moved by hand, the rest by tools/citeShift.mjs.
 
-Pinned: `test/loot10_codex.test.js` (7) - a find (its key, said and heard once, the day, off nothing), how a find is
+Pinned: `test/systems/loot10_codex.test.js` (7) - a find (its key, said and heard once, the day, off nothing), how a find is
 seen (the take, the round's sweep of the pack and the table, an old save filled silently and the next find said, the
 game's import), the record (saved, restored, cleaned, junk, a new game), the page (the thirty, a found one whole and an
 unfound one's hint, the sets, the count), the imprint (choices of its group, every refusal with nothing taken, paid,
@@ -752,7 +752,7 @@ billboards, the interior arm's after its characters - each in the air the render
 INVIS-LOOK's building order keeps the veiled bodies right after the last opaque draw (the lines follow them); `lootCrown`
 for a name the naval ships already used; 194 cites shifted and 26 struck ones by hand.
 
-Pinned: `test/loot11_lines.test.js` (4) - the pick (the best tier, the nearest eight within 40 m, gone below Rare, the
+Pinned: `test/scenes/loot11_lines.test.js` (4) - the pick (the best tier, the nearest eight within 40 m, gone below Rare, the
 malformed skipped, off none), the pass (the crown, the renderer's own calls - its roots and its pulse - the finds never
 gathered off, no context no pass), the finds (a pile put down, the street's bodies never a peer's, the dungeon's bodies,
 piles and drops), and every host's pass; `tools/mutants/loot11.json` (15, all dead).
@@ -794,7 +794,7 @@ seeded doors' draws), the bible against the code, and the screens and keys. Nine
   phone's Keep its own row under Break it.
 - **F7 - Back with the Codex over the pack closed the pack.** The pack's capture listener was laid first and heard every
   key: Back put both away, and the pack's Inventory key left the Codex standing over the world. The pack yields while
-  the Codex stands (`ui/enhancedInventory.js` `onKey`, `reforgeDoor.js` `reforgeDoorOpen`): Back puts the Codex away and
+  the Codex stands (`ui/enhanced/enhancedInventory.js` `onKey`, `reforgeDoor.js` `reforgeDoorOpen`): Back puts the Codex away and
   keeps the pack, as the Info box's does, and no other key reaches the pack under it.
 - **F8 - the thirty-first Legendary had no power, and the codex took it and never listed it.** The Thunderlock's own
   record, *The Last Lock* (registered by `systems/thunderlock.js`, `exclusive` to the gun), is found as a Legendary and
@@ -824,7 +824,7 @@ written when focus was a jewel's only proc line. No page kept crafted pieces fro
 Superior's and Masterwork's roll takes the last pass since, on its own record's stream (the LOOT4 record's CRAFT-PROCS
 note, section 15); the Broker's `applyRarity` still never does.
 
-Pinned: `test/auditloot.test.js` (8), driven where it can be - F1 the fits, the choices and the wire; F2 a Masterwork's
+Pinned: `test/systems/auditloot.test.js` (8), driven where it can be - F1 the fits, the choices and the wire; F2 a Masterwork's
 and a Superior's piece refused with nothing taken; F3 a reforge and an imprint off the market; F4 both hands, either
 order; F6 the sheet's rules (a phone's Keep), both skins' sheets (the classic's beside the Broker's), the brass tab, the
 imprint's card (its tier's line, its word, said);
@@ -877,7 +877,7 @@ half and a seventh, each at least 1 a blow - the floor is what lifts both on sma
   is whole (`10-UI/UI-Arc.md`, WORLD-HOVER's departures).
 - **CHAMP-SAID - on the classic skin a champion was invisible until it died, and no screen said what a trait does.**
   The plaque is the enhanced skin's (`ui/worldPlaque.js` `worldPlaqueOn`: `isEnhanced() && !isTouchDevice()`; the
-  classic face resolves quick loot's piles alone), so is the target frame (`ui/hudFoeTarget.js`, PX30), and
+  classic face resolves quick loot's piles alone), so is the target frame (`ui/hud/hudFoeTarget.js`, PX30), and
   `CHAMPION_TRAITS`' `text` was read by nothing. `champions.js` `sayChampion`: the first blow that lands EITHER WAY -
   its on me, mine on it, through formulas.js's struck and strike tails under their own name (`CHAMPIONS_SAID`), the
   seams every pool already shares (the dungeon's, the street's, a building's, a puppet's), so no host stands it - says
@@ -900,7 +900,7 @@ one is a field on the wire and a relay version, not a small thing. A dungeon's r
 the dungeon's champions are its layout's (the hash every client agrees on), and an encounter stood later is not in
 it. AUDIT LOOT's stated Vampiric stands as it was.
 
-Pinned: `test/loot7check.test.js` (4), each red on the code before - CORPSE-FIND the corpse door against the list door
+Pinned: `test/systems/loot7check.test.js` (4), each red on the code before - CORPSE-FIND the corpse door against the list door
 seed for seed over 6,000 champions' bodies (the Thunderlock loaded), a kitted body and a bare one, the spawn seam's
 champion, off; CHAMP-HOVER the law, a real champion through the hosts' composition onto `resolveHover`'s frame, off,
 the four arms, the plaque's skin; CHAMP-SAID the five traits' rows golden, the real blows both ways through a
@@ -926,7 +926,7 @@ Rare and Legendary finds halve with its pieces. Its worn kit is still worn and f
 chance at every step and rolls it truncated to whole percent (`dice100(Math.trunc(c))`), so the factor compounded down
 the ladder and a 1-3% chance fell to nothing: measured exactly over the live tables at levels 1, 10 and 25, it kept
 33-50% of the table, and none of a level-1 humanoid's on table A. A coin per piece keeps half of whatever the ladder
-made, at any chance. `test/rf2_spawnloot.test.js` PLAIN-LOOT; `tools/mutants/plainloot.json` (5, all dead).
+made, at any chance. `test/systems/rf2_spawnloot.test.js` PLAIN-LOOT; `tools/mutants/plainloot.json` (5, all dead).
 
 LOOT-EASE (section 19) keeps three pieces in four since 2026-10-05.
 
@@ -990,7 +990,7 @@ online too. No body past its cap.
 not a count), the champions', elites' and Elite Dungeons' own drops, and the metal - Unleveled Loot is a 1:1 mod, the
 room's whole online; more Silver and up is its dungeon-quality ladder's call, and Mac's.
 
-Pinned: `test/search1_searchables.test.js` (the ladder, CAP-SUPPLIES, KIT-ROLL and its doors swept against the pools'
+Pinned: `test/systems/search1_searchables.test.js` (the ladder, CAP-SUPPLIES, KIT-ROLL and its doors swept against the pools'
 sigil stamps), `rf2_spawnloot` (three in four), `potion_common` (MAGICKA-COMMON), `rest6_consumables` (REST-LOOT);
 re-aimed - SIGIL1's and SURVTIERS3's door regexes, the customs pins under the shut switch (`auditrest2_camps`,
 `auditrest3`, `auditrestparty_camps`), the mounted dungeon harnesses' stubs (`audit68_dungeonctx`, `loot7check`,
@@ -1050,13 +1050,13 @@ bodies a cell, a plain Warrior at level 8: 1.11 pieces a body at Renown 1 (26.5%
 Renown 1 / 20 / 40, Restore Power on 2.2% / 4.3% / 8.2%, a rest supply on 2.4% / 7.1% / 11.0%. A skeleton's body 0.46 /
 0.59 / 0.75 pieces.
 
-Pinned: `test/renownloot.test.js` (6 - the stage and its door, the table, the keep through the real spawn, the kit at
-death, the supplies through the real hooks with their draws counted, the hosts). Moved: `test/rf2_spawnloot.test.js`
+Pinned: `test/systems/renownloot.test.js` (6 - the stage and its door, the table, the keep through the real spawn, the kit at
+death, the supplies through the real hooks with their draws counted, the hosts). Moved: `test/systems/rf2_spawnloot.test.js`
 (the chain's text - `ease` read once). `tools/mutants/renownloot.json` (26, all dead).
 
 ## 21. AUDIT 625 - the loot lens (2026-10-05)
 
-Mac: *"Lets do a comprehensive audit on this"*, of PR #625. The whole record is `01-Overview/Audit-625.md`; what it
+Mac: *"Lets do a comprehensive audit on this"*, of PR #625. The whole record is `01-Overview/audits/Audit-625.md`; what it
 moved here:
 
 - **L1, a foe restored from a save rolled no kit.** KIT-ROLL found the kit by the foe's equip table, object by object,
@@ -1077,7 +1077,7 @@ moved here:
   suite); **L7** the cap's potion is DFU's IsPotion through its one export (`useItem.js` `isPotion`), and the watch's
   comment says why its kit is rolled where it is.
 
-Pinned: `test/audit625_loot.test.js` (6); moved: `search1_searchables` (KIT-ROLL's scope), `renownloot` (the body's
+Pinned: `test/systems/audit625_loot.test.js` (6); moved: `search1_searchables` (KIT-ROLL's scope), `renownloot` (the body's
 copy; the keep's threshold itself, not a band), `sigil1` and `survtiers3` (the copies' cap), and the mounted dungeon
 harnesses' stubs (`audit68_dungeonctx`, `loot7check`, `corpsegold`, `seatheal`). `tools/mutants/audit625.json` (the L
 records); `lootease.json`'s KIT-ROLL records re-aimed by content (the reversed law's record says so).

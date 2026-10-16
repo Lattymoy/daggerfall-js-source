@@ -5,8 +5,8 @@
     "old": "export const SEASON_ZERO_WEEKS = 4;",
     "new": "export const SEASON_ZERO_WEEKS = 8;",
     "tests": [
-      "test/season1_law.test.js",
-      "test/season1_service.test.js"
+      "test/net/season1_law.test.js",
+      "test/net/season1_service.test.js"
     ]
   },
   {
@@ -15,7 +15,7 @@
     "old": "(/^\\d{1,7}$/.test(String(v ?? '').trim())",
     "new": "(/^\\d+$/.test(String(v ?? '').trim())",
     "tests": [
-      "test/season1_law.test.js"
+      "test/net/season1_law.test.js"
     ]
   },
   {
@@ -24,7 +24,7 @@
     "old": "  if (zero == null || !Number.isSafeInteger(week) || week < zero) return null;",
     "new": "  if (zero == null || !Number.isSafeInteger(week)) return null;",
     "tests": [
-      "test/season1_law.test.js"
+      "test/net/season1_law.test.js"
     ]
   },
   {
@@ -33,7 +33,7 @@
     "old": "  if (zero == null || !Number.isSafeInteger(week) || week < zero) return null;",
     "new": "  if (zero == null || week < zero) return null;",
     "tests": [
-      "test/season1_law.test.js"
+      "test/net/season1_law.test.js"
     ]
   },
   {
@@ -42,8 +42,8 @@
     "old": "  if (week < zero + SEASON_ZERO_WEEKS) return { n: 0, start: zero, end: zero + SEASON_ZERO_WEEKS };\n",
     "new": "",
     "tests": [
-      "test/season1_law.test.js",
-      "test/season1_service.test.js"
+      "test/net/season1_law.test.js",
+      "test/net/season1_service.test.js"
     ]
   },
   {
@@ -52,8 +52,8 @@
     "old": "  const n = 1 + Math.floor((week - zero - SEASON_ZERO_WEEKS) / SEASON_WEEKS);",
     "new": "  const n = Math.floor((week - zero - SEASON_ZERO_WEEKS) / SEASON_WEEKS);",
     "tests": [
-      "test/season1_law.test.js",
-      "test/season1_service.test.js"
+      "test/net/season1_law.test.js",
+      "test/net/season1_service.test.js"
     ]
   },
   {
@@ -62,8 +62,8 @@
     "old": "  const start = zero + SEASON_ZERO_WEEKS + (n - 1) * SEASON_WEEKS;",
     "new": "  const start = zero + (n - 1) * SEASON_WEEKS;",
     "tests": [
-      "test/season1_law.test.js",
-      "test/season1_service.test.js"
+      "test/net/season1_law.test.js",
+      "test/net/season1_service.test.js"
     ]
   },
   {
@@ -72,8 +72,8 @@
     "old": "  return { n, start, end: start + SEASON_WEEKS };",
     "new": "  return { n, start, end: start + SEASON_ZERO_WEEKS };",
     "tests": [
-      "test/season1_law.test.js",
-      "test/season1_service.test.js"
+      "test/net/season1_law.test.js",
+      "test/net/season1_service.test.js"
     ]
   },
   {
@@ -82,8 +82,8 @@
     "old": "  if (n === 0) return 'Season 0';\n",
     "new": "",
     "tests": [
-      "test/season1_law.test.js",
-      "test/season1_client.test.js"
+      "test/net/season1_law.test.js",
+      "test/net/season1_client.test.js"
     ]
   },
   {
@@ -92,7 +92,7 @@
     "old": "  if (!Number.isSafeInteger(n) || n < 0) return null;\n  if (n === 0)",
     "new": "  if (!Number.isSafeInteger(n)) return null;\n  if (n === 0)",
     "tests": [
-      "test/season1_law.test.js"
+      "test/net/season1_law.test.js"
     ]
   },
   {
@@ -101,7 +101,7 @@
     "old": "  const round = Math.floor((n - 1) / SEASON_MONTHS.length) + 1;",
     "new": "  const round = 1;",
     "tests": [
-      "test/season1_law.test.js"
+      "test/net/season1_law.test.js"
     ]
   },
   {
@@ -110,7 +110,7 @@
     "old": "${round > 1 ? ` ${roman(round)}` : ''}",
     "new": "${round > 1 ? ` ${round}` : ''}",
     "tests": [
-      "test/season1_law.test.js"
+      "test/net/season1_law.test.js"
     ]
   },
   {
@@ -119,8 +119,8 @@
     "old": "SEASON_MONTHS[(n - 1) % SEASON_MONTHS.length]",
     "new": "SEASON_MONTHS[n % SEASON_MONTHS.length]",
     "tests": [
-      "test/season1_law.test.js",
-      "test/season1_client.test.js"
+      "test/net/season1_law.test.js",
+      "test/net/season1_client.test.js"
     ]
   },
   {
@@ -129,7 +129,7 @@
     "old": "[10, 'X'], [9, 'IX'],",
     "new": "[10, 'X'],",
     "tests": [
-      "test/season1_law.test.js"
+      "test/net/season1_law.test.js"
     ]
   },
   {
@@ -138,7 +138,7 @@
     "old": "const ROMAN = [[1000, 'M'],",
     "new": "const ROMAN = [",
     "tests": [
-      "test/season1_law.test.js"
+      "test/net/season1_law.test.js"
     ]
   },
   {
@@ -147,7 +147,7 @@
     "old": "'Hearthfire', 'Frostfall'",
     "new": "'Frostfall', 'Hearthfire'",
     "tests": [
-      "test/season1_law.test.js"
+      "test/net/season1_law.test.js"
     ]
   },
   {
@@ -156,8 +156,8 @@
     "old": "return s && s.end === week + 1 ? s : null; };",
     "new": "return s && s.end === week ? s : null; };",
     "tests": [
-      "test/season1_law.test.js",
-      "test/season1_service.test.js"
+      "test/net/season1_law.test.js",
+      "test/net/season1_service.test.js"
     ]
   },
   {
@@ -166,7 +166,7 @@
     "old": "seasonOf(week, zero)?.start ?? week - SIEGE_PAIR_WEEKS + 1;",
     "new": "seasonOf(week, zero)?.start ?? week - SIEGE_PAIR_WEEKS;",
     "tests": [
-      "test/season1_law.test.js"
+      "test/net/season1_law.test.js"
     ]
   },
   {
@@ -175,8 +175,8 @@
     "old": "export const seasonFloor = (week, zero) => seasonOf(week, zero)?.start ?? week - SIEGE_PAIR_WEEKS + 1;",
     "new": "export const seasonFloor = (week, zero) => week - SIEGE_PAIR_WEEKS + 1;",
     "tests": [
-      "test/season1_law.test.js",
-      "test/season1_service.test.js"
+      "test/net/season1_law.test.js",
+      "test/net/season1_service.test.js"
     ]
   },
   {
@@ -185,8 +185,8 @@
     "old": "STANDING_START + Math.trunc((Number(standing) - STANDING_START) / 2);",
     "new": "STANDING_START + Math.round((Number(standing) - STANDING_START) / 2);",
     "tests": [
-      "test/season1_law.test.js",
-      "test/season1_service.test.js"
+      "test/net/season1_law.test.js",
+      "test/net/season1_service.test.js"
     ]
   },
   {
@@ -195,8 +195,8 @@
     "old": "STANDING_START + Math.trunc((Number(standing) - STANDING_START) / 2);",
     "new": "STANDING_START + Math.trunc((Number(standing) - STANDING_START) / 3);",
     "tests": [
-      "test/season1_law.test.js",
-      "test/season1_service.test.js"
+      "test/net/season1_law.test.js",
+      "test/net/season1_service.test.js"
     ]
   },
   {
@@ -205,7 +205,7 @@
     "old": "  if (!season || season.n < 1) return [];",
     "new": "  if (!season) return [];",
     "tests": [
-      "test/season1_law.test.js"
+      "test/net/season1_law.test.js"
     ]
   },
   {
@@ -214,8 +214,8 @@
     "old": "    if (h.tier === 'crown') out.push({ guild: h.guild, title: 'crowned', key: h.key });\n",
     "new": "",
     "tests": [
-      "test/season1_law.test.js",
-      "test/season1_service.test.js"
+      "test/net/season1_law.test.js",
+      "test/net/season1_service.test.js"
     ]
   },
   {
@@ -224,7 +224,7 @@
     "old": "Number(since) <= season.start + (season.n === 1 ? 1 : 0);",
     "new": "Number(since) < season.start + (season.n === 1 ? 1 : 0);",
     "tests": [
-      "test/season1_law.test.js"
+      "test/net/season1_law.test.js"
     ]
   },
   {
@@ -233,7 +233,7 @@
     "old": "  for (const h of [...(holds ?? [])].sort((a, b) => a.key - b.key)) {",
     "new": "  for (const h of [...(holds ?? [])]) {",
     "tests": [
-      "test/season1_law.test.js"
+      "test/net/season1_law.test.js"
     ]
   },
   {
@@ -242,8 +242,8 @@
     "old": "(s ? `Week ${week - s.start + 1} of ${s.end - s.start} of",
     "new": "(s ? `Week ${week - s.start} of ${s.end - s.start} of",
     "tests": [
-      "test/season1_law.test.js",
-      "test/season1_client.test.js"
+      "test/net/season1_law.test.js",
+      "test/net/season1_client.test.js"
     ]
   },
   {
@@ -252,7 +252,7 @@
     "old": "of ${s.end - s.start} of ${seatSeasonName(s.n)}.` : null);",
     "new": "of ${SEASON_WEEKS} of ${seatSeasonName(s.n)}.` : null);",
     "tests": [
-      "test/season1_law.test.js"
+      "test/net/season1_law.test.js"
     ]
   },
   {
@@ -261,7 +261,7 @@
     "old": "${d.kept ? ', as it had the whole Season through' : ''}",
     "new": "",
     "tests": [
-      "test/season1_law.test.js"
+      "test/net/season1_law.test.js"
     ]
   },
   {
@@ -270,7 +270,7 @@
     "old": "At the end of ${seatSeasonName(Number(d.season)) ?? 'the Season'}",
     "new": "At the end of the Season",
     "tests": [
-      "test/season1_law.test.js"
+      "test/net/season1_law.test.js"
     ]
   },
   {
@@ -279,7 +279,7 @@
     "old": "  return palace ? { title: 'warden', ts: [palace.key, season] } : null;",
     "new": "  return palace ? { title: 'warden', ts: [palace.key, 0] } : null;",
     "tests": [
-      "test/season1_law.test.js"
+      "test/net/season1_law.test.js"
     ]
   },
   {
@@ -288,8 +288,8 @@
     "old": "export const pactUntil = (week, zero = null) => seasonOf(week, zero)?.end ?? (Math",
     "new": "export const pactUntil = (week, zero = null) => (Math",
     "tests": [
-      "test/season1_law.test.js",
-      "test/season1_service.test.js"
+      "test/net/season1_law.test.js",
+      "test/net/season1_service.test.js"
     ]
   },
   {
@@ -298,7 +298,7 @@
     "old": "  const ending = seasonEndingAt(week, zero);",
     "new": "  const ending = null;",
     "tests": [
-      "test/season1_service.test.js"
+      "test/net/season1_service.test.js"
     ]
   },
   {
@@ -307,7 +307,7 @@
     "old": "  const wipe = ending?.n === 0;",
     "new": "  const wipe = false;",
     "tests": [
-      "test/season1_service.test.js"
+      "test/net/season1_service.test.js"
     ]
   },
   {
@@ -316,7 +316,7 @@
     "old": "{ ...reckonedPlan, claims: [], contested: [],",
     "new": "{ ...reckonedPlan, contested: [],",
     "tests": [
-      "test/season1_service.test.js"
+      "test/net/season1_service.test.js"
     ]
   },
   {
@@ -325,7 +325,7 @@
     "old": "rights: [], edicts: [], standings: [],",
     "new": "rights: [], standings: [],",
     "tests": [
-      "test/season1_service.test.js"
+      "test/net/season1_service.test.js"
     ]
   },
   {
@@ -334,7 +334,7 @@
     "old": "    stmts.push(db.prepare(\"UPDATE town_seat_edicts SET state = 'void' WHERE week = ? AND state = 'proclaimed'\").bind(next));\n",
     "new": "",
     "tests": [
-      "test/season1_service.test.js"
+      "test/net/season1_service.test.js"
     ]
   },
   {
@@ -343,7 +343,7 @@
     "old": "    for (const t of SEASON_ZERO_WIPED) stmts.push(db.prepare(`DELETE FROM ${t}${SEASON_ZERO_KEPT[t] ? ` WHERE NOT (${SEASON_ZERO_KEPT[t]})` : ''}`));   // AUDIT-SEATS S5: the strikes kept\n",
     "new": "",
     "tests": [
-      "test/season1_service.test.js"
+      "test/net/season1_service.test.js"
     ]
   },
   {
@@ -352,7 +352,7 @@
     "old": "bind(ending ? seasonStanding(w.standing) : w.standing, w.key, w.guild));",
     "new": "bind(w.standing, w.key, w.guild));",
     "tests": [
-      "test/season1_service.test.js"
+      "test/net/season1_service.test.js"
     ]
   },
   {
@@ -361,7 +361,7 @@
     "old": "  for (const l of ending ? [] : plan.legacy) {",
     "new": "  for (const l of plan.legacy) {",
     "tests": [
-      "test/season1_service.test.js"
+      "test/net/season1_service.test.js"
     ]
   },
   {
@@ -370,7 +370,7 @@
     "old": "    const stood = holdRows.filter((h) => !lapsed.has(Number(h.key))).map(",
     "new": "    const stood = holdRows.map(",
     "tests": [
-      "test/season1_service.test.js"
+      "test/net/season1_service.test.js"
     ]
   },
   {
@@ -379,7 +379,7 @@
     "old": "      if (masters.has(t.guild)) stmts.push(",
     "new": "      stmts.push(",
     "tests": [
-      "test/season1_service.test.js"
+      "test/net/season1_service.test.js"
     ]
   },
   {
@@ -388,7 +388,7 @@
     "old": "`SELECT guild_id, player FROM guild_members WHERE rank = ? AND guild_id IN (${qs})`, [GUILD_RANK_MASTER]);",
     "new": "`SELECT guild_id, player FROM guild_members WHERE guild_id IN (${qs})`);",
     "tests": [
-      "test/season1_service.test.js"
+      "test/net/season1_service.test.js"
     ]
   },
   {
@@ -397,7 +397,7 @@
     "old": "season: ending.n, kept: keptWholeSeason(ending, h.since) }));",
     "new": "season: ending.n, kept: true }));",
     "tests": [
-      "test/season1_service.test.js"
+      "test/net/season1_service.test.js"
     ]
   },
   {
@@ -406,7 +406,7 @@
     "old": "    for (const h of stood) stmts.push(history(h.key, 'season-end',",
     "new": "    for (const h of []) stmts.push(history(h.key, 'season-end',",
     "tests": [
-      "test/season1_service.test.js"
+      "test/net/season1_service.test.js"
     ]
   },
   {
@@ -415,7 +415,7 @@
     "old": "SELECT key, guild_id, region, tier, standing, truce_week, tithe, owed, since_week FROM town_seat_holds",
     "new": "SELECT key, guild_id, region, tier, standing, truce_week, tithe, owed, 0 AS since_week FROM town_seat_holds",
     "tests": [
-      "test/season1_service.test.js"
+      "test/net/season1_service.test.js"
     ]
   },
   {
@@ -424,7 +424,7 @@
     "old": "const r = await settleWeek(db, w, nowS, zero);",
     "new": "const r = await settleWeek(db, w, nowS);",
     "tests": [
-      "test/season1_service.test.js"
+      "test/net/season1_service.test.js"
     ]
   },
   {
@@ -433,8 +433,8 @@
     "old": "await settleDueOnce(ctx.db, nowS, seasonZeroOf(env.SEASON_ZERO_WEEK))",
     "new": "await settleDueOnce(ctx.db, nowS)",
     "tests": [
-      "test/season1_service.test.js",
-      "test/seat1c_client.test.js"
+      "test/net/season1_service.test.js",
+      "test/ui/seat1c_client.test.js"
     ]
   },
   {
@@ -443,7 +443,7 @@
     "old": "body.character, seasonOf(seatWeekOf(nowS * 1000), zero)?.n ?? 0, member) : null;",
     "new": "body.character, 0, member) : null;",
     "tests": [
-      "test/season1_service.test.js"
+      "test/net/season1_service.test.js"
     ],
     "note": "SCALE4f part two (2026-10-10) re-aimed it by content: the mint reads the membership once (guilds.js mintMemberOf)."
   },
@@ -453,7 +453,7 @@
     "old": "await keptTitleOf(ctx.db, who.player.id, wornT, zero) : null;",
     "new": "await keptTitleOf(ctx.db, who.player.id, wornT) : null;",
     "tests": [
-      "test/season1_service.test.js"
+      "test/net/season1_service.test.js"
     ]
   },
   {
@@ -462,7 +462,7 @@
     "old": "  const season = seasonOf(week, seasonZeroOf(env?.SEASON_ZERO_WEEK));   // SEASON1: the Season counted, and its Tides",
     "new": "  const season = null;   // SEASON1: the Season counted, and its Tides",
     "tests": [
-      "test/season1_service.test.js"
+      "test/net/season1_service.test.js"
     ]
   },
   {
@@ -471,7 +471,7 @@
     "old": "seasonOf(Number(r.week), zero)?.n ?? 0] } : null;",
     "new": "0] } : null;",
     "tests": [
-      "test/season1_service.test.js"
+      "test/net/season1_service.test.js"
     ]
   },
   {
@@ -480,7 +480,7 @@
     "old": "export const KEPT_TITLES = Object.freeze(['crowned', 'keeper', 'champion']);",
     "new": "export const KEPT_TITLES = Object.freeze(['champion']);",
     "tests": [
-      "test/season1_service.test.js"
+      "test/net/season1_service.test.js"
     ]
   },
   {
@@ -489,8 +489,8 @@
     "old": "WHERE account = ? AND title = ? ORDER BY week DESC, key LIMIT 1').bind(playerId, title)",
     "new": "WHERE account = ? ORDER BY week DESC, key LIMIT 1').bind(playerId)",
     "tests": [
-      "test/season1_service.test.js",
-      "test/crown1_royal_service.test.js"
+      "test/net/season1_service.test.js",
+      "test/net/crown1_royal_service.test.js"
     ]
   },
   {
@@ -499,7 +499,7 @@
     "old": "  return ['warden', 'protector', 'crowned', 'keeper', 'champion'].filter((t) => out.has(t));",
     "new": "  return ['warden', 'protector', 'crowned', 'champion'].filter((t) => out.has(t));",
     "tests": [
-      "test/season1_service.test.js"
+      "test/net/season1_service.test.js"
     ]
   },
   {
@@ -508,7 +508,7 @@
     "old": "  const zero = seasonZeroOf(env?.SEASON_ZERO_WEEK);",
     "new": "  const zero = null;",
     "tests": [
-      "test/season1_service.test.js"
+      "test/net/season1_service.test.js"
     ]
   },
   {
@@ -517,7 +517,7 @@
     "old": "bind(b.attacker, b.defender, seasonFloor(W, zero), W).first());",
     "new": "bind(b.attacker, b.defender, seasonFloor(W, null), W).first());",
     "tests": [
-      "test/season1_service.test.js"
+      "test/net/season1_service.test.js"
     ]
   },
   {
@@ -526,7 +526,7 @@
     "old": "bind(seasonFloor(c.sw, zero), c.sw, b.attacker, b.defender, c.sk)",
     "new": "bind(seasonFloor(c.sw, null), c.sw, b.attacker, b.defender, c.sk)",
     "tests": [
-      "test/season1_service.test.js"
+      "test/net/season1_service.test.js"
     ]
   },
   {
@@ -535,7 +535,7 @@
     "old": "await applyResult(db, b, c, nowS, zero);",
     "new": "await applyResult(db, b, c, nowS, null);",
     "tests": [
-      "test/season1_service.test.js"
+      "test/net/season1_service.test.js"
     ]
   },
   {
@@ -544,7 +544,7 @@
     "old": "  const until = pactUntil(week, seasonZeroOf(env?.SEASON_ZERO_WEEK));",
     "new": "  const until = pactUntil(week);",
     "tests": [
-      "test/season1_service.test.js"
+      "test/net/season1_service.test.js"
     ]
   },
   {
@@ -553,7 +553,7 @@
     "old": "      if (season) week.append(el('p', 'notice-seat-week notice-seat-season', season));\n",
     "new": "",
     "tests": [
-      "test/season1_client.test.js"
+      "test/net/season1_client.test.js"
     ]
   },
   {
@@ -562,7 +562,7 @@
     "old": "      const season = seasonLine(data.week, data.season ?? null);",
     "new": "      const season = seasonLine(data.week, null);",
     "tests": [
-      "test/season1_client.test.js"
+      "test/net/season1_client.test.js"
     ]
   }
 ]

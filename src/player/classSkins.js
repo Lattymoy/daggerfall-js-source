@@ -9,7 +9,7 @@
 // these as new skin options".
 //
 // THEY ARE NOT EYE OF THE BEHOLDER'S LAYOUT. The mod draws a player from
-// twelve on-foot tables of five records each (player/eotbBillboard.js
+// twelve on-foot tables of five records each (player/eyeOfTheBeholder/eotbBillboard.js
 // STATE_TABLES: idle, walk, death, ready, armed walk, swing, bow ready,
 // bow walk, loose, spell ready, spell walk, cast - 155 sprites). These
 // are Daggerfall's own enemy-class sheets, the shape DFU's MobileEnemy

@@ -2,7 +2,7 @@
 // KG1 (2026-10-13, bible/11-Multiplayer/Kings-Gambit.md sections 2, 4 and 11; the owner, handing over
 // thekingsgambit.dfmod: "How can we implement this using the illiac bay card system. A new minigame", then "Make the
 // best and most detailed decisions. We also have permission"): THE KING'S GAMBIT'S LAW - the mod's game, pure,
-// DOM-free and plain data (structuredClone-safe, as net/iliacHand.js's state is), ONE HOME for both ends: the tavern's
+// DOM-free and plain data (structuredClone-safe, as net/iliac/iliacHand.js's state is), ONE HOME for both ends: the tavern's
 // regulars play by it offline (KG2, KG3) and the relay will run it online (KG5), so it imports only the enemy table its
 // units are read from, the dice's unbiased draw and Unity's rounding (systems/mathf.js, its one home). Nothing here draws
 // a picture, plays a sound or waits.
@@ -36,7 +36,7 @@
 // so a relay keeps its last good state); one it takes answers the next state and the events it made.
 //
 // Not a DFU member: Daggerfall Unity has no such game - the mod does. Ledger A row (THE KING'S GAMBIT).
-import { ENEMY_BASICS, enemyDisplayName } from '../characters/enemyBasics.js';
+import { ENEMY_BASICS, enemyDisplayName } from '../characters/enemy/enemyBasics.js';
 import { drawBelow } from './dice.js';
 import { roundToInt } from '../systems/mathf.js';   // Mathf.RoundToInt's one home
 
@@ -104,7 +104,7 @@ export const KG_AUTOFILL_ROUNDS = 200;
 export const KG_AUTOFILL_RANGED = 2;
 export const KG_AUTOFILL_LEAN = 0.5;
 /** The most draws one step may take from its source - a board's build takes a few thousand at the most; past this the
- *  source is broken (net/iliacHand.js ILIAC_RAND_DRAWS_MAX's law). */
+ *  source is broken (net/iliac/iliacHand.js ILIAC_RAND_DRAWS_MAX's law). */
 export const KG_RAND_DRAWS_MAX = 100_000;
 
 /** THE LAYOUTS - BuildMap's switch, by Rand(0, 4) - each its key and its two floor tones (floorA, floorB, RGB); and the
@@ -125,7 +125,7 @@ export const KG_COMMANDS = Object.freeze(['move', 'attack', 'potion', 'end']);
 
 const f32 = Math.fround;
 // Mathf.RoundToInt, which rounds a half to the even neighbour, is `systems/mathf.js`'s roundToInt: ONE DFU MEMBER, ONE
-// EXPORT (test/audit24_onehome.test.js).
+// EXPORT (test/systems/talk/audit24_onehome.test.js).
 
 // ── THE UNITS AND THE ROSTER ──────────────────────────────────────────────────────────────────────────────────────
 
@@ -248,7 +248,7 @@ export function autoFill(army, budget, source) {
 
 /** NextDouble: a [0, 1) draw off a 32-bit source - the law's (a blow's roll), and Unity's Random.value at float32, where
  *  it is [0, 1] as Unity's is (the top 128 draws round to 1): Auto-fill's lean, and the regulars' choices
- *  (systems/gambitPatrons.js, KG2). @param {() => number} rand32 */
+ *  (systems/gambit/gambitPatrons.js, KG2). @param {() => number} rand32 */
 export const nextDouble = (rand32) => (rand32() >>> 0) / 4294967296;
 
 // ── THE BOARD ─────────────────────────────────────────────────────────────────────────────────────────────────────

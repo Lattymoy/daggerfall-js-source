@@ -8,7 +8,7 @@ name: Account database load
 #      insights; the window rounds up to the day it allows);
 #   2. the service's own metrics (server-account/src/metrics.js, every request and cron firing one Analytics Engine
 #      point) - the D1 wait by route, minute by minute, the clock's jobs, and every answer that was not a 2xx.
-# The questions are tools/d1Load.mjs's, tested in test/d1load.test.js - not written again here. It READS ONLY.
+# The questions are tools/d1Load.mjs's, tested in test/server/d1load.test.js - not written again here. It READS ONLY.
 
 on:
   workflow_dispatch:

@@ -62,7 +62,7 @@ export const grimoireImg = (name) => packUrl(G, `Img/${name}.IMG.png`);
  *  earlier build drew it - the detailed painting (the candle's drips, the inkwell's glass, the quill), 1515 x 947, its
  *  room's edges falling into the dark as that build lit them. The pack's own BIOG00I0 is a 960 x 600 copy of a
  *  320 x 200 picture, blocks at any size; this one is lifted from Mac's screenshot of that build, its doors' words
- *  and the wordmark taken off (public/art/grimoire-desk.jpg; its doctrine row in test/doctrine.test.js). */
+ *  and the wordmark taken off (public/art/grimoire-desk.jpg; its doctrine row in test/tooling/doctrine.test.js). */
 export const GRIMOIRE_DESK_FILE = 'grimoire-desk.jpg';
 export const grimoireDeskUrl = (doc = globalThis.document) => dialFileUrl(GRIMOIRE_DESK_FILE, doc);
 /** The pack's lettering - FONT0003-SDF.ttf, the Alagard face GrimoireUI draws every word in. */
@@ -108,7 +108,7 @@ export const GRIMOIRE_SIZES = Object.freeze({
 /** WOOD-HD (2026-10-10, Mac: "can every board wood background in DFO Grimoire UI in ALL windows and frames look like
  *  this that has that blurred wood?"): the boards' wood is the Ascend's own soft desk wood - even planks, no pixel
  *  blocks - cut from Mac's screenshot of that sheet, its light flattened and made seamless (public/art/grimoire-wood.jpg,
- *  301 x 567; its doctrine row in test/doctrine.test.js). On the game's grid it is 100 x 189: at the usual three screen
+ *  301 x 567; its doctrine row in test/tooling/doctrine.test.js). On the game's grid it is 100 x 189: at the usual three screen
  *  pixels to one, the size it was painted at. The INFO01I0 cut stands in only if the file cannot load. */
 export const GRIMOIRE_WOOD_FILE = 'grimoire-wood.jpg';
 export const WOOD_TILE = Object.freeze([100, 189]);
@@ -348,7 +348,7 @@ export const DIAL_ICONS = Object.freeze({
   // GRIM6 (Dudey: "the chest is still not fitting and looks too blurry and also badly cutout ... looks at this drawn style
   // of the book and helmet it must match"); GRIM7: the chest Dudey supplied ("here this chest chatgpt made is great make
   // sure it fits the other symbols"), cut from its dark ground along its outline once and shipped
-  // (public/art/grimoire-dial-chest.png; its doctrine row in test/doctrine.test.js) - drawn DOWN to the dial's size here,
+  // (public/art/grimoire-dial-chest.png; its doctrine row in test/tooling/doctrine.test.js) - drawn DOWN to the dial's size here,
   // as the helm and the book are
   items: Object.freeze({ file: 'grimoire-dial-chest.png', size: Object.freeze([130, 132]), h: 80 }),
 });

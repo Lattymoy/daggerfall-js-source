@@ -1,12 +1,12 @@
-// ARENA2, MEASURED (2026-10-02, Mac: "All UI elements and text must be enhanced UI plus"): the bout's HUD (ui/arenaHud.js)
-// and the Herald's choice (ui/enhancedDialog.js drawEnhancedChoice, systems/arenaHerald.js) drawn over the real sheets in
+// ARENA2, MEASURED (2026-10-02, Mac: "All UI elements and text must be enhanced UI plus"): the bout's HUD (ui/arena/arenaHud.js)
+// and the Herald's choice (ui/enhanced/enhancedDialog.js drawEnhancedChoice, systems/arena/arenaHerald.js) drawn over the real sheets in
 // Chromium - the Enhanced Plus sheet and the classic skin's bare page - at a desktop's width, a narrow window's and a
 // phone's, with the widest names a bout can carry, a two-against-one, a Grand Melee's three and the yield hint up. Each
-// must stand inside the viewport, its words in the pixel face, nothing spilling sideways. test/arena2_hud.test.js holds
+// must stand inside the viewport, its words in the pixel face, nothing spilling sideways. test/systems/arena/arena2_hud.test.js holds
 // the law on a fake document; this photographs what a fake cannot. Photographs to SHOT_DIR (default tools/shots/).
 // ARENA4b: and THE STANDS - a watcher of a relay's bout with the two presses under the plate (Cheer, Boo): inside the
 // viewport, a finger's size on the phone (the touch sheet), the kit's stone button on Plus, a real click on each and the
-// + and - keys reaching the door (test/arena4b_stands.test.js holds the law).
+// + and - keys reaching the door (test/systems/arena/arena4b_stands.test.js holds the law).
 //
 //     node tools/arenaHudProbe.mjs
 import { createServer } from 'vite';
@@ -29,12 +29,12 @@ for (const [W, H, width] of [[1440, 900, 'desktop'], [800, 600, 'narrow'], [390,
   page.on('pageerror', (e) => errors.push(String(e.message)));
   await page.goto('http://localhost:5243/play/?skin=enhanced&touch=off');
   const r = await page.evaluate(async ([sheet, shape, width]) => {
-    const { arenaHudModel, drawArenaHud } = await import('/src/ui/arenaHud.js');
-    const B = await import('/src/systems/arenaBout.js');
-    const { newCrowd } = await import('/src/systems/arenaCrowd.js');
+    const { arenaHudModel, drawArenaHud } = await import('/src/ui/arena/arenaHud.js');
+    const B = await import('/src/systems/arena/arenaBout.js');
+    const { newCrowd } = await import('/src/systems/arena/arenaCrowd.js');
     document.body.innerHTML = '';
     document.body.style.cssText = 'margin:0;background:repeating-linear-gradient(45deg,#2a2721 0 14px,#231f1a 14px 28px);height:100vh';
-    if (sheet === 'enhanced') (await import('/src/ui/enhancedStyle.js')).injectEnhancedStyle();
+    if (sheet === 'enhanced') (await import('/src/ui/enhanced/enhancedStyle.js')).injectEnhancedStyle();
     const fighters = shape === 'duel'
       ? [{ id: 'you', name: 'Aldric Wyndbrooke-Varnell', side: 0, maxHealth: 100, ai: false }, { id: 'f0', name: 'Gorlak gro-Mazgulbarz', side: 1, maxHealth: 80, home: 'Daggerfall' }, { id: 'f1', name: 'Trististyr Hearthsly', side: 1, maxHealth: 70 }]
       : shape === 'stands'
@@ -83,8 +83,8 @@ for (const [W, H, width] of [[1440, 900, 'desktop'], [800, 600, 'narrow'], [390,
   // the Herald's choice (the enhanced dialog - the Plus face of ChoiceWindow)
   if (shape === 'duel') {
     const d = await page.evaluate(async () => {
-      const { drawEnhancedChoice } = await import('/src/ui/enhancedDialog.js');
-      const { heraldChoice } = await import('/src/systems/arenaHerald.js');
+      const { drawEnhancedChoice } = await import('/src/ui/enhanced/enhancedDialog.js');
+      const { heraldChoice } = await import('/src/systems/arena/arenaHerald.js');
       const ch = heraldChoice({ gameMinutes: 400 * 1440 + 12 * 60 + 5, cityBout: { a: 'Gorlak gro-Mazgul', b: 'Peristair Kingfield' }, ladder: { tier: 1, won: 3, champs: [true] } });
       const owner = { input: () => {} };
       const draw = () => drawEnhancedChoice(owner, ch.lines, ch.options.filter((o) => o.label).map((o) => ({ code: o.code, label: o.label })));

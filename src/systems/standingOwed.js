@@ -1,5 +1,5 @@
 // @ts-check
-// STANDING-WORDS (2026-10-16, bible/01-Overview/Field-Bugs-2026-10-15g.md; Mac, asked of the guild system's words: "Standing
+// STANDING-WORDS (2026-10-16, bible/01-Overview/bugs/Field-Bugs-2026-10-15g.md; Mac, asked of the guild system's words: "Standing
 // changes shown"): WHAT THE ROLL STILL OWES, AS THE PAGE LAST HEARD IT. Online the Roll credits a guild faction at most
 // ROLL_GAIN_DAY_MAX a UTC day and owes the rest (net/npcChapterLaw.js rollCredit); its answer carries the owed
 // (`roll.owed`, server-account/src/npcRoll.js viewOf), and nothing on the page kept it - the pace's line said "the rest

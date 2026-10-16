@@ -5,10 +5,10 @@
     "old": "  Object.freeze([0.92, 0.92, 0.97]),",
     "new": "  Object.freeze([0.62, 0.62, 0.62]),",
     "tests": [
-      "test/grasslit.test.js",
-      "test/grasspx.test.js",
-      "test/disc20.test.js",
-      "test/weatherfront.test.js"
+      "test/render/grasslit.test.js",
+      "test/render/grasspx.test.js",
+      "test/systems/disc20.test.js",
+      "test/systems/weatherfront.test.js"
     ]
   },
   {
@@ -17,10 +17,10 @@
     "old": "dim: 1, lane: renderer.lightingLane,",
     "new": "dim: wxNow.dim, lane: renderer.lightingLane,",
     "tests": [
-      "test/grasslit.test.js",
-      "test/grasspx.test.js",
-      "test/disc20.test.js",
-      "test/weatherfront.test.js"
+      "test/render/grasslit.test.js",
+      "test/render/grasspx.test.js",
+      "test/systems/disc20.test.js",
+      "test/systems/weatherfront.test.js"
     ]
   },
   {
@@ -29,10 +29,10 @@
     "old": "  c = uLane > 0.5 ? elEncode(elTonemapRGB(elDecode(c) * light * (uELExposure * elAdapt()))) : c * light;",
     "new": "  c = c * light;",
     "tests": [
-      "test/grasslit.test.js",
-      "test/grasspx.test.js",
-      "test/disc20.test.js",
-      "test/weatherfront.test.js"
+      "test/render/grasslit.test.js",
+      "test/render/grasspx.test.js",
+      "test/systems/disc20.test.js",
+      "test/systems/weatherfront.test.js"
     ]
   },
   {
@@ -41,10 +41,10 @@
     "old": "uSunCol * (uSunScale * vLam * vSun)",
     "new": "uSunCol * (uSunScale * vLam)",
     "tests": [
-      "test/grasslit.test.js",
-      "test/grasspx.test.js",
-      "test/disc20.test.js",
-      "test/weatherfront.test.js"
+      "test/render/grasslit.test.js",
+      "test/render/grasspx.test.js",
+      "test/systems/disc20.test.js",
+      "test/systems/weatherfront.test.js"
     ]
   },
   {
@@ -53,10 +53,10 @@
     "old": "* vLam * vSun;   // GRASS-PX; GRASS-LIT",
     "new": "* vLam;   // GRASS-PX; GRASS-LIT",
     "tests": [
-      "test/grasslit.test.js",
-      "test/grasspx.test.js",
-      "test/disc20.test.js",
-      "test/weatherfront.test.js"
+      "test/render/grasslit.test.js",
+      "test/render/grasspx.test.js",
+      "test/systems/disc20.test.js",
+      "test/systems/weatherfront.test.js"
     ]
   },
   {
@@ -65,10 +65,10 @@
     "old": "    to: '  c = mix(c, vGround, vFar);   // GRASS-LIT: the far field is the ground\\'s colour\\n'\n",
     "new": "    to: ''\n",
     "tests": [
-      "test/grasslit.test.js",
-      "test/grasspx.test.js",
-      "test/disc20.test.js",
-      "test/weatherfront.test.js"
+      "test/render/grasslit.test.js",
+      "test/render/grasspx.test.js",
+      "test/systems/disc20.test.js",
+      "test/systems/weatherfront.test.js"
     ]
   },
   {
@@ -77,10 +77,10 @@
     "old": "export const GRASS_SWARD = 0.9;",
     "new": "export const GRASS_SWARD = 0.42;",
     "tests": [
-      "test/grasslit.test.js",
-      "test/grasspx.test.js",
-      "test/disc20.test.js",
-      "test/weatherfront.test.js"
+      "test/render/grasslit.test.js",
+      "test/render/grasspx.test.js",
+      "test/systems/disc20.test.js",
+      "test/systems/weatherfront.test.js"
     ]
   },
   {
@@ -89,10 +89,10 @@
     "old": "const c3 = (c, out) => (lane && c ? lane.decode3(c, out) : c);",
     "new": "const c3 = (c) => c;",
     "tests": [
-      "test/grasslit.test.js",
-      "test/grasspx.test.js",
-      "test/disc20.test.js",
-      "test/weatherfront.test.js"
+      "test/render/grasslit.test.js",
+      "test/render/grasspx.test.js",
+      "test/systems/disc20.test.js",
+      "test/systems/weatherfront.test.js"
     ]
   },
   {
@@ -101,10 +101,10 @@
     "old": "if (light.shadows) light.shadows.upload(this.shadowLoc);",
     "new": "if (false) light.shadows.upload(this.shadowLoc);",
     "tests": [
-      "test/grasslit.test.js",
-      "test/grasspx.test.js",
-      "test/disc20.test.js",
-      "test/weatherfront.test.js"
+      "test/render/grasslit.test.js",
+      "test/render/grasspx.test.js",
+      "test/systems/disc20.test.js",
+      "test/systems/weatherfront.test.js"
     ]
   },
   {
@@ -113,10 +113,10 @@
     "old": "gl.uniform4fv(u.uCloudShadowRect, cs ? cs.rect : NO_DECK);",
     "new": "gl.uniform4fv(u.uCloudShadowRect, NO_DECK);",
     "tests": [
-      "test/grasslit.test.js",
-      "test/grasspx.test.js",
-      "test/disc20.test.js",
-      "test/weatherfront.test.js"
+      "test/render/grasslit.test.js",
+      "test/render/grasspx.test.js",
+      "test/systems/disc20.test.js",
+      "test/systems/weatherfront.test.js"
     ]
   },
   {
@@ -125,10 +125,10 @@
     "old": "    gl.uniform3fv(u.uGrassTone, lane ? this.tones : this.tonesClassic);   // GRASS-LIT2: each lane its own\n",
     "new": "",
     "tests": [
-      "test/grasslit.test.js",
-      "test/grasspx.test.js",
-      "test/disc20.test.js",
-      "test/weatherfront.test.js"
+      "test/render/grasslit.test.js",
+      "test/render/grasspx.test.js",
+      "test/systems/disc20.test.js",
+      "test/systems/weatherfront.test.js"
     ]
   },
   {
@@ -137,10 +137,10 @@
     "old": "+ vNear + vPoint;   // GRASS-LIT; GRASS-LIT2",
     "new": "+ vPoint;   // GRASS-LIT; GRASS-LIT2",
     "tests": [
-      "test/grasslit.test.js",
-      "test/grasspx.test.js",
-      "test/disc20.test.js",
-      "test/weatherfront.test.js"
+      "test/render/grasslit.test.js",
+      "test/render/grasspx.test.js",
+      "test/systems/disc20.test.js",
+      "test/systems/weatherfront.test.js"
     ]
   },
   {
@@ -149,10 +149,10 @@
     "old": "to: '  vec3 nrm = normalize(vec3(-lean.y, 0.0, lean.x) + 1.2 * gN);",
     "new": "to: '  vec3 nrm = normalize(vec3(-lean.y, 0.0, lean.x) + 0.6 * gN);",
     "tests": [
-      "test/grasslit.test.js",
-      "test/grasspx.test.js",
-      "test/disc20.test.js",
-      "test/weatherfront.test.js"
+      "test/render/grasslit.test.js",
+      "test/render/grasspx.test.js",
+      "test/systems/disc20.test.js",
+      "test/systems/weatherfront.test.js"
     ]
   },
   {
@@ -161,10 +161,10 @@
     "old": "    depthOn(this.programs.ao, aoDepth);",
     "new": "    depthOn(this.programs.ao);",
     "tests": [
-      "test/grasslit.test.js",
-      "test/grasspx.test.js",
-      "test/disc20.test.js",
-      "test/weatherfront.test.js"
+      "test/render/grasslit.test.js",
+      "test/render/grasspx.test.js",
+      "test/systems/disc20.test.js",
+      "test/systems/weatherfront.test.js"
     ]
   },
   {
@@ -173,10 +173,10 @@
     "old": "gl.blitFramebuffer(0, 0, F.w, F.h, 0, 0, F.w, F.h, gl.DEPTH_BUFFER_BIT, gl.NEAREST);",
     "new": "gl.blitFramebuffer(0, 0, F.w, F.h, 0, 0, F.w, F.h, gl.COLOR_BUFFER_BIT, gl.NEAREST);",
     "tests": [
-      "test/grasslit.test.js",
-      "test/grasspx.test.js",
-      "test/disc20.test.js",
-      "test/weatherfront.test.js"
+      "test/render/grasslit.test.js",
+      "test/render/grasspx.test.js",
+      "test/systems/disc20.test.js",
+      "test/systems/weatherfront.test.js"
     ]
   },
   {
@@ -185,10 +185,10 @@
     "old": "      renderer.snapshotAoDepth();   // GRASS-LIT: the AO reads the world without the field (render/airPass.js snapshotAoDepth)\n",
     "new": "",
     "tests": [
-      "test/grasslit.test.js",
-      "test/grasspx.test.js",
-      "test/disc20.test.js",
-      "test/weatherfront.test.js"
+      "test/render/grasslit.test.js",
+      "test/render/grasspx.test.js",
+      "test/systems/disc20.test.js",
+      "test/systems/weatherfront.test.js"
     ]
   },
   {
@@ -197,10 +197,10 @@
     "old": "    F.aoTaken = false;\n    quad(this.programs.ao, T.ao);",
     "new": "    quad(this.programs.ao, T.ao);",
     "tests": [
-      "test/grasslit.test.js",
-      "test/grasspx.test.js",
-      "test/disc20.test.js",
-      "test/weatherfront.test.js"
+      "test/render/grasslit.test.js",
+      "test/render/grasspx.test.js",
+      "test/systems/disc20.test.js",
+      "test/systems/weatherfront.test.js"
     ]
   },
   {
@@ -209,10 +209,10 @@
     "old": "(gl_VertexID % 3 == 2 && uSunScale > 0.0) ?",
     "new": "(uSunScale > 0.0) ?",
     "tests": [
-      "test/grasslit.test.js",
-      "test/grasspx.test.js",
-      "test/disc20.test.js",
-      "test/weatherfront.test.js"
+      "test/render/grasslit.test.js",
+      "test/render/grasspx.test.js",
+      "test/systems/disc20.test.js",
+      "test/systems/weatherfront.test.js"
     ]
   },
   {
@@ -221,10 +221,10 @@
     "old": "+ 'flat out float vSun;",
     "new": "+ 'out float vSun;",
     "tests": [
-      "test/grasslit.test.js",
-      "test/grasspx.test.js",
-      "test/disc20.test.js",
-      "test/weatherfront.test.js"
+      "test/render/grasslit.test.js",
+      "test/render/grasspx.test.js",
+      "test/systems/disc20.test.js",
+      "test/systems/weatherfront.test.js"
     ]
   }
 ]

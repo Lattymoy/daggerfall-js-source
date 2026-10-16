@@ -1,7 +1,7 @@
 // PERF-SAILS1 (2026-10-10, Dudey's `?perf=cpu` readout in a port at night: `sails` 5-7.6 ms a frame): THE BOATS' FRAME.
-// Come Sail Away's pool (scenes/comeSailAwayPool.js) over the vendored hulls, N ships standing in a row, its `frame`
+// Come Sail Away's pool (scenes/comeSailAway/comeSailAwayPool.js) over the vendored hulls, N ships standing in a row, its `frame`
 // (the walk, the holders' bakes, the lanterns, the flats) and its `draw` (to a stand-in renderer) timed over FRAMES frames after a warm-up. No GL: the
-// renderer and the picture pipeline are stand-ins (test/audit0928_online.test.js's), so the time is the pool's own.
+// renderer and the picture pipeline are stand-ins (test/scenes/audit0928_online.test.js's), so the time is the pool's own.
 //
 //   node tools/csaBench.mjs [ships=12] [frames=600]      BOB=1: each hull pitched and rolled every frame, as navalHost's
 //                                                        poseShip rocks a ship in a wind (her MeshObject's local turn)
@@ -9,8 +9,8 @@
 //                                                        steps each every frame within NEAR_LIFE_M) - every one of them, standing
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { createComeSailAwayPool } from '../src/scenes/comeSailAwayPool.js';
-import { Boat, boatAnimators } from '../src/systems/comeSailAwayBoat.js';
+import { createComeSailAwayPool } from '../src/scenes/comeSailAway/comeSailAwayPool.js';
+import { Boat, boatAnimators } from '../src/systems/comeSailAway/comeSailAwayBoat.js';
 
 const fileFetch = async (url) => {
   const bytes = readFileSync(fileURLToPath(url));

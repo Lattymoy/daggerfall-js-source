@@ -4,7 +4,7 @@
 // "budgets per hour of online play the service measured itself", built.
 //
 // THE QUESTION IT ANSWERS. The world runs on the player's own machine (Multiplayer.md's first decision), so a kill, a
-// chest and a counter's price are the client's word, and the item law (systems/itemLaw.js) can prove only that a piece
+// chest and a counter's price are the client's word, and the item law (systems/item/itemLaw.js) can prove only that a piece
 // is one the game could mint - never that this player found it. What a modified client gains on its word is bounded
 // here instead: between two checkpoints the character's wealth (judge.js wealthOf) may rise by what the service saw
 // move in the open (a market sale, a vault's piece - `witnessed`) and by what time spent playing could have earned. The

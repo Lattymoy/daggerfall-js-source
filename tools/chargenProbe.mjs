@@ -169,7 +169,7 @@ console.log('starting spells:', JSON.stringify(spells));
 // Khajiit clothing archive, not the morphology-0 Argonian row the
 // template carries.
 const icons = await page.evaluate(async () => {
-  const m = await import('/src/systems/itemTemplates.js');
+  const m = await import('/src/systems/item/itemTemplates.js');
   const p = window.__playerEntity;
   const shirt = (p.items ?? []).find((i) => i.name === 'Short Shirt');
   return { worn: m.inventoryItemImage(shirt, p), base: m.inventoryItemImage(shirt, { gender: 'female', race: 'Argonian' }) };

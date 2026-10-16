@@ -8,7 +8,7 @@ and view to observe other ships, their allegiance, cargo, etc. 2. A brand new op
 to the etheric sea."* The Eltheric Ocean is its own page (`03-World/Eltheric-Ocean.md`); this one is the Iliac Bay's.
 
 The pre-merge audit (AUDIT CAPTAIN'S SEA, the owner: "Lets do a comprehensive audit, enaure this is insanely detailed
-and perfection. No exceptions") is `01-Overview/Audit-Captains-Sea.md`: its fixes stand in the sections below, each
+and perfection. No exceptions") is `01-Overview/audits/Audit-Captains-Sea.md`: its fixes stand in the sections below, each
 under its finding's id.
 
 **THE PORT'S OWN.** Daggerfall has no sea fight (`03-World/Naval-Combat.md`), and nothing here is transcribed: no DFU
@@ -41,15 +41,15 @@ a captain did added up. Now:
 
 | slice | what | modules |
 |---|---|---|
-| CAPT-CREW | A HAND'S SERVICE AND HIS POST'S WORTH: fights and twice the boardings rank a hand Green, Seasoned (4), Veteran (12), an Old Salt (30); each post's best holder aboard does its thing by his rank; seasoned hires | `systems/naval/shipCrew.js` (`serviceOf`, `VETERANCY`, `veteranOf`, `POST_WORTH`, `postsOf`, `crewWorth`, `NO_WORTH`, `postWords`, `sync`'s `service` and `prior`, `roleOf`, `tick`'s `wear`), `scenes/navalHost.js` (`crewStep`'s worth, `ashoreNames`, `muster`, `myHands`, the seams), `scenes/fleetHost.js` (`handsOf`), `ui/fleetPage.js` (`handService`), `scenes/world.js` (the CSA refit's way, `seasonedHires`) |
-| CAPT-LOG | THE CAPTAIN'S LOG AND STANDING: leagues sailed, the deepest water, ships sunk, taken and beaten off by trade, prizes and plunder, contracts; a standing with each crown and its rank; the Captain page | `systems/naval/captainLedger.js`, `scenes/navalHost.js` (`chargePlayer`'s deed and regard, `notePlunder`, `sailed`), `ui/captainPage.js`, `ui/enhancedMenu.js` (the Holdings tab), `scenes/world.js` (the ledger, its save) |
-| CAPT-PAY | THE DEAD ENDS PAID: a pirate boarding beaten off is the law's to reward (`PIRATE_REWARD.repelled`) and the log's; a raid's flagship repelled has the law's reward of its quest alone; a pirate beaten off and then taken or sunk is ended once | `systems/naval/navalLaw.js`, `scenes/navalHost.js` (`winBoarding`'s repel) |
-| CAPT-MARQUE | A LETTER OF MARQUE: a crown's letter makes a rival crown's lawful ships - merchantmen and navies - its prizes for its term: no grievance of the signer's, no witnesses of the signer's navy, standing with the signer for each; the rival still names it Piracy (its crime, its notoriety, its regard lost); striking the signer's own ship tears it up | `systems/naval/captainLedger.js` (`marque`, `setMarque`, `tearMarque`, `MARQUE_STANDING`), `systems/naval/navalShips.js` (`flagOf`), `scenes/navalHost.js` (`chargePlayer`, the witness) |
-| CAPT-WATERS | THE DEEP WATERS: DEEP_PX map pixels and more from every port - pirates DEEP_PIRATE_K as likely, the trade DEEP_TRADE_K, classes DEEP_LEVEL levels up, a pirate bold DEEP_BOLD of the time, holds and casks DEEP_TIER tiers richer; the plate says the deep | `systems/naval/navalDirector.js` (`watersOf`, `factionWeights`), `systems/naval/navalAI.js` (`temperOf`'s `bold`), `systems/naval/navalShots.js` (a cask's `deep`), `scenes/navalHost.js`, `ui/navalHud.js`, `scenes/world.js` (`navalPortPx`) |
-| CAPT-BOARD | THE HARBOURMASTER'S BOARD: five kinds of contract a port posts a day, held on the captain's clock, their sites stood at sea; the letter of marque and the Admiralty's carrack for sale; a rank's favours at the yard, among the hands and in the relief | `systems/naval/harbourBoard.js`, `scenes/harbourOffice.js`, `systems/naval/captainLedger.js` (the contracts), `scenes/navalHost.js` (THE SITES, the events), `systems/naval/navalYard.js` (`discount`), `systems/naval/navalDirector.js` (`reliefSure`), `ui/navalYardWindow.js` (the Harbourmaster tab), `scenes/world.js` (the office, the ports, a site's point) |
-| CAPT-TRADE | THE EXCHANGE: eleven goods, a crown's ports' makes and wants and a port's own twist, a day's drift, the exchange's spread and a day's stock; the goods as items in a hold | `systems/naval/tradeGoods.js`, `scenes/harbourOffice.js` (`exchange`), `ui/navalYardWindow.js` (the Exchange tab), `systems/itemLaw.js` |
-| CAPT-CHARTS | TREASURE CHARTS: a chart among a pirate's papers, read and marked, its cache floated and raised | `systems/naval/treasureCharts.js`, `scenes/harbourOffice.js`, `scenes/navalHost.js` (`pickCache`), `scenes/world.js` (the chart's use), `ui/captainPage.js` |
-| SPYGLASS | WHAT A CAPTAIN KNOWS OF A SHIP, AND THE GLASS: her hull at any range, her colours and name by the eye, a Lookout, the glass or her guns, the rest through the glass close; no tag on an unknown hull; false colours; the Spyglass action, its lens and its window | `systems/naval/shipKnowledge.js`, `scenes/navalHost.js` (`knowStep`, `glass`, `glassCardOf`, the tags, cards, hails and cries), `ui/spyglassView.js`, `ui/navalHud.js` (the plate's Glass), `player/mwView.js` (`mwViewHoldFirst`), `systems/inputActions.js`, `ui/touchButtons.js`, `ui/plusPadBinds.js`, `ui/plusPad.js`, `scenes/world.js` (`spyglassStep`, `spyglassWheel`, the lens) |
+| CAPT-CREW | A HAND'S SERVICE AND HIS POST'S WORTH: fights and twice the boardings rank a hand Green, Seasoned (4), Veteran (12), an Old Salt (30); each post's best holder aboard does its thing by his rank; seasoned hires | `systems/naval/shipCrew.js` (`serviceOf`, `VETERANCY`, `veteranOf`, `POST_WORTH`, `postsOf`, `crewWorth`, `NO_WORTH`, `postWords`, `sync`'s `service` and `prior`, `roleOf`, `tick`'s `wear`), `scenes/naval/navalHost.js` (`crewStep`'s worth, `ashoreNames`, `muster`, `myHands`, the seams), `scenes/fleetHost.js` (`handsOf`), `ui/fleetPage.js` (`handService`), `scenes/world.js` (the CSA refit's way, `seasonedHires`) |
+| CAPT-LOG | THE CAPTAIN'S LOG AND STANDING: leagues sailed, the deepest water, ships sunk, taken and beaten off by trade, prizes and plunder, contracts; a standing with each crown and its rank; the Captain page | `systems/naval/captainLedger.js`, `scenes/naval/navalHost.js` (`chargePlayer`'s deed and regard, `notePlunder`, `sailed`), `ui/captainPage.js`, `ui/enhanced/enhancedMenu.js` (the Holdings tab), `scenes/world.js` (the ledger, its save) |
+| CAPT-PAY | THE DEAD ENDS PAID: a pirate boarding beaten off is the law's to reward (`PIRATE_REWARD.repelled`) and the log's; a raid's flagship repelled has the law's reward of its quest alone; a pirate beaten off and then taken or sunk is ended once | `systems/naval/navalLaw.js`, `scenes/naval/navalHost.js` (`winBoarding`'s repel) |
+| CAPT-MARQUE | A LETTER OF MARQUE: a crown's letter makes a rival crown's lawful ships - merchantmen and navies - its prizes for its term: no grievance of the signer's, no witnesses of the signer's navy, standing with the signer for each; the rival still names it Piracy (its crime, its notoriety, its regard lost); striking the signer's own ship tears it up | `systems/naval/captainLedger.js` (`marque`, `setMarque`, `tearMarque`, `MARQUE_STANDING`), `systems/naval/navalShips.js` (`flagOf`), `scenes/naval/navalHost.js` (`chargePlayer`, the witness) |
+| CAPT-WATERS | THE DEEP WATERS: DEEP_PX map pixels and more from every port - pirates DEEP_PIRATE_K as likely, the trade DEEP_TRADE_K, classes DEEP_LEVEL levels up, a pirate bold DEEP_BOLD of the time, holds and casks DEEP_TIER tiers richer; the plate says the deep | `systems/naval/navalDirector.js` (`watersOf`, `factionWeights`), `systems/naval/navalAI.js` (`temperOf`'s `bold`), `systems/naval/navalShots.js` (a cask's `deep`), `scenes/naval/navalHost.js`, `ui/naval/navalHud.js`, `scenes/world.js` (`navalPortPx`) |
+| CAPT-BOARD | THE HARBOURMASTER'S BOARD: five kinds of contract a port posts a day, held on the captain's clock, their sites stood at sea; the letter of marque and the Admiralty's carrack for sale; a rank's favours at the yard, among the hands and in the relief | `systems/naval/harbourBoard.js`, `scenes/harbourOffice.js`, `systems/naval/captainLedger.js` (the contracts), `scenes/naval/navalHost.js` (THE SITES, the events), `systems/naval/navalYard.js` (`discount`), `systems/naval/navalDirector.js` (`reliefSure`), `ui/naval/navalYardWindow.js` (the Harbourmaster tab), `scenes/world.js` (the office, the ports, a site's point) |
+| CAPT-TRADE | THE EXCHANGE: eleven goods, a crown's ports' makes and wants and a port's own twist, a day's drift, the exchange's spread and a day's stock; the goods as items in a hold | `systems/naval/tradeGoods.js`, `scenes/harbourOffice.js` (`exchange`), `ui/naval/navalYardWindow.js` (the Exchange tab), `systems/item/itemLaw.js` |
+| CAPT-CHARTS | TREASURE CHARTS: a chart among a pirate's papers, read and marked, its cache floated and raised | `systems/naval/treasureCharts.js`, `scenes/harbourOffice.js`, `scenes/naval/navalHost.js` (`pickCache`), `scenes/world.js` (the chart's use), `ui/captainPage.js` |
+| SPYGLASS | WHAT A CAPTAIN KNOWS OF A SHIP, AND THE GLASS: her hull at any range, her colours and name by the eye, a Lookout, the glass or her guns, the rest through the glass close; no tag on an unknown hull; false colours; the Spyglass action, its lens and its window | `systems/naval/shipKnowledge.js`, `scenes/naval/navalHost.js` (`knowStep`, `glass`, `glassCardOf`, the tags, cards, hails and cries), `ui/spyglassView.js`, `ui/naval/navalHud.js` (the plate's Glass), `player/mwView.js` (`mwViewHoldFirst`), `systems/inputActions.js`, `ui/touch/touchButtons.js`, `ui/plus/plusPadBinds.js`, `ui/plus/plusPad.js`, `scenes/world.js` (`spyglassStep`, `spyglassWheel`, the lens) |
 
 THE FOUR HOSTS (Home.md; AUDIT CAPTAIN'S SEA H12 - the slices named none): the sea, its ships and every seam here are
 `scenes/world.js`'s - the streaming exterior's, where the sea is. `scenes/exterior.js` (the bench) stands no sea and no
@@ -238,7 +238,7 @@ d-pad press given the glass is the glass's, the helm's gesture on it yielding, i
 ## GLASS-SPOT and GLASS-CLEAR - nothing spotted before the glass; the ship out of its way (2026-10-11)
 
 The owner: "You can spot ships before you even decide to use the spyglass and the ship blocks your view most of the
-time when using your spyglass". `test/glassclear.test.js` (9), `tools/mutants/glassclear.json` (41, all dead).
+time when using your spyglass". `test/systems/naval/glassclear.test.js` (9), `tools/mutants/glassclear.json` (41, all dead).
 
 **GLASS-SPOT - A SAIL NOT MADE OUT GIVES NO CARD** (`navalHost.js targetCard`). The helm's target card named every hull
 within 900 m the look passed over - "Unknown two-master", her range, her way - so a ship was spotted, and ranged, at a
@@ -284,7 +284,7 @@ WHAT IT CANNOT CLEAR: where the sea holds the focus short of her. From the x4 gl
 that is only the Large Galley's long bow (93 m of her, her helm 82 m abaft her stem): the focus stops at the sea's 63 m,
 and her bow past it stays in view. A lower glass (x2) or a look lowered toward her deck brings the sea's foot nearer -
 the Carrack's, the Large Boat's and the galleon's forward deck then stay in the glass too. Every other hull and bearing,
-at x4 and x8, looking level or above: nothing of her past the focus (test/glassclear.test.js walks each hull's parts on
+at x4 and x8, looking level or above: nothing of her past the focus (test/systems/naval/glassclear.test.js walks each hull's parts on
 twelve bearings at x4, level and raised).
 
 ## CAPT-BOARD - the harbourmaster's board
@@ -313,10 +313,10 @@ regard rises by its `standing`, its kind and its purse in the log; failed (a ter
 seconds - or a cargo lost) STANDING_FAILED; given up from the tab, STANDING_ABANDONED. The HUD says each one come
 further ("Clear Wayrest's waters: 2 of 3 pirate ships ended"), the screen's middle each done or failed.
 
-THE PORTS (PORT-TOWNS, `01-Overview/Field-Bugs-2026-10-13c.md`; the owner: "Even the port quests sending you to non port
+THE PORTS (PORT-TOWNS, `01-Overview/bugs/Field-Bugs-2026-10-13c.md`; the owner: "Even the port quests sending you to non port
 places"). The board's ports - the port a captain lies at (`world.js navalPortHere`, the nearest within a map pixel), a
 cargo's, a treasure chart's - are the TOWNS among Travel Options' harbours (`world.js navalPortList`, `portPlaces.js
-isPortTownType`) that the open sea bears on (`portSites.js seaBears` - INLAND-PORTS, `01-Overview/Field-Bugs-2026-10-14-inland-ports.md`):
+isPortTownType`) that the open sea bears on (`portSites.js seaBears` - INLAND-PORTS, `01-Overview/bugs/Field-Bugs-2026-10-14-inland-ports.md`):
 the towns that stand the port's places, 106 on the real map. The table is every place a ship may put
 in at - MAPS.BSA's 343 flagged locations and Hazelnut's extras - and 223 of its 378 are tombs, farms, inns, temples,
 manors, graveyards and ruins, which the board read as ports with harbourmasters until then. A cargo goes only to a port
@@ -337,7 +337,7 @@ salvage's casks float there (SITE_CASK_LIFE each, its own lot - `SITE_LOT`), aga
 water (D2). A boat of mine lying to a port's quay at her helm is the berth a delivery asks after. A site lies past the
 map's edge only where the land beyond the Bay stands (B10: with it off nothing streams there), and never on a lake
 inland: the office's sea is the open sea (`world.js:"seaAt: openSea,"` - the map's water that reaches its border, the
-continent's past it; INLAND-PORTS, `01-Overview/Field-Bugs-2026-10-14-inland-ports.md`, Mac: "Fix harbour seaAt too").
+continent's past it; INLAND-PORTS, `01-Overview/bugs/Field-Bugs-2026-10-14-inland-ports.md`, Mac: "Fix harbour seaAt too").
 
 THE LETTERS: a crown's LETTER OF MARQUE (CAPT-MARQUE above) for MARQUE_PRICE, MARQUE_DAYS of the captain's clock, to its
 Privateers, one crown's at a time (`marqueOffer`); THE ADMIRALTY'S CARRACK - the one Carrack the Bay sells, Come Sail
@@ -372,7 +372,7 @@ goods a port never sells read "not sold here", and are listed where the captain 
 The goods are ITEMS of the port's own (DECLARED): custom templates from GOODS_TEMPLATE (1331), stackable, the row's
 weight and base - and no shop buys them: the exchange alone deals in them (`shopStock.js shopBuysItem` - AUDIT
 CAPTAIN'S SEA B2: a General Store paid more for a tusk than the quay that makes it asked, a money loop with no voyage);
-`systems/itemLaw.js` imports the module, as the
+`systems/item/itemLaw.js` imports the module, as the
 carpenter's stores' - and the chart's - so the account service's Worker bundles them and what they read (the board,
 the ships' table, the hash), and its deploy's path filter names each (`.github/workflows/account-deploy.yml`, ACC4's
 walk). A port's key hashes on the wire's FNV-1a (net/wire.js `hashKey`, the board's re-export - one home).
@@ -393,20 +393,20 @@ out of a wreck the same). The Captain page lists the charts marked.
 
 ## Tests and mutants
 
-`test/captcrew.test.js` (`tools/mutants/captcrew.json`), `test/captlog.test.js` (`tools/mutants/captlog.json`),
-`test/captwaters.test.js` (`tools/mutants/captwaters.json`), `test/spyglass.test.js` (`tools/mutants/spyglass.json`),
-`test/captboard.test.js` (`tools/mutants/captboard.json`), `test/capttrade.test.js` (`tools/mutants/capttrade.json`) -
-every mutant dead; AUDIT CAPTAIN'S SEA's own in `test/auditcaptsea.test.js` (68 tests;
-`tools/mutants/auditcaptsea.json`, 331 records; `01-Overview/Audit-Captains-Sea.md`, which names the 47 suites its fixes
+`test/systems/naval/captcrew.test.js` (`tools/mutants/captcrew.json`), `test/systems/naval/captlog.test.js` (`tools/mutants/captlog.json`),
+`test/systems/naval/captwaters.test.js` (`tools/mutants/captwaters.json`), `test/systems/naval/spyglass.test.js` (`tools/mutants/spyglass.json`),
+`test/systems/naval/captboard.test.js` (`tools/mutants/captboard.json`), `test/systems/naval/capttrade.test.js` (`tools/mutants/capttrade.json`) -
+every mutant dead; AUDIT CAPTAIN'S SEA's own in `test/systems/naval/auditcaptsea.test.js` (68 tests;
+`tools/mutants/auditcaptsea.json`, 331 records; `01-Overview/audits/Audit-Captains-Sea.md`, which names the 47 suites its fixes
 moved and those main's merges moved). The suites whose pins moved with the slices say so where they moved (PIN MOVED):
 the crew card's line, the Holdings tabs, the tags and the hails now knowing a ship first (`test/navalSea.mjs knowAll`),
-the action tables, the lens, the sky's and the far ring's lens narrowed with the world's (`test/climb4.test.js`,
-`test/hudlarge.test.js` E5), the wheel's rung for the glass (`test/audit24_wave37.test.js`). The harbour office's day is
+the action tables, the lens, the sky's and the far ring's lens narrowed with the world's (`test/player/climb4.test.js`,
+`test/systems/hudlarge.test.js` E5), the wheel's rung for the glass (`test/scenes/audit24_wave37.test.js`). The harbour office's day is
 a reader of the event clock, named in `test/fixtures/time1_census.json`.
 
-GLASS-SPOT and GLASS-CLEAR: `test/glassclear.test.js` (9 tests; `tools/mutants/glassclear.json`, 41 records, all
-dead). Their pins moved say so (PIN MOVED): the look's card on an unknown hull (`test/spyglass.test.js` "at sea, the
-eye", `test/auditcaptsea.test.js` S24), the frame's lens and the glass's hold now taking the focus (`test/spyglass.test.js`
-"the world", `test/dwf_audit.test.js` E5-1/E5-4), `lowerGlass` putting it back (`test/auditcaptsea.test.js` S1/S15), and the players' names' sight test
-(`test/name1_bubbles.test.js`); three records re-aimed by content (NAV1H-the-card-by-the-look-alone,
+GLASS-SPOT and GLASS-CLEAR: `test/systems/naval/glassclear.test.js` (9 tests; `tools/mutants/glassclear.json`, 41 records, all
+dead). Their pins moved say so (PIN MOVED): the look's card on an unknown hull (`test/systems/naval/spyglass.test.js` "at sea, the
+eye", `test/systems/naval/auditcaptsea.test.js` S24), the frame's lens and the glass's hold now taking the focus (`test/systems/naval/spyglass.test.js`
+"the world", `test/scenes/dwf_audit.test.js` E5-1/E5-4), `lowerGlass` putting it back (`test/systems/naval/auditcaptsea.test.js` S1/S15), and the players' names' sight test
+(`test/net/name1_bubbles.test.js`); three records re-aimed by content (NAV1H-the-card-by-the-look-alone,
 SPY-W-lens-unnarrowed, NAME1-host-sight-test-dropped) and four recorded `equivalent` (above).

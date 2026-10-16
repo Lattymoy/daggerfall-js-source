@@ -6,7 +6,7 @@
 // ═══ WHAT IT CATCHES, AND WHAT IT DOES NOT ═════════════════════════
 //
 // A piece's key is a crafted piece's provenance (the service minted it - no client can mint a fresh one) or the id its
-// first checkpoint stamped (systems/itemIds.js). A copy that keeps its key is seen: a save copied onto another
+// first checkpoint stamped (systems/item/itemIds.js). A copy that keeps its key is seen: a save copied onto another
 // character, a dupe a bug of the game made, a piece kept after the service took it. A copy a modified client re-keys is
 // a NEW piece to the ledger, and a new piece is a gain the wealth budget charges (budget.js) - the ledger never has to
 // catch that one, and never could.
@@ -47,7 +47,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { JUDGE_VERSION } from './judge.js';
-import { LOCKED_SAID_MAX } from '../../src/net/realmTradeLaw.js';   // AUTO-HOLD: the locked pieces an answer names - one number with the session's
+import { LOCKED_SAID_MAX } from '../../src/net/realm/realmTradeLaw.js';   // AUTO-HOLD: the locked pieces an answer names - one number with the session's
 
 /** How long a claim waits for its holder's checkpoint before the holder's still having the piece proves it a copy - a
  *  checkpoint every two minutes, and one in flight when the claim was made. */

@@ -1,20 +1,20 @@
 [
   {
     "name": "TRADE-LOC-II-a-the-row-without-it",
-    "file": "src/ui/enhancedPlayerTrade.js",
+    "file": "src/ui/enhanced/enhancedPlayerTrade.js",
     "old": "const sub = [letterWorthLine(item), line.material, line.word]",
     "new": "const sub = [line.material, line.word]",
     "tests": [
-      "test/fb1011_tradeloc.test.js"
+      "test/systems/fb1011_tradeloc.test.js"
     ]
   },
   {
     "name": "TRADE-LOC-II-b-the-card-without-it",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "  pair('Worth', letterWorthGold(picked));",
     "new": "  pair('Worth', null);",
     "tests": [
-      "test/fb1011_tradeloc.test.js"
+      "test/systems/fb1011_tradeloc.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "export const letterWorthGold = (/** @type {any} */ item) => (item?.templateIndex === LETTER_OF_CREDIT_TEMPLATE",
     "new": "export const letterWorthGold = (/** @type {any} */ item) => (item != null",
     "tests": [
-      "test/fb1011_tradeloc.test.js"
+      "test/systems/fb1011_tradeloc.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "return g == null ? null : `Worth ${g}`;",
     "new": "return `Worth ${g}`;",
     "tests": [
-      "test/fb1011_tradeloc.test.js"
+      "test/systems/fb1011_tradeloc.test.js"
     ]
   }
 ]

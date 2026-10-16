@@ -4,7 +4,7 @@
 // it twice in a row, the PR's check and again on main before the deploy. Now the files are split into N shards by their
 // recorded times (tools/testTimes.json, written by `npm run test:times`): the longest first, each onto the lightest shard,
 // so every shard finishes near the others and the N jobs run at once. EVERY FILE IS IN EXACTLY ONE SHARD (the pin,
-// test/flow1_ci.test.js, holds it): a file with no recorded time weighs the median, so a new test file is never left
+// test/tooling/flow1_ci.test.js, holds it): a file with no recorded time weighs the median, so a new test file is never left
 // out - at worst it is placed a little less well until the times are taken again. Inside a shard `node --test` is
 // handed its files longest first, so its workers start on the long ones.
 //
@@ -21,9 +21,10 @@ import { isMain } from './lib/isMain.mjs';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 export const TIMES_FILE = 'tools/testTimes.json';
 
-/** The suite's files, as `npm test` globs them (`test/*.test.js`), sorted. */
+/** The suite's files - every `*.test.js` under test/, its folders' among them - sorted. */
 export function testFiles(root = ROOT) {
-  return readdirSync(join(root, 'test')).filter((f) => f.endsWith('.test.js')).sort().map((f) => `test/${f}`);
+  // TIDY5: every test file under test/, its area's folder and its feature's (bible/01-Overview/Code-Map.md)
+  return readdirSync(join(root, 'test'), { recursive: true }).map((f) => f.split('\\').join('/')).filter((f) => f.endsWith('.test.js')).sort().map((f) => `test/${f}`);
 }
 
 /** The recorded times (file -> ms), or none. */

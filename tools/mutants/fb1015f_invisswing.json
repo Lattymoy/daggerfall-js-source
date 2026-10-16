@@ -1,57 +1,57 @@
 [
   {
     "name": "INVIS-SWING-the-live-feet-s-bearing",
-    "file": "src/characters/enemyAttack.js",
+    "file": "src/characters/enemy/enemyAttack.js",
     "old": "      if (!ai.inSight || !known || !withinYaw(ai.yaw, known[0] - ai.feet[0], known[2] - ai.feet[2], ATTACK_YAW_DEG)) continue;",
     "new": "      if (!ai.inSight || !withinYaw(ai.yaw, dx, dz, ATTACK_YAW_DEG)) continue;",
     "tests": [
-      "test/fb1015f_invisswing.test.js"
+      "test/characters/enemy/fb1015f_invisswing.test.js"
     ]
   },
   {
     "name": "INVIS-SWING-the-null-let-through",
-    "file": "src/characters/enemyAttack.js",
+    "file": "src/characters/enemy/enemyAttack.js",
     "old": "      const known = ai.lastKnownTargetPos;\n",
     "new": "      const known = ai.lastKnownTargetPos ?? playerFeet;\n",
     "tests": [
-      "test/fb1015f_invisswing.test.js"
+      "test/characters/enemy/fb1015f_invisswing.test.js"
     ]
   },
   {
     "name": "INVIS-SWING-the-x-and-y-read",
-    "file": "src/characters/enemyAttack.js",
+    "file": "src/characters/enemy/enemyAttack.js",
     "old": "known[0] - ai.feet[0], known[2] - ai.feet[2], ATTACK_YAW_DEG",
     "new": "known[0] - ai.feet[0], known[1] - ai.feet[1], ATTACK_YAW_DEG",
     "tests": [
-      "test/fb1015f_invisswing.test.js",
-      "test/audit24_characters.test.js"
+      "test/characters/enemy/fb1015f_invisswing.test.js",
+      "test/characters/enemy/audit24_characters.test.js"
     ]
   },
   {
     "name": "INVIS-SWING-the-illusion-unread",
-    "file": "src/systems/wildAlert.js",
+    "file": "src/systems/wild/wildAlert.js",
     "old": "  if (concealment && blockedByIllusionEffect(seesThrough, concealment, rng)) return false;\n",
     "new": "",
     "tests": [
-      "test/fb1015f_invisswing.test.js"
+      "test/characters/enemy/fb1015f_invisswing.test.js"
     ]
   },
   {
     "name": "INVIS-SWING-the-seer-blinded",
-    "file": "src/systems/wildAlert.js",
+    "file": "src/systems/wild/wildAlert.js",
     "old": "  if (concealment && blockedByIllusionEffect(seesThrough, concealment, rng)) return false;",
     "new": "  if (concealment && blockedByIllusionEffect(false, concealment, rng)) return false;",
     "tests": [
-      "test/fb1015f_invisswing.test.js"
+      "test/characters/enemy/fb1015f_invisswing.test.js"
     ]
   },
   {
     "name": "INVIS-SWING-the-step-unconcealed",
-    "file": "src/systems/wildAlert.js",
+    "file": "src/systems/wild/wildAlert.js",
     "old": "      if (noticeRoll(distM, reachM, stealth, { seesThrough, concealment, rng })) {",
     "new": "      if (noticeRoll(distM, reachM, stealth, { rng })) {",
     "tests": [
-      "test/fb1015f_invisswing.test.js"
+      "test/characters/enemy/fb1015f_invisswing.test.js"
     ]
   },
   {
@@ -60,7 +60,7 @@
     "old": "concealment: concealmentFlags(playerEntity), rng: Math.random });   // INVIS-SWING",
     "new": "rng: Math.random });   // INVIS-SWING",
     "tests": [
-      "test/fb1015f_invisswing.test.js"
+      "test/characters/enemy/fb1015f_invisswing.test.js"
     ]
   },
   {
@@ -69,7 +69,7 @@
     "old": "seesThrough: !!f.ai.seesThroughInvisibility, concealment: hid });",
     "new": "seesThrough: !!f.ai.seesThroughInvisibility });",
     "tests": [
-      "test/fb1015f_invisswing.test.js"
+      "test/characters/enemy/fb1015f_invisswing.test.js"
     ]
   }
 ]

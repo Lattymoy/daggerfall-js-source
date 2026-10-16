@@ -29,11 +29,11 @@
 // omits it too) - estimates recompute per refresh.
 
 import { calculateCost } from './shopStock.js';
-import { templateByIndex, TRANSPORT_HORSE, TRANSPORT_SMALL_CART } from './itemTemplates.js';
+import { templateByIndex, TRANSPORT_HORSE, TRANSPORT_SMALL_CART } from './item/itemTemplates.js';
 import { isEnchantedItem } from './enchantments.js';
 import { MINUTES_PER_DAY, MINUTES_PER_HOUR } from './gameDate.js';
-import { getBool } from './settings.js';   // RRI2: InstantRepairs picks the mod's repair factor
-import { conditionBasedPricesOn, conditionRepairCostBase } from './rriRealism.js';   // RRI2: the CalculateItemRepairCost override
+import { getBool } from './settings/settings.js';   // RRI2: InstantRepairs picks the mod's repair factor
+import { conditionBasedPricesOn, conditionRepairCostBase } from './roleplayRealismItems/rriRealism.js';   // RRI2: the CalculateItemRepairCost override
 import { localizedText } from './textManager.js';   // L10N3d: the refusal, the interrupt box, the label
 import { stampLayout, layoutStampOfMapId, recordStands } from './layoutPins.js';   // WD3: a ticket names the smith's town and its layout
 
@@ -127,7 +127,7 @@ export const INTERRUPT_REPAIR_TEXT = "Take back that item before it's repaired?"
 export const cannotBeRepairedText = () => localizedText('cannotBeRepaired', CANNOT_BE_REPAIRED_TEXT);
 export const interruptRepairText = () => localizedText('interruptRepair', INTERRUPT_REPAIR_TEXT);
 /** WAGONS4: a smith's word on a horse or a wagon - the port's own (a wagon left at a smith's counter left the pack for
- *  days, and the horse and wagon the mod stood in the world with it): a Wagon Yard mends wagons (systems/wagonUpkeep.js). */
+ *  days, and the horse and wagon the mod stood in the world with it): a Wagon Yard mends wagons (systems/wagon/wagonUpkeep.js). */
 export const TRANSPORT_CANNOT_BE_REPAIRED_TEXT = 'A smith mends no horse and no wagon. A town\u2019s Wagon Yard mends wagons.';
 export function repairRefusal(item, { allowMagicRepairs = false } = {}) {
   if (item?.templateIndex === TRANSPORT_HORSE || item?.templateIndex === TRANSPORT_SMALL_CART) return 'transport';   // WAGONS4: never left at a smith

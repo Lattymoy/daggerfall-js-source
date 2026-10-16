@@ -5,7 +5,7 @@
     "old": "  if (capped) return true;\n",
     "new": "",
     "tests": [
-      "test/scale4h.test.js"
+      "test/server/scale4h.test.js"
     ],
     "note": "a spent hour read as an open one - what is earned in it waits"
   },
@@ -15,7 +15,7 @@
     "old": "  if (!Number.isSafeInteger(xp) || !Number.isSafeInteger(room)) return true;",
     "new": "  if (!Number.isSafeInteger(room)) return true;",
     "tests": [
-      "test/scale4h.test.js"
+      "test/server/scale4h.test.js"
     ],
     "note": "a total not yet said read as known"
   },
@@ -25,7 +25,7 @@
     "old": "  if (!Number.isSafeInteger(xp) || !Number.isSafeInteger(room)) return true;",
     "new": "  if (!Number.isSafeInteger(xp)) return true;",
     "tests": [
-      "test/scale4h.test.js"
+      "test/server/scale4h.test.js"
     ],
     "note": "a room not yet said read as known (as a room of nothing)"
   },
@@ -35,7 +35,7 @@
     "old": "  if (n >= /** @type {number} */ (room)) return true;",
     "new": "  if (n > /** @type {number} */ (room)) return true;",
     "tests": [
-      "test/scale4h.test.js"
+      "test/server/scale4h.test.js"
     ],
     "note": "what reaches the room exactly waits"
   },
@@ -45,7 +45,7 @@
     "old": "  return p.need > 0 && n >= p.need - p.into;",
     "new": "  return false;",
     "tests": [
-      "test/scale4h.test.js"
+      "test/server/scale4h.test.js"
     ],
     "note": "a rise waits the coalescing - its order to the rooms late"
   },
@@ -55,7 +55,7 @@
     "old": "  return p.need > 0 && n >= p.need - p.into;",
     "new": "  return n >= p.need - p.into;",
     "tests": [
-      "test/scale4h.test.js"
+      "test/server/scale4h.test.js"
     ],
     "note": "at the cap's total every report soon"
   },
@@ -65,7 +65,7 @@
     "old": "  const n = Number.isFinite(pending) && pending > 0 ? pending : 0;",
     "new": "  const n = Number(pending) || 0;",
     "tests": [
-      "test/scale4h.test.js"
+      "test/server/scale4h.test.js"
     ],
     "note": "a negative pending read as owed"
   },
@@ -75,7 +75,7 @@
     "old": "soonNow() ? RENOWN_REPORT_MS : RENOWN_COALESCE_MS);",
     "new": "RENOWN_REPORT_MS);",
     "tests": [
-      "test/scale4h.test.js"
+      "test/server/scale4h.test.js"
     ],
     "note": "every report at the minute's pace - the coalescing never happens"
   },
@@ -85,7 +85,7 @@
     "old": "  const soonNow = () => { try { return soon() !== false; } catch { return true; } };",
     "new": "  const soonNow = () => { try { return soon() !== false; } catch { return false; } };",
     "tests": [
-      "test/scale4h.test.js"
+      "test/server/scale4h.test.js"
     ],
     "note": "a host whose word throws coalesces"
   },
@@ -95,7 +95,7 @@
     "old": "region = () => null, soon = () => true }) {",
     "new": "region = () => null, soon = () => false }) {",
     "tests": [
-      "test/scale4h.test.js"
+      "test/server/scale4h.test.js"
     ],
     "note": "a tracker given no word coalesces - every other host's pace changed"
   },
@@ -105,7 +105,7 @@
     "old": "  return { level, order, announce, capped, xp, room };",
     "new": "  return { level, order, announce, capped, xp, room: null };",
     "tests": [
-      "test/scale4h.test.js"
+      "test/server/scale4h.test.js"
     ],
     "note": "the page never hears the room"
   },
@@ -115,7 +115,7 @@
     "old": "  const room = Number.isSafeInteger(data?.room) && data.room >= 0 ? data.room : null;",
     "new": "  const room = data?.room ?? null;",
     "tests": [
-      "test/scale4h.test.js"
+      "test/server/scale4h.test.js"
     ],
     "note": "a room of any shape taken"
   },
@@ -125,7 +125,7 @@
     "old": "  const hourLeft = Math.max(0, RENOWN_XP_HOUR_MAX - int(d.hour_xp));",
     "new": "  const hourLeft = RENOWN_XP_HOUR_MAX;",
     "tests": [
-      "test/scale4h.test.js"
+      "test/server/scale4h.test.js"
     ],
     "note": "the room the whole hour always"
   },
@@ -135,7 +135,7 @@
     "old": ", ${refused} AS refused, renown_hour_xp AS hour_xp`,",
     "new": ", ${refused} AS refused`,",
     "tests": [
-      "test/scale4h.test.js"
+      "test/server/scale4h.test.js"
     ],
     "note": "the hour's spend never read back - a room of the whole hour"
   },
@@ -145,7 +145,7 @@
     "old": "room: _renownRoom && _renownRoom.hour === renownHour() && _renownRoom.xp === renownXp ? _renownRoom.room : null }),",
     "new": "room: _renownRoom && _renownRoom.xp === renownXp ? _renownRoom.room : null }),",
     "tests": [
-      "test/scale4h.test.js"
+      "test/server/scale4h.test.js"
     ],
     "note": "last hour's room read in this one"
   },
@@ -155,7 +155,7 @@
     "old": "room: _renownRoom && _renownRoom.hour === renownHour() && _renownRoom.xp === renownXp ? _renownRoom.room : null }),",
     "new": "room: _renownRoom && _renownRoom.hour === renownHour() ? _renownRoom.room : null }),",
     "tests": [
-      "test/scale4h.test.js"
+      "test/server/scale4h.test.js"
     ],
     "note": "a room read after a raid or a writ moved the total"
   },
@@ -165,7 +165,7 @@
     "old": "    soon: () => renownReportSoon({",
     "new": "    soonUnused: () => renownReportSoon({",
     "tests": [
-      "test/scale4h.test.js"
+      "test/server/scale4h.test.js"
     ],
     "note": "the host gives no word - every report at the minute's pace"
   },
@@ -175,7 +175,7 @@
     "old": "    earning: () => !!online && !seatOut() && _renownCapHour !== renownHour(),",
     "new": "    earning: () => !!online && !seatOut(),",
     "tests": [
-      "test/scale4h.test.js"
+      "test/server/scale4h.test.js"
     ],
     "note": "a spent hour still earned, reported and credited nothing"
   },
@@ -185,7 +185,7 @@
     "old": "      renownXpAdopt(a.xp);   // RENOWN4: the track's total, for my bar\n      if (a.room !== null) _renownRoom = { room: a.room, hour: renownHour(), xp: renownXp };   // SCALE4h\n",
     "new": "      if (a.room !== null) _renownRoom = { room: a.room, hour: renownHour(), xp: renownXp };   // SCALE4h\n      renownXpAdopt(a.xp);   // RENOWN4: the track's total, for my bar\n",
     "tests": [
-      "test/scale4h.test.js"
+      "test/server/scale4h.test.js"
     ],
     "note": "the room kept against the total before the answer's - never read"
   },
@@ -195,7 +195,7 @@
     "old": "export const SESSION_TOUCH_S = 60 * 60;",
     "new": "export const SESSION_TOUCH_S = 10 * 60;",
     "tests": [
-      "test/scale4h.test.js"
+      "test/server/scale4h.test.js"
     ],
     "note": "the session touched six times an hour again"
   },
@@ -205,7 +205,7 @@
     "old": "            if (typeof all === 'function' && args.length === 0) {",
     "new": "            if (false) {",
     "tests": [
-      "test/scale4h.test.js"
+      "test/server/scale4h.test.js"
     ],
     "note": "a first()'s rows uncounted again - the beat's write invisible"
   },
@@ -215,7 +215,7 @@
     "old": "            if (typeof all === 'function' && args.length === 0) {",
     "new": "            if (typeof all === 'function') {",
     "tests": [
-      "test/scale4h.test.js"
+      "test/server/scale4h.test.js"
     ],
     "note": "a first(column) answered a row, not its column"
   },
@@ -225,7 +225,7 @@
     "old": "  if (t) { const by = tally.tables ??= {}; by[t] = (by[t] ?? 0) + m.rows_written; }",
     "new": "",
     "tests": [
-      "test/scale4h.test.js"
+      "test/server/scale4h.test.js"
     ],
     "note": "no row charged to a table"
   },
@@ -235,7 +235,7 @@
     "old": "            if (Array.isArray(rs)) rs.forEach((r, i) => noteMeta(r, tally, Array.isArray(list) ? SQL.get(list[i]) : null));",
     "new": "            if (Array.isArray(rs)) rs.forEach((r) => noteMeta(r, tally, Array.isArray(list) ? SQL.get(list[0]) : null));",
     "tests": [
-      "test/scale4h.test.js"
+      "test/server/scale4h.test.js"
     ],
     "note": "a batch's rows all charged to its first statement's table"
   },
@@ -245,7 +245,7 @@
     "old": "      if (key === 'bind') return (/** @type {any[]} */ ...args) => timedStatement(v.apply(target, args), tally, sql);",
     "new": "      if (key === 'bind') return (/** @type {any[]} */ ...args) => timedStatement(v.apply(target, args), tally);",
     "tests": [
-      "test/scale4h.test.js"
+      "test/server/scale4h.test.js"
     ],
     "note": "a bound statement's table forgotten"
   },
@@ -255,7 +255,7 @@
     "old": "  .sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1)).slice(0, 8)",
     "new": "  .slice(0, 8)",
     "tests": [
-      "test/scale4h.test.js"
+      "test/server/scale4h.test.js"
     ],
     "note": "the tables in the order met, not most first"
   },
@@ -265,7 +265,7 @@
     "old": "      doubles: [Date.now() - started, res.status, tally.n, tally.rw, tally.ms, tally.rr, tally.replica,   // SCALE4f: rows written, D1's wait, rows read, a replica's statements\n        ...HOT_TABLES.map((t) => tally.tables[t] ?? 0)],",
     "new": "      doubles: [Date.now() - started, res.status, tally.n, tally.rw, tally.ms, tally.rr, tally.replica],",
     "tests": [
-      "test/scale4h.test.js"
+      "test/server/scale4h.test.js"
     ],
     "note": "the hot rows unwritten"
   },
@@ -275,7 +275,7 @@
     "old": "  const parts = typeof said.parts === 'string' ? said.parts : '';   // AUDIT SCALE II A-3: the service's own word on the body it read\n",
     "new": "  const parts = '';\n",
     "tests": [
-      "test/scale4h.test.js"
+      "test/server/scale4h.test.js"
     ],
     "note": "the parts never said on the point (re-aimed by AUDIT SCALE II A-3: the parts are the service's word now, so 'read after the service took the body' is the point dropping that word)"
   },
@@ -285,7 +285,7 @@
     "old": "  return HEARTBEAT_PARTS.filter((k) => b[k] !== undefined && b[k] !== false).join(',');",
     "new": "  return HEARTBEAT_PARTS.filter((k) => b[k] !== undefined).join(',');",
     "tests": [
-      "test/scale4h.test.js"
+      "test/server/scale4h.test.js"
     ],
     "note": "a part said false counted"
   },
@@ -295,7 +295,7 @@
     "old": "      if (!who) return no('auth', 401, origin);\n",
     "new": "      if (!who) return no('auth', 401, origin);\n      held.said.parts = heartbeatPartsOf(body);\n",
     "tests": [
-      "test/scale4h.test.js"
+      "test/server/scale4h.test.js"
     ],
     "note": "every route's body read for parts (re-aimed by AUDIT SCALE II A-3: the route says them now - here, every authenticated route)"
   }

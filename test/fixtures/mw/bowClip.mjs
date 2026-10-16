@@ -9,7 +9,7 @@
 //   Limb       NiGeomMorpherController over NiMorphData: the base, and one morph LIMB_BEND that bends the limb, its
 //              weight 0 at the attach, 1 at max attack and the release, 0 again by the follow's start
 import { readFileSync } from 'node:fs';
-import { parseNif } from '../../../src/formats/mwNifFile.js';
+import { parseNif } from '../../../src/formats/morrowind/mwNifFile.js';
 import { writeNif } from '../../../tools/nifWrite.mjs';
 
 export const ARROW_REST = Object.freeze([0, 6, 0]);

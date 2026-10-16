@@ -5,7 +5,7 @@
     "old": "realm_gold = realm_gold + ${gold}, ",
     "new": "",
     "tests": [
-      "test/guildgrant.test.js"
+      "test/tooling/guildgrant.test.js"
     ],
     "note": "The award would sit in the treasury and neither buy a hall nor come back out - the hall's buy and a realm withdrawal spend realm_gold alone (HALL-GOLD)."
   },
@@ -15,7 +15,7 @@
     "old": ", moved_kind = 'grant'",
     "new": "",
     "tests": [
-      "test/guildgrant.test.js"
+      "test/tooling/guildgrant.test.js"
     ],
     "note": "The ledger would say a member put 1,600,000 in - the trigger names a move with no kind a deposit."
   },
@@ -25,7 +25,7 @@
     "old": ", moved_at = CAST(strftime('%s', 'now') AS INTEGER)",
     "new": "",
     "tests": [
-      "test/guildgrant.test.js"
+      "test/tooling/guildgrant.test.js"
     ],
     "note": "The line would carry the last deposit's moment, or none at all - guild_ledger.at is NOT NULL and the award fails."
   },
@@ -35,7 +35,7 @@
     "old": " AND treasury + ${gold} <= ${GUILD_TREASURY_MAX}",
     "new": "",
     "tests": [
-      "test/guildgrant.test.js"
+      "test/tooling/guildgrant.test.js"
     ],
     "note": "An award could take a treasury past the cap every deposit is held to."
   },
@@ -45,7 +45,7 @@
     "old": "  return guildNameKey(n);",
     "new": "  return n.replaceAll(\"'\", \"''\");",
     "tests": [
-      "test/guildgrant.test.js"
+      "test/tooling/guildgrant.test.js"
     ],
     "note": "name_key is folded; 'empire of tamriel' typed into the workflow would find no guild."
   },
@@ -55,7 +55,7 @@
     "old": "const gold = /^[1-9][0-9]*$/.test(s) ? Number(s) : NaN;",
     "new": "const gold = Number(s);",
     "tests": [
-      "test/guildgrant.test.js"
+      "test/tooling/guildgrant.test.js"
     ],
     "note": "'1e6' would award a million, and a hex or padded figure would award what nobody typed."
   },
@@ -65,7 +65,7 @@
     "old": "/^[1-9][0-9]*$/",
     "new": "/^[0-9]+$/",
     "tests": [
-      "test/guildgrant.test.js"
+      "test/tooling/guildgrant.test.js"
     ],
     "note": "A run of 0 writes a ledger line of nothing."
   },
@@ -75,7 +75,7 @@
     "old": "node tools/grantGuildGold.mjs --look \"$GUILD\"",
     "new": "node tools/grantGuildGold.mjs --look \"${{ inputs.guild }}\"",
     "tests": [
-      "test/guildgrant.test.js"
+      "test/tooling/guildgrant.test.js"
     ],
     "note": "An input pasted into a run: line is a shell command whoever runs the workflow can type."
   },
@@ -85,7 +85,7 @@
     "old": "          if [ \"$(echo \"$rows\" | jq -r 'length')\" != \"1\" ]; then\n            echo \"::error::no guild is named",
     "new": "          if [ \"$(echo \"$rows\" | jq -r 'length')\" = \"-1\" ]; then\n            echo \"::error::no guild is named",
     "tests": [
-      "test/guildgrant.test.js"
+      "test/tooling/guildgrant.test.js"
     ],
     "note": "A misspelled guild would read as a dry run with an empty summary, and a green run."
   },
@@ -95,7 +95,7 @@
     "old": "          if [ \"$(echo \"$rows\" | jq -r 'length')\" != \"1\" ]; then\n            echo \"::error::the award changed no guild",
     "new": "          if [ \"$(echo \"$rows\" | jq -r 'length')\" = \"-1\" ]; then\n            echo \"::error::the award changed no guild",
     "tests": [
-      "test/guildgrant.test.js"
+      "test/tooling/guildgrant.test.js"
     ],
     "note": "A green run would tell the operator the gold was awarded when nothing was written."
   },
@@ -105,7 +105,7 @@
     "old": "      - name: Award the gold\n        if: env.APPLY == 'true'\n",
     "new": "      - name: Award the gold\n",
     "tests": [
-      "test/guildgrant.test.js"
+      "test/tooling/guildgrant.test.js"
     ],
     "note": "The dry run would write the award."
   }

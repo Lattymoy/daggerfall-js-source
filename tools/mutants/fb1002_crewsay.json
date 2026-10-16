@@ -1,175 +1,175 @@
 [
   {
     "name": "SAY-chorus-each",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "    if (g) g.n++; else said.set(key, { key, p, n: 1, at: said.size });",
     "new": "    said.set(`${key}\\u0000${said.size}`, { key: `${key}\\u0000${said.size}`, p, n: 1, at: said.size });",
     "tests": [
-      "test/fb1002_crewsay.test.js"
+      "test/systems/naval/fb1002_crewsay.test.js"
     ]
   },
   {
     "name": "SAY-chorus-named",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "    const text = n === 1 && p.name ? `${p.name}: ${p.text}` : p.text;",
     "new": "    const text = p.name ? `${p.name}: ${p.text}` : p.text;",
     "tests": [
-      "test/fb1002_crewsay.test.js"
+      "test/systems/naval/fb1002_crewsay.test.js"
     ]
   },
   {
     "name": "SAY-never-named",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "    const text = n === 1 && p.name ? `${p.name}: ${p.text}` : p.text;",
     "new": "    const text = p.text;",
     "tests": [
-      "test/fb1002_crewsay.test.js"
+      "test/systems/naval/fb1002_crewsay.test.js"
     ]
   },
   {
     "name": "SAY-farthest-first",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "  for (const p of [...(points ?? [])].filter(Boolean).sort((a, b) => a.distance - b.distance)) {",
     "new": "  for (const p of [...(points ?? [])].filter(Boolean).sort((a, b) => b.distance - a.distance)) {",
     "tests": [
-      "test/fb1002_crewsay.test.js"
+      "test/systems/naval/fb1002_crewsay.test.js"
     ]
   },
   {
     "name": "SAY-no-lift",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "      bottom = under.top - CREW_SAY_GAP * scale;   // over the one it would cover",
     "new": "      break;",
     "tests": [
-      "test/fb1002_crewsay.test.js"
+      "test/systems/naval/fb1002_crewsay.test.js"
     ]
   },
   {
     "name": "SAY-no-gap",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "      bottom = under.top - CREW_SAY_GAP * scale;   // over the one it would cover",
     "new": "      bottom = under.top;",
     "tests": [
-      "test/fb1002_crewsay.test.js"
+      "test/systems/naval/fb1002_crewsay.test.js"
     ]
   },
   {
     "name": "SAY-lift-rounded",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "    let lift = Math.max(0, Math.ceil(foot - bottom - 1e-9));",
     "new": "    let lift = Math.max(0, Math.round(foot - bottom));",
     "tests": [
-      "test/fb1002_crewsay.test.js"
+      "test/systems/naval/fb1002_crewsay.test.js"
     ]
   },
   {
     "name": "SAY-lift-fractional",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "    let lift = Math.max(0, Math.ceil(foot - bottom - 1e-9));",
     "new": "    let lift = Math.max(0, foot - bottom);",
     "tests": [
-      "test/fb1002_crewsay.test.js"
+      "test/systems/naval/fb1002_crewsay.test.js"
     ]
   },
   {
     "name": "SAY-placed-unlifted",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "    placed.push({ x: p.x, w, top: foot - lift - h, bottom: foot - lift });",
     "new": "    placed.push({ x: p.x, w, top: foot - h, bottom: foot });",
     "tests": [
-      "test/fb1002_crewsay.test.js"
+      "test/systems/naval/fb1002_crewsay.test.js"
     ]
   },
   {
     "name": "SAY-one-pass",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "    for (let k = 0; k <= placed.length; k++) {",
     "new": "    for (let k = 0; k < 1; k++) {",
     "tests": [
-      "test/fb1002_crewsay.test.js"
+      "test/systems/naval/fb1002_crewsay.test.js"
     ]
   },
   {
     "name": "SAY-side-by-side-ignored",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "      const under = placed.find((q) => Math.abs(q.x - p.x) < (q.w + w) / 2 && bottom > q.top && bottom - h < q.bottom);",
     "new": "      const under = placed.find((q) => Math.abs(q.x - p.x) < 1 && bottom > q.top && bottom - h < q.bottom);",
     "tests": [
-      "test/fb1002_crewsay.test.js"
+      "test/systems/naval/fb1002_crewsay.test.js"
     ]
   },
   {
     "name": "SAY-unbounded",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "  const chosen = [...said.values()].slice(0, CREW_SAY_MAX);",
     "new": "  const chosen = [...said.values()];",
     "tests": [
-      "test/fb1002_crewsay.test.js"
+      "test/systems/naval/fb1002_crewsay.test.js"
     ]
   },
   {
     "name": "SAY-drawn-unlifted",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "    set('at', `translate(${Math.round(p.x)}px, ${Math.round(p.y - p.lift)}px) scale(${scale})",
     "new": "    set('at', `translate(${Math.round(p.x)}px, ${Math.round(p.y)}px) scale(${scale})",
     "tests": [
-      "test/fb1002_crewsay.test.js",
-      "test/livingcrew.test.js"
+      "test/systems/naval/fb1002_crewsay.test.js",
+      "test/systems/naval/livingcrew.test.js"
     ]
   },
   {
     "name": "SAY-farthest-on-top",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "    set('z', String(CREW_SAY_MAX - i), (v) => { slot.n.style.zIndex = v; });",
     "new": "    set('z', String(i), (v) => { slot.n.style.zIndex = v; });",
     "tests": [
-      "test/fb1002_crewsay.test.js"
+      "test/systems/naval/fb1002_crewsay.test.js"
     ]
   },
   {
     "name": "SAY-lift-old",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "export const CREW_SAY_LIFT = 26;",
     "new": "export const CREW_SAY_LIFT = 6;",
     "tests": [
-      "test/fb1002_crewsay.test.js",
-      "test/livingcrew.test.js"
+      "test/systems/naval/fb1002_crewsay.test.js",
+      "test/systems/naval/livingcrew.test.js"
     ]
   },
   {
     "name": "SAY-box-capped-whole",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "w: (Math.min(CREW_SAY_W, run) + CREW_SAY_PAD_W + 2 * CREW_SAY_RING) * scale",
     "new": "w: Math.min(CREW_SAY_W, run + CREW_SAY_PAD_W) * scale",
     "tests": [
-      "test/fb1002_crewsay.test.js"
+      "test/systems/naval/fb1002_crewsay.test.js"
     ]
   },
   {
     "name": "SAY-box-no-ring",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "h: (lines * CREW_SAY_LINE_H + CREW_SAY_PAD_H + 2 * CREW_SAY_RING) * scale",
     "new": "h: (lines * CREW_SAY_LINE_H + CREW_SAY_PAD_H) * scale",
     "tests": [
-      "test/fb1002_crewsay.test.js"
+      "test/systems/naval/fb1002_crewsay.test.js"
     ]
   },
   {
     "name": "SAY-box-one-line",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "  const lines = Math.max(1, Math.ceil(run / (CREW_SAY_W * CREW_SAY_WRAP_SLACK)));",
     "new": "  const lines = 1;",
     "tests": [
-      "test/fb1002_crewsay.test.js"
+      "test/systems/naval/fb1002_crewsay.test.js"
     ]
   },
   {
     "name": "SAY-box-unscaled",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "h: (lines * CREW_SAY_LINE_H + CREW_SAY_PAD_H + 2 * CREW_SAY_RING) * scale",
     "new": "h: (lines * CREW_SAY_LINE_H + CREW_SAY_PAD_H + 2 * CREW_SAY_RING)",
     "tests": [
-      "test/fb1002_crewsay.test.js"
+      "test/systems/naval/fb1002_crewsay.test.js"
     ]
   },
   {
@@ -178,7 +178,7 @@
     "old": "        points.push({ x: at.x, y: at.y, text: l.text, name: name ? name.split(' ')[0] : null, who: key, kind: l.kind, distance: d });",
     "new": "        points.push({ x: at.x, y: at.y, text: l.text, name: null, who: key, kind: l.kind, distance: d });",
     "tests": [
-      "test/fb1002_crewsay.test.js"
+      "test/systems/naval/fb1002_crewsay.test.js"
     ]
   }
 ]

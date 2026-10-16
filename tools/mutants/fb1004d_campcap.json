@@ -4,7 +4,7 @@
     "file": "src/systems/survival/camp.js",
     "old": "  const strike = Math.max(0, (standing | 0) - CAMPS_PER_OWNER + 1);\n",
     "new": "  if (standing >= CAMPS_PER_OWNER) return { ok: false, text: CAMP_TEXT.struckCamp, camp: null, spent: false };\n  const strike = 0;\n",
-    "tests": ["test/fb1004d_campcap.test.js"],
+    "tests": ["test/systems/survival/fb1004d_campcap.test.js"],
     "note": "the brick itself: four standing anywhere refuse every placing after them"
   },
   {
@@ -12,7 +12,7 @@
     "file": "src/systems/survival/camp.js",
     "old": "(standing | 0) - CAMPS_PER_OWNER + 1);",
     "new": "(standing | 0) - CAMPS_PER_OWNER);",
-    "tests": ["test/fb1004d_campcap.test.js"],
+    "tests": ["test/systems/survival/fb1004d_campcap.test.js"],
     "note": "the fifth stands beside the four - the cap (the wire's bound) broken"
   },
   {
@@ -20,7 +20,7 @@
     "file": "src/systems/survival/camp.js",
     "old": "(standing | 0) - CAMPS_PER_OWNER + 1);",
     "new": "(standing | 0) - CAMPS_PER_OWNER + 2);",
-    "tests": ["test/fb1004d_campcap.test.js"],
+    "tests": ["test/systems/survival/fb1004d_campcap.test.js"],
     "note": "the fourth placing already strikes one: three stand"
   },
   {
@@ -28,7 +28,7 @@
     "file": "src/systems/survival/camp.js",
     "old": "  if (!d.ok) return { ok: false, text: d.text, camp: null, spent: false };\n",
     "new": "  if (!d.ok) return { ok: false, text: d.text, camp: null, spent: false, strike };\n",
-    "tests": ["test/fb1004d_campcap.test.js"],
+    "tests": ["test/systems/survival/fb1004d_campcap.test.js"],
     "note": "the law's contract: a placing refused for its own reason (town, foes, indoors) strikes nothing"
   },
   {
@@ -36,7 +36,7 @@
     "file": "src/systems/survival/camp.js",
     "old": "spent: true, strike };",
     "new": "spent: true };",
-    "tests": ["test/fb1004d_campcap.test.js"],
+    "tests": ["test/systems/survival/fb1004d_campcap.test.js"],
     "note": "an Ember Jar lit at the cap stands a fifth camp"
   },
   {
@@ -44,7 +44,7 @@
     "file": "src/systems/survival/camp.js",
     "old": "  return { ok: true, text, camp, spent: false, strike };\n",
     "new": "  return { ok: true, text, camp, spent: false };\n",
-    "tests": ["test/fb1004d_campcap.test.js"],
+    "tests": ["test/systems/survival/fb1004d_campcap.test.js"],
     "note": "a tent or a Campfire at the cap stands a fifth"
   },
   {
@@ -52,7 +52,7 @@
     "file": "src/systems/survival/camp.js",
     "old": "camp.kind === CAMP_KIND.Tent ? CAMP_TEXT.struckCamp : CAMP_TEXT.struckFire",
     "new": "camp.kind === CAMP_KIND.Tent ? CAMP_TEXT.struckFire : CAMP_TEXT.struckCamp",
-    "tests": ["test/fb1004d_campcap.test.js"],
+    "tests": ["test/systems/survival/fb1004d_campcap.test.js"],
     "note": "the line names the wrong gear"
   },
   {
@@ -60,7 +60,7 @@
     "file": "src/systems/survival/camp.js",
     "old": "text: !item ? CAMP_TEXT.struckOut :",
     "new": "text: !item ? CAMP_TEXT.struckFire :",
-    "tests": ["test/fb1004d_campcap.test.js"],
+    "tests": ["test/systems/survival/fb1004d_campcap.test.js"],
     "note": "a fire that gives nothing back says a Campfire was packed"
   },
   {
@@ -68,7 +68,7 @@
     "file": "src/systems/survival/camp.js",
     "old": "  const { item } = packCamp(camp);\n  return { item, text: !item",
     "new": "  const item = packCamp(camp).item ?? createSurvivalItem(TEMPLATE.Campfire);\n  return { item, text: !item",
-    "tests": ["test/fb1004d_campcap.test.js"],
+    "tests": ["test/systems/survival/fb1004d_campcap.test.js"],
     "note": "a Campfire minted from an Ember Jar's embers (an old kit fire's): the gear is packCamp's alone"
   },
   {
@@ -76,7 +76,7 @@
     "file": "src/scenes/camps.js",
     "old": "    const struck = strikeOldest(r.strike);   // FIELD BUGS 2026-10-04d CAMP-CAP",
     "new": "    const struck = null;   // FIELD BUGS 2026-10-04d CAMP-CAP",
-    "tests": ["test/fb1004d_campcap.test.js"],
+    "tests": ["test/systems/survival/fb1004d_campcap.test.js"],
     "note": "the law asks, the pool stands five"
   },
   {
@@ -84,7 +84,7 @@
     "file": "src/scenes/camps.js",
     "old": "    if (r.text) say(r.text);\n    if (!r.ok) return false;\n    const struck = strikeOldest(r.strike);",
     "new": "    const struck = strikeOldest(r.strike ?? 1);\n    if (r.text) say(r.text);\n    if (!r.ok) return false;",
-    "tests": ["test/fb1004d_campcap.test.js"],
+    "tests": ["test/systems/survival/fb1004d_campcap.test.js"],
     "note": "the oldest packed away for a placing that never stood (in town, foes near, no ground, the arc Off)"
   },
   {
@@ -92,7 +92,7 @@
     "file": "src/scenes/camps.js",
     "old": "      if (r.item && entity) (entity.items ??= []).push(r.item);   // CAMP-CAP: home as act's Pack hands it\n",
     "new": "",
-    "tests": ["test/fb1004d_campcap.test.js"],
+    "tests": ["test/systems/survival/fb1004d_campcap.test.js"],
     "note": "the struck camp's gear lost"
   },
   {
@@ -100,7 +100,7 @@
     "file": "src/scenes/camps.js",
     "old": "      drop(c);\n      line = r.text;",
     "new": "      line = r.text;",
-    "tests": ["test/fb1004d_campcap.test.js"],
+    "tests": ["test/systems/survival/fb1004d_campcap.test.js"],
     "note": "the duplicate: the gear home AND the camp standing to pack again"
   },
   {
@@ -108,7 +108,7 @@
     "file": "src/scenes/camps.js",
     "old": "camps.filter(mine).slice(0, n | 0)",
     "new": "camps.filter(mine).reverse().slice(0, n | 0)",
-    "tests": ["test/fb1004d_campcap.test.js"],
+    "tests": ["test/systems/survival/fb1004d_campcap.test.js"],
     "note": "the camp just pitched before this one goes, not the oldest"
   },
   {
@@ -116,7 +116,7 @@
     "file": "src/scenes/camps.js",
     "old": "    const struck = strikeOldest(r.strike);   // FIELD BUGS 2026-10-04d CAMP-CAP: at the cap my oldest goes, before this one stands\n    // DECK-CAMP: placed on a boat's deck, it is hers - its point and heading in her frame, by her number\n    const on = deck?.at?.(r.camp.pos) ?? null;\n    if (on?.m && on.ref) {\n      const d = validDeck({ ...on.ref, local: intoDeck(on.m, r.camp.pos, [0, 0, 0]), yaw: r.camp.yaw - deckYaw(on.m) });\n      if (d) r.camp.deck = d;\n    }\n    const c = stand(r.camp);\n    if (r.camp.deck && on?.m) { c.hidden = false; c.deckM = on.m; }\n    if (struck) say(struck);\n    onChanged?.();\n",
     "new": "    onChanged?.();\n    const struck = strikeOldest(r.strike);   // FIELD BUGS 2026-10-04d CAMP-CAP: at the cap my oldest goes, before this one stands\n    // DECK-CAMP: placed on a boat's deck, it is hers - its point and heading in her frame, by her number\n    const on = deck?.at?.(r.camp.pos) ?? null;\n    if (on?.m && on.ref) {\n      const d = validDeck({ ...on.ref, local: intoDeck(on.m, r.camp.pos, [0, 0, 0]), yaw: r.camp.yaw - deckYaw(on.m) });\n      if (d) r.camp.deck = d;\n    }\n    const c = stand(r.camp);\n    if (r.camp.deck && on?.m) { c.hidden = false; c.deckM = on.m; }\n    if (struck) say(struck);\n",
-    "tests": ["test/fb1004d_campcap.test.js"],
+    "tests": ["test/systems/survival/fb1004d_campcap.test.js"],
     "note": "online: the room told before the strike - the dungeon's act word still carries the struck fire and not the new one THE SECOND MERGE OF MAIN (#598, PIN MOVED): DECK-CAMP stands the camp on a deck between the strike and its word - the room is still told before the strike, around the deck's lines."
   },
   {
@@ -124,7 +124,7 @@
     "file": "src/scenes/camps.js",
     "old": "    if (struck) say(struck);\n",
     "new": "",
-    "tests": ["test/fb1004d_campcap.test.js"],
+    "tests": ["test/systems/survival/fb1004d_campcap.test.js"],
     "note": "the oldest vanishes without a word"
   },
   {
@@ -132,7 +132,7 @@
     "file": "src/scenes/world.js",
     "old": "    placeCamp: (item, list) => camps.placeItem(item, list ?? playerEntity.items ?? []),   // SURV3: Camping Equipment",
     "new": "    placeCamp: (item, list) => placeCampItem(item, list ?? playerEntity.items ?? []).ok,   // SURV3: Camping Equipment",
-    "tests": ["test/fb1004d_campcap.test.js"],
+    "tests": ["test/systems/survival/fb1004d_campcap.test.js"],
     "note": "the four hosts: a host calling the law around the pool would place with no strike"
   },
   {
@@ -140,7 +140,7 @@
     "file": "src/scenes/world.js",
     "old": "    place: () => ({ insideBuilding: _mode() === 'interior', insideDungeon: _mode() === 'dungeon', inTown: _isPlayerInTownStrict(), enemiesNearby: areEnemiesNearby(exteriorFoePool(), { resting: true }), inWater: !!player.isPlayerSwimming }),\n    pixelKeyAt:",
     "new": "    place: () => ({ insideBuilding: false, insideDungeon: _mode() === 'dungeon', inTown: _isPlayerInTownStrict(), enemiesNearby: areEnemiesNearby(exteriorFoePool(), { resting: true }), inWater: !!player.isPlayerSwimming }),\n    pixelKeyAt:",
-    "tests": ["test/fb1004d_campcap.test.js"],
+    "tests": ["test/systems/survival/fb1004d_campcap.test.js"],
     "note": "the fourth host: a building's pack and hotbar reach the world pool, whose place must refuse indoors before any strike"
   },
   {
@@ -148,7 +148,7 @@
     "file": "src/scenes/worldModes.js",
     "old": "    hearths: () => interiorHearths,\n    place: () => ({ insideBuilding: true }),",
     "new": "    hearths: () => interiorHearths,\n    place: () => ({}),",
-    "tests": ["test/fb1004d_campcap.test.js"],
+    "tests": ["test/systems/survival/fb1004d_campcap.test.js"],
     "note": "the fourth host's own pool: it stands nothing and so strikes nothing"
   },
   {
@@ -156,7 +156,7 @@
     "file": "src/scenes/world.js",
     "old": "onChanged: () => { _foesFullAt = -Infinity; },",
     "new": "onChanged: () => {},",
-    "tests": ["test/fb1004d_campcap.test.js"],
+    "tests": ["test/systems/survival/fb1004d_campcap.test.js"],
     "note": "online in a cell: the full foes frame that carries my camps is not asked for after the strike"
   },
   {
@@ -164,7 +164,7 @@
     "file": "src/scenes/dungeonContext.js",
     "old": "const campMemory = () => camps.camps.map((c) => ({ ...campWire(c.rec), o: c.owner ?? (opts.selfId?.() ?? 'host') }));",
     "new": "const campMemory = () => camps.camps.map((c) => ({ ...campWire(c.rec), o: opts.selfId?.() ?? 'host' }));",
-    "tests": ["test/fb1004d_campcap.test.js"],
+    "tests": ["test/systems/survival/fb1004d_campcap.test.js"],
     "note": "the room's memory the online pin emulates is dungeonContext's own producer, held by source"
   }
 ]

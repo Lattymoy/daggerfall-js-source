@@ -5,7 +5,7 @@
     "old": "      ...bag,\n",
     "new": "",
     "tests": [
-      "test/f5quests.test.js"
+      "test/ui/f5quests.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "return enhancedSheetPageOverlay(hooks, deps.entity, deps.pause ?? null);",
     "new": "return enhancedSheetPageOverlay(hooks, deps.entity, null);",
     "tests": [
-      "test/f5quests.test.js"
+      "test/ui/f5quests.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "      onAction: pauseMenuAct(menuHooks, close),",
     "new": "      onAction: (a) => { if (a === 'resume') close(); },",
     "tests": [
-      "test/f5quests.test.js"
+      "test/ui/f5quests.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    pause: pause ?? (() => pauseDoorHooks()),   // F5-QUESTS: the enhanced F5 page is the pause window - handed this host's own bag; ESC-BOOK: or the mounting host's (a building's), whose arms open its doors in ITS slot\n",
     "new": "",
     "tests": [
-      "test/f5quests.test.js"
+      "test/ui/f5quests.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    pause: pause ?? (() => pauseDoorHooks()),   // F5-QUESTS: the enhanced F5 page is the pause window - handed this host's own bag (or the mounting building's)\n",
     "new": "",
     "tests": [
-      "test/f5quests.test.js"
+      "test/ui/f5quests.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "pause: () => api.pauseHooks(pauseOpts(sheetOpts).setPlayerPos),",
     "new": "pause: () => api.pauseHooks(),",
     "tests": [
-      "test/f5quests.test.js"
+      "test/ui/f5quests.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "        quickLoad: () => ctx.quickLoad?.(setPlayerPos),",
     "new": "        quickLoad: () => ctx.quickLoad?.(null),",
     "tests": [
-      "test/f5quests.test.js"
+      "test/ui/f5quests.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "ctx.toggleCharSheet({ setPlayerPos }); return true;",
     "new": "ctx.toggleCharSheet(); return true;",
     "tests": [
-      "test/f5quests.test.js"
+      "test/ui/f5quests.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "  return (action) => {\n    close();\n",
     "new": "  return (action) => {\n    if (action === 'save') hooks.quickSave?.();\n    close();\n",
     "tests": [
-      "test/f5quests.test.js"
+      "test/ui/f5quests.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "return n && typeof base.saveAs === 'function' ? base.saveAs(n) : base.quickSave?.();",
     "new": "return base.quickSave?.();",
     "tests": [
-      "test/f5quests.test.js"
+      "test/ui/f5quests.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "      ...bag,\n      // The sheet's own buttons, onto the page PX25 built to take\n      // them. A host that hands no hook gets no button, which is the\n      // same honest refusal the classic sheet gives.\n      // ESC-BOOK: through the HOST's arms (sheetPageDoors) - the sheet's factories built windows no slot held.\n      ...sheetPageDoors(bag, close),\n",
     "new": "      // The sheet's own buttons, onto the page PX25 built to take\n      // them. A host that hands no hook gets no button, which is the\n      // same honest refusal the classic sheet gives.\n      // ESC-BOOK: through the HOST's arms (sheetPageDoors) - the sheet's factories built windows no slot held.\n      ...sheetPageDoors(bag, close),\n      ...bag,\n",
     "tests": [
-      "test/f5quests.test.js"
+      "test/ui/f5quests.test.js"
     ]
   }
 ]

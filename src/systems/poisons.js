@@ -42,7 +42,7 @@
 import { savingThrow, careerTolerance, EFFECT_FLAGS } from './spellcast.js';
 import { FATIGUE_MULTIPLIER } from './statMods.js';
 import { dice100 } from '../combat/formulas.js';
-import { MOBILE_TYPES } from '../characters/mobileTypes.js';
+import { MOBILE_TYPES } from '../characters/mobile/mobileTypes.js';
 import { youFeelSomewhatBadText } from './diseases.js';
 
 // ---- ItemEnums.Poisons, verbatim (0-7 weapon poisons, 8-11 drugs) ----

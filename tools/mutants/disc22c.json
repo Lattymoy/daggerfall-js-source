@@ -5,7 +5,7 @@
     "old": "  const classic = !dom && classicPlaqueOn();",
     "new": "  const classic = false;",
     "tests": [
-      "test/disc22c_classic_loot.test.js"
+      "test/systems/disc22c_classic_loot.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    else { const lit = quickLootRow(frame), w = windowOf(frame, lit); setClassicLootFrame(w.frame, frameMark(), lit >= 0 ? lit - w.from : -1); }   // DISC22-C: drawHud draws it, this frame, its lit row with it - LOOT-SCROLL: the same window the plaque draws",
     "new": "",
     "tests": [
-      "test/disc22c_classic_loot.test.js"
+      "test/systems/disc22c_classic_loot.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "export const classicPlaqueOn = () => !isEnhanced() && !isTouchDevice() && quickLootOn();",
     "new": "export const classicPlaqueOn = () => !isEnhanced() && !isTouchDevice();",
     "tests": [
-      "test/disc22c_classic_loot.test.js"
+      "test/systems/disc22c_classic_loot.test.js"
     ]
   },
   {
@@ -32,16 +32,16 @@
     "old": "export const classicLootFrame = (mark = null) => (_frame && _mark === mark ? { frame: _frame, lit: _lit } : null);",
     "new": "export const classicLootFrame = (mark = null) => (_frame ? { frame: _frame, lit: _lit } : null);",
     "tests": [
-      "test/disc22c_classic_loot.test.js"
+      "test/systems/disc22c_classic_loot.test.js"
     ]
   },
   {
     "name": "D22C-hud-draws-nothing",
-    "file": "src/ui/hud.js",
+    "file": "src/ui/hud/hud.js",
     "old": "  if (loot) drawLootPanel(renderer, nativeMetrics(canvas), font, loot.frame, loot.lit, at);",
     "new": "",
     "tests": [
-      "test/disc22c_classic_loot.test.js"
+      "test/systems/disc22c_classic_loot.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "    drawImgCrop(renderer, sheet, m, [0, P.cutTop, P.w, P.cutBottom - P.cutTop], [L.x, L.y + P.cutTop, P.w, L.middle]);",
     "new": "    drawImgCrop(renderer, sheet, m, [0, P.cutTop, P.w, P.cutBottom - P.cutTop], [L.x, L.y + P.cutTop, P.w, P.cutBottom - P.cutTop]);",
     "tests": [
-      "test/disc22c_classic_loot.test.js"
+      "test/systems/disc22c_classic_loot.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "    const middle = Math.max(rowH, n * rowH) + 6;",
     "new": "    const middle = PARCHMENT.cutBottom - PARCHMENT.cutTop;",
     "tests": [
-      "test/disc22c_classic_loot.test.js"
+      "test/systems/disc22c_classic_loot.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "      if (i === lit) drawRect(renderer, m, L.x + P.textX - 2, y - 1, P.textW + 4, L.rowH, PARCHMENT_LIT);",
     "new": "",
     "tests": [
-      "test/disc22c_classic_loot.test.js"
+      "test/systems/disc22c_classic_loot.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "  const sheet = activeUiPack()?.id === 'grimoire' ? parchmentImage(renderer) : null;",
     "new": "  const sheet = parchmentImage(renderer);",
     "tests": [
-      "test/disc22c_classic_loot.test.js"
+      "test/systems/disc22c_classic_loot.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "  if (!frame || frame.kind !== 'items' || !frame.rows?.length || !font?.fnt) return false;",
     "new": "  if (!frame || !font?.fnt) return false;",
     "tests": [
-      "test/disc22c_classic_loot.test.js"
+      "test/systems/disc22c_classic_loot.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "setClassicLootFrame(w.frame, frameMark(), lit >= 0 ? lit - w.from : -1);",
     "new": "setClassicLootFrame(w.frame, frameMark());",
     "tests": [
-      "test/disc22c_classic_loot.test.js"
+      "test/systems/disc22c_classic_loot.test.js"
     ]
   }
 ]

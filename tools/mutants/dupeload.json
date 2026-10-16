@@ -5,7 +5,7 @@
     "old": "    if (ctx.overlayWindow?.()?.loadsUnder === true && actionsOf(e, keys).includes('QuickLoad') && !retroToggleKey(e, keys)) { ctx.quickLoad?.(setPlayerPos); return true; }",
     "new": "    if (actionsOf(e, keys).includes('QuickLoad') && !retroToggleKey(e, keys)) { ctx.quickLoad?.(setPlayerPos); return true; }",
     "tests": [
-      "test/dupeload.test.js"
+      "test/ui/dupeload.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    this.loadsUnder = true;",
     "new": "    this.loadsUnder = false;",
     "tests": [
-      "test/dupeload.test.js"
+      "test/ui/dupeload.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    if (townTalk.overlayActive && townTalk.overlay?.loadsUnder === true && !isTextEntryTarget(e.target)",
     "new": "    if (townTalk.overlayActive && !isTextEntryTarget(e.target)",
     "tests": [
-      "test/dupeload.test.js"
+      "test/ui/dupeload.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "      closeWindowsForLoad();\n",
     "new": "\n",
     "tests": [
-      "test/dupeload.test.js"
+      "test/ui/dupeload.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    for (let n = 0; n < 16 && townTalk.overlay && !(townTalk.overlay instanceof DeathScreen); n++) townTalk.closeOverlay();",
     "new": "    for (let n = 0; n < 1 && townTalk.overlay && !(townTalk.overlay instanceof DeathScreen); n++) townTalk.closeOverlay();",
     "tests": [
-      "test/dupeload.test.js"
+      "test/ui/dupeload.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "    for (let n = 0; n < 16 && townTalk.overlay && !(townTalk.overlay instanceof DeathScreen); n++) townTalk.closeOverlay();",
     "new": "    for (let n = 0; n < 16 && townTalk.overlay; n++) townTalk.closeOverlay();",
     "tests": [
-      "test/dupeload.test.js"
+      "test/ui/dupeload.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "    overlayWindow: () => interiorOverlay,",
     "new": "    overlayWindow: () => null,",
     "tests": [
-      "test/dupeload.test.js"
+      "test/ui/dupeload.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "    if (townTalk.overlay instanceof DeathScreen) townTalk.discardBeneath(townTalk.overlay);\n",
     "new": "",
     "tests": [
-      "test/dupeload.test.js"
+      "test/ui/dupeload.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "    modes?.discardBeneathDeath?.();\n  }\n",
     "new": "  }\n",
     "tests": [
-      "test/dupeload.test.js"
+      "test/ui/dupeload.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "      closeWindowsForLoad();   // AUDIT DUPE-LOAD: and once more after the last await",
     "new": "      // AUDIT DUPE-LOAD: and once more after the last await",
     "tests": [
-      "test/dupeload.test.js"
+      "test/ui/dupeload.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "        if (isHud(w) || w === keep) continue;",
     "new": "        if (isHud(w)) continue;",
     "tests": [
-      "test/dupeload.test.js"
+      "test/ui/dupeload.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "      windows.keepOnly(keep, (w) => w.dispose?.());",
     "new": "      windows.keepOnly(keep);",
     "tests": [
-      "test/dupeload.test.js"
+      "test/ui/dupeload.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "      interiorWindows.reconcile(death);\n",
     "new": "",
     "tests": [
-      "test/dupeload.test.js"
+      "test/ui/dupeload.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "      dungeonWindows.reconcile(death);\n",
     "new": "",
     "tests": [
-      "test/dupeload.test.js"
+      "test/ui/dupeload.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "      this.discardBeneathDeath();   // AUDIT DUPE-LOAD: what waits under the death screen goes before the save is read\n",
     "new": "",
     "tests": [
-      "test/dupeload.test.js"
+      "test/ui/dupeload.test.js"
     ]
   }
 ]

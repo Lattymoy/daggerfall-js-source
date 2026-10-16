@@ -5,7 +5,7 @@
     "old": "WHERE h.tier = 'palace' AND EXISTS",
     "new": "WHERE h.tier IN ('palace', 'crown') AND EXISTS",
     "tests": [
-      "test/seathall_service.test.js"
+      "test/net/seathall_service.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "AND g.rank IN (${HALL_POWERS.decorate.join(', ')})\n    AND EXISTS (SELECT 1 FROM realm_characters rc WHERE rc.id = g.char_id AND rc.player = k.p)))`;",
     "new": "AND g.rank IN (0, 1, 2, 3)\n    AND EXISTS (SELECT 1 FROM realm_characters rc WHERE rc.id = g.char_id AND rc.player = k.p)))`;",
     "tests": [
-      "test/seathall_service.test.js"
+      "test/net/seathall_service.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "WHERE g.guild_id = h.guild_id AND g.player = k.p AND g.char_id = k.c\n    AND g.rank IN (${HALL_POWERS.decorate.join(', ')})\n    AND EXISTS (SELECT 1 FROM realm_characters rc WHERE rc.id = g.char_id AND rc.player = k.p)))`;",
     "new": "WHERE g.player = k.p AND g.char_id = k.c\n    AND g.rank IN (${HALL_POWERS.decorate.join(', ')})\n    AND EXISTS (SELECT 1 FROM realm_characters rc WHERE rc.id = g.char_id AND rc.player = k.p)))`;",
     "tests": [
-      "test/seathall_service.test.js"
+      "test/net/seathall_service.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "table: 'seat_hall_decor', owns: SEAT_OWNS",
     "new": "table: 'home_decor', owns: SEAT_OWNS",
     "tests": [
-      "test/seathall_service.test.js"
+      "test/net/seathall_service.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  if (seat === true) return { error: 'bad-home' };   // SEAT-HALL",
     "new": "  // SEAT-HALL",
     "tests": [
-      "test/seathall_service.test.js"
+      "test/net/seathall_service.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "guildOf: seatHallGuildOf,",
     "new": "guildOf: hallGuildOf,",
     "tests": [
-      "test/seathall_service.test.js"
+      "test/net/seathall_service.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "UPDATE ${S.table} SET place = ? WHERE",
     "new": "UPDATE home_decor SET place = ? WHERE",
     "tests": [
-      "test/seathall_service.test.js"
+      "test/net/seathall_service.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "const hall = delta > 0 ? await S.guildOf(db, mapId, buildingKey) : null;\n    if (hall) {\n      // GUILD1d: a hall's piece taken out",
     "new": "const hall = delta > 0 ? await hallGuildOf(db, mapId, buildingKey) : null;\n    if (hall) {\n      // GUILD1d: a hall's piece taken out",
     "tests": [
-      "test/seathall_service.test.js"
+      "test/net/seathall_service.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "out ? DECOR_YARD_CAP : S.cap,",
     "new": "out ? DECOR_YARD_CAP : DECOR_CAP,",
     "tests": [
-      "test/seathall_service.test.js"
+      "test/net/seathall_service.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "['map_id = ? AND yard = ?', [mapId, out]]",
     "new": "['map_id = ? AND building_key = ? AND yard = ?', [mapId, _buildingKey, out]]",
     "tests": [
-      "test/seathall_service.test.js"
+      "test/net/seathall_service.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "  WHEN NEW.guild_id IS NOT OLD.guild_id\n",
     "new": "",
     "tests": [
-      "test/seathall_service.test.js"
+      "test/net/seathall_service.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "DELETE FROM seat_hall_decor WHERE map_id = NEW.key;",
     "new": "DELETE FROM seat_hall_decor WHERE 0;",
     "tests": [
-      "test/seathall_service.test.js"
+      "test/net/seathall_service.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "DELETE FROM seat_hall_decor WHERE map_id = OLD.key;",
     "new": "DELETE FROM seat_hall_decor WHERE 0;",
     "tests": [
-      "test/seathall_service.test.js"
+      "test/net/seathall_service.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "&& body?.seat === true && !seatsOpenFor(who.player, env)) return no('seats-closed'",
     "new": "&& !seatsOpenFor(who.player, env)) return no('seats-closed'",
     "tests": [
-      "test/seathall_service.test.js"
+      "test/net/seathall_service.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "body?.seat === true && !seatsOpenFor(who.player, env)) return no('seats-closed'",
     "new": "body?.seat === true && false) return no('seats-closed'",
     "tests": [
-      "test/seathall_service.test.js"
+      "test/net/seathall_service.test.js"
     ]
   },
   {
@@ -140,8 +140,8 @@
     "old": "export const SEAT_HALL_DECOR_CAP = 100;",
     "new": "export const SEAT_HALL_DECOR_CAP = 101;",
     "tests": [
-      "test/seathall_service.test.js",
-      "test/seathall_client.test.js"
+      "test/net/seathall_service.test.js",
+      "test/net/seathall_client.test.js"
     ]
   },
   {
@@ -150,7 +150,7 @@
     "old": "export const SEAT_HALL_CLEAR_M = 2;",
     "new": "export const SEAT_HALL_CLEAR_M = 3;",
     "tests": [
-      "test/seathall_client.test.js"
+      "test/net/seathall_client.test.js"
     ]
   },
   {
@@ -159,43 +159,43 @@
     "old": "&& seat.holder?.guild?.id === guildId;",
     "new": "&& !!seat.holder?.guild?.id;",
     "tests": [
-      "test/seathall_client.test.js"
+      "test/net/seathall_client.test.js"
     ]
   },
   {
     "name": "SEAT-HALL-largest",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "(b.cells > a.cells ? b : a)",
     "new": "(b.cells < a.cells ? b : a)",
     "tests": [
-      "test/seathall_client.test.js"
+      "test/net/seathall_client.test.js"
     ]
   },
   {
     "name": "SEAT-HALL-court",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "return deps.charterClear?.(at) ?? null;",
     "new": "return null;",
     "tests": [
-      "test/seathall_client.test.js"
+      "test/net/seathall_client.test.js"
     ]
   },
   {
     "name": "SEAT-HALL-commit",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "    if (whyNotHere(p)) return false;   // HOME-YARD: off the lot; SEAT-HALL: out of the Charter Room - the bar says why\n    p.busy = true;",
     "new": "    p.busy = true;",
     "tests": [
-      "test/seathall_client.test.js"
+      "test/net/seathall_client.test.js"
     ]
   },
   {
     "name": "SEAT-HALL-tool-cap",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": ": Number.isSafeInteger(r?.cap) ? r.cap : DECOR_CAP);",
     "new": ": DECOR_CAP);",
     "tests": [
-      "test/seathall_client.test.js"
+      "test/net/seathall_client.test.js"
     ]
   },
   {
@@ -204,7 +204,7 @@
     "old": "{ mapId, buildingKey, ...(seat ? { seat: true } : {}) }),   // SEAT-HALL",
     "new": "{ mapId, buildingKey }),   // SEAT-HALL",
     "tests": [
-      "test/seathall_client.test.js"
+      "test/net/seathall_client.test.js"
     ]
   },
   {
@@ -213,7 +213,7 @@
     "old": "...(yard ? { yard: true } : {}), ...(seat ? { seat: true } : {}) }),",
     "new": "...(yard ? { yard: true } : {}) }),",
     "tests": [
-      "test/seathall_client.test.js"
+      "test/net/seathall_client.test.js"
     ]
   },
   {
@@ -222,7 +222,7 @@
     "old": "id, place, ...(realm ? { realm } : {}), ...(seat ? { seat: true } : {}) }),",
     "new": "id, place, ...(realm ? { realm } : {}) }),",
     "tests": [
-      "test/seathall_client.test.js"
+      "test/net/seathall_client.test.js"
     ]
   },
   {
@@ -231,7 +231,7 @@
     "old": "character, id, ...(realm ? { realm } : {}), ...(seat ? { seat: true } : {}) }),",
     "new": "character, id, ...(realm ? { realm } : {}) }),",
     "tests": [
-      "test/seathall_client.test.js"
+      "test/net/seathall_client.test.js"
     ]
   },
   {
@@ -240,7 +240,7 @@
     "old": "interiorSeatHall = building?.buildingType === BUILDING_TYPES.Palace ?",
     "new": "interiorSeatHall = building?.buildingType === BUILDING_TYPES.Tavern ?",
     "tests": [
-      "test/seathall_client.test.js"
+      "test/net/seathall_client.test.js"
     ]
   },
   {
@@ -249,7 +249,7 @@
     "old": "    interiorSeatHall = null;   // SEAT-HALL\n",
     "new": "",
     "tests": [
-      "test/seathall_client.test.js"
+      "test/net/seathall_client.test.js"
     ]
   },
   {
@@ -258,7 +258,7 @@
     "old": "interiorHome = null; interiorSeatHall = null; interiorOverlay = null;",
     "new": "interiorHome = null; interiorOverlay = null;",
     "tests": [
-      "test/seathall_client.test.js"
+      "test/net/seathall_client.test.js"
     ]
   },
   {
@@ -267,7 +267,7 @@
     "old": "if (interiorSeatHall?.keeper) return { kind: 'home', hall: true, seat: true",
     "new": "if (interiorSeatHall?.member) return { kind: 'home', hall: true, seat: true",
     "tests": [
-      "test/seathall_client.test.js"
+      "test/net/seathall_client.test.js"
     ]
   },
   {
@@ -276,9 +276,9 @@
     "old": "ask: () => host.homeDecor.list(homeTownOf(b), b.buildingKey, seat),",
     "new": "ask: () => host.homeDecor.list(homeTownOf(b), b.buildingKey),",
     "tests": [
-      "test/seathall_client.test.js",
-      "test/decor1.test.js",
-      "test/decorshell.test.js"
+      "test/net/seathall_client.test.js",
+      "test/server/decor1.test.js",
+      "test/scenes/decor/decorshell.test.js"
     ]
   },
   {
@@ -287,7 +287,7 @@
     "old": "? { ...a, seat: true } : a);",
     "new": "? a : a);",
     "tests": [
-      "test/seathall_client.test.js"
+      "test/net/seathall_client.test.js"
     ]
   },
   {
@@ -296,7 +296,7 @@
     "old": "if (near(n.x, n.z)) return SEAT_HALL_TEXT.clear;",
     "new": "if (near(n.x, n.y)) return SEAT_HALL_TEXT.clear;",
     "tests": [
-      "test/seathall_client.test.js"
+      "test/net/seathall_client.test.js"
     ]
   },
   {
@@ -305,7 +305,7 @@
     "old": "if ((m.type === 11 || m.type === 18) && near(m.x, m.z))",
     "new": "if ((m.type === 11) && near(m.x, m.z))",
     "tests": [
-      "test/seathall_client.test.js"
+      "test/net/seathall_client.test.js"
     ]
   },
   {
@@ -314,7 +314,7 @@
     "old": "for (const q of questFlats ?? []) if (!q.dead && near(q.x, q.z))",
     "new": "for (const q of [] ?? []) if (!q.dead && near(q.x, q.z))",
     "tests": [
-      "test/seathall_client.test.js"
+      "test/net/seathall_client.test.js"
     ]
   },
   {
@@ -323,8 +323,8 @@
     "old": "if ((interiorHome?.hall && interiorHome.member) || interiorSeatHall?.member) { openHallChest(); return; }",
     "new": "if ((interiorHome?.hall && interiorHome.member)) { openHallChest(); return; }",
     "tests": [
-      "test/seathall_client.test.js",
-      "test/decor1.test.js"
+      "test/net/seathall_client.test.js",
+      "test/server/decor1.test.js"
     ]
   },
   {
@@ -333,8 +333,8 @@
     "old": "(!!interiorHome?.hall || !!interiorSeatHall) && piece?.model",
     "new": "(!!interiorHome?.hall) && piece?.model",
     "tests": [
-      "test/seathall_client.test.js",
-      "test/guild1e_client.test.js"
+      "test/net/seathall_client.test.js",
+      "test/net/guild1e_client.test.js"
     ]
   },
   {
@@ -343,7 +343,7 @@
     "old": "Math.floor(Date.now() / 1000)) || !!interiorSeatHall?.member,",
     "new": "Math.floor(Date.now() / 1000)) || !!interiorSeatHall?.keeper,",
     "tests": [
-      "test/seathall_client.test.js"
+      "test/net/seathall_client.test.js"
     ]
   },
   {
@@ -352,7 +352,7 @@
     "old": "keeper: member && hallMay(Number(mine?.rank), 'decorate')",
     "new": "keeper: member",
     "tests": [
-      "test/seathall_client.test.js"
+      "test/net/seathall_client.test.js"
     ]
   },
   {
@@ -361,7 +361,7 @@
     "old": "const g = seat?.tier === 'palace' ? seat.holder?.guild ?? null : null;",
     "new": "const g = seat.holder?.guild ?? null;",
     "tests": [
-      "test/seathall_client.test.js"
+      "test/net/seathall_client.test.js"
     ]
   },
   {
@@ -370,7 +370,7 @@
     "old": "\n    AND EXISTS (SELECT 1 FROM realm_characters rc WHERE rc.id = g.char_id AND rc.player = k.p)))`;",
     "new": "))`;",
     "tests": [
-      "test/seathall_service.test.js"
+      "test/net/seathall_service.test.js"
     ]
   },
   {
@@ -379,7 +379,7 @@
     "old": "const seatRegionOf = async (db, mapId) => (await db.prepare('SELECT region FROM town_seat_holds WHERE key = ?').bind(mapId).first())?.region ?? null;",
     "new": "const seatRegionOf = async () => null;",
     "tests": [
-      "test/seathall_service.test.js"
+      "test/net/seathall_service.test.js"
     ]
   }
 ]

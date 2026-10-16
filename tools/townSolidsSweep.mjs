@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // FIELD BUGS 2026-10-15f TEMPLE-STEPS: THE SOLIDS THE PORT STANDS IN A TOWN'S BLOCK, SWEPT - against the author's own
-// models and against every exterior door's approach. The law test/wd3_standins.test.js holds on the player's data.
+// models and against every exterior door's approach. The law test/world/wd3_standins.test.js holds on the player's data.
 //
 //   ARENA2_PATH=<the player's arena2> node tools/townSolidsSweep.mjs          print every finding over both packs' blocks
 //   ARENA2_PATH=<...> node tools/townSolidsSweep.mjs TEMPASF1.RMB ...         only these blocks
@@ -32,7 +32,7 @@ import { openTownData, VENDORS } from './townQuestMarkers.mjs';
 import { layoutRmbBlock } from '../src/world/rmbLayout.js';
 import { RMBRP_HILLS, RMBRP_DOCKS, blockHillSeat, blockHillPatch, drawnHillStandIn, doorApproach, doorApproachPoints, HILL_PATCH_SINK, CITY_WALL_PIECE } from '../src/world/townStandIns.js';
 import { hasCustomModel } from '../src/world/customModels.js';
-import { blockFromJson } from '../src/formats/worldDataReplacement.js';
+import { blockFromJson } from '../src/formats/worldData/worldDataReplacement.js';
 import { curateBlockPlacements } from '../src/world/curatedPlacements.js';
 
 /** "A few centimetres": two classic units (0.05 m - the overlap the author's own models stand in: TEMPASF1's temple floor

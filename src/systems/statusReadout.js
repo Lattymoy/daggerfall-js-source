@@ -88,7 +88,7 @@ export const STATUS_YIELD_ACTIONS = Object.freeze(new Set([
   'QuickSave', 'QuickLoad',
   // NOT 'ToggleConsole', 'CenterView', 'PrintScreen' or 'Slide':
   // those four are the registry rows nothing in src/ routes
-  // (test/pad1.test.js's derived law names them), so a dispatch
+  // (test/ui/pad1.test.js's derived law names them), so a dispatch
   // would never hand one of them here - and a set that lists an
   // action no door produces reads as a promise nothing keeps.
 ]));

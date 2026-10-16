@@ -5,7 +5,7 @@
     "old": "addEquipChangeListener((entity) => _liveHandLaw?.(entity));",
     "new": "",
     "tests": [
-      "test/ht6_offhand.test.js"
+      "test/systems/ht6_offhand.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    _liveHandLaw = applyHandLaw;   // HT6: this host has the player, so this component answers the equip change",
     "new": "",
     "tests": [
-      "test/ht6_offhand.test.js"
+      "test/systems/ht6_offhand.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    if (ctx?.entity !== entity) return;   // no frame has run yet (no ctx to read sheathed from), or this is another host's wearer",
     "new": "",
     "tests": [
-      "test/ht6_offhand.test.js"
+      "test/systems/ht6_offhand.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    w.s = settings();\n    updateFreeHand();\n    handLaw(light());",
     "new": "    w.s = settings();\n    handLaw(light());",
     "tests": [
-      "test/ht6_offhand.test.js"
+      "test/systems/ht6_offhand.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    w.s = settings();\n    updateFreeHand();\n    handLaw(light());",
     "new": "    updateFreeHand();\n    handLaw(light());",
     "tests": [
-      "test/ht6_offhand.test.js"
+      "test/systems/ht6_offhand.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": " if (_liveHandLaw === applyHandLaw) _liveHandLaw = null; }   // HT6: a torn-down component stops answering the equip change",
     "new": " }",
     "tests": [
-      "test/ht6_offhand.test.js"
+      "test/systems/ht6_offhand.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "if (_liveHandLaw === applyHandLaw) _liveHandLaw = null;",
     "new": "_liveHandLaw = null;",
     "tests": [
-      "test/ht6_offhand.test.js"
+      "test/systems/ht6_offhand.test.js"
     ]
   },
   {
@@ -68,8 +68,8 @@
     "old": "    handLaw(l);\n    // the sprite's frames",
     "new": "    // the sprite's frames",
     "tests": [
-      "test/ht6_offhand.test.js",
-      "test/ht1_handheldtorches.test.js"
+      "test/systems/ht6_offhand.test.js",
+      "test/systems/ht1_handheldtorches.test.js"
     ]
   },
   {
@@ -78,18 +78,18 @@
     "old": "    } else if (!sheathedNow && usingRightNow) w.handRight = false;   // bare right hand, in use (0x2d53) - and only with the weapon up",
     "new": "    } else if (usingRightNow) w.handRight = false;",
     "tests": [
-      "test/ht6_offhand.test.js",
-      "test/ht1_handheldtorches.test.js"
+      "test/systems/ht6_offhand.test.js",
+      "test/systems/ht1_handheldtorches.test.js"
     ]
   },
   {
     "name": "HT6-the-window-reads-the-lit-flag-off-the-equip-table",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "    lit: !!item && identity?.lightSource === item,",
     "new": "    lit: !!item && isEquipped(item),",
     "tests": [
-      "test/ht6_offhand.test.js",
-      "test/enhancedInventory.test.js"
+      "test/systems/ht6_offhand.test.js",
+      "test/ui/enhanced/enhancedInventory.test.js"
     ]
   }
 ]

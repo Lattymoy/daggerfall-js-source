@@ -45,7 +45,7 @@
 // the rounds live; this module is only ever asked about the player.
 
 import { billboardSize } from '../world/rmbFlats.js';
-import { LIGHTS_ARCHIVE } from '../world/cityLights.js';
+import { LIGHTS_ARCHIVE } from '../world/city/cityLights.js';
 import { lightList, packLight, copyLights } from '../render/lightId.js';   // LIGHT-ID: the player's lights into the list through the one seam
 
 /** MagicCandleBehaviour + the prefab's Light, as numbers. */

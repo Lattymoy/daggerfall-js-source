@@ -52,7 +52,7 @@ export const SCENES = {
 };
 
 /** PERF-ON4: the probe-only edits, by file - each [needle, replacement] asserted where it is made (bible/Home.md's
- *  Process rule), and held to the tree by test/perfon4_probes.test.js, so a needle a change moves fails the suite and
+ *  Process rule), and held to the tree by test/tooling/perfon4_probes.test.js, so a needle a change moves fails the suite and
  *  not the next probe run. The stream's build slice served at 250 ms; the grass field filled at once. */
 export const FRAME_PROBE_EDITS = Object.freeze([
   { file: 'src/systems/buildBreather.js', edits: [['export const BUILD_SLICE_MS = 6;', 'export const BUILD_SLICE_MS = 250;'], ['export const BUILD_SLICE_FLOOR_MS = 3;', 'export const BUILD_SLICE_FLOOR_MS = 250;']] },

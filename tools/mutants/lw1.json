@@ -5,7 +5,7 @@
     "old": "export const lwSeed = (...parts) => hash32(LW_SALT, ...parts);",
     "new": "export const lwSeed = (...parts) => hash32(...parts);",
     "tests": [
-      "test/lw1_livingWorld.test.js"
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  for (const k in weights) if (weights[k] > 0) total += weights[k];",
     "new": "  for (const k in weights) if (weights[k] > 0) total += 1;",
     "tests": [
-      "test/lw1_livingWorld.test.js"
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    merchant: b >= 4 ? clamp(1 + Math.floor(b / 8), 1, 5) : (b >= 2 ? 1 : 0),",
     "new": "    merchant: b >= 4 ? clamp(1 + Math.floor(b / 8), 1, 6) : (b >= 2 ? 1 : 0),",
     "tests": [
-      "test/lw1_livingWorld.test.js"
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    merchant: b >= 4 ? clamp(1 + Math.floor(b / 8), 1, 5) : (b >= 2 ? 1 : 0),",
     "new": "    merchant: b >= 4 ? clamp(1 + Math.floor(b / 8), 1, 5) : (b >= 3 ? 1 : 0),",
     "tests": [
-      "test/lw1_livingWorld.test.js"
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    mercenary: b >= 9 ? clamp(Math.floor(b / 8), 1, 6) : 0,",
     "new": "    mercenary: b >= 8 ? clamp(Math.floor(b / 8), 1, 6) : 0,",
     "tests": [
-      "test/lw1_livingWorld.test.js"
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "    adventurer: b >= 4 ? clamp(1 + Math.floor(b / 10), 1, 6) : 0,",
     "new": "    adventurer: b >= 2 ? clamp(1 + Math.floor(b / 10), 1, 6) : 0,",
     "tests": [
-      "test/lw1_livingWorld.test.js"
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "    sailor: town.port ? clamp(2 + Math.floor(b / 10), 2, 6) : 0,",
     "new": "    sailor: true ? clamp(2 + Math.floor(b / 10), 2, 6) : 0,",
     "tests": [
-      "test/lw1_livingWorld.test.js"
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "    pilgrim: b >= 2 ? 1 + (b >= 16 ? 1 : 0) : 0,",
     "new": "    pilgrim: b >= 2 ? 1 + (b >= 9 ? 1 : 0) : 0,",
     "tests": [
-      "test/lw1_livingWorld.test.js"
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "    courier: b >= 16 ? 1 + (b >= 36 ? 1 : 0) : 0,",
     "new": "    courier: b >= 16 ? 1 + (b >= 64 ? 1 : 0) : 0,",
     "tests": [
-      "test/lw1_livingWorld.test.js"
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "  return b >= 2 ? Math.max(1, Math.min(6, 1 + Math.floor(b / 9))) : 0;",
     "new": "  return b >= 2 ? Math.max(1, Math.min(7, 1 + Math.floor(b / 9))) : 0;",
     "tests": [
-      "test/lw1_livingWorld.test.js"
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
     ],
     "note": "WATCH-DAY (re-aimed by content): the law in its new home."
   },
@@ -96,7 +96,7 @@
     "old": "  return b >= 2 ? Math.max(1, Math.min(6, 1 + Math.floor(b / 9))) : 0;",
     "new": "  return b >= 1 ? Math.max(1, Math.min(6, 1 + Math.floor(b / 9))) : 0;",
     "tests": [
-      "test/lw1_livingWorld.test.js"
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
     ],
     "note": "WATCH-DAY (re-aimed by content): the law in its new home."
   },
@@ -106,7 +106,7 @@
     "old": "  const female = !guard && rng() < 0.5;",
     "new": "  const female = rng() < 0.5;",
     "tests": [
-      "test/lw1_livingWorld.test.js"
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
     ]
   },
   {
@@ -115,7 +115,7 @@
     "old": "  const variant = guard ? 0 : Math.floor(rng() * set.length);",
     "new": "  const variant = Math.floor(rng() * set.length);",
     "tests": [
-      "test/lw1_livingWorld.test.js"
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
     ]
   },
   {
@@ -124,7 +124,7 @@
     "old": "  const face = (female ? faces.female : faces.male)[variant] + Math.floor(rng() * NUM_PERSON_FACE_VARIANTS);",
     "new": "  const face = Math.floor(rng() * NUM_PERSON_FACE_VARIANTS);",
     "tests": [
-      "test/lw1_livingWorld.test.js"
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
     ]
   },
   {
@@ -133,7 +133,7 @@
     "old": "  } finally { setSeed(saved); }",
     "new": "  } finally { void saved; }",
     "tests": [
-      "test/lw1_livingWorld.test.js"
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
     ]
   },
   {
@@ -142,7 +142,7 @@
     "old": "      trades.push({ job: 'innkeeper', work: b.key, faction: b.factionId ?? 0, livesAt: b.key });",
     "new": "      trades.push({ job: 'innkeeper', work: b.key, faction: b.factionId ?? 0, livesAt: null });",
     "tests": [
-      "test/lw1_livingWorld.test.js"
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
     ]
   },
   {
@@ -151,7 +151,7 @@
     "old": "      for (let i = 0; i < 2; i++) trades.push({ job: 'priest', work: b.key, faction: b.factionId ?? 0, livesAt: b.key });",
     "new": "      for (let i = 0; i < 1; i++) trades.push({ job: 'priest', work: b.key, faction: b.factionId ?? 0, livesAt: b.key });",
     "tests": [
-      "test/lw1_livingWorld.test.js"
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
     ]
   },
   {
@@ -160,7 +160,7 @@
     "old": "[BUILDING_TYPES.Armorer]: 'smith'",
     "new": "[BUILDING_TYPES.Armorer]: 'keeper'",
     "tests": [
-      "test/lw1_livingWorld.test.js"
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
     ]
   },
   {
@@ -169,7 +169,7 @@
     "old": "  const keep = placed.concat(common.slice(0, Math.max(0, CENSUS_MAX - placed.length)));",
     "new": "  const keep = placed.concat(common);",
     "tests": [
-      "test/lw1_livingWorld.test.js"
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
     ]
   },
   {
@@ -178,7 +178,7 @@
     "old": "    if (r.guard && palace != null) return palace;",
     "new": "    if (false) return palace;",
     "tests": [
-      "test/lw1_livingWorld.test.js"
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
     ]
   },
   {
@@ -187,7 +187,7 @@
     "old": "  for (const sign of [1, -1]) {",
     "new": "  for (const sign of [1]) {",
     "tests": [
-      "test/lw1_livingWorld.test.js"
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
     ]
   },
   {
@@ -196,7 +196,7 @@
     "old": "      if (open > bestOpen || (open === bestOpen && d < bestD)) { bestOpen = open; bestD = d; square = [x, y]; }",
     "new": "      if (d < bestD) { bestOpen = open; bestD = d; square = [x, y]; }",
     "tests": [
-      "test/lw1_livingWorld.test.js"
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
     ]
   },
   {
@@ -205,7 +205,7 @@
     "old": "const at = doorCell(nav, d, (i) => net[i] === netId);",
     "new": "const at = doorCell(nav, d, () => true);",
     "tests": [
-      "test/lw1_livingWorld.test.js"
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
     ]
   },
   {
@@ -214,7 +214,7 @@
     "old": "      const i = k === 0 ? H - 1 - n : k === 1 ? n : k === 2 ? W - 1 - n : n;",
     "new": "      const i = k === 1 ? H - 1 - n : k === 0 ? n : k === 2 ? W - 1 - n : n;",
     "tests": [
-      "test/lw1_livingWorld.test.js"
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
     ]
   },
   {
@@ -223,7 +223,7 @@
     "old": "export const SOCIAL_OUT = 4;",
     "new": "export const SOCIAL_OUT = 3;",
     "tests": [
-      "test/lw1_livingWorld.test.js"
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
     ]
   },
   {
@@ -232,7 +232,7 @@
     "old": "export const stepCost = (weight) => 1 + (15 - weight) / 10;",
     "new": "export const stepCost = (weight) => 1 + (15 - weight) / 100;",
     "tests": [
-      "test/lw1_livingWorld.test.js"
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
     ]
   },
   {
@@ -241,7 +241,7 @@
     "old": "          const nx = d === 2 ? cx + 1 : d === 3 ? cx - 1 : cx;",
     "new": "          const nx = d === 2 || d === 0 ? cx + 1 : d === 3 ? cx - 1 : cx;",
     "tests": [
-      "test/lw1_livingWorld.test.js"
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
     ]
   },
   {
@@ -250,7 +250,7 @@
     "old": "    if ((c[0] - p[0]) !== (n[0] - c[0]) || (c[1] - p[1]) !== (n[1] - c[1])) pts.push(at(c));",
     "new": "    if (false) pts.push(at(c));",
     "tests": [
-      "test/lw1_livingWorld.test.js"
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
     ]
   },
   {
@@ -259,7 +259,7 @@
     "old": "          if (budget <= 0 || soon.size + later.size >= PATH_QUEUE_MAX) return undefined;",
     "new": "          if (budget < -1 || soon.size + later.size >= PATH_QUEUE_MAX) return undefined;",
     "tests": [
-      "test/lw1_livingWorld.test.js"
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
     ]
   },
   {
@@ -268,7 +268,7 @@
     "old": "export const DAY_START_MIN = 240;",
     "new": "export const DAY_START_MIN = 300;",
     "tests": [
-      "test/lw1_livingWorld.test.js"
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
     ]
   },
   {
@@ -277,7 +277,7 @@
     "old": "export const WALK_DETOUR = 1.2;",
     "new": "export const WALK_DETOUR = 1.3;",
     "tests": [
-      "test/lw1_livingWorld.test.js"
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
     ]
   },
   {
@@ -286,7 +286,7 @@
     "old": "      I('work', at, h(job === 'smith' ? 7 : 8), 240);",
     "new": "      I('work', at, h(job === 'smith' ? 7 : 9), 240);",
     "tests": [
-      "test/lw1_livingWorld.test.js"
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
     ]
   },
   {
@@ -295,7 +295,7 @@
     "old": "      I('work', at, h(12.5), 330, h(18));",
     "new": "      I('work', at, h(12.5), 330, h(19));",
     "tests": [
-      "test/lw1_livingWorld.test.js"
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
     ]
   },
   {
@@ -304,7 +304,7 @@
     "old": "      I('work', work ?? home, h(11), 900, bed);",
     "new": "      I('work', work ?? home, h(10), 900, bed);",
     "tests": [
-      "test/lw1_livingWorld.test.js"
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
     ]
   },
   {
@@ -313,7 +313,7 @@
     "old": "      I('fields', exitNearest(places, home.cell), h(6), 660, h(17));",
     "new": "      I('fields', exitNearest(places, home.cell), h(7), 660, h(17));",
     "tests": [
-      "test/lw1_livingWorld.test.js"
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
     ]
   },
   {
@@ -322,7 +322,7 @@
     "old": "export const OUTDOOR = Object.freeze(new Set(['walk', 'market', 'social', 'stall', 'beg', 'dock', 'watch', 'post', 'gate']));",
     "new": "export const OUTDOOR = Object.freeze(new Set(['walk', 'market', 'social', 'stall', 'beg', 'dock', 'watch', 'post', 'gate', 'fields']));",
     "tests": [
-      "test/lw1_livingWorld.test.js"
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
     ],
     "note": "WATCH-DAY (re-aimed by content): the law in its new home."
   },
@@ -332,8 +332,8 @@
     "old": "  const shift = res.job === 'guard' && !visitor ? watchDuty(res, places, day, watchSize).shift : -1;",
     "new": "  const shift = res.job === 'guard' && !visitor ? (res.slot + day) % 3 : -1;",
     "tests": [
-      "test/lw1_livingWorld.test.js",
-      "test/watchday_watch.test.js"
+      "test/systems/livingWorld/lw1_livingWorld.test.js",
+      "test/systems/livingWorld/watchday_watch.test.js"
     ],
     "note": "WATCH-DAY (re-aimed by content): the law in its new home."
   },
@@ -343,7 +343,7 @@
     "old": "      if (start - cursor > walkMinutes(at, home, mpm) + walkMinutes(home, it.at, mpm) + HOME_GAP) go(home, cursor);",
     "new": "      if (false) go(home, cursor);",
     "tests": [
-      "test/lw1_livingWorld.test.js"
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
     ]
   },
   {
@@ -352,7 +352,7 @@
     "old": "      else go(/** @type {Spot} */ (it.at), cursor + walkMinutes(at, it.at, mpm), {}, it.kind, it.mark ?? null);",
     "new": "      else void 0;",
     "tests": [
-      "test/lw1_livingWorld.test.js"
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
     ],
     "note": "WATCH-DAY (re-aimed by content): the law in its new home."
   },
@@ -362,7 +362,7 @@
     "old": "      if (w.armed) { fill(leaveHome - GEAR_MIN); if (leaveHome > cursor) { push('gear', home, cursor, leaveHome); cursor = leaveHome; } }",
     "new": "      if (w.armed) { fill(leaveHome - GEAR_MIN); }",
     "tests": [
-      "test/lw1_livingWorld.test.js"
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
     ]
   },
   {
@@ -371,7 +371,7 @@
     "old": "      go(exit, w.t0, { armed: !!w.armed }, 'away');",
     "new": "      go(exit, w.t0, {}, 'away');",
     "tests": [
-      "test/lw1_livingWorld.test.js"
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
     ]
   },
   {
@@ -380,7 +380,7 @@
     "old": "      push('walk', home, cursor, cursor + back, { from: exit, to: home, armed: !!w.armed });",
     "new": "      push('walk', home, cursor, cursor + back, { from: exit, to: home });",
     "tests": [
-      "test/lw1_livingWorld.test.js"
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
     ]
   },
   {
@@ -389,7 +389,7 @@
     "old": "    if (m > 0) { fill(Math.max(cursor, by - m)); push('walk', to, cursor, cursor + m, { from: at, to, ...(atMark ?? {}), ...(arriveMark ?? {}), ...extra }); cursor += m; }",
     "new": "    if (m > 0) { fill(Math.max(cursor, by - m)); push('walk', to, cursor, cursor + m, { from: to, to, ...(atMark ?? {}), ...(arriveMark ?? {}), ...extra }); cursor += m; }",
     "tests": [
-      "test/lw1_livingWorld.test.js"
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
     ],
     "note": "WATCH-DAY (re-aimed by content): the law in its new home."
   },
@@ -399,7 +399,7 @@
     "old": "  const rng = lwRng(res.town, res.roll.charCodeAt(0), res.slot, 0x666176);   // 'fav'",
     "new": "  const rng = lwRng(res.town, res.roll.charCodeAt(0), res.slot, Math.floor(Math.random() * 1e9));   // 'fav'",
     "tests": [
-      "test/lw1_livingWorld.test.js"
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
     ]
   },
   {
@@ -408,7 +408,7 @@
     "old": "present.filter((p) => p.t0 <= start && p.t1 >= end)",
     "new": "present.filter((p) => p.t1 >= end)",
     "tests": [
-      "test/lw1_livingWorld.test.js"
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
     ],
     "note": "LW-TALK (re-aimed by content): the law in its new home."
   },
@@ -418,7 +418,7 @@
     "old": "    const n = here.length - i === 3 ? 3 : 2;",
     "new": "    const n = 2;",
     "tests": [
-      "test/lw1_livingWorld.test.js"
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
     ]
   },
   {
@@ -427,7 +427,7 @@
     "old": "export const TALK_SHARE = 0.75;",
     "new": "export const TALK_SHARE = 0.7;",
     "tests": [
-      "test/lwtalk_town.test.js"
+      "test/systems/livingWorld/lwtalk_town.test.js"
     ],
     "note": "LW-TALK (re-aimed by content): the share a slot's now (TALK_SHARE 0.75 of exchanges), pinned in lwtalk_town."
   },
@@ -437,7 +437,7 @@
     "old": "const who = circle.members[(at.k + (index % 2 ? 1 + ((index - 1) >> 1) % (n - 1) : 0)) % n];",
     "new": "const who = circle.members[0];",
     "tests": [
-      "test/lw1_livingWorld.test.js"
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
     ],
     "note": "LW-TALK (re-aimed by content): the law in its new home."
   },
@@ -447,7 +447,7 @@
     "old": "      const x = c.x + Math.sin(b) * (CIRCLE_APART / 2), z = c.z + Math.cos(b) * (CIRCLE_APART / 2);",
     "new": "      const x = c.x + Math.sin(b) * CIRCLE_APART, z = c.z + Math.cos(b) * CIRCLE_APART;",
     "tests": [
-      "test/lw1_livingWorld.test.js"
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
     ]
   },
   {
@@ -456,7 +456,7 @@
     "old": "const s = ctx[k] ? String(ctx[k]) : TOKEN_FALLBACK[/** @type {keyof typeof TOKEN_FALLBACK} */ (k)] ?? '';",
     "new": "const s = ctx[k] ? String(ctx[k]) : '';",
     "tests": [
-      "test/lw1_livingWorld.test.js"
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
     ]
   },
   {
@@ -465,7 +465,7 @@
     "old": "  for (const j of new Set(jobs)) { const p = JOB_TALKS[/** @type {keyof typeof JOB_TALKS} */ (j)]; if (p) pools.push(p); }",
     "new": "  void jobs;",
     "tests": [
-      "test/lw1_livingWorld.test.js"
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
     ],
     "note": "LW-TALK (re-aimed by content): the law in its new home."
   },
@@ -475,7 +475,7 @@
     "old": "      if (kind === 'talk') { if (e.talked === day) delta = 0; else e.talked = day; }",
     "new": "      if (kind === 'talk') { e.talked = day; }",
     "tests": [
-      "test/lw1_livingWorld.test.js"
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
     ]
   },
   {
@@ -484,7 +484,7 @@
     "old": "    return e.r > 0 ? Math.max(0, e.r - ease) : Math.min(0, e.r + ease);",
     "new": "    return e.r > 0 ? e.r - ease : e.r + ease;",
     "tests": [
-      "test/lw1_livingWorld.test.js"
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
     ]
   },
   {
@@ -493,7 +493,7 @@
     "old": "  if (record && typeof record === 'object' && record.v === 1 && record.people && typeof record.people === 'object') {",
     "new": "  if (record && typeof record === 'object' && record.people && typeof record.people === 'object') {",
     "tests": [
-      "test/lw1_livingWorld.test.js"
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
     ]
   },
   {
@@ -502,7 +502,7 @@
     "old": "    if (map.size <= RELATIONS_MAX) return;",
     "new": "    return;",
     "tests": [
-      "test/lw1_livingWorld.test.js"
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
     ]
   },
   {
@@ -511,7 +511,7 @@
     "old": "export const ENEMY_AT = -40;",
     "new": "export const ENEMY_AT = -45;",
     "tests": [
-      "test/lw1_livingWorld.test.js"
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
     ]
   },
   {
@@ -520,7 +520,7 @@
     "old": "  saved: 35,      // their fight won with them standing",
     "new": "  saved: 30,      // their fight won with them standing",
     "tests": [
-      "test/lw1_livingWorld.test.js"
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
     ]
   }
 ]

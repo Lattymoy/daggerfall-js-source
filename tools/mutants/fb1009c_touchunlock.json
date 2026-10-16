@@ -5,7 +5,7 @@
     "old": "      if (held || quiet() || fingered() || nowMs() - lastRealEscape < REAL_ESCAPE_MS + ESCAPE_DELIVERY_MS) return;",
     "new": "      if (held || quiet() || nowMs() - lastRealEscape < REAL_ESCAPE_MS + ESCAPE_DELIVERY_MS) return;",
     "tests": [
-      "test/fb1009c_touchunlock.test.js"
+      "test/player/fb1009c_touchunlock.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    for (const t of TOUCH_TYPES) document.addEventListener?.(t, onTouch, { capture: true, passive: true });\n",
     "new": "",
     "tests": [
-      "test/fb1009c_touchunlock.test.js"
+      "test/player/fb1009c_touchunlock.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  const fingered = () => nowMs() - lastTouch < TOUCH_UNLOCK_MS;",
     "new": "  const fingered = () => lastTouch > -Infinity;",
     "tests": [
-      "test/fb1009c_touchunlock.test.js"
+      "test/player/fb1009c_touchunlock.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "      for (const t of TOUCH_TYPES) document.removeEventListener?.(t, onTouch, true);\n",
     "new": "",
     "tests": [
-      "test/fb1009c_touchunlock.test.js"
+      "test/player/fb1009c_touchunlock.test.js"
     ]
   }
 ]

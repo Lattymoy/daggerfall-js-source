@@ -12,12 +12,12 @@
 //
 // Now the arrow is laid at boot, no data needed, on the CLASSIC skin (GrimoireUI is the classic skin under a pack and
 // ships no cursor of its own: DFU's arrow, as DFU shows it). A RULE over every element, !important, as Plus's gauntlet
-// is (ui/plusCursor.js): a hardware cursor is the whole screen's, and the inline cursor on <html> lost to every panel's
+// is (ui/plus/plusCursor.js): a hardware cursor is the whole screen's, and the inline cursor on <html> lost to every panel's
 // own `cursor: pointer` - the chat, the social panel, a button - which showed the OS hand. A text field keeps its caret,
 // and a canvas a controller hid the pointer on (ui/gamepadInput.js) keeps it hidden. Enhanced Plus wears its gauntlet.
 // NEVER TRAPS: the rule names `auto` after the arrow - an arrow that will not load is the OS's.
 //
-// A LEAF on the boot path (test/boot2.test.js): the skin and the root are systems/ modules already on the entry's reach.
+// A LEAF on the boot path (test/render/boot2.test.js): the skin and the root are systems/ modules already on the entry's reach.
 
 import { isEnhanced } from '../systems/uiSkin.js';
 import { APP_ROOT } from '../systems/appRoot.js';

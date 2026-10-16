@@ -5,7 +5,7 @@
     "old": "const cl = player.mantling ? 3 : player.hanging ? 1 : player.onWall",
     "new": "const cl = player.mantling ? 3 : player.hanging ? 2 : player.onWall",
     "tests": [
-      "test/climb5.test.js"
+      "test/net/climb5.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": ": player.onWall || player.climb?.isClimbing ? 2 : 0;",
     "new": ": player.onWall ? 2 : 0;",
     "tests": [
-      "test/climb5.test.js"
+      "test/net/climb5.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "const out = Number.isFinite(cw) ? { cl, cw: Math.round(cw * 1000) / 1000 || 0 } : { cl };",
     "new": "const out = { cl };",
     "tests": [
-      "test/climb5.test.js"
+      "test/net/climb5.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "{ cl, cw: Math.round(cw * 1000) / 1000 || 0 }",
     "new": "{ cl, cw: Math.round(cw * 1000) / 1000 }",
     "tests": [
-      "test/climb5.test.js"
+      "test/net/climb5.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "if (n) return Math.atan2(-n[0], -n[2]);",
     "new": "if (n) return Math.atan2(n[0], n[2]);",
     "tests": [
-      "test/climb5.test.js"
+      "test/net/climb5.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "return dx * dx + dz * dz > 1e-6 ? Math.atan2(dx, dz) : null;",
     "new": "return dx * dx + dz * dz > 1e-6 ? Math.atan2(-dx, -dz) : null;",
     "tests": [
-      "test/climb5.test.js"
+      "test/net/climb5.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "const k = 1 - Math.exp(-Math.max(0, dt) / BODY_TURN_TAU);",
     "new": "const k = 1;",
     "tests": [
-      "test/climb5.test.js"
+      "test/net/climb5.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "this._bodyYawOff = Math.abs(off) < 1e-3 ? null : off;",
     "new": "this._bodyYawOff = off;",
     "tests": [
-      "test/climb5.test.js"
+      "test/net/climb5.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "this._bodyYaw = from + wrap(face - from) * k;",
     "new": "this._bodyYaw = from + wrap(viewYaw - from) * k;",
     "tests": [
-      "test/climb5.test.js"
+      "test/net/climb5.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "    ...climbOf(cl, cw, ck, cy, cd),\n",
     "new": "",
     "tests": [
-      "test/climb5.test.js"
+      "test/net/climb5.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "const c = uint(cl, 3) ?? 0;",
     "new": "const c = uint(cl, 255) ?? 0;",
     "tests": [
-      "test/climb5.test.js"
+      "test/net/climb5.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "const out = finite(cw) ? { cl: c, cw: wrapAngle(cw) } : { cl: c };",
     "new": "const out = finite(cw) ? { cl: c, cw } : { cl: c };",
     "tests": [
-      "test/climb5.test.js"
+      "test/net/climb5.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "const out = finite(cw) ? { cl: c, cw: wrapAngle(cw) } : { cl: c };",
     "new": "const out = cw !== undefined ? { cl: c, cw: wrapAngle(cw) } : { cl: c };",
     "tests": [
-      "test/climb5.test.js"
+      "test/net/climb5.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "|| (a.cl | 0) !== (b.cl | 0) || ((a.cl | 0) > 0 && Math.abs(wrapAngle((a.cw ?? 0) - (b.cw ?? 0))) > eps)   // CLIMB5",
     "new": "|| ((a.cl | 0) > 0 && Math.abs(wrapAngle((a.cw ?? 0) - (b.cw ?? 0))) > eps)   // CLIMB5",
     "tests": [
-      "test/climb5.test.js"
+      "test/net/climb5.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "|| (a.cl | 0) !== (b.cl | 0) || ((a.cl | 0) > 0 && Math.abs(wrapAngle((a.cw ?? 0) - (b.cw ?? 0))) > eps)   // CLIMB5",
     "new": "|| (a.cl | 0) !== (b.cl | 0)   // CLIMB5",
     "tests": [
-      "test/climb5.test.js"
+      "test/net/climb5.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "Math.abs(wrapAngle((a.cw ?? 0) - (b.cw ?? 0))) > eps",
     "new": "Math.abs((a.cw ?? 0) - (b.cw ?? 0)) > eps",
     "tests": [
-      "test/climb5.test.js"
+      "test/net/climb5.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "...(to.cl ? { cl: to.cl, ",
     "new": "...(false ? { cl: to.cl, ",
     "tests": [
-      "test/climb5.test.js"
+      "test/net/climb5.test.js"
     ]
   },
   {
@@ -158,160 +158,160 @@
     "old": "{ cl: to.cl, ...(Number.isFinite(to.cw) ? { cw: to.cw } : {}),",
     "new": "{ cl: to.cl,",
     "tests": [
-      "test/climb5.test.js"
+      "test/net/climb5.test.js"
     ]
   },
   {
     "name": "CLIMB5-peer-climbing-off-the-wall-too",
-    "file": "src/net/peerClimb.js",
+    "file": "src/net/peer/peerClimb.js",
     "old": "export const peerClimbing = (shown) => (shown?.cl | 0) > 0;",
     "new": "export const peerClimbing = (shown) => (shown?.cl | 0) >= 0;",
     "tests": [
-      "test/climb5.test.js"
+      "test/net/climb5.test.js"
     ]
   },
   {
     "name": "CLIMB5-peer-yaw-takes-a-missing-facing",
-    "file": "src/net/peerClimb.js",
+    "file": "src/net/peer/peerClimb.js",
     "old": "return peerClimbing(shown) && Number.isFinite(shown.cw) ? shown.cw : shown?.yaw;",
     "new": "return peerClimbing(shown) ? shown.cw : shown?.yaw;",
     "tests": [
-      "test/climb5.test.js"
+      "test/net/climb5.test.js"
     ]
   },
   {
     "name": "CLIMB5-peer-walks-on-the-wall",
-    "file": "src/net/peerClimb.js",
+    "file": "src/net/peer/peerClimb.js",
     "old": "export const peerMoving = (shown) => !!shown?.mv && !peerClimbing(shown) && !shown?.st;",
     "new": "export const peerMoving = (shown) => !!shown?.mv && !shown?.st;",
     "tests": [
-      "test/climb5.test.js"
+      "test/net/climb5.test.js"
     ]
   },
   {
     "name": "CLIMB5-cues-a-catch-onto-a-face",
-    "file": "src/net/peerClimb.js",
+    "file": "src/net/peer/peerClimb.js",
     "old": "if (!was) return now === HANG ?",
     "new": "if (!was) return now === FACE ?",
     "tests": [
-      "test/climb5.test.js"
+      "test/net/climb5.test.js"
     ]
   },
   {
     "name": "CLIMB5-cues-a-let-go-off-a-move",
-    "file": "src/net/peerClimb.js",
+    "file": "src/net/peer/peerClimb.js",
     "old": "if (!now) return was === MOVE ? [] : [['step', C.LET_GO]];",
     "new": "if (!now) return [['step', C.LET_GO]];",
     "tests": [
-      "test/climb5.test.js"
+      "test/net/climb5.test.js"
     ]
   },
   {
     "name": "CLIMB5-cues-the-haul-weights-swapped",
-    "file": "src/net/peerClimb.js",
+    "file": "src/net/peer/peerClimb.js",
     "old": "C.PULL * (was === HANG ? 1 : 0.7)",
     "new": "C.PULL * (was === HANG ? 0.7 : 1)",
     "tests": [
-      "test/climb5.test.js"
+      "test/net/climb5.test.js"
     ]
   },
   {
     "name": "CLIMB5-sounds-replay-an-old-climb-on-first-sight",
-    "file": "src/net/peerClimb.js",
+    "file": "src/net/peer/peerClimb.js",
     "old": "const s = this.peers.get(id);\n    if (!s) { this.peers.set(id, { cl, at: at ? [at[0], at[1], at[2]] : null, climb: 0, shimmy: 0 }); return; }",
     "new": "let s = this.peers.get(id);\n    if (!s) { s = { cl: 0, at: at ? [at[0], at[1], at[2]] : null, climb: 0, shimmy: 0 }; this.peers.set(id, s); }",
     "tests": [
-      "test/climb5.test.js"
+      "test/net/climb5.test.js"
     ]
   },
   {
     "name": "CLIMB5-sounds-heard-out-of-earshot",
-    "file": "src/net/peerClimb.js",
+    "file": "src/net/peer/peerClimb.js",
     "old": "if (on && heard && at && cueOk) {",
     "new": "if (on && at && cueOk) {",
     "tests": [
-      "test/climb5.test.js"
+      "test/net/climb5.test.js"
     ]
   },
   {
     "name": "CLIMB5-sounds-ignore-the-ports-switch",
-    "file": "src/net/peerClimb.js",
+    "file": "src/net/peer/peerClimb.js",
     "old": "const on = this.on() && !!this.audio?.play3d;",
     "new": "const on = !!this.audio?.play3d;",
     "tests": [
-      "test/climb5.test.js"
+      "test/net/climb5.test.js"
     ]
   },
   {
     "name": "CLIMB5-sounds-a-hand-per-span-up-a-face",
-    "file": "src/net/peerClimb.js",
+    "file": "src/net/peer/peerClimb.js",
     "old": "s.climb += d / FEEL.REACH;",
     "new": "s.climb += d / FEEL.SHIMMY_SPAN;",
     "tests": [
-      "test/climb5.test.js"
+      "test/net/climb5.test.js"
     ]
   },
   {
     "name": "CLIMB5-sounds-a-hand-per-reach-along-a-lip",
-    "file": "src/net/peerClimb.js",
+    "file": "src/net/peer/peerClimb.js",
     "old": "s.shimmy += d / FEEL.SHIMMY_SPAN;",
     "new": "s.shimmy += d / FEEL.REACH;",
     "tests": [
-      "test/climb5.test.js"
+      "test/net/climb5.test.js"
     ]
   },
   {
     "name": "CLIMB5-sounds-a-snap-is-a-climb",
-    "file": "src/net/peerClimb.js",
+    "file": "src/net/peer/peerClimb.js",
     "old": "if (d > 1e-5 && d < 1) {",
     "new": "if (d > 1e-5) {",
     "tests": [
-      "test/climb5.test.js"
+      "test/net/climb5.test.js"
     ]
   },
   {
     "name": "CLIMB5-sounds-never-forget",
-    "file": "src/net/peerClimb.js",
+    "file": "src/net/peer/peerClimb.js",
     "old": "forget(id) { this.peers.delete(id); }",
     "new": "forget(id) { void id; }",
     "tests": [
-      "test/climb5.test.js"
+      "test/net/climb5.test.js"
     ]
   },
   {
     "name": "CLIMB5-sounds-rebase-keeps-the-old-frame",
-    "file": "src/net/peerClimb.js",
+    "file": "src/net/peer/peerClimb.js",
     "old": "rebase() { for (const s of this.peers.values()) s.at = null; }",
     "new": "rebase() {}",
     "tests": [
-      "test/climb5.test.js"
+      "test/net/climb5.test.js"
     ]
   },
   {
     "name": "CLIMB5-body-camera-grounded-on-the-wall",
-    "file": "src/net/peerBodies.js",
+    "file": "src/net/peer/peerBodies.js",
     "old": "  c.move.grounded = !peerClimbing(shown);",
     "new": "  c.move.grounded = true;",
     "tests": [
-      "test/climb5.test.js"
+      "test/net/climb5.test.js"
     ]
   },
   {
     "name": "CLIMB5-body-camera-walks-on-the-wall",
-    "file": "src/net/peerBodies.js",
+    "file": "src/net/peer/peerBodies.js",
     "old": "const moving = peerMoving(shown);   // CLIMB5: a shimmy along a lip is no walk",
     "new": "const moving = !!shown.mv;   // CLIMB5: a shimmy along a lip is no walk",
     "tests": [
-      "test/climb5.test.js"
+      "test/net/climb5.test.js"
     ]
   },
   {
     "name": "CLIMB5-body-eases-to-the-camera",
-    "file": "src/net/peerBodies.js",
+    "file": "src/net/peer/peerBodies.js",
     "old": "const want = peerBodyYaw(peer.shown);",
     "new": "const want = peer.shown.yaw;",
     "tests": [
-      "test/climb5.test.js"
+      "test/net/climb5.test.js"
     ]
   },
   {
@@ -320,7 +320,7 @@
     "old": "const moving = peerMoving(shown);   // CLIMB5: a shimmy along a lip is no walk",
     "new": "const moving = !!shown.mv;   // CLIMB5: a shimmy along a lip is no walk",
     "tests": [
-      "test/climb5.test.js"
+      "test/net/climb5.test.js"
     ]
   },
   {
@@ -329,7 +329,7 @@
     "old": "const face = peerBodyYaw(shown);   // CLIMB5: on the wall, facing it",
     "new": "const face = shown.yaw;   // CLIMB5: on the wall, facing it",
     "tests": [
-      "test/climb5.test.js"
+      "test/net/climb5.test.js"
     ]
   },
   {
@@ -338,8 +338,8 @@
     "old": "standingStill: !peerMoving(shown)",
     "new": "standingStill: !shown.mv",
     "tests": [
-      "test/climb5.test.js",
-      "test/peerstride.test.js"
+      "test/net/climb5.test.js",
+      "test/net/peerstride.test.js"
     ]
   },
   {
@@ -348,7 +348,7 @@
     "old": "      this._syncClimbSound(peer, toScene, eye);   // CLIMB5\n",
     "new": "",
     "tests": [
-      "test/climb5.test.js"
+      "test/net/climb5.test.js"
     ]
   },
   {
@@ -357,7 +357,7 @@
     "old": "getPref('peerFootsteps') !== false && peerInEarshot(f, eye));",
     "new": "peerInEarshot(f, eye));",
     "tests": [
-      "test/climb5.test.js"
+      "test/net/climb5.test.js"
     ]
   },
   {
@@ -366,7 +366,7 @@
     "old": "for (const id of [...this._climbSounds.peers.keys()]) if (!seen.has(id)) this._climbSounds.forget(id);",
     "new": "",
     "tests": [
-      "test/climb5.test.js"
+      "test/net/climb5.test.js"
     ]
   },
   {
@@ -375,36 +375,36 @@
     "old": "    this._climbSounds.rebase();   // CLIMB5: and the climb's last places - the shift is no reach up the wall\n",
     "new": "",
     "tests": [
-      "test/climb5.test.js",
-      "test/peerstride.test.js"
+      "test/net/climb5.test.js",
+      "test/net/peerstride.test.js"
     ]
   },
   {
     "name": "CLIMB5-walker-stands-a-walk-on-the-wall",
-    "file": "src/net/peerRiders.js",
+    "file": "src/net/peer/peerRiders.js",
     "old": "const standing = (pose) => chooseTable({ stopped: !peerMoving(pose)",
     "new": "const standing = (pose) => chooseTable({ stopped: !pose.mv",
     "tests": [
-      "test/climb5.test.js"
+      "test/net/climb5.test.js"
     ]
   },
   {
     "name": "CLIMB5-walker-faces-the-camera",
-    "file": "src/net/peerRiders.js",
+    "file": "src/net/peer/peerRiders.js",
     "old": "const yaw = peerBodyYaw(pose), view = viewOf(yaw, feet, eye);   // CLIMB5: facing the wall it climbs",
     "new": "const yaw = pose.yaw, view = viewOf(yaw, feet, eye);   // CLIMB5: facing the wall it climbs",
     "tests": [
-      "test/climb5.test.js"
+      "test/net/climb5.test.js"
     ],
     "note": "SPRITE-FACE (re-aimed by content): the facing moved off the figure to facing() - the picture's."
   },
   {
     "name": "CLIMB5-walker-strides-on-the-wall",
-    "file": "src/net/peerRiders.js",
+    "file": "src/net/peer/peerRiders.js",
     "old": "spriteStride(peerMoving(pose) && !r.shot,",
     "new": "spriteStride(!!pose.mv && !r.shot,",
     "tests": [
-      "test/climb5.test.js"
+      "test/net/climb5.test.js"
     ]
   },
   {
@@ -413,8 +413,8 @@
     "old": "      ...climbPoseOf(player),   // CLIMB5",
     "new": "      // CLIMB5",
     "tests": [
-      "test/climb5.test.js",
-      "test/mac7.test.js"
+      "test/net/climb5.test.js",
+      "test/net/mac7.test.js"
     ]
   },
   {
@@ -423,8 +423,8 @@
     "old": "mwViewDrawBody(canvas, { proj, view, eye, feet: player.bodyFeetAt(), yaw: player.bodyYawFor(cam.yaw), viewYaw: cam.yaw });",
     "new": "mwViewDrawBody(canvas, { proj, view, eye, feet: player.bodyFeetAt(), yaw: cam.yaw, viewYaw: cam.yaw });",
     "tests": [
-      "test/climb5.test.js",
-      "test/prbow1b_followups.test.js"
+      "test/net/climb5.test.js",
+      "test/formats/morrowind/prbow1b_followups.test.js"
     ]
   },
   {
@@ -433,16 +433,16 @@
     "old": "    const n = this._wall?.normal ?? m?.hang?.normal ?? m?.wall?.normal ?? null;",
     "new": "    const n = this._wall?.normal ?? null;",
     "tests": [
-      "test/climb5.test.js"
+      "test/net/climb5.test.js"
     ]
   },
   {
     "name": "CLIMB5-sounds-rhythm-carried-across-a-change",
-    "file": "src/net/peerClimb.js",
+    "file": "src/net/peer/peerClimb.js",
     "old": "    if (cl !== s.cl) { s.climb = 0; s.shimmy = 0; }\n",
     "new": "",
     "tests": [
-      "test/climb5.test.js"
+      "test/net/climb5.test.js"
     ]
   },
   {
@@ -451,7 +451,7 @@
     "old": "getPref('peerFootsteps') !== false && peerInEarshot(f, eye));",
     "new": "getPref('peerFootsteps') !== false);",
     "tests": [
-      "test/climb5.test.js"
+      "test/net/climb5.test.js"
     ]
   }
 ]

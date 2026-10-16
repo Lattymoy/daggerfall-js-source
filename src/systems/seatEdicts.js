@@ -72,7 +72,7 @@ export function createSeatEdicts(host) {
     bountyAt: (px, py) => bountyAt(host.regionAt(px, py), [px, py]),
     /** SEASON1 part two (Seats-Arc 9.3): whether an Orc Raid is the Tide at map pixel (`px`, `py`) - its camps doubled. */
     orcsAt: (px, py) => (host.tideAt?.(host.regionAt(px, py)) ?? 'calm') === 'orcs',
-    /** A camp cleared by this player - `site` its id (src/world/wodShared.js wodSiteId, naming its pixel), claimed where a
+    /** A camp cleared by this player - `site` its id (src/world/worldOfDaggerfall/wodShared.js wodSiteId, naming its pixel), claimed where a
      *  Bounty rules (and, SEASON1 part two, where an Orc Raid is the Tide - its influence). Answers the Drakes paid. */
     async campCleared(site) {
       const pixel = typeof site === 'string' ? bountySitePixel(site) : null;

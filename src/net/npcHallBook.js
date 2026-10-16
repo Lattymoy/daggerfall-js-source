@@ -22,9 +22,9 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { BUILDING_TYPES } from '../world/buildingNames.js';
-import { GUILD_FACTION_IDS } from '../systems/guildFactions.js';
-import { guildGroupOfFaction } from '../systems/guilds.js';
-import { createGuildForGroup } from '../systems/guildVariants.js';
+import { GUILD_FACTION_IDS } from '../systems/guild/guildFactions.js';
+import { guildGroupOfFaction } from '../systems/guild/guilds.js';
+import { createGuildForGroup } from '../systems/guild/guildVariants.js';
 import { isRollFaction, hallReportOf } from './npcChapterLaw.js';
 
 /** Where this device keeps the day it last reported each town: { [mapId]: UTC day } - HALL_DONE past the day for a town

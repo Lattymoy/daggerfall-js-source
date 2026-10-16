@@ -5,8 +5,8 @@
     "old": "export const AUCTION_GRACE_S = 7 * 86_400;",
     "new": "export const AUCTION_GRACE_S = 0;",
     "tests": [
-      "test/audit31_law.test.js",
-      "test/audit31_service.test.js"
+      "test/net/audit31_law.test.js",
+      "test/net/audit31_service.test.js"
     ]
   },
   {
@@ -15,7 +15,7 @@
     "old": "&& takesQuality(/** @type {any} */ (recipeById(recipeId)));",
     "new": "&& !!recipeById(recipeId);",
     "tests": [
-      "test/audit31_law.test.js"
+      "test/net/audit31_law.test.js"
     ]
   },
   {
@@ -24,8 +24,8 @@
     "old": "export const commissionable = (recipeId) => pieceListable(recipeId) && !commissionUnyielded(recipeId);",
     "new": "export const commissionable = (recipeId) => pieceListable(recipeId);",
     "tests": [
-      "test/audit31_law.test.js",
-      "test/audit31_service.test.js"
+      "test/net/audit31_law.test.js",
+      "test/net/audit31_service.test.js"
     ]
   },
   {
@@ -34,7 +34,7 @@
     "old": "(Object.hasOwn(WRIT_POWERS, power) ? WRIT_POWERS[power] : [])",
     "new": "(WRIT_POWERS[power] ?? [])",
     "tests": [
-      "test/audit31_law.test.js"
+      "test/net/audit31_law.test.js"
     ]
   },
   {
@@ -43,7 +43,7 @@
     "old": "&& units <= ownDeposit);",
     "new": "&& units <= ownDeposit + 1);",
     "tests": [
-      "test/audit31_law.test.js"
+      "test/net/audit31_law.test.js"
     ]
   },
   {
@@ -52,7 +52,7 @@
     "old": "export const writDeliverMay = (rank) => rank == null || !writMay(rank, 'storesWithdraw');",
     "new": "export const writDeliverMay = (rank) => rank == null || rank !== 0;",
     "tests": [
-      "test/audit31_law.test.js"
+      "test/net/audit31_law.test.js"
     ]
   },
   {
@@ -61,7 +61,7 @@
     "old": "  if (cur >= max) return WEAR_WHOLE;\n  return Math.max(1, Math.min(WEAR_WHOLE - 1,",
     "new": "  return Math.max(1, Math.min(WEAR_WHOLE,",
     "tests": [
-      "test/audit31_client.test.js"
+      "test/net/audit31_client.test.js"
     ]
   },
   {
@@ -70,7 +70,7 @@
     "old": "    if (!Number(a.live) || !room) {",
     "new": "    if (!room) {",
     "tests": [
-      "test/audit31_service.test.js"
+      "test/net/audit31_service.test.js"
     ]
   },
   {
@@ -79,7 +79,7 @@
     "old": "        WHERE provenance = (SELECT provenance FROM market_auctions WHERE id = ?1 AND cn = ?2)\n          AND EXISTS (SELECT 1 ${won})`)",
     "new": "        WHERE provenance = (SELECT provenance FROM market_auctions WHERE id = ?1 AND cn = ?2)`)",
     "tests": [
-      "test/audit31_service.test.js"
+      "test/net/audit31_service.test.js"
     ],
     "equivalent": true,
     "why": "the sold close runs only for a standing bid read live (the decision asks it again, and the bid is marked won in the same batch before the owner moves) - a bid gone between the read and the batch leaves the decision unwritten and every later statement keyed on its cn; the guard keeps the owner never NULL whatever order a later change puts the statements in"
@@ -90,7 +90,7 @@
     "old": "OR ${sellerBalanceSql('a')} + ${leastNetSql('high')} <= ?2 OR ends_at + ?3 <= ?1)\n",
     "new": "OR ${sellerBalanceSql('a')} + ${leastNetSql('high')} <= ?2 OR (ends_at + ?3 <= ?1 AND 0))\n",
     "tests": [
-      "test/audit31_service.test.js"
+      "test/net/audit31_service.test.js"
     ],
     "note": "GATHER-SPEED/MARKET-SPEED (PIN MOVED): re-aimed by content - the reads batched."
   },
@@ -100,7 +100,7 @@
     "old": "        db.prepare(`UPDATE market_bids SET state = 'void' WHERE id = (SELECT high_bid FROM market_auctions WHERE id = ?1 AND cn = ?2) AND state = 'high'`)",
     "new": "        db.prepare(`UPDATE market_bids SET state = 'void' WHERE id = (SELECT high_bid FROM market_auctions WHERE id = ?1 AND cn = ?2) AND state = 'none'`)",
     "tests": [
-      "test/audit31_service.test.js"
+      "test/net/audit31_service.test.js"
     ]
   },
   {
@@ -109,7 +109,7 @@
     "old": "  return { error: 'auction-moved' };",
     "new": "  return { error: 'market-gone' };",
     "tests": [
-      "test/audit31_service.test.js"
+      "test/net/audit31_service.test.js"
     ]
   },
   {
@@ -118,7 +118,7 @@
     "old": "WHERE seller = ?1 AND state = 'open' AND ends_at > ${now}))`;",
     "new": "WHERE seller = ?1 AND state = 'open' AND ${now} = ${now}))`;",
     "tests": [
-      "test/audit31_service.test.js"
+      "test/net/audit31_service.test.js"
     ]
   },
   {
@@ -127,7 +127,7 @@
     "old": "OR b.at > ?2 OR a.closed_at > ?2)",
     "new": "OR b.at > ?2)",
     "tests": [
-      "test/audit31_service.test.js"
+      "test/net/audit31_service.test.js"
     ]
   },
   {
@@ -136,7 +136,7 @@
     "old": "if (!bidOk(amount)) return { error: 'bad-bid' };",
     "new": "if (!bidOk(amount)) return { error: 'bad-price' };",
     "tests": [
-      "test/audit31_service.test.js"
+      "test/net/audit31_service.test.js"
     ]
   },
   {
@@ -145,7 +145,7 @@
     "old": "  const p = await db.prepare('SELECT owner, listed, bought_with FROM products WHERE provenance = ?1').bind(provenance).first();\n  if (!p) return { error: 'market-no-record' };",
     "new": "  const p = await db.prepare('SELECT owner, listed, bought_with FROM products WHERE provenance = ?1').bind(provenance).first();\n  if (!p) return { error: 'market-not-yours' };",
     "tests": [
-      "test/prof5_service.test.js"
+      "test/net/prof5_service.test.js"
     ]
   },
   {
@@ -154,7 +154,7 @@
     "old": "  return results.every((r) => writDeliverMay(Number(r.rank)));",
     "new": "  return true;",
     "tests": [
-      "test/audit31_service.test.js"
+      "test/net/audit31_service.test.js"
     ]
   },
   {
@@ -163,7 +163,7 @@
     "old": "        AND NOT EXISTS (SELECT 1 FROM guild_members WHERE player = ?1 AND guild_id = w.guild_id AND rank IN (${TAKERS_SQL}))",
     "new": "        AND ?1 = ?1",
     "tests": [
-      "test/audit31_service.test.js"
+      "test/net/audit31_service.test.js"
     ]
   },
   {
@@ -172,8 +172,8 @@
     "old": "  if (kind === 'withdraw' && !guildTakeMay(rank, units, await ownDeposit(db, g, key, me, character))) return { error: 'guild-stores-mine' };",
     "new": "  if (kind === 'withdraw' && rank > 1 && false) return { error: 'guild-stores-mine' };",
     "tests": [
-      "test/audit31_service.test.js",
-      "test/prof6_service.test.js"
+      "test/net/audit31_service.test.js",
+      "test/net/prof6_service.test.js"
     ]
   },
   {
@@ -182,7 +182,7 @@
     "old": "        AND (?9 IN (${TAKERS_SQL})\n          OR COALESCE(",
     "new": "        AND (?9 = ?9\n          OR COALESCE(",
     "tests": [
-      "test/audit31_service.test.js"
+      "test/net/audit31_service.test.js"
     ]
   },
   {
@@ -191,7 +191,7 @@
     "old": "        AND (?19 IS NOT NULL OR ${guildHeldSql('?4', '?8')} + ${reservedSql('?4', '?8', '?12')} + ?9 <= ?18)",
     "new": "        AND (?19 IS NOT NULL OR (?18 = ?18 AND ?9 = ?9))",
     "tests": [
-      "test/audit31_service.test.js"
+      "test/net/audit31_service.test.js"
     ]
   },
   {
@@ -200,7 +200,7 @@
     "old": "        AND (?19 IS NOT NULL OR ${guildHeldSql('?4', '?8')} + ${reservedSql('?4', '?8', '?12')} + ?9 <= ?18)",
     "new": "        AND (?19 IS NOT NULL OR ${guildHeldSql('?4', '?8')} + ?9 <= ?18)",
     "tests": [
-      "test/audit31_service.test.js"
+      "test/net/audit31_service.test.js"
     ]
   },
   {
@@ -209,7 +209,7 @@
     "old": "        AND (SELECT COUNT(*) FROM guild_writs WHERE guild_id = ?4 AND state = 'open' AND expires_at > ?12) < ?17",
     "new": "        AND (SELECT COUNT(*) FROM guild_writs WHERE guild_id = ?4 AND state = 'open') < ?17",
     "tests": [
-      "test/audit31_service.test.js"
+      "test/net/audit31_service.test.js"
     ]
   },
   {
@@ -218,7 +218,7 @@
     "old": "        AND (SELECT COUNT(*) FROM commissions WHERE crafter = ?4 AND state = 'open' AND expires_at > ?9) < ?14",
     "new": "        AND (SELECT COUNT(*) FROM commissions WHERE crafter = ?4 AND state = 'open') < ?14",
     "tests": [
-      "test/audit31_service.test.js"
+      "test/net/audit31_service.test.js"
     ]
   },
   {
@@ -227,7 +227,7 @@
     "old": "WHERE (poster = ?1 OR crafter = ?1) AND state = 'open' AND expires_at <= ?2`)",
     "new": "WHERE poster = ?1 AND state = 'open' AND expires_at <= ?2`)",
     "tests": [
-      "test/audit31_service.test.js"
+      "test/net/audit31_service.test.js"
     ]
   },
   {
@@ -236,7 +236,7 @@
     "old": "      OR (c.crafter = ?1 AND (c.state = 'open' OR c.closed_at > ?2))",
     "new": "      OR (c.crafter = ?1 AND (c.state = 'open' OR (c.state = 'filled' AND c.closed_at > ?2)))",
     "tests": [
-      "test/audit31_service.test.js"
+      "test/net/audit31_service.test.js"
     ]
   },
   {
@@ -245,7 +245,7 @@
     "old": "  if (!commissionable(recipe)) return { error: pieceListable(recipe) && commissionUnyielded(recipe) ? 'commission-unyielded' : 'commission-recipe' };",
     "new": "  if (!commissionable(recipe)) return { error: 'commission-recipe' };",
     "tests": [
-      "test/audit31_service.test.js"
+      "test/net/audit31_service.test.js"
     ]
   },
   {
@@ -254,7 +254,7 @@
     "old": "  if (await db.prepare('SELECT 1 FROM market_deliveries WHERE provenance = ?1 AND collected = 0').bind(provenance).first()) return { error: 'market-uncollected' };\n",
     "new": "",
     "tests": [
-      "test/audit31_service.test.js"
+      "test/net/audit31_service.test.js"
     ]
   },
   {
@@ -263,7 +263,7 @@
     "old": "      AND EXISTS (SELECT 1 FROM prof_crafts WHERE player = ?1 AND (provenance = p.provenance OR provenance2 = p.provenance))",
     "new": "      AND ?1 = ?1",
     "tests": [
-      "test/audit31_service.test.js"
+      "test/net/audit31_service.test.js"
     ]
   },
   {
@@ -272,7 +272,7 @@
     "old": "ORDER BY p.quality, p.provenance LIMIT",
     "new": "ORDER BY p.quality DESC, p.provenance LIMIT",
     "tests": [
-      "test/audit31_service.test.js"
+      "test/net/audit31_service.test.js"
     ]
   },
   {
@@ -281,7 +281,7 @@
     "old": "  room: w.seat == null ? Math.max(0, GUILD_STORES_MAX - Number(w.guild_held ?? 0)) : null,",
     "new": "  room: w.seat == null ? GUILD_STORES_MAX : null,",
     "tests": [
-      "test/audit31_service.test.js"
+      "test/net/audit31_service.test.js"
     ]
   },
   {
@@ -290,7 +290,7 @@
     "old": "    writsOpen: true, me: displayName(player),",
     "new": "    writsOpen: false, me: displayName(player),",
     "tests": [
-      "test/audit31_service.test.js"
+      "test/net/audit31_service.test.js"
     ]
   },
   {
@@ -299,7 +299,7 @@
     "old": "material(key) && UNYIELDED.includes(key) ? 'market-unyielded' : 'bad-material'",
     "new": "'bad-material'",
     "tests": [
-      "test/prof6_service.test.js"
+      "test/net/prof6_service.test.js"
     ]
   },
   {
@@ -308,7 +308,7 @@
     "old": "  if (Number(c.region) !== region) return { error: 'commission-elsewhere' };",
     "new": "  if (Number(c.region) !== region) return { error: 'writ-elsewhere' };",
     "tests": [
-      "test/prof6_service.test.js"
+      "test/net/prof6_service.test.js"
     ]
   },
   {
@@ -317,7 +317,7 @@
     "old": "    AND treasury = 0 AND NOT EXISTS (SELECT 1 FROM guild_marks WHERE guild_id = guilds.id AND balance > 0) AND NOT ${guildKeepsSql('guilds.id')}`).bind(key, t).run();",
     "new": "`).bind(key, t).run();",
     "tests": [
-      "test/audit31_service.test.js"
+      "test/net/audit31_service.test.js"
     ]
   },
   {
@@ -326,7 +326,7 @@
     "old": "  ['guild-writ-escrow', (/** @type {string} */ p) => `EXISTS (SELECT 1 FROM guild_writs WHERE",
     "new": "  ['guild-writs', (/** @type {string} */ p) => `EXISTS (SELECT 1 FROM guild_writs WHERE",
     "tests": [
-      "test/audit31_service.test.js"
+      "test/net/audit31_service.test.js"
     ]
   },
   {
@@ -335,7 +335,7 @@
     "old": "    if (!signedIn()) return { ok: false, error: 'no-session' };\n    if (body.provenance",
     "new": "    if (body.provenance",
     "tests": [
-      "test/audit31_client.test.js"
+      "test/net/audit31_client.test.js"
     ]
   },
   {
@@ -344,7 +344,7 @@
     "old": "        if (!account()) return { ok: false, error: 'no-session' };\n",
     "new": "",
     "tests": [
-      "test/audit31_client.test.js"
+      "test/net/audit31_client.test.js"
     ]
   },
   {
@@ -353,7 +353,7 @@
     "old": "        if (kept(r) || slot() !== key) return { ok: false, kept: true, error: r?.error, text: WRIT_KEPT_TEXT };",
     "new": "        if (kept(r)) return { ok: false, kept: true, error: r?.error, text: WRIT_KEPT_TEXT };",
     "tests": [
-      "test/audit31_client.test.js"
+      "test/net/audit31_client.test.js"
     ]
   },
   {
@@ -362,7 +362,7 @@
     "old": "    const k = `${slot()}|${key}`;",
     "new": "    const k = key;",
     "tests": [
-      "test/audit31_client.test.js"
+      "test/net/audit31_client.test.js"
     ]
   },
   {
@@ -371,7 +371,7 @@
     "old": "    const k = `${slot()}|${key}`;",
     "new": "    const k = key;",
     "tests": [
-      "test/audit31_client.test.js"
+      "test/net/audit31_client.test.js"
     ]
   },
   {
@@ -380,7 +380,7 @@
     "old": "      try { market?.told?.(d.balance); } catch { /* the market book's own */ }\n",
     "new": "",
     "tests": [
-      "test/audit31_client.test.js"
+      "test/net/audit31_client.test.js"
     ]
   },
   {
@@ -389,7 +389,7 @@
     "old": "    if (r?.ok && MOVES_MARKS.includes(key.split('|')[0])) { try { market?.forget?.(); }",
     "new": "    if (false) { try { market?.forget?.(); }",
     "tests": [
-      "test/audit31_client.test.js"
+      "test/net/audit31_client.test.js"
     ]
   },
   {
@@ -398,7 +398,7 @@
     "old": "      if (g !== writGen) return book.writs(region, { force: true });   // an act answered while it was read: read again\n",
     "new": "",
     "tests": [
-      "test/audit31_client.test.js"
+      "test/net/audit31_client.test.js"
     ]
   },
   {
@@ -407,7 +407,7 @@
     "old": "      const wk = `${owner}|${region}`;",
     "new": "      const wk = `${region}`;",
     "tests": [
-      "test/audit31_client.test.js"
+      "test/net/audit31_client.test.js"
     ]
   },
   {
@@ -416,7 +416,7 @@
     "old": "'auction-low', 'auction-leading', 'auction-bid-standing',",
     "new": "'auction-low', 'auction-bid-standing',",
     "tests": [
-      "test/audit31_client.test.js"
+      "test/net/audit31_client.test.js"
     ]
   },
   {
@@ -425,7 +425,7 @@
     "old": "      return _busy && _busyKey !== 'settle' ? _busy.then(go, go) : go();",
     "new": "      return go();",
     "tests": [
-      "test/audit31_client.test.js"
+      "test/net/audit31_client.test.js"
     ]
   },
   {
@@ -434,7 +434,7 @@
     "old": "      return _busy && _busyKey !== 'settle' ? _busy.then(go, go) : go();",
     "new": "      return go();",
     "tests": [
-      "test/audit31_client.test.js"
+      "test/net/audit31_client.test.js"
     ]
   },
   {
@@ -443,7 +443,7 @@
     "old": "    if (body.provenance && (keptPieces().has(body.provenance) || holds?.(body.provenance))) return",
     "new": "    if (body.provenance && keptPieces().has(body.provenance)) return",
     "tests": [
-      "test/audit31_client.test.js"
+      "test/net/audit31_client.test.js"
     ]
   },
   {
@@ -452,7 +452,7 @@
     "old": "        if (req?.provenance && (keptPieces().has(req.provenance) || holds?.(req.provenance))) return",
     "new": "        if (req?.provenance && keptPieces().has(req.provenance)) return",
     "tests": [
-      "test/audit31_client.test.js"
+      "test/net/audit31_client.test.js"
     ]
   },
   {
@@ -461,7 +461,7 @@
     "old": "    if (had && !PIECE_GONE.includes(r?.error)) {",
     "new": "    if (had) {",
     "tests": [
-      "test/audit31_client.test.js"
+      "test/net/audit31_client.test.js"
     ]
   },
   {
@@ -470,7 +470,7 @@
     "old": "            if (PIECE_GONE.includes(r?.error)) { try { drop?.(l.item, l.where); }",
     "new": "            if (false) { try { drop?.(l.item, l.where); }",
     "tests": [
-      "test/audit31_client.test.js"
+      "test/net/audit31_client.test.js"
     ]
   },
   {
@@ -479,7 +479,7 @@
     "old": "            if (PIECE_GONE.includes(r?.error)) { try { drop?.(f.item, f.where); }",
     "new": "            if (false) { try { drop?.(f.item, f.where); }",
     "tests": [
-      "test/audit31_client.test.js"
+      "test/net/audit31_client.test.js"
     ]
   },
   {
@@ -488,7 +488,7 @@
     "old": "    if (!piece?.take?.()) return { ok: false, error: 'piece-held' };",
     "new": "    if (!piece?.take?.()) return { ok: false, error: 'bad-provenance' };",
     "tests": [
-      "test/audit31_client.test.js"
+      "test/net/audit31_client.test.js"
     ]
   },
   {
@@ -497,8 +497,8 @@
     "old": " && !pieceKept(it.provenance))\n      .map((item) => ({ item, where: 'pack'",
     "new": ")\n      .map((item) => ({ item, where: 'pack'",
     "tests": [
-      "test/audit31_client.test.js",
-      "test/prof5_client.test.js"
+      "test/net/audit31_client.test.js",
+      "test/net/prof5_client.test.js"
     ]
   },
   {
@@ -507,7 +507,7 @@
     "old": "playerEntity.furnishings, playerEntity.wagonItems, playerEntity.otherItems].filter(Array.isArray);",
     "new": "playerEntity.furnishings].filter(Array.isArray);",
     "tests": [
-      "test/audit31_client.test.js"
+      "test/net/audit31_client.test.js"
     ]
   },
   {
@@ -516,7 +516,7 @@
     "old": "  item.recipe = r.id;   // AUDIT 31 H3: an Ebony and a Warforged piece mint the same template and material\n",
     "new": "",
     "tests": [
-      "test/audit31_client.test.js"
+      "test/net/audit31_client.test.js"
     ]
   },
   {
@@ -525,7 +525,7 @@
     "old": "  if (typeof item?.recipe === 'string') return item.recipe === recipeId;",
     "new": "",
     "tests": [
-      "test/audit31_client.test.js"
+      "test/net/audit31_client.test.js"
     ]
   },
   {
@@ -534,7 +534,7 @@
     "old": "    giveBack(kept);\n  }",
     "new": "    void kept;\n  }",
     "tests": [
-      "test/audit31_tabs.test.js"
+      "test/ui/audit31_tabs.test.js"
     ]
   },
   {
@@ -543,7 +543,7 @@
     "old": "    if (b && k.top && k.where === `${tab}|${view}`) b.scrollTop = k.top;\n",
     "new": "",
     "tests": [
-      "test/audit31_tabs.test.js"
+      "test/ui/audit31_tabs.test.js"
     ]
   },
   {
@@ -552,7 +552,7 @@
     "old": "    for (const c of more) grid.append(c);",
     "new": "    if (more.length) { const g2 = el('ul', 'notice-grid'); for (const c of more) g2.append(c); body.append(g2); }",
     "tests": [
-      "test/audit31_tabs.test.js"
+      "test/ui/audit31_tabs.test.js"
     ]
   },
   {
@@ -561,7 +561,7 @@
     "old": "    node(data) {\n      if (data?.writsOpen !== true) return null;",
     "new": "    node(data) {",
     "tests": [
-      "test/audit31_tabs.test.js"
+      "test/ui/audit31_tabs.test.js"
     ]
   },
   {
@@ -570,7 +570,7 @@
     "old": "      else if (n.button === 'commission' && !commissionsOpen()) { b.disabled = true;",
     "new": "      else if (false) { b.disabled = true;",
     "tests": [
-      "test/audit31_tabs.test.js"
+      "test/ui/audit31_tabs.test.js"
     ]
   },
   {
@@ -579,7 +579,7 @@
     "old": "    const most = Math.min(x.left, held, room);",
     "new": "    const most = Math.min(x.left, held);",
     "tests": [
-      "test/audit31_tabs.test.js"
+      "test/ui/audit31_tabs.test.js"
     ]
   },
   {
@@ -588,7 +588,7 @@
     "old": "  const mayDeliver = (data, x) => data?.guild?.id !== x.guild?.id || writDeliverMay(data.guild.rank);",
     "new": "  const mayDeliver = () => true;",
     "tests": [
-      "test/audit31_tabs.test.js"
+      "test/ui/audit31_tabs.test.js"
     ]
   },
   {
@@ -597,7 +597,7 @@
     "old": "        || (standing >= GUILD_WRITS_MAX ? t('prof.work.writ.full', 'The guild has {n} writs posted already.', { n: GUILD_WRITS_MAX })\n          : escrow > (g.marks ?? 0) ? treasuryShort(g)\n            : officer && !(g.budget > 0) ? noBudget()",
     "new": "        || (standing >= GUILD_WRITS_MAX ? t('prof.work.writ.full', 'The guild has {n} writs posted already.', { n: GUILD_WRITS_MAX })\n          : escrow > (g.marks ?? 0) ? treasuryShort(g)\n            : false ? noBudget()",
     "tests": [
-      "test/audit31_tabs.test.js"
+      "test/ui/audit31_tabs.test.js"
     ]
   },
   {
@@ -606,7 +606,7 @@
     "old": "            : data?.me && name.toLowerCase() === String(data.me).toLowerCase() ? t('prof.work.comm.self', 'You cannot commission yourself.')",
     "new": "            : false ? t('prof.work.comm.self', 'You cannot commission yourself.')",
     "tests": [
-      "test/audit31_tabs.test.js"
+      "test/ui/audit31_tabs.test.js"
     ]
   },
   {
@@ -615,7 +615,7 @@
     "old": "                  : balance != null && f.pay > balance ? t('prof.work.comm.short', 'You hold only {balance}.', { balance: marksText(balance) }) : '');",
     "new": "                  : false ? t('prof.work.comm.short', 'You hold only {balance}.', { balance: marksText(balance) }) : '');",
     "tests": [
-      "test/audit31_tabs.test.js"
+      "test/ui/audit31_tabs.test.js"
     ]
   },
   {
@@ -624,7 +624,7 @@
     "old": "                : mineOpen >= COMMISSIONS_MAX ? t('prof.work.comm.full', 'You have {n} commissions posted already.', { n: COMMISSIONS_MAX })",
     "new": "                : false ? t('prof.work.comm.full', 'You have {n} commissions posted already.', { n: COMMISSIONS_MAX })",
     "tests": [
-      "test/audit31_tabs.test.js"
+      "test/ui/audit31_tabs.test.js"
     ]
   },
   {
@@ -633,8 +633,8 @@
     "old": "      if (!armed()) { st.arm = { id: c.id, at: nowMs() }; ui.rerender(); return; }\n",
     "new": "",
     "tests": [
-      "test/audit31_tabs.test.js",
-      "test/prof6_client.test.js"
+      "test/ui/audit31_tabs.test.js",
+      "test/net/prof6_client.test.js"
     ]
   },
   {
@@ -643,7 +643,7 @@
     "old": "        li.append(el('span', 'work-where', here ? t('prof.work.yours.fillAbove', 'Fill it on its card above.') : t('prof.work.yours.fillThere', 'Filled at the boards of {where}.', { where })), declineButton(c));",
     "new": "        li.append(el('span', 'work-where', ''));",
     "tests": [
-      "test/audit31_tabs.test.js"
+      "test/ui/audit31_tabs.test.js"
     ]
   },
   {
@@ -652,7 +652,7 @@
     "old": "        : c.mine && c.state === 'filled' ? t('prof.work.yours.collect', 'filled - collect it at the Market tab')",
     "new": "        : false ? t('prof.work.yours.collect', 'filled - collect it at the Market tab')",
     "tests": [
-      "test/audit31_tabs.test.js"
+      "test/ui/audit31_tabs.test.js"
     ]
   },
   {
@@ -661,7 +661,7 @@
     "old": "  const st = keep ? (keep.workDrafts ??= fresh()) : fresh();",
     "new": "  const st = fresh();",
     "tests": [
-      "test/audit31_tabs.test.js"
+      "test/ui/audit31_tabs.test.js"
     ]
   },
   {
@@ -670,7 +670,7 @@
     "old": "    if (tab === 'work' && workMore?.closeForm()) { render(); return; }   // AUDIT 31 U12: Escape closes an open form first\n",
     "new": "",
     "tests": [
-      "test/audit31_tabs.test.js"
+      "test/ui/audit31_tabs.test.js"
     ]
   },
   {
@@ -679,7 +679,7 @@
     "old": "      st.focus = 'comm|pay';\n",
     "new": "",
     "tests": [
-      "test/audit31_tabs.test.js"
+      "test/ui/audit31_tabs.test.js"
     ]
   },
   {
@@ -688,7 +688,7 @@
     "old": "    const label = (p) => (p.quality != null ? t('prof.work.fill.pieceQuality', '{name} ({quality})', { name: p.name, quality: QUALITY_NAMES[p.quality] }) : p.name);",
     "new": "    const label = (p) => p.name;",
     "tests": [
-      "test/audit31_tabs.test.js"
+      "test/ui/audit31_tabs.test.js"
     ]
   },
   {
@@ -697,7 +697,7 @@
     "old": "(pieces).blocked > 0 ?",
     "new": "(pieces).blocked > 1 ?",
     "tests": [
-      "test/audit31_tabs.test.js"
+      "test/ui/audit31_tabs.test.js"
     ]
   },
   {
@@ -706,7 +706,7 @@
     "old": "export const paidText = (pay, tax) => (tax > 0 ? t(",
     "new": "export const paidText = (pay, tax) => (tax >= 0 ? t(",
     "tests": [
-      "test/audit31_tabs.test.js"
+      "test/ui/audit31_tabs.test.js"
     ]
   },
   {
@@ -715,7 +715,7 @@
     "old": "    } else if (a.next > AUCTION_BID_MAX) {",
     "new": "    } else if (false) {",
     "tests": [
-      "test/audit31_tabs.test.js"
+      "test/ui/audit31_tabs.test.js"
     ]
   },
   {
@@ -724,7 +724,7 @@
     "old": "st.family ? 'No Masterwork of that kind is up for auction.' :",
     "new": "false ? 'No Masterwork of that kind is up for auction.' :",
     "tests": [
-      "test/audit31_tabs.test.js"
+      "test/ui/audit31_tabs.test.js"
     ]
   },
   {
@@ -733,7 +733,7 @@
     "old": "adds ${AUCTION_ADD_S / 60} minutes. You get the top bid",
     "new": "adds ${AUCTION_LATE_S / 60} minutes. You get the top bid",
     "tests": [
-      "test/prof5b_client.test.js"
+      "test/net/prof5b_client.test.js"
     ],
     "equivalent": true,
     "why": "the add and the late window are both 120 s today - the words read the add's own number so a change to either stays true"
@@ -744,7 +744,7 @@
     "old": "Promise.resolve(W.guildStores()).then((r) => { guildUi.storesError = r?.ok ? null : (r?.error ?? 'server'); ui++; }",
     "new": "Promise.resolve(W.guildStores()).then(() => { guildUi.storesError = null; ui++; }",
     "tests": [
-      "test/audit31_client.test.js"
+      "test/net/audit31_client.test.js"
     ]
   },
   {
@@ -753,7 +753,7 @@
     "old": "  const lookAtGuild = () => { guildUi.storesAsked = false; guildUi.vaultAsked = false; if (guild?.stale?.()) guild.refresh(); };",
     "new": "  const lookAtGuild = () => { guildUi.vaultAsked = false; if (guild?.stale?.()) guild.refresh(); };",
     "tests": [
-      "test/audit31_client.test.js"
+      "test/net/audit31_client.test.js"
     ],
     "note": "AUDIT BAG1 + GUILD2 (PIN MOVED): re-aimed by content - the look resets the vault's read too."
   },
@@ -763,7 +763,7 @@
     "old": " || guildWho() !== paintedWho",
     "new": "",
     "tests": [
-      "test/audit31_client.test.js"
+      "test/net/audit31_client.test.js"
     ]
   },
   {
@@ -772,7 +772,7 @@
     "old": "    const takeable = gs.rows.filter((r) => gs.mayWithdraw || r.mine > 0);",
     "new": "    const takeable = gs.rows.filter(() => gs.mayWithdraw);",
     "tests": [
-      "test/audit31_client.test.js"
+      "test/net/audit31_client.test.js"
     ]
   },
   {
@@ -781,7 +781,7 @@
     "old": "            : n > outMost(k) ? (gs.mayWithdraw ?",
     "new": "            : false ? (gs.mayWithdraw ?",
     "tests": [
-      "test/audit31_client.test.js"
+      "test/net/audit31_client.test.js"
     ]
   },
   {
@@ -790,7 +790,7 @@
     "old": "          : n > heldOf(k) ? `your Stores hold",
     "new": "          : false ? `your Stores hold",
     "tests": [
-      "test/audit31_client.test.js"
+      "test/net/audit31_client.test.js"
     ]
   },
   {
@@ -799,7 +799,7 @@
     "old": "    const unitsTyped = () => { const t = String(d.storeUnits ?? '').trim(); const n = /^\\d+$/.test(t) ? Number(t) : 0; return guildMoveOk(n) ? n : 0; };",
     "new": "    const unitsTyped = () => { const t = String(d.storeUnits ?? '').trim(); return /^\\d+$/.test(t) ? Number(t) : 0; };",
     "tests": [
-      "test/audit31_client.test.js"
+      "test/net/audit31_client.test.js"
     ]
   }
 ]

@@ -7,7 +7,7 @@ import { placeAt, turnKey } from '../src/systems/livingWorld/lives.js';
 import { troubleOf, troubledTrip } from '../src/systems/livingWorld/trouble.js';
 import { rollGroupComposition } from '../src/systems/campEncounters.js';
 import { chooseRandomEnemy } from '../src/systems/encounters.js';
-import { ENEMY_BASICS } from '../src/characters/enemyBasics.js';
+import { ENEMY_BASICS } from '../src/characters/enemy/enemyBasics.js';
 import { DAY_MIN } from '../src/systems/livingWorld/dayPlan.js';
 
 /** Towns every `step` pixels on a `n` x `n` grid from (x0, y0); each town's blocks off its place - LW6: and, `dives`,

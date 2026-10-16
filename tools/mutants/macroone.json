@@ -5,7 +5,7 @@
   "old": "  const ctx = questLike ?? macroWorld();",
   "new": "  const ctx = questLike;",
   "tests": [
-   "test/macroone.test.js"
+   "test/systems/quest/macroone.test.js"
   ]
  },
  {
@@ -14,7 +14,7 @@
   "old": "  if (!hasValues && !questLike && !macroWorld()) return rows;",
   "new": "  if (!hasValues && !questLike) return rows;",
   "tests": [
-   "test/macroone.test.js"
+   "test/systems/quest/macroone.test.js"
   ]
  },
  {
@@ -23,7 +23,7 @@
   "old": "      if ((!questLike || declared) && isErrorShape(v, token)) return token;\n",
   "new": "",
   "tests": [
-   "test/macroone.test.js"
+   "test/systems/quest/macroone.test.js"
   ]
  },
  {
@@ -32,7 +32,7 @@
   "old": "      else { try { v = getMacroValue(token, null, ctx.hooks, null); } catch { return token; } }",
   "new": "      else v = getMacroValue(token, null, ctx.hooks, null);",
   "tests": [
-   "test/macroone.test.js"
+   "test/systems/quest/macroone.test.js"
   ]
  },
  {
@@ -41,16 +41,16 @@
   "old": "  try { return _macroWorld?.() ?? null; } catch { return null; }",
   "new": "  return _macroWorld?.() ?? null;",
   "tests": [
-   "test/macroone.test.js"
+   "test/systems/quest/macroone.test.js"
   ]
  },
  {
   "name": "MACRO-ONE-the-bridge-never-registers",
-  "file": "src/scenes/questBridge.js",
+  "file": "src/scenes/quest/questBridge.js",
   "old": "  setMacroWorld(() => machine.macroContext());\n",
   "new": "",
   "tests": [
-   "test/macroone.test.js"
+   "test/systems/quest/macroone.test.js"
   ]
  },
  {
@@ -59,7 +59,7 @@
   "old": "    playerRaceName: () => (playerEntity.race ? raceDisplayName(playerEntity.race) : null),   // MACRO-ONE",
   "new": "    playerRaceNameX: () => (playerEntity.race ? raceDisplayName(playerEntity.race) : null),   // MACRO-ONE",
   "tests": [
-   "test/macroone.test.js"
+   "test/systems/quest/macroone.test.js"
   ]
  },
  {
@@ -68,7 +68,7 @@
   "old": "      else { try { v = getMacroValue(token, null, ctx.hooks, null); } catch { return token; } }",
   "new": "      else { try { v = getContextValue(token, ctx, ctx.hooks); } catch { return token; } }",
   "tests": [
-   "test/macroone.test.js"
+   "test/systems/quest/macroone.test.js"
   ]
  },
  {
@@ -77,7 +77,7 @@
   "old": "      if (v != null) return String(v);\n    }",
   "new": "      if (v == null) return token;\n      return String(v);\n    }",
   "tests": [
-   "test/macroone.test.js"
+   "test/systems/quest/macroone.test.js"
   ]
  },
  {
@@ -86,26 +86,26 @@
   "old": "if ((!questLike || declared) && isErrorShape(v, token)) return token;",
   "new": "if (!questLike && isErrorShape(v, token)) return token;",
   "tests": [
-   "test/macroone.test.js",
-   "test/daedrasummoning.test.js"
+   "test/systems/quest/macroone.test.js",
+   "test/systems/daedrasummoning.test.js"
   ]
  },
  {
   "name": "MACRO-2-the-guild-map-prints-a-blank-city",
-  "file": "src/systems/guildServiceActions.js",
+  "file": "src/systems/guild/guildServiceActions.js",
   "old": "pcn: known(playerName), cn: known(cityName), oth: '',",
   "new": "pcn: known(playerName), cn: cityName, oth: '',",
   "tests": [
-   "test/macroone.test.js"
+   "test/systems/quest/macroone.test.js"
   ]
  },
  {
   "name": "MACRO-2-the-talk-map-prints-a-blank-name",
-  "file": "src/systems/talkSession.js",
+  "file": "src/systems/talk/talkSession.js",
   "old": "    pcf: known(playerName) && firstName(playerName), pcn: known(playerName), cn: known(cityName), oth: oath,\n  });\n}",
   "new": "    pcf: firstName(playerName), pcn: known(playerName), cn: known(cityName), oth: oath,\n  });\n}",
   "tests": [
-   "test/macroone.test.js"
+   "test/systems/quest/macroone.test.js"
   ]
  }
 ]

@@ -240,6 +240,6 @@ console.log('  gpu zones ms:', JSON.stringify(out.zones));
 if (process.env.VERBOSE) console.log(JSON.stringify(out.rows.map((x) => [x.script.toFixed(2), x.frame.toFixed(1)])), JSON.stringify(out.shadowStats));
 if (process.env.OUT_DIR) { mkdirSync(process.env.OUT_DIR, { recursive: true }); writeFileSync(`${process.env.OUT_DIR}/${SCENE}${FLAGS.length ? `.${FLAGS.join('_')}` : ''}.rgba`, Buffer.from(out.px)); }
 if (errors.length) console.log('errors:', errors.slice(0, 8).join('\n  '));
-// the rig judges its run (test/probehygiene.test.js T3): a page that threw, a GL error, or no frame drawn is no measure
+// the rig judges its run (test/tooling/probehygiene.test.js T3): a page that threw, a GL error, or no frame drawn is no measure
 if (errors.length || out.err !== 0 || !tail.length) process.exitCode = 1;
 await browser.close(); await server.close();

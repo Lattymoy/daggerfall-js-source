@@ -56,7 +56,7 @@ async function toGamePage(page) {
 async function openPack(page, { doll = true } = {}) {
   await page.evaluate(async (withDoll) => {
     const { createInventoryWindow } = await import('/src/ui/inventoryDoor.js');
-    const { ITEM_TEMPLATES } = await import('/src/characters/paperdoll.js');
+    const { ITEM_TEMPLATES } = await import('/src/characters/paperdoll/paperdoll.js');
     const pd = await import('/src/ui/paperDoll.js');
     if (withDoll) {
       const W = 110, H = 184;

@@ -5,7 +5,7 @@
     "old": "  if (isArenaUndercroft(dfLocation)) return 'full';\n",
     "new": "",
     "tests": [
-      "test/arena5_audit.test.js"
+      "test/world/arena5_audit.test.js"
     ]
   }
 ]

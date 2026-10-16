@@ -5,7 +5,7 @@
     "old": "    top = spacer(top, above > 0 ? above * pitch - gap : 0, true);",
     "new": "    top = spacer(top, above > 0 ? above * pitch : 0, true);",
     "tests": [
-      "test/virt_pack.test.js"
+      "test/systems/virt_pack.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    foot = spacer(foot, below > 0 ? below * pitch - gap : 0, false);",
     "new": "    foot = spacer(foot, below > 0 ? below * pitch : 0, false);",
     "tests": [
-      "test/virt_pack.test.js"
+      "test/systems/virt_pack.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    aim(line(v0 - over) * cols, Math.min(total, (line(v1 + over) + 1) * cols));",
     "new": "    place();",
     "tests": [
-      "test/virt_pack.test.js"
+      "test/systems/virt_pack.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    for (const [i, n] of nodes) if (i < ns || i >= ne) { if (active && n.contains?.(active)) lostFocus = true; n.remove(); nodes.delete(i); }",
     "new": "    for (const [i, n] of nodes) if (i >= 0) { if (active && n.contains?.(active)) lostFocus = true; n.remove(); nodes.delete(i); }",
     "tests": [
-      "test/virt_pack.test.js"
+      "test/systems/virt_pack.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    if (aligned && start <= line(v0 - 1) * cols && end >= Math.min(total, (line(v1 + 1) + 1) * cols)) { place(); return; }",
     "new": "    if (false) { place(); return; }",
     "tests": [
-      "test/virt_pack.test.js"
+      "test/systems/virt_pack.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "    if (remeasure || !geo) {",
     "new": "    if (!geo) {",
     "tests": [
-      "test/virt_pack.test.js"
+      "test/systems/virt_pack.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "      if (!g) { if (!geo) drawAll(); return; }",
     "new": "      if (!g) return;",
     "tests": [
-      "test/virt_pack.test.js"
+      "test/systems/virt_pack.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "  if (total < min) {",
     "new": "  if (total < 0) {",
     "tests": [
-      "test/virt_pack.test.js"
+      "test/systems/virt_pack.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "      for (const s of scrollers ?? []) s.removeEventListener('scroll', onScroll);",
     "new": "      for (const s of []) s.removeEventListener('scroll', onScroll);",
     "tests": [
-      "test/virt_pack.test.js"
+      "test/systems/virt_pack.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "  if (fitted.has(key)) { const pic = fitted.get(key); fitted.delete(key); fitted.set(key, pic); hear(fitWaiting.get(key), onReady); return pic; }",
     "new": "  if (fitted.has(key)) { const pic = fitted.get(key); hear(fitWaiting.get(key), onReady); return pic; }",
     "tests": [
-      "test/virt_pack.test.js"
+      "test/systems/virt_pack.test.js"
     ]
   },
   {
@@ -95,43 +95,43 @@
     "old": "export const FIT_CACHE_MAX = 2000;",
     "new": "export const FIT_CACHE_MAX = 600;",
     "tests": [
-      "test/virt_pack.test.js"
+      "test/systems/virt_pack.test.js"
     ]
   },
   {
     "name": "VIRT-a-landing-repaints-the-pack",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "  const tile = itemTile(line, box, tileLanded, snap);\n  if (!tile.classList.contains('has-icon')) _waitingTiles.set(tile, { line, box, snap });",
     "new": "  const tile = itemTile(line, box, render, snap);\n  if (!tile.classList.contains('has-icon')) _waitingTiles.set(tile, { line, box, snap });",
     "tests": [
-      "test/virt_pack.test.js"
+      "test/systems/virt_pack.test.js"
     ]
   },
   {
     "name": "VIRT-the-tile-left-on-its-initials",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "    tile.replaceWith(fresh);",
     "new": "    void fresh;",
     "tests": [
-      "test/virt_pack.test.js"
+      "test/systems/virt_pack.test.js"
     ]
   },
   {
     "name": "VIRT-the-wear-bar-lost",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "    if (bar) fresh.append(bar);",
     "new": "    void bar;",
     "tests": [
-      "test/virt_pack.test.js"
+      "test/systems/virt_pack.test.js"
     ]
   },
   {
     "name": "VIRT-the-lines-kept-across-passes",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "  _lineEpoch++;   // VIRT: a pass reads every item as it stands now",
     "new": "  void _lineEpoch;",
     "tests": [
-      "test/virt_pack.test.js"
+      "test/systems/virt_pack.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "  if (fitted.has(key)) { const pic = fitted.get(key); fitted.delete(key); fitted.set(key, pic); hear(fitWaiting.get(key), onReady); return pic; }",
     "new": "  if (fitted.has(key)) { const pic = fitted.get(key); fitted.delete(key); fitted.set(key, null); hear(fitWaiting.get(key), onReady); return pic; }",
     "tests": [
-      "test/virt_pack.test.js"
+      "test/systems/virt_pack.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "    if (fitted.size <= FIT_CACHE_MAX && fittedBytes <= FIT_CACHE_BYTES) break;",
     "new": "    if (fitted.size <= FIT_CACHE_MAX) break;",
     "tests": [
-      "test/virt_pack.test.js"
+      "test/systems/virt_pack.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "      trimFitted();   // AUDIT VIRT: a picture put out while it was made comes back as it lands - the bound kept then too",
     "new": "      void 0;",
     "tests": [
-      "test/virt_pack.test.js"
+      "test/systems/virt_pack.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "    if (!url) { if (fitted.get(key) === null) fitted.delete(key); fitWaiting.delete(key); wakeAll(wake); return; }",
     "new": "    if (!url) { fitWaiting.delete(key); return; }",
     "tests": [
-      "test/virt_pack.test.js"
+      "test/systems/virt_pack.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "  if (_fittedGen !== dfmodGeneration()) { fitted.clear(); fitWaiting.clear(); fittedBytes = 0; _fittedGen = dfmodGeneration(); }",
     "new": "  if (_fittedGen !== dfmodGeneration()) { _fittedGen = dfmodGeneration(); }",
     "tests": [
-      "test/virt_pack.test.js"
+      "test/systems/virt_pack.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "      if (gen !== _fittedGen) { wakeAll(wake); return; }   // made from a mod set since replaced: not kept, asked again",
     "new": "      void gen;",
     "tests": [
-      "test/virt_pack.test.js"
+      "test/systems/virt_pack.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "  const onScroll = () => { if (queued || gone) return; queued = true; later(() => { queued = false; sync(); }); };",
     "new": "  const onScroll = () => { if (queued || gone) return; queued = true; later(() => { queued = false; }); };",
     "tests": [
-      "test/virt_pack.test.js"
+      "test/systems/virt_pack.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "  container.style.overflowAnchor = 'none';",
     "new": "  void 0;",
     "tests": [
-      "test/virt_pack.test.js"
+      "test/systems/virt_pack.test.js"
     ]
   },
   {
@@ -212,7 +212,7 @@
     "old": "    aim(line(v0 - over) * cols, Math.min(total, (line(v1 + over) + 1) * cols));",
     "new": "    aim(line(v0 - over) * cols, (line(v1 + over) + 1) * cols);",
     "tests": [
-      "test/virt_pack.test.js"
+      "test/systems/virt_pack.test.js"
     ]
   },
   {
@@ -221,7 +221,7 @@
     "old": "    const below = lines - Math.ceil(end / cols);",
     "new": "    const below = lines - Math.floor(end / cols);",
     "tests": [
-      "test/virt_pack.test.js"
+      "test/systems/virt_pack.test.js"
     ]
   },
   {
@@ -230,7 +230,7 @@
     "old": "const OVERSCAN = 0.5;",
     "new": "const OVERSCAN = 0;",
     "tests": [
-      "test/virt_pack.test.js"
+      "test/systems/virt_pack.test.js"
     ]
   },
   {
@@ -239,7 +239,7 @@
     "old": "const OVERSCAN_LINES = 2;",
     "new": "const OVERSCAN_LINES = 1;",
     "tests": [
-      "test/virt_pack.test.js"
+      "test/systems/virt_pack.test.js"
     ]
   },
   {
@@ -248,7 +248,7 @@
     "old": "      for (let a = container; a && a.nodeType === 1 && a !== doc?.body && a !== doc?.documentElement; a = a.parentElement) {",
     "new": "      for (let a = container; a && a.nodeType === 1 && a !== doc?.body && a !== doc?.documentElement; a = null) {",
     "tests": [
-      "test/virt_pack.test.js"
+      "test/systems/virt_pack.test.js"
     ]
   },
   {
@@ -257,7 +257,7 @@
     "old": "        if (cs?.position === 'fixed') break;",
     "new": "        void 0;",
     "tests": [
-      "test/virt_pack.test.js"
+      "test/systems/virt_pack.test.js"
     ]
   },
   {
@@ -266,7 +266,7 @@
     "old": "    if (!(hi > lo) && own) { const r = own.getBoundingClientRect(); return [r.top, r.bottom]; }",
     "new": "    void own;",
     "tests": [
-      "test/virt_pack.test.js"
+      "test/systems/virt_pack.test.js"
     ]
   },
   {
@@ -275,7 +275,7 @@
     "old": "    if (lostFocus) keepFocus();",
     "new": "    void lostFocus;",
     "tests": [
-      "test/virt_pack.test.js"
+      "test/systems/virt_pack.test.js"
     ]
   },
   {
@@ -284,7 +284,7 @@
     "old": "    onAim?.();",
     "new": "    void onAim;",
     "tests": [
-      "test/virt_pack.test.js"
+      "test/systems/virt_pack.test.js"
     ]
   },
   {
@@ -293,90 +293,90 @@
     "old": "    const aligned = start % cols === 0 && (end === total || end % cols === 0);",
     "new": "    const aligned = true;",
     "tests": [
-      "test/virt_pack.test.js"
+      "test/systems/virt_pack.test.js"
     ],
     "equivalent": true,
     "why": "Belt and braces, kept on purpose. A window measured again on new columns (a resize) is covered by its old index range only near the list's top, where its start is 0 and so already aligned: fewer columns put the old start past the new band's top, more columns put the old end above its foot. No layout this pane has reaches a covered, misaligned window; the check stays as the law's own guard against one that might."
   },
   {
     "name": "AUDIT-VIRT-the-still-waiting-tiles-thrown-away",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "    if (!fresh.classList.contains('has-icon')) continue;   // its picture is still being made - the pass is every waiting tile's, and another picture woke it",
     "new": "    void 0;",
     "tests": [
-      "test/virt_pack.test.js"
+      "test/systems/virt_pack.test.js"
     ]
   },
   {
     "name": "AUDIT-VIRT-a-frame-a-landing",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "  if (_tilesQueued) return;",
     "new": "  void _tilesQueued;",
     "tests": [
-      "test/virt_pack.test.js"
+      "test/systems/virt_pack.test.js"
     ]
   },
   {
     "name": "AUDIT-VIRT-the-window-aimed-before-the-scroll-is-given-back",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "    syncLists({ draw: false });",
     "new": "    void 0;",
     "tests": [
-      "test/virt_pack.test.js"
+      "test/systems/virt_pack.test.js"
     ]
   },
   {
     "name": "AUDIT-VIRT-the-refill-aimed-at-once",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "  v.sync({ draw: false });\n  if (kept) list.scrollTop = kept;\n  v.sync();",
     "new": "  v.sync();",
     "tests": [
-      "test/virt_pack.test.js"
+      "test/systems/virt_pack.test.js"
     ]
   },
   {
     "name": "AUDIT-VIRT-the-card-left-beside-nothing",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "const rowsMoved = () => { if (tipRow && tipRow.isConnected === false) hideTip(); };",
     "new": "const rowsMoved = () => {};",
     "tests": [
-      "test/virt_pack.test.js"
+      "test/systems/virt_pack.test.js"
     ]
   },
   {
     "name": "AUDIT-VIRT-the-old-lists-kept-on-a-repaint",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "    dropLists();   // VIRT: the old DOM's windows and waiting tiles go with it",
     "new": "    void 0;",
     "tests": [
-      "test/virt_pack.test.js"
+      "test/systems/virt_pack.test.js"
     ]
   },
   {
     "name": "AUDIT-VIRT-the-old-window-kept-on-a-refill",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "  dropLists(list);   // VIRT: a refill (the filter's) lets go of the window it replaces",
     "new": "  void 0;",
     "tests": [
-      "test/virt_pack.test.js"
+      "test/systems/virt_pack.test.js"
     ]
   },
   {
     "name": "AUDIT-VIRT-the-line-read-on-every-key",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "  if (had && had.epoch === _lineEpoch) return had.line;",
     "new": "  void had;",
     "tests": [
-      "test/virt_pack.test.js"
+      "test/systems/virt_pack.test.js"
     ]
   },
   {
     "name": "AUDIT-VIRT-the-lists-kept-at-unmount",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "      dropLists();   // VIRT: the windows' scroll listeners, and the tiles that will never be drawn into",
     "new": "      void 0;",
     "tests": [
-      "test/virt_pack.test.js"
+      "test/systems/virt_pack.test.js"
     ]
   }
 ]

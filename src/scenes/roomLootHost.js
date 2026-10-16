@@ -3,21 +3,21 @@
 // settled names by value at construction, every live one (a `let` someone writes, a `const` made below) read at its
 // use as `host.<name>` - as the code read them where it was.
 import { addGoldPieces, addItem, isGoldPieces, stacksWith } from '../systems/inventory.js';
-import { asTheRoom } from '../systems/onlineLane.js';
+import { asTheRoom } from '../systems/online/onlineLane.js';
 import { baseSignature, bonusSpent, claimOf, claimWord, composeRoomView, isPersonalLoot, isRoomBaseKind, isRoomWord, judgeRoomClaim, markPersonal, mergeRoomWord, pieceCount, recentAnswers, ROOM_BASE_FIND, ROOM_BASE_LUCK, ROOM_BASE_MAX, ROOM_BASE_QUARTERS, ROOM_CLAIM_TIMEOUT_MS, ROOM_CLAIMS_MAX, ROOM_PUT_RESAY_MS, ROOM_TAKEN_TEXT, roomBaseGender, roomBaseLevel, roomClaimId, roomClaimOrder, roomContainerName, roomRoller, roomState, roomTermsBeat, roomWord, sameRoomTerms, seededRolls, settleBonusSpent, validRoomWord } from '../systems/roomLoot.js';
-import { ENEMY_BASICS } from '../characters/enemyBasics.js';
+import { ENEMY_BASICS } from '../characters/enemy/enemyBasics.js';
 import { grantEliteLoot } from '../systems/eliteFoes.js';
-import { isDeepPileKey } from '../systems/restItems.js';
+import { isDeepPileKey } from '../systems/rest/restItems.js';
 import { isEquipped, unequipItem } from '../systems/equip.js';
-import { LOOT_LIST_MAX, validLootList } from '../systems/loot.js';
+import { LOOT_LIST_MAX, validLootList } from '../systems/loot/loot.js';
 import { neverPeerHanded, peerHanded, notCarried } from '../systems/peerWord.js';
 import { playerEntity } from '../characters/playerEntity.js';
 import { raiseEnemyDeath } from './corpseMarker.js';
 import { rollCorpseKit } from '../systems/foeLootCap.js';
 import { rollRoomBonus, spawnEnemyLoot, wildLootAfter } from './hostCombat.js';
 import { setMidScreenText } from '../ui/midScreenText.js';
-import { stampWonWeapons } from '../systems/lootRarity.js';
-import { wildPileMore } from '../systems/wildZone.js';
+import { stampWonWeapons } from '../systems/loot/lootRarity.js';
+import { wildPileMore } from '../systems/wild/wildZone.js';
 
 /** @param {any} host */
 export function createRoomLoot(host) {

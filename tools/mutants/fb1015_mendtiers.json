@@ -5,7 +5,7 @@
     "old": "const mendTier = (it) => (wearsItself(it) ? 1 : it.equipSlot != null ? 0 : 2);",
     "new": "const mendTier = (it) => (wearsItself(it) ? 3 : it.equipSlot != null ? 0 : 2);",
     "tests": [
-      "test/fb1015_mendtiers.test.js"
+      "test/systems/fb1015_mendtiers.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "const mendTier = (it) => (wearsItself(it) ? 1 : it.equipSlot != null ? 0 : 2);",
     "new": "const mendTier = (it) => (wearsItself(it) ? 1 : it.equipSlot != null ? 0 : 1);",
     "tests": [
-      "test/fb1015_mendtiers.test.js"
+      "test/systems/fb1015_mendtiers.test.js"
     ],
     "equivalent": true,
     "why": "Within a tier the scan reads mendOrder, whose first key is worn-first (itemTemplates.js wornFirst), so a worn piece that wears itself and a carried piece sharing one tier still come out worn first: the pack's tier is ahead of nothing it was not already behind. Merged either way (the pack at 1, or the self-wearing piece at 2) it picks the same piece on every input. The third tier is kept because it states Mac's three tiers where the reader looks for them, and so that the order does not rest on mendOrder keeping its worn key; it dies the day mendOrder loses that key (MEND-WORN-order-worn-dropped's change), and then this record says so."
@@ -25,7 +25,7 @@
     "old": "const mendTier = (it) => (wearsItself(it) ? 1 : it.equipSlot != null ? 0 : 2);",
     "new": "const mendTier = (it) => (wearsItself(it) ? 0 : it.equipSlot != null ? 1 : 2);",
     "tests": [
-      "test/fb1015_mendtiers.test.js"
+      "test/systems/fb1015_mendtiers.test.js"
     ]
   },
   {
@@ -34,7 +34,7 @@
     "old": "const mendTier = (it) => (wearsItself(it) ? 1 : it.equipSlot != null ? 0 : 2);",
     "new": "const mendTier = (it) => (wearsItself(it) ? 0 : it.equipSlot != null ? 0 : 2);",
     "tests": [
-      "test/fb1015_mendtiers.test.js"
+      "test/systems/fb1015_mendtiers.test.js"
     ]
   },
   {
@@ -43,7 +43,7 @@
     "old": "if (!best || tier < bestTier ||",
     "new": "if (!best || tier > bestTier ||",
     "tests": [
-      "test/fb1015_mendtiers.test.js"
+      "test/systems/fb1015_mendtiers.test.js"
     ]
   }
 ]

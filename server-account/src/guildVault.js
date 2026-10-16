@@ -12,7 +12,7 @@
 //
 // PUT IN: the depositor's realm record (realm.js prepareRealmRecord) has
 // the piece taken out of it - the very record the client picked, at the
-// count offered, by the trade's own law (net/realmTradeLaw.js
+// count offered, by the trade's own law (net/realm/realmTradeLaw.js
 // takeTradeGoods: what may leave a pack, and nothing a save does not
 // hold) - and the vault's slot is written, in ONE batch the record's
 // guard rolls back unless both land. TAKE OUT is the same the other way:
@@ -47,11 +47,11 @@
 import { displayName, overRate } from './accounts.js';
 import { guildActorOf } from './guilds.js';
 import { prepareRealmRecord, realmActFirst, recordMovedOf, mustChange, dropObjects, dropIfUnnamed, REALM_ID_RE } from './realm.js';
-import { GUILD_OPS_MAX, GUILD_OPS_WINDOW_S, GUILD_RANK_MASTER, guildMay, GUILD_MEMBER_RE } from '../../src/net/guildLaw.js';
-import { vaultStanding, vaultMayPut, vaultMayTake, vaultGrantOf, guildVaultSlots, GUILD_VAULT_LOG_SHOWN, GUILD_VAULT_SLOTS, GUILD_VAULT_HALL_SLOTS } from '../../src/net/guildVaultLaw.js';
-import { takeTradeGoods, giveTradeGoods, recordCount, REALM_TRADE_RECORD_MAX } from '../../src/net/realmTradeLaw.js';
-import { wagonItemName } from '../../src/systems/wagonKinds.js';   // WAGONS2 (FINAL AUDIT): a marked wagon named by its kind (already in this graph, by itemLaw.js)
-import { lawfulItem } from '../../src/systems/itemLaw.js';   // INT1 (AUDIT INT): a piece put before the law read the vault, read as it is taken
+import { GUILD_OPS_MAX, GUILD_OPS_WINDOW_S, GUILD_RANK_MASTER, guildMay, GUILD_MEMBER_RE } from '../../src/net/guild/guildLaw.js';
+import { vaultStanding, vaultMayPut, vaultMayTake, vaultGrantOf, guildVaultSlots, GUILD_VAULT_LOG_SHOWN, GUILD_VAULT_SLOTS, GUILD_VAULT_HALL_SLOTS } from '../../src/net/guild/guildVaultLaw.js';
+import { takeTradeGoods, giveTradeGoods, recordCount, REALM_TRADE_RECORD_MAX } from '../../src/net/realm/realmTradeLaw.js';
+import { wagonItemName } from '../../src/systems/wagon/wagonKinds.js';   // WAGONS2 (FINAL AUDIT): a marked wagon named by its kind (already in this graph, by itemLaw.js)
+import { lawfulItem } from '../../src/systems/item/itemLaw.js';   // INT1 (AUDIT INT): a piece put before the law read the vault, read as it is taken
 
 const DAY_S = 86_400;
 const spend = (ctx, player) => overRate(ctx, `guild:${player.id}`, GUILD_OPS_MAX, GUILD_OPS_WINDOW_S);

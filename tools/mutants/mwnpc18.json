@@ -5,7 +5,7 @@
   "old": "  const gender = row ? flatGender(row.gender) : null;",
   "new": "  const gender = 'male';",
   "tests": [
-   "test/mwnpc18_decorfigures.test.js"
+   "test/scenes/mwnpc18_decorfigures.test.js"
   ]
  },
  {
@@ -14,7 +14,7 @@
   "old": "  const seed = textSeed(`decor:${piece.id}`);",
   "new": "  const seed = textSeed(`decor:${a}.${r}`);",
   "tests": [
-   "test/mwnpc18_decorfigures.test.js"
+   "test/scenes/mwnpc18_decorfigures.test.js"
   ]
  },
  {
@@ -23,7 +23,7 @@
   "old": "  const flats = ctx?.flats ?? null;\n  if (!flats) return null;",
   "new": "  const flats = ctx?.flats ?? null;\n  if (!flats) return (fig._mwLook = null);",
   "tests": [
-   "test/mwnpc18_decorfigures.test.js"
+   "test/scenes/mwnpc18_decorfigures.test.js"
   ]
  },
  {
@@ -32,7 +32,7 @@
   "old": "  if (a === DAEDRA_PRINCES_ARCHIVE || isChildNPCTexture(a, r)) return (fig._mwLook = null);",
   "new": "  if (isChildNPCTexture(a, r)) return (fig._mwLook = null);",
   "tests": [
-   "test/mwnpc18_decorfigures.test.js"
+   "test/scenes/mwnpc18_decorfigures.test.js"
   ]
  },
  {
@@ -41,25 +41,25 @@
   "old": "  ['knight', /\\b(?:knight|soldier|captain|sentry|sentries|paladin|sergeant)|guard/i],\n",
   "new": "",
   "tests": [
-   "test/mwnpc18_decorfigures.test.js"
+   "test/scenes/mwnpc18_decorfigures.test.js"
   ]
  },
  {
   "name": "MWNPC18-offer-skipped",
-  "file": "src/scenes/decorRoom.js",
+  "file": "src/scenes/decor/decorRoom.js",
   "old": "    lane.offer(personActor(e, look, f, eye, dt), e.batch);\n",
   "new": "",
   "tests": [
-   "test/mwnpc18_decorfigures.test.js"
+   "test/scenes/mwnpc18_decorfigures.test.js"
   ]
  },
  {
   "name": "MWNPC18-cast-only-left",
-  "file": "src/scenes/decorRoom.js",
+  "file": "src/scenes/decor/decorRoom.js",
   "old": "    if (!look) { e.batch.castOnly = false; continue; }",
   "new": "    if (!look) continue;",
   "tests": [
-   "test/mwnpc18_decorfigures.test.js"
+   "test/scenes/mwnpc18_decorfigures.test.js"
   ]
  },
  {
@@ -68,7 +68,7 @@
   "old": "    offerDecorFigures(interiorDecor.figures(), peopleBodies, _peopleOn, figureCtx, mwv.eye, dt);",
   "new": "",
   "tests": [
-   "test/mwnpc18_decorfigures.test.js"
+   "test/scenes/mwnpc18_decorfigures.test.js"
   ]
  },
  {
@@ -77,25 +77,25 @@
   "old": "    if (yards && _mode() === 'exterior') offerDecorFigures(yards.figures(), streetPeople, _peopleOn, yardFigureCtx, mwv.eye,",
   "new": "    if (false) offerDecorFigures(yards.figures(), streetPeople, _peopleOn, yardFigureCtx, mwv.eye,",
   "tests": [
-   "test/mwnpc18_decorfigures.test.js"
+   "test/scenes/mwnpc18_decorfigures.test.js"
   ]
  },
  {
   "name": "MWNPC18-place-dropped",
-  "file": "src/scenes/decorRoom.js",
+  "file": "src/scenes/decor/decorRoom.js",
   "old": "    f[0] = e.o[0] + e.piece.pos[0]; f[1] = e.o[1] + e.piece.pos[1]; f[2] = e.o[2] + e.piece.pos[2];",
   "new": "    f[0] = e.o[0]; f[1] = e.o[1]; f[2] = e.o[2];",
   "tests": [
-   "test/mwnpc18_decorfigures.test.js"
+   "test/scenes/mwnpc18_decorfigures.test.js"
   ]
  },
  {
   "name": "MWNPC18-base-made-once",
-  "file": "src/scenes/decorRoom.js",
+  "file": "src/scenes/decor/decorRoom.js",
   "old": "    f[0] = e.o[0] + e.piece.pos[0]; f[1] = e.o[1] + e.piece.pos[1]; f[2] = e.o[2] + e.piece.pos[2];",
   "new": "    if (!e._mwFeetMade && (e._mwFeetMade = true)) { f[0] = e.o[0] + e.piece.pos[0]; f[1] = e.o[1] + e.piece.pos[1]; f[2] = e.o[2] + e.piece.pos[2]; }",
   "tests": [
-   "test/mwnpc18_decorfigures.test.js"
+   "test/scenes/mwnpc18_decorfigures.test.js"
   ]
  },
  {
@@ -104,7 +104,7 @@
   "old": "  ['noble', /\\b(?:noble|lords?\\b|lady|ladies|kings?\\b|queen|prince|baron|duke|duchess|count(?:ess)?\\b|regent|courtier|elegant|royal|emperor|empress|aristocra)/i],",
   "new": "  ['noble', /noble|lords?|lady|ladies|kings?|queen|prince|baron|duke|duchess|count(?:ess)?|regent|courtier|elegant|royal|emperor|empress|aristocra/i],",
   "tests": [
-   "test/mwnpc18_decorfigures.test.js"
+   "test/scenes/mwnpc18_decorfigures.test.js"
   ]
  },
  {
@@ -113,7 +113,7 @@
   "old": "  ['mage', /\\b(?:mages?\\b|wizard|sorcer|witch|warlock|necromanc|magician|enchant|seers?\\b|mystic|alchemist)/i],",
   "new": "  ['mage', /mages?|wizard|sorcer|witch|warlock|necromanc|magician|enchant|seers?|mystic|alchemist/i],",
   "tests": [
-   "test/mwnpc18_decorfigures.test.js"
+   "test/scenes/mwnpc18_decorfigures.test.js"
   ]
  },
  {
@@ -122,27 +122,27 @@
   "old": "    get race() { const i = interiorBuilding?.regionIndex ?? host.currentRegionIndex?.() ?? -1; return REGION_RACES[i] != null ? REGION_RACES[i] + 1 : null; },",
   "new": "    get race() { return null; },",
   "tests": [
-   "test/mwnpc18_decorfigures.test.js"
+   "test/scenes/mwnpc18_decorfigures.test.js"
   ]
  },
  {
   "name": "MWNPC18-figure-kept-after-down",
-  "file": "src/scenes/decorRoom.js",
+  "file": "src/scenes/decor/decorRoom.js",
   "old": "    figs.delete(entry);   // MWNPC18\n",
   "new": "",
   "tests": [
-   "test/mwnpc18_decorfigures.test.js"
+   "test/scenes/mwnpc18_decorfigures.test.js"
   ],
   "equivalent": true,
   "why": "memory, which no pin sees: unmount nulls the entry's batch and figures() reads it, so a piece taken down never answers; the delete keeps the set from growing by an entry at every put of a figure (a yard's turn, station, light and move each put the piece anew) for the life of the room"
  },
  {
   "name": "MWNPC18-every-piece-a-figure",
-  "file": "src/scenes/decorRoom.js",
+  "file": "src/scenes/decor/decorRoom.js",
   "old": "    if (decorIsFigure(piece)) figs.add(entry);",
   "new": "    figs.add(entry);",
   "tests": [
-   "test/mwnpc18_decorfigures.test.js"
+   "test/scenes/mwnpc18_decorfigures.test.js"
   ]
  },
  {
@@ -151,7 +151,7 @@
   "old": "  ['priest', /\\b(?:priest|monks?\\b|nuns?\\b|cleric|healer|acolyte|templar|abbot|abbess|holy\\b)/i],\n  ['mage', /\\b(?:mages?\\b|wizard|sorcer|witch|warlock|necromanc|magician|enchant|seers?\\b|mystic|alchemist)/i],",
   "new": "  ['mage', /\\b(?:mages?\\b|wizard|sorcer|witch|warlock|necromanc|magician|enchant|seers?\\b|mystic|alchemist)/i],\n  ['priest', /\\b(?:priest|monks?\\b|nuns?\\b|cleric|healer|acolyte|templar|abbot|abbess|holy\\b)/i],",
   "tests": [
-   "test/mwnpc18_decorfigures.test.js"
+   "test/scenes/mwnpc18_decorfigures.test.js"
   ]
  },
  {
@@ -160,7 +160,7 @@
   "old": "  ['mage', /\\b(?:mages?\\b|wizard|sorcer|witch|warlock|necromanc|magician|enchant|seers?\\b|mystic|alchemist)/i],\n  ['knight', /\\b(?:knight|soldier|captain|sentry|sentries|paladin|sergeant)|guard/i],",
   "new": "  ['knight', /\\b(?:knight|soldier|captain|sentry|sentries|paladin|sergeant)|guard/i],\n  ['mage', /\\b(?:mages?\\b|wizard|sorcer|witch|warlock|necromanc|magician|enchant|seers?\\b|mystic|alchemist)/i],",
   "tests": [
-   "test/mwnpc18_decorfigures.test.js"
+   "test/scenes/mwnpc18_decorfigures.test.js"
   ]
  },
  {
@@ -169,7 +169,7 @@
   "old": "  ['knight', /\\b(?:knight|soldier|captain|sentry|sentries|paladin|sergeant)|guard/i],\n  ['fighter', /\\b(?:warrior|fighter|barbarian|mercenar|swordsm|archer|spear|axes?\\b|axe-?m[ae]n|crossbow|amazon|gladiator)/i],",
   "new": "  ['fighter', /\\b(?:warrior|fighter|barbarian|mercenar|swordsm|archer|spear|axes?\\b|axe-?m[ae]n|crossbow|amazon|gladiator)/i],\n  ['knight', /\\b(?:knight|soldier|captain|sentry|sentries|paladin|sergeant)|guard/i],",
   "tests": [
-   "test/mwnpc18_decorfigures.test.js"
+   "test/scenes/mwnpc18_decorfigures.test.js"
   ]
  },
  {
@@ -178,7 +178,7 @@
   "old": "  ['fighter', /\\b(?:warrior|fighter|barbarian|mercenar|swordsm|archer|spear|axes?\\b|axe-?m[ae]n|crossbow|amazon|gladiator)/i],\n  ['noble', /\\b(?:noble|lords?\\b|lady|ladies|kings?\\b|queen|prince|baron|duke|duchess|count(?:ess)?\\b|regent|courtier|elegant|royal|emperor|empress|aristocra)/i],",
   "new": "  ['noble', /\\b(?:noble|lords?\\b|lady|ladies|kings?\\b|queen|prince|baron|duke|duchess|count(?:ess)?\\b|regent|courtier|elegant|royal|emperor|empress|aristocra)/i],\n  ['fighter', /\\b(?:warrior|fighter|barbarian|mercenar|swordsm|archer|spear|axes?\\b|axe-?m[ae]n|crossbow|amazon|gladiator)/i],",
   "tests": [
-   "test/mwnpc18_decorfigures.test.js"
+   "test/scenes/mwnpc18_decorfigures.test.js"
   ]
  },
  {
@@ -187,7 +187,7 @@
   "old": "  ['noble', /\\b(?:noble|lords?\\b|lady|ladies|kings?\\b|queen|prince|baron|duke|duchess|count(?:ess)?\\b|regent|courtier|elegant|royal|emperor|empress|aristocra)/i],\n  ['rogue', /\\b(?:thief|thieves|rogue|assassin|cutthroat|bandit|brotherhood|smuggler|pirate|cowl)/i],",
   "new": "  ['rogue', /\\b(?:thief|thieves|rogue|assassin|cutthroat|bandit|brotherhood|smuggler|pirate|cowl)/i],\n  ['noble', /\\b(?:noble|lords?\\b|lady|ladies|kings?\\b|queen|prince|baron|duke|duchess|count(?:ess)?\\b|regent|courtier|elegant|royal|emperor|empress|aristocra)/i],",
   "tests": [
-   "test/mwnpc18_decorfigures.test.js"
+   "test/scenes/mwnpc18_decorfigures.test.js"
   ]
  },
  {
@@ -196,7 +196,7 @@
   "old": "  ['rogue', /\\b(?:thief|thieves|rogue|assassin|cutthroat|bandit|brotherhood|smuggler|pirate|cowl)/i],\n  ['merchant', /\\b(?:merchant|shopkeep|trader|vendor|innkeep|barkeep|bartender|banker|tailor|grocer)|smith/i],",
   "new": "  ['merchant', /\\b(?:merchant|shopkeep|trader|vendor|innkeep|barkeep|bartender|banker|tailor|grocer)|smith/i],\n  ['rogue', /\\b(?:thief|thieves|rogue|assassin|cutthroat|bandit|brotherhood|smuggler|pirate|cowl)/i],",
   "tests": [
-   "test/mwnpc18_decorfigures.test.js"
+   "test/scenes/mwnpc18_decorfigures.test.js"
   ]
  },
  {
@@ -205,7 +205,7 @@
   "old": "  ['merchant', /\\b(?:merchant|shopkeep|trader|vendor|innkeep|barkeep|bartender|banker|tailor|grocer)|smith/i],\n  ['scholar', /\\b(?:scholar|sages?\\b|librarian|scribe|teacher|professor|clerk|historian)/i],",
   "new": "  ['scholar', /\\b(?:scholar|sages?\\b|librarian|scribe|teacher|professor|clerk|historian)/i],\n  ['merchant', /\\b(?:merchant|shopkeep|trader|vendor|innkeep|barkeep|bartender|banker|tailor|grocer)|smith/i],",
   "tests": [
-   "test/mwnpc18_decorfigures.test.js"
+   "test/scenes/mwnpc18_decorfigures.test.js"
   ]
  },
  {
@@ -214,7 +214,7 @@
   "old": "  ['priest', /\\b(?:priest|monks?\\b|nuns?\\b|cleric|healer|acolyte|templar|abbot|abbess|holy\\b)/i],",
   "new": "  ['priest', /\\b(?:priest|monks?\\b|nuns?\\b|cleric|healer|acolyte|templar|abbot|abbess|holy\\b)/],",
   "tests": [
-   "test/mwnpc18_decorfigures.test.js"
+   "test/scenes/mwnpc18_decorfigures.test.js"
   ]
  },
  {
@@ -223,7 +223,7 @@
   "old": "  ['fighter', /\\b(?:warrior|fighter|barbarian|mercenar|swordsm|archer|spear|axes?\\b|axe-?m[ae]n|crossbow|amazon|gladiator)/i],",
   "new": "  ['fighter', /\\b(?:warrior|fighter|barbarian|mercenar|swordsm|archer|spear|axes?\\b|axe-?m[ae]n|crossbow|amazon|gladiator)/],",
   "tests": [
-   "test/mwnpc18_decorfigures.test.js"
+   "test/scenes/mwnpc18_decorfigures.test.js"
   ]
  },
  {
@@ -232,7 +232,7 @@
   "old": "  ['scholar', /\\b(?:scholar|sages?\\b|librarian|scribe|teacher|professor|clerk|historian)/i],",
   "new": "  ['scholar', /\\b(?:scholar|sages?\\b|librarian|scribe|teacher|professor|clerk|historian)/],",
   "tests": [
-   "test/mwnpc18_decorfigures.test.js"
+   "test/scenes/mwnpc18_decorfigures.test.js"
   ]
  },
  {
@@ -241,7 +241,7 @@
   "old": "    get flats() { return pipeline?.flatsFile?.() ?? null; },",
   "new": "    get flats() { return null; },",
   "tests": [
-   "test/mwnpc18_decorfigures.test.js"
+   "test/scenes/mwnpc18_decorfigures.test.js"
   ]
  },
  {
@@ -250,7 +250,7 @@
   "old": "const yardFigureCtx = { get flats() { return pipeline.flatsFile?.() ?? null; }",
   "new": "const yardFigureCtx = { get flats() { return null; }",
   "tests": [
-   "test/mwnpc18_decorfigures.test.js"
+   "test/scenes/mwnpc18_decorfigures.test.js"
   ]
  },
  {
@@ -259,7 +259,7 @@
   "old": "      for (const y of yards.values()) if (nearEye(y, eye)) for (const e of y.pool.figures()) yardFigs.push(e);",
   "new": "      for (const y of yards.values()) for (const e of y.pool.figures()) yardFigs.push(e);",
   "tests": [
-   "test/mwnpc18_decorfigures.test.js"
+   "test/scenes/mwnpc18_decorfigures.test.js"
   ]
  }
 ]

@@ -21,7 +21,7 @@ import { buildProgram } from './glProgram.js';   // AUDIT 68 S17-gl-program-dup:
 import { realWindowsGlsl, RW_MAIN_DERIVS, RW_MAIN_CUTOUT, RW_MAIN_GLASS, RW_MAIN_ROOM, GLASS_NONE, GLASS_EXTERIOR, GLASS_INTERIOR, winModeFor, roomLightFor, sphereNdcRect, cropProjection, viewTargetSize, viewSkyFrom, viewRays, VIEW_BG_VS, VIEW_BG_FS, VIEW_PANES_MAX, VIEW_PANE_UNIT, VIEW_PANE_VS, VIEW_PANE_FS } from './realWindows.js';   // RW1: the real windows - the rooms, the glass, the view out
 import { MESH_ALPHA_GLSL, samplerParams, samplerKey } from './meshAlpha.js';   // POI-2: a translucent mesh draw, and a texture's own wrap and filter
 import { frameTarget, setFrameTarget } from './renderTarget.js';   // RW1: the view out's pass hands the frame target back as it found it (EL4's restore)
-import { CLIP_SENTINEL } from '../world/terrainSurface.js';   // FAR-CLIP1: the byte the terrain's clip variant discards - the TileMap format's module, already in this file's closure (waterCorners.js)
+import { CLIP_SENTINEL } from '../world/terrain/terrainSurface.js';   // FAR-CLIP1: the byte the terrain's clip variant discards - the TileMap format's module, already in this file's closure (waterCorners.js)
 /** AUDIT TECH-FX: the screen offset before any is set - one, frozen (Renderer `screenOffset`). */
 const NO_SCREEN_OFFSET = Object.freeze([0, 0]);
 
@@ -239,7 +239,7 @@ void main() {
 //   - the OPTIONAL skin channels 5-9, additive as aUV and aEmissive are: a VAO that never enables them reads
 //     constants, and `uSkin` 0 never looks at them - every voxel rig and every CPU-skinned mesh draws exactly what
 //     it drew;
-//   - uSkin 1 (one influence pair) or 2 (two): the position is BLENDED here off the palette (formats/mwGpuSkin.js -
+//   - uSkin 1 (one influence pair) or 2 (two): the position is BLENDED here off the palette (formats/morrowind/mwGpuSkin.js -
 //     its skinPoint is this function in JS, and the pins hold the two together): the influences' rows accumulated
 //     in slot order, the post composed onto the sum once (MW-D31), the result applied to the stream position;
 //   - `vNormalV` and `vRel`: the normal under its old name's job, and the posed position in the model's own axes
@@ -554,7 +554,7 @@ uniform vec3 uRight;
 uniform vec3 uUp;
 uniform vec3 uOrigin;
 uniform vec2 uSize;
-uniform vec4 uFlatWind;   // WIND3: the wind's rate x, z (m/s, the lab's rate from systems/windDrive.js), the clock, the gust
+uniform vec4 uFlatWind;   // WIND3: the wind's rate x, z (m/s, the lab's rate from systems/wind/windDrive.js), the clock, the gust
 uniform float uSway;      // WIND3: this batch's share of the lean (0 = stands still); WINDFALL1: its wind mask while the mod's law stands
 ${WINDFALL_SWAY_GLSL}
 uniform vec3 uTip;        // PROF4: a felled tree's fall - x, z the way it falls, the angle it has leaned (0 = stands)
@@ -782,8 +782,8 @@ import { multiply as mat4Multiply } from '../world/mat4.js';   // PERF-CROWD2: p
 import { PerfMeter, perfOn, perfZones, perfCpu, setMeter } from './perfMeter.js';   // EL8: `?perf`   // EL5: the bounds every bundle carries for the replays' culling   // EL2: the lane's shadow maps - a leaf that compiles nothing until a lane asks
 import { AirPass, AIR_ADAPT_UNIT as ADAPT_UNIT, AIR_CONTACT_UNIT as CONTACT_UNIT } from './airPass.js';   // EL3: the ambient occlusion, the bloom and the shafts - the same kind of leaf; EL4: the eye's unit; EL6: all of it off the frame's own depth, at the resolve
 import { RetroPass } from './retroPass.js';   // RETRO1: DFU's retro mode - the world's small image, its effect and its present (a leaf, the air pass's kind)
-import { decalIndices, DECAL_FLOATS_PER_VERTEX } from '../combat/bloodDecals.js';   // BLOOD1a: the index winding and the vertex stride are the decal module's, so the writer and the buffer cannot disagree about the format
-import { BLOOD_ABSORB_ENCODED, INK_DEPTH } from '../combat/bloodArt.js';
+import { decalIndices, DECAL_FLOATS_PER_VERTEX } from '../combat/blood/bloodDecals.js';   // BLOOD1a: the index winding and the vertex stride are the decal module's, so the writer and the buffer cannot disagree about the format
+import { BLOOD_ABSORB_ENCODED, INK_DEPTH } from '../combat/blood/bloodArt.js';
 import { glslFloat } from './airPass.js';   // AUDIT BLOOD3 F9: a dial at a whole number is an INT literal in GLSL, and vec3 * int does not compile   // BLOOD3: the film's absorption - the classic mark takes the depth, the lane takes the sheen too
 import { SHADE_DARK } from '../systems/concealDraw.js';   // ECV1 / AUDIT 65 PN-3: the shade's pull toward black, interpolated into BB_FS below - the shader restated 0.12 as a second literal. The LEAF, not systems/combatVisuals.js, which re-exports it: that module's graph would take this file's closure from 13 modules to 69
 import { FLAT_DISSOLVE_GLSL } from '../systems/dissolve.js';   // DISSOLVE: a sprite burnt away, or gathered through a portal (a leaf)
@@ -1102,9 +1102,9 @@ void main() {
 // variant available, so the sea-level water cap stays visible on mixed
 // land/water map pixels".
 //
-// The port's mark is the byte CLIP_SENTINEL (world/terrainSurface.js).
+// The port's mark is the byte CLIP_SENTINEL (world/terrain/terrainSurface.js).
 // DW-C left a clipped tile's QUAD out of the pixel's index set instead
-// (world/deepWaterCap.js clippedTerrainIndices) - the discard exactly while
+// (world/deepWater/deepWaterCap.js clippedTerrainIndices) - the discard exactly while
 // a tile is a quad, at stride 1. EV4's far ground draws at stride 4,
 // sixteen tiles a quad, and kept every quad not clipped whole; no terrain
 // program tested the byte, so a kept quad drew its clipped tiles as tile
@@ -1313,7 +1313,7 @@ void main() {
   // maroon it was (at full thickness the factor is exactly 1). The
   // LANE's twin carries the rest of the slice - the meniscus normal and
   // the sheen's Fresnel - because a classic mark has no glint to temper
-  // and no lantern rig to catch a rim with. See combat/bloodArt.js.
+  // and no lantern rig to catch a rim with. See combat/blood/bloodArt.js.
   // AUDIT BLOOD3 F1: the ink is the thickness INVERTED (bloodArt.js), so
   // the film reads it out rather than taking it for a density - BLOOD3
   // had this running backwards over every shape in the sheet. And the
@@ -1464,7 +1464,7 @@ export const VIEW_OUT_CLEAR = Object.freeze([0, 0, 0, 0]);
  *  (_uploadCloudShadow). It used to be 7, which is also where the
  *  Dynamic Skies pass lands `_MoonTex`: that mod binds its nine
  *  TEXTURE_SLOTS as `TEXTURE0 + i` (dynamicSkiesRenderer.js:"for (let i = 0; i < TEXTURE_SLOTS.length; i++)",
- *  over systems/dynamicSkies.js:"export const TEXTURE_SLOTS"'s nine names),
+ *  over systems/dynamicSkies/dynamicSkies.js:"export const TEXTURE_SLOTS"'s nine names),
  *  so unit 7 was written by a foreign pass while the renderer's
  *  per-program stamp still said the shadow map was there. 15 sits
  *  above the mod's nine and above every other pass in the tree (none
@@ -1541,7 +1541,7 @@ import { WATER_MAP_COLOR } from './underwaterFog.js';
 import { WATER_SURFACE_VS, waterSurfaceFs } from './waterSurface.js';   // WATER1: the enhanced water pass over the terrain grid
 import { WATER_LAYER_UNITS, WATER_SCENE_UNIT, WATER_SCENE_DEPTH_UNIT, NO_BED_DEPTH, WATER_RIPPLE_UNIT } from './waterSurface.js';   // FIELD BUGS 2026-09-29 (the sea) #4: WATER1's offset is the sea's surface film's
 import { WATER_BED_GLSL, waterBedMix } from './waterBedGlsl.js';   // WATER-NEXT 2: the ground under the water is a bed
-import { packWaterMask, WATER_DRAW_MASK_TABLE } from '../world/waterCorners.js';   // MAC2: the corner table's one home; WATER-DRAW1: the PASS takes the draw's table, not the feet's
+import { packWaterMask, WATER_DRAW_MASK_TABLE } from '../world/water/waterCorners.js';   // MAC2: the corner table's one home; WATER-DRAW1: the PASS takes the draw's table, not the feet's
 import { pageParam } from '../systems/pageQuery.js';   // PERF-URL: the page's query, parsed once a search
 import { SKIN_PAL_ROW, SKIN_PALETTE_UNIT } from './skinPalette.js';   // MWNPC1: the GPU skin's palette shape
 import { lightIdsOf, lightList, packLight } from './lightId.js';   // LIGHT-ID: each light's identity, lifted off its list for the shadow pass (and the flash packed through the seam)
@@ -1780,7 +1780,7 @@ export class Renderer {
     // DRAW pays; upload-time binds are creation cost, not frame cost.
     this._perf = perfOn() ? setMeter(gl, new PerfMeter(gl, perfZones(), perfCpu())) : null;   // EL8: `?perf` - a GPU-timed line every PERF_EVERY world frames; VC6d: `?perf=zones` per pass, and the meter is findable by its context (the sky's march marks its own span); PERF-CPU: `?perf=cpu` tiles the same zones on the MAIN THREAD's clock, which is the one a script-bound frame is losing
     this._perfOpen = false;   // AUDIT 68 S16-perf-no-resolve-leak: a world frame's meter frame begun and not yet closed (_perfClose)
-    this._frameStamp = 0;      // PERF3: bumped by beginFrame (and the state restores) - the terrain program's frame-constant block is uploaded once per stamp; LA-COST1: and the billboard's, the decal's and the character's, and bumped by every setter and seam that moves a value in any of the four (the law: test/la_cost.test.js)
+    this._frameStamp = 0;      // PERF3: bumped by beginFrame (and the state restores) - the terrain program's frame-constant block is uploaded once per stamp; LA-COST1: and the billboard's, the decal's and the character's, and bumped by every setter and seam that moves a value in any of the four (the law: test/render/la_cost.test.js)
     // PERF-CROWD2 (2026-09-19): THE BILLBOARD PASS CULLS, so that no host
     // has to remember to. PERF-ON2 found the peers submitted uncut and
     // PERF-CROWD found the whole town beside them - and then the same
@@ -1837,7 +1837,7 @@ export class Renderer {
     this._fogDensity = 0;
     this._fogRange = new Float32Array([0, 1]);
     // DW-C: Iliac Puddle No More's distance fog - fogGlsl.js uDwFog, five vec4s
-    // (world/deepWaterLook.js distanceFogUniforms). A FRAME's, as the cloud
+    // (world/deepWater/deepWaterLook.js distanceFogUniforms). A FRAME's, as the cloud
     // deck is: beginFrame clears it and the exterior host sets it after.
     this._dwFog = new Float32Array(20);
     this._seaHaze = new Float32Array(2);   // FAR-SEA1: the hold and the sea's height (setSeaHaze)
@@ -2019,7 +2019,7 @@ export class Renderer {
    * camera's rect every frame from the HUD's height; this is that
    * rect, in Unity's own normalized BOTTOM-LEFT space, which is also
    * gl.viewport's - so `{ x: 0, y: hudHeight, w: 1, h: 1 - hudHeight }`
-   * ports digit for digit (ui/hudLarge.js owns the arithmetic).
+   * ports digit for digit (ui/hud/hudLarge.js owns the arithmetic).
    *
    * CONSUMED BY THE NEXT beginFrame, exactly as DFU recomputes the
    * rect every frame ("Check size every frame as HUD height can
@@ -2122,7 +2122,7 @@ export class Renderer {
    *  `activeTexture` is a pure selector - it has no effect but to say
    *  which unit the next `bindTexture` means - so this shadow cannot
    *  change a picture on its own. What it CAN do is go stale, which is
-   *  why the funnel law (`test/glstate.test.js`) allows exactly one raw
+   *  why the funnel law (`test/render/glstate.test.js`) allows exactly one raw
    *  `gl.activeTexture` in this file, inside here. */
   _activeTexture(unit) {
     if (this._activeUnit === unit) return;
@@ -2196,7 +2196,7 @@ export class Renderer {
     // PERF-2D: THE ONE GAP THIS CHANGE CANNOT GUARD, MADE LOUD.
     //
     // Every path inside this file closes the 2D run before it needs the
-    // baseline, and `test/glstate.test.js` reads that law out of the
+    // baseline, and `test/render/glstate.test.js` reads that law out of the
     // source. The SKY, the rain, the wisps, the sand and the grass are
     // not inside this file: the hosts hand them `renderer.gl` at
     // construction and call `draw` on them directly, so nothing here can
@@ -3156,7 +3156,7 @@ export class Renderer {
    *  happens: on demand, at the head of everything that needs the
    *  baseline back, instead of eagerly after every quad.
    *
-   *  The law, and `test/glstate.test.js` reads it out of the source:
+   *  The law, and `test/render/glstate.test.js` reads it out of the source:
    *  **every method in this file that issues a `gl.draw*` either is one
    *  of the three 2D primitives or calls `_close2D()` first**, and so
    *  does every seam where foreign GL can run (`beginFrame`,
@@ -3347,7 +3347,7 @@ export class Renderer {
   }
 
   /**
-   * MWNPC1: A GPU-SKINNED CHARACTER MESH - formats/mwGpuSkin.js packSkinStream's static stream, uploaded ONCE, and
+   * MWNPC1: A GPU-SKINNED CHARACTER MESH - formats/morrowind/mwGpuSkin.js packSkinStream's static stream, uploaded ONCE, and
    * its palette texture (RGBA32F, `width` x `height`, three texels an entry). A pose re-uploads the palette alone
    * (updateSkinPalette); drawCharacter blends the stream in CHAR_SKIN_VS. `pairs` is the influence pairs a corner
    * carries (1 or 2). No sphere: the body is drawn only through the sprite target, which never casts (MW-CROWD) - an NPC's
@@ -3398,7 +3398,7 @@ export class Renderer {
   }
 
   /** MW-BOW1 x MWNPC1: a part that moved on its own clock - its corners alone put back into the static stream at
-   *  `offset` floats (formats/mwGpuSkin.js restreamMovedRows). Nothing else of the body is re-sent. */
+   *  `offset` floats (formats/morrowind/mwGpuSkin.js restreamMovedRows). Nothing else of the body is re-sent. */
   updateSkinStream(mesh, offset, data) {
     const gl = this.gl;
     if (!mesh || !mesh.skin || !mesh.vbo) return;
@@ -3483,7 +3483,7 @@ export class Renderer {
   /** Re-upload a character mesh's vertex stream in place (per-frame
    *  animation). `packed` must match the original layout/length. */
   /** MAC-Q: a particle EFFECT's GL objects - a VAO over PARTICLE_FLOATS
-   *  (formats/mwParticles.js packParticleQuads' stream), sized for
+   *  (formats/morrowind/mwParticles.js packParticleQuads' stream), sized for
    *  `capacity` quads and refilled each frame. Rides a character mesh's
    *  `effects` list and is drawn after its ranges. */
   createParticleEffect(capacity, state = {}) {
@@ -3528,7 +3528,7 @@ export class Renderer {
   }
 
   /** MW-SPELLFX1: MORROWIND'S SPELL EFFECTS IN THE WORLD PASS (scenes/mwMagicFx.js) - particle effects whose streams
-   *  are already in world space (formats/mwVfx.js), drawn with the identity model through the character path's own
+   *  are already in world space (formats/morrowind/mwVfx.js), drawn with the identity model through the character path's own
    *  particle draw: the NIF's blend function and depth flags, depth-tested against the world. Both faces, as the
    *  impact pass draws them (render/spellImpactFx.js): an effect's shells are seen from inside and out, and the
    *  Morrowind-to-world mirror turns every triangle over. The baseline's CULL_FACE comes back after. */
@@ -4223,7 +4223,7 @@ export class Renderer {
   /** Composite the sprite into the world: camera-facing quad at the
    *  character's position, alpha-cut, fogged, depth-tested. */
   /** INVIS-LOOK (2026-09-27): `conceal`, optional - ECV1's visual ({ mode, alpha, t, phase }, systems/combatVisuals.js)
-   *  for a CONCEALED peer's Morrowind body (net/peerBodies.js drawVeiled): the billboard shader's own look on this
+   *  for a CONCEALED peer's Morrowind body (net/peer/peerBodies.js drawVeiled): the billboard shader's own look on this
    *  quad (the blend's ripple and opacity, the shade's dark), BLENDED with no depth write, as the billboards' concealed
    *  phase draws a concealed foe. None, and the quad is the opaque cut-out it always was. */
   /** AUDIT OW4 J6: `up`, optional - the quad's vertical when it leans (the travel view's leaned up, characterSprite.js
@@ -4466,7 +4466,7 @@ void main() {
   // cannot serve them: it pins its up-axis to world Y (`cy +- halfH`),
   // so its quad is always vertical, and a decal's whole point is to lie
   // on the surface it landed on. These take a full surface basis -
-  // right and up both in the plane - which combat/bloodDecals.js works
+  // right and up both in the plane - which combat/blood/bloodDecals.js works
   // out and writes as four vertices.
   //
   // THE BUFFER IS THE RING. One slot per decal, written in place when
@@ -5655,7 +5655,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     const gl = this.gl;
     // EVERY global this pass can touch, saved by name. A thirteenth
     // one added to the renderer later must be added HERE - the source
-    // pin in test/roadc_panelframe.test.js is what enforces it.
+    // pin in test/ui/automap/roadc_panelframe.test.js is what enforces it.
     this._panelSaved = {
       screenOffset: this._screenOffset ? [...this._screenOffset] : [0, 0],
       clipY: this._clipY,
@@ -6343,7 +6343,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   }
 
   /** DW-C: Iliac Puddle No More's distance fog for this frame - the twenty
-   *  floats world/deepWaterLook.js distanceFogUniforms packs, or null for
+   *  floats world/deepWater/deepWaterLook.js distanceFogUniforms packs, or null for
    *  none. After beginFrame, which clears it: it is a frame's.
    *
    *  LA-COST6 (2026-09-27, found by the audit of Mac's "a deep audit on the enhanced lighting system"): UNDER THE SEA,
@@ -6878,7 +6878,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // frame writes into the rest is Smis, booleans, strings or objects,
     // which need no box (`sway`'s fraction is written once, by the host).
     // A field a batch gains anywhere in src/ belongs here too -
-    // test/perfextb.test.js sweeps the writes, and weighs the record.
+    // test/render/perfextb.test.js sweeps the writes, and weighs the record.
     // PERF-EXT1 (2026-09-25, the same players): `_place`, the placements on
     // a grid (bounds.js placementGrid), for a static batch of more than one
     // flat - a pixel-wide wood's sphere reaches every shadow in its pixel,
@@ -7102,7 +7102,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   }
 
   /** WATER-NEXT 2: THE WATER'S SHEET - the water pass's own surface: the grid AS IT STOOD before its bed was carved
-   *  (world/waterBed.js; `positions`, uploaded here), the bed's depth under each vertex on attribute 1 (`depths`), and
+   *  (world/water/waterBed.js; `positions`, uploaded here), the bed's depth under each vertex on attribute 1 (`depths`), and
    *  the water quads (`indices`). Without a bed (`positions` null: no vertex of the grid is under water - a one-tile
    *  stream) it rides the terrain's own position buffer and attribute 1 is the constant NO_BED_DEPTH: the water lies
    *  on the ground as WATER1's did, shallow. destroyWaterSurface frees what it owns. */
@@ -7151,7 +7151,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     return this._underWater;
   }
 
-  /** WATER-NEXT 4: THE RIPPLE FIELD the water reads this frame - world/waterRipples.js's (its `bytes`, `origin`,
+  /** WATER-NEXT 4: THE RIPPLE FIELD the water reads this frame - world/water/waterRipples.js's (its `bytes`, `origin`,
    *  `version`), or null for none. The host hands it over each frame; the texture is written only when the field moved. */
   setWaterRipples(field, span = 48, cells = 96) {
     this._ripples = field ?? null;   // AUDIT WATER-NEXT P4: the field itself, a frame's handing no object
@@ -7340,7 +7340,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   setCloudShadow(d) { d = d ?? null; if (d !== this._cloudShadow) { this._cloudShadow = d; this._csStamp++; } }   // VC4: the stamp moves only when the deck does (the hosts hand the same object per pixel)
 
   /** WIND3: the wind the flats lean with, for this frame - [rate x, rate
-   *  z, seconds, gust] (systems/windDrive.js's windV and gust), or null
+   *  z, seconds, gust] (systems/wind/windDrive.js's windV and gust), or null
    *  for none. Numbers only; uploaded by drawBillboards. A batch leans by
    *  this times its own `sway` (0 for everything but the climate's flora,
    *  floraSwayOf), so an interior or a dungeon that never sets it draws
@@ -7829,7 +7829,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   _drawWaterRows(L, rows, n) {
     this._close2D();   // PERF-2D: every draw hands the baseline back first (a no-op after the callers' own)
     const gl = this.gl;
-    gl.vertexAttrib1f(1, -NO_BED_DEPTH);   // a sheet without a bed: attribute 1 is a shallow constant (createWaterSheet) - AUDIT WATER-NEXT H2: negative, no bed under it (world/waterCorners.js SHEET_NO_BED)
+    gl.vertexAttrib1f(1, -NO_BED_DEPTH);   // a sheet without a bed: attribute 1 is a shallow constant (createWaterSheet) - AUDIT WATER-NEXT H2: negative, no bed under it (world/water/waterCorners.js SHEET_NO_BED)
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     gl.depthMask(false);
@@ -7884,7 +7884,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   }
 
   /**
-   * WATER-NEXT 2: THE OPEN SEA - Iliac Puddle No More's surface sheets (world/deepWaterSurface.js) drawn as water by
+   * WATER-NEXT 2: THE OPEN SEA - Iliac Puddle No More's surface sheets (world/deepWater/deepWaterSurface.js) drawn as water by
    * the water's own program (`uOpen`: no tilemap, no bed - its depth is the scene copy's, the floor it carved), in the
    * mod's own place in the frame (its Transparent queue). `list` the mod's surfaces ({h: {surface: {vao, count}},
    * model}), `liftY` its height over the pixel, `color` the mod's tint, `arrayTex` the ground tile array whose water

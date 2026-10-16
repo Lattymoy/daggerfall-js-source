@@ -30,7 +30,7 @@
 //
 // DETERMINISTIC: every noise is a seeded PRNG (each clip its own seed), so re-running writes the same bytes - the rule
 // public/README.md sets for anything of ours that ships. Provenance: public/sfx/SOURCES.md; the doctrine allow-list
-// (test/doctrine.test.js) carries a row for each.
+// (test/tooling/doctrine.test.js) carries a row for each.
 
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';

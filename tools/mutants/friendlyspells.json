@@ -5,7 +5,7 @@
     "old": "const marks = [...allyMarksFor(sp), ...duelMarksFor(sp), ...bossMarksFor(sp)];",
     "new": "const marks = [...duelMarksFor(sp), ...bossMarksFor(sp)];",
     "tests": [
-      "test/friendlyspells.test.js"
+      "test/systems/friendlyspells.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    try { sent = !!castAtAlly?.(mark.id, allyCastFrame(sp, effectiveLevel(playerEntity), mark.id)); } catch { sent = false; }",
     "new": "    sent = true;",
     "tests": [
-      "test/friendlyspells.test.js"
+      "test/systems/friendlyspells.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    if (!allyMarks || !castAtAlly || !sp || free || !allyCastable(sp)) return [];",
     "new": "    if (!allyMarks || !castAtAlly || !sp || !allyCastable(sp)) return [];",
     "tests": [
-      "test/friendlyspells.test.js"
+      "test/systems/friendlyspells.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    if (!allyMarks || !castAtAlly || !sp || free || !allyCastable(sp)) return [];",
     "new": "    if (!allyMarks || !castAtAlly || !sp || free) return [];",
     "tests": [
-      "test/friendlyspells.test.js"
+      "test/systems/friendlyspells.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "      if (m.ally) {\n        // COMPANION-KIT: my companion's body meets it as a mate's does\n        const hitMate",
     "new": "      if (false) {\n        // COMPANION-KIT: my companion's body meets it as a mate's does\n        const hitMate",
     "tests": [
-      "test/friendlyspells.test.js"
+      "test/systems/friendlyspells.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "      giveToAllies(sweepFoes(eye, EXPLOSION_RADIUS, allyMarksFor(sp)), sp);",
     "new": "      giveToAllies(allyMarksFor(sp), sp);",
     "tests": [
-      "test/friendlyspells.test.js"
+      "test/systems/friendlyspells.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "    const marks = giftablePeers(near).filter((p) => online.reachesPeer?.(p.id) && (mateOf(p.id) || strangers))",
     "new": "    const marks = giftablePeers(near).filter((p) => online.reachesPeer?.(p.id))",
     "tests": [
-      "test/friendlyspells.test.js"
+      "test/systems/friendlyspells.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "      if (m.visual) {\n        // SUNBABY2: a sky fireball lands",
     "new": "      if (false) {\n        // SUNBABY2: a sky fireball lands",
     "tests": [
-      "test/friendlyspells.test.js"
+      "test/systems/friendlyspells.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "export const castGate = (bucket, nowMs) => tokenGate(bucket, nowMs, CAST_HZ_MAX, CAST_BURST_MAX);",
     "new": "export const castGate = (bucket, nowMs) => tokenGate(bucket, nowMs, CAST_HZ_MAX);",
     "tests": [
-      "test/friendlyspells.test.js"
+      "test/systems/friendlyspells.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "    ce: uint(ce, POSE_CAST_ELEMENTS - 1) ?? 4,",
     "new": "    ce: uint(ce, POSE_CAST_ELEMENTS) ?? 4,",
     "tests": [
-      "test/friendlyspells.test.js"
+      "test/systems/friendlyspells.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "    ar: uint(ar, 65535) ?? 0,",
     "new": "",
     "tests": [
-      "test/friendlyspells.test.js"
+      "test/systems/friendlyspells.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "      if (soundSilenced(index)) return null;",
     "new": "",
     "tests": [
-      "test/friendlyspells.test.js"
+      "test/systems/friendlyspells.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "      if (deps.inside || deps.underground || soundSilenced(AMBIENT_CRICKETS_LOOP)) {",
     "new": "      if (deps.inside || deps.underground) {",
     "tests": [
-      "test/friendlyspells.test.js"
+      "test/systems/friendlyspells.test.js"
     ]
   },
   {
@@ -122,16 +122,16 @@
     "old": "if (base === `${name.toLowerCase()}.wav`) return name;",
     "new": "if (base.startsWith(name.toLowerCase())) return name;",
     "tests": [
-      "test/friendlyspells.test.js"
+      "test/systems/friendlyspells.test.js"
     ]
   },
   {
     "name": "PR29-supersede-dropped",
-    "file": "src/systems/partyRestLaw.js",
+    "file": "src/systems/party/partyRestLaw.js",
     "old": "    if (stampOf(m?.p?.voteAt, now) > t) continue;\n",
     "new": "",
     "tests": [
-      "test/friendlyspells.test.js"
+      "test/systems/friendlyspells.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "  const cancelPartyRestStart = () => { if (!social) return; _partyRestStartWaived = true; };",
     "new": "  const cancelPartyRestStart = () => { if (!social) return; };",
     "tests": [
-      "test/friendlyspells.test.js"
+      "test/systems/friendlyspells.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "        else if (round !== _partyRestReadyRound) { _partyRestReady = false; _partyRestReadyRound = null; }",
     "new": "",
     "tests": [
-      "test/friendlyspells.test.js"
+      "test/systems/friendlyspells.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "    rangeType: 1,                                   // ByTouch",
     "new": "    rangeType: 0,                                   // ByTouch",
     "tests": [
-      "test/friendlyspells.test.js"
+      "test/systems/friendlyspells.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "  if (careerIndex === HEALER_CAREER_INDEX) {",
     "new": "  if (true) {",
     "tests": [
-      "test/friendlyspells.test.js"
+      "test/systems/friendlyspells.test.js"
     ]
   },
   {
@@ -176,16 +176,16 @@
     "old": "    if (!entity.spells.some((k) => k === sp || (k?.index === sp.index && k?.name === sp.name))) entity.spells.push(sp);",
     "new": "    entity.spells.push(sp);",
     "tests": [
-      "test/friendlyspells.test.js"
+      "test/systems/friendlyspells.test.js"
     ]
   },
   {
     "name": "REST-MANA1-online-arm-dropped",
-    "file": "src/systems/rest.js",
+    "file": "src/systems/rest/rest.js",
     "old": "  if (hasSpecialAbility(entity.career, SPECIAL_ABILITY.NoRegenSpellPoints) && !restIgnoresNoRegen()) return 0;",
     "new": "  if (hasSpecialAbility(entity.career, SPECIAL_ABILITY.NoRegenSpellPoints)) return 0;",
     "tests": [
-      "test/friendlyspells.test.js"
+      "test/systems/friendlyspells.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "      if (!noSpellPointCost) setSpellQuickslot(sp);",
     "new": "      setSpellQuickslot(sp);",
     "tests": [
-      "test/friendlyspells.test.js"
+      "test/systems/friendlyspells.test.js"
     ]
   }
 ]

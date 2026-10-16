@@ -5,7 +5,7 @@
     "old": "export const banishmentEnd = (worldNow) => eventMinuteOfSky(skyMinuteOfEvent(worldNow) + BANISHMENT_MINUTES);",
     "new": "export const banishmentEnd = (worldNow) => worldNow + BANISHMENT_MINUTES;",
     "tests": [
-      "test/banishsky_standing.test.js"
+      "test/systems/banishsky_standing.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "export const banishmentEnd = (worldNow) => eventMinuteOfSky(skyMinuteOfEvent(worldNow) + BANISHMENT_MINUTES);",
     "new": "export const banishmentEnd = (worldNow) => worldNow + 30 * (eventMinuteOfSky(skyMinuteOfEvent(worldNow) + 1440) - worldNow);",
     "tests": [
-      "test/banishsky_standing.test.js"
+      "test/systems/banishsky_standing.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  const span = skyMinuteOfEvent(worldNow + left) - skyMinuteOfEvent(worldNow);",
     "new": "  const span = left;",
     "tests": [
-      "test/banishsky_standing.test.js"
+      "test/systems/banishsky_standing.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  return Math.max(1, Math.ceil((span - CALENDAR_EPSILON_MINUTES) / 1440));",
     "new": "  return Math.max(1, Math.ceil(span / 1440));",
     "tests": [
-      "test/banishsky_standing.test.js"
+      "test/systems/banishsky_standing.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  return Math.max(1, Math.ceil((span - CALENDAR_EPSILON_MINUTES) / 1440));",
     "new": "  return Math.ceil((span - CALENDAR_EPSILON_MINUTES) / 1440);",
     "tests": [
-      "test/banishsky_standing.test.js"
+      "test/systems/banishsky_standing.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "  if (!Number.isFinite(left) || left <= 0) return left;",
     "new": "  if (!Number.isFinite(left)) return left;",
     "tests": [
-      "test/banishsky_standing.test.js"
+      "test/systems/banishsky_standing.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "export const eventMinuteOfSky = (skyMinutes) => (_on && Number.isFinite(skyMinutes) ? eventOfSkyLaw(skyMinutes) : skyMinutes);",
     "new": "export const eventMinuteOfSky = (skyMinutes) => (Number.isFinite(skyMinutes) ? eventOfSkyLaw(skyMinutes) : skyMinutes);",
     "tests": [
-      "test/banishsky_standing.test.js"
+      "test/systems/banishsky_standing.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "  if (!_sharedClock || !Number.isFinite(eventMinutes) || eventMinutes <= 0) return null;",
     "new": "  if (!Number.isFinite(eventMinutes) || eventMinutes <= 0) return null;",
     "tests": [
-      "test/banishsky_standing.test.js"
+      "test/systems/banishsky_standing.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "  const real = Math.max(1, Math.ceil(eventMinutes / ONLINE_MINUTES_PER_MS / 60000));",
     "new": "  const real = Math.max(1, Math.round(eventMinutes / ONLINE_MINUTES_PER_MS / 60000));",
     "tests": [
-      "test/banishsky_standing.test.js"
+      "test/systems/banishsky_standing.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "  return real >= 120 ? `about ${Math.ceil(real / 60)} real hours` : `about ${real} real minute${real === 1 ? '' : 's'}`;",
     "new": "  return real >= 120 ? `about ${Math.round(real / 60)} real hours` : `about ${real} real minute${real === 1 ? '' : 's'}`;",
     "tests": [
-      "test/banishsky_standing.test.js"
+      "test/systems/banishsky_standing.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "  return real >= 120 ? `about ${Math.ceil(real / 60)} real hours` : `about ${real} real minute${real === 1 ? '' : 's'}`;",
     "new": "  return real >= 120 ? `about ${Math.ceil(real / 60)} hours` : `about ${real} minute${real === 1 ? '' : 's'}`;",
     "tests": [
-      "test/banishsky_standing.test.js"
+      "test/systems/banishsky_standing.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "  moveBanishments(copy, (b) => Math.floor(own) + (skyOfEventLaw(b) - skyOfEventLaw(Math.floor(world))));\n",
     "new": "",
     "tests": [
-      "test/banishsky_standing.test.js"
+      "test/systems/banishsky_standing.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "  moveBanishments(copy, (b) => Math.floor(own) + (skyOfEventLaw(b) - skyOfEventLaw(Math.floor(world))));",
     "new": "  moveBanishments(copy, (b) => Math.floor(own) + (b - Math.floor(world)));",
     "tests": [
-      "test/banishsky_standing.test.js"
+      "test/systems/banishsky_standing.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "  moveBanishments(copy, (b) => eventOfSkyLaw(skyOfEventLaw(Math.floor(worldNow)) + (b - Math.floor(own))));\n",
     "new": "",
     "tests": [
-      "test/banishsky_standing.test.js"
+      "test/systems/banishsky_standing.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "  moveBanishments(copy, (b) => eventOfSkyLaw(skyOfEventLaw(Math.floor(worldNow)) + (b - Math.floor(own))));",
     "new": "  moveBanishments(copy, (b) => Math.floor(worldNow) + (b - Math.floor(own)));",
     "tests": [
-      "test/banishsky_standing.test.js"
+      "test/systems/banishsky_standing.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "    if (r && typeof r === 'object' && Number.isFinite(r.b)) r.b = toEnd(r.b);",
     "new": "    if (r && typeof r === 'object') r.b = toEnd(r.b);",
     "tests": [
-      "test/banishsky_standing.test.js"
+      "test/systems/banishsky_standing.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "    const days = banishmentDaysLeft(entity, regionIndex, now);",
     "new": "    const days = Math.ceil(banishmentLeft(entity, regionIndex, now) / 1440);",
     "tests": [
-      "test/banishsky_standing.test.js"
+      "test/systems/banishsky_standing.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "        ...(real ? line(`(${real})`) : []),\n",
     "new": "",
     "tests": [
-      "test/banishsky_standing.test.js"
+      "test/systems/banishsky_standing.test.js"
     ]
   },
   {
@@ -167,25 +167,25 @@
     "old": "        worldWords: worldSpanRealWords,   // BANISH-SKY: and online the term said in real time too\n",
     "new": "",
     "tests": [
-      "test/banishsky_standing.test.js"
+      "test/systems/banishsky_standing.test.js"
     ]
   },
   {
     "name": "BANISH-SKY-the-page-counts-event-days",
-    "file": "src/ui/enhancedMenu.js",
+    "file": "src/ui/enhanced/enhancedMenu.js",
     "old": "    const days = banishmentDaysLeft(entity, i, worldNow);",
     "new": "    const days = Math.ceil(left / 1440);",
     "tests": [
-      "test/banishsky_standing.test.js"
+      "test/systems/banishsky_standing.test.js"
     ]
   },
   {
     "name": "BANISH-SKY-the-page-says-no-real-time",
-    "file": "src/ui/enhancedMenu.js",
+    "file": "src/ui/enhanced/enhancedMenu.js",
     "old": "const real = Number.isFinite(left) ? worldSpanRealWords(left) : null;",
     "new": "const real = null;",
     "tests": [
-      "test/banishsky_standing.test.js"
+      "test/systems/banishsky_standing.test.js"
     ]
   }
 ]

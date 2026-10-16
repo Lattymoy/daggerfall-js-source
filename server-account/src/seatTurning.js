@@ -44,11 +44,11 @@ import { incursionStatements } from './seatIncursion.js';   // AUDIT-SEATS: a Da
 import { fortsSeasonStatements, campsSpent, fortTiersOf, fortsLapsedStatements, campsWorn } from './seatForts.js';   // SEAT2b: a Season's wear, the Siege Camps spent; part two: a holder's Shrine; AUDIT SEATS-2 S5, S4: a lapse's projects fallen, the worn gate's Rams
 import { shrineStanding, marketHallTitheCap } from '../../src/net/fortLaw.js';   // SEAT2b part two (7.5): the Shrine's Standing a week
 import { swordsSettled } from './seatSiege.js';   // AUDIT-SEATS S3: a void battle's Sellsword escrow home
-import { gameDayAt, gateTimes } from '../../src/net/gateLaw.js';
+import { gameDayAt, gateTimes } from '../../src/net/gate/gateLaw.js';
 import { guildActorOf } from './guilds.js';
 import { mustChange } from './realm.js';
 import { utcDay } from '../../src/net/marksLaw.js';
-import { GUILD_RANK_MASTER } from '../../src/net/guildLaw.js';
+import { GUILD_RANK_MASTER } from '../../src/net/guild/guildLaw.js';
 import { seatWeekOf, seatWeekStartMs, seatKeyOk, turningPlan, seatGlyphsOf, seatTitleOf, SEAT_WEEK_MS, STANDING_START, placeBattles, atSiegeWindow, CROWN_SEAT_REGIONS, conscriptionDue,
   fealtyReckoning, fealtyTribute, TITHE_CAP, seasonEndingAt, seasonStanding, seasonTitles, seasonOf, seasonRibbons, keptWholeSeason } from '../../src/net/townSeatLaw.js';
 import { tideAt } from '../../src/net/tideLaw.js';   // SEASON1 part two: the Tides

@@ -1,21 +1,21 @@
 [
   {
     "name": "GATHERSAID-queue-keep-ignored",
-    "file": "src/ui/profHud.js",
+    "file": "src/ui/professions/profHud.js",
     "old": "        const i = rows.findIndex((r) => !r.keep);",
     "new": "        const i = 0;",
     "tests": [
-      "test/gathersaid.test.js"
+      "test/net/gathersaid.test.js"
     ]
   },
   {
     "name": "GATHERSAID-queue-overflow-unbounded",
-    "file": "src/ui/profHud.js",
+    "file": "src/ui/professions/profHud.js",
     "old": "      while (rows.length > max) {",
     "new": "      while (rows.length > max + 1) {",
     "tests": [
-      "test/gathersaid.test.js",
-      "test/prof1_client.test.js"
+      "test/net/gathersaid.test.js",
+      "test/systems/prof1_client.test.js"
     ]
   },
   {
@@ -24,7 +24,7 @@
     "old": "      if (!hauled) hud.toast(k?.storesLine ? k.storesLine(d) : storesLine(d), { keep: true });",
     "new": "      if (!hauled) hud.toast(k?.storesLine ? k.storesLine(d) : storesLine(d));",
     "tests": [
-      "test/gathersaid.test.js"
+      "test/net/gathersaid.test.js"
     ],
     "note": "HAUL-CARDS (PIN MOVED): re-aimed by content - the queue's own hold and merge, the haul card's twin lines (the anchor widened to the pickup's own), the goods' line said where no card stood, a Motherlode's silver unsaid under its card."
   },
@@ -34,8 +34,8 @@
     "old": "  if (d.gem) { const g = materialCountLabel(d.gem, 1); goods.push(`${/^[aeiou]/i.test(g) ? 'an' : 'a'} ${g}`); }",
     "new": "",
     "tests": [
-      "test/gathersaid.test.js",
-      "test/prof2_client.test.js"
+      "test/net/gathersaid.test.js",
+      "test/net/prof2_client.test.js"
     ]
   },
   {
@@ -44,8 +44,8 @@
     "old": "${/^[aeiou]/i.test(g) ? 'an' : 'a'} ${g}",
     "new": "a ${g}",
     "tests": [
-      "test/gathersaid.test.js",
-      "test/prof2_client.test.js"
+      "test/net/gathersaid.test.js",
+      "test/net/prof2_client.test.js"
     ]
   },
   {
@@ -54,8 +54,8 @@
     "old": "`${goods.slice(0, -1).join(', ')} and ${goods[goods.length - 1]}`",
     "new": "goods.join(', ')",
     "tests": [
-      "test/gathersaid.test.js",
-      "test/prof7_client.test.js"
+      "test/net/gathersaid.test.js",
+      "test/systems/prof7_client.test.js"
     ]
   },
   {
@@ -64,8 +64,8 @@
     "old": "      if (!storesSaid) { storesSaid = true; hud.toast(storesWhereLine(deps.keyLabel?.('Professions') ?? '', d.carry === true)); }\n",
     "new": "",
     "tests": [
-      "test/gathersaid.test.js",
-      "test/prof7_client.test.js"
+      "test/net/gathersaid.test.js",
+      "test/systems/prof7_client.test.js"
     ],
     "note": "CLASSIC-PAGES (PIN MOVED): the line names the Professions key now, re-aimed by content."
   },
@@ -75,7 +75,7 @@
     "old": "      if (!storesSaid) { storesSaid = true; hud.toast(storesWhereLine(deps.keyLabel?.('Professions') ?? '', d.carry === true)); }",
     "new": "      hud.toast(storesWhereLine(deps.keyLabel?.('Professions') ?? '', d.carry === true));",
     "tests": [
-      "test/gathersaid.test.js"
+      "test/net/gathersaid.test.js"
     ],
     "note": "CLASSIC-PAGES (PIN MOVED): the line names the Professions key now, re-aimed by content."
   },
@@ -85,7 +85,7 @@
     "old": "r.error === 'auth' || r.error === 'no-session' ? KEPT_SIGNED_OUT_LINE : KEPT_LINE",
     "new": "KEPT_LINE",
     "tests": [
-      "test/gathersaid.test.js"
+      "test/net/gathersaid.test.js"
     ]
   },
   {
@@ -94,7 +94,7 @@
     "old": "    if (r?.kept) { hud.toast(",
     "new": "    if (r?.kept) { if (!answered.once) answered.once = true; else return; hud.toast(",
     "tests": [
-      "test/gathersaid.test.js"
+      "test/net/gathersaid.test.js"
     ]
   },
   {
@@ -103,7 +103,7 @@
     "old": "    if (r?.error === 'lapsed') {\n      hud.toast(LAPSED_LINE);\n",
     "new": "    if (r?.error === 'lapsed') {\n",
     "tests": [
-      "test/gathersaid.test.js"
+      "test/net/gathersaid.test.js"
     ],
     "note": "GATHER-SPEED/MARKET-SPEED (PIN MOVED): re-aimed by content - the reads batched. AUDIT GATHER-SPEED (PIN MOVED): re-aimed by content."
   },
@@ -113,7 +113,7 @@
     "old": "          act = null; hud.setMeter(null); hud.toast(ACT_STOPPED_LINE);\n        }",
     "new": "          act = null; hud.setMeter(null);\n        }",
     "tests": [
-      "test/gathersaid.test.js"
+      "test/net/gathersaid.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "const RETRY = Object.freeze(['offline', 'server', 'rate', 'maintenance']);",
     "new": "const RETRY = Object.freeze(['offline', 'server', 'rate']);",
     "tests": [
-      "test/gathersaid.test.js"
+      "test/net/gathersaid.test.js"
     ]
   }
 ]

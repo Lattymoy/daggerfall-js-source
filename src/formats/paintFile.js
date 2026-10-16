@@ -6,7 +6,7 @@
 //
 // A record is four 10-byte SLOTS of TEXT.RSC record offsets - subject,
 // adjective, prefix 1, prefix 2 - each terminated by 0xFF when it holds
-// fewer than ten choices. InitPaintingInfo (systems/itemInfo.js) is the
+// fewer than ten choices. InitPaintingInfo (systems/item/itemInfo.js) is the
 // only reader; GetPaintingRecordPart there is what walks a slot.
 
 /** PaintFile.recordLength (:23). */

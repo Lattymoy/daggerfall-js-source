@@ -5,7 +5,7 @@
     "old": "export const LOOT_LINES_MAX = 8;",
     "new": "export const LOOT_LINES_MAX = 12;",
     "tests": [
-      "test/loot11_lines.test.js"
+      "test/scenes/loot11_lines.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    if (!(d <= reach)) continue;\n",
     "new": "\n",
     "tests": [
-      "test/loot11_lines.test.js"
+      "test/scenes/loot11_lines.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "if (!tier || (RARITIES[tier]?.rank ?? 0) < RARITIES.rare.rank) continue;",
     "new": "if (!tier || (RARITIES[tier]?.rank ?? 0) < RARITIES.magic.rank) continue;",
     "tests": [
-      "test/loot11_lines.test.js"
+      "test/scenes/loot11_lines.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  out.sort((a, b) => a.d - b.d);\n",
     "new": "\n",
     "tests": [
-      "test/loot11_lines.test.js"
+      "test/scenes/loot11_lines.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  out.sort((a, b) => a.d - b.d);",
     "new": "  out.sort((a, b) => b.d - a.d);",
     "tests": [
-      "test/loot11_lines.test.js"
+      "test/scenes/loot11_lines.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "    if (!rarity) continue;   // OFF IS DFU EXACTLY: with the loot-rarity row off, no find's own line\n",
     "new": "",
     "tests": [
-      "test/loot11_lines.test.js"
+      "test/scenes/loot11_lines.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "      if (!glow || (!lootRarityOn() && !_marksLive.size)) return false;",
     "new": "      if (!glow) return false;",
     "tests": [
-      "test/loot11_lines.test.js"
+      "test/scenes/loot11_lines.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "[pos[0], pos[1] + (Number.isFinite(size?.h) ? size.h : LOOT_LINE_CROWN), pos[2]]",
     "new": "[pos[0], pos[1], pos[2]]",
     "tests": [
-      "test/loot11_lines.test.js"
+      "test/scenes/loot11_lines.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "(Number.isFinite(size?.h) ? size.h : LOOT_LINE_CROWN)",
     "new": "(Number.isFinite(size?.h) ? size.h : 0)",
     "tests": [
-      "test/loot11_lines.test.js"
+      "test/scenes/loot11_lines.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "  const lootFinds = () => [...piles.filter((p) => alive(p) && p.items?.length && !presented(p)).map((p) => (p.wild?.mine ? { root: lootCrown(p.pos, p.size), items: p.items, mark: WILD_MINE_MARK } : p.mark ? { root: lootCrown(p.pos, p.size), items: p.items, mark: p.mark } : { root: lootCrown(p.pos, p.size), items: p.items })), ...physical.finds()];   // PI1: and each standing item's own; WILD1: my remains, their own line; FB1013d: a pile that carries its own (the house's fallen - scenes/legacyRemainsStand.js)",
     "new": "  const lootFinds = () => [];",
     "tests": [
-      "test/loot11_lines.test.js"
+      "test/scenes/loot11_lines.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "f.dead && f.corpseMarker && !f.puppet && !f.corpseDisabled",
     "new": "f.dead && f.corpseMarker && !f.corpseDisabled",
     "tests": [
-      "test/loot11_lines.test.js"
+      "test/scenes/loot11_lines.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "      ...droppedLoot.lootFinds(),   // and what was put down here\n",
     "new": "\n",
     "tests": [
-      "test/loot11_lines.test.js"
+      "test/scenes/loot11_lines.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "if (lootLines.draw(() => [...exteriorFoes.lootFinds(), ...droppedLoot.lootFinds()],",
     "new": "if (lootLines.draw(() => [],",
     "tests": [
-      "test/loot11_lines.test.js"
+      "test/scenes/loot11_lines.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "      host.drawLootLines?.({ proj, view, eye: mwv.eye, finds: () => dungeonCtx.lootFinds?.() ?? [] });",
     "new": "      void 0;",
     "tests": [
-      "test/loot11_lines.test.js"
+      "test/scenes/loot11_lines.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "    host.drawLootLines?.({ proj, view, eye: mwv.eye, finds: () => [...interiorDropped.lootFinds(), ...(interiorFoes?.lootFinds?.() ?? [])] });",
     "new": "    void 0;",
     "tests": [
-      "test/loot11_lines.test.js"
+      "test/scenes/loot11_lines.test.js"
     ]
   }
 ]

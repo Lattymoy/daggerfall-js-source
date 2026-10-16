@@ -31,7 +31,7 @@ tree do.
 
 `tools/readiedHandsAssets.mjs` reproduces the three script and manifest files
 from `readied spellcasting hands.dfmod` (sha256 `82f413ef...459c`) through the
-port's own `src/formats/unityBundle.js`, byte for byte; the licence is the
+port's own `src/formats/unity/unityBundle.js`, byte for byte; the licence is the
 zip's own text file. There are no textures, sounds or settings: the hands are
 Daggerfall's own casting art (`FIRE00C6.CIF` and its four siblings) from the
 player's ARENA2, and the mod ships no `modsettings.json`.
@@ -57,7 +57,7 @@ empty screen (the weapon hides while a spell is readied) until the click.
 ## The port's reading, recorded
 
 See `src/combat/fpsSpellCasting.js` (`readiedHandsFrame`) and the RSH1 note in
-`src/combat/weaponRig.js`. In outline:
+`src/combat/weapon/weaponRig.js`. In outline:
 
 - **The same art, the same draw.** The port's `FPSSpellCasting` is already DFU's
   own, line for line; the mod's copy of `SetCurrentAnims`, `UpdateSpellCast`

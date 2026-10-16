@@ -3,9 +3,9 @@
 `src/combat/fpArm.js` (headPortrait, renderHeadAssembly, headFrame, headBounds, faceMatchOf - the picture and the one
 face door) + `src/characters/headPortraits.js` (who is asked, by which gate, under which key) +
 `src/render/portraitRenderer.js` (the renderer the menu's wells borrow) + the doors: `src/ui/facePortrait.js`,
-`src/ui/nativeTalk.js` (setNpcPortrait), `src/scenes/townTalk.js` and `src/scenes/worldModes.js` (the talk doors),
-`src/ui/hudLarge.js`, `src/ui/chargenArt.js`, `src/ui/partyPanel.js` (createFaceLoader - the party's, the family's and
-the succession's faces), `src/ui/hudEscortFaces.js`, `src/ui/dialClassicArt.js` (PORTRAIT3D, the owner, 2026-10-15)
+`src/ui/native/nativeTalk.js` (setNpcPortrait), `src/scenes/townTalk.js` and `src/scenes/worldModes.js` (the talk doors),
+`src/ui/hud/hudLarge.js`, `src/ui/chargenArt.js`, `src/ui/partyPanel.js` (createFaceLoader - the party's, the family's and
+the succession's faces), `src/ui/hud/hudEscortFaces.js`, `src/ui/dialClassicArt.js` (PORTRAIT3D, the owner, 2026-10-15)
 
 > "Btw I know I dont have the rest of the races faces, but can we do the other races with 3d portraits also?"
 
@@ -101,18 +101,18 @@ curse come or the data attached draws the head again. The party's plate keys a s
 
 - `ui/facePortrait.js`: `loadFace` and `loadFaceCanvases` draw each face as its head on a canvas the record's own size;
   a face is drawn alone (a save tile renders one, not ten). The classic set still addresses every index (AUDIT-312 F5).
-- `ui/nativeTalk.js` `setNpcPortrait(archive, record, { picture })`: the record first, then the head under a key of its
+- `ui/native/nativeTalk.js` `setNpcPortrait(archive, record, { picture })`: the record first, then the head under a key of its
   own (`<file>#<record>#mwhead<n>`) once it lands - the enhanced panel repaints on the key - and only for the session it
   was asked for. The classic window draws it in PORTRAIT_RECT at its own resolution, as a mod's portrait (DFMOD1).
 - `scenes/townTalk.js` `portraitOf` carries the walker's look; `scenes/worldModes.js` `staticNpcPortrait` the static
   NPC's (`talkedTo`, the click's NPCData to its person).
-- `ui/hudLarge.js` `loadHudLargeHead`: the Morrowind head first - the curse's too (the owner: "Do this") - then
+- `ui/hud/hudLarge.js` `loadHudLargeHead`: the Morrowind head first - the curse's too (the owner: "Do this") - then
   Daggerfall's override heads, then the race's record, at four times the head rect.
 - `ui/chargenArt.js` `loadFaceSet`: the ten records first, each upgraded in place as its head lands.
 - `ui/partyPanel.js` `createFaceLoader`: `poseHeadImage` first, at `HEAD_RECORD` (32 x 34, the widest head record's
   plate) three times over; the answer says `scale`, and the plate, the family's cards and the succession's draw it that
   many times smaller and smooth - the record's size, where a record is drawn at whole pixels.
-- `ui/hudEscortFaces.js`: the head at `HEAD_RECORD`'s size, its picture four times over, uploaded once a key; a record
+- `ui/hud/hudEscortFaces.js`: the head at `HEAD_RECORD`'s size, its picture four times over, uploaded once a key; a record
   that lands after it is not drawn over it.
 - `ui/dialClassicArt.js` `readHeadDial`: the head at twice CLASSIC_FACE_MAX, trimmed to its painted pixels and drawn at
   half (`headDialPicture`) - its longer side the rose's limit; the root's `data-grim-dial-face="head"` lifts the dial's
@@ -134,7 +134,7 @@ curse come or the data attached draws the head again. The party's plate keys a s
 
 ## How it was proven
 
-`test/portrait3d.test.js` (15), on the port's own Breton heads and helms read off the disk on the vendored retail
+`test/ui/portrait3d.test.js` (15), on the port's own Breton heads and helms read off the disk on the vendored retail
 skeleton under a counting renderer: the frame face-on, every corner in the window with air, as wide as asked; the hood
 framed only round the head; the portrait the head and hair the curated table names for portrait 6, every range
 textured, the mesh and every texture let go; the steel helm closed hiding the face and hair, open showing the face, the

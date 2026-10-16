@@ -5,7 +5,7 @@
     "old": "fogState = null; stopRain(); rainKind = null; owe(); footsteps.rebase(); },",
     "new": "fogState = null; stopRain(); owe(); footsteps.rebase(); },",
     "tests": [
-      "test/bacrash1.test.js"
+      "test/systems/bacrash1.test.js"
     ]
   }
 ]

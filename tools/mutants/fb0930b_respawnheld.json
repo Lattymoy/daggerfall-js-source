@@ -5,7 +5,7 @@
     "old": "const _seasonHeld = _partyArrivalPending || _seasonHoldKey !== null || _seasonStraightening;",
     "new": "const _seasonHeld = _partyArrivalPending || _seasonHoldKey !== null;",
     "tests": [
-      "test/fb0930b_respawnheld.test.js"
+      "test/player/fb0930b_respawnheld.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "const _seasonHeld = _partyArrivalPending || _seasonHoldKey !== null || _seasonStraightening;",
     "new": "const _seasonHeld = true;",
     "tests": [
-      "test/fb0930b_respawnheld.test.js"
+      "test/player/fb0930b_respawnheld.test.js"
     ]
   }
 ]

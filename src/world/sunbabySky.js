@@ -47,7 +47,7 @@
 // until it has loaded, or if it never does.
 // ═══════════════════════════════════════════════════════════════════
 
-import { seededRng } from '../systems/wind.js';   // SUNBABY2: the fireballs' draws (the dread's)
+import { seededRng } from '../systems/wind/wind.js';   // SUNBABY2: the fireballs' draws (the dread's)
 import { slotHash } from './dreadSky.js';   // SUNBABY2: one slot hash for the shared clock's schedules
 
 /** The live event this file draws (net/wire.js LIVE_EVENTS). */

@@ -7,16 +7,16 @@
 // client, so every player rolls the same pixels, sees the same dungeons and enters the same room - and a pixel holds
 // at most one, however many players stand in it. No relay word is needed for any of that.
 //
-// THE ID keeps DFU's own law: MapId & 0xfffff IS the map pixel (systems/mapDirectory.js, systems/discovery.js key
+// THE ID keeps DFU's own law: MapId & 0xfffff IS the map pixel (systems/map/mapDirectory.js, systems/discovery.js key
 // on it), so the low 20 bits are this pixel's id and the high 12 are the salt - unique per (salt, pixel), an unsigned
 // 32-bit number the relay's room law admits (wire.js WORLD_ROOM, `dungeon:m<1-10 digits>`), and it cannot equal a real
 // location's id because a spawn only ever stands on a pixel that has no location.
 
 import { mapPixelToLongitudeLatitude } from '../formats/mapsFile.js';
 import { MINUTES_PER_DAY } from '../systems/gameDate.js';   // TTL1: a day is the clock's own, never a second 1440
-import { TERRAIN_SIZE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, SCALED_BEACH_ELEVATION, sampleKernel } from './terrainSampler.js';   // SPAWNED-DUNGEONS3: a pixel is 819.2 metres on a side; SPAWN-SHORE: the ground a ruin is flattened to
-import { getLocationTerrainTileOrigin, WORLD_MAP_TILE_DIM, BEACH_JITTER } from './terrainTiles.js';   // SPAWNED-DUNGEONS3: where a location stands in its pixel
-import { dataPoint, PATH_KEYS } from '../systems/travelPaths.js';   // SPAWN-ROADS: the network's own byte per pixel
+import { TERRAIN_SIZE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, SCALED_BEACH_ELEVATION, sampleKernel } from './terrain/terrainSampler.js';   // SPAWNED-DUNGEONS3: a pixel is 819.2 metres on a side; SPAWN-SHORE: the ground a ruin is flattened to
+import { getLocationTerrainTileOrigin, WORLD_MAP_TILE_DIM, BEACH_JITTER } from './terrain/terrainTiles.js';   // SPAWNED-DUNGEONS3: where a location stands in its pixel
+import { dataPoint, PATH_KEYS } from '../systems/travel/travelPaths.js';   // SPAWN-ROADS: the network's own byte per pixel
 
 /** The chance a pixel holds a NORMAL spawned dungeon. */
 export const SPAWN_CHANCE = 0.30;
@@ -105,7 +105,7 @@ export function spawnPlateauFloor(woods, px, py) {
 
 /**
  * WILD-DRY (2026-10-12, a player's live client: the map's first open froze 6.7 s - the zone's giants' walking ground,
- * systems/wildGiants.js cellsOf, asks every pixel of the zone whether it is dry, and each answer read the whole
+ * systems/wild/wildGiants.js cellsOf, asks every pixel of the zone whether it is dry, and each answer read the whole
  * 129 x 129 kernel): WHETHER THE PLATEAU ON (px, py) STANDS OVER SPAWN_DRY_ELEVATION - `spawnPlateauFloor(...) >
  * SPAWN_DRY_ELEVATION` to the bit, read only until it is certain. Every sample is in [0, 1] (sampleKernel's clamp01),
  * so the running sum never falls - and a float sum of non-negatives never falls either, nor do the division and the
@@ -184,7 +184,7 @@ export function synthesizeDungeonLocation(template, { salt, px, py, where = {}, 
 
 /**
  * The real locations a spawn may clone: a dungeon with blocks and an exterior, never a main-story one (`isMain`, by
- * MapId - world/dungeonTextures.js), and - to keep every spawned exterior as cheap as the smallest real ones - a
+ * MapId - world/dungeon/dungeonTextures.js), and - to keep every spawned exterior as cheap as the smallest real ones - a
  * one-block exterior when any exist.
  */
 export function spawnTemplates(locations, isMain = () => false) {

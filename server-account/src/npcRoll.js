@@ -8,7 +8,7 @@
 // "This is mostly with online in mind", and asked who holds it online,
 // "Server-owned". The law and every bound are src/net/npcChapterLaw.js;
 // the record is bible/11-Multiplayer/Chapters-Arc.md, section 3, and its
-// audit bible/01-Overview/Audit-Chapters.md (AUDIT CHAP).
+// audit bible/01-Overview/audits/Audit-Chapters.md (AUDIT CHAP).
 //
 // ═══ ONE CHARACTER, UNDER ITS LEASE, IN THE WRITE ITSELF ═══════════
 //

@@ -48,7 +48,7 @@
 // module answers a DECISION rather than performing one.
 
 import { BUILDING_TYPES } from '../world/buildingNames.js';
-import { getInt } from './settings.js';
+import { getInt } from './settings/settings.js';
 
 /** GetRandomText(256) - the householder's greeting, one of the
  *  record's variants. */

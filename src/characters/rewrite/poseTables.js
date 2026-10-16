@@ -1,6 +1,6 @@
 // Vendored from project-final's Rewrite Engine (rewrite/rig/poseTables.js) at C4a -
 // same-owner code, flat-pathed; byte-parity against the canonical copy
-// is pinned by test/rig.test.js over fixtures/bare-body-parity.json.
+// is pinned by test/characters/rig.test.js over fixtures/bare-body-parity.json.
 // Do not hand-diverge: upstream first, then re-vendor + re-capture.
 // Pose + locomotion data tables (carved from body.js on the ceiling
 // breach - pure data, byte-identical move; the assembly stays there).

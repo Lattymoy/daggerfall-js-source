@@ -7,7 +7,7 @@
 // inventory shows, minus its panel background, cropped to the figure and
 // stood on the ground as a billboard at the peer's feet, the name over
 // its head. With the Morrowind layer on, the
-// body instead (MWBODY1, net/peerBodies.js: one rig instance per
+// body instead (MWBODY1, net/peer/peerBodies.js: one rig instance per
 // peer), the doll standing wherever a body does not. Recorded in
 // Online-Arc.md.
 //
@@ -30,7 +30,7 @@ import { projectToScreen } from '../player/tapRay.js'; import { multiply } from 
 import { LOOK_ITEM_FIELDS, LOOK_GROUPS, LOOK_GLOW_SLOTS, lookGlowOk } from './wire.js';   // the look's vocabulary: the wire's own; WEAPON-GLOW1: and a weapon's glow
 import { meshGlow, glowWord } from '../systems/weaponGlow.js';   // WEAPON-GLOW1: a held weapon's glow, said on the look
 import { renownText } from './renown.js';   // RENOWN1: Renown's words, left of the name in the bitmap face too
-import { guildTagText } from './guildLaw.js';   // GUILD1c: the guild's tag, right of the name in the bitmap face too
+import { guildTagText } from './guild/guildLaw.js';   // GUILD1c: the guild's tag, right of the name in the bitmap face too
 import { ribbonRgba } from './heraldryLaw.js';   // SEASON1 part two: a Season's banner ribbon, under the name in the bitmap face too
 /** AUDIT-SEATS C12: each ribbon's two tints, parsed once - by its claim's two colour indexes (one number, no string made),
  *  for every ribboned name every frame; anything that is no claim is asked of the law itself (it answers null). */
@@ -42,19 +42,19 @@ export function ribbonTints(rb) {
   if (t === undefined) { t = ribbonRgba(rb); _ribbonTints.set(k, t); }
   return t;
 }
-// 2026-09-17 (per-request, the NON-Morrowind peer only - net/peerBodies.js and its Morrowind body are untouched):
+// 2026-09-17 (per-request, the NON-Morrowind peer only - net/peer/peerBodies.js and its Morrowind body are untouched):
 // the same class-enemy sprite classic dungeon humanoids already use (Warrior, Mage, Knight, ...), driven by simple
 // moving/striking flags off the peer's synced pose instead of AI - the reusable pieces dungeonContext.js already
 // builds a foe's OWN mobile unit from (MobileUnit.update takes the same flags EnemyMotor's AI would set).
-import { MobileUnit } from '../characters/mobileUnit.js';
-import { ENEMY_BASICS, ENEMY_NAMES } from '../characters/enemyBasics.js';
-import { MOBILE_TYPES } from '../characters/mobileTypes.js';   // DISC12: the beast a peer in beast form stands as
+import { MobileUnit } from '../characters/mobile/mobileUnit.js';
+import { ENEMY_BASICS, ENEMY_NAMES } from '../characters/enemy/enemyBasics.js';
+import { MOBILE_TYPES } from '../characters/mobile/mobileTypes.js';   // DISC12: the beast a peer in beast form stands as
 import { mobileBillboardSize } from '../world/rmbFlats.js';
 import { quadHalfDiagonal } from '../render/bounds.js';   // OW-PEERS: a grown sprite's reach, as the batch is made with
 import { modSetting, storedModSetting } from '../systems/modSettings.js';   // DISC23-B: the Eye Of The Beholder set the look carries
 import { getPref } from '../systems/uiPrefs.js';   // 2026-09-17: the 'peerClassSprites' on/off, read once a sync (Other players, enhancedMenu.js peerSpritesCard)
 import { CLASS_CAREERS } from '../systems/chargen.js';   // 2026-09-17 (bugfix): a stock class's CFG-loaded career carries no `.name` of its own - chargenSession.js's own class list already falls back to this array by careerIndex (`cf.career.name || CLASS_CAREERS[i]`), and composeLook needs the same fallback or every stock-class peer sends class:null
-import { EQUIP_SLOTS } from '../characters/paperdoll.js';   // AUDIT DROPS E6: the hand a swing sound is read off
+import { EQUIP_SLOTS } from '../characters/paperdoll/paperdoll.js';   // AUDIT DROPS E6: the hand a swing sound is read off
 import { FootstepMachine, FOOTSTEP_CLIP_SETS } from '../systems/footsteps.js';   // PEER-FS1: peer footsteps off the pose's own `fk`
 import { RidingAnimator, RIDING_VOLUME_SCALE, nextNeighDelay } from '../systems/riding.js';   // RIDE-SOUND: a peer's hooves are TransportManager's own loop, clip swap and neigh
 import { TRANSPORT_MODES } from '../systems/transport.js';   // RIDE-SOUND: the pose's `rd` as the animator's mode
@@ -62,8 +62,8 @@ import { swingSoundFor, SOUND } from '../systems/soundClips.js';   // PEER-FS2: 
 import { billboardSize } from '../world/rmbFlats.js';   // PCORPSE1: a corpse stands as the dungeon's own corpses stand
 import { raceGenderPain3Sound, CLASSIC_PLAYER_DEATH_SOUND } from '../systems/playerDeath.js';   // PCORPSE1: the fallen player's own cry
 import { SEAT_HIP_DROP } from '../player/seatPose.js';   // CARDS2c: a seated sprite sinks by the seat's own drop
-import { RACES } from '../systems/races.js'; import { PeerClimbSounds, peerBodyYaw, peerMoving } from './peerClimb.js';   // CLIMB5: a peer on the wall faces it, takes no stride, and is heard climbing
-import { PeerGatherSounds, peerGatherSwing, peerKneeling } from './peerGather.js';   // PEER-ACTS: a peer gathering is seen at it and heard
+import { RACES } from '../systems/races.js'; import { PeerClimbSounds, peerBodyYaw, peerMoving } from './peer/peerClimb.js';   // CLIMB5: a peer on the wall faces it, takes no stride, and is heard climbing
+import { PeerGatherSounds, peerGatherSwing, peerKneeling } from './peer/peerGather.js';   // PEER-ACTS: a peer gathering is seen at it and heard
 
 // ── PCORPSE1: THE FALLEN ──────────────────────────────────────────
 //
@@ -108,7 +108,7 @@ function careerName(entity) {
 const THIEF_MOBILE_TYPE = 138;
 
 /** A career name ("Warrior", "Mage", ...) to the matching class-enemy MobileType (128+). `ENEMY_NAMES` is
- *  generated straight off DFU's own EnemyBasics table (see characters/enemyBasics.js's header) - class rows start
+ *  generated straight off DFU's own EnemyBasics table (see characters/enemy/enemyBasics.js's header) - class rows start
  *  at array index 43, mobileType 128 - so this reads the SAME data dungeonContext.js's own class-enemy foes render
  *  from, rather than a second, hand-kept copy of the mapping (the Unity co-op mod this was ported from keeps its
  *  own switch statement for exactly this; a data-driven lookup here cannot drift out of sync with the sprite table
@@ -191,7 +191,7 @@ export const NAME_BASE_PX = 16;
 //
 // THEY ARE KEPT APART from `nameScaleFor` on purpose. The depth law is the one number BOTH faces read off the
 // point; the terms below are measured in each face's OWN pixels - the DOM face in CSS px (so it takes the viewport
-// term by value) and the classic bitmap face in drawing-buffer px, where the host's own `hudScale` (ui/hud.js: the
+// term by value) and the classic bitmap face in drawing-buffer px, where the host's own `hudScale` (ui/hud/hud.js: the
 // 320x200 fit) is already that term. The LENS term belongs to neither face in particular - it is the lens both of
 // them drew the sprite through - so it rides the point itself.
 /** The viewport height, in a face's own pixels, the size law is normalised at. */
@@ -387,7 +387,7 @@ export function composeLook(entity, { eotbSet = ownEotbSet() } = {}) {
     for (const k of LOOK_ITEM_FIELDS) if (it[k] != null) o[k] = it[k];
     if (o.equipSlot == null) o.equipSlot = slot;
     // WEAPON-GLOW1: a weapon's glow as its owner's card knows it, whatever the owner's own switch says - each viewer's
-    // switch is theirs (net/peerBodies.js); OMITTED when none, so a plain weapon's item keeps its bytes. A PLAYER's look
+    // switch is theirs (net/peer/peerBodies.js); OMITTED when none, so a plain weapon's item keeps its bytes. A PLAYER's look
     // alone: a foe's kit is said on its record (characters/foeBodies.js encodeWorn), which carries no glow, so a foe's
     // weapon glowing on the host's screen alone would be one fight seen two ways
     if (it.group === 'Weapons' && entity?.isPlayer === true && LOOK_GLOW_SLOTS.includes(o.equipSlot)) { const g = glowWord(meshGlow(it, { on: true })); if (g) o.glow = g; }   // AUDIT WEAPON-GLOW NET-4: a weapon in a hand
@@ -580,7 +580,7 @@ export class RemotePlayers {
   corpseMarks(toScene = (p) => [p.x, p.y, p.z]) {
     return this._corpses.filter((c) => !c.dead && (c.id || c.acct)).map((c) => ({ id: c.id, acct: c.acct, feet: toScene(c.pose), height: 0.9 }));
   }
-  /** WILD1 (net/wildFight.js): a body in the open zone lies the zone's two minutes - its time moved on to at least `ms`
+  /** WILD1 (net/wild/wildFight.js): a body in the open zone lies the zone's two minutes - its time moved on to at least `ms`
    *  from now (the killer's game hears of the death from the body's own offer). */
   holdCorpse(id, ms) { for (const c of this._corpses) if (!c.dead && id && c.id === id) c.until = Math.max(c.until, this._now() + ms); }
   /** PCORPSE3: is a body already lying for this account (or peer)? */
@@ -877,7 +877,7 @@ export class RemotePlayers {
       // INVIS-LOOK (2026-09-27): a CONCEALED peer (the host hands ECV1's visual) is drawn translucent, as a concealed foe
       // is on the enhanced lane - and carries no name: a name over an invisible player is the player, found
       const veil = conceal(peer.id) ?? null;
-      // MWBODY1: a peer standing in a Morrowind body (net/peerBodies.js) draws no doll/mobile; its name still rides this pass, at the body's own head
+      // MWBODY1: a peer standing in a Morrowind body (net/peer/peerBodies.js) draws no doll/mobile; its name still rides this pass, at the body's own head
       const bodyH = bodyHeight(peer.id);
       if (bodyH > 0) { if (!veil) this._shown.push({ peer, height: bodyH }); continue; }
       live.add(peer.id);
@@ -892,7 +892,7 @@ export class RemotePlayers {
       // (LycanthropyTypes 1 werewolf, 2 wereboar); the sprite is the enemy's own (MobileTypes 9 / 14), puppeted off the
       // pose like any class sprite - whatever the 'Other players' card says, since a person drawn there is a lie.
       // PR-WW1 (2026-09-24, player report: "Werewolf morrowind sprite not showing online"): THE FALLBACK now. A beast
-      // is drawn as Eye Of The Beholder's lycanthrope by net/peerRiders.js - the art the transformed player sees on
+      // is drawn as Eye Of The Beholder's lycanthrope by net/peer/peerRiders.js - the art the transformed player sees on
       // themselves - and reaches here only while that art is not up (loading, failed, or a build without it), when
       // `bodyHeight` answers 0: the enemy sprite stands for them then, so a beast is never nothing
       const beast = peer.shown.wb | 0;
@@ -992,7 +992,7 @@ export class RemotePlayers {
     peerSound(this.deps.audio, step.clip, f, step.volume);
   }
 
-  /** CLIMB5: a peer's climb, heard at them (net/peerClimb.js) - its changes and its rhythm, within earshot, behind the
+  /** CLIMB5: a peer's climb, heard at them (net/peer/peerClimb.js) - its changes and its rhythm, within earshot, behind the
    *  peers' own sounds' switch as their stride is. */
   _syncClimbSound(peer, toScene, eye) {
     if (!this.deps?.audio?.play3d) return;
@@ -1034,7 +1034,7 @@ export class RemotePlayers {
     peerSound(this.deps.audio, swingSoundFor(weapon), f, 1.1);
   }
 
-  /** PEER-ACTS (GATHER-FEEL II): a peer's gathering, heard at them (net/peerGather.js PeerGatherSounds) - the act's
+  /** PEER-ACTS (GATHER-FEEL II): a peer's gathering, heard at them (net/peer/peerGather.js PeerGatherSounds) - the act's
    *  beats within earshot, behind the swings' switch ('peerAttackSounds' - a tool's blow is a swing, the rest its hands'
    *  work). Told every change with the switch off, as the climb is (AUDIT CLIMB-ARC N5), so switching it back on replays
    *  nothing. */
@@ -1142,7 +1142,7 @@ export class RemotePlayers {
   }
 
   /** The class-enemy billboard path: `bundle.mobileUnit.update` is fed simple flags off the peer's OWN synced pose
-   *  (`shown`), the same wire fields net/peerBodies.js already reads to drive its own (Morrowind) rig - `mv` for
+   *  (`shown`), the same wire fields net/peer/peerBodies.js already reads to drive its own (Morrowind) rig - `mv` for
    *  moving/running, `an`'s change for the striking edge - rather than anything new added to the wire protocol.
    *  `striking` only fires from the SECOND frame a given peer is seen onward (`entry.lastAn` starts null): a peer's
    *  attack counter is whatever it already was when they were first drawn, and comparing against nothing would
@@ -1161,7 +1161,7 @@ export class RemotePlayers {
     const striking = (entry != null && entry.lastAn != null && an !== entry.lastAn) || acted != null;
     const face = peerBodyYaw(shown);   // CLIMB5: on the wall, facing it
     const yaw = Number.isFinite(face) ? face : 0;
-    // BUGFIX (2026-09-17): mobileOrientation (characters/mobileUnit.js) reads cameraPos[0]/[2] unconditionally to
+    // BUGFIX (2026-09-17): mobileOrientation (characters/mobile/mobileUnit.js) reads cameraPos[0]/[2] unconditionally to
     // work out which of the 8 directional frames faces the viewer - it was never optional the way `null` assumed,
     // and crashed the moment a sprite actually built successfully. `eye` is the local player's own position, passed
     // in from world.js's onlineFrame (the same call site already reading `player.pos` for peerBodies.sync); the `f`
@@ -1176,7 +1176,7 @@ export class RemotePlayers {
     const viewer = eye && eye.length === 3 ? eye : f;
     const stepped = bundle.mobileUnit.update(dt, { moving, striking }, yaw, f, viewer);
     // PEER-ACTS: kneeling at an act - a herb, the Basket's search, the knife at a body - the sprite kneels as a yielding foe
-    // kneels (REVENANT-FATE's held hurt frame, systems/revenantFate.js), its own clock untouched; a one-shot plays through
+    // kneels (REVENANT-FATE's held hurt frame, systems/revenant/revenantFate.js), its own clock untouched; a one-shot plays through
     const out = peerKneeling(shown) && !moving && !bundle.mobileUnit.isPlayingOneShot() ? bundle.mobileUnit.heldPose('hurt', -1, yaw, f, viewer) : stepped;
     const rkey = `${out.record}#${out.frame}`;
     if (!this.renderer.textures?.has?.(`${bundle.archive}_${rkey}`)) this.deps.uploadRecordFrame(bundle.archive, out.record, out.frame);
@@ -1294,7 +1294,7 @@ export class RemotePlayers {
    * rule is the same, nothing ahead of it moved), because a name's colour is not this module's business to know. A peer is a tab in a room; whether that tab belongs to somebody in my party (PARTY_MAX seats) is the social
    * picture's question (net/social.js colorOf -> PARTY_GREEN or null), and the host asks it. Nothing is passed on
    * the probe hosts and on every caller written before the party existed, so the default path stays exactly what it
-   * was: white, byte for byte (test/online.test.js pins it).
+   * was: white, byte for byte (test/net/online.test.js pins it).
    * @param {((id: string) => number[]|null)|null} colorOf peer id -> an RGBA array, or null for the plain name
    */
   /**
@@ -1336,7 +1336,7 @@ export class RemotePlayers {
       const run = `${lead ? `[${lead}] ` : ''}${marks ? `${named} ${marks}` : named}`;
       const tw = measureText(font.fnt, run) * s;
       // AUDIT NAME1 F13: the gap takes the HOST's scale, and only that one. NAME_GAP_PX is a clearance in SCREEN
-      // pixels and this face draws in the drawing buffer's, where `scale` (ui/hud.js hudScale, the 320x200 fit) is
+      // pixels and this face draws in the drawing buffer's, where `scale` (ui/hud/hud.js hudScale, the 320x200 fit) is
       // what carries one into the other - the same number the glyph box takes before the point's own perspective
       // term multiplies it. Unscaled, the classic face put a 5-buffer-pixel gap under a label drawn five times
       // over, which is a fifth of the clearance the DOM face leaves at the same size: the two faces disagreeing
@@ -1431,7 +1431,7 @@ export class RemotePlayers {
     }
     if (layer) {
       // the world viewport's own height where the docked HUD shrinks it (E5) - the name is sized by the frame it
-      // is drawn into, not by the page (AUDIT NAME1 F3). The rect is NORMALISED (ui/hudLarge.js
+      // is drawn into, not by the page (AUDIT NAME1 F3). The rect is NORMALISED (ui/hud/hudLarge.js
       // largeHudViewportRect: `{ x: 0, y: hudHeight, w: 1, h: 1 - hudHeight }`), so its height is a SHARE of the
       // canvas and the pixels are that share of it.
       layer.render({ points, log, covered, colorOf, viewport: (Number.isFinite(rect?.h) ? rect.h : 1) * h, hudScale });

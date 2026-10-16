@@ -5,7 +5,7 @@
     "old": "  if (!data.questPerson && !isNpcFlat(data.billboardArchiveIndex)) return (pn._mwLook = null);\n",
     "new": "",
     "tests": [
-      "test/mwnpc8b_streetdungeon.test.js"
+      "test/scenes/mwnpc8b_streetdungeon.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  if (!data.questPerson && !isNpcFlat(data.billboardArchiveIndex)) return (pn._mwLook = null);",
     "new": "  if (!isNpcFlat(data.billboardArchiveIndex)) return (pn._mwLook = null);",
     "tests": [
-      "test/mwnpc8b_streetdungeon.test.js"
+      "test/scenes/mwnpc8b_streetdungeon.test.js"
     ]
   }
 ]

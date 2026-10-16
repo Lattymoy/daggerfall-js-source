@@ -35,16 +35,16 @@
 // open); the Work tab's day stands above its cards, not under the last; the cards straight; the words cut to what the
 // reader needs.
 //
-// THE HOUSE'S SHAPE, as the bounty board's (ui/bountyWindow.js) and the Broker's before it: a lazy chunk the door
+// THE HOUSE'S SHAPE, as the bounty board's (ui/bounty/bountyWindow.js) and the Broker's before it: a lazy chunk the door
 // (ui/noticeDoor.js) mounts in its own host - `mountNoticeBoard(host, deps)` answers `{ repaint, unmount }` - the back
 // key and a tap on the scrim leave through the door's own close. On the classic skins the window lays its own sheet,
 // the kit's rules cut to its selectors, so it wears the Enhanced Plus stone whichever UI is chosen (online forces the
 // enhanced lane, never necessarily its Plus face).
-import { closeOnOutsideTap } from './enhancedOverlays.js';
+import { closeOnOutsideTap } from './enhanced/enhancedOverlays.js';
 import { overlayAction, isTextEntryTarget } from './input.js';
-import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
-import { NOTICE_CSS, PROF_CSS } from './enhancedPlusStyle.js';
-import { frameCss } from './enhancedFrame.js';
+import { injectEnhancedStyle, injectEnhancedFonts } from './enhanced/enhancedStyle.js';
+import { NOTICE_CSS, PROF_CSS } from './enhanced/enhancedPlusStyle.js';
+import { frameCss } from './enhanced/enhancedFrame.js';
 import { isEnhancedPlus } from '../systems/uiSkin.js';
 import { scopeRules } from './brokerWindow.js';
 import {
@@ -63,7 +63,7 @@ import { movedFirstText } from '../net/bagLaw.js';   // AUDIT2 BAG1 K8: what wen
 import { createMarketTab } from './marketTab.js';   // PROF5: the Market tab
 import { createWorkTab, writWalledText } from './workTab.js';   // PROF6: the Work tab's guild writs and commissions; WRIT-WALL: what no writ may spend, in words
 import { createSeatTab, boardFold } from './seatTab.js';   // SEAT1b: the Seat tab - a seat town's standings, pledges and Tribute
-import { createVendorTab } from './vendorTab.js';   // HOME-VENDOR: the Vendors tab, and a trader's stall
+import { createVendorTab } from './vendor/vendorTab.js';   // HOME-VENDOR: the Vendors tab, and a trader's stall
 import { bannerSvg } from './heraldryArt.js';   // GUILD1e: a guild's banner over its notes and its posters
 
 /** @param {string} tag @param {string|null} [cls] @param {string|null} [text] */
@@ -209,7 +209,7 @@ function injectSkin(doc = document) {
  *   seat?: ({ seat: any, book: any, nameOf?: (key: number) => (string|null) } | null), seatBattle?: (seat: any, fight: any) => boolean,
  *   seatRoyal?: (seat: any, royal: any, watch: boolean) => boolean, seatRecords?: (seat: any) => Promise<boolean>,
  *   vendors?: any, traderOnly?: { title: string, sub?: string } | null,
- * }} deps HOME-VENDOR: `vendors` the Vendors tab's host (ui/vendorTab.js), `traderOnly` a stall's window. `work` - PROF1's Court writs for the board's region (net/profBook.js), or null where the professions are not
+ * }} deps HOME-VENDOR: `vendors` the Vendors tab's host (ui/vendor/vendorTab.js), `traderOnly` a stall's window. `work` - PROF1's Court writs for the board's region (net/profBook.js), or null where the professions are not
  *   this account's; PROF6: with `writs` (net/writBook.js) the guild writs and commissions beside them (ui/workTab.js),
  *   `pieces` the pieces in the save that answer a commission; `market` - PROF5's Market tab's host (ui/marketTab.js createMarketTab's `m`), or null where the
  *   market is not; `guilds` - GUILD1e: the Guilds tab shown (online, the board open); `guildOnly` - the board in a guild's

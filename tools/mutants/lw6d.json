@@ -5,7 +5,7 @@
     "old": "export const TALE_KINDS = Object.freeze(['home', 'routed', 'held']);",
     "new": "export const TALE_KINDS = Object.freeze(['routed', 'held']);",
     "tests": [
-      "test/lw6d_word.test.js"
+      "test/systems/livingWorld/lw6d_word.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "        if (!turnOk(key) || tale.has(key) || !Number.isFinite(at?.t)) return false;",
     "new": "        if (!turnOk(key) || tale.has(key)) return false;",
     "tests": [
-      "test/lw6d_word.test.js"
+      "test/systems/livingWorld/lw6d_word.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "        if (!turnOk(key) || tale.has(key) || !Number.isFinite(at?.t)) return false;",
     "new": "        if (!turnOk(key) || !Number.isFinite(at?.t)) return false;",
     "tests": [
-      "test/lw6d_word.test.js"
+      "test/systems/livingWorld/lw6d_word.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "        tale.set(key, { t: Number(at?.t), seen: true, who: nameOk(at?.who) });",
     "new": "        tale.set(key, { t: Number(at?.t), seen: true, who: '' });",
     "tests": [
-      "test/lw6d_word.test.js"
+      "test/systems/livingWorld/lw6d_word.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "      const tale = tales[kind];   // LW6d",
     "new": "      const tale = null;   // LW6d",
     "tests": [
-      "test/lw6d_word.test.js"
+      "test/systems/livingWorld/lw6d_word.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "      const talesOut = Object.fromEntries(TALE_KINDS.filter((k) => tales[k].size).map((k) => [k, [...tales[k]].map(([key, h]) => [key, h.t, h.who])]));",
     "new": "      const talesOut = {};",
     "tests": [
-      "test/lw6d_word.test.js"
+      "test/systems/livingWorld/lw6d_word.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "      const talesOut = Object.fromEntries(TALE_KINDS.filter((k) => tales[k].size).map(",
     "new": "      const talesOut = Object.fromEntries(TALE_KINDS.map(",
     "tests": [
-      "test/lw6d_word.test.js"
+      "test/systems/livingWorld/lw6d_word.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "        if (turnOk(key) && Number.isFinite(Number(t))) tales[k].set(key, { t: Number(t), seen: true, who: nameOk(who) });",
     "new": "        void key;",
     "tests": [
-      "test/lw6d_word.test.js"
+      "test/systems/livingWorld/lw6d_word.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "    rel?.turn('home', `${item.livingKeepsake.id}@home`, { t: now, who: item.livingKeepsake.name });",
     "new": "    void rel;",
     "tests": [
-      "test/lw6d_word.test.js"
+      "test/systems/livingWorld/lw6d_word.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "    const now = this.o.clock?.() ?? this._now;",
     "new": "    const now = this._now - 1;",
     "tests": [
-      "test/lw6d_word.test.js"
+      "test/systems/livingWorld/lw6d_word.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": " && !turns.died?.size && !turns.killed?.size && !turns.home?.size && !turns.routed?.size && !turns.held?.size)) return [];",
     "new": " && !turns.died?.size && !turns.killed?.size && !turns.routed?.size && !turns.held?.size)) return [];",
     "tests": [
-      "test/lw6d_word.test.js"
+      "test/systems/livingWorld/lw6d_word.test.js"
     ],
     "note": "WATCH-FIX (re-aimed by content): the law in its new home. LW16 (re-aimed by content): a party robbed beside it."
   },
@@ -105,7 +105,7 @@
     "old": "      if (!key.startsWith(prefix) || known > t || t - known >= NEWS_DAYS * DAY_MIN || !h.who) continue;",
     "new": "      if (!key.startsWith(prefix) || t - known >= NEWS_DAYS * DAY_MIN || !h.who) continue;",
     "tests": [
-      "test/lw6d_word.test.js"
+      "test/systems/livingWorld/lw6d_word.test.js"
     ]
   },
   {
@@ -114,7 +114,7 @@
     "old": "      if (!key.startsWith(prefix) || known > t || t - known >= NEWS_DAYS * DAY_MIN || !h.who) continue;",
     "new": "      if (!key.startsWith(prefix) || known > t || !h.who) continue;",
     "tests": [
-      "test/lw6d_word.test.js"
+      "test/systems/livingWorld/lw6d_word.test.js"
     ]
   },
   {
@@ -123,7 +123,7 @@
     "old": "      if (!key.startsWith(prefix) || known > t || t - known >= NEWS_DAYS * DAY_MIN || !h.who) continue;",
     "new": "      if (known > t || t - known >= NEWS_DAYS * DAY_MIN || !h.who) continue;",
     "tests": [
-      "test/lw6d_word.test.js"
+      "test/systems/livingWorld/lw6d_word.test.js"
     ]
   },
   {
@@ -132,7 +132,7 @@
     "old": "      out.push({ kind: 'home', who: h.who, foe: '', place: '', t: known, seen: true });",
     "new": "      void out;",
     "tests": [
-      "test/lw6d_word.test.js"
+      "test/systems/livingWorld/lw6d_word.test.js"
     ]
   },
   {
@@ -141,7 +141,7 @@
     "old": "  : item.kind === 'home' ? HOME_NEWS   // LW6d",
     "new": "  : false ? HOME_NEWS   // LW6d",
     "tests": [
-      "test/lw6d_word.test.js"
+      "test/systems/livingWorld/lw6d_word.test.js"
     ]
   }
 ]

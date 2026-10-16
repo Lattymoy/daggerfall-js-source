@@ -3,7 +3,7 @@
 // (Bloodline) or non-permadeath (Enduring)" - the design's "two players' characters may wed: both in the same temple,
 // both asking the priest, the service records the union (each family names the other's member as spouse)"): THE
 // WEDDING'S HANDSHAKE, AS A STATE MACHINE. Pure - no DOM, no game import: the socket, the account service and the house
-// are handed in, so test/legacy7_wed.test.js drives two of these against each other over a fake wire and a real Worker.
+// are handed in, so test/systems/legacy/legacy7_wed.test.js drives two of these against each other over a fake wire and a real Worker.
 //
 // THE HANDSHAKE (net/wire.js's LEGACY7 header names the frames):
 //   1. A PROPOSES (the Inspect card's Propose): `ask`. Each must stand in a temple, a realm character of a house, wed to

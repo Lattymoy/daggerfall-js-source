@@ -60,7 +60,7 @@ import { mustChange } from './realm.js';
 import { seatsOpenFor, confirmedSeats } from './townSeats.js';
 import { marksOpenFor } from './marks.js';
 import { verifyWatchReceipt } from '../../src/net/watchReceipt.js';
-import { gateTimes, gameDayAt } from '../../src/net/gateLaw.js';
+import { gateTimes, gameDayAt } from '../../src/net/gate/gateLaw.js';
 import { shrineGateInfluence, towersSee } from '../../src/net/fortLaw.js';   // SEAT2b part two (7.5): a Shrine's gates, the Watchtowers' word
 import { fortTierAt } from './seatForts.js';   // SEAT2b part two: the Shrine standing, read without a write
 import { MARKS_RID_RE, utcDay } from '../../src/net/marksLaw.js';

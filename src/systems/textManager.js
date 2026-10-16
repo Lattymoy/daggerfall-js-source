@@ -6,7 +6,7 @@
 //     one, then an error string or a throw), GetLocalizedTextWithReversion, GetLocalizedTextList (split on newlines,
 //     cached), GetLocalizedTextListFromKeyArray, TryGetLocalizedText, SplitTextList, the id-keyed name helpers
 //     (region, location, spell, item, magic item, faction) and the localized-font registry. GetLocalizedEnemyName's
-//     index law already has its one home (characters/enemyBasics.js enemyDisplayName) and reads the list from here.
+//     index law already has its one home (characters/enemy/enemyBasics.js enemyDisplayName) and reads the list from here.
 //   - StringTableCSVParser.cs - the two-column Key,Value reader, regex and all: an UNQUOTED value is cut at its first
 //     comma, a key can hold no comma, quote or newline, and the header row is dropped only when it is exactly
 //     Key/Value. Every DFU translation pack is authored against this parser, so its quirks are kept.

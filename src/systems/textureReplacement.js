@@ -23,7 +23,7 @@
 // which is the whole point, exactly as the `song_` prefix was for
 // music.
 
-import { getBool } from './settings.js';
+import { getBool } from './settings/settings.js';
 import { toColor32 } from '../formats/color32Order.js';   // ROAD-H H4: the one door a decoded PNG crosses into the port's texel convention
 import { dyeToken } from '../characters/dyes.js';   // DW3: GetName's dye arm - the key carries the dye a caller asks with
 
@@ -235,7 +235,7 @@ export function vendorRecordCount(archive) {
  *  SURV-ART (2026-09-19, Mac: "the sprites aren't showing at all") -
  *  IT MUST ANSWER `recordCount` AND `getSize`. Every icon door in the
  *  port gates on `record < tex.recordCount` before it uploads
- *  (ui/itemScroller.js, ui/nativeInventory.js, ui/paperDoll.js, and
+ *  (ui/item/itemScroller.js, ui/native/nativeInventory.js, ui/paperDoll.js, and
  *  the world arms in scenes/) and then measures with `tex.getSize`,
  *  which is the TextureFile surface those lines were written against.
  *  This object carried neither, so the comparison read

@@ -1,5 +1,5 @@
 // DISC22-C: THE CLASSIC SKINS' QUICK-LOOT FRAME, a LEAF - no imports, on purpose. The hover resolve
-// (ui/worldPlaque.js worldHoverFrame) leaves the frame and its lit row here and ui/hud.js reads them for the canvas
+// (ui/worldPlaque.js worldHoverFrame) leaves the frame and its lit row here and ui/hud/hud.js reads them for the canvas
 // panel (ui/classicLootPanel.js). hud.js sits under half the tree's import rings, and reaching for systems/quickLoot.js
 // (and through it the item graph) from there closed a ring that initialised itemTransfer.js before its own constants
 // - so the one thing hud.js needs is kept where it costs no import at all.

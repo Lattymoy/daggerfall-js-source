@@ -22,7 +22,7 @@
 //   reader on that id.
 
 import { getShelfBookID, bookTitle } from './books.js';   // WB12c: the shelf's draw - the port's own books among the classic ones
-import { canAccessLibrary } from './guildServices.js';
+import { canAccessLibrary } from './guild/guildServices.js';
 import { BUILDING_TYPES } from '../world/buildingNames.js';
 import { localizedText } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 

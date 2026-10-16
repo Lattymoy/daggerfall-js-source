@@ -22,7 +22,7 @@
 //
 // U58 removed it, and could only remove it because U56 and U57 took
 // the law out of the window first: TransferItem's ladder is
-// systems/itemTransfer.js, the remote side's four claims and the
+// systems/item/itemTransfer.js, the remote side's four claims and the
 // wagon's two refusals are systems/inventorySession.js, and the
 // enhanced pane runs both rather than a second reading of either.
 // `CLASSIC_ONLY_MODES` is gone; the fork is now the plain skin
@@ -36,9 +36,9 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { isEnhanced } from '../systems/uiSkin.js';
-import { mountEnhancedChunk } from './enhancedChunk.js';   // MENU1: the one lazy-chunk door
-import { registerOverlay } from './enhancedOverlays.js';   // PX28: Tab puts it away
-import { NativeInventoryWindow, inventoryArtLoaded } from './nativeInventory.js';
+import { mountEnhancedChunk } from './enhanced/enhancedChunk.js';   // MENU1: the one lazy-chunk door
+import { registerOverlay } from './enhanced/enhancedOverlays.js';   // PX28: Tab puts it away
+import { NativeInventoryWindow, inventoryArtLoaded } from './native/nativeInventory.js';
 import { closeSession } from '../systems/inventorySession.js';
 import { immersiveFootsteps } from '../systems/immersiveFootsteps.js';   // AUDIT-IF F5: the enhanced skin's close refreshes the mod's armour slots too
 import { racialSuppressInventory } from '../systems/lycanthropy.js';   // DISC10-E L3: GetSuppressInventory, in the window itself
@@ -171,11 +171,11 @@ function enhancedInventoryOverlay(deps) {
   // beside its own - the model figure reads fpArm.figure() when a body
   // stands and never touches it otherwise. Enhanced only: this door is
   // the enhanced skin's.
-  // MENU1: the ONE lazy-chunk door (ui/enhancedChunk.js). The arms
+  // MENU1: the ONE lazy-chunk door (ui/enhanced/enhancedChunk.js). The arms
   // module keeps its own optional catch - a missing fpArm is a feature
   // that is off, not a screen that failed.
   mountEnhancedChunk({
-    load: () => Promise.all([import('./enhancedInventory.js'), import('../combat/fpArm.js').catch(() => null)]),
+    load: () => Promise.all([import('./enhanced/enhancedInventory.js'), import('../combat/fpArm.js').catch(() => null)]),
     mount: ([{ mountEnhancedInventory }, armMod]) => {
       view = mountEnhancedInventory(host, { ...deps, onExit: close, fpArm: armMod?.fpArm ?? null });
     },

@@ -5,7 +5,7 @@
     "old": "      ?? (guild ? halls.find((b) => b.npcs.some(sameLook)) ?? halls.find((b) => b.npcs.some((n) => n.factionID === q.factionID)) : null);",
     "new": "      ?? null;",
     "tests": [
-      "test/qa2_layouts.test.js"
+      "test/systems/quest/qa2_layouts.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "      ?? (guild ? halls.find((b) => b.npcs.some(sameLook)) ?? halls.find((b) => b.npcs.some((n) => n.factionID === q.factionID)) : null);",
     "new": "      ?? (guild ? halls.find((b) => b.npcs.some(sameLook)) : null);",
     "tests": [
-      "test/qa2_layouts.test.js"
+      "test/systems/quest/qa2_layouts.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    const guild = hasGuildService(q.factionID);",
     "new": "    const guild = true;",
     "tests": [
-      "test/qa2_layouts.test.js"
+      "test/systems/quest/qa2_layouts.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "      const { unseated: _was, ...site } = hall.siteDetails;",
     "new": "      const site = hall.siteDetails;",
     "tests": [
-      "test/qa2_layouts.test.js"
+      "test/systems/quest/qa2_layouts.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    if (this.scope === Scopes.None) return this._unseat(held);",
     "new": "    if (this.scope === Scopes.None) return false;",
     "tests": [
-      "test/qa2_layouts.test.js"
+      "test/systems/quest/qa2_layouts.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "    if (recordHeldBack(held)) return this._unseat(held);",
     "new": "",
     "tests": [
-      "test/qa2_layouts.test.js"
+      "test/systems/quest/qa2_layouts.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "    if (recordHeldBack(q)) return false;",
     "new": "",
     "tests": [
-      "test/qa2_layouts.test.js"
+      "test/systems/quest/qa2_layouts.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "  _heldBack = new Set(heldBack ?? []);",
     "new": "  if (heldBack) _heldBack = new Set(heldBack);",
     "tests": [
-      "test/qa2_layouts.test.js"
+      "test/systems/quest/qa2_layouts.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "    const changed = setLayoutPins(pins, { heldBack, missing: worldDataPacksMissing() });",
     "new": "    const changed = setLayoutPins(pins, { missing: worldDataPacksMissing() });",
     "tests": [
-      "test/qa2_layouts.test.js"
+      "test/systems/quest/qa2_layouts.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "    if (!shareId || !this.parentQuest.hooks?.sharedCopy?.(this.parentQuest)) return this._reseatMovedSite(world);",
     "new": "    if (true) return this._reseatMovedSite(world);",
     "tests": [
-      "test/qa2_layouts.test.js"
+      "test/systems/quest/qa2_layouts.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "    for (const r of quest.resources.values()) if (r.isPlace && sitesBefore.has(r.symbol?.name)) r.keepOwnSite?.(sitesBefore.get(r.symbol?.name));",
     "new": "",
     "tests": [
-      "test/qa2_layouts.test.js"
+      "test/systems/quest/qa2_layouts.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "      for (const s of sd.selectedMarker.targetResources) assignResourceToMarker(s, selectedMarker);\n",
     "new": "",
     "tests": [
-      "test/qa2_layouts.test.js"
+      "test/systems/quest/qa2_layouts.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "    // dozens of links per Place in the save, and every mount of its building walked them all\n    this.siteLinks = this.siteLinks.filter((link) => link.questUID !== quest.uid);",
     "new": "    // dozens of links per Place in the save, and every mount of its building walked them all\n",
     "tests": [
-      "test/qa2_layouts.test.js"
+      "test/systems/quest/qa2_layouts.test.js"
     ]
   }
 ]

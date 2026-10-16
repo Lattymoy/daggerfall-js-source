@@ -12,7 +12,7 @@
 import { readFileSync } from 'node:fs';
 import { createServer } from 'vite';
 import { chromium } from 'playwright';
-import { MwBsaFile } from '../src/formats/mwBsaFile.js';
+import { MwBsaFile } from '../src/formats/morrowind/mwBsaFile.js';
 
 process.env.PLAYWRIGHT_BROWSERS_PATH ??= '/opt/pw-browsers';
 

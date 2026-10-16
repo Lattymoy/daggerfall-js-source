@@ -5,7 +5,7 @@
     "old": "  if (openWindow(corpseLootHooks(entry)) === true) silverFindAt('corpse', entry);\n  return items.length;",
     "new": "  for (const item of items) addItem(playerEntity.items, item);\n  items.length = 0;\n  silverFindAt('corpse', entry);\n  return 1;",
     "tests": [
-      "test/mace_corpse_window.test.js"
+      "test/scenes/mace_corpse_window.test.js"
     ],
     "note": "SILVER-FINDS (PIN MOVED): a body opened rolls its silver after the window's door - re-aimed by content, the roll kept in the mutant."
   },
@@ -15,7 +15,7 @@
     "old": "  if (typeof openWindow !== 'function') {\n    console.warn('[corpse] no inventory door - the body stays shut rather than emptying itself');\n    return items.length;\n  }",
     "new": "  if (typeof openWindow !== 'function') return takeCorpseLoot(entry, playerEntity, say);",
     "tests": [
-      "test/mace_corpse_window.test.js"
+      "test/scenes/mace_corpse_window.test.js"
     ]
   },
   {
@@ -24,7 +24,7 @@
     "old": "  playerOwned: false,\n  textureArchive: entry.corpseMarker?.archive ?? 0,",
     "new": "  playerOwned: true,\n  textureArchive: entry.corpseMarker?.archive ?? 0,",
     "tests": [
-      "test/mace_corpse_window.test.js"
+      "test/scenes/mace_corpse_window.test.js"
     ]
   },
   {
@@ -33,26 +33,26 @@
     "old": "  if (!items?.length) {\n    entry.corpseDisabled = true;\n    say(localizedText('theBodyHasNoTreasure', 'The body has no treasure.'));\n    return 0;\n  }\n  // :948-952 - one item and it is arrows: taken whole, no window.\n  if (arrowsOnly(items)) {",
     "new": "  if (!items?.length) {\n    entry.corpseDisabled = true;\n    return 0;\n  }\n  // :948-952 - one item and it is arrows: taken whole, no window.\n  if (arrowsOnly(items)) {",
     "tests": [
-      "test/mace_corpse_window.test.js",
-      "test/cityguards.test.js"
+      "test/scenes/mace_corpse_window.test.js",
+      "test/scenes/cityguards.test.js"
     ]
   },
   {
     "name": "MAC-C-the-pack-goes-back-to-the-hardcoded-F6",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "  if (overlayAction(e) !== 'back' && !acts.includes('Inventory')) return;",
     "new": "  if (overlayAction(e) !== 'back' && e.key !== 'F6') return;",
     "tests": [
-      "test/macc_window_keys.test.js"
+      "test/ui/macc_window_keys.test.js"
     ]
   },
   {
     "name": "MAC-C-the-pack-opens-the-sheet-BEFORE-it-closes-itself",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "    const openCharSheet = deps.openCharSheet;\n    onExit();                 // the pack's own close law runs FIRST...\n    openCharSheet();          // ...and this replaces the slot it just freed",
     "new": "    const openCharSheet = deps.openCharSheet;\n    openCharSheet();\n    onExit();",
     "tests": [
-      "test/macc_window_keys.test.js"
+      "test/ui/macc_window_keys.test.js"
     ]
   },
   {
@@ -61,7 +61,7 @@
     "old": "    if (!acts.includes('CharacterSheet') && !pack) return;",
     "new": "    if (!acts.length) return;",
     "tests": [
-      "test/macc_window_keys.test.js"
+      "test/ui/macc_window_keys.test.js"
     ]
   },
   {
@@ -70,7 +70,7 @@
     "old": "    globalThis.removeEventListener?.('keydown', onSheetKey, true);",
     "new": "",
     "tests": [
-      "test/macc_window_keys.test.js"
+      "test/ui/macc_window_keys.test.js"
     ]
   },
   {
@@ -79,7 +79,7 @@
     "old": "      || action === 'Enter' || action === 'Escape' || bound('CharacterSheet') || action === 'KeyE') {",
     "new": "      || action === 'Enter' || action === 'Escape' || action === 'F5' || action === 'KeyE') {",
     "tests": [
-      "test/macc_window_keys.test.js"
+      "test/ui/macc_window_keys.test.js"
     ]
   },
   {
@@ -88,7 +88,7 @@
     "old": "    if (bound('Inventory') && this.hooks?.inventory) {",
     "new": "    if (bound('Inventory')) {",
     "tests": [
-      "test/macc_window_keys.test.js"
+      "test/ui/macc_window_keys.test.js"
     ]
   },
   {
@@ -97,7 +97,7 @@
     "old": "    const long = itemLongName(it, {",
     "new": "    const long = (it.name ?? '') && itemLongName(it, {",
     "tests": [
-      "test/macd_quest_item_name.test.js"
+      "test/systems/quest/macd_quest_item_name.test.js"
     ]
   },
   {
@@ -106,7 +106,7 @@
     "old": "      differentiatePlantIngredients: false,",
     "new": "      differentiatePlantIngredients: true,",
     "tests": [
-      "test/macd_quest_item_name.test.js"
+      "test/systems/quest/macd_quest_item_name.test.js"
     ]
   },
   {
@@ -115,7 +115,7 @@
     "old": "        if (hit != null && hit < dist) dist = Math.max(0, spherecast ? hit : hit - limit);",
     "new": "        if (hit != null && hit < dist) dist = Math.max(0, hit - limit);",
     "tests": [
-      "test/maca_camera_sphere.test.js"
+      "test/player/maca_camera_sphere.test.js"
     ]
   },
   {
@@ -124,7 +124,7 @@
     "old": "      const cast = spherecast\n        ? (o, d, m, r) => spherecast(o, r, d, m)\n        : (raycast ? (o, d, m) => raycast(o, d, m) : null);",
     "new": "      const cast = raycast ? (o, d, m) => raycast(o, d, m) : null;",
     "tests": [
-      "test/maca_camera_sphere.test.js"
+      "test/player/maca_camera_sphere.test.js"
     ]
   },
   {
@@ -133,7 +133,7 @@
     "old": "      spherecast: (o, r, d, m) => { const h = Math.min(collider.sphereCast(o, r, d, m, camFilter).dist, hcc.cameraHit(o, d, m, r)); return Number.isFinite(h) ? h : null; },",
     "new": "      spherecast: (o, r, d, m) => Math.min(collider.sphereCast(o, r, d, m, camFilter).dist, hcc.cameraHit(o, d, m, r)),",
     "tests": [
-      "test/maca_camera_sphere.test.js"
+      "test/player/maca_camera_sphere.test.js"
     ]
   }
 ]

@@ -154,7 +154,7 @@ small-frame rule (frames 0 and 5 always, fire's frame 4 as well) and
 `AlignLeftHand`/`AlignRightHand` verbatim, and `OnGUI`'s two draws
 under the large HUD's `weaponOffsetHeight` - which is FPSWeapon's own
 rule word for word (":86-95, Same logic as in FPSWeapon"), so it reads
-`ui/hudLarge.js` rather than restating the gate.
+`ui/hud/hudLarge.js` rather than restating the gate.
 
 THE ART rides the path the weapon sprite already rides: the user's own
 ARENA2 at runtime through `CifRciFile`, ART_PAL.COL, fpsWeapon's
@@ -202,12 +202,12 @@ NOBODY HAS SEEN IT RUN: no GL and no ARENA2 in this container, so the
 corpus pin (five archives, six records, one frame each, fitting the
 fixed 320x200, and the small-frame claim checked against the ART) is
 `skipReal`-gated and the placement is arithmetic against DFU's own
-formulas. `test/fpsspellcasting.test.js`, 11 pins, 9 mutants, 9 dead.
+formulas. `test/combat/fpsspellcasting.test.js`, 11 pins, 9 mutants, 9 dead.
 
 ## C9 (2026-08-16): the FP-weapon HOST ROLLOUT - SHIPPED
 
 The weapon audit's follow-up closes: the classic weapon was
-dungeon-only (the voxel path was too). combat/weaponRig.js bundles
+dungeon-only (the voxel path was too). combat/weapon/weaponRig.js bundles
 the host surface - PlayerWeapon + the WEAPON*.CIF art cache, the
 ShowWeapons legs (spellArmed a hook; hosts without casting omit it),
 ToggleSheath + DrawWeapon 78, the zero-arrow bow auto-sheathe, the
@@ -249,7 +249,7 @@ dungeon + exterior(&play) + world shot probes green.
 
 The C9 residual closes (the parallel FP lane has ended; this session
 is the only one): dungeonContext's inline weapon surface collapses
-onto combat/weaponRig.js - ONE home for the art cache, the
+onto combat/weapon/weaponRig.js - ONE home for the art cache, the
 ShowWeapons legs (spellArmed = the click-cast HasReadySpell leg,
 threaded), ToggleSheath + DrawWeapon 78, the zero-arrow bow guard
 (say -> hudText), the gesture buffer, the swing-sound edge, and the
@@ -275,7 +275,7 @@ dungeon + world shot probes green.
 ## C11 (2026-08-17): THE MONSTER PIVOT - classic sprite mobiles, LIVE - SHIPPED
 
 Monsters 0-42 stop being static flats and become full foes: the
-classic 8-orientation sprite animation (characters/mobileUnit.js,
+classic 8-orientation sprite animation (characters/mobile/mobileUnit.js,
 DaggerfallMobileUnit + EnemyBasics verbatim) driving a live billboard
 batch per foe, on the SAME combat spine as the rigged class enemies -
 EnemyAI/EnemyAttack senses + pursuit, makeEnemyEntity (monster HP/
@@ -774,7 +774,7 @@ wrongly"). Closed:
   the shooter exclusion lives in the flight module where the contact
   is decided.
 
-Pins: 7 in `test/arrowfoes.test.js`. Campaign: 7 mutants, 7 killed.
+Pins: 7 in `test/systems/arrowfoes.test.js`. Campaign: 7 mutants, 7 killed.
 
 ## EW1 - THE ENEMY WEIGHT TERM (2026-08-28)
 
@@ -813,7 +813,7 @@ city watch, exterior foes) and all four now hand the foe's own list
 through; a source sweep holds them there, because a new pool copying a
 three-argument call is how one pool silently goes back to naked foes.
 
-Pins: 6 in `test/enemyweight.test.js`, one of them REGENERATING the
+Pins: 6 in `test/systems/enemyweight.test.js`, one of them REGENERATING the
 constants from FormulaHelper.cs - including the assertion that DFU's
 item term is computed above the type branch, which is the law the
 shape depends on. Campaign: 5 mutants, 5 killed.
@@ -859,7 +859,7 @@ neutral to, and one with an undead phobia lost its penalty entirely.
 An attacker carrying both flips SIGN when the player turns - pinned,
 because no single-arm port can do that.
 
-Pins: 5 in `test/vampireundead.test.js`. Campaign: 4 mutants, 4 killed,
+Pins: 5 in `test/combat/vampireundead.test.js`. Campaign: 4 mutants, 4 killed,
 including the hand-rolled predicate that ignores `ended` - a cured
 vampire must be humanoid again, which is why the arm reads
 `liveVampirism` rather than re-testing the entry shape locally.
@@ -971,7 +971,7 @@ keypress:
 | `vsFoe 0`, teams 2+ | selection is running and rejecting; the bug is in the gates |
 | `vsFoe > 0` | they ARE picking each other; the gap is downstream |
 
-Pins: 7 in `test/infighting.test.js`. Campaign: 12 mutants, 12 killed -
+Pins: 7 in `test/characters/enemy/infighting.test.js`. Campaign: 12 mutants, 12 killed -
 including the census being *defined but never drawn*, which is the
 drawn-door rule applied to a diagnostic. The harness's new
 anchor-uniqueness check earned its keep a second time, refusing
@@ -1005,7 +1005,7 @@ still animating when the door closes would be drawn in the **next**
 building, in the previous one's coordinates. Both interior teardowns
 clear it.
 
-Pins: 6 in `test/interiorblood.test.js`, the first two behavioural
+Pins: 6 in `test/scenes/interiorblood.test.js`, the first two behavioural
 against the real pool with a counting renderer — `clear()` frees every
 batch it made rather than merely emptying the list, and a *warming*
 splash (one whose texture has not resolved yet, so it has no batch) is
@@ -1202,7 +1202,7 @@ defect H2 exists to close, and the one half of it the behavioural
 `explodeAt` pin cannot reach, since that test calls `explodeAt` directly
 with an explicit height.
 
-Both are now **driven** rather than spelled. `test/roadh_missiles.test.js`
+Both are now **driven** rather than spelled. `test/scenes/roadh_missiles.test.js`
 stands a headless exterior encounter pool (every seam stubbed, the spawn
 chain never entered, so no ARENA2 is wanted) with one hand-built foe on
 its shoot frame, and reads what the pool's own call site hands the two
@@ -1271,7 +1271,7 @@ whether the target IS the player (`DaggerfallMissile.cs:584`), and
 spell missile stores at fire time - so the impact fork's non-player arm
 (MT-iv) runs for an arrow as it already did for a bolt.
 
-Pins: `test/roadh_tail.test.js` (4). The crouched-player miss and the
+Pins: `test/scenes/roadh_tail.test.js` (4). The crouched-player miss and the
 giant's head both die under the point law restored; the reach pin drives
 `missileReach` with the dipped vector and reads what the flight asks the
 collider for; the archer arm is pinned on its gate, its target read, its
@@ -1388,7 +1388,7 @@ ALREADY stale before this round and are left as found rather than
 bumped — a mechanical +1 on a wrong number is the defect this round is
 recording.
 
-Pins: `test/roadh_tail.test.js` (4 → 7). Five pins whose subject moved
+Pins: `test/scenes/roadh_tail.test.js` (4 → 7). Five pins whose subject moved
 were re-pointed with the law rather than deleted (the ceiling-bats
 count, AUDIT 23's magic-2 impact point, AUDIT 26's F033 flash order,
 AUDIT 62 F21's foe-vs-foe contact count, MT-iv's arrow fork and wave
@@ -1410,7 +1410,7 @@ stops the shaft on any body it meets and damages only the one it was
 loosed at: a foe-aimed shaft the player steps into is spent on the
 player with no `BowDamage`, no Dodging tally and no recovered Arrow; a
 non-target foe in the way stops it and takes nothing; a player shaft
-(`WeaponDamage`) keeps striking what it hits. `test/roadh_tail.test.js`
+(`WeaponDamage`) keeps striking what it hits. `test/scenes/roadh_tail.test.js`
 drives all five cases and pins the pool's read and the three hosts'
 stores; the two AR1 infighting pins now carry the law they always
 described (the bear the shaft was loosed AT).
@@ -1434,7 +1434,7 @@ Meaner Monsters edit rides `enemyEntity.makeEnemyEntity`'s row. Unity's
 half-to-even round and float32 arithmetic are kept, and so are the four
 clamps the C# throws away. Off by default in the Mods pane; the seven
 shipped module keys default as shipped. Pins: 22 in
-`test/pcaao.test.js`. Not filmed: a game.
+`test/systems/pcaao.test.js`. Not filmed: a game.
 
 **AUDIT PCO1 (2026-09-12, the same day).** Read again method for method
 against the decompiled 1.44, the tables diffed by script. One gap fixed:
@@ -1453,14 +1453,14 @@ A player's report: "I've lost my boots and legs, both rare (yellow) rarity ... b
 items break, yellow items disappear. is this intended?" It was the mod's own
 module - "Enchanted Weapons and Armor will be destroyed upon breaking from
 physical combat", on by default and forced whole online with the rest of PCAAO -
-meeting the port's rarity ladder (`systems/lootRarity.js`, LR1): a Rare or
+meeting the port's rarity ladder (`systems/loot/lootRarity.js`, LR1): a Rare or
 Legendary carries ONE DFU catalogue enchantment as its flavour, so the module
 read it as an enchanted item and took it from the pack, while a Magic (numeric
 affixes, no enchantment) broke and stayed. Mac: "Rarity loot breaks, not
 destroyed". `pcaao.js pcaaoFades` leaves any piece that rolled a tier on the
 ladder out of the fade: it breaks and stays, repairable. DFU's own enchanted
 loot (MAGIC.DEF, made and soul-bound items - no rolled tier) still fades as the
-mod says. Pinned in `test/pcaao.test.js`, mutants in
+mod says. Pinned in `test/systems/pcaao.test.js`, mutants in
 `tools/mutants/rarebreak1.json`.
 ## WW1 - WEAPON WIDGET, THE MOD, 1:1, AND THE MORROWIND ARMS (2026-09-14, Mac's call) - SHIPPED
 
@@ -1469,7 +1469,7 @@ with morrowind's first person view." The whole account is
 `Weapon-Widget.md` beside this file; the ledger row is Port-Ledger A.
 The short of it: RedRoryOTheGlen's Weapon Widget 1.6 - FPSWeaponClone,
 a compiled DLL read off its IL method by method - ported into
-`combat/weaponWidget.js` as a component the weapon rig runs BESIDE the
+`combat/weapon/weaponWidget.js` as a component the weapon rig runs BESIDE the
 machine, the way the clone runs beside FPSWeapon: its three coroutines
 are generators on Unity's own WaitForSeconds / WaitForEndOfFrame clock,
 its nine modules read their switches every frame, its Recoil is fed
@@ -1484,7 +1484,7 @@ supply through the textures pick (renders of ARENA2, the doctrine's own
 case), read by the SIB1 bundle door under the mod's GUID. On by default
 in the Mods pane with a Mod Authored row on the Features home; the
 Mods pane grew SliderFloatKey for its speeds and sizes. Pins: 14 in
-`test/ww1_weaponwidget.test.js`. Not filmed: a game.
+`test/combat/weapon/ww1_weaponwidget.test.js`. Not filmed: a game.
 
 ## SWING-LAW - the player's swing is the port's own law (2026-09-28)
 
@@ -1492,7 +1492,7 @@ Mac: "swing speed is insane", then "Do whatever is the most detailed. I dont car
 do it better". **What changed:** DISC28-D (861462d2) gave the rig the player's live Speed, which it had never read - every
 player had swung at the number 50 - and DFU's line (FormulaHelper.GetMeleeWeaponAnimTime, `3 * (115 - LiveSpeed) / 980`
 a frame, five frames a blow) is a hyperbola in the swing rate: one blow a second at 50, 3.3 at 95, four at the cap, where
-a lycanthrope's +40 Speed puts any base of 60 or more (DISC29-G, `01-Overview/Field-Bugs-2026-09-28f.md`).
+a lycanthrope's +40 Speed puts any base of 60 or more (DISC29-G, `01-Overview/bugs/Field-Bugs-2026-09-28f.md`).
 
 **The law** (`characters/weaponStates.js` - a leaf, so the build-viewer's paste of it still stands):
 
@@ -1515,7 +1515,7 @@ a lycanthrope's +40 Speed puts any base of 60 or more (DISC29-G, `01-Overview/Fi
 **Who reads it.** A swing with a wielder the port knows (`ctx.entity`, AUDIT-RR F1's ctx) - the machine, the Weapon
 Widget's clone, the Eye of the Beholder body - asks the one function. The weapon in the hand is read by
 `combat/swingLaw.js` (the equip table's hand the swing is in, the template's base weight, `getItemHands` for both hands,
-the live Strength; bare hands and claws weigh nothing), registered as the module loads - `combat/weaponRig.js`, the one
+the live Strength; bare hands and claws weigh nothing), registered as the module loads - `combat/weapon/weaponRig.js`, the one
 maker of a swing's ctx, imports it (AUDIT PRE-MERGE 0929 S5: it was a boot call in `scenes/shared.js`, and a rig built
 without that boot swung with no weight and no second hand) - and it reads the equip table the way the rig's syncWorn
 does, never growing one (S6: through `equipTableOf` it grew an empty table on a body with none, and the rig then emptied
@@ -1524,7 +1524,7 @@ the weight's share) are the Speed the swing is read at, answered through the cur
 replaces the port's heft; Roleplay & Realism's blend has no weight in it, so the port's heft rides on it (AUDIT
 PRE-MERGE 0929 S3: with it answering alone, a 2 kg shortsword, a 4.5 kg longsword and a 5 kg broadsword all swung at
 0.995 s - heavy blades quicker than with no mod). A
-wielder the port does not know keeps DFU's line: a foe's machine (DFU never asks it for a foe - `characters/enemyAttack.js`
+wielder the port does not know keeps DFU's line: a foe's machine (DFU never asks it for a foe - `characters/enemy/enemyAttack.js`
 - and a sprite foe's blow lands on its own frame), a peer's walker at PEER_SWING_SPEED 50, the viewers. The bow's draw
 (0.0625 s a frame), its cooldown and the Thunderlock's clock are their own.
 
@@ -1532,7 +1532,7 @@ wielder the port does not know keeps DFU's line: a foe's machine (DFU never asks
 attack speed/multiple attacks when attack speed is high"). The arm used to play a blow at its WEAP record's own pace,
 so at a high Speed the machine began its next blow while the arm was still in the last, and one blow in two was drawn.
 At a strike's first frame the machine says when its hit lands and when the blow is done (`characters/weaponStates.js`
-blowSchedule, at that frame's dt; `combat/playerWeapon.js` strikeSchedule; `combat/weaponRig.js` fpAttack), and the arm
+blowSchedule, at that frame's dt; `combat/playerWeapon.js` strikeSchedule; `combat/weapon/weaponRig.js` fpAttack), and the arm
 fits its wind-up and release to the hit and its follow-through to the end (`02-Formats/Morrowind-Rules.md` MW-PACE1). A
 peer's body paces its blows by the burst's own gaps. A declared departure: Ledger A (MW-PACE1).
 
@@ -1549,18 +1549,18 @@ one, and a melee clip's frame rounding left a phantom second one too. The rig sa
 count), and a blow's melee or claw clip starts once; a new rig's count starts over; a bow keeps the IL's poll. The claws'
 clip keeps its fixed tick - stretching it over the blow is a second departure, left for Mac.
 
-**Pins** `test/swinglaw.test.js` (7) and `test/disc29_swing.test.js` (2); RR1's and RRI2's swing pins and AUDIT DISC28 AR-4
+**Pins** `test/systems/swinglaw.test.js` (7) and `test/systems/disc29_swing.test.js` (2); RR1's and RRI2's swing pins and AUDIT DISC28 AR-4
 re-aimed to the law. Mutants `tools/mutants/swinglaw.json` (23, all dead); the 89 committed records on the files it changed
-re-run - 88 dead, RR1-18 equivalent as recorded. AUDIT PRE-MERGE 0929: `test/audit0929_swing.test.js` (4 - one clip a
+re-run - 88 dead, RR1-18 equivalent as recorded. AUDIT PRE-MERGE 0929: `test/systems/audit0929_swing.test.js` (4 - one clip a
 blow, mods on and off, for a claw and a sword and a second and third rig; the reader in a rig built without the boot;
-the reader that never writes), RR1's heft, `test/disc28_speed.test.js` on the weapon as the rig builds it; mutants
+the reader that never writes), RR1's heft, `test/combat/disc28_speed.test.js` on the weapon as the rig builds it; mutants
 `tools/mutants/audit0929_swing.json` (8, all dead). A declared departure: Ledger A (SWING-LAW).
 
 ## TECH1 - WEAPON TECHNIQUES (2026-10-10, the owner's call) - SHIPPED
 
 A weapon found on the loot ladder may carry a technique, done by its own key (WeaponTechnique, the mouse's back side
 button): a Volley, a Leap Strike, a Shadowstep, a Whirlwind and eight more. It rides the swing's own machine and the
-shot's own loose: `PlayerWeapon.resolveHit` reads the technique's blow (`combat/techniqueBlow.js`) for its reach and
+shot's own loose: `PlayerWeapon.resolveHit` reads the technique's blow (`combat/technique/techniqueBlow.js`) for its reach and
 scales DFU's rolled damage by its multiplier, and `playerArrowHitFoe` does the same for its shafts - the formula still
 decides, a miss is still a miss. The record, the roster and the four hosts' doors are `Weapon-Techniques.md`. A declared
 departure: Ledger A (TECH1).

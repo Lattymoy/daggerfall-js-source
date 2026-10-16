@@ -32,12 +32,12 @@ import {
   createRegularMagicItem, createArtifact, getMagicItemTemplates,
   createPotion, createRandomPotion,   // AUDIT 63 F20: Item.cs:350's own two makers
   ITEM_GROUP_NAME_BY_CLASS, BOOK_TEMPLATE,
-} from '../loot.js';
-import { GROUP_TEMPLATE_INDICES, ITEM_TEMPLATES, mintCondition, rollPaintingMessage } from '../itemTemplates.js';
+} from '../loot/loot.js';
+import { GROUP_TEMPLATE_INDICES, ITEM_TEMPLATES, mintCondition, rollPaintingMessage } from '../item/itemTemplates.js';
 import { createBook, createRandomBook } from '../books.js';   // A2: ItemBuilder.CreateBook / CreateRandomBook
 import { goldStack, isGoldPieces } from '../inventory.js';
-import { itemLongName, shownItemName } from '../itemInfo.js';   // MAC-D: ResolveItemLongName, which Item.cs:304-307 is a call to; L10N3e: an artifact's shortName, as shown
-import { alterReward } from '../guilds.js';
+import { itemLongName, shownItemName } from '../item/itemInfo.js';   // MAC-D: ResolveItemLongName, which Item.cs:304-307 is a call to; L10N3e: an artifact's shortName, as shown
+import { alterReward } from '../guild/guilds.js';
 import { CLOTHING_DYES } from '../../characters/dyes.js';
 
 /** DaggerfallUnityItem.MakePermanent (DaggerfallUnityItem.cs:1240-

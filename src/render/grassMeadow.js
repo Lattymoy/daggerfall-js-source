@@ -45,7 +45,7 @@
 //
 // Everything here is pure and deterministic; the shader's half of the law
 // is written from these same numbers (render/labGrass.js
-// GRASSMEADOW_VS_EDITS), and test/grassmeadow.test.js holds the two
+// GRASSMEADOW_VS_EDITS), and test/render/grassmeadow.test.js holds the two
 // together.
 import { MEADOW_SPRITES, MEADOW_ALPHABET } from './meadowArt.js';
 import { smoothstep } from '../systems/mathf.js';
@@ -83,7 +83,7 @@ export const MEADOW_BLADES_PER_TUFT = 3;
  * the bush stands at 2.25 - half a metre to a metre and a half of bush over the lab's height law. `stiff` is the
  * share of its own standing lean a card takes: a bush is woody, and stands a third as crooked as grass. `sway` is its
  * share of the WIND's lean (AUDIT MEADOW1, Mac: "have the wind sway effect the new foilage, like it does the trees"):
- * the trees' own shares (systems/windDrive.js floraSwayOf) - the grass sways whole, as a tall flora record does, and
+ * the trees' own shares (systems/wind/windDrive.js floraSwayOf) - the grass sways whole, as a tall flora record does, and
  * the bush six tenths, as the world's bushes and shrubs do.
  */
 export const MEADOW_VARIANTS = Object.freeze([

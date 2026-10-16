@@ -5,7 +5,7 @@
     "old": "  for (let k = 0; k < 3; k++) if (!(Math.abs(min[k] - boundsMin[k]) <= 1e-3 && Math.abs(max[k] - boundsMax[k]) <= 1e-3)) return { error: 'bounds' };",
     "new": "  for (let k = 0; k < 3; k++) if (false) return { error: 'bounds' };",
     "tests": [
-      "test/poi1_store.test.js"
+      "test/poi/poi1_store.test.js"
     ],
     "note": "AUDIT POI (lane A): re-aimed by content - S5 wrote the bounds check as the bounds agreeing (a NaN bound refused)."
   },
@@ -15,7 +15,7 @@
     "old": "    for (let i = from; i < to; i++) if (ix[i] >= V) return 'index-range';",
     "new": "    for (let i = from; i < to; i++) if (ix[i] > V) return 'index-range';",
     "tests": [
-      "test/poi1_store.test.js"
+      "test/poi/poi1_store.test.js"
     ]
   },
   {
@@ -24,7 +24,7 @@
     "old": "    if (!s || !Number.isInteger(s.start) || !Number.isInteger(s.count) || s.start !== at || s.count <= 0 || s.count % 3) return 'submesh-run';",
     "new": "    if (!s || !Number.isInteger(s.start) || !Number.isInteger(s.count) || s.count <= 0 || s.count % 3) return 'submesh-run';",
     "tests": [
-      "test/poi1_store.test.js"
+      "test/poi/poi1_store.test.js"
     ]
   },
   {
@@ -33,7 +33,7 @@
     "old": "  if (got.w > POI_IMAGE_LIMITS.side || got.h > POI_IMAGE_LIMITS.side) return { error: 'too-large' };",
     "new": "  if (false) return { error: 'too-large' };",
     "tests": [
-      "test/poi1_store.test.js"
+      "test/poi/poi1_store.test.js"
     ]
   },
   {
@@ -42,7 +42,7 @@
     "old": "  for (const k of Object.keys(raw)) if (!known.has(k)) say(k, 'unknown');",
     "new": "  for (const k of Object.keys(raw)) if (false) say(k, 'unknown');",
     "tests": [
-      "test/poi1_store.test.js"
+      "test/poi/poi1_store.test.js"
     ]
   },
   {
@@ -51,7 +51,7 @@
     "old": "  const builder = approver || developerHandles(env).has(h) || handleList(env?.BUILDER_HANDLES).has(h);",
     "new": "  const builder = approver || handleList(env?.BUILDER_HANDLES).has(h);",
     "tests": [
-      "test/poi1_store.test.js"
+      "test/poi/poi1_store.test.js"
     ]
   },
   {
@@ -60,7 +60,7 @@
     "old": "  const approver = handleList(env?.APPROVER_HANDLES).has(h);",
     "new": "  const approver = handleList(env?.APPROVER_HANDLES).has(h) || handleList(env?.BUILDER_HANDLES).has(h);",
     "tests": [
-      "test/poi1_store.test.js"
+      "test/poi/poi1_store.test.js"
     ]
   },
   {
@@ -69,7 +69,7 @@
     "old": "  if (got !== sha) return { error: 'poi-sha-mismatch' };",
     "new": "  if (false) return { error: 'poi-sha-mismatch' };",
     "tests": [
-      "test/poi1_store.test.js"
+      "test/poi/poi1_store.test.js"
     ]
   },
   {
@@ -78,7 +78,7 @@
     "old": "    if ('error' in d) return { error: 'poi-bad-mesh', why: d.error };",
     "new": "    if (false) return { error: 'poi-bad-mesh', why: d.error };",
     "tests": [
-      "test/poi1_store.test.js"
+      "test/poi/poi1_store.test.js"
     ]
   },
   {
@@ -87,7 +87,7 @@
     "old": "  if (!row || (row.live !== 1 && !roles.builder)) return { error: 'not-found' };",
     "new": "  if (!row) return { error: 'not-found' };",
     "tests": [
-      "test/poi1_store.test.js"
+      "test/poi/poi1_store.test.js"
     ]
   },
   {
@@ -96,7 +96,7 @@
     "old": "export async function reviewPoi(ctx, player, env, { id, rev, verdict, note = null, docSha = null }) {\n  if (!poiRolesOf(player, env).approver) return { error: 'poi-not-approver' };",
     "new": "export async function reviewPoi(ctx, player, env, { id, rev, verdict, note = null, docSha = null }) {\n  if (!poiRolesOf(player, env).builder) return { error: 'poi-not-approver' };",
     "tests": [
-      "test/poi1_store.test.js"
+      "test/poi/poi1_store.test.js"
     ],
     "note": "AUDIT POI (lane A): re-aimed by content - S1 added the approval's `docSha` to the signature."
   },
@@ -106,7 +106,7 @@
     "old": "CREATE UNIQUE INDEX IF NOT EXISTS poi_revs_one_retire",
     "new": "CREATE INDEX IF NOT EXISTS poi_revs_one_retire",
     "tests": [
-      "test/poi1_store.test.js"
+      "test/poi/poi1_store.test.js"
     ],
     "note": "AUDIT POI (lane A): re-aimed by content - S8 made one retirement waiting the database's own unique index (the asked-then-written check is gone)."
   },
@@ -116,7 +116,7 @@
     "old": "  if (row.state !== 'approved' || row.kind !== 'doc') return { error: 'poi-state', state: row.state };",
     "new": "  if (row.kind !== 'doc') return { error: 'poi-state', state: row.state };",
     "tests": [
-      "test/poi1_store.test.js"
+      "test/poi/poi1_store.test.js"
     ]
   },
   {
@@ -125,7 +125,7 @@
     "old": "      stale: (r.base_rev ?? null) !== (r.live_rev ?? null),",
     "new": "      stale: false,",
     "tests": [
-      "test/poi1_store.test.js"
+      "test/poi/poi1_store.test.js"
     ],
     "note": "AUDIT POI (lane A): re-aimed by content - S12 made stale whatever the live revision is now."
   },
@@ -135,7 +135,7 @@
     "old": "  if (kept && kept.v >= atLeast && nowMs - kept.checkedMs < POI_FEED_KEEP_MS) return kept;",
     "new": "  if (false) return kept;",
     "tests": [
-      "test/poi1_store.test.js"
+      "test/poi/poi1_store.test.js"
     ],
     "note": "AUDIT POI (lane A): re-aimed by content - S11 added the version the game holds to the keep."
   },
@@ -145,7 +145,7 @@
     "old": "    if (over) return { id, rev: over.rev, state: 'draft' };",
     "new": "    if (false) return { id, rev: over.rev, state: 'draft' };",
     "tests": [
-      "test/poi1_store.test.js"
+      "test/poi/poi1_store.test.js"
     ],
     "note": "AUDIT POI (lane A): re-aimed by content - S7 made the save over the author's draft one statement."
   }

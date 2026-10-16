@@ -309,7 +309,7 @@ rig is the authoring bench for monster morphologies. Slices:
   reversed comparison; so do we), MeleeAnimation gates (in sight,
   22.5deg yaw toward the LAST-KNOWN target position - INVIS-SWING,
   2026-10-15: the port faced the live feet, so an undetected invisible
-  player was struck, `01-Overview/Field-Bugs-2026-10-15f.md` -
+  player was struck, `01-Overview/bugs/Field-Bugs-2026-10-15f.md` -
   distance <= MeleeDistance + rate-of-approach),
   ResetMeleeTimer arithmetic exact (Range(1500,3001), -50/level over
   10, +450/reflex step, 0-floor, /980). Unity-Random slots stay
@@ -946,7 +946,7 @@ per grid, steps the visible one each frame (`drapeColliders` builds the
 gait's capsules + bones from the rig's real joint Ys), recomputes normals,
 reshades with the garment's material. `drape:` toolbar button cycles them.
 
-**Test:** `test/clothSim.test.js` - stability, no-clip static, no-clip
+**Test:** `test/characters/clothSim.test.js` - stability, no-clip static, no-clip
 walking (true-3D vs the articulated capsules), and the bone-driven path,
 all over hundreds of gait steps.
 
@@ -2035,7 +2035,7 @@ data spec rather than as engine wiring. Nothing in src/ reads them.
 The ROSTER is not ours to choose. mobilePerson.js's PERSON_TEXTURES is
 3 races x 2 genders x 4 archives plus the city guard, and SetPerson
 spawns off that table, so an archive with no design is a blank
-townsperson - test/villagerdesigns.test.js fails the moment the two
+townsperson - test/characters/villagerdesigns.test.js fails the moment the two
 drift. Colour is an ART_PAL INDEX SPAN, never free RGB: the rig snaps
 faces to ramp steps, which is what makes the blocky look.
 
@@ -2111,7 +2111,7 @@ this audit. Whichever value ships, "verbatim DFU" means 20.
 
 **C2's exterior NPCs.** The C2 record says "collectExteriorNpcs filters the
 registry", and the function does exactly that - but NOTHING IN `src/` CALLS
-IT. Its only importer is test/names.test.js, so no scene ever builds the
+IT. Its only importer is test/characters/names.test.js, so no scene ever builds the
 exterior NPC registry and no exterior static NPC is a talk or activation
 target in the running game. The interior twin IS live
 (interiorContext.js:"Layout with real" -> collectInteriorPeople), which is what made the
@@ -2278,7 +2278,7 @@ The extraction first: the dungeon host's castEnemySpell body - the
 magic-15 silence gate, the player-priced cost floored at 0, the
 element cast sound, the CasterOnly self-assign, the magic-9
 at-caster AoC with the caster excluded, and the missile loose -
-moves whole into characters/enemyCasting.js beside the EnemyCaster
+moves whole into characters/enemy/enemyCasting.js beside the EnemyCaster
 decision driver it always served, behind injected deps (the M3
 one-engine doctrine). The dungeon rebinds through foeDeps and its
 local copy is gone; three pins that anchored on the old body
@@ -2328,7 +2328,7 @@ The AUDIT 23 shorthand row ("roll order + yaw gate + frame clamp")
 had lost its finding bodies; CH3 marked it unfixable without a
 dedicated pass. CH4 is that pass: EnemySenses.cs (965 lines) and
 EnemyMotor.cs's classic path re-read whole against
-characters/enemyMotor.js, member by member.
+characters/enemy/enemyMotor.js, member by member.
 
 VERIFIED CLEAN (the "roll order" third): the illusion die is
 classic-gated in both (EnemySenses.cs:444-449 - the source's own
@@ -2381,7 +2381,7 @@ Mutations: 4 run, 4 killed (the stop gate reverted to 5.625; the
 hearing origin back at the eye; the resolution re-gated on the
 classic tick; the magicka restore dropped).
 
-Pins: test/ch4senses.test.js x4 (the 22.5/5.625 pair with a live
+Pins: test/characters/enemy/ch4senses.test.js x4 (the 22.5/5.625 pair with a live
 15deg-stands/30deg-turns drive; the hearing origin captured off
 the mock ray; the cadence - detection on the first 1/60 step with
 zero classic ticks and exactly one illusion die per classic tick,
@@ -2396,7 +2396,7 @@ no target field at all, `SENSES_INTERVAL_UNITS` sat exported and
 unconsumed since C8, and `ENEMY_BASICS` carried a team string for
 every mobile that nothing read.
 
-### MT-i - the selection half (`src/characters/enemyTargets.js`)
+### MT-i - the selection half (`src/characters/enemy/enemyTargets.js`)
 
 `MOBILE_TEAMS` is DaggerfallUnityEnums.cs's enum, index for value
 (gated in-test against the C# itself). `getTargets` is
@@ -2493,8 +2493,8 @@ GameManager.cs:709's hostility/team gate and C#'s own
 ~~**STILL OPEN (MT-iv):** the DUNGEON host is not armed.~~
 **MT-iv SHIPPED (2026-08-27), the same day.** See below.
 
-Pins: 14 in `test/enemytargets.test.js`, 9 in
-`test/enemyinfighting.test.js`. Three of the MT-i pins exist because
+Pins: 14 in `test/characters/enemy/enemytargets.test.js`, 9 in
+`test/characters/enemy/enemyinfighting.test.js`. Three of the MT-i pins exist because
 an adversarial re-read of EnemySenses.cs found the port had them
 wrong: the mutual-target write nested one level too deep (it is a
 sibling of the spawn-band gate, firing off the PERSISTENT
@@ -2557,7 +2557,7 @@ tick for ever instead of completing. `worldModes.liveQuestFoes()` is
 the inside pool's half of DFU's one database - the dungeon's, and
 (AUDIT 68) the building's, whose IF pool stands quest foes too.
 
-Pins: 8 in `test/dungeoninfighting.test.js`. One pre-existing pin
+Pins: 8 in `test/scenes/dungeoninfighting.test.js`. One pre-existing pin
 (`ch3`'s fall-damage arm) was repaired rather than merely advanced:
 its `braceBlock` helper took the last `{` BEFORE the match, so any
 helper declared above the arm shadowed the block it meant to read -
@@ -2627,7 +2627,7 @@ not one.
   use interior spawn points at all; it calls PlaceFoeFreely, and says
   why: "Spawn points work well for 'interior hunt' quests but less so
   for 'directly attack the player'. Feel just placing freely will
-  yield best results overall." SHOP-RATS (`01-Overview/Field-Bugs-2026-10-12g.md`) keeps that ring first, every
+  yield best results overall." SHOP-RATS (`01-Overview/bugs/Field-Bugs-2026-10-12g.md`) keeps that ring first, every
   tick, and gives a foe it has missed thirty times a near ring that does not mind the view, then the room's own
   markers - a shop's counter and shelves left DFU's ring no room at all (a departure, Port-Ledger).
 - **`enemiesNearby`** was a literal `false` at three consumers (the
@@ -2663,7 +2663,7 @@ the action objects and the no-enemy sound only as the else.
 The pool is ARMED for MobileTeams targeting like every other pool
 (MT), over the only active-enemy database this host has - itself.
 
-Pins: 9 in `test/interiorfoes.test.js`, four of them mutation-proven.
+Pins: 9 in `test/scenes/interiorfoes.test.js`, four of them mutation-proven.
 One pre-existing pin was REPAIRED rather than advanced, the same class
 of fragility MT-iv found in `ch3`: FA1's corpse-batch pin matched
 `for (const c of corpseBatches)` and took the first hit, which the new
@@ -2802,17 +2802,17 @@ is a bare `Physics.OverlapSphere`, :317-321, so a watchman blocks a
 spot as surely as a daedra does). Both hosts that mount the mode
 machine take the arm, because it is the SAME machine for both routes.
 
-Pins: 8 in `test/roadg_pools.test.js`, five of them RUN against the
+Pins: 8 in `test/scenes/roadg_pools.test.js`, five of them RUN against the
 live pool with records pushed onto its own public `guards` array (no
 ARENA2 needed, which is what made the aggro block observable at all);
-`test/enchantpool.test.js`'s EC1 spawn-arms pin was rewritten from a
+`test/scenes/enchantpool.test.js`'s EC1 spawn-arms pin was rewritten from a
 refusal into the positive law, and its Wabbajack pin now routes the
 watch. 21 mutants driven, 20 dead; the one survivor is EQUIVALENT and named: `removeGuard`'s `g.dead` early return is shadowed by `releaseGuardBatch`'s own null-batch guard, so dropping it changes nothing observable.
 
 ## INCIDENT 2026-09-04 - THE BATS IN THE CEILING (Mac's report) - SHIPPED
 
 Mac: "In the first dungeon I notice some bat enemies stuck in the
-ceiling." Three laws, all in one new home, `characters/enemyAnchor.js`.
+ceiling." Three laws, all in one new home, `characters/enemy/enemyAnchor.js`.
 
 **1. Where the marker is.** `RDBLayout.cs:1537` stands the enemy
 TRANSFORM on the flat marker, and the mobile billboard hangs on it
@@ -2850,7 +2850,7 @@ keeps its centre (`:407-410`). The port's shader bottom-anchors, so
 scratch origin so a wing-beat record grows around the centre instead
 of up from the feet.
 
-Pins: 6 in `test/incident_ceiling_bats.test.js` - the three laws as
+Pins: 6 in `test/scenes/incident_ceiling_bats.test.js` - the three laws as
 values against DFU's numbers, a live `EnemyAI` over a real floored
 Collider recording the height every move carries, a sweep of every
 `collider.move` in both motors, and the two spawn hosts' shapes. No
@@ -2858,7 +2858,7 @@ ARENA2 in the container: the bats' height, the halved capsule's feel
 at doors, and flyers and swimmers in every host want Mac's eyes on the
 live site.
 
-DOOR-JAM (FIELD BUGS 2026-10-14b, `01-Overview/Field-Bugs-2026-10-14b.md`):
+DOOR-JAM (FIELD BUGS 2026-10-14b, `01-Overview/bugs/Field-Bugs-2026-10-14b.md`):
 the sized capsule met the doors. A Mage's, a Healer's, a Spellsword's, a
 Lich's and a Daedra Lord's stand taller than nine in ten of the dungeons'
 doorways, and DFU's counterpart to SetupDemoEnemy's height - EnemyMotor
@@ -2925,7 +2925,7 @@ transform at `height/2`.
   own `height/2` (the audio origins keep 0.9: a sound source, not a
   hit law).
 
-Pins: 3 more in `test/incident_ceiling_bats.test.js` (the inverse and
+Pins: 3 more in `test/scenes/incident_ceiling_bats.test.js` (the inverse and
 the save judgement as values; a live 3.2-idle bat with a 1.6 capsule
 measuring its centre at 1.6 and aiming 0.2 in feet-space, a rat +0.35,
 a walker level; every host/re-stand/hit-site shape), and the two
@@ -3130,7 +3130,7 @@ not.
 The F11 comment block that explains why the conversion sweep is
 `_m === 'exterior'` and not `_m !== 'dungeon'` was written BETWEEN
 `_updatedGuards = true;` and the `cityGuards.makeNpcGuardsIntoEnemies(`
-call, and the pin in `test/exteriorfoes.test.js` that had held those two
+call, and the pin in `test/scenes/exteriorfoes.test.js` that had held those two
 adjacent was relaxed to make room: one assertion for the latch, another,
 19 lines later, for the call. Nothing then pinned the call INSIDE the
 latch. `PlayerEntity.cs:484` declares `bool updatedGuards = false`
@@ -3173,7 +3173,7 @@ never reached, the player.
   four transform-space laws had no test that died when they were
   reverted: `canHearTarget`'s two offset arguments at the live call
   site, `_classicSenses`' distance, and `getTargets`' transform
-  distance. `test/ch4senses.test.js` calls `canHearTarget` with five
+  distance. `test/characters/enemy/ch4senses.test.js` calls `canHearTarget` with five
   arguments, so both new parameters sat at their defaults and were
   invisible to it, and a PLAYER target cannot separate the far term at
   all (`_targetCentreOffset()` IS the parameter's default there). Pinned
@@ -3192,7 +3192,7 @@ never reached, the player.
   height/8`, the shared `bloodCentre` every player-melee site for the
   same lines already uses. An orc mauling a bear bled it at the shins.
   Its own comment named the right point. The pin
-  (`test/enemyinfighting.test.js`) asserted the port's value under the
+  (`test/characters/enemy/enemyinfighting.test.js`) asserted the port's value under the
   reference's label and so held the missing term in place; it is
   anchored to `bloodCentre` now.
 - **F20 - `transform.position` is not the base.** Four sites passed the
@@ -3251,7 +3251,7 @@ never reached, the player.
   `bible/03-World/Player-Arc.md` ("foes still target the standing
   height") is discharged by this row.
 
-Pins: `test/audit62_foes.test.js` (10, three of them from the review
+Pins: `test/scenes/audit62_foes.test.js` (10, three of them from the review
 round below). Every one was checked to die under a mutation that
 reverts its law - both F17 terms independently, each of `getTargets`'
 two offsets independently, the six- and seven-argument `canHearTarget`
@@ -3361,7 +3361,7 @@ was not - `actionSystem.js` tested `o.kind !== 'door'` there with no
 `!o.special`. The claim is now true because the hack was collapsed onto
 the helper; it was not true when it was written.)
 
-F40 is the pin that kept it green: `test/enemydoors.test.js` grepped
+F40 is the pin that kept it green: `test/world/enemydoors.test.js` grepped
 the host for the literal `DOOR_VERB_FLAGS.has(_door.actionFlag)` under
 the label "only DOOR action objects count" - the port restated, not the
 reference, so the defect was pinned rather than caught. It is now a
@@ -3381,7 +3381,7 @@ to find.
 and the deferral was wrong there - see AUDIT 63 F42 below. Only the
 OPEN-STREET mount remains genuinely undecided.)
 
-Pins: 2 in `test/enemydoors.test.js`. Mutants: the helper reverted to
+Pins: 2 in `test/world/enemydoors.test.js`. Mutants: the helper reverted to
 the flag family, and each host seam reverted on its own; 3 killed.
 
 ## AUDIT 63 F42 - the interior mount had no door component to ask, and no OpenDoors at all (2026-09-08)
@@ -3435,7 +3435,7 @@ Knight_CityWatch is a CanOpenDoors mobile, so the indoor watch is
 driven too. Paralysis is `EnemyMotor.HandleParalysis`, the gate both
 pools already read in their own updates.
 
-Pins: 3 in `test/audit63_world_actions.test.js` - the behavioural one
+Pins: 3 in `test/scenes/audit63_world_actions.test.js` - the behavioural one
 builds an interior-shaped record-less door, gives one EnemyAI the
 mount's dep and one none, and shows `obstacleDetected` false with the
 key recorded against `obstacleDetected` true with nothing recorded;
@@ -3464,7 +3464,7 @@ compatibility switches (`meanerMonsters`, `rolePlayRealismArchery`) are
 gone: it reads the other mods' own switches through
 `modSettingIfDeclared`, and Ralzar's row lands first, the overhaul's
 edit over it, as DFU Awakes the dependency first. Off by default. Pins:
-4 in `test/meanerMonsters.test.js`. The page:
+4 in `test/characters/enemy/meanerMonsters.test.js`. The page:
 `04-Characters/Meaner-Monsters.md`.
 
 **AUDIT MM1 (the same day).** Two doors, not one: a mobile unit takes

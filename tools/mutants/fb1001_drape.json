@@ -4,69 +4,69 @@
     "file": "src/systems/useItem.js",
     "old": "      if (hoodUp(item) === up) return true;",
     "new": "      if (hoodUp(item) !== up) return true;",
-    "tests": ["test/fb1001_drape.test.js"]
+    "tests": ["test/systems/fb1001_drape.test.js"]
   },
   {
     "name": "CLOAK-DRAPE-nextvariants-plain-step",
     "file": "src/systems/useItem.js",
     "old": "  const drapes = drapeCount(item);\n  if (drapes < 2) return false;\n  const from = item.variant ?? 0;",
     "new": "  const drapes = drapeCount(item);\n  if (drapes < 2) return false;\n  if (drapes) return nextVariant(item);\n  const from = item.variant ?? 0;",
-    "tests": ["test/fb1001_drape.test.js"]
+    "tests": ["test/systems/fb1001_drape.test.js"]
   },
   {
     "name": "CLOAK-DRAPE-the-last-drape-never-left",
     "file": "src/systems/useItem.js",
     "old": "    const pair = (d + step) % drapes;",
     "new": "    const pair = Math.min(drapes - 1, d + step);",
-    "tests": ["test/fb1001_drape.test.js"]
+    "tests": ["test/systems/fb1001_drape.test.js"]
   },
   {
     "name": "CLOAK-DRAPE-a-one-drape-garment-moved",
     "file": "src/systems/useItem.js",
     "old": "  if (drapes < 2) return false;\n  const from = item.variant ?? 0;\n  const up = hoodUp(item);\n  const d = ",
     "new": "  if (drapes < 1) return false;\n  const from = item.variant ?? 0;\n  const up = hoodUp(item);\n  const d = ",
-    "tests": ["test/fb1001_drape.test.js"]
+    "tests": ["test/systems/fb1001_drape.test.js"]
   },
   {
     "name": "CLOAK-DRAPE-the-count-off-by-the-pairs",
     "file": "src/systems/useItem.js",
     "old": "Math.floor((templateByIndex(item.templateIndex)?.variants ?? 0) / 2) : 0);",
     "new": "(templateByIndex(item.templateIndex)?.variants ?? 0) : 0);",
-    "tests": ["test/fb1001_drape.test.js"]
+    "tests": ["test/systems/fb1001_drape.test.js"]
   },
   {
     "name": "CLOAK-DRAPE-no-drape-button",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "  if (hooded && drapeCount(picked) > 1) {",
     "new": "  if (false) {",
-    "tests": ["test/fb1001_drape.test.js"]
+    "tests": ["test/systems/fb1001_drape.test.js"]
   },
   {
     "name": "CLOAK-DRAPE-the-button-on-a-one-drape-garment",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "  if (hooded && drapeCount(picked) > 1) {",
     "new": "  if (hooded) {",
-    "tests": ["test/fb1001_drape.test.js"]
+    "tests": ["test/systems/fb1001_drape.test.js"]
   },
   {
     "name": "CLOAK-DRAPE-nothing-said",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "  notice = DRAPE_TEXT;",
     "new": "  notice = null;",
-    "tests": ["test/fb1001_drape.test.js"]
+    "tests": ["test/systems/fb1001_drape.test.js"]
   },
   {
     "name": "CLOAK-DRAPE-the-doll-not-redrawn",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "  notice = DRAPE_TEXT;\n  refresh();\n  refreshFigure();\n  render();",
     "new": "  notice = DRAPE_TEXT;\n  refresh();\n  render();",
-    "tests": ["test/fb1001_drape.test.js"]
+    "tests": ["test/systems/fb1001_drape.test.js"]
   },
   {
     "name": "CLOAK-DRAPE-the-card-closed",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "  notice = DRAPE_TEXT;\n  refresh();\n  refreshFigure();\n  render();",
     "new": "  notice = DRAPE_TEXT;\n  refresh();\n  refreshFigure();\n  picked = null;\n  render();",
-    "tests": ["test/fb1001_drape.test.js"]
+    "tests": ["test/systems/fb1001_drape.test.js"]
   }
 ]

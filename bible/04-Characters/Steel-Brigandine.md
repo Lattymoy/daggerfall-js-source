@@ -1,8 +1,8 @@
 # The Steel Brigandine — the port's own worn model
 
-`tools/bakeBrigandine.mjs` + `src/characters/ownArmorModels.js` +
-`src/formats/mwItemMap.js` (composeWornArmor) +
-`src/formats/mwSkinTransfer.js` (transferSkin, fitLift) + `src/formats/mwFirstPerson.js` (bindSkinnedFromBody)
+`tools/bakeBrigandine.mjs` + `src/characters/ownModels/ownArmorModels.js` +
+`src/formats/morrowind/mwItemMap.js` (composeWornArmor) +
+`src/formats/morrowind/mwSkinTransfer.js` (transferSkin, fitLift) + `src/formats/morrowind/mwFirstPerson.js` (bindSkinnedFromBody)
 (MW-BRIG1, Mac, 2026-09-29; MW-BRIG2; MW-BRIG3; MW-BRIG4, every metal in its own painting, 2026-10-09)
 
 > "This is for the morrowind model. The steel brigantine"
@@ -76,13 +76,13 @@ and the reference places each of its vertices by the part's OWN NiSkinData on
 the spine, pelvis and leg bones (rule 20) - never by the Chest node, which is
 a clothing bone that stands its own way at rest and is keyed its own way by
 the idle. So once anything animated, the torso moved by its bones and the
-brigandine by a node the body does not use. `test/mwbrig2.test.js` builds
+brigandine by a node the body does not use. `test/formats/morrowind/mwbrig2.test.js` builds
 exactly that case and measures the MW-BRIG1 attach dragged over 10 units off
 the body.
 
-Now there is ONE transform. `formats/mwSkinTransfer.js`: every brigandine
+Now there is ONE transform. `formats/morrowind/mwSkinTransfer.js`: every brigandine
 vertex copies the skin of the nearest vertex of the player's own body parts
-(`skinFrom: chest, groin, upperleg, knee` in `characters/ownArmorModels.js`) -
+(`skinFrom: chest, groin, upperleg, knee` in `characters/ownModels/ownArmorModels.js`) -
 the same bones, weights, inverse binds and skin transform - and its position
 is solved, through `skinBatch` itself (four probe vertices per body vertex),
 so that in the skeleton's rest pose it lands exactly where Mac fitted it.
@@ -137,7 +137,7 @@ facing untouched. Only then is it skinned from the body, so every vertex copies
 the skin of the body it now actually covers. The third-person build's notes say what was
 done ("fitted to the chest - moved up N"); with no chest to fit to, the
 brigandine keeps its baked height and the notes say that instead. On a
-Morrowind-proportioned male (`test/mwbrig3.test.js`, the neck's base at z 106)
+Morrowind-proportioned male (`test/formats/morrowind/mwbrig3.test.js`, the neck's base at z 106)
 the lift is 11.24, the collar meets the neck's base and the skirt ends
 above the knee; on the player's own body it is whatever that body measures - a
 woman's, a beast race's, a mod's - read off the same part.
@@ -147,7 +147,7 @@ it to the binder with the body under it. The shipped NIF and DDS are unchanged.
 
 ## How it reaches the body
 
-`characters/ownArmorModels.js` is the worn counterpart of
+`characters/ownModels/ownArmorModels.js` is the worn counterpart of
 `ownWeaponModels.js` and a leaf for the same reason. Per own piece:
 template, material, `skinFrom` (the body slots it is skinned from), `fitTo` (the body slot it hides and is
 fitted onto, MW-BRIG3), and the parts it fills by ARMO_PART name. `composeWornArmor` asks it before `mwArmorRecords` and claims each
@@ -179,8 +179,8 @@ it back through `collectArmTextures` to the PNG pixel for pixel.
 are Mac's two files, renamed for the asset, committed beside what they
 make; `node tools/bakeBrigandine.mjs` re-makes the shipped files - since
 MW-BRIG4 a NIF and a DDS for every brigandine metal, twenty in all, from
-the FBX and each metal's painting - and `test/mwbrig2.test.js` holds
-Steel's to the bytes and its sources to their SHA-256, `test/mwbrig4.test.js`
+the FBX and each metal's painting - and `test/formats/morrowind/mwbrig2.test.js` holds
+Steel's to the bytes and its sources to their SHA-256, `test/formats/morrowind/mwbrig4.test.js`
 every metal's. The FBX records its texture's original location as a
 `Downloads\brigandine\` folder; the doctrine rows call these files
 SUPPLIED (Mac's, given for the port) rather than OURS, and whether the
@@ -256,7 +256,7 @@ committed as he sent them under their metals' names
 (`src/assets/mw/source/Brigandine_<Metal>.png`, `PAINTING`); Steel's files
 bake to the bytes they were.
 
-**How it was proven.** `test/mwbrig4.test.js`: the metals are the ten
+**How it was proven.** `test/formats/morrowind/mwbrig4.test.js`: the metals are the ten
 plate materials, and a jerkin wears the brigandine exactly when its name
 says Brigandine; each metal's row the Steel row's skin and fit, composed
 into the cuirass slot with its own mesh and the chest's shadow; every

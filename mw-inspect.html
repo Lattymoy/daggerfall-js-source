@@ -59,12 +59,12 @@ import {
   skeletonReport, checkRequiredBones,
   assembleFirstPersonArm, armPieceRows, poseAssembly, clipReport, clipUnionBounds,
 } from '/src/tools/mwInspect.js';
-import { sampleTrack, resetClip, advanceClip } from '/src/formats/mwAnim.js';
-import { mwItemReport } from '/src/formats/mwItemMap.js';
-import { parseNif } from '/src/formats/mwNifFile.js';
-import { flattenNif } from '/src/formats/mwNifMesh.js';
-import { correctTexturePath } from '/src/formats/mwTexture.js';
-import { decodeDds } from '/src/formats/mwDdsFile.js';
+import { sampleTrack, resetClip, advanceClip } from '/src/formats/morrowind/mwAnim.js';
+import { mwItemReport } from '/src/formats/morrowind/mwItemMap.js';
+import { parseNif } from '/src/formats/morrowind/mwNifFile.js';
+import { flattenNif } from '/src/formats/morrowind/mwNifMesh.js';
+import { correctTexturePath } from '/src/formats/morrowind/mwTexture.js';
+import { decodeDds } from '/src/formats/morrowind/mwDdsFile.js';
 
 const out = document.getElementById('out');
 const drop = document.getElementById('drop');

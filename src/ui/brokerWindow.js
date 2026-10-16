@@ -2,7 +2,7 @@
 // SET7 (2026-09-26, Sigil Sets - bible/11-Multiplayer/Sigil-Sets.md section 7; Mac: "Sigil stones become a currency to
 // trade for daily reset sigil items at a new NPC vendor that stands outside the oblivion gate"): THE BROKER'S WINDOW.
 //
-// The day's six offers (systems/sigilBroker.js brokerStock), each a row: the piece's picture in its tier's frame with its
+// The day's six offers (systems/sigil/sigilBroker.js brokerStock), each a row: the piece's picture in its tier's frame with its
 // set's rune (the pack's own markItemFrame), its name in its tier's colour, its set and tier, its price in Sigil Stones,
 // and a Buy that says why it cannot when it cannot ("Bought", "Need 3 more" - the whole reason in its title). A row pressed shows the
 // piece whole beside the list - its tier's lines, its sigil's block and its set's (the pack card's own blocks), so a
@@ -14,26 +14,26 @@
 // classic skin the window lays its OWN sheet (`brokerSkinCss`): its layout, the tiers' colours scoped to it, the
 // sigil's and the set's blocks, and the stone-and-brass kit's rules cut to its own selectors (`scopeRules`).
 //
-// THE HOUSE'S SHAPE, as the tavern's (ui/enhancedTavern.js): a lazy chunk the door (ui/brokerDoor.js) mounts in its own
+// THE HOUSE'S SHAPE, as the tavern's (ui/enhanced/enhancedTavern.js): a lazy chunk the door (ui/brokerDoor.js) mounts in its own
 // host - `mountBrokerWindow(host, deps)` answers `{ repaint, unmount }` - the back key (overlayAction's 'back': Escape,
 // or a pad's) and a tap on the scrim leave through the door's own close (`deps.onExit`), never around it. Everything the
 // window needs from the world is handed in: the stock and the day, the purse and the record, the sale (the host takes
 // the stones, gives the piece and marks it - in that order), and the wearer whose sets the set block reads - so this
 // file draws and asks, and never touches a pack.
-import { rarityLines, rarityAttr, RARITIES } from '../systems/lootRarity.js';
-import { brokerOfferState, BROKER_REFUSALS, offerSetName, brokerTurnsIn, stonesText } from '../systems/sigilBroker.js';
-import { inventoryItemImage } from '../systems/itemTemplates.js';
+import { rarityLines, rarityAttr, RARITIES } from '../systems/loot/lootRarity.js';
+import { brokerOfferState, BROKER_REFUSALS, offerSetName, brokerTurnsIn, stonesText } from '../systems/sigil/sigilBroker.js';
+import { inventoryItemImage } from '../systems/item/itemTemplates.js';
 import { sigilCard } from './sigilCard.js';
 import { setCard, markSetFrame } from './setCard.js';
 import { requestFittedIcon, fittedImg } from './textureCanvas.js';
 import { SLOT_BOX, screenDpr } from './iconFit.js';   // UI1: the offer's picture box
-import { closeOnOutsideTap } from './enhancedOverlays.js';
+import { closeOnOutsideTap } from './enhanced/enhancedOverlays.js';
 import { overlayAction } from './input.js';
-import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
-import { rarityVarsCss, SIGIL_VARS_CSS, SIGIL_KEYFRAMES_CSS, SIGIL_BLOCK_CSS, SET_BLOCK_CSS, BROKER_CSS } from './enhancedPlusStyle.js';
-import { frameCss, scopeRules } from './enhancedFrame.js';
+import { injectEnhancedStyle, injectEnhancedFonts } from './enhanced/enhancedStyle.js';
+import { rarityVarsCss, SIGIL_VARS_CSS, SIGIL_KEYFRAMES_CSS, SIGIL_BLOCK_CSS, SET_BLOCK_CSS, BROKER_CSS } from './enhanced/enhancedPlusStyle.js';
+import { frameCss, scopeRules } from './enhanced/enhancedFrame.js';
 import { isEnhancedPlus } from '../systems/uiSkin.js';
-import { isBound, BOUND_LINE } from '../systems/itemBound.js';   // SS4: the wares are bound, and the card says so
+import { isBound, BOUND_LINE } from '../systems/item/itemBound.js';   // SS4: the wares are bound, and the card says so
 import { paintTitle, titleBadge } from './playerBadge.js';   // WB9g: the Gatebreaker's word, in its own fire
 
 /** @param {string} tag @param {string|null} [cls] @param {string|null} [text] */
@@ -49,7 +49,7 @@ export function brokerTurnText(ms) {
   return m >= 60 ? `${Math.floor(m / 60)}h ${String(m % 60).padStart(2, '0')}m` : `${m}m`;
 }
 /** "1 Sigil Stone", "3 Sigil Stones". */
-export { stonesText };   // SS5: the law's own words now (systems/sigilBroker.js) - the dismantle says them too
+export { stonesText };   // SS5: the law's own words now (systems/sigil/sigilBroker.js) - the dismantle says them too
 /** The purse's words: the stones a sale may take, and the locked ones it may not ("3 Sigil Stones · 1 locked"). */
 export const purseText = (have, locked = 0) => (locked > 0 ? `${stonesText(have)} · ${locked} locked` : stonesText(have));
 /** The last word of a press: the piece bought, or why not (the law's refusals and the host's own). */

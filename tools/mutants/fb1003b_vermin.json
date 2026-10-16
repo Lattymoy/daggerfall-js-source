@@ -5,7 +5,7 @@
     "old": "    const u = quest.shareId && quest.hooks?.sharedCopy?.(quest)\n",
     "new": "    const u = false && quest.shareId && quest.hooks?.sharedCopy?.(quest)\n",
     "tests": [
-      "test/fb1003b_vermin.test.js"
+      "test/systems/quest/fb1003b_vermin.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    const u = quest.shareId && quest.hooks?.sharedCopy?.(quest)\n",
     "new": "    const u = quest.shareId\n",
     "tests": [
-      "test/fb1003b_vermin.test.js"
+      "test/systems/quest/fb1003b_vermin.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "sharedPickRoll(quest.shareId, caller?.symbol?.name ?? '', caller?.actions?.indexOf(this) ?? 0)",
     "new": "sharedPickRoll(quest.shareId, '', caller?.actions?.indexOf(this) ?? 0)",
     "tests": [
-      "test/fb1003b_vermin.test.js"
+      "test/systems/quest/fb1003b_vermin.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "sharedPickRoll(quest.shareId, caller?.symbol?.name ?? '', caller?.actions?.indexOf(this) ?? 0)",
     "new": "sharedPickRoll(quest.shareId, caller?.symbol?.name ?? '', 0)",
     "tests": [
-      "test/fb1003b_vermin.test.js"
+      "test/systems/quest/fb1003b_vermin.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "seededFirst(stringHash(`${shareId}|${taskName}|${index}`))",
     "new": "seededFirst(stringHash(`|${taskName}|${index}`))",
     "tests": [
-      "test/fb1003b_vermin.test.js"
+      "test/systems/quest/fb1003b_vermin.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "this.sharedQuestNames.has(quest.questName) && this.sharedCandidateNamed(quest.questName) === quest,",
     "new": "this.sharedQuestNames.has(quest.questName),",
     "tests": [
-      "test/fb1003b_vermin.test.js"
+      "test/systems/quest/fb1003b_vermin.test.js"
     ]
   },
   {
@@ -59,84 +59,84 @@
     "old": "sharedCopy: (quest) => !!quest && this.sharedQuestNames.has(quest.questName) && ",
     "new": "sharedCopy: (quest) => !!quest && ",
     "tests": [
-      "test/fb1003b_vermin.test.js"
+      "test/systems/quest/fb1003b_vermin.test.js"
     ]
   },
   {
     "name": "VERMIN-defer-on-presence",
-    "file": "src/scenes/questFoeHost.js",
+    "file": "src/scenes/quest/questFoeHost.js",
     "old": "    if (dx * dx + dz * dz <= radius * radius) return sharerFoeStands({ foes, sharer, questName, symbol, accountOfPeer });\n",
     "new": "    if (dx * dx + dz * dz <= radius * radius) return true;\n",
     "tests": [
-      "test/fb1003b_vermin.test.js",
-      "test/questparty.test.js",
-      "test/questparty3b.test.js"
+      "test/systems/quest/fb1003b_vermin.test.js",
+      "test/scenes/questparty.test.js",
+      "test/scenes/questparty3b.test.js"
     ]
   },
   {
     "name": "VERMIN-body-defers",
-    "file": "src/scenes/questFoeHost.js",
+    "file": "src/scenes/quest/questFoeHost.js",
     "old": "    if (f.dead) continue;   // a body stands no wave",
     "new": "    if (false) continue;   // a body stands no wave",
     "tests": [
-      "test/fb1003b_vermin.test.js",
-      "test/questparty.test.js",
-      "test/questparty3b.test.js"
+      "test/systems/quest/fb1003b_vermin.test.js",
+      "test/scenes/questparty.test.js",
+      "test/scenes/questparty3b.test.js"
     ]
   },
   {
     "name": "VERMIN-any-foe-defers",
-    "file": "src/scenes/questFoeHost.js",
+    "file": "src/scenes/quest/questFoeHost.js",
     "old": "    if (!tag || tag.q !== questName || tag.s !== symbol) continue;\n",
     "new": "    if (!tag || tag.q !== questName) continue;\n",
     "tests": [
-      "test/fb1003b_vermin.test.js",
-      "test/questparty.test.js",
-      "test/questparty3b.test.js"
+      "test/systems/quest/fb1003b_vermin.test.js",
+      "test/scenes/questparty.test.js",
+      "test/scenes/questparty3b.test.js"
     ]
   },
   {
     "name": "VERMIN-any-quest-defers",
-    "file": "src/scenes/questFoeHost.js",
+    "file": "src/scenes/quest/questFoeHost.js",
     "old": "    if (!tag || tag.q !== questName || tag.s !== symbol) continue;\n",
     "new": "    if (!tag || tag.s !== symbol) continue;\n",
     "tests": [
-      "test/fb1003b_vermin.test.js",
-      "test/questparty.test.js",
-      "test/questparty3b.test.js"
+      "test/systems/quest/fb1003b_vermin.test.js",
+      "test/scenes/questparty.test.js",
+      "test/scenes/questparty3b.test.js"
     ]
   },
   {
     "name": "VERMIN-untagged-defers",
-    "file": "src/scenes/questFoeHost.js",
+    "file": "src/scenes/quest/questFoeHost.js",
     "old": "    if (!tag || tag.q !== questName || tag.s !== symbol) continue;\n",
     "new": "    if (tag && (tag.q !== questName || tag.s !== symbol)) continue;\n",
     "tests": [
-      "test/fb1003b_vermin.test.js",
-      "test/questparty.test.js",
-      "test/questparty3b.test.js"
+      "test/systems/quest/fb1003b_vermin.test.js",
+      "test/scenes/questparty.test.js",
+      "test/scenes/questparty3b.test.js"
     ]
   },
   {
     "name": "VERMIN-anyones-foe-defers",
-    "file": "src/scenes/questFoeHost.js",
+    "file": "src/scenes/quest/questFoeHost.js",
     "old": "    if (accountOfPeer(f.puppet ?? f._ownFrom) === sharer) return true;\n",
     "new": "    return true;\n",
     "tests": [
-      "test/fb1003b_vermin.test.js",
-      "test/questparty.test.js",
-      "test/questparty3b.test.js"
+      "test/systems/quest/fb1003b_vermin.test.js",
+      "test/scenes/questparty.test.js",
+      "test/scenes/questparty3b.test.js"
     ]
   },
   {
     "name": "VERMIN-dungeon-owner-unread",
-    "file": "src/scenes/questFoeHost.js",
+    "file": "src/scenes/quest/questFoeHost.js",
     "old": "    if (accountOfPeer(f.puppet ?? f._ownFrom) === sharer) return true;\n",
     "new": "    if (accountOfPeer(f.puppet) === sharer) return true;\n",
     "tests": [
-      "test/fb1003b_vermin.test.js",
-      "test/questparty.test.js",
-      "test/questparty3b.test.js"
+      "test/systems/quest/fb1003b_vermin.test.js",
+      "test/scenes/questparty.test.js",
+      "test/scenes/questparty3b.test.js"
     ]
   },
   {
@@ -145,7 +145,7 @@
     "old": "partnerStandsQuestFoes({ questName: handle.foe?.parentQuest?.questName, symbol: handle.foe?.symbol?.name, sharerOf: (q) => _liveSharer(q), inMyParty: (a) => !!social?.inMyParty(a), peers: peersNear(), accountOfPeer: (id) => social?.accountOfPeer(id), myFeet: player.pos,",
     "new": "partnerStandsQuestFoes({ questName: handle.foe?.parentQuest?.questName, sharerOf: (q) => _liveSharer(q), inMyParty: (a) => !!social?.inMyParty(a), peers: peersNear(), accountOfPeer: (id) => social?.accountOfPeer(id), myFeet: player.pos,",
     "tests": [
-      "test/fb1003b_vermin.test.js"
+      "test/systems/quest/fb1003b_vermin.test.js"
     ]
   },
   {
@@ -154,7 +154,7 @@
     "old": "myFeet: player.pos, foes: modes?.insideFoes?.() ?? [] })) return true;",
     "new": "myFeet: player.pos, foes: [] })) return true;",
     "tests": [
-      "test/fb1003b_vermin.test.js"
+      "test/systems/quest/fb1003b_vermin.test.js"
     ]
   },
   {
@@ -163,7 +163,7 @@
     "old": "partnerStandsQuestFoes({ questName: handle.foe?.parentQuest?.questName, symbol: handle.foe?.symbol?.name, sharerOf: (q) => _liveSharer(q), inMyParty: (a) => !!social?.inMyParty(a), peers: peersNear(), accountOfPeer: (id) => social?.accountOfPeer(id), myFeet: feet,",
     "new": "partnerStandsQuestFoes({ questName: handle.foe?.parentQuest?.questName, sharerOf: (q) => _liveSharer(q), inMyParty: (a) => !!social?.inMyParty(a), peers: peersNear(), accountOfPeer: (id) => social?.accountOfPeer(id), myFeet: feet,",
     "tests": [
-      "test/fb1003b_vermin.test.js"
+      "test/systems/quest/fb1003b_vermin.test.js"
     ]
   },
   {
@@ -172,7 +172,7 @@
     "old": "myFeet: feet, foes: exteriorFoes.foes })) return true;",
     "new": "myFeet: feet, foes: [] })) return true;",
     "tests": [
-      "test/fb1003b_vermin.test.js"
+      "test/systems/quest/fb1003b_vermin.test.js"
     ]
   }
 ]

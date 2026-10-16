@@ -11,10 +11,10 @@ import { BsaFile } from '../src/formats/bsaFile.js';
 import { Arch3dFile } from '../src/formats/arch3dFile.js';
 import { BlocksFile } from '../src/formats/blocksFile.js';
 import { MapsFile } from '../src/formats/mapsFile.js';
-import { layoutDungeon } from '../src/world/dungeonLayout.js';
+import { layoutDungeon } from '../src/world/dungeon/dungeonLayout.js';
 import { dfMeshToModel } from '../src/world/meshReader.js';
 import { Collider } from '../src/player/collider.js';
-import { EnemyAI } from '../src/characters/enemyMotor.js';
+import { EnemyAI } from '../src/characters/enemy/enemyMotor.js';
 import { multiply, trs } from '../src/world/mat4.js';
 
 const A2 = process.env.ARENA2_PATH;

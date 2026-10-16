@@ -1,13 +1,13 @@
 // @ts-check
 // MWNPC9 (2026-10-09, the MW-NPC arc's ninth slice - bible/04-Characters/Morrowind-NPCs.md section 14b): DAGGERFALL'S
-// CREATURES, MATCHED TO MORROWIND'S. Every creature mobile (characters/mobileTypes.js, 0-42) is either matched to the
+// CREATURES, MATCHED TO MORROWIND'S. Every creature mobile (characters/mobile/mobileTypes.js, 0-42) is either matched to the
 // Morrowind creature that stands for it - an ordered list of CREA ids, the first the attached masters carry building
 // its body (combat/fpArm.js buildCreatureBody) - or a DECLARED MISS with its reason, keeping its Daggerfall sprite. The
 // ids are the records' own, read off UESP's creature tables (2026-10-09), never recalled: Morrowind.esm's, Tribunal's
 // (lich) and Bloodmoon's (BM_spriggan, BM_bear_black, bm_frost_giant, draugr); a master that lacks one refuses the
 // build and the sprite stands, as for any refused body.
-import { MOBILE_TYPES as M } from './mobileTypes.js';
-import { ENEMY_BASICS } from './enemyBasics.js';   // MWNPC13: a spectral's own archive (a named one keeps its sprite)
+import { MOBILE_TYPES as M } from './mobile/mobileTypes.js';
+import { ENEMY_BASICS } from './enemy/enemyBasics.js';   // MWNPC13: a spectral's own archive (a named one keeps its sprite)
 import { BaseImageFile } from '../formats/baseImageFile.js';   // MWNPC13: the spectral sprite's opacity
 
 /** The match: mobile type -> `{ creature: [CREA ids, first carried wins] }` or `{ miss: reason }`. Every creature

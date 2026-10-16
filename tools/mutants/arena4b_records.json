@@ -5,7 +5,7 @@
     "old": ".sort((x, y) => y.at - x.at || y.src - x.src || y.k - x.k)",
     "new": ".sort((x, y) => x.at - y.at || x.src - y.src || x.k - y.k)",
     "tests": [
-      "test/arena4b_records.test.js"
+      "test/server/arena4b_records.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "const won = r.result === 2 ? null : r.result === side;",
     "new": "const won = r.result === side;",
     "tests": [
-      "test/arena4b_records.test.js"
+      "test/server/arena4b_records.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "points: r.won === 1 && r.banner ? pvePoints(",
     "new": "points: r.banner ? pvePoints(",
     "tests": [
-      "test/arena4b_records.test.js"
+      "test/server/arena4b_records.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "points: r.won === 1 && r.banner ? pvePoints(",
     "new": "points: r.won === 1 ? pvePoints(",
     "tests": [
-      "test/arena4b_records.test.js"
+      "test/server/arena4b_records.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "points: rated && won === true && banner ? ARENA_TEAM_POINTS.pvp : 0,",
     "new": "points: won === true && banner ? ARENA_TEAM_POINTS.pvp : 0,",
     "tests": [
-      "test/arena4b_records.test.js"
+      "test/server/arena4b_records.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "recent: records.recent.map((b) => (b.opponent ? { ...b, opponent: names.get(b.opponent) ?? { name: '', title: null, glyphs: [] } } : b)),",
     "new": "recent: records.recent,",
     "tests": [
-      "test/arena4b_records.test.js"
+      "test/server/arena4b_records.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "(SELECT COALESCE(SUM(CASE WHEN (a = ?1 AND result = 0) OR (b = ?1 AND result = 1) THEN 1 ELSE 0 END), 0) FROM arena_pvp WHERE a = ?1 OR b = ?1) AS vw,",
     "new": "(SELECT COALESCE(SUM(CASE WHEN (a = ?1 AND result = 0) OR (b = ?1 AND result = 1) OR result = 2 THEN 1 ELSE 0 END), 0) FROM arena_pvp WHERE a = ?1 OR b = ?1) AS vw,",
     "tests": [
-      "test/arena4b_records.test.js"
+      "test/server/arena4b_records.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "UNION ALL SELECT at, 1, rowid, CASE WHEN (a = ?1 AND result = 0) OR (b = ?1 AND result = 1) THEN 1 ELSE 0 END FROM arena_pvp WHERE a = ?1 OR b = ?1),",
     "new": "UNION ALL SELECT at, 1, rowid, 1 FROM arena_pvp WHERE 0),",
     "tests": [
-      "test/arena4b_records.test.js"
+      "test/server/arena4b_records.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "OVER (ORDER BY at, src, k ROWS UNBOUNDED PRECEDING)",
     "new": "OVER (ORDER BY src, at, k ROWS UNBOUNDED PRECEDING)",
     "tests": [
-      "test/arena4b_records.test.js"
+      "test/server/arena4b_records.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "export const ARENA_RECENT_MAX = 20;",
     "new": "export const ARENA_RECENT_MAX = 30;",
     "tests": [
-      "test/arena4b_records.test.js"
+      "test/server/arena4b_records.test.js"
     ]
   }
 ]

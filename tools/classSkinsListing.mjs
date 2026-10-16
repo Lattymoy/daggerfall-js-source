@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// SKIN2: THE CLASS SKINS' LISTING - the authority test/doctrine.test.js reads for vendor/class-skins/.
+// SKIN2: THE CLASS SKINS' LISTING - the authority test/tooling/doctrine.test.js reads for vendor/class-skins/.
 //
 // Mac's ExistingClasses archive is a LOOSE-FILE pack (no .dfmod, so no manifest of its own), the GrimoireUI case: its
 // authority is a listing generated from the archive. Unlike GrimoireUI's, these files were RENAMED on the way in -

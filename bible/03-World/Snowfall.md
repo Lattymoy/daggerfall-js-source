@@ -18,7 +18,7 @@ corner saying where snow may lie). They ship under `public/art/snowfall/`
 (mip 0 of each texture written losslessly), under Port-Doctrine's SECOND
 EXCEPTION, written and checked by `tools/environmentModsExtract.mjs`. The
 records are a SHIPPED MOD in the texture door, registered beside Vanilla
-Enhanced's by `systems/vanillaEnhancedPack.js` (`ENVIRONMENT_PACK_MODS`), ON BY
+Enhanced's by `systems/vanillaEnhanced/vanillaEnhancedPack.js` (`ENVIRONMENT_PACK_MODS`), ON BY
 DEFAULT and a switch of its own on the Replacement packs card. They carry each
 archive's record 0, so they decide the winter archives' ground as a whole -
 and the index names Vanilla Enhanced's Base as an optional dependency, so the
@@ -34,7 +34,7 @@ keeps them in the save and fills them back over the hours. Read off the
 assembly (ilspycmd's C# and `vendor/snowfall/il/DynamicSnow.il.txt`) and its
 one shader's DXBC (`vendor/snowfall/shaders/DynamicSnow.glsl`):
 
-SNOWLESS1 (FIELD BUGS 2026-10-09 #1, `01-Overview/Field-Bugs-2026-10-09.md`) - two departures from the mod. Its
+SNOWLESS1 (FIELD BUGS 2026-10-09 #1, `01-Overview/bugs/Field-Bugs-2026-10-09.md`) - two departures from the mod. Its
 "outside the desert" asks the climate type alone, so under Vanilla Enhanced's Snowless Swamps and Jungles it laid its
 snow over the add-on's green swamp ground, bare only on the roads its own 403 masks leave (DFU's two mods clash the
 same way). A climate whose winter set the add-on decides is the desert's case now: no tier stands while the player is
@@ -66,13 +66,13 @@ over a desert pixel next door; a desert's tile is bare now.
 | `render/snowfallGlsl.js` | the shader: the vertex law, and the fragment's snow spliced into the ground's own fragment program |
 | `render/snowfallSurface.js` | the tiers on the GPU, uploaded as they change, drawn through the renderer's `drawSnow` |
 | `scenes/snowfallHost.js` | the runtime both exterior hosts build over the ground they draw: its tiles, a rebuilt tile replacing the old, the bodies, the save record, `snow_status` |
-| `world/terrainSurface.js` `surfaceNormalFromSamples`, `gridValueAt` | the drawn ground's normal off a pixel's samples at its stride; a grid's value (WATER-NEXT's bed) on the drawn triangle |
+| `world/terrain/terrainSurface.js` `surfaceNormalFromSamples`, `gridValueAt` | the drawn ground's normal off a pixel's samples at its stride; a grid's value (WATER-NEXT's bed) on the drawn triangle |
 
 PINNED AGAINST THE ASSEMBLY ITSELF: the session's C# reference compiles the
 mod's own sources (SnowpackState, SnowDepthRules, SnowCoverageData,
 SnowContactRamp, PersistentTrackField, the rasterizers, CorpseImpressions'
 rasterizer, the statics, BasicRoadsClassifier and BasicRoadsTerrain) under
-.NET 8 and runs nine scenarios off one LCG; `test/snowfall1_model.test.js`
+.NET 8 and runs nine scenarios off one LCG; `test/systems/snowfall1_model.test.js`
 runs the same through the port, and every section's trace - float and double
 bits, mask hashes, the save's cells in the dictionary's order - hashes to the
 reference's (`5ce5e363...` the snowpack, `e1e83e50...` Resolve, `b4789563...`
@@ -118,12 +118,12 @@ the rasterizers, `fa48dcc6...` the statics, `e4c9678b...` Basic Roads,
   retries are real seconds. A load restores the record at the clock's nought
   and completes its session on the next frame - the LOADED game's clock (AUDIT
   ENVIRONS S2: the hosts restore the mods' records before the save's clock).
-  Online the mod is the player's own (`systems/onlineLane.js`).
+  Online the mod is the player's own (`systems/online/onlineLane.js`).
 - **A TELEPORT'S NEW FRAME.** `state.init`'s re-anchor (a load, a fast travel,
   a respawn) carries the tiers, their tracks and the last stamp by its move
   (`initOffset`) as a recentre does, so the old place's tracks stay on the old
   place and the arrival's first stamp is no trench (AUDIT ENVIRONS I2).
-- **WHAT IT COSTS** (AUDIT ENVIRONS P1-P8, `01-Overview/Audit-Environs.md`).
+- **WHAT IT COSTS** (AUDIT ENVIRONS P1-P8, `01-Overview/audits/Audit-Environs.md`).
   The ring's rebuild copies the last build's samples where its points fall on
   the same place of the same tile over the same roads and settlements, each
   copy spending the sample budget a sample does (P3); the window's uploads wait
@@ -154,7 +154,7 @@ interiors) and `scenes/dungeonContext.js` (the dungeons) are FLAGGED, not
 wired: their frames run inside the exterior hosts' indoor branch, which ticks
 the mod indoors, and no snow lies there.
 
-SNOW-TELL (`01-Overview/Field-Bugs-2026-10-11d.md`): what stands on the ground
+SNOW-TELL (`01-Overview/bugs/Field-Bugs-2026-10-11d.md`): what stands on the ground
 must stand on the snow too. A foe's telegraph is fitted to the bare ground (the
 colliders know no snow) and lay 0.06 m over it, under this surface; the renderer
 keeps the frame's snow height (`render/snowfallGlsl.js` snowSurfaceRise, each
@@ -188,7 +188,7 @@ tier `drawSnow` draws) and the foes' ground pass lies its marks over it.
   down. The window, the ring and the blanket were sampled, committed and
   uploaded round a traveller crossing the land at the journey's x60, for a
   picture nobody saw. Held to the frame in play's every clock by
-  `test/fb1009_travelperf.test.js`.
+  `test/scenes/fb1009_travelperf.test.js`.
 - **A SAVE PACKS ONCE A CHANGE** (TV-SAVE, the port's own). The track field's
   record (`PersistentTrackField.writeSaveData`) is packed again only when the
   field has changed since the last one (`revision`: a cell made or deepened,
@@ -220,13 +220,13 @@ tier `drawSnow` draws) and the foes' ground pass lies its marks over it.
 
 ## Pins
 
-`test/environs_texturePacks.test.js` (4); `tools/mutants/alikr1.json` (7, all
-dead); `test/doctrine.test.js` holds `public/art/snowfall/` to Port-Doctrine's
-second exception. The dynamic snow: `test/snowfall1_model.test.js` (12) and
-`test/snowfall1_runtime.test.js` (15); `tools/mutants/snowfall1.json` (42, all
+`test/systems/environs_texturePacks.test.js` (4); `tools/mutants/alikr1.json` (7, all
+dead); `test/tooling/doctrine.test.js` holds `public/art/snowfall/` to Port-Doctrine's
+second exception. The dynamic snow: `test/systems/snowfall1_model.test.js` (12) and
+`test/render/snowfall1_runtime.test.js` (15); `tools/mutants/snowfall1.json` (42, all
 dead). The shader's variants compile and draw in Chromium's WebGL2 on both
 lanes (a synthetic hill through the real renderer, the mod's masks and
 albedo: the snow on the ground, the track in it, no GL error). AUDIT ENVIRONS
-(`01-Overview/Audit-Environs.md`): `test/audit_environs.test.js` (21),
+(`01-Overview/audits/Audit-Environs.md`): `test/systems/audit_environs.test.js` (21),
 `tools/mutants/audit_environs.json`. TV-SNOW, TV-SAVE and TV-REFILL (FIELD BUGS
-2026-10-09): `test/fb1009_travelperf.test.js`, `tools/mutants/fb1009_travelperf.json`.
+2026-10-09): `test/scenes/fb1009_travelperf.test.js`, `tools/mutants/fb1009_travelperf.json`.

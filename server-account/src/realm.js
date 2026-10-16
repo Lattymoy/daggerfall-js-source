@@ -46,16 +46,16 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { SAVE_MAX_BYTES } from './service.js';
-import { GUILD_RANK_MASTER } from '../../src/net/guildLaw.js';   // AUDIT REALM L1-F7: a deleted guildmaster hands the guild over first
+import { GUILD_RANK_MASTER } from '../../src/net/guild/guildLaw.js';   // AUDIT REALM L1-F7: a deleted guildmaster hands the guild over first
 import { homeMoved } from '../../src/net/homeLaw.js';   // QUEST-HOME: the homes a deleted character took with it
-import { liquidWealthOf, customsAllowance, REALM_BIRTH_LEVEL, REALM_BIRTH_WEALTH_MAX } from '../../src/net/realmGoldLaw.js';
-import { cardWorthOf, cardPacksOf, customsCardAllowance, STARTER_DECK_WORTH } from '../../src/net/cardWorthLaw.js';   // CARDS9: the cards' customs - the client's law   // AUDIT REALM2 S1: the first save, measured as customs measures it
+import { liquidWealthOf, customsAllowance, REALM_BIRTH_LEVEL, REALM_BIRTH_WEALTH_MAX } from '../../src/net/realm/realmGoldLaw.js';
+import { cardWorthOf, cardPacksOf, customsCardAllowance, STARTER_DECK_WORTH } from '../../src/net/card/cardWorthLaw.js';   // CARDS9: the cards' customs - the client's law   // AUDIT REALM2 S1: the first save, measured as customs measures it
 import { ID_RE, armsIssuable } from '../../src/net/identityToken.js';   // CUSTOMS-PASS: an account named by its id; INT7: the arms' claim
 import { isGuestShaped, isHandleShaped } from '../../src/net/handleShape.js';   // CUSTOMS-PASS: a handle and a guest's name, told apart by their shape alone
 import { isDeveloper } from './titles.js';   // CUSTOMS-PASS: a developer grants one
 import { displayName } from './accounts.js';
 import { linkFirstPlay } from './founderLink.js';   // FOUNDER5: a character brought in links its first play
-import { saveTextOf, REALM_TEXT_MAX_BYTES } from '../../src/net/realmSaveCodec.js';   // REALM-GZIP: a save read packed or plain
+import { saveTextOf, REALM_TEXT_MAX_BYTES } from '../../src/net/realm/realmSaveCodec.js';   // REALM-GZIP: a save read packed or plain
 import { lineageBirthRefusal, houseOn, endUnionsOf } from './legacy.js';   // LEGACY7: a realm character born as a person of the account's own line
 import { wealthOf, ledgerPieces, classicCount, WEALTH_VERSION } from './judge.js';   // INT5: what the service's own writes move, witnessed; INT4: the pieces it moves
 import { piecesRefusal, ledgerMoves, releaseSteps, ledgerReads, leavingKeys } from './ledger.js';   // INT4: a piece the record may give, and the ledger moved with it; SAVE-BATCH: its reads in the checkpoint's first batch
@@ -71,7 +71,7 @@ export const REALM_SUMMARY_MAX = 512;
 /** A lease renewed this recently is a character in play ("playing now" on the tile). Checkpoints come every two minutes. */
 export const REALM_PLAYING_S = 300;
 /** The largest save a checkpoint may carry - the cloud save's own bound. REALM-GZIP: the REQUEST's bound - a tab packs
- *  its save, and the text a checkpoint opens to is REALM_TEXT_MAX_BYTES (src/net/realmSaveCodec.js). */
+ *  its save, and the text a checkpoint opens to is REALM_TEXT_MAX_BYTES (src/net/realm/realmSaveCodec.js). */
 export const REALM_MAX_BYTES = SAVE_MAX_BYTES;
 /** The service's ids: `r` and twenty hex digits. Nothing a client mints looks like one. */
 export const REALM_ID_RE = /^r[0-9a-f]{20}$/;
@@ -174,13 +174,13 @@ export const REALM_LEVEL_CLAIM_MAX = 1000;
  *    name filter refuses - a house is shown to every player, as an account's name is).
  *  - `name` NAME-AS (2026-10-12): ITS OWN NAME, as its row keeps it (realmNameOf's) - the name the mint signs where the
  *    account chose its character's (accounts.js wornNameOf, which asks whether the wire can carry it). A fifth answer of
- *    the same read, never a second statement: test/scale4f.test.js holds it to its own read beside the four.
+ *    the same read, never a second statement: test/server/scale4f.test.js holds it to its own read beside the four.
  *  The four are read only for a character that is the realm's (`rc` 1), as the mint signs them only then.
  *  SCALE4f (2026-10-10, Mac: "really future proof our archetecture while also increasing performance"; bible
  *  11-Multiplayer/Scale-Arc.md SCALE4f): THE FOUR READS OF ONE ROW, IN ONE. These were four functions and four
  *  statements of the same realm_characters row (realmCharacterHeld, realmLevelOf, realmArmsOf, legacy.js realmHouseOf),
  *  asked by every mint - and a relay deploy's wave asks the mint of every player at once. One statement answers exactly
- *  what the four answered: test/scale4f.test.js holds it to them, as they stood at acct106, over every state a row can be
+ *  what the four answered: test/server/scale4f.test.js holds it to them, as they stood at acct106, over every state a row can be
  *  in. */
 export async function realmMintFacts({ db }, /** @type {string} */ playerId, /** @type {unknown} */ id) {
   const none = { rc: 0, cl: null, wa: null, house: null, name: null };
@@ -460,7 +460,7 @@ export async function realmSaveTextOf(/** @type {any} */ object) {
  * as chargen starts one: level REALM_BIRTH_LEVEL, and no more liquid wealth than REALM_BIRTH_WEALTH_MAX ('realm-birth').
  * A customs character brings no more than the allowance at the level customs was asked at - the level on its row's
  * summary, which nothing writes before the first save lands, never the first save's own word ('customs-allowance').
- * Wealth is customs' own measure (net/realmGoldLaw.js liquidWealthOf): the purse, the banks, and every gold-piece item
+ * Wealth is customs' own measure (net/realm/realmGoldLaw.js liquidWealthOf): the purse, the banks, and every gold-piece item
  * and letter of credit wherever it lies. A save that is no JSON object is neither. Answers null, or `{ error }`.
  * REALM-GZIP: it reads the save's TEXT, opened by the checkpoint - a packed first save is measured as a plain one, and
  * one that will not open (null) is no JSON object.
@@ -471,7 +471,7 @@ export function firstSaveRefusal(text, row) {
   try { save = JSON.parse(text); } catch { save = null; }
   const shaped = !!save && typeof save === 'object' && !Array.isArray(save);
   if (!row.origin_id) {
-    // CARDS9: and no more cards than the binder's gift - the starter deck's worth (net/cardWorthLaw.js). AUDIT CARDS-6 A1:
+    // CARDS9: and no more cards than the binder's gift - the starter deck's worth (net/card/cardWorthLaw.js). AUDIT CARDS-6 A1:
     // and no sealed pack - chargen hands none, and the first save lands before the world is played
     return shaped && save.level === REALM_BIRTH_LEVEL && liquidWealthOf(save) <= REALM_BIRTH_WEALTH_MAX && cardWorthOf(save) <= STARTER_DECK_WORTH && cardPacksOf(save) === 0 ? null : { error: 'realm-birth' };
   }
@@ -676,7 +676,7 @@ export function realmAtOf(/** @type {any} */ v) {
  * A REALM CHARACTER'S RECORD, CHANGED WITH AN ACT - the service's half of every act online that costs or pays a realm
  * character gold: a guild's treasury, a founding, a home, a piece of decor. `at` is the record as its tab last
  * checkpointed it (the tab checkpoints just before, and holds its checkpoints until the answer, so the save read here
- * is the one it plays); `change(save)` changes it in place (net/realmGoldLaw.js payFromSave, creditSave) and answers
+ * is the one it plays); `change(save)` changes it in place (net/realm/realmGoldLaw.js payFromSave, creditSave) and answers
  * null, or a refusal's word. The record is written ONE SEQUENCE ON as a new object - but the row is not moved here: the
  * answer's `steps` go into the caller's OWN batch beside the act they pay for (the row's move and its guard), so the
  * gold and the act land together or neither does. After the batch the caller drops `prev` (it landed) or `key` (it did

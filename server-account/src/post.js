@@ -33,7 +33,7 @@
 // record, which holds it.
 // ═══════════════════════════════════════════════════════════════════
 import { realmActFirst, prepareRealmRecord, mustChange, dropObjects, dropIfUnnamed, recordMovedOf, REALM_ID_RE } from './realm.js';
-import { giveTradeGoods } from '../../src/net/realmTradeLaw.js';
+import { giveTradeGoods } from '../../src/net/realm/realmTradeLaw.js';
 import { POST_ID_RE, POST_BOX_MAX, postItemHead } from '../../src/net/postLaw.js';
 
 /** The record a row holds, or null. AUDIT SERVER-POST: ONE ANSWER to "does this piece hold an item" for the box, the

@@ -3,7 +3,7 @@
 //
 // The owner, of the shops and the menus: "I just feel like text lists are too much. Why cant you try something else".
 // The shipmaster's cards (ui/shipyardWindow.js) led with a ship's glyph at her size; each now shows her: the hull's
-// portrait boat (scenes/comeSailAwayPool.js `portrait` - built once, standing, never on the water) drawn with the panel
+// portrait boat (scenes/comeSailAway/comeSailAwayPool.js `portrait` - built once, standing, never on the water) drawn with the panel
 // pass into a box of the game canvas under the window, and copied out (scenes/panelPicture.js), once a hull for the
 // session. The window asks (`picture`); the world's frame draws (`draw`, after its own pass, as the decorator's preview
 // is drawn) SHIP_PORTRAITS_A_FRAME a frame, once her every part has come. An ask the world cannot answer in

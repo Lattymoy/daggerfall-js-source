@@ -2,7 +2,7 @@
 // THE FLEET'S HOST HALF (HOLDINGS, 2026-10-03 - bible/03-World/Holdings.md). The Fleet page (ui/fleetPage.js) reads a
 // model and asks acts; this builds the one and carries out the other over the world host's runtimes - Come Sail Away's
 // boats (the mod's own laws: SummonBoat, LayUpBoat, StartPlacing over the Fleet's book), the sea fight's state of each
-// (scenes/navalHost.js fleetStatus, repairAway, refitBoat, the yard, the berths), and the ledger (systems/fleet.js).
+// (scenes/naval/navalHost.js fleetStatus, repairAway, refitBoat, the yard, the berths), and the ledger (systems/fleet.js).
 // Built by scenes/world.js, the one host that stands Come Sail Away; the page is taken down with it.
 //
 //   deps = {
@@ -20,13 +20,13 @@ import {
   fleetShip, fleetShips, fleetBook, titleOf, titleDeedsIn, knowShip, renameShip, addRefit, setShipPort, retitle, refitOf, loanOwed, settleCredit,
   shipLabel, upgradeCost, materialCount, takeMaterials, UPGRADE_LINES, UPGRADE_TIERS, MATERIALS, BOAT_PARTS_TEMPLATE,
 } from '../systems/fleet.js';
-import { HULL_NAMES, HULL_PRICES } from '../systems/comeSailAwayBoat.js';
-import { mintDeed } from '../systems/comeSailAwayItems.js';
-import { TERRAIN_EDGE } from '../systems/comeSailAway.js';
+import { HULL_NAMES, HULL_PRICES } from '../systems/comeSailAway/comeSailAwayBoat.js';
+import { mintDeed } from '../systems/comeSailAway/comeSailAwayItems.js';
+import { TERRAIN_EDGE } from '../systems/comeSailAway/comeSailAway.js';
 import { batteriesOf } from '../systems/naval/navalShips.js';
 import { CREW_ORDERS, CREW_ROLES } from '../systems/naval/shipCrew.js';
 import { MOBILE } from '../systems/naval/navalBoarding.js';
-import { optionPath } from '../ui/settingsMap.js';   // ORG2: a switch named in a line says where it lives
+import { optionPath } from '../ui/settings/settingsMap.js';   // ORG2: a switch named in a line says where it lives
 
 /** The hulls whose prefab carries a live `Crewed` node (Come Sail Away's Small Ship, Large Galley and Carrack - the
  *  Rowboat's is inactive): a ship with hands, who sail her to a port and mend her where she lies. */

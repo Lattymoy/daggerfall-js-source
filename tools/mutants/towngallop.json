@@ -5,35 +5,35 @@
     "old": "'EnhancedRiding.GallopingInTowns': Object.freeze({ default: true,",
     "new": "'EnhancedRiding.GallopingInTowns': Object.freeze({ default: false,",
     "tests": [
-      "test/horsewalk.test.js",
-      "test/rr1_realism.test.js"
+      "test/systems/horsewalk.test.js",
+      "test/systems/rr1_realism.test.js"
     ]
   },
   {
     "name": "TOWNGALLOP-room-walks-in-town",
-    "file": "src/systems/onlineLane.js",
+    "file": "src/systems/online/onlineLane.js",
     "old": "'RefinedTraining.intensiveTraining': false,",
     "new": "'RefinedTraining.intensiveTraining': false, 'EnhancedRiding.GallopingInTowns': false,",
     "tests": [
-      "test/horsewalk.test.js"
+      "test/systems/horsewalk.test.js"
     ]
   },
   {
     "name": "TOWNGALLOP-room-leaves-it-to-the-player",
-    "file": "src/systems/onlineLane.js",
+    "file": "src/systems/online/onlineLane.js",
     "old": "'roleplay-realism': Object.freeze(['variantNpcs', 'variantResidents']),",
     "new": "'roleplay-realism': Object.freeze(['variantNpcs', 'variantResidents', 'EnhancedRiding.GallopingInTowns']),",
     "tests": [
-      "test/horsewalk.test.js"
+      "test/systems/horsewalk.test.js"
     ]
   },
   {
     "name": "TOWNGALLOP-setting-unread",
-    "file": "src/systems/rrInstall.js",
+    "file": "src/systems/roleplayRealism/rrInstall.js",
     "old": "gallopingInTowns: rrRidingSetting('GallopingInTowns') === true",
     "new": "gallopingInTowns: false",
     "tests": [
-      "test/horsewalk.test.js"
+      "test/systems/horsewalk.test.js"
     ]
   },
   {
@@ -42,7 +42,7 @@
     "old": "Your horse walks; hold {Run} to gallop. Don",
     "new": "Your horse walks; hold {Run} to gallop outside towns. Don",
     "tests": [
-      "test/horsewalk.test.js"
+      "test/systems/horsewalk.test.js"
     ]
   },
   {
@@ -51,7 +51,7 @@
     "old": " Don\\'t gallop into people in town: trampling them is a crime.",
     "new": "",
     "tests": [
-      "test/horsewalk.test.js"
+      "test/systems/horsewalk.test.js"
     ]
   },
   {
@@ -60,7 +60,7 @@
     "old": "'EnhancedRiding.TrampleCivilians': Object.freeze({ default: true,",
     "new": "'EnhancedRiding.TrampleCivilians': Object.freeze({ default: false,",
     "tests": [
-      "test/horsewalk.test.js"
+      "test/systems/horsewalk.test.js"
     ]
   }
 ]

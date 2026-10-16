@@ -5,7 +5,7 @@
     "old": "watchFlees: () => cityGuards.frighten(walkMode ? player.pos : cam.pos) + (modes?.frightenWatch?.() ?? 0),",
     "new": "watchFlees: () => cityGuards.frighten(walkMode ? player.pos : cam.pos),",
     "tests": [
-      "test/auditwerefright.test.js"
+      "test/scenes/auditwerefright.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "watchFlees: () => cityGuards.frighten(walkMode && playerSpawned ? player.pos : cam.pos) + (modes?.frightenWatch?.() ?? 0),",
     "new": "watchFlees: () => cityGuards.frighten(walkMode && playerSpawned ? player.pos : cam.pos),",
     "tests": [
-      "test/auditwerefright.test.js"
+      "test/scenes/auditwerefright.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    if (!isTransformedLycanthrope(playerEntity)) { applyDamage(); return false; }\n",
     "new": "",
     "tests": [
-      "test/auditwerefright.test.js"
+      "test/scenes/auditwerefright.test.js"
     ]
   },
   {
@@ -32,16 +32,16 @@
     "old": "    if (!isTransformedLycanthrope(playerEntity)) { applyDamage(); return false; }",
     "new": "    if (!isTransformedLycanthrope(playerEntity)) { return false; }",
     "tests": [
-      "test/auditwerefright.test.js"
+      "test/scenes/auditwerefright.test.js"
     ]
   },
   {
     "name": "AUDIT-WERE-FRIGHT-F3-the-run-pacifies",
-    "file": "src/characters/enemyMotor.js",
+    "file": "src/characters/enemy/enemyMotor.js",
     "old": "    // takes its target, which is all that stops it striking.\n    this.target = null;",
     "new": "    // takes its target, which is all that stops it striking.\n    this.isHostile = false;\n    this.target = null;",
     "tests": [
-      "test/auditwerefright.test.js"
+      "test/scenes/auditwerefright.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "    if (inCourt() || isTransformedLycanthrope(playerEntity)) return false;",
     "new": "    if (inCourt()) return false;",
     "tests": [
-      "test/auditwerefright.test.js"
+      "test/scenes/auditwerefright.test.js"
     ]
   }
 ]

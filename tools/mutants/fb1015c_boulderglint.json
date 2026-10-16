@@ -5,7 +5,7 @@
     "old": "lift: BOULDER_LIFT",
     "new": "lift: Math.min(1.2, Math.max(0.4, (rock[4] - g) / 2))",
     "tests": [
-      "test/fb1001_mining.test.js"
+      "test/scenes/fb1001_mining.test.js"
     ]
   }
 ]

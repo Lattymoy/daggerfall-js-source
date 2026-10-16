@@ -5,7 +5,7 @@
   "old": "const WEEK_ORDINALS = Object.freeze(['first', 'second', 'third',",
   "new": "const WEEK_ORDINALS = Object.freeze(['second', 'first', 'third',",
   "tests": [
-   "test/season1_records.test.js"
+   "test/ui/season1_records.test.js"
   ]
  },
  {
@@ -14,7 +14,7 @@
   "old": "const nth = s ? WEEK_ORDINALS[week - s.start] : null;",
   "new": "const nth = s ? WEEK_ORDINALS[week - s.start + 1] : null;",
   "tests": [
-   "test/season1_records.test.js"
+   "test/ui/season1_records.test.js"
   ]
  },
  {
@@ -23,7 +23,7 @@
   "old": "return nth ? `In the ${nth} week of ${seatSeasonName(s.n)}` : `In ${seatWeekName(week)}`;",
   "new": "return nth ? `In the ${nth} week of ${seatSeasonName(s.n + 1)}` : `In ${seatWeekName(week)}`;",
   "tests": [
-   "test/season1_records.test.js"
+   "test/ui/season1_records.test.js"
   ]
  },
  {
@@ -32,7 +32,7 @@
   "old": "return nth ? `In the ${nth} week of ${seatSeasonName(s.n)}` : `In ${seatWeekName(week)}`;",
   "new": "return nth ? `In the ${nth} week of ${seatSeasonName(s.n)}` : `In the first week of ${seatSeasonName(0)}`;",
   "tests": [
-   "test/season1_records.test.js"
+   "test/ui/season1_records.test.js"
   ]
  },
  {
@@ -41,7 +41,7 @@
   "old": "  const when = chronicleWhen(row?.week ?? 0, zero);",
   "new": "  const when = chronicleWhen(row?.week ?? 0, null);",
   "tests": [
-   "test/season1_records.test.js"
+   "test/ui/season1_records.test.js"
   ]
  },
  {
@@ -50,7 +50,7 @@
   "old": "export const HALL_OF_RECORDS_ROWS = 400;",
   "new": "export const HALL_OF_RECORDS_ROWS = 399;",
   "tests": [
-   "test/season1_records.test.js"
+   "test/ui/season1_records.test.js"
   ]
  },
  {
@@ -59,7 +59,7 @@
   "old": "export const hallOfRecordsTitle = (seat) => `The Hall of Records of ${seat?.name ?? 'the seat'}`;",
   "new": "export const hallOfRecordsTitle = (seat) => `Hall of Records of ${seat?.name ?? 'the seat'}`;",
   "tests": [
-   "test/season1_records.test.js"
+   "test/ui/season1_records.test.js"
   ]
  },
  {
@@ -68,7 +68,7 @@
   "old": "    const line = chronicleLine(r, seat, zero);\n    if (!line) continue;",
   "new": "    const line = chronicleLine(r, seat, zero) ?? '';",
   "tests": [
-   "test/season1_records.test.js"
+   "test/ui/season1_records.test.js"
   ]
  },
  {
@@ -77,7 +77,7 @@
   "old": "    const heading = s ? seatSeasonName(s.n) : null;",
   "new": "    const heading = s ? seatSeasonName(s.n) : '';",
   "tests": [
-   "test/season1_records.test.js"
+   "test/ui/season1_records.test.js"
   ]
  },
  {
@@ -86,7 +86,7 @@
   "old": "    if (last && last.heading === heading) last.lines.push(line);",
   "new": "    if (last) last.lines.push(line);",
   "tests": [
-   "test/season1_records.test.js"
+   "test/ui/season1_records.test.js"
   ]
  },
  {
@@ -95,7 +95,7 @@
   "old": "const TITLE_FONT = 5;",
   "new": "const TITLE_FONT = 4;",
   "tests": [
-   "test/season1_records.test.js"
+   "test/ui/season1_records.test.js"
   ]
  },
  {
@@ -104,7 +104,7 @@
   "old": "  const out = [{ formatting: RSC.JustifyCenter }, { formatting: RSC.FontPrefix, x: TITLE_FONT },",
   "new": "  const out = [{ formatting: RSC.FontPrefix, x: TITLE_FONT },",
   "tests": [
-   "test/season1_records.test.js"
+   "test/ui/season1_records.test.js"
   ]
  },
  {
@@ -113,7 +113,7 @@
   "old": "if (c.heading) out.push({ formatting: RSC.JustifyCenter }, text(upper(c.heading)), nl(), nl());",
   "new": "if (c.heading) out.push(text(upper(c.heading)), nl(), nl());",
   "tests": [
-   "test/season1_records.test.js"
+   "test/ui/season1_records.test.js"
   ]
  },
  {
@@ -122,7 +122,7 @@
   "old": "text(upper(c.heading))",
   "new": "text(c.heading)",
   "tests": [
-   "test/season1_records.test.js"
+   "test/ui/season1_records.test.js"
   ]
  },
  {
@@ -131,7 +131,7 @@
   "old": "    for (const line of c.lines) out.push(text(line), nl(), nl());",
   "new": "    for (const line of c.lines) out.push(text(line), nl());",
   "tests": [
-   "test/season1_records.test.js"
+   "test/ui/season1_records.test.js"
   ]
  },
  {
@@ -140,7 +140,7 @@
   "old": "if (!chapters.length && !said.length) return [...out, text(HALL_OF_RECORDS_EMPTY), nl()];",
   "new": "if (!chapters.length && !said.length) return out;",
   "tests": [
-   "test/season1_records.test.js"
+   "test/ui/season1_records.test.js"
   ]
  },
  {
@@ -149,7 +149,7 @@
   "old": "export const HALL_OF_RECORDS_AUTHOR = 'the Chronicle of the Seats';",
   "new": "export const HALL_OF_RECORDS_AUTHOR = '';",
   "tests": [
-   "test/season1_records.test.js"
+   "test/ui/season1_records.test.js"
   ]
  },
  {
@@ -158,7 +158,7 @@
   "old": "pageCount: 1, getPageTokens: () => tokens };",
   "new": "pageCount: 0, getPageTokens: () => tokens };",
   "tests": [
-   "test/season1_records.test.js"
+   "test/ui/season1_records.test.js"
   ]
  },
  {
@@ -167,7 +167,7 @@
   "old": "  const rows = (await chronicleOf(db, key, HALL_OF_RECORDS_ROWS)).reverse();",
   "new": "  const rows = await chronicleOf(db, key, HALL_OF_RECORDS_ROWS);",
   "tests": [
-   "test/season1_records.test.js"
+   "test/ui/season1_records.test.js"
   ]
  },
  {
@@ -176,7 +176,7 @@
   "old": "  const rows = (await chronicleOf(db, key, HALL_OF_RECORDS_ROWS)).reverse();",
   "new": "  const rows = (await chronicleOf(db, key, 10_000)).reverse();",
   "tests": [
-   "test/season1_records.test.js"
+   "test/ui/season1_records.test.js"
   ]
  },
  {
@@ -185,7 +185,7 @@
   "old": "  return { ok: true, key, rows, zero: seasonZeroOf(env?.SEASON_ZERO_WEEK) };",
   "new": "  return { ok: true, key, rows, zero: null };",
   "tests": [
-   "test/season1_records.test.js"
+   "test/ui/season1_records.test.js"
   ]
  },
  {
@@ -194,7 +194,7 @@
   "old": "export async function readRecords({ db }, player, env, { key } = {}) {\n  if (!seatsOpenFor(player, env)) return { error: 'seats-closed' };\n",
   "new": "export async function readRecords({ db }, player, env, { key } = {}) {\n",
   "tests": [
-   "test/season1_records.test.js"
+   "test/ui/season1_records.test.js"
   ]
  },
  {
@@ -203,7 +203,7 @@
   "old": "  if (!seatKeyOk(key)) return { error: 'bad-seat' };\n  const rows = (await chronicleOf(db, key, HALL_OF_RECORDS_ROWS)).reverse();",
   "new": "  const rows = (await chronicleOf(db, key, HALL_OF_RECORDS_ROWS)).reverse();",
   "tests": [
-   "test/season1_records.test.js"
+   "test/ui/season1_records.test.js"
   ]
  },
  {
@@ -212,8 +212,8 @@
   "old": "async function chronicleOf(db, key, max = SEAT_CHRONICLE_SHOWN) {",
   "new": "async function chronicleOf(db, key, max = HALL_OF_RECORDS_ROWS) {",
   "tests": [
-   "test/season1_records.test.js",
-   "test/seat1c_service.test.js"
+   "test/ui/season1_records.test.js",
+   "test/net/seat1c_service.test.js"
   ]
  },
  {
@@ -222,7 +222,7 @@
   "old": "          '/v1/seats/records': () => readRecords(ctx, who.player, env, body),   // SEASON1 part three (9.2): the Hall of Records\n",
   "new": "",
   "tests": [
-   "test/season1_records.test.js"
+   "test/ui/season1_records.test.js"
   ]
  },
  {
@@ -231,7 +231,7 @@
   "old": "      if (open !== true) return { data: null, error: 'seats-closed' };\n      let r;\n      try { r = await door.records(key); }",
   "new": "      let r;\n      try { r = await door.records(key); }",
   "tests": [
-   "test/season1_records.test.js"
+   "test/ui/season1_records.test.js"
   ]
  },
  {
@@ -240,7 +240,7 @@
   "old": "if (kept && nowMs() - kept.at < SEAT_RECORDS_CACHE_MS) return { data: kept.data, error: null };",
   "new": "if (kept && nowMs() - kept.at < 0) return { data: kept.data, error: null };",
   "tests": [
-   "test/season1_records.test.js"
+   "test/ui/season1_records.test.js"
   ]
  },
  {
@@ -249,7 +249,7 @@
   "old": "const data = { rows: Array.isArray(r.data?.rows) ? r.data.rows : [],",
   "new": "const data = { rows: r.data?.rows ?? [],",
   "tests": [
-   "test/season1_records.test.js"
+   "test/ui/season1_records.test.js"
   ]
  },
  {
@@ -258,7 +258,7 @@
   "old": "zero: Number.isSafeInteger(r.data?.zero) ? r.data.zero : null };",
   "new": "zero: r.data?.zero ?? null };",
   "tests": [
-   "test/season1_records.test.js"
+   "test/ui/season1_records.test.js"
   ]
  },
  {
@@ -267,7 +267,7 @@
   "old": "        recordsAt.set(key, { at: nowMs(), data });\n        return { data, error: null };\n      }\n      if (SHUT.includes(r?.error)) open = false;",
   "new": "        recordsAt.set(key, { at: nowMs(), data });\n        return { data, error: null };\n      }",
   "tests": [
-   "test/season1_records.test.js"
+   "test/ui/season1_records.test.js"
   ]
  },
  {
@@ -276,7 +276,7 @@
   "old": "    records: (key) => post('/v1/seats/records', { key }),",
   "new": "    records: (key) => post('/v1/seats/standings', { key }),",
   "tests": [
-   "test/season1_records.test.js"
+   "test/ui/season1_records.test.js"
   ]
  },
  {
@@ -285,7 +285,7 @@
   "old": "const hallOfRecordsHere = (b) => b?.buildingType === BUILDING_TYPES.Palace && !!host.hallOfRecords?.here?.(homeTownOf(b));",
   "new": "const hallOfRecordsHere = (b) => !!host.hallOfRecords?.here?.(homeTownOf(b));",
   "tests": [
-   "test/season1_records.test.js"
+   "test/ui/season1_records.test.js"
   ]
  },
  {
@@ -294,7 +294,7 @@
   "old": "        if (hallOfRecordsHere(b)) return { title: HALL_OF_RECORDS_TEXT };   // SEASON1 part three: a seat's palace shelves are its Hall of Records\n",
   "new": "",
   "tests": [
-   "test/season1_records.test.js"
+   "test/ui/season1_records.test.js"
   ]
  },
  {
@@ -303,7 +303,7 @@
   "old": "    if (hallOfRecordsHere(b)) { openHallOfRecords(b); return; }   // SEASON1 part three: a seat's palace shelves (DFU leaves them geometry)\n",
   "new": "",
   "tests": [
-   "test/season1_records.test.js"
+   "test/ui/season1_records.test.js"
   ]
  },
  {
@@ -312,7 +312,7 @@
   "old": "      if (interiorBuilding !== b || interiorOverlay) { dropRecords(w); return; }\n      if (w) interiorOverlay = w;",
   "new": "      if (w) interiorOverlay = w;",
   "tests": [
-   "test/season1_records.test.js"
+   "test/ui/season1_records.test.js"
   ]
  },
  {
@@ -321,7 +321,7 @@
   "old": "      here: (mapId) => !!seatHere(mapId),",
   "new": "      here: (mapId) => mapId != null,",
   "tests": [
-   "test/season1_records.test.js"
+   "test/ui/season1_records.test.js"
   ]
  },
  {
@@ -330,7 +330,7 @@
   "old": "return r?.data ? hallOfRecordsWindow(seat, r.data.rows, r.data.zero, seatArmsOf, ch?.ok ? ch.data : null) : null;",
   "new": "return r?.data ? hallOfRecordsWindow(seat, r.data.rows, null, seatArmsOf, ch?.ok ? ch.data : null) : null;",
   "tests": [
-   "test/season1_records.test.js"
+   "test/ui/season1_records.test.js"
   ]
  },
  {
@@ -339,16 +339,16 @@
   "old": "chronicleLine(r, seat, book.zero ?? null)",
   "new": "chronicleLine(r, seat)",
   "tests": [
-   "test/season1_records.test.js"
+   "test/ui/season1_records.test.js"
   ]
  },
  {
   "name": "RECORDS-oh-text",
-  "file": "src/systems/onlineHomes.js",
+  "file": "src/systems/online/onlineHomes.js",
   "old": "export const HALL_OF_RECORDS_TEXT = 'Hall of Records';",
   "new": "export const HALL_OF_RECORDS_TEXT = 'Bookshelf';",
   "tests": [
-   "test/season1_records.test.js"
+   "test/ui/season1_records.test.js"
   ]
  }
 ]

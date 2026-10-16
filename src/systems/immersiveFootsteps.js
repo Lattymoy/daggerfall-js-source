@@ -39,10 +39,10 @@
 
 import { CLIMATES } from '../formats/mapsFile.js';
 import { SEASON } from '../world/climateSwaps.js';
-import { EQUIP_SLOTS } from '../characters/paperdoll.js';
+import { EQUIP_SLOTS } from '../characters/paperdoll/paperdoll.js';
 import { equipTableOf } from './equip.js';
 import { ARMOR_MATERIAL } from './armorMaterials.js';
-import { rriNativeMaterialValue } from './rriItems.js';   // DISC29-B: the class's NativeMaterialValue, the port's one reader
+import { rriNativeMaterialValue } from './roleplayRealismItems/rriItems.js';   // DISC29-B: the class's NativeMaterialValue, the port's one reader
 import { TRANSPORT_MODES } from './transport.js';
 import { modSettingsOf, modSettingIfDeclared } from './modSettings.js';   // BA1: ModCompatibilityChecking reads Better Ambience's switch
 import { audio as defaultAudio } from './audio.js';

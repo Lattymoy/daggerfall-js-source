@@ -2,10 +2,10 @@
 
 > Design page, written 2026-10-11 before the arc's first slice. The same day it was revised by AUDIT EG0 (five cold
 > lanes on the first draft, 177a3acd6, 105 findings, then a sixth lane on the revision, 28 more:
-> `01-Overview/Audit-EG0.md`), widened by EG0b (the fragments), and polished by AUDIT EG II (six cold lanes on
-> 14b3b172f, 282 findings: `01-Overview/Audit-EG-II.md`). The code's comments will cite this page by section number;
+> `01-Overview/audits/Audit-EG0.md`), widened by EG0b (the fragments), and polished by AUDIT EG II (six cold lanes on
+> 14b3b172f, 282 findings: `01-Overview/audits/Audit-EG-II.md`). The code's comments will cite this page by section number;
 > where the page and a pin disagree, the pin is what runs. Each slice adds its record under section 31. A path that
-> exists today is written from the repository root (`src/net/gateBrain.js`); a path this arc will create is written
+> exists today is written from the repository root (`src/net/gate/gateBrain.js`); a path this arc will create is written
 > without `src/` (`net/egLaw.js`).
 
 ## What Mac asked for
@@ -106,7 +106,7 @@ So, as decided here (each decision is argued in its section):
 
 Daggerfall has no Elite Breach, no torn halls and no other players, so none of this is a DFU member. Its Ledger A row,
 ELITE-GATES, is opened by the first file that cites it, and every later file that cites it is added to the row by name
-in the same change: `test/doctrine.test.js` fails a file citing Ledger A that no row names (SD2a's record). The row
+in the same change: `test/tooling/doctrine.test.js` fails a file citing Ledger A that no row names (SD2a's record). The row
 lists the Spire's departures from DFU: Resurrect refused, Levitate and Slowfall banned, a technique's flight refused on
 traversal ground, Stendarr's AvoidDeath refused, a limit of two potions a hall, a jump buffer and a late press, and no
 DEATH-PENALTY inside.
@@ -144,7 +144,7 @@ DEATH-PENALTY inside.
 
 ## 2. The tiers of the gate - Regular, Elite, Abyss
 
-The dungeons have three tiers and one law that names them: `dungeonTier` in `src/systems/dungeonTier.js`, with the
+The dungeons have three tiers and one law that names them: `dungeonTier` in `src/systems/dungeon/dungeonTier.js`, with the
 words *Regular Dungeon*, *Elite Dungeon* and *Abyss Dungeon* (ABYSS-NAME). Mac said *"Normal"*; the player reads
 *Regular*, the word the game already shows (`DUNGEON_TIER_TEXT`). The gate gets the same shape: one leaf law,
 `systems/gateTier.js` (EG1), with `gateTier(x)`:
@@ -332,14 +332,14 @@ THE COUNT CHIP, THE RECAP, THE REHEARSAL, RIDDEN POSES, THE SPIRE MIX, ROLE READ
 ## 5. The Weir Key
 
 **The item.** Template **575**, free today (the gate's 570-572 and the Ayleid stones' 573-574 come before it). It is a
-row beside `PORTAL_STONE_TEMPLATES` in `src/systems/gateSpoils.js`:
+row beside `PORTAL_STONE_TEMPLATES` in `src/systems/gate/gateSpoils.js`:
 
 - `{index:575, baseWeight:0.25, hitPoints:1000, basePrice, rarity:20, bound:true, stackable:true}`, in the miscellany
   group (`UselessItems2`), never a gem (PORTAL1's lesson: every Gems piece is a crystal a slot takes);
 - its art: a key of black iron and gold, painted in code into the Spire's first pseudo-archive (section 25), which
   EG1's registry holds. EG2 ships it with that art, never a borrowed record, because Port-Doctrine allows no
   placeholder shipped silently;
-- named in `BOUND_TEMPLATES` (`src/net/realmTradeLaw.js`), so the realm's trade refuses it as the client does;
+- named in `BOUND_TEMPLATES` (`src/net/realm/realmTradeLaw.js`), so the realm's trade refuses it as the client does;
 - its line: *One of the Spire's portal keys, surrendered to the Kyn in 3E 398. It opens the Weir Gate's road from
   this side.*
 
@@ -427,7 +427,7 @@ Then the **start window** asks where in the Spire:
 - **the Rehearsal** (section 27.7): *Rehearse - Halls 1-5, no key* (once a real day);
 - **the classic skin** asks with DFU's DaggerfallListPickerWindow (`src/ui/listPicker.js`, PICK00I0.IMG; the boat
   variant picker is the precedent), so the native-window rule holds: a list of DFU's own, no free-styled geometry;
-- **the enhanced skin** asks with `src/ui/enhancedPicker.js`;
+- **the enhanced skin** asks with `src/ui/enhanced/enhancedPicker.js`;
 - **a warning line**, when one of the opener's quests falls due before the last word (36 game hours, three real
   hours): *A quest falls due before the breach can close.*
 
@@ -521,11 +521,11 @@ no DEATH-PENALTY runs, and what was banked stays banked. The Reliquaries are los
 
 ### 6.3 The arch
 
-The gate's own model, `buildGateModel` in `src/world/gateModel.js` (Mac's Blender bake), drawn at **0.62 scale**:
+The gate's own model, `buildGateModel` in `src/world/gate/gateModel.js` (Mac's Blender bake), drawn at **0.62 scale**:
 10.04 m tall and 4.79 m to each side.
 
 - **The skin**: Imperial white marble inlaid with gold, cracked through with the Warden's basalt.
-- **The pass** (`src/render/gatePass.js`) compiles the membrane's colours and the arch's heights into its shader, and
+- **The pass** (`src/render/gate/gatePass.js`) compiles the membrane's colours and the arch's heights into its shader, and
   the beacon's column with them: it runs `BEACON_HEIGHT_M` (1200) from `BEACON_BELOW_M` (400) under the foot, so it
   stands 800 m over the ground, its light starting at `BEACON_START_M` (15). Its colour is the uniform `uColor`, set
   once a frame from `BEACON_COLOR` before the loop over the gates, and its `draw()` takes at most `GATE_PASS_MAX` (2)
@@ -536,7 +536,7 @@ The gate's own model, `buildGateModel` in `src/world/gateModel.js` (Mac's Blende
   should not outshine Dagon's.
 - **Rising and sinking**: it climbs out of the ground over `GATE_RISE_MS` (20 s) and sinks over `GATE_COLLAPSE_MS`
   (10 s).
-- **Its clearing**: `createGateClearSweep` (`src/world/gateClearance.js`) tracks one key today. EG9 widens it to a set
+- **Its clearing**: `createGateClearSweep` (`src/world/gate/gateClearance.js`) tracks one key today. EG9 widens it to a set
   of keys, the clock's gate and every standing arch, each keyed by its breach id.
 - **Where it stands**: at the opener's feet, ahead (the Portal Stone's `portalPlace`, `PORTAL_AHEAD` 2 m), facing the
   opener.
@@ -567,7 +567,7 @@ CALL):
 - **Answering** asks `/v1/eg/admit` for the order the portal is stepped through with.
 - **Admission never depends on place**: the room checks orders and the company, never where a member stood.
 - **Landing**: where each member answered is stored as their LANDING. A fall, the way home, the tear or the end lands
-  them there. The opener lands at the arch's site: `gateLandingFor` (`src/world/gateArena.js`) is widened to take an
+  them there. The opener lands at the arch's site: `gateLandingFor` (`src/world/gate/gateArena.js`) is widened to take an
   arch record (a site and a yaw), since today it takes only a gate's day.
 - **Late.** A member who answers after the open window reads: *The breach has closed behind <opener>'s company.*
 
@@ -753,7 +753,7 @@ A walkway 90-160 m long over the void: 3-4.5 m wide for a company of up to four,
 
 ### 8.4 The Athenaeum (`athenaeum`) - the lock
 
-The Battlemages' library, its heart an **Orrery** drawn by `orreryOf` (`src/net/sdBrain.js`).
+The Battlemages' library, its heart an **Orrery** drawn by `orreryOf` (`src/net/superDungeon/sdBrain.js`).
 
 - **Today**, `orreryOf(s)` takes a Hollow's slot. It reads its fray from that slot's own Hour marks
   (`sdMarksLaw(sdMarksOf(s)).fray`) and its turns range from the module constants `SD_TRUTH_TURNS_MIN`/`_MAX`, with a
@@ -872,7 +872,7 @@ sum) would give the relay and a phone different halls. So:
   `{k:'spec'}` and builds from the relay's bytes, and the mismatch rides the next receipt's measures.
 
 **Seeds.** The breach's `seed` is drawn by the relay's CSPRNG when the room accepts the open order, and said in its
-state. A hall's own seed is `egSeed(seed, hall)`, the `sdSeed` mix. EG5 exports `sdSeed` from `src/net/sdBrain.js`
+state. A hall's own seed is `egSeed(seed, hall)`, the `sdSeed` mix. EG5 exports `sdSeed` from `src/net/superDungeon/sdBrain.js`
 (today it is private), and the Spire imports it rather than copying it (ONE DFU MEMBER, ONE EXPORT). The receipts'
 seeds are not the breach's (section 22).
 
@@ -897,15 +897,15 @@ the circle and the decrees. The Spire therefore has no lucky seeds: two companie
 weight, drawn differently. The budget is the measured knob of EG's tuning pass (EG21).
 
 **Where the law lives.** The relay draws halls too, so the span law must not pull client code into the relay bundle.
-Today `src/world/sdSteps.js`, which holds the platform clock (`stepAt`, `beatStands`), imports `src/world/sdHall.js`,
-and through it the Hour's art; the union floor's bearing search lives in `src/scenes/gateCourt.js`, which imports
-`render/`, `ui/` and `world/` modules. Neither is in `RELAY_GRAPH` (`test/relayversion.test.js`). So:
+Today `src/world/superDungeon/sdSteps.js`, which holds the platform clock (`stepAt`, `beatStands`), imports `src/world/superDungeon/sdHall.js`,
+and through it the Hour's art; the union floor's bearing search lives in `src/scenes/gate/gateCourt.js`, which imports
+`render/`, `ui/` and `world/` modules. Neither is in `RELAY_GRAPH` (`test/net/relayversion.test.js`). So:
 
 - EG4 moves the platform clock (`stepAt`, `beatStands`, `beatBlinks`, `crumbleAfter`, `gustAt`) into
-  `net/egSpanLaw.js`, a leaf, and `src/world/sdSteps.js` re-exports it;
+  `net/egSpanLaw.js`, a leaf, and `src/world/superDungeon/sdSteps.js` re-exports it;
 - the fragments' law is another leaf beside it, `net/egFragLaw.js` (section 11.5);
 - EG8 moves the bearing search into `net/egFloor.js` and widens it there (THE UNION FLOOR, section 13.2);
-  `src/scenes/gateCourt.js` imports it back for the arrow;
+  `src/scenes/gate/gateCourt.js` imports it back for the arrow;
 - the span law's motor numbers are copied as `EG_*` constants and held equal to the motor's by a test;
 - the solver is part of that law, so the relay and the client draw the same course;
 - the CLI `egSpanSolve.mjs` (under tools/, as `tools/sdScoreProbe.mjs` is) only drives it;
@@ -915,19 +915,19 @@ and through it the Hour's art; the union floor's bearing search lives in `src/sc
 
 - The spec law is pinned against golden specs for fixed seeds.
 - Every spec field the relay reads is pinned against the brain that reads it.
-- A change to the draw changes the relay version, as the Orrery's golden draw does (`test/relayversion.test.js`).
+- A change to the draw changes the relay version, as the Orrery's golden draw does (`test/net/relayversion.test.js`).
 
 ## 10. The spans - generated platforming
 
 ### 10.1 The course is the Steps' own record
 
-`src/world/sdSteps.js` lays the Unmoored Steps as a uniform array, `{i, kind, span, x, y, z, w, d, amp, period,
+`src/world/superDungeon/sdSteps.js` lays the Unmoored Steps as a uniform array, `{i, kind, span, x, y, z, w, d, amp, period,
 phase, beat}`, plus checkpoints `{x, y, z, r}` (the Spire's islands): exactly what a generator emits.
 
 - **Today** it is frozen at import (`layCourse`, `SD_STEPS_COURSE`). Its module-scope readers are `SD_GHOST_STEPS`
   (the pass's uniform count), `SD_WAYSTONES` and `SD_VANE`, `sdFx`'s `SD_REWIND_EDGES`, `sdIslandModel` and
-  `abyssLab`. The motes read `SD_COURSE_END` lazily. At build time, `createSdSteps` (`src/scenes/sdSteps.js`, the
-  riders) and `src/world/sdStepsModel.js`'s check and breath builders (`buildChecksModel`, `checkFloorTris`,
+  `abyssLab`. The motes read `SD_COURSE_END` lazily. At build time, `createSdSteps` (`src/scenes/superDungeon/sdSteps.js`, the
+  riders) and `src/world/superDungeon/sdStepsModel.js`'s check and breath builders (`buildChecksModel`, `checkFloorTris`,
   `buildBreathModel`) read it too.
 - **EG4 turns it into data**:
   - `courseOf(courseSpec)` lays a course;
@@ -1046,7 +1046,7 @@ each band's slice adds its own.
   carries it: the Drop's walls, the headroom and the crossing's bound are all taken with it.
 - **Technique flights are refused on traversal ground.** A weapon technique's leap or dash (the motor's
   `techniqueLaunch`, called by `src/combat/techniques.js`) flies its own arc at up to `TECHNIQUE_MAX_SPEED` (12 m/s,
-  `src/combat/techniqueRoster.js`) toward a target. On a fight
+  `src/combat/technique/techniqueRoster.js`) toward a target. On a fight
   floor it is a technique; on a span it would be a bridge. The Spire refuses its launch while the member stands on
   traversal ground.
 - The staff command `/fly` is exempt.
@@ -1236,8 +1236,8 @@ Two sources, one record:
    - **each fragment its own `.fbx`**. The gate's 8.6 MB whole-scene source (1,905 meshes) is the warning.
 
 **One kit of mesh tools.** Today every made level carries its own box, extrude and pack helpers (`packFaces` in
-`src/world/gateArena.js`, `packRealmFaces` and `quadFacing` in `src/world/sdRealm.js`, `away` in
-`src/world/sdIslandModel.js`, `facing` in `src/world/sdHall.js`). The fragments use one shared kit, `world/meshKit.js`:
+`src/world/gate/gateArena.js`, `packRealmFaces` and `quadFacing` in `src/world/superDungeon/sdRealm.js`, `away` in
+`src/world/superDungeon/sdIslandModel.js`, `facing` in `src/world/superDungeon/sdHall.js`). The fragments use one shared kit, `world/meshKit.js`:
 box, prism, extrude, lathe, sweep, and the pack into `createMesh`'s shape with Uint32 indices, writing straight into
 typed arrays so a hall can be built a slice at a time (THE SWAP, section 7). The court and the Hour may move onto it
 later; that is not required.
@@ -1252,14 +1252,14 @@ registered there.
 fire walls, read from the player's own ARENA2 at runtime through the data pipeline (`getTexture`), never shipped.
 Vanilla Enhanced does not repaint 356. DFU's table (`src/world/emissiveTextures.js`) marks its records 0, 2 and 3
 emissive, but DFU lights them through `TextureReader.GetFireWallColors32`, which the port has not ported: so
-`src/scenes/dataPipeline.js` skips `FIRE_WALLS_ARCHIVE` at both upload arms, `test/audit39_render.test.js` pins the
+`src/scenes/dataPipeline.js` skips `FIRE_WALLS_ARCHIVE` at both upload arms, `test/render/audit39_render.test.js` pins the
 skip, and 356 draws unlit today. EG6b ports `GetFireWallColors32` (the fire falls are its first consumer) and re-pins
 audit39. Everything else is painted in code into the band's archives (section 25).
 
 ### 11.7 Fighting in a fragment
 
 - **Fight floors.** Blows land only on flat **fight floors** (`floors[].fight`), each a polygon at one height.
-  - Today the telegraph pass (`src/render/gateTelegraph.js`) draws each shape on one plane at one height:
+  - Today the telegraph pass (`src/render/gate/gateTelegraph.js`) draws each shape on one plane at one height:
     `TELEGRAPH_LIFT` (0.05 m) over the court frame's origin (`centre`). A shape on a higher ledge hides under it; on a
     lower one it floats.
   - EG6b widens it: each fight floor is triangulated once (a static buffer). For each shape and each floor it touches,
@@ -1268,7 +1268,7 @@ audit39. Everything else is painted in code into the band's archives (section 25
     BUDGET's order (section 25.4).
   - Stairs, slopes, ledges and inner platforms are traversal ground. No lord or add aims a blow at a member standing
     there; only the place's own hazards reach them, each drawn by its own pass on its own surface.
-- **Walls bound the escape.** `perilAt` and `wayOut` (`src/scenes/gateCourt.js`) search 24 bearings
+- **Walls bound the escape.** `perilAt` and `wayOut` (`src/scenes/gate/gateCourt.js`) search 24 bearings
   (`PERIL_BEARINGS`) bounded only by a court's circle, straight through walls. In a fragment, the union floor
   (`net/egFloor.js`, section 13.2) and the client's arrow search the fight floor's polygon, whose edges are walls,
   and open edges bound the search like walls: an escape never runs into rock or off the edge.
@@ -1309,7 +1309,7 @@ audit39. Everything else is painted in code into the band's archives (section 25
   - the Morrowind body's camera pivot rides 1.77 m up (`FOCAL_HEIGHT` 124 units) and drops at most 0.14 m under a
     ceiling (`FOCAL_OBSTACLE_LIMIT` 10 units, `src/player/mwCamera.js`);
   - the Eye Of The Beholder camera rides 0.5 m over the eye and 2 m behind it, and casts twice its offset upward
-    (`checkBounds`, `src/player/eotbCamera.js`), so it wants about 2.7 m for its whole offset.
+    (`checkBounds`, `src/player/eyeOfTheBeholder/eotbCamera.js`), so it wants about 2.7 m for its whole offset.
   - 3.5 m gives both their whole offset with room for a ledge's step. No fragment asks for a crouch.
 - **The camera in rock.** In the Spire both cameras pull in at once against a wall and ease back out over 0.25 s,
   never snapping. Occluders between the camera and the body dither out (`setDissolve`). On a shaft's ledge facing a
@@ -1389,7 +1389,7 @@ audit39. Everything else is painted in code into the band's archives (section 25
 
 ## 12. The legion - relentless adds
 
-**One wave runner, widened from the gate's.** In `src/net/gateBrain.js`, the private `stepHost` runs the
+**One wave runner, widened from the gate's.** In `src/net/gate/gateBrain.js`, the private `stepHost` runs the
 Legion-Lord's three kinds, tied to the gate's phase, court and trial.
 
 - **EG8 lifts their law** into `net/egHost.js`: a runner driven by a hall's geometry (a court's rim, a rift's place, a
@@ -1398,7 +1398,7 @@ Legion-Lord's three kinds, tied to the gate's phase, court and trial.
   exported `hostTeamHpFor`, and imports them. The gate's `stepHost` stays, its frames and pins unchanged. This is
   SERPENT1's rule again: widen a seam whose default is the gate's own bytes.
 
-**The kinds.** Bodies are Daggerfall's own mobiles (`MOBILE_TYPES` in `src/characters/mobileTypes.js`), so every player
+**The kinds.** Bodies are Daggerfall's own mobiles (`MOBILE_TYPES` in `src/characters/mobile/mobileTypes.js`), so every player
 can draw them. A Morrowind body (`CREATURE_MATCH` in `src/characters/creatureBodies.js`) re-skins one where the
 player's data and the budget allow. Every blow is a shape the telegraph pass draws, every wind-up keeps its floor
 (section 13.2), and every shape is at least 4 m across (THE WIDTH RULE, section 11.7). Floors are ceiled to 10 ms.
@@ -1576,7 +1576,7 @@ byte. The Spire's lords are written to it. The gate's brain already exports the 
   those runs by the fewest seconds to that last Redoubt. The seal lifts with each band's slice, and the herald says so.
   An endless mode never launches as a loop of one band.
 
-Bodies are Daggerfall's, drawn large, as Ruhn is (`BOSS_LOOKS` in `src/world/gateBoss.js`: a mobile and a scale). Each
+Bodies are Daggerfall's, drawn large, as Ruhn is (`BOSS_LOOKS` in `src/world/gate/gateBoss.js`: a mobile and a scale). Each
 lord's errand rules are given for *n* = 1, and its numbers keep the floors.
 
 #### The Broken Galleries
@@ -1854,7 +1854,7 @@ as their save. Every Vestige that raises damage on a relay foe does so through t
 | | **Mender's Grace** | heals you cast on allies +15 / 25 / 35% | the receiver's client, from the room's word (ALLY-CAST's law) |
 | | **Lifeline** | a heal you cast on an ally under 30% gives them 3 s of 20 / 30 / 40% less from blows | the receiver's client; the relay's census applies it too |
 
-The Redoubt's card shows the circle's damage chart with the gate's Healed column (`src/ui/gateDamageChart.js`,
+The Redoubt's card shows the circle's damage chart with the gate's Healed column (`src/ui/gate/gateDamageChart.js`,
 GATE-HEAL), so a company of eight sees what its healer did.
 
 **Mastery Vestiges** change what their holder does, not a number. One is offered as a fourth card at Redoubt 3 and at
@@ -1909,13 +1909,13 @@ for the breach:
 - **Arcana, Spellweave**: every fourth damage spell costs nothing;
 - **Fellowship, Rallying Cry**: Rally's heal and every Second Wind in the company refresh when a hall's door opens.
 
-**Death saves.** Divine Grace (`src/systems/lootPowers.js`, `lootDeathSave`, registered with
+**Death saves.** Divine Grace (`src/systems/loot/lootPowers.js`, `lootDeathSave`, registered with
 `registerPlayerDeathSave`), The Hour Turns (the Brass of Numidium's) and Unbroken (Malacath's)
-(`src/systems/sigilSetPowers.js`) are not timers in the Spire. In an `eg:` room each recovers at the next Redoubt
+(`src/systems/sigil/sigilSetPowers.js`) are not timers in the Spire. In an `eg:` room each recovers at the next Redoubt
 taken, and its chip reads *Redoubt*; so do the Ghost-King's Vigil, a low-health heal that never answers a killing
-blow (`lootHurt`), Shed Skin (Sethrakul's Coilscale, `src/systems/sigilSets.js`) and the Panoply's Battlemage's
+blow (`lootHurt`), Shed Skin (Sethrakul's Coilscale, `src/systems/sigil/sigilSets.js`) and the Panoply's Battlemage's
 Reprieve. As timers they would hand out a fresh life every few minutes, and make the Brass of Numidium
-mandatory. **Stendarr's AvoidDeath** (`avoidDeath` in `src/systems/guildServices.js`, a rank-in-fifty roll the hosts
+mandatory. **Stendarr's AvoidDeath** (`avoidDeath` in `src/systems/guild/guildServices.js`, a rank-in-fifty roll the hosts
 consult through `setAvoidDeathHook`) is refused in an `eg:` room: every host's hook answers false there, or a temple
 rank would cancel a fall.
 
@@ -2011,9 +2011,9 @@ nobody decides for eight alone.
 - they become a **witness** (below);
 - **THE FALL**, their own screen. Today the world host's online death runs the death screen
   (`src/ui/deathScreen.js`, counting `ONLINE_RESPAWN_SECONDS`, 60 s, to a respawn; the enhanced skin's *YOU DIED*
-  veil is `src/ui/enhancedDeath.js`); in the Spire that respawn never comes. So in
+  veil is `src/ui/enhanced/enhancedDeath.js`); in the Spire that respawn never comes. So in
   an `eg:` room there is no death screen. The camera sinks for 1.2 s as the screen drains to a fifth of its colour;
-  then the gate's title card (`src/ui/gateTitleCard.js`) reads *FALLEN*, with *The next Redoubt can call you back.* (a
+  then the gate's title card (`src/ui/gate/gateTitleCard.js`) reads *FALLEN*, with *The next Redoubt can call you back.* (a
   first fall) or *The Spire will not take you back.* (a final one), and *Reliquaries lost: 4* in red. 2.5 s later the
   witness view dithers in. The company hears a low toll (clip 107, pitch 0.42) and reads *<name> falls.* once.
 
@@ -2223,7 +2223,7 @@ company gets is how well it plays.
 
 **What a Redoubt pays**, to each earner, at the claim of their `e1` receipt. **A Redoubt's number pays once per
 account per arena week**: `arenaWeekOf(nowS) = floor((nowS - ARENA_SEASON_EPOCH_S) / 604800)`, a new helper beside
-`arenaSeasonOf` (`src/net/arenaLaw.js`, whose seasons are eight weeks). Taken again in the same week it pays gold alone
+`arenaSeasonOf` (`src/net/arena/arenaLaw.js`, whose seasons are eight weeks). Taken again in the same week it pays gold alone
 and seals no Reliquary. This is also the weekly reason to come back. Without it, a company with keys could farm one
 Redoubt daily (AUDIT EG0 G6).
 
@@ -2233,7 +2233,7 @@ Redoubt daily (AUDIT EG0 G6).
 | **a Reliquary** | sealed; opens at the way home | section 16.3 |
 | **Marks** | 20 | a new faucet, `MARKS_FAUCETS.eg` (`eg` joins `MARKS_COMBAT.kinds`), inside `MARKS_COMBAT.perDay` (150), shared with the gate, the raids and the serpent (`src/net/marksLaw.js`) |
 | **a guild's deed** | 25 to the treasury, when three members of one guild, each 7 days in it (`tenureS`), take the same Redoubt | the gate's deed law, at most 4 a guild a day |
-| **Deadlands Embers** | at a Valkynaz's Redoubt, `1 + floor(R/10)`; and 1 for each Redoubt taken for the first time this season | the Broker's currency (`BROKER_PRICES`, `src/systems/sigilBroker.js`). The Spire's embers join `EMBERS_EARNED_SQL` (today gate and serpent embers alone), so the insignia and the sink spend them |
+| **Deadlands Embers** | at a Valkynaz's Redoubt, `1 + floor(R/10)`; and 1 for each Redoubt taken for the first time this season | the Broker's currency (`BROKER_PRICES`, `src/systems/sigil/sigilBroker.js`). The Spire's embers join `EMBERS_EARNED_SQL` (today gate and serpent embers alone), so the insignia and the sink spend them |
 | **a Weir Key** | at a Valkynaz's Redoubt, 1 in 4, at most one a week | section 5 |
 
 Embers are paid where they are earned, not by the hour. A gate pays one or two. The insignia (30 and 50 embers, Mac's
@@ -2369,7 +2369,7 @@ row pinned at the foot (`topWithMe`), the company's names, the flame, and *Your 
 skin builds it from DFU windows, as the start window uses DaggerfallListPickerWindow (`src/ui/listPicker.js`);
 `src/ui/iliacTableHud.js`, one DOM panel outside the window stack, is the precedent for the enhanced skin only.
 
-**The herald** (`net/egHerald.js`: pure builders, as `src/net/gateHerald.js` is). Like the Hour's and the serpent's
+**The herald** (`net/egHerald.js`: pure builders, as `src/net/gate/gateHerald.js` is). Like the Hour's and the serpent's
 heralds, it posts to the gate's webhook and falls back to the gate's role, pinging no one:
 
 - a company taking Redoubt 10, 20, 30...: *<opener>'s company took Redoubt 10 of the Battlespire (Hall 50) in
@@ -2703,7 +2703,7 @@ the merchant yard's 38221):
 **THE SPIRE DANGER EDGE.** Every Spire telegraph line is `TELEGRAPH_EDGE_DAGON` ([1.0, 0.24, 0.28], crimson), never
 `TELEGRAPH_EDGE` ([1.0, 0.36, 0.05], orange), which most lords' and every legion outline uses today (Dagon's Wrath and
 Reckoning, and the Remnant's Reset and End, already draw the crimson) and which the burning
-ground's `POOL_COLOR` shares (`src/world/gateBoss.js`). The pass blends additively, and orange over the Caverns' and the
+ground's `POOL_COLOR` shares (`src/world/gate/gateBoss.js`). The pass blends additively, and orange over the Caverns' and the
 Wellhead's emissive orange would vanish. Spire pools take the band's ramp, darkened, with a dashed rim, never
 `POOL_COLOR`.
 
@@ -2728,14 +2728,14 @@ protanopia filters.
 Every edge a member could fall from (a platform's rim, a floor's `open` edge, a magma channel's lip, a walkway's side)
 carries a gold line 2 px wide (3 px on phones), its luminance 0.3-0.45, emissive, kept by the fog as telegraphs are
 (section 25.6), never pulsing. Walls and parapets carry none. The Steps carry a gold line under each rim in their mesh
-(`SD_STEP_LINE`, `src/world/sdStepsArt.js`); the Spire's 2 px line reuses `sdStepsPass`'s line-quad technique (which
+(`SD_STEP_LINE`, `src/world/superDungeon/sdStepsArt.js`); the Spire's 2 px line reuses `sdStepsPass`'s line-quad technique (which
 today draws only the ghosts of gone steps) on every edge of every hall. In the Shade's near-black and under the
 mist, it is the only read.
 
 ### 25.4 The telegraph pass, THE TELEGRAPH BUDGET, THE QUIET COMPANY
 
-**The pass** (`src/render/gateTelegraph.js`) draws one shape a call. The Burning Court already draws several a frame:
-its pools, his mark, his blow, and up to `HOST_SHAPES_MAX` (8) host shapes (`src/scenes/gateHost.js`), cut in array
+**The pass** (`src/render/gate/gateTelegraph.js`) draws one shape a call. The Burning Court already draws several a frame:
+its pools, his mark, his blow, and up to `HOST_SHAPES_MAX` (8) host shapes (`src/scenes/gate/gateHost.js`), cut in array
 order. A Ward-Bearer's tether is drawn today as a lane in the path pool (`TELEGRAPH_KIND.lane`, `HOST_PATH_HALF_W`
 0.35, `TELEGRAPH_POOL.path`). The Spire adds three kinds to `TELEGRAPH_KIND`, each a seam whose default draws the
 gate's own:
@@ -2801,7 +2801,7 @@ shape the union floor counted for that member.
 
 ### 25.7 Accessibility
 
-The port's Accessibility tab (`src/ui/settingsMap.js`) holds Motion, Readability (swapping the health and fatigue
+The port's Accessibility tab (`src/ui/settings/settingsMap.js`) holds Motion, Readability (swapping the health and fatigue
 colours among it) and the large HUD today, and no danger-colour option. The Spire adds:
 
 - **`port:dangerPalette`**: *Standard*, *High contrast*, *Deutan-Protan*, *Tritan*. High contrast draws the danger
@@ -2831,7 +2831,7 @@ colours among it) and the large HUD today, and no danger-colour option. The Spir
 ## 26. The score and the sound
 
 Written as notes for the game's own player and FM bank, in `systems/egScore.js`. Each score module writes its own
-`makeSong`, as `src/systems/sdScore.js` and `src/systems/gateScore.js` do. The mode is E Phrygian, the Kyn's colour
+`makeSong`, as `src/systems/superDungeon/sdScore.js` and `src/systems/gate/gateScore.js` do. The mode is E Phrygian, the Kyn's colour
 against the Imperial brass: the Battlemages' fanfare, broken, answered by the legion's drums. A pure law,
 `spireScoreFor(place)`, chooses the song. The names are 8-character stems, as every made song's are (GATEWAR1,
 HOURWAR1):
@@ -2871,7 +2871,7 @@ mask the cues that matter. So:
 
 ### 27.1 The HUD, by form factor
 
-Today the gate's row (`src/ui/gateBossBar.js`, `BOSS_BAR_WIDTH` 460) sits at 44 px on a landscape phone and drops
+Today the gate's row (`src/ui/gate/gateBossBar.js`, `BOSS_BAR_WIDTH` 460) sits at 44 px on a landscape phone and drops
 its marks row there (`max-height: 480px`), and no gate UI reads the HUD's scale. The Spire's is laid out per form
 factor, every part reading `--hud-scale`:
 
@@ -2898,7 +2898,7 @@ Pinned at 1280x720, 390x844 and 844x390.
 
 ### 27.3 The arrival card, the objective, the door
 
-- **The arrival card** (`src/ui/gateTitleCard.js`): *Hall 12 - the Broken Galleries*, the objective beneath, the
+- **The arrival card** (`src/ui/gate/gateTitleCard.js`): *Hall 12 - the Broken Galleries*, the objective beneath, the
   twist as a second line, and at a band's first hall its card; *Hall 15 - the Court* and the lord's card at a Court.
 - **The objective**, from `EG_TEXT.objective`, stays as a chip with its progress: *Close the rifts.* (*Rifts 3 of 5*),
   *Fell the standard.*, *Hold the relic.* (*1:12*), *Cross.*, *Break the wards at the portcullis.*, *Turn the Orrery
@@ -2953,7 +2953,7 @@ A run of up to three hours never ends on a receipt alone. On `end`, and for a me
 - the board's line: *The Descent, the Few: 14th*.
 
 The last five runs are kept. At every lord's fall the damage chart shows as the gate's does (FELLED, then the chart,
-`src/ui/gateDamageChart.js`, with its Healed column).
+`src/ui/gate/gateDamageChart.js`, with its Healed column).
 
 ### 27.7 The first breach
 
@@ -2976,7 +2976,7 @@ The last five runs are kept. At every lord's fall the damage chart shows as the 
 
 ### 27.8 Touch and the pad
 
-Today the right half of the screen is look and Jump is a held button in its corner (`src/ui/touch.js`), so a jump
+Today the right half of the screen is look and Jump is a held button in its corner (`src/ui/touch/touch.js`), so a jump
 with a camera correction needs two right thumbs, and the stick sprints only past `RUN_THROW` (0.8). No gamepad rumbles
 anywhere in the port. In the Spire:
 
@@ -2999,7 +2999,7 @@ rules. Every player-facing line is a constant in `EG_TEXT`, worded once and pinn
   - the Timers row, the sight line, the company's map mark;
   - the hub's open and the room link; the swap's caller;
   - the HUD and its layouts, the count's chip, the arrival card, the rest window, the recap; the claim queue
-    (`createEgClaims`, as `createGateClaims` in `src/net/gateClaims.js` is); *Return to the Spire*;
+    (`createEgClaims`, as `createGateClaims` in `src/net/gate/gateClaims.js` is); *Return to the Spire*;
   - the score, THE SPIRE MIX and the reverb's hold; the flight bans (OR'd into the one ward registration) and the
     technique refusal; the jump buffer; THE POTION LAW's counter; no Resurrect; the AvoidDeath hook answering false;
     a death as a fall;
@@ -3032,7 +3032,7 @@ wired or flagged.
   - the gate's constants (`BUCKET_*`, `PHASE_AT`, `SHIELD_MS`, `THREAT_*`, `ATTACKS`, `POOLS`) are imported, never
     copied;
   - `sdSeed`, `rimSpots` and `topWithMe` are exported once and imported (`hostTeamHpFor` already is);
-  - the platform clock moves to `net/egSpanLaw.js` once, and `src/world/sdSteps.js` re-exports it;
+  - the platform clock moves to `net/egSpanLaw.js` once, and `src/world/superDungeon/sdSteps.js` re-exports it;
   - `EG_ESCAPE_MPS` is computed from `runSpeed` at the escape build, never a literal;
   - the span law's copied motor numbers are held equal by a test;
   - one mesh kit (`world/meshKit.js`) and one registry of pseudo-archives (`world/pseudoArchives.js`).
@@ -3136,11 +3136,11 @@ it opened or moved, and where it departs from this page.
 
 The design, whole, before any code. Grounded in the shipped tree at `d9a3ced2`:
 
-- the gate's clock (`src/net/gateLaw.js`);
-- the made levels (`src/world/gateArena.js`, `src/world/sdRealm.js`);
-- the brains and their shared hand (`src/net/gateBrain.js`, `src/net/sdRemnant.js`);
-- the marks (`src/net/gateMods.js`, `src/net/sdMarks.js`);
-- the Steps (`src/world/sdSteps.js`) and the engine's envelope (`src/player/motor.js`, `src/player/parkour.js`);
+- the gate's clock (`src/net/gate/gateLaw.js`);
+- the made levels (`src/world/gate/gateArena.js`, `src/world/superDungeon/sdRealm.js`);
+- the brains and their shared hand (`src/net/gate/gateBrain.js`, `src/net/superDungeon/sdRemnant.js`);
+- the marks (`src/net/gate/gateMods.js`, `src/net/superDungeon/sdMarks.js`);
+- the Steps (`src/world/superDungeon/sdSteps.js`) and the engine's envelope (`src/player/motor.js`, `src/player/parkour.js`);
 - the party (`PARTY_MAX` 8) and the hub's rosters;
 - the receipts and their claims, the boards (`server-account/src/arena.js`) and the Portal Stone.
 
@@ -3159,7 +3159,7 @@ Five cold lanes on the frozen first draft (177a3acd6), no edit made until every 
 
 There were **105 findings**: 31, 23, 17, 16 and 18. A sixth cold lane then re-read the revision against every
 row and found **28** more (3 HIGH), each fixed in place. Each was verified against the tree, the maths or UESP, and each
-has its verdict and its place in the revision in `01-Overview/Audit-EG0.md`. The revision moved the page whole:
+has its verdict and its place in the revision in `01-Overview/audits/Audit-EG0.md`. The revision moved the page whole:
 
 - **the lore** set right: the Spire's fate, a Valkynaz a warrior duke, the door held by the key and not a lord's will,
   and the torn halls marked as the port's invention;
@@ -3195,9 +3195,9 @@ They are grounded in:
 
 - the gate's and the ships' bakes (`tools/bakeGate.mjs`, `tools/shipBake.mjs`, `tools/fbxMesh.mjs`);
 - the collider (`src/player/collider.js`);
-- the telegraph pass, and how flat it is (`src/render/gateTelegraph.js`);
+- the telegraph pass, and how flat it is (`src/render/gate/gateTelegraph.js`);
 - `deepIn`'s margin (`src/net/bossBody.js`);
-- the cameras (`src/player/mwCamera.js`, `src/player/eotbCamera.js`);
+- the cameras (`src/player/mwCamera.js`, `src/player/eyeOfTheBeholder/eotbCamera.js`);
 - the light caps;
 - the reverb presets;
 - TEXTURE.356, the Mantellan Crux's fire walls.
@@ -3216,7 +3216,7 @@ Six cold lanes on the frozen page (14b3b172f), no edit made until every lane had
 - presentation, feel and accessibility.
 
 There were **282 findings**: 25, 37, 44, 46, 90 and 40. Each has its verdict and its place in this revision in
-`01-Overview/Audit-EG-II.md`. The polish moved the page whole:
+`01-Overview/audits/Audit-EG-II.md`. The polish moved the page whole:
 
 - **the structure**: section 6 numbered, the fragments their own section (11), and every section after it renumbered
   once, before any code cites the page; the words table rebuilt, with five overloaded words split ("the descent"

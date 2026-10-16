@@ -44,7 +44,7 @@ import { budgetConfig, budgetConfigOf, forgetBudgetConfig, BUDGET_DEFAULT, FAUCE
 import { repairOf, applyRepair } from '../../src/net/repairLaw.js';   // SUMMON-REPAIR: the repair's law, the tool's too
 import { isHandleShaped } from '../../src/net/handleShape.js';   // SUMMON-REPAIR: an account named by its handle
 import { wealthOf } from './judge.js';
-import { REALM_LETTER_TEMPLATE } from '../../src/net/realmGoldLaw.js';   // HACKED-GOLD: a trade's letters, at their worth
+import { REALM_LETTER_TEMPLATE } from '../../src/net/realm/realmGoldLaw.js';   // HACKED-GOLD: a trade's letters, at their worth
 
 /** How long the judge's findings are kept (the hourly sweep, cron.js). */
 export const REALM_FINDINGS_KEEP_S = 90 * 24 * 3600;

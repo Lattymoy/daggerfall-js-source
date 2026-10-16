@@ -5,7 +5,7 @@
     "old": "getInt('Video', 'RetroRenderingMode', 0, 2)",
     "new": "getInt('Video', 'RetroRenderingMode', 0, 3)",
     "tests": [
-      "test/retro1.test.js"
+      "test/render/retro1.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "getInt('Video', 'PostProcessingInRetroMode', 0, 4)",
     "new": "getInt('Video', 'PostProcessingInRetroMode')",
     "tests": [
-      "test/retro1.test.js"
+      "test/render/retro1.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "getInt('Video', 'PalettizationLUTShift', 0, 7)",
     "new": "getInt('Video', 'PalettizationLUTShift', 0, 8)",
     "tests": [
-      "test/retro1.test.js"
+      "test/render/retro1.test.js"
     ]
   },
   {
@@ -32,17 +32,17 @@
     "old": "1: Object.freeze([320, 154])",
     "new": "1: Object.freeze([320, 200])",
     "tests": [
-      "test/retro1.test.js"
+      "test/render/retro1.test.js"
     ]
   },
   {
     "name": "RETRO1-docked-ignores-LargeHUDDocked",
-    "file": "src/ui/hudLarge.js",
+    "file": "src/ui/hud/hudLarge.js",
     "old": "  const retro = retroWorldAspect(retroRenderingMode(), dockedLargeHudHeight(bar) > 0);\n",
     "new": "  const retro = retroWorldAspect(retroRenderingMode(), !!bar && largeHudEnabled());\n",
     "tests": [
-      "test/retro1.test.js",
-      "test/auditretro1.test.js"
+      "test/render/retro1.test.js",
+      "test/render/auditretro1.test.js"
     ]
   },
   {
@@ -51,7 +51,7 @@
     "old": "    post: _postprocessing ? retroPostProcessing() : RETRO_POST.OFF,",
     "new": "    post: retroPostProcessing(),",
     "tests": [
-      "test/retro1.test.js"
+      "test/render/retro1.test.js"
     ]
   },
   {
@@ -60,7 +60,7 @@
     "old": "aspect === RETRO_ASPECT.FOUR_THREE ? 5 : 6",
     "new": "aspect === RETRO_ASPECT.FOUR_THREE ? 6 : 5",
     "tests": [
-      "test/retro1.test.js"
+      "test/render/retro1.test.js"
     ]
   },
   {
@@ -69,7 +69,7 @@
     "old": "  return Math.trunc((screenW - viewWidth) / 2);",
     "new": "  return (screenW - viewWidth) / 2;",
     "tests": [
-      "test/retro1.test.js"
+      "test/render/retro1.test.js"
     ]
   },
   {
@@ -78,7 +78,7 @@
     "old": "  const viewWidth = Math.trunc(Math.fround(",
     "new": "  const viewWidth = (Math.fround(",
     "tests": [
-      "test/retro1.test.js"
+      "test/render/retro1.test.js"
     ]
   },
   {
@@ -87,7 +87,7 @@
     "old": "  const hudHeight = hudPx > 0 ? Math.fround(hudPx / screenH) : 0;",
     "new": "  const hudHeight = 0;",
     "tests": [
-      "test/retro1.test.js"
+      "test/render/retro1.test.js"
     ]
   },
   {
@@ -96,34 +96,34 @@
     "old": "  return t ? t[0] / t[1] : null;",
     "new": "  return t ? t[1] / t[0] : null;",
     "tests": [
-      "test/retro1.test.js"
+      "test/render/retro1.test.js"
     ]
   },
   {
     "name": "RETRO1-lens-keeps-the-window-aspect",
-    "file": "src/ui/hudLarge.js",
+    "file": "src/ui/hud/hudLarge.js",
     "old": "  const retro = retroWorldAspect(retroRenderingMode(), dockedLargeHudHeight(bar) > 0);\n  if (retro) return retro;\n",
     "new": "  const retro = retroWorldAspect(retroRenderingMode(), dockedLargeHudHeight(bar) > 0);\n",
     "tests": [
-      "test/retro1.test.js"
+      "test/render/retro1.test.js"
     ]
   },
   {
     "name": "RETRO1-pillarbox-without-retro-mode",
-    "file": "src/ui/hudLarge.js",
+    "file": "src/ui/hud/hudLarge.js",
     "old": "  const aspect = retroRenderingMode() !== 0 ? retroAspectCorrection() : 0;",
     "new": "  const aspect = retroAspectCorrection();",
     "tests": [
-      "test/retro1.test.js"
+      "test/render/retro1.test.js"
     ]
   },
   {
     "name": "RETRO1-pillarbox-drops-the-docked-bar",
-    "file": "src/ui/hudLarge.js",
+    "file": "src/ui/hud/hudLarge.js",
     "old": "  return retroAspectViewportRect(canvasWidth, canvasHeight, aspect, dockedLargeHudHeight(bar));",
     "new": "  return retroAspectViewportRect(canvasWidth, canvasHeight, aspect, 0);",
     "tests": [
-      "test/retro1.test.js"
+      "test/render/retro1.test.js"
     ]
   },
   {
@@ -132,7 +132,7 @@
     "old": "      if (bestFit < 0 || fit < bestFit) { best = i; bestFit = fit; }",
     "new": "      if (bestFit < 0 || fit <= bestFit) { best = i; bestFit = fit; }",
     "tests": [
-      "test/retro1.test.js"
+      "test/render/retro1.test.js"
     ]
   },
   {
@@ -141,7 +141,7 @@
     "old": "    if (minor[1] < major[1]) return minor;",
     "new": "    if (minor[1] <= major[1]) return minor;",
     "tests": [
-      "test/retro1.test.js"
+      "test/render/retro1.test.js"
     ]
   },
   {
@@ -150,7 +150,7 @@
     "old": "  if (!below.length || !above.length) return buildPaletteTree(pal, list, depth + 1);\n",
     "new": "  if (!above.length) return buildPaletteTree(pal, list, depth + 1);\n",
     "tests": [
-      "test/retro1.test.js"
+      "test/render/retro1.test.js"
     ]
   },
   {
@@ -159,7 +159,7 @@
     "old": "              if (ties > 1) best = nearestPaletteIndex(tree, R, G, Bv)[0];   // a tie: the tree's own answer\n",
     "new": "",
     "tests": [
-      "test/retro1.test.js"
+      "test/render/retro1.test.js"
     ]
   },
   {
@@ -168,7 +168,7 @@
     "old": "else q = texelFetch(uLut, min(ivec3(floor(g * float(uLutSize))), ivec3(uLutSize - 1)), 0).rgb;",
     "new": "else q = texelFetch(uLut, ivec3(floor(g * float(uLutSize))), 0).rgb;",
     "tests": [
-      "test/retro1.test.js"
+      "test/render/retro1.test.js"
     ]
   },
   {
@@ -177,7 +177,7 @@
     "old": "export const posterizeByte = (byte) => retroShownByte(Math.floor(retroGammaOf(byte) * 15 + 0.5) / 15);",
     "new": "export const posterizeByte = (byte) => retroShownByte(Math.floor(retroGammaOf(byte) * 16 + 0.5) / 16);",
     "tests": [
-      "test/retro1.test.js"
+      "test/render/retro1.test.js"
     ]
   },
   {
@@ -186,7 +186,7 @@
     "old": "    noSky: post === 2 || post === 4,",
     "new": "    noSky: post === 2,",
     "tests": [
-      "test/retro1.test.js"
+      "test/render/retro1.test.js"
     ]
   },
   {
@@ -195,7 +195,7 @@
     "old": "  if (uNoSky == 1 && texture(uDepth, uv).r >= 1.0) return;",
     "new": "  if (uNoSky == 1 && texture(uDepth, uv).r > 1.0) return;",
     "tests": [
-      "test/retro1.test.js"
+      "test/render/retro1.test.js"
     ]
   },
   {
@@ -204,7 +204,7 @@
     "old": "  vec2 uv = (floor((gl_FragCoord.xy - uRect.xy) / uRect.zw * uPresent) + 0.5) / uPresent;",
     "new": "  vec2 uv = (gl_FragCoord.xy - uRect.xy) / uRect.zw;",
     "tests": [
-      "test/retro1.test.js"
+      "test/render/retro1.test.js"
     ]
   },
   {
@@ -213,7 +213,7 @@
     "old": "        gl.clearColor(0, 0, 0, 1);\n        gl.clear(gl.COLOR_BUFFER_BIT);",
     "new": "        gl.clearColor(0, 0, 0, 0);\n        gl.clear(gl.COLOR_BUFFER_BIT);",
     "tests": [
-      "test/retro1.test.js"
+      "test/render/retro1.test.js"
     ]
   },
   {
@@ -222,7 +222,7 @@
     "old": "    if (clear) gl.clearColor(clear[0], clear[1], clear[2], clear[3]);\n",
     "new": "",
     "tests": [
-      "test/retro1.test.js"
+      "test/render/retro1.test.js"
     ]
   },
   {
@@ -231,7 +231,7 @@
     "old": "      gl.viewport(rect[0], rect[1], rect[2], rect[3]);\n      gl.disable(gl.DEPTH_TEST);",
     "new": "      gl.viewport(0, 0, canvasW, canvasH);\n      gl.disable(gl.DEPTH_TEST);",
     "tests": [
-      "test/retro1.test.js"
+      "test/render/retro1.test.js"
     ]
   },
   {
@@ -240,7 +240,7 @@
     "old": "    if (this.lut && this.lut.shift === shift) { this._dropJob(); return this.lut; }",
     "new": "    if (this.lut) { this._dropJob(); return this.lut; }",
     "tests": [
-      "test/retro1.test.js"
+      "test/render/retro1.test.js"
     ]
   },
   {
@@ -249,7 +249,7 @@
     "old": "      const lut = want === 2 ? this._lut(lutShift) : null;",
     "new": "      const lut = this._lut(lutShift);",
     "tests": [
-      "test/retro1.test.js"
+      "test/render/retro1.test.js"
     ]
   },
   {
@@ -258,7 +258,7 @@
     "old": "        gl.blitFramebuffer(0, 0, t.w, t.h, rect[0], rect[1], rect[0] + rect[2], rect[1] + rect[3], gl.COLOR_BUFFER_BIT, smooth ? gl.LINEAR : gl.NEAREST);\n",
     "new": "",
     "tests": [
-      "test/retro1.test.js"
+      "test/render/retro1.test.js"
     ]
   },
   {
@@ -267,7 +267,7 @@
     "old": "      this.failed = true;\n      this.P = null;",
     "new": "      this.P = null;",
     "tests": [
-      "test/retro1.test.js"
+      "test/render/retro1.test.js"
     ]
   },
   {
@@ -276,7 +276,7 @@
     "old": "    if (this.target && this.target.w === W && this.target.h === H) return this.target;",
     "new": "    if (this.target) return this.target;",
     "tests": [
-      "test/retro1.test.js"
+      "test/render/retro1.test.js"
     ]
   },
   {
@@ -285,7 +285,7 @@
     "old": "    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, t.fbo);\n    setFrameTarget(t.fbo);",
     "new": "    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, t.fbo);",
     "tests": [
-      "test/retro1.test.js"
+      "test/render/retro1.test.js"
     ]
   },
   {
@@ -294,7 +294,7 @@
     "old": "mipmaps: cfg.mipmaps, view: view ? { ...view } : null, depth: null };",
     "new": "mipmaps: cfg.mipmaps, view: null, depth: null };",
     "tests": [
-      "test/retro1.test.js"
+      "test/render/retro1.test.js"
     ]
   },
   {
@@ -303,7 +303,7 @@
     "old": "    const retro = world && !this._panelSaved ? this._retroBegin() : null;",
     "new": "    const retro = !this._panelSaved ? this._retroBegin() : null;",
     "tests": [
-      "test/retro1.test.js"
+      "test/render/retro1.test.js"
     ]
   },
   {
@@ -312,7 +312,7 @@
     "old": "    if (this._retroOwed && !this._panelSaved) this._compositeAir();   // RETRO1: a retro image still owed",
     "new": "    // RETRO1: a retro image still owed",
     "tests": [
-      "test/retro1.test.js"
+      "test/render/retro1.test.js"
     ]
   },
   {
@@ -321,7 +321,7 @@
     "old": "    if (this._retroOwed && !this._air?.pending) this._presentRetroFrame();",
     "new": "    if (false) this._presentRetroFrame();",
     "tests": [
-      "test/retro1.test.js"
+      "test/render/retro1.test.js"
     ]
   },
   {
@@ -330,7 +330,7 @@
     "old": "    if (this._retroOwed) this._presentRetroFrame();   // RETRO1: the lane resolved into the retro image",
     "new": "    // RETRO1: the lane resolved into the retro image",
     "tests": [
-      "test/retro1.test.js"
+      "test/render/retro1.test.js"
     ]
   },
   {
@@ -339,7 +339,7 @@
     "old": "    if (retro && this._air) { this._air.resolveTo = this._retro.resolveTarget(retro.width, retro.height, this._frameFbo);",
     "new": "    if (retro && this._air) { this._retro.resolveTarget(retro.width, retro.height, this._frameFbo);",
     "tests": [
-      "test/retro1.test.js"
+      "test/render/retro1.test.js"
     ]
   },
   {
@@ -348,7 +348,7 @@
     "old": "this._air.beginFrameTarget(retro ? retro.width : this.canvas.width, retro ? retro.height : this.canvas.height, retro ? 'retro' : 'canvas')",
     "new": "this._air.beginFrameTarget(this.canvas.width, this.canvas.height, retro ? 'retro' : 'canvas')",
     "tests": [
-      "test/retro1.test.js"
+      "test/render/retro1.test.js"
     ]
   },
   {
@@ -357,7 +357,7 @@
     "old": "retro ? retro.height : this.canvas.height, retro ? 'retro' : 'canvas')",
     "new": "retro ? retro.height : this.canvas.height, 'canvas')",
     "tests": [
-      "test/retro1.test.js"
+      "test/render/retro1.test.js"
     ]
   },
   {
@@ -366,7 +366,7 @@
     "old": "    this._applyRetroMips(cfg ? cfg.mipmaps : true);",
     "new": "    this._applyRetroMips(true);",
     "tests": [
-      "test/retro1.test.js"
+      "test/render/retro1.test.js"
     ]
   },
   {
@@ -375,7 +375,7 @@
     "old": "    else if (mips && !this._retroMips) gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAX_LEVEL, 0);   // RETRO1: loaded under retro mode without mip maps (_applyRetroMips)\n",
     "new": "",
     "tests": [
-      "test/retro1.test.js"
+      "test/render/retro1.test.js"
     ]
   },
   {
@@ -384,7 +384,7 @@
     "old": "    for (const tex of this.tileArrays.values()) { gl.bindTexture(gl.TEXTURE_2D_ARRAY, tex); gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAX_LEVEL, level); }\n",
     "new": "",
     "tests": [
-      "test/retro1.test.js"
+      "test/render/retro1.test.js"
     ]
   },
   {
@@ -393,7 +393,7 @@
     "old": "retro.depth = this._air.frame?.depth ?? null; }",
     "new": "retro.depth = null; }",
     "tests": [
-      "test/retro1.test.js"
+      "test/render/retro1.test.js"
     ]
   },
   {
@@ -402,7 +402,7 @@
     "old": "return p && p[0] ? Math.abs(p[5] / p[0]) : null;",
     "new": "return p && p[0] ? p[5] / p[0] : null;",
     "tests": [
-      "test/retro1.test.js"
+      "test/render/retro1.test.js"
     ]
   },
   {
@@ -411,7 +411,7 @@
     "old": "      if (this.frame !== kept) { this.frame = kept; this.prevValid = false; }",
     "new": "      if (this.frame !== kept) { this.prevValid = false; }",
     "tests": [
-      "test/retro1.test.js"
+      "test/render/retro1.test.js"
     ]
   },
   {
@@ -420,34 +420,34 @@
     "old": "    gl.bindFramebuffer(gl.FRAMEBUFFER, this.resolveTo?.fbo ?? null);",
     "new": "    gl.bindFramebuffer(gl.FRAMEBUFFER, null);",
     "tests": [
-      "test/retro1.test.js"
+      "test/render/retro1.test.js"
     ]
   },
   {
     "name": "RETRO1-muzzle-strip-aspect",
-    "file": "src/combat/weaponRig.js",
+    "file": "src/combat/weapon/weaponRig.js",
     "old": "  const tanX = tanY * (aspect > 0 ? aspect : r.w / r.h);",
     "new": "  const tanX = tanY * (r.w / r.h);",
     "tests": [
-      "test/retro1.test.js"
+      "test/render/retro1.test.js"
     ]
   },
   {
     "name": "RETRO1-rig-parks-no-aspect",
-    "file": "src/combat/weaponRig.js",
+    "file": "src/combat/weapon/weaponRig.js",
     "old": ", aspect: renderer.worldProjAspect ?? null };",
     "new": "};",
     "tests": [
-      "test/retro1.test.js"
+      "test/render/retro1.test.js"
     ]
   },
   {
     "name": "RETRO1-shift-f11-unbound",
-    "file": "src/ui/hudShortcuts.js",
+    "file": "src/ui/hud/hudShortcuts.js",
     "old": "  if (hotkeyHit('ToggleRetroPP', e.code, e, keys)) {\n    toggleRetroPostprocessing();\n    return true;\n  }\n",
     "new": "",
     "tests": [
-      "test/retro1.test.js"
+      "test/render/retro1.test.js"
     ]
   },
   {
@@ -456,25 +456,25 @@
     "old": "Math.max(1, viewH || gl.drawingBufferHeight)",
     "new": "Math.max(1, gl.drawingBufferHeight)",
     "tests": [
-      "test/retro1.test.js"
+      "test/render/retro1.test.js"
     ]
   },
   {
     "name": "RETRO1-mode-not-live",
-    "file": "src/systems/settings.js",
+    "file": "src/systems/settings/settings.js",
     "old": "  'Video/RetroRenderingMode': 'src/systems/retroMode.js',\n",
     "new": "",
     "tests": [
-      "test/retro1.test.js"
+      "test/render/retro1.test.js"
     ]
   },
   {
     "name": "RETRO1-aspect-word-mangled",
-    "file": "src/ui/settingsLaw.js",
+    "file": "src/ui/settings/settingsLaw.js",
     "old": "values: ['Off', '4:3', '16:10']",
     "new": "values: ['Off', '4:03', '16:10']",
     "tests": [
-      "test/retro1.test.js"
+      "test/render/retro1.test.js"
     ]
   },
   {
@@ -483,7 +483,7 @@
     "old": "  renderer.setRetroSource(retroFrameConfig);",
     "new": "  void retroFrameConfig;",
     "tests": [
-      "test/retro1.test.js"
+      "test/render/retro1.test.js"
     ]
   }
 ]

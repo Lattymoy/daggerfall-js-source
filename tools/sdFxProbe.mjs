@@ -1,9 +1,9 @@
 // SD16 - THE HOUR'S BLOWS SEEN, DRAWN IN A REAL BROWSER (the motes' probe's method, tools/sdMotesProbe.mjs).
 //
-// node holds the bursts' law (test/sd16_fx.test.js - which kinds, where, when, the shakes and the lights); what node
+// node holds the bursts' law (test/scenes/superDungeon/sd16_fx.test.js - which kinds, where, when, the shakes and the lights); what node
 // cannot answer is whether the gate's spark pass, fed the Hour's bursts in the dungeon's frame, lights the frame where
 // they stand. So: the repo's own modules served as they are, a fight turned through its landings and turns on a fake
-// link, scenes/sdFx.js's own draw over a cleared frame from the arena's rim, the frame read back about each burst. It runs
+// link, scenes/superDungeon/sdFx.js's own draw over a cleared frame from the arena's rim, the frame read back about each burst. It runs
 // on Vite's own dev server (tools/qs3Probe.mjs's reason): the scene's graph reaches `import.meta.glob`, Vite's macro.
 //
 //     node tools/sdFxProbe.mjs
@@ -19,9 +19,9 @@ const W = 640, H = 400;
 const PAGE_NAME = 'sdfx-probe.tmp.html', PAGE_PATH = join(ROOT, 'tools', PAGE_NAME);
 
 const PAGE = `<!doctype html><html><body style="margin:0;background:#000"><canvas id=c width=${W} height=${H}></canvas><script type=module>
-import { createSdFx, SD_FX_KINDS } from '/src/scenes/sdFx.js';
-import { SD_BLOWS, SD_BODY } from '/src/net/sdRemnant.js';
-import { SD_ARENA, realmToDungeon } from '/src/net/sdBrain.js';
+import { createSdFx, SD_FX_KINDS } from '/src/scenes/superDungeon/sdFx.js';
+import { SD_BLOWS, SD_BODY } from '/src/net/superDungeon/sdRemnant.js';
+import { SD_ARENA, realmToDungeon } from '/src/net/superDungeon/sdBrain.js';
 const gl = document.getElementById('c').getContext('webgl2', { alpha: false, preserveDrawingBuffer: true });
 const persp = (f, a, n, fa) => { const t = 1 / Math.tan(f / 2); return new Float32Array([t / a, 0, 0, 0, 0, t, 0, 0, 0, 0, (fa + n) / (n - fa), -1, 0, 0, 2 * fa * n / (n - fa), 0]); };
 const look = (e, c) => {

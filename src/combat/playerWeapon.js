@@ -26,7 +26,7 @@ import {
   MAX_GESTURE_SECONDS, BOW_DRAWN_HOLD_FRAME, machineCancelBowDraw, THUNDERLOCK_NUM_FRAMES, CLASSIC_UPDATE_INTERVAL,
   blowSchedule,   // MW-PACE1: the strike just begun, timed - what the Morrowind arm fits its blow into
 } from '../characters/weaponStates.js';
-import { GUN_FEEL, GUN_TICK_SECONDS, GUN_COOLDOWN_SECONDS } from './gunFeel.js';   // FIELD-GUN7: the lab's cadence, from the one home
+import { GUN_FEEL, GUN_TICK_SECONDS, GUN_COOLDOWN_SECONDS } from './gun/gunFeel.js';   // FIELD-GUN7: the lab's cadence, from the one home
 import { DIRECTION_TO_STRIKE, ATTACKS_FP, sampleClip } from '../characters/anims.js';
 import { combinePose } from '../characters/animate.js';
 import { weaponTypeForItem, WEAPON_TYPES } from './fpsWeapon.js';
@@ -35,9 +35,9 @@ import { POSES } from '../characters/poses.js';
 import { calculateAttackDamage } from './formulas.js';
 import { isShieldTemplate } from '../systems/armorMaterials.js';   // a12: UpdateHands' IsShield leg
 import { equipDelayFor } from '../systems/equip.js';               // a12: ToggleHand's EquipDelayTimes[GroupIndex]
-import { getBool, getFloat, getInt } from '../systems/settings.js';   // AUDIT 28 W2b: MeleeAttackFriendlyProtection; W11: WeaponAttackThreshold, WeaponSwingMode
-import { blowReaches, blowMult, scaleBlowDamage, playerBody } from './techniqueBlow.js';   // TECH1: a technique's blow - its shape and its weight, a leaf
-import { HANDS_MODE, handsModeOf, strikeHandOf, twoHanded, offHandToHit, OFF_HAND_BLOW, offHandBurden, offHandHold, DUAL } from './handsLaw.js';   // TWO-HANDS: which hand strikes, and what the off hand costs
+import { getBool, getFloat, getInt } from '../systems/settings/settings.js';   // AUDIT 28 W2b: MeleeAttackFriendlyProtection; W11: WeaponAttackThreshold, WeaponSwingMode
+import { blowReaches, blowMult, scaleBlowDamage, playerBody } from './technique/techniqueBlow.js';   // TECH1: a technique's blow - its shape and its weight, a leaf
+import { HANDS_MODE, handsModeOf, strikeHandOf, twoHanded, offHandToHit, OFF_HAND_BLOW, offHandBurden, offHandHold, DUAL } from './twoHands/handsLaw.js';   // TWO-HANDS: which hand strikes, and what the off hand costs
 import { getItemHands } from '../systems/equip.js';   // TWO-HANDS: a hand's item as the law reads it (one-handed or not)
 import { readSwing } from './swingLaw.js';   // TWO-HANDS: the striking weapon's weight and the Strength, for the off hand's burden
 import { liveStat } from '../systems/statMods.js';   // TWO-HANDS: the off hand's sureness reads the live Agility
@@ -118,7 +118,7 @@ export const USING_LEFT_HAND_TEXT = 'Using weapon in left hand.';
 
 /** StartGameBehaviour.StartFromClassicSave :605-606, the whole line:
  *  `weaponManager.UsingRightHand = !saveVars.UsingLeftHandWeapon`.
- *  THE SEAM: formats/saveVarsFile.js has parsed the byte since SAV2
+ *  THE SEAM: formats/save/saveVarsFile.js has parsed the byte since SAV2
  *  (:183, offset 0x3D9) and systems/classicSave.js recorded it as
  *  "read but dropped - the port has no left-hand rig". It has one
  *  now; this is the import that classicSave's snapshot builder calls,
@@ -171,7 +171,7 @@ export const usingRightHandFromSaveVars = (saveVars) => !saveVars?.usingLeftHand
  * rig THREW - loudly, at the save. This returns null, and the composed
  * bag then simply omits the pair, which a presence-gated restore reads
  * as "leave the live hand". That is quieter, and quieter is worse.
- * `test/hard2c_weaponpose.test.js` pins the difference rather than
+ * `test/combat/hard2c_weaponpose.test.js` pins the difference rather than
  * leaving it to be discovered: if a caller ever does pass null, the
  * pin says what changed and when.
  */
@@ -248,7 +248,7 @@ export function friendlyProtected(foe, { protection = getBool('MeleeAttacks', 'M
   return false;
 }
 
-/** TWO-HANDS: a hand's item as combat/handsLaw.js reads it - its WeaponTypes and its ItemHands (a custom class answers
+/** TWO-HANDS: a hand's item as combat/twoHands/handsLaw.js reads it - its WeaponTypes and its ItemHands (a custom class answers
  *  GetItemHands through the equip law) - or null for an empty hand. */
 export function handDesc(item) {
   if (!item) return null;
@@ -291,7 +291,7 @@ export class PlayerWeapon {
     this.holdingShield = false;
     this.currentRightHandWeapon = null;
     this.currentLeftHandWeapon = null;
-    // TWO-HANDS (bible/05-Combat/Two-Hands.md): how the hands are held (combat/handsLaw.js HANDS_MODE - DFU's one used
+    // TWO-HANDS (bible/05-Combat/Two-Hands.md): how the hands are held (combat/twoHands/handsLaw.js HANDS_MODE - DFU's one used
     // hand, both fists, or a pair), the strike in flight ({ hand, flurry, off } - strikeHandOf's answer as it began), and the
     // last strike's hand and the machine time it ended, which the next one alternates from. `usingRightHand` keeps
     // DFU's meaning and its saves: with both hands up it is the LEAD - the hand an exchange opens with.
@@ -303,7 +303,7 @@ export class PlayerWeapon {
     this._burdenCarry = 0;   // AUDIT 2: the fraction of a tick the off hand's last blow owed its burden, paid on its next (handsLaw.js offHandHold)
     this.sheathed = true;   // classic starts sheathed; Z readies (WeaponManager.Sheathed)
     this.lastDrawMs = 0;   // PCO1: the last bow shot's weaponAnimTime (_bowAnimTimeMs)
-    // TECH1 (bible/05-Combat/Weapon-Techniques.md): the swing in flight is a technique's - its blow (combat/techniqueBlow.js:
+    // TECH1 (bible/05-Combat/Weapon-Techniques.md): the swing in flight is a technique's - its blow (combat/technique/techniqueBlow.js:
     // the reach, the arc, the weight), set as the technique starts the swing and taken down once the machine is idle again
     // (combat/techniques.js), so every pool the ONE swing is offered to reads the same blow. Null for every other swing.
     this.techniqueBlow = null;
@@ -728,7 +728,7 @@ export class PlayerWeapon {
 
   /** MW-PACE1: THE STRIKE JUST BEGUN, TIMED - when its hit lands and when it is done, at this frame's `dt`
    *  (characters/weaponStates.js blowSchedule: the machine's own tick, read off the same live Speed and the same
-   *  GetMeleeWeaponAnimTime ask as update() above). Null for a ranged weapon or an idle machine. combat/weaponRig.js
+   *  GetMeleeWeaponAnimTime ask as update() above). Null for a ranged weapon or an idle machine. combat/weapon/weaponRig.js
    *  fpAttack hands it to the Morrowind arm, which fits its blow into it. */
   strikeSchedule(dt = 0) {
     return blowSchedule(this.machine, this.liveSpeed, this.animCtx?.() ?? null, dt);
@@ -780,7 +780,7 @@ export class PlayerWeapon {
     const tb = this.techniqueBlow;
     const techOn = (foe) => !!tb && !playerBody(foe);
     const singles = [];
-    // TWO-HANDS (combat/handsLaw.js DUAL): THE OFF HAND'S BLOW - in a pair, the hand that is not the lead strikes less
+    // TWO-HANDS (combat/twoHands/handsLaw.js DUAL): THE OFF HAND'S BLOW - in a pair, the hand that is not the lead strikes less
     // surely (a to-hit term by the live Agility, on the swing's own channel) and less hard (a share of the rolled damage,
     // a miss staying a miss). The lead's blow, every single weapon's and every fist's are DFU's own.
     const off = this.offStrike;   // AUDIT 2: the one predicate every arm reads (the duel's, the wild's, this)
@@ -841,7 +841,7 @@ export class PlayerWeapon {
  *  skeletal rules and the <1 floor) - not post-hoc. Backstab rides
  *  its own: chance onto chanceToHitMod, x3 roll AFTER the damage. */
 /** SET2 (Nocturnal's Shroud's Nightfall Strike, bible/11-Multiplayer/Sigil-Sets.md): has this foe NOT noticed the
- *  player - its AI's own `detected` (characters/enemyMotor.js: sight, earshot and stealth, vetoed by the illusion
+ *  player - its AI's own `detected` (characters/enemy/enemyMotor.js: sight, earshot and stealth, vetoed by the illusion
  *  effects) is false. Read where the foe RECORD is in hand (the swing here, the arrow in arrowFlight.js): the formula is
  *  handed the entity, which knows nothing of its AI. A PUPPET (a foe another player's machine runs) is never unaware
  *  here - its AI is its owner's, and what this machine holds of it is not a word about whether it saw me. */

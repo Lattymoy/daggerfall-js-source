@@ -20,7 +20,7 @@
 // biography adjustments and per-part armor SHIPPED - the first two
 // live in this very file.)
 
-import { MELEE_DISTANCE } from '../characters/enemyMotor.js';   // single source (EnemyAttack.cs:30)
+import { MELEE_DISTANCE } from '../characters/enemy/enemyMotor.js';   // single source (EnemyAttack.cs:30)
 import { CLASSIC_TO_UNITY_RATIO } from '../player/motor.js';   // C15 knockback units
 import { rand } from '../formats/dfRandom.js';
 import { enchantChanceToHitMod, doItemEnchantmentPayloads, PAYLOAD, isEnchantedItem, entityImprovedAdrenalineRush } from '../systems/enchantments.js';   // E1: the enchantment channels + the Strikes payload; AUDIT 39: ImprovesTalents' adrenaline flag lives in the fold's bag   // the monster multi-attack reflex gate (F2)
@@ -553,7 +553,7 @@ export function dropWeaponIfTargetImmune(weapon, targetEntity) {
  *  slot. Breaks speak and unequip through lowerCondition. */
 export function damageEquipment(attacker, target, damage, weapon, struckBodyPart, { rolls = Math.random, say = null } = {}) {
   // WBX6 (2026-09-26, Swololo on Discord: "I broke one and a half of a weapon during the fight"): A BLOW ON THE WARDEN
-  // OF THE BURNING GATE WEARS NOTHING. His body is a stand-in the relay judges (world/gateBoss.js bossStandIn carries
+  // OF THE BURNING GATE WEARS NOTHING. His body is a stand-in the relay judges (world/gate/gateBoss.js bossStandIn carries
   // `spareGear`), a fight measured in hundreds of blows, and it broke weapons it was never meant to. A departure (Ledger
   // A, WB): every other foe wears the gear as DFU's does, and the override below is never asked for him either.
   if (target?.spareGear) return;
@@ -608,7 +608,7 @@ export function calculateAttackDamage(attacker, target, { weapon = null, damageM
       try { _playerAttackHook({ ...notes, damage, attacker, target, weapon }); } catch { /* a HUD is not the formula's problem */ }
     }
     // ARENA-FIX 9/10: every resolution, whoever swung - the arena's judges count the misses and its crowd hears the
-    // critical strikes (scenes/arenaBouts.js attackResolved)
+    // critical strikes (scenes/arena/arenaBouts.js attackResolved)
     if (_resolutionListeners.size) for (const fn of _resolutionListeners.values()) { try { fn({ ...notes, damage, attacker, target, weapon }); } catch { /* a listener is not the blow's problem */ } }
     return damage;
   };

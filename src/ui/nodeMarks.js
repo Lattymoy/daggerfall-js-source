@@ -4,8 +4,8 @@
 // appear on the compass. The node itself should also stand out with a
 // detailed slight glow or something"): A PROFESSION'S NODES, IN ITS
 // OWN COLOUR - every herb patch, vein, boulder, tree, school and body
-// standing near the player on the compass (both skins: ui/hud.js
-// drawNodeCompassMarks, ui/enhancedHud.js) and lit in the world by its
+// standing near the player on the compass (both skins: ui/hud/hud.js
+// drawNodeCompassMarks, ui/enhanced/enhancedHud.js) and lit in the world by its
 // glow (render/nodeGlow.js), one colour a profession in both, so a mark
 // and the light it points at read as one thing. The nodes themselves
 // are the gathering host's (scenes/gatherHost.js marks).
@@ -14,7 +14,7 @@
 // green, the Detect markers' blood red, the gate's ember and the ships'
 // red, bone and grey - and of each other (AUDIT NODE-MARKS: Logging's
 // pale heartwood was a ship's bone and Hunting's coral a hostile ship's
-// red; test/nodemarks.test.js holds the distances). Mining keeps the
+// red; test/scenes/nodemarks.test.js holds the distances). Mining keeps the
 // copper PROF2's Prospector's veins were drawn in, near the quest's gold,
 // the gate's ember and a hostile ship's red - told apart by shape alone:
 // theirs are diamonds on the strip's middle and a ship's triangle points

@@ -1,12 +1,12 @@
 // AUDIT NAV1 (2026-09-29) - the naval audit suites' one sea: createNavalHost over Come Sail Away's real pool (the
-// vendored hulls, a stand-in renderer and pipeline - test/nav_h_host.test.js's), every other seam a recording stand-in.
+// vendored hulls, a stand-in renderer and pipeline - test/systems/naval/nav_h_host.test.js's), every other seam a recording stand-in.
 // Its own module so the audit's suites (test/navaudit_*.test.js) stand the same sea.
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { createNavalHost } from '../src/scenes/navalHost.js';
-import { createComeSailAwayPool } from '../src/scenes/comeSailAwayPool.js';
-import { Boat } from '../src/systems/comeSailAwayBoat.js';
+import { createNavalHost } from '../src/scenes/naval/navalHost.js';
+import { createComeSailAwayPool } from '../src/scenes/comeSailAway/comeSailAwayPool.js';
+import { Boat } from '../src/systems/comeSailAway/comeSailAwayBoat.js';
 
 const fileFetch = async (url) => {
   const bytes = readFileSync(fileURLToPath(url));
@@ -38,12 +38,12 @@ export async function readyPool() {
 /**
  * SHIPS-2 (2026-10-07): THE MOD'S OWN SHIPS FALLEN BACK - a pool whose new carrack's and new large boat's models do not
  * load, so hulls 4 and 1 are Come Sail Away's own Carrack and Large Boat, as the game stands them then
- * (systems/comeSailAwayModels.js) - the hulls the deck's and the boarding's laws were found on (the Carrack's cargo
+ * (systems/comeSailAway/comeSailAwayModels.js) - the hulls the deck's and the boarding's laws were found on (the Carrack's cargo
  * doors, her forecastle's stair, her five doors). Its preload stands the builds with it (navalShips.js setShipStanding);
  * `restore()` stands the new ships' again. A pool of its own, never the shared one.
  */
 export async function modShipsPool() {
-  const { CARRACK_MODEL_URL, LARGE_BOAT_MODEL_URL } = await import('../src/systems/comeSailAwayModels.js');
+  const { CARRACK_MODEL_URL, LARGE_BOAT_MODEL_URL } = await import('../src/systems/comeSailAway/comeSailAwayModels.js');
   const { setShipStanding } = await import('../src/systems/naval/navalShips.js');
   const fetchFn = async (url) => (url === CARRACK_MODEL_URL || url === LARGE_BOAT_MODEL_URL ? { ok: false, status: 404 } : fileFetch(url));
   const pool = createComeSailAwayPool({ renderer: standInRenderer(), pipeline: standInPipeline(), fetchFn, log: { warn() {} } });

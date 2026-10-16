@@ -5,8 +5,8 @@
     "old": "if (a) { a.SetBool('Opened', true); a.Play(OPENED_STATE); a.update(0); }",
     "new": "if (a) { a.SetBool('Opened', true); a.Play(OPENED_STATE); }",
     "tests": [
-      "test/auditgalleon2_guns.test.js",
-      "test/auditgalleon_guns.test.js"
+      "test/systems/naval/auditgalleon2_guns.test.js",
+      "test/systems/naval/auditgalleon_guns.test.js"
     ]
   },
   {
@@ -15,7 +15,7 @@
     "old": "if (s) { s.laidUntil = Math.max(s.laidUntil, now + HOLD_S); settling.add(boat); }",
     "new": "if (s) s.laidUntil = Math.max(s.laidUntil, now + HOLD_S);",
     "tests": [
-      "test/auditgalleon2_guns.test.js"
+      "test/systems/naval/auditgalleon2_guns.test.js"
     ]
   },
   {
@@ -24,7 +24,7 @@
     "old": "      settling.add(boat);\n",
     "new": "",
     "tests": [
-      "test/auditgalleon2_guns.test.js"
+      "test/systems/naval/auditgalleon2_guns.test.js"
     ]
   },
   {
@@ -33,7 +33,7 @@
     "old": "for (const boat of [...boats, ...settling]) {",
     "new": "for (const boat of boats) {",
     "tests": [
-      "test/auditgalleon2_guns.test.js"
+      "test/systems/naval/auditgalleon2_guns.test.js"
     ]
   },
   {
@@ -42,61 +42,61 @@
     "old": "if (s.x[i] !== s.inX[i] || kick > 0) rest = false;",
     "new": "if (kick > 0) rest = false;",
     "tests": [
-      "test/auditgalleon2_guns.test.js"
+      "test/systems/naval/auditgalleon2_guns.test.js"
     ]
   },
   {
     "name": "AUDIT-GN2-GN3-her-lay-on-my-sea-clock",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "if (self?.laid?.length && realClock - self.real <= PEER_LAY_S) for (const side of self.laid)",
     "new": "if (self?.laid?.length && clock - self.at <= PEER_LAY_S) for (const side of self.laid)",
     "tests": [
-      "test/auditgalleon2_guns.test.js"
+      "test/systems/naval/auditgalleon2_guns.test.js"
     ]
   },
   {
     "name": "AUDIT-GN2-GN3-real-clock-scaled",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "realClock += Math.max(0, dt) / timeScale();",
     "new": "realClock += Math.max(0, dt);",
     "tests": [
-      "test/auditgalleon2_guns.test.js"
+      "test/systems/naval/auditgalleon2_guns.test.js"
     ]
   },
   {
     "name": "AUDIT-GN2-GN4-her-word-pose",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "const drawn = boat?.GameObject, back =",
     "new": "const drawn = null, back =",
     "tests": [
-      "test/auditgalleon2_guns.test.js"
+      "test/systems/naval/auditgalleon2_guns.test.js"
     ]
   },
   {
     "name": "AUDIT-GN2-GN4-drawn-not-set-back",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "drawn.position.map((x, k) => x - v.vel[k] * back)",
     "new": "drawn.position.map((x) => x)",
     "tests": [
-      "test/auditgalleon2_guns.test.js"
+      "test/systems/naval/auditgalleon2_guns.test.js"
     ]
   },
   {
     "name": "AUDIT-GN2-GN4-her-word-heading",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "rotation: drawn ? drawn.rotation : quatOfYaw(v.yaw), velocity: v.vel",
     "new": "rotation: quatOfYaw(v.yaw), velocity: v.vel",
     "tests": [
-      "test/auditgalleon2_guns.test.js"
+      "test/systems/naval/auditgalleon2_guns.test.js"
     ]
   },
   {
     "name": "AUDIT-GN2-GN5-the-sea-cleared-leaves-her-laid",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    galleonGuns.clear();   // AUDIT GN2-GN5",
     "new": "    // AUDIT GN2-GN5",
     "tests": [
-      "test/auditgalleon2_guns.test.js"
+      "test/systems/naval/auditgalleon2_guns.test.js"
     ]
   },
   {
@@ -105,7 +105,7 @@
     "old": " s.x = [...s.inX]; }",
     "new": " }",
     "tests": [
-      "test/auditgalleon2_guns.test.js"
+      "test/systems/naval/auditgalleon2_guns.test.js"
     ]
   },
   {
@@ -114,7 +114,7 @@
     "old": "        stand(r, lastNow, 0);\n",
     "new": "",
     "tests": [
-      "test/auditgalleon2_guns.test.js"
+      "test/systems/naval/auditgalleon2_guns.test.js"
     ]
   },
   {
@@ -123,7 +123,7 @@
     "old": "her gun deck at 1.0829 - so",
     "new": "her gun deck at 1.085 - so",
     "tests": [
-      "test/auditgalleon2_guns.test.js"
+      "test/systems/naval/auditgalleon2_guns.test.js"
     ]
   },
   {
@@ -132,45 +132,45 @@
     "old": "const sign = side === 'starboard' ? 1 : -1;",
     "new": "const sign = 1;",
     "tests": [
-      "test/auditgalleon2_guns.test.js"
+      "test/systems/naval/auditgalleon2_guns.test.js"
     ]
   },
   {
     "name": "AUDIT-GN2-TS2-no-run-out-lay",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      for (const side of e.ship.runOut?.keys?.() ?? []) if (side === 'starboard' || side === 'port') galleonGuns.lay(e.boat, side, clock);\n",
     "new": "",
     "tests": [
-      "test/auditgalleon2_guns.test.js"
+      "test/systems/naval/auditgalleon2_guns.test.js"
     ]
   },
   {
     "name": "AUDIT-GN2-TS2-sea-ships-unstepped",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      decks.push(e.boat);\n",
     "new": "",
     "tests": [
-      "test/auditgalleon2_guns.test.js"
+      "test/systems/naval/auditgalleon2_guns.test.js"
     ],
     "equivalent": true,
     "why": "AUDIT GN2-GN2: a sea ship laid (her run-out) or fired is stepped from the gun deck's own settling set until she is at rest, and a step leaves a boat at rest as she stands - the list adds nothing a step would move (killed by TS2 on the code before GN2: her shutters ordered open 0.0 s before her first report)"
   },
   {
     "name": "AUDIT-GN2-TS2-sea-shooter-no-boat",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    return sea.get(id)?.boat ?? null;\n",
     "new": "    return null;\n",
     "tests": [
-      "test/auditgalleon2_guns.test.js"
+      "test/systems/naval/auditgalleon2_guns.test.js"
     ]
   },
   {
     "name": "AUDIT-GN2-TS3-captain-balls-upright",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "const launches = volleyLaunches(heeled(solution, pose, boatOfShooter(shooter)), seed, { skill, carry: pose.velocity, weight });",
     "new": "const launches = volleyLaunches(heeled(solution, pose, isMine(shooter) ? boatOfShooter(shooter) : null), seed, { skill, carry: pose.velocity, weight });",
     "tests": [
-      "test/auditgalleon_guns.test.js"
+      "test/systems/naval/auditgalleon_guns.test.js"
     ],
     "note": "CREW-HOLD/GALLEON-WEIGHT (2026-10-06): re-aimed by content - the line gained the crew's toughness or the weight."
   }

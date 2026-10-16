@@ -54,7 +54,7 @@ async function dataAttached() {
 }
 
 /** The player's face (or a save's, a portrait's) as a Morrowind head: `{ width, height, data }` or null, `px` x `ph`.
- *  A LIVE character (one with its equipment - the player's entity) is drawn as its body is built (combat/weaponRig.js
+ *  A LIVE character (one with its equipment - the player's entity) is drawn as its body is built (combat/weapon/weaponRig.js
  *  armBuildOptsOf, the build's own door): its helm and hood, the vampire's head, the transformed werewolf's in its skin;
  *  the transformed wereboar keeps Daggerfall's picture, as its body does (Morrowind has no boar). An identity alone (a
  *  save's envelope, a chargen portrait) is its bare face. A player's face wears the port's own heads where the race has
@@ -63,9 +63,9 @@ async function dataAttached() {
  *  @param {{ px?: number, ph?: number, renderer?: any }} [opts] */
 export async function playerHeadImage(who, { px = 128, ph = px, renderer = portraitRenderer() } = {}) {
   if (!who || !renderer || !(await dataAttached())) return null;
-  const [{ headPortrait }, { mwRaceId }] = await Promise.all([import('../combat/fpArm.js'), import('../formats/mwNpc.js')]);
+  const [{ headPortrait }, { mwRaceId }] = await Promise.all([import('../combat/fpArm.js'), import('../formats/morrowind/mwNpc.js')]);
   if (who.equip) {
-    const [{ armBuildOptsOf }, { liveLycanthropy }] = await Promise.all([import('../combat/weaponRig.js'), import('../systems/lycanthropy.js')]);
+    const [{ armBuildOptsOf }, { liveLycanthropy }] = await Promise.all([import('../combat/weapon/weaponRig.js'), import('../systems/lycanthropy.js')]);
     if (liveLycanthropy(who)?.isTransformed && !armBuildOptsOf(who).werewolf) return null;   // the wereboar: no Morrowind boar
     const o = armBuildOptsOf(who);
     return headPortrait({ renderer, race: o.race, female: o.female, faceIndex: o.faceIndex, armor: o.armor, vampire: o.vampire, werewolf: o.werewolf, skin: o.skin, ownHeads: o.ownHeads, px, ph });
@@ -83,7 +83,7 @@ export async function npcHeadImage(look, { px = 128, ph = px, renderer = portrai
   if (!look || look.creature || !renderer) return null;
   const { npcBodiesOn } = await import('./npcBodies.js');
   if (!npcBodiesOn()) return null;
-  const [{ headPortrait }, { peerBuildOpts }] = await Promise.all([import('../combat/fpArm.js'), import('../net/peerBodies.js')]);
+  const [{ headPortrait }, { peerBuildOpts }] = await Promise.all([import('../combat/fpArm.js'), import('../net/peer/peerBodies.js')]);
   const o = /** @type {any} */ (peerBuildOpts(look));
   if (!o || o.creature || o.werewolf || !o.race) return null;
   return headPortrait({ renderer, race: o.race, female: !!o.female, faceIndex: o.faceIndex | 0, npcFace: o.npcFace ?? null, vampire: !!o.vampire, armor: o.armor ?? null, px, ph });   // its helm and hood too

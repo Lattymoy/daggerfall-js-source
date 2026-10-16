@@ -1,79 +1,79 @@
 [
   {
     "name": "NFA-every-frame",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (e.watchN !== 0) return NO_WATCH;\n",
     "new": "",
-    "tests": ["test/navfarai.test.js"]
+    "tests": ["test/systems/naval/navfarai.test.js"]
   },
   {
     "name": "NFA-missed-time-lost",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    e.watchDt = 0;\n    return stepCaptain(s, { ...world, dt: owed + d });",
     "new": "    e.watchDt = 0;\n    return stepCaptain(s, { ...world, dt: d });",
-    "tests": ["test/navfarai.test.js"]
+    "tests": ["test/systems/naval/navfarai.test.js"]
   },
   {
     "name": "NFA-no-step-cap",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (owed > 0 && owed + d > FRAME_STEP_S) { e.watchDt = d; return stepCaptain(s, { ...world, dt: owed }); }\n",
     "new": "",
-    "tests": ["test/navfarai.test.js"]
+    "tests": ["test/systems/naval/navfarai.test.js"]
   },
   {
     "name": "NFA-come-near-owed-lost",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (!watchesFar(e, eye, fought)) { e.watchDt = 0; return stepCaptain(s, owed > 0 ? { ...world, dt: owed + d } : world); }",
     "new": "    if (!watchesFar(e, eye, fought)) { e.watchDt = 0; return stepCaptain(s, world); }",
-    "tests": ["test/navfarai.test.js"]
+    "tests": ["test/systems/naval/navfarai.test.js"]
   },
   {
     "name": "NFA-near-thinned-too",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    && Math.hypot(s.pos[0] - eye[0], s.pos[2] - eye[2]) > FAR_WATCH_M && !fought().has(e.id);",
     "new": "    && !fought().has(e.id);",
-    "tests": ["test/navfarai.test.js"]
+    "tests": ["test/systems/naval/navfarai.test.js"]
   },
   {
     "name": "NFA-fighting-thinned",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "s.damage.state === SHIP_STATES.afloat && s.mode !== 'engage' && s.mode !== 'board' && !s.lashed",
     "new": "s.damage.state === SHIP_STATES.afloat && s.mode !== 'board' && !s.lashed",
-    "tests": ["test/navfarai.test.js"]
+    "tests": ["test/systems/naval/navfarai.test.js"]
   },
   {
     "name": "NFA-boarding-thinned",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "s.damage.state === SHIP_STATES.afloat && s.mode !== 'engage' && s.mode !== 'board' && !s.lashed",
     "new": "s.damage.state === SHIP_STATES.afloat && s.mode !== 'engage' && !s.lashed",
-    "tests": ["test/navfarai.test.js"]
+    "tests": ["test/systems/naval/navfarai.test.js"]
   },
   {
     "name": "NFA-lashed-thinned",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "s.mode !== 'engage' && s.mode !== 'board' && !s.lashed\n",
     "new": "s.mode !== 'engage' && s.mode !== 'board'\n",
-    "tests": ["test/navfarai.test.js"]
+    "tests": ["test/systems/naval/navfarai.test.js"]
   },
   {
     "name": "NFA-struck-thinned",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "  return !!eye && s.damage.state === SHIP_STATES.afloat && s.mode",
     "new": "  return !!eye && s.mode",
-    "tests": ["test/navfarai.test.js"]
+    "tests": ["test/systems/naval/navfarai.test.js"]
   },
   {
     "name": "NFA-fight-target-thinned",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    && Math.hypot(s.pos[0] - eye[0], s.pos[2] - eye[2]) > FAR_WATCH_M && !fought().has(e.id);",
     "new": "    && Math.hypot(s.pos[0] - eye[0], s.pos[2] - eye[2]) > FAR_WATCH_M;",
-    "tests": ["test/navfarai.test.js"]
+    "tests": ["test/systems/naval/navfarai.test.js"]
   },
   {
     "name": "NFA-fights-asked-first",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "  return !!eye && s.damage.state === SHIP_STATES.afloat && s.mode",
     "new": "  return !fought().has('') && !!eye && s.damage.state === SHIP_STATES.afloat && s.mode",
-    "tests": ["test/navfarai.test.js"]
+    "tests": ["test/systems/naval/navfarai.test.js"]
   }
 ]

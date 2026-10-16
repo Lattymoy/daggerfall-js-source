@@ -1,0 +1,213 @@
+// ECON1 (Mac, 2026-09-17: "Economy slice next" - the STOP list's "one economy"): THE REGION'S PRICES ARE THE WORLD'S.
+// DFU walks each region's price index once a day on the player's own state, tilted by The Merchants' power against
+// the region's; WORLD6b made the day's rolls the world's and left the state each player's, so two players who
+// arrived on different days read different prices in one shop. Under the shared clock the index is now a pure
+// function of the world's day: the opening indices drawn on the epoch day, every day since walked with that day's
+// generator, region-major, the merchants' tilt dropped (the powers are each player's - quests move them). No wire, no
+// owner, no memory: every client computes the same numbers. The player's own `regionPrices` are never written online;
+// the condition flags (PricesHigh / PricesLow, the player's own store) are applied from the world's index.
+import '../modsOff.js';
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { worldRegionPricesOn, worldRegionPrice, dayRng, DAY_SALT, setSharedClock, sharedClockOn, runDayChange, MINUTES_PER_DAY, setWorldPriceTilt, worldPriceTiltOn, worldPriceCheckpointDays } from '../../src/systems/worldTick.js';
+import { regionPriceAdjustment, priceWalkStep, initialRegionPrice, setWorldPriceSource, worldPriceSourceOn, updateRegionalPrices, applyPriceConditionFlags, worldPriceTiltOf, PRICE_ADJUSTMENT_MIN, PRICE_ADJUSTMENT_MAX } from '../../src/systems/shopStock.js';
+import { REGION_COUNT, REGION_FLAGS, createRegionConditions, conditionFlag, turnOnConditionFlag } from '../../src/systems/region/regionConditions.js';
+import { ONLINE_EPOCH_MINUTES } from '../../src/net/wire.js';
+import { MERCHANTS_FACTION_ID } from '../../src/systems/guild/guilds.js';
+import { FACTION_TYPES } from '../../src/formats/factionFile.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
+
+const rd = (p) => hostText(p);
+const EPOCH_DAY = Math.floor(ONLINE_EPOCH_MINUTES / MINUTES_PER_DAY);
+
+test('ECON1: the world\'s index is a pure function of the day - the epoch day\'s opening indices are DFU\'s 750..1250 off the day\'s own generator, region-major; every later day is one step per region off that day\'s generator (the tilt at zero: 51/50 up on a passed roll, 49/50 down, clamped); a day before the epoch reads the epoch\'s; a cold answer equals a walked one (catching up equals having stayed)', () => {
+  const p0 = worldRegionPricesOn(EPOCH_DAY);
+  assert.equal(p0.length, REGION_COUNT);
+  const init = dayRng(EPOCH_DAY * MINUTES_PER_DAY, DAY_SALT.priceInit);
+  for (let i = 0; i < REGION_COUNT; i++) { const r = init(); assert.equal(p0[i], initialRegionPrice(r), `region ${i} opens off the epoch day's ${i}th draw`); assert.ok(p0[i] >= 750 && p0[i] <= 1250); }
+  assert.deepEqual(worldRegionPricesOn(EPOCH_DAY - 100), p0, 'a day before the epoch reads the epoch\'s');
+  // one step, by hand, region-major off the next day's generator
+  const p1 = worldRegionPricesOn(EPOCH_DAY + 1);
+  const gen = dayRng((EPOCH_DAY + 1) * MINUTES_PER_DAY, DAY_SALT.prices);
+  for (let i = 0; i < REGION_COUNT; i++) assert.equal(p1[i], priceWalkStep(p0[i], 0, gen()), `region ${i} walked one step off the day's ${i}th draw`);
+  assert.ok(p1.some((v, i) => v !== p0[i]), 'and the walk walked');
+  // the step itself: DFU's arithmetic with the tilt at zero
+  assert.equal(priceWalkStep(1000, 0, 0.49), 1020, 'a passed roll (49 < 50) rises 51/50');
+  assert.equal(priceWalkStep(1000, 0, 0.5), 980, 'a failed roll (50 < 50 is false) falls 49/50');
+  assert.equal(priceWalkStep(2000, 0, 0.09), 2040, 'at 2000 the chance is 10: 9 passes'); assert.equal(priceWalkStep(2000, 0, 0.1), 1960, '10 fails');
+  assert.equal(priceWalkStep(1000, 20, 0.69), 1020, 'the player\'s own walk keeps its tilt (merchants 100 vs region 0: +20)');
+  assert.equal(priceWalkStep(PRICE_ADJUSTMENT_MAX, 0, 0.0), 3920, 'at the ceiling a rise is impossible (chance -70) - the walk falls'); assert.equal(priceWalkStep(3960, 120, 0.0), PRICE_ADJUSTMENT_MAX, 'clamped high (a tilt large enough to pass: 4039 -> 4000)'); assert.equal(priceWalkStep(PRICE_ADJUSTMENT_MIN, 0, 0.99), PRICE_ADJUSTMENT_MIN, 'clamped low');
+  // the cache: a far day walked forward, a nearer day rebuilt from the epoch - the same numbers either way
+  const far = worldRegionPricesOn(EPOCH_DAY + 40).slice();
+  const near = worldRegionPricesOn(EPOCH_DAY + 3).slice();
+  assert.deepEqual(worldRegionPricesOn(EPOCH_DAY + 40), far, 'a day asked again after a rebuild is the same day');
+  assert.deepEqual(worldRegionPricesOn(EPOCH_DAY + 3), near);
+  assert.notDeepEqual(far, near);
+  assert.equal(worldRegionPrice(5, (EPOCH_DAY + 40) * MINUTES_PER_DAY + 700), far[5], 'a minute of the day reads the day');
+  assert.equal(worldRegionPrice(999, (EPOCH_DAY + 40) * MINUTES_PER_DAY), 1000, 'a region off the table reads the pivot');
+  const a = dayRng(EPOCH_DAY * MINUTES_PER_DAY, DAY_SALT.priceInit)(), b = dayRng(EPOCH_DAY * MINUTES_PER_DAY, DAY_SALT.prices)(), c = dayRng(EPOCH_DAY * MINUTES_PER_DAY, DAY_SALT.conditions)();
+  assert.ok(a !== b && b !== c && a !== c, 'the three consumers are salted apart (AUDIT WORLD6b C5)');
+});
+
+test('ECON1: the seam - with the shared clock installed regionPriceAdjustment answers the world\'s index for today, draws nothing from the player\'s dice and writes nothing to the player\'s regionPrices; the clock gone, the player\'s own lazy draw and state answer as before; the source can be handed in and taken away by hand', () => {
+  const day = EPOCH_DAY + 12;
+  const e = { regionPrices: {}, factionRep: { dict: new Map() } };
+  let draws = 0; const dice = () => { draws++; return 0.5; };
+  assert.equal(sharedClockOn(), false); assert.equal(worldPriceSourceOn(), false);
+  try {
+    setSharedClock(() => day * MINUTES_PER_DAY + 300);
+    assert.equal(worldPriceSourceOn(), true, 'the clock installs the world\'s price source');
+    assert.equal(regionPriceAdjustment(e, 17, dice), worldRegionPricesOn(day)[17], 'the world\'s index for today');
+    assert.equal(draws, 0, 'no lazy draw off the player\'s dice'); assert.deepEqual(e.regionPrices, {}, 'nothing written');
+    const other = { regionPrices: { 17: 4000 }, factionRep: { dict: new Map() } };
+    assert.equal(regionPriceAdjustment(other, 17, dice), regionPriceAdjustment(e, 17, dice), 'whatever the player\'s own state says');
+  } finally { setSharedClock(null); }
+  assert.equal(worldPriceSourceOn(), false, 'the clock gone, the source goes');
+  const own = regionPriceAdjustment(e, 17, dice);
+  assert.equal(draws, 1, 'offline: the lazy draw'); assert.equal(own, initialRegionPrice(0.5)); assert.equal(e.regionPrices[17], own, 'and it is written');
+  assert.equal(regionPriceAdjustment(e, 17, dice), own); assert.equal(draws, 1, 'once');
+  setWorldPriceSource((i) => 1234 + i);
+  try { assert.equal(regionPriceAdjustment(e, 3, dice), 1237, 'a source handed in by hand answers'); assert.equal(regionPriceAdjustment(e, 17, dice), 1251, 'over the player\'s own'); }
+  finally { setWorldPriceSource(null); }
+  assert.equal(regionPriceAdjustment(e, 17, dice), own, 'and taken away, the player\'s own again');
+  setWorldPriceSource((i) => NaN);
+  try { assert.equal(regionPriceAdjustment(e, 17, dice), own, 'a source answering no number is no source for that region'); } finally { setWorldPriceSource(null); }
+  // AUDIT ALL E2: the player's own walk stands its table itself - under a source the seam's lazy init never runs
+  setWorldPriceSource((i) => 1234);
+  try {
+    const fresh = {};
+    const dict = new Map([[MERCHANTS_FACTION_ID, { id: MERCHANTS_FACTION_ID, type: FACTION_TYPES.Group, region: -1, power: 50 }], [9000, { id: 9000, type: FACTION_TYPES.Province, region: 0, power: 50 }]]);
+    assert.doesNotThrow(() => updateRegionalPrices(fresh, dict, 1, () => 0.5, null), 'a walk on an entity with no table, a source standing: no throw');
+    assert.equal(typeof fresh.regionPrices[0], 'number', 'the table stood and the region walked');
+  } finally { setWorldPriceSource(null); }
+});
+
+test('ECON1: the day change online - the player\'s regionPrices are not walked and not written; the condition flags are the player\'s, applied from the world\'s index one day at a time with the day\'s own generator (PricesHigh over 2000, PricesLow under 500, the normal band clearing both); offline DFU\'s own walk, tilt and all, writes the player\'s state', () => {
+  const dict = () => new Map([[MERCHANTS_FACTION_ID, { id: MERCHANTS_FACTION_ID, type: FACTION_TYPES.Group, region: -1, power: 100 }], [9000, { id: 9000, type: FACTION_TYPES.Province, region: 0, power: 0 }], [9001, { id: 9001, type: FACTION_TYPES.Province, region: 1, power: 50 }]]);
+  const day = EPOCH_DAY + 5;
+  const cond = () => createRegionConditions();
+  try {
+    setSharedClock(() => day * MINUTES_PER_DAY);
+    const e = { regionPrices: { 0: 1000 }, factionRep: { dict: dict() }, regionConditions: cond() };
+    // flags left standing from another day (or a save): the world's index today is in the normal band for every
+    // region (the epoch's 750..1250 walked five days stays inside 500..2000), so the day change must CLEAR them
+    turnOnConditionFlag(e.regionConditions, 0, REGION_FLAGS.PricesHigh, () => 0.5); turnOnConditionFlag(e.regionConditions, 1, REGION_FLAGS.PricesLow, () => 0.5);
+    turnOnConditionFlag(e.regionConditions, 5, REGION_FLAGS.PricesHigh, () => 0.5);   // AUDIT ALL E8: region 5 has no Province faction in this store - DFU's walk never reaches it
+    assert.equal(conditionFlag(e.regionConditions, 0, REGION_FLAGS.PricesHigh), true);
+    runDayChange({ entity: e, lastMinutes: (day - 3) * MINUTES_PER_DAY, nowMinutes: day * MINUTES_PER_DAY, rolls: () => 0.99 });
+    assert.equal(conditionFlag(e.regionConditions, 0, REGION_FLAGS.PricesHigh), false, 'the flag half ran off the world\'s index: the normal band cleared a standing PricesHigh');
+    assert.equal(conditionFlag(e.regionConditions, 1, REGION_FLAGS.PricesLow), false, 'and a standing PricesLow');
+    assert.equal(conditionFlag(e.regionConditions, 5, REGION_FLAGS.PricesHigh), true, 'AUDIT ALL E8: a region with no Province faction is not walked and not flagged - its standing flag stands (DFU\'s `continue`)');
+    assert.deepEqual(e.regionPrices, { 0: 1000 }, 'not walked, not written');
+    // the flags: a crafted index over 2000 on the world's day raises PricesHigh through the one flag home
+    const prices = worldRegionPricesOn(day);
+    for (const i of [0, 1]) {   // the regions this player's store has a Province faction for (AUDIT ALL E8: DFU walks and flags no other)
+      const high = conditionFlag(e.regionConditions, i, REGION_FLAGS.PricesHigh), low = conditionFlag(e.regionConditions, i, REGION_FLAGS.PricesLow);
+      assert.equal(high, prices[i] > 2000, `region ${i}: PricesHigh follows the world's index`); assert.equal(low, prices[i] < 500, `region ${i}: PricesLow follows the world's index`);
+    }
+    // the flag half by hand, off the world's index: the three arms
+    const store = cond();
+    applyPriceConditionFlags(store, 4, 2100, () => 0.5); assert.equal(conditionFlag(store, 4, REGION_FLAGS.PricesHigh), true, 'over 2000: PricesHigh on');
+    applyPriceConditionFlags(store, 4, 1000, () => 0.5); assert.equal(conditionFlag(store, 4, REGION_FLAGS.PricesHigh) || conditionFlag(store, 4, REGION_FLAGS.PricesLow), false, 'the normal band clears both');
+    applyPriceConditionFlags(store, 4, 400, () => 0.5); assert.equal(conditionFlag(store, 4, REGION_FLAGS.PricesLow), true, 'under 500: PricesLow on');
+    applyPriceConditionFlags(null, 4, 400, () => 0.5);   // no store: nothing, no throw
+    // two players, different spans, one store shape: the same flags
+    const f = { regionPrices: {}, factionRep: { dict: dict() }, regionConditions: cond() };
+    runDayChange({ entity: f, lastMinutes: (day - 1) * MINUTES_PER_DAY, nowMinutes: day * MINUTES_PER_DAY, rolls: () => 0.01 });
+    const pair = (st) => [0, 1].map((i) => [conditionFlag(st, i, REGION_FLAGS.PricesHigh), conditionFlag(st, i, REGION_FLAGS.PricesLow)]);   // the regions the store walks
+    assert.deepEqual(pair(f.regionConditions), pair(e.regionConditions), 'one day walked and three walked read the same flags today');
+  } finally { setSharedClock(null); }
+  // offline: DFU's own, the tilt included (merchants 100 vs region 0: +20 on the chance), the state written
+  const off = { regionPrices: { 0: 1000 }, factionRep: { dict: dict() }, regionConditions: cond() };
+  runDayChange({ entity: off, lastMinutes: (day - 1) * MINUTES_PER_DAY, nowMinutes: day * MINUTES_PER_DAY, rolls: () => 0.69 });
+  assert.equal(off.regionPrices[0], 1020, 'offline the tilt carries a 69 (chance 70) up - the player\'s own walk, written');
+  const off2 = { regionPrices: { 0: 1000 }, factionRep: { dict: dict() } };
+  updateRegionalPrices(off2, dict(), 2, () => 0.69, null);
+  assert.equal(off2.regionPrices[0], Math.trunc(51 * 1020 / 50), 'and DFU\'s span-whole loop through the one step');
+});
+
+test('ECON1 by source: the shared clock installs and removes the world\'s price source; the player\'s walk and the world\'s share one step and one flag home; every consumer reads through regionPriceAdjustment (no host reads regionPrices directly); the powers keep their own law; the wire is untouched', () => {
+  const w = rd('src/systems/worldTick.js'), sh = rd('src/systems/shopStock.js');
+  assert.ok(w.includes("setWorldPriceSource(_sharedClock ? (regionIndex) => worldRegionPrice(regionIndex, _sharedClock()) : null);"), 'installed beside the clock, removed with it');
+  assert.ok(w.includes("const ECON_EPOCH_DAY = Math.floor(ONLINE_EPOCH_MINUTES / MINUTES_PER_DAY);"), 'the world\'s economy begins on the online world\'s epoch day (WORLD5\'s)');
+  assert.ok(w.includes("const prices = _worldPrices.prices.map((adj, i) => { const roll = gen(); const tilt = _worldTilt ? _worldTilt(i) : 0; return tilt == null ? adj : priceWalkStep(adj, tilt, roll); });"), 'the world\'s step through the one home, tilted by the base powers, a roll drawn for every region and spent only where DFU walks');
+  assert.ok(rd('src/scenes/world.js').includes("if (onlineOn) townTalk.ensureFactions?.().then(() => { if (townTalk.factionDict) setWorldPriceTilt(worldPriceTiltOf(townTalk.factionDict)); }).catch(() => {});"), 'AUDIT ALL E1: the host installs the tilt off the FILE\'s dict once FACTION.TXT is read, online alone');
+  assert.ok(sh.includes("const adjusted = priceWalkStep(adj, Math.trunc((merchants.power - regionFaction.power) / 5), rolls());"), 'the player\'s step through the same home, tilted');
+  assert.ok(sh.includes("applyPriceConditionFlags(conditions, i, adjusted, rolls);"), 'the flag half, one home');
+  assert.equal((sh.match(/Math\.trunc\(51 \* adj \/ 50\)/g) ?? []).length, 1, 'the 51/50 arithmetic has one home');
+  for (const f of ['src/scenes/world.js', 'src/scenes/worldModes.js', 'src/scenes/exterior.js', 'src/scenes/dungeonContext.js', 'src/ui/native/nativeTrade.js', 'src/systems/tradeModes.js', 'src/systems/guild/guildServiceActions.js', 'src/systems/repairService.js', 'src/systems/quest/machine.js']) {
+    assert.equal(/regionPrices\[/.test(rd(f)), false, `${f} reads the region\'s index through the seam, never the player\'s table`);
+  }
+  assert.match(w, /const dayRolls = powerMinute \|\| \(worldArms && conditionMinute\) \? dayRollsFor\(i, rolls, DAY_SALT\.powers\) : null;\s*if \(powerMinute\) \{/, 'the powers walk as WORLD6b left them: the day\'s rolls, the player\'s state (LIVED1: minted on the minutes an arm reads, the world\'s arms)');
+  assert.ok(rd('src/net/wire.js').includes("export const RELAY_VERSION = 'world211'"), 'PIN MOVED: world211, TIDY2 (the relay files into feature folders - no behaviour moved; bible/01-Overview/Code-Map.md; world209 on its branch, renumbered past the WEAPON-GLOW1 world209 and the HUB-PULL + DO-ASK world210 of main at the merge); PIN MOVED: world210, HUB-PULL + DO-ASK (the bus never calls a shard - each shard polls its bus; the Worker asks a room reset before it ran once more; world208 then world209 on its branch, renumbered past the INSTANCES world208 and the WEAPON-GLOW1 world209 of main at the merges); PIN MOVED: world209, WEAPON-GLOW1 (a weapon in a hand carries its glow on the look, a word; world208 on its branch, renumbered past the INSTANCES world208 of main at the merge); PIN MOVED: world208, INSTANCES (an instance is a world room of its own - a dungeon whole or a building, its owner and epoch after it, admitted to its owner, staff and the party of its owner alone; world206 then world207 on its branch, renumbered past SERPENT5 and ONE-BODY at the merges); PIN MOVED: world207, ONE-BODY (FIELD BUGS 2026-10-15c - one body an account in a cell or a dungeon, the older socket closed as replaced; world206 on its branch, renumbered past the SERPENT5 world206 of main at the merge); PIN MOVED: world206, SERPENT5 (Coilbreaker and The Maelstrom join the token vocabulary; world205 on its branch, renumbered past PVP-LOOT + QUEST-HOME world205 of main at the merge); PIN MOVED: world205, PVP-LOOT + QUEST-HOME (the friend law is the law of the drop alone - the worn piece a killer picks is theirs whoever the guild or party of the fallen counts them; the hub fans a home the service signed as moved to every page online and holds its word for a page that joins after; bible/01-Overview/bugs/Field-Bugs-2026-10-14.md QUEST-HOME; world201 on each branch, one bump past FIVE-ASKS at the merge, world203 on the integration, renumbered past KG-SET world203 and KG5 world204 at the merge of main); PIN MOVED: world204, KG5 (the relay runs The King\'s Gambit - a gambit frame, four files more in the bundle; KG6: the gold table\'s stakes and a rated game\'s signed result; world203 on its branch, renumbered past FIVE-ASKS\'s world202 at the merge); PIN MOVED: world203, KG-SET (the Iliac catalog without its words, and nine cards more - Kings-Gambit.md section 10.3; world201 then world202 on its branch, renumbered past CHAT-TRADE\'s world201 and FIVE-ASKS\'s world202 at the merges); PIN MOVED: world202, FIVE-ASKS (the dungeon respawn half an hour, I Love Lamp a title the relay knows; world201 on its branch, renumbered past the CHAT-TRADE world201 of main at the merge); PIN MOVED: world201, CHAT-TRADE (the Trade and LFG channels joined CHAT_ROOMS); PIN MOVED: world200, PEER-ACTS (the pose carries a gathering act - the act, its beats and the throw of the net; world199 on its branch, renumbered past the AUDIT ETHER-OW world199 of main at the merge); PIN MOVED: world199, AUDIT ETHER-OW C2-1 (one home for the ground the Watch mints on - watchPixelOk, its answers as they were); PIN MOVED: world198, SPAWN-REBIRTH (a cell keeps the row of a spawned dungeon until it stands again, never sixty real days); PIN MOVED: world197, BAL8 (the PvP referee and its one harm ceiling - every fighter, blows and casts together at most 180 in any 5 s); PIN MOVED: world196, CHAT-LANG (the language channels joined the whitelist) over world195, COATS1 (the horse look: rc on a mounted pose, hc on a parked word; world194 on its branch, renumbered past SLIM-FRAME at the merge); PIN MOVED: world194, SLIM-FRAME (the place on the second wire in its own units - every height in metres to the centimetre, the x and z of a dungeon, a town and a building too, those of a cell in whole world units); PIN MOVED: world193, SERPENT4 (the sea serpent reworked - its waters open until it dives, hands strike it with their own weapons, a party shares the kill, its girth; its law version 3 - world192 on its branch, renumbered past SCALE5c at the merge); PIN MOVED: world192 (past WARDEN1, world191 on main, at the merge), SCALE5c (the hub split sixteen ways - the shards hold the sockets, the bus runs every law over a virtual socket for each; a search of everyone online by name, and the guild online on every shard); PIN MOVED: world191, SCALE5b (the second wire - batched slim poses, a channel roster and a beat in one frame - the relay hygiene, its metrics and run-time settings, the halo referee word); PIN MOVED: world190, AUDIT MW-NPC II (the foe look on the wire - world188, then world189, on its branch, renumbered past INT11-INT14 and SCALE5a at the merges); PIN MOVED: world189, SCALE5a (the hub\'s hello and leave without a walk of every socket; a busy refusal\'s token unread); PIN MOVED: world188, INT11-INT14 (the INTEGRITY arc\'s lane 3 - world186 on its branch, renumbered past SD-HERALD\'s world186 and WAGONS1\'s world187 at the merge); PIN MOVED: world185, INT7-INT10 (the INTEGRITY arc\'s lane 2 - world183, then world184, on its branch, renumbered past CHAP4c\'s world183 and PERF-RELAY1\'s world184 at the merges); PIN MOVED: world183, CHAP4c (the chapters\' seats\' titles on the token - past THE WROTHGARIAN ZONE\'s world177, TAVERN CARDS\' world178, HOURS-FIRST\'s world179, TAVERN-TABLES\' world180, TV-BEYOND\'s world181 and CARDS10\'s world182 at the merges); no wire change of this slice\'s: the economy is computed, not streamed (world176 is SUPER-DUNGEONS - a re-laid dungeon\'s room of its own and the Super dungeon\'s frame, world171 on its branch renumbered past CRYSTAL-FIST\'s at one merge, past WATCH-FIX\'s, SERPENT3\'s and LEGACY7\'s at the next and past TEXT-F1\'s at the one after; world175 is TEXT-F1 - the words a player types starred; world174 is LEGACY7 - the house on the token and the row and two players\' wed frame, world172 on its branch renumbered past WATCH-FIX\'s and SERPENT3\'s at the merge; world173 is SERPENT3 - the sea serpent brain, no frame changes shape, world171 on its branch renumbered past CRYSTAL-FIST\'s and WATCH-FIX\'s at the merges; world172 is WATCH-FIX - the watch record names its resident; world171 is CRYSTAL-FIST - the Crystal Fist\'s title, glyph and aura words on the token, no frame changes shape, world170 on its branch renumbered past FEUD\'s at the merge; world170 is FEUD - the foe record\'s wind-ups and a revenant\'s fields; world169 is AUDIT ARENA-LADDER - the arena ladder audit; world168 is SERAPH-WINGS - the wings aura word on the token, no frame changes shape; world167 is SHADOW-CLOAK - the cloak\'s aura word on the token, no frame changes shape; world166 is SERPENT2 - the serpent herald; world165 is SERPENT1 - the serpent frame; world164 is PARTY-LEAD - the hub\'s party.lead act; world163 is SUNBABY1 - a live event\'s word, no frame changes shape; world162 is PRIMARCH, the Primarch\'s title, glyph and aura on the token; world161 is GUILD2 - no wire change, the guild and heraldry laws under the relay; world160 is AEGIS, the Aegis of Oblivion\'s title, glyph and aura on the token; world155 is ARENA4 and its arena rooms - world142 on its branch, renumbered past main\'s at the merge; world154 is BROKER-CAGE, the rite word c and the hub cl - the Broker cage, world153 is REVENANT-WIRE, a revenant\'s name and fate on the foe record, world152 is GLYPH-WEAR, the glyphs a player took off, world151 is WB12\'s Dagon\'s Breach and the faithful\'s rite, world150 is SEAT2b part two (b)\'s the works in battle, world149 is SEASON1 part two, the banner ribbon\'s the banner ribbon, world148 is CROWN1 part two\'s the Royal Tourney, world147 is SEAT2a\'s the siege battle, world146 is PVP-REF\'s refereed siege room, world145 SEAT1c\'s titles and glyphs, world144 SEAT1b\'s Watch tick, world143 is ELITE FOES\' foe record\'s `z`; world142 is FRIENDS-SYNC\'s hub account; world141 is CLIMB5\'s and CLIMB6\'s climb on the pose; world140 is WB11\'s Legion-Lord host and GATE-HEAL\'s heal, world139 is LOOT7\'s street foe record cp, world138 is HERALD\'s title and glyph, world137 is KEPT-KILL\'s party pose qk, world136 is GATE-UX\'s damage chart, world135 is WB9\'s courts and crystals, world134 is PARTY-MAP\'s amap frame, world133 SOFTCAP1\'s party pose cl, world132 is STRIKE-SHARED\'s hit spell and body trapper, world131 is MERGE 2\'s bounty fields, world130 is the realm door, world102 is the community arc\'s channel, roll, emote, card and page frames and AUDIT ATTACH\'s meters, world101 DISC12\'s pose lh/wb, world100 DISC7\'s hs, world99 is HCC-PARK + RIDE\'s park frame and riding pose, world98 SPELLFX1\'s pose fields, world84 was RELAY-H1\'s, world85 is ACC1d\'s token field, world91 the three drops\', world92 AUDIT DROPS\' relay meters, world96 the party-rest drop\'s pose fields)');
+});
+
+test('ECON1 (AUDIT ALL E1): THE WORLD\'S TILT - the base powers of the game\'s own file tilt the world\'s walk as they tilt DFU\'s (trunc((merchants - province) / 5)); a region with no Province faction stands still and a world with no Merchants stands whole, the day\'s rolls drawn all the same; a tilt strong enough lights PricesHigh and PricesLow at the player\'s store - one day at a time (the flag\'s duration is the day it lit on) and for the last region too; installing the tilt starts the world over, removing it returns the untilted walk', () => {
+  const base = new Map([[MERCHANTS_FACTION_ID, { id: MERCHANTS_FACTION_ID, type: FACTION_TYPES.Group, region: -1, power: 100 }]]);
+  // synthetic powers past the game's 0..100 so the crossings come inside the pin's patience: region 0 pulled up hard (+60: the
+  // walk's equilibrium at 2500, over the PricesHigh line), region 1 pulled down hard (-70: equilibrium 250, under PricesLow),
+  // the rest flat (0), region 7 with no Province faction at all. DFU's own +-20 makes the flags rare, as they are in DFU.
+  for (let i = 0; i < REGION_COUNT; i++) if (i !== 7) base.set(9000 + i, { id: 9000 + i, type: FACTION_TYPES.Province, region: i, power: i === 0 ? -200 : (i === 1 ? 450 : 100) });
+  const tilt = worldPriceTiltOf(base);
+  assert.equal(tilt(0), 60); assert.equal(tilt(1), -70); assert.equal(tilt(2), 0); assert.equal(tilt(7), null, 'no Province faction: DFU walks nothing there');
+  assert.equal(worldPriceTiltOf(new Map([[MERCHANTS_FACTION_ID, { power: 40 }], [9003, { type: FACTION_TYPES.Province, region: 3, power: 62 }]]))(3), Math.trunc((40 - 62) / 5), 'DFU\'s own arithmetic: trunc toward zero');
+  assert.equal(worldPriceTiltOf(new Map())(0), null, 'no Merchants: DFU walks nothing anywhere'); assert.equal(worldPriceTiltOf(null)(0), null);
+  const flat = worldRegionPricesOn(EPOCH_DAY + 30).slice();
+  try {
+    setWorldPriceTilt(tilt);
+    assert.equal(worldPriceTiltOn(), true);
+    assert.notDeepEqual(worldRegionPricesOn(EPOCH_DAY + 30), flat, 'installing the tilt starts the world over: the day just cached is walked again, tilted');
+    const p0 = worldRegionPricesOn(EPOCH_DAY), p1 = worldRegionPricesOn(EPOCH_DAY + 1);
+    const gen = dayRng((EPOCH_DAY + 1) * MINUTES_PER_DAY, DAY_SALT.prices);
+    for (let i = 0; i < REGION_COUNT; i++) { const roll = gen(); assert.equal(p1[i], i === 7 ? p0[i] : priceWalkStep(p0[i], tilt(i), roll), `region ${i}: one step off the day's ${i}th draw with its own tilt, none for a region DFU skips`); }
+    const p30 = worldRegionPricesOn(EPOCH_DAY + 30);
+    assert.notDeepEqual(p30, flat, 'the tilt is part of every step'); assert.equal(p30[7], p0[7], 'region 7 never moves');
+    assert.ok(p30[0] > p30[1], 'pulled up beats pulled down over a month');
+    // the flags light, at the player's store, one day at a time: find the first day region 0 crosses 2000
+    let d0 = EPOCH_DAY + 1; while (worldRegionPricesOn(d0)[0] <= 2000 && d0 < EPOCH_DAY + 400) d0++;
+    assert.ok(d0 < EPOCH_DAY + 400, `region 0 crosses 2000 within a year at +60: day ${d0 - EPOCH_DAY}`);
+    let d1 = EPOCH_DAY + 1; while (worldRegionPricesOn(d1)[1] >= 500 && d1 < EPOCH_DAY + 400) d1++;
+    assert.ok(d1 < EPOCH_DAY + 400, 'and region 1 falls under 500');
+    const store = new Map([[MERCHANTS_FACTION_ID, { id: MERCHANTS_FACTION_ID, type: FACTION_TYPES.Group, region: -1, power: 50 }], [9000, { id: 9000, type: FACTION_TYPES.Province, region: 0, power: 50 }], [9001, { id: 9001, type: FACTION_TYPES.Province, region: 1, power: 50 }], [9061, { id: 9061, type: FACTION_TYPES.Province, region: 61, power: 50 }]]);
+    setSharedClock(() => d0 * MINUTES_PER_DAY);
+    try {
+      const stayed = { regionPrices: {}, factionRep: { dict: store }, regionConditions: createRegionConditions() };
+      runDayChange({ entity: stayed, lastMinutes: (d0 - 1) * MINUTES_PER_DAY, nowMinutes: d0 * MINUTES_PER_DAY, rolls: () => 0.5 });
+      assert.equal(conditionFlag(stayed.regionConditions, 0, REGION_FLAGS.PricesHigh), true, 'PricesHigh lights at the player\'s store off the world\'s index');
+      const away = { regionPrices: {}, factionRep: { dict: store }, regionConditions: createRegionConditions() };
+      runDayChange({ entity: away, lastMinutes: (d0 - 3) * MINUTES_PER_DAY, nowMinutes: d0 * MINUTES_PER_DAY, rolls: () => 0.5 });
+      assert.equal(conditionFlag(away.regionConditions, 0, REGION_FLAGS.PricesHigh), true);
+      assert.equal(away.regionConditions[0].values[REGION_FLAGS.PricesHigh], stayed.regionConditions[0].values[REGION_FLAGS.PricesHigh], 'one day at a time: the flag lit on the day it crossed, with that day\'s duration draw, for the player who was away as for the one who stayed');
+      assert.deepEqual(stayed.regionPrices, {}, 'and no price of the player\'s was written');
+    } finally { setSharedClock(null); }
+    // the last region: a tilt on 61 alone, a crossing, a flag
+    const only61 = (i) => (i === 61 ? 60 : 0);
+    setWorldPriceTilt(only61);
+    let d61 = EPOCH_DAY + 1; while (worldRegionPricesOn(d61)[61] <= 2000 && d61 < EPOCH_DAY + 400) d61++;
+    assert.ok(d61 < EPOCH_DAY + 400);
+    setSharedClock(() => d61 * MINUTES_PER_DAY);
+    try {
+      const e = { regionPrices: {}, factionRep: { dict: store }, regionConditions: createRegionConditions() };
+      runDayChange({ entity: e, lastMinutes: (d61 - 1) * MINUTES_PER_DAY, nowMinutes: d61 * MINUTES_PER_DAY, rolls: () => 0.5 });
+      assert.equal(conditionFlag(e.regionConditions, 61, REGION_FLAGS.PricesHigh), true, 'the last region is walked and flagged too');
+    } finally { setSharedClock(null); }
+  } finally { setWorldPriceTilt(null); }
+  assert.equal(worldPriceTiltOn(), false);
+  assert.deepEqual(worldRegionPricesOn(EPOCH_DAY + 30), flat, 'the tilt removed, the untilted walk again - from the epoch');
+});
+
+test('ECON1 (AUDIT ALL E4): a rebuild is bounded - a checkpoint every 512 days, so a day asked behind the cache walks from the newest checkpoint at or before it, and the numbers are the epoch walk\'s', () => {
+  const far = worldRegionPricesOn(EPOCH_DAY + 1100).slice();
+  const t0 = process.hrtime.bigint();
+  const back = worldRegionPricesOn(EPOCH_DAY + 1030).slice();   // behind the cache, past two checkpoints
+  const dt = Number(process.hrtime.bigint() - t0) / 1e6;
+  assert.deepEqual(worldRegionPricesOn(EPOCH_DAY + 1100), far, 'walked on from the checkpoint, the far day agrees');
+  setWorldPriceTilt(null);   // starts the world over: no checkpoints
+  assert.deepEqual(worldRegionPricesOn(EPOCH_DAY + 1030), back, 'the checkpoint walk equals the epoch walk');
+  assert.ok(dt < 50, `a rebuild behind the cache is a checkpoint away, not the epoch (${dt.toFixed(1)} ms)`);
+  worldRegionPricesOn(EPOCH_DAY + 1100);
+  assert.deepEqual(worldPriceCheckpointDays(), [512, 1024], 'a checkpoint every 512 days of the walk so far (the epoch is day 363)');
+  setWorldPriceTilt(null);
+  assert.deepEqual(worldPriceCheckpointDays(), [], 'starting the world over drops them');
+});

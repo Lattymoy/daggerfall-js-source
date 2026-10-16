@@ -187,22 +187,22 @@ stands in.
 
 ## 8. Pinned
 
-- `test/instances1.test.js` (8): the law - the owner's and the Hold's digests and the epoch's spelling, the key both
+- `test/net/instances1.test.js` (8): the law - the owner's and the Hold's digests and the epoch's spelling, the key both
   ways, a world room on its own clock, roomKeyFor, the relay's door with the hub's word, the party word, the relay
   version.
-- `test/instances2_relay.test.js` (11): the real Room's hello with signed tokens - the owner, a party member by the hub
+- `test/net/instances2_relay.test.js` (11): the real Room's hello with signed tokens - the owner, a party member by the hub
   (a real Room over its own storage), a stranger refused before anything is written, the hub silent is busy, a relay of
   one room, the public room untouched, the alarm's clock; the party pose's `ins` a room key; the audit's: a member kicked
   refused out by the re-ask and never asked more often, the party as it stands (a lapsed owner) and no no kept, a zone
   hall refused to all, the gate by account, a member gone on its own while the hub was asked never refused after.
-- `test/instances3_door.test.js` (15): the door's law over the real QuestMachine and Place, a quest's epoch for its life
+- `test/systems/quest/instances3_door.test.js` (15): the door's law over the real QuestMachine and Place, a quest's epoch for its life
   (its save, a copy's, a resync's), the sizes and the load's re-lay, partners by their room, the offer; the door's popup
   awaited (its rows, Esc, the window closed any way), no popup where nothing is chosen, the Hold, a partner, a building, a
   home; entryFor's rule and what was recorded; atDoor, refused, poseWord, questElsewhere; the funnel and the doors
   executed from their source; the hosts by source; the Recall anchor's dungeon record.
-- `test/staffTeleport.test.js`: a staff landing in the player's instance.
+- `test/net/staffTeleport.test.js`: a staff landing in the player's instance.
 - `tools/mutants/instances.json` (51), all dead; the lists re-aimed by content where this arc moved their lines.
-- PIN MOVED: RELAY_VERSION world208 in every file that names it, and `test/relayversion.test.js`'s row and graph; the
+- PIN MOVED: RELAY_VERSION world208 in every file that names it, and `test/net/relayversion.test.js`'s row and graph; the
   quest stamp and the re-lay; the funnels', the doors' and the identity's shapes; the relay's hello gate; the account
   Worker's deploy filter (`.github/workflows/account-deploy.yml`: net/instanceRoom.js is in its bundle).
 - HOST-SPLIT: bootWorld's ceiling stands at 21,676 (LOWERED from 21,679 as the arc moved homeYardWallet to

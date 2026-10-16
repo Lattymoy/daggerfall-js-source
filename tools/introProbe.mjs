@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 import { chromium, devices } from 'playwright';
 import { createServer } from 'vite';
-import { TITLE_IMPACT_TIME, TITLE_ENTER_TIME, TITLE_READY_TIME } from '../src/ui/introCue.js';
+import { TITLE_IMPACT_TIME, TITLE_ENTER_TIME, TITLE_READY_TIME } from '../src/ui/intro/introCue.js';
 import { MENU_THEME_GAIN } from '../src/systems/introTheme.js';
 
 const out = process.argv[2] ?? 'test-harness/intro';
@@ -92,7 +92,7 @@ try {
   check('transition input cannot activate a menu action', await page.locator('#pick').count() === 0 && await page.locator('#enhanced-menu').count() === 1);
   check('shared supplied logo loads in the main menu', await page.locator('.px-wordmark .brand-logo').evaluate((img, w) => img.complete && img.naturalWidth === w, LOGO_W));
   await shot(page, '07-main-menu');
-  await page.evaluate(async () => { const { setValue } = await import('/src/systems/settings.js'); setValue('Controls', 'MusicVolume', 0); });
+  await page.evaluate(async () => { const { setValue } = await import('/src/systems/settings/settings.js'); setValue('Controls', 'MusicVolume', 0); });
   await page.waitForFunction(() => window.__intro.theme.gain.gain.value < 0.001);
   check('menu music obeys live volume settings', true);
   await closeAccount(page);

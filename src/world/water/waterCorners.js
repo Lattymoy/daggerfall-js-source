@@ -1,0 +1,203 @@
+// THE WATER CORNERS (MAC2, 2026-09-11): which corners of a terrain tile
+// stand in water, by the CONVERTED tile byte - lifted out of
+// render/waterSurface.js (WATER1) into a leaf the render pass and the
+// player's feet share. The surface pass draws water where this table
+// says; the exterior surface model (player/exteriorSurface.js) now
+// swims the player where the same table puts water under the feet, so
+// the picture and the physics cannot disagree by construction.
+//
+// WHICH TEXEL IS WATER. The tile byte says (the same byte the terrain
+// pass decodes: record = data >> 2, transform = data & 3), through a
+// 256-entry table of WATER CORNERS: which of the tile's four corners,
+// in the TILEMAP'S OWN FRAME, stand in water. Record 0 is all four.
+// The shore records are the marching-squares transitions
+// (world/terrain/terrainTiles.js createLookupTable, DFU's AssignTilesJob): a
+// shape's bits name the corners that are dirt, and the table maps that
+// shape to a record plus its rotate/flip bits - so the table inverts
+// exactly: the byte a shape wrote gets the shape's water corners back.
+// The river painter (world/road/roadPainter.js) writes the same records with
+// the same bits, and the water-grass (20-22, 49) and water-stone
+// (30-32, 50) twins of the water-dirt shapes by the same columns, so
+// they take the same corners. A shore record the painters never write
+// as a SHAPE (8, 23, 33-36: town docks, moats and puddles) is one of
+// DFU's own shallow-water tiles - PlayerMotor.OnShallowWaterTile
+// (:551-563), "determined by if the water design takes up the majority
+// of the texture" - and takes all four corners; its corner geometry is
+// unknown here, and a majority-water tile whole is the nearer reading
+// of its art than a bare classic tile. Record 9 is not in DFU's list
+// and takes no water.
+import { createLookupTable } from '../terrain/terrainTiles.js';
+import { convertTile, WATER_TILE_INDEX } from '../terrain/terrainSurface.js';
+
+/** The water-dirt shore family and its water-grass / water-stone twins,
+ *  by column: corner, edge, three-corner, saddle - the painter's own
+ *  columns (roadPainter.js STREAM_TILES / RIVER_TILES). */
+export const SHORE_FAMILIES = Object.freeze([
+  Object.freeze([5, 6, 7, 48]),
+  Object.freeze([20, 21, 22, 49]),
+  Object.freeze([30, 31, 32, 50]),
+]);
+/** DFU's shallow-water records the painters never write as a shape -
+ *  PlayerMotor.OnShallowWaterTile's list (:551-563) minus the shore
+ *  families above (5, 6, 20, 21, 30, 31, 49, whose corners the table
+ *  knows). Drawn whole (see the header). */
+export const SHALLOW_WHOLE = Object.freeze([8, 23, 33, 34, 35, 36]);
+
+/**
+ * WATER-DRAW1 (2026-09-19, Mac with a screenshot: "some textures not
+ * taking the water tile"): THE DRAW AND THE FEET ARE NOT THE SAME
+ * QUESTION, and this file had been answering both with one list.
+ *
+ * The screenshot is a town pond. Every tile in it shimmers except one,
+ * which sits there as a flat blue square with a muddy bed showing
+ * through - the terrain pass's own tile, with no water drawn over it,
+ * because `waterCorners` answered 0 for its record and the pass's
+ * fragment shader does `if (corners == 0u) discard`.
+ *
+ * WHY IT ANSWERED 0. The whole-tile half of the table is
+ * `SHALLOW_WHOLE`, and SHALLOW_WHOLE is PlayerMotor.OnShallowWaterTile
+ * (:551-563) - a list DFU uses to decide whether the PLAYER'S FEET are
+ * in shallow water. DFU never drew a water surface at all, so that list
+ * was never a drawing list; the port made it one at WATER1 and
+ * inherited its omissions whole. THAT is the fault, and it is a fault
+ * whatever the right contents of the list below turn out to be.
+ *
+ * So there are two tables now. `WATER_MASK_TABLE` is unchanged and is
+ * the LAW's - what the player swims in (player/exteriorSurface.js) and
+ * what the town's own navigation refuses to walk (world/city/cityNavigation.js)
+ * are DFU's answers and stay verbatim, because adding a record there
+ * would change the physics to fix a picture. `WATER_DRAW_MASK_TABLE` is
+ * the ENHANCED PASS's - what reads as water to the eye - and it is the
+ * law's table plus the records below.
+ *
+ * WHAT THIS FILE CANNOT KNOW, said plainly rather than implied. The
+ * contents of SHALLOW_DRAWN are inferred from ONE screenshot; this
+ * container has no ARENA2, so nothing here has looked at a single texel
+ * of record 9. What the tree CAN say is where record 9 sits: the
+ * water-dirt group runs 5-8 (three marching shapes and DFU's first
+ * shallow variant), 10 begins the dirt-grass ring, and 9 is the one
+ * record between them that neither the shore families nor DFU's motor
+ * list covers. That makes it the only candidate nameable from here -
+ * not a tile anyone has verified is water.
+ *
+ * SO THE FIX CAN BE WRONG IN THE OTHER DIRECTION, and it is worth
+ * knowing what that looks like: if record 9 is NOT water art, the pass
+ * will now shimmer over a dry tile instead of leaving a wet one flat -
+ * the same bug mirrored. It is one entry on the line below to revert.
+ * `window.__tileHere()` (scenes/world.js) prints the record under the
+ * player, its transform, and BOTH tables' answers, so the next tile
+ * that looks wrong either way reports itself as a number.
+ */
+export const SHALLOW_DRAWN = Object.freeze([9]);
+
+/**
+ * WATER-DRAW2 (2026-10-07, Mac with a winter town's screenshot - a pond
+ * of WATER-NEXT's water and in it two flat blue squares round white
+ * islands: "Is there a reason these fucking patches still remain after
+ * our most recent water changes?"): THE TABLE NEVER KNEW THREE KINDS OF
+ * WATER ART, AND EVERY WATER LAW SINCE ASKS IT.
+ *
+ * The squares are records 4 and 19 - water round an island of dirt and
+ * of grass (29 is the stone one; in winter all three islands are snow).
+ * They are neither marching shapes nor in DFU's motor list, so this
+ * table gave them no corner, and PUDDLE-DRY's census, WATER-NEXT's bed,
+ * its silt and its sheet all ask it: the new water stopped at their
+ * edges and the old painted water showed through. Measured on the art
+ * (the colour rule's mask, read at each corner through the pass's own
+ * turn - the method agrees with every shore entry the table already
+ * holds), the same gap holds for two more kinds, and BLOCKS.BSA lays
+ * them all - 1,071 islands, 76 corners and 138 saddles, almost every
+ * one of them in a pond:
+ *
+ *   - ISLAND_DRAWN: water round an island, whole - under the new water
+ *     the tile is the pond's, silt under it, and the island DFU paints
+ *     goes with the painted water (the classic skin draws both, as DFU);
+ *   - CORNER_DRAWN: a ground of two or three kinds with water in one
+ *     corner - record 7's corner, turn for turn;
+ *   - a SADDLE (each shore family's fourth record) laid half turned: the
+ *     marching table writes the two diagonals at turns 0 and 1 only, and a
+ *     block that sets the flip bit (turn 2 or 3) got nothing - a diagonal
+ *     turned half round is itself, so turns 2 and 3 take 0's and 1's.
+ *
+ * The DRAW's alone, as SHALLOW_DRAWN is: DFU walks the player over all
+ * of them dry, and the law's table stays its own.
+ */
+export const ISLAND_DRAWN = Object.freeze([4, 19, 29]);
+export const CORNER_DRAWN = Object.freeze([37, 38, 40, 41, 43, 44]);
+
+/**
+ * The 256-entry water-corner table, indexed by the CONVERTED tile byte
+ * (record << 2 | transform). Bits: 1 = corner (0,0), 2 = (1,0),
+ * 4 = (0,1), 8 = (1,1), in the tilemap's frame (x along the tile row,
+ * y along the column - AssignTilesJob's b0..b3).
+ *
+ * WATER-DRAW1: `drawn` adds the records that READ as water without
+ * being water to DFU's motor - see SHALLOW_DRAWN and WATER-DRAW2's three
+ * above. The default is false, so the law's table is what this function
+ * has always built.
+ */
+export function buildWaterMaskTable(drawn = false) {
+  const table = new Uint8Array(256);
+  for (let t = 0; t < 4; t++) table[(WATER_TILE_INDEX << 2) | t] = 0xF;
+  const lookup = createLookupTable();
+  for (let shape = 0; shape < 16; shape++) {
+    const raw = lookup[shape];               // ring 0: water below, dirt above
+    const record = raw & 0x3f;
+    const k = SHORE_FAMILIES[0].indexOf(record);
+    if (k < 0) continue;                      // shape 0 is bare water (record 0, above), 15 bare dirt
+    const t = convertTile(raw) & 3;
+    const water = (~shape) & 0xF;             // the shape's bits are the DIRT corners
+    for (const family of SHORE_FAMILIES) table[(family[k] << 2) | t] = water;
+  }
+  for (const r of SHALLOW_WHOLE) for (let t = 0; t < 4; t++) table[(r << 2) | t] = 0xF;   // MAC2: the docks, moats and puddles, whole
+  if (!drawn) return table;
+  for (const r of SHALLOW_DRAWN) for (let t = 0; t < 4; t++) table[(r << 2) | t] = 0xF;   // WATER-DRAW1: and what the EYE calls water
+  for (const r of ISLAND_DRAWN) for (let t = 0; t < 4; t++) table[(r << 2) | t] = 0xF;   // WATER-DRAW2: the water round an island
+  const corner = SHORE_FAMILIES[0][2];   // record 7: one corner of water
+  for (const r of CORNER_DRAWN) for (let t = 0; t < 4; t++) table[(r << 2) | t] = table[(corner << 2) | t];   // WATER-DRAW2: a corner of water
+  for (const family of SHORE_FAMILIES) for (const t of [2, 3]) table[(family[3] << 2) | t] = table[(family[3] << 2) | (t - 2)];   // WATER-DRAW2: a saddle half turned
+  return table;
+}
+
+/** The LAW's table: what the player swims in and what the town's
+ *  navigation refuses. DFU's answers, verbatim. */
+export const WATER_MASK_TABLE = buildWaterMaskTable();
+/** WATER-DRAW1: the enhanced PASS's table - what reads as water to the
+ *  eye. The law's, plus SHALLOW_DRAWN and WATER-DRAW2's. */
+export const WATER_DRAW_MASK_TABLE = buildWaterMaskTable(true);
+
+/** The depth a water sheet without a bed stands for (a one-tile stream, the water on ground never carved - world/water/waterBed.js):
+ *  shallow, tinted, and never a shore. AUDIT WATER-NEXT H2: its one home is this leaf - the kernel's worker writes it into a
+ *  sheet's depths and the renderer sets it as a constant, and the leaf is on both their roads already (a home in
+ *  world/water/waterBed.js put one more file on the page's boot, test/render/boot2.test.js). */
+export const NO_BED_DEPTH = 1.2;
+/** AUDIT WATER-NEXT H2: a sheet vertex over ground that was never carved carries this - NO_BED_DEPTH, negated: the water
+ *  shader reads its magnitude as the depth (the tint) and its sign as "no bed under it", which takes no swell. */
+export const SHEET_NO_BED = -NO_BED_DEPTH;
+/** BANK-FLUSH (world/water/waterBed.js SHELF_CHAMFER): the bed's depth one cell (a diagonal) off the bank - the deepest a sheet
+ *  vertex reaches over ground the carve leaves where it stood (BED_DEPTH x bedProfile(4 x 6.4 / 3 / BED_RAMP)). The swell
+ *  grows only past it, so a trough never dips under that ground. Its home is this leaf, as NO_BED_DEPTH's (boot2). */
+export const SHELF_SHEET_DEPTH = 1.668;
+
+/** The table packed eight nibbles to a uint, as the shader's
+ *  `uvec4 uWaterMask[8]` takes it: entry i is word i >> 3, nibble i & 7. */
+export function packWaterMask(table = WATER_MASK_TABLE) {
+  const words = new Uint32Array(32);
+  for (let i = 0; i < 256; i++) words[i >> 3] |= (table[i] & 0xF) << ((i & 7) * 4);
+  return words;
+}
+
+
+/** The water corners of one converted byte (the shader's own lookup, in JS). */
+export const waterCorners = (convertedByte, table = WATER_MASK_TABLE) => table[convertedByte & 0xff];
+
+/** The bilinear coverage the shader computes at (fx, fy) inside a tile -
+ *  the JS twin of this file's own GLSL `coverage()` (the corner-bit
+ *  order bit0=(0,0), bit1=(1,0), bit2=(0,1), bit3=(1,1)). No production
+ *  caller: test/world/terrain/water.test.js holds the two bodies against each other. */
+export function waterCoverage(mask, fx, fy) {
+  const c00 = mask & 1, c10 = (mask >> 1) & 1, c01 = (mask >> 2) & 1, c11 = (mask >> 3) & 1;
+  const top = c00 + (c10 - c00) * fx;
+  const bottom = c01 + (c11 - c01) * fx;
+  return top + (bottom - top) * fy;
+}

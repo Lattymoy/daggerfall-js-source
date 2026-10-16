@@ -76,7 +76,7 @@ export const CLOUD_STATES = Object.freeze(['off', 'none', 'saved', 'busy', 'bad'
  * that stamped each save (`realTime`, ms). This names the fact for the
  * player and decides nothing - bible ACC2 D5 refused a sync that takes
  * the newer by itself, and it still does: the restore is the player's
- * press (ui/enhancedMenu.js), and `pullSlot` never overwrites a slot.
+ * press (ui/enhanced/enhancedMenu.js), and `pullSlot` never overwrites a slot.
  *
  * @param {{gameTime?: number, realTime?: number}|null|undefined} card  the service's row
  * @param {{gameTime?: number, realTime?: number}|null|undefined} local  this device's slot's `dateAndTime`
@@ -95,7 +95,7 @@ export function newerBackup(card, local) {
 /**
  * ═══ THE CLOUD LINE'S STATE, DECIDED WHERE NODE CAN REACH IT ═══════
  *
- * AUDIT-312 F3: this decision lived inside `ui/enhancedMenu.js`, which
+ * AUDIT-312 F3: this decision lived inside `ui/enhanced/enhancedMenu.js`, which
  * is DOM and a boot and which no node pin can drive - so three mutants
  * that change what a player is told about their own backup all
  * SURVIVED the whole suite (an unfinished upload reading as a finished

@@ -23,7 +23,7 @@
 //     USING an item closed it - no key, no touch X, no pad Back.
 //   - ParentPanel.BackgroundColor = Color.clear (:33): no backdrop.
 //   - Refresh() lists LongName per item (:50-57) - DaggerfallUnityItem.LongName,
-//     which is ItemHelper.ResolveItemLongName (systems/itemInfo.js
+//     which is ItemHelper.ResolveItemLongName (systems/item/itemInfo.js
 //     itemLongName). UMI-NAMES (2026-10-07, the field: "Use Magic Item
 //     Menu is crowded"): the factory listed the raw `name` field, so
 //     every potion read its template's "Glass Bottle" (or nothing, off
@@ -46,7 +46,7 @@ import { ListPickerWindow } from './listPicker.js';
 import { ENCHANTMENT_TYPES } from '../formats/magicDef.js';
 import { isPotion } from '../systems/useItem.js';
 import { isEnchanted as defaultIsEnchanted } from '../systems/inventory.js';
-import { itemLongName } from '../systems/itemInfo.js';   // UMI-NAMES: Refresh's LongName (:50-57); L10N3e: its names in the player's language
+import { itemLongName } from '../systems/item/itemInfo.js';   // UMI-NAMES: Refresh's LongName (:50-57); L10N3e: its names in the player's language
 import { audio } from '../systems/audio.js';   // AUDIT 64 F43: MagicItemPicker_OnItemPicked's ButtonClick
 import { SOUND } from '../systems/soundClips.js';
 import { localizedText } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language

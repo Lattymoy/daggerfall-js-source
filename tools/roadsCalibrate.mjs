@@ -18,7 +18,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { MAP_WIDTH, MAP_HEIGHT, WoodsFile } from '../src/formats/woodsFile.js';
 import { MapsFile } from '../src/formats/mapsFile.js';
-import { buildRoadNetwork, ROAD_DIALS, DIR } from '../src/world/roadNetwork.js';
+import { buildRoadNetwork, ROAD_DIALS, DIR } from '../src/world/road/roadNetwork.js';
 import { settlementsOf, WATER_BYTE } from '../src/world/roadsProducer.js';
 import { isMain } from './lib/isMain.mjs';
 

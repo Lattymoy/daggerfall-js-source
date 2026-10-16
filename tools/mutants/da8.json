@@ -4,7 +4,7 @@
     "file": "app/lib/launcherState.cjs",
     "old": "  if (s.update.status === 'installing') return SETUP_DONE.has(s.setup.status) ? 'install' : 'wait';",
     "new": "  if (s.update.status === 'installing') return 'wait';",
-    "tests": ["test/da8_launcher.test.js"],
+    "tests": ["test/tooling/da8_launcher.test.js"],
     "note": "Install-on-quit again: the player launches into the build before the last one, a protocol behind the relay."
   },
   {
@@ -12,63 +12,63 @@
     "file": "app/lib/launcherState.cjs",
     "old": "    case 'check-timeout':\n      if (u.status === 'checking') u.status = 'offline';\n",
     "new": "    case 'check-timeout':\n      if (u.status === 'checking' || u.status === 'downloading') u.status = 'offline';\n",
-    "tests": ["test/da8_launcher.test.js"]
+    "tests": ["test/tooling/da8_launcher.test.js"]
   },
   {
     "name": "DA8-4-play-now-is-the-default-and-enter-skips-the-update",
     "file": "app/lib/launcherState.cjs",
     "old": "    if (SETUP_DONE.has(st.status)) v.statusActions = [{ id: 'play-now', label: 'Play without updating' }];\n",
     "new": "    if (SETUP_DONE.has(st.status)) v.statusActions = [{ id: 'play-now', label: 'Play without updating', primary: true }];\n",
-    "tests": ["test/da8_launcher.test.js"]
+    "tests": ["test/tooling/da8_launcher.test.js"]
   },
   {
     "name": "DA8-5-an-installer-that-never-starts-strands-the-player",
     "file": "app/lib/launcherState.cjs",
     "old": "      if (u.status === 'installing') u.status = 'stuck';\n",
     "new": "",
-    "tests": ["test/da8_launcher.test.js"]
+    "tests": ["test/tooling/da8_launcher.test.js"]
   },
   {
     "name": "DA8-7-a-found-folder-is-taken-silently",
     "file": "app/lib/launcherState.cjs",
     "old": "        st.status = st.found.length ? 'found' : 'none';\n",
     "new": "        st.status = st.found.length ? 'ready' : 'none';\n",
-    "tests": ["test/da8_launcher.test.js"]
+    "tests": ["test/tooling/da8_launcher.test.js"]
   },
   {
     "name": "DA8-9-the-player-reads-the-list-of-pull-requests",
     "file": "app/lib/launcherState.cjs",
     "old": "  return (cut < 0 ? text : text.slice(0, cut)).trim();\n",
     "new": "  return text.trim();\n",
-    "tests": ["test/da8_launcher.test.js"]
+    "tests": ["test/tooling/da8_launcher.test.js"]
   },
   {
     "name": "DA8-12-the-launcher-window-is-not-sandboxed",
     "file": "app/main.cjs",
     "old": "      sandbox: true,\n",
     "new": "      sandbox: false,\n",
-    "tests": ["test/da8_launcher.test.js"]
+    "tests": ["test/tooling/da8_launcher.test.js"]
   },
   {
     "name": "DA8-13-any-window-can-drive-the-launcher",
     "file": "app/main.cjs",
     "old": "const fromLauncher = (e) => !!launcher && e.sender === launcher.win.webContents && ",
     "new": "const fromLauncher = (e) => !!launcher && ",
-    "tests": ["test/da8_launcher.test.js"]
+    "tests": ["test/tooling/da8_launcher.test.js"]
   },
   {
     "name": "DA8-14-the-page-names-any-url-to-open",
     "file": "app/main.cjs",
     "old": "    case 'open': if (Object.hasOwn(LAUNCHER_LINKS, arg)) shell.openExternal(LAUNCHER_LINKS[arg]); break;\n",
     "new": "    case 'open': shell.openExternal(String(arg)); break;\n",
-    "tests": ["test/da8_launcher.test.js"]
+    "tests": ["test/tooling/da8_launcher.test.js"]
   },
   {
     "name": "DA8-15-the-launcher-closes-before-the-game-shows",
     "file": "app/main.cjs",
     "old": "  const lw = l?.win;\n  createWindow({",
     "new": "  const lw = l?.win;\n  lw?.close();\n  createWindow({",
-    "tests": ["test/da8_launcher.test.js"],
+    "tests": ["test/tooling/da8_launcher.test.js"],
     "note": "window-all-closed quits the app on Windows and Linux: the player would see the launcher vanish and nothing come."
   },
   {
@@ -76,56 +76,56 @@
     "file": "app/main.cjs",
     "old": "  autoUpdater().quitAndInstall(true, true);\n}",
     "new": "  autoUpdater().quitAndInstall(false, true);\n}",
-    "tests": ["test/da8_launcher.test.js"]
+    "tests": ["test/tooling/da8_launcher.test.js"]
   },
   {
     "name": "DA8-17-a-mid-session-update-is-never-told",
     "file": "app/main.cjs",
     "old": "    if (!installingNow && !again) { updateReady.told = tellGame({ version, manual: false }); buildMenu(); }\n",
     "new": "    if (!installingNow && !again) { buildMenu(); }\n",
-    "tests": ["test/da8_launcher.test.js"]
+    "tests": ["test/tooling/da8_launcher.test.js"]
   },
   {
     "name": "DA8-19-a-late-subscriber-misses-the-news",
     "file": "app/preload.cjs",
     "old": "    if (updateHeard) cb(updateHeard);\n",
     "new": "",
-    "tests": ["test/da8_launcher.test.js"]
+    "tests": ["test/tooling/da8_launcher.test.js"]
   },
   {
     "name": "DA8-20-anything-is-spoken-as-a-version",
     "file": "src/systems/shellUpdates.js",
     "old": "const versionOf = (info) => (typeof info?.version === 'string' && /^\\d+\\.\\d+\\.\\d+$/.test(info.version) ? info.version : null);\n",
     "new": "const versionOf = (info) => info?.version ?? null;\n",
-    "tests": ["test/da8_launcher.test.js"]
+    "tests": ["test/tooling/da8_launcher.test.js"]
   },
   {
     "name": "DA8-21-a-colour-the-brand-does-not-have",
     "file": "app/launcher/launcher.css",
     "old": ".link { padding: 2px 4px; border: 0; background: none;",
     "new": ".link { padding: 2px 4px; border: 0; background: #ff00ff;",
-    "tests": ["test/da8_launcher.test.js"]
+    "tests": ["test/tooling/da8_launcher.test.js"]
   },
   {
     "name": "DA8-22-patch-notes-from-github-as-markup",
     "file": "app/launcher/launcher.js",
     "old": "      document.querySelector('#news .feed').replaceChildren(...v.news.items.map(notesBlock));\n",
     "new": "      document.querySelector('#news .feed').innerHTML = v.news.items.map((n) => n.text).join('');\n",
-    "tests": ["test/da8_launcher.test.js"]
+    "tests": ["test/tooling/da8_launcher.test.js"]
   },
   {
     "name": "DA8-23-the-page-may-run-inline-and-remote-code",
     "file": "app/launcher/index.html",
     "old": "default-src 'none'; script-src 'self';",
     "new": "default-src *; script-src 'self' 'unsafe-inline';",
-    "tests": ["test/da8_launcher.test.js"]
+    "tests": ["test/tooling/da8_launcher.test.js"]
   },
   {
     "name": "DA8-24-the-launcher-is-not-packed",
     "file": "app/package.json",
     "old": "      \"launcher/**\",\n",
     "new": "",
-    "tests": ["test/da8_launcher.test.js"],
+    "tests": ["test/tooling/da8_launcher.test.js"],
     "note": "The installed app's first window would be a 404."
   },
   {
@@ -133,14 +133,14 @@
     "file": "app/main.cjs",
     "old": "  if (recheckTimer || !updateChecksEnabled()) return;\n",
     "new": "  if (recheckTimer) return;\n",
-    "tests": ["test/autoupdate.test.js"]
+    "tests": ["test/tooling/autoupdate.test.js"]
   },
   {
     "name": "DA8-26-the-notice-downloads-a-page-not-the-file",
     "file": "app/main.cjs",
     "old": "download: file ? listed ?? latestDownloadUrl(file) : url",
     "new": "download: url",
-    "tests": ["test/da8_launcher.test.js"],
+    "tests": ["test/tooling/da8_launcher.test.js"],
     "note": "BR5 (re-aimed by content, AUDIT BR5): the release's own link to the file comes first now."
   },
   {
@@ -148,13 +148,13 @@
     "file": "app/launcher/launcher.js",
     "old": "      if (v.panel === 'setup') document.querySelector('#setup .plaque.primary')?.focus({ preventScroll: true });\n",
     "new": "      if (v.panel === 'setup') document.querySelector('#setup .plaque')?.focus({ preventScroll: true });\n",
-    "tests": ["test/da8_launcher.test.js"]
+    "tests": ["test/tooling/da8_launcher.test.js"]
   },
   {
     "name": "DA8-28-the-installed-app-wears-electrons-icon",
     "file": "app/package.json",
     "old": "    \"icon\": \"../public/icons/icon-512.png\",\n",
     "new": "",
-    "tests": ["test/da8_launcher.test.js"]
+    "tests": ["test/tooling/da8_launcher.test.js"]
   }
 ]

@@ -1,38 +1,38 @@
 [
   {
     "name": "CHAT-POST-magic-left-off",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "    ...itemBriefLines(item, d)].filter(Boolean);",
     "new": "    ].filter(Boolean);",
     "tests": [
-      "test/chatpost.test.js"
+      "test/systems/chatpost.test.js"
     ]
   },
   {
     "name": "CHAT-POST-bound-not-kept",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "  if (text.length <= CHAT_MAX) return text;",
     "new": "  return text;",
     "tests": [
-      "test/chatpost.test.js"
+      "test/systems/chatpost.test.js"
     ]
   },
   {
     "name": "CHAT-POST-cut-mid-word",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "  return `${cut.slice(0, Math.max(cut.lastIndexOf(' '), line.name.length + 2)).replace(/[\\s·]+$/, '')}...`;",
     "new": "  return `${cut}...`;",
     "tests": [
-      "test/chatpost.test.js"
+      "test/systems/chatpost.test.js"
     ]
   },
   {
     "name": "CHAT-POST-offered-offline",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "  if (deps.canPostItem?.()) {",
     "new": "  if (true) {",
     "tests": [
-      "test/chatpost.test.js"
+      "test/systems/chatpost.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  const postItemInChat = (text) => (canPostItemInChat() ? chatSend(chatLog.active, text) === true : false);",
     "new": "  const postItemInChat = (text) => (canPostItemInChat() ? socialLink()?.sendChat(text) === true : false);",
     "tests": [
-      "test/chatpost.test.js"
+      "test/systems/chatpost.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "    postItem: (text) => postItemInChat(text), canPostItem: () => canPostItemInChat(),   // CHAT-POST: an item on the chat's open tab\n",
     "new": "",
     "tests": [
-      "test/chatpost.test.js"
+      "test/systems/chatpost.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "    postItem: (text) => postItemInChat(text), canPostItem: () => canPostItemInChat(),   // CHAT-POST: the building's and the dungeon's packs post too\n",
     "new": "",
     "tests": [
-      "test/chatpost.test.js"
+      "test/systems/chatpost.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "          postItem: (text) => host.postItem?.(text) ?? false, canPostItem: () => host.canPostItem?.() ?? false,   // CHAT-POST: the dungeon's pack posts through the outer host\n",
     "new": "",
     "tests": [
-      "test/chatpost.test.js"
+      "test/systems/chatpost.test.js"
     ]
   }
 ]

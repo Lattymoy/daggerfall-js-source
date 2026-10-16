@@ -5,7 +5,7 @@
     "old": "const signed = { s: who.player.id, n: nameWorn.name, ",
     "new": "const signed = { s: who.player.id, n: displayName(who.player), ",
     "tests": [
-      "test/nameas_service.test.js"
+      "test/net/nameas_service.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "          name: nameWorn.name,   // NAME-AS:",
     "new": "          name: displayName(who.player),   // NAME-AS:",
     "tests": [
-      "test/nameas_service.test.js"
+      "test/net/nameas_service.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "(row?.name_as === 'character' ? 'character' : 'account')",
     "new": "(row?.name_as ? 'character' : 'account')",
     "tests": [
-      "test/nameas_service.test.js"
+      "test/net/nameas_service.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  if (handleLooksLikeEmail(s)) return { why: 'email' };\n",
     "new": "",
     "tests": [
-      "test/nameas_service.test.js"
+      "test/net/nameas_service.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  if (s.length > NAME_MAX) return { why: 'long' };\n",
     "new": "",
     "tests": [
-      "test/nameas_service.test.js"
+      "test/net/nameas_service.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "return { why: 'refused', word: verdict.word };",
     "new": "return { why: 'refused' };",
     "tests": [
-      "test/nameas_service.test.js"
+      "test/net/nameas_service.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "    if (other) return { name: account, why: 'taken' };",
     "new": "    if (other && false) return { name: account, why: 'taken' };",
     "tests": [
-      "test/nameas_service.test.js"
+      "test/net/nameas_service.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": ".bind(character.toLowerCase(), player.id)",
     "new": ".bind(character, player.id)",
     "tests": [
-      "test/nameas_service.test.js"
+      "test/net/nameas_service.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": ".bind(character.toLowerCase(), player.id)",
     "new": ".bind(character.toLowerCase(), '')",
     "tests": [
-      "test/nameas_service.test.js"
+      "test/net/nameas_service.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "  if (refused) return { name: account, ...refused };",
     "new": "  if (refused && false) return { name: account, ...refused };",
     "tests": [
-      "test/nameas_service.test.js"
+      "test/net/nameas_service.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "await db.prepare('UPDATE players SET name_as = ?, last_seen = ? WHERE id = ?').bind(as === 'character' ? 'character' : null, nowS, player.id).run();",
     "new": "void db;",
     "tests": [
-      "test/nameas_service.test.js"
+      "test/net/nameas_service.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": ".bind(as === 'character' ? 'character' : null, nowS, player.id)",
     "new": ".bind(as, nowS, player.id)",
     "tests": [
-      "test/nameas_service.test.js"
+      "test/net/nameas_service.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "    nameAs: nameAsOf(player),\n",
     "new": "",
     "tests": [
-      "test/nameas_service.test.js"
+      "test/net/nameas_service.test.js"
     ]
   },
   {
@@ -122,8 +122,8 @@
     "old": "    name: typeof row.name === 'string' && row.name ? row.name : null,",
     "new": "    name: null,",
     "tests": [
-      "test/nameas_service.test.js",
-      "test/scale4f.test.js"
+      "test/net/nameas_service.test.js",
+      "test/server/scale4f.test.js"
     ]
   },
   {
@@ -132,8 +132,8 @@
     "old": "  if (!reader.handle) return { error: 'reader-guest' };",
     "new": "  if (!reader.handle && false) return { error: 'reader-guest' };",
     "tests": [
-      "test/nameas_service.test.js",
-      "test/mail1.test.js"
+      "test/net/nameas_service.test.js",
+      "test/server/mail1.test.js"
     ]
   },
   {
@@ -142,7 +142,7 @@
     "old": "to: account ? displayName(reader) : reader.handle };",
     "new": "to: reader.handle };",
     "tests": [
-      "test/nameas_service.test.js"
+      "test/net/nameas_service.test.js"
     ]
   },
   {
@@ -151,7 +151,7 @@
     "old": "from: n.author_name, by: n.author, ",
     "new": "from: n.author_name, ",
     "tests": [
-      "test/nameas_service.test.js"
+      "test/net/nameas_service.test.js"
     ]
   },
   {
@@ -160,8 +160,8 @@
     "old": "export const ACCOUNT_VERSION = 'acct145';",
     "new": "export const ACCOUNT_VERSION = 'acct121';",
     "tests": [
-      "test/duel_record.test.js",
-      "test/mail1.test.js"
+      "test/server/duel_record.test.js",
+      "test/server/mail1.test.js"
     ]
   },
   {
@@ -170,7 +170,7 @@
     "old": "adoptIdentity(storage, { ...who, name: who.accountName ?? who.name, secret: session.secret });",
     "new": "adoptIdentity(storage, { ...who, secret: session.secret });",
     "tests": [
-      "test/nameas_client.test.js"
+      "test/net/nameas_client.test.js"
     ]
   },
   {
@@ -179,7 +179,7 @@
     "old": "          ...(typeof answer.data.nameWhy === 'string' && answer.data.nameWhy ? ",
     "new": "          ...(false ? ",
     "tests": [
-      "test/nameas_client.test.js"
+      "test/net/nameas_client.test.js"
     ]
   },
   {
@@ -188,7 +188,7 @@
     "old": "why === 'refused' && typeof who.nameWord === 'string' && who.nameWord ?",
     "new": "why === 'refused' && false ?",
     "tests": [
-      "test/nameas_client.test.js"
+      "test/net/nameas_client.test.js"
     ]
   },
   {
@@ -197,7 +197,7 @@
     "old": " && !(Number.isSafeInteger(was.nameAsAt) && was.nameAsAt >= nameAsAt)) next.nameAsAt = nameAsAt;",
     "new": ") next.nameAsAt = nameAsAt;",
     "tests": [
-      "test/nameas_client.test.js"
+      "test/net/nameas_client.test.js"
     ]
   },
   {
@@ -206,7 +206,7 @@
     "old": "JSON.stringify({ id, name, kind, sessionId, secret, glyphs, aura, nameAsAt })",
     "new": "JSON.stringify({ id, name, kind, sessionId, secret, glyphs, aura })",
     "tests": [
-      "test/nameas_client.test.js"
+      "test/net/nameas_client.test.js"
     ]
   },
   {
@@ -215,7 +215,7 @@
     "old": "const nameAs = r.data?.nameAs === 'character' ? 'character' : 'account';",
     "new": "const nameAs = as;",
     "tests": [
-      "test/nameas_client.test.js"
+      "test/net/nameas_client.test.js"
     ]
   },
   {
@@ -224,7 +224,7 @@
     "old": "    if ((self.account.nameAs ?? 'account') === as) return false;\n",
     "new": "",
     "tests": [
-      "test/nameas_client.test.js"
+      "test/net/nameas_client.test.js"
     ]
   },
   {
@@ -233,7 +233,7 @@
     "old": "      if (!r.ok) return refuse(accountRefusalText(r.error));\n      const nameAs = r.data?.nameAs",
     "new": "      if (!r.ok) { adoptIdentity(storage, { nameAsAt: now(), secret: asked }); return refuse(accountRefusalText(r.error)); }\n      const nameAs = r.data?.nameAs",
     "tests": [
-      "test/nameas_client.test.js"
+      "test/net/nameas_client.test.js"
     ]
   },
   {
@@ -242,34 +242,34 @@
     "old": "nameAsAt: Math.max(now(), Number.isSafeInteger(was) ? was + 1 : 0)",
     "new": "nameAsAt: now()",
     "tests": [
-      "test/nameas_client.test.js"
+      "test/net/nameas_client.test.js"
     ]
   },
   {
     "name": "NAMEAS-the-toggle-unwired",
-    "file": "src/ui/enhancedAccount.js",
+    "file": "src/ui/enhanced/enhancedAccount.js",
     "old": "      b.onclick = () => flow.chooseName(as);",
     "new": "      b.onclick = () => {};",
     "tests": [
-      "test/nameas_client.test.js"
+      "test/net/nameas_client.test.js"
     ]
   },
   {
     "name": "NAMEAS-the-pressed-state-inverted",
-    "file": "src/ui/enhancedAccount.js",
+    "file": "src/ui/enhanced/enhancedAccount.js",
     "old": "      const on = a.nameAs === as;",
     "new": "      const on = a.nameAs !== as;",
     "tests": [
-      "test/nameas_client.test.js"
+      "test/net/nameas_client.test.js"
     ]
   },
   {
     "name": "NAMEAS-a-toggle-for-an-old-service",
-    "file": "src/ui/enhancedAccount.js",
+    "file": "src/ui/enhanced/enhancedAccount.js",
     "old": "    if (a?.nameAs !== 'account' && a?.nameAs !== 'character') return;\n",
     "new": "",
     "tests": [
-      "test/nameas_client.test.js"
+      "test/net/nameas_client.test.js"
     ]
   },
   {
@@ -278,7 +278,7 @@
     "old": "    else if (said !== _nameWhySaid && chatLog)",
     "new": "    else if (chatLog)",
     "tests": [
-      "test/nameas_client.test.js"
+      "test/net/nameas_client.test.js"
     ]
   },
   {
@@ -287,7 +287,7 @@
     "old": "    for (const link of chatLinks?.values?.() ?? []) link.rehello?.();\n",
     "new": "",
     "tests": [
-      "test/nameas_client.test.js"
+      "test/net/nameas_client.test.js"
     ]
   },
   {
@@ -296,7 +296,7 @@
     "old": "    if (first || !online) return;",
     "new": "    if (!online) return;",
     "tests": [
-      "test/nameas_client.test.js"
+      "test/net/nameas_client.test.js"
     ]
   },
   {
@@ -305,7 +305,7 @@
     "old": "    nameAsFrame();   // NAME-AS: a name chosen on this device said again in every room I hold - before the dead return, as the chat's channels keep theirs\n",
     "new": "",
     "tests": [
-      "test/nameas_client.test.js"
+      "test/net/nameas_client.test.js"
     ]
   },
   {
@@ -314,7 +314,7 @@
     "old": "(typeof note.by === 'string' && note.by ? q?.sub === note.by : q?.name === note.from)",
     "new": "(q?.name === note.from)",
     "tests": [
-      "test/nameas_client.test.js"
+      "test/net/nameas_client.test.js"
     ]
   },
   {
@@ -323,8 +323,8 @@
     "old": "writeTo(r.name, '', r.acct);",
     "new": "writeTo(r.name);",
     "tests": [
-      "test/mail1.test.js",
-      "test/nameas_client.test.js"
+      "test/server/mail1.test.js",
+      "test/net/nameas_client.test.js"
     ]
   },
   {
@@ -333,8 +333,8 @@
     "old": "d.to = to.value; d.account = null; });",
     "new": "d.to = to.value; });",
     "tests": [
-      "test/mail1.test.js",
-      "test/nameas_client.test.js"
+      "test/server/mail1.test.js",
+      "test/net/nameas_client.test.js"
     ]
   },
   {
@@ -343,8 +343,8 @@
     "old": "    const toAccount = typeof account === 'string' && ID_RE.test(account) ? account : null;",
     "new": "    const toAccount = null;",
     "tests": [
-      "test/mail1.test.js",
-      "test/nameas_client.test.js"
+      "test/server/mail1.test.js",
+      "test/net/nameas_client.test.js"
     ]
   },
   {
@@ -353,7 +353,7 @@
     "old": "toAccount ? { to, toAccount, subject, body } : { to, subject, body }",
     "new": "toAccount ? { toAccount, subject, body } : { to, subject, body }",
     "tests": [
-      "test/nameas_client.test.js"
+      "test/net/nameas_client.test.js"
     ]
   }
 ]

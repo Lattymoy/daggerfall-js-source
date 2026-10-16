@@ -1,37 +1,37 @@
 [
   {
     "name": "TRADE-KNOWN-knowing-made-volatile",
-    "file": "src/net/realmTradeLaw.js",
+    "file": "src/net/realm/realmTradeLaw.js",
     "old": "export const TRADE_VOLATILE_FIELDS = Object.freeze(['stackCount', 'value', ...RECEIVER_MARKS]);",
     "new": "export const TRADE_VOLATILE_FIELDS = Object.freeze(['stackCount', 'value', ...RECEIVER_MARKS, 'isIdentified']);",
-    "tests": ["test/fb1001_identify.test.js"]
+    "tests": ["test/systems/fb1001_identify.test.js"]
   },
   {
     "name": "TRADE-KNOWN-the-realm-strips-it-from-the-moved-record",
-    "file": "src/net/realmTradeLaw.js",
+    "file": "src/net/realm/realmTradeLaw.js",
     "old": "for (const k of RECEIVER_MARKS) delete rec[k];",
     "new": "for (const k of RECEIVER_MARKS) delete rec[k]; delete rec.isIdentified;",
-    "tests": ["test/fb1001_identify.test.js"]
+    "tests": ["test/systems/fb1001_identify.test.js"]
   },
   {
     "name": "TRADE-KNOWN-the-wire-copy-strips-it",
     "file": "src/systems/tradePack.js",
     "old": "const copy = JSON.parse(JSON.stringify(item));",
     "new": "const copy = JSON.parse(JSON.stringify(item)); delete copy.isIdentified;",
-    "tests": ["test/fb1001_identify.test.js"]
+    "tests": ["test/systems/fb1001_identify.test.js"]
   },
   {
     "name": "TRADE-KNOWN-the-clamp-strips-it",
-    "file": "src/systems/loot.js",
+    "file": "src/systems/loot/loot.js",
     "old": "for (const k of RECEIVER_MARKS) delete out[k];",
     "new": "for (const k of RECEIVER_MARKS) delete out[k]; delete out.isIdentified;",
-    "tests": ["test/fb1001_identify.test.js"]
+    "tests": ["test/systems/fb1001_identify.test.js"]
   },
   {
     "name": "TRADE-KNOWN-the-schema-reads-it-as-no-bool",
-    "file": "src/systems/itemFields.js",
+    "file": "src/systems/item/itemFields.js",
     "old": "  isIdentified: bool(),",
     "new": "  isIdentified: int(),",
-    "tests": ["test/fb1001_identify.test.js"]
+    "tests": ["test/systems/fb1001_identify.test.js"]
   }
 ]

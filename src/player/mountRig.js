@@ -32,16 +32,16 @@
 
 import { TRANSPORT_MODES, isRiding, hasHorse, hasCart } from '../systems/transport.js';
 import { RidingAnimator, loadRidingArt, ridingRect, ridingLook, RIDING_VOLUME_SCALE } from '../systems/riding.js';
-import { riddenHorseLook } from '../systems/horseCoats.js';   // COATS1: the ridden horse's look, which the sprite wears
+import { riddenHorseLook } from '../systems/horse/horseCoats.js';   // COATS1: the ridden horse's look, which the sprite wears
 import { TransportWindow, transportArtLoaded } from '../ui/transportWindow.js';
-import { enhancedWindow } from '../ui/enhancedPorts.js';   // PORT4: the transport picker, in the enhanced skin
+import { enhancedWindow } from '../ui/enhanced/enhancedPorts.js';   // PORT4: the transport picker, in the enhanced skin
 import { ownsShip } from '../systems/banking.js';
-import { horseOffsetHeight, dockedLargeHudHeight } from '../ui/hudLarge.js';   // ROAD-D D10: LargeHUDOffsetHorse; AUDIT-RR F25: EnhancedRiding's own arm asks LargeHUDDocked (EnhancedRiding.cs:256-257)
+import { horseOffsetHeight, dockedLargeHudHeight } from '../ui/hud/hudLarge.js';   // ROAD-D D10: LargeHUDOffsetHorse; AUDIT-RR F25: EnhancedRiding's own arm asks LargeHUDDocked (EnhancedRiding.cs:256-257)
 import { mwViewHides, mwViewDrawSaddle } from './mwView.js';   // AUDIT-EOTB2: the sprite body on screen hides the FPV horse (Eye Of The Beholder's ToggleBillboard); COATS3D: the 3D horse in its place
 import { SOUND } from '../systems/soundClips.js';
 import { isShipAvailable } from '../systems/ship.js';   // RR1: TransportManager.ShipAvailiable, the delegate
 import { NATIVE_SCREEN_HEIGHT } from '../systems/riding.js';   // RR2: the 200-line native screen the sprite scales by
-import { RR_RIDING, rrTerrainAngle, rrTerrainFollow, rrRidingYAdj, rrRidingNeckBand } from '../systems/rrRealism.js';   // RR2: EnhancedRiding's draw laws
+import { RR_RIDING, rrTerrainAngle, rrTerrainFollow, rrRidingYAdj, rrRidingNeckBand } from '../systems/roleplayRealism/rrRealism.js';   // RR2: EnhancedRiding's draw laws
 import { setPitchFloorProvider } from './lookFilter.js';   // RR2: PitchMaxLimit while riding
 import { uiCanvas, onUiScreen } from '../ui/uiScreen.js';   // RETRO-UI: the horse in the pillarbox (TransportManager's CustomScreenRect)
 import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
@@ -244,7 +244,7 @@ export function createMountRig({
         const lift = enhanced ? liftForLook(rect, art, enhanced) : null;   // RR2: EnhancedRiding.OnGUI - the sprite rides the look
         // HORSE-LIT (2026-10-16, Mac: "Horses in first person should be affected by lighting"): THE ROOM'S LIGHT ON THE
         // MOUNT. TransportManager.OnGUI (:285-318) draws the ridingTexture white, and so did this - a bright horse's neck
-        // under a weapon MAC-I darkens, at night and in the dark. It takes the weapon's tint now (combat/weaponRig.js
+        // under a weapon MAC-I darkens, at night and in the dark. It takes the weapon's tint now (combat/weapon/weaponRig.js
         // fpTint): `flatLightAt` at the camera, under the same switch. The 3D horse (mwViewDrawSaddle, above) is drawn
         // in the world's own space and light, and needs none.
         const tint = fpLightingOn() ? (renderer?.flatLightAt?.() ?? undefined) : undefined;

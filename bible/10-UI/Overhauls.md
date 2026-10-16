@@ -15,7 +15,7 @@ top" and "Currently there are no texture packs, it should be empty."
 System pane. Three cards, one look each; the arrows (and Left/Right on a
 focused card) BROWSE, the button WEARS - a look that reloads the game is never
 worn by a stray arrow. `systems/overhauls.js` is the registry and the only
-writer; `ui/enhancedMenu.js paneOverhauls` draws it (`.look-*` rules).
+writer; `ui/enhanced/enhancedMenu.js paneOverhauls` draws it (`.look-*` rules).
 
 - **Texture** - the texture packs: a pack's door, not a second face on the
   Features switches (OVH1b - it stood empty, "No texture packs yet.", until
@@ -53,7 +53,7 @@ pack's pixels. The doors:
   browser on the old WebGL IDL hands back a null texture, and the flag's
   `WeakSet.add(null)` threw - every pack upload a TypeError that took over
   the context-lost notice, where a classic upload does nothing. The flag is
-  set on a texture only (`test/auditretro2.test.js`).
+  set on a texture only (`test/ui/auditretro2.test.js`).
 - `nativePanel.loadImg`, `hud.js`'s loader and `chargenArt.loadOne` ask it
   first (the raw classic bitmap is still read: the size, the fallback, and
   TAMRIEL2's click mask and CHGN00I0's palette cycle, which the pack lacks).
@@ -137,11 +137,11 @@ dungeon's (`dungeonContext.js _restDeps`, through the mode machine) and every
 mirror ask it. The five skin gates are gone. A solo or offline rest on the
 classic skin keeps Daggerfall's own window, byte for byte.
 
-Pins: `test/ovh4_partyrest.test.js` (the real door under a fake document and a
+Pins: `test/scenes/ovh4_partyrest.test.js` (the real door under a fake document and a
 real skin choice; the hosts' wiring by source). Mutants:
 `tools/mutants/ovh4.json` (15, all dead).
 
-Pins: `test/overhauls.test.js`; the browser probe `tools/overhaulsProbe.mjs`
+Pins: `test/ui/overhauls.test.js`; the browser probe `tools/overhaulsProbe.mjs`
 (26 checks):
 - the three cards at a desktop and on a phone;
 - browse vs wear, and Custom;
@@ -192,7 +192,7 @@ its board by its own brightness and laid on the wood), the inventory's shelf box
   a sheet of the older scroll, a tile the shelf box, a band a plank, a tab the pack's wooden tab plate; a press on a
   page is WRITTEN in ink (the inventory's Wagon/Info/Equip strip), on wood in the pack's yellow, and the way out of a
   window (Close, Exit) wears the pack's own red Exit frame. Plus's diamonds go. AUDIT CARDS-PLUS (2026-10-13,
-  `01-Overview/Audit-Cards-Plus.md`): a tile's chosen, pointed-at and keyboard marks are an outline drawn above its box -
+  `01-Overview/audits/Audit-Cards-Plus.md`): a tile's chosen, pointed-at and keyboard marks are an outline drawn above its box -
   they were inset shadows, and the shelf box's fill paints over every inset shadow, so on every dressed page a chosen
   tile looked as the rest (C2); a warn press answers the pointer and the keyboard, its red brighter and struck twice -
   its own red had outweighed the hover's (B1); and the card tables' states are re-said in the dress's own colours, as
@@ -221,7 +221,7 @@ its board by its own brightness and laid on the wood), the inventory's shelf box
 The card offers DFO Grimoire's own rows beside the Plus ones it shares (cursor, item hover, controller): Pages (cream
 page / tan scroll), Backdrop (the desk / the map) and Vitals (upright / in a row), each worn at once.
 
-Pins: `test/grim1_dress.test.js` (10). Mutants: `tools/mutants/grim1.json` (12, all dead). The browser half:
+Pins: `test/ui/grim1_dress.test.js` (10). Mutants: `tools/mutants/grim1.json` (12, all dead). The browser half:
 `tools/grimoireDressProbe.mjs` (8 checks, no ARENA2).
 
 ### GRIM3 - the polish (2026-10-10)
@@ -295,7 +295,7 @@ numbers next to the filters are hardly readable, the + next to the speed multipl
 bars in the ascend and status screen also do not look like the player health/stam/mana bars", "make sure theres not so
 much space left on the book pages when using different resolutions", and of the Tab dial: "instead of words give this
 fitting symbols, all in the style of grimoire" ("not suiting at all ... this is not a happy pixel game" of a drawn set;
-"PIXEL PERFECT please"). Pinned by `test/grim1_dress.test.js` GRIM4, its mutants in `tools/mutants/grim1.json`.
+"PIXEL PERFECT please"). Pinned by `test/ui/grim1_dress.test.js` GRIM4, its mutants in `tools/mutants/grim1.json`.
 
 - **The compass** draws the pack's own COMPASS and COMPBOX at the pack's resolution, smooth, at the compass's size
   (`--gcm`): the game-grid cut stretched pixel for pixel by two and a half smeared every letter.
@@ -326,7 +326,7 @@ fitting symbols, all in the style of grimoire" ("not suiting at all ... this is 
 Dudey: "the "of 5" my inner monk is killing me xD its not in the middle next ot the how many box", "remove those dotted
 lines in the ascend screen under the attributes", "make sure that the points left in the box are centralized ... put
 the points left under the last number of the attributes not too close", "The gold counter is also a bit misplaced",
-"the vial bars are toooshort in the stat screen". Pinned by `test/grim1_dress.test.js` GRIM5.
+"the vial bars are toooshort in the stat screen". Pinned by `test/ui/grim1_dress.test.js` GRIM5.
 
 - **The sheet's vitals** are the HUD's vial drawn to the row's length: its own head (cork and lit shoulder, `head`), its
   body drawn out (`longBody`: each row's own course from shoulder to foot laid over the length, the row's bubbles laid
@@ -343,8 +343,8 @@ the points left under the last number of the attributes not too close", "The gol
 - **TRADE-LOC** (Dudey: "when players trade in any ui the letter of credit doesnt show how many gold its worth when being
   clicked on it in the info box"): the player trade window - the one window every skin opens - says a letter of
   credit's worth (`systems/walletItem.js letterWorthLine`) in the detail a click opens and in the row's hover, for a
-  letter of either side; its value rides the wire whole (`systems/loot.js wireLootItem` floors, never drops it).
-  Pinned by `test/tradeinfo.test.js` TRADE-LOC. TRADE-LOC II (`01-Overview/Field-Bugs-2026-10-11d.md`): and on the
+  letter of either side; its value rides the wire whole (`systems/loot/loot.js wireLootItem` floors, never drops it).
+  Pinned by `test/systems/tradeinfo.test.js` TRADE-LOC. TRADE-LOC II (`01-Overview/bugs/Field-Bugs-2026-10-11d.md`): and on the
   row itself, under the letter's name - no hover on a phone, and two letters told apart without a click each - and as
   the pack's card's Worth (`letterWorthGold`).
 
@@ -355,13 +355,13 @@ blurry and also badly cutout ... looks at this drawn style of the book and helme
 button in dungeon 3d handdrawn map", "When i press on retro look in main menu settings ... the menu misplaces", "The
 bonus points left number is still quite big compared to the 47 and not in the same row and not under it", "The chat
 fonts when i type in it are white", "make sure the blue event text is readable when the chat box is not open", "give
-the main menu button presses the same sound as ingame", "box fonts leaving the box". Pinned by `test/grim1_dress.test.js`
-GRIM6 and `test/snd.test.js` SND2.
+the main menu button presses the same sound as ingame", "box fonts leaving the box". Pinned by `test/ui/grim1_dress.test.js`
+GRIM6 and `test/ui/snd.test.js` SND2.
 
 - **The front door's desk** (and the loading screen's) is the pack's BIOG00I0 at its own resolution, drawn smooth.
 - **The dial's chest** (GRIM7, Dudey: "here this chest chatgpt made is great make sure it fits the other symbols") is
   the painted chest Dudey supplied, cut from its dark ground along its outline and shipped
-  (`public/art/grimoire-dial-chest.png`, its doctrine row in `test/doctrine.test.js`) - the one dial symbol shipped as
+  (`public/art/grimoire-dial-chest.png`, its doctrine row in `test/tooling/doctrine.test.js`) - the one dial symbol shipped as
   a file (the pack paints its own chest at 35 pixels, too small for the dial); the dial draws it DOWN, as the helm and
   the book.
 - **The settings never jump**: Plus's ground canvas (hidden under the dress, 1200 pixels tall in a 960 frame) let a
@@ -386,7 +386,7 @@ sigil's teal 35% (`SIGIL_INK`) - every set colour then reads at 4.5:1 or better.
 light wash of its colour with an inked edge and pips; a set's tier not yet awake is written in faint ink, no longer
 faded to 55%. **PACK-ROOM**: with the worn map held to its column, the figure left each flank ~80px and a pair's names
 broke a letter at a time; the goods' column is now `minmax(230px, 290px)` and the figure at most 210px wide. Pinned by
-`test/grim1_dress.test.js` INK-TONES.
+`test/ui/grim1_dress.test.js` INK-TONES.
 
 ### DESK-FILL - the front door's desk as big as the screen holds it (2026-10-10)
 
@@ -395,7 +395,7 @@ Mac, of the front door as an earlier build drew it: "it looks way better use thi
 desk is drawn smooth at its own resolution, and the rounding only shrank it - at 1985 x 947 four to one, 800 tall in a
 dark room, where 4.7 fills the screen. `--gd` is now `grimoireArt.js deskScale`: the exact fit, the whole desk (candle,
 inkwell, quill) touching two edges of the screen, the book and its doors following it (`--gbw`/`--gbh`). The wordmark
-is untouched. Pinned by `test/grim1_dress.test.js` DESK-FILL.
+is untouched. Pinned by `test/ui/grim1_dress.test.js` DESK-FILL.
 
 ### DESK-HD - the detailed desk under the front door (2026-10-10)
 
@@ -406,7 +406,7 @@ lifted from Mac's screenshot of that build - the desk's rectangle at that build'
 words inpainted from the paper round them, the wordmark replaced by the wood beside it, its edges feathered into the
 room - and ships as `public/art/grimoire-desk.jpg` (`grimoireArt.js grimoireDeskUrl`). It already carries its room's
 dark edges, so no vignette is laid over it; BIOG00I0 stands under it as the fallback. Its doctrine row awaits Mac's
-note of where that build's painting came from. Pinned by `test/grim1_dress.test.js` DESK-HD.
+note of where that build's painting came from. Pinned by `test/ui/grim1_dress.test.js` DESK-HD.
 
 ### WOOD-HD - every board in the soft desk wood (2026-10-10)
 
@@ -417,7 +417,7 @@ wood, cut from the empty board beside the book in Mac's screenshot, its light fl
 (`public/art/grimoire-wood.jpg`, `grimoireArt.js WOOD_TILE` 100 x 189 of the game's pixels - the size it was painted at
 on three screen pixels to one). It is resampled once at the grid's own device pixels (`--gp`), so the kit's pixelated
 drawing lays it one to one and it stays smooth; the frame, built at the game's own size, takes a copy at that size. The
-INFO01I0 cut stands in only if the file cannot load. Pinned by `test/grim1_dress.test.js` WOOD-HD.
+INFO01I0 cut stands in only if the file cannot load. Pinned by `test/ui/grim1_dress.test.js` WOOD-HD.
 
 ### LOGO-MEND - the Daggerfall Online logo's torn rows and sliced tops (2026-10-10)
 
@@ -428,7 +428,7 @@ door, the section masthead - is mended at once: five 4-row strips of torn rows (
 carried back in; and the art moved down 8 rows (into the 81 empty rows under the banner, so the file stays 2112 x 850
 and `brandMark.js`'s size and the doors' `81 / 2112` pull are unchanged), the black outline closed over the tops of
 T, E, l, d and S that the old top edge had sliced flat. The red scribble through ENHANCED is kept: the deliberate
-strike-through. `test/intro.test.js`'s hash of the file moves with it (`28b16729...`).
+strike-through. `test/ui/intro.test.js`'s hash of the file moves with it (`28b16729...`).
 - **DESK-SEAM (2026-10-10)**: Mac, arrows at the wood left of the wordmark: the wordmark's place on the desk had been
   filled with a block of wood lifted from beside it, and its edges showed as a seam (a smooth box among the planks).
   The place is now filled row by row from the SAME row's wood on both sides (the planks run across: a few pixels
@@ -440,24 +440,24 @@ strike-through. `test/intro.test.js`'s hash of the file moves with it (`28b16729
 The GRIM pass arrived as a drop-in cut from main at #733 (`fadd7bda`); each file it changed was merged three ways onto
 main's head, so nothing main had moved since was reverted (BAL4's `enhancedAI` default, PERF-HUD1's one sweep clock).
 Four gates the drop-in's own tree did not pass were met here:
-- **ONE DFU MEMBER, ONE EXPORT** (`test/audit24_onehome.test.js`): `grimoireArt.js` exported a `bayer` nothing called
-  (the 4 x 4 dither `world/sdPixelKit.js` already exports) - deleted; and its `toNative`, the 3x crop brought back to
+- **ONE DFU MEMBER, ONE EXPORT** (`test/systems/talk/audit24_onehome.test.js`): `grimoireArt.js` exported a `bayer` nothing called
+  (the 4 x 4 dither `world/superDungeon/sdPixelKit.js` already exports) - deleted; and its `toNative`, the 3x crop brought back to
   the game's grid, shared a name with `mouseControlsWindow.js`'s rect offset - renamed `toGameGrid`.
-- **THE HUD STAYS LIGHT** (`test/guide3_herald.test.js`, `test/guide4_tracker.test.js`): SND2 is wired through
+- **THE HUD STAYS LIGHT** (`test/ui/quest/guide3_herald.test.js`, `test/ui/quest/guide4_tracker.test.js`): SND2 is wired through
   `main.js`'s data gate (above), never a data module named in the click's.
-- **HUD-CLASS** (`test/hudclass_sheets.test.js`): the dress's sheet is built in functions, so the audit of the game's
+- **HUD-CLASS** (`test/ui/naval/hudclass_sheets.test.js`): the dress's sheet is built in functions, so the audit of the game's
   sheets could not read its selectors; it is exported evaluated (`GRIMOIRE_KIT_CSS`, the text `mountGrimoireDress`
   lays). Read, two of its rules styled the bare `.on` the HUD writes: a chosen press on the page and on wood. Each is
   now named by its own press root (`PRESS_ROOTS`, the only elements the dress stamps `data-grim-on` on), and holds only
   at rest - its added weight never beats the hover that won by order - and the wood's underline gives way to a
   disabled press, as it did.
-- **The suite's count** (`test/manifest.test.js`): the drop-in's `grim1_dress.test.js` row said 16 of its 20 tests.
+- **The suite's count** (`test/bible/manifest.test.js`): the drop-in's `grim1_dress.test.js` row said 16 of its 20 tests.
 
 ### GRIM-FIELD - the bug thread's round (2026-10-11)
 
 Two drop-ins on the DFO Grimoire bug thread - the readability-and-bars patch, then a cumulative round that carries it
 whole - merged onto main's head (#779): every hunk applied as it stood but `Testing.md`'s Suite line, recounted on the
-merged tree. Each fix's record is the comment over it in the dress; the pins are `test/grim1_dress.test.js` (23 now)
+merged tree. Each fix's record is the comment over it in the dress; the pins are `test/ui/grim1_dress.test.js` (23 now)
 and the files named below.
 
 - **THE INK** (`ui/grimoireDress.js`). INK-VARS: a `var(--x, fallback)` is read as --x's colour - re-saying the fallback
@@ -468,7 +468,7 @@ and the files named below.
 - **NO-LINES** (a player: "those weird lines everywhere, those are not needed"): a page of the pack is not ruled - the
   talk window's two pages part by the scroll's own shading, a profession is a line on its page and not a box, a career
   group of Master Skills its name in red over the pack's dotted rule.
-- **THE BARS** (`ui/grimoireArt.js`, `ui/hudLayout.js`). FOE-PLATE / VIAL-LONG: no drain on any bar, the foe's and the
+- **THE BARS** (`ui/grimoireArt.js`, `ui/hud/hudLayout.js`). FOE-PLATE / VIAL-LONG: no drain on any bar, the foe's and the
   boss's glass drawn out at any length with nothing behind it, the upright vials lengthened as height. BAR-SCREEN: the
   two bars are the screen's size, not a pixel count (the foe's glass 1.75% of the view's height, never under 13; the
   boss's 1.4 times it). HUD-LEN: the HUD editor's (Alt+U) length handle follows the pointer by a measured step, never
@@ -481,17 +481,17 @@ and the files named below.
   picture, which painted over the kit's inset line.
 - **THE HELD MAP** (`ui/heldMap.js` FINDME-SHEET): its root says which sheet is up (`data-hm-sheet`), so the dress takes
   Find me off the dungeon's sheet alone and the world's and the town's keep it beside Close.
-- **NOT THE DRESS'S, ON THE SAME THREAD**: HOTBAR-LAG (`ui/enhancedHotbar.js`, `test/ui1_slots.test.js`) - a press plays
+- **NOT THE DRESS'S, ON THE SAME THREAD**: HOTBAR-LAG (`ui/enhanced/enhancedHotbar.js`, `test/ui/enhanced/ui1_slots.test.js`) - a press plays
   the caption's fade through the browser's animation instead of a class off, a forced layout and the class back (two
-  restyles a press, ~10 ms under the dress's wood); NOTE-KEYS (`ui/questJournal.js`, `test/audit26_uiwindows2.test.js`)
+  restyles a press, ~10 ms under the dress's wood); NOTE-KEYS (`ui/quest/questJournal.js`, `test/ui/audit26_uiwindows2.test.js`)
   - the journal's note field takes its letters by the native route, as a native window is handed raw codes, and the
   move/remove box its Y and N.
 
 Two gates the drop-in's own tree did not pass were met on the merge:
-- **THE ROSTER** (`test/classicinputbox.test.js`, CM3-CM11): the drop-in's NOTE-KEYS typed the journal's note into the
+- **THE ROSTER** (`test/ui/classicinputbox.test.js`, CM3-CM11): the drop-in's NOTE-KEYS typed the journal's note into the
   journal's own art through `typedChar` - the inline field CM3-CM11 retired everywhere else. EnterNote now PUSHES the
   one `InputMessageBoxWindow` (the prompt above `" > "`, MaxLineLenth 70, WidthOverride 318), which reads both hosts'
   spellings; the confirm box's Y and N read the shortcut table (`hotkeyHit`); the roster names the journal
   (`10-UI/UI-Arc.md` NOTE-KEYS).
-- **DISC25-A A7** (`test/disc25a_dungeon_map.test.js`): FINDME-SHEET's stamp stood between a sheet's mount and the foot's
+- **DISC25-A A7** (`test/ui/disc25a_dungeon_map.test.js`): FINDME-SHEET's stamp stood between a sheet's mount and the foot's
   `_writeHint`, the pair the pin reads as one; it stands after them.

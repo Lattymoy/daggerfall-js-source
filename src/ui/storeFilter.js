@@ -19,7 +19,7 @@
 // is why it stands beside them rather than among them. The search matches the row's own name, lower-cased.
 //
 // Classic skin: not drawn there. THE NATIVE-WINDOW RULE (bible/Home.md) holds every element of a native window to a DFU
-// source, and DFU's window has no control for this; shift-click (ui/nativeInventory.js) is the classic skin's half.
+// source, and DFU's window has no control for this; shift-click (ui/native/nativeInventory.js) is the classic skin's half.
 import { PACK_PAGES, pageOf } from './packPages.js';
 import { isMaterialItem } from '../systems/materialsBag.js';
 

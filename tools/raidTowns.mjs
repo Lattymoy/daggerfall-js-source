@@ -2,7 +2,7 @@
 // RAID-ROLL (2026-09-28, Mac: "Fix it" - the relay held no copy of the day's raid schedule): THE TOWNS TABLE'S HASH,
 // the value the relay's RAID_TOWNS_SHA256 pins (server/wrangler.toml).
 //
-// The relay reads every raid word against the day's own draws with no game data at all (net/raidLaw.js
+// The relay reads every raid word against the day's own draws with no game data at all (net/raid/raidLaw.js
 // raidDaySlots: a raid's start, party and target), and against the day's WHOLE roll - its town, key and pixel too -
 // once it holds the towns table. The table is the player's game data (MAPS.BSA's rows and the travel map's region
 // picker, TRAV0I01.IMG), so it is never in this repository and never on the relay until a client hands it over; what
@@ -18,7 +18,7 @@ import { join } from 'node:path';
 import { MapsFile } from '../src/formats/mapsFile.js';
 import { ImgFile } from '../src/formats/imgFile.js';
 import { raidRegions } from '../src/systems/raidingParties.js';
-import { raidTownsCanon, raidTownsHash, readRaidTowns } from '../src/net/raidLaw.js';
+import { raidTownsCanon, raidTownsHash, readRaidTowns } from '../src/net/raid/raidLaw.js';
 import { isMain } from './lib/isMain.mjs';
 
 /** The towns table of the game files in `arena2`, in its one spelling, and its hash - what the game's own

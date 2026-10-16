@@ -2,7 +2,7 @@
 // MWNPC4 (2026-10-09, the MW-NPC arc's fourth slice - bible/04-Characters/Morrowind-NPCs.md section 9): THE NPC LANE.
 //
 // Every living actor the arc stands in a Morrowind body - a foe, the watch, a townsperson, a person in a building - is
-// drawn the way an online peer already is (net/peerBodies.js): a `createFpArm()` rig built from a LOOK, posed off a
+// drawn the way an online peer already is (net/peer/peerBodies.js): a `createFpArm()` rig built from a LOOK, posed off a
 // POSE, budgeted by the laws PEER-CADENCE, WB9h and MW-CROWD proved on a crowd of players (the view cull and its turn
 // lead, the skin budget, the distance cadence, the swap dwell, the spares, the linger, the range), skinned on the GPU
 // (MWNPC1) and drawn in the body pass's one bind (MWNPC2). The family and the card table's regulars already ride that
@@ -21,7 +21,7 @@
 //     `dd`, the death (playRandomDeath) - see combat/fpArm.js `hurt`/`die`.
 //
 // The populations' adapters (which actor wears what - MWNPC5 onward) fill the actor; this module never reads a host.
-import { PeerBodies, BODY_BUILD_GATE } from '../net/peerBodies.js';
+import { PeerBodies, BODY_BUILD_GATE } from '../net/peer/peerBodies.js';
 import { getPref } from '../systems/uiPrefs.js';
 import { isEnhanced } from '../systems/uiSkin.js';
 import { morrowindDataCount, morrowindDataGeneration } from '../scenes/dataSource.js';

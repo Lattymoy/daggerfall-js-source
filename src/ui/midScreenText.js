@@ -2,7 +2,7 @@
 //
 // DaggerfallHUD owns TWO text surfaces, not one. `popupText` is
 // PopupText - a stacking seven-row queue at the TOP of the native
-// panel, ported as ui/hudText.js - and `midScreenTextLabel` is a
+// panel, ported as ui/hud/hudText.js - and `midScreenTextLabel` is a
 // single centred TextLabel with its own timer that REPLACES itself on
 // every write (DaggerfallHUD.cs:32-33, two distinct fields). The port
 // had only the first, so every SetMidScreenText caller - the
@@ -46,14 +46,14 @@
 // enhanced version"): THE LABEL IS THE SKIN'S, THE TIMER IS DFU'S.
 // Everything below - the sentinel, the 1.5 s delay, the large-HUD lift
 // - is DaggerfallHUD and stays it on both skins; only `draw` branches,
-// handing the live line to ui/enhancedHudText.js's DOM label. The
+// handing the live line to ui/enhanced/enhancedHudText.js's DOM label. The
 // classic arm is byte for byte what it was, and `hide()` exists for
 // the same reason HudText's does: a DOM line is not repainted, so a
 // frame that must not show it has to SAY so (AUDIT 64 F37).
 import { drawText, measureText } from './text.js';
-import { nativeMetrics, NATIVE_W, DEFAULT_TEXT_COLOR } from './nativePanel.js';
+import { nativeMetrics, NATIVE_W, DEFAULT_TEXT_COLOR } from './native/nativePanel.js';
 import { isEnhanced } from '../systems/uiSkin.js';
-import { drawEnhancedMidText, midTextTopPx } from './enhancedHudText.js';
+import { drawEnhancedMidText, midTextTopPx } from './enhanced/enhancedHudText.js';
 import { timeScale } from '../systems/timeScale.js';   // CSA-G: the timer adds Time.deltaTime, which the time scale scales
 
 /** DaggerfallHUD.cs:25 `const int midScreenTextDefaultY = 146`, the

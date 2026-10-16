@@ -5,8 +5,8 @@
     "old": "  if (online && slot.crossed) return { kind: 'crossed' };",
     "new": "",
     "tests": [
-      "test/auditrealm2_customs.test.js",
-      "test/restore.test.js"
+      "test/systems/auditrealm2_customs.test.js",
+      "test/systems/restore.test.js"
     ]
   },
   {
@@ -15,8 +15,8 @@
     "old": "  if (online && player.shipCrossed) return { kind: 'crossed' };",
     "new": "",
     "tests": [
-      "test/auditrealm2_customs.test.js",
-      "test/restore.test.js"
+      "test/systems/auditrealm2_customs.test.js",
+      "test/systems/restore.test.js"
     ]
   },
   {
@@ -25,8 +25,8 @@
     "old": "  if (online && slot.crossed) return",
     "new": "  if (slot.crossed) return",
     "tests": [
-      "test/auditrealm2_customs.test.js",
-      "test/restore.test.js"
+      "test/systems/auditrealm2_customs.test.js",
+      "test/systems/restore.test.js"
     ]
   },
   {
@@ -35,8 +35,8 @@
     "old": "  delete slot.crossed;   // RESTORE: a house bought is the buyer's own",
     "new": "  void slot;   // RESTORE: a house bought is the buyer's own",
     "tests": [
-      "test/auditrealm2_customs.test.js",
-      "test/restore.test.js"
+      "test/systems/auditrealm2_customs.test.js",
+      "test/systems/restore.test.js"
     ]
   },
   {
@@ -45,7 +45,7 @@
     "old": "  delete player.shipCrossed;   // RESTORE: a ship bought is the buyer's own",
     "new": "  void player;   // RESTORE: a ship bought is the buyer's own",
     "tests": [
-      "test/restore.test.js"
+      "test/systems/restore.test.js"
     ]
   },
   {
@@ -54,7 +54,7 @@
     "old": "export function resetShip(player) { player.ownedShip = SHIP_TYPES.None; delete player.boatCabinLink; delete player.shipCrossed; }",
     "new": "export function resetShip(player) { player.ownedShip = SHIP_TYPES.None; delete player.boatCabinLink; }",
     "tests": [
-      "test/restore.test.js"
+      "test/systems/restore.test.js"
     ]
   },
   {
@@ -63,8 +63,8 @@
     "old": "  if (!online) return null;\n  const slot = houses?.[regionIndex];",
     "new": "  const slot = houses?.[regionIndex];",
     "tests": [
-      "test/auditrealm2_customs.test.js",
-      "test/restore.test.js"
+      "test/systems/auditrealm2_customs.test.js",
+      "test/systems/restore.test.js"
     ]
   },
   {
@@ -73,8 +73,8 @@
     "old": "kind === 'ship' ? ownsShip(player) && !!player?.shipCrossed :",
     "new": "kind === 'house' ? ownsShip(player) && !!player?.shipCrossed :",
     "tests": [
-      "test/auditrealm2_customs.test.js",
-      "test/restore.test.js"
+      "test/systems/auditrealm2_customs.test.js",
+      "test/systems/restore.test.js"
     ]
   },
   {
@@ -83,7 +83,7 @@
     "old": "const crossed = this.hooks.crossedDeed?.('house');",
     "new": "const crossed = null;",
     "tests": [
-      "test/restore.test.js"
+      "test/systems/restore.test.js"
     ]
   },
   {
@@ -92,7 +92,7 @@
     "old": "const crossed = this.hooks.crossedDeed?.('ship');",
     "new": "const crossed = null;",
     "tests": [
-      "test/restore.test.js"
+      "test/systems/restore.test.js"
     ]
   },
   {
@@ -101,54 +101,54 @@
     "old": "crossedDeedLines(kind, { houses: playerEntity.houses, regionIndex: bankRegion(), player: playerEntity })",
     "new": "crossedDeedLines(kind, { houses: playerEntity.houses, regionIndex: 0, player: playerEntity })",
     "tests": [
-      "test/restore.test.js"
+      "test/systems/restore.test.js"
     ]
   },
   {
     "name": "RESTORE-A-the-ship-mark-unsaved",
-    "file": "src/systems/save.js",
+    "file": "src/systems/save/save.js",
     "old": "  if (entity.shipCrossed === true) snap.shipCrossed = true;",
     "new": "",
     "tests": [
-      "test/restore.test.js"
+      "test/systems/restore.test.js"
     ]
   },
   {
     "name": "RESTORE-A-the-ship-mark-unrestored",
-    "file": "src/systems/save.js",
+    "file": "src/systems/save/save.js",
     "old": "  if (snap.shipCrossed === true) entity.shipCrossed = true; else delete entity.shipCrossed;",
     "new": "  delete entity.shipCrossed;",
     "tests": [
-      "test/restore.test.js"
+      "test/systems/restore.test.js"
     ]
   },
   {
     "name": "RESTORE-A-a-stale-mark-kept",
-    "file": "src/systems/save.js",
+    "file": "src/systems/save/save.js",
     "old": "entity.shipCrossed = true; else delete entity.shipCrossed;",
     "new": "entity.shipCrossed = true;",
     "tests": [
-      "test/restore.test.js"
+      "test/systems/restore.test.js"
     ]
   },
   {
     "name": "RESTORE-A-a-crossed-house-counted",
-    "file": "src/net/realmGoldLaw.js",
+    "file": "src/net/realm/realmGoldLaw.js",
     "old": "slot?.buildingKey > 0 && !slot.crossed)",
     "new": "slot?.buildingKey > 0)",
     "tests": [
-      "test/house_loss.test.js",
-      "test/auditrealm2_customs.test.js"
+      "test/systems/house_loss.test.js",
+      "test/systems/auditrealm2_customs.test.js"
     ]
   },
   {
     "name": "RESTORE-A-a-crossed-ship-counted",
-    "file": "src/net/realmGoldLaw.js",
+    "file": "src/net/realm/realmGoldLaw.js",
     "old": "if (ownsShip(snap) && !snap.shipCrossed) {",
     "new": "if (ownsShip(snap)) {",
     "tests": [
-      "test/house_loss.test.js",
-      "test/auditrealm2_customs.test.js"
+      "test/systems/house_loss.test.js",
+      "test/systems/auditrealm2_customs.test.js"
     ]
   },
   {
@@ -157,8 +157,8 @@
     "old": "  const crossed = crossDeeds(snap);",
     "new": "  const crossed = [];",
     "tests": [
-      "test/house_loss.test.js",
-      "test/auditrealm2_customs.test.js"
+      "test/systems/house_loss.test.js",
+      "test/systems/auditrealm2_customs.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "    if (!permanent.has(name) || houses[region]?.buildingKey > 0) continue;",
     "new": "    if (houses[region]?.buildingKey > 0) continue;",
     "tests": [
-      "test/restore.test.js"
+      "test/systems/restore.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "    if (!permanent.has(name) || houses[region]?.buildingKey > 0) continue;",
     "new": "    if (!permanent.has(name)) continue;",
     "tests": [
-      "test/restore.test.js"
+      "test/systems/restore.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "mapId: slot.mapId, buildingKey: slot.buildingKey, crossed: true };",
     "new": "mapId: slot.mapId, buildingKey: slot.buildingKey };",
     "tests": [
-      "test/restore.test.js"
+      "test/systems/restore.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "      ours.decor.push({ ...p, paid: 0 });",
     "new": "      ours.decor.push({ ...p });",
     "tests": [
-      "test/restore.test.js"
+      "test/systems/restore.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "      if (!p || p.item || standing.has(p.id)) continue;",
     "new": "      if (!p || standing.has(p.id)) continue;",
     "tests": [
-      "test/restore.test.js"
+      "test/systems/restore.test.js"
     ]
   },
   {
@@ -212,7 +212,7 @@
     "old": "      if (!p || p.item || standing.has(p.id)) continue;",
     "new": "      if (!p || p.item) continue;",
     "tests": [
-      "test/restore.test.js"
+      "test/systems/restore.test.js"
     ]
   },
   {
@@ -221,7 +221,7 @@
     "old": "    if (permanent.has(name)) {\n      realm.ownedShip = ship;",
     "new": "    if (true) {\n      realm.ownedShip = ship;",
     "tests": [
-      "test/restore.test.js"
+      "test/systems/restore.test.js"
     ]
   },
   {
@@ -230,7 +230,7 @@
     "old": "if (ship !== SHIP_TYPES.None && (realm.ownedShip ?? SHIP_TYPES.None) === SHIP_TYPES.None) {",
     "new": "if (ship !== SHIP_TYPES.None) {",
     "tests": [
-      "test/restore.test.js"
+      "test/systems/restore.test.js"
     ]
   },
   {
@@ -239,7 +239,7 @@
     "old": "      realm.shipCrossed = true;\n",
     "new": "",
     "tests": [
-      "test/restore.test.js"
+      "test/systems/restore.test.js"
     ]
   },
   {
@@ -248,7 +248,7 @@
     "old": "find((/** @type {any} */ e) => e?.snap?.characterId === origin)",
     "new": "find(() => true)",
     "tests": [
-      "test/restore.test.js"
+      "test/systems/restore.test.js"
     ]
   },
   {
@@ -257,7 +257,7 @@
     "old": "origin: row?.origin_id ?? null };",
     "new": "origin: null };",
     "tests": [
-      "test/restore.test.js"
+      "test/systems/restore.test.js"
     ]
   },
   {
@@ -266,7 +266,7 @@
     "old": "const realmGiven = realmBoot?.origin ? reclaimFromDevice(bootSnapRead, realmBoot.origin) : null;",
     "new": "const realmGiven = null;",
     "tests": [
-      "test/restore.test.js"
+      "test/systems/restore.test.js"
     ]
   },
   {
@@ -275,7 +275,7 @@
     "old": "${back.houses.length + (back.ship ? 1 : 0) > 1 ? 'They are' : 'It is'}",
     "new": "${'It is'}",
     "tests": [
-      "test/restore.test.js"
+      "test/systems/restore.test.js"
     ]
   },
   {
@@ -284,7 +284,7 @@
     "old": "    if (maintaining(env)) return no('maintenance', 503, origin);\n",
     "new": "",
     "tests": [
-      "test/realm_restore.test.js"
+      "test/net/realm_restore.test.js"
     ]
   },
   {
@@ -293,7 +293,7 @@
     "old": "...(maintaining(env) ? { maintenance: true } : {})",
     "new": "...({})",
     "tests": [
-      "test/realm_restore.test.js"
+      "test/net/realm_restore.test.js"
     ]
   },
   {
@@ -302,7 +302,7 @@
     "old": "export const maintaining = (/** @type {any} */ env) => env?.MAINTENANCE === '1';",
     "new": "export const maintaining = (/** @type {any} */ env) => !env;",
     "tests": [
-      "test/realm_restore.test.js"
+      "test/net/realm_restore.test.js"
     ]
   },
   {
@@ -311,7 +311,7 @@
     "old": "    if (t.p && !realmIds.has(t.c)) held.add(t.p);",
     "new": "",
     "tests": [
-      "test/realm_restore.test.js"
+      "test/net/realm_restore.test.js"
     ]
   },
   {
@@ -320,7 +320,7 @@
     "old": ".filter((o) => !standing.has(o)).sort();",
     "new": ".sort();",
     "tests": [
-      "test/realm_restore.test.js"
+      "test/net/realm_restore.test.js"
     ]
   },
   {
@@ -329,7 +329,7 @@
     "old": "        if (nowHome && (nowHome.player !== player || String(nowHome.char_id).startsWith('guild:'))) {",
     "new": "        if (false) {",
     "tests": [
-      "test/realm_restore.test.js"
+      "test/net/realm_restore.test.js"
     ]
   },
   {
@@ -338,7 +338,7 @@
     "old": "        if (nowHome && nowHome.player === player && nowHome.char_id === origin) continue;   // never lost\n",
     "new": "",
     "tests": [
-      "test/realm_restore.test.js"
+      "test/net/realm_restore.test.js"
     ]
   },
   {
@@ -347,7 +347,7 @@
     "old": " AND NOT EXISTS (SELECT 1 FROM realm_characters WHERE origin_id = ${lit(origin)});`);",
     "new": ";`);",
     "tests": [
-      "test/realm_restore.test.js"
+      "test/net/realm_restore.test.js"
     ]
   },
   {
@@ -356,7 +356,7 @@
     "old": "        else if (members >= GUILD_MEMBERS_MAX)",
     "new": "        else if (false)",
     "tests": [
-      "test/realm_restore.test.js"
+      "test/net/realm_restore.test.js"
     ]
   },
   {
@@ -365,7 +365,7 @@
     "old": "        else if (place.rank === GUILD_RANK_MASTER && master)",
     "new": "        else if (false)",
     "tests": [
-      "test/realm_restore.test.js"
+      "test/net/realm_restore.test.js"
     ]
   },
   {
@@ -374,7 +374,7 @@
     "old": "  return `INSERT OR IGNORE INTO ${table}",
     "new": "  return `INSERT INTO ${table}",
     "tests": [
-      "test/realm_restore.test.js"
+      "test/net/realm_restore.test.js"
     ]
   },
   {
@@ -383,7 +383,7 @@
     "old": "        if: always() && env.REWOUND == '1'",
     "new": "        if: env.REWOUND == '1'",
     "tests": [
-      "test/realm_restore.test.js"
+      "test/net/realm_restore.test.js"
     ]
   },
   {
@@ -392,7 +392,7 @@
     "old": "        if: always() && env.REWOUND != '1'",
     "new": "        if: always()",
     "tests": [
-      "test/realm_restore.test.js"
+      "test/net/realm_restore.test.js"
     ]
   },
   {
@@ -401,7 +401,7 @@
     "old": "          echo \"REWOUND=1\" >> \"$GITHUB_ENV\"\n",
     "new": "",
     "tests": [
-      "test/realm_restore.test.js"
+      "test/net/realm_restore.test.js"
     ]
   },
   {
@@ -410,7 +410,7 @@
     "old": "        if: env.APPLY == 'true'",
     "new": "        if: always()",
     "tests": [
-      "test/realm_restore.test.js"
+      "test/net/realm_restore.test.js"
     ]
   },
   {
@@ -419,7 +419,7 @@
     "old": "-X POST \"$base/v1/realm/customs\" -H 'content-type: application/json' -d '{}' || true)",
     "new": "-X POST \"$base/v1/auth/guest\" -H 'content-type: application/json' -d '{\"label\":\"restore-hold\"}' || true)",
     "tests": [
-      "test/realm_restore.test.js"
+      "test/net/realm_restore.test.js"
     ],
     "note": "The hold proven by opening an account: on an instance not yet held, the guest route writes its rate row before any refusal (TERMS1's 400)."
   }

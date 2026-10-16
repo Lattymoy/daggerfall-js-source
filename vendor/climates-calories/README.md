@@ -6,7 +6,7 @@ description: "Introduces temperature effects based on climates,
 seasons, weather and clothes etc. Also adds food items and starvation
 effects." The shipped bundle carries a compiled DLL (no C# source),
 eleven item templates (530-540), twenty small textures and a tent
-model (all twenty read out of the bundle with `src/formats/unityBundle.js`).
+model (all twenty read out of the bundle with `src/formats/unity/unityBundle.js`).
 
 Mac (Lattymoy) handed the shipped zip
 (`Climates_and_Calories-49-1-7-1-1707751069`) over on 2026-09-17:

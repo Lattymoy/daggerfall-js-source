@@ -186,5 +186,5 @@ export const HUB_GUILD_WHO_MS = 30_000;
 export const HUB_WHO_MS = 15_000;
 /** How long the bus keeps its answer - every ask inside it is the one frame, which each shard's batch carries once. */
 export const HUB_WHO_KEEP_MS = 1000;
-/** The most of a guild that answer says (a guild holds GUILD_MEMBERS_MAX - net/guildLaw.js - so this is headroom). */
+/** The most of a guild that answer says (a guild holds GUILD_MEMBERS_MAX - net/guild/guildLaw.js - so this is headroom). */
 export const HUB_GUILD_WHO_MAX = 64;

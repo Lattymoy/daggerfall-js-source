@@ -27,7 +27,7 @@
 // shows; __fpsStats adds them when a probe asks, so hidden they cost
 // nothing (`sizeLine` is the pure half).
 //
-// The pure half (`fpsStats`) is executed by test/mwarms_fps.test.js;
+// The pure half (`fpsStats`) is executed by test/ui/enhanced/mwarms_fps.test.js;
 // the DOM half runs against the same stub document AUDIT 62 built.
 
 import { frameCpu } from '../systems/frameClock.js';   // PERF1: the hosts' script time

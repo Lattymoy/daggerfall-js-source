@@ -68,7 +68,7 @@
  *
  * ═══ WHY NO GATE CAUGHT IT, WHICH IS THE REAL FINDING ═════════════
  *
- * `test/accountworker.test.js` drives the whole thing in node, and
+ * `test/server/accountworker.test.js` drives the whole thing in node, and
  * node has no such cap. `tools/accountProbe.mjs` exists precisely
  * because IMPORTABILITY IS NOT DEPLOYABILITY (AUDIT-ACC F2 stood the
  * Worker up in a real workerd after the suite was green over a Worker

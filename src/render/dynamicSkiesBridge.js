@@ -55,7 +55,7 @@ export function modHorizon(modColor, shade, w) {
 
 /** DS1: the moons as moonlightTerm reads them, from the mod's own
  *  state: each moon's place is the shader's orbit (the CPU twin in
- *  systems/dynamicSkies.js), its phase is DFU's ladder, its visibility
+ *  systems/dynamicSkies/dynamicSkies.js), its phase is DFU's ladder, its visibility
  *  is "up, and not in daylight" on the shader's own `day` term
  *  (Remap(sunY, NightEnd..NightStart)), its colour the preset's. Night
  *  is the port's law, as for the enhanced dome. */

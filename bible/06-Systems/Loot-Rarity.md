@@ -15,8 +15,8 @@ player meets. The online lane forces it on with every other
 enhancement (OL1), as it always did. Off, not one field is written and
 not one read moves - so the 1:1 lane is one press away, not lost.
 
-One module: `src/systems/lootRarity.js`. One pin file:
-`test/lr1_lootrarity.test.js` (20). One tuning table: `RARITY_WEIGHTS`
+One module: `src/systems/loot/lootRarity.js`. One pin file:
+`test/systems/lr1_lootrarity.test.js` (20). One tuning table: `RARITY_WEIGHTS`
 and `SOURCE_MULT`, per mille.
 
 ## The ladder
@@ -215,7 +215,7 @@ snapshot copies items as they are); `affixes` joins
 field and reads Common.
 
 The Loot arc II (`Loot-II-Arc.md`) adds four fields, each declared in
-`systems/itemFields.js` and absent on every piece that has none - so
+`systems/item/itemFields.js` and absent on every piece that has none - so
 an older save and an older peer read as before: `cursed` (LOOT16, a
 cursed find's drawback - `validCurse`), `honed` (LOOT17, the hones a
 piece has taken), `junk` (LOOT18, the player's mark - the lock's twin)
@@ -366,7 +366,7 @@ but the suite's only wire pin was that `affixes` is a declared array
 field and that a string there is refused. Nothing would have caught a
 tier, an affix list, a Legendary's record or an affix-bought price lost
 on the way across, in either door. Four pins now cover both doors by
-execution (`test/lr1_lootrarity.test.js`, AUDIT-LR), and two mutants
+execution (`test/systems/lr1_lootrarity.test.js`, AUDIT-LR), and two mutants
 were run and killed: the value floor turned into a ceiling, and the
 affix list's check removed.
 
@@ -419,9 +419,9 @@ flip alone would have done nothing for him - or for any existing
 player - and the switch would have looked broken. Fixed at the root
 (the shelf persists overrides, not defaults) with a one-time stamped
 adoption for the shelves already written: PREF1, recorded in
-`10-UI/Features-Arc.md` and pinned in `test/pref1_shelf.test.js`.
+`10-UI/Features-Arc.md` and pinned in `test/systems/pref1_shelf.test.js`.
 
-**The trap this had to avoid.** `test/lr1_lootrarity.test.js` drives
+**The trap this had to avoid.** `test/systems/lr1_lootrarity.test.js` drives
 its OFF half through a helper that was a bare `_resetForTests()`. With
 the row shipping ON, that helper stops meaning "off" - every "off is
 DFU exactly" pin in the file would have gone on testing the ON path, in
@@ -429,11 +429,11 @@ silence, and passing. The helper presses the switch off explicitly now.
 
 ## RARITY-WEAR (FIELD BUGS 2026-10-01) - NO SLOT, NO TIER
 
-Cruor's King's Mark came out a Wand and could not be worn (`01-Overview/Field-Bugs-2026-10-01.md` part four #4). A
+Cruor's King's Mark came out a Wand and could not be worn (`01-Overview/bugs/Field-Bugs-2026-10-01.md` part four #4). A
 Legendary record names the piece a maker minted and never picks the base; the Gate's spoils and a town's thanks drew a
-jewel over all eight Jewellery templates (`systems/gateSpoils.js` spoilsBase), and the eighth, the Wand, has no slot
+jewel over all eight Jewellery templates (`systems/gate/gateSpoils.js` spoilsBase), and the eighth, the Wand, has no slot
 (GetJewelleryEquipSlot's None). Every affix and a Held enchantment read worn pieces alone, so one jewel in eight was a
 tier read by nothing. Now `systems/equip.js` wearableItem (GetEquipSlot on an empty table) is the one law: the ladder
 grades no piece it refuses (`rarityEligible`), the spoils' base is made again on one, and a save's rolled wands load as
 the Amulet - the same weight and condition (`repairRarityBases`, `RARITY_HOME`). The Jewellery records still name no
-templates: a King's Mark lands on any wearable jewel. `test/fb1001_wand.test.js`.
+templates: a King's Mark lands on any wearable jewel. `test/systems/fb1001_wand.test.js`.

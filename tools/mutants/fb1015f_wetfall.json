@@ -5,7 +5,7 @@
     "old": "  const k = precipitationForWeather(weather) ? Math.max(0, Math.min(1, Number.isFinite(fall) ? fall : 1)) : 1;",
     "new": "  const k = 1;",
     "tests": [
-      "test/fb1015f_wetfall.test.js"
+      "test/systems/survival/fb1015f_wetfall.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  const k = precipitationForWeather(weather) ? Math.max(0, Math.min(1, Number.isFinite(fall) ? fall : 1)) : 1;",
     "new": "  const k = Math.max(0, Math.min(1, Number.isFinite(fall) ? fall : 1));",
     "tests": [
-      "test/fb1015f_wetfall.test.js"
+      "test/systems/survival/fb1015f_wetfall.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "Math.max(0, Math.min(1, Number.isFinite(fall) ? fall : 1)) : 1;",
     "new": "Math.max(0, Number.isFinite(fall) ? fall : 1) : 1;",
     "tests": [
-      "test/fb1015f_wetfall.test.js"
+      "test/systems/survival/fb1015f_wetfall.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    wetGain: weatherWetGain(env.falling?.word ?? env.weather, {",
     "new": "    wetGain: weatherWetGain(env.weather, {",
     "tests": [
-      "test/fb1015f_wetfall.test.js"
+      "test/systems/survival/fb1015f_wetfall.test.js"
     ]
   },
   {
@@ -41,25 +41,25 @@
     "old": "sheltered: !!env.sheltered, fall: env.falling?.level ?? 1 })",
     "new": "sheltered: !!env.sheltered })",
     "tests": [
-      "test/fb1015f_wetfall.test.js"
+      "test/systems/survival/fb1015f_wetfall.test.js"
     ]
   },
   {
     "name": "WET-FALL-the-fallback-the-sim-s-word",
-    "file": "src/systems/weatherSim.js",
+    "file": "src/systems/weather/weatherSim.js",
     "old": "{ word: _heard, level: _heardGain } : { word: shown, level: 1 });",
     "new": "{ word: _heard, level: _heardGain } : { word: currentWeather(), level: 1 });",
     "tests": [
-      "test/fb1015f_wetfall.test.js"
+      "test/systems/survival/fb1015f_wetfall.test.js"
     ]
   },
   {
     "name": "WET-FALL-heard-outlives-a-jump",
-    "file": "src/systems/weatherSim.js",
+    "file": "src/systems/weather/weatherSim.js",
     "old": "export const fallingWeather = (shown = currentWeather()) => (_heard != null && _heardAtJump === _jumps ?",
     "new": "export const fallingWeather = (shown = currentWeather()) => (_heard != null ?",
     "tests": [
-      "test/fb1015f_wetfall.test.js"
+      "test/systems/survival/fb1015f_wetfall.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "Object.assign(sky, { weather: 'sunny', falling: null, byFire: false,",
     "new": "Object.assign(sky, { weather: 'sunny', byFire: false,",
     "tests": [
-      "test/fb1015f_wetfall.test.js"
+      "test/systems/survival/fb1015f_wetfall.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "hour, weather, falling: fallingWeather(weather),   // WET-FALL",
     "new": "hour, weather,   // WET-FALL",
     "tests": [
-      "test/fb1015f_wetfall.test.js"
+      "test/systems/survival/fb1015f_wetfall.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "hour, weather, falling: fallingWeather(weather),   // WET-FALL",
     "new": "hour, weather,   // WET-FALL",
     "tests": [
-      "test/fb1015f_wetfall.test.js"
+      "test/systems/survival/fb1015f_wetfall.test.js"
     ]
   }
 ]

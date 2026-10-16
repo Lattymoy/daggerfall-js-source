@@ -5,7 +5,7 @@
     "old": "  const k = (1 + PAY_LEVEL * (Math.max(1, level | 0) - 1)) * (1 + Math.max(0, Number(pay) || 0));",
     "new": "  const k = 1 + Math.max(0, Number(pay) || 0);",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  const k = (1 + PAY_LEVEL * (Math.max(1, level | 0) - 1)) * (1 + Math.max(0, Number(pay) || 0));",
     "new": "  const k = 1 + PAY_LEVEL * (Math.max(1, level | 0) - 1);",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  if (kind === 'bounty') g = PAY_BASE.bounty * Math.max(1, size) * k + px * PAY_SITE_PX;",
     "new": "  if (kind === 'bounty') g = PAY_BASE.bounty * k + px * PAY_SITE_PX;",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  if (kind === 'bounty') g = PAY_BASE.bounty * Math.max(1, size) * k + px * PAY_SITE_PX;",
     "new": "  if (kind === 'bounty') g = PAY_BASE.bounty * Math.max(1, size) * k;",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  else if (kind === 'delivery') g = (PAY_BASE.delivery * px + PAY_DELIVERY_BASE) * k;",
     "new": "  else if (kind === 'delivery') g = PAY_BASE.delivery * px * k;",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "  else if (kind === 'salvage') g = PAY_BASE.salvage * need * k + px * PAY_SITE_PX;",
     "new": "  else if (kind === 'salvage') g = PAY_BASE.salvage * need * k;",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "  else if (PAY_BASE[kind]) g = PAY_BASE[kind] * need * k;",
     "new": "  else if (PAY_BASE[kind]) g = PAY_BASE[kind] * k;",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "  const open = (x, y) => { for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (!seaAt(x + dx, y + dy)) return false; return true; };",
     "new": "  const open = (x, y) => seaAt(x, y);",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "  for (let k = 0; k < 8; k++) {\n    const a = ((first + k) % 8) * (Math.PI / 4);",
     "new": "  for (let k = 0; k < 1; k++) {\n    const a = ((first + k) % 8) * (Math.PI / 4);",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "    const c = Math.cos(a), sn = Math.sin(a), m = Math.max(Math.abs(c), Math.abs(sn));",
     "new": "    const c = Math.cos(a), sn = Math.sin(a), m = 1;",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "c.minLevel <= Math.max(1, level | 0) + 2 && (!c.flagship || level >= 12));",
     "new": "c.minLevel <= Math.max(1, level | 0) && (!c.flagship || level >= 12));",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "c.minLevel <= Math.max(1, level | 0) + 2 && (!c.flagship || level >= 12));",
     "new": "c.minLevel <= Math.max(1, level | 0) + 2);",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "  const want = BOARD_OFFERS + Math.max(0, perks?.offers | 0);",
     "new": "  const want = BOARD_OFFERS;",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "  const r = mulberry32(((hashKey(port.key) ^ Math.imul((day | 0) + 1, 0x9e3779b1) ^ BOARD_SALT) >>> 0));",
     "new": "  const r = mulberry32(((hashKey(port.key) ^ BOARD_SALT) >>> 0));",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "  const r = mulberry32(((hashKey(port.key) ^ Math.imul((day | 0) + 1, 0x9e3779b1) ^ BOARD_SALT) >>> 0));",
     "new": "  const r = mulberry32(((Math.imul((day | 0) + 1, 0x9e3779b1) ^ BOARD_SALT) >>> 0));",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "    if (!gone.has(id)) out.push(o);",
     "new": "    out.push(o);",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "    if (!o) continue;\n    posted++;",
     "new": "    if (!o || gone.has(id)) continue;\n    posted++;",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "cheb(p, port) >= DELIVERY_PX_MIN && deliveryPort(p, seaAt))",
     "new": "cheb(p, port) >= 1 && deliveryPort(p, seaAt))",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "    const days = DELIVERY_DAYS_BASE + Math.ceil(d / DELIVERY_PX_DAY);",
     "new": "    const days = DELIVERY_DAYS_BASE;",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "pay: payOf('hunt', { level, need, pay }), standing: STANDING_DONE.hunt * need,",
     "new": "pay: payOf('hunt', { level, need, pay }), standing: STANDING_DONE.hunt,",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "standing: STANDING_DONE.bounty * Math.max(1, cls.cargo), days: TERM_DAYS.bounty,",
     "new": "standing: STANDING_DONE.bounty, days: TERM_DAYS.bounty,",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "until: Math.floor(now) + offer.days * MINUTES_PER_DAY,",
     "new": "until: Math.floor(now) + MINUTES_PER_DAY,",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "boat: offer.kind === 'delivery' ? boat ?? null : null };",
     "new": "boat: boat ?? null };",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -212,7 +212,7 @@
     "old": "  if (c.kind === 'bounty') return ev.bounty !== c.id ? null : ev.type === 'end' ? 'done' : ev.type === 'lost' ? 'void' : null;",
     "new": "  if (c.kind === 'bounty') return ev.type === 'end' ? 'done' : ev.type === 'lost' ? 'void' : null;",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -221,7 +221,7 @@
     "old": "ev.faction === 'pirate' && ev.crown === c.crown && (ev.act === 'sink' || ev.act === 'board') ? count() : null;",
     "new": "ev.faction === 'pirate' && (ev.act === 'sink' || ev.act === 'board') ? count() : null;",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -230,7 +230,7 @@
     "old": "ev.faction === 'pirate' && ev.crown === c.crown && (ev.act === 'sink' || ev.act === 'board') ? count() : null;",
     "new": "ev.crown === c.crown && (ev.act === 'sink' || ev.act === 'board') ? count() : null;",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -239,7 +239,7 @@
     "old": "ev.faction === 'pirate' && ev.crown === c.crown && (ev.act === 'sink' || ev.act === 'board') ? count() : null;",
     "new": "ev.faction === 'pirate' && ev.crown === c.crown ? count() : null;",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -248,7 +248,7 @@
     "old": "    if (ev.type !== 'study' || ev.crown !== c.crown) return null;",
     "new": "    if (ev.type !== 'study') return null;",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -257,7 +257,7 @@
     "old": "  if (c.kind === 'salvage') return ev.type === 'haul' && ev.site === c.id ? count() : null;",
     "new": "  if (c.kind === 'salvage') return ev.type === 'haul' ? count() : null;",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -266,7 +266,7 @@
     "old": "    if (c.boat == null || ev.boat !== c.boat) return null;",
     "new": "    if (c.boat == null) return null;",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -275,7 +275,7 @@
     "old": "    if (ev.type === 'wrecked') return 'failed';\n",
     "new": "",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -284,7 +284,7 @@
     "old": "    return ev.type === 'berth' && ev.port === c.to?.key ? 'done' : null;",
     "new": "    return ev.type === 'berth' ? 'done' : null;",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -293,7 +293,7 @@
     "old": "export const expired = (c, now) => Number.isFinite(now) && now >= c.until;",
     "new": "export const expired = (c, now) => Number.isFinite(now) && now > c.until;",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -302,7 +302,7 @@
     "old": "hours = Math.floor((left % MINUTES_PER_DAY) / 60);",
     "new": "hours = 0;",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -311,7 +311,7 @@
     "old": "n: Math.max(0, (c.need | 0) - (c.done | 0)) });",
     "new": "n: c.need | 0 });",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -320,7 +320,7 @@
     "old": "  if (!c || typeof c !== 'object' || !HARBOUR_CONTRACT_KINDS.includes(c.kind) || typeof c.id !== 'string' || typeof c.crown !== 'string') return null;",
     "new": "  if (!c || typeof c !== 'object' || typeof c.id !== 'string' || typeof c.crown !== 'string') return null;",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -329,7 +329,7 @@
     "old": "  if (!perks?.marque) return { can: false, price, days: MARQUE_DAYS, why: `${crown} grants letters of marque to its Privateers.` };\n",
     "new": "",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -338,7 +338,7 @@
     "old": "  if ((Number(purse) || 0) < price) return { can: false, price, days: MARQUE_DAYS, why: `A letter costs ${gold(price)}.` };\n",
     "new": "",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -347,7 +347,7 @@
     "old": "  if (held) return { can: false, price, days: MARQUE_DAYS,",
     "new": "  if (false) return { can: false, price, days: MARQUE_DAYS,",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -356,7 +356,7 @@
     "old": "  if (!perks?.admiralty) return { can: false, price, why: `${crown}'s Admiralty sells its carrack to its Commodores.` };\n",
     "new": "",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -365,7 +365,7 @@
     "old": "  const price = Math.round(HULL_PRICES[CARRACK_HULL] * (1 - ADMIRALTY_OFF));",
     "new": "  const price = HULL_PRICES[CARRACK_HULL];",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -374,7 +374,7 @@
     "old": "      if (!c || contracts.length >= CONTRACTS_MAX || contracts.some((x) => x.id === c.id)) return false;",
     "new": "      if (!c || contracts.some((x) => x.id === c.id)) return false;",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -383,7 +383,7 @@
     "old": "      if (!c || contracts.length >= CONTRACTS_MAX || contracts.some((x) => x.id === c.id)) return false;",
     "new": "      if (!c || contracts.length >= CONTRACTS_MAX) return false;",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -392,7 +392,7 @@
     "old": "    regard(c.crown, c.standing);\n    ledger.note(c.kind);",
     "new": "    ledger.note(c.kind);",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -401,7 +401,7 @@
     "old": "    ledger.note('earned', c.pay);\n",
     "new": "",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -410,7 +410,7 @@
     "old": "    if (!ok) { regard(c.crown, STANDING_FAILED); return; }",
     "new": "    if (!ok) return;",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -419,7 +419,7 @@
     "old": "      regard(c.crown, STANDING_ABANDONED);\n      return c;",
     "new": "      return c;",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -428,7 +428,7 @@
     "old": "} else if ((c.done | 0) !== was) moved.push(c);",
     "new": "}",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -437,7 +437,7 @@
     "old": "contracts: JSON.parse(JSON.stringify(contracts)), taken: taken.slice(), dealt:",
     "new": "contracts: [], taken: taken.slice(), dealt:",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -446,7 +446,7 @@
     "old": "    for (const c of r.done) { deps.credit?.(c.pay);",
     "new": "    for (const c of r.done) {",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -455,7 +455,7 @@
     "old": "    if (o.kind === 'delivery' && boat?.uid == null) return { ok: false, text: 'A cargo needs a ship of your own to carry it.' };\n",
     "new": "",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -464,7 +464,7 @@
     "old": "    deps.pay?.(o.price);\n    L.setMarque(port.crown, now() + o.days * MINUTES_PER_DAY);",
     "new": "    L.setMarque(port.crown, now() + o.days * MINUTES_PER_DAY);",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -473,7 +473,7 @@
     "old": "    if (!deps.carrack?.(o.price, port)) return { ok: false, text: 'The Admiralty\\'s yard has no carrack to give today.' };",
     "new": "    if (false) return { ok: false, text: '' };",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -482,7 +482,7 @@
     "old": "  const perksAt = (crown) => (crown ? perksOf(L.rank(crown).rank, deps.notorietyOf?.(crown) ?? 0) : perksOf(0));",
     "new": "  const perksAt = (crown) => (crown ? perksOf(L.rank(crown).rank, 0) : perksOf(0));",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -491,79 +491,79 @@
     "old": "    for (const c of failed) deps.mid?.(`Contract failed - ${c.title}. Its term ran out.`, 5);\n",
     "new": "",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
     "name": "HOST-site-reach",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      if (Math.max(Math.abs(site.px - w.px), Math.abs(site.py - w.py)) > SITE_REACH_PX) continue;",
     "new": "      if (Math.max(Math.abs(site.px - w.px), Math.abs(site.py - w.py)) > SITE_REACH_PX + 1) continue;",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
     "name": "HOST-quarry-restood",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "        if (was === 'ended' || (was && sea.has(was))) continue;",
     "new": "        if (was === 'ended') continue;",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
     "name": "HOST-quarry-unmarked",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    e.bounty = site.id; e.plain = true; e.ship.temper = TEMPERS.bold;",
     "new": "    e.plain = true; e.ship.temper = TEMPERS.bold;",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
     "name": "HOST-quarry-wary",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    e.bounty = site.id; e.plain = true; e.ship.temper = TEMPERS.bold;",
     "new": "    e.bounty = site.id; e.plain = true;",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
     "name": "HOST-casks-short",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "pos: wet ? [x, deps.seaY(), z] : [c[0], deps.seaY(), c[2]], lot: SITE_LOT + site.id, from: 'merchantGalleon', life: SITE_CASK_LIFE });",
     "new": "pos: wet ? [x, deps.seaY(), z] : [c[0], deps.seaY(), c[2]], lot: SITE_LOT + site.id, from: 'merchantGalleon' });",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
     "name": "HOST-haul-unsaid",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      deps.captain?.event?.({ type: 'haul', site: e.lot.slice(SITE_LOT.length) });\n",
     "new": "",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
     "name": "HOST-end-unsaid",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (act === 'sink' || act === 'board') cap.event?.({ type: 'end', act, faction: s.cls.faction, crown, bounty: entry.bounty ?? null });",
     "new": "    if (act === 'sink') cap.event?.({ type: 'end', act, faction: s.cls.faction, crown, bounty: null });",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
     "name": "HOST-berth-unsaid",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (boat && w.port && yardHere(boat)) deps.captain?.event?.({ type: 'berth', port: w.port.key, boat: boat.uid ?? null });",
     "new": "    if (false) deps.captain?.event?.({ type: 'berth', port: w.port.key, boat: boat.uid ?? null });",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -572,7 +572,7 @@
     "old": "  const k = 1 - Math.max(0, Math.min(YARD_DISCOUNT_MAX, Number(discount) || 0));",
     "new": "  const k = 1;",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -581,7 +581,7 @@
     "old": "  const k = 1 - Math.max(0, Math.min(YARD_DISCOUNT_MAX, Number(discount) || 0));",
     "new": "  const k = 1 - Math.max(0, Number(discount) || 0);",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -590,34 +590,34 @@
     "old": "    if (!ctx.reliefSure && !(roll < RELIEF_CHANCE)) return null;",
     "new": "    if (!(roll < RELIEF_CHANCE)) return null;",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
     "name": "TAB-office-unshown",
-    "file": "src/ui/navalYardWindow.js",
+    "file": "src/ui/naval/navalYardWindow.js",
     "old": "    officeTab.style.display = o ? '' : 'none';",
     "new": "    officeTab.style.display = 'none';",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
     "name": "TAB-take-unpressed",
-    "file": "src/ui/navalYardWindow.js",
+    "file": "src/ui/naval/navalYardWindow.js",
     "old": "b.press, b.can, () => { const r = o.take(b.id);",
     "new": "b.press, b.can, () => { const r = null;",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
     "name": "TAB-lede-rank",
-    "file": "src/ui/navalYardWindow.js",
+    "file": "src/ui/naval/navalYardWindow.js",
     "old": "    : `${o.port} - ${o.crown}'s harbourmaster. You are ${o.rank === 'Unsworn' ? 'Unsworn' : `${/^[aeiou]/i.test(o.rank) ? 'an' : 'a'} ${o.rank}`} of ${o.crown} (standing ${o.standing}).`;",
     "new": "    : `${o.port} - ${o.crown}'s harbourmaster.`;",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -626,7 +626,7 @@
     "old": "      return harbourOffice.model({ uid: model.uid ?? null });",
     "new": "      return null;",
     "tests": [
-      "test/captboard.test.js"
+      "test/systems/naval/captboard.test.js"
     ]
   }
 ]

@@ -25,7 +25,7 @@
 // PURE. `createBoltField` is the hosts' small store of the strikes
 // burning now.
 
-import { seededRng } from './wind.js';
+import { seededRng } from './wind/wind.js';
 
 /** The share of strikes that reach the ground - a storm's flashes are
  *  mostly in the cloud (roughly three in ten reach the ground). */

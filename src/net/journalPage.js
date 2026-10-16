@@ -41,7 +41,7 @@ import { breakableNote } from '../systems/notebook.js';
 /** @typedef {{ head: string, lines: string[] }} Page */
 /** @typedef {{ formatting: string, text: string }} NoteToken */
 
-/** The token kinds that are a LINE of an entry - the chronicle's own set (ui/enhancedChronicle.js LINE_FORMATTINGS),
+/** The token kinds that are a LINE of an entry - the chronicle's own set (ui/enhanced/enhancedChronicle.js LINE_FORMATTINGS),
  *  less the break, which is a blank line here. */
 const LINE_TOKENS = new Set(['text', 'highlight', 'question', 'answer']);
 const DRAWN_TOKENS = new Set([...LINE_TOKENS, 'newline']);

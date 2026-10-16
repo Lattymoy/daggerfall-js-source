@@ -5,7 +5,7 @@
     "old": "    mount: (win, { push }) => { if (push) return pushOverlay(win); showOverlay(win); return true; },",
     "new": "    mount: (win, { push }) => { showOverlay(win); return true; },",
     "tests": [
-      "test/enhnotice3_hosts.test.js"
+      "test/scenes/enhnotice3_hosts.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    hudText: (line, delayInSeconds) => { hud.add(line, delayInSeconds); return true; },\n    priority: 0,",
     "new": "    hudText: (line, delayInSeconds) => { hud.add(line, delayInSeconds); return true; },\n    priority: 30,",
     "tests": [
-      "test/enhnotice3_hosts.test.js"
+      "test/scenes/enhnotice3_hosts.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    hudText: (line, delayInSeconds) => { hud.add(line, delayInSeconds); return true; },\n    priority: 0,",
     "new": "    hudText: (line) => { hud.add(line); return true; },\n    priority: 0,",
     "tests": [
-      "test/enhnotice3_hosts.test.js"
+      "test/scenes/enhnotice3_hosts.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    if (mode === 'dungeon' && dungeonCtx?.showOverlay) return dungeonCtx.showOverlay(win);\n    return false;\n  }",
     "new": "    if (mode === 'dungeon' && dungeonCtx?.showOverlay) return dungeonCtx.showOverlay(win);\n    return true;\n  }",
     "tests": [
-      "test/enhnotice3_hosts.test.js"
+      "test/scenes/enhnotice3_hosts.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  registerPresenter({ mount: (win) => showQuestOverlay(win), priority: 10 });",
     "new": "",
     "tests": [
-      "test/enhnotice3_hosts.test.js"
+      "test/scenes/enhnotice3_hosts.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "  registerPresenter({ mount: (win) => showQuestOverlay(win), priority: 10 });",
     "new": "  registerPresenter({ mount: (win) => showQuestOverlay(win), priority: 20 });",
     "tests": [
-      "test/enhnotice3_hosts.test.js"
+      "test/scenes/enhnotice3_hosts.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "    mount: (win) => pushDungeonWindow(win),\n    hudText: (line, delayInSeconds) => { hudText.add(line, delayInSeconds); return true; },\n    active: () => _live && !_ctxDead,\n    priority: 20,",
     "new": "    mount: (win) => { activeOverlay = win; return true; },\n    hudText: (line, delayInSeconds) => { hudText.add(line, delayInSeconds); return true; },\n    active: () => _live && !_ctxDead,\n    priority: 20,",
     "tests": [
-      "test/enhnotice3_hosts.test.js"
+      "test/scenes/enhnotice3_hosts.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "    active: () => _live && !_ctxDead,\n    priority: 20,",
     "new": "    active: () => _live && !_ctxDead,\n    priority: 5,",
     "tests": [
-      "test/enhnotice3_hosts.test.js"
+      "test/scenes/enhnotice3_hosts.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "      _unregisterPresenter();   // ENH-NOTICE3: the registration leaves with the context",
     "new": "      // _unregisterPresenter();   // ENH-NOTICE3: the registration leaves with the context",
     "tests": [
-      "test/enhnotice3_hosts.test.js"
+      "test/scenes/enhnotice3_hosts.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "import { ActionTextBox } from '../ui/actionText.js';",
     "new": "import { ActionTextBox } from '../ui/actionText.js';\nimport { isEnhanced } from './uiSkin.js';\nvoid isEnhanced;",
     "tests": [
-      "test/enhnotice3_hosts.test.js"
+      "test/scenes/enhnotice3_hosts.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": ".sort((a, b) => ((b.p.priority ?? 0) - (a.p.priority ?? 0)) || (b.i - a.i))",
     "new": ".sort((a, b) => ((a.p.priority ?? 0) - (b.p.priority ?? 0)) || (b.i - a.i))",
     "tests": [
-      "test/notify.test.js"
+      "test/systems/notify.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "|| (b.i - a.i))",
     "new": "|| (a.i - b.i))",
     "tests": [
-      "test/notify.test.js"
+      "test/systems/notify.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": ".filter(({ p }) => p.active?.() !== false)",
     "new": ".filter(() => true)",
     "tests": [
-      "test/notify.test.js"
+      "test/systems/notify.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "  hudText(rows.map(rowText).join(' '));\n  const inert",
     "new": "  const inert",
     "tests": [
-      "test/notify.test.js"
+      "test/systems/notify.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "    if (p.mount(win, { push: !!push })) return true;",
     "new": "    if (p.mount(win, { push: true })) return true;",
     "tests": [
-      "test/notify.test.js"
+      "test/systems/notify.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "  if (mountWindow(win, { push })) return handle;",
     "new": "  if (mountWindow(win, { push: true })) return handle;",
     "tests": [
-      "test/notify.test.js"
+      "test/systems/notify.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "    addNext(next) { win.addNext(toRows(next)); return handle; },",
     "new": "    addNext(next) { return handle; },",
     "tests": [
-      "test/notify.test.js"
+      "test/systems/notify.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "const win = new ActionTextBox(rows, { highlightColor, previousWindow });",
     "new": "const win = new ActionTextBox(rows);",
     "tests": [
-      "test/notify.test.js"
+      "test/systems/notify.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "if (Array.isArray(text)) return text.length ? text : [''];",
     "new": "if (Array.isArray(text)) return text;",
     "tests": [
-      "test/notify.test.js"
+      "test/systems/notify.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "return String(text).split('\\n');",
     "new": "return [String(text)];",
     "tests": [
-      "test/notify.test.js"
+      "test/systems/notify.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "    if (p.hudText(String(text ?? ''), delay)) return true;\n  }\n  return false;",
     "new": "    if (p.hudText(String(text ?? ''), delay)) return true;\n  }\n  return true;",
     "tests": [
-      "test/notify.test.js"
+      "test/systems/notify.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "import { ActionTextBox } from '../ui/actionText.js';",
     "new": "import { ActionTextBox } from '../ui/actionText.js';\nimport { isEnhanced } from './uiSkin.js';\nconst _face = () => isEnhanced();",
     "tests": [
-      "test/notify.test.js"
+      "test/systems/notify.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "    messageBox: (line) => messageBox(line),",
     "new": "    messageBox: (line) => townTalk.say(line),",
     "tests": [
-      "test/notify.test.js"
+      "test/systems/notify.test.js"
     ]
   },
   {
@@ -212,8 +212,8 @@
     "old": "      messageBox: (id) => {\n        const lines = plainLines(townTalk.lines(id));\n        if (lines?.length) messageBox(lines);\n      },",
     "new": "      messageBox: (id) => {\n        const lines = plainLines(townTalk.lines(id));\n        if (lines?.length) townTalk.showOverlay(new ChoiceWindow({ lines }));\n      },",
     "tests": [
-      "test/notify.test.js",
-      "test/roadb_push_doors.test.js"
+      "test/systems/notify.test.js",
+      "test/scenes/roadb_push_doors.test.js"
     ]
   },
   {
@@ -222,8 +222,8 @@
     "old": "        if (rows.length) messageBox(rows);",
     "new": "        if (rows.length) townTalk.showBox(rows);",
     "tests": [
-      "test/notify.test.js",
-      "test/audit64_time_weather.test.js"
+      "test/systems/notify.test.js",
+      "test/systems/audit64_time_weather.test.js"
     ]
   },
   {
@@ -232,8 +232,8 @@
     "old": "export function wireInfectionVideos(renderer, { textAt = null, factionDict = null, transferToCemetery = null, cancelRest = null } = {}) {",
     "new": "export function wireInfectionVideos(renderer, { textAt = null, showText = null, factionDict = null, transferToCemetery = null, cancelRest = null } = {}) {",
     "tests": [
-      "test/notify.test.js",
-      "test/roadb_push_doors.test.js"
+      "test/systems/notify.test.js",
+      "test/scenes/roadb_push_doors.test.js"
     ]
   },
   {
@@ -242,9 +242,9 @@
     "old": "      if (lines?.length) messageBox(lines);",
     "new": "      if (lines?.length) showText?.(lines);",
     "tests": [
-      "test/notify.test.js",
-      "test/roadb_push_doors.test.js",
-      "test/infection.test.js"
+      "test/systems/notify.test.js",
+      "test/scenes/roadb_push_doors.test.js",
+      "test/systems/infection.test.js"
     ]
   },
   {
@@ -253,9 +253,9 @@
     "old": "    messageBox(lines, { previousWindow: false });",
     "new": "    messageBox(lines);",
     "tests": [
-      "test/notify.test.js",
-      "test/roadb_push_doors.test.js",
-      "test/audit64_hud.test.js"
+      "test/systems/notify.test.js",
+      "test/scenes/roadb_push_doors.test.js",
+      "test/ui/hud/audit64_hud.test.js"
     ]
   },
   {
@@ -264,7 +264,7 @@
     "old": "    showBox: (rows) => messageBox(rows.length ? rows : ['']),",
     "new": "    showBox: (rows) => showOverlay(new ActionTextBox(rows.length ? rows : [''])),",
     "tests": [
-      "test/notify.test.js"
+      "test/systems/notify.test.js"
     ]
   },
   {
@@ -273,8 +273,8 @@
     "old": "      reportModCompatibilityIssues({ showText: (lines) => messageBox(lines) });",
     "new": "      reportModCompatibilityIssues({ showText: (lines) => townTalk.pushOverlay(new ChoiceWindow({ lines })) });",
     "tests": [
-      "test/notify.test.js",
-      "test/ba1_betterambience.test.js"
+      "test/systems/notify.test.js",
+      "test/systems/ba1_betterambience.test.js"
     ]
   },
   {
@@ -283,8 +283,8 @@
     "old": "      messageBox(rows.length ? rows : [localizedText('youGetNoResponse', 'You get no response.')]);",
     "new": "      townTalk.showBox(rows.length ? rows : [localizedText('youGetNoResponse', 'You get no response.')]);",
     "tests": [
-      "test/notify.test.js",
-      "test/audit63_quests_talk.test.js"
+      "test/systems/notify.test.js",
+      "test/systems/audit63_quests_talk.test.js"
     ]
   },
   {
@@ -293,7 +293,7 @@
     "old": "  registerPresenter({\n    mount: (win, { push })",
     "new": "  void ({\n    mount: (win, { push })",
     "tests": [
-      "test/notify.test.js"
+      "test/systems/notify.test.js"
     ]
   },
   {
@@ -302,7 +302,7 @@
     "old": "  registerPresenter({ mount: (win) => showQuestOverlay(win), priority: 10 });",
     "new": "  // registerPresenter({ mount: (win) => showQuestOverlay(win), priority: 10 });",
     "tests": [
-      "test/notify.test.js"
+      "test/systems/notify.test.js"
     ]
   },
   {
@@ -311,36 +311,36 @@
     "old": "  const _unregisterPresenter = registerPresenter({",
     "new": "  const _unregisterPresenter = () => {}; void ({",
     "tests": [
-      "test/notify.test.js"
+      "test/systems/notify.test.js"
     ]
   },
   {
     "name": "ENH-NOTICE3-P4-mod-arrival-box-sent-to-the-hud-line",
-    "file": "src/systems/travelOptions.js",
+    "file": "src/systems/travel/travelOptions.js",
     "old": "      messageBox(T.MsgArrived);\n    };\n    st.lastLocation = deps.currentLocation?.() ?? null;\n    initTravelUI();\n  }\n\n  /** :495-519, BeginTravelToCoords",
     "new": "      say(T.MsgArrived);\n    };\n    st.lastLocation = deps.currentLocation?.() ?? null;\n    initTravelUI();\n  }\n\n  /** :495-519, BeginTravelToCoords",
     "tests": [
-      "test/notify.test.js",
-      "test/to1_travelOptions.test.js"
+      "test/systems/notify.test.js",
+      "test/systems/travel/to1_travelOptions.test.js"
     ]
   },
   {
     "name": "ENH-NOTICE3-P4-mod-enemies-refusal-sent-to-the-hud-line",
-    "file": "src/systems/travelOptions.js",
+    "file": "src/systems/travel/travelOptions.js",
     "old": "    messageBox(T.MsgEnemies);\n    return false;",
     "new": "    say(T.MsgEnemies);\n    return false;",
     "tests": [
-      "test/notify.test.js",
-      "test/to1_travelOptions.test.js"
+      "test/systems/notify.test.js",
+      "test/systems/travel/to1_travelOptions.test.js"
     ]
   },
   {
     "name": "ENH-NOTICE3-P4-mod-no-path-hud-line-sent-to-the-box-door",
-    "file": "src/systems/travelOptions.js",
+    "file": "src/systems/travel/travelOptions.js",
     "old": "        drawJunctionMap(mp);\n        say(T.MsgNoPath);",
     "new": "        drawJunctionMap(mp);\n        messageBox(T.MsgNoPath);",
     "tests": [
-      "test/notify.test.js"
+      "test/systems/notify.test.js"
     ]
   },
   {
@@ -349,7 +349,7 @@
     "old": "    active: () => _live && !_ctxDead,\n    priority: 20,",
     "new": "    active: () => !_ctxDead,\n    priority: 20,",
     "tests": [
-      "test/enhnotice3_hosts.test.js"
+      "test/scenes/enhnotice3_hosts.test.js"
     ]
   },
   {
@@ -358,7 +358,7 @@
     "old": "      ctx.goLive?.();   // ENH-NOTICE3 (AUDIT F1, re-audited C1)",
     "new": "      // ctx.goLive?.();   // ENH-NOTICE3 (AUDIT F1, re-audited C1)",
     "tests": [
-      "test/enhnotice3_hosts.test.js"
+      "test/scenes/enhnotice3_hosts.test.js"
     ]
   },
   {
@@ -367,8 +367,8 @@
     "old": "    if (_ctxDead) return false;\n    dungeonWindows.reconcile(activeOverlay);",
     "new": "    dungeonWindows.reconcile(activeOverlay);",
     "tests": [
-      "test/enhnotice3_hosts.test.js",
-      "test/roadb_push_doors.test.js"
+      "test/scenes/enhnotice3_hosts.test.js",
+      "test/scenes/roadb_push_doors.test.js"
     ]
   },
   {
@@ -377,7 +377,7 @@
     "old": "    mountWindow(win);\n  };",
     "new": "    if (modes?.showQuestOverlay?.(win)) return;\n    townTalk.pushOverlay(win);\n  };",
     "tests": [
-      "test/enhnotice3_hosts.test.js"
+      "test/scenes/enhnotice3_hosts.test.js"
     ]
   },
   {
@@ -386,7 +386,7 @@
     "old": "  const toastsCovered = () => (talkPaused() && windows.hudCovered(overlay)) || hidesHud(overlay) || !!otherHudCovered?.();",
     "new": "  const toastsCovered = () => (talkPaused() && windows.hudCovered(overlay)) || hidesHud(overlay);",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
@@ -395,7 +395,7 @@
     "old": "    if (p.mount(win, { push: !!push })) return true;",
     "new": "    if (p.mount(win, { push: !!push, onClosed: null })) return true;",
     "tests": [
-      "test/notify.test.js"
+      "test/systems/notify.test.js"
     ]
   },
   {
@@ -404,7 +404,7 @@
     "old": "  const inert = { addNext: () => inert, done: true, mounted: false, window: null };\n  return inert;",
     "new": "  return null;",
     "tests": [
-      "test/notify.test.js"
+      "test/systems/notify.test.js"
     ]
   },
   {
@@ -413,7 +413,7 @@
     "old": "  if (Array.isArray(r?.cells)) return r.cells.map((c) => c?.text ?? '').join('  ');\n  return r?.text ?? '';",
     "new": "  return '';",
     "tests": [
-      "test/notify.test.js"
+      "test/systems/notify.test.js"
     ]
   },
   {
@@ -422,7 +422,7 @@
     "old": "showBox: (rows) => messageBox(rows.length ? rows : ['']),",
     "new": "showBox: (rows) => messageBox(rows.length ? rows : [''], { push: false }),",
     "tests": [
-      "test/notify.test.js"
+      "test/systems/notify.test.js"
     ]
   },
   {
@@ -431,7 +431,7 @@
     "old": "  if (!p || typeof p !== 'object') return () => {};\n  presenters.push(p);",
     "new": "  presenters.push(p);",
     "tests": [
-      "test/notify.test.js"
+      "test/systems/notify.test.js"
     ]
   },
   {
@@ -440,97 +440,97 @@
     "old": "    if (typeof p.mount !== 'function') continue;   // a host with a PopupText and no slot passes the window on",
     "new": "    if (typeof p.mount !== 'function') break;   // a host with a PopupText and no slot passes the window on",
     "tests": [
-      "test/notify.test.js"
+      "test/systems/notify.test.js"
     ]
   },
   {
     "name": "AUDIT-the-box-under-the-toasts",
-    "file": "src/ui/enhancedNotice.js",
+    "file": "src/ui/enhanced/enhancedNotice.js",
     "old": "  if (firstToast) stack.insertBefore(host, firstToast); else stack.append(host);",
     "new": "  stack.append(host); void firstToast;",
     "tests": [
-      "test/enhancedNotice.test.js"
+      "test/ui/enhancedNotice.test.js"
     ]
   },
   {
     "name": "TAV-yes-no-decision-routed-to-the-panel",
-    "file": "src/ui/enhancedTavern.js",
+    "file": "src/ui/enhanced/enhancedTavern.js",
     "old": "noticeHold(noticeOwner, box.buttons ? null : box.rows)",
     "new": "noticeHold(noticeOwner, box.rows)",
     "tests": [
-      "test/tavernwindow.test.js"
+      "test/ui/enhanced/tavernwindow.test.js"
     ]
   },
   {
     "name": "TAV-scrim-is-not-the-click",
-    "file": "src/ui/enhancedTavern.js",
+    "file": "src/ui/enhanced/enhancedTavern.js",
     "old": "    scrim.onclick = dismiss;\n",
     "new": "",
     "tests": [
-      "test/tavernwindow.test.js"
+      "test/ui/enhanced/tavernwindow.test.js"
     ]
   },
   {
     "name": "TAV-no-release-when-the-box-clears",
-    "file": "src/ui/enhancedTavern.js",
+    "file": "src/ui/enhanced/enhancedTavern.js",
     "old": "  } else noticeRelease(noticeOwner);",
     "new": "  } else if (false) noticeRelease(noticeOwner);",
     "tests": [
-      "test/tavernwindow.test.js"
+      "test/ui/enhanced/tavernwindow.test.js"
     ]
   },
   {
     "name": "TAV-no-release-on-unmount",
-    "file": "src/ui/enhancedTavern.js",
+    "file": "src/ui/enhanced/enhancedTavern.js",
     "old": "      noticeRelease(noticeOwner);\n      host = null;",
     "new": "      host = null;",
     "tests": [
-      "test/tavernwindow.test.js"
+      "test/ui/enhanced/tavernwindow.test.js"
     ]
   },
   {
     "name": "TAV-owner-minted-per-render",
-    "file": "src/ui/enhancedTavern.js",
+    "file": "src/ui/enhanced/enhancedTavern.js",
     "old": "const noticeOwner = {};",
     "new": "let noticeOwner = {};",
     "tests": [
-      "test/tavernwindow.test.js"
+      "test/ui/enhanced/tavernwindow.test.js"
     ]
   },
   {
     "name": "INV-line-left-on-the-sheet-too",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "    if (notice && !onPanel) win.append(el('p', 'sheet-notice', notice));",
     "new": "    if (notice) win.append(el('p', 'sheet-notice', notice));",
     "tests": [
-      "test/enhancedInventory.test.js"
+      "test/ui/enhanced/enhancedInventory.test.js"
     ]
   },
   {
     "name": "INV-loot-frame-line-left-too",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "      if (!packOpen && notice && !onPanel) loot.append(el('p', 'sheet-notice', notice));",
     "new": "      if (!packOpen && notice) loot.append(el('p', 'sheet-notice', notice));",
     "tests": [
-      "test/enhancedInventory.test.js"
+      "test/ui/enhanced/enhancedInventory.test.js"
     ]
   },
   {
     "name": "INV-no-release-on-unmount",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "      noticeRelease(noticeOwner);\n      hostEl.innerHTML = '';",
     "new": "      hostEl.innerHTML = '';",
     "tests": [
-      "test/enhancedInventory.test.js"
+      "test/ui/enhanced/enhancedInventory.test.js"
     ]
   },
   {
     "name": "INV-hold-lifted-above-the-host-guard",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "  if (!host) return;\n  repaints++;",
     "new": "  repaints++;\n  if (!host) { noticeHold(noticeOwner, notice ? [{ text: notice, center: true }] : null); return; }",
     "tests": [
-      "test/enhancedInventory.test.js"
+      "test/ui/enhanced/enhancedInventory.test.js"
     ]
   },
   {
@@ -539,7 +539,7 @@
     "old": "    noticeRelease(this);\n    noticeRelease(this._infoOwner);",
     "new": "    noticeRelease(this._infoOwner);",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -548,7 +548,7 @@
     "old": "    noticeRelease(this);\n    noticeRelease(this._infoOwner);",
     "new": "    noticeRelease(this);",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -557,7 +557,7 @@
     "old": "    const onPanel = noticeHold(this._infoOwner, this._infoNoticeRows());",
     "new": "    const onPanel = noticeHold(this, this._infoNoticeRows());",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -566,7 +566,7 @@
     "old": "    this._chrome.root.classList.toggle('hmmodal', modal);",
     "new": "    this._chrome.root.classList.toggle('hmmodal', open);",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -575,7 +575,7 @@
     "old": "    const open = modal && !(this._info && onPanel);",
     "new": "    const open = modal;",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -584,7 +584,7 @@
     "old": "      if (st.notice && !onPanel) card.append(el('p', 'hmnotice', st.notice));",
     "new": "      if (st.notice) card.append(el('p', 'hmnotice', st.notice));",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -593,7 +593,7 @@
     "old": "    if (i.title) out.push({ text: i.title, center: true, highlight: true });",
     "new": "    if (false) out.push({ text: i.title, center: true, highlight: true });",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -602,7 +602,7 @@
     "old": "    for (const c of i.cells) out.push({ text: c, center: false });",
     "new": "    for (const c of []) out.push({ text: c, center: false });",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -611,7 +611,7 @@
     "old": "    noticeRelease(this);\n    this._onClosed?.(finished);",
     "new": "    this._onClosed?.(finished);",
     "tests": [
-      "test/forage4_wait.test.js"
+      "test/systems/quest/forage4_wait.test.js"
     ]
   },
   {
@@ -620,25 +620,25 @@
     "old": "    const rows = [{ text: this.busy, center: true }, { text: this.dots, center: true }];",
     "new": "    const rows = this._rowsOnce ??= [{ text: this.busy, center: true }, { text: this.dots, center: true }];",
     "tests": [
-      "test/forage4_wait.test.js"
+      "test/systems/quest/forage4_wait.test.js"
     ]
   },
   {
     "name": "TAV-a-fresh-owner-at-every-raise",
-    "file": "src/ui/enhancedTavern.js",
+    "file": "src/ui/enhanced/enhancedTavern.js",
     "old": "  const onPanel = noticeHold(noticeOwner, box.buttons ? null : box.rows);",
     "new": "  const onPanel = noticeHold({}, box.buttons ? null : box.rows);",
     "tests": [
-      "test/tavernwindow.test.js"
+      "test/ui/enhanced/tavernwindow.test.js"
     ]
   },
   {
     "name": "TAV-dismiss-does-not-repaint",
-    "file": "src/ui/enhancedTavern.js",
+    "file": "src/ui/enhanced/enhancedTavern.js",
     "old": "  const cb = box?.onDismiss;\n  box = null;\n  cb?.();\n  render();",
     "new": "  const cb = box?.onDismiss;\n  box = null;\n  cb?.();",
     "tests": [
-      "test/tavernwindow.test.js"
+      "test/ui/enhanced/tavernwindow.test.js"
     ]
   },
   {
@@ -647,16 +647,16 @@
     "old": "    for (const r of i.rows) out.push({ text: r, center: false });",
     "new": "    for (const r of []) out.push({ text: r, center: false });",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
     "name": "INV-loot-frame-line-left-too-with-map-tests",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "      if (!packOpen && notice && !onPanel) loot.append(el('p', 'sheet-notice', notice));",
     "new": "      if (!packOpen && notice) loot.append(el('p', 'sheet-notice', notice));",
     "tests": [
-      "test/enhancedInventory.test.js"
+      "test/ui/enhanced/enhancedInventory.test.js"
     ]
   },
   {
@@ -665,7 +665,7 @@
     "old": "    noticeRelease(this);\n    this._onClosed?.(finished);",
     "new": "    this._onClosed?.(finished);\n    noticeRelease(this);",
     "tests": [
-      "test/forage4_wait.test.js"
+      "test/systems/quest/forage4_wait.test.js"
     ]
   },
   {
@@ -674,7 +674,7 @@
     "old": "  const toastsCovered = () => (talkPaused() && windows.hudCovered(overlay)) || hidesHud(overlay) || !!otherHudCovered?.();",
     "new": "  const toastsCovered = () => (talkPaused() && windows.hudCovered(overlay)) || hidesHud(overlay) || !!otherOverlayActive?.();",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
@@ -683,7 +683,7 @@
     "old": "  const toastsCovered = () => (talkPaused() && windows.hudCovered(overlay)) || hidesHud(overlay) || !!otherHudCovered?.();",
     "new": "  const toastsCovered = () => !!overlay || !!otherHudCovered?.();",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
@@ -692,7 +692,7 @@
     "old": "    hudText.observe(!!activeOverlay && (dungeonWindows.hudCovered(activeOverlay) || hidesHud(activeOverlay)));",
     "new": "    hudText.observe(!!activeOverlay);",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
@@ -701,7 +701,7 @@
     "old": "      ctx.goLive?.();   // ENH-NOTICE3 (AUDIT F1, re-audited C1): ADOPTED - the context's stack is the live top window from the next statement on; before the flip and not after, so no statement ever runs with mode 'dungeon' and the door's presenter still dormant (worldModes' own quest door reaches the same stack and reads no `_live`)\n      setMode('dungeon');\n      host.unlockOn?.();   // AUDIT 62 F16/F28: the lock never outlives a mode change\n",
     "new": "      setMode('dungeon');\n      host.unlockOn?.();   // AUDIT 62 F16/F28: the lock never outlives a mode change\n      ctx.goLive?.();\n",
     "tests": [
-      "test/enhnotice3_hosts.test.js"
+      "test/scenes/enhnotice3_hosts.test.js"
     ]
   },
   {
@@ -710,7 +710,7 @@
     "old": "      dungeonCtx = ctx;\n",
     "new": "      dungeonCtx = ctx;\n      ctx.goLive?.();\n",
     "tests": [
-      "test/enhnotice3_hosts.test.js"
+      "test/scenes/enhnotice3_hosts.test.js"
     ]
   },
   {
@@ -719,7 +719,7 @@
     "old": "    active: () => _live && !_ctxDead,\n    priority: 20,\n  });\n",
     "new": "    active: () => _live && !_ctxDead,\n    priority: 20,\n  });\n  _live = true;\n",
     "tests": [
-      "test/enhnotice3_hosts.test.js"
+      "test/scenes/enhnotice3_hosts.test.js"
     ]
   },
   {
@@ -728,137 +728,137 @@
     "old": "      else { interiorOverlay.dispose?.(); interiorOverlay = null; }",
     "new": "      else interiorOverlay = null;",
     "tests": [
-      "test/enhnotice3_hosts.test.js"
+      "test/scenes/enhnotice3_hosts.test.js"
     ]
   },
   {
     "name": "AUDIT4-A1-the-stack-spills",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": "  max-width: min(520px, 70vw); max-height: 90vh; overflow: hidden;",
     "new": "  max-width: min(520px, 70vw); max-height: 900vh;",
     "tests": [
-      "test/hudtext.test.js",
-      "test/enhancedNotice.test.js"
+      "test/ui/enhanced/hudtext.test.js",
+      "test/ui/enhancedNotice.test.js"
     ]
   },
   {
     "name": "AUDIT4-A6-the-toast-row-escapes-the-phone-block",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": "  .notice-row, .notice.notice-toast .notice-row { font-size: 13px; }\n  .notice-cell:first-child { min-width: 5em; }",
     "new": "  .notice-row { font-size: 13px; }\n  .notice-cell:first-child { min-width: 5em; }",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
     "name": "AUDIT4-A7-the-stack-back-on-the-tie",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": "  z-index: 31; pointer-events: none;",
     "new": "  z-index: 30; pointer-events: none;",
     "tests": [
-      "test/enhancedNotice.test.js"
+      "test/ui/enhancedNotice.test.js"
     ]
   },
   {
     "name": "AUDIT4-A10-the-toast-loses-its-dark",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": "border-left-color: rgba(243,239,44,0.55);\n  background: rgba(10,12,17,0.82);",
     "new": "border-left-color: rgba(243,239,44,0.55);\n  background: rgba(10,12,17,0.06);",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
     "name": "AUDIT4-A1-the-enhanced-arm-paints-both-faces",
-    "file": "src/ui/hudText.js",
+    "file": "src/ui/hud/hudText.js",
     "old": "      drawEnhancedToasts({ ...this.frame(), visible: !this.covered }, undefined, this.key);\n      return;",
     "new": "      drawEnhancedToasts({ ...this.frame(), visible: !this.covered }, undefined, this.key);",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
     "name": "AUDIT4-A7-the-waiting-timer-assigned",
-    "file": "src/ui/hudText.js",
+    "file": "src/ui/hud/hudText.js",
     "old": "    else if (this.timer >= 0) this.timer = Math.max(this.timer, delayInSeconds);",
     "new": "    else if (this.timer >= 0) this.timer = delayInSeconds;",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
     "name": "AUDIT4-A8-the-next-pop-delay-assigned",
-    "file": "src/ui/hudText.js",
+    "file": "src/ui/hud/hudText.js",
     "old": "    else if (this.timer >= 0) this.timer = Math.max(this.timer, delayInSeconds);\n    else this.nextPopDelay = Math.max(this.nextPopDelay, delayInSeconds);",
     "new": "    else if (this.timer >= 0) this.timer = Math.max(this.timer, delayInSeconds);\n    else this.nextPopDelay = delayInSeconds;",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
     "name": "AUDIT4-A6-the-next-pop-delay-never-reset",
-    "file": "src/ui/hudText.js",
+    "file": "src/ui/hud/hudText.js",
     "old": "      this.lines.shift();\n      this.nextPopDelay = HUD_TEXT_POP_DELAY;",
     "new": "      this.lines.shift();",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
     "name": "AUDIT4-A2-the-watchdog-leaves-the-owner-set",
-    "file": "src/ui/enhancedNotice.js",
+    "file": "src/ui/enhanced/enhancedNotice.js",
     "old": "    if (mine) { mine.delete(p.rowId); if (!mine.size) toasts.delete(p.toastOwner); }",
     "new": "    void mine;",
     "tests": [
-      "test/enhancedNotice.test.js"
+      "test/ui/enhancedNotice.test.js"
     ]
   },
   {
     "name": "AUDIT4-A2-a-covered-pop-merely-hidden",
-    "file": "src/ui/enhancedNotice.js",
+    "file": "src/ui/enhanced/enhancedNotice.js",
     "old": "    if (!visible && !ids.length) {",
     "new": "    if (!visible) {",
     "tests": [
-      "test/enhancedNotice.test.js"
+      "test/ui/enhancedNotice.test.js"
     ]
   },
   {
     "name": "AUDIT4-A12-a-covered-arrival-counted",
-    "file": "src/ui/enhancedNotice.js",
+    "file": "src/ui/enhanced/enhancedNotice.js",
     "old": "    if (host) {\n      const p = panels.get(toastKey(key, ids[i]));",
     "new": "    mine.add(ids[i]);\n    if (host) {\n      const p = panels.get(toastKey(key, ids[i]));",
     "tests": [
-      "test/enhancedNotice.test.js"
+      "test/ui/enhancedNotice.test.js"
     ]
   },
   {
     "name": "AUDIT4-B2-the-hint-option-ignored",
-    "file": "src/ui/enhancedNotice.js",
+    "file": "src/ui/enhanced/enhancedNotice.js",
     "old": "  const caption = toast ? false : (hint === undefined ? NOTICE_HINT : hint);",
     "new": "  const caption = toast ? false : NOTICE_HINT;",
     "tests": [
-      "test/enhancedNotice.test.js",
-      "test/forage4_wait.test.js",
-      "test/heldmap.test.js",
-      "test/enhancedInventory.test.js"
+      "test/ui/enhancedNotice.test.js",
+      "test/systems/quest/forage4_wait.test.js",
+      "test/ui/heldmap.test.js",
+      "test/ui/enhanced/enhancedInventory.test.js"
     ]
   },
   {
     "name": "AUDIT4-B1-the-scrim-window-sized",
-    "file": "src/ui/enhancedTavern.js",
+    "file": "src/ui/enhanced/enhancedTavern.js",
     "old": "    scrim.className = 'sb-ask sb-screen';\n",
     "new": "",
     "tests": [
-      "test/tavernwindow.test.js"
+      "test/ui/enhanced/tavernwindow.test.js"
     ]
   },
   {
     "name": "AUDIT4-B1-the-scrim-on-the-window",
-    "file": "src/ui/enhancedTavern.js",
+    "file": "src/ui/enhanced/enhancedTavern.js",
     "old": "    (scrim.className.includes('sb-screen') ? shell : win).append(scrim);",
     "new": "    win.append(scrim);",
     "tests": [
-      "test/tavernwindow.test.js"
+      "test/ui/enhanced/tavernwindow.test.js"
     ]
   },
   {
@@ -867,7 +867,7 @@
     "old": "    const cardNotice = cardUp ? (",
     "new": "    const cardNotice = true ? (",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -876,16 +876,16 @@
     "old": "  let _ctxDead = false;\n  function pushDungeonWindow(win) {",
     "new": "  function pushDungeonWindow(win) {",
     "tests": [
-      "test/enhnotice3_hosts.test.js"
+      "test/scenes/enhnotice3_hosts.test.js"
     ]
   },
   {
     "name": "INV-nothing-on-the-panel",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "  const onPanel = noticeHold(noticeOwner, notice ? [{ text: notice, center: true }] : null, { hint: false });",
     "new": "  const onPanel = noticeHold(noticeOwner, null, { hint: false });",
     "tests": [
-      "test/enhancedInventory.test.js"
+      "test/ui/enhanced/enhancedInventory.test.js"
     ]
   },
   {
@@ -894,7 +894,7 @@
     "old": "    const onPanel = noticeHold(this, cardNotice ? [{ text: cardNotice, center: true }] : null, { hint: false });",
     "new": "    const onPanel = noticeHold(this, null, { hint: false });",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -903,7 +903,7 @@
     "old": "(feeRefused ? 'You do not have enough gold.' : null) || this._itRefusal || null) : null;",
     "new": "this._itRefusal || null) : null;",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ],
     "note": "IT1 (PIN MOVED): re-aimed by content - Immersive Travel’s arm sits beside the line this record mutates."
   },
@@ -913,7 +913,7 @@
     "old": "    if (noticeFrame(this, rows, { hint: false })) { this._box = null; return; }",
     "new": "    noticeFrame(this, rows, { hint: false });",
     "tests": [
-      "test/forage4_wait.test.js"
+      "test/systems/quest/forage4_wait.test.js"
     ]
   }
 ]

@@ -4,10 +4,10 @@
 // anything (For example housing customization)". The two mods do not edit Daggerfall's towns, they REPLACE them:
 // 7,727 locations get a new block grid and a new building list, and the blocks themselves are rebuilt (only one
 // house interior in eight keeps nine tenths of its classic furniture). A building is known to the game by WHERE it
-// stands - DFU's building key, (block x << 16) + (block y << 8) + record (systems/talkTopics.js) - so every record a
+// stands - DFU's building key, (block x << 16) + (block y << 8) + record (systems/talk/talkTopics.js) - so every record a
 // save keeps by building key would wake up in another building:
 //   - the house you bought (banking's deed) and everything you did to it: the decor placed in its frame, the built-in
-//     furniture taken out by name, the chests filled by index, its yard (systems/sceneCache.js, scenes/decorTool.js);
+//     furniture taken out by name, the chests filled by index, its yard (systems/sceneCache.js, scenes/decor/decorTool.js);
 //   - a room rented at an inn (systems/tavern.js), a quest's building and the markers its people stand on
 //     (systems/quest/place.js), an item left at a smith (systems/repairService.js), a Recall anchor set indoors.
 // DFU itself would let them wake in the wrong building; a port that promised not to regress house customisation
@@ -18,12 +18,12 @@
 // moment nothing it holds needs it (the room expires, the quest ends, the house is sold), and next loads as the mods
 // would have it.
 //
-// The door (formats/worldDataReplacement.js) asks `pinAt(locationKey)` for the location it is serving and for the
+// The door (formats/worldData/worldDataReplacement.js) asks `pinAt(locationKey)` for the location it is serving and for the
 // blocks laid out in it (WorldDataVariants' last location - the location read right before its blocks, as in DFU).
 // This module holds no game state: the hosts hand it the save's records (`layoutRecordsOf`) and the location of a map
 // id, and refresh the towns whose answer changed.
 
-import { setLayoutPinOracle, worldDataVendorCarries, locationReplacementFilename, blockReplacementFilename } from '../formats/worldDataReplacement.js';
+import { setLayoutPinOracle, worldDataVendorCarries, locationReplacementFilename, blockReplacementFilename } from '../formats/worldData/worldDataReplacement.js';
 
 /** The world-data mods that MOVE BUILDINGS in towns - the only ones a pin speaks for. A mod that adds scenery to a
  *  dungeon or a ship's deck (Aquatic Sprites, Detailed Ships) moves no building a save keeps by key. */
@@ -34,7 +34,7 @@ export const LAYOUT_MODS = Object.freeze(['beautiful-villages', 'beautiful-citie
  * name (layoutsMatch) - true while each mod ships one version. A pack of another version may move buildings, and every
  * stamped house, room, site and home would name another one with nothing to say so: updating a vendored pack is a
  * layout migration (records stamped with the old version re-keyed, or their towns kept in the old pack), and
- * test/wd3_layoutPins.test.js holds the vendored packs to these versions until one is written.
+ * test/systems/wd3_layoutPins.test.js holds the vendored packs to these versions until one is written.
  */
 export const LAYOUT_MOD_VERSIONS = Object.freeze({ 'beautiful-villages': '1.4.2', 'beautiful-cities': '0.5.0' });
 
@@ -59,7 +59,7 @@ let _typeOf = () => null;               // a location key -> its MapTable Locati
 let _pins = new Map();                  // locationKey -> { out:Set, in:Set, stamp, why }
 let _heldBack = new Set();              // QUEST-AUDIT II PIN-SLEEP: locationKeys whose pin this session could not honour
 let _missingVendors = new Set();        // AUDIT QA2: the layout mods switched on whose packs did not load this session
-let _displaced = () => false;           // ARENA1: a record whose building the port itself took away (world/arenaCity.js)
+let _displaced = () => false;           // ARENA1: a record whose building the port itself took away (world/arena/arenaCity.js)
 
 /** The hosts' half: which layout mods are loaded for the game (the latch) and their versions (the world-data loader,
  *  scenes/modWorldData.js), and where a town is (the world host, which holds the map). Each is kept until replaced. */
@@ -191,7 +191,7 @@ export function recordStands(rec) {
   if (!rec?.mapId || layoutLocationKeyOfMapId(rec.mapId) == null) return true;
   // ARENA1: a building the arena took (Daggerfall's cell 4,3, in every layout) is no building at all - a room rented
   // there is honoured at any inn of the city, a ticket at any smith, a quest site chosen again (place.js
-  // reseatMovedSite); a house deed is moved before it is ever asked (systems/arenaMove.js)
+  // reseatMovedSite); a house deed is moved before it is ever asked (systems/arena/arenaMove.js)
   if (_displaced(rec)) return false;
   return layoutsMatch(rec.layout, layoutStampOfMapId(rec.mapId));
 }

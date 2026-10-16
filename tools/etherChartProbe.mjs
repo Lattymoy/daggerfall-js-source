@@ -1,5 +1,5 @@
 // ETHER-CHART2 and AUDIT ETHER-CHART2 (2026-10-12; bible/03-World/Eltheric-Ocean.md ETHER-CHART2,
-// bible/01-Overview/Audit-Ether-Chart2.md): THE CHART OF THE ELTHERIC OCEAN, MEASURED IN A BROWSER.
+// bible/01-Overview/audits/Audit-Ether-Chart2.md): THE CHART OF THE ELTHERIC OCEAN, MEASURED IN A BROWSER.
 //
 // node has no layout engine and no font, so what the chart's pins cannot hold is measured here, in Chromium, over the
 // real module (`ui/etherChartWindow.js` mounted alone - it needs no game data: the sea is a pure function of its pixel,

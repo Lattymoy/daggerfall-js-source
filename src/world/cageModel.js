@@ -1,6 +1,6 @@
 // @ts-check
 // BROKER-CAGE (2026-10-02, Mac: "she should be present at the site in a jailed gate, and the gate opens after all the
-// enemies are cleared"): THE SIGIL BROKER'S CAGE, MADE - cut from the gate's own stone (world/gateModel.js faces,
+// enemies are cleared"): THE SIGIL BROKER'S CAGE, MADE - cut from the gate's own stone (world/gate/gateModel.js faces,
 // GATE_ARCHIVE), as the faithful's circle is (world/riteModel.js): corner posts, a ring of bars on three sides and
 // either side of its door, a frame and bars over the top, and the door itself, a barred leaf on its hinge. Its walls in
 // the collider are plain slabs apart from the bars (a body meets a wall, never slips between two bars).
@@ -15,7 +15,7 @@
 // jambs under the beam, the posts capped over it). Pure.
 //
 // Not a DFU member. Ledger A (WB).
-import { faces, GATE_STONE_RECORD, GATE_PLINTH_RECORD, GATE_ARCHIVE } from './gateModel.js';
+import { faces, GATE_STONE_RECORD, GATE_PLINTH_RECORD, GATE_ARCHIVE } from './gate/gateModel.js';
 
 /** The cage, metres: across, deep, and high over her feet (her idle stands 2.15). */
 export const CAGE_W = 2.2;

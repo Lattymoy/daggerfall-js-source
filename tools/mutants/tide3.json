@@ -5,7 +5,7 @@
     "old": "const o = Math.min(TIDE_EFFECTS.orcsInfluenceWeek, amountOf(raid));",
     "new": "const o = amountOf(raid);",
     "tests": [
-      "test/tide_orcs.test.js"
+      "test/net/tide_orcs.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "const o = Math.min(TIDE_EFFECTS.orcsInfluenceWeek, amountOf(raid));",
     "new": "const o = Math.min(TIDE_EFFECTS.orcsInfluenceWeek, Number(raid));",
     "tests": [
-      "test/tide_orcs.test.js"
+      "test/net/tide_orcs.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "return Math.min(ACCOUNT_SEAT_WEEK_CAP, w + g + r + h + m + o);",
     "new": "return Math.min(ACCOUNT_SEAT_WEEK_CAP, w + g + r + h + m);",
     "tests": [
-      "test/tide_orcs.test.js"
+      "test/net/tide_orcs.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "      else if (r.source === 'raid') a(r.account).raid += Number(r.amount);",
     "new": "      else if (r.source === 'raid') a(r.account).raid += 0;",
     "tests": [
-      "test/tide_orcs.test.js"
+      "test/net/tide_orcs.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  if (accountKind(player) !== 'linked') return { error: 'seats-need-account' };\n  if (!seatsOpenFor(player, env)) return { error: 'seats-closed' };\n  if (!bountySitePixel(site)",
     "new": "  if (!seatsOpenFor(player, env)) return { error: 'seats-closed' };\n  if (!bountySitePixel(site)",
     "tests": [
-      "test/tide_orcs.test.js"
+      "test/net/tide_orcs.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "  if (!bountySitePixel(site) || !seatRegionOk(region)) return { error: 'bad-orc-camp' };",
     "new": "  if (!seatRegionOk(region)) return { error: 'bad-orc-camp' };",
     "tests": [
-      "test/tide_orcs.test.js"
+      "test/net/tide_orcs.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "  if (!bountySitePixel(site) || !seatRegionOk(region)) return { error: 'bad-orc-camp' };",
     "new": "  if (!bountySitePixel(site)) return { error: 'bad-orc-camp' };",
     "tests": [
-      "test/tide_orcs.test.js"
+      "test/net/tide_orcs.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "  if (tideNow(env, nowS, region) !== 'orcs') return { ok: true, counted: false, why: 'no-raid' };",
     "new": "  if (tideNow(env, nowS, region) === 'calm') return { ok: true, counted: false, why: 'no-raid' };",
     "tests": [
-      "test/tide_orcs.test.js"
+      "test/net/tide_orcs.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "  if (tideNow(env, nowS, region) !== 'orcs') return { ok: true, counted: false, why: 'no-raid' };\n",
     "new": "",
     "tests": [
-      "test/tide_orcs.test.js"
+      "test/net/tide_orcs.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "  const at = await countsAt(db, player, character, region, nowS, { anyCharacter: true });\n  if ('counted' in at) return { ok: true, counted: false, why: at.why };\n  const day = utcDay(nowS);",
     "new": "  const at = await countsAt(db, player, character, region, nowS, { anyCharacter: true });\n  if ('counted' in at) return { ok: true, counted: false, why: 'no-pledge' };\n  const day = utcDay(nowS);",
     "tests": [
-      "test/tide_orcs.test.js"
+      "test/net/tide_orcs.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "  const ref = `${day}:${site}:${player.id}`;",
     "new": "  const ref = `${site}:${player.id}`;",
     "tests": [
-      "test/tide_orcs.test.js"
+      "test/net/tide_orcs.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "  const ref = `${day}:${site}:${player.id}`;",
     "new": "  const ref = `${day}:${site}`;",
     "tests": [
-      "test/tide_orcs.test.js"
+      "test/net/tide_orcs.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "AND source = 'raid' AND day = ?8) < ?11",
     "new": "AND source = 'raid' AND day = ?8) <= ?11",
     "tests": [
-      "test/tide_orcs.test.js"
+      "test/net/tide_orcs.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "\n        AND (SELECT COUNT(*) FROM town_seat_influence WHERE account = ?4 AND source = 'raid' AND day = ?8) < ?11",
     "new": "",
     "tests": [
-      "test/tide_orcs.test.js"
+      "test/net/tide_orcs.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "AND week = ?1), 0) + ?6 <= ?12`)",
     "new": "AND week = ?1), 0) <= ?12`)",
     "tests": [
-      "test/tide_orcs.test.js"
+      "test/net/tide_orcs.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "\n        AND COALESCE((SELECT SUM(amount) FROM town_seat_influence WHERE account = ?4 AND source = 'raid' AND week = ?1), 0) + ?6 <= ?12`)",
     "new": "`)",
     "tests": [
-      "test/tide_orcs.test.js"
+      "test/net/tide_orcs.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "WHERE account = ?4 AND source = 'raid' AND week = ?1), 0)",
     "new": "WHERE account = ?4 AND week = ?1), 0)",
     "tests": [
-      "test/tide_orcs.test.js"
+      "test/net/tide_orcs.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": ".bind(at.week, at.key, at.guild, player.id, at.char, TIDE_EFFECTS.orcsCampInfluence, region, day, ref, nowS, TIDE_EFFECTS.orcsCampsDay, TIDE_EFFECTS.orcsInfluenceWeek),",
     "new": ".bind(at.week, at.key, at.guild, player.id, at.char, 25, region, day, ref, nowS, TIDE_EFFECTS.orcsCampsDay, TIDE_EFFECTS.orcsInfluenceWeek),",
     "tests": [
-      "test/tide_orcs.test.js"
+      "test/net/tide_orcs.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "  if (await db.prepare(\"SELECT 1 FROM town_seat_influence WHERE source = 'raid' AND ref = ?\").bind(ref).first()) return { ok: true, counted: false, why: 'claimed' };\n",
     "new": "",
     "tests": [
-      "test/tide_orcs.test.js"
+      "test/net/tide_orcs.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "  if (ins?.meta?.changes) return { ok: true, counted: true, key: at.key };",
     "new": "  if (ins?.meta?.changes) return { ok: true, counted: true };",
     "tests": [
-      "test/tide_orcs.test.js"
+      "test/net/tide_orcs.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "          '/v1/seats/orc-camp': () => claimOrcCamp(ctx, who.player, env, body),",
     "new": "",
     "tests": [
-      "test/tide_orcs.test.js"
+      "test/net/tide_orcs.test.js"
     ]
   },
   {
@@ -194,8 +194,8 @@
     "old": "...(await seatsBoard(ctx.db, r.seats, nowS)), zero: seasonZeroOf(env.SEASON_ZERO_WEEK) };",
     "new": "...(await seatsBoard(ctx.db, r.seats, nowS)) };",
     "tests": [
-      "test/tide_orcs.test.js",
-      "test/seat1c_client.test.js"
+      "test/net/tide_orcs.test.js",
+      "test/ui/seat1c_client.test.js"
     ],
     "note": "PRIMARY-TRIPS (re-aimed by content): the zero beside seatsBoard's answer"
   },
@@ -205,7 +205,7 @@
     "old": "    orcCamp: (character, site, region) => post('/v1/seats/orc-camp', { character, site, region }),",
     "new": "    orcCamp: (character, site, region) => post('/v1/seats/bounty', { character, site, region }),",
     "tests": [
-      "test/tide_orcs.test.js"
+      "test/net/tide_orcs.test.js"
     ]
   },
   {
@@ -214,7 +214,7 @@
     "old": "get zero() { return Number.isSafeInteger(data?.zero) ? data.zero : null; },",
     "new": "get zero() { return data?.zero ?? null; },",
     "tests": [
-      "test/tide_orcs.test.js"
+      "test/net/tide_orcs.test.js"
     ]
   },
   {
@@ -223,7 +223,7 @@
     "old": "    tideAt(region) {\n      if (open !== true) return 'calm';\n",
     "new": "    tideAt(region) {\n",
     "tests": [
-      "test/tide_orcs.test.js"
+      "test/net/tide_orcs.test.js"
     ]
   },
   {
@@ -232,7 +232,7 @@
     "old": "      return tideAt(week, region, !!seasonOf(week, this.zero));",
     "new": "      return tideAt(week, region, true);",
     "tests": [
-      "test/tide_orcs.test.js"
+      "test/net/tide_orcs.test.js"
     ]
   },
   {
@@ -241,7 +241,7 @@
     "old": "    async orcCamp(site, region) {\n      if (open !== true) return { counted: false };\n",
     "new": "    async orcCamp(site, region) {\n",
     "tests": [
-      "test/tide_orcs.test.js"
+      "test/net/tide_orcs.test.js"
     ]
   },
   {
@@ -250,7 +250,7 @@
     "old": "      if (r?.ok) standingsAt.clear();\n      return { counted: !!(r?.ok && r.data?.counted) };",
     "new": "      return { counted: !!(r?.ok && r.data?.counted) };",
     "tests": [
-      "test/tide_orcs.test.js"
+      "test/net/tide_orcs.test.js"
     ]
   },
   {
@@ -259,7 +259,7 @@
     "old": "      return { counted: !!(r?.ok && r.data?.counted) };",
     "new": "      return { counted: !!r?.ok };",
     "tests": [
-      "test/tide_orcs.test.js"
+      "test/net/tide_orcs.test.js"
     ]
   },
   {
@@ -268,7 +268,7 @@
     "old": "    orcsAt: (px, py) => (host.tideAt?.(host.regionAt(px, py)) ?? 'calm') === 'orcs',",
     "new": "    orcsAt: (px, py) => (host.tideAt?.(host.regionAt(px, py)) ?? 'calm') !== 'calm',",
     "tests": [
-      "test/tide_orcs.test.js"
+      "test/net/tide_orcs.test.js"
     ]
   },
   {
@@ -277,7 +277,7 @@
     "old": "    orcsAt: (px, py) => (host.tideAt?.(host.regionAt(px, py)) ?? 'calm') === 'orcs',",
     "new": "    orcsAt: (px, py) => (host.tideAt?.(host.regionAt(px, py)) ?? 'orcs') === 'orcs',",
     "tests": [
-      "test/tide_orcs.test.js"
+      "test/net/tide_orcs.test.js"
     ]
   },
   {
@@ -286,7 +286,7 @@
     "old": "      if ((host.tideAt?.(region) ?? 'calm') === 'orcs' && host.orcCamp) {",
     "new": "      if (host.orcCamp) {",
     "tests": [
-      "test/tide_orcs.test.js"
+      "test/net/tide_orcs.test.js"
     ]
   },
   {
@@ -295,7 +295,7 @@
     "old": "host.orcCamp(site, region).then((r) => { if (r?.counted) host.say?.(ORC_CAMP_TEXT, 4); }).catch(() => {});",
     "new": "host.orcCamp(site, region).then((r) => { host.say?.(ORC_CAMP_TEXT, 4); }).catch(() => {});",
     "tests": [
-      "test/tide_orcs.test.js"
+      "test/net/tide_orcs.test.js"
     ]
   },
   {
@@ -304,52 +304,52 @@
     "old": "export const ORC_CAMP_TEXT = 'The Orc Raids: your guild gains 50 influence at its seat in the region.';",
     "new": "export const ORC_CAMP_TEXT = 'The Orc Raids: your guild gains influence at its seat in the region.';",
     "tests": [
-      "test/tide_orcs.test.js"
+      "test/net/tide_orcs.test.js"
     ]
   },
   {
     "name": "TIDE3-tr-ocean",
-    "file": "src/systems/travel.js",
+    "file": "src/systems/travel/travel.js",
     "old": "    minutes += terrain === CLIMATES.Ocean && seaMult !== 1 ? Math.floor(m * seaMult) : m;",
     "new": "    minutes += seaMult !== 1 ? Math.floor(m * seaMult) : m;",
     "tests": [
-      "test/tide_orcs.test.js"
+      "test/net/tide_orcs.test.js"
     ]
   },
   {
     "name": "TIDE3-tr-floor",
-    "file": "src/systems/travel.js",
+    "file": "src/systems/travel/travel.js",
     "old": "    minutes += terrain === CLIMATES.Ocean && seaMult !== 1 ? Math.floor(m * seaMult) : m;",
     "new": "    minutes += terrain === CLIMATES.Ocean && seaMult !== 1 ? Math.ceil(m * seaMult) : m;",
     "tests": [
-      "test/tide_orcs.test.js"
+      "test/net/tide_orcs.test.js"
     ]
   },
   {
     "name": "TIDE3-tr-default",
-    "file": "src/systems/travel.js",
+    "file": "src/systems/travel/travel.js",
     "old": "  hasHorse = false, hasCart = false, seaMult = seaTideAt(end),",
     "new": "  hasHorse = false, hasCart = false, seaMult = 1,",
     "tests": [
-      "test/tide_orcs.test.js"
+      "test/net/tide_orcs.test.js"
     ]
   },
   {
     "name": "TIDE3-tr-host",
-    "file": "src/systems/travel.js",
+    "file": "src/systems/travel/travel.js",
     "old": "const seaTideAt = (end) => (seaTide && end ? seaTide(end) : 1);",
     "new": "const seaTideAt = (end) => (seaTide && end ? seaTide({ ...end, x: end.x - 1 }) : 1);",
     "tests": [
-      "test/tide_orcs.test.js"
+      "test/net/tide_orcs.test.js"
     ]
   },
   {
     "name": "TIDE3-tr-set",
-    "file": "src/systems/travel.js",
+    "file": "src/systems/travel/travel.js",
     "old": "export function setSeaTide(fn) { seaTide = typeof fn === 'function' ? fn : null; }",
     "new": "export function setSeaTide(fn) { seaTide = typeof fn === 'function' ? fn : seaTide; }",
     "tests": [
-      "test/tide_orcs.test.js"
+      "test/net/tide_orcs.test.js"
     ]
   }
 ]

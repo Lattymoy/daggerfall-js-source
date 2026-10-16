@@ -5,7 +5,7 @@
   "old": "    reachable: codes.some((c) => !c.startsWith('Joystick')),",
   "new": "    reachable: codes.length > 0,",
   "tests": [
-   "test/swingsay.test.js"
+   "test/systems/swingsay.test.js"
   ]
  },
  {
@@ -14,7 +14,7 @@
   "old": "  for (const dict of [b.primary, b.secondary]) for (const [code, a] of dict) if (a === 'SwingWeapon') codes.push(code);",
   "new": "  for (const [code, a] of b.primary) if (a === 'SwingWeapon') codes.push(code);",
   "tests": [
-   "test/swingsay.test.js"
+   "test/systems/swingsay.test.js"
   ]
  },
  {
@@ -23,7 +23,7 @@
   "old": "  const mode = swingMode();",
   "new": "  const mode = 0;",
   "tests": [
-   "test/swingsay.test.js"
+   "test/systems/swingsay.test.js"
   ]
  },
  {
@@ -32,7 +32,7 @@
   "old": "    travelPx: Math.round(threshold * Math.max(width, height)),",
   "new": "    travelPx: Math.round(threshold * Math.min(width, height)),",
   "tests": [
-   "test/swingsay.test.js"
+   "test/systems/swingsay.test.js"
   ]
  },
  {
@@ -41,7 +41,7 @@
   "old": "    modeName: ['Vanilla', 'Click', 'Hold'][mode] ?? String(mode),",
   "new": "    modeName: ['Click', 'Vanilla', 'Hold'][mode] ?? String(mode),",
   "tests": [
-   "test/swingsay.test.js"
+   "test/systems/swingsay.test.js"
   ]
  },
  {
@@ -50,7 +50,7 @@
   "old": "  const button = swingButton();\n  const mode = swingMode();",
   "new": "  const button = swingButton();\n  if (button < 0) setBinding(b, 'Mouse1', 'SwingWeapon', true);\n  const mode = swingMode();",
   "tests": [
-   "test/swingsay.test.js"
+   "test/systems/swingsay.test.js"
   ]
  },
  {
@@ -59,7 +59,7 @@
   "old": "    const broken = s.mode !== 0 || s.button < 0 || !s.reachable;",
   "new": "    const broken = false;",
   "tests": [
-   "test/swingsay.test.js"
+   "test/systems/swingsay.test.js"
   ]
  }
 ]

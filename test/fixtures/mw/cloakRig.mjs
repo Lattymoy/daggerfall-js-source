@@ -5,11 +5,11 @@
 // triangle of the cloak (the clip itself, counted).
 import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
-import { assembleFirstPersonArm } from '../../../src/formats/mwFirstPerson.js';
-import { composeWornArmor } from '../../../src/formats/mwItemMap.js';
-import { CLASSIC_ARMOR_TEMPLATE } from '../../../src/characters/ownArmorModels.js';
-import { isCloakSlot } from '../../../src/characters/ownClothingModels.js';
-import { cloakSheet, sheetCellKey, surfaceSamples } from '../../../src/formats/mwCloakFit.js';
+import { assembleFirstPersonArm } from '../../../src/formats/morrowind/mwFirstPerson.js';
+import { composeWornArmor } from '../../../src/formats/morrowind/mwItemMap.js';
+import { CLASSIC_ARMOR_TEMPLATE } from '../../../src/characters/ownModels/ownArmorModels.js';
+import { isCloakSlot } from '../../../src/characters/ownModels/ownClothingModels.js';
+import { cloakSheet, sheetCellKey, surfaceSamples } from '../../../src/formats/morrowind/mwCloakFit.js';
 import { HOLSTER_SLOTS } from '../../../src/systems/weaponSheathing.js';
 import { retailSkeleton } from './retailRig.mjs';
 

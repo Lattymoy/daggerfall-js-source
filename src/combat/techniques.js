@@ -5,7 +5,7 @@
 // possible and take your time. No exceptions"): THE TECHNIQUE KEY - what a press of WeaponTechnique does with the weapon
 // in hand. Design and laws: bible/05-Combat/Weapon-Techniques.md.
 //
-// ONE RUNNER, EVERY HOST. Every host builds a weapon rig (combat/weaponRig.js - exterior.js, world.js, worldModes.js'
+// ONE RUNNER, EVERY HOST. Every host builds a weapon rig (combat/weapon/weaponRig.js - exterior.js, world.js, worldModes.js'
 // interior arm, dungeonContext.js), and the rig that owns the frame steps THIS module, as it steps the one pair of
 // casting hands (combat/fpsSpellCasting.js): the cooldowns are the player's, not a rig's, so walking through a door
 // neither resets one nor runs two. A rig that is not the last to step finds the aim and the flight set aside (a door
@@ -13,7 +13,7 @@
 //
 // WHAT IT RIDES - nothing it does grows a second performer:
 //   the swing      the rig starts the machine's own strike (machineAttack + the arm's fpAttack), the technique's BLOW
-//                  on it (combat/techniqueBlow.js); every host's 'hit' resolves it through PlayerWeapon.resolveHit and
+//                  on it (combat/technique/techniqueBlow.js); every host's 'hit' resolves it through PlayerWeapon.resolveHit and
 //                  each pool's own door - the corpse, the crime, a puppet's owner, the referee's clip on a boss
 //   the shaft      the bow's own loose (the rig hands the machine's hit frame here instead of to the host), then real
 //                  arrows through the host's own lane (the door's fireArrow - combat/arrowFlight.js, or the dungeon's
@@ -26,25 +26,25 @@
 // { sky, weapon, technique, speedScale }) - a player shaft through the host's lane (`sky`: from that very point, not the
 // bow hand; `weapon` the bow that loosed it); drainFatigue(n) - the host's fatigue door; face(point, from) - turn the
 // view toward a point from where the body lands (Shadowstep's turn); blocked() - a window holds the world (the street's
-// hosts); and THE FEEL's three (combat/techniqueFx.js): fx(recipe, at, o) - a burst in the host's cast engine's impact
+// hosts); and THE FEEL's three (combat/technique/techniqueFx.js): fx(recipe, at, o) - a burst in the host's cast engine's impact
 // pass, shake(k) - the one shaker, sound(clip, volume, pitch) - the audio bus }.
 // A host that hands none still swings its techniques; it cannot leap, dash or shoot one (said so).
 
-import { techniqueById, techniqueMult, TECHNIQUE_MAX_SPEED, TECHNIQUES, TECHNIQUE_ACTION } from './techniqueRoster.js';
-import { techniqueLineOf, lootRarityOn, rarityKnown } from '../systems/lootRarity.js';
+import { techniqueById, techniqueMult, TECHNIQUE_MAX_SPEED, TECHNIQUES, TECHNIQUE_ACTION } from './technique/techniqueRoster.js';
+import { techniqueLineOf, lootRarityOn, rarityKnown } from '../systems/loot/lootRarity.js';
 import { EQUIP_SLOTS } from '../systems/equip.js';
-import { sigilDueling } from '../systems/sigil.js';
+import { sigilDueling } from '../systems/sigil/sigil.js';
 import { FATIGUE_MULTIPLIER } from '../systems/statMods.js';
 import { spendAmmoFor, ammoCountFor } from '../systems/inventory.js';
 import { tallySwingSkills, SWING_FATIGUE_COST } from '../scenes/hostCombat.js';
 import { playerDoor } from '../systems/playerDoor.js';
 import { GRAVITY } from '../player/motor.js';
-import { restoresSoFar } from '../systems/save.js';   // AUDIT TECH1: every load passes the one door (PORTAL1's count)
+import { restoresSoFar } from '../systems/save/save.js';   // AUDIT TECH1: every load passes the one door (PORTAL1's count)
 import { blowSchedule } from '../characters/weaponStates.js';
 import { MISSILE_SPEED } from '../systems/spellcast.js';   // AUDIT TECH-FX: a shaft's flight - DFU's one constant (ONE DFU MEMBER, ONE EXPORT)
 import { WEAPON_REACH, friendlyProtected } from './playerWeapon.js';
-import { playerBody, bodyRadius } from './techniqueBlow.js';
-import { techniqueCue, resetTechniqueFx, TECH_FX } from './techniqueFx.js';   // TECH-FX: what each moment looks, moves and sounds like (bible/05-Combat/Weapon-Techniques.md THE FEEL)
+import { playerBody, bodyRadius } from './technique/techniqueBlow.js';
+import { techniqueCue, resetTechniqueFx, TECH_FX } from './technique/techniqueFx.js';   // TECH-FX: what each moment looks, moves and sounds like (bible/05-Combat/Weapon-Techniques.md THE FEEL)
 
 /** The registry action (systems/inputActions.js) - the roster's (TECH-CARD: the leaf, so the card names the key). */
 export { TECHNIQUE_ACTION };
@@ -95,7 +95,7 @@ const fresh = () => ({
   owner: null,
   /** the last say door handed in */
   say: null,
-  /** the loads it has seen (AUDIT TECH1: a load starts it fresh - systems/save.js restoresSoFar, the count every load
+  /** the loads it has seen (AUDIT TECH1: a load starts it fresh - systems/save/save.js restoresSoFar, the count every load
    *  moves; the player's entity is one object for the page's life, refilled in place) */
   restores: null,
 });
@@ -144,10 +144,10 @@ const flatOf = (yaw) => [Math.sin(yaw), 0, Math.cos(yaw)];
 /** AUDIT TECH-FX: a point, whatever holds it - the motor's feet are a Float32Array (player/motor.js `pos`), never an
  *  Array, and `Array.isArray` on them dropped every burst in every host. */
 const vec3 = (v) => v != null && v.length >= 3 && Number.isFinite(v[0]) && Number.isFinite(v[1]) && Number.isFinite(v[2]);
-/** TECH-FX: where a moment's burst stands (combat/techniqueFx.js TECH_FX names the recipe): a ring at the feet, a star
+/** TECH-FX: where a moment's burst stands (combat/technique/techniqueFx.js TECH_FX names the recipe): a ring at the feet, a star
  *  where the blow falls in front, a flare and a tracer from the bow down the look, a trail from where a dash began, a
  *  Volley's arrow where it lands. null: no burst for this moment. A sweep spins the way its strike travels (AUDIT
- *  TECH-FX: a StrikeLeft - the Whirlwind's - carries the blade to the left: combat/weaponWidget.js leanFor, bloodDecals.js
+ *  TECH-FX: a StrikeLeft - the Whirlwind's - carries the blade to the left: combat/weapon/weaponWidget.js leanFor, bloodDecals.js
  *  SWING_PUSH), and an arc spans the technique's own half-angle (techniqueRoster.js `arc`). */
 function fxPlace(id, moment, ctx, extra = null) {
   const burst = TECH_FX[id]?.[moment]?.burst, f = ctx.cam?.feet;
@@ -168,7 +168,7 @@ function fxPlace(id, moment, ctx, extra = null) {
       return { at: [f[0], f[1], f[2]], ground: f[1], yaw, spin: tech?.strike === 'StrikeRight' ? -1 : 1, ...(typeof tech?.arc === 'number' ? { half: tech.arc } : {}) };
   }
 }
-/** TECH-FX: a moment cued - the springs, the shake, the burst and the sound (combat/techniqueFx.js techniqueCue). */
+/** TECH-FX: a moment cued - the springs, the shake, the burst and the sound (combat/technique/techniqueFx.js techniqueCue). */
 const cue = (hand, moment, ctx, extra = null) => techniqueCue(hand.id, moment, ctx.door, fxPlace(hand.id, moment, ctx, extra));
 const at = (o, d, s) => [o[0] + d[0] * s, o[1] + d[1] * s, o[2] + d[2] * s];
 const flatDist = (a, b) => Math.hypot(b[0] - a[0], b[2] - a[2]);
@@ -301,7 +301,7 @@ export function volleyPoints(centre, radius, n, turn = 0) {
   return out;
 }
 
-/** THE BLOW a technique's swing carries (combat/techniqueBlow.js), at its line's power, from the feet and look now. */
+/** THE BLOW a technique's swing carries (combat/technique/techniqueBlow.js), at its line's power, from the feet and look now. */
 export function swingBlow(id, value, cam, extra = {}) {
   const t = techniqueById(id);
   if (!t) return null;
@@ -485,7 +485,7 @@ export function refusal(hand, ctx) {
   const left = techniqueWait(hand.id);
   if (left > 0) return notReadyText(techniqueName(hand), Math.ceil(left));
   // AUDIT TECH1: the price AND the blow's own drain after it - a technique never spends the last of a body (exhaustion
-  // with a foe near is death: systems/rest.js)
+  // with a foe near is death: systems/rest/rest.js)
   if ((ctx.entity.fatigue ?? 0) <= techniqueFatigue(hand.tech) + SWING_FATIGUE_COST) return TIRED_TEXT;
   const t = hand.tech;
   if (t.mech === 'rain' || t.mech === 'pierce') {
@@ -561,7 +561,7 @@ function stepAct(dt, ctx) {
   }
   if (a.kind === 'shot') {
     // the loose never came (a climb took the hands) - unless the rig holds the shot's hit for the Morrowind arm's release
-    // (combat/weaponRig.js MW-D42: the arrow leaves with the string, after the machine is idle again)
+    // (combat/weapon/weaponRig.js MW-D42: the arrow leaves with the string, after the machine is idle again)
     if (!a.loosed && !ctx.holding && ((pw.machine?.state === 'Idle' && a.t > 0.05) || a.t > SWING_GIVE_UP_S)) endAct(pw);
     return;
   }
@@ -616,7 +616,7 @@ function endAct(pw) {
 function say(line) { try { _s.say?.(line); } catch { /* a line is never the technique's problem */ } }
 
 /**
- * THE LOOSE - the rig's last word on its frame's events (combat/weaponRig.js frame): a bow's technique takes its own
+ * THE LOOSE - the rig's last word on its frame's events (combat/weapon/weaponRig.js frame): a bow's technique takes its own
  * hit frame, so no host looses a plain arrow on it. Answers the events the hosts are to see.
  */
 export function claimShot(evs, ctx) {
@@ -720,7 +720,7 @@ export const CHIP_UNBOUND = 'unbound';
 const _chip = { key: 'technique', set: 'technique', name: '', text: '', state: 'active' };
 const _chips = Object.freeze([_chip]);
 let _chipSecs = -1, _chipSecsText = '';
-/** The HUD's chip for the technique in hand (ui/enhancedHud.js setHudSetChips' shape): its name, and its seconds while it
+/** The HUD's chip for the technique in hand (ui/enhanced/enhancedHud.js setHudSetChips' shape): its name, and its seconds while it
  *  recovers - or its key while ready. `keyName` the key's word, or a function that answers it - asked only when ready
  *  (AUDIT TECH-FX: the host's key lookup walked every binding a frame, whether a technique was in hand or not); with no
  *  key bound, `CHIP_UNBOUND`. [] with none in hand, with the ladder off, or in a duel (FINAL AUDIT).

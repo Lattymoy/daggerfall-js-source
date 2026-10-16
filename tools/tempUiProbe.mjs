@@ -1,6 +1,6 @@
 // TEMP-UI (2026-10-12, the owner: "add a tempurature widget to the UI") - THE TEMPERATURE PLATE, DRAWN AND MEASURED.
 //
-// The REAL HUD (ui/enhancedHud.js over the real sheets, the enhanced skin) under a character reading freezing, then
+// The REAL HUD (ui/enhanced/enhancedHud.js over the real sheets, the enhanced skin) under a character reading freezing, then
 // comfortable, then scorching, beside the quest card (.qtrack, the right edge 92px down), a foe's bar under the compass
 // and the status widget at the left edge - at a desktop, two laptops, HUD scales 1.5 and 2, and a phone both ways up -
 // in Enhanced Plus and in the DFO Grimoire dress. For each it reads:
@@ -30,7 +30,7 @@ const PAGE = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewp
 <style>html,body{margin:0;height:100%;overflow:hidden;background:repeating-linear-gradient(45deg,#3b4a3a 0 14px,#324031 14px 28px)}</style></head><body>
 <script type="module">
 import { setPref } from '/src/systems/uiPrefs.js';
-import { drawEnhancedHud } from '/src/ui/enhancedHud.js';
+import { drawEnhancedHud } from '/src/ui/enhanced/enhancedHud.js';
 import { survivalOf } from '/src/systems/survival/needs.js';
 import { worldMinutes } from '/src/systems/worldTick.js';
 const q = new URLSearchParams(location.search);
@@ -42,7 +42,7 @@ const now = Math.floor(worldMinutes());
 const s = survivalOf(e, now);
 Object.assign(s, { lastAte: now - 800, thirst: 85, felt: -40 });
 globalThis.__felt = (f) => { s.felt = f; };
-// the quest card at its own place (ui/questTracker.js - the sheet's .qtrack rule stands it), with a title and a line
+// the quest card at its own place (ui/quest/questTracker.js - the sheet's .qtrack rule stands it), with a title and a line
 const card = document.createElement('div'); card.className = 'qtrack';
 card.innerHTML = '<div class="qtrack-title">The Lord\\u2019s Ransom</div><div class="qtrack-line">Find the courier at the Wayrest docks.</div>';
 document.body.append(card);

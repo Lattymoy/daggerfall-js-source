@@ -1,6 +1,6 @@
 // NODE-MARKS - A GATHERING NODE'S GLOW, COMPILED, LINKED AND DRAWN IN A REAL BROWSER.
 //
-// node holds the glow's law (test/nodemarks.test.js: who glows and how bright, the shader run through test/glsl.mjs, the
+// node holds the glow's law (test/scenes/nodemarks.test.js: who glows and how bright, the shader run through test/glsl.mjs, the
 // pass over a fake GL); what node cannot answer is whether the GLSL COMPILES and LINKS in a real WebGL2 context, and
 // whether what it draws is the glow it says: light low on the node in its profession's colour, nothing past its crown,
 // lying OVER the node's own picture (its card stood toward the eye), hidden by a wall in front of it, no jump where the

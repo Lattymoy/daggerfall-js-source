@@ -5,8 +5,8 @@
   "old": "  float u = uSlotN > 0.5 ? float(gl_InstanceID) / uSlotN : 0.0;\n  if (vFade <= 0.001 || u > vFade * 1.15) { gl_Position = vec4(2,2,2,1); return; }",
   "new": "  if (vFade <= 0.001 || fract(aInst.w * 91.7) > vFade * 1.15) { gl_Position = vec4(2,2,2,1); return; }",
   "tests": [
-   "test/labGrass.test.js",
-   "test/wind4_windweather.test.js"
+   "test/render/labGrass.test.js",
+   "test/render/wind4_windweather.test.js"
   ]
  },
  {
@@ -15,7 +15,7 @@
   "old": "      const budget = Math.min(m, Math.ceil(m * fade * 1.15));",
   "new": "      const budget = m;",
   "tests": [
-   "test/perf2.test.js"
+   "test/render/perf2.test.js"
   ],
   "why": "GRASS AUDIT 1 re-aimed by content: the budget runs over the half in the pixel style."
  },
@@ -25,7 +25,7 @@
   "old": "      near[slot] = Math.sqrt(dx * dx + dz * dz);",
   "new": "      near[slot] = Math.hypot((box[0] + box[3]) / 2 - eye[0], (box[2] + box[5]) / 2 - eye[2]);",
   "tests": [
-   "test/perf2.test.js"
+   "test/render/perf2.test.js"
   ]
  },
  {
@@ -34,7 +34,7 @@
   "old": "      gl.uniform1f(this.u.uSlotN, m);   // the fraction is over the CELL (or its half), not over the prefix",
   "new": "      gl.uniform1f(this.u.uSlotN, budget);   // the fraction is over the CELL (or its half), not over the prefix",
   "tests": [
-   "test/perf2.test.js"
+   "test/render/perf2.test.js"
   ],
   "why": "GRASS AUDIT 1 re-aimed by content."
  },
@@ -44,7 +44,7 @@
   "old": "      const far = this._oneQuad || dn > range * GRASS_FAR_AT;   // GRASS-PX2: the pixel style is one quad everywhere",
   "new": "      const far = this._oneQuad || false;",
   "tests": [
-   "test/perf2.test.js"
+   "test/render/perf2.test.js"
   ],
   "why": "GRASS-PX2 re-aimed by content: the pixel style shares the far line."
  },
@@ -54,8 +54,8 @@
   "old": "export const GRASS_FAR_SEGMENTS = 1;",
   "new": "export const GRASS_FAR_SEGMENTS = 5;",
   "tests": [
-   "test/labGrass.test.js",
-   "test/perf2.test.js"
+   "test/render/labGrass.test.js",
+   "test/render/perf2.test.js"
   ]
  },
  {
@@ -64,7 +64,7 @@
   "old": "      const n = this.slotCount ? this.slotCount[slot] : p;",
   "new": "      const n = p;",
   "tests": [
-   "test/perf2.test.js"
+   "test/render/perf2.test.js"
   ]
  },
  {
@@ -73,8 +73,8 @@
   "old": "export const grassPerCell = (density = LAB_GRASS.density, span = LAB_GRASS.densitySpan, cell = GRASS_CELL) =>",
   "new": "export const grassPerCell = (density = LAB_GRASS.density, span = LAB_GRASS.span, cell = GRASS_CELL) =>",
   "tests": [
-   "test/perf2.test.js",
-   "test/labGrass.test.js"
+   "test/render/perf2.test.js",
+   "test/render/labGrass.test.js"
   ]
  },
  {
@@ -83,7 +83,7 @@
   "old": "export const LAB_GRASS = Object.freeze({ density: 1200000, height: 38, range: 300, span: 315, densitySpan: 210, seed: 0x2f6e2b1 });",
   "new": "export const LAB_GRASS = Object.freeze({ density: 1200000, height: 38, range: 300, span: 310, densitySpan: 210, seed: 0x2f6e2b1 });",
   "tests": [
-   "test/labGrass.test.js"
+   "test/render/labGrass.test.js"
   ],
   "why": "GRASS5 re-aimed by content: the range and span moved when the pack lifted the memory cap."
  },
@@ -93,7 +93,7 @@
   "old": "    const tint = bakedTint(tRnd, fx, fz);   // GRASS6: pulled toward the patch it stands in;",
   "new": "    const tint = tRnd;   // GRASS6: pulled toward the patch it stands in;",
   "tests": [
-   "test/labGrass.test.js"
+   "test/render/labGrass.test.js"
   ],
   "why": "GRASS AUDIT 1 re-aimed by content: the bake moved after keep(). PERF-EXT21 re-aimed it again: the cell placer bakes at the field\u0027s coordinates, fx/fz."
  },
@@ -103,7 +103,7 @@
   "old": "export const LAB_GRASS = Object.freeze({ density: 1200000, height: 38, range: 300, span: 315, densitySpan: 210, seed: 0x2f6e2b1 });",
   "new": "export const LAB_GRASS = Object.freeze({ density: 1200000, height: 54, range: 300, span: 315, densitySpan: 210, seed: 0x2f6e2b1 });",
   "tests": [
-   "test/labGrass.test.js"
+   "test/render/labGrass.test.js"
   ],
   "why": "GRASS5 re-aimed by content: same line, same law, new numbers around it."
  },
@@ -113,7 +113,7 @@
   "old": "      meterFor(renderer.gl)?.mark('grass');   // GRASS2",
   "new": "",
   "tests": [
-   "test/el8_contact.test.js"
+   "test/render/el8_contact.test.js"
   ]
  }
 ]

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // WD3 (2026-10-01): A MOD'S WHOLE WORLD DATA AS ONE PACK - the author's edits over the player's own MAPS.BSA and
-// BLOCKS.BSA, every shared piece once (formats/worldDataPack.js says what a pack is and why).
+// BLOCKS.BSA, every shared piece once (formats/worldData/worldDataPack.js says what a pack is and why).
 //
 //   node tools/worldDataPackBuild.mjs <arena2> <bundle.dfmod> <vendor> <out.json> [--title T] [--author A] [--version V]
 //
@@ -21,11 +21,11 @@ import { dirname, join } from 'node:path';
 import { createHash } from 'node:crypto';
 import zlib from 'node:zlib';
 import { isMain } from './lib/isMain.mjs';
-import { readUnityFs, readSerializedFile, CLASS_ID } from '../src/formats/unityBundle.js';
+import { readUnityFs, readSerializedFile, CLASS_ID } from '../src/formats/unity/unityBundle.js';
 import { BlocksFile } from '../src/formats/blocksFile.js';
 import { MapsFile } from '../src/formats/mapsFile.js';
-import { blockToDfuJson, locationToDfuJson, diffJson, canonicalJson } from '../src/formats/worldDataJson.js';
-import { PACK_FORMAT, ROW_ENCODERS, runLength, openWorldDataPack, classicIndicesOf } from '../src/formats/worldDataPack.js';
+import { blockToDfuJson, locationToDfuJson, diffJson, canonicalJson } from '../src/formats/worldData/worldDataJson.js';
+import { PACK_FORMAT, ROW_ENCODERS, runLength, openWorldDataPack, classicIndicesOf } from '../src/formats/worldData/worldDataPack.js';
 
 /** FullSerializer's string escapes that JSON lacks (fsJsonParser.UnescapeChar: `\0`, `\a`), rewritten, then parsed. */
 export function parseFullSerializerJson(text) {

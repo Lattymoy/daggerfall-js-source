@@ -35,7 +35,7 @@
 //
 // Three probe-only transforms beside the frame probe's own, the tree untouched: the account base may be the local service
 // (net/accountClient.js serviceBase answers an https base alone); `?shot` survives the online boot (REALM P0.1 refuses
-// it there - systems/onlineLane.js ONLINE_REFUSED_FLAGS - because it installs the probe seams, which are the instrument
+// it there - systems/online/onlineLane.js ONLINE_REFUSED_FLAGS - because it installs the probe seams, which are the instrument
 // here: `__frame`, `__shotReady`); and the composer's hook (`__probeSaveText`, with `__onlinePeers`, the peers the
 // session draws, its status and the way book's size - `__probeOnline`). `?tod` is still refused online, so the sky is the shared clock's: an A/B's two arms stand at
 // different hours, and an online A/B is read by its counts and its own functions, not by the frame's total.
@@ -57,7 +57,7 @@ import { OnlineSession } from '../src/net/online.js';
 import { SESSION_KEY, SERVICE_KEY } from '../src/net/accountClient.js';
 import { realmIo, realmCreate, createRealmSession } from '../src/systems/realmSaves.js';
 import { worldRoom, CHAT_WORLD_ROOM, PIXEL_UNITS } from '../src/net/wire.js';
-import { PIXEL_M } from '../src/net/gateLaw.js';
+import { PIXEL_M } from '../src/net/gate/gateLaw.js';
 import { ACCEPTED } from '../src/net/legalLaw.js';
 
 const ROOT = process.env.TREE || fileURLToPath(new URL('..', import.meta.url));
@@ -81,20 +81,20 @@ let stateDir = null;
 const dropState = () => { if (stateDir) { try { rmSync(stateDir, { recursive: true, force: true }); } catch { /* gone */ } stateDir = null; } };
 
 /** The edits this probe makes beside the frame probe's (FRAME_PROBE_EDITS' shape: each needle asserted, and held to the
- *  tree by test/perfon4_probes.test.js). */
+ *  tree by test/tooling/perfon4_probes.test.js). */
 export const ONLINE_PROBE_EDITS = Object.freeze([
   // the account base may be the local service - serviceBase answers an https base alone
   { file: 'src/net/accountClient.js', edits: [["/^https:\\/\\/\\S+$/.test(v)", "/^(https:\\/\\/\\S+|http:\\/\\/127\\.0\\.0\\.1:\\d+)$/.test(v)"]] },
   // REALM P0.1 drops `?shot` from an online boot - it installs the probe seams, `__addGold` among them, which no player's
   // world may carry. Here the world is this run's own, local, and the seams are the instrument
-  { file: 'src/systems/onlineLane.js', edits: [["export const ONLINE_REFUSED_FLAGS = Object.freeze(['shot', ", 'export const ONLINE_REFUSED_FLAGS = Object.freeze([']] },
+  { file: 'src/systems/online/onlineLane.js', edits: [["export const ONLINE_REFUSED_FLAGS = Object.freeze(['shot', ", 'export const ONLINE_REFUSED_FLAGS = Object.freeze([']] },
   // the composer's hook, and the peers the session draws
   { file: 'src/scenes/world.js', edits: [['    window.__quickSave = (name) => modes.quickSaveNow(name);', `    window.__quickSave = (name) => modes.quickSaveNow(name);
     window.__probeSaveText = () => { let t = null; modes.quickSaveNow('probe', { quiet: true, sink: (s) => { t = JSON.stringify(s); } }); return t; };
     window.__probeOnline = () => ({ peers: online ? online.drawable().length : null, status: online ? online.status : null, ways: livingWays.size, frame: window.__frame | 0 });`]] },
 ]);
 
-/** The page's server's transforms: the frame probe's and this probe's own (exported for test/perfon4_probes.test.js). */
+/** The page's server's transforms: the frame probe's and this probe's own (exported for test/tooling/perfon4_probes.test.js). */
 export const probePlugins = () => [probeTransforms(), editsPlugin('online-probe-transforms', ONLINE_PROBE_EDITS)];
 
 /** The bots' knobs, as tools/loadHarness.mjs makeBot reads them: guests (no registration), seven in ten walking. */

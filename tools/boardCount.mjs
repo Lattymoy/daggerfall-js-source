@@ -1,6 +1,6 @@
 // NOTICE1b's MEASURE - BOARD-COUNT (PROF0 10.1: "Every seat and hub has one. A seat or hub whose blocks place no board
 // gets one ... SEAT-COUNT counts them"). The Notice Board is a town's RUMOUR boards' (BOUNTY1 took every other one,
-// systems/bountyBoard.js questBoardIndices), so a hub has a Notice Board wherever its blocks place at least one
+// systems/bounty/bountyBoard.js questBoardIndices), so a hub has a Notice Board wherever its blocks place at least one
 // bulletin board. This walks MAPS.BSA and BLOCKS.BSA from the player's own ARENA2 exactly as the world host's boot pass
 // does (the game's own rows, regionHubs.js pickRegionHubs), lays out every hub (world/locationLayout.js) and prints
 // each: its region, its name, whether it is a capital, how many bulletin boards its blocks place, how many of them
@@ -15,8 +15,8 @@ import { BlocksFile } from '../src/formats/blocksFile.js';
 import { MapsFile } from '../src/formats/mapsFile.js';
 import { layoutLocation } from '../src/world/locationLayout.js';
 import { isBulletinBoard } from '../src/world/rmbLayout.js';
-import { pickRegionHubs } from '../src/systems/regionHubs.js';
-import { questBoardIndices } from '../src/systems/bountyBoard.js';
+import { pickRegionHubs } from '../src/systems/region/regionHubs.js';
+import { questBoardIndices } from '../src/systems/bounty/bountyBoard.js';
 
 /**
  * A laid-out location's boards: every placed model the town sign wears (rmbLayout isBulletinBoard), and how BOUNTY1

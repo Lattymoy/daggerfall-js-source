@@ -89,7 +89,7 @@ jobs:
             exit 1
           fi
 
-      # The tool checks every input and mints the item - the statements are the tested ones (test/serverpost_send.test.js),
+      # The tool checks every input and mints the item - the statements are the tested ones (test/tooling/serverpost_send.test.js),
       # not ones written again here.
       - name: Write the statements
         run: |

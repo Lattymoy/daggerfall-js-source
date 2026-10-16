@@ -1,227 +1,227 @@
 [
   {
     "name": "PEERRANGE-default-150",
-    "file": "src/net/peerRange.js",
+    "file": "src/net/peer/peerRange.js",
     "old": "export const PEER_RANGE_DEFAULT = 300;",
     "new": "export const PEER_RANGE_DEFAULT = 150;",
     "tests": [
-      "test/peerrange.test.js"
+      "test/systems/peerrange.test.js"
     ]
   },
   {
     "name": "PEERRANGE-tiers-reordered",
-    "file": "src/net/peerRange.js",
+    "file": "src/net/peer/peerRange.js",
     "old": "export const PEER_RANGE_TIERS = Object.freeze([150, 300, 600, 0]);",
     "new": "export const PEER_RANGE_TIERS = Object.freeze([0, 150, 300, 600]);",
     "tests": [
-      "test/peerrange.test.js"
+      "test/systems/peerrange.test.js"
     ]
   },
   {
     "name": "PEERRANGE-no-hold",
-    "file": "src/net/peerRange.js",
+    "file": "src/net/peer/peerRange.js",
     "old": "export const PEER_RANGE_HOLD = 1.1;",
     "new": "export const PEER_RANGE_HOLD = 1;",
     "tests": [
-      "test/peerrange.test.js"
+      "test/systems/peerrange.test.js"
     ]
   },
   {
     "name": "PEERRANGE-stray-kept",
-    "file": "src/net/peerRange.js",
+    "file": "src/net/peer/peerRange.js",
     "old": "export const peerRangeOf = (v) => (PEER_RANGE_TIERS.includes(v) ? v : PEER_RANGE_DEFAULT);",
     "new": "export const peerRangeOf = (v) => (v ?? PEER_RANGE_DEFAULT);",
     "tests": [
-      "test/peerrange.test.js"
+      "test/systems/peerrange.test.js"
     ]
   },
   {
     "name": "PEERRANGE-range-unread",
-    "file": "src/net/peerRange.js",
+    "file": "src/net/peer/peerRange.js",
     "old": "const near = range * range,",
     "new": "const near = PEER_RANGE_DEFAULT * PEER_RANGE_DEFAULT,",
     "tests": [
-      "test/peerrange.test.js"
+      "test/systems/peerrange.test.js"
     ]
   },
   {
     "name": "PEERRANGE-strictly-inside",
-    "file": "src/net/peerRange.js",
+    "file": "src/net/peer/peerRange.js",
     "old": "if (dx * dx + dz * dz <= (was?.has(p.id) ? kept : near)) { out.add(p.id); continue; }",
     "new": "if (dx * dx + dz * dz < (was?.has(p.id) ? kept : near)) { out.add(p.id); continue; }",
     "tests": [
-      "test/peerrange.test.js"
+      "test/systems/peerrange.test.js"
     ]
   },
   {
     "name": "PEERRANGE-x-from-origin",
-    "file": "src/net/peerRange.js",
+    "file": "src/net/peer/peerRange.js",
     "old": "const dx = f[0] - me[0], dz = f[2] - me[2];",
     "new": "const dx = f[0] - 0, dz = f[2] - me[2];",
     "tests": [
-      "test/peerrange.test.js"
+      "test/systems/peerrange.test.js"
     ]
   },
   {
     "name": "PEERRANGE-x-summed",
-    "file": "src/net/peerRange.js",
+    "file": "src/net/peer/peerRange.js",
     "old": "const dx = f[0] - me[0], dz = f[2] - me[2];",
     "new": "const dx = f[0] + me[0], dz = f[2] - me[2];",
     "tests": [
-      "test/peerrange.test.js"
+      "test/systems/peerrange.test.js"
     ]
   },
   {
     "name": "PEERRANGE-z-from-origin",
-    "file": "src/net/peerRange.js",
+    "file": "src/net/peer/peerRange.js",
     "old": "const dx = f[0] - me[0], dz = f[2] - me[2];",
     "new": "const dx = f[0] - me[0], dz = f[2] - 0;",
     "tests": [
-      "test/peerrange.test.js"
+      "test/systems/peerrange.test.js"
     ]
   },
   {
     "name": "PEERRANGE-height-counted",
-    "file": "src/net/peerRange.js",
+    "file": "src/net/peer/peerRange.js",
     "old": "if (dx * dx + dz * dz <= (was?.has(p.id) ? kept : near))",
     "new": "if (dx * dx + (f[1] - me[1]) ** 2 + dz * dz <= (was?.has(p.id) ? kept : near))",
     "tests": [
-      "test/peerrange.test.js"
+      "test/systems/peerrange.test.js"
     ]
   },
   {
     "name": "PEERRANGE-mate-unasked",
-    "file": "src/net/peerRange.js",
+    "file": "src/net/peer/peerRange.js",
     "old": "    if (mate(p.id)) out.add(p.id);",
     "new": "    if (mate(p.id) && false) out.add(p.id);",
     "tests": [
-      "test/peerrange.test.js"
+      "test/systems/peerrange.test.js"
     ]
   },
   {
     "name": "PEERRANGE-party-asked-first",
-    "file": "src/net/peerRange.js",
+    "file": "src/net/peer/peerRange.js",
     "old": "    const f = at(p);\n    if (f) {",
     "new": "    if (mate(p.id)) { out.add(p.id); continue; }\n    const f = at(p);\n    if (f) {",
     "tests": [
-      "test/peerrange.test.js"
+      "test/systems/peerrange.test.js"
     ]
   },
   {
     "name": "PEERRANGE-no-range-cutting",
-    "file": "src/net/peerRange.js",
+    "file": "src/net/peer/peerRange.js",
     "old": "if (!(range > 0) || !me) {\n    for (const p of peers) out.add(p.id);",
     "new": "if (!me) {\n    for (const p of peers) out.add(p.id);",
     "tests": [
-      "test/peerrange.test.js"
+      "test/systems/peerrange.test.js"
     ]
   },
   {
     "name": "PEERRANGE-placeless-drawn",
-    "file": "src/net/peerRange.js",
+    "file": "src/net/peer/peerRange.js",
     "old": "    const f = at(p);\n    if (f) {",
     "new": "    const f = at(p);\n    if (!f) { out.add(p.id); continue; }\n    if (f) {",
     "tests": [
-      "test/peerrange.test.js"
+      "test/systems/peerrange.test.js"
     ]
   },
   {
     "name": "PEERRANGE-hold-to-newcomer",
-    "file": "src/net/peerRange.js",
+    "file": "src/net/peer/peerRange.js",
     "old": "(was?.has(p.id) ? kept : near)",
     "new": "(was?.has(p.id) ? near : kept)",
     "tests": [
-      "test/peerrange.test.js"
+      "test/systems/peerrange.test.js"
     ]
   },
   {
     "name": "PEERRANGE-hold-sign-turned",
-    "file": "src/net/peerRange.js",
+    "file": "src/net/peer/peerRange.js",
     "old": "kept = range * hold * range * hold;",
     "new": "kept = (range / hold) * (range / hold);",
     "tests": [
-      "test/peerrange.test.js"
+      "test/systems/peerrange.test.js"
     ]
   },
   {
     "name": "PEERRANGE-hold-forgotten",
-    "file": "src/net/peerRange.js",
+    "file": "src/net/peer/peerRange.js",
     "old": "const now = rangeDrawn(peers, me, { at, range, mate, was: held }, spare);",
     "new": "const now = rangeDrawn(peers, me, { at, range, mate, was: null }, spare);",
     "tests": [
-      "test/peerrange.test.js"
+      "test/systems/peerrange.test.js"
     ]
   },
   {
     "name": "PEERRANGE-shows-cut-true",
-    "file": "src/net/peerRange.js",
+    "file": "src/net/peer/peerRange.js",
     "old": "shows: (id) => !gone.has(id),",
     "new": "shows: () => true,",
     "tests": [
-      "test/peerrange.test.js"
+      "test/systems/peerrange.test.js"
     ]
   },
   {
     "name": "PEERRANGE-shows-unseen-false",
-    "file": "src/net/peerRange.js",
+    "file": "src/net/peer/peerRange.js",
     "old": "shows: (id) => !gone.has(id),",
     "new": "shows: (id) => !live || held.has(id),",
     "tests": [
-      "test/peerrange.test.js"
+      "test/systems/peerrange.test.js"
     ]
   },
   {
     "name": "PEERRANGE-gone-kept",
-    "file": "src/net/peerRange.js",
+    "file": "src/net/peer/peerRange.js",
     "old": "      gone.clear();\n      live = !!on",
     "new": "      live = !!on",
     "tests": [
-      "test/peerrange.test.js"
+      "test/systems/peerrange.test.js"
     ]
   },
   {
     "name": "PEERRANGE-off-cutting",
-    "file": "src/net/peerRange.js",
+    "file": "src/net/peer/peerRange.js",
     "old": "live = !!on && range > 0 && !!me;",
     "new": "live = range > 0 && !!me;",
     "tests": [
-      "test/peerrange.test.js"
+      "test/systems/peerrange.test.js"
     ]
   },
   {
     "name": "PEERRANGE-range-zero-live",
-    "file": "src/net/peerRange.js",
+    "file": "src/net/peer/peerRange.js",
     "old": "live = !!on && range > 0 && !!me;",
     "new": "live = !!on && range >= 0 && !!me;",
     "tests": [
-      "test/peerrange.test.js"
+      "test/systems/peerrange.test.js"
     ]
   },
   {
     "name": "PEERRANGE-no-place-live",
-    "file": "src/net/peerRange.js",
+    "file": "src/net/peer/peerRange.js",
     "old": "live = !!on && range > 0 && !!me;",
     "new": "live = !!on && range > 0;",
     "tests": [
-      "test/peerrange.test.js"
+      "test/systems/peerrange.test.js"
     ]
   },
   {
     "name": "PEERRANGE-off-keeps-held",
-    "file": "src/net/peerRange.js",
+    "file": "src/net/peer/peerRange.js",
     "old": "if (!live) { held.clear(); return peers; }",
     "new": "if (!live) { return peers; }",
     "tests": [
-      "test/peerrange.test.js"
+      "test/systems/peerrange.test.js"
     ]
   },
   {
     "name": "PEERRANGE-cut-default",
-    "file": "src/net/peerRange.js",
+    "file": "src/net/peer/peerRange.js",
     "old": "cut(peers, { on = true, me, at, range = PEER_RANGE_DEFAULT, mate = () => false }) {",
     "new": "cut(peers, { on = true, me, at, range = 150, mate = () => false }) {",
     "tests": [
-      "test/peerrange.test.js"
+      "test/systems/peerrange.test.js"
     ]
   },
   {
@@ -230,7 +230,7 @@
     "old": "{ on: !travelView?.active, me: player.pos, at: (d) => onlineToScene(d.shown), range: peerRangeOf(getPref('peerRange'))",
     "new": "{ on: true, me: player.pos, at: (d) => onlineToScene(d.shown), range: peerRangeOf(getPref('peerRange'))",
     "tests": [
-      "test/peerrange.test.js"
+      "test/systems/peerrange.test.js"
     ]
   },
   {
@@ -239,7 +239,7 @@
     "old": "range: peerRangeOf(getPref('peerRange'))",
     "new": "range: 300",
     "tests": [
-      "test/peerrange.test.js"
+      "test/systems/peerrange.test.js"
     ]
   },
   {
@@ -248,7 +248,7 @@
     "old": "mate: (id) => !!social?.isPartyPeer(id) || id === duelMgr.opponent });",
     "new": "mate: (id) => id === duelMgr.opponent });",
     "tests": [
-      "test/peerrange.test.js"
+      "test/systems/peerrange.test.js"
     ]
   },
   {
@@ -257,7 +257,7 @@
     "old": "mate: (id) => !!social?.isPartyPeer(id) || id === duelMgr.opponent });",
     "new": "mate: (id) => !!social?.isPartyPeer(id) });",
     "tests": [
-      "test/peerrange.test.js"
+      "test/systems/peerrange.test.js"
     ]
   },
   {
@@ -266,7 +266,7 @@
     "old": "const crowdDrawnHere = (p) => gateCrowd.shows(p.id) && peerRange.shows(p.id);",
     "new": "const crowdDrawnHere = (p) => gateCrowd.shows(p.id);",
     "tests": [
-      "test/peerrange.test.js"
+      "test/systems/peerrange.test.js"
     ]
   },
   {
@@ -275,7 +275,7 @@
     "old": "|| !gateCrowd.shows(p.id) || !peerRange.shows(p.id)) { peerFxPlayer.forget",
     "new": "|| !gateCrowd.shows(p.id)) { peerFxPlayer.forget",
     "tests": [
-      "test/peerrange.test.js"
+      "test/systems/peerrange.test.js"
     ]
   },
   {
@@ -284,7 +284,7 @@
     "old": "const visiblePeers = gateCrowd.cut(ranged, {",
     "new": "const visiblePeers = gateCrowd.cut(cabin ? drawable : drawable.filter((d) => !csaPeers.isBelowDeck(d.id)), {",
     "tests": [
-      "test/peerrange.test.js"
+      "test/systems/peerrange.test.js"
     ]
   },
   {
@@ -293,7 +293,7 @@
     "old": ", grow: tvGrow, room: drawable });",
     "new": ", grow: tvGrow });",
     "tests": [
-      "test/peerrange.test.js"
+      "test/systems/peerrange.test.js"
     ]
   },
   {
@@ -302,7 +302,7 @@
     "old": "for (const peer of room ?? peers) if (peer?.shown && peer.id) up.set(peer.id, peer.shown);",
     "new": "for (const peer of peers) if (peer?.shown && peer.id) up.set(peer.id, peer.shown);",
     "tests": [
-      "test/peerrange.test.js"
+      "test/systems/peerrange.test.js"
     ]
   },
   {
@@ -311,7 +311,7 @@
     "old": "if (!live.has(id) && !inRoom?.has(id)) this._mobiles.delete(id);",
     "new": "if (!live.has(id)) this._mobiles.delete(id);",
     "tests": [
-      "test/peerrange.test.js"
+      "test/systems/peerrange.test.js"
     ]
   },
   {
@@ -320,7 +320,7 @@
     "old": "if (room) { inRoom = new Set(); for (const peer of room) if (peer?.id) inRoom.add(peer.id); }",
     "new": "if (room) { inRoom = new Set(); }",
     "tests": [
-      "test/peerrange.test.js"
+      "test/systems/peerrange.test.js"
     ]
   },
   {
@@ -329,43 +329,43 @@
     "old": "&& !inRoom?.has(id)) this._mobiles.delete(id);",
     "new": "&& !inRoom) this._mobiles.delete(id);",
     "tests": [
-      "test/peerrange.test.js"
+      "test/systems/peerrange.test.js"
     ]
   },
   {
     "name": "PEERRANGE-card-row-gone",
-    "file": "src/ui/enhancedMenu.js",
+    "file": "src/ui/enhanced/enhancedMenu.js",
     "old": "  c.append(choiceRow('peerRange', t('menu.peers.range', 'Draw distance'),",
     "new": "  void (choiceRow('peerRange', t('menu.peers.range', 'Draw distance'),",
     "tests": [
-      "test/peerrange.test.js"
+      "test/systems/peerrange.test.js"
     ]
   },
   {
     "name": "PEERRANGE-card-key-another",
-    "file": "src/ui/enhancedMenu.js",
+    "file": "src/ui/enhanced/enhancedMenu.js",
     "old": "choiceRow('peerRange', t('menu.peers.range', 'Draw distance'),",
     "new": "choiceRow('peerRanges', t('menu.peers.range', 'Draw distance'),",
     "tests": [
-      "test/peerrange.test.js"
+      "test/systems/peerrange.test.js"
     ]
   },
   {
     "name": "PEERRANGE-card-tiers-twice",
-    "file": "src/ui/enhancedMenu.js",
+    "file": "src/ui/enhanced/enhancedMenu.js",
     "old": "PEER_RANGE_TIERS.map((m) => [m, m ? t('menu.peers.metres', '{m} m', { m }) : t('menu.peers.everyone', 'Everyone')])",
     "new": "[150, 300, 600, 0].map((m) => [m, m ? t('menu.peers.metres', '{m} m', { m }) : t('menu.peers.everyone', 'Everyone')])",
     "tests": [
-      "test/peerrange.test.js"
+      "test/systems/peerrange.test.js"
     ]
   },
   {
     "name": "PEERRANGE-card-raw-pref",
-    "file": "src/ui/enhancedMenu.js",
+    "file": "src/ui/enhanced/enhancedMenu.js",
     "old": "read: () => peerRangeOf(getPref('peerRange'))",
     "new": "read: () => getPref('peerRange')",
     "tests": [
-      "test/peerrange.test.js"
+      "test/systems/peerrange.test.js"
     ]
   },
   {
@@ -374,7 +374,7 @@
     "old": "  peerRange: 300,\n",
     "new": "  peerRange: 150,\n",
     "tests": [
-      "test/peerrange.test.js"
+      "test/systems/peerrange.test.js"
     ]
   }
 ]

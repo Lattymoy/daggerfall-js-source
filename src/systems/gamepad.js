@@ -2,7 +2,7 @@
 // law, the half the port never had: "AXES + JOYSTICK (AxisActions,
 // JoystickUIActions): no gamepad layer in the port" stood flagged at
 // inputActions.js since I2. This module is the PURE half - no DOM, no
-// Gamepad API, no frame - so test/gamepad.test.js can execute each law
+// Gamepad API, no frame - so test/systems/gamepad.test.js can execute each law
 // against its mutant; ui/gamepadInput.js is the poller that feeds it.
 //
 // WHAT DFU HAS. Unity's Input Manager exposes sixteen joystick axes
@@ -29,7 +29,7 @@
 // are that table, with the asset's dead zone and inversions applied,
 // so everything downstream reads Unity's numbers and DFU's law holds
 // unchanged.
-import { getBool, getFloat } from './settings.js';
+import { getBool, getFloat } from './settings/settings.js';
 
 export const AXIS_ACTIONS = Object.freeze(['MovementHorizontal', 'MovementVertical', 'CameraHorizontal', 'CameraVertical']);
 export const JOYSTICK_UI_ACTIONS = Object.freeze(['LeftClick', 'RightClick', 'MiddleClick', 'Back']);

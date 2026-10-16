@@ -49,7 +49,7 @@ Editor writes it:
   names; the dependency list below).
 - `WorldDataPack/beautiful-cities.pack.json.gz` - every world-data file of
   the mod as the author's EDIT of Daggerfall's own data
-  (`src/formats/worldDataPack.js`, WD3;
+  (`src/formats/worldData/worldDataPack.js`, WD3;
   `bible/02-Formats/World-Data-Patches.md`): a location as the edit of the
   location MAPS.BSA holds, a classic-named block as the edit of the block,
   a composite as the edit of a parent, a new block as the edit of the

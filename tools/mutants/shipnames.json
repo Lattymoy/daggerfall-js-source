@@ -5,8 +5,8 @@
     "old": "  const name = shipNameOf(shipClass.faction, mulberry32(((seed >>> 0) ^ SHIP_NAME_SALT) >>> 0), crown);",
     "new": "  const name = shipNameOf(shipClass.faction, rng, crown);",
     "tests": [
-      "test/shipnames.test.js",
-      "test/nav_c_ships.test.js"
+      "test/systems/naval/shipnames.test.js",
+      "test/systems/naval/nav_c_ships.test.js"
     ]
   },
   {
@@ -15,8 +15,8 @@
     "old": "  rng();   // SHIP-NAMES: the draw the name took off this stream - her captain's draws are the ones they always were\n",
     "new": "",
     "tests": [
-      "test/shipnames.test.js",
-      "test/nav_c_ships.test.js"
+      "test/systems/naval/shipnames.test.js",
+      "test/systems/naval/nav_c_ships.test.js"
     ]
   },
   {
@@ -25,7 +25,7 @@
     "old": "export const SHIP_NAME_SALT = 0x4e414d45;   // \"NAME\"",
     "new": "export const SHIP_NAME_SALT = 0x4e414d46;   // \"NAME\"",
     "tests": [
-      "test/shipnames.test.js"
+      "test/systems/naval/shipnames.test.js"
     ]
   },
   {
@@ -34,7 +34,7 @@
     "old": "  const pick = (list) => list[Math.floor(r() * list.length) % list.length];",
     "new": "  const pick = (list) => list[Math.floor(r() * (list.length - 1)) % list.length];",
     "tests": [
-      "test/shipnames.test.js"
+      "test/systems/naval/shipnames.test.js"
     ]
   },
   {
@@ -43,7 +43,7 @@
     "old": "  let x = r() * total;",
     "new": "  let x = r() * (total - 1);",
     "tests": [
-      "test/shipnames.test.js"
+      "test/systems/naval/shipnames.test.js"
     ]
   },
   {
@@ -52,7 +52,7 @@
     "old": "  for (const [w, make] of forms) { if ((x -= w) < 0) return make(); }",
     "new": "  for (const [w, make] of forms) { if ((x -= w) < 1e9) return make(); }",
     "tests": [
-      "test/shipnames.test.js"
+      "test/systems/naval/shipnames.test.js"
     ]
   },
   {
@@ -61,7 +61,7 @@
     "old": "  const c = crown ?? CROWNS[0], lore = CROWN_LORE[c.name] ?? CROWN_LORE.Daggerfall;",
     "new": "  const c = crown ?? CROWNS[1], lore = CROWN_LORE[c.name] ?? CROWN_LORE.Daggerfall;",
     "tests": [
-      "test/shipnames.test.js"
+      "test/systems/naval/shipnames.test.js"
     ]
   },
   {
@@ -70,7 +70,7 @@
     "old": "  const c = crown ?? CROWNS[0], lore = CROWN_LORE[c.name] ?? CROWN_LORE.Daggerfall;",
     "new": "  const c = crown ?? CROWNS[0], lore = CROWN_LORE[c.name] ?? CROWN_LORE.Wayrest;",
     "tests": [
-      "test/shipnames.test.js"
+      "test/systems/naval/shipnames.test.js"
     ]
   },
   {
@@ -79,7 +79,7 @@
     "old": "      [3, () => the(pick(c.ships)).replace(/^The (\\S+'s )/, '$1')],",
     "new": "      [3, () => the(pick(c.ships))],",
     "tests": [
-      "test/shipnames.test.js"
+      "test/systems/naval/shipnames.test.js"
     ]
   },
   {
@@ -88,7 +88,7 @@
     "old": "      [3, () => the(pick(c.ships)).replace(/^The (\\S+'s )/, '$1')],",
     "new": "      [4, () => the(pick(c.ships)).replace(/^The (\\S+'s )/, '$1')],",
     "tests": [
-      "test/shipnames.test.js"
+      "test/systems/naval/shipnames.test.js"
     ]
   },
   {
@@ -97,8 +97,8 @@
     "old": "      [5, () => `${pick(lore.royals)}'s ${pick(W.virtues)}`],",
     "new": "      [5, () => `${pick(CROWN_LORE.Daggerfall.royals)}'s ${pick(W.virtues)}`],",
     "tests": [
-      "test/shipnames.test.js",
-      "test/nav_c_ships.test.js"
+      "test/systems/naval/shipnames.test.js",
+      "test/systems/naval/nav_c_ships.test.js"
     ]
   },
   {
@@ -107,7 +107,7 @@
     "old": "      [5, () => `${pick(lore.royals)}'s ${pick(W.virtues)}`],",
     "new": "      [4, () => `${pick(lore.royals)}'s ${pick(W.virtues)}`],",
     "tests": [
-      "test/shipnames.test.js"
+      "test/systems/naval/shipnames.test.js"
     ]
   },
   {
@@ -116,8 +116,8 @@
     "old": "      [5, () => the(`${c.name} ${pick(W.martial)}`)],",
     "new": "      [5, () => the(`${CROWNS[0].name} ${pick(W.martial)}`)],",
     "tests": [
-      "test/shipnames.test.js",
-      "test/nav_c_ships.test.js"
+      "test/systems/naval/shipnames.test.js",
+      "test/systems/naval/nav_c_ships.test.js"
     ]
   },
   {
@@ -126,7 +126,7 @@
     "old": "      [5, () => the(`${c.name} ${pick(W.martial)}`)],",
     "new": "      [6, () => the(`${c.name} ${pick(W.martial)}`)],",
     "tests": [
-      "test/shipnames.test.js"
+      "test/systems/naval/shipnames.test.js"
     ]
   },
   {
@@ -135,7 +135,7 @@
     "old": "      [3, () => `${pick(W.divines)}'s ${pick(W.favours)}`],",
     "new": "      [3, () => the(`${pick(W.divines)}'s ${pick(W.favours)}`)],",
     "tests": [
-      "test/shipnames.test.js"
+      "test/systems/naval/shipnames.test.js"
     ]
   },
   {
@@ -144,7 +144,7 @@
     "old": "      [3, () => `${pick(W.divines)}'s ${pick(W.favours)}`],",
     "new": "      [4, () => `${pick(W.divines)}'s ${pick(W.favours)}`],",
     "tests": [
-      "test/shipnames.test.js"
+      "test/systems/naval/shipnames.test.js"
     ]
   },
   {
@@ -153,8 +153,8 @@
     "old": "      [3, () => the(`${pick(W.emblems)} of ${pick(lore.places)}`)],",
     "new": "      [3, () => the(`${pick(W.emblems)} of ${pick(W.ports)}`)],",
     "tests": [
-      "test/shipnames.test.js",
-      "test/nav_c_ships.test.js"
+      "test/systems/naval/shipnames.test.js",
+      "test/systems/naval/nav_c_ships.test.js"
     ]
   },
   {
@@ -163,7 +163,7 @@
     "old": "      [3, () => the(`${pick(W.emblems)} of ${pick(lore.places)}`)],",
     "new": "      [2, () => the(`${pick(W.emblems)} of ${pick(lore.places)}`)],",
     "tests": [
-      "test/shipnames.test.js"
+      "test/systems/naval/shipnames.test.js"
     ]
   },
   {
@@ -172,7 +172,7 @@
     "old": "      [3, () => the(pick(W.martial))],\n",
     "new": "",
     "tests": [
-      "test/shipnames.test.js"
+      "test/systems/naval/shipnames.test.js"
     ]
   },
   {
@@ -181,7 +181,7 @@
     "old": "        [2, () => the(pick(PIRATE_NAMES)).replace(/^The (\\S+'s )/, '$1')],",
     "new": "        [2, () => the(pick(PIRATE_NAMES))],",
     "tests": [
-      "test/shipnames.test.js"
+      "test/systems/naval/shipnames.test.js"
     ]
   },
   {
@@ -190,7 +190,7 @@
     "old": "        [2, () => the(pick(PIRATE_NAMES)).replace(/^The (\\S+'s )/, '$1')],",
     "new": "        [3, () => the(pick(PIRATE_NAMES)).replace(/^The (\\S+'s )/, '$1')],",
     "tests": [
-      "test/shipnames.test.js"
+      "test/systems/naval/shipnames.test.js"
     ]
   },
   {
@@ -199,7 +199,7 @@
     "old": "        [6, () => the(`${pick(W.dark)} ${pick(W.beasts)}`)],",
     "new": "        [6, () => the(`${pick(W.dark)} ${pick(W.boons)}`)],",
     "tests": [
-      "test/shipnames.test.js"
+      "test/systems/naval/shipnames.test.js"
     ]
   },
   {
@@ -208,7 +208,7 @@
     "old": "        [6, () => the(`${pick(W.dark)} ${pick(W.beasts)}`)],",
     "new": "        [5, () => the(`${pick(W.dark)} ${pick(W.beasts)}`)],",
     "tests": [
-      "test/shipnames.test.js"
+      "test/systems/naval/shipnames.test.js"
     ]
   },
   {
@@ -217,7 +217,7 @@
     "old": "        [4, () => `${pick(W.princes)}'s ${pick(W.boons)}`],",
     "new": "        [4, () => the(`${pick(W.princes)}'s ${pick(W.boons)}`)],",
     "tests": [
-      "test/shipnames.test.js"
+      "test/systems/naval/shipnames.test.js"
     ]
   },
   {
@@ -226,7 +226,7 @@
     "old": "        [4, () => `${pick(W.princes)}'s ${pick(W.boons)}`],",
     "new": "        [5, () => `${pick(W.princes)}'s ${pick(W.boons)}`],",
     "tests": [
-      "test/shipnames.test.js"
+      "test/systems/naval/shipnames.test.js"
     ]
   },
   {
@@ -235,7 +235,7 @@
     "old": "return the(h.slice(-1).toLowerCase() === d[0] ? `${h}-${d}` : `${h}${d}`); }],",
     "new": "return the(`${h}${d}`); }],",
     "tests": [
-      "test/shipnames.test.js"
+      "test/systems/naval/shipnames.test.js"
     ]
   },
   {
@@ -244,7 +244,7 @@
     "old": "return the(h.slice(-1).toLowerCase() === d[0] ? `${h}-${d}` : `${h}${d}`); }],",
     "new": "return the(`${h}-${d}`); }],",
     "tests": [
-      "test/shipnames.test.js"
+      "test/systems/naval/shipnames.test.js"
     ]
   },
   {
@@ -253,7 +253,7 @@
     "old": "        [3, () => { const h = pick(W.heads), d = pick(W.deeds);",
     "new": "        [2, () => { const h = pick(W.heads), d = pick(W.deeds);",
     "tests": [
-      "test/shipnames.test.js"
+      "test/systems/naval/shipnames.test.js"
     ]
   },
   {
@@ -262,7 +262,7 @@
     "old": "        [3, () => the(`${pick(W.scourges)} of ${pick(W.ports)}`)],",
     "new": "        [3, () => the(`${pick(W.scourges)} of ${pick(W.goods)}`)],",
     "tests": [
-      "test/shipnames.test.js"
+      "test/systems/naval/shipnames.test.js"
     ]
   },
   {
@@ -271,7 +271,7 @@
     "old": "        [2, () => the(pick(MERCHANT_NAMES))],",
     "new": "        [3, () => the(pick(MERCHANT_NAMES))],",
     "tests": [
-      "test/shipnames.test.js"
+      "test/systems/naval/shipnames.test.js"
     ]
   },
   {
@@ -280,7 +280,7 @@
     "old": "        [5, () => the(`${pick(W.ports)} ${pick(W.callings)}`)],",
     "new": "        [5, () => the(`${pick(W.ports)} ${pick(W.titles)}`)],",
     "tests": [
-      "test/shipnames.test.js"
+      "test/systems/naval/shipnames.test.js"
     ]
   },
   {
@@ -289,7 +289,7 @@
     "old": "        [5, () => the(`${pick(W.ports)} ${pick(W.callings)}`)],",
     "new": "        [4, () => the(`${pick(W.ports)} ${pick(W.callings)}`)],",
     "tests": [
-      "test/shipnames.test.js"
+      "test/systems/naval/shipnames.test.js"
     ]
   },
   {
@@ -298,7 +298,7 @@
     "old": "        [5, () => the(`${pick(W.fair)} ${pick(W.wares)}`)],",
     "new": "        [5, () => the(`${pick(W.fair)} ${pick(W.goods)}`)],",
     "tests": [
-      "test/shipnames.test.js"
+      "test/systems/naval/shipnames.test.js"
     ]
   },
   {
@@ -307,7 +307,7 @@
     "old": "        [5, () => the(`${pick(W.fair)} ${pick(W.wares)}`)],",
     "new": "        [6, () => the(`${pick(W.fair)} ${pick(W.wares)}`)],",
     "tests": [
-      "test/shipnames.test.js"
+      "test/systems/naval/shipnames.test.js"
     ]
   },
   {
@@ -316,7 +316,7 @@
     "old": "        [4, () => the(`${pick(W.ports)} ${pick(W.goods)}`)],",
     "new": "        [3, () => the(`${pick(W.ports)} ${pick(W.goods)}`)],",
     "tests": [
-      "test/shipnames.test.js"
+      "test/systems/naval/shipnames.test.js"
     ]
   },
   {
@@ -325,7 +325,7 @@
     "old": "        [4, () => the(`${pick(W.titles)} of ${pick(W.ports)}`)],\n",
     "new": "",
     "tests": [
-      "test/shipnames.test.js"
+      "test/systems/naval/shipnames.test.js"
     ]
   }
 ]

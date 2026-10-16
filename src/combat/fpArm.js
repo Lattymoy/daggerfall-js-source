@@ -2,8 +2,8 @@
 //
 // Seven stages of this arc shipped diagnostics and nothing touched the
 // game. This is the wire. It owns no rules: every rule it applies is
-// already ported and pinned in src/formats/mwFirstPerson.js and
-// src/formats/mwAnim.js, and this file IMPORTS them rather than
+// already ported and pinned in src/formats/morrowind/mwFirstPerson.js and
+// src/formats/morrowind/mwAnim.js, and this file IMPORTS them rather than
 // restating them. That is deliberate - MW7 failed by carrying a second
 // port of one rule, and two copies of a rule drift.
 //
@@ -40,20 +40,20 @@
 // takes the player's pitch through the neck the reference rotates.
 
 import { lookAt, multiply, ortho, perspective, transformPoint, trs, wrapAngle } from '../world/mat4.js';
-import { ClimbPose, POSE } from '../player/climbPose.js';   // CLIMB6: the climb's limbs, in the world; TWO-HANDS: its limb law (LIMB_TAU) eases the mirror's compositions
-import { runWeightStep, runPhaseFollow, pumpTarget3D, RUN_3D, mirrorStrike, guardStep, GUARD } from './handsLaw.js';   // TWO-HANDS: the run's pump, the sprite lane's stroke on the 3D body; a mirrored blow's way across the screen; the guard's weight
-import { strikingSide, mirrorPlan, counterpartName } from './mirrorRig.js';   // TWO-HANDS: which fist a hand-to-hand clip throws; the wrists, for the pins; a blade's own bone across
+import { ClimbPose, POSE } from '../player/climb/climbPose.js';   // CLIMB6: the climb's limbs, in the world; TWO-HANDS: its limb law (LIMB_TAU) eases the mirror's compositions
+import { runWeightStep, runPhaseFollow, pumpTarget3D, RUN_3D, mirrorStrike, guardStep, GUARD } from './twoHands/handsLaw.js';   // TWO-HANDS: the run's pump, the sprite lane's stroke on the 3D body; a mirrored blow's way across the screen; the guard's weight
+import { strikingSide, mirrorPlan, counterpartName } from './twoHands/mirrorRig.js';   // TWO-HANDS: which fist a hand-to-hand clip throws; the wrists, for the pins; a blade's own bone across
 import { climbRequestToRig, climbRequestToFirstPerson } from './climbRig.js';   // CLIMB6: ...and in each rig's space
 import { seatRequestFor, seatedCamera, saddleRequestFor } from '../player/seatPose.js';   // CARDS2b: the seat in the rig's space; WAGONS3: and the body still on it; COATS3D: and astride
 import { fieldOfView } from '../ui/viewSettings.js';   // CLIMB6: the world lens the arm's hands are matched to
 import { MW_ARM_PIXEL, CHAR_SPRITE_RT_SIZE } from '../render/renderer.js';
 import {
   sampleTrack, resetClip, advanceClip, getTextKeyTime, getStartTime,
-} from '../formats/mwAnim.js';
-import { accumRootRef, buildSkeleton, GRAPH_ROOT } from '../formats/mwSkin.js';
-import { nodeTransformOf } from '../formats/mwCharacter.js';
-import { parseNif } from '../formats/mwNifFile.js';
-import { flattenNif } from '../formats/mwNifMesh.js';
+} from '../formats/morrowind/mwAnim.js';
+import { accumRootRef, buildSkeleton, GRAPH_ROOT } from '../formats/morrowind/mwSkin.js';
+import { nodeTransformOf } from '../formats/morrowind/mwCharacter.js';
+import { parseNif } from '../formats/morrowind/mwNifFile.js';
+import { flattenNif } from '../formats/morrowind/mwNifMesh.js';
 import {
   assembleFirstPersonArm, poseAssembly, armPieceRows, clipReport, clipUnionBounds, clipSweepTimes, bindPartsInto,
   armReport, armMeshPaths, bodyParts,
@@ -74,41 +74,41 @@ import {
   assembleCreature, creatureAnimSources, creatureRecords, CREA_FLAG,   // MWNPC9: a creature's body
   posePartClocks, WEAPON_CLASS, MW_WEAPON_CLASS,   // MW-BOW1: the weapon's own clock
   placeAtBone,   // TWO-HANDS AUDIT 2: a blade placed at rest, for the pair's guard (bladePictureHeight)
-} from '../formats/mwFirstPerson.js';
-import { PART_BONES, dfRaceKeyOf } from '../formats/mwNpc.js';
-import { portraitFeatures, headFeatures, hairFeatures, matchFace, FACE_MATCH_VERSION } from '../formats/mwFaceMatch.js';
+} from '../formats/morrowind/mwFirstPerson.js';
+import { PART_BONES, dfRaceKeyOf } from '../formats/morrowind/mwNpc.js';
+import { portraitFeatures, headFeatures, hairFeatures, matchFace, FACE_MATCH_VERSION } from '../formats/morrowind/mwFaceMatch.js';
 import { CifRciFile } from '../formats/cifRciFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
 import { raceArt } from '../systems/races.js';
 import { appStorage } from '../systems/appStorage.js';   // DA1: the storage seam
 import { drawRigSpriteBox } from '../render/characterSprite.js';
 import { WEAPONS } from '../characters/weapons.js';
-import { materialName } from '../systems/itemInfo.js';
-import { composeWornArmor, composeWornModest, shadowSkinRows, fpWornAdds, mwArmorRecords, mwClothingRecord, CLOTHING_NAME, werewolfRobeOf, firstPersonPartGroup } from '../formats/mwItemMap.js';   // WEREWOLF1: the robe and its first-person ladder; NUDE-FLATS: the upper weld
+import { materialName } from '../systems/item/itemInfo.js';
+import { composeWornArmor, composeWornModest, shadowSkinRows, fpWornAdds, mwArmorRecords, mwClothingRecord, CLOTHING_NAME, werewolfRobeOf, firstPersonPartGroup } from '../formats/morrowind/mwItemMap.js';   // WEREWOLF1: the robe and its first-person ladder; NUDE-FLATS: the upper weld
 import { showNudity } from '../characters/nudeFlats.js';   // NUDE-FLATS: Show Nudity, the weld's switch
 import { getPref } from '../systems/uiPrefs.js';   // MW-STEEL1: the Steel Helm switch, read where the worn set is composed
 import { skinMips, skinUseOf, skinUseKey } from '../characters/werewolfSkin.js';   // SHADOW-FANG: the werewolf's skin, a law over its own textures
-import { correctTexturePath, correctActorModelPath, wrapModes, warningImage, decodeTextureImage } from '../formats/mwTexture.js';
-import { decodeTextureOffThread } from '../formats/mwTextureClient.js';   // MW-TEXTHREAD: the preload's decodes, in the pool
-import { diffuseAt, emissiveAt } from '../formats/mwNifMesh.js';   // MWT2: the emission the pass has always resolved and never read
+import { correctTexturePath, correctActorModelPath, wrapModes, warningImage, decodeTextureImage } from '../formats/morrowind/mwTexture.js';
+import { decodeTextureOffThread } from '../formats/morrowind/mwTextureClient.js';   // MW-TEXTHREAD: the preload's decodes, in the pool
+import { diffuseAt, emissiveAt } from '../formats/morrowind/mwNifMesh.js';   // MWT2: the emission the pass has always resolved and never read
 import { fpLightingOn } from './fpsWeapon.js';   // MAC-P: the first-person lighting switch, shared with the classic sprite it stands in for
-import { createParticleSystem, packParticleQuads, particleDrawState, affineOfTransform, affineMul, affineApply, affineScale } from '../formats/mwParticles.js';   // MAC-Q: the torch's flame, and any other particle system a part carries
+import { createParticleSystem, packParticleQuads, particleDrawState, affineOfTransform, affineMul, affineApply, affineScale } from '../formats/morrowind/mwParticles.js';   // MAC-Q: the torch's flame, and any other particle system a part carries
 import { boneSourcesFor, resolveHolsterParts, holsterPartPaths, holsterHidden, HOLSTER_SLOTS } from '../systems/weaponSheathing.js';   // WS1
-import { fitCloakOver, fitStowedGear, followCloak, HIP_PITCH_LIMIT, CLOAK_PUSH_LIMIT, SLUNG_MOVE_LIMIT } from '../formats/mwCloakFit.js';   // MW-CLOAK1: the cloak over what the body wears, stowed gear against it; AUDIT MW-CLOAK: and going with it
-import { isCloakSlot, ownCloakFor, isOutfitSlot } from '../characters/ownClothingModels.js';   // MW-CLOAK1; AUDIT MW-CLOAK: and its picture; AUDIT MW-FOLK1: an outfit's add, by its label
-import { injectSkeletonNodes } from '../formats/mwSkin.js';   // WS1: the dry injection the holster's bone probe runs
+import { fitCloakOver, fitStowedGear, followCloak, HIP_PITCH_LIMIT, CLOAK_PUSH_LIMIT, SLUNG_MOVE_LIMIT } from '../formats/morrowind/mwCloakFit.js';   // MW-CLOAK1: the cloak over what the body wears, stowed gear against it; AUDIT MW-CLOAK: and going with it
+import { isCloakSlot, ownCloakFor, isOutfitSlot } from '../characters/ownModels/ownClothingModels.js';   // MW-CLOAK1; AUDIT MW-CLOAK: and its picture; AUDIT MW-FOLK1: an outfit's add, by its label
+import { injectSkeletonNodes } from '../formats/morrowind/mwSkin.js';   // WS1: the dry injection the holster's bone probe runs
 // MAP3: THE HELD SHEET - the pose deltas over the idle, the paper piece
 // the hands hold, and where its corners land on the composite
 import { deltaTracks, heldSampler, paperPiece, refreshPaperSource, projectPaperCorners, normaliseHeldPose, HELD_POSE_DEFAULT } from './heldPose.js';
 import { farthestVertexIndex, posedVertex, viewOffsetOf, worldPointOf } from './rigMuzzle.js';   // AUDIT FIELD-GUN-MW F2: where the barrel ends, off the posed piece
-import { armKickMatrix } from './gunFeel.js';   // MW-GUN-FEEL: the gun's recoil and reload, as one pose over the viewmodel
+import { armKickMatrix } from './gun/gunFeel.js';   // MW-GUN-FEEL: the gun's recoil and reload, as one pose over the viewmodel
 import { createLanternSwing, stepLanternSwing, lanternSwingMatrix } from '../systems/lanternSwing.js';   // HT-WAIST: the one swing law both bodies feed
-import { vfxOf, createVfx, vfxCapacity, vfxTextures } from '../formats/mwVfx.js';   // MW-SPELLFX1: an effect mesh, running
-import { spellFxPlan } from '../formats/mwSpellFx.js';   // MW-SPELLFX1: which visuals a spell wears
+import { vfxOf, createVfx, vfxCapacity, vfxTextures } from '../formats/morrowind/mwVfx.js';   // MW-SPELLFX1: an effect mesh, running
+import { spellFxPlan } from '../formats/morrowind/mwSpellFx.js';   // MW-SPELLFX1: which visuals a spell wears
 import { effectSchool } from '../systems/spellcost.js';   // MW-SPELLFX1: a family the mapping does not name is drawn as its school
 import { createVfxGpu } from '../render/vfxGpu.js';   // MW-SPELLFX1: an effect's streams on the GPU
 import { validCastRate } from '../systems/castSpeed.js';   // CAST-SPEED: the rate a cast is handed, made safe
-import { skinLayout, skinSamePieces, packSkinStream, writeSkinPalette, skinnedVertex, restreamMovedRows } from '../formats/mwGpuSkin.js';   // MWNPC1: the third body's skin, on the GPU
+import { skinLayout, skinSamePieces, packSkinStream, writeSkinPalette, skinnedVertex, restreamMovedRows } from '../formats/morrowind/mwGpuSkin.js';   // MWNPC1: the third body's skin, on the GPU
 import { pageParam } from '../systems/pageQuery.js';   // MWNPC1: the GPU skin's bisect door
 import { t } from '../systems/textManager.js';   // L10N4: AUDIT MW-FOLK1's note in the player's language
 
@@ -183,7 +183,7 @@ function findLoaded(archives, path) {
  *  decode memo already holds, so a rebuild loads nothing twice.
  *
  *  MW-TEXTHREAD: and it DECODES them, off this thread and several at
- *  once (formats/mwTextureClient.js - the same decoder in a pool of
+ *  once (formats/morrowind/mwTextureClient.js - the same decoder in a pool of
  *  workers), into the same generation memo collectArmTextures reads, so
  *  its synchronous decode finds every texture already answered. Only an
  *  image or the decoder's refusal is kept here (AUDIT MW-TEXTHREAD F4);
@@ -846,7 +846,7 @@ export function visibleRangeBounds(ranges, out, skip = null) {
  *  diagonal, so a longsword pointing at the viewer, or a bow's stave,
  *  widened the picture past its 110:184 cell, and object-fit shrank the
  *  body in it (bare 0.943 of the cell, longsword 0.891, long bow 0.774
- *  on the pin's stand-in, test/prbow1b_followups.test.js).
+ *  on the pin's stand-in, test/formats/morrowind/prbow1b_followups.test.js).
  *
  *  THE WINDOW IS WHAT IS DRAWN, AT THE YAW ASKED - the tight box of every
  *  range the portrait SHOWS (the body, the held weapon, the lit torch,
@@ -1390,7 +1390,7 @@ async function measurePart(record, archives, kind) {
   // MW-LOAD: level 0 only - it is the one level measured below, and
   // the chain under it was a third again of the decode for nothing.
   // MW-TEXTHREAD: in the pool - the same decoder, off the frame's thread
-  // (formats/mwTextureClient.js), and a refusal is still a null.
+  // (formats/morrowind/mwTextureClient.js), and a refusal is still a null.
   try { img = await decodeTextureOffThread(tpath, tarc.get(tpath), { levels: 1 }); } catch { return null; }
   const m0 = img.mips[0];
   if (kind === 'head') {
@@ -1688,7 +1688,7 @@ export function hangHipLight(arm) {
   return hang;
 }
 
-/** MW-CLOAK1: THE CLOAK'S FITS on a third-person assembly (formats/mwCloakFit.js) - the cloak eased back over every
+/** MW-CLOAK1: THE CLOAK'S FITS on a third-person assembly (formats/morrowind/mwCloakFit.js) - the cloak eased back over every
  *  piece whose slot `underSlots` names (the body's skin parts and what it wears; null: the cloak is fitted already, as
  *  on a weapon swap), held over CLOAK_FIT_POSES; then each holster bone's pieces against it, slung gear over it and hip
  *  gear pitched under it; and (AUDIT MW-CLOAK) the gear tied to the cloak, every pose after (the assembly's afterPose).
@@ -1721,7 +1721,7 @@ export const archiveHas = (archives) => (p) => (archives ?? []).some((a) => a.ha
  *  a fault the player sees from the chair and could not name - the
  *  card's note is the same sentence, but the card is a menu away. */
 import { ammoCountFor } from '../systems/inventory.js';   // AUDIT 68 S27-ammoCount-dup: the ammunition count's one home, beside the spend law
-import { ownWeaponModelFor } from '../characters/ownWeaponModels.js';   // FIELD-GUN-MW2: the weapons Morrowind does not have - a leaf too
+import { ownWeaponModelFor } from '../characters/ownModels/ownWeaponModels.js';   // FIELD-GUN-MW2: the weapons Morrowind does not have - a leaf too
 import { glowUnit } from '../render/weaponGlowGlsl.js';   // WEAPON-GLOW1: the glow's unit off the lens's rows - a leaf
 
 const saidArrow = new Set();
@@ -1784,7 +1784,7 @@ export function guardLensDrop(arm, mats, cameraRef, p) {
   return h > 0 ? Math.atan(GUARD.LOWER * h) : GUARD_LENS_DROP;
 }
 /**
- * The angle each arm turns down at its shoulder at full guard (combat/mirrorRig.js `dip`): its drop on the picture
+ * The angle each arm turns down at its shoulder at full guard (combat/twoHands/mirrorRig.js `dip`): its drop on the picture
  * (`drop`, per side - guardLensDrop) times the eye's distance to the wrist over the shoulder's - a small turn at the
  * shoulder moves the wrist that many times farther than the same turn at the eye would, so on the picture the hand drops
  * `drop`. Read at the build's rest pose (`mats`, the idle's first frame), per side; the body takes the same angles (one
@@ -1808,10 +1808,10 @@ const swapFailedNote = (slot, msg) => `${slot}: the swap to this weapon failed -
 /**
  * TWO-HANDS: THE LEFT HAND'S WEAPON - the same record, the same mesh and the same door the right hand's takes
  * (resolveWeaponParts: the port's own models, Morrowind's records by type, material and shape), hung on the left hand's
- * node in a part of its own slot ('offweapon'). No arrow: a pair is two melee weapons (combat/handsLaw.js DUAL_TYPES).
+ * node in a part of its own slot ('offweapon'). No arrow: a pair is two melee weapons (combat/twoHands/handsLaw.js DUAL_TYPES).
  * The node is asked of the skeleton AS ASSEMBLED (`hasBone`, as the holster asks - TWO-HANDS AUDIT): retail's carry no
  * Weapon Bone Left in their bytes, and the player's rigs are given one made by the mirror from their own Weapon Bone
- * (assembleFirstPersonArm's `offWeaponBone`, combat/mirrorRig.js offWeaponBoneAddon). Without `hasBone` the bytes are
+ * (assembleFirstPersonArm's `offWeaponBone`, combat/twoHands/mirrorRig.js offWeaponBoneAddon). Without `hasBone` the bytes are
  * asked. A skeleton that has none even so draws no second weapon and says so - a sword hung anywhere else would hang
  * unmirrored, the wrong way round in the hand.
  */
@@ -1922,7 +1922,7 @@ export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, 
                 pre = nodeTransformOf(weaponNif, ARROW_FALLBACK_NODE);
                 arrowBone = pre ? bone : null;
                 // MW-BOW1: and the node MOVES - the bow's own clock carries the ArrowBone from the quiver to the
-                // string and back (formats/mwPartClock.js). `pre` is its rest; the clock poses it each frame.
+                // string and back (formats/morrowind/mwPartClock.js). `pre` is its rest; the clock poses it each frame.
                 if (pre) preClip = { nif: weaponNif, node: ARROW_FALLBACK_NODE };
               }
               if (!arrowBone) {
@@ -2215,7 +2215,7 @@ async function buildTpBody({
 /**
  * MWNPC9 (bible/04-Characters/Morrowind-NPCs.md section 14b): A CREATURE'S BODY, BUILT. The CREA record by id (the
  * last master that carries it wins - the load order), its model through rule 18's actor path (the "x" variant when
- * its .kf is there), assembled as its own skeleton and body (formats/mwFirstPerson.js assembleCreature), textured as a
+ * its .kf is there), assembled as its own skeleton and body (formats/morrowind/mwFirstPerson.js assembleCreature), textured as a
  * body is, and animated from its sources - xbase_anim first for a Bipedal one, then its own (creatureanimation.cpp).
  * Nothing is worn, held, hung or faced, and there is no first person: the answer is the third-person body, shaped as
  * buildTpBody's so the rig, the GPU skin and the sprite take it unchanged, standing also as `built` (no arm), with the
@@ -2567,7 +2567,7 @@ export async function buildFpArm({
   vampire = false,   // MWNPC14: a vampire's face - the race's vampire head
   flies = false,   // AUDIT MW-NPC II K5: a creature body that must fly (its CREA record's Flies flag)
   npcFace = null,   // MWNPC17: an NPC's head and hair, each walked off its seed ({ head, hair } - characters/wardrobe.js npcFaceOf): no portrait to match
-  ownHeads = false,   // MW-HEADS2 (the owner: "only the player Britons should recieve the new heads, not npcs"): a player's body - the local player's (weaponRig.js armBuildOptsOf) and a peer's (net/peerBodies.js playerBuildOpts) - wears the port's own heads; every other the data's
+  ownHeads = false,   // MW-HEADS2 (the owner: "only the player Britons should recieve the new heads, not npcs"): a player's body - the local player's (weaponRig.js armBuildOptsOf) and a peer's (net/peer/peerBodies.js playerBuildOpts) - wears the port's own heads; every other the data's
   offWeapon = null,   // TWO-HANDS AUDIT 2: a pair's left-hand weapon, bound in the build on both rigs - the rig's own rebuilds hand the one it holds (setOffWeapon records it)
 } = {}) {
   if (creature) return buildCreatureBody({ creature, flies, deps });   // MWNPC9
@@ -2757,7 +2757,7 @@ export async function buildFpArm({
     const robe = werewolf ? werewolfRobeOf(clothes) : null;
     // MW-STEEL1: THE STEEL HELM SWITCH (systems/features.js, pref `mwSteelHelm`) - closed or open, read here where the
     // worn set is composed, so the player's own figure and every peer's are drawn by the viewer's switch, as Show
-    // Nudity's weld below is. A switch thrown rebuilds the player (ui/enhancedMenu.js TILE_AFTER); a peer, its next build.
+    // Nudity's weld below is. A switch thrown rebuilds the player (ui/enhanced/enhancedMenu.js TILE_AFTER); a peer, its next build.
     const helmStyle = getPref('mwSteelHelm');
     // MW-LOAD: covers clothingColourOf's two synchronous reads (a
     // garment's part mesh and its texture) for every candidate the
@@ -3291,7 +3291,7 @@ const FOLLOW_CAMERA_KEY = 'dagger.mwArmsFollowCamera3';
 /** WW1: a screen-space transform over the arms' composite, or null - set per frame by the rig from the weapon widget. */
 let screenTransform = null;
 // DA1: through the storage seam, not localStorage directly - the pin
-// in test/filestorage.test.js caught this landing bare on the merge,
+// in test/systems/save/filestorage.test.js caught this landing bare on the merge,
 // which would have split the toggle out of the desktop app's file
 // store (the seam's whole reason). First firing of that pin, one
 // merge after it was written.
@@ -3399,7 +3399,7 @@ export function mwVisualModel(cat, id) {
   return w.has(key) ? `meshes/${w.get(key)}` : null;
 }
 
-/** MW-SPELLFX1: A SPELL'S PLAN off the catalog (formats/mwSpellFx.js spellFxPlan), its families read by their own
+/** MW-SPELLFX1: A SPELL'S PLAN off the catalog (formats/morrowind/mwSpellFx.js spellFxPlan), its families read by their own
  *  Daggerfall school. Null without the magic records. */
 export function mwSpellPlan(cat, spell) {
   if (!cat?.magic?.effects?.size) return null;
@@ -3407,7 +3407,7 @@ export function mwSpellPlan(cat, spell) {
 }
 
 /** MW-SPELLFX1: AN EFFECT MESH OUT OF THE ARM'S OWN ARCHIVES - read through the build's catalog, the bytes through
- *  loadFromArchives, the effect through formats/mwVfx.js. Memoised per data generation and path; a read that did not
+ *  loadFromArchives, the effect through formats/morrowind/mwVfx.js. Memoised per data generation and path; a read that did not
  *  land (a lazy archive that never got the bytes) is not the generation's answer and is asked again next time. */
 const EFFECT_MESH_CACHE = new Map();
 export function loadMwEffectMesh(cat, path) {
@@ -3552,7 +3552,7 @@ export function createFpArm() {
   // winner ladder EXACTLY - the "third animation" the two-slot note above foresaw needs no per-bone vector, because
   // neither has a mask of its own: Priority_Death over everything, Priority_Hit between the weapon and the movement
   // (character.hpp's enum - Movement < Hit < Weapon < Block < Knockdown < Torch < Storm < Death). An NPC's body takes
-  // them (net/peerBodies.js `_arm`, the pose's `ht` and `dd`); the player's own never does.
+  // them (net/peer/peerBodies.js `_arm`, the pose's `ht` and `dd`); the player's own never does.
   let hitState = null;
   let hitSource = null;
   let deathState = null;
@@ -3611,9 +3611,9 @@ export function createFpArm() {
   let climbLast = null;
   let climbHands = false;
   // TWO-HANDS (bible/05-Combat/Two-Hands.md): THE SECOND HAND. How the hands are held - the rig's word every frame
-  // (setHands: combat/handsLaw.js HANDS_MODE, and the hand that leads) - the hand of the blow in flight, the left
+  // (setHands: combat/twoHands/handsLaw.js HANDS_MODE, and the hand that leads) - the hand of the blow in flight, the left
   // hand's weapon (setOffWeapon: its key, a request queued behind a build), the carry each rig's mirror eases its
-  // compositions by (combat/mirrorRig.js), which fist each hand-to-hand clip throws (measured once a clip), and the run.
+  // compositions by (combat/twoHands/mirrorRig.js), which fist each hand-to-hand clip throws (measured once a clip), and the run.
   let handsMode = 'single', leadHand = 'R', attackHand = null;
   let offKey = null, pendingOff;
   const mirrorCarry = { first: {}, third: {} };
@@ -3623,7 +3623,7 @@ export function createFpArm() {
   let guardDipMemo = null;   // TWO-HANDS AUDIT 2: the guard's angles, per rig and bound blades (guardDipNow)
   let heldMemo = null;           // { base, spec, inner, tracks, sampler }
   let lastFrame = null;          // { model, view, proj, rect } - what draw() last composed with
-  /** MW-GUN-FEEL: the gun's kick and reload this frame - `{ pitch, back, down }` (combat/gunFeel.js armGunPose), set by
+  /** MW-GUN-FEEL: the gun's kick and reload this frame - `{ pitch, back, down }` (combat/gun/gunFeel.js armGunPose), set by
    *  the rig (weaponRig.js thunderlockFeel) - or null. */
   let gunFeel = null;
   let lastThirdModel = null;   // AUDIT FIELD-GUN-MW F2: drawThird's model matrix, for the muzzle in the world
@@ -3762,7 +3762,7 @@ export function createFpArm() {
   let thirdBuilt = null;
   let thirdMesh = null;
   let thirdPacked = null;
-  let thirdSkin = null;          // MWNPC1: the third body's GPU skin layout (formats/mwGpuSkin.js), while it skins on the GPU
+  let thirdSkin = null;          // MWNPC1: the third body's GPU skin layout (formats/morrowind/mwGpuSkin.js), while it skins on the GPU
   let thirdSkinRefused = null;   // MWNPC1: the piece list a layout refused - the CPU skin for it, asked again when the pieces change
   const thirdDrawBox = { minX: 0, minY: 0, minZ: 0, maxX: 0, maxY: 0, maxZ: 0 };   // PR-BOW1: drawThird's fold, owned by the rig - one object, rewritten per draw
   const thirdBodyBox = { minX: 0, minY: 0, minZ: 0, maxX: 0, maxY: 0, maxZ: 0 };   // PR-BOW1: the same fold less CARRIED_SLOTS - the body's own height
@@ -4280,7 +4280,7 @@ export function createFpArm() {
     const rigEye = [node.t[0] + fpOffset[0], node.t[1] + fpOffset[1], node.t[2] + fpOffset[2]];
     return climbRequestToFirstPerson(cw, { eye: cam.pos, yaw: cam.yaw || 0, pitch: cam.pitch || 0, fov: fieldOfView(), lensFov: FP_FIELD_OF_VIEW, lensPitch: followCam ? 0 : (cam.pitch || 0), rigEye, unitsPerMetre: MW_UNITS_PER_METER });
   }
-  // ---- TWO-HANDS: the second hand on the body (combat/mirrorRig.js) and the run's pump -----------------------------
+  // ---- TWO-HANDS: the second hand on the body (combat/twoHands/mirrorRig.js) and the run's pump -----------------------------
   const attackingNow = () => upper === UPPER_BODY.AttackWindUp || upper === UPPER_BODY.AttackRelease || upper === UPPER_BODY.AttackEnd;
   /** The left hand's weapon shows on rig `r`: a pair is held, a weapon is in hand (drawn, no spell), and the rig bound
    *  one on its Weapon Bone Left. The blade's alone - the arm's composition is pairHeld's. */
@@ -4334,7 +4334,7 @@ export function createFpArm() {
     return side;
   }
   /**
-   * THE SECOND HAND'S COMPOSITION on rig `r` this frame (combat/mirrorRig.js's request):
+   * THE SECOND HAND'S COMPOSITION on rig `r` this frame (combat/twoHands/mirrorRig.js's request):
    *   a pair at rest   - the left arm the right's mirror: both weapons up, as the stance holds the one;
    *   the right's blow - the clip swings the right; the left holds the idle's right arm, mirrored;
    *   the left's blow  - the whole body in the mirror (the left swings the clip's blow, the torso turns with it) and the
@@ -4672,7 +4672,7 @@ export function createFpArm() {
     let yawRate = 0;
     if (lastYaw != null && dt > 0) {
       // ONCRASH1: one step, not a loop. A PEER's rig reads this camera
-      // (net/peerBodies.js peerCamera), so `yaw` is the wire's there.
+      // (net/peer/peerBodies.js peerCamera), so `yaw` is the wire's there.
       const d = wrapAngle(yaw - lastYaw);
       yawRate = d / dt;
       if (d !== 0) { turnDir = Math.sign(d); turnHold = 0.05; }
@@ -5701,7 +5701,7 @@ export function createFpArm() {
     },
 
     /** TWO-HANDS (bible/05-Combat/Two-Hands.md): how the hands are held this frame - 'single', 'fists' or 'dual'
-     *  (combat/handsLaw.js HANDS_MODE) - and the hand that leads. The rig says so every frame; two writes. */
+     *  (combat/twoHands/handsLaw.js HANDS_MODE) - and the hand that leads. The rig says so every frame; two writes. */
     setHands({ mode = 'single', lead = 'R' } = {}) {
       handsMode = mode === 'fists' || mode === 'dual' ? mode : 'single';
       leadHand = lead === 'L' ? 'L' : 'R';
@@ -6141,7 +6141,7 @@ export function createFpArm() {
      *  particle step, which are the frame's cost (PERF-RIG1: ~0.3 ms a
      *  body at 3,000 vertices, per body). A body posed from a 10 Hz
      *  wire and drawn as a 3-px sprite does not need its skin every
-     *  frame; net/peerBodies.js decides which frames, by distance. The
+     *  frame; net/peer/peerBodies.js decides which frames, by distance. The
      *  particle systems are stepped by `effectsDt` on the frame that
      *  poses - the caller banks the skipped frames' dt and hands it
      *  over, so a puff's clock keeps wall time. The first-person arm
@@ -6452,7 +6452,7 @@ export function createFpArm() {
       const pitch = followCam ? 0 : (cam.pitch || 0);
       const fwd = [0, Math.sin(pitch), -Math.cos(pitch)];
       const lens = lookAt(eye, [eye[0] + fwd[0], eye[1] + fwd[1], eye[2] + fwd[2]], [0, 1, 0]);
-      // MW-GUN-FEEL (combat/gunFeel.js): THE GUN'S RECOIL AND ITS RELOAD, over the WHOLE viewmodel in the eye's own axes -
+      // MW-GUN-FEEL (combat/gun/gunFeel.js): THE GUN'S RECOIL AND ITS RELOAD, over the WHOLE viewmodel in the eye's own axes -
       // turned about the shoulder, moved back and down - laid in front of the lens, so the arms and the gun move as one
       // and nothing else in the pass does. Not through the neck (poseAssembly's neckPitch/neckOffset): glued arms take
       // no look there by IG4's construction, and a kick is not a look. The frame record below carries it, so the muzzle
@@ -6577,7 +6577,7 @@ export function createFpArm() {
     followCamera: () => followCam,
     /** WW1: the rig sets the weapon widget's transform over the composite (null: the fullscreen overlay). */
     setScreenTransform(fn) { screenTransform = typeof fn === 'function' ? fn : null; },
-    /** MW-GUN-FEEL: the gun's kick and reload for the next first-person draw (combat/gunFeel.js armGunPose) - a pose
+    /** MW-GUN-FEEL: the gun's kick and reload for the next first-person draw (combat/gun/gunFeel.js armGunPose) - a pose
      *  that moves nothing is none. */
     setGunFeel(pose) { gunFeel = pose && (pose.pitch || pose.back || pose.down) ? { pitch: +pose.pitch || 0, back: +pose.back || 0, down: +pose.down || 0 } : null; },
     gunFeel: () => gunFeel,
@@ -6714,7 +6714,7 @@ export function createFpArm() {
       const halfH = ((maxZ - minZ) * u * rs.height) / 2;
       const halfW = (Math.hypot(maxX - minX, maxY - minY) * u * rs.weight) / 2;
       const center = transformPoint(model, (minX + maxX) / 2, (minY + maxY) / 2, (minZ + maxZ) / 2);
-      // MWNPC16: the shape it casts, where it is asked (an NPC's lane - net/peerBodies.js `casts`, which never asks it of a
+      // MWNPC16: the shape it casts, where it is asked (an NPC's lane - net/peer/peerBodies.js `casts`, which never asks it of a
       // body the travel view grows: OW-BIG's law, no giant's shadow), at its size (MWNPC10's boss stands larger, and casts
       // so); never a veiled body's - a concealed foe and a ghost cast nothing, as their flats never did
       if (cast && !conceal && renderer.recordShadowBody) castBody(model, center, halfW, halfH, anchored);
@@ -6737,7 +6737,7 @@ export function createFpArm() {
       // MW-D43b: the body is a Morrowind MESH, so it takes the arm's
       // dial, not the sprite standard - the same fix MW-D43 made for
       // the first-person pass and missed here.
-      // INVIS-LOOK: `conceal` a concealed peer's draw (ECV1's visual, net/peerBodies.js drawVeiled) - the quad blends.
+      // INVIS-LOOK: `conceal` a concealed peer's draw (ECV1's visual, net/peer/peerBodies.js drawVeiled) - the quad blends.
       // AUDIT OW4 J6: `up` the travel view's leaned vertical (player/mwView.js, face.up) - the quad leans with the flats and
       // the sprite lane's body, so the picture taken down the pitched ray is not foreshortened a second time
       // COATS3D: ASTRIDE, ONE PICTURE. `horse` ({ mesh, model, box } - world/horseRig.js, stepped this frame) is drawn in

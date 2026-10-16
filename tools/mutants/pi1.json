@@ -5,7 +5,7 @@
     "old": "  if (isPotion(item)) return 'Potions';",
     "new": "  if (false) return 'Potions';",
     "tests": [
-      "test/pi1_physicalitems.test.js"
+      "test/systems/pi1_physicalitems.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "item.templateIndex === TEMPLATES.Arrow ? 'Arrows' : 'Weapons'",
     "new": "'Weapons'",
     "tests": [
-      "test/pi1_physicalitems.test.js"
+      "test/systems/pi1_physicalitems.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "item.templateIndex === TEMPLATES.Map ? 'Maps' : 'Other Items'",
     "new": "'Other Items'",
     "tests": [
-      "test/pi1_physicalitems.test.js"
+      "test/systems/pi1_physicalitems.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "Artifacts: 'Magic Items',",
     "new": "Artifacts: 'Other Items',",
     "tests": [
-      "test/pi1_physicalitems.test.js"
+      "test/systems/pi1_physicalitems.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "Currency: 'Gold',",
     "new": "Currency: 'Other Items',",
     "tests": [
-      "test/pi1_physicalitems.test.js"
+      "test/systems/pi1_physicalitems.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "arrow: 0.32,",
     "new": "arrow: 0.33,",
     "tests": [
-      "test/pi1_physicalitems.test.js"
+      "test/systems/pi1_physicalitems.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "clothing: 0.52,",
     "new": "clothing: 0.5,",
     "tests": [
-      "test/pi1_physicalitems.test.js"
+      "test/systems/pi1_physicalitems.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "105: 'Pauldrons',",
     "new": "105: 'Left Pauldron',",
     "tests": [
-      "test/pi1_physicalitems.test.js"
+      "test/systems/pi1_physicalitems.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "clamp(pct, 0, PI_IMPULSE_MAX_PCT) / 100",
     "new": "pct / 100",
     "tests": [
-      "test/pi1_physicalitems.test.js"
+      "test/systems/pi1_physicalitems.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "if (finite(v) && v > 0) overrides.set",
     "new": "if (finite(v)) overrides.set",
     "tests": [
-      "test/pi1_physicalitems.test.js"
+      "test/systems/pi1_physicalitems.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "export const PI_ALPHA_VISIBLE = 128;",
     "new": "export const PI_ALPHA_VISIBLE = 127;",
     "tests": [
-      "test/pi1_physicalitems.test.js"
+      "test/systems/pi1_physicalitems.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "if (x1 < x0 || y1 < y0) return { x: 0, y: 0, w: width, h: height };",
     "new": "if (x1 < x0 || y1 < y0) return { x: 0, y: 0, w: 1, h: 1 };",
     "tests": [
-      "test/pi1_physicalitems.test.js"
+      "test/systems/pi1_physicalitems.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "const k = worldH / Math.max(visW, visH);",
     "new": "const k = worldH / visH;",
     "tests": [
-      "test/pi1_physicalitems.test.js"
+      "test/systems/pi1_physicalitems.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "Math.max(w, h * 0.4)",
     "new": "Math.max(w, h * 0.5)",
     "tests": [
-      "test/pi1_physicalitems.test.js"
+      "test/systems/pi1_physicalitems.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "PI_SCATTER = Object.freeze({ min: 0.45,",
     "new": "PI_SCATTER = Object.freeze({ min: 0.5,",
     "tests": [
-      "test/pi1_physicalitems.test.js"
+      "test/systems/pi1_physicalitems.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "max: 0.85, up: 0.65 });",
     "new": "max: 0.85, up: 0.6 });",
     "tests": [
-      "test/pi1_physicalitems.test.js"
+      "test/systems/pi1_physicalitems.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "PI_LAUNCH = Object.freeze({ reach: 0.85,",
     "new": "PI_LAUNCH = Object.freeze({ reach: 0.8,",
     "tests": [
-      "test/pi1_physicalitems.test.js"
+      "test/systems/pi1_physicalitems.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "nudge: 0.08,",
     "new": "nudge: 0.1,",
     "tests": [
-      "test/pi1_physicalitems.test.js"
+      "test/systems/pi1_physicalitems.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "const k = fresh ? impulse : 1;",
     "new": "const k = impulse;",
     "tests": [
-      "test/pi1_physicalitems.test.js"
+      "test/systems/pi1_physicalitems.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "PI_SPIRAL = Object.freeze({ ahead: 1.1, ring: 0.78,",
     "new": "PI_SPIRAL = Object.freeze({ ahead: 1.1, ring: 0.8,",
     "tests": [
-      "test/pi1_physicalitems.test.js"
+      "test/systems/pi1_physicalitems.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "golden: 2.399963140487671,",
     "new": "golden: 2.4,",
     "tests": [
-      "test/pi1_physicalitems.test.js"
+      "test/systems/pi1_physicalitems.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "overlap: 0.1 });",
     "new": "overlap: 0 });",
     "tests": [
-      "test/pi1_physicalitems.test.js"
+      "test/systems/pi1_physicalitems.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "drag: 0.9, bounce: 0.35,",
     "new": "drag: 0.9, bounce: 0.3,",
     "tests": [
-      "test/pi1_physicalitems.test.js"
+      "test/systems/pi1_physicalitems.test.js"
     ]
   },
   {
@@ -212,7 +212,7 @@
     "old": "bounceThreshold: 2,",
     "new": "bounceThreshold: 1,",
     "tests": [
-      "test/pi1_physicalitems.test.js"
+      "test/systems/pi1_physicalitems.test.js"
     ]
   },
   {
@@ -221,7 +221,7 @@
     "old": "settleSq: 0.0025, settleS: 0.5,",
     "new": "settleSq: 0.0025, settleS: 0.2,",
     "tests": [
-      "test/pi1_physicalitems.test.js"
+      "test/systems/pi1_physicalitems.test.js"
     ]
   },
   {
@@ -230,7 +230,7 @@
     "old": "gravity: 9.81, dt: 0.02, drag: 0.9,",
     "new": "gravity: 9.81, dt: 0.02, drag: 0,",
     "tests": [
-      "test/pi1_physicalitems.test.js"
+      "test/systems/pi1_physicalitems.test.js"
     ]
   },
   {
@@ -239,7 +239,7 @@
     "old": "ground: 0.15, speed: 0.45,",
     "new": "ground: 0.15, speed: 0.5,",
     "tests": [
-      "test/pi1_physicalitems.test.js"
+      "test/systems/pi1_physicalitems.test.js"
     ]
   },
   {
@@ -248,7 +248,7 @@
     "old": "PI_SEPARATION = Object.freeze({ maxAcross: 0.65,",
     "new": "PI_SEPARATION = Object.freeze({ maxAcross: 1.5,",
     "tests": [
-      "test/pi1_physicalitems.test.js"
+      "test/systems/pi1_physicalitems.test.js"
     ]
   },
   {
@@ -257,7 +257,7 @@
     "old": "PI_RIM = Object.freeze({ magic: 0.3,",
     "new": "PI_RIM = Object.freeze({ magic: 0.35,",
     "tests": [
-      "test/pi1_physicalitems.test.js"
+      "test/systems/pi1_physicalitems.test.js"
     ]
   },
   {
@@ -266,7 +266,7 @@
     "old": "  if (!lootRarityOn()) return null;\n  const tier = rarityOf(item);",
     "new": "  const tier = rarityOf(item);",
     "tests": [
-      "test/pi1_physicalitems.test.js"
+      "test/systems/pi1_physicalitems.test.js"
     ]
   },
   {
@@ -275,7 +275,7 @@
     "old": "(item?.group === 'Transportation' ? { text: CANNOT_REMOVE_ITEM_TEXT }",
     "new": "(false ? { text: CANNOT_REMOVE_ITEM_TEXT }",
     "tests": [
-      "test/pi1_physicalitems.test.js"
+      "test/systems/pi1_physicalitems.test.js"
     ]
   },
   {
@@ -284,7 +284,7 @@
     "old": "  if (lockRefuses(item, 'drop')) return { refusal: { text: lockedText(name()) } };",
     "new": "",
     "tests": [
-      "test/pi1_physicalitems.test.js"
+      "test/systems/pi1_physicalitems.test.js"
     ]
   },
   {
@@ -293,7 +293,7 @@
     "old": "groundRefusal: dropRefusal?.() ?? null,",
     "new": "groundRefusal: null,",
     "tests": [
-      "test/pi1_physicalitems.test.js"
+      "test/systems/pi1_physicalitems.test.js"
     ]
   },
   {
@@ -302,7 +302,7 @@
     "old": "settings?.enemyDrops !== false && !settings?.disabled?.has(itemCategory(item))",
     "new": "settings?.enemyDrops !== false",
     "tests": [
-      "test/pi1_physicalitems.test.js"
+      "test/systems/pi1_physicalitems.test.js"
     ]
   },
   {
@@ -311,7 +311,7 @@
     "old": "return t !== undefined && at - t <= PI_FRESH_MS;",
     "new": "return true;",
     "tests": [
-      "test/pi1_physicalitems.test.js"
+      "test/systems/pi1_physicalitems.test.js"
     ]
   },
   {
@@ -320,7 +320,7 @@
     "old": "const fresh = !g && diedRecently(entity, now());",
     "new": "const fresh = !g;",
     "tests": [
-      "test/pi1_physicalitems.test.js"
+      "test/systems/pi1_physicalitems.test.js"
     ]
   },
   {
@@ -329,7 +329,7 @@
     "old": "    setBatchGlint(p.batch, rarityRim(p.item));\n    presentItem(p.item, true);\n",
     "new": "    setBatchGlint(p.batch, rarityRim(p.item));\n",
     "tests": [
-      "test/pi1_physicalitems.test.js"
+      "test/systems/pi1_physicalitems.test.js"
     ]
   },
   {
@@ -338,7 +338,7 @@
     "old": "try { host.taken?.(backingOf(p)); }",
     "new": "try { void backingOf(p); }",
     "tests": [
-      "test/pi1_physicalitems.test.js"
+      "test/systems/pi1_physicalitems.test.js"
     ]
   },
   {
@@ -347,7 +347,7 @@
     "old": "if (!wanted.has(it)) orphans.push(it);",
     "new": "if (false) orphans.push(it);",
     "tests": [
-      "test/pi1_physicalitems.test.js"
+      "test/systems/pi1_physicalitems.test.js"
     ]
   },
   {
@@ -356,7 +356,7 @@
     "old": "return !!p && p.batch != null; },",
     "new": "return false && !!p; },",
     "tests": [
-      "test/pi1_physicalitems.test.js"
+      "test/systems/pi1_physicalitems.test.js"
     ]
   },
   {
@@ -365,7 +365,7 @@
     "old": "return [at[0], at[1] + PI_SPIRAL.lift, at[2]];",
     "new": "return at;",
     "tests": [
-      "test/pi1_physicalitems.test.js"
+      "test/systems/pi1_physicalitems.test.js"
     ]
   },
   {
@@ -374,7 +374,7 @@
     "old": "if (!on()) { if (proxies.size) this.clear(); return; }",
     "new": "if (!on()) return;",
     "tests": [
-      "test/pi1_physicalitems.test.js"
+      "test/systems/pi1_physicalitems.test.js"
     ]
   },
   {
@@ -383,7 +383,7 @@
     "old": "items: p.items.map((it) => ({ ...it })), ...(p.physical ? { physical: true } : {}) };",
     "new": "items: p.items.map((it) => ({ ...it })) };",
     "tests": [
-      "test/pi1_physicalitems.test.js"
+      "test/systems/pi1_physicalitems.test.js"
     ]
   },
   {
@@ -392,7 +392,7 @@
     "old": "...(s.physical ? { physical: true, settled: true } : {}) };   // PI1: a shift-drop lies where it was saved",
     "new": "...(s.physical ? { physical: true } : {}) };   // PI1: a shift-drop lies where it was saved",
     "tests": [
-      "test/pi1_physicalitems.test.js"
+      "test/systems/pi1_physicalitems.test.js"
     ]
   },
   {
@@ -401,7 +401,7 @@
     "old": "flatAnims.tick(dt); physical.frame(dt, piles.filter((p) => p.physical === true && alive(p)));",
     "new": "flatAnims.tick(dt);",
     "tests": [
-      "test/pi1_physicalitems.test.js"
+      "test/systems/pi1_physicalitems.test.js"
     ]
   },
   {
@@ -410,7 +410,7 @@
     "old": "bestRarity(f.own ? f.items : f.items.filter((it) => !isPresented(it)))",
     "new": "bestRarity(f.items)",
     "tests": [
-      "test/pi1_physicalitems.test.js"
+      "test/systems/pi1_physicalitems.test.js"
     ]
   },
   {
@@ -419,7 +419,7 @@
     "old": "if (!isCorpse(e) || e.corpseDisabled || e.puppet || !e.corpseMarker) return;",
     "new": "if (!isCorpse(e) || e.corpseDisabled || !e.corpseMarker) return;",
     "tests": [
-      "test/pi1_physicalitems.test.js"
+      "test/systems/pi1_physicalitems.test.js"
     ]
   }
 ]

@@ -5,7 +5,7 @@
     "old": "export const CITY_WALL_FILL = Object.freeze({ x: 128, z: 128, length: 128, lift: 1 });",
     "new": "export const CITY_WALL_FILL = Object.freeze({ x: 127, z: 128, length: 128, lift: 1 });",
     "tests": [
-      "test/fb1003c_citywall.test.js"
+      "test/world/fb1003c_citywall.test.js"
     ],
     "note": "The piece would stand a unit off the gap - a seam at the tower, an overlap at the first segment."
   },
@@ -15,7 +15,7 @@
     "old": "export const CITY_WALL_FILL = Object.freeze({ x: 128, z: 128, length: 128, lift: 1 });",
     "new": "export const CITY_WALL_FILL = Object.freeze({ x: 128, z: 0, length: 128, lift: 1 });",
     "tests": [
-      "test/fb1003c_citywall.test.js"
+      "test/world/fb1003c_citywall.test.js"
     ],
     "note": "The piece would stand three metres beside the wall's line, inside the town or out of it."
   },
@@ -25,7 +25,7 @@
     "old": "export const CITY_WALL_FILL = Object.freeze({ x: 128, z: 128, length: 128, lift: 1 });",
     "new": "export const CITY_WALL_FILL = Object.freeze({ x: 128, z: 128, length: 256, lift: 1 });",
     "tests": [
-      "test/fb1003c_citywall.test.js"
+      "test/world/fb1003c_citywall.test.js"
     ],
     "note": "The piece would run into the first segment and fight it face for face."
   },
@@ -35,7 +35,7 @@
     "old": "export const CITY_WALL_FILL = Object.freeze({ x: 128, z: 128, length: 128, lift: 1 });",
     "new": "export const CITY_WALL_FILL = Object.freeze({ x: 128, z: 128, length: 128, lift: 0 });",
     "tests": [
-      "test/fb1003c_citywall.test.js"
+      "test/world/fb1003c_citywall.test.js"
     ],
     "note": "The piece would stand the unit the author sank it below the walls either side."
   },
@@ -45,7 +45,7 @@
     "old": "      const poly = clip(clip(tri, below), above);",
     "new": "      const poly = clip(tri, above);",
     "tests": [
-      "test/fb1003c_citywall.test.js"
+      "test/world/fb1003c_citywall.test.js"
     ],
     "note": "Half the wall segment would stand in the gap, through the tower and out past it."
   },
@@ -55,7 +55,7 @@
     "old": "const s = da / (da - db);",
     "new": "const s = 0.5;",
     "tests": [
-      "test/fb1003c_citywall.test.js"
+      "test/world/fb1003c_citywall.test.js"
     ],
     "note": "A cut face would end halfway along its edge, not on the cut - the piece the wrong length, its stone stretched."
   },
@@ -65,7 +65,7 @@
     "old": "        idx.push(push(poly[0]), push(poly[k]), push(poly[k + 1]));",
     "new": "        idx.push(push(poly[0]), push(poly[k + 1]), push(poly[k]));",
     "tests": [
-      "test/fb1003c_citywall.test.js"
+      "test/world/fb1003c_citywall.test.js"
     ],
     "note": "Every face wound against the wall's own: culled from outside, the hole seen again."
   },
@@ -75,7 +75,7 @@
     "old": "registerCustomModel(CITY_WALL_PIECE, (ctx) => cityWallFillModel(ctx?.classicModel?.(CITY_WALL_MODEL)), isOn, { needs: [CITY_WALL_MODEL] });",
     "new": "registerCustomModel(CITY_WALL_PIECE, (ctx) => cityWallFillModel(ctx?.classicModel?.(CITY_WALL_MODEL)), () => true, { needs: [CITY_WALL_MODEL] });",
     "tests": [
-      "test/fb1003c_citywall.test.js"
+      "test/world/fb1003c_citywall.test.js"
     ],
     "note": "The stand-in would stand with the towns switched off."
   },
@@ -85,7 +85,7 @@
     "old": "registerCustomModel(CITY_WALL_PIECE, (ctx) => cityWallFillModel(ctx?.classicModel?.(CITY_WALL_MODEL)), isOn, { needs: [CITY_WALL_MODEL] });",
     "new": "registerCustomModel(CITY_WALL_PIECE, (ctx) => cityWallFillModel(ctx?.classicModel?.(CITY_WALL_MODEL)), isOn, {});",
     "tests": [
-      "test/fb1003c_citywall.test.js"
+      "test/world/fb1003c_citywall.test.js"
     ],
     "note": "The 445's pictures would not be loaded before the build reads their sizes."
   },
@@ -95,7 +95,7 @@
     "old": "  if (!wall?.positions?.length) return null;\n  const half = (CITY_WALL_FILL.length / 2) * U;",
     "new": "  const half = (CITY_WALL_FILL.length / 2) * U;",
     "tests": [
-      "test/fb1003c_citywall.test.js"
+      "test/world/fb1003c_citywall.test.js"
     ],
     "note": "A build asked before the pipeline hands the 445 over would throw rather than wait for it."
   },
@@ -105,7 +105,7 @@
     "old": "const SLICE_ON_PLANE_M = 1e-5;",
     "new": "const SLICE_ON_PLANE_M = 0;",
     "tests": [
-      "test/fb1003c_citywall.test.js"
+      "test/world/fb1003c_citywall.test.js"
     ],
     "note": "AUDIT S1: float32's 1.6000000238 reads as outside a cut at 1.6, and every face on a cut goes - a merlon's end open to the eye."
   },
@@ -115,7 +115,7 @@
     "old": "if (tri.every((v) => below(v) === 0) && !(tri[0][3] < 0)) continue;",
     "new": "if (tri.every((v) => below(v) === 0) && !(tri[0][3] > 0)) continue;",
     "tests": [
-      "test/fb1003c_citywall.test.js"
+      "test/world/fb1003c_citywall.test.js"
     ],
     "note": "AUDIT S1: the outside's face over the gap kept at the low cut, and the slab's own end dropped."
   },
@@ -125,7 +125,7 @@
     "old": "if (tri.every((v) => above(v) === 0) && !(tri[0][3] > 0)) continue;",
     "new": "if (tri.every((v) => above(v) === 0) && !(tri[0][3] < 0)) continue;",
     "tests": [
-      "test/fb1003c_citywall.test.js"
+      "test/world/fb1003c_citywall.test.js"
     ],
     "note": "AUDIT S1: the same at the high cut."
   }

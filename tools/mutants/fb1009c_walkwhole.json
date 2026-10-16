@@ -5,8 +5,8 @@
     "old": "      if (inTheWay(i, k, w)) continue;\n",
     "new": "",
     "tests": [
-      "test/fb1009c_walkwhole.test.js",
-      "test/taverntable.test.js"
+      "test/world/fb1009c_walkwhole.test.js",
+      "test/world/card/taverntable.test.js"
     ]
   },
   {
@@ -15,8 +15,8 @@
     "old": "export const PLACE_LANE_CELLS = 1;",
     "new": "export const PLACE_LANE_CELLS = 0;",
     "tests": [
-      "test/fb1009c_walkwhole.test.js",
-      "test/taverntable.test.js"
+      "test/world/fb1009c_walkwhole.test.js",
+      "test/world/card/taverntable.test.js"
     ]
   },
   {
@@ -25,8 +25,8 @@
     "old": "      else if (was !== after[c]) return true;",
     "new": "      else return true;",
     "tests": [
-      "test/fb1009c_walkwhole.test.js",
-      "test/taverntable.test.js"
+      "test/world/fb1009c_walkwhole.test.js",
+      "test/world/card/taverntable.test.js"
     ]
   },
   {
@@ -35,8 +35,8 @@
     "old": "    const li = w.ri + PLACE_LANE_CELLS, lk = w.rk + PLACE_LANE_CELLS;",
     "new": "    const li = w.ri + PLACE_LANE_CELLS, lk = w.rk;",
     "tests": [
-      "test/fb1009c_walkwhole.test.js",
-      "test/taverntable.test.js"
+      "test/world/fb1009c_walkwhole.test.js",
+      "test/world/card/taverntable.test.js"
     ]
   }
 ]

@@ -5,7 +5,7 @@
     "old": "  'Cylinder.017': role('aftStep', [[-13.403, 10.189, 4.271], [-9.991, 13.774, 6.416]]),\n",
     "new": "",
     "tests": [
-      "test/ships2_bake.test.js"
+      "test/tooling/ships2_bake.test.js"
     ],
     "why": "an object of hers named in no role: her bake refuses the scene"
   },
@@ -15,7 +15,7 @@
     "old": "(z - frame.waterline) * frame.scale",
     "new": "z * frame.scale",
     "tests": [
-      "test/ships2_bake.test.js"
+      "test/tooling/ships2_bake.test.js"
     ],
     "why": "her heights the scene's, not over her waterline: neither file re-made"
   },
@@ -25,7 +25,7 @@
     "old": "(frame.centreline - y) * frame.scale",
     "new": "(-y) * frame.scale",
     "tests": [
-      "test/ships2_bake.test.js"
+      "test/tooling/ships2_bake.test.js"
     ],
     "why": "her centreline the scene's Y 0: her hull off her centreline"
   },
@@ -35,7 +35,7 @@
     "old": "      if (fault) throw new Error(fault);\n",
     "new": "",
     "tests": [
-      "test/ships2_bake.test.js"
+      "test/tooling/ships2_bake.test.js"
     ],
     "why": "an object of hers said to be skipped, baked without it"
   },
@@ -45,7 +45,7 @@
     "old": "    if (!(off <= BOX_SLACK)) throw",
     "new": "    if (false) throw",
     "tests": [
-      "test/ships2_bake.test.js"
+      "test/tooling/ships2_bake.test.js"
     ],
     "why": "a role whose object has moved baked as it stands"
   }

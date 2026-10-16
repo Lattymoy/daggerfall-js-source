@@ -5,10 +5,10 @@
 //
 // The window is wrapped in the generic overlay shape every host's frame already drives (isChoiceWindow, done, input,
 // click, wheel, hover, tick, draw, dispose) - tradeDoor.js's `enhancedTradeOverlay`, and for the same reason - and it
-// loads as a LAZY CHUNK through ui/enhancedChunk.js, so a deploy that lands while a tab is open is SAID, not silent
+// loads as a LAZY CHUNK through ui/enhanced/enhancedChunk.js, so a deploy that lands while a tab is open is SAID, not silent
 // (MENU1). The session it draws is net/tradeSession.js's; this file owns only the overlay's life.
-import { mountEnhancedChunk } from './enhancedChunk.js';
-import { registerOverlay } from './enhancedOverlays.js';
+import { mountEnhancedChunk } from './enhanced/enhancedChunk.js';
+import { registerOverlay } from './enhanced/enhancedOverlays.js';
 import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
 
 /** Can this page draw the window? It reads no ARENA2 at all, as the enhanced shop counter's does not. */
@@ -47,7 +47,7 @@ export function createPlayerTradeWindow(session, deps) {
     dispose() { if (session.phase === 'open') session.cancel(); close(); },
   };
   mountEnhancedChunk({
-    load: () => import('./enhancedPlayerTrade.js'),
+    load: () => import('./enhanced/enhancedPlayerTrade.js'),
     mount: ({ mountEnhancedPlayerTrade }) => { view = mountEnhancedPlayerTrade(host, { session, deps: { ...deps, onExit: close } }); },
     alive: () => !fired, host, onDismiss: () => { host.remove(); fired = true; }, label: 'player trade',
   });

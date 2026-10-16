@@ -29,7 +29,7 @@
 //   6. THE SWITCH: `weaponGlow` (the Features row, systems/features.js), on by default; `?weaponglow=off` the kill door.
 //      The loot ladder's own switch answers first - off, no line is read (lootPowers.js linesOf), so no element shows.
 
-import { readLines, validAffix, PROC_ELEMENTS, lootRarityOn, rarityKnown } from './lootRarity.js';
+import { readLines, validAffix, PROC_ELEMENTS, lootRarityOn, rarityKnown } from './loot/lootRarity.js';
 import { isEnchanted } from './inventory.js';
 import { getPref } from './uiPrefs.js';
 import { pageParam } from './pageQuery.js';
@@ -163,6 +163,6 @@ export const meshGlow = (item, opts) => specOf(item, true, opts?.on, opts?.ladde
 
 /** THE WIRE'S WORD for a held weapon's glow - `fire2`, `arcane2` - and back (net/wire.js LOOK_GLOW_RE, validLookItem's
  *  `glow`): a peer's body is drawn from it, since its affixes never travel. Anything else reads as none. The words are
- *  exactly the specs' ten, which are exactly the words the wire's pattern takes (test/weaponglow1.test.js). */
+ *  exactly the specs' ten, which are exactly the words the wire's pattern takes (test/systems/weaponglow1.test.js). */
 export const glowWord = (spec) => spec?.word ?? null;
 export const glowFromWord = (word) => (typeof word === 'string' ? SPEC_BY_WORD.get(word) ?? null : null);

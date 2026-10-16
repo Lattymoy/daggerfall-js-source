@@ -5,7 +5,7 @@
     "old": "  if (docSha !== null && docSha !== row.doc_sha) return { error: 'poi-changed' };",
     "new": "  if (false) return { error: 'poi-changed' };",
     "tests": [
-      "test/auditpoi_store.test.js"
+      "test/poi/auditpoi_store.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  if (verdict === 'approve' && row.kind === 'doc' && docSha === null) return { error: 'body' };",
     "new": "  if (false) return { error: 'body' };",
     "tests": [
-      "test/auditpoi_store.test.js"
+      "test/poi/auditpoi_store.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "AND state = 'submitted' AND doc_sha IS ?9`).bind(",
     "new": "AND state = 'submitted' AND (doc_sha IS ?9 OR 1)`).bind(",
     "tests": [
-      "test/auditpoi_store.test.js"
+      "test/poi/auditpoi_store.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  const mark = decisionMark(ctx);\n  const decided = 'EXISTS",
     "new": "  const mark = 'every decision';\n  const decided = 'EXISTS",
     "tests": [
-      "test/auditpoi_store.test.js"
+      "test/poi/auditpoi_store.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "docSha: r.doc_sha ?? null,",
     "new": "docSha: null,",
     "tests": [
-      "test/auditpoi_store.test.js"
+      "test/poi/auditpoi_store.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "docSha: body.docSha ?? null }));",
     "new": "docSha: null }));",
     "tests": [
-      "test/auditpoi_store.test.js"
+      "test/poi/auditpoi_store.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "...(typeof docSha === 'string' ? { docSha } : {})",
     "new": "...({})",
     "tests": [
-      "test/auditpoi_store.test.js"
+      "test/poi/auditpoi_store.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "AND state = 'draft' AND doc_sha = ?\").bind(",
     "new": "AND state = 'draft' AND (doc_sha = ? OR 1)\").bind(",
     "tests": [
-      "test/auditpoi_store.test.js"
+      "test/poi/auditpoi_store.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "    unknownProblems(p, PLACE_KEYS, 'place', say);",
     "new": "    void 0;",
     "tests": [
-      "test/auditpoi_store.test.js"
+      "test/poi/auditpoi_store.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "      unknownProblems(part, PART_KEYS, at, say);",
     "new": "      void 0;",
     "tests": [
-      "test/auditpoi_store.test.js"
+      "test/poi/auditpoi_store.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "      unknownProblems(l, LIGHT_KEYS, at, say);",
     "new": "      void 0;",
     "tests": [
-      "test/auditpoi_store.test.js"
+      "test/poi/auditpoi_store.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "      unknownProblems(m, MARKER_KEYS, 'marker', say);",
     "new": "      void 0;",
     "tests": [
-      "test/auditpoi_store.test.js"
+      "test/poi/auditpoi_store.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "  if (uv && typeof uv === 'object') unknownProblems(uv, UV_KEYS, `${at}.uv`, say);",
     "new": "  void 0;",
     "tests": [
-      "test/auditpoi_store.test.js"
+      "test/poi/auditpoi_store.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "d.live_by, n.name, n.px, n.py,",
     "new": "d.live_by, json_extract(n.doc, '$.name') AS name, json_extract(n.doc, '$.place.px') AS px, json_extract(n.doc, '$.place.py') AS py,",
     "tests": [
-      "test/auditpoi_store.test.js"
+      "test/poi/auditpoi_store.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "SELECT ?1, n.next, 'doc', ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, 'draft'",
     "new": "SELECT ?1, n.next, 'doc', ?2, ?3, NULL, ?5, ?6, ?7, ?8, ?9, ?10, 'draft'",
     "tests": [
-      "test/auditpoi_store.test.js"
+      "test/poi/auditpoi_store.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "live = EXISTS (SELECT 1 FROM poi_rev_assets ra JOIN poi_docs d ON d.id = ra.poi_id AND d.live_rev = ra.rev WHERE ra.sha = poi_assets.sha)",
     "new": "live = MAX(live, EXISTS (SELECT 1 FROM poi_rev_assets ra JOIN poi_docs d ON d.id = ra.poi_id AND d.live_rev = ra.rev WHERE ra.sha = poi_assets.sha))",
     "tests": [
-      "test/auditpoi_store.test.js"
+      "test/poi/auditpoi_store.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "    ctx.db.prepare(liveRecomputed('1')).bind(id),\n",
     "new": "",
     "tests": [
-      "test/auditpoi_store.test.js"
+      "test/poi/auditpoi_store.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "export const POI_LIVE_ASSET_MAX_AGE_S = 86400;",
     "new": "export const POI_LIVE_ASSET_MAX_AGE_S = 31536000;",
     "tests": [
-      "test/auditpoi_store.test.js"
+      "test/poi/auditpoi_store.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "  for (let k = 0; k < 3; k++) if (!(Math.abs(min[k] - boundsMin[k]) <= 1e-3 && Math.abs(max[k] - boundsMax[k]) <= 1e-3)) return { error: 'bounds' };",
     "new": "  for (let k = 0; k < 3; k++) if (Math.abs(min[k] - boundsMin[k]) > 1e-3 || Math.abs(max[k] - boundsMax[k]) > 1e-3) return { error: 'bounds' };",
     "tests": [
-      "test/auditpoi_store.test.js"
+      "test/poi/auditpoi_store.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "  over('budget-triangles', triangles, POI_BUDGET.triangles);",
     "new": "  void 0;",
     "tests": [
-      "test/auditpoi_store.test.js"
+      "test/poi/auditpoi_store.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "  over('budget-vertices', vertices, POI_BUDGET.vertices);",
     "new": "  void 0;",
     "tests": [
-      "test/auditpoi_store.test.js"
+      "test/poi/auditpoi_store.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "  over('budget-bytes', bytes, POI_BUDGET.bytes);",
     "new": "  void 0;",
     "tests": [
-      "test/auditpoi_store.test.js"
+      "test/poi/auditpoi_store.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "  over('budget-pixels', pixels, POI_BUDGET.pixels);",
     "new": "  void 0;",
     "tests": [
-      "test/auditpoi_store.test.js"
+      "test/poi/auditpoi_store.test.js"
     ]
   },
   {
@@ -212,7 +212,7 @@
     "old": "  over('budget-reach', Math.ceil(reach), POI_BUDGET.reach);",
     "new": "  void 0;",
     "tests": [
-      "test/auditpoi_store.test.js"
+      "test/poi/auditpoi_store.test.js"
     ]
   },
   {
@@ -221,7 +221,7 @@
     "old": "  reach *= finite(doc?.place?.s) ? doc.place.s : 1;",
     "new": "  void 0;",
     "tests": [
-      "test/auditpoi_store.test.js"
+      "test/poi/auditpoi_store.test.js"
     ]
   },
   {
@@ -230,7 +230,7 @@
     "old": "WHERE poi_id = ?1 AND author = ?8 AND state = 'draft' AND kind = 'doc' RETURNING rev",
     "new": "WHERE poi_id = ?1 AND author = ?8 AND state IN ('draft', 'submitted') AND kind = 'doc' RETURNING rev",
     "tests": [
-      "test/auditpoi_store.test.js"
+      "test/poi/auditpoi_store.test.js"
     ]
   },
   {
@@ -239,7 +239,7 @@
     "old": "  if (!r) return stateNow(ctx.db, id, rev, 'poi-state');\n  return { id, rev, state: r.state };",
     "new": "  if (!r) return { id, rev, state: 'draft' };\n  return { id, rev, state: r.state };",
     "tests": [
-      "test/auditpoi_store.test.js"
+      "test/poi/auditpoi_store.test.js"
     ]
   },
   {
@@ -248,7 +248,7 @@
     "old": "CREATE UNIQUE INDEX IF NOT EXISTS poi_revs_one_draft",
     "new": "CREATE INDEX IF NOT EXISTS poi_revs_one_draft",
     "tests": [
-      "test/auditpoi_store.test.js"
+      "test/poi/auditpoi_store.test.js"
     ]
   },
   {
@@ -257,7 +257,7 @@
     "old": "CREATE UNIQUE INDEX IF NOT EXISTS poi_revs_one_retire",
     "new": "CREATE INDEX IF NOT EXISTS poi_revs_one_retire",
     "tests": [
-      "test/auditpoi_store.test.js"
+      "test/poi/auditpoi_store.test.js"
     ]
   },
   {
@@ -266,7 +266,7 @@
     "old": "    if (made.meta?.changes) return { id: item.id, at: ctx.nowS };",
     "new": "    return { id: item.id, at: ctx.nowS };",
     "tests": [
-      "test/auditpoi_store.test.js"
+      "test/poi/auditpoi_store.test.js"
     ]
   },
   {
@@ -275,7 +275,7 @@
     "old": "DO UPDATE SET bytes = bytes + excluded.bytes WHERE bytes + excluded.bytes <= ?4",
     "new": "DO UPDATE SET bytes = bytes + excluded.bytes WHERE ?4 > 0",
     "tests": [
-      "test/auditpoi_store.test.js"
+      "test/poi/auditpoi_store.test.js"
     ]
   },
   {
@@ -284,7 +284,7 @@
     "old": "  } catch (e) {\n    await giveBack();\n    throw e;",
     "new": "  } catch (e) {\n    throw e;",
     "tests": [
-      "test/auditpoi_store.test.js"
+      "test/poi/auditpoi_store.test.js"
     ]
   },
   {
@@ -293,7 +293,7 @@
     "old": "state IN ('draft', 'submitted')) < ${POI_OPEN_REVS}`;",
     "new": "state IN ('draft', 'submitted')) < ${POI_OPEN_REVS * 2}`;",
     "tests": [
-      "test/auditpoi_store.test.js"
+      "test/poi/auditpoi_store.test.js"
     ]
   },
   {
@@ -302,7 +302,7 @@
     "old": "(SELECT COUNT(*) FROM poi_shelf WHERE by = ?8) < ${POI_SHELF_EVER}",
     "new": "(SELECT COUNT(*) FROM poi_shelf WHERE by = ?8) < ${POI_SHELF_EVER * 2}",
     "tests": [
-      "test/auditpoi_store.test.js"
+      "test/poi/auditpoi_store.test.js"
     ]
   },
   {
@@ -311,7 +311,7 @@
     "old": "FROM poi_revs WHERE poi_id IN (SELECT id FROM poi_docs ORDER BY created_at DESC LIMIT ${POI_LIST_MAX})) WHERE k <= ${POI_LIST_REVS}",
     "new": "FROM poi_revs) WHERE k <= ${POI_LIST_REVS}",
     "tests": [
-      "test/auditpoi_store.test.js"
+      "test/poi/auditpoi_store.test.js"
     ]
   },
   {
@@ -320,7 +320,7 @@
     "old": "WHERE k <= ${POI_LIST_REVS} ORDER BY poi_id, rev",
     "new": "WHERE k <= ${POI_LIST_REVS} + 1000 ORDER BY poi_id, rev",
     "tests": [
-      "test/auditpoi_store.test.js"
+      "test/poi/auditpoi_store.test.js"
     ]
   },
   {
@@ -329,7 +329,7 @@
     "old": "    queue: rows.slice(0, POI_QUEUE_MAX).map((r) => ({",
     "new": "    queue: rows.map((r) => ({",
     "tests": [
-      "test/auditpoi_store.test.js"
+      "test/poi/auditpoi_store.test.js"
     ]
   },
   {
@@ -338,7 +338,7 @@
     "old": "    more: rows.length > POI_QUEUE_MAX,",
     "new": "    more: false,",
     "tests": [
-      "test/auditpoi_store.test.js"
+      "test/poi/auditpoi_store.test.js"
     ]
   },
   {
@@ -347,7 +347,7 @@
     "old": "  if (kept && kept.v >= atLeast && nowMs - kept.checkedMs < POI_FEED_KEEP_MS) return kept;",
     "new": "  if (kept && nowMs - kept.checkedMs < POI_FEED_KEEP_MS) return kept;",
     "tests": [
-      "test/auditpoi_store.test.js"
+      "test/poi/auditpoi_store.test.js"
     ]
   },
   {
@@ -356,7 +356,7 @@
     "old": "const feed = await poiLiveFeed(env.DB, Date.now(), held);",
     "new": "const feed = await poiLiveFeed(env.DB, Date.now());",
     "tests": [
-      "test/auditpoi_store.test.js"
+      "test/poi/auditpoi_store.test.js"
     ]
   },
   {
@@ -365,7 +365,7 @@
     "old": "(?:W\\/)?\"poi-(\\d{1,15})\"",
     "new": "\"poi-(\\d{1,15})\"",
     "tests": [
-      "test/auditpoi_store.test.js"
+      "test/poi/auditpoi_store.test.js"
     ]
   },
   {
@@ -374,7 +374,7 @@
     "old": "if (held === feed.v) return new Response(null, { status: 304, headers });",
     "new": "if (request.headers.get('if-none-match') === etag) return new Response(null, { status: 304, headers });",
     "tests": [
-      "test/auditpoi_store.test.js"
+      "test/poi/auditpoi_store.test.js"
     ]
   },
   {
@@ -383,7 +383,7 @@
     "old": "      stale: (r.base_rev ?? null) !== (r.live_rev ?? null),",
     "new": "      stale: r.kind === 'doc' && r.live_rev != null && r.base_rev !== r.live_rev,",
     "tests": [
-      "test/auditpoi_store.test.js"
+      "test/poi/auditpoi_store.test.js"
     ]
   },
   {
@@ -392,7 +392,7 @@
     "old": "const UNSAID_RE = /[\\p{Cc}\\p{Cs}",
     "new": "const UNSAID_RE = /[\\p{Cc}",
     "tests": [
-      "test/auditpoi_store.test.js"
+      "test/poi/auditpoi_store.test.js"
     ]
   },
   {
@@ -401,7 +401,7 @@
     "old": "\\u{2028}\\u{2029}\\u{202a}-\\u{202e}\\u{2066}-\\u{2069}]/u;\n// the one field",
     "new": "\\u{2028}\\u{2029}]/u;\n// the one field",
     "tests": [
-      "test/auditpoi_store.test.js"
+      "test/poi/auditpoi_store.test.js"
     ]
   },
   {
@@ -410,7 +410,7 @@
     "old": "const UNSAID_RE = /[\\p{Cc}",
     "new": "const UNSAID_RE = /[\\u{0}-\\u{1f}\\u{7f}",
     "tests": [
-      "test/auditpoi_store.test.js"
+      "test/poi/auditpoi_store.test.js"
     ]
   },
   {
@@ -419,7 +419,7 @@
     "old": "const PROSE_UNSAID_RE = /[\\u{0}-\\u{9}\\u{b}-\\u{1f}\\u{7f}-\\u{9f}\\p{Cs}",
     "new": "const PROSE_UNSAID_RE = /[\\u{0}-\\u{9}\\u{b}-\\u{1f}\\u{7f}\\p{Cs}",
     "tests": [
-      "test/auditpoi_store.test.js"
+      "test/poi/auditpoi_store.test.js"
     ]
   },
   {
@@ -428,7 +428,7 @@
     "old": "SELECT ?1, n.next, 'rollback', NULL, ?2, ?3",
     "new": "SELECT ?1, n.next, 'rollback', NULL, NULL, ?3",
     "tests": [
-      "test/auditpoi_store.test.js"
+      "test/poi/auditpoi_store.test.js"
     ]
   },
   {
@@ -437,7 +437,7 @@
     "old": "THEN 'draft' ELSE 'withdrawn' END",
     "new": "THEN 'draft' ELSE 'rejected' END",
     "tests": [
-      "test/auditpoi_store.test.js"
+      "test/poi/auditpoi_store.test.js"
     ]
   },
   {
@@ -446,7 +446,7 @@
     "old": "  if (r.gone_at != null) return { error: 'poi-gone' };   // AUDIT POI U13: taken off the shelf",
     "new": "  if (r.gone_at != null) return { error: 'not-found' };   // AUDIT POI U13: taken off the shelf",
     "tests": [
-      "test/auditpoi_store.test.js"
+      "test/poi/auditpoi_store.test.js"
     ]
   },
   {
@@ -455,7 +455,7 @@
     "old": "? { error: 'poi-shelf-full', max: POI_SHELF_MAX }",
     "new": "? { error: 'poi-quota', max: POI_SHELF_MAX }",
     "tests": [
-      "test/poi4b_library.test.js"
+      "test/poi/poi4b_library.test.js"
     ]
   },
   {
@@ -464,7 +464,7 @@
     "old": "'poi-gone': () => t('account.refusal.poiGone'",
     "new": "'poi-gone-unsaid': () => t('account.refusal.poiGone'",
     "tests": [
-      "test/auditpoi_store.test.js"
+      "test/poi/auditpoi_store.test.js"
     ]
   }
 ]

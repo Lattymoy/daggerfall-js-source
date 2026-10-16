@@ -12,7 +12,7 @@ import { spawnSync } from 'node:child_process';
 
 const ROOT = process.cwd();
 const COV = JSON.parse(fs.readFileSync(path.join(ROOT, '.mutaudit/cov.json'), 'utf8'));
-const ALLTESTS = fs.readdirSync(path.join(ROOT, 'test')).filter(f => f.endsWith('.test.js')).sort();
+const ALLTESTS = fs.readdirSync(path.join(ROOT, 'test'), { recursive: true }).filter(f => f.endsWith('.test.js')).sort();
 
 const argv = process.argv.slice(2);
 function arg(name, def) { const i = argv.indexOf('--' + name); return i >= 0 ? argv[i + 1] : def; }

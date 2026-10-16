@@ -5,7 +5,7 @@
     "old": "    return pixelOk(x, y) && haulKey({ x, y, day, id: h[4] }) === s ? { kind: 'haul'",
     "new": "    return pixelOk(x, y) ? { kind: 'haul'",
     "tests": [
-      "test/prof8_law.test.js"
+      "test/net/prof8_law.test.js"
     ]
   },
   {
@@ -14,8 +14,8 @@
     "old": "  let y = roll * (clean ? ACT_YIELD_MAX : 1);\n  if (march) y *= MARCH_MULT;\n  y *= tideMult;   // SEASON1 part two: the land's Tide on confirmed ground (tideLaw.js tideYield)\n  if (school)",
     "new": "  let y = roll;\n  if (march) y *= MARCH_MULT;\n  y *= tideMult;   // SEASON1 part two: the land's Tide on confirmed ground (tideLaw.js tideYield)\n  if (school)",
     "tests": [
-      "test/prof8_law.test.js",
-      "test/prof8_service.test.js"
+      "test/net/prof8_law.test.js",
+      "test/net/prof8_service.test.js"
     ]
   },
   {
@@ -24,7 +24,7 @@
     "old": "if (school) y += netter ? SCHOOL_FISH.netter : SCHOOL_FISH.plain;",
     "new": "if (school) y += SCHOOL_FISH.plain;",
     "tests": [
-      "test/prof8_law.test.js"
+      "test/net/prof8_law.test.js"
     ]
   },
   {
@@ -33,8 +33,8 @@
     "old": "  if (slaughterfish) y += 1;\n",
     "new": "",
     "tests": [
-      "test/prof8_law.test.js",
-      "test/prof8_service.test.js"
+      "test/net/prof8_law.test.js",
+      "test/net/prof8_service.test.js"
     ]
   },
   {
@@ -43,8 +43,8 @@
     "old": "  const open = sea && confirmed;",
     "new": "  const open = sea;",
     "tests": [
-      "test/prof8_law.test.js",
-      "test/prof8_service.test.js"
+      "test/net/prof8_law.test.js",
+      "test/net/prof8_service.test.js"
     ]
   },
   {
@@ -53,7 +53,7 @@
     "old": "(pearlDiver ? FISH_CHANCE.pearlDiver : 1)",
     "new": "1",
     "tests": [
-      "test/prof8_law.test.js"
+      "test/net/prof8_law.test.js"
     ]
   },
   {
@@ -62,7 +62,7 @@
     "old": "FISH_CHANCE.slaughterfish * (deepSea ? FISH_CHANCE.deepSea : 1)",
     "new": "FISH_CHANCE.slaughterfish",
     "tests": [
-      "test/prof8_law.test.js"
+      "test/net/prof8_law.test.js"
     ]
   },
   {
@@ -71,7 +71,7 @@
     "old": "export const haulAtSea = (climate, region) => climate === CLIMATES.Ocean || region === SEA_REGION;",
     "new": "export const haulAtSea = (climate, region) => climate === CLIMATES.Ocean;",
     "tests": [
-      "test/prof8_law.test.js"
+      "test/net/prof8_law.test.js"
     ]
   },
   {
@@ -80,8 +80,8 @@
     "old": "export const haulTier = (rank) => topTierOf(rank);",
     "new": "export const haulTier = (rank) => 1;",
     "tests": [
-      "test/prof8_law.test.js",
-      "test/prof8_service.test.js"
+      "test/net/prof8_law.test.js",
+      "test/net/prof8_service.test.js"
     ]
   },
   {
@@ -90,7 +90,7 @@
     "old": "export const HAUL_YIELD = Object.freeze([1, 2]);",
     "new": "export const HAULS_PER_DAY = 40;\nexport const HAUL_YIELD = Object.freeze([1, 2]);",
     "tests": [
-      "test/cap_off.test.js"
+      "test/net/cap_off.test.js"
     ],
     "note": "RETIRED by CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\"): the law exports no day's forty - the mutant exports it again. It was the mutant that made the day sixty."
   },
@@ -100,8 +100,8 @@
     "old": "(hour === 7 || hour === 17 ? 0.5 : 1)",
     "new": "1",
     "tests": [
-      "test/prof8_law.test.js",
-      "test/prof8_client.test.js"
+      "test/net/prof8_law.test.js",
+      "test/world/terrain/prof8_client.test.js"
     ]
   },
   {
@@ -110,8 +110,8 @@
     "old": "FISH_ACT.tugS * (angler ? FISH_ACT.angler : 1)",
     "new": "FISH_ACT.tugS",
     "tests": [
-      "test/prof8_law.test.js",
-      "test/prof8_client.test.js"
+      "test/net/prof8_law.test.js",
+      "test/world/terrain/prof8_client.test.js"
     ]
   },
   {
@@ -120,8 +120,8 @@
     "old": "        AND ?11 - ${stored} >= 1`)",
     "new": "        AND (?9 <> 'fishing' OR (SELECT COUNT(*) FROM node_harvests WHERE player = ?1 AND profession = 'fishing' AND day = ?6) < 40)\n        AND ?11 - ${stored} >= 1`)",
     "tests": [
-      "test/prof8_service.test.js",
-      "test/cap_off.test.js"
+      "test/net/prof8_service.test.js",
+      "test/net/cap_off.test.js"
     ],
     "note": "RETIRED by CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\"): the account's forty hauls are gone and the pin turned (the forty-first credited) - the mutant asks the forty again. It was the mutant that left them unasked."
   },
@@ -131,7 +131,7 @@
     "old": "    if (tier >= HIGH_HIDE_TIER && hunt.high >= HIGH_HIDES_PER_DAY) return { error: 'prof-hunt-high' };\n  }\n",
     "new": "    if (tier >= HIGH_HIDE_TIER && hunt.high >= HIGH_HIDES_PER_DAY) return { error: 'prof-hunt-high' };\n  }\n  if (isHaul && (await haulsToday(db, player.id, day)) >= 40) return { error: 'prof-fish-cap' };\n",
     "tests": [
-      "test/cap_off.test.js"
+      "test/net/cap_off.test.js"
     ],
     "note": "RETIRED by CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\"): the service says `prof-fish-cap` no more - the mutant says it again for a haul past forty the INSERT refused (a full Stores), where the Stores' own word stands. It was the mutant that left it unsaid."
   },
@@ -141,7 +141,7 @@
     "old": "school: act?.school === 0 || act?.school === 1 };",
     "new": "school: act?.school != null };",
     "tests": [
-      "test/prof8_service.test.js"
+      "test/net/prof8_service.test.js"
     ]
   },
   {
@@ -150,7 +150,7 @@
     "old": "    trophy = finds.trophy ? 1 : 0;",
     "new": "    trophy = 0;",
     "tests": [
-      "test/prof8_service.test.js"
+      "test/net/prof8_service.test.js"
     ]
   },
   {
@@ -159,7 +159,7 @@
     "old": "    ...(Number(row.trophy) === 1 ? { trophy: true } : {}),   // PROF8: a trophy the client puts in the pack\n",
     "new": "",
     "tests": [
-      "test/prof8_service.test.js"
+      "test/net/prof8_service.test.js"
     ]
   },
   {
@@ -168,7 +168,7 @@
     "old": "    ...(isBody ? [] : [db.prepare(`INSERT OR IGNORE INTO world_witness",
     "new": "    ...(isBody || isHaul ? [] : [db.prepare(`INSERT OR IGNORE INTO world_witness",
     "tests": [
-      "test/prof8_service.test.js"
+      "test/net/prof8_service.test.js"
     ]
   },
   {
@@ -177,7 +177,7 @@
     "old": "    ...(row.profession === 'fishing' ? { hauls: Number(r.get('hauls')?.[0]?.n ?? 0) } : {}),   // PROF8: the account's hauls today\n",
     "new": "",
     "tests": [
-      "test/prof8_service.test.js"
+      "test/net/prof8_service.test.js"
     ],
     "note": "GATHER-SPEED/MARKET-SPEED (PIN MOVED): re-aimed by content - the reads batched."
   },
@@ -187,7 +187,7 @@
     "old": "  const pressed = attack || (held && !st.wasHeld);",
     "new": "  const pressed = attack || held;",
     "tests": [
-      "test/prof8_client.test.js"
+      "test/world/terrain/prof8_client.test.js"
     ]
   },
   {
@@ -196,7 +196,7 @@
     "old": "      else st.slip = Math.min(1, st.slip + step / FISH_ACT.slipS);\n",
     "new": "",
     "tests": [
-      "test/prof8_client.test.js"
+      "test/world/terrain/prof8_client.test.js"
     ]
   },
   {
@@ -205,7 +205,7 @@
     "old": "          if (gentle) { land(false); return st; }   // no moment: the net comes in plain\n",
     "new": "",
     "tests": [
-      "test/prof8_client.test.js"
+      "test/world/terrain/prof8_client.test.js"
     ]
   },
   {
@@ -214,7 +214,7 @@
     "old": "    st.school = schoolAt ? schoolAt(st.throwM) : null;",
     "new": "    st.school = null;",
     "tests": [
-      "test/prof8_client.test.js"
+      "test/world/terrain/prof8_client.test.js"
     ]
   },
   {
@@ -223,7 +223,7 @@
     "old": "      if (dungeon || host.busy?.() || !foragingToolIn(entity, FT.FishingNet) || !inWater()) return [];",
     "new": "      if (dungeon || host.busy?.() || !foragingToolIn(entity, FT.FishingNet)) return [];",
     "tests": [
-      "test/prof8_client.test.js"
+      "test/world/terrain/prof8_client.test.js"
     ]
   },
   {
@@ -232,7 +232,7 @@
     "old": "cast.day !== day || book.taken(cast.key, 'fish') || book.counting(cast.key, 'fish')) {",
     "new": "cast.day !== day) {",
     "tests": [
-      "test/prof8_client.test.js"
+      "test/world/terrain/prof8_client.test.js"
     ]
   },
   {
@@ -241,7 +241,7 @@
     "old": "if (Math.hypot(s.x - at[0], s.z - at[1]) <= SCHOOL_R) return",
     "new": "if (Math.hypot(s.x - at[0], s.z - at[1]) >= 0) return",
     "tests": [
-      "test/prof8_client.test.js"
+      "test/world/terrain/prof8_client.test.js"
     ]
   },
   {
@@ -250,7 +250,7 @@
     "old": "      if (!d?.trophy || trophied.has(d.node)) return;",
     "new": "      if (!d?.trophy) return;",
     "tests": [
-      "test/prof8_client.test.js"
+      "test/world/terrain/prof8_client.test.js"
     ]
   },
   {
@@ -259,7 +259,7 @@
     "old": "      if (!isOutdoorWaterTile(tilemap[ty * WORLD_MAP_TILE_DIM + tx])) continue;\n",
     "new": "",
     "tests": [
-      "test/prof8_client.test.js"
+      "test/world/terrain/prof8_client.test.js"
     ]
   },
   {
@@ -268,7 +268,7 @@
     "old": "      const refusal = foragingActRefusal(FT.FishingNet);\n      if (refusal) return { refused: refusal };\n",
     "new": "",
     "tests": [
-      "test/prof8_client.test.js"
+      "test/world/terrain/prof8_client.test.js"
     ]
   },
   {
@@ -277,16 +277,16 @@
     "old": "      applyHauls(r.data?.hauls);   // PROF8: and its hauls\n",
     "new": "",
     "tests": [
-      "test/prof8_client.test.js"
+      "test/world/terrain/prof8_client.test.js"
     ]
   },
   {
     "name": "PROF8-page-unpractised",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "'hunting', 'fishing', 'logging',",
     "new": "'hunting', 'logging',",
     "tests": [
-      "test/prof8_client.test.js"
+      "test/world/terrain/prof8_client.test.js"
     ]
   },
   {
@@ -295,7 +295,7 @@
     "old": "          try { onTug?.(); } catch { /* the host's own */ }\n",
     "new": "",
     "tests": [
-      "test/prof8_client.test.js"
+      "test/world/terrain/prof8_client.test.js"
     ]
   },
   {
@@ -304,7 +304,7 @@
     "old": "export const SCHOOL_PICTURE = Object.freeze([211, 9]);",
     "new": "export const SCHOOL_PICTURE = Object.freeze([216, 46]);",
     "tests": [
-      "test/prof8_client.test.js"
+      "test/world/terrain/prof8_client.test.js"
     ]
   }
 ]

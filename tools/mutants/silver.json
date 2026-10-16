@@ -5,7 +5,7 @@
     "old": "toLocaleString('en-US')} silver`;",
     "new": "toLocaleString('en-US')} ${n === 1 ? 'Drake' : 'Drakes'}`;",
     "tests": [
-      "test/silver.test.js"
+      "test/net/silver.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "toLocaleString('en-US')} silver`;",
     "new": "toLocaleString('en-US')} ${n === 1 ? 'silver' : 'silvers'}`;",
     "tests": [
-      "test/silver.test.js"
+      "test/net/silver.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "'marks-short': () => t('account.refusal.marksShort', 'You do not hold that much silver.'),",
     "new": "'marks-short': () => t('account.refusal.marksShort', 'You do not hold that many silver.'),",
     "tests": [
-      "test/silver.test.js"
+      "test/net/silver.test.js"
     ]
   },
   {
@@ -32,16 +32,16 @@
     "old": "'marks-need-account': () => t('account.refusal.marksNeedAccount', 'Silver is kept by registered accounts. Add a username to hold it.'),",
     "new": "'marks-need-account': () => t('account.refusal.marksNeedAccount', 'Drakes are kept by registered accounts. Add a username to hold them.'),",
     "tests": [
-      "test/silver.test.js"
+      "test/net/silver.test.js"
     ]
   },
   {
     "name": "SILVER-the-bank-rate-old",
-    "file": "src/ui/enhancedPorts.js",
+    "file": "src/ui/enhanced/enhancedPorts.js",
     "old": "`${MARKS_BANK.goldPerMark} gold for each silver`",
     "new": "`${MARKS_BANK.goldPerMark} gold a Drake`",
     "tests": [
-      "test/silver.test.js"
+      "test/net/silver.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "'dfsocial-sec', 'Silver treasury'",
     "new": "'dfsocial-sec', 'Drake treasury'",
     "tests": [
-      "test/silver.test.js"
+      "test/net/silver.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "[['marks', 'Priced in silver'], ['gold', 'Priced in gold']]",
     "new": "[['marks', 'Priced in Drakes'], ['gold', 'Priced in gold']]",
     "tests": [
-      "test/silver.test.js"
+      "test/net/silver.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "      ...(q ? [labelled(t('prof.work.label.leastQuality', 'Least quality'), q)] : []), labelled(t('prof.work.label.paySilver', 'Pay (silver)'), pay), go);",
     "new": "      ...(q ? [labelled(t('prof.work.label.leastQuality', 'Least quality'), q)] : []), labelled(t('prof.work.label.paySilver', 'Pay (Drakes)'), pay), go);",
     "tests": [
-      "test/silver.test.js"
+      "test/net/silver.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "toLocaleString('en-US')} silver   ends in",
     "new": "toLocaleString('en-US')} Drakes   ends in",
     "tests": [
-      "test/silver.test.js"
+      "test/net/silver.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "` Costs ${cost.toLocaleString('en-US')} silver.`",
     "new": "` Costs ${cost.toLocaleString('en-US')} Drakes.`",
     "tests": [
-      "test/silver.test.js"
+      "test/net/silver.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "`The Bounty pays you ${n} silver for the camp.`",
     "new": "`The Bounty pays you ${n} Drakes for the camp.`",
     "tests": [
-      "test/silver.test.js"
+      "test/net/silver.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "'Silver set aside for the Bounty'",
     "new": "'Drakes set aside for the Bounty'",
     "tests": [
-      "test/silver.test.js"
+      "test/net/silver.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "toLocaleString('en-US')} silver struck to your account,",
     "new": "toLocaleString('en-US')} Drakes struck to your account,",
     "tests": [
-      "test/silver.test.js"
+      "test/net/silver.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "made('ingot:silver', 'metals', 3, 622, 'Silver Ingot', ICON_IRON, 'Silver')",
     "new": "made('ingot:silver', 'metals', 3, 622, 'silver Ingot', ICON_IRON, 'silver')",
     "tests": [
-      "test/silver.test.js"
+      "test/net/silver.test.js"
     ]
   }
 ]

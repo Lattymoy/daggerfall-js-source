@@ -5,7 +5,7 @@
     "old": "      || lz + r < box[o + 2] - BOX_SKIN || lz - r > box[o + 5] + BOX_SKIN) continue;",
     "new": "      || false) continue;",
     "tests": [
-      "test/ow_wod.test.js"
+      "test/world/worldOfDaggerfall/ow_wod.test.js"
     ],
     "note": "The tree walks every node: every face again, the lag back."
   },
@@ -15,7 +15,7 @@
     "old": "  if (bucket.wide.length) NEAR.push(wideNear(bucket, lx, ly, lz, r + WIDE_MARGIN));   // OW-WOD-LAG",
     "new": "",
     "tests": [
-      "test/ow_wod.test.js"
+      "test/world/worldOfDaggerfall/ow_wod.test.js"
     ],
     "note": "A sphere never meets a wide face: the massif is walked through."
   },
@@ -25,7 +25,7 @@
     "old": "k < e; k++) out.push(T.order[k]); continue; }",
     "new": "k < e; k++) out.push(T.order[T.start[node]]); continue; }",
     "tests": [
-      "test/ow_wod.test.js"
+      "test/world/worldOfDaggerfall/ow_wod.test.js"
     ],
     "note": "A ray takes one face of each leaf: the faces beside it are missed."
   },
@@ -35,7 +35,7 @@
     "old": "      if (tMin > tMax) miss = true;",
     "new": "      if (tMin > tMax + 1e9) miss = true;",
     "tests": [
-      "test/ow_wod.test.js"
+      "test/world/worldOfDaggerfall/ow_wod.test.js"
     ],
     "note": "The ray's node test refuses nothing: every wide face on every ray - the feelers' lag."
   },
@@ -45,7 +45,7 @@
     "old": "    if (bucket && bucket.wide.length) wideTree(bucket);",
     "new": "    if (bucket && bucket.wide.length) return;",
     "tests": [
-      "test/ow_wod.test.js"
+      "test/world/worldOfDaggerfall/ow_wod.test.js"
     ],
     "note": "The host's settle builds nothing: the first query in play raises the tree."
   },
@@ -55,47 +55,47 @@
     "old": "  if (bucket.wideTree && bucket.wideTree.n === n) return bucket.wideTree;",
     "new": "  if (bucket.wideTree) return bucket.wideTree;",
     "tests": [
-      "test/ow_wod.test.js"
+      "test/world/worldOfDaggerfall/ow_wod.test.js"
     ],
     "note": "A later mesh's faces never join the tree."
   },
   {
     "name": "OW-WOD-LAG-host-no-settle",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "    collider.settle(key);\n    await breather.breathe();\n\n    // SIB1:",
     "new": "    await breather.breathe();\n\n    // SIB1:",
     "tests": [
-      "test/ow_wod.test.js"
+      "test/world/worldOfDaggerfall/ow_wod.test.js"
     ],
     "note": "The host never settles its pixel."
   },
   {
     "name": "MOUNTAINS-WALKABLE-rocks-refused",
-    "file": "src/systems/travelRoute.js",
+    "file": "src/systems/travel/travelRoute.js",
     "old": "  const openBlocked = () => false;   // MOUNTAINS WALKABLE",
     "new": "  const openBlocked = (ax, ay, bx, by, leaving = false) => !leaving && rocks !== null && rocks[by * width + bx] === 1;",
     "tests": [
-      "test/ow_wod.test.js"
+      "test/world/worldOfDaggerfall/ow_wod.test.js"
     ],
     "note": "MOUNTAINS WALKABLE undone for the World of Daggerfall massifs: the route goes round a massif again."
   },
   {
     "name": "MOUNTAINS-WALKABLE-rock-peaks",
-    "file": "src/systems/travelRoute.js",
+    "file": "src/systems/travel/travelRoute.js",
     "old": "  const peak = (_x, _y) => false;   // MOUNTAINS WALKABLE: no pixel is a peak, so \"the mountains cannot be crossed\" never fires",
     "new": "  const peak = (x, y) => rocks !== null && rocks[y * width + x] === 1;",
     "tests": [
-      "test/ow_wod.test.js"
+      "test/world/worldOfDaggerfall/ow_wod.test.js"
     ],
     "note": "MOUNTAINS WALKABLE undone for the massifs: a massif's pixel is a peak again - a spot there refused."
   },
   {
     "name": "OW-WOD-PATH-rock-fields-too",
-    "file": "src/world/worldOfDaggerfall.js",
+    "file": "src/world/worldOfDaggerfall/worldOfDaggerfall.js",
     "old": "export const WOD_MOUNTAIN_PREFAB = /^WOD_Mountain_/;",
     "new": "export const WOD_MOUNTAIN_PREFAB = /^WOD_(?:Mountain_|Rocks_Large)/;",
     "tests": [
-      "test/ow_wod.test.js"
+      "test/world/worldOfDaggerfall/ow_wod.test.js"
     ],
     "note": "A tenth of the map refused to open ground."
   },
@@ -105,47 +105,47 @@
     "old": "    if (src) for (let i = 0; i < n; i++) if (src[i] && !onRoad(i)) out[i] = 1;",
     "new": "    if (src) for (let i = 0; i < n; i++) if (src[i]) out[i] = 1;",
     "tests": [
-      "test/ow_wod.test.js"
+      "test/world/worldOfDaggerfall/ow_wod.test.js"
     ],
     "note": "A road's pixel refused to an open step, where the mod stands no site."
   },
   {
     "name": "OW-TOWN-RING-tie-counter",
-    "file": "src/systems/travelOptions.js",
+    "file": "src/systems/travel/travelOptions.js",
     "old": "  const cw = (b - a + 8) % 8, step = cw <= 4 ? 1 : -1;",
     "new": "  const cw = (b - a + 8) % 8, step = cw < 4 ? 1 : -1;",
     "tests": [
-      "test/ow_wod.test.js"
+      "test/world/worldOfDaggerfall/ow_wod.test.js"
     ],
     "note": "The tie goes round the south (still a ring - the pin reads which way)."
   },
   {
     "name": "OW-TOWN-RING-no-corners",
-    "file": "src/systems/travelOptions.js",
+    "file": "src/systems/travel/travelOptions.js",
     "old": "if (RING_ORDER[i].length === 2) out.push(at[RING_ORDER[i]]);",
     "new": "if (false) out.push(at[RING_ORDER[i]]);",
     "tests": [
-      "test/ow_wod.test.js"
+      "test/world/worldOfDaggerfall/ow_wod.test.js"
     ],
     "note": "Straight from side to side: across the town."
   },
   {
     "name": "OW-TOWN-RING-legs-ignore-ring",
-    "file": "src/systems/travelRoute.js",
+    "file": "src/systems/travel/travelRoute.js",
     "old": "    if (pts && pts.length) {\n      for (const at of pts)",
     "new": "    if (false) {\n      for (const at of pts)",
     "tests": [
-      "test/ow_wod.test.js"
+      "test/world/worldOfDaggerfall/ow_wod.test.js"
     ],
     "note": "A leg aimed at the town's heart again."
   },
   {
     "name": "OW-TOWN-RING-fold-through-town",
-    "file": "src/systems/travelRoute.js",
+    "file": "src/systems/travel/travelRoute.js",
     "old": "    const same = next && !(rings[i + 1]?.length) && next.x",
     "new": "    const same = next && next.x",
     "tests": [
-      "test/ow_wod.test.js"
+      "test/world/worldOfDaggerfall/ow_wod.test.js"
     ],
     "note": "The run before the town is folded past it: the leg aimed across the town at the ring."
   },
@@ -155,27 +155,27 @@
     "old": "    const legs = routeLegs(plan.pixels, plan.kinds, { ringAt: tvRingAt });",
     "new": "    const legs = routeLegs(plan.pixels, plan.kinds);",
     "tests": [
-      "test/ow_wod.test.js"
+      "test/world/worldOfDaggerfall/ow_wod.test.js"
     ],
     "note": "The host hands no ring."
   },
   {
     "name": "OW-TOWN-RING-resume-skips",
-    "file": "src/systems/travelOptions.js",
+    "file": "src/systems/travel/travelOptions.js",
     "old": "    if (cur && !cur.ring && cur.x === mp.x && cur.y === mp.y) best = r.i + 1;",
     "new": "    if (cur && cur.x === mp.x && cur.y === mp.y) best = r.i + 1;",
     "tests": [
-      "test/ow_wod.test.js"
+      "test/world/worldOfDaggerfall/ow_wod.test.js"
     ],
     "note": "A resume in the town's pixel skips a ring point: across the town."
   },
   {
     "name": "OW-TOWN-RING-ring-as-join",
-    "file": "src/systems/travelOptions.js",
+    "file": "src/systems/travel/travelOptions.js",
     "old": "    if (r.legs[best]?.at && !r.legs[best].ring && best + 1 < r.legs.length) best++;",
     "new": "    if (r.legs[best]?.at && best + 1 < r.legs.length) best++;",
     "tests": [
-      "test/ow_wod.test.js"
+      "test/world/worldOfDaggerfall/ow_wod.test.js"
     ],
     "note": "A ring point taken for a road join and skipped."
   }

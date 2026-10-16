@@ -5,7 +5,7 @@
     "old": "  return (_sounds ??= (async () => {",
     "new": "  return (_sounds = (async () => {",
     "tests": [
-      "test/nav_e_sounds.test.js"
+      "test/tooling/nav_e_sounds.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "      try { if (await audio.registerSound(key, await load(file))) n++; } catch { /* the gun still fires, silently */ }",
     "new": "      if (await audio.registerSound(key, await load(file))) n++;",
     "tests": [
-      "test/nav_e_sounds.test.js"
+      "test/tooling/nav_e_sounds.test.js"
     ]
   },
   {
@@ -23,8 +23,8 @@
     "old": "  [NAVAL_SFX.cannon]: Object.freeze({ refDistance: 30, maxDistance: 2400 }),",
     "new": "  [NAVAL_SFX.cannon]: Object.freeze({ refDistance: 1, maxDistance: 2400 }),",
     "tests": [
-      "test/nav_e_sounds.test.js",
-      "test/nav_h_host.test.js"
+      "test/tooling/nav_e_sounds.test.js",
+      "test/systems/naval/nav_h_host.test.js"
     ]
   },
   {
@@ -33,7 +33,7 @@
     "old": "  ['naval-cannon', cannon, 0.95],",
     "new": "  ['naval-cannon', cannon, 0.9],",
     "tests": [
-      "test/nav_e_sounds.test.js"
+      "test/tooling/nav_e_sounds.test.js"
     ]
   },
   {
@@ -42,16 +42,16 @@
     "old": "export const softClip = (x, drive = 1) => x.map((v) => Math.tanh(v * drive) / Math.tanh(drive));",
     "new": "export const softClip = (x, drive = 1) => x.map((v) => Math.tanh(v * drive));",
     "tests": [
-      "test/nav_e_sounds.test.js"
+      "test/tooling/nav_e_sounds.test.js"
     ]
   },
   {
     "name": "NAV-E-the-host-range-dropped",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    const o = { ...navalSoundRange(key), ...opts };",
     "new": "    const o = { ...opts };",
     "tests": [
-      "test/nav_h_host.test.js"
+      "test/systems/naval/nav_h_host.test.js"
     ]
   }
 ]

@@ -1,67 +1,67 @@
 [
   {
     "name": "ASLH-B1-theirs-berthed-unread",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "theirs: true, afloat, berthed: atBerth(e.ship) });",
     "new": "theirs: true, afloat });",
     "tests": [
-      "test/auditshiplife_host.test.js"
+      "test/scenes/naval/auditshiplife_host.test.js"
     ]
   },
   {
     "name": "ASLH-B2-moored-unengaged",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": " || (!!e.fromHarbour && e.ship.errand?.kind === 'moored'), afloat,",
     "new": ", afloat,",
     "tests": [
-      "test/auditshiplife_host.test.js"
+      "test/scenes/naval/auditshiplife_host.test.js"
     ]
   },
   {
     "name": "ASLH-B3-players-level",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "        let cls = classFor(faction, HARBOUR_LEVEL, r());",
     "new": "        let cls = classFor(faction, deps.level?.() ?? 1, r());",
     "tests": [
-      "test/auditshiplife_host.test.js"
+      "test/scenes/naval/auditshiplife_host.test.js"
     ]
   },
   {
     "name": "ASLH-B3-seed-by-class",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "[...sea.values()].some((x) => x.ship.seed === seed && x.ship.damage.state !== SHIP_STATES.sunk)",
     "new": "bySeed(seed, cls.id, null)",
     "tests": [
-      "test/auditshiplife_host.test.js"
+      "test/scenes/naval/auditshiplife_host.test.js"
     ],
     "equivalent": true,
     "why": "With the port's own level (HARBOUR_LEVEL) every client draws the same class for a seed, so a copy of her with another class cannot arise and deduping by seed and class is deduping by seed. Kept as the defensive half: a seed is one ship whatever a client drew for her (the audit's two hulls in one berth came from the class check)."
   },
   {
     "name": "ASLH-B4-election-near-me",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    const near = (on.peers?.() ?? []).filter((p) => Array.isArray(p.feet) && Math.hypot(p.feet[0] - mouth[0], p.feet[2] - mouth[1]) <= HARBOUR_STAND);\n    standing = amGroupRollOwner(id, deps.feet(), near, HARBOUR_STAND * 2);",
     "new": "    const near = on.peers?.() ?? [];\n    standing = amGroupRollOwner(id, deps.feet(), near, NAVAL_SHARE_RADIUS);",
     "tests": [
-      "test/auditshiplife_host.test.js"
+      "test/scenes/naval/auditshiplife_host.test.js"
     ]
   },
   {
     "name": "ASLH-B5-heir-unmarked",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (e.ship.errand?.kind === 'moored') e.fromHarbour = e.ship.errand.harbour;",
     "new": "",
     "tests": [
-      "test/auditshiplife_host.test.js"
+      "test/scenes/naval/auditshiplife_host.test.js"
     ]
   },
   {
     "name": "ASLH-B6-sailings-lost",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    rolled = new WeakSet(); grids = new Map();",
     "new": "    rolled = new WeakSet(); departedByPort.clear(); grids = new Map();",
     "tests": [
-      "test/auditshiplife_host.test.js"
+      "test/scenes/naval/auditshiplife_host.test.js"
     ]
   },
   {
@@ -70,53 +70,53 @@
     "old": "else if (!h.harbour && clock - h.at >= HARBOUR_RETRY_S && near.ready?.() !== false) { h.harbour = sound(); h.at = clock; }",
     "new": "else if (false) { h.harbour = sound(); h.at = clock; }",
     "tests": [
-      "test/auditshiplife_host.test.js"
+      "test/scenes/naval/auditshiplife_host.test.js"
     ],
     "note": "AUDIT HOLDINGS (PIN MOVED): re-aimed by content to the line the audit's fix rewrote - its law the same."
   },
   {
     "name": "ASLH-F1-b-launches-too",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    const afloat = (on.peers?.() ?? []).filter((p) => Array.isArray(p.feet) && deps.isWater(p.feet[0], p.feet[2], 0));",
     "new": "    const afloat = [];",
     "tests": [
-      "test/seatraffic_online.test.js"
+      "test/systems/naval/seatraffic_online.test.js"
     ]
   },
   {
     "name": "AKP-D1-pack-before-my-boat",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    const into = myBoat() ?? nearMe();",
     "new": "    const into = myBoat();",
     "tests": [
-      "test/keepplunder.test.js"
+      "test/systems/naval/keepplunder.test.js"
     ]
   },
   {
     "name": "AKP-D1-leftovers-unsaid",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (lost) deps.say?.(",
     "new": "    if (false) deps.say?.(",
     "tests": [
-      "test/keepplunder.test.js"
+      "test/systems/naval/keepplunder.test.js"
     ]
   },
   {
     "name": "AKP-D3-switch-unstowed",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    setEnabled(v) { if (enabled && !v) stowPlunder(); enabled",
     "new": "    setEnabled(v) { enabled",
     "tests": [
-      "test/keepplunder.test.js"
+      "test/systems/naval/keepplunder.test.js"
     ]
   },
   {
     "name": "AKB-D2-dungeon-unasked",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "  const inDungeon = () => deps.isPlayerInsideDungeon?.() ?? true;",
     "new": "  const inDungeon = () => true;",
     "tests": [
-      "test/keepplunder.test.js"
+      "test/systems/naval/keepplunder.test.js"
     ]
   },
   {
@@ -125,7 +125,7 @@
     "old": "    if (mine.part === 'bed' || csaRuntime?.isSailing()) return { title };",
     "new": "    if (mine.part === 'bed') return { title };",
     "tests": [
-      "test/boatmenu.test.js"
+      "test/systems/comeSailAway/boatmenu.test.js"
     ]
   },
   {
@@ -134,7 +134,7 @@
     "old": "${modelId === CSA_TRIGGER_MODEL.drive && getInteractionMode() === 'steal' ? ':steal' : ''}`, distance: best.hit.distance,",
     "new": "`, distance: best.hit.distance,",
     "tests": [
-      "test/boatmenu.test.js"
+      "test/systems/comeSailAway/boatmenu.test.js"
     ]
   },
   {
@@ -143,7 +143,7 @@
     "old": "    if (box == null) return { title, actions: rows, actionsUnlit: true };",
     "new": "    if (box == null) return { title, actions: rows, actionsStart: 0 };",
     "tests": [
-      "test/boatmenu.test.js"
+      "test/systems/comeSailAway/boatmenu.test.js"
     ]
   },
   {
@@ -152,16 +152,16 @@
     "old": "(!worldPlaqueOn() || (modes?.mode ?? 'exterior') !== 'exterior') && !csaRuntime?.isSailing()",
     "new": "!worldPlaqueOn() && !csaRuntime?.isSailing()",
     "tests": [
-      "test/boatmenu.test.js"
+      "test/systems/comeSailAway/boatmenu.test.js"
     ]
   },
   {
     "name": "ABM-C6-aimed-unread",
-    "file": "src/systems/csaBoatMenu.js",
+    "file": "src/systems/comeSailAway/csaBoatMenu.js",
     "old": "  if (aimed && list.includes(aimed)) return aimed;",
     "new": "",
     "tests": [
-      "test/boatmenu.test.js"
+      "test/systems/comeSailAway/boatmenu.test.js"
     ]
   },
   {
@@ -170,7 +170,7 @@
     "old": "        const from = delta > 0 ? Math.max(MIN_DISTANCE, baseDistance - Math.max(0, obstacleDelta)) : baseDistance;",
     "new": "        const from = baseDistance;",
     "tests": [
-      "test/fbsea_zoom.test.js"
+      "test/player/fbsea_zoom.test.js"
     ]
   },
   {
@@ -179,16 +179,16 @@
     "old": "        const notch = Math.max(-1, Math.min(1, delta / WHEEL_STEP));",
     "new": "        const notch = delta / WHEEL_STEP;",
     "tests": [
-      "test/fbsea_zoom.test.js"
+      "test/player/fbsea_zoom.test.js"
     ]
   },
   {
     "name": "AHZ-E3-ratio-below-base",
-    "file": "src/player/eotbCamera.js",
+    "file": "src/player/eyeOfTheBeholder/eotbCamera.js",
     "old": "(clicks < 0 && -z >= baseDist - 1e-6)",
     "new": "clicks < 0",
     "tests": [
-      "test/fbsea_zoom.test.js"
+      "test/player/fbsea_zoom.test.js"
     ]
   }
 ]

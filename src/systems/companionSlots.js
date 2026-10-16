@@ -2,7 +2,7 @@
 // COMPANION-SLOTS (2026-10-02, Mac: "Companion slots should still be limited") - ONE LAW FOR EVERYONE AT THE PLAYER'S
 // SIDE. A leaf: each kind of companion registers how many of its own walk with the player now - the crew's hands
 // ashore (CREW-COMPANIONS, systems/naval/crewCompanions.js, never more than its own two) and the revenants sworn to the
-// player (REVENANT-COMPANION, systems/revenantCompanions.js) - and every door that would add one asks here first.
+// player (REVENANT-COMPANION, systems/revenant/revenantCompanions.js) - and every door that would add one asks here first.
 
 /** How many companions walk with the player at once, of every kind together. */
 export const COMPANION_SLOTS = 3;

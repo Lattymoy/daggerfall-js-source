@@ -28,7 +28,7 @@
 //
 // A NEW INSTALL starts over: a state.json from another seed (the installer brought a new one) is reset and every version
 // folder deleted - the seed is now at least as new as anything the channel brought, or the player chose an older install
-// by hand. Plain Node, no Electron: test/da13_gamechannel.test.js drives it over temp folders.
+// by hand. Plain Node, no Electron: test/tooling/da13_gamechannel.test.js drives it over temp folders.
 'use strict';
 
 const fs = require('node:fs');

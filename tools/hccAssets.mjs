@@ -15,14 +15,14 @@
 //
 // Default outDir is vendor/horse-cart-and-cargo. It writes the three
 // text files, the two assemblies and the 45 PNGs under Textures/, and
-// prints each one's size and sha256 - which test/hcc_assets.test.js
+// prints each one's size and sha256 - which test/tooling/hcc_assets.test.js
 // pins (the PNGs against the vendored assembly, since the bundle is
 // the player's and not the repository's). The IL listings beside the
 // assemblies are `tools/ilDump.py`'s (dnfile + dncil).
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import { readUnityBundle } from '../src/formats/unityBundle.js';
+import { readUnityBundle } from '../src/formats/unity/unityBundle.js';
 import { readManifestResources } from '../src/formats/dotnetResources.js';
 import { isMain } from './lib/isMain.mjs';
 

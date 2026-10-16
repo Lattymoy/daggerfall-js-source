@@ -59,7 +59,7 @@
  * @property {ReadonlyArray<number>} [glint]          TELL2: a wind-up's glint, [r, g, b, strength] - its outline and its body (systems/hitFlash.js setBatchGlint)
  * @property {ReadonlyArray<number> | null} [dissolve] DISSOLVE: [share gone 0..1, r, g, b] - a body burnt away or gathering through a portal (systems/dissolve.js)
  * @property {number[] | null} [crack]               VEIN-CRACKS: [share worked 0..1, seed 0..1] - a worked vein's seams (systems/veinCrack.js setBatchCrack)
- * @property {ReadonlyArray<number> | null} [tint]     ARENA5: a soft wash multiplied into the lit flat after both maps are sampled ([r, g, b], display colour; none - white) - the arena crowd's half in a banner's colours (scenes/arenaBouts.js buildCrowd)
+ * @property {ReadonlyArray<number> | null} [tint]     ARENA5: a soft wash multiplied into the lit flat after both maps are sampled ([r, g, b], display colour; none - white) - the arena crowd's half in a banner's colours (scenes/arena/arenaBouts.js buildCrowd)
  * @property {number} [dye]                          VEIN-HUE: how far `tint` is the flat's colour rather than a multiply (0..1: the lit flat's brightness in the wash's hue) - an ore vein's (scenes/mineHost.js ORE_DYE)
  * @property {Float32Array} [bounds]                  EL5: the sphere [cx, cy, cz, r] about the origin the shadow and air replays cull by
  * @property {number} [_quads]                        BLOOD1b: how many quads the buffer holds, so `moveBillboardBatch` cannot write past it

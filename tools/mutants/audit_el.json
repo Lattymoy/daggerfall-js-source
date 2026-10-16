@@ -5,7 +5,7 @@
     "old": "    const tex = this._air && this._studioDepth === 0 ? this._air.adaptTexture : this._adaptOne();",
     "new": "    const tex = this._air ? this._air.adaptTexture : this._adaptOne();",
     "tests": [
-      "test/audit_el.test.js"
+      "test/render/audit_el.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    const tex = this._air && this._studioDepth === 0 ? this._air.adaptTexture : this._adaptOne();",
     "new": "    const tex = this._air ? this._air.adaptTexture : this._adaptOne();",
     "tests": [
-      "test/audit_el.test.js"
+      "test/render/audit_el.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  _uploadAdapt(loc) {\n    if (!loc?.adapt) return;",
     "new": "  _uploadAdapt(loc) {\n    if (!loc?.adapt || !this._air) return;",
     "tests": [
-      "test/audit_el.test.js"
+      "test/render/audit_el.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  if (wuv.x >= 0.0 && wuv.x <= 1.0 && wuv.y >= 0.0 && wuv.y <= 1.0) {\n    c *= mix(1.0, texture(uAO, wuv).r, uAOMix);   // EL6: the crevice loses its light here, once, whole\n",
     "new": "  c *= mix(1.0, texture(uAO, wuv).r, uAOMix);\n  if (wuv.x >= 0.0 && wuv.x <= 1.0 && wuv.y >= 0.0 && wuv.y <= 1.0) {\n",
     "tests": [
-      "test/audit_el.test.js"
+      "test/render/audit_el.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "      this._spriteDepth--;   // AUDIT-EL F2\n",
     "new": "",
     "tests": [
-      "test/audit_el.test.js"
+      "test/render/audit_el.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "    const count = Math.min(this._pointLights.length / 4, CLASSIC_MAX_LIGHTS);\n    gl.uniform1i(L.pointCount, count);",
     "new": "    const count = this._pointLights.length / 4;\n    gl.uniform1i(L.pointCount, count);",
     "tests": [
-      "test/audit_el.test.js"
+      "test/render/audit_el.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "    if (count > 0) gl.uniform3fv(L.pointColors, this._pointColorData(count, true));",
     "new": "    if (count > 0) gl.uniform3fv(L.pointColors, this._pointColorData(count));",
     "tests": [
-      "test/audit_el.test.js"
+      "test/render/audit_el.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "  const keep = (base.length / 4) * 4;\n",
     "new": "  const keep = Math.min(16 - live.length, base.length / 4) * 4;\n",
     "tests": [
-      "test/audit_el.test.js"
+      "test/render/audit_el.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "    if (this._shadows && world) this._renderPasses(proj, view, lightDir);",
     "new": "    if (this._shadows) this._renderPasses(proj, view, lightDir);",
     "tests": [
-      "test/audit_el.test.js"
+      "test/render/audit_el.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "    if (this._air?.pending && !this._panelSaved) this._compositeAir();\n    this._deckOwed = null;   // VC6c: whatever was owed is drawn; this frame's deck is its host's to set\n    const retro = world",
     "new": "    this._deckOwed = null;   // VC6c: whatever was owed is drawn; this frame's deck is its host's to set\n    const retro = world",
     "tests": [
-      "test/audit_el.test.js"
+      "test/render/audit_el.test.js"
     ],
     "why": "PERF-READ1 re-aimed by content: the perf reset sits after the deck line now. RETRO1 re-aimed BY CONTENT: the retro mode's lines now sit beside this one; same law, same killer."
   },
@@ -96,7 +96,7 @@
     "old": "    this.pending = true;   // AUDIT-EL F5: a bound frame is a resolve owed, whether or not the passes ran for it\n",
     "new": "",
     "tests": [
-      "test/audit_el.test.js"
+      "test/render/audit_el.test.js"
     ]
   },
   {
@@ -105,7 +105,7 @@
     "old": "  return { ...fog, color: [c[0] * EL_DUNGEON_AMBIENT_SCALE, c[1] * EL_DUNGEON_AMBIENT_SCALE, c[2] * EL_DUNGEON_AMBIENT_SCALE] };",
     "new": "  return { ...fog, color: [c[0], c[1], c[2]] };",
     "tests": [
-      "test/audit_el.test.js"
+      "test/render/audit_el.test.js"
     ]
   },
   {
@@ -114,7 +114,7 @@
     "old": "    this._panelLane = this._lane;\n    if (this._lane) { this._lane = null; this._installWorldSet(this._classicSet); }\n",
     "new": "    this._panelLane = null;\n",
     "tests": [
-      "test/audit_el.test.js"
+      "test/render/audit_el.test.js"
     ]
   },
   {
@@ -123,7 +123,7 @@
     "old": "    if (this._panelLane) { this._lane = this._panelLane; this._installWorldSet(this._laneSet); }   // AUDIT-EL F7: the lane back\n",
     "new": "",
     "tests": [
-      "test/audit_el.test.js"
+      "test/render/audit_el.test.js"
     ]
   },
   {
@@ -132,7 +132,7 @@
     "old": "    this.measured = !!(sp && sp.count > 0);   // AUDIT-EL F10",
     "new": "    this.measured = true;   // AUDIT-EL F10",
     "tests": [
-      "test/audit_el.test.js"
+      "test/render/audit_el.test.js"
     ]
   },
   {
@@ -141,7 +141,7 @@
     "old": " || lights[i * 4 + 3] > SHADOW_CASTER_MAX_RANGE) continue;   // AUDIT-EL F11",
     "new": ") continue;   // AUDIT-EL F11",
     "tests": [
-      "test/audit_el.test.js"
+      "test/render/audit_el.test.js"
     ]
   },
   {
@@ -150,7 +150,7 @@
     "old": "      if (!(range > 0) || range > AIR_GLARE_MAX_RANGE) continue;   // AUDIT-EL F11",
     "new": "      if (!(range > 0)) continue;   // AUDIT-EL F11",
     "tests": [
-      "test/audit_el.test.js"
+      "test/render/audit_el.test.js"
     ]
   },
   {
@@ -159,7 +159,7 @@
     "old": "          gl.uniform3fv(P.emitBb.uRight, r.right); gl.uniform3fv(P.emitBb.uUp, r.up);",
     "new": "          gl.uniform3fv(P.emitBb.uRight, new Float32Array([1, 0, 0])); gl.uniform3fv(P.emitBb.uUp, r.up);",
     "tests": [
-      "test/audit_el.test.js"
+      "test/render/audit_el.test.js"
     ]
   },
   {
@@ -168,7 +168,7 @@
     "old": "        if (!perBatchRight) gl.uniform3fv(P.bb.right, recordBasis ? r.right : this._right);",
     "new": "        if (!perBatchRight) gl.uniform3fv(P.bb.right, this._right);",
     "tests": [
-      "test/audit_el.test.js"
+      "test/render/audit_el.test.js"
     ],
     "equivalent": true,
     "why": "EL6: no replay passes recordBasis=true any more - the camera depth replay is gone (the frame's own depth) and the emitters carry their basis in _replayEmission. RE-AIMED BY CONTENT at PERF-BASIS (2026-09-19), which hoisted this upload out of the batch loop: the line moved, the law did not, and a positional bump would have left it anchored on nothing."
@@ -179,7 +179,7 @@
     "old": "  if (uConceal.x == 2.0) lit *= ${SHADE_DARK};",
     "new": "  if (uConceal.x == 2.0) lit *= 0.0;",
     "tests": [
-      "test/audit_el.test.js"
+      "test/render/audit_el.test.js"
     ]
   },
   {
@@ -188,7 +188,7 @@
     "old": "export const SHADOW_SUN_BIAS = 0.00005;",
     "new": "export const SHADOW_SUN_BIAS = 0.0004;",
     "tests": [
-      "test/audit_el.test.js"
+      "test/render/audit_el.test.js"
     ]
   },
   {
@@ -197,7 +197,7 @@
     "old": "  float ref = cubeDepthOfM(m - ${SHADOW_POINT_BIAS}, far);",
     "new": "  float ref = cubeDepthOfM(m, far) - 0.002;",
     "tests": [
-      "test/audit_el.test.js"
+      "test/render/audit_el.test.js"
     ]
   },
   {
@@ -206,7 +206,7 @@
     "old": "export function cubeDepthOfM(m, far, near = SHADOW_POINT_NEAR) {\n  m = Math.max(m, near);",
     "new": "export function cubeDepthOfM(m, far, near = SHADOW_POINT_NEAR) {",
     "tests": [
-      "test/audit_el.test.js"
+      "test/render/audit_el.test.js"
     ]
   },
   {
@@ -215,7 +215,7 @@
     "old": "      acc += clamp(log2(max(dot(c, vec3(0.2126, 0.7152, 0.0722)) / prev, 1e-9)), ",
     "new": "      acc += clamp(log2(max(dot(c, vec3(0.2126, 0.7152, 0.0722)), 1e-9)), ",
     "tests": [
-      "test/audit_el.test.js"
+      "test/render/audit_el.test.js"
     ]
   },
   {
@@ -224,7 +224,7 @@
     "old": "  for (int y = 0; y < 4; y++) {\n    for (int x = 0; x < 4; x++) {\n      vec2 t = vUV",
     "new": "  for (int y = 0; y < 1; y++) {\n    for (int x = 0; x < 1; x++) {\n      vec2 t = vUV",
     "tests": [
-      "test/audit_el.test.js"
+      "test/render/audit_el.test.js"
     ]
   },
   {
@@ -233,7 +233,7 @@
     "old": "  vec2 ray = (uSun - vUV) / ${AIR_SHAFT_TAPS}.0;",
     "new": "  vec2 step = (uSun - vUV) / ${AIR_SHAFT_TAPS}.0;",
     "tests": [
-      "test/audit_el.test.js"
+      "test/render/audit_el.test.js"
     ]
   },
   {
@@ -242,7 +242,7 @@
     "old": "    if (!(w > 0 && h > 0)) { this.f = null; this.prevValid = false; return; }",
     "new": "    if (false) { this.f = null; this.prevValid = false; return; }",
     "tests": [
-      "test/audit_el.test.js"
+      "test/render/audit_el.test.js"
     ]
   },
   {
@@ -251,7 +251,7 @@
     "old": "    if (!(W > 0 && H > 0)) return null;   // AUDIT-EL F18\n",
     "new": "",
     "tests": [
-      "test/audit_el.test.js"
+      "test/render/audit_el.test.js"
     ]
   },
   {
@@ -260,7 +260,7 @@
     "old": "    this.markForeignPass();   // AUDIT-EL F19",
     "new": "    this._lastProgram = null; this._lastVao = null;   // AUDIT-EL F19",
     "tests": [
-      "test/audit_el.test.js"
+      "test/render/audit_el.test.js"
     ]
   },
   {
@@ -269,7 +269,7 @@
     "old": "  outColor = vec4(airDecode(texture(uEmissionTex, vUV).rgb * uEmissionColor), 1.0);   // AUDIT-EL F20",
     "new": "  outColor = vec4(texture(uEmissionTex, vUV).rgb * uEmissionColor, 1.0);   // AUDIT-EL F20",
     "tests": [
-      "test/audit_el.test.js"
+      "test/render/audit_el.test.js"
     ]
   },
   {
@@ -278,7 +278,7 @@
     "old": "export function frameTarget() { return _frameTarget; }",
     "new": "export function frameTarget() { return null; }",
     "tests": [
-      "test/audit_el.test.js"
+      "test/render/audit_el.test.js"
     ]
   },
   {
@@ -287,7 +287,7 @@
     "old": "    if (this._shadows && world) this._renderPasses(proj, view, lightDir);",
     "new": "    if (this._shadows && (world || this._panelSaved)) this._renderPasses(proj, view, lightDir);",
     "tests": [
-      "test/audit_el.test.js"
+      "test/render/audit_el.test.js"
     ]
   }
 ]

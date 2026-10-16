@@ -57,7 +57,7 @@ members. The world host (`scenes/world.js`) is its GameManager:
 - **the quests** - `QuestListsManager.GetQuest` and the machine's
   immediate `StartQuest`; the `WA_Ships` list registers at the scene boot
   (as a loaded mod's does) and the four quests ride the pack loader's
-  mod glob (`scenes/questData.js`), so `GetQuest` finds them by name, as
+  mod glob (`scenes/quest/questData.js`), so `GetQuest` finds them by name, as
   DFU's `AnyModContainsQuest` does;
 - **TransportMode = Ship** - `boardOrDisembark`, UpdateMode's ship arm.
 

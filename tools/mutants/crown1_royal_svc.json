@@ -5,8 +5,8 @@
   "old": "'royal-tourney': Object.freeze({ name: 'Royal Tourney', standing: 0, cost: Object.freeze({ crown: 5000 }), repeat: false, crown: true }),",
   "new": "'royal-tourney': Object.freeze({ name: 'Royal Tourney', standing: 0, cost: Object.freeze({ crown: 4000 }), repeat: false, crown: true }),",
   "tests": [
-   "test/crown1_royal_law.test.js",
-   "test/crown1_royal_service.test.js"
+   "test/net/crown1_royal_law.test.js",
+   "test/net/crown1_royal_service.test.js"
   ]
  },
  {
@@ -15,9 +15,9 @@
   "old": "cost: Object.freeze({ crown: 5000 }), repeat: false, crown: true }),",
   "new": "cost: Object.freeze({ crown: 5000 }), repeat: false }),",
   "tests": [
-   "test/crown1_royal_law.test.js",
-   "test/crown1_royal_service.test.js",
-   "test/crown1_client.test.js"
+   "test/net/crown1_royal_law.test.js",
+   "test/net/crown1_royal_service.test.js",
+   "test/ui/crown1_client.test.js"
   ]
  },
  {
@@ -26,7 +26,7 @@
   "old": "  'royal-tourney': 'A duel ladder all week",
   "new": "  'royal-tourneyX': 'A duel ladder all week",
   "tests": [
-   "test/crown1_royal_law.test.js"
+   "test/net/crown1_royal_law.test.js"
   ]
  },
  {
@@ -35,8 +35,8 @@
   "old": "    case 'champion': return kingdom ? `Champion of ${kingdom}${seasonTail(ts[1])}` : null;",
   "new": "    case 'champion': return kingdom ? `Champion of ${kingdom}` : null;",
   "tests": [
-   "test/crown1_royal_law.test.js",
-   "test/crown1_royal_service.test.js"
+   "test/net/crown1_royal_law.test.js",
+   "test/net/crown1_royal_service.test.js"
   ]
  },
  {
@@ -45,7 +45,7 @@
   "old": "    case 'royal-champion': return",
   "new": "    case 'royal-championX': return",
   "tests": [
-   "test/crown1_royal_law.test.js"
+   "test/net/crown1_royal_law.test.js"
   ]
  },
  {
@@ -54,7 +54,7 @@
   "old": "    case 'royal-none': return",
   "new": "    case 'royal-noneX': return",
   "tests": [
-   "test/crown1_royal_law.test.js"
+   "test/net/crown1_royal_law.test.js"
   ]
  },
  {
@@ -63,8 +63,8 @@
   "old": "export const ROYAL_PAIR_DAY = 3;",
   "new": "export const ROYAL_PAIR_DAY = 4;",
   "tests": [
-   "test/crown1_royal_law.test.js",
-   "test/crown1_royal_service.test.js"
+   "test/net/crown1_royal_law.test.js",
+   "test/net/crown1_royal_service.test.js"
   ]
  },
  {
@@ -73,8 +73,8 @@
   "old": "    if (by && by !== r.account) return r.field;",
   "new": "    if (by) return r.field;",
   "tests": [
-   "test/crown1_royal_law.test.js",
-   "test/crown1_royal_service.test.js"
+   "test/net/crown1_royal_law.test.js",
+   "test/net/crown1_royal_service.test.js"
   ]
  },
  {
@@ -83,7 +83,7 @@
   "old": "x.losses - y.losses || x.last - y.last",
   "new": "x.last - y.last",
   "tests": [
-   "test/crown1_royal_law.test.js"
+   "test/net/crown1_royal_law.test.js"
   ]
  },
  {
@@ -92,7 +92,7 @@
   "old": "x.losses - y.losses || x.last - y.last",
   "new": "x.losses - y.losses || y.last - x.last",
   "tests": [
-   "test/crown1_royal_law.test.js"
+   "test/net/crown1_royal_law.test.js"
   ]
  },
  {
@@ -101,7 +101,7 @@
   "old": "w.wins++; w.last = Math.max(w.last, Number(b.at) || 0);",
   "new": "w.wins++; w.last = Number(b.at) || 0;",
   "tests": [
-   "test/crown1_royal_law.test.js"
+   "test/net/crown1_royal_law.test.js"
   ]
  },
  {
@@ -110,8 +110,8 @@
   "old": "    row(b.loser).losses++;\n",
   "new": "    row(b.loser);\n",
   "tests": [
-   "test/crown1_royal_law.test.js",
-   "test/crown1_royal_service.test.js"
+   "test/net/crown1_royal_law.test.js",
+   "test/net/crown1_royal_service.test.js"
   ]
  },
  {
@@ -120,7 +120,7 @@
   "old": "  if (!seat || seat.tier !== 'crown') return { error: 'royal-none' };",
   "new": "  if (!seat) return { error: 'royal-none' };",
   "tests": [
-   "test/crown1_royal_service.test.js"
+   "test/net/crown1_royal_service.test.js"
   ]
  },
  {
@@ -129,7 +129,7 @@
   "old": "  if (!(await royalRuling(db, week, key))) return { error: 'royal-none' };\n  if (await overRate",
   "new": "  if (await overRate",
   "tests": [
-   "test/crown1_royal_service.test.js"
+   "test/net/crown1_royal_service.test.js"
   ]
  },
  {
@@ -138,7 +138,7 @@
   "old": "  const side = watch === true ? 'watch' : 'duel';",
   "new": "  const side = 'duel';",
   "tests": [
-   "test/crown1_royal_service.test.js"
+   "test/net/crown1_royal_service.test.js"
   ]
  },
  {
@@ -147,7 +147,7 @@
   "old": "      if (!siegeFieldValid(field, 'crown', 'royal')) return { error: 'field-bad' };",
   "new": "",
   "tests": [
-   "test/crown1_royal_service.test.js"
+   "test/net/crown1_royal_service.test.js"
   ]
  },
  {
@@ -156,7 +156,7 @@
   "old": "    if (side === 'duel') {\n      if (!siegeFieldValid",
   "new": "    if (side === 'duel' || true) {\n      if (!siegeFieldValid",
   "tests": [
-   "test/crown1_royal_service.test.js"
+   "test/net/crown1_royal_service.test.js"
   ]
  },
  {
@@ -165,7 +165,7 @@
   "old": "    await db.prepare('INSERT OR IGNORE INTO town_seat_royal (week, key, field, at) VALUES (?, ?, ?, ?)').bind(week, key, f, nowS).run();\n    ring = (await db.prepare('SELECT field FROM town_seat_royal WHERE week = ? AND key = ?').bind(week, key).first())?.field ?? f;",
   "new": "    ring = f;",
   "tests": [
-   "test/crown1_royal_service.test.js"
+   "test/net/crown1_royal_service.test.js"
   ]
  },
  {
@@ -174,7 +174,7 @@
   "old": "st: 'crown', sn: 'royal', sb, se,",
   "new": "st: 'crown', sn: 'siege', sb, se,",
   "tests": [
-   "test/crown1_royal_service.test.js"
+   "test/net/crown1_royal_service.test.js"
   ]
  },
  {
@@ -183,7 +183,7 @@
   "old": "const windowOf = (week) => { const sb = Math.floor(seatWeekStartMs(week) / 1000); return { sb, se: sb + SEAT_WEEK_MS / 1000 }; };",
   "new": "const windowOf = (week) => { const sb = Math.floor(seatWeekStartMs(week) / 1000); return { sb, se: sb + SEAT_WEEK_MS / 2000 }; };",
   "tests": [
-   "test/crown1_royal_service.test.js"
+   "test/net/crown1_royal_service.test.js"
   ]
  },
  {
@@ -192,7 +192,7 @@
   "old": "  if (c.s !== player.id) return { error: 'not-yours' };",
   "new": "",
   "tests": [
-   "test/crown1_royal_service.test.js"
+   "test/net/crown1_royal_service.test.js"
   ]
  },
  {
@@ -201,7 +201,7 @@
   "old": "  if (!(await royalRuling(db, c.sw, c.sk))) return { error: 'royal-none' };\n  if (await db.prepare('SELECT 1 FROM town_seat_weeks",
   "new": "  if (await db.prepare('SELECT 1 FROM town_seat_weeks",
   "tests": [
-   "test/crown1_royal_service.test.js"
+   "test/net/crown1_royal_service.test.js"
   ]
  },
  {
@@ -210,7 +210,7 @@
   "old": "  if (await db.prepare('SELECT 1 FROM town_seat_weeks WHERE week = ?').bind(c.sw).first()) return { error: 'royal-over' };",
   "new": "",
   "tests": [
-   "test/crown1_royal_service.test.js"
+   "test/net/crown1_royal_service.test.js"
   ]
  },
  {
@@ -219,7 +219,7 @@
   "old": "    WHERE NOT EXISTS (SELECT 1 FROM town_seat_bouts WHERE week = ?1 AND key = ?2 AND n = ?3)`)",
   "new": "    WHERE 1`)",
   "tests": [
-   "test/crown1_royal_service.test.js"
+   "test/net/crown1_royal_service.test.js"
   ]
  },
  {
@@ -228,7 +228,7 @@
   "old": "      AND ((winner = ?4 AND loser = ?5) OR (winner = ?5 AND loser = ?4))) < ?7, ?8",
   "new": "      AND winner = ?4 AND loser = ?5) < ?7, ?8",
   "tests": [
-   "test/crown1_royal_service.test.js"
+   "test/net/crown1_royal_service.test.js"
   ]
  },
  {
@@ -237,7 +237,7 @@
   "old": "  const day = utcDay(c.i);",
   "new": "  const day = utcDay(nowS);",
   "tests": [
-   "test/crown1_royal_service.test.js"
+   "test/net/crown1_royal_service.test.js"
   ]
  },
  {
@@ -246,7 +246,7 @@
   "old": "AND winner = ? AND counted = 1').bind(c.sw, c.sk, player.id)",
   "new": "AND winner = ?').bind(c.sw, c.sk, player.id)",
   "tests": [
-   "test/crown1_royal_service.test.js"
+   "test/net/crown1_royal_service.test.js"
   ]
  },
  {
@@ -255,7 +255,7 @@
   "old": "repeat: !ins?.meta?.changes, wins };",
   "new": "repeat: false, wins };",
   "tests": [
-   "test/crown1_royal_service.test.js"
+   "test/net/crown1_royal_service.test.js"
   ]
  },
  {
@@ -264,7 +264,7 @@
   "old": "  const rows = royalStandings(await countedBouts(db, week, key)).slice(0, ROYAL_LADDER_ROWS);",
   "new": "  const rows = royalStandings(await countedBouts(db, week, key)).slice(0, 2);",
   "tests": [
-   "test/crown1_royal_service.test.js"
+   "test/net/crown1_royal_service.test.js"
   ]
  },
  {
@@ -273,7 +273,7 @@
   "old": "  const { results = [] } = await db.prepare('SELECT winner, loser, at FROM town_seat_bouts WHERE week = ? AND key = ? AND counted = 1')",
   "new": "  const { results = [] } = await db.prepare('SELECT winner, loser, at FROM town_seat_bouts WHERE week = ? AND key = ? AND 1')",
   "tests": [
-   "test/crown1_royal_service.test.js"
+   "test/net/crown1_royal_service.test.js"
   ]
  },
  {
@@ -282,7 +282,7 @@
   "old": "  return { prize: rule.prize, startsAt: sb,",
   "new": "  return { prize: 0, startsAt: sb,",
   "tests": [
-   "test/crown1_royal_service.test.js"
+   "test/net/crown1_royal_service.test.js"
   ]
  },
  {
@@ -291,7 +291,7 @@
   "old": "'royal-prize', ?2, ?4, ?5, 'seats', 'The Royal Tourney', ?1 || ':prize'`)\n          .bind(escrow, prize, top.account, day, nowS));",
   "new": "'royal-prize', ?2, ?4, ?5, 'seats', 'The Royal Tourney', ?1 || ':prize'`)\n          .bind(escrow, prize, top.account, day, nowS) && db.prepare('SELECT 1'));",
   "tests": [
-   "test/crown1_royal_service.test.js"
+   "test/net/crown1_royal_service.test.js"
   ]
  },
  {
@@ -300,7 +300,7 @@
   "old": "        db.prepare('INSERT OR IGNORE INTO town_seat_titles (account, title, key, week, at) VALUES (?, \\'champion\\', ?, ?, ?)').bind(top.account, key, week, nowS),\n",
   "new": "",
   "tests": [
-   "test/crown1_royal_service.test.js"
+   "test/net/crown1_royal_service.test.js"
   ]
  },
  {
@@ -309,7 +309,7 @@
   "old": "        history(key, 'royal-champion', { name: handle, kingdom, wins: top.wins, prize }),",
   "new": "        history(key, 'royal-champion', { name: handle, kingdom, wins: top.wins }),",
   "tests": [
-   "test/crown1_royal_service.test.js"
+   "test/net/crown1_royal_service.test.js"
   ]
  },
  {
@@ -318,7 +318,7 @@
   "old": "'royal-return', ?3, ?4, ?5, 'seats', 'The Royal Tourney', ?1 || ':return'",
   "new": "'royal-return', 0, ?4, ?5, 'seats', 'The Royal Tourney', ?1 || ':return'",
   "tests": [
-   "test/crown1_royal_service.test.js"
+   "test/net/crown1_royal_service.test.js"
   ]
  },
  {
@@ -327,7 +327,7 @@
   "old": "      out.push(history(key, 'royal-none', { kingdom }));",
   "new": "",
   "tests": [
-   "test/crown1_royal_service.test.js"
+   "test/net/crown1_royal_service.test.js"
   ]
  },
  {
@@ -336,7 +336,7 @@
   "old": "    out.push(db.prepare(\"UPDATE town_seat_edicts SET state = 'returned' WHERE key = ? AND week = ? AND state = 'law'\").bind(key, week));",
   "new": "",
   "tests": [
-   "test/crown1_royal_service.test.js"
+   "test/net/crown1_royal_service.test.js"
   ]
  },
  {
@@ -345,7 +345,7 @@
   "old": "    const kingdom = CROWN_SEAT_REGIONS[registry.get(key)?.region] ?? null;",
   "new": "    const kingdom = null;",
   "tests": [
-   "test/crown1_royal_service.test.js"
+   "test/net/crown1_royal_service.test.js"
   ]
  },
  {
@@ -354,7 +354,7 @@
   "old": "  return r ? { ts: [Number(r.key), seasonOf(Number(r.week), zero)?.n ?? 0] } : null;",
   "new": "  return r ? { ts: [0, seasonOf(Number(r.week), zero)?.n ?? 0] } : null;",
   "tests": [
-   "test/crown1_royal_service.test.js"
+   "test/net/crown1_royal_service.test.js"
   ]
  },
  {
@@ -363,7 +363,7 @@
   "old": "  stmts.push(...(await royalTurning(db, week, nowS, history, registry)));\n",
   "new": "",
   "tests": [
-   "test/crown1_royal_service.test.js"
+   "test/net/crown1_royal_service.test.js"
   ]
  },
  {
@@ -372,7 +372,7 @@
   "old": "const held = e.edict === 'bounty' ? 'bounty' : e.edict === 'royal-tourney' ? 'royal' : null;",
   "new": "const held = e.edict === 'bounty' ? 'bounty' : null;",
   "tests": [
-   "test/crown1_royal_service.test.js"
+   "test/net/crown1_royal_service.test.js"
   ]
  },
  {
@@ -381,7 +381,7 @@
   "old": "  for (const k of kept) out.add(k.title);\n",
   "new": "",
   "tests": [
-   "test/crown1_royal_service.test.js"
+   "test/net/crown1_royal_service.test.js"
   ]
  },
  {
@@ -390,7 +390,7 @@
   "old": "        const seatT = KEPT_TITLES.includes(wornT) ? (kept ? { t: wornT, ts: kept.ts } : {})",
   "new": "        const seatT = KEPT_TITLES.includes(wornT) ? (kept ? { t: wornT } : {})",
   "tests": [
-   "test/crown1_royal_service.test.js"
+   "test/net/crown1_royal_service.test.js"
   ]
  },
  {
@@ -399,7 +399,7 @@
   "old": "          '/v1/seats/royal/pass': async () => royalPass(",
   "new": "          '/v1/seats/royal/passX': async () => royalPass(",
   "tests": [
-   "test/crown1_royal_service.test.js"
+   "test/net/crown1_royal_service.test.js"
   ]
  },
  {
@@ -408,7 +408,7 @@
   "old": "          '/v1/seats/royal/claim': async () => claimRoyal(",
   "new": "          '/v1/seats/royal/claimX': async () => claimRoyal(",
   "tests": [
-   "test/crown1_royal_service.test.js"
+   "test/net/crown1_royal_service.test.js"
   ]
  },
  {
@@ -417,7 +417,7 @@
   "old": "  'royal-none': 404, 'royal-over': 409, 'ring-unsettled': 409,",
   "new": "  'royal-over': 409, 'ring-unsettled': 409,",
   "tests": [
-   "test/crown1_royal_service.test.js"
+   "test/net/crown1_royal_service.test.js"
   ]
  },
  {
@@ -426,7 +426,7 @@
   "old": "    royal: seat.tier === 'crown' ? await royalView(db, key, nowS) : null,",
   "new": "    royal: null,",
   "tests": [
-   "test/crown1_royal_service.test.js"
+   "test/net/crown1_royal_service.test.js"
   ]
  },
  {
@@ -435,7 +435,7 @@
   "old": "  '/v1/seats/royal/pass', '/v1/seats/royal/claim',",
   "new": "  '/v1/seats/royal/claim',",
   "tests": [
-   "test/crown1_royal_service.test.js"
+   "test/net/crown1_royal_service.test.js"
   ]
  }
 ]

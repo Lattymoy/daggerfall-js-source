@@ -5,7 +5,7 @@
     "old": "    const start = ++_turnN === 1 ? new Promise((resolve) => resolve(go())) : /** @type {Promise<void>} */ (_turn).then(go);   // begun at once, a throw a rejection",
     "new": "    const start = ++_turnN === 1 ? new Promise((resolve) => resolve(go())) : new Promise((resolve) => resolve(go()));   // begun at once, a throw a rejection",
     "tests": [
-      "test/watchfix_watch.test.js"
+      "test/systems/livingWorld/watchfix_watch.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    const go = () => (gen === epoch ? run(gen) : undefined);",
     "new": "    const go = () => run(gen);",
     "tests": [
-      "test/watchfix_watch.test.js"
+      "test/systems/livingWorld/watchfix_watch.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    if (claimed.has(who) || p.live?.() === false) return null;",
     "new": "    if (p.live?.() === false) return null;",
     "tests": [
-      "test/watchfix_watch.test.js"
+      "test/systems/livingWorld/watchfix_watch.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    if (claimed.has(who) || p.live?.() === false) return null;",
     "new": "    if (claimed.has(who)) return null;",
     "tests": [
-      "test/watchfix_watch.test.js"
+      "test/systems/livingWorld/watchfix_watch.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "          if (gen !== epoch) return;\n        }\n      }\n      return;\n    }",
     "new": "        }\n      }\n      return;\n    }",
     "tests": [
-      "test/watchfix_watch.test.js"
+      "test/systems/livingWorld/watchfix_watch.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "      if (p.person?.living) g.livingFrom = p.person.living;",
     "new": "      void 0;",
     "tests": [
-      "test/watchfix_watch.test.js"
+      "test/systems/livingWorld/watchfix_watch.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "      g.killedBy = peer ? 'peer' : fromPlayer ? 'player' : 'other';",
     "new": "      g.killedBy = 'player';",
     "tests": [
-      "test/watchfix_watch.test.js"
+      "test/systems/livingWorld/watchfix_watch.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "      g.killedBy = peer ? 'peer' : fromPlayer ? 'player' : 'other';",
     "new": "      g.killedBy = fromPlayer || peer ? 'player' : 'other';",
     "tests": [
-      "test/watchfix_watch.test.js"
+      "test/systems/livingWorld/watchfix_watch.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "        ...(typeof g.livingFrom?.id === 'string' ? { living: g.livingFrom.id } : {}),",
     "new": "        ...({}),",
     "tests": [
-      "test/watchfix_watch.test.js"
+      "test/systems/livingWorld/watchfix_watch.test.js"
     ]
   },
   {
@@ -86,61 +86,61 @@
     "old": "        if (typeof sg.living === 'string') g.livingFrom = { id: sg.living, res: null, town: null };",
     "new": "        void sg.living;",
     "tests": [
-      "test/watchfix_watch.test.js"
+      "test/systems/livingWorld/watchfix_watch.test.js"
     ]
   },
   {
     "name": "WATCH-FIX-dead-is-a-kill",
-    "file": "src/scenes/livingWatch.js",
+    "file": "src/scenes/livingWorld/livingWatch.js",
     "old": "    if (g.dead && g.corpse && w.res.guard) {",
     "new": "    if (g.dead && w.res.guard) {",
     "tests": [
-      "test/watchfix_watch.test.js"
+      "test/systems/livingWorld/watchfix_watch.test.js"
     ]
   },
   {
     "name": "WATCH-FIX-displaced-slain",
-    "file": "src/scenes/livingWatch.js",
+    "file": "src/scenes/livingWorld/livingWatch.js",
     "old": "    if (g.dead && g.corpse && w.res.guard) {",
     "new": "    if (g.dead && g.corpse) {",
     "tests": [
-      "test/watchfix_watch.test.js"
+      "test/systems/livingWorld/watchfix_watch.test.js"
     ]
   },
   {
     "name": "WATCH-FIX-killed-as-slain",
-    "file": "src/scenes/livingWatch.js",
+    "file": "src/scenes/livingWorld/livingWatch.js",
     "old": "      else w.town.killed(person);",
     "new": "      else w.town.slain(person);",
     "tests": [
-      "test/watchfix_watch.test.js"
+      "test/systems/livingWorld/watchfix_watch.test.js"
     ]
   },
   {
     "name": "WATCH-FIX-never-back",
-    "file": "src/scenes/livingWatch.js",
+    "file": "src/scenes/livingWorld/livingWatch.js",
     "old": "    } else w.town.back(w.res);",
     "new": "    }",
     "tests": [
-      "test/watchfix_watch.test.js"
+      "test/systems/livingWorld/watchfix_watch.test.js"
     ]
   },
   {
     "name": "WATCH-FIX-never-lent",
-    "file": "src/scenes/livingWatch.js",
+    "file": "src/scenes/livingWorld/livingWatch.js",
     "old": "    if (!w.lent && w.res && w.town) { w.town.lend(w.res); w.lent = true; }",
     "new": "    if (!w.lent && w.res && w.town) { w.lent = true; }",
     "tests": [
-      "test/watchfix_watch.test.js"
+      "test/systems/livingWorld/watchfix_watch.test.js"
     ]
   },
   {
     "name": "WATCH-FIX-resolve-unread",
-    "file": "src/scenes/livingWatch.js",
+    "file": "src/scenes/livingWorld/livingWatch.js",
     "old": "    if (!w.res || !w.town) { const got = resolve(w.from.id); if (got) { w.res = got.res; w.town = got.town; } }",
     "new": "    void resolve;",
     "tests": [
-      "test/watchfix_watch.test.js"
+      "test/systems/livingWorld/watchfix_watch.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "    this._lent.add(res.id);\n    this._taken.delete(res.id);",
     "new": "    this._lent.add(res.id);",
     "tests": [
-      "test/watchfix_watch.test.js"
+      "test/systems/livingWorld/watchfix_watch.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "      const away = this._away(res);",
     "new": "      const away = false && this._away(res);",
     "tests": [
-      "test/watchfix_watch.test.js"
+      "test/systems/livingWorld/watchfix_watch.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "      if (this._taken.get(res.id) === day || this._away(res) || this._gone(res) || this.o.deadAt?.(res, t)) continue;   // WATCH-FIX: nor one with the watch",
     "new": "      if (this._taken.get(res.id) === day || this._gone(res) || this.o.deadAt?.(res, t)) continue;   // WATCH-FIX: nor one with the watch",
     "tests": [
-      "test/watchfix_watch.test.js"
+      "test/systems/livingWorld/watchfix_watch.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "    this.o.killed?.(res, this._now);",
     "new": "    void this.o;",
     "tests": [
-      "test/watchfix_watch.test.js"
+      "test/systems/livingWorld/watchfix_watch.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "  _away(res) { return this._lent.has(res.id) || this._peerLent.has(res.id); }",
     "new": "  _away(res) { return this._lent.has(res.id); }",
     "tests": [
-      "test/watchfix_watch.test.js"
+      "test/systems/livingWorld/watchfix_watch.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "    if (ids.size) for (const r of this.pool) if (r.res && ids.has(r.res.id)) this._free(r);",
     "new": "    void ids;",
     "tests": [
-      "test/watchfix_watch.test.js"
+      "test/systems/livingWorld/watchfix_watch.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "    return this.peopleOf(day).find((r) => r.id === id) ?? [...this._crewOf.values()].find((c) => c.res.id === id)?.res ?? null;",
     "new": "    return null;",
     "tests": [
-      "test/watchfix_watch.test.js"
+      "test/systems/livingWorld/watchfix_watch.test.js"
     ]
   },
   {
@@ -212,7 +212,7 @@
     "old": "export const HAND_KINDS = Object.freeze(['slain', 'died', 'killed']);",
     "new": "export const HAND_KINDS = Object.freeze(['slain', 'died']);",
     "tests": [
-      "test/watchfix_watch.test.js"
+      "test/systems/livingWorld/watchfix_watch.test.js"
     ]
   },
   {
@@ -221,7 +221,7 @@
     "old": "  const at = turns?.slain?.get(key) ?? turns?.died?.get(key) ?? turns?.killed?.get(key) ?? null;",
     "new": "  const at = turns?.slain?.get(key) ?? turns?.died?.get(key) ?? null;",
     "tests": [
-      "test/watchfix_watch.test.js"
+      "test/systems/livingWorld/watchfix_watch.test.js"
     ]
   },
   {
@@ -230,7 +230,7 @@
     "old": "    for (const kind of /** @type {const} */ (['slain', 'died', 'killed'])) {",
     "new": "    for (const kind of /** @type {const} */ (['slain', 'died'])) {",
     "tests": [
-      "test/watchfix_watch.test.js"
+      "test/systems/livingWorld/watchfix_watch.test.js"
     ]
   },
   {
@@ -239,7 +239,7 @@
     "old": "seen: !!h.seen, watch: !!res?.guard });",
     "new": "seen: !!h.seen, watch: false });",
     "tests": [
-      "test/watchfix_watch.test.js"
+      "test/systems/livingWorld/watchfix_watch.test.js"
     ]
   },
   {
@@ -248,7 +248,7 @@
     "old": "  if (r.lr !== undefined) { if (typeof r.lr !== 'string' || !LIVING_ID_RE.test(r.lr)) return null; out.lr = r.lr; }",
     "new": "  void r.lr;",
     "tests": [
-      "test/watchfix_watch.test.js"
+      "test/systems/livingWorld/watchfix_watch.test.js"
     ]
   },
   {
@@ -257,7 +257,7 @@
     "old": "  if (r.lr !== undefined) { if (typeof r.lr !== 'string' || !LIVING_ID_RE.test(r.lr)) return null; out.lr = r.lr; }",
     "new": "  if (r.lr !== undefined) out.lr = r.lr;",
     "tests": [
-      "test/watchfix_watch.test.js"
+      "test/systems/livingWorld/watchfix_watch.test.js"
     ]
   },
   {
@@ -266,7 +266,7 @@
     "old": "      if (onWatch && typeof f.livingFrom?.id === 'string' && LIVING_ID_RE.test(f.livingFrom.id)) r.lr = f.livingFrom.id;",
     "new": "      void onWatch;",
     "tests": [
-      "test/watchfix_watch.test.js"
+      "test/systems/livingWorld/watchfix_watch.test.js"
     ]
   },
   {
@@ -275,7 +275,7 @@
     "old": "    f.livingId = typeof r.lr === 'string' ? r.lr : null;",
     "new": "    f.livingId = null;",
     "tests": [
-      "test/watchfix_watch.test.js"
+      "test/systems/livingWorld/watchfix_watch.test.js"
     ]
   },
   {
@@ -284,7 +284,7 @@
     "old": "    for (const f of exteriorFoes.foes) if (f.puppet && typeof f.livingId === 'string') _livingPeerWatch.add(f.livingId);",
     "new": "    void exteriorFoes;",
     "tests": [
-      "test/watchfix_watch.test.js"
+      "test/systems/livingWorld/watchfix_watch.test.js"
     ]
   },
   {
@@ -293,7 +293,7 @@
     "old": "    live: ((living) => () => _streetHolds(person, living))(person.living),",
     "new": "    live: () => true,",
     "tests": [
-      "test/watchfix_watch.test.js"
+      "test/systems/livingWorld/watchfix_watch.test.js"
     ]
   },
   {
@@ -302,16 +302,16 @@
     "old": "      if (it) return !!it.active && (person.living ?? null) === (living ?? null);",
     "new": "      if (it) return !!it.active;",
     "tests": [
-      "test/watchfix_watch.test.js"
+      "test/systems/livingWorld/watchfix_watch.test.js"
     ]
   },
   {
     "name": "WATCH-FIX-host-killed-unwired",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "slay: livingSlay, killed: livingKilled,",
     "new": "slay: livingSlay,",
     "tests": [
-      "test/watchfix_watch.test.js"
+      "test/systems/livingWorld/watchfix_watch.test.js"
     ]
   },
   {
@@ -320,7 +320,7 @@
     "old": "    live: () => !!population?.pool.find((i) => i.person === person)?.active,",
     "new": "    live: () => true,",
     "tests": [
-      "test/watchfix_watch.test.js"
+      "test/systems/livingWorld/watchfix_watch.test.js"
     ]
   },
   {
@@ -329,8 +329,8 @@
     "old": " + spawning.filter((p) => p.defender).length + _summonsWaiting;",
     "new": " + spawning.filter((p) => p.defender).length;",
     "tests": [
-      "test/watchfix_watch.test.js",
-      "test/auditdisc19.test.js"
+      "test/systems/livingWorld/watchfix_watch.test.js",
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
@@ -339,7 +339,7 @@
     "old": "    this._lent.delete(res.id);\n    this._take(res);\n    return res.id;\n  }\n\n  /** LW7: one of the watch STRUCK",
     "new": "    this._lent.delete(res.id);\n    return res.id;\n  }\n\n  /** LW7: one of the watch STRUCK",
     "tests": [
-      "test/watchfix_watch.test.js"
+      "test/systems/livingWorld/watchfix_watch.test.js"
     ],
     "note": "WATCH-DAY: killed()'s take, which LW7-slain-left-standing's text had drifted onto - the killed gone for the day."
   }

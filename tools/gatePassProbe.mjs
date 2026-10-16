@@ -1,6 +1,6 @@
 // WB2 - THE GATE'S FIRE AND BEACON, COMPILED, LINKED AND DRAWN IN A REAL BROWSER.
 //
-// node holds the pass's law (test/wb2_gate.test.js drives it over a fake GL); what node cannot answer is whether the
+// node holds the pass's law (test/world/gate/wb2_gate.test.js drives it over a fake GL); what node cannot answer is whether the
 // GLSL COMPILES and LINKS in a real WebGL2 context, whether the arch's profile survives as a uniform the optimiser did
 // not drop, and whether the fire actually lands on the pixels between the pillars - bright and hot when open, an ember
 // when sealed - and the beacon on the sky over the crown. So: the repo's own modules served as they are (no bundler -
@@ -19,9 +19,9 @@ const shotsAt = process.argv.includes('--shots') ? process.argv[process.argv.ind
 const out = []; const check = (n, ok, d = '') => { out.push(ok); console.log(`${ok ? 'ok  ' : 'FAIL'} ${n}${d ? ` - ${d}` : ''}`); };
 
 const PAGE = `<!doctype html><html><body style="margin:0;background:#000"><canvas id=c width=640 height=480></canvas><script type=module>
-import { buildGateModel, gateArchProfile } from '/src/world/gateModel.js';
-import { gateArt } from '/src/world/gateArt.js';
-import { GatePassRenderer } from '/src/render/gatePass.js';
+import { buildGateModel, gateArchProfile } from '/src/world/gate/gateModel.js';
+import { gateArt } from '/src/world/gate/gateArt.js';
+import { GatePassRenderer } from '/src/render/gate/gatePass.js';
 const m = buildGateModel();
 const gl = document.getElementById('c').getContext('webgl2', { alpha: false, preserveDrawingBuffer: true });
 const vs = \`#version 300 es

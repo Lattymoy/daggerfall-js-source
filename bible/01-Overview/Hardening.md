@@ -59,7 +59,7 @@ the future, not the past.
 
 ### HARD1 - the lifetime gate, generative. SHIPPED 2026-09-14.
 
-`test/hard1_ownership.test.js`. Reads each session-lifetime context,
+`test/scenes/hard1_ownership.test.js`. Reads each session-lifetime context,
 finds every thing it builds through a factory, and requires each one to
 be ended on EVERY one of that context's teardown paths - or declared,
 with a sentence, as one of two things: it holds nothing, or it hands what
@@ -131,7 +131,7 @@ rivals AUDIT 65 MC-2 split. It was written out by hand in both exterior
 hosts, character for character, which is how F7 shipped a torch that had
 to beat the pile but not the door. The hosts keep their ladders - the
 ARMS are theirs, because what each does with a win differs - and ask who
-won. `test/hard2_activationrace.test.js` pins the law directly and gates
+won. `test/scenes/hard2_activationrace.test.js` pins the law directly and gates
 against a third copy appearing.
 
 Both rules held, and both were checked rather than asserted:
@@ -201,7 +201,7 @@ Both HARD2 rules held, and both were checked rather than asserted:
   instead of a re-typed copy - the same "a pin getting simpler at an
   extraction is the sign the extraction was real" that HARD2a recorded.
 
-`test/hard2c_weaponpose.test.js` pins the law directly and gates against
+`test/combat/hard2c_weaponpose.test.js` pins the law directly and gates against
 a fourth inline copy appearing.
 
 **A correction to this page.** The line that used to sit here called the
@@ -292,7 +292,7 @@ for inference - and never reported.
 The seam sets are DERIVED, which is what makes this a gate rather than a
 list: every file in `render/`, every file in `net/`, and every `systems/`
 module that knows `SAVE_VERSION`, because a module that knows the
-envelope's version reads or writes the envelope. `test/hard3_types.test.js`
+envelope's version reads or writes the envelope. `test/systems/save/hard3_types.test.js`
 re-derives all three on every run, floor-checks each one so a refactor
 cannot quietly empty it, and bans `@ts-ignore`, `@ts-expect-error` and
 `@ts-nocheck` across `src/` with no allow-list. That last rule is the
@@ -335,7 +335,7 @@ pointed at documentation instead of at teardown.
 
 ### HARD4 - the vendored-work registry. SHIPPED 2026-09-15.
 
-`01-Overview/Mod-Registry.md`, and `test/hard4_registry.test.js` behind
+`01-Overview/Mod-Registry.md`, and `test/systems/hard4_registry.test.js` behind
 it. One row per directory under `vendor/`: what the port takes, the
 upstream author and version, the bundle or commit it was read from, the
 licence or permission, the port slice, the parity date and the bible
@@ -437,7 +437,7 @@ in silence (it has to be written into Home.md to count) and a stub naming
 a page that is not there throws rather than quietly shrinking what the
 gates read. The four index gates and the three negative pins read it now.
 
-`test/hard5_index.test.js` holds the rest: a ceiling on Home.md's size so
+`test/tooling/hard5_index.test.js` holds the rest: a ceiling on Home.md's size so
 it cannot grow back into an everything-page, a check that no section
 exists twice across the index (a relocation that leaves the original
 behind is worse than none - two texts, one edited and one read), the
@@ -524,7 +524,7 @@ player.** HARD1-4 and two audits found and paid a dozen defects, and the
 one that reached a human was a rule written in four comments and held by
 none of them.
 
-`test/crash1_overlay_contract.test.js` derives it: the door list comes
+`test/ui/crash1_overlay_contract.test.js` derives it: the door list comes
 off `ui/`, every DOM-overlay window must answer `input`/`draw`/`close`/
 `dispose`, the dead `onKey`/`onPointer` contract is banned outright, and
 the ban re-checks that no host has started reading it. Mutation-verified
@@ -547,7 +547,7 @@ prevent.
 **F1 - it read five doors of eight, in silence.** Its block finder
 matched `return {` alone. `ui/pauseDoor.js` and `ui/inventoryDoor.js`
 name the object (`const overlay = { ... }`) before handing it over, and
-`ui/travelMapDoor.js` returns classes - so all three were skipped and the
+`ui/travel/travelMapDoor.js` returns classes - so all three were skipped and the
 suite went green over a claim that covered five of eight doors. One of
 the two skipped doors is the pause menu, which is half of what the player
 reported. **A gate that skips in silence is worse than no gate**: it
@@ -597,12 +597,12 @@ populations - and both gates ask it rather than each other. A second copy
 of a rule is a second thing to keep in step, which is the whole failure
 mode.
 
-- `test/crash2_window_contract.test.js` derives the arms from the hosts,
+- `test/ui/crash2_window_contract.test.js` derives the arms from the hosts,
   pins F2 in both directions so it cannot come back, checks every DOM
   door against the open hosts' arms, pins `interior.js`'s closed
   population, and **asserts its own coverage**: a door it cannot parse is
   a failure, never a skip.
-- `test/crash1_overlay_contract.test.js` keeps what is genuinely this
+- `test/ui/crash1_overlay_contract.test.js` keeps what is genuinely this
   crash's - the named chronicle regression, the dead-contract ban, and
   the key map that made the report read the way it did.
 
@@ -681,7 +681,7 @@ Two further mechanics, both learned the expensive way here:
 
 - **`citeShift` must not run mid-merge.** Run before the merge commit it
   reads a base that predates the incoming files (it said so itself:
-  *"fatal: path 'test/ht3_sprite_upright.test.js' exists on disk, but
+  *"fatal: path 'test/formats/ht3_sprite_upright.test.js' exists on disk, but
   not in 'HEAD'"*) and shifted seventeen citations off by one. Commit the
   merge first, then let the tool re-resolve against the new base - the
   same order PR #168's merge established.

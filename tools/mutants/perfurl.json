@@ -5,7 +5,7 @@
     "old": "if (_params === null || search !== _search) {",
     "new": "if (true) {",
     "tests": [
-      "test/perfurl_doors.test.js"
+      "test/systems/perfurl_doors.test.js"
     ]
   },
   {
@@ -14,16 +14,16 @@
     "old": "if (_params === null || search !== _search) {",
     "new": "if (_params === null) {",
     "tests": [
-      "test/perfurl_doors.test.js"
+      "test/systems/perfurl_doors.test.js"
     ]
   },
   {
     "name": "PERFURL-online-door-parses-again",
-    "file": "src/systems/onlineLane.js",
+    "file": "src/systems/online/onlineLane.js",
     "old": "=> pageHas('online', search);",
     "new": "=> new URLSearchParams(search).has('online');",
     "tests": [
-      "test/perfurl_doors.test.js"
+      "test/systems/perfurl_doors.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "return clean(pageParam('skin', search));",
     "new": "return clean(new URLSearchParams(search).get('skin'));",
     "tests": [
-      "test/perfurl_doors.test.js"
+      "test/systems/perfurl_doors.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "return pageParam('air', search) !== 'off';",
     "new": "return new URLSearchParams(search).get('air') !== 'off';",
     "tests": [
-      "test/perfurl_doors.test.js"
+      "test/systems/perfurl_doors.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "grassDensity > 0 && pageParam('grass') !== 'off'",
     "new": "grassDensity > 0 && new URLSearchParams(globalThis.location?.search ?? '').get('grass') !== 'off'",
     "tests": [
-      "test/perfurl_doors.test.js"
+      "test/systems/perfurl_doors.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "const params = new URLSearchParams(location.search);",
     "new": "const params = new URLSearchParams(globalThis.location.search);",
     "tests": [
-      "test/perfurl_doors.test.js"
+      "test/systems/perfurl_doors.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "const search = win.location?.search ?? '';",
     "new": "const search = globalThis.location?.search ?? '';",
     "tests": [
-      "test/perfurl_doors.test.js"
+      "test/systems/perfurl_doors.test.js"
     ]
   }
 ]

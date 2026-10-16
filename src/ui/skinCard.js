@@ -18,7 +18,7 @@
 // looking at it; "Thief Mage (female)" is a caption, not a choice.
 //
 // THE STORE IS THE MOD'S. Pressing a tile writes Graphics.OnFoot /
-// Graphics.OnHorse - the two keys the body reads (player/eotbBody.js
+// Graphics.OnHorse - the two keys the body reads (player/eyeOfTheBeholder/eotbBody.js
 // look()) and the look sends (net/remotePlayers.js ownEotbSet, the wire's
 // `eo`) - so there is one choice and every reader agrees on it. A set
 // pressed here is a CHOSEN set: the look carries it, where the mod's
@@ -43,7 +43,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { MOD_SETTINGS, modSetting, setModSetting, storedModSetting } from '../systems/modSettings.js';
-import { spriteFor, eotbSpriteUrl } from '../player/eotbSprite.js';
+import { spriteFor, eotbSpriteUrl } from '../player/eyeOfTheBeholder/eotbSprite.js';
 import { EOTB_FOOT_SET_COUNT } from '../player/classSkins.js';
 
 const VENDOR = 'eye-of-the-beholder';

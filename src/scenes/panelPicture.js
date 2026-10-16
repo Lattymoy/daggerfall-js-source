@@ -1,7 +1,7 @@
 // @ts-check
 // MENU-ORDER (2026-10-12, bible/10-UI/Menu-Order.md) - A PICTURE MADE WITH THE PANEL PASS.
 //
-// The owner: "I just feel like text lists are too much". A piece of furniture's tile (scenes/decorTool.js) and a ship's
+// The owner: "I just feel like text lists are too much". A piece of furniture's tile (scenes/decor/decorTool.js) and a ship's
 // card (scenes/shipPortraits.js) show the thing itself: drawn once, small, by the second camera the decorator's preview
 // and the bank's already take (render/renderer.js panelFrame) into a box of the game canvas under the window's own
 // card, and copied out of the canvas in the same frame, as the preview is (ui/screenshot.js reads it the same way). The

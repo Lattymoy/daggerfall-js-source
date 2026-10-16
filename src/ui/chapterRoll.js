@@ -12,7 +12,7 @@ import { createBookReaderWindow } from './bookDoor.js';   // the reader's one do
 
 /** Who the book says wrote it. */
 export const CHAPTER_ROLL_AUTHOR = 'the chapter\'s clerk';
-/** The title face's font (ui/enhancedBook.js: 5 is the title cut) - the Hall of Records' own. */
+/** The title face's font (ui/enhanced/enhancedBook.js: 5 is the title cut) - the Hall of Records' own. */
 const TITLE_FONT = 5;
 const text = (/** @type {string} */ t) => ({ formatting: TOKEN_TEXT, text: t });
 const nl = () => ({ formatting: RSC.NewLine });

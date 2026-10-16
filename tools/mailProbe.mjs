@@ -2,7 +2,7 @@
 //
 //   node tools/mailProbe.mjs        (SHOT_DIR=tools/shots by default)
 //
-// test/mail1.test.js drives the tab over a fake document, which proves what it DOES and nothing about how it LOOKS:
+// test/server/mail1.test.js drives the tab over a fake document, which proves what it DOES and nothing about how it LOOKS:
 // whether the widest sender, the longest subject and a letter of one unbroken word stay inside the panel, whether the
 // form fits a phone, whether a finger can hit what it needs. This mounts the REAL panel (ui/socialPanel.js) over the
 // real enhanced sheet in Chromium with a REAL MailBox (net/mail.js) whose fetch answers the service's own shapes, at
@@ -35,7 +35,7 @@ for (const [W, H, label, touch] of [[1440, 900, 'desktop', false], [480, 800, 'n
     const { GLYPHS } = await import('/src/net/identityToken.js');
     document.body.innerHTML = '';
     document.body.style.cssText = 'margin:0;background:repeating-linear-gradient(45deg,#2a2721 0 14px,#231f1a 14px 28px);height:100vh';
-    (await import('/src/ui/enhancedStyle.js')).injectEnhancedStyle();
+    (await import('/src/ui/enhanced/enhancedStyle.js')).injectEnhancedStyle();
     // THE WIDEST LETTERS THE LAW ALLOWS: a full box, every sender at the handle's bound in its widest letter and every
     // glyph, every subject at its bound; the one opened is the body's bound of one unbroken word and the lines' bound.
     const W24 = 'W'.repeat(HANDLE_MAX_LEN);

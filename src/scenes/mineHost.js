@@ -33,14 +33,14 @@
 // ═══════════════════════════════════════════════════════════════════
 import { veins, boulders, nodeKey, VEIN_TABLES, dungeonVeins, dveinKey } from '../net/nodeLaw.js';
 import { tierOpen, TIER_RANKS, PROF_RANK_MAX, pickAxeBand, minedMaterial, storesFullIn, goneIn, fullWordsIn, GROUND_WHERE, GROUND_WHERE_WORDS, SURVEYOR } from '../net/professionLaw.js';
-import { natureStandsAt, groundAt, insideRocks } from '../world/terrainNature.js';   // NODE-CLEAR: the rock check's one home
-import { WORLD_MAP_TILE_DIM } from '../world/terrainTiles.js';
-import { TERRAIN_SIZE } from '../world/terrainSampler.js';
+import { natureStandsAt, groundAt, insideRocks } from '../world/terrain/terrainNature.js';   // NODE-CLEAR: the rock check's one home
+import { WORLD_MAP_TILE_DIM } from '../world/terrain/terrainTiles.js';
+import { TERRAIN_SIZE } from '../world/terrain/terrainSampler.js';
 import { createMineAct } from '../systems/mineAct.js';
-import { FT } from '../systems/foragingLaw.js';
-import { foragingActRefusal, foragingToolIn, actChecksRefusal } from '../systems/foragingInstall.js';
-import { materialLabel } from '../systems/profItems.js';
-import { templateByIndex } from '../systems/itemTemplates.js';
+import { FT } from '../systems/foraging/foragingLaw.js';
+import { foragingActRefusal, foragingToolIn, actChecksRefusal } from '../systems/foraging/foragingInstall.js';
+import { materialLabel } from '../systems/professions/profItems.js';
+import { templateByIndex } from '../systems/item/itemTemplates.js';
 import { liveStat } from '../systems/statMods.js';
 import { getPref } from '../systems/uiPrefs.js';
 import { MOTHERLODE_TIER, MOTHERLODE_RANK } from '../net/motherlodeLaw.js';   // PROF2b
@@ -191,7 +191,7 @@ function nearestStone(samples, tilemap, locationRect, tx, ty, reach, rocks, clea
 /**
  * A PIXEL'S VEINS AND BOULDERS AS THE CLIENT STANDS THEM (PROF0 23): the law's nodes of the day, each at its anchor -
  * `{ key, what: 'vein'|'boulder', slot, tier, material, signature?, local, rock?, lift }`, `local` pixel-local metres.
- * VERGE1: `verge` (`(x, z, reach) => boolean`, the pixel's - world/roadVerge.js vergeClear), when handed, keeps a vein
+ * VERGE1: `verge` (`(x, z, reach) => boolean`, the pixel's - world/road/roadVerge.js vergeClear), when handed, keeps a vein
  * that stands on the stone off the roads by its glow's half width (MINE_MARKS); a vein or a boulder at a rock piece's
  * foot keeps the piece's own clearance (ROADS-CLEAR).
  * MINE-PERKS: `surveyed` - this character a Surveyor (net/nodeLaw.js vein): their veins on ground not confirmed are

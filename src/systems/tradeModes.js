@@ -56,22 +56,22 @@
 import { calculateCost, calculateTradePrice, essentialPrice } from './shopStock.js';   // ESSENTIALS-HALF: online, a potion costs half
 import { GOLD_PIECE_WEIGHT_KG, isEnchanted } from './inventory.js';
 import { calculateItemRepairCost, repairRefusal } from './repairService.js';
-import { itemValueOf, conditionPercentage } from './itemTemplates.js';
-import { craftedRarityWorth } from './lootRarity.js';   // CRAFT-WORTH: a crafted piece's rolled worth, never a counter's
-import { isOnlinePage } from './onlineLane.js';   // SELL-AS-FOUND: online, a sale reads a piece as it was found
+import { itemValueOf, conditionPercentage } from './item/itemTemplates.js';
+import { craftedRarityWorth } from './loot/lootRarity.js';   // CRAFT-WORTH: a crafted piece's rolled worth, never a counter's
+import { isOnlinePage } from './online/onlineLane.js';   // SELL-AS-FOUND: online, a sale reads a piece as it was found
 import { isCampfireKit } from './survival/items.js';   // AUDIT REST: the Campfire an essential online
-import { isFirewood } from './restItems.js';
+import { isFirewood } from './rest/restItems.js';
 import { isPotion } from './useItem.js';   // ESSENTIALS-HALF: the potion, by DFU's own IsPotion   // JAN1: the one value read; RRI2: ConditionPercentage, the Sell arm's third argument
 import { HOLIDAYS } from './holidays.js';
-import { GUILDS } from './guilds.js';
+import { GUILDS } from './guild/guilds.js';
 import { isBagItem } from '../net/bagLaw.js';   // BAG1: a loaded Materials Bag is never sold (the cart's rule)
-import { activeWagonItem } from './wagonKinds.js';   // WAGONS2 (FINAL AUDIT): the wagon driven, read once for every counter (sellGuardOf)
-import { wagonSoldWhole } from './wagonUpkeep.js';   // WAGON-TIERS: a wagon's wear prices its sale only on Hard
-import { wagonUpkeepRules } from './upkeepSwitch.js';   // WAGON-TIERS: the tier, through wagon upkeep's one accessor
+import { activeWagonItem } from './wagon/wagonKinds.js';   // WAGONS2 (FINAL AUDIT): the wagon driven, read once for every counter (sellGuardOf)
+import { wagonSoldWhole } from './wagon/wagonUpkeep.js';   // WAGON-TIERS: a wagon's wear prices its sale only on Hard
+import { wagonUpkeepRules } from './upkeep/upkeepSwitch.js';   // WAGON-TIERS: the tier, through wagon upkeep's one accessor
 import { PATRON_COUNTER_MARK } from '../net/patronLaw.js';   // AUDIT LW-II-2 S1: online, a counter's piece is no patron's
 import {
   cureOfferMessageOffset, TRADE_MESSAGE_BASE_ID, NOT_ENOUGH_GOLD_ID,
-} from './guildServiceActions.js';
+} from './guild/guildServiceActions.js';
 import { localizedText, formatText } from './textManager.js';   // L10N3d: the window's own lines
 
 /** The shared TEXT.RSC ids. DaggerfallTradeWindow declares both

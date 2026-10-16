@@ -18,7 +18,7 @@
 // resolved dark -> light by orcOpts - the order the rig indexes ramps
 // by lighting intensity. Same contract as villagerDesigns.RAMPS.
 
-import { MOBILE_TYPES } from './mobileTypes.js';
+import { MOBILE_TYPES } from './mobile/mobileTypes.js';
 
 /** ART_PAL blocks the orc line draws from. `moss` and `sage` are the
  *  two green families in the palette; the orcs live in them so they sit

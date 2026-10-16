@@ -5,7 +5,7 @@
     "old": "(hour >= SLEEP_FROM_HOUR || hour < SLEEP_TO_HOUR)",
     "new": "(hour >= SLEEP_FROM_HOUR && hour < SLEEP_TO_HOUR)",
     "tests": [
-      "test/shipwatch.test.js"
+      "test/systems/naval/shipwatch.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "Math.max(1, Math.ceil(n / 3))",
     "new": "Math.max(1, Math.ceil(n / 2))",
     "tests": [
-      "test/shipwatch.test.js"
+      "test/systems/naval/shipwatch.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "lit ? NIGHT_LIT_SIGHT : NIGHT_DARK_SIGHT",
     "new": "lit ? NIGHT_DARK_SIGHT : NIGHT_LIT_SIGHT",
     "tests": [
-      "test/shipwatch.test.js"
+      "test/systems/naval/shipwatch.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "return Math.min(range, lit ? NIGHT_LIT_SIGHT : NIGHT_DARK_SIGHT);",
     "new": "return lit ? NIGHT_LIT_SIGHT : NIGHT_DARK_SIGHT;",
     "tests": [
-      "test/shipwatch.test.js"
+      "test/systems/naval/shipwatch.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  if (!afloat) return false;\n",
     "new": "",
     "tests": [
-      "test/shipwatch.test.js"
+      "test/systems/naval/shipwatch.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "return faction === 'merchant' && mode === 'flee';",
     "new": "return false;",
     "tests": [
-      "test/shipwatch.test.js"
+      "test/systems/naval/shipwatch.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "(dist - LAMP_NEAR_M) / LAMP_FADE_M",
     "new": "dist / LAMP_FADE_M",
     "tests": [
-      "test/shipwatch.test.js"
+      "test/systems/naval/shipwatch.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "Math.max(LAMP_MIN_M, dist * LAMP_ANGLE)",
     "new": "LAMP_MIN_M",
     "tests": [
-      "test/shipwatch.test.js"
+      "test/systems/naval/shipwatch.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "if (points.length <= LAMP_MAX) return points.slice();",
     "new": "return points.slice();",
     "tests": [
-      "test/shipwatch.test.js"
+      "test/systems/naval/shipwatch.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "if (asleep) turnIn(fresh); else allUp(battle || struck);",
     "new": "if (!asleep) allUp(battle || struck);",
     "tests": [
-      "test/shipwatch.test.js"
+      "test/systems/naval/shipwatch.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "const keep = new Set(crew.filter((m) => m.station));",
     "new": "const keep = new Set();",
     "tests": [
-      "test/shipwatch.test.js"
+      "test/systems/naval/shipwatch.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "      if (m.gone || m.below) continue;\n      if (m.line && (m.line.t -= dt) <= 0) m.line = null;",
     "new": "      if (m.gone) continue;\n      if (m.line && (m.line.t -= dt) <= 0) m.line = null;",
     "tests": [
-      "test/shipwatch.test.js"
+      "test/systems/naval/shipwatch.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "if (!battle && !muster && !struck && !asleep) {",
     "new": "if (!battle && !muster && !struck) {",
     "tests": [
-      "test/shipwatch.test.js"
+      "test/systems/naval/shipwatch.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": ": asleep ? CREW_BLURBS.night : CREW_BLURBS.calm",
     "new": ": CREW_BLURBS.calm",
     "tests": [
-      "test/shipwatch.test.js"
+      "test/systems/naval/shipwatch.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "const sleep = !!ctx.asleep && !battle && !struck && ctx.order !== 'repair';",
     "new": "const sleep = !!ctx.asleep && ctx.order !== 'repair';",
     "tests": [
-      "test/shipwatch.test.js"
+      "test/systems/naval/shipwatch.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "if (asleep) turnIn(fresh); else allUp(battle || struck);",
     "new": "if (asleep) turnIn(fresh); else allUp(false);",
     "tests": [
-      "test/shipwatch.test.js"
+      "test/systems/naval/shipwatch.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "        if (m.below) { m.below = false; m.pos = [...(hatch ?? m.post)]; }   // SHIP-WATCH: up out of her hatch\n",
     "new": "",
     "tests": [
-      "test/shipwatch.test.js"
+      "test/systems/naval/shipwatch.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "m.ashore = true; m.below = false;",
     "new": "m.ashore = true;",
     "tests": [
-      "test/shipwatch.test.js"
+      "test/systems/naval/shipwatch.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "!m.station && m.mobile !== MOBILE.Bard && m.state !== 'turnIn';",
     "new": "!m.station && m.state !== 'turnIn';",
     "tests": [
-      "test/shipwatch.test.js"
+      "test/systems/naval/shipwatch.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "if (m === lookout && bow) {",
     "new": "if (false) {",
     "tests": [
-      "test/shipwatch.test.js"
+      "test/systems/naval/shipwatch.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "const by = pickLookout() ?? live()[0];",
     "new": "const by = live()[0];",
     "tests": [
-      "test/shipwatch.test.js"
+      "test/systems/naval/shipwatch.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "(work > 0 ? WORK_SHARE * Math.min(1, work) : 0) + (asleep ? 0 : CHORE_SHARE)",
     "new": "(asleep ? 0 : CHORE_SHARE)",
     "tests": [
-      "test/shipwatch.test.js"
+      "test/systems/naval/shipwatch.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "+ (asleep ? 0 : CHORE_SHARE);",
     "new": "+ (asleep || !(work > 0) ? 0 : CHORE_SHARE);",
     "tests": [
-      "test/shipwatch.test.js"
+      "test/systems/naval/shipwatch.test.js"
     ]
   },
   {
@@ -212,7 +212,7 @@
     "old": "if ((m.swingT -= dt) <= 0) { m.swing = true;",
     "new": "if ((m.swingT -= dt) <= 0) { m.swing = false;",
     "tests": [
-      "test/shipwatch.test.js"
+      "test/systems/naval/shipwatch.test.js"
     ]
   },
   {
@@ -221,7 +221,7 @@
     "old": "      m.moving = false;\n      m.swing = false;\n",
     "new": "      m.moving = false;\n",
     "tests": [
-      "test/shipwatch.test.js"
+      "test/systems/naval/shipwatch.test.js"
     ]
   },
   {
@@ -230,7 +230,7 @@
     "old": "          if (quiet || asleep && !(work > 0)) { m.state = 'idle'; m.t = within(rng, CREW_IDLE_S) * 0.3; break; }\n",
     "new": "",
     "tests": [
-      "test/shipwatch.test.js"
+      "test/systems/naval/shipwatch.test.js"
     ]
   },
   {
@@ -239,34 +239,34 @@
     "old": "if (!now && hatch && walkTo(m, hatch)) m.state = 'turnIn';",
     "new": "if (false) m.state = 'turnIn';",
     "tests": [
-      "test/shipwatch.test.js"
+      "test/systems/naval/shipwatch.test.js"
     ]
   },
   {
     "name": "NC-sleepers-drawn",
-    "file": "src/scenes/navalCrew.js",
+    "file": "src/scenes/naval/navalCrew.js",
     "old": "if (s?.batch && s.unit && !m.below) out.push(s.batch);",
     "new": "if (s?.batch && s.unit) out.push(s.batch);",
     "tests": [
-      "test/shipwatch.test.js"
+      "test/systems/naval/shipwatch.test.js"
     ]
   },
   {
     "name": "NC-sleepers-posed",
-    "file": "src/scenes/navalCrew.js",
+    "file": "src/scenes/naval/navalCrew.js",
     "old": "if (member.below || !s.unit || !s.batch) continue;",
     "new": "if (!s.unit || !s.batch) continue;",
     "tests": [
-      "test/shipwatch.test.js"
+      "test/systems/naval/shipwatch.test.js"
     ]
   },
   {
     "name": "NC-no-attack",
-    "file": "src/scenes/navalCrew.js",
+    "file": "src/scenes/naval/navalCrew.js",
     "old": "_motion.striking = !!member.swing;",
     "new": "_motion.striking = false;",
     "tests": [
-      "test/shipwatch.test.js"
+      "test/systems/naval/shipwatch.test.js"
     ]
   },
   {
@@ -275,7 +275,7 @@
     "old": "const see = nightSight(sight, { night: !!world.night, lit });",
     "new": "const see = sight;",
     "tests": [
-      "test/shipwatch.test.js"
+      "test/systems/naval/shipwatch.test.js"
     ]
   },
   {
@@ -284,7 +284,7 @@
     "old": "const lit = !!c.lit || !!flashed?.has(c.id);",
     "new": "const lit = !!flashed?.has(c.id);",
     "tests": [
-      "test/shipwatch.test.js"
+      "test/systems/naval/shipwatch.test.js"
     ]
   },
   {
@@ -293,7 +293,7 @@
     "old": "const lit = !!c.lit || !!flashed?.has(c.id);",
     "new": "const lit = !!c.lit;",
     "tests": [
-      "test/shipwatch.test.js"
+      "test/systems/naval/shipwatch.test.js"
     ]
   },
   {
@@ -302,7 +302,7 @@
     "old": "world.now - g.at <= GUNS_SEEN_S",
     "new": "true",
     "tests": [
-      "test/shipwatch.test.js"
+      "test/systems/naval/shipwatch.test.js"
     ]
   },
   {
@@ -311,7 +311,7 @@
     "old": "dist < nightSight(FLEE_RANGE, { night: !!world.night, lit })",
     "new": "dist < FLEE_RANGE",
     "tests": [
-      "test/shipwatch.test.js"
+      "test/systems/naval/shipwatch.test.js"
     ]
   },
   {
@@ -320,7 +320,7 @@
     "old": "if (ship.clock >= e.until && !(ctx.night && ship.cls?.faction === 'merchant')) {",
     "new": "if (ship.clock >= e.until) {",
     "tests": [
-      "test/shipwatch.test.js"
+      "test/systems/naval/shipwatch.test.js"
     ]
   },
   {
@@ -329,7 +329,7 @@
     "old": "!(ctx.night && ship.cls?.faction === 'merchant')",
     "new": "!ctx.night",
     "tests": [
-      "test/shipwatch.test.js"
+      "test/systems/naval/shipwatch.test.js"
     ]
   },
   {
@@ -338,7 +338,7 @@
     "old": "const at = night ? [hb.mouth[0] + (e.at[0] - hb.mouth[0]) * NIGHT_LURK_K, hb.mouth[1] + (e.at[1] - hb.mouth[1]) * NIGHT_LURK_K] : e.at;",
     "new": "const at = e.at;",
     "tests": [
-      "test/shipwatch.test.js"
+      "test/systems/naval/shipwatch.test.js"
     ]
   },
   {
@@ -347,124 +347,124 @@
     "old": "      if (e.night !== night) { e.night = night; e.path = null; }\n",
     "new": "",
     "tests": [
-      "test/shipwatch.test.js"
+      "test/systems/naval/shipwatch.test.js"
     ]
   },
   {
     "name": "H-every-ship-lit",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    const lit = shipLit(e);\n",
     "new": "    const lit = !!where().cityLights;\n",
     "tests": [
-      "test/shipwatch.test.js"
+      "test/systems/naval/shipwatch.test.js"
     ]
   },
   {
     "name": "H-contacts-unlit",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "yaw: e.ship.yaw, hull: e.ship.hull, ship: e.ship, lit: shipLit(e) });",
     "new": "yaw: e.ship.yaw, hull: e.ship.hull, ship: e.ship });",
     "tests": [
-      "test/shipwatch.test.js"
+      "test/systems/naval/shipwatch.test.js"
     ]
   },
   {
     "name": "H-my-lanterns-unread",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "lit: !!boat.LightOn && carriesLanterns(boat, boat.hull),",
     "new": "lit: carriesLanterns(boat, boat.hull),",
     "tests": [
-      "test/shipwatch.test.js"
+      "test/systems/naval/shipwatch.test.js"
     ]
   },
   {
     "name": "H-night-untold",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    const night = !!where().night;   // SHIP-WATCH: the dark hours",
     "new": "    const night = false;   // SHIP-WATCH: the dark hours",
     "tests": [
-      "test/shipwatch.test.js"
+      "test/systems/naval/shipwatch.test.js"
     ]
   },
   {
     "name": "H-hail-night-unread",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "d > nightSight(SAIL_HO_RANGE * sight, { night, lit: showsLight(e) })",
     "new": "d > SAIL_HO_RANGE * sight",
     "tests": [
-      "test/shipwatch.test.js"
+      "test/systems/naval/shipwatch.test.js"
     ]
   },
   {
     "name": "H-cry-never-handed",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "if (deck?.crewed) hailCalls.set(",
     "new": "if (false) hailCalls.set(",
     "tests": [
-      "test/shipwatch.test.js"
+      "test/systems/naval/shipwatch.test.js"
     ]
   },
   {
     "name": "H-cry-every-frame",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      if (call) hailCalls.delete(boat);\n",
     "new": "",
     "tests": [
-      "test/shipwatch.test.js"
+      "test/systems/naval/shipwatch.test.js"
     ]
   },
   {
     "name": "H-work-unread",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "const work = boat.crewed && st.crew.order === CREW_ORDERS.repair ? 1 : workOf(st.damage);",
     "new": "const work = 0;",
     "tests": [
-      "test/shipwatch.test.js"
+      "test/systems/naval/shipwatch.test.js"
     ]
   },
   {
     "name": "H-lamps-by-day",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (!where().cityLights) return;\n    const eye = deps.look?.()?.origin ?? deps.feet();\n    const boats = [];",
     "new": "    const eye = deps.look?.()?.origin ?? deps.feet();\n    const boats = [];",
     "tests": [
-      "test/shipwatch.test.js"
+      "test/systems/naval/shipwatch.test.js"
     ]
   },
   {
     "name": "H-no-lamps",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    lampsInto(particles);",
     "new": "    void lampsInto;",
     "tests": [
-      "test/shipwatch.test.js"
+      "test/systems/naval/shipwatch.test.js"
     ]
   },
   {
     "name": "H-dark-lamps",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "if (e.boat?.LightOn && (e.fade ?? 1) >= FADE_FLATS) boats.push(e.boat);",
     "new": "if (e.boat && (e.fade ?? 1) >= FADE_FLATS) boats.push(e.boat);",
     "tests": [
-      "test/shipwatch.test.js"
+      "test/systems/naval/shipwatch.test.js"
     ]
   },
   {
     "name": "H-near-lamps",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "        if (d <= LAMP_NEAR_M) continue;\n",
     "new": "",
     "tests": [
-      "test/shipwatch.test.js"
+      "test/systems/naval/shipwatch.test.js"
     ]
   },
   {
     "name": "H-sea-work-unread",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "work: st === SHIP_STATES.afloat ? workOf(e.ship.damage) : 0 });",
     "new": "work: 0 });",
     "tests": [
-      "test/shipwatch.test.js"
+      "test/systems/naval/shipwatch.test.js"
     ]
   },
   {
@@ -473,7 +473,7 @@
     "old": "const asleep = asleepHour(hourOf(minuteNow()));",
     "new": "const asleep = false;",
     "tests": [
-      "test/shipwatch.test.js"
+      "test/systems/naval/shipwatch.test.js"
     ]
   },
   {
@@ -482,7 +482,7 @@
     "old": "      if (ship.mine) ship.mine.call = null;\n",
     "new": "",
     "tests": [
-      "test/shipwatch.test.js"
+      "test/systems/naval/shipwatch.test.js"
     ]
   }
 ]

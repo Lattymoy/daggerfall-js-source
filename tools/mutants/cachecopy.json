@@ -5,8 +5,8 @@
     "old": "      gl.drawArrays(gl.TRIANGLES, 0, 3);\n",
     "new": "",
     "tests": [
-      "test/cachecopy.test.js",
-      "test/sc1_shadowcache.test.js"
+      "test/render/cachecopy.test.js",
+      "test/render/sc1_shadowcache.test.js"
     ]
   },
   {
@@ -15,7 +15,7 @@
     "old": "    gl.depthFunc(gl.ALWAYS);\n",
     "new": "",
     "tests": [
-      "test/cachecopy.test.js"
+      "test/render/cachecopy.test.js"
     ]
   },
   {
@@ -24,7 +24,7 @@
     "old": "    gl.depthFunc(gl.LESS);\n    gl.bindTexture(gl.TEXTURE_2D_ARRAY, null);",
     "new": "    gl.bindTexture(gl.TEXTURE_2D_ARRAY, null);",
     "tests": [
-      "test/cachecopy.test.js"
+      "test/render/cachecopy.test.js"
     ]
   },
   {
@@ -33,7 +33,7 @@
     "old": "      gl.uniform1i(C.layer, k * 6 + face);",
     "new": "      gl.uniform1i(C.layer, face);",
     "tests": [
-      "test/cachecopy.test.js"
+      "test/render/cachecopy.test.js"
     ]
   },
   {
@@ -42,7 +42,7 @@
     "old": "    gl.useProgram(C.p);\n    gl.activeTexture(gl.TEXTURE0);\n",
     "new": "    gl.useProgram(C.p);\n",
     "tests": [
-      "test/cachecopy.test.js"
+      "test/render/cachecopy.test.js"
     ]
   },
   {
@@ -51,7 +51,7 @@
     "old": "    gl.bindTexture(gl.TEXTURE_2D_ARRAY, null);   // no cache left on a unit while a rebuild draws into it\n",
     "new": "",
     "tests": [
-      "test/cachecopy.test.js"
+      "test/render/cachecopy.test.js"
     ]
   },
   {
@@ -60,7 +60,7 @@
     "old": "    if (bindVao) bindVao(this._copyVao); else gl.bindVertexArray(this._copyVao);\n",
     "new": "    gl.bindVertexArray(this._copyVao);\n",
     "tests": [
-      "test/cachecopy.test.js"
+      "test/render/cachecopy.test.js"
     ]
   },
   {
@@ -69,7 +69,7 @@
     "old": "precision highp sampler2DArray;\nuniform sampler2DArray uCache;",
     "new": "precision mediump sampler2DArray;\nuniform sampler2DArray uCache;",
     "tests": [
-      "test/cachecopy.test.js"
+      "test/render/cachecopy.test.js"
     ]
   },
   {
@@ -78,7 +78,7 @@
     "old": "texelFetch(uCache, ivec3(gl_FragCoord.xy, uLayer), 0)",
     "new": "texelFetch(uCache, ivec3(0, 0, uLayer), 0)",
     "tests": [
-      "test/cachecopy.test.js"
+      "test/render/cachecopy.test.js"
     ]
   },
   {
@@ -87,7 +87,7 @@
     "old": "uniform sampler2DArray uCache;",
     "new": "uniform sampler2DArrayShadow uCache;",
     "tests": [
-      "test/cachecopy.test.js"
+      "test/render/cachecopy.test.js"
     ]
   },
   {
@@ -96,9 +96,9 @@
     "old": "  return pageParam('shadowcache', search) !== 'off';   // PERF-URL\n",
     "new": "  return pageParam('shadowcache', search) === 'on';   // PERF-URL\n",
     "tests": [
-      "test/cachecopy.test.js",
-      "test/perfurl_doors.test.js",
-      "test/sc1_shadowcache.test.js"
+      "test/render/cachecopy.test.js",
+      "test/systems/perfurl_doors.test.js",
+      "test/render/sc1_shadowcache.test.js"
     ]
   },
   {
@@ -107,7 +107,7 @@
     "old": "    this._shadowCacheWanted = true;",
     "new": "    this._shadowCacheWanted = false;",
     "tests": [
-      "test/cachecopy.test.js"
+      "test/render/cachecopy.test.js"
     ]
   },
   {
@@ -116,7 +116,7 @@
     "old": "export const patternOf = (x, y, layer, round) => (x * 7 + y * 13 + layer * 31 + round * 101) % 4093;",
     "new": "export const patternOf = (x, y, layer, round) => (x * 8 + y * 13 + layer * 31 + round * 101) % 4093;",
     "tests": [
-      "test/cachecopy.test.js"
+      "test/render/cachecopy.test.js"
     ]
   },
   {
@@ -125,7 +125,7 @@
     "old": "  if (r.control.wrong !== r.texels || r.control.otherLayer !== r.texels) return",
     "new": "  if (false) return",
     "tests": [
-      "test/cachecopy.test.js"
+      "test/render/cachecopy.test.js"
     ]
   },
   {
@@ -134,7 +134,7 @@
     "old": "  if (r.draw.wrong) return",
     "new": "  if (r.draw.wrong && !r.blit.wrong) return",
     "tests": [
-      "test/cachecopy.test.js"
+      "test/render/cachecopy.test.js"
     ]
   }
 ]

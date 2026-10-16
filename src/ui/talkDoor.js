@@ -17,7 +17,7 @@
 // skins. NativeTalkWindow is where DFU's conversation law lives - the
 // pages, the selection model, the tone guard, the Q/A pair, the
 // logbook copy set and the note it files on close - and the enhanced
-// panel (ui/enhancedTalk.js) is a second FACE over that same object:
+// panel (ui/enhanced/enhancedTalk.js) is a second FACE over that same object:
 // it presses the model's named buttons and draws the model's state.
 // Its draw() is simply never called. So there is nothing for the two
 // skins to disagree about, which is the fault PX27 found two enhanced
@@ -35,9 +35,9 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { isEnhanced } from '../systems/uiSkin.js';
-import { mountEnhancedChunk } from './enhancedChunk.js';   // MENU1: the one lazy-chunk door
-import { registerOverlay } from './enhancedOverlays.js';   // PX28: Tab puts it away
-import { NativeTalkWindow, talkArtLoaded } from './nativeTalk.js';
+import { mountEnhancedChunk } from './enhanced/enhancedChunk.js';   // MENU1: the one lazy-chunk door
+import { registerOverlay } from './enhanced/enhancedOverlays.js';   // PX28: Tab puts it away
+import { NativeTalkWindow, talkArtLoaded } from './native/nativeTalk.js';
 import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
 
 /** The gate a host asks before it opens a conversation window. The
@@ -94,9 +94,9 @@ function enhancedTalkOverlay(model, hooks) {
   host.style.cssText = 'position:fixed;inset:0;z-index:11';
   document.body.append(host);
   unregister = registerOverlay(goodbye);
-  // MENU1: the ONE lazy-chunk door (ui/enhancedChunk.js).
+  // MENU1: the ONE lazy-chunk door (ui/enhanced/enhancedChunk.js).
   mountEnhancedChunk({
-    load: () => import('./enhancedTalk.js'),
+    load: () => import('./enhanced/enhancedTalk.js'),
     mount: ({ mountEnhancedTalk }) => { view = mountEnhancedTalk(host, { model, onExit: teardown, relock: () => hooks.relock?.() }); },
     alive: () => !torn, host, onDismiss: goodbye, label: 'talk',
   });

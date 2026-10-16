@@ -3,7 +3,7 @@
 // every settings window builds it through, DaggerfallUI.AddSlider
 // (DaggerfallUI.cs:1106-1124).
 //
-// WHY IT HAS ITS OWN HOME. `ui/nativeTalk.js` already carried half of
+// WHY IT HAS ITS OWN HOME. `ui/native/nativeTalk.js` already carried half of
 // DrawSlider's thumb arithmetic for the topic list's horizontal bar,
 // and the mouse-controls window needs the WHOLE component - four
 // sliders in three of its four modes. Two copies of one C# class is
@@ -28,7 +28,7 @@ import { roundToInt } from '../systems/mathf.js';
 import { clampScrollIndex } from './verticalScrollBar.js';
 
 // TWO PIECES OF DFU ART THE PORT HAS NO BYTES FOR, both recorded the
-// way ui/travelPopUp.js records the same shape for its green checkbox:
+// way ui/travel/travelPopUp.js records the same shape for its green checkbox:
 //   - the thumb is three textures out of DFU's own Resources folder
 //     (HSliderThumbLeft/Body/Right, :112-114), tinted; the port draws
 //     the flat tint over the trough instead.

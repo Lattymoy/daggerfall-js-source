@@ -83,7 +83,7 @@ check('entered at midday, the shop stands ALL of its people', shopGate.standing 
 // for a person no active quest has moved. It is reported, not
 // asserted: the property that matters (a hidden person is never
 // handed to the machine at all) is an ORDERING inside
-// interiorContext and is pinned in test/people.test.js, where it can
+// interiorContext and is pinned in test/world/people.test.js, where it can
 // be checked without needing a live quest.
 console.log(`  [note] questWired ${shopGate.questWired} of ${shopGate.standing} standing - no active quest has moved anyone here`);
 await leave();

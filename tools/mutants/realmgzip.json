@@ -5,7 +5,7 @@
     "old": "  if (!gzip || !canGzip()) return text;\n",
     "new": "  return text;\n",
     "tests": [
-      "test/realm_gzip.test.js"
+      "test/net/realm_gzip.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "        let r = await realmPut(io, id, { lease, seq: current + 1, summary: job.summary }, job.text, { gzip });\n",
     "new": "        let r = await realmPut(io, id, { lease, seq: current + 1, summary: job.summary }, job.text);\n",
     "tests": [
-      "test/realm_gzip.test.js"
+      "test/net/realm_gzip.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "      gzip = j.data.gzip === true;",
     "new": "      void 0;",
     "tests": [
-      "test/realm_gzip.test.js"
+      "test/net/realm_gzip.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "origin: typeof origin === 'string' ? origin : null, gzip: joined.data?.gzip === true };",
     "new": "origin: typeof origin === 'string' ? origin : null, gzip: false };",
     "tests": [
-      "test/realm_gzip.test.js"
+      "test/net/realm_gzip.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "`${realmSavePath(id)}${canGunzip() ? '?enc=gzip' : ''}`",
     "new": "realmSavePath(id)",
     "tests": [
-      "test/realm_gzip.test.js"
+      "test/net/realm_gzip.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "  const text = await saveTextOf(r.bytes, Infinity);\n",
     "new": "  const text = new TextDecoder().decode(r.bytes);\n",
     "tests": [
-      "test/realm_gzip.test.js"
+      "test/net/realm_gzip.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "answer(r.error ? r : { ...r, gzip: true })",
     "new": "answer(r)",
     "tests": [
-      "test/realm_gzip.test.js"
+      "test/net/realm_gzip.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "            if (isGzip(packed) && gzipSizeOf(packed) > REALM_TEXT_MAX_BYTES) return no('too-large', 413, origin);\n",
     "new": "",
     "tests": [
-      "test/realm_gzip.test.js"
+      "test/net/realm_gzip.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "            if (url.searchParams.get('enc') !== 'gzip') {\n",
     "new": "            if (false) {\n",
     "tests": [
-      "test/realm_gzip.test.js"
+      "test/net/realm_gzip.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "              body = isGzip(bytes) ? await gunzipText(bytes, REALM_TEXT_MAX_BYTES) : bytes;\n",
     "new": "              body = isGzip(bytes) ? await gunzipText(bytes, Infinity) : bytes;\n",
     "tests": [
-      "test/realm_gzip.test.js"
+      "test/net/realm_gzip.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "  const text = await saveTextOf(new Uint8Array(body), REALM_TEXT_MAX_BYTES);\n",
     "new": "  const text = new TextDecoder().decode(body);\n",
     "tests": [
-      "test/realm_gzip.test.js"
+      "test/net/realm_gzip.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "  const text = await saveTextOf(new Uint8Array(body), REALM_TEXT_MAX_BYTES);\n",
     "new": "  const text = await saveTextOf(new Uint8Array(body), Infinity);\n",
     "tests": [
-      "test/realm_gzip.test.js"
+      "test/net/realm_gzip.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "  try { save = JSON.parse(await realmSaveTextOf(object)); } catch { save = null; }   // REALM-GZIP: packed or plain\n",
     "new": "  try { save = JSON.parse(await object.text()); } catch { save = null; }   // REALM-GZIP: packed or plain\n",
     "tests": [
-      "test/realm_gzip.test.js"
+      "test/net/realm_gzip.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "  if (bytes > REALM_TEXT_MAX_BYTES) return { error: 'no-data' };",
     "new": "  if (bytes > REALM_MAX_BYTES) return { error: 'no-data' };",
     "tests": [
-      "test/realm_gzip.test.js"
+      "test/net/realm_gzip.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "saveA = JSON.parse(await realmSaveTextOf(objA)); saveB = JSON.parse(await realmSaveTextOf(objB));",
     "new": "saveA = JSON.parse(await objA.text()); saveB = JSON.parse(await objB.text());",
     "tests": [
-      "test/realm_gzip.test.js"
+      "test/net/realm_gzip.test.js"
     ]
   },
   {
@@ -140,25 +140,25 @@
     "old": "  if (bytesA > REALM_TEXT_MAX_BYTES || bytesB > REALM_TEXT_MAX_BYTES) return",
     "new": "  if (bytesA > 4 * 1024 * 1024 || bytesB > 4 * 1024 * 1024) return",
     "tests": [
-      "test/realm_gzip.test.js"
+      "test/net/realm_gzip.test.js"
     ]
   },
   {
     "name": "REALM-GZIP-the-bound-never-kept",
-    "file": "src/net/realmSaveCodec.js",
+    "file": "src/net/realm/realmSaveCodec.js",
     "old": "      if (size > max) { reader.cancel().catch(() => {}); return null; }\n",
     "new": "",
     "tests": [
-      "test/realm_gzip.test.js"
+      "test/net/realm_gzip.test.js"
     ]
   },
   {
     "name": "REALM-GZIP-plain-text-past-its-bound",
-    "file": "src/net/realmSaveCodec.js",
+    "file": "src/net/realm/realmSaveCodec.js",
     "old": "  return bytes.byteLength > max ? null : new TextDecoder().decode(bytes);\n",
     "new": "  return new TextDecoder().decode(bytes);\n",
     "tests": [
-      "test/realm_gzip.test.js"
+      "test/net/realm_gzip.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "seq: realmBoot.seq, gzip: realmBoot.gzip, onLost:",
     "new": "seq: realmBoot.seq, onLost:",
     "tests": [
-      "test/realm_gzip.test.js"
+      "test/net/realm_gzip.test.js"
     ]
   },
   {
@@ -176,17 +176,17 @@
     "old": "  return realmPut(io, made.data.id, { lease: made.data.lease, seq: 1, summary: realmSummaryOf(playerEntity) }, text, { gzip: made.data.gzip === true });",
     "new": "  return realmPut(io, made.data.id, { lease: made.data.lease, seq: 1, summary: realmSummaryOf(playerEntity) }, text);",
     "tests": [
-      "test/realm_gzip.test.js"
+      "test/net/realm_gzip.test.js"
     ],
     "note": "LEGACY7 (PIN MOVED): re-aimed by content - the first save is realmFirstSave's (realmBirth's and an online member's birth alike)."
   },
   {
     "name": "REALM-GZIP-customs-drops-the-word",
-    "file": "src/ui/enhancedMenu.js",
+    "file": "src/ui/enhanced/enhancedMenu.js",
     "old": "JSON.stringify(copy), { gzip: made.data.gzip === true });",
     "new": "JSON.stringify(copy));",
     "tests": [
-      "test/realm_gzip.test.js"
+      "test/net/realm_gzip.test.js"
     ]
   }
 ]

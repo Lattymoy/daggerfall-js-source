@@ -55,25 +55,25 @@ Mod-Registry row records. Both are what the mod's manifest names.
 
 `Quests/QuestList-RoleplayRealism.txt` and `Quests/RRMSTARM0-2.txt`,
 verbatim from the source tree (MIT, the mod's own header). The pack
-loader globs them beside DFU's own (`src/scenes/questData.js`).
+loader globs them beside DFU's own (`src/scenes/quest/questData.js`).
 
 ## The world data (RR3b)
 
 `WorldData/locationnew-RRfort01-16.json`, `WorldData/RRFORT01.RMB.json`
 and `WorldData/ARMRAM03.RMB-765-building14_master.json`, verbatim from
 the source tree - DFU's WorldDataReplacement JSON (a new location, its
-block, a building variant), read by `src/formats/worldDataReplacement.js`
+block, a building variant), read by `src/formats/worldData/worldDataReplacement.js`
 through `src/scenes/modWorldData.js`'s glob. Everything the mod ships is
 vendored now.
 
 ## What is ported, and where
 
 - **RR3b** (2026-09-23): the Master Armorer quest line's world data -
-  WorldDataReplacement.cs ported whole (`src/formats/worldDataReplacement.js`
+  WorldDataReplacement.cs ported whole (`src/formats/worldData/worldDataReplacement.js`
   + `worldDataDoor.js`), MapsFile and BlocksFile asking it, RMBLayout's
   replacement arm in the building merge, the variants on the save.
 - **RR3a** (2026-09-23): the Master Armorer quest line's registrations -
-  `src/systems/rrQuestLine.js` (the tables, the factions, the fort's
+  `src/systems/roleplayRealism/rrQuestLine.js` (the tables, the factions, the fort's
   tracks, the shop's discovery, the custom armor service) over four DFU
   mod hooks ported for it: `registerCustomFaction`, `registerQuestList`,
   `registerMerchantService`, `systems/worldDataVariants.js` + the
@@ -83,7 +83,7 @@ vendored now.
   `rrRealism.js`; the mount rig, the look filter, the move axes, the
   guild training flow and the world host carry the seams).
 - **RR1** (2026-09-23): the formula overrides and the rule modules -
-  `src/systems/rrRealism.js` (the laws), `src/systems/rrInstall.js`
+  `src/systems/roleplayRealism/rrRealism.js` (the laws), `src/systems/roleplayRealism/rrInstall.js`
   (InitMod's registrations at the scene boot), the seams they hang on
   in formulas, climbing, the weapon rig, banking, the ship, the magic
   round, potions, the guilds, the interior context and the world host.

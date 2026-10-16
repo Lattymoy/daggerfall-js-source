@@ -20,7 +20,7 @@
 // Pure: numbers in, a model out. Not a DFU member. Ledger A (WAGONS2).
 import { MEASURED, LIFT, caravanSideU } from './wagonModels.js';
 import { WAGON_ARCHIVE, TEX, WAGON_TILE, SIDE_Y0, SIDE_Y1 } from './wagonArt.js';
-import { planarUv } from './galleonMesh.js';
+import { planarUv } from './ships/galleonMesh.js';
 
 const M = MEASURED.caravan;
 /** The boards' thickness: how far the room's walls stand in from the body's outside (m). */
@@ -53,7 +53,7 @@ const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
 const baked = (p) => [p[0], p[1] + LIFT, p[2]];
 /** The side walls' picture: u the caravan's side's own along its tile (`out` the side's outward normal - wagonModels.js
  *  caravanSideU, laid from the body's middle as the side is), v up the side's heights (1 its eaves) - BANDS.roomSide's
- *  slice, world/galleonModel.js bandPiece's law. */
+ *  slice, world/ships/galleonModel.js bandPiece's law. */
 const sideUv = (out) => (p) => { const b = baked(p); return [caravanSideU(b, out, WAGON_TILE.roomSide[0]), Math.min(1, Math.max(0, (b[1] - SIDE_Y0) / (SIDE_Y1 - SIDE_Y0)))]; };
 /** An end's picture laid whole (wagonModels.js endUv's law): `sign` -1 the front's, 1 the rear's, as seen from outside. */
 const endUv = (sign) => (p) => { const b = baked(p); return [0.5 + (sign * b[0]) / (2 * M.sideX), (b[1] - M.floorY) / (M.endTopY - M.floorY)]; };

@@ -10,7 +10,7 @@
 import { TextureFile } from '../formats/textureFile.js'; import { changeMask } from '../formats/baseImageFile.js';   // HM1: the item icons' removeMask (one line: the cites below stand)
 import { FlatsFile } from '../formats/flatsFile.js';   // NPC1: captions + portrait indices
 import { isExteriorWindow } from '../world/climateSwaps.js';
-import { isInteriorGlassArchive, interiorGlassMask } from '../world/interiorGlass.js';   // RW1: an interior's own glass
+import { isInteriorGlassArchive, interiorGlassMask } from '../world/interior/interiorGlass.js';   // RW1: an interior's own glass
 import { isEmissive, FIRE_WALLS_ARCHIVE } from '../world/emissiveTextures.js';   // TextureReader's auto-emissive table (lit lanterns, fireplaces, fire daedra)
 import { dfMeshToModel } from '../world/meshReader.js'; import { patchSeams } from '../world/arch3dSeams.js';   // DUNGEON-SEAMS (one line: the cites below stand)
 import { fetchBytes, texName } from './shared.js';
@@ -159,7 +159,7 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
   // AUDIT GN2-PF5: THE ARCHIVES WHOSE STAND-INS ARE CLASSIC ART - the port's own pictures standing where a TEXTURE file
   // would (the new galleon's 38131: a hull's planking, as ARENA2's is every other hull's), uploaded as a classic record
   // is, so Retro Mode's no-mip cap reaches them. Every other stand-in is a mod's picture, TryImportTexture's, never
-  // capped. Marked by whoever registers them (scenes/comeSailAwayPool.js); a pack's picture over one is taken as its own.
+  // capped. Marked by whoever registers them (scenes/comeSailAway/comeSailAwayPool.js); a pack's picture over one is taken as its own.
   const classicArt = new Set();
   const markClassicArt = (archive) => { classicArt.add(Number(archive)); };
   const isClassicArt = (archive) => classicArt.has(Number(archive));
@@ -254,7 +254,7 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
       // sitting at scene ambient beside the light it casts.
       renderer.uploadEmissionTexture(archive, record, color32, { white: true, replacement });
     } else if (!t.vendor && isInteriorGlassArchive(archive) && renderer.uploadGlassMask) {
-      // RW1: A BUILDING INTERIOR'S OWN GLASS (world/interiorGlass.js interiorGlassMask - the rule's one home): a building
+      // RW1: A BUILDING INTERIOR'S OWN GLASS (world/interior/interiorGlass.js interiorGlassMask - the rule's one home): a building
       // set's window wall, its panes read off the classic bitmap against its twin wall. GLASS-ALL: a pack's picture of it
       // too, cut by the classic mask as the exterior arm cuts a pack's window - a repaint keeps the window where it was.
       const glass = interiorGlassMask(archive, record, bitmap, (r) => (r < t.recordCount ? t.getDFBitmap(r, 0) : null));
@@ -558,7 +558,7 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
   }
 
   loadFlats();   // warm it with the scene; the getters answer null until it lands
-  // DISC22-D: the icon doors' per-record decode is the drawer's own (ui/itemScroller.js preloadIconRecord) - the
+  // DISC22-D: the icon doors' per-record decode is the drawer's own (ui/item/itemScroller.js preloadIconRecord) - the
   // handout this bag once carried was taken by no scene, which is how the Steel Light Flail drew nothing.
   return { textureFiles, getTexture, getTextureSize, uploadRecord: pinnedUpload, uploadRecordFrame: pinnedUploadFrame, getGpuMesh: pinnedGpuMesh, getWindmillMeshes, getMachineryParts, gpuMeshes, cpuModels, palette,
     markClassicArt, isClassicArt,   // AUDIT GN2-PF5

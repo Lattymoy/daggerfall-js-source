@@ -8,7 +8,7 @@
 // location) mint the record here.
 import { isNpcFlat } from './npcFlatArchives.js';
 import { isStandingHorseFlat, standingHorseYaw, standingHorseSeed } from './standingHorses.js';
-import { strangerHorseLook } from '../systems/horseCoats.js';
+import { strangerHorseLook } from '../systems/horse/horseCoats.js';
 
 /** Does this flat stand for a body - a town horse, or a person's flat (one a StaticNPC holds is the NPC pass's, never
  *  asked here)? */
@@ -20,7 +20,7 @@ export const standFlatId = (place, x, z) => `flat:${place}:${Math.round(x * 100)
 
 /**
  * The record a host keeps for a stand flat it has batched: a horse's heading, idle seed and look (the road's strangers'
- * law, off its id - systems/horseCoats.js strangerHorseLook), or a person's piece (`{ id, flat }` - the BORN flat, their
+ * law, off its id - systems/horse/horseCoats.js strangerHorseLook), or a person's piece (`{ id, flat }` - the BORN flat, their
  * identity, whatever picture NUDE-FLATS drew). `x, y, z` its billboard's base in the host's frame.
  * @param {{ archive: number, record: number, x: number, y: number, z: number }} sf @param {any} batch @param {string} id
  */

@@ -5,7 +5,7 @@
     "old": "    const want = journey ? travelAsked : walk;",
     "new": "    const want = journey ? travelAsked : 1;",
     "tests": [
-      "test/tv_wasd.test.js"
+      "test/systems/travel/tv_wasd.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "      if (tvWalking) { tvWalking = 0; if (!travelControlUI?.isShowing && !csaHoldsTimeScale() && worldTimeScale() !== 1) resetTimeScale(); }",
     "new": "      if (tvWalking) { tvWalking = 0; }",
     "tests": [
-      "test/tv_wasd.test.js"
+      "test/systems/travel/tv_wasd.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  const tvWalkHoldsTimeScale = () => tvWalking > 0 && !!travelView?.active;",
     "new": "  const tvWalkHoldsTimeScale = () => tvWalking > 0;",
     "tests": [
-      "test/tv_wasd.test.js"
+      "test/systems/travel/tv_wasd.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    if (!travelControlUI?.isShowing && worldTimeScale() !== 1 && !csaHoldsTimeScale() && !tvWalkHoldsTimeScale()) resetTimeScale();   // CSA-G",
     "new": "    if (!travelControlUI?.isShowing && worldTimeScale() !== 1 && !csaHoldsTimeScale()) resetTimeScale();   // CSA-G",
     "tests": [
-      "test/tv_wasd.test.js"
+      "test/systems/travel/tv_wasd.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "          if (!travelControlUI?.isShowing && worldTimeScale() !== 1 && !csaHoldsTimeScale() && !tvWalkHoldsTimeScale()) resetTimeScale();   // the panel gone",
     "new": "          if (!travelControlUI?.isShowing && worldTimeScale() !== 1 && !csaHoldsTimeScale()) resetTimeScale();   // the panel gone",
     "tests": [
-      "test/tv_wasd.test.js"
+      "test/systems/travel/tv_wasd.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "      onFoot: walkMode && playerSpawned && !player.isPlayerSwimming && !csaBoatUnderMe() && !(player.climb?.isClimbing || player.mantling || player.onWall || player.holdPending),",
     "new": "      onFoot: walkMode && playerSpawned && !csaBoatUnderMe() && !(player.climb?.isClimbing || player.mantling || player.onWall || player.holdPending),",
     "tests": [
-      "test/tv_wasd.test.js"
+      "test/systems/travel/tv_wasd.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "      viewUp: travelView?.state === 'up', journey,",
     "new": "      viewUp: !!travelView?.active, journey,",
     "tests": [
-      "test/tv_wasd.test.js"
+      "test/systems/travel/tv_wasd.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "          const way = cam.yaw + Math.atan2(axes.strafe, axes.forward);",
     "new": "          const way = cam.yaw;",
     "tests": [
-      "test/tv_wasd.test.js"
+      "test/systems/travel/tv_wasd.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "  if (!viewUp || journey || !moving || !onFoot || paused || !travels) return 0;",
     "new": "  if (!viewUp || !moving || !onFoot || paused || !travels) return 0;",
     "tests": [
-      "test/tv_wasd.test.js"
+      "test/systems/travel/tv_wasd.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "  travelling: (rate, held = null) => (held != null && held < rate ?",
     "new": "  travelling: (rate, held = null) => (false ?",
     "tests": [
-      "test/tv_wasd.test.js"
+      "test/systems/travel/tv_wasd.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "            forward: _travelDrive.forward,\n          });",
     "new": "            forward: _travelDrive.forward,\n          }); axes.strafe = 0;",
     "tests": [
-      "test/to1_travelOptions.test.js"
+      "test/systems/travel/to1_travelOptions.test.js"
     ]
   },
   {
@@ -104,8 +104,8 @@
     "old": "        if (tvWalking && !_travelDrive && (axes.forward || axes.strafe)) {",
     "new": "        if (tvWalking && (axes.forward || axes.strafe)) {",
     "tests": [
-      "test/to1_travelOptions.test.js",
-      "test/tv_wasd.test.js"
+      "test/systems/travel/to1_travelOptions.test.js",
+      "test/systems/travel/tv_wasd.test.js"
     ]
   }
 ]

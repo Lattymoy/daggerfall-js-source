@@ -6,7 +6,7 @@
 // moved, and world.js is 29,000 lines: every change to it shifted every cite below the change, citeShift rewrote them
 // in every doc that carried one (191 cites in 40 files for one feature), and any two branches that touched world.js
 // then rewrote the same doc lines with different numbers. Every merge of main into PR #630 conflicted, and every
-// conflict was cite numbers alone. The law that made the numbers checkable (test/citedrift.test.js, ROAD-E fix-D:
+// conflict was cite numbers alone. The law that made the numbers checkable (test/scenes/citedrift.test.js, ROAD-E fix-D:
 // "THE CITATION IS PART OF THE CLAIM") stands; what changes is what the claim says.
 //
 // THE ANCHOR. `world.js:"const livingQuarry = () =>"` is the one line of world.js that holds that text, and the text
@@ -17,7 +17,7 @@
 // each quote twice, once in the line and once in the anchor that names it. Lines added or removed anywhere else leave an
 // anchor as it was, so a change to a
 // file touches the docs that cite the lines it changed, and no others. A quote that stops being true is the gate's
-// (test/citeanchor.test.js CA1) in the change that made it so, and it names the doc and the quote.
+// (test/tooling/citeanchor.test.js CA1) in the change that made it so, and it names the doc and the quote.
 //
 // WHAT IT COVERS. A cite into a tracked .js/.mjs - the path form (`src/scenes/world.js:6153`), the basename form
 // (`world.js:6153`), a range (`:6153-6160`, anchored at its first line: the anchor names the place, the code shows the
@@ -29,7 +29,7 @@
 // strike is read span by span, and a line whose marks do not pair - a strike across lines - is held whole); a cite
 // into a .cs (DFU's lines do not move), a .md (the Ledger's rows are cited by name, CD1) or a .sh; a cite into another
 // repository's file that shares a basename with ours (FOREIGN); the tools' own fixtures (SELF_DOCS); and a cite in a
-// file of the relay's bundle (relayFiles - every byte there is a relay law, test/relayversion.test.js SLAM8, and a
+// file of the relay's bundle (relayFiles - every byte there is a relay law, test/net/relayversion.test.js SLAM8, and a
 // comment rewritten is a version bump and a deploy that drops every connected player: its cites become anchors with
 // the next relay change that is one anyway).
 //
@@ -69,7 +69,7 @@ export const QUOTE_MAX = 72;
 export const AFTER_REACH = 60;
 
 /** The tools' own fixtures, which carry example cites that are synthetic. */
-export const SELF_DOCS = Object.freeze([...SHIFT_SELF_DOCS, 'tools/citeAnchor.mjs', 'test/citeanchor.test.js']);
+export const SELF_DOCS = Object.freeze([...SHIFT_SELF_DOCS, 'tools/citeAnchor.mjs', 'test/tooling/citeanchor.test.js']);
 
 /** Cites into a file that is not one of ours but shares a basename with one: another repository's (Audit-68.md:
  *  project-final's main.js, which citeShift moved as if it were src/main.js - the five carry their first-written
@@ -77,13 +77,13 @@ export const SELF_DOCS = Object.freeze([...SHIFT_SELF_DOCS, 'tools/citeAnchor.mj
  *  src/ui/launcher.js - app/launcher/launcher.js came later). Held as written: nothing they name can move. */
 export const FOREIGN = Object.freeze([
   ['src/ai/enhancedMotor.js', 'main.js'],
-  ['src/ai/navBake.js', 'main.js'],
-  ['test/enhancedAI.test.js', 'main.js'],
+  ['src/ai/nav/navBake.js', 'main.js'],
+  ['test/ai/nav/enhancedAI.test.js', 'main.js'],
   ['bible/12-Enhanced-AI/Enhanced-AI-Arc.md', 'main.js'],
   ['bible/10-UI/Settings-Screen-Spec.md', 'launcher.js'],
 ]);
 
-/** The relay's bundle: every file the worker's entry reaches (test/relayversion.test.js RELAY_GRAPH walks the same). */
+/** The relay's bundle: every file the worker's entry reaches (test/net/relayversion.test.js RELAY_GRAPH walks the same). */
 export const relayFiles = (root = ROOT) => new Set(closureOf('server/src/index.js', root));
 
 /** A numeric cite into a .js/.mjs, path or basename, with an optional range end. Not the tests' escaped spelling. */

@@ -20,7 +20,7 @@ export const BURNING_DOORS_ID = 417;
  * @typedef {{ title: string, author: string, pages: ReadonlyArray<ReadonlyArray<string|{ text: string, center?: boolean, font?: number }>> }} PortBook
  */
 
-/** The face a title page sets: FontPrefix 5, FONT0004 (ui/bookReader.js BOOK_FONT_NAMES, ui/enhancedBook.js
+/** The face a title page sets: FontPrefix 5, FONT0004 (ui/bookReader.js BOOK_FONT_NAMES, ui/enhanced/enhancedBook.js
  *  FACE_OF_PREFIX). The empty line under it puts the reader back in its own face. */
 export const BOOK_TITLE_FONT = 5;
 

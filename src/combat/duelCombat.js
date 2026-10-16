@@ -5,7 +5,7 @@
 //
 // THE STRIKER'S HALF ALONE (INT8, INT9, INT10 - bible/06-Systems/Integrity-Arc.md 5). Every blow and spell between
 // players - a duel's, a siege's and its works', a Royal Tourney's, the open zone's - is counted on the STRIKER's machine
-// and sent as a number, which the relay's referee clips (net/duelRef.js, siegeRef.js, wildRef.js); no defender's
+// and sent as a number, which the relay's referee clips (net/duel/duelRef.js, siegeRef.js, wildRef.js); no defender's
 // machine resolves anything, and nothing of the defender's sheet - its armour, Dodging, attributes, live effects -
 // reaches any roll. The striker's sheet is its own LIVE one (duelAttackerOf: level, race, the eight attributes by
 // liveStat - a Fortify's, a disease's, a Boons tier's - the four skills a blow reads, the career's bitfields, health;
@@ -25,7 +25,7 @@ import { SWING_MODS, WEAPON_REACH } from './playerWeapon.js';
 import { createWeapon } from './enemyEquipment.js';
 import { SKILLS, skillValue } from '../systems/skills.js';
 import { liveStat } from '../systems/statMods.js';
-import { offHandToHit, OFF_HAND_BLOW } from './handsLaw.js';   // TWO-HANDS (AUDIT): the off hand's terms on a blow between players
+import { offHandToHit, OFF_HAND_BLOW } from './twoHands/handsLaw.js';   // TWO-HANDS (AUDIT): the off hand's terms on a blow between players
 import { STAT_KEYS_ORDER } from '../systems/chargen.js';
 import { weaponSkillUsed } from '../characters/weapons.js';
 import { armorValuesOf } from '../systems/equip.js';   // AUDIT C&C H5: the stand-in's unarmoured table, DFU's own 100s

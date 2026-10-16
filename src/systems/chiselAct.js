@@ -5,7 +5,7 @@
 // strike too: the Pick-Axe's glint's rule (systems/mineAct.js), a line for a point. The chisel is set on a line (the
 // pointer's press names one; the arrows move it; the digits name one) and a strike lands there: on the marked line it is
 // true. A cut or a mix takes four strikes, a carving seven (recipeLaw chiselStrikes); every one true is a clean act. Pure
-// - a machine the bench's page ticks and strikes (ui/profPages.js), as the heat is the anvil's (systems/heatAct.js).
+// - a machine the bench's page ticks and strikes (ui/professions/profPages.js), as the heat is the anvil's (systems/heatAct.js).
 //
 // The act is the client's, so it may be lied about: its report moves the service by its bounded step only (5.1's honest
 // bound - a carving's one quality step; a cut's or a mix's half again of its XP, the Stores keeping no quality - the

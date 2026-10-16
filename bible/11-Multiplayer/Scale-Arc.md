@@ -104,7 +104,7 @@ No player is named, and a metric never costs a request. The module's header carr
 to run the Worker near its database; nothing said where it ran, and on 2026-10-12 it ran it in Sydney, a Pacific from
 the primary - D1-NEAR (below) names the place instead.
 
-**Indexes.** `0043_scale_indexes.sql` holds twelve indexes, each found by the planner and pinned by it (`test/scale1.test.js` C). `node_harvests` has been rebuilt four times to widen its CHECK, so a fifth rebuild must recreate `idx_node_harvests_day`.
+**Indexes.** `0043_scale_indexes.sql` holds twelve indexes, each found by the planner and pinned by it (`test/net/scale1.test.js` C). `node_harvests` has been rebuilt four times to widen its CHECK, so a fifth rebuild must recreate `idx_node_harvests_day`.
 
 **D1's hundred parameters.** The market's materials view and its medians bind their keys as one JSON array (`IN (SELECT value FROM json_each(?))`). The planner still uses `idx_market_open`, and tighter than before. The pin runs the whole catalogue (113 materials) through a D1 that refuses past 100.
 
@@ -115,7 +115,7 @@ the primary - D1-NEAR (below) names the place instead.
 
 **Retries.** `src/net/backoff.js` holds `jittered` (a wait anywhere from half to one and a half times itself) and `ASK_AGAIN_NOW` (only `offline` and `server` are asked again within one press). The professions', market's and writs' books send `rate` and `maintenance` straight back, kept for their slower pumps. The Drakes' book waits between its asks.
 
-**Pins.** `test/scale1.test.js` (10). `tools/mutants/scale1.json`: 35 mutants, 35 dead. `npm run account`: 46/46 in workerd, with `METRICS` bound locally, so the counting proxy ran over a real D1. The service is `acct43`.
+**Pins.** `test/net/scale1.test.js` (10). `tools/mutants/scale1.json`: 35 mutants, 35 dead. `npm run account`: 46/46 in workerd, with `METRICS` bound locally, so the counting proxy ran over a real D1. The service is `acct43`.
 
 ## SCALE2: shipped (client only, no relay deploy)
 
@@ -139,7 +139,7 @@ The relay was split out of SCALE2 on reading: every piece of the reconnect storm
 - After a terminal close, the wait is drawn once, anywhere in [half, one and a half) of `CHAT_REJOIN_MS`.
 - Before, every tab's channels came back on the same thirtieth second.
 
-**Pins.** `test/scale2.test.js` (8). `tools/mutants/scale2.json`: 19 mutants, 19 dead. Re-aimed, still dead:
+**Pins.** `test/net/scale2.test.js` (8). `tools/mutants/scale2.json`: 19 mutants, 19 dead. Re-aimed, still dead:
 - ACC1d-8 / 9 / 10 / 12
 - the three TOKEN-WAIT mutants
 - RENOWN1's character mutant
@@ -226,7 +226,7 @@ room's copy of a pose and spaces a peer's waypoints by the time its sender kept.
 **Not done here:** the hub split, binary poses and the load harness are SCALE3 and SCALE5, unchanged. Nothing here has
 been measured live - the metrics above are how it will be.
 
-**Pins.** `test/scale2b.test.js` (15). `tools/mutants/scale2b.json`. Re-aimed: the hello bucket's storage pins
+**Pins.** `test/net/scale2b.test.js` (15). `tools/mutants/scale2b.json`. Re-aimed: the hello bucket's storage pins
 (online_relay, chat1, world1, profile2), ONLINE1's and CHAT1's pose-frame pins (the send time), SOC1's last-seen pin,
 CHAT1's meter regex, REALM P0.5's checkpoint regex; `test/fakeRoom.mjs` and slam5's harness bring a socket in by the
 object's own door (`_adopt`), as `fetch` does.
@@ -237,7 +237,7 @@ Mac, 2026-10-08, asked "How can we continue to improve server performance and ov
 the list it was answered with, "Do 1 2 and 3": the account service's two reads made one (SCALE4a), SCALE4 (here 4b and
 4c), and SCALE3. The service is **acct95** with migration **0091** (acct94 and 0090 until the merge with main, where
 SD9b had taken both); it deploys with the site, which waits for it. No relay change. All four were audited before the
-merge (AUDIT SCALE, `01-Overview/Audit-Scale.md`); what it found is written into each section below, and every account
+merge (AUDIT SCALE, `01-Overview/audits/Audit-Scale.md`); what it found is written into each section below, and every account
 figure here was measured again after it. The relay's could not be, on the boot that did (below).
 
 ### SCALE3: the load harness (the local half)
@@ -247,7 +247,7 @@ entry exported no AdmitGate - nor set up a fleet past the line's burst; it expor
 service's entry does, and each bot's guest waits its place in the line. Its three sessions now share one reconnect wave
 and offer the second wire (`--wire 1` runs the first), and its tally reads `poses` and `fb` batches - every figure below
 was taken on the first wire with a wave a session, before SCALE5b and SCALE2c; the audit's own live storm is in
-`01-Overview/Audit-Scale-II.md`.)
+`01-Overview/audits/Audit-Scale-II.md`.)
 
 `tools/loadHarness.mjs` (`npm run load`; `--help` names every knob) runs a fleet of bots against the REAL relay and the
 REAL account service, both in local workerd (`wrangler dev`; the service behind `tools/loadAccountEntry.mjs`).
@@ -292,8 +292,8 @@ requests a bot-hour and frames a bot-second. Rows a statement are only partly so
 run built and on what each isolate kept (the yards, the Motherlodes' pick). **The staging pair** (the same harness
 pointed at deployed Workers) is not built: it needs a second deploy of both Workers and a database on Mac's account.
 
-**Pins.** `test/scale3.test.js` (5) pins the parts that stand without a toolchain; `tools/mutants/scale3.json`: 11
-mutants, 11 dead. AUDIT SCALE pinned the measurement itself (`test/auditscale.test.js` section C: the report's
+**Pins.** `test/net/scale3.test.js` (5) pins the parts that stand without a toolchain; `tools/mutants/scale3.json`: 11
+mutants, 11 dead. AUDIT SCALE pinned the measurement itself (`test/net/auditscale.test.js` section C: the report's
 arithmetic, the storm's seconds, the clocks, the roles and every counter), and moved scale3's merge pin (C9: the fleets'
 pose reservoirs pooled unweighted read a 75th percentile of a second for 10 ms). The harness itself is not in the suite,
 for the account probe's reason (`tools/accountProbe.mjs`). Two of its findings were fixed because it needed them:
@@ -371,7 +371,7 @@ past its year deleted first, an orphan refused, the stale touch unchanged.
 **Left, Mac's call:** a session kept in the isolate for a few seconds would take most of the session reads left, but a
 sign-out or a revoked device would then take effect up to that long later on every other isolate.
 
-**Pins.** `test/scale4a.test.js` (3): the two old reads are the oracle. `tools/mutants/scale4a.json`: 6 mutants, 6
+**Pins.** `test/server/scale4a.test.js` (3): the two old reads are the oracle. `tools/mutants/scale4a.json`: 6 mutants, 6
 dead.
 
 ### SCALE4b: the service's own clock
@@ -419,7 +419,7 @@ statements to 4, and the sweeps' scans are gone from the rows read. The clock it
 here: six minutes' firings and one hour's. On a quiet world it is about five statements a minute and seventeen an hour,
 however many play (pinned, AUDIT SCALE D7) - twenty since INT2/INT5's two sweeps and INT9's (`06-Systems/Integrity-Arc.md`).
 
-**Pins.** `test/scale4b.test.js` (6), over the real Worker. `tools/mutants/scale4b.json`: 27 mutants, 27 dead
+**Pins.** `test/server/scale4b.test.js` (6), over the real Worker. `tools/mutants/scale4b.json`: 27 mutants, 27 dead
 (SCALE4b-sessions-unindexed retired by AUDIT SCALE A6); five earlier records re-aimed by content, and the 18 aimed into
 the changed code all still die. PIN MOVED: AUDIT 30 S3, BAG1's AUDIT2 S1 and NOTICE1's expiry now run the hour's
 firing; AUDIT SCALE moved scale4b's arena clock (A4) and its sessions plan (A6).
@@ -469,7 +469,7 @@ SCALE4b: -13.3% requests (-13.9% of the play's), -5.0% statements, -5.4% rows re
 so their clocks start in step and stay there; the falling into step is pinned instead: twenty-two requests in fifteen
 minutes for a town entered half a minute into the box's three, seventeen now.
 
-**Pins.** `test/scale4c.test.js` (8); `tools/mutants/scale4c.json`: 28 mutants, 28 dead. Re-aimed by content, still
+**Pins.** `test/net/scale4c.test.js` (8); `tools/mutants/scale4c.json`: 28 mutants, 28 dead. Re-aimed by content, still
 dead: MAIL1's BOX-auth-kept and HOST-never-polled, NOTICE1-19, and eight of scale4c's own after AUDIT SCALE. PIN MOVED:
 ACC4's play-clock host pin and MAIL1's host pin; AUDIT DROPS F's and CHAT1's host pins (the lane's stamp); AUDIT SCALE
 moved scale4c's first knock (B1) and its street stamp (B7), and AUDIT WORLD7/8's hidden-tab pin to world.js's one
@@ -537,14 +537,14 @@ PERF-RELAY1, each half alone, three alternating runs' medians, us a moving pose:
 per-listener pixel cost nothing it could see). PERF-NEXT's prototype measured 108.5 -> 39.3 at 200 with the arm
 tightened further; this changes two of its lines.
 
-**Pins.** `test/perfrelay1.test.js` (3): inRangeOf answers inRange over every key kind and pose shape (absent, empty,
+**Pins.** `test/server/perfrelay1.test.js` (3): inRangeOf answers inRange over every key kind and pose shape (absent, empty,
 NaN, infinite, a pixel edge, either side of zero); over a room of 60 past POSE_FAN_MAX, with listeners out of range and
 listeners walking the range's edge and an id-less socket with a pose, every moving pose reaches exactly the listeners
 `poseFan` names over those inRange hears, and a keepalive exactly everyone in range; `_poseFrame`'s bytecode is under
 the ceiling and `_message`'s over it (a fold back leaves no `_poseFrame` to print). `tools/mutants/perfrelay1.json`:
-8 mutants, 8 dead. `test/relayversion.test.js` carries world184's law; PIN MOVED: the files that pin RELAY_VERSION (35, 37 at
+8 mutants, 8 dead. `test/net/relayversion.test.js` carries world184's law; PIN MOVED: the files that pin RELAY_VERSION (35, 37 at
 the merge of main),
-`disc7`'s list of versions, `soc1.json`'s S38 record, and CHAT1's pin on the arm's order (`test/chat1.test.js`, read
+`disc7`'s list of versions, `soc1.json`'s S38 record, and CHAT1's pin on the arm's order (`test/net/chat1.test.js`, read
 off `_poseFrame` now, with the dispatch pinned beside it). Re-aimed by content, the arm one indent shallower, all dead:
 ARENA4-STANDS-POSE-NOBODY, AUDIT1003b-R4-POSES-TO-ALL, AUDIT-SEATS-R2-gate-not-first, AUDIT-SEATS-T2-eye-fanned,
 HOTFIX1003f-STRANGER-POSE-FANNED, PVPREF-relay-step-unjudged, SEAT1b-relay-a-channel-ticks.
@@ -747,14 +747,14 @@ least, so `COPY=1` copies each frame as it is sent (AUDIT SCALE5a D6), and both 
 
 ### Pins
 
-- **`test/scale4d.test.js` (7).** The mint runs on one session opened `first-primary`, the session lookup first, every
+- **`test/server/scale4d.test.js` (7).** The mint runs on one session opened `first-primary`, the session lookup first, every
   claim read through it, and the honours alone on the binding (A1). No other route opens one: the play beat, the
   heartbeat, Renown's report and the realm's list, each answered 200 (D3). The claims are byte for byte the binding's,
   the same token. The metrics point counts the session's statements and the honours'. DB_ROOT is the binding, through
   the counter too, and a binding with no sessions is answered as it stands; the fake's session is a class that reads
   its own fields (D8). The budget's config is read once across two requests' Proxies, and forgotten for both by a staff
   change. The deploy turns replication on after the migrations and before the Worker, mode auto, never a stop (D5).
-- **`test/scale5a.test.js` (13).**
+- **`test/net/scale5a.test.js` (13).**
   - The kept account and subject indexes answer EXACTLY what the old walks answered: over six seeded stories of the
     hub's own doors (hellos, reconnects, claims, drops) and four at the index's own doors. The latter adopt, set,
     clear, forget and set again, let a socket go unannounced past IDX_TRUST_MS, and run an account past
@@ -935,7 +935,7 @@ into my cell is opening or refused gets every pose through the halo, as before.
   zone across an edge lands in a room where its striker is no fighter. Both want one room for a pair; recorded, not built
   here.
 
-**Pins.** `test/halothin.test.js` (11):
+**Pins.** `test/net/halothin.test.js` (11):
 - the step, and the law, every arm of it;
 - the real session at a corner - its own cell every pose, each halo one each 8 m, the stop and the heartbeat;
 - standing and turning - the halo hears the place once (the stop the session records);
@@ -950,7 +950,7 @@ into my cell is opening or refused gets every pose through the halo, as before.
 Mutants: `tools/mutants/halothin.json`, 32 dead. SCALE2b's stamp-per-room record re-aimed by content at the halo's send
 (dead). The word moved one line up after CI: WAGONS2-VISIT holds `caravanVisitLink.close()` against `if (!key)`.
 
-AUDITED the same day (`01-Overview/Audit-Peer-Range-Halo-Thin.md`): what it changed is written into this section as it
+AUDITED the same day (`01-Overview/audits/Audit-Peer-Range-Halo-Thin.md`): what it changed is written into this section as it
 now stands.
 
 ## SCALE4e: built (2026-10-10, this branch - the account deploy outlasts an overloaded database)
@@ -973,7 +973,7 @@ primary within half a minute.
   D-10: written at acct106. Main's own account deploys since (acct107-111) each carried SCALE4d already; this merge's is
   acct112.)
 
-**Pins.** `test/scale4e.test.js` (4) runs the step's own script under bash, as the runner does, over a fake wrangler
+**Pins.** `test/tooling/scale4e.test.js` (4) runs the step's own script under bash, as the runner does, over a fake wrangler
 that answers as D1 did and a fake `sleep`: an overload asked again after each wait and the deploy going on once the
 database answers; a migration that fails for any other reason stopping it at once; a database overloaded past the
 last wait stopping it with the error; the one apply line and the step's place. `tools/mutants/scale4e.json`: 5
@@ -1031,7 +1031,7 @@ about (N - 25) / 5 s whatever the spread - 95 s at 500, 395 s at 2,000, half an 
 is the slower door the spread costs nobody a token; it only spreads the line's arrivals and the cells' hellos. Live (60
 bots, the real relay and account service in local workerd, the relay restarted under them): 51 of 111 mints answered
 `queue`, every bot back in its cell in 13-17 s. The minter now waits the line's own `wait` (AUDIT SCALE II L4a). Which
-door sets a reconnect's pace - the line's rate for a mint, or the spread - is Mac's (`01-Overview/Audit-Scale-II.md`,
+door sets a reconnect's pace - the line's rate for a mint, or the spread - is Mac's (`01-Overview/audits/Audit-Scale-II.md`,
 L4). Before this, at 500, the mints overloaded the database, and a page whose mint failed waited
 out STORM-SHED's cooling instead.
 
@@ -1052,7 +1052,7 @@ the room's 4 MiB/s foes budget, past which the relay drops frames silently, real
 - Deltas, the own lane, a dungeon host's stream (its frames are the readers' heartbeat of the host) and a refused send
   are untouched.
 
-**Pins.** `test/scale2c.test.js` (8):
+**Pins.** `test/net/scale2c.test.js` (8):
 - the spread's law;
 - the wave's rules;
 - a page's cell, halo and hub driven over the pins' fake socket, held to one slot and reopened in one instant;
@@ -1164,7 +1164,7 @@ A realm character's mint with the seats open:
   slower report is a gameplay change.
 - **`TOKEN_REUSE_MS`**: as the plan says. A room would hear a level or a guild up to four minutes stale.
 
-**Pins.** `test/scale4f_guild.test.js` (2):
+**Pins.** `test/server/scale4f_guild.test.js` (2):
 - the three asked with the one read held to each reading for itself, over twelve membership states and every Season;
   the states are none, a member, the guildmaster with a palace and a crown seat, a ribbon earned while a member, before
   it joined and the instant it joined, another Season's, two Seasons', no heraldry, heraldry that is no JSON, and a
@@ -1177,7 +1177,7 @@ A6, GUILD1c-mint-guild-off-the-body and -every-character-the-accounts-guild (now
 SEASON1-idx-badge-season.
 
 **Pins.**
-- `test/scale4f.test.js` (5):
+- `test/server/scale4f.test.js` (5):
   - the fold held to the four, frozen as they stood at acct106 and copied into the test, over fourteen states of four
     characters for two askers, every arm reached on both sides;
   - the mint asking its realm row once, with its token as it was;
@@ -1201,7 +1201,7 @@ PIN MOVED:
 
 **Found on the way, fixed.** LEGACY7-model-rewritten survived, on main too: a line's model change sent with the stored
 copy's `base` reached the UPDATE, which keeps the model column, and would have written a record that says another
-model. Only a write with no `base` was pinned, and the stale path refused that one. `test/legacy7_service.test.js` now
+model. Only a write with no `base` was pinned, and the stale path refused that one. `test/server/legacy7_service.test.js` now
 sends one made from the stored copy, and the mutant dies.
 
 ## SCALE4g: built (2026-10-10, this branch - acct112, beside SCALE4f; no migration)
@@ -1253,7 +1253,7 @@ replicas serve. SCALE4f's `double7` will say whether they do. With the Worker be
 Placement had run it in Sydney), whether D1 then serves a session from a replica is the open question SCALE4d named.
 
 **Pins.**
-- `test/scale4g.test.js` (4):
+- `test/server/scale4g.test.js` (4):
   - the routes by route and method, and the session's start (the bookmark, none, one D1 refuses);
   - the header's law;
   - over the real Worker: a heartbeat's session started from its bookmark and its answer carrying the newer position
@@ -1372,7 +1372,7 @@ kept as one more reason a halo goes whole beside the host's `haloWhole`: the rel
 zone's among them.
 
 **Pins.**
-- `test/scale5b.test.js` (22):
+- `test/net/scale5b.test.js` (22):
   - slimPose's round trip over every field the wire carries;
   - the relay's batch: one frame of slim entries in order, the first wire byte for byte, the hello's offer, owed frames
     ahead of any other, a closed socket owed nothing, one timer a room, the bound;
@@ -1391,7 +1391,7 @@ zone's among them.
 - `tools/wire2Bench.mjs`: the table above.
 
 PIN MOVED, each a pin that read a line SCALE5b moved:
-- RELAY_VERSION's pins (39 files and the soc1 record) to world191; `test/relayversion.test.js` holds world191's law,
+- RELAY_VERSION's pins (39 files and the soc1 record) to world191; `test/net/relayversion.test.js` holds world191's law,
   and `src/net/relayCfg.js` joins the relay's import graph.
 - The chat links' constructor (chat1, chatroster_namefilter, scale2c's default), the join and leave fans (scale5a,
   soc1_hub), the healer's lookup (gateheal), the herald's roles (discordgates, sdherald, serpent2_herald), the staff
@@ -1502,7 +1502,7 @@ line does not grow with the hub (AUDIT SCALE II D-6: in sends; its time is one s
 party, which nobody is. If the bus's metrics run hot, the next step is party poses shard to shard.
 
 **Pins.**
-- `test/scale5c.test.js` (12): the law; the bus running a shard's socket as its own (welcome, picture, a world line
+- `test/net/scale5c.test.js` (12): the law; the bus running a shard's socket as its own (welcome, picture, a world line
   everywhere, a friend request across shards); a shard's roster and the hub's count, told and said; the hops; ONE-SEAT
   and a reconnect; the woken bus, a lost hello and the alarm's sync; the search; the session; the bus's fans (a
   world line one entry a shard in its batch's order, a guild's line, the guild online, the hub's search budget); the
@@ -1511,7 +1511,7 @@ party, which nobody is. If the bus's metrics run hot, the next step is party pos
 - `tools/hubShardBench.mjs`: the table above.
 
 PIN MOVED, each a pin that read a line SCALE5c moved:
-- RELAY_VERSION's pins (40 files and the soc1 record) to world192. `test/relayversion.test.js` holds world192's law,
+- RELAY_VERSION's pins (40 files and the soc1 record) to world192. `test/net/relayversion.test.js` holds world192's law,
   and `src/net/hubShards.js` joins the relay's import graph.
 - `.github/workflows/account-deploy.yml` lists `src/net/hubShards.js`: wire.js imports it.
 - The channel whitelist (chat1, chatchan: sixteen more). The hub's hello words moved into `_hubHelloWords` (auditraid,
@@ -1562,7 +1562,7 @@ the difference), a region line 0.81 ms; the same region on its four shards - a h
 (500 a shard) and 0.08 ms on the bus, the whole wave 156 ms of the bus's, a region line 0.56 ms on the bus and 0.7 KiB
 to the shards.
 
-**Pins.** `test/scale5c.test.js`'s thirteenth: the law (every region shard a channel and a region's room, never a
+**Pins.** `test/net/scale5c.test.js`'s thirteenth: the law (every region shard a channel and a region's room, never a
 hub's; the bus of a shard and the channel of a key), and over real Rooms a region line and a traveller's mark from one
 shard heard on another and on a tab from before (the mark one entry a shard, never back to its sender), a shard's
 joiner told the marks, the census over every shard, everyone for the Region tab, the hops, a bus refusing another
@@ -1609,7 +1609,7 @@ the square of its crowd, so SOCKETS_MAX stays at 256 and a crowd past it goes to
   (`partyLayerAt`). (AUDIT SCALE II R3-4: IN the cell it joins - a neighbour's layer number is another place's. R3-10: a
   badge said again asks the layer its old socket stands in, the primary's and a halo's.)
 
-**Pins.** `test/scale5d.test.js` (4): the law; the Worker's walk (the asked layer first, round past the last, only a
+**Pins.** `test/net/scale5d.test.js` (4): the law; the Worker's walk (the asked layer first, round past the last, only a
 full room's refusal walked past, each object told its layer whatever the page sent, every layer full `room full`); the
 room (a full room said full, the layer kept on a socket only where the room layers, its welcome's `ly`); the session
 (the hint, a reconnect's own layer, the welcome, a halo's layer carried by a crossing, a channel never asked) and the
@@ -1621,7 +1621,7 @@ SCALE5b-full-uncounted, X12-welcome-without-v.
 
 **Found on the way, fixed.** The walk was first written in `server/src/index.js` as an exported function, which the
 pins could import. workerd reads every named export of an entrypoint as an entrypoint, and a function there stops the
-relay starting. AUDIT-ACC F2's pin (test/accountdeploy.test.js) failed on it before any deploy, and the walk moved to
+relay starting. AUDIT-ACC F2's pin (test/server/accountdeploy.test.js) failed on it before any deploy, and the walk moved to
 `server/src/relayScale.js`, where the relay's helpers live for that reason.
 
 **Left:** part two - the event rooms (a gate's court, a Super dungeon's realm) as copies around one fight. Only those two
@@ -1677,7 +1677,7 @@ frame or the sync does.
 has a seat), earns his receipt and sees the kill, beside the copy's crowd but not the court's. The court's own crowd is
 unchanged.
 
-**Pins.** `test/scale5d_court.test.js` (7):
+**Pins.** `test/net/scale5d_court.test.js` (7):
 - the law;
 - the Worker's walk (the court first);
 - a copy's socket: welcomed by its copy, held by the court outside its index, joining the one fight, hearing the same
@@ -1745,7 +1745,7 @@ What the numbers ask is fewer writes at the source.
     window, where a player just under the bound lost it.
 
   Otherwise what is earned waits RENOWN_COALESCE_MS (5 minutes). The bar draws it all the while as its ghost
-  (ui/hudRenown.js, RENOWN4), and a report's worth (5,000) still goes at once.
+  (ui/hud/hudRenown.js, RENOWN4), and a report's worth (5,000) still goes at once.
 - **The service says the room** (`server-account/src/renownTracks.js`): each answer carries `room`, what the account's
   open hour still takes. It is read back by the report's own decision, so it counts every writer's spend so far.
 - **The host keeps the room with the hour and the total it was said at** (`scenes/world.js` `_renownRoom`). Another
@@ -1823,7 +1823,7 @@ the plan for that point, built when `/v1/auth/token`'s D1 wait (`double5`, SCALE
   back-forward cache restores sends that last one again, and it is answered as a repeat).
 
 **Pins.**
-- `test/scale4h.test.js` (8):
+- `test/server/scale4h.test.js` (8):
   - the law, every arm;
   - the tracker's pace (coalesced, the minute, a word that throws, none given, a report's worth, a refusal's own
     backoff);
@@ -1879,7 +1879,7 @@ to 82.1, a dungeon's 70.0 to 78.6 - still well under half the first wire's.
 the merge. A client from before it reads the new relay's poses through the same door; a client after it against the
 old relay sees the old rounding until the deploy lands.
 
-**Pinned** (`test/slimframe.test.js`, 2; `tools/mutants/slimframe.json`, 6, all dead): the law over every room kind
+**Pinned** (`test/net/slimframe.test.js`, 2; `tools/mutants/slimframe.json`, 6, all dead): the law over every room kind
 (a height within half a centimetre everywhere, x and z whole in a native room and within half a centimetre elsewhere,
 one nativePoseRoom for session and relay), and the relay to the screen - a speaker in a cell and in a dungeon at heights
 and places that are no whole metre, each pose's batch entry kept, and the peer a second-wire session stands within half
@@ -1889,7 +1889,7 @@ the height whole (`"y":-1412` for -1412.25 - the bug, pinned); it reads the cent
 room. `SCALE5b-place-unrounded`, the three relay-fan records and the two `NETSMOOTH-1` records (to `wire.js`) re-aimed by
 content. The relay's version pins moved to world194.
 
-## D1-NEAR: built (2026-10-12, this branch - no migration, no version, no drop; audited, `01-Overview/Audit-D1-Near.md`)
+## D1-NEAR: built (2026-10-12, this branch - no migration, no version, no drop; audited, `01-Overview/audits/Audit-D1-Near.md`)
 
 From play: *"I notice a lot of UI elements that utilize the server (like searching players, the guild menu, etc) take
 an insane amount of time to load."*
@@ -1985,7 +1985,7 @@ A report and never a gate: the step is `continue-on-error` and bounded by `timeo
 from the region the toml names, or a statement costing tens of ms more than the first deploy's, is the cue to change
 the line. SCALE1's word stood because nothing said where the Worker ran; every deploy says it now.
 
-**Pinned.** `test/d1near.test.js` (2): the toml's one `[placement]` table holds `region` alone, the region this record
+**Pinned.** `test/bible/d1near.test.js` (2): the toml's one `[placement]` table holds `region` alone, the region this record
 names; its comment is D1-NEAR's; none of the three sentences that took Smart Placement's word stands on any page of the
 bible outside a quote; the report step, run by bash as the runner runs it over a fake curl and a fake wrangler
 (`test/d1nearStep.mjs`), says five answers' placements - an HTTP/2 header in lower case and an HTTP/1.1 one capitalised
@@ -2049,7 +2049,7 @@ Left, each with its reason:
 - **The healthy rate.** `HOME_TOWN_TTL_MS` is what sets the route's rate when the service answers; a longer one cuts it
   further and shows another player's changes to a home later - also the owner's call.
 
-Pins: `test/homes_shed.test.js` (3); `tools/mutants/homes_shed.json` (8 dead); SCALE4f's `overload-unread` and
+Pins: `test/systems/online/homes_shed.test.js` (3); `tools/mutants/homes_shed.json` (8 dead); SCALE4f's `overload-unread` and
 `every-fault-503` re-aimed at `thrown` (both dead).
 
 ## BUSY-GATE: built (2026-10-13, this branch - acct128, no migration, no drop)
@@ -2090,7 +2090,7 @@ Left, each with its reason:
 - **A slow database that is not yet refusing opens neither gate.** Both key on D1's own overload word; a breaker keyed
   on latency would shed answers the database could still give, and needs a measured threshold first.
 
-Pins: `test/busy_gate.test.js` (3); `tools/mutants/busy_gate.json` (15 dead); SCALE4f's two catch mutants re-aimed at
+Pins: `test/net/busy_gate.test.js` (3); `tools/mutants/busy_gate.json` (15 dead); SCALE4f's two catch mutants re-aimed at
 `thrown`'s guard (both dead).
 
 ## SEAT-REPLICA: built (2026-10-13, this branch - no migration, no version, no drop)
@@ -2146,7 +2146,7 @@ properly", then "Do it". Read off D1's own query insights and the service's metr
 - **The replica's own ceiling.** At the outage's rate the read is some 14% of one instance's time (1.8 reads a second at
   76 ms); the replica took none of it before.
 
-Pins: `test/seat_replica.test.js` (3); `tools/mutants/seat_replica.json` (12 dead); STORM-SHED's
+Pins: `test/server/seat_replica.test.js` (3); `tools/mutants/seat_replica.json` (12 dead); STORM-SHED's
 `STORM-SHED-report-unforgotten` and `STORM-SHED-write-unasked` re-aimed at the new lines (both dead).
 
 ## DISPLAY-REPLICA: built (2026-10-13, this branch - no migration, no version, no drop)
@@ -2195,7 +2195,7 @@ people"): "1, 2 and 3" - the display reads on the replicas the first of them to 
 - **The replica's ceiling.** The display reads are some 75 statements a second at this hour, on the one WNAM replica
   the pinned Worker is nearest (D1-NEAR); a replica is one instance as the primary is.
 
-Pins: `test/display_replica.test.js` (3); `tools/mutants/display_replica.json` (4 dead); SCALE4g's route list,
+Pins: `test/server/display_replica.test.js` (3); `tools/mutants/display_replica.json` (4 dead); SCALE4g's route list,
 SCALE4d's example of a read on the binding (the yards, where it was the lineages) and BUSY-GATE's rule that a held read
 is never a replica's - each PIN MOVED.
 
@@ -2234,7 +2234,7 @@ The owner's "1, 2 and 3", the first of them: one read of the seats' rows a minut
 - **Another isolate's report reaches a list up to a minute and SEAT_ROWS_KEPT_S later** (the clock's minute, then the
   isolate's keep), where it was SEAT_ROWS_KEPT_S - a confirmation is three witnesses' and the facts move by the week.
 
-Pins: `test/seat_facts.test.js` (3); `tools/mutants/seat_facts.json` (10 dead); AUDIT SCALE D7's quiet minute (eight
+Pins: `test/server/seat_facts.test.js` (3); `tools/mutants/seat_facts.json` (10 dead); AUDIT SCALE D7's quiet minute (eight
 statements, where it was six), SEAT-REPLICA's counted point (two statements, the row asked first) and ACC1b's tables
 (`seat_facts_kept`) - each PIN MOVED.
 
@@ -2308,29 +2308,29 @@ Observability (the relay's own logs), with the account's token.
   `retry-after: 2`) that the page's backoff answers - never an exception thrown out of the Worker.
 - **The pins' harness asks each poll itself.** `test/fakeRoom.mjs` fakeRooms sets `env.HUB_POLL` 'driven', and each
   world's settle calls `_hubPoll` on every shard after the buses seal; `poll: 'held'` runs the loop the runtime runs,
-  on the real clock (`test/hubpull.test.js`).
+  on the real clock (`test/net/hubpull.test.js`).
 
 ### Pins
 
-- `test/hubpull.test.js` (6): the held loop (one poll a shard at the bus, a delivery answering it, a line crossing
+- `test/net/hubpull.test.js` (6): the held loop (one poll a shard at the bus, a delivery answering it, a line crossing
   shards with no hand driving it, every call between the objects TO the bus); a miss asked again later with its
   deliveries still owed, an empty or stale answer paced; the poll's door (held, the older answered at the newer, a
   delivery answering the held one, the `ack` letting go, the first poll's `rs` and `rs` said until heard); `gone`; and
   the audit's two (A1-A5, below). `tools/mutants/hubpull.json`: 20.
-- `test/doask.test.js` (2): the Worker's door and the walk - a retryable error asked again once, an overloaded one
+- `test/server/doask.test.js` (2): the Worker's door and the walk - a retryable error asked again once, an overloaded one
   never, what is left a 503. `tools/mutants/doask.json`.
-- PIN MOVED: `test/auditscale2_bus.test.js` R2-6 (a woken bus's resync now the first poll's `rs`), R2-7 (a delivery's
+- PIN MOVED: `test/net/auditscale2_bus.test.js` R2-6 (a woken bus's resync now the first poll's `rs`), R2-7 (a delivery's
   answer lost and handed twice, by poll; a close the bus let go of a shard cut off past HUB_SILENT_MS said again at its
   sync), R2-8 (the poll carrying a wrong `gone` reaches the bus before the reconnect's hand-up, so its guard stays
   pinned), R2-9 (the shard heard from keeps its very ShardSockets), R3-6 (a woken court's copy resynced by its first
   poll), D-7 (settled, so a second greeting would reach the socket), D-8 (HUB_POLL_MS and the outbox's bounds);
-  `test/scale5c.test.js`'s count (the shard asks after the bus's tell); `test/scale2b.test.js`'s calls between rooms
+  `test/net/scale5c.test.js`'s count (the shard asks after the bus's tell); `test/net/scale2b.test.js`'s calls between rooms
   (twenty-three, eighteen on ROOM_CALL_MS after the merge of main - its INSTANCES twenty-four and twenty, less the push
   and the resync, the poll on its own deadline);
   `tools/mutants/auditscale2_bus.json` re-aimed by content (the resync's three to the poll's `rs`, the delivery's miss
   to its `ack`), `vhubs`' record retired with the storage it pinned, and the outbox's bounds and the silent sweep's
   purge added; `tools/hubShardBench.mjs` reads the bus's outbox where it read its pushes.
-- RELAY_VERSION world210, its hash in `test/relayversion.test.js` and every pin on world209 moved. It was world208 on
+- RELAY_VERSION world210, its hash in `test/net/relayversion.test.js` and every pin on world209 moved. It was world208 on
   this branch until the merge of main, whose INSTANCES (`11-Multiplayer/Instances.md`) took world208 first, and world209
   until the next, whose WEAPON-GLOW1 (`05-Combat/Weapon-Glow.md`) took world209.
 
@@ -2353,7 +2353,7 @@ Read and left: a shard reset with deliveries answered but not yet acknowledged h
 (its sockets, where they outlived it, hear them twice - the window is one poll); a held poll keeps a live shard resident
 (the shards were active 21-23 hours a day already, above). DO-ASK was sound: only a socket's upgrade reaches askRoom
 (the 426 comes first), so a second ask sends no body twice. The relay law's hash (then `world209`) moved with the fixes, before any deploy
-(`test/relayversion.test.js` notes the first).
+(`test/net/relayversion.test.js` notes the first).
 
 ### The deploy
 
@@ -2437,11 +2437,11 @@ Each finding reproduced over the service on node:sqlite, against the branch and 
 
 | # | Found | Fixed | Pin |
 |---|---|---|---|
-| B1 | YARDS-REPLICA moved an answer: an isolate's first read of a town was the primary's and saw every write; now it is a replica's, and another isolate's write - the owner's own, their next ask landing elsewhere - can miss it, kept YARDS_KEPT_S. Its comment said the lag was "less"; it is added | the owner's page holds its writes over any answer YARD_WRITE_HOLD_MS (a minute: the kept answer and a lag inside it), not only one asked before them - and FB1001 YARD-STALE's 30 s gap of another isolate's kept answer closes with it; the comment corrected | `test/fb1001_yard.test.js` PRIMARY-TRIPS audit, mutants hold-dropped and YARD-STALE's re-aimed |
+| B1 | YARDS-REPLICA moved an answer: an isolate's first read of a town was the primary's and saw every write; now it is a replica's, and another isolate's write - the owner's own, their next ask landing elsewhere - can miss it, kept YARDS_KEPT_S. Its comment said the lag was "less"; it is added | the owner's page holds its writes over any answer YARD_WRITE_HOLD_MS (a minute: the kept answer and a lag inside it), not only one asked before them - and FB1001 YARD-STALE's 30 s gap of another isolate's kept answer closes with it; the comment corrected | `test/scenes/fb1001_yard.test.js` PRIMARY-TRIPS audit, mutants hold-dropped and YARD-STALE's re-aimed |
 | B2 | Past YARDS_KEPT_MAX towns (anyone can ask 4,096) every bookmark went with the kept answers, so a town's next read could be a replica's from before this isolate's own write or its last answer | the newest bookmark let go is a floor (D1's bookmarks sort oldest to newest - d1/reference/time-travel); a floor whose read fails is let go | primary_trips audit (yards), mutants floor-unkept, floor-oldest, floor-unread, floor-refused-kept |
 | B3 | SAVE-BATCH read the budget's config in its batch but kept it after the save's opening and the baseline's R2 read: a staff change forgotten meanwhile was undone by the older row, kept a minute | kept the moment the batch lands | primary_trips audit (config), mutant config-kept-late |
 | B4 | SIGN-BATCH decided a #1 was kept when it planned and read it after the batch: another request counting a new season meanwhile stood in its place (the last second of a season) | each plan keeps the id it saw | primary_trips audit (#1), mutants arena-, iliac-, gambit-kept-late |
-| B5 | Two pins of a race between a checkpoint's reads and its write (`test/int2_judge.test.js` a staff hold, `test/int5_budget.test.js` a win's spoils) hooked the checkpoint's FIRST batch - SAVE-BATCH made the reads that batch, so the race landed before them and the guards they pin (the write's `judge_rev`, the grant's arithmetic) went unchecked: int_audit's INTA-the-rev-unguarded and INTA-the-grant-lost survived on the branch, dead on main | hooked at the object's put, which runs between the reads and the write, and the hook's firing asserted | both mutants dead again |
+| B5 | Two pins of a race between a checkpoint's reads and its write (`test/server/int2_judge.test.js` a staff hold, `test/server/int5_budget.test.js` a win's spoils) hooked the checkpoint's FIRST batch - SAVE-BATCH made the reads that batch, so the race landed before them and the guards they pin (the write's `judge_rev`, the grant's arithmetic) went unchecked: int_audit's INTA-the-rev-unguarded and INTA-the-grant-lost survived on the branch, dead on main | hooked at the object's put, which runs between the reads and the write, and the hook's firing asserted | both mutants dead again |
 
 Read and left: a yards read that fails from a bookmark fails that one request (the bookmark is D1's own; the next starts
 from none); a checkpoint refused early (a lease, a sequence) reads the ledger's and the config's rows in its batch for
@@ -2461,12 +2461,12 @@ nothing - a read, never an answer. SEAT-BATCH, BEAT-LAST, HALL-PLAN and the ledg
 
 ### Pins
 
-- `test/primary_trips.test.js` (6): each slice counted over the service - the list's one batch of six, the yards'
+- `test/server/primary_trips.test.js` (6): each slice counted over the service - the list's one batch of six, the yards'
   sessions (any instance's, the bookmark's, the primary's after a write), a checkpoint's three trips and its batch with
   and without the kept config, the mint's one honours batch on the binding and the kept #1s left out, the beat after
   every read, the bump's plan; and the audit's three (B2-B4). `tools/mutants/primary_trips.json`: 21 mutants, all dead.
-- PIN MOVED: `test/seat1c_client.test.js` and `test/crown2_client.test.js` (the list's line is seatsBoard's);
-  `test/scale4d.test.js` (the yards ride one session of their own); thirteen account pins' own D1 fakes gain D1's `batch`
+- PIN MOVED: `test/ui/seat1c_client.test.js` and `test/net/crown2_client.test.js` (the list's line is seatsBoard's);
+  `test/server/scale4d.test.js` (the yards ride one session of their own); thirteen account pins' own D1 fakes gain D1's `batch`
   (acc3titles, acc4played, accountworker, audit68_backend, audit_recoveryset, cloudsaves, founder3, founder4, mod1,
   recoverop, recoveryset, terms1, wb5b_gate_claim - a fake without it was a database D1 never is); ACCOUNT_VERSION acct139
   and every pin and mutant record on acct138.
@@ -2494,7 +2494,7 @@ makes. `homes/town` had been made one batch for the same reason (HOMES-SHED).
 
 ### Pins
 
-- `test/homevote.test.js` (13: DECOR-BATCH's one): every round trip the service asks of its database counted where the
+- `test/net/homevote.test.js` (13: DECOR-BATCH's one): every round trip the service asks of its database counted where the
   Worker asks it (PRIMARY-TRIPS' count) - a visitor's room `batch 3`, the shunned room `batch 3` then `batch 2` (its two
   traders), the owner's `batch 3`; every answer as it was. `tools/mutants/homevote.json`: DECOR-BATCH's three (the three
   trips back, the shop a trip a trader, the hidden list dropped from the batch), all dead; HOME-VOTE's room-handed-out
@@ -2541,12 +2541,12 @@ service with. What it read:
 
 ### Pins
 
-- `test/bookmark_spiral.test.js` (3): the six named and nothing past them, each a replica route and not the mint;
+- `test/server/bookmark_spiral.test.js` (3): the six named and nothing past them, each a replica route and not the mint;
   every replica route's session with no bookmark, with one, and with one D1 refuses; a heartbeat and a town read with
   no bookmark looking the session up on the replica and the primary asked for neither, the account view still the
   primary's (laggyD1's replica); a guest minted after the replica's last catch-up found, the primary asked once, and a
   secret nobody holds refused. `tools/mutants/bookmark_spiral.json`: 9, all dead.
-- `test/display_replica.test.js`: its pin on the display reads with no bookmark moved - the polled ones at any instance.
+- `test/server/display_replica.test.js`: its pin on the display reads with no bookmark moved - the polled ones at any instance.
   `scale4g.json`'s two records and `scale4d.json`'s D8 re-aimed by content, all dead.
 - ACCOUNT_VERSION acct143, and every pin and mutant record on acct142 (each pin's PIN MOVED history kept).
 
@@ -2573,10 +2573,10 @@ held: half of all requests past 5 s, the Worker's log still `D1 DB is overloaded
 
 ### Pins
 
-- `test/busy_heart.test.js` (2): the client holds both after an overload answer and asks at the wait's end; an isolate
+- `test/net/busy_heart.test.js` (2): the client holds both after an overload answer and asks at the wait's end; an isolate
   that met an overload answers both `server` 503 with a Retry-After and not one statement, and asks again after
   BUSY_SHED_MS. `tools/mutants/busy_heart.json`: 2, both dead; `busy_gate.json` all dead.
-- `test/busy_gate.test.js`: the law's list, its always-goes list and the client's goes list moved.
+- `test/net/busy_gate.test.js`: the law's list, its always-goes list and the client's goes list moved.
 - ACCOUNT_VERSION acct144, and every pin and mutant record on acct143 (each pin's PIN MOVED history kept).
 
 ## SHED-LONG - BOOKMARK-SPIRAL rolled back, the shed 10 s (2026-10-16, acct145)
@@ -2600,12 +2600,12 @@ lookups a second onto it, while the primary, answering in a fifth of the time, h
 
 ### Pins
 
-- `test/bookmark_spiral.test.js` (3, rewritten): no route at any instance; every replica route with no bookmark, and
+- `test/server/bookmark_spiral.test.js` (3, rewritten): no route at any instance; every replica route with no bookmark, and
   one D1 refuses, at the primary; with one, at it; a heartbeat and a town read looking their session up on the primary
   (laggyD1); on a session at any instance, a session the replica holds found there and the primary never asked, one
   minted after the replica's last catch-up found on the primary (asked once), a secret nobody holds refused.
   `tools/mutants/bookmark_spiral.json` re-made for the rollback: 6.
-- `test/busy_gate.test.js`: BUSY_SHED_MS 10 s.
+- `test/net/busy_gate.test.js`: BUSY_SHED_MS 10 s.
 - ACCOUNT_VERSION acct145, and every pin and mutant record on acct144 (each pin's PIN MOVED history kept).
 
 ## THE PLAN PAST 2,000 (2026-10-10)

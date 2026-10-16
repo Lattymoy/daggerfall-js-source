@@ -3,7 +3,7 @@
 *2026-09-25. Two players via Mac: "fps issues in the exterior but fine
 in the interior", and a second, "me too my friend.. don't know why. I got
 a RX6600" (the first on an RTX 4060 Ti). PERF-SCALE answered the
-per-pixel half the same morning (`01-Overview/Field-Bugs-2026-09-25.md`:
+per-pixel half the same morning (`01-Overview/bugs/Field-Bugs-2026-09-25.md`:
 a render scale, and a counter that names the GPU). Mac, on the rest:
 "Why are you so avoidant when it comes to addressing performance issues?
 I am not getting another player to do the work that youre suppose to
@@ -101,7 +101,7 @@ runs: 1.284 -> 1.242 by day, 1.497 -> 1.547 at night; `ab.sh` on the
 hunter's town, 9 runs: 1.252 -> 1.287 and 1.465 -> 1.460); the point is
 the garbage.
 
-**Pinned** (`test/perfextb.test.js`, every one failing on the base):
+**Pinned** (`test/render/perfextb.test.js`, every one failing on the base):
 a batch of every producer - a tree, a town flat, a walker, a loot pile,
 the player's card, a gib, a cast-only batch and a freed one, dressed as
 their hosts dress them - carries the birth key list through four night
@@ -167,7 +167,7 @@ claimed, which came from 20,000 back-to-back calls throttled by
 SwiftShader's full command ring. Node's no-op GL shows no time change,
 which is expected.
 
-**Pinned** (`test/perfextb.test.js`, each failing on the base): twenty
+**Pinned** (`test/render/perfextb.test.js`, each failing on the base): twenty
 batches of one record from five pixels upload ONE size and FIVE origins
 (the base: twenty of each) with every flat still drawn; twenty flats of
 one pixel, recorded and replayed into the sun's three cascades, upload one
@@ -216,13 +216,13 @@ The prover's run on the same harness: 1,228 against 1,003-1,013
 scavenges, the batches zone 0.392 -> 0.353 ms. About 0.02-0.04 ms of CPU
 a frame; the point is the garbage.
 
-**Pinned** (`test/perfextb.test.js`, both failing on the base): the pixel
+**Pinned** (`test/render/perfextb.test.js`, both failing on the base): the pixel
 walk's call is positional and nothing in `src/` builds an object to ask
 the rule; and over rings 0-6, six heights and `animated` false, true and
 left out, `farFlatVisibleAt` answers what `farFlatVisible({...})` answers
 (86 of 126 draw), with the object form nothing but a call to it. MAC1's
-wire pin (`test/mac1_playreport.test.js`) and SHADOW-REACH's gate pin
-(`test/shadowreach.test.js`) read the positional call now. Mutants 19-24,
+wire pin (`test/scenes/mac1_playreport.test.js`) and SHADOW-REACH's gate pin
+(`test/render/shadowreach.test.js`) read the positional call now. Mutants 19-24,
 one of them run against the MAC1 pins alone: the tree line moved in the
 one home is seen through the object form.
 
@@ -279,7 +279,7 @@ main thread; on a real GPU the portable part is ~2,100 fewer commands a
 frame for the GPU process in a coastal city, and about 5-250 fewer where
 there is less water.
 
-**Pinned** (`test/perfextb.test.js`, both failing on the base): ten water
+**Pinned** (`test/render/perfextb.test.js`, both failing on the base): ten water
 pixels through the list upload uView, uProj, uTime, uLift, uSunScale and
 uOpacity once each, set the offset once, a model matrix a pixel, the
 ground array once a RUN (six for none / A A / B B B / A A / B / A) and a
@@ -290,7 +290,7 @@ identical, draw for draw, to the same pixels drawn one by one, the state
 it leaves identical and absolutely what the old draw left, and the
 one-row door holding no surface after. The equivalence against the BASE
 is `equivX.mjs` above - in the suite both paths run this tree's code.
-`test/water.test.js` reads the block off the list's body now and the host's
+`test/world/terrain/water.test.js` reads the block off the list's body now and the host's
 collection and call. Mutants 25-33, all dead.
 
 **PERF-EXT10-13 together, against the base.** The same two-tree
@@ -412,7 +412,7 @@ lamp's range, where it lights nothing) is not painted, as calm weather
 does not paint it today. The shadow lens's layer differential counted
 both: 2 of 7,152 windy layer states among trees, 0 of 7,599 calm.
 
-**Pinned** (`test/perfexta.test.js`, every one failing on the base): a
+**Pinned** (`test/render/perfexta.test.js`, every one failing on the base): a
 lantern beside a swaying wood whose 41 trees stand 150+ units off redraws
 no face, blits nothing and binds none of it (the base: twelve faces), and
 redraws for one tree moved to its foot and for a 1 x 3 quad in a face's
@@ -434,7 +434,7 @@ distant wood with a walker leaving is the same, frame for frame, in wind
 and in calm. The provers' own pins pass on the tree and fail on the base
 (`pins.test.mjs` 1-2); their guards pass on both (`pins2.test.mjs`'s
 corner, `gibpin.test.mjs`). Mutants `tools/mutants/perfexta.json` 1-16,
-all dead. `test/hard3_types.test.js`: the literal mints 35.
+all dead. `test/systems/save/hard3_types.test.js`: the literal mints 35.
 
 ## PERF-EXT2 - a run of sub-meshes is one depth draw
 
@@ -479,7 +479,7 @@ mesh replay drew with the per-sub-mesh base's: identical in 7,802 replays
 over six runs, no mismatch. The draw lens's prover read the three
 cascade layers back bit-identical on SwiftShader.
 
-**Pinned** (`test/perfexta.test.js`, both failing on the base): a pixel
+**Pinned** (`test/render/perfexta.test.js`, both failing on the base): a pixel
 of thirty texture groups built by the real `StaticBatchBuilder` and
 `createMesh` is one draw a cascade over its whole range from 0, and with
 its middle group's sphere out of the cascade, two draws at exactly
@@ -488,9 +488,9 @@ empty groups, spheres in and out - replayed into the sun's cascades and
 eight lanterns' caches, every replay's triangles are, as a multiset,
 its visible sub-meshes', in 380 draws for 529 visible sub-meshes (the
 base: 529). The count pins the merge moves by design are restated with
-their reason: `test/sc1_shadowcache.test.js` (five tests - the room's two
-sub-meshes meet, one run), `test/audit_lighting.test.js` (ONE MESH AT
-TWO PLACES), `test/el2_shadows.test.js` (the renderer builds the pass:
+their reason: `test/render/sc1_shadowcache.test.js` (five tests - the room's two
+sub-meshes meet, one run), `test/render/audit_lighting.test.js` (ONE MESH AT
+TWO PLACES), `test/render/el2_shadows.test.js` (the renderer builds the pass:
 3 x 3 sun draws, 6 x 2 face draws). Mutants `perfexta.json` 17-21, all
 dead; `perfextb.json`'s PERF-EXT11-9 re-aimed by content again.
 
@@ -541,7 +541,7 @@ frames against the per-caster walk, 0 differing; the suite does the same
 (below) and replays a scripted night through a twin that walks per
 lantern.
 
-**Pinned** (`test/perfexta.test.js`, every one failing on the base): on
+**Pinned** (`test/render/perfexta.test.js`, every one failing on the base): on
 a still night with every cache valid, the pass reads each still flat's
 bounds as often under eight lanterns as under one (the base: once a
 lantern); over 200 random frames of records - still, moving, swaying,
@@ -589,7 +589,7 @@ shadow reach.
 **The picture.** Unchanged, bit for bit: the same spheres, so the same
 culls.
 
-**Pinned** (`test/perfexta.test.js`, failing on the base): a mesh of
+**Pinned** (`test/render/perfexta.test.js`, failing on the base): a mesh of
 forty bounded sub-meshes and one without, recorded under a rotated,
 non-uniformly scaled (the y column the longest), translated matrix,
 takes exactly three `Math.hypot` (the base: 123), and its sphere and
@@ -649,15 +649,15 @@ the repo's `perfSunShaderProbe`): the five lane FS and the five lane
 programs, and the water FS with and without the block, all ok, no GL
 error.
 
-**Pinned** (`test/perfexta.test.js`, failing on the base):
+**Pinned** (`test/render/perfexta.test.js`, failing on the base):
 `sunShadowTap` fetches the map five times (the far cascade's one, the
 kernel's four; the base: a loop of nine), has no loop, takes the four at
 the positions and weights the twin proves, and names no local like a
 uniform; and the twin - its lines tied to the shader's - on random
 depth maps (straight edges and noise, clamped, LEQUAL): the four equal
 the nine to 1e-12 with exact weights, within a 255th with 8-bit ones.
-`test/el2_shadows.test.js` ('a 3x3 PCF') and
-`test/perfsun_fragment.test.js` (PERF-SUN1, the kernel after the cheap
+`test/render/el2_shadows.test.js` ('a 3x3 PCF') and
+`test/render/perfsun_fragment.test.js` (PERF-SUN1, the kernel after the cheap
 tap) restated on the four-tap text. Mutants `perfexta.json` 37-41, all
 dead; `perfsun.json`'s PERF-SUN1 cheap-tap mutant re-aimed by content.
 
@@ -824,7 +824,7 @@ queries, `createBillboardBatch`'s sphere, `moveBillboardBatch`'s and
 `placementRadius` take them. The same arithmetic on the same values, so
 every sphere and radius keeps its bits (the suite, and VERIFY above).
 
-**Pinned** (`test/perfexta.test.js`, 16 -> 20): a still hall of twenty
+**Pinned** (`test/render/perfexta.test.js`, 16 -> 20): a still hall of twenty
 lamps and twenty batches of six flats under `everyLightCasts` reads no
 batch's placement grid in three frames while every lamp keeps its lo
 map (the first cut: 10,806 reads), the same hall not drawn whole still
@@ -839,7 +839,7 @@ pad and the lean by |h|, as above; and ONE HOME EACH, by source over
 their homes, and every caller calling them. All four fail on the base;
 the room's, the half-diagonal's and the one home's on the first cut too,
 and the margins' pass there - they hold what it had.
-`test/blood1_decals.test.js`'s and `test/perfon2_peercull.test.js`'s
+`test/combat/blood1_decals.test.js`'s and `test/render/perfon2_peercull.test.js`'s
 by-source pins read the lift and the half-diagonal at their homes.
 Mutants: `perfexta.json` 42-54 (PERF-EXT-R1 to R13: the eight or the lo
 tier asking the quads in a room, the flag ignored, a street asked by the
@@ -854,7 +854,7 @@ records and `el5.json`'s bb-bounds-no-flat. 68 run, 68 dead.
 
 *2026-09-25. Two players, relayed by Mac: "fps issues in the exterior but
 fine in the interior" (an RTX 4060 Ti), and "me too my friend.. don't know
-why. I got a RX6600". PERF-SCALE (`01-Overview/Field-Bugs-2026-09-25.md`)
+why. I got a RX6600". PERF-SCALE (`01-Overview/bugs/Field-Bugs-2026-09-25.md`)
 gave them a render scale and a counter that names the GPU; Mac then:
 "Why are you so avoidant when it comes to addressing performance issues? I
 am not getting another player to do the work that youre suppose to do".*
@@ -902,7 +902,7 @@ force.
 | `discSlot.mjs` - discSlotCount(315), three calls | 22.2 / 12.3 / 11.5 ms | 28.1 (the one sweep - the world pays it at mount) / 0.01 / 0.00 ms |
 | `crossingFrame.mjs` - createGrassField on the crossing frame, six crossings | 10.6 / 11.0 / 8.2 / 7.8 / 7.6 / 7.7 ms | 0.1 ms each |
 
-Pins: `test/grassshift.test.js` PERF-EXT20 (the sweep counter: two fields, at most
+Pins: `test/world/terrain/grassshift.test.js` PERF-EXT20 (the sweep counter: two fields, at most
 one sweep; four distinct questions, four sweeps; the world's warm).
 Mutants: `tools/mutants/perfextc.json` PERF-EXT20 x4, all dead.
 
@@ -956,7 +956,7 @@ gust's wave reads `dot(root, wdir)` (the lab's): both jumped by the offset
 on the crossing frame, and the meadow's cards turned and flipped by the
 same hash. The tuft's seed is its place in its cell now (`hash(aPA.xy *
 64)`, the packed lane no shift touches), and the world host hands the wave
-a clock that carries the shift's phase (`systems/windDrive.js`
+a clock that carries the shift's phase (`systems/wind/windDrive.js`
 `gustClock`) - the flats' wave with it, so the trees stand still under a
 crossing too (`07-Rendering/Rendering.md`, AUDIT MEADOW1). The vanish, the
 three-second regrow and the reshuffle were gone already.
@@ -974,7 +974,7 @@ nothing to wire, flagged here by name.
 | `grassCrossing.mjs` (all-grass ring) - the refill a crossing paid | 177 frames, 1,171.9 ms, median 6.46 ms a frame, 34.6 MB re-uploaded | not paid: the crossing builds no field (the harness scripts the old rebuild; `shiftProof.mjs` runs the new path) |
 | `walkEquiv.mjs` - a crossed field walking a world path against one that never moved | - | 368/368 the same cell keys; 354/354 drawn slots have a twin within 1 mm (worst 1.71e-4 m) |
 
-Pins: `test/grassshift.test.js` PERF-EXT21 x4 - the crossing (three offsets: east,
+Pins: `test/world/terrain/grassshift.test.js` PERF-EXT21 x4 - the crossing (three offsets: east,
 a vertical recentre, south) re-specifies nothing, uploads nothing and
 draws every slot moved by the offset; a crossed field grows the same
 world, cell for cell and tint for tint, as one that never moved;
@@ -1034,7 +1034,7 @@ filter). It was not proven, so it is not built.
 | `slicedTree.mjs` - 200 cells | whole cell median 1.59 ms | slices of 1 / 1,500 / whole byte-identical 20/20, 200/200, 200/200; a 1,500 slice median 0.33, p90 0.49, p99 0.81 ms |
 | `cellCost.mjs` - a whole cell (the boot's path) | 2.01-2.05 ms median | 2.02-2.03 ms |
 
-Pins: `test/grassshift.test.js` PERF-EXT22 x3 - the slice/whole byte identity at
+Pins: `test/world/terrain/grassshift.test.js` PERF-EXT22 x3 - the slice/whole byte identity at
 1, 777, 1,500 and the whole cell on a crossed field; a walk on a crossed
 field asks keep() at most a slice a frame, writes every rim cell with the
 bytes a whole placement makes, and ends holding a whole fill's cells plus
@@ -1079,7 +1079,7 @@ call that is per FRAME - an animated rig's sphere (`renderer.js`, stride
 9: 29 -> 40-50 us). So the sliced sphere is its own loop beside it: the
 same two passes (a min and a max, then a max from the float32-rounded
 centre), which no cut can change, held to boundsOf's bytes on meshes of
-every shape by `test/publishtail.test.js` - neither can drift alone.
+every shape by `test/render/publishtail.test.js` - neither can drift alone.
 
 **Not done: the chunked upload.** The prover's step (d) - a 22.8 MB
 `bufferData` split into ~2 MB `bufferSubData` a breath - was left for a
@@ -1094,7 +1094,7 @@ Chrome profile to justify; SwiftShader numbers are relative only.
 | `unitDist.mjs` - city, every unit | - | p99 0.16-0.21 ms; the odd 1-2 ms unit is a collection or the first, uncompiled range |
 | `boundsBench.mjs` - boundsOf itself | rig 29-36 us, mesh 192-220 us | unchanged (boundsOf is byte for byte what it was) |
 
-Pins: `test/publishtail.test.js` (4) - boundsSteps is boundsOf's bytes on
+Pins: `test/render/publishtail.test.js` (4) - boundsSteps is boundsOf's bytes on
 empty, single, large and extreme-at-either-end meshes at ranges of 1, 7,
 256, BOUNDS_RANGE and whole, with a yield per range; finishSliced gives
 finish()'s arrays and groups (mirrored placements among them) and
@@ -1154,7 +1154,7 @@ not claimed away. `BUILD_SLICE_FLOOR_MS` and `BUILD_STREAM_AGE_MS`
 | before: the flat 6 ms slice | 60 (4.9 ms built a frame) | 54.9 (4.97) | 49.5 (4.96) | 41.4 (4.99) |
 | after: what the frame left | 59.4 (4.3) | 60 (2.48) | 57.7 (2.48) | 47.0 (2.50) |
 
-Pins: `test/buildslice.test.js` (7) - frameFitBudget's arithmetic, its
+Pins: `test/systems/buildslice.test.js` (7) - frameFitBudget's arithmetic, its
 floor, its ceiling, 144 and 30 Hz, the age guard at 1,999/2,001 ms, the
 awaited build and a NaN; the breather asks once a slice, yields at the
 budget and not before, reports a slice its resume began, and without a
@@ -1200,7 +1200,7 @@ built.
 | the same - GC during the insert | 60-61 collections, 395-432 ms | 51-52 collections, 419-428 ms (the pauses are noise) |
 | `tools/guardCostProbe.mjs 5 1200 12` - five guards, three runs | mean 0.891-1.005 ms, median 0.662-0.702 | mean 0.823-0.929 ms, median 0.588-0.653 (the query side, ~7-10% - the prover read no change) |
 
-Pins: `test/colliderkeys.test.js` (3) - every bucket of a scene with fine,
+Pins: `test/player/colliderkeys.test.js` (3) - every bucket of a scene with fine,
 coarse-filed and short-listed triangles, at positive and negative cells,
 holds cell for cell (decoded) the triangle lists of the OLD string-keyed
 filing, kept verbatim in the test with collider.js's constants read from
@@ -1251,7 +1251,7 @@ same heightfield, 819 m or more away.
 The GPU upload of the new surface (`createTerrainSurface`, 390 KB) is on
 the landing frame either way; node cannot time it.
 
-Pins: `test/restrideworker.test.js` (4) - restrideGrid is buildTerrainGrid
+Pins: `test/world/terrain/restrideworker.test.js` (4) - restrideGrid is buildTerrainGrid
 with the woods' ghost rows at strides 1 and 4 and the kernel builds with
 it; the REAL worker shell, initialised with a synthetic WOODS.WLD the real
 reader loads, answers a grid job by id with the main thread's bytes and
@@ -1338,7 +1338,7 @@ rewritten - so the map is here: C1 -> 20 (the slot count), C2 -> 21 (the
 origin shift), C3 -> 22 (the rim), C4 -> 23 (the publish tail), C5 -> 24
 (the slice), C6 -> 25 (the collider key), C7 -> 26 (the promotions).
 
-Pins: `test/buildslice.test.js` +2 - the lend (the reviewer's repro on the
+Pins: `test/systems/buildslice.test.js` +2 - the lend (the reviewer's repro on the
 real modules; a resume's slice lent whole into the next sample; a slice a
 frame ran inside, and a reset's with no worker, not lent) and the awaited
 build (the host's own `awaitedBuild` and budget run at 144 Hz beside a
@@ -1432,7 +1432,7 @@ On the cards: about 25-30 us a frame on a 4060 Ti and 40-45 us on an RX
 6600 for the default sky at 1080p with 40% of the screen sky; the dome
 tier about 55 and 140 us.
 
-**Pinned** (`test/perfextd.test.js`, the shaders RUN in float32 by
+**Pinned** (`test/render/perfextd.test.js`, the shaders RUN in float32 by
 `test/glsl.mjs`): the mod's sheets - their own text between `// Clouds`
 and `// REDUCE_COLOR` - on the uniforms the real runtime and the real
 renderer upload for four weathers and hours, against the same text with
@@ -1512,7 +1512,7 @@ bright pass -27%, 0 pixels. On the cards: about 2 million taps and 12
 million transcendental ops a frame at 1080p by day, some 15 us on a 4060
 Ti and 25 us on an RX 6600, and a tap a pixel more at night.
 
-**Pinned** (`test/perfextd.test.js`, two more): the six fragment sources
+**Pinned** (`test/render/perfextd.test.js`, two more): the six fragment sources
 as the renderer links them - each variant is the full pass less exactly
 its reads, the full pass carries both - RUN in float32 over every frame
 the pass can make (each image drawn or black): a variant reads the glow
@@ -1589,7 +1589,7 @@ affected player, each a minute: Render scale 50% (PERF-SCALE - if the
 fps roughly doubles or more, the cost is the world's pixels), the
 `Compositing` and `WebGL` lines of `chrome://gpu` (a software
 compositor reads every WebGL frame back on this thread), and a counter
-screenshot with this line. Pins `test/scriptsplit.test.js` (3); mutants
+screenshot with this line. Pins `test/systems/scriptsplit.test.js` (3); mutants
 `tools/mutants/scriptsplit.json` (7 dead).
 
 **AUDIT (2026-09-26): the three claims above, checked.** The stamp:

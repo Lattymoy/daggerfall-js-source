@@ -1,7 +1,7 @@
 // @ts-check
 // INT11-INT13 (2026-10-10, the INTEGRITY arc's lane 3 - bible/06-Systems/Integrity-Arc.md section 6): THE BOSS'S BLOWS
-// JUDGED WHERE THE CLIENT CANNOT SKIP THEM - each fight's own test of where a blow lands (net/gateStrike.js,
-// net/sdStrike.js's geometry in net/sdRemnant.js, systems/serpentStrike.js), run on the relay against the poses it
+// JUDGED WHERE THE CLIENT CANNOT SKIP THEM - each fight's own test of where a blow lands (net/gate/gateStrike.js,
+// net/superDungeon/sdStrike.js's geometry in net/superDungeon/sdRemnant.js, systems/serpent/serpentStrike.js), run on the relay against the poses it
 // already holds, at its beat. What each answers is the share the relay's count of the struck fighter takes
 // (net/bossBody.js bodyStruck).
 //
@@ -28,11 +28,11 @@
 // PURE: a fight, its bodies (the relay's census, each `{sub, x, z, dead, tr?}` in the fight's own frame - `tr` its
 // trail, `[[t, x, z], ...]` oldest first, the relay's clock), the clock in; `[{sub, share}]` out, the fight's blows
 // marked in place. Not a DFU member. Ledger A (INT).
-import { ATTACK_BY_ID, ATTACKS, profileOf, hostBlowUnder } from './gateBrain.js';
-import { inAttack, chargeStrikes, blowOf } from './gateStrike.js';
-import { SD_BLOW_BY_ID, SD_BLOWS, SD_RESET_PCT, SD_END_PCT, SD_ARENA_SLACK, blowShape, pulsePctOf, handSwept, behindPillar, inArena } from './sdRemnant.js';
-import { SERPENT_ATTACK_BY_ID, SERPENT_ATTACK_TABLE, GRIP, CRUSH, MAEL_GRIND, MAEL_EYE_R, coilHolds, serpentShipsFighting, serpentOnShip } from './serpentBrain.js';
-import { shapeMeets, fleetShare } from '../systems/serpentStrike.js';
+import { ATTACK_BY_ID, ATTACKS, profileOf, hostBlowUnder } from './gate/gateBrain.js';
+import { inAttack, chargeStrikes, blowOf } from './gate/gateStrike.js';
+import { SD_BLOW_BY_ID, SD_BLOWS, SD_RESET_PCT, SD_END_PCT, SD_ARENA_SLACK, blowShape, pulsePctOf, handSwept, behindPillar, inArena } from './superDungeon/sdRemnant.js';
+import { SERPENT_ATTACK_BY_ID, SERPENT_ATTACK_TABLE, GRIP, CRUSH, MAEL_GRIND, MAEL_EYE_R, coilHolds, serpentShipsFighting, serpentOnShip } from './serpent/serpentBrain.js';
+import { shapeMeets, fleetShare } from '../systems/serpent/serpentStrike.js';
 import { deepIn, BODY_AFTER_MS } from './bossBody.js';
 
 const dist = (ax, az, bx, bz) => Math.hypot(ax - bx, az - bz);
@@ -85,7 +85,7 @@ function landing(a, bodies, share, inside, out, t = a.at) {
 
 /**
  * INT11 - THE GATE: his blow in flight (`f.atk`) and each of his host's (`f.lg.ads[].atk`, the Legion-Lord's), judged
- * at its landing (net/gateStrike.js inAttack - a charge down its lane between beats, chargeStrikes), each a plain blow's
+ * at its landing (net/gate/gateStrike.js inAttack - a charge down its lane between beats, chargeStrikes), each a plain blow's
  * or Dagon's share (blowOf - `saved`, an element's, is the client's).
  * @param {any} f @param {Array<{sub: string, x: number, z: number, dead: boolean}>} bodies the court's frame @param {number} now
  * @returns {Array<{sub: string, share: number}>}
@@ -148,7 +148,7 @@ export function judgeRemnant(f, bodies, now) {
  * not hold, so her helm alone, the favour again): its blow at its landing (the ram down its lane over its run), the
  * coil's grip each second it holds the ship it closed about (her pose deep in its ring as it landed - her `esc` is her
  * word, the ring the relay's) and its crush as it lets her go crushed, and the Maelstrom's eye grinding her - each a
- * share of her hull at the fleet's share (systems/serpentStrike.js fleetShare).
+ * share of her hull at the fleet's share (systems/serpent/serpentStrike.js fleetShare).
  * @param {any} f @param {Array<{sub: string, x: number, z: number, dead: boolean}>} bodies the site's frame @param {number} now
  * @returns {Array<{sub: string, share: number}>}
  */

@@ -9,9 +9,9 @@
 // alone, exactly as inventoryDoor.js's is for the pack.
 
 import { isEnhanced } from '../systems/uiSkin.js';
-import { mountEnhancedChunk } from './enhancedChunk.js';   // MENU1: the one lazy-chunk door
-import { registerOverlay } from './enhancedOverlays.js';
-import { NativeTradeWindow, preloadTradeArt, tradeArtLoaded } from './nativeTrade.js';
+import { mountEnhancedChunk } from './enhanced/enhancedChunk.js';   // MENU1: the one lazy-chunk door
+import { registerOverlay } from './enhanced/enhancedOverlays.js';
+import { NativeTradeWindow, preloadTradeArt, tradeArtLoaded } from './native/nativeTrade.js';
 import { racialSuppressInventory } from '../systems/lycanthropy.js';   // DISC10-E L3: the trade window's inherited refusal
 import { messageBox } from '../systems/notify.js';   // DISC10-E L3: DaggerfallUI.MessageBox
 import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
@@ -101,7 +101,7 @@ function enhancedTradeOverlay(hooks) {
   };
 
   mountEnhancedChunk({
-    load: () => import('./enhancedTrade.js'),
+    load: () => import('./enhanced/enhancedTrade.js'),
     mount: ({ mountEnhancedTrade }) => {
       view = mountEnhancedTrade(host, hooks);
     },

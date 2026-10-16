@@ -1,6 +1,6 @@
 // MWNPC5 LIVE PROOF: A FOE'S TELLS ON ITS BODY - IN A REAL BROWSER.
 //
-// test/mwnpc5_bodyfx.test.js holds the uniforms each quad sends and the box's padding on a recording GL. What it cannot
+// test/render/mwnpc5_bodyfx.test.js holds the uniforms each quad sends and the box's padding on a recording GL. What it cannot
 // say is that the shader compiles and that the picture changes the way the billboards' does. This draws one fixture body
 // (the GPU-skinned rig of MWNPC1) plain, then with each tell, reads the frame back each time and compares with the plain:
 //   - the glint: texels OFF the plain silhouette lit (the outline) and the body lifted toward the colour;

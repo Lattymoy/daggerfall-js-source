@@ -22,7 +22,7 @@ goes quiet for longer.
 | Settings | `MOD_SETTINGS['ambient-text']` (`src/systems/modSettings.js`) |
 | Row | `mod-ambient-text`, group "The world" (`src/systems/features.js`) |
 | Credit | `CREDITS.mods` (`src/ui/credits.js`), About pane |
-| Pins | `test/ambienttext.test.js` (26) |
+| Pins | `test/systems/ambienttext.test.js` (26) |
 | Registry | `01-Overview/Mod-Registry.md` |
 
 ## AT1 - what the mod actually is
@@ -120,7 +120,7 @@ he wrote ten for speaks often; a family he wrote none for is silent.
 
 A port that filled the gaps, or that picked "from the keys that
 exist", would be a louder and flatter mod wearing this one's name.
-`test/ambienttext.test.js` pins the sparseness from both ends: the
+`test/systems/ambienttext.test.js` pins the sparseness from both ends: the
 count, and that a known-empty family still answers `null`.
 
 **The other direction is pinned too, and it is the pin that matters.**
@@ -231,7 +231,7 @@ time is read back off the wall.
 | DFU | here |
 |---|---|
 | `PlayerEnterExit.IsPlayerInsideBuilding` | the host slot's own `insideBuilding()` - see AUDIT AT F5 |
-| `DaggerfallUI.AddHUDText(text, delay)` | `townTalk.say(line, delay)` / `ctx.hudSay(line, delay)` → `ui/hudText.js` `add` (drawn by the classic bitmap arm on the classic skin; on the enhanced one FONT1 2026-09-16 gave it the pixel face in a top-centre DOM column - Mac: "Ambient Text mod also doesnt use it" - and ENH-NOTICE3 2026-09-21 made each row a TOAST in the right-edge notice stack, `ui/enhancedNotice.js` `drawEnhancedToasts` - Mac: "All mods ... need to utilize the enhanced notification popup") |
+| `DaggerfallUI.AddHUDText(text, delay)` | `townTalk.say(line, delay)` / `ctx.hudSay(line, delay)` → `ui/hud/hudText.js` `add` (drawn by the classic bitmap arm on the classic skin; on the enhanced one FONT1 2026-09-16 gave it the pixel face in a top-centre DOM column - Mac: "Ambient Text mod also doesnt use it" - and ENH-NOTICE3 2026-09-21 made each row a TOAST in the right-edge notice stack, `ui/enhanced/enhancedNotice.js` `drawEnhancedToasts` - Mac: "All mods ... need to utilize the enhanced notification popup") |
 | `Dice100.SuccessRoll(chance)` | `combat/formulas.js` `dice100` |
 | `PlayerGPS.IsPlayerInLocationRect` / `CurrentLocationType` | the hosts' `_musicInLocationRect` / `_musicLocationType` |
 | `PlayerGPS.CurrentClimateIndex` | `maps.getClimateIndex(px.x, px.y)` |
@@ -384,7 +384,7 @@ extraction only pays once something else reads it.
 
 - **The Testing.md suite count was NOT drifted.** The audit read the
   runner's `# tests 7726` against the doc's 7712 and called it wrong.
-  The doc's number is the `^test\(` count, which `test/manifest.test.js`
+  The doc's number is the `^test\(` count, which `test/bible/manifest.test.js`
   already gates exactly - 7712 was right, and the gate had been holding
   it all along. The runner's larger number counts something else.
 - **The first "banking gone" mutant was equivalent.** Swapping the

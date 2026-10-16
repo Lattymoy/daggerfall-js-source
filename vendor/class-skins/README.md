@@ -15,7 +15,7 @@ here. The archive names one artist folder, "KAMER - Bounty Hunter".]**
 ## Layout
 
 `Textures/<archive>/<archive>_<record>-<frame>.png`, the key the port's sprite
-bundle already indexes by (`player/eotbSprite.js`). A sheet is
+bundle already indexes by (`player/eyeOfTheBeholder/eotbSprite.js`). A sheet is
 Daggerfall's enemy-class shape, five orientation records per group:
 
 | Records | Group | Frames |
@@ -31,10 +31,10 @@ Daggerfall's enemy-class shape, five orientation records per group:
 and **every record's real frame count**, counted off the files. The
 pack is not uniform: the female healer's ranged records have five
 frames and the bounty hunter's (78 pictures) record 24 has two.
-`test/skin2_class_skins.test.js` checks the manifest against the
+`test/net/skin2_class_skins.test.js` checks the manifest against the
 folders.
 
-`class-skins.files.json` is the art's authority (`test/doctrine.test.js`
+`class-skins.files.json` is the art's authority (`test/tooling/doctrine.test.js`
 reads it for `Textures/`): the archive's sha256 and every vendored file
 mapped to the archive path it came from. `tools/classSkinsListing.mjs`
 generates it from the unpacked archive and proves each vendored file is
@@ -90,6 +90,6 @@ What changed on the way in:
   picture is unchanged - the files are byte-checked against the archive -
   and `skins.json` carries its size the way a DFU pack's XML would
   (`TextureReplacement.SetBillboardScale`): `"scale": { "16": 81/110 }`
-  on archive 1524. `test/skin2_class_skins.test.js` sweeps every view of
+  on archive 1524. `test/net/skin2_class_skins.test.js` sweeps every view of
   every sheet against its group, so another picture drawn small fails
   there.

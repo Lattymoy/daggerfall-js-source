@@ -1,7 +1,7 @@
 // @ts-check
 // NAV-D (2026-09-28, Mac: "actual sailing ships to the world that players can encounter and pillage") - THE PRIZE:
 // what a taken ship's hold gives up, and what her captor can make of her. The port's own; pure - the host draws the
-// items through DFU's own loot tables (systems/loot.js generateItems, LootTables.GenerateRandomLoot).
+// items through DFU's own loot tables (systems/loot/loot.js generateItems, LootTables.GenerateRandomLoot).
 //
 // A HOLD IS LOTS. A ship carries one lot for each tier of its class's cargo (navalShips.js `cargo`, 1-4), each lot a
 // draw of DFU's treasure tables under a key that fits her trade (HOLD_KEYS): a pirate's plunder is gold, jewels and
@@ -26,9 +26,9 @@
 // least one; and her dry powder as SALVAGE_BARRELS fire barrels, for a stern that rolls them. What the yard sold, the sea
 // now gives back: a captain who sinks what she meets mends her ship and fills her barrels without making port.
 
-import { mulberry32 } from '../../combat/bloodArt.js';
+import { mulberry32 } from '../../combat/blood/bloodArt.js';
 import { NOTORIETY } from './navalLaw.js';
-import { HULL_PRICES } from '../comeSailAwayBoat.js';   // SHIP-CLAIM: a claimed prize's deed, at a share of her hull's price
+import { HULL_PRICES } from '../comeSailAway/comeSailAwayBoat.js';   // SHIP-CLAIM: a claimed prize's deed, at a share of her hull's price
 import { hullBuild } from './navalShips.js';
 import { STORE_POINTS } from './navalYard.js';
 
@@ -60,7 +60,7 @@ export const PRESS_SHARE = 0.6;
 export const FLOTSAM_OF = 0.5;
 /**
  * SHIP-CLAIM (2026-10-01, Mac: "Claim captured prizes - Keep a ship you take by boarding as your own boat") - HER
- * PAPERS: a prize claimed is the captor's own boat on a Come Sail Away deed (scenes/navalHost.js claimPrize), and the
+ * PAPERS: a prize claimed is the captor's own boat on a Come Sail Away deed (scenes/naval/navalHost.js claimPrize), and the
  * deed is worth PRIZE_DEED_SHARE of what her hull's deed costs on the shelf (comeSailAwayBoat.js HULL_PRICES) - a taken
  * ship is no bought one, and a full-price deed would make every pirate a fortune to sell.
  */
@@ -68,7 +68,7 @@ export const PRIZE_DEED_SHARE = 0.25;
 /** A claimed prize's deed's value: PRIZE_DEED_SHARE of her hull's price, in whole gold. */
 export const prizeDeedValue = (hull) => Math.round(HULL_PRICES[hull] * PRIZE_DEED_SHARE);
 /**
- * The rarity tier a lot is rolled at (systems/lootRarity.js pileSource - the dungeon tiers' own scale, 3 a cemetery to
+ * The rarity tier a lot is rolled at (systems/loot/lootRarity.js pileSource - the dungeon tiers' own scale, 3 a cemetery to
  * 18 a dragon's den): a merchantman's cargo a mine's (5), a pirate's plunder a human stronghold's (6), a navy's armoury
  * a giant's hold's (8), a flagship's strongbox a barbarian chief's (11).
  */

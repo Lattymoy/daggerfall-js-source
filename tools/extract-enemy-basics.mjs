@@ -1,4 +1,4 @@
-// Regenerate src/characters/enemyBasics.js from DFU's EnemyBasics.cs
+// Regenerate src/characters/enemy/enemyBasics.js from DFU's EnemyBasics.cs
 // Enemies table (MIT, Daggerfall Workshop). C3 extracted the visual
 // fields; E3a re-extracts with the combat/entity fields. HARD RULE:
 // the three C3 fields must come out byte-identical for every existing
@@ -7,7 +7,7 @@
 //
 // AUDIT 24 (wave 23): the extraction itself now lives in
 // extractEnemyBasics.lib.mjs as a pure function, so the SAME code the
-// gate in test/audit24_enemytable.test.js runs is the code that writes
+// gate in test/systems/audit24_enemytable.test.js runs is the code that writes
 // this file. A column the extraction never looked at used to be
 // invisible from both sides - see the library header.
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -20,7 +20,7 @@ const scPath = process.argv[3] || join(dirname(process.argv[2]), '..', 'SoundCli
 const out = extractEnemyBasics(src, readFileSync(scPath, 'utf8'));
 
 // Assert C3 parity before writing
-const cur = (await import(new URL('../src/characters/enemyBasics.js', import.meta.url).href)).ENEMY_BASICS;
+const cur = (await import(new URL('../src/characters/enemy/enemyBasics.js', import.meta.url).href)).ENEMY_BASICS;
 for (const [k, v] of Object.entries(cur)) {
   const n = out[k];
   if (!n) throw new Error(`ASSERT FAIL: key ${k} missing from re-extraction`);
@@ -31,7 +31,7 @@ for (const [k, v] of Object.entries(cur)) {
 console.log(`ASSERT: C3 parity holds for ${Object.keys(cur).length} keys; re-extracted ${Object.keys(out).length}`);
 
 const body = JSON.stringify(out, null, 1).replace(/"([a-zA-Z][a-zA-Z0-9]*)":/g, "'$1':").replace(/"/g, "'");
-writeFileSync(new URL('../src/characters/enemyBasics.js', import.meta.url),
+writeFileSync(new URL('../src/characters/enemy/enemyBasics.js', import.meta.url),
 `// Enemy visual/behaviour/entity basics (Characters C3, re-extracted
 // E3a with combat fields). Generated from DFU's EnemyBasics.cs
 // Enemies table (MIT, Daggerfall Workshop): textures + Behaviour

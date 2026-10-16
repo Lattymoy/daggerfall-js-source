@@ -143,7 +143,7 @@ export async function askRoom(rooms, name, request) {
  *  try marked so (LAYER_LAST_HEADER, AUDIT SCALE II R1-5), and an asked layer that holds nobody walked from the place
  *  (LAYER_ASK_HEADER, AUDIT SCALE II R3-3). Here, not
  *  in index.js: the entrypoint's every named export is read as an entrypoint, and a function there stops workerd
- *  starting (test/accountdeploy.test.js AUDIT-ACC F2 caught it). */
+ *  starting (test/server/accountdeploy.test.js AUDIT-ACC F2 caught it). */
 export async function layerWalk(rooms, key, request, start) {
   // the page's own word of the walk's headers is never passed on: its layer is overwritten below, its ask and its last
   // dropped (a Headers lower-cases its names, as these are)

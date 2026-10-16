@@ -11,7 +11,7 @@
 // in front of the eye for the hands to hold.
 //
 // THE MECHANISM IS THE TORCH'S. combat/fpArm.js poses the rig from a
-// TRACK MAP and a SAMPLER (formats/mwFirstPerson.js poseAssembly ->
+// TRACK MAP and a SAMPLER (formats/morrowind/mwFirstPerson.js poseAssembly ->
 // mwSkin.js poseSkeleton, which asks `tracks.get(boneName)` and then
 // `sampleTrack(track, time)` and expects `{rotation: quaternion,
 // translation, scale}`). MW-D51 blended the torch clip onto the left
@@ -48,13 +48,13 @@
 
 import { transformPoint } from '../world/mat4.js';
 
-/** Morrowind's own scale: MW_UNITS_PER_METER (formats/mwFirstPerson.js). */
+/** Morrowind's own scale: MW_UNITS_PER_METER (formats/morrowind/mwFirstPerson.js). */
 const UNITS_PER_METRE = 69.99;
 
 /**
  * The pose, in DEGREES about each bone's own axes, applied after the
  * idle's rotation - and the paper, in metres from the eye. Bone names
- * are the first-person skeleton's own (formats/mwNpc.js PART_BONES),
+ * are the first-person skeleton's own (formats/morrowind/mwNpc.js PART_BONES),
  * lowercased as the track map keys them.
  */
 export const HELD_POSE_DEFAULT = Object.freeze({

@@ -5,7 +5,7 @@
     "old": "  const free = (/** @type {number} */ x, /** @type {number} */ z) => placed.every((p) => Math.hypot(p.x - x, p.z - z) >= SPACE_M - 1e-6);\n  /** @type {Map<string, string[]>} those waiting",
     "new": "  const free = (/** @type {number} */ x, /** @type {number} */ z) => x === x && z === z;\n  /** @type {Map<string, string[]>} those waiting",
     "tests": [
-      "test/lwspace_street.test.js"
+      "test/systems/livingWorld/lwspace_street.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    out.set(id, got);\n    placed.push(got);\n    for (const w of waiting",
     "new": "    out.set(id, got);\n    for (const w of waiting",
     "tests": [
-      "test/lwspace_street.test.js"
+      "test/systems/livingWorld/lwspace_street.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "      for (let j = 0; !got && j <= 2 * turns; j++) {",
     "new": "      for (let j = 0; !got && j <= 0; j++) {",
     "tests": [
-      "test/lwspace_street.test.js"
+      "test/systems/livingWorld/lwspace_street.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "        if (free(x, z) && street.clear(spot.x, spot.z, x, z)) got = { x, z, yaw: b + Math.PI };",
     "new": "        if (free(x, z)) got = { x, z, yaw: b + Math.PI };",
     "tests": [
-      "test/lwspace_street.test.js"
+      "test/systems/livingWorld/lwspace_street.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    if (!got.every((p) => free(p.x, p.z))) {",
     "new": "    if (false) {",
     "tests": [
-      "test/lwspace_street.test.js"
+      "test/systems/livingWorld/lwspace_street.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "              if (!free(x, z) || !street.clear(spot.x, spot.z, x, z)) break;",
     "new": "              if (!free(x, z)) break;",
     "tests": [
-      "test/lwspace_street.test.js"
+      "test/systems/livingWorld/lwspace_street.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "    const st = inCircle ? c.place : alone && alone.spot === e.at ? alone : aloneStand(e.at, res.id, this._street);   // LW-STAND",
     "new": "    const st = inCircle ? c.place : aloneStand(e.at, res.id, this._street);   // LW-STAND",
     "tests": [
-      "test/lwspace_street.test.js"
+      "test/systems/livingWorld/lwspace_street.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "      const ids = who.map((w) => w.id), taken = circled.get(k) ?? [], by = beside.get(k) ?? null;",
     "new": "      const ids = who.map((w) => w.id), taken = [], by = beside.get(k) ?? null;",
     "tests": [
-      "test/lwspace_street.test.js"
+      "test/systems/livingWorld/lwspace_street.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "      who.sort((a, b) => a.t0 - b.t0 || (a.id < b.id ? -1 : 1));",
     "new": "      who.sort((a, b) => (a.id < b.id ? -1 : 1));",
     "tests": [
-      "test/lwspace_street.test.js"
+      "test/systems/livingWorld/lwspace_street.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "        while (j > 0 && plan[j - 1].at === e.at && plan[j - 1].kind !== 'walk' && isOutdoor(plan[j - 1])) j--;",
     "new": "        while (j < 0) j--;",
     "tests": [
-      "test/lwspace_street.test.js"
+      "test/systems/livingWorld/lwspace_street.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "        dealt.members.forEach((m, i) => { if (!absent.has(m.id) && !inInc(m.id)) this._inCircle.set(m.id, { circle, place: places[i], spot }); });",
     "new": "        dealt.members.forEach((m, i) => { if (!absent.has(m.id) && !inInc(m.id)) this._inCircle.set(m.id, { circle, place: circleStands(spot, dealt, this._street)[i], spot }); });",
     "tests": [
-      "test/lwspace_street.test.js"
+      "test/systems/livingWorld/lwspace_street.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "pointOnLine(line, Math.max(0, w.s - this._fileOf(res, e) * FILE_M));",
     "new": "pointOnLine(line, Math.max(0, w.s - 0 * FILE_M));",
     "tests": [
-      "test/lwspace_street.test.js"
+      "test/systems/livingWorld/lwspace_street.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "    while (i > 0 && list[i].t0 - list[i - 1].t0 <= FILE_MIN) { i--; k++; }",
     "new": "    while (i > 0 && list[i].t0 - list[i - 1].t0 <= 0) { i--; k++; }",
     "tests": [
-      "test/lwspace_street.test.js"
+      "test/systems/livingWorld/lwspace_street.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "        if (e.kind !== 'walk' || e.pair != null || !e.from) continue;",
     "new": "        if (e.kind !== 'walk' || !e.from) continue;",
     "tests": [
-      "test/lwspace_street.test.js"
+      "test/systems/livingWorld/lwspace_street.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "          const g = this._dodge(row, p, w, dt);   // LW-SPACE: where they walk this frame, stepped aside for whoever is in the way",
     "new": "          const g = { x: w.x, z: w.z };   // LW-SPACE: where they walk this frame, stepped aside for whoever is in the way",
     "tests": [
-      "test/lwspace_street.test.js"
+      "test/systems/livingWorld/lwspace_street.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "Math.abs(a - cur) - Math.abs(b - cur) || b - a)",
     "new": "Math.abs(a - cur) - Math.abs(b - cur) || a - b)",
     "tests": [
-      "test/lwspace_street.test.js"
+      "test/systems/livingWorld/lwspace_street.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "&& (a > SPACE_M || o.res.id > row.res.id)) continue;",
     "new": "&& (a > SPACE_M)) continue;",
     "tests": [
-      "test/lwspace_street.test.js"
+      "test/systems/livingWorld/lwspace_street.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "    if (!row.halt && (w.moving || Math.hypot(toX, toZ) > DODGE_SETTLE_M)) {",
     "new": "    if (!row.halt && (w.moving || Math.hypot(toX, toZ) > -1)) {",
     "tests": [
-      "test/lwspace_street.test.js"
+      "test/systems/livingWorld/lwspace_street.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "    if (!row.halt && (w.moving || Math.hypot(toX, toZ) > DODGE_SETTLE_M)) {",
     "new": "    if ((w.moving || Math.hypot(toX, toZ) > DODGE_SETTLE_M)) {",
     "tests": [
-      "test/lwspace_street.test.js"
+      "test/systems/livingWorld/lwspace_street.test.js"
     ]
   },
   {
@@ -176,8 +176,8 @@
     "old": "          if (inWay.every((s) => Math.abs(s - c) >= SPACE_M - SPACE_EPS) && this._street.holds(tx + rx * c, tz + rz * c)) { want = c; break; }",
     "new": "          if (inWay.every((s) => Math.abs(s - c) >= SPACE_M - SPACE_EPS)) { want = c; break; }",
     "tests": [
-      "test/lwspace_street.test.js",
-      "test/lwstand_street.test.js"
+      "test/systems/livingWorld/lwspace_street.test.js",
+      "test/systems/livingWorld/lwstand_street.test.js"
     ]
   },
   {
@@ -186,7 +186,7 @@
     "old": "      const back = Math.min(0, -toX * fx - toZ * fz) - SPACE_M;",
     "new": "      const back = -SPACE_M;",
     "tests": [
-      "test/lwspace_street.test.js"
+      "test/systems/livingWorld/lwspace_street.test.js"
     ]
   }
 ]

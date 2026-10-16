@@ -5,7 +5,7 @@
     "old": "  if (handler && (handler.usable?.(item) ?? true)) return true;\n",
     "new": "",
     "tests": [
-      "test/disc13.test.js"
+      "test/systems/disc13.test.js"
     ]
   },
   {
@@ -14,16 +14,16 @@
     "old": "if (handler && (handler.usable?.(item) ?? true)) return true;",
     "new": "if (handler) return true;",
     "tests": [
-      "test/disc13.test.js"
+      "test/systems/disc13.test.js"
     ]
   },
   {
     "name": "DISC13-B-the-bandage-declares-no-usable",
-    "file": "src/systems/rriKits.js",
+    "file": "src/systems/roleplayRealismItems/rriKits.js",
     "old": "useBandage.usable = () => rriModule('bandaging');\n",
     "new": "",
     "tests": [
-      "test/disc13.test.js"
+      "test/systems/disc13.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "return loc ? { locationLoaded: true, portTown:",
     "new": "return loc ? { loaded: true, portTown:",
     "tests": [
-      "test/disc13.test.js"
+      "test/systems/disc13.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "} : { locationLoaded: false, onShip: false }; },",
     "new": "} : { loaded: false, onShip: false }; },",
     "tests": [
-      "test/disc13.test.js"
+      "test/systems/disc13.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "'underworldExpulsion', 'shipPorts']",
     "new": "'underworldExpulsion']",
     "tests": [
-      "test/disc13.test.js"
+      "test/systems/disc13.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "playerTorchLight(playerEntity, player.feetAt(), cam.yaw), thunderlockMuzzleLight(playerEntity, player.feetAt(), cam.yaw)",
     "new": "playerTorchLight(playerEntity, player.pos, cam.yaw), thunderlockMuzzleLight(playerEntity, player.pos, cam.yaw)",
     "tests": [
-      "test/disc13.test.js"
+      "test/systems/disc13.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "thunderlockMuzzleLight(playerEntity, player.feetAt(), cam.yaw)",
     "new": "thunderlockMuzzleLight(playerEntity, player.pos, cam.yaw)",
     "tests": [
-      "test/disc13.test.js"
+      "test/systems/disc13.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "playerTorchLight(playerEntity, player.feetAt(), cam.yaw)",
     "new": "playerTorchLight(playerEntity, player.pos, cam.yaw)",
     "tests": [
-      "test/disc13.test.js"
+      "test/systems/disc13.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "playerTorchLight(playerEntity, player.feetAt(), cam.yaw)",
     "new": "playerTorchLight(playerEntity, player.pos, cam.yaw)",
     "tests": [
-      "test/disc13.test.js"
+      "test/systems/disc13.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "      feet: renderFeet ?? playerFeet ?? [0, 0, 0],",
     "new": "      feet: playerFeet ?? [0, 0, 0],",
     "tests": [
-      "test/disc13.test.js"
+      "test/systems/disc13.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "magic.update(dt, player.pos, _mfwd, player.height, player.feetAt());",
     "new": "magic.update(dt, player.pos, _mfwd, player.height);",
     "tests": [
-      "test/disc13.test.js"
+      "test/systems/disc13.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "playerHeight, playerRenderFeet);",
     "new": "playerHeight);",
     "tests": [
-      "test/disc13.test.js"
+      "test/systems/disc13.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "!!player.crouching, player.feetAt(), climbRigInput(player, cam.yaw), aimView);",
     "new": "!!player.crouching, undefined, climbRigInput(player, cam.yaw), aimView);",
     "tests": [
-      "test/disc13.test.js"
+      "test/systems/disc13.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "const k0 = Math.floor(-rect.x / cw + 1e-9), r0 = Math.floor(-rect.y / ch + 1e-9);",
     "new": "const k0 = -rect.x / cw, r0 = -rect.y / ch;",
     "tests": [
-      "test/disc13.test.js"
+      "test/systems/disc13.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "const k0 = Math.floor(-rect.x / cw + 1e-9), r0",
     "new": "const k0 = Math.max(0, Math.floor(-rect.x / cw + 1e-9)), r0",
     "tests": [
-      "test/disc13.test.js"
+      "test/systems/disc13.test.js"
     ]
   },
   {
@@ -149,8 +149,8 @@
     "old": "r0 = Math.floor(-rect.y / ch + 1e-9);",
     "new": "r0 = Math.max(0, Math.floor(-rect.y / ch + 1e-9));",
     "tests": [
-      "test/disc13.test.js",
-      "test/macr_fixes.test.js"
+      "test/systems/disc13.test.js",
+      "test/ui/enhanced/macr_fixes.test.js"
     ]
   },
   {
@@ -159,7 +159,7 @@
     "old": "const nx = Math.min(cap, Math.ceil((W - rect.x) / cw - 1e-9) - k0);",
     "new": "const nx = Math.min(cap, pw - k0);",
     "tests": [
-      "test/disc13.test.js"
+      "test/systems/disc13.test.js"
     ]
   },
   {
@@ -168,7 +168,7 @@
     "old": "const ny = Math.min(cap, Math.ceil((H - rect.y) / ch - 1e-9) - r0);",
     "new": "const ny = Math.min(cap, ph - r0);",
     "tests": [
-      "test/disc13.test.js"
+      "test/systems/disc13.test.js"
     ]
   },
   {
@@ -177,7 +177,7 @@
     "old": "dst: { x: rect.x + k0 * cw, y: rect.y + r0 * ch, w: nx * cw, h: ny * ch }",
     "new": "dst: { x: rect.x, y: rect.y, w: nx * cw, h: ny * ch }",
     "tests": [
-      "test/disc13.test.js"
+      "test/systems/disc13.test.js"
     ]
   },
   {
@@ -186,7 +186,7 @@
     "old": "const spare = screenTransform ? 1 : 0;",
     "new": "const spare = 0;",
     "tests": [
-      "test/disc13.test.js"
+      "test/systems/disc13.test.js"
     ]
   },
   {
@@ -195,7 +195,7 @@
     "old": "      if (rect && !(rect.w > 0 && rect.h > 0)) return false;\n",
     "new": "",
     "tests": [
-      "test/disc13.test.js"
+      "test/systems/disc13.test.js"
     ]
   }
 ]

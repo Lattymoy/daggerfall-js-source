@@ -5,7 +5,7 @@
     "old": "export const COMPANION_MAX = 2;",
     "new": "export const COMPANION_MAX = 3;",
     "tests": [
-      "test/crewcompanions.test.js"
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "export const REST_MIN = 8 * 60;",
     "new": "export const REST_MIN = 60;",
     "tests": [
-      "test/crewcompanions.test.js"
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "      if (r && now < r.until) return COMPANION_WHY.resting;",
     "new": "      if (r && now < r.until - 60) return COMPANION_WHY.resting;",
     "tests": [
-      "test/crewcompanions.test.js"
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "      if (party.length >= COMPANION_MAX && !find(boat, hand.name)) return COMPANION_WHY.full;",
     "new": "      if (party.length >= COMPANION_MAX) return COMPANION_WHY.full;",
     "tests": [
-      "test/crewcompanions.test.js"
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "      if (!isBoat(boat) || !isName(hand?.name) || find(boat, hand.name) || this.why(boat, hand, now) != null) return null;",
     "new": "      if (!isBoat(boat) || !isName(hand?.name) || this.why(boat, hand, now) != null) return null;",
     "tests": [
-      "test/crewcompanions.test.js"
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "      resting.push({ boat, name, until: now + REST_MIN });",
     "new": "      resting.push({ boat, name, until: now });",
     "tests": [
-      "test/crewcompanions.test.js"
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "      if (!this.sendBack(boat, name)) return false;\n      resting",
     "new": "      this.sendBack(boat, name);\n      resting",
     "tests": [
-      "test/crewcompanions.test.js"
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "      const woke = resting.filter((r) => now >= r.until);",
     "new": "      const woke = resting.filter((r) => now > r.until + 1e9);",
     "tests": [
-      "test/crewcompanions.test.js"
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "      c.health = health >= maxHealth ? null : Math.max(1, health);",
     "new": "      c.health = Math.max(1, health);",
     "tests": [
-      "test/crewcompanions.test.js"
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "      c.health = health >= maxHealth ? null : Math.max(1, health);",
     "new": "      c.health = health >= maxHealth ? null : health;",
     "tests": [
-      "test/crewcompanions.test.js"
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "      if (gone.length) party = party.filter((p) => lives(p.boat, p.name));",
     "new": "      if (gone.length) party = party.filter(() => true);",
     "tests": [
-      "test/crewcompanions.test.js"
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "      resting = resting.filter((r) => lives(r.boat, r.name));",
     "new": "      resting = resting.filter(() => true);",
     "tests": [
-      "test/crewcompanions.test.js"
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "      if (party.length >= COMPANION_MAX || !c || !isBoat(c.boat)",
     "new": "      if (!c || !isBoat(c.boat)",
     "tests": [
-      "test/crewcompanions.test.js"
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "      if (party.some((p) => same(p, r.boat, r.name))) continue;\n",
     "new": "\n",
     "tests": [
-      "test/crewcompanions.test.js"
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "    if (companions.isAshore(boat, h.name)) return { id: h.name, label: `${COMPANION_TEXT.back}: ${called}`, back: true };\n",
     "new": "",
     "tests": [
-      "test/crewcompanions.test.js"
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "  return [-fx * back + fz * side, -fz * back - fx * side];",
     "new": "  return [fx * back + fz * side, fz * back - fx * side];",
     "tests": [
-      "test/crewcompanions.test.js"
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "  const back = 1.8, side = n > 1 ? (i === 0 ? -1 : 1) * 1.1 : 0;",
     "new": "  const back = 1.8, side = n > 1 ? 1.1 : 0;",
     "tests": [
-      "test/crewcompanions.test.js"
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "      if (rec._knockedOut) {",
     "new": "      if (rec._knockedOut && false) {",
     "tests": [
-      "test/crewcompanions.test.js"
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "        stood.delete(k); leave(s);   // COMPANION-PORTAL: carried off through a portal\n        if (party.knock",
     "new": "        stood.delete(k);\n        if (party.knock",
     "tests": [
-      "test/crewcompanions.test.js"
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "      if (rec.dead || !rec.ai || (s.has && !s.has(rec))) { carry(s); stood.delete(k); continue; }",
     "new": "      if (rec.dead || !rec.ai || (s.has && !s.has(rec))) continue;",
     "tests": [
-      "test/crewcompanions.test.js"
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "      if (i < 0) { stood.delete(k); leave(s); continue; }",
     "new": "      if (i < 0) continue;",
     "tests": [
-      "test/crewcompanions.test.js"
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "        party.hurt(s.c.boat, s.c.name, rec.entity.health, rec.entity.maxHealth);\n",
     "new": "",
     "tests": [
-      "test/crewcompanions.test.js"
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "        const away = Math.hypot(f[0] - L.feet[0], f[2] - L.feet[2]) > CATCH_UP_M || (L.grounded !== false && Math.abs(f[1] - L.feet[1]) > CATCH_UP_DY);",
     "new": "        const away = Math.hypot(f[0] - L.feet[0], f[2] - L.feet[2]) > CATCH_UP_M;",
     "tests": [
-      "test/crewcompanions.test.js"
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -212,7 +212,7 @@
     "old": "          if (typeof rec.ai.resumeLive === 'function') rec.ai.resumeLive();\n          else { rec.ai.target = null; rec.ai.path = null; rec.ai.velY = 0; }\n",
     "new": "",
     "tests": [
-      "test/crewcompanions.test.js"
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -221,7 +221,7 @@
     "old": "    if (key !== placeKey) { liftAll(); placeKey = key; epoch++; trail.length = 0; leaderWas = null; }",
     "new": "    if (key !== placeKey) { placeKey = key; epoch++; trail.length = 0; leaderWas = null; }",
     "tests": [
-      "test/crewcompanions.test.js"
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -230,7 +230,7 @@
     "old": "        if (was !== epoch || !party.isAshore(c.boat, c.name) || deps.party() !== party) { place.remove(rec); return; }",
     "new": "        if (!party.isAshore(c.boat, c.name) || deps.party() !== party) { place.remove(rec); return; }",
     "tests": [
-      "test/crewcompanions.test.js"
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -239,7 +239,7 @@
     "old": "        rec.shipmate = true;\n",
     "new": "",
     "tests": [
-      "test/crewcompanions.test.js"
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -248,7 +248,7 @@
     "old": "          if (c.maxHealth > 0) { rec.entity.maxHealth = c.maxHealth;",
     "new": "          if (false) { rec.entity.maxHealth = c.maxHealth;",
     "tests": [
-      "test/crewcompanions.test.js"
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -257,7 +257,7 @@
     "old": "const followOf = (i) => ({ feet: () => deps.leader()?.feet ?? null, stop: HEEL_M + i * HEEL_STEP_M, trail: () => trail });",
     "new": "const followOf = (i) => ({ feet: () => deps.leader()?.feet ?? null, stop: HEEL_M, trail: () => trail });",
     "tests": [
-      "test/crewcompanions.test.js"
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -266,61 +266,61 @@
     "old": "      if (stood.has(k) || pending.has(k)) return;",
     "new": "      if (stood.has(k)) return;",
     "tests": [
-      "test/crewcompanions.test.js"
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
     "name": "FM-no-follow",
-    "file": "src/characters/enemyMotor.js",
+    "file": "src/characters/enemy/enemyMotor.js",
     "old": "    if (this._following) this._followTicks(classicTicks, dt);",
     "new": "    if (false) this._followTicks(classicTicks, dt);",
     "tests": [
-      "test/crewcompanions.test.js"
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
     "name": "FM-follow-while-fighting",
-    "file": "src/characters/enemyMotor.js",
+    "file": "src/characters/enemy/enemyMotor.js",
     "old": "    if (this.target == null) return true;\n    const tf",
     "new": "    return true;\n    const tf",
     "tests": [
-      "test/crewcompanions.test.js"
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
     "name": "FM-no-leash",
-    "file": "src/characters/enemyMotor.js",
+    "file": "src/characters/enemy/enemyMotor.js",
     "old": "    if (home > leash || (tf && Math.hypot(tf[0] - leader[0], tf[2] - leader[2]) > leash)) {",
     "new": "    if (tf && Math.hypot(tf[0] - leader[0], tf[2] - leader[2]) > leash) {",
     "tests": [
-      "test/crewcompanions.test.js"
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
     "name": "FM-no-slack",
-    "file": "src/characters/enemyMotor.js",
+    "file": "src/characters/enemy/enemyMotor.js",
     "old": "    if (d <= stop || (!this._followWalking && d <= stop + FOLLOW_SLACK)) {",
     "new": "    if (d <= stop) {",
     "tests": [
-      "test/crewcompanions.test.js"
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
     "name": "FM-walks-into-leader",
-    "file": "src/characters/enemyMotor.js",
+    "file": "src/characters/enemy/enemyMotor.js",
     "old": "    if (d <= stop || (!this._followWalking",
     "new": "    if (d <= 0.1 || (!this._followWalking",
     "tests": [
-      "test/crewcompanions.test.js"
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
     "name": "FM-leash-constant",
-    "file": "src/characters/enemyMotor.js",
+    "file": "src/characters/enemy/enemyMotor.js",
     "old": "export const FOLLOW_LEASH = 20;",
     "new": "export const FOLLOW_LEASH = 200;",
     "tests": [
-      "test/crewcompanions.test.js"
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -329,7 +329,7 @@
     "old": "      this._repathToward(chf, leader, dt);\n      if (!this.path",
     "new": "      if (true) return leader;\n      if (!this.path",
     "tests": [
-      "test/crewcompanions.test.js"
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -338,25 +338,25 @@
     "old": "      if (this._following) {\n        if (this.path && this.moving)",
     "new": "      if (this._following && false) {\n        if (this.path && this.moving)",
     "tests": [
-      "test/crewcompanions.test.js"
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
     "name": "ET-companion-unfought",
-    "file": "src/characters/enemyTargets.js",
+    "file": "src/characters/enemy/enemyTargets.js",
     "old": "      if (!isPlayer && selfMobileTeam !== 'PlayerAlly' && !(c.companion != null && ai.isHostile)) continue;",
     "new": "      if (!isPlayer && selfMobileTeam !== 'PlayerAlly') continue;",
     "tests": [
-      "test/crewcompanions.test.js"
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
     "name": "ET-companion-takes-an-ally",
-    "file": "src/characters/enemyTargets.js",
+    "file": "src/characters/enemy/enemyTargets.js",
     "old": "    if (self.companion != null && (c.companion != null || targetEntity?.team === 'PlayerAlly')) continue;\n",
     "new": "",
     "tests": [
-      "test/crewcompanions.test.js"
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -365,7 +365,7 @@
     "old": "        if (!m.gone || m.taken || m.ashore) continue;",
     "new": "        if (!m.gone || m.taken) continue;",
     "tests": [
-      "test/crewcompanions.test.js"
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -374,7 +374,7 @@
     "old": "        } else if (!out && m.ashore) {",
     "new": "        } else if (false) {",
     "tests": [
-      "test/crewcompanions.test.js"
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -383,7 +383,7 @@
     "old": "      if (f.companion != null) { f.entity.health = 1; if (!f._knockedOut) f._knockedBy = striker; f._knockedOut = true; return; }\n",
     "new": "",
     "tests": [
-      "test/crewcompanions.test.js"
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -392,7 +392,7 @@
     "old": "      if (foe.companion != null) { foe.entity.health = 1; if (!foe._knockedOut) foe._knockedBy = striker; foe._knockedOut = true; return; }\n",
     "new": "",
     "tests": [
-      "test/crewcompanions.test.js"
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -401,7 +401,7 @@
     "old": "    if (foe.dead || (fromPlayer && !peer && foe.companion != null)) return;",
     "new": "    if (foe.dead) return;",
     "tests": [
-      "test/crewcompanions.test.js"
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -410,7 +410,7 @@
     "old": "f._ownFrom == null && f.companion == null).map((f) => ({",
     "new": "f._ownFrom == null).map((f) => ({",
     "tests": [
-      "test/crewcompanions.test.js"
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -419,7 +419,7 @@
     "old": "    const live = dropFateHeld(foes.filter((f) => !f.dead && f.companion == null));",
     "new": "    const live = dropFateHeld(foes.filter((f) => !f.dead));",
     "tests": [
-      "test/crewcompanions.test.js"
+      "test/systems/naval/crewcompanions.test.js"
     ]
   }
 ]

@@ -109,7 +109,7 @@ NiBSAnimationNode over an empty sheath); twelve carry quivers of five
 to seven slots (the bows and crossbows); the three addons carry the
 same thirteen marked nodes, and `Bip01 AttachWeapon` unmarked.
 
-**Pins:** test/ws1_sheathing.test.js (12). tools/mutants/ws1.json (35).
+**Pins:** test/formats/morrowind/ws1_sheathing.test.js (12). tools/mutants/ws1.json (35).
 
 ## AUDIT-WS (2026-09-17, Mac: "Please audit this")
 

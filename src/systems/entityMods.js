@@ -82,7 +82,7 @@ const _blowMods = new Map();
 /** SIGIL1: register a modifier over a WEAPON BLOW's whole damage - `fn(weapon, damage, attacker, target, info) -> damage`,
  *  read at the tail of FormulaHelper's weapon damage (after the strength, the material and the enemy-type term, before
  *  DFU's mod hook, its last line), where the
- *  attacker and the target are known: the online sigil (systems/sigil.js) is the one that needs them.
+ *  attacker and the target are known: the online sigil (systems/sigil/sigil.js) is the one that needs them.
  *  SET2: `info` is what the striker's host knew and the formula could not - `{ unaware }`, the struck foe had not
  *  noticed the striker (its AI's `detected`, read where the foe RECORD is in hand: combat/playerWeapon.js foeUnaware).
  *  Read under EITHER core - DFU's (combat/formulas.js weaponAttackDamage) and PCAAO's (combat/pcaao.js

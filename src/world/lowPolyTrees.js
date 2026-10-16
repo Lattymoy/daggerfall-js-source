@@ -522,7 +522,7 @@ export const LPT_INSTANCE_FLOATS = 5;
  * eye's 3x3 is ever read). `groups` - one a far-picture batch: `{ h, centers, wild }` - the handle's index, the
  * batch's centres (pixel-local, the flats' own arrays) and which of them are the terrain's own (a Uint8Array, 1 wild;
  * null - none: a location's flats). Answers `{ trees, centers }`: LPT_SET_FLOATS a tree and each tree's centre.
- * LPT-FIT: and `fit` - the largest each tree may be drawn (world/roadVerge.js lptFitCap; absent, no cap): its variety
+ * LPT-FIT: and `fit` - the largest each tree may be drawn (world/road/roadVerge.js lptFitCap; absent, no cap): its variety
  * is drawn under it, so its crown keeps off the roads and streets beside it.
  * @param {number} px @param {number} py the pixel
  * @param {{ h: number, centers: number[][], wild: Uint8Array|null, fit?: Float32Array|null }[]} groups

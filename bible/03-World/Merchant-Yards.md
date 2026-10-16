@@ -17,12 +17,12 @@ over a copy - YARDS-FOUND, below) - and the whole of it is a departure, Ledger A
 ## Where they stand
 
 **Which towns.** Every city and town - MAPS.BSA's `TownCity` and `TownHamlet` (`systems/merchantYards.js`
-`isYardTown`; `systems/travelOptions.js` names them "city" and "town"). No village, farm, manor, temple or dungeon.
+`isYardTown`; `systems/travel/travelOptions.js` names them "city" and "town"). No village, farm, manor, temple or dungeon.
 
-**The ground** (`world/merchantYardSites.js`). The town's own navgrid (`world/cityNavigation.js`, DFU's CityNavigation
+**The ground** (`world/merchantYards/merchantYardSites.js`). The town's own navgrid (`world/city/cityNavigation.js`, DFU's CityNavigation
 carve: every automap byte a building, a tree or a lamp draws is closed, the water with it), always on the enhanced
 lane's water table as LEFAY1's monument reads it, and over it what the town's blocks put in a yard's way
-(`world/merchantYardSites.js` `yardMeasuresOf`, handed its measures by `scenes/world.js` `townPlacesFor`):
+(`world/merchantYards/merchantYardSites.js` `yardMeasuresOf`, handed its measures by `scenes/world.js` `townPlacesFor`):
 
 - every **building**'s box (its ARCH3D size, `staticBuildingBox`, no mesh built; a registered model's own geometry -
   `placedModelBox`) kept `BUILDING_CLEAR_M` (6 m) away -
@@ -34,7 +34,7 @@ lane's water table as LEFAY1's monument reads it, and over it what the town's bl
   (`fieldRect`); every **flat** (a tree, a lamp, a sign, a person, and the editor's markers - a traveller's start
   marker, a quest's) `FLAT_CLEAR_M` (0.8 m) round its foot;
 - a **palace's block** left whole (no yard in a castle's court - a palace read off the block's real buildings,
-  `talkTopics.js` `blockBuildingCount`), the **colosseum's** block too (`world/arenaCity.js` `ARENA_BLOCK` - its model
+  `talkTopics.js` `blockBuildingCount`), the **colosseum's** block too (`world/arena/arenaCity.js` `ARENA_BLOCK` - its model
   is built over the player's own, so it is never measured here), and LEFAY1's **monument** its own ground
   (`MONUMENT_KEEP_M`) - kept for a town that stands it; since HOLD-MONUMENT (2026-10-14) it stands outside Privateer's
   Hold, which has no yard, so no town's yards read it now. Gothway Garden's yards (a hamlet's) may stand in the 8 m the
@@ -59,8 +59,8 @@ yard over a house, a road or a lot.
 
 ## What stands
 
-Both are the port's own geometry (`world/merchantYardModels.js`, every face wound outward, the collider the same
-triangles) in the port's own art, made at boot under the pseudo-archive 38221 (`world/merchantYardArt.js`): weathered
+Both are the port's own geometry (`world/merchantYards/merchantYardModels.js`, every face wound outward, the collider the same
+triangles) in the port's own art, made at boot under the pseudo-archive 38221 (`world/merchantYards/merchantYardArt.js`): weathered
 fence timber, shed boards, split cedar shingles, straw, trodden earth, packed gravel, trough water, iron. Nothing of
 Daggerfall's is read for either.
 
@@ -83,7 +83,7 @@ Stable's iron horseshoe, its opening up for luck, and STABLES; the Wagon Yard's 
 spokes - and WAGONS. Both faces carry the picture, each reading the right way round (the world is left-handed: from the
 street, looking along -z, +x is on the viewer's left - the front's picture starts at +x, the back's at -x).
 
-**The keepers.** A person of the town's own people (the race its walkers wear - `characters/mobilePerson.js`
+**The keepers.** A person of the town's own people (the race its walkers wear - `characters/mobile/mobilePerson.js`
 `walkerRace`, REGIONAL-FOLK's law: the climate's People, a Redguard region's Redguard; both exterior hosts' populations
 and the yards read it) in the idle record its walkers stand in, one of the race's four outfits; named on the region's
 name bank on a seed of the town's map id and the yard's kind (`yardKeeper`, DFU's stream put back as it stood), so every
@@ -134,27 +134,27 @@ Nothing is saved or sent: where a yard stands is the town's layout, who keeps it
 ## Beside WAGONS3 and REGIONAL-FOLK (the merge, 2026-10-10)
 
 MERCHANT-YARDS and WAGONS3 (`06-Systems/Wagons.md`) were built on two branches and landed together, after main had
-taken REGIONAL-FOLK (`01-Overview/Field-Bugs-2026-10-10.md`). Three seams were settled on the merged tree:
+taken REGIONAL-FOLK (`01-Overview/bugs/Field-Bugs-2026-10-10.md`). Three seams were settled on the merged tree:
 
-- **One race law.** This branch had moved the climate's People map to `characters/mobilePerson.js` as
+- **One race law.** This branch had moved the climate's People map to `characters/mobile/mobilePerson.js` as
   `peopleRaceOf`; REGIONAL-FOLK had put the same map there as `raceOfPeople`, with `walkerRace` over it (a Redguard
   region's walkers are Redguards). Two homes for one table is the ONE EXPORT rule's fault, so `peopleRaceOf` is gone
   and the keepers wear `walkerRace(people, region)`, as the walkers do - Sentinel's stablemaster is a Redguard, as
   Sentinel's street is.
 - **The second horse.** WAGONS3's Open Wagon and Caravan take a pair, and its refusal sent the player to a General
   Store for the other horse; the General Store sells none now, so it says "Buy another at a town's Stable."
-- **The price and the team.** `systems/wagonKinds.js` carries WAGON-PRICE's `value` and `floor` and WAGONS3's
+- **The price and the team.** `systems/wagon/wagonKinds.js` carries WAGON-PRICE's `value` and `floor` and WAGONS3's
   `horses` on each kind.
 
 ## Not seen
 
 This container holds no ARENA2, so no real town was laid out here: the yards' places are proven on synthetic grids
-(`test/merchantyards1.test.js`) and the yards themselves in a software render of their own geometry, never in a
+(`test/world/merchantyards1.test.js`) and the yards themselves in a software render of their own geometry, never in a
 Daggerfall town. Where a town's open ground falls is for the owner's eyes - a town that finds no room logs it.
 
 ## Tests
 
-`test/merchantyards1.test.js` - the towns, the stock, what each buys, the General Store's shelf and list, the keeper,
+`test/world/merchantyards1.test.js` - the towns, the stock, what each buys, the General Store's shelf and list, the keeper,
 the place (its ground, its ring, its front, the turns), the measures, both yards apart and a laid-out town read as the
 people's navgrid, the carve, the timber, the sign read from both sides, the art, the pool (standing, the wagons'
 boxes coming in, a yard gone, no ground), the hold-back, the press and the plaque, the yard's frame, and the four hosts;
@@ -171,7 +171,7 @@ mutant. The yards' findings:
 - **Y1 (major) - the window's Steal.** Only the press refused a steal; the Buy window a yard opens is the shop counter's,
   and its Steal ran - a Caravan (25000) stolen at 11% risk for a master pickpocket, the press again minting another,
   each sold back at any Wagon Yard: gold without end, online too. `yardCounter`'s `noSteal`, through
-  `openTradeWindow`'s `stealRefusal` to both windows (`ui/nativeTrade.js` `_doSteal`, `ui/enhancedTrade.js`).
+  `openTradeWindow`'s `stealRefusal` to both windows (`ui/native/nativeTrade.js` `_doSteal`, `ui/enhanced/enhancedTrade.js`).
 - **Y2 (major) - the regions' prices.** A yard was priced at its region's walk, both ways; with endless, weightless
   stock, a Caravan bought where the index stood low sold where it stood high paid without end (ENDLESS-STOCK's loop).
   `YARD_PRICE_INDEX`, read by `shopAdjustment` off the counter.
@@ -203,7 +203,7 @@ buildings of its list, the Overworld marks places and parties, and the talk wind
 directory's buildings. A yard is none of those, so a Stable stood in the street and no map, mark or person knew it.
 
 **The talk directory** (`systems/merchantYards.js` yardDirectoryRows). Each yard is a row of its town's directory, in
-the shape `systems/talkTopics.js` buildBuildingDirectory mints: its name ("Moorhart's Stables"), its counter's type
+the shape `systems/talk/talkTopics.js` buildBuildingDirectory mints: its name ("Moorhart's Stables"), its counter's type
 (`yard:stable`), YARD_QUALITY, its middle in the location's frame. Its key is YARD_KEY_BASE (1 << 25) and its kind's
 place in YARD_KIND_ORDER - past every building's key (under 1 << 19 in the largest city) and past BUILDING_KEY_0
 (1 << 24). `scenes/townTalk.js` rebuildDirectory joins the rows to the buildings', off the host's `yards`
@@ -214,26 +214,26 @@ place in YARD_KIND_ORDER - past every building's key (under 1 << 19 in the large
   (LocalBuilding, its key). The groups take their own variable, so C#'s shared one flows into the General section and
   the palace arm untouched. Without an engine, townTalk's own fallback (directoryByCategory) groups them the same way;
 - the answer: the knowledge roll takes the yard's key as a building's, "%di of here" reads its middle off the
-  directory (`systems/talk.js` buildingCompassDirection), and "Let me just mark %loc here on your map" discovers it by
+  directory (`systems/talk/talk.js` buildingCompassDirection), and "Let me just mark %loc here on your map" discovers it by
   its key (`systems/answerPipeline.js` markKeySubjectLocationOnMap).
 
-**The town map** (`world/merchantYardMap.js` yardTownBlocks, laid once at `ui/townMapDoor.js` createTownMapWindow for
+**The town map** (`world/merchantYards/merchantYardMap.js` yardTownBlocks, laid once at `ui/town/townMapDoor.js` createTownMapWindow for
 whichever map the skin wears). The Arena's own law (ARENA-MAP), taken for the yards:
 
 - every cell of a yard's ground is drawn in YARD_MAP_BYTE - the General Store's byte, the counter that sold the horse
   and the cart before the yards took them - so both maps wash it in the shop quarter's colour. The data rows run
   against +z as the navgrid's do, so the cells drawn are the ones the people's navgrid closes;
 - its name is a `places` entry of the block its middle stands in, beside the block's `landmark`. Both the classic
-  window (`ui/exteriorAutomapWindow.js` buildPlates) and the held map's sheet (`ui/townSheet.js` named) letter it
+  window (`ui/exteriorAutomapWindow.js` buildPlates) and the held map's sheet (`ui/town/townSheet.js` named) letter it
   always, in a shop's ink, and no record renames it;
 - the rows are copies: a block a yard touches has its bytes copied, never written in place. The block's own bytes are
   the navgrid's and the next build's.
 
 **The Overworld** (`scenes/merchantYardsHost.js` overworldMarks, pushed in `scenes/travelViewMarks.js` travelViewMarks - HOST-SPLIT 1 moved it out of world.js). Each yard
 standing is a mark: its name over its ground (YARD_MARK_LIFT, 4 m), and its kind is the look's (`yard stable`,
-`yard transport`). The HUD draws its signboard's emblem (`ui/travelViewHud.js` yardGlyph): the Wagon Yard's wheel and
+`yard transport`). The HUD draws its signboard's emblem (`ui/travel/travelViewHud.js` yardGlyph): the Wagon Yard's wheel and
 the Stable's horseshoe, opening up. The marks go with the Towns switch and are never counted as a town
-(`systems/travelViewFilters.js` markGroup, countGroups). Only the yards of the towns built about the player stand;
+(`systems/travel/travelViewFilters.js` markGroup, countGroups). Only the yards of the towns built about the player stand;
 a town beyond that build shows its plate, not its yards.
 
 THE FOUR HOSTS (YARDS-FOUND): `scenes/world.js` - WIRED (the town map, the directory, the Overworld).
@@ -241,12 +241,12 @@ THE FOUR HOSTS (YARDS-FOUND): `scenes/world.js` - WIRED (the town map, the direc
 talk window reads the same directory, so a yard is asked after indoors too (the compass's indoor arm measures from the
 building). `scenes/dungeonContext.js` - no town.
 
-Pins: `test/yardsfound1.test.js`. Mutants: `tools/mutants/yardsfound1.json`. Not seen in a real town (no ARENA2 here).
+Pins: `test/systems/yardsfound1.test.js`. Mutants: `tools/mutants/yardsfound1.json`. Not seen in a real town (no ARENA2 here).
 
 ## Beside the port's places (SHIPYARDS, 2026-10-11)
 
 A port town's shipyard and lighthouse (`03-World/Shipyards.md`) stand on the ground the yards leave: the yards are
-placed by their own two steps, as they always were (`world/merchantYardSites.js` `townGroundOf`, then `yardSitesOn` -
+placed by their own two steps, as they always were (`world/merchantYards/merchantYardSites.js` `townGroundOf`, then `yardSitesOn` -
 `yardSitesOf` is the two), and the port's places on what is left (`scenes/world.js` `townPlacesFor`, one memo a town).
 The keeper's draw and the name's are one home for both (`systems/merchantYards.js` `townKeeper`, `namedAfter`), and the
 found places' one order is `systems/portPlaces.js` `FOUND_KIND_ORDER` - the yards' two first, so the Stable and the
@@ -259,7 +259,7 @@ stall, so every client sees the same three - priced by what they are while horse
 owns never stood again, and a stack of oats beside them (`06-Systems/Horse-Care.md`). The Wagon Yard sells Wagon Repair
 Kits beside its wagons, and its keeper's third row, Mend, makes the wagon driven whole for gold - a wright sent out to
 a wagon away (`06-Systems/Wagon-Upkeep.md`). Online the oats and the kits waited a release on UPKEEP_ITEMS_ONLINE
-(`systems/upkeepItemRows.js`, REST6's law); UPKEEP-ONLINE (2026-10-12) turned it on. The counter opens on the yard's town (`openYardTrade`'s `mapId`).
+(`systems/upkeep/upkeepItemRows.js`, REST6's law); UPKEEP-ONLINE (2026-10-12) turned it on. The counter opens on the yard's town (`openYardTrade`'s `mapId`).
 
 ## CARP-YARD - the Joinery (2026-10-12, Mac)
 
@@ -275,14 +275,14 @@ Its one row is the bench (`YARD_BENCH_ROW`, `yardRowsFor`). Steal takes nothing,
 
 **Placed last, keyed last.** The Stable and the Wagon Yard are placed first, as they always were (`YARD_KIND_ORDER`
 unchanged). A port town's shipyard and lighthouse go on what they leave. Then the joinery goes on what is left
-(`CRAFT_YARD_ORDER`, `world/merchantYardSites.js` `craftYardSitesOn`, called after `portSitesOn` in `scenes/world.js`
+(`CRAFT_YARD_ORDER`, `world/merchantYards/merchantYardSites.js` `craftYardSitesOn`, called after `portSitesOn` in `scenes/world.js`
 townPlacesFor). So no town's existing place moves, and a town too full for it stands none. Its ground is
 `YARD_FOOT.carpenter`, 14 m by 12. Its talk-directory key is `YARD_KEY_BASE + 6` (`YARD_KEY_SLOT`), its place in
 `systems/portPlaces.js` FOUND_KIND_ORDER after the port's four. So no key a save's discovery holds now names another
 place. On the Where-is page its group is "Carpenters", after the port's groups.
 
-**What stands** (`world/merchantYardModels.js` `buildCarpenterModel`, `CARPENTER_YARD`). It wears the yards' own
-pictures (`world/merchantYardArt.js`) and four new ones: the JOINERY board, `shavings`, `bark` and `endgrain`
+**What stands** (`world/merchantYards/merchantYardModels.js` `buildCarpenterModel`, `CARPENTER_YARD`). It wears the yards' own
+pictures (`world/merchantYards/merchantYardArt.js`) and four new ones: the JOINERY board, `shavings`, `bark` and `endgrain`
 (records 10-13; the floor is `shavings`, not `sawdust`, because the port's art already keeps a `sawdust` of its own
 under another record):
 
@@ -306,17 +306,17 @@ says the bench is bare (`WORKBENCH_COLD_LINE`, a home workbench's word). While t
 question answers `YARD_BENCH`: a shop's bench at the furnisher's own fee (`WORKBENCH_FEE` - no bench is a cheaper
 one), the carpenter the one paid. That question is `scenes/world.js` workbenchHere, asked by the craft, the Stores page
 and the saw alike; indoors it is still the mode machine's. The Stores page names the joinery's carpenter
-(`ui/profPages.js`). The furnisher's Linen counter stays a Furniture Store's alone (`!bench.yard`).
+(`ui/professions/profPages.js`). The furnisher's Linen counter stays a Furniture Store's alone (`!bench.yard`).
 
 **Found as a yard is.** Its row of the talk directory, the town maps' shop-coloured ground and its lettered name come
-through YARDS-FOUND's own doors unchanged. The Overworld marks it with the board's saw (`ui/travelViewHud.js`
+through YARDS-FOUND's own doors unchanged. The Overworld marks it with the board's saw (`ui/travel/travelViewHud.js`
 yardGlyph, `yardMarkKind`), under the Towns switch.
 
 THE FOUR HOSTS (CARP-YARD): `scenes/world.js` - WIRED (the placing, the pool's bench, the street's workbench).
 `scenes/worldModes.js` - its street ray reaches every `yard:` key unchanged, and indoors its workbenchHere answers as
 before. `scenes/exterior.js` - stands no yard (FLAGGED above). `scenes/dungeonContext.js` - no town.
 
-Pins: `test/carpyard1.test.js` (8). Mutants: `tools/mutants/carpyard1.json` (23, all dead). Pins moved: `prof4_client`
+Pins: `test/systems/carpyard1.test.js` (8). Mutants: `tools/mutants/carpyard1.json` (23, all dead). Pins moved: `prof4_client`
 (the bench's empty line, the craft's station question), `audit30_client` and `prof7_client` (the host's question),
 `shipyards1` (the found order), `yardsfound1` (the groups). Mutant records re-aimed: `shipyards1.json` (the found order,
 the mark's kind), `wagons4.json` (the mend row), `prof4.json` (the Linen's gate). Not seen in a real town (no ARENA2

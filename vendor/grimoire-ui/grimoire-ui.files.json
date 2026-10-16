@@ -5,7 +5,7 @@
   "Source": "https://www.nexusmods.com/daggerfallunity/mods/1222",
   "Archive": "GrimoireUI-1222-1-2-1780429570.zip",
   "ArchiveSha256": "445458a7a58c3eea60bde82ba5c5377a9af6b5ceff394794b924fb1df43ed965",
-  "Note": "A LOOSE-FILE pack: the archive carries no .dfmod and so no manifest of its own. This file is the archive's own listing, every file in it in the order the archive stores it - generated from the zip, not written by hand, and the authority test/doctrine.test.js reads for what may stand under public/art/grimoire-ui/.",
+  "Note": "A LOOSE-FILE pack: the archive carries no .dfmod and so no manifest of its own. This file is the archive's own listing, every file in it in the order the archive stores it - generated from the zip, not written by hand, and the authority test/tooling/doctrine.test.js reads for what may stand under public/art/grimoire-ui/.",
   "Files": [
     "StreamingAssets/Fonts/FONT0003-SDF.ttf",
     "StreamingAssets/Fonts/FONT0002-SDF.ttf",

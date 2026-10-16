@@ -17,7 +17,7 @@
 // slice.
 //
 // The arithmetic is NOT here - it is pure and pinned in node against
-// ui/charsheet.js's own expressions (test/enhancedCharSheet.test.js).
+// ui/charsheet.js's own expressions (test/ui/enhanced/enhancedCharSheet.test.js).
 //
 // Run against a dev server with NO arena2 on disk:
 //     npx vite --port 5199 &

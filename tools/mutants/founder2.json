@@ -5,7 +5,7 @@
     "old": "export const FOUNDER_UNTIL = 1_790_337_600;",
     "new": "export const FOUNDER_UNTIL = 1_790_121_600;",
     "tests": [
-      "test/founder2.test.js"
+      "test/server/founder2.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "export const FOUNDER_UNTIL = 1_790_337_600;",
     "new": "export const FOUNDER_UNTIL = Infinity;",
     "tests": [
-      "test/founder2.test.js"
+      "test/server/founder2.test.js"
     ]
   }
 ]

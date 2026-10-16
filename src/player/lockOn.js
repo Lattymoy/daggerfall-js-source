@@ -15,7 +15,7 @@
 // mat4's HANDEDNESS law), so mouse smoothing, the pitch clamp and the
 // swing-settle rule (F-C2) all hold over the lock exactly as they hold
 // over a drag. With the camera facing the foe, the right-half drag is
-// free to be the swipe (ui/touchGestures.js), and DFU's own melee -
+// free to be the swipe (ui/touch/touchGestures.js), and DFU's own melee -
 // which resolves along the camera ray behind the in-view gate
 // (player/cameraView.js) - lands on the locked foe without a second
 // aim of its own.

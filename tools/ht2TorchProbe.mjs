@@ -5,7 +5,7 @@
 // source has an equip slot, and the card answered "torch cannot be
 // worn." - so the only act on it that named the torch honestly was
 // Drop. The law is headless and pinned there
-// (test/ht2_packlight.test.js drives `localPrimaryAct` and the use);
+// (test/systems/ht2_packlight.test.js drives `localPrimaryAct` and the use);
 // what only a browser answers is whether the CARD a player actually
 // presses now offers Light, lights that torch, says which one burns,
 // and comes back offering Douse.
@@ -34,7 +34,7 @@ await page.waitForFunction(() => document.body.textContent.includes('boot failed
 
 await page.evaluate(async () => {
   const { createInventoryWindow } = await import('/src/ui/inventoryDoor.js');
-  const { ITEM_TEMPLATES } = await import('/src/characters/paperdoll.js');
+  const { ITEM_TEMPLATES } = await import('/src/characters/paperdoll/paperdoll.js');
   const { TEMPLATES } = await import('/src/systems/useItem.js');
   const t = (n) => ITEM_TEMPLATES.find((x) => x.name === n);
   const mk = (n, group = 'Weapons') => { const tp = t(n); return tp && { name: tp.name, templateIndex: tp.index, group, stackCount: 1, currentCondition: tp.hitPoints ?? 50, maxCondition: tp.hitPoints ?? 50 }; };

@@ -5,12 +5,12 @@
 // without any of them reaching the others' graphs.
 //
 // The tree is the ACCOUNT SERVICE's (server-account/src/firmament.js) - the host hands in what its book last heard
-// (net/firmamentBook.js) - and it is in force ONLINE ALONE: offline the character is the save's, Daggerfall's, with no
+// (net/firmament/firmamentBook.js) - and it is in force ONLINE ALONE: offline the character is the save's, Daggerfall's, with no
 // sky at all, as Renown's layer is (systems/renownLayer.js). The combat channels sleep further still (in a refereed fight
 // - firmamentPowers.js awake); and the whole sky sleeps while mentoring, a life channel read here with it (AUDIT
 // UICALM-FIRM1 L1 L2: the herb and fishing windows and the sail had kept it).
 
-import { treeStats, EMPTY_TREE } from '../net/firmamentLaw.js';
+import { treeStats, EMPTY_TREE } from '../net/firmament/firmamentLaw.js';
 
 /** @type {Readonly<Record<string, number>>} */
 const NONE = Object.freeze({});

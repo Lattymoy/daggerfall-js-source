@@ -4,7 +4,7 @@ The owner, 2026-10-04: *"So with the removal of fast travel, I want to implement
 this should cost weykar shards (from dismantling gear with rarity). These should always be readily available. When
 using this item, it opens a portal allowing you to traverse to anywhere on the map. This is a one use item that stays
 open for a short time, allowing multiple players to traverse."* Then: *"Audit this. It needs to be perfect. Also every
-current player should recieve x10 of these. They should stack."* (AUDIT PORTAL1, `01-Overview/Audit-PORTAL1.md`;
+current player should recieve x10 of these. They should stack."* (AUDIT PORTAL1, `01-Overview/audits/Audit-PORTAL1.md`;
 PORTAL-GIFT, below.)
 
 "Weykar shards" are the **Welkynd Shards** LOOT9 shipped (`06-Systems/Loot-Arc.md` section 11): what salvaging a
@@ -19,17 +19,17 @@ Not a DFU member - the port's own (Ledger A, PORTAL1).
 
 | File | What it is |
 |---|---|
-| `src/systems/gateSpoils.js` | the stone's row: template 572 beside the shard's 571 - bound, stacking with its own kind, the Diamond's art (TEXTURE.254 record 3), miscellany (`UselessItems2`) and never a gem: every Gems piece is a crystal a slot takes, so a gem stone was WORN from the hotbar. `PORTAL_STONE_SHARDS` (5) and the price off it; `portalStones(n)` mints a stack; the gift (`givePortalGift`) |
-| `src/net/realmTradeLaw.js` | `BOUND_TEMPLATES` names 572 - the realm's trade service refuses it as the client does |
+| `src/systems/gate/gateSpoils.js` | the stone's row: template 572 beside the shard's 571 - bound, stacking with its own kind, the Diamond's art (TEXTURE.254 record 3), miscellany (`UselessItems2`) and never a gem: every Gems piece is a crystal a slot takes, so a gem stone was WORN from the hotbar. `PORTAL_STONE_SHARDS` (5) and the price off it; `portalStones(n)` mints a stack; the gift (`givePortalGift`) |
+| `src/net/realm/realmTradeLaw.js` | `BOUND_TEMPLATES` names 572 - the realm's trade service refuses it as the client does |
 | `src/systems/portalStone.js` | the laws: the sale (`buyPortalStone`, `portalStoneRefusal`, `shardsKept`), the Use's registered arm (`openPortal`), one stone spent, THE HOLDS (`portalHold`), where a portal opens (`portalPlace`), the step in (`portalStepIn`), the wire (`portalWire`, `validPortalRecord`), the words (`PORTAL_TEXT`, `PORTAL_HOLD_TEXT`), the card's lines, every number below |
 | `src/systems/reforge.js` | the purse spends a shard unlocked AND unworn (AUDIT PORTAL1 I1) |
 | `src/scenes/portalGates.js` | the host's pool: the portals in the WORLD frame, COMPANION-PORTAL's vortex held for each one's time, the step and its forgetting, mine on the wire and a peer's landed |
 | `src/scenes/portalFx.js` | the vortex takes `holdMs` (a hold of its own) and `fixed` (stands where it opened), and `remove` - the companions' defaults unchanged |
-| `src/ui/merchantServiceWindow.js`, `src/ui/merchantRepairWindow.js` | the classic popups' port row under the art (`portalRowRect`, key P, `drawPortalRow`) - the Reforge row's law and its one dark (`guildServiceWindow.js` `REFORGE_ROW_BG`) |
-| `src/ui/merchantServiceDoor.js`, `src/ui/merchantRepairDoor.js` | the Enhanced Plus panel's button, above Exit |
-| `src/ui/nativeInventory.js`, `src/ui/enhancedInventory.js`, `src/systems/quickslots.js`, `src/systems/useItem.js` | the `openPortal` result routed on every reader - the pack closes and hands the stone to the host's door; a host with none says `USE_PENDING.openPortal` |
-| `src/systems/itemInfo.js` | the stone's card: what it does and how long it stands, on both skins |
-| `src/systems/save.js` | the gift's mark (`portalGift`), the gift given at the restore, and `restoresSoFar` - the count every load moves |
+| `src/ui/merchant/merchantServiceWindow.js`, `src/ui/merchant/merchantRepairWindow.js` | the classic popups' port row under the art (`portalRowRect`, key P, `drawPortalRow`) - the Reforge row's law and its one dark (`guildServiceWindow.js` `REFORGE_ROW_BG`) |
+| `src/ui/merchant/merchantServiceDoor.js`, `src/ui/merchant/merchantRepairDoor.js` | the Enhanced Plus panel's button, above Exit |
+| `src/ui/native/nativeInventory.js`, `src/ui/enhanced/enhancedInventory.js`, `src/systems/quickslots.js`, `src/systems/useItem.js` | the `openPortal` result routed on every reader - the pack closes and hands the stone to the host's door; a host with none says `USE_PENDING.openPortal` |
+| `src/systems/item/itemInfo.js` | the stone's card: what it does and how long it stands, on both skins |
+| `src/systems/save/save.js` | the gift's mark (`portalGift`), the gift given at the restore, and `restoresSoFar` - the count every load moves |
 | `src/scenes/worldModes.js` | THE COUNTER: `portalRow` / `askPortalStone` / `buyPortalStoneNow` |
 | `src/scenes/world.js` | THE USE AND THE PORTALS: `portalHoldNow`, `portalDoorRefusal`, `openPortalStone`, `standPortal`, `portalArrive`, the pool (`portalGates`), its tick and draw, a load's end of it, `portalWord` and the peers' landing, the gift said |
 | `src/scenes/exteriorFoes.js` | the foes frame's `pg` field past the room test (`setOnPortals`); an heir's list lands unbound (AUDIT PORTAL1 I4) |
@@ -165,16 +165,16 @@ the first time it is loaded.
 
 ## Pinned
 
-`test/portal1_stone.test.js` (12): the row, the counter (the boundary, the locked and the worn, the words), the use on
+`test/systems/portal1_stone.test.js` (12): the row, the counter (the boundary, the locked and the worn, the words), the use on
 every reader, the numbers and the holds and the place, the step, the wire (the producer's own record in the host's
 units), the vortex held, the pool (mine through the host's own x40 frame and a moving origin, the step forgotten, the
 holds; a peer's believed near its opener, one an opener, never longer, on my ground), the door, the pick and the
 arrival run from world.js's own source, the classic popups' row and the panels' button, and the hosts.
-`test/portal1_gift.test.js` (3): the gift's law, its mark through the save, and the hosts. `tools/mutants/portal1.json`
+`test/systems/portal1_gift.test.js` (3): the gift's law, its mark through the save, and the hosts. `tools/mutants/portal1.json`
 (92, all dead). Along the way (PORTAL1 and its audit), pins moved by content: the two mounted foes streams
-(`test/csa_together.test.js`, `test/audit0928_online.test.js`) stub `portalWord` as they stub every word on the line;
-U61's count of openers gated on the travel map's door is four (`test/heldmap.test.js`); AUDIT REALM F1's bound list
-reads the row (`test/auditrealm.test.js`); and mutant records re-aimed - `auditrealm.json`'s and `loot9.json`'s bound
+(`test/systems/csa_together.test.js`, `test/scenes/audit0928_online.test.js`) stub `portalWord` as they stub every word on the line;
+U61's count of openers gated on the travel map's door is four (`test/ui/heldmap.test.js`); AUDIT REALM F1's bound list
+reads the row (`test/systems/auditrealm.test.js`); and mutant records re-aimed - `auditrealm.json`'s and `loot9.json`'s bound
 lists, `loot9.json`'s purse and spend at the one `spendable` law, `survtiers.json`'s potion cite and
 `survtiers3.json`'s two world-seed cites and its rest-window cite (each a cite the shift moved).
 

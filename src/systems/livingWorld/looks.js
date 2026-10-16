@@ -14,7 +14,7 @@
 // Daggerfall's own still picture of their kind (its NPC flats, FLATS.CFG's captions and genders: an old beggar, a
 // well-to-do merchant, a cowled monk, a noblewoman wearing blue), their seed's among their kind's, animated as the game's
 // own still people are (render/flatAnimation.js). In a circle they are themselves, turned to those they talk with.
-import { MOBILE_TYPES as M } from '../../characters/mobileTypes.js';
+import { MOBILE_TYPES as M } from '../../characters/mobile/mobileTypes.js';
 import { lwSeed, textSeed } from './seed.js';
 import { MAGES_GUILD, FIGHTERS_GUILD, ORDER_FACTIONS } from './dayPlan.js';
 

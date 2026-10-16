@@ -6,7 +6,7 @@
 // weapon's paperdoll layer and its inventory icon are the SAME record
 // in Daggerfall - GetInventoryTextureArchive hands back the item's
 // PlayerTextureArchive, the very field the doll draws from
-// (src/characters/paperdollArt.js) - so whatever is cut out of the
+// (src/characters/paperdoll/paperdollArt.js) - so whatever is cut out of the
 // sprite is cut out of both. That is exactly why classic weapon icons
 // have a notch in them: it is not an icon with a hole, it is a doll
 // layer being shown in a list.

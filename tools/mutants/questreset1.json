@@ -5,7 +5,7 @@
     "old": "    const fresh = lines ? this.parseQuestForLists(lines, old.factionId) : null;\n    if (!fresh) return { ok: false, reason: 'unparsed' };\n    if (this.sharedCandidateNamed(old.questName) === old) this.sharedQuestNames.delete(old.questName);\n    this.removeQuest(old);\n",
     "new": "    if (this.sharedCandidateNamed(old.questName) === old) this.sharedQuestNames.delete(old.questName);\n    this.removeQuest(old);\n    const fresh = lines ? this.parseQuestForLists(lines, old.factionId) : null;\n    if (!fresh) return { ok: false, reason: 'unparsed' };\n",
     "tests": [
-      "test/questreset1.test.js"
+      "test/scenes/quest/questreset1.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    this.removeQuest(old);\n    try {\n      this.startQuestImmediate(fresh);",
     "new": "    try {\n      this.startQuestImmediate(fresh);",
     "tests": [
-      "test/questreset1.test.js"
+      "test/scenes/quest/questreset1.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "      this.startQuestImmediate(fresh);\n    } catch (e) {\n      console.warn(`[quest] QuestMachine failed to restart",
     "new": "      void fresh;\n    } catch (e) {\n      console.warn(`[quest] QuestMachine failed to restart",
     "tests": [
-      "test/questreset1.test.js"
+      "test/scenes/quest/questreset1.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    if (this.sharedCandidateNamed(old.questName) === old) this.sharedQuestNames.delete(old.questName);\n    this.removeQuest(old);",
     "new": "    this.removeQuest(old);",
     "tests": [
-      "test/questreset1.test.js"
+      "test/scenes/quest/questreset1.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    const why = this.shelveRefusal(uid);   // Abandon's own rungs: gone, set aside, ending, the world's own\n    if (why) return why;",
     "new": "    const why = this.shelveRefusal(uid);   // Abandon's own rungs: gone, set aside, ending, the world's own\n    if (why === 'gone') return why;",
     "tests": [
-      "test/questreset1.test.js"
+      "test/scenes/quest/questreset1.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "    if ([...quest.resources.values()].some((r) => r?.isPerson && r.isQuestor)) return 'questor';\n",
     "new": "",
     "tests": [
-      "test/questreset1.test.js"
+      "test/scenes/quest/questreset1.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "&& !a.isComplete && a.questUId === quest.uid)) return 'child';",
     "new": "&& a.questUId === quest.uid)) return 'child';",
     "tests": [
-      "test/questreset1.test.js"
+      "test/scenes/quest/questreset1.test.js"
     ]
   },
   {
@@ -68,97 +68,97 @@
     "old": "    return refuse ? refuse(quest) ?? null : null;",
     "new": "    return null;",
     "tests": [
-      "test/questreset1.test.js"
+      "test/scenes/quest/questreset1.test.js"
     ]
   },
   {
     "name": "QRESET-chronicle-door-unasked",
-    "file": "src/ui/enhancedChronicle.js",
+    "file": "src/ui/enhanced/enhancedChronicle.js",
     "old": "        if (reset?.restart && reset.canRestart?.(e.uid)) {",
     "new": "        if (reset?.restart) {",
     "tests": [
-      "test/questreset1.test.js"
+      "test/scenes/quest/questreset1.test.js"
     ]
   },
   {
     "name": "QRESET-chronicle-unarmed",
-    "file": "src/ui/enhancedChronicle.js",
+    "file": "src/ui/enhanced/enhancedChronicle.js",
     "old": "            if (bountyArmed !== `r:${e.uid}`) { bountyArmed = `r:${e.uid}`; render(); return; }",
     "new": "            void 0;",
     "tests": [
-      "test/questreset1.test.js"
+      "test/scenes/quest/questreset1.test.js"
     ]
   },
   {
     "name": "QRESET-chronicle-silent",
-    "file": "src/ui/enhancedChronicle.js",
+    "file": "src/ui/enhanced/enhancedChronicle.js",
     "old": "            shelfWord = reset.restart(e.uid)?.text ?? '';",
     "new": "            reset.restart(e.uid);",
     "tests": [
-      "test/questreset1.test.js"
+      "test/scenes/quest/questreset1.test.js"
     ]
   },
   {
     "name": "QRESET-chronicle-label-english",
-    "file": "src/ui/enhancedChronicle.js",
+    "file": "src/ui/enhanced/enhancedChronicle.js",
     "old": "t('chronicle.quests.restartLabel', 'Restart this quest')",
     "new": "'Restart'",
     "tests": [
-      "test/questreset1.test.js"
+      "test/scenes/quest/questreset1.test.js"
     ]
   },
   {
     "name": "QRESET-pause-door-unasked",
-    "file": "src/ui/enhancedMenu.js",
+    "file": "src/ui/enhanced/enhancedMenu.js",
     "old": "clean.restart && clean.canRestart?.(sel.id)) {",
     "new": "clean.restart) {",
     "tests": [
-      "test/questreset1.test.js"
+      "test/scenes/quest/questreset1.test.js"
     ]
   },
   {
     "name": "QRESET-credit-ungated",
-    "file": "src/scenes/questFoeHost.js",
+    "file": "src/scenes/quest/questFoeHost.js",
     "old": "return countsByName(quest, r) ? r : null;",
     "new": "return r;",
     "tests": [
-      "test/questreset1.test.js"
+      "test/scenes/quest/questreset1.test.js"
     ]
   },
   {
     "name": "QRESET-credit-item-gate",
-    "file": "src/scenes/questFoeHost.js",
+    "file": "src/scenes/quest/questFoeHost.js",
     "old": "  if ((foe?.itemQueue?.length ?? 0) > 0) return false;\n  const name = foe?.symbol?.name;",
     "new": "  const name = foe?.symbol?.name;",
     "tests": [
-      "test/questreset1.test.js"
+      "test/scenes/quest/questreset1.test.js"
     ]
   },
   {
     "name": "QRESET-credit-killed-unread",
-    "file": "src/scenes/questFoeHost.js",
+    "file": "src/scenes/quest/questFoeHost.js",
     "old": "(a.typeName === 'KilledFoe' || a.typeName === 'InjuredFoe')",
     "new": "(a.typeName === 'InjuredFoe')",
     "tests": [
-      "test/questreset1.test.js"
+      "test/scenes/quest/questreset1.test.js"
     ]
   },
   {
     "name": "QRESET-credit-injured-unread",
-    "file": "src/scenes/questFoeHost.js",
+    "file": "src/scenes/quest/questFoeHost.js",
     "old": "(a.typeName === 'KilledFoe' || a.typeName === 'InjuredFoe')",
     "new": "(a.typeName === 'KilledFoe')",
     "tests": [
-      "test/questreset1.test.js"
+      "test/scenes/quest/questreset1.test.js"
     ]
   },
   {
     "name": "QRESET-credit-any-trigger",
-    "file": "src/scenes/questFoeHost.js",
+    "file": "src/scenes/quest/questFoeHost.js",
     "old": "&& a.foeSymbol?.name === name) return true;",
     "new": ") return true;",
     "tests": [
-      "test/questreset1.test.js"
+      "test/scenes/quest/questreset1.test.js"
     ]
   }
 ]

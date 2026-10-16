@@ -5,7 +5,7 @@
     "old": "export const neverPeerHanded = (/** @type {any} */ item) => isBound(item) || isLetterOfCredit(item);",
     "new": "export const neverPeerHanded = (/** @type {any} */ item) => isBound(item);",
     "tests": [
-      "test/hackedgold.test.js"
+      "test/systems/hackedgold.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  online && isLetterOfCredit(item) && container && !own;",
     "new": "  isLetterOfCredit(item) && container && !own;",
     "tests": [
-      "test/hackedgold.test.js"
+      "test/systems/hackedgold.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  online && isLetterOfCredit(item) && container && !own;",
     "new": "  online && isLetterOfCredit(item) && container;",
     "tests": [
-      "test/hackedgold.test.js"
+      "test/systems/hackedgold.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "      const grant = notCarried(peerHanded(validLootList(data.grant)));",
     "new": "      const grant = notCarried(validLootList(data.grant));",
     "tests": [
-      "test/hackedgold.test.js"
+      "test/systems/hackedgold.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    const stays = items.filter(neverPeerHanded);\n    if (stays.length) { const go = items.filter((it) => !neverPeerHanded(it)); items.length = 0; items.push(...go, ...stays); }\n    let n = items.length - stays.length;",
     "new": "    const stays = [];\n    let n = items.length;",
     "tests": [
-      "test/hackedgold.test.js"
+      "test/systems/hackedgold.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "Math.min(255, peerHanded(f.entity?.items ?? []).length)",
     "new": "Math.min(255, f.entity?.items?.length | 0)",
     "tests": [
-      "test/hackedgold.test.js"
+      "test/systems/hackedgold.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "const items = h ? peerHanded(validLootList(f.entity?.items ?? [])) : null;",
     "new": "const items = h ? validLootList(f.entity?.items ?? []) : null;",
     "tests": [
-      "test/hackedgold.test.js"
+      "test/systems/hackedgold.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "const items = peerHanded(validLootList(r.it));",
     "new": "const items = unbound(validLootList(r.it));",
     "tests": [
-      "test/hackedgold.test.js"
+      "test/systems/hackedgold.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "      const items = peerHanded(validLootList(rec.r));",
     "new": "      const items = unbound(validLootList(rec.r));",
     "tests": [
-      "test/hackedgold.test.js"
+      "test/systems/hackedgold.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "r: peerHanded(held).map((it) => ({ ...it })),",
     "new": "r: unbound(held).map((it) => ({ ...it })),",
     "tests": [
-      "test/hackedgold.test.js"
+      "test/systems/hackedgold.test.js"
     ]
   },
   {
@@ -95,91 +95,91 @@
     "old": "const li = notCarried(peerHanded(validLootList(sf.items)));",
     "new": "const li = notCarried(unbound(validLootList(sf.items)));",
     "tests": [
-      "test/hackedgold.test.js"
+      "test/systems/hackedgold.test.js"
     ]
   },
   {
     "name": "HACKED-GOLD-a-buildings-record-heard-with-a-letter",
-    "file": "src/world/interiorShared.js",
+    "file": "src/world/interior/interiorShared.js",
     "old": "    const items = peerHanded(validLootList(rec.r));",
     "new": "    const items = validLootList(rec.r);",
     "tests": [
-      "test/hackedgold.test.js"
+      "test/systems/hackedgold.test.js"
     ]
   },
   {
     "name": "HACKED-GOLD-a-buildings-record-said-with-a-letter",
-    "file": "src/world/interiorShared.js",
+    "file": "src/world/interior/interiorShared.js",
     "old": "r: peerHanded(t.items).map((it) => ({ ...it })),",
     "new": "r: t.items.map((it) => ({ ...it })),",
     "tests": [
-      "test/hackedgold.test.js"
+      "test/systems/hackedgold.test.js"
     ]
   },
   {
     "name": "HACKED-GOLD-the-price-uncapped",
-    "file": "src/systems/loot.js",
+    "file": "src/systems/loot/loot.js",
     "old": "    it.value = Math.min(it.value, Math.max(_priceCeiling(it), wireFloorOf(it)));",
     "new": "",
     "tests": [
-      "test/hackedgold.test.js"
+      "test/systems/hackedgold.test.js"
     ]
   },
   {
     "name": "HACKED-GOLD-the-list-uncapped",
-    "file": "src/systems/loot.js",
+    "file": "src/systems/loot/loot.js",
     "old": "    if (!lawRefuses(it)) out.push(lawPriced(it));",
     "new": "    if (!lawRefuses(it)) out.push(it);",
     "tests": [
-      "test/hackedgold.test.js"
+      "test/systems/hackedgold.test.js"
     ]
   },
   {
     "name": "HACKED-GOLD-a-letter-priced",
-    "file": "src/systems/loot.js",
+    "file": "src/systems/loot/loot.js",
     "old": "if (_priceCeiling && !VALUE_IS_IDENTITY_TEMPLATES.includes(it.templateIndex) && !BOAT_TEMPLATES.includes(it.templateIndex)) {",
     "new": "if (_priceCeiling && !BOAT_TEMPLATES.includes(it.templateIndex)) {",
     "tests": [
-      "test/hackedgold.test.js"
+      "test/systems/hackedgold.test.js"
     ]
   },
   {
     "name": "HACKED-GOLD-the-ceiling-unregistered",
-    "file": "src/systems/itemLaw.js",
+    "file": "src/systems/item/itemLaw.js",
     "old": "setItemLaw(itemFindings, worthCeiling);",
     "new": "setItemLaw(itemFindings);",
     "tests": [
-      "test/hackedgold.test.js"
+      "test/systems/hackedgold.test.js"
     ]
   },
   {
     "name": "HACKED-GOLD-a-letter-unbounded",
-    "file": "src/systems/itemLaw.js",
+    "file": "src/systems/item/itemLaw.js",
     "old": "  if (item.templateIndex === LETTER_OF_CREDIT_TEMPLATE && typeof item.value === 'number' && item.value > (classic ? CLASSIC_VALUE_MAX : GOLD_INT_MAX)) out.add('value');",
     "new": "",
     "tests": [
-      "test/hackedgold.test.js",
-      "test/int1_itemlaw.test.js"
+      "test/systems/hackedgold.test.js",
+      "test/systems/item/int1_itemlaw.test.js"
     ]
   },
   {
     "name": "HACKED-GOLD-a-classic-letter-at-the-ports-bound",
-    "file": "src/systems/itemLaw.js",
+    "file": "src/systems/item/itemLaw.js",
     "old": "item.value > (classic ? CLASSIC_VALUE_MAX : GOLD_INT_MAX)) out.add('value');",
     "new": "item.value > GOLD_INT_MAX) out.add('value');",
     "tests": [
-      "test/hackedgold.test.js",
-      "test/int1_itemlaw.test.js"
+      "test/systems/hackedgold.test.js",
+      "test/systems/item/int1_itemlaw.test.js"
     ]
   },
   {
     "name": "HACKED-GOLD-a-coin-pile-unbounded",
-    "file": "src/systems/itemLaw.js",
+    "file": "src/systems/item/itemLaw.js",
     "old": "? GOLD_INT_MAX : LOOT_STACK_MAX);",
     "new": "? Number.MAX_SAFE_INTEGER : LOOT_STACK_MAX);",
     "tests": [
-      "test/hackedgold.test.js",
-      "test/int1_itemlaw.test.js"
+      "test/systems/hackedgold.test.js",
+      "test/systems/item/int1_itemlaw.test.js"
     ]
   },
   {
@@ -188,17 +188,17 @@
     "old": "  if (!purseWord(save?.goldPieces)) out.push({ code: 'gold' });",
     "new": "  if (!goldWord(save?.goldPieces)) out.push({ code: 'gold' });",
     "tests": [
-      "test/hackedgold.test.js"
+      "test/systems/hackedgold.test.js"
     ]
   },
   {
     "name": "HACKED-GOLD-the-law-version-unmoved",
-    "file": "src/systems/itemLaw.js",
+    "file": "src/systems/item/itemLaw.js",
     "old": "export const ITEM_LAW_VERSION = 5;",
     "new": "export const ITEM_LAW_VERSION = 3;",
     "tests": [
-      "test/int1_itemlaw.test.js",
-      "test/tech1_roster.test.js"
+      "test/systems/item/int1_itemlaw.test.js",
+      "test/systems/tech1_roster.test.js"
     ]
   },
   {
@@ -207,8 +207,8 @@
     "old": "export const ACCOUNT_VERSION = 'acct145';",
     "new": "export const ACCOUNT_VERSION = 'acct123';",
     "tests": [
-      "test/tech1_roster.test.js",
-      "test/realm1.test.js"
+      "test/systems/tech1_roster.test.js",
+      "test/server/realm1.test.js"
     ]
   },
   {
@@ -217,34 +217,34 @@
     "old": "return r && wearableItem(r) ? r : null; });",
     "new": "return r; });",
     "tests": [
-      "test/hackedgold.test.js"
+      "test/systems/hackedgold.test.js"
     ]
   },
   {
     "name": "HACKED-GOLD-the-classic-chest-takes-a-letter",
-    "file": "src/ui/nativeInventory.js",
+    "file": "src/ui/native/nativeInventory.js",
     "old": "        if (letterRefusesPut(it, { container: t === REMOTE_TARGET_TYPES.Loot && this.hooks.loot?.storage !== true, own: this.hooks.loot?.playerOwned === true })) {",
     "new": "        if (false) {",
     "tests": [
-      "test/hackedgold.test.js"
+      "test/systems/hackedgold.test.js"
     ]
   },
   {
     "name": "HACKED-GOLD-the-enhanced-ghost-unasked",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "  if (remote && letterRefuses(item)) return { kind: 'stow', label: null, speaks: true };   // HACKED-GOLD: a letter online - released, it says why\n",
     "new": "",
     "tests": [
-      "test/hackedgold.test.js"
+      "test/systems/hackedgold.test.js"
     ]
   },
   {
     "name": "HACKED-GOLD-the-enhanced-stow-unasked",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "  if (remote && letterRefuses(item)) {\n    notice = letterPutText(itemLongName(item, { getQuest: deps.getQuest ?? null }));\n    return render();\n  }",
     "new": "",
     "tests": [
-      "test/hackedgold.test.js"
+      "test/systems/hackedgold.test.js"
     ]
   },
   {
@@ -253,7 +253,7 @@
     "old": "  if (act === 'gains') return gainsMeasure(db, nowS, Number.isSafeInteger(body.days) && body.days >= 1 && body.days <= 30 ? body.days : 7);\n",
     "new": "",
     "tests": [
-      "test/hackedgold.test.js"
+      "test/systems/hackedgold.test.js"
     ]
   },
   {
@@ -262,7 +262,7 @@
     "old": "     GROUP BY f.char_id ORDER BY gain DESC LIMIT ?2`,",
     "new": "     GROUP BY f.char_id ORDER BY gain ASC LIMIT ?2`,",
     "tests": [
-      "test/hackedgold.test.js"
+      "test/systems/hackedgold.test.js"
     ]
   },
   {
@@ -271,7 +271,7 @@
     "old": "  if (act === 'trades') return tradesOf(db, row);\n",
     "new": "",
     "tests": [
-      "test/hackedgold.test.js"
+      "test/systems/hackedgold.test.js"
     ]
   },
   {
@@ -280,7 +280,7 @@
     "old": "      gave: receiptOf(r[theirs]), got: receiptOf(r[mine]),",
     "new": "      gave: receiptOf(r[mine]), got: receiptOf(r[theirs]),",
     "tests": [
-      "test/hackedgold.test.js"
+      "test/systems/hackedgold.test.js"
     ]
   },
   {
@@ -289,25 +289,25 @@
     "old": "  '/v1/mod/realm-gains',    // HACKED-GOLD: who gained past the bucket (review.js gainsMeasure)\n",
     "new": "",
     "tests": [
-      "test/hackedgold.test.js"
+      "test/systems/hackedgold.test.js"
     ]
   },
   {
     "name": "HACKED-GOLD-PRICE-CAP-an-honest-price-capped",
-    "file": "src/systems/loot.js",
+    "file": "src/systems/loot/loot.js",
     "old": "    it.value = Math.min(it.value, Math.max(_priceCeiling(it), wireFloorOf(it)));",
     "new": "    it.value = Math.min(it.value, Math.max(_priceCeiling(it) / 2, wireFloorOf(it)));",
     "tests": [
-      "test/int1_itemlaw.test.js"
+      "test/systems/item/int1_itemlaw.test.js"
     ]
   },
   {
     "name": "HACKED-GOLD-PRICE-CAP-a-deed-capped",
-    "file": "src/systems/loot.js",
+    "file": "src/systems/loot/loot.js",
     "old": "if (_priceCeiling && !VALUE_IS_IDENTITY_TEMPLATES.includes(it.templateIndex) && !BOAT_TEMPLATES.includes(it.templateIndex)) {",
     "new": "if (_priceCeiling && !VALUE_IS_IDENTITY_TEMPLATES.includes(it.templateIndex)) {",
     "tests": [
-      "test/int1_itemlaw.test.js"
+      "test/systems/item/int1_itemlaw.test.js"
     ]
   }
 ]

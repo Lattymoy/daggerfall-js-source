@@ -5,7 +5,7 @@
     "old": "isSdRoom(a.key) || isCellRoom(a.key) || isWorldRoom(a.key)) && who.subject)",
     "new": "isSdRoom(a.key) || isWorldRoom(a.key)) && who.subject)",
     "tests": [
-      "test/fb1015c_onebody.test.js"
+      "test/net/fb1015c_onebody.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "isSdRoom(a.key) || isCellRoom(a.key) || isWorldRoom(a.key)) && who.subject)",
     "new": "isSdRoom(a.key) || isCellRoom(a.key)) && who.subject)",
     "tests": [
-      "test/fb1015c_onebody.test.js"
+      "test/net/fb1015c_onebody.test.js"
     ]
   }
 ]

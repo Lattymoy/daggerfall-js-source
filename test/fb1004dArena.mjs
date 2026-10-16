@@ -1,5 +1,5 @@
 // FIELD BUGS 2026-10-04d: THE PLAYER'S OWN TOWNS, for the gated pins - the port's MapsFile and BlocksFile over
-// ARENA2_PATH, the world-data door holding both vendored town packs at their load priorities (formats/worldDataPack.js,
+// ARENA2_PATH, the world-data door holding both vendored town packs at their load priorities (formats/worldData/worldDataPack.js,
 // as scenes/modWorldData.js registers them), and the layout pins told where a town is. Nothing of ARENA2 is written or
 // kept. Without ARENA2_PATH (and its MAPS.BSA, BLOCKS.BSA, CLIMATE.PAK, POLITIC.PAK) every gated test skips.
 import { readFileSync, existsSync } from 'node:fs';
@@ -19,12 +19,12 @@ export const packJson = (v) => JSON.parse(zlib.gunzipSync(readFileSync(join(ROOT
 
 /** The towns as a game with `mods` loaded stands them: { maps, blocks, W, LP, packs, keyOf(mapId), world(location) }. */
 export async function openTowns({ mods = true } = {}) {
-  const W = await import('../src/formats/worldDataReplacement.js');
+  const W = await import('../src/formats/worldData/worldDataReplacement.js');
   const LP = await import('../src/systems/layoutPins.js');
-  const { setValue } = await import('../src/systems/settings.js');
+  const { setValue } = await import('../src/systems/settings/settings.js');
   const { MapsFile } = await import('../src/formats/mapsFile.js');
   const { BlocksFile } = await import('../src/formats/blocksFile.js');
-  const { openWorldDataPack } = await import('../src/formats/worldDataPack.js');
+  const { openWorldDataPack } = await import('../src/formats/worldData/worldDataPack.js');
   const blocks = new BlocksFile(); blocks.load(bytes('BLOCKS.BSA'));
   W._resetWorldDataReplacement(); LP._resetLayoutPins();
   setValue('Enhancements', 'AssetInjection', 'True');

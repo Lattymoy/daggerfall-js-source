@@ -5,7 +5,7 @@
   "old": "  if (f.type === FACTION_TYPES.VampireClan || f.ggroup === GUILD_GROUPS.Vampires || f.sgroup === SOCIAL_GROUPS.SupernaturalBeings) return 'none';\n",
   "new": "",
   "tests": [
-   "test/mwnpc8_people.test.js"
+   "test/systems/mwnpc8_people.test.js"
   ]
  },
  {
@@ -14,7 +14,7 @@
   "old": "  if (f.type === FACTION_TYPES.Temple || f.ggroup === GUILD_GROUPS.HolyOrder) return 'priest';\n",
   "new": "",
   "tests": [
-   "test/mwnpc8_people.test.js"
+   "test/systems/mwnpc8_people.test.js"
   ]
  },
  {
@@ -23,7 +23,7 @@
   "old": "  if (f.ggroup === GUILD_GROUPS.MagesGuild || f.type === FACTION_TYPES.MagicUser) return 'mage';\n",
   "new": "",
   "tests": [
-   "test/mwnpc8_people.test.js"
+   "test/systems/mwnpc8_people.test.js"
   ]
  },
  {
@@ -32,7 +32,7 @@
   "old": "  if (f.ggroup === GUILD_GROUPS.KnightlyOrder || f.type === FACTION_TYPES.KnightlyGuard) return 'knight';   // MWNPC17: was 'steel'\n",
   "new": "",
   "tests": [
-   "test/mwnpc8_people.test.js"
+   "test/systems/mwnpc8_people.test.js"
   ]
  },
  {
@@ -41,7 +41,7 @@
   "old": "  if (f.sgroup === SOCIAL_GROUPS.Nobility || f.type === FACTION_TYPES.Courts) return 'noble';\n",
   "new": "",
   "tests": [
-   "test/mwnpc8_people.test.js"
+   "test/systems/mwnpc8_people.test.js"
   ]
  },
  {
@@ -50,7 +50,7 @@
   "old": "  if (f.sgroup === SOCIAL_GROUPS.Merchants) return 'merchant';\n",
   "new": "",
   "tests": [
-   "test/mwnpc8_people.test.js"
+   "test/systems/mwnpc8_people.test.js"
   ]
  },
  {
@@ -59,7 +59,7 @@
   "old": "  if (f.sgroup === SOCIAL_GROUPS.Underworld || f.type === FACTION_TYPES.Thieves || f.ggroup === GUILD_GROUPS.DarkBrotherHood) return 'underworld';   // MWNPC17: and the Brotherhood\n",
   "new": "",
   "tests": [
-   "test/mwnpc8_people.test.js"
+   "test/systems/mwnpc8_people.test.js"
   ]
  },
  {
@@ -68,7 +68,7 @@
   "old": "  if (f.sgroup === SOCIAL_GROUPS.Scholars) return 'scholar';\n",
   "new": "",
   "tests": [
-   "test/mwnpc8_people.test.js"
+   "test/systems/mwnpc8_people.test.js"
   ]
  },
  {
@@ -77,7 +77,7 @@
   "old": "  if (!data || isChildNPCData(data)) return (pn._mwLook = null);",
   "new": "  if (!data) return (pn._mwLook = null);",
   "tests": [
-   "test/mwnpc8_people.test.js"
+   "test/systems/mwnpc8_people.test.js"
   ]
  },
  {
@@ -86,7 +86,7 @@
   "old": "  if (kind === 'none' || !race) return (pn._mwLook = null);",
   "new": "  if (kind === 'none') return (pn._mwLook = null);",
   "tests": [
-   "test/mwnpc8_people.test.js"
+   "test/systems/mwnpc8_people.test.js"
   ]
  },
  {
@@ -95,7 +95,7 @@
   "old": "  const gender = data.gender === GENDERS.Female ? 'female' : 'male';",
   "new": "  const gender = 'male';",
   "tests": [
-   "test/mwnpc8_people.test.js"
+   "test/systems/mwnpc8_people.test.js"
   ]
  },
  {
@@ -104,7 +104,7 @@
   "old": "  if (pn._mwLook !== undefined) return pn._mwLook;\n  if (!data",
   "new": "  if (!data",
   "tests": [
-   "test/mwnpc8_people.test.js"
+   "test/systems/mwnpc8_people.test.js"
   ]
  },
  {
@@ -113,7 +113,7 @@
   "old": "  const armor = R.armor ? armorKit(R.armor, tier, wmix(s ^ 0xa4)) : [];",
   "new": "  const armor = [];",
   "tests": [
-   "test/mwnpc8_people.test.js"
+   "test/systems/mwnpc8_people.test.js"
   ]
  },
  {
@@ -122,7 +122,7 @@
   "old": "  if (!armor.some((it) => it.equipSlot === EQUIP_SLOTS.Feet)) items.push(",
   "new": "  if (true) items.push(",
   "tests": [
-   "test/mwnpc8_people.test.js"
+   "test/systems/mwnpc8_people.test.js"
   ]
  },
  {
@@ -131,7 +131,7 @@
   "old": "  const seed = mix((data.nameSeed | 0) ^ mix(data.hash | 0));",
   "new": "  const seed = 0;",
   "tests": [
-   "test/mwnpc8_people.test.js"
+   "test/systems/mwnpc8_people.test.js"
   ]
  },
  {
@@ -140,7 +140,7 @@
   "old": "  const dye = (salt) => pickOf(R.dyes, wmix(s ^ salt));",
   "new": "  const dye = (salt) => pickOf(WARDROBE_DYES.street, wmix(s ^ salt));",
   "tests": [
-   "test/mwnpc8_people.test.js"
+   "test/systems/mwnpc8_people.test.js"
   ]
  },
  {
@@ -149,7 +149,7 @@
   "old": "    pn._mwYaw = wrap(pn._mwYaw + (Math.abs(d) <= step ? d : Math.sign(d) * step));",
   "new": "    pn._mwYaw = wrap(pn._mwYaw + d);",
   "tests": [
-   "test/mwnpc8_people.test.js"
+   "test/systems/mwnpc8_people.test.js"
   ]
  },
  {
@@ -158,7 +158,7 @@
   "old": "    const d = wrap(want - pn._mwYaw), step",
   "new": "    const d = (want - pn._mwYaw), step",
   "tests": [
-   "test/mwnpc8_people.test.js"
+   "test/systems/mwnpc8_people.test.js"
   ]
  },
  {
@@ -167,7 +167,7 @@
   "old": "(Math.abs(d) <= step ? d : Math.sign(d) * step)",
   "new": "(Math.sign(d) * step)",
   "tests": [
-   "test/mwnpc8_people.test.js"
+   "test/systems/mwnpc8_people.test.js"
   ]
  },
  {
@@ -176,7 +176,7 @@
   "old": "  if (pn._mwYaw == null) pn._mwYaw = want;",
   "new": "  if (pn._mwYaw == null) pn._mwYaw = 0;",
   "tests": [
-   "test/mwnpc8_people.test.js"
+   "test/systems/mwnpc8_people.test.js"
   ]
  },
  {
@@ -185,7 +185,7 @@
   "old": "    if (!dict) return null;\n    return personLook(",
   "new": "    return personLook(",
   "tests": [
-   "test/mwnpc8_people.test.js"
+   "test/systems/mwnpc8_people.test.js"
   ]
  },
  {
@@ -194,7 +194,7 @@
   "old": "      if (look) peopleBodies.offer(personActor(pn, look, pn._mwFeet ??= [pn.x, pn.y, pn.z], mwv.eye, dt), pn.standBatch);",
   "new": "      if (false) peopleBodies.offer(personActor(pn, look, pn._mwFeet ??= [pn.x, pn.y, pn.z], mwv.eye, dt), pn.standBatch);",
   "tests": [
-   "test/mwnpc8_people.test.js"
+   "test/systems/mwnpc8_people.test.js"
   ]
  },
  {
@@ -203,7 +203,7 @@
   "old": "    peopleBodies.draw(canvas, proj, view, mwv.eye, dt);\n",
   "new": "",
   "tests": [
-   "test/mwnpc8_people.test.js"
+   "test/systems/mwnpc8_people.test.js"
   ]
  },
  {
@@ -212,7 +212,7 @@
   "old": "    peopleBodies.destroy();   // MWNPC8a: the room's people's bodies with it\n",
   "new": "",
   "tests": [
-   "test/mwnpc8_people.test.js"
+   "test/systems/mwnpc8_people.test.js"
   ]
  }
 ]

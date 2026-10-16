@@ -5,7 +5,7 @@
     "old": "return { red: redFrom(redRes?.results), seats:",
     "new": "return { red: redFrom((await redRead(db, nowS).all()).results), seats:",
     "tests": [
-      "test/primary_trips.test.js"
+      "test/server/primary_trips.test.js"
     ],
     "note": "the red lines asked in a trip of their own"
   },
@@ -15,7 +15,7 @@
     "old": "for (const r of fortsRes?.results ?? [])",
     "new": "for (const r of (await fortsRead.all()).results ?? [])",
     "tests": [
-      "test/primary_trips.test.js"
+      "test/server/primary_trips.test.js"
     ],
     "note": "the works asked in a trip of their own"
   },
@@ -25,7 +25,7 @@
     "old": "try { db = replicaDb(typeof ctx.db?.withSession === 'function' ? ctx.db : root, from); } catch",
     "new": "try { db = ctx.db; } catch",
     "tests": [
-      "test/primary_trips.test.js"
+      "test/server/primary_trips.test.js"
     ],
     "note": "a town's yards read on the binding - the primary's queue"
   },
@@ -35,7 +35,7 @@
     "old": "  yardsWritten.add(mapId);   // YARDS-REPLICA: and its next read the primary's, which has the write\n",
     "new": "",
     "tests": [
-      "test/primary_trips.test.js"
+      "test/server/primary_trips.test.js"
     ],
     "note": "the read after a decor write here off a replica that may not have it"
   },
@@ -45,7 +45,7 @@
     "old": "      if (mark) yardsMark.set(mapId, mark);\n",
     "new": "",
     "tests": [
-      "test/primary_trips.test.js"
+      "test/server/primary_trips.test.js"
     ],
     "note": "a read after a kept one from any instance - a replica behind it may answer"
   },
@@ -55,7 +55,7 @@
     "old": "    ...ledgerReads(db, id),\n",
     "new": "",
     "tests": [
-      "test/primary_trips.test.js"
+      "test/server/primary_trips.test.js"
     ],
     "note": "the ledger's reads out of the checkpoint's first batch"
   },
@@ -65,7 +65,7 @@
     "old": "    ...(keptConfig ? [] : [budgetRead(db)]),\n",
     "new": "",
     "tests": [
-      "test/primary_trips.test.js"
+      "test/server/primary_trips.test.js"
     ],
     "note": "the budget's config out of the checkpoint's first batch"
   },
@@ -75,7 +75,7 @@
     "old": "  const keptConfig = budgetKept(db);",
     "new": "  const keptConfig = null;",
     "tests": [
-      "test/primary_trips.test.js"
+      "test/server/primary_trips.test.js"
     ],
     "note": "the config asked though this isolate kept it"
   },
@@ -85,7 +85,7 @@
     "old": "  const res = reads.length ? await ctx.db.batch(reads) : [];",
     "new": "  const res = await Promise.all(reads.map((r) => r.all()));",
     "tests": [
-      "test/primary_trips.test.js"
+      "test/server/primary_trips.test.js"
     ],
     "note": "each game's honours a trip of their own"
   },
@@ -95,7 +95,7 @@
     "old": "  const cached = _champ.season === season && nowS - _champ.at < ARENA_CHAMPION_CACHE_S;",
     "new": "  const cached = false;",
     "tests": [
-      "test/primary_trips.test.js"
+      "test/server/primary_trips.test.js"
     ],
     "note": "the arena's #1 this Worker kept asked again"
   },
@@ -105,7 +105,7 @@
     "old": "  if (body?.mail === true) await part('mail',",
     "new": "  if (body?.beat === true) await part('beat', () => creditPlay(ctx, player.id));\n  if (body?.mail === true) await part('mail',",
     "tests": [
-      "test/primary_trips.test.js"
+      "test/server/primary_trips.test.js"
     ],
     "note": "the beat written before the reads - a session sends them to the primary"
   },
@@ -115,7 +115,7 @@
     "old": "SELECT DISTINCT +region, 1, 0, ?2 FROM world_witness",
     "new": "SELECT DISTINCT region, 1, 0, ?2 FROM world_witness",
     "tests": [
-      "test/primary_trips.test.js"
+      "test/server/primary_trips.test.js"
     ],
     "note": "the bump's DISTINCT off the (kind, region) index - every hall report walked"
   },
@@ -125,7 +125,7 @@
     "old": "        for (const m of yardsMark.values()) if (yardsFloor == null || m > yardsFloor) yardsFloor = m;   // PRIMARY-TRIPS audit\n",
     "new": "",
     "tests": [
-      "test/primary_trips.test.js"
+      "test/server/primary_trips.test.js"
     ],
     "note": "the bookmarks let go with the kept towns leave no floor"
   },
@@ -135,7 +135,7 @@
     "old": "if (yardsFloor == null || m > yardsFloor) yardsFloor = m;",
     "new": "if (yardsFloor == null || m < yardsFloor) yardsFloor = m;",
     "tests": [
-      "test/primary_trips.test.js"
+      "test/server/primary_trips.test.js"
     ],
     "note": "the floor the oldest bookmark let go, not the newest"
   },
@@ -145,7 +145,7 @@
     "old": "(yardsMark.get(mapId) ?? yardsFloor ?? YARDS_FROM)",
     "new": "(yardsMark.get(mapId) ?? YARDS_FROM)",
     "tests": [
-      "test/primary_trips.test.js"
+      "test/server/primary_trips.test.js"
     ],
     "note": "a town with no mark of its own reads from any instance, the floor never read"
   },
@@ -155,7 +155,7 @@
     "old": " if (yardsFloor === from) yardsFloor = null;",
     "new": "",
     "tests": [
-      "test/primary_trips.test.js"
+      "test/server/primary_trips.test.js"
     ],
     "note": "a floor whose read failed kept - every unmarked town's read fails with it"
   },
@@ -165,7 +165,7 @@
     "old": "  const known = { mine: mineRes, dupes: dupesRes, config };",
     "new": "  const known = { mine: mineRes, dupes: dupesRes, config: keptConfig ?? budgetFrom(db, configRes?.results?.[0] ?? null) };",
     "tests": [
-      "test/primary_trips.test.js"
+      "test/server/primary_trips.test.js"
     ],
     "note": "the config kept again after the baseline's read - a staff change forgotten meanwhile undone"
   },
@@ -175,7 +175,7 @@
     "old": "(cached ? keptId : await championFrom(",
     "new": "(cached ? _champ.id : await championFrom(",
     "tests": [
-      "test/primary_trips.test.js"
+      "test/server/primary_trips.test.js"
     ],
     "note": "the arena #1 read after the batch - another request's new season in its place"
   },
@@ -185,7 +185,7 @@
     "old": "(cached ? keptId : await championFrom(",
     "new": "(cached ? _champ.id : await championFrom(",
     "tests": [
-      "test/primary_trips.test.js"
+      "test/server/primary_trips.test.js"
     ],
     "note": "the iliac #1 read after the batch - another request's new season in its place"
   },
@@ -195,7 +195,7 @@
     "old": "(cached ? keptId : await championFrom(",
     "new": "(cached ? _champ.id : await championFrom(",
     "tests": [
-      "test/primary_trips.test.js"
+      "test/server/primary_trips.test.js"
     ],
     "note": "the gambit #1 read after the batch - another request's new season in its place"
   },
@@ -205,7 +205,7 @@
     "old": "if (w.n > asked || now() - w.at < YARD_WRITE_HOLD_MS) byKey.set(bk, w.list);",
     "new": "if (w.n > asked) byKey.set(bk, w.list);",
     "tests": [
-      "test/fb1001_yard.test.js"
+      "test/scenes/fb1001_yard.test.js"
     ],
     "note": "the owner's write held over an answer asked before it alone"
   }

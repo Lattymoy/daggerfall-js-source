@@ -34,9 +34,9 @@
 
 import { mwCamera } from './mwCamera.js';
 import { fpArm } from '../combat/fpArm.js';
-import { eotbCamera } from './eotbCamera.js';
-import { eotbBody } from './eotbBody.js';
-import { eotbWagon } from './eotbWagon.js';
+import { eotbCamera } from './eyeOfTheBeholder/eotbCamera.js';
+import { eotbBody } from './eyeOfTheBeholder/eotbBody.js';
+import { eotbWagon } from './eyeOfTheBeholder/eotbWagon.js';
 import { modSetting } from '../systems/modSettings.js';
 import { horseRigFor, HORSE_SEAT } from '../world/horseRig.js';   // COATS3D: the 3D horse under the Morrowind body
 import { gaitShare } from '../world/horseModel.js';
@@ -64,7 +64,7 @@ let eotbBodyReady = () => false;
  * not own. `weaponReady` is the weapon rig's to answer (it holds the
  * machine); `sailing` is the camera's own field since CSA-J, raised by
  * Come Sail Away's OnUpdateSailing (eotbCamera.setComeSailAway).
- * Registered once by `combat/weaponRig.js`, so no host re-derives it -
+ * Registered once by `combat/weapon/weaponRig.js`, so no host re-derives it -
  * MW-D25's law, the reason this seam exists at all.
  */
 let eotbPlayerState = () => ({});
@@ -469,7 +469,7 @@ function dropOwnHorse() {
 
 /** COATS3D: the 3D horse rig while the world's horses are 3D - the Morrowind body is the one on screen (the player's
  *  own lane: never the sprite lane's, whose riders and horses are its own pictures) and the rig is up; else null, and
- *  every horse stands as its billboard. The pool's and the road's horses (scenes/horseCartPool.js, world/roadTeams.js)
+ *  every horse stands as its billboard. The pool's and the road's horses (scenes/horseCartPool.js, world/road/roadTeams.js)
  *  ask it each frame. */
 export function mwViewHorseRig() {
   return horseRig?.ready() && !eotbLane() && fpArm.canThirdPerson() ? horseRig : null;
@@ -556,7 +556,7 @@ export function mwViewRebase(delta) {
 
 // ═══ EOTB-IL: THE CART's three doors ═════════════════════════════════
 //
-// SpawnWagon / UpdateWagon / CheckWagon (player/eotbWagon.js). The two
+// SpawnWagon / UpdateWagon / CheckWagon (player/eyeOfTheBeholder/eotbWagon.js). The two
 // EXTERIOR hosts carry all three - DFU's TransportManager puts the
 // player on foot at every interior and dungeon door, so the cart
 // (TransportMode == Cart, IL_1f58) never exists inside.
@@ -565,7 +565,7 @@ export function mwViewRebase(delta) {
 export function mwViewAttachWagon(pipeline) { eotbWagon.attach(pipeline); }
 
 /** The cart in the host's world pass, after its models. Off the lane there is no cart. PERF-WAGON: `cull` the host's
- *  view test, handed on (player/eotbWagon.js draw). */
+ *  view test, handed on (player/eyeOfTheBeholder/eotbWagon.js draw). */
 export function mwViewDrawWagon(renderer, texRemap = null, cull = null) {
   if (!eotbLane()) return false;
   return eotbWagon.draw(renderer, texRemap, cull);
@@ -631,12 +631,12 @@ export function mwViewBodyBones(names) {
   if (eotbLane() || !mwCamera.thirdPerson()) return null;
   return fpArm.thirdBones(names);
 }
-/** SERAPH-WINGS: the sprite lane's body as drawn this frame - { base, h } over its feet (player/eotbBody.js figure()) - or
+/** SERAPH-WINGS: the sprite lane's body as drawn this frame - { base, h } over its feet (player/eyeOfTheBeholder/eotbBody.js figure()) - or
  *  null: another lane, or no sprite drawn. */
 let spriteFigure = null;
 export function mwViewSpriteFigure() { return eotbLane() ? spriteFigure : null; }
 /** SPRITE-FACE (2026-10-05): the sprite lane's body's facing as drawn this frame - { yaw, turn }: the way its picture
- *  faces and the way the body turns (player/eotbBody.js facing()) - or null: another lane, no sprite drawn, first person.
+ *  faces and the way the body turns (player/eyeOfTheBeholder/eotbBody.js facing()) - or null: another lane, no sprite drawn, first person.
  *  An aura on the sprite hangs on `yaw`, never on the walk's facing the picture lags (world.js auraFrame, drawAuras). */
 let spriteFacing = null;
 export function mwViewSpriteFacing() { return eotbLane() ? spriteFacing : null; }

@@ -13,7 +13,7 @@ const COVROOT = path.join(OUT, 'v8cov');
 fs.rmSync(COVROOT, { recursive: true, force: true });
 fs.mkdirSync(COVROOT, { recursive: true });
 
-const tests = fs.readdirSync(path.join(ROOT, 'test')).filter(f => f.endsWith('.test.js')).sort();
+const tests = fs.readdirSync(path.join(ROOT, 'test'), { recursive: true }).filter(f => f.endsWith('.test.js')).sort();
 
 const srcCache = new Map();
 function getSrc(abs) {

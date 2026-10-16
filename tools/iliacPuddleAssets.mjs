@@ -22,7 +22,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { PNG } from 'pngjs';
 import { isMain } from './lib/isMain.mjs';
-import { readUnityBundle } from '../src/formats/unityBundle.js';
+import { readUnityBundle } from '../src/formats/unity/unityBundle.js';
 import { DFPalette } from '../src/formats/dfPalette.js';
 import { classicRecords, findClassicSource } from './detailedShipsAssets.mjs';   // DS1's search: a record within a pixel of the picture's size, at every offset
 

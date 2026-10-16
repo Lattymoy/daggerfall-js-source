@@ -7,7 +7,7 @@
 // row here, and the About pane renders the rows; a README in vendor/
 // credits the author to whoever reads the repo, and this credits them
 // to whoever plays the game, which is the audience that matters to a
-// modder. test/credits.test.js sweeps vendor/ against this list both
+// modder. test/systems/credits.test.js sweeps vendor/ against this list both
 // ways, so a work cannot be vendored without a row and a row cannot
 // name a folder that is gone.
 //

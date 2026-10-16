@@ -12,7 +12,7 @@
 // (byte - 128) / 128) and cache by index.
 
 import { SndFile, SAMPLE_RATE } from '../formats/sndFile.js';
-import { getFloat } from './settings.js';   // SETT: SoundVolume
+import { getFloat } from './settings/settings.js';   // SETT: SoundVolume
 import { REVERB_PRESET, reverbImpulse } from './reverbPresets.js';   // BA1: AudioReverbZone's presets and the impulse built from them
 import { setEquipSoundSink } from './equip.js';   // ES2: the equip moment's one audio door
 import { SOUND_REPLACEMENTS, soundBufferKey, fetchReplacement, soundSilenced, soundReplacementGen } from './soundReplacer.js';   // SNDREP1: a player's loose WAVs over classic clips, and the two night-sound switches
@@ -67,12 +67,12 @@ export const PANNING_MODEL = 'HRTF';
 export const VOICE_FADE_S = 0.08;
 
 /** PEERFX1: one observer of every one-shot (index, volume) - the online layer hears "a blow landed on me" here
- *  (net/peerFx.js isHurtClip). Null offline. */
+ *  (net/peer/peerFx.js isHurtClip). Null offline. */
 let _oneShotObserver = null;
 export function setOneShotObserver(fn) { _oneShotObserver = typeof fn === 'function' ? fn : null; }
 
 /** AUDIT SD III (A3): how long a named bed (AudioEngine.setBed) takes to rise as it begins and to fade as it is let go
- *  (s) - the arena's crowd bed's (systems/arenaSound.js BED_FADE_S). */
+ *  (s) - the arena's crowd bed's (systems/arena/arenaSound.js BED_FADE_S). */
 const BED_FADE_S = 0.4;
 
 export class AudioEngine {
@@ -107,7 +107,7 @@ export class AudioEngine {
       this._master.connect(this._listenerIn);
       // BA1 / AUDIT-BA F4: THE REVERB SEND. Unity's zone takes every AudioSource the listener stands near at its
       // reverbZoneMix (1 by default) - the music's included. The port's music runs its own master on the same
-      // context (systems/songPlayer.js), so the zone is a SEND node both masters feed; setReverb hangs the
+      // context (systems/song/songPlayer.js), so the zone is a SEND node both masters feed; setReverb hangs the
       // convolver off it, and nothing is downstream of it while no zone is on.
       this._reverbIn = this.ctx.createGain();
       this._master.connect(this._reverbIn);
@@ -362,7 +362,7 @@ export class AudioEngine {
   }
 
   /** ARENA2: a DAGGER.SND record's samples (mono, SAMPLE_RATE) - the raw voices a made sound is built from
-   *  (systems/arenaSound.js: the crowd's cheer and boo out of AmbientPeople1-10). Read off the player's own archive,
+   *  (systems/arena/arenaSound.js: the crowd's cheer and boo out of AmbientPeople1-10). Read off the player's own archive,
    *  no context needed; null with no archive or no such record. Never a replacement's: the made sound is Daggerfall's. */
   samplesOf(index) {
     const rec = this.snd?.getSound?.(index);

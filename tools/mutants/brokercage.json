@@ -1,58 +1,58 @@
 [
   {
     "name": "BROKER-CAGE-a-faithful-short-counted-all",
-    "file": "src/net/gateRite.js",
+    "file": "src/net/gate/gateRite.js",
     "old": "if (!(Number.isSafeInteger(slain[career]) && slain[career] >= n)) return false;",
     "new": "if (!(Number.isSafeInteger(slain[career]) && slain[career] >= n - 1)) return false;",
     "tests": [
-      "test/brokercage.test.js"
+      "test/systems/brokercage.test.js"
     ]
   },
   {
     "name": "BROKER-CAGE-the-summoner-not-asked",
-    "file": "src/net/gateRite.js",
+    "file": "src/net/gate/gateRite.js",
     "old": "  if (!fell || !slain || typeof slain !== 'object') return false;\n  if (_rosterDay",
     "new": "  if (!slain || typeof slain !== 'object') return false;\n  if (_rosterDay",
     "tests": [
-      "test/brokercage.test.js"
+      "test/systems/brokercage.test.js"
     ]
   },
   {
     "name": "BROKER-CAGE-a-career-missed",
-    "file": "src/net/gateRite.js",
+    "file": "src/net/gate/gateRite.js",
     "old": "for (const m of riteFaithfulOf(day)) if (!m.summoner) want.set(",
     "new": "for (const m of riteFaithfulOf(day).slice(0, 2)) if (!m.summoner) want.set(",
     "tests": [
-      "test/brokercage.test.js"
+      "test/systems/brokercage.test.js"
     ]
   },
   {
     "name": "BROKER-CAGE-the-roster-of-the-first-day-asked",
-    "file": "src/net/gateRite.js",
+    "file": "src/net/gate/gateRite.js",
     "old": "  if (_rosterDay !== day) {",
     "new": "  if (_rosterDay === null) {",
     "tests": [
-      "test/brokercage.test.js"
+      "test/systems/brokercage.test.js"
     ]
   },
   {
     "name": "BROKER-CAGE-midnight-kept",
-    "file": "src/net/gateRite.js",
+    "file": "src/net/gate/gateRite.js",
     "old": "now >= t.omenAt && now < t.wrathAt; };",
     "new": "now >= t.omenAt && now < t.wrathAt + GATE_COLLAPSE_MS; };",
     "tests": [
-      "test/brokercage.test.js",
-      "test/set7_broker_world.test.js"
+      "test/systems/brokercage.test.js",
+      "test/player/set7_broker_world.test.js"
     ]
   },
   {
     "name": "BROKER-CAGE-the-omen-not-waited-for",
-    "file": "src/net/gateRite.js",
+    "file": "src/net/gate/gateRite.js",
     "old": "isGateDay(day) && now >= t.omenAt && now < t.wrathAt; };",
     "new": "isGateDay(day) && now < t.wrathAt; };",
     "tests": [
-      "test/brokercage.test.js",
-      "test/set7_broker_world.test.js"
+      "test/systems/brokercage.test.js",
+      "test/player/set7_broker_world.test.js"
     ]
   },
   {
@@ -61,8 +61,8 @@
     "old": "  if (c !== 0 && c !== 1) return null;\n  return { d: m.d",
     "new": "  return { d: m.d",
     "tests": [
-      "test/brokercage.test.js",
-      "test/wb12d_rite_law.test.js"
+      "test/systems/brokercage.test.js",
+      "test/net/gate/wb12d_rite_law.test.js"
     ]
   },
   {
@@ -71,7 +71,7 @@
     "old": "export const RITE_OUT_KINDS = Object.freeze(['br', 'cl']);",
     "new": "export const RITE_OUT_KINDS = Object.freeze(['br']);",
     "tests": [
-      "test/brokercage.test.js"
+      "test/systems/brokercage.test.js"
     ]
   },
   {
@@ -80,7 +80,7 @@
     "old": "  if (m.k === 'cl') return { k: 'cl', d: m.d, px: m.px, py: m.py, at: m.at };",
     "new": "  if (m.k === 'cl') return { k: 'cl', d: m.d, px: m.px, py: m.py, at: m.at, by: m.by };",
     "tests": [
-      "test/brokercage.test.js"
+      "test/systems/brokercage.test.js"
     ]
   },
   {
@@ -89,7 +89,7 @@
     "old": "if (m.c === 1 && !c.cl) { c.cl = 1;",
     "new": "if (false) { c.cl = 1;",
     "tests": [
-      "test/brokercage.test.js"
+      "test/systems/brokercage.test.js"
     ]
   },
   {
@@ -98,7 +98,7 @@
     "old": "if (m.c === 1 && !c.cl) { c.cl = 1; c.clAt = now; if (!c.f) { c.f = 1; c.at = now; } moved = true; }",
     "new": "if (m.c === 1 && !c.cl) { c.cl = 1; c.clAt = now; moved = true; }",
     "tests": [
-      "test/brokercage.test.js"
+      "test/systems/brokercage.test.js"
     ]
   },
   {
@@ -107,7 +107,7 @@
     "old": "...(cl ? { cl, clAt: c.clAt } : {})",
     "new": "",
     "tests": [
-      "test/brokercage.test.js"
+      "test/systems/brokercage.test.js"
     ]
   },
   {
@@ -116,7 +116,7 @@
     "old": "    const cleared = body.cl === 1 && !c.cl;",
     "new": "    const cleared = body.cl === 1;",
     "tests": [
-      "test/brokercage.test.js"
+      "test/systems/brokercage.test.js"
     ]
   },
   {
@@ -125,7 +125,7 @@
     "old": "    if (cleared) {   // the Broker's cage open, said to everyone online once",
     "new": "    if (false) {   // the Broker's cage open, said to everyone online once",
     "tests": [
-      "test/brokercage.test.js"
+      "test/systems/brokercage.test.js"
     ]
   },
   {
@@ -134,7 +134,7 @@
     "old": "if (c.cl && caged) this._send",
     "new": "if (c.cl && stands) this._send",
     "tests": [
-      "test/brokercage.test.js"
+      "test/systems/brokercage.test.js"
     ]
   },
   {
@@ -143,7 +143,7 @@
     "old": "if (c.cl && caged) this._send",
     "new": "if (c.cl) this._send",
     "tests": [
-      "test/brokercage.test.js"
+      "test/systems/brokercage.test.js"
     ]
   },
   {
@@ -152,8 +152,8 @@
     "old": "c = riteRosterFell(C.day, mem.slain, mem.fell || brokenHere() ? 1 : 0) ? 1 : 0, k = s * 4 + f * 2 + c;",
     "new": "c = 0, k = s * 4 + f * 2 + c;",
     "tests": [
-      "test/brokercage.test.js",
-      "test/wb12d_rite_world.test.js"
+      "test/systems/brokercage.test.js",
+      "test/net/gate/wb12d_rite_world.test.js"
     ],
     "note": "AUDIT BROKER-CAGE (re-aimed by content)"
   },
@@ -163,7 +163,7 @@
     "old": "c = riteRosterFell(C.day, mem.slain, mem.fell || brokenHere() ? 1 : 0) ? 1 : 0, k = s * 4 + f * 2 + c;",
     "new": "c = riteRosterFell(C.day, mem.slain, mem.fell || brokenHere() ? 1 : 0) ? 1 : 0, k = s * 4 + f * 2;",
     "tests": [
-      "test/wb12d_rite_world.test.js"
+      "test/net/gate/wb12d_rite_world.test.js"
     ],
     "note": "AUDIT BROKER-CAGE (re-aimed by content)"
   },
@@ -173,7 +173,7 @@
     "old": "      if (clearedWords.has(k)) return true;",
     "new": "      if (clearedWords.size) return true;",
     "tests": [
-      "test/brokercage.test.js"
+      "test/systems/brokercage.test.js"
     ],
     "note": "AUDIT BROKER-CAGE (re-aimed by content)"
   },
@@ -183,7 +183,7 @@
     "old": "    if (clearedHere()) return [];\n",
     "new": "",
     "tests": [
-      "test/brokercage.test.js"
+      "test/systems/brokercage.test.js"
     ]
   },
   {
@@ -192,7 +192,7 @@
     "old": "      const mem = riteSeen(day);",
     "new": "      const mem = riteMemory(day);",
     "tests": [
-      "test/brokercage.test.js"
+      "test/systems/brokercage.test.js"
     ]
   },
   {
@@ -201,34 +201,34 @@
     "old": "      if (w.k === 'cl') {",
     "new": "      if (w.k === 'xx') {",
     "tests": [
-      "test/brokercage.test.js"
+      "test/systems/brokercage.test.js"
     ]
   },
   {
     "name": "BROKER-CAGE-the-cage-site-the-gates-standing",
-    "file": "src/systems/gateOmen.js",
+    "file": "src/systems/gate/gateOmen.js",
     "old": "      const s = c.site ?? siteOf(c.t.day);",
     "new": "      const s = c.site;",
     "tests": [
-      "test/brokercage.test.js"
+      "test/systems/brokercage.test.js"
     ]
   },
   {
     "name": "BROKER-CAGE-the-omens-midnight-kept",
-    "file": "src/systems/gateOmen.js",
+    "file": "src/systems/gate/gateOmen.js",
     "old": "      if (!c?.t || !cageStands(c.t.day, now())) return null;",
     "new": "      if (!c?.t) return null;",
     "tests": [
-      "test/brokercage.test.js"
+      "test/systems/brokercage.test.js"
     ]
   },
   {
     "name": "BROKER-CAGE-a-cage-site-a-frame",
-    "file": "src/systems/gateOmen.js",
+    "file": "src/systems/gate/gateOmen.js",
     "old": "      if (cage?.day !== c.t.day || cage.px !== s.px || cage.py !== s.py) cage = ",
     "new": "      cage = ",
     "tests": [
-      "test/brokercage.test.js"
+      "test/systems/brokercage.test.js"
     ]
   },
   {
@@ -237,7 +237,7 @@
     "old": "const facing = Math.atan2(gx - e, gz - n), a = facing + CAGE_TURN;",
     "new": "const facing = Math.atan2(gx - e, gz - n), a = CAGE_TURN;",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ]
   },
   {
@@ -246,8 +246,8 @@
     "old": "export const CAGE_R = 11.5;",
     "new": "export const CAGE_R = 8;",
     "tests": [
-      "test/set7_broker_world.test.js",
-      "test/gateclear.test.js"
+      "test/player/set7_broker_world.test.js",
+      "test/world/gate/gateclear.test.js"
     ]
   },
   {
@@ -256,7 +256,7 @@
     "old": "      else if (!doorOpen) say(now() < riteWindow(at.day).to + RITE_GRACE_MS ? BROKER_TEXT.held : BROKER_TEXT.lost);",
     "new": "      else if (false) say(BROKER_TEXT.held);",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ],
     "note": "AUDIT BROKER-CAGE (re-aimed by content)"
   },
@@ -266,7 +266,7 @@
     "old": "subs: [doorOpen ? BROKER_TEXT.trade : BROKER_TEXT.caged]",
     "new": "subs: [BROKER_TEXT.trade]",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ]
   },
   {
@@ -275,7 +275,7 @@
     "old": "say(now() < riteWindow(at.day).to + RITE_GRACE_MS ? BROKER_TEXT.held : BROKER_TEXT.lost)",
     "new": "say(BROKER_TEXT.held)",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ],
     "note": "AUDIT BROKER-CAGE (re-aimed by content)"
   },
@@ -285,7 +285,7 @@
     "old": "box: [-BROKER_BOX_HX, 0, -BROKER_BOX_HZ, BROKER_BOX_HX, BROKER_BOX_H, BROKER_BOX_HZ] },",
     "new": "box: [-0.45, 0, -0.45, 0.45, 2.15, 0.45] },",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ],
     "note": "AUDIT BROKER-CAGE (re-aimed by content)"
   },
@@ -295,7 +295,7 @@
     "old": "export const BROKER_BOX_HX = CAGE_W / 2 + CAGE_WALL_OUT + 0.05;",
     "new": "export const BROKER_BOX_HX = CAGE_W / 2 - 0.2;",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ],
     "note": "AUDIT BROKER-CAGE (re-aimed by content)"
   },
@@ -305,7 +305,7 @@
     "old": "    stands: () => !!at && doorOpen,",
     "new": "    stands: () => !!at,",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ]
   },
   {
@@ -314,7 +314,7 @@
     "old": "    if (!freed(at.day, at.px, at.py)) { shutSince ??= t; return; }",
     "new": "    shutSince ??= t; return;",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ]
   },
   {
@@ -323,7 +323,7 @@
     "old": "    openedAt = saw ? t : -Infinity;",
     "new": "    openedAt = -Infinity;",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ]
   },
   {
@@ -332,7 +332,7 @@
     "old": "<= BROKER_FREED_SAY_M) say(BROKER_TEXT.freed);",
     "new": "<= Infinity) say(BROKER_TEXT.freed);",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ]
   },
   {
@@ -341,7 +341,7 @@
     "old": "const saw = shutSince != null && t - shutSince >= BROKER_SHUT_SEEN_MS && !(when < shutSince);",
     "new": "const saw = shutSince != null && !(when < shutSince);",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ],
     "note": "AUDIT BROKER-CAGE (re-aimed by content)"
   },
@@ -351,7 +351,7 @@
     "old": "    if (cageDay !== at.day) { cageDay = at.day; doorOpen = false;",
     "new": "    if (cageDay !== at.day) { cageDay = at.day;",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ]
   },
   {
@@ -360,7 +360,7 @@
     "old": "      col.addMesh(BROKER_CAGE_BUCKET, CAGE_WALLS.positions, CAGE_WALLS.indices, cageMat);\n",
     "new": "",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ]
   },
   {
@@ -369,7 +369,7 @@
     "old": "    else if (doorOpen && doorUp) { col.removeBucket?.(BROKER_DOOR_BUCKET); doorUp = false; }",
     "new": "",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ]
   },
   {
@@ -378,7 +378,7 @@
     "old": "    if (!doorOpen && !doorUp) { col.addMesh(BROKER_DOOR_BUCKET, CAGE_DOOR_WALL.positions, CAGE_DOOR_WALL.indices, cageMat); doorUp = true; }",
     "new": "    if (!doorOpen && !doorUp) { doorUp = true; }",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ]
   },
   {
@@ -387,7 +387,7 @@
     "old": "    if (!(cageAt && f && cageAt[0] === f[0]",
     "new": "    if (!(false && f && cageAt[0] === f[0]",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ]
   },
   {
@@ -396,7 +396,7 @@
     "old": "      if (!f || cageTraps(f, at.rest, feet())) return;",
     "new": "      if (!f) return;",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ]
   },
   {
@@ -405,7 +405,7 @@
     "old": "reach = CAGE_WALL_OUT + CAPSULE_RADIUS;",
     "new": "reach = 0;",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ],
     "note": "AUDIT BROKER-CAGE (re-aimed by content)"
   },
@@ -415,7 +415,7 @@
     "old": "      col?.removeBucket?.(BROKER_CAGE_BUCKET);\n      col?.removeBucket?.(BROKER_DOOR_BUCKET);\n",
     "new": "",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ]
   },
   {
@@ -424,7 +424,7 @@
     "old": "  side(0, 1, 5, 4); side(1, 2, 6, 5);",
     "new": "  side(4, 5, 1, 0); side(1, 2, 6, 5);",
     "tests": [
-      "test/brokercage.test.js"
+      "test/systems/brokercage.test.js"
     ]
   },
   {
@@ -433,7 +433,7 @@
     "old": "export const CAGE_GAP = 0.22;",
     "new": "export const CAGE_GAP = 0.9;",
     "tests": [
-      "test/brokercage.test.js"
+      "test/systems/brokercage.test.js"
     ]
   },
   {
@@ -442,8 +442,8 @@
     "old": "  slabTris(out, -hx - o, y0, -hz - o, hx + o, y1, -hz + i);   // the back\n",
     "new": "",
     "tests": [
-      "test/brokercage.test.js",
-      "test/set7_broker_world.test.js"
+      "test/systems/brokercage.test.js",
+      "test/player/set7_broker_world.test.js"
     ],
     "note": "AUDIT BROKER-CAGE (re-aimed by content)"
   },
@@ -453,8 +453,8 @@
     "old": "  slabTris(out, -dx, -CAGE_FOOT, hz - CAGE_WALL_IN, dx, CAGE_H, hz + CAGE_WALL_OUT);\n",
     "new": "",
     "tests": [
-      "test/brokercage.test.js",
-      "test/set7_broker_world.test.js"
+      "test/systems/brokercage.test.js",
+      "test/player/set7_broker_world.test.js"
     ],
     "note": "AUDIT BROKER-CAGE (re-aimed by content)"
   },
@@ -464,7 +464,7 @@
     "old": "export const cageHinge = () => [-CAGE_LEAF_W / 2, CAGE_D / 2];",
     "new": "export const cageHinge = () => [CAGE_LEAF_W / 2, CAGE_D / 2];",
     "tests": [
-      "test/brokercage.test.js"
+      "test/systems/brokercage.test.js"
     ],
     "note": "AUDIT BROKER-CAGE (re-aimed by content)"
   },
@@ -474,7 +474,7 @@
     "old": "    sigilBroker?.draw(renderer);   // BROKER-CAGE",
     "new": "    void sigilBroker;   // BROKER-CAGE",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ]
   },
   {
@@ -483,7 +483,7 @@
     "old": "    freed: (day, px, py) => _relayKeepsRite === false || !!riteHost?.isCleared(day, px, py, _relayKeepsCage !== true),",
     "new": "    freed: () => true,",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ],
     "note": "AUDIT BROKER-CAGE (re-aimed by content)"
   },
@@ -493,7 +493,7 @@
     "old": "site: () => gateOmen.cageSite(),",
     "new": "site: () => gateOmen.standing(),",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ]
   },
   {
@@ -502,7 +502,7 @@
     "old": "    if (!stands && !(body?.cl === 1 && cageStands(o.d, now))) return json({ ok: true });",
     "new": "    if (!stands) return json({ ok: true });",
     "tests": [
-      "test/brokercage.test.js"
+      "test/systems/brokercage.test.js"
     ]
   },
   {
@@ -511,7 +511,7 @@
     "old": "    if (this._riteTelling) { await this._riteArm(now + RITE_TELL_RETRY_MS); return true; }",
     "new": "    if (this._riteTelling) return true;",
     "tests": [
-      "test/brokercage.test.js"
+      "test/systems/brokercage.test.js"
     ]
   },
   {
@@ -520,7 +520,7 @@
     "old": "const riteOwed = (c) => (!!c.f && c.told < Object.keys(c.h).length) || (!!c.cl && !c.clTold);",
     "new": "const riteOwed = (c) => (!!c.f && c.told < Object.keys(c.h).length);",
     "tests": [
-      "test/brokercage.test.js"
+      "test/systems/brokercage.test.js"
     ]
   },
   {
@@ -529,7 +529,7 @@
     "old": "riteRosterFell(C.day, mem.slain, mem.fell || brokenHere() ? 1 : 0)",
     "new": "riteRosterFell(C.day, mem.slain, mem.fell)",
     "tests": [
-      "test/brokercage.test.js"
+      "test/systems/brokercage.test.js"
     ]
   },
   {
@@ -538,7 +538,7 @@
     "old": "riteRosterFell(day, mem.slain, mem.fell || brokenWords.has(k) ? 1 : 0)",
     "new": "riteRosterFell(day, mem.slain, mem.fell)",
     "tests": [
-      "test/brokercage.test.js"
+      "test/systems/brokercage.test.js"
     ]
   },
   {
@@ -547,7 +547,7 @@
     "old": "distance: RAY_DISTANCE, reach: BROKER_REACH, noSurface: false,",
     "new": "distance: RAY_DISTANCE, reach: BROKER_REACH, noSurface: true,",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ]
   },
   {
@@ -556,7 +556,7 @@
     "old": "          obb: { m: trs(",
     "new": "          obbNone: { m: trs(",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ]
   },
   {
@@ -565,7 +565,7 @@
     "old": "      if (!ownEyes) return false;\n",
     "new": "",
     "tests": [
-      "test/brokercage.test.js"
+      "test/systems/brokercage.test.js"
     ]
   },
   {
@@ -574,7 +574,7 @@
     "old": "!!riteHost?.isCleared(day, px, py, _relayKeepsCage !== true)",
     "new": "!!riteHost?.isCleared(day, px, py, true)",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ]
   },
   {
@@ -583,7 +583,7 @@
     "old": "    freed: (day, px, py) => _relayKeepsRite === false || ",
     "new": "    freed: (day, px, py) => ",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ]
   },
   {
@@ -592,7 +592,7 @@
     "old": "frameN - groundAt[3] >= BROKER_GROUND_EVERY",
     "new": "true",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ]
   },
   {
@@ -601,7 +601,7 @@
     "old": " && !(when < shutSince);",
     "new": ";",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ]
   },
   {
@@ -610,7 +610,7 @@
     "old": "  slabTris(out, -hx - o, CAGE_H - CAGE_BEAM, -hz - o, hx + o, CAGE_H + CAGE_CAP, hz + o);   // the roof\n",
     "new": "",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ]
   },
   {
@@ -619,7 +619,7 @@
     "old": "    if (t < openedAt) openedAt = -Infinity;",
     "new": "",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ]
   },
   {
@@ -628,7 +628,7 @@
     "old": "if (was && (!due || s.day !== was.day) && gone())",
     "new": "if (was && !due && gone())",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ]
   },
   {
@@ -637,7 +637,7 @@
     "old": "to + RITE_GRACE_MS ? BROKER_TEXT.held",
     "new": "to ? BROKER_TEXT.held",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ]
   },
   {
@@ -646,7 +646,7 @@
     "old": "      if (foes && C.ownLive && clearedHere()) { foes.drop(C.site); C.ownLive = 0; }",
     "new": "",
     "tests": [
-      "test/brokercage.test.js"
+      "test/systems/brokercage.test.js"
     ]
   },
   {
@@ -655,7 +655,7 @@
     "old": "export const CAGE_LEAF_W = CAGE_DOOR_W - CAGE_BEAM;",
     "new": "export const CAGE_LEAF_W = CAGE_DOOR_W;",
     "tests": [
-      "test/brokercage.test.js"
+      "test/systems/brokercage.test.js"
     ]
   },
   {
@@ -664,7 +664,7 @@
     "old": "bar(f, foot, x, z, H + CAGE_CAP, CAGE_POST",
     "new": "bar(f, foot, x, z, H, CAGE_POST",
     "tests": [
-      "test/brokercage.test.js"
+      "test/systems/brokercage.test.js"
     ]
   },
   {
@@ -673,7 +673,7 @@
     "old": "for (const x of [-dx, dx]) bar(f, foot, x, hz, top, CAGE_BEAM",
     "new": "for (const x of [-dx, dx]) bar(f, foot, x, hz, H, CAGE_BEAM",
     "tests": [
-      "test/brokercage.test.js"
+      "test/systems/brokercage.test.js"
     ]
   },
   {
@@ -682,7 +682,7 @@
     "old": "    foot = Math.round(Math.max(CAGE_FOOT, CAGE_FOOT_UNDER - low) * 100) / 100;",
     "new": "    foot = CAGE_FOOT;",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ]
   },
   {
@@ -691,7 +691,7 @@
     "old": "    sill = Math.round(Math.min(CAGE_SILL_MAX, Math.max(CAGE_SILL, high + CAGE_SILL_OVER)) * 100) / 100;",
     "new": "    sill = CAGE_SILL;",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ]
   },
   {
@@ -700,7 +700,7 @@
     "old": "    if (meshTried && foot === meshFoot && sill === meshSill) return;",
     "new": "    if (meshTried) return;",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ]
   },
   {
@@ -709,8 +709,8 @@
     "old": "slab(f, rec, x - w / 2, -foot, z - w / 2, x + w / 2, top, z + w / 2);",
     "new": "slab(f, rec, x - w / 2, -CAGE_FOOT, z - w / 2, x + w / 2, top, z + w / 2);",
     "tests": [
-      "test/brokercage.test.js",
-      "test/set7_broker_world.test.js"
+      "test/systems/brokercage.test.js",
+      "test/player/set7_broker_world.test.js"
     ]
   },
   {
@@ -719,7 +719,7 @@
     "old": "export const CAGE_DOOR_OPEN = -1.75;",
     "new": "export const CAGE_DOOR_OPEN = 1.75;",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ]
   },
   {
@@ -728,7 +728,7 @@
     "old": "CAGE_DOOR_OPEN * k * k * (3 - 2 * k)",
     "new": "CAGE_DOOR_OPEN * k",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ]
   },
   {
@@ -737,7 +737,7 @@
     "old": "      drawMat = trs(at.feet[0], at.feet[1], at.feet[2], 0, (at.rest * 180) / Math.PI, 0);",
     "new": "      drawMat = trs(at.feet[0], at.feet[1], at.feet[2], 0, 0, 0);",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ]
   },
   {
@@ -746,7 +746,7 @@
     "old": "  for (const x of along(-hx, hx)) slab(f, GATE_STONE_RECORD, x - CAGE_BAR / 2, top + 0.02, -hz, x + CAGE_BAR / 2, H - 0.02, hz);\n",
     "new": "",
     "tests": [
-      "test/brokercage.test.js"
+      "test/systems/brokercage.test.js"
     ]
   },
   {
@@ -755,7 +755,7 @@
     "old": "  for (const x of [...along(-hx, -dx), ...along(dx, hx)]) bar(f, foot, x, hz, H);\n",
     "new": "",
     "tests": [
-      "test/brokercage.test.js"
+      "test/systems/brokercage.test.js"
     ]
   },
   {
@@ -764,7 +764,7 @@
     "old": "if (C.pupLive || peerSprang(C.site) || clearedHere()) C.retry.length = 0;",
     "new": "if (C.pupLive || peerSprang(C.site)) C.retry.length = 0;",
     "tests": [
-      "test/release532_regressions.test.js"
+      "test/net/gate/release532_regressions.test.js"
     ]
   }
 ]

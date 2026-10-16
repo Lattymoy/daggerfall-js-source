@@ -5,7 +5,7 @@
     "old": "few: 1, some: 2, many: 4",
     "new": "few: 2, some: 3, many: 5",
     "tests": [
-      "test/seaease.test.js"
+      "test/systems/naval/seaease.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "export const SPAWN_EVERY = Object.freeze([60, 140]);",
     "new": "export const SPAWN_EVERY = Object.freeze([30, 65]);",
     "tests": [
-      "test/seaease.test.js"
+      "test/systems/naval/seaease.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "export const FIRST_ROLL_S = 30;",
     "new": "export const FIRST_ROLL_S = 12;",
     "tests": [
-      "test/seaease.test.js"
+      "test/systems/naval/seaease.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "{ pirate: 30, merchant: 45, navy: 25 }",
     "new": "{ pirate: 45, merchant: 38, navy: 17 }",
     "tests": [
-      "test/seaease.test.js"
+      "test/systems/naval/seaease.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": " w.pirate *= PORT_PIRATE_K; }",
     "new": " }",
     "tests": [
-      "test/seaease.test.js"
+      "test/systems/naval/seaease.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "      if (distress) wait = Math.min(wait, RELIEF_WAIT_S);\n",
     "new": "",
     "tests": [
-      "test/seaease.test.js"
+      "test/systems/naval/seaease.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "(ctx.density ?? 0) + (distress ? 1 : 0)",
     "new": "(ctx.density ?? 0)",
     "tests": [
-      "test/seaease.test.js"
+      "test/systems/naval/seaease.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "    if (!ctx.reliefSure && !(roll < RELIEF_CHANCE)) return null;   // CAPT-BOARD: an Admiral's crown always answers (the draw taken either way)\n",
     "new": "\n",
     "tests": [
-      "test/seaease.test.js"
+      "test/systems/naval/seaease.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "const pos = [at[0] + Math.sin(a) * d, ctx.seaY ?? at[1], at[2] + Math.cos(a) * d];",
     "new": "const pos = [ctx.player[0] + Math.sin(a) * d, ctx.seaY ?? at[1], ctx.player[2] + Math.cos(a) * d];",
     "tests": [
-      "test/seaease.test.js"
+      "test/systems/naval/seaease.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "yaw: Math.atan2(at[0] - pos[0], at[2] - pos[2]), hunter: false, relief: true",
     "new": "yaw: 0, hunter: false, relief: true",
     "tests": [
-      "test/seaease.test.js"
+      "test/systems/naval/seaease.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "        out.spawn = reliefSpawn(seed, ctx, nearest, distress);\n        return out;",
     "new": "        out.spawn = reliefSpawn(seed, ctx, nearest, distress);\n        if (out.spawn) return out;",
     "tests": [
-      "test/seaease.test.js"
+      "test/systems/naval/seaease.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "Array.isArray(ctx.distress) && !ctx.relieving && !ctx.ether ? ctx.distress : null",
     "new": "Array.isArray(ctx.distress) && !ctx.ether ? ctx.distress : null",
     "tests": [
-      "test/seaease.test.js"
+      "test/systems/naval/seaease.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "export const BOLD_SHARE = 0.25;",
     "new": "export const BOLD_SHARE = 0.4;",
     "tests": [
-      "test/seaease.test.js"
+      "test/systems/naval/seaease.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "export const GRAPPLE_STILL_S = 15;",
     "new": "export const GRAPPLE_STILL_S = 5;",
     "tests": [
-      "test/seaease.test.js"
+      "test/systems/naval/seaease.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "(aids && fightsAny(c, aids) ? AID_PRIORITY : 1)",
     "new": "1",
     "tests": [
-      "test/seaease.test.js"
+      "test/systems/naval/seaease.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "if (c.kind === 'player' && !hostile(ship, c, world))",
     "new": "if (c.kind === 'player')",
     "tests": [
-      "test/seaease.test.js"
+      "test/systems/naval/seaease.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "(c.ship.mode === 'engage' || c.ship.mode === 'board')",
     "new": "c.ship.mode !== 'cruise'",
     "tests": [
-      "test/seaease.test.js"
+      "test/systems/naval/seaease.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "(c.ship.mode === 'engage' || c.ship.mode === 'board')",
     "new": "(c.ship.mode === 'engage')",
     "tests": [
-      "test/seaease.test.js"
+      "test/systems/naval/seaease.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "  if (ship.cls.faction !== 'navy') return null;\n  let ids = null;",
     "new": "  let ids = null;",
     "tests": [
-      "test/seaease.test.js"
+      "test/systems/naval/seaease.test.js"
     ]
   },
   {
@@ -176,160 +176,160 @@
     "old": "export const RAIDER_SHIPS_MAX = 1;",
     "new": "export const RAIDER_SHIPS_MAX = 2;",
     "tests": [
-      "test/seaease.test.js"
+      "test/systems/naval/seaease.test.js"
     ]
   },
   {
     "name": "SE-distress-unread",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "distress, relieving,   // SEA-EASE: THE RELIEF",
     "new": "distress: null, relieving,   // SEA-EASE: THE RELIEF",
     "tests": [
-      "test/seaease.test.js"
+      "test/systems/naval/seaease.test.js"
     ]
   },
   {
     "name": "SE-course-not-laid",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "{ e.relief = true; e.ship.course = [distress[0], distress[2]]; }",
     "new": "{ e.relief = true; }",
     "tests": [
-      "test/seaease.test.js"
+      "test/systems/naval/seaease.test.js"
     ]
   },
   {
     "name": "SE-course-kept",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "<= RELIEF_REACHED_M)) s.course = null;",
     "new": "<= RELIEF_REACHED_M)) s.course = s.course;",
     "tests": [
-      "test/seaease.test.js"
+      "test/systems/naval/seaease.test.js"
     ]
   },
   {
     "name": "SE-course-dropped-at-guns",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "((s.mode !== 'cruise' && s.mode !== 'answer') ||",
     "new": "(s.mode !== 'cruise' ||",
     "tests": [
-      "test/seaease.test.js"
+      "test/systems/naval/seaease.test.js"
     ]
   },
   {
     "name": "SE-cry-every-frame",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "{ e.aidSaid = true; deps.say?.(`${calledName(e)} comes to your aid!`, 4); }",
     "new": "{ deps.say?.(`${calledName(e)} comes to your aid!`, 4); }",
     "tests": [
-      "test/seaease.test.js"
+      "test/systems/naval/seaease.test.js"
     ]
   },
   {
     "name": "SE-navy-by-me-uncounted",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "const stood = [...sea.values()].some((w) => w.ship.cls.faction === 'navy'",
     "new": "const stood = false && [...sea.values()].some((w) => w.ship.cls.faction === 'navy'",
     "tests": [
-      "test/seaease.test.js"
+      "test/systems/naval/seaease.test.js"
     ]
   },
   {
     "name": "SE-law-unread",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "if (!p || !(p.law < NAVY_HUNTS)) continue;",
     "new": "if (!p) continue;",
     "tests": [
-      "test/seaease.test.js"
+      "test/systems/naval/seaease.test.js"
     ]
   },
   {
     "name": "SE-relief-errand",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "!out.spawn.encounter && !out.spawn.relief) e.ship.errand",
     "new": "!out.spawn.encounter) e.ship.errand",
     "tests": [
-      "test/seaease.test.js"
+      "test/systems/naval/seaease.test.js"
     ]
   },
   {
     "name": "SE-stray-unweighed",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "const stray = byMe && !target.owner && strayOnAlly(target, hurt, myId());",
     "new": "const stray = false;",
     "tests": [
-      "test/seaease.test.js"
+      "test/systems/naval/seaease.test.js"
     ]
   },
   {
     "name": "SE-stray-no-share",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (struck > ALLY_STRAY_SHARE * s.damage.maxHull) return false;\n",
     "new": "",
     "tests": [
-      "test/seaease.test.js"
+      "test/systems/naval/seaease.test.js"
     ]
   },
   {
     "name": "SE-stray-witnessed",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "if (byPlayer && !stray && s.cls.faction !== 'pirate') {",
     "new": "if (byPlayer && s.cls.faction !== 'pirate') {",
     "tests": [
-      "test/seaease.test.js"
+      "test/systems/naval/seaease.test.js"
     ]
   },
   {
     "name": "SE-stray-cry-every-ball",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "{ entry.straySaid = true; deps.say?.(",
     "new": "{ deps.say?.(",
     "tests": [
-      "test/seaease.test.js"
+      "test/systems/naval/seaease.test.js"
     ]
   },
   {
     "name": "SE-stray-any-navy",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "s.damage.state !== SHIP_STATES.afloat || s.mode !== 'engage' || sea.get(s.target)?.ship.cls.faction !== 'pirate') return false;",
     "new": "s.damage.state !== SHIP_STATES.afloat) return false;",
     "tests": [
-      "test/seaease.test.js"
+      "test/systems/naval/seaease.test.js"
     ]
   },
   {
     "name": "SE-stray-provokes",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "if (!stray && (!striker || !kindred(striker, s))) provoke(s, by, clock);",
     "new": "if (!striker || !kindred(striker, s)) provoke(s, by, clock);",
     "tests": [
-      "test/seaease.test.js"
+      "test/systems/naval/seaease.test.js"
     ]
   },
   {
     "name": "SE-stray-charged",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "if (byMe && !stray) chargePlayer('fire', target);",
     "new": "if (byMe) chargePlayer('fire', target);",
     "tests": [
-      "test/seaease.test.js"
+      "test/systems/naval/seaease.test.js"
     ]
   },
   {
     "name": "SE-peer-stray-unweighed",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "strike(entry, hurt, from, true, strayOnAlly(entry, hurt, from));",
     "new": "strike(entry, hurt, from, true);",
     "tests": [
-      "test/seaease.test.js"
+      "test/systems/naval/seaease.test.js"
     ]
   },
   {
     "name": "SE-stray-cry-for-peer",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "if (by === myId() && !entry.straySaid)",
     "new": "if (!entry.straySaid)",
     "tests": [
-      "test/seaease.test.js"
+      "test/systems/naval/seaease.test.js"
     ]
   }
 ]

@@ -5,7 +5,7 @@
     "old": "const c = p.timed ? (p.tsU ?? 0) : 0;",
     "new": "const c = 0;",
     "tests": [
-      "test/auditonline3.test.js"
+      "test/net/auditonline3.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    if (t < last) { back += last - t; return last; }",
     "new": "    if (t < last) return (last = t);",
     "tests": [
-      "test/auditonline3.test.js"
+      "test/net/auditonline3.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    if (t < last) { back += last - t; return last; }",
     "new": "    if (t < last) return last;",
     "tests": [
-      "test/auditonline3.test.js"
+      "test/net/auditonline3.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "WebSocketImpl = globalThis.WebSocket, now = steadyNow, rand",
     "new": "WebSocketImpl = globalThis.WebSocket, now = () => Date.now(), rand",
     "tests": [
-      "test/auditonline3.test.js"
+      "test/net/auditonline3.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "      old.lookOk = this.lookOk; this.lookOk = !!h.lookOk;",
     "new": "      this.lookOk = !!h.lookOk;",
     "tests": [
-      "test/auditonline3.test.js"
+      "test/net/auditonline3.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "      old.lookOk = this.lookOk; this.lookOk = !!h.lookOk;",
     "new": "      old.lookOk = this.lookOk;",
     "tests": [
-      "test/auditonline3.test.js"
+      "test/net/auditonline3.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "      if (!pose.dd && this._diedSince(m.id, pose, now)) return;   // AUDIT ONLINE 3 F4: a slower room's copy of a pose from before the death\n",
     "new": "",
     "tests": [
-      "test/auditonline3.test.js"
+      "test/net/auditonline3.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": " && now - f.at <= TS_RESYNC_MS && ",
     "new": " && ",
     "tests": [
-      "test/auditonline3.test.js"
+      "test/net/auditonline3.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "    if (dead?.dd) this._fell(id, made, dead, room, now, true);\n",
     "new": "",
     "tests": [
-      "test/auditonline3.test.js"
+      "test/net/auditonline3.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": " if (dead?.dd) this._fell(id, this.peers.get(id), dead, room, now, true); return; }",
     "new": " return; }",
     "tests": [
-      "test/auditonline3.test.js"
+      "test/net/auditonline3.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "pose, room, intro ? { intro: true } : undefined));",
     "new": "pose, room));",
     "tests": [
-      "test/auditonline3.test.js"
+      "test/net/auditonline3.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "pose, room, { quiet: !!how?.intro });",
     "new": "pose, room);",
     "tests": [
-      "test/auditonline3.test.js"
+      "test/net/auditonline3.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "      const frame = this._helloFrame(tok);",
     "new": "      const frame = this._helloFrame();",
     "tests": [
-      "test/auditonline3.test.js"
+      "test/net/auditonline3.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "{ tok: null, why: this.mintToken?.lastWhy ?? 'refused' }",
     "new": "{ tok: null, why: 'refused' }",
     "tests": [
-      "test/auditonline3.test.js"
+      "test/net/auditonline3.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "    if (this.room != null) this._forgetRoom(this.room);\n",
     "new": "",
     "tests": [
-      "test/auditonline3.test.js"
+      "test/net/auditonline3.test.js"
     ]
   }
 ]

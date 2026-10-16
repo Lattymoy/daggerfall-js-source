@@ -1,5 +1,5 @@
 // @ts-check
-// ARENA-ARROWS (FIELD BUGS 2026-10-04e, systems/arenaQuiver.js): THE SHOTS A BOUT LOOSED, counted as they leave the bow.
+// ARENA-ARROWS (FIELD BUGS 2026-10-04e, systems/arena/arenaQuiver.js): THE SHOTS A BOUT LOOSED, counted as they leave the bow.
 // The quiver's mark alone read every arrow missing at the healers' heal as spent on the sand - so an arrow DROPPED in a
 // bout (or sold, or given away) came back with the healers and the dropped stack still lay where it fell: a duplicate.
 // Now the refund is the fewer of what is missing and what was loosed - the shots inventory.js spendAmmoFor took from

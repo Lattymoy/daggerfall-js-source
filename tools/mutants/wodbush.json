@@ -1,51 +1,51 @@
 [
   {
     "name": "WODBUSH-not-grounded",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "if (isWodShrub(m.modelId, wodPicks[m.pick]?.name)) {",
     "new": "if (false && isWodShrub(m.modelId, wodPicks[m.pick]?.name)) {",
-    "tests": ["test/wodbush.test.js"]
+    "tests": ["test/world/terrain/wodbush.test.js"]
   },
   {
     "name": "WODBUSH-every-model-grounded",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "if (isWodShrub(m.modelId, wodPicks[m.pick]?.name)) {",
     "new": "if (true) {",
-    "tests": ["test/wodbush.test.js"]
+    "tests": ["test/world/terrain/wodbush.test.js"]
   },
   {
     "name": "WODBUSH-mesh-left-behind",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "lowestGroundUnder(samples, box) - box[1];\n          m.matrix[13] += dy; box[1] += dy; box[4] += dy;",
     "new": "lowestGroundUnder(samples, box) - box[1];\n          box[1] += dy; box[4] += dy;",
-    "tests": ["test/wodbush.test.js"]
+    "tests": ["test/world/terrain/wodbush.test.js"]
   },
   {
     "name": "WODBUSH-model-id",
-    "file": "src/world/wodLocationObjects.js",
+    "file": "src/world/worldOfDaggerfall/wodLocationObjects.js",
     "old": "export const WOD_BUSH_MODEL = 60610;",
     "new": "export const WOD_BUSH_MODEL = 60611;",
-    "tests": ["test/wodbush.test.js"]
+    "tests": ["test/world/terrain/wodbush.test.js"]
   },
   {
     "name": "WODBUSH-highest-ground",
-    "file": "src/world/terrainSurface.js",
+    "file": "src/world/terrain/terrainSurface.js",
     "old": "low = Math.min(low, surfaceHeightAt(heightmapData, x, z));",
     "new": "low = Math.max(low === Infinity ? -Infinity : low, surfaceHeightAt(heightmapData, x, z));",
-    "tests": ["test/wodbush.test.js"]
+    "tests": ["test/world/terrain/wodbush.test.js"]
   },
   {
     "name": "WODBUSH-no-sample-lines",
-    "file": "src/world/terrainSurface.js",
+    "file": "src/world/terrain/terrainSurface.js",
     "old": "    for (let g = Math.ceil(a / cell) * cell; g < b; g += cell) out.push(g);\n",
     "new": "",
-    "tests": ["test/wodbush.test.js"]
+    "tests": ["test/world/terrain/wodbush.test.js"]
   },
   {
     "name": "WODBUSH-off-the-pixel",
-    "file": "src/world/terrainSurface.js",
+    "file": "src/world/terrain/terrainSurface.js",
     "old": "const clamp = (v) => Math.max(0, Math.min(TERRAIN_SIZE, v));",
     "new": "const clamp = (v) => v;",
-    "tests": ["test/wodbush.test.js"]
+    "tests": ["test/world/terrain/wodbush.test.js"]
   }
 ]

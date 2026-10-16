@@ -5,7 +5,7 @@
     "old": "    if (r.settles || r.types.has('Prompt')) return true;\n  }\n  return false;\n}",
     "new": "  }\n  return false;\n}",
     "tests": [
-      "test/wavewait_quests.test.js"
+      "test/systems/quest/wavewait_quests.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    if (r.settles || r.types.has('Prompt')) return true;\n  }\n  return false;\n}",
     "new": "    if (r.settles) return true;\n  }\n  return false;\n}",
     "tests": [
-      "test/wavewait_quests.test.js"
+      "test/systems/quest/wavewait_quests.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    if (r.settles || r.types.has('Prompt')) return true;\n  }\n  return false;\n}",
     "new": "    if (r.types.has('Prompt')) return true;\n  }\n  return false;\n}",
     "tests": [
-      "test/wavewait_quests.test.js"
+      "test/systems/quest/wavewait_quests.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    if (r.settles || r.types.has('Prompt')) return true;\n  }\n  return false;\n}",
     "new": "    if (r.settles || r.types.has('Prompt') || r.types.has('Say')) return true;\n  }\n  return false;\n}",
     "tests": [
-      "test/wavewait_quests.test.js"
+      "test/systems/quest/wavewait_quests.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    if (!t.actions.some((a) => a.isTriggerCondition && a.constructor?.typeName === 'KilledFoe' && a.foeSymbol?.name === foeName)) continue;",
     "new": "    if (!t.actions.some((a) => a.isTriggerCondition && (a.constructor?.typeName === 'KilledFoe' || a.constructor?.typeName === 'InjuredFoe') && a.foeSymbol?.name === foeName)) continue;",
     "tests": [
-      "test/wavewait_quests.test.js"
+      "test/systems/quest/wavewait_quests.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "    this._awaited ??= waveIsAwaited(this.parentQuest, this.foeSymbol?.name);\n",
     "new": "    this._awaited ??= true;\n",
     "tests": [
-      "test/wavewait_quests.test.js"
+      "test/systems/quest/wavewait_quests.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "    if (this.spawnCounter > 0 || this._arrived || !questWaitsShort(this.parentQuest)) return this.spawnInterval;\n",
     "new": "    if (this.spawnCounter > 0 || this._arrived) return this.spawnInterval;\n",
     "tests": [
-      "test/wavewait_quests.test.js"
+      "test/systems/quest/wavewait_quests.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "    if (this.spawnCounter > 0 || this._arrived || !questWaitsShort(this.parentQuest)) return this.spawnInterval;\n",
     "new": "    if (this._arrived || !questWaitsShort(this.parentQuest)) return this.spawnInterval;\n",
     "tests": [
-      "test/wavewait_quests.test.js"
+      "test/systems/quest/wavewait_quests.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "this.lastSpawnTime = gameSeconds - (this.spawnInterval - first) - this._range(first);",
     "new": "this.lastSpawnTime = gameSeconds - (this.spawnInterval - first) - this._range(this.spawnInterval);",
     "tests": [
-      "test/wavewait_quests.test.js"
+      "test/systems/quest/wavewait_quests.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "this.lastSpawnTime = gameSeconds - (this.spawnInterval - first) - this._range(first);",
     "new": "this.lastSpawnTime = gameSeconds - this._range(first);",
     "tests": [
-      "test/wavewait_quests.test.js"
+      "test/systems/quest/wavewait_quests.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "    if (first < this.spawnInterval && !this.spawnInProgress) this.lastSpawnTime = Math.min(this.lastSpawnTime, gameSeconds - (this.spawnInterval - first));",
     "new": "    if (false) this.lastSpawnTime = Math.min(this.lastSpawnTime, gameSeconds - (this.spawnInterval - first));",
     "tests": [
-      "test/wavewait_quests.test.js"
+      "test/systems/quest/wavewait_quests.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "    if (first < this.spawnInterval && !this.spawnInProgress) this.lastSpawnTime = Math.min(this.lastSpawnTime, gameSeconds - (this.spawnInterval - first));",
     "new": "    if (first < this.spawnInterval) this.lastSpawnTime = Math.min(this.lastSpawnTime, gameSeconds - (this.spawnInterval - first));",
     "tests": [
-      "test/wavewait_quests.test.js"
+      "test/systems/quest/wavewait_quests.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "    return Math.min(this.spawnInterval, ONLINE_DELAY_SECONDS);\n",
     "new": "    return this.spawnInterval;\n",
     "tests": [
-      "test/wavewait_quests.test.js"
+      "test/systems/quest/wavewait_quests.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "      this._arrived = true;   // AUDIT WAITS W3: come - a re-set's re-arm is the script's pacing from here\n",
     "new": "",
     "tests": [
-      "test/wavewait_quests.test.js"
+      "test/systems/quest/wavewait_quests.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "    if (this.spawnCounter > 0 || this._arrived || !questWaitsShort(this.parentQuest)) return this.spawnInterval;\n",
     "new": "    if (this.spawnCounter > 0 || !questWaitsShort(this.parentQuest)) return this.spawnInterval;\n",
     "tests": [
-      "test/wavewait_quests.test.js"
+      "test/systems/quest/wavewait_quests.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "  initialiseOnSet() {\n    this.lastSpawnTime = 0;\n    this.spawnCounter = 0;\n  }",
     "new": "  initialiseOnSet() {\n    this.lastSpawnTime = 0;\n    this.spawnCounter = 0;\n    this._arrived = false;\n  }",
     "tests": [
-      "test/wavewait_quests.test.js"
+      "test/systems/quest/wavewait_quests.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "    if (!this._awaited || (this.parentQuest.getFoe(this.foeSymbol)?.killCount ?? 0) > 0) return this.spawnInterval;",
     "new": "    if (!this._awaited) return this.spawnInterval;",
     "tests": [
-      "test/wavewait_quests.test.js"
+      "test/systems/quest/wavewait_quests.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "    else if (this._lastTick == null) { if (Number.isFinite(step) && (gameSeconds - this.lastSpawnTime > step || gameSeconds < this.lastSpawnTime)) this.lastSpawnTime = gameSeconds; this._lastTick = gameSeconds; }   // a resume past a step: the time away is forgiven whole and the first wave waits a full interval from here (OL3's standing-up arm)\n    else if (Number.isFinite(step) && gameSeconds < this._lastTick) { this.lastSpawnTime = gameSeconds; this._lastTick = gameSeconds; }\n    else { const raised = Number.isFinite(step) ? Math.min(raisedSince(raisedNow, this._lastRaised), gameSeconds - this._lastTick) : 0; const forgiven = Math.max(0, gameSeconds - this._lastTick - raised - step) + raised; if (forgiven > 0) this.lastSpawnTime += forgiven; this._lastTick = gameSeconds; }\n    // WAVE-WAIT: until it has come, an awaited wave is never further away than the short wait - after a resume, a load\n    // that stamped `now` (restoreSaveData's quirk: a full interval), or an attempt that brought nothing (a failed roll, a\n    // hidden foe, a wave kept off, a wave lost in flight) it comes inside one, not a whole interval on (AUDIT WAITS W7)\n    if (first < this.spawnInterval && !this.spawnInProgress) this.lastSpawnTime = Math.min(this.lastSpawnTime, gameSeconds - (this.spawnInterval - first));",
     "new": "    else if (this._lastTick == null) { if (Number.isFinite(step) && (gameSeconds - this.lastSpawnTime > step || gameSeconds < this.lastSpawnTime)) this.lastSpawnTime = gameSeconds; this._lastTick = gameSeconds; if (first < this.spawnInterval) this.lastSpawnTime = Math.min(this.lastSpawnTime, gameSeconds - (this.spawnInterval - first)); }   // a resume past a step: the time away is forgiven whole and the first wave waits a full interval from here (OL3's standing-up arm)\n    else if (Number.isFinite(step) && gameSeconds < this._lastTick) { this.lastSpawnTime = gameSeconds; this._lastTick = gameSeconds; }\n    else { const raised = Number.isFinite(step) ? Math.min(raisedSince(raisedNow, this._lastRaised), gameSeconds - this._lastTick) : 0; const forgiven = Math.max(0, gameSeconds - this._lastTick - raised - step) + raised; if (forgiven > 0) this.lastSpawnTime += forgiven; this._lastTick = gameSeconds; }\n    // WAVE-WAIT: until it has come, an awaited wave is never further away than the short wait - after a resume, a load\n    // that stamped `now` (restoreSaveData's quirk: a full interval), or an attempt that brought nothing (a failed roll, a\n    // hidden foe, a wave kept off, a wave lost in flight) it comes inside one, not a whole interval on (AUDIT WAITS W7)\n    // (the clamp on a resume alone)",
     "tests": [
-      "test/wavewait_quests.test.js"
+      "test/systems/quest/wavewait_quests.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "- (this.spawnInterval - first) - this._range(first);",
     "new": "- (this.spawnInterval - first) - Math.min(this._range(first), this._range(this.spawnInterval));",
     "tests": [
-      "test/wavewait_quests.test.js"
+      "test/systems/quest/wavewait_quests.test.js"
     ]
   }
 ]

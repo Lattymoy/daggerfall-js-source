@@ -1,7 +1,7 @@
 // @ts-check
 // HELM-WAY (DECLARED, the Port-Ledger's HELM-WAY row; 2026-09-29, Mac: "Improve the overall mobility and
 // maneuverability of ships") - THE RESPONSIVE HELM: one law for how a hull gathers way, loses it and answers her helm,
-// read by the player's own boat (systems/comeSailAway.js, over Come Sail Away's own handling - the Features row's Ship
+// read by the player's own boat (systems/comeSailAway/comeSailAway.js, over Come Sail Away's own handling - the Features row's Ship
 // handling, 'responsive' by default, 'classic' the mod to the letter) and by the sea's captains
 // (systems/naval/navalAI.js maxTurnRate - they sail at the player's own pace, so they turn at the player's own helm).
 // SAIL-FREE (below) is the player's alone: her way under sail, and her handling scaled with it (SAIL_FREE.gain) - the
@@ -65,7 +65,7 @@ export const SAIL_FREE = Object.freeze({ pace: 1.2, gain: 1.643 });
  * wind over the mod's own (HELM-WAY's, its auto-trim's) for her hull and, a Large Boat's, her variant (SAIL_FREE.gain is
  * the galleon's). SAIL_FREE.gain was every hull's, so a Large Boat (her way up 6%) gathered and lost hers a third
  * quicker than HELM-WAY tuned her, and a Large Galley (her way doubled) a third slower, with a Carrack between. Measured
- * on the runtime and pinned there (test/auditships_sail.test.js): a rig whose drive moves moves them.
+ * on the runtime and pinned there (test/systems/auditships_sail.test.js): a rig whose drive moves moves them.
  */
 export const SAIL_FREE_GAINS = Object.freeze({
   1: Object.freeze([1.065, 1.159, 2.071, 1.190, 1.233, 1.212, 2.131]),   // the Large Boat's seven rigs

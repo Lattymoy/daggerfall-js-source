@@ -4,7 +4,7 @@
 // made wholly of goods only a counter sells - the Weavers' Linen and Wool: 152 of the loom's patterns, the Fishing-Net
 // among them - and the owner keeps it. Nothing in the game said so: the anvil, the workbench, the loom and the mason's
 // bench showed no XP, the jeweller's and the fire's showed theirs without the first, and the craft's word left the
-// answer's `first` unread. These are the words both say it with: the station pages' boxes (ui/profPages.js) and the
+// answer's `first` unread. These are the words both say it with: the station pages' boxes (ui/professions/profPages.js) and the
 // craft's word (scenes/world.js's `craft`, one call).
 //
 // FACT: the client holds no record of which patterns were made - the service's state answers the tracks, the Stores and

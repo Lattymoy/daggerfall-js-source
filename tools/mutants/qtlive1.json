@@ -5,7 +5,7 @@
     "old": "    return Math.max(0, this.remainingTimeInSeconds - this.chargeSeconds(caller));",
     "new": "    return this.remainingTimeInSeconds;",
     "tests": [
-      "test/qtlive1.test.js"
+      "test/ui/enhanced/qtlive1.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    return Math.max(0, this.remainingTimeInSeconds - this.chargeSeconds(caller));",
     "new": "    return this.remainingTimeInSeconds - this.chargeSeconds(caller);",
     "tests": [
-      "test/qtlive1.test.js"
+      "test/ui/enhanced/qtlive1.test.js"
     ]
   },
   {
@@ -23,8 +23,8 @@
     "old": "    return Math.trunc(Math.min(Math.max(raw - raised, 0), step));",
     "new": "    return Math.trunc(raw);",
     "tests": [
-      "test/qtlive1.test.js",
-      "test/auditworld78.test.js"
+      "test/ui/enhanced/qtlive1.test.js",
+      "test/systems/quest/auditworld78.test.js"
     ],
     "note": "TIME3 (PIN MOVED): the charge splits the lived part from the raised; re-aimed by content. QCLOCK-WORLD (PIN MOVED): the charge is the lived step alone; re-aimed by content."
   },
@@ -34,8 +34,8 @@
     "old": "    return Math.trunc(Math.min(Math.max(raw - raised, 0), step));",
     "new": "    return Math.trunc(Math.min(raw - raised, step));",
     "tests": [
-      "test/qtlive1.test.js",
-      "test/auditworld78.test.js"
+      "test/ui/enhanced/qtlive1.test.js",
+      "test/systems/quest/auditworld78.test.js"
     ],
     "note": "TIME3 (PIN MOVED): the charge splits the lived part from the raised; re-aimed by content. QCLOCK-WORLD (PIN MOVED): re-aimed by content."
   },
@@ -45,8 +45,8 @@
     "old": "    this.remainingTimeInSeconds -= this.chargeSeconds(caller);",
     "new": "    this.remainingTimeInSeconds -= Math.trunc(now - this._lastWorldTimeSample);",
     "tests": [
-      "test/qtlive1.test.js",
-      "test/auditworld78.test.js"
+      "test/ui/enhanced/qtlive1.test.js",
+      "test/systems/quest/auditworld78.test.js"
     ]
   },
   {
@@ -55,90 +55,90 @@
     "old": "    if (!this.clockEnabled || this.clockFinished) return this.remainingTimeInSeconds;\n    if (this.waitsShort)",
     "new": "    if (this.clockEnabled && !this.clockFinished) return this.remainingTimeInSeconds;\n    if (this.waitsShort)",
     "tests": [
-      "test/qtlive1.test.js"
+      "test/ui/enhanced/qtlive1.test.js"
     ],
     "note": "REST8 (PIN MOVED): re-aimed by content - the delay's short-wait read now stands between the check and the charge."
   },
   {
     "name": "QT-LIVE1-walk-reads-the-stale-field",
-    "file": "src/scenes/questBridge.js",
+    "file": "src/scenes/quest/questBridge.js",
     "old": "            const left = isShelved(q) ? r.remainingTimeInSeconds : r.liveRemainingSeconds(q);",
     "new": "            const left = r.remainingTimeInSeconds;",
     "tests": [
-      "test/questbridge.test.js",
-      "test/enhancedPause.test.js"
+      "test/systems/quest/questbridge.test.js",
+      "test/ui/enhanced/enhancedPause.test.js"
     ]
   },
   {
     "name": "QT-LIVE1-words-ignore-urgency",
-    "file": "src/ui/enhancedMenu.js",
+    "file": "src/ui/enhanced/enhancedMenu.js",
     "old": "  return { text: t('pause.journal.timeRemains', 'Time remains: {left}', { left: remainWords(q.clockSeconds) }), urgent: q.clockSeconds < QUEST_URGENT_SECONDS };",
     "new": "  return { text: t('pause.journal.timeRemains', 'Time remains: {left}', { left: remainWords(q.clockSeconds) }), urgent: false };",
     "tests": [
-      "test/qtlive1.test.js"
+      "test/ui/enhanced/qtlive1.test.js"
     ]
   },
   {
     "name": "QT-LIVE1-words-for-a-clockless-quest",
-    "file": "src/ui/enhancedMenu.js",
+    "file": "src/ui/enhanced/enhancedMenu.js",
     "old": "  if (!q || q.clockSeconds == null) return null;",
     "new": "  if (!q) return null;",
     "tests": [
-      "test/qtlive1.test.js"
+      "test/ui/enhanced/qtlive1.test.js"
     ]
   },
   {
     "name": "QT-LIVE1-interval-reads-a-captured-log",
-    "file": "src/ui/enhancedMenu.js",
+    "file": "src/ui/enhanced/enhancedMenu.js",
     "old": "    const w = questTimerWords(hooks.questLog?.(), key);",
     "new": "    const w = questTimerWords(log0, key);",
     "tests": [
-      "test/qtlive1.test.js"
+      "test/ui/enhanced/qtlive1.test.js"
     ]
   },
   {
     "name": "QT-LIVE1-interval-once-a-minute",
-    "file": "src/ui/enhancedMenu.js",
+    "file": "src/ui/enhanced/enhancedMenu.js",
     "old": "    span.className = `px-qtimer${w.urgent ? ' urgent' : ''}`;\n  }, 1000);",
     "new": "    span.className = `px-qtimer${w.urgent ? ' urgent' : ''}`;\n  }, 60000);",
     "tests": [
-      "test/qtlive1.test.js"
+      "test/ui/enhanced/qtlive1.test.js"
     ]
   },
   {
     "name": "QT-LIVE1-rebuild-leaks-the-interval",
-    "file": "src/ui/enhancedMenu.js",
+    "file": "src/ui/enhanced/enhancedMenu.js",
     "old": "  if (groundTimer) { clearInterval(groundTimer); groundTimer = null; }\n  if (questTimer) { clearInterval(questTimer); questTimer = null; }\n  stopTimers();",
     "new": "  if (groundTimer) { clearInterval(groundTimer); groundTimer = null; }\n  stopTimers();",
     "tests": [
-      "test/qtlive1.test.js"
+      "test/ui/enhanced/qtlive1.test.js"
     ]
   },
   {
     "name": "QT-LIVE1-unmount-leaks-the-interval",
-    "file": "src/ui/enhancedMenu.js",
+    "file": "src/ui/enhanced/enhancedMenu.js",
     "old": "      if (questTimer) { clearInterval(questTimer); questTimer = null; }\n      stopTimers();   // TIMERS1",
     "new": "      stopTimers();   // TIMERS1",
     "tests": [
-      "test/qtlive1.test.js"
+      "test/ui/enhanced/qtlive1.test.js"
     ]
   },
   {
     "name": "QT-LIVE1-timer-never-armed",
-    "file": "src/ui/enhancedMenu.js",
+    "file": "src/ui/enhanced/enhancedMenu.js",
     "old": "        armQuestTimer(timer, sel.key);",
     "new": "        void timer;",
     "tests": [
-      "test/qtlive1.test.js"
+      "test/ui/enhanced/qtlive1.test.js"
     ]
   },
   {
     "name": "QT-LIVE1-a-gone-clock-leaves-a-stale-line",
-    "file": "src/ui/enhancedMenu.js",
+    "file": "src/ui/enhanced/enhancedMenu.js",
     "old": "    if (!w) { render(); return; }",
     "new": "    if (!w) return;",
     "tests": [
-      "test/qtlive1.test.js"
+      "test/ui/enhanced/qtlive1.test.js"
     ]
   }
 ]

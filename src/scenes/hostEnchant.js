@@ -27,11 +27,11 @@
 // once.
 import { playerInSunlight, playerInHolyPlace } from '../systems/passiveSpecials.js';   // V2c: the two E1 conditional flags
 import { skyMinutes } from '../systems/worldTick.js';   // TIME1: a season's or a moon's enchantment reads the sky
-import { getBool } from '../systems/settings.js';
+import { getBool } from '../systems/settings/settings.js';
 import { seasonValue, SEASONS, dateFromClassicMinutes, lunarPhasesFromMinutes, LUNAR_PHASES } from '../systems/gameDate.js';
 import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring
-import { placeFoeEnv, entityOccupancy, heldSpots, holdSpotWhile } from './questFoeHost.js';   // QUEST-WAVE: the held spots' one home
-import { ENEMY_BASICS } from '../characters/enemyBasics.js';
+import { placeFoeEnv, entityOccupancy, heldSpots, holdSpotWhile } from './quest/questFoeHost.js';   // QUEST-WAVE: the held spots' one home
+import { ENEMY_BASICS } from '../characters/enemy/enemyBasics.js';
 import { sparedByPlayer } from '../combat/friendlyFire.js';   // AUDIT NAV2 F55: who the drain passes by
 
 /** The law REFUSES a spot DFU would have rejected - no floor under it,

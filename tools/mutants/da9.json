@@ -4,7 +4,7 @@
     "file": "app/lib/arena2Detect.cjs",
     "old": "  if (!top.length) return { dir };",
     "new": "  if (top.length < REQUIRED_ARENA2.length) return { dir };",
-    "tests": ["test/da9_arena2detect.test.js"],
+    "tests": ["test/tooling/da9_arena2detect.test.js"],
     "note": "A2-WHOLE's fault, in the app: the palette served, the boot dead on ARCH3D.BSA, the shell never asking again."
   },
   {
@@ -12,62 +12,62 @@
     "file": "app/lib/arena2Detect.cjs",
     "old": "    if (!m.length) return { dir: nested };\n",
     "new": "",
-    "tests": ["test/da9_arena2detect.test.js"]
+    "tests": ["test/tooling/da9_arena2detect.test.js"]
   },
   {
     "name": "DA9-3-only-the-main-steam-library-is-looked-in",
     "file": "app/lib/arena2Detect.cjs",
     "old": "      for (const lib of [root, ...vdfValues(vdf, 'path')]) if (!libraries.includes(lib)) libraries.push(lib);\n",
     "new": "      for (const lib of [root]) if (!libraries.includes(lib)) libraries.push(lib);\n",
-    "tests": ["test/da9_arena2detect.test.js"]
+    "tests": ["test/tooling/da9_arena2detect.test.js"]
   },
   {
     "name": "DA9-4-one-install-behind-a-link-is-offered-twice",
     "file": "app/lib/arena2Detect.cjs",
     "old": "  const real = (d) => { try { return fsImpl.realpathSync(d); } catch { return path.resolve(d); } };\n",
     "new": "  const real = (d) => path.resolve(d);\n",
-    "tests": ["test/da9_arena2detect.test.js"]
+    "tests": ["test/tooling/da9_arena2detect.test.js"]
   },
   {
     "name": "DA9-5-every-gog-game-is-walked",
     "file": "app/lib/arena2Detect.cjs",
     "old": "        ...regQuery('HKLM\\\\SOFTWARE\\\\WOW6432Node\\\\GOG.com\\\\Games', 'path', { recursive: true }).filter((p) => DAGGERFALL_DIR_RE.test(p)),\n",
     "new": "        ...regQuery('HKLM\\\\SOFTWARE\\\\WOW6432Node\\\\GOG.com\\\\Games', 'path', { recursive: true }),\n",
-    "tests": ["test/da9_arena2detect.test.js"]
+    "tests": ["test/tooling/da9_arena2detect.test.js"]
   },
   {
     "name": "DA9-6-the-walk-has-no-floor",
     "file": "app/lib/arena2Detect.cjs",
     "old": "    if (d >= depth) continue;\n",
     "new": "",
-    "tests": ["test/da9_arena2detect.test.js"]
+    "tests": ["test/tooling/da9_arena2detect.test.js"]
   },
   {
     "name": "DA9-7-the-walk-has-no-cap",
     "file": "app/lib/arena2Detect.cjs",
     "old": "    if (opened.size >= SEARCH_DIRS_MAX) return { dir: null, cut: true };\n",
     "new": "",
-    "tests": ["test/da9_arena2detect.test.js"]
+    "tests": ["test/tooling/da9_arena2detect.test.js"]
   },
   {
     "name": "DA9-8-dfu-settings-read-from-any-section",
     "file": "app/lib/arena2Detect.cjs",
     "old": "    if (kv && section.toLowerCase() === 'daggerfall') return kv[1].trim() || null;\n",
     "new": "    if (kv) return kv[1].trim() || null;\n",
-    "tests": ["test/da9_arena2detect.test.js"]
+    "tests": ["test/tooling/da9_arena2detect.test.js"]
   },
   {
     "name": "DA9-9-the-shell-keeps-its-own-one-file-test",
     "file": "app/main.cjs",
     "old": "const { findCaseInsensitive, answerArena2 } = require('./lib/arena2Detect.cjs');",
     "new": "const { findCaseInsensitive, answerArena2 } = require('./lib/arena2Detect.cjs');\nfunction resolveArena2(dir) { return dir && findCaseInsensitive(dir, 'ART_PAL.COL') ? dir : null; }",
-    "tests": ["test/da9_arena2detect.test.js"]
+    "tests": ["test/tooling/da9_arena2detect.test.js"]
   },
   {
     "name": "DA9-10-the-shell-and-the-game-disagree-on-a-whole-set",
     "file": "app/lib/arena2Detect.cjs",
     "old": "  'ARCH3D.BSA', 'BLOCKS.BSA', 'MAPS.BSA', 'MONSTER.BSA', 'WOODS.WLD', 'TEXT.RSC', 'ART_PAL.COL',\n]);\n\n/** The Elder Scrolls II",
     "new": "  'ARCH3D.BSA', 'BLOCKS.BSA', 'MAPS.BSA', 'WOODS.WLD', 'TEXT.RSC', 'ART_PAL.COL',\n]);\n\n/** The Elder Scrolls II",
-    "tests": ["test/da9_arena2detect.test.js"]
+    "tests": ["test/tooling/da9_arena2detect.test.js"]
   }
 ]

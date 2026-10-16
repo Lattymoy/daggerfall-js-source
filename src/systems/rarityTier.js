@@ -1,9 +1,9 @@
 // RARE-BREAK1 (2026-09-25): THE LADDER'S ROLLED TIERS, AS A LEAF.
 //
-// The rarity ladder (systems/lootRarity.js, LR1) stamps a piece that rolled a tier with
+// The rarity ladder (systems/loot/lootRarity.js, LR1) stamps a piece that rolled a tier with
 // `item.rarity` - one of these three. The names live here, alone, so a reader that must not
 // import the ladder (the combat formulas read no affix fold by name - RF1's law,
-// test/rf1_entitymods.test.js) can still ask the one question it needs: did this piece come
+// test/systems/rf1_entitymods.test.js) can still ask the one question it needs: did this piece come
 // off the ladder? lootRarity.js re-exports ROLLED_TIERS from here; this is its one home.
 
 /** The tiers the ladder ROLLS (an artifact is DFU's, Common is no roll). */

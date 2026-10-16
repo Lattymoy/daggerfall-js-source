@@ -5,7 +5,7 @@
   "old": "for (let i = end; i !== -1; i = /** @type {number} */ (from.get(i))) path.unshift([i % KG_COLS, Math.floor(i / KG_COLS)]);",
   "new": "for (let i = end; i !== -1; i = /** @type {number} */ (from.get(i))) path.push([i % KG_COLS, Math.floor(i / KG_COLS)]);",
   "tests": [
-   "test/kg4_board.test.js"
+   "test/world/kg4_board.test.js"
   ]
  },
  {
@@ -14,7 +14,7 @@
   "old": "if (end === cellIndex(p.col, p.row) || !from.has(end)) return null;",
   "new": "if (!from.has(end)) return null;",
   "tests": [
-   "test/kg4_board.test.js"
+   "test/world/kg4_board.test.js"
   ]
  },
  {
@@ -23,7 +23,7 @@
   "old": "until: from + ((path.length - 1) / GAMBIT_WALK_CELLS_S) * MS, path",
   "new": "until: from + ((path.length - 1) / (GAMBIT_WALK_CELLS_S * 2)) * MS, path",
   "tests": [
-   "test/kg4_board.test.js"
+   "test/world/kg4_board.test.js"
   ]
  },
  {
@@ -32,7 +32,7 @@
   "old": "const path = (tiles && reachPath(board, { ...p, col: e.from[0], row: e.from[1] }, e.to[0], e.to[1])) ?? [e.from, e.to];",
   "new": "const path = [e.from, e.to];",
   "tests": [
-   "test/kg4_board.test.js"
+   "test/world/kg4_board.test.js"
   ]
  },
  {
@@ -41,7 +41,7 @@
   "old": "reach: e.shot ? GAMBIT_LUNGE_SHOT : GAMBIT_LUNGE_MELEE",
   "new": "reach: GAMBIT_LUNGE_MELEE",
   "tests": [
-   "test/kg4_board.test.js"
+   "test/world/kg4_board.test.js"
   ]
  },
  {
@@ -50,7 +50,7 @@
   "old": "const lands = e.shot ? impact + GAMBIT_SHOT_S * MS : impact;",
   "new": "const lands = impact;",
   "tests": [
-   "test/kg4_board.test.js"
+   "test/world/kg4_board.test.js"
   ]
  },
  {
@@ -59,7 +59,7 @@
   "old": "            if (!reduced) {",
   "new": "            if (true) {",
   "tests": [
-   "test/kg4_board.test.js"
+   "test/world/kg4_board.test.js"
   ]
  },
  {
@@ -68,7 +68,7 @@
   "old": "const from = Math.max(at, busy(a.id));",
   "new": "const from = at;",
   "tests": [
-   "test/kg4_board.test.js"
+   "test/world/kg4_board.test.js"
   ]
  },
  {
@@ -77,7 +77,7 @@
   "old": "at: at + GAMBIT_FALL_AFTER_S * MS, dir, pile",
   "new": "at: at, dir, pile",
   "tests": [
-   "test/kg4_board.test.js"
+   "test/world/kg4_board.test.js"
   ]
  },
  {
@@ -86,7 +86,7 @@
   "old": "index: piles[p.side]++",
   "new": "index: piles[p.side]",
   "tests": [
-   "test/kg4_board.test.js"
+   "test/world/kg4_board.test.js"
   ]
  },
  {
@@ -95,7 +95,7 @@
   "old": "const order = [...mine.filter((/** @type {any} */ p) => p.king), ...mine.filter((/** @type {any} */ p) => !p.king)];",
   "new": "const order = [...mine.filter((/** @type {any} */ p) => !p.king), ...mine.filter((/** @type {any} */ p) => p.king)];",
   "tests": [
-   "test/kg4_board.test.js"
+   "test/world/kg4_board.test.js"
   ]
  },
  {
@@ -104,7 +104,7 @@
   "old": "throws.set(p.id, at + i * GAMBIT_MUSTER_BEAT_S * MS)",
   "new": "throws.set(p.id, at)",
   "tests": [
-   "test/kg4_board.test.js"
+   "test/world/kg4_board.test.js"
   ]
  },
  {
@@ -113,7 +113,7 @@
   "old": "      for (const [, f] of fallen) {\n",
   "new": "      for (const [, f] of []) {\n",
   "tests": [
-   "test/kg4_board.test.js"
+   "test/world/kg4_board.test.js"
   ]
  },
  {
@@ -122,7 +122,7 @@
   "old": "if (Math.abs(u) <= half && y >= 0 && y <= H) take(t, [p.col, p.row]);",
   "new": "if (Math.abs(u) <= half && y >= 0 && y <= H * 0.1) take(t, [p.col, p.row]);",
   "tests": [
-   "test/kg4_board.test.js"
+   "test/world/kg4_board.test.js"
   ]
  },
  {
@@ -131,7 +131,7 @@
   "old": "const t = planeY(places.top + (tile === KG_TILE.wall ? GAMBIT_WALL_H : GAMBIT_PILLAR_H));",
   "new": "const t = planeY(places.top);",
   "tests": [
-   "test/kg4_board.test.js"
+   "test/world/kg4_board.test.js"
   ]
  },
  {
@@ -140,7 +140,7 @@
   "old": "const up = [f[1] * rt[2] - f[2] * rt[1], f[2] * rt[0] - f[0] * rt[2], f[0] * rt[1] - f[1] * rt[0]];",
   "new": "const up = [rt[1] * f[2] - rt[2] * f[1], rt[2] * f[0] - rt[0] * f[2], rt[0] * f[1] - rt[1] * f[0]];",
   "tests": [
-   "test/kg4_board.test.js"
+   "test/world/kg4_board.test.js"
   ]
  },
  {
@@ -149,7 +149,7 @@
   "old": "(b.x1 - b.x0) / ((cx1 - cx0) * GAMBIT_LEAN_FILL)",
   "new": "(b.x1 - b.x0) / (cx1 - cx0)",
   "tests": [
-   "test/kg4_board.test.js"
+   "test/world/kg4_board.test.js"
   ]
  },
  {
@@ -158,7 +158,7 @@
   "old": "sx -= dx * dist * tx; sy -= dy * dist * ty;",
   "new": "sx -= dx * dist * tx;",
   "tests": [
-   "test/kg4_board.test.js"
+   "test/world/kg4_board.test.js"
   ]
  },
  {
@@ -167,7 +167,7 @@
   "old": "  const best = options.reduce((a, b) => (area(b) > area(a) ? b : a));",
   "new": "  const best = options[0];",
   "tests": [
-   "test/kg4_board.test.js"
+   "test/world/kg4_board.test.js"
   ]
  },
  {
@@ -176,7 +176,7 @@
   "old": "const y0 = touch ? Math.min(0.3, fy(GAMBIT_TOUCH_TOP_PX)) : 0;",
   "new": "const y0 = 0;",
   "tests": [
-   "test/kg4_board.test.js"
+   "test/world/kg4_board.test.js"
   ]
  },
  {
@@ -185,7 +185,7 @@
   "old": "if (events.length) g.motion.feed(events, now, s.state);",
   "new": "",
   "tests": [
-   "test/kg3_host.test.js"
+   "test/systems/kg3_host.test.js"
   ]
  },
  {
@@ -194,7 +194,7 @@
   "old": "const want = g.phase === 'battle' && !watching() ? 1 : 0;",
   "new": "const want = 1;",
   "tests": [
-   "test/kg3_host.test.js"
+   "test/systems/kg3_host.test.js"
   ]
  },
  {
@@ -203,7 +203,7 @@
   "old": "const built = ray ? gambitPressCell(g.places, g.session.state, cam.eye, ray, g.selected) : null;",
   "new": "const built = p ? g.places.cellAt(p) : null;",
   "tests": [
-   "test/kg3_host.test.js"
+   "test/systems/kg3_host.test.js"
   ]
  },
  {
@@ -212,7 +212,7 @@
   "old": "const s = projectToScreen(c[2] ? [o[0], o[1] + mid, o[2]] : o, w, h, cam.proj, cam.view, rect);",
   "new": "const s = projectToScreen(o, w, h, cam.proj, cam.view, rect);",
   "tests": [
-   "test/kg3_host.test.js"
+   "test/systems/kg3_host.test.js"
   ]
  },
  {
@@ -221,7 +221,7 @@
   "old": "    if (gambitLeanNow) cam.pos = gambitLeanNow.eye;\n",
   "new": "\n",
   "tests": [
-   "test/kg3_host.test.js"
+   "test/systems/kg3_host.test.js"
   ]
  },
  {
@@ -230,7 +230,7 @@
   "old": "const view = betterAmbience.view(lookAt(mwv.eye, [mwv.eye[0] + lookFwd[0], mwv.eye[1] + lookFwd[1], mwv.eye[2] + lookFwd[2]], [0, 1, 0]));",
   "new": "const view = betterAmbience.view(lookAt(mwv.eye, [mwv.eye[0] + fwd[0], mwv.eye[1] + fwd[1], mwv.eye[2] + fwd[2]], [0, 1, 0]));",
   "tests": [
-   "test/kg3_host.test.js"
+   "test/systems/kg3_host.test.js"
   ]
  },
  {
@@ -239,7 +239,7 @@
   "old": "const y = water(c, r) ? top - GAMBIT_WATER_DROP : top;",
   "new": "const y = top;",
   "tests": [
-   "test/kg4_board.test.js"
+   "test/world/kg4_board.test.js"
   ]
  },
  {
@@ -248,7 +248,7 @@
   "old": "return plateModel([u0, v0, u1, v1], [u1, v0, u0, v1], ",
   "new": "return plateModel([u0, v0, u1, v1], [u0, v0, u1, v1], ",
   "tests": [
-   "test/kg4_board.test.js"
+   "test/world/kg4_board.test.js"
   ]
  },
  {
@@ -257,7 +257,7 @@
   "old": "  const Y = cross(Z, X);\n  const H = gambitCardHeight(places.cell);",
   "new": "  const Y = cross(X, Z);\n  const H = gambitCardHeight(places.cell);",
   "tests": [
-   "test/kg4_board.test.js"
+   "test/world/kg4_board.test.js"
   ]
  },
  {
@@ -266,7 +266,7 @@
   "old": "(p.id === selected ? GAMBIT_SELECT_LIFT : 0)",
   "new": "0",
   "tests": [
-   "test/kg4_board.test.js"
+   "test/world/kg4_board.test.js"
   ]
  },
  {
@@ -275,7 +275,7 @@
   "old": "const remap = p.flash ? GAMBIT_REMAP_HURT : p.glow ? GAMBIT_REMAP_GLOW : null;",
   "new": "const remap = null;",
   "tests": [
-   "test/kg4_board.test.js"
+   "test/world/kg4_board.test.js"
   ]
  },
  {
@@ -284,7 +284,7 @@
   "old": "paintGambitAtlas(t.ctx); tintGambitAtlas(t.ctx, tint);",
   "new": "paintGambitAtlas(t.ctx);",
   "tests": [
-   "test/kg4_board.test.js"
+   "test/world/kg4_board.test.js"
   ]
  },
  {
@@ -293,7 +293,7 @@
   "old": "upload(GAMBIT_FX, c.ctx, W, H, { cutout: true });",
   "new": "upload(GAMBIT_FX, c.ctx, W, H);",
   "tests": [
-   "test/kg4_board.test.js"
+   "test/world/kg4_board.test.js"
   ]
  },
  {
@@ -302,7 +302,7 @@
   "old": "    if (!m) { m = renderer.createMesh(model()); meshes.set(key, m); }",
   "new": "    { m = renderer.createMesh(model()); meshes.set(key, m); }",
   "tests": [
-   "test/kg4_board.test.js"
+   "test/world/kg4_board.test.js"
   ]
  },
  {
@@ -311,7 +311,7 @@
   "old": "    return { piece: p, plate, disc: disc ? [base[0] + shake[0], places.top, base[2] + shake[2]] : null, bar, remap };",
   "new": "    return { piece: p, plate, disc: [base[0] + shake[0], places.top, base[2] + shake[2]], bar, remap };",
   "tests": [
-   "test/kg4_board.test.js"
+   "test/world/kg4_board.test.js"
   ]
  },
  {
@@ -320,7 +320,7 @@
   "old": "if (e.shot && GAMBIT_ARCHER_CLASSES.includes(a.unit)) {",
   "new": "if (e.shot && false) {",
   "tests": [
-   "test/kg4_board.test.js"
+   "test/world/kg4_board.test.js"
   ]
  },
  {
@@ -329,7 +329,7 @@
   "old": "cue(a.unit >= GAMBIT_CALLING_FROM ? one(GAMBIT_SWING_CLIPS) : monsterClip(a.unit, 'attackSound'), from, A);",
   "new": "cue(monsterClip(a.unit, 'attackSound'), from, A);",
   "tests": [
-   "test/kg4_board.test.js"
+   "test/world/kg4_board.test.js"
   ]
  },
  {
@@ -338,7 +338,7 @@
   "old": "else cue(t.unit >= GAMBIT_CALLING_FROM ? SOUND.PainSound : monsterClip(t.unit, 'barkSound'), hit + 0.1 * MS, T);",
   "new": "else cue(SOUND.PainSound, hit + 0.1 * MS, T);",
   "tests": [
-   "test/kg4_board.test.js"
+   "test/world/kg4_board.test.js"
   ]
  },
  {
@@ -347,7 +347,7 @@
   "old": "if (e.killed) cue(SOUND.BodyFall, hit + 0.3 * MS, T);",
   "new": "if (e.killed) cue(SOUND.BodyFall, hit, T);",
   "tests": [
-   "test/kg4_board.test.js"
+   "test/world/kg4_board.test.js"
   ]
  },
  {
@@ -356,7 +356,7 @@
   "old": "fire: SOUND.SpellImpactFire, spikes: SOUND.Hit3",
   "new": "fire: SOUND.Hit3, spikes: SOUND.SpellImpactFire",
   "tests": [
-   "test/kg4_board.test.js"
+   "test/world/kg4_board.test.js"
   ]
  },
  {
@@ -365,7 +365,7 @@
   "old": "if (steps > 1) cue(walk, from + (steps / GAMBIT_WALK_CELLS_S) * 0.5 * MS, e.to);",
   "new": "",
   "tests": [
-   "test/kg4_board.test.js"
+   "test/world/kg4_board.test.js"
   ]
  },
  {
@@ -374,7 +374,7 @@
   "old": "      cues = cues.filter((c) => c.at > now);\n",
   "new": "",
   "tests": [
-   "test/kg4_board.test.js"
+   "test/world/kg4_board.test.js"
   ]
  },
  {
@@ -383,7 +383,7 @@
   "old": "else if (e.winner === 1 && e.by !== 'forfeit') sound(SOUND.Groan, GAMBIT_RESULT_MS);",
   "new": "else if (e.winner === 1 && e.by !== 'forfeit') sound(SOUND.Groan, 0);",
   "tests": [
-   "test/kg3_host.test.js"
+   "test/systems/kg3_host.test.js"
   ]
  },
  {
@@ -392,7 +392,7 @@
   "old": "if (g.game?.stake > 0) sound(SOUND.GoldPieces, GAMBIT_RESULT_MS + 600);",
   "new": "",
   "tests": [
-   "test/kg3_host.test.js"
+   "test/systems/kg3_host.test.js"
   ]
  },
  {
@@ -401,7 +401,7 @@
   "old": "if (mine) sound(SOUND.ButtonClick);",
   "new": "",
   "tests": [
-   "test/kg3_host.test.js"
+   "test/systems/kg3_host.test.js"
   ]
  },
  {
@@ -410,7 +410,7 @@
   "old": "play: (clip, at) => audio?.play3d?.(clip, at, 1, { maxDistance: 16 }),",
   "new": "play: (clip) => audio?.playOneShot?.(clip, 1),",
   "tests": [
-   "test/kg3_host.test.js"
+   "test/systems/kg3_host.test.js"
   ]
  }
 ]

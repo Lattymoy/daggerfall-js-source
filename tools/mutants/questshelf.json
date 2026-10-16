@@ -5,7 +5,7 @@
     "old": "        if (!quest.questComplete && !isShelved(quest)) quest.update();   // QUEST-SHELF: a quest set aside does not run",
     "new": "        if (!quest.questComplete) quest.update();",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "      if (isShelved(quest)) continue;   // QUEST-SHELF: a quest set aside hears no click\n",
     "new": "",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "      if (isShelved(quest)) continue;\n      for (const resource of quest.resources.values()) {\n        if (!resource.isPerson || !resource.isQuestor) continue;",
     "new": "      for (const resource of quest.resources.values()) {\n        if (!resource.isPerson || !resource.isQuestor) continue;",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "      if (isShelved(quest)) continue;   // QUEST-SHELF: its questor is nobody's while it is set aside\n",
     "new": "",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "      if (quest.questComplete || isShelved(quest)) continue;   // QUEST-SHELF: a named NPC a quest set aside held is home again",
     "new": "      if (quest.questComplete) continue;",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "      if (isShelved(quest)) continue;   // QUEST-SHELF: the journal's active page holds what runs; the Abandoned list the rest\n",
     "new": "",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "    if (!quest || isShelved(quest)) return null;   // QUEST-SHELF: a quest set aside is not handed on",
     "new": "    if (!quest) return null;",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "    if (isShelved(quest)) return null;   // QUEST-SHELF: a copy set aside takes no partner's state - reclaimed, it is as it was\n",
     "new": "",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "    this.siteLinks = this.siteLinks.filter((l) => l.questUID !== quest.uid);\n    for (const [factionID, owner]",
     "new": "    for (const [factionID, owner]",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "    quest.shelvedSites = [...new Set(this.siteLinks.filter((l) => l.questUID === quest.uid).map((l) => l.placeSymbol?.name).filter(Boolean))];",
     "new": "    quest.shelvedSites = [];",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "    if (this.sharedCandidateNamed(quest.questName) === quest) this.sharedQuestNames.delete(quest.questName);\n",
     "new": "",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "action.spawnInProgress = false; }\n    }\n    this.deps.forceTopicListsUpdate?.();",
     "new": "action.spawnInProgress = false; }\n    }",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "    if (isProtectedQuest(quest)) return 'protected';\n",
     "new": "",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "    if (quest.ticksToEnd > 0) return 'ending';\n",
     "new": "",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "    return refuse?.(quest) ?? null;",
     "new": "    return null;",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "    if (isShelved(quest)) return 'shelved';\n",
     "new": "",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "    shiftQuestStamps(data, away, { own: true });\n",
     "new": "",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "      if (place?.siteDetails && !this.siteLinks.some((l) => l.questUID === quest.uid && l.placeSymbol?.name === name)) this.createSiteLink(quest, place.symbol);",
     "new": "      void place;",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "    if (!isShelved(quest)) return { ok: false, reason: 'running' };\n",
     "new": "",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "      shelvedAt: this.shelvedAt ?? null,   // QUEST-SHELF: the port's own, absent in DFU's saves (an older envelope: not set aside)\n",
     "new": "",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "      shelvedSites: this.shelvedSites ? [...this.shelvedSites] : null,\n",
     "new": "",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "    this.shelvedAt = Number.isFinite(data.shelvedAt) && data.shelvedAt !== 0 ? data.shelvedAt : null;   // QUEST-SHELF",
     "new": "    this.shelvedAt = null;",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "'questTombstoneTime', 'shelvedAt']);",
     "new": "'questTombstoneTime']);",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
@@ -212,7 +212,7 @@
     "old": "      if (!this.individualHome) this.setGameObjectActive(!!this.targetResource?.isQuestor);\n      return;",
     "new": "      return;",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
@@ -221,7 +221,7 @@
     "old": "      if (!this.individualHome) this.setGameObjectActive(!!this.targetResource?.isQuestor);",
     "new": "      if (!this.individualHome) this.setGameObjectActive(false);",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
@@ -230,16 +230,16 @@
     "old": "    if (this.targetResource != null && !isShelved(this.targetQuest)) {",
     "new": "    if (this.targetResource != null) {",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
     "name": "QS-a-share-taken",
-    "file": "src/systems/questShare.js",
+    "file": "src/systems/quest/questShare.js",
     "old": "  if (isShelved(machine.sharedCandidateNamed?.(questName))) return { ok: false, reason: 'shelved' };\n",
     "new": "",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
@@ -248,61 +248,61 @@
     "old": "      if (result.reason === 'shelved' && quest.data?.sync === 1) return;\n",
     "new": "",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
     "name": "QS-guidance-marks-it",
-    "file": "src/systems/questGuidance.js",
+    "file": "src/systems/quest/questGuidance.js",
     "old": " || q.shelvedAt != null);   // QUEST-SHELF: and one set aside marks nothing while away",
     "new": ");   // QUEST-SHELF: and one set aside marks nothing while away",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
     "name": "QS-the-list-unhanded",
-    "file": "src/scenes/questBridge.js",
+    "file": "src/scenes/quest/questBridge.js",
     "old": "ended, hidden: notebook?.getHiddenQuests?.() ?? [], shelved };",
     "new": "ended, hidden: notebook?.getHiddenQuests?.() ?? [] };",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
     "name": "QS-a-raid-set-aside",
-    "file": "src/scenes/questBridge.js",
+    "file": "src/scenes/quest/questBridge.js",
     "old": "const refuseRaid = (q) => (WA_RAID_QUESTS.includes(q.questName) ? 'raid' : null);",
     "new": "const refuseRaid = () => null;",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
     "name": "QS-the-tracker-holds-it",
-    "file": "src/scenes/questBridge.js",
+    "file": "src/scenes/quest/questBridge.js",
     "old": "      if (!q || q.questComplete || isShelved(q)) questTracker.pinned = null;   // QUEST-SHELF: one set aside is let go too",
     "new": "      if (!q || q.questComplete) questTracker.pinned = null;   // QUEST-SHELF: one set aside is let go too",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
     "name": "QS-no-abandoned-section",
-    "file": "src/ui/enhancedMenu.js",
+    "file": "src/ui/enhanced/enhancedMenu.js",
     "old": "  if (shelved.length) section(t('pause.journal.abandoned', 'Abandoned'), shelved, ' done');\n",
     "new": "",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
     "name": "QS-no-reclaim",
-    "file": "src/ui/enhancedMenu.js",
+    "file": "src/ui/enhanced/enhancedMenu.js",
     "old": "        const rc = el('button', 'act', 'Reclaim quest');",
     "new": "        const rc = el('button', 'act', 'Reclaim');",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
@@ -311,7 +311,7 @@
     "old": "      if (isShelved(this.deps.getQuest?.(questID))) continue;   // QUEST-SHELF: a quest set aside offers no topic (its topics kept whole - hints, discovery - for its reclaim)\n      for (const [resourceName, info] of questInfo.resourceInfo) {\n        const itemQuestTopic",
     "new": "      for (const [resourceName, info] of questInfo.resourceInfo) {\n        const itemQuestTopic",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
@@ -320,7 +320,7 @@
     "old": ".filter((q) => !q.questTombstoned && !isShelved(q)).map((q) => q.uid);",
     "new": ".filter((q) => !q.questTombstoned).map((q) => q.uid);",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
@@ -329,7 +329,7 @@
     "old": "      if (!isShelved(quest)) return quest;\n      away ??= quest;",
     "new": "      return quest;",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
@@ -338,7 +338,7 @@
     "old": "    return away;\n  }",
     "new": "    return null;\n  }",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
@@ -347,7 +347,7 @@
     "old": "    if (this.sharedCandidateNamed(quest.questName) === quest) this.sharedQuestNames.delete(quest.questName);",
     "new": "    this.sharedQuestNames.delete(quest.questName);",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
@@ -356,7 +356,7 @@
     "old": "    if (!isShelved(this.sharedCandidateNamed(quest.questName))) return { ok: false, reason: 'twin' };\n",
     "new": "",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
@@ -365,7 +365,7 @@
     "old": "    for (const b of standing) b.relinkToLiveQuest?.();\n    this.deps.relinkQuestTopics?.(quest);   // and its talk topics",
     "new": "    this.deps.relinkQuestTopics?.(quest);   // and its talk topics",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
@@ -374,7 +374,7 @@
     "old": "    this.deps.relinkQuestTopics?.(quest);   // and its talk topics (AUDIT 68 S29-share-topics): 'where is' reads the live Person\n",
     "new": "",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
@@ -383,7 +383,7 @@
     "old": "    questData = { ...this._onThisClock(questData), ...NO_SHELF, ...NO_INSTANCE };   // TIME3: the sender's countdowns, on this character's clock\n    const quest = this._newQuest();",
     "new": "    questData = { ...this._onThisClock(questData), ...NO_INSTANCE };   // TIME3: the sender's countdowns, on this character's clock\n    const quest = this._newQuest();",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
@@ -392,7 +392,7 @@
     "old": "    questData = { ...this._onThisClock(questData), ...NO_SHELF };   // TIME3: the sender's countdowns, on this character's clock\n    const scratch = this._newQuest();",
     "new": "    questData = this._onThisClock(questData);   // TIME3: the sender's countdowns, on this character's clock\n    const scratch = this._newQuest();",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
@@ -401,7 +401,7 @@
     "old": "      behaviour.individualHome = true;   // QUEST-SHELF (its audit): the home copy - a quest set aside never hides it\n",
     "new": "",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
@@ -410,7 +410,7 @@
     "old": "      if (!this.individualHome) this.setGameObjectActive(!!this.targetResource?.isQuestor);",
     "new": "      this.setGameObjectActive(!!this.targetResource?.isQuestor);",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
@@ -419,7 +419,7 @@
     "old": "    let foundInActiveQuest = false;\n    if (this.targetResource != null && !isShelved(this.targetQuest)) {",
     "new": "    if (isShelved(this.targetQuest)) return false;\n    let foundInActiveQuest = false;\n    if (this.targetResource != null) {",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
@@ -428,7 +428,7 @@
     "old": ".filter((q) => questRunning(q) && !isShelved(q));",
     "new": ".filter(questRunning);",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
@@ -437,7 +437,7 @@
     "old": "      if (entry.questID !== 0 && this.deps.questAway?.(entry.questID)) continue;   // QUEST-SHELF's audit\n",
     "new": "",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
@@ -446,34 +446,34 @@
     "old": "    questAway: (uid) => isShelved(questBridge?.machine.getQuest(uid)),",
     "new": "",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
     "name": "QS-A-the-lens-forgets",
-    "file": "src/ui/questLens.js",
+    "file": "src/ui/quest/questLens.js",
     "old": "    for (const [id, was] of this._last ?? []) if (away.has(id) && !last.has(id)) last.set(id, was);\n",
     "new": "",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
     "name": "QS-A-the-rail-unordered",
-    "file": "src/ui/questRail.js",
+    "file": "src/ui/quest/questRail.js",
     "old": "  return (log?.shelved ?? []).map((q, i) => railRow(q, i, readLines, 's'));",
     "new": "  return (log?.shelved ?? []).map((q, i) => ({ ...railRow(q, i, readLines, 's'), entries: (q.messages ?? []).map((m) => readLines(m, null, q) ?? []).filter((x) => x.length) }));",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
     "name": "QS-A-a-share-unworded",
-    "file": "src/systems/questShare.js",
+    "file": "src/systems/quest/questShare.js",
     "old": "  shelved: 'have abandoned it - reclaim it from your journal to take it up again.',",
     "new": "",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
@@ -482,61 +482,61 @@
     "old": "      if (result.reason === 'shelved' && quest.data?.sync === 1) return;",
     "new": "      if (result.reason === 'shelved') return;",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
     "name": "QS-A-the-selection-jumps",
-    "file": "src/ui/enhancedMenu.js",
+    "file": "src/ui/enhanced/enhancedMenu.js",
     "old": "if (out?.ok) questSel = `a:${sel.id}`;",
     "new": "questSel = `a:${sel.id}`;",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
     "name": "QS-A-the-selection-jumps-too",
-    "file": "src/ui/enhancedMenu.js",
+    "file": "src/ui/enhanced/enhancedMenu.js",
     "old": "          if (out?.ok) questSel = `s:${sel.id}`;",
     "new": "          questSel = `s:${sel.id}`;",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
     "name": "QS-A-a-reclaim-still-hidden",
-    "file": "src/scenes/questBridge.js",
+    "file": "src/scenes/quest/questBridge.js",
     "old": "        if (r.ok) notebook?.unhideQuest?.(id);\n",
     "new": "",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
     "name": "QS-A-the-button-its-own-ladder",
-    "file": "src/scenes/questBridge.js",
+    "file": "src/scenes/quest/questBridge.js",
     "old": "canAbandon: (id) => machine.shelveRefusal(Number(id), { refuse: refuseRaid }) === null,",
     "new": "canAbandon: (id) => machine.shelveRefusal(Number(id)) === null,",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
     "name": "QSD-drop-refused",
-    "file": "src/systems/itemTransfer.js",
+    "file": "src/systems/item/itemTransfer.js",
     "old": "  if (!trade && fromLocal && quest?.shelvedAt != null && questItem && !questItem.madePermanent) return false;",
     "new": "",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
     "name": "QSD-sold-too",
-    "file": "src/systems/itemTransfer.js",
+    "file": "src/systems/item/itemTransfer.js",
     "old": "  if (!trade && fromLocal && quest?.shelvedAt != null && questItem && !questItem.madePermanent) return false;",
     "new": "  if (fromLocal && quest?.shelvedAt != null && questItem && !questItem.madePermanent) return false;",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
@@ -545,7 +545,7 @@
     "old": "      this.deps.giveItemToPlayer?.(structuredClone(res.daggerfallUnityItem));",
     "new": "",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   },
   {
@@ -554,7 +554,7 @@
     "old": "      if (!res?.daggerfallUnityItem || this.deps.carriesQuestItem?.(res)) continue;",
     "new": "      if (!res?.daggerfallUnityItem) continue;",
     "tests": [
-      "test/questshelf.test.js"
+      "test/systems/quest/questshelf.test.js"
     ]
   }
 ]

@@ -6,7 +6,7 @@
 //
 // Not a DFU member. Ledger A (WB).
 import { registerModSaveData } from './modSaveData.js';
-import { isSigilStone } from './gateSpoils.js';
+import { isSigilStone } from './gate/gateSpoils.js';
 import { createBook } from './books.js';
 import { BURNING_DOORS_ID } from './portBooks.js';
 

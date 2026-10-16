@@ -5,7 +5,7 @@
     "old": "    const t = { rolls, level: terms.lv, gender, luck: ROOM_BASE_LUCK, quarters: ROOM_BASE_QUARTERS, find: ROOM_BASE_FIND };",
     "new": "    const t = { rolls, level: terms.lv, gender, luck: liveStat(playerEntity, 'luck'), quarters: ROOM_BASE_QUARTERS, find: ROOM_BASE_FIND };",
     "tests": [
-      "test/partyloot.test.js"
+      "test/systems/partyloot.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    const t = { rolls, level: terms.lv, gender, luck: ROOM_BASE_LUCK, quarters: ROOM_BASE_QUARTERS, find: ROOM_BASE_FIND };",
     "new": "    const t = { rolls, level: effectiveLevel(playerEntity), gender, luck: ROOM_BASE_LUCK, quarters: ROOM_BASE_QUARTERS, find: ROOM_BASE_FIND };",
     "tests": [
-      "test/partyloot.test.js"
+      "test/systems/partyloot.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "      spawnEnemyLoot(e, f.mobileType, ENEMY_BASICS[f.mobileType], roller, { ...eliteLootOpts(f.src), where: 'dungeon', ...o, rejects });",
     "new": "      spawnEnemyLoot(e, f.mobileType, ENEMY_BASICS[f.mobileType], roller, { ...eliteLootOpts(f.src), where: 'dungeon', ...o, rolls: Math.random, rejects });",
     "tests": [
-      "test/partyloot.test.js"
+      "test/systems/partyloot.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    asTheRoom(() => {\n      if (h.pile) items = roomPileBase(h, terms, rolls, gender);",
     "new": "    ((fn) => fn())(() => {\n      if (h.pile) items = roomPileBase(h, terms, rolls, gender);",
     "tests": [
-      "test/partyloot.test.js"
+      "test/systems/partyloot.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    const { state, changed, answered } = mergeRoomWord(st, w);\n    _roomState.set(canon, state);",
     "new": "    const { state, changed, answered } = mergeRoomWord(null, w);\n    _roomState.set(canon, state);",
     "tests": [
-      "test/partyloot.test.js"
+      "test/systems/partyloot.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "      if (seen.at.has(obj) || isPersonalLoot(obj)) continue;   // the bonus is the player's own - taken and put back at will",
     "new": "      if (seen.at.has(obj)) continue;   // the bonus is the player's own - taken and put back at will",
     "tests": [
-      "test/partyloot.test.js"
+      "test/systems/partyloot.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "    const lv = roomBaseLevel(playerEntity?.level ?? 1, opts.partyLevels?.() ?? []);",
     "new": "    const lv = roomBaseLevel(playerEntity?.level ?? 1, []);",
     "tests": [
-      "test/partyloot.test.js"
+      "test/systems/partyloot.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "      if ((kind === 'loot' || kind === 'corpse') && roomUnborn(key)) return null;   // PARTY-LOOT: a room container with no terms yet names nothing - its list is the room's, not this copy's\n",
     "new": "",
     "tests": [
-      "test/partyloot.test.js"
+      "test/systems/partyloot.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "    f.entity.items.length = 0;   // UNBORN holds nothing: this copy's own roll is no reader's (LOOT11's light, Hunting's body key, the save); the sweep counts its wait from here (mintUnbornRoom)\n",
     "new": "",
     "tests": [
-      "test/partyloot.test.js"
+      "test/systems/partyloot.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "    const key = `${base.name}|${who}`;\n    const was = _roomBonus.get(canon);",
     "new": "    const key = `${base.name}|${who}`;\n    const was = _roomBonus.get(canon);\n    if (who) return { key, pieces: [], composed: false };",
     "tests": [
-      "test/partyloot.test.js"
+      "test/systems/partyloot.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "    if (!b || !b.composed || b.list !== list) return;   // a list a load replaced holds copies, and says nothing of what was taken",
     "new": "    if (b) return;   // a list a load replaced holds copies, and says nothing of what was taken",
     "tests": [
-      "test/partyloot.test.js"
+      "test/systems/partyloot.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "    base.items.forEach((_, i) => st.taken.add(i));\n    st.stored = items;",
     "new": "    st.stored = items;",
     "tests": [
-      "test/partyloot.test.js"
+      "test/systems/partyloot.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "  for (const [i, n] of w.c ?? []) { const was = st.counts.get(i); if (was === undefined || n < was) { st.counts.set(i, n); changed = true; } }",
     "new": "  for (const [i, n] of w.c ?? []) { st.counts.set(i, n); changed = true; }",
     "tests": [
-      "test/partyloot.test.js"
+      "test/systems/partyloot.test.js"
     ]
   },
   {
@@ -122,16 +122,16 @@
     "old": "{ level: effectiveLevel(player), gender: player.gender }, rolls, { itemChanceScale, mobileType });",
     "new": "{ level: effectiveLevel(player), gender: player.gender }, undefined, { itemChanceScale, mobileType });",
     "tests": [
-      "test/partyloot.test.js"
+      "test/systems/partyloot.test.js"
     ]
   },
   {
     "name": "PARTY-LOOT-room-scope-never-raised",
-    "file": "src/systems/onlineLane.js",
+    "file": "src/systems/online/onlineLane.js",
     "old": "  if (_roomRoll > 0) return true;   // PARTY-LOOT: while a room's base rolls, every mod is the room's whole (asTheRoom, below)\n",
     "new": "",
     "tests": [
-      "test/partyloot.test.js"
+      "test/systems/partyloot.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "        const items = onlineRoom() ? [] : rollPileItems();",
     "new": "        const items = rollPileItems();",
     "tests": [
-      "test/partyloot.test.js"
+      "test/systems/partyloot.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "    const give = roomLift(obj, k);\n",
     "new": "    const give = 0;\n",
     "tests": [
-      "test/partyloot.test.js"
+      "test/systems/partyloot.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "      if (g < k) { roomLift(obj, k - g); if (!g) setMidScreenText(ROOM_TAKEN_TEXT); }",
     "new": "      if (false) { roomLift(obj, k - g); if (!g) setMidScreenText(ROOM_TAKEN_TEXT); }",
     "tests": [
-      "test/partyloot.test.js"
+      "test/systems/partyloot.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "    else if (!_roomWon.has(key)) setMidScreenText(ROOM_TAKEN_TEXT);",
     "new": "    else if (false) setMidScreenText(ROOM_TAKEN_TEXT);",
     "tests": [
-      "test/partyloot.test.js"
+      "test/systems/partyloot.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "    if (cl.p < baseLength && !state.taken.has(cl.p)) {",
     "new": "    if (cl.p < baseLength) {",
     "tests": [
-      "test/partyloot.test.js"
+      "test/systems/partyloot.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "    if (on) roomTakeSeat();   // PARTY-LOOT: the claims the last host left unanswered are this seat's to judge now\n",
     "new": "",
     "tests": [
-      "test/partyloot.test.js"
+      "test/systems/partyloot.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "    for (const [canon, st] of [..._roomState]) if (st.claims.size) roomJudge(canon, st, roomClaimOrder);",
     "new": "    for (const [canon, st] of [..._roomState]) if (st.claims.size) roomJudge(canon, st);",
     "tests": [
-      "test/partyloot.test.js"
+      "test/systems/partyloot.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "    return seat == null ? host._foesFrom == null : from === seat;",
     "new": "    return true;",
     "tests": [
-      "test/partyloot.test.js"
+      "test/systems/partyloot.test.js"
     ]
   },
   {
@@ -212,7 +212,7 @@
     "old": "    if (!roomHostSaid(from)) { w.x = []; w.c = []; w.y = []; if (!birth) { w.s = null; w.si = null; } }",
     "new": "    if (!roomHostSaid(from)) { w.x = []; w.c = []; w.y = []; }",
     "tests": [
-      "test/partyloot.test.js"
+      "test/systems/partyloot.test.js"
     ]
   },
   {
@@ -221,7 +221,7 @@
     "old": "    w.q = from == null ? [] : w.q.filter((cl) => claimOf(cl.id, from));",
     "new": "    w.q = from == null ? [] : w.q;",
     "tests": [
-      "test/partyloot.test.js"
+      "test/systems/partyloot.test.js"
     ]
   },
   {
@@ -230,7 +230,7 @@
     "old": "      if (m.claim && !m.lapsed && nowMs - m.at >= ROOM_CLAIM_TIMEOUT_MS) { m.lapsed = true; composeRoomContainer(m.canon); }",
     "new": "      if (false) { m.lapsed = true; composeRoomContainer(m.canon); }",
     "tests": [
-      "test/partyloot.test.js"
+      "test/systems/partyloot.test.js"
     ]
   },
   {
@@ -239,7 +239,7 @@
     "old": "      if (m.claim && !m.lapsed && nowMs - m.at >= ROOM_CLAIM_TIMEOUT_MS) { m.lapsed = true; composeRoomContainer(m.canon); }",
     "new": "      if (m.claim && !m.lapsed && nowMs - m.at >= ROOM_CLAIM_TIMEOUT_MS) { _roomMine.clear(); composeRoomContainer(m.canon); }",
     "tests": [
-      "test/partyloot.test.js"
+      "test/systems/partyloot.test.js"
     ]
   },
   {
@@ -248,7 +248,7 @@
     "old": "    roomClaimTick(_ecvT * 1000);   // PARTY-LOOT: the takes this frame - judged by the host, claimed of it by anyone else\n",
     "new": "",
     "tests": [
-      "test/partyloot.test.js"
+      "test/systems/partyloot.test.js"
     ]
   },
   {
@@ -257,7 +257,7 @@
     "old": "    const left = (state.counts.get(i) ?? (counted ? /** @type {number} */ (full[i]) : 1)) - (places.get(i) ?? 0);",
     "new": "    const left = (state.counts.get(i) ?? (counted ? /** @type {number} */ (full[i]) : 1));",
     "tests": [
-      "test/partyloot.test.js"
+      "test/systems/partyloot.test.js"
     ]
   },
   {
@@ -266,7 +266,7 @@
     "old": "    for (const obj of seen.list) {\n      if (seen.at.has(obj) || isPersonalLoot(obj)) continue;",
     "new": "    for (const obj of []) {\n      if (seen.at.has(obj) || isPersonalLoot(obj)) continue;",
     "tests": [
-      "test/partyloot.test.js"
+      "test/systems/partyloot.test.js"
     ]
   }
 ]

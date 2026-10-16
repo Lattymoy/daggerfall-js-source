@@ -25,7 +25,7 @@
 //      146-of-200 line, under the reticle and over the bars (AUDIT FONT
 //      F11); and, since ENH-NOTICE3 (2026-09-21) moved PopupText's rows
 //      off the top-centre column and into the right-edge notice stack
-//      as TOASTS (ui/enhancedNotice.js), the toasts: at the right edge,
+//      as TOASTS (ui/enhanced/enhancedNotice.js), the toasts: at the right edge,
 //      two models' rows stacking rather than overlapping (AUDIT FONT F1's
 //      claim, kept - townTalk's and dungeonContext's are both alive on
 //      ?world in a dungeon), a TEXT.RSC-length line wrapping whole
@@ -48,7 +48,7 @@ import { CHAT_CSS } from '../src/ui/chatPanel.js';
 import { SOCIAL_CSS } from '../src/ui/socialPanel.js';
 import { PARTY_CSS } from '../src/ui/partyPanel.js';
 import { SOCIAL_MENU_CSS } from '../src/ui/socialMenu.js';
-import { ENHANCED_CSS, ENHANCED_FONTS_URL } from '../src/ui/enhancedStyle.js';
+import { ENHANCED_CSS, ENHANCED_FONTS_URL } from '../src/ui/enhanced/enhancedStyle.js';
 
 const UA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 
@@ -268,7 +268,7 @@ const MEASURE_HUDTEXT = () => {
   const mid = el('div', 'hudmid', 'Interaction is now in talk mode.');
   document.body.append(mid);
   const fallbackBox = mid.getBoundingClientRect();
-  // AUDIT FONT F11: ...at the number ui/enhancedHudText.js writes for
+  // AUDIT FONT F11: ...at the number ui/enhanced/enhancedHudText.js writes for
   // this viewport, which is the CLASSIC label's own line - the floored
   // native fit (Math.floor(min(w/320, h/200))) with the 320x200 panel
   // centred in what is left. The sheet's 73% is the fallback above.

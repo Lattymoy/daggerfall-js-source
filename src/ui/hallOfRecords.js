@@ -16,7 +16,7 @@ import { REGION_NAMES } from '../formats/mapsTables.js';
 
 /** Who the book says wrote it. */
 export const HALL_OF_RECORDS_AUTHOR = 'the Chronicle of the Seats';
-/** The title face's font (ui/enhancedBook.js: 5 is the title cut). */
+/** The title face's font (ui/enhanced/enhancedBook.js: 5 is the title cut). */
 const TITLE_FONT = 5;
 const text = (t) => ({ formatting: TOKEN_TEXT, text: t });
 const nl = () => ({ formatting: RSC.NewLine });

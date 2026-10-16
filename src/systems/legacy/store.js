@@ -243,7 +243,7 @@ function birthOf(b, personId, now) {
 }
 
 /** A played member's newest save: the key whose card names their character id and was written last
- *  (systems/saveSlots.js enumerateSaves' `info`, key -> card). -1 when they have none. */
+ *  (systems/save/saveSlots.js enumerateSaves' `info`, key -> card). -1 when they have none. */
 export function newestSaveOf(info, characterId) {
   let best = -1;
   let bestT = -Infinity;

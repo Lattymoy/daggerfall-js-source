@@ -6,7 +6,7 @@
 // and driver in them. A whole RMB block is game data, which this
 // repository never carries (Port-Doctrine), so the port keeps the EDIT and
 // rebuilds the block from the player's own BLOCKS.BSA at load
-// (formats/worldDataPatch.js, scenes/modWorldData.js) - WD1's law.
+// (formats/worldData/worldDataPatch.js, scenes/modWorldData.js) - WD1's law.
 //
 //   node tools/immersiveTravelPatches.mjs <immersivetravel.dfmod> [arena2] [out dir]
 //
@@ -29,14 +29,14 @@
 //     classic block reads 32 slots (formats/blocksFile.js; Warm Ashes'
 //     patches, diffed against a real BSA, remove the same 30 and 29), and a
 //     scale of 1 on each model where the classic record has none
-//     (formats/worldDataJson.js modelJson). Any other round-trip change to
+//     (formats/worldData/worldDataJson.js modelJson). Any other round-trip change to
 //     the classic records (an automap byte, a rotation written as its
 //     equivalent) it can only find against the classic block - so the
-//     loader's sha256 check, and test/it1_worlddata.test.js with
+//     loader's sha256 check, and test/formats/worldData/it1_worlddata.test.js with
 //     ARENA2_PATH set, are what say whether it rebuilds the author's file;
 //     run this tool again with an ARENA2 to replace it with WD1's.
 //
-// The four files are read out of the shipped bundle (formats/unityBundle.js)
+// The four files are read out of the shipped bundle (formats/unity/unityBundle.js)
 // and parsed as FullSerializer writes them (`\0` is one of its escapes, and
 // WALLAA11 carries one - plain JSON.parse refuses it).
 
@@ -44,9 +44,9 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isMain } from './lib/isMain.mjs';
-import { readUnityBundle } from '../src/formats/unityBundle.js';
+import { readUnityBundle } from '../src/formats/unity/unityBundle.js';
 import { BlocksFile } from '../src/formats/blocksFile.js';
-import { PATCH_FORMAT, rebuildWorldDataPatch } from '../src/formats/worldDataPatch.js';
+import { PATCH_FORMAT, rebuildWorldDataPatch } from '../src/formats/worldData/worldDataPatch.js';
 import { parseFullSerializerJson } from './worldDataPackBuild.mjs';
 import { makePatch, formatPatch, sha256Canonical } from './worldDataPatch.mjs';
 

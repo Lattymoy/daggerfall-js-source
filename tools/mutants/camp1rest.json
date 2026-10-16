@@ -5,7 +5,7 @@
     "old": "      if ((modes?.mode ?? 'exterior') === 'exterior' && !playerEntity.isResting && !travelOptions?.isTravelActive && getPref('wildernessCamps') !== false && amGroupRollOwner(online?.id ?? null, player.feetAt(), peersNear())) {   // CAMP-REST: never while the player is resting or waiting; CAMP-TRAVEL (2026-09-25, Mac: \"it would stop players too often\"): nor while a Travel Options journey runs - the pixels a ride crosses roll no camps",
     "new": "      if ((modes?.mode ?? 'exterior') === 'exterior' && !travelOptions?.isTravelActive && getPref('wildernessCamps') !== false && amGroupRollOwner(online?.id ?? null, player.feetAt(), peersNear())) {   // CAMP-REST: never while the player is resting or waiting; CAMP-TRAVEL (2026-09-25, Mac: \"it would stop players too often\"): nor while a Travel Options journey runs - the pixels a ride crosses roll no camps",
     "tests": [
-      "test/camp1_groups.test.js"
+      "test/systems/camp1_groups.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "      if (!isResting && getPref('wildernessCamps') !== false) {",
     "new": "      if (getPref('wildernessCamps') !== false) {",
     "tests": [
-      "test/camp1_groups.test.js"
+      "test/systems/camp1_groups.test.js"
     ]
   },
   {
@@ -23,8 +23,8 @@
     "old": "runEncounterTick(walkMode && playerSpawned ? player.pos : cam.pos, true); },   // CAMP1-REST: every tick this drives IS a rest",
     "new": "runEncounterTick(walkMode && playerSpawned ? player.pos : cam.pos); },   // CAMP1-REST: every tick this drives IS a rest",
     "tests": [
-      "test/camp1_groups.test.js",
-      "test/restx2_online_rest.test.js"
+      "test/systems/camp1_groups.test.js",
+      "test/systems/rest/restx2_online_rest.test.js"
     ]
   },
   {
@@ -33,8 +33,8 @@
     "old": "runEncounterTick(walkMode ? player.pos : cam.pos, true); },   // CAMP1-REST: every tick this drives IS a rest",
     "new": "runEncounterTick(walkMode ? player.pos : cam.pos); },   // CAMP1-REST: every tick this drives IS a rest",
     "tests": [
-      "test/camp1_groups.test.js",
-      "test/restx2_online_rest.test.js"
+      "test/systems/camp1_groups.test.js",
+      "test/systems/rest/restx2_online_rest.test.js"
     ]
   },
   {
@@ -43,8 +43,8 @@
     "old": "  function runEncounterTick(playerFeet, isResting = false, { spawns = true } = {}) {",
     "new": "  function runEncounterTick(playerFeet, isResting = true, { spawns = true } = {}) {",
     "tests": [
-      "test/camp1_groups.test.js",
-      "test/restx2_online_rest.test.js"
+      "test/systems/camp1_groups.test.js",
+      "test/systems/rest/restx2_online_rest.test.js"
     ]
   },
   {
@@ -53,7 +53,7 @@
     "old": "export const MIN_CAMP_SPAWN_DISTANCE = 100;   // a camp is come across, never landed on",
     "new": "export const MIN_CAMP_SPAWN_DISTANCE = 11;   // a camp is come across, never landed on",
     "tests": [
-      "test/camp1_groups.test.js"
+      "test/systems/camp1_groups.test.js"
     ]
   },
   {
@@ -62,7 +62,7 @@
     "old": "    if (resting && !canSee && (f.ai._distLocal ?? f.ai._dist ?? Infinity) > RESTING_DISTANCE) continue;",
     "new": "    if (resting && !canSee && !f.ai.wouldBeSpawned && (f.ai._distLocal ?? f.ai._dist ?? Infinity) > RESTING_DISTANCE) continue;",
     "tests": [
-      "test/camp1_groups.test.js"
+      "test/systems/camp1_groups.test.js"
     ]
   }
 ]

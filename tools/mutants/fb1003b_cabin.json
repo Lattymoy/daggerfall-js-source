@@ -5,7 +5,7 @@
     "old": "    const col = modes?.sailingCabin ? collider : csaModeCollider();",
     "new": "    const col = csaModeCollider();",
     "tests": [
-      "test/fb1003b_cabinhull.test.js"
+      "test/systems/comeSailAway/fb1003b_cabinhull.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "const peers = (modes?.mode ?? 'exterior') === 'exterior' || modes?.sailingCabin ? csa.peerBoats : [];",
     "new": "const peers = (modes?.mode ?? 'exterior') === 'exterior' ? csa.peerBoats : [];",
     "tests": [
-      "test/fb1003b_cabinhull.test.js"
+      "test/systems/comeSailAway/fb1003b_cabinhull.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    if (!csaRuntime || modes?.sailingCabin) return null;   // CABIN-HULL",
     "new": "    if (!csaRuntime) return null;   // CABIN-HULL",
     "tests": [
-      "test/fb1003b_cabinhull.test.js"
+      "test/systems/comeSailAway/fb1003b_cabinhull.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    if (!csaOn() || modes?.sailingCabin) return null;   // CABIN-HULL: nor another's",
     "new": "    if (!csaOn()) return null;   // CABIN-HULL: nor another's",
     "tests": [
-      "test/fb1003b_cabinhull.test.js"
+      "test/systems/comeSailAway/fb1003b_cabinhull.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    if (modes?.sailingCabin) return;   /* CABIN-HULL",
     "new": "    if (false) return;   /* CABIN-HULL",
     "tests": [
-      "test/fb1003b_cabinhull.test.js"
+      "test/systems/comeSailAway/fb1003b_cabinhull.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "    drawModeMeshes: () => { if (csaOn() && !modes?.sailingCabin) {",
     "new": "    drawModeMeshes: () => { if (csaOn()) {",
     "tests": [
-      "test/fb1003b_cabinhull.test.js"
+      "test/systems/comeSailAway/fb1003b_cabinhull.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "    csaDrawParticlesBlended: () => { if (csaOn() && !modes?.sailingCabin) csaDrawParticlesBlended(); }",
     "new": "    csaDrawParticlesBlended: () => { if (csaOn()) csaDrawParticlesBlended(); }",
     "tests": [
-      "test/fb1003b_cabinhull.test.js"
+      "test/systems/comeSailAway/fb1003b_cabinhull.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "...(csaOn() && !modes?.sailingCabin ? csa.batches() : [])",
     "new": "...(csaOn() ? csa.batches() : [])",
     "tests": [
-      "test/fb1003b_cabinhull.test.js"
+      "test/systems/comeSailAway/fb1003b_cabinhull.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "    modeLights: () => (csaOn() && !modes?.sailingCabin ? csa.lights(cam.pos) : []),",
     "new": "    modeLights: () => (csaOn() ? csa.lights(cam.pos) : []),",
     "tests": [
-      "test/fb1003b_cabinhull.test.js"
+      "test/systems/comeSailAway/fb1003b_cabinhull.test.js"
     ]
   }
 ]

@@ -27,7 +27,7 @@ departs from DFU's one hand. The ledger row is Port-Ledger A (TWO-HANDS).
   `characters/weaponStates.js`), CalculateSwingModifiers gives a StrikeDown -10 to hit, CalculateAttackDamage rolls the
   blow off the used hand's weapon and skill, and CalculateHandToHandAttackDamage reads the skill, never a hand.
 
-## The law - `src/combat/handsLaw.js` (pure, @ts-check)
+## The law - `src/combat/twoHands/handsLaw.js` (pure, @ts-check)
 
 One law, read by both lanes and by the swing: which way the hands are held, which hand strikes, the mirror, the
 balance, the guard and the run. It reads no setting, no clock and no equip table; the callers hand it each hand's item
@@ -173,9 +173,9 @@ with a fever's +40) and `OFF_HAND_BLOW`. A technique (TECH1) is always the lead 
 H re-applies as ApplyWeapon does (AUDIT 2, L4): a transformed lycanthrope's claws stay the weapon in use, one hand, and
 DFU's line is said, not the fists' lead.
 
-## The sprite lane - `src/combat/twoHands.js`
+## The sprite lane - `src/combat/twoHands/twoHands.js`
 
-Wired by `combat/weaponRig.js`, the one surface all four hosts mount (no host carries a line of it, HOST-SPLIT).
+Wired by `combat/weapon/weaponRig.js`, the one surface all four hosts mount (no host carries a line of it, HOST-SPLIT).
 
 - **The machine is one.** The rig's PlayerWeapon runs DFU's one machine; each hand sees a VIEW of it (`view(hand)`):
   its picture's state (above) while the strike is that hand's, the idle otherwise.
@@ -278,7 +278,7 @@ Wired by `combat/weaponRig.js`, the one surface all four hosts mount (no host ca
   hand's, untouched. The gate gains `runHands` and `armsRun`: an empty-handed run is often a sheathed one, and the
   running hands are not a weapon either (as CLIMB-HANDS' `armsClimb`).
 
-## The Morrowind lane - `src/combat/mirrorRig.js`, `src/combat/fpArm.js`
+## The Morrowind lane - `src/combat/twoHands/mirrorRig.js`, `src/combat/fpArm.js`
 
 Tackled after the sprite lane, as asked. Morrowind has one weapon hand: its one-handed groups swing the right arm, its
 hand-to-hand groups throw each punch with the hand the clip was made for, and there is no clip for a left-hand blow or a
@@ -369,7 +369,7 @@ second weapon. So the second hand is the sprite lane's idea on a skeleton: THE L
   an armour change had dropped the left blade until the archives reopened (23 frames at a 600 ms reopen; 0 now). The
   arm's hands go through ONE door (AUDIT 2, L4:
   `weaponRig.js` `handArm` - the right hand's item, the left's, the mode and the lead), asked by the frame and by the
-  enhanced pack (`ui/enhancedInventory.js`, handed `handArm` by each host on the line that hands it `usingRightHand`),
+  enhanced pack (`ui/enhanced/enhancedInventory.js`, handed `handArm` by each host on the line that hands it `usingRightHand`),
   whose window blocks the frame while the table changes under it: the pack had kept its own one-hand read, so a
   left-led pair held the left weapon in both hands while the window was up and a pair made in it showed only on close.
 - **The running hands** (`RUN_3D`): the same stride, snap and weight as the sprite lane's, the stride FOLLOWING the
@@ -430,7 +430,7 @@ one, never one hand's glow on both:
 ## Not carried
 
 - **Peers on the wire**: another player's body still holds the one hand the wire names (`shown.lh`,
-  `net/peerBodies.js`), not the pair.
+  `net/peer/peerBodies.js`), not the pair.
 - **The off weapon's holster**: sheathed, the left hand's weapon is hidden, not hung on the body as Weapon Sheathing
   hangs the one weapon.
 - **The Beholder's sprite body** (EOTB): third person on the sprite body shows one weapon.
@@ -445,12 +445,12 @@ one, never one hand's glow on both:
 
 ## Pins
 
-- `test/twohands.test.js` (23 - AUDIT 2's two: the off hand's blow as 0.8 of a blow in all it counts, and the sprite lane audited again): the law and the painted arm, the balance MEASURED through the machine at two frame
+- `test/combat/twohands.test.js` (23 - AUDIT 2's two: the off hand's blow as 0.8 of a blow in all it counts, and the sprite lane audited again): the law and the painted arm, the balance MEASURED through the machine at two frame
   rates, PlayerWeapon through the real formula and the override seam (the flurry's frame, the schedule's ticks, H's
   exchange, the resting weapon, the off strike), the off hand's blow in the formula and between players, the rig on a
   synthetic CIF - the fists, the guard, the widget's two clones, the pair, the running hands (the stroke, the bob's
   clock, what takes a hand, the mods), the branch by source, a left-handed player.
-- `test/twohands_mw.test.js` (32 - AUDIT 2's six for L3; the field reports' three: the stride's other half, a pair
+- `test/combat/twohands_mw.test.js` (32 - AUDIT 2's six for L3; the field reports' three: the stride's other half, a pair
   walking in third person swinging its arms against each other on a female body's two sources, the first-person pair
   mirrored across an eye moved off the chest): the mirror rig on the retail biped (counterparts, the plan, the law in each bone's
   frame - every joint on its parent, a twisted chest, the carry per bone, the made Weapon Bone Left, which fist a clip

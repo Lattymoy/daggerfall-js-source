@@ -5,7 +5,7 @@
     "old": "|| !!(home.hall && home.member) || rentDaysLeft(home.tenant, nowS) > 0);",
     "new": "|| !!(home.hall && home.member));",
     "tests": [
-      "test/fb1001_rent.test.js"
+      "test/systems/fb1001_rent.test.js"
     ],
     "note": "THE SEATS ARC'S MERGE (PIN MOVED): re-aimed by content - GUILD1d's hall member joined homeBedIsMine's rule (AUDIT GUILD1d A1's online bed, folded into RENT-REST's)."
   },
@@ -15,26 +15,26 @@
     "old": "|| !!(home.hall && home.member) || rentDaysLeft(home.tenant, nowS) > 0);",
     "new": "|| !!(home.hall && home.member) || rentDaysLeft(home.tenant, nowS) >= 0);",
     "tests": [
-      "test/fb1001_rent.test.js"
+      "test/systems/fb1001_rent.test.js"
     ],
     "note": "THE SEATS ARC'S MERGE (PIN MOVED): re-aimed by content - GUILD1d's hall member joined homeBedIsMine's rule (AUDIT GUILD1d A1's online bed, folded into RENT-REST's)."
   },
   {
     "name": "RENT-REST-the-bed-outside-the-permanent-scene",
-    "file": "src/systems/restSession.js",
+    "file": "src/systems/rest/restSession.js",
     "old": "permanentScene: permanentScene || homeBed,",
     "new": "permanentScene,",
     "tests": [
-      "test/fb1001_rent.test.js"
+      "test/systems/fb1001_rent.test.js"
     ]
   },
   {
     "name": "RENT-REST-the-bed-no-house",
-    "file": "src/systems/restSession.js",
+    "file": "src/systems/rest/restSession.js",
     "old": "houseOwned: houseOwned || homeBed,",
     "new": "houseOwned,",
     "tests": [
-      "test/fb1001_rent.test.js"
+      "test/systems/fb1001_rent.test.js"
     ]
   },
   {
@@ -43,10 +43,10 @@
     "old": "homeBed: homeBedIsMine(interiorHome, Math.floor(Date.now() / 1000)) || !!interiorSeatHall?.member,   // HOME1",
     "new": "homeBed: false,   // HOME1",
     "tests": [
-      "test/fb1001_rent.test.js",
-      "test/restlodging.test.js",
-      "test/homerent.test.js",
-      "test/houses.test.js"
+      "test/systems/fb1001_rent.test.js",
+      "test/scenes/restlodging.test.js",
+      "test/server/homerent.test.js",
+      "test/systems/houses.test.js"
     ]
   },
   {
@@ -55,9 +55,9 @@
     "old": "houseOwned: !interiorHome && houseOwnedAt(b, b?.buildingKey ?? 0), homeBed:",
     "new": "houseOwned: houseOwnedAt(b, b?.buildingKey ?? 0), homeBed:",
     "tests": [
-      "test/fb1001_rent.test.js",
-      "test/restlodging.test.js",
-      "test/houses.test.js"
+      "test/systems/fb1001_rent.test.js",
+      "test/scenes/restlodging.test.js",
+      "test/systems/houses.test.js"
     ]
   },
   {
@@ -66,7 +66,7 @@
     "old": "rentUntil(nowS, room?.yours ? room.until : 0, d) != null);",
     "new": "rentUntil(nowS, 0, d) != null);",
     "tests": [
-      "test/fb1001_rent.test.js"
+      "test/systems/fb1001_rent.test.js"
     ]
   },
   {
@@ -75,7 +75,7 @@
     "old": "rentUntil(nowS, room?.yours ? room.until : 0, d) != null);",
     "new": "rentUntil(nowS, 0, d) != null || d > 0);",
     "tests": [
-      "test/fb1001_rent.test.js"
+      "test/systems/fb1001_rent.test.js"
     ]
   },
   {
@@ -84,7 +84,7 @@
     "old": "r.yours && !r.listed);",
     "new": "r.yours && r.listed);",
     "tests": [
-      "test/fb1001_rent.test.js"
+      "test/systems/fb1001_rent.test.js"
     ]
   },
   {
@@ -93,7 +93,7 @@
     "old": "if (days.length) openHomeRentDays(bd, r, days);",
     "new": "if (days.length) openHomeRentDays(bd, r, RENT_DAYS);",
     "tests": [
-      "test/fb1001_rent.test.js"
+      "test/systems/fb1001_rent.test.js"
     ]
   },
   {
@@ -102,7 +102,7 @@
     "old": "if (days.length) openHomeRentDays(bd, r, days); else townTalk?.say?.(RENT_FULL_LINE); },",
     "new": "if (days.length) openHomeRentDays(bd, r, days); },",
     "tests": [
-      "test/fb1001_rent.test.js"
+      "test/systems/fb1001_rent.test.js"
     ]
   },
   {
@@ -111,7 +111,7 @@
     "old": "if (!list.length) { townTalk?.say?.(rentNoneLine(got.rooms, nowS)); return; }",
     "new": "if (!list.length) { townTalk?.say?.(RENT_NONE_FREE); return; }",
     "tests": [
-      "test/fb1001_rent.test.js"
+      "test/systems/fb1001_rent.test.js"
     ]
   },
   {
@@ -120,61 +120,61 @@
     "old": "nowS = got.now || Math.floor(Date.now() / 1000);",
     "new": "nowS = Math.floor(Date.now() / 1000);",
     "tests": [
-      "test/fb1001_rent.test.js"
+      "test/systems/fb1001_rent.test.js"
     ]
   },
   {
     "name": "RENT-FRESH-read-once-a-visit",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "    else if (!rentState.busy && (!panel?.isOpen() || (panel.mode?.() === 'rent' && now() - rentState.at >= RENT_VIEW_FRESH_MS))) refreshRent(door);",
     "new": "",
     "tests": [
-      "test/fb1001_rent.test.js"
+      "test/systems/fb1001_rent.test.js"
     ]
   },
   {
     "name": "RENT-FRESH-the-opening-unread",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "(!panel?.isOpen() || (panel.mode?.() === 'rent' && now()",
     "new": "((panel.mode?.() === 'rent' && now()",
     "tests": [
-      "test/fb1001_rent.test.js"
+      "test/systems/fb1001_rent.test.js"
     ]
   },
   {
     "name": "RENT-FRESH-the-view-never-read-again",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "(panel.mode?.() === 'rent' && now() - rentState.at >= RENT_VIEW_FRESH_MS)",
     "new": "false",
     "tests": [
-      "test/fb1001_rent.test.js"
+      "test/systems/fb1001_rent.test.js"
     ]
   },
   {
     "name": "RENT-FRESH-read-every-frame",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "now() - rentState.at >= RENT_VIEW_FRESH_MS",
     "new": "now() - rentState.at >= 0",
     "tests": [
-      "test/fb1001_rent.test.js"
+      "test/systems/fb1001_rent.test.js"
     ]
   },
   {
     "name": "RENT-FRESH-the-ask-unstamped",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "    rentState.at = now();\n",
     "new": "",
     "tests": [
-      "test/fb1001_rent.test.js"
+      "test/systems/fb1001_rent.test.js"
     ]
   },
   {
     "name": "RENT-FRESH-an-older-read-stands",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "if (rentState.visit !== visit || ask !== rentState.asked || !res?.ok) return false;",
     "new": "if (rentState.visit !== visit || !res?.ok) return false;",
     "tests": [
-      "test/fb1001_rent.test.js"
+      "test/systems/fb1001_rent.test.js"
     ]
   },
   {
@@ -183,25 +183,25 @@
     "old": "${view.rent.busy ? 1 : 0}${view.rent.loaded ? 1 : 0}${view.rent.finding ? 1 : 0}",
     "new": "${view.rent.busy ? 1 : 0}${view.rent.finding ? 1 : 0}",
     "tests": [
-      "test/fb1001_rent.test.js"
+      "test/systems/fb1001_rent.test.js"
     ]
   },
   {
     "name": "RENT-ORPHANS-the-one-room-house-lists-none",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "      rows: found ? rentRoomsView(list ?? [], rentState.list ?? []",
     "new": "      rows: list ? rentRoomsView(list ?? [], rentState.list ?? []",
     "tests": [
-      "test/fb1001_rent.test.js"
+      "test/systems/fb1001_rent.test.js"
     ]
   },
   {
     "name": "RENT-ORPHANS-one-room-matched-as-a-room",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "    const list = found && found.length > 1 ? found : null;",
     "new": "    const list = found;",
     "tests": [
-      "test/fb1001_rent.test.js"
+      "test/systems/fb1001_rent.test.js"
     ]
   },
   {
@@ -210,7 +210,7 @@
     "old": "view.rent.finding ? DECOR_RENT_FINDING : DECOR_RENT_ONE_ROOM",
     "new": "view.rent.rooms ? DECOR_RENT_FINDING : DECOR_RENT_ONE_ROOM",
     "tests": [
-      "test/fb1001_rent.test.js"
+      "test/systems/fb1001_rent.test.js"
     ]
   },
   {
@@ -219,7 +219,7 @@
     "old": "${view.rent.loaded ? 1 : 0}${view.rent.finding ? 1 : 0}",
     "new": "${view.rent.loaded ? 1 : 0}",
     "tests": [
-      "test/fb1001_rent.test.js"
+      "test/systems/fb1001_rent.test.js"
     ],
     "equivalent": true,
     "why": "Belt-and-braces: the doorway finder runs on the rooms once found, and its count (view.doorways, in the same signature) moves from null at or after the frame `finding` flips, so the rooms view redraws either way; `finding` is signed so the rent's empty line does not lean on the doors' finder."
@@ -230,7 +230,7 @@
     "old": "const number = o ? o.room : rentRoomOk(f.id) && !held.has(f.id) ? f.id : next;",
     "new": "const number = o ? o.room : next;",
     "tests": [
-      "test/fb1001_rent.test.js"
+      "test/systems/fb1001_rent.test.js"
     ]
   },
   {
@@ -239,7 +239,7 @@
     "old": "rentRoomOk(f.id) && !held.has(f.id) ? f.id : next;",
     "new": "rentRoomOk(f.id) ? f.id : next;",
     "tests": [
-      "test/fb1001_rent.test.js"
+      "test/systems/fb1001_rent.test.js"
     ]
   },
   {
@@ -248,17 +248,17 @@
     "old": "rentRoomOk(f.id) && !held.has(f.id) ? f.id : next;",
     "new": "!held.has(f.id) ? f.id : next;",
     "tests": [
-      "test/fb1001_rent.test.js"
+      "test/systems/fb1001_rent.test.js"
     ]
   },
   {
     "name": "HOMES-FORCE-answered-by-the-flight",
-    "file": "src/systems/onlineHomes.js",
+    "file": "src/systems/online/onlineHomes.js",
     "old": "    if (flying) return !force || (forcedFlight.has(id) && askedAt.get(id) === writesTo(id)) ? flying : afterFlight(id, flying);",
     "new": "    if (flying) return flying;",
     "tests": [
-      "test/fb1001_look.test.js",
-      "test/fb1001_rent.test.js"
+      "test/net/fb1001_look.test.js",
+      "test/systems/fb1001_rent.test.js"
     ]
   }
 ]

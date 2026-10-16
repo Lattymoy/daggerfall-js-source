@@ -3,7 +3,7 @@
 // Online the arrows are Carpentry's (net/recipeLaw.js, twenty at a workbench - Professions-Arc.md 9.3); offline nothing
 // made one, and a bow went quiet when the shops ran dry. Now the player whittles them from wood they carry, anywhere,
 // online or off: USE (the inventory's Use mode - DaggerfallInventoryWindow.UseItem asks a registered handler first,
-// ItemHelper.RegisterItemUseHandler, systems/itemTemplates.js) a piece of wood, and it becomes ITS OWN WEIGHT IN ARROWS -
+// ItemHelper.RegisterItemUseHandler, systems/item/itemTemplates.js) a piece of wood, and it becomes ITS OWN WEIGHT IN ARROWS -
 // Daggerfall's Twigs (0.5 kg, two), its Pine Branch (1 kg, four), Foraging's Wood Bundle (2.5 kg, ten) - the weights the
 // templates carry, over the Arrow's 0.25 kg, never a table of counts. One piece a Use, as a potion is one bottle; the
 // arrows are CreateWeapon's (combat/enemyEquipment.js - the shelf's, the corpse's, the workbench's), so they join the
@@ -11,10 +11,10 @@
 //
 // A departure from DFU, which crafts no arrow. Not a quest's piece: a watched item keeps the ladder's own answer.
 
-import { registerItemUseHandler, templateByIndex, ITEM_TEMPLATES } from './itemTemplates.js';
+import { registerItemUseHandler, templateByIndex, ITEM_TEMPLATES } from './item/itemTemplates.js';
 import { addItem, ARROW_TEMPLATE } from './inventory.js';
 import { createWeapon } from '../combat/enemyEquipment.js';
-import { FT } from './foragingLaw.js';   // Foraging's Wood Bundle (1604) - its template is registered when the mod is on
+import { FT } from './foraging/foragingLaw.js';   // Foraging's Wood Bundle (1604) - its template is registered when the mod is on
 
 /** The wood an arrow is whittled from - Twigs (PlantIngredients1/2 8), Pine Branch (14), Foraging's Wood Bundle. */
 export const FLETCH_TEMPLATES = Object.freeze([8, 14, FT.WoodBundle]);

@@ -3,7 +3,7 @@
 //
 // A pin can say an item resolves to an archive and a record; only a layout engine can say the picture in the slot reads
 // as a gun. So the REAL pack (ui/inventoryDoor.js createInventoryWindow, the enhanced skin) and the REAL hotbar
-// (ui/enhancedHotbar.js) are drawn here over the real sheets with a Dwarven Thunderlock worn, a stack of Dwemer Pellets
+// (ui/enhanced/enhancedHotbar.js) are drawn here over the real sheets with a Dwarven Thunderlock worn, a stack of Dwemer Pellets
 // carried and (THE GILDED RUNG) the Hourlock beside them, and each slot's picture is read back: which art it drew
 // (the item's archive and record, through the one door every slot asks - itemTemplates.js inventoryItemImage), its
 // natural size, and how much of the slot it fills. Every state is photographed.
@@ -27,11 +27,11 @@ const PAGE = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewp
 <style>html,body{margin:0;height:100%;overflow:hidden;background:repeating-linear-gradient(45deg,#3b4a3a 0 14px,#324031 14px 28px)}#dock{position:fixed;left:0;right:0;bottom:12px;display:flex;justify-content:center}</style></head><body><div id="dock"></div>
 <script type="module">
 import { createThunderlock, createPellets, installThunderlockIcons } from '/src/systems/thunderlock.js';
-import { inventoryItemImage } from '/src/systems/itemTemplates.js';
+import { inventoryItemImage } from '/src/systems/item/itemTemplates.js';
 import { equipItem } from '/src/systems/equip.js';
 import { setPref } from '/src/systems/uiPrefs.js';
 import { createInventoryWindow } from '/src/ui/inventoryDoor.js';
-import { mountHotbarDock, drawEnhancedHotbar, hotbarDropItem, HOTBAR_PREF } from '/src/ui/enhancedHotbar.js';
+import { mountHotbarDock, drawEnhancedHotbar, hotbarDropItem, HOTBAR_PREF } from '/src/ui/enhanced/enhancedHotbar.js';
 let gilded = null;
 try { gilded = await import(/* @vite-ignore */ ['', 'src', 'systems', 'gilded.js'].join('/')); } catch { gilded = null; }   // THE GILDED RUNG, where it exists
 

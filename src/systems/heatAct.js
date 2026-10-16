@@ -1,7 +1,7 @@
 // @ts-check
 // PROF3 (2026-09-28, Mac: "Lets keep moving") - THE HEAT, Smithing's act at the anvil (bible/06-Systems/Professions-Arc.md
 // 9.4, 24): the ingot's glow rises and falls; strike three times while it is in the band. Pure - a machine the anvil's
-// page ticks and strikes (ui/profPages.js), as the Pick-Axe's glint is the mine host's (systems/mineAct.js).
+// page ticks and strikes (ui/professions/profPages.js), as the Pick-Axe's glint is the mine host's (systems/mineAct.js).
 //
 // The act is the client's, so it may be lied about: its report moves the service's roll by one quality step at most
 // (5.1's honest bound - the service reads `clean` and nothing else). Gentle acts (the setting) strike plain: every

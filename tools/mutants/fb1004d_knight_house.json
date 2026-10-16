@@ -5,7 +5,7 @@
     "old": "if (!slot || typeof slot !== 'object' || slot.crossed || !homeBuildingKeyOk(buildingKey)",
     "new": "if (!slot || typeof slot !== 'object' || !homeBuildingKeyOk(buildingKey)",
     "tests": [
-      "test/fb1004d_knight_house.test.js"
+      "test/systems/fb1004d_knight_house.test.js"
     ],
     "note": "A deed customs carried in read as one the realm gave: an offline house held from everyone online (HOME1 keeps it offline only)."
   },
@@ -15,7 +15,7 @@
     "old": "|| slot.buildingKey !== buildingKey) return null;",
     "new": ") return null;",
     "tests": [
-      "test/fb1004d_knight_house.test.js"
+      "test/systems/fb1004d_knight_house.test.js"
     ],
     "note": "Any building of the town read as the deed's: every house next door unsellable to the knight, and held."
   },
@@ -25,7 +25,7 @@
     "old": "(Number(slot.mapId) >>> 0) === id ? slot : null",
     "new": "Number(slot.mapId) === id ? slot : null",
     "tests": [
-      "test/fb1004d_knight_house.test.js"
+      "test/systems/fb1004d_knight_house.test.js"
     ],
     "note": "The save's signed map id (MAPS.BSA reads it signed) compared to the door's unsigned one: a town past 2^31 never matches."
   },
@@ -35,57 +35,57 @@
     "old": "return homeMapIdOk(id) && (Number(slot.mapId) >>> 0) === id ? slot : null;",
     "new": "return homeMapIdOk(id) ? slot : null;",
     "tests": [
-      "test/fb1004d_knight_house.test.js"
+      "test/systems/fb1004d_knight_house.test.js"
     ],
     "note": "The same key in another town read as the deed's building."
   },
   {
     "name": "KNIGHT-HOUSE-sleeping-deed-counted",
-    "file": "src/systems/onlineHomes.js",
+    "file": "src/systems/online/onlineHomes.js",
     "old": "return !!slot && deedStands(slot);",
     "new": "return !!slot;",
     "tests": [
-      "test/fb1004d_knight_house.test.js"
+      "test/systems/fb1004d_knight_house.test.js"
     ],
     "note": "A deed asleep in another layout (WD3 H1) names another building: that one kept from its buyers."
   },
   {
     "name": "KNIGHT-HOUSE-own-deed-an-online-home",
-    "file": "src/systems/onlineHomes.js",
+    "file": "src/systems/online/onlineHomes.js",
     "old": "    if (own && row.deed) return null;\n",
     "new": "",
     "tests": [
-      "test/fb1004d_knight_house.test.js"
+      "test/systems/fb1004d_knight_house.test.js"
     ],
     "note": "A read made before the character was known names the knight's own deed row: the door took it for an online home (another scene, its things gone from view)."
   },
   {
     "name": "KNIGHT-HOUSE-client-blind-to-deed",
-    "file": "src/systems/onlineHomes.js",
+    "file": "src/systems/online/onlineHomes.js",
     "old": "deed: h.deed === true,",
     "new": "deed: false,",
     "tests": [
-      "test/fb1004d_knight_house.test.js"
+      "test/systems/fb1004d_knight_house.test.js"
     ],
     "note": "The registry drops the service's word: the own deed row read as an online home."
   },
   {
     "name": "KNIGHT-HOUSE-no-deed-listed",
-    "file": "src/systems/onlineHomes.js",
+    "file": "src/systems/online/onlineHomes.js",
     "old": "? [{ region, mapId, buildingKey: slot.buildingKey }] : [];",
     "new": "? [] : [];",
     "tests": [
-      "test/fb1004d_knight_house.test.js"
+      "test/systems/fb1004d_knight_house.test.js"
     ],
     "note": "The boot holds nothing: a knight given a house before the hold existed stays exposed."
   },
   {
     "name": "KNIGHT-HOUSE-hold-repeat-unsaid",
-    "file": "src/systems/onlineHomes.js",
+    "file": "src/systems/online/onlineHomes.js",
     "old": "if (r?.ok) return { ok: true, repeat: r.data?.repeat === true };",
     "new": "if (r?.ok) return { ok: true, repeat: false };",
     "tests": [
-      "test/fb1004d_knight_house.test.js"
+      "test/systems/fb1004d_knight_house.test.js"
     ],
     "note": "The registry hides the service's repeat."
   },
@@ -95,7 +95,7 @@
     "old": "post('/v1/homes/deed', ",
     "new": "post('/v1/homes/deeds', ",
     "tests": [
-      "test/fb1004d_knight_house.test.js"
+      "test/systems/fb1004d_knight_house.test.js"
     ],
     "note": "The hold asks a route the service does not have."
   },
@@ -105,7 +105,7 @@
     "old": "post('/v1/homes/release', { mapId, buildingKey, deed: true })",
     "new": "post('/v1/homes/release', { mapId, buildingKey })",
     "tests": [
-      "test/fb1004d_knight_house.test.js"
+      "test/systems/fb1004d_knight_house.test.js"
     ],
     "note": "The deed's release asks the home's sale, which refuses it: the bank's sale of the deed left the building held from every buyer."
   },
@@ -115,7 +115,7 @@
     "old": "    if (owned?.(b)) continue;\n",
     "new": "",
     "tests": [
-      "test/fb1004d_knight_house.test.js"
+      "test/systems/fb1004d_knight_house.test.js"
     ],
     "note": "The market lists a building someone owns: the Seneschal hands on another knight's house or a player's home."
   },
@@ -125,7 +125,7 @@
     "old": "      owned: host.onlineHomes ? (bs) => !!host.onlineHomes.homeAt(dir.mapId, bs.buildingKey) : null,\n",
     "new": "",
     "tests": [
-      "test/fb1004d_knight_house.test.js"
+      "test/systems/fb1004d_knight_house.test.js"
     ],
     "note": "The host never says who owns what: the law reads nothing."
   },
@@ -135,7 +135,7 @@
     "old": "  if (!deed || !homeLayoutsMatch(deed.layout ?? null, layout ?? null)) return { error: 'no-deed' };\n",
     "new": "",
     "tests": [
-      "test/fb1004d_knight_house.test.js"
+      "test/systems/fb1004d_knight_house.test.js"
     ],
     "note": "The hold trusts the client's word: any building held free, uncapped."
   },
@@ -145,7 +145,7 @@
     "old": "if (!deed || !homeLayoutsMatch(deed.layout ?? null, layout ?? null))",
     "new": "if (!deed)",
     "tests": [
-      "test/fb1004d_knight_house.test.js"
+      "test/systems/fb1004d_knight_house.test.js"
     ],
     "note": "A deed given in one layout held in another: its key names a stranger's building there."
   },
@@ -155,7 +155,7 @@
     "old": "  await deedStatement(db, player, { mapId, buildingKey, region, character, layout: layout ?? null }, nowS).run();\n",
     "new": "",
     "tests": [
-      "test/fb1004d_knight_house.test.js"
+      "test/systems/fb1004d_knight_house.test.js"
     ],
     "note": "The hold answers and writes nothing: the building stays claimable."
   },
@@ -165,7 +165,7 @@
     "old": "SELECT ?, ?, ?, ?, ?, ?, ?, 0, ?, 0, ${TOWN_LAYOUT_SQL}, 1",
     "new": "SELECT ?, ?, ?, ?, ?, ?, ?, 0, ?, 0, ${TOWN_LAYOUT_SQL}, 0",
     "tests": [
-      "test/fb1004d_knight_house.test.js"
+      "test/systems/fb1004d_knight_house.test.js"
     ],
     "note": "The hold written as a home bought: counted by the cap, listed to its knight as an online home."
   },
@@ -175,7 +175,7 @@
     "old": " AND deed = 0) < ?",
     "new": ") < ?",
     "tests": [
-      "test/fb1004d_knight_house.test.js"
+      "test/systems/fb1004d_knight_house.test.js"
     ],
     "note": "The deed costs one of the three homes a character may buy."
   },
@@ -185,7 +185,7 @@
     "old": "homes: results.filter((h) => !(h.deed === 1 && h.player === player.id && h.char_id === me)).map((h) => {",
     "new": "homes: results.map((h) => {",
     "tests": [
-      "test/fb1004d_knight_house.test.js"
+      "test/systems/fb1004d_knight_house.test.js"
     ],
     "note": "The knight's own answer lists the deed: an older build takes it for an online home and keeps its things under another scene."
   },
@@ -195,7 +195,7 @@
     "old": "        ...(h.deed === 1 ? { deed: true } : {}),   // FIELD BUGS 2026-10-04d KNIGHT-HOUSE: a deed held, never bought\n",
     "new": "",
     "tests": [
-      "test/fb1004d_knight_house.test.js"
+      "test/systems/fb1004d_knight_house.test.js"
     ],
     "note": "The town's answer never says a row is a deed: the client cannot know its own."
   },
@@ -205,7 +205,7 @@
     "old": "AND player = ? AND deed = 1').bind(mapId, buildingKey, player.id).run();",
     "new": "AND player = ?').bind(mapId, buildingKey, player.id).run();",
     "tests": [
-      "test/fb1004d_knight_house.test.js"
+      "test/systems/fb1004d_knight_house.test.js"
     ],
     "note": "A deed's release takes a home bought at a door, for nothing."
   },
@@ -215,7 +215,7 @@
     "old": "  if (deed === true) {\n",
     "new": "  if (false) {\n",
     "tests": [
-      "test/fb1004d_knight_house.test.js"
+      "test/systems/fb1004d_knight_house.test.js"
     ],
     "note": "The deed's release reaches the home's sale, which refuses a row no record paid for."
   },
@@ -225,7 +225,7 @@
     "old": "  if (await overRate({ db, nowS }, `home:${player.id}`, HOME_CLAIMS_MAX, HOME_CLAIMS_WINDOW_S)) return { error: 'home-rate' };\n  // THE RECORD HOLDS IT",
     "new": "  // THE RECORD HOLDS IT",
     "tests": [
-      "test/fb1004d_knight_house.test.js"
+      "test/systems/fb1004d_knight_house.test.js"
     ],
     "note": "Holds count against no hour: a record read from R2 at every request, without end."
   },
@@ -235,7 +235,7 @@
     "old": "  // a claim's order (AUDIT WD3 B8): another layout of the town refused before the hour counts it; the record read after it\n  const refused = await townLayoutRefusal(db, mapId, layout ?? null);\n  if (refused) return refused;\n",
     "new": "",
     "tests": [
-      "test/fb1004d_knight_house.test.js"
+      "test/systems/fb1004d_knight_house.test.js"
     ],
     "note": "A hold in another layout of the town counted against the hour (AUDIT WD3 B8's order)."
   },
@@ -245,7 +245,7 @@
     "old": "  if (homeInArenaCell(mapId, buildingKey)) return { error: 'home-arena' };\n  if (typeof character",
     "new": "  if (typeof character",
     "tests": [
-      "test/fb1004d_knight_house.test.js"
+      "test/systems/fb1004d_knight_house.test.js"
     ],
     "note": "A key of the arena's cell (no building since ARENA1) held."
   },
@@ -255,7 +255,7 @@
     "old": "        if (path === '/v1/homes/deed') {\n",
     "new": "        if (false) {\n",
     "tests": [
-      "test/fb1004d_knight_house.test.js"
+      "test/systems/fb1004d_knight_house.test.js"
     ],
     "note": "The worker answers the hold with the entry's refusal."
   },
@@ -265,7 +265,7 @@
     "old": "  '/v1/homes/deed',\n",
     "new": "",
     "tests": [
-      "test/fb1004d_knight_house.test.js"
+      "test/systems/fb1004d_knight_house.test.js"
     ],
     "note": "The route set refuses the hold (404)."
   },
@@ -275,7 +275,7 @@
     "old": "'rent_due', 'look', 'layout', 'deed']);",
     "new": "'rent_due', 'look', 'layout']);",
     "tests": [
-      "test/arena4b_homes.test.js"
+      "test/net/arena4b_homes.test.js"
     ],
     "note": "An arena move carries the row without its `deed` - the pin over the table's columns says so."
   },
@@ -285,7 +285,7 @@
     "old": "export const ACCOUNT_VERSION = 'acct145';",
     "new": "export const ACCOUNT_VERSION = 'acct76';",
     "tests": [
-      "test/fb1004d_knight_house.test.js"
+      "test/systems/fb1004d_knight_house.test.js"
     ],
     "note": "YARD-SWEEP + HANDLE-EMAIL (PIN MOVED): acct117, and the mutant is the version main left. CRAFT-HOLD (PIN MOVED, acct115 on its branch, renumbered past BR5 at the merge): acct116. BR5 (PIN MOVED, acct113 on its branch, renumbered past GUILD-SEEN's acct113 and GUILD3's acct114 at the merge): acct115. GUILD-SEEN (PIN MOVED): acct113. HOME-VOTE (PIN MOVED, acct109 and then acct110 on its branch, renumbered past PATRON-LOAD and PATRON-LOAD II at the merges): acct112. PATRON-LOAD II (PIN MOVED): acct110, migration 0107. PATRON-LOAD (PIN MOVED): acct109. TECH1 (PIN MOVED): acct108, the item law's version 2, after LW15's acct107. LW15 (PIN MOVED, past INT11-INT14's acct105 and SCALE4d's acct106 at the merges): acct107. SCALE4d (PIN MOVED): acct106. INT11-INT14 (PIN MOVED): acct105. INT7-INT10 (PIN MOVED, past the Chapters' acct103 at the merge): acct104. A deploy that did not happen looks like one that did. SERPENT1 (PIN MOVED, re-aimed by content at its merge of main): acct78. GLOBAL-MARKET (PIN MOVED): acct79. SHADOW-CLOAK (PIN MOVED at its merges of main, past SERPENT1 and GLOBAL-MARKET): acct80. SERAPH-WINGS (PIN MOVED): acct81. AUDIT ARENA-LADDER (PIN MOVED at its merges of main, past GLOBAL-MARKET, SHADOW-CLOAK and SERAPH-WINGS): acct82. CRYSTAL-FIST (PIN MOVED): acct83. SERPENT-SET / SILVER-FINDS (PIN MOVED at its merge of main, past CRYSTAL-FIST): acct84 - re-aimed by content. YARD-SHED (PIN MOVED, re-aimed by content): acct85. YARD-HEIGHT (PIN MOVED, re-aimed by content): acct86. LEGACY7 (PIN MOVED at its merges of main, past SERPENT-SET's acct84, YARD-SHED's acct85 and YARD-HEIGHT's acct86): acct87. STORM-SHED, STORM-SHED 2 and TEXT-F1 (PIN MOVED): acct88 to acct90. CAP-OFF (PIN MOVED, re-aimed by content): acct91. FOUNDER5 (PIN MOVED, re-aimed by content): acct92. SD9b (re-aimed by content at the merges past CAP-OFF and FOUNDER5): acct93. SCALE4a-c (PIN MOVED, re-aimed by content at the merge past SD9b's acct94): acct95. TAVERN CARDS (PIN MOVED): acct96. SERVER-POST and HOURS-FIRST (PIN MOVED, re-aimed by content at the merge past TAVERN CARDS' acct96): acct97. PERMADEATH-HOUSES (re-aimed by content): acct98. The Chapters (PIN MOVED, re-aimed by content at the merge past PERMADEATH-HOUSES' acct98): acct99. CARDS9 and CARDS10 (PIN MOVED, at the Chapters' merge of main): acct99. UNWITNESSED-ORE (PIN MOVED): acct102. The Chapters (CHAP1-CHAP7b, PIN MOVED, re-aimed by content past CARDS9 and CARDS10's acct99, INT1-INT6's acct100, BAG-CRAFT's acct101 and UNWITNESSED-ORE's acct102 at the merges): acct103. Re-aimed to acct112 at the merge past HOME-VOTE (acct111). GATHER-SPEED + MARKET-SPEED (PIN MOVED): acct119, the version moved on (acct118 on its branch, renumbered past SEAT-LEASE at the merge). NAME-AS (PIN MOVED): acct122 (acct121 on its branch, renumbered past BAL9 at the merge)."
   },
@@ -295,7 +295,7 @@
     "old": "ALTER TABLE homes ADD COLUMN deed INTEGER NOT NULL DEFAULT 0;",
     "new": "SELECT 1;",
     "tests": [
-      "test/fb1004d_knight_house.test.js"
+      "test/systems/fb1004d_knight_house.test.js"
     ],
     "note": "The service reads a column the database does not have."
   },
@@ -305,7 +305,7 @@
     "old": "    if (realmDeedAt(playerEntity.houses, bd.regionIndex ?? 0, homeTownOf(bd), bd.buildingKey)) return 0;\n",
     "new": "",
     "tests": [
-      "test/fb1004d_knight_house.test.js"
+      "test/systems/fb1004d_knight_house.test.js"
     ],
     "note": "THE FIELD'S PLAQUE: \"Buy it: 554330 gold\" at the knight's own door."
   },
@@ -315,7 +315,7 @@
     "old": "      if (host.holdRealmDeed) holdGrantedHouse(region, kept);\n",
     "new": "",
     "tests": [
-      "test/fb1004d_knight_house.test.js"
+      "test/systems/fb1004d_knight_house.test.js"
     ],
     "note": "The order's house never held: bought from under its knight."
   },
@@ -325,7 +325,7 @@
     "old": "      if (host.homeLayoutsHeard?.() === false) { host.hearHomeLayouts?.(); return { rows: [{ text: accountRefusalText('home-layout'), center: true }] }; }\n",
     "new": "",
     "tests": [
-      "test/fb1004d_knight_house.test.js"
+      "test/systems/fb1004d_knight_house.test.js"
     ],
     "note": "A house given in a town not yet standing in the room's layout - its key another building to the room."
   },
@@ -335,7 +335,7 @@
     "old": "      membership.flags = (membership.flags ?? 0) & ~HOUSE_FLAG_MASK;\n",
     "new": "",
     "tests": [
-      "test/fb1004d_knight_house.test.js"
+      "test/systems/fb1004d_knight_house.test.js"
     ],
     "note": "A gift the service would not hold, given back without the order's flag: \"You have already received your house.\" and no house."
   },
@@ -345,7 +345,7 @@
     "old": "if (r?.ok || (r?.error !== 'home-taken' && r?.error !== 'home-layout')) return;",
     "new": "if (r?.ok) return;",
     "tests": [
-      "test/fb1004d_knight_house.test.js"
+      "test/systems/fb1004d_knight_house.test.js"
     ],
     "note": "A hold the network lost gives the gift back: the house of a knight offline for a moment taken away."
   },
@@ -355,7 +355,7 @@
     "old": ".then((r) => { if (r.ok || r.error === 'no-home') sell(); else townTalk?.say?.(accountRefusalText(r.error)); })",
     "new": ".then(() => { sell(); })",
     "tests": [
-      "test/fb1004d_knight_house.test.js"
+      "test/systems/fb1004d_knight_house.test.js"
     ],
     "note": "The deed sells though its hold stands: the gold paid and the building frozen from every buyer."
   },
@@ -365,7 +365,7 @@
     "old": "        if (host.onlineHomes && owned && realmDeedAt(playerEntity.houses, region, slot?.mapId, owned.buildingKey)) {\n",
     "new": "        if (false) {\n",
     "tests": [
-      "test/fb1004d_knight_house.test.js"
+      "test/systems/fb1004d_knight_house.test.js"
     ],
     "note": "The bank sells the deed and never gives up its hold."
   },
@@ -375,7 +375,7 @@
     "old": "      void holdRealmDeedsOnline();   // FIELD BUGS 2026-10-04d KNIGHT-HOUSE: a deed's town stands in the room's layout now - its hold names its building\n",
     "new": "",
     "tests": [
-      "test/fb1004d_knight_house.test.js"
+      "test/systems/fb1004d_knight_house.test.js"
     ],
     "note": "A house given before the hold existed is never held: Arde's, as the field found it."
   },
@@ -385,7 +385,7 @@
     "old": "if (!onlineHomes || !checkpointLanded(await onlineCheckpointLanded())) return { ok: false, error: 'offline' };",
     "new": "if (!onlineHomes) return { ok: false, error: 'offline' };",
     "tests": [
-      "test/fb1004d_knight_house.test.js"
+      "test/systems/fb1004d_knight_house.test.js"
     ],
     "note": "The hold asked before the record holds the deed: refused, and the grant's house unheld until the next boot."
   },
@@ -395,7 +395,7 @@
     "old": "    holdRealmDeed: onlineHomes ? (d) => holdGrantedDeed(d) : null,",
     "new": "    holdRealmDeed: null,",
     "tests": [
-      "test/fb1004d_knight_house.test.js"
+      "test/systems/fb1004d_knight_house.test.js"
     ],
     "note": "The host never hands the Seneschal its hold."
   }

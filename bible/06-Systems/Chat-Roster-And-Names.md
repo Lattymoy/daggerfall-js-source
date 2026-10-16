@@ -385,7 +385,7 @@ caught it until a local relay was needed to reproduce this. Fixed as
 LOCALDEV1 (`world76`): the entry exports handlers alone, every pin
 reads `wire.js`.
 
-**Driven.** `test/rosterg.test.js` (4): the channel's welcome by name
+**Driven.** `test/net/rosterg.test.js` (4): the channel's welcome by name
 with the count, the join and the leave said and no host, no look in
 storage; the cut at `CHAT_ROSTER_MAX` with the count uncut; a channel
 link holding the roster through welcome, join and leave, the cut count
@@ -411,9 +411,9 @@ the guild's tag and the glyphs. The title is worn over the head and on the Inspe
   nothing.
 - **Untouched**: the Dungeon Master's `/dm` lines keep the title's orange - a voice's colour, not a title on a name;
   a letter's sender line keeps its title - the letterbox, not the chat.
-- **Pinned**: `test/chatfit.test.js` (7), its line pins re-aimed - no title on a line or in the peek, no title rule
-  in the sheet, a title alone re-laying nothing; `test/acc3wear.test.js`, `test/guild1c.test.js`,
-  `test/shadowfang.test.js` and `test/chatsize.test.js` read the panel's new source. In Chromium,
+- **Pinned**: `test/ui/chatfit.test.js` (7), its line pins re-aimed - no title on a line or in the peek, no title rule
+  in the sheet, a title alone re-laying nothing; `test/ui/enhanced/acc3wear.test.js`, `test/net/guild1c.test.js`,
+  `test/ui/shadowfang.test.js` and `test/ui/chatsize.test.js` read the panel's new source. In Chromium,
   `tools/chatFitProbe.mjs`: 12 of 12, every line's title null and the glyphs where they were. Mutants:
   `tools/mutants/titlec.json` - 4, all dead; `tools/mutants/chatfit.json`'s layLine record and
   `tools/mutants/titlen.json`'s roster record re-aimed at the new source - 40 of 40 dead across the three.

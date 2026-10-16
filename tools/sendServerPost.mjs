@@ -56,7 +56,7 @@ export const HOURS_FIRST = Object.freeze({
 });
 
 /** HOURS-FIRST: the Hourlock's record as 0094 sent it - `mintHourlock()` that day, frozen (a Gilded piece is a static roll:
- *  test/serverpost_send.test.js holds the two equal, and a change to the mint would make every unclaimed gift a forgery
+ *  test/tooling/serverpost_send.test.js holds the two equal, and a change to the mint would make every unclaimed gift a forgery
  *  the client refuses - systems/gilded.js validGildedMarks). */
 export const HOURS_FIRST_RECORD = "{\"group\":\"Weapons\",\"templateIndex\":560,\"material\":4,\"flags\":0,\"variant\":0,\"message\":0,\"stackCount\":1,\"name\":\"The Hourlock\",\"value\":39740,\"maxCondition\":4800,\"currentCondition\":4800,\"rarity\":\"gilded\",\"gilded\":\"the-hourlock\",\"affixes\":[{\"id\":\"damage\",\"value\":40},{\"id\":\"stat\",\"param\":\"agility\",\"value\":15},{\"id\":\"skill\",\"param\":33,\"value\":30},{\"id\":\"elemental\",\"param\":\"shock\",\"value\":10}],\"isIdentified\":true}";
 

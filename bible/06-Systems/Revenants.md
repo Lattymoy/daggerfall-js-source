@@ -1,6 +1,6 @@
 # Revenants
 
-**Status:** shipped 2026-10-02 (`src/systems/revenant.js`, `test/revenant.test.js`).
+**Status:** shipped 2026-10-02 (`src/systems/revenant/revenant.js`, `test/systems/revenant.test.js`).
 **Next:** `12-Enhanced-AI/Feud-Arc.md` (FEUD, proposed 2026-10-04) - memory, a weakness, the will, a last stand, a
 signature, a band, a lair, theft, festering, new deeds and loyalty. Nothing below changes until a FEUD slice ships.
 Mac: "the ability for these enemies that kill you, or a very small chance to flee at low health. These enemies can
@@ -26,8 +26,8 @@ Two deeds make one:
 
 | Deed | How | Seam |
 |---|---|---|
-| **Slew** | Its blow takes the player's last health (melee or an arrow) | The struck seam marks the attacker (`combat/formulas.js`), the damage door takes the mark, the hurt tells `registerPlayerBlowLanded` (`systems/sigilSetPowers.js`). Confirmed a microtask later, after `hurtPlayer` is done, so a death Stendarr's mercy (`setAvoidDeathHook`) undoes makes no revenant. |
-| **Fled** | Under 20% of its health for the first time (35% for a revenant of rank 1 or 2), it wins a roll (5%; 80% for a revenant of rank 1 or 2, 15% from rank 3, where its will takes over - FLIGHT-FIRST, section 38) and runs, at twice its walk. Out of reach before its run ends, it has escaped. | `scenes/exteriorFoes.js` update: `revenantFleeHealth` and `rollRevenantFlee`, then `ai.flee(playerFeet, 8 s)` (`characters/enemyMotor.js`). While fleeing it does nothing else. At the end of its run or 45 m off, `escapeFoe` removes it with no corpse and no kill. |
+| **Slew** | Its blow takes the player's last health (melee or an arrow) | The struck seam marks the attacker (`combat/formulas.js`), the damage door takes the mark, the hurt tells `registerPlayerBlowLanded` (`systems/sigil/sigilSetPowers.js`). Confirmed a microtask later, after `hurtPlayer` is done, so a death Stendarr's mercy (`setAvoidDeathHook`) undoes makes no revenant. |
+| **Fled** | Under 20% of its health for the first time (35% for a revenant of rank 1 or 2), it wins a roll (5%; 80% for a revenant of rank 1 or 2, 15% from rank 3, where its will takes over - FLIGHT-FIRST, section 38) and runs, at twice its walk. Out of reach before its run ends, it has escaped. | `scenes/exteriorFoes.js` update: `revenantFleeHealth` and `rollRevenantFlee`, then `ai.flee(playerFeet, 8 s)` (`characters/enemy/enemyMotor.js`). While fleeing it does nothing else. At the end of its run or 45 m off, `escapeFoe` removes it with no corpse and no kill. |
 
 A kill no blow names (a spell's burn, a lingering effect's round, a poison's tick) goes to the foe whose harm last
 reached the player (**REVENANT-HARM**, `systems/harmMark.js`, a leaf):
@@ -118,7 +118,7 @@ revenants are its own.
 **FEUD's fields (RVN1, 2026-10-04).** The record carries `scars`, `learned`, `weak`, `weakKnown`, `sig`, `kin`, `lair`,
 `lairKnown`, `took`, `wrath`, `fights` and a sworn one's `companion.loyalty` - each checked by its validator when read
 back, and an older record's derived (its weakness, signature at rank 2 and up, and kin drawn on its id; its fights
-`kills + escapes + returns`; a loyalty its personality's start). The law is `systems/revenantFeud.js feudFields`
+`kills + escapes + returns`; a loyalty its personality's start). The law is `systems/revenant/revenantFeud.js feudFields`
 (`bible/12-Enhanced-AI/Feud-Arc.md` section 26). The slot and the mirror also keep `lastDay` (RVN9's festering day),
 read back a whole day or none, the later of the two kept.
 
@@ -147,9 +147,9 @@ Everything a revenant says or does is an **event** (`revenantEvent` and the buil
 - what happens in the narrator's voice (a beast never speaks: "Bares its teeth - it remembers you.");
 - the one `line` a text surface says instead.
 
-`systems/revenantVoice.js` (a leaf) hands an event to the registered face, or speaks its line through the host's `say`.
+`systems/revenant/revenantVoice.js` (a leaf) hands an event to the registered face, or speaks its line through the host's `say`.
 
-The face is `ui/revenantCard.js`, on the enhanced skin only:
+The face is `ui/revenant/revenantCard.js`, on the enhanced skin only:
 
 - **Placement and lifetime**: the notices' twin at the LEFT edge, sliding in and out. One card per revenant, two at most. The words are typed at 42 letters a second, then held 3.5 to 7.5 s.
 - **Colours**: a blood edge for a taunt or a rise, amber for a flight or an escape, brass for a fall (the portrait grey and struck through).
@@ -160,7 +160,7 @@ The face is `ui/revenantCard.js`, on the enhanced skin only:
 
 ## 7b. The page (REVENANT-PAGE)
 
-`ui/revenantPage.js` is the **Revenants** page on the Enhanced pause menu's Holdings tab (the Stats rail until HOLDINGS,
+`ui/revenant/revenantPage.js` is the **Revenants** page on the Enhanced pause menu's Holdings tab (the Stats rail until HOLDINGS,
 2026-10-03), shown while revenants are made or any is remembered. The living come first, strongest first, each with:
 
 - its portrait and rank;
@@ -173,7 +173,7 @@ Then the **Fallen**, struck through, with when each fell. A character with none 
 
 ## 8. The numbers
 
-Every number is a named constant at the top of `systems/revenant.js`:
+Every number is a named constant at the top of `systems/revenant/revenant.js`:
 
 | Constant | Value |
 |---|---|
@@ -210,7 +210,7 @@ and close a slain one. Returns stay in the open world: a dungeon's foes are its 
 ## 10. Who it is (REVENANT-VOICE)
 
 Mac: "They should have their own unique personalities that affect their speach. One could be humorous, or witty, etc."
-`systems/revenantPersonality.js` (a leaf) holds ten personalities and every word they say:
+`systems/revenant/revenantPersonality.js` (a leaf) holds ten personalities and every word they say:
 
 | Personality | In a word | A beast's manner |
 |---|---|---|
@@ -242,12 +242,12 @@ Mac: "They should have their own unique personalities that affect their speach. 
 Mac: "Players should have the option to kill or spare"; "the choice popup should reuse the loot menu".
 
 - **The yield**: the blow that would kill one of the player's revenants (any blow - the revenant is the player's own;
-  never a Disintegrate's kill) leaves it at 1 health on its knees (`systems/revenantFate.js beginYield`): its fight and
+  never a Disintegrate's kill) leaves it at 1 health on its knees (`systems/revenant/revenantFate.js beginYield`): its fight and
   its run over, its hurt's last frame held with a breath now and then (`MobileUnit.heldPose`), no blow reaches it, no foe
   hunts it (`enemyTargets.js`), never in the save. Its plea is said in its voice; its record notes the deed. Its
   TROPHY is rolled now, so the choice shows it.
 - **The choice** is the loot window's: activating it (at the treasure's reach, as a body - `mobileEnemyActivate.js`)
-  opens the window with its FATE side (`ui/enhancedInventory.js` + `ui/revenantFateView.js`): the loot frame's own head
+  opens the window with its FATE side (`ui/enhanced/enhancedInventory.js` + `ui/revenant/revenantFateView.js`): the loot frame's own head
   (its name, what it is, its personality), its plea, and two of the loot list's rows - KILL, drawn as the trophy weapon
   is drawn when looted (its tile, its rarity's colour), and SPARE, its portrait and where it would stand. A row is
   picked, then confirmed (a second press, the confirm button, Enter); K and S pick; Back steps out of a pick, then closes
@@ -268,7 +268,7 @@ roar - and from there the body **burns away from the feet up** in embers (DISSOL
 no body. Where it knelt drops a **pile** (the place's dropped loot, with its line of light): everything it carried and
 its trophy. Its record closes for good, **executed** (the page's Fallen say so).
 
-The trophy (`systems/revenantTrophy.js`):
+The trophy (`systems/revenant/revenantTrophy.js`):
 
 - **Its weapon**: the best blade it carried, else its kind's (an orc's war axe or battle axe, a lich's staff, a vampire's
   saber or katana, a giant's warhammer, a bear's war axe...) or a person's by class (a Barbarian's claymore, an
@@ -285,9 +285,9 @@ enhanced plus UI feature."
 
 - **Sworn**: spared, it rises, gathers into a portal where it knelt, and is sworn to the player for good - it hunts
   nobody, never returns as a foe, and its record keeps its place (`companion`: with the player, away, or resting).
-  It fights as a crew companion does, the foe fighting the player's side first (ASSIST, `01-Overview/Field-Bugs-2026-10-05c.md`).
+  It fights as a crew companion does, the foe fighting the player's side first (ASSIST, `01-Overview/bugs/Field-Bugs-2026-10-05c.md`).
 - **The crew's own layer** (`scenes/crewAshore.js`) stands the sworn - every place, every door, the heel, the catch-up,
-  health and spells carried - as a second party of the crew's shape (`systems/revenantCompanions.js revenantParty`), never
+  health and spells carried - as a second party of the crew's shape (`systems/revenant/revenantCompanions.js revenantParty`), never
   under the naval arc's gate. Each stands at the player's level with its rank's strength (health once, its blows always),
   called by its own name; activated, it opens its pack (the crew's COMPANION-KIT storage); it has a card on the party
   panel and a green bar overhead.
@@ -331,12 +331,12 @@ underground, a joiner's own frame) name an heir for every other live foe and non
 (`exteriorFoes.js foesFrame`, `dungeonContext.js ownFrame`). Its record lives in its owner's save alone
 (`revenantById`), so an heir's copy read a plain foe: no last stand, no will, no kneel, a corpse, and the owner's record
 never told. It goes with its owner, as a watchman goes with his own. A party member's killing blow lands at the owner,
-where the record is, and brings its last stand and then its fate there (`test/revenant_fate.test.js`).
+where the record is, and brings its last stand and then its fate there (`test/systems/revenant/revenant_fate.test.js`).
 
 ## 16. The audit (2026-10-02, Mac: "Audit everything and ensure perfection")
 
 Five audits - the records and their words, the kill-or-spare flow, the sworn, the UI, the burn and the portals - and
-every finding fixed (`test/revenant_audit.test.js`, `tools/mutants/revenantaudit.json`):
+every finding fixed (`test/systems/revenant/revenant_audit.test.js`, `tools/mutants/revenantaudit.json`):
 
 - **Records.** A judged revenant (executed, released, sworn) does no deed - its poison finishing the player after it
   knelt raised it again under its own id, or ranked up a sworn companion. A kneeling one claims no kill and clears its
@@ -388,7 +388,7 @@ fight. The page says them ("Scarred by arrows, fought by night."). What the scar
 ## 18. What it learns: adaptations (FEUD RVN2, 2026-10-04)
 
 At each deed it learns one lesson of the fight - the first of its scars that teaches something it does not hold - and
-keeps its rank's worth (three at most), the oldest forgotten (`systems/revenantFeud.js lessonOf`, `withLesson`). What it
+keeps its rank's worth (three at most), the oldest forgotten (`systems/revenant/revenantFeud.js lessonOf`, `withLesson`). What it
 learned stands with it (`entity.revenant.edge`, `adaptEdge`): **Mailed**, **Hewn-hard**, **Braced**, **Unflinching** and
 **Arrow-wise** take a weapon class less (x0.6 at the least); **Fireproof**, **Rimebound**, **Grounded**, **Venom-blooded**
 and **Spell-scarred** +25 on the saving throw against their element (DFU's own Resistant - never immunity); a
@@ -625,10 +625,10 @@ ranks 1 and 5 fought never running (a young revenant's flight ends most of its f
 measure of how hard it is to bring down): the will by its weakness 100%, by dodging 93.1%, by trading 11.5%; rank 5
 over rank 1, 2.67 trading and 2.64 dodging.
 
-Killing the player still ranks a revenant up; it is no longer nearly the only way. Pinned: `test/flightfirst.test.js`
-(6), `tools/mutants/flightfirst.json` (15 dead). PIN MOVED: `test/feudharness.test.js` - its flight and rank 5's
+Killing the player still ranks a revenant up; it is no longer nearly the only way. Pinned: `test/systems/revenant/flightfirst.test.js`
+(6), `tools/mutants/flightfirst.json` (15 dead). PIN MOVED: `test/systems/revenant/feudharness.test.js` - its flight and rank 5's
 rally chase as a fast runner, and a rank 3 run down is cornered (its last stand comes before a kneel mid-run);
-`test/audittell.test.js` - the flee's signature.
+`test/scenes/audittell.test.js` - the flee's signature.
 
 ## 39. The Renown gate (RENOWN-GATE, 2026-10-12)
 
@@ -637,7 +637,7 @@ revnants". Asked, the owner chose elites at Renown 5 and revenants at 10 ("Elite
 offline", a shared dungeon's elites "Room's pick stands", and the rate "Return chance 50% → 40%".
 
 **The door.** Renown is online's own (`Accounts-And-Cloud-Saves-Arc.md` RENOWN1: offline earns none), so the gate is
-too. `systems/sigil.js renownOpens(min)` sits beside the door every Renown-woken power reads (the sigils', the sets',
+too. `systems/sigil/sigil.js renownOpens(min)` sits beside the door every Renown-woken power reads (the sigils', the sets',
 RENOWN-LOOT's): offline it is always open; online it opens once the page's Renown reaches `min`, and never before the
 page knows it (the moments before the first token) - RENOWN-LOOT's first-stage law, nothing ahead of the Renown behind
 it. `scenes/world.js` sets the door; `scenes/exterior.js`, the offline bench, never does.
@@ -669,7 +669,7 @@ that makes, stands, spreads or marks one answers as the Loot rarity row's off do
 
 What is remembered stays. The page lists every one, each **Held** - "It will not come for you before Renown 10." - with
 its lair named but promised on no map and by no town, and with none it says revenants come from Renown 10
-(`ui/revenantPage.js` comeWords, lairWords). The sworn keep their days: loyalty moves and a desertion leaves, as it
+(`ui/revenant/revenantPage.js` comeWords, lairWords). The sworn keep their days: loyalty moves and a desertion leaves, as it
 stands nothing (a deserter's return is held like any).
 
 **The rate.** A due revenant takes 40% of the encounter rolls (`REVENANT_RETURN_CHANCE`, 0.5 before) - a fifth fewer
@@ -691,6 +691,6 @@ new rate.
 - `scenes/exterior.js` WIRED through `revenantToReturn`; its pool rolls no elite (a town's ground, as a building's),
   and the bench never goes online, so nothing is held there.
 
-Pinned: `test/renowngate.test.js` (14); `tools/mutants/renowngate.json` (30, all dead). No pin moved; two AUDIT BAL
+Pinned: `test/systems/renowngate.test.js` (14); `tools/mutants/renowngate.json` (30, all dead). No pin moved; two AUDIT BAL
 records (`tools/mutants/bal.json` AUDIT-BAL-a-search-elite-anywhere and AUDIT-BAL-the-search-roll-skipped) were re-aimed
 by content at the search's roll as it now reads, and both still die.

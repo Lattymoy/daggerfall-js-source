@@ -5,13 +5,13 @@ import { peerMenuBind, setPeerMenuBind, resetPeerMenuBinds, PEER_MENU_DEFAULTS }
 import { buttonText } from '../systems/controlsConfig.js';
 import { hdGlyphName } from './padGlyphsHD.js';
 import { padFamily } from './padGlyphs.js';
-import { setPlusBindCapture } from './plusPad.js';
+import { setPlusBindCapture } from './plus/plusPad.js';
 
 let armed = null;          // 'key' | 'pad' | null
 let quietUntil = 0;        // a captured pad B still sends its Back a moment later - it is swallowed, not a back-out
 let listener = null, repaintFn = () => {};
 
-/** Is this card taking keys - the shell's own Escape stands down while it is (ui/enhancedMenu.js onKey). */
+/** Is this card taking keys - the shell's own Escape stands down while it is (ui/enhanced/enhancedMenu.js onKey). */
 export const peerBindBusy = () => !!armed || Date.now() < quietUntil;
 
 const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };

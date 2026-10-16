@@ -5,7 +5,7 @@
     "old": "export const COURT_COPY_RE = /^(gate:(?:0|[1-9]\\d{0,8}))#([1-7])$/;",
     "new": "export const COURT_COPY_RE = /^(gate:(?:0|[1-9]\\d{0,8}))#([1-9])$/;",
     "tests": [
-      "test/scale5d_court.test.js"
+      "test/net/scale5d_court.test.js"
     ],
     "note": "a copy past LAYERS_MAX - 1"
   },
@@ -15,7 +15,7 @@
     "old": "export const COURT_COPY_RE = /^(gate:(?:0|[1-9]\\d{0,8}))#([1-7])$/;",
     "new": "export const COURT_COPY_RE = /^(gate:\\d+)#([1-7])$/;",
     "tests": [
-      "test/scale5d_court.test.js"
+      "test/net/scale5d_court.test.js"
     ],
     "note": "a key the clock never mints taken"
   },
@@ -25,7 +25,7 @@
     "old": "export const upOf = (name) => busOf(name) ?? courtOfCopy(name);",
     "new": "export const upOf = (name) => busOf(name);",
     "tests": [
-      "test/scale5d_court.test.js"
+      "test/net/scale5d_court.test.js"
     ],
     "note": "a copy hands up to nobody"
   },
@@ -35,7 +35,7 @@
     "old": "    if (isGateRoom(key)) return layerWalk(env.ROOMS, key, request, 0);\n",
     "new": "",
     "tests": [
-      "test/scale5d_court.test.js"
+      "test/net/scale5d_court.test.js"
     ],
     "note": "a full court refuses as it did"
   },
@@ -45,7 +45,7 @@
     "old": "    if (isGateRoom(key)) return layerWalk(env.ROOMS, key, request, 0);",
     "new": "    if (isGateRoom(key)) return layerWalk(env.ROOMS, key, request, layerOf(url.searchParams.get('ly')));",
     "tests": [
-      "test/scale5d_court.test.js"
+      "test/net/scale5d_court.test.js"
     ],
     "note": "the page's layer asked before the court"
   },
@@ -55,7 +55,7 @@
     "old": "const no = a.ly ? (gateHolds(gateDayOfRoom(a.key), now) ? null : 'the gate is closed') : await this._gateAdmit(a.key, who.subject, now);",
     "new": "const no = await this._gateAdmit(a.key, who.subject, now);",
     "tests": [
-      "test/scale5d_court.test.js"
+      "test/net/scale5d_court.test.js"
     ],
     "note": "a copy judging a fight it does not hold - a fighter refused after the seal"
   },
@@ -65,7 +65,7 @@
     "old": "        this._hubUpOwe(vid, 'h', { att: this._shardAtt(this._attach(ws)) });\n",
     "new": "",
     "tests": [
-      "test/scale5d_court.test.js"
+      "test/net/scale5d_court.test.js"
     ],
     "note": "the court never hears a copy's hello"
   },
@@ -75,7 +75,7 @@
     "old": "        if (m.pose) this._hubUpOwe(vid, 'p', m.pose);\n",
     "new": "",
     "tests": [
-      "test/scale5d_court.test.js"
+      "test/net/scale5d_court.test.js"
     ],
     "note": "where a copy's socket stands, unknown until it moves"
   },
@@ -85,7 +85,7 @@
     "old": "      if (a.ly) { if (a.vid && a.id) this._hubUpOwe(a.vid, 'f', JSON.stringify({ t: 'gate', ...m })); return; }",
     "new": "      if (false) { if (a.vid && a.id) this._hubUpOwe(a.vid, 'f', JSON.stringify({ t: 'gate', ...m })); return; }",
     "tests": [
-      "test/scale5d_court.test.js"
+      "test/net/scale5d_court.test.js"
     ],
     "note": "a copy keeps its gate words - and fights a boss of its own"
   },
@@ -95,7 +95,7 @@
     "old": "    if (posed && a.vid && a.ly && isGateRoom(a.key)) this._hubUpOwe(a.vid, 'p', m.p);",
     "new": "    void 0;",
     "tests": [
-      "test/scale5d_court.test.js"
+      "test/net/scale5d_court.test.js"
     ],
     "note": "a copy's pose never the court's"
   },
@@ -105,7 +105,7 @@
     "old": "    if ((isChannelShard(a.key) || (a.ly && isGateRoom(a.key))) && a.vid) { this._vidIdx.delete(a.vid); this._hubUpOwe(a.vid, 'x', 0); }",
     "new": "    if (isChannelShard(a.key) && a.vid) { this._vidIdx.delete(a.vid); this._hubUpOwe(a.vid, 'x', 0); }",
     "tests": [
-      "test/scale5d_court.test.js"
+      "test/net/scale5d_court.test.js"
     ],
     "note": "a copy's socket gone, the court keeps it"
   },
@@ -115,7 +115,7 @@
     "old": "    if (no) { if (no === 'busy') this._refuse(vws, no, CLOSE_BUSY); else this._refuse(vws, no); return; }\n    this._vput(vws);",
     "new": "    this._vput(vws);",
     "tests": [
-      "test/scale5d_court.test.js"
+      "test/net/scale5d_court.test.js"
     ],
     "note": "the court's law skipped for a copy's socket"
   },
@@ -125,7 +125,7 @@
     "old": "      this._courtReplace(vws.att.sub, vws);\n",
     "new": "",
     "tests": [
-      "test/scale5d_court.test.js"
+      "test/net/scale5d_court.test.js"
     ],
     "note": "one seat across the court's own sockets alone"
   },
@@ -135,7 +135,7 @@
     "old": "      if (isGateRoom(a.key) && !a.ly && who.subject) this._courtReplace(who.subject, null);",
     "new": "      void 0;",
     "tests": [
-      "test/scale5d_court.test.js"
+      "test/net/scale5d_court.test.js"
     ],
     "note": "a hello in the court leaves the account's copy socket standing"
   },
@@ -145,7 +145,7 @@
     "old": "    vws.att = { ...vws.att, pose };\n",
     "new": "",
     "tests": [
-      "test/scale5d_court.test.js"
+      "test/net/scale5d_court.test.js"
     ],
     "note": "the court never knows where a copy's socket stands"
   },
@@ -155,7 +155,7 @@
     "old": "    if (this._trailing(vws.att)) this._trailPose(vws, pose, Date.now());\n  }",
     "new": "  }",
     "tests": [
-      "test/scale5d_court.test.js"
+      "test/net/scale5d_court.test.js"
     ],
     "note": "a copy's fighter's trail never kept"
   },
@@ -165,7 +165,7 @@
     "old": "    if (ws.court) { ws.att = a; return true; }",
     "new": "    void 0;",
     "tests": [
-      "test/scale5d_court.test.js"
+      "test/net/scale5d_court.test.js"
     ],
     "note": "a copy's socket in the court's index - its crowd's every fan reaches it"
   },
@@ -175,7 +175,7 @@
     "old": "    yield* this._all();\n    if (this._cper.size) for (const v of this._vsocks.values()) if (v.court && !v.closed && v.att) yield [v, v.att];",
     "new": "    yield* this._all();",
     "tests": [
-      "test/scale5d_court.test.js"
+      "test/net/scale5d_court.test.js"
     ],
     "note": "the fight hears the court's sockets alone"
   },
@@ -185,7 +185,7 @@
     "old": "    if (here || !this._cper.size || !id) return here;",
     "new": "    return here;",
     "tests": [
-      "test/scale5d_court.test.js"
+      "test/net/scale5d_court.test.js"
     ],
     "note": "a healer in a copy never found"
   },
@@ -195,7 +195,7 @@
     "old": "    if (this._cper.size) for (const s of outs) this._courtSendAll(s);",
     "new": "    void outs;",
     "tests": [
-      "test/scale5d_court.test.js"
+      "test/net/scale5d_court.test.js"
     ],
     "note": "the boss's beat never reaches a copy"
   },
@@ -205,7 +205,7 @@
     "old": "const per = vws.court ? this._cper : this._vper; per.set(",
     "new": "const per = this._vper; per.set(",
     "tests": [
-      "test/scale5d_court.test.js"
+      "test/net/scale5d_court.test.js"
     ],
     "note": "a copy's socket counted as a channel's - its beats reach nobody, a channel's fans reach it"
   },
@@ -215,7 +215,7 @@
     "old": "if (vws.court) this._trails?.delete(vws); }",
     "new": "}",
     "tests": [
-      "test/scale5d_court.test.js"
+      "test/net/scale5d_court.test.js"
     ],
     "note": "a copy's gone socket keeps its trail"
   },
@@ -225,7 +225,7 @@
     "old": "    if (vws.court) return;   // SCALE5d part two: a copy's socket was never the court's crowd - nobody here is told it went\n",
     "new": "",
     "tests": [
-      "test/scale5d_court.test.js"
+      "test/net/scale5d_court.test.js"
     ],
     "note": "a copy's socket's going said to the court's crowd"
   },
@@ -235,7 +235,7 @@
     "old": "      if (ws.court) continue;   // SCALE5d part two: a copy's socket the court closed - its copy says its leave, to its own crowd\n",
     "new": "",
     "tests": [
-      "test/scale5d_court.test.js"
+      "test/net/scale5d_court.test.js"
     ],
     "note": "a refused copy socket's leave said in the court"
   },
@@ -245,7 +245,7 @@
     "old": "    const court = isCourtCopy(hub), n = court ? null : this._busCount();",
     "new": "    const court = false, n = this._busCount();",
     "tests": [
-      "test/scale5d_court.test.js"
+      "test/net/scale5d_court.test.js"
     ],
     "note": "a copy told a channel's count"
   },
@@ -255,7 +255,7 @@
     "old": "    this._vshut.set(vws.vid, { code: code | 0, reason: String(reason ?? '').slice(0, 120) });",
     "new": "    void 0;",
     "tests": [
-      "test/scale5d_court.test.js"
+      "test/net/scale5d_court.test.js"
     ],
     "note": "a refused hello asked again, for ever"
   },
@@ -265,7 +265,7 @@
     "old": "    let key = isChannelShard(k) ? k : isGateRoom(k) && ly > 0 ? layerName(k, ly) : null;\n    if (!key && this._hubKey === undefined) {",
     "new": "    let key = isChannelShard(k) ? k : null;\n    if (false) {",
     "tests": [
-      "test/scale5d_court.test.js"
+      "test/net/scale5d_court.test.js"
     ],
     "note": "a woken copy hands nothing up (its sync's own alarm)"
   }

@@ -67,7 +67,7 @@
 //   rolls                 - Math.random-compatible (Random.Range +
 //                           Dice100)
 
-import { getInt } from './settings.js';   // AUDIT 28 W1: QuestRumorWeight, read live
+import { getInt } from './settings/settings.js';   // AUDIT 28 W1: QuestRumorWeight, read live
 import { dice100 } from '../combat/formulas.js';
 import { localizedText } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 

@@ -25,7 +25,7 @@ import { LOCATION_TYPES, DUNGEON_TYPES, longitudeLatitudeToMapPixel } from '../f
 import { cureAllOfKind } from './effects.js';   // DEATHLOOP1
 import { maxFatigue, liveStat, STAT_KEYS_ORDER } from './statMods.js';   // AUDIT DISC19: the revival's fatigue floor; DISC24-D: its stat floor
 import { sharedClockOn, worldMinutes, skipDeadMinutes } from './worldTick.js';   // DISC28-E: the dead live no minutes
-import { SD_REALM_TEXT } from '../world/sdRealm.js';   // AUDIT SD II (L6 F4): the Shattered Hour's own waking
+import { SD_REALM_TEXT } from '../world/superDungeon/sdRealm.js';   // AUDIT SD II (L6 F4): the Shattered Hour's own waking
 
 const SAFE_KINDS = Object.freeze([
   { kind: 'temple', match: (e) => e.locationType === LOCATION_TYPES.ReligionTemple },

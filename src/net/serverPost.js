@@ -2,17 +2,17 @@
 // SERVER-POST (2026-10-08, Mac: "Let's develop an ingame server mailbox that goes next to the hourglass in the pause
 // menu. It should show notifications whenever players have a message. First use is to utilize it for players being
 // granted items."): THE SERVER'S POST, AS THIS CLIENT SEES IT - the box the pause face's mailbox draws
-// (ui/enhancedPost.js), looked at on the letterbox's clock (riding the heartbeat, net/heartbeat.js), a new piece said on
+// (ui/enhanced/enhancedPost.js), looked at on the letterbox's clock (riding the heartbeat, net/heartbeat.js), a new piece said on
 // the world tab, and a piece's item CLAIMED into the online character being played.
 //
-// THE CLAIM IS THE GUILD VAULT'S TAKE (net/guildBook.js vaultTake): the service writes the item into the realm record
+// THE CLAIM IS THE GUILD VAULT'S TAKE (net/guild/guildBook.js vaultTake): the service writes the item into the realm record
 // (server-account/src/post.js claimPost) and answers it; the pack takes it on the answer, through realmGoldAct with
 // `needsAnswer` - a claim that landed with its answer lost cannot put the item in the pack, and the checkpoint after it
 // would write the record without it. So a lost answer ends the session (`abandon`), and a join reads the record, which
 // holds it.
 import { call, forgetSession } from './accountClient.js';
 import { postHead, postWhole, unclaimedOf, POST_POLL_MS, POST_BOX_MAX } from './postLaw.js';
-import { validLootItem } from '../systems/loot.js';
+import { validLootItem } from '../systems/loot/loot.js';
 
 /** The box: `{ post: [head...], unread, unclaimed, max }`, newest first. */
 export const postBoxCall = (io) => call(io, '/v1/post/box');
@@ -195,7 +195,7 @@ export class PostBox {
 
   /**
    * CLAIM ITS ITEM into the online character being played. The service writes it into the record and answers it; the
-   * pack takes it on the answer (checked as every item that arrives over the wire is - systems/loot.js validLootItem).
+   * pack takes it on the answer (checked as every item that arrives over the wire is - systems/loot/loot.js validLootItem).
    * Answers `{ ok, item }` or `{ ok: false, error }`.
    * @param {string} id
    */

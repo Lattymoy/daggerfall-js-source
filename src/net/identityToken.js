@@ -115,15 +115,15 @@
 // ═══════════════════════════════════════════════════════════════════
 
 /* global atob, btoa */
-// HOST GLOBALS, declared the way ai/navmesh.js declares its own: base64
+// HOST GLOBALS, declared the way ai/nav/navmesh.js declares its own: base64
 // is in every runtime this file has to run in - the browser, the Worker
 // and node 22 - and in none of the shared globals lists, because this
 // is the first module in src/net/ to need it.
 
 import { sanitizeName, NAME_MAX, streamsFoes } from './wire.js';
-import { GUILD_ID_RE, GUILD_TAG_RE, GUILD_MEMBER_RE } from './guildLaw.js';   // GUILD1c: a guild rides the token - the law's own three shapes
+import { GUILD_ID_RE, GUILD_TAG_RE, GUILD_MEMBER_RE } from './guild/guildLaw.js';   // GUILD1c: a guild rides the token - the law's own three shapes
 import { ribbonClaimOk } from './heraldryLaw.js';   // SEASON1 part two: a Season's banner ribbon - heraldryLaw.js imports nothing, so the worker's graph stays flat
-import { worksOf } from './siegeRef.js';   // SEAT2b part two (b): a siege's works on its pass - siegeRef.js imports nothing
+import { worksOf } from './siege/siegeRef.js';   // SEAT2b part two (b): a siege's works on its pass - siegeRef.js imports nothing
 import { houseClaimOk } from './houseLaw.js';   // LEGACY7: a house rides the token - houseLaw.js imports nothing, so the worker's graph stays flat
 import { homeMapIdOk, homeBuildingKeyOk, HOME_ORDER_KEYS_MAX } from './homeLaw.js';   // QUEST-HOME: a home order names a town and its buildings in the homes' own shapes - homeLaw.js imports nothing
 
@@ -315,31 +315,31 @@ export function nameIsIssuable(name) {
  *      the level its judge TRUSTS, `level_seen`, once a checkpoint was
  *      judged; the summary's `level` before), absent when it named none
  *      or from a service before ARENA4b; the relay's ladder vitality
- *      reads it (net/arenaLaw.js ladderVitality) and never a health the
+ *      reads it (net/arena/arenaLaw.js ladderVitality) and never a health the
  *      client claims
- *   wa that realm character's ARMS (INT7, net/siegeRef.js armsOf): `[reach,
+ *   wa that realm character's ARMS (INT7, net/siege/siegeRef.js armsOf): `[reach,
  *      bow]` - the most reach (a weapon's top and its material's
  *      modifier) of any lawful weapon its JUDGED pack holds, 0 for none,
  *      and 1 where a lawful bow is among them; beside a 1 `rc` alone,
  *      absent before its first judged checkpoint and from a service
  *      before INT7. Every referee's clip of a blow between players
- *      (net/siegeRef.js siegeBlowMax, net/arenaLaw.js arenaBlowCap)
+ *      (net/siege/siegeRef.js siegeBlowMax, net/arena/arenaLaw.js arenaBlowCap)
  *   hn hc hb hg  that realm character's HOUSE (LEGACY7, net/houseLaw.js):
  *      the line's surname, the member's given name, 1 for a Bloodline,
  *      the generation's numeral - `hn` or none of them; absent for a
  *      character of no line and from a service before LEGACY7
  */
-/** ARENA4: the rating's bounds on a token (net/arenaLaw.js ARENA_ELO_MIN and ARENA_ELO_MAX, pinned - written here, not
+/** ARENA4: the rating's bounds on a token (net/arena/arenaLaw.js ARENA_ELO_MIN and ARENA_ELO_MAX, pinned - written here, not
  *  imported, so the token module stays the leaf every end reads). */
 export const ARENA_RATING_MIN = 100;
 export const ARENA_RATING_MAX = 4000;
 /** ARENA4b: the character level's bounds on a token (`cl` - the realm summary's own, server-account/src/realm.js
- *  realmSummaryOf's 1000; net/arenaLaw.js ARENA_CL_MIN and ARENA_CL_MAX, pinned). */
+ *  realmSummaryOf's 1000; net/arena/arenaLaw.js ARENA_CL_MIN and ARENA_CL_MAX, pinned). */
 export const CHARACTER_LEVEL_MIN = 1;
 export const CHARACTER_LEVEL_MAX = 1000;
 /** ARENA4b: a character level a token may carry - a whole number in bounds, never a stand-in. */
 export const characterLevelIssuable = (cl) => Number.isSafeInteger(cl) && cl >= CHARACTER_LEVEL_MIN && cl <= CHARACTER_LEVEL_MAX;
-/** INT7: the most reach a weapon has (net/siegeRef.js ARMS_TOP_MAX - a Daedric Thunderlock's 26 + 6, pinned equal; its own
+/** INT7: the most reach a weapon has (net/siege/siegeRef.js ARMS_TOP_MAX - a Daedric Thunderlock's 26 + 6, pinned equal; its own
  *  name, ONE MEMBER ONE EXPORT - this leaf imports only the token's). */
 export const TOKEN_ARMS_TOP_MAX = 32;
 /** INT7: an arms claim a token may carry - `[reach, bow]`, the reach a whole number 0..TOKEN_ARMS_TOP_MAX, the bow 0 or 1. */
@@ -411,7 +411,7 @@ export function claimsValid(c, { maxTtlS = MAX_TTL_S } = {}) {
   if (c.rc !== undefined && c.rc !== 0 && c.rc !== 1) return false;
   // AUDIT LEGACY III O1: the realm character itself - beside the realm's yes alone, and of the realm's own id's shape
   if (c.ci !== undefined && !(c.rc === 1 && typeof c.ci === 'string' && REALM_CHARACTER_RE.test(c.ci))) return false;
-  // ARENA4: the account's arena rating this season (net/arenaLaw.js - the hall queues by it): absent from a service before
+  // ARENA4: the account's arena rating this season (net/arena/arenaLaw.js - the hall queues by it): absent from a service before
   // it and from a guest's token; present, a whole number on the rating's scale
   if (c.ar !== undefined && !(Number.isSafeInteger(c.ar) && c.ar >= ARENA_RATING_MIN && c.ar <= ARENA_RATING_MAX)) return false;
   // ARENA4b: the named character's level (the relay's ladder vitality reads it): absent from a service before it and from a
@@ -620,7 +620,7 @@ export function orderValid(c) {
   return true;
 }
 
-/* ═══ QUEST-HOME: THE HOME ORDER (bible/01-Overview/Field-Bugs-2026-10-14.md QUEST-HOME; Mac, 2026-10-15: "Close both") ══
+/* ═══ QUEST-HOME: THE HOME ORDER (bible/01-Overview/bugs/Field-Bugs-2026-10-14.md QUEST-HOME; Mac, 2026-10-15: "Close both") ══
  *
  * A home bought, held or given up must reach every page online at once: a quest picks its residence in towns its player
  * never asked about, off the boot's read of every town's homes (server-account/src/homes.js homeLayouts), and a read at
@@ -656,7 +656,7 @@ export async function mintHomeOrder({ s, bm, bu = [], bd = [] }, privateKey, { s
  * and hands the client ITS WORD on it, an order the room checks with the key it already holds:
  * `{o:'stake', s, cj, cr, ct, ca, cb, i, e}` - account `s` has `ca` gold held as stake `cj` for table `ct` of room
  * `cr` at big blind `cb`. The room seats it with `ca` chips and marks `cj` spent (one stake, one seat, ever); what the
- * seat leaves with comes back in the relay's receipt (net/cardReceipt.js), which the service pays once.
+ * seat leaves with comes back in the relay's receipt (net/card/cardReceipt.js), which the service pays once.
  */
 /** A stake order's fields - no other order kind carries one. */
 export const STAKE_FIELDS = Object.freeze(['cj', 'cr', 'ct', 'ca', 'cb']);
@@ -682,7 +682,7 @@ export async function mintStakeOrder({ s, cj, cr, ct, ca, cb }, privateKey, { su
   return sealClaims(claims, privateKey, subtle);
 }
 
-/** CARDS6: VERIFY A STAKE ORDER WHATEVER ITS AGE - the room's void (net/cardReceipt.js): an order past its minute can
+/** CARDS6: VERIFY A STAKE ORDER WHATEVER ITS AGE - the room's void (net/card/cardReceipt.js): an order past its minute can
  *  never be sat on, so a stake it names that the room never sat is the player's to have back. The signature and the
  *  claims are checked as ever; only the clock is the order's own. */
 export async function verifyStakeOrderAnyAge(token, publicKey, { subtle }) {
@@ -703,9 +703,9 @@ export async function verifyStakeOrderAnyAge(token, publicKey, { subtle }) {
  * list (JSON, as the service answered it) digests to `wh` (hex SHA-256), to be laid in room `wm` alone (AUDIT INT9: an
  * order named no room, so one fall was laid in two); `wk` the killer whose worn piece is the list's record `wi`, theirs
  * alone to take; `wg` the fallen's guild, whose members take nothing of it (PVPDUNGEONS - whoever lays it). The room keeps
- * a deposit only whose records digest to `wh` (net/wildLaw.js), and opens it to takes only then. MAC'S DECISION
+ * a deposit only whose records digest to `wh` (net/wild/wildLaw.js), and opens it to takes only then. MAC'S DECISION
  * (2026-10-14, the two-phase handoff): `we` 1 - the killer's piece is held by the service in ESCROW (server-account/src/
- * wild.js), never the room's to hand: the killer's take is a COLLECT the room signs (net/wildReceipt.js `g1`), and the
+ * wild.js), never the room's to hand: the killer's take is a COLLECT the room signs (net/wild/wildReceipt.js `g1`), and the
  * service commits the piece to the killer's record against it.
  */
 /** A remains order's fields - no other order kind carries one. */
@@ -780,7 +780,7 @@ export async function mintDeckOrder({ s, dh }, privateKey, { subtle, nowS, ttlS 
  * point, the defenders' camp where they rise), no works.
  */
 /** A pass's fields - never on another kind. SEAT2b part two (b): `sx` a siege's works, as the service froze them at the
- *  battle's first pass - `[walls, gatehouse (-1 none), rams, siegewright (0|1), barracks]` (net/siegeRef.js worksOf);
+ *  battle's first pass - `[walls, gatehouse (-1 none), rams, siegewright (0|1), barracks]` (net/siege/siegeRef.js worksOf);
  *  optional (a battle whose works were never frozen carries none), a siege's alone. */
 export const SIEGE_PASS_FIELDS = Object.freeze(['sk', 'sw', 'sd', 'st', 'sn', 'sb', 'se', 'sf', 'sx']);
 /** The sides a pass may name: the two sides' fighters, and a spectator's - CROWN1 part two: and a Royal Tourney's

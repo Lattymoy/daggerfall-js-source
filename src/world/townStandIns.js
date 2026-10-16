@@ -1,6 +1,6 @@
 // WD3 (2026-10-01): THE PIECES BEAUTIFUL VILLAGES AND BEAUTIFUL CITIES BORROW, STOOD IN BY THE PORT.
 //
-// The two town mods are world data (src/formats/worldDataPack.js), and their blocks place pieces of five peer mods
+// The two town mods are world data (src/formats/worldData/worldDataPack.js), and their blocks place pieces of five peer mods
 // the port does not carry - Daggerfall Expanded Textures, Diep's Rosy's Resources, New Paintings, the RMB Resource
 // Pack and DET's Harvestable Crops - and eighteen beds of their own whose prefabs point at nothing (their meshes and
 // textures are Daggerfall's, recoloured). Mac's answer for a peer the port lacks was "Build your own" (DS1), and the
@@ -148,7 +148,7 @@ export function paintingModel({ hang, picture, mirror }) {
 
 // ---- Rosy's other pieces -------------------------------------------------------------------------------------------
 /** The picture each of Rosy's small hangings and rugs wears (world/townPictures.js), by id - the one table its builder
- *  and its name in the house decorator (systems/decorMods.js decorModNaming) both read (AUDIT 05b A8). */
+ *  and its name in the house decorator (systems/decor/decorMods.js decorModNaming) both read (AUDIT 05b A8). */
 export const ROSYS_PICTURES = Object.freeze({
   69467: PICTURE.smallHanging(0), 69468: PICTURE.smallHanging(1), 69469: PICTURE.smallHanging(2), 69471: PICTURE.rug(2), 69472: PICTURE.rug(3),
 });
@@ -403,7 +403,7 @@ export function seatNatureFlat(seat, x, z, groundY) {
 // it must, to pass HILL_PATCH_SINK under every one - still facing up, its edge still under the ground.
 
 /** HILL-SEAT: how far a model the author stood on a hill may hang over what is drawn under any point of its footprint,
- *  in metres - the bar HILL-SHAPES held a prop's foot to at its origin (test/fb1005_hills.test.js), held now under the
+ *  in metres - the bar HILL-SHAPES held a prop's foot to at its origin (test/formats/worldData/fb1005_hills.test.js), held now under the
  *  whole footprint: three times the 2 classic units (0.05 m) a town's own models stand over their ground (GroundOffset,
  *  the block's frame over the levelled terrain), the hair the pad's own top keeps under a base (HILL_PATCH_SINK). */
 export const HILL_SEAT_TOLERANCE = 0.15;

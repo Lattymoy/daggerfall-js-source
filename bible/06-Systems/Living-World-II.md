@@ -10,7 +10,7 @@ dungeon, and in what order to build: "Your decision" to both (section 1, decisio
 detailed as possible."
 
 **Status: LW9-LW16 BUILT 2026-10-09; AUDITED 2026-10-10** (Mac: "Lets do a deep audit and ensure this is perfection" -
-`01-Overview/Audit-LivingWorld-II.md`: every finding, where it stands below marked AUDIT LW-II, and what was not
+`01-Overview/audits/Audit-LivingWorld-II.md`: every finding, where it stands below marked AUDIT LW-II, and what was not
 changed and why). Eight slices, LW9 to LW16, in the order of decision 2.
 As each one ships, its record is written on this page under its name, the way `06-Systems/Living-World.md` records
 LW1-LW8. That first page stays the record of LW0-LW8 and their fixes, and its LW0 decisions bind here except where
@@ -270,7 +270,7 @@ has none.
 - `scenes/exterior.js`: FLAGGED, as LW2 has it.
 - `scenes/dungeonContext.js`: no roads.
 
-Pins: `test/lw9_traffic.test.js` (17 - AUDIT LW-II: the road jobs' own tables against their reach, stay, pace and
+Pins: `test/systems/livingWorld/lw9_traffic.test.js` (17 - AUDIT LW-II: the road jobs' own tables against their reach, stay, pace and
 cycle; the cover's two readers; the lodging after dark and the leaving; one fire to a shared camp and none on the march;
 the friendly knight still halting a wanted player). PIN MOVED: `lw1_livingWorld` (the roster's ids, more of the road's own appended),
 `lw3_roads` (the first's tables pinned alone), `lwperf_cost` (the day's trips' reference reads the new chances).
@@ -287,7 +287,7 @@ Mac: "actual caravans utilizing horses and wagons".
 - A noble's procession (LW9) draws its baggage wagon.
 - A pedlar's or a carter's own trip leads a pack horse: the horse alone, in its still and walk views. ARENA2 has no pack
   model the tree knows of.
-- Nobody else has a team. Couriers stay on foot: the riding peer's mounted sprites (`net/peerRiders.js`) are a player's
+- Nobody else has a team. Couriers stay on foot: the riding peer's mounted sprites (`net/peer/peerRiders.js`) are a player's
   Eye of the Beholder look, not a resident's (section 11, call 5).
 
 ### 3.2 Where it is (`wagons.js`, pure)
@@ -321,7 +321,7 @@ Mac: "actual caravans utilizing horses and wagons".
 - **THE CARGO** (`cargoOf`, the tiers CARGO_DEFINITIONS shows): full (90) on the way out; home, sold (50) or bought
   (75) by the trip's seed; a quarter (25) once robbed (LW11's `robbed`, the character's own).
 
-### 3.3 Drawn (`world/roadTeams.js`, `scenes/livingRoads.js`, `scenes/horseCartPool.js`)
+### 3.3 Drawn (`world/road/roadTeams.js`, `scenes/livingWorld/livingRoads.js`, `scenes/horseCartPool.js`)
 
 - **ONE MEMBER, ONE EXPORT.** The pool's own wagon draw and horse pose are handed out through its `presentation`
   (`drawWagon`, `poseHorse`) beside its `wagonParts` and `horseArt`. The living world's teams draw with them, and the
@@ -348,7 +348,7 @@ Mac: "actual caravans utilizing horses and wagons".
     pool's `boxTriangles`) in a bucket of its own (`wagonBucket`), taken down when it moves or leaves; a moving wagon
     claims nothing.
   - `clear()` destroys every batch and takes down every box, with the roads' own clear.
-- **THE OVERWORLD**: a caravan's mark is its wagon - the bed and two wheels under it (`ui/travelViewHud.js`).
+- **THE OVERWORLD**: a caravan's mark is its wagon - the bed and two wheels under it (`ui/travel/travelViewHud.js`).
 
 ### 3.4 The four hosts, the measure, the pins
 
@@ -364,7 +364,7 @@ pool's: at most WAGONS_DRAWN wagons of five meshes and their cargo a frame. A re
 Moved pins (AUDIT LW-II-2 P15 - unrecorded until then): `lw3_roads` (a caravan's Overworld mark is its wagon),
 `lw4b_roadFights` (the roads' `clear()` clears the teams beside the fights).
 
-Pins: `test/lw10_wagons.test.js` (9 - AUDIT LW-II: the roads' layer at a camp, its bodies and its parked teams;
+Pins: `test/systems/livingWorld/lw10_wagons.test.js` (9 - AUDIT LW-II: the roads' layer at a camp, its bodies and its parked teams;
 WAGONS1 x LW10 through a real pool). Mutants: `tools/mutants/lw10.json` (34).
 
 ## 4. LW11 - the caravan's door: trade, theft, the hold-up, the escort (BUILT 2026-10-09)
@@ -519,13 +519,13 @@ talk's doors: a caravan's after the kin's - AUDIT LW-II-2 P15, unrecorded until 
 
 Moved by the audit: `lwfix4_turns`' records (a hold-up's robbery carried at the leg's end, C9).
 
-AUDIT LW-II-2: `test/auditlwii2_door.test.js` (13), `tools/mutants/auditlwii2_door.json` (44). Moved: `lw11_caravan`
+AUDIT LW-II-2: `test/systems/livingWorld/auditlwii2_door.test.js` (13), `tools/mutants/auditlwii2_door.json` (44). Moved: `lw11_caravan`
 (the host's `travelFree`; the road's caught hand no longer clears the crime; its hold-up fixtures minted through
 `handsOn`), `lw2_livingTown` (the save flushes the counters first), `lw3_roads` (the talk's caught line puts the crime
 back); re-aimed by content: `lw11.json`'s report, gone, witness and C4/C7/C10 records (`LW11-wire-caught` now aims at
 `townTalk.js`), `lw2.json` LW2-regards-unsaved, `lw3.json` LW3-road-watch.
 
-Pins: `test/lw11_caravan.test.js` (21 - AUDIT LW-II: the newcomer witness and the trip pending, the hold-up by the
+Pins: `test/systems/livingWorld/lw11_caravan.test.js` (21 - AUDIT LW-II: the newcomer witness and the trip pending, the hold-up by the
 player's own hand, the escort with the party throughout, the band's purse, the book's robbery last forgotten, the
 report's law). Mutants: `tools/mutants/lw11.json` (98).
 
@@ -629,7 +629,7 @@ a region's towns, its roads, a seed and the clock); the hideout is stood by `src
   Hand keep a camp off this road." (BAND_WARNINGS) - of a band whose hideout lies within HEARD_PX (3 px) the character
   has not heard of; the character has heard of it (`heard`, the band's key).
 - **A HEARD MARK.** Each band heard of, standing, is marked on the Overworld as "Hideout of the Black Hand (rumoured)":
-  a dashed ring (`wayfarer hideout`, `ui/travelViewHud.js` TV_HIDEOUT_R) about a point up to RUMOUR_OFF_N (half a
+  a dashed ring (`wayfarer hideout`, `ui/travel/travelViewHud.js` TV_HIDEOUT_R) about a point up to RUMOUR_OFF_N (half a
   pixel) from it, never the point (`rumourAt`).
 - **NOT BUILT:** a talk's answer naming a band. **OPEN FOR MAC:** a band on the bounty board (section 11, call 3).
 
@@ -649,11 +649,11 @@ about 1.2 ms, once a network; a fortnight's 341 troubles, 7 a band's (5 robbed);
 Moved pins: `lw4_trouble` (HALT_MIN, FIGHT_MIN, ROAD_NEWS's ends), `lw6b_remains` and `lw6d_word` (MARK_KINDS,
 TALE_KINDS); `nudedecor` (the band's camp fire among the billboards that are no person - AUDIT LW-II-2 P15).
 
-Pins: `test/lw12_outlaws.test.js` (16 - AUDIT LW-II: the chest kept by its minting, the rout by blows, the book asked
+Pins: `test/systems/livingWorld/lw12_outlaws.test.js` (16 - AUDIT LW-II: the chest kept by its minting, the rout by blows, the book asked
 again and its two readers alike, the robbery at the leg's end, the camp every reader's). Mutants:
 `tools/mutants/lw12.json` (93).
 
-AUDIT LW-II-2: `test/auditlwii2_outlaws.test.js` (10), `tools/mutants/auditlwii2_outlaws.json` (47); world.js wires the
+AUDIT LW-II-2: `test/systems/livingWorld/auditlwii2_outlaws.test.js` (10), `tools/mutants/auditlwii2_outlaws.json` (47); world.js wires the
 recentre and the teleport too, and the trouble world's `resolved` remakes LW16's kept word with the troubles (H3: the
 news told, the visitors and the carried word kept what was read band-less, and a late reader told another story).
 `tools/livingPerfProbe.mjs` stands every hideout, its stand frame counted. Moved: `lw12_outlaws` (the chest a generator,
@@ -713,7 +713,7 @@ census's roster) and `src/systems/livingWorld/trips.js` (`leaderOf`, `ownTrip`, 
   Orcs" in a fight.
 - Its greeting names it (COMPANY_GREETINGS: "The Lantern Company - you've heard of us?"), by its head's regard. Each
   member keeps their own regard; the company's word to the player is its head's.
-- The chronicle's People page (`people.js peoplePage`, `ui/enhancedChronicle.js`): each card a member's company, and a
+- The chronicle's People page (`people.js peoplePage`, `ui/enhanced/enhancedChronicle.js`): each card a member's company, and a
   COMPANIES group - each company any of the known walk with, its town and the members the character knows.
 
 ### 6.3 The measure, the pins
@@ -731,7 +731,7 @@ Moved pins: `lw4_trouble` (a fated member's place sends its company's first), `l
   road's `spared` and `fallen` too, so a member saved can fall after all in that cycle), and a `won`/`lost` on a later
   member's own trip, which LW13 no longer makes, is never read again.
 
-Pins: `test/lw13_companies.test.js` (10 - AUDIT LW-II: one company to a train; the holy day on its own draw).
+Pins: `test/systems/livingWorld/lw13_companies.test.js` (10 - AUDIT LW-II: one company to a train; the holy day on its own draw).
 Mutants: `tools/mutants/lw13.json` (45).
 
 ## 7. LW14 - the deep's own (BUILT 2026-10-09)
@@ -743,7 +743,7 @@ below is `src/scenes/dungeonDivers.js`.
 ### 7.1 The dive's route (`deepRoute.js`)
 
 - **THE STOPS** (`stopsOf`): the dungeon's random foe markers (editor record 15, STOP_FOE) and random treasure markers
-  (19, STOP_TREASURE - each its one home's: `characters/dungeonEnemies.js RANDOM_RECORD`, `systems/loot.js
+  (19, STOP_TREASURE - each its one home's: `characters/dungeonEnemies.js RANDOM_RECORD`, `systems/loot/loot.js
   RANDOM_TREASURE_MARKER_RECORD`; AUDIT LW-II-2 D11: they were two literals beside them), off the placed blocks'
   layouts - never a fixed foe (16), a quest's marker (11, 18) or fixed treasure (archive 216). Keyed `<block>:<marker position>`, a foe's by its marker's LoadID too. Read at the dungeon's
   build only; the trips need none of it.
@@ -851,9 +851,9 @@ Moved pins: `lw1_livingWorld` (EVENTS' `poached`), `lw7b_beyond` (the divers' de
 (the remains' guard), and the door's reach line written apart from the companion's (`auditwatchkit_ui.json`'s
 WK-P6 records name one site).
 
-Pins: `test/lw14_deep.test.js` (12). Mutants: `tools/mutants/lw14.json` (64).
+Pins: `test/scenes/lw14_deep.test.js` (12). Mutants: `tools/mutants/lw14.json` (64).
 
-AUDIT LW-II-2: `test/auditlwii2_deep.test.js` (15), `tools/mutants/auditlwii2_deep.json` (34); the host's divers' and
+AUDIT LW-II-2: `test/scenes/auditlwii2_deep.test.js` (15), `tools/mutants/auditlwii2_deep.json` (34); the host's divers' and
 remains' steps wrapped as their neighbours are (a throw there no longer ends the frame loop). Moved: `lw14_deep` (a fated
 trouble is `inside`; the harness's `choose` answers it mounted), `lw6_deep`, `lw6b_remains` and `lwfix6_rooms` (the
 wrapped steps), `lw11_caravan` and `lw2_livingTown` (the talk's door asks the divers below only), `portal1_stone` (the
@@ -1020,9 +1020,9 @@ errand in `dayPlan.js`.
   moved with it - AUDIT LW-II-2 P15), `market.js` (the reckoning, the reads, the prune), `homes.js` (a door opened marks its trader),
   `cron.js` (HOUR_JOBS `patrons`, behind the market's switches), `budget.js` (FAUCET_KINDS,
   `faucetStatement`), `.github/workflows/account-deploy.yml` (the law's file among the paths that deploy the Worker,
-  `test/accountdeploy.test.js` ACC1-CI). The account service redeploys on merge.
+  `test/server/accountdeploy.test.js` ACC1-CI). The account service redeploys on merge.
 
-Pins: `test/lw15_patrons.test.js` (12) - the law (the share, the odds, the over, the draws, the takes, a crafted piece
+Pins: `test/systems/livingWorld/lw15_patrons.test.js` (12) - the law (the share, the odds, the over, the draws, the takes, a crafted piece
 no dearer, the hour's odds measured); the hour (the town, the seller, the day, the order, the hours); the service
 through the real Worker over node:sqlite (the sale, the gold, the faucet, twice the same, late and hourly each the
 law's own fold, a private home none, a piece taken back mid-reckoning none, a full purse none, the region's read); the
@@ -1032,7 +1032,7 @@ reads at once, the floor's worth, the laws read again, the held seller, the read
 pruned, the door opened from now, the switch, the secret, the failure unmarked). Mutants: `tools/mutants/lw15.json`
 (106).
 
-AUDIT LW-II-2: `test/auditlwii2_service.test.js` (14), `tools/mutants/auditlwii2_service.json` (45). The counter's mark:
+AUDIT LW-II-2: `test/systems/auditlwii2_service.test.js` (14), `tools/mutants/auditlwii2_service.json` (45). The counter's mark:
 `worldModes.js` WIRED at both Buy doors (`commitTrade`'s Buy arm, `doBuy`); `world.js` through it (the caravan's counter
 is `openRoadTrade`); `exterior.js` and `dungeonContext.js` none (no counter's Buy). Moved: `lw15_patrons` (P7's door marks
 the hour it opens in, S4), `auditscale` D7 (the shut market's hours marked - twenty-two statements an hour, S3);
@@ -1073,7 +1073,7 @@ registration smoke check asks again on a 5xx, a new handle each try, as every ot
 (`account-deploy.yml`): asked once, it failed #766's deploy on the overload's 500 - read as the PBKDF2 cap - with the
 Worker already live.
 
-Pins: `test/patronload2.test.js` (2) - each statement's plan on the real migrations (the region's index, the piece's
+Pins: `test/server/patronload2.test.js` (2) - each statement's plan on the real migrations (the region's index, the piece's
 own, no walk of the market or of a town, the newest read in the index's order) and the stall's read;
 `tools/mutants/patronload2.json` 6 of 6 dead.
 
@@ -1141,7 +1141,7 @@ the host's is `scenes/world.js` (the visits, worked a slice a frame).
   is charged, a tale of its region's towns (relations.js TALE_KINDS `held`, `R<region>.<minute>~<crime>`, the name of
   the one robbed - the report now names them), in its own words (HELD_NEWS). A murder charged never one: it is the
   hand's. Void, none. (AUDIT LW-II: the road's reports were void in the host until LW11's audit, C1 - a place held by a
-  newcomer could not be found, so no witness was ever living; see `01-Overview/Audit-LivingWorld-II.md`.)
+  newcomer could not be found, so no witness was ever living; see `01-Overview/audits/Audit-LivingWorld-II.md`.)
 
 ### 9.3 The host, and the measure
 
@@ -1181,14 +1181,14 @@ robbed). Re-aimed by content: `lw6d.json` LW6d-early and its TALE_KINDS record, 
 Moved pins (AUDIT LW-II): `lwfix4_turns` (the readers of `livingMemoFresh`, five to six); re-aimed `lw4.json`
 LW4-news-nameless (a band named whole beside it).
 
-Pins: `test/lw16_word.test.js` (8) - the word carried (the window, the set-out, the own, the first in, the deeds, the
+Pins: `test/systems/livingWorld/lw16_word.test.js` (8) - the word carried (the window, the set-out, the own, the first in, the deeds, the
 courier's one hop); the repute (each kind, the bounds, the order, the stranger, the share); told (the share on its own
 draw, the old law replayed, the opener, a robbery's words); the living town (any town's deeds, a robbery told in its
 region, the word in its talk, the repute, a stranger's regard and word, the host's word once worked); the host's
-seams. `test/lw11_caravan.test.js` (the tale on the charge, void none, a murder none). Mutants:
+seams. `test/systems/livingWorld/lw11_caravan.test.js` (the tale on the charge, void none, a murder none). Mutants:
 `tools/mutants/lw16.json` (73).
 
-AUDIT LW-II-2: `test/auditlwii2_town.test.js` (11), `tools/mutants/auditlwii2_town.json` (32). A token that opens a
+AUDIT LW-II-2: `test/systems/livingWorld/auditlwii2_town.test.js` (11), `tools/mutants/auditlwii2_town.json` (32). A token that opens a
 sentence opens it with a capital (`lines.js fillLine`, W8/C11: a band's "the" - "the Crooked Fangs have a camp ..."). Moved:
 `lw15_patrons` (the online gate, the plan's guard; the buyer and the walker by place), `lw16_word` (the word through
 `carriedOf`; the done line, `carriedAt`, the open world's step by its comment), `lw12_outlaws` (the warning's capital);

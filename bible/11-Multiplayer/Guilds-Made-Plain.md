@@ -5,7 +5,7 @@ The port's own. Both guild systems online - a player's guild (GUILD1, GUILD2: `0
 read whole as a player meets them, and made easier to understand without taking a mechanic away that does its own job.
 Offline is DFU 1:1 and untouched (Port-Doctrine; Chapters-Arc law 1).
 
-AUDITED the same day (the owner: "Do a comprehensive audit and ensure absolute perfection"): `01-Overview/Audit-Guild3.md`,
+AUDITED the same day (the owner: "Do a comprehensive audit and ensure absolute perfection"): `01-Overview/audits/Audit-Guild3.md`,
 six cold lanes over a frozen snapshot. What it changed is written into the sections below as they now stand, each
 marked AUDIT GUILD3 and its finding's id.
 
@@ -22,7 +22,7 @@ Three layers, each with its own room to move:
 
 | Layer | Switch | Room |
 |---|---|---|
-| DFU's guilds - the four, the eight temples, the ten orders (`systems/guilds.js`, `guildVariants.js`, `guildServices.js`) | always | None: Port-Doctrine's 1:1 list. Nothing here touches them. |
+| DFU's guilds - the four, the eight temples, the ten orders (`systems/guild/guilds.js`, `guildVariants.js`, `guildServices.js`) | always | None: Port-Doctrine's 1:1 list. Nothing here touches them. |
 | A player's guild and its seats (GUILD1, GUILD2, SEAT1-SEAT2, CROWN1-2, SEASON1) | `SEATS_OPEN = "on"`, `MARKS_OPEN = "on"` | Words and pages freely; a mechanic's change moves live rows and needs a migration. |
 | The Chapters (CHAP1-CHAP7) | `CHAPTERS_OPEN = "dev"`, `CHAPTER_TITLES = "off"` (`server-account/wrangler.toml`) | Free: the developers' rows alone. |
 
@@ -104,7 +104,7 @@ Considered and NOT done, each with its reason:
   NATIVE-WINDOW RULE): no element without its DFU source. The board's chapter card says what the band does instead
   (GUILD3d).
 - **`SEAT_WEEK_ZERO_S` (writLaw) and `SEAT_WEEK0_MS` (townSeatLaw) as one export.** One instant, twice - each pinned to
-  the epoch's own formula (`test/audit31_law.test.js` the writs', `test/seat1a_client.test.js` the seats'), so one through
+  the epoch's own formula (`test/net/audit31_law.test.js` the writs', `test/net/seat1a_client.test.js` the seats'), so one through
   the other (AUDIT GUILD3 R15: this said "pinned equal"); importing townSeatLaw into writLaw would carry the seats' graph
   into every writ reader. Left, pinned.
 
@@ -174,7 +174,7 @@ Sigil's top stage beside the band's; neither is a guild's (AUDIT GUILD3's words 
   (W1/S1); every read walks the guild's own index, its plan pinned (S2); the silver's room is said before the press (S3);
   a code a past refusal said that nothing re-reads is listed but never holds the buttons (C1/T2); and the page reads the
   guild again as Settings is turned to (C8).
-- **What each rank may do.** `src/net/guildPowers.js` composes the four power tables and the vault's defaults into one
+- **What each rank may do.** `src/net/guild/guildPowers.js` composes the four power tables and the vault's defaults into one
   list in words (`GUILD_RANK_ACTS`, `guildRankActsText`), each line's ranks read off its own table at the call - a
   table moved moves the page. The Members page folds it under "What each rank may do": each rank's acts, the
   guildmaster's grants of the vault named as what can change a member's. A sweep fails the suite on a power any of the
@@ -248,7 +248,7 @@ Sigil's top stage beside the band's; neither is a guild's (AUDIT GUILD3's words 
 | A cut that takes depth | Each cut's mechanics move to the band it stood for (law 1), and the record names where each went - the Decline's fall to Failing (AUDIT GUILD3 R1) |
 | A developers' Season under way with a retired event | Read as none, its Strength the week's alone; its Chronicle row, if one was written, keeps its words |
 | An Ascendant chapter's patron paying more than a stranger | The better of the two (`chapterHallFactor`) |
-| A new power added to a table with no words | The sweep (`test/guild3_plain.test.js`) fails the suite |
+| A new power added to a table with no words | The sweep (`test/net/guild3_plain.test.js`) fails the suite |
 
 ## 7. The four hosts (THE FOUR HOSTS RULE)
 
@@ -261,10 +261,10 @@ Sigil's top stage beside the band's; neither is a guild's (AUDIT GUILD3's words 
 
 ## 8. Pins
 
-`test/guild3_plain.test.js` (the words, the ledger's words and direction, the rank list and its sweep, the disband
+`test/net/guild3_plain.test.js` (the words, the ledger's words and direction, the rank list and its sweep, the disband
 list on the service through the real Worker and on the page, the treasury's line, the no-guild primer, the chapter card,
 the five events, the Ascendant band and its High Master, the patron's price) and `tools/mutants/guild3.json`; the audit's
-pins, `test/audit_guild3.test.js` and `tools/mutants/audit_guild3.json` (`01-Overview/Audit-Guild3.md`).
+pins, `test/net/audit_guild3.test.js` and `tools/mutants/audit_guild3.json` (`01-Overview/audits/Audit-Guild3.md`).
 
 **The pins GUILD3 moved, each said where it stands** (`PIN MOVED: GUILD3...` - AUDIT GUILD3 R4: eight files had moved
 unmarked, marked since): the chairs' and the council's words

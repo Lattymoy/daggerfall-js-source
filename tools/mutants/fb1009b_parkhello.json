@@ -5,7 +5,7 @@
     "old": "    const primaryOpen = this.status === 'open' && this._ws && this._welcomed.has(this._ws);",
     "new": "    const primaryOpen = this.status === 'open' && this._ws;",
     "tests": [
-      "test/fb1009b_parkhello.test.js"
+      "test/net/fb1009b_parkhello.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    if (this.status === 'open' && this._ws) { if (!this._welcomed.has(this._ws)) return; if (this.lookOk) socks.push(this._ws); }",
     "new": "    if (this.status === 'open' && this._ws) { if (this.lookOk) socks.push(this._ws); }",
     "tests": [
-      "test/fb1009b_parkhello.test.js"
+      "test/net/fb1009b_parkhello.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    if (this.status === 'open' && this._ws) { if (!this._welcomed.has(this._ws)) return; if (this.lookOk) socks.push(this._ws); }",
     "new": "    if (this.status === 'open' && this._ws) { if (!this._welcomed.has(this._ws)) { this._lookDirty = false; return; } if (this.lookOk) socks.push(this._ws); }",
     "tests": [
-      "test/fb1009b_parkhello.test.js"
+      "test/net/fb1009b_parkhello.test.js"
     ]
   }
 ]

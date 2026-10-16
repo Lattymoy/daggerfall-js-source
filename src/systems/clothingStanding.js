@@ -37,7 +37,7 @@
 // (`entity.equip.slots`, equipTableOf's own field) with the bag's
 // `equipSlot` mark as the fallback, as equippedEnchantedItems does.
 
-import { EQUIP_SLOTS } from '../characters/paperdoll.js';
+import { EQUIP_SLOTS } from '../characters/paperdoll/paperdoll.js';
 import { ITEM_GROUPS } from '../characters/equipRules.js';
 import { FACTION_TYPES } from '../formats/factionFile.js';
 

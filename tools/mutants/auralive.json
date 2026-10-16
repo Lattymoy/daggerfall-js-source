@@ -5,7 +5,7 @@
     "old": "    this._rehelloAt = now;\n",
     "new": "",
     "tests": [
-      "test/auralive.test.js"
+      "test/net/auralive.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "if (this.terminal || this._closedByUs || !cur || cur !== s.old || !open) {",
     "new": "if (false) {",
     "tests": [
-      "test/auralive.test.js"
+      "test/net/auralive.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "      this._retire(ws);   // AURA-LIVE: a replacement refused",
     "new": "      // AURA-LIVE: a replacement refused",
     "tests": [
-      "test/auralive.test.js"
+      "test/net/auralive.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "      this._retire(primary ? this._ws : this._halo.get(room)?.ws);",
     "new": "",
     "tests": [
-      "test/auralive.test.js"
+      "test/net/auralive.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "if (now - s.since > BACKOFF_MAX_MS) {",
     "new": "if (false) {",
     "tests": [
-      "test/auralive.test.js"
+      "test/net/auralive.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "    for (const [, s] of this._swap) { try { s.ws.close(1000, 'leaving'); } catch { /* already closed */ } }\n",
     "new": "",
     "tests": [
-      "test/auralive.test.js"
+      "test/net/auralive.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "      if (this._roomOf(ws) == null && !this._promote(ws, room)) return;   // AURA-LIVE",
     "new": "      // AURA-LIVE",
     "tests": [
-      "test/auralive.test.js"
+      "test/net/auralive.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "    for (const [room, h] of this._halo) if (h.ws && h.status === 'open') open.push([room, h.ws]);\n",
     "new": "",
     "tests": [
-      "test/auralive.test.js"
+      "test/net/auralive.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "mine !== _auraHeard && online.rehello?.()",
     "new": "mine !== _auraHeard && false",
     "tests": [
-      "test/auralive.test.js"
+      "test/net/auralive.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "if (who && 'aura' in who) _auraHeard = who.aura ?? null;",
     "new": "",
     "tests": [
-      "test/auralive.test.js"
+      "test/net/auralive.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "export const AURA_DRAW_MAX = 32;",
     "new": "export const AURA_DRAW_MAX = 16;",
     "tests": [
-      "test/auralive.test.js"
+      "test/net/auralive.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "if (t - w.seen > AURA_FORGET_S) _auraPool.delete(id);",
     "new": "if (w.seen !== t) _auraPool.delete(id);",
     "tests": [
-      "test/auralive.test.js"
+      "test/net/auralive.test.js"
     ]
   }
 ]

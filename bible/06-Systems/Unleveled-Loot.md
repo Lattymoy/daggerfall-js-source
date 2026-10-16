@@ -96,7 +96,7 @@ scenes/worldModes.js (`setUnleveledLootWorld`); the two hosts hand it
 - **The rolls are the caller's `rolls`**, so a test drives every
   Range and Dice100.
 
-## Pinned (`test/unleveledLoot.test.js`, 8)
+## Pinned (`test/systems/unleveledLoot.test.js`, 8)
 
 Unity's Range forms; the tables (dungeonQuality, ShopLevel,
 RandomHighTier's thresholds, MaterialSwitch through the ten keys and

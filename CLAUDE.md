@@ -9,7 +9,7 @@ change) and read `bible/01-Overview/Port-Doctrine.md` before touching code.
   history; Port-Doctrine's Scope section governs new work.
 
 - **Before a push** (FAST-SUITE, `bible/09-Testing/Testing.md` "How the suite
-  runs"): `npm run lint`, `npm run types`, the bible's gates (`test/manifest`,
+  runs"): `npm run lint`, `npm run types`, the bible's gates (`test/bible/manifest`,
   `citeanchor`, `citedrift`, `mutantdrift`, `audit18_bible_docs`, `ledger` -
   always: they catch a cite or a mutant record a change moved, which the tests
   it picks do not) and `npm run test:changed` - the tests a change can move. When that is
@@ -31,12 +31,13 @@ change) and read `bible/01-Overview/Port-Doctrine.md` before touching code.
 - **Patch notes go in the pull request's description**, under
   `## Patch notes: <title>` (`.github/pull_request_template.md`). The desktop
   release reads them there. Never commit a patch-notes file:
-  `test/rel4_release.test.js` fails the suite on one. Editing a merged pull
+  `test/tooling/rel4_release.test.js` fails the suite on one. Editing a merged pull
   request's description rewrites its release's notes (`release-notes.yml`).
 - **The hosts do not grow** (HOST-SPLIT, `bible/01-Overview/Host-Split.md`):
   new behaviour goes into a module the host wires (`src/scenes/fishHost.js` is
-  the shape), never into `bootWorld`, `createWorldModes`, `buildDungeonContext`
-  or `bootExterior` themselves - and on the relay into a Room method of its own,
-  never into `_message`. `test/hostceiling.test.js` fails a host that lengthens
+  the shape), never into `bootWorld`, `createWorldModes`, `buildDungeonContext`,
+  `bootExterior`, `navalHost`'s `createNavalHost` or `comeSailAway`'s
+  `createComeSailAwayRuntime` themselves - and on the relay into a Room method of its own,
+  never into `_message`. `test/scenes/hostceiling.test.js` fails a host that lengthens
   past its ceiling in code lines; `node tools/hostScope.mjs <host>` maps what a
   block reads and writes before you move it.

@@ -28,7 +28,7 @@
 // WHAT IT TAKES BACK (`saleRefusal`): a ship of the player's that is HERE - made fast or lying at this port, laid up (her
 // title in the book), or packed (her parts in the pack) - with nothing in her hold, nobody of hers ashore at the
 // player's side, never one at her helm or fighting. Sold, her title leaves the book and her record the ledger (fleet.js
-// forgetShip), her hurts and crew the sea fight's state (scenes/navalHost.js forgetBoat), and a boat standing in the
+// forgetShip), her hurts and crew the sea fight's state (scenes/naval/navalHost.js forgetBoat), and a boat standing in the
 // world is laid up first, by the mod's own law (LayUpBoat), so she leaves the water as a ship sent away does.
 //
 // THE SHELVES. The General Store and the Pawn Shop no longer shelve Come Sail Away's two items, and no shop buys them
@@ -36,8 +36,8 @@
 // and the cart off DFU's General Store.
 //
 // Pure: no DOM, no renderer, no clock. Not a DFU member. Ledger A (SHIPYARDS).
-import { HULL_NAMES, HULL_PRICES } from './comeSailAwayHulls.js';
-import { mintDeed, mintParts, BOAT_PARTS_TEMPLATE, BOAT_DEED_TEMPLATE } from './comeSailAwayItems.js';
+import { HULL_NAMES, HULL_PRICES } from './comeSailAway/comeSailAwayHulls.js';
+import { mintDeed, mintParts, BOAT_PARTS_TEMPLATE, BOAT_DEED_TEMPLATE } from './comeSailAway/comeSailAwayItems.js';
 import { YARD_QUALITY, YARD_PRICE_INDEX } from './merchantYards.js';
 import { calculateCost } from './shopStock.js';
 import { getTradePrice } from './tradeModes.js';

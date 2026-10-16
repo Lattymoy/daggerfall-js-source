@@ -5,18 +5,18 @@
 // restored, and where its door lets the player out.
 //
 // WAGONS2: the room is the caravan's own (world/caravanRoomModel.js), stood on the caravan at its pose and turned with
-// it, its pictures the caravan's - the built ones or its owner's paint (systems/wagonLooks.js) - uploaded here, its
+// it, its pictures the caravan's - the built ones or its owner's paint (systems/wagon/wagonLooks.js) - uploaded here, its
 // windows' glass cut out so the world is seen through them.
 import { CARAVAN_BUILDING_KEY, CARAVAN_TEXT, CARAVAN_ROOM_MODEL_ID, caravanRoomBlock, readCaravanRoom } from '../systems/caravanRoom.js';
 import { BUILDING_TYPES } from '../world/buildingNames.js';
 import { trs } from '../world/mat4.js';
 import { caravanRoomModel, CARAVAN_ENTER, CARAVAN_LANTERN } from '../world/caravanRoomModel.js';
 import { wagonArt, wagonLookArt, isGlassRecord, lookRecord, LOOK_RECORDS, LOOK_RECORD_STRIDE, TEX, WAGON_ARCHIVE } from '../world/wagonArt.js';
-import { readWagonLook, CARAVAN_INSIDE_LOOKS, CARAVAN_INSIDE_PARTS } from '../systems/wagonLooks.js';
+import { readWagonLook, CARAVAN_INSIDE_LOOKS, CARAVAN_INSIDE_PARTS } from '../systems/wagon/wagonLooks.js';
 import { toColor32 } from '../formats/color32Order.js';
 import { dfLook, lookSeed } from '../world/dfLook.js';   // DF-LOOK: the room's pictures in Daggerfall's colours
 import { quatRotate } from '../world/quat.js';
-import { WAGON_MODE } from '../systems/horseCartLaw.js';
+import { WAGON_MODE } from '../systems/horse/horseCartLaw.js';
 
 import { CARAVAN_STANDS_NATIVES, CARAVAN_STANDS_TURN, turnGap } from '../systems/caravanRoom.js';   // WAGONS2 (AUDIT): the room's caravan where it stands - FINAL AUDIT: and which way
 export { CARAVAN_STANDS_NATIVES };
@@ -42,7 +42,7 @@ export function caravanRoomRecords() {
   return out;
 }
 
-/** The pictures an inside paint (`look` - systems/wagonLooks.js) puts on the room's live records: `[record, picture]`,
+/** The pictures an inside paint (`look` - systems/wagon/wagonLooks.js) puts on the room's live records: `[record, picture]`,
  *  each part's built picture or its paint's. */
 export function caravanRoomPictures(look) {
   const l = readWagonLook(look);

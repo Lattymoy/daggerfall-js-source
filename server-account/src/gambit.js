@@ -9,7 +9,7 @@
 //
 // Iliac Hand's board's twin (iliac.js), for a game with no deck to vouch
 // for: a game between two accounts at the relay's King's Gambit table is
-// rated - the relay signs its result (net/gambitReceipt.js g1) and either
+// rated - the relay signs its result (net/gambit/gambitReceipt.js g1) and either
 // seat carries it here. ONE row keyed by the game's id, whichever account
 // carries it first; the arena's Elo (arenaLaw.js eloAfter) and season
 // (arenaSeasonOf); a pair's day and season capped as the arena's are; a
@@ -25,8 +25,8 @@
 //
 // Not a DFU member: Daggerfall Unity has no such game - the mod does. Ledger A row (THE KING'S GAMBIT).
 // ═══════════════════════════════════════════════════════════════════
-import { verifyGambitReceipt } from '../../src/net/gambitReceipt.js';
-import { arenaSeasonOf, arenaSeasonEndsS, arenaSeasonDay, eloAfter, ARENA_ELO_START, ARENA_ELO_MIN, ARENA_ELO_MAX, arenaRatingOk, ARENA_PAIR_DAY_MAX, ARENA_PAIR_SEASON_MAX } from '../../src/net/arenaLaw.js';
+import { verifyGambitReceipt } from '../../src/net/gambit/gambitReceipt.js';
+import { arenaSeasonOf, arenaSeasonEndsS, arenaSeasonDay, eloAfter, ARENA_ELO_START, ARENA_ELO_MIN, ARENA_ELO_MAX, arenaRatingOk, ARENA_PAIR_DAY_MAX, ARENA_PAIR_SEASON_MAX } from '../../src/net/arena/arenaLaw.js';
 import { boardNamesOf } from './boardNames.js';
 
 /** 10.7: the games and the different foes the season's #1 must have played to wear GRANDMASTER - Iliac Hand's
@@ -194,7 +194,7 @@ async function topMayMove(ctx, season, a, b, na, nb) {
 }
 
 /**
- * A RATED GAME'S CLAIM (`/v1/gambit/claim`): the relay's receipt (net/gambitReceipt.js) for a game this account played.
+ * A RATED GAME'S CLAIM (`/v1/gambit/claim`): the relay's receipt (net/gambit/gambitReceipt.js) for a game this account played.
  * One row a game, whichever seat carries it first; both accounts must be registered to be rated. Answers
  * `{ recorded, ... }`, a game already kept `{ recorded: false, why: 'claimed', ... }`, a guest's `{ recorded: false,
  * why: 'guest' }`, one whose other seat is no registered account `{ recorded: false, why: 'foe-unregistered' }`, or

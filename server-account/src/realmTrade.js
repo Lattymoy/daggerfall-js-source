@@ -4,7 +4,7 @@
 // change hands in one write of both records, or not at all.
 //
 // Mac: "eliminate duping". The plan is bible/06-Systems/Realm-Arc.md
-// section 3; the law both ends read is src/net/realmTradeLaw.js.
+// section 3; the law both ends read is src/net/realm/realmTradeLaw.js.
 //
 // ═══ A HALF, THEN THE OTHER ════════════════════════════════════════
 //
@@ -32,8 +32,8 @@
 import { REALM_ID_RE, LEASE_RE, mintObjectKey, dropObjects, dropIfUnnamed, realmSaveTextOf, holdRefusal } from './realm.js';
 import { wealthOf, ledgerPieces, classicCount } from './judge.js';   // INT5: the trade's wealth, witnessed; INT4: the pieces it moves
 import { piecesRefusal, ledgerMoves, leavingKeys } from './ledger.js';   // INT4: a piece a side may give, and the ledger moved with it
-import { REALM_TEXT_MAX_BYTES } from '../../src/net/realmSaveCodec.js';   // REALM-GZIP: the text's bound
-import { realmTradeHalfOf, halvesAgree, settleRealmTrade, REALM_TRADE_SID_RE, REALM_TRADE_TTL_S } from '../../src/net/realmTradeLaw.js';
+import { REALM_TEXT_MAX_BYTES } from '../../src/net/realm/realmSaveCodec.js';   // REALM-GZIP: the text's bound
+import { realmTradeHalfOf, halvesAgree, settleRealmTrade, REALM_TRADE_SID_RE, REALM_TRADE_TTL_S } from '../../src/net/realm/realmTradeLaw.js';
 import { canon } from '../../src/net/canon.js';
 
 /** A trade half's body: two offers of up to TRADE_ITEMS_MAX records each, wider than any other JSON route (4 KiB). */

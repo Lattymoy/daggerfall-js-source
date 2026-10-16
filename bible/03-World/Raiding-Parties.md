@@ -138,7 +138,7 @@ participants, and signs the rewards. `RELAY_VERSION` world122 (a relay deploy - 
 - **Where.** A raid's LEDGER lives in the raided town's CELL (`worldRoom(px, py)` - every player standing in the town
   is in that room), in the cell object's storage (`raid:<key>`), for the raid's window and `RAID_KEEP_MS` (10 min)
   past it; the cell's alarm forgets it then. A cell keeps `RAID_LEDGERS_MAX` (4) - a new raid takes the stalest one's
-  place. The law is `net/raidLaw.js`, pure; the relay's half is `server/src/index.js` (`_raidWord`, `_raidClean`,
+  place. The law is `net/raid/raidLaw.js`, pure; the relay's half is `server/src/index.js` (`_raidWord`, `_raidClean`,
   `_raidSweep`).
 - **The word.** A player standing in a raided town while it runs says `{t:'raid', k:'w', key, st, tg, ty, px, py, n,
   s}` to the town's cell - the raid as the day's roll made it (its start, target, party and town pixel), the deaths of
@@ -167,7 +167,7 @@ participants, and signs the rewards. `RELAY_VERSION` world122 (a relay deploy - 
   Any word that finds the count at its target with no cleanse stamped starts it (a ledger written at its target just
   before an eviction), and a word that lands while the receipts are being minted is not heard - an object's input
   gate holds for storage alone, and the mint awaits the key and the signature - so a raid is cleansed once.
-- **The receipt** (`net/raidReceipt.js`): `w1.<base64url({ w, s, c, y, i, e })>.<signature>` - the raid's key, the
+- **The receipt** (`net/raid/raidReceipt.js`): `w1.<base64url({ w, s, c, y, i, e })>.<signature>` - the raid's key, the
   account, a seed from the relay's CSPRNG (RAID4 rolls the spoils off it), the party, issued and expiry (a week).
   Signed by the relay's one key, `GATE_SIGNING_KEY`, which now signs two things - the version is inside the signed
   bytes, so the gate's verifier refuses a `w1` and this one an `r1` before a byte of either body is read, and neither
@@ -196,7 +196,7 @@ Mac's "3. We can also add renown and it's own atheric + armor sets". A town defe
 receipt - one a raid, to each account that struck a raider and stood in the town at the cleanse.
 
 - **RAID4a - the record and the Renown** (account service acct17, no relay change). The device carries each receipt
-  with the character that fought it (`net/raidClaims.js`) to `/v1/raid/claim` (`server-account/src/raids.js`), which
+  with the character that fought it (`net/raid/raidClaims.js`) to `/v1/raid/claim` (`server-account/src/raids.js`), which
   verifies it with the relay's public half, counts it once a (raid, account) and at most `RAID_CLAIMS_DAY_MAX` (6) a
   game day - the relay holds no schedule, so this is the record's bound - and pays that character `renownRaidXp`:
   three quests' worth at the top quest level, under RENOWN3's ceiling (780 at Renown 1, 1,860 at 10, 3,900 from 27),
@@ -219,7 +219,7 @@ receipt - one a raid, to each account that struck a raider and stood in the town
 
 Mac: *"1. Audit this properly 2. Ensure online functionality is perfect"*. A read-only lens drove the real relay object
 (`test/fakeRoom.mjs`), the real account service over node:sqlite and the real device queue against RAID3-RAID4b's
-tree, and reproduced what it reported. Everything below is fixed and pinned (`test/auditraid.test.js`, 13 tests; 36
+tree, and reproduced what it reported. Everything below is fixed and pinned (`test/net/auditraid.test.js`, 13 tests; 36
 mutants, all dead), one relay deploy (**world123**) and one account deploy (**acct18**, migration 0017):
 
 - **R1 (high): a socket's first word decided an honest raid.** The first word to reach the town's cell made the ledger
@@ -278,7 +278,7 @@ Mac: *"Fix it and do another audit"* - AUDIT RAID's "not changed". A raid is fiv
 region, its town, its start, its party, its target - and the last three are the GENERATOR'S ALONE. So the relay (world124)
 reads every raid word against:
 
-- **the day's slots, always** (`net/raidLaw.js raidDaySlots`): a start, target and party the day never drew is no raid,
+- **the day's slots, always** (`net/raid/raidLaw.js raidDaySlots`): a start, target and party the day never drew is no raid,
   dropped before any read and without a strike (a data-modded world rolls its own raids, and they are its own). It
   needs no game data. The generator is ONE copy for relay and client (`raidDayRandom`, pinned equal to
   `systems/worldTick.js dayRng` for the raids' salt), and the client's roll is the law's (`rollRaidTowns` -
@@ -296,17 +296,17 @@ reads every raid word against:
   places with invented ones (the account service's six a game day and the hour's bound stay beside it). An empty pin
   is a legal state: the slots alone are read.
 
-Pinned in `test/raidroll.test.js` (9 tests; `tools/mutants/raidroll.json`, 25 mutants, all dead).
+Pinned in `test/systems/raidroll.test.js` (9 tests; `tools/mutants/raidroll.json`, 25 mutants, all dead).
 
 ## AUDIT ONLINE 2 - what AUDIT ONLINE left, fixed (2026-09-28)
 
-- **F2: a receipt's life is the RELAY's clock.** The raid and gate carriers (`net/raidClaims.js`, `net/gateClaims.js`)
+- **F2: a receipt's life is the RELAY's clock.** The raid and gate carriers (`net/raid/raidClaims.js`, `net/gate/gateClaims.js`)
   let a receipt go unasked by the device's clock, so a device a week ahead lost every receipt's Renown. A receipt is
   now expired only by the relay's clock (`world.js relayNowS`, heard at the welcome); unheard, it is kept and the
   account service judges it.
 - **F3 (AUDIT RAID R8d): a load in the session is a stand-up.** A town's thanks given, a save from before them loaded,
   then a save: the pool's `saved` cleared the record with its pieces in no pack. A load now says so
-  (`systems/saveSlots.js slotLoaded`, from the world's load and the dungeon's); the pools let go of what they held in
+  (`systems/save/saveSlots.js slotLoaded`, from the world's load and the dungeon's); the pools let go of what they held in
   the old pack (`scenes/spoilsPool.js loaded`), and the crash's door asks again for the loaded character. (Online, a
   load is refused; this is a session that went on offline, or a later one.)
 - **F4 (AUDIT SETS M2's other half): a body's pile the taker cannot read comes back.** A corpse's grant holding a
@@ -317,7 +317,7 @@ Pinned in `test/raidroll.test.js` (9 tests; `tools/mutants/raidroll.json`, 25 mu
   valid*" - blaming the reader. The maker now reads "*X's game refused the trade - nothing was traded*", and the reader
   that its game does not know something in the offer, and to reload (`net/tradeSession.js`).
 
-Pinned in `test/auditonline2.test.js` (F2, F3, F5) and `test/world6biiic.test.js` (F4); `tools/mutants/auditonline2.json`,
+Pinned in `test/net/auditonline2.test.js` (F2, F3, F5) and `test/net/world6biiic.test.js` (F4); `tools/mutants/auditonline2.json`,
 18 mutants, all dead.
 
 ## Open
@@ -341,7 +341,7 @@ answers with a card: *RAIDING PARTY* / the town and its province / the party att
 driven off (said only once this machine knows some) / *Withdraws at* the raid's end on the game's clock [TIME1: online in this machine's local time, "... your time"; offline
 the game clock's]. The host hands
 the map `raids` (`ui/eventMapMarks.js raidMapMarks` over `raidState()`), none while the mod is off; the classic region
-page, DFU's window, draws no raids. The gate's ring answers the same way. `01-Overview/Field-Bugs-2026-09-28b.md`
+page, DFU's window, draws no raids. The gate's ring answers the same way. `01-Overview/bugs/Field-Bugs-2026-09-28b.md`
 EVENT-TIP.
 
 ## FIELD-RAID-FT - a fast travel into a raided town crashed (2026-09-28)
@@ -351,7 +351,7 @@ Discord (lumin): "Fast traveled to a raid and got a crash" - `TypeError: Cannot 
 host's `peersNear()` answers null while no room is open (every other reader guards it); RAID2's `peersInTown` seam
 walked it, and the raid's Update asks it the first frame the player stands in a raided town - which a fast travel's
 arrival reaches while the rooms change over. Walking in never met the gap. The seam now reads no room as nobody in
-town. Pinned by `test/field_raid_ft.test.js` (red before), one mutant dead.
+town. Pinned by `test/scenes/field_raid_ft.test.js` (red before), one mutant dead.
 
 ## FB0929 - the swing no longer finds the town's defenders (2026-09-29)
 
@@ -366,7 +366,7 @@ and a defender on the look ray stops the swing short of the townsperson behind h
 wired; `scenes/exterior.js` and `scenes/worldModes.js` stand no defender and take the pool's law as it is, and
 `scenes/dungeonContext.js` has no watch. Online nothing changes on the wire: a peer's blow on my defender was already
 refused by its owner (AUDIT FINAL F12). Port-Ledger A carries the departure (DFU's ray still strikes an ally alone in
-front). Pinned by `test/fb0929_raidguards.test.js` (red before), five mutants dead.
+front). Pinned by `test/scenes/fb0929_raidguards.test.js` (red before), five mutants dead.
 
 **RAID-GUARDS (the same day, Mac: "Raids shouldnt let you damage the guards").** While a raid is on in the town, its
 defenders take none of the player's blows WHATEVER the setting. `cityGuards.playerSpares` is the one question - a
@@ -376,7 +376,7 @@ met) ask it, while the guards' damage door refuses any blow of the player's on a
 came: it lands nothing and raises no Assault. The crime watch is never spared, and with no raid on and the protection
 off the watch's pass strikes a defender as DFU's does (the DISC19-F watch against a monster). Kamer's defenders were
 passive watch-skinned Knights, re-pacified every three seconds and never a crime to strike; this is that, for the
-player's own hand. `test/fb0929_raidguards.test.js`, `tools/mutants/raidguards.json` (8, 8 dead).
+player's own hand. `test/scenes/fb0929_raidguards.test.js`, `tools/mutants/raidguards.json` (8, 8 dead).
 
 **RAID-REP (the same day, Mac: "I think it improves rep in all regions").** Checked, and it does not: GrantReputation
 raises the raided region's legal reputation, that region's People and its first knightly order, for a player who
@@ -396,4 +396,4 @@ a word - was tallied and never said (step F said the word from inside the rect a
 (`scenes/world.js` `exteriorFoes.clearLive()`) took every raider out of the pool without a death, so the raid kept them
 standing and stood no one under its cap. Step F says a raid I fought from anywhere on its pixel now, and
 `raidPoolCleared()` runs beside the sweep. The held map's card counts the town's ledger (`raidRelayState`) against the
-town's target, not this machine's share. The record: `01-Overview/Field-Bugs-2026-10-11g.md` RAID-WORD.
+town's target, not this machine's share. The record: `01-Overview/bugs/Field-Bugs-2026-10-11g.md` RAID-WORD.

@@ -3,15 +3,15 @@
 // Node has no layout engine, so "the diamond clears the vitals column"
 // and "it does not stand under the phone's jump button" are claims the
 // suite cannot check. This is the artifact that checks them: a page
-// over the REAL modules (src/ui/enhancedHud.js and
-// src/ui/enhancedStyle.js, imported rather than re-implemented), a fake
+// over the REAL modules (src/ui/enhanced/enhancedHud.js and
+// src/ui/enhanced/enhancedStyle.js, imported rather than re-implemented), a fake
 // player carrying a weapon, a shield and two potions, and every box
 // read back off the live engine at three sizes, two HUD scales and both
 // virtual-stick anchors.
 //
 // IT RUNS ON VITE'S OWN DEV SERVER rather than a static file server,
 // and that is not a convenience: the HUD's module graph reaches
-// `import.meta.glob` (scenes/questData.js, systems/dynamicSkiesAssets
+// `import.meta.glob` (scenes/quest/questData.js, systems/dynamicSkiesAssets
 // .js, systems/betterAmbience.js), which is a Vite COMPILE-TIME macro.
 // A plain server hands the browser the macro itself and the page dies
 // with "(intermediate value).glob is not a function" - measured, on the
@@ -20,7 +20,7 @@
 //
 // The rectangles it must clear belong to the other layers, and are
 // stated here as the numbers those layers use rather than measured off
-// them - ui/touch.js: the bottom-right column at edge 16 with 48-tall
+// them - ui/touch/touch.js: the bottom-right column at edge 16 with 48-tall
 // buttons, and a FIXED virtual stick at inset 36 radius 56
 // (FIXED_STICK_INSET, STICK_RADIUS).
 //
@@ -43,10 +43,10 @@ const PAGE_PATH = join(ROOT, PAGE_REL);
 const PAGE = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>QS3 probe</title>
 <style>html,body{margin:0;height:100%;background:#12141a;overflow:hidden}</style></head><body>
 <script type="module">
-import { drawEnhancedHud } from '/src/ui/enhancedHud.js';
+import { drawEnhancedHud } from '/src/ui/enhanced/enhancedHud.js';
 import { assignQuickslot, clearQuickslots, setSpellQuickslot } from '/src/systems/quickslots.js';   // QS6
 import { setPref } from '/src/systems/uiPrefs.js';
-import { EQUIP_SLOTS } from '/src/characters/paperdoll.js';
+import { EQUIP_SLOTS } from '/src/characters/paperdoll/paperdoll.js';
 
 const q = new URLSearchParams(location.search);
 setPref('hudScale', Number(q.get('scale') ?? 1));
@@ -133,7 +133,7 @@ document.title = 'ready';
 <\/script></body></html>`;
 
 /** The other layers' own rectangles, in viewport px off the edges they
- *  are inset from (ui/touch.js). */
+ *  are inset from (ui/touch/touch.js). */
 const touchButtons = (W, H) => ({ x: W - 296, y: H - 64, right: W - 16, bottom: H - 16 });
 const fixedStickBox = (H) => ({ x: 36, y: H - 148, right: 148, bottom: H - 36 });
 const overlaps = (a, b) => !!a && !!b && a.x < b.right && b.x < a.right && a.y < b.bottom && b.y < a.bottom;

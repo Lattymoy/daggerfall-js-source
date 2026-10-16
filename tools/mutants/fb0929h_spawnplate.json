@@ -5,8 +5,8 @@
     "old": "return b ? b.location == null : _spawnLedger.expired(key, _spawnClock()); };",
     "new": "return b ? false : _spawnLedger.expired(key, _spawnClock()); };",
     "tests": [
-      "test/fb0929h_spawnplate.test.js",
-      "test/tv6_dungeons.test.js"
+      "test/world/fb0929h_spawnplate.test.js",
+      "test/systems/travel/tv6_dungeons.test.js"
     ]
   },
   {
@@ -15,8 +15,8 @@
     "old": "return b ? b.location == null : _spawnLedger.expired(key, _spawnClock()); };",
     "new": "return _spawnLedger.expired(key, _spawnClock()); };",
     "tests": [
-      "test/fb0929h_spawnplate.test.js",
-      "test/tv6_dungeons.test.js"
+      "test/world/fb0929h_spawnplate.test.js",
+      "test/systems/travel/tv6_dungeons.test.js"
     ]
   },
   {
@@ -25,8 +25,8 @@
     "old": "if (_insideSpawn(key)) return false; const b = built.get(key);",
     "new": "const b = built.get(key);",
     "tests": [
-      "test/fb0929h_spawnplate.test.js",
-      "test/tv6_dungeons.test.js"
+      "test/world/fb0929h_spawnplate.test.js",
+      "test/systems/travel/tv6_dungeons.test.js"
     ]
   },
   {
@@ -35,7 +35,7 @@
     "old": "return b ? b.location == null :",
     "new": "return b ? !b.location :",
     "tests": [
-      "test/fb0929h_spawnplate.test.js"
+      "test/world/fb0929h_spawnplate.test.js"
     ]
   }
 ]

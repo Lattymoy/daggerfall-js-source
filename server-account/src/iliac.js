@@ -19,7 +19,7 @@
 // ═══ A ROW IS A RECEIPT (/v1/iliac/claim) ═══════════════════════════
 //
 // The arena players' bouts' law (arena.js claimPlayers), for a card
-// game: the relay's signed result (net/iliacReceipt.js i1) is ONE row
+// game: the relay's signed result (net/iliac/iliacReceipt.js i1) is ONE row
 // keyed by the game's id, whichever of the two accounts carries it first;
 // the Elo the arena's (arenaLaw.js eloAfter), its season the arena's
 // (arenaSeasonOf), a pair's day and season capped as the arena's are - so
@@ -41,11 +41,11 @@
 //
 // Not a DFU member: Daggerfall Unity has no card games. Ledger A row (TAVERN CARDS).
 // ═══════════════════════════════════════════════════════════════════
-import { verifyIliacReceipt } from '../../src/net/iliacReceipt.js';
+import { verifyIliacReceipt } from '../../src/net/iliac/iliacReceipt.js';
 import { mintDeckOrder, deckDigest } from '../../src/net/identityToken.js';
-import { arenaSeasonOf, arenaSeasonEndsS, arenaSeasonDay, eloAfter, ARENA_ELO_START, ARENA_ELO_MIN, ARENA_ELO_MAX, arenaRatingOk, ARENA_PAIR_DAY_MAX, ARENA_PAIR_SEASON_MAX } from '../../src/net/arenaLaw.js';
-import { deckShortOf } from '../../src/net/cardWorthLaw.js';
-import { deckValid } from '../../src/net/iliacHand.js';   // the rules' own deck law (iliacHand.js imports cardLaw.js, dice.js and iliacCards.js - the bundle's already)
+import { arenaSeasonOf, arenaSeasonEndsS, arenaSeasonDay, eloAfter, ARENA_ELO_START, ARENA_ELO_MIN, ARENA_ELO_MAX, arenaRatingOk, ARENA_PAIR_DAY_MAX, ARENA_PAIR_SEASON_MAX } from '../../src/net/arena/arenaLaw.js';
+import { deckShortOf } from '../../src/net/card/cardWorthLaw.js';
+import { deckValid } from '../../src/net/iliac/iliacHand.js';   // the rules' own deck law (iliacHand.js imports cardLaw.js, dice.js and iliacCards.js - the bundle's already)
 import { realmActFirst, getRealmBlob, realmSaveTextOf } from './realm.js';
 import { boardNamesOf } from './boardNames.js';   // AUDIT CARDS-6 D3: a board's names wear every honour, the arena's too
 
@@ -263,7 +263,7 @@ async function topMayMove(ctx, season, a, b, na, nb) {
 }
 
 /**
- * A RANKED GAME'S CLAIM: the relay's receipt (net/iliacReceipt.js) for a game this account played. One row a game,
+ * A RANKED GAME'S CLAIM: the relay's receipt (net/iliac/iliacReceipt.js) for a game this account played. One row a game,
  * whichever seat carries it first; both accounts must be registered to be rated. Answers `{ recorded, ... }`, a game
  * already kept `{ recorded: false, why: 'claimed', ... }`, a guest's `{ recorded: false, why: 'guest' }` (registering
  * mends it), one whose OTHER seat is no registered account `{ recorded: false, why: 'foe-unregistered' }` (nothing

@@ -51,7 +51,7 @@ export function setInteractionMode(m) {
 /** SENSE1 (the delve arc): HOW MANY TIMES THE PLAYER HAS ASKED FOR EACH MODE - every press of a mode's key, the HUD's
  *  cycle and the pad's, whether or not the mode changed. ChangeInteractionMode is a no-op on the mode already in force
  *  (townTalk.js setMode), so a host that wants "the player asked for Info again" - the dungeon's look round
- *  (systems/dungeonSense.js) - cannot read it off the mode; it reads this count, which the press's own readers keep
+ *  (systems/dungeon/dungeonSense.js) - cannot read it off the mode; it reads this count, which the press's own readers keep
  *  (townTalk.js setMode, dungeon.js's mode keys). A count and no listener: nothing to unsubscribe, nothing to leak.
  *  Not a DFU member. */
 const _asks = { steal: 0, grab: 0, info: 0, dialogue: 0 };

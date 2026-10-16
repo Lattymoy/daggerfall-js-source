@@ -14,7 +14,7 @@
 //
 // Pure: no clock, no DOM, no network. The account service
 // (server-account/src/townSeats.js), the client's derivation
-// (systems/townSeats.js) and its book (net/townSeatBook.js) read it.
+// (systems/town/townSeats.js) and its book (net/townSeatBook.js) read it.
 // ═══════════════════════════════════════════════════════════════════
 import { ONLINE_EPOCH_MS } from './wire.js';
 import { KINGDOMS, MARCHES, kingdomOf, isMarch, isFreeLand } from './kingdomLaw.js';
@@ -1024,7 +1024,7 @@ export function seatArrivalNews(seat) {
   return parts.length ? parts.join(' ') : null;
 }
 
-/** A World of Daggerfall camp's id (src/world/wodShared.js wodSiteId: "px,py:objectID[.n]", or Privateer's Hold's
+/** A World of Daggerfall camp's id (src/world/worldOfDaggerfall/wodShared.js wodSiteId: "px,py:objectID[.n]", or Privateer's Hold's
  *  "px,py:hold") - its map pixel, or null. */
 export function bountySitePixel(site) {
   const m = /^(\d{1,3}),(\d{1,3}):(?:\d{1,10}(?:\.\d{1,3})?|hold)$/.exec(typeof site === 'string' ? site : '');
@@ -1043,7 +1043,7 @@ export const levyOf = (qty, roll) => {
 
 // ═══ SEAT2a: THE BATTLES' WEEK - WINDOWS, THE SCHEDULE, THE SIDES (SEAT0 6.3-6.5) ═══
 // The Turning names a Right of Siege (or a Tourney at a Contested seat) for the coming week; SEAT2a places each in the
-// week and signs its two sides. The battle itself is the relay's (net/siegeRef.js, SEAT2a's next half).
+// week and signs its two sides. The battle itself is the relay's (net/siege/siegeRef.js, SEAT2a's next half).
 
 /** THE HOLDER'S WINDOW (6.3, Mac: "Yes"): a day Wednesday to Saturday (0-3) and a start hour 16:00 to 02:00 UTC, two
  *  hours long - a start from 00:00 to 02:00 belongs to the night after its day ("Wednesday 01:00" is Thursday 01:00). */
@@ -1171,7 +1171,7 @@ export const SIGN_WHY = Object.freeze({
 });
 
 // ─── SEAT2a (part three): THE PASS, THE FIELD, THE RESULT AND HONOURS (SEAT0 6.2, 6.5-6.8) ───
-// The relay fights the battle (net/siegeRef.js); the service signs who may enter it and settles what it gave.
+// The relay fights the battle (net/siege/siegeRef.js); the service signs who may enter it and settles what it gave.
 
 /** The field a client derives from the town, settled for a battle (DECIDED, part three): the first one an attacker and a
  *  defender submitted alike (two sides whose interests differ agreeing on it), else - once the battle is joined, a side
@@ -1194,7 +1194,7 @@ export function settleField(rows, joined, kind = 'siege') {
 }
 /** The room's window on a pass (`se`): the battle's block - two hours, a crown siege's one (battleSpanMs). */
 export const passWindowEnds = (b) => b.starts_at + battleSpanMs({ kind: b.kind, tier: b.tier }) / 1000;
-/** The pass's door opens as the rosters close (SIGN_CLOSES_MS before the start - net/siegeRef.js SIEGE_OPENS_MS). */
+/** The pass's door opens as the rosters close (SIGN_CLOSES_MS before the start - net/siege/siegeRef.js SIEGE_OPENS_MS). */
 export const passOpens = (b) => b.starts_at - SIGN_CLOSES_MS / 1000;
 
 /** WHAT A SIEGE GIVES (6.8): the holder's Standing for a held siege (only where a banner was raised) and for a forfeit,
@@ -1306,10 +1306,10 @@ export function conscriptionDue({ kingdom, crownGuild, holds, tithes, vassals = 
 
 
 // ═══ CROWN1 part two: THE ROYAL TOURNEY (SEAT0 7.6) - the service's half ═══════════════════════════════════════════
-// The bouts are the relay's (net/siegeRef.js royal*); the service counts each winner's receipt by the room's own rule
+// The bouts are the relay's (net/siege/siegeRef.js royal*); the service counts each winner's receipt by the room's own rule
 // and names the week's champion at the Turning.
 
-/** The same two contenders' bouts counted a UTC day (net/siegeRef.js ROYAL_PAIR_DAY_MAX, pinned equal). */
+/** The same two contenders' bouts counted a UTC day (net/siege/siegeRef.js ROYAL_PAIR_DAY_MAX, pinned equal). */
 export const ROYAL_PAIR_DAY = 3;
 /** The ladder's rows the Seat tab shows. */
 export const ROYAL_LADDER_ROWS = 10;

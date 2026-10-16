@@ -50,7 +50,7 @@ here - the earlier mod records carry theirs in this line.]**
   ONE departure: the two hotkeys ship on `F7` and `F10` here, because K
   is Travel Options' follow key and G is Handheld Torches' drop key in
   this tree, and no letter is free (HCC-KEYS; HT4's own gate,
-  `test/ht1_handheldtorches.test.js`, refuses a shipped collision).
+  `test/systems/ht1_handheldtorches.test.js`, refuses a shipped collision).
 - `textdatabase.csv` - the settings' display names, the mod's own text
   table, verbatim.
 - `TrailingWagon.dll`, `HorseCartUiCompatibility.dll` - the two
@@ -87,5 +87,5 @@ Rider and Expanded Inventory) have no target here: none of those three
 mods is part of this port, and `HorseCartUiCompatibilityCoordinator`
 resolves to `Native` when none is enabled, which is the mode the port
 runs in. The sidecar and its IL are vendored for the record and read
-for the scope table (`test/hcc_scope.test.js`), and nothing of them is
+for the scope table (`test/systems/horse/hcc_scope.test.js`), and nothing of them is
 ported.

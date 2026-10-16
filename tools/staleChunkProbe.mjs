@@ -27,6 +27,7 @@ import { readFileSync, writeFileSync, cpSync, rmSync, mkdtempSync, existsSync, s
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createServer } from 'node:http';
+import { tagSource } from '../scripts/buildTag.mjs';
 
 const results = [];
 const check = (name, ok, detail = '') => {
@@ -41,7 +42,7 @@ const work = mkdtempSync(join(tmpdir(), 'stalechunk-'));
 /** One build of the site, stamped with `sha` so its chunk hashes
  *  differ from the other's exactly as two deploys' do. */
 function buildAs(sha, out) {
-  writeFileSync(TAG, `export const BUILD_TAG = '${sha}';\n`);
+  writeFileSync(TAG, tagSource(sha, null));
   execFileSync('npx', ['vite', 'build'], { stdio: 'pipe' });
   cpSync('dist', out, { recursive: true });
 }

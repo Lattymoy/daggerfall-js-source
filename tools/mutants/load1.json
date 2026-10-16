@@ -5,7 +5,7 @@
   "old": "filter((s) => s && s.loading !== false)",
   "new": "filter((s) => s)",
   "tests": [
-   "test/load1_loading.test.js"
+   "test/ui/load1_loading.test.js"
   ]
  },
  {
@@ -14,7 +14,7 @@
   "old": "if ((await b.count()) >= GALLERY_MAX) return 'full';",
   "new": "",
   "tests": [
-   "test/load1_loading.test.js"
+   "test/ui/load1_loading.test.js"
   ]
  },
  {
@@ -23,7 +23,7 @@
   "old": "const s = Math.min(1, edge / Math.max(W, H));",
   "new": "const s = edge / Math.max(W, H);",
   "tests": [
-   "test/load1_loading.test.js"
+   "test/ui/load1_loading.test.js"
   ]
  },
  {
@@ -32,7 +32,7 @@
   "old": "Math.floor(Math.max(0, rand()) * pool.length)",
   "new": "Math.floor(Math.max(0, rand()) * (pool.length - 1))",
   "tests": [
-   "test/load1_loading.test.js"
+   "test/ui/load1_loading.test.js"
   ]
  },
  {
@@ -41,7 +41,7 @@
   "old": "const thumb = fitWithin(w, h, THUMB_W);",
   "new": "const thumb = fitWithin(w, h, FULL_EDGE);",
   "tests": [
-   "test/load1_loading.test.js"
+   "test/ui/load1_loading.test.js"
   ]
  },
  {
@@ -50,7 +50,7 @@
   "old": "s.put(id == null ? fresh : rec)",
   "new": "s.put(id == null ? rec : fresh)",
   "tests": [
-   "test/load1_loading.test.js"
+   "test/ui/load1_loading.test.js"
   ]
  },
  {
@@ -59,7 +59,7 @@
   "old": "if (!e?.galleryOpenFailed) throw e;",
   "new": "throw e;",
   "tests": [
-   "test/load1_loading.test.js"
+   "test/ui/load1_loading.test.js"
   ]
  },
  {
@@ -68,7 +68,7 @@
   "old": "const run = _keeping.then(() => keepOne(image, meta));",
   "new": "const run = keepOne(image, meta);",
   "tests": [
-   "test/load1_loading.test.js"
+   "test/ui/load1_loading.test.js"
   ]
  },
  {
@@ -77,7 +77,7 @@
   "old": "if (delay > 0) appearTimer",
   "new": "if (false) appearTimer",
   "tests": [
-   "test/load1_loading.test.js"
+   "test/ui/load1_loading.test.js"
   ]
  },
  {
@@ -86,7 +86,7 @@
   "old": "const wait = Math.max(0, MIN_SHOWN_MS - (Date.now() - shownAt));",
   "new": "const wait = 0;",
   "tests": [
-   "test/load1_loading.test.js"
+   "test/ui/load1_loading.test.js"
   ]
  },
  {
@@ -95,7 +95,7 @@
   "old": "if (Number.isFinite(maxMs) && maxMs > 0) {",
   "new": "if (false) {",
   "tests": [
-   "test/load1_loading.test.js"
+   "test/ui/load1_loading.test.js"
   ]
  },
  {
@@ -104,7 +104,7 @@
   "old": "if (!holds.size) { place = String(p ?? ''); line = String(l ?? ''); }",
   "new": "if (holds.size) { place = String(p ?? ''); line = String(l ?? ''); }",
   "tests": [
-   "test/load1_loading.test.js"
+   "test/ui/load1_loading.test.js"
   ]
  },
  {
@@ -113,7 +113,7 @@
   "old": "else { if (p) place = String(p); if (l) line = String(l); }",
   "new": "else { place = String(p); line = String(l); }",
   "tests": [
-   "test/load1_loading.test.js"
+   "test/ui/load1_loading.test.js"
   ]
  },
  {
@@ -122,7 +122,7 @@
   "old": "if (!framed) framed = beginLoading(",
   "new": "if (true) framed = beginLoading(",
   "tests": [
-   "test/load1_loading.test.js"
+   "test/ui/load1_loading.test.js"
   ]
  },
  {
@@ -131,7 +131,7 @@
   "old": "if (framed) { const h = framed; framed = null; h.end(); }",
   "new": "if (framed) { framed = null; }",
   "tests": [
-   "test/load1_loading.test.js"
+   "test/ui/load1_loading.test.js"
   ]
  },
  {
@@ -140,7 +140,7 @@
   "old": "if (!isEnhanced(search)) return 'off';",
   "new": "",
   "tests": [
-   "test/load1_loading.test.js"
+   "test/ui/load1_loading.test.js"
   ]
  },
  {
@@ -149,7 +149,7 @@
   "old": "if (pageHas('shot', search) || pageHas('noloading', search)) return 'off';",
   "new": "",
   "tests": [
-   "test/load1_loading.test.js"
+   "test/ui/load1_loading.test.js"
   ]
  },
  {
@@ -158,7 +158,7 @@
   "old": "if (!holds.size) return; line = String",
   "new": "line = String",
   "tests": [
-   "test/load1_loading.test.js"
+   "test/ui/load1_loading.test.js"
   ]
  },
  {
@@ -167,7 +167,7 @@
   "old": "if (!holds.size) return; place = String",
   "new": "place = String",
   "tests": [
-   "test/load1_loading.test.js"
+   "test/ui/load1_loading.test.js"
   ]
  },
  {
@@ -176,7 +176,7 @@
   "old": "  if (loadingMode() === 'shots') {\n    loadingShot()",
   "new": "  if (false) {\n    loadingShot()",
   "tests": [
-   "test/load1_loading.test.js"
+   "test/ui/load1_loading.test.js"
   ]
  },
  {
@@ -185,7 +185,7 @@
   "old": "if (cap) corner.replaceChildren(el('span', 'ld-cap', cap));",
   "new": "",
   "tests": [
-   "test/load1_loading.test.js"
+   "test/ui/load1_loading.test.js"
   ]
  },
  {
@@ -194,7 +194,7 @@
   "old": "  try { return await fn(hold); } finally { hold.end(); }",
   "new": "  return await fn(hold);",
   "tests": [
-   "test/load1_loading.test.js"
+   "test/ui/load1_loading.test.js"
   ]
  },
  {
@@ -203,7 +203,7 @@
   "old": "  if (node) node.classList.toggle('aside', hiddenNow() || !!node._keepHidden);\n",
   "new": "",
   "tests": [
-   "test/load1_loading.test.js"
+   "test/ui/load1_loading.test.js"
   ]
  },
  {
@@ -212,7 +212,7 @@
   "old": "  if (had && !on && !asideFor.size && framed?.open) revealOnSync = true;\n",
   "new": "",
   "tests": [
-   "test/load1_loading.test.js"
+   "test/ui/load1_loading.test.js"
   ]
  },
  {
@@ -221,7 +221,7 @@
   "old": "    if (!busy && node) node._keepHidden = true;   // the move ended under the film or the window: it ends hidden\n",
   "new": "",
   "tests": [
-   "test/load1_loading.test.js"
+   "test/ui/load1_loading.test.js"
   ]
  },
  {
@@ -230,7 +230,7 @@
   "old": "  if (hiddenNow()) root.classList.add('aside');\n",
   "new": "",
   "tests": [
-   "test/load1_loading.test.js"
+   "test/ui/load1_loading.test.js"
   ]
  },
  {
@@ -239,7 +239,7 @@
   "old": "!!node && !hiddenNow() && !node._keepHidden",
   "new": "!!node",
   "tests": [
-   "test/load1_loading.test.js"
+   "test/ui/load1_loading.test.js"
   ]
  },
  {
@@ -248,7 +248,7 @@
   "old": "z-index: ${LOADING_Z}; overflow: hidden;",
   "new": "z-index: 119; overflow: hidden;",
   "tests": [
-   "test/load1_loading.test.js"
+   "test/ui/load1_loading.test.js"
   ]
  },
  {
@@ -257,7 +257,7 @@
   "old": "if (!groundKept || groundKept.w !== w || groundKept.h !== h) {",
   "new": "if (true) {",
   "tests": [
-   "test/load1_loading.test.js"
+   "test/ui/load1_loading.test.js"
   ]
  },
  {
@@ -266,7 +266,7 @@
   "old": "  return moving ? '' : here();",
   "new": "  return here();",
   "tests": [
-   "test/load1_loading.test.js"
+   "test/ui/load1_loading.test.js"
   ]
  },
  {
@@ -275,7 +275,7 @@
   "old": "download: getPref(SHOT_DOWNLOAD_PREF) !== false",
   "new": "download: true",
   "tests": [
-   "test/load1_loading.test.js"
+   "test/ui/load1_loading.test.js"
   ]
  },
  {
@@ -284,7 +284,7 @@
   "old": "  const place = placeNow();",
   "new": "  const place = 'x';",
   "tests": [
-   "test/load1_loading.test.js"
+   "test/ui/load1_loading.test.js"
   ]
  },
  {
@@ -293,7 +293,7 @@
   "old": "Promise.resolve().then(() => keep(blob))",
   "new": "Promise.resolve().then(() => null)",
   "tests": [
-   "test/load1_loading.test.js"
+   "test/ui/load1_loading.test.js"
   ]
  },
  {
@@ -302,7 +302,7 @@
   "old": "if (armed !== s.id) { armed = s.id; fill(root); return; }",
   "new": "",
   "tests": [
-   "test/load1_loading.test.js"
+   "test/ui/load1_loading.test.js"
   ]
  },
  {
@@ -311,7 +311,7 @@
   "old": "turn.onclick = () => { armed = null; setShotLoading(s.id, !on); };",
   "new": "turn.onclick = () => { armed = null; };",
   "tests": [
-   "test/load1_loading.test.js"
+   "test/ui/load1_loading.test.js"
   ]
  },
  {
@@ -320,7 +320,7 @@
   "old": "  viewing = null; armed = null; focusNext = null;\n  const root = el('div', 'shots');",
   "new": "  const root = el('div', 'shots');",
   "tests": [
-   "test/load1_loading.test.js"
+   "test/ui/load1_loading.test.js"
   ]
  },
  {
@@ -329,7 +329,7 @@
   "old": "  if (want) [...root.querySelectorAll('button')].find((b) => keyOf(b) === want)?.focus?.();\n",
   "new": "",
   "tests": [
-   "test/load1_loading.test.js"
+   "test/ui/load1_loading.test.js"
   ]
  },
  {
@@ -338,7 +338,7 @@
   "old": "    focusNext = focusAfterDelete;\n",
   "new": "",
   "tests": [
-   "test/load1_loading.test.js"
+   "test/ui/load1_loading.test.js"
   ]
  },
  {
@@ -347,7 +347,7 @@
   "old": "  if (unread) words.push(",
   "new": "  if (false) words.push(",
   "tests": [
-   "test/load1_loading.test.js"
+   "test/ui/load1_loading.test.js"
   ]
  },
  {
@@ -356,7 +356,7 @@
   "old": "at: Number.isFinite(f?.lastModified) && f.lastModified > 0 ? f.lastModified : Date.now()",
   "new": "at: Date.now()",
   "tests": [
-   "test/load1_loading.test.js"
+   "test/ui/load1_loading.test.js"
   ]
  },
  {
@@ -365,7 +365,7 @@
   "old": "(isEnhanced() ? loadingMode() : 'classic')",
   "new": "loadingMode()",
   "tests": [
-   "test/load1_loading.test.js"
+   "test/ui/load1_loading.test.js"
   ]
  },
  {
@@ -374,7 +374,7 @@
   "old": "    syncLoading(_moving, { place: loadingPlaceNow, line: loadingLineNow });\n",
   "new": "",
   "tests": [
-   "test/load1_loading.test.js"
+   "test/ui/load1_loading.test.js"
   ]
  },
  {
@@ -383,7 +383,7 @@
   "old": "    setLoadingAside('window', townTalk.overlayActive || !!modes?.overlayHeld);\n",
   "new": "",
   "tests": [
-   "test/load1_loading.test.js"
+   "test/ui/load1_loading.test.js"
   ]
  },
  {
@@ -392,7 +392,7 @@
   "old": "if (msg == null) bootLoading.end(); else ",
   "new": "",
   "tests": [
-   "test/load1_loading.test.js"
+   "test/ui/load1_loading.test.js"
   ]
  },
  {
@@ -401,7 +401,7 @@
   "old": "if (!params.has('load') && !(params.has('classicload') && peekPendingClassicSave())) setLoadingPlace",
   "new": "if (!params.has('load') && !params.has('classicload')) setLoadingPlace",
   "tests": [
-   "test/load1_loading.test.js"
+   "test/ui/load1_loading.test.js"
   ]
  },
  {
@@ -410,7 +410,7 @@
   "old": "      setLoadingAside('window', true);   // AUDIT LOAD1 2: the wizard",
   "new": "      // AUDIT LOAD1 2: the wizard",
   "tests": [
-   "test/load1_loading.test.js"
+   "test/ui/load1_loading.test.js"
   ]
  },
  {
@@ -419,7 +419,7 @@
   "old": "    if (_ohGpsName?.key === key && _ohGpsName.name) return _ohGpsName.name;",
   "new": "    if (false) return _ohGpsName.name;",
   "tests": [
-   "test/load1_loading.test.js"
+   "test/ui/load1_loading.test.js"
   ]
  },
  {
@@ -428,7 +428,7 @@
   "old": "_traveling ? (_partyWaitLine || 'Travelling')",
   "new": "_traveling ? 'Travelling'",
   "tests": [
-   "test/load1_loading.test.js"
+   "test/ui/load1_loading.test.js"
   ]
  },
  {
@@ -437,7 +437,7 @@
   "old": "    _loadingDest = { x: px, y: py }; setLoadingPlace(placeAtPixel(px, py));",
   "new": "    setLoadingPlace(placeAtPixel(px, py));",
   "tests": [
-   "test/load1_loading.test.js"
+   "test/ui/load1_loading.test.js"
   ]
  },
  {
@@ -446,7 +446,7 @@
   "old": "export function claimFrame() { syncLoading(false); return",
   "new": "export function claimFrame() { return",
   "tests": [
-   "test/load1_loading.test.js"
+   "test/ui/load1_loading.test.js"
   ]
  },
  {
@@ -455,7 +455,7 @@
   "old": "  _frameHold++;\n  stepAsideLoading(true);",
   "new": "  _frameHold++;",
   "tests": [
-   "test/load1_loading.test.js"
+   "test/ui/load1_loading.test.js"
   ]
  },
  {
@@ -464,16 +464,16 @@
   "old": " if (!_frameHold) stepAsideLoading(false); };",
   "new": " };",
   "tests": [
-   "test/load1_loading.test.js"
+   "test/ui/load1_loading.test.js"
   ]
  },
  {
   "name": "LOAD1-pane-release-gone",
-  "file": "src/ui/enhancedMenu.js",
+  "file": "src/ui/enhanced/enhancedMenu.js",
   "old": "      releaseShotsPane();   // LOAD1",
   "new": "      // LOAD1",
   "tests": [
-   "test/load1_loading.test.js"
+   "test/ui/load1_loading.test.js"
   ]
  }
 ]

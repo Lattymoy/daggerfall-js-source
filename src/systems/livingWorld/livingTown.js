@@ -1,6 +1,6 @@
 // @ts-check
 // LW2 (2026-10-04, bible/06-Systems/Living-World.md): THE LIVING TOWN - the residents on the street. It stands where
-// DFU's wandering pool stood (systems/townPopulation.js TownPopulation) and answers the street's seams in the pool's own
+// DFU's wandering pool stood (systems/town/townPopulation.js TownPopulation) and answers the street's seams in the pool's own
 // shape - `pool` rows of { person, active, scheduleEnable, scheduleRecycle, visible }, `update()` the live seats,
 // `retire(person)`, `nav`, `maxPopulation` - so the talk ray, the watch's conversion, the trample, the probes and the
 // draw take a resident as they took a walker. What stands on the street is not a pool's roll but the town's day:
@@ -27,7 +27,7 @@
 //  - WHAT THEY SAY (`speech()`): a circle's line at this minute (pure: every reader hears it), and a word to the player
 //    passing close - by name from a friend, a cold one from an enemy (relations.js).
 //  - A RESIDENT TAKEN off the street - trampled - is gone for the rest of the day. WATCH-FIX: one the watch's conversion
-//    took is LENT to the guard stood in their place (`lend` - scenes/livingWatch.js follows it): off the street while it
+//    took is LENT to the guard stood in their place (`lend` - scenes/livingWorld/livingWatch.js follows it): off the street while it
 //    stands, and at its end back to their day (`back`), or - one of the watch cut down - slain by the player's own blow,
 //    else KILLED (`killed`: dead for good, nobody's regard moved). Another player's watch stands for residents here too
 //    (WATCH1's records name them, `peerLend`): off this street while it does.
@@ -42,14 +42,14 @@
 //    (`WITNESS_M`, a clear line - `o.sees`) counts it a crime; so does every one who saw a hand caught in a purse, and
 //    one of the watch STRUCK (`struck`) remembers the blow. A word's tone (`toned`) moves a regard once a day. The town
 //    talks of it for NEWS_DAYS (`deedNews`): one of its own struck down - and, seen, by whom.
-import { POP_RECYCLE_DISTANCE, maxPopulationFor, popAllowChange } from '../townPopulation.js';
-import { PERSON_MOVE_SPEED } from '../../characters/mobilePerson.js';
+import { POP_RECYCLE_DISTANCE, maxPopulationFor, popAllowChange } from '../town/townPopulation.js';
+import { PERSON_MOVE_SPEED } from '../../characters/mobile/mobilePerson.js';
 import { townPlaces, exitToward, harbourDock, streetGeometry } from './places.js';
 import { townCensus, isHome, watchShiftSize } from './census.js';
 import { dayPlan, entryAt, isOutdoor, walkMinutes, DAY_START_MIN, DAY_MIN, GUILD_DAY_OFFSETS } from './dayPlan.js';
 import { townClassOf, stillRoleOf, stillFlatOf } from './looks.js';
 import { BUILDING_TYPES } from '../../world/buildingNames.js';
-import { NAV_CELL } from '../../world/cityNavigation.js';   // LW-DAWN: a berth's cell
+import { NAV_CELL } from '../../world/city/cityNavigation.js';   // LW-DAWN: a berth's cell
 import { createPathBook, pointOnLine } from './townPaths.js';
 import { spotCircles, spotRound, circleLine, circlesStands, aloneStand, aloneStands, ROUND_S, GATHER_BEAT_S, lineMinutes, ALONE_FAR_M, SPACE_M } from './meetups.js';
 import { spotIncidents, stirLine, stirLoud, smallVoice, gateWord } from './stir.js';
@@ -643,7 +643,7 @@ export class LivingTown {
   /**
    * LW-LODGE: WHO LODGES AT A TAVERN today - a visitor and a hand of a packet lying here (their lodging, `_lodging`), and
    * one of the town whose home is its rooms (an adventurer with no house) - its own staff aside; in the order of their
-   * ids. Every reader's alike: the tavern's rooms are dealt to them (scenes/livingIndoors.js `bedsOf`).
+   * ids. Every reader's alike: the tavern's rooms are dealt to them (scenes/livingWorld/livingIndoors.js `bedsOf`).
    * @param {number} key @param {number} day @returns {Resident[]}
    */
   lodgersAt(key, day) {
@@ -949,7 +949,7 @@ export class LivingTown {
   _away(res) { return this._lent.has(res.id) || this._peerLent.has(res.id); }
 
   /**
-   * WATCH-FIX: A RESIDENT LENT TO THE WATCH - the conversion stood a guard in their place (scenes/livingWatch.js follows
+   * WATCH-FIX: A RESIDENT LENT TO THE WATCH - the conversion stood a guard in their place (scenes/livingWorld/livingWatch.js follows
    * it): off the street while it stands (the body free at once), never taken for the day - the conversion's own take
    * (the street disabled the row) undone.
    * @param {Resident} res
@@ -1471,7 +1471,7 @@ export class LivingTown {
   /**
    * The word a resident has for the player passing close at minute `t`: a friend's by name, an enemy's cold, a known
    * face's plain, a stranger's now and then (and always when the player stops before them) - else null. A word said
-   * notes them seen. LW8b: the street's (`_greet`) and a room's (scenes/livingIndoors.js).
+   * notes them seen. LW8b: the street's (`_greet`) and a room's (scenes/livingWorld/livingIndoors.js).
    * @param {Resident} res @param {number} t @param {boolean} stopped @returns {string|null}
    */
   greetingFor(res, t, stopped) {

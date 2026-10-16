@@ -3,27 +3,27 @@
 // organize everything appropriately. Under the new tab add a page that allows you to see your currently owned mounts
 // ships and carts. You can summon your horse/cart from this page/send away much like the companion system. You can also
 // do this with ships instead of relying on a deed item") - THE HOLDINGS TAB's own pages (bible/03-World/Holdings.md).
-// The tab (ui/enhancedMenu.js pauseHoldings) is a rail of what the player owns and who follows them: these two pages,
+// The tab (ui/enhanced/enhancedMenu.js pauseHoldings) is a rail of what the player owns and who follows them: these two pages,
 // and the Companions, Revenants and Stores pages that stood on the Stats rail before it.
 //
 //  - THE STABLE: the horse and the wagon - owned or not, where each is (ridden, following, parked or waiting how far
 //    off, with the player, or stabled - WAGON-STABLED: sent away), the wagon's load against its limit; SUMMON (Horse Cart and Cargo's own summon) and SEND AWAY
-//    (its other half, systems/horseCart.js sendTransportAway), and the horse renamed in place. Each act's word is said
+//    (its other half, systems/horse/horseCart.js sendTransportAway), and the horse renamed in place. Each act's word is said
 //    under its card, never on a HUD the window covers.
 //  - THE FLEET: every ship the player holds - drawn by ui/fleetPage.js over the same provider.
 //
 // THE PROVIDER is the host's (scenes/world.js, scenes/exterior.js - setHoldingsProvider): what the pages read and the
-// acts they ask, so this file touches no runtime. Dressed by the stone-and-brass kit's roles (ui/enhancedFrame.js
+// acts they ask, so this file touches no runtime. Dressed by the stone-and-brass kit's roles (ui/enhanced/enhancedFrame.js
 // FRAME_ROLES: a card a panel, a picture a well, a state a chip) - this sheet writes geometry and
 // the words' colours alone, as the Companions page's does.
 
-import { stableWagonName, WAGON_KINDS } from '../systems/wagonKinds.js';   // WAGONS1: the Stable's card names the wagon driven
-import { paintDrivenWagon, outsidePaintRow, LOOK_TEXT } from '../systems/wagonLooks.js';   // WAGONS2: and paints it
-import { restyleRiddenHorse, horseLookRows, birthHorses, HORSE_LOOK_PARTS } from '../systems/horseCoats.js';   // COATS1: and the horse's look
+import { stableWagonName, WAGON_KINDS } from '../systems/wagon/wagonKinds.js';   // WAGONS1: the Stable's card names the wagon driven
+import { paintDrivenWagon, outsidePaintRow, LOOK_TEXT } from '../systems/wagon/wagonLooks.js';   // WAGONS2: and paints it
+import { restyleRiddenHorse, horseLookRows, birthHorses, HORSE_LOOK_PARTS } from '../systems/horse/horseCoats.js';   // COATS1: and the horse's look
 import { requestFittedIcon, fittedImg } from './textureCanvas.js';
-import { WAGON_MODE, HORSE_MODE, TRANSPORT, HORSE_NAME_MAX } from '../systems/horseCartLaw.js';
-import { optionPath } from './settingsMap.js';   // ORG2: a switch named in a window says where it lives
-import { upkeepReach } from '../systems/upkeepRuntime.js';   // STEED1/WAGONS4: a horse fed by hand only beside it, a kit spent only at the wagon
+import { WAGON_MODE, HORSE_MODE, TRANSPORT, HORSE_NAME_MAX } from '../systems/horse/horseCartLaw.js';
+import { optionPath } from './settings/settingsMap.js';   // ORG2: a switch named in a window says where it lives
+import { upkeepReach } from '../systems/upkeep/upkeepRuntime.js';   // STEED1/WAGONS4: a horse fed by hand only beside it, a kit spent only at the wagon
 import { t } from '../systems/textManager.js';   // HORSE-TIERS: Boons' two hunger lines in the player's language
 
 export const STABLE_PAGE_SECTIONS = Object.freeze([Object.freeze(['stable', 'Stable'])]);
@@ -41,10 +41,10 @@ export function _setHoldingsIconForTests(fn) { _icon = fn ?? ((p, box, onReady) 
  * @property {boolean} hcc   Horse Cart and Cargo is on: the pair stands in the world (else the classic transport)
  * @property {boolean} hasHorse @property {boolean} hasCart
  * @property {any} [view]   the runtime's stableView() while `hcc`
- * @property {string|null} [kind]   WAGONS1: the wagon driven ('cart', 'openWagon', 'caravan' - systems/wagonKinds.js)
+ * @property {string|null} [kind]   WAGONS1: the wagon driven ('cart', 'openWagon', 'caravan' - systems/wagon/wagonKinds.js)
  * @property {{ choices: string[], current: number }|null} [paint]   WAGONS2: its outside's paints, and its paint now
  * @property {{ desc: string, rows: Array<{ part: string, name: string, choices: string[], current: number }> }|null} [look]   COATS1: the ridden horse's look - in words, and a row of choices a part (coat, pattern, legs)
- * @property {any} [care]   STEED1/WAGONS4: the upkeep's model (systems/upkeepRuntime.js model) - each horse's stats, bond, hunger and breath; the wagon's soundness; the oats, apples and kits carried
+ * @property {any} [care]   STEED1/WAGONS4: the upkeep's model (systems/upkeep/upkeepRuntime.js model) - each horse's stats, bond, hunger and breath; the wagon's soundness; the oats, apples and kits carried
  *
  * @typedef {Object} HoldingsProvider
  * @property {() => StableModel} [stable]   the horse and the wagon
@@ -61,9 +61,9 @@ export const holdingsProvider = () => _provider;
  * scenes/exterior.js): the Stable's half of the provider over a host's runtime - `on()` the mod's switch, `hasHorse()`
  * and `hasCart()` the pack's two items. WAGONS2: `items()` the pack (the driven wagon painted in it - systems/
  * wagonLooks.js paintDrivenWagon) and `onPainted()` the host told (its word moved). COATS1: the ridden horse's look
- * (systems/horseCoats.js restyleRiddenHorse - its coat, its pattern, its legs) the same way, in the same pack, the host
+ * (systems/horse/horseCoats.js restyleRiddenHorse - its coat, its pattern, its legs) the same way, in the same pack, the host
  * told the same; and a horse not yet born is born before the card reads it (birthHorses). STEED1/WAGONS4: `upkeep` the
- * host's (systems/upkeepRuntime.js createUpkeep) - its model on the card, and its acts: a horse fed by hand only beside it
+ * host's (systems/upkeep/upkeepRuntime.js createUpkeep) - its model on the card, and its acts: a horse fed by hand only beside it
  * (the mod's own mount reach - a horse waiting across the map is not) and never at the stable; a kit spent on the wagon
  * only where its load can be reached; `pass(minutes)` the host's clock for the kit's hour.
  */
@@ -299,7 +299,7 @@ const WITH_YOU = 'With you';
 
 /**
  * THE STABLE'S WORDS: where the horse and the wagon each are, as a chip's word and a line under it, off the runtime's
- * view (systems/horseCart.js stableView) - or, with Horse Cart and Cargo off, the classic transport's: with the player.
+ * view (systems/horse/horseCart.js stableView) - or, with Horse Cart and Cargo off, the classic transport's: with the player.
  * Pure. Answers `{ horse, wagon }`, each `{ state, tone, line }` or null for one not owned.
  * @param {StableModel} m
  */

@@ -22,15 +22,15 @@
 // and block array, and the caller hands THAT to the dungeon context.
 
 import { setSeed, randomRange } from '../formats/dfRandom.js';
-import { getBool } from '../systems/settings.js';
+import { getBool } from '../systems/settings/settings.js';
 import { SITE_TYPES } from '../systems/quest/place.js';
-import { isMainStoryDungeon } from './dungeonTextures.js';
-import { isArenaUndercroft } from './arenaCity.js';   // ARENA5: the fighters' hall keeps its blocks
+import { isMainStoryDungeon } from './dungeon/dungeonTextures.js';
+import { isArenaUndercroft } from './arena/arenaCity.js';   // ARENA5: the fighters' hall keeps its blocks
 import { isEnhanced } from '../systems/uiSkin.js';   // DSIZE1: the medium size is the enhanced skin's
 import { getPref } from '../systems/uiPrefs.js';   // DSIZE1: ...and the player's ask (the `medium-dungeons` row)
-import { isOnlinePage } from '../systems/onlineLane.js';   // AUDIT DELVE E4 / SD-ONLINE: online the quest's stamp is the world's sizes
-import { seededFirst } from '../systems/wind.js';   // SD-ONLINE: the port's one seeded die - a dungeon's online size, the same on every client
-import { dungeonTier } from '../systems/dungeonTier.js';   // AUDIT SD: a Hollow, by the one tier law
+import { isOnlinePage } from '../systems/online/onlineLane.js';   // AUDIT DELVE E4 / SD-ONLINE: online the quest's stamp is the world's sizes
+import { seededFirst } from '../systems/wind/wind.js';   // SD-ONLINE: the port's one seeded die - a dungeon's online size, the same on every client
+import { dungeonTier } from '../systems/dungeon/dungeonTier.js';   // AUDIT SD: a Hollow, by the one tier law
 
 /** QuestSmallerDungeonsState (DaggerfallUnityEnums.cs:758-763) -
  *  NotSet, DISABLED, ENABLED, in that order. F-B3 (self-audit 2): the
@@ -63,7 +63,7 @@ export const SMALLER_DUNGEON_THRESHOLD = 5;
  * The quest freeze carries it as ONLINE_DUNGEONS_STATE, so a quest started online builds its dungeons at their online
  * sizes offline too; and offline the `world-dungeon-sizes` row asks for the world's sizes outright.
  *
- * AUDIT DELVE (MAPS.BSA, read whole - bible/01-Overview/Audit-Delve.md): the first cut was a cross of five interior
+ * AUDIT DELVE (MAPS.BSA, read whole - bible/01-Overview/audits/Audit-Delve.md): the first cut was a cross of five interior
  * blocks and its eight-block ring over THIRTEEN, and the real data had it backwards. Of the 4,232 dungeons, 159 have
  * more than thirteen blocks, and every one of them is four interior blocks in a ring of ten: the cross made them
  * BIGGER inside (five interior draws from a pool of four) and touched nothing else. The real sizes are 5 (775), 8
@@ -177,7 +177,7 @@ export function dungeonSizeFor(dfLocation, { questMachine = null,
   world = worldDungeonSizesWanted(), whole = false } = {}) {   // INSTANCES: `whole` - online, the dungeon as Daggerfall lays it, whatever size the world gives it
   if (!dfLocation?.hasDungeon || isMainStoryDungeon(dfLocation.mapTableData?.mapId)) return 'full';
   // ARENA5 (the audit, closing ARENA1's open item "Smaller Dungeons may trim the undercroft"): THE ARENA'S UNDERCROFT
-  // NEVER SHRINKS. It is no keep of Daggerfall's but the fighters' hall (world/arenaUndercroft.js): its people, the Pit
+  // NEVER SHRINKS. It is no keep of Daggerfall's but the fighters' hall (world/arena/arenaUndercroft.js): its people, the Pit
   // Master's ring and the Keeper's Hall stand by their distance out from the stair over Kamer's 32 blocks, and a five-
   // block plus of random ones drawn from his list would stand the pit in a cellar and the Hall nowhere. Main story's rule.
   if (isArenaUndercroft(dfLocation)) return 'full';

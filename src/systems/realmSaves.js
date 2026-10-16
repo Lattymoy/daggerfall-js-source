@@ -41,7 +41,7 @@
 // moved past it drops it unread. The copy is the save's text; its put
 // packs it as every checkpoint rides (REALM-GZIP, below).
 //
-// REALM-GZIP: IT RIDES PACKED (net/realmSaveCodec.js). A long life's
+// REALM-GZIP: IT RIDES PACKED (net/realm/realmSaveCodec.js). A long life's
 // JSON grew past the request's 4 MiB and every checkpoint was refused
 // for good; a put packs the text when the service said it opens a packed
 // save (`gzip` on the join, create and customs answers), and a read asks
@@ -49,9 +49,9 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { storedSession, serviceBase, forgetSession, accountRefusalText, forgetD1Bookmark } from '../net/accountClient.js';   // AUDIT SCALE II A-2: a write forgets the page's D1 bookmark
-import { realmTradeRefusalText, LOCKED_SAID_MAX } from '../net/realmTradeLaw.js';   // REALM P2.1: a trade the realm settles
+import { realmTradeRefusalText, LOCKED_SAID_MAX } from '../net/realm/realmTradeLaw.js';   // REALM P2.1: a trade the realm settles
 import { REALM_DOOR_WORD } from '../net/wire.js';   // REALM-DOOR: the relay's word for a token that names no realm character
-import { gzipText, gunzipText, saveTextOf, canGzip, canGunzip } from '../net/realmSaveCodec.js';   // REALM-GZIP: a save rides packed
+import { gzipText, gunzipText, saveTextOf, canGzip, canGunzip } from '../net/realm/realmSaveCodec.js';   // REALM-GZIP: a save rides packed
 import { houseLine } from '../net/houseLaw.js';   // LEGACY7: the house on the roster's tile
 
 
@@ -196,7 +196,7 @@ export const realmTradeCall = (/** @type {any} */ io, /** @type {any} */ half) =
 /** The answers that end a session: the character is not this tab's to write any more. */
 export const REALM_LOST = Object.freeze(['lease', 'no-realm-character', 'auth', 'signed-out']);
 /** AUTO-HOLD: a ledger key as a checkpoint's answer names a locked piece (an item's uid or a craft's provenance, sixteen
- *  hex either way - systems/itemIds.js ledgerKeyOf; pinned equal to both, test/autohold.test.js). */
+ *  hex either way - systems/item/itemIds.js ledgerKeyOf; pinned equal to both, test/server/autohold.test.js). */
 export const LEDGER_KEY_RE = /^[0-9a-f]{16}$/;
 /** AUDIT AUTO-HOLD: the locked pieces this device has told its player of, by character - so each is told once, not at
  *  every join ("was found" again and again), beside the character's other records on the device. */
@@ -519,7 +519,7 @@ export function createRealmSession({
   /** AUTO-HOLD: THE LOCKED PIECES - copies the ledger found, locked piece by piece (server-account/src/ledger.js) - as a
    *  landed checkpoint names them (`locked`, their keys; an answer naming none: none locked). `session.lockedKeys` is the
    *  set standing, told to `session.onLockedKeys(keys)` as each answer lands (the client's lock reads it -
-   *  systems/itemBound.js, through scenes/realmHoldHost.js); `session.onPiecesLocked(keys)` is told the ones this device
+   *  systems/item/itemBound.js, through scenes/realmHoldHost.js); `session.onPiecesLocked(keys)` is told the ones this device
    *  never told its player (AUDIT AUTO-HOLD: every join told them all again). */
   let lockedKeys = lockedTold(storage, id);
   const heardLocked = (/** @type {unknown} */ v) => {
@@ -845,7 +845,7 @@ export function takeRealmNotice(/** @type {any} */ storage) {
  * beside these three (main.js's front door). A born character reaches that host by a reload (scenes/world.js
  * realmBirth), and main.js boots a game only on a scene door: this address had none, so it was the front door's, which
  * clears every door key, the realm id with them, and shows the menu. The make and the save had landed, so the Online
- * door played the character fine. test/fb0930_realmbirth.test.js holds the two boots to each other.
+ * door played the character fine. test/systems/fb0930_realmbirth.test.js holds the two boots to each other.
  * @param {string} search @param {string} id @param {readonly string[]} doorKeys
  */
 export function realmBootSearch(search, id, doorKeys) {
@@ -930,7 +930,7 @@ export const REALM_TRADE_POLL_MS = 1_500;
  * this call, and the half follows once the goods are reserved (a null half abandons it). Answers `{ ok, seq, items,
  * gold }` (what this side received), `{ ok: false, why, text }` (refused: nothing moved) or `{ ok: false, unknown: true }`
  * (no answer - the session ends).
- * `heldSaid`, the host's: the hold's notice as this session stands (systems/itemIds.js tradeHeldNotice), said again by a
+ * `heldSaid`, the host's: the hold's notice as this session stands (systems/item/itemIds.js tradeHeldNotice), said again by a
  * refusal over my own hold - the piece named, or a timed hold's end (AUTO-HOLD; the Ring report: it said "something").
  * @param {{ session: any, half: any, wait?: (ms: number) => Promise<void>, now?: () => number, heldSaid?: (() => string | null) | null }} at
  */

@@ -41,10 +41,10 @@
 
 import { doEnchantedPayloads, classicEnchantmentType } from './enchantments.js';   // SetEnchantments' created-payload callback (:1289-1300) and its ClassicType store (:1316-1320)
 import { unequipItem } from './equip.js';   // DaggerfallUnityItem.UnequipItem (:1183-1196)
-import { templateByIndex } from './itemTemplates.js';
+import { templateByIndex } from './item/itemTemplates.js';
 import { ARMOR_MATERIAL } from './armorMaterials.js';
 import { WEAPON_MATERIALS } from '../characters/weapons.js';
-import { customItemClass } from './rriItems.js';   // RRI1: GetEnchantmentPower is a virtual the armor classes answer
+import { customItemClass } from './roleplayRealismItems/rriItems.js';   // RRI1: GetEnchantmentPower is a virtual the armor classes answer
 import { localizedText } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 import { enchantGold } from '../net/alchemyLaw.js';   // PROF12: Enchanting's layer - the gold with the rank's share off
 import { recipeById, jewelPoints } from '../net/recipeLaw.js';   // AUDIT PROF10 J1: the most a crafted piece's recipe mints
@@ -164,7 +164,7 @@ export function keptEnchantments(item) {
   }
   return out;
 }
-/** INT1: `lookup` the template reader - the item law's (systems/itemLaw.js lawTemplate) knows the rows a headless reader
+/** INT1: `lookup` the template reader - the item law's (systems/item/itemLaw.js lawTemplate) knows the rows a headless reader
  *  never registers. */
 export function itemEnchantmentPower(item, lookup = templateByIndex) {
   if (!item) throw new Error('itemEnchantmentPower: item is null');
@@ -344,4 +344,4 @@ export const enchantmentCostLabel = (cost, power) => `${cost}/${power}`;
 
 // M4 closed both of M3's flags: systems/enchantmentCatalogue.js
 // gathers every effect's EnchantmentSettings and SoulBound's forced
-// sets, and ui/itemMakerWindow.js is the window.
+// sets, and ui/item/itemMakerWindow.js is the window.

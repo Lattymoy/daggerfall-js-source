@@ -12,7 +12,7 @@
 import { VEIN_TABLES, dungeonVeinTable, regionSignature, UNCONFIRMED_VEIN_TIER, WITNESS, factConfirmed } from '../net/nodeLaw.js';
 import { kingdomOf, KINGDOMS } from '../net/kingdomLaw.js';
 import { minedMaterial } from '../net/professionLaw.js';
-import { materialLabel } from '../systems/profItems.js';
+import { materialLabel } from '../systems/professions/profItems.js';
 import { REGION_NAMES } from '../formats/mapsTables.js';
 
 export const ORE_TIP_TITLE = 'Ore here';

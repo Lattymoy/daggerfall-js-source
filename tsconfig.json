@@ -14,7 +14,7 @@
   // on its first line. A file outside the seams is still PARSED (its
   // exports give the seam files their inference) and never reported. The
   // seam sets are derived, and the opt-in is enforced, by
-  // test/hard3_types.test.js - so a new file at a seam cannot join
+  // test/systems/save/hard3_types.test.js - so a new file at a seam cannot join
   // without one, and no `@ts-ignore` may buy greenness.
   "compilerOptions": {
     "allowJs": true,

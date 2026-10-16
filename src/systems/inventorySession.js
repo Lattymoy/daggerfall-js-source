@@ -32,11 +32,11 @@
 // looks like the player misremembered picking something up.
 // ═══════════════════════════════════════════════════════════════════
 
-import { DROP_ICON_IDXS, DROP_ICON_ARCHIVES, RANDOM_TREASURE_ARCHIVE } from './lootDataTables.js';
-import { STORAGE_CONTEXT } from './horseCartLaw.js';   // HCC: the storage contexts the runtime's CanAccessWagonStorage takes
+import { DROP_ICON_IDXS, DROP_ICON_ARCHIVES, RANDOM_TREASURE_ARCHIVE } from './loot/lootDataTables.js';
+import { STORAGE_CONTEXT } from './horse/horseCartLaw.js';   // HCC: the storage contexts the runtime's CanAccessWagonStorage takes
 import { localizedText } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 import { BAG_CAPACITY, BAG_WORDS, hasBag } from '../net/bagLaw.js';   // BAG1: the Materials Bag, a second list as the wagon is
-import { activeWagonItem } from './wagonKinds.js';   // CART-SLOT: the Cart cell shows the wagon driven
+import { activeWagonItem } from './wagon/wagonKinds.js';   // CART-SLOT: the Cart cell shows the wagon driven
 
 /** ItemGroups.Transportation.Small_cart's template index. */
 export const SMALL_CART_TEMPLATE = 93;

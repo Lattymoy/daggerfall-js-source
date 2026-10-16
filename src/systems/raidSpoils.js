@@ -4,9 +4,9 @@
 // Design: bible/03-World/Raiding-Parties.md, "The rewards (RAID4)".
 //
 // PER PLAYER, AND THE SEED'S OWN. The receipt the relay signs at a town's cleanse for each account that struck a raider
-// and stood in the town (net/raidReceipt.js `w1`) carries a seed (`c`, 32 bits of the relay's CSPRNG) and the raiding
-// party (`y`: 0 knights, 1 bandits, 2 orcs), and everything here is rolled on `seededRng(c)` (systems/wind.js) - the
-// gate's spoils' own law (systems/gateSpoils.js): every defender's thanks are their own. The roll reads the player's
+// and stood in the town (net/raid/raidReceipt.js `w1`) carries a seed (`c`, 32 bits of the relay's CSPRNG) and the raiding
+// party (`y`: 0 knights, 1 bandits, 2 orcs), and everything here is rolled on `seededRng(c)` (systems/wind/wind.js) - the
+// gate's spoils' own law (systems/gate/gateSpoils.js): every defender's thanks are their own. The roll reads the player's
 // world as well as the seed (the level, the registered custom pieces), so what was rolled is what is kept -
 // scenes/spoilsPool.js records the pieces themselves.
 //
@@ -22,9 +22,9 @@
 // the crash's door hands them back (the gate's AUDIT WBX S3 law, whole).
 //
 // Not a DFU member. Ledger A (RAID1's row).
-import { seededRng } from './wind.js';
-import { spoilsBase, magicOrBetter } from './gateSpoils.js';
-import { applyRarity, lastPass, techniquePass } from './lootRarity.js';   // TECH1: the technique pass, a door's last draw
+import { seededRng } from './wind/wind.js';
+import { spoilsBase, magicOrBetter } from './gate/gateSpoils.js';
+import { applyRarity, lastPass, techniquePass } from './loot/lootRarity.js';   // TECH1: the technique pass, a door's last draw
 import { rollRaidSetPiece } from './aetheric.js';
 
 /** Gold a level of the player's, before the seed's variation (0.8 to 1.2 of it) - a third of a boss's. */

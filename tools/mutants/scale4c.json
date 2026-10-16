@@ -5,7 +5,7 @@
     "old": "  if (body?.mail === true) await part('mail', async () => (accountKind(player) !== 'linked' ? { error: 'mail-needs-account' } : inboxOf(ctx, player, env)));\n",
     "new": "",
     "tests": [
-      "test/scale4c.test.js"
+      "test/net/scale4c.test.js"
     ],
     "note": "the box asked for and never answered"
   },
@@ -15,7 +15,7 @@
     "old": "accountKind(player) !== 'linked' ? { error: 'mail-needs-account' } : inboxOf(ctx, player, env)",
     "new": "inboxOf(ctx, player, env)",
     "tests": [
-      "test/scale4c.test.js"
+      "test/net/scale4c.test.js"
     ],
     "note": "a guest's box read past the door /v1/mail/inbox shuts"
   },
@@ -25,7 +25,7 @@
     "old": "() => readBoard(ctx, player, env, body.board)",
     "new": "() => readBoard(ctx, player, env, Number(body.board) + 1)",
     "tests": [
-      "test/scale4c.test.js"
+      "test/net/scale4c.test.js"
     ],
     "note": "another town's board answered"
   },
@@ -35,7 +35,7 @@
     "old": "due.some(([n]) => n === name) || p.soon(t, RIDE_EARLY_MS)",
     "new": "due.some(([n]) => n === name)",
     "tests": [
-      "test/scale4c.test.js"
+      "test/net/scale4c.test.js"
     ],
     "note": "a part due a moment later never rides - every clock its own request again"
   },
@@ -45,7 +45,7 @@
     "old": "    const due = [...parts].filter(([, p]) => p.due(t));",
     "new": "    const due = [...parts].filter(([, p]) => p.soon(t, 30_000));",
     "tests": [
-      "test/scale4c.test.js"
+      "test/net/scale4c.test.js"
     ],
     "note": "a part sent half a minute before its clock says"
   },
@@ -55,7 +55,7 @@
     "old": "p.take(r.ok ? partAnswer(r.data?.[name])",
     "new": "p.take(r.ok ? partAnswer(r.data?.[sent[0][0]])",
     "tests": [
-      "test/scale4c.test.js"
+      "test/net/scale4c.test.js"
     ],
     "note": "each part handed the first part's answer"
   },
@@ -65,7 +65,7 @@
     "old": "    const beatDue = beatAt != null && (due.length > 0 || !rideComing(t));",
     "new": "    const beatDue = beatAt != null;",
     "tests": [
-      "test/scale4c.test.js"
+      "test/net/scale4c.test.js"
     ],
     "note": "the knock its own request beside a ride coming"
   },
@@ -75,7 +75,7 @@
     "old": "    : Math.min(BEAT_RIDE_MS - (t - /** @type {number} */ (beatAt)), creditedAt",
     "new": "    : Math.min(10 * BEAT_RIDE_MS - (t - /** @type {number} */ (beatAt)), creditedAt",
     "tests": [
-      "test/scale4c.test.js"
+      "test/net/scale4c.test.js"
     ],
     "note": "a knock held past what its grace allows"
   },
@@ -85,7 +85,7 @@
     "old": "    return left > 0 && [...parts.values()].some((p) => p.soon(t, left));",
     "new": "    return left > 0;",
     "tests": [
-      "test/scale4c.test.js"
+      "test/net/scale4c.test.js"
     ],
     "note": "a single-player world's knock held for a ride that never comes"
   },
@@ -95,7 +95,7 @@
     "old": "      if (r.ok || !RETRY.includes(r.error)) break;",
     "new": "      break;",
     "tests": [
-      "test/scale4c.test.js"
+      "test/net/scale4c.test.js"
     ],
     "note": "a lost answer never asked again"
   },
@@ -105,7 +105,7 @@
     "old": "      if (r.ok || !RETRY.includes(r.error)) break;",
     "new": "      if (r.ok) break;",
     "tests": [
-      "test/scale4c.test.js"
+      "test/net/scale4c.test.js"
     ],
     "note": "a refusal asked again"
   },
@@ -115,7 +115,7 @@
     "old": "    const session = storedSession(storage);",
     "new": "    const session = storedSession(storage) ?? { secret: 'anyone-at-all-000000' };",
     "tests": [
-      "test/scale4c.test.js"
+      "test/net/scale4c.test.js"
     ],
     "note": "a signed-out tab sends anyway"
   },
@@ -125,7 +125,7 @@
     "old": "    if (!visible()) {\n      // AUDIT SCALE B1",
     "new": "    if (false) {\n      // AUDIT SCALE B1",
     "tests": [
-      "test/scale4c.test.js"
+      "test/net/scale4c.test.js"
     ],
     "note": "a hidden page beats"
   },
@@ -135,7 +135,7 @@
     "old": "      due: (nowMs) => ready(nowMs, 0),",
     "new": "      due: () => false,",
     "tests": [
-      "test/scale4c.test.js"
+      "test/net/scale4c.test.js"
     ],
     "note": "the letterbox never looked at"
   },
@@ -145,7 +145,7 @@
     "old": "        const out = this._take(r, undefined, false);",
     "new": "        const out = { ok: true };",
     "tests": [
-      "test/scale4c.test.js"
+      "test/net/scale4c.test.js"
     ],
     "note": "the box's answer thrown away"
   },
@@ -155,7 +155,7 @@
     "old": "      const map = townMap();\n      if (!boardKeyOk(map)) return false;",
     "new": "      const map = townMap();",
     "tests": [
-      "test/scale4c.test.js"
+      "test/net/scale4c.test.js"
     ],
     "note": "a board read with no town underfoot"
   },
@@ -165,7 +165,7 @@
     "old": "        e.pending = new Promise((r) => { settle = r; });\n",
     "new": "",
     "tests": [
-      "test/scale4c.test.js"
+      "test/net/scale4c.test.js"
     ],
     "note": "a window's read beside the heartbeat's asks again"
   },
@@ -175,7 +175,7 @@
     "old": "        e.error = r?.error ?? 'server';\n        e.at = a.at;\n        a.settle(",
     "new": "        e.error = r?.error ?? 'server';\n        a.settle(",
     "tests": [
-      "test/scale4c.test.js"
+      "test/net/scale4c.test.js"
     ],
     "note": "a refusal asked again the next second"
   },
@@ -185,7 +185,7 @@
     "old": "_noticeTown = { mapId: town ? town.mapId : null, at: stampAt }; }",
     "new": "_noticeTown = { mapId: town ? town.mapId : null, at: stampAt }; if (town) noticeBook.read(town.mapId); }",
     "tests": [
-      "test/scale4c.test.js"
+      "test/net/scale4c.test.js"
     ],
     "note": "the street frame asks the board itself beside the heartbeat"
   },
@@ -195,7 +195,7 @@
     "old": "    _mailFrameAt = performance.now();   // MAIL1",
     "new": "    _mailFrameAt = performance.now(); mail?.poll();   // MAIL1",
     "tests": [
-      "test/scale4c.test.js"
+      "test/net/scale4c.test.js"
     ],
     "note": "the online lane looks at the box itself beside the heartbeat"
   },
@@ -205,7 +205,7 @@
     "old": "    beat: () => heartbeat.beat(),",
     "new": "    beat: () => null,",
     "tests": [
-      "test/scale4c.test.js"
+      "test/net/scale4c.test.js"
     ],
     "note": "the play clock's knock carried by nothing"
   },
@@ -215,7 +215,7 @@
     "old": "        if (SHUT.includes(r?.error)) { open = false; e.board = null; }   // AUDIT 28 N11's law, as `read` keeps it",
     "new": "        if (SHUT.includes(r?.error)) { open = false; }   // AUDIT 28 N11's law, as `read` keeps it",
     "tests": [
-      "test/scale4c.test.js"
+      "test/net/scale4c.test.js"
     ],
     "note": "a board shut by the heartbeat's answer still shown from the cache"
   },
@@ -225,7 +225,7 @@
     "old": "    const riding = Number.isFinite(pace)\n      ? [...parts].filter(([name, p]) => going.some(([n]) => n === name) || ((p.every ?? 0) >= pace && p.soon(t, pace - RIDE_EARLY_MS)))\n      : going;",
     "new": "    const riding = going;",
     "tests": [
-      "test/scale4c.test.js"
+      "test/net/scale4c.test.js"
     ],
     "note": "two clocks out of step stay out of step: the box alone every three minutes after a town is entered"
   },
@@ -235,7 +235,7 @@
     "old": "p.soon(t, pace - RIDE_EARLY_MS)))",
     "new": "p.soon(t, pace)))",
     "tests": [
-      "test/scale4c.test.js"
+      "test/net/scale4c.test.js"
     ],
     "note": "the box riding the board's second minute in step - a look every two minutes, not three"
   },
@@ -245,7 +245,7 @@
     "old": "|| ((p.every ?? 0) >= pace && p.soon(t, pace - RIDE_EARLY_MS)))",
     "new": "|| (p.soon(t, pace - RIDE_EARLY_MS)))",
     "tests": [
-      "test/scale4c.test.js"
+      "test/net/scale4c.test.js"
     ],
     "note": "the board read early on the box's heartbeat - a read more, and no request fewer"
   },
@@ -255,7 +255,7 @@
     "old": "      every: MAIL_POLL_MS,\n",
     "new": "",
     "tests": [
-      "test/scale4c.test.js"
+      "test/net/scale4c.test.js"
     ],
     "note": "the box's part without its period: it never rides early"
   },
@@ -265,7 +265,7 @@
     "old": "      every: BOARD_CACHE_MS,\n",
     "new": "",
     "tests": [
-      "test/scale4c.test.js"
+      "test/net/scale4c.test.js"
     ],
     "note": "the board's part without its period: the heartbeat's pace unknown, nothing rides early"
   },
@@ -275,7 +275,7 @@
     "old": "export const whileLive = (/** @type {HeartbeatPart} */ part, /** @type {() => boolean} */ live) => ({\n  ...part,",
     "new": "export const whileLive = (/** @type {HeartbeatPart} */ part, /** @type {() => boolean} */ live) => ({\n  body: part.body, take: part.take,",
     "tests": [
-      "test/scale4c.test.js"
+      "test/net/scale4c.test.js"
     ],
     "note": "the world host's box, gated on its lane, loses its period"
   }

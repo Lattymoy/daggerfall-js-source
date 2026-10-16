@@ -2,7 +2,7 @@
 // GALLEON (2026-10-01, Mac: "ensuring cannon fire shoots from the cannon holes properly"): THE GUN DECK AT WORK - a
 // ship's gunport shutters and the guns behind them, as a broadside is laid and fired.
 //
-// The new galleon (world/galleonModel.js) carries a gun behind each of her ten ports (`Gun<Side><i>`, its frame's +x
+// The new galleon (world/ships/galleonModel.js) carries a gun behind each of her ten ports (`Gun<Side><i>`, its frame's +x
 // outboard) and a shutter over each (`Gunport<Side><i>`, an Animator on the mod's Door Controller - Opened swings it up
 // on its hinge). This is what moves them, for every ship of hers in play - mine, the sea's, another player's (her lay on
 // her word's `g`, navalWire.js - AUDIT GN-G3):
@@ -22,15 +22,15 @@
 // It reads nothing but node names and moves nothing but those nodes (the gun's local position along its own +x; the
 // shutter's Opened), so a hull without them is left alone. Pure but for those nodes: the clock is the caller's.
 // Not a DFU member. Ledger A (GALLEON).
-import { GUN } from '../../world/galleonModel.js';
+import { GUN } from '../../world/ships/galleonModel.js';
 
 /** The ship's two broadsides, as the nodes spell them. */
 export const GUN_DECK_SIDES = Object.freeze({ starboard: 'Starboard', port: 'Port' });
 /** A battery stays laid this long (s) after its last word - a lay, a run-out, a gun fired. */
 export const HOLD_S = 2.5;
-/** Where a gun stands along its own +x (m, from her centreline): run in to load, run out to fire (world/galleonModel.js
+/** Where a gun stands along its own +x (m, from her centreline): run in to load, run out to fire (world/ships/galleonModel.js
  *  GUN's - its muzzle a hair outside her planking). SHIPS-2: a gun whose node carries a GunCarriage stands at that
- *  carriage's own `runInX` and `runOutX` (world/carrackModel.js: the new carrack's, on their platforms under her
+ *  carriage's own `runInX` and `runOutX` (world/ships/carrackModel.js: the new carrack's, on their platforms under her
  *  wider-set ports); a gun with none at these. */
 export const RUN_IN_X = GUN.runInX;
 export const RUN_OUT_X = GUN.runOutX;

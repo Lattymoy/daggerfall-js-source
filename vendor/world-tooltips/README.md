@@ -27,7 +27,7 @@ line, exactly as the other ported mods in this tree do.
   source, shipped inside the bundle**, not a decompile: the `.dfmod`
   carries it as a Unity TextAsset beside the manifest and the settings,
   and `tools/worldTooltipsAssets.mjs` is what extracts it (the same
-  `src/formats/unityBundle.js` reader `tools/travelOptionsAssets.mjs`
+  `src/formats/unity/unityBundle.js` reader `tools/travelOptionsAssets.mjs`
   uses). So every cite in the port resolves against a file anyone
   holding the shipped zip can reproduce byte for byte.
 - `tooltip.dfmod.json` - the bundle's manifest, verbatim.

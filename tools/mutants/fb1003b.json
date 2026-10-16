@@ -1,11 +1,11 @@
 [
   {
     "name": "AETHERICMAKER-filter-out",
-    "file": "src/ui/itemMakerWindow.js",
+    "file": "src/ui/item/itemMakerWindow.js",
     "old": "  if (itemMakerRefuses(item)) return false;   // AETHERIC-MAKER: an Aetheric piece is out of every tab\n",
     "new": "",
     "tests": [
-      "test/fb1003b_aethericmaker.test.js"
+      "test/systems/fb1003b_aethericmaker.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  if (itemMakerRefuses(item)) return { kind: 'refused', text: AETHERIC_TAKES_NO_ENCHANTMENT };   // AETHERIC-MAKER\n",
     "new": "",
     "tests": [
-      "test/fb1003b_aethericmaker.test.js"
+      "test/systems/fb1003b_aethericmaker.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "export const itemMakerRefuses = (item) => isAetheric(item) || isGilded(item);",
     "new": "export const itemMakerRefuses = (item) => false && isAetheric(item) || isGilded(item);",
     "tests": [
-      "test/fb1003b_aethericmaker.test.js"
+      "test/systems/fb1003b_aethericmaker.test.js"
     ]
   }
 ]

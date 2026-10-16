@@ -5,7 +5,7 @@
     "old": "run: () => { resumeParty = true; j.openMap?.(); } }));",
     "new": "run: () => { j.openMap?.(); } }));",
     "tests": [
-      "test/soc3_socialpanel.test.js"
+      "test/net/soc3_socialpanel.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "if (round && !round.set) resumeParty = true;",
     "new": "resumeParty = true;",
     "tests": [
-      "test/soc3_socialpanel.test.js"
+      "test/net/soc3_socialpanel.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "if (round && !round.set) resumeParty = true;",
     "new": "if (round) resumeParty = true;",
     "tests": [
-      "test/soc3_socialpanel.test.js"
+      "test/net/soc3_socialpanel.test.js"
     ]
   },
   {
@@ -32,79 +32,79 @@
     "old": "if (resumeParty) { resumeParty = false; if (!open && social.party) { tab = 'party'; openPanel(); } }",
     "new": "if (resumeParty) { resumeParty = false; }",
     "tests": [
-      "test/soc3_socialpanel.test.js"
+      "test/net/soc3_socialpanel.test.js"
     ]
   },
   {
     "name": "PARTYREADY-wait-host-default",
-    "file": "src/systems/partyTravel.js",
+    "file": "src/systems/party/partyTravel.js",
     "old": "host.mid(`Waiting for the party to ready up (${t.count}).`, Math.max(1, (PARTY_READY_TIMEOUT_MS - (now - t.at)) / 1000));",
     "new": "host.mid(`Waiting for the party to ready up (${t.count}).`);",
     "tests": [
-      "test/partytravel.test.js"
+      "test/systems/party/partytravel.test.js"
     ]
   },
   {
     "name": "PARTYREADY-wait-every-tick",
-    "file": "src/systems/partyTravel.js",
+    "file": "src/systems/party/partyTravel.js",
     "old": "if (count !== t.count) { t.count = count; waitLabel(t, now); }",
     "new": "{ t.count = count; waitLabel(t, now); }",
     "tests": [
-      "test/partytravel.test.js"
+      "test/systems/party/partytravel.test.js"
     ]
   },
   {
     "name": "PARTYREADY-wait-never-moved",
-    "file": "src/systems/partyTravel.js",
+    "file": "src/systems/party/partyTravel.js",
     "old": "if (count !== t.count) { t.count = count; waitLabel(t, now); }",
     "new": "if (count !== t.count) { t.count = count; }",
     "tests": [
-      "test/partytravel.test.js"
+      "test/systems/party/partytravel.test.js"
     ]
   },
   {
     "name": "PARTYREADY-set-out-not-on-hud",
-    "file": "src/systems/partyTravel.js",
+    "file": "src/systems/party/partyTravel.js",
     "old": "      host.mid(line);   // PARTY-READY: the wait ends on the HUD too\n",
     "new": "",
     "tests": [
-      "test/partytravel.test.js"
+      "test/systems/party/partytravel.test.js"
     ]
   },
   {
     "name": "PARTYREADY-lapse-not-on-hud",
-    "file": "src/systems/partyTravel.js",
+    "file": "src/systems/party/partyTravel.js",
     "old": "    if (open && text) host.mid(text);",
     "new": "",
     "tests": [
-      "test/partytravel.test.js"
+      "test/systems/party/partytravel.test.js"
     ]
   },
   {
     "name": "PARTYREADY-call-off-not-on-hud",
-    "file": "src/systems/partyTravel.js",
+    "file": "src/systems/party/partyTravel.js",
     "old": "host.mid('You call off the journey.'); return 'You call off the journey.';",
     "new": "return 'You call off the journey.';",
     "tests": [
-      "test/partytravel.test.js"
+      "test/systems/party/partytravel.test.js"
     ]
   },
   {
     "name": "PARTYREADY-box-over-tab",
-    "file": "src/systems/partyTravel.js",
+    "file": "src/systems/party/partyTravel.js",
     "old": "      if (host.tabOpen?.()) return;\n",
     "new": "",
     "tests": [
-      "test/partytravel.test.js"
+      "test/systems/party/partytravel.test.js"
     ]
   },
   {
     "name": "PARTYREADY-asked-under-tab",
-    "file": "src/systems/partyTravel.js",
+    "file": "src/systems/party/partyTravel.js",
     "old": "      if (host.tabOpen?.()) return;",
     "new": "      if (host.tabOpen?.()) { asked = round.at; return; }",
     "tests": [
-      "test/partytravel.test.js"
+      "test/systems/party/partytravel.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "mid: (text, seconds = PARTY_REST_FAR_SECONDS) => setMidScreenText(text, seconds),",
     "new": "mid: (text) => setMidScreenText(text, PARTY_REST_FAR_SECONDS),",
     "tests": [
-      "test/partytravel.test.js"
+      "test/systems/party/partytravel.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "tabOpen: () => !!socialPanel?.isOpen?.() && socialPanel.tab() === 'party',",
     "new": "tabOpen: () => false,",
     "tests": [
-      "test/partytravel.test.js"
+      "test/systems/party/partytravel.test.js"
     ]
   }
 ]

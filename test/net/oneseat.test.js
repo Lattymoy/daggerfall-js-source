@@ -1,0 +1,620 @@
+// ONE-SEAT (2026-09-27, Mac: "Can we also make it where the player can only have one character only at a time. Like
+// they shouldnt be able to open multiple tabs and join as different characters").
+//
+// ONE TAB OF A PLAYER ONLINE. The hub - the one room every online tab holds - decides it for an ACCOUNT (the token's
+// verified subject): a hub hello that CLAIMS (`cl`) closes the account's other tabs there, and one that does not is a
+// reconnect, refused while another tab of the account holds the hub. The client that is closed so leaves every room
+// and stays out (net/online.js `superseded`) until its player presses Play online here; and every tab of one browser
+// hears the others go online (net/oneSeat.js), so two tabs signed in as two players are one seat too. These pins drive
+// the real Room over the fake object, the real session over a fake socket, and the lock over a fake channel.
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { fakeRoom } from '../fakeRoom.mjs';
+import { parseClient, SEAT_ELSEWHERE, SOCIAL_ROOM, CLOSE_REPLACED, RELAY_VERSION } from '../../src/net/wire.js';
+import { OnlineSession, SEAT_TEXT, BACKOFF_MAX_MS, CLAIM_TTL_MS } from '../../src/net/online.js';
+import { createSeatLock, SEAT_CHANNEL, SEAT_NOTICE, SEAT_MID_TEXT, PLAY_HERE_LABEL } from '../../src/net/oneSeat.js';
+import { createChatPanel, CHAT_CSS } from '../../src/ui/chatPanel.js';
+import { ChatLog } from '../../src/net/chat.js';
+import { setSigilOnline, setSigilRenown, drinkSigil, sigilOnline, sigilRenown, _resetSigilForTests } from '../../src/systems/sigil/sigil.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
+
+const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
+const look = { race: 'Nord', gender: 'male', faceIndex: 0, items: [] };
+const errorsOf = (ws) => ws.sent.filter((f) => f.t === 'error').map((f) => f.m);
+const welcomed = (ws) => ws.sent.some((f) => f.t === 'welcome');
+
+test('ONE-SEAT: the hello\'s claim is 1 or nothing - anything else is refused, as a malformed token is; the version moved (mutants: the claim dropped at the door; any value taken)', () => {
+  const base = { t: 'hello', id: 'tab-0001', secret: 'secret-of-tab-0001', name: 'Mac', look, pose: null };
+  assert.equal(parseClient(JSON.stringify({ ...base, cl: 1 })).cl, 1, 'a tab going online says so');
+  assert.equal('cl' in parseClient(JSON.stringify(base)), false, 'a reconnect says nothing');
+  for (const bad of [0, true, '1', 2]) assert.deepEqual(parseClient(JSON.stringify({ ...base, cl: bad })), { error: 'bad claim' }, JSON.stringify(bad));
+  assert.equal(SEAT_ELSEWHERE, 'online in another tab, window or device');
+  assert.equal(RELAY_VERSION, 'world211');   // PIN MOVED: world211, TIDY2 (the relay files into feature folders - no behaviour moved; bible/01-Overview/Code-Map.md; world209 on its branch, renumbered past the WEAPON-GLOW1 world209 and the HUB-PULL + DO-ASK world210 of main at the merge); PIN MOVED: world210, HUB-PULL + DO-ASK (the bus never calls a shard - each shard polls its bus; the Worker asks a room reset before it ran once more; world208 then world209 on its branch, renumbered past the INSTANCES world208 and the WEAPON-GLOW1 world209 of main at the merges); PIN MOVED: world209, WEAPON-GLOW1 (a weapon in a hand carries its glow on the look, a word; world208 on its branch, renumbered past the INSTANCES world208 of main at the merge); PIN MOVED: world208, INSTANCES (an instance is a world room of its own - a dungeon whole or a building, its owner and epoch after it, admitted to its owner, staff and the party of its owner alone; world206 then world207 on its branch, renumbered past SERPENT5 and ONE-BODY at the merges); PIN MOVED: world207, ONE-BODY (FIELD BUGS 2026-10-15c - one body an account in a cell or a dungeon, the older socket closed as replaced; world206 on its branch, renumbered past the SERPENT5 world206 of main at the merge); PIN MOVED: world206, SERPENT5 (Coilbreaker and The Maelstrom join the token vocabulary; world205 on its branch, renumbered past PVP-LOOT + QUEST-HOME world205 of main at the merge); PIN MOVED: world205, PVP-LOOT + QUEST-HOME (the friend law is the law of the drop alone - the worn piece a killer picks is theirs whoever the guild or party of the fallen counts them; the hub fans a home the service signed as moved to every page online and holds its word for a page that joins after; bible/01-Overview/bugs/Field-Bugs-2026-10-14.md QUEST-HOME; world201 on each branch, one bump past FIVE-ASKS at the merge, world203 on the integration, renumbered past KG-SET world203 and KG5 world204 at the merge of main); PIN MOVED: world204, KG5 (the relay runs The King's Gambit - a gambit frame, four files more in the bundle; KG6: the gold table's stakes and a rated game's signed result; world203 on its branch, renumbered past FIVE-ASKS's world202 at the merge); PIN MOVED: world203, KG-SET (the Iliac catalog without its words, and nine cards more - Kings-Gambit.md section 10.3; world201 then world202 on its branch, renumbered past CHAT-TRADE's world201 and FIVE-ASKS's world202 at the merges); PIN MOVED: world202, FIVE-ASKS (the dungeon respawn half an hour, I Love Lamp a title the relay knows; world201 on its branch, renumbered past the CHAT-TRADE world201 of main at the merge); PIN MOVED: world201, CHAT-TRADE (the Trade and LFG channels, `chat:trade` and `chat:lfg`, joined CHAT_ROOMS); PIN MOVED: world200, PEER-ACTS (the pose carries a gathering act - the act, its beats and the throw of the net; world199 on its branch, renumbered past the AUDIT ETHER-OW world199 of main at the merge); PIN MOVED: world199, AUDIT ETHER-OW C2-1 (one home for the ground the Watch mints on - watchPixelOk, its answers as they were); PIN MOVED: world198, SPAWN-REBIRTH (a cell keeps the row of a spawned dungeon until it stands again, never sixty real days); PIN MOVED: world197, BAL8 (the PvP referee and its one harm ceiling - every fighter, blows and casts together at most 180 in any 5 s); PIN MOVED: world196, CHAT-LANG (the language channels joined the whitelist) over world195, COATS1 (the horse look: rc on a mounted pose, hc on a parked word; world194 on its branch, renumbered past SLIM-FRAME at the merge); PIN MOVED: world194, SLIM-FRAME (the place on the second wire in its own units - every height in metres to the centimetre, the x and z of a dungeon, a town and a building too, those of a cell in whole world units); PIN MOVED: world193, SERPENT4 (the sea serpent reworked - its waters open until it dives, hands strike it with their own weapons, a party shares the kill, its girth; its law version 3 - world192 on its branch, renumbered past SCALE5c at the merge); PIN MOVED: world192 (past WARDEN1, world191 on main, at the merge), SCALE5c (the hub split sixteen ways - the shards hold the sockets, the bus runs every law over a virtual socket for each; a search of everyone online by name, and the guild online on every shard); PIN MOVED: world191, SCALE5b (the second wire - batched slim poses, a channel roster and a beat in one frame - the relay hygiene, its metrics and run-time settings, the halo referee word); PIN MOVED: world190, AUDIT MW-NPC II (the foe look on the wire - world188, then world189, on its branch, renumbered past INT11-INT14 and SCALE5a at the merges); PIN MOVED: world189, SCALE5a (the hub's hello and leave without a walk of every socket; a busy refusal's token unread); PIN MOVED: world188, INT11-INT14 (the INTEGRITY arc's lane 3 - world186 on its branch, renumbered past SD-HERALD's world186 and WAGONS1's world187 at the merge); CHAP4c moved it on last (world183: the chapters' seats' titles - five ids and their claim on the token; NOT YET DEPLOYED - world177, world178, world179, world180, world181 then world182 on its branch, renumbered past THE WROTHGARIAN ZONE's, TAVERN CARDS', HOURS-FIRST's, TAVERN-TABLES', TV-BEYOND's and CARDS10's at the merges of main); CARDS10 moved it on (world182: Iliac Hand's season board, its champion's title in the token's vocabulary); TV-BEYOND moved it on (world181: the world's pixels on the wire Tamriel's, not the Bay's); TAVERN-TABLES moved it on (world180: the gold table an index - two card tables a tavern); HOURS-FIRST moved it on (world179: Hour's First and The First Hour in the token's vocabulary); TAVERN CARDS moved it on (world178: the card tables); THE WROTHGARIAN ZONE moved it on (world177: the open zone, its halls and its giants); SUPER-DUNGEONS moved it on (world176: the Super Dungeons arc, one version - SD-ONLINE first: a dungeon re-laid at the size the world gives it, small or medium, stands in a room of its own, so a page that lays it whole shares no stream and no memory with it; world171 on its branch, renumbered past CRYSTAL-FIST's world171 at one merge and past WATCH-FIX's world172, SERPENT3's world173 and LEGACY7's world174 at the next, and past TEXT-F1's world175 at the one after; TEXT-F1 moved it on (world175: the words a player types starred in sanitizeChat and wordsLine, a custom class the filter catches dropped from a look); LEGACY7 moved it on (world174: the house on the token and the row - world172 on its branch, renumbered past WATCH-FIX's world172 and SERPENT3's world173 at the merge); SERPENT3 moved it on (world173: the sea serpent brain swims every leg it shows - no leap - a slept fight taken up where it was and a blow judged where it struck; its law version 2; world171 on its branch, renumbered past CRYSTAL-FIST's world171 and WATCH-FIX's world172 at the merges); WATCH-FIX moved it on (world172: the foe record names the living-world resident a watchman stands for, `lr`); CRYSTAL-FIST moved it on (world171: the Crystal Fist's title and glyph and the Crystal Resonance's aura join the token's vocabulary - a relay before it refuses Flylighter's token; world170 on its branch, renumbered past FEUD's world170 at the merge); FEUD moved it on (world170: the foe record's wind-ups, staggers and blow classes and a revenant's adaptations, weakness, last stand, band follower, blows and signature - TELL8, AUDIT TELL, RVN13 and FEUD WIRE, world162-world165 on its branch, renumbered past main's world169 at its merge); AUDIT ARENA-LADDER moved it on (world169: the arena ladder audit - elite champions, telegraphed blows, a judging floor and the attempt ticket - world167 on its branch, renumbered past SHADOW-CLOAK and SERAPH-WINGS at the merges); SERAPH-WINGS moved it on (world168: the Seraph Wings join the aura vocabulary of the token - a relay before it refuses the token of a developer wearing them); SHADOW-CLOAK moved it on (world167: the Holo Shadow Cloak joins the token's aura vocabulary - a relay before it refuses SirMcMobdon's token once they wear it; world165 on its branch, renumbered past SERPENT1 and SERPENT2 at the merges); SERPENT2 moved it on (world166: the serpent herald - a serpent site word to the hub, its bells and its kill posted to Discord); SERPENT1 moved it on (world165: the serpent frame - a sea serpent fight in the cell of its site; world162 on its branch, renumbered past PRIMARCH (world162) and SUNBABY1 (world163), then PARTY-LEAD (world164), at the merges); PARTY-LEAD moved it on (world164: the hub's party.lead act - a leader hands the lead to a member); SUNBABY1 moved it on (world163: the hub's live events gain the sun baby's word - LIVE_EVENTS, no frame changes shape); PRIMARCH moved it on (world162: the Primarch's title and glyph and the Golden Radiance's aura join the token's vocabulary - a relay before it refuses GA00250's token); GUILD2 moved it on (world161: no wire change - the guild and heraldry laws moved under the relay); AEGIS moved it on (world160: the Aegis of Oblivion's title and glyph and the Oblivion Ward's aura join the token's vocabulary - a relay before it refuses Sureme's token); ARENA4 moved it on (world155: the arena rooms - the hall queue, the refereed bouts, the stands - and the arena titles and laurel on the token - world142 on its branch, renumbered past main's FRIENDS-SYNC, ELITE FOES, the Seats arc, WB12, GLYPH-WEAR, REVENANT-WIRE and BROKER-CAGE (world142-world154) at the merge); BROKER-CAGE moved it on (world154: the rite word says every one of the faithful fell, and the hub says the Broker cage open); REVENANT-WIRE moved it on (world153: the foe record carries a revenant's name, nm, and a beaten one's kneel, burning and oath, yd/ex/sp); GLYPH-WEAR moved it on (world152); WB12 moved it on (world151: Dagon's Breach - its words in the omen's lines and the herald's posts, the faithful's rite - main's CLIMB5 and CLIMB6, FRIENDS-SYNC, ELITE FOES and the Seats arc took world141-world150 first); before it SEAT2b part two (b) moved it on (world150: the works in battle); SEASON1 part two, the banner ribbon moved it on (world149: the banner ribbon - the Seats arc's six relays renumbered past main's HERALD, LOOT7, WB11 and CLIMB5 (world138-world141) at the merge); CROWN1 part two moved it on (world148: the Royal Tourney); SEAT2a moved it on (world147: the siege battle); PVP-REF moved it on (world146: the refereed siege room); SEAT1c moved it on (world145: the seats' titles and glyphs - five generic title ids, a `ts` claim beside them, four glyphs); SEAT1b moved it on (world144: the Watch's tick - a `watch` frame carrying a `k1` receipt the relay signs, net/watchReceipt.js); ELITE FOES moved it on (world143: the foe record carries an elite foe, z, so a puppet stands as one); before it FRIENDS-SYNC moved it on (world142: the hub account is the signed-in player - the token subject - and a browser profile list is merged into it once); before it CLIMB5 and CLIMB6 moved it on (world141: the pose's climb - `cl`, `cw` and a move's `ck`, `cy`, `cd`); before it WB11 moved it on (world140: the host of the Legion-Lord - the `ahit` blow on one of it, the words `ad`, `amv`, `aatk`, `ah` and `adie` of the room, `lg` in the state, `a` in a chart row, the brain law 5; GATE-HEAL's `heal` and a chart row's `hl` with it - main's HERALD and LOOT7 took world138 and world139 first); before it LOOT7 moved it on (world139: the street foe record field `cp`, a champion trait - HERALD took world138 first); before it HERALD moved it on (world138: `herald` joins the titles and glyphs a token carries, the Patreon tier between Disciple and Hierophant); before it KEPT-KILL moved it on (world137: the party pose field `qk`, the kills of quest foes a member held for a partner, counted by every copy of the quest); before it GATE-UX moved it on (world136: the damage chart made at the kill - every challenger and their part, ranked, on the `fell` word of the court and on the fall in the state (`dm`)); before it WB9 moved it on (world135: the three courts of the Warden and the Reckoning of Dagon - his court and the walkways laid in the state (`ct`, `xa`), the crystals, their breaking and the stun (`cx`, `cxh`, `cxb`, `stun`, `su`, `rk`) and a blow on a crystal (`xhit`), judged and fanned by the relay - main's PARTY-MAP took world134 first); before it PARTY-MAP moved it on (world134: the `amap` frame, the automap rows a Shared Cartography caster reveals, to the party alone); before it SOFTCAP1 moved it on (world133: the party pose `cl`, a member character level for mentor mode); before it STRIKE-SHARED moved it on (world132: the strike spell on a hit and the trapper on a dead foe, both read by the clients alone); before it MERGE 2 moved it on (world131: the professions branch, BOUNTY1 + AUDIT 28 - `bq` and `lv` on the party pose, `k`, `a` and `t` on a bounty row - world125 on its branch, never deployed, a number VOICE1 took on main); before it REALM-DOOR moved it on (world130: the door refuses a token the account service signed as naming no realm character); before it PENITENT's badge vocabulary (world129); before it WB8 (world128: marks on the gate state, the fed word - world126 on its branch, never deployed, renumbered past OW6L at the merge) past OW6L (world127: the overworld ledger of a cell - never world125 nor world126) past TV8 (world124: the party's Overworld walk) past THE MERGE (world123: the raids, the gates and Discord), one relay past main's TV3 (world122); world119, then world120, on this branch - main's AUDIT SET took world119 and PARTY-BUFFS + REST-OPT world120 first (the merges renumbered ONE-SEAT's)
+});
+
+test('ONE-SEAT at the hub: a claim closes the account\'s other tab - the reason said first, CLOSE_REPLACED - and its leave is said to the room; the newest tab stays; another account is not touched (mutants: no supersede; by the browser\'s account instead of the verified one; every room instead of the hub)', async () => {
+  const r = fakeRoom(SOCIAL_ROOM);
+  const a = r.connect(), b = r.connect(), other = r.connect();
+  await r.hello(other, 'tab-other', null, { tokenSub: 'player-2' });
+  await r.hello(a, 'tab-a', null, { tokenSub: 'player-1', cl: 1, acct: 'aprofile1', asecret: 'asecret-profile-1' });
+  assert.ok(welcomed(a) && !a.closed, 'the first tab online');
+  // the second tab is another browser profile (its own hub account) signed in as the same player
+  await r.hello(b, 'tab-b', null, { tokenSub: 'player-1', cl: 1, acct: 'aprofile2', asecret: 'asecret-profile-2' });
+  assert.ok(welcomed(b) && !b.closed, 'the tab that claimed is in');
+  assert.deepEqual(a.closed, { code: CLOSE_REPLACED, reason: SEAT_ELSEWHERE }, 'the older tab is closed, CLOSE_REPLACED');
+  assert.deepEqual(errorsOf(a), [SEAT_ELSEWHERE], 'and told why first');
+  assert.ok(!other.closed && welcomed(other), 'another player is not touched');
+  assert.ok(other.sent.some((f) => f.t === 'leave' && f.id === 'tab-a'), 'the room hears the older tab go (its leave, at the reap)');
+  assert.ok(!r.sockets.includes(a), 'and it is out of the object');
+});
+
+test('ONE-SEAT at the hub: a hello that does NOT claim is a reconnect - refused while another tab of the account holds the hub, before anything is written; admitted when none does (an older build\'s first tab); the holder\'s own reconnect replaces its old socket (mutants: the refusal dropped; the same-id exclusion dropped, so a holder\'s reconnect refused itself)', async () => {
+  const r = fakeRoom(SOCIAL_ROOM);
+  const holder = r.connect();
+  await r.hello(holder, 'tab-holder', null, { tokenSub: 'player-1' });   // no claim: a build before ONE-SEAT, first in
+  assert.ok(welcomed(holder) && !holder.closed, 'the first tab in holds the seat, claim or none');
+  const stale = r.connect();
+  await r.hello(stale, 'tab-stale', null, { tokenSub: 'player-1' });   // a tab superseded while its socket was down, back
+  assert.deepEqual(stale.closed, { code: CLOSE_REPLACED, reason: SEAT_ELSEWHERE }, 'the seat is the holder\'s');
+  assert.equal(welcomed(stale), false, 'no welcome');
+  assert.equal(r.store.has('secret:tab-stale'), false, 'and nothing written for it - a refused hello leaves nothing behind');
+  assert.ok(!holder.closed, 'the holder stands');
+  // the holder's own socket drops without the object hearing it, and the tab reconnects - the same id, no claim
+  const again = r.connect();
+  await r.hello(again, 'tab-holder', null, { tokenSub: 'player-1' });
+  assert.ok(welcomed(again) && !again.closed, 'its own reconnect is in');
+  assert.deepEqual(holder.closed, { code: CLOSE_REPLACED, reason: 'replaced' }, 'its old socket replaced, as every reconnect is');
+  // and a claim from the stale tab takes the seat back - the player pressed Play online here
+  const back = r.connect();
+  await r.hello(back, 'tab-stale', null, { tokenSub: 'player-1', cl: 1 });
+  assert.ok(welcomed(back) && !back.closed, 'a claim is always in');
+  assert.deepEqual(again.closed, { code: CLOSE_REPLACED, reason: SEAT_ELSEWHERE }, 'and the other tab goes');
+});
+
+test('ONE-SEAT: only the hub decides - two tabs of one account in a place room are both admitted there, claim or none; the client that the hub closes leaves the rest (mutant: the rule run in every room)', async () => {
+  const r = fakeRoom('1234567890');
+  const a = r.connect(), b = r.connect();
+  await r.hello(a, 'tab-a', { x: 0, y: 0, z: 0, yaw: 0, pitch: 0 }, { tokenSub: 'player-1' });
+  await r.hello(b, 'tab-b', { x: 1, y: 0, z: 0, yaw: 0, pitch: 0 }, { tokenSub: 'player-1', cl: 1 });
+  assert.ok(welcomed(a) && welcomed(b) && !a.closed && !b.closed);
+});
+
+/** A fake WebSocket class: records what was sent, lets the test drive the events (test/net/online.test.js's own). */
+function fakeSocketClass() {
+  const sockets = [];
+  class FakeWS {
+    constructor(url) { this.url = url; this.sent = []; this.closed = null; sockets.push(this); }
+    send(s) { this.sent.push(JSON.parse(s)); }
+    close(code, reason) { this.closed = { code, reason }; }
+    open() { this.onopen?.(); }
+    receive(o) { this.onmessage?.({ data: typeof o === 'string' ? o : JSON.stringify(o) }); }
+    drop(code = 1006) { this.onclose?.({ code, reason: '' }); }
+  }
+  return { FakeWS, sockets };
+}
+const hub = (FakeWS, clock) => new OnlineSession({ url: 'wss://relay.test/', name: 'Mac', look, id: 'tab-0001', secret: 'secret-of-tab-0001', presence: false, WebSocketImpl: FakeWS, now: () => clock.t });
+const hellos = (ws) => ws.sent.filter((f) => f.t === 'hello');
+
+test('ONE-SEAT, the session: the hub link claims until the hub welcomes it, and a reconnect after does not (mutants: the claim never sent; the welcome not spending it)', async () => {
+  const { FakeWS, sockets } = fakeSocketClass();
+  const clock = { t: 1000 };
+  const s = hub(FakeWS, clock);
+  s.claim = true;
+  s.join(SOCIAL_ROOM);
+  await sockets[0].onopen();
+  assert.equal(hellos(sockets[0])[0].cl, 1, 'the tab going online claims');
+  sockets[0].drop(1006);   // dropped before the hub answered: the claim was never taken
+  clock.t += BACKOFF_MAX_MS;
+  s.tick();
+  await sockets[1].onopen();
+  assert.equal(hellos(sockets[1])[0].cl, 1, 'so the retry claims again');
+  sockets[1].receive({ t: 'welcome', id: 'tab-0001', peers: [], n: 1, v: RELAY_VERSION, now: clock.t });
+  assert.equal(s.claim, false, 'the hub took it');
+  sockets[1].drop(1006);
+  clock.t += BACKOFF_MAX_MS;
+  s.tick();
+  await sockets[2].onopen();
+  assert.equal('cl' in hellos(sockets[2])[0], false, 'a reconnect is a reconnect');
+});
+
+test('ONE-SEAT, the session: the hub\'s close is STICKY - nothing joins, rejoins or retries, and the line says why - until resume(), whose join claims again (mutants: the close not sticky; join or rejoin not shut; resume not claiming)', async () => {
+  const { FakeWS, sockets } = fakeSocketClass();
+  const clock = { t: 1000 };
+  const s = hub(FakeWS, clock);
+  let heard = 0;
+  s.onSuperseded = () => { heard++; throw new Error('a host that throws is contained'); };
+  s.join(SOCIAL_ROOM);
+  await sockets[0].onopen();
+  sockets[0].receive({ t: 'welcome', id: 'tab-0001', peers: [], n: 1, v: RELAY_VERSION, now: clock.t });
+  sockets[0].receive({ t: 'error', m: SEAT_ELSEWHERE });
+  sockets[0].drop(CLOSE_REPLACED);
+  assert.equal(s.superseded, true);
+  assert.equal(s.statusLine('World'), `World: ${SEAT_TEXT}`, 'the line says why');
+  clock.t += BACKOFF_MAX_MS * 4;
+  s.tick();
+  assert.equal(s.rejoin(SOCIAL_ROOM, 0), false, 'the chat frame\'s door is shut');
+  s.join(SOCIAL_ROOM);
+  s.join('1234567890');
+  assert.equal(sockets.length, 1, 'no socket opened - by the clock, the chat frame, or a crossing');
+  assert.equal(heard, 1, 'the host heard it at once - a hidden tab draws no frame to notice in');
+  s.resume({ claim: true });
+  assert.equal(s.superseded, false);
+  s.join(SOCIAL_ROOM);
+  assert.equal(sockets.length, 2, 'Play online here: in again');
+  await sockets[1].onopen();
+  assert.equal(hellos(sockets[1])[0].cl, 1, 'taking the seat back');
+});
+
+test('ONE-SEAT, the session: supersede() - the host\'s word, when the hub closed ANOTHER of this tab\'s links or another tab of the browser went online - leaves the room cleanly and shuts the doors (mutant: supersede only marking)', async () => {
+  const { FakeWS, sockets } = fakeSocketClass();
+  const clock = { t: 1000 };
+  const presence = new OnlineSession({ url: 'wss://relay.test/', name: 'Mac', look, id: 'tab-0001', secret: 'secret-of-tab-0001', WebSocketImpl: FakeWS, now: () => clock.t });
+  presence.join('1234567890', { x: 0, y: 0, z: 0, yaw: 0, pitch: 0 });
+  await sockets[0].onopen();
+  presence.supersede();
+  assert.deepEqual(sockets[0].closed, { code: 1000, reason: 'leaving' }, 'a clean leave - the room says it at once');
+  assert.equal(presence.room, null);
+  assert.equal(presence.superseded, true);
+  assert.equal(presence.terminal, true, 'and terminal - what the gate\'s door asks (world.js gateRefusal: a tab out of the seat walks through no gate) - AUDIT ONESEAT T1');
+  assert.equal(presence.statusLine('Local'), `Local: ${SEAT_TEXT}`);
+  presence.join('1234567891', { x: 0, y: 0, z: 0, yaw: 0, pitch: 0 });
+  assert.equal(sockets.length, 1, 'the next crossing joins nothing');
+});
+
+/** A BroadcastChannel over one bus: a post reaches every OTHER object of the name, never its source - the real one's law. */
+function fakeChannels() {
+  const all = [];
+  class Channel {
+    constructor(name) { this.name = name; this.onmessage = null; this.closed = false; all.push(this); }
+    postMessage(data) { if (this.closed) throw new Error('closed'); for (const c of all) if (c !== this && !c.closed && c.name === this.name) c.onmessage?.({ data: structuredClone(data) }); }
+    close() { this.closed = true; }
+  }
+  return { Channel, all };
+}
+
+test('ONE-SEAT, the browser\'s arm: a tab going online takes the seat from every other tab of the browser that holds it - once, the newest wins, and it turns back (mutants: the hold not asked; the page\'s own word taken for another\'s)', () => {
+  const { Channel, all } = fakeChannels();
+  const lost = { a: 0, b: 0 };
+  let t = 0;
+  const now = () => (t += 1000);   // AUDIT ONESEAT C4: a claim is stamped - a second between a player's presses, as there is
+  const a = createSeatLock({ Channel, now, onLost: () => { lost.a++; } });
+  const b = createSeatLock({ Channel, now, onLost: () => { lost.b++; } });
+  assert.equal(all[0].name, SEAT_CHANNEL);
+  a.claim();
+  assert.deepEqual(lost, { a: 0, b: 0 }, 'b held nothing, so it lost nothing');
+  b.claim();
+  assert.deepEqual(lost, { a: 1, b: 0 }, 'a gave the seat to the newer tab');
+  assert.equal(a.held, false); assert.equal(b.held, true);
+  b.claim();
+  assert.equal(lost.a, 1, 'said once - a tab out of the seat is not told again');
+  a.claim();
+  assert.deepEqual(lost, { a: 1, b: 1 }, 'Play online here: it turns back');
+  b.release();
+  a.claim();
+  assert.equal(lost.b, 1, 'a released tab holds nothing to lose');
+  // one PAGE's two objects (a nonce shared) are one tab: its own word is never another's
+  const one = createSeatLock({ Channel, now, nonce: 'page-1', onLost: () => { lost.a += 100; } });
+  const same = createSeatLock({ Channel, now, nonce: 'page-1' });
+  one.claim(); same.claim();
+  assert.equal(one.held, true, 'a page does not take its own seat');
+});
+
+test('ONE-SEAT, the browser\'s arm: a browser without BroadcastChannel (or a channel that throws) has the hub\'s arm alone - the lock never throws', () => {
+  const none = createSeatLock({ Channel: undefined });
+  none.claim(); assert.equal(none.held, true); none.release(); none.close();
+  const bad = createSeatLock({ Channel: class { constructor() { throw new Error('no'); } } });
+  bad.claim(); bad.close();
+});
+
+// ── THE BUTTON ───────────────────────────────────────────────────────
+function fakeNode(tag, doc) {
+  const n = {
+    tagName: tag.toUpperCase(), children: [], parent: null, className: '', textContent: '', id: '', value: '', type: '',
+    style: {}, dataset: {}, attrs: {}, listeners: new Map(), scrollTop: 0, scrollHeight: 100, clientHeight: 100,
+    append(...cs) { for (const c of cs) { c.parent = n; n.children.push(c); } },
+    replaceChildren(...cs) { n.children = []; n.append(...cs); },
+    setAttribute(k, v) { n.attrs[k] = v; },
+    removeAttribute(k) { delete n.attrs[k]; },
+    addEventListener(t, fn) { if (!n.listeners.has(t)) n.listeners.set(t, []); n.listeners.get(t).push(fn); },
+    removeEventListener(t, fn) { const l = n.listeners.get(t) ?? []; const i = l.indexOf(fn); if (i >= 0) l.splice(i, 1); },
+    fire(t) { const ev = { type: t, target: n, preventDefault() {}, stopPropagation() {} }; for (const fn of n.listeners.get(t) ?? []) fn(ev); },
+    focus() { doc.activeElement = n; }, blur() { if (doc.activeElement === n) doc.activeElement = null; },
+    remove() { if (n.parent) { n.parent.children.splice(n.parent.children.indexOf(n), 1); n.parent = null; } },
+    getBoundingClientRect: () => ({ left: 0, top: 0, width: 440, height: 300, right: 440, bottom: 300 }),
+  };
+  return n;
+}
+function fakeDocument() {
+  const doc = { activeElement: null };
+  doc.createElement = (tag) => fakeNode(tag, doc);
+  doc.head = fakeNode('head', doc); doc.body = fakeNode('body', doc);
+  doc.documentElement = fakeNode('html', doc);
+  const byId = (n, id) => { if (n.id === id) return n; for (const c of n.children) { const f = byId(c, id); if (f) return f; } return null; };
+  doc.getElementById = (id) => byId(doc.head, id) ?? byId(doc.body, id);
+  return doc;
+}
+const fakeWindow = () => ({ innerWidth: 1280, innerHeight: 720, listeners: [], addEventListener(t, fn) { this.listeners.push({ t, fn }); }, removeEventListener() {} });
+const find = (n, cls, out = []) => { if (String(n.className).split(/\s+/).includes(cls)) out.push(n); for (const c of n.children) find(c, cls, out); return out; };
+
+test('ONE-SEAT, the way back: the chat\'s strip carries "Play online here" while the host hands the action in, a press runs it, and Hide does not take it - a player who hid the chat is still told (mutants: the button never drawn; the press not wired; hidden with the chat)', () => {
+  const doc = fakeDocument(), win = fakeWindow();
+  const panel = createChatPanel({ log: new ChatLog(), onSend: () => true, doc, win, overlay: () => false });
+  const [here] = find(doc.body, 'dfchat-here');
+  assert.ok(here, 'the button is built');
+  assert.equal(here.type, 'button');
+  panel.render({ status: `World: ${SEAT_TEXT}`, here: null });
+  assert.equal(here.className, 'dfchat-here', 'no action, no button');
+  let ran = 0;
+  panel.render({ status: `World: ${SEAT_TEXT}`, here: { label: PLAY_HERE_LABEL, run: () => { ran++; } } });
+  assert.equal(here.className, 'dfchat-here on');
+  assert.equal(here.textContent, 'Play online here');
+  here.fire('click');
+  assert.equal(ran, 1, 'the press takes the seat back');
+  panel.render({ status: null, here: null });
+  assert.equal(here.className, 'dfchat-here', 'back online, gone');
+  here.fire('click');
+  assert.equal(ran, 1, 'and a stale press does nothing');
+  const hiddenRule = CHAT_CSS.slice(CHAT_CSS.indexOf('.dfchat[data-hidden="1"]'), CHAT_CSS.indexOf('.dfchat-show { display: inline-flex'));
+  assert.ok(hiddenRule.length > 40 && !hiddenRule.includes('dfchat-here'), 'Hide does not take it');
+  assert.match(CHAT_CSS, /\n\.dfchat-here \{ display: none; pointer-events: auto;[^}]*font-size: 14px; padding: 6px 10px;/, 'a thumb\'s button, unscaled, as the others');
+  assert.match(CHAT_CSS, /\n\.dfchat-here\.on \{ display: inline-flex; \}/);
+  panel.destroy();
+});
+
+test('ONE-SEAT, the host: the World link claims, the tab claims the browser\'s seat as it goes online, a lost seat is left once before anything else of the frame (the foes handed and the room\'s last word said first) and every session is marked, the renown earns only in the seat, and Play online here resumes every link with the hub\'s claiming (mutants: each line)', () => {
+  const w = hostText('src/scenes/world.js');
+  assert.match(w, /if \(tab\.room === SOCIAL_ROOM\) link\.claim = true;/, 'the hub link\'s first hello claims');
+  assert.match(w, /seatLock = createSeatLock\(\{ onLost: \(\) => seatLostNow\(\) \}\);\n\s*if \(online\.url\) seatLock\.claim\(\);/, 'the browser\'s arm, at online start - acted on as it arrives (AUDIT ONESEAT C3: by a tab with a relay to be online on)');
+  assert.match(w, /\n\s*link\.onSuperseded = \(\) => seatLostNow\(\);/, 'the hub\'s close acted on as it arrives - a hidden tab draws no frame');
+  assert.doesNotMatch(w, /if \(tab\.room === SOCIAL_ROOM\) link\.onSuperseded/, 'AUDIT ONESEAT C5: every link\'s close, not the hub\'s alone - a shut Region link had no way back');
+  assert.match(w, /online\.onSuperseded = \(\) => seatLostNow\(\);/, 'and a room\'s');
+  assert.match(w, /const seatLostNow = \(\) => \{\n\s*_seatOut = true;\n\s*try \{ leaveSeat\(performance\.now\(\)\); \}/, 'the network\'s half at once, contained');
+  assert.match(w, /const seatOut = \(\) => _seatOut \|\| !!online\?\.superseded \|\| !!chatLinks\?\.get\('world'\)\?\.superseded;/, 'either arm');
+  const frame = w.slice(w.indexOf('  const onlineFrame = (now, dt) => {'));
+  const branch = frame.indexOf('    if (seatOut()) {\n      if (!_seatLeft) leaveSeat(now);');
+  assert.ok(branch > 0, 'the frame asks');
+  assert.ok(branch < frame.indexOf('// AUDIT ONLINE D12: the dead broadcast nothing and see no one'), 'before the dead\'s law');
+  assert.ok(branch < frame.indexOf('online.join('), 'and before anything joins');
+  assert.match(frame.slice(branch, branch + 1200), /peerBodies\.destroy\(\); remotePlayers\.sync\(\[\], onlineToScene\);[^\n]*return;/, 'nobody drawn while out');
+  const leave = w.slice(w.indexOf('  const leaveSeat = (now) => {'), w.indexOf('  const seatLostNow = () => {'));
+  assert.match(leave, /const leaveSeat = \(now\) => \{\n\s*if \(_seatLeft\) return;\n\s*_seatLeft = true;/, 'once, whoever asks first');
+  assert.ok(leave.indexOf('handOverFoes() || handOverRoomFoes()') > 0 && leave.indexOf('worldPublish(now, true)') > 0, 'my foes and the room\'s memory, first');
+  assert.ok(leave.indexOf('online?.supersede();') > leave.indexOf('worldPublish(now, true)'), 'while the socket still stands');
+  assert.match(leave, /for \(const link of chatLinks\?\.values\?\.\(\) \?\? \[\]\) link\.supersede\(\);/, 'every link marked');
+  const words = frame.slice(branch, frame.indexOf('peerBodies.destroy();', branch));
+  assert.match(words, /if \(!_seatSaid\) \{[^\n]*\n\s*_seatSaid = true;/, 'the frame\'s half, once');
+  assert.match(words, /if \(modes\?\.gateArenaDay\?\.\(\) != null\) ejectFromCourt\(COURT_TEXT\.lost\);/, 'the court is online\'s alone - cast out in the frame, where a mode may change');
+  assert.match(words, /chatNotice\(SEAT_NOTICE\);/);
+  assert.match(words, /setMidScreenText\(SEAT_MID_TEXT\);/);
+  const take = w.slice(w.indexOf('  const takeSeat = () => {'), w.indexOf('  const onlineFrame = (now, dt) => {'));
+  assert.match(take, /_seatOut = false; _seatLeft = false; _seatSaid = false;/, 'a seat taken back is lost afresh next time');
+  assert.match(take, /online\?\.resume\(\);/);
+  assert.match(take, /link\.resume\(\{ claim: room === SOCIAL_ROOM \}\);\n\s*if \(room\) link\.join\(channelLinkRoom\(room\)\);/, 'the hub\'s link claims the seat back (PIN MOVED, SCALE5c: a channel\'s link on its own shard)');
+  assert.match(take, /seatLock\?\.claim\(\);/, 'and the browser\'s other tabs are told');
+  assert.match(w, /earning: \(\) => !!online && !seatOut\(\) && _renownCapHour !== renownHour\(\),/, 'a tab out of the seat earns no Renown');   // SCALE4h (PIN MOVED): nor a spent hour
+  assert.match(w, /here: seatOut\(\) \? \{ label: PLAY_HERE_LABEL, run: takeSeat \} : null,/, 'the way back, drawn');
+  assert.match(w, /const chatRegionFrame = \(now\) => \{\n\s*if \(seatOut\(\)\) return;/, 'no region said while out');
+  assert.ok(SEAT_NOTICE.includes(PLAY_HERE_LABEL) && SEAT_MID_TEXT.length < 60);
+});
+
+// ── AUDIT ONESEAT (2026-09-27, Mac: "Audit this") ───────────────────────────────────────────────────────────────────
+// Four lenses read ONE-SEAT (the relay, the session and the browser's lock, the host and the button, the pins and the
+// record), each reproducing what it reported; every finding pinned here was verified before it was fixed.
+// bible/01-Overview/audits/Audit-OneSeat.md is the record.
+
+test('AUDIT ONESEAT R1: a seat that MOVES is not a drain - a claim that closes the lone holder of the hub keeps its party and a stranger\'s, and so does a lone player\'s reconnect over its own socket; a room that did drain still sweeps (mutants: the moved seat not asked before the sweep; the sweep never run)', async () => {
+  const realNow = Date.now; let clock = 1e12; Date.now = () => clock;
+  try {
+    const r = fakeRoom(SOCIAL_ROOM);
+    const social = (ws, o) => r.raw(ws, JSON.stringify({ t: 'social', ...o }));
+    const lastOf = (ws, k) => ws.sent.filter((f) => f.t === 'social' && f.k === k).at(-1) ?? null;
+    const hello = async (id, sub, extra = {}) => { const ws = r.connect(); await r.hello(ws, id, null, { name: sub, tokenSub: sub, acct: `acct-${sub}`, asecret: `secret-of-acct-${sub}`, ...extra }); clock += 10; return ws; };
+    const partyOf = async (a, b, peer) => { await social(a, { k: 'party.invite', peer }); clock += 600; await social(b, { k: 'party.accept', party: lastOf(b, 'invite').party }); clock += 600; return a.att.party; };
+    const me = await hello('tab-p1', 'player-p', { cl: 1 }), friend = await hello('tab-f1', 'player-f', { cl: 1 });
+    const g = await hello('tab-g1', 'player-g', { cl: 1 }), h = await hello('tab-h1', 'player-h', { cl: 1 });
+    const mine = await partyOf(me, friend, 'tab-f1'), theirs = await partyOf(g, h, 'tab-h1');
+    for (const ws of [friend, g, h]) { await r.drop(ws); clock += 600; }   // everyone else steps away - their seats kept PARTY_OFFLINE_MS
+    assert.ok(r.store.has(`party:${mine}`) && r.store.has(`party:${theirs}`));
+    const me2 = await hello('tab-p2', 'player-p', { cl: 1 });   // I go on in a second tab: its claim closes the hub's only other socket
+    assert.deepEqual(me.closed, { code: CLOSE_REPLACED, reason: SEAT_ELSEWHERE });
+    assert.ok(r.store.has(`party:${mine}`), 'my party stands');
+    assert.equal(lastOf(me2, 'state')?.party?.id, mine, 'and the tab I went on in sits in it');
+    assert.ok(r.store.has(`party:${theirs}`), 'and a stranger\'s is not swept by my tab switch');
+    const again = await hello('tab-p2', 'player-p');   // alone again, and my connection blips: its reconnect replaces its old socket
+    assert.deepEqual(me2.closed, { code: CLOSE_REPLACED, reason: 'replaced' });
+    assert.ok(welcomed(again) && r.store.has(`party:${mine}`) && r.store.has(`party:${theirs}`), 'a reconnect is not a drain either');
+    // the relay is deployed: every socket gone without a close heard, and the first hello finds an empty room - swept
+    r.sockets.length = 0; r.wake();
+    await hello('tab-q1', 'player-q', { cl: 1 });
+    assert.equal(r.store.has(`party:${theirs}`) || r.store.has(`party:${mine}`), false, 'a drained hub still forgets its parties (SOC1)');
+  } finally { Date.now = realNow; }
+});
+
+test('AUDIT ONESEAT R4: a socket the object closed never holds the seat - a runtime that lists it until its close completes does not turn the claimer\'s own reconnect away (mutants: the closed not asked; the reaped not asked)', async () => {
+  const r = fakeRoom(SOCIAL_ROOM);
+  const lingering = (ws) => { ws.close = function (code, reason) { this.closed = { code, reason }; }; return ws; };   // closed by the object, still listed
+  const phone = lingering(r.connect());
+  await r.hello(phone, 'tab-phone', null, { tokenSub: 'player-1', cl: 1 });
+  const desk = lingering(r.connect());
+  await r.hello(desk, 'tab-desk', null, { tokenSub: 'player-1', cl: 1 });
+  assert.deepEqual(errorsOf(phone), [SEAT_ELSEWHERE], 'the phone is told, and closed');
+  assert.ok(phone.closed && r.sockets.includes(phone), 'and still listed');
+  await r.drop(desk);   // the desk's own network blips
+  const back = r.connect();
+  await r.hello(back, 'tab-desk', null, { tokenSub: 'player-1' });
+  assert.equal(back.closed, null, 'the desk keeps the seat across its own reconnect');
+  assert.ok(welcomed(back));
+  // and one closed by the object and not yet reaped (a send that failed while no door was open) holds nothing either
+  const lone = fakeRoom(SOCIAL_ROOM);
+  const held = lingering(lone.connect());
+  await lone.hello(held, 'tab-a', null, { tokenSub: 'player-2', cl: 1 });
+  held.close(1011, 'send failed'); lone.room._dead.add(held);
+  const other = lone.connect();
+  await lone.hello(other, 'tab-b', null, { tokenSub: 'player-2' });
+  assert.equal(other.closed, null, 'the seat is free');
+});
+
+test('AUDIT ONESEAT T7: a claim refused for its own fault (\'id taken\') closes nobody - the claim is made after the refusals asked before anything is written (mutant: the claim before the id\'s secret)', async () => {
+  const r = fakeRoom(SOCIAL_ROOM);
+  const holder = r.connect(), stranger = r.connect(), squat = r.connect();
+  await r.hello(holder, 'tab-a', null, { tokenSub: 'player-1', cl: 1 });
+  await r.hello(stranger, 'tab-b', null, { tokenSub: 'player-2', cl: 1 });
+  await r.hello(squat, 'tab-b', null, { tokenSub: 'player-1', cl: 1, secret: 'not-the-secret-of-tab-b' });
+  assert.deepEqual(errorsOf(squat), ['id taken']);
+  assert.equal(holder.closed, null, 'the player\'s tab stands');
+  assert.equal(stranger.closed, null);
+});
+
+test('AUDIT ONESEAT H1: a press on "Play online here" is the panel\'s - pointerdown, mousedown, click and touchstart stop at the button, as the Chat, Show and Social buttons\' do, so the game never reads it as Mouse0 (the readied spell cast, the centre used) (mutant: the press not swallowed)', () => {
+  const doc = fakeDocument(), win = fakeWindow();
+  const panel = createChatPanel({ log: new ChatLog(), onSend: () => true, doc, win, overlay: () => false });
+  const [here] = find(doc.body, 'dfchat-here');
+  let ran = 0;
+  panel.render({ status: `World: ${SEAT_TEXT}`, here: { label: PLAY_HERE_LABEL, run: () => { ran++; } } });
+  for (const t of ['pointerdown', 'mousedown', 'click', 'touchstart']) {
+    let stopped = 0;
+    for (const fn of here.listeners.get(t) ?? []) fn({ type: t, target: here, preventDefault() {}, stopPropagation() { stopped++; } });
+    assert.ok(stopped > 0, `${t} stops at the button`);
+  }
+  assert.equal(ran, 1, 'the click alone takes the seat');
+  panel.destroy();
+});
+
+test('AUDIT ONESEAT T6: "Play online here" is not the chat\'s to hide - it stands on the panel\'s root under the status line (never in the box, shut unless the chat is open), a hidden chat still draws it, and no Hide rule names it (mutants: off the root; hidden with the chat, in the render or by a rule)', () => {
+  const doc = fakeDocument(), win = fakeWindow();
+  const panel = createChatPanel({ log: new ChatLog(), onSend: () => true, doc, win, overlay: () => false });
+  const [root] = find(doc.body, 'dfchat'), [status] = find(doc.body, 'dfchat-status'), [here] = find(doc.body, 'dfchat-here');
+  assert.equal(here.parent, root, 'on the root');
+  assert.equal(root.children.indexOf(here), root.children.indexOf(status) + 1, 'right under the line that says why');
+  panel.setHidden(true);
+  panel.render({ status: `World: ${SEAT_TEXT}`, here: { label: PLAY_HERE_LABEL, run: () => {} } });
+  assert.equal(root.dataset.hidden, '1');
+  assert.equal(here.className, 'dfchat-here on', 'a hidden chat still draws it');
+  for (const rule of CHAT_CSS.split('}')) if (rule.includes('data-hidden')) assert.ok(!rule.includes('dfchat-here'), `no Hide rule names it: ${rule.trim()}`);
+  panel.setHidden(false);
+  panel.destroy();
+});
+
+test('AUDIT ONESEAT H2, the session: resume() is only a superseded session\'s - a live one keeps its socket, its status and its sends, and arms no claim on a seat it holds (mutant: resume over a live session)', async () => {
+  const { FakeWS, sockets } = fakeSocketClass();
+  const clock = { t: 1000 };
+  const s = hub(FakeWS, clock);
+  s.join(SOCIAL_ROOM);
+  await sockets[0].onopen();
+  sockets[0].receive({ t: 'welcome', id: 'tab-0001', peers: [], n: 1, v: RELAY_VERSION, now: clock.t });
+  assert.equal(s.status, 'open');
+  s.resume({ claim: true });
+  assert.equal(s.status, 'open', 'never written "closed" over an open socket - every send would be refused');
+  assert.equal(s.claim, false);
+  assert.equal(sockets[0].closed, null);
+  s.join(SOCIAL_ROOM);
+  assert.equal(sockets.length, 1, 'the same room, the same socket');
+});
+
+test('AUDIT ONESEAT C1: a claim speaks for CLAIM_TTL_MS - within it a retry still claims (the hub never welcomed the first), past it the hello is a reconnect, so a first hello that never reached the hub (no network, a lid shut) does not take the seat from a tab the player opened after it (mutant: the claim a standing order)', async () => {
+  const { FakeWS, sockets } = fakeSocketClass();
+  const clock = { t: 1000 };
+  const s = hub(FakeWS, clock);
+  s.claim = true;
+  s.join(SOCIAL_ROOM);
+  await sockets[0].onopen();
+  assert.equal(hellos(sockets[0])[0].cl, 1, 'the tab going online claims');
+  sockets[0].drop(1006);
+  clock.t += BACKOFF_MAX_MS;
+  s.tick();
+  await sockets[1].onopen();
+  assert.equal(hellos(sockets[1])[0].cl, 1, 'a retry inside the claim\'s life is still the player\'s act');
+  sockets[1].drop(1006);
+  clock.t += BACKOFF_MAX_MS * 2;
+  assert.ok(clock.t - 1000 > CLAIM_TTL_MS);
+  s.tick();
+  await sockets[2].onopen();
+  assert.equal('cl' in hellos(sockets[2])[0], false, 'past it: a reconnect, refused while another tab holds the seat');
+  assert.equal(s.claim, false);
+  s.claim = true;   // Play online here (resume) - a new act, a new claim
+  assert.equal(s.claim, true);
+});
+
+test('AUDIT ONESEAT C4/T5: over the RUNTIME\'s BroadcastChannel (which delivers later, as a browser\'s does - the suite\'s fake delivered inside the post and hid it), two tabs that claim before either hears the other leave exactly one holding the seat; a press in the same millisecond still takes it; and a claim that crossed a newer one is answered, not obeyed (mutants: no stamp asked; the older not answered; the stamp the clock alone)', async () => {
+  const BC = globalThis.BroadcastChannel;
+  assert.equal(typeof BC, 'function');
+  // BroadcastChannel delivery has no 25 ms deadline, especially during the full parallel suite.
+  // Wait for the observed handoff, with a bounded failure if the protocol never converges.
+  const settle = async (ready) => {
+    const deadline = performance.now() + 2000;
+    while (!ready() && performance.now() < deadline) await new Promise((res) => setTimeout(res, 5));
+    assert.ok(ready(), 'BroadcastChannel seat handoff did not converge within 2 seconds');
+  };
+  const opened = [];
+  const lock = (name, nonce, lost, key) => { const l = createSeatLock({ Channel: BC, name, nonce, now: () => 5000, onLost: () => { lost[key]++; } }); opened.push(l); return l; };
+  try {
+    // two tabs, both online at once: each claims before the other's word arrives
+    let lost = { a: 0, b: 0 }, name = `dagger.test.seat.${process.pid}.1`;
+    let a = lock(name, 'n-2', lost, 'a'), b = lock(name, 'n-1', lost, 'b');
+    a.claim(); b.claim();
+    await settle(() => Number(a.held) + Number(b.held) === 1 && lost.a + lost.b === 1);
+    assert.equal(Number(a.held) + Number(b.held), 1, 'one tab holds the seat - two had given it up');
+    assert.equal(lost.a + lost.b, 1);
+    // Play online here in the tab that lost, in the same millisecond (the clock stands still): it takes the seat
+    const [out, holder] = a.held ? [b, a] : [a, b];
+    out.claim();
+    await settle(() => out.held && !holder.held);
+    assert.equal(out.held, true, 'the newer press holds');
+    assert.equal(holder.held, false);
+    // a tab whose channel opened after the holder's claim never heard it: the holder answers its claim with its own
+    lost = { a: 0, b: 0 }; name = `dagger.test.seat.${process.pid}.2`;
+    a = lock(name, 'n-2', lost, 'a');
+    a.claim();
+    // No listener existed when this claim was posted; a later channel cannot receive it.
+    b = lock(name, 'n-1', lost, 'b');   // the same instant, a lower nonce: the tie is a's
+    b.claim();
+    await settle(() => a.held && !b.held);
+    assert.deepEqual([a.held, b.held], [true, false], 'one seat, not two');
+    assert.deepEqual(lost, { a: 0, b: 1 });
+  } finally { for (const l of opened) l.close(); }
+});
+
+/** AUDIT ONESEAT T1: THE HOST'S SEAT, RUN - seatOut, renownAdopt, leaveSeat, seatLostNow, takeSeat and the frame's
+ *  seat branch, lifted VERBATIM out of world.js (the audit24 waves' way) and run over stubs that write down what they
+ *  are asked, in order. A text pin could not tell a line commented out, moved or skipped from a live one. */
+function seatHost({ publishThrows = false, duelThrows = false, court = null } = {}) {
+  const w = hostText('src/scenes/world.js');
+  const cut = (from, to) => { const a = w.indexOf(from), b = w.indexOf(to, a + from.length); assert.ok(a > 0 && b > a, from); return w.slice(a, b); };
+  const log = [];
+  const session = (name, room) => ({
+    room, superseded: false,
+    supersede() { log.push(`${name} out`); this.superseded = true; this.room = null; },
+    resume({ claim = false } = {}) { log.push(`${name} resumed${claim ? ', claiming' : ''}`); this.superseded = false; },
+    join(r) { log.push(`${name} joins ${r}`); this.room = r; },
+  });
+  const rooms = { world: SOCIAL_ROOM, region: 'chat:region.3', trade: null };   // a tab whose room waits for the region
+  const deps = {
+    staffTeleportClient: { cancel() {} }, cabinLink: { close() {} }, caravanVisitLink: { close: () => log.push('caravan listener closed') },   // WAGONS2-VISIT: the visited caravan's listener
+    wagonRiders: { clear: () => log.push('riders cleared') },   // WAGONS2 (FINAL AUDIT): nobody rides with me offline
+    online: session('presence', 'dungeon:m123'), chatLinks: new Map(Object.keys(rooms).map((k) => [k, session(k, rooms[k])])),
+    chatLog: { tab: (id) => ({ room: rooms[id] ?? null }) }, SOCIAL_ROOM, channelLinkRoom: (r) => r,   // SCALE5c: a page that has not seen a relay with the shards - each channel link the channel's own
+    seatLock: { release: () => log.push('lock released'), claim: () => log.push('lock claimed') },
+    handOverFoes: () => { log.push('foes handed'); return 0; }, handOverRoomFoes: () => 0,
+    worldPublish: (now, force) => { log.push(`last word${force ? ', final' : ''}`); if (publishThrows) throw new TypeError("Cannot read properties of undefined (reading 'records')"); },
+    duelLeaveNow: () => { log.push('duel ended'); if (duelThrows) throw new Error('no duel was built'); },
+    travellerBook: { clear: () => log.push('travellers forgotten') }, travellerSent: { last: { px: 1 }, at: 0 },   // AUDIT TV C5
+    exteriorFoes: { clearPuppets: () => log.push('puppets gone') }, modes: { clearOwnPuppets: () => log.push('own puppets gone'), gateArenaDay: () => court },
+    camps: { sweepOwners: (alive) => log.push(`camps kept for ${alive.size}`) }, hcc: { pruneKept: (list) => log.push(`kept teams for ${list.length} rooms`) },
+    setFirmamentOnline: () => {}, firmBook: null,   // FIRM1: the sky sleeps and wakes with the sigils (systems/firmamentLive.js); no book in this host
+    setSigilOnline, setSigilRenown, setRenownLayer: (e, level) => log.push(`renown layer ${level}`), playerEntity: { name: 'Mac' }, renownNow: 12, onlineOn: true,
+    computeEntityMods: () => log.push('set tiers folded'),   // SET3 (main's): the sets' stat fold, as a Renown rise runs it
+    ejectFromCourt: (t) => log.push(`cast out: ${t}`), COURT_TEXT: { lost: 'the fight is lost' },
+    chatNotice: (t) => log.push(`said: ${t}`), SEAT_NOTICE, setMidScreenText: (t) => log.push(`over the screen: ${t}`), SEAT_MID_TEXT,
+    peerBodies: { destroy: () => log.push('bodies gone') }, remotePlayers: { sync: (list) => log.push(`players ${list.length}`) }, onlineToScene: null,
+    peerRiders: { destroy: () => log.push('riders gone') }, peerWalkers: { destroy: () => log.push('walkers gone') }, peerCandlesFrame: (list) => log.push(`candles ${list.length}`),
+    PLAY_HERE_LABEL,
+    arenaOnline: { leaveAll: () => log.push('arena rooms left') },   // AUDIT PRE-MERGE 1003 O9: the arena's own rooms
+  };
+  const body = `let { ${Object.keys(deps).join(', ')} } = deps;
+    let _seatOut = false, _seatLeft = false, _seatSaid = false, _foesRoom = 'dungeon:m123';
+    ${cut('  const seatOut = () =>', '\n')}
+    ${cut('  const renownAdopt = (level) => {', '  const adoptIssued = ')}
+    ${cut('  const leaveSeat = (now) => {', '  const onlineFrame = (now, dt) => {')}
+    const seatFrame = (now, dt) => {
+${cut('    if (seatOut()) {\n      if (!_seatLeft) leaveSeat(now);', '    // AUDIT ONLINE D12: the dead broadcast nothing and see no one')}      return 'online';
+    };
+    return { seatOut, renownAdopt, seatLostNow, takeSeat, seatFrame, flags: () => ({ _seatLeft, _seatSaid, _foesRoom, renownNow }) };`;
+  const quiet = { info() {}, warn: (...a) => log.push(`warned: ${a.join(' ')}`), error: (...a) => log.push(`error: ${a[0]}`) };
+  // eslint-disable-next-line no-new-func
+  const host = new Function('deps', 'performance', 'console', body)(deps, { now: () => 5000 }, quiet);
+  return { host, log, deps };
+}
+
+test('AUDIT ONESEAT H2/H3/H5/H6/T1, the host run: the seat lost is left ONCE - my foes handed and the room\'s last word said, a duel ended while the socket stands, every session marked, the puppets gone, the others\' camps and kept teams gone, the sigil and the Renown layer off - and ALL of it though the last word THROWS; the frame draws nobody and says it once; Play online here puts it all back, each link by its tab\'s room and the hub\'s claiming (mutants: each line)', () => {
+  _resetSigilForTests();
+  try {
+    setSigilOnline(true); setSigilRenown(12);   // the page plays online, its Renown known
+    const sword = { name: 'Longsword', group: 'Weapons', sigil: { power: 6, party: 1, xp: 100 } };
+    const { host, log, deps } = seatHost({ publishThrows: true, duelThrows: true });
+    assert.equal(host.seatFrame(1000, 16), 'online', 'in the seat, the frame goes on');
+    assert.deepEqual(log, []);
+    host.seatLostNow();   // the hub's close or the browser's word, as it arrives
+    assert.deepEqual(log, [
+      'foes handed', 'last word, final', "error: [online] the seat's last word could not be said - leaving anyway:",   // H2: contained
+      'duel ended',   // H6: while the socket stands - its throw contained too
+      'presence out', 'world out', 'region out', 'trade out',
+      'arena rooms left',   // AUDIT PRE-MERGE 1003 O9: the arena's hall, its exhibition's and its verdict's sockets
+      'travellers forgotten',   // AUDIT TV C5: offline, nobody is seen travelling
+      'puppets gone', 'own puppets gone',
+      'camps kept for 0', 'kept teams for 0 rooms',   // H5
+      'renown layer null', 'set tiers folded',   // H3 - and the sets sleep with the sigils (main's SET3, at the merge)
+      'riders cleared',   // WAGONS2 (FINAL AUDIT): my riders' seats and my own ride go with the seat
+      'caravan listener closed',   // WAGONS2-VISIT: the visited caravan's cell, heard from inside it, goes with the seat
+      'lock released',
+    ]);
+    assert.equal(sigilOnline(), false, 'H3: the sigils sleep - a weapon won here is won offline');
+    assert.equal(drinkSigil(sword, 300), null);
+    assert.equal(sword.sigil.xp, 100, 'and the sigil in hand drinks nothing');
+    assert.deepEqual(host.flags(), { _seatLeft: true, _seatSaid: false, _foesRoom: null, renownNow: 12 });
+    log.length = 0;
+    host.seatLostNow();
+    assert.deepEqual(log, [], 'left once, whoever asks again');
+    assert.equal(host.seatFrame(1016, 16), undefined, 'the frame returns before anything is sent');
+    assert.deepEqual(log, [`said: ${SEAT_NOTICE}`, `over the screen: ${SEAT_MID_TEXT}`, 'bodies gone', 'players 0', 'riders gone', 'walkers gone', 'candles 0']);
+    log.length = 0;
+    host.seatFrame(1032, 16);
+    assert.deepEqual(log, ['bodies gone', 'players 0', 'riders gone', 'walkers gone', 'candles 0'], 'said once, nobody drawn every frame');
+    // a Renown rise heard while out waits for Play online here
+    log.length = 0;
+    assert.equal(host.renownAdopt(14), 14);
+    assert.deepEqual(log, ['set tiers folded'], 'no layer while out (the sets fold asleep)');
+    assert.equal(sigilRenown(), null);
+    log.length = 0;
+    host.takeSeat();
+    assert.deepEqual(log, ['renown layer 14', 'set tiers folded', 'presence resumed', 'world resumed, claiming', `world joins ${SOCIAL_ROOM}`, 'region resumed', 'region joins chat:region.3', 'trade resumed', 'lock claimed']);
+    assert.equal(sigilOnline(), true, 'online again');
+    assert.equal(sigilRenown(), 14);
+    assert.equal(host.seatOut(), false);
+    log.length = 0;
+    host.takeSeat();
+    assert.deepEqual(log, [], 'a second press is nothing');
+    // lost again: left afresh, and said afresh
+    deps.online.room = 'dungeon:m123';
+    host.seatLostNow();
+    assert.ok(log.includes('presence out') && log.includes('foes handed'));
+    log.length = 0;
+    host.seatFrame(2000, 16);
+    assert.equal(log[0], `said: ${SEAT_NOTICE}`);
+  } finally { _resetSigilForTests(); }
+});
+
+test('AUDIT ONESEAT, the host run: a court\'s fighter is cast out on the first frame out, and a tab out of every room hands nothing and says no last word (the dead\'s own law)', () => {
+  const { host, log, deps } = seatHost({ court: 3 });
+  deps.online.room = null;
+  host.seatLostNow();
+  assert.ok(!log.includes('foes handed') && !log.some((l) => l.startsWith('last word')), 'no room, no word');
+  assert.ok(log.includes('duel ended') && log.includes('presence out'));
+  log.length = 0;
+  host.seatFrame(1000, 16);
+  assert.deepEqual(log.slice(0, 3), ['cast out: the fight is lost', `said: ${SEAT_NOTICE}`, `over the screen: ${SEAT_MID_TEXT}`]);
+  _resetSigilForTests();
+});
+
+test('AUDIT ONESEAT H4: the page\'s exit save is never a tab\'s the seat was taken from - it is offline, and every slot of the character would be written over what the tab that has the seat saved (mutant: the seat not asked)', () => {
+  const w = hostText('src/scenes/world.js');
+  const at = w.indexOf('  const exitAutosave = () => {\n    // AUDIT ONESEAT H4');   // FIELD BUGS 29h (BOOT-HIDE): the page's exit save, named
+  assert.ok(at > 0 && w.includes("\n  addEventListener('beforeunload', exitAutosave);\n"));
+  const body = w.slice(w.indexOf('{', at) + 1, w.indexOf('\n  };', at));
+  const run = (out, realmSession = null) => {
+    const written = [];
+    // eslint-disable-next-line no-new-func
+    new Function('online', 'playerSpawned', 'seatOut', 'duelLeaveNow', 'modes', 'worldQuickSave', 'exitAutosaveNames', 'playerEntity', 'townTalk', 'DeathScreen', 'realmSession', 'successionOpen', body)(
+      {}, true, () => out, () => {}, { quickSaveNow: (n) => written.push(n), deathUp: () => false }, null, () => ['QuickSave', 'AutoSave', 'Before the crypt'], {}, { overlay: null }, class {}, realmSession, () => false);   // AUDIT LEGACY B1: no Succession standing
+    return written;
+  };
+  assert.deepEqual(run(true), [], 'out of the seat: nothing written');
+  assert.deepEqual(run(false), ['QuickSave', 'AutoSave', 'Before the crypt'], 'in it: every slot of the character, as ONLINE-AUTOSAVE1 says');
+  // REALM P1.3: a realm character's exit writes no slot of it. AUDIT REALM2 C2: nor gives its lease up - this event
+  // comes before the unload guard's "Leave site?" is answered; the leave is the page's going (pagehide,
+  // test/systems/auditrealm2_client.test.js)
+  const left = [];
+  const realm = { leave: (o) => left.push(o) };
+  assert.deepEqual([run(false, realm), left], [[], []], 'a realm character: never a slot, and no leave before the answer');
+  assert.deepEqual([run(true, realm), left.length], [[], 0], 'out of the seat: nothing');
+});

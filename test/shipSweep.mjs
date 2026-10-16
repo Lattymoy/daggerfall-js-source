@@ -1,5 +1,5 @@
-// SHIPS-2: A SHIP'S RIG SWEPT - the tests' one sweep (test/ships2_carrack.test.js, test/ships2_largeboat.test.js): a
-// built prefab of the port's (world/carrackModel.js, world/largeBoatModel.js), one sail plan switched on, every canvas
+// SHIPS-2: A SHIP'S RIG SWEPT - the tests' one sweep (test/systems/naval/ships2_carrack.test.js, test/world/ships/ships2_largeboat.test.js): a
+// built prefab of the port's (world/ships/carrackModel.js, world/ships/largeBoatModel.js), one sail plan switched on, every canvas
 // at every Wind and stowed (each sail's own clips), every boom turned through the trims asked (square booms `sq`, gaffs'
 // and lateens' `lat`, about the boom's own axis), against every other part of her rig (her canvas, her spars and her
 // standing rope read out of their meshes as tubes, her running rope bone to bone), her solids (the drawn meshes `solid`

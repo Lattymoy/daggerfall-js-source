@@ -5,7 +5,7 @@
     "old": "          c.count += e.count;",
     "new": "          c.count = e.count;",
     "tests": [
-      "test/pickupfeed.test.js"
+      "test/systems/pickupfeed.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "          c.at = now;",
     "new": "          c.at = c.at;",
     "tests": [
-      "test/pickupfeed.test.js"
+      "test/systems/pickupfeed.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "        const i = cards.findIndex((c) => c.key === e.key);",
     "new": "        const i = -1;",
     "tests": [
-      "test/pickupfeed.test.js"
+      "test/systems/pickupfeed.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "          block.push(c);\n          continue;",
     "new": "          cards.splice(i, 0, c);\n          continue;",
     "tests": [
-      "test/pickupfeed.test.js"
+      "test/systems/pickupfeed.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "        if (mine) { mine.count += e.count; merge(mine, e); continue; }",
     "new": "        if (false) { mine.count += e.count; merge(mine, e); continue; }",
     "tests": [
-      "test/pickupfeed.test.js"
+      "test/systems/pickupfeed.test.js"
     ],
     "note": "HAUL-CARDS (PIN MOVED): re-aimed by content - the queue's own hold and merge, the haul card's twin lines (the anchor widened to the pickup's own), the goods' line said where no card stood, a Motherlode's silver unsaid under its card."
   },
@@ -51,7 +51,7 @@
     "old": "      cards = [...block, ...cards].slice(0, Math.max(1, max));",
     "new": "      cards = [...block, ...cards];",
     "tests": [
-      "test/pickupfeed.test.js"
+      "test/systems/pickupfeed.test.js"
     ]
   },
   {
@@ -60,7 +60,7 @@
     "old": "      cards = [...block, ...cards].slice(0, Math.max(1, max));",
     "new": "      cards = [...block.reverse(), ...cards].slice(0, Math.max(1, max));",
     "tests": [
-      "test/pickupfeed.test.js"
+      "test/systems/pickupfeed.test.js"
     ]
   },
   {
@@ -69,7 +69,7 @@
     "old": "    standing(now) { return cards.map((c) => ({ ...c, fading: now - c.at >= holdOf(c) })); },",
     "new": "    standing(now) { return cards.map((c) => ({ ...c, fading: false })); },",
     "tests": [
-      "test/pickupfeed.test.js"
+      "test/systems/pickupfeed.test.js"
     ],
     "note": "HAUL-CARDS (PIN MOVED): re-aimed by content - the queue's own hold and merge, the haul card's twin lines (the anchor widened to the pickup's own), the goods' line said where no card stood, a Motherlode's silver unsaid under its card."
   },
@@ -79,7 +79,7 @@
     "old": "    cards = cards.filter((c) => now - c.at < holdOf(c) + fade);",
     "new": "    cards = cards.filter(() => true);",
     "tests": [
-      "test/pickupfeed.test.js"
+      "test/systems/pickupfeed.test.js"
     ],
     "note": "HAUL-CARDS (PIN MOVED): re-aimed by content - the queue's own hold and merge, the haul card's twin lines (the anchor widened to the pickup's own), the goods' line said where no card stood, a Motherlode's silver unsaid under its card."
   },
@@ -89,7 +89,7 @@
     "old": "      tick(now);\n      const block = [];",
     "new": "      const block = [];",
     "tests": [
-      "test/pickupfeed.test.js"
+      "test/systems/pickupfeed.test.js"
     ]
   },
   {
@@ -98,7 +98,7 @@
     "old": "(!line.gold && line.count > 1 ?",
     "new": "(!line.gold && line.count >= 1 ?",
     "tests": [
-      "test/pickupfeed.test.js"
+      "test/systems/pickupfeed.test.js"
     ]
   },
   {
@@ -107,7 +107,7 @@
     "old": "  if (isGoldPieces(item)) return { key: 'gold',",
     "new": "  if (false) return { key: 'gold',",
     "tests": [
-      "test/pickupfeed.test.js"
+      "test/systems/pickupfeed.test.js"
     ]
   },
   {
@@ -116,7 +116,7 @@
     "old": "  if (l.gold) el.classList.add('is-gold');\n  if (l.rarity) el.dataset.rarity = l.rarity;",
     "new": "  if (l.gold) el.classList.add('is-gold');\n  if (false) el.dataset.rarity = l.rarity;",
     "tests": [
-      "test/pickupfeed.test.js"
+      "test/systems/pickupfeed.test.js"
     ],
     "note": "HAUL-CARDS (PIN MOVED): re-aimed by content - the queue's own hold and merge, the haul card's twin lines (the anchor widened to the pickup's own), the goods' line said where no card stood, a Motherlode's silver unsaid under its card."
   },
@@ -126,7 +126,7 @@
     "old": "  if (!l.gold) {\n    const plus = d.createElement('span');",
     "new": "  if (true) {\n    const plus = d.createElement('span');",
     "tests": [
-      "test/pickupfeed.test.js"
+      "test/systems/pickupfeed.test.js"
     ]
   },
   {
@@ -135,7 +135,7 @@
     "old": "  let top = Math.max(Number.isFinite(base) ? base : up, up);",
     "new": "  let top = up;",
     "tests": [
-      "test/pickupfeed.test.js"
+      "test/systems/pickupfeed.test.js"
     ]
   },
   {
@@ -144,7 +144,7 @@
     "old": "    if (top + height(shown) > lower) top = Math.max(up, lower - height(shown));",
     "new": "    if (false) top = Math.max(up, lower - height(shown));",
     "tests": [
-      "test/pickupfeed.test.js"
+      "test/systems/pickupfeed.test.js"
     ]
   },
   {
@@ -153,7 +153,7 @@
     "old": "    if (top + height(shown) > lower) top = Math.max(up, lower - height(shown));",
     "new": "    if (top + height(shown) > lower) top = lower - height(shown);",
     "tests": [
-      "test/pickupfeed.test.js"
+      "test/systems/pickupfeed.test.js"
     ]
   },
   {
@@ -162,7 +162,7 @@
     "old": "    while (shown > 1 && top + height(shown) > lower) shown -= 1;\n",
     "new": "\n",
     "tests": [
-      "test/pickupfeed.test.js"
+      "test/systems/pickupfeed.test.js"
     ]
   },
   {
@@ -171,7 +171,7 @@
     "old": "  for (const sel of PICKUP_KEEP_ABOVE) { const r = rect(d.querySelector?.(sel)); if (r) upper = Math.max(upper, r.bottom + gap); }",
     "new": "  void PICKUP_KEEP_ABOVE;",
     "tests": [
-      "test/pickupfeed.test.js"
+      "test/systems/pickupfeed.test.js"
     ]
   },
   {
@@ -180,7 +180,7 @@
     "old": "    if (r) lower = Math.min(lower, r.top - gap);",
     "new": "    if (r) lower = lower + 0;",
     "tests": [
-      "test/pickupfeed.test.js"
+      "test/systems/pickupfeed.test.js"
     ]
   },
   {
@@ -189,7 +189,7 @@
     "old": "  if (mid && mid.style?.display !== 'none' && mid.textContent) { const r = rect(mid); if (r) upper = Math.max(upper, r.bottom + gap); }",
     "new": "  void mid;",
     "tests": [
-      "test/pickupfeed.test.js"
+      "test/systems/pickupfeed.test.js"
     ]
   },
   {
@@ -198,7 +198,7 @@
     "old": "  for (let i = 0; i < kids.length; i++) kids[i].classList.toggle('pf-over', i >= shown);",
     "new": "  void kids;",
     "tests": [
-      "test/pickupfeed.test.js"
+      "test/systems/pickupfeed.test.js"
     ]
   },
   {
@@ -207,7 +207,7 @@
     "old": "    if (!isEnhanced()) return false;\n    const d = doc();\n    if (!d?.body || !d.createElement) return false;\n    // LOOT-BANNER",
     "new": "    if (false) return false;\n    const d = doc();\n    if (!d?.body || !d.createElement) return false;\n    // LOOT-BANNER",
     "tests": [
-      "test/pickupfeed.test.js"
+      "test/systems/pickupfeed.test.js"
     ],
     "note": "HAUL-CARDS (PIN MOVED): re-aimed by content - the queue's own hold and merge, the haul card's twin lines (the anchor widened to the pickup's own), the goods' line said where no card stood, a Motherlode's silver unsaid under its card."
   },
@@ -217,7 +217,7 @@
     "old": "  d.body.append(node);",
     "new": "  void node;",
     "tests": [
-      "test/pickupfeed.test.js"
+      "test/systems/pickupfeed.test.js"
     ]
   },
   {
@@ -226,7 +226,7 @@
     "old": "  if (!d.getElementById?.(PICKUP_FEED_STYLE_ID)) {",
     "new": "  if (true) {",
     "tests": [
-      "test/pickupfeed.test.js"
+      "test/systems/pickupfeed.test.js"
     ]
   },
   {
@@ -235,7 +235,7 @@
     "old": "  if (!_ticking) { const gen = _tickGen; _ticking = _raf(() => frame(gen)) != null; }",
     "new": "  if (false) { const gen = _tickGen; _ticking = _raf(() => frame(gen)) != null; }",
     "tests": [
-      "test/pickupfeed.test.js"
+      "test/systems/pickupfeed.test.js"
     ]
   },
   {
@@ -244,7 +244,7 @@
     "old": "  if (!lines.length) return;\n  place(lines.length);",
     "new": "  if (!lines.length) { const gen = _tickGen; _ticking = _raf(() => frame(gen)) != null; return; }\n  place(lines.length);",
     "tests": [
-      "test/pickupfeed.test.js"
+      "test/systems/pickupfeed.test.js"
     ]
   },
   {
@@ -253,7 +253,7 @@
     "old": "  for (const [id, c] of drawn) if (!live.has(id)) { try { c.el.remove(); } catch { /* already gone */ } drawn.delete(id); }",
     "new": "  for (const [id] of drawn) if (!live.has(id)) drawn.delete(id);",
     "tests": [
-      "test/pickupfeed.test.js"
+      "test/systems/pickupfeed.test.js"
     ]
   },
   {
@@ -262,7 +262,7 @@
     "old": "    if (c.fading !== l.fading) { c.fading = l.fading; c.el.classList.toggle('fading', l.fading); }",
     "new": "    if (c.fading !== l.fading) { c.fading = l.fading; }",
     "tests": [
-      "test/pickupfeed.test.js"
+      "test/systems/pickupfeed.test.js"
     ]
   },
   {
@@ -271,7 +271,7 @@
     "old": "      c.num.textContent = pickupCountText(l);\n",
     "new": "\n",
     "tests": [
-      "test/pickupfeed.test.js"
+      "test/systems/pickupfeed.test.js"
     ]
   },
   {
@@ -280,7 +280,7 @@
     "old": "      target.classList.add(l.bumps % 2 ? 'bump-a' : 'bump-b');",
     "new": "      target.classList.add('bump-a');",
     "tests": [
-      "test/pickupfeed.test.js"
+      "test/systems/pickupfeed.test.js"
     ]
   },
   {
@@ -289,7 +289,7 @@
     "old": "  try { pic = _icon(l, () => { if (drawn.get(l.id) === c) {",
     "new": "  try { pic = _icon(l, () => { if (false) {",
     "tests": [
-      "test/pickupfeed.test.js"
+      "test/systems/pickupfeed.test.js"
     ]
   },
   {
@@ -298,7 +298,7 @@
     "old": "  if (!shown && !l.image) { c.icon.remove(); c.el.classList.add('no-icon'); }",
     "new": "  if (!shown && !l.image) { c.el.classList.add('no-icon'); }",
     "tests": [
-      "test/pickupfeed.test.js"
+      "test/systems/pickupfeed.test.js"
     ]
   },
   {
@@ -307,7 +307,7 @@
     "old": "  _watchdog = armDrawWatchdog(PICKUP_WATCHDOG_MS, () => { _watchdog = null; clearPickupFeed(); }, { schedule: _schedule, cancel: _cancel });",
     "new": "  _watchdog = null;",
     "tests": [
-      "test/pickupfeed.test.js"
+      "test/systems/pickupfeed.test.js"
     ]
   },
   {
@@ -316,7 +316,7 @@
     "old": "  _watchdog = armDrawWatchdog(PICKUP_WATCHDOG_MS, () => { _watchdog = null; clearPickupFeed(); }, { schedule: _schedule, cancel: _cancel });",
     "new": "  _watchdog = armDrawWatchdog(PICKUP_WATCHDOG_MS, () => { _watchdog = null; }, { schedule: _schedule, cancel: _cancel });",
     "tests": [
-      "test/pickupfeed.test.js"
+      "test/systems/pickupfeed.test.js"
     ]
   },
   {
@@ -325,7 +325,7 @@
     "old": "  try { node?.remove(); } catch { /* already gone */ }\n  node = null;",
     "new": "  node = null;",
     "tests": [
-      "test/pickupfeed.test.js"
+      "test/systems/pickupfeed.test.js"
     ]
   },
   {
@@ -334,7 +334,7 @@
     "old": "  if (gen !== _tickGen) return;\n",
     "new": "\n",
     "tests": [
-      "test/pickupfeed.test.js"
+      "test/systems/pickupfeed.test.js"
     ]
   },
   {
@@ -343,7 +343,7 @@
     "old": "  clearPickupFeed();   // PICKUP-FEED:",
     "new": "  void 0;   // PICKUP-FEED:",
     "tests": [
-      "test/pickupfeed.test.js"
+      "test/systems/pickupfeed.test.js"
     ]
   },
   {
@@ -352,7 +352,7 @@
     "old": "  // the hosts' one teardown for quick loot is this function.\n  destroyPickupFeed();",
     "new": "  // the hosts' one teardown for quick loot is this function.",
     "tests": [
-      "test/pickupfeed.test.js"
+      "test/systems/pickupfeed.test.js"
     ]
   },
   {
@@ -361,8 +361,8 @@
     "old": "  if (got) { takeSound(); if (!shownBy(took, moved, playerEntity)) say(tookItemText(got)); }",
     "new": "  if (got) { takeSound(); shownBy(took, moved, playerEntity); say(tookItemText(got)); }",
     "tests": [
-      "test/pickupfeed.test.js",
-      "test/quickloot.test.js"
+      "test/systems/pickupfeed.test.js",
+      "test/systems/quickloot.test.js"
     ]
   },
   {
@@ -371,8 +371,8 @@
     "old": "  if (got) { takeSound(); if (!shownBy(took, moved, playerEntity)) say(tookItemText(got)); }",
     "new": "  if (got) { takeSound(); say(tookItemText(got)); }",
     "tests": [
-      "test/pickupfeed.test.js",
-      "test/quickloot.test.js"
+      "test/systems/pickupfeed.test.js",
+      "test/systems/quickloot.test.js"
     ]
   },
   {
@@ -381,8 +381,8 @@
     "old": "  try { return took(moved, playerEntity) === true; } catch (e) {",
     "new": "  try { took(moved, playerEntity); return true; } catch (e) {",
     "tests": [
-      "test/pickupfeed.test.js",
-      "test/quickloot.test.js"
+      "test/systems/pickupfeed.test.js",
+      "test/systems/quickloot.test.js"
     ]
   },
   {
@@ -391,8 +391,8 @@
     "old": "  try { return took(moved, playerEntity) === true; } catch (e) {\n    console.warn(`[quick-loot] the pickup face failed; the line is said instead: ${e?.message ?? e}`);\n    return false;\n  }",
     "new": "  return took(moved, playerEntity) === true;",
     "tests": [
-      "test/pickupfeed.test.js",
-      "test/quickloot.test.js"
+      "test/systems/pickupfeed.test.js",
+      "test/systems/quickloot.test.js"
     ]
   },
   {
@@ -401,8 +401,8 @@
     "old": "    if (n && shownBy(took, moved, playerEntity)) { if (refusal?.text) say(refusal.text); }",
     "new": "    if (n && shownBy(took, moved, playerEntity)) { }",
     "tests": [
-      "test/pickupfeed.test.js",
-      "test/quickloot.test.js"
+      "test/systems/pickupfeed.test.js",
+      "test/systems/quickloot.test.js"
     ]
   },
   {
@@ -411,8 +411,8 @@
     "old": "    if (n && shownBy(took, moved, playerEntity)) { if (refusal?.text) say(refusal.text); }",
     "new": "    if (n && shownBy(took, moved, playerEntity)) { say(refusal?.text ?? ''); }",
     "tests": [
-      "test/pickupfeed.test.js",
-      "test/quickloot.test.js"
+      "test/systems/pickupfeed.test.js",
+      "test/systems/quickloot.test.js"
     ]
   },
   {
@@ -421,8 +421,8 @@
     "old": "  moved?.push({ item: got, count: plan.amount });",
     "new": "  moved?.push({ item: got, count: got.stackCount ?? 1 });",
     "tests": [
-      "test/pickupfeed.test.js",
-      "test/quickloot.test.js"
+      "test/systems/pickupfeed.test.js",
+      "test/systems/quickloot.test.js"
     ]
   },
   {
@@ -431,8 +431,8 @@
     "old": "      const got = takeThrough(playerEntity, items, it, getQuest, moved);",
     "new": "      const got = takeThrough(playerEntity, items, it, getQuest);",
     "tests": [
-      "test/pickupfeed.test.js",
-      "test/quickloot.test.js"
+      "test/systems/pickupfeed.test.js",
+      "test/systems/quickloot.test.js"
     ]
   },
   {
@@ -441,7 +441,7 @@
     "old": ", took: showPickups })) return true;   // AUDIT QL-WEIGHT1: the window's own resolver; PICKUP-FEED: the cards",
     "new": " })) return true;   // AUDIT QL-WEIGHT1: the window's own resolver; PICKUP-FEED: the cards",
     "tests": [
-      "test/pickupfeed.test.js"
+      "test/systems/pickupfeed.test.js"
     ]
   },
   {
@@ -450,7 +450,7 @@
     "old": ", took: showPickups })) {   // AUDIT QL-WEIGHT1; PICKUP-FEED: the cards",
     "new": " })) {   // AUDIT QL-WEIGHT1; PICKUP-FEED: the cards",
     "tests": [
-      "test/pickupfeed.test.js"
+      "test/systems/pickupfeed.test.js"
     ]
   },
   {
@@ -459,7 +459,7 @@
     "old": ", took: showPickups })) return true;   // AUDIT QL-WEIGHT1: the window's own resolver; PICKUP-FEED: the cards",
     "new": " })) return true;   // AUDIT QL-WEIGHT1: the window's own resolver; PICKUP-FEED: the cards",
     "tests": [
-      "test/pickupfeed.test.js"
+      "test/systems/pickupfeed.test.js"
     ]
   },
   {
@@ -468,7 +468,7 @@
     "old": ", took: showPickups })) {   // AUDIT QL-WEIGHT1; PICKUP-FEED: the cards",
     "new": " })) {   // AUDIT QL-WEIGHT1; PICKUP-FEED: the cards",
     "tests": [
-      "test/pickupfeed.test.js"
+      "test/systems/pickupfeed.test.js"
     ]
   },
   {
@@ -477,7 +477,7 @@
     "old": ", took: showPickups })) return true;   // AUDIT QL-WEIGHT1: the window's own resolver; PICKUP-FEED: the cards",
     "new": " })) return true;   // AUDIT QL-WEIGHT1: the window's own resolver; PICKUP-FEED: the cards",
     "tests": [
-      "test/pickupfeed.test.js"
+      "test/systems/pickupfeed.test.js"
     ]
   },
   {
@@ -486,7 +486,7 @@
     "old": ", took: showPickups })) {   // AUDIT QL-WEIGHT1; PICKUP-FEED: the cards",
     "new": " })) {   // AUDIT QL-WEIGHT1; PICKUP-FEED: the cards",
     "tests": [
-      "test/pickupfeed.test.js"
+      "test/systems/pickupfeed.test.js"
     ]
   },
   {
@@ -495,7 +495,7 @@
     "old": ", took: showPickups })) {   // AUDIT QL-WEIGHT1: the window's own resolver (openInventory's, :1512); PICKUP-FEED: the cards",
     "new": " })) {   // AUDIT QL-WEIGHT1: the window's own resolver (openInventory's, :1512); PICKUP-FEED: the cards",
     "tests": [
-      "test/pickupfeed.test.js"
+      "test/systems/pickupfeed.test.js"
     ]
   }
 ]

@@ -54,12 +54,12 @@
 //   its "-- Taverns menu" block (:175-179) puts EXIT on G, not on the
 //   E the port had assumed.
 
-import { loadImg, nativeMetrics, drawImg } from './nativePanel.js';
+import { loadImg, nativeMetrics, drawImg } from './native/nativePanel.js';
 import { drawMenuBackdrop } from './chargenArt.js';
 import { ServiceFlowWindow, macroRows } from './guildServiceWindows.js';
 import { goldAmount, totalGoldAmount, deductGold } from '../systems/court.js';
 import { dayOfYearFromMinutes } from '../systems/gameDate.js';
-import { raceDisplayName, honorificOf } from '../systems/talkSession.js';
+import { raceDisplayName, honorificOf } from '../systems/talk/talkSession.js';
 import { audio } from '../systems/audio.js';   // F145: the ButtonClick roster
 import { SOUND } from '../systems/soundClips.js';
 import { firstHotkey } from '../systems/dialogShortcuts.js';   // A8: the DaggerfallShortcut table

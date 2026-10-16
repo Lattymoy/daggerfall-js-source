@@ -11,7 +11,7 @@
 // time a window was wired host-by-host, chargen ended up living in one
 // host only and a town boot ran the whole session on a pre-chargen
 // entity.
-import { QuestJournalWindow, preloadQuestJournalArt } from './questJournal.js';
+import { QuestJournalWindow, preloadQuestJournalArt } from './quest/questJournal.js';
 import { PlayerHistoryWindow, preloadPlayerHistoryArt } from './playerHistory.js';
 
 /**

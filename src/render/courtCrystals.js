@@ -22,15 +22,15 @@
 import { FOG_FACTOR_GLSL } from './labGrass.js';
 import { buildProgram } from './glProgram.js';
 import { duelClock } from './duelWall.js';
-import { seededRng } from '../systems/wind.js';
-import { CRYSTAL_R, CRYSTAL_H } from '../net/gateBrain.js';
+import { seededRng } from '../systems/wind/wind.js';
+import { CRYSTAL_R, CRYSTAL_H } from '../net/gate/gateBrain.js';
 
 /** How long a crystal takes to grow out of the floor from the Reckoning's word, and how long its shards fly (ms). */
 export const CRYSTAL_GROW_MS = 1400;
 export const CRYSTAL_SHATTER_MS = 900;
 /** A struck crystal flashes this long (ms). */
 export const CRYSTAL_FLASH_MS = 220;
-/** The most crystals one draw takes (net/gateBrain.js RECKON_CRYSTALS' most). */
+/** The most crystals one draw takes (net/gate/gateBrain.js RECKON_CRYSTALS' most). */
 export const CRYSTALS_DRAW_MAX = 8;
 /** The floor's glow under a crystal - its radius (m); the beam's width (m) and its flow (cycles a second, whole over
  *  duelWall.js DUEL_CLOCK_PERIOD). */
@@ -133,7 +133,7 @@ export const CRYSTAL_FS = HEAD + `in vec3 vNrm;
 in vec3 vLocal;
 in vec3 vWorld;
 uniform vec3 uEye;
-uniform vec3 uColor;    // his aspect's colour (world/gateBoss.js crystalColor)
+uniform vec3 uColor;    // his aspect's colour (world/gate/gateBoss.js crystalColor)
 uniform float uHp;      // its health's share, 0..1
 uniform float uFlash;   // struck: 1 at the blow, falling
 uniform float uSeed;

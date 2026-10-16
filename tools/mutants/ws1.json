@@ -5,7 +5,7 @@
     "old": "  [MW_WEAPON_TYPE.AxeTwoHand]: 'Bip01 AxeTwoClose',",
     "new": "  [MW_WEAPON_TYPE.AxeTwoHand]: 'Bip01 AxeTwoHand',",
     "tests": [
-      "test/ws1_sheathing.test.js"
+      "test/formats/morrowind/ws1_sheathing.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "export const holsters = (mwType) => SHEATHING_BONE[mwType] != null && mwType !== MW_WEAPON_TYPE.MarksmanThrown;",
     "new": "export const holsters = (mwType) => SHEATHING_BONE[mwType] != null;",
     "tests": [
-      "test/ws1_sheathing.test.js"
+      "test/formats/morrowind/ws1_sheathing.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  if (slot === 'holster') return !!weaponShown;",
     "new": "  if (slot === 'holster') return !weaponShown;",
     "tests": [
-      "test/ws1_sheathing.test.js"
+      "test/formats/morrowind/ws1_sheathing.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  parts.push({ slot: 'sheath', bones: [bone], bytes: shBytes, excludeNode: SHEATH_WEAPON_NODE, bare: true });",
     "new": "  parts.push({ slot: 'sheath', bones: [bone], bytes: shBytes, bare: true });",
     "tests": [
-      "test/ws1_sheathing.test.js"
+      "test/formats/morrowind/ws1_sheathing.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    parts.push({ slot: 'holster', bones: [bone], bytes: shBytes, underNode: SHEATH_WEAPON_NODE, bare: true });",
     "new": "    parts.push({ slot: 'holster', bones: [bone], bytes: shBytes, bare: true });",
     "tests": [
-      "test/ws1_sheathing.test.js"
+      "test/formats/morrowind/ws1_sheathing.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "preTransform: nodeTransformOf(shNif, SHEATH_WEAPON_NODE), bare: true, inheritOffsetFrom: 'sheath' });",
     "new": "preTransform: nodeTransformOf(shNif, SHEATH_WEAPON_NODE) });",
     "tests": [
-      "test/ws1_sheathing.test.js"
+      "test/formats/morrowind/ws1_sheathing.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "      const n = Math.min(Math.max(0, Math.floor(Number(ammoCount) || 0)), slots.length);",
     "new": "      const n = Math.max(0, Math.min(Math.floor(Number(ammoCount) || 0), 100));",
     "tests": [
-      "test/ws1_sheathing.test.js"
+      "test/formats/morrowind/ws1_sheathing.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "    const suitable = wanted !== MW_WEAPON_TYPE.None && ammo.type === wanted;",
     "new": "    const suitable = wanted !== MW_WEAPON_TYPE.None;",
     "tests": [
-      "test/ws1_sheathing.test.js"
+      "test/formats/morrowind/ws1_sheathing.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "    if (showHolstered) parts.push({ slot: 'holster', bones: [bone], bytes: weaponBytes, bare: true });\n    return { parts, info: { bone, scabbard: null, weaponNode: false, thrown: !showHolstered }, notes };\n  }\n  const shBytes",
     "new": "    return { parts, info: { bone, scabbard: null, weaponNode: false, thrown: !showHolstered }, notes };\n  }\n  const shBytes",
     "tests": [
-      "test/ws1_sheathing.test.js"
+      "test/formats/morrowind/ws1_sheathing.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "  if (dot > p.lastIndexOf('/')) p = p.slice(0, dot);\n  return `${p}/`;",
     "new": "  return `${p}/`;",
     "tests": [
-      "test/ws1_sheathing.test.js"
+      "test/formats/morrowind/ws1_sheathing.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "  if (own !== dirs[0]) dirs.push(own);",
     "new": "",
     "tests": [
-      "test/ws1_sheathing.test.js"
+      "test/formats/morrowind/ws1_sheathing.test.js"
     ]
   },
   {
@@ -104,43 +104,43 @@
     "old": "  return at >= 0 ? p.slice(at + 'data files/'.length) : p.slice(p.lastIndexOf('/') + 1);",
     "new": "  return p.slice(p.lastIndexOf('/') + 1);",
     "tests": [
-      "test/ws1_sheathing.test.js"
+      "test/formats/morrowind/ws1_sheathing.test.js"
     ]
   },
   {
     "name": "flatten-under-ignored",
-    "file": "src/formats/mwNifMesh.js",
+    "file": "src/formats/morrowind/mwNifMesh.js",
     "old": "      if (inside && !skipGeometryName(rec.name, hasMarkers)) emit(rec, nextWorld, nextProps, nextChain, animFlags, parentRef);",
     "new": "      if (!skipGeometryName(rec.name, hasMarkers)) emit(rec, nextWorld, nextProps, nextChain, animFlags, parentRef);",
     "tests": [
-      "test/ws1_sheathing.test.js"
+      "test/formats/morrowind/ws1_sheathing.test.js"
     ]
   },
   {
     "name": "flatten-exclude-ignored",
-    "file": "src/formats/mwNifMesh.js",
+    "file": "src/formats/morrowind/mwNifMesh.js",
     "old": "    if (excludeNode && lname === excludeNode) return;   // WS1: the masked subtree\n",
     "new": "",
     "tests": [
-      "test/ws1_sheathing.test.js"
+      "test/formats/morrowind/ws1_sheathing.test.js"
     ]
   },
   {
     "name": "binder-sheath-offset-lost",
-    "file": "src/formats/mwFirstPerson.js",
+    "file": "src/formats/morrowind/mwFirstPerson.js",
     "old": "        if (part.slot === 'sheath') sheathBoneOffset = bound.boneOffset || null;   // WS1\n",
     "new": "",
     "tests": [
-      "test/ws1_sheathing.test.js"
+      "test/formats/morrowind/ws1_sheathing.test.js"
     ]
   },
   {
     "name": "binder-subtree-lost",
-    "file": "src/formats/mwFirstPerson.js",
+    "file": "src/formats/morrowind/mwFirstPerson.js",
     "old": "underNode: part.underNode, excludeNode: part.excludeNode });   // WS1: a subtree of the file",
     "new": "});",
     "tests": [
-      "test/ws1_sheathing.test.js"
+      "test/formats/morrowind/ws1_sheathing.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "            const swapped = new Set(['weapon', 'arrow', ...HOLSTER_SLOTS]);",
     "new": "            const swapped = new Set(['weapon', 'arrow']);",
     "tests": [
-      "test/ws1_sheathing.test.js"
+      "test/formats/morrowind/ws1_sheathing.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "        ammoCount: ammoCount ?? (hasAmmo ? Number.MAX_SAFE_INTEGER : 0),\n        find, hasBone: boneProbe",
     "new": "        ammoCount: ammoCount ?? 0,\n        find, hasBone: boneProbe",
     "tests": [
-      "test/ws1_sheathing.test.js"
+      "test/formats/morrowind/ws1_sheathing.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "    archives.push(makeLooseArchive(loose));\n  }\n  // WS1:",
     "new": "  }\n  // WS1:",
     "tests": [
-      "test/ws1_sheathing.test.js"
+      "test/formats/morrowind/ws1_sheathing.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "control: Object.freeze({ store: 'prefs', key: 'mwSheathing', initial: true, online: 'player' }),",
     "new": "control: Object.freeze({ store: 'prefs', key: 'mwSheathing', initial: false, online: 'player' }),",
     "tests": [
-      "test/ws1_sheathing.test.js"
+      "test/formats/morrowind/ws1_sheathing.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "  [MW_WEAPON_TYPE.AxeOneHand]: 'Bip01 LongBladeOneHand',",
     "new": "  [MW_WEAPON_TYPE.AxeOneHand]: 'Bip01 AxeOneHand',",
     "tests": [
-      "test/ws1_sheathing.test.js"
+      "test/formats/morrowind/ws1_sheathing.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "  if (!showHolstered) {\n    // thrown: the weapon node is masked whatever the hand does (:375-378 with showHolsteredWeapons forced false)\n  } else if (weaponKids > 0) {",
     "new": "  if (weaponKids > 0) {",
     "tests": [
-      "test/ws1_sheathing.test.js"
+      "test/formats/morrowind/ws1_sheathing.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "    if (showHolstered) parts.push({ slot: 'holster', bones: [bone], bytes: weaponBytes, bare: true });\n    return { parts, info: { bone, scabbard: null, weaponNode: false, thrown: !showHolstered }, notes };\n  }\n  const shBytes",
     "new": "    parts.push({ slot: 'holster', bones: [bone], bytes: weaponBytes, bare: true });\n    return { parts, info: { bone, scabbard: null, weaponNode: false, thrown: !showHolstered }, notes };\n  }\n  const shBytes",
     "tests": [
-      "test/ws1_sheathing.test.js"
+      "test/formats/morrowind/ws1_sheathing.test.js"
     ]
   },
   {
@@ -212,7 +212,7 @@
     "old": "  if (slot === 'quiver') return !!(arrowShown && tag && tag.i === tag.n - 1);",
     "new": "  if (slot === 'quiver') return false;",
     "tests": [
-      "test/ws1_sheathing.test.js"
+      "test/formats/morrowind/ws1_sheathing.test.js"
     ]
   },
   {
@@ -221,7 +221,7 @@
     "old": "  if (slot === 'quiver') return !!(arrowShown && tag && tag.i === tag.n - 1);",
     "new": "  if (slot === 'quiver') return !!(arrowShown && tag && tag.i === 0);",
     "tests": [
-      "test/ws1_sheathing.test.js"
+      "test/formats/morrowind/ws1_sheathing.test.js"
     ]
   },
   {
@@ -230,61 +230,61 @@
     "old": "bare: true, inheritOffsetFrom: 'sheath', tag: { i, n } });",
     "new": "bare: true, inheritOffsetFrom: 'sheath' });",
     "tests": [
-      "test/ws1_sheathing.test.js"
+      "test/formats/morrowind/ws1_sheathing.test.js"
     ]
   },
   {
     "name": "binder-tag-lost",
-    "file": "src/formats/mwFirstPerson.js",
+    "file": "src/formats/morrowind/mwFirstPerson.js",
     "old": "kind: 'rigid', mirrored: mirror, tag: part.tag ?? null,",
     "new": "kind: 'rigid', mirrored: mirror,",
     "tests": [
-      "test/ws1_sheathing.test.js"
+      "test/formats/morrowind/ws1_sheathing.test.js"
     ]
   },
   {
     "name": "inject-unmarked-too",
-    "file": "src/formats/mwSkin.js",
+    "file": "src/formats/morrowind/mwSkin.js",
     "old": "    if (hasBoneMarker(addonNif, rec)) {",
     "new": "    if (hasBoneMarker(addonNif, rec) || String(rec.name || '').startsWith('Bip01 Attach')) {",
     "tests": [
-      "test/ws1_sheathing.test.js"
+      "test/formats/morrowind/ws1_sheathing.test.js"
     ]
   },
   {
     "name": "inject-any-string-marks",
-    "file": "src/formats/mwSkin.js",
+    "file": "src/formats/morrowind/mwSkin.js",
     "old": "    if (x.type === 'NiStringExtraData' && x.string === 'BONE') return true;",
     "new": "    if (x.type === 'NiStringExtraData') return true;",
     "tests": [
-      "test/ws1_sheathing.test.js"
+      "test/formats/morrowind/ws1_sheathing.test.js"
     ]
   },
   {
     "name": "inject-known-overwritten",
-    "file": "src/formats/mwSkin.js",
+    "file": "src/formats/morrowind/mwSkin.js",
     "old": "      if (key && skeleton.byName.has(key)) { skipped.push(`${rec.name} (already here)`); return; }\n",
     "new": "",
     "tests": [
-      "test/ws1_sheathing.test.js"
+      "test/formats/morrowind/ws1_sheathing.test.js"
     ]
   },
   {
     "name": "inject-parent-missing-added-at-root",
-    "file": "src/formats/mwSkin.js",
+    "file": "src/formats/morrowind/mwSkin.js",
     "old": "      if (baseParent === undefined) { skipped.push(`${rec.name || '(nameless)'} (no \"${parentRec?.name ?? ''}\" here)`); return; }",
     "new": "      if (baseParent === undefined) { copy(ref, -1); return; }",
     "tests": [
-      "test/ws1_sheathing.test.js"
+      "test/formats/morrowind/ws1_sheathing.test.js"
     ]
   },
   {
     "name": "inject-subtree-not-copied",
-    "file": "src/formats/mwSkin.js",
+    "file": "src/formats/morrowind/mwSkin.js",
     "old": "    for (const child of rec.children ?? []) if (child >= 0) copy(child, hereRef);\n  }",
     "new": "  }",
     "tests": [
-      "test/ws1_sheathing.test.js"
+      "test/formats/morrowind/ws1_sheathing.test.js"
     ]
   },
   {
@@ -293,7 +293,7 @@
     "old": "r.hidden = holsterHidden(r.slot, weaponShown, { arrowShown, tag: r.piece?.tag });",
     "new": "r.hidden = holsterHidden(r.slot, weaponShown);",
     "tests": [
-      "test/ws1_sheathing.test.js"
+      "test/formats/morrowind/ws1_sheathing.test.js"
     ]
   },
   {
@@ -302,7 +302,7 @@
     "old": "    if (showHolstered) parts.push({ slot: 'holster', bones: [bone], bytes: weaponBytes, bare: true });\n    return { parts, info: { bone, scabbard: null, weaponNode: false, thrown: !showHolstered }, notes };\n  }\n  const shBytes",
     "new": "    if (showHolstered) parts.push({ slot: 'holster', bones: [bone], bytes: weaponBytes });\n    return { parts, info: { bone, scabbard: null, weaponNode: false, thrown: !showHolstered }, notes };\n  }\n  const shBytes",
     "tests": [
-      "test/ws1_sheathing.test.js"
+      "test/formats/morrowind/ws1_sheathing.test.js"
     ]
   },
   {
@@ -311,7 +311,7 @@
     "old": "bytes: shBytes, excludeNode: SHEATH_WEAPON_NODE, bare: true });",
     "new": "bytes: shBytes, excludeNode: SHEATH_WEAPON_NODE });",
     "tests": [
-      "test/ws1_sheathing.test.js"
+      "test/formats/morrowind/ws1_sheathing.test.js"
     ]
   },
   {
@@ -320,8 +320,8 @@
     "old": "control: Object.freeze({ store: 'prefs', key: 'mwSheathing', initial: true, online: 'player' }),",
     "new": "control: Object.freeze({ store: 'prefs', key: 'mwSheathing', initial: true, online: true }),",
     "tests": [
-      "test/ws1_sheathing.test.js",
-      "test/modsonline.test.js"
+      "test/formats/morrowind/ws1_sheathing.test.js",
+      "test/systems/modsonline.test.js"
     ]
   }
 ]

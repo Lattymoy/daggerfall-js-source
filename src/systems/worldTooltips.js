@@ -55,12 +55,12 @@
 // change under a constant key, which the mod cannot.
 import { modSetting } from './modSettings.js';
 import { foeTitle } from './foeTitle.js';   // FOE-TITLE: a champion, an elite, a revenant - what each is called
-import { itemLongName } from './itemInfo.js';   // RF6: ResolveItemLongName, the port's one resolver
+import { itemLongName } from './item/itemInfo.js';   // RF6: ResolveItemLongName, the port's one resolver
 import { buildingClosedText, buildingLockValue } from './buildingLocks.js';
 import { BUILDING_TYPES } from '../world/buildingNames.js';
 import { TRIGGER_FLAGS } from '../world/rdbLayout.js';   // DFBlock.RdbTriggerFlags has ONE home; this arm compares against it rather than a second copy by name
 import { isActionDoorObject } from '../world/actionSystem.js';   // SENSE1: GetComponent<DaggerfallActionDoor>, the door band's own question
-import { DUNGEON_TIER_TEXT } from './dungeonTier.js';   // TIER1: a dungeon's tier, in the words every surface draws
+import { DUNGEON_TIER_TEXT } from './dungeon/dungeonTier.js';   // TIER1: a dungeon's tier, in the words every surface draws
 
 /** The mod's switch, and its one knob. Online forces every mod on
  *  (OL1), which `modSetting` already applies - right for this one: a
@@ -321,7 +321,7 @@ export const mobilePersonName = (nameNPC) => (nameNPC || null);
  * CHAMP-HOVER's exception - a hostile champion, elite or revenant named
  * here - is retired. The mod's law holds for every foe again: while a
  * special foe fights, its name and its trait stand on its health bar
- * alone (ui/hudFoeTarget.js, systems/foeTitle.js), and the first blow's
+ * alone (ui/hud/hudFoeTarget.js, systems/foeTitle.js), and the first blow's
  * line (LOOT7-CHECK CHAMP-SAID) still says a champion on every skin. At
  * peace it is named as ever, title and all (liveEntityName below) - a
  * sworn companion, a calmed one, and a kneeling revenant (its motor is
@@ -348,7 +348,7 @@ export function mobileEntityName(entityName, { hostile = false } = {}) {
  *
  * RECORDED DEPARTURE. The port's enemy entity only carries a career
  * name for CLASS enemies - `name: isClass ? career.name : undefined`
- * (characters/enemyEntity.js) - because nothing else has ever needed a
+ * (characters/enemy/enemyEntity.js) - because nothing else has ever needed a
  * monster's career template. So a monster falls through to the enemy
  * name, which is the same word for every monster in the game and the
  * only word the port holds; a class enemy now takes the member the mod
@@ -478,7 +478,7 @@ export function staticDoorName(kind, {
 } = {}) {
   // ELITE: the mouth of an elite spawned dungeon says so, in the plaque's title, with the way in beneath.
   // TIER1 (Super-Dungeons.md section 12): and every dungeon's mouth says its TIER the same way where the host names one -
-  // online, where the tiers differ (systems/dungeonTier.js) - Regular, Elite or Super, and beneath the way in, the
+  // online, where the tiers differ (systems/dungeon/dungeonTier.js) - Regular, Elite or Super, and beneath the way in, the
   // size the room builds it at (SD-ONLINE's Small, Medium or Large). Offline the host names none and the mouth keeps the
   // mod's own "To <name>". The `Elite ` a spawn's name carries is the title's now, not the way in's.
   if (kind === 'dungeonEntrance' && Object.hasOwn(DUNGEON_TIER_TEXT, tier ?? '')) {
