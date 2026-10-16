@@ -40,14 +40,19 @@ test('#751: summonTransport with no horse parks the cart in the world - Deployed
   assert.equal(rt.view().horse, null, 'and no horse beside it');
 });
 
-test('#751: the Stable\'s wagon line points a horseless owner at Summon while the cart is out of the world', () => {
+test('#751: a horseless cart sent away to the stable - the Stable\'s wagon line points its owner at Summon', () => {
   const { rt, w, step } = makeWorld({ cart: false, horse: false });
   step();
   w.items.cart = true;
   step();
+  // WAGON-STABLED: a cart just bought is beside the player (the next door parks it); Send away is what stables it
+  const sent = rt.sendTransportAway();
+  assert.equal(sent.ok, true); assert.equal(sent.text, HCC_TEXT.sentWagon);
+  step();
   const view = rt.stableView();   // what the Stable page is handed: the runtime's own read
   assert.equal(view.persistence, true); assert.equal(view.hasCart, true); assert.equal(view.hasHorse, false);
   assert.equal(view.wagonMode, WAGON_MODE.WithPlayer, 'out of the world - neither parked nor following');
+  assert.equal(view.wagonStabled, true, 'sent to the stable');
   const { wagon } = stableWords({ hcc: true, hasHorse: false, hasCart: true, view });
   assert.equal(wagon.state, 'Stabled');
   assert.match(wagon.line, /Summon/, `the line names Summon: ${wagon.line}`);
