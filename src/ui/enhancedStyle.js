@@ -5235,15 +5235,19 @@ ${paceControlsCss('tview')}
    in the block direction, so the overflow columns went below the fold
    and the list scrolled anyway - measured, 14 rows spilling 203px past
    the frame. A GRID has no fragmentation: two tracks, rows in reading
-   order, a definite height, nothing to overflow. */
-.loot-win.wide .remotelist { display: grid; grid-template-columns: 1fr 1fr;
+   order, a definite height, nothing to overflow.
+   AUDIT VIRT: and two EQUAL tracks. A bare 1fr is never narrower than its widest row's unwrapped name, so the
+   tracks were sized by the rows drawn - a long list's window drew a few dozen of them, and its columns changed width
+   as it scrolled (205, 237, 222 px on a phone); a whole list's ran past the window (476 px of 410). minmax(0, 1fr)
+   splits the width in two, and the name's own ellipsis takes the rest. */
+.loot-win.wide .remotelist { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
   align-content: start; }
 .loot-win.wide .remotelist .packempty { grid-column: 1 / -1; }
 .loot-win .itemrow { width: 100%; height: auto; min-height: 52px;
   display: flex; align-items: center; justify-content: flex-start; gap: 12px;
   padding: 8px 14px; border: 0; border-bottom: 2px solid rgba(125,116,96,0.16);
   text-align: left; }
-.loot-win .itemrow:last-child { border-bottom: 0; }
+.loot-win .itemrow:last-child { border-bottom-color: transparent; }   /* AUDIT VIRT: unseen, not gone - every row the one height, so a long list's spacers are its rows to the pixel */
 .loot-win .itemrow .tile { width: 38px; height: 38px; font-size: 18px; flex: 0 0 auto; }
 .loot-win .itemrow .itemname { position: static; width: auto; height: auto;
   clip-path: none; overflow: hidden; display: flex; flex-direction: column; gap: 2px;

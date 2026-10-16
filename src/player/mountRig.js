@@ -45,6 +45,7 @@ import { RR_RIDING, rrTerrainAngle, rrTerrainFollow, rrRidingYAdj, rrRidingNeckB
 import { setPitchFloorProvider } from './lookFilter.js';   // RR2: PitchMaxLimit while riding
 import { uiCanvas, onUiScreen } from '../ui/uiScreen.js';   // RETRO-UI: the horse in the pillarbox (TransportManager's CustomScreenRect)
 import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
+import { fpLightingOn } from '../combat/fpsWeapon.js';   // HORSE-LIT: the first-person lighting switch the weapon's tint rides
 
 /**
  * @param deps {
@@ -100,12 +101,12 @@ export function createMountRig({
    *  under it, a strip of the same riding texture fills it (no neck CFA
    *  here - see rrRealism), `width - 14` wide, from 0.2 of the texture
    *  down by `yAdj / 100`. */
-  function drawNeckBand({ yAdj, scaleY, c, offset }, rect, art, r) {
+  function drawNeckBand({ yAdj, scaleY, c, offset }, rect, art, r, tint) {
     const drawBottom = rect.y + rect.h - scaleY;
     if (drawBottom >= c.height) return;
     const band = rrRidingNeckBand(yAdj);
     const scaleX = rect.w / art.width;
-    renderer.drawScreenQuad(art.frames[r.frame], { x: rect.x, y: drawBottom, w: (art.width - band.widthTrim) * scaleX, h: c.height - drawBottom + scaleY - offset }, { u0: band.u0, v0: band.v0, u1: band.u1, v1: band.v1 });
+    renderer.drawScreenQuad(art.frames[r.frame], { x: rect.x, y: drawBottom, w: (art.width - band.widthTrim) * scaleX, h: c.height - drawBottom + scaleY - offset }, { u0: band.u0, v0: band.v0, u1: band.u1, v1: band.v1 }, tint);   // HORSE-LIT: the neck the sprite's own
   }
   setPitchFloorProvider(() => (enhancedRiding?.() && isRiding(player.transportMode) && !paused() ? _terrainAngle + RR_RIDING.pitchMaxOffset : null));   // AUDIT-RR2 G26: the else arm (`IsGamePaused || !IsRiding`, :122-131) resets PitchMaxLimit every frame
   let art = null;                          // TR2: the four CFA frames of the mount under you
@@ -241,9 +242,15 @@ export function createMountRig({
         const ui = canvasOf();
         const rect = ridingRect(ui, art, horseOffsetHeight());
         const lift = enhanced ? liftForLook(rect, art, enhanced) : null;   // RR2: EnhancedRiding.OnGUI - the sprite rides the look
+        // HORSE-LIT (2026-10-16, Mac: "Horses in first person should be affected by lighting"): THE ROOM'S LIGHT ON THE
+        // MOUNT. TransportManager.OnGUI (:285-318) draws the ridingTexture white, and so did this - a bright horse's neck
+        // under a weapon MAC-I darkens, at night and in the dark. It takes the weapon's tint now (combat/weaponRig.js
+        // fpTint): `flatLightAt` at the camera, under the same switch. The 3D horse (mwViewDrawSaddle, above) is drawn
+        // in the world's own space and light, and needs none.
+        const tint = fpLightingOn() ? (renderer?.flatLightAt?.() ?? undefined) : undefined;
         onUiScreen(renderer, ui, () => {   // RETRO-UI: drawn in the pillarbox
-          renderer.drawScreenQuad(art.frames[r.frame], rect);
-          if (lift) drawNeckBand(lift, rect, art, r);   // RR2: and the gap under it is filled
+          renderer.drawScreenQuad(art.frames[r.frame], rect, undefined, tint);
+          if (lift) drawNeckBand(lift, rect, art, r, tint);   // RR2: and the gap under it is filled
         });
       }
       return r;

@@ -38,7 +38,8 @@ ESCORTING FACES - the quest escorts' portrait column, FE1 - and the CREDITS TABL
 - and FIRM1's FIRMAMENT (`firmamentWindow.js`: the passive tree's sky over the whole screen, in both dresses; `firmamentOver.js`: its door off the Stats page, for either door that draws the page; `06-Systems/Firmament.md`)
 - and UI-CALM's QUIET PASS (`uiCalmStyle.js`: the type, the space and the quiet ink laid after Plus's sheet - the front door's two questions, the corner temperature, the calm vitals, the type floor; `10-UI/UI-Calm.md`)
 - and CRAFT-FIRST-SHOWN's CRAFT XP WORDS (`craftXpWords.js`: what a craft and its first pay, said in a station's box and in the craft's word - or that the Weavers' cloth earns no first-time bonus; `06-Systems/Professions-Arc.md` 41.9)
-369 modules
+- and VIRT's LONG LISTS (`virtualRows.js`: a list past 120 rows draws the rows on screen and two spacers for the rest, measured off its own layout - the pack's dock and its side window; `UI-Arc.md` VIRT)
+370 modules
 live under `src/ui/`. Items still routed here are
 collected in `01-Overview/Port-Ledger.md` section C; scope in
 `01-Overview/Port-Doctrine.md` phase plan.

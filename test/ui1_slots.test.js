@@ -424,7 +424,7 @@ test('UI1 wiring: every enhanced surface draws its item through the one fitted d
   assert.match(inv, /row\.append\(tileWithWear\(line, row, from === 'remote' \? SLOT_BOX\.loot : gridBox\(\)\)\);/);
   assert.match(inv, /b\.append\(tileWithWear\(line, b, wornBox\(area == null\), false\)\);/);
   assert.match(inv, /b\.append\(tileWithWear\(line, b, SLOT_BOX\.socket, false\)\);/);
-  assert.match(inv, /node\.append\(line \? itemTile\(line, wornBox\(true\), render, false\) :/);
+  assert.match(inv, /node\.append\(line \? liveTile\(line, wornBox\(true\), false\) :/);   // VIRT: itemTile's own picture, put in when it lands
   assert.match(inv, /const tile = \(\) => itemTile\(line, gridBox\(\), \(\) => \{ if \(ghost === g\) g\.querySelector\('\.tile'\)\?\.replaceWith\(tile\(\)\); \}\);/);
   for (const f of ['src/ui/enhancedTrade.js', 'src/ui/enhancedPlayerTrade.js']) {
     assert.match(read(f), /linePicture\(line, \{ box: SLOT_BOX\.row, onReady:/, f);

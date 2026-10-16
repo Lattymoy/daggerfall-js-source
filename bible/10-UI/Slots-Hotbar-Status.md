@@ -223,8 +223,9 @@ and its mutant.
   now stands at `:root` weight, after the theme's.
 - A3: a pack left open over a resize, a phone turned or a zoom kept its old boxes. It listens for a resize and
   repaints when its boxes or the screen's ratio change, and not otherwise.
-- A4: the fitted pictures were kept without end (every zoom and HUD scale is a new set). Now 600 at the most, the
-  oldest asked going first.
+- A4: the fitted pictures were kept without end (every zoom and HUD scale is a new set). Bounded: since VIRT (`UI-Arc.md`)
+  at 2000 and 12 MB, the one asked for least recently going first, and dropped whole when the attached texture mods
+  change.
 - A6: the ratio was clamped to 4, and a 3x phone at HUD scale 1.5 draws at 4.5. Now clamped to 0.5..8.
 
 **THE HOTBAR (B).**

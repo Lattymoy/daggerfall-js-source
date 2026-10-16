@@ -128,8 +128,8 @@
   {
     "name": "UI1-the-second-waiter-dropped",
     "file": "src/ui/textureCanvas.js",
-    "old": "  if (fitted.has(key)) { hear(fitWaiting.get(key), onReady); return fitted.get(key); }",
-    "new": "  if (fitted.has(key)) { return fitted.get(key); }",
+    "old": "  if (fitted.has(key)) { const pic = fitted.get(key); fitted.delete(key); fitted.set(key, pic); hear(fitWaiting.get(key), onReady); return pic; }",
+    "new": "  if (fitted.has(key)) { const pic = fitted.get(key); fitted.delete(key); fitted.set(key, pic); return pic; }",
     "tests": [
       "test/ui1_slots.test.js"
     ]
@@ -327,8 +327,8 @@
   {
     "name": "AUDIT-UI-A4-the-cache-unbounded",
     "file": "src/ui/textureCanvas.js",
-    "old": "while (fitted.size > FIT_CACHE_MAX) {",
-    "new": "while (fitted.size > Infinity) {",
+    "old": "    if (fitted.size <= FIT_CACHE_MAX && fittedBytes <= FIT_CACHE_BYTES) break;",
+    "new": "    break;",
     "tests": [
       "test/ui1_slots.test.js"
     ]

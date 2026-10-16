@@ -265,7 +265,7 @@
   {
     "name": "A0928-R5-flat-scale-walks-again",
     "file": "src/scenes/comeSailAwayPool.js",
-    "old": "        const s = n.lossyScaleOf(m);",
+    "old": "        const s = n.lossyScaleOf(m, _flatScale);",
     "new": "        const s = n.lossyScale;",
     "tests": [
       "test/audit0928_online.test.js"

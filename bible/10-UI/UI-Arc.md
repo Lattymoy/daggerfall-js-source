@@ -16860,6 +16860,12 @@ flat in a black room goes black and the player reads that as the room,
 but a HAND that goes black is a hole in the middle of the screen, and
 you cannot tell a drawn weapon from a sheathed one.
 
+HORSE-LIT (2026-10-16, Mac: "Horses in first person should be affected
+by lighting"): the mount's sprite is drawn by `player/mountRig.js`, not
+this seam, and stayed white. It reads the same tint the same way now -
+the sprite and RR2's neck band - under the same switch
+(`01-Overview/Field-Bugs-2026-10-16.md`).
+
 ### MAC-P - and the Morrowind arms, which were worse
 
 *"morrowind's first person view also doesn't receive lighting and is
@@ -19593,3 +19599,122 @@ default since STANDING-ON, 2026-10-11 - Mac: "should be on by default"), it list
 (`systems/factionStanding.js` standingGroups, drawn by `enhancedMenu.js` statsEveryStanding): the guilds, the temples,
 the knightly orders, the kingdoms, the covens, the vampire clans, the Daedric Princes - a membership under Guilds above,
 with its rank, never twice. The classic skin's sheet is untouched. The record: `01-Overview/Field-Bugs-2026-10-09e.md`.
+
+## VIRT - THE LONG PACK: the rows on screen, a picture into its tile, the pictures kept by use (2026-10-16)
+
+A report against `ui/enhancedInventory.js` and `ui/textureCanvas.js`: a container of hundreds of pieces opened slowly,
+froze while its pictures landed and repainted the whole window on every pick. Measured in a browser
+(`tools/packVirtProbe.mjs`: 700 pieces of 351 kinds over 312 pictures, synthetic archives, no ARENA2, this machine's
+Chromium; the same probe on the tree before), it was worse than reported. Three causes, each fixed where it stood:
+
+1. EVERY LANDING REPAINTED THE WINDOW. A cold picture's `onReady` was `render`, and a render rebuilt every row, so a
+   pile of 312 cold pictures was 311 whole repaints of 700 rows - 46 s of long tasks before the loot window settled (22 s
+   for a 700-piece page of the pack). A tile drawn on its initials now waits in `_waitingTiles`; a landing asks for ONE
+   pass on the next frame (`tileLanded`), and the pass gives each waiting tile the tile `itemTile` draws for its line
+   and box, the wear bar carried over (`liveTile`, `paintLandedTiles`). The pictures that land together are one pass,
+   a tile still waiting stays waiting, a tile a repaint threw away is dropped, and the pack is not repainted at all
+   (`__pack()` counts the passes and the tiles painted: `landings`, `painted`). The card's, the gems' and the fate
+   portrait's pictures still repaint, one picture each.
+2. EVERY PASS BUILT EVERY ROW. A list past `VIRTUAL_MIN` (120) rows - the dock's page, the side window's rows - draws
+   the rows in its visible band and half a band each side (never under two lines), and two spacers stand in for the
+   rest (`ui/virtualRows.js`). The layout is MEASURED: the columns are the rows sharing the first row's top, the pitch
+   the next line's top less the first's, and a spacer is whole lines of that pitch less the one gap the layout puts
+   beside it - the dock's wrapping tiles, the loot window's two grid tracks and its one column on a pair, a desktop
+   and a phone, all the same law. A scroll keeps the rows it keeps (never moved, never rebuilt) and builds the rows
+   that enter; a list that cannot be measured is drawn whole. The windowed list is no scroll anchor
+   (`overflow-anchor: none`): Chrome's hold on a node while whole lines were swapped for spacer landed a jump to the
+   foot 22 px short. A repaint measures the new lists before a scroll is given back (`syncLists({ draw: false })`),
+   and aims them after (`syncLists()`), and so does the store's search refilling its list in place; a resize that
+   keeps the slots' boxes measures them again. The window follows the list's own scroll even when an outer box hides
+   the list whole (a phone's paired store, below the fixed host's fold - the layout as it stood, not touched here).
+3. THE FITTED PICTURES WERE TOO FEW. `FIT_CACHE_MAX` (AUDIT UI A4) kept 600, and the probe's pile at the pack's box
+   and the loot window's together is 624 pictures - a pass down it made every picture again. The bound is 2000, and
+   at most `FIT_CACHE_BYTES` (12 MB) of picture since AUDIT VIRT; a hit goes to the back of the line, so what goes is
+   what was asked for least recently - the pictures a screen keeps asking for stay. (The order alone would not have
+   saved a list longer than the bound: a pass down one asks every picture once, and the oldest asked is the next
+   wanted. Windowing is what keeps a pass short.)
+
+And an item's line is read once a pass (`lineOf`, by the item, an epoch every `render` opens): the store's search
+read every name and then every row its line, on every key typed. `itemLine` stays pure.
+
+Measured, before / after, 700 pieces on a desktop (1440x900; a phone, 393x851 at 2.625, measured alike):
+
+| | the loot window | the player's storage | a page of the pack |
+| --- | --- | --- | --- |
+| cold, opened to settled | 46.1 s, 311 repaints / 0.20 s, 2 | 2.3 s, 14 repaints / 0.24 s, 2 | 22.1 s, 171 repaints / 0.20 s, 2 |
+| warm open, to the frame | 305 ms / 69 ms | 297 ms / 74 ms | 285 ms / 66 ms |
+| a pick (a take, in a pile) | 968 ms / 72 ms | 1092 ms / 66 ms | 2017 ms / 126 ms |
+
+What a player sees is the list it was: the probe scrolls each list to six depths and finds every drawn row at its
+own piece's place to the pixel and none in view missing, the list one height at every scroll, its columns still, the
+scroll kept through a press and a search, the last piece flush at the foot, the search's focus kept. No DFU member is
+touched - the classic skin's lists are `ui/itemScroller.js`'s, untouched - and nothing here is a departure from DFU's
+behaviour. Two things a player can see did change, both by AUDIT VIRT and both in the loot window's sheet: its two
+columns are always one width (they were as wide as their widest name, and ran past a phone's window), and its last
+row keeps its unseen border's 2 px. Pins: `test/virt_pack.test.js` (the window over a document that lays its rows
+out; the cache; real replacement records landing into a mounted pack's tiles; a long loot list laid out inside the
+mounted pack); mutants `tools/mutants/virt.json` (42: 41 dead, 1 equivalent as recorded); re-aimed by content:
+`ui1.json`'s UI1-the-second-waiter-dropped and AUDIT-UI-A4-the-cache-unbounded, `shiftstow.json`'s
+AUDIT-WAGON-FILTER-S8.
+
+### AUDIT VIRT (2026-10-16, "Please audit this")
+
+Four lenses read the slice cold, each against HEAD and the tree before it, in node and in Chromium: the windowing law
+(`ui/virtualRows.js`), its seams in the pack, the fitted-picture cache, and the record, the pins and the probe. No
+lens touched the tree; every finding was fixed after the four had reported (Home.md, DO NOT FIX WHILE THE VERIFIER IS
+READING). What they found, and what became of it:
+
+- A SEARCH THREW THE SCROLL (two lenses). The store's search and its category refill the list in place, and the
+  refill aimed its window at once: the browser laid out the first 48 rows as the whole list and clamped the scroll to
+  their foot - 23,198 px became 2,150, on every key. The refill now measures and stands its spacers, gives the scroll
+  back, then aims (`fillRemoteList`), as a repaint does.
+- THE PHONE'S COLUMNS MOVED. The loot window's two tracks were `1fr 1fr`, and a bare `1fr` is never narrower than its
+  widest unwrapped name - so the tracks were sized by the rows drawn, and changed width as the list scrolled (205,
+  237, 222 px). The whole list's had run past the phone's window too (476 px of 410). Two equal tracks now,
+  `repeat(2, minmax(0, 1fr))`, the name's own ellipsis taking the rest.
+- A PAD'S HOVER CARD STOOD BESIDE NOTHING. The pad's cursor sends its leave only when it moves; its stick scrolled the
+  hovered row out of the window, and the card stayed up (it jumped to the corner when its late picture landed). A
+  window that moves tells the pack (`onAim`), and a card whose row went is put away (`rowsMoved`).
+- A CARRIED TILE ACROSS A SCROLL. The drag's scroll listener heard the wheel before the window had drawn the rows
+  under the still pointer, so the ghost said nothing over the row a release then moved the piece to; and the carried
+  tile's dim stayed on a row the window had taken away and drawn again. The drag aims the windows first
+  (`onDragScroll`) and finds its row by its item (`dragTo`).
+- A FOCUSED ROW SCROLLED AWAY dropped the keyboard's focus to the page, and Home and Page Down did nothing after. The
+  list's own scroller takes it, out of the Tab order (`keepFocus`). And the window's fallback for a list hidden whole
+  reads the box that scrolls, not the first that merely clips (the dock's own column, whose box is the whole list) -
+  latent, no layout reached it.
+- 2 PX: the loot window's last row had no border, so a long one-column list was 2 px taller until the window reached
+  its foot. The border is unseen now, not gone (`border-bottom-color: transparent`).
+- THE CACHE NEVER HEARD THE MODS CHANGE (older than VIRT, made worse by it). requestIcon drops its pictures when the
+  attached texture mods change (DFMOD1-E); the fitted cache never did, so a slot kept the last mod's picture - and
+  since VIRT's order kept it for as long as it was asked. It is dropped whole with them now, and a picture still
+  being made from the replaced set is not kept. A source gone between its landing and its read (the same change) left
+  an entry that stood as a picture that never comes; it is asked again. A picture put out while it was made came back
+  as it landed without the bound being kept; the bound is kept then too. And the cache is held to `FIT_CACHE_BYTES`:
+  2000 of a phone's pictures were 10 to 18 MB (measured over 322 real item pictures: 3 KB at a desktop's ratio, 5 to
+  9 KB at a phone's). A picture that never comes still keeps up to eight waiters for as long as a screen asks for
+  it - bounded, and older than VIRT.
+- THE RECORD SAID MORE THAN WAS TRUE: 351 kinds of picture (312), the order as what saved a long list (the bound
+  did), "a few kilobytes" (a phone's are more), the 2 px as one layout's (any odd count), and a comment on the waiting
+  tiles' guard, `itemTile`'s doc and `__pack`'s count each describing the code before VIRT. Corrected above and in
+  place; `10-UI/Slots-Hotbar-Status.md` A4 and the Testing manifest said 600.
+- THE PINS PINNED LESS THAN THEIR TITLES. Nineteen of one lens's mutants survived, and twelve of another's thirteen: the fake
+  document laid no list out, so no pack list was ever windowed in node; the scroll listener was never heard; a picture
+  landing alone, a partial last line, the band's clips and the margin after a real aim were never driven; "the
+  pictures that land together are one pass" was one picture. The tests now lay a long loot list out inside the mounted
+  pack (its scroll clamped at each layout, as a browser clamps it), hold three pictures behind three gates, hear the
+  scroll, and drive each of those; 42 mutants, 41 dead, 1 equivalent as recorded (a window measured on new columns
+  that its old range still covers starts at 0 - the alignment check is the law's own guard, unreached). The fake
+  document's `replaceWith` moves a node as the DOM's does.
+- THE PROBE PROVED LESS THAN IT SAID: rows named by their names (19 distinct over 700 pieces), placed to the nearest
+  line, the list's height never compared, a press never asked to have done anything, the settle never asked to have
+  painted. It reads every row by its own piece now, to the pixel, with none in view missing, the height at every
+  scroll against its foot's, each press's act, every picture painted, and the audit's five behaviours above; the tree
+  before the audit fails 15 of its checks (90 there - it has no landing count to ask), the tree after none (102 of 102). `tools/enhancedIconProbe.mjs`'s repaint
+  count measured nothing once a landing stopped repainting; it counts the landings now - unrun here, because that
+  probe stops at the front door's intro and account stage, which it predates.
+
+The whole suite on the slice: 28,025 passed and one failed - `test/fb1013e_writwall.test.js`, the notice board's writs
+(its "a mix" card not found). It fails the same way on the commit before VIRT, in the same 248-file batch at four at a
+time, and passes alone and under a loaded CPU on both: older than this slice, and left for its own.
+

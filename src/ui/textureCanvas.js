@@ -230,10 +230,29 @@ export function requestIcon(archive, record, { scale = 2, onReady = null, dye = 
 
 const fitted = new Map();      // `${picture}@${box}x${dpr}c${cap}` -> { src, w, h, smooth } | null
 const fitWaiting = new Map();  // the same key -> the screens waiting on it, while it is made
+let fittedBytes = 0;           // AUDIT VIRT: the kept pictures' data URLs, in characters
+let _fittedGen = -1;           // AUDIT VIRT: the attached-mod set the kept pictures were made from
 /** AUDIT UI A4: how many fitted pictures are kept - every zoom and every HUD scale is a new set, and a picture that never
- *  comes held its waiters for good. Past this the OLDEST asked goes, and its waiters with it (a picture on screen keeps
- *  its source; asked again, it is made again). */
-export const FIT_CACHE_MAX = 600;
+ *  comes held its waiters for good. Past this the one asked for LEAST RECENTLY goes, and its waiters with it (a picture
+ *  on screen keeps its source; asked again, it is made again).
+ *  VIRT (2026-10-16): 600 was under one long store's pictures at the pack's box and the loot window's together (312
+ *  kinds, 624 pictures, measured), so a pass down it made every picture again. 2000 now, and a hit goes to the back of
+ *  the line - what a screen keeps asking for is what stays. */
+export const FIT_CACHE_MAX = 2000;
+/** AUDIT VIRT: and never more than this many characters of picture. A list's picture is about 3 KB of PNG at a
+ *  desktop's ratio and 5 to 9 KB at a phone's (measured over 322 real item pictures; a card's at 3x, 9 KB and up to 56),
+ *  so a phone reaches this before the count - 2000 of its pictures were 10 to 18 MB. */
+export const FIT_CACHE_BYTES = 12 * 1024 * 1024;
+const picBytes = (pic) => pic?.src?.length ?? 0;
+/** The bound, kept: the picture asked for least recently goes first, with its waiters, until the count and the bytes fit. */
+function trimFitted() {
+  for (const k of fitted.keys()) {
+    if (fitted.size <= FIT_CACHE_MAX && fittedBytes <= FIT_CACHE_BYTES) break;
+    fittedBytes -= picBytes(fitted.get(k));
+    fitted.delete(k);
+    fitWaiting.delete(k);
+  }
+}
 
 /** A picture's data URL as the fitted picture, or null (a page with no Image or no 2D canvas - node, the pins). */
 async function fitUrl(url, opts) {
@@ -262,24 +281,32 @@ async function fitUrl(url, opts) {
  */
 export function requestFittedPicture(name, ask, { box, dpr = 1, cap = ICON_CAP, trim = true, snap = true, onReady = null } = /** @type {any} */ ({})) {
   if (!(box > 0) || typeof ask !== 'function') return null;
+  // AUDIT VIRT: A FITTED PICTURE IS MADE FROM ITS SOURCE, and requestIcon drops its sources when the attached texture mods
+  // change (DFMOD1-E) - this cache never did, so a slot kept the last mod's picture, and since VIRT kept it for as long as
+  // it was asked. Dropped whole with them; a make still in flight from the old set keeps nothing it makes.
+  if (_fittedGen !== dfmodGeneration()) { fitted.clear(); fitWaiting.clear(); fittedBytes = 0; _fittedGen = dfmodGeneration(); }
   const r = clampDpr(dpr);
   const key = `${name}@${box}x${r}c${cap}${trim ? '' : 'w'}${snap ? '' : 'nosnap'}`;
-  if (fitted.has(key)) { hear(fitWaiting.get(key), onReady); return fitted.get(key); }
+  // VIRT: AN ASK IS A USE - the picture goes to the back of the line the bound takes from
+  if (fitted.has(key)) { const pic = fitted.get(key); fitted.delete(key); fitted.set(key, pic); hear(fitWaiting.get(key), onReady); return pic; }
   fitted.set(key, null);
-  while (fitted.size > FIT_CACHE_MAX) {
-    const oldest = fitted.keys().next().value;
-    fitted.delete(oldest);
-    fitWaiting.delete(oldest);
-  }
+  trimFitted();
   const wake = new Set(onReady ? [onReady] : []);
   fitWaiting.set(key, wake);
+  const gen = _fittedGen;
   const make = () => {
     const url = ask(null);
-    if (!url) { fitWaiting.delete(key); return; }
+    // AUDIT VIRT: the source landed and was gone again by this read (the attached mods changed between): the entry goes,
+    // so the next ask makes it again, and its screens are told to ask - kept, it stood as a picture that never comes
+    if (!url) { if (fitted.get(key) === null) fitted.delete(key); fitWaiting.delete(key); wakeAll(wake); return; }
     fitUrl(url, { box, dpr: r, cap, trim, snap }).then((pic) => {
       fitWaiting.delete(key);
+      if (gen !== _fittedGen) { wakeAll(wake); return; }   // made from a mod set since replaced: not kept, asked again
       if (!pic) return;
+      fittedBytes += picBytes(pic) - picBytes(fitted.get(key));
+      fitted.delete(key);
       fitted.set(key, pic);
+      trimFitted();   // AUDIT VIRT: a picture put out while it was made comes back as it lands - the bound kept then too
       wakeAll(wake);
     }, (e) => { fitWaiting.delete(key); console.warn(`[icons] ${name} would not fit its slot`, e); });
   };

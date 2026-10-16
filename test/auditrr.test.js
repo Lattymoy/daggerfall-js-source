@@ -135,8 +135,8 @@ test('AUDIT-RR F14/F25: the neck band is the sprite\'s BOTTOM fifth (Unity v = 0
   const mr = rd('src/player/mountRig.js');
   assert.match(mr, /import \{ horseOffsetHeight, dockedLargeHudHeight \} from '\.\.\/ui\/hudLarge\.js'/);
   assert.match(mr, /const offset = Math\.trunc\(dockedLargeHudHeight\(\)\);[^\n]*\n\s+rect\.y = c\.height - \(\(art\.height \+ yAdj\) \* scaleY\) - offset;\s+return \{ yAdj, scaleY, c, offset \};/);   // AUDIT-RR2 G4: `(int)` (EnhancedRiding.cs:257)
-  assert.match(mr, /function drawNeckBand\(\{ yAdj, scaleY, c, offset \}, rect, art, r\)/);
-  assert.match(mr, /\{ u0: band\.u0, v0: band\.v0, u1: band\.u1, v1: band\.v1 \}/);
+  assert.match(mr, /function drawNeckBand\(\{ yAdj, scaleY, c, offset \}, rect, art, r, tint\)/);   // HORSE-LIT: the sprite's light rides in (fb1016_horselit.test.js)
+  assert.match(mr, /\{ u0: band\.u0, v0: band\.v0, u1: band\.u1, v1: band\.v1 \}, tint\)/);
 });
 
 test('AUDIT-RR F15/F16/F17/F18: the riding component\'s contacts - a civilian under the hooves bleeds LETHAL, cries at RidingVolumeScale, is retired; a foe is charged ONCE with the component\'s own knockback and the heavy pain voice, the blow handed down with no knock direction', () => {

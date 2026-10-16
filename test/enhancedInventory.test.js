@@ -1243,7 +1243,7 @@ test('PX21e: the loot window never scrolls - it grows, then widens, and its head
   assert.match(css, /\.loot-win \.remotehead \{ flex: 0 0 auto; \}/);
   assert.match(css, /\.loot-win \.remotelist \{ flex: 1; min-height: 0; overflow-y: auto;/);
   assert.match(src, /const list = el\('div', 'remotelist'\);/);
-  assert.match(src, /for \(const it of shown\) list\.append\(itemRow\(it, 'remote'\)\);/);   // WAGON-FILTER: the rows a store's filter shows, into the same list
+  assert.match(src, /const v = keepList\(virtualRows\(list, shown, \(it\) => itemRow\(it, 'remote'\), \{ onAim: rowsMoved \}\)\);/);   // WAGON-FILTER: the rows a store's filter shows, into the same list; VIRT: a long one as a window
   assert.doesNotMatch(src, /for \(const it of remote\.items\) col\.append\(/, 'the rows left the column');
   // A LONG PILE WIDENS rather than scrolling.
   assert.match(src, /export const LOOT_ONE_COLUMN = 8;/);
@@ -1253,7 +1253,7 @@ test('PX21e: the loot window never scrolls - it grows, then widens, and its head
   // container fragments in the block direction, so the overflow columns
   // went below the fold and it scrolled anyway (measured: 14 rows
   // spilling 203px past the frame). A grid has nothing to fragment.
-  assert.match(css, /\.loot-win\.wide \.remotelist \{ display: grid; grid-template-columns: 1fr 1fr;/);
+  assert.match(css, /\.loot-win\.wide \.remotelist \{ display: grid; grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);/);   // AUDIT VIRT: two equal tracks
   assert.doesNotMatch(css, /\.loot-win\.wide \.remotelist \{ column-count/, 'multicol was the wrong answer');
   assert.match(css, /\.loot-win\.wide \.remotelist \.packempty \{ grid-column: 1 \/ -1; \}/, 'and Empty. still spans');
 });

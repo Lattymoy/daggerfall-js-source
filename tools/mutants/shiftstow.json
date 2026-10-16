@@ -137,7 +137,7 @@
   {
     "name": "AUDIT-WAGON-FILTER-S8-the-search-on-item-name",
     "file": "src/ui/enhancedInventory.js",
-    "old": "const storeNameOf = (it) => itemLine(it, deps.entity).name;",
+    "old": "const storeNameOf = (it) => lineOf(it).name;",
     "new": "const storeNameOf = (it) => it.name;",
     "tests": [
       "test/shiftstow.test.js"

@@ -96,7 +96,7 @@ test('F2 F5 F6 F9 F10 F11: one press per dialog or list; Escape puts the menu aw
   const inv = rd('src/ui/enhancedInventory.js');
   assert.match(inv, /function onKey\(e\) \{[\s\S]{0,400}?if \(menuEl && e\.key === 'Escape'\) \{ e\.preventDefault\(\); e\.stopPropagation\(\); closeMenu\(\); return; \}/, 'before anything else the pack does with the key');
   assert.match(inv, /\(\) => \{ if \(tipEl && tipFor === item\) showTip\(item, from, row\); \}/);
-  assert.match(inv, /function hideTip\(\) \{ tipEl\?\.remove\(\); tipEl = null; tipFor = null; \}/);
+  assert.match(inv, /function hideTip\(\) \{ tipEl\?\.remove\(\); tipEl = null; tipFor = null; tipRow = null; \}/);   // AUDIT VIRT: and the row it stood beside
   assert.match(inv, /row\.oncontextmenu = \(e\) => \{ e\.preventDefault\(\); if \(drag\) return; openMenu\(/);
   const port = rd('src/ui/enhancedPort.js');
   assert.match(port, /if \(win\.box && !win\.box\.buttons\?\.length && !win\.picker\) \{ win\.click\?\.\(-1, -1\); return; \}\n\s*if \(!b \|\| b\.disabled\) return;/);

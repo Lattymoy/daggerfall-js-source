@@ -207,24 +207,26 @@ check('the address came from inventoryItemImage',
   Number.isInteger(addr?.archive) && Number.isInteger(addr?.record),
   JSON.stringify(addr));
 
-// ── THE REPAINT MUST SETTLE ────────────────────────────────────────
-// Every cold icon repaints the screen when it lands, which is what
-// makes the letters give way to the picture. A cache that forgot an
-// in-flight record would ask again on that repaint, land again, and
-// repaint again - a loop running at whatever rate a decode takes,
+// ── THE LANDINGS MUST SETTLE ───────────────────────────────────────
+// A cold icon used to repaint the screen when it landed, which is what
+// made the letters give way to the picture; since VIRT the waiting tile
+// takes its picture in place and the screen is not repainted at all
+// (bible/10-UI/UI-Arc.md VIRT). AUDIT VIRT: so the count that pins it is
+// the landings' own (`__pack`'s `landings`, the passes that put pictures
+// into tiles, and `painted`, the tiles they put them into). A landing
+// that set off another - a cache that forgot an in-flight record asked
+// again, landed again - would run at whatever rate a decode takes,
 // invisible except as a hot fan. So: let it settle, then prove it HAS.
-const settled = await page.evaluate(() => JSON.parse(globalThis.__pack()).repaints);
+const at = () => page.evaluate(() => { const p = JSON.parse(globalThis.__pack()); return { landings: p.landings, painted: p.painted, repaints: p.repaints, tiles: document.querySelectorAll('#enhanced-inventory .tile').length }; });
+const settled = await at();
 await page.waitForTimeout(1200);
-const later = await page.evaluate(() => JSON.parse(globalThis.__pack()).repaints);
-check('the screen stops repainting once its icons have landed',
-  later === settled, `${settled} -> ${later}`);
-// THE COUNT IS THE PIN, not just the stability. Three items means
-// about three landings plus the mount; a cache that forgot its
-// in-flight records decodes each icon once per repaint until the
-// first lands and the count DOUBLES - which is what it measured at
-// before the marker existed, and the only way that waste is visible.
-check('...and each icon was decoded once, not once per repaint',
-  settled <= 5, `${settled} repaints for 3 items`);
+const later = await at();
+check('the landing passes stop once the icons have landed',
+  later.landings === settled.landings, `${settled.landings} -> ${later.landings}`);
+check('...each tile was given its picture once',
+  later.painted <= later.tiles, `${later.painted} painted, ${later.tiles} tiles`);
+check('...and the screen was not repainted for them',
+  later.repaints === settled.repaints && settled.repaints <= 3, `${settled.repaints} -> ${later.repaints} repaints (the mount and the doll's)`);
 
 // the detail draws it larger
 await page.locator('#enhanced-inventory .itemrow').first().click();
