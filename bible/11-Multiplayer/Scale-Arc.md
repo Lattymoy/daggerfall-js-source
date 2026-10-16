@@ -79,6 +79,7 @@ Four read-only audits covered the relay (`server/src/index.js`), the account ser
 | DECOR-BATCH | The account database overloaded again through the evening of 2026-10-16: every account deploy since #952 failed its smoke on `/v1/homes/decor` (seven asks of 15 s, no byte back) while `homes/town` answered its one batch in 11 s - a home's room one request where it was three trips in a row, a shunned home's shop one more | No | **Built** (2026-10-16; acct142) |
 | BOOKMARK-SPIRAL | The account database's primary overloaded from 13:50 UTC (2026-10-16) and stayed so - every route 5 to 60 s, every deploy's smoke on `/v1/homes/decor` 000, DECOR-BATCH deployed and nothing moved: the page's D1 bookmark is kept only when no call goes between a read and its answer, so a slow primary took the bookmarks away, and every polled display read then started at the primary. The six polled reads with no bookmark start at any instance; a session lookup that misses there asks the primary | No | **Built** (2026-10-16; acct143) |
 | BUSY-HEART | After BOOKMARK-SPIRAL deployed and the primary's own load halved, the overload held: it held only while players were in the world (healthy 20:00-20:04 with the relay's players dropped by its deploy, at more primary statements than when it came back), and the heartbeat and the motherlodes - asked again on their own schedules, twice and three times as often - spent the most of the database's time. Both stand back now | No | **Built** (2026-10-16; acct144) |
+| SHED-LONG | After BUSY-HEART the overload eased (p50 17-45 s to 5-13 s) and held: a request on a D1 session waited 31 s on the database for every 5.6 s one on the binding did - the replica the longer queue. BOOKMARK-SPIRAL rolled back (the six polled reads at the primary first again, its session lookup's fallback kept), and an overload's shed 10 s where it was 2 | No | **Built** (2026-10-16; acct145) |
 | SCALE6 | Abuse and backups: Turnstile on guest creation, /64 IPv6 rate keys, bans, report and ignore, `ALLOWED_ORIGIN`, R2 snapshots, a hub export | Some | Alongside |
 
 **Relay deploy policy (SCALE):** relay changes are batched into as few deploys as possible, each in a window announced beforehand. A deploy drops every player, and until SCALE2 every reconnect is a D1 write storm.
@@ -2577,6 +2578,35 @@ held: half of all requests past 5 s, the Worker's log still `D1 DB is overloaded
   BUSY_SHED_MS. `tools/mutants/busy_heart.json`: 2, both dead; `busy_gate.json` all dead.
 - `test/busy_gate.test.js`: the law's list, its always-goes list and the client's goes list moved.
 - ACCOUNT_VERSION acct144, and every pin and mutant record on acct143 (each pin's PIN MOVED history kept).
+
+## SHED-LONG - BOOKMARK-SPIRAL rolled back, the shed 10 s (2026-10-16, acct145)
+
+BUSY-HEART deployed at 21:07 UTC (run 263, dispatched by the owner after #961's pins): the account Worker's p50 went
+from 17-45 s to 5-13 s and its p90 from 42-105 s to 25-35 s, at the same traffic - eased, not well. The service's own
+metrics from 21:07:30 (D1 wait by route, its answered requests only): every route on a D1 session waited 31 s on the
+database on average, every route on the binding 5.6 s - town 26 s, pixels 24 s, heartbeat 32 s, motherlodes 58 s,
+the mint 74 s; a realm checkpoint 10 s, renown 13 s. The replica was the longer queue, and had been before
+BOOKMARK-SPIRAL too (16:00-16:30: sessions 21-47 s, the binding 1-13 s) - BOOKMARK-SPIRAL had moved some 40 session
+lookups a second onto it, while the primary, answering in a fifth of the time, had shown 245 statements a second well
+(20:00-20:04).
+
+- **BOOKMARK-SPIRAL rolled back** (`service.js` ANY_REPLICA_ROUTES, now empty): every replica route with no bookmark
+  starts at the primary first again, as DISPLAY-REPLICA made it. Kept: `replicaDb`'s DB_ANY and `resolveSession`'s
+  miss asking the primary - so a session opened at any instance (REPLICA_ANY) never refuses a session minted a
+  moment ago, wherever one is opened.
+- **An overload's shed is 10 s** (`net/busyLaw.js` BUSY_SHED_MS, was 2 s): sheds were answering (544 of the town's
+  6,475 asks, 628 of the heartbeat's 5,122), and still every answered read waited half a minute - two seconds' rest
+  let the next wave of the same reads in before the queue had drained.
+
+### Pins
+
+- `test/bookmark_spiral.test.js` (3, rewritten): no route at any instance; every replica route with no bookmark, and
+  one D1 refuses, at the primary; with one, at it; a heartbeat and a town read looking their session up on the primary
+  (laggyD1); on a session at any instance, a session the replica holds found there and the primary never asked, one
+  minted after the replica's last catch-up found on the primary (asked once), a secret nobody holds refused.
+  `tools/mutants/bookmark_spiral.json` re-made for the rollback: 6.
+- `test/busy_gate.test.js`: BUSY_SHED_MS 10 s.
+- ACCOUNT_VERSION acct145, and every pin and mutant record on acct144 (each pin's PIN MOVED history kept).
 
 ## THE PLAN PAST 2,000 (2026-10-10)
 

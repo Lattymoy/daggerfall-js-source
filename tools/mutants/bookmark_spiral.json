@@ -1,13 +1,13 @@
 [
  {
-  "name": "BOOKMARKSPIRAL-constraint-primary",
+  "name": "SHEDLONG-route-back-in-set",
   "file": "server-account/src/service.js",
-  "old": "  return replicaDb(db, ANY_REPLICA_ROUTES.get(path) === method ? REPLICA_ANY : REPLICA_CONSTRAINT);",
-  "new": "  return replicaDb(db, REPLICA_CONSTRAINT);",
+  "old": "export const ANY_REPLICA_ROUTES = new Map();",
+  "new": "export const ANY_REPLICA_ROUTES = new Map([['/v1/heartbeat', 'POST'], ['/v1/homes/town', 'POST']]);",
   "tests": [
    "test/bookmark_spiral.test.js"
   ],
-  "note": "every replica read with no bookmark at the primary again - the spiral's way back"
+  "note": "the polled reads with no bookmark back on the replica's queue"
  },
  {
   "name": "BOOKMARKSPIRAL-any-everywhere",
@@ -17,37 +17,7 @@
   "tests": [
    "test/bookmark_spiral.test.js"
   ],
-  "note": "the account view, the realm and the decor with no bookmark off any instance - a caller's own write unread"
- },
- {
-  "name": "BOOKMARKSPIRAL-refused-bookmark-primary",
-  "file": "server-account/src/service.js",
-  "old": "  if (bookmark && !PRIMARY_FIRST_ROUTES.has(path)) { try { return replicaDb(db, bookmark); } catch { /* a bookmark D1 refuses: as with none, below */ } }",
-  "new": "  if (bookmark && !PRIMARY_FIRST_ROUTES.has(path)) { try { return replicaDb(db, bookmark); } catch { return replicaDb(db); } }",
-  "tests": [
-   "test/bookmark_spiral.test.js"
-  ],
-  "note": "a bookmark D1 refuses sends a polled read to the primary"
- },
- {
-  "name": "BOOKMARKSPIRAL-route-past-six",
-  "file": "server-account/src/service.js",
-  "old": "  ['/v1/arena/board', 'POST'],\n]);\n/** BOOKMARK-SPIRAL: where such a session starts",
-  "new": "  ['/v1/arena/board', 'POST'],\n  ['/v1/homes/decor', 'POST'],\n]);\n/** BOOKMARK-SPIRAL: where such a session starts",
-  "tests": [
-   "test/bookmark_spiral.test.js"
-  ],
-  "note": "a room's pieces off any instance - the piece just placed missing from the room"
- },
- {
-  "name": "BOOKMARKSPIRAL-heartbeat-dropped",
-  "file": "server-account/src/service.js",
-  "old": "export const ANY_REPLICA_ROUTES = new Map([\n  ['/v1/heartbeat', 'POST'],\n",
-  "new": "export const ANY_REPLICA_ROUTES = new Map([\n",
-  "tests": [
-   "test/bookmark_spiral.test.js"
-  ],
-  "note": "the busiest polled read back at the primary"
+  "note": "every replica read with no bookmark off any instance - a caller's own write unread"
  },
  {
   "name": "BOOKMARKSPIRAL-flag-unread",

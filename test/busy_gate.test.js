@@ -32,7 +32,7 @@ test('BUSY-GATE the law: the reads that stand back are the fourteen display read
   for (const act of ['/v1/homes/claim', '/v1/homes/decor/place', '/v1/auth/token', '/v1/market/read', '/v1/chapters/list', '/v1/arena/board']) {   // PIN MOVED (BUSY-HEART): the heartbeat stands back now
     assert.equal(busyRead(act, 'POST'), false, `${act} always goes`);
   }
-  assert.deepEqual([BUSY_RETRY_AFTER_S, BUSY_SHED_MS, BUSY_BASE_MS, BUSY_MAX_MS, BUSY_HOLD_MS], [5, 2_000, 5_000, 60_000, 250]);
+  assert.deepEqual([BUSY_RETRY_AFTER_S, BUSY_SHED_MS, BUSY_BASE_MS, BUSY_MAX_MS, BUSY_HOLD_MS], [5, 10_000, 5_000, 60_000, 250]);   // PIN MOVED (SHED-LONG, 2026-10-16): the shed 10 s, where it was 2
   assert.deepEqual([1, 2, 3, 4, 5, 6, 40].map((n) => busyWaitMs(n, 1)), [5_000, 10_000, 20_000, 40_000, 60_000, 60_000, 60_000]);
   assert.deepEqual([1, 2, 5].map((n) => busyWaitMs(n, 0)), [2_500, 5_000, 30_000], 'the bottom of its spread, half the wait');
   assert.equal(busyWaitMs(3, 0.5), 15_000);

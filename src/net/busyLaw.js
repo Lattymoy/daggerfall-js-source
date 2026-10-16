@@ -54,8 +54,10 @@ export const busyRead = (/** @type {string} */ path, /** @type {string} */ metho
 
 /** The seconds an overload answer tells a client to stand back (its Retry-After) - and the least a client waits. */
 export const BUSY_RETRY_AFTER_S = 5;
-/** How long the service, having met an overload, answers the reads without asking the database (ms). */
-export const BUSY_SHED_MS = 2_000;
+/** How long the service, having met an overload, answers the reads without asking the database (ms). SHED-LONG
+ *  (2026-10-16, bible/11-Multiplayer/Scale-Arc.md SHED-LONG): 10 s, where it was 2 - with the queue a minute deep, two
+ *  seconds' rest let the next wave of the same reads in before it had drained. */
+export const BUSY_SHED_MS = 10_000;
 /** The client's first wait after an overload answer, and the most it ever waits (ms): the wait doubles with each
  *  overload answer in a row, between the two. */
 export const BUSY_BASE_MS = BUSY_RETRY_AFTER_S * 1000;
