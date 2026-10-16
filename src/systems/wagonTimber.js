@@ -60,7 +60,7 @@
 // written - so the reader is HERE, and the paint is untouched and still reads only its own four.
 //
 // Pure: no DOM, no renderer, no clock. Not a DFU member. Ledger A (WAGONS2, WAGON-TIMBER).
-import { isWagonItem } from './wagonKinds.js';
+import { isWagonItem, activeWagonItem } from './wagonKinds.js';
 import { wagonLookOf, readWagonLook, wagonLookOfCode, isBuiltLook, LOOK_COUNT } from './wagonLooks.js';
 import { t } from './textManager.js';   // L10N4: the card's own words, routed like every new sentence the port adds
 
@@ -152,15 +152,16 @@ export const timberChoiceName = (part, i) => TIMBER_LOOK_NAMES[looksOf(part)[ind
  * five rows, the wheels among them and last. Null with no wagon. The same shape wagonLooks.js horseLookRows-style rows
  * have, so one row renderer can take both.
  *
- * PASS 2: the card's five rows read this, and `timberedDrivenWagon` below dyes THE SAME WAGON - the first one in the
- * pack, found the same way here and there. A row that showed one wagon's timber and a press that dyed another's is
- * the card lying about itself, so the two find alike on purpose; the paint's own rows read activeWagonItem and its own
- * act does too, which is a different rule and not this law's to move.
+ * PASS 2: the card's five rows read this, and `timberedDrivenWagon` below dyes THE SAME WAGON - the driven one
+ * (systems/wagonKinds.js activeWagonItem, the best owned), the way the paint's own rows and act and the pool all find
+ * it. A row that showed one wagon's timber and a press that dyed another's is the card lying about itself, so the two
+ * find alike on purpose; with two wagons in the pack the first may be a cart nobody drives.
+ * WAGON-TIMBER PASS 3: was "the first one in the pack", which dyed a wagon nobody drives beside the one the pool draws.
  * @param {any[]} items
  */
 export function timberRows(items) {
   if (!Array.isArray(items)) return null;
-  const item = items.find(isWagonItem);
+  const item = activeWagonItem(items);
   if (!item) return null;
   const t = wagonTimberOf(item);
   return TIMBER_FIELDS.map((part) => ({ part, name: TIMBER_PART_NAMES[part], choices: looksOf(part).map((k) => TIMBER_LOOK_NAMES[k]), current: t[part] }));
@@ -188,14 +189,17 @@ export const TIMBER_TEXT = Object.freeze({
 
 /**
  * PASS 2: THE DRIVEN WAGON DYED: in the pack `items` (the host's own list - the wagon's place in it taken by its dyed
- * self), the first wagon the pack holds given choice `i` of `part` - THE ONE timberRows listed, so the row a player
- * pressed is the row they saw. `{ ok, text }` - what the Stable says. Free, any time, the mod on or off, as the paint's
+ * self), the driven wagon (systems/wagonKinds.js activeWagonItem, the best owned - THE ONE timberRows listed and the
+ * one the pool draws) given choice `i` of `part`, so the row a player pressed is the row they saw and the wagon dyed
+ * is the wagon driven. `{ ok, text }` - what the Stable says. Free, any time, the mod on or off, as the paint's
  * own act is: what the wagon is made of is the wagon's business.
+ * WAGON-TIMBER PASS 3: was `items.find(isWagonItem)` - the FIRST wagon, which with two wagons dyed a cart nobody
+ * drives while the pool drew the best. Aligned with paintDrivenWagon and the pool.
  * @param {any[]} items @param {string} part @param {number} i
  */
 export function timberedDrivenWagon(items, part, i) {
   if (!Array.isArray(items)) return { ok: false, text: TIMBER_TEXT.noWagon() };
-  const item = items.find(isWagonItem);
+  const item = activeWagonItem(items);
   if (!item || !TIMBER_FIELDS.includes(part)) return { ok: false, text: TIMBER_TEXT.noWagon };
   const dyed = timberedWagon(item, part, i);
   if (!dyed) return { ok: false, text: TIMBER_TEXT.noWagon };

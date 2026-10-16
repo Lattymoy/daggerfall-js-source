@@ -2871,6 +2871,8 @@ function portRowsInterface({ pause = false } = {}) {
   out.push(mapScaleRow());   // MAP-SCALE
   out.push(prefRow('standingAll', 'Every faction\'s standing',
     'Your reputation with every guild, temple, knightly order, kingdom, coven, vampire clan and Daedric Prince on the character sheet\'s Standing page - not only the ones you belong to.'));   // EVERY-STANDING
+  out.push(prefRow('broadcastHeraldry', 'Broadcast my guild\'s heraldry',
+    'Worn on your open wagon and shown to everyone when on. Off: plain cloth.'));   // WAGON-ARMS: my guild's tag on my open wagon's side, seen by all
   if (isEnhanced()) out.push(...hudLayoutRows());   // HUD-MOVE: the Enhanced Plus HUD's own - Classic draws none of it
   // FOEBAR1: the target bar's face is a two-way choice, not a switch - the
   // stick-position row's shape: a row whose button names the OTHER option.

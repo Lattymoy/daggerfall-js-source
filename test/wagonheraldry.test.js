@@ -20,7 +20,7 @@ import { readFileSync } from 'node:fs';
 
 import {
   TEX, WAGON_ARCHIVE, WAGON_TILE, WAGON_SOURCES, wagonLookSources, LOOK_RECORDS, BANDS, SIDE_Y0, SIDE_Y1, SIDE_TILE_M,
-  SIDE_CELLS, sideBandU, lookRecord,
+  SIDE_CELLS, sideBandU, lookRecord, emblemmedSide,
 } from '../src/world/wagonArt.js';
 import { COMPOSE, classicPictures, resample, opaque, composedPicture } from '../src/world/classicArt.js';
 import {
@@ -38,7 +38,7 @@ const armsColours = (h) => [heraldryColourOf(h.field).hex, heraldryColourOf(h.bo
 const asHex = (h) => [heraldryColourOf(h.field).hex, heraldryColourOf(h.border).hex, heraldryColourOf(heraldryInk(h)).hex];
 /** A heraldry of three colours of its own, so "the device's colour is on the cloth" is not the border's by accident. */
 const THREE_COLOURS = Object.freeze({ field: 'argent', border: 'sable', device: 'dragon', charge: 'teal' });
-const sidePicture = async () => (await classicPictures({ [TEX.openSide]: WAGON_SOURCES[TEX.openSide] }, fakeClassicRgba()))[0][1];
+const sidePicture = async () => (await classicPictures({ [TEX.openSide]: emblemmedSide([50, 7], undefined) }, fakeClassicRgba()))[0][1];
 /** The cell of `pic` the arms are on, as that cell's rectangle - the real one, read off the picture itself. */
 const rectIn = (pic, cell) => emblemRect(pic, SIDE_TILE_M, SIDE_Y1 - SIDE_Y0, EMBLEM_M, cell, COMPOSE);
 /** The metres along the side a texel column of the picture stands at. */

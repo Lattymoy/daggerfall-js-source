@@ -171,6 +171,8 @@ const REFUSAL_WORDS = {
   'not-found': () => t('account.refusal.notFound', 'The account service does not know that request. The game may need updating.'),
   'no-database': () => t('account.refusal.noDatabase', 'The account service is starting up. Try again in a moment.'),
   queue: () => t('account.refusal.queue', 'Many players are signing in at once - you are in line. Try again in a few seconds.'),   // ADMIT-LINE (server-account/src/admit.js): the sign-in line
+  'arms-batch': () => 'That request carried too many guild tags. Wait and ask again.',
+  'arms-rate': () => 'Too many wagon arms requests. Try again later.',
   // ACC2, the cloud saves. Every one of these is a sentence a player
   // can act on, which is the whole rule of this table - "too-large" is
   // not a thing to read and "that save is too big to back up" is.

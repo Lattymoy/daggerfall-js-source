@@ -62,7 +62,8 @@
 // Ledger A (WAGONS1).
 import { DF, SEE_THROUGH_WINDOW, COMPOSE } from './classicArt.js';
 import { wagonWheelArt, wagonTyreArt, WHEEL_FINISHES } from './wagonWheelArt.js';
-import { paintWagonEmblem } from './wagonEmblem.js';
+import { paintWagonEmblem, EMBLEM_CELL } from './wagonEmblem.js';
+import { ownArmsForTag } from '../systems/guildArms.js';   // WAGON-ARMS PASS B: per-tag arms for the open side's picture
 
 /** The wagons' pseudo-archive: past the large boat's 38171 (38151 collided once - largeBoatArt.js). */
 export const WAGON_ARCHIVE = 38181;
@@ -148,10 +149,10 @@ export const isGlassRecord = (rec) => /** @type {number[]} */ ([TEX.caravanSide,
  * texels, because the two are not square here.
  * @param {readonly number[]} cloth the Daggerfall record the side's cloth wears
  */
-export function emblemmedSide(cloth) {
+export function emblemmedSide(cloth, heraldry = undefined) {
   return Object.freeze({
     body: cloth, size: Object.freeze([COMPOSE, COMPOSE]), repeat: SIDE_CELLS,
-    paint: (/** @type {{width:number,height:number,data:Uint8Array}} */ pic) => paintWagonEmblem(pic, SIDE_TILE_M, SIDE_Y1 - SIDE_Y0),
+    paint: (/** @type {{width:number,height:number,data:Uint8Array}} */ pic) => paintWagonEmblem(pic, SIDE_TILE_M, SIDE_Y1 - SIDE_Y0, EMBLEM_CELL, COMPOSE, undefined, heraldry),
   });
 }
 
@@ -187,7 +188,7 @@ export const WHEEL_PAINTED = Object.freeze({
 });
 export const WAGON_SOURCES = Object.freeze({
   [TEX.floor]: DF.deck, [TEX.side]: DF.hullPlanks, [TEX.inner]: DF.oakPale, [TEX.beam]: DF.oakDark, [TEX.bench]: DF.board,
-  [TEX.tyre]: WHEEL_PAINTED.tyre, [TEX.wheel]: WHEEL_PAINTED.wheel, [TEX.iron]: DF.iron, [TEX.openSide]: emblemmedSide(DF.sailcloth), [TEX.tilt]: DF.sailcloth,
+  [TEX.tyre]: WHEEL_PAINTED.tyre, [TEX.wheel]: WHEEL_PAINTED.wheel, [TEX.iron]: DF.iron, [TEX.openSide]: emblemmedSide(DF.sailcloth, null), [TEX.tilt]: DF.sailcloth,
   [TEX.tiltInner]: DF.sailcloth, [TEX.caravanSide]: caravanWall(TEX.caravanSide, DF.paintGreen),
   [TEX.caravanFront]: caravanWall(TEX.caravanFront, DF.paintGreen), [TEX.caravanRear]: caravanWall(TEX.caravanRear, DF.paintGreen),
   [TEX.caravanRoof]: DF.paintGreen, [TEX.roomSide]: caravanWall(TEX.roomSide, DF.paintGreen),
@@ -222,6 +223,23 @@ export const WOOD_DYES = Object.freeze({
   ebony: Object.freeze({ hue: 12, sat: Object.freeze(['abs', 0.3]), val: Object.freeze([0, 0.36]) }),
   ash: Object.freeze({ hue: 34, sat: Object.freeze(['abs', 0.14]), val: Object.freeze([0.26, 0.95]) }),
 });
+/** WAGON-TIMBER PASS 3 (2026-10-16, operator: the cart's paint reads flat beside the timber's grain): THE CART'S SIX
+ * OUTSIDE PAINTS AS DYES, in WOOD_DYES' own shape - the cart's boards keep Daggerfall's grain with the paint on it,
+ * where the flat swatches (LOOK_PICTURES.paint) laid a coloured plane over them. Tuned by eye against what the
+ * swatches read as: each hue at its swatch's family (red near mahogany's, blue and green mid, black warm-dark like
+ * ebony, white a warm lift like the grey coat), every saturation absolute so the pale grain stays paler than the
+ * flank, the value scaled under the raw boards for the paints and lifted for the whitewash - the grain's own light
+ * still its own light. This is pre-existing WAGONS2 behaviour corrected per the operator's complaint, not a timber
+ * regression: the open wagon's cloths and the caravan's paints below are untouched, choice for choice.
+ * `oak` is the identity (choice 0, which the law never asks for) and the unknown-name fallback. */
+export const CART_DYES = Object.freeze({
+  oak: Object.freeze({ hue: null, sat: Object.freeze(['mul', 1]), val: Object.freeze([0, 1]) }),
+  red: Object.freeze({ hue: 2, sat: Object.freeze(['abs', 0.55]), val: Object.freeze([0.03, 0.9]) }),
+  blue: Object.freeze({ hue: 214, sat: Object.freeze(['abs', 0.5]), val: Object.freeze([0.03, 0.88]) }),
+  green: Object.freeze({ hue: 132, sat: Object.freeze(['abs', 0.45]), val: Object.freeze([0.03, 0.85]) }),
+  black: Object.freeze({ hue: 20, sat: Object.freeze(['abs', 0.15]), val: Object.freeze([0, 0.32]) }),
+  white: Object.freeze({ hue: 45, sat: Object.freeze(['abs', 0.07]), val: Object.freeze([0.55, 0.9]) }),
+});
 /** WAGON-TIMBER: the wheels' finishes, by name (systems/wagonTimber.js WHEEL_LOOKS), each a `painted` source for both of
  *  the wheel's records (the face and the tread) in ONE finish - a wheel is turned and fitted whole, so its tread belongs
  *  to its spokes rather than being a second thing to choose. The colours themselves are world/wagonWheelArt.js
@@ -246,12 +264,12 @@ export const WHEEL_SOURCES = Object.freeze(Object.fromEntries(
  * `wheels` takes its TWO (the tread and the face) from WHEEL_SOURCES' one finish. Neither family touches the other's
  * records, which is what "the wheel options separate from the wood options" means in a source table.
  */
-export function wagonLookSources(list, i, name) {
+export function wagonLookSources(list, i, name, tag = null) {
   if (!(Number.isInteger(i) && i > 0) || !LOOK_RECORDS[list]) return {};
   const r = (rec) => lookRecord(rec, i);
   const paint = LOOK_PICTURES.paint[name] ?? DF.paintGreen;
-  if (list === 'cart') return { [r(TEX.side)]: paint };
-  if (list === 'openWagon') { const c = LOOK_PICTURES.cloth[name] ?? DF.sailcloth; return { [r(TEX.openSide)]: emblemmedSide(c), [r(TEX.tilt)]: c, [r(TEX.tiltInner)]: c }; }
+  if (list === 'cart') { const from = WAGON_SOURCES[TEX.side]; return Array.isArray(from) ? { [r(TEX.side)]: { dyed: { from, dye: CART_DYES[name] ?? CART_DYES.oak } } } : {}; }   // WAGON-TIMBER PASS 3: the cart's paint dyes its built boards (DF.hullPlanks) like the timber dyes its wood - the flat swatch read as a coloured plane over the grain
+  if (list === 'openWagon') { const c = LOOK_PICTURES.cloth[name] ?? DF.sailcloth; return { [r(TEX.openSide)]: emblemmedSide(c, ownArmsForTag(tag)), [r(TEX.tilt)]: c, [r(TEX.tiltInner)]: c }; }
   if (list === 'caravan') return { [r(TEX.caravanSide)]: caravanWall(TEX.caravanSide, paint), [r(TEX.caravanFront)]: caravanWall(TEX.caravanFront, paint), [r(TEX.caravanRear)]: caravanWall(TEX.caravanRear, paint), [r(TEX.caravanRoof)]: paint };
   if (list === 'walls') return { [r(TEX.roomSide)]: caravanWall(TEX.roomSide, paint), [r(TEX.roomFront)]: caravanWall(TEX.roomFront, paint), [r(TEX.roomRear)]: caravanWall(TEX.roomRear, paint) };
   if (list === 'floor') return { [r(TEX.roomFloor)]: LOOK_PICTURES.floor[name] ?? DF.deck };

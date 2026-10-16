@@ -41,7 +41,7 @@ import { quatAngleAxis, quatRotate, quatMultiply } from './quat.js';
 import { NORMAL_GROUND_OFFSET } from '../systems/horseCartLaw.js';
 import { CARGO_DEFINITIONS } from '../systems/wagon41214.js';
 import { WAGON_KINDS, activeWagonKind, activeWagonItem } from '../systems/wagonKinds.js';
-import { wagonLookOf } from '../systems/wagonLooks.js';   // WAGONS2: the driven wagon's paint
+import { readWagonLookAll } from '../systems/wagonTimber.js';   // WAGON-TIMBER PASS 3: the dep delivers the WHOLE look - the pool reads all nine keys, and the paint's own four-key reader would strip the timber's five before either saw them
 import { riddenHorseLook } from '../systems/horseCoats.js';   // COATS1: the ridden horse's look
 import { mwViewHorseRig } from '../player/mwView.js';   // COATS3D: the 3D horse rig, on the Morrowind lane
 import { SEATED_HIP_HEIGHT } from '../player/seatPose.js';   // WAGONS3: the seated hips' height over the feet, the measured biped's
@@ -474,7 +474,7 @@ export function wagonPoolDeps(items, fetchFn = (u) => globalThis.fetch(u)) {
   const loads = new Map();
   return {
     wagonKind: () => activeWagonKind(items()) ?? 'cart',
-    wagonLook: () => wagonLookOf(activeWagonItem(items())),   // WAGONS2: the driven wagon's paint
+    wagonLook: () => readWagonLookAll(activeWagonItem(items())?.wagonLook),   // WAGON-TIMBER PASS 3 (2026-10-16, operator: Stable timber rows change nothing live): the driven wagon's WHOLE look, all nine keys - the pool's myLook reads it through readWagonLookAll too, so a four-key read here stripped the timber's five and the pool's remap never saw a dye. wagonLooks.js's own wagonLookOf is untouched for its paint-only consumers.
     horseLook: () => riddenHorseLook(items()),   // COATS1: and the horse's look
     horses3d: () => mwViewHorseRig(),   // COATS3D: on the Morrowind lane, every horse the pool stands is the 3D horse
     bakedWagon: (kind) => {

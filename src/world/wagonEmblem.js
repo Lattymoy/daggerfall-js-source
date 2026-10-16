@@ -137,18 +137,29 @@ function emblemCanvas(w, h) {
   return c;
 }
 
+/** Normalise `heraldry` into a heraldry the law accepts, or null / undefined. `undefined` (the default) keeps the
+ *  reader's own guild's arms (icons and previews). `null` draws nothing. An object carrying a `heraldry` (an arms
+ *  row from the service) is unwrapped. Returns `undefined` only for the default. */
+function normalizeArms(heraldry) {
+  if (heraldry === undefined) return undefined;   // default reader's
+  if (heraldry === null) return null;
+  if (typeof heraldry !== 'object' || Array.isArray(heraldry)) return null;
+  const raw = heraldry && heraldry.heraldry !== undefined ? heraldry.heraldry : heraldry;
+  if (raw === null) return null;
+  return heraldryOf(raw) ?? null;
+}
 /**
- * THE EMBLEM PAINTED OVER A WAGON'S SIDE - the `paint` of a composed picture (world/classicArt.js): the reader's own
- * guild's arms drawn into a canvas the size of the rect emblemRect puts them in, read back and stamped over ONE CELL
- * of the cloth. `tileM` of u to a cell and `bandM` of v over the lot are the side's own metres (world/wagonArt.js
- * SIDE_TILE_M and BANDS), so the emblem is measured on the wagon and not in texels; `cell`/`cellW` say which cell of a
- * repeated picture it belongs to. Whether it was painted - false where there is no canvas to draw in, where the law
- * refuses the arms, or where nothing is left of the box.
+ * THE EMBLEM PAINTED OVER A WAGON'S SIDE - the `paint` of a composed picture (world/classicArt.js): when no heraldry
+ * is passed (the icons and previews) the reader's own guild's arms; `null` leaves the cloth bare (no guild, or a
+ * guild that does not broadcast); an object paints that guild's arms. `tileM`/`bandM` are the side's own metres,
+ * `cell`/`cellW` which cell of a repeated picture it belongs to. Whether it was painted - false where there is no
+ * canvas, where the law refuses the arms, or where the box is empty.
  * @param {{width:number,height:number,data:Uint8Array}} pic @param {number} tileM @param {number} bandM
- * @param {number} [cell] @param {number} [cellW] @param {number} [emblemM]
+ * @param {number} [cell] @param {number} [cellW] @param {number} [emblemM] @param {any} [heraldry]
  */
-export function paintWagonEmblem(pic, tileM, bandM, cell = EMBLEM_CELL, cellW = COMPOSE, emblemM = EMBLEM_M) {
-  const arms = wagonHeraldry();
+export function paintWagonEmblem(pic, tileM, bandM, cell = EMBLEM_CELL, cellW = COMPOSE, emblemM = EMBLEM_M, heraldry = undefined) {
+  const resolved = normalizeArms(heraldry);
+  const arms = (resolved === undefined) ? wagonHeraldry() : resolved;
   const { x0, y0, w, h } = emblemRect(pic, tileM, bandM, emblemM, cell, cellW);
   if (!arms || w < 1 || h < 1) return false;
   const canvas = emblemCanvas(w, h);

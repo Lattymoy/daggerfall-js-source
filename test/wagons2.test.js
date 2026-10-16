@@ -16,7 +16,7 @@ import { readWagonLookAll } from '../src/systems/wagonTimber.js';   // WAGON-TIM
 import { newWagonItem } from '../src/systems/wagonKinds.js';
 import {
   WAGON_SOURCES, wagonLookSources, TEX, WAGON_ARCHIVE, LOOK_RECORDS, LOOK_RECORD_STRIDE, lookRecord, isGlassRecord, CARAVAN_SIDE_WINDOW,
-  CARAVAN_FRONT_WINDOW, SIDE_Y0, SIDE_Y1,
+  CARAVAN_FRONT_WINDOW, SIDE_Y0, SIDE_Y1, CART_DYES,
 } from '../src/world/wagonArt.js';
 import { classicPictures, COMPOSE } from '../src/world/classicArt.js';
 import { setTextureDeriveContext } from '../src/systems/textureReplacement.js';
@@ -87,7 +87,7 @@ test('WAGONS2 THE PAINT\'S LAW: six choices a list, the first the wagon as built
 });
 
 test('WAGONS2 THE PAINTS\' PICTURES (DF-ART: Daggerfall\'s own): each choice past the first names its own records, a stride from the built ones, each a Daggerfall record that is not the built one\'s; the caravan\'s glass a hole - Daggerfall\'s leaded window laid in its sides\' and its room\'s, and its front\'s, where the layout puts them, its panes cut out between its leads - and nothing else of any picture see-through (mutants: the glass left opaque, a paint\'s picture its built one)', async () => {
-  const bodyOf = (from) => (Array.isArray(from) ? from : from.body);
+  const bodyOf = (from) => (Array.isArray(from) ? from : (from.body ?? from.dyed?.from));   // WAGON-TIMBER PASS 3: and a dye's base
   assert.equal(Object.keys(WAGON_SOURCES).length, 21);   // PIN MOVED (WAGONS3): and the harness
   const looks = {};
   for (const [list, names] of [...Object.entries(WAGON_OUTSIDE_LOOKS), ...Object.entries(CARAVAN_INSIDE_LOOKS)]) {
@@ -95,7 +95,13 @@ test('WAGONS2 THE PAINTS\' PICTURES (DF-ART: Daggerfall\'s own): each choice pas
     for (let i = 1; i < names.length; i++) {
       const srcs = wagonLookSources(list, i, names[i]);
       assert.deepEqual(Object.keys(srcs).map(Number), LOOK_RECORDS[list].map((rec) => rec + LOOK_RECORD_STRIDE * i), `${list} ${names[i]}`);
-      assert.ok(Object.entries(srcs).some(([rec, from]) => bodyOf(from).join('_') !== bodyOf(WAGON_SOURCES[Number(rec) % LOOK_RECORD_STRIDE]).join('_')), `${list} ${names[i]} is its own picture`);
+      if (list === 'cart') {
+        // WAGON-TIMBER PASS 3 (operator: the cart's paint read flat): the cart's paint is a DYE of its built boards,
+        // not a flat swatch - the same base with the grain kept, each choice its own dye
+        const src = srcs[lookRecord(TEX.side, i)];
+        assert.deepEqual(src?.dyed?.from, WAGON_SOURCES[TEX.side], `cart ${names[i]}: dyed from the built boards`);
+        assert.deepEqual(src?.dyed?.dye, CART_DYES[names[i]], `cart ${names[i]}: in its own dye, not a flat fill`);
+      } else assert.ok(Object.entries(srcs).some(([rec, from]) => bodyOf(from).join('_') !== bodyOf(WAGON_SOURCES[Number(rec) % LOOK_RECORD_STRIDE]).join('_')), `${list} ${names[i]} is its own picture`);
       Object.assign(looks, srcs);
     }
   }

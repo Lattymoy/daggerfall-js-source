@@ -29,7 +29,8 @@ import { LOOK_COUNT, LOOK_NAMES, WAGON_OUTSIDE_LOOKS, wagonLookCode, wagonLookOf
 import { hccWireRecord, validHccRecord, hccRecordKey } from '../src/systems/horseCartWire.js';
 import { validParkData, PARK_WAGON_LOOK_MAX, PARK_WAGON_TIMBER_MAX, PARK_WAGON_WHEEL_MAX, RELAY_VERSION } from '../src/net/wire.js';
 import { newWagonItem } from '../src/systems/wagonKinds.js';
-import { WAGON_ARCHIVE, TEX, LOOK_RECORDS, LOOK_RECORD_STRIDE, lookRecord, TIMBER_LISTS, wagonLookSources } from '../src/world/wagonArt.js';
+import { wagonPoolDeps } from '../src/world/wagonModels.js';   // WAGON-TIMBER PASS 3: the regression test builds the pool through the production dep, not a hand-fed look
+import { WAGON_ARCHIVE, TEX, LOOK_RECORDS, LOOK_RECORD_STRIDE, lookRecord, TIMBER_LISTS, wagonLookSources, WAGON_SOURCES, CART_DYES } from '../src/world/wagonArt.js';
 import { createHorseCartPool } from '../src/scenes/horseCartPool.js';
 import { setTextureDeriveContext } from '../src/systems/textureReplacement.js';
 import { LOOK_SWATCHES, stableProviderFor, drawStablePage, setHoldingsProvider, resetHoldingsPages, _setHoldingsIconForTests } from '../src/ui/holdingsPages.js';
@@ -408,4 +409,47 @@ test('WAGON-TIMBER PASS 2 THE RELAY IS world207 AND SAYS ITS DEPLOY ORDER: the v
   // the relay bundle is wire.js and the one mat4 it reaches: a wagon's law is NOT pulled in to check a number
   const { graph } = await import('./importGraph.mjs');
   assert.deepEqual(graph('server/src/index.js').filter((f) => /wagon|horse|timber/i.test(f)), [], 'no wagon module in the relay bundle');
+});
+
+// ═══ 6. THE PRODUCTION PATH (PASS 3) ═══════════════════════════════════════════════════════════════════════════════════
+
+test('WAGON-TIMBER PASS 3 THE PRODUCTION PATH CARRIES THE DYE: the pool is built through the REAL `wagonPoolDeps` look over a pack holding a cart FIRST and the open wagon second, and the timber act dyes the DRIVEN wagon (the open wagon, not the first in the pack) - then the pool\'s drawn remap carries the dyed records, and the cart\'s paints dye its grain instead of swapping a flat swatch (mutants: the dep stripping the timber, the act dyeing the first wagon, the cart painted flat)', async () => {
+  // THE PACK: a cart first, the open wagon second. The driven wagon is the BEST owned (wagonKinds.js activeWagonItem),
+  // so the pool draws the open wagon - and the old act (`items.find(isWagonItem)`) would have dyed the cart instead.
+  const items = [newWagonItem('cart'), newWagonItem('openWagon')];
+  const deps = wagonPoolDeps(() => items);
+  assert.equal(deps.wagonKind(), 'openWagon', 'the pool draws the driven wagon');
+  const r = fakeRenderer();
+  const pool = createHorseCartPool({ renderer: r, meshes: null, collider: () => null, now: () => 0, wagonKind: deps.wagonKind, wagonLook: deps.wagonLook, bakedWagon: async (k) => bakeOf(k) });
+  pool.attach(runtime);
+  pool.partsOf('openWagon');
+  await flush();
+  r.draws.length = 0;
+  assert.equal(pool.draw(r), 1, 'the driven wagon stands');
+  await flush();
+  assert.equal(bodyOf(r).remap, null, 'as built: no remap');
+
+  // DYE THROUGH THE PRODUCTION ACT - on the DRIVEN wagon, never the first in the pack
+  const said = timberedDrivenWagon(items, 'beam', 4);
+  assert.equal(said.ok, true, 'the press dyes');
+  assert.equal(items[1].wagonLook.beam, 4, 'the driven wagon (the open wagon) dyed');
+  assert.equal(items[0].wagonLook, undefined, 'and the cart first in the pack untouched');
+  assert.equal(timberRows(items).find((row) => row.part === 'beam').current, 4, 'and the card reads the wagon it dyed');
+
+  // …AND THE POOL DRAWS THE DYE THROUGH THE PRODUCTION DEP. A dep that stripped the timber (the old four-key read)
+  // hands the pool a look with no `beam`, and the wagon keeps the built beam with nothing thrown anywhere.
+  r.draws.length = 0;
+  pool.draw(r);
+  await flush();
+  const remap = bodyOf(r).remap;
+  assert.equal(remap?.get(`${WAGON_ARCHIVE}_${TEX.beam}`), `${WAGON_ARCHIVE}_${lookRecord(TEX.beam, 4)}`, 'the drawn body wears the dyed beams');
+  assert.ok(r.textures.has(`${WAGON_ARCHIVE}_${lookRecord(TEX.beam, 4)}`), 'the dye\'s record built on first wear');
+  assert.equal(remap.size, 1, 'and nothing else moved');
+
+  // …AND THE CART'S PAINT IS A DYE OF ITS GRAIN. Each choice past as built names the side's dyed record - the built
+  // boards (DF.hullPlanks) through its own CART_DYES row - never a flat swatch over them.
+  for (const [i, name] of WAGON_OUTSIDE_LOOKS.cart.entries()) {
+    if (i === 0) { assert.deepEqual(wagonLookSources('cart', 0, name), {}, 'as built names nothing'); continue; }
+    assert.deepEqual(wagonLookSources('cart', i, name), { [lookRecord(TEX.side, i)]: { dyed: { from: WAGON_SOURCES[TEX.side], dye: CART_DYES[name] } } }, `cart ${name}: its grain, dyed`);
+  }
 });

@@ -704,6 +704,7 @@ import { locationArrivalLanding, locationStartMarkers } from '../world/locationE
 import { preloadPrisonScreenArt, preloadCourtScreenArt } from '../ui/prisonScreen.js';   // PRIS00I0 - the serving-time screen   // ROAD-B B5: CORT01I0 - the courtroom the trial is pushed over
 import { TerrainGenClient } from '../world/terrainGenClient.js';   // EV7: the pixel kernel, off the main thread (samples/blend/tiles/grid/nature moved whole to terrainGen.js)
 import { getPref, setPref } from '../systems/uiPrefs.js';
+import { ensureGuildArms, seedGuildArms, setGuildArmsFetcher } from '../systems/guildArms.js';   // WAGON-ARMS PASS B
 import { createCoverIndex, isCoverFlat, coverProxy, coverProxies, FELLED } from '../ai/cover.js';   // TACT1: billboards are cover; LPT1: a felled tree stands no 3D tree
 import { techniqueMarksNow, techniqueHudChips, offsetTechniques, TECHNIQUE_ACTION } from '../combat/techniques.js';   // TECH1 (bible/05-Combat/Weapon-Techniques.md): the player's marks on the ground, the HUD's chip, the recentre's shift
 import { setHudTechniqueChips } from '../ui/enhancedHud.js';   // TECH1: the technique's chip, beside the set powers'
@@ -8682,6 +8683,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     threats: hccThreats, selfId: () => online?.id ?? null, peerName: (id) => peerName(id),
     onChanged: () => { _hccDirty = true; }, toWire: (p) => campToWire(p), log: console, ...wagonPoolDeps(() => playerEntity.items ?? []), enterCaravan: () => caravanRooms.enter(),   // WAGONS1: Mac's wagons, by the one the player drives; the caravan's door
     wagonEntry: () => caravanEntryWord(),   // WAGONS2-VISIT: who may enter my caravan, on its word
+    wagonArms: () => (getPref('broadcastHeraldry') && guildBook?.guild?.tag) ? { tag: guildBook.guild.tag } : null,   // WAGON-ARMS PASS B: my guild's tag when I let it be drawn
     caravanEntry: { row: () => caravanEntryRow(), turn: () => caravanEntryTurn() },   // WAGONS2-VISIT: my caravan's "Who may enter"
     visit: { may: (t) => caravanVisitMay(t), enter: (t) => caravanVisitEnter(t) },   // WAGONS2-VISIT: another's caravan, open to me
     horses: () => horseCountOf(playerEntity.items ?? []),   // WAGONS3: my parked pair keeps its second horse while I own two
@@ -23190,6 +23192,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // ON THIS CLOSING LINE, DELIBERATELY: HOST-SPLIT says a host does not grow (bible/01-Overview/Host-Split.md) and
     // bootWorld had none free - this is wiring and not behaviour, the one line the law asks a host to pay.
     }); setWagonHeraldry(() => guildBook?.guild?.heraldry ?? null);
+    // WAGON-ARMS PASS B: let the pool fetch heraldry by tag through this book's door; seed my own guild so it paints
+    // without a round-trip.
+    setGuildArmsFetcher((tags) => (guildBook?.door ?? null) ? guildBook.door.arms(tags) : accountGuilds({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() }).arms(tags));
+    seedGuildArms(guildBook?.guild?.tag, guildBook?.guild?.heraldry);
     socialPanel = createSocialPanel({
       social,
       mail,

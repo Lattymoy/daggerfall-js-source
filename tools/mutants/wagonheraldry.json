@@ -2,7 +2,7 @@
   {
     "name": "WAGONEMBLEM-1-the-side-a-bare-record-again",
     "file": "src/world/wagonArt.js",
-    "old": "[TEX.openSide]: emblemmedSide(DF.sailcloth)",
+    "old": "[TEX.openSide]: emblemmedSide(DF.sailcloth, null)",
     "new": "[TEX.openSide]: DF.sailcloth",
     "tests": [
       "test/wagonheraldry.test.js"

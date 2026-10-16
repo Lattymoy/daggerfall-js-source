@@ -95,6 +95,7 @@ import { classicPictures } from '../world/classicArt.js';   // DF-ART: the wagon
 import { caravanRoomModel } from '../world/caravanRoomModel.js';   // WAGONS2: the caravan's room, seen through its windows
 import { readWagonLook, wagonLookOfCode, WAGON_OUTSIDE_LOOKS, CARAVAN_INSIDE_LOOKS, CARAVAN_INSIDE_PARTS } from '../systems/wagonLooks.js';
 import { readWagonLookAll, TIMBER_FIELDS, TIMBER_CHOICE_LISTS } from '../systems/wagonTimber.js';   // WAGON-TIMBER: the look is NINE keys, and this is the one reader of all nine
+import { ensureGuildArms, guildArmsEpoch } from '../systems/guildArms.js';   // WAGON-ARMS PASS B: per-tag arms rebuild
 import { validWagonKind, wagonHitchOf, WAGON_KINDS, wagonHorsesOf } from '../systems/wagonKinds.js';
 import { CARAVAN_TEXT } from '../systems/caravanRoom.js';
 import { recolorHorse, horseLookCode, horseLookOfCode, lookSuffix } from '../systems/horseCoats.js';   // COATS1: the horses' looks, dyed as they upload
@@ -386,10 +387,12 @@ export function createHorseCartPool({
   // ── WAGONS2: a paint's pictures, uploaded the first time a wagon wears it, and the remap it is drawn by
   const _lookUp = new Set();   // `${list}:${i}` uploaded
   const _remaps = new Map();   // `${kind}:${code}` -> the body's remap; `room:${code}` -> the room's
-  function ensureLook(list, i, names) {
-    if (!(i > 0) || !renderer?.uploadTexture || _lookUp.has(`${list}:${i}`)) return;
-    _lookUp.add(`${list}:${i}`);
-    uploadWagonPictures(wagonLookSources(list, i, names[i]));
+  function ensureLook(list, i, names, tag = null) {
+    if (!(i > 0) || !renderer?.uploadTexture) return;
+    const luKey = tag ? `${list}:${i}:${tag}:${guildArmsEpoch()}` : `${list}:${i}`;
+    if (_lookUp.has(luKey)) return;
+    _lookUp.add(luKey);
+    uploadWagonPictures(wagonLookSources(list, i, (Array.isArray(names) ? names[i] : names), tag));
   }
   /** The remap a wagon of `kind` wearing `look` is drawn by: each built record its paint repaints, to the paint's
    *  (null for the wagon as built - its own pictures, no remap). `room` the caravan's inside's instead of its outside's.
@@ -408,17 +411,23 @@ export function createHorseCartPool({
    *  picture, and that picture is uploaded once (`ensureWagonArt`), so a guild that changes mid-session keeps the arms
    *  it was built with until reload. A dyed board is NOT that shape - a choice's records are a function of the list
    *  and the choice alone (`_lookUp`), so nothing about them goes stale, and only the key had to learn. */
-  function lookRemap(kind, look, room = false) {
+  function lookRemap(kind, look, room = false, arms = null) {
     const l = room ? readWagonLook(look) : readWagonLookAll(look), k = validWagonKind(kind) ?? 'cart';
+    const armsTag = (typeof arms === 'string') ? arms : (arms && typeof arms === 'object' ? (arms.tag ?? null) : null);
     const lists = room ? CARAVAN_INSIDE_PARTS.map((part) => [part, l[part[0]], CARAVAN_INSIDE_LOOKS[part]])
       : [[k, l.o, WAGON_OUTSIDE_LOOKS[k]], ...TIMBER_FIELDS.map((part) => [TIMBER_LISTS[part], l[part], TIMBER_CHOICE_LISTS[part]])];
+    // WAGON-ARMS PASS B: a base-painted open wagon wears its owner's arms on a synthetic record, so an owner with a
+    // guild does not lose the emblem by choosing "as built".
+    if (!room && armsTag && k === 'openWagon' && !(Number.isInteger(l.o) && l.o > 0)) lists.push(['openWagon', 7, []]);
     if (lists.every(([, i]) => !i)) return null;
-    const key = room ? `room:${l.w}.${l.f}.${l.c}` : `${k}:${l.o}.${TIMBER_FIELDS.map((part) => l[part]).join('.')}`;
+    const baseKey = room ? `room:${l.w}.${l.f}.${l.c}` : `${k}:${l.o}.${TIMBER_FIELDS.map((part) => l[part]).join('.')}`;
+    const armsKey = armsTag ? `:${armsTag}@${guildArmsEpoch()}` : '';
+    const key = baseKey + armsKey;
     let map = _remaps.get(key);
     if (!map) {
       map = new Map();
       for (const [list, i, names] of lists) {
-        ensureLook(list, i, names);
+        if (i) ensureLook(list, i, names, list === 'openWagon' ? armsTag : null);
         for (const rec of LOOK_RECORDS[list]) if (i) map.set(`${WAGON_ARCHIVE}_${rec}`, `${WAGON_ARCHIVE}_${lookRecord(rec, i)}`);
       }
       _remaps.set(key, map);
@@ -610,7 +619,7 @@ export function createHorseCartPool({
    *  (systems/wagonLooks.js - a look or its wire code), its body, bogie and wheels drawn on the paint's pictures, and a
    *  caravan's room inside its body, seen through its windows (world/caravanRoomModel.js - casting no shadow: the body
    *  casts the caravan's). */
-  function drawWagon(r, texRemap, position, rotation, tier, turn, scale = 1, kind = myKind(), hitched = false, look = null) {
+  function drawWagon(r, texRemap, position, rotation, tier, turn, scale = 1, kind = myKind(), hitched = false, look = null, arms = null) {
     const parts = partsOf(kind);
     if (!parts?.gpu?.body || !r?.drawMesh) return false;
     const grown = scale > 1;
@@ -622,7 +631,7 @@ export function createHorseCartPool({
       const pitch = hitched ? parts.hitchPitch ?? 0 : 0;
       const body = pitchedMatrix(m, parts, pitch);
       const l = typeof look === 'number' ? wagonLookOfCode(look) : readWagonLookAll(look);   // WAGON-TIMBER: a peer's word brings all nine keys, and `readWagonLook` alone would drop the five it never heard of
-      const paint = lookRemap(kind, l) ?? texRemap;
+      const paint = lookRemap(kind, l, false, arms) ?? texRemap;
       r.drawMesh(g.body, body, paint, o);
       const steered = parts.bogie ? steeredMatrix(parts.bogie.kingpin, turn?.steer ?? 0) : null;
       if (g.bogie && steered) r.drawMesh(g.bogie, multiply(body, steered), paint, o);
@@ -917,10 +926,10 @@ export function createHorseCartPool({
    *  teams (world/roadTeams.js, LW10) - by the same verdict over the same box (teamVerdict): in view drawn, off screen in
    *  a shadow's reach cast into the maps alone, else nothing; no test, or grown, drawn whole. drawWagon's own arguments
    *  after the test. Answers whether it was drawn on screen. */
-  function drawWagonSeen(r, cull, texRemap, position, rotation, tier, turn, scale = 1, kind = myKind(), hitched = false, look = null) {
+  function drawWagonSeen(r, cull, texRemap, position, rotation, tier, turn, scale = 1, kind = myKind(), hitched = false, look = null, arms = null) {
     const v = teamVerdict({ at: position, g: scale }, cull);
     if (v === DECOR_SKIP) return false;
-    return drawWagon(v === DECOR_SHADOW ? castOnly(r) : r, texRemap, position, rotation, tier, turn, scale, kind, hitched, look) && v === DECOR_DRAW;
+    return drawWagon(v === DECOR_SHADOW ? castOnly(r) : r, texRemap, position, rotation, tier, turn, scale, kind, hitched, look, arms) && v === DECOR_DRAW;
   }
   /** The world pass. WAGON-HITCH x OW-BIG: under the travel view the host says how far the traveller is grown
    *  (`selfGrow`, the view's own step) and how far another player is at a point (`grow`, OW-PEERS' peerGrow); a cart's
@@ -932,18 +941,23 @@ export function createHorseCartPool({
     const s = shown();
     const mine = drawnFrameOf('', grows, s);
     if (mine) {
+      // WAGON-ARMS PASS B: kick per-tag resolution for my own guild too (idempotent).
+      const mineTag = s.wagon?.arms?.tag ?? null;
+      if (mineTag) ensureGuildArms(mineTag);
       // PERF-TEAMS: mine too - a wagon I parked in town and walked a league from is a wagon in the town's street
       const v = s.wagon.kind === HCC_WIRE_KIND.Deployed && reachCuts() && peerTeamFar(mine.at, _eye) ? DECOR_SKIP : teamVerdict(mine, cull);
       const to = v === DECOR_SHADOW ? castOnly(r) : r;
-      if (v !== DECOR_SKIP && drawWagon(to, texRemap, mine.at, mine.rotation, s.wagon.tier, grownTurn('', s.wagon.turn ?? { angle: s.wagon.angle }, mine.g), mine.g, s.wagon.model, s.wagon.hitched, s.wagon.look) && v === DECOR_DRAW) n++;
+      if (v !== DECOR_SKIP && drawWagon(to, texRemap, mine.at, mine.rotation, s.wagon.tier, grownTurn('', s.wagon.turn ?? { angle: s.wagon.angle }, mine.g), mine.g, s.wagon.model, s.wagon.hitched, s.wagon.look, mineTag) && v === DECOR_DRAW) n++;
     } else _grownWheels.delete('');
     for (const [owner, p] of _peers) {
       if (p.far) continue;   // PERF-TEAMS: past the reach (frame), nothing
       const f = drawnFrameOf(owner, grows);
       if (!f) continue;
+      const peerTag = p.wagon?.arms?.tag ?? null;
+      if (peerTag) ensureGuildArms(peerTag);
       const v = teamVerdict(f, cull);
       if (v === DECOR_SKIP) continue;
-      if (drawWagon(v === DECOR_SHADOW ? castOnly(r) : r, texRemap, f.at, f.rotation, p.wagon.tier, grownTurn(owner, p.turn ?? { angle: p.wagon.angle }, f.g), f.g, p.wagon.model, f.hitched, p.wagon.look) && v === DECOR_DRAW) n++;
+      if (drawWagon(v === DECOR_SHADOW ? castOnly(r) : r, texRemap, f.at, f.rotation, p.wagon.tier, grownTurn(owner, p.turn ?? { angle: p.wagon.angle }, f.g), f.g, p.wagon.model, f.hitched, p.wagon.look, peerTag) && v === DECOR_DRAW) n++;
     }
     drawHarness(r, cull);   // WAGONS3: the traces and the reins; PERF-WAGON: by the same test
     return n;
@@ -959,7 +973,7 @@ export function createHorseCartPool({
     for (const [owner, p] of _peers) if (!p.far) frames.push([owner, drawnFrameOf(owner, {}), p.wagon, p.turn ?? { angle: p.wagon?.angle ?? 0 }]);   // PERF-TEAMS: a window looks out on the street, not past the reach
     for (const [, f, w, turn] of frames) {
       if (!f || !w || (skipAt && Math.hypot(f.at[0] - skipAt[0], f.at[2] - skipAt[2]) < OUTSIDE_SKIP_REACH)) continue;
-      if (drawWagon(r, null, f.at, f.rotation, w.tier, turn, 1, w.model, f.hitched, w.look)) n++;
+      if (drawWagon(r, null, f.at, f.rotation, w.tier, turn, 1, w.model, f.hitched, w.look, w?.arms?.tag ?? null)) n++;
     }
     return n;
   }

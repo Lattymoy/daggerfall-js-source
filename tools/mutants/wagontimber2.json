@@ -2,8 +2,8 @@
   {
     "name": "WAGONTIMBER2-1-the-remap-key-blind-to-the-timber",
     "file": "src/scenes/horseCartPool.js",
-    "old": "    const key = room ? `room:${l.w}.${l.f}.${l.c}` : `${k}:${l.o}.${TIMBER_FIELDS.map((part) => l[part]).join('.')}`;",
-    "new": "    const key = room ? `room:${l.w}.${l.f}.${l.c}` : `${k}:${l.o}`;",
+    "old": "    const baseKey = room ? `room:${l.w}.${l.f}.${l.c}` : `${k}:${l.o}.${TIMBER_FIELDS.map((part) => l[part]).join('.')}`;",
+    "new": "    const baseKey = room ? `room:${l.w}.${l.f}.${l.c}` : `${k}:${l.o}`;",
     "tests": [
       "test/wagontimber2.test.js"
     ],

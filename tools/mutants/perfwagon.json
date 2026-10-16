@@ -65,7 +65,7 @@
   {
     "name": "PERF-WAGON-h-the-road-cast-arm-drawn",
     "file": "src/scenes/horseCartPool.js",
-    "old": "    return drawWagon(v === DECOR_SHADOW ? castOnly(r) : r, texRemap, position, rotation, tier, turn, scale, kind, hitched, look) && v === DECOR_DRAW;",
+    "old": "    return drawWagon(v === DECOR_SHADOW ? castOnly(r) : r, texRemap, position, rotation, tier, turn, scale, kind, hitched, look, arms) && v === DECOR_DRAW;",
     "new": "    return drawWagon(r, texRemap, position, rotation, tier, turn, scale, kind, hitched, look) && v === DECOR_DRAW;",
     "tests": [
       "test/perfwagon.test.js"
