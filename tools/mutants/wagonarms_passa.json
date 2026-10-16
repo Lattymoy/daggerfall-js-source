@@ -1,0 +1,42 @@
+[
+  {
+    "name": "PASSA-1-og-gate-dropped",
+    "file": "src/net/wire.js",
+    "old": "    if (typeof r.og === 'string' && GUILD_TAG_RE.test(r.og)) rec.og = r.og;",
+    "new": "    if (typeof r.og === 'string') rec.og = r.og;",
+    "tests": [
+      "test/wagonarms_passa.test.js"
+    ],
+    "note": "the og gate removed: any string names a guild on the park record"
+  },
+  {
+    "name": "PASSA-2-broadcast-re-minted",
+    "file": "src/systems/horseCartWire.js",
+    "old": "  return tag ? { tag } : null;",
+    "new": "  return tag ? { tag, broadcast: true } : null;",
+    "tests": [
+      "test/wagonarms_passa.test.js"
+    ],
+    "note": "the redundant flag re-minted against the contract"
+  },
+  {
+    "name": "PASSA-3-key-blind-to-og",
+    "file": "src/systems/horseCartWire.js",
+    "old": "return JSON.stringify([rec.w ?? 0, rec.h ?? 0, rec.n ?? '', rec.wk ?? 0, rec.wh ?? 0, rec.ps ?? 0, rec.go ?? 0, rec.pn ?? 0, rec.wl ?? 0, rec.ww ?? 0, rec.wr ?? 0, rec.we ?? 0, rec.wg ?? '', rec.og ?? '', rec.hc ?? 0]);",
+    "new": "return JSON.stringify([rec.w ?? 0, rec.h ?? 0, rec.n ?? '', rec.wk ?? 0, rec.wh ?? 0, rec.ps ?? 0, rec.go ?? 0, rec.pn ?? 0, rec.wl ?? 0, rec.ww ?? 0, rec.wr ?? 0, rec.we ?? 0, rec.wg ?? '', rec.hc ?? 0]);",
+    "tests": [
+      "test/wagonarms_passa.test.js"
+    ],
+    "note": "the change key blind to og - a guild turned off publishes nothing"
+  },
+  {
+    "name": "PASSA-4-arms-route-unregistered",
+    "file": "server-account/src/service.js",
+    "old": "  '/v1/guilds/mine', '/v1/guilds/invites', '/v1/guilds/arms', '/v1/guilds/found', '/v1/guilds/invite', '/v1/guilds/answer', '/v1/guilds/leave',",
+    "new": "  '/v1/guilds/mine', '/v1/guilds/invites', '/v1/guilds/found', '/v1/guilds/invite', '/v1/guilds/answer', '/v1/guilds/leave',",
+    "tests": [
+      "test/wagonarms_passa.test.js"
+    ],
+    "note": "the arms read is no longer a served path - every caller is 404"
+  }
+]

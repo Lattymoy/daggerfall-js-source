@@ -1687,6 +1687,13 @@ export function accountGuilds({ fetch, storage }) {
     invites: () => post('/v1/guilds/invites', {}),
     found: ({ character, name, tag, realm = null, region = null }) => post('/v1/guilds/found', { character, name, tag, ...(realm ? { realm, region } : {}) }),   // REALM P2.2: a realm character's record pays
     invite: (character, handle) => post('/v1/guilds/invite', { character, handle }),
+    // WAGON-ARMS (2026-10-16, Mac: "If a player with no guild has a wagon, nothing is overlayed. If they do, then their
+    // guilds heraldry is overlayed for others to see."): a guild's heraldry BY ITS TAG - the read that covers a guild
+    // holding no seat, no hall, no note and no writ, which the four incidental ones do not. A wagon's word carries the
+    // tag (`og`, src/systems/horseCartWire.js); this turns it into a picture, or `null` heraldry for one that has not
+    // chosen any. Thin beside the rest, and it takes the tags AS ASKED - the service refuses a batch past its bound
+    // whole rather than answering a prefix, so there is no paging here to mirror.
+    arms: (tags) => post('/v1/guilds/arms', { tags }),
     answer: ({ character, guild, accept }) => post('/v1/guilds/answer', { character, guild, accept }),
     leave: (character) => post('/v1/guilds/leave', { character }),
     remove: (character, member) => post('/v1/guilds/remove', { character, member }),

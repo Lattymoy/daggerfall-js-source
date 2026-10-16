@@ -78,8 +78,9 @@ import { marksOpenFor, guildMarksSweep, guildDeedsToday } from './marks.js';   /
 import { hallViewOf, heraldryOfRow } from './halls.js';   // GUILD1d: the guild's hall and heraldry, in its view
 import {
   GUILD_FOUND_GOLD, GUILD_FOUND_RENOWN, GUILD_MEMBERS_MAX, GUILD_RANK_NAMES, GUILD_RANK_MASTER, GUILD_RANK_OFFICER, GUILD_RANK_RECRUIT,
-  GUILD_TREASURY_MAX, GUILD_LEDGER_SHOWN, GUILD_OPS_MAX, GUILD_OPS_WINDOW_S, GUILD_INVITE_TTL_S, GUILD_ID_RE, GUILD_MEMBER_RE,
+  GUILD_TREASURY_MAX, GUILD_LEDGER_SHOWN, GUILD_OPS_MAX, GUILD_OPS_WINDOW_S, GUILD_INVITE_TTL_S, GUILD_ID_RE, GUILD_MEMBER_RE, GUILD_TAG_RE,
   guildMay, guildMayMove, guildOutranks, guildNameOf, guildNameKey, guildTagOf, guildRankNamesOf, guildGoldOk,
+  GUILD_ARMS_TAGS_MAX, GUILD_ARMS_READS_MAX, GUILD_ARMS_READS_WINDOW_S,   // WAGON-ARMS: the arms read's batch, its meter
   GUILD_RENAME_GOLD, GUILD_RENAME_COOLDOWN_S, guildRenameAt, guildRenameOpen,   // GUILD2a: a new name, for a price
 } from '../../src/net/guildLaw.js';
 import { vaultStanding, guildVaultSlots } from '../../src/net/guildVaultLaw.js';   // GUILD2b: the vault, in the guild's view
@@ -416,6 +417,59 @@ export async function invitesOf({ db, nowS }, player) {
   const r = await db.prepare(`SELECT i.guild_id, i.by_name, i.at, g.name, g.tag FROM guild_invites i JOIN guilds g ON g.id = i.guild_id
     WHERE i.player = ? AND i.at > ? ORDER BY i.at DESC`).bind(player.id, nowS - GUILD_INVITE_TTL_S).all();
   return { ok: true, invites: (r?.results ?? []).map((i) => ({ guild: i.guild_id, name: i.name, tag: i.tag, by: i.by_name, at: i.at })) };
+}
+
+// ─── WAGON-ARMS (2026-10-16): A GUILD'S ARMS, BY ITS TAG ──────────────────────────────────────────────────────
+//
+// Mac, of the arms on a wagon: "All player made guilds in the game have a coat of arms. It is a requirement to make a
+// guild. However, on teh safe side, I want the modification to work as such. If a player with no guild has a wagon,
+// nothing is overlayed. If they do, then their guilds heraldry is overlayed for others to see." A wagon's park record says
+// whose guild its owner is in (net/wire.js validParkData `og`), and a client standing beside that wagon has to turn the
+// tag into a picture. Four endpoints did that incidentally - /v1/seats/list, /v1/homes/town, /v1/board/read and
+// /v1/writs/list - and each of them returns a guild only because that guild happens to hold a seat, own a hall, have
+// posted a note or have a writ. A guild with none of the four appears in none of them, so a wagon whose owner is in one
+// could not be given arms at all. This is the read that covers every guild: tags in, the arms out.
+//
+// WHAT IT DELIBERATELY DOES NOT SAY. A tag that names nothing is answered `{ tag, name: null, heraldry: null }` - the
+// same row a guild that has chosen no heraldry gets, so a caller cannot walk the guilds table by what the answer does
+// NOT carry. No guild id, no member row, no treasury, no roster, no hall, no founded date: the arms and the name the
+// arms are drawn under, and nothing else. The roster is /v1/guilds/mine's alone and a member's.
+//
+// GATE AND METER. A batch of tags within GUILD_ARMS_TAGS_MAX, each through GUILD_TAG_RE (one shape for a guild tag, and
+// this is the module that owns it); past the bound or off the shape is the whole request refused, never cut - a read
+// that answers a prefix of what was asked is a read whose answer means something the request did not say. The meter is
+// accounts.js overRate at GUILD_ARMS_READS_MAX the hour: a read is bounded and cheap, and the bound is here to keep one
+// call from walking the table a tag at a time.
+//
+// EVERY CLOCK IS AN ARGUMENT, as in accounts.js.
+
+/** A tag as the arms read will carry it - null for anything GUILD_TAG_RE does not admit. */
+const armsTagOk = (t) => (typeof t === 'string' && GUILD_TAG_RE.test(t) ? t : null);
+
+/**
+ * WAGON-ARMS: THE ARMS OF UP TO `GUILD_ARMS_TAGS_MAX` GUILDS, BY TAG - `{ tag, name, heraldry }` in the order asked,
+ * one row for every tag. A row whose guild has no heraldry (or whose tag names no guild at all) carries `null` for both,
+ * which is what "a guild is REQUIRED to have heraldry" leaves for a guild that has not chosen yet: the reader has an
+ * answer to draw and no arms to draw in it, and no reason to be told anything else.
+ * @param {{db: any, nowS: number}} ctx @param {any} player
+ */
+export async function armsOf(ctx, player, { tags } = {}) {
+  const { db } = ctx;
+  if (!Array.isArray(tags) || !tags.length || tags.length > GUILD_ARMS_TAGS_MAX) return { error: 'arms-batch' };
+  const want = tags.map(armsTagOk);
+  if (want.some((t) => t === null)) return { error: 'arms-batch' };
+  if (await overRate(ctx, `guild-arms:${player.id}`, GUILD_ARMS_READS_MAX, GUILD_ARMS_READS_WINDOW_S)) return { error: 'arms-rate' };
+  // ONE STATEMENT, not a read per tag: the tags are a bound of sixteen and the guilds table is the whole world.
+  const marks = want.map(() => '?').join(', ');
+  const { results = [] } = await db.prepare(`SELECT tag, name, heraldry FROM guilds WHERE tag IN (${marks})`).bind(...want).all();
+  const byTag = new Map(results.map((g) => [g.tag, g]));
+  return {
+    arms: want.map((tag) => {
+      const g = byTag.get(tag);
+      const heraldry = g ? heraldryOfRow(g.heraldry) : null;
+      return heraldry ? { tag, name: g.name ?? '', heraldry } : { tag, name: null, heraldry: null };
+    }),
+  };
 }
 
 /** INVITE AN ACCOUNT by its handle - an officer's or the guildmaster's, while the guild has room. */

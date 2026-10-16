@@ -68,6 +68,27 @@ import { horseLookCode, horseLookOfCode, HORSE_LOOK_CODE_MAX } from './horseCoat
 // it), and with the guild's `wg`, the owner's guild tag - beside `wk` at the record's top, folded into `w` as `entry` and
 // `guild`; an older reader drops both, and to it every caravan is its owner's alone.
 
+// WAGON-ARMS (2026-10-16, Mac, of the arms on a wagon: "All player made guilds in the game have a coat of arms. It is a
+// requirement to make a guild. However, on teh safe side, I want the modification to work as such. If a player with no
+// guild has a wagon, nothing is overlayed. If they do, then their guilds heraldry is overlayed for others to see."):
+// WHOSE ARMS. ONE FIELD BESIDE THE CARAVAN'S DOOR AND NOT INSIDE IT - `og`, the OWNER's own guild tag. Mac asked for
+// one setting, not two: "put my heraldry on my wagon or not." The tag's presence IS the broadcast, so there is no
+// second `ob` flag and no separate permission byte - a withdrawn guild names no tag at all.
+//
+// WHY A NEW FIELD AND NOT A WIDER `wg`. `wg` is the DOOR's word: systems/caravanVisit.js writes it only for the guild
+// entry, and net/wire.js validParkData keeps it only beside `we = 3`, because the tag it names is the one that opens the
+// door. Re-using it would put two unrelated laws in one field and make every reader re-derive which of them it has: a
+// wagon whose owner's door is private still wears arms, and a caravan whose door is the guild's still wears arms the
+// owner may have withdrawn from the public view. A field per law is the only shape where an older reader dropping the
+// new one leaves the old one true.
+//
+// THE CONTRACT - two outcomes, and the tag's presence is the whole of it:
+//   `og` absent   - no guild, or withdrawn. Nothing is overlaid. (`arms` is null.)
+//   `og` present  - draw the arms OF THAT TAG. (`arms` is `{ tag }`.)
+// A receiver cannot tell "no guild" from "guild, withdrawn" - and never needs to: draw nothing either way. A guild is
+// REQUIRED to have heraldry, so the present tag always resolves: the arms behind it come from the account service
+// (POST /v1/guilds/arms, guilds.js guildArmsOf).
+
 // WAGONS1: AND WHO RIDES IN IT (systems/wagonSeats.js's word). An owner's word says who sits in which seat of their
 // wagon's back (`ps`, `[[peer, seat], ...]`), who they turned away this moment (`pn`, peer ids - the rider's client says
 // so at once rather than waiting out the ask), and a journey their riders go on with them (`go`, `[x, y, n]`: the map
@@ -88,7 +109,7 @@ const inBounds = (p) => Math.abs(p[0]) <= POSE_BOUND && Math.abs(p[2]) <= POSE_B
  * My word: the pool's view of the runtime as the wire says it. `view` is scenes/horseCartPool.js's
  * `shown()` - `{ wagon: { kind, position, rotation, tier, angle } | null, horse: { position, forward, walking } | null,
  * name }` in scene units; `toWire` converts a scene point to the wire frame.
- * @returns {{ w?: number[], h?: number[], n?: string, hc?: number, wk?: number, wh?: number, wl?: number, ww?: number, wr?: number, we?: number, wg?: string, ps?: any[], go?: number[], pn?: string[] } | null} null when nothing stands (the reader drops mine)
+ * @returns {{ w?: number[], h?: number[], n?: string, hc?: number, wk?: number, wh?: number, wl?: number, ww?: number, wr?: number, we?: number, wg?: string, og?: string, ps?: any[], go?: number[], pn?: string[] } | null} null when nothing stands (the reader drops mine)
  */
 export function hccWireRecord(view, toWire = (p) => p) {
   if (!view) return null;
@@ -108,6 +129,12 @@ export function hccWireRecord(view, toWire = (p) => p) {
     if (wr) out.wr = wr;
     const we = caravanEntryCode(w.entry);   // WAGONS2-VISIT: who may enter it, and with the guild's, the guild's tag
     if (we) { out.we = we; const wg = we === CARAVAN_GUILD_CODE ? caravanGuildTag(w.guild) : null; if (wg) out.wg = wg; }
+    // WAGON-ARMS: the OWNER's guild, on a wagon of any kind and whatever the door says. Read off `w.arms` - its OWN
+    // field, so the door's `wg` is never asked to mean two things - and the tag is taken through the SAME validator
+    // the door's is, because a guild tag is one shape (net/guildLaw.js GUILD_TAG_RE) and a second one would drift.
+    // The tag's presence IS its broadcast: it travels only when its owner lets it be drawn, so no separate flag rides.
+    const og = caravanGuildTag(w.arms?.tag);
+    if (og) { out.og = og; }
     const ps = validPassengers(w.passengers);   // WAGONS1
     if (ps?.length) out.ps = ps;
   }
@@ -147,6 +174,7 @@ export function validHccRecord(raw) {
     if (!TIERS.has(w[8])) return null;
     out.w = { kind: w[0], position: p, rotation: q.map((v) => v / len), tier: w[8], angle: ((w[9] % 360) + 360) % 360, model: wagonKindOfCode(raw.wk ?? 0), hitched: raw.wh === 1, look: wagonLookOfWire(Number.isInteger(raw.wl) && raw.wl > 0 && raw.wl <= WAGON_LOOK_CODE_MAX ? raw.wl : 0, Number.isInteger(raw.ww) && raw.ww > 0 && raw.ww <= WAGON_TIMBER_CODE_MAX ? raw.ww : 0, Number.isInteger(raw.wr) && raw.wr > 0 && raw.wr <= WAGON_WHEEL_CODE_MAX ? raw.wr : 0), passengers: validPassengers(raw.ps) ?? [] };   // WAGONS1: an unknown kind is drawn as the cart; a passenger list that is not one seats nobody. WAGONS2 + WAGON-TIMBER: the look is all NINE keys - the paint's `wl`, the four parts' `ww` and the wheels' `wr`, each out of its own law's bound, and a code past it or absent is that half as built (the word is never refused for a look)
     out.w.entry = caravanEntryOfCode(raw.we); out.w.guild = out.w.entry === 'guild' ? caravanGuildTag(raw.wg) : null;   // WAGONS2-VISIT: who may enter it - the owner alone for anything the law does not know
+    out.w.arms = wagonArmsOfWire(raw.og);   // WAGON-ARMS: whose arms this wagon wears - { tag } or null (no tag draws nothing)
   }
   // WAGONS1: a journey the owner's riders go on, and who was turned away - each dropped alone when it is not one
   if (Array.isArray(raw.go) && raw.go.length === 3 && raw.go.every(Number.isInteger) && raw.go[0] >= 0 && raw.go[0] < MAP_PIXELS_X && raw.go[1] >= 0 && raw.go[1] < MAP_PIXELS_Y && raw.go[2] >= 0) out.go = [...raw.go];
@@ -170,7 +198,19 @@ export function validHccRecord(raw) {
   return out;
 }
 
+/** WAGON-ARMS: the arms a wagon may wear as a reader takes them - `{ tag }` when the owner's guild is named on the
+ *  wire, `null` for one that is not. The tag's PRESENCE IS THE BROADCAST: a withdrawn guild names no tag, and a
+ *  receiver cannot tell "no guild" from "guild, withdrawn" - draw nothing either way. A tag the law does not admit is
+ *  no guild at all, because a renderer may not invent one (a guild is REQUIRED to have heraldry). Pure. */
+export const wagonArmsOfWire = (og) => {
+  const tag = caravanGuildTag(og);
+  return tag ? { tag } : null;
+};
+
 /** A change key, so a frame carries the record only when the word moved (the full frame always does).
+ *
+ *  WAGON-ARMS: `og` and `ob` are IN it too - a player who turns their arms off has said a thing, and a key blind to it
+ *  would leave the wagon wearing them for every peer until they reloaded.
  *
  *  WAGON-TIMBER: `ww` and `wr` are IN it, beside `wl` - and that is the whole of this slice's reach. A field absent
  *  from here changes nothing the key can see, so the pool asks for no frame, the relay is told nothing, and a wagon
@@ -178,7 +218,7 @@ export function validHccRecord(raw) {
  *  to see that anything went wrong. A number is on the wire only if the key can tell it moved. */
 export function hccRecordKey(rec) {
   if (!rec) return '';
-  return JSON.stringify([rec.w ?? 0, rec.h ?? 0, rec.n ?? '', rec.wk ?? 0, rec.wh ?? 0, rec.ps ?? 0, rec.go ?? 0, rec.pn ?? 0, rec.wl ?? 0, rec.ww ?? 0, rec.wr ?? 0, rec.we ?? 0, rec.wg ?? '', rec.hc ?? 0]);
+  return JSON.stringify([rec.w ?? 0, rec.h ?? 0, rec.n ?? '', rec.wk ?? 0, rec.wh ?? 0, rec.ps ?? 0, rec.go ?? 0, rec.pn ?? 0, rec.wl ?? 0, rec.ww ?? 0, rec.wr ?? 0, rec.we ?? 0, rec.wg ?? '', rec.og ?? '', rec.hc ?? 0]);
 }
 
 /** The snap-or-ease a reader shows between two words: a step past `snap` metres is a teleport (the owner

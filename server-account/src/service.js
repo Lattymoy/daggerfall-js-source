@@ -361,7 +361,7 @@ export const ROUTES = new Set([
   '/v1/homes/inherit',
   // GUILD1: the guilds (guilds.js) - a character's own guild and the account's invitations read by any session (a
   // guest's reads nothing); the rest change one, an account's alone.
-  '/v1/guilds/mine', '/v1/guilds/invites', '/v1/guilds/found', '/v1/guilds/invite', '/v1/guilds/answer', '/v1/guilds/leave',
+  '/v1/guilds/mine', '/v1/guilds/invites', '/v1/guilds/arms', '/v1/guilds/found', '/v1/guilds/invite', '/v1/guilds/answer', '/v1/guilds/leave',
   '/v1/guilds/remove', '/v1/guilds/rank', '/v1/guilds/ranks', '/v1/guilds/deposit', '/v1/guilds/withdraw', '/v1/guilds/handover',
   '/v1/guilds/disband',
   // GUILD1d: the guild hall (halls.js) - bought and sold from the treasury by the guildmaster, who may walk in set by an

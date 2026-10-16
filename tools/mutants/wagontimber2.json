@@ -4,7 +4,9 @@
     "file": "src/scenes/horseCartPool.js",
     "old": "    const key = room ? `room:${l.w}.${l.f}.${l.c}` : `${k}:${l.o}.${TIMBER_FIELDS.map((part) => l[part]).join('.')}`;",
     "new": "    const key = room ? `room:${l.w}.${l.f}.${l.c}` : `${k}:${l.o}`;",
-    "tests": ["test/wagontimber2.test.js"],
+    "tests": [
+      "test/wagontimber2.test.js"
+    ],
     "note": "THE STALE-LOOK BUG, and the one this slice would most easily have shipped. The remap map is CACHED, so a key that carries only the kind and the paint hands back the map it built for the LIVERY when the timber moves: a player dyes their beams on a wagon already painted, the draw keeps asking for the built TEX.beam, and the wagon they are standing next to - and every peer reading their word - keeps the wood it had. Nothing throws and nothing logs. The timber's five digits belong in the key beside the paint's."
   },
   {
@@ -12,7 +14,9 @@
     "file": "src/net/wire.js",
     "old": "    if (Number.isInteger(r.ww) && r.ww >= 1 && r.ww <= PARK_WAGON_TIMBER_MAX) rec.ww = r.ww;",
     "new": "",
-    "tests": ["test/wagontimber2.test.js"],
+    "tests": [
+      "test/wagontimber2.test.js"
+    ],
     "note": "The wood's gate taken out of validParkData. This validator refuses a word it does not recognise WHOLE, so `ww` without a gate is not a wagon painted as built - it is the park record of EVERY dyed wagon refused: the horse, the name, the landing, the throw, all of it, over a picture. The gate is not decoration; it is the only thing standing between a dyed bed and a dropped team."
   },
   {
@@ -20,7 +24,9 @@
     "file": "src/net/wire.js",
     "old": "    if (Number.isInteger(r.wr) && r.wr >= 1 && r.wr <= PARK_WAGON_WHEEL_MAX) rec.wr = r.wr;",
     "new": "",
-    "tests": ["test/wagontimber2.test.js"],
+    "tests": [
+      "test/wagontimber2.test.js"
+    ],
     "note": "The wheels' gate taken out - the operator's own separate wheel options, dropped whole the same way `ww` would be. Two gates, because two fields: the wood is one number and the wheels are another and a gate held only for the first leaves the second taking the team down with it."
   },
   {
@@ -28,7 +34,9 @@
     "file": "src/systems/horseCartWire.js",
     "old": "rec.wl ?? 0, rec.ww ?? 0, rec.wr ?? 0, rec.we ?? 0,",
     "new": "rec.wl ?? 0, rec.we ?? 0,",
-    "tests": ["test/wagontimber2.test.js"],
+    "tests": [
+      "test/wagontimber2.test.js"
+    ],
     "note": "hccRecordKey blind to the timber. The key is the CHANGE DETECTION, so with the wood out of it a player dyes their beams and nothing is published: not to the peers, not to the relay, not to their own next foes frame. The wagon keeps its wood until reload and there is no error anywhere to notice it by. A number is on the wire only if the key can tell it moved."
   },
   {
@@ -36,7 +44,9 @@
     "file": "src/systems/horseCartWire.js",
     "old": "rec.wl ?? 0, rec.ww ?? 0, rec.wr ?? 0, rec.we ?? 0,",
     "new": "rec.wl ?? 0, rec.ww ?? 0, rec.we ?? 0,",
-    "tests": ["test/wagontimber2.test.js"],
+    "tests": [
+      "test/wagontimber2.test.js"
+    ],
     "note": "hccRecordKey blind to the wheels alone - the wood publishes and the finish does not, so a player who changes only their wheels sees their own old wheels and every peer sees them too. Two fields, two entries: the key is a list, and a list is only as good as its last item."
   },
   {
@@ -44,7 +54,10 @@
     "file": "src/systems/wagonTimber.js",
     "old": "return t.floor + TIMBER_CHOICES * (t.inner + TIMBER_CHOICES * (t.beam + TIMBER_CHOICES * t.bench)); };",
     "new": "return t.floor + TIMBER_CHOICES * (t.inner + TIMBER_CHOICES * (t.bench + TIMBER_CHOICES * t.beam)); };",
-    "tests": ["test/wagontimber2.test.js", "test/wagontimber.test.js"],
+    "tests": [
+      "test/wagontimber2.test.js",
+      "test/wagontimber.test.js"
+    ],
     "note": "The beams and the bench swapped in the packing. The number is still in range and still round-trips - two digits at the same weights - so a bound check passes and a count passes, and the failure is a wagon whose beams and bench are exchanged on every peer: the thing a six-of-four ladder exists to make impossible."
   },
   {
@@ -52,7 +65,9 @@
     "file": "src/systems/wagonTimber.js",
     "old": "export const wagonLookOfWire = (paint, wood, wheel) => ({ ...wagonLookOfCode(paint), ...wagonTimberOfCode(wood), wheels: wagonWheelOfCode(wheel) });",
     "new": "export const wagonLookOfWire = (paint, wood, wheel) => ({ ...wagonLookOfCode(paint), ...wagonTimberOfCode(wood), wheels: wagonTimberOfCode(wood).floor });",
-    "tests": ["test/wagontimber2.test.js"],
+    "tests": [
+      "test/wagontimber2.test.js"
+    ],
     "note": "The wheels unpacked out of the WOOD's code instead of their own digit: every peer's wheels wear whatever their bed is dyed, and the `wr` field rides the wire doing nothing. Mac's own words are the pin - \"I want the wheel options to be separate from the wood options\" - and this is what separate fails into."
   },
   {
@@ -60,7 +75,9 @@
     "file": "src/systems/horseCartWire.js",
     "old": "look: wagonLookOfWire(Number.isInteger(raw.wl) && raw.wl > 0 && raw.wl <= WAGON_LOOK_CODE_MAX ? raw.wl : 0, Number.isInteger(raw.ww) && raw.ww > 0 && raw.ww <= WAGON_TIMBER_CODE_MAX ? raw.ww : 0, Number.isInteger(raw.wr) && raw.wr > 0 && raw.wr <= WAGON_WHEEL_CODE_MAX ? raw.wr : 0),",
     "new": "look: wagonLookOfCode(Number.isInteger(raw.wl) && raw.wl > 0 && raw.wl <= WAGON_LOOK_CODE_MAX ? raw.wl : 0),",
-    "tests": ["test/wagontimber2.test.js"],
+    "tests": [
+      "test/wagontimber2.test.js"
+    ],
     "note": "The reader answering with the paint's four alone - the word carries `ww` and `wr` faithfully and the reader throws them away. The sender sees their own wagon dyed, every peer sees it as built, and nothing anywhere says a number went missing: the one shape this change can take that looks like it works."
   },
   {
@@ -68,7 +85,9 @@
     "file": "src/net/wire.js",
     "old": "export const PARK_WAGON_WHEEL_MAX = 5;",
     "new": "export const PARK_WAGON_WHEEL_MAX = 6;",
-    "tests": ["test/wagontimber2.test.js"],
+    "tests": [
+      "test/wagontimber2.test.js"
+    ],
     "note": "The relay's wheel bound one wider than the law's. The writer never sends six, so nothing breaks - and the relay has agreed in writing to carry a seventh choice that no client can make, which is exactly the kind of drift the named-constant-and-a-pin convention exists to stop."
   },
   {
@@ -76,7 +95,9 @@
     "file": "src/scenes/horseCartPool.js",
     "old": "      : [[k, l.o, WAGON_OUTSIDE_LOOKS[k]], ...TIMBER_FIELDS.map((part) => [TIMBER_LISTS[part], l[part], TIMBER_CHOICE_LISTS[part]])];",
     "new": "      : [[k, l.o, WAGON_OUTSIDE_LOOKS[k]]];",
-    "tests": ["test/wagontimber2.test.js"],
+    "tests": [
+      "test/wagontimber2.test.js"
+    ],
     "note": "The remap given the paint's list alone, as it stood before this pass. Five selectors that upload nothing and draw nothing and are nonetheless saved, wired and published: the operator's \"send them over the wire using the same system that already exists\" answered with the numbers and not the pictures."
   },
   {
@@ -84,7 +105,9 @@
     "file": "src/systems/wagonTimber.js",
     "old": "export const TIMBER_CHOICE_LISTS = Object.freeze({ floor: TIMBER_LOOKS, inner: TIMBER_LOOKS, beam: TIMBER_LOOKS, bench: TIMBER_LOOKS, wheels: WHEEL_LOOKS });",
     "new": "export const TIMBER_CHOICE_LISTS = Object.freeze({ floor: TIMBER_LOOKS, inner: TIMBER_LOOKS, beam: TIMBER_LOOKS, bench: TIMBER_LOOKS, wheels: TIMBER_LOOKS });",
-    "tests": ["test/wagontimber2.test.js"],
+    "tests": [
+      "test/wagontimber2.test.js"
+    ],
     "note": "The pool's door handed the wheels the WOOD's list of choice names: a wheel's fifth choice is built with the fifth WOOD's dye, and `silvered` - a word in no wood table - is unreachable, so the operator's grey wheel paints as an unpainted wood instead. Two tables, and the one line between them is this."
   },
   {
@@ -92,15 +115,20 @@
     "file": "src/ui/holdingsPages.js",
     "old": "  Oak: '#8a6a43', Pine: '#c9ab74', Ash: '#b0a68c', Walnut: '#5a3f27', Mahogany: '#8a3a24', Ebony: '#2a2422', Silvered: '#9aa0a3',",
     "new": "  Oak: '#8a6a43', Pine: '#c9ab74', Ash: '#b0a68c', Walnut: '#5a3f27', Mahogany: '#8a3a24', Ebony: '#2a2422',",
-    "tests": ["test/wagontimber2.test.js"],
+    "tests": [
+      "test/wagontimber2.test.js"
+    ],
     "note": "One hex out of the seven - `silvered`, the operator's grey wheel, the only name the two tables do not share. `choiceRow` asks `colours.every(Boolean)`, so this ONE missing colour takes the WHOLE wheels row off its swatches and onto a pair of arrows, and the player sees a stepper for a list that has six perfectly good finishes behind it. Nothing throws; the row just quietly stops being a swatch row."
   },
   {
     "name": "WAGONTIMBER2-13-the-version-never-moved",
     "file": "src/net/wire.js",
-    "old": "export const RELAY_VERSION = 'world207';",
+    "old": "export const RELAY_VERSION = 'world208';",
     "new": "export const RELAY_VERSION = 'world206';",
-    "tests": ["test/wagontimber2.test.js", "test/relayversion.test.js"],
+    "tests": [
+      "test/wagontimber2.test.js",
+      "test/relayversion.test.js"
+    ],
     "note": "The version left where it was with two new gates in the law behind it. `/health` would answer with a bundle the operator believes is deployed and is not, and every deployed relay is a world206 that does not know `ww` or `wr`: the clients' words come back with a wagon as built and no one can say why. The hand-deployed relay is the reason this constant exists at all (SLAM8)."
   }
 ]

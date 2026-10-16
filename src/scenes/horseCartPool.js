@@ -300,6 +300,7 @@ export function createHorseCartPool({
   enterCaravan = /** @type {(() => any) | null} */ (null),
   riders = /** @type {any} */ (null),
   wagonEntry = /** @type {() => any} */ (() => null),
+  wagonArms = /** @type {() => any} */ (() => null),   // WAGON-ARMS: my guild's tag when I let it be drawn - the word's `og` (its presence IS the broadcast)
   caravanEntry = /** @type {any} */ (null),
   visit = /** @type {any} */ (null),
   horses = () => 1,   // WAGONS3
@@ -683,6 +684,10 @@ export function createHorseCartPool({
     if (wagon) wagon.turn = wagon.kind === HCC_WIRE_KIND.Deployed ? v.rest ?? null : { angle: v.moving.wheel?.angle ?? 0, angles: v.moving.wheel?.angles ?? null, steer: v.moving.pose.steer ?? 0 };
     const entry = wagon ? wagonEntry?.() : null;   // WAGONS2-VISIT: who may enter it (the wire's `we`, and the guild's `wg`)
     if (entry) { wagon.entry = entry.entry; wagon.guild = entry.guild ?? null; }
+    // WAGON-ARMS: whose arms this wagon wears, on a wagon of ANY kind - the door above is the caravan's own law and says
+    // nothing about the small cart or the open wagon, which wear the owner's guild's arms just the same.
+    const arms = wagon ? wagonArms?.() : null;
+    if (arms) wagon.arms = arms;
     const h = v.horse;
     const horse = h?.isInteractive ? { position: h.position, forward: h.forward, frame: h.walk?.animationFrame ?? 0, walking: !!h.walk?.walking } : null;
     return { wagon, horse, name: v.state?.HorseName ?? '', look: lookOfOwner(''), interaction: !!v.moving?.interaction, deployed: !!v.deployed?.isGrounded, go: riders?.go?.() ?? null, declined: riders?.declined?.() ?? [] };   // WAGONS1: a journey my riders go on, who I turned away
@@ -1776,6 +1781,7 @@ export function createHorseCartPool({
     if (horseParked && rec?.h && !v.horseFollowing && !v.teamFollowing && near(rec.h[0], rec.h[2])) { r.h = [...rec.h]; r.h[5] = 0; if (rec.n) r.n = rec.n; }
     if (r.w && !near(r.w[1], r.w[3])) { delete r.w; delete r.wk; delete r.wh; delete r.wl; }
     if (r.w && rec.we) { r.we = rec.we; if (rec.wg) r.wg = rec.wg; }   // WAGONS2-VISIT: who may enter it, the cell's to keep while its owner is away
+    if (r.w && rec.og) { r.og = rec.og; }   // WAGON-ARMS: and whose arms it wears, kept while its owner is away too - the arms outlive the visit, so a guild turns its arms off by omitting `og` and the cell learns it on the next word
     if ((r.w || r.h) && rec?.hc) r.hc = rec.hc;   // COATS1: the look of the horse it keeps (or of the pair in its shafts)
     if (r.w) Object.assign(r, wardenWord?.(a) ?? {});   // WARDEN1: a parked wagon's town, its road and where the watch would throw it
     return r.w || r.h ? { a, r } : { a };

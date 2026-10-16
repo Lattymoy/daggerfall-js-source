@@ -229,6 +229,7 @@ import {
   foundGuild, guildOf, invitesOf, inviteToGuild, answerInvite, leaveGuild, removeFromGuild, rankGuildMember, renameGuildRanks,
   depositToGuild, withdrawFromGuild, handOverGuild, disbandGuild, guildBadgeOf, mintMemberOf,
   renameGuild,   // GUILD2a
+  armsOf,   // WAGON-ARMS: a guild's heraldry by its tag, for a wagon that wears it
 } from './guilds.js';   // GUILD1: the guilds' routes; GUILD1c: the guild a token carries
 import { vaultOf, vaultPut, vaultTake, vaultGrant } from './guildVault.js';   // GUILD2b: the guild's vault
 import { HOME_ORDER_KEYS_MAX } from '../../src/net/homeLaw.js';   // QUEST-HOME: the most buildings one home order names
@@ -415,6 +416,8 @@ const GUILD_STATUS = Object.freeze({
   'guild-writ-escrow': 409,   // AUDIT 31 A15: a closed writ's escrow waiting on a full treasury
   'guild-contracts': 409,   // AUDIT SILVER-WAYS B3: a guild with a contract standing does not go (its siblings' conflict, never a bad request)
   'guild-rate': 429,
+  // WAGON-ARMS: the arms read - a batch past its bound or off the tag's shape 400 (the default), the hour's reads spent 429
+  'arms-batch': 400, 'arms-rate': 429,
   // GUILD1d (Seats-Arc 8): the hall - a building somebody owns, the guild's one hall already held, none held, one moved
   // under its sale, a guild kept from going by it; and the heraldry - the same again, changed meanwhile, the Drakes short
   'home-taken': 409, 'guild-hall-have': 409, 'guild-hall-moved': 409, 'guild-hall': 409, 'guild-hall-none': 404, 'home-rate': 429,
@@ -1513,6 +1516,15 @@ const service = {
           return 'error' in r ? no(r.error, GUILD_STATUS[r.error] ?? 400, origin) : json(await guildOrdersOf(r, who.player.id, env, subtle, nowS), 200, origin);
         }
         if (path === '/v1/guilds/invites') return json(await invitesOf(ctx, who.player), 200, origin);
+        // WAGON-ARMS: a guild's heraldry BY ITS TAG - the four incidental reads above it (`/v1/seats/list`,
+        // `/v1/homes/town`, `/v1/board/read`, `/v1/writs/list`) return a guild only because it holds a seat, owns a hall,
+        // posted a note or has a writ, and a wagon's owner may be in none of those. Open to a GUEST beside the gate below,
+        // because a guest is a player standing next to somebody else's wagon and has the same right to see what is on it:
+        // the answer is the arms and the name they are drawn under, never a roster.
+        if (path === '/v1/guilds/arms') {
+          const r = await armsOf(ctx, who.player, body);
+          return 'error' in r ? no(r.error, GUILD_STATUS[r.error] ?? 400, origin) : json(r, 200, origin);
+        }
         if (accountKind(who.player) !== 'linked') return no('guilds-need-account', 403, origin);
         const act = {
           '/v1/guilds/found': foundGuild, '/v1/guilds/invite': inviteToGuild, '/v1/guilds/answer': answerInvite,

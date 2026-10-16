@@ -390,9 +390,9 @@ test('WAGON-TIMBER PASS 2 THE STABLE CARD HAS FIVE SELECTORS, AND ALL FIVE ARE S
 // ═══ 5. THE RELAY'S WORDS, AND WHAT A DEPLOY OWES ═════════════════════════════════════════════════════════════════════
 
 test('WAGON-TIMBER PASS 2 THE RELAY IS world207 AND SAYS ITS DEPLOY ORDER: the version moved for the two gates, the house comment says the relay goes before the account service and before the clients, and no wagon module was pulled into the bundle (mutants: a version not moved, the bounds imported into the bundle, a frame reshaped)', async () => {
-  assert.equal(RELAY_VERSION, 'world207');
+  assert.equal(RELAY_VERSION, 'world208');
   const wire = read('src/net/wire.js');
-  assert.match(wire, /export const RELAY_VERSION = 'world207';\s+\/\/ WAGON-TIMBER \(2026-10-16, Mac,/);
+  assert.match(wire, /export const RELAY_VERSION = 'world208';\s+\/\/ WAGON-ARMS \(2026-10-16, Mac,/);
   assert.match(wire, /DEPLOY THE RELAY BEFORE THE ACCOUNT SERVICE/, 'the house order is in the comment that is the law, and it is the relay first');
   assert.match(wire, /BEFORE THE ACCOUNT SERVICE[^]*?and before the clients/, 'then the account service, then the clients - that ORDER is the part that matters and it is pinned as words, not as a sentence that drifts');
   // …AND CI ENFORCES THE FIRST HALF. account-deploy.yml waits on the relay's /health for the version wire.js names

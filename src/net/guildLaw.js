@@ -60,6 +60,26 @@ export const GUILD_LEDGER_SHOWN = 50;
 /** Writes an account may make an hour to its guilds (an invite, a move, a deposit each count). */
 export const GUILD_OPS_MAX = 300;
 export const GUILD_OPS_WINDOW_S = 3600;
+
+// ─── WAGON-ARMS (2026-10-16) ────────────────────────────────────────────────────────────────────────────────────
+// Mac, of the arms on a wagon: "All player made guilds in the game have a coat of arms. It is a requirement to make a
+// guild. However, on teh safe side, I want the modification to work as such. If a player with no guild has a wagon,
+// nothing is overlayed. If they do, then their guilds heraldry is overlayed for others to see." A wagon's side wears a
+// guild's arms, so a client standing beside one has to be able to ask for the arms of ANY guild by its tag - not only
+// of the guilds that happen to hold a seat, own a hall, posted a note or have a writ, which is what the four
+// incidental endpoints returned.
+//
+// A GUILD IS REQUIRED TO HAVE HERALDRY (Seats-Arc 8.1), so a renderer never has to invent one: the only "nothing to
+// draw" case is a player in no guild at all. That is why this is a read of ARMS and nothing else - a batch of tags in,
+// the arms that stand behind them out, and a tag that names nothing is answered exactly as a guild that chose none.
+
+/** How many guild tags one arms read may ask after - a wagon yard's worth, and the shape net/homeLaw.js's
+ *  HOME_ORDER_KEYS_MAX has for a batch of keys. A request past it is refused whole (`guild-arms-tags`), never cut. */
+export const GUILD_ARMS_TAGS_MAX = 16;
+/** How many arms reads one account may make an hour, and the hour they are counted in. A read is bounded and a free
+ *  row, so this is not about the cost of the row - it is about a caller walking the guilds table one tag at a time. */
+export const GUILD_ARMS_READS_MAX = 120;
+export const GUILD_ARMS_READS_WINDOW_S = 3600;
 /** How long an invitation stands, seconds. */
 export const GUILD_INVITE_TTL_S = 7 * 24 * 3600;
 
