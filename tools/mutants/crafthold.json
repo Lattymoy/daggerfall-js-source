@@ -122,7 +122,7 @@
   {
     "name": "CRAFT-HOLD-account-version-unmoved",
     "file": "server-account/src/service.js",
-    "old": "export const ACCOUNT_VERSION = 'acct145';",
+    "old": "export const ACCOUNT_VERSION = 'acct146';",
     "new": "export const ACCOUNT_VERSION = 'acct123';",
     "tests": [
       "test/legacy7_service.test.js",
@@ -133,7 +133,7 @@
   {
     "name": "CRAFT-HOLD-wrangler-version-unmoved",
     "file": "server-account/wrangler.toml",
-    "old": "ACCOUNT_VERSION = \"acct145\"\n",
+    "old": "ACCOUNT_VERSION = \"acct146\"\n",
     "new": "ACCOUNT_VERSION = \"acct123\"\n",
     "tests": [
       "test/realm1.test.js",

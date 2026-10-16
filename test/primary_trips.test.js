@@ -67,17 +67,17 @@ test('PRIMARY-TRIPS YARDS-REPLICA: a town\'s yards are read on a session of thei
     db._sessions.length = 0;
     const ctx = { db, nowS: T0 };
     assert.equal(YARDS_FROM, 'first-unconstrained');
-    await yardsKept(ctx, 1291, T0);
-    await yardsKept(ctx, 1291, T0 + 1);   // kept: no read
+    await yardsKept(ctx, 1291, T0, true);
+    await yardsKept(ctx, 1291, T0 + 1, true);   // kept: no read
     assert.deepEqual(db._sessions.map((s) => s.constraint), ['first-unconstrained'], 'the first read any instance\'s, the kept answer no read at all');
     assert.match(db._sessions[0].statements.join('\n'), /FROM home_decor WHERE map_id = \? AND yard = 1/);
-    await yardsKept(ctx, 1291, T0 + 60);   // past YARDS_KEPT_S
+    await yardsKept(ctx, 1291, T0 + 60, true);   // past YARDS_KEPT_S
     const mark = db._sessions[1]?.constraint;
     assert.ok(mark && mark !== 'first-unconstrained' && mark !== 'first-primary', `the next read from the last one's bookmark (${mark})`);
     forgetYards(1291);   // a decor write in this isolate (index.js, after every place, move, hide or remove)
-    await yardsKept(ctx, 1291, T0 + 61);
+    await yardsKept(ctx, 1291, T0 + 61, true);
     assert.equal(db._sessions[2]?.constraint, 'first-primary', 'the read after this isolate\'s own write the primary\'s - it sees the write');
-    await yardsKept(ctx, 1291, T0 + 120);
+    await yardsKept(ctx, 1291, T0 + 120, true);
     assert.notEqual(db._sessions[3]?.constraint, 'first-primary', 'and only that one');
   });
 });
@@ -177,15 +177,15 @@ test('PRIMARY-TRIPS audit: a town\'s yards never read older than this isolate al
   const T = 7;
   write(T, 'mine');   // this isolate's own decor write; the replica not caught up
   forgetYards(T);
-  assert.deepEqual(pieceIds(await yardsKept(ctx, T, T0)), ['mine'], 'the read after the write is the primary\'s');
-  for (let i = 1; i <= YARDS_KEPT_MAX; i++) await yardsKept(ctx, 100_000 + i, T0);   // the last of them lets every kept town go
-  const again = await yardsKept(ctx, T, T0 + 31);
+  assert.deepEqual(pieceIds(await yardsKept(ctx, T, T0, true)), ['mine'], 'the read after the write is the primary\'s');
+  for (let i = 1; i <= YARDS_KEPT_MAX; i++) await yardsKept(ctx, 100_000 + i, T0, true);   // the last of them lets every kept town go
+  const again = await yardsKept(ctx, T, T0 + 31, true);
   assert.notEqual(L.sessions.at(-1)?.c, YARDS_FROM, 'from the floor, never any instance\'s');
   assert.deepEqual(pieceIds(again), ['mine'], 'the write still stands - a replica behind it never answers it');
   // the floor's session refused at its read: that read fails, and the next starts from any instance's
   L.refuse = L.sessions.at(-1)?.c ?? null;
-  await assert.rejects(() => yardsKept(ctx, 9, T0 + 100));
-  await yardsKept(ctx, 10, T0 + 100);
+  await assert.rejects(() => yardsKept(ctx, 9, T0 + 100, true));
+  await yardsKept(ctx, 10, T0 + 100, true);
   assert.equal(L.sessions.at(-1)?.c, YARDS_FROM, 'the refused floor let go');
   _resetYardsKept();
 });

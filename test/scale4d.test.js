@@ -90,8 +90,8 @@ test('SCALE4d every other route stays on the binding - no session opened (mutant
   // own - any instance's, the route itself on the binding (test/yards_replica.test.js holds the rest)
   const yards = await S.fetch('https://accounts.invalid/v1/homes/yards', { method: 'POST', headers: { authorization: `Bearer ${who.secret}`, 'content-type': 'application/json' }, body: '{"mapId":1}' });
   assert.equal(yards.status, 200, 'a town\'s yards answered');
-  assert.deepEqual(raw._sessions.map((x) => x.constraint), ['first-unconstrained'], 'the yards\' read on a session of its own');
-  assert.match(raw._sessions[0].statements.join('\n'), /FROM home_decor WHERE map_id = \? AND yard = 1/);
+  // PIN MOVED (YARDS-PRIMARY, 2026-10-16; test/yards_primary.test.js): the yards read on the binding again - no session
+  assert.deepEqual(raw._sessions.map((x) => x.constraint), [], 'the yards\' read on the binding');
 });
 
 test('SCALE4d the claims a session mints are the claims the binding mints - byte for byte, the same token (mutant: none; the oracle is the binding)', async () => {

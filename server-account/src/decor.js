@@ -316,8 +316,16 @@ const yardsWritten = new Set();
  *  starts there, never older than this isolate already answered or wrote (D1's bookmarks sort oldest to newest:
  *  d1/reference/time-travel). Cleared with them, every town's next read could be a replica's from before them. */
 let yardsFloor = /** @type {string | null} */ (null);
-/** A town's yards as yardsOf answers them, from this isolate's kept answer while it is YARDS_KEPT_S old or younger. */
-export async function yardsKept(ctx, mapId, nowS) {
+/** YARDS-PRIMARY (2026-10-16, acct146; bible/11-Multiplayer/Scale-Arc.md YARDS-PRIMARY): WHERE A TOWN'S YARDS ARE READ -
+ *  the binding (the primary) again, YARDS-REPLICA's session kept behind this switch. The account database's overload of
+ *  that afternoon began some two hours after YARDS-REPLICA moved every yards read onto the one replica (11:00 UTC all
+ *  the primary's, 12:00 all the replica's; the replica's rows read 5 thousand a second to 17-35), and through it a request
+ *  on a replica's session waited 31 s on the database for every 5.6 s one on the binding did. The primary had answered
+ *  these reads all morning at 5-7% of its time. */
+export const YARDS_ON_REPLICA = false;
+/** A town's yards as yardsOf answers them, from this isolate's kept answer while it is YARDS_KEPT_S old or younger.
+ *  `onReplica` (YARDS_ON_REPLICA): the read on a session of its own (YARDS-REPLICA), or on the binding. */
+export async function yardsKept(ctx, mapId, nowS, onReplica = YARDS_ON_REPLICA) {
   if (!homeMapIdOk(mapId)) return { error: 'bad-home' };
   const kept = keptYards.get(mapId);
   if (kept && nowS - kept.at < YARDS_KEPT_S) return kept.answer;
@@ -329,8 +337,8 @@ export async function yardsKept(ctx, mapId, nowS) {
   const wrote = yardsWritten.has(mapId);
   const from = wrote ? 'first-primary' : (yardsMark.get(mapId) ?? yardsFloor ?? YARDS_FROM);
   const root = ctx.db?.[DB_ROOT] ?? ctx.db;
-  let db = ctx.db;
-  try { db = replicaDb(typeof ctx.db?.withSession === 'function' ? ctx.db : root, from); } catch { /* a bookmark D1 refuses: the request's database */ }
+  let db = onReplica ? ctx.db : root;   // YARDS-PRIMARY: the binding, unless asked on a replica
+  if (onReplica) try { db = replicaDb(typeof ctx.db?.withSession === 'function' ? ctx.db : root, from); } catch { /* a bookmark D1 refuses: the request's database */ }
   const ask = yardsOf({ ...ctx, db }, null, { mapId }).then((answer) => {
     if (!('error' in answer) && (yardWrites.get(mapId) ?? 0) === gen) {
       if (keptYards.size >= YARDS_KEPT_MAX && !keptYards.has(mapId)) {

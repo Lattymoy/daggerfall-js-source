@@ -80,6 +80,7 @@ Four read-only audits covered the relay (`server/src/index.js`), the account ser
 | BOOKMARK-SPIRAL | The account database's primary overloaded from 13:50 UTC (2026-10-16) and stayed so - every route 5 to 60 s, every deploy's smoke on `/v1/homes/decor` 000, DECOR-BATCH deployed and nothing moved: the page's D1 bookmark is kept only when no call goes between a read and its answer, so a slow primary took the bookmarks away, and every polled display read then started at the primary. The six polled reads with no bookmark start at any instance; a session lookup that misses there asks the primary | No | **Built** (2026-10-16; acct143) |
 | BUSY-HEART | After BOOKMARK-SPIRAL deployed and the primary's own load halved, the overload held: it held only while players were in the world (healthy 20:00-20:04 with the relay's players dropped by its deploy, at more primary statements than when it came back), and the heartbeat and the motherlodes - asked again on their own schedules, twice and three times as often - spent the most of the database's time. Both stand back now | No | **Built** (2026-10-16; acct144) |
 | SHED-LONG | After BUSY-HEART the overload eased (p50 17-45 s to 5-13 s) and held: a request on a D1 session waited 31 s on the database for every 5.6 s one on the binding did - the replica the longer queue. BOOKMARK-SPIRAL rolled back (the six polled reads at the primary first again, its session lookup's fallback kept), and an overload's shed 10 s where it was 2 | No | **Built** (2026-10-16; acct145) |
+| YARDS-PRIMARY | The overload of 2026-10-16 began some two hours after YARDS-REPLICA (#942, 11:48 UTC) moved every yards read onto the one replica (11:00 all the primary's, 12:00 all the replica's; the replica's rows read 5 to 17-35 thousand a second), and through it the replica's sessions were the longer queue. A town's yards are read on the binding again, YARDS-REPLICA's session behind a switch | No | **Built** (2026-10-16; acct146) |
 | SCALE6 | Abuse and backups: Turnstile on guest creation, /64 IPv6 rate keys, bans, report and ignore, `ALLOWED_ORIGIN`, R2 snapshots, a hub export | Some | Alongside |
 
 **Relay deploy policy (SCALE):** relay changes are batched into as few deploys as possible, each in a window announced beforehand. A deploy drops every player, and until SCALE2 every reconnect is a D1 write storm.
@@ -2607,6 +2608,29 @@ lookups a second onto it, while the primary, answering in a fifth of the time, h
   `tools/mutants/bookmark_spiral.json` re-made for the rollback: 6.
 - `test/busy_gate.test.js`: BUSY_SHED_MS 10 s.
 - ACCOUNT_VERSION acct145, and every pin and mutant record on acct144 (each pin's PIN MOVED history kept).
+
+## YARDS-PRIMARY - a town's yards on the primary again (2026-10-16, acct146)
+
+The owner: "It was fine all day. What happened to screw everything up". Read off D1's analytics, hour by hour: the town's
+yards read (`SELECT * FROM home_decor WHERE map_id = ? AND yard = 1`, some 1,100 rows an answer) was the primary's alone
+until 11:00 UTC and the replica's alone from 12:00 - YARDS-REPLICA, in #942 (deployed 11:48). The replica's rows read went
+from 3-7 thousand a second to 17-35; the primary's busy share stayed at 5-7%. Through the morning's low traffic (some 65
+account requests a second) the move held; at about 13:50, near 100 a second, the overload began, and through it a request
+on a replica's session waited on the database five times as long as one on the binding (SHED-LONG). The replica's own SQL
+time stayed under 11% - what it queued on is not in D1's statement figures - so this is the timing's case, not a proof.
+
+- **A town's yards are read on the binding again** (`decor.js` YARDS_ON_REPLICA `false`; `yardsKept`'s `onReplica`).
+  YARDS-REPLICA's session - any instance's first, a kept read's bookmark after, the primary's after a write here - is
+  kept behind the switch, and its pins ask it so (`test/primary_trips.test.js` passes `true`).
+
+### Pins
+
+- `test/yards_primary.test.js` (1): the service's `/v1/homes/yards` opens no session and asks the yards on the binding;
+  `yardsKept` asked plainly asks the binding itself. `tools/mutants/yards_primary.json`: 2 (the switch on; the read on a
+  session whatever it says), dead with `primary_trips.json` and `yardshed.json` (32 in all).
+- `test/scale4d.test.js`: the yards' session pin moved - none. `test/primary_trips.test.js`: YARDS-REPLICA's pins ask
+  `yardsKept` on a replica.
+- ACCOUNT_VERSION acct146, and every pin and mutant record on acct145 (each pin's PIN MOVED history kept).
 
 ## THE PLAN PAST 2,000 (2026-10-10)
 

@@ -1,0 +1,22 @@
+[
+ {
+  "name": "YARDSPRIMARY-switch-on",
+  "file": "server-account/src/decor.js",
+  "old": "export const YARDS_ON_REPLICA = false;",
+  "new": "export const YARDS_ON_REPLICA = true;",
+  "tests": [
+   "test/yards_primary.test.js"
+  ],
+  "note": "every yards read back on the replica's queue"
+ },
+ {
+  "name": "YARDSPRIMARY-request-db",
+  "file": "server-account/src/decor.js",
+  "old": "  let db = onReplica ? ctx.db : root;   // YARDS-PRIMARY: the binding, unless asked on a replica\n  if (onReplica) try {",
+  "new": "  let db = ctx.db;\n  try {",
+  "tests": [
+   "test/yards_primary.test.js"
+  ],
+  "note": "the yards read on a session whatever the switch says"
+ }
+]
