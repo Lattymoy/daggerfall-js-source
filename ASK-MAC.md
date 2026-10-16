@@ -9,7 +9,7 @@ wants an eye; this marks *decisions* nobody below Mac can take.
 
 ---
 
-## 1. `classicArt.js` calls the paint records flat. They are not.
+## 1. `classicArt.js` calls the paint records flat. They are not. — SUPERSEDED 2026-10-16
 
 The table's own comment reads:
 
@@ -31,6 +31,14 @@ right.
 **Asked:** what is the correct description, and should the table be corrected in
 place? Any comment elsewhere in the repo that inherited the "flat swatch"
 assumption should be swept at the same time.
+
+ **2026-10-16 update:** the operator's dev test has since shown the cart
+ painting FLAT and losing its grain — against the grain-keeping reported
+ above. The branch now ships the flat reading plus a fix: cart paint dyes over
+ the grain (CART_DYES, same `{dyed}` machinery as timber) rather than swapping
+ the record. So whichever the records are, the wagon keeps grain. The table
+ comment is still wrong in one direction or the other; the question above
+ stands, but it no longer blocks anything the player sees.
 
 ---
 
@@ -110,10 +118,12 @@ but unverified.
 
 ---
 
-## 7. Relay deploy order for the timber wire bump
+## 7. Relay deploy order for the timber wire bump — UPDATED 2026-10-16
 
-`RELAY_VERSION` is `world206`, not yet deployed (`SERPENT5`, 2026-10-15). The
-timber work will bump it again and add two park-record fields (`ww`, `wr`).
+`RELAY_VERSION` is now `world208` (207 lived and died on the branch, never
+deployed). The bump carries three park-record fields, not two: `ww` (wood),
+`wr` (wheels), `og` (owner's guild tag, presence is the broadcast). Nothing
+deployed yet — still one deploy.
 
 The house rule, from the version comment itself:
 
@@ -125,7 +135,14 @@ service, then clients — and whether the two new fields need the same treatment
 or ride an already-deployed path.
 ---
 
-## 8. A wagon wears the READER'S arms, not the owner's. Which is right?
+## 8. A wagon wears the READER'S arms, not the owner's. Which is right? — ANSWERED 2026-10-16
+
+Operator's ruling: the OWNER's arms; no guild → nothing overlaid; ONE setting
+("Show guild's heraldry on wagon", on by default) whose presence on the wire
+is the whole broadcast — off means no tag travels and everyone sees plain
+cloth. Implemented as Pass A (wire + `/v1/guilds/arms`) and Pass B (per-tag
+side pictures, toggle). Moved to `bible/06-Systems/Wagons.md`; the questions
+below are kept as the record of what was decided.
 
 `wagonHeraldry()` (`src/world/wagonEmblem.js`) takes **no arguments** and resolves
 from one module-global wired to `guildBook?.guild?.heraldry`. So **every open wagon

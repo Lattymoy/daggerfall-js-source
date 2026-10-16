@@ -3,7 +3,7 @@
 // that already exists"; "I want the wheel options to be separate from the wood options") - THE TIMBER AND THE WHEELS GO
 // ON THE WIRE, AND GET THEIR SELECTORS - `ww` and `wr` beside the paint's `wl` (src/systems/horseCartWire.js,
 // src/net/wire.js validParkData), the pool's own door opened for the five lists (src/scenes/horseCartPool.js
-// ensureLook/lookRemap), and five swatch rows on the Stable card (src/ui/holdingsPages.js), driven through the real
+// ensureLook/lookRemap), and the driven kind's swatch rows on the Stable card (src/ui/holdingsPages.js), driven through the real
 // pool and the real card over the tests' stand-in ARENA2 (test/classicArtFake.mjs).
 //
 // WHAT IS PINNED, AND WHY THE STALENESS TEST IS THE BIG ONE. Five things, and the third is the one that would have
@@ -12,7 +12,7 @@
 // out beside `wl`'s, which this bump did not move; (3) THE STALENESS CASE - a wagon that has already built its
 // textures dyes its beams mid-session, and the pool rebuilds instead of handing back the map it cached for the paint
 // alone: the emblem's known staleness is a different shape (its arms are painted INTO the built picture, uploaded
-// once) and a dyed board must not inherit it; (4) the five rows are SWATCH rows, because `choiceRow`'s
+// once) and a dyed board must not inherit it; (4) the rows shown are SWATCH rows, because `choiceRow`'s
 // `colours.every(Boolean)` demotes a whole row to a stepper over ONE missing hex - so all seven names are pinned;
 // (5) hccRecordKey moves on the wood and on the wheels and stands still when nothing did.
 import './modsOff.js';
@@ -330,7 +330,7 @@ test('WAGON-TIMBER PASS 2 THE STALENESS CASE - CHANGING A LOOK MID-SESSION REBUI
 });
 // ═══ 4. THE FIVE SELECTORS ON THE STABLE CARD ═══════════════════════════════════════════════════════════════════════
 
-test('WAGON-TIMBER PASS 2 THE STABLE CARD HAS FIVE SELECTORS, AND ALL FIVE ARE SWATCH ROWS: behind the one press beside the paint, a row a part and the wheels, each a row of little colours - NOT a stepper - and a press writes the item and tells the host (mutants: a name with no swatch demoting its row, the wheels missed, a press that dyes nothing, a press the host is not told of)', () => {
+test('WAGON-TIMBER PER-KIND ROWS THE STABLE CARD SHOWS ONLY WHAT THE DRIVEN KIND WEARS, AND ALL OF THEM ARE SWATCH ROWS: behind the one press beside the paint, a row a part the kind wears (an open wagon: floor, beams, bench, wheels - no inner) and the wheels, each a row of little colours - NOT a stepper - and a press writes the item and tells the host (mutants: a name with no swatch demoting its row, the wheels missed, a press that dyes nothing, a press the host is not told of)', () => {
   // EVERY name of BOTH tables has a colour. `choiceRow` asks `colours.every(Boolean)`, so ONE missing hex takes the
   // WHOLE row to a stepper - six selectors, five of them little squares and one a pair of arrows, for one missing hex.
   for (const name of [...TIMBER_LOOKS, ...WHEEL_LOOKS]) assert.match(LOOK_SWATCHES[TIMBER_LOOK_NAMES[name]] ?? '', /^#[0-9a-f]{6}$/, `${name}: a swatch of its own`);
@@ -354,8 +354,8 @@ test('WAGON-TIMBER PASS 2 THE STABLE CARD HAS FIVE SELECTORS, AND ALL FIVE ARE S
   const open = draw();
   const rows = nodesWith(open, 'hld-pick');
   const words = rows.map((x) => x.children.find((c) => (c.className ?? '').includes('hld-picklabel'))?.textContent);
-  assert.deepEqual(words, ['Paint', 'Floor', 'Inner', 'Beams', 'Bench', 'Wheels'], 'the paint\'s row and the five');
-  assert.equal(nodesWith(open, 'hld-swatches').length, 6, 'SIX swatch rows, one a row');
+  assert.deepEqual(words, ['Paint', 'Floor', 'Beams', 'Bench', 'Wheels'], 'the paint\'s row and the open wagon\'s four (no inner)');
+  assert.equal(nodesWith(open, 'hld-swatches').length, 5, 'FIVE swatch rows, one a row');
   assert.equal(nodesWith(open, 'hld-step').length, 0, 'and NOT ONE stepper - every name of both tables has a colour');
   for (const row of rows) {
     const set = row.children.find((c) => (c.className ?? '').includes('hld-swatches'));
@@ -365,11 +365,11 @@ test('WAGON-TIMBER PASS 2 THE STABLE CARD HAS FIVE SELECTORS, AND ALL FIVE ARE S
 
   // A PRESS DYES, AND THE HOST IS TOLD - `onPainted` is the ONLY thing that republishes, so it is the whole of the
   // door between a card and a peer seeing it.
-  const beamRow = rows[3], beamSet = beamRow.children.find((c) => (c.className ?? '').includes('hld-swatches'));
+  const beamRow = rows[2], beamSet = beamRow.children.find((c) => (c.className ?? '').includes('hld-swatches'));
   beamSet.children[4].onclick();
   assert.equal(items[0].wagonLook.beam, 4, 'the beams dyed');
   assert.equal(told, 1, 'and the host told its word moved');
-  const wheelRow = rows[5], wheelSet = wheelRow.children.find((c) => (c.className ?? '').includes('hld-swatches'));
+  const wheelRow = rows[4], wheelSet = wheelRow.children.find((c) => (c.className ?? '').includes('hld-swatches'));
   wheelSet.children[WHEEL_LOOKS.indexOf('silvered')].onclick();
   assert.equal(items[0].wagonLook.wheels, WHEEL_LOOKS.indexOf('silvered'), 'and the wheels, out of their own list');
   assert.equal(told, 2);
@@ -386,6 +386,24 @@ test('WAGON-TIMBER PASS 2 THE STABLE CARD HAS FIVE SELECTORS, AND ALL FIVE ARE S
   assert.deepEqual(timberedDrivenWagon(items, 'keel', 1), { ok: false, text: TIMBER_TEXT.noWagon }, 'and not a part this law knows');
   assert.equal(timberedDrivenWagon(items, 'wheels', 1).text, "The wagon's wheels are now ash.", 'the two many are read off the names table');
   assert.equal(timberedDrivenWagon(items, 'floor', 1).text, "The wagon's floor is now pine.", 'and the three one');
+});
+
+// ═══ 4b. THE PER-KIND TABLE (2026-10-16, operator correction) ════════════════════════════════════════════════════════
+
+test('WAGON-TIMBER PER-KIND ROWS THE CARD OFFERS WHAT THE DRIVEN KIND WEARS: a cart floor, inner, beam, wheels (NO bench - its bake has no bench role); an open wagon floor, beam, bench, wheels (NO inner); a caravan keeps all five untouched by standing order; a kind the card does not know all five, so a selector is never stranded - and the law stays permissive (a hidden part set programmatically still dyes)', () => {
+  const parts = (items) => timberRows(items).map((r) => r.part);
+  assert.deepEqual(parts([newWagonItem('cart')]), ['floor', 'inner', 'beam', 'wheels'], 'the Small Cart, unmarked: no bench');
+  assert.deepEqual(parts([{ ...newWagonItem('cart'), wagonKind: 'cart' }]), ['floor', 'inner', 'beam', 'wheels'], 'and marked a cart: no bench');
+  assert.deepEqual(parts([newWagonItem('openWagon')]), ['floor', 'beam', 'bench', 'wheels'], 'the open wagon: no inner');
+  assert.deepEqual(parts([newWagonItem('caravan')]), ['floor', 'inner', 'beam', 'bench', 'wheels'], 'the caravan: untouched, all five as before');
+  assert.deepEqual(parts([{ ...newWagonItem('cart'), wagonKind: 'balloon' }]), ['floor', 'inner', 'beam', 'bench', 'wheels'], 'a mark naming no kind: all five, never strand a selector');
+  // THE DRIVEN WAGON DECIDES, not the first in the pack: a cart first, the open wagon second, and the card lists the open wagon's rows
+  assert.deepEqual(parts([newWagonItem('cart'), newWagonItem('openWagon')]), ['floor', 'beam', 'bench', 'wheels'], 'two wagons: the driven one\'s rows');
+  // every row still reads the wagon it lists
+  assert.deepEqual(timberRows([newWagonItem('openWagon')]).map((r) => [r.part, r.current]), [['floor', 0], ['beam', 0], ['bench', 0], ['wheels', 0]], 'as built: every current 0');
+  // AND THE LAW STAYS PERMISSIVE: a hidden part set programmatically still dyes (the cart's bench)
+  const cart = [newWagonItem('cart')];
+  assert.equal(timberedDrivenWagon(cart, 'bench', 2).ok, true, 'the cart\'s bench, hidden from the card, still dyes by hand');
 });
 
 // ═══ 5. THE RELAY'S WORDS, AND WHAT A DEPLOY OWES ═════════════════════════════════════════════════════════════════════

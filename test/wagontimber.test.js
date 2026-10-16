@@ -112,8 +112,8 @@ test('WAGON-TIMBER THE LAW: four wooden parts and the wheels, each six choices o
   assert.equal(paintedWagon(newWagonItem('cart'), 'walls', 1), null, 'and still no inside');
 
   const rows = timberRows([{ templateIndex: 2 }, dyed]);
-  assert.deepEqual(rows.map((r) => [r.part, r.name, r.choices.length]), [['floor', 'Floor', 6], ['inner', 'Inner', 6], ['beam', 'Beams', 6], ['bench', 'Bench', 6], ['wheels', 'Wheels', 6]]);
-  assert.deepEqual(rows.map((r) => r.choices), [TIMBER_LOOKS, TIMBER_LOOKS, TIMBER_LOOKS, TIMBER_LOOKS, WHEEL_LOOKS].map((l) => l.map((k) => TIMBER_LOOK_NAMES[k])));
+  assert.deepEqual(rows.map((r) => [r.part, r.name, r.choices.length]), [['floor', 'Floor', 6], ['beam', 'Beams', 6], ['bench', 'Bench', 6], ['wheels', 'Wheels', 6]], 'an open wagon: no inner row (PER-KIND ROWS)');
+  assert.deepEqual(rows.map((r) => r.choices), [TIMBER_LOOKS, TIMBER_LOOKS, TIMBER_LOOKS, WHEEL_LOOKS].map((l) => l.map((k) => TIMBER_LOOK_NAMES[k])));
   assert.equal(rows.find((r) => r.part === 'beam').current, 3, 'and the one worn');
   assert.equal(timberChoiceName('beam', 2), TIMBER_LOOK_NAMES[TIMBER_LOOKS[2]]);
   assert.equal(timberChoiceName('wheels', 2), TIMBER_LOOK_NAMES[WHEEL_LOOKS[2]]);

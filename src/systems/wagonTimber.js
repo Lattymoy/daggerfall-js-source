@@ -60,7 +60,7 @@
 // written - so the reader is HERE, and the paint is untouched and still reads only its own four.
 //
 // Pure: no DOM, no renderer, no clock. Not a DFU member. Ledger A (WAGONS2, WAGON-TIMBER).
-import { isWagonItem, activeWagonItem } from './wagonKinds.js';
+import { isWagonItem, activeWagonItem, validWagonKind } from './wagonKinds.js';
 import { wagonLookOf, readWagonLook, wagonLookOfCode, isBuiltLook, LOOK_COUNT } from './wagonLooks.js';
 import { t } from './textManager.js';   // L10N4: the card's own words, routed like every new sentence the port adds
 
@@ -149,7 +149,7 @@ export const timberChoiceName = (part, i) => TIMBER_LOOK_NAMES[looksOf(part)[ind
 
 /**
  * The driven wagon's timber as the Stable card will list it: a row a part - its name, its choices' names, the one worn -
- * five rows, the wheels among them and last. Null with no wagon. The same shape wagonLooks.js horseLookRows-style rows
+ * a row for each part the driven kind wears (PER-KIND ROWS below), the wheels among them and last. Null with no wagon. The same shape wagonLooks.js horseLookRows-style rows
  * have, so one row renderer can take both.
  *
  * PASS 2: the card's five rows read this, and `timberedDrivenWagon` below dyes THE SAME WAGON - the driven one
@@ -157,6 +157,14 @@ export const timberChoiceName = (part, i) => TIMBER_LOOK_NAMES[looksOf(part)[ind
  * it. A row that showed one wagon's timber and a press that dyed another's is the card lying about itself, so the two
  * find alike on purpose; with two wagons in the pack the first may be a cart nobody drives.
  * WAGON-TIMBER PASS 3: was "the first one in the pack", which dyed a wagon nobody drives beside the one the pool draws.
+ * PER-KIND ROWS (2026-10-16, operator correction: "Carts dont have Benches so the selector for that must be removed
+ * on Carts. Wagons dont have Inner, or at least it doesnt affect them, so that selector has to be removed for
+ * Wagons" - verified against world/wagonModels.js layFace): the card offers only the parts the driven kind wears -
+ * a cart floor, inner, beam and wheels (NO bench: its bake has no bench role); an open wagon floor, beam, bench
+ * and wheels (NO inner). The caravan is NOT filtered: caravans remain untouched by standing order, so a caravan
+ * keeps all five rows exactly as before. A kind the card does not know keeps all five, so a selector is never stranded.
+ * The LAW stays permissive: timberedWagon/timberedDrivenWagon still dye any of the five on any wagon, a hidden row
+ * simply stays 0, and the wire still packs four digits either way.
  * @param {any[]} items
  */
 export function timberRows(items) {
@@ -164,7 +172,14 @@ export function timberRows(items) {
   const item = activeWagonItem(items);
   if (!item) return null;
   const t = wagonTimberOf(item);
-  return TIMBER_FIELDS.map((part) => ({ part, name: TIMBER_PART_NAMES[part], choices: looksOf(part).map((k) => TIMBER_LOOK_NAMES[k]), current: t[part] }));
+  // The driven kind, the way the rest of the card reads it (wagonKindOf: the mark, or the Small Cart unmarked) -
+  // except a mark that names NO kind stays unknown instead of borrowing the cart's rows, so a future or corrupt
+  // kind shows everything rather than hiding the wrong selectors.
+  const kind = validWagonKind(item?.wagonKind) ?? (item?.wagonKind == null ? 'cart' : null);
+  const parts = kind === 'cart' ? ['floor', 'inner', 'beam', 'wheels']
+    : kind === 'openWagon' ? ['floor', 'beam', 'bench', 'wheels']
+    : [...TIMBER_FIELDS];
+  return parts.map((part) => ({ part, name: TIMBER_PART_NAMES[part], choices: looksOf(part).map((k) => TIMBER_LOOK_NAMES[k]), current: t[part] }));
 }
 
 /** PASS 2: what the card says when a part is dyed. The wagon's part, in its own words, and the choice's - and the
