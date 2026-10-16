@@ -28,7 +28,10 @@ the texture archive each wears and where it stands; the ids are DFU's model numb
 - Reach: `SEARCH_REACH`, half of DoorActivationDistance (64 classic units, 1.6 m).
 - The roll: a third each underground; at a Graveyard location's headstone two in three nothing, a sixth each.
 - Foe: a grave, a coffin or a shelf wakes an undead by the player's level; a chest or a crate draws from the
-  dungeon's own layout roster. The named foe is an elite half the time (systems/eliteFoes.js) - offline too, as asked.
+  dungeon's own layout roster, less its water species (SLAUGHTER-BOX, `01-Overview/Field-Bugs-2026-10-15c.md`: the
+  foe stands on the dry floor beside the box; RDBLayout's Slaughterfish, Dreugh and Lamia stand in the roster only for
+  a marker under water - `characters/dungeonEnemies.js` WATER_SPECIES, the one home). The named foe is an elite half the
+  time (systems/eliteFoes.js) - offline too, as asked.
 - Find: one to four items, the first always gold, from the kind's goods, then the rarity ladder at the place's pile tier.
 - The message: a parchment box the player clicks away; the foes stand, or the find opens, only from its `onClose`
   (ui/actionText.js - deferred past the dismissal, once, never for a replaced box).

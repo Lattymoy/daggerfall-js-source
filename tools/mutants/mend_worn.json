@@ -11,8 +11,8 @@
   {
     "name": "MEND-WORN-pack-order",
     "file": "src/systems/enchantments.js",
-    "old": "(wears === bestWears && mendOrder(it, best) < 0)) { best = it; bestWears = wears; }",
-    "new": "(wears === bestWears && false)) { best = it; bestWears = wears; }",
+    "old": "(tier === bestTier && mendOrder(it, best) < 0)) { best = it; bestTier = tier; }",
+    "new": "(tier === bestTier && false)) { best = it; bestTier = tier; }",
     "tests": [
       "test/mend_worn.test.js"
     ]

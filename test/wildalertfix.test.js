@@ -3,6 +3,7 @@
 // meeting), a band that caught the traveller stood unaware, a band's notice outlived a chase handed to a peer and a load,
 // the checks rolled while a window held the game, and the gate's switch dropped the peers a foe was fighting. The host's
 // functions lifted out of scenes/world.js and scenes/exteriorFoes.js and RUN; the target machine run for real.
+import { concealmentFlags } from '../src/systems/effects.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -27,7 +28,7 @@ function gateHost(over = {}) {
   const d = { travelling: true, scale: 60, stealth: 30, foes: [], paused: false, noticed: [], rolls: 0, die: 0.999, ...over };
   const wildFoes = createWildAlert({ weak: true, rng: () => { d.rolls++; return d.die; } });
   const scope = {
-    wildFoes, playerEntity: {}, SKILLS: { Stealth: 'Stealth' }, skillValue: () => d.stealth,
+    wildFoes, playerEntity: {}, SKILLS: { Stealth: 'Stealth' }, skillValue: () => d.stealth, concealmentFlags,   // INVIS-SWING: the real flags (an unconcealed traveller)
     travelControlUI: { get isShowing() { return d.travelling; } }, travelOptions: { state: { get autopilot() { return d.travelling ? {} : null; } } },
     tvWalking: 0, modes: { mode: 'exterior' }, walkMode: true, playerSpawned: true, gamePaused: () => d.paused,
     player: { feetAt: () => [1, 0, 2] }, worldTimeScale: () => d.scale, performance: { now: () => 0 },

@@ -362,10 +362,10 @@ export function createUpkeep({ items, now, horseCare = () => null, wagonUpkeep =
 
 /**
  * The keep a horse is in, off Horse Cart and Cargo's Stable view (systems/horseCart.js stableView - null with the mod
- * off): 'with' its owner - ridden, pulling, following, or the mod off or without persistence (the classic transport:
- * it goes where they go); 'waiting' in the world (left loose, or in the harness of a parked wagon); 'stabled' out of
- * it, where the Stable card says it is (ui/holdingsPages.js stableWords - mounted from the Transport window, or
- * summoned). Pure.
+ * off): 'with' its owner - ridden, pulling, following, beside them on foot by the mod's WithPlayer, or the mod off or
+ * without persistence (the classic transport: it goes where they go); 'waiting' in the world (left loose, or in the
+ * harness of a parked wagon); 'stabled' out of it - WAGON-STABLED: sent away (the view's `horseStabled`), where the
+ * Stable card says it is (ui/holdingsPages.js stableWords - mounted from the Transport window, or summoned). Pure.
  * @param {any} view
  */
 export function horseWhereOf(view) {
@@ -375,7 +375,7 @@ export function horseWhereOf(view) {
   if (view.wagonMode === WAGON_MODE.FollowingPlayer && view.horseMode === HORSE_MODE.HitchedToWagon) return 'with';
   if (view.horseMode === HORSE_MODE.LooseStationary) return 'waiting';
   if (view.horseMode === HORSE_MODE.HitchedToWagon && view.wagonMode === WAGON_MODE.Deployed) return 'waiting';
-  return 'stabled';
+  return view.horseStabled ? 'stabled' : 'with';   // WAGON-STABLED: sent away; never sent, the mod's WithPlayer beside its owner
 }
 
 /**

@@ -133,14 +133,16 @@ piece is never fed.
 
 Where a horse is decides who feeds it (`systems/upkeepRuntime.js` horseWhereOf, off Horse Cart and Cargo's Stable view):
 
-- **With its owner** (ridden, pulling, following, in the harness of a wagon that follows - or the mod off, or without
-  its physical persistence: the classic transport goes where its owner goes): fed by hand; and across any span of the
+- **With its owner** (ridden, pulling, following, in the harness of a wagon that follows, beside its owner on foot
+  and never sent away - the mod's WithPlayer, WAGON-STABLED - or the mod off, or without its physical persistence: the
+  classic transport goes where its owner goes): fed by hand; and across any span of the
   clock skipped (SKIP_MINUTES, an hour - a rest, a wait, a journey), it eats a sack of oats each time its food runs
   out, while they last, its bond grown as by hand - the pack's first, then the wagon's load where the wagon is in reach
   (the hosts' `stores`: Horse Cart and Cargo's storage reach, upkeepReach's wagonNear). The Stable page's Feed and its
   counts read the wagon's load the same way.
 - **Waiting** in the world (left loose, or in the harness of a parked wagon): it grazes - hungry, never starving.
-- **Stabled** (out of the world, where the Stable page says it is): the stable feeds it.
+- **Stabled** (sent away from the Stable page, out of the world - the runtime's `HorseStabled`, WAGON-STABLED,
+  `03-World/Holdings.md` section 2): the stable feeds it.
 
 Grazing or stabled, a span the keep did not run across (an inn's rest, a dungeon: no frame ticks indoors) costs it no
 bond - only a fade owed before the span is taken (AUDIT STEED1). The keep's clock is the character's: a load and a new

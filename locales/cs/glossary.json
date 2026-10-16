@@ -285,5 +285,7 @@
  "Lv (level, short)": "Úr.",
  "HP (health, short)": "Zdr.",
  "Atk (attack, short)": "Útok",
- "pts (points, short)": "b."
+ "pts (points, short)": "b.",
+ "first-time bonus (a craft's first-make XP)": "bonus za první výrobu",
+ "cloth (the Weavers' Linen and Wool)": "látka"
 }

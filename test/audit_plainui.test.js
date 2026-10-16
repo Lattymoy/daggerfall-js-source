@@ -107,7 +107,8 @@ test('AUDIT PLAIN-UI W6 the badge\'s number toward nought, as the standing reads
   assert.deepEqual([b.label, b.value], ['Known', '+39']);
   assert.deepEqual([regardBadge({ regard: -40.5, standing: 'enemy' }).value, regardBadge({ regard: -39.5, standing: 'neutral' }).value], ['-40', '-39']);
   assert.equal(regardBadge({ regard: -0.4, standing: 'neutral' }).value, '0');
-  assert.match(b.words, /a blunt word, a crime they see, a blow and - worst - one of their own struck down lower it\./);
+  // PIN MOVED: TONE-TASTE (bible/06-Systems/Living-World.md) - the tone as they take it, townsfolk's named
+  assert.match(b.words, /a tone they dislike, a crime they see, a blow and - worst - one of their own struck down lower it\. Townsfolk like a Blunt word, not a Polite one\./);
 });
 
 test('AUDIT PLAIN-UI C1 a board fold records the reader\'s PRESS on its line, never a toggle - a browser fires toggle for the open a draw sets too, so the drawn default was kept as a choice and a redraw\'s echo could undo a fold; the words\' fold and the chapters\' fold kept across redraws as the guide\'s is (mutants: the words\' fold forgotten; the chapters\' fold forgotten)', async () => {

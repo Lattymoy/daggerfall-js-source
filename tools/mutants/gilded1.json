@@ -20,8 +20,8 @@
   {
     "name": "GILDED1-a-line-over-the-band",
     "file": "src/systems/gilded.js",
-    "old": "    line('damage', 40),",
-    "new": "    line('damage', 50),",
+    "old": "    line('damage', 40),\n    line('stat', 15, 'agility'),\n    line('skill', 30, SKILLS.Archery),",
+    "new": "    line('damage', 50),\n    line('stat', 15, 'agility'),\n    line('skill', 30, SKILLS.Archery),",
     "tests": [
       "test/gilded1_gilded.test.js"
     ]

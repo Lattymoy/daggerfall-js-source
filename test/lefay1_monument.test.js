@@ -14,10 +14,7 @@ import {
   buildLefayModel, LEFAY_FLOWERS, FLOWER_RINGS, MONUMENT_FLOWERS_KEPT, TOSS_MS, TOSS_ARC, TOSS_EVERY_MS, TOSS_SPREAD,
   tossRest, flowerPlace, tossPoint, normalTribute, layFlower,
 } from '../src/world/lefayMonument.js';
-import { LEFAY_SOURCES, lefayPictures, lefayPlaqueArt, LEFAY_GLYPHS, lefayGlyph, lineWidth, PLAQUE_SCALES, LEFAY_PLAQUE_W, LEFAY_PLAQUE_H, GLYPH_H } from '../src/world/lefayArt.js';
-import { DF } from '../src/world/classicArt.js';
-import { setTextureDeriveContext } from '../src/systems/textureReplacement.js';
-import { fakeClassicRgba } from './classicArtFake.mjs';
+import { lefayArt, lefayPlaqueArt, LEFAY_GLYPHS, lefayGlyph, lineWidth, PLAQUE_SCALES, LEFAY_PLAQUE_W, LEFAY_PLAQUE_H, GLYPH_H } from '../src/world/lefayArt.js';
 import { createLefayMonument, bodyTrapped, LEFAY_REACH, TOSS_HAND_DROP } from '../src/scenes/lefayMonumentHost.js';
 import { CAPSULE_RADIUS, CAPSULE_HEIGHT } from '../src/player/motor.js';
 import { CityNavigation, NAV_CELL, HALF_CELL } from '../src/world/cityNavigation.js';
@@ -28,8 +25,6 @@ import { snapshotPlayer, restorePlayer } from '../src/systems/save.js';
 import { PRIVATEERS_HOLD_BLOCK, HOLD_MODELS } from '../src/world/wodPrivateersHold.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-// DF-ART: the monument's pictures are read from the player's ARENA2 - here the tests' stand-in (test/classicArtFake.mjs)
-setTextureDeriveContext({ classicRgba: fakeClassicRgba() });
 const read = (f) => readFileSync(join(root, f), 'utf8');
 
 /** A navgrid of `w` x `h` cells, every cell `weight` (stored as CityNavigation stores it). */
@@ -270,11 +265,8 @@ test('LEFAY1: THE PLAQUE\'S FACE - its picture\'s top-left at the plaque\'s top,
   assert.ok(Math.abs(PLAQUE.w / PLAQUE.h - LEFAY_PLAQUE_W / LEFAY_PLAQUE_H) < 1e-9, 'the picture is the plaque\'s shape');
 });
 
-test('LEFAY1: THE ART - five pictures, opaque: its stone Daggerfall\'s own (DF-ART: granite, marble, gilt, read from the player\'s ARENA2), its plaque its own bronze as it was (Mac: "Bring back the old plaque texture"), the same on every client, cut with the inscription', async () => {
-  assert.deepEqual(Object.keys(LEFAY_SOURCES).map(Number), [LEFAY_GRANITE, LEFAY_MARBLE, LEFAY_GILT]);
-  assert.deepEqual([LEFAY_SOURCES[LEFAY_GRANITE], LEFAY_SOURCES[LEFAY_MARBLE], LEFAY_SOURCES[LEFAY_GILT]], [DF.granite, DF.marble, DF.giltPlain]);
-  const a = (await lefayPictures(fakeClassicRgba())).map(([r, p]) => [r, { width: p.width, height: p.height, colors: p.data }]);
-  const b = (await lefayPictures(fakeClassicRgba())).map(([r, p]) => [r, { width: p.width, height: p.height, colors: p.data }]);
+test('LEFAY1: THE ART - five pictures, opaque, the same on every client; the plaque cut with the inscription', () => {
+  const a = lefayArt(), b = lefayArt();
   assert.deepEqual(a.map(([r]) => r), [LEFAY_GRANITE, LEFAY_MARBLE, LEFAY_GILT, LEFAY_PLAQUE, LEFAY_BRONZE]);
   for (let i = 0; i < a.length; i++) {
     const img = a[i][1];
@@ -398,7 +390,6 @@ test('LEFAY1: THE POOL STANDS IT - on its site\'s ground, its stone, its bucket 
   const m = createLefayMonument(deps);
   assert.deepEqual(m.frame(), [100, 2, 50]);
   assert.equal(log.meshes, 1);
-  await new Promise((r) => setTimeout(r, 0));   // DF-ART: its pictures read from the player's ARENA2, landing a moment after
   assert.deepEqual(log.uploads.filter(([a]) => a === LEFAY_ARCHIVE).map(([, r]) => r), [0, 1, 2, 3, 4], 'its five pictures, under its own archive');
   assert.ok(log.buckets.has(LEFAY_KEY), 'its collider under the key the eye\'s box answers to');
   assert.deepEqual([...log.buckets.get(LEFAY_KEY).m].slice(12, 15), [100, 2, 50]);

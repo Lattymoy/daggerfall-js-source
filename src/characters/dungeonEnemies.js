@@ -33,7 +33,8 @@ const UNDERWATER_TABLE = 19;
 const PASSIVE_ACTION = 99;
 const GENDER_FEMALE_FLAG = 1;
 const GENDER_MALE_FLAG = 2;
-const WATER_SPECIES = new Set([
+/** RDBLayout.AddEnemy's water species - the one home (SLAUGHTER-BOX: a search's foe and the wild halls read it too). */
+export const WATER_SPECIES = new Set([
   MOBILE_TYPES.Slaughterfish, MOBILE_TYPES.Dreugh, MOBILE_TYPES.Lamia,
 ]);
 

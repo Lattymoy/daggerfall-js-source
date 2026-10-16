@@ -391,8 +391,8 @@
   {
     "name": "AUDIT-BAG1-put-everything-in-stops-at-a-refusal",
     "file": "src/ui/profPages.js",
-    "old": "if (res?.kept) stop = res.text ?? null; else refused.push({ name: r.name, text: res?.text ?? null }); break;",
-    "new": "stop = res?.text ?? null; break;",
+    "old": "if (res?.kept) stop = res.text ?? null; else refused.push({ name: r.name, text: res?.text ?? null }); left = -1; break;",
+    "new": "stop = res?.text ?? null; left = -1; break;",
     "tests": [
       "test/bag1_client.test.js"
     ]
@@ -644,8 +644,8 @@
   {
     "name": "AUDIT2-BAG1-U1-the-stores-room-unread",
     "file": "src/ui/profPages.js",
-    "old": "    const inMost = Math.min(DEPOSIT_MAX, pick.carried, storesRoomOf(book, pick));",
-    "new": "    const inMost = Math.min(DEPOSIT_MAX, pick.carried);",
+    "old": "    const inMost = Math.min(DEPOSIT_MAX, pick.carried + (pick.uncounted | 0), storesRoomOf(book, pick));",
+    "new": "    const inMost = Math.min(DEPOSIT_MAX, pick.carried + (pick.uncounted | 0));",
     "tests": [
       "test/bag1_client.test.js"
     ]
@@ -653,8 +653,8 @@
   {
     "name": "AUDIT2-BAG1-U1-put-everything-asks-a-full-store",
     "file": "src/ui/profPages.js",
-    "old": "        let left = Math.min(r.carried, storesRoomOf(book, r));",
-    "new": "        let left = r.carried;",
+    "old": "        let room = storesRoomOf(book, r);",
+    "new": "        let room = Infinity;",
     "tests": [
       "test/bag1_client.test.js"
     ]

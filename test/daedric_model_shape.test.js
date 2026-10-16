@@ -11,7 +11,7 @@ const rows = [
   ['Dagger', 0, 'dagger'], ['Tanto', 0, 'tanto'], ['Shortsword', 0, 'shortsword'], ['Wakazashi', 0, 'wakizashi'],
   ['Longsword', 1, 'longsword'], ['Katana', 1, 'katana'], ['Claymore', 2, 'claymore'], ['Dai_Katana', 2, 'dai-katana'],
   ['Mace', 3, 'mace'], ['Staff', 5, 'staff'], ['Warhammer', 4, 'warhammer'],
-  ['War_Axe', 7, 'war axe'], ['Battle_Axe', 8, 'battle axe'], ['Long_Bow', 9, 'long bow'],
+  ['War_Axe', 8, 'battle axe'], ['Battle_Axe', 7, 'war axe'], ['Long_Bow', 9, 'long bow'],   // PIN MOVED (MW-AXES): Daggerfall's axe names are Morrowind's crossed
 ];
 const records = rows.map(([, type, name]) => ({ id: `daedric ${name}`, type, model: `w/${name}.nif`, enchanted: false }));
 records.push({ id: 'daedric club', type: 3, model: 'w/club.nif', enchanted: false });

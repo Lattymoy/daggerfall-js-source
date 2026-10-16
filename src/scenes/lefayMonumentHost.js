@@ -30,9 +30,8 @@ import {
   LEFAY_KEY, LEFAY_TEXT, LEFAY_ROWS, LEFAY_ARCHIVE, MONUMENT_BOXES, MONUMENT_STEPS, MONUMENT_FOOT, OBELISK, LEFAY_FLOWERS, FLOWER_SCALE,
   TOSS_MS, TOSS_EVERY_MS, buildLefayModel, tossRest, flowerPlace, tossPoint, normalTribute, layFlower,
 } from '../world/lefayMonument.js';
-import { lefayPictures } from '../world/lefayArt.js';
-import { asPortRows } from '../world/classicArt.js';   // DF-ART: the monument's pictures, Daggerfall's own
-import { classicRgbaOf } from '../systems/textureReplacement.js';
+import { lefayArt } from '../world/lefayArt.js';
+import { dfLook, lookSeed } from '../world/dfLook.js';   // DF-LOOK: the monument's pictures in Daggerfall's colours
 import { RAY_DISTANCE, STATIC_NPC_ACTIVATION_DISTANCE } from '../player/activate.js';
 import { CAPSULE_RADIUS, CAPSULE_HEIGHT } from '../player/motor.js';
 import { trs } from '../world/mat4.js';
@@ -146,10 +145,7 @@ export function createLefayMonument({
     if (meshTried || !renderer?.createMesh) return;
     meshTried = true;
     try {
-      // DF-ART: Daggerfall's own pictures (world/lefayArt.js lefayPictures), read from the player's ARENA2 - the
-      // monument stands at once and wears them as they land
-      lefayPictures(classicRgbaOf).then((pics) => { for (const [rec, pic] of pics) renderer.uploadTexture?.(LEFAY_ARCHIVE, rec, asPortRows(pic)); })
-        .catch((e) => console.warn('[lefay] the monument\'s pictures would not load', e?.message ?? e));
+      for (const [rec, art] of lefayArt()) renderer.uploadTexture?.(LEFAY_ARCHIVE, rec, dfLook(art, lookSeed(LEFAY_ARCHIVE, rec)));
       mesh = renderer.createMesh(model);
     } catch (e) { console.warn('[lefay] the monument would not build', e?.message ?? e); }
   }

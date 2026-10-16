@@ -148,3 +148,122 @@ foot, the brass above, a glove-hued crevice that touches nothing). Its mutants, 
 dead. The ladder's own enumerations moved with it, each saying so: LR1, SET6, PI1, WB5, RF5, LOOT9 (the salvage's
 refusals), LOOT10/AUDIT LOOT (the codex count), DW1 and AUDIT-DW F4 (the rig's key), FIELD-GUN-MW2 (the preload's two
 rows and the bake's two twins), SD9e (the spoils' order and the Hourlock's rate).
+
+## 7. The world's two - the Dragonfire Oath and the Sunken Sovereign (GILDED2, 2026-10-15)
+
+Mac: "With the introduction of elite dungeons soon. I want to enhance the rewards for each world activety. We need to add
+a rare gilded weapon to the oblivion gates. A gilded weapon to the serpent + a rare chance of a title/aura drop." The
+title and the aura are the serpent's own slice (`11-Multiplayer/Sea-Serpent.md` section 17, SERPENT5); this section is
+the two weapons. The rung was one record (sections 1 to 6, which say so as they were written); it is three now -
+`GILDED_RECORDS` is the Hourlock, then the gate's, then the serpent's, and every reader of the rung already walked the
+list (the codex, the wire's `validGildedMarks`, the item law, the card). AUDIT WORLD-REWARDS (`01-Overview/Audit-World-
+Rewards.md`) read the slice cold and moved what this section says where it was wrong; each such place is marked.
+
+| | The Dragonfire Oath (the gate's) | The Sunken Sovereign (the serpent's) |
+|---|---|---|
+| Weapon, make | Dai-Katana (123), Daedric - two hands, Long Blade | Saber (119), Ebony - either hand, Long Blade, a shield beside it |
+| Lines | +40% damage, +15 Strength, +30 Long Blade, +15 Endurance (AUDIT B1: no longer a slayer of the Daedra) | +40% damage, +15 Agility, +30 Long Blade, 10% leech |
+| Power | DRAGONFIRE - a landed blow on a Daedra burns it again for a third of the blow, and every OTHER Daedra within 3 m for as much; no Daedra resists it | UNDERTOW - each landed blow on a foe adds +10% to its next blows on that foe, up to +50%, for 6 s from the last; a foe it fells heals 10% of your health |
+| Brief (the card's 32) | "Daedra burn +33%, and all in 3m" | "+10%/hit on a foe; kills heal" |
+| Drop | the gate Warden's spoils, 1 in 100 (`GATE_GILDED_CHANCE`) | a dealing ship's serpent hoard, 1 in 100 (`SERPENT_GILDED_CHANCE`); a ship that stood, never |
+| Price | 93,750 | 21,608 |
+| Lore | "A Dragonguard carried it through the first gate and never carried it back. The Deadlands blackened its steel; the Dragonfire in its gilding never went out." | "A Sentinel admiral's saber, swallowed with her flagship off Stros M'kai. The Old Coil gave back only the blade, and the sea never touched its gilding." |
+| The codex's hint | "Said to fall from the Warden of the Burning Gate, once in a long while" | "Said to lie in the Old Coil's belly, once in a long while" |
+
+**The mint** (`systems/gilded.js` `mintGilded`). A DFU weapon's own - `combat/enemyEquipment.js` `createWeapon`
+(ItemBuilder.CreateWeapon: its make's value, its span, its condition; no draw - its arrow arm alone rolls) - where the
+Hourlock keeps the gun's (`createThunderlock`), so its record and every gift already minted of it (the HOURS-FIRST post,
+migration 0094) are byte for byte what they were. Each a STATIC ROLL, as the Hourlock is: every line its record's, held
+exactly on the wire, no door alters it (section 2's list - the Reforge, the hone, the salvage, the item maker, the
+exalt, the curse, the heirloom, the temper, a socket, a technique; the audit walked every one of them with the real
+pieces). The item law moved with them: ITEM_LAW_VERSION 5, the account service's acct137 (TECH1's LAW_SERVICE), so a
+finding a law of 4 made against one - a piece found on a site that shipped ahead of its judge - is asked again.
+
+**Why these two.** Each answers its fight. The gate is Mehrunes Dagon's: the Oath is an Akaviri Dragonguard's blade
+(the Dai-Katana is the Akaviri's own), and Dragonfire is Akatosh's - the fire that sealed the gates - so it burns Daedra
+alone and none of them resists it (a fire-immune Daedra takes it whole: no element's share is taken). **AUDIT B1:** as
+first built it only BURST on the Daedra about a struck one, through the player door's foe records - and the gate's
+court, its Warden, his crystals and his host are the relay's bodies, no record of any door (`world/gateArena.js`, an
+empty dungeon; `dungeonContext.js` keeps them out of `foes`), as an Elite Gate's legion will be: in the fights it is
+named for it did nothing (twenty real blows of it on the Warden's stand-in, no burst). Now the STRUCK Daedra burns
+too, as Many Endings' echo strikes again (`lootPowers.js` `dragonfire` -> `again`): through its record where the world
+runs it, and OWED to the claim its blow sends where the relay does (`playerDoor.js` `oweFoe`, taken by `landOnBoss`,
+`landOnHost`, `landOnCrystal` - OPEN-HAND's path, the relay's caps deciding what lands); the burst on the others
+reaches only the foes the world runs. Of the Legion-Lord's host, by DFU's own groups, the Ward-Bearers and the Warden
+are Daedra (the Harriers, Imps, are humanoid; the Sappers, atronachs, none). The serpent is the sea's: the Sovereign is
+a sailor's saber, one hand and a shield, and its power is the undertow - the longer it holds a foe the harder it drags,
+and a foe it drowns gives the tide back.
+
+**The numbers - powerful, not overpowered.** AUDIT E6: section 3's method (each span's mean, the material's modifier)
+missed the Oath's own +15 Strength - `combat/formulas.js` `damageModifier` is a point of damage for every 5 over 50, +3
+a blow - which the Hourlock's Agility never touched. So the table is MEASURED now, the real `weaponAttackDamage` over
+20,000 rolls (the mean with its integer floors; before the hit roll, a critical and armour), Strength 50 before the
+weapon's own line:
+
+| Weapon | A landed blow | Beside it |
+|---|---|---|
+| A Daedric Dai-Katana with +40% damage alone (a Legendary at the band's top, no Strength line) | 22.4 | section 3's best of the melee |
+| **The Dragonfire Oath** | **25.4** at any foe (its Strength's +3); at a Daedra **+8.5** burnt again (a third of the blow, rounded a blow), and **8.5** to every other Daedra within 3 m where the world runs them | Earthshaker (a Legendary): a quarter of every blow to every foe within 3 m |
+| Sethrakul's Fang (Aetheric, Ebony Katana) | 9.5 x 1.3 + 4 = 16.35 (section 3's way) | the serpent's own set's weapon |
+| **The Sunken Sovereign** | **14.1** at a foe's first blow; **21.2** from its sixth on the same foe (+50%); 10% of each healed back | one hand - a shield beside it |
+
+So the Oath stands a Strength line over a Legendary dai-katana anywhere, and a third again at a Daedra - about 34 a
+blow at the gate's Warden and his Ward-Bearers, where the Hourlock lands 43.5 a shot at its 2.13 s cycle; the
+Sovereign never outhits a two-handed Legendary, and what it has is staying power: a shield, a leech, a heal at every
+kill, and a blow that grows on a foe that lasts. Like every power, each sleeps in a duel and wakes only for MY entity's
+worn weapon's own blows - and (AUDIT B3) a blow the Warden's ward turns answers nothing (`lootStrike` refuses a warded
+foe, as `lootBlow` already did: the strike is told before the court turns a melee swing).
+
+**Undertow, as it runs** (`lootPowers.js`, kind `'undertow'`): the stacks are the FOE's - a WeakMap keyed by the struck
+entity, `{ n, until, at }` - counted at the strike and read at the next blow (blow one +0%, blow six +50%). AUDIT B4:
+they hold for `seconds` (6) from the last landed blow and are let go after, as Flow's are - kept for good, a crystal
+of the next Reckoning (`gateCourt.js` keeps its stand-in for the whole fight) and a foe a quickload un-killed came back
+with their old stacks. AUDIT B2: the kill's heal is the felled foe's own record (`at`), never one slot for the last
+struck - a swing strikes every foe in its box before the hosts apply any, so a slot kept the second foe's and the
+first one's fall healed nothing.
+
+**The drops.** Each is its spoils' very LAST draw - after the technique pass, after everything the gate's and the
+serpent's spoils rolled before - so every spoils and hoard ever rolled is what it was for its seed: `rollDragonfireOath`
+at the end of `systems/gateSpoils.js` `rollSpoils`, `rollSunkenSovereign` at the end of `systems/serpentSpoils.js`
+`rollSerpentSpoils` (a ship that DEALT; one that stood draws nothing, as it draws no set piece, card or gem). One in a
+hundred each: a gate opens every two hours and a serpent rises every four, where the Hour - the Hourlock's one in fifty -
+comes a few times a week. Every pin that read "the last draw" moved with them, each saying so: WB5's roll, SET6's drop,
+LOOT4's seeded doors, LOOT2's Exalted, GEM2's and TECH1's (the Oath and the Sovereign set aside, as the technique is).
+AUDIT A1: on the gate's floor the Oath's picture is drawn LAST of all (`scenes/spoilsPool.js` `spoilsList`) - drawn in
+its place among the pieces it moved the ember's, the gold's, the card's and the gems' pictures off what the seed gave
+them (AUDIT CARDS-6 A8's law); it still leaves among the pieces, inside the glow's eight.
+
+**The look.** Named as an artifact is; its card the tier, its four lines, its power and its lore; its own codex row
+under the Hourlock's, unfound by its OWN hint (`hint` on the record, `lootCodex.js` `codexGilded`) - on the Reforge's
+Codex page and (AUDIT A5) on the Collections page too, which said its rows were the Reforge's and never showed the rung
+(GILDED1's gap, wider by two hints); the gold name, the breathing frame, the spoils' line, the banner and the rim, every
+one the rung's. The loot test character carries both, minted whole, after the Hourlock and its shot
+(`systems/testRoom.js`; LR1's count moved with it). Their words - names, powers, lore and hints - are English, as the
+Hourlock's are and as every record of the ladder's is (`lootRarity.js` 251 such, `aetheric.js` 97 on L10N4's ratchet):
+the ladder's records are routed as one, by the localization arc, never record by record.
+
+**What the audit left, and why.**
+- AUDIT A2: a gate list of the three pieces, a Regalia piece, the Oath and the card puts the gold pile ninth - past the
+  glow's eight (`render/spoilsGlow.js` SPOILS_GLOW_MAX), its line undrawn (7 lists in 20,000). The Oath is always
+  inside the eight; the gold pile's line is the least of them.
+- AUDIT A3: the wealth budget's spoils grant (`server-account/src/budget.js` `spoilsGrant`) is not sized for a 93,750
+  piece one fight in a hundred. The budget is a measure today (`enforce: false`), its numbers "a guess the measure exists
+  to replace", and loosening the grant for every claim to cover the Oath would loosen what it catches for all of them -
+  the measure is left to say what the drop is.
+- AUDIT A4: a build from before this one refuses a container or a lot holding either record whole (`systems/loot.js`
+  `validLootList` - a Gilded piece's marks are the shape's, as SERPENT-SET's were): the hosts read it as "from a newer
+  version" and keep it, nothing is lost, and the relay's world206 brings every client to the new build at once.
+
+**Not done, and why.** The gold IN THE HAND is the Hourlock's alone: its gold sprite and its gold Morrowind twin are
+baked from the gun's own committed art (section 5), and a DFU weapon's art is the player's ARENA2 - no gilded frame of
+it can be committed, and none can be eyed here without the data. So the Oath and the Sovereign are held, worn and
+listed in their make's own art; a gilding of the classic frames at load (the metal band, 0x70-0x7F, mapped to a gold
+ramp - `combat/fpsWeapon.js` `frameToColor32`'s dye seam) and of the Morrowind meshes is the next slice's, to be looked
+at against the player's own data.
+
+**The pins.** `test/gilded2_world.test.js` (8) - the records, the mint, the drops, the floor's pictures, Dragonfire (a
+relay body's burn owed, a warded blow nothing), Undertow (the window, a heal for each foe one swing fells) and the look;
+`test/auditcards5_ui.test.js` the Collections page's rows. `tools/mutants/gilded2.json`: 25, all dead (the law's version,
+the audit's own among them). GILDED1's own pins that read one record moved (`gilded1_gilded.test.js`'s record and codex,
+`loot10_codex.test.js`'s count), and GILDED1's mutant on the Hourlock's first line was re-aimed by content (its first
+three lines, which the Oath's and the Sovereign's first lines share in part).

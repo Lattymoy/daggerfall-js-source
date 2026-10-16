@@ -6,8 +6,10 @@ import { readFileSync } from 'node:fs';
 import {
   searchableKind, SEARCH_REACH, SEARCH_COOLDOWN_MINUTES, rollSearchOutcome, rollSearchLoot, pickSearchUndead,
   searchKey, markSearched, searchCooldownLeft, searchLedgerRecord, restoreSearchLedger, markPicked, isPicked,
-  searchLockValue, searchMessage, _resetSearchLedgerForTests, SEARCH_FOES_PER_PLAYER,
+  searchLockValue, searchMessage, _resetSearchLedgerForTests, SEARCH_FOES_PER_PLAYER, pickRosterFoe,
 } from '../src/systems/searchables.js';
+import { WATER_SPECIES } from '../src/characters/dungeonEnemies.js';
+import { ENEMY_BASICS } from '../src/characters/enemyBasics.js';
 import { DOOR_ACTIVATION_DISTANCE } from '../src/player/activate.js';
 import { ActionTextBox } from '../src/ui/actionText.js';
 import { capLootList, capFoeLoot, plainFoeLootRule, PLAIN_FOE_RARITY_WEIGHTS } from '../src/systems/foeLootCap.js';
@@ -245,4 +247,14 @@ test('ELITE-RARE: an elite\'s extra Rare is half a champion\'s blue at its level
     assert.ok(Math.abs(eliteRareChance(+lv) - w) < 0.001, `L${lv}: ${eliteRareChance(+lv)}`);
   }
   assert.match(readFileSync('src/systems/eliteFoes.js', 'utf8'), /if \(rolls\(\) < eliteRareChance\(lv\)\)/);
+});
+
+test('SLAUGHTER-BOX (FIELD BUGS 2026-10-15c, the Discord: "Random encounter from box - Slaughter fish"): a chest\'s or a crate\'s foe is never one of the roster\'s water species - it stands on the dry floor beside the box; a roster of swimmers alone wakes the grave\'s undead; the species are RDBLayout\'s three, the Aquatic ones of EnemyBasics, one home (mutants: the filter dropped; one species out of the set; the wild halls\' own copy back)', () => {
+  const drawn = new Set();
+  for (let r = 0; r < 1; r += 0.05) drawn.add(pickRosterFoe([0, 11, 41, 42], 5, () => r));
+  assert.deepEqual([...drawn], [0], 'a rat beside the crate, never the pool\'s fish, Dreugh or Lamia');
+  assert.equal(pickRosterFoe([11, 41, 42], 1, () => 0.999), 19, 'a roster of swimmers alone: the grave\'s undead');
+  assert.deepEqual([...WATER_SPECIES].sort((a, b) => a - b), [11, 41, 42]);
+  assert.deepEqual(Object.keys(ENEMY_BASICS).filter((k) => ENEMY_BASICS[k].behaviour === 'Aquatic').map(Number), [...WATER_SPECIES].sort((a, b) => a - b), 'the swimmers the motor knows are the layout\'s');
+  assert.doesNotMatch(readFileSync(new URL('../src/systems/wildDungeons.js', import.meta.url), 'utf8'), /new Set\(\[11, 41, 42\]\)/, 'the wild halls read the one home');
 });

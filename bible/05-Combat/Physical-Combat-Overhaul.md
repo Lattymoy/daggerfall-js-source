@@ -547,7 +547,13 @@ The law now (`systems/enchantments.js` `repairsObjectsTarget`, `POOL_WEAPON_MEND
 - **Which piece.** What is worn first, the most worn first (the lowest share of its condition left), then the pack's most
   worn; two at one share keep the pack's order. That is MEND-AIM's order for a repair kit (kurkku: "always repairing the
   most worn piece of equipment means fixing arrows or random loot you picked up most of the time"). It is one export now,
-  `mendOrder`, read by the kit's `repairKitTargets` and by Repairs Objects.
+  `mendOrder`, read by the kit's `repairKitTargets` and by Repairs Objects. MEND-TIERS (FIELD BUGS 2026-10-15d, Mac's
+  call): Repairs Objects reads it within three tiers (`mendTier`) - what is worn; then a worn piece that wears itself on
+  the tick's own round (Cast When Held's degrade, Item Deteriorates; `wearsItself`), which took every tick at +1 and -1
+  when it was the most worn and which MEND-STARVE (2026-10-14) had put behind the pack; then the pack. The kit keeps
+  the two. While such a piece is below its condition the pack waits, and Cast When Held wears on every tick's round
+  out of rest and an all-the-time Item Deteriorates on every one, so while one is worn nothing carried is mended
+  (`01-Overview/Field-Bugs-2026-10-15d.md`).
 - **Never what a smith refuses** as not repairable (the template's `isNotRepairable`, `repairService.js`
   repairRefusal's). An enchanted piece mends only under AllowMagicRepairs, which is DFU's gate (on by default and online,
   DISC22-A).

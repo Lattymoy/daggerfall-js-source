@@ -400,7 +400,13 @@ receipt's carrier); `scenes/dungeonContext.js` and `scenes/worldModes.js` NO DUE
   takeWildDeath): the killer's worn piece first (`wildPickOf` - the piece the offer showed, else none), then half the
   purse and the cart's coin, then the bag's and the cart's drop BY WORTH (a bag of junk ahead of them kept the gold and
   the valuables), fitted to one remains, every record within `WILD_RECORD_BYTES_MAX`, the rest put back where it came
-  from; the record's lit light follows its piece. The service answers what it took as the game finds it again (`took`,
+  from; the record's lit light follows its piece. CART-AWAY (FIELD BUGS 2026-10-15d; Mac, 2026-10-15: "if its parked
+  outside the zone nothing should be lost" - `11-Multiplayer/Wild-Zone.md` section 4): the cart's coin and its drop only
+  while the wagon is with the fallen. The zone's mask is the client's, so the fallen's own tab says its wagon is away
+  (`cart` 0 - `systems/wildCart.js` wildCartAway), and the service takes the word only where the record it keeps says
+  the wagon is parked, stabled or none by its mode (`wildDropLaw.js:"export function wildCartMayBeAway"`) - never a
+  record that drives it, leads it or stands it beside them; a seizure takes no word, and a tab that says none drops the
+  cart as before. The service answers what it took as the game finds it again (`took`,
   `gold` - wildTookOf), and the fallen's game takes out EXACTLY that (`wildTakeTook` - it ran the law again without the
   ledger's word, and took what the service kept). The fallen's own act at its tab's `at` (`realmGoldAct`, its answer
   needed: checkpointed as it will rise, the service asked, the room named), or its killer's SEIZURE once
@@ -448,7 +454,7 @@ receipt's carrier); `scenes/dungeonContext.js` and `scenes/worldModes.js` NO DUE
   goes only to its killer, who can never have it from a held record.
 - **THE FOUR HOSTS.** `scenes/world.js` WIRED (the zone word, the blows, the referee's readout, the fall, the drop, the
   deposit, the seizure, the escrow - the killer's collect carried, the fallen's piece taken back, both on the zone's
-  frame, `world.js:"const wildEscrowFrame = () =>"`); `scenes/dungeonContext.js` (the zone's halls) WIRED through world.js's own `wildStrike` and
+  frame, `wildEscrowHost.js:"const wildEscrowFrame = () =>"`); `scenes/dungeonContext.js` (the zone's halls) WIRED through world.js's own `wildStrike` and
   `wildSpellOut`, refereed alike, its pool holding the remains, its ghost leaving once its deposit has gone; `scenes/
   worldModes.js` (a building) no fight - the zone word is 0 indoors - its pool holding the remains;
   `scenes/exterior.js`, the offline fixed city, NOT WIRED on purpose: the zone is online's alone.
@@ -531,6 +537,9 @@ Mac, on "Equipped items Disappear after looting in PvP zone" (`01-Overview/Field
 - A crafted piece the fallen takes back from its own remains is written down as its copy: it wears it, and never trades
   it (the craft's key cannot be minted afresh as an id is).
 - A pick at a piece the fallen no longer wears (it changed between the offer and the receipt) takes none.
+- Where a parked wagon stands (CART-AWAY) is the fallen's word, held to its record's mode alone: the wagon's record is
+  the player's own, so a client that writes its wagon parked off the zone keeps a cart it drove in, and rises with that
+  record. A seizure, its carrier holding neither the record nor the mask, takes the cart wherever it stood.
 - A relay before world185 knows no `wref`, no `zone` and no `dref`: a client meets it fighting nobody and duelling
   nobody. A client from before world185 still open in a tab sends the zone's retired words (WILD1's `result` and
   `gave`) and the duel's own resolve, which the new relay refuses - it is closed for them until it reloads. The deploy

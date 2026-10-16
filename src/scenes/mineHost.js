@@ -87,6 +87,11 @@ export const VEIN_SPREAD = 0.45;
 /** A boulder's loose stone at its foot: this many Lodestone lumps at this size. */
 export const STONE_FLATS = 3;
 export const STONE_SCALE = 1.8;
+/** BOULDER-GLINT (FIELD BUGS 2026-10-15c, "Boulder's glint offset is way off"): a boulder's aim point - where the act's
+ *  face and its glint stand - over its loose stones, which are the boulder the player sees: the stones' scale against a
+ *  vein's 0.5 over its VEIN_SCALE ore. It was half the ROCK's height (to 1.2 m), standing the face a third of the screen
+ *  over the stones, in the air. The look still meets the node up to its glow's top (gatherHost findTarget). */
+export const BOULDER_LIFT = 0.4;
 /** How far off a piece's box a node's flats stand (m), and how far a vein looks for a stone tile (tiles). */
 export const ROCK_OFFSET = 0.4;
 /** ROCK-SHARE: two nodes at a rock field stand at least this far apart (m) - on one piece's different sides, or two. */
@@ -230,7 +235,7 @@ export function standMineNodes({ px, py, day, climate, region = null, confirmed 
     if (!claimed) continue;
     const { rock, foot: [fx, fz] } = claimed;
     const g = groundAt(samples, fx, fz);
-    stones.push({ key: nodeKey({ kind: 'boulder', x: px, y: py, day, slot: b.slot }), what: 'boulder', slot: b.slot, tier: b.tier, material: b.material, local: [fx, g, fz], rock, lift: Math.min(1.2, Math.max(0.4, (rock[4] - g) / 2)) });
+    stones.push({ key: nodeKey({ kind: 'boulder', x: px, y: py, day, slot: b.slot }), what: 'boulder', slot: b.slot, tier: b.tier, material: b.material, local: [fx, g, fz], rock, lift: BOULDER_LIFT });
   }
   if (VEIN_TABLES[climate]) {
     for (const v of veins({ x: px, y: py, day, climate, region, confirmed, surveyed })) {

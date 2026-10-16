@@ -11,6 +11,7 @@ import { setPref, _resetForTests } from '../src/systems/uiPrefs.js';
 import * as LR from '../src/systems/lootRarity.js';
 import * as CX from '../src/systems/lootCodex.js';
 import { createWeapon } from '../src/combat/enemyEquipment.js';
+import { GILDED_RECORDS, DRAGONFIRE_OATH, mintGilded } from '../src/systems/gilded.js';   // AUDIT WORLD-REWARDS A5: the Gilded rung's rows
 import { drawCollectionsPage, collectionsPageShown, collectionParts, resetCollectionsPage, setCollectionsPart, disarmCollectionsPage } from '../src/ui/collectionsPage.js';
 import { drawCardsPart, resetCardsPart, cardCanvas, _clearCardFacesForTests, copiesAllowed, TILE_H } from '../src/ui/cardBinderPage.js';
 import { giveBinder, binderOf, mintIliacCard } from '../src/systems/iliacItems.js';
@@ -55,11 +56,11 @@ test('AUDIT CARDS-5 D12/D14: the Codex part - every Legendary row, found and not
   assert.equal(all(p.root, (c) => c.classList?.contains('coll-parts')).length, 0, 'one part: no switch');
   const rows = CX.codexRows();
   const lines = all(p.root, (c) => c.classList?.contains('codex-line'));
-  assert.equal(lines.length, rows.length, 'every Legendary a row');
+  assert.equal(lines.length, rows.length + GILDED_RECORDS.length, 'every Legendary a row - PIN MOVED (AUDIT WORLD-REWARDS A5): and every Gilded record one, over them');
   const found = lines.find((l) => l.dataset.record === 'wyrmbane');
   assert.ok(found.classList.contains('found'));
   assert.match(found.textContent, /found on day/);
-  const unfound = lines.find((l) => !l.classList.contains('found'));
+  const unfound = lines.find((l) => !l.classList.contains('found') && rows.some((x) => x.id === l.dataset.record));   // a Legendary's
   assert.equal(unfound.children[0].textContent, 'Unfound', 'never its name');
   const n = CX.codexCount();
   assert.ok(all(p.root, (c) => c.tag === 'h4').some((h) => h.textContent === `Legendaries - ${n.legendary} of ${n.legendaries} found`));
@@ -77,6 +78,21 @@ test('AUDIT CARDS-5 D12/D14: the Codex part - every Legendary row, found and not
   assert.equal(all(p.root, (c) => c.classList?.contains('codex-whole')).length, 0, 'pressed again: closed');
   all(p.root, (c) => c.dataset?.record === unfound.dataset.record)[0].onclick();
   assert.deepEqual(all(p.root, (c) => c.classList?.contains('codex-whole'))[0].children.map((c) => c.textContent).slice(0, 2), [`Legendary · ${unfound.children[1].textContent.split(' · ')[0]}`, 'Not yet found']);
+  // AUDIT WORLD-REWARDS A5: the Gilded rung first, as the Reforge's Codex page lists it - each record a row, unfound by its
+  // OWN hint; one found opens whole in the Reforge's own lines, its tier's word first
+  assert.ok(all(p.root, (c) => c.tag === 'h4').some((h) => h.textContent === `Gilded - ${n.gilded} of ${n.gildeds} found`));
+  const gildedRows = all(p.root, (c) => c.classList?.contains('codex-line')).slice(0, GILDED_RECORDS.length);
+  assert.deepEqual(gildedRows.map((l) => l.dataset.record), GILDED_RECORDS.map((g) => g.id), 'the rung first, in its order');
+  assert.deepEqual(gildedRows.map((l) => l.children[1].textContent), GILDED_RECORDS.map((g) => `${g.group} · ${CX.codexGilded().find((x) => x.id === g.id).hint}`), 'each unfound by its own hint');
+  CX.noteFind(mintGilded(DRAGONFIRE_OATH), { quiet: true });
+  p.draw();
+  const oath = all(p.root, (c) => c.dataset?.record === DRAGONFIRE_OATH.id)[0];
+  assert.ok(oath.classList.contains('found') && oath.dataset.rarity === 'gilded');
+  oath.onclick();
+  const gw = all(p.root, (c) => c.classList?.contains('codex-whole'))[0].children.map((c) => c.textContent);
+  assert.equal(gw[0], `Gilded · ${DRAGONFIRE_OATH.group}`);
+  assert.ok(gw.includes(LR.powerLine(DRAGONFIRE_OATH.power)) && gw.includes(DRAGONFIRE_OATH.lore) && gw.length >= 4 + DRAGONFIRE_OATH.affixes.length - 1, 'its lines, its power, its lore');
+  oath.onclick();
   // a binder: two parts, the switch; a landing on cards; the reset
   giveBinder(me);
   assert.deepEqual(collectionParts(me).map(([id]) => id), ['codex', 'cards']);

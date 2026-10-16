@@ -356,6 +356,12 @@ point the player is looking at is the point they struck - with a
 little scatter so a flurry fans out. Enhanced only: the enhanced HUD
 registers the hook; the classic path never has one.
 
+ROSE-SEEN (`01-Overview/Field-Bugs-2026-10-15e.md`): a follow-up blow -
+Open Hand's second, Many Endings' echo - runs no formula, so the seam
+never heard it and the Rose looked like nothing. It raises its own
+number through `showFollowUp`, tagged with the power's name, under the
+same enhanced-only gate.
+
 
 
 ## CM1-CM11 THE CLASSIC MODALS, AND THE ONE INPUT BOX (2026-09-15 / 2026-09-21)
@@ -18825,8 +18831,12 @@ Fifteen items in five groups, each answered on both skins where both have the sc
   case in the question needs no second binding: Jump and Crouch already raise and lower a swimming or levitating body
   (LevitateMotor.cs:86-89; every motor host passes the pair). So the page says it - Float up and Float down carry "Jump
   (SPACE) rises too while you swim or levitate", in the live keys - and giving Jump's key to Float up is answered "you
-  need neither". The conflict itself is highlighted where it is decided: the replace question stands in the sticky head
-  over the list it no longer replaces, the row the key would go to edged in brass and the row that holds it in red.
+  need neither". The conflict itself is highlighted where it is decided: KEY-IN-USE-TIP (2026-10-15) moved the replace
+  question from the sticky head into a viewport-fitted modal tooltip for the binding being changed. It lives in the
+  browser's top layer, outside either Settings scrollport: its no-anchor fallback centres in the viewport, and CSS
+  anchors keep it beside the binding and flip it above or below to fit where they exist. Its first answer takes focus,
+  the page behind is inert, and the binding takes focus back after the answer. The row the key would go to is edged in
+  brass and the row that holds it in red.
 - **S - and then: "So you wont add multiple key bindings even when asked? I dont care if it goes against daggerfall."**
   So it is added, and recorded as a departure. The held-key question has a third answer, USE FOR BOTH (a button on the
   enhanced page, B in the classic grid and its ADVANCED popup), offered wherever every holder holds this very key: the
@@ -18838,8 +18848,9 @@ Fifteen items in five groups, each answered on both skins where both have the sc
   now finds only the clash no press resolves - a combo against its own modifier bound bare - still red or blue and still
   blocking; a share is green, and each of its rows names what else the key does. Measured in a browser on the way:
   the page's key-state colours had never drawn on the main menu's Settings (the door's `.shell .act` outranked them, so
-  even DFU's red clash was a plain key), and the sticky head the question stands in was a 35% wash with the rows
-  printed through it - both fixed (`enhancedStyle.js`, the UXB1-S rules).
+  even DFU's red clash was a plain key), and the sticky head the question stood in was a 35% wash with the rows
+  printed through it - both fixed (`enhancedStyle.js`, the UXB1-S rules; the question later moved beside its row at
+  KEY-IN-USE-TIP).
 - **E - Sync from server**: `systems/onlineSync.js`, a card under the Online pane's rules. THERE IS NO HOST TO ASK: a relay
   serves the wire and /health and publishes no rules, because the rules are the online lane's - this build's, the same on
   every server. So the sync copies the lane into the offline stores (every forced pref, DFU setting and room mod key,

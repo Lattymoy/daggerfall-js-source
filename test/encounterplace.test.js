@@ -18,7 +18,7 @@
 // dungeon rest spawn needs. RE1 carries the CALL SITES' arguments as
 // data, because the three encounter arms do not pass the same things:
 // the dungeon one alone clears lineOfSightCheck.
-import { noticeChance } from '../src/systems/wildAlert.js';   // WILD-ALERT: the wanderer's first check
+import { noticeChance, noticeRoll } from '../src/systems/wildAlert.js';   // WILD-ALERT: the wanderer's first check
 import { SIGHT_RADIUS } from '../src/characters/enemyMotor.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -154,7 +154,8 @@ test('AUDIT OW5b E1: a wanderer PLACED beside the traveller asks the walking jou
       ambushNight: () => false,   // AUDIT REST-PARTY A1: a night running is told of the stand (none here)
       campFeet: () => [], campPasses: (env) => [env],   // CAMP-ROLL (RE-AIMED): no camp - the one pass, DFU's (test/camproll.test.js runs the camp's)
       // WILD-ALERT: the traveller's pace and the roll
-      wildTravelling: () => fast, _inAnyLocationRect: () => false, noticeChance, SIGHT_RADIUS, wildStealth: () => 50,
+      wildTravelling: () => fast, _inAnyLocationRect: () => false, noticeRoll, SIGHT_RADIUS, wildStealth: () => 50,
+      concealmentFlags: () => ({ invisible: false, blending: false, shade: false }), playerEntity: {},   // INVIS-SWING: the traveller unconcealed
       wildFoes: { alert: (f) => wild.alerted.push(f.id), checked: (f) => wild.checked.push(f.id) },
       Math: { ...Math, random: () => die, hypot: Math.hypot, atan2: Math.atan2 }, performance: { now: () => 0 },
     };

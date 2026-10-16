@@ -421,6 +421,26 @@
     "why": "the throats' planks at 1.6 cm a texel, not her planking's 3.1"
   },
   {
+    "name": "AUDIT-GALLEON-R11-dark-seamed",
+    "file": "src/world/galleonArt.js",
+    "old": "planks(img, { ph: 8, lenMin: 20, lenMax: 44, seed: 0xd4b,",
+    "new": "planks(img, { ph: 7, lenMin: 20, lenMax: 44, seed: 0xd4b,",
+    "tests": [
+      "test/auditgalleon_prefab.test.js"
+    ],
+    "why": "planks 7 rows high: 64 is no multiple, a seam at the wrap"
+  },
+  {
+    "name": "AUDIT-GALLEON-R12-a-texel-misstated",
+    "file": "src/world/galleonArt.js",
+    "old": "a shutter's face 1.4 by 2.4",
+    "new": "a shutter's face 1.4 by 2.5",
+    "tests": [
+      "test/auditgalleon_prefab.test.js"
+    ],
+    "why": "a figure the comment gives that the measure does not"
+  },
+  {
     "name": "AUDIT-GALLEON-R14-cut-only-the-livery",
     "file": "src/world/galleonModel.js",
     "old": "    for (const piece of slabs([a, b, cc], offset[1], cuts)) {",

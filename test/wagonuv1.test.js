@@ -8,11 +8,10 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-import { WAGON_SOURCES, TEX, WAGON_TILE, CARAVAN_SIDE_WINDOW, CARAVAN_SKIRT_Y, CARAVAN_CORNICE_Y, SIDE_Y0, SIDE_Y1, sideRow } from '../src/world/wagonArt.js';
+import { wagonArt, TEX, WAGON_TILE, CARAVAN_SIDE_WINDOW, CARAVAN_SKIRT_Y, CARAVAN_CORNICE_Y, SIDE_Y0, SIDE_Y1, sideRow } from '../src/world/wagonArt.js';
 import { wagonGeometry, buildBakedWagonParts, pitchedPoint, MEASURED, LIFT } from '../src/world/wagonModels.js';
 import { planarUv } from '../src/world/galleonMesh.js';
-import { classicPictures, COMPOSE } from '../src/world/classicArt.js';
-import { fakeClassicRgba } from './classicArtFake.mjs';
+import { C } from '../src/world/galleonArt.js';
 
 const bakeOf = (kind) => JSON.parse(readFileSync(new URL(`../src/assets/wagons/${kind}.json`, import.meta.url), 'utf8'));
 const keyOf = (rec) => Object.keys(TEX).find((k) => TEX[k] === rec);
@@ -79,13 +78,11 @@ function uvAt(g, rec, p) {
 }
 /** A livery row's height over the ground (sideRow undone: SIDE_Y1 row 0, SIDE_Y0 row 63). */
 const rowY = (row) => SIDE_Y1 - (row / 63) * (SIDE_Y1 - SIDE_Y0);
-/** A picture coordinate's texel in an `n`-texel picture (64: the layout's - world/wagonArt.js). */
-const texelAt = (uv, n = 64) => [((Math.floor(uv[0] * n) % n) + n) % n, Math.min(n - 1, Math.max(0, Math.floor((1 - uv[1]) * n)))];
+const texelAt = (uv) => [((Math.floor(uv[0] * 64) % 64) + 64) % 64, Math.min(63, Math.max(0, Math.floor((1 - uv[1]) * 64)))];
 
-test('WAGON-UV THE CARAVAN\'S WINDOWS CENTRED: along each side the two windows\' glass stands the same each way from the body\'s middle, each in the middle of its half; and up the side the window stands as far under the cornice\'s height as over the skirt\'s, its glass inside it (DF-ART: Daggerfall\'s window laid in its layout) (from play: "the windows on the wagon arent centered properly"; mutants: the side laid from the axle again, the half texel of the window\'s middle dropped, the window back up under the cornice)', async () => {
+test('WAGON-UV THE CARAVAN\'S WINDOWS CENTRED: along each side the two windows\' glass stands the same each way from the body\'s middle, each in the middle of its half; and up the side the window stands as far under the cornice as over the skirt (from play: "the windows on the wagon arent centered properly"; mutants: the side laid from the axle again, the half texel of the window\'s middle dropped, the window back up under the cornice)', () => {
   const body = wagonGeometry(bakeOf('caravan')).statics;
-  const side = new Map(await classicPictures({ [TEX.caravanSide]: WAGON_SOURCES[TEX.caravanSide] }, fakeClassicRgba())).get(TEX.caravanSide);
-  assert.equal(side.width, COMPOSE);
+  const side = new Map(wagonArt()).get(TEX.caravanSide);
   const M = MEASURED.caravan, rear = M.rearZ, front = M.bedZ[1], mid = (rear + front) / 2, half = (front - rear) / 2;
   const { y0, y1 } = CARAVAN_SIDE_WINDOW;
   const paneY = rowY((y0 + y1) / 2 - 3) - LIFT;   // a pane's height, clear of the lead across the window's middle
@@ -94,8 +91,8 @@ test('WAGON-UV THE CARAVAN\'S WINDOWS CENTRED: along each side the two windows\'
     for (let z = rear + 0.0125; z < front - 0.01; z += 0.005) {
       const uv = uvAt(body, TEX.caravanSide, [s * M.sideX, paneY, z]);
       assert.ok(uv, `the side at ${s} ${z.toFixed(3)}`);
-      const [x, y] = texelAt(uv, COMPOSE);
-      if (side.data[(y * COMPOSE + x) * 4 + 3] !== 0) continue;
+      const [x, y] = texelAt(uv);
+      if (side.data[(y * 64 + x) * 4 + 3] !== 0) continue;
       const last = runs.at(-1);
       if (last && z - last[1] < 0.1) last[1] = z; else runs.push([z, z]);   // the lead down a window's middle splits none
     }
@@ -104,13 +101,13 @@ test('WAGON-UV THE CARAVAN\'S WINDOWS CENTRED: along each side the two windows\'
     assert.ok(Math.abs(a + b - 2 * mid) < 0.015, `side ${s}: the same each way from the middle (${(a - mid).toFixed(3)}, ${(b - mid).toFixed(3)})`);
     for (const [c, want] of [[a, rear + half / 2], [b, mid + half / 2]]) assert.ok(Math.abs(c - want) < 0.02, `side ${s}: a window in the middle of its half (${c.toFixed(3)}, ${want.toFixed(3)})`);
   }
-  // up the side: the window's rows in the layout as many under the cornice's row as over the skirt's (or one more: 45
-  // rows, 26 of window), and its glass in the picture inside those rows
-  const cornice = sideRow(CARAVAN_CORNICE_Y), skirt = sideRow(CARAVAN_SKIRT_Y), k = COMPOSE / 64;
-  const over = y0 - cornice - 1, under = skirt - y1 - 1;
+  // up the side: the gilt lines down a column through the window's frame - the cornice's, the frame's top and foot,
+  // the skirt's - and the boards between, as many rows over the window as under it (or one more: 45 rows, 26 of window)
+  const x = CARAVAN_SIDE_WINDOW.x0 + 3;
+  const gilt = [];
+  for (let y = 0; y < 64; y++) { const i = (y * 64 + x) * 4; if (C.gilt.every((v, k) => side.data[i + k] === v)) gilt.push(y); }
+  assert.deepEqual(gilt, [sideRow(CARAVAN_CORNICE_Y), y0, y1, sideRow(CARAVAN_SKIRT_Y)], 'the cornice, the frame and the skirt, in the picture');
+  const over = y0 - gilt[0] - 1, under = gilt[3] - y1 - 1;
   assert.ok(Math.abs(over - under) <= 1, `centred between them: ${over} rows over the window, ${under} under`);
-  const glassRows = [];
-  for (let y = 0; y < COMPOSE; y++) for (let x = 0; x < COMPOSE; x++) if (side.data[(y * COMPOSE + x) * 4 + 3] === 0) { glassRows.push(y); break; }
-  assert.ok(glassRows.length && glassRows[0] >= y0 * k && glassRows.at(-1) < (y1 + 1) * k, `its glass inside the window's rows (${glassRows[0]}-${glassRows.at(-1)})`);
 });
 

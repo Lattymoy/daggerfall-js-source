@@ -14,11 +14,8 @@ import { YARD_PAD_M, YARD_TURNS } from '../src/world/merchantYardSites.js';
 import { NAV_CELL, NAV_CELLS_PER_BLOCK } from '../src/world/cityNavigation.js';
 import { buildShipyardModel, SHIPYARD, shipsSignBox, hullBox, noticesBox, crewSignBox } from '../src/world/shipyardModel.js';
 import { buildLighthouseModel, LIGHTHOUSE, LIGHTHOUSE_POINTS, GALLERY_Y, guardBand, doorBox, hatchBox, lanternBox, towerR } from '../src/world/lighthouseModel.js';
-import { PORT_SOURCES, PORT_ARCHIVE, PORT_REC } from '../src/world/portArt.js';
-import { YARD_ARCHIVE, YARD_REC, YARD_SOURCES, wordCells, SIGN_PAINT } from '../src/world/merchantYardArt.js';
-import { DF, classicPictures } from '../src/world/classicArt.js';
-import { setTextureDeriveContext } from '../src/systems/textureReplacement.js';
-import { fakeClassicRgba } from './classicArtFake.mjs';
+import { portArt, portSignArt, PORT_ARCHIVE, PORT_REC } from '../src/world/portArt.js';
+import { YARD_ARCHIVE, YARD_REC } from '../src/world/merchantYardArt.js';
 import {
   createPortHost, folkOf, peopleOf, feetInPort, beamPuffs, PORT_REACH, PORT_MARK_LIFT, LAMP_RANGE, OFFICE_LAMP_RANGE, BEAM_PUFFS, BEAM_PERIOD_S,
   BEAM_SEEN_M, SHIPYARD_ROWS, CREW_ROWS, CLIMB_ROWS, DOWN_ROWS, PORT_TEXT,
@@ -35,8 +32,6 @@ function ground(W, H, { blockedAt = () => false, roadAt = () => false } = {}) {
   for (let gy = 0; gy < H; gy++) for (let gx = 0; gx < W; gx++) { blocked[gy * W + gx] = blockedAt(gx, gy) ? 1 : 0; road[gy * W + gx] = roadAt(gx, gy) ? 1 : 0; }
   return { width: W, height: H, blocked, road };
 }
-// DF-ART: the port's pictures are read from the player's ARENA2 - here the tests' stand-in (test/classicArtFake.mjs)
-setTextureDeriveContext({ classicRgba: fakeClassicRgba() });
 const cellsOf = (s) => { const out = []; for (let gy = s.gy; gy < s.gy + s.nz; gy++) for (let gx = s.gx; gx < s.gx + s.nx; gx++) out.push([gx, gy]); return out; };
 /** A town by the sea: W x H cells, the sea east of column `shore` - the town's own (`townSea`) - a road across at row `roadRow`. */
 function seaside({ W = 128, H = 96, shore = 104, roadRow = 48 } = {}) {
@@ -177,26 +172,19 @@ test('SHIPYARDS THE MODELS: the shipyard and the lighthouse under the port\'s ow
   assert.ok(lanternBox()[1] === GALLERY_Y);
 });
 
-test('SHIPYARDS THE ART (DF-ART, Mac: "use daggerfall textures instead of AI generated"): the port\'s own archive - the yards\' timber, straw, earth and iron at their own records and from the same Daggerfall records, the stone, whitewash, slate, glass, rope, canvas, tar, sawdust, hull, cobbles, door, notices and brass besides, each a Daggerfall record read from the player\'s own ARENA2; the two boards Daggerfall\'s planks with SHIPS and CREW lettered on them (Mac: "Bring back the sign text"); and the beacon\'s flame and embers (BEACON-TOWER, PIN MOVED: the red band and the copper gone with the tower that wore them)', async () => {
-  for (const [k, rec] of Object.entries(YARD_REC)) if (k in PORT_REC) {
-    assert.equal(PORT_REC[k], rec, `${k} where the yards keep it`);
-    assert.deepEqual(PORT_SOURCES[rec], YARD_SOURCES[rec], `${k} the yards' own Daggerfall record`);
-  }
+test('SHIPYARDS THE ART: the port\'s own archive - the yards\' timber, straw, earth and iron at their own records, the stone, whitewash, slate, glass, rope, canvas, tar, sawdust, hull, cobbles, door, notices and brass besides, the two boards (an anchor and SHIPS, a coil and CREW), and the beacon\'s flame and embers (BEACON-TOWER, PIN MOVED: the red band and the copper gone with the tower that wore them)', () => {
+  const art = new Map(portArt());
+  for (const [k, rec] of Object.entries(YARD_REC)) if (k in PORT_REC) assert.equal(PORT_REC[k], rec, `${k} where the yards keep it`);
   assert.notEqual(PORT_ARCHIVE, YARD_ARCHIVE);
-  const art = new Map(await classicPictures(PORT_SOURCES, fakeClassicRgba()));
   for (const rec of Object.values(PORT_REC)) {
     const a = art.get(rec);
     assert.ok(a, `record ${rec}`);
-    assert.equal(a.data.length, a.width * a.height * 4);
+    assert.equal(a.colors.length, a.width * a.height * 4);
   }
   assert.equal(art.size, Object.keys(PORT_REC).length);
-  for (const [rec, place] of [[PORT_REC.signShips, 'shipyard'], [PORT_REC.signCrew, 'crewhall']]) {
-    const img = art.get(rec), cells = wordCells(PORT_PLACES[place].sign);
-    assert.deepEqual([img.width, img.height], [224, 96], `${place}: the yards' board`);
-    for (const [x, y] of cells) assert.deepEqual([...img.data.slice((y * img.width + x) * 4, (y * img.width + x) * 4 + 3)], [...SIGN_PAINT], `${place}: ${PORT_PLACES[place].sign} lettered on it`);
-  }
-  assert.deepEqual([PORT_PLACES.shipyard.sign, PORT_PLACES.crewhall.sign], ['SHIPS', 'CREW']);
-  assert.deepEqual([PORT_SOURCES[PORT_REC.hull], PORT_SOURCES[PORT_REC.canvas], PORT_SOURCES[PORT_REC.rope], PORT_SOURCES[PORT_REC.door]], [DF.hullPlanks, DF.sailcloth, DF.rope, DF.door], 'the hull, its canvas, rope and door Come Sail Away\'s');
+  assert.deepEqual([art.get(PORT_REC.signShips).width, art.get(PORT_REC.signShips).height], [224, 96]);
+  assert.notDeepEqual([...portSignArt('shipyard').colors], [...portSignArt('crewhall').colors], 'two boards');
+  assert.deepEqual([...portSignArt('shipyard').colors], [...portSignArt('shipyard').colors], 'the same board every time');
 });
 
 // ── the pool ───────────────────────────────────────────────────────────────────────────────────────────────────────

@@ -66,7 +66,7 @@
 
 import {
   ROLL_FACTIONS, ROLL_CLAIM_MS, ROLL_RETRY_MS, ROLL_RETRY_MAX_MS, rollDeltasOf, rollAdopt, rollMembersKey, rollMembersOf, rollRep, rollKeptOf,
-  rollBookCap, rollSeatsOf, ROLL_SEATS_MS,
+  rollBookCap, rollSeatsOf, ROLL_SEATS_MS, ROLL_BOOK_RANK_MAX, rollPromoteCeiling, rollPaceWait,   // ROLL-PACE
 } from './npcChapterLaw.js';
 import { setReputation } from '../systems/factionRep.js';
 
@@ -155,6 +155,8 @@ export function createRollTracker({
   let stoppedLease = null;
   /** @type {{ f: number, region: number, seat: string }[] | null} CHAP4b: the character's seats, as the Roll last said */
   let seats = null;
+  /** @type {Map<number, number>} ROLL-PACE: when the Roll saw each membership begin (its view's `members[].since`) */
+  let sinces = new Map();
 
   const fail = (/** @type {string} */ error, /** @type {string | null} */ ls = null) => {
     if (ROLL_STOPS.includes(error)) { stopped = error; stoppedLease = ls; onStop(error); return; }
@@ -168,6 +170,7 @@ export function createRollTracker({
     base = a.base;
     keep({ seq: roll.seq, factions: a.base });
     heldKey = rollMembersKey(membersOf(roll.members));
+    sinces = new Map((Array.isArray(roll.members) ? roll.members : []).filter((m) => Number.isFinite(m?.since)).map((m) => [m.f, m.since]));   // ROLL-PACE
     wait = ROLL_RETRY_MS;
     nextAt = now();
     // CHAP4b: the book held at 7, and the seats kept - each said
@@ -252,5 +255,19 @@ export function createRollTracker({
     get stopped() { return stopped; },
     /** CHAP4b: the character's seats, `[{ f, region, seat }]` - none before the Roll's first word. */
     get seats() { return seats ?? []; },
+    /** ROLL-PACE: the Roll's own standing with faction `f` - its reputation as last adopted and when it saw the membership
+     *  begin (null: not one it has seen) - or null before its first word. */
+    standing(/** @type {number} */ f) { return base ? { rep: base[f] ?? 0, since: sinces.get(f) ?? null } : null; },
   };
+}
+
+/** ROLL-PACE: what the guild halls read of the Roll for faction `f` (scenes/worldModes.js openGuildService, through the
+ *  host's `rollPace`): null offline, or with no Roll to read (none made, or a refusal ended it) - DFU's review whole;
+ *  else the book's ceiling, the highest rank a review may promote to now, and the days the pace still holds a rank.
+ * @param {{ stopped: string | null, standing: (f: number) => { rep: number, since: number | null } | null } | null} tracker
+ * @param {number} f @param {number} nowS */
+export function rollPaceOf(tracker, f, nowS) {
+  if (!tracker || tracker.stopped) return null;
+  const standing = tracker.standing(f);
+  return { book: ROLL_BOOK_RANK_MAX, ceiling: rollPromoteCeiling(standing, nowS), wait: (/** @type {number} */ rank) => rollPaceWait(standing, nowS, rank) };
 }

@@ -810,7 +810,7 @@ export function runSurvivalMinutes(entity, from, to, env, deps) {
   // the host's weather, which its window re-reads every few minutes.
   const jump = end - start > 1;
   const sky = deps.skyFollows && jump ? { ...env } : null;
-  if (sky && !env.resting && end - start > ROAD_MINUTES) Object.assign(sky, { weather: 'sunny', byFire: false, swimming: false, submerged: false, wading: false });
+  if (sky && !env.resting && end - start > ROAD_MINUTES) Object.assign(sky, { weather: 'sunny', falling: null, byFire: false, swimming: false, submerged: false, wading: false });
   const sinks = deps.sinks ?? {};
   // AUDIT C&C N2/H1: A JUMP NEVER EMPTIES THE POOL. In Hard every replayed minute drained the live pool, and at nothing
   // the host's collapse fired from inside the replay - a nested hour and a box each time: a three-day fast travel

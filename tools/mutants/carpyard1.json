@@ -81,14 +81,31 @@
     ]
   },
   {
-    "name": "CARP-YARD-the-stables-board",
+    "name": "CARP-YARD-the-saw-over-the-word",
     "file": "src/world/merchantYardArt.js",
-    "old": "  [YARD_REC.signCarpenter]: signSource(YARD_KINDS.carpenter.sign, DF.toolsSign),",
-    "new": "  [YARD_REC.signCarpenter]: signSource(YARD_KINDS.stable.sign),",
+    "old": "export const SAW_BLADE = Object.freeze({ x0: 28, x1: 78, back: 38, heelFoot: 60, toeFoot: 51, teeth: 3 });",
+    "new": "export const SAW_BLADE = Object.freeze({ x0: 28, x1: 96, back: 38, heelFoot: 60, toeFoot: 51, teeth: 3 });",
     "tests": [
       "test/carpyard1.test.js"
-    ],
-    "why": "DF-ART (re-aimed: the joinery's board Daggerfall's planks, its shop sign and JOINERY): the stable's board in its place"
+    ]
+  },
+  {
+    "name": "CARP-YARD-a-letter-lost",
+    "file": "src/world/merchantYardArt.js",
+    "old": "  J: ['..###', '....#', '....#', '....#', '#...#', '#...#', '.###.'],   // CARP-YARD: JOINERY's\n",
+    "new": "",
+    "tests": [
+      "test/carpyard1.test.js"
+    ]
+  },
+  {
+    "name": "CARP-YARD-the-stables-board",
+    "file": "src/world/merchantYardArt.js",
+    "old": "  if (k === 'transport') paintWheel(img); else if (k === 'carpenter') paintSaw(img); else paintHorseshoe(img);",
+    "new": "  if (k === 'transport') paintWheel(img); else paintHorseshoe(img);",
+    "tests": [
+      "test/carpyard1.test.js"
+    ]
   },
   {
     "name": "CARP-YARD-the-benchs-box-lost",
@@ -188,15 +205,5 @@
     "tests": [
       "test/carpyard1.test.js"
     ]
-  },
-  {
-    "name": "CARP-YARD-a-letter-lost",
-    "file": "src/world/merchantYardArt.js",
-    "old": "  J: ['..###', '....#', '....#', '....#', '#...#', '#...#', '.###.'],   // CARP-YARD: JOINERY's\n",
-    "new": "",
-    "tests": [
-      "test/carpyard1.test.js"
-    ],
-    "why": "DF-ART: restored with the sign's words (Mac: \"Bring back the sign text\")"
   }
 ]

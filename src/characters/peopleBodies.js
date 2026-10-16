@@ -19,7 +19,7 @@ import { flatGender } from '../formats/flatsFile.js';   // MWNPC18: a figure's s
 import { textSeed } from '../systems/livingWorld/seed.js';   // MWNPC18: a figure's seed, its piece's id
 import { RACES } from '../systems/races.js';
 import { SOCIAL_GROUPS, GUILD_GROUPS, FACTION_TYPES } from '../formats/factionFile.js';
-import { EDITOR_FLATS_ARCHIVE } from '../world/rmbFlats.js';
+import { isNpcFlat } from '../world/npcFlatArchives.js';   // STALL-FLATS: RDBLayout.NPCFlatArchives, the people's pictures
 import { dressPerson } from './wardrobe.js';   // MWNPC17: the wardrobe's roles
 
 const RACE_NAME = Object.freeze(Object.fromEntries(Object.entries(RACES).map(([k, v]) => [v, k])));
@@ -69,8 +69,15 @@ export function wardrobeOf(f) {
 export function personLook(pn, data, faction) {
   if (pn._mwLook !== undefined) return pn._mwLook;
   if (!data || isChildNPCData(data)) return (pn._mwLook = null);
-  // MWNPC8b: an EDITOR flat (a marker DFU never renders, whatever faction it carries) is no one to stand a body for
-  if (data.billboardArchiveIndex === EDITOR_FLATS_ARCHIVE) return (pn._mwLook = null);
+  // MWNPC8b: an EDITOR flat (a marker DFU never renders, whatever faction it carries) is no one to stand a body for -
+  // STALL-FLATS (FIELD BUGS 2026-10-15c, "every animal and food stand item turned into freaks"; "The NPC's are clustered
+  // into groups and all have their heads down and they just rotate"): nor a flat whose picture is no person's - a town
+  // mod's market food, goods and animals carry faction ids (Beautiful Villages' TVRNAS02, TEMPASB0, TEMPBSB0, RESIAS02:
+  // faction 584), and RMBLayout makes each a StaticNPC, but DFU draws a person only of RDBLayout.NPCFlatArchives
+  // (FlatTypes.NPC, DaggerfallBillboard) and the rest as their billboards - AUDIT WD3 G1's click law, the body's now. A
+  // quest's person is one by the quest's word, whatever FLATS.CFG pictures them with (`questPerson`). The editor's 199 is
+  // no person's archive, so this one law keeps the marker's sprite-less flat bodiless too.
+  if (!data.questPerson && !isNpcFlat(data.billboardArchiveIndex)) return (pn._mwLook = null);
   const kind = wardrobeOf(faction);
   const race = RACE_NAME[data.race];
   if (kind === 'none' || !race) return (pn._mwLook = null);

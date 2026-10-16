@@ -157,22 +157,32 @@
   {
     "name": "DEV3-tabby-not-granted",
     "file": "server-account/wrangler.toml",
-    "old": "DEVELOPER_HANDLES = \"Lattymoy,trashBattery,LostMyLeg,Tabby,RookieG\"",
-    "new": "DEVELOPER_HANDLES = \"Lattymoy,trashBattery,LostMyLeg,RookieG\"",
+    "old": "DEVELOPER_HANDLES = \"Lattymoy,LostMyLeg,Tabby,RookieG\"",
+    "new": "DEVELOPER_HANDLES = \"Lattymoy,LostMyLeg,RookieG\"",
     "tests": [
       "test/titlen.test.js"
     ],
-    "note": "DEV4 (re-aimed by content): the list gained RookieG."
+    "note": "DEV4 (re-aimed by content): the list gained RookieG. DEV5 (re-aimed by content): trashBattery left it."
   },
   {
     "name": "DEV4-rookieg-not-granted",
     "file": "server-account/wrangler.toml",
-    "old": "DEVELOPER_HANDLES = \"Lattymoy,trashBattery,LostMyLeg,Tabby,RookieG\"",
-    "new": "DEVELOPER_HANDLES = \"Lattymoy,trashBattery,LostMyLeg,Tabby,RookieG(Dev)\"",
+    "old": "DEVELOPER_HANDLES = \"Lattymoy,LostMyLeg,Tabby,RookieG\"",
+    "new": "DEVELOPER_HANDLES = \"Lattymoy,LostMyLeg,Tabby,RookieG(Dev)\"",
     "tests": [
       "test/titlen.test.js"
     ],
-    "note": "The bracketed handle listed for the account RookieG (the owner: \"Change RookieG(Dev) to RookieG\"): RookieG holds nothing, and the developer's rights go to whoever registers the other name."
+    "note": "The bracketed handle listed for the account RookieG (the owner: \"Change RookieG(Dev) to RookieG\"): RookieG holds nothing, and the developer's rights go to whoever registers the other name. DEV5 (re-aimed by content): trashBattery left the list."
+  },
+  {
+    "name": "DEV5-trashbattery-still-listed",
+    "file": "server-account/wrangler.toml",
+    "old": "DEVELOPER_HANDLES = \"Lattymoy,LostMyLeg,Tabby,RookieG\"",
+    "new": "DEVELOPER_HANDLES = \"Lattymoy,trashBattery,LostMyLeg,Tabby,RookieG\"",
+    "tests": [
+      "test/titlen.test.js"
+    ],
+    "note": "DEV5 (Mac: \"Remove trashBattery ingame as a dev\"): the handle left on the list keeps the whole developer set."
   },
   {
     "name": "DISC-flylighter-not-granted",

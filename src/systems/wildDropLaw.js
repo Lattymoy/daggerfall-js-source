@@ -26,6 +26,7 @@ import { liquidWorthOf } from '../net/realmGoldLaw.js';   // INT9 (AUDIT): a let
 import { goldStack } from './inventory.js';
 import { isWalletItem, walletHolds } from './walletItem.js';   // KEEP-WALLET
 import { classicPiece, itemWorth } from './itemLaw.js';   // INT9: a classic save's piece stays its character's
+import { HCC_VENDOR, WAGON_MODE } from './horseCartLaw.js';   // CART-AWAY: the wagon's record, the mod's own words (a leaf the Worker bundles already)
 
 /** The groups no death in the zone ever drops: a vehicle, a deed, a quest's own item. */
 export const WILD_NEVER_GROUPS = Object.freeze(new Set(['Transportation', 'Deeds', 'QuestItems', 'Currency']));
@@ -78,13 +79,15 @@ export function takeWildDrop(items, wagon = null) {
 export const WILD_GOLD_LOSS = 0.5;
 
 /** Take WILD_GOLD_LOSS of the purse (`entity.goldPieces`) AND of the cart's gold stack (the `Currency` item in
- *  `entity.wagonItems`), in place; answers the gold as ONE pile record (purse + cart share), or null. */
-export function takeWildGold(entity) {
+ *  `entity.wagonItems`), in place; answers the gold as ONE pile record (purse + cart share), or null. CART-AWAY (Mac,
+ *  2026-10-15): `cart` false - the wagon away from the death (wildCartMayBeAway) - and the purse's share alone.
+ *  @param {any} entity @param {{ cart?: boolean }} [opts] */
+export function takeWildGold(entity, { cart: withCart = true } = {}) {
   let take = 0;
   const have = Math.max(0, Math.floor(entity?.goldPieces ?? 0));
   const purse = Math.floor(have * WILD_GOLD_LOSS);
   if (purse >= 1) { entity.goldPieces = have - purse; take += purse; }
-  const cart = Array.isArray(entity?.wagonItems) ? entity.wagonItems.find((i) => i?.group === 'Currency') : null;
+  const cart = withCart && Array.isArray(entity?.wagonItems) ? entity.wagonItems.find((i) => i?.group === 'Currency') : null;
   if (cart) {
     const n = Math.max(0, Math.floor(cart.stackCount ?? 1));
     const share = Math.floor(n * WILD_GOLD_LOSS);
@@ -118,10 +121,12 @@ export function wildPickOf(items, w = -1, wt = null) {
 
 /** INT9 (AUDIT): EVERY PIECE A DEATH COULD TAKE out of `entity` (its killer's piece, the bag's and the cart's drop) -
  *  unfitted, untouched. The account service asks the ledger of all of them before it takes any (AUDIT INT9: it asked of
- *  a dry run's fitted few, and a piece kept back let in one it never asked of). */
-export function wildDropCandidates(entity, w = -1, wt = null) {
+ *  a dry run's fitted few, and a piece kept back let in one it never asked of). CART-AWAY: `cart` false, none of the
+ *  cart's (takeWildDeath's own option).
+ *  @param {any} entity @param {number} [w] @param {number[] | null} [wt] @param {{ cart?: boolean }} [opts] */
+export function wildDropCandidates(entity, w = -1, wt = null, { cart: withCart = true } = {}) {
   const bag = Array.isArray(entity?.items) ? entity.items : [];
-  const cart = Array.isArray(entity?.wagonItems) ? entity.wagonItems : [];
+  const cart = withCart && Array.isArray(entity?.wagonItems) ? entity.wagonItems : [];
   const k = wildPickOf(bag, w, wt);
   const drop = [...bag.filter((it) => !isEquipped(it) && wildCanLose(it)), ...cart.filter((it) => wildCanLose(it))];
   return k ? [k, ...drop] : drop;
@@ -143,11 +148,15 @@ const dropWorth = (/** @type {any} */ it) => { const l = liquidWorthOf(it); retu
  * each came from ('bag', 'cart', 'gold'), their wire records in that order, whether the first is the killer's, and the
  * gold taken `{ purse, cart }`. The account service runs it on the record (server-account/src/wild.js) and answers what
  * it took; the fallen's game takes out exactly that (wildTakeTook) - it never guesses what the ledger kept.
+ * CART-AWAY (Mac, 2026-10-15: "if its parked outside the zone nothing should be lost"): `cart` false - the wagon away
+ * from the death, parked off the zone, stabled or none (the service's word, wildCartMayBeAway) - takes nothing of the
+ * cart, neither a piece nor its coin's share; the bag and the purse as ever.
  * @param {any} entity @param {number} [w] @param {(item: any) => boolean} [keep] @param {number[] | null} [wt]
+ * @param {{ cart?: boolean }} [opts]
  */
-export function takeWildDeath(entity, w = -1, keep = () => false, wt = null) {
+export function takeWildDeath(entity, w = -1, keep = () => false, wt = null, { cart: withCart = true } = {}) {
   const bag = Array.isArray(entity?.items) ? entity.items : [];
-  const cart = Array.isArray(entity?.wagonItems) ? entity.wagonItems : [];
+  const cart = withCart && Array.isArray(entity?.wagonItems) ? entity.wagonItems : [];
   const lit = Number.isSafeInteger(entity?.lightSourceIndex) && entity.lightSourceIndex >= 0 ? bag[entity.lightSourceIndex] : undefined;
   /** @type {[any, string][]} each piece taken, and where it came from */
   const took = [];
@@ -157,7 +166,7 @@ export function takeWildDeath(entity, w = -1, keep = () => false, wt = null) {
   // the gold, second: the purse's share and the cart's
   const cartCoin = cart.find((i) => i?.group === 'Currency') ?? null;
   const purse0 = Math.max(0, Math.floor(entity?.goldPieces ?? 0)), cart0 = cartCoin ? Math.max(0, Math.floor(cartCoin.stackCount ?? 1)) : 0;
-  const coin = takeWildGold(entity);
+  const coin = takeWildGold(entity, { cart: withCart });
   const gold = { purse: coin ? purse0 - Math.max(0, Math.floor(entity.goldPieces ?? 0)) : 0, cart: coin && cartCoin ? cart0 - Math.max(0, Math.floor(cartCoin.stackCount ?? 0)) : 0 };
   if (coin) took.push([coin, 'gold']);
   // a piece kept stands aside while the drop is taken, and comes back to its place
@@ -187,6 +196,23 @@ export function takeWildDeath(entity, w = -1, keep = () => false, wt = null) {
   if (lit !== undefined) entity.lightSourceIndex = bag.indexOf(lit);
   const kept = took.slice(0, records.length);
   return { taken: kept.map(([it]) => it), from: kept.map(([, f]) => f), records, killer: killer && records.length > 0, gold };
+}
+
+/** CART-AWAY (FIELD BUGS 2026-10-15d; Mac, asked "If parked outside of the pvp zone in the wrothgarian mountains, can it
+ *  be lost?": "Yeah, if its parked outside the zone nothing should be lost"): THE WAGON'S RECORD a save carries - Horse
+ *  Cart and Cargo's (horseCartLaw.js newSaveData, in the save's `modData` under HCC_VENDOR) - or null. */
+export const wildCartRecordOf = (/** @type {any} */ save) => { const r = save?.modData?.[HCC_VENDOR]; return r && typeof r === 'object' ? r : null; };
+
+/** CART-AWAY: MAY THIS RECORD'S WAGON STAND AWAY FROM ITS FALLEN, by its mode alone - no wagon (None), parked (Deployed:
+ *  whether off the zone only its mask can say, which a client holds - systems/wildCart.js wildCartAway), or sent to the
+ *  stable (WithPlayer with WAGON-STABLED's word). Never driven, following, or beside them on foot (WithPlayer unstabled:
+ *  the mod's next door parks it there, so it is where they are), and no record says nothing. The account service honours
+ *  a fallen's word that its wagon is away only where the record it keeps says this (server-account/src/wild.js).
+ *  @param {any} rec @returns {boolean} */
+export function wildCartMayBeAway(rec) {
+  if (!rec || typeof rec !== 'object') return false;
+  if (rec.Mode === WAGON_MODE.None || rec.Mode === WAGON_MODE.Deployed) return true;
+  return rec.Mode === WAGON_MODE.WithPlayer && rec.WagonStabled === true;
 }
 
 /** INT9 (AUDIT): WHAT THE SERVICE TOOK, as the fallen's game finds it again - a piece's own marks (`g` group, `t`

@@ -165,7 +165,7 @@ test('SET6 the drop: the spoils\' LAST roll - a Regalia piece a sixth of the tim
     const own = (it) => it.affixes?.filter((a) => !isTechniqueAffix(a));
     const drawn = (it) => (it.exalted ? own(it).slice(0, -1) : own(it)?.filter((a) => !isProcAffix(a)));
     assert.deepEqual(s.pieces.slice(0, 3).map((p) => JSON.stringify(drawn(p.item) ?? null)), b.affixes);
-    const has = s.pieces.length === 4;
+    const has = s.pieces[3]?.tier === 'aetheric';   // GILDED2: the Dragonfire Oath, the spoils' very last draw, may follow it (or stand fourth alone)
     assert.equal(has, b.next < REGALIA_CHANCE, `seed ${seed}: the next roll decides it`);
     if (!has) continue;
     drops++;

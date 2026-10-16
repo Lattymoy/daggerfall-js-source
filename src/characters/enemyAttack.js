@@ -226,7 +226,14 @@ export class EnemyAttack {
         continue;
       }
       if (!meleePass) continue;
-      if (!ai.inSight || !withinYaw(ai.yaw, dx, dz, ATTACK_YAW_DEG)) continue;
+      // INVIS-SWING (FIELD BUGS 2026-10-15f, "inside dungeons, monsters still spot and attack me immediately while the
+      // spell is active"): MeleeAnimation faces senses.LastKnownTargetPos (EnemyAttack.cs:155), not the target's live
+      // feet. The position is written only when the foe DETECTS its target (EnemySenses.cs:451-470) and holds
+      // ResetPlayerPos until then (:28 - float.MaxValue, which no yaw test passes), so a foe its target's Invisibility
+      // blinds (BlockedByIllusionEffect) never starts a swing at it - it read the live feet, and every foe a corridor put
+      // in front of an invisible player struck. The blow's own test (MeleeDamage, meleeHitConnects) is the live one.
+      const known = ai.lastKnownTargetPos;
+      if (!ai.inSight || !known || !withinYaw(ai.yaw, known[0] - ai.feet[0], known[2] - ai.feet[2], ATTACK_YAW_DEG)) continue;
       // MT-ii: MeleeAnimation's OWN reach (:157-160), which the port
       // exported as CLASSIC_MELEE_DISTANCE_VS_AI at C8 and never
       // consumed, because nothing but the player could be a target:

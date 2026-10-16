@@ -153,7 +153,8 @@ Taken at the design, in the request's own order; each is Mac's to overrule.
   the morning's, the day's (LW-TALK, the street's), the evening's and the night's; tokens with fallbacks; LIVING_GREETINGS
   by regard.
 - **`relations.js`.** A regard per resident (-100..100), a stranger 0: a word +3 once a day, a polite word +1, a gift
-  +8, help +20, a life saved +35, a blow -45, a crime -15, one of theirs slain -60, a blunt word -6; friend at 40, enemy
+  +8, help +20, a life saved +35, a blow -45, a crime -15, one of theirs slain -60, a blunt word -6 (TONE-TASTE: the
+  +1 and the -6 are a tone taken kindly and one taken ill, by the resident's own taste - section TONE-TASTE); friend at 40, enemy
   at -40, hostile at -70; eased toward zero half a point a day unseen and never across; 600 kept; the save's record
   `{ v: 1, people }`, a bad one nobody known.
 
@@ -2020,3 +2021,42 @@ ways only through world.js.
 ## PLAIN-UI - the regard on the talk panel (2026-10-12)
 
 A player: "Where's the UI for relationship in the talk window?" The enhanced talk panel shows a living resident's regard under their name - the standing in the People page's words, a bar from -100 to +100 and the number - and, on a press, what it is and what moves it (`src/systems/livingWorld/people.js` `regardBadge`; the card the body's own door's - `src/systems/livingWorld/livingTown.js` `regardCard` on the street, the indoor door's at home, `src/scenes/livingRoads.js` `regardCard` on the road and below, AUDIT PLAIN-UI C2). The classic face is DFU's window and draws none. The record: `10-UI/Plain-Words.md`.
+
+## TONE-TASTE - a tone counts as it was taken (2026-10-15)
+
+Mac, of a stream: "someone who didnt like etiquette still went up". The talk's answer reads DFU's tone tables
+(`src/systems/talkTopics.js` `ETIQUETTE_REACTION_MODS`, `STREETWISE_REACTION_MODS`, TalkManager.cs:663-667): a Commoner
+takes a Polite question at -10, the Underworld at -15, a Noble a Blunt one at -15. LW7's regard and LEGACY5's courtship
+did not. They went by the tone's name: a Polite word +1 and a Blunt one -6 to everyone, and a courtship +3 Polite and -3
+Blunt. Every resident is a Commoner to the talk (a mobile's group is DFU's own literal, `npcSession.js`
+`setTargetMobileNPC`), so the Polite word a Commoner refuses still raised their regard on the panel (PLAIN-UI). Mac's
+choice, of three put to him: **a tone they like raises both; a tone they dislike lowers both.**
+
+- **The law** (`talkTopics.js` `toneTaste`): the sign of the tone's row in DFU's own tables - 1 a tone the group takes
+  kindly (Polite: Merchants, Scholars, Nobles; Blunt: Commoners, Merchants, the Underworld), -1 one it takes ill, 0 the
+  Normal tone; groups 5 and up fold to the Merchants as the reaction folds them; a group off the tables takes nothing.
+- **The door** (`scenes/townTalk.js` `_toneTaste`): the window reads the group off the engine's own session
+  (`npcData.socialGroup` - with no engine, a Commoner's) and hands the taste, never the tone, to the regard's door
+  (`livingTone`) and to the Legacy host's answer (`row.legacy.answer(tone, taste)`).
+- **The regard** (`livingTown.js` and `livingRoads.js` `toned(person, taste)`, `relations.js` `EVENTS`): a tone taken
+  kindly is `polite` (+1), one taken ill `insulted` (-6), each once a day as before. The save's day fields keep their
+  names (`polite`, `blunt`); they now mean the kind word's day and the ill word's. A Polite question to a townsperson,
+  the day's first word: +3 for the word, -6 for the tone - -3, where it was +4.
+- **The courtship** (`systems/legacy/marriage.js` `courtGain`, `court`; `scenes/legacyHost.js` `answerTopic`): a tone
+  taken kindly adds `COURT_TASTE` (3) to the day's affection as Polite did; the Normal tone nothing; a tone taken ill
+  COSTS `COURT_TASTE` whatever else, never below nothing, the day spent on it (`cooled`), said
+  `MARRIAGE_TEXT.cooled` ("{name} stiffens. ..." - `legacy.court.cooled`, drafted in the thirteen whole languages).
+  LEGACY5's `COURT_TONE` is gone. The Etiquette term (a point per twenty) is unmoved: Mac's call named the tone.
+- **The panel's words** (`people.js` `regardBadge`): "a word in a tone they like ... a tone they dislike ... Townsfolk
+  like a Blunt word, not a Polite one."
+- **Not moved**: the answer's own reaction (DFU's, already by taste); the skill tally (DFU tallies the tone's skill on
+  its first use in a conversation, liked or not - `reactionTier012` `onTally`).
+- **The four hosts**: `scenes/world.js` WIRED (the street's, the room's and the road's doors pass the taste through:
+  `livingTone`, `_livingIndoorsDoor.toned`, `_livingRoadsDoor.toned`); `scenes/exterior.js`, `scenes/worldModes.js` and
+  `scenes/dungeonContext.js` FLAGGED - none holds a talk door of its own (the room's residents are the street's talk,
+  LW8).
+
+Pinned by `test/tonetaste.test.js` (4: the law over every group, the real town's regard, the real Legacy host's
+courtship, the talk's door); pins moved by intent, each a PIN MOVED note (`legacy5_marriage`, `lw7_deeds`,
+`lwfix2_watch`, `lw8_indoors`); `tools/mutants/tonetaste.json` (11, all dead) and six LW7/LW8 records re-aimed at the
+taste, dead.

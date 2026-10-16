@@ -548,11 +548,6 @@ const _decoded = new Map();   // textureKey -> { width, height, colors } in getC
  *  build asked without one is refused (its classic art is not here). */
 let _deriveContext = null;
 export function setTextureDeriveContext(ctx) { _deriveContext = ctx ?? null; }
-/** DF-ART (world/classicArt.js): a classic record of the player's own as a top-down RGBA picture, for a host that uploads
- *  a port model's pictures itself rather than through this door - null with no pipeline up, or no such record. */
-export async function classicRgbaOf(archive, record, frame = 0) {
-  return _deriveContext ? _deriveContext.classicRgba(archive, record, frame) : null;
-}
 /** DS1: a built picture may carry the classic record scale it is to be
  *  sized by (`scale: { width, height }`, TextureFile.getScale's shape) - a
  *  stand-in for a classic sprite stands as big as that sprite does. */

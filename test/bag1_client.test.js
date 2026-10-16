@@ -801,7 +801,7 @@ test('BAG1 (AUDIT): Put everything in says what went in and each material refuse
   assert.equal(BAG_PAGE_WORDS.allInDone(12, [{ name: 'Oak Log', text: 'Your Stores hold 5,000 of that already.' }]), '12 put in the Stores. Oak Log: Your Stores hold 5,000 of that already.');
   assert.equal(BAG_PAGE_WORDS.allInDone(3, [], 'slow'), '3 put in the Stores. slow');
   const page = src('src/ui/profPages.js');
-  assert.match(page, /if \(res\?\.kept\) stop = res\.text \?\? null; else refused\.push\(\{ name: r\.name, text: res\?\.text \?\? null \}\); break;/);
+  assert.match(page, /if \(res\?\.kept\) stop = res\.text \?\? null; else refused\.push\(\{ name: r\.name, text: res\?\.text \?\? null \}\); left = -1; break;/);   // PIN MOVED (LOOT-LOOSE, FIELD BUGS 2026-10-15c): the counted and the loose each a pass, a refusal ending this material's
   assert.match(page, /const carriedAny = \[\.\.\.all\.values\(\)\]\.some/);
   assert.match(src('src/ui/workTab.js'), /w\.carrying\?\.\(\) \? t\('prof\.work\.writ\.heldCarried', '\{n, number\} held', \{ n: Number\(held\) \}\) : t\('prof\.work\.writ\.held', '\{n, number\} in your Stores', \{ n: Number\(held\) \}\)/);
 });

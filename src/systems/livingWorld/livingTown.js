@@ -1761,11 +1761,12 @@ export class LivingTown {
     return res.id;
   }
 
-  /** LW7: a word asked in the talk's tone - a courteous one (`polite`, tone 0) or a blunt one (`insulted`, tone 2), each
-   *  once a day. Answers the resident's id, or null. @param {any} person @param {number} tone */
-  toned(person, tone) {
+  /** LW7: a word asked in the talk's tone, each once a day - TONE-TASTE: as they took it (talkTopics.js toneTaste), a tone
+   *  they take kindly (`polite`, 1) or one they take ill (`insulted`, -1); the Normal tone nothing. Answers the
+   *  resident's id, or null. @param {any} person @param {number} taste */
+  toned(person, taste) {
     const id = person?.living?.id;
-    const kind = tone === 0 ? 'polite' : tone === 2 ? 'insulted' : null;
+    const kind = taste > 0 ? 'polite' : taste < 0 ? 'insulted' : null;
     if (!id || !kind) return null;
     this.o.relations?.()?.note(id, kind, this.dayOf(this._liveMinute()));
     return id;

@@ -693,7 +693,8 @@ export class PlayerMotor {
    * TECH1 (bible/05-Combat/Weapon-Techniques.md): A TECHNIQUE'S FLIGHT - a leap or a dash a weapon's technique makes
    * (combat/techniques.js): `dir` the horizontal unit it flies along, `along` metres a second along it, `up` metres a
    * second up. The body flies as a jump flies - the airborne arm keeps the momentum, the collider stops it on what it
-   * meets, gravity brings it down, the fall counts from the launch - and the Jump spell's air control does not steer it
+   * meets, gravity brings it down, the fall counts from the launch (or, launched mid-fall, from where that fall began:
+   * KICK-AIR) - and the Jump spell's air control does not steer it
    * (`techFlight`, cleared on the ground: a leap's flight keeps its launch, as a parkour leap's does). Refused (false) to a
    * body the hands hold (a climb, a hold, a mantle), the water or the air (a swim, a levitation, a slow fall), the saddle,
    * a knockdown and a held motor - nothing there leaps.
@@ -709,8 +710,9 @@ export class PlayerMotor {
     this.groundedTime = 0;
     this.groundKey = null;
     this.jumping = true;
-    this.falling = false;
-    this.fallStart = this.pos[1];
+    // KICK-AIR (Mac, 2026-10-15): a flight from the air (the Flying Kick - techniqueRoster.js `airborne`) leaves a fall
+    // under way where it began, so a kick is never a feather fall; from the ground, or a jump's rise, it counts from here
+    if (!(this.falling && this.fallStart > this.pos[1])) { this.falling = false; this.fallStart = this.pos[1]; }
     this.techFlight = true;
     return true;
   }

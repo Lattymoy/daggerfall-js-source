@@ -45,9 +45,8 @@ import { YARD_KINDS, YARD_TEXT, YARD_ROWS, YARD_BENCH_ROW, CARPENTER_STEAL_TEXT,
 import { WAGON_KINDS } from '../systems/wagonKinds.js';
 import { YARD_FOOT } from '../world/merchantYardSites.js';
 import { buildYardModel, signBoxOf, yardPoints } from '../world/merchantYardModels.js';
-import { YARD_SOURCES, YARD_ARCHIVE } from '../world/merchantYardArt.js';
-import { classicPictures, asPortRows } from '../world/classicArt.js';   // DF-ART: the yards' pictures, Daggerfall's own
-import { classicRgbaOf } from '../systems/textureReplacement.js';
+import { yardArt, YARD_ARCHIVE } from '../world/merchantYardArt.js';
+import { dfLook, lookSeed } from '../world/dfLook.js';   // DF-LOOK: the yards' pictures in Daggerfall's colours
 import { PERSON_TEXTURES, PERSON_IDLE_RECORD, PERSON_IDLE_FPS } from '../characters/mobilePerson.js';
 import { mobileBillboardSize } from '../world/rmbFlats.js';
 import { folkLookOf } from '../characters/folkBodies.js';   // AUDIT MW-NPC II P1: a keeper's body, in the outfit their picture wears
@@ -170,17 +169,11 @@ export function createMerchantYards({
     for (const w of y.wagons) if (w.box) for (let i = 0; i < 3; i++) { l[i] = Math.min(l[i], w.box[i]); l[i + 3] = Math.max(l[i + 3], w.box[i + 3]); }
     return transformedAabb(l, y.matrix);
   }
-  /** DF-ART: the yards' pictures, Daggerfall's own (world/merchantYardArt.js YARD_SOURCES), read from the player's
-   *  ARENA2 and uploaded as they land - the yard stands at once and wears them a moment later. */
-  function uploadYardArt() {
-    classicPictures(YARD_SOURCES, classicRgbaOf).then((pics) => { for (const [rec, pic] of pics) renderer.uploadTexture?.(YARD_ARCHIVE, rec, asPortRows(pic)); })
-      .catch((e) => console.warn('[yards] the yards\' pictures would not load', e?.message ?? e));
-  }
   function meshOf(kind) {
     if (meshes.has(kind)) return meshes.get(kind);
     if (!renderer?.createMesh) return null;
     try {
-      if (!artUp) { artUp = true; uploadYardArt(); }
+      if (!artUp) { for (const [rec, art] of yardArt()) renderer.uploadTexture?.(YARD_ARCHIVE, rec, dfLook(art, lookSeed(YARD_ARCHIVE, rec))); artUp = true; }
       meshes.set(kind, renderer.createMesh(modelOf(kind)));
     } catch (e) { meshes.set(kind, null); console.warn('[yards] a yard would not build', e?.message ?? e); }
     return meshes.get(kind);

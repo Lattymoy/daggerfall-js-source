@@ -312,7 +312,8 @@ mutation-proven in `tools/mutants/legacy5.json`. Two players' characters wed onl
   FRIEND (`FRIEND_AT`, 40), or one already courted. Their talk's Tell me about page opens with Project Legacy's own
   rows, on both skins (`townTalk.js legacyTopics`, answered by the host - never the engine's pipeline): "Courtship"
   once a day of the one played's own clock - affection by Personality and Etiquette and the question's tone, on a roll
-  (`courtGain`) - then, at 100, "Marriage": a proposal, taken. The courtship keeps the resident as they are (name,
+  (`courtGain`; TONE-TASTE, 2026-10-15: the tone as the resident took it - kindly +3, ill a loss of 3, never below
+  nothing, `06-Systems/Living-World.md` TONE-TASTE) - then, at 100, "Marriage": a proposal, taken. The courtship keeps the resident as they are (name,
   sex, race, face, town) - their identity is for life, so the wedding needs no town loaded (AUDIT LEGACY III A4/P2: the
   record's reader kept only the name and the town, and every wedding after a load made a male Breton with no face).
   Nobody of the house is courted, nor one another member is betrothed to (A1: two members wed one townsperson - one

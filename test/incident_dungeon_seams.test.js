@@ -65,10 +65,10 @@ test('seams 1: alphaIndex -1 keeps palette index 0 opaque; 0 cuts it (MaterialRe
 
 test('seams 1: the pipeline uploads MESH materials opaque and flats as cutouts, through the one door', () => {
   const p = src('src/scenes/dataPipeline.js');
-  assert.match(p, /const uploadRecord = \(archive, record, \{ opaque = false, mips, removeMask = false, dye = null, dyeTarget = null, cutout = false \} = \{\}\) =>/);   // REVIEW 2026-09-05: + the icon door's mips opt-out; DYE-ICON: + the swatch the dye changes; PIN MOVED (DF-ART): + the cut-out a ship's window asks
+  assert.match(p, /const uploadRecord = \(archive, record, \{ opaque = false, mips, removeMask = false, dye = null, dyeTarget = null, cutout = false \} = \{\}\) =>/);   // REVIEW 2026-09-05: + the icon door's mips opt-out; DYE-ICON: + the swatch the dye changes; PIN MOVED (DF-ART, kept by DF-LOOK): + the cut-out a ship's window asks
   assert.match(p, /const masked = swap \? null : removeMask \? changeMask\(bitmap\) : bitmap;/);
   assert.match(p, /const color32 = swap \?\? t\.getColor32\(dyed \? changeDyeBitmap\(masked, dye, dyeTarget\) : masked, opaque \? -1 : 0\);/);   // DYE-ICON: the opaque/cutout choice is untouched
-  assert.match(p, /renderer\.uploadTexture\(archive, record, color32, variant !== undefined \? \{ opaque, mips, variant, replacement, cutout \} : \{ opaque, mips, replacement, cutout \}\);/);   // PIN MOVED (DF-ART): + the cut-out a ship's window asks (comeSailAwayPool.js cutOf)
+  assert.match(p, /renderer\.uploadTexture\(archive, record, color32, variant !== undefined \? \{ opaque, mips, variant, replacement, cutout \} : \{ opaque, mips, replacement, cutout \}\);/);   // PIN MOVED (DF-ART, kept by DF-LOOK): + the cut-out a ship's window asks (comeSailAwayPool.js cutOf)
   // every sub-mesh upload asks for the opaque material
   const meshSites = [...p.matchAll(/uploadRecord\(sm\.textureArchive, sm\.textureRecord(, \{ opaque: true \})?\)/g)];
   assert.ok(meshSites.length >= 2, `the pipeline uploads sub-mesh textures at ${meshSites.length} sites`);
@@ -235,5 +235,5 @@ test('seams review 2: item icons are UI art - the icon door uploads a world arch
     assert.match(src(f), /icons\.uploadRecord\(img\.archive, img\.record, \{ mips: false, removeMask: true, dye: img\.dye, dyeTarget: img\.dyeTarget \}\);/, `${f} asks for the UI variant (HM1: with the mask stripped; DYE-ICON: its metal dyed)`);
     assert.match(src(f), /icons\.textures\.get\(glKeys\.get\(key\) \?\? `\$\{img\.archive\}_\$\{img\.record\}#ui`\)/, `${f} reads it back (DW3: by the variant the upload answered, the shared #ui when none)`);
   }
-  assert.match(src('src/scenes/dataPipeline.js'), /renderer\.uploadTexture\(archive, record, color32, variant !== undefined \? \{ opaque, mips, variant, replacement, cutout \} : \{ opaque, mips, replacement, cutout \}\);/, 'the door forwards it');   // PIN MOVED (DF-ART): + the cut-out a ship's window asks (comeSailAwayPool.js cutOf)
+  assert.match(src('src/scenes/dataPipeline.js'), /renderer\.uploadTexture\(archive, record, color32, variant !== undefined \? \{ opaque, mips, variant, replacement, cutout \} : \{ opaque, mips, replacement, cutout \}\);/, 'the door forwards it');   // PIN MOVED (DF-ART, kept by DF-LOOK): + the cut-out a ship's window asks (comeSailAwayPool.js cutOf)
 });

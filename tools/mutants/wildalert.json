@@ -138,8 +138,8 @@
   {
     "name": "WILD-reach-unbounded",
     "file": "src/scenes/world.js",
-    "old": "reachM: f.ai.sightRadius ?? SIGHT_RADIUS, stealth, scaledDt: sdt, now });",
-    "new": "reachM: Infinity, stealth, scaledDt: sdt, now });",
+    "old": "reachM: f.ai.sightRadius ?? SIGHT_RADIUS, stealth, scaledDt: sdt, now, seesThrough:",
+    "new": "reachM: Infinity, stealth, scaledDt: sdt, now, seesThrough:",
     "tests": [
       "test/wildalert.test.js"
     ]
@@ -147,8 +147,8 @@
   {
     "name": "WILD-cadence-real-time",
     "file": "src/scenes/world.js",
-    "old": "    const fx = player.feetAt(), stealth = wildStealth(), sdt = gamePaused() ? 0 : dt * worldTimeScale(), now = performance.now() / 1000;",
-    "new": "    const fx = player.feetAt(), stealth = wildStealth(), sdt = gamePaused() ? 0 : dt, now = performance.now() / 1000;",
+    "old": "    const fx = player.feetAt(), stealth = wildStealth(), hid = concealmentFlags(playerEntity), sdt = gamePaused() ? 0 : dt * worldTimeScale(), now = performance.now() / 1000;",
+    "new": "    const fx = player.feetAt(), stealth = wildStealth(), hid = concealmentFlags(playerEntity), sdt = gamePaused() ? 0 : dt, now = performance.now() / 1000;",
     "tests": [
       "test/wildalert.test.js"
     ]
@@ -239,8 +239,8 @@
   {
     "name": "WILD-wanderer-never-rolls",
     "file": "src/scenes/world.js",
-    "old": "    const noticed = !fast || Math.random() * 100 < noticeChance(",
-    "new": "    const noticed = true || Math.random() * 100 < noticeChance(",
+    "old": "    const noticed = !fast || noticeRoll(",
+    "new": "    const noticed = true || noticeRoll(",
     "tests": [
       "test/encounterplace.test.js"
     ]

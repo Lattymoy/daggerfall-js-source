@@ -32,8 +32,8 @@
   {
     "name": "HOURSFIRST-another-paint",
     "file": "src/ui/playerBadge.js",
-    "old": "firsthour: 'hoursfirst' });",
-    "new": "firsthour: 'hourbreaker' });",
+    "old": "firsthour: 'hoursfirst', maelstrom: 'coilbreaker' });",
+    "new": "firsthour: 'hourbreaker', maelstrom: 'coilbreaker' });",
     "tests": [
       "test/hoursfirst.test.js"
     ],

@@ -18,8 +18,9 @@
 // the binder's filters, chips and decks, and this sheet's own `background` and border colours painted over any that
 // might; the switch and the binder's presses are the kit's tiles now, a codex row its list line, a deck its panel.
 
-import { codexRows, codexSets, codexCount } from '../systems/lootCodex.js';
-import { lootRarityOn, powerLine, legendaryById, affixLine } from '../systems/lootRarity.js';
+import { codexRows, codexSets, codexCount, codexGilded } from '../systems/lootCodex.js';   // AUDIT WORLD-REWARDS A5: and the Gilded rung's rows
+import { lootRarityOn, powerLine, legendaryById, affixLine, RARITIES } from '../systems/lootRarity.js';
+import { gildedById } from '../systems/gilded.js';
 import { setById } from '../systems/sigilSets.js';
 import { cardsPartShown, drawCardsPart, resetCardsPart, disarmCardsPart } from './cardBinderPage.js';
 
@@ -91,22 +92,19 @@ export function drawCollectionsPage(detail, rerender, kit) {
   else drawCardsPart(detail, rerender, kit);
 }
 
-/** THE CODEX PART: the Legendaries, found and not, then the Aetheric sets; a row pressed opens it whole. */
+/** THE CODEX PART: the Legendaries, found and not, then the Aetheric sets; a row pressed opens it whole. AUDIT WORLD-REWARDS
+ *  A5: and the Gilded rung's records first, over them all, as the Reforge's Codex page lists them - this page's rows are
+ *  that page's, and it never showed the rung (GILDED1), nor the gate's and the serpent's own hints (GILDED2). */
 function drawCodexPart(detail, rerender, { el, divider }) {
   const n = codexCount();
   const rows = codexRows();
+  detail.append(divider(`Gilded - ${n.gilded} of ${n.gildeds} found`));
+  const gilded = el('div', 'codex-list');
+  for (const r of codexGilded()) gilded.append(...codexLine(el, r, rerender));
+  detail.append(gilded);
   detail.append(divider(`Legendaries - ${n.legendary} of ${n.legendaries} found`));
   const list = el('div', 'codex-list');
-  for (const r of rows) {
-    const line = el('button', `codex-line${r.found ? ' found' : ''}${_picked === r.id ? ' on' : ''}`);
-    line.type = 'button';
-    line.dataset.record = r.id;
-    line.append(el('span', 'nm', r.found ? r.name : 'Unfound'), el('span', 'sub', r.found ? `${r.group} · found on day ${r.day}` : `${r.group} · ${r.hint}`));
-    line.setAttribute('data-focus', `codex-row-${r.id}`);
-    line.onclick = () => { _picked = _picked === r.id ? null : r.id; rerender(); };
-    list.append(line);
-    if (_picked === r.id) list.append(codexWhole(el, r));
-  }
+  for (const r of rows) list.append(...codexLine(el, r, rerender));
   detail.append(list);
   detail.append(divider(`Aetheric - ${n.aetheric} of ${n.aetherics} found`));
   for (const s of codexSets()) {
@@ -116,12 +114,29 @@ function drawCodexPart(detail, rerender, { el, divider }) {
     detail.append(p);
   }
 }
+/** One codex row, and - pressed - the record whole under it (a Legendary's or, AUDIT WORLD-REWARDS A5, a Gilded's). */
+function codexLine(el, r, rerender) {
+  const out = [];
+  {
+    const line = el('button', `codex-line${r.found ? ' found' : ''}${_picked === r.id ? ' on' : ''}`);
+    line.type = 'button';
+    line.dataset.record = r.id;
+    line.append(el('span', 'nm', r.found ? r.name : 'Unfound'), el('span', 'sub', r.found ? `${r.group} · found on day ${r.day}` : `${r.group} · ${r.hint}`));
+    line.setAttribute('data-focus', `codex-row-${r.id}`);
+    line.onclick = () => { _picked = _picked === r.id ? null : r.id; rerender(); };
+    if (r.kind === 'gilded' && r.found) line.dataset.rarity = 'gilded';
+    out.push(line);
+    if (_picked === r.id) out.push(codexWhole(el, r));
+  }
+  return out;
+}
 /** A codex row opened whole: what the record is (found), or where it is said to be. */
 function codexWhole(el, r) {
   const ul = el('ul', 'codex-whole');
-  ul.append(el('li', null, `Legendary · ${r.group}`));   // AUDIT CARDS-5 D12: the Reforge's own lines, in its order
+  ul.append(el('li', null, `${RARITIES[r.kind]?.label ?? 'Legendary'} · ${r.group}`));   // AUDIT CARDS-5 D12: the Reforge's own lines, in its order
   if (r.found) {
-    for (const a of legendaryById(r.id)?.affixes ?? []) { const line = affixLine({ rarity: 'legendary', affixes: [a] }, 0); if (line) ul.append(el('li', null, line)); }
+    const rec = r.kind === 'gilded' ? gildedById(r.id) : legendaryById(r.id);   // AUDIT WORLD-REWARDS A5: a Gilded record's lines, as the Reforge's
+    for (const a of rec?.affixes ?? []) { const line = affixLine({ rarity: r.kind ?? 'legendary', affixes: [a] }, 0); if (line) ul.append(el('li', null, line)); }
     if (r.power) ul.append(el('li', null, powerLine(r.power)));
     if (r.lore) ul.append(el('li', null, r.lore));
     ul.append(el('li', null, `First found on day ${r.day}`));

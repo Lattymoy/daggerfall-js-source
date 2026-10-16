@@ -52,9 +52,9 @@ test('HCC law: scene <-> world runs on the player\'s pair and the ratio, truncat
   assert.deepEqual(applyLocalOffsetToWorld(1000, 2000, [1, 0, 0], 1, 0, 40), [1000, 1960]);
 });
 
-test('HCC law: the save record - fifteen fields, copied whole, normalised on load (unknown enums to None, unit headings, the version)', () => {
+test('HCC law: the save record - fifteen fields (and WAGON-STABLED\'s two of the port\'s own), copied whole, normalised on load (unknown enums to None, unit headings, the version)', () => {
   const d = newSaveData();
-  assert.equal(Object.keys(d).length, 15);
+  assert.equal(Object.keys(d).length, 17, 'the mod\'s fifteen and WagonStabled, HorseStabled (WAGON-STABLED, PIN MOVED: 15)');
   assert.equal(d.Version, 7); assert.equal(d.Mode, WAGON_MODE.None); assert.equal(d.HorseMode, HORSE_MODE.None);
   assert.deepEqual([d.HeadingX, d.HeadingZ, d.HorseHeadingX, d.HorseHeadingZ], [0, 1, 0, 1]);
   const c = copySaveData({ ...d, HorseName: 'Bess', Mode: 2, Junk: 1 });

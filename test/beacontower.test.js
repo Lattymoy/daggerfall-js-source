@@ -9,17 +9,12 @@ import assert from 'node:assert/strict';
 import {
   buildLighthouseModel, buildLighthouseFire, LIGHTHOUSE, LIGHTHOUSE_POINTS, GALLERY_Y, LANTERN_H, ARCH_CROWN, TOWER_SIDES,
 } from '../src/world/lighthouseModel.js';
-import { PORT_REC, PORT_HOW, PORT_ARCHIVE, PORT_SOURCES } from '../src/world/portArt.js';
-import { DF, classicPictures } from '../src/world/classicArt.js';
-import { setTextureDeriveContext } from '../src/systems/textureReplacement.js';
-import { fakeClassicRgba } from './classicArtFake.mjs';
+import { PORT_REC, PORT_HOW, PORT_ARCHIVE, PORT_PAINTERS, portFlameArt, portEmbersArt } from '../src/world/portArt.js';
 import { YARD_TILE_M } from '../src/world/merchantYardModels.js';
 import { createPortHost, feetInPort, PORT_TEXT } from '../src/scenes/portHost.js';
 import { Collider } from '../src/player/collider.js';
 import { CROUCH_HEIGHT, CAPSULE_RADIUS } from '../src/player/motor.js';
 
-// DF-ART: the port's pictures are read from the player's ARENA2 - here the tests' stand-in (test/classicArtFake.mjs)
-setTextureDeriveContext({ classicRgba: fakeClassicRgba() });
 const T = LIGHTHOUSE.tower, G = LIGHTHOUSE.gallery, L = LIGHTHOUSE.lantern, B = LIGHTHOUSE.brazier;
 const I4 = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
 const recName = Object.fromEntries(Object.entries(PORT_REC).map(([k, v]) => [v, k]));
@@ -49,7 +44,7 @@ test('BEACON-TOWER THE TOWER IS STONE: over the cottage\'s chimney every face of
   assert.deepEqual([...worn].sort(), ['door', 'embers', 'iron', 'slate', 'stone', 'window', 'wood']);
   assert.ok(!('redband' in PORT_REC) && !('copper' in PORT_REC), 'the age of steam\'s two pictures gone');
   assert.deepEqual([PORT_REC.flame, PORT_REC.embers], [28, 29]);
-  assert.equal(Object.keys(PORT_SOURCES).length, Object.keys(PORT_REC).length, 'every picture named once');
+  assert.equal(new Set(PORT_PAINTERS.map(([rec]) => rec)).size, Object.keys(PORT_REC).length, 'every picture painted once');
 });
 
 test('BEACON-TOWER THE BATTLEMENTS: the parapet round the gallery stands its crenels on the town\'s and the sea\'s bearings (where the hatch is and where the climb comes out, facing the sea) and a merlon between each two - eight of each - its stone from parapetR to the slab\'s edge (mutants: merlons all round, crenels all round)', () => {
@@ -124,21 +119,19 @@ test('BEACON-TOWER THE FIRE: the brazier\'s coals lie in the bowl under the lamp
   for (const t of floorTris) t.v.forEach((p, k) => assert.ok(Math.abs(t.uv[k][0] - p[0] / YARD_TILE_M) < 1e-4 && Math.abs(t.uv[k][1] - p[2] / YARD_TILE_M) < 1e-4, 'planar'));
 });
 
-test('BEACON-TOWER THE ART (DF-ART: Daggerfall\'s brazier fire): the flame is the fire flat\'s flames cut from over its bowl - clear round them (its own clear texels), whole in their middle - and uploaded a cutout; the flame and the embers are their own light (the gate\'s fires\' law: uploadEmissionTexture, white) and nothing else of the port\'s is either (mutants: the flame without holes, the cutout unread, the glow unread)', async () => {
-  assert.deepEqual(PORT_SOURCES[PORT_REC.flame].from, DF.fireFlat);
-  assert.deepEqual(DF.fireFlat, [210, 0], 'Daggerfall\'s brazier fire');
-  const pics = new Map(await classicPictures(PORT_SOURCES, fakeClassicRgba()));
-  const f = pics.get(PORT_REC.flame), a = (x, y) => f.data[(y * f.width + x) * 4 + 3];
-  assert.deepEqual([f.width, f.height], [40, 27], 'the flat\'s rows over its bowl (27 on)');
+test('BEACON-TOWER THE ART: the flame is its tongues on nothing - alpha 0 round them, whole in their middle - and uploaded a cutout; the flame and the embers are their own light (the gate\'s fires\' law: uploadEmissionTexture, white) and nothing else of the port\'s is either (mutants: the flame solid, the flame without holes, the fire unlit, the cutout unread, the glow unread)', () => {
+  const f = portFlameArt(), a = (x, y) => f.colors[(y * f.width + x) * 4 + 3];
+  assert.deepEqual([f.width, f.height], [32, 64]);
   assert.equal(a(0, 0), 0, 'the corner: nothing');
-  assert.equal(a(20, 20), 255, 'in the flames: flame');
-  const holes = Array.from({ length: f.width * f.height }, (_, i) => f.data[i * 4 + 3]).filter((x) => x === 0).length;
+  assert.equal(a(16, 60), 255, 'over the coals: flame');
+  const holes = Array.from({ length: f.width * f.height }, (_, i) => f.colors[i * 4 + 3]).filter((x) => x === 0).length;
   assert.ok(holes > f.width * f.height * 0.3 && holes < f.width * f.height * 0.85, `${holes} holes`);
-  assert.ok(pics.get(PORT_REC.embers).data.every((x, i) => i % 4 !== 3 || x === 255), 'the coals: no hole');
+  assert.deepEqual(portFlameArt().colors, f.colors, 'the same fire on every client');
+  assert.ok(portEmbersArt().colors.every((x, i) => i % 4 !== 3 || x === 255), 'the coals: no hole');
   assert.deepEqual(Object.keys(PORT_HOW).map(Number).sort((x, y) => x - y), [PORT_REC.flame, PORT_REC.embers]);
   assert.deepEqual({ ...PORT_HOW[PORT_REC.flame] }, { cutout: true, glows: true });
   assert.deepEqual({ ...PORT_HOW[PORT_REC.embers] }, { cutout: false, glows: true });
-  // the host's upload, as the pictures land
+  // the host's upload, as it paints
   const ups = [], glows = [];
   const renderer = {
     textures: new Map(), uploadTexture: (ar, r, img, o) => ups.push([ar, r, o ?? null]), uploadEmissionTexture: (ar, r, img, o) => glows.push([ar, r, o]),
@@ -146,9 +139,8 @@ test('BEACON-TOWER THE ART (DF-ART: Daggerfall\'s brazier fire): the flame is th
   };
   const host = createPortHost({ renderer, collider: () => ({ addMesh: () => {}, removeBucket: () => {} }), now: () => 0,
     sites: () => [{ key: '9:lighthouse', kind: 'lighthouse', x: 0, z: 0, yaw: 0, comp: 0, race: 'Breton', name: 'L', keeper: { name: 'K', sex: 'male', variant: 0 } }], groundAt: () => 0 });
-  host.frame();
-  await new Promise((r) => setTimeout(r, 0));
-  assert.equal(ups.length, Object.keys(PORT_SOURCES).length);
+  for (let i = 0; i < 40 && ups.length < PORT_PAINTERS.length; i++) host.frame();
+  assert.equal(ups.length, PORT_PAINTERS.length);
   assert.deepEqual(ups.filter(([, , o]) => o).map(([ar, r, o]) => [ar, r, { ...o }]), [[PORT_ARCHIVE, PORT_REC.flame, { cutout: true }]]);
   assert.deepEqual(glows.map(([ar, r, o]) => [ar, r, { ...o }]), [[PORT_ARCHIVE, PORT_REC.flame, { white: true }], [PORT_ARCHIVE, PORT_REC.embers, { white: true }]]);
 });

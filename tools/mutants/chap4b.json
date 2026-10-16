@@ -264,7 +264,7 @@
   {
     "name": "CHAP4B-WM-CEILING",
     "file": "src/scenes/worldModes.js",
-    "old": "        rankCeiling: host.rollRankCeiling?.() ?? null,   // CHAP4b: 7 online while the Roll holds - 8 and 9 are seats\n",
+    "old": "        rankCeiling: host.rollPace?.(guild.factionId)?.ceiling ?? null,   // CHAP4b: 7 online while the Roll holds - 8 and 9 are seats; ROLL-PACE: and no further than its pace since joining\n",
     "new": "",
     "tests": [
       "test/chap4b_seats.test.js"
@@ -282,8 +282,8 @@
   {
     "name": "CHAP4B-W-CEILING",
     "file": "src/scenes/world.js",
-    "old": "rollRankCeiling: () => (rollTracker && !rollTracker.stopped ? ROLL_BOOK_RANK_MAX : null),",
-    "new": "rollRankCeiling: () => ROLL_BOOK_RANK_MAX,",
+    "old": "    rollPace: (f) => rollPaceOf(rollTracker, f, Math.floor(Date.now() / 1000)),",
+    "new": "    rollPace: () => ({ book: 7, ceiling: 7, wait: () => null }),",
     "tests": [
       "test/chap4b_seats.test.js"
     ]

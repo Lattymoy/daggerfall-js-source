@@ -171,16 +171,25 @@ export function applyLocalOffsetToWorld(originX, originZ, forward, localX, local
 
 // ─── THE SAVE RECORD (WagonSaveData) ───────────────────────────────────────────────────────────────────────────
 
-/** WagonSaveData..ctor [IL_c6c3]: Version 7, the headings +Z, the horse None, an empty name. */
+/** The record's slot in a save's `modData` (DFU's per-mod save data, IHasModSaveData - the mod's own name, under which
+ *  the world host and the dungeon's save it). CART-AWAY (2026-10-15): the zone's death reads the wagon's record by it,
+ *  on the account service too (systems/wildDropLaw.js wildCartRecordOf). */
+export const HCC_VENDOR = 'horse-cart-and-cargo';
+
+/** WagonSaveData..ctor [IL_c6c3]: Version 7, the headings +Z, the horse None, an empty name. WAGON-STABLED (2026-10-15,
+ *  the port's own, no IL twin): and two words of the port's - the wagon and the horse SENT TO THE STABLE
+ *  (systems/horseCart.js sendTransportAway), which the mod's WithPlayer alone cannot tell from "beside the player on
+ *  foot", the state its next door parks outside. */
 export function newSaveData() {
   return {
     Version: WAGON_SAVE_VERSION, Mode: WAGON_MODE.None, WorldX: 0, WorldZ: 0, HeadingX: 0, HeadingZ: 1,
     HorseMode: HORSE_MODE.None, HorseWorldX: 0, HorseWorldZ: 0, HorseHeadingX: 0, HorseHeadingZ: 1,
     InteriorAccessMode: INTERIOR_ACCESS.None, InteriorAccessId: 0, HorseName: '', LastMount: LAST_MOUNT.None,
+    WagonStabled: false, HorseStabled: false,
   };
 }
 const SAVE_FIELDS = Object.freeze(Object.keys(newSaveData()));
-/** WagonSaveData.Copy [IL_c608]: every one of the fifteen fields. */
+/** WagonSaveData.Copy [IL_c608]: every one of the fifteen fields (and WAGON-STABLED's two). */
 export function copySaveData(d) {
   const out = newSaveData();
   for (const k of SAVE_FIELDS) if (d && d[k] !== undefined) out[k] = d[k];
@@ -229,6 +238,9 @@ export function normalizeSaveData(source, ratio) {
   if (d.Mode !== WAGON_MODE.Deployed && d.Mode !== WAGON_MODE.FollowingPlayer) { d.InteriorAccessMode = INTERIOR_ACCESS.None; d.InteriorAccessId = 0; }   // [IL_958c-IL_9595]
   if (d.Mode === WAGON_MODE.FollowingPlayer && d.HorseMode !== HORSE_MODE.HitchedToWagon) d.Mode = WAGON_MODE.Deployed;   // [IL_95ac-IL_95b4]
   for (const k of ['WorldX', 'WorldZ', 'HorseWorldX', 'HorseWorldZ', 'InteriorAccessId']) d[k] = Number.isFinite(d[k]) ? Math.trunc(d[k]) : 0;
+  // WAGON-STABLED (the port's own): a true word, or not stabled - a save from before the word (none written) loads not
+  // stabled, the mod's WithPlayer
+  d.WagonStabled = d.WagonStabled === true; d.HorseStabled = d.HorseStabled === true;
   d.Version = WAGON_SAVE_VERSION;
   return d;
 }

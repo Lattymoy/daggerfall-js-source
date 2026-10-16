@@ -30,7 +30,9 @@ test('enemyAttack: the classic roll uses floored speed and the >> 3 gate', () =>
 });
 
 test('enemyAttack: strikes only in range+sight+yaw; hit event at the melee hit frame', () => {
-  const mkAi = (dist, inSight) => ({ _dist: dist, inSight, yaw: 0, feet: [0, 0, 0] });
+  // INVIS-SWING: a foe that sees its target has DETECTED it - the motor's senses wrote where it stands (the target here
+  // lies straight down +z, at the distance)
+  const mkAi = (dist, inSight) => ({ _dist: dist, inSight, yaw: 0, feet: [0, 0, 0], lastKnownTargetPos: [0, 0, dist] });
   const player = [0, 0, 1.5];
   // out of range: never fires even with a passing roll
   const far = new EnemyAttack({ liveSpeed: 50 });
@@ -50,6 +52,6 @@ test('enemyAttack: strikes only in range+sight+yaw; hit event at the melee hit f
   assert.ok(atk.meleeTimer >= 0);
   // facing away (yaw PI): never fires
   const away = new EnemyAttack({ liveSpeed: 50 });
-  for (let i = 0; i < 300; i++) away.update(1 / 60, { _dist: 1.5, inSight: true, yaw: Math.PI, feet: [0, 0, 0] }, player);
+  for (let i = 0; i < 300; i++) away.update(1 / 60, { _dist: 1.5, inSight: true, yaw: Math.PI, feet: [0, 0, 0], lastKnownTargetPos: player }, player);
   assert.equal(away.machine.state, 'Idle');
 });

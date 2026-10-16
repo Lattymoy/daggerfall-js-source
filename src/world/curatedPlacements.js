@@ -26,6 +26,10 @@
 // where the row found it. A curation of the mod's data (Port-Ledger A, HILL-HOUSE).
 
 export const HILL_HOUSE_VENDOR = 'beautiful-villages';
+/** HILL-HOUSE's rule for a door: its step and this many metres before it are the door's approach, clear of every hill
+ *  and piece (tools/curatedPlacements.mjs measured the row to it; FIELD BUGS 2026-10-15f TEMPLE-STEPS holds every
+ *  exterior door of both packs to it, and a HILL-SEAT pad's bank falls under it - world/townStandIns.js). */
+export const DOOR_APPROACH_M = 4;
 
 /** One record moved: `from` where the pack stands it (xPos, zPos, yRotation - RMB block units and Daggerfall's angle),
  *  `to` the measured spot, `model` its first exterior model, `automap` the 64 x 64 automap cells its footprint covers

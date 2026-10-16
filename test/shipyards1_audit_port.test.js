@@ -10,9 +10,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { buildShipyardModel, SHIPYARD, HULL_STATIONS } from '../src/world/shipyardModel.js';
 import { buildLighthouseModel, buildLighthouseFire, LIGHTHOUSE, LIGHTHOUSE_POINTS, GALLERY_Y, LANTERN_H, TOWER_SIDES, towerR, OIL_CASKS, WATER_BUTT, STEP_BOX } from '../src/world/lighthouseModel.js';
-import { PORT_REC, PORT_SOURCES, PORT_ARCHIVE } from '../src/world/portArt.js';
-import { setTextureDeriveContext } from '../src/systems/textureReplacement.js';
-import { fakeClassicRgba } from './classicArtFake.mjs';
+import { PORT_REC, PORT_PAINTERS, PORT_ARCHIVE } from '../src/world/portArt.js';
 import { peopleOf, createPortHost, feetInPort, guardFor, GUARD_HEADROOM, beamPuffs, nearFade, BEAM_PUFFS, BEAM_NEAR_FADE, BEAM_PERIOD_S, OFFICE_LAMP_RANGE } from '../src/scenes/portHost.js';
 import { KEEPER_HALF, KEEPER_HEIGHT, yardToScene } from '../src/scenes/merchantYardsHost.js';
 import { DECOR_SHADOW } from '../src/scenes/decorRoom.js';
@@ -299,8 +297,6 @@ test('AUDIT SHIPYARDS THE HOLLOW TOWER HOLDS NOBODY (L4-5): its collider is held
   assert.ok(stoodAt !== null && stoodAt >= top - 0.05, `stood with the feet over the roof's point: ${stoodAt?.toFixed(2)}`);
 });
 
-// DF-ART: the port's pictures are read from the player's ARENA2 - here the tests' stand-in (test/classicArtFake.mjs)
-setTextureDeriveContext({ classicRgba: fakeClassicRgba() });
 // ── the pool's light, its art and its frame ────────────────────────────────────────────────────────────────────────
 /** The pool over a renderer that logs its meshes, uploads and draws (with their options), a shipyard and a lighthouse. */
 function poolRig({ now = () => 0, beamClock, lit = true } = {}) {
@@ -323,10 +319,8 @@ function poolRig({ now = () => 0, beamClock, lit = true } = {}) {
   return { host, log, renderer, sites };
 }
 
-test('AUDIT SHIPYARDS THE BEACON\'S FLAMES CAST NOTHING (L5-2\'s law; BEACON-TOWER, PIN MOVED): the flames over the coals are a mesh of their own, drawn with noShadow (round the lamp the lantern room\'s glass the tower had then shadowed its own light on every side: 600 rays of 600 hit the model within a metre) and only in the lanterns\' hours, never cast where the place is cast alone - and no solid: the collider holds the model and the keeper\'s box alone', async () => {
+test('AUDIT SHIPYARDS THE BEACON\'S FLAMES CAST NOTHING (L5-2\'s law; BEACON-TOWER, PIN MOVED): the flames over the coals are a mesh of their own, drawn with noShadow (round the lamp the lantern room\'s glass the tower had then shadowed its own light on every side: 600 rays of 600 hit the model within a metre) and only in the lanterns\' hours, never cast where the place is cast alone - and no solid: the collider holds the model and the keeper\'s box alone', () => {
   const { host, log, renderer } = poolRig();
-  host.frame();
-  await new Promise((r) => setTimeout(r, 0));   // DF-ART: the art read from the player's ARENA2, off the frame
   host.frame();
   assert.equal(log.meshes.length, 3, 'the shipyard, the lighthouse, its flames');
   const fire = log.meshes.find((m) => m.tris === buildLighthouseFire().indices.length / 3);
@@ -344,8 +338,6 @@ test('AUDIT SHIPYARDS THE BEACON\'S FLAMES CAST NOTHING (L5-2\'s law; BEACON-TOW
   assert.equal(bucket.idx.length / 3, buildLighthouseModel().indices.length / 3 + people * box / 3, 'the model and the keeper\'s box in the collider - never the flames');
   // by day the brazier's coals smoulder and no flame stands over them
   const day = poolRig({ lit: false });
-  day.host.frame();
-  await new Promise((r) => setTimeout(r, 0));
   day.host.frame();
   day.host.draw(day.renderer);
   const dayFire = day.log.meshes.find((m) => m.tris === buildLighthouseFire().indices.length / 3);
@@ -423,20 +415,20 @@ test('AUDIT SHIPYARDS THE BEAMS TURN ON ONE CLOCK (L4-6): two clients whose fram
   assert.ok(Math.abs(inside[15].color[3] - puffs[14].alpha) < 1e-9 && puffs[14].alpha > 0, 'the far puffs as they were');
 });
 
-test('AUDIT SHIPYARDS THE ART OFF THE FRAME (L5-5; DF-ART): the twenty-six pictures were painted at once (~60 ms) in the frame that first stood a port - now they are read from the player\'s ARENA2 off the frame, once however many frames ask meanwhile, and uploaded together as they land; the meshes are made once all are up, and the places stand in the collider from the first frame', async () => {
-  {
-    const { host, log } = poolRig();
-    host.frame(); host.frame();
-    assert.equal(log.uploads.length, 0, 'nothing uploaded in the frame');
-    assert.equal(log.meshes.length, 0, 'no mesh before the art is up');
-    assert.ok(log.buckets.has('port:9:shipyard') && log.buckets.has('port:9:lighthouse'), 'in the collider at once');
-    await new Promise((r) => setTimeout(r, 0));
-    assert.equal(log.uploads.length, Object.keys(PORT_SOURCES).length, 'every picture once, though two frames asked');
-    assert.deepEqual(new Set(log.uploads.map(([a, r]) => `${a}:${r}`)).size, Object.keys(PORT_SOURCES).length);
-    assert.ok(log.uploads.every(([a]) => a === PORT_ARCHIVE));
-    host.frame();
-    assert.equal(log.meshes.length, 3);
-  }
+test('AUDIT SHIPYARDS THE ART A FEW PICTURES A FRAME (L5-5): the twenty-six pictures were painted at once (~60 ms) in the frame that first stood a port - now while ART_BUDGET_MS of the frame is unspent (one at least), each once; the meshes are made once all are up, and the places stand in the collider from the first frame', () => {
+  let t = 0;
+  const { host, log } = poolRig({ now: () => (t += 3) });   // 3 ms a reading: two pictures a frame
+  host.frame();
+  assert.ok(log.uploads.length >= 1 && log.uploads.length <= 3, `the first frame painted ${log.uploads.length}`);
+  assert.equal(log.meshes.length, 0, 'no mesh before the art is up');
+  assert.ok(log.buckets.has('port:9:shipyard') && log.buckets.has('port:9:lighthouse'), 'in the collider at once');
+  let frames = 1;
+  while (log.meshes.length === 0 && frames < 100) { host.frame(); frames++; }
+  assert.ok(frames > 5, `spread over ${frames} frames`);
+  assert.equal(log.uploads.length, PORT_PAINTERS.length, 'every picture once');
+  assert.deepEqual(new Set(log.uploads.map(([a, r]) => `${a}:${r}`)).size, PORT_PAINTERS.length);
+  assert.ok(log.uploads.every(([a]) => a === PORT_ARCHIVE));
+  assert.equal(log.meshes.length, 3);
 });
 
 test('AUDIT SHIPYARDS THE OFFICE LANTERN\'S LIGHT AT ITS GLASS (L5-6): the shipyard\'s lantern is one point of its layout (SHIPYARD.lantern) - the light the pool hands and the glass the model draws round it (the light was a literal of its own)', () => {

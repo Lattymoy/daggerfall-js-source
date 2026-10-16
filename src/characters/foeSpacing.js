@@ -281,19 +281,21 @@ export function bodyFits(collider, feet, height = CAPSULE_HEIGHT) {
  * meets the room's two walls first; under a table or a walkway with no underside the room is open round it). A room's
  * own shell looks in at it, and a model whose faces look both ways holds it in DFU too. Whatever its height: a body in a
  * crate taller than itself (41833, a 2.1 m cube) is held by its walls all the same. A collider that cannot answer - no
- * raycastHit to read a face's side by, no sphereOverlaps for the free's fit (bodyFits) - holds nobody.
+ * raycastHit to read a face's side by, no sphereOverlaps for the free's fit (bodyFits) - holds nobody. QUEST-FOE-WALL
+ * (FIELD BUGS 2026-10-15c, "Quest enemy spawned inside object"): and a COLUMN - a pillar to the ceiling has no lid in
+ * reach (no cap, or one past LODGE_REACH), so without one a body is held only when every bearing meets a face's back.
  */
 export function lodgedIn(collider, feet) {
   if (!feet || typeof collider?.raycastHit !== 'function' || typeof collider.sphereOverlaps !== 'function') return false;
   _knee[0] = feet[0]; _knee[1] = feet[1] + LODGE_KNEE; _knee[2] = feet[2];
   const lid = collider.raycastHit(_knee, UP, LODGE_REACH);
-  if (lid?.back !== true || !Number.isFinite(lid.dist)) return false;
+  const lidded = lid?.back === true && Number.isFinite(lid.dist);
   let walls = 0;
   for (const dir of KNEE_BEARINGS) {
     const h = collider.raycastHit(_knee, dir, LODGE_REACH);
     if (h?.back === true && Number.isFinite(h.dist)) walls++;
   }
-  return walls >= 2;
+  return walls >= (lidded ? 2 : KNEE_BEARINGS.length);   // QUEST-FOE-WALL: a column to the ceiling - no lid, every bearing in its skin
 }
 
 /** CRATE-FREE: does the line from `from` along the unit `dir` run `dist` meeting no face that looks at it? The faces it

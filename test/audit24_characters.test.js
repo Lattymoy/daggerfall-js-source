@@ -57,7 +57,7 @@ test('audit24 characters-2: the DFRandom byte draws mid-swing, and the timer re-
   // attack anim. The port used to skip the whole tick body while a
   // swing played, so the shared global LCG desynced for ~16 ticks
   // per swing.
-  const ai = { _dist: 1.0, feet: [0, 0, 0], yaw: 0, inSight: true, detected: true, giveUpTimer: 200 };
+  const ai = { _dist: 1.0, feet: [0, 0, 0], yaw: 0, inSight: true, detected: true, giveUpTimer: 200, lastKnownTargetPos: [0, 0, 10] };
   const player = [0, 0, 10];
   const a = new EnemyAttack({ liveSpeed: 50, playerLevel: 10, reflexes: 2, rolls: () => 0.0 });
   a.meleeTimer = 0;
@@ -104,7 +104,7 @@ test('audit24 characters-3: the bow band carries DetectedTarget and the CanAct/G
   const shoot = (over) => {
     const a = new EnemyAttack({ liveSpeed: 200, playerLevel: 1, reflexes: 2, rolls: () => 0.0 });
     a.rangedAttack = true; a.meleeTimer = 0;
-    const ai = { _dist: 10, feet: [0, 0, 0], yaw: 0, inSight: true, detected: true, giveUpTimer: 200, ...over };
+    const ai = { _dist: 10, feet: [0, 0, 0], yaw: 0, inSight: true, detected: true, giveUpTimer: 200, lastKnownTargetPos: [0, 0, 10], ...over };
     let fired = false;
     for (let i = 0; i < 60; i++) if (a.update(1 / 15, ai, player).includes('hit')) fired = true;
     return fired || a.firedRanged;
@@ -125,7 +125,7 @@ test('audit24 characters-3b: the bow roll is STRICT, and the strike index stays 
   // exactly ON the chance does NOT shoot - which no fixture at 0.0 or
   // 0.99 can tell you.
   const player = [0, 0, 10];
-  const ai = { _dist: 10, feet: [0, 0, 0], yaw: 0, inSight: true, detected: true, giveUpTimer: 200 };
+  const ai = { _dist: 10, feet: [0, 0, 0], yaw: 0, inSight: true, detected: true, giveUpTimer: 200, lastKnownTargetPos: [0, 0, 10] };
   const fire = (roll) => {
     const a = new EnemyAttack({ liveSpeed: 200, playerLevel: 1, reflexes: 2, rolls: () => roll });
     a.rangedAttack = true; a.meleeTimer = 0;
@@ -166,7 +166,7 @@ test('audit24 characters-3c: the band and the reach are STRICT at every bound', 
   const at = (dist, ranged) => {
     const a = new EnemyAttack({ liveSpeed: 200, playerLevel: 1, reflexes: 2, rolls: () => 0.0 });
     a.rangedAttack = ranged; a.meleeTimer = 0;
-    const ai2 = { _dist: dist, feet: [0, 0, 0], yaw: 0, inSight: true, detected: true, giveUpTimer: 200 };
+    const ai2 = { _dist: dist, feet: [0, 0, 0], yaw: 0, inSight: true, detected: true, giveUpTimer: 200, lastKnownTargetPos: [0, 0, 10] };
     setSeed(3);
     let hit = false;
     for (let i = 0; i < 60; i++) if (a.update(1 / 15, ai2, player).includes('hit')) hit = true;
@@ -186,8 +186,8 @@ test('audit24 characters-3c: the band and the reach are STRICT at every bound', 
 });
 
 test('audit24 characters-3d: the yaw vector reads X and Z, not X and Y', () => {
-  // `dx = playerFeet[0] - ai.feet[0], dz = playerFeet[2] - ai.feet[2]`
-  // feeds withinYaw. A fixture with the player straight ahead on +z and
+  // INVIS-SWING: the bearing to `ai.lastKnownTargetPos` (EnemyAttack.cs:155 - where the senses last
+  // saw the target, here the player) feeds withinYaw, X and Z. A fixture with the player straight ahead on +z and
   // the foe at the origin cannot tell index 2 from index 1 - both read
   // zero - so the foe stands OFF the axis here.
   const a = new EnemyAttack({ liveSpeed: 200, playerLevel: 1, reflexes: 2, rolls: () => 0.0 });
@@ -195,7 +195,7 @@ test('audit24 characters-3d: the yaw vector reads X and Z, not X and Y', () => {
   // foe at the origin facing +x (yaw = PI/2), player 2m along +x and
   // 5m UP: the yaw gate must read the XZ bearing (dead ahead) and
   // ignore the height.
-  const ai2 = { _dist: 2.0, feet: [0, 0, 0], yaw: Math.PI / 2, inSight: true, detected: true, giveUpTimer: 200 };
+  const ai2 = { _dist: 2.0, feet: [0, 0, 0], yaw: Math.PI / 2, inSight: true, detected: true, giveUpTimer: 200, lastKnownTargetPos: [2, 5, 0] };
   setSeed(5);
   let hit = false;
   for (let i = 0; i < 60; i++) if (a.update(1 / 15, ai2, [2, 5, 0]).includes('hit')) hit = true;
@@ -253,7 +253,7 @@ test('audit24 characters-3e: the three gates a constant-roll fixture cannot sepa
   // Three mutants outlived every fixture above, each for its own
   // reason. They are the campaign's whole point.
   const player = [0, 0, 10];
-  const near = { _dist: 1.0, feet: [0, 0, 0], yaw: 0, inSight: true, detected: true, giveUpTimer: 200 };
+  const near = { _dist: 1.0, feet: [0, 0, 0], yaw: 0, inSight: true, detected: true, giveUpTimer: 200, lastKnownTargetPos: [0, 0, 10] };
 
   // (1) `attackRollPasses(...) && this.meleeTimer === 0` - swapped to
   // `||`, a foe whose timer is still running attacks anyway. Every

@@ -37,6 +37,7 @@ import { rollRegalia } from './aetheric.js';   // SET6: Ruhn's Regalia - the spo
 import { stacksWith, addItem } from './inventory.js';   // SS1: the fold of a pack saved before the stone stacked; PORTAL-GIFT: the gift joins the pack's stack
 import { wearableItem } from './equip.js';   // RARITY-WEAR: a spoils piece is one a slot takes
 import { bossCardRoll } from './bossCards.js';   // CARDS9: the Warden's own card, the hoard's last draw
+import { rollDragonfireOath } from './gilded.js';   // GILDED2: the Dragonfire Oath - the spoils' very last draw
 
 /** Gold a level of the player's, before the seed's variation (0.8 to 1.2 of it). */
 export const SPOILS_GOLD_PER_LEVEL = 250;
@@ -215,8 +216,8 @@ export function sigilStone() {
 
 /**
  * THE SPOILS of one kill for one player: `{ gold, pieces: [{ item, tier }], sigil, card, gems }` - the pieces in the order they
- * leave him (the Rare-or-better first; SET6: a Regalia piece, when one drops, last). The same seed, level and world
- * answer the same spoils.
+ * leave him (the Rare-or-better first; SET6: a Regalia piece, when one drops, after them; GILDED2: the Dragonfire Oath,
+ * when it drops, last). The same seed, level and world answer the same spoils.
  * @param {number} seed the receipt's `c` @param {number} level the player's
  */
 export function rollSpoils(seed, level) {
@@ -246,6 +247,10 @@ export function rollSpoils(seed, level) {
   // TECH1 (bible/05-Combat/Weapon-Techniques.md): a weapon's technique - after even the Warden's gem, so every spoils
   // before it is what it was for its seed (a piece with no technique family takes no draw)
   techniquePass(pieces.map((p) => p.item), rolls);
+  // GILDED2 (bible/06-Systems/Gilded.md section 7): THE DRAGONFIRE OATH - one draw more, LAST of all (after even the
+  // technique pass), so every spoils before it is what it was for its seed; a static roll, so no pass ever reaches it
+  const oath = rollDragonfireOath(rolls);
+  if (oath) pieces.push({ item: oath, tier: oath.rarity });
   return { gold, pieces, sigil: sigilStone(), card, gems };
 }
 

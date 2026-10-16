@@ -88,11 +88,11 @@
     "new": "  wellspring: Object.freeze({ slot: 'suffix', groups: Object.freeze(['Jewellery', 'Weapons']), params: null, proc: true,",
     "tests": ["test/bal9_destruction.test.js"] },
   { "name": "BAL9c-the-law-unmoved", "file": "src/systems/itemLaw.js",
-    "old": "export const ITEM_LAW_VERSION = 4;",
+    "old": "export const ITEM_LAW_VERSION = 5;",
     "new": "export const ITEM_LAW_VERSION = 2;",
     "tests": ["test/tech1_roster.test.js", "test/int1_itemlaw.test.js"] },
   { "name": "BAL9c-the-service-behind-the-law", "file": "server-account/src/service.js",
-    "old": "export const ACCOUNT_VERSION = 'acct136';",
+    "old": "export const ACCOUNT_VERSION = 'acct138';",
     "new": "export const ACCOUNT_VERSION = 'acct120';",
     "tests": ["test/tech1_roster.test.js"] }
 ]

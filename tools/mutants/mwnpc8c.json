@@ -152,8 +152,8 @@
  {
   "name": "MWNPC8c-quest-child-unread",
   "file": "src/scenes/worldModes.js",
-  "old": ", billboardArchiveIndex: s.archive, billboardRecordIndex: s.record };",
-  "new": " };",
+  "old": ", billboardArchiveIndex: s.archive, billboardRecordIndex: s.record, questPerson: true };",
+  "new": ", questPerson: true };",
   "tests": [
    "test/mwnpc8c_location.test.js",
    "test/dungeonquestclick.test.js"

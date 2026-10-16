@@ -128,8 +128,8 @@
   {
     "name": "LOOT5-the-echo-nine-in-ten",
     "file": "src/systems/lootPowers.js",
-    "old": "      case 'echo': if (_rand() * 100 < p.chance) again(target, damage); break;",
-    "new": "      case 'echo': if (_rand() * 100 >= p.chance) again(target, damage); break;",
+    "old": "      case 'echo': if (_rand() * 100 < p.chance) again(target, damage, p.name); break;",
+    "new": "      case 'echo': if (_rand() * 100 >= p.chance) again(target, damage, p.name); break;",
     "tests": [
       "test/loot5_powers.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "LOOT5-open-hand-on-a-sword",
     "file": "src/systems/lootPowers.js",
-    "old": "      case 'fists': if (!weapon) again(target, (damage * p.share) / 100); break;   // BAL7: for half (the record's share)",
-    "new": "      case 'fists': again(target, (damage * p.share) / 100); break;   // BAL7: for half (the record's share)",
+    "old": "      case 'fists': if (!weapon) again(target, (damage * p.share) / 100, p.name); break;   // BAL7: for half (the record's share)",
+    "new": "      case 'fists': again(target, (damage * p.share) / 100, p.name); break;   // BAL7: for half (the record's share)",
     "tests": [
       "test/loot5_powers.test.js"
     ]

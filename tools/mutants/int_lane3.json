@@ -725,8 +725,8 @@
   {
     "name": "INT14-SERPENT-CLAIM-DROPS-BODY",
     "file": "server-account/src/serpents.js",
-    "old": "nowS, embers, c.m ? JSON.stringify(c.m) : null),",
-    "new": "nowS, embers, null),",
+    "old": "nowS, embers, c.m ? JSON.stringify(c.m) : null, title ? 1 : 0, aura ? 1 : 0),",
+    "new": "nowS, embers, null, title ? 1 : 0, aura ? 1 : 0),",
     "tests": [
       "test/int12_body_relay.test.js"
     ]

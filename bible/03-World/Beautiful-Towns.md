@@ -1,6 +1,6 @@
 # Beautiful Villages and Beautiful Cities (WD3, 2026-10-01)
 
-> DF-ART (2026-10-14, `01-Overview/DF-Art.md`): the town's hangings and rugs (archive 38202), drawn here in WD3, are Daggerfall's own tapestries, woven cloth and rug now (`world/townPictures.js` TOWN_PICTURES).
+> DF-LOOK (2026-10-15, `01-Overview/DF-Art.md`): the town's hangings and rugs (archive 38202), drawn here in WD3, wear their own drawn charges again (DF-ART's swap to Daggerfall's tapestries reverted), laid on in Daggerfall's colours as they go up - grained and snapped to the player's own ART_PAL.COL (`world/dfLook.js`).
 
 carademono's two town mods, ported 1:1: **Beautiful Villages of Daggerfall
 1.4.2** (7,317 villages, hamlets, farms, manors and temples, and every
@@ -372,11 +372,11 @@ one stand-in, on while either mod that places it is loaded.
 | DET pieces shared with Detailed Ships | `45082` (ensign staff), `45121` (dog vane), `45190` (sea chest), `45191` (weapon rack) | 1,364 | Detailed Ships' own stand-ins (`world/detStandIns.js`), which the towns share |
 | the table clutter | archive `56790` (22 records) | 4,827 | no peer's catalogue names it; each record a piece of Daggerfall's own clutter of the kind its height says - tableware and books on the tables, jars, potions and books on shelves and ledges |
 | the temple gardens | archive `10035` (7 records) | 151 | no catalogue names it either; rows of one record each on three temples' grounds - each a garden plant of Daggerfall's own (`TEXTURE.301`): cabbages, greens, lavender, flowers, a berry bush |
-| the RMB Resource Pack's rocks | 23 ids | 245 | a boulder of the climate's rock (`302_3`), each the size of the pack's own mesh, measured |
+| the RMB Resource Pack's rocks | 23 ids | 245 | a boulder of the climate's rock (`302_3`) over the pack's own mesh's box, never past it, at its prefab's scale of 2 to 8 (FIELD BUGS 2026-10-15f TEMPLE-STEPS: they had been the mesh alone, and 143 of the 245 stood wholly under the ground they were laid on) |
 | its hills | 23 ids | 47 | a hill of the climate's grass or rock at the pack's own shape (FIELD BUGS 2026-10-05 HILL-SHAPES, "Houses in Ipsham are floating"): a polar profile measured off each published mesh by `tools/rmbrpHills.mjs --shapes` (`world/rmbrpHillShapes.js`: the raised footprint's centre, 16 bearings each with its reach and ten rings' heights, each cell's median - the shape, not the sculpt; 0.03-0.32 m from the pack's surface at the median), so what the author stood on a hill stands on it - Ipsham's TEMPASH3 houses, TVRNAS03's gazebo - and is held under its whole footprint by a pad (HILL-SEAT, below). They were mounds of the catalogue's size, 1.7-4.5x too narrow and 2-7x too low, and those houses hung 4.1-4.2 m. TREES-SEATED's seat (`world/townStandIns.js` `blockHillSeat`) reads the hills drawn, so the six blocks' 130 trees stand on them (1 more than 1.5 m off, where 121 were). A measurement of the peer's mesh, as the docks' and domes' - Mac's to confirm |
-| its market stalls | 17 ids | 32 | a stall the pack's size (3.2 m across the counter, 4.9 m along it), its awning the cloth each prefab names (`TEXTURE.049` or `449`) |
+| its market stalls | 17 ids | 32 | a stall the pack's size - its mesh as Unity imports it (x mirrored: its high back on -x, its counter at the origin) at the prefab's 0.75, 2.4 m across the counter, 3.7 m along it (TEMPLE-STEPS: it had been the mesh at 1, built 2.4 m off its origin) - its awning the cloth each prefab names (`TEXTURE.049` or `449`) |
 | its docks | `53140`-`53144` | 16 | measured off the pack's meshes: a plank deck whose top is the origin, five-sided piles 5 m below it and 1 m above, a ramp or five steps - which land where the author's do (GENRAS00's ramps at the long dock's two ends; TEMPASH3's three flights across the T-dock's wing) |
-| its platform, foundation and domes | `53160`, `53170`, `53182`, `53187`, `53194` | 22 | stone blocks, classic textures, and the three domes at the pack's own profile (FIELD BUGS 2026-10-04d DOMES, measured off its HF Dome 03/04 meshes at the prefabs' 4.6875: an octagonal drum 4.8 m across on the ground to 3.63 m, the dome to 8.43 m, 03's spire to 10.75 m - they had been a 3.6 m cap over a drum sunk in the roofs they stand on) - the foundation the pack's 16 x 8 x 16 m block, its top the floor of the two temples it stands under (centred, as the pack's mesh is, it walled up their front doors; no stand-in covers any door of either pack's towns) |
+| its platform, foundation and domes | `53160`, `53170`, `53182`, `53187`, `53194` | 22 | stone blocks, classic textures, and the three domes at the pack's own profile (FIELD BUGS 2026-10-04d DOMES, measured off its HF Dome 03/04 meshes at the prefabs' 4.6875: an octagonal drum 4.8 m across on the ground to 3.63 m, the dome to 8.43 m, 03's spire to 10.75 m - they had been a 3.6 m cap over a drum sunk in the roofs they stand on) - the landing and the foundation the pack's own box (`Platform-Temple.fbx`, `Foundation 1.fbx`: +-160 x +-80 x +-160 cm) at each prefab's scale, centred: the landing 3.2 x 1.6 x 3.2 m, the foundation 6.4 x 3.2 x 6.4 m, its top the floor of the two temples it stands under (FIELD BUGS 2026-10-15f TEMPLE-STEPS: a prefab's MeshFilter names the mesh itself, so the FBX node's Lcl Scaling of 125 and 250 is never instanced; read with it, the foundation had been 16 x 8 x 16 m, sunk under the floor, and it buried the stairs and landings the author built up to the doors of 123 temples - `tools/townSolidsSweep.mjs` holds every structure and door of both packs to it) |
 | its crop fields | `53211`-`53214` | 252 | RMBCropBillboardBatch's own law (FIELD BUGS 2026-10-04d CROPS, read again off the component's source): a grid over C#'s integer halves (an 85 m field from -42 to 42, a 35 m one from -17 to 15) in the world's axes - the batch's turn is never read - a plant every 4 m nudged up to half a metre, at the field's own height, none within a metre of the block's models (IsOverlapping, `blockSolids`), each a random pick of the climate's crop billboard (`TEXTURE.301`: wheat in the woodlands, corn in the mountains, sunflowers in the south, vines in swamp and rainforest, the second desert's own record 20; `511_22` stubble in winter), seeded by the spot so a field stands the same every visit (`world/flatFields.js`, sown by `world/rmbFlats.js`) |
 | its city-wall piece | `53210` | 224 | the middle 128 units of Daggerfall's own wall segment (`445`) out of the player's ARCH3D - its stone, its climate - cut and moved onto the piece's line (FIELD BUGS 2026-10-03c, below) |
 
@@ -421,10 +421,16 @@ its top (not hung there), and which hangs more than 0.05 m over what is drawn an
 vertices, gets a PAD (`world/townStandIns.js` `blockHillPatch`): a flat top 0.05 m under its base over that whole
 footprint and 0.25 m past it, and a 45-degree bank down until it is under the hill or the plane - the hill's own
 picture, laid in the hill's own frame, so the grass runs on where they meet. No model moves and nothing is raised
-over a base. The streamed world merges the pads with the pixel's statics and its collider bucket, both freed with the
-pixel; the fixed city (`?exterior`) draws and collides them for its life; TREES-SEATED's seat reads them. Every point
-of every such footprint now stands within 0.15 m of what is drawn (`test/fb1013e_hillseat.test.js`; the whole packs
-swept with the player's ARCH3D on `ARENA2_PATH`).
+over a base. A pad buries nothing the author left in the open (FIELD BUGS 2026-10-15f TEMPLE-STEPS, "The Akatosh
+Chantry in Merdale also has some small issues": the pads had banked over Merdale's temple flight by up to 1.25 m, and
+over TEMPASF1's and TEMPASH4's stairs): no pad where its top would cover another model's vertex standing over the
+drawn ground, and its bank falls steeper where it must to pass 0.05 m under every such vertex and every door's step and
+the 4 m before it (HILL-HOUSE's rule), read off the same meshes. The streamed world merges the pads with the pixel's
+statics and its collider bucket, both freed with the pixel; the fixed city (`?exterior`) draws and collides them for
+its life; TREES-SEATED's seat reads them. Every point of every such footprint stands within 0.15 m of what is drawn -
+the hills, the pads, or the author's own models under it (a temple on its foundations, a stair on its landing) - but
+two, named: Merdale's third stair, whose pad would bury the second, and TEMPASH4's temple's back edge, 2.27 m over the
+pack's own hill too (`test/fb1013e_hillseat.test.js`; the whole packs swept with the player's ARCH3D on `ARENA2_PATH`).
 
 ### Not stood in
 

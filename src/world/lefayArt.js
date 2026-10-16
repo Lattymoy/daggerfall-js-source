@@ -1,30 +1,27 @@
 // @ts-check
-// LEFAY1 (2026-10-08): THE MONUMENT'S PICTURES - the stone of the monument to Julian LeFay (world/lefayMonument.js),
-// under the pseudo-archive LEFAY_ARCHIVE.
+// LEFAY1 (2026-10-08): THE MONUMENT'S OWN ART, MADE AT BOOT - the stone of the monument to Julian LeFay
+// (world/lefayMonument.js) is the port's, so it is made here from noise the moment a host asks (world/gateArt.js's
+// law: pictures of the port's own under a pseudo-archive far above any classic one, no renderer and no GL in this
+// file - pixels and numbers).
 //
-// DF-ART (2026-10-14, Mac: "For all textures you implemented that are AI (Ships, wagons, caravans, etc) I want to
-// instead use daggerfall textures instead of AI generated"): its stone is DAGGERFALL'S OWN - each record named here
-// (world/classicArt.js DF) is read from the player's own ARENA2 when the host stands the monument
-// (scenes/lefayMonumentHost.js):
+//   granite - the steps: a cool grey, speckled dark and light. Tileable.
+//   marble  - the pedestal and the obelisk: a pale stone, veined faintly grey. Tileable.
+//   gilt    - the obelisk's point: a warm gold, burnished in bands.
+//   plaque  - bronze, its border bevelled, the inscription (LEFAY_TEXT.plaque) cut into it in square capitals: the
+//             name and the years twice the size of the two lines under them.
+//   bronze  - the plaque's edges: the plate's own metal, plain.
 //
-//   granite - the steps: dark speckled stone (341).
-//   marble  - the pedestal and the obelisk: pale veined marble (341).
-//   gilt    - the obelisk's point: plain gold (000).
-//
-// THE PLAQUE IS ITS OWN, AS IT WAS (Mac: "Bring back the old plaque texture"): bronze, its border bevelled, the
-// inscription (LEFAY_TEXT.plaque) cut into it in square capitals - the name and the years twice the size of the two
-// lines under them - and its edges the plate's own bronze, made here from noise the moment the host asks (no renderer,
-// no GL: pixels and numbers). Deterministic (its own mulberry32 on fixed seeds): every client's plaque is the same.
+// Low and square-pixelled, Daggerfall's own texel size: the monument sits in the pixel world, not over it.
+// Deterministic (its own mulberry32 on fixed seeds): every client's monument is the same stone.
 //
 // Not a DFU member. Ledger A (LEFAY).
 import { LEFAY_GRANITE, LEFAY_MARBLE, LEFAY_GILT, LEFAY_PLAQUE, LEFAY_BRONZE, LEFAY_TEXT } from './lefayMonument.js';
-import { DF, classicPictures } from './classicArt.js';
 
+/** A stone picture's side, texels. */
+export const LEFAY_ART_SIZE = 64;
 /** The plaque's picture, texels (its shape is the plaque's, world/lefayMonument.js PLAQUE: 1.0 m by 0.8). */
 export const LEFAY_PLAQUE_W = 160;
 export const LEFAY_PLAQUE_H = 128;
-/** A painted picture's side, texels (the plaque's edges). */
-export const LEFAY_ART_SIZE = 64;
 
 /** mulberry32, the port's seeded rng (world/gateArt.js's own), kept here so the art is the monument's alone. */
 function rng(seed) {
@@ -59,6 +56,44 @@ const put = (img, x, y, rgb) => {
 };
 /** @param {ArrayLike<number>} a @param {ArrayLike<number>} b @param {number} t @returns {number[]} */
 const mix = (a, b, t) => { const k = Math.min(1, Math.max(0, t)); return [0, 1, 2].map((i) => Math.round(a[i] + (b[i] - a[i]) * k)); };
+
+/** The steps' granite: a cool grey, mottled, speckled with dark and light grains. */
+export function lefayGraniteArt(seed = 0x1e6a) {
+  const S = LEFAY_ART_SIZE, img = image(S);
+  const coarse = noiseField(seed, 8), r = rng(seed + 3);
+  const DARK = [86, 88, 92], LIGHT = [148, 150, 152];
+  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+    let c = mix(DARK, LIGHT, 0.25 + 0.6 * coarse(x, y));
+    const g = r();
+    if (g < 0.08) c = mix(c, [40, 40, 44], 0.7);
+    else if (g > 0.95) c = mix(c, [210, 206, 200], 0.6);
+    put(img, x, y, c);
+  }
+  return img;
+}
+
+/** The pedestal's and the obelisk's marble: a warm white, clouded, with faint grey veins wandering across it. */
+export function lefayMarbleArt(seed = 0x3a7b) {
+  const S = LEFAY_ART_SIZE, img = image(S);
+  const cloud = noiseField(seed, 4), vein = noiseField(seed + 1, 8);
+  const BASE = [214, 210, 200], SHADE = [186, 182, 174], VEIN = [128, 126, 124];
+  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+    const c = mix(BASE, SHADE, cloud(x, y) * 0.8);
+    // a vein where the field crosses its middle, thin and broken
+    const v = Math.abs(vein(x, y) - 0.5);
+    put(img, x, y, v < 0.02 ? mix(c, VEIN, 0.45 - v * 10) : c);
+  }
+  return img;
+}
+
+/** The point's gilt: gold, burnished in bands across it. */
+export function lefayGiltArt(seed = 0x9117) {
+  const S = 32, img = image(S);
+  const n = noiseField(seed, 4, S);
+  const DEEP = [150, 104, 30], BRIGHT = [244, 204, 96];
+  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) put(img, x, y, mix(DEEP, BRIGHT, 0.5 + 0.35 * Math.sin((y / S) * Math.PI * 4) * 0.6 + 0.4 * (n(x, y) - 0.5)));
+  return img;
+}
 
 /** The plaque's metal: a dark bronze, faintly mottled (the plate, and its plain edges). */
 const BRONZE_DARK = [70, 50, 26];
@@ -153,20 +188,11 @@ export function lefayPlaqueArt(lines = LEFAY_TEXT.plaque, seed = 0x91a0) {
   return img;
 }
 
-/** DF-ART: the Daggerfall record each of the monument's stone records wears (world/classicArt.js DF). */
-export const LEFAY_SOURCES = Object.freeze({
-  [LEFAY_GRANITE]: DF.granite,
-  [LEFAY_MARBLE]: DF.marble,
-  [LEFAY_GILT]: DF.giltPlain,
-});
-/** A painted picture (`colors`, row 0 its top) as the top-down `data` picture the readers answer. */
-const asData = (/** @type {{width:number,height:number,colors:Uint8Array}} */ img) => ({ width: img.width, height: img.height, data: img.colors });
-
-/** Every picture the monument wears, by record - `[record, picture]` (top-down, `data`): its stone read from the
- *  player's own ARENA2 through `classicRgba` (world/classicArt.js classicPictures), its plaque and the plaque's edges
- *  its own bronze. What the host uploads under LEFAY_ARCHIVE. */
-export async function lefayPictures(/** @type {(archive: number, record: number, frame?: number) => Promise<any>} */ classicRgba) {
-  const out = await classicPictures(LEFAY_SOURCES, classicRgba);
-  out.push([LEFAY_PLAQUE, asData(lefayPlaqueArt())], [LEFAY_BRONZE, asData(lefayBronzeArt())]);
-  return out.sort((a, b) => a[0] - b[0]);
-}
+/** Every picture the monument wears, by record - what a host uploads under LEFAY_ARCHIVE before it draws. */
+export const lefayArt = () => [
+  [LEFAY_GRANITE, lefayGraniteArt()],
+  [LEFAY_MARBLE, lefayMarbleArt()],
+  [LEFAY_GILT, lefayGiltArt()],
+  [LEFAY_PLAQUE, lefayPlaqueArt()],
+  [LEFAY_BRONZE, lefayBronzeArt()],
+];

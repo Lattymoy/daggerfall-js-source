@@ -457,8 +457,8 @@
   {
     "name": "LW7-tone-swapped",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "    const kind = tone === 0 ? 'polite' : tone === 2 ? 'insulted' : null;",
-    "new": "    const kind = tone === 2 ? 'polite' : tone === 0 ? 'insulted' : null;",
+    "old": "    const kind = taste > 0 ? 'polite' : taste < 0 ? 'insulted' : null;",
+    "new": "    const kind = taste < 0 ? 'polite' : taste > 0 ? 'insulted' : null;",
     "tests": [
       "test/lw7_deeds.test.js"
     ]
@@ -622,8 +622,8 @@
   {
     "name": "LW7-road-tone-swapped",
     "file": "src/scenes/livingRoads.js",
-    "old": "      const kind = tone === 0 ? 'polite' : tone === 2 ? 'insulted' : null;",
-    "new": "      const kind = tone === 2 ? 'polite' : tone === 0 ? 'insulted' : null;",
+    "old": "      const kind = taste > 0 ? 'polite' : taste < 0 ? 'insulted' : null;",
+    "new": "      const kind = taste < 0 ? 'polite' : taste > 0 ? 'insulted' : null;",
     "tests": [
       "test/lw7_deeds.test.js"
     ]
@@ -872,7 +872,7 @@
   {
     "name": "LW7-host-tone",
     "file": "src/scenes/world.js",
-    "old": "    livingTone: (person, tone) => person?.living?.town?.toned?.(person, tone),",
+    "old": "    livingTone: (person, taste) => person?.living?.town?.toned?.(person, taste),",
     "new": "    livingTone: null,",
     "tests": [
       "test/lw7_deeds.test.js"
@@ -881,7 +881,7 @@
   {
     "name": "LW7-host-road-tone",
     "file": "src/scenes/world.js",
-    "old": "  _livingRoadsDoor.toned = (p, tone) => livingRoads?.toned(p, tone) ?? null;",
+    "old": "  _livingRoadsDoor.toned = (p, taste) => livingRoads?.toned(p, taste) ?? null;",
     "new": "  void 0;",
     "tests": [
       "test/lw7_deeds.test.js"
@@ -899,7 +899,7 @@
   {
     "name": "LW7-talk-tone-unheard",
     "file": "src/scenes/townTalk.js",
-    "old": "  const _toneHeard = () => { if (_toneTarget) livingTone?.(_toneTarget, tone); };",
+    "old": "  const _toneHeard = () => { if (_toneTarget) livingTone?.(_toneTarget, _toneTaste()); };",
     "new": "  const _toneHeard = () => {};",
     "tests": [
       "test/lw7_deeds.test.js"

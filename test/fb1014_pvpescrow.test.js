@@ -148,7 +148,7 @@ async function herDrop(z, rc, { collect = true } = {}) {
 }
 
 /** HIS BOOK (net/wildRemains.js), over the game's own mint and pack: the room's words in, its asks out; a collect the room
- *  signs goes to his tab's act (world.js wildCollectHeard - the service asked with his record's `at`, the piece added from
+ *  signs goes to his tab's act (wildEscrowHost.js wildCollectHeard - the service asked with his record's `at`, the piece added from
  *  its answer, wildCollected). Answers the book and what it saw. */
 function hisBook(z, { carrying = true } = {}) {
   const { svc, bo, BO, kb, sender, killer } = z;
@@ -392,11 +392,15 @@ test('THE HANDOFF\'S DOORS: a tab asks the escrow only for a room that signs col
   assert.equal(d.escrow, undefined, 'no collect asked: the room\'s old take');
   assert.equal(escrowRow(z.svc, d.r), undefined);
   const w = rd('src/scenes/world.js');
-  assert.ok(w.includes("realm: at, room: lay, ...(online?.wildCollectAt?.(lay) ? { collect: 1 } : {}) }),"), 'my drop asks it for my room alone');
-  assert.ok(w.includes('collect: (cr, at) => wildCollectHeard(cr, at),'), 'the book\'s collect to my tab');
-  assert.ok(w.includes('wildEscrowFrame();'), 'the zone\'s frame watches my escrows');
+  assert.ok(w.includes("realm: at, room: lay, ...(online?.wildCollectAt?.(lay) ? { collect: 1 } : {}), ...wildCartWord("), 'my drop asks it for my room alone');   // PIN MOVED (CART-AWAY, Mac, 2026-10-15): my wagon's word beside it (test/fb1015_cartaway.test.js)
+  // PIN MOVED (HOST-SPLIT, FIELD BUGS 2026-10-15c): the handoff's two sides live in scenes/wildEscrowHost.js, the host wiring them
+  const eh = rd('src/scenes/wildEscrowHost.js');
+  assert.ok(w.includes('const wildEscrow = createWildEscrowHost({ townTalk, session: realmSession, modes: () => modes, wildAccount, checkpoint: () => onlineCheckpoint() });'), 'the host wires the handoff');
+  assert.ok(w.includes('collect: (cr, at) => wildEscrow.collectHeard(cr, at),'), 'the book\'s collect to my tab');
+  assert.ok(w.includes('wildEscrow.frame();'), 'the zone\'s frame watches my escrows');
   assert.ok(w.includes('const held = d.wi === 0 && !!d.escrow?.r;') && w.includes('setWildDeath({ killer: dd.killer, dropped: d.order ? n : 0, claimed, held });'), 'my death screen says my piece is held');
-  assert.ok(w.includes('if (held) wildEscrowHeld(d.escrow, { killer: dd?.killer ?? null, name: claimed });'), 'and my tab watches it');
-  assert.ok(w.includes("call: (at) => wildAccount.reclaim({ r, realm: at }), apply: (a) => wildEscrowBack(r, a?.data ?? null)"), 'taken back as an act on my record');
-  assert.ok(w.includes("call: (at) => wildAccount.collect({ receipt: c.cr, realm: at }), apply: (a) => wildCollected(a?.data ?? null)"), 'collected as an act on mine');
+  assert.ok(w.includes('if (held) wildEscrow.held(d.escrow, { killer: dd?.killer ?? null, name: claimed });'), 'and my tab watches it');
+  assert.ok(eh.includes("call: (at) => wildAccount.reclaim({ r, realm: at }), apply: (a) => wildEscrowBack(r, a?.data ?? null)"), 'taken back as an act on my record');
+  assert.ok(eh.includes("call: (at) => wildAccount.collect({ receipt: c.cr, realm: at }), apply: (a) => wildCollected(a?.data ?? null)"), 'collected as an act on mine');
+  assert.ok(eh.includes('return { held: wildEscrowHeld, collectHeard: wildCollectHeard, frame: wildEscrowFrame };'), 'the module hands back its three doors');
 }));

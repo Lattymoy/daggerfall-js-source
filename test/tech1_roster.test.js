@@ -208,7 +208,10 @@ test('TECH1 THE DOOR: one roll a piece at its tier\'s chance, the door\'s LAST d
       const p = door();
       LR._setTechniqueForTests(null);
       assert.equal(s.gold, p.gold);
-      assert.deepEqual(s.pieces.map((x) => noTech(x.item)), p.pieces.map((x) => x.item), `seed ${seed}: the spoils before it are their seed's`);
+      // PIN MOVED (GILDED2, bible/06-Systems/Gilded.md section 7): the gate's Oath and the serpent's Sovereign are the doors'
+      // very last draw, AFTER the technique's - set aside on both sides
+      const unGilded = (list) => list.filter((x) => x.tier !== 'gilded' || x.item.gilded === 'the-hourlock');
+      assert.deepEqual(unGilded(s.pieces).map((x) => noTech(x.item)), unGilded(p.pieces).map((x) => x.item), `seed ${seed}: the spoils before it are their seed's`);
       assert.deepEqual(s.card ?? null, p.card ?? null, 'the card before it');
     }
   }
@@ -278,12 +281,12 @@ test('TECH1 THE CARD: the line with its band, then what a press does with its nu
 
 test('TECH1 THE LAW: a technique of the piece\'s family, one, last of its own lines, in its tier\'s band - every honest shape lawful, each forgery named; the law moved to 2 (mutants: the count; the place; the family; the band)', () => {
   on();
-  assert.equal(ITEM_LAW_VERSION, 4);   // PIN MOVED (HACKED-GOLD): law 4 - a letter of credit's worth and a coin pile's count past one DFU int are findings (law 3 on its branch, renumbered past BAL9c at the merge); PIN MOVED (BAL9c): the caster's two lines and the arcane three are lawful from law 3 on
+  assert.equal(ITEM_LAW_VERSION, 5);   // PIN MOVED (GILDED2): law 5 - the Gilded rung's two new records are lawful; PIN MOVED (HACKED-GOLD): law 4 - a letter of credit's worth and a coin pile's count past one DFU int are findings (law 3 on its branch, renumbered past BAL9c at the merge); PIN MOVED (BAL9c): the caster's two lines and the arcane three are lawful from law 3 on
   // AUDIT TECH1: THE LAW MOVES THE SERVICE. The account Worker's judge IS this law (judge.js JUDGE_VERSION), and a site
   // deploy waits only on ACCOUNT_VERSION (.github/workflows/deploy.yml) - a law moved without it ships the site before the
   // judge that knows it, and an honest piece reads as a forgery (a hold and a strike) in the gap. Each law version names
   // the first service that carries it; a law with no entry here, or a service older than its entry, fails.
-  const LAW_SERVICE = { 1: 0, 2: 108, 3: 121, 4: 123 };   // PIN MOVED (HACKED-GOLD): law 4 is acct123's (law 3 and acct121 on its branch, renumbered past BAL9c at the merge; then acct122, renumbered past NAME-AS - which carries law 3 - at the next)   // BAL9c: law 3 is acct121's   // PIN MOVED (TECH1 at the #749 merge): law 2 is acct108's - main's acct107 is LW15's, which never carried it; PIN MOVED (TECH1 at the #755 merge): law 2 was acct107's - main's acct106 is SCALE4d's, which never carried it; PIN MOVED (TECH1 at the #745 merge): law 2 was acct106's - main's acct105 is THE INTEGRITY ARC lane 3's, which never carried it
+  const LAW_SERVICE = { 1: 0, 2: 108, 3: 121, 4: 123, 5: 137 };   // PIN MOVED (GILDED2): law 5 is acct137's (acct135 on its branch, renumbered past main's acct135 and acct136 at the merge); PIN MOVED (HACKED-GOLD): law 4 is acct123's (law 3 and acct121 on its branch, renumbered past BAL9c at the merge; then acct122, renumbered past NAME-AS - which carries law 3 - at the next)   // BAL9c: law 3 is acct121's   // PIN MOVED (TECH1 at the #749 merge): law 2 is acct108's - main's acct107 is LW15's, which never carried it; PIN MOVED (TECH1 at the #755 merge): law 2 was acct107's - main's acct106 is SCALE4d's, which never carried it; PIN MOVED (TECH1 at the #745 merge): law 2 was acct106's - main's acct105 is THE INTEGRITY ARC lane 3's, which never carried it
   assert.ok(Number.isInteger(LAW_SERVICE[ITEM_LAW_VERSION]), `item law ${ITEM_LAW_VERSION} names no account service - bump ACCOUNT_VERSION with it and record it here`);
   assert.ok(Number(/^acct(\d+)$/.exec(ACCOUNT_VERSION)?.[1]) >= LAW_SERVICE[ITEM_LAW_VERSION], `${ACCOUNT_VERSION} predates item law ${ITEM_LAW_VERSION}`);
   const lawful = [

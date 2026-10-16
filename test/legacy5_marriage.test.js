@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
   topicsFor, topicLabel, topicQuestion, courtGain, court, propose, betrothalOf, wed, childStep, spouseOf, childrenTogether,
-  splitName, residentInHouse, forgetCourtship, TOPIC, AFFECTION_MAX, CHILD_DAYS, CHILDREN_MAX, COURT_BASE, MARRIAGE_TEXT,
+  splitName, residentInHouse, forgetCourtship, TOPIC, AFFECTION_MAX, CHILD_DAYS, CHILDREN_MAX, COURT_BASE, COURT_TASTE, MARRIAGE_TEXT,
 } from '../src/systems/legacy/marriage.js';
 import { FRIEND_AT } from '../src/systems/livingWorld/relations.js';
 import { foundFamily, familyRng, personOf, successors, MODELS } from '../src/systems/legacy/family.js';
@@ -32,7 +32,7 @@ test('LEGACY5 the topics: a friend is courted, a full heart hears a proposal, a 
   const me = personOf(f, f.currentId);
   assert.deepEqual(topicsFor(f, me, RES, FRIEND_AT - 1), [], 'not yet a friend');
   assert.deepEqual(topicsFor(f, me, RES, FRIEND_AT), [TOPIC.court]);
-  court(me, RES, { day: 1, personality: 0, etiquette: 0, tone: 1, roll: 0.5 });
+  court(me, RES, { day: 1, personality: 0, etiquette: 0, taste: 0, roll: 0.5 });   // PIN MOVED: TONE-TASTE - the tone as taken
   assert.deepEqual(topicsFor(f, me, RES, 0), [TOPIC.court], 'a courtship begun goes on whatever the day\'s regard');
   assert.equal(propose(me, RES.id), false, 'a heart not yet full hears no proposal');
   me.courting[RES.id].affection = AFFECTION_MAX;
@@ -51,18 +51,21 @@ test('LEGACY5 the topics: a friend is courted, a full heart hears a proposal, a 
 });
 
 test('LEGACY5 a day\'s courtship: Personality, Etiquette and the tone on a roll, once a day, never past the full heart', () => {
-  assert.equal(courtGain({ personality: 0, etiquette: 0, tone: 1, roll: 0.5 }), COURT_BASE);
-  assert.equal(courtGain({ personality: 100, etiquette: 100, tone: 0, roll: 0.5 }), COURT_BASE + 5 + 5 + 3);
-  assert.equal(courtGain({ personality: 0, etiquette: 0, tone: 2, roll: 0 }), Math.round((COURT_BASE - 3) * 0.75));
-  assert.ok(courtGain({ personality: 0, etiquette: 0, tone: 2, roll: 0 }) >= 1);
+  // PIN MOVED: TONE-TASTE (2026-10-15) - the tone counts as the resident TOOK it (`taste`, talkTopics.js toneTaste),
+  // never by its name (LEGACY5's COURT_TONE, Polite +3 to everyone): kindly COURT_TASTE more, the Normal tone nothing,
+  // ill a loss of COURT_TASTE whatever else (test/tonetaste.test.js)
+  assert.equal(courtGain({ personality: 0, etiquette: 0, taste: 0, roll: 0.5 }), COURT_BASE);
+  assert.equal(courtGain({ personality: 100, etiquette: 100, taste: 1, roll: 0.5 }), COURT_BASE + 5 + 5 + COURT_TASTE);
+  assert.equal(courtGain({ personality: 0, etiquette: 0, taste: 0, roll: 0 }), Math.round(COURT_BASE * 0.75));
+  assert.ok(courtGain({ personality: 0, etiquette: 0, taste: 0, roll: 0 }) >= 1);
   const me = { courting: {} };
-  const a = court(me, RES, { day: 3, townName: 'Ashbury', personality: 50, etiquette: 40, tone: 0, roll: 1 });
+  const a = court(me, RES, { day: 3, townName: 'Ashbury', personality: 50, etiquette: 40, taste: 1, roll: 1 });
   assert.equal(a.again, false);
   assert.ok(a.gained > 0);
-  const b = court(me, RES, { day: 3, personality: 50, etiquette: 40, tone: 0, roll: 1 });
+  const b = court(me, RES, { day: 3, personality: 50, etiquette: 40, taste: 1, roll: 1 });
   assert.deepEqual(b, { gained: 0, affection: a.affection, again: true }, 'the day\'s was given');
   me.courting[RES.id].affection = AFFECTION_MAX - 1;
-  assert.equal(court(me, RES, { day: 4, personality: 100, etiquette: 100, tone: 0, roll: 1 }).affection, AFFECTION_MAX);
+  assert.equal(court(me, RES, { day: 4, personality: 100, etiquette: 100, taste: 1, roll: 1 }).affection, AFFECTION_MAX);
   assert.equal(me.courting[RES.id].town, 'Ashbury', 'the town the courtship is in - where the wedding will be');
   forgetCourtship(me, RES.id);
   assert.equal(me.courting[RES.id], undefined);
@@ -223,7 +226,7 @@ test('LEGACY5 the host: a courted resident dead ends the courtship with word; a 
 test('LEGACY5 the wiring: the talk puts the host\'s rows first on Tell me about and answers them itself, both skins through the one hooks object; the world hands the doors over', () => {
   const tt = read('src/scenes/townTalk.js');
   assert.match(tt, /const own = _toneTarget \? \(legacyTopics\?\.\(_toneTarget\) \?\? \[\]\) : \[\];/);
-  assert.match(tt, /if \(row\.legacy\) return row\.legacy\.answer\(tone\);   \/\/ LEGACY5/);
+  assert.match(tt, /if \(row\.legacy\) return row\.legacy\.answer\(tone, _toneTaste\(\)\);   \/\/ LEGACY5/);   // PIN MOVED: TONE-TASTE - and how the tone was taken
   assert.match(tt, /question: \(row\) => \(row\.legacy \? row\.legacy\.question\(tone\) :/);
   const w = read('src/scenes/world.js');
   assert.match(w, /legacyTopics: \(person\) => legacyTopicRows\(person\),/);

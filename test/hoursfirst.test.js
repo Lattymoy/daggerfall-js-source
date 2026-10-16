@@ -35,8 +35,8 @@ const env = { HOURS_FIRST_HANDLES: ' Duck , ArtemisGodfrey,terra ' };
 const FIRST_CLEAR = ['aether', 'ArtemisGodfrey', 'CycleD0se', 'Duck', 'Kobakk', 'MackyWackyDeeJew', 'mayaamano', 'Nirnroot', 'ofrizz', 'rosalina', 'ShikiX3', 'Temegast', 'Terra'];
 
 test('HOURS-FIRST the vocabulary: the title and the aura join the closed lists last; "Hour\'s First" and "The First Hour" in words; the title drawn rose gold into pearl into the dawn\'s white, edged in black, its one colour the rose gold and no other title\'s; the aura\'s button in its paint; no glyph (mutants: another title\'s paint; the gradient\'s order; the colour the Hourbreaker\'s)', () => {
-  assert.deepEqual(TITLES.slice(-9, -2), ['hoursfirst', 'iliacchampion', 'chaptermaster', 'chapterofficer', 'formermaster', 'highmaster', 'seasonmaster']);   // PIN MOVED (KG6): The King's Gambit's Grandmaster after it, last; PIN MOVED (LAMP-KEEPER II): I Love Lamp joined the list last, after them; PIN MOVED (CARDS10, at the merge of main): Iliac Champion joined the list after it; PIN MOVED (CHAP4c): the Chapters' three after them - their relay after CARDS10's world182; PIN MOVED (CHAP6e): and their two more
-  assert.equal(AURAS.at(-1), 'firsthour');
+  assert.deepEqual(TITLES.slice(-10, -3), ['hoursfirst', 'iliacchampion', 'chaptermaster', 'chapterofficer', 'formermaster', 'highmaster', 'seasonmaster']);   // PIN MOVED (KG6): The King's Gambit's Grandmaster after it, last; PIN MOVED (LAMP-KEEPER II): I Love Lamp joined the list last, after them; PIN MOVED (CARDS10, at the merge of main): Iliac Champion joined the list after it; PIN MOVED (CHAP4c): the Chapters' three after them - their relay after CARDS10's world182; PIN MOVED (CHAP6e): and their two more
+  assert.equal(AURAS.at(-2), 'firsthour');   // PIN MOVED (SERPENT5): The Maelstrom after it, last
   assert.equal(TITLE_TEXT.hoursfirst, "Hour's First");
   assert.equal(AURA_TEXT.firsthour, 'The First Hour');
   assert.equal(HOURS_FIRST_AURA, 'firsthour');

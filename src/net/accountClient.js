@@ -1511,7 +1511,8 @@ export function accountRaids({ fetch, storage }) {
 }
 
 /** SERPENT1: a sea serpent's receipt the relay signed for this account, carried to the service with the character that
- *  fought it and this device's claim id (the hoard's key) - `{ recorded, slain, renown, spoils, order }`, or
+ *  fought it and this device's claim id (the hoard's key) - `{ recorded, slain, renown, spoils, order }` (SERPENT5: and
+ *  `title`, `aura`, `titleNew`, `auraNew` - the Old Coil's grants on its first write, acct135), or
  *  `{ recorded: false, why }` (`claimed`, `guest`). */
 // AUDIT 625 P4: and the embers this build's hoard mints (systems/serpentSpoils.js serpentEmbers) - the row counts what the
 // claim says, so a build from before them, saying none, is counted none

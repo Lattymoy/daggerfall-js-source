@@ -168,13 +168,13 @@ test('CHAP4b the hosts\' wiring: the hall\'s services read the book seated, its 
   assert.match(wm, /const access = serviceAccess\(guild, membershipOf\(seated\(\), guild\), service\);/);
   assert.match(wm, /guild, memberships: seated\(\), store, rows, route,/);
   assert.match(wm, /freeHealing: freeHealing\(guild, membershipOf\(seated\(\), guild\)\),/);
-  assert.match(wm, /rankCeiling: host\.rollRankCeiling\?\.\(\) \?\? null,/);
+  assert.match(wm, /rankCeiling: host\.rollPace\?\.\(guild\.factionId\)\?\.ceiling \?\? null,/);   // PIN MOVED (ROLL-PACE): the pace's ceiling, the book's seven within it
   assert.match(wm, /steps: \(\) => onPushEffects\(playerEntity, guild, memberships, store, ownDate\(\), \{/, 'the review reads the book itself');
   const w = src('src/scenes/world.js');
   assert.match(w, /const seatRankHere = \(\/\*\* @type \{number\} \*\/ faction\) => \{\n\s+if \(!rollTracker\?\.held \|\| rollTracker\.stopped\) return null;\n\s+const px = playerTravelPixel\(\);\n\s+const region = \(\(\) => \{ try \{ return maps\.getRegionIndexAt\(px\.x, px\.y\); \} catch \{ return null; \} \}\)\(\);\n\s+return seatRankAt\(rollTracker\.seats, faction, region\);/);
   assert.match(w, /chapterSeatRank: \(faction\) => seatRankHere\(faction\),/);
   assert.match(w, /magesGuildRank: \(\) => Math\.max\(joinedGuildOfGroup\(activeMemberships\(playerEntity\), GUILD_GROUPS\.MagesGuild\)\?\.rank \?\? 0, seatRankHere\(GUILD_FACTION_IDS\.MagesGuild\) \?\? 0\),/, 'the paid teleport\'s fee at a seat\'s rank');
-  assert.match(w, /rollRankCeiling: \(\) => \(rollTracker && !rollTracker\.stopped \? ROLL_BOOK_RANK_MAX : null\),/);   // PIN MOVED (AUDIT CHAP4 C3): from the page's first frame, the Roll's first word or not
+  assert.match(w, /rollPace: \(f\) => rollPaceOf\(rollTracker, f, Math\.floor\(Date\.now\(\) \/ 1000\)\),/);   // PIN MOVED (AUDIT CHAP4 C3, then ROLL-PACE): from the page's first frame, the Roll's first word or not
   assert.match(w, /onCapped: \(factions\) => \{ const line = bookCappedLine\(factions\); if \(line\) chatNotice\(line\); \},/);
   assert.match(w, /onSeats: \(seats, before\) => \{ for \(const line of seatLinesOf\(before, seats\)\) chatNotice\(line\); \},/);
   assert.match(w, /\.\.\.rollEntityDoors\(\(\) => playerEntity\),/, 'the doors carry the cap');

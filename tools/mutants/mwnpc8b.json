@@ -164,8 +164,8 @@
  {
   "name": "MWNPC8b-marker-bodied",
   "file": "src/characters/peopleBodies.js",
-  "old": "  if (data.billboardArchiveIndex === EDITOR_FLATS_ARCHIVE) return (pn._mwLook = null);\n",
-  "new": "",
+  "old": "  if (!data.questPerson && !isNpcFlat(data.billboardArchiveIndex)) return (pn._mwLook = null);",
+  "new": "  if (!data.questPerson && !isNpcFlat(data.billboardArchiveIndex) && data.billboardArchiveIndex !== 199) return (pn._mwLook = null);",
   "tests": [
    "test/mwnpc8b_streetdungeon.test.js"
   ]

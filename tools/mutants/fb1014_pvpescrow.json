@@ -119,8 +119,8 @@
   {
     "name": "ESCROW-the-escrow-asked-of-any-room",
     "file": "src/scenes/world.js",
-    "old": "realm: at, room: lay, ...(online?.wildCollectAt?.(lay) ? { collect: 1 } : {}) }),",
-    "new": "realm: at, room: lay, collect: 1 }),",
+    "old": "realm: at, room: lay, ...(online?.wildCollectAt?.(lay) ? { collect: 1 } : {}), ...wildCartWord(",
+    "new": "realm: at, room: lay, collect: 1, ...wildCartWord(",
     "tests": [
       "test/fb1014_pvpescrow.test.js"
     ]

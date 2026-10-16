@@ -163,7 +163,9 @@
     "new": "    const mine = this._all().get(ws)?.sub;\n    const tr = [...(this._trails ?? new Map())].filter(([k]) => this._all().get(k)?.sub === mine).flatMap(([, t]) => t).sort((x, y) => x[0] - y[0]);\n    if (tr?.length)",
     "tests": [
       "test/int_lane3_audit.test.js"
-    ]
+    ],
+    "equivalent": true,
+    "why": "ONE-BODY (FIELD BUGS 2026-10-15c): only a gate's court, a Super dungeon's realm and a cell keep trails, and each stands one socket an account now - two trails of one account never meet in a live room, so judging the account's trails together judges the one socket's"
   },
   {
     "name": "AINT11-DECOY-VOLLEY-LANDS",

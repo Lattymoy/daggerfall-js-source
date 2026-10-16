@@ -2063,9 +2063,9 @@
   },
   {
     "name": "ACS-S3-pad-words",
-    "file": "src/scenes/world.js",
-    "old": "      if (m.tap === 'Spyglass') return hdGlyphName(padHand, DPAD_CODES[dir]);",
-    "new": "      if (m.tap === 'Spyglass') return null;",
+    "file": "src/scenes/glassPad.js",
+    "old": "    if (m.tap === 'Spyglass') return hdGlyphName(padHand, DPAD_CODES[dir]);",
+    "new": "    if (m.tap === 'Spyglass') return null;",
     "tests": [
       "test/auditcaptsea.test.js"
     ]

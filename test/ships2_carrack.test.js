@@ -15,10 +15,7 @@ import {
   CARRACK_BATTERIES, ANCHOR, sideAt, lidFitOf, ropeLadderGeometry,
 } from '../src/world/carrackModel.js';
 import { SAILS, CARRACK_RIG } from '../src/world/carrackRig.js';
-import { carrackCut, carrackGlow, registerCarrackArt, _resetCarrackArt, CARRACK_ARCHIVE, TEX, BANDS, CARRACK_SOURCES, CARRACK_NIGHT } from '../src/world/carrackArt.js';
-import { GALLEON_SOURCES, TEX as GALLEON_TEX, NIGHT_RECORD_OFFSET } from '../src/world/galleonArt.js';
-import { DF, PANE_GLOW } from '../src/world/classicArt.js';
-import { fakeClassicRgba, texelOf, texel } from './classicArtFake.mjs';
+import { carrackArt, carrackGlow, carrackCut, CARRACK_NIGHT, registerCarrackArt, _resetCarrackArt, CARRACK_ARCHIVE, TEX, BANDS } from '../src/world/carrackArt.js';
 import { RUDDER_DEG } from '../src/world/galleonModel.js';
 import { createGalleonGunDeck } from '../src/systems/naval/galleonGunDeck.js';
 import { DECK_STEP } from '../src/systems/naval/navalDeck.js';
@@ -309,39 +306,36 @@ test('SHIPS-2 CARRACK HULL_BUILDS\' CARRACK IS HERS: her box her MeshCollider\'s
 
 // ── her pictures ───────────────────────────────────────────────────────────────────────────────────────────────────
 
-test('SHIPS-2 CARRACK HER PICTURES (DF-ART, Mac: "use daggerfall textures instead of AI generated"): a Daggerfall record a TEX record under CARRACK_ARCHIVE - the galleon\'s for the records she shares with her, Come Sail Away\'s planking for her sides - read from the player\'s own ARENA2 as a stand-in, opaque; registered with the vendor textures once; her transom\'s window alone seen through (Mac: "windows should always be see through") by day, its night twin whole and glowing (Mac: "See-through by day, lit at night"); every face of hers drawn on a picture of hers (mutants: registered twice, every picture of hers a cut-out, a face on no picture)', async () => {
-  const records = new Set(Object.keys(CARRACK_SOURCES).map(Number));
-  assert.deepEqual([...records].sort((x, y) => x - y), [...new Set(Object.values(TEX))].sort((x, y) => x - y), 'a Daggerfall record a record');
-  const shared = ['hullBottom', 'hullInner', 'deck', 'trim', 'spar', 'iron', 'canvas', 'rope', 'gilt', 'grate', 'lid', 'door', 'beams', 'dark', 'underDeck'].filter((n) => n in TEX);
-  for (const name of shared) assert.deepEqual(CARRACK_SOURCES[TEX[name]], GALLEON_SOURCES[GALLEON_TEX[name]], `${name}: the galleon's`);
-  assert.deepEqual(CARRACK_SOURCES[TEX.hullSide0], DF.hullPlanks, 'her side Come Sail Away\'s planking');
+test('SHIPS-2 CARRACK HER PICTURES: painted at load from numbers alone - the same bytes every time - a picture a TEX record under CARRACK_ARCHIVE, each 64 x 64; registered with the vendor textures once, her transom\'s night twins with them (DF-LOOK: its glass a hole by day, whole by night); her stern windows\' slices alone glowing by night; every face of hers drawn on a picture of hers (mutants: a picture seeded off the clock, registered twice, the glow everywhere, a face on no picture)', async () => {
+  const hash = (art) => createHash('sha256').update(JSON.stringify(art.map(([r, p]) => [r, p.width, p.height, Buffer.from(p.data).toString('base64')]))).digest('hex');
+  const a = carrackArt(), b = carrackArt();
+  assert.equal(hash(a), hash(b), 'the same bytes');
+  assert.deepEqual([...new Set(a.map(([r]) => r))].sort((x, y) => x - y), [...new Set(Object.values(TEX))].sort((x, y) => x - y), 'a picture a record');
+  for (const [r, p] of a) assert.deepEqual([p.width, p.height, p.data.length], [64, 64, 64 * 64 * 4], `record ${r}`);
+  const lit = (r) => !!carrackGlow(r)?.data.some((v, i) => i % 4 === 0 && v > 0);
+  assert.ok(BANDS.transom.recs.some(lit), 'her stern windows glow');
+  for (const r of new Set(Object.values(TEX))) if (!BANDS.transom.recs.includes(r)) assert.equal(carrackGlow(r), null, `nothing else (record ${r})`);
+  const records = new Set(a.map(([r]) => r));
   for (const [key, g] of Object.entries(built.meshes)) for (const s of g.slots ?? []) {
     if (s.record == null) continue;
     assert.equal(s.archive, CARRACK_ARCHIVE, `${key}: her archive`);
-    assert.ok(records.has(s.record), `${key}: record ${s.record} hers`);
+    assert.ok(records.has(s.record), `${key}: record ${s.record} painted`);
   }
   _resetCarrackArt();
   const added = [];
   const add = (entries) => { added.push(...entries); return entries.length; };
-  assert.deepEqual(CARRACK_NIGHT, { [TEX.transom0]: TEX.transom0 + NIGHT_RECORD_OFFSET }, 'her transom\'s window its night twin');
-  const night = CARRACK_NIGHT[TEX.transom0];
-  assert.ok(!records.has(night), 'past every record of hers');
-  assert.equal(registerCarrackArt(add), records.size + 1);
+  assert.equal(registerCarrackArt(add), Object.keys(TEX).length + BANDS.transom.recs.length, 'her pictures and her transom\'s night twins (DF-LOOK)');
   assert.equal(registerCarrackArt(add), 0, 'once');
   assert.ok(added.every((e) => e.archive === CARRACK_ARCHIVE && e.standIn === true && typeof e.build === 'function'));
-  const ctx = { classicRgba: fakeClassicRgba() };
-  for (const e of added) {
-    const pic = await e.build(ctx), from = CARRACK_SOURCES[e.record];
-    if (Array.isArray(from)) assert.deepEqual(texel(pic, 3, 3), [...texelOf(from[0], from[1]), 255], `record ${e.record}: read from ${from.join('_')}, opaque`);
+  // DF-LOOK (DF-ART II and III kept): her transom's glass a hole by day, its twin whole by night
+  for (const r of BANDS.transom.recs) {
+    const painted = a.find(([q]) => q === r)[1], glow = carrackGlow(r);
+    const day = await added.find((e) => e.record === r).build(), night = await added.find((e) => e.record === CARRACK_NIGHT[r]).build();
+    assert.ok(Buffer.from(night.data).equals(Buffer.from(painted.data)), `slice ${r}: its night twin whole, as painted`);
+    for (let i = 0; i < day.data.length; i += 4) assert.equal(day.data[i + 3], glow.data[i] > 0 ? 0 : 255, `slice ${r} texel ${i / 4}`);
+    assert.ok(carrackCut(r) && !carrackCut(CARRACK_NIGHT[r]), `slice ${r} a cut-out, its twin not`);
   }
-  for (const r of new Set(Object.values(TEX))) assert.equal(carrackCut(r), r === TEX.transom0, `record ${r}: ${r === TEX.transom0 ? 'her transom\'s window seen through' : 'whole'}`);
-  const twin = await added.find((e) => e.record === night).build(ctx), glow = carrackGlow(night);
-  assert.ok(!carrackCut(night) && glow && [...Object.values(TEX)].every((r) => !carrackGlow(r)), 'her twin whole and glowing, nothing else');
-  let lit = 0;
-  for (let i = 0; i < twin.data.length; i += 4) { assert.equal(twin.data[i + 3], 255, 'her twin whole'); if (glow.data[i] === PANE_GLOW[0]) lit++; }
-  assert.ok(lit > 0, 'her twin\'s glass glows');
   _resetCarrackArt();
-  assert.equal(carrackGlow(night), null, 'reset: her glow uncut');
 });
 
 // ── the mod's own Carrack fallen back to; her harbours ─────────────────────────────────────────────────────────────

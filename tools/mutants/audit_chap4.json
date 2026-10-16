@@ -335,11 +335,12 @@
   },
   {
     "name": "AUDIT-CHAP4-C3-CEILING",
-    "file": "src/scenes/world.js",
-    "old": "rollRankCeiling: () => (rollTracker && !rollTracker.stopped ? ROLL_BOOK_RANK_MAX : null),",
-    "new": "rollRankCeiling: () => (rollTracker?.held && !rollTracker.stopped ? ROLL_BOOK_RANK_MAX : null),",
+    "file": "src/net/npcRollTracker.js",
+    "old": "  if (!tracker || tracker.stopped) return null;\n  const standing",
+    "new": "  if (!tracker?.held || tracker.stopped) return null;\n  const standing",
     "tests": [
-      "test/audit_chap4.test.js"
+      "test/audit_chap4.test.js",
+      "test/fb1015f_rollpace.test.js"
     ]
   },
   {

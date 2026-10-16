@@ -157,7 +157,8 @@ test('AUDIT CAPTAIN\'S SEA S3: at a helm the d-pad press the player gave the gla
   assert.equal(glassFootWords({ zoom: 4, pad: true, keys: { glass: 'D-pad left', zoom: 'Right stick click' } }), 'x4 - Right stick click: magnify - D-pad left: lower the glass');
   assert.equal(glassFootWords({ zoom: 2, touch: true, keys: { glass: 'K' } }), 'x2', 'a finger\'s presses are the foot\'s buttons');
   const w = rd('src/scenes/world.js');
-  assert.match(w, /if \(m\.tap === 'Spyglass'\) return hdGlyphName\(padHand, DPAD_CODES\[dir\]\);\n\s+if \(m\.hold === 'Spyglass'\) return `Hold \$\{hdGlyphName\(padHand, DPAD_CODES\[dir\]\)\}`;/, 'a d-pad press named');
+  // PIN MOVED: GILDED2's merge of main (HOST-SPLIT) - glassPadWords left bootWorld whole for src/scenes/glassPad.js
+  assert.match(rd('src/scenes/glassPad.js'), /if \(m\.tap === 'Spyglass'\) return hdGlyphName\(padHand, DPAD_CODES\[dir\]\);\n\s+if \(m\.hold === 'Spyglass'\) return `Hold \$\{hdGlyphName\(padHand, DPAD_CODES\[dir\]\)\}`;/, 'a d-pad press named');
   assert.match(w, /if \(taps\.zoom && spyglass\.up\) spyglass\.zoom = nextGlassZoom\(spyglass\.zoom\);/);
   assert.match(w, /glass: \{ up: \(\) => spyglass\.up, zoom: \(\) => \{ if \(spyglass\.up\) spyglass\.zoom = nextGlassZoom\(spyglass\.zoom\); \} \},/);
 });

@@ -33,6 +33,7 @@ import { TOWN_PICTURE_ARCHIVE, PICTURE } from './townPictures.js';
 import { registerFlatField } from './flatFields.js';
 import { RMBRP_HILL_SHAPES, SHAPE_BEARINGS, SHAPE_RINGS } from './rmbrpHillShapes.js';   // FIELD BUGS 2026-10-05 HILL-SHAPES: the pack's hills, measured
 import { wrapAngle } from './mat4.js';   // FIELD BUGS 2026-10-13e HILL-SEAT: a pad corner's turn, in one step
+import { DOOR_APPROACH_M } from './curatedPlacements.js';   // FIELD BUGS 2026-10-15f TEMPLE-STEPS: a door's approach, HILL-HOUSE's rule
 import { shareDetailedShipsArt } from '../systems/detailedShips.js';   // Cliffworms' Items (archive 1210): his pictures, the towns' too
 
 const U = 0.025;   // MeshReader.GlobalScale: one classic unit in metres
@@ -185,26 +186,43 @@ export const TOWN_CROP_FIELDS = Object.freeze({
 });
 
 // ---- the RMB Resource Pack's scene pieces -----------------------------------------------------------------------
-/** The rocks Beautiful Villages and Beautiful Cities scatter round their buildings: [width, height above the origin,
- *  depth below it, length] in metres - the pack's own meshes measured (centimetre FBX, as Daggerfall Unity reads the
- *  mesh its prefab names). Each stands in as a boulder of the climate's rock (302_3, swapped by climate). */
+/** The rocks Beautiful Villages and Beautiful Cities scatter round their buildings: each mesh's box as Unity imports it
+ *  (x mirrored), in metres at the mesh's own centimetres - [x0, x1, depth below the origin, height above it, z0, z1] -
+ *  stood at RMBRP_ROCK_SCALE, below. Each stands in as a boulder of the climate's rock (302_3, swapped by climate) over
+ *  that box. FIELD BUGS 2026-10-15f TEMPLE-STEPS: the table was [width, height, depth, length] round the origin, but a
+ *  mesh's box sits off its origin, by up to a fifth of its width (53086), which the prefab's scale makes a metre. */
 export const RMBRP_ROCKS = Object.freeze({
-  53006: [0.54, 0.33, 0.12, 0.59], 53012: [0.85, 0.28, 0.13, 0.54], 53014: [1.11, 0.35, 0, 0.98], 53017: [0.58, 0.64, 0, 0.86],
-  53020: [1.56, 0.96, 0, 1.3], 53023: [1.37, 0.52, 0.25, 1.19], 53029: [0.58, 0.17, 0.09, 0.55], 53030: [0.56, 0.17, 0.07, 0.42],
-  53031: [0.53, 0.18, 0.09, 0.46], 53032: [1.01, 0.22, 0.12, 1.05], 53033: [0.66, 0.12, 0.1, 0.65], 53035: [0.76, 0.41, 0.4, 0.59],
-  53036: [0.68, 0.54, 0.1, 0.61], 53037: [1.97, 0.71, 0.14, 1.73], 53038: [1.82, 0.47, 0.18, 1.49], 53039: [2.29, 0.66, 0.16, 1.6],
-  53040: [2.22, 0.52, 0.19, 2.51], 53042: [2.03, 0.22, 0.11, 2.22], 53054: [0.89, 0.13, 0, 0.57], 53064: [0.79, 0.37, 0, 0.85],
-  53083: [0.77, 0.13, 0, 0.5], 53085: [0.66, 0.14, 0, 0.64], 53086: [2.2, 0.56, 0, 1.26],
+  53006: [-0.273, 0.263, 0.123, 0.327, -0.308, 0.286], 53012: [-0.431, 0.416, 0.13, 0.278, -0.282, 0.26], 53014: [-0.475, 0.636, 0.001, 0.349, -0.421, 0.561],
+  53017: [-0.228, 0.356, 0.003, 0.639, -0.382, 0.483], 53020: [-0.738, 0.82, 0.004, 0.961, -0.562, 0.734], 53023: [-0.814, 0.555, 0.255, 0.523, -0.619, 0.576],
+  53029: [-0.356, 0.224, 0.092, 0.167, -0.319, 0.234], 53030: [-0.343, 0.215, 0.069, 0.167, -0.221, 0.203], 53031: [-0.307, 0.219, 0.085, 0.176, -0.236, 0.223],
+  53032: [-0.504, 0.506, 0.124, 0.224, -0.553, 0.501], 53033: [-0.333, 0.325, 0.102, 0.119, -0.36, 0.286], 53035: [-0.349, 0.415, 0.09, 0.496, -0.414, 0.404],
+  53036: [-0.335, 0.35, 0.103, 0.541, -0.294, 0.318], 53037: [-0.898, 1.076, 0.141, 0.715, -0.788, 0.945], 53038: [-0.93, 0.891, 0.176, 0.468, -0.618, 0.872],
+  53039: [-1.194, 1.095, 0.164, 0.658, -0.875, 0.726], 53040: [-1.005, 1.212, 0.189, 0.523, -1.161, 1.346], 53042: [-0.99, 1.04, 0.114, 0.224, -1.176, 1.041],
+  53054: [-0.387, 0.505, 0, 0.133, -0.316, 0.252], 53064: [-0.397, 0.396, 0, 0.367, -0.45, 0.401], 53083: [-0.387, 0.387, 0, 0.133, -0.252, 0.252],
+  53085: [-0.255, 0.403, 0, 0.136, -0.405, 0.236], 53086: [-1.305, 0.891, 0, 0.56, -0.611, 0.65],
+});
+/** FIELD BUGS 2026-10-15f TEMPLE-STEPS: the scale each rock's prefab stands its mesh at - the m_LocalScale it sets on the
+ *  model's root, which MeshReplacement.ImportCustomGameobject keeps and multiplies the placement's into. The stand-ins
+ *  had been the mesh alone: at it, 143 of the 245 rocks the packs lay stood wholly under the ground they were laid on. */
+export const RMBRP_ROCK_SCALE = Object.freeze({
+  53006: 6, 53012: 5, 53014: 4, 53017: 6, 53020: 4, 53023: 2, 53029: 6, 53030: 8, 53031: 6, 53032: 3, 53033: 4, 53035: 4,
+  53036: 6, 53037: 4, 53038: 4, 53039: 4, 53040: 3, 53042: 4, 53054: 8, 53064: 6, 53083: 6, 53085: 8, 53086: 4,
 });
 const ROCK = [302, 3], GRASS = [302, 2];
-/** A boulder: an eight-sided lump, its rim and crown pushed in and out by a seed, `w` x `l` across, `up` above its origin
- *  and `down` below. */
-export function boulderMesh(w, up, down, l, seed) {
+/** A rock's boulder: over its mesh's box (RMBRP_ROCKS), at its prefab's scale. */
+export function rockMesh(id) {
+  const [x0, x1, down, up, z0, z1] = RMBRP_ROCKS[id].map((v) => v * RMBRP_ROCK_SCALE[id]);
+  return boulderMesh(x1 - x0, up, down, z1 - z0, Number(id), (x0 + x1) / 2, (z0 + z1) / 2);
+}
+/** A boulder: an eight-sided lump, its rim and crown pushed in and out by a seed, `w` x `l` across round (cx, cz), `up`
+ *  above its origin and `down` below - never out past its box (TEMPLE-STEPS: the rim had been pushed out by up to 12%,
+ *  half a metre past the pack's own rock at its prefab's scale). */
+export function boulderMesh(w, up, down, l, seed, cx = 0, cz = 0) {
   const m = new MeshBuilder(), N = 8;
   let h = seed >>> 0;
   const rnd = () => { h = (Math.imul(h ^ (h >>> 15), 2246822507) + 0x9e3779b9) >>> 0; return (h & 0xffff) / 0xffff; };
-  const ring = (y, k) => Array.from({ length: N }, (_, i) => { const a = (i / N) * Math.PI * 2, r = k * (0.82 + rnd() * 0.3); return [Math.cos(a) * (w / 2) * r, y, Math.sin(a) * (l / 2) * r]; });
-  const base = ring(-Math.max(down, 0.05), 0.92), mid = ring(up * 0.45, 1), top = ring(up * 0.85, 0.62), crown = [0, up, 0], foot = [0, -Math.max(down, 0.05), 0];
+  const ring = (y, k) => Array.from({ length: N }, (_, i) => { const a = (i / N) * Math.PI * 2, r = k * (0.82 + rnd() * 0.18); return [cx + Math.cos(a) * (w / 2) * r, y, cz + Math.sin(a) * (l / 2) * r]; });
+  const base = ring(-Math.max(down, 0.05), 0.92), mid = ring(up * 0.45, 1), top = ring(up * 0.85, 0.62), crown = [cx, up, cz], foot = [cx, -Math.max(down, 0.05), cz];
   const face = (a, b, c) => { const u = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], v = [c[0] - a[0], c[1] - a[1], c[2] - a[2]]; const n = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]]; const l2 = Math.hypot(...n) || 1; m.tri(ROCK, a, b, c, [n[0] / l2, n[1] / l2, n[2] / l2], [a[0], -a[1]], [b[0], -b[1]], [c[0], -c[1]]); };
   for (let i = 0; i < N; i++) {
     const j = (i + 1) % N;
@@ -372,6 +390,17 @@ export function seatNatureFlat(seat, x, z, groundY) {
 // falling from that edge until it is under what the block draws there (its hills, or its plane) - in the picture of the
 // hill the model stands on, with that hill's own texture coordinates (hillPlanUv in the hill's frame), so where the bank
 // meets the hill the grass runs on. The model is not moved, and nothing is raised over its base.
+//
+// FIELD BUGS 2026-10-15f TEMPLE-STEPS (Discord: "The Akatosh Chantry in Merdale also has some small issues"): A PAD BURIES
+// NOTHING THE AUTHOR LEFT IN THE OPEN. A pad is the port's, not the author's - DFU with the pack lays none - and it was
+// laid against the hills and the plane alone, blind to the block's other models. Merdale's TEMPASD1 stands its temple's
+// four-piece flight (21728) over hill 52458: the pad under a post beside it (43733, 0.25 m square) banked down over the
+// flight by up to 1.25 m, the third piece's (it stands on the fourth, stacked under it) over the second's treads; TEMPASF1's
+// temple and upper stair banked over its lower stair (40720) by up to 0.7 m, TEMPASH4's temple over its stair's top step
+// and the rocks at its foundations' feet. So a pad now leaves in the open every vertex of the block's other models that
+// stands over what is drawn under it (hills, or the plane) and every door's approach (its step and DOOR_APPROACH_M
+// before it, at its foot, HILL-HOUSE's rule): no pad where its flat top would cover one, and its bank falls steeper where
+// it must, to pass HILL_PATCH_SINK under every one - still facing up, its edge still under the ground.
 
 /** HILL-SEAT: how far a model the author stood on a hill may hang over what is drawn under any point of its footprint,
  *  in metres - the bar HILL-SHAPES held a prop's foot to at its origin (test/fb1005_hills.test.js), held now under the
@@ -393,6 +422,8 @@ const HILL_PATCH_STEP = 0.25;     // the bank's march out
 const HILL_PATCH_GRID = 1;        // the gap's samples inside a footprint, past the exact ones (footprintSamples)
 const HILL_PATCH_RAY = 1;         // a bank's rays along a footprint's edge
 const HILL_PATCH_FAN = Math.PI / 6;   // and round its corners, 30 degrees apart at most
+const HILL_PATCH_STEEPEST = 8;    // TEMPLE-STEPS: the steepest a yielding bank falls (8 m a metre, 83 degrees); a pad that needs more lays nothing
+const HILL_PATCH_ROUNDS = 8;      // TEMPLE-STEPS: and the rounds its rays are steepened in, before it lays nothing
 
 /** HILL-SEAT: the convex hull of points [x, z], counter-clockwise (x across, z up the page) - Andrew's monotone chain. */
 function hullXZ(points) {
@@ -465,11 +496,93 @@ function hillUvAt(m) {
     return hillPlanUv(((e * i - f * h) * x + (c * h - b * i) * y + (b * f - c * e) * z) / det, ((d * h - e * g) * x + (b * g - a * h) * y + (a * e - b * d) * z) / det);
   };
 }
+/** HILL-SEAT x TEMPLE-STEPS: how far [x, z] stands outside a counter-clockwise convex polygon - 0 inside it. */
+function outsideHull(h, x, z) {
+  if (inHull(h, x, z)) return 0;
+  let best = Infinity;
+  for (let i = 0; i < h.length; i++) best = Math.min(best, segmentDistance(x, z, h[i], h[(i + 1) % h.length]));
+  return best;
+}
+/** TEMPLE-STEPS: a point's distance to the segment a-b, seen from above. */
+function segmentDistance(x, z, a, b) {
+  const ex = b[0] - a[0], ez = b[1] - a[1], l2 = ex * ex + ez * ez;
+  const t = l2 ? Math.max(0, Math.min(1, ((x - a[0]) * ex + (z - a[1]) * ez) / l2)) : 0;
+  return Math.hypot(x - a[0] - ex * t, z - a[1] - ez * t);
+}
+
+/** FIELD BUGS 2026-10-15f TEMPLE-STEPS: a door's approach in the block's frame - the middle of its foot (`foot`), the way
+ *  out of it, level (`out`, the door record's own normal: the way DFU's exit lands a player), and half its width along
+ *  the wall (`half`). `door` a door record of the mesh (meshReader's vert0-2 and normal, the model's own space), `m` the
+ *  placement's matrix. */
+export function doorApproach(door, m) {
+  const at = (x, y, z) => [m[0] * x + m[4] * y + m[8] * z + m[12], m[1] * x + m[5] * y + m[9] * z + m[13], m[2] * x + m[6] * y + m[10] * z + m[14]];
+  const v0 = door.vert0, v2 = door.vert2, footY = Math.min(v0.y, door.vert1.y, v2.y);
+  const cx = (v0.x + v2.x) / 2, cz = (v0.z + v2.z) / 2;
+  const foot = at(cx, footY, cz), tip = at(cx + door.normal.x, footY, cz + door.normal.z);
+  const ox = tip[0] - foot[0], oz = tip[2] - foot[2], l = Math.hypot(ox, oz) || 1;
+  const a = at(v0.x, footY, v0.z), b = at(v2.x, footY, v2.z);
+  return { foot, out: [ox / l, 0, oz / l], half: Math.hypot(b[0] - a[0], b[2] - a[2]) / 2 };
+}
+/** TEMPLE-STEPS: the approach's points on the ground, [x, z, k] each - its step (k = 0) and every `step` metres out to
+ *  DOOR_APPROACH_M, at its middle and a hand's breadth in from each jamb. */
+export function doorApproachPoints({ foot, out, half }, step = HILL_PATCH_STEP) {
+  const side = Math.max(half - 0.1, 0), pts = [];
+  for (let k = 0; k <= DOOR_APPROACH_M + 1e-9; k += step) {
+    for (const s of side ? [-side, 0, side] : [0]) pts.push([foot[0] + out[0] * k - out[2] * s, foot[2] + out[2] * k + out[0] * s, k]);
+  }
+  return pts;
+}
+
+/** TEMPLE-STEPS: what the block's pads must leave in the open, filed by the metre square - every vertex of its models (a
+ *  hill aside) standing more than HILL_PATCH_SINK over what `seat` draws under it (its hills, or the plane), and every
+ *  door's approach at its foot. Each point [x, y, z, owner]: the model's index, or -1 for a door's approach (a model's own
+ *  vertices are its own pad's to sit on; no door's approach is anyone's). */
+function openPoints(seat, models, meshOf, drawn) {
+  const cells = new Map(), key = (i, j) => `${i},${j}`;
+  const add = (x, y, z, owner) => {
+    const k = key(Math.floor(x), Math.floor(z));
+    let c = cells.get(k);
+    if (!c) cells.set(k, (c = []));
+    c.push([x, y, z, owner]);
+  };
+  for (const [owner, placed] of [...(models ?? [])].entries()) {
+    if (drawn(placed.modelIdNum)) continue;
+    const mesh = meshOf(placed), m = placed.matrix;
+    if (!mesh?.positions?.length) continue;
+    const p = mesh.positions;
+    for (let i = 0; i < p.length; i += 3) {
+      const x = m[0] * p[i] + m[4] * p[i + 1] + m[8] * p[i + 2] + m[12], y = m[1] * p[i] + m[5] * p[i + 1] + m[9] * p[i + 2] + m[13], z = m[2] * p[i] + m[6] * p[i + 1] + m[10] * p[i + 2] + m[14];
+      if (y > Math.max(seat.topAt(x, z) ?? 0, 0) + HILL_PATCH_SINK) add(x, y, z, owner);
+    }
+    for (const door of mesh.doors ?? []) {
+      const a = doorApproach(door, m);
+      for (const [x, z] of doorApproachPoints(a)) add(x, a.foot[1], z, -1);
+    }
+  }
+  return {
+    /** The points over the box x0..x1, z0..z1 but `owner`'s own. */
+    near(x0, z0, x1, z1, owner) {
+      const out = [];
+      for (let i = Math.floor(x0); i <= Math.floor(x1); i++) for (let j = Math.floor(z0); j <= Math.floor(z1); j++) {
+        for (const q of cells.get(key(i, j)) ?? []) if (q[3] !== owner && q[0] >= x0 && q[0] <= x1 && q[2] >= z0 && q[2] <= z1) out.push(q);
+      }
+      return out;
+    },
+  };
+}
+
 /** HILL-SEAT: one model's pad into `mb` - a flat top at `top` over `hull` grown by HILL_PATCH_MARGIN (its corners
  *  rounded), and a bank out of every point of that edge along its outward normal, falling HILL_PATCH_SLOPE a metre until
  *  it is HILL_PATCH_TOE under what the block draws there (`seat`'s top, or the plane), or under the plane wherever it
- *  is. Each triangle faces up. */
-function hillPad(mb, seat, hull, top, tex, uvOf) {
+ *  is. Each triangle faces up. TEMPLE-STEPS: `open` (openPoints) what it must leave in the open, but `owner`'s own - none
+ *  under the flat top (else no pad: answers false), and each bank's ray falls steeper where it must to pass
+ *  HILL_PATCH_SINK under every one over it (or, past HILL_PATCH_STEEPEST, no pad). */
+function hillPad(mb, seat, hull, top, tex, uvOf, open, owner) {
+  let x0 = Infinity, z0 = Infinity, x1 = -Infinity, z1 = -Infinity;
+  for (const [x, z] of hull) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); }
+  for (const q of open.near(x0 - HILL_PATCH_MARGIN, z0 - HILL_PATCH_MARGIN, x1 + HILL_PATCH_MARGIN, z1 + HILL_PATCH_MARGIN, owner)) {
+    if (q[1] - top < HILL_PATCH_SINK - 1e-4 && outsideHull(hull, q[0], q[2]) <= HILL_PATCH_MARGIN) return false;   // the top would cover what the author left in the open
+  }
   const n = hull.length, rays = [];
   const outward = (i) => {
     const [ax, az] = hull[i], [bx, bz] = hull[(i + 1) % n];
@@ -485,14 +598,41 @@ function hillPad(mb, seat, hull, top, tex, uvOf) {
     for (let k = 1; k < along; k++) rays.push([ax + ((bx - ax) * k) / along, az + ((bz - az) * k) / along, a1]);
   }
   const under = (x, z) => Math.max(seat.topAt(x, z) ?? 0, 0);   // what the block draws: its hills, or its plane
-  const reach = (top + HILL_PATCH_TOE) / HILL_PATCH_SLOPE;   // this far out the bank is under the plane
-  const ring = rays.map(([px, pz, a]) => {
+  const slopes = rays.map(() => HILL_PATCH_SLOPE);   // TEMPLE-STEPS: each ray's own, steeper where it must yield
+  const rayOf = ([px, pz, a], s) => {
     const dx = Math.cos(a), dz = Math.sin(a), cx = px + dx * HILL_PATCH_MARGIN, cz = pz + dz * HILL_PATCH_MARGIN;
+    const reach = (top + HILL_PATCH_TOE) / s;   // this far out the bank is under the plane
     let d = HILL_PATCH_STEP;
-    while (d < reach && top - HILL_PATCH_SLOPE * d > under(cx + dx * d, cz + dz * d) - HILL_PATCH_TOE) d += HILL_PATCH_STEP;
+    while (d < reach && top - s * d > under(cx + dx * d, cz + dz * d) - HILL_PATCH_TOE) d += HILL_PATCH_STEP;
     d = Math.min(d, reach);
-    return { crest: [cx, top, cz], toe: [cx + dx * d, top - HILL_PATCH_SLOPE * d, cz + dz * d] };
-  });
+    return { crest: [cx, top, cz], toe: [cx + dx * d, top - s * d, cz + dz * d] };
+  };
+  let ring = rays.map((r, i) => rayOf(r, slopes[i]));
+  // TEMPLE-STEPS: each bank triangle over something left in the open steepens its two rays, until none is
+  for (let round = 0; ; round++) {
+    let steeper = false;
+    for (let i = 0; i < ring.length; i++) {
+      const j = (i + 1) % ring.length, a = ring[i], b = ring[j];
+      for (const [p, q, r] of [[a.crest, b.crest, b.toe], [a.crest, b.toe, a.toe]]) {
+        const tx0 = Math.min(p[0], q[0], r[0]), tx1 = Math.max(p[0], q[0], r[0]), tz0 = Math.min(p[2], q[2], r[2]), tz1 = Math.max(p[2], q[2], r[2]);
+        const det = (q[2] - r[2]) * (p[0] - r[0]) + (r[0] - q[0]) * (p[2] - r[2]);
+        if (Math.abs(det) < 1e-12) continue;
+        for (const [x, y, z] of open.near(tx0, tz0, tx1, tz1, owner)) {
+          const l1 = ((q[2] - r[2]) * (x - r[0]) + (r[0] - q[0]) * (z - r[2])) / det, l2 = ((r[2] - p[2]) * (x - r[0]) + (p[0] - r[0]) * (z - r[2])) / det;
+          if (l1 < -1e-9 || l2 < -1e-9 || l1 + l2 > 1 + 1e-9) continue;
+          if (l1 * p[1] + l2 * q[1] + (1 - l1 - l2) * r[1] <= y - HILL_PATCH_SINK) continue;   // the bank passes under it
+          const d = segmentDistance(x, z, [a.crest[0], a.crest[2]], [b.crest[0], b.crest[2]]);
+          const need = (top - (y - HILL_PATCH_SINK)) / Math.max(d, 1e-6) * 1.01;
+          if (d < HILL_PATCH_STEP || need > HILL_PATCH_STEEPEST) return false;   // at the crest: the pad would bury it however its bank fell
+          slopes[i] = Math.max(slopes[i], need); slopes[j] = Math.max(slopes[j], need);
+          steeper = true;
+        }
+      }
+    }
+    if (!steeper) break;
+    if (round >= HILL_PATCH_ROUNDS) return false;
+    ring = rays.map((r, i) => rayOf(r, slopes[i]));
+  }
   const bank = (p, q, r) => {
     const u = [q[0] - p[0], q[1] - p[1], q[2] - p[2]], v = [r[0] - p[0], r[1] - p[1], r[2] - p[2]];
     const c = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]];
@@ -510,6 +650,7 @@ function hillPad(mb, seat, hull, top, tex, uvOf) {
     bank(a.crest, b.crest, b.toe);
     bank(a.crest, b.toe, a.toe);
   }
+  return true;
 }
 
 /**
@@ -517,14 +658,16 @@ function hillPad(mb, seat, hull, top, tex, uvOf) {
  * hill holds itself) whose base stands over the block's plane (HILL_SEAT_PLANE), over a drawn hill, and ON it - the
  * drawn top somewhere under its footprint within HILL_SEAT_STAND of its base (a model hung higher keeps its air) - and
  * which hangs more than HILL_PATCH_SINK over what is drawn anywhere under its footprint: a pad (hillPad), in the picture
- * of the hill under its middle. The pads come back as ONE mesh in the block's frame, in a custom model's shape
+ * of the hill under its middle - leaving in the open what the author did (TEMPLE-STEPS: every other model's vertices over
+ * the drawn ground, and every door's approach - read off the same meshes, their door records too, so no host hands
+ * anything more in), or none. The pads come back as ONE mesh in the block's frame, in a custom model's shape
  * (positions, normals, uvs, indices, subMeshes), and are laid into `seat`, so its top - TREES-SEATED's flats' - answers
  * them as it answers the hills. Null when the block needs none. The one home of both street hosts (scenes/world.js
  * merges it with the pixel's statics and its collider bucket, freed with them; scenes/exterior.js draws and collides it
  * for its fixed city's life).
  * @param {?ReturnType<typeof blockHillSeat>} seat the block's hills as drawn (blockHillSeat), or null - none of ours
  * @param {Iterable<{modelIdNum:number, matrix:ArrayLike<number>}>} models the block's (layoutRmbBlock's)
- * @param {(placed:{modelIdNum:number, matrix:ArrayLike<number>}) => ?{positions:ArrayLike<number>}} meshOf the mesh the host draws for a placement, or null for one it does not draw
+ * @param {(placed:{modelIdNum:number, matrix:ArrayLike<number>}) => ?{positions:ArrayLike<number>, doors?:Array<any>}} meshOf the mesh the host draws for a placement (its door records with it), or null for one it does not draw
  * @param {(id:number) => ?{positions:ArrayLike<number>, indices:ArrayLike<number>, subMeshes?:Array<{textureArchive:number, textureRecord:number}>}} [drawn] the mesh drawn for a hill (blockHillSeat's)
  * @returns {?{positions:Float32Array, normals:Float32Array, uvs:Float32Array, indices:Uint32Array, subMeshes:Array, doors:Array}}
  */
@@ -535,9 +678,9 @@ export function blockHillPatch(seat, models, meshOf, drawn = drawnHillStandIn) {
     const mesh = drawn(placed.modelIdNum);
     if (mesh) hills.push({ placed, mesh, seat: null });
   }
-  const mb = new MeshBuilder();
-  let pads = 0;
-  for (const placed of models ?? []) {
+  const mb = new MeshBuilder(), all = [...(models ?? [])];
+  let pads = 0, open = null;
+  for (const [owner, placed] of all.entries()) {
     if (drawn(placed.modelIdNum)) continue;   // a hill holds itself
     const mesh = meshOf(placed);
     if (!mesh?.positions?.length) continue;
@@ -560,8 +703,8 @@ export function blockHillPatch(seat, models, meshOf, drawn = drawnHillStandIn) {
     }
     if (!on) continue;
     const sm = on.mesh.subMeshes?.[0];
-    hillPad(mb, seat, hull, base - HILL_PATCH_SINK, sm ? [sm.textureArchive, sm.textureRecord] : GRASS, hillUvAt(on.placed.matrix));
-    pads++;
+    open ??= openPoints(seat, all, meshOf, drawn);   // TEMPLE-STEPS: read once a block lays its first pad, before any pad is laid
+    if (hillPad(mb, seat, hull, base - HILL_PATCH_SINK, sm ? [sm.textureArchive, sm.textureRecord] : GRASS, hillUvAt(on.placed.matrix), open, owner)) pads++;
   }
   if (!pads) return null;
   const patch = mb.build();
@@ -569,29 +712,49 @@ export function blockHillPatch(seat, models, meshOf, drawn = drawnHillStandIn) {
   return patch;
 }
 /** The pack's market stalls: the awning each wears (its fourth material, a cloth of TEXTURE.049 or 449) on a stall the
- *  pack's size - 3.2 m across the counter, 4.9 m along it, 4.4 m to the awning's high edge. */
+ *  pack's size - its mesh (ext_city_stall001) 3.2 m across the counter, 4.9 m along it, 4.4 m to the awning's high edge,
+ *  at RMBRP_STALL_SCALE. */
 export const RMBRP_STALLS = Object.freeze({
   53100: [49, 5], 53101: [449, 1], 53102: [449, 2], 53103: [449, 3], 53104: [49, 0], 53106: [49, 2], 53107: [49, 3], 53108: [49, 4],
   53109: [49, 5], 53113: [49, 5], 53115: [449, 2], 53117: [49, 0], 53118: [49, 1], 53121: [49, 4], 53122: [49, 5], 53123: [49, 6], 53124: [49, 8],
 });
+/** FIELD BUGS 2026-10-15f TEMPLE-STEPS: the scale every stall's prefab stands its mesh at (the model root's m_LocalScale,
+ *  kept by ImportCustomGameobject). The stand-in had been the mesh at 1, and off its origin by the mesh's width: built
+ *  from -0.4 to 2.75 m, where the mesh as Unity imports it (x mirrored, as the docks') runs from -2.76 to 0.43 - its high
+ *  back on -x, its counter at the origin. */
+export const RMBRP_STALL_SCALE = 0.75;
 const STALL_WOOD = [67, 1];
 function stall(cloth) {
-  const m = new MeshBuilder(), x0 = -0.4, x1 = 2.75, z0 = -2.4, z1 = 2.45;
+  const m = new MeshBuilder(), x0 = -2.75, x1 = 0.4, z0 = -2.48, z1 = 2.4;   // the back (the awning's high edge) and the counter's front, the mesh's metres
   for (const [x, top] of [[x0 + 0.08, 4.3], [x1 - 0.08, 2.5]]) for (const z of [z0 + 0.08, z1 - 0.08]) m.box(STALL_WOOD, [x, top / 2, z], [0.12, top, 0.12], 0.6);
   m.box(STALL_WOOD, [x1 - 0.35, 0.5, (z0 + z1) / 2], [0.6, 1.0, z1 - z0 - 0.3], 0.6);   // the counter
   m.box(STALL_WOOD, [x0 + 0.5, 0.35, (z0 + z1) / 2], [0.8, 0.7, z1 - z0 - 0.4], 0.6);   // the bench of goods at the back
   const hi = 4.4, lo = 2.45, n = [lo - hi, -(x1 - x0), 0], l = Math.hypot(...n);
   m.sheet(cloth, [x0, hi, z0], [x0, hi, z1], [x1, lo, z1], [x1, lo, z0], [-n[0] / l, -n[1] / l, 0], [[0, 0], [2.5, 0], [2.5, -1.6], [0, -1.6]]);
-  return m.build();
+  const built = m.build();
+  for (let i = 0; i < built.positions.length; i++) built.positions[i] *= RMBRP_STALL_SCALE;   // a uniform scale: the normals and the winding hold
+  return built;
 }
-/** A temple's platform: a stone block four metres square and two high, standing half in the ground. */
-function platform() { const m = new MeshBuilder(); m.box([361, 1], [0, 0, 0], [4, 2, 4], 0.5); return m.build(); }
-/** A building's foundation where the ground falls away: a stone block sixteen metres square and eight deep. The pack's
- *  own (Foundation 1.fbx, 8 x 4 x 8 m at its prefab's scale of two) stands centred on its origin - four metres above
- *  it - and Beautiful Villages stands it only under two temples (TEMPASF1, TEMPASH4), whose floors are 1.55-1.6 m above
- *  that origin: centred, its top would wall up the temples' front doors (AUDIT WD3 T1). Its top here is the temples'
- *  floor, 1.6 m up, and the rest goes into the ground. */
-function foundation() { const m = new MeshBuilder(); m.box([317, 0], [0, -2.4, 0], [16, 8, 16], 0.5); return m.build(); }
+/** FIELD BUGS 2026-10-15f TEMPLE-STEPS: the pack's two stone blocks - the temple's platform (53160, Platform-Temple.fbx)
+ *  and the foundation (53170, Foundation 1.fbx) - are one mesh, a box of +-160 x +-80 x +-160 centimetres centred on
+ *  its origin, as Unity imports it: each prefab's MeshFilter names the mesh itself, so the FBX node it was exported on,
+ *  and that node's Lcl Scaling (125 on the platform's, 250 on the foundation's), is never instanced - only the prefab's
+ *  own scale is, which Daggerfall Unity keeps (MeshReplacement.ImportCustomGameobject multiplies it in; DOME_UNIT reads
+ *  the domes the same way). The box in centimetres, and each prefab's scale: */
+export const RMBRP_BLOCK_CM = Object.freeze([320, 160, 320]);
+export const RMBRP_BLOCK_SCALE = Object.freeze({ 53160: 1, 53170: 2 });
+const rmbrpBlock = (id, tex) => () => {
+  const m = new MeshBuilder(), k = RMBRP_BLOCK_SCALE[id] / 100;
+  m.box(tex, [0, 0, 0], RMBRP_BLOCK_CM.map((c) => c * k), 0.5);
+  return m.build();
+};
+/** A temple's platform: a stone landing 3.2 m square and 1.6 m high, centred on its origin - its top the step of the
+ *  temple door it stands at, and the foot of the stair below (TEMPASF1). */
+const platform = rmbrpBlock(53160, [361, 1]);
+/** A building's foundation where the ground falls away: a stone block 6.4 m square and 3.2 m high, centred on its
+ *  origin - its top the floor of the two temples Beautiful Villages stands it under (TEMPASF1, TEMPASH4: 1.55-1.6 m over
+ *  the origin), the author's stairs and landings against its faces. */
+const foundation = rmbrpBlock(53170, [317, 0]);
 /** FIELD BUGS 2026-10-04d DOMES: the pack's three domes as its own meshes stand them, measured off its published files
  *  (Assets/Meshes/Buildings "HF Dome 03.fbx" for 53182 and 53194, "HF Dome 04.fbx" for 53187): octagons in centimetres,
  *  at their prefabs' scale of 4.6875, which Daggerfall Unity keeps (MeshReplacement.ImportCustomGameobject multiplies a
@@ -680,7 +843,7 @@ function dockSteps() {
 }
 
 export const RMBRP_PIECES = Object.freeze({
-  ...Object.fromEntries(Object.entries(RMBRP_ROCKS).map(([id, [w, up, down, l]]) => [id, () => boulderMesh(w, up, down, l, Number(id))])),
+  ...Object.fromEntries(Object.keys(RMBRP_ROCKS).map((id) => [id, () => rockMesh(id)])),   // TEMPLE-STEPS: each over its mesh's box, at its prefab's scale
   ...Object.fromEntries(Object.entries(RMBRP_HILLS).map(([id, surface]) => [id, () => hillMesh(RMBRP_HILL_SHAPES[id], surface)])),   // HILL-SHAPES
   ...Object.fromEntries(Object.entries(RMBRP_STALLS).map(([id, cloth]) => [id, () => stall(cloth)])),
   53160: platform,

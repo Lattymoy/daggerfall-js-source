@@ -19,6 +19,7 @@
 // Pure - the call, the store and the clocks are handed in. Not a DFU member. Ledger A (SERPENT1).
 import { readSerpentReceipt } from './serpentReceipt.js';
 import { serpentBossById } from './serpentLaw.js';
+import { t } from '../systems/textManager.js';   // AUDIT WORLD-REWARDS C2: the Old Coil's grants said in the player's language, each read when it is said
 
 /** The device's serpent receipts not yet settled with the account service: `[{ r, ch, nm, lv, cid }]` - the receipt, the
  *  character that fought it, its name, its level (the hoard rolls at it), and this device's claim id. */
@@ -44,7 +45,13 @@ export const SERPENT_ME_POLL_MS = 1000;
 export const SERPENT_CLAIM_TEXT = Object.freeze({
   recorded: (n, xp, boss) => `The Bay will remember ${boss.name}'s fall. Serpents slain: ${n}.${xp > 0 ? ` +${xp} Renown XP.` : ''}`,   // AUDIT SERPENT B11: the table's name
   guest: 'This serpent is not on your record yet: only registered accounts keep one. Add a username this week and it counts.',
+  title: () => t('serpent.honour.title', 'The Bay names you Coilbreaker.'),   // SERPENT5; AUDIT WORLD-REWARDS C2: routed (the lamp's own way)
+  aura: () => t('serpent.honour.aura', 'The Maelstrom turns about you.'),   // SERPENT5
 });
+
+/** SERPENT5 (2026-10-15, Sea-Serpent.md section 17): the words the Old Coil grants, in the vocabulary's spelling
+ *  (net/identityToken.js TITLES / AURAS) - its popup's, as the Hour's are (net/sdClaims.js SD_HONOUR_KEYS). */
+export const SERPENT_HONOUR_KEYS = Object.freeze({ title: 'coilbreaker', aura: 'maelstrom' });
 
 /** The refusals of a receipt the service can mend (the gate's GATE_CLAIM_MENDABLE): kept for the week it carries. */
 export const SERPENT_CLAIM_MENDABLE = Object.freeze(['signature', 'verify-threw', 'future', 'clock']);
@@ -71,12 +78,14 @@ export function serpentRecordText(rec) {
  *   onSpoils?: (entry: { r: string, ch: string, nm: string|null, lv: number, cid: string }, data: any) => (void|Promise<any>),
  *   onMarks?: (data: any) => (string|string[]|null),
  *   me?: () => (string|null), cid?: () => string,
+ *   announce?: (kind: 'title'|'aura', key: string) => void,
  * }} deps `claim` is net/accountClient.js accountSerpents' - `{ ok, data }` or `{ ok: false, error, why? }`, never a
  *   throw; `me` the signed-in account's id; `onRecorded` hears each counted receipt's answer (its Renown and order);
  *   `onSpoils` each receipt whose hoard the service gave THIS claim - awaited, its receipt settled only once it is given;
- *   `onMarks` (SERPENT-SET) each counted receipt's silver, the lines it answers said as the raids' are
+ *   `onMarks` (SERPENT-SET) each counted receipt's silver, the lines it answers said as the raids' are; `announce`
+ *   (SERPENT5) the loot banner's honour popup (ui/lootBanner.js announceHonour), for a grant the account did not hold before
  */
-export function createSerpentClaims({ claim, store = null, nowS = () => Math.floor(Date.now() / 1000), nowMs = () => Date.now(), say = () => {}, onRecorded = () => {}, onSpoils = () => {}, onMarks = () => null, me = () => null, cid = mintCid }) {
+export function createSerpentClaims({ claim, store = null, nowS = () => Math.floor(Date.now() / 1000), nowMs = () => Date.now(), say = () => {}, onRecorded = () => {}, onSpoils = () => {}, onMarks = () => null, me = () => null, announce = () => {}, cid = mintCid }) {
   let busy = false, again = false, lastAt = -Infinity;
   let lastMe, meAt = -Infinity;
   const settled = new Set(), guestSaid = new Set();
@@ -122,6 +131,12 @@ export function createSerpentClaims({ claim, store = null, nowS = () => Math.flo
           let lines = null;
           try { lines = onMarks(answer.data); } catch (err) { console.warn('[serpent] silver lines', err?.message ?? err); }
           for (const line of Array.isArray(lines) ? lines : [lines]) if (typeof line === 'string' && line) say(line);
+          // SERPENT5: THE OLD COIL'S GRANTS - said whenever this kill granted one, popped only when it is new (the Hour's law,
+          // net/sdClaims.js: a re-roll of a held one is said, never announced as "New"); a service from before acct137 says neither
+          if (answer.data.title === true) say(SERPENT_CLAIM_TEXT.title());
+          if (answer.data.aura === true) say(SERPENT_CLAIM_TEXT.aura());
+          if (answer.data.titleNew === true) hear(announce, 'title', SERPENT_HONOUR_KEYS.title);
+          if (answer.data.auraNew === true) hear(announce, 'aura', SERPENT_HONOUR_KEYS.aura);
           hear(onRecorded, answer.data, e);
         } else if (answer?.ok && answer.data?.why === 'guest' && !guestSaid.has(e.r)) {
           guestSaid.add(e.r);

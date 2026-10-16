@@ -1,6 +1,6 @@
 # The Stables and the Wagon Yards (MERCHANT-YARDS)
 
-> DF-ART (2026-10-14, `01-Overview/DF-Art.md`): the yards' pictures, painted here from noise, are Daggerfall's own records now (`world/merchantYardArt.js` YARD_SOURCES); each board Daggerfall's planks with its word lettered on it as before (Mac: "Bring back the sign text"), the Joinery's with Daggerfall's axe-and-sword shop sign (333_18) beside JOINERY.
+> DF-LOOK (2026-10-15, `01-Overview/DF-Art.md`): the yards' pictures - the boards with their emblems and words among them - are painted here again (DF-ART's swap to Daggerfall's records reverted), laid on in Daggerfall's colours as they go up - grained and snapped to the player's own ART_PAL.COL (`world/dfLook.js`).
 
 THE PORT'S OWN (2026-10-10). Asked: *"I want to add 2 new merchants to each town without removing player's homes or
 breaking anything. 1. The stable where you can purchase horses 2. Transport merchant where you can purchase

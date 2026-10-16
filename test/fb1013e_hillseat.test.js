@@ -333,52 +333,32 @@ function wrap(points) {
   return out;
 }
 
-test('HILL-SEAT with ARENA2: over every block of both packs that stands a hill, every classic model the author stood up on one stands on what is drawn - its own vertices\' footprint, edges included, within 0.15 m everywhere (fb1005_hills read the middle half)', { skip: HAVE_ARENA2 ? false : 'ARENA2_PATH not set', timeout: 600000 }, async () => {
-  const rd = (f) => new Uint8Array(readFileSync(join(ARENA2, f)));
-  const { MapsFile } = await import('../src/formats/mapsFile.js');
-  const { BlocksFile } = await import('../src/formats/blocksFile.js');
-  const { Arch3dFile } = await import('../src/formats/arch3dFile.js');
-  const { dfMeshToModel } = await import('../src/world/meshReader.js');
+// FIELD BUGS 2026-10-15f TEMPLE-STEPS: THE SHAPE THE PRODUCER MINTS. This sweep fed blockHillPatch Daggerfall's own models
+// alone, where the hosts feed it every mesh they draw (the stand-ins too - scenes/world.js cpuModels), and held a model
+// to the hills and the pads alone, where the author stood temples on his foundations and a stair on the landing or the
+// stair under it. So each block is the pack's own as the door serves it (tools/townSolidsSweep.mjs eachPackBlock), its
+// models the pipeline's (tools/townQuestMarkers.mjs openTownData), and what holds a model is what is drawn under it:
+// the hills, the pads, or another of the block's models whose top there is at most its base and the bar.
+test('HILL-SEAT with ARENA2: over every block of both packs that stands a hill, every model the author stood up on one stands on what is drawn under it - the hills, the pads, or the block\'s own models (TEMPLE-STEPS: a temple on its foundations, a stair on its landing) - its own walls\' and floors\' footprint, edges included, within 0.15 m everywhere; save two, named', { skip: HAVE_ARENA2 ? false : 'ARENA2_PATH not set', timeout: 600000 }, async () => {
   const WDR = await import('../src/formats/worldDataReplacement.js');
-  const { openWorldDataPack } = await import('../src/formats/worldDataPack.js');
-  const { setValue } = await import('../src/systems/settings.js');
-  const maps = new MapsFile(); maps.load(rd('MAPS.BSA'), rd('CLIMATE.PAK'), rd('POLITIC.PAK'));
-  const blocks = new BlocksFile(); blocks.load(rd('BLOCKS.BSA'));
-  const arch = new Arch3dFile(); arch.load(rd('ARCH3D.BSA')); arch.autoDiscard = false;
+  const { openTownData } = await import('../tools/townQuestMarkers.mjs');
+  const { eachPackBlock } = await import('../tools/townSolidsSweep.mjs');
   const quiet = console.log; console.log = () => {};
   const hung = [];
   let stood = 0, padded = 0;
   try {
-    WDR._resetWorldDataReplacement();
-    setValue('Enhancements', 'AssetInjection', 'True');
-    WDR.installWorldDataReplacement(); WDR.bindWorldDataBlocks(blocks);
-    const names = new Set();
-    for (const [v, priority] of [['beautiful-villages', 10], ['beautiful-cities', 20]]) {
-      const raw = JSON.parse(zlib.gunzipSync(readFileSync(new URL(`../vendor/${v}/WorldDataPack/${v}.pack.json.gz`, import.meta.url))).toString('utf8'));
-      for (const n of Object.keys(raw.files)) if (n.endsWith('.RMB.json')) names.add(n.slice(0, -5));
-      WDR.registerWorldDataPack(openWorldDataPack(raw, { blocks }), () => true, { priority });
-    }
-    for (let r = 0; r < maps.regionCount; r++) {
-      for (let l = 0; l < (maps.baseLocationCount(r) ?? 0); l++) {
-        const loc = maps.getLocation(r, l), ex = loc?.exterior?.exteriorData;
-        if (ex) for (let y = 0; y < ex.height; y++) for (let x = 0; x < ex.width; x++) blocks.checkName(maps.getRmbBlockName(loc, x, y));
-      }
-    }
-    const meshes = new Map();
-    const classic = (id) => { if (!meshes.has(id)) { const i = arch.getRecordIndex(id); meshes.set(id, i < 0 ? null : dfMeshToModel(arch.getMesh(i), () => ({ width: 64, height: 64 }))); } return meshes.get(id); };
-    for (const name of [...names].sort()) {
-      let b = null;
-      try { b = blocks.getBlockByName(name); } catch { b = null; }
-      if (!b?.rmbBlock) continue;
-      const { models: laid } = layoutRmbBlock(b, { enhanced: true });
-      const hills = blockHillSeat(laid, drawn);
-      if (!hills) continue;
-      const seat = blockHillSeat(laid, drawn);
-      const meshOfClassic = (m) => (RMBRP_HILLS[m.modelIdNum] ? null : classic(m.modelIdNum));
-      if (blockHillPatch(seat, laid, meshOfClassic, drawn)) padded++;
-      for (const m of laid) {
-        const mesh = meshOfClassic(m);
-        if (!mesh) continue;
+    const data = await openTownData(ARENA2);
+    eachPackBlock(data, (vendor, name, laid) => {
+      const hills = blockHillSeat(laid);
+      if (!hills) return;
+      const seat = blockHillSeat(laid);
+      const meshOf = (m) => (RMBRP_HILLS[m.modelIdNum] ? null : data.getModel(m.modelIdNum));
+      if (blockHillPatch(seat, laid, meshOf)) padded++;
+      // each of the block's models as drawn: its own top (what the author may have stood another on)
+      const tops = laid.map((m) => (meshOf(m)?.positions?.length ? blockHillSeat([{ modelIdNum: 1, matrix: m.matrix }], () => meshOf(m)) : null));
+      for (const [i, m] of laid.entries()) {
+        const mesh = meshOf(m);
+        if (!mesh?.positions?.length) continue;
         const M = mesh.positions, T = m.matrix, pts = [];
         let base = Infinity;
         for (let k = 0; k < M.length; k += 3) {
@@ -390,25 +370,37 @@ test('HILL-SEAT with ARENA2: over every block of both packs that stands a hill, 
         const mid = hull.reduce((s, q) => [s[0] + q[0] / hull.length, s[1] + q[1] / hull.length], [0, 0]);
         if (hills.topAt(mid[0], mid[1]) === null) continue;   // on no hill
         const samples = [...hull];
-        for (let i = 0; i < hull.length; i++) {
-          const a = hull[i], c = hull[(i + 1) % hull.length], n = Math.ceil(Math.hypot(c[0] - a[0], c[1] - a[1]) / 0.25);
+        for (let h = 0; h < hull.length; h++) {
+          const a = hull[h], c = hull[(h + 1) % hull.length], n = Math.ceil(Math.hypot(c[0] - a[0], c[1] - a[1]) / 0.25);
           for (let k = 1; k < n; k++) samples.push([a[0] + ((c[0] - a[0]) * k) / n, a[1] + ((c[1] - a[1]) * k) / n]);
         }
         const xs = hull.map((q) => q[0]), zs = hull.map((q) => q[1]);
         for (let x = Math.min(...xs); x <= Math.max(...xs); x += 0.5) for (let z = Math.min(...zs); z <= Math.max(...zs); z += 0.5) {
-          if (hull.every((a, i) => { const c = hull[(i + 1) % hull.length]; return (c[0] - a[0]) * (z - a[1]) - (c[1] - a[1]) * (x - a[0]) >= -1e-9; })) samples.push([x, z]);
+          if (hull.every((a, h) => { const c = hull[(h + 1) % hull.length]; return (c[0] - a[0]) * (z - a[1]) - (c[1] - a[1]) * (x - a[0]) >= -1e-9; })) samples.push([x, z]);
         }
         const high = Math.max(...samples.map(([x, z]) => hills.topAt(x, z) ?? -Infinity));
         if (base - high > 1) continue;   // hung by its author over the hill
         stood++;
-        const worst = Math.max(...samples.map(([x, z]) => base - Math.max(seat.topAt(x, z) ?? 0, 0)));
-        if (worst > TOLERANCE) hung.push(`${name} ${m.modelIdNum} ${worst.toFixed(2)} m`);
+        const under = (x, z) => Math.max(seat.topAt(x, z) ?? 0, 0, ...tops.map((t, j) => {
+          const v = j === i || !t ? null : t.topAt(x, z);
+          return v !== null && v <= base + TOLERANCE ? v : -Infinity;
+        }));
+        // under the model's own walls and floors - its hull spans air where it is not convex (TEMPASH4's temple: 1.8 m of
+        // it past its own floor, over the hill's fall, the pack's own hill no higher)
+        const worst = Math.max(...samples.filter(([x, z]) => tops[i].topAt(x, z) !== null).map(([x, z]) => base - under(x, z)));
+        if (worst > TOLERANCE) hung.push(`${vendor} ${name} ${m.modelIdNum}#${i} ${worst.toFixed(2)} m`);
       }
-    }
+    });
   } finally {
     console.log = quiet;
     WDR._resetWorldDataReplacement();
   }
-  assert.ok(stood > 20 && padded > 0, `${stood} classic models stood up on the hills, ${padded} blocks padded`);
-  assert.deepEqual(hung, [], 'none hangs over what is drawn');
+  assert.ok(stood > 20 && padded > 0, `${stood} models stood up on the hills, ${padded} blocks padded`);
+  // Two, named, measured against the pack's own meshes (its hills, foundations and platforms, as Unity imports them):
+  // - TEMPASD1 #56 is the third of the four pieces of Merdale's temple flight, stacked on the fourth (#57): its pad would
+  //   lay its top over the fourth's treads and its bank over the second's (TEMPLE-STEPS: a pad buries nothing the author
+  //   left in the open), so it has none, and the median falls away under its foot - the pack's own hill holds it;
+  // - TEMPASH4 #14 is Kynareth's temple on its five foundations: its back edge stands 2.27 m over the pack's own hill
+  //   there, the author's own, and its pad would bury the stair's top step and the rocks at the foundations' feet.
+  assert.deepEqual(hung, ['beautiful-villages TEMPASD1.RMB 21728#56 0.43 m', 'beautiful-villages TEMPASH4.RMB 402#14 2.14 m'], 'none hangs over what is drawn but the two named');
 });

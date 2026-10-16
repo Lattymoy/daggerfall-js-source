@@ -72,7 +72,7 @@ a technique as they ride a click.
 | **Headsman's Chop** | axes | StrikeDown in DFU's own view, +100% more on a foe as it is wounded (x1.2 at full health, x2.2 at none) | 1.2 | +20 | 5 | 11 s |
 | **Ground Slam** | blunt | StrikeDown on every foe within 3.5 m, all round | 0.9 | +15 | 6 | 12 s |
 | **Skull Crack** | blunt | StrikeDown on the nearest foe in view within 2.5 m alone | 1.6 | +30 | 5 | 10 s |
-| **Flying Kick** | bare hands (Gauntlets) | aim a foe (or the ground) 2-6 m off; leap onto it, StrikeDown on every foe within 2 m | 1.3 | +20 | 4 | 10 s |
+| **Flying Kick** | bare hands (Gauntlets) | aim a foe (or the ground) 2-6 m off; leap onto it - from the ground or from the air, the one technique that goes from a jump, a fall or a step off a ledge (KICK-AIR, below) - StrikeDown on every foe within 2 m | 1.3 | +20 | 4 | 10 s |
 | **Haymaker** | bare hands (Gauntlets) | StrikeRight on the nearest foe in view within 2.5 m alone | 1.8 | +30 | 4 | 9 s |
 
 **The families are the skill a piece swings with** - DaggerfallUnityItem.GetWeaponSkillUsed, ported as
@@ -170,11 +170,24 @@ hit frame for a technique's loose before the host sees it.
 | cooling down | `<name>` is not ready (Ns). |
 | too little fatigue | You are too tired. |
 | a shot with no lane in this host / no ammunition | Not here. / You have nothing to shoot. |
-| a leap or dash with no motor / climbing, swimming, levitating, slow-falling, riding, knocked down, in the air | Not here. / You cannot leap from here. |
+| a leap or dash with no motor / climbing, swimming, levitating, slow-falling, riding, knocked down, in the air (but a Flying Kick: KICK-AIR, below) | Not here. / You cannot leap from here. |
 | the aim out of reach, or no foe there | Out of reach. / No foe there. |
 
 When a cooldown runs out with that technique in hand, the message line says "`<name>` is ready again." - the classic HUD
 has no chips to say it.
+
+**KICK-AIR - the Flying Kick from the air** (Mac's call, 2026-10-15, on the field report "Flying kick doesn't work ...
+tried doing it mid-air, off ledges"; `01-Overview/Field-Bugs-2026-10-15d.md`, KICK-AIR). The Flying Kick is the one
+exception to "in the air": the roster marks it `airborne` (`combat/techniqueRoster.js`) and the gate reads the mark, on the press and
+again on the release - so a kick goes from a jump, a fall, a step off a ledge, or pressed on the ground and let go after
+the takeoff. Every other leap and dash stays on the ground, and every other refusal (climbing, on a wall, mid-vault,
+swimming, on the open water, levitating, slow-falling, riding, knocked down) is the kick's too. From the air it is the
+same kick: aimed from where the feet are (2-6 m off on the level, landing at most 4 m below them or 2.5 m above), the
+same arc over them (`launchTo` - the peak 1.2 m over the airborne feet, so a kick from the air hops before it drops),
+the same strike landing with the body. A fall already under way keeps where it began (`player/motor.js`
+`techniqueLaunch`): the kick is never a feather fall - off a 7 m ledge, the landing is a 7 m fall. Kept: aimed from the
+top of a jump, the kick's 2.5 m rise is measured from feet already in the air, so it reaches a ledge a jump's height
+higher than a kick from the ground (once in 10 s).
 
 **The acts.** A **swing** sets the technique's blow on the weapon (`PlayerWeapon.techniqueBlow`) and starts the
 machine's own strike (`techniqueStrike` - machineAttack, the arm's fpAttack); the blow follows the feet to its hit
@@ -191,8 +204,9 @@ Flying Kick's 1.2 m, a dash's 0.25 m - each at least 0.4 m over the landing - ra
 12 m/s; lowered, where a ceiling stands over the path, to the highest that fits, `flightApex`), and starts the strike so its hit
 lands WITH the body - when the time left in the air is the swing's own time to its hit, asked of the machine's
 schedule (`blowSchedule`). The collider stops the body; gravity lands it; the fall is a jump's (DFU's fall law measures
-the landing). Air control does not steer a technique's flight (`techFlight`), and no click starts a swing while it is in
-the air (`techniqueFlying` - the rig asks no gesture), so the landing's strike is never thrown away; at the strike the
+the landing) - from the launch, or, for a kick launched mid-fall, from where that fall began (KICK-AIR). Air control
+does not steer a technique's flight (`techFlight`), and no click starts a swing while it is in the air
+(`techniqueFlying` - the rig asks no gesture), so the landing's strike is never thrown away; at the strike the
 swing's own gate is asked again (sheathed, a spell readied, paralyzed, a weapon changed in the air: no blow). A
 Shadowstep turns the view on the foe from where the body lands behind it (the door's `face(point, from)`), and its blow
 is that foe's alone, all round within its reach (`blow.target`). A paralysis freezes a swing's or a shot's clock with the
@@ -618,6 +632,11 @@ Gauntlets' Flying Kick and Haymaker) - every technique a press away.
   Shot; the leap on the real PlayerMotor (lands on its aim, air control does not steer it); the cooldown and its line;
   the aim set aside (the Activate press; a door crossed mid-aim, the next rig holding the same weapon; another rig
   mid-swing); THE LOOSE HELD (the Morrowind arm's held hit); THE GROUND OUTDOORS (on the real Collider).
+- `test/fb1015_kickair.test.js` (5) - KICK-AIR on a real PlayerMotor over a real Collider through the press, the hold
+  and the release: the kick from a jump (the same blow and landing as from the ground, the foe struck), pressed on the
+  ground and let go in the air, the other leaps and dashes refused in the air, the kick's other refusals (the saddle, a
+  slow fall, the water, a levitation), and no feather fall (a 7 m ledge's fall kept). Mutants
+  `tools/mutants/fb1015_kickair.json` (9, all dead).
 - `test/tech1_hosts.test.js` (4) - the action, its key and its rows; the rig's order, its held-hit flag; THE FOUR HOSTS,
   swept from the source (each host's door, and each ground pass's marks call right after its foes'); the dungeon lane;
   the mark's own size in the pass; the world host's chip seam and recentre, the HUD's colour, the side buttons' guard.

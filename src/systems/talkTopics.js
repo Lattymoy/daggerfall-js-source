@@ -463,6 +463,17 @@ export const QUESTION_TYPE_REACTION_MODS = Object.freeze([5, 0, 0, 0, 5, 0, 0, 0
 export const ETIQUETTE_REACTION_MODS = Object.freeze([-10, 5, 10, 15, -15]);
 export const STREETWISE_REACTION_MODS = Object.freeze([10, 5, -10, -15, 15]);
 
+/** TONE-TASTE (2026-10-15, Mac: "someone who didnt like etiquette still went up"): how the one spoken to takes a
+ *  tone - 1 a tone their group takes kindly (its row in the tables above over nought: Polite with Merchants, Scholars
+ *  and Nobles, Blunt with Commoners, Merchants and the Underworld), -1 one it takes ill, 0 the Normal tone. The
+ *  reaction's own fold (sgroup 5 and above is a Merchant's); a group off the tables takes nothing. The port's, read
+ *  off DFU's tables: what a Living World resident's regard and a courtship hear of a question's tone. */
+export function toneTaste(toneIndex, socialGroup = 0) {
+  const group = socialGroup >= 5 ? 1 : socialGroup;
+  const mod = toneIndex === 0 ? ETIQUETTE_REACTION_MODS[group] : toneIndex === 2 ? STREETWISE_REACTION_MODS[group] : 0;
+  return Math.sign(mod ?? 0);
+}
+
 /** GetReactionToPlayer_0_1_2, verbatim - all three tones.
  *  toneIndex: 0 Polite (Etiquette) / 1 Normal / 2 Blunt (Streetwise).
  *  session is the per-talk-session reaction cache ([0,0,0], DFU's

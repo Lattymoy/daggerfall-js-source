@@ -2148,7 +2148,9 @@ found it:
   `ItemTemp` takes twenty, floored at nought - the ten was SURV1's reading,
   kept with the floor).
 - **E11 - the Sun Baby's clear sky** soaked a body in the sim's rain; the
-  needs feel the weather the land wears.
+  needs feel the weather the land wears. (WET-FALL, 2026-10-15: and the
+  soak reads what FALLS - `weatherSim.js` fallingWeather, the street's word
+  and level - with the shown sky the fallback; `01-Overview/Field-Bugs-2026-10-15f.md`.)
 - **E12 - a record with a counter that was no number** read NaN for the
   session and hid the chip; `survivalOf` mends it from the fresh record.
 - **E9, E13**: the plate reads live (above); the SURV1 temperature
@@ -2953,3 +2955,17 @@ dead.
 ## UI-CALM - the plate in the corner (2026-10-14)
 
 A player: "I like the temperature indicator, but it would fit better in the bottom-left corner." The HUD plate (TEMP-UI) now stands as the first word of the bottom-left block's caption, beside the mode's word (`ui/enhancedHud.js`), its own HUD piece inside the quick block (`ui/hudLayout.js`); comfortable it shows the glyph and the number alone, felt or costing its word and scale too. The fit off the compass's right end (AUDIT C&C S3, S10, S12 and lens S: beside, compact, hung, aside) is retired with that place. `10-UI/UI-Calm.md`.
+
+## WET-FALL - the soak reads what falls (2026-10-15)
+
+A Discord report: "Player is getting wet despite it not raining. Possibly an oversight in reducing the rain?" The
+mod's Weather() soaks by the word - its every-minute row (`temperature.js` WEATHER_WET, AUDIT C&C T2's) whenever it
+rains - and DFU's weather has no level. The enhanced sky's has one: RAIN-HEART (`07-Rendering/Weather-Arc.md`) made
+most rain a sprinkle by the front's intensity, and the front holds a new rain word dry until its drops arrive, so a
+body soaked at the downpour's rate under a sky that dropped next to nothing.
+
+A DEPARTURE FROM THE MOD: `weatherWetGain` scales a rain, storm or snow row by how hard it falls (`fall`, the level the
+street's frame wrote for the ear, DISC9/DISC11 - `weatherSim.js` fallingWeather), and `feltTemperature` soaks on
+`env.falling` while the air and the sun keep the sky's word. Fog is not falling and keeps its row. The classic sky's
+level is 1: the mod's row, whole. The record: `01-Overview/Field-Bugs-2026-10-15f.md`.
+

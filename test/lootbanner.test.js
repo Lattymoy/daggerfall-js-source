@@ -396,6 +396,8 @@ test('HONOUR-BANNER THE FACE: announced on Enhanced Plus it stands - held by the
     frame(hero());
     assert.equal(cdoc.getElementById(B.LOOT_BANNER_STACK_ID), null);
   }, { skin: 'classic' });
-  assert.match(read('src/scenes/world.js'), /announce: \(kind, key\) => announceHonour\(kind, key\),/, 'the Hour\'s door');
+  // AUDIT WORLD-REWARDS C1: anchored to the Hour's own carrier - SERPENT5's door (the Old Coil's carrier, above it) is the
+  // same text, and the bare line matched it with the Hour's gone (HONOUR-BANNER-world-hands-no-door survived)
+  assert.match(read('src/scenes/world.js'), /createSdClaims\(\{[\s\S]{0,1200}announce: \(kind, key\) => announceHonour\(kind, key\),   \/\/ HONOUR-BANNER/, 'the Hour\'s door');
   assert.match(read('src/net/sdClaims.js'), /if \(answer\.data\.titleNew === true\) announce\('title', SD_HONOUR_KEYS\.title\);/, 'announced when the title is newly held (AUDIT FIVE-ASKS E1)');
 }));

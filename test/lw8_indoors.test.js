@@ -228,5 +228,5 @@ test('LW8 the hosts: the building\'s press offers a resident in the room before 
   assert.match(w, /if \(livingIndoors\?\.size \|\| livingIndoors\?\.spots\(\)\.length\) livingIndoors\.clear\(\);   \/\/ LW8: the street again/);   // LW-FIX1: an empty room too
   assert.match(w, /caught: \(p\) => livingIndoors\?\.caught\(p\) \?\? null,/);
   assert.match(w, /refuses: \(p\) => livingIndoors\?\.town\(\)\?\.refuses\(p\) \?\? null,/);
-  assert.match(w, /toned: \(p, tone\) => livingIndoors\?\.town\(\)\?\.toned\(p, tone\) \?\? null,/);
+  assert.match(w, /toned: \(p, taste\) => livingIndoors\?\.town\(\)\?\.toned\(p, taste\) \?\? null,/);   // PIN MOVED: TONE-TASTE - the tone as taken
 });

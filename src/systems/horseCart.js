@@ -477,9 +477,14 @@ export function createHorseCartRuntime(deps) {
   function ownsStationaryHorseActivator(a) { return physicalPersistenceEnabled && !!stationaryHorseVisual && stationaryHorseVisual === a; }   // [IL_8591]
 
   // ── the save record's setters [IL_73f0-IL_75fb, IL_969c, IL_a205, IL_78c0]
-  function setHorseLoose(wx, wz, heading) { const h = horizontalForward(heading); wagonState.Version = WAGON_SAVE_VERSION; wagonState.HorseMode = HORSE_MODE.LooseStationary; wagonState.HorseWorldX = wx; wagonState.HorseWorldZ = wz; wagonState.HorseHeadingX = h[0]; wagonState.HorseHeadingZ = h[2]; changed(); }
+  // WAGON-STABLED (2026-10-15, the port's own - Fay: "I keep sending my wagon away, but every time I enter a building or
+  // dungeon it appears outside again"): the record's two words of the port's, WagonStabled and HorseStabled
+  // (horseCartLaw.js newSaveData), say the pair was SENT TO THE STABLE (sendTransportAway) - set there alone, and let go
+  // by every setter that lays the wagon's or the horse's record afresh or stands it in the world, and by a mount
+  // (leaveStable): a stabled one is the mod's WithPlayer that no door parks.
+  function setHorseLoose(wx, wz, heading) { const h = horizontalForward(heading); wagonState.Version = WAGON_SAVE_VERSION; wagonState.HorseMode = HORSE_MODE.LooseStationary; wagonState.HorseWorldX = wx; wagonState.HorseWorldZ = wz; wagonState.HorseHeadingX = h[0]; wagonState.HorseHeadingZ = h[2]; wagonState.HorseStabled = false; changed(); }
   function setHorseFollowing(wx, wz, heading) { const h = horizontalForward(heading); wagonState.Version = WAGON_SAVE_VERSION; wagonState.HorseMode = HORSE_MODE.FollowingPlayer; wagonState.HorseWorldX = wx; wagonState.HorseWorldZ = wz; wagonState.HorseHeadingX = h[0]; wagonState.HorseHeadingZ = h[2]; changed(); }
-  const zeroHorse = (mode) => { wagonState.Version = WAGON_SAVE_VERSION; wagonState.HorseMode = mode; wagonState.HorseWorldX = 0; wagonState.HorseWorldZ = 0; wagonState.HorseHeadingX = 0; wagonState.HorseHeadingZ = 1; };
+  const zeroHorse = (mode) => { wagonState.Version = WAGON_SAVE_VERSION; wagonState.HorseMode = mode; wagonState.HorseWorldX = 0; wagonState.HorseWorldZ = 0; wagonState.HorseHeadingX = 0; wagonState.HorseHeadingZ = 1; wagonState.HorseStabled = false; };
   function setHorseWithPlayer() { zeroHorse(HORSE_MODE.WithPlayer); destroyStationaryHorsePresentation(); horseFollower.resetTransient(); changed(); }
   function setHorseHitchedToWagon() { zeroHorse(HORSE_MODE.HitchedToWagon); destroyStationaryHorsePresentation(); horseFollower.resetTransient(); changed(); }
   function setHorseNone() { zeroHorse(HORSE_MODE.None); horseFollower.resetTransient(); changed(); }
@@ -490,7 +495,7 @@ export function createHorseCartRuntime(deps) {
     const [hx, hz] = applyLocalOffsetToWorld(wagonState.WorldX, wagonState.WorldZ, heading, HITCHED_HORSE_LOCAL_X, hitchZ(), ratio());
     setHorseLoose(hx, hz, heading);
   }
-  function resetWagonState(mode) { wagonState.Version = WAGON_SAVE_VERSION; wagonState.Mode = mode; wagonState.WorldX = 0; wagonState.WorldZ = 0; wagonState.HeadingX = 0; wagonState.HeadingZ = 1; wagonState.InteriorAccessMode = INTERIOR_ACCESS.None; wagonState.InteriorAccessId = 0; changed(); }
+  function resetWagonState(mode) { wagonState.Version = WAGON_SAVE_VERSION; wagonState.Mode = mode; wagonState.WorldX = 0; wagonState.WorldZ = 0; wagonState.HeadingX = 0; wagonState.HeadingZ = 1; wagonState.InteriorAccessMode = INTERIOR_ACCESS.None; wagonState.InteriorAccessId = 0; wagonState.WagonStabled = false; changed(); }
   function clearInteriorAccess() { wagonState.InteriorAccessMode = INTERIOR_ACCESS.None; wagonState.InteriorAccessId = 0; }
   function clearPendingInteriorState() {
     hasPendingInteriorDeployment = false; hasPendingInteriorHorseDeployment = false; pendingInteriorEntranceEligible = false; pendingInteriorEntranceDistance = Infinity;
@@ -503,6 +508,8 @@ export function createHorseCartRuntime(deps) {
     const h = horizontalForward(heading);
     wagonState.Version = WAGON_SAVE_VERSION; wagonState.Mode = WAGON_MODE.Deployed; wagonState.WorldX = wx; wagonState.WorldZ = wz; wagonState.HeadingX = h[0]; wagonState.HeadingZ = h[2]; wagonState.HorseMode = deployedHorseMode;
     if (deployedHorseMode !== HORSE_MODE.LooseStationary && deployedHorseMode !== HORSE_MODE.FollowingPlayer) { wagonState.HorseWorldX = 0; wagonState.HorseWorldZ = 0; wagonState.HorseHeadingX = 0; wagonState.HorseHeadingZ = 1; }
+    wagonState.WagonStabled = false;   // WAGON-STABLED: parked in the world - and its horse with it, unless the horse stays with the player (at the stable still, or ridden)
+    if (deployedHorseMode !== HORSE_MODE.WithPlayer) wagonState.HorseStabled = false;
     clearPendingInteriorState(); hasMovingWorldPose = false; clearMovingPresentation(); destroyDeployedWagonPresentation();
   }
   /** CaptureBestAvailableDeploymentPose [IL_7820]: the trailing wagon's last cached world pose, else 2.5 m behind the
@@ -516,10 +523,16 @@ export function createHorseCartRuntime(deps) {
   function deployFromBestAvailablePose(horseMode) { const p = captureBestAvailableDeploymentPose(); commitDeployment(p.wx, p.wz, p.heading, horseMode); }
   function captureHorseBehindPlayerPose() { const heading = horizontalForward(deps.player.forward()); const [wx, wz] = toWorld(vsub(playerPosition(), vscale(heading, HORSE_DISMOUNT_REAR_OFFSET))); return { wx, wz, heading }; }
   function deployHorseBehindPlayer() { const p = captureHorseBehindPlayerPose(); setHorseLoose(p.wx, p.wz, p.heading); }
-  function deployWagonBeforeHorseTravel() { if (wagonState.Mode === WAGON_MODE.WithPlayer && tm().hasCart() && !pee().isPlayerInside() && !hasPendingInteriorDeployment) deployFromBestAvailablePose(HORSE_MODE.WithPlayer); }
+  function deployWagonBeforeHorseTravel() { if (wagonState.Mode === WAGON_MODE.WithPlayer && tm().hasCart() && !pee().isPlayerInside() && !hasPendingInteriorDeployment && !wagonState.WagonStabled) deployFromBestAvailablePose(HORSE_MODE.WithPlayer); }   // WAGON-STABLED: a horse mounted leaves a stabled wagon at the stable
 
   // ── transport mode [IL_6668-IL_679c]
   function rememberLastMount(mode) { if (mode === TRANSPORT.Horse) wagonState.LastMount = LAST_MOUNT.Horse; else if (mode === TRANSPORT.Cart) wagonState.LastMount = LAST_MOUNT.Cart; }
+  /** WAGON-STABLED: a mount taken is the pair out of the stable - the horse ridden, or the wagon driven with its horse in
+   *  the shafts (the port's own; set by the runtime, or the game's set once ObserveTransportMode accepts it). */
+  function leaveStable(mode) {
+    if (mode === TRANSPORT.Cart) { wagonState.WagonStabled = false; wagonState.HorseStabled = false; }
+    else if (mode === TRANSPORT.Horse) wagonState.HorseStabled = false;
+  }
   function clearPendingTransportModeRefresh() { hasPendingTransportModeRefresh = false; pendingTransportModeRefresh = TRANSPORT.Foot; pendingTransportModeRefreshTime = 0; }
   function setTransportMode(mode) {
     if (hasPendingTransportModeRefresh && mode !== pendingTransportModeRefresh) clearPendingTransportModeRefresh();
@@ -527,6 +540,7 @@ export function createHorseCartRuntime(deps) {
     hasObservedTransportMode = true; previousTransportMode = mode;
     if (mode === TRANSPORT.Foot || mode === TRANSPORT.Horse) lastValidNonCartTransportMode = mode;
     rememberLastMount(mode);
+    leaveStable(mode);
   }
   function rememberValidNonCartMode(mode) { if (mode === TRANSPORT.Foot) { lastValidNonCartTransportMode = TRANSPORT.Foot; return; } if (mode === TRANSPORT.Horse && tm().hasHorse()) lastValidNonCartTransportMode = TRANSPORT.Horse; }
   function rejectTransportChange(fallback, message) {
@@ -823,6 +837,7 @@ export function createHorseCartRuntime(deps) {
       if (mode === TRANSPORT.Cart && teamShort()) { rejectTransportChange(TRANSPORT.Foot, teamShort()); return; }   // WAGONS3
       if (mode === TRANSPORT.Cart && !tryPrepareCartMount()) { rejectTransportChange(TRANSPORT.Foot, HCC_TEXT.wagonNotWithYou); return; }
       if (mode === TRANSPORT.Horse && !tryPrepareHorseMount(HORSE_MENU_MOUNT_DISTANCE)) { rejectTransportChange(TRANSPORT.Foot, `${horseSubject(true)} is not close enough.`); return; }
+      leaveStable(mode);
       if (mode === TRANSPORT.Horse) deployWagonBeforeHorseTravel();
       return;
     }
@@ -831,6 +846,7 @@ export function createHorseCartRuntime(deps) {
     if (mode === TRANSPORT.Cart && teamShort()) { rejectTransportChange(prev, teamShort()); return; }   // WAGONS3
     if (mode === TRANSPORT.Cart && !tryPrepareCartMount()) { rejectTransportChange(prev, HCC_TEXT.wagonNotWithYou); return; }
     if (mode === TRANSPORT.Horse && prev !== TRANSPORT.Cart && !tryPrepareHorseMount(HORSE_MENU_MOUNT_DISTANCE)) { rejectTransportChange(prev, `${horseSubject(true)} is not close enough.`); return; }
+    leaveStable(mode);
     if (mode === TRANSPORT.Horse && prev !== TRANSPORT.Cart) deployWagonBeforeHorseTravel();
     if (prev === TRANSPORT.Cart && wagonState.Mode === WAGON_MODE.WithPlayer && !pee().isPlayerInside() && !hasPendingInteriorDeployment) {
       const hm = mode === TRANSPORT.Horse ? HORSE_MODE.WithPlayer : (tm().hasHorse() ? HORSE_MODE.HitchedToWagon : HORSE_MODE.None);
@@ -877,17 +893,23 @@ export function createHorseCartRuntime(deps) {
     } else { deployHorseBehindPlayer(); destroyStationaryHorsePresentation(); }
     return { ok: true, text: hasCart && hasHorse ? HCC_TEXT.summonedBoth : hasCart ? HCC_TEXT.summonedWagon : HCC_TEXT.summonedHorse };
   }
-  /** Whether the horse or the wagon stands in the world - parked, waiting, or following. */
+  /** Whether the horse or the wagon stands in the world - parked, waiting, or following - or (WAGON-STABLED) is with a
+   *  player on foot by the mod's WithPlayer without being sent to the stable: the state its next door parks outside
+   *  (a pair just bought, a save from before the word). */
   const transportOut = () => wagonState.Mode === WAGON_MODE.Deployed || wagonState.Mode === WAGON_MODE.FollowingPlayer
-    || wagonState.HorseMode === HORSE_MODE.LooseStationary || wagonState.HorseMode === HORSE_MODE.FollowingPlayer;
+    || wagonState.HorseMode === HORSE_MODE.LooseStationary || wagonState.HorseMode === HORSE_MODE.FollowingPlayer
+    || (tm().get() === TRANSPORT.Foot && ((tm().hasCart() && wagonState.Mode === WAGON_MODE.WithPlayer && !wagonState.WagonStabled)
+      || (tm().hasHorse() && wagonState.HorseMode === HORSE_MODE.WithPlayer && !wagonState.HorseStabled)));
   /**
    * HOLDINGS (the port's own, no IL twin - bible/03-World/Holdings.md): SEND AWAY, the summon's other half. Whatever of
    * the pair stands in the world - a parked wagon, a horse waiting or following - leaves it, and the pair is "with the
    * player" again in the mod's own sense: the record the persistence switch's turning on makes
    * (resolvePersistenceEnabledState for a player on foot - the wagon WithPlayer, the horse WithPlayer), mounted from the
-   * transport window or summoned back to the player's side. Refused indoors and aboard (as the summon is), while riding
-   * or driving (the pair is the player's seat), with the persistence off (nothing stands in the world) and with nothing
-   * out. Answers `{ ok, text }`.
+   * transport window or summoned back to the player's side. WAGON-STABLED: and STABLED - the record's two words set, so
+   * no door parks it outside (handlePreTransition) and no horse mounted leaves the wagon behind; the mod's WithPlayer
+   * alone was the state "on foot beside the player" whose next door stands it outside. Refused indoors and aboard (as
+   * the summon is), while riding or driving (the pair is the player's seat), with the persistence off (nothing stands in
+   * the world) and with nothing out. Answers `{ ok, text }`.
    */
   function sendTransportAway() {
     if (pee().isPlayerInside() || tm().isOnShip()) return { ok: false, text: HCC_TEXT.sendAwayOutdoorsOnly };
@@ -899,6 +921,7 @@ export function createHorseCartRuntime(deps) {
     const r = resolvePersistenceEnabledState(TRANSPORT.Foot, hasCart, hasHorse);
     resetWagonState(r.WagonMode);
     zeroHorse(r.HorseMode);
+    wagonState.WagonStabled = hasCart; wagonState.HorseStabled = hasHorse;   // WAGON-STABLED
     clearPendingInteriorState(); hasMovingWorldPose = false; followingTransitionSuspended = false;
     clearMovingPresentation(); destroyAllStationaryPresentations(); horseFollower.resetTransient();
     changed();
@@ -938,13 +961,14 @@ export function createHorseCartRuntime(deps) {
     return horseName();
   }
   /** HOLDINGS: the pair as the Stable page reads it - owned, where each is (its mode, and how far a parked or waiting
-   *  one stands from the player, in the scene's metres, while its pixel is the one built), and the wagon's load. */
+   *  one stands from the player, in the scene's metres, while its pixel is the one built; WAGON-STABLED: and whether
+   *  each was sent to the stable), and the wagon's load. */
   function stableView() {
     const at = (wx, wz) => { const s = tryGetRelevantSavedWorldScene(wx, wz); return s ? Math.round(horizontalDistance(playerPosition(), s)) : null; };
     const st = wagonState;
     return {
       persistence: physicalPersistenceEnabled, transport: tm().get(), hasHorse: tm().hasHorse(), hasCart: tm().hasCart(),
-      horseName: horseName(), wagonMode: st.Mode, horseMode: st.HorseMode,
+      horseName: horseName(), wagonMode: st.Mode, horseMode: st.HorseMode, wagonStabled: !!st.WagonStabled, horseStabled: !!st.HorseStabled,   // WAGON-STABLED
       wagonAt: st.Mode === WAGON_MODE.Deployed ? at(st.WorldX, st.WorldZ) : null,
       horseAt: st.HorseMode === HORSE_MODE.LooseStationary ? at(st.HorseWorldX, st.HorseWorldZ) : null,
       out: transportOut(), inside: !!pee().isPlayerInside(), onShip: !!tm().isOnShip(),
@@ -967,7 +991,11 @@ export function createHorseCartRuntime(deps) {
     } else return null;
     return toScene(wx, wz);
   }
-  /** HandlePreTransition [IL_98f0]: `args = { type: 'ToBuildingInterior'|'ToDungeonInterior'|..., door: [x,y,z] | null, buildingKey, dungeonId }`. */
+  /** HandlePreTransition [IL_98f0]: `args = { type: 'ToBuildingInterior'|'ToDungeonInterior'|..., door: [x,y,z] | null, buildingKey, dungeonId }`.
+   *  WAGON-STABLED (the port's own): the IL parks a WithPlayer wagon at the door, and stands a WithPlayer horse behind
+   *  the player there - a STABLED one (sent away, never mounted since) is neither, unless the player drives it (the wagon)
+   *  or rides it (the horse) through the door: the mode they go in by is a mount (leaveStable), the game's own set
+   *  before a frame observed it too. */
   function handlePreTransition(args) {
     if (!args || (args.type !== 'ToBuildingInterior' && args.type !== 'ToDungeonInterior')) return;
     if (!physicalPersistenceEnabled) { clearPhysicalPersistenceTransientState(); return; }
@@ -975,11 +1003,12 @@ export function createHorseCartRuntime(deps) {
     if (isHorseFollowing()) { cacheFollowingHorseWorldPose(); followingTransitionSuspended = true; horseFollower.resetTransient(); }
     clearPendingInteriorState();
     pendingInteriorTransportMode = resolveInteriorEntryMode(tm().get(), hasObservedTransportMode, previousTransportMode, wagonState.Mode === WAGON_MODE.WithPlayer, tm().hasCart(), tm().hasHorse(), wagonState.HorseMode);
-    if (wagonState.Mode === WAGON_MODE.WithPlayer && tm().hasCart()) {
+    leaveStable(pendingInteriorTransportMode);
+    if (wagonState.Mode === WAGON_MODE.WithPlayer && tm().hasCart() && !wagonState.WagonStabled) {
       const p = captureBestAvailableDeploymentPose();
       pendingInteriorWorldX = p.wx; pendingInteriorWorldZ = p.wz; pendingInteriorHeading = p.heading; hasPendingInteriorDeployment = true;
     }
-    if (shouldDeployIndependentHorseForInterior(hasPendingInteriorDeployment, pendingInteriorTransportMode, wagonState.HorseMode, tm().hasHorse())) {
+    if (!wagonState.HorseStabled && shouldDeployIndependentHorseForInterior(hasPendingInteriorDeployment, pendingInteriorTransportMode, wagonState.HorseMode, tm().hasHorse())) {
       const p = captureHorseBehindPlayerPose();
       pendingInteriorHorseWorldX = p.wx; pendingInteriorHorseWorldZ = p.wz; pendingInteriorHorseHeading = p.heading; hasPendingInteriorHorseDeployment = true;
     }
@@ -1244,7 +1273,7 @@ export function createHorseCartRuntime(deps) {
    *  journey forced); a parked one, or a following one left at the departure, stays. The seats in its back go only
    *  with it (scenes/wagonRiders.js announce: riders told to follow a wagon that stayed landed with none). */
   function wagonGoesOnJourney() {
-    if (wagonState.Mode === WAGON_MODE.WithPlayer) return true;
+    if (wagonState.Mode === WAGON_MODE.WithPlayer) return !wagonState.WagonStabled;   // WAGON-STABLED: a stabled one stays at the stable
     return physicalPersistenceEnabled && (followingTransportFastTravels || forceNextJourney) && isTeamFollowing();
   }
   function convertFollowingTransportToWaitAtDeparture() {

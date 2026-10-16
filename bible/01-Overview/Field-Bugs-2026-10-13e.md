@@ -128,10 +128,11 @@ footprint's edge, and a 1 m grid. No model moves and nothing rises over a base. 
 so TREES-SEATED's trees stand on them. Every point of the four TEMPASH3 footprints is within 0.05 m now (0.15 m is the
 law, HILL-SHAPES' bar for the origin taken to the whole footprint); the four pads come to 837 triangles.
 
-NOT SEEN, with no ARENA2 and no GPU here: the real house meshes' footprints and bases, and which other classic models
-across both packs take a pad (the gated sweep is written and has not run); whether a bank buries a neighbour's door, a
-HILL-HOUSE placement or a quest marker; how the seam between bank and hill looks, at distance and under the climates'
-textures and the shadows; walking the bank; a real pixel's build cost (15-40 ms a block here, on a loaded machine).
+NOT SEEN, with no GPU here: whether a bank buries a quest marker; how the seam between bank and hill looks, at distance
+and under the climates' textures and the shadows; walking the bank; a real pixel's build cost (15-40 ms a block here, on
+a loaded machine). The real meshes, the gated sweep and what a bank buries were measured with ARENA2 by FIELD BUGS
+2026-10-15f TEMPLE-STEPS: the banks buried no door, but they buried Merdale's temple flight (by up to 1.25 m) and
+TEMPASF1's and TEMPASH4's stairs - a pad buries nothing the author left in the open now.
 
 `test/fb1013e_hillseat.test.js` (8, one on ARENA2_PATH); `tools/mutants/fb1013e_hillseat.json` (18, all dead). No pin
 moved.

@@ -230,6 +230,16 @@
     "why": "her topsail's foot out of its rig box: a ball through it misses"
   },
   {
+    "name": "SHIPS2-C-a-picture-seeded-off-the-clock",
+    "file": "src/world/carrackArt.js",
+    "old": "ph: 7, seed: 0xc52,",
+    "new": "ph: 7, seed: Math.floor(Math.random() * 1e6),",
+    "tests": [
+      "test/ships2_carrack.test.js"
+    ],
+    "why": "her pictures another on every client"
+  },
+  {
     "name": "SHIPS2-C-registered-twice",
     "file": "src/world/carrackArt.js",
     "old": "  if (_registered) return 0;\n  _registered = true;\n",
@@ -240,14 +250,14 @@
     "why": "her pictures added to the texture door every scene"
   },
   {
-    "name": "SHIPS2-C-every-picture-a-cut-out",
+    "name": "SHIPS2-C-the-glow-everywhere",
     "file": "src/world/carrackArt.js",
-    "old": "export const carrackCut = (/** @type {number} */ record) => _art.cut(record);",
-    "new": "export const carrackCut = () => true;",
+    "old": "  const k = BANDS.transom.recs.indexOf(record >= NIGHT_RECORD_OFFSET ? record - NIGHT_RECORD_OFFSET : record);",
+    "new": "  const k = Math.max(0, BANDS.transom.recs.indexOf(record >= NIGHT_RECORD_OFFSET ? record - NIGHT_RECORD_OFFSET : record));",
     "tests": [
       "test/ships2_carrack.test.js"
     ],
-    "why": "DF-ART (re-aimed: her transom's window seen through, the glow gone): every picture of hers a cut-out"
+    "why": "every picture of hers glowing by night"
   },
   {
     "name": "SHIPS2-C-a-face-on-no-picture",

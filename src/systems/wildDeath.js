@@ -16,6 +16,8 @@
 //     and Shards it holds - the trade's refusals and the decor's kept-back list, read, not rewritten).
 //   DROPPED: every other thing in the bag and in the cart - into the room's remains (net/wildLaw.js), where anyone may
 //     take it for ten minutes. A letter of credit too (LETTERS-DROP, 2026-10-09), ahead of the decor's kept-back list.
+//     CART-AWAY (Mac, 2026-10-15: "if its parked outside the zone nothing should be lost"): the cart's only while the
+//     wagon is with them - parked off the zone, stabled or none, it keeps every piece and its coin (systems/wildCart.js).
 //   WORN: kept on a death to a foe. On a death at another player's hand the killer may take ONE worn piece the same
 //     rules let go (`wornOffer`) - the fallen's own game gives it (net/wildFight.js).
 // The purse is the death penalty's (systems/deathPenalty.js) and unchanged.
@@ -24,7 +26,7 @@ import { WILD_ITEMS_MAX } from '../net/wire.js';
 
 // THE LAW - INT9: its home is systems/wildDropLaw.js (a leaf the account Worker bundles: the service takes a death's drop
 // off the record), re-exported here
-export { WILD_NEVER_GROUPS, keptOnWildDeath, wildCanLose, takeWildDrop, WILD_GOLD_LOSS, takeWildGold, wornOffer, wildRecord, takeWildDeath, wildPickOf, wildDropCandidates, wildTookOf, wildTakeTook } from './wildDropLaw.js';
+export { WILD_NEVER_GROUPS, keptOnWildDeath, wildCanLose, takeWildDrop, WILD_GOLD_LOSS, takeWildGold, wornOffer, wildRecord, takeWildDeath, wildPickOf, wildDropCandidates, wildCartRecordOf, wildCartMayBeAway, wildTookOf, wildTakeTook } from './wildDropLaw.js';
 
 /** A list cut into the wire's chunks. */
 export function wildChunks(list, size = WILD_ITEMS_MAX, bytes = Infinity) {

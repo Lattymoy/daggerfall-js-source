@@ -132,6 +132,6 @@ test('HOME-PLAQUE: a nameless house whose door has verbs is a "Residence" - its 
   assert.ok(plaque, 'a plaque stands for a house for sale');
   assert.match(JSON.stringify(plaque), /Residence/);
   const m = readFileSync(new URL('../src/scenes/worldModes.js', import.meta.url), 'utf8');
-  assert.match(m, /const houseVerbs = homeDoorVerbs\(bd, home\);\n\s*_doorText = staticDoorName\('building', \{\n\s*displayName: home \? homeDoorTitle\(home\) : homeDoorName\(shownBuildingName\(db, bd\.name\), !!houseVerbs\),/);
+  assert.match(m, /const houseVerbs = homeDoorVerbs\(bd, home\);\n\s*_doorText = staticDoorName\('building', \{\n\s*displayName: home \? homeDoorTitle\(home, questSiteHere\(bd\) && db\.isOverrideName \? db\.displayName : null\) : homeDoorName\(shownBuildingName\(db, bd\.name\), !!houseVerbs\),/);   // PIN MOVED (QUEST-RESIDENCE, FIELD BUGS 2026-10-15c): a quest's home says the quest's name - homeDoorTitle's second word
   assert.match(m, /const verbs = _doorText \? houseVerbs : null;/);
 });

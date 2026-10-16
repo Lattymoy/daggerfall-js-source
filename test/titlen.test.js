@@ -15,7 +15,7 @@ import { fakeRoom } from './fakeRoom.mjs';
 import { TITLES, GLYPHS, claimsValid, mintToken, verifyToken, importPublicKeyB64 } from '../src/net/identityToken.js';
 import { TITLE_TEXT, TITLE_RGBA, GLYPH_RGBA, GLYPH_MARK, GLYPH_PATH, GLYPH_STROKE, FONT_GLYPH_MIN, FONT_GLYPH_MAX, cssRgba, titleBadge, glyphBadges } from '../src/ui/playerBadge.js';
 import { GLYPH_LABEL } from '../src/ui/enhancedAccount.js';
-import { titlesHeld, glyphsOf, equipRefusal, titleWorn, TIER_LISTS, TIER_GLYPH, FOUNDER_UNTIL } from '../server-account/src/titles.js';
+import { titlesHeld, glyphsOf, equipRefusal, titleWorn, aurasHeld, auraWorn, canModerate, TIER_LISTS, TIER_GLYPH, FOUNDER_UNTIL } from '../server-account/src/titles.js';
 import { parseClient, dmGate, redGate, DM_HZ_MAX, RED_HZ_MAX, DM_RELAY_MIN, relaySupportsDm, RELAY_VERSION, readBadge } from '../src/net/wire.js';
 import { HOST_COMMANDS, parseChatLine } from '../src/net/chatCommands.js';
 import { ChatLog } from '../src/net/chat.js';
@@ -80,12 +80,24 @@ test('TITLE-N grants: the Dungeon Master is SquidKamer\'s alone and Disciple is 
   assert.equal(v('APOSTLE_HANDLES'), '', 'SirMcMobdon is no longer an Apostle');
   assert.deepEqual(titlesHeld({ handle: 'sirmcmobdon', created_at: 1_800_000_000, registered_at: 1_900_000_000 }, { APOSTLE_HANDLES: v('APOSTLE_HANDLES') }), [], 'SirMcMobdon holds no Apostle title');
   assert.deepEqual(glyphsOf({ handle: 'SirMcMobdon', created_at: 0 }, { APOSTLE_HANDLES: v('APOSTLE_HANDLES') }, 10 ** 10), [], 'and no Apostle glyph');
-  assert.equal(v('DEVELOPER_HANDLES'), 'Lattymoy,trashBattery,LostMyLeg,Tabby,RookieG', 'DEV2, Mac: "Give trashBattery, LostMyLeg the developer title/glyph"; DEV3: "grant Tabby the developer title/glyph"; DEV4, the owner: "Also add RookieG(Dev) as developer", then "Change RookieG(Dev) to RookieG"');
-  for (const h of ['trashbattery', 'LOSTMYLEG', 'tabby', 'RookieG', 'rookieg', 'ROOKIEG']) {
+  assert.equal(v('DEVELOPER_HANDLES'), 'Lattymoy,LostMyLeg,Tabby,RookieG', 'DEV2, Mac: "Give trashBattery, LostMyLeg the developer title/glyph"; DEV3: "grant Tabby the developer title/glyph"; DEV4, the owner: "Also add RookieG(Dev) as developer", then "Change RookieG(Dev) to RookieG"; DEV5, Mac: "Remove trashBattery ingame as a dev"');
+  for (const h of ['LOSTMYLEG', 'tabby', 'RookieG', 'rookieg', 'ROOKIEG']) {
     const dev = { handle: h, created_at: 1_800_000_000, registered_at: 1_900_000_000 };   // FOUNDER3: first played after the cutoff too, so no Founder
     const denv = { DEVELOPER_HANDLES: v('DEVELOPER_HANDLES') };
     assert.deepEqual(titlesHeld(dev, denv), ['developer'], `${h}: the Developer title, case-folded`);
     assert.deepEqual(glyphsOf(dev, denv, 1_900_000_000), ['dev'], `${h}: the dev glyph`);
+  }
+  // DEV5 (2026-10-16, Mac: "Remove trashBattery ingame as a dev"): off the list in any case, and the whole set with it -
+  // the title, the glyph, the wings, the moderating; and the title and wings a row still stores are no longer worn
+  for (const h of ['trashBattery', 'trashbattery', 'TRASHBATTERY']) {
+    const was = { handle: h, created_at: 1_800_000_000, registered_at: 1_900_000_000, title: 'developer', aura: 'seraphwings' };
+    const denv = { DEVELOPER_HANDLES: v('DEVELOPER_HANDLES') };
+    assert.deepEqual(titlesHeld(was, denv), [], `${h}: no Developer title`);
+    assert.deepEqual(glyphsOf(was, denv, 1_900_000_000), [], `${h}: no dev glyph`);
+    assert.ok(!aurasHeld(was, denv).includes('seraphwings'), `${h}: no Seraph Wings`);
+    assert.equal(canModerate(was, denv), false, `${h}: no /mute`);
+    assert.equal(titleWorn(was, denv), undefined, `${h}: the stored title is not worn`);
+    assert.equal(auraWorn(was, denv), undefined, `${h}: nor the stored wings`);
   }
   // DEV4: the handle whole - "RookieG(Dev)" (a handle may carry brackets) is another account, and a near name is no
   // developer either: none of them holds its rights

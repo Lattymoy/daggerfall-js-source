@@ -451,8 +451,8 @@
   {
     "name": "CSA-B-mesh-textures-cutout",
     "file": "src/scenes/comeSailAwayPool.js",
-    "old": "{ opaque: true, cutout: cutOf(archive, record) });\n    const night = nightOf",
-    "new": "{ cutout: cutOf(archive, record) });\n    const night = nightOf",
+    "old": "    pipeline.uploadRecord(archive, record, { opaque: true, cutout: cutOf(archive, record) });",
+    "new": "    pipeline.uploadRecord(archive, record, { cutout: cutOf(archive, record) });",
     "tests": [
       "test/csa_pool.test.js"
     ]

@@ -1235,3 +1235,8 @@ be rarer than rain.
 Pinned by `test/rainhours.test.js` (4); `tools/mutants/rainhours.json`, 9, all dead; `weather3a.json` 14/14;
 `weather3g.json` 15 dead and 1 equivalent as recorded.
 
+WET-FALL (2026-10-15, a Discord report: "Player is getting wet despite it not raining. Possibly an oversight in reducing
+the rain?"): RAIN-HEART's level reached the drops, the look and the ear, and not the skin - the survival soak read the
+sim's word at the downpour's rate. It reads what falls now (`weatherSim.js` fallingWeather, the street's word and level
+as the ear's), `01-Overview/Field-Bugs-2026-10-15f.md`; `06-Systems/Climates-Calories.md` WET-FALL.
+

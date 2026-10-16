@@ -54,9 +54,9 @@ import { buildDeck } from '../systems/naval/navalDeck.js';   // DECK-WALK: her w
 import { hullBuild, setGalleonStanding, setShipStanding } from '../systems/naval/navalShips.js';   // AUDIT GN-G4: and hull 2's build follows the hull that stands (SHIPS-2: hull 4's and hull 1's)
 import { registerGalleonArt, GALLEON_ARCHIVE, galleonCut, galleonGlow, GALLEON_NIGHT } from '../world/galleonArt.js';   // GALLEON: the new galleon's own pictures, on the texture door before her meshes ask
 import { registerCarrackArt, CARRACK_ARCHIVE, carrackCut, carrackGlow, CARRACK_NIGHT } from '../world/carrackArt.js';   // SHIPS-2: and the new carrack's,
-import { registerLargeBoatArt, LARGE_BOAT_ARCHIVE, largeBoatCut } from '../world/largeBoatArt.js';   // and the new large boat's
-import { addVendorTextures } from '../systems/textureReplacement.js';
+import { registerLargeBoatArt, LARGE_BOAT_ARCHIVE } from '../world/largeBoatArt.js';   // and the new large boat's
 import { toColor32 } from '../formats/color32Order.js';
+import { addVendorTextures } from '../systems/textureReplacement.js';
 import { adoptLight } from '../render/lightId.js';   // LIGHT-ID: a lantern's light named by its lantern
 
 /** DungeonLightHandler.CheckLight's reach: UnscaledBlockRange x MeshReader.GlobalScale. */
@@ -67,14 +67,14 @@ export const CSA_LIGHTS_MAX = 8;
 /** AUDIT NAV1 (the presentation): the hull whose FlagObject a flagless sea ship is given (the Small Ship - graftColours). */
 export const FLAG_DONOR_HULL = 2;
 /** SHIPS-2: THE PORT'S OWN SHIPS' PICTURES - each standing ship's archive, how it is put on the texture door, which
- *  of its records hold glass to see through (DF-ART, Mac: "windows should always be see through" - uploaded cut-outs),
- *  each of those records' NIGHT TWIN and the twin's glow (Mac, of the stern windows: "See-through by day, lit at night" -
- *  world/galleonArt.js NIGHT_RECORD_OFFSET), by the models' key for the ship (systems/comeSailAwayModels.js
- *  PORT_SHIPS). */
+ *  of its records hold glass to see through (DF-LOOK, DF-ART II kept - Mac: "windows should always be see through" -
+ *  uploaded cut-outs), each of those records' NIGHT TWIN and the twin's glow (DF-ART III kept - Mac, of the stern
+ *  windows: "See-through by day, lit at night" - world/galleonArt.js NIGHT_RECORD_OFFSET; the glow cut while the world
+ *  loads), by the models' key for the ship (systems/comeSailAwayModels.js PORT_SHIPS). */
 export const PORT_ART = Object.freeze({
   galleon: Object.freeze({ archive: GALLEON_ARCHIVE, register: registerGalleonArt, cut: galleonCut, night: GALLEON_NIGHT, glow: galleonGlow }),
   carrack: Object.freeze({ archive: CARRACK_ARCHIVE, register: registerCarrackArt, cut: carrackCut, night: CARRACK_NIGHT, glow: carrackGlow }),
-  largeBoat: Object.freeze({ archive: LARGE_BOAT_ARCHIVE, register: registerLargeBoatArt, cut: largeBoatCut, night: Object.freeze({}), glow: () => null }),
+  largeBoat: Object.freeze({ archive: LARGE_BOAT_ARCHIVE, register: registerLargeBoatArt, cut: () => false, night: Object.freeze({}), glow: () => null }),
 });
 const artOf = (archive) => Object.values(PORT_ART).find((a) => a.archive === archive);
 /** Whether a picture holds glass to see through, whichever port ship's archive it is in (false for any other). */
@@ -84,8 +84,8 @@ const nightOf = (archive, record) => artOf(archive)?.night[record] ?? null;
 /** THE STERN WINDOWS LIT: every see-through record of the port's ships drawn as its night twin - its glass whole, its
  *  panes glowing - while the lanterns are lit (`frame`'s cityLightsOn, the lanterns' own switch: lanternLightUpdate).
  *  By day her glass is a hole and the eye sees into her great cabin; a hole draws nothing, its glow included, so at
- *  night the glass is whole again and glows as it did before DF-ART. One Map, so the renderer's per-sub-mesh lookups
- *  (drawMesh's `_evRemap`) stay cached night after night. */
+ *  night the glass is whole again and glows. One Map, so the renderer's per-sub-mesh lookups (drawMesh's `_evRemap`)
+ *  stay cached night after night. */
 export const NIGHT_REMAP = new Map(Object.values(PORT_ART).flatMap((a) => Object.entries(a.night).map(([r, n]) => [`${a.archive}_${r}`, `${a.archive}_${n}`])));
 const _nightRemaps = new WeakMap();   // a host's remap -> it with NIGHT_REMAP's twins, made once
 /** The remap a night draw takes: NIGHT_REMAP, or a host's own remap with its twins added (the host's key wins). */
@@ -319,13 +319,14 @@ export function createComeSailAwayPool({ renderer = null, pipeline = null, fetch
     preloading ??= (async () => {
       if (!(await ensureModels())) return false;
       for (let hull = 0; hull < HULL_NAMES.length; hull++) await prepare(hull);
-      // AUDIT GN2-PF3: her pictures built (her archive's first ask builds all twenty-five on the vendor door - DF-ART:
-      // read from the player's ARENA2) while the world loads - they were her first mesh's ask (meshFor) or a sail
-      // bake's, at the first draw of a hull 2: a 50-120 ms stall the first time she came into view
+      // AUDIT GN2-PF3: her pictures painted (her archive's first ask builds all twenty-five on the vendor door - DF-LOOK:
+      // her stern gallery's two night twins with them) and her glass's glow cut while the world loads - they were her
+      // first mesh's ask (meshFor) or a sail bake's, at the first draw of a hull 2: a 50-120 ms stall the first time she
+      // came into view
       // SHIPS-2: every standing port ship's so
       for (const [key, art] of Object.entries(PORT_ART)) {
         if (!models[key]) continue;
-        try { await pipeline.getTexture(art.archive); }
+        try { await pipeline.getTexture(art.archive); for (const n of Object.values(art.night)) art.glow(n); }
         catch (e) { warnOnce(`tex:${art.archive}`, `[come-sail-away] TEXTURE.${art.archive} will not load - the boats' faces in it draw nothing`, e); }
       }
       for (let hull = 0; hull < HULL_NAMES.length; hull++) deckOf(hull, 0);   // DECK-WALK: baked while the world loads (10-50 ms a hull), never mid-voyage (AUDIT NAV2 F57: every rig's deck, one a hull)
@@ -485,7 +486,8 @@ export function createComeSailAwayPool({ renderer = null, pipeline = null, fetch
   /** A boat's sub-mesh's picture up through the pipeline's own door (after its archive's getTexture): a model's face,
    *  a cut-out where its glass is seen through - and that record's night twin with it, whole, its glow its emission
    *  (renderer.uploadEmissionTexture: lit by the window style, as every lit window is; AUDIT GN2-PF5: capped by Retro
-   *  Mode as her classic art is, a pack's picture never). */
+   *  Mode as her classic art is, a pack's picture never). AUDIT GN-R15: a pack's own picture over her stern windows (a
+   *  loose 38131_6, or its night twin's 38131_106) glows by HER glass. */
   function uploadFace(archive, record) {
     pipeline.uploadRecord(archive, record, { opaque: true, cutout: cutOf(archive, record) });
     const night = nightOf(archive, record);
@@ -503,9 +505,9 @@ export function createComeSailAwayPool({ renderer = null, pipeline = null, fetch
         const model = build();
         if (!model) { meshes.set(key, null); return; }
         for (const sm of model.subMeshes) {
-          // DF-ART (Mac: "windows should always be see through"): her stern gallery's glass a hole - the picture a
-          // cut-out, its glass seen through into her great cabin (SHIPS-2: the carrack's transom gallery the same) -
-          // and its night twin lit (`uploadFace`)
+          // GALLEON: her stern gallery's glass, lit at night as a town's windows are (the window style the host sets -
+          // its emission mask is the glass alone, galleonArt.js galleonGlow) - DF-LOOK: on its night twin, the glass
+          // seen through by day (`uploadFace`). SHIPS-2: the new carrack's transom gallery's glass the same
           try { await pipeline.getTexture(sm.textureArchive); uploadFace(sm.textureArchive, sm.textureRecord); }
           catch (e) { warnOnce(`tex:${sm.textureArchive}`, `[come-sail-away] TEXTURE.${sm.textureArchive} will not load - the boats' faces in it draw nothing`, e); }
         }

@@ -22,7 +22,7 @@
 //
 // WHAT: three octagonal granite steps, a marble pedestal with a bronze plaque on each face, and a marble obelisk
 // tipped in gilt - the port's own geometry in the monument's own frame (y up from the ground at its middle, its faces
-// on the axes), wearing Daggerfall's own pictures read from the player's ARENA2 (DF-ART: world/lefayArt.js, LEFAY_ARCHIVE).
+// on the axes), cut from the port's own art (world/lefayArt.js, LEFAY_ARCHIVE): no game data at all.
 //
 // THE FLOWERS: Daggerfall's own (TEXTURE.254's roses and flowers - systems/arenaCrowd.js THROWN_FLOWERS, the arena
 // crowd's), thrown from the hand on a short arc to a rest on one of the steps or the ground at their foot, on the
@@ -216,7 +216,7 @@ export function carveLefay(nav, spot) {
 }
 
 // ── THE STONE ────────────────────────────────────────────────────────────────────────────────────────────────────
-/** The monument's pictures, under a pseudo-archive of their own (world/lefayArt.js names their Daggerfall records). */
+/** The port's own pictures, under a pseudo-archive of their own (world/lefayArt.js draws them). */
 export const LEFAY_ARCHIVE = 38211;
 export const LEFAY_GRANITE = 0;
 export const LEFAY_MARBLE = 1;

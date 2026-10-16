@@ -248,7 +248,9 @@ DECIDED. `baseCalculateNewRank` and `updateRank` run unchanged, over the Roll's 
 FACT: the skills are the client's word until Realm phase 3 checks a save; a lied skill buys a rank that costs no rival
 anything, which law 3 allows. BUILT (CHAP1): the 28-day gate and REP6's probation stay DFU's, on the client's own
 calendar, untouched (PROMO-NOW, 2026-10-15, Mac: "No wait" - online a PROMOTION no longer waits the 28 days; a
-demotion, a probation and an expulsion still do, `01-Overview/Field-Bugs-2026-10-15.md`); the Roll records the rank the client reports, bounded by its own reputation (3.2; AUDIT CHAP2 D5:
+demotion, a probation and an expulsion still do, `01-Overview/Field-Bugs-2026-10-15.md`; ROLL-PACE, the same day: and no
+further than the Roll's pace since it saw the membership begin - ROLL_GAIN_DAY_MAX a UTC day, the first counted - read
+off the Roll's own reputation, never the page's unclaimed number, `01-Overview/Field-Bugs-2026-10-15f.md`); the Roll records the rank the client reports, bounded by its own reputation (3.2; AUDIT CHAP2 D5:
 this said the rank as reported) - so between DFU's reviews, or for a Thieves Guild or Brotherhood member (they never
 expel), the recorded rank may sit BELOW the book's: the Roll's bound, not a demotion. AUDIT CHAP2 C2 (= D1): the tab
 compares its book with the book it last SENT, never with the Roll's record of it, so that difference is claimed once,

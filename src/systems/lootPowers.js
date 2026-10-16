@@ -57,6 +57,7 @@ import { registerSpellPowerMod, registerSpellPierceMod } from './spellPower.js';
 import { hasSpecialAbility, SPECIAL_ABILITY, restIgnoresNoRegen } from './rest.js';   // BAL9c: a career that cannot regenerate magicka, rest's own gate
 import { registerPlayerBlowLanded, pendingPlayerBlow, REACH_RISE_M } from './sigilSetPowers.js';
 import { playerDoor, paidBack, oweFoe } from './playerDoor.js';   // BAL5: a blow paid back never kills; OPEN-HAND: a follow-up owed to a relay's body
+import { showFollowUp } from '../ui/hitNumbers.js';   // FIELD BUGS 2026-10-15e ROSE-SEEN: a follow-up's own number
 import { careerTolerance, EFFECT_FLAGS } from './spellcast.js';
 import { lootRarityOn, validAffix, powerOf, registerLegendaryFind, readLines } from './lootRarity.js';   // GEM1: readLines, law 6's reading
 import { equipTableOf } from './equip.js';
@@ -159,6 +160,10 @@ let _tolls = new WeakMap();              // GILDED1: a tolling weapon -> its lan
 let _lastToll = null;                    // GILDED1: the last foe a tolling weapon's shot landed on, and when
 /** @type {WeakSet<object>} */
 let _struck = new WeakSet();             // the foes my blows have landed on (First Blood)
+/** @type {WeakMap<object, { n: number, until: number, at: number }>} */
+let _undertow = new WeakMap();           // GILDED2: a foe -> the Undertow's landed blows on it (its stacks, at most the power's max), until when they hold, and when the last landed (its kill heals - TOLL_REFUND_S's bound; AUDIT WORLD-REWARDS B2: a foe's own, so a swing that strikes two heals for each it fells)
+/** GILDED2: a foe's Undertow stacks now - none once the tide lets it go (AUDIT WORLD-REWARDS B4). */
+const undertowStacks = (foe, now) => { const u = _undertow.get(foe); return u && now < u.until ? u.n : 0; };
 /** GILDED1: THE HOUR TOLLS - is this weapon's next landed shot its toll? Its landed shots are counted on the strike
  *  (lootStrike, after the blow), so the blow asks before the count moves: shots one and two ring nothing, the third tolls. */
 const tollDue = (weapon, p) => !!weapon && (_tolls.get(weapon) ?? 0) === p.every - 1;
@@ -233,6 +238,7 @@ export function lootBlow(weapon, damage, attacker, target, info) {
       case 'execute': if (share(target) < p.below / 100) pct += p.pct; break;
       case 'firstblood': if (!_struck.has(target)) pct += p.pct; break;
       case 'toll': if (tollDue(weapon, p)) pct += p.pct; break;   // GILDED1: the third that lands
+      case 'undertow': pct += p.pct * undertowStacks(target, now); break;   // GILDED2: the blows landed on this foe before (counted to its max at the strike)
       default: break;
     }
   }
@@ -243,7 +249,9 @@ export function lootBlow(weapon, damage, attacker, target, info) {
 // ── the strike: leech ───────────────────────────────────────────────
 /** MY blow, LANDED (formulas.js registerPlayerStrikeListener - the final damage at a foe): the leech's share heals me. */
 export function lootStrike(attacker, target, damage, weapon) {
-  if (!mine(attacker) || !(damage > 0) || !target || target.isPlayer) return;
+  // AUDIT WORLD-REWARDS B3: nor a blow the Warden's ward turns - a melee swing's strike is told before the court turns it
+  // (dungeonContext.js swingOnBoss), and lootBlow already refuses a warded foe: nothing landed, so nothing answers it
+  if (!mine(attacker) || !(damage > 0) || !target || target.isPlayer || target.warded) return;
   let pct = 0;
   for (const a of linesOf(weapon, 'leech')) pct += a.value;
   pct = Math.min(LEECH_CAP, pct);   // BAL7
@@ -254,11 +262,13 @@ export function lootStrike(attacker, target, damage, weapon) {
     switch (p.kind) {
       case 'chain': if (ranged(weapon)) arc(target, (damage * p.share) / 100, p.metres); break;
       case 'quake': if (weapon && !ranged(weapon)) quake(target, (damage * p.share) / 100, p.metres); break;
-      case 'echo': if (_rand() * 100 < p.chance) again(target, damage); break;
-      case 'fists': if (!weapon) again(target, (damage * p.share) / 100); break;   // BAL7: for half (the record's share)
+      case 'echo': if (_rand() * 100 < p.chance) again(target, damage, p.name); break;
+      case 'fists': if (!weapon) again(target, (damage * p.share) / 100, p.name); break;   // BAL7: for half (the record's share)
       case 'conduit': gainMana(attacker, p.mana); break;
       case 'flow': _s.flow = Math.min(p.max, flowStacks(now) + 1); _s.flowUntil = now + p.seconds; break;
       case 'toll': if (weapon) { _tolls.set(weapon, ((_tolls.get(weapon) ?? 0) + 1) % p.every); _lastToll = { foe: target, at: now }; } break;   // GILDED1
+      case 'dragonfire': if (weapon && foeGroup(target) === p.group) dragonfire(target, (damage * p.share) / 100, p.metres, p.group); break;   // GILDED2
+      case 'undertow': if (weapon) _undertow.set(target, { n: Math.min(p.max, undertowStacks(target, now) + 1), until: now + p.seconds, at: now }); break;   // GILDED2
       default: break;
     }
   }
@@ -277,11 +287,13 @@ export function near(door, feet, metres, except) {
     && rise(f.ai.feet, feet) <= REACH_RISE_M && flat2(f.ai.feet, feet) <= metres && (!door.clear || door.clear(feet, f.ai.feet)));
 }
 const recordOf = (door, entity) => door?.foes().find((f) => f.entity === entity) ?? null;
-/** The struck foe takes the blow again (Many Endings, Open Hand) - through its own pool's door. */
-function again(target, damage) {
+/** The struck foe takes the blow again (Many Endings, Open Hand) - through its own pool's door - and its number rises,
+ *  tagged `word` (the power's name). */
+function again(target, damage, word) {
   const door = playerDoor();
   const f = recordOf(door, target);
   const n = Math.max(1, Math.round(damage));
+  if (!f?.dead) showFollowUp(n, word);   // FIELD BUGS 2026-10-15e ROSE-SEEN: the HUD showed the first blow alone
   if (f) { if (!f.dead) door.hurtFoe(f, n); return; }
   oweFoe(target, n);   // FIELD BUGS 2026-10-12g OPEN-HAND: a body the relay runs (the gate's Warden) - its host's claim carries it
 }
@@ -294,6 +306,19 @@ function arc(target, amount, metres) {
   for (const f of near(door, struck.ai.feet, metres, target)) { const d = flat2(f.ai.feet, struck.ai.feet); if (d <= bestD) { best = f; bestD = d; } }
   const n = best ? Math.floor(amount * elementShare(best.entity, 'shock')) : 0;
   if (best && n > 0) door.hurtFoe(best, n);
+}
+/** GILDED2: Dragonfire - the struck one takes `amount` again, and every other foe of `group` within `metres` of it as much, no
+ *  element's share of it: Akatosh's fire, which no Daedra resists. AUDIT WORLD-REWARDS B1: the struck one's burn goes as
+ *  Many Endings' echo does (again - through its record, or OWED to the claim a body the relay runs sends, the relay's caps
+ *  deciding); the burst is Earthshaker's reach (near) over one kind of foe, and reaches only the foes the world runs - a
+ *  body the relay runs has no record, and no other is in reach of it (the gate's court, an Elite Gate's legion). */
+function dragonfire(target, amount, metres, group) {
+  if (!(amount > 0)) return;
+  again(target, amount);
+  const door = playerDoor();
+  const struck = recordOf(door, target);
+  if (!struck?.ai?.feet) return;
+  for (const f of near(door, struck.ai.feet, metres, target)) if (foeGroup(f.entity) === group) door.hurtFoe(f, Math.max(1, Math.round(amount)));
 }
 /** Earthshaker: every other foe within `metres` of the struck one takes `amount`. */
 function quake(target, amount, metres) {
@@ -402,7 +427,7 @@ export const hasteBundle = (p) => ({
     magnitudeBaseLow: p.speed, magnitudeBaseHigh: p.speed, magnitudeLevelBase: 0, magnitudeLevelHigh: 0, magnitudePerLevel: 1,
   }],
 });
-/** MY KILL (playerKills.js - every pool's word that my own blow killed a foe): Sanctified's and Orc Rage's heal, Soul
+/** MY KILL (playerKills.js - every pool's word that my own blow killed a foe): Sanctified's, Orc Rage's and (GILDED2) the Undertow's heal, Soul
  *  Siphon's magicka, Tribute's gold, Courier's Haste. */
 export function lootKill(foe) {
   if (!foe || neverCounts(foe)) return;
@@ -421,6 +446,7 @@ export function lootKill(foe) {
       case 'siphon': gainMana(me, (me.maxMagicka * p.pct) / 100); break;
       case 'tribute': { const g = p.gold * Math.max(1, foe.level | 0); addGoldPieces(me, g); say(`Tribute: ${g} gold.`); break; }
       case 'toll': if (p.refund && _lastToll?.foe === foe && now - _lastToll.at <= TOLL_REFUND_S && Array.isArray(me?.items)) { addItem(me.items, createPellets(1)); _lastToll = null; } break;   // GILDED1: the felling shot's pellet, back
+      case 'undertow': { const u = _undertow.get(foe); if (u && now - u.at <= TOLL_REFUND_S) { healMine(me, (me.maxHealth * p.heal) / 100); _undertow.delete(foe); } break; }   // GILDED2: a foe it fells, the tide's heal - each its own (AUDIT WORLD-REWARDS B2)
       case 'haste':
         if (now >= _s.hasteReady && door?.castOnPlayer) { _s.hasteReady = now + p.recover; _s.recovering.add('haste'); door.castOnPlayer(hasteBundle(p)); }
         break;
@@ -571,6 +597,7 @@ export function lootHudChips(entity, now = _now()) {
 /** Tests only: every carry and power fresh, a clock and a chance of their own (seconds, [0, 1)). */
 export function _resetLootPowersForTests() {
   _carry = new WeakMap(); _resetPlayerHealForTests(); _s = freshState(); _hexed = new WeakMap(); _struck = new WeakSet(); _tolls = new WeakMap(); _lastToll = null;
+  _undertow = new WeakMap();   // GILDED2
   _say = (line) => { hudText(line); };
 }
 export function _setLootPowersClockForTests(fn) { _now = typeof fn === 'function' ? fn : () => performance.now() / 1000; }

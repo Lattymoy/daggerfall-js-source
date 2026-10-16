@@ -424,7 +424,7 @@
   {
     "name": "LW8-host-toned",
     "file": "src/scenes/world.js",
-    "old": "    toned: (p, tone) => livingIndoors?.town()?.toned(p, tone) ?? null,",
+    "old": "    toned: (p, taste) => livingIndoors?.town()?.toned(p, taste) ?? null,",
     "new": "    toned: () => null,",
     "tests": [
       "test/lw8_indoors.test.js"

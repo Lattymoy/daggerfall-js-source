@@ -134,7 +134,7 @@ Enchanting - ten professions a character holds, with the five that gather.
   at the highest tier the rank opens**: every haul is tier 1 and herbs stop at tier 3, so their own tiers would have
   held Fishing at a Novice's pace and quartered every herb past rank 70 (the Basket's food keeps its tier). DECIDED, AUDIT 32 S1 - Mac: "Whatever you think is best": **no +500 for a recipe made wholly of goods
   only a counter sells** (4.5's Linen and Wool, never gathered) - the counter's supply has no end, and 152 recipes of
-  it bought Outfitting 87 for 811 Marks.
+  it bought Outfitting 87 for 811 Marks. Said at every station and in the craft's word since CRAFT-FIRST-SHOWN (41.9).
 - All XP is service-witnessed: the service performed the harvest, the craft, the delivery.
 - **Tiers**, the ladder every material, node and recipe sits on - the rank each needs:
 
@@ -4105,6 +4105,59 @@ A4, `prof12_client` R2-C2, `prof3_client` wiring. Re-aimed by content, each stil
   the dish and the Potent potion measured, the anvil's box. `tools/mutants/craft5.json` (24, all dead). PIN MOVED:
   `prof3_law` (a kit's record its quality), `prof3_service` (a kit's craft answered a quality), `repair_rate` (the
   anvil's kit line), and the account version's pins (acct93).
+
+### 41.9 CRAFT-FIRST-SHOWN - the first-make 500 said where it is earned (BUILT 2026-10-15, FIELD BUGS 2026-10-15f)
+
+The Discord, 2026-10-13: "Outfitting xp (first-time craft bonus): The first time craft bonus is not applying to the
+outfitting. I got somehow it once from...Fishing net? Then never after."
+
+- **FOUND - the law held, and nothing said it.** AUDIT 32 S1 (3.2; `06-Systems/Online-Arc.md` S1) withholds the 500 from
+  a recipe made wholly of goods only a counter sells (`recipeLaw.js` `firstCraftPays` over `professionLaw.js`
+  `COUNTER_ONLY`): 152 of the loom's patterns - 144 garments, the rugs and tapestries and the Fishing-Net, every one
+  wholly the Weavers' Linen and Wool (MEASURED, pinned). The Fishing-Net never paid; a bolt-and-Cured-Leather boot
+  does. The service decided it and answered `first` (`server-account/src/professions.js` `craftAtAnvil` - `first` is
+  recorded for every first craft, the 500 laid on only where it pays). But no station said a craft's XP (the anvil,
+  the workbench, the loom and the mason's bench said none; the jeweller's bench and the fire said theirs without the
+  first), and the craft's word read `xp` and never `first`.
+- **DECIDED (the owner): keep S1 - it stops 76,000 XP of first crafts being bought with the counter's cloth - and say
+  the rule.** Client only: no service, relay or account version moved.
+- **The words** - `src/ui/craftXpWords.js` (new), the module the host and the pages read:
+  - `craftXpLine` - a station box's line for its picked recipe, at the craft's track's rank: "20 Outfitting XP, and 500
+    more the first time you make this piece at this tier." (`craftXp`, the quarter past two tiers included, and the
+    500 the first of its PATTERN AT ITS TIER - `firstCraftKey`, 41.5), or, where the recipe pays none, "20 Outfitting XP.
+    Made only of cloth from the Weavers, it earns no first-time bonus."
+  - `dishFirstLine` - the fire's: "The first time you cook this dish: 500 more Provisioning XP." beside the pans' XP
+    (`cookXp`). `masonWorksFirstLine` - the mason's bench's works (`smeltAtForge` keys a work's first by the work):
+    "Your first cut and your first mix each earn 500 more Building XP."
+  - `craftXpText` - the craft's word, from the service's answer: "(+520 Smithing XP, with the first-time bonus)" for a
+    first that paid, "(+20 Outfitting XP - your first, but cloth from the Weavers earns no first-time bonus)" for a
+    first of the cloth, the XP alone otherwise.
+- **FACT - the client cannot know which patterns were made.** The service's state answers the tracks, the Stores and
+  the day (`profState`), never `prof_crafts`, so a box says what a first craft pays, never whether this pattern's is
+  still owed; the craft's answer says whether it was one, and its word says so after.
+- **The stations** - `src/ui/profPages.js`: the anvil's, the workbench's, the loom's and a Sculptor's carving's boxes say
+  `craftXpLine` under their odds where the recipe is open at the rank; the jeweller's odds give up their XP clause
+  (`prof.page.jewel.odds`) to the same line; the mason's bench says its works' first under the works; the fire its
+  dish's; and the alchemy station's potion wholly of the Apothecaries' goods (`brewFirstPays`, S1's law for a brew)
+  says why its first pays nothing, where it said its XP alone. THE NATIVE-WINDOW RULE: these are the Stores page's own
+  station boxes, the port's own design (17.2's row, section 21), not a window DFU has - no DFU source to cite.
+- **The four hosts**: `scenes/world.js` says the word with one call (its `craft`'s return reads `craftXpText(rec,
+  r.data, st.xp)`; HOST-SPLIT - no line added to bootWorld); `worldModes.js`, `exterior.js` and `dungeonContext.js` build
+  no station page and no craft word - none to wire.
+- **The words in the player's language**: eight new keys (`prof.craft.xp`, `.xpFirst`, `.xpFirstShop`;
+  `prof.page.craft.xpFirst`, `.xpShop`; `prof.page.fire.first`; `prof.page.mason.worksFirst`;
+  `prof.page.alchemy.xpShop`, which replaces `prof.page.alchemy.xp`) and `prof.page.jewel.odds` without its XP clause -
+  drafted in-session in the thirteen whole languages (`tools/l10nInSession.mjs`; each glossary given "first-time bonus"
+  and "cloth"), the twelve drafting languages owing them with the rest (`06-Systems/Localization-Arc.md` L10N6) - but
+  the three of them that held the jeweller's row (Finnish, Japanese, Polish) had it cut the same, or it named arguments
+  the English no longer has (`test/l10n1b.test.js`); the craft's word around them is still the host's English, as it was.
+- **As built**: `src/ui/craftXpWords.js` (new), `src/ui/profPages.js`, `src/scenes/world.js`,
+  `locales/*/Port_Strings.csv` and their records, the thirteen glossaries. Pinned: `test/fb1015f_firstcraft.test.js`
+  (3) - the law the words say (the 152, all the Weavers' cloth; both works and every dish pay), the craft's word from
+  the real Worker's answer through the book (a Linen Straps' first, a Linen Boots' first, a second of each; in French),
+  the host's one call, and every station's box read off the real book. `tools/mutants/fb1015f_firstcraft.json` (20, all
+  dead). PIN MOVED: `craft1_chain` (the host's craft word, its chain still first) and `prof10_client` (the jeweller's
+  XP its own line).
 
 ## 42. PROF-FOUND - the station shops found as every shop is (BUILT 2026-10-12)
 

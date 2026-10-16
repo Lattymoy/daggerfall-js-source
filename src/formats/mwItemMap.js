@@ -34,9 +34,16 @@
 //     hands are BRACERS, not gauntlets, so the gauntlet row tries
 //     both tokens in order.
 //   - CHAIN -> imperial chain, which exists ONLY as cuirass and
-//     greaves on retail. Every other chain piece will report a miss
-//     and keep its sprite - that is the DATA being thin, and the
-//     report says so instead of a wrong metal standing in.
+//     greaves on retail. ~~Every other chain piece will report a miss
+//     and keep its sprite~~ - BARE-BOOTS (FIELD BUGS 2026-10-15c, "No
+//     boots model on legendary boots"): the Morrowind figure has no
+//     sprite to keep, so a miss stood bare skin - chain boots, gauntlets
+//     and pauldrons drew bare feet, hands and shoulders. What imperial
+//     chain lacks is iron now (the chain's second token), as the NPCs'
+//     wardrobe already dresses a chain piece Morrowind cannot draw
+//     (characters/wardrobe.js CHAIN_PIECES). And the chain walks by
+//     PIECE: a material whose first token has records but not this
+//     piece tries the next (Adamantium's Tribunal set, then ebony).
 //   - MITHRIL/ELVEN -> glass, ADAMANTIUM -> ebony, DWARVEN ->
 //     'dwemer' (the armor ids' own spelling; the WEAPON ids spell it
 //     'dwarven', which is exactly why armor gets its own material
@@ -134,7 +141,7 @@ import { DF_TO_MW_WEAPON, DF_TO_MW_MATERIAL, ARM_PARTS, MOD_WEAPON_TO_MW } from 
 // ebony to the eye (Adamantium tries Tribunal's own first). Each value
 // is a CHAIN tried in order.
 export const DF_TO_MW_ARMOR_MATERIAL = Object.freeze({
-  Leather: ['netch'], Chain: ['chain'], Chain2: ['chain'],
+  Leather: ['netch'], Chain: ['chain', 'iron'], Chain2: ['chain', 'iron'],   // BARE-BOOTS: what imperial chain lacks, iron
   Iron: ['iron'], Steel: ['steel'], Silver: ['steel'], Elven: ['steel'],
   Dwarven: ['dwemer'], Mithril: ['ebony'], Adamantium: ['adamantium', 'ebony'],
   Ebony: ['ebony'], Orcish: ['orcish'], Daedric: ['daedric'],
@@ -308,9 +315,6 @@ export function mwArmorRecords(armorRecords, templateIndex, material) {
     if ((row.not ?? []).some((n) => id.includes(n))) return false;
     return true;
   });
-  let token = null; let all = [];
-  for (const tok of chain) { const hit = byToken(tok); if (hit.length) { token = tok; all = hit; break; } }
-  if (!token) token = chain[chain.length - 1];
   const byPiece = (list) => {
     for (const t of row.tokens) {
       const hit = list.filter((r) => String(r.id || '').toLowerCase().includes(t));
@@ -318,9 +322,12 @@ export function mwArmorRecords(armorRecords, templateIndex, material) {
     }
     return [];
   };
-  const pool = byPiece(all).sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  // BARE-BOOTS: the chain walked by PIECE - the first material token that has THIS piece, never the first with any
+  let token = chain[chain.length - 1]; let pool = [];
+  for (const tok of chain) { const hit = byPiece(byToken(tok)); if (hit.length) { token = tok; pool = hit; break; } }
+  pool.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
   if (!pool.length) {
-    return { records: [], row, material: token, note: `no ${token} ${row.tokens[0]} in these archives - the classic sprite stands` };
+    return { records: [], row, material: token, note: `no ${chain.join('/')} ${row.tokens[0]} in these archives - the classic sprite stands` };
   }
   if (!row.sides) return { records: [pool[0]], row, material: token, note: 'resolved' };
   const records = [];

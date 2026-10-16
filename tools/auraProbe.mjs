@@ -32,7 +32,8 @@
 //     node tools/auraProbe.mjs [--shots <dir>]     (writes aura.png / aura_side.png / ward.png / ward_side.png /
 //                                                   radiance.png / radiance_side.png / cloak_back.png /
 //                                                   cloak_front.png / cloak_top.png / cloak_torn.png /
-//                                                   wings_back.png / resonance.png / resonance_top.png there)
+//                                                   wings_back.png / resonance.png / resonance_top.png /
+//                                                   maelstrom_top.png / maelstrom_side.png there)
 //
 // CRYSTAL-FIST (2026-10-05): and THE CRYSTAL RESONANCE, the sixth - from the side, every square node's law
 // (resonanceLit, on the wearer's own clock) stands lit is lit in the reference's purple itself, and every square over a
@@ -40,8 +41,12 @@
 // moment, other squares); its feet on the ring from above, read inside it where no square of the wall can stand over
 // them; the purple not summed to a paler one where a square lies over its foot; no jump at the wrap; nothing before it
 // kindles.
+//
+// SERPENT5 (2026-10-15; AUDIT WORLD-REWARDS D3 - the interpreter had been its only reader): and THE MAELSTROM, the ninth -
+// from above, foam where node's law (maelstromArmAngle, on the aura's own clock) stands its arms and the water darker
+// between them; its eye open water; no jump at the wrap; nothing before it kindles; from the side, its curl at the lip.
 import { chromium } from 'playwright';
-import { glyphEdges, CLOAK_GLYPH, RESONANCE_R, RESONANCE_COLUMNS, RESONANCE_CELLS, RESONANCE_PITCH_M, AURA_LIFT_M, resonanceLit, resonanceClock } from '../src/render/auraRing.js';   // SHADOW-CLOAK: where the wearer's glyph is, to read it back; CRYSTAL-FIST: which squares stand lit, by node's own law
+import { glyphEdges, CLOAK_GLYPH, RESONANCE_R, RESONANCE_COLUMNS, RESONANCE_CELLS, RESONANCE_PITCH_M, AURA_LIFT_M, resonanceLit, resonanceClock, MAELSTROM_R, MAELSTROM_ARMS, maelstromArmAngle, auraClock } from '../src/render/auraRing.js';   // SHADOW-CLOAK; SERPENT5 (AUDIT WORLD-REWARDS D3): the Maelstrom: where the wearer's glyph is, to read it back; CRYSTAL-FIST: which squares stand lit, by node's own law
 import http from 'node:http';
 import { readFileSync, existsSync } from 'node:fs';
 import { join, extname, dirname } from 'node:path';
@@ -392,6 +397,28 @@ try {
   check('no jump where the clock wraps', rsJump <= 45, `${rsJump}`);
   const rsCold = await rs(resEye, rsT, 0, resPts, resAt);
   check('unkindled, nothing stands', rsCold.px.every((c) => lum(c) < 70), `${Math.max(...rsCold.px.map(lum))}`);
+  // ── SERPENT5: THE MAELSTROM (AUDIT WORLD-REWARDS D3: the real GL's own word, beside the interpreter's) ──
+  const ms = (eye, t, k, pts, at) => page.evaluate(([e, tt, kk, ps, a]) => window.draw(e, tt, kk, ps, 'maelstrom', a, 0, 1, -1, null, { strict: true }), [eye, t, k, pts, at]);
+  const msEye = [0, 3.4, 0.001], msAt = [0, 0, 0], msT = 21.7;
+  const msG = (r, a) => [Math.cos(a) * r, AURA_LIFT_M, Math.sin(a) * r];
+  const armPts = [], gapPts = [];
+  for (const r of [0.35, 0.55, 0.7]) for (let k = 0; k < MAELSTROM_ARMS; k++) { const a = maelstromArmAngle(r, auraClock(msT), k); armPts.push(msG(r, a)); gapPts.push(msG(r, a + Math.PI / MAELSTROM_ARMS)); }
+  const msPts = [...armPts, ...gapPts, msG(0.06, 0.4), msG(0.06, 2.5)];
+  const msBare = await page.evaluate(([e, tt, ps, a]) => window.draw(e, tt, 1, ps, 'maelstrom', a, 0, 1, -1, null, { strict: true, none: true }), [msEye, msT, msPts, msAt]);
+  const msWhole = await ms(msEye, msT, 1, msPts, msAt);
+  if (shotsAt) await page.locator('#c').screenshot({ path: join(shotsAt, 'maelstrom_top.png') });
+  check('the maelstrom draws without a GL error', msWhole.error === 0 && msWhole.drawn === 1, `error ${msWhole.error}, drawn ${msWhole.drawn}`);
+  const lift = (i) => lum(msWhole.px[i]) - lum(msBare.px[i]), nA = armPts.length;
+  check('foam where its arms stand at the clock\'s own turn, the water between them darker', armPts.every((_, i) => lift(i) > lift(nA + i) + 40), armPts.map((_, i) => `${lift(i)}/${lift(nA + i)}`).join(' '));
+  check('its eye open water', lift(2 * nA) < 20 && lift(2 * nA + 1) < 20, `${lift(2 * nA)} ${lift(2 * nA + 1)}`);
+  const msB = await ms(msEye, p.period - 1 / 240, 1, msPts, msAt), msA = await ms(msEye, 1 / 240, 1, msPts, msAt);
+  const msJump = Math.max(...msB.px.map((c, i) => Math.abs(lum(c) - lum(msA.px[i]))));
+  check('no jump where the clock wraps', msJump <= 45, `${msJump}`);
+  const msCold = await ms(msEye, msT, 0, msPts, msAt);
+  check('unkindled, nothing stands', msCold.px.every((c, i) => lum(c) - lum(msBare.px[i]) < 10), `${Math.max(...msCold.px.map((c, i) => lum(c) - lum(msBare.px[i])))}`);
+  const msSide = await ms([0, 0.6, 3.2], msT, 1, [[0, AURA_LIFT_M + 0.09, MAELSTROM_R]], [0, 0.2, 0]);
+  if (shotsAt) await page.locator('#c').screenshot({ path: join(shotsAt, 'maelstrom_side.png') });
+  check('from the side, its curl stands at the lip', msSide.error === 0 && lum(msSide.px[0]) > 60, `${lum(msSide.px[0])}`);
   check('no page error', errs.length === 0, errs.join('; '));
 } finally {
   await browser.close();

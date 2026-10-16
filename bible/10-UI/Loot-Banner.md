@@ -87,7 +87,8 @@ Mac: *"The title/aura in the abyss dungeon should also have a loot popup"*, and 
 there is a loot popup for obtaining the title"*. A title or an aura is no piece in the pack, so the watcher never sees
 one: its grant's own door pushes it (`lootBanner.js:"export function announceHonour(kind, key, { doc = docOf() } = {}) {"`).
 The Hour's (`net/sdClaims.js` - Hourbreaker and The Turning Hour, when the account service answers a claim with the
-grant) and the lamp's (`systems/lampKeeper.js`, I Love Lamp) are its two doors.
+grant), the lamp's (`systems/lampKeeper.js`, I Love Lamp) and - SERPENT5 (`11-Multiplayer/Sea-Serpent.md` section 17) -
+the Old Coil's (`net/serpentClaims.js`, Coilbreaker and The Maelstrom, on the Hour's own law) are its three doors.
 
 - **The entry** (`honourEntry`, pure): the word as `ui/playerBadge.js` names it (`TITLE_TEXT`, `AURA_TEXT`), the kicker
   "New Title" or "New Aura", and under it "Wear it from your account card". It takes the top tier's place (`gilded`):

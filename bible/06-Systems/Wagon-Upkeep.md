@@ -105,8 +105,8 @@ A step down to Rickety or Failing is said once.
   road), the metres owed kept for the next. A half-loaded Caravan is worn to its last point some hundred kilometres of
   road from new, and rolls on at the failing pace.
 - **A journey on the travel map** it goes on (driven, or its team following along - `horseCart.js`
-  wagonGoesOnJourney; with Horse Cart and Cargo off, the cart goes where its owner goes): 1% a day, 20% a journey at
-  most.
+  wagonGoesOnJourney; never a wagon sent to the stable, WAGON-STABLED; with Horse Cart and Cargo off, the cart goes
+  where its owner goes): 1% a day, 20% a journey at most.
 - **The town watch** carrying it off (`scenes/wagonWardenHost.js` throwMine, WARDEN1): 10%.
 
 A wagon left parked does not wear.

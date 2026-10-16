@@ -165,14 +165,15 @@ export function codexSets() {
   }
   return [...sets].map(([set, pieces]) => ({ set, pieces }));
 }
-/** GILDED1: where a Gilded record is said to be - the Hourlock's, the Brass Remnant's spoils (systems/sdSpoils.js). */
+/** GILDED1: where a Gilded record is said to be - the Hourlock's, the Brass Remnant's spoils (systems/sdSpoils.js). GILDED2:
+ *  a record that says its own (`hint` - the gate's Warden's, the Old Coil's) is said by it. */
 export const GILDED_HINT = 'Said to lie in the brass of the Hour, once in a long while';
 /** GILDED1: the Gilded rows, the records' order: `{ id, kind, name, group, found, day, hint, power, lore }` - as a
  *  Legendary's row is, a found one whole and an unfound one by its hint alone. */
 export function codexGilded() {
   return GILDED_RECORDS.map((r) => {
     const day = foundDay('gilded', r.id), found = day != null;
-    return { id: r.id, kind: 'gilded', name: found ? r.name : null, group: r.group, found, day, hint: GILDED_HINT, power: found ? r.power : null, lore: found ? r.lore : null };
+    return { id: r.id, kind: 'gilded', name: found ? r.name : null, group: r.group, found, day, hint: r.hint ?? GILDED_HINT, power: found ? r.power : null, lore: found ? r.lore : null };
   });
 }
 /** How many found, of how many. */

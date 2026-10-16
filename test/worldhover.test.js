@@ -1646,7 +1646,7 @@ test('AUDIT-WH2 L1-F1/F2: the door\'s word is dropped when the ray leaves it, an
   assert.equal((head.match(/return _doorText;/g) ?? []).length, 4,
     'the cache hit and all three misses hand back the same door\'s last word rather than caching a null');
   assert.doesNotMatch(head, /return null;/, 'and none of them caches the negative');
-  assert.match(arm, /_doorText = staticDoorName\('building', \{[\s\S]{0,400}?\}\);\n[\s\S]{0,800}?\n\s+_doorTextKey = key; _doorTextGen = gen; _doorTextHomes = homesV; _doorTextVerbs = verbsSig;\n\s+return _doorText;/,   // HOME1 re-aim: a home's line joins the text before the stamp, and the stamp takes the homes' version; HOME2: and the door's verbs join it (800: their comment and two lines)
+  assert.match(arm, /_doorText = staticDoorName\('building', \{[\s\S]{0,600}?\}\);\n[\s\S]{0,800}?\n\s+_doorTextKey = key; _doorTextGen = gen; _doorTextHomes = homesV; _doorTextVerbs = verbsSig;\n\s+return _doorText;/,   // HOME1 re-aim: a home's line joins the text before the stamp, and the stamp takes the homes' version; HOME2: and the door's verbs join it (800: their comment and two lines); PIN MOVED (QUEST-RESIDENCE, FIELD BUGS 2026-10-15c): the building's object 438 characters with the quest's name - 600
     'the stamp is the LAST thing the success path does');
 });
 

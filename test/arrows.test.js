@@ -17,7 +17,7 @@ test('bows: the 6..51.2 band owns the archer - 1/32 cadence inside, melee fallba
   // (:357-364) drops the moment GiveUpTimer reaches 0 - so a sound
   // archer fixture must carry BOTH.
   const mkAi = (dist, yaw = 0, extra = {}) =>
-    ({ _dist: dist, feet: [0, 0, 0], yaw, inSight: true, detected: true, giveUpTimer: 200, ...extra });
+    ({ _dist: dist, feet: [0, 0, 0], yaw, inSight: true, detected: true, giveUpTimer: 200, lastKnownTargetPos: [0, 0, 10], ...extra });   // INVIS-SWING: detected - the senses wrote the player's feet
   const player = [0, 0, 10];   // straight ahead (yaw 0 faces +z)
   const run = (ranged, dist, { yaw = 0, rolls = () => 0.0, ai: aiOver = {} } = {}) => {
     const a = new EnemyAttack({ liveSpeed: 200, playerLevel: 1, reflexes: 2, rolls });

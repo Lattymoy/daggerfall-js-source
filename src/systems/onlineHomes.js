@@ -164,9 +164,14 @@ export function homeDoorPrompt({ door, mode, price = 0, declined = false, asked 
 }
 
 /** The door's name for a home, over the building's own. GUILD1d: a hall's is its guild's - "Your guild's hall" to its
- *  members, "The Silver Hand's hall <SH>" to everyone else. */
-export const homeDoorTitle = (home) => (home.hall ? (home.member ? "Your guild's hall" : `${home.hall.name}'s hall${home.hall.tag ? ` ${guildTagText(home.hall.tag) ?? ''}` : ''}`.trim())
-  : home.own ? 'Your home' : `${home.owner}'s home`);
+ *  members, "The Silver Hand's hall <SH>" to everyone else. QUEST-RESIDENCE (FIELD BUGS 2026-10-15c, "I've visited every
+ *  residence in Tambeth and NONE are the Tambeth Hawkley Residence"): a home a quest still names (`questName` - a site
+ *  picked before QUEST-HOME, or one the re-pick could not move) says the quest's name first, so its door is findable. */
+export const homeDoorTitle = (home, questName = null) => {
+  const title = home.hall ? (home.member ? "Your guild's hall" : `${home.hall.name}'s hall${home.hall.tag ? ` ${guildTagText(home.hall.tag) ?? ''}` : ''}`.trim())
+    : home.own ? 'Your home' : `${home.owner}'s home`;
+  return questName ? `${questName} (${title})` : title;
+};
 /**
  * FIELD BUGS 2026-09-30b (HOME-PLAQUE): "every door looks like just a house I can buy". A private house has no name
  * (DFU's BuildingNames names none), and a nameless door drew no plaque - so HOME2's verbs, which ride the plaque, were

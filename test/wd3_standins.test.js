@@ -16,8 +16,9 @@
 // table clutter and the temple gardens (classic records); the install (once, every piece behind its switch, DET's and
 // Cliffworms' shared with Detailed Ships by either switch); the pipeline's hole (a record no picture is for draws
 // nothing, said once). With ARENA2_PATH: every model and flat the two packs place is Daggerfall's own, stood in, or one
-// of a named few; every built-in flat a town's interior lays can be taken out of a house (BASE-HIDE's name); the alias
-// beds built by the pipeline from the player's own ARCH3D.
+// of a named few; every built-in flat a town's interior lays can be taken out of a house (BASE-HIDE's name); the solids
+// the port stands in a town against the author's own models and every exterior door's approach (FIELD BUGS 2026-10-15f
+// TEMPLE-STEPS, tools/townSolidsSweep.mjs); the alias beds built by the pipeline from the player's own ARCH3D.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
@@ -28,13 +29,12 @@ import zlib from 'node:zlib';
 import {
   TOWN_BED_FIRST, TOWN_BED_COUNT, TOWN_BED_ARCHIVE, TOWN_BED_MODELS, TOWN_BEDCLOTHS, TOWN_BED_COLOURS, townBedOf, bedclothRecord,
   isBedclothGreen, recolourBedcloth, CLASSIC_PAINTINGS, TOWN_PAINTINGS, paintingModel, ROSYS_PIECES, TOWN_CROP_FIELDS, RMBRP_ROCKS,
-  RMBRP_HILLS, blockHillSeat, RMBRP_STALLS, RMBRP_DOCKS, DOCK_SCALE, RMBRP_PIECES, TOWN_CLUTTER, TOWN_CLUTTER_ARCHIVE, TOWN_GARDEN, TOWN_GARDEN_ARCHIVE,
+  RMBRP_ROCK_SCALE, RMBRP_HILLS, RMBRP_STALLS, RMBRP_DOCKS, DOCK_SCALE, RMBRP_PIECES, TOWN_CLUTTER, TOWN_CLUTTER_ARCHIVE, TOWN_GARDEN, TOWN_GARDEN_ARCHIVE,
   installTownStandIns, _resetTownStandIns,
 } from '../src/world/townStandIns.js';
 import { RMBRP_HILL_SHAPES, SHAPE_BEARINGS, SHAPE_RINGS } from '../src/world/rmbrpHillShapes.js';   // FIELD BUGS 2026-10-05 HILL-SHAPES
 import { DET_TOWN_MODELS, DET_FLAT_STAND_INS, DET_FLAT_DRAWINGS, DET_TOWN_FLATS, DET_OLD_ARCHIVES, detStandInsOn, _resetDetStandIns } from '../src/world/detStandIns.js';
 import { TOWN_PICTURE_ARCHIVE, TOWN_PICTURES, PICTURE, townPictureEntries } from '../src/world/townPictures.js';
-import { fakeClassicRgba, texelOf } from './classicArtFake.mjs';
 import { STAND_IN_SPRITES } from '../src/world/standInSprites.js';
 import { customModelFor, customAliasFor, aliasSubMeshes, classicModelIdOf, hasCustomModel, _resetCustomModels } from '../src/world/customModels.js';
 import { flatFieldFor, cropRecordsFor, sowField, CROP_ARCHIVE, _resetFlatFields } from '../src/world/flatFields.js';
@@ -54,9 +54,7 @@ import { TextureFile } from '../src/formats/textureFile.js';
 import { DFPalette } from '../src/formats/dfPalette.js';
 import { classicRecordRgba } from '../src/formats/derivedTexture.js';
 import { openWorldDataPack } from '../src/formats/worldDataPack.js';
-import { dfMeshToModel } from '../src/world/meshReader.js';
 import { isNpcFlat } from '../src/world/rdbLayout.js';
-import { trs, multiply } from '../src/world/mat4.js';
 import { tinyRmb } from './wd3Fakes.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -207,12 +205,14 @@ test('WD3 stand-ins, every built piece is sound - Rosy\'s hangings and rugs, the
   assert.equal(Object.keys(DET_TOWN_MODELS).length, 52);
   const box = {};
   for (const [id, build] of Object.entries(all)) box[id] = soundMesh(id, build());
-  // rocks: [width, height above the origin, depth below, length] - the boulder's rim pushed out by at most a tenth and in by a fifth
-  for (const [id, [w, up, down, l]] of Object.entries(RMBRP_ROCKS)) {
-    const { lo, hi, tex } = box[id];
+  // rocks: the mesh's box [x0, x1, depth below, height above, z0, z1] at the prefab's scale (FIELD BUGS 2026-10-15f
+  // TEMPLE-STEPS) - the boulder inside it, its rim pulled in by at most a quarter (test/fb1015f_templesteps.test.js)
+  for (const [id, b] of Object.entries(RMBRP_ROCKS)) {
+    const { lo, hi, tex } = box[id], [x0, x1, down, up, z0, z1] = b.map((v) => v * RMBRP_ROCK_SCALE[id]);
     assert.deepEqual([...tex], ['302_3'], `${id}: the climate's rock`);
-    assert.ok(near(hi[1], up) && near(lo[1], -Math.max(down, 0.05)), `${id}: ${up} up, ${down} down`);
-    assert.ok(hi[0] - lo[0] <= w * 1.13 && hi[0] - lo[0] >= w * 0.75 && hi[2] - lo[2] <= l * 1.13 && hi[2] - lo[2] >= l * 0.75, `${id}: ${w} x ${l}`);
+    assert.ok(near(hi[1], up, 1e-5) && near(lo[1], -Math.max(down, 0.05), 1e-5), `${id}: ${up} up, ${down} down`);
+    assert.ok(lo[0] >= x0 - 1e-5 && hi[0] <= x1 + 1e-5 && lo[2] >= z0 - 1e-5 && hi[2] <= z1 + 1e-5, `${id}: inside its box`);
+    assert.ok(hi[0] - lo[0] >= (x1 - x0) * 0.75 && hi[2] - lo[2] >= (z1 - z0) * 0.75, `${id}: ${x1 - x0} x ${z1 - z0}`);
   }
   // FIELD BUGS 2026-10-05 HILL-SHAPES: each hill at its measured polar profile - its top the highest of its rings, its
   // foot the rim (the pack's base), its x across the reach of its bearings
@@ -226,7 +226,8 @@ test('WD3 stand-ins, every built piece is sound - Rosy\'s hangings and rugs, the
   for (const [id, [a, r]] of Object.entries(RMBRP_STALLS)) {
     const { lo, hi, tex } = box[id];
     assert.ok(tex.has(`${a}_${r}`) && tex.has('67_1'), `${id}: its awning, ${a}_${r}`);
-    assert.ok(near(lo[0], -0.4, 1e-5) && near(hi[0], 2.75, 1e-5) && near(hi[1], 4.4, 1e-5) && near(lo[2], -2.4, 1e-5) && near(hi[2], 2.45, 1e-5), id);
+    // TEMPLE-STEPS: the mesh as Unity imports it (x mirrored - its high back on -x, its counter at the origin) at the prefab's 0.75
+    assert.ok(near(lo[0], -2.75 * 0.75, 1e-5) && near(hi[0], 0.4 * 0.75, 1e-5) && near(hi[1], 4.4 * 0.75, 1e-5) && near(lo[2], -2.48 * 0.75, 1e-5) && near(hi[2], 2.4 * 0.75, 1e-5), id);
   }
   // the docks: the deck's top on the origin, its piles 2.5 units below and half above, at the prefab's 2; x mirrored as Unity imports
   assert.equal(DOCK_SCALE, 2);
@@ -242,8 +243,10 @@ test('WD3 stand-ins, every built piece is sound - Rosy\'s hangings and rugs, the
   assert.deepEqual([ramp.lo, ramp.hi].map((v) => v.map((x) => +x.toFixed(3))), [[0, -1.4, -4], [4, 0, 0]], 'the ramp: four metres square, falling one metre on its top, mirrored onto +x');
   assert.deepEqual([steps.lo, steps.hi].map((v) => v.map((x) => +x.toFixed(3))), [[0, -1.2, -4], [3, 0, 0]], 'the steps: five treads of 0.6 m, falling 0.2 m each');
   // the platform, the foundation, the domes
-  assert.deepEqual([box[53160].lo, box[53160].hi], [[-2, -1, -2], [2, 1, 2]]);
-  assert.deepEqual([box[53170].lo, box[53170].hi].map((v) => v.map((x) => +x.toFixed(3))), [[-8, -6.4, -8], [8, 1.6, 8]], 'the temples\' floor its top - their doors never walled up (AUDIT WD3 T1)');
+  // FIELD BUGS 2026-10-15f TEMPLE-STEPS: the pack's own box (+-160 x +-80 x +-160 cm) at each prefab's scale, centred - the
+  // FBX node's Lcl Scaling (125, 250) never instanced; the foundation's top is the temples' floor without a sink
+  assert.deepEqual([box[53160].lo, box[53160].hi].map((v) => v.map((x) => +x.toFixed(3))), [[-1.6, -0.8, -1.6], [1.6, 0.8, 1.6]]);
+  assert.deepEqual([box[53170].lo, box[53170].hi].map((v) => v.map((x) => +x.toFixed(3))), [[-3.2, -1.6, -3.2], [3.2, 1.6, 3.2]], 'the temples\' floor its top, centred as the pack\'s mesh is');
   // FIELD BUGS 2026-10-04d DOMES: the pack's own meshes at their prefabs' scale - the drum's foot on the origin, the crown at
   // 8.43 m, 03's spire (53182, 53194) at 10.75 m (test/fb1004d_domes.test.js holds the whole profile)
   for (const id of [53182, 53187, 53194]) assert.ok(near(box[id].lo[1], 1.15 * 0.046875, 1e-5) && near(box[id].hi[1], (id === 53187 ? 179.8 : 229.4) * 0.046875, 1e-5) && near(box[id].hi[0], 4.8, 1e-5), id);
@@ -253,18 +256,17 @@ test('WD3 stand-ins, every built piece is sound - Rosy\'s hangings and rugs, the
 });
 
 // ---- the pictures and the sprites ----------------------------------------------------------------------------------------
-test('WD3 stand-ins, the town\'s cloth (DF-ART, Mac: "use daggerfall textures instead of AI generated"): forty-eight records of archive 38202 - five regions\' tapestries and banners, the Eight\'s, fourteen patterns, four rugs, leaves, three small hangings - each a Daggerfall record (a heraldic tapestry of TEXTURE.057 - a banner its middle half -, a woven pattern of .049, the rug of .371, growth of .302), read from the player\'s own ARENA2, opaque, behind its switch', async () => {
+test('WD3 stand-ins, the drawn cloth: forty-eight pictures of archive 38202 - five regions\' tapestries and banners, the Eight\'s, fourteen patterns, four rugs, leaves, three small hangings - every one opaque, behind its switch', async () => {
   assert.equal(TOWN_PICTURE_ARCHIVE, 38202);
   assert.equal(TOWN_PICTURES.length, 48);
-  const recordOf = (from) => (Array.isArray(from) ? from : from.from);
-  const archives = TOWN_PICTURES.map((p) => recordOf(p.from)[0]);
-  for (const k of [5, 18]) assert.deepEqual(TOWN_PICTURES[k].from.crop, [32, 0, 95, 127], 'a banner the middle half of its tapestry');
-  assert.deepEqual([...new Set(archives.slice(0, 26))], [57], 'the regions\' and the Eight\'s hangings: Daggerfall\'s heraldic tapestries');
-  assert.ok(archives.slice(26, 40).every((a) => a === 49), 'the patterns: its woven cloth');
-  assert.equal(archives[40], 371, 'the first rug its rug');
-  assert.deepEqual(TOWN_PICTURES[44].from, [302, 2], 'the leaves: green growth');
-  assert.deepEqual(TOWN_PICTURES[PICTURE.divineTapestry('Akatosh')].from, [57, 0], 'Akatosh the dragon');
-  assert.deepEqual(TOWN_PICTURES[PICTURE.regionTapestry('Lainlyn')].from, [57, 1], 'Lainlyn\'s crescent the moon');
+  const sizes = TOWN_PICTURES.map((p) => { const pic = p.draw(); return `${pic.width}x${pic.height}`; });
+  assert.deepEqual([...new Set(sizes.slice(0, 5)), ...new Set(sizes.slice(5, 10)), ...new Set(sizes.slice(40, 44)), sizes[44], ...new Set(sizes.slice(45))], ['32x48', '24x64', '48x32', '16x16', '16x24']);
+  for (const [k, p] of TOWN_PICTURES.entries()) {
+    const pic = p.draw();
+    assert.equal(pic.data.length, pic.width * pic.height * 4, p.name);
+    for (let i = 3; i < pic.data.length; i += 4) assert.equal(pic.data[i], 255, `${k} ${p.name}: opaque`);
+    assert.deepEqual([...pic.data], [...p.draw().data], `${p.name}: the same every time`);
+  }
   assert.deepEqual([PICTURE.regionTapestry('Glenpoint'), PICTURE.regionBanner('Glenpoint'), PICTURE.divineTapestry('Kynareth'), PICTURE.divineBanner('Akatosh'), PICTURE.decorative(15), PICTURE.rug(5), PICTURE.leaves, PICTURE.smallHanging(4)], [0, 5, 10 + PICTURE.divineTapestry('Kynareth') - 10, 18 + PICTURE.divineBanner('Akatosh') - 18, 26 + 1, 41, 44, 46]);
   let on = true;
   const entries = townPictureEntries(() => on);
@@ -272,12 +274,7 @@ test('WD3 stand-ins, the town\'s cloth (DF-ART, Mac: "use daggerfall textures in
   assert.ok(entries.every((e, r) => e.archive === 38202 && e.record === r && e.standIn === true && e.gate() === true));
   on = false;
   assert.ok(entries.every((e) => e.gate() === false));
-  const ctx = { classicRgba: fakeClassicRgba() };
-  for (const [k, e] of entries.entries()) {
-    const pic = await e.build(ctx);
-    for (let i = 3; i < pic.data.length; i += 4) assert.equal(pic.data[i], 255, `${k} ${TOWN_PICTURES[k].name}: opaque`);
-    assert.deepEqual([...pic.data.slice(0, 3)], texelOf(...recordOf(TOWN_PICTURES[k].from)), `${k}: read from its Daggerfall record`);
-  }
+  assert.equal((await entries[3].build()).width, 32);
 });
 
 test('WD3 stand-ins, the drawn sprites: every one a clear ground and a drawn subject, binary alpha, small as Daggerfall\'s own; every name the DET tables point at is drawn', () => {
@@ -493,77 +490,59 @@ test('WD3 with ARENA2: HOUSING - every built-in piece a town\'s interior lays ca
   assert.deepEqual([...bad], [], 'a piece no name can name would be refused whole online and come back at the next load offline');
 });
 
-test('WD3 with ARENA2: no stand-in walls up a door - every exterior door of both packs\' towns, and the step in front of it, stands outside every piece the port stands in for a peer mod (AUDIT WD3 T1: the foundation under two temples)', { skip: HAVE_ARENA2 ? false : 'ARENA2_PATH not set' }, () => {
+// FIELD BUGS 2026-10-15f TEMPLE-STEPS (Discord: "The entrance to The School of Julianos in Makehda is blocked"): this
+// sweep read each door's point and one metre out, and held the stand-ins as boxes to them - so the foundation drawn
+// 16 m square, sunk until its top cleared that point (AUDIT WD3 T1), passed while it buried TEMPASF1's and TEMPASH4's
+// temple stairs and landings, the approach the author built to the door. Now tools/townSolidsSweep.mjs's three laws,
+// over each pack's own blocks as the door serves them (curated - HILL-HOUSE's house stands where the door stands it),
+// the pipeline's meshes and the host's hills and pads.
+test('WD3 with ARENA2: THE SOLIDS THE PORT STANDS IN A TOWN (FIELD BUGS 2026-10-15f TEMPLE-STEPS) - no structure it stands in for the RMB Resource Pack holds another model the author placed past a touch, but what the pack\'s own meshes hold; no HILL-SEAT pad stands over anything the author left in the open; and every exterior door\'s step and the four metres before it are clear of every solid the port generates, but the author\'s own named', { skip: HAVE_ARENA2 ? false : 'ARENA2_PATH not set', timeout: 600000 }, async () => {
   resetAll();
-  installTownStandIns(() => true);
-  const { blocks, maps, arch } = loadArena2();
-  const G = 0.025, RD = 512 / 90;   // MeshReader.GlobalScale; Daggerfall's angle units a degree
-  const doorsOf = new Map(), boxOf = new Map();
-  const doors = (id) => {
-    if (!doorsOf.has(id)) { const i = arch.getRecordIndex(id); doorsOf.set(id, i < 0 ? [] : (dfMeshToModel(arch.getMesh(i), () => ({ width: 64, height: 64 })).doors ?? [])); }
-    return doorsOf.get(id);
-  };
-  const classicModel = (id) => { const i = arch.getRecordIndex(id); return i < 0 ? null : dfMeshToModel(arch.getMesh(i), () => ({ width: 64, height: 64 })); };   // CITY-WALL: the wall piece is cut out of the 445
-  const box = (id) => {
-    if (!boxOf.has(id)) {
-      const m = customModelFor(id, { classicModel });
-      if (!m) boxOf.set(id, null);
-      else { const lo = [Infinity, Infinity, Infinity], hi = [-Infinity, -Infinity, -Infinity]; for (let i = 0; i < m.positions.length; i += 3) for (let k = 0; k < 3; k++) { lo[k] = Math.min(lo[k], m.positions[i + k]); hi[k] = Math.max(hi[k], m.positions[i + k]); } boxOf.set(id, { lo, hi }); }
-    }
-    return boxOf.get(id);
-  };
-  const at = (M, p) => [0, 1, 2].map((k) => M[k] * p[0] + M[4 + k] * p[1] + M[8 + k] * p[2] + M[12 + k]);
-  const local = (M) => {   // the inverse of a TRS
-    const a = [[M[0], M[4], M[8]], [M[1], M[5], M[9]], [M[2], M[6], M[10]]];
-    const det = a[0][0] * (a[1][1] * a[2][2] - a[1][2] * a[2][1]) - a[0][1] * (a[1][0] * a[2][2] - a[1][2] * a[2][0]) + a[0][2] * (a[1][0] * a[2][1] - a[1][1] * a[2][0]);
-    const co = (r, c) => { const m = [0, 1, 2].filter((x) => x !== r), n = [0, 1, 2].filter((x) => x !== c); return ((r + c) % 2 ? -1 : 1) * (a[m[0]][n[0]] * a[m[1]][n[1]] - a[m[0]][n[1]] * a[m[1]][n[0]]); };
-    const I = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
-    for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) I[c][r] = co(r, c) / det;
-    return (p) => { const q = [p[0] - M[12], p[1] - M[13], p[2] - M[14]]; return [0, 1, 2].map((r) => I[r][0] * q[0] + I[r][1] * q[1] + I[r][2] * q[2]); };
-  };
-  const walled = [];
-  let doorCount = 0;
-  for (const v of ['beautiful-villages', 'beautiful-cities']) {
-    const p = openWorldDataPack(JSON.parse(zlib.gunzipSync(readFileSync(join(ROOT, `vendor/${v}/WorldDataPack/${v}.pack.json.gz`))).toString()), { blocks });
-    for (const name of p.names()) {
-      if (!name.endsWith('.RMB.json')) continue;
-      const rmb = p.rebuild(name, maps).RmbBlock;
-      const ds = [], pieces = [];
-      for (const [ri, sr] of rmb.SubRecords.entries()) {
-        const S = trs(sr.XPos * G, 0, (4096 - sr.ZPos) * G, 0, -sr.YRotation / RD, 0);
-        for (const m of sr.Exterior.Block3dObjectRecords) {
-          const M = multiply(S, trs(m.XPos * G, -m.YPos * G, m.ZPos * G, -m.XRotation / RD, -m.YRotation / RD, -m.ZRotation / RD, m.XScale || 1, m.YScale || 1, m.ZScale || 1));
-          for (const d of doors(m.ModelIdNum)) {
-            const c = [(d.vert0.x + d.vert2.x) / 2, d.vert1.y + 1, (d.vert0.z + d.vert2.z) / 2];
-            ds.push({ ri, id: m.ModelIdNum, pts: [at(M, c), at(M, [c[0] + d.normal.x, c[1], c[2] + d.normal.z])] });
-          }
-          if (box(m.ModelIdNum)) pieces.push({ id: m.ModelIdNum, M });
-        }
-      }
-      for (const m of rmb.Misc3dObjectRecords) if (box(m.ModelIdNum)) pieces.push({ id: m.ModelIdNum, M: trs(m.XPos * G, (-m.YPos - 4) * G, (m.ZPos + 4096) * G, -m.XRotation / RD, -m.YRotation / RD, -m.ZRotation / RD, m.XScale || 1, m.YScale || 1, m.ZScale || 1) });
-      doorCount += ds.length;
-      for (const pc of pieces) {
-        // AUDIT FB1005 T3: a hill is a surface, not a box - since HILL-SHAPES drew the pack's hills at their size, a
-        // door BESIDE one stood inside its bounding box (27 of 29); a hill walls a door that stands under its top
-        if (RMBRP_HILLS[pc.id]) {
-          const seat = blockHillSeat([{ modelIdNum: pc.id, matrix: pc.M }]);
-          for (const d of ds) for (const pt of d.pts) if ((seat.topAt(pt[0], pt[2]) ?? -Infinity) > pt[1]) walled.push(`${v} ${name}: ${pc.id} at the door of record ${d.ri} (model ${d.id})`);
-          continue;
-        }
-        const b = box(pc.id), inv = local(pc.M);
-        for (const d of ds) for (const pt of d.pts) if (inv(pt).every((x, i) => x > b.lo[i] + 0.02 && x < b.hi[i] - 0.02)) walled.push(`${v} ${name}: ${pc.id} at the door of record ${d.ri} (model ${d.id})`);
-      }
-    }
-    p.release();
+  const WDR = await import('../src/formats/worldDataReplacement.js');
+  const { openTownData } = await import('../tools/townQuestMarkers.mjs');
+  const { sweepTownPacks, TOUCH_M, RMBRP_STRUCTURES } = await import('../tools/townSolidsSweep.mjs');
+  assert.equal(TOUCH_M, 0.06, 'a touch: the two classic units the author\'s own models overlap by, and a centimetre');
+  assert.deepEqual([...RMBRP_STRUCTURES].sort(), [53140, 53141, 53142, 53143, 53144, 53160, 53170, 53182, 53187, 53194, 53210]);
+  const quiet = console.log; console.log = () => {};
+  let r;
+  try {
+    r = sweepTownPacks(await openTownData(ARENA2));
+  } finally {
+    console.log = quiet;
+    WDR._resetWorldDataReplacement();
   }
-  assert.ok(doorCount > 10000, `${doorCount} doors`);
-  // AUDIT FB1005 T3: ONE door, and it is the pack's own - Beautiful Villages' TEMPASD1 stands its House2 #6 (model 159)
-  // inside hills 52458 and 52713, and the pack's published meshes stand 10.5-11.2 m over the door's foot there (measured with the
-  // clone; the stand-ins 10.1-10.4 m): DFU with the RMB Resource Pack buries it too. Carried, named, Mac's call (FIELD
-  // BUGS 2026-10-05's audit) - any other door a stand-in walls is still a failure here. The PACK still walls it (this
-  // sweep reads the pack's own JSON); the block the door mints stands the house on clear ground since FIELD BUGS
-  // 2026-10-09e HILL-HOUSE (src/world/curatedPlacements.js, test/fb1009e_hillhouse.test.js) - a quest sent a player there.
-  assert.deepEqual([...new Set(walled)].sort(), ['beautiful-villages TEMPASD1.RMB.json: 52458 at the door of record 6 (model 159)', 'beautiful-villages TEMPASD1.RMB.json: 52713 at the door of record 6 (model 159)']);
+  assert.ok(r.blocks > 800 && r.doors > 10000, `${r.blocks} blocks, ${r.doors} doors`);
+  // HELD: what each structure holds is what the pack's own meshes hold (measured with them, the pack's boxes being the
+  // stand-ins' own): the docks' stairs tucked under their decks, TEMPASF1's landing half under its foundation and the
+  // timbers the author ran through another, TEMPASH4's rocks laid at its foundations' feet
+  assert.deepEqual(r.held, [
+    'beautiful-villages GENRAS00.RMB: 53141#103 holds 53143#102 (9 vertices, 0.2 m in)',
+    'beautiful-villages GENRAS04.RMB: 53140#93 holds 53143#92 (9 vertices, 0.2 m in)',
+    'beautiful-villages GENRAS04.RMB: 53140#93 holds 53143#94 (9 vertices, 0.2 m in)',
+    'beautiful-villages TEMPASF1.RMB: 53170#70 holds 53160#73 (9 vertices, 1.49 m in)',
+    'beautiful-villages TEMPASF1.RMB: 53170#91 holds 45076#64 (9 vertices, 0.9 m in)',
+    'beautiful-villages TEMPASF1.RMB: 53170#91 holds 45076#65 (9 vertices, 0.9 m in)',
+    'beautiful-villages TEMPASH4.RMB: 53170#21 holds 53039#15 (6 vertices, 0.54 m in)',
+    'beautiful-villages TEMPASH4.RMB: 53170#23 holds 53039#15 (16 vertices, 1.12 m in)',
+    'beautiful-villages TEMPASH4.RMB: 53170#24 holds 53036#27 (39 vertices, 1.43 m in)',
+    'beautiful-villages TEMPASH4.RMB: 53170#25 holds 53030#28 (11 vertices, 0.44 m in)',
+  ]);
+  // PADS: none - a pad is the port's own (Merdale's TEMPASD1 flight lay under them by up to 1.25 m)
+  assert.deepEqual(r.pads, []);
+  // APPROACH: the author's own, each measured with the pack's own hills and rocks where the pack has them (Daggerfall
+  // Unity with the pack stands the same there): TVRNAS00's house stands its back door under the pack's hill (1.14 m of
+  // it; its front door is clear), WEAPAS01's a hill 2.75 m before a door (0.3 m of it), TVRNAS01's and DARKAA02's rocks
+  // two to three metres before a door (0.7-0.8 m of them) - and DARKAA02's 53031, the boulder's round rim a hand's breadth
+  // into the approach a metre out where the pack's own rock is irregular and clear of it; TEMPAAC0's chimney flue
+  // (45076, Daggerfall Expanded Textures, a piece no one here has seen) 3.75 m before a side door
+  assert.deepEqual(r.approach, [
+    'beautiful-villages TVRNAS00.RMB: door 0 of 125#0 - a hill 0.82 m into it, 0 m out',
+    'beautiful-villages TVRNAS01.RMB: door 1 of 339#12 - 53023#48 0.76 m into it, 3 m out',
+    'beautiful-villages WEAPAS01.RMB: door 0 of 117#21 - a hill 0.6 m into it, 2.5 m out',
+    'beautiful-cities DARKAA02.RMB: door 0 of 326#33 - 53031#101 0.13 m into it, 1 m out',
+    'beautiful-cities DARKAA02.RMB: door 0 of 326#33 - 53029#102 0.69 m into it, 2 m out',
+    'beautiful-cities TEMPAAC0.RMB: door 1 of 320#0 - 45076#58 0.4 m into it, 3.75 m out',
+  ]);
   resetAll();
 });
 

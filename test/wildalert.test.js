@@ -4,6 +4,7 @@
 // range, a check a classic minute apart on the traveller's clock), the alert predicate (systems/encounters.js
 // foeAlerted), the host's gate, band spotting and "!" marks lifted out of scenes/world.js and RUN, and the mark's DOM
 // layer (ui/wildMarks.js) over a fake document.
+import { concealmentFlags } from '../src/systems/effects.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -115,7 +116,7 @@ function gateHost(over = {}) {
   };
   const wildFoes = createWildAlert({ weak: true, rng: () => { d.rolls = (d.rolls ?? 0) + 1; return d.die ?? 0.999; } });
   const scope = {
-    wildFoes, playerEntity: {}, SKILLS: { Stealth: 'Stealth' }, skillValue: () => d.stealth,
+    wildFoes, playerEntity: {}, SKILLS: { Stealth: 'Stealth' }, skillValue: () => d.stealth, concealmentFlags,   // INVIS-SWING: the real flags (an unconcealed traveller)
     travelControlUI: { get isShowing() { return d.travelling; } }, travelOptions: { state: { get autopilot() { return d.travelling ? {} : null; } } },
     tvWalking: 0, modes: { get mode() { return d.mode; } }, get walkMode() { return d.walkMode; }, get playerSpawned() { return d.spawned; },
     player: { feetAt: () => [0, 0, 0] }, worldTimeScale: () => d.scale, performance: { now: () => 0 }, gamePaused: () => !!d.paused,

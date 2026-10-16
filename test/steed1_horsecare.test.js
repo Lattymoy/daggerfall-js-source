@@ -206,7 +206,8 @@ test('STEED1 THE KEEP: a horse first seen comes fed; the stable feeds its own; a
   assert.equal(horseWhereOf(v({ horseMode: HORSE_MODE.HitchedToWagon, wagonMode: WAGON_MODE.FollowingPlayer })), 'with');
   assert.equal(horseWhereOf(v({ horseMode: HORSE_MODE.LooseStationary })), 'waiting');
   assert.equal(horseWhereOf(v({ horseMode: HORSE_MODE.HitchedToWagon, wagonMode: WAGON_MODE.Deployed })), 'waiting');
-  assert.equal(horseWhereOf(v({})), 'stabled', 'out of the world - the Stable card\'s own word');
+  assert.equal(horseWhereOf(v({ horseStabled: true })), 'stabled', 'out of the world - the Stable card\'s own word');
+  assert.equal(horseWhereOf(v({})), 'with', 'WAGON-STABLED (PIN MOVED): never sent to the stable, the mod\'s WithPlayer is beside its owner');
 });
 
 test('STEED1 THE BREATH: a gallop spends it, Endurance slowing the spend; at nought winded until 30% is back; back at a walk, half at the ride\'s pace, slower hungry; a starving horse never gallops (mutants: the spend, the back, the winded threshold, the ridden share, the hunger)', () => {
@@ -363,7 +364,7 @@ test('STEED1 THE STABLE\'S ACTS: oats and an apple fed by hand - beside the hors
   // the reach off the mod's runtime
   const rt = (o) => ({ stableView: () => ({ persistence: true, hasHorse: true, transport: TRANSPORT.Foot, horseMode: HORSE_MODE.LooseStationary, wagonMode: WAGON_MODE.WithPlayer, horseName: 'Ash', ...o.view }), canMountHorseFromTransportWindow: () => o.mount, canAccessWagonInventory: () => ({ allowed: o.wagon }) });
   assert.deepEqual(upkeepReach(rt({ mount: true, wagon: false }), true), { near: true, stabled: false, wagonNear: false, who: 'Ash' });
-  assert.deepEqual(upkeepReach(rt({ mount: false, wagon: true, view: { horseMode: HORSE_MODE.WithPlayer } }), true), { near: false, stabled: true, wagonNear: true, who: 'Ash' });
+  assert.deepEqual(upkeepReach(rt({ mount: false, wagon: true, view: { horseMode: HORSE_MODE.WithPlayer, horseStabled: true } }), true), { near: false, stabled: true, wagonNear: true, who: 'Ash' });   // WAGON-STABLED (PIN MOVED): sent away
   assert.deepEqual(upkeepReach(rt({ mount: false, wagon: false }), false), { near: true, stabled: false, wagonNear: true, who: 'Your horse' }, 'the mod off: always beside');
 });
 

@@ -376,28 +376,35 @@ export const POOL_WEAPON_MEND = Math.round(WEAPON_CONDITION_POOL / ITEM_TEMPLATE
 const mendsOnPool = (it) => it.group === 'Weapons' && !it.magic && !it.artifact;
 
 /** MEND-WORN: THE PIECE A REPAIRS OBJECTS TICK MENDS in `items` (the pack), or null. Among the pieces below their
- *  condition that a repair may touch, the mend order's first (itemTemplates.js mendOrder, the repair kit's: WORN first,
- *  then the pack, each the lowest share left first, ties in the pack's order). Never what a smith refuses as not
+ *  condition that a repair may touch, the first of MEND-TIERS' three tiers (mendTier: what is worn, then a worn piece
+ *  that wears itself, then the pack), and within a tier the mend order's first (itemTemplates.js mendOrder, the repair
+ *  kit's: the lowest share left first, ties in the pack's order). Never what a smith refuses as not
  *  repairable (repairService.js repairRefusal) - DFU's own flag on the quiver it mints at 0 and on the lights, whose
  *  condition is their fuel (Arrow, Torch, Lantern, Candle, Holy Candle), and the port's on the Dwemer Pellet, a
  *  campfire's nights and the rest items' doses (AUDIT REST II H7). RepairsObjects.cs reads no such flag, so a lit
  *  torch first in the pack was refuelled as it burned. An enchanted piece only under AllowMagicRepairs
  *  (RepairsObjects.cs:93). */
 export function repairsObjectsTarget(items, { allowMagicRepairs = false } = {}) {
-  let best = null, bestWears = false;
+  let best = null, bestTier = 0;
   for (const it of Array.isArray(items) ? items : []) {
     if (!it || !Number.isFinite(it.currentCondition) || !Number.isFinite(it.maxCondition) || !(it.currentCondition < it.maxCondition)) continue;
     if (templateByIndex(it.templateIndex)?.isNotRepairable) continue;
     if (isEnchantedItem(it) && !allowMagicRepairs) continue;
     if (it.templateIndex === TRANSPORT_SMALL_CART || it.templateIndex === TRANSPORT_HORSE) continue;   // AUDIT WAGONS4: a wagon's condition is its upkeep - a Wagon Yard's or a kit's, never a held enchantment's (DFU's wagon never wore)
-    // FIELD BUGS 2026-10-14 MEND-STARVE: a worn piece that wears itself on the round the tick mends (Cast When Held's
-    // degrade, Item Deteriorates) is mended last - first in the order it took every tick, +1 and -1 on the same round,
-    // and nothing else was ever mended
-    const wears = wearsItself(it);
-    if (!best || (wears ? 1 : 0) - (bestWears ? 1 : 0) < 0 || (wears === bestWears && mendOrder(it, best) < 0)) { best = it; bestWears = wears; }
+    // FIELD BUGS 2026-10-15d MEND-TIERS (Unconquerable: "worn items should always repair before backpack items"; Mac's
+    // call): a worn piece that wears itself on the round the tick mends (Cast When Held's degrade, Item Deteriorates) is
+    // mended after the rest of what is worn - first, it took every tick, +1 and -1 on the same round, and no other worn
+    // piece was mended (MEND-STARVE, 2026-10-14) - and ahead of the pack, where MEND-STARVE had put it behind the loot
+    const tier = mendTier(it);
+    if (!best || tier < bestTier || (tier === bestTier && mendOrder(it, best) < 0)) { best = it; bestTier = tier; }
   }
   return best;
 }
+/** MEND-TIERS: a piece's tier for the tick - 0 worn, 1 worn and wearing itself (wearsItself), 2 carried. While a worn
+ *  piece that wears itself is below its condition the pack waits, Mac's accepted trade-off: Cast When Held wears a point
+ *  on every tick's round out of rest (HELD_DEGRADE_RATE is CONDITION_PER_ROUNDS) and an all-the-time Item Deteriorates
+ *  on every one, so while such a piece is worn the tick holds it and the pack is not mended. */
+const mendTier = (it) => (wearsItself(it) ? 1 : it.equipSlot != null ? 0 : 2);
 /** MEND-STARVE: a WORN piece whose own held enchantment wears it a point on the rounds Repairs Objects mends - Cast When
  *  Held (CastWhenHeld.cs:27, HELD_DEGRADE_RATE) and Item Deteriorates (ItemDeteriorates.cs:29). */
 const wearsItself = (it) => it.equipSlot != null
@@ -553,7 +560,9 @@ const REGISTRY = new Map([
   /** RepairsObjects.cs - MagicRound, player only: every 4 rounds ONE
    *  piece mends (the C# returns inside its loop). MEND-WORN: the
    *  piece is repairsObjectsTarget's - what is worn first, the most
-   *  worn first - by POOL_WEAPON_MEND on a pool weapon and DFU's
+   *  worn first, a worn piece that wears itself after the rest of
+   *  what is worn and ahead of the pack (MEND-TIERS) - by
+   *  POOL_WEAPON_MEND on a pool weapon and DFU's
    *  point on the rest, never past its condition; a weapon still on
    *  its row's pool moves to the one pool first, as it does before a
    *  wear (equip.js lowerCondition). */

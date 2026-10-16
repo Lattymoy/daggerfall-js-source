@@ -1899,6 +1899,11 @@ layer); re-aimed `ow6_slowdown` (a wandering band holds nothing, a chase does; a
 `tv1_travel_view`, `roadh_missiles`, `exteriorfoes`; `tools/mutants/wildalert.json` (32, all dead); seven older records
 re-aimed by content and dead, OW6-S-spent-band-slows retired with the wandering bands' arm it killed.
 
+INVIS-SWING (2026-10-15): the notice is EnemySenses' stealth roll, which DFU makes behind BlockedByIllusionEffect - an
+Invisibility blinds every enemy but the thirteen seers. The gate rolled the stealth formula alone; `wildAlert.js`
+noticeRoll now passes the illusion gate first, and both of world.js's checks hand it the traveller's concealment and the
+enemy's sight through it. `01-Overview/Field-Bugs-2026-10-15f.md`.
+
 ## WILD-ALERT-FIX - the deep audit's five (2026-10-05)
 
 The deep audit of the branch (each finding verified against the code before the fix) found WILD-ALERT's notice half

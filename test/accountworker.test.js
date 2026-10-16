@@ -240,10 +240,12 @@ test('ACC1b: the migration is the real schema, and applying it twice changes not
   // still never stored twice: displayName derives the account's, and the character's is its own row's.
   // LAMP-KEEPER II added ONE (0113): `lamp_title`, the account's first word with a lamp keeper laid on the row (I Love Lamp) -
   // a meeting that happened, recorded as `sd_honours` is and held for good.
+  // SERPENT5 added ONE (0119): `serpent_honours`, what a dealing ship's serpent kills granted the account on their first
+  // writes (Coilbreaker, The Maelstrom) - recorded as `sd_honours` is and held for good; the kills are `serpent_kills`' rows.
   assert.deepEqual(cols.sort(), ['aura', 'created_at', 'email', 'first_played_at', 'glyphs_off', 'guest_name', 'handle', 'handle_lc', 'id', 'insignia', 'insignia_spent',
     'lamp_title', 'last_seen', 'legal_accepted_at', 'muted_by', 'muted_until', 'name_as', 'password', 'patreon_at', 'patreon_status', 'patreon_tiers', 'patreon_user',
     'played_at', 'played_s', 'privacy_version', 'recovery_hash',
-    'registered_at', 'renown_hour', 'renown_hour_xp', 'renown_last_credit', 'sd_honours', 'terms_version', 'title']);
+    'registered_at', 'renown_hour', 'renown_hour_xp', 'renown_last_credit', 'sd_honours', 'serpent_honours', 'terms_version', 'title']);
   // GLYPH-WEAR: `glyphs_off` is the one glyph column, and it grants nothing - it is the choice of which true glyphs to hide
   assert.ok(!cols.some((c) => c !== 'glyphs_off' && /founder|developer|sprout|glyph|grant/i.test(c)), `a grant became a column: ${cols}`);
   // SAVES AND PROVIDER LINKS ARE STILL NOT HERE. They arrive as their

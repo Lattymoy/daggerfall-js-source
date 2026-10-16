@@ -50,17 +50,45 @@ and a summon or a send away there is refused by the runtimes' own indoor laws.
 
 The horse (DFU item 94) and the wagon (93), each a card with the item's own inventory picture: owned or not; where it is
 - **Riding**, **In harness** / **Driving**, **Following**, **Waiting** (where it was left, how far), **Hitched** to the
-parked wagon, **Parked** (how far), **Stabled**; with the mod off, or its physical persistence off, the classic
-transport's **With you**; the wagon's load against its 750 kg.
+parked wagon, **Parked** (how far), **With you** (beside a player on foot and never sent away - the mod's WithPlayer,
+which the next door leaves outside), **Stabled** (sent away - WAGON-STABLED, below); with the mod off, or its physical
+persistence off, the classic transport's **With you**; the wagon's load against its 750 kg.
 
 - **SUMMON** is Horse Cart and Cargo's own (`HandleSummonTransport`), its line ANSWERED now rather than said
   (`summonTransport`: the page says it under the cards, the hotkey on the HUD - one body).
 - **SEND AWAY** is its other half (`sendTransportAway`, the port's own): whatever of the pair stands in the world - a
-  parked wagon, a horse waiting or following - leaves it, and the pair is "with the player" in the mod's own sense: the
-  record the persistence switch's turning on makes (`resolvePersistenceEnabledState` for a player on foot). Stabled, the
-  pair is mounted from the Transport window as the mod's WithPlayer state always was, or summoned again. Refused indoors
-  and aboard (as the summon is), while riding or driving, with the persistence off, and with nothing out.
+  parked wagon, a horse waiting or following - leaves it, or is beside a player on foot without having been sent away,
+  and the pair is STABLED: the record the persistence switch's turning on makes (`resolvePersistenceEnabledState` for a
+  player on foot - the mod's WithPlayer), with the record's two words of the port's own set (WAGON-STABLED, below).
+  Stabled, the pair is mounted from the Transport window as the mod's WithPlayer state always was, or summoned again.
+  Refused indoors and aboard (as the summon is), while riding or driving, with the persistence off, and with nothing
+  out.
 - **RENAME HORSE** in place, by the name prompt's own law (`renameHorse` - `resolveHorseNameInput`).
+
+**WAGON-STABLED** (FIELD BUGS 2026-10-15d, `01-Overview/Field-Bugs-2026-10-15d.md`; Fay, 2026-10-14: "Wagon appears outside of buildings/dungeons when stabled - I
+keep sending my wagon away, but every time I enter a building or dungeon it appears outside again"). Stabled WAS the
+mod's WithPlayer and nothing more - the state of a pair beside a player on foot - and the mod's HandlePreTransition
+[IL_98f0] parks a WithPlayer wagon at every door such a player goes through and stands a WithPlayer horse behind them
+there: the pair sent away came back at the next door. The save record (`systems/horseCartLaw.js` newSaveData) carries
+two words of the port's own beside the mod's fifteen fields, `WagonStabled` and `HorseStabled`, set by Send away alone:
+
+- **A stabled pair stays away.** `handlePreTransition` parks no stabled wagon and stands no stabled horse at the door;
+  a horse mounted from the Transport window leaves a stabled wagon at the stable (`deployWagonBeforeHorseTravel`); a
+  fast travel does not take it (`wagonGoesOnJourney` - no wear, no riders' seats).
+- **What takes it out of the stable lets the word go**: a summon (the page's, the key's - `commitDeployment`,
+  `setHorseLoose`) or any park; a mount (`leaveStable` - the horse ridden, the wagon driven with its horse: the
+  runtime's set, the game's once observed, and the mode a door is gone through in, so a pair driven or ridden through
+  a door is parked there as the mod parks one); the record laid afresh (`resetWagonState`, `zeroHorse` - one sold and
+  another bought, the persistence switch turned); a new game and a load's start. A wagon parked at a door with its
+  horse still at the stable (a wagon bought after the horse was sent) keeps the horse's word.
+- **Saved** with the record and read back only as `true`: a save from before the word loads NOT stabled - the mod's
+  WithPlayer, parked at the next door as before, which the card calls With you and offers to send away.
+- **The words follow it**: the card says Stabled only for what was sent away, and the keep feeds only that horse at
+  the stable (`systems/upkeepRuntime.js` horseWhereOf, `06-Systems/Horse-Care.md`); a horse beside its owner unsent
+  is with its owner.
+- **Unchanged**: a stabled wagon's load is reached outdoors, and the pair mounted from the Transport window anywhere,
+  as the mod's WithPlayer pair's always were. A peer sees nothing of a stabled pair (`scenes/horseCartPool.js`
+  parkWord reads a parked wagon and a waiting horse alone), and the town watch throws only a parked wagon.
 
 ## 3. The Fleet - a ship's title is a ledger's, not an item's
 
@@ -365,7 +393,8 @@ in `systems/naval/shipLife.js` (`alongside`), `systems/comeSailAway.js` (`warp`)
 (`SHORE_TERRAIN_FIT_METERS`, exported for JETTY_MAX) and `scenes/navalHost.js` (the book read, the docking, the
 gangways).
 
-`test/holdings.test.js` (the tab, the Stable, the runtime's summon and send away), `test/fleet.test.js` (the ledger, the
+`test/holdings.test.js` (the tab, the Stable, the runtime's summon and send away), `test/fb1015_wagonstabled.test.js`
+(WAGON-STABLED: a stabled pair through the real runtime's doors, mounts, summons, sales and saves), `test/fleet.test.js` (the ledger, the
 book under Come Sail Away's real runtime, the refits on the helm and the sea, the away repairs, the host half's every act
 and refusal, the word's names, the page), `test/crewroles.test.js` (the posts given, their places on the deck and the
 crew keeping them against a no-roles control, the First Mate's voice, the Crew panel), `test/quays.test.js` (the quay off a
@@ -373,5 +402,5 @@ berth, the shore walked, what stands on it, its model, alongside, docking's law,
 gangway, Come Sail Away's seam, the Fleet's word, the world's wiring), `test/auditholdings.test.js` (AUDIT HOLDINGS,
 `01-Overview/Audit-Holdings.md`: a pin a finding), `test/berthhidden.test.js` (BERTH-HIDDEN: a ship out of sight keeps
 her berth), `test/harbourbook.test.js` (HARBOUR-BOOK: the book, the sea reading the world's, the pier across the shelf,
-the world's wiring); `tools/mutants/holdings.json`, `tools/mutants/quays.json`, `tools/mutants/auditholdings.json`,
+the world's wiring); `tools/mutants/holdings.json`, `tools/mutants/fb1015_wagonstabled.json`, `tools/mutants/quays.json`, `tools/mutants/auditholdings.json`,
 `tools/mutants/berthhidden.json`, `tools/mutants/harbourbook.json`.

@@ -38,7 +38,7 @@ test('MWNPC8c-b the quests\' stands: a person read as the click reads them (an i
   const m = rd('src/scenes/worldModes.js');
   ordered(m, ['const questStandLook = (s, buildingKey) => {', 'if (s._mwLook !== undefined) return s._mwLook;', 'if (!person) return null;   // asked again',
     'if (person.isPerson !== true) return (s._mwLook = null);', 'if (!dict || !questBridge) return null;   // never before the faction table',
-    'const data = { ...questStandNpcData(s, person, buildingKey), billboardArchiveIndex: s.archive, billboardRecordIndex: s.record };',
+    'const data = { ...questStandNpcData(s, person, buildingKey), billboardArchiveIndex: s.archive, billboardRecordIndex: s.record, questPerson: true };',   // PIN MOVED (STALL-FLATS): a person by the quest's word
     'return personLook(s, data, dict.get(person.factionId ?? 0) ?? null);'], 'the reading');
   ordered(m, ['const questStandNpcData = (s, person, buildingKey) => {', 'const questStandLook = (s, buildingKey) => {', 'const npcData = () => questStandNpcData(s, person, buildingKey);'],
     'one NPCData builder (DQ1), the body\'s reading and the click\'s');

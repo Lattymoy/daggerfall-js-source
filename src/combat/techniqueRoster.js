@@ -85,6 +85,8 @@ export const techniqueMult = (base, value) => base * (1 + Math.max(0, value | 0)
 //             what it reached or passed
 //   swing   - one strike, its reach and arc the technique's: all around (`arc` 'all'), a half-angle (radians) about
 //             the look, or DFU's own camera view ('view'); `single` the nearest foe alone
+// A leap or a dash launches from the ground alone, but for one marked `airborne` (KICK-AIR, Mac 2026-10-15: the Flying
+// Kick), which goes from the air too - a jump, a fall, a step off a ledge (combat/techniques.js refusal).
 // Speeds never pass TECHNIQUE_MAX_SPEED: a technique moves no body faster than any room's referee believes - the
 // arena's 12.5 m/s on the level, measured pose to pose with half a metre of slack (net/arenaLaw.js ARENA_SPEED_MAX; AUDIT
 // TECH1: it was 16, and a Lunge or a Shadowstep in an arena bout was refused a pose and its landing measured from the
@@ -113,7 +115,7 @@ export const TECHNIQUES = Object.freeze({
   crush: Object.freeze({ name: 'Skull Crack', families: Object.freeze(['blunt']), mech: 'swing', aim: null, base: 1.6, fatigue: 5, cooldown: 10,
     reach: 2.5, arc: 'view', single: true, strike: 'StrikeDown', toHit: 30 }),
   kick: Object.freeze({ name: 'Flying Kick', families: Object.freeze(['handToHand']), mech: 'leap', aim: 'target', base: 1.3, fatigue: 4, cooldown: 10,
-    range: Object.freeze([2, 6]), apex: 1.2, radius: 2.0, strike: 'StrikeDown', toHit: 20 }),
+    range: Object.freeze([2, 6]), apex: 1.2, radius: 2.0, strike: 'StrikeDown', toHit: 20, airborne: true }),   // KICK-AIR: from the air too
   haymaker: Object.freeze({ name: 'Haymaker', families: Object.freeze(['handToHand']), mech: 'swing', aim: null, base: 1.8, fatigue: 4, cooldown: 9,
     reach: 2.5, arc: 'view', single: true, strike: 'StrikeRight', toHit: 30 }),
 });

@@ -139,7 +139,7 @@
 import { FOG_FACTOR_GLSL } from './labGrass.js';
 import { buildProgram } from './glProgram.js';
 import { wrapAngle } from '../world/mat4.js';
-import { GLYPH_PATH, GLYPH_DETAIL, CRYSTAL_PURPLE, HOUR_BRASS, HOUR_GOLD, HOUR_LIGHT, HOUR_DAWN, HOUR_PEARL, HOUR_SUN } from '../ui/playerBadge.js';   // SHADOW-CLOAK: the wearer's own glyph, its emblem; CRYSTAL-FIST AUDIT: the Crystal Fist's purple, the resonance's one colour
+import { GLYPH_PATH, GLYPH_DETAIL, CRYSTAL_PURPLE, HOUR_BRASS, HOUR_GOLD, HOUR_LIGHT, HOUR_DAWN, HOUR_PEARL, HOUR_SUN, COIL_SEA, COIL_TIDE, COIL_FOAM } from '../ui/playerBadge.js';   // SHADOW-CLOAK: the wearer's own glyph, its emblem; CRYSTAL-FIST AUDIT: the Crystal Fist's purple, the resonance's one colour
 
 /** The ring's radius about the feet (m), the ground quad's half-width, the flames' height, and the ground's lift. */
 export const AURA_RING_R = 0.85;
@@ -463,6 +463,57 @@ export function turningWheelAngle(t) {
  *  growing; it fell, and the dial turned clockwise, forward. */
 export const turningDialAngle = (t) => Math.PI * 2 * TURNING_HZ.dial * t;
 
+// SERPENT5 (2026-10-15; bible/11-Multiplayer/Sea-Serpent.md section 17): THE MAELSTROM - the Old Coil's aura, the
+// whirlpool Sethrakul raises about a ship, drawn about the wearer's feet; one dealing ship's serpent kill in fifty on its
+// first write (server-account/src/serpents.js). The pass's ninth look, added whole as the wheel is:
+//   - THE GROUND: a pool of the sea's light, dark in its eye; MAELSTROM_ARMS arms of foam wound in to the eye, turning
+//     with it - clockwise as the eye sees the ground, so they draw IN (maelstromArmAngle); a lip of foam breaking round
+//     it, the surf running round the lip.
+//   - THE WALL: the curl of water at the lip, its crest riding the arms round; spray thrown up off the crest, each drop on
+//     its own arc and back down, carried round with the pool.
+// It kindles UP, as the wheel's light does. Every rate whole over the clock (maelstromRatesWhole).
+export const MAELSTROM_R = 0.9;          // the pool's lip, where its foam breaks, m
+export const MAELSTROM_EYE_R = 0.14;     // the eye at its middle - open water, no foam
+export const MAELSTROM_ARMS = 3;
+export const MAELSTROM_TWIST = 4;        // how hard the arms wind in: an arm turns TWIST/ARMS radians for each factor of e inward
+export const MAELSTROM_SHARP = 6;        // how narrow an arm's crest is
+export const MAELSTROM_H = 0.55;         // the wall: the spray's reach
+export const MAELSTROM_CURL_H = 0.12;    // the curl's crest at the lip, its middle height
+export const MAELSTROM_DROPS = 16;
+/** Its rates, in turns a second: the pool's turn, the light's breath, the surf round the lip, the drops' arcs. */
+export const MAELSTROM_HZ = Object.freeze({ spin: 1 / 12, pulse: 1 / 4, surf: 1 / 3, drop: 1 / 6 });
+export const maelstromRatesWhole = () => Object.values(MAELSTROM_HZ).every((r) => r > 0 && Number.isInteger(Math.round(r * AURA_CLOCK_PERIOD * MAELSTROM_ARMS * 1e6) / 1e6) && Number.isInteger(Math.round(r * AURA_CLOCK_PERIOD * 1e6) / 1e6));
+/** AUDIT WORLD-REWARDS D1: the Coilbreaker's colours as the pass ADDS them - at MAELSTROM_SHADE, The First Hour's own law
+ *  (FIRST_SHADE): at full strength the near-white foam washed out to white over a lit floor (4,706 pixels clipped at a
+ *  0.55 floor, where The Turning Hour clipped 497) and the sea's hue read as mint-white; shaded, 444. */
+export const MAELSTROM_SHADE = 0.72;
+const coilShaded = (/** @type {readonly number[]} */ c) => Object.freeze(c.slice(0, 3).map((x) => Math.round(x * MAELSTROM_SHADE * 1000) / 1000));
+/** The Coilbreaker's own colours (ui/playerBadge.js COIL_*), shaded: the open sea, the tide, the foam. */
+export const MAELSTROM_RGB = Object.freeze({ sea: coilShaded(COIL_SEA), tide: coilShaded(COIL_TIDE), foam: coilShaded(COIL_FOAM) });
+/** AUDIT WORLD-REWARDS D4: a drop's arc tops out at this share of the wall - at its whole height the drop's top half stood
+ *  past the strip's edge, cut off at its apex. */
+export const MAELSTROM_DROP_TOP = 0.9;
+/** The pool's turn at clock time `t` (s), radians: its angle FALLS - clockwise as the eye sees the ground (the one
+ *  mirror's law, turningDialAngle's above). The shader's own (maelstromSpin). Pure. */
+export const maelstromSpin = (t) => -Math.PI * 2 * MAELSTROM_HZ.spin * t;
+/** Where arm `k` crosses radius `r` at `t`, radians - a log spiral turning with the pool. As the pool turns clockwise a
+ *  point of an arm falls INWARD (the angle an arm holds at r is held at a smaller r a moment later): the arms draw in.
+ *  The shader's own crest (maelstromArm). Pure. */
+export function maelstromArmAngle(r, t, k = 0) {
+  return maelstromSpin(t) - (MAELSTROM_TWIST / MAELSTROM_ARMS) * Math.log(r / MAELSTROM_R) + (Math.PI * 2 * k) / MAELSTROM_ARMS;
+}
+/** The curl's crest at `u` round the strip (0..1) at `t`, m - higher under an arm. The shader's own (maelstromWall). Pure. */
+export const maelstromCrest = (u, t) => MAELSTROM_CURL_H * (0.7 + 0.3 * Math.cos(MAELSTROM_ARMS * (u * Math.PI * 2 - maelstromSpin(t))));
+/** AUDIT WORLD-REWARDS E5: where drop `m` of the spray is at `t` - its place round the strip (0..1), carried round WITH
+ *  the pool (maelstromSpin's turn: it drifted a few hundredths a life and snapped back, at a tenth of the pool's pace),
+ *  and its life (0..1, thrown up off the crest and back down). The shader's own (maelstromWall's hashes). Pure. */
+export function maelstromDropAt(m, t) {
+  const hash = (a, b, c) => { const x = Math.sin(m * a + b) * c; return x - Math.floor(x); };
+  const h1 = hash(41.37, 1.7, 43758.5453), h2 = hash(17.93, 3.1, 24634.6345);
+  const f = (x) => x - Math.floor(x);
+  return { u: f(h1 + maelstromSpin(t) / (Math.PI * 2)), life: f((t / Math.round(1 / MAELSTROM_HZ.drop)) * (1 + (m % 3)) + h2) };
+}
+
 /** AEGIS: HOW EACH AURA IS DRAWN - its kind in the shader (`uAura`), its ring's radius, its wall's height and how many
  *  symbols float off it (the third draw - none for the fire). A pin walks AURAS and requires one each. SHADOW-CLOAK: and,
  *  for the cloak alone, the mesh its wall is (`mesh` - the shaped cloth, not the strip) and that it SHADES: it darkens
@@ -476,6 +527,7 @@ export const AURA_LOOK = Object.freeze({
   resonance: Object.freeze({ kind: 5, ringR: RESONANCE_R, flameH: RESONANCE_H, glyphs: 0, shade: true }),   // CRYSTAL-FIST: the ring of columns of squares, on the strip; AUDIT: drawn premultiplied, so the squares stay the one purple
   turninghour: Object.freeze({ kind: 6, ringR: TURNING_R + TURNING_TOOTH_M, flameH: TURNING_H, glyphs: 0 }),   // SD9c: the wheel at the feet, its edge on the strip at its teeth's tips
   firsthour: Object.freeze({ kind: 7, ringR: TURNING_R + TURNING_TOOTH_M, flameH: TURNING_H, glyphs: 0 }),   // HOURS-FIRST: the same wheel, in the first dawn's light
+  maelstrom: Object.freeze({ kind: 8, ringR: MAELSTROM_R, flameH: MAELSTROM_H, glyphs: 0 }),   // SERPENT5: the pool at the feet, its curl and spray on the strip at its lip
 });
 /** The look a wearer's aura is drawn with - Dagon's Fire for one that names none (the fire was the only aura before). */
 export const auraLookOf = (aura) => (typeof aura === 'string' && Object.hasOwn(AURA_LOOK, aura) ? AURA_LOOK[aura] : AURA_LOOK.dagonfire);
@@ -824,6 +876,60 @@ vec3 ${fn}Wall(vec2 q) {
 }
 `;
 const TURNING_GLSL = TURNING_HELPERS + turningLook('turning', 'TH', TURNING_RGB) + turningLook('first', 'FH', FIRST_RGB, { forward: true, blaze: FIRST_BLAZE, rays: FIRST_RAY });
+/** SERPENT5: THE MAELSTROM'S LOOK - its ground and its wall (MAELSTROM_* above). */
+const MAELSTROM_GLSL = `
+const vec3 MS_SEA = ${v3(MAELSTROM_RGB.sea)};
+const vec3 MS_TIDE = ${v3(MAELSTROM_RGB.tide)};
+const vec3 MS_FOAM = ${v3(MAELSTROM_RGB.foam)};
+// the pool's turn - clockwise as the eye sees it (maelstromSpin)
+float maelstromSpin() { return -TAU * uTime ${hzGlsl(MAELSTROM_HZ.spin)}; }
+float maelstromBreath() { return 0.85 + 0.15 * sin(uTime * TAU ${hzGlsl(MAELSTROM_HZ.pulse)}); }
+// an arm's crest at (r, a): one on it, falling away between (maelstromArmAngle's spiral)
+float maelstromArm(float r, float a) {
+  float ph = ${MAELSTROM_ARMS.toFixed(1)} * (a - maelstromSpin()) + ${MAELSTROM_TWIST.toFixed(1)} * log(max(r, 0.02) / ${MAELSTROM_R.toFixed(3)});
+  return pow(max(0.5 + 0.5 * cos(ph), 0.0), ${MAELSTROM_SHARP.toFixed(1)});   // AUDIT WORLD-REWARDS D2: never a pow of a negative (a cos a hair under -1 - AUDIT SD II L2 F12's law)
+}
+vec3 maelstromGround(vec2 p) {
+  float r = length(p);
+  if (r > uGroundR) discard;
+  float breath = maelstromBreath();
+  // THE WATER the pool turns in: the sea's light, dark in the eye, gone past the lip
+  vec3 col = MS_SEA * 0.22 * smoothstep(${MAELSTROM_EYE_R.toFixed(3)}, ${MAELSTROM_R.toFixed(3)}, r) * (1.0 - smoothstep(${MAELSTROM_R.toFixed(3)}, uGroundR, r));
+  // never the angle at the middle, where atan(0, 0) is no number (the resonance's AUDIT)
+  if (r > 0.05) {
+    float a = atan(p.y, p.x);
+    // THE ARMS of foam, wound in to the eye and turning with the pool
+    float arm = maelstromArm(r, a) * smoothstep(${MAELSTROM_EYE_R.toFixed(3)}, ${(MAELSTROM_EYE_R + 0.12).toFixed(3)}, r) * (1.0 - smoothstep(${(MAELSTROM_R - 0.04).toFixed(3)}, ${(MAELSTROM_R + 0.04).toFixed(3)}, r));
+    col += mix(MS_TIDE, MS_FOAM, arm) * arm * 0.7 * breath;
+    // THE LIP: a ring of foam breaking round the pool, the surf running round it
+    float ld = (r - ${MAELSTROM_R.toFixed(3)}) / 0.035;
+    col += MS_FOAM * exp(-ld * ld) * (0.55 + 0.45 * sin(a * 7.0 + uTime * TAU ${hzGlsl(MAELSTROM_HZ.surf)})) * 0.45;
+  }
+  return col * uKindle * (1.0 - smoothstep(uGroundR - 0.2, uGroundR, r));
+}
+vec3 maelstromWall(vec2 q) {
+  float u = q.x, v = q.y, y = v * uFlameH, breath = maelstromBreath();
+  // THE CURL at the lip, its crest riding the arms round
+  float crest = ${MAELSTROM_CURL_H.toFixed(3)} * (0.7 + 0.3 * cos(${MAELSTROM_ARMS.toFixed(1)} * (u * TAU - maelstromSpin())));
+  vec3 col = MS_TIDE * 0.3 * (1.0 - smoothstep(crest - 0.02, crest, y)) * clamp(y / crest, 0.0, 1.0);
+  float cd = (y - crest) / 0.012;
+  col += MS_FOAM * 0.6 * exp(-cd * cd);
+  // THE SPRAY: drops thrown up off the crest, each on its own arc and back down, carried round with the pool
+  float circ = TAU * uRingR, spray = 0.0;
+  for (int m = 0; m < ${MAELSTROM_DROPS}; m++) {
+    float fm = float(m);
+    float h1 = fract(sin(fm * 41.37 + 1.7) * 43758.5453), h2 = fract(sin(fm * 17.93 + 3.1) * 24634.6345);
+    float life = fract(uTime ${hzGlsl(MAELSTROM_HZ.drop)} * (1.0 + mod(fm, 3.0)) + h2);
+    float hy = crest + (uFlameH * ${MAELSTROM_DROP_TOP.toFixed(2)} - crest) * 4.0 * life * (1.0 - life);   // AUDIT WORLD-REWARDS D4: the arc's top inside the strip
+    vec2 dm = vec2((fract(u - h1 - maelstromSpin() / TAU + 0.5) - 0.5) * circ, y - hy);   // AUDIT WORLD-REWARDS E5: carried round WITH the pool (maelstromDropAt)
+    spray += exp(-dot(dm, dm) / 0.0003) * (1.0 - smoothstep(0.7, 1.0, life));
+  }
+  col += mix(MS_TIDE, MS_FOAM, 0.7) * 0.55 * spray * breath;
+  // kindled UP, as the wheel's light is: the spray rising from the feet
+  float kindled = clamp((uKindle * 1.25 - v) / 0.15, 0.0, 1.0);
+  return kindled * col;
+}
+`;
 /** SHADOW-CLOAK: A GLYPH'S OUTLINE AS STRAIGHT EDGES - an SVG path of absolute M, L, Q and Z (ui/playerBadge.js
  *  GLYPH_PATH's shapes), each quadratic cut into `steps` chords and each figure closed, as [ax, ay, bx, by] in the
  *  glyph's own 16-unit box, y down; no edge of no length; any other command refused. Pure. */
@@ -1429,7 +1535,7 @@ export const AURA_FS = HEAD + `in vec2 vP;
 in vec3 vWorld;
 in vec3 vS;             // AEGIS: a floating symbol's age, rune and number
 uniform int uKind;
-uniform int uAura;      // AEGIS: 0 Dagon's Fire, 1 the Oblivion Ward, 2 the Golden Radiance (AURA_LOOK - PRIMARCH), 3 the Holo Shadow Cloak (SHADOW-CLOAK), 4 the Seraph Wings (SERAPH-WINGS), 5 the Crystal Resonance (CRYSTAL-FIST), 6 The Turning Hour (SD9c), 7 The First Hour (HOURS-FIRST)
+uniform int uAura;      // AEGIS: 0 Dagon's Fire, 1 the Oblivion Ward, 2 the Golden Radiance (AURA_LOOK - PRIMARCH), 3 the Holo Shadow Cloak (SHADOW-CLOAK), 4 the Seraph Wings (SERAPH-WINGS), 5 the Crystal Resonance (CRYSTAL-FIST), 6 The Turning Hour (SD9c), 7 The First Hour (HOURS-FIRST), 8 The Maelstrom (SERPENT5)
 uniform vec3 uAt;       // PRIMARCH: the feet - the axis the radiance's column stands on
 uniform float uYaw;     // SHADOW-CLOAK: the wearer's facing - the cloak's opening is at their front
 uniform int uSide;      // SHADOW-CLOAK: which side of the cloth this draw lays - 0 its lining (front faces culled), 1 its outside (back faces culled)
@@ -1444,7 +1550,7 @@ uniform vec3 uCamPos;
 out vec4 o;
 ${FOG_FACTOR_GLSL}${NOISE_GLSL}
 const float TAU = 6.283185307179586;
-${WARD_GLSL}${RADIANCE_GLSL}${RESONANCE_GLSL}${TURNING_GLSL}${CLOAK_SHAPE_GLSL}${CLOAK_FS_GLSL}${WING_SHARED_GLSL}${WING_FS_GLSL}
+${WARD_GLSL}${RADIANCE_GLSL}${RESONANCE_GLSL}${TURNING_GLSL}${MAELSTROM_GLSL}${CLOAK_SHAPE_GLSL}${CLOAK_FS_GLSL}${WING_SHARED_GLSL}${WING_FS_GLSL}
 void main() {
   if (uAura == 4) { vec3 wl = uKind == 0 ? wingsGround(vP) : uKind == 1 ? wingStrand(vP, vS) : vS.y > 1.5 ? wingHalo(vP, vS.x) : wingMote(vP, vS); o = vec4(wl * fogFactorAt(vWorld), 1.0); return; }   // SERAPH-WINGS: added whole; kindled within (the strands unfurl)
   if (uAura == 3) {   // SHADOW-CLOAK: premultiplied - the light it adds, and how much the shadow covers; both fogged
@@ -1456,6 +1562,7 @@ void main() {
   if (uAura == 5) { vec4 c = uKind == 0 ? resonanceGround(vP) : resonanceWall(vP); float f = fogFactorAt(vWorld); o = vec4(c.rgb * f, c.a * f); return; }   // CRYSTAL-FIST: premultiplied (AURA_LOOK shade), fogged to nothing; AUDIT: the columns rise as it kindles by node's counts (uResLit), the feet by uKindle
   if (uAura == 6) { vec3 c = uKind == 0 ? turningGround(vP) : turningWall(vP); o = vec4(c * fogFactorAt(vWorld), 1.0); return; }   // SD9c: added whole, kindled within (the ground fades in, the strip rises)
   if (uAura == 7) { vec3 c = uKind == 0 ? firstGround(vP) : firstWall(vP); o = vec4(c * fogFactorAt(vWorld), 1.0); return; }   // HOURS-FIRST: The First Hour, as The Turning Hour is drawn
+  if (uAura == 8) { vec3 c = uKind == 0 ? maelstromGround(vP) : maelstromWall(vP); o = vec4(c * fogFactorAt(vWorld), 1.0); return; }   // SERPENT5: added whole, kindled within (the pool fades in, the spray rises)
   if (uAura == 2) { vec3 rad = uKind == 0 ? radianceGround(vP) : radianceWall(vP); o = vec4(rad * uKindle * fogFactorAt(vWorld), 1.0); return; }   // PRIMARCH
   if (uAura == 1) { vec3 ward = uKind == 0 ? wardGround(vP) : uKind == 1 ? wardWall(vP) : wardSymbol(vP, vS); o = vec4(ward * uKindle * fogFactorAt(vWorld), 1.0); return; }   // AEGIS
   // every rate a whole number of cycles over the clock, in turns a second times TAU - never a rounded radian rate, which

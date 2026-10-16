@@ -103,7 +103,10 @@ UseItem asks a registered handler first (ItemHelper.RegisterItemUseHandler, `sys
 | Pine Branch (14) | 1 kg | 4 |
 | Wood Bundle (Foraging's 1604, a Wood-Axe's chop) | 2.5 kg | 10 |
 
-The counts are the templates' weights over the Arrow's 0.25 kg (`fletchYield`), never a table. Each Use takes one
+The counts are the templates' weights over the Arrow's 0.25 kg (`fletchYield`), never a table - the CLASSIC Arrow's
+(`ITEM_TEMPLATES`), never a mod's patch (BENCH-ARROWS, `01-Overview/Field-Bugs-2026-10-15c.md`: Roleplay & Realism:
+Items' 0.1 kg Arrow, on by default and forced online, had made a Twig five arrows - four Twigs the workbench's twenty
+without its plank and its ingot). Each Use takes one
 piece, as a potion is one bottle. The arrows are CreateWeapon's (the shelf's, the corpse's, the workbench's), go into
 the PACK (`localItems`, so wood used off a pile fletches into the pack), and join the quiver as one stack. The window
 says "You fletch 2 arrows from the Twigs." in its own box. A quest's piece keeps the ladder's answer. Online and

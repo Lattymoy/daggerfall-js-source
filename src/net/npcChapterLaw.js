@@ -61,7 +61,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { GUILD_FACTION_IDS, DIVINES, ORDERS, MIN_REPUTATION, MAX_REPUTATION, RANK_REQ_REPUTATION } from '../systems/guildFactions.js';
-import { MARKS_RID_RE } from './marksLaw.js';
+import { MARKS_RID_RE, utcDay } from './marksLaw.js';   // ROLL-PACE: the Roll's day, the claims' own
 import { gateHash } from './gateLaw.js';   // CHAP2a: a hall writ's own dice
 import { courtWrits, material, regionOk } from './nodeLaw.js';   // CHAP2a: the Court's writ law, the material families, a region
 import { REGION_NAMES } from '../formats/mapsTables.js';   // CHAP4b: a seat's region, named
@@ -780,6 +780,38 @@ export const SEAT_RANK = Object.freeze({ master: 9, officer: 8 });
 export const ROLL_BOOK_RANK_MAX = 7;
 /** The rank the Roll records for a member: the book's, bounded by its own reputation (3.2), and never a seat's. */
 export const rollBookRankOf = (/** @type {unknown} */ reported, /** @type {unknown} */ rep) => Math.max(0, Math.min(whole(reported), rollRankCapOf(rep), ROLL_BOOK_RANK_MAX));
+
+// ROLL-PACE (FIELD BUGS 2026-10-15f, a Discord report: "exploit where you do easy quests for a guild and then ask to join
+// it to farm 100 rep in 1 minute"; Mac, asked of four shapes: "Pace ranks from joining"). PROMO-NOW took DFU's 28 days
+// off an online promotion on the word that the Roll's paced reputation paces the ranks - it paces the REPUTATION, and a
+// stranger's quests (DFU's +5 to the guild's faction, a member or not: Quest.cs EndQuest, GuildManager.GetGuildFactionId)
+// banked it before the membership began, so the hall's first review turned a week's standing into seven ranks at once.
+// So a review online promotes no further than the Roll's day could have paid SINCE THE ROLL SAW THE MEMBERSHIP BEGIN:
+// ROLL_GAIN_DAY_MAX a UTC day, the first day counted - what a member who joined with nothing could have earned. The
+// stranger's standing still counts (it joins, and it is the rank's), at the pace; a rank already held is never taken.
+
+/** The Roll's days of a membership at `nowS`: its UTC day of beginning counted, and today. `sinceS` the Roll's own record
+ *  of it (its view's `members[].since`); one the Roll has not yet seen begins today. */
+export const rollPaceDays = (/** @type {unknown} */ sinceS, /** @type {number} */ nowS) => (typeof sinceS === 'number' && Number.isFinite(sinceS) ? Math.max(0, utcDay(nowS) - utcDay(sinceS)) : 0) + 1;
+
+/** THE HIGHEST RANK A REVIEW MAY PROMOTE TO, online: what the Roll's own reputation allows (never the page's unclaimed
+ *  number - AUDIT CHAP S5's bound, read on the page), no more than its pace has paid since the membership began, and
+ *  never a seat's. `standing` the Roll's `{ rep, since }` for the guild's faction - null before its first word, when no
+ *  review promotes. */
+export function rollPromoteCeiling(/** @type {{ rep: unknown, since: unknown } | null} */ standing, /** @type {number} */ nowS) {
+  if (!standing) return 0;
+  const paid = rollPaceDays(standing.since, nowS) * ROLL_GAIN_DAY_MAX;
+  return Math.min(ROLL_BOOK_RANK_MAX, rollRankCapOf(Math.min(rollRep(standing.rep), paid)));
+}
+
+/** The UTC days until the Roll's pace pays `rank`'s line (0: it has), or null where the pace is not what holds it - no
+ *  standing yet, a rank past the book's, or the Roll's own reputation short of the line (the hall says that one). */
+export function rollPaceWait(/** @type {{ rep: unknown, since: unknown } | null} */ standing, /** @type {number} */ nowS, /** @type {number} */ rank) {
+  if (!standing || !(rank >= 0 && rank <= ROLL_BOOK_RANK_MAX)) return null;
+  const need = RANK_REQ_REPUTATION[rank];
+  if (rollRep(standing.rep) < need) return null;
+  return Math.max(0, Math.ceil(need / ROLL_GAIN_DAY_MAX) - rollPaceDays(standing.since, nowS));
+}
 /** Eligible's tenure on the Roll, and its account's age. */
 export const SEAT_TENURE_S = 14 * 86_400;
 export const SEAT_ACCOUNT_AGE_S = 7 * 86_400;

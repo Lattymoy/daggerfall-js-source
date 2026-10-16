@@ -2,22 +2,23 @@
   {
     "name": "AUDIT-GN2-PF3-her-pictures-at-her-first-draw",
     "file": "src/scenes/comeSailAwayPool.js",
-    "old": "        try { await pipeline.getTexture(art.archive); }",
-    "new": "        try { /* her archive left to her first mesh's ask */ }",
+    "old": "        try { await pipeline.getTexture(art.archive); for (const n of Object.values(art.night)) art.glow(n); }",
+    "new": "        try { for (const n of Object.values(art.night)) art.glow(n); }",
     "tests": [
       "test/auditgalleon2_prefab.test.js"
     ],
-    "why": "her archive not asked at the preload: her twenty-three pictures built at her first mesh's ask, mid-voyage (DF-ART: re-aimed past the door's preload)"
+    "why": "her archive not asked at the preload: her twenty-three pictures painted at her first mesh's ask, mid-voyage"
   },
   {
-    "name": "AUDIT-GN2-PF3-her-glass-whole",
-    "file": "src/world/classicArt.js",
-    "old": "  return spec.glass ? cutGlass(opaque(pic)) : opaque(pic);",
-    "new": "  return opaque(pic);",
+    "name": "AUDIT-GN2-PF3-her-glow-at-her-first-draw",
+    "file": "src/scenes/comeSailAwayPool.js",
+    "old": "await pipeline.getTexture(art.archive); for (const n of Object.values(art.night)) art.glow(n); }",
+    "new": "await pipeline.getTexture(art.archive); }",
     "tests": [
       "test/auditgalleon2_prefab.test.js"
     ],
-    "why": "DF-ART (re-aimed: her windows seen through, the glow gone with their glass): her stern windows built whole - the glass never cut"
+    "why": "her glow cut at her first stern mesh's upload, not at the preload - EQUIVALENT since DF-LOOK: each stern slice's build cuts its glass by its glow (galleonArt.js shipStandIns, cutGlass), so the preload's getTexture cuts the glow already and the loop is belt-and-braces. It is kept for a loose pack's picture over a stern slice, whose stand-in build never runs - with one, the glow would be cut at the first draw (uploadFace).",
+    "equivalent": true
   },
   {
     "name": "AUDIT-GN2-PF4-her-model-after-the-five",
@@ -91,6 +92,16 @@
     "why": "the pool never says her stand-ins are classic art: her pictures and glow mip-mapped under Retro Mode"
   },
   {
+    "name": "AUDIT-GN2-PF5-her-glow-a-replacement",
+    "file": "src/scenes/comeSailAwayPool.js",
+    "old": "{ replacement: !pipeline.isClassicArt?.(archive) }",
+    "new": "{ replacement: true }",
+    "tests": [
+      "test/auditgalleon2_prefab.test.js"
+    ],
+    "why": "her glow uncapped under Retro Mode while her picture is capped: the shader's two samples off different levels"
+  },
+  {
     "name": "AUDIT-GN2-PF7-the-trigger-at-the-hub",
     "file": "src/world/galleonModel.js",
     "old": "export const DRIVE_TRIGGER_AT = Object.freeze([HELM.hub[0], HELM.hub[1], HELM.hub[2] + 0.25]);",
@@ -142,25 +153,24 @@
     "why": "the shut leaf moved forward with its hinge, off its doorway's middle"
   },
   {
-    "name": "AUDIT-GN2-TS7-the-whole-window-a-hole",
-    "file": "src/world/classicArt.js",
-    "old": "  for (let i = 0; i < data.length; i += 4) if (isGlass(data[i], data[i + 1], data[i + 2])) data[i + 3] = 0;",
-    "new": "  for (let i = 0; i < data.length; i += 4) data[i + 3] = 0;",
+    "name": "AUDIT-GN2-TS7-the-whole-stern-glows",
+    "file": "src/world/galleonArt.js",
+    "old": "put(out, x, y, glassy ? [255, 186, 96] : [0, 0, 0]);",
+    "new": "put(out, x, y, [255, 186, 96]);",
     "tests": [
       "test/auditgalleon2_prefab.test.js"
     ],
-    "why": "DF-ART (re-aimed: her windows seen through): every texel of her window a hole, its leads and its frame too"
+    "why": "both stern slices glowing on every pixel - the old check (some pixel over nothing) let it stand"
   },
   {
-    "name": "AUDIT-GN2-TS7-the-panes-dark",
-    "file": "src/world/classicArt.js",
-    "old": "export const isPane = (r, g, b) => b >= r && r + g + b > 60;",
-    "new": "export const isPane = (r, g, b) => b >= r && r + g + b > 200;",
+    "name": "AUDIT-GN2-TS7-the-glint-dark",
+    "file": "src/world/galleonArt.js",
+    "old": " || (c[0] === C.glassLit[0] && c[1] === C.glassLit[1]);",
+    "new": ";",
     "tests": [
-      "test/auditgalleon2_prefab.test.js",
-      "test/dfart_classicart.test.js"
+      "test/auditgalleon2_prefab.test.js"
     ],
-    "why": "DF-ART (re-aimed from the painted glint): Daggerfall's darker panes left out of the glow, its leads alone lit"
+    "why": "the glass's glint left out of the glow"
   },
   {
     "name": "AUDIT-GN2-TS8-the-foot-cap-inward",

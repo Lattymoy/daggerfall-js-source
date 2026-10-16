@@ -151,10 +151,13 @@ test('LOOT2: the one-in-ten - at the host door, after the piece\'s own draws; ne
 test('LOOT2: last - the gate\'s and a town\'s Legendaries Exalted one in ten, every earlier draw their seed\'s; the Broker never', () => {
   on();
   let gate = 0, gateEx = 0;
+  // PIN MOVED (GILDED2, bible/06-Systems/Gilded.md section 7): the Dragonfire Oath is the gate's very last draw, after the
+  // Exalted's - set aside on both sides, as the technique is
+  const unGilded = (spoils) => ({ ...spoils, pieces: spoils.pieces.filter((x) => x.tier !== 'gilded') });
   for (let seed = 1; seed <= 4000; seed++) {
-    const s = rollSpoils(seed, 14);
+    const s = unGilded(rollSpoils(seed, 14));
     LR._setExaltedForTests(0);
-    const plain = rollSpoils(seed, 14);
+    const plain = unGilded(rollSpoils(seed, 14));
     LR._setExaltedForTests(null);
     assert.equal(s.gold, plain.gold);
     assert.equal(s.pieces.length, plain.pieces.length, `seed ${seed}: the Regalia's roll is before it`);

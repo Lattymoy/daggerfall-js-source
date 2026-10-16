@@ -1487,7 +1487,7 @@
   {
     "name": "AC5-D-C15-never-whole",
     "file": "src/ui/collectionsPage.js",
-    "old": "if (_picked === r.id) list.append(codexWhole(el, r));",
+    "old": "if (_picked === r.id) out.push(codexWhole(el, r));",
     "new": "",
     "tests": [
       "test/auditcards5_ui.test.js",

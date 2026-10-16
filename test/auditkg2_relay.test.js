@@ -10,7 +10,7 @@ import { webcrypto } from 'node:crypto';
 import {
   newGambitTable, gambitSit, gambitReady, gambitStand, gambitTick, gambitCommand, gambitTableValid, validGambitIn, GAMBIT_FIRST_MS, GAMBIT_LATE_MS,
 } from '../src/net/gambitTable.js';
-import { GAMBIT_FRAME_MAX } from '../src/net/wire.js';
+import { GAMBIT_FRAME_MAX, CLOSE_REPLACED } from '../src/net/wire.js';
 import { HOLDEM_STAKE_MAX } from '../src/net/holdemTable.js';
 import { GAMBIT_STAKE_BB } from '../src/net/gambitStakes.js';
 import { mintStakeOrder, verifyOrder } from '../src/net/identityToken.js';
@@ -287,16 +287,27 @@ test('AUDIT KG II E1 A BROKEN SOURCE AT THE GOLD TABLE IS NO CONTEST - at a blow
   assert.deepEqual(cash(d), [['acct-a', 200, 'void'], ['acct-b', 200, 'void']]);
 });
 
-test('AUDIT KG II E4 + E9 THE ROOM\'S OWN REFUSALS: a sit in a layer (busy), a second seat for one account, a staked Ready in a layer (stakes closed), and a Ready the table refused after its spend handed back whole as \'refused\' (mutants: the layer\'s sit; one seat an account; the layer\'s stake; the refused cash-out)', () => withRoom(async ({ r, tick, nowS }) => {
+test('AUDIT KG II E4 + E9 THE ROOM\'S OWN REFUSALS: a sit in a layer (busy), a second seat for one account, a staked Ready in a layer (stakes closed), and a Ready the table refused after its spend handed back whole as \'refused\' (mutants: the layer\'s sit; one seat an account; the layer\'s stake; the refused cash-out) - ONE-BODY (PIN MOVED): a second tab replaces the first in a place', () => withRoom(async ({ r, tick, nowS }) => {
   const kp = await r.signer();
   const lay = r.connect(); lay.att.ly = 3; await r.hello(lay, 'peer-l', null, { name: 'peer-l' });
   await word(r, lay, { op: 'sit', table: 1, chair: 0, chairs: 4, crown: 0 });
   assert.equal(kg(lay).at(-1).error, 'busy', 'no table in a layer');
   assert.equal(await r.room._gambitReady({ id: 'peer-l', ly: 3, sub: 'acct-peer-l', key: ROOM }, { table: 1, army: army(1), stake: 'x' }, Date.now()), 'stakes closed');
-  const a = await join(r, 'peer-a');
-  const twin = r.connect(); await r.hello(twin, 'peer-a2', null, { name: 'peer-a2', tokenSub: 'acct-peer-a' });
+  // PIN MOVED (ONE-BODY, FIELD BUGS 2026-10-15c): this stood one account's twin tab beside it in the building's room (ROOM)
+  // and refused its sit 'account seated'. ROOM is a world room, and a place stands one body an account now
+  // (server/src/index.js the hello's one-socket law): the twin's hello closes the first tab (CLOSE_REPLACED) and is the
+  // account's one body here, which sits and readies below. The refusal still guards an interior no world room names
+  // (net/online.js roomKeyFor's name-keyed room, or any `interior:` key a page opens; a table sits in any interior),
+  // where both tabs stand: the second seat's refusal moved there.
+  const first = await join(r, 'peer-a');
+  const a = r.connect(); await r.hello(a, 'peer-a2', null, { name: 'peer-a2', tokenSub: 'acct-peer-a' });
+  assert.equal(first.closed?.code, CLOSE_REPLACED, 'a place: the twin tab replaces the first');
   await word(r, a, { op: 'sit', table: 1, chair: 0, chairs: 4, crown: 0 });
-  await word(r, twin, { op: 'sit', table: 1, chair: 2, chairs: 4, crown: 1 });
+  const n = fakeRoom('interior:17.Daggerfall.200');
+  const n1 = await join(n, 'peer-a'), twin = n.connect(); await n.hello(twin, 'peer-a2', null, { name: 'peer-a2', tokenSub: 'acct-peer-a' });
+  assert.equal(n1.closed, null, 'no world room: both tabs stand');
+  await word(n, n1, { op: 'sit', table: 1, chair: 0, chairs: 4, crown: 0 });
+  await word(n, twin, { op: 'sit', table: 1, chair: 2, chairs: 4, crown: 1 });
   assert.equal(kg(twin).at(-1).error, 'account seated', 'one seat an account');
   // a Ready refused after its spend: the table changed under the spend's write
   const b = await join(r, 'peer-b');

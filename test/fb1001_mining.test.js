@@ -17,7 +17,7 @@ import { readFileSync } from 'node:fs';
 
 import { createGatherHost, aimAt, NODE_AIM_DEG } from '../src/scenes/gatherHost.js';
 import { herbKind } from '../src/scenes/herbHost.js';
-import { mineKind, standMineNodes } from '../src/scenes/mineHost.js';
+import { mineKind, standMineNodes, BOULDER_LIFT } from '../src/scenes/mineHost.js';
 import { treeKind } from '../src/scenes/treeHost.js';
 import { trees, veins, boulders, utcDayOfMs } from '../src/net/nodeLaw.js';
 import { groundAt } from '../src/world/terrainNature.js';
@@ -212,7 +212,7 @@ test('NODE-AIM: a boulder is found by looking at its stones - the look meets a n
   try {
     const b = s.nodes('mine').find((n) => n.what === 'boulder');
     assert.ok(b, 'a boulder stands at its rock');
-    assert.equal(b.lift, 1.2, 'its aim point 1.2 m up its four-metre rock');
+    assert.equal(b.lift, BOULDER_LIFT, 'its aim point over its loose stones (BOULDER-GLINT, PIN MOVED: it was 1.2 m up its four-metre rock)');
     const [x, y, z] = b.local;
     s.face(b, [x, y + 0.1, z]);   // the loose stone at its foot, where its glow stands
     assert.equal(s.host.target?.node.key, b.key, 'the stones find it');
@@ -303,4 +303,22 @@ test('ACT-CLICK: the act\'s strike is either button - the world host\'s input re
   beginInputFrame(latch.edge);
   assert.equal(input().attack, false, 'held: no second strike');
   keys.delete('Mouse0');
+});
+
+test('BOULDER-GLINT (FIELD BUGS 2026-10-15c, the Discord: "Boulder\'s glint offset is way off"): a boulder\'s glint stands on its loose stones - looking at the stones, the act\'s face no further over them than a vein\'s over its ore (mutant: the lift read off the rock again)', async () => {
+  const s = await stage();
+  try {
+    const over = (n) => {
+      const [x, y, z] = n.local;
+      s.face(n, [x, y + 0.1, z]);
+      assert.equal(s.host.press(), true);
+      s.host.tick(0.016);
+      const deg = -s.act.state.aim.pitch;   // the face's centre over the crosshair (offsetOf's input)
+      s.host.cancel(); s.host.tick(0.016);
+      return deg;
+    };
+    const mine = s.nodes('mine');
+    const boulder = over(mine.find((n) => n.what === 'boulder')), vein = over(mine.find((n) => n.what === 'vein'));
+    assert.ok(boulder <= vein + 1e-9, `boulder ${boulder.toFixed(1)} deg, vein ${vein.toFixed(1)}`);
+  } finally { s.host.dispose(); setForagingHost(null); }
 });

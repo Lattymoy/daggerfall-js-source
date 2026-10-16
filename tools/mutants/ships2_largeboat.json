@@ -210,6 +210,16 @@
     "why": "a ball meeting the canvas of a plan she is not setting"
   },
   {
+    "name": "SHIPS2-L-a-picture-seeded-off-the-clock",
+    "file": "src/world/largeBoatArt.js",
+    "old": "const weed = noise(0xb51, S, S, 8, 8);",
+    "new": "const weed = noise(Math.floor(Math.random() * 1e6), S, S, 8, 8);",
+    "tests": [
+      "test/ships2_largeboat.test.js"
+    ],
+    "why": "her side another on every client"
+  },
+  {
     "name": "SHIPS2-L-registered-twice",
     "file": "src/world/largeBoatArt.js",
     "old": "  if (_registered) return 0;\n  _registered = true;\n",
@@ -218,6 +228,16 @@
       "test/ships2_largeboat.test.js"
     ],
     "why": "her pictures added to the texture door every scene"
+  },
+  {
+    "name": "SHIPS2-L-a-picture-off-64",
+    "file": "src/world/largeBoatArt.js",
+    "old": "[TEX.transom0, transomArt()]",
+    "new": "[TEX.transom0, picture(32, 32)]",
+    "tests": [
+      "test/ships2_largeboat.test.js"
+    ],
+    "why": "her transom a picture of another size"
   },
   {
     "name": "SHIPS2-L-a-face-on-no-picture",

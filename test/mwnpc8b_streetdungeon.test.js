@@ -9,6 +9,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
+import { gunzipSync } from 'node:zlib';
+import { ROW_CODECS } from '../src/formats/worldDataPack.js';
+import { blockFromJson } from '../src/formats/worldDataReplacement.js';
+import { collectBlockFlats } from '../src/world/rmbFlats.js';
+import { collectExteriorNpcs, exteriorNpcRecord } from '../src/characters/exteriorNpcs.js';
+import { staticNpcData } from '../src/characters/staticNpc.js';
+import { isNpcFlat } from '../src/world/npcFlatArchives.js';
 import { personLook, wardrobeOf } from '../src/characters/peopleBodies.js';
 import { SOCIAL_GROUPS, GUILD_GROUPS, FACTION_TYPES } from '../src/formats/factionFile.js';
 import { RACES } from '../src/systems/races.js';
@@ -86,4 +93,20 @@ test('MWNPC8b-d a flat with a faction is not always a person drawn: an editor ma
     assert.equal(personLook({}, data({}), fac(o)), null, what);
   }
   assert.equal(wardrobeOf(fac({ type: FACTION_TYPES.WitchesCoven })), 'mage', 'a coven\'s witch is mortal');   // PIN MOVED (MWNPC17, section 25): and in a mage's robes, not the street's
+});
+
+test('STALL-FLATS (FIELD BUGS 2026-10-15c, "every animal and food stand item turned into freaks"; "The NPC\'s are clustered into groups and all have their heads down"): Beautiful Villages\' TVRNAS02 market, read off the vendored pack the town mods serve - RMBLayout\'s StaticNPC rule kept (113, every factioned flat), and a body stands only for a person\'s picture (RDBLayout.NPCFlatArchives), never for the stall\'s food, goods and animals (101 before); a quest\'s person keeps theirs whatever FLATS.CFG pictures them with (mutants: the archive law dropped; the quest\'s word unread)', () => {
+  const pack = JSON.parse(gunzipSync(readFileSync(new URL('../vendor/beautiful-villages/WorldDataPack/beautiful-villages.pack.json.gz', import.meta.url))).toString());
+  const op = JSON.parse(pack.files['TVRNAS02.RMB.json'])[2].find((o) => JSON.stringify(o[1]) === '["RmbBlock","MiscFlatObjectRecords"]');
+  const block = blockFromJson({ Name: 'TVRNAS02.RMB', RmbBlock: { FldHeader: {}, SubRecords: [], Misc3dObjectRecords: [], MiscFlatObjectRecords: op[2].$f.map(ROW_CODECS.$f) } }, 0);
+  const npcs = collectExteriorNpcs(collectBlockFlats(block, 0));
+  assert.equal(npcs.length, 113, 'DFU\'s StaticNPC rule kept - the click and the quest pass read them all');
+  assert.ok(npcs.filter((f) => !isNpcFlat(f.archive)).length >= 100, 'the market\'s factioned scenery stands in the list');
+  const bodied = npcs.filter((f) => { const pn = exteriorNpcRecord(f, null); return personLook(pn, staticNpcData(pn, { getFaction: () => null, raceOfCurrentRegion: () => 1 }), null); });
+  assert.deepEqual(bodied.filter((f) => !isNpcFlat(f.archive)).map((f) => f.archive), [], 'no food, goods or animal bodied');
+  assert.equal(bodied.length, 11, 'the block\'s twelve people less its child');
+  // a quest's person, pictured off a FLATS.CFG archive outside the people's
+  const look = (questPerson) => personLook({}, { race: 1, gender: GENDERS.Male, nameSeed: 7, hash: 9, billboardArchiveIndex: 186, billboardRecordIndex: 0, questPerson }, null);
+  assert.equal(look(undefined), null);
+  assert.notEqual(look(true), null, 'the quest\'s word stands them');
 });

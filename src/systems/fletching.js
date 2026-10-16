@@ -11,7 +11,7 @@
 //
 // A departure from DFU, which crafts no arrow. Not a quest's piece: a watched item keeps the ladder's own answer.
 
-import { registerItemUseHandler, templateByIndex } from './itemTemplates.js';
+import { registerItemUseHandler, templateByIndex, ITEM_TEMPLATES } from './itemTemplates.js';
 import { addItem, ARROW_TEMPLATE } from './inventory.js';
 import { createWeapon } from '../combat/enemyEquipment.js';
 import { FT } from './foragingLaw.js';   // Foraging's Wood Bundle (1604) - its template is registered when the mod is on
@@ -20,11 +20,13 @@ import { FT } from './foragingLaw.js';   // Foraging's Wood Bundle (1604) - its 
 export const FLETCH_TEMPLATES = Object.freeze([8, 14, FT.WoodBundle]);
 
 /** How many arrows one piece of `item` makes: its template's weight over the Arrow's, whole arrows; 0 for anything else
- *  (and for a template the data does not carry - Foraging off). */
+ *  (and for a template the data does not carry - Foraging off). BENCH-ARROWS (FIELD BUGS 2026-10-15c): the Arrow's weight
+ *  is the classic Arrow's, 0.25 kg - never a mod's patch: Roleplay & Realism: Items' 0.1 (on by default, forced online)
+ *  made a Twig five arrows, so four were the workbench's twenty without its plank and its ingot. */
 export function fletchYield(item) {
   if (!FLETCH_TEMPLATES.includes(item?.templateIndex)) return 0;
   const wood = templateByIndex(item.templateIndex)?.baseWeight ?? 0;
-  const arrow = templateByIndex(ARROW_TEMPLATE)?.baseWeight ?? 0;
+  const arrow = ITEM_TEMPLATES[ARROW_TEMPLATE]?.baseWeight ?? 0;
   return wood > 0 && arrow > 0 ? Math.floor(wood / arrow + 1e-9) : 0;
 }
 

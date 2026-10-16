@@ -1,6 +1,6 @@
 # The Shipyards, the Crew Halls and the Lighthouses (SHIPYARDS)
 
-> DF-ART (2026-10-14, `01-Overview/DF-Art.md`): the port's pictures, painted here from noise, are Daggerfall's own records now (`world/portArt.js` PORT_SOURCES), read off the frame; the SHIPS and CREW boards Daggerfall's planks with their words lettered on (Mac: "Bring back the sign text"); the beacon's flame Daggerfall's brazier fire (210_0) cut from over its bowl.
+> DF-LOOK (2026-10-15, `01-Overview/DF-Art.md`): the port's pictures - the SHIPS and CREW boards and the beacon's flame among them - are painted here again (DF-ART's swap to Daggerfall's records reverted), laid on in Daggerfall's colours as they go up - grained and snapped to the player's own ART_PAL.COL (`world/dfLook.js`); the flame's own light stays as painted.
 
 THE PORT'S OWN (2026-10-11). Mac: *"I want to give ports the same treatment we did wagons and horses. A new highly
 detailed shipmaster vendor and crew recruitment station within it. All detailed functions including ship upgrading

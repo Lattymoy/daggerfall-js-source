@@ -1,6 +1,6 @@
 # The three wagons (WAGONS1, 2026-10-09)
 
-> DF-ART (2026-10-14, `01-Overview/DF-Art.md`): the wagons' and the caravan's pictures, painted here from noise in WAGONS1-WAGONS3, are Daggerfall's own records now, read from the player's ARENA2 (`world/wagonArt.js` WAGON_SOURCES, LOOK_PICTURES); the caravan's walls a swatch with Daggerfall's leaded window and door laid in, the glass still cut so the room is seen through it; its painted livery gone.
+> DF-LOOK (2026-10-15, `01-Overview/DF-Art.md`): the wagons' and the caravan's pictures, painted here in WAGONS1-WAGONS3, are worn again, the caravan's livery and the wheels among them (DF-ART's swap to Daggerfall's records reverted), laid on in Daggerfall's colours as they go up - grained and snapped to the player's own ART_PAL.COL (`world/dfLook.js`), each paint with its built record's grain; the caravan's glass still cut, so the room is seen through it.
 
 Mac, sending `Wagon_Cart_1.fbx`, `Wagon_1.fbx` and `Caravan_1-1.fbx`:
 "Here are 3 new models that will need to be textured 1. Is a replacement

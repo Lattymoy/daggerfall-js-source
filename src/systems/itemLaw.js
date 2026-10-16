@@ -92,8 +92,10 @@ import './naval/treasureCharts.js';   // CAPT-CHARTS: the treasure chart
  *  to 2: a weapon's technique line (systems/lootRarity.js AFFIX_KINDS.technique) is lawful from it on, so a finding a law
  *  of 1 made against one is a finding to ask again. BAL9c moved it to 3: the caster's potency and wellspring lines and
  *  the arcane three (lootRarity.js ARCANE_LEGENDARIES) are lawful from it on. HACKED-GOLD moved it to 4: a letter of
- *  credit's worth and a coin pile's count past one count (GOLD_INT_MAX, below) are findings from it on. */
-export const ITEM_LAW_VERSION = 4;
+ *  credit's worth and a coin pile's count past one count (GOLD_INT_MAX, below) are findings from it on. GILDED2 moved it to
+ *  5: the Gilded rung's two new records (systems/gilded.js - the Dragonfire Oath, the Sunken Sovereign) are lawful from it
+ *  on, so a finding a law of 4 made against one is a finding to ask again. */
+export const ITEM_LAW_VERSION = 5;
 
 const T = ENCHANTMENT_TYPES;
 const TYPE_KEY = Object.freeze(Object.fromEntries(Object.entries(T).map(([k, v]) => [v, k])));

@@ -312,6 +312,7 @@ on:
       - "src/world/terrainSurface.js"
       - "src/world/terrainTiles.js"
       - "src/world/waterCorners.js"
+      - "src/world/weather.js"
       - "src/systems/partyScale.js"
       - "src/systems/books.js"
       - "src/systems/booksData.js"

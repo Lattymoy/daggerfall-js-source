@@ -744,10 +744,10 @@ export function createLivingRoads(deps) {
       timer = ROADS_TICK_S; sweep = null; readAt = null;   // LW-PERF: read again whole, at once - a read under way began before the deed
       return res.id;
     },
-    /** LW7: a word's tone - a courteous one (tone 0) or a blunt one (tone 2), each once a day. */
-    toned(person, tone) {
+    /** LW7: a word's tone, each once a day - TONE-TASTE: as they took it (livingTown.js toned's law), kindly (1) or ill (-1). */
+    toned(person, taste) {
       const id = person?.living?.id;
-      const kind = tone === 0 ? 'polite' : tone === 2 ? 'insulted' : null;
+      const kind = taste > 0 ? 'polite' : taste < 0 ? 'insulted' : null;
       if (!id || !kind) return null;
       deps.relations?.()?.note(id, kind, dayOf(deps.clock()));
       return id;

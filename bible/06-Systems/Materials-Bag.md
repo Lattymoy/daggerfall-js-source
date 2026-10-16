@@ -105,6 +105,16 @@ move only the count. A realm trade moves save records and no count - so the rece
 counted, by the same law; letting the count travel with a trade is the owner's call. Pinned by
 `test/fb1009c_uncounted.test.js`; `tools/mutants/fb1009c_uncounted.json` (7, all dead; `bag1.json`'s B6 and
 `goldmarket.json`'s stores-total records re-aimed by content).
+**LOOT-LOOSE (FIELD BUGS 2026-10-15c, "a lot of alchemy and some other ingredients when looted from a dungeon are
+unstorable", a second player confirming; Mac, asked: "Store as loose").** The page's Put in and Put everything in take
+the units past the count now, as **loose** - BAG-CRAFT's origin (section 15), by its `work` order: what the service counts
+goes first by `all`, every origin as it was, then the rest held by `work` (`src/ui/profPages.js`; the host hands the
+order through, `world.js` deposit). Loose units serve every crafting station and never a writ, the guild Stores or a
+Drakes listing (`WRIT_ORIGINS`), so law 3's wall stands: nothing past the count reaches the economy. The card says
+"N loose" and the picked bar says what loose means. No service change - a `work` put-in was already a request any
+client may send (AUDIT BAG-CRAFT A1). `bagLaw.js`'s note that the Stores page's Put in moves only what the service
+handed out is superseded by this paragraph (left as written: an edit there redeploys the account service). Pinned in
+`test/fb1009c_uncounted.test.js` (PIN MOVED: Put in had been shut); `fb1009c_uncounted.json` 11, all dead.
 **And a writ's card names them too** (WRIT-WALL, FIELD BUGS 2026-10-13e, 2026-10-13, "Cant turn in writs": 100 Iron
 in the pack, a chapter writ for 40 of it reading "0 held", Take shut, and a hover that said "Not enough - your Stores,
 Materials Bag and pack together"). UNCOUNTED fixed the silence on the Stores page alone; a writ counts what law 3 and
@@ -137,8 +147,8 @@ reopens exactly that door - unless the service knows what it handed out. So it c
   the goods walled from every Marks act go first and a character's own (which raise a seat's influence) last. **It is
   never raised**: a pack holding more than the count adds nothing.
 - So a save-edited Red Rose, a looted one and a gathered one are one item in the pack - and **only the gathered one is
-  counted**. A deposit by the Stores page, a writ or the market never moves more than the count, and never gold's to a
-  station. What enters the Stores from the bag by those doors is exactly what the service handed out: law 3's
+  counted**. A deposit by a writ or the market never moves more than the count, and never gold's to a station; the
+  Stores page's moves the rest as loose (LOOT-LOOSE, section 4). What enters the Stores from the bag by those doors is exactly what the service handed out: law 3's
   guarantee, kept with the door open one way more. A station's own put-in is the exception, by the owner's word
   (BAG-CRAFT, section 14): it moves what the pack holds past the count too, as **loose** - a station's alone (section 15).
 - A lie about `held` can only cut the count, never raise it. **What it bounds and what it does not**: a client may say

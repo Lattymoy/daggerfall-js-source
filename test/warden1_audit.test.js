@@ -14,7 +14,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
   validParkData, parkKeyOf, parkKey, PIXEL_UNITS, WARDEN_ROAD_MS, WARDEN_TOWN_CAP, WARDEN_LAND_REACH, POSE_BOUND, PARK_ACCOUNT_MAX,
-  wardenVerdicts, validParkYeet, parkSameSpot, WARDEN_SPOT_NATIVES, WARDEN_RETRY_MS, cellRoomOfWire, mapPixelOfWire,
+  wardenVerdicts, validParkYeet, parkSameSpot, WARDEN_SPOT_NATIVES, WARDEN_RETRY_MS, cellRoomOfWire, mapPixelOfWire, CLOSE_REPLACED,
 } from '../src/net/wire.js';
 import { fakeRooms } from './fakeRoom.mjs';
 import {
@@ -158,19 +158,29 @@ test('AUDIT WARDEN1 R4: a round the cell cannot make (its park list refused) is 
   });
 });
 
-test('AUDIT WARDEN1 C6/D8: the cell\'s word to the owner names whose team (`k`), and only the socket that spoke for it hears it - another character\'s socket of the same account does not (mutants: the frame unnamed, every socket of the account told, the re-sayer\'s socket ignored)', async () => {
+test('AUDIT WARDEN1 C6/D8: the cell\'s word to the owner names whose team (`k`), and only the socket that spoke for it hears it - another character\'s socket of the same account does not (mutants: the frame unnamed, every socket of the account told, the re-sayer\'s socket ignored) - ONE-BODY (PIN MOVED): a second tab replaces the first in a place', async () => {
   await onClock(async ({ step }) => {
     const { w, park, join } = await world();
-    const a1 = await join(X, 'ann1', 'acct-ann1'), a2 = await join(X, 'ann2', 'acct-ann1'), bob = await join(X, 'bob1');
+    const a1 = await join(X, 'ann1', 'acct-ann1'), bob = await join(X, 'bob1');
     const k = await parkKeyOf('acct-ann1', 'char-ann-0001');
     await park(X, a1, { c: 'char-ann-0001', a: [AX, AZ], r: { w: W(), ly: LY, tw: 77, rd: 1 } });
+    // PIN MOVED (ONE-BODY, FIELD BUGS 2026-10-15c): this stood her two characters' sockets in the cell at once - the first
+    // told of its team's throw, the second (her account, another character) not, and the first alone told again as it
+    // re-said the spot. A cell stands one body an account now (server/src/index.js the hello's one-socket law): her
+    // second tab's hello closes the first (CLOSE_REPLACED). The watch's word is still the socket's that speaks for the
+    // team, never the account's: her ONE socket here, speaking for another character, is not told of the throw; a tab
+    // back on the thrown character is told, named, as it says the spot again.
+    const a2 = await join(X, 'ann2', 'acct-ann1');
+    assert.equal(a1.closed?.code, CLOSE_REPLACED, 'a place: her second tab replaces the first');
     await park(X, a2, { c: 'char-ann-0002', a: [AX + 900, AZ], r: { w: W(AX + 900) } });
     step(WARDEN_ROAD_MS);
     await w.room(X).ping(bob);
-    assert.deepEqual(framesOf(a1, 'parkYeet').map((f) => f.k), [k]);
-    assert.equal(framesOf(a2, 'parkYeet').length, 0, 'her other character\'s socket');
-    await park(X, a1, { c: 'char-ann-0001', a: [AX, AZ], r: { w: W(), ly: LY, tw: 77, rd: 1 } });
-    assert.equal(framesOf(a1, 'parkYeet').length, 2, 're-said: told');
+    assert.ok(Number.isFinite(w.room(X).store.get(parkKey(k)).y), 'her first character\'s team thrown');
+    assert.equal(framesOf(a2, 'parkYeet').length, 0, 'her other character\'s socket - her one body here - is not told');
+    const a3 = await join(X, 'ann3', 'acct-ann1');   // her first character again, in a tab of its own
+    assert.equal(a2.closed?.code, CLOSE_REPLACED);
+    await park(X, a3, { c: 'char-ann-0001', a: [AX, AZ], r: { w: W(), ly: LY, tw: 77, rd: 1 } });
+    assert.deepEqual(framesOf(a3, 'parkYeet').map((f) => f.k), [k], 're-said: told, and named');
     assert.equal(framesOf(a2, 'parkYeet').length, 0, 'and only the one that re-said it');
   });
   assert.deepEqual(validParkYeet({ at: 1, from: [AX, AZ], to: LY, k: 'b'.repeat(24) }).k, 'b'.repeat(24));

@@ -2,8 +2,8 @@
   {
     "name": "CRATEFREE-lid-facing",
     "file": "src/characters/foeSpacing.js",
-    "old": "  if (lid?.back !== true || !Number.isFinite(lid.dist)) return false;",
-    "new": "  if (lid?.back === true || !Number.isFinite(lid?.dist)) return false;",
+    "old": "  const lidded = lid?.back === true && Number.isFinite(lid.dist);",
+    "new": "  const lidded = lid?.back !== true && Number.isFinite(lid?.dist);",
     "tests": [
       "test/fb1004d_cratefree.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "CRATEFREE-walls-three",
     "file": "src/characters/foeSpacing.js",
-    "old": "  return walls >= 2;",
-    "new": "  return walls >= 3;",
+    "old": "  return walls >= (lidded ? 2 : KNEE_BEARINGS.length);",
+    "new": "  return walls >= (lidded ? 3 : KNEE_BEARINGS.length);",
     "tests": [
       "test/fb1004d_cratefree.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "CRATEFREE-walls-none",
     "file": "src/characters/foeSpacing.js",
-    "old": "  return walls >= 2;",
-    "new": "  return walls >= 0;",
+    "old": "  return walls >= (lidded ? 2 : KNEE_BEARINGS.length);",
+    "new": "  return walls >= (lidded ? 0 : KNEE_BEARINGS.length);",
     "tests": [
       "test/fb1004d_cratefree.test.js"
     ],
@@ -218,5 +218,25 @@
       "test/fb1004d_cratefree.test.js"
     ],
     "note": "an imp handed its feet over a house floor inside a crate is freed onto the floor, off its height"
+  },
+  {
+    "name": "QUEST-FOE-WALL-the-column-unheld",
+    "file": "src/characters/foeSpacing.js",
+    "old": "  return walls >= (lidded ? 2 : KNEE_BEARINGS.length);",
+    "new": "  return walls >= (lidded ? 2 : Infinity);",
+    "tests": [
+      "test/fb1004d_cratefree.test.js"
+    ],
+    "note": "no lid, nobody held: a body inside a pillar that runs to the ceiling stays in it (FIELD BUGS 2026-10-15c)"
+  },
+  {
+    "name": "QUEST-FOE-WALL-the-open-room-held",
+    "file": "src/characters/foeSpacing.js",
+    "old": "  return walls >= (lidded ? 2 : KNEE_BEARINGS.length);",
+    "new": "  return walls >= (lidded ? 2 : 2);",
+    "tests": [
+      "test/fb1004d_cratefree.test.js"
+    ],
+    "note": "no lid and two walls enough: a body in a corridor of model shells meeting two backs reads lodged"
   }
 ]

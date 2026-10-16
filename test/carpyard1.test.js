@@ -17,9 +17,7 @@ import { FOUND_KIND_ORDER, PORT_PLACE_ORDER, foundBuildingKey } from '../src/sys
 import { WORKBENCH_FEE } from '../src/net/professionLaw.js';
 import { yardGround, yardSitesOn, craftYardSitesOn, YARD_FOOT, YARD_GAP_M, YARD_PAD_M } from '../src/world/merchantYardSites.js';
 import { buildYardModel, buildCarpenterModel, CARPENTER_YARD, SIGN_BOARD, signBoxOf, yardPoints, benchBoxOf, YARD_SINK } from '../src/world/merchantYardModels.js';
-import { YARD_SOURCES, YARD_ARCHIVE, YARD_REC, signGlyph, wordCells, SIGN_EMBLEM, SIGN_PAINT } from '../src/world/merchantYardArt.js';
-import { DF, classicPictures } from '../src/world/classicArt.js';
-import { fakeClassicRgba, texelOf } from './classicArtFake.mjs';
+import { yardArt, yardSignArt, YARD_ARCHIVE, YARD_REC, signGlyph, SAW_BLADE, SIGN_EMBLEM } from '../src/world/merchantYardArt.js';
 import { createMerchantYards, yardToScene, YARD_REACH, YARD_BENCH_RISE } from '../src/scenes/merchantYardsHost.js';
 import { yardTownBlocks, YARD_MAP_BYTE } from '../src/world/merchantYardMap.js';
 import { quarterOf } from '../src/ui/townQuarters.js';
@@ -158,24 +156,22 @@ test('CARP-YARD THE TIMBER: the joinery the port\'s own geometry inside its grou
   assert.equal(yardPoints('transport').bench, null);
 });
 
-test('CARP-YARD THE ART (DF-ART, Mac: "use daggerfall textures instead of AI generated"): fourteen pictures by record, the joinery\'s four besides the yards\' ten - its board Daggerfall\'s planks with Daggerfall\'s own shop sign of an axe and a sword (333_18) at its left and JOINERY lettered beside it, every letter drawn (J and Y the board\'s new two; Mac: "Bring back the sign text"), the sign clear of the word; its floor\'s shavings straw, its logs\' bark and their sawn ends (mutants: the stable\'s board, a letter lost)', async () => {
-  assert.deepEqual(Object.keys(YARD_SOURCES).map(Number), [...Array(14).keys()]);
+test('CARP-YARD THE ART: fourteen pictures by record, the joinery\'s four besides the yards\' ten; its board the hand saw and JOINERY - every letter drawn (J and Y the board\'s new two), the saw clear of the word, its own board the same twice and like no other (mutants: the saw over the word, a letter lost)', () => {
+  const art = yardArt();
+  assert.deepEqual(art.map(([r]) => r), [...Array(14).keys()]);
   assert.deepEqual([YARD_REC.signCarpenter, YARD_REC.shavings, YARD_REC.endgrain, YARD_REC.bark], [10, 11, 12, 13]);
-  const board = YARD_SOURCES[YARD_REC.signCarpenter];
-  assert.deepEqual(board.insets.map((i) => i.from), [[333, 18]], 'Daggerfall\'s shop sign: an axe and a sword');
-  assert.deepEqual(DF.toolsSign, [333, 18]);
   for (const ch of YARD_KINDS.carpenter.sign) assert.ok(signGlyph(ch), `"${ch}" is drawn`);
   assert.deepEqual(signGlyph('J'), ['..###', '....#', '....#', '....#', '#...#', '#...#', '.###.']);
   assert.deepEqual(signGlyph('Y'), ['#...#', '#...#', '.#.#.', '..#..', '..#..', '..#..', '..#..']);
-  const img = new Map(await classicPictures({ [YARD_REC.signCarpenter]: board }, fakeClassicRgba())).get(YARD_REC.signCarpenter);
-  const at = (x, y) => [...img.data.slice((y * img.width + x) * 4, (y * img.width + x) * 4 + 3)];
-  const { x0, y0, x1, y1 } = board.insets[0].px;
-  assert.deepEqual(at((x0 + x1) >> 1, (y0 + y1) >> 1), texelOf(333, 18), 'the shop sign at the board\'s left');
-  const cells = wordCells(YARD_KINDS.carpenter.sign, img.width, img.height, SIGN_EMBLEM);
-  assert.ok(cells.every(([x]) => x > x1 + 1), 'the word clear of the sign');
-  for (const [x, y] of cells) assert.deepEqual(at(x, y), [...SIGN_PAINT], `JOINERY at ${x},${y}`);
-  assert.notDeepEqual(board, YARD_SOURCES[YARD_REC.signStable]);
-  assert.deepEqual([YARD_SOURCES[YARD_REC.shavings], YARD_SOURCES[YARD_REC.endgrain], YARD_SOURCES[YARD_REC.bark]], [DF.straw, DF.endGrain, DF.bark]);
+  const board = yardSignArt('carpenter');
+  assert.deepEqual(board.colors, yardSignArt('carpenter').colors);
+  assert.notDeepEqual(board.colors, yardSignArt('stable').colors);
+  assert.notDeepEqual(board.colors, yardSignArt('transport').colors);
+  assert.ok(SAW_BLADE.x1 + 1 < SIGN_EMBLEM + 8, 'the saw\'s painted edge stops short of the word');
+  // the blade is steel on the board: a texel in its middle is grey (its channels near each other), not the board's brown
+  const at = (x, y) => { const i = (y * board.width + x) * 4; return [board.colors[i], board.colors[i + 1], board.colors[i + 2]]; };
+  const mid = at(Math.round((SAW_BLADE.x0 + SAW_BLADE.x1) / 2), SAW_BLADE.back + 6);
+  assert.ok(Math.max(...mid) - Math.min(...mid) < 20 && mid[0] > 90, `the blade grey: ${mid}`);
 });
 
 function rig(sites) {

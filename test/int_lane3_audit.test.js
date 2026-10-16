@@ -16,7 +16,7 @@ import { COURT_CENTRE, ATTACKS, profileOf, BRAIN_TICK_MS, HIT_KINDS, GATE_FIGHTE
 import { gateTimes, gateRoomKey } from '../src/net/gateLaw.js';
 import {
   GATE_BRAIN_V, GATE_HZ_MAX, SERPENT_HZ_MAX, SD_FIGHT_HZ, BODY_WORD_HZ_MAX, bodyWordGate, bodyWordRelayGate, RELAY_VERSION, BOSS_REF_RELAY_MIN,
-  PIXEL_UNITS, cellRoomOfWire, serpentFightId, worldRoom,
+  PIXEL_UNITS, cellRoomOfWire, serpentFightId, worldRoom, CLOSE_REPLACED,
 } from '../src/net/wire.js';
 import { serpentTimes, serpentSiteKey, SERPENT_BRAIN_V, SERPENT_NATIVE_PER_M } from '../src/net/serpentLaw.js';
 import { SERPENT_ATTACK_TABLE, SERPENT_TICK_MS, SERPENT_ABSENT_RETIRE_MS } from '../src/net/serpentBrain.js';
@@ -233,26 +233,36 @@ test('AUDIT INT11 A TRAIL A SOCKET\'S, A FIGHTER\'S, WHILE ITS FIGHT LIVES: a co
   });
 });
 
-test('AUDIT INT11 A SECOND SOCKET IS NO DECOY: a ship\'s body is judged on the trail of the socket that speaks for her (her newest here), however another of her sockets poses far off - and a volley from any but that socket lands nothing (mutants: the trail by account; a volley from any socket)', async () => {
+test('AUDIT INT11 A SECOND SOCKET IS NO DECOY: a ship\'s body is judged on the trail of the socket that speaks for her (her newest here), however another of her sockets poses far off - and a volley from any but that socket lands nothing (mutants: the trail by account; a volley from any socket) - ONE-BODY (PIN MOVED): a second tab replaces the first in a place', async () => {
   await withSea(async ({ r, say, tick, now, set }) => {
     const { a, f, p, cruise } = await twoShips({ r, say, tick, now });
+    // PIN MOVED (ONE-BODY, FIELD BUGS 2026-10-15c): this stood three sockets of her account in the serpent's cell at once -
+    // `a`, a decoy posing far off and the newest near - and judged her body on the newest's trail, the decoy's poses read
+    // for nothing. A cell stands one body an account now (server/src/index.js the hello's one-socket law): each newer hello
+    // of hers closes the one before it (CLOSE_REPLACED), so no decoy of hers poses beside the socket that speaks for her
+    // (the serpent fights in a cell alone - no room the law leaves out holds her). What stands: her body judged on the
+    // trail of the socket that speaks for her, its volley landing - and a volley the socket her newest replaced still had
+    // on the wire landing nothing, however near (the `own` guard, below).
     const decoy = r.connect(); await r.hello(decoy, 'peer-0007', sat(900, 900), { tokenSub: 'acct-peer-0001' });
+    assert.equal(a.closed?.code, CLOSE_REPLACED, 'a place: her second socket replaces the first');
     const real = r.connect(); await r.hello(real, 'peer-0008', sat(150, 0), { tokenSub: 'acct-peer-0001' });   // newest: hers
-    await say(a, { k: 'vt', v: 1000 }); await say(real, { k: 'vt', v: 1000 });
-    for (let i = 0; i < 6; i++) { set(now() + 50); await r.pose(decoy, sat(900, 900)); await r.pose(real, sat(150, 0)); }
+    assert.equal(decoy.closed?.code, CLOSE_REPLACED, 'and her third the second - no decoy stands beside her');
+    await say(real, { k: 'vt', v: 1000 });
+    for (let i = 0; i < 6; i++) { set(now() + 50); await r.pose(real, sat(150, 0)); }
     lash(f, now());
-    for (let i = 0; i < LANDED; i++) { await tick(1); await r.pose(decoy, sat(900, 900)); }
-    assert.ok(p.bd.t > 0, 'struck where her own socket stands, the decoy\'s poses read for nothing');
+    for (let i = 0; i < LANDED; i++) await tick(1);
+    assert.ok(p.bd.t > 0, 'struck where her own socket stands');
     set(now() + 1000); cruise();
     let dealt = p.dealt;
     await say(real, { k: 'hit', d: 50, z: 0 });
     assert.ok(p.dealt > dealt, 'from the socket that speaks for her, a volley lands');
     // the cheat the other way: a socket newer still, far off, speaks for her body - a volley from the near one is no one's
     const far = r.connect(); await r.hello(far, 'peer-0006', sat(900, 900), { tokenSub: 'acct-peer-0001' });
+    assert.equal(real.closed?.code, CLOSE_REPLACED, 'the near one replaced');
     set(now() + 1000); cruise();
     dealt = p.dealt;
     await say(real, { k: 'hit', d: 50, z: 0 });
-    assert.equal(p.dealt, dealt, 'a volley from a socket that does not speak for her lands nothing, however near');
+    assert.equal(p.dealt, dealt, 'a volley the replaced socket still had on the wire lands nothing, however near');
   });
 });
 

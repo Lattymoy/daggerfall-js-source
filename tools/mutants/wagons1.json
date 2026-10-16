@@ -28,14 +28,11 @@
     "tests": ["test/wagons1.test.js"]
   },
   {
-    "name": "WAGONS1-the-sides-the-floors",
+    "name": "WAGONS1-a-seed-from-the-clock",
     "file": "src/world/wagonArt.js",
-    "old": "[TEX.side]: DF.hullPlanks,",
-    "new": "[TEX.side]: DF.deck,",
-    "tests": [
-      "test/wagons1.test.js"
-    ],
-    "why": "DF-ART (re-aimed: no seed - Daggerfall's records): the sides read from the floor's record"
+    "old": "r = mulberry32(0xa32);",
+    "new": "r = mulberry32((performance.now() * 1e6) | 0);",
+    "tests": ["test/wagons1.test.js"]
   },
   {
     "name": "WAGONS1-the-lift-dropped",

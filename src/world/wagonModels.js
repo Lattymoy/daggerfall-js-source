@@ -28,9 +28,8 @@
 // height, everything else tiled planar (world/galleonMesh.js planarUv), the wheels' faces and the caravan's ends laid
 // whole on their pictures - the cart's on its LEVEL frame (`cartLevel`), the caravan's sides from their middle
 // (`caravanSideU`). Not a DFU member. Ledger A (WAGONS1).
-import { WAGON_ARCHIVE, TEX, WAGON_TILE, BANDS, WAGON_SOURCES, CARAVAN_SIDE_WINDOW_U } from './wagonArt.js';
-import { classicPictures } from './classicArt.js';   // DF-ART: the wagons' pictures, Daggerfall's own
-import { classicRgbaOf } from '../systems/textureReplacement.js';
+import { WAGON_ARCHIVE, TEX, WAGON_TILE, BANDS, wagonArt, CARAVAN_SIDE_WINDOW_U } from './wagonArt.js';
+import { dfLook, lookSeed } from './dfLook.js';   // DF-LOOK: the icon's wagon in the colours the world's wears
 import { toColor32 } from '../formats/color32Order.js';
 import { MeshBench, prism, box, planarUv, sub, add, dot } from './galleonMesh.js';
 import { benchPart } from './galleonModel.js';
@@ -381,7 +380,7 @@ export function seatsFor(kind) {
   return at.slice(0, n).map(([sx, z, yaw]) => Object.freeze({ feet: Object.freeze([sx, y, z]), yaw }));
 }
 
-/** The caravan's door: on its rear end, where its door's picture stands (world/wagonArt.js CARAVAN_DOOR) - the point
+/** The caravan's door: on its rear end, where its painted door stands (world/wagonArt.js caravanEndArt) - the point
  *  in front of it (lifted frame) a player walks out of the caravan onto, and the way they face (the wagon's, back). */
 export function doorFor(kind) {
   if (kind !== 'caravan') return null;
@@ -483,12 +482,12 @@ export function wagonPoolDeps(items, fetchFn = (u) => globalThis.fetch(u)) {
 }
 
 /** WAGONS1: an item's picture of a wagon of `kind` (ui/modelIcon.js's port door): the whole wagon as one model, its
- *  pictures read from the player's own ARENA2 (DF-ART: world/wagonArt.js WAGON_SOURCES) - `{ model, texels(archive,
- *  record) }`, the shape the icon's rasteriser takes. */
-export async function wagonIconSource(kind, fetchFn = (u) => globalThis.fetch(u), classicRgba = classicRgbaOf) {
+ *  pictures painted here (DF-LOOK: in Daggerfall's colours, as scenes/horseCartPool.js uploads them) - `{ model,
+ *  texels(archive, record) }`, the shape the icon's rasteriser takes. */
+export async function wagonIconSource(kind, fetchFn = (u) => globalThis.fetch(u)) {
   const r = await fetchFn(WAGON_MODEL_URLS[kind]);
   if (!r?.ok) throw new Error(`the ${kind}'s model: HTTP ${r?.status}`);
   const model = wagonIconModel(wagonGeometry(await r.json()));
-  const pics = new Map((await classicPictures(WAGON_SOURCES, classicRgba)).map(([rec, pic]) => [rec, toColor32(pic)]));
+  const pics = new Map(wagonArt().map(([rec, pic]) => [rec, toColor32(dfLook(pic, lookSeed(WAGON_ARCHIVE, rec)))]));
   return { model, texels: (arc, rec) => (arc === WAGON_ARCHIVE ? pics.get(rec) ?? null : null) };
 }

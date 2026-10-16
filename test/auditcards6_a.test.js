@@ -283,12 +283,16 @@ test('AUDIT CARDS-6 A8: the card\'s picture is drawn LAST in its hoard - every e
     ]) {
       // PIN MOVED (GEM2, bible/06-Systems/Gem-Sockets.md): the boss's gems' pictures are drawn after the card's - every
       // record before them still the look-stream's draw it was
+      // PIN MOVED (AUDIT WORLD-REWARDS A1, bible/01-Overview/Audit-World-Rewards.md): the Gate's Dragonfire Oath's picture
+      // is drawn after the gems' - every record before it still the look-stream's draw it was
+      const oath = name === 'gate' ? list.filter((p) => p.tier === 'gilded') : [];
       const cards = list.filter((p) => p.item?.templateIndex === 581);
       const gems = list.filter((p) => gemKindOf(p.item));
-      const rest = list.filter((p) => p.item?.templateIndex !== 581 && !gemKindOf(p.item));
+      const rest = list.filter((p) => p.item?.templateIndex !== 581 && !gemKindOf(p.item) && !oath.includes(p));
       for (const p of rest) assert.equal(p.record, icon(look), `${name} seed ${s}: ${p.kind} ${p.item?.name ?? ''}`);
       for (const c of cards) assert.equal(c.record, icon(look), `${name} seed ${s}: the card, after them`);
-      for (const g of gems) assert.equal(g.record, icon(look), `${name} seed ${s}: the gems, last`);
+      for (const g of gems) assert.equal(g.record, icon(look), `${name} seed ${s}: the gems, after the card`);
+      for (const o of oath) assert.equal(o.record, icon(look), `${name} seed ${s}: the Oath, last`);
       assert.equal(gems.length, name === 'gate' ? 1 : 2);
       if (cards.length && name === 'gate') gate++;
       if (cards.length && name === 'abyss') abyss++;

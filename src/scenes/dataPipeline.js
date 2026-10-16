@@ -16,6 +16,7 @@ import { dfMeshToModel } from '../world/meshReader.js'; import { patchSeams } fr
 import { fetchBytes, texName } from './shared.js';
 import { decodedTexture, preloadTextureArchive, isVendorArchive, vendorTextureStandIn, setTextureDeriveContext, textureTierEpoch } from '../systems/textureReplacement.js';   // M-TEX: user-supplied textures override the classic ones; AUDIT VE R1: the tiers' epoch
 import { classicRecordRgba } from '../formats/derivedTexture.js';   // WD2: a mod sprite rebuilt from the player's own record
+import { setDfLookPalette } from '../world/dfLook.js';   // DF-LOOK: the port's own painted pictures in this palette's colours
 import { customModelBuilt, customAliasFor, aliasSubMeshes, customModelNeeds } from '../world/customModels.js';   // DS1: models no ARCH3D carries; WD3: a classic model with its pictures swapped
 import { dyeToken, changeDyeBitmap } from '../characters/dyes.js';   // DW3: the per-dye UI variant; DYE-ICON: and the classic arm's ChangeDye
 import { ROTOR, MACHINERY, MACHINERY_MODEL_ID, MACHINERY_CHILDREN, PLANK_GEAR, ROLLER } from '../world/windmillMesh.js';   // WM2b/WM2d/WM4b: the vendored mill and its machinery, uploaded like any other model
@@ -152,6 +153,9 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
       return !t || t.vendor ? null : t.getScale(record);
     },
   });
+  // DF-LOOK: the port's own painted pictures (the ships, the wagons, the yards, the port, the monument, the town's
+  // hangings) go up grained and snapped to the palette every TEXTURE record is drawn in - this host's ART_PAL.COL
+  setDfLookPalette(palette);
   // AUDIT GN2-PF5: THE ARCHIVES WHOSE STAND-INS ARE CLASSIC ART - the port's own pictures standing where a TEXTURE file
   // would (the new galleon's 38131: a hull's planking, as ARENA2's is every other hull's), uploaded as a classic record
   // is, so Retro Mode's no-mip cap reaches them. Every other stand-in is a mod's picture, TryImportTexture's, never
@@ -164,7 +168,7 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
     return { width: t.getWidth(record), height: t.getHeight(record) };
   };
   const _standInMisses = new Set();   // WD3: the stand-in records said once each
-  const uploadRecord = (archive, record, { opaque = false, mips, removeMask = false, dye = null, dyeTarget = null, cutout = false } = {}) => {   // DYE-ICON: `dyeTarget` - the swatch the classic arm dyes (itemDye.js itemDyeTarget)   // DW3: `dye` - GetItemImage asks the replacement by the item's dye (ItemHelper.cs:458); the icon uploads under a per-dye variant and answers which   // REVIEW 2026-09-05: `mips: false` for item icons (ImageReader.cs:59 builds UI art with no chain); HM1: `removeMask` = ItemHelper's GetItemImage(removeMask: true), the item icons' door - 0xFF becomes the cutout before the upload   // DF-ART: `cutout` - a model's picture whose glass is seen through (renderer.uploadTexture's RW1 cut-out; the port's ships' windows)
+  const uploadRecord = (archive, record, { opaque = false, mips, removeMask = false, dye = null, dyeTarget = null, cutout = false } = {}) => {   // DYE-ICON: `dyeTarget` - the swatch the classic arm dyes (itemDye.js itemDyeTarget)   // DW3: `dye` - GetItemImage asks the replacement by the item's dye (ItemHelper.cs:458); the icon uploads under a per-dye variant and answers which   // REVIEW 2026-09-05: `mips: false` for item icons (ImageReader.cs:59 builds UI art with no chain); HM1: `removeMask` = ItemHelper's GetItemImage(removeMask: true), the item icons' door - 0xFF becomes the cutout before the upload   // DF-LOOK (DF-ART II's, kept): `cutout` - a model's picture whose glass is seen through (renderer.uploadTexture's RW1 cut-out; the port's ships' stern windows)
     const t = textureFiles.get(archive); freshen(archive);   // AUDIT VE R1
     const bitmap = t.getDFBitmap(record, 0);
     // Spectral archives (ghost/wraith/Lysandus) take the verbatim

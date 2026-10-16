@@ -90,7 +90,7 @@ test('AUDIT 68 S04-strike-edge-cut: a melee strike that cuts a bow release is a 
   const a = new EnemyAttack({ liveSpeed: 50, rolls: () => 0.001 });
   a.rangedAttack = true;
   setSeed(12345);
-  const ai = { _dist: 10, feet: [0, 0, 0], yaw: 0, inSight: true, detected: true, giveUpTimer: 200, canAct: true };
+  const ai = { _dist: 10, feet: [0, 0, 0], yaw: 0, inSight: true, detected: true, giveUpTimer: 200, canAct: true, lastKnownTargetPos: [0, 0, 10] };   // INVIS-SWING: detected, straight down +z
   let latched = 0, edges = 0;
   const frame = (target) => { a.update(1 / 60, ai, target); if (a.swingSeq !== latched) { edges++; latched = a.swingSeq; } };
   for (let i = 0; i < 600 && a.machine.state === 'Idle'; i++) frame([0, 0, 10]);
@@ -122,7 +122,7 @@ test('AUDIT 68 S04-melee-timer-stale-level: ResetMeleeTimer reads the player lev
   a.meleeTimer = 0;
   setSeed(11);
   lvl = 20;
-  const ai = { _dist: 1, feet: [0, 0, 0], yaw: 0, inSight: true, detected: true, giveUpTimer: 200 };
+  const ai = { _dist: 1, feet: [0, 0, 0], yaw: 0, inSight: true, detected: true, giveUpTimer: 200, lastKnownTargetPos: [0, 0, 2] };   // INVIS-SWING: detected
   for (let i = 0; i < 60 && a.meleeTimer === 0; i++) a.update(1 / 16, ai, [0, 0, 2]);
   assert.equal(a.meleeTimer, resetMeleeTimer(20, 2, 0.5), 'the reset used the level of the moment');
   assert.equal(a.playerLevel, 20, 'and EnemyCaster\'s touch reset reads the same live value');

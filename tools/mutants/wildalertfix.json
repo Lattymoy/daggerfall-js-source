@@ -12,8 +12,8 @@
   {
     "name": "WAFIX-paused",
     "file": "src/scenes/world.js",
-    "old": "sdt = gamePaused() ? 0 : dt * worldTimeScale(), now = performance.now() / 1000;\n    for (const f of exteriorFoes.foes) {",
-    "new": "sdt = dt * worldTimeScale(), now = performance.now() / 1000;\n    for (const f of exteriorFoes.foes) {",
+    "old": "sdt = gamePaused() ? 0 : dt * worldTimeScale(), now = performance.now() / 1000;   // INVIS-SWING: my concealment, the check's\n    for (const f of exteriorFoes.foes) {",
+    "new": "sdt = dt * worldTimeScale(), now = performance.now() / 1000;   // INVIS-SWING: my concealment, the check's\n    for (const f of exteriorFoes.foes) {",
     "tests": [
       "test/wildalertfix.test.js",
       "test/wildalert.test.js"

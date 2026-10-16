@@ -152,13 +152,14 @@ test('HOLDINGS stableView: the pair as the page reads it - owned, its modes, a p
   walk(30, 90);
   const v = rt.stableView();
   assert.deepEqual({ ...v, wagonAt: undefined }, { persistence: true, transport: TRANSPORT.Foot, hasHorse: true, hasCart: true, horseName: '', wagonMode: WAGON_MODE.Deployed, horseMode: HORSE_MODE.HitchedToWagon,
+    wagonStabled: false, horseStabled: false,   // WAGON-STABLED (PIN MOVED): whether each was sent to the stable
     wagonAt: undefined, horseAt: null, out: true, inside: false, onShip: false, kg: 120, limit: 750 });
   assert.ok(v.wagonAt >= 32 && v.wagonAt <= 33, `the wagon 2.5 m behind where it was summoned, 30 m walked: ${v.wagonAt}`);
 });
 
 // ── the page ─────────────────────────────────────────────────────────────────────────────────────────────────────────
 
-test('HOLDINGS the Stable\'s words: each state of the pair a chip and a line - ridden, in harness, following, waiting how far, hitched to the parked wagon, parked, stabled; the classic transport\'s with the mod off or the persistence off; none owned none drawn', () => {
+test('HOLDINGS the Stable\'s words: each state of the pair a chip and a line - ridden, in harness, following, waiting how far, hitched to the parked wagon, parked, stabled (WAGON-STABLED: sent away), with you (the mod\'s WithPlayer never sent); the classic transport\'s with the mod off or the persistence off; none owned none drawn', () => {
   const view = (o) => ({ persistence: true, transport: TRANSPORT.Foot, hasHorse: true, hasCart: true, horseName: '', wagonMode: WAGON_MODE.WithPlayer, horseMode: HORSE_MODE.WithPlayer, wagonAt: null, horseAt: null, out: false, kg: 0, limit: 750, ...o });
   const at = (o) => stableWords({ hcc: true, hasHorse: true, hasCart: true, view: view(o) });
   assert.deepEqual([at({ transport: TRANSPORT.Horse }).horse.state, at({ transport: TRANSPORT.Cart }).horse.state, at({ transport: TRANSPORT.Cart }).wagon.state], ['Riding', 'In harness', 'Driving']);
@@ -167,7 +168,10 @@ test('HOLDINGS the Stable\'s words: each state of the pair a chip and a line - r
   assert.deepEqual(at({ horseMode: HORSE_MODE.LooseStationary, horseAt: 42 }).horse, { state: 'Waiting', tone: 'is-away', line: 'Waiting where you left it, 42 m away.' });
   assert.equal(at({ wagonMode: WAGON_MODE.Deployed, horseMode: HORSE_MODE.HitchedToWagon, wagonAt: 1500 }).horse.line, 'Hitched to your parked wagon, 1.5 km away.');
   assert.equal(at({ wagonMode: WAGON_MODE.Deployed, wagonAt: null }).wagon.line, 'Parked away from here.');
-  assert.deepEqual([at({}).horse.state, at({}).wagon.state], ['Stabled', 'Stabled']);
+  // WAGON-STABLED (PIN MOVED): Stabled is the runtime's word that the pair was sent away; the mod's WithPlayer without it is
+  // beside the player, and the next door parks it outside (test/fb1015_wagonstabled.test.js)
+  assert.deepEqual([at({ horseStabled: true, wagonStabled: true }).horse.state, at({ horseStabled: true, wagonStabled: true }).wagon.state], ['Stabled', 'Stabled']);
+  assert.deepEqual([at({}).horse.state, at({}).wagon.state], ['With you', 'With you']);
   assert.equal(stableWords({ hcc: false, hasHorse: true, hasCart: false }).horse.state, 'With you');
   assert.equal(stableWords({ hcc: false, hasHorse: true, hasCart: false }).wagon, null);
   assert.equal(stableWords({ hcc: true, hasHorse: false, hasCart: true, view: view({ persistence: false, hasHorse: false }) }).wagon.state, 'With you');
@@ -185,8 +189,8 @@ test('HOLDINGS the Stable page over the real runtime through the hosts\' one sea
   let re = 0;
   const draw = () => { const d = el('div', 'px-qdetail'); drawStablePage(d, () => { re++; }, kit); return d; };
   let d = draw();
-  assert.match(d.textContent, /Your horse.*Stabled/);
-  assert.match(d.textContent, /Your wagon.*Stabled/);
+  assert.match(d.textContent, /Your horse.*With you/);   // WAGON-STABLED (PIN MOVED): never sent away is not stabled
+  assert.match(d.textContent, /Your wagon.*With you/);
   assert.match(d.textContent, /0\/750/, 'the load against the wagon\'s limit');
   assert.equal(buttons(d, 'Send away').length, 0, 'nothing out to send');
   buttons(d, 'Summon')[0].onclick();
@@ -197,6 +201,9 @@ test('HOLDINGS the Stable page over the real runtime through the hosts\' one sea
   d = draw();
   assert.match(d.textContent, /go back to the stable/);
   assert.equal(state().Mode, WAGON_MODE.WithPlayer);
+  assert.match(d.textContent, /Your horse.*Stabled/);   // WAGON-STABLED: sent away, the cards say so
+  assert.match(d.textContent, /Your wagon.*Stabled/);
+  assert.equal(buttons(d, 'Send away').length, 0, 'nothing out to send');
   // the name, in place
   buttons(d, 'Rename horse')[0].onclick();
   d = draw();

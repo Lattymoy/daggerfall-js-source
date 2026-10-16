@@ -59,7 +59,7 @@ test('UNCOUNTED: a looted Troll\'s Blood is the material - the same item the min
   assert.equal(carryRows(fb, (k) => heldOf(friend, k), () => heldKeysOf(friend)).get(TROLL).uncounted, n);
 });
 
-test('UNCOUNTED: the Stores page lists the looted blood, says why it stays out, and offers no Put in for it - Put everything in moves the counted alone (mutants: the card silent; the why unsaid)', async () => {
+test('UNCOUNTED: the Stores page lists the looted blood and says what it is; LOOT-LOOSE (FIELD BUGS 2026-10-15c; Mac: "Store as loose" - PIN MOVED, it had offered no Put in): Put in takes it as loose (`work`, a station\'s alone), the counted by `all` first, and Put everything in moves both (mutants: the card silent; the why unsaid; the loose left out; the loose by `all`)', async () => {
   const e = body();
   e.items.push(...lootedTrollsBlood());
   mintCarried(e, HERB, 4);
@@ -74,7 +74,7 @@ test('UNCOUNTED: the Stores page lists the looted blood, says why it stays out, 
       book, name: (k) => k, withdraw: async () => ({ ok: true, text: '' }), inTown: () => true, room: (k) => roomFor(e, k),
       carriedHeld: (k) => heldOf(e, k), heldKeys: () => heldKeysOf(e),
       bag: () => ({ has: true, kg: bagWeight(e), max: 300, count: e.bagItems.length }),
-      deposit: async (k, q) => { deposits.push([k, q]); return { ok: true, text: '' }; },
+      deposit: async (k, q, o) => { deposits.push([k, q, o]); return { ok: true, text: '' }; },
     });
     let root = null;
     const draw = () => { root = dom.mk('div'); drawStoresPage(root, draw, kit); };
@@ -86,15 +86,20 @@ test('UNCOUNTED: the Stores page lists the looted blood, says why it stays out, 
     const said = root.querySelectorAll('p').map((x) => x.textContent).join(' ');
     assert.ok(said.includes(BAG_PAGE_WORDS.uncounted), 'the why, drawn');
     const put = root.querySelectorAll('button').find((b) => b.textContent === 'Put in');
-    assert.equal(put.disabled, true, 'nothing counted: Put in is shut');
+    assert.equal(put.disabled, false, 'LOOT-LOOSE: Put in takes the looted blood');
+    await put.onclick();
+    assert.deepEqual(deposits, [[TROLL, 1, 'work']], 'as loose - never by `all`, which the service refuses past the count');
+    deposits.length = 0;
     await root.querySelectorAll('button').find((b) => b.textContent === BAG_PAGE_WORDS.allIn).onclick();
-    assert.deepEqual(deposits, [[HERB, 4]], 'Put everything in: the gathered herbs, never the blood');
+    assert.deepEqual(deposits, [[HERB, 4, 'all'], [TROLL, n, 'work']], 'Put everything in: the gathered herbs as they were, the blood as loose');
   });
   setProfessionsPages(null);
-  assert.match(BAG_PAGE_WORDS.uncounted, /^Looted, bought at a shop or given by another player, a material stays an item in your pack: only what you gathered, or took out of your Stores, goes back in\./);
+  assert.match(BAG_PAGE_WORDS.uncounted, /^Looted, bought at a shop or given by another player, a material goes into your Stores as loose: every crafting station uses it, but no writ, no guild Stores and no market sale takes it/);
+  assert.equal(BAG_PAGE_WORDS.uncountedSplit(2), '2 loose');
 });
 
 test('UNCOUNTED wired: the world host hands the page every material held', () => {
   const w = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
   assert.match(w, /carriedHeld: \(k\) => bagHeldOf\(playerEntity, k\),\n\s+heldKeys: \(\) => bagHeldKeysOf\(playerEntity\),/);
+  assert.match(w, /deposit: async \(k, n, order = 'all'\) => \{[^\n]*\n\s+const r = await profBook\.deposit\(k, n, \{ order \}\);/, 'LOOT-LOOSE: the page\'s order reaches the book');
 });

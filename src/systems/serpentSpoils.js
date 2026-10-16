@@ -36,6 +36,7 @@ import { bossGems } from './gems.js';   // GEM2: the Old Coil's gem
 import { rollSerpentSetPiece } from './aetheric.js';   // SERPENT-SET: the Old Coil's own
 import { SERPENT_EMBERS } from '../net/serpentHoardLaw.js';   // SERPENT-SET: the gate's currency
 import { bossCardRoll } from './bossCards.js';   // CARDS9: Sethrakul's own card, the hoard's last draw
+import { rollSunkenSovereign } from './gilded.js';   // GILDED2: the Sunken Sovereign - a dealer's hoard's very last draw
 
 /** Gold a level of the player's, before the seed's variation (0.8 to 1.2 of it) - two thirds of a gate boss's. */
 export const SERPENT_SPOILS_GOLD_PER_LEVEL = 160;
@@ -75,7 +76,7 @@ export function serpentEmbers() {
 
 /**
  * THE HOARD for one player: `{ gold, pieces: [{ item, tier }], embers, card, gems }` - the Rare-or-better piece first, SERPENT-SET's
- * Coilscale piece (when one drops) last; `embers` the stack of the gate's currency every hoard carries. The same seed,
+ * Coilscale piece (when one drops) after them, GILDED2's Sunken Sovereign (when it drops) last; `embers` the stack of the gate's currency every hoard carries. The same seed,
  * level, earning and world answer the same hoard.
  * @param {number} seed the receipt's `c` @param {number} level the level it fought at @param {string} earned the receipt's `x`
  */
@@ -100,6 +101,10 @@ export function rollSerpentSpoils(seed, level, earned = 'dealt') {
   weaponSocketPass(pieces.map((p) => p.item), rolls);
   const gems = dealt ? bossGems('serpent', rolls) : [];
   techniquePass(pieces.map((p) => p.item), rolls);   // TECH1: a weapon's technique - after even the Old Coil's gem (law 9); a set piece takes none
+  // GILDED2 (bible/06-Systems/Gilded.md section 7): THE SUNKEN SOVEREIGN - a dealer's alone, one draw more, LAST of all
+  // (after even the technique pass), so every hoard before it is what it was for its seed; a static roll, no pass reaches it
+  const sovereign = dealt ? rollSunkenSovereign(rolls) : null;
+  if (sovereign) pieces.push({ item: sovereign, tier: sovereign.rarity });
   return { gold, pieces, embers: serpentEmbers(), card, gems };
 }
 

@@ -134,11 +134,13 @@ test('WB5 the roll: the seed\'s own - the same spoils every time, another seed\'
   for (let seed = 1; seed <= 200; seed++) {
     const s = rollSpoils(seed, 10);
     assert.ok(s.gold >= SPOILS_GOLD_PER_LEVEL * 10 * 0.8 - 1 && s.gold <= SPOILS_GOLD_PER_LEVEL * 10 * 1.2 + 1, `gold by the level: ${s.gold}`);
-    assert.ok(s.pieces.length === 3 || (s.pieces.length === 4 && s.pieces[3].tier === 'aetheric'), 'three graded pieces - and SET6: a Regalia piece, Aetheric, last when one drops');
+    // GILDED2: and the Dragonfire Oath, Gilded, after them all when it drops
+    const extra = s.pieces.slice(3).map((p) => p.tier);
+    assert.ok([[], ['aetheric'], ['gilded'], ['aetheric', 'gilded']].some((w) => JSON.stringify(w) === JSON.stringify(extra)), 'three graded pieces - and SET6: a Regalia piece, Aetheric, then GILDED2 the Oath, last when they drop');
     assert.ok(['rare', 'legendary'].includes(s.pieces[0].tier), `the first is Rare or better: ${s.pieces[0].tier}`);
     if (s.pieces[0].tier === 'legendary') legendary++;
     for (const [i, p] of s.pieces.entries()) {
-      assert.ok(i < 3 ? ['magic', 'rare', 'legendary'].includes(p.tier) : p.tier === 'aetheric', p.tier);
+      assert.ok(i < 3 ? ['magic', 'rare', 'legendary'].includes(p.tier) : ['aetheric', 'gilded'].includes(p.tier), p.tier);
       assert.equal(p.item.rarity, p.tier, 'the tier the item wears');
       assert.ok(templateByIndex(p.item.templateIndex) && String(p.item.name).trim(), 'never a piece the port has no row for');
       assert.ok(!isAmmunition(p.item), 'never ammunition');

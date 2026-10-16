@@ -68,7 +68,9 @@ WithPlayer, None, FollowingPlayer):
   inventory's wagon button inside asks the runtime rather than DFU - at a
   dungeon exit through the exit prompt's Yes, elsewhere by the access
   id (a building's must also be on the same map pixel). A failed entry
-  undoes the parking; stepping out closes the access.
+  undoes the parking; stepping out closes the access. A pair sent to the
+  Holdings Stable is parked at no door (WAGON-STABLED, the port's own:
+  `03-World/Holdings.md` section 2).
 - **Fast travel** takes a following horse along (re-stood behind the
   player once the world is up at the arrival, the team's wagon saved 2.5 m
   behind it - and drawn on its shafts, 3.1 m: WAGON-HITCH below), or leaves it waiting at the departure with the setting off;

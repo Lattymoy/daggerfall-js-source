@@ -11,7 +11,7 @@
 //
 // On the wire the four indices are one number, `wl` (systems/horseCartWire.js, and a parked team's record in
 // net/wire.js validParkData): o + 6w + 36f + 216c, each digit below LOOK_COUNT - so another player's client paints the
-// same wagon from it (world/wagonArt.js wagonLookSources), and a visitor in a caravan sees its owner's inside.
+// same wagon from it (world/wagonArt.js wagonLookArt), and a visitor in a caravan sees its owner's inside.
 //
 // Pure: no DOM, no renderer, no clock. Not a DFU member. Ledger A (WAGONS2).
 import { validWagonKind, isWagonItem, activeWagonItem, wagonKindOf } from './wagonKinds.js';

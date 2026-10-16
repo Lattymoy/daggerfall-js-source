@@ -113,11 +113,12 @@
   {
     "name": "AWD3-FOUNDATION-CENTRED",
     "file": "src/world/townStandIns.js",
-    "old": "m.box([317, 0], [0, -2.4, 0], [16, 8, 16], 0.5);",
-    "new": "m.box([317, 0], [0, 0, 0], [16, 8, 16], 0.5);",
+    "old": "const foundation = rmbrpBlock(53170, [317, 0]);",
+    "new": "const foundation = () => { const m = new MeshBuilder(); m.box([317, 0], [0, -2.4, 0], [16, 8, 16], 0.5); return m.build(); };",
     "tests": [
       "test/wd3_standins.test.js"
-    ]
+    ],
+    "note": "FIELD BUGS 2026-10-15f TEMPLE-STEPS re-aimed it: the foundation as AUDIT WD3 T1 left it - 16 m square at the FBX node's scale, sunk 2.4 m so its top cleared the door - which buried the temples' stairs and landings"
   },
   {
     "name": "AWD3-STANDINS-ALWAYS-ON",

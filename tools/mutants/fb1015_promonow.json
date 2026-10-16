@@ -29,7 +29,7 @@
   {
     "name": "PROMO-NOW-the-host-offline",
     "file": "src/scenes/worldModes.js",
-    "old": "        promoteWhenEarned: sharedClockOn(),   // PROMO-NOW: online, a promotion does not wait the 28 days\n",
+    "old": "        promoteWhenEarned: sharedClockOn() && !!host.rollPace?.(guild.factionId),   // PROMO-NOW: online, a promotion does not wait the 28 days - ROLL-PACE: while the Roll paces it\n",
     "new": "        promoteWhenEarned: false,\n",
     "tests": [
       "test/fb1015_promonow.test.js"

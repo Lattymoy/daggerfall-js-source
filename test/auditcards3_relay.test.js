@@ -7,7 +7,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { newTable, sit, stand, tick, actAt, HOLDEM_FIRST_MS, HOLDEM_CLOCK_MS, HOLDEM_GAP_MS, HOLDEM_RUNOUT_MS } from '../src/net/holdemTable.js';
-import { HOLDEM_SIT_ROOM_HZ_MAX } from '../src/net/wire.js';
+import { HOLDEM_SIT_ROOM_HZ_MAX, CLOSE_REPLACED } from '../src/net/wire.js';
 import { HOLDEM_REFUSALS } from '../src/ui/cardTableHud.js';
 import { fakeRoom } from './fakeRoom.mjs';
 
@@ -48,23 +48,44 @@ test('AUDIT CARDS-3 A1: a sit refused at another table stands nobody up - no fol
   assert.ok(r.store.get('holdem')[0].seats[0]?.leaving || !r.store.get('holdem')[0].seats[0], 'stood up there, saved');
 }));
 
-test('AUDIT CARDS-3 A2: one seat an account - a second tab under another id is refused while the first sits', () => withRoom('interior:m100.200', async ({ r }) => {
-  const m1 = r.connect(); await r.hello(m1, 'peer-m1', null, { name: 'Mal', tokenSub: 'acct-mal' });
-  const m2 = r.connect(); await r.hello(m2, 'peer-m2', null, { name: 'Mal', tokenSub: 'acct-mal' });
-  const o = r.connect(); await r.hello(o, 'peer-o', null, { name: 'Oth' });
-  await word(r, m1, sitW(0, 0, 3));
-  m2.sent.length = 0;
-  await word(r, m2, sitW(0, 1, 3));
-  assert.equal(holdem(m2).at(-1).error, 'account seated');
-  assert.ok(HOLDEM_REFUSALS['account seated'], 'the panel says it in words');
-  await word(r, m2, sitW(2, 0, 3));
-  assert.equal(holdem(m2).at(-1).error, 'account seated', 'at any table of the room');
-  await word(r, o, sitW(0, 1, 3));
-  assert.deepEqual(r.room._holdem.get(0).seats.map((s) => s?.id ?? null), ['peer-m1', 'peer-o', null]);
-  await word(r, m1, { op: 'stand', table: 0 });
-  await word(r, m2, sitW(0, 2, 3));
-  assert.equal(r.room._holdem.get(0).seats[2]?.id, 'peer-m2', 'the first up, the second may sit');
-}));
+// PIN MOVED (ONE-BODY, FIELD BUGS 2026-10-15c): A2 held two tabs of one account standing side by side in a building's
+// room (`interior:m100.200`), the second's sit refused 'account seated' while the first sat. A building's room is a world
+// room, and a place stands one body an account now (server/src/index.js the hello's one-socket law): the second tab's
+// hello closes the first (CLOSE_REPLACED), whose seat goes with it (A3's law), so there the table never meets two. The
+// refusal still guards an interior no world room names - a place with no map id (net/online.js roomKeyFor's name-keyed
+// room), or any `interior:` key a page opens (the worker admits it; a card table sits in any interior) - where both tabs
+// still stand: A2's own pin moved there, whole.
+const NAMED = 'interior:17.Daggerfall.200';
+
+test('AUDIT CARDS-3 A2: one seat an account - a second tab under another id is refused while the first sits - ONE-BODY (PIN MOVED): a second tab replaces the first in a place', async () => {
+  await withRoom('interior:m100.200', async ({ r }) => {
+    const m1 = r.connect(); await r.hello(m1, 'peer-m1', null, { name: 'Mal', tokenSub: 'acct-mal' });
+    await word(r, m1, sitW(0, 0, 3));
+    const m2 = r.connect(); await r.hello(m2, 'peer-m2', null, { name: 'Mal', tokenSub: 'acct-mal' });
+    assert.equal(m1.closed?.code, CLOSE_REPLACED, 'a place: the second tab replaces the first');
+    assert.equal(r.room._holdem.get(0), undefined, 'its leave said, the first\'s seat goes with its socket - and the table it alone held');
+    await word(r, m2, sitW(0, 1, 3));
+    assert.equal(r.room._holdem.get(0).seats[1]?.id, 'peer-m2', 'the account\'s one body sits');
+  });
+  await withRoom(NAMED, async ({ r }) => {
+    const m1 = r.connect(); await r.hello(m1, 'peer-m1', null, { name: 'Mal', tokenSub: 'acct-mal' });
+    const m2 = r.connect(); await r.hello(m2, 'peer-m2', null, { name: 'Mal', tokenSub: 'acct-mal' });
+    assert.equal(m1.closed, null, 'no world room: both tabs stand');
+    const o = r.connect(); await r.hello(o, 'peer-o', null, { name: 'Oth' });
+    await word(r, m1, sitW(0, 0, 3));
+    m2.sent.length = 0;
+    await word(r, m2, sitW(0, 1, 3));
+    assert.equal(holdem(m2).at(-1).error, 'account seated');
+    assert.ok(HOLDEM_REFUSALS['account seated'], 'the panel says it in words');
+    await word(r, m2, sitW(2, 0, 3));
+    assert.equal(holdem(m2).at(-1).error, 'account seated', 'at any table of the room');
+    await word(r, o, sitW(0, 1, 3));
+    assert.deepEqual(r.room._holdem.get(0).seats.map((s) => s?.id ?? null), ['peer-m1', 'peer-o', null]);
+    await word(r, m1, { op: 'stand', table: 0 });
+    await word(r, m2, sitW(0, 2, 3));
+    assert.equal(r.room._holdem.get(0).seats[2]?.id, 'peer-m2', 'the first up, the second may sit');
+  });
+});
 
 test('AUDIT CARDS-3 A3: a seat whose socket the relay closed itself is stood up on the alarm - no ghost hands, the room forgets, nobody takes its cards by its id', () => withRoom('interior:m100.200', async ({ r, tickMs, setClock }) => {
   const a = r.connect(); await r.hello(a, 'peer-aaaa', null, { name: 'Ann' });

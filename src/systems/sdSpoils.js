@@ -14,7 +14,7 @@
 // source's chances (SD_SPOILS_SOURCE - a boss past the ladder's top tier, a lucky hand: the hardest fight in the game);
 // every piece KNOWN, the ladder's last pass after them (LOOT2); then (SD9d) a piece of the Brass of Numidium
 // NUMIDIUM_SET_CHANCE of the time (systems/aetheric.js rollNumidiumPiece); and LAST OF ALL (GILDED1) the Hourlock, the
-// Gilded rung's one record, GILDED_CHANCE of the time (systems/gilded.js rollHourlock) - so no roll before either ever moves.
+// Gilded rung's first record, GILDED_CHANCE of the time (systems/gilded.js rollHourlock) - so no roll before either ever moves.
 //
 // THROWN FROM WHERE IT FELL (scenes/sdSpoils.js): the spoils pool's burst on the arena's floor, under keys of its own
 // (SD_SPOILS_KEYS - an Hour's receipts never push a boss's or a hoard's out of the spent list); a receipt that comes

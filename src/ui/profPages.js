@@ -70,10 +70,11 @@ import {
   GARMENT_DYES, MASONRY_RECIPES, CHISEL_ACT, chiselStrikes, chiselMarkS, SCULPTOR,   // PROF11: the Sculptor's stone and the chisel
   COOKING_RECIPES, dishOf, dishEffectText, dishHand, craftCount, cookXp, panCount, panWindow, HAND_PROVISIONER,   // PROF9: the fire's dishes and the pan
   JEWELCRAFTING_RECIPES, JEWEL_PIECES, jewelBases, jewelHand, jewelPointsPct, jewelPoints, takesCracked, masterworkSpec, facetCount,
-  facetWindow, LAPIDARY, JEWEL_HAND_GOLDSMITH, JEWEL_HAND_GEMCUTTER, craftXp, gemWord,   // PROF10: the jeweller's pieces and the facet
+  facetWindow, LAPIDARY, JEWEL_HAND_GOLDSMITH, JEWEL_HAND_GEMCUTTER, gemWord,   // PROF10: the jeweller's pieces and the facet
   recipeById,   // AUDIT PROF12 E2: a disenchant's XP is its piece's recipe's tier
   patternsOf,   // CRAFT2: a station lists its patterns, the material chosen from what is held
 } from '../net/recipeLaw.js';
+import { craftXpLine, dishFirstLine, masonWorksFirstLine } from './craftXpWords.js';   // CRAFT-FIRST-SHOWN: what a craft pays, and its first, said in its box
 import { temperableRecipe, temperCost, temperXp, REFORGE_RANK, REFORGE_ESSENCE, reforgeEssence } from '../net/temperLaw.js';   // CRAFT4: the temper and the Reforge with Essence
 import { createStitchAct } from '../systems/stitchAct.js';
 import { createChiselAct } from '../systems/chiselAct.js';   // PROF11
@@ -147,7 +148,7 @@ import { t, localizedText, formatMessage, formatNumber } from '../systems/textMa
  *   CRAFT4: the pack's known Magic and Rare pieces an Enchanter reforges with Essence, each line it may roll
  * @property {(offer: { item: any, name: string, tier: string }, index: number) => Promise<{ ok: boolean, text: string }>} [essenceReforge]
  *   CRAFT4: a line rolled again for Arcane Essence
- * @property {(key: string, qty: number) => Promise<{ ok: boolean, text: string, kept?: boolean }>} [deposit]   BAG1: carried units of a
+ * @property {(key: string, qty: number, order?: string) => Promise<{ ok: boolean, text: string, kept?: boolean }>} [deposit]   BAG1: carried units of a
  *   material - out of the bag and the pack - into the Stores
  * @property {() => boolean} [inTown]   BAG1: whether the Stores are reached here - in a town, indoors or out
  * @property {(key: string) => number} [room]   BAG1: how many more units of a material the bag and the pack can take
@@ -250,8 +251,10 @@ export const BAG_PAGE_WORDS = Object.freeze({
   /** UNCOUNTED (FIELD BUGS 2026-10-09c, "Some ingredients won't let you store them": Troll's Blood and Orc's Blood from a
    *  dungeon, and what a friend was traded): units held that the service never handed out (law 3) - a card's split, and
    *  the picked bar's why. The page listed none of them and said nothing. */
-  uncountedSplit: (n) => `${n.toLocaleString('en-US')} unstorable`,
-  uncounted: 'Looted, bought at a shop or given by another player, a material stays an item in your pack: only what you gathered, or took out of your Stores, goes back in. A Mages Guild\'s potion maker and every crafting station use it as it is.',   // BAG-CRAFT: a station's put-in takes it, loose
+  uncountedSplit: (n) => `${n.toLocaleString('en-US')} loose`,
+  /** LOOT-LOOSE (FIELD BUGS 2026-10-15c, "a lot of alchemy and some other ingredients when looted from a dungeon are
+   *  unstorable"; Mac: "Store as loose"): Put in takes them now - as loose, a station's alone (BAG-CRAFT's origin). */
+  uncounted: 'Looted, bought at a shop or given by another player, a material goes into your Stores as loose: every crafting station uses it, but no writ, no guild Stores and no market sale takes it - only what you gathered does.',   // BAG-CRAFT: a station's put-in takes it, loose
 });
 /** AUDIT2 BAG1 U1: how many more units of a row's material the Stores take - their bound less what they hold, every
  *  origin (the deposit's own decision, server-account/src/professions.js depositStores). */
@@ -928,7 +931,7 @@ function drawCarryStores(detail, rerender, kit) {
   const rows = storesRows(all, _stores, p.name);
   // AUDIT BAG1: whatever the filter shows - the button puts in everything carried, and a search that hid the carried
   // materials hid the button with them
-  const carriedAny = [...all.values()].some((r) => r.carried > 0);
+  const carriedAny = [...all.values()].some((r) => r.carried + (r.uncounted | 0) > 0);   // LOOT-LOOSE: and the loose
   if (carriedAny) {
     const allIn = el('button', 'act', _stores.busy ? 'Sending...' : BAG_PAGE_WORDS.allIn);
     allIn.type = 'button';
@@ -941,15 +944,21 @@ function drawCarryStores(detail, rerender, kit) {
       // silent (a deposit kept) ends the run, its goods on their way
       let moved = 0, stop = null;
       const refused = [];
-      for (const r of storesRows(carryRows(book, p.carriedHeld), {}, p.name)) {
+      for (const r of storesRows(carryRows(book, p.carriedHeld, p.heldKeys), {}, p.name)) {
         // AUDIT2 BAG1 U1: as many as the Stores have room for - a material whose Stores are full is said, never asked
-        let left = Math.min(r.carried, storesRoomOf(book, r));
-        if (r.carried > 0 && left < 1) { refused.push({ name: r.name, text: BAG_PAGE_WORDS.storesFull }); continue; }
-        while (left > 0) {
-          const q = Math.min(left, DEPOSIT_MAX);
-          const res = await p.deposit(r.material, q);
-          if (!res?.ok) { if (res?.kept) stop = res.text ?? null; else refused.push({ name: r.name, text: res?.text ?? null }); break; }
-          moved += q; left -= q;
+        let room = storesRoomOf(book, r);
+        const held = r.carried + (r.uncounted | 0);
+        if (held > 0 && room < 1) { refused.push({ name: r.name, text: BAG_PAGE_WORDS.storesFull }); continue; }
+        // LOOT-LOOSE: what the service counts by `all` (every origin as it was), then the rest held as loose (`work`)
+        for (const [n, order] of /** @type {[number, string][]} */ ([[r.carried, 'all'], [r.uncounted | 0, 'work']])) {
+          let left = Math.min(n, room);
+          while (left > 0) {
+            const q = Math.min(left, DEPOSIT_MAX);
+            const res = await p.deposit(r.material, q, order);
+            if (!res?.ok) { if (res?.kept) stop = res.text ?? null; else refused.push({ name: r.name, text: res?.text ?? null }); left = -1; break; }
+            moved += q; left -= q; room -= q;
+          }
+          if (stop || left < 0) break;
         }
         if (stop) break;
       }
@@ -976,7 +985,7 @@ function drawCarryStores(detail, rerender, kit) {
     bar.append(el('span', 'prof-matline', `${pick.name} - ${pick.total} stored, ${pick.carried} carried - tier ${pick.tier} - ${pick.value} silver each`));
     const room = Math.max(0, p.room?.(pick.material) ?? 0);
     const outMost = Math.min(WITHDRAW_MAX, pick.total, room);
-    const inMost = Math.min(DEPOSIT_MAX, pick.carried, storesRoomOf(book, pick));   // AUDIT2 BAG1 U1: and the Stores' room
+    const inMost = Math.min(DEPOSIT_MAX, pick.carried + (pick.uncounted | 0), storesRoomOf(book, pick));   // AUDIT2 BAG1 U1: and the Stores' room; LOOT-LOOSE: and the loose
     const most = Math.max(1, outMost, inMost);
     const qty = el('input', 'prof-qty');
     qty.type = 'number'; qty.min = '1'; qty.max = String(most); qty.value = String(Math.min(_stores.qty, most));
@@ -998,16 +1007,25 @@ function drawCarryStores(detail, rerender, kit) {
     const put = el('button', 'act', _stores.busy ? 'Sending...' : 'Put in');
     put.type = 'button';
     put.disabled = _stores.busy || !town || inMost < 1 || !p.deposit;
-    put.title = !town ? BAG_WORDS.town : pick.carried > 0 && inMost < 1 ? BAG_PAGE_WORDS.storesFull : '';
-    put.onclick = run(() => p.deposit?.(pick.material, Math.max(1, Math.min(_stores.qty, inMost))));
+    put.title = !town ? BAG_WORDS.town : pick.carried + (pick.uncounted | 0) > 0 && inMost < 1 ? BAG_PAGE_WORDS.storesFull : '';
+    // LOOT-LOOSE: the counted units first, by `all` (a `work` order moves no gold's), then the loose by `work`
+    put.onclick = run(async () => {
+      const q = Math.max(1, Math.min(_stores.qty, inMost)), counted = Math.min(q, pick.carried);
+      let res = counted > 0 ? await p.deposit?.(pick.material, counted, 'all') : null;
+      if (q > counted && (!res || res.ok)) {
+        const loose = await p.deposit?.(pick.material, q - counted, 'work');
+        res = loose?.ok && res?.ok ? { ...loose, text: BAG_PAGE_WORDS.allInDone(q) } : loose;
+      }
+      return res;
+    });
     if (withdrawable(pick.material)) bar.append(qty, take, put);
     detail.append(bar);
     // AUDIT2 BAG1 U14: why Take out or Put in is shut, drawn - a title is no word on a touch screen
     if (town && withdrawable(pick.material)) {
-      const why = [pick.total > 0 && room < 1 ? BAG_WORDS.noRoom : null, pick.carried > 0 && inMost < 1 ? BAG_PAGE_WORDS.storesFull : null].filter(Boolean);
+      const why = [pick.total > 0 && room < 1 ? BAG_WORDS.noRoom : null, pick.carried + (pick.uncounted | 0) > 0 && inMost < 1 ? BAG_PAGE_WORDS.storesFull : null].filter(Boolean);
       if (why.length) detail.append(el('p', 'px-note prof-why', why.join(' ')));
     }
-    if (pick.uncounted > 0) detail.append(el('p', 'px-note prof-why', BAG_PAGE_WORDS.uncounted));   // UNCOUNTED: why Put in leaves them
+    if (pick.uncounted > 0) detail.append(el('p', 'px-note prof-why', BAG_PAGE_WORDS.uncounted));   // UNCOUNTED: what Put in makes of them (LOOT-LOOSE)
     detail.append(el('p', 'px-note', withdrawable(pick.material) ? BAG_PAGE_WORDS.takenNote
       : staysLine(pick)));
     if ((pick.gold | 0) > 0) detail.append(el('p', 'px-note', goldGoodsLine()));
@@ -1420,6 +1438,7 @@ function drawAnvil(detail, rerender, { el, divider }) {
       const odds = qualityOdds(rank - r.rank, { masterwright: specs[100] === 'masterwright' });
       box.append(el('p', 'px-note', t('prof.page.anvil.odds', 'Your rank {rank}, margin {margin}: {odds}. A clean heat is a step better.', { rank, margin: rank - r.rank, odds: oddsText(odds) })));
     }
+    if (recipeOpen(r, rank)) box.append(el('p', 'px-note', craftXpLine(r, rank, professionName('smithing'))));   // CRAFT-FIRST-SHOWN
     if (r.kind === 'kit') box.append(el('p', 'px-note', KIT_REACH_LINE));
     heartwoodToggle(box, el, r, book, _anvil, rerender, striking);   // PROF4: a Heartwood for a plank - the axes, hammers, shields, the Spade
     const gentle = getPref('gentleActs') === true;
@@ -1639,6 +1658,7 @@ function drawWorkbench(detail, rerender, { el, divider }) {
       const odds = qualityOdds(rank - r.rank, { masterwright: false });
       box.append(el('p', 'px-note', t('prof.page.bench.odds', 'Your rank {rank}, margin {margin}: {odds}. A clean pass of the plane is a step better.', { rank, margin: rank - r.rank, odds: oddsText(odds) })));
     }
+    if (!r.later && recipeOpen(r, rank)) box.append(el('p', 'px-note', craftXpLine(r, rank, professionName('carpentry'))));   // CRAFT-FIRST-SHOWN: Building's
     heartwoodToggle(box, el, r, book, _bench, rerender, planing);
     const gentle = getPref('gentleActs') === true;
     const elsewhere = handsAt(_bench);   // AUDIT 32 P2
@@ -1866,6 +1886,8 @@ function drawLoom(detail, rerender, { el, divider }) {
         : specs[50] === 'leatherworker' && r.family === 'leather' ? t('prof.page.loom.oddsLeather', 'Your rank {rank}, margin {margin}: {odds}. A clean stitch is a step better, and a Leatherworker\'s leather another.', a)
           : t('prof.page.loom.odds', 'Your rank {rank}, margin {margin}: {odds}. A clean stitch is a step better.', a)));
     }
+    // CRAFT-FIRST-SHOWN: its XP and its first's - or, wholly the Weavers' cloth, that it lays on none (AUDIT 32 S1)
+    if (recipeOpen(r, rank)) box.append(el('p', 'px-note', craftXpLine(r, rank, professionName('outfitting'))));
     const gentle = getPref('gentleActs') === true;
     const dye = r.kind === 'garment' && r.dyes === true ? _loom.dye : null;
     const elsewhere = handsAt(_loom);   // AUDIT 32 P2
@@ -2121,6 +2143,7 @@ function drawMasonBench(detail, rerender, { el, divider }) {
   detail.append(el('p', 'px-note', held('stone:rough') > 0
     ? t('prof.page.mason.works', 'Two Rough Stone cut to a Cut Stone (a Quarryman\'s two); Sulphur, Lead and five Rough Stone mix to ten Mortar. A clean chisel - every strike on the marked line - earns half again its Building XP.')
     : t('prof.page.mason.noStone', 'Rough Stone is quarried from the boulders of the rock fields with a Pick-Axe (Mining).')));
+  detail.append(el('p', 'px-note', masonWorksFirstLine(rank, professionName('masonry'))));   // CRAFT-FIRST-SHOWN: a work's first, the service's (smeltAtForge)
   if (elsewhere && !_mason.act) detail.append(el('p', 'px-note', handsLine(elsewhere)));
   // THE SCULPTOR'S STONE DECOR (3.3, 9.3): a column, a bench, a font, a statue plinth
   detail.append(el('p', 'px-note', specs[100] === SCULPTOR ? t('prof.page.mason.decor', 'Stone decor, carved for a room of your own:')
@@ -2153,6 +2176,7 @@ function drawMasonBench(detail, rerender, { el, divider }) {
     if (open) {
       const odds = qualityOdds(rank - r.rank, { masterwright: false });
       box.append(el('p', 'px-note', t('prof.page.mason.odds', 'Your rank {rank}, margin {margin}: {odds}. A clean chisel is a step better.', { rank, margin: rank - r.rank, odds: oddsText(odds) })));
+      box.append(el('p', 'px-note', craftXpLine(r, rank, professionName('masonry'))));   // CRAFT-FIRST-SHOWN
     }
     const ready = open && (craftable(r, held) || chain?.ok === true) && !_mason.busy && !_mason.crafting && !_mason.act && !elsewhere && !short;
     const go = el('button', 'act primary', _mason.crafting ? benchBusyWord() : craftWord());
@@ -2327,6 +2351,8 @@ function drawCookFire(detail, rerender, { el, divider }) {
     box.append(el('p', 'px-note', `${serves > 1 ? t('prof.page.fire.servesTwo', 'Two servings (a Cook\'s), into your pack.') : t('prof.page.fire.servesOne', 'One serving, into your pack.')} ${t('prof.page.fire.pans',
       '{pans, plural, one {# pan} other {# pans}}; every pan taken off done is a clean pan, {steps, plural, =0 {half again its {xp} {profession} XP} one {{clean} {profession} XP to a plain dish\'s {xp} - the town\'s Apothecary\'s step in both} other {{clean} {profession} XP to a plain dish\'s {xp} - the town\'s Apothecary\'s # steps in both}}.',
       { pans: panCount(r), steps, xp: steps > 0 ? cookXp(rank, { steps }) : cookXp(rank), clean: cookXp(rank, { clean: true, steps }), profession: professionName('cooking') })}`));   // AUDIT PROF-541 K7: the XP the service pays (cookXp's steps); CRAFT3: the craft's own name
+    const first = dishFirstLine(r, professionName('cooking'));   // CRAFT-FIRST-SHOWN: the dish's first, laid on beside the pans' XP
+    if (first) box.append(el('p', 'px-note', first));
     const ready = recipeOpen(r, rank, specs) && craftable(r, held) && !_cook.crafting && !_cook.act && !elsewhere;
     const go = el('button', 'act primary', _cook.crafting ? t('prof.page.fire.cooking', 'At the fire...') : t('prof.page.fire.cook', 'Cook'));
     go.type = 'button';
@@ -2528,8 +2554,9 @@ function drawJewellerBench(detail, rerender, { el, divider }) {
       const odds = qualityOdds(rank - r.rank, { masterwright: masterworkSpec(specs[100], r) });   // CRAFT3: the Master Jeweller's, on a jewel
       // AUDIT PROF-541 R2-C6: and the town Apothecary's quality steps the service adds (professions.js seatStepsFor)
       const steps = Math.max(0, Math.trunc(Number(p.jewelSteps?.()) || 0));
-      box.append(el('p', 'px-note', t('prof.page.jewel.odds', 'Your rank {rank}, margin {margin}: {odds}{steps, plural, =0 {} one { (+# step from the town\'s Apothecary)} other { (+# steps from the town\'s Apothecary)}}. A clean facet is a step better; {xp} {profession} XP.',
-        { rank, margin: rank - r.rank, odds: oddsText(odds), steps, xp: craftXp(r.tier, rank, false), profession: professionName('jewelcrafting') })));
+      box.append(el('p', 'px-note', t('prof.page.jewel.odds', 'Your rank {rank}, margin {margin}: {odds}{steps, plural, =0 {} one { (+# step from the town\'s Apothecary)} other { (+# steps from the town\'s Apothecary)}}. A clean facet is a step better.',
+        { rank, margin: rank - r.rank, odds: oddsText(odds), steps })));
+      box.append(el('p', 'px-note', craftXpLine(r, rank, professionName('jewelcrafting'))));   // CRAFT-FIRST-SHOWN: its XP moved here, beside its first's
     }
     heartwoodToggle(box, el, r, book, _jewel, rerender, cutting);   // a Wand's plank (4.2: Heartwood "worth one quality step in any recipe")
     if (lapidary && takesCracked(r) && crackedHeld > 0) {
@@ -2677,7 +2704,8 @@ function drawAlchemyStation(detail, rerender, { el, divider }) {
     box.append(el('p', 'px-note', [
       t('prof.page.alchemy.made', '{n, plural, one {A potion} other {# potions}} a brew.', { n: made }),
       t('prof.page.alchemy.potentLine', '{potent}{gathered, select, yes { - and +{unbruised}% for each of its herbs you picked unbruised} other {}}.', { potent: potentLine(rank, specs, 0, potion, steps), gathered: gathered ? 'yes' : 'no', unbruised: POTENT.unbruised }),
-      brewFirstPays(potion) ? t('prof.page.alchemy.xpFirst', '{xp} {profession} XP, and {more} the first time.', { xp, profession, more: brewXp(potion, rank, true) - xp }) : t('prof.page.alchemy.xp', '{xp} {profession} XP.', { xp, profession }),
+      // CRAFT-FIRST-SHOWN: a potion wholly of the Apothecaries' goods says why its first lays on nothing (AUDIT 32 S1's law, brewFirstPays)
+      brewFirstPays(potion) ? t('prof.page.alchemy.xpFirst', '{xp} {profession} XP, and {more} the first time.', { xp, profession, more: brewXp(potion, rank, true) - xp }) : t('prof.page.alchemy.xpShop', '{xp} {profession} XP. Made only of the Apothecaries\' goods, it earns no first-time bonus.', { xp, profession }),
     ].join(' ')));
     const ready = rank >= potion.rank && spends.length > 0 && spends.every((i) => held(i.key) >= i.n) && !_alchemy.crafting && !short;
     const go = el('button', 'act primary', _alchemy.crafting ? t('prof.page.alchemy.brewing', 'Brewing...') : t('prof.page.alchemy.go', 'Brew'));

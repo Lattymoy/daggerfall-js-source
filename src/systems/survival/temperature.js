@@ -23,6 +23,7 @@ import { EQUIP_SLOTS } from '../../characters/paperdoll.js';
 import { CLIMATES } from '../../formats/mapsFile.js';
 import { RACES } from '../races.js';
 import { monthNames, DAWN_HOUR, DUSK_HOUR } from '../gameDate.js';   // TEMP-UI: the breakdown names the month (an import-free leaf; L10N3e: in the player's language); AUDIT C&C: the sun's hours
+import { precipitationForWeather } from '../../world/weather.js';   // WET-FALL: which words fall (an import-free leaf but for UMRandom)
 
 /** spellcast.js's EFFECT_FLAGS.Fire and .Frost (DFCareer.EffectFlags),
  *  restated so this leaf imports no combat module: spellcast sits on the
@@ -227,11 +228,15 @@ export function naturalParts(env = {}) {
 
 /** How wet a minute in this weather makes you, outdoors - AUDIT C&C I2: and none at rest in a tent (`sheltered`: the
  *  mod's camp rest is its "inside or camping" arm, where the counter only dries). */
-export function weatherWetGain(weather, { cloak = false, hood = false, insideBuilding = false, insideDungeon = false, sheltered = false } = {}) {
+export function weatherWetGain(weather, { cloak = false, hood = false, insideBuilding = false, insideDungeon = false, sheltered = false, fall = 1 } = {}) {
   if (insideBuilding || insideDungeon || sheltered) return 0;
   const row = WEATHER_WET[weather];
   if (!row) return 0;
-  return cloak ? (hood ? row[2] : row[1]) : row[0];
+  // WET-FALL (FIELD BUGS 2026-10-15f): a rain, a storm or a snow soaks by how hard it FALLS - `fall`, the front's level
+  // (weatherSim.js fallingWeather; 1 on the classic sky, as the mod's every-minute row) - so a sprinkle soaks as a
+  // sprinkle and a word with nothing yet falling not at all. Fog is not falling: its row stands whole.
+  const k = precipitationForWeather(weather) ? Math.max(0, Math.min(1, Number.isFinite(fall) ? fall : 1)) : 1;
+  return k * (cloak ? (hood ? row[2] : row[1]) : row[0]);
 }
 
 /** LOOT14 (the Loot arc II, bible/06-Systems/Loot-II-Arc.md section 6): the most of the weather's soaking a wardrobe's
@@ -429,7 +434,7 @@ export function feltTemperature(env = {}, worn = null, ctx = {}) {
     // TEMP-UI: the rest of the sum, so a breakdown adds up to `felt` exactly (temperatureBreakdown): the resistances on
     // the air, the ground's correction, the heat loss, the drink to hand, a garment's degrees
     worldResist: natTemp - air, dungeon: air - natural, naked: NAKED_OFFSET, waterCools: watered - unwatered, degrees: felt - watered,
-    wetGain: weatherWetGain(env.weather, { cloak: cloakState(worn).cloak, hood: clothes.hood, insideBuilding: env.insideBuilding, insideDungeon: env.insideDungeon, sheltered: !!env.sheltered })
+    wetGain: weatherWetGain(env.falling?.word ?? env.weather, { cloak: cloakState(worn).cloak, hood: clothes.hood, insideBuilding: env.insideBuilding, insideDungeon: env.insideDungeon, sheltered: !!env.sheltered, fall: env.falling?.level ?? 1 })   // WET-FALL: what falls, not the sky's word
         * (1 - Math.min(GEAR_DRY_MOST, Math.max(0, Number(ctx.gearDry) || 0)) / 100)   // LOOT14: weatherproofing turns the weather's soaking aside
       + environmentWet(env),
   };

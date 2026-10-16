@@ -108,7 +108,7 @@ crons = ["* * * * *", "41 * * * *"]
 [vars]
 # Answered by /health so a deploy that did not happen cannot look like
 # one that did. Kept in step with ACCOUNT_VERSION in src/service.js.
-ACCOUNT_VERSION = "acct136"
+ACCOUNT_VERSION = "acct138"
 # WB5b: THE RELAY'S PUBLIC HALF, GATE_PUBLIC_KEY - the key an Oblivion
 # Gate's kill receipts verify with (src/net/gateReceipt.js) - is NOT a
 # var here. GATE-KEYS (2026-09-26): the account deploy mints the pair
@@ -147,7 +147,12 @@ ALLOWED_ORIGIN = "*"
 # set and the developers' Seraph Wings. The handle exactly - "RookieG(Dev)"
 # (a handle may carry brackets, net/handleShape.js HANDLE_RE) is another
 # account and holds none of it.
-DEVELOPER_HANDLES = "Lattymoy,trashBattery,LostMyLeg,Tabby,RookieG"
+# DEV5 (2026-10-16, Mac: "Remove trashBattery ingame as a dev"): off the
+# list, and the whole set goes with the handle - the title, the glyph, the
+# wings, /red, /mute and /unmute, the developer's acts (titles.js
+# isDeveloper) and the POI editor's builder door - on their next token
+# and next call.
+DEVELOPER_HANDLES = "Lattymoy,LostMyLeg,Tabby,RookieG"
 # POI-1 (2026-10-14, the POI editor; bible/06-Systems/POI-Editor-Arc.md): WHO BUILDS AND WHO APPROVES. Mac, asked how a
 # POI reaches players: "I need to be able to approve changes"; asked who uses the editor: "Developers + Builders". A
 # BUILDER imports models, places POIs, saves drafts and submits them - every developer above is one, and BUILDER_HANDLES

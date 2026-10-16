@@ -30,11 +30,19 @@
 // the batch of the record it lands in, guarded to one row: the piece is in the fallen's record, the escrow, or one
 // record - never two, never none - and an end asked twice moves nothing twice. A record the judge holds keeps the piece
 // (it can never reach its killer, so it is never lost).
+//
+// CART-AWAY (FIELD BUGS 2026-10-15d; Mac, 2026-10-15: "if its parked outside the zone nothing should be lost"): THE CART
+// DROPS ONLY WHILE THE WAGON IS WITH ITS FALLEN. Whether a parked wagon stands on the zone's ground is the zone's mask,
+// which only a client holds (the map files); so the fallen's own tab says its wagon is away (`cart` 0 -
+// src/systems/wildCart.js wildCartAway), and the word is honoured only where the record this service keeps agrees by its
+// mode (src/systems/wildDropLaw.js wildCartMayBeAway: parked, stabled or none - never driven, following or beside them
+// unstabled). A seizure honours none (its carrier holds neither the record nor the mask), and a tab that says nothing
+// (one from before the word) drops the cart as ever. Asked again, a fall answers its first take, whatever is said.
 import { verifyWildReceipt, verifyWildCollect, WILD_FALL_GRACE_S, WILD_COLLECT_TTL_S } from '../../src/net/wildReceipt.js';
 import { mintRemainsOrder, remainsDigest, ORDER_TTL_S } from '../../src/net/identityToken.js';
 import { streamsFoes, WILD_REMAINS_MS } from '../../src/net/wire.js';
 import { GUILD_ID_RE } from '../../src/net/guildLaw.js';
-import { takeWildDeath, wildDropCandidates, wildTookOf } from '../../src/systems/wildDropLaw.js';
+import { takeWildDeath, wildDropCandidates, wildTookOf, wildCartRecordOf, wildCartMayBeAway } from '../../src/systems/wildDropLaw.js';
 import { mintItemId } from '../../src/systems/itemIds.js';
 import { giveTradeGoods } from '../../src/net/realmTradeLaw.js';
 import { prepareRealmRecord, seizeRealmRecord, realmAtOf, realmActFirst, recordMovedOf, mustChange, dropIfUnnamed, dropObjects, realmSaveTextOf, holdRefusal, REALM_ID_RE } from './realm.js';
@@ -81,7 +89,8 @@ async function answerOf(/** @type {any} */ ctx, /** @type {CryptoKey} */ signing
  * /v1/wild/fall - A DEATH'S DROP, TAKEN. `body.receipt` a fall the relay signed (the caller its fallen or its killer), or
  * none (a death to a foe: the caller's own, `body.n` its tab's nonce); `body.realm` the caller's record where its tab says
  * it stands (the fallen's own act - required of the fallen, never of a killer); `body.room` the room the remains will be
- * laid in (the order names it, and no other room keeps it). Answers `{ r, order, items, kept, took, gold, burnt?, realm? }`
+ * laid in (the order names it, and no other room keeps it); `body.cart` 0 the fallen's word that its wagon is away
+ * (CART-AWAY - honoured where its record agrees, never on a seizure). Answers `{ r, order, items, kept, took, gold, burnt?, realm? }`
  * - the remains' id, the order the room keeps a deposit on (null: nothing for the room), the records taken, the ledger
  * keys the record kept, what the record lost as the fallen's game finds it again - or `{ error }`: 'no-signing-key',
  * 'no-gate-key', 'receipt' (with `why`), 'not-yours', 'no-realm-character', 'grace' (the fallen's own tab has the first
@@ -143,14 +152,17 @@ export async function wildFall(ctx, player, body, { gateKey, signing }, again = 
   // piece its killer picked - that one goes only to its killer, who can never have it from a held record
   const burnt = !!holdRefusal(row);
   if (burnt) { w = -1; wt = null; }
-  const barred = await piecesBarred(ctx.db, charId, wildDropCandidates(stored, w, wt).map(ledgerKeyOf).filter((k) => k != null));
+  // CART-AWAY: the fallen's own word that its wagon is away, where its record agrees - the cart's pieces and coin stay
+  const away = !seize && body?.cart === 0 && wildCartMayBeAway(wildCartRecordOf(stored));
+  const cart = { cart: !away };
+  const barred = await piecesBarred(ctx.db, charId, wildDropCandidates(stored, w, wt, cart).map(ledgerKeyOf).filter((k) => k != null));
   const keep = (/** @type {any} */ it) => { const k = ledgerKeyOf(it); return k != null && barred.has(k); };
   /** @type {any} */ let drop = null;
   // MAC (2026-10-14): the killer's piece, where the tab's room collects, into escrow - its ledger key the service's
   const collect = body?.collect === 1;
   /** @type {Set<string>} */ const escrowKeys = new Set();
   const change = (/** @type {any} */ save) => {
-    drop = takeWildDeath(save, w, keep, wt);
+    drop = takeWildDeath(save, w, keep, wt, cart);
     if (collect && drop.killer) { const k = ledgerKeyOf(drop.taken[0]); if (k != null) escrowKeys.add(k); }
     return null;
   };

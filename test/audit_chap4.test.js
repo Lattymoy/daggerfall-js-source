@@ -278,7 +278,9 @@ test('AUDIT CHAP4 C2, C3: the living town reads its chapters at its own pixel; t
   const w = src('src/scenes/world.js');
   assert.match(w, /chapterOf: chapterSheet \? \(faction\) => livingChapterOf\(faction, px, py\) : undefined,/);
   assert.match(w, /const livingChapterOf = \(\/\*\* @type \{number\} \*\/ faction, \/\*\* @type \{number\} \*\/ x, \/\*\* @type \{number\} \*\/ y\) => \{\n\s+const f = chapterFactionOf\(faction, townTalk\?\.factionDict \?\? null\) \?\? faction;\n\s+const region = \(\(\) => \{ try \{ return maps\.getRegionIndexAt\(x, y\); \} catch \{ return null; \} \}\)\(\);/);
-  assert.match(w, /rollRankCeiling: \(\) => \(rollTracker && !rollTracker\.stopped \? ROLL_BOOK_RANK_MAX : null\),/);
+  // PIN MOVED (ROLL-PACE, FIELD BUGS 2026-10-15f): the ceiling is the Roll's pace's, read from the page's first frame -
+  // before the Roll's first word it promotes nobody (npcChapterLaw.js rollPromoteCeiling, fb1015f_rollpace's pins)
+  assert.match(w, /rollPace: \(f\) => rollPaceOf\(rollTracker, f, Math\.floor\(Date\.now\(\) \/ 1000\)\),/);
 });
 
 test('AUDIT CHAP4 (D, worth a look): a hall building\'s faction read as its chapter\'s - a temple\'s templar order its divine\'s, a guild hall\'s its guild\'s, the hidden two as they are (mutants: the resolution)', () => {

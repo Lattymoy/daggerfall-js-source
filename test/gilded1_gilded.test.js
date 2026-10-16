@@ -83,7 +83,8 @@ test('GILDED1 THE RUNG: the ladder\'s top - rank 6 over the Artifact\'s 5, gold 
 // ── the record ────────────────────────────────────────────────────────
 
 test('GILDED1 THE RECORD: one, a Thunderlock of the gun\'s own Dwarven make - +40% damage, +15 Agility, +30 Archery, +10 shock a shot: each line the Legendary band\'s TOP and no higher - its power The Hour Tolls, its lore; frozen whole (mutants: a line over the band\'s top; the power\'s every)', () => {
-  assert.equal(GILDED_RECORDS.length, 1);
+  // PIN MOVED (GILDED2, bible/06-Systems/Gilded.md section 7): the Hourlock first of three - the gate's and the serpent's after it
+  assert.equal(GILDED_RECORDS.length, 3);
   assert.equal(GILDED_RECORDS[0], HOURLOCK);
   assert.equal(gildedById('the-hourlock'), HOURLOCK);
   assert.equal(gildedById('the-hourlocks'), null);
@@ -277,7 +278,7 @@ test('GILDED1 THE LOOK: named as an artifact is (no metal before it); its card t
   const off = registerPresenter({ priority: 99, hudText: (t) => { lines.push(t); return true; } });
   try {
     assert.deepEqual(CX.codexKey(h), { kind: 'gilded', id: 'the-hourlock' });
-    assert.deepEqual(CX.codexGilded().map((r) => [r.id, r.found, r.name, r.hint]), [['the-hourlock', false, null, CX.GILDED_HINT]], 'listed, unfound, by its hint alone');
+    assert.deepEqual(CX.codexGilded()[0] && [CX.codexGilded()[0].id, CX.codexGilded()[0].found, CX.codexGilded()[0].name, CX.codexGilded()[0].hint], ['the-hourlock', false, null, CX.GILDED_HINT], 'listed, unfound, by its hint alone');   // PIN MOVED (GILDED2): the first of the rows
     assert.equal(CX.noteFind(h), true);
     assert.deepEqual(lines, ['The Hourlock - a Gilded piece! It joins your codex.']);
     assert.equal(CX.noteFind(mintHourlock()), false, 'once');

@@ -139,8 +139,9 @@ Either death, at the first dead frame, while the room is still the player's (`wi
   organizer, its pieces lie in the pack itself, so the rule names each (`isWalletItem`, `walletHolds`;
   `wildDropLaw.js:"if (isWalletItem(item) || walletHolds(item)) return false;"`). `src/systems/wildDropLaw.js` (INT9:
   the law's home, a leaf the account Worker bundles; `src/systems/wildDeath.js` re-exports it).
-- DROPPED: every other thing in the bag and in the cart, into the room's remains (section 5). INT9: TAKEN OFF THE
-  RECORD BY THE ACCOUNT SERVICE (`server-account/src/wild.js`, `/v1/wild/fall`), never handed over by the fallen's game:
+- DROPPED: every other thing in the bag and - while the wagon is with them (CART-AWAY, below) - in the cart, into the
+  room's remains (section 5). INT9: TAKEN OFF THE RECORD BY THE ACCOUNT SERVICE (`server-account/src/wild.js`,
+  `/v1/wild/fall`), never handed over by the fallen's game:
   the fallen's tab asks as an act on its record (checkpointed as it will rise; the law
   `wildDropLaw.js:"export function takeWildDeath"` the service's alone - the killer's piece, the gold, then the drop by
   worth), against the relay's signed fall at a player's hand or on its own nonce at a foe's, naming the room its remains
@@ -148,13 +149,31 @@ Either death, at the first dead frame, while the room is still the player's (`wi
   `wildDropLaw.js:"export function wildTakeTook"`) and its `remains` order over them for that room, the same order each
   asking, good its minute; and the tab deposits them on it - the room keeps nothing else (INT9's audit: each valuable
   piece under a fresh id, the id it had the fallen's own copy). WILD GOLD: and half the gold - `WILD_GOLD_LOSS` (0.5) of
-  the purse and of the cart's gold stack, as ONE pile record in the same remains (`takeWildGold`,
-  `wildDropLaw.js:"export function takeWildGold"`),
+  the purse and, while the wagon is with them, of the cart's gold stack, as ONE pile record in the same remains
+  (`takeWildGold`, `wildDropLaw.js:"export function takeWildGold"`),
   for anyone to take; the usual death penalty is not taken on top (`world.js:"const goldLost ="`). LETTERS-DROP (the
   owner: "letter of credits should be dropped"): a letter of credit is the one piece the wallet holds that the death
   takes, as it takes the purse's coin - into the same remains at its whole value, unless a quest's or one the trade
   refuses (`wildDropLaw.js:"item.templateIndex === TEMPLATES.Letter_of_credit && !item.questItem"`) - answered ahead
   of the decor's kept-back list, which names the letter too.
+- CART-AWAY (FIELD BUGS 2026-10-15d; MAC'S DECISION, 2026-10-15, asked "If parked outside of the pvp zone in the
+  wrothgarian mountains, can it be lost?": "Yeah, if its parked outside the zone nothing should be lost"): THE CART'S
+  SHARE ONLY WHEN THE WAGON IS WITH THEM. Where it stands is the Horse Cart and Cargo record's
+  (`horseCartLaw.js:"export function newSaveData"`, the save's modData). WITH THEM: driven, beside them on foot (the
+  mod's WithPlayer never sent away - its next door parks it there), following, or parked (Deployed) on a map pixel of
+  the zone. AWAY: parked on any other pixel - the band about the zone (`wildNear`) is not the zone, no blow lands and
+  nothing drops there - stabled (WithPlayer with WAGON-STABLED's word, `03-World/Holdings.md`), or no wagon. Away, the
+  death takes nothing of the cart, neither a piece nor its gold's share (`takeWildDeath`'s `cart` option, and
+  `wildDropCandidates`' and `takeWildGold`'s); the bag, the purse and the killer's piece go as ever. THE TRUST: the
+  zone's mask is the map files', which the account service does not hold, so the fallen's own tab SAYS its wagon is away
+  (`cart` 0 on `/v1/wild/fall`, `src/systems/wildCart.js` wildCartAway over the record the save writes and
+  `wildMaskOf`; with the mod switched off the wagon is Daggerfall's own, which goes where its owner goes), and the
+  service honours the word only where the record it keeps agrees by its mode
+  (`wildDropLaw.js:"export function wildCartMayBeAway"`: parked, stabled or none - never driven, following or beside
+  them unstabled; `server-account/src/wild.js:"const away = !seize"`), so a tab cannot keep a cart its own record says it
+  drives. A seizure honours no word - its carrier holds neither the record nor the mask - and a tab from before the word
+  says none: both take the cart as before. A fall asked again answers its first take whatever is said, so the fallen's
+  own ask, made first, is what its killer's seizure is answered too. Its limit is section 22's.
 - WORN: kept on a death to a foe. At another player's hand, in the open country (a cell room), the killer may take
   ONE worn piece: the fallen's game shows the list (`worn`, under the fall's id), the killer's body window picks
   (`pick`, INT9: to the relay, in the room that refereed the fall, within `WILD_REF.pickMs`, naming what the offer
@@ -168,10 +187,10 @@ Either death, at the first dead frame, while the room is still the player's (`wi
   socket plays), once, and says the same collect each time it is asked (`wildLaw.js:"export function collectAsk"`). The
   killer's tab carries it to the service as an act on its own record (`/v1/wild/collect`, wildCollect): the piece into
   that record and the escrow ended, one batch guarded to the one row - only then is it the killer's, and it arrives in
-  the service's answer, carried, never in a slot (`world.js:"const wildCollected = (d) =>"`). NOBODY COLLECTING by the
+  the service's answer, carried, never in a slot (`wildEscrowHost.js:"const wildCollected = (d) =>"`). NOBODY COLLECTING by the
   remains' latest end (`until`: the order's minute and `WILD_REMAINS_MS`, WILD_ESCROW_HOLD_S) and a collect signed at
   that moment spent (`WILD_COLLECT_TTL_S`, `escrowBackAt`), the fallen's own tab takes it back into its record
-  (`/v1/wild/reclaim`, wildReclaim) - watched on the zone's frame (`world.js:"const wildEscrowFrame = () =>"`), and a
+  (`/v1/wild/reclaim`, wildReclaim) - watched on the zone's frame (`wildEscrowHost.js:"const wildEscrowFrame = () =>"`), and a
   game closed meanwhile asks the service at its next play (`/v1/wild/escrows`). The piece is in the fallen's record, the
   escrow, or one record - never two, never none; an end asked twice moves nothing twice. What the fallen sees: the
   death screen says the piece is held until the killer collects it and comes back otherwise (`WILD_TEXT.deathHeld`), a
@@ -320,6 +339,10 @@ renumbered past main's SUPER-DUNGEONS (world176) - its parts written on their br
 first, then the site. A client on an older relay plays the mountains as they were - the zone is not raised there at
 all (`wildFrame` reads `online.wildOk`), and no `wdun` word is sent to a hub that would close the socket on it
 (`online.wdunOk`, `online.wdunGiantsOk`).
+
+CART-AWAY (2026-10-15, section 4) is one field on the account service's `/v1/wild/fall` body, `cart` (0 the wagon away,
+1 with them) - no relay frame and no migration. A service from before it ignores the word and a tab from before it says
+none: either way the cart is taken as it was, so the two deploy in either order.
 
 ## 9. The journeys (WILD3, PVPTIERS)
 
@@ -770,6 +793,11 @@ Pinned by `test/fb1009b_partytruce.test.js` and `test/tv8_party_walk.test.js`; `
 - A piece in escrow comes back only when its fallen plays again (its tab takes it back - there is no clock that moves a
   record nobody plays); until then it is the escrow's, in no record. A fallen character deleted or dead for good while
   one is held has no record to take it back into, and it stays the escrow's.
+- CART-AWAY (section 4): where a parked wagon stands is the fallen's own word, held to its record's mode alone. The
+  wagon's record is the player's own (whose horse and wagon stand where is never the service's), so a modified client
+  that writes its wagon parked off the zone keeps a cart it drove in - and rises with that record, the wagon parked where
+  it wrote. A fallen whose tab never asks is seized with its cart taken wherever it stood; and an ask that finds its
+  fallen already risen meets a hitched team the rise called to follow, with them: the cart is taken.
 
 ## 23. What the suite caught (WILD-SUITE, 2026-10-08)
 
@@ -801,4 +829,7 @@ and `test/audit24_onehome.test.js`; `tools/mutants/wildsuite.json`; LETTERS-DROP
 killer's worn piece theirs whoever the fallen's guild or party counts them, end to end over the game's own pieces):
 `test/fb1014_pvploot.test.js`, `tools/mutants/fb1014_pvploot.json`. Mac's two decisions of 2026-10-14 - guildmates kin,
 the two-phase handoff - end to end through the real relay room, account service and clients:
-`test/fb1014_pvpescrow.test.js`, `tools/mutants/fb1014_pvpescrow.json`.
+`test/fb1014_pvpescrow.test.js`, `tools/mutants/fb1014_pvpescrow.json`. CART-AWAY (Mac, 2026-10-15 - the cart's share
+only while the wagon is with them; through the real drop law, the real Horse Cart and Cargo runtime's records, the zone's
+own mask and the real account service): `test/fb1015_cartaway.test.js`, `tools/mutants/fb1015_cartaway.json` (20, all
+dead).

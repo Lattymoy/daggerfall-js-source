@@ -563,7 +563,7 @@ const TWO_WEAPON_ESM = () => Uint8Array.from([
   ...wpdtRec('iron longsword', 'w/blade.nif', MW_WEAPON_TYPE.LongBladeOneHand),
   ...wpdtRec('iron battle axe', 'w/blade.nif', MW_WEAPON_TYPE.AxeTwoHand),
 ]);
-const BATTLE_AXE = { templateIndex: 127 };
+const WAR_AXE = { templateIndex: 128 };   // PIN MOVED (MW-AXES): Daggerfall's War Axe, the two-hander, draws Morrowind's battle axe
 
 test('MW-D19: build once empty-handed, swap live - the sword arrives, repeats no-op, leaves', async () => {
   const arm = createFpArm();
@@ -583,7 +583,7 @@ test('MW-D19: build once empty-handed, swap live - the sword arrives, repeats no
   // Same item again: no-op, synchronously.
   assert.equal(arm.setWeapon(LONGSWORD, { hasAmmo: false }), false);
   // A DIFFERENT weapon replaces, never stacks.
-  assert.equal(await arm.setWeapon(BATTLE_AXE, { hasAmmo: false }), true);
+  assert.equal(await arm.setWeapon(WAR_AXE, { hasAmmo: false }), true);
   s = arm.status();
   assert.equal(s.weapon && s.weapon.id, 'iron battle axe');
   assert.equal(s.weapon.type, MW_WEAPON_TYPE.AxeTwoHand);
@@ -603,7 +603,7 @@ test('MW-D19: swapping while DRAWN re-equips the new weapon and lands back at We
   arm.setSheathed(false);
   assert.ok(run(arm, (st) => st.upperName === 'WeaponEquipped') >= 0, 'the sword is drawn');
   assert.ok(arm.status().weaponShown);
-  assert.equal(await arm.setWeapon(BATTLE_AXE, { hasAmmo: false }), true);
+  assert.equal(await arm.setWeapon(WAR_AXE, { hasAmmo: false }), true);
   // The reference's shape for an equip change mid-draw: the NEW weapon
   // is equipped - the machine runs its equip section rather than
   // pretending the axe was always in hand.

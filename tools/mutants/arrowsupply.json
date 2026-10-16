@@ -457,5 +457,14 @@
     "tests": [
       "test/arrowsupply.test.js"
     ]
+  },
+  {
+    "name": "BENCH-ARROWS-the-patched-arrow",
+    "file": "src/systems/fletching.js",
+    "old": "  const arrow = ITEM_TEMPLATES[ARROW_TEMPLATE]?.baseWeight ?? 0;",
+    "new": "  const arrow = templateByIndex(ARROW_TEMPLATE)?.baseWeight ?? 0;",
+    "tests": [
+      "test/arrowsupply.test.js"
+    ]
   }
 ]

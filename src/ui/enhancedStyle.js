@@ -2169,12 +2169,30 @@ ${badgeCss()}
 }
 .ctl-foot { display: flex; justify-content: flex-end; }
 .ctl-row:last-child { border-bottom: 0; }
-/* UXB1-D (2026-09-25, the UX backlog): a question about a key stands in the
-   sticky head (brass-edged, so it reads as the thing waiting on an answer)
-   over the list it no longer replaces - and the rows it is about say so:
-   the row the key would go to in brass, the row that holds it now in the
-   duplicate's red. */
+/* UXB1-D: Defaults still asks in the sticky head. A question about a key is a
+   viewport-fitted tooltip beside the binding being changed, so a conflict far
+   down the list never sends the player back to the top. The list remains in
+   place and inert, and the two rows involved still say what is happening. */
 .ctl-head.ctl-asking { border-color: var(--brass); box-shadow: 0 6px 18px rgba(0,0,0,0.45); }
+.ctl-row .ctl { position: relative; }
+.ctl-tooltip {
+  position: fixed; z-index: 30; inset: auto; top: 50%; left: 50%;
+  transform: translate(-50%, -50%); margin: 0; box-sizing: border-box;
+  width: min(420px, calc(100vw - 24px)); max-height: calc(100dvh - 24px); overflow-y: auto;
+  padding: 16px 18px; border: 2px solid var(--brass); background: #0d1014; color: inherit;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.7); text-align: left;
+}
+.ctl-tooltip::backdrop { background: transparent; }
+.ctl-key.ctl-tip-anchor { anchor-name: --ctl-key-in-use-anchor; }
+@supports (position-anchor: --ctl-key-in-use-anchor) {
+  .ctl-tooltip {
+    position-anchor: --ctl-key-in-use-anchor; position-area: bottom span-left;
+    position-try-fallbacks: flip-block, flip-inline;
+    top: auto; left: auto; transform: none; margin-block: 10px;
+  }
+}
+.ctl-tooltip h3 { margin: 0 0 8px; }
+.ctl-tooltip .acts { flex-wrap: wrap; }
 .ctl-row.ctl-want { box-shadow: inset 3px 0 0 var(--brass); }
 .ctl-row.ctl-want .ctl-key { color: var(--brass); border-color: var(--brass); }
 .ctl-row.ctl-holder { box-shadow: inset 3px 0 0 var(--blood); }

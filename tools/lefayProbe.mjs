@@ -6,7 +6,7 @@
 // the cornice's underside and its obelisk all drawn from outside, and the plaque's inscription READING the right way
 // round - not mirrored, not upside down - where the viewer sees it on the screen. AUDIT LEFAY1 A1: the first cut drew
 // with a plain projection, the mirror of the game's, and so certified a plaque the game shows backwards. So: the repo's own modules served as they are, the stone drawn with
-// stand-in tones for its stone (DF-ART: the player's ARENA2's) and its own plaque, by a stand-in shader (riteProbe.mjs's), the flowers' rests marked by small swatches (their pictures are
+// its own art by a stand-in shader (riteProbe.mjs's), the flowers' rests marked by small swatches (their pictures are
 // the player's ARENA2, which no probe carries), and the frame read back.
 //
 //     node tools/lefayProbe.mjs [--shots <dir>]     (writes front / quarter / plaque / above .png there)
@@ -22,7 +22,7 @@ const out = []; const check = (n, ok, d = '') => { out.push(ok); console.log(`${
 
 const PAGE = `<!doctype html><html><body style="margin:0;background:#000"><canvas id=c width=640 height=480></canvas><script type=module>
 import { buildLefayModel, flowerPlace, FLOWER_RINGS, PLAQUE, PEDESTAL } from '/src/world/lefayMonument.js';
-import { lefayPlaqueArt, lefayBronzeArt, LEFAY_PLAQUE_W, LEFAY_PLAQUE_H } from '/src/world/lefayArt.js';
+import { lefayArt, LEFAY_PLAQUE_W, LEFAY_PLAQUE_H } from '/src/world/lefayArt.js';
 import { mirrorProjectionX } from '/src/world/mat4.js';
 const m = buildLefayModel();
 const gl = document.getElementById('c').getContext('webgl2', { alpha: false, preserveDrawingBuffer: true });
@@ -46,10 +46,7 @@ const fl = []; const rests = [[0, 0, 0, 4], [40, 1, 1, 5], [80, 2, 2, 3], [120, 
 for (const e of rests) { const [x, y, z] = flowerPlace(e), s = 0.12, h = 0.3; fl.push(x - s, y, z, x + s, y, z, x + s, y + h, z, x - s, y, z, x + s, y + h, z, x - s, y + h, z, x, y, z - s, x, y, z + s, x, y + h, z + s, x, y, z - s, x, y + h, z + s, x, y + h, z - s); }
 const flowers = mesh(new Float32Array(fl), new Float32Array(fl.length).map((_, i) => (i % 3 === 1 ? 1 : 0)), new Float32Array(fl.length / 3 * 2));
 const tex = (img) => { const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, img.width, img.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, img.colors); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST); return t; };
-// DF-ART: the monument's stone wears the player's own ARENA2 (world/lefayArt.js LEFAY_SOURCES), which no probe carries -
-// each a flat tone of its own here; the plaque and its edges are its own bronze, as the game draws them
-const flat = (w, h, rgb) => { const colors = new Uint8Array(w * h * 4); for (let i = 0; i < colors.length; i += 4) colors.set([...rgb, 255], i); return { width: w, height: h, colors }; };
-const art = [[0, flat(8, 8, [90, 92, 98])], [1, flat(8, 8, [210, 208, 200])], [2, flat(8, 8, [206, 160, 64])], [3, lefayPlaqueArt()], [4, lefayBronzeArt()]];
+const art = lefayArt();
 const T = new Map(art.map(([rec, a]) => [rec, tex(a)]));
 const plaqueImg = art.find(([rec]) => rec === 3)[1];
 const persp = (f, a, n, fa) => { const t = 1 / Math.tan(f / 2); return new Float32Array([t / a, 0, 0, 0, 0, t, 0, 0, 0, 0, (fa + n) / (n - fa), -1, 0, 0, 2 * fa * n / (n - fa), 0]); };

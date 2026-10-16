@@ -31,7 +31,7 @@
 // WAGONS1 (2026-10-09, Mac: "1. Is a replacement model for the current cart ingame 2. Theres an open wagon ... 3. Is a
 // closed wagon varient"): THE WAGON DRAWN IS MAC'S. With the hosts' `bakedWagon` the parts are his Wagon Cart, Open
 // Wagon or Caravan (world/wagonModels.js - their statics, each wheel on its pivot, the rear pair the parked solve's;
-// pictured under world/wagonArt.js's archive, which this pool uploads and owns), by the kind each owner drives: mine by
+// painted under world/wagonArt.js's archive, which this pool uploads and owns), by the kind each owner drives: mine by
 // `wagonKind`, a peer's by their word's `wk` (systems/horseCartWire.js). The cart is borne level on its axle while a
 // horse is in its shafts and rests tipped on them when none is (`hitchPitch`), and every kind hangs its own length
 // behind its horse (`hitchOf`). A bake that will not load or build falls back to the classic wagon for that kind, as a
@@ -85,13 +85,13 @@ import { PARK_REACH, PARK_TTL_MS } from '../net/wire.js';   // HCC-PARK: how far
 import { thrownRecord } from '../systems/wagonWarden.js';   // WARDEN1: a kept team the town watch threw, where it landed
 import { WAGON_HOVER_TEXT } from '../player/eotbWagon.js';   // the hover word for a wagon - the noun of Eye Of The Beholder's Info line, so both carts read alike
 import { hccWireRecord, validHccRecord, hccRecordKey, easeToward, HCC_WIRE_KIND } from '../systems/horseCartWire.js';
-import { decodePng, classicRgbaOf } from '../systems/textureReplacement.js';
+import { decodePng } from '../systems/textureReplacement.js';
 import { toColor32 } from '../formats/color32Order.js';
 import { wagonGeometry, buildBakedWagonParts, rendererModelOf, pitchedPoint, teamSidesOf, TEAM, rigGrowOf, driverSeatFor, SHELL_CLEAR_M } from '../world/wagonModels.js';   // WAGONS1: Mac's wagons; WAGONS3: the team, the rig's grow, the bench; BENCH-CAM: the pivot's clearance
 import { seatRigInput, seatTopByte } from '../player/seatPose.js';   // WAGONS3: the driver's hands, and a seated peer's `st`
 import { newRope, stepRope, tubeModel, tubeInto, tubeVertexCount, ROPE } from '../systems/wagonRopes.js';   // WAGONS3: the harness
-import { WAGON_SOURCES, WAGON_ARCHIVE, wagonLookSources, isGlassRecord, LOOK_RECORDS, lookRecord, TEX as WAGON_TEX } from '../world/wagonArt.js';
-import { classicPictures } from '../world/classicArt.js';   // DF-ART: the wagons' pictures, Daggerfall's own
+import { wagonArt, WAGON_ARCHIVE, wagonLookArt, isGlassRecord, LOOK_RECORDS, LOOK_RECORD_STRIDE, lookRecord, TEX as WAGON_TEX } from '../world/wagonArt.js';
+import { dfLook, lookSeed } from '../world/dfLook.js';   // DF-LOOK: the wagons' pictures in Daggerfall's colours
 import { caravanRoomModel } from '../world/caravanRoomModel.js';   // WAGONS2: the caravan's room, seen through its windows
 import { readWagonLook, wagonLookOfCode, WAGON_OUTSIDE_LOOKS, CARAVAN_INSIDE_LOOKS, CARAVAN_INSIDE_PARTS } from '../systems/wagonLooks.js';
 import { validWagonKind, wagonHitchOf, WAGON_KINDS, wagonHorsesOf } from '../systems/wagonKinds.js';
@@ -371,23 +371,22 @@ export function createHorseCartPool({
   function ensureWagonArt() {
     if (_wagonArtUp || !renderer?.uploadTexture) return;
     _wagonArtUp = true;
-    uploadWagonPictures(WAGON_SOURCES);
+    for (const [rec, pic] of wagonArt()) uploadWagonPicture(rec, pic);
   }
-  /** DF-ART: the wagons' pictures, read from the player's own ARENA2 (world/classicArt.js classicPictures) and uploaded
-   *  as they land: opaque as a model's are (dataPipeline.js uploadRecord's), but a CUT-OUT where one holds glass
-   *  (WAGONS2: the caravan's windows, outside and in - world/wagonArt.js isGlassRecord). */
-  function uploadWagonPictures(sources) {
-    classicPictures(sources, classicRgbaOf).then((pics) => {
-      for (const [rec, pic] of pics) renderer.uploadTexture(WAGON_ARCHIVE, rec, toColor32(pic), isGlassRecord(rec) ? { cutout: true } : { opaque: true });
-    }).catch((e) => console.warn('[TrailingWagon] the wagons\' pictures would not load', e?.message ?? e));
+  /** One of the wagons' pictures: opaque as a model's is (dataPipeline.js uploadRecord's), but a CUT-OUT where it holds
+   *  glass (WAGONS2: the caravan's windows, outside and in - world/wagonArt.js isGlassRecord). DF-LOOK: grained and
+   *  snapped to Daggerfall's palette, a paint's picture by its built record's seed (each paint the same grain). */
+  function uploadWagonPicture(rec, pic) {
+    const looked = dfLook(pic, lookSeed(WAGON_ARCHIVE, rec % LOOK_RECORD_STRIDE));
+    renderer.uploadTexture(WAGON_ARCHIVE, rec, toColor32(looked), isGlassRecord(rec) ? { cutout: true } : { opaque: true });
   }
-  // ── WAGONS2: a paint's pictures, uploaded the first time a wagon wears it, and the remap it is drawn by
-  const _lookUp = new Set();   // `${list}:${i}` uploaded
+  // ── WAGONS2: a paint's pictures, painted and uploaded the first time a wagon wears it, and the remap it is drawn by
+  const _lookUp = new Set();   // `${list}:${i}` painted and uploaded
   const _remaps = new Map();   // `${kind}:${code}` -> the body's remap; `room:${code}` -> the room's
   function ensureLook(list, i, names) {
     if (!(i > 0) || !renderer?.uploadTexture || _lookUp.has(`${list}:${i}`)) return;
     _lookUp.add(`${list}:${i}`);
-    uploadWagonPictures(wagonLookSources(list, i, names[i]));
+    for (const [rec, pic] of wagonLookArt(list, i, names[i])) uploadWagonPicture(rec, pic);
   }
   /** The remap a wagon of `kind` wearing `look` is drawn by: each built record its paint repaints, to the paint's
    *  (null for the wagon as built - its own pictures, no remap). `room` the caravan's inside's instead of its outside's. */

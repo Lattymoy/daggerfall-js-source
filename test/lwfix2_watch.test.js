@@ -75,7 +75,7 @@ test('LW-FIX2 a room\'s doors read the clock\'s own minute: a word, a tone, a re
   town.talked(person);
   assert.equal(rel.regard(r.id, day), EVENTS.talk, 'the word counts, today');
   assert.equal(rel.entries().find((e) => e.id === r.id).seen, day, 'seen today');
-  town.toned(person, 0);
+  town.toned(person, 1);   // PIN MOVED: TONE-TASTE - a tone taken kindly (talkTopics.js toneTaste)
   assert.equal(rel.regard(r.id, day), EVENTS.talk + EVENTS.polite, 'the tone, today');
   const foe = town.residents[1];
   rel.note(foe.id, 'slain', day);

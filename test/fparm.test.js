@@ -395,8 +395,8 @@ test('MW-D9: the Daggerfall->Morrowind mapping is DECLARED, complete, and keyed 
   assert.equal(DF_TO_MW_WEAPON.Claymore, MW_WEAPON_TYPE.LongBladeTwoHand, 'a Claymore is TWO-handed in Morrowind');
   assert.equal(DF_TO_MW_WEAPON.Longsword, MW_WEAPON_TYPE.LongBladeOneHand, 'a Longsword is not');
   assert.equal(DF_TO_MW_WEAPON.Flail, MW_WEAPON_TYPE.BluntOneHand, 'Morrowind has no flail - this row is the fudge');
-  assert.equal(DF_TO_MW_WEAPON.War_Axe, MW_WEAPON_TYPE.AxeOneHand);
-  assert.equal(DF_TO_MW_WEAPON.Battle_Axe, MW_WEAPON_TYPE.AxeTwoHand);
+  assert.equal(DF_TO_MW_WEAPON.War_Axe, MW_WEAPON_TYPE.AxeTwoHand, 'PIN MOVED (MW-AXES): Daggerfall\'s War Axe is its two-hander - Morrowind\'s battle axe');
+  assert.equal(DF_TO_MW_WEAPON.Battle_Axe, MW_WEAPON_TYPE.AxeOneHand, 'PIN MOVED (MW-AXES): and its Battle Axe the one-hander - Morrowind\'s war axe');
   assert.equal(DF_TO_MW_WEAPON.Long_Bow, MW_WEAPON_TYPE.MarksmanBow);
   // MW-D21, after the retail report "the staff registers as a sword":
   // the ROW was never the problem - BluntTwoWide IS Morrowind's own

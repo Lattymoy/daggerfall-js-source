@@ -155,11 +155,14 @@ test('LOOT4: the seeded doors keep their earlier draws - the gate\'s and a town\
   // is the last line before it)
   const noTech = (it) => (it.affixes ?? []).filter((a) => !LR.isTechniqueAffix(a));
   const strip2 = (it) => { const own = noTech(it); return own.filter((a) => !LR.isProcAffix(a) && !(it.exalted && own.indexOf(a) === own.length - 1)); };
+  // PIN MOVED (GILDED2, bible/06-Systems/Gilded.md section 7): the Dragonfire Oath is the gate's very last draw, after the
+  // technique's - set aside on both sides, as the technique is
+  const unGilded = (spoils) => ({ ...spoils, pieces: spoils.pieces.filter((x) => x.tier !== 'gilded') });
   let procs = 0;
   for (let seed = 1; seed <= 1500; seed++) {
-    const s = rollSpoils(seed, 12);
+    const s = unGilded(rollSpoils(seed, 12));
     LR._setProcForTests({ magic: 0, rare: 0 }); LR._setExaltedForTests(0);
-    const p = rollSpoils(seed, 12);
+    const p = unGilded(rollSpoils(seed, 12));
     LR._setProcForTests(null); LR._setExaltedForTests(null);
     assert.equal(s.gold, p.gold);
     assert.equal(s.pieces.length, p.pieces.length, `seed ${seed}: the Regalia's roll is before the last pass`);

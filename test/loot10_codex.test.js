@@ -16,6 +16,7 @@ import { setPref, _resetForTests } from '../src/systems/uiPrefs.js';
 import * as LR from '../src/systems/lootRarity.js';
 import * as CX from '../src/systems/lootCodex.js';
 import { AETHERIC_RECORDS, mintAetheric } from '../src/systems/aetheric.js';
+import { GILDED_RECORDS } from '../src/systems/gilded.js';   // GILDED2: the rung's records, counted
 import { welkyndShards } from '../src/systems/gateSpoils.js';
 import { shardsHeld } from '../src/systems/reforge.js';
 import { takeOneInto } from '../src/systems/inventory.js';
@@ -123,7 +124,8 @@ test('LOOT10: the page - every record (the thirty, and AUDIT LOOT F8 a registere
   for (const r of rows) assert.ok(r.hint, `${r.id}: a hint`);
   const sets = CX.codexSets();
   assert.equal(sets.reduce((n, s) => n + s.pieces.length, 0), AETHERIC_RECORDS.length);
-  assert.deepEqual(CX.codexCount(), { legendary: 1, legendaries: LR.allLegendaries().length, aetheric: 0, aetherics: AETHERIC_RECORDS.length, gilded: 0, gildeds: 1 }, 'GILDED1: and the Gilded rung\'s one');
+  assert.deepEqual(CX.codexCount(), { legendary: 1, legendaries: LR.allLegendaries().length, aetheric: 0, aetherics: AETHERIC_RECORDS.length, gilded: 0, gildeds: GILDED_RECORDS.length }, 'GILDED1: and the Gilded rung\'s records (PIN MOVED, GILDED2: three)');
+  assert.equal(GILDED_RECORDS.length, 3, 'GILDED2: the Hourlock, the Dragonfire Oath and the Sunken Sovereign');
 });
 
 test('LOOT10: the imprint - a known, unworn Rare takes a found power of its group, once, for 20 shards and 5,000 gold; its card and its power', () => {

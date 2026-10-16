@@ -168,8 +168,7 @@
     "new": "    if (false) put(img, x, y, FLOOR);",
     "tests": [
       "test/lefay1_monument.test.js"
-    ],
-    "why": "restored with the old plaque (Mac: \"Bring back the old plaque texture\")"
+    ]
   },
   {
     "name": "LEFAY-ART-ONE-SIZE",
@@ -505,14 +504,22 @@
     ]
   },
   {
+    "name": "AUDIT-LEFAY1-B-ART-BEVEL-SWAPPED",
+    "file": "src/world/lefayArt.js",
+    "old": "put(img, x, y, lit ? LIT : SHADOW);",
+    "new": "put(img, x, y, lit ? SHADOW : LIT);",
+    "tests": [
+      "test/lefay1_monument.test.js"
+    ]
+  },
+  {
     "name": "AUDIT-LEFAY1-B-ART-NO-LIP",
     "file": "src/world/lefayArt.js",
     "old": "    else if ((x > 0 && cut[y * W + x - 1]) || (y > 0 && cut[(y - 1) * W + x])) put(img, x, y, LIP);",
     "new": "    else if (false) put(img, x, y, LIP);",
     "tests": [
       "test/lefay1_monument.test.js"
-    ],
-    "why": "restored with the old plaque"
+    ]
   },
   {
     "name": "AUDIT-LEFAY1-B-POOL-GROUND-NEVER-REREAD",
@@ -702,15 +709,5 @@
     "tests": [
       "test/lefay1_monument.test.js"
     ]
-  },
-  {
-    "name": "AUDIT-LEFAY1-B-ART-BEVEL-SWAPPED",
-    "file": "src/world/lefayArt.js",
-    "old": "put(img, x, y, lit ? LIT : SHADOW);",
-    "new": "put(img, x, y, lit ? SHADOW : LIT);",
-    "tests": [
-      "test/lefay1_monument.test.js"
-    ],
-    "why": "restored with the old plaque (Mac: \"Bring back the old plaque texture\")"
   }
 ]

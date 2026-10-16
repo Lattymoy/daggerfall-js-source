@@ -457,6 +457,10 @@ player's roll is its own.
   And a **Sigil Stone**: the gate's trophy - its own item row, a gem by group but no ingredient, so it never stacks away
   its name - worth a small fortune, one a kill (WB12a named it the Deadlands Ember; WB12d pays one more to each who
   broke the faithful's rite - section 19 D).
+  GILDED2 (2026-10-15, `06-Systems/Gilded.md` section 7): and, the spoils' very last draw - after everything above and
+  every pass, so every spoils rolled before is what it was for its seed - **the Dragonfire Oath**, a Gilded Daedric
+  Dai-Katana whose Dragonfire burns a struck Daedra again for a third - the Warden and his Ward-Bearers too, owed to
+  the blow's own claim (AUDIT WORLD-REWARDS B1) - one kill in a hundred (`GATE_GILDED_CHANCE`).
 - **The spew**: at the kill the boss's body bursts and each piece leaves his chest on its own arc - out and up toward
   the player's side of him, the seed choosing each angle and speed - and falls, bounces and comes to rest with the
   thrown torch's own physics (`droppedTorches.js stepProjectile`: the fixed 0.02 s step, gravity, the collider's ray,

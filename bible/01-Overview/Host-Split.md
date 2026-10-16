@@ -250,3 +250,14 @@ gate's header names the case: it gates a change, never a deploy). FB1015 adds no
 the growth is a cut of its own, so the ceiling was raised by exactly the overflow - 21,695 -> 21,750, with the reason
 beside it in `test/hostceiling.test.js` - and no room: the next pull request that lengthens `bootWorld` moves code out
 first (`buildPixelNow` is next in the order above).
+
+## FIELD BUGS 2026-10-15c - the overflow taken back out (2026-10-15)
+
+PVP-ESCROW's two sides - my pieces held in the service's escrow, asked back once my killer can no longer collect them,
+and my collects carried to the service (`11-Multiplayer/Wild-Zone.md` section 4) - leave `bootWorld` whole for
+`src/scenes/wildEscrowHost.js` (`createWildEscrowHost`). `node tools/hostScope.mjs` measured the group: eight members,
+63 lines, reads five host names (`modes`, `onlineCheckpoint`, `realmSession`, `townTalk`, `wildAccount`), writes
+none, used by three (the drop's receipt, the zone's frame, the room's collect) - handed in, the three calls go through
+the module's `held`, `frame` and `collectHeard`. `bootWorld` 21,750 -> 21,688 code lines, and its ceiling back to
+21,695, where it stood before FB1015's raise. The pins that read the block by source (`test/fb1014_pvpescrow.test.js`)
+read the module, and the bible's anchors name it (`01-Overview/Field-Bugs-2026-10-15c.md`).

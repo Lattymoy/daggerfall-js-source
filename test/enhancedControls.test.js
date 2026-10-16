@@ -56,6 +56,19 @@ function fakeEl(tag) {
     onclick: null, oncontextmenu: null,
     append(...cs) { for (const c of cs) { n.children.push(c); c.parent = n; } },
     setAttribute(k, v) { n.attrs[k] = v; },
+    contains(q) { return q === n || n.children.some((c) => c.contains?.(q)); },
+    querySelectorAll(sel) {
+      const matches = (q) => sel === 'button' ? q.tag === 'button'
+        : sel === '[autofocus]' ? Object.hasOwn(q.attrs, 'autofocus')
+          : sel.startsWith('.') && q.className.split(/\s+/).includes(sel.slice(1));
+      const out = [];
+      const walk = (q) => { if (matches(q)) out.push(q); for (const c of q.children) walk(c); };
+      for (const c of n.children) walk(c);
+      return out;
+    },
+    querySelector(sel) { return n.querySelectorAll(sel)[0] ?? null; },
+    focus() { if (globalThis.document) globalThis.document.activeElement = n; },
+    showModal() { n.open = true; },
     addEventListener() {}, removeEventListener() {},
   };
   return n;
@@ -620,15 +633,31 @@ test('UXB1-B: the commit button says Confirm, head and foot, and the page says t
   });
 });
 
-test('UXB1-D: a replace prompt stands in the HEAD over the list it leaves in place, marks the rows it is about, and the list is inert under it', () => {
+test('UXB1-D: a replace prompt is a tooltip on the changed binding, marks both rows, and leaves the list inert', () => {
   withPane(({ doc, view, store }) => {
     const rowOf = (action) => find(view.body, 'ctl-row').find((r) => one(r, 'ctl-key').dataset.action === action);
     const classes = (n) => n.className.split(/\s+/);
     keyBtn(view, 'MoveForwards').onclick();
     doc.listeners[0].fn(keyEvent('KeyS'));   // MoveBackwards' default
     const head = one(view.body, 'ctl-head');
-    assert.ok(one(head, 'ctl-prompt'), 'the question is inside the sticky head');
-    assert.ok(classes(head).includes('ctl-asking'));
+    const wanted = rowOf('MoveForwards');
+    const tip = one(wanted, 'ctl-tooltip');
+    assert.ok(tip, 'the question is beside the binding being changed');
+    assert.ok(classes(tip).includes('ctl-prompt'), 'the tooltip keeps the prompt card and its answers');
+    assert.equal(one(head, 'ctl-prompt'), undefined, 'the sticky head no longer owns key conflicts');
+    assert.ok(!classes(head).includes('ctl-asking'));
+    assert.equal(keyBtn(view, 'MoveForwards').attrs['aria-expanded'], 'true');
+    assert.equal(tip.attrs.role, 'dialog');
+    assert.equal(tip.tag, 'dialog', 'the top layer keeps the fallback outside the Settings scrollport');
+    assert.equal(tip.open, true, 'the conflict is a native modal dialog');
+    assert.equal(doc.activeElement.textContent, 'Yes', 'the first answer owns keyboard focus');
+    assert.equal(keyBtn(view, 'Jump').attrs.inert, '', 'background controls are outside the tab order');
+    assert.equal(tip.querySelector('[autofocus]').attrs.inert, undefined, 'the answers remain reachable');
+    const css = read('src/ui/enhancedStyle.js');
+    assert.match(css, /\.ctl-tooltip \{[\s\S]*?position: fixed;[\s\S]*?top: 50%; left: 50%;[\s\S]*?max-height: calc\(100dvh - 24px\)/,
+      'without CSS anchors the top-layer dialog is fitted to and centred in the viewport');
+    assert.match(css, /@supports \(position-anchor:[\s\S]*?position-area: bottom span-left;[\s\S]*?position-try-fallbacks: flip-block, flip-inline;/,
+      'where anchors exist the tooltip stays beside the binding and flips to fit');
     assert.ok(keyBtn(view, 'MoveForwards'), 'and the list is still drawn under it, so the scroll has somewhere to stay');
     assert.ok(classes(rowOf('MoveForwards')).includes('ctl-want'), 'the row the key would go to is marked');
     assert.ok(classes(rowOf('MoveBackwards')).includes('ctl-holder'), 'the row that holds it now is marked');
@@ -646,12 +675,14 @@ test('UXB1-D: a replace prompt stands in the HEAD over the list it leaves in pla
     assert.equal(find(view.body, 'ctl-holder').length, 0, 'answered: the marks go with it');
     assert.equal(find(view.body, 'ctl-want').length, 0);
     assert.equal(one(view.body, 'ctl-prompt'), undefined);
+    assert.equal(doc.activeElement, keyBtn(view, 'MoveForwards'), 'answering returns focus to the binding that asked');
   });
   // a holder in the OTHER set is named by the prompt, not marked on a page that does not show it
   const marks = promptMarks({ kind: 'replace', action: 'Jump', holders: [{ action: 'Run', primary: false }, { action: 'Sneak', primary: true }] }, true);
   assert.equal(marks.want, 'Jump');
   assert.deepEqual([...marks.holders], ['Sneak']);
   assert.deepEqual([...promptMarks({ kind: 'defaults' }, true).holders], []);
+
 });
 
 test('UXB1-D: Float up and Float down say Jump and Crouch move you too, in the live keys - and giving Jump\'s key to Float up says neither is needed', () => {

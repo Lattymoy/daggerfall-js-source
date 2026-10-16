@@ -14,12 +14,9 @@ import {
 } from '../src/systems/wagonLooks.js';
 import { newWagonItem } from '../src/systems/wagonKinds.js';
 import {
-  WAGON_SOURCES, wagonLookSources, TEX, WAGON_ARCHIVE, LOOK_RECORDS, LOOK_RECORD_STRIDE, lookRecord, isGlassRecord, CARAVAN_SIDE_WINDOW,
+  wagonArt, wagonLookArt, TEX, WAGON_ARCHIVE, LOOK_RECORDS, LOOK_RECORD_STRIDE, lookRecord, isGlassRecord, CARAVAN_SIDE_WINDOW,
   CARAVAN_FRONT_WINDOW, SIDE_Y0, SIDE_Y1,
 } from '../src/world/wagonArt.js';
-import { classicPictures, COMPOSE } from '../src/world/classicArt.js';
-import { setTextureDeriveContext } from '../src/systems/textureReplacement.js';
-import { fakeClassicRgba } from './classicArtFake.mjs';
 import { caravanRoomModel, CARAVAN_ROOM, CARAVAN_ENTER, CARAVAN_LANTERN, ceilingArc } from '../src/world/caravanRoomModel.js';
 import { wagonGeometry, MEASURED, LIFT, rigGrowOf } from '../src/world/wagonModels.js';
 import { caravanRoomBlock, CARAVAN_ROOM_MODEL_ID, roomToSaved, savedToRoom, turnCaravanScene, readCaravanRoom } from '../src/systems/caravanRoom.js';
@@ -48,8 +45,6 @@ const src = (p) => readFileSync(new URL(`../src/${p}`, import.meta.url), 'utf8')
 const bakeOf = (kind) => JSON.parse(readFileSync(new URL(`../src/assets/wagons/${kind}.json`, import.meta.url), 'utf8'));
 const tick = () => new Promise((r) => setTimeout(r, 0));
 const flush = async (n = 8) => { for (let i = 0; i < n; i++) await tick(); };
-// DF-ART: the wagons' pictures are read from the player's ARENA2 - here the tests' stand-in (test/classicArtFake.mjs)
-setTextureDeriveContext({ classicRgba: fakeClassicRgba() });
 const near = (a, b, eps = 1e-6) => Math.abs(a - b) < eps;
 const alphaAt = (pic, x, y) => pic.data[(y * pic.width + x) * 4 + 3];
 
@@ -85,33 +80,37 @@ test('WAGONS2 THE PAINT\'S LAW: six choices a list, the first the wagon as built
   assert.equal(outsidePaintRow([]), null);
 });
 
-test('WAGONS2 THE PAINTS\' PICTURES (DF-ART: Daggerfall\'s own): each choice past the first names its own records, a stride from the built ones, each a Daggerfall record that is not the built one\'s; the caravan\'s glass a hole - Daggerfall\'s leaded window laid in its sides\' and its room\'s, and its front\'s, where the layout puts them, its panes cut out between its leads - and nothing else of any picture see-through (mutants: the glass left opaque, a paint\'s picture its built one)', async () => {
-  const bodyOf = (from) => (Array.isArray(from) ? from : from.body);
-  assert.equal(Object.keys(WAGON_SOURCES).length, 21);   // PIN MOVED (WAGONS3): and the harness
-  const looks = {};
+test('WAGONS2 THE PAINTS\' PICTURES: each choice past the first painted to its own records, a stride from the built ones, the same bytes every time and not the built picture; the caravan\'s glass a hole - its sides\' and its room\'s windows exactly where the side\'s picture puts them, its front\'s round window - and nothing else of any picture see-through (mutants: the glass left opaque, a paint\'s picture its built one)', () => {
+  const built = new Map(wagonArt());
+  assert.equal(built.size, 21);   // PIN MOVED (WAGONS3): and the harness
   for (const [list, names] of [...Object.entries(WAGON_OUTSIDE_LOOKS), ...Object.entries(CARAVAN_INSIDE_LOOKS)]) {
-    assert.deepEqual(wagonLookSources(list, 0, names[0]), {}, 'the built choice names nothing here');
+    assert.deepEqual(wagonLookArt(list, 0, names[0]), [], 'the built choice paints nothing here');
     for (let i = 1; i < names.length; i++) {
-      const srcs = wagonLookSources(list, i, names[i]);
-      assert.deepEqual(Object.keys(srcs).map(Number), LOOK_RECORDS[list].map((rec) => rec + LOOK_RECORD_STRIDE * i), `${list} ${names[i]}`);
-      assert.ok(Object.entries(srcs).some(([rec, from]) => bodyOf(from).join('_') !== bodyOf(WAGON_SOURCES[Number(rec) % LOOK_RECORD_STRIDE]).join('_')), `${list} ${names[i]} is its own picture`);
-      Object.assign(looks, srcs);
+      const pics = wagonLookArt(list, i, names[i]);
+      assert.deepEqual(pics.map(([rec]) => rec), LOOK_RECORDS[list].map((rec) => rec + LOOK_RECORD_STRIDE * i), `${list} ${names[i]}`);
+      const again = wagonLookArt(list, i, names[i]);
+      pics.forEach(([rec, pic], k) => {
+        assert.deepEqual([pic.width, pic.height], [64, 64]);
+        assert.deepEqual(pic.data, again[k][1].data, 'from numbers, the same every time');
+        assert.notDeepEqual(pic.data, built.get(rec % LOOK_RECORD_STRIDE).data, `${list} ${names[i]} is its own picture`);
+      });
     }
   }
-  const all = await classicPictures({ ...WAGON_SOURCES, ...looks }, fakeClassicRgba());
-  assert.equal(all.length, Object.keys(WAGON_SOURCES).length + Object.keys(looks).length, 'every one read');
-  const k = COMPOSE / 64;
+  const all = [...built, ...Object.entries(WAGON_OUTSIDE_LOOKS).flatMap(([l, n]) => n.flatMap((k, i) => wagonLookArt(l, i, k))), ...Object.entries(CARAVAN_INSIDE_LOOKS).flatMap(([l, n]) => n.flatMap((k, i) => wagonLookArt(l, i, k)))];
+  const { x0, x1, y0, y1 } = CARAVAN_SIDE_WINDOW;
   for (const [rec, pic] of all) {
     const holes = [];
-    for (let y = 0; y < pic.height; y++) for (let x = 0; x < pic.width; x++) if (alphaAt(pic, x, y) !== 255) holes.push([x, y, alphaAt(pic, x, y)]);
+    for (let y = 0; y < 64; y++) for (let x = 0; x < 64; x++) if (alphaAt(pic, x, y) !== 255) holes.push([x, y, alphaAt(pic, x, y)]);
     assert.equal(holes.every(([, , a]) => a === 0), true, 'a texel is whole or a hole');
     const base = rec % LOOK_RECORD_STRIDE;
     assert.equal(isGlassRecord(rec), [TEX.caravanSide, TEX.caravanFront, TEX.roomSide, TEX.roomFront].includes(base));
-    const win = base === TEX.caravanSide || base === TEX.roomSide ? CARAVAN_SIDE_WINDOW : base === TEX.caravanFront || base === TEX.roomFront ? CARAVAN_FRONT_WINDOW : null;
-    if (win) {
-      assert.ok(holes.length > 40, `record ${rec}: its window's panes (${holes.length})`);
-      assert.ok(holes.every(([x, y]) => x >= win.x0 * k && x < (win.x1 + 1) * k && y >= win.y0 * k && y < (win.y1 + 1) * k), `record ${rec}: the glass inside its window alone`);
-      assert.ok(holes.length < (win.x1 - win.x0 + 1) * (win.y1 - win.y0 + 1) * k * k * 0.8, `record ${rec}: its frame and its leads whole`);
+    if (base === TEX.caravanSide || base === TEX.roomSide) {
+      const glass = [];
+      for (let y = y0 + 1; y < y1; y++) for (let x = x0 + 1; x < x1; x++) if (x !== ((x0 + x1) >> 1) && y !== ((y0 + y1) >> 1)) glass.push([x, y]);
+      assert.deepEqual(holes.map(([x, y]) => [x, y]).sort((a, b) => a[1] - b[1] || a[0] - b[0]), glass.sort((a, b) => a[1] - b[1] || a[0] - b[0]), `record ${rec}: its window's panes, its frame and its lead whole`);
+    } else if (base === TEX.caravanFront || base === TEX.roomFront) {
+      const { cx, cy, glassR } = CARAVAN_FRONT_WINDOW;
+      assert.ok(holes.length > 40 && holes.every(([x, y]) => Math.hypot(x - cx, y - cy) <= glassR), `record ${rec}: the round window's panes alone`);
     } else assert.equal(holes.length, 0, `record ${rec} has no glass`);
   }
 });
@@ -144,10 +143,9 @@ function uvAt(model, rec, p, normalSign = null) {
   }
   return null;
 }
-/** A picture coordinate's texel in an `n`-texel picture (64: the layout's - world/wagonArt.js). */
-const texelAt = (uv, n = 64) => [((Math.floor(uv[0] * n) % n) + n) % n, Math.min(n - 1, Math.max(0, Math.floor((1 - uv[1]) * n)))];
+const texelAt = (uv) => [((Math.floor(uv[0] * 64) % 64) + 64) % 64, Math.min(63, Math.max(0, Math.floor((1 - uv[1]) * 64)))];
 
-test('WAGONS2 THE ROOM\'S MODEL: the caravan\'s inside - a floor, two sides, two ends under a barrel ceiling through both eaves and the peak - every face looking into the room, all of it inside the body; and its windows MEET the caravan\'s: a point of a side or the front is glass in the room\'s picture exactly where it is glass in the caravan\'s (mutants: a wall facing out, the side\'s u from the other side, the room\'s ends swapped)', async () => {
+test('WAGONS2 THE ROOM\'S MODEL: the caravan\'s inside - a floor, two sides, two ends under a barrel ceiling through both eaves and the peak - every face looking into the room, all of it inside the body; and its windows MEET the caravan\'s: a point of a side or the front is glass in the room\'s picture exactly where it is glass in the caravan\'s (mutants: a wall facing out, the side\'s u from the other side, the room\'s ends swapped)', () => {
   const R = CARAVAN_ROOM, M = MEASURED.caravan;
   assert.ok(R.halfX < M.sideX && R.floorY >= M.floorY - LIFT && R.peakY < M.endTopY - LIFT && R.rearZ > M.rearZ && R.frontZ < M.bedZ[1], 'inside the body');
   const arc = ceilingArc();
@@ -166,8 +164,8 @@ test('WAGONS2 THE ROOM\'S MODEL: the caravan\'s inside - a floor, two sides, two
   // the windows meet: the body's faces as baked (wagonGeometry's statics, the lifted frame)
   const body = wagonGeometry(bakeOf('caravan')).statics;
   const bodyModel = { ...body, subMeshes: body.subMeshes.map((sm, k) => ({ ...sm, textureRecord: body.slots[k].record })) };
-  const art = new Map(await classicPictures(WAGON_SOURCES, fakeClassicRgba()));
-  const glass = (rec, uv) => { const p = art.get(rec), [x, y] = texelAt(uv, p.width); return alphaAt(p, x, y) === 0; };
+  const art = new Map(wagonArt());
+  const glass = (rec, uv) => { const [x, y] = texelAt(uv); return alphaAt(art.get(rec), x, y) === 0; };
   let sideGlass = 0, frontGlass = 0;
   for (const side of [1, -1]) for (let z = R.rearZ + 0.05; z < R.frontZ - 0.05; z += 0.05) for (let y = SIDE_Y0 - LIFT + 0.85; y < SIDE_Y1 - LIFT - 0.1; y += 0.05) {
     const out = uvAt(bodyModel, TEX.caravanSide, [side * M.sideX, y, z]);
@@ -188,7 +186,7 @@ test('WAGONS2 THE ROOM\'S MODEL: the caravan\'s inside - a floor, two sides, two
     assert.deepEqual(texelAt(inn), texelAt(out), `the front at ${x.toFixed(2)}, ${y.toFixed(2)}`);
   }
   assert.ok(sideGlass > 100, `the side windows meet (${sideGlass} points)`);
-  assert.ok(frontGlass > 20, `the front window meets (${frontGlass} points)`);
+  assert.ok(frontGlass > 20, `the round window meets (${frontGlass} points)`);
 });
 
 /** The interior builder over fakes (test/audit68_scenes_ab.test.js's shape): a texture of `h` metres' height a record. */
@@ -286,7 +284,6 @@ test('WAGONS2 THE PAINT ON THE WAGON: the pool draws the driven wagon in its pai
   assert.equal(room.remap.get(`${WAGON_ARCHIVE}_${TEX.roomSide}`), `${WAGON_ARCHIVE}_${lookRecord(TEX.roomSide, 1)}`);
   assert.equal(room.remap.get(`${WAGON_ARCHIVE}_${TEX.roomFloor}`), `${WAGON_ARCHIVE}_${lookRecord(TEX.roomFloor, 3)}`);
   assert.equal(room.remap.has(`${WAGON_ARCHIVE}_${TEX.roomCeiling}`), false, 'the ceiling as built');
-  await flush();   // DF-ART: a paint's pictures are read from the player's ARENA2, and land a moment after its first draw
   for (const rec of [...LOOK_RECORDS.caravan.map((x) => lookRecord(x, 2)), lookRecord(TEX.roomFloor, 3)]) assert.ok(r.textures.has(`${WAGON_ARCHIVE}_${rec}`) || r.textures.has(`${WAGON_ARCHIVE}_${rec}#opaque`), `record ${rec} uploaded`);
   const ups = r.textures.size;
   pool.draw(r);
@@ -318,22 +315,15 @@ test('WAGONS2 THE PAINTERS: the Stable lists the driven wagon\'s outside paints 
   // the live records
   assert.deepEqual(Object.values(caravanRoomRecords()).sort(), [TEX.roomSide, TEX.roomFront, TEX.roomRear, TEX.roomCeiling, TEX.roomFloor].map((x) => lookRecord(x, CARAVAN_LIVE_CHOICE)).sort());
   const r = fakeRenderer();
-  await paintCaravanRoom(r, { w: 2 });
+  paintCaravanRoom(r, { w: 2 });
   const side = lookRecord(TEX.roomSide, CARAVAN_LIVE_CHOICE);
   assert.ok(r.evicted.includes(`${WAGON_ARCHIVE}_${side}`) && r.evicted.includes(`${WAGON_ARCHIVE}_${side}#opaque`));
   assert.deepEqual(r.textures.get(`${WAGON_ARCHIVE}_${side}`).o, { cutout: true });
-  const pictureOf = async (srcs, rec) => (await classicPictures(srcs, fakeClassicRgba())).find(([x]) => x === rec)[1].data;
-  const whitewash = await pictureOf(wagonLookSources('walls', 2, 'whitewash'), lookRecord(TEX.roomSide, 2));
-  assert.deepEqual((await caravanRoomPictures({ w: 2 })).find(([rec]) => rec === side)[1].data, whitewash);
-  await paintCaravanRoom(r, { w: 3 });
-  assert.deepEqual((await caravanRoomPictures({ w: 3 })).find(([rec]) => rec === side)[1].data, await pictureOf(wagonLookSources('walls', 3, 'blue'), lookRecord(TEX.roomSide, 3)));
+  const whitewash = new Map(wagonLookArt('walls', 2, 'whitewash'));
+  assert.deepEqual(caravanRoomPictures({ w: 2 }).find(([rec]) => rec === side)[1].data, whitewash.get(lookRecord(TEX.roomSide, 2)).data);
+  paintCaravanRoom(r, { w: 3 });
+  assert.deepEqual(caravanRoomPictures({ w: 3 }).find(([rec]) => rec === side)[1].data, new Map(wagonLookArt('walls', 3, 'blue')).get(lookRecord(TEX.roomSide, 3)).data);
   assert.equal(r.evicted.filter((k) => k === `${WAGON_ARCHIVE}_${side}`).length, 2, 'let go each time');
-  // DF-ART: read a moment after it is asked, a paint asked meanwhile wins - the walls never wear the older one
-  const late = fakeRenderer();
-  const a = paintCaravanRoom(late, { w: 2 }), b = paintCaravanRoom(late, { w: 3 });
-  await Promise.all([a, b]);
-  assert.deepEqual(late.textures.get(`${WAGON_ARCHIVE}_${side}`).px.colors.length > 0, true);
-  assert.equal(late.evicted.filter((k) => k === `${WAGON_ARCHIVE}_${side}`).length, 1, 'the older paint lands nowhere');
   // the decorator
   const painted = [];
   const door = { caravan: caravanPaintRows({ w: 1 }), set: (part, i) => { painted.push([part, i]); return `The ${part} are now x.`; } };
@@ -700,7 +690,8 @@ test('WAGONS2 (FINAL AUDIT) A SEATED RIDER SETS OUT ON NO JOURNEY OF THEIR OWN, 
   assert.match(w, /if \(!partyArrival && !hccRuntimeOn\(\)\?\.wagonGoesOnJourney\?\.\(\) && wagonRiders\?\.release\(\)\) _hccDirty = true;\n\s*if \(!partyArrival && wagonRiders\?\.announce\(pick\.pixel\)\)/);
   assert.match(w, /wagonRiders\?\.clear\(\);[^\n]*\n\s*caravanVisitLink\.close\(\);[^\n]*\n\s*seatLock\?\.release\(\);/);
   const hc = src('systems/horseCart.js');
-  assert.match(hc, /function wagonGoesOnJourney\(\) \{\n\s*if \(wagonState\.Mode === WAGON_MODE\.WithPlayer\) return true;\n\s*return physicalPersistenceEnabled && \(followingTransportFastTravels \|\| forceNextJourney\) && isTeamFollowing\(\);\n\s*\}/);
+  // WAGON-STABLED (PIN MOVED): a wagon with the player goes unless it was sent to the stable (test/fb1015_wagonstabled.test.js)
+  assert.match(hc, /function wagonGoesOnJourney\(\) \{\n\s*if \(wagonState\.Mode === WAGON_MODE\.WithPlayer\) return !wagonState\.WagonStabled;[^\n]*\n\s*return physicalPersistenceEnabled && \(followingTransportFastTravels \|\| forceNextJourney\) && isTeamFollowing\(\);\n\s*\}/);
   // the release, by execution
   const riders = createWagonRiders({ selfId: () => 'me', name: (i) => i, now: () => 0, say() {}, pool: { mySeatCount: () => 4, mySeatsKnown: () => true } });
   assert.equal(riders.release(), false, 'nobody aboard: nothing to give up');

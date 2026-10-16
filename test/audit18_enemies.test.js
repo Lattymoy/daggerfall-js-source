@@ -210,7 +210,7 @@ test('audit18 enemies: melee reach is a FLAT MeleeDistance - no rate-of-approach
   const run = (far, near) => {
     srand(12345);
     const atk = new EnemyAttack({ liveSpeed: 50 });
-    const ai = { _dist: far, inSight: true, yaw: 0, feet: [0, 0, 0] };
+    const ai = { _dist: far, inSight: true, yaw: 0, feet: [0, 0, 0], lastKnownTargetPos: [0, 0, far] };   // INVIS-SWING: detected, down +z
     for (let i = 0; i < 100; i++) {
       ai._dist = far;
       atk.update(0.0625, ai, [0, 0, far]);

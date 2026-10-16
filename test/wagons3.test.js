@@ -23,8 +23,7 @@ import {
 } from '../src/world/wagonModels.js';
 import { SEATED_HIP_HEIGHT, SEAT_HIP_DROP, SEAT_PELVIS_HEIGHT, seatedMotion, seatedCamera, seatRigInput, seatTopByte } from '../src/player/seatPose.js';
 import { ROPE, newRope, layRope, stepRope, restSag, tubeModel, tubeInto, tubeVertexCount } from '../src/systems/wagonRopes.js';
-import { TEX, WAGON_ARCHIVE, WAGON_SOURCES } from '../src/world/wagonArt.js';
-import { DF } from '../src/world/classicArt.js';
+import { TEX, WAGON_ARCHIVE, wagonArt } from '../src/world/wagonArt.js';
 import { quatAngleAxis, UNITY_QUAT_IDENTITY, quatRotate as quatRotateT, quatForward } from '../src/world/quat.js';
 import { FOCAL_HEIGHT } from '../src/player/mwCamera.js';   // AUDIT WAGONS3 B1: the camera's own focal over the seat
 import { MW_UNITS_PER_METER } from '../src/formats/mwFirstPerson.js';
@@ -245,8 +244,9 @@ test('WAGONS3 THE HARNESS\'S TUBE: ROPE.sides faces round each link, laid once w
     close(off[0] / 0.05, n[0], 1e-4, 'out along its normal');
   }
   assert.ok(m.positions.slice(0, tubeVertexCount(1) * 3).every((v) => v === 0), 'another rope\'s rings untouched');
-  // the leather the strap wears: the wagons' own archive, Daggerfall's brown (DF-ART: Come Sail Away's own leather)
-  assert.deepEqual(WAGON_SOURCES[TEX.harness], DF.leather);
+  // the leather the strap wears: the wagons' own archive, painted from numbers
+  const art = new Map(wagonArt());
+  assert.ok(art.has(TEX.harness));
   assert.equal(TEX.harness, 20);
 });
 

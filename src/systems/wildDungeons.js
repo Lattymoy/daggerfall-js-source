@@ -22,6 +22,7 @@
 // Pure: the mask, a pixel test and a day in; the halls out. The same on every client.
 // ═══════════════════════════════════════════════════════════════════
 import { WILD_RINGS } from './wildZone.js';
+import { WATER_SPECIES } from '../characters/dungeonEnemies.js';   // SLAUGHTER-BOX: RDBLayout's water species, one home
 
 export const WILD_DUNGEONS_PER_RING = Object.freeze([10, 8, 6, 4]);
 /** A hall keeps at least this many pixels from every other hall (they never crowd one valley). */
@@ -191,7 +192,6 @@ export const WILD_HALL_FOES = Object.freeze({
   water: Object.freeze([41, 42]),                                   // Dreugh, Lamia
 });
 const HIGH = new Set(Object.values(WILD_HALL_FOES).flat());
-const WATER = new Set([11, 41, 42]);   // Slaughterfish, Dreugh, Lamia
 /** Is this monster one of the high tiers a hall keeps as it is? (A human class always.) */
 export const wildHallKeeps = (mobileType) => mobileType >= 128 || HIGH.has(mobileType);
 const mix = (a, b) => { let h = (a ^ Math.imul(b + 0x7f4a7c15, 0x9e3779b1)) >>> 0; h = Math.imul(h ^ (h >>> 16), 0x85ebca6b) >>> 0; h = Math.imul(h ^ (h >>> 13), 0xc2b2ae35) >>> 0; return (h ^ (h >>> 16)) >>> 0; };
@@ -203,7 +203,7 @@ export function wildHallFoes(enemies, ring, seed) {
   const pool = WILD_HALL_FOES[Math.max(1, Math.min(WILD_RINGS, ring | 0 || 1))];
   return (enemies ?? []).map((e, i) => {
     if (!e || wildHallKeeps(e.mobileType)) return e;
-    const list = WATER.has(e.mobileType) ? WILD_HALL_FOES.water : pool;
+    const list = WATER_SPECIES.has(e.mobileType) ? WILD_HALL_FOES.water : pool;
     return { ...e, mobileType: list[mix(seed >>> 0, i) % list.length], gender: 'unspecified', wildSwapped: true };
   });
 }

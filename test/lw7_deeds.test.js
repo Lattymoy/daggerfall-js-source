@@ -236,10 +236,12 @@ test('LW7 the town\'s deeds: a resident struck down (`slain`) is dead for good f
   assert.equal(c.relations.regard(v.living.id, cday), EVENTS.crime, 'the purse\'s own');
   for (const id of cNear) assert.equal(c.relations.regard(id, cday), EVENTS.crime, `${id} saw the hand`);
   const w = cseats.find((x) => x.person !== v && !cNear.includes(x.person.living.id)).person;   // one who did not see the hand
-  assert.equal(c.town.toned(w, 1), null, 'a plain word: nothing');
-  c.town.toned(w, 0);
+  // PIN MOVED: TONE-TASTE (2026-10-15) - the door hears how the tone was TAKEN (talkTopics.js toneTaste: 1 kindly, -1
+  // ill, 0 the Normal tone), never the tone's index (test/tonetaste.test.js)
+  assert.equal(c.town.toned(w, 0), null, 'a plain word: nothing');
+  c.town.toned(w, 1);
   assert.equal(c.relations.regard(w.living.id, cday), EVENTS.polite);
-  c.town.toned(w, 2);
+  c.town.toned(w, -1);
   assert.equal(c.relations.regard(w.living.id, cday), EVENTS.polite + EVENTS.insulted);
   // a visitor's own, a crew's own
   const V = { id: 'L9.t1', name: 'Vi Ash', town: 9, slot: 1, roll: 't', job: 'merchant', home: null };
@@ -334,8 +336,8 @@ test('LW7 the road\'s deeds: a traveller struck down (`slain`) - the hand\'s tur
   roads.frame(0.001, [0, 0, 0]);
   assert.notEqual(roads.parties(), before, 'read again at once');
   assert.equal(roads.slain({ living: null }), null);
-  roads.toned({ living: { id: T.party[0].id } }, 0);
-  assert.equal(rel.regard(T.party[0].id, day), EVENTS.slain + EVENTS.polite, 'a courteous word on the road');
+  roads.toned({ living: { id: T.party[0].id } }, 1);   // PIN MOVED: TONE-TASTE - a tone taken kindly
+  assert.equal(rel.regard(T.party[0].id, day), EVENTS.slain + EVENTS.polite, 'a word taken kindly on the road');
   // a lone traveller struck down: no mark walks on for them
   const solo = trips.find((tr) => tr.party.length === 1 && !tr.dive && !tr.enc);
   assert.ok(solo, 'a lone traveller');
@@ -384,13 +386,14 @@ test('LW7 the streaming host: every resident\'s place by the lives (`livingCycle
   assert.match(w, /else if \(!r\?\.spared && livingStrikeRoad\(cam\.pos, lookFwd\)\) surfacePlayer\(\);/);
   assert.match(w, /const near = nearestPerson\(eye, dir, livingRoads\.talkSeats\(\)\);[^\n]*\n\s*if \(!near \|\| near\.distance > WEAPON_REACH\) return false;\n\s*const wall = collider\.raycast\(eye, dir, near\.distance\);\n\s*if \(Number\.isFinite\(wall\) && wall < near\.distance - 1e-3\) return false;\n\s*if \(!livingRoads\.slain\(near\.entry\.person\)\) return false;/);
   assert.match(w, /tallyCrimeGuildRequirements\(playerEntity, false, 5\);\n\s*playerWeaponHitEntity\(playerEntity, \{ health: 0 \}, \{ isCivilian: true \}\);/);
-  assert.match(w, /livingTone: \(person, tone\) => person\?\.living\?\.town\?\.toned\?\.\(person, tone\),/);
-  assert.match(w, /_livingRoadsDoor\.toned = \(p, tone\) => livingRoads\?\.toned\(p, tone\) \?\? null;/);
+  // PIN MOVED: TONE-TASTE - the seams carry the tone as taken
+  assert.match(w, /livingTone: \(person, taste\) => person\?\.living\?\.town\?\.toned\?\.\(person, taste\),/);
+  assert.match(w, /_livingRoadsDoor\.toned = \(p, taste\) => livingRoads\?\.toned\(p, taste\) \?\? null;/);
   // PIN MOVED (LW11): the road's slay is the hand's turn and the road's report of it
   assert.match(w, /slay: livingRoadSlay,   \/\/ LW7: a traveller struck down/);
   assert.match(w, /const livingRoadSlay = \(res, t, seen\) => \{ livingSlay\(res, t, seen\); caravanHostOf\(\)\.slain\(res, t\); \};/);
   const tt = rd('src/scenes/townTalk.js');
-  assert.match(tt, /const _toneHeard = \(\) => \{ if \(_toneTarget\) livingTone\?\.\(_toneTarget, tone\); \};/);
+  assert.match(tt, /const _toneHeard = \(\) => \{ if \(_toneTarget\) livingTone\?\.\(_toneTarget, _toneTaste\(\)\); \};/);   // PIN MOVED: TONE-TASTE
   assert.match(tt, /_toneTarget = _toneNext;   \/\/ LW7[^\n]*\n\s*_toneNext = null;/, 'the window takes the door\'s resident, and every other door leaves nobody');
   assert.match(tt, /livingTalk\?\.talked\?\.\(target\.person\);[^\n]*\n\s*_toneNext = target\.person\.living \? target\.person : null;/, 'the mobile door names its resident');
   assert.match(tt, /_toneHeard\(\);   \/\/ LW7: the question's tone/);

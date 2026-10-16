@@ -7,7 +7,7 @@
 // and the Companions, Revenants and Stores pages that stood on the Stats rail before it.
 //
 //  - THE STABLE: the horse and the wagon - owned or not, where each is (ridden, following, parked or waiting how far
-//    off, or stabled), the wagon's load against its limit; SUMMON (Horse Cart and Cargo's own summon) and SEND AWAY
+//    off, with the player, or stabled - WAGON-STABLED: sent away), the wagon's load against its limit; SUMMON (Horse Cart and Cargo's own summon) and SEND AWAY
 //    (its other half, systems/horseCart.js sendTransportAway), and the horse renamed in place. Each act's word is said
 //    under its card, never on a HUD the window covers.
 //  - THE FLEET: every ship the player holds - drawn by ui/fleetPage.js over the same provider.
@@ -293,6 +293,10 @@ function wagonLines(el, meter, w, care, act) {
 /** How far a thing stands, in the words a card uses. */
 export const farWords = (m) => (m == null ? 'away from here' : m < 1000 ? `${m} m away` : `${(m / 1000).toFixed(1)} km away`);
 
+/** The chip of a horse or a wagon with the player: the classic transport's (the mod off, or its persistence), and
+ *  WAGON-STABLED's - the mod's WithPlayer never sent to the stable, which the next door leaves outside. */
+const WITH_YOU = 'With you';
+
 /**
  * THE STABLE'S WORDS: where the horse and the wagon each are, as a chip's word and a line under it, off the runtime's
  * view (systems/horseCart.js stableView) - or, with Horse Cart and Cargo off, the classic transport's: with the player.
@@ -301,16 +305,17 @@ export const farWords = (m) => (m == null ? 'away from here' : m < 1000 ? `${m} 
  */
 export function stableWords(m) {
   if (!m.hcc || !m.view) {
-    const classic = { state: 'With you', tone: '', line: 'Ride from the Transport window.' };
+    const classic = { state: WITH_YOU, tone: '', line: 'Ride from the Transport window.' };
     return { horse: m.hasHorse ? classic : null, wagon: m.hasCart ? { ...classic, line: 'Its load rides with you.' } : null };
   }
   const v = m.view;
   if (!v.persistence) {
-    const classic = { state: 'With you', tone: '', line: 'Physical persistence is off: it travels with you.' };
+    const classic = { state: WITH_YOU, tone: '', line: 'Physical persistence is off: it travels with you.' };
     return { horse: v.hasHorse ? classic : null, wagon: v.hasCart ? classic : null };
   }
   const riding = v.transport === TRANSPORT.Horse, driving = v.transport === TRANSPORT.Cart;
   const teamFollowing = v.wagonMode === WAGON_MODE.FollowingPlayer && v.horseMode === HORSE_MODE.HitchedToWagon;
+  const beside = { state: WITH_YOU, tone: '', line: 'At your side - left outside the next door you go through.' };   // WAGON-STABLED
   let horse = null, wagon = null;
   if (v.hasHorse) {
     if (riding) horse = { state: 'Riding', tone: '', line: 'You are in the saddle.' };
@@ -318,12 +323,16 @@ export function stableWords(m) {
     else if (teamFollowing || v.horseMode === HORSE_MODE.FollowingPlayer) horse = { state: 'Following', tone: '', line: teamFollowing ? 'Following you with the wagon.' : 'Following you.' };
     else if (v.horseMode === HORSE_MODE.LooseStationary) horse = { state: 'Waiting', tone: 'is-away', line: `Waiting where you left it, ${farWords(v.horseAt)}.` };
     else if (v.horseMode === HORSE_MODE.HitchedToWagon && v.wagonMode === WAGON_MODE.Deployed) horse = { state: 'Hitched', tone: 'is-away', line: `Hitched to your parked wagon, ${farWords(v.wagonAt)}.` };
+    // WAGON-STABLED: Stabled is sent away (the runtime's word); the mod's WithPlayer never sent is beside the player, and
+    // the next door stands it outside
+    else if (!v.horseStabled) horse = beside;
     else horse = { state: 'Stabled', tone: 'is-away', line: 'Out of the world - mount it from the Transport window, or summon it to your side.' };
   }
   if (v.hasCart) {
     if (driving) wagon = { state: 'Driving', tone: '', line: 'You are on the box.' };
     else if (teamFollowing) wagon = { state: 'Following', tone: '', line: 'Following you behind your horse.' };
     else if (v.wagonMode === WAGON_MODE.Deployed) wagon = { state: 'Parked', tone: 'is-away', line: `Parked ${farWords(v.wagonAt)}.` };
+    else if (!v.wagonStabled) wagon = beside;
     else wagon = { state: 'Stabled', tone: 'is-away', line: v.hasHorse ? 'Out of the world - drive it from the Transport window, or summon it.' : 'Out of the world - Summon it to your side; you need a horse to pull it.' };
   }
   return { horse, wagon };

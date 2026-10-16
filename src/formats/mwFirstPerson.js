@@ -1406,9 +1406,17 @@ export function sneakOffset(sneaking, delta) {
  *     that exists; nothing here is right.
  *   - STAFF. Daggerfall's staff is a two-handed blunt; Morrowind's own
  *     staves are BluntTwoWide, so that is where it goes.
- *   - WAR AXE vs BATTLE AXE. Daggerfall splits them one/two-handed and
- *     Morrowind's AxeOneHand / AxeTwoHand split the same way, which is
- *     the cleanest row in the table.
+ *   - WAR AXE vs BATTLE AXE. Daggerfall's names are the REVERSE of
+ *     Morrowind's: its Battle Axe is the one-hander (DFU's ItemTemplates,
+ *     WEAPON_HANDS 127 'Either') and its War Axe the two-hander (128
+ *     'Both'), where every later game - Morrowind's records included -
+ *     calls the one-hander the war axe. So a Daggerfall Battle Axe draws
+ *     Morrowind's AxeOneHand (its war axes) and a War Axe its AxeTwoHand
+ *     (its battle axes), the grip and the clips following the hands the
+ *     item really has (MW-AXES, FIELD BUGS 2026-10-15c: the rows had
+ *     matched the names, and a War Axe swung one-handed beside a torch
+ *     while a Battle Axe took both hands). dfWeaponShape crosses the
+ *     two names for the same reason.
  *   - DAI-KATANA and CLAYMORE are LongBladeTwoHand, which costs them
  *     Daggerfall's own one-handed animation - a real behavioural change,
  *     not just a mesh swap.
@@ -1428,8 +1436,8 @@ export const DF_TO_MW_WEAPON = Object.freeze({
   Flail: MW_WEAPON_TYPE.BluntOneHand,
   Warhammer: MW_WEAPON_TYPE.BluntTwoClose,
   Staff: MW_WEAPON_TYPE.BluntTwoWide,
-  War_Axe: MW_WEAPON_TYPE.AxeOneHand,
-  Battle_Axe: MW_WEAPON_TYPE.AxeTwoHand,
+  War_Axe: MW_WEAPON_TYPE.AxeTwoHand,
+  Battle_Axe: MW_WEAPON_TYPE.AxeOneHand,
   Short_Bow: MW_WEAPON_TYPE.MarksmanBow,
   Long_Bow: MW_WEAPON_TYPE.MarksmanBow,
 });
@@ -3389,9 +3397,12 @@ export function clipUnionBounds(assembly, poseAt, times) {
 
 /** Preserve the item's shape within an animation class, after material and archive
  * availability. An absent equivalent keeps the existing fallback. Retail uses Wakizashi
- * in record IDs, while Daggerfall's template enum spells it Wakazashi. */
+ * in record IDs, while Daggerfall's template enum spells it Wakazashi. MW-AXES: and the two
+ * axes cross - a Daggerfall Battle Axe is Morrowind's war axe shape, its War Axe the battle axe. */
+const DF_TO_MW_SHAPE = Object.freeze({ wakazashi: 'wakizashi', battleaxe: 'waraxe', waraxe: 'battleaxe' });
 export function dfWeaponShape(item, weaponsTable) {
   if (!item || item.werecreatureClaws) return null;
   const name = Object.keys(weaponsTable ?? {}).find((key) => weaponsTable[key] === item.templateIndex);
-  return name ? name.toLowerCase().replace(/[^a-z]/g, '').replace('wakazashi', 'wakizashi') : null;
+  const shape = name ? name.toLowerCase().replace(/[^a-z]/g, '') : null;
+  return shape ? (DF_TO_MW_SHAPE[shape] ?? shape) : null;
 }

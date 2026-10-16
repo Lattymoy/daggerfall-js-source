@@ -17,10 +17,7 @@ import {
 } from '../src/world/merchantYardSites.js';
 import { staticBuildingBox, staticBuildingWorldAabb } from '../src/world/staticBuildings.js';   // AUDIT MERCHANT-YARDS R2
 import { buildYardModel, SIGN_BOARD, STABLE_YARD, WAGON_YARD, YARD_FLOOR_Y, signBoxOf, yardPoints } from '../src/world/merchantYardModels.js';
-import { YARD_SOURCES, YARD_ARCHIVE, YARD_REC, SIGN_GLYPHS, signGlyph, SIGN_ART_W, SIGN_ART_H, SIGN_PAINT, SIGN_PAINT_SHADOW, wordCells } from '../src/world/merchantYardArt.js';
-import { DF, classicPictures } from '../src/world/classicArt.js';
-import { setTextureDeriveContext } from '../src/systems/textureReplacement.js';
-import { fakeClassicRgba, texelOf } from './classicArtFake.mjs';
+import { yardArt, yardSignArt, YARD_ARCHIVE, YARD_REC, SIGN_GLYPHS, signGlyph, SIGN_ART_W, SIGN_ART_H, YARD_ART_SIZE } from '../src/world/merchantYardArt.js';
 import { createMerchantYards, yardToScene, yardBoxToScene, feetInYard, YARD_REACH } from '../src/scenes/merchantYardsHost.js';
 import { YARD_MARGIN } from '../src/scenes/homeYards.js';
 import { stockShopShelf, SHOP_BUYS_GROUPS, shopBuysItem, TRANSPORT_HORSE, TRANSPORT_SMALL_CART } from '../src/systems/shopStock.js';
@@ -36,8 +33,6 @@ import { STATIC_NPC_ACTIVATION_DISTANCE, RAY_DISTANCE } from '../src/player/acti
 import { PERSON_TEXTURES, walkerRace } from '../src/characters/mobilePerson.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-// DF-ART: the yards' pictures are read from the player's ARENA2 - here the tests' stand-in (test/classicArtFake.mjs)
-setTextureDeriveContext({ classicRgba: fakeClassicRgba() });
 const read = (f) => readFileSync(join(root, f), 'utf8');
 
 /** A navgrid of `w` x `h` cells, every cell `weight` (CityNavigation's shape: weightAt). */
@@ -258,27 +253,18 @@ test('MERCHANT-YARDS THE SIGN READS FROM THE STREET AND FROM THE YARD - its pict
   assert.deepEqual([m[8], m[10]].map((v) => Math.round(v)), [1, 0]);
 });
 
-test('MERCHANT-YARDS THE ART (DF-ART, Mac: "use daggerfall textures instead of AI generated"): every picture (ten; CARP-YARD: fourteen, the joinery\'s four) a Daggerfall record read from the player\'s own ARENA2, opaque, in the rows the yards\' faces lay (row 0 its top): weathered wood, a building\'s planking, shingles, straw, earth, stones, water, iron; each board Daggerfall\'s planks with its word lettered on it, every letter drawn (Mac: "Bring back the sign text")', async () => {
-  assert.deepEqual(Object.keys(YARD_SOURCES).map(Number), Object.values(YARD_REC));
-  const want = { wood: DF.weathered, plank: DF.barnPlanks, shingle: DF.shingles, hay: DF.straw, dirt: DF.dirt, gravel: DF.gravel, water: DF.water, iron: DF.iron };
-  for (const [name, from] of Object.entries(want)) assert.deepEqual(YARD_SOURCES[YARD_REC[name]], from, name);
-  const art = new Map(await classicPictures(YARD_SOURCES, fakeClassicRgba()));
-  assert.deepEqual([...art.keys()], Object.values(YARD_REC));
-  for (const [rec, img] of art) {
-    assert.equal(img.data.length, img.width * img.height * 4);
-    for (let k = 3; k < img.data.length; k += 4) assert.equal(img.data[k], 255, `record ${rec} opaque`);
+test('MERCHANT-YARDS THE ART: every picture (ten; CARP-YARD: fourteen, the joinery\'s four), opaque, the same on every client; each board its emblem and its word, every letter drawn', () => {
+  const art = yardArt(), again = yardArt();
+  assert.deepEqual(art.map(([r]) => r), Object.values(YARD_REC));
+  for (const [i, [rec, img]] of art.entries()) {
+    assert.equal(img.colors.length, img.width * img.height * 4);
+    for (let k = 3; k < img.colors.length; k += 4) assert.equal(img.colors[k], 255, `record ${rec} opaque`);
+    assert.deepEqual(img.colors, again[i][1].colors, `record ${rec} the same twice`);
   }
-  for (const [kind, rec] of [['stable', YARD_REC.signStable], ['transport', YARD_REC.signTransport]]) {
-    const img = art.get(rec), word = YARD_KINDS[kind].sign, at = (x, y) => [...img.data.slice((y * img.width + x) * 4, (y * img.width + x) * 4 + 3)];
-    assert.deepEqual([img.width, img.height], [SIGN_ART_W, SIGN_ART_H]);
-    assert.equal(YARD_SOURCES[rec].body, DF.hullPlanks, `${kind}: Daggerfall's planks`);
-    assert.deepEqual(at(1, 1), texelOf(...DF.hullPlanks), `${kind}: the board where nothing is lettered`);
-    const cells = wordCells(word);
-    assert.ok(cells.length > 100, `${kind}: "${word}" lettered`);
-    for (const [x, y] of cells) assert.deepEqual(at(x, y), [...SIGN_PAINT], `${kind}: the cream at ${x},${y}`);
-    const [sx, sy] = cells.find(([x, y]) => !cells.some(([u, v]) => u === x + 1 && v === y + 1));
-    assert.deepEqual(at(sx + 1, sy + 1), [...SIGN_PAINT_SHADOW], `${kind}: its shadow a texel down and right`);
-  }
+  assert.deepEqual([art[0][1].width, art[0][1].height], [YARD_ART_SIZE, YARD_ART_SIZE]);
+  const stable = yardSignArt('stable'), transport = yardSignArt('transport');
+  assert.deepEqual([stable.width, stable.height], [SIGN_ART_W, SIGN_ART_H]);
+  assert.notDeepEqual(stable.colors, transport.colors);
   for (const kind of YARD_KIND_ORDER) for (const ch of YARD_KINDS[kind].sign) assert.ok(signGlyph(ch), `${kind}: "${ch}" is drawn`);
   assert.equal(signGlyph('Q'), null);
   assert.ok(Object.values(SIGN_GLYPHS).every((g) => g.length === 7 && g.every((row) => row.length === 5)));

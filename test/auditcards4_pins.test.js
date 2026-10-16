@@ -16,14 +16,15 @@ import { mintStakeOrder, ORDER_TTL_S } from '../src/net/identityToken.js';
 import { readCardReceipt, mintCardReceipt, CARD_RECEIPT_TTL_S } from '../src/net/cardReceipt.js';
 import { newTable, sit, stand, tick, actAt, HOLDEM_FIRST_MS } from '../src/net/holdemTable.js';
 import { createCardStakes, CARD_STAKES_KEY, CARD_RECEIPTS_KEY, CARD_VOID_AFTER_MS } from '../src/net/cardStakes.js';
+import { CLOSE_REPLACED } from '../src/net/wire.js';
 
 const { subtle } = webcrypto;
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const ROOM = 'interior:m100.200';
 const gateKey = subtle.generateKey({ name: 'Ed25519' }, true, ['sign', 'verify']).then(async (kp) => Buffer.from(await subtle.exportKey('pkcs8', kp.privateKey)).toString('base64'));
 let _tick = () => {};
-async function withRoom(fn) {
-  const r = fakeRoom(ROOM);
+async function withRoom(fn, key = ROOM) {
+  const r = fakeRoom(key);
   r.env.GATE_SIGNING_KEY = await gateKey;
   const realNow = Date.now; let clock = 1e12; Date.now = () => clock;
   _tick = (ms) => { clock += ms; };
@@ -66,29 +67,47 @@ test('AUDIT CARDS-4 M relay: a void of another room\'s or another account\'s ord
   assert.equal(r.room._holdem.get(1)?.seats[1]?.stack, 200, 'twenty big blinds sits');
 }));
 
-test('AUDIT CARDS-4 M relay: owed cash-outs - told on a sit, never past their life, the newest kept past the bound, sent to the account\'s other sockets too', () => withRoom(async ({ r, tick, nowS }) => {
-  const b = await join(r, 'peer-b');
-  const b2 = await join(r, 'peer-b2', { tokenSub: 'acct-peer-b' });   // one player in a second tab
-  const v = await order(r, nowS(), { s: 'acct-peer-b' });
-  await word(r, b, { op: 'void', table: 0, stake: v.stake });
-  assert.deepEqual(receipts(b2).map((x) => x.j), [v.cj], 'the account\'s other socket hears it too');
-  b.sent.length = 0;
-  await word(r, b, { op: 'sit', table: 4, chair: 0, chairs: 2, bb: 10 });
-  assert.deepEqual(receipts(b).map((x) => x.j), [v.cj], 'a sit tells what is owed first');
-  await word(r, b, { op: 'stand', table: 4 });
-  // the bound keeps the newest
-  const js = [];
-  for (let i = 0; i < 70; i++) { const o = await order(r, nowS(), { s: 'acct-peer-b' }); js.push(o.cj); await word(r, b, { op: 'void', table: 0, stake: o.stake }); }
-  const kept = r.store.get('cashout:acct-peer-b').map((x) => x.j);
-  assert.equal(kept.at(-1), js.at(-1), 'the newest kept');
-  assert.deepEqual(kept, js.slice(-64), 'the bound: the newest sixty-four');
-  assert.ok(!kept.includes(v.cj), 'the oldest gone past the bound');
-  // past their life, never told
-  tick((CARD_RECEIPT_TTL_S + 60) * 1000);
-  b.sent.length = 0;
-  await word(r, b, { op: 'look', table: 0 });
-  assert.deepEqual(receipts(b), [], 'past its life: not told');
-}));
+// PIN MOVED (ONE-BODY, FIELD BUGS 2026-10-15c): this held one player in two tabs in the building's room (ROOM), the
+// first voiding and the second hearing the cash-out too. ROOM is a world room, and a place stands one body an account now
+// (server/src/index.js the hello's one-socket law): the second tab's hello closes the first (CLOSE_REPLACED), so here the
+// second is the account's one socket and the rest is said to it. A cash-out still goes to every socket of its account
+// where two can stand - an interior no world room names (net/online.js roomKeyFor's name-keyed room, or any `interior:`
+// key a page opens; a card table sits in any interior): the other socket's half moved there.
+const NAMED = 'interior:17.Daggerfall.200';
+test('AUDIT CARDS-4 M relay: owed cash-outs - told on a sit, never past their life, the newest kept past the bound, sent to the account\'s other sockets too - ONE-BODY (PIN MOVED): a second tab replaces the first in a place', async () => {
+  await withRoom(async ({ r, tick, nowS }) => {
+    const first = await join(r, 'peer-b');
+    const b = await join(r, 'peer-b2', { tokenSub: 'acct-peer-b' });   // one player in a second tab
+    assert.equal(first.closed?.code, CLOSE_REPLACED, 'a place: the second tab replaces the first');
+    const v = await order(r, nowS(), { s: 'acct-peer-b' });
+    await word(r, b, { op: 'void', table: 0, stake: v.stake });
+    assert.deepEqual(receipts(b).map((x) => x.j), [v.cj], 'the account\'s one socket hears it');
+    b.sent.length = 0;
+    await word(r, b, { op: 'sit', table: 4, chair: 0, chairs: 2, bb: 10 });
+    assert.deepEqual(receipts(b).map((x) => x.j), [v.cj], 'a sit tells what is owed first');
+    await word(r, b, { op: 'stand', table: 4 });
+    // the bound keeps the newest
+    const js = [];
+    for (let i = 0; i < 70; i++) { const o = await order(r, nowS(), { s: 'acct-peer-b' }); js.push(o.cj); await word(r, b, { op: 'void', table: 0, stake: o.stake }); }
+    const kept = r.store.get('cashout:acct-peer-b').map((x) => x.j);
+    assert.equal(kept.at(-1), js.at(-1), 'the newest kept');
+    assert.deepEqual(kept, js.slice(-64), 'the bound: the newest sixty-four');
+    assert.ok(!kept.includes(v.cj), 'the oldest gone past the bound');
+    // past their life, never told
+    tick((CARD_RECEIPT_TTL_S + 60) * 1000);
+    b.sent.length = 0;
+    await word(r, b, { op: 'look', table: 0 });
+    assert.deepEqual(receipts(b), [], 'past its life: not told');
+  });
+  await withRoom(async ({ r, nowS }) => {
+    const b = await join(r, 'peer-b');
+    const b2 = await join(r, 'peer-b2', { tokenSub: 'acct-peer-b' });   // one player in a second tab, where both stand
+    assert.equal(b.closed, null, 'no world room: both tabs stand');
+    const v = await order(r, nowS(), { s: 'acct-peer-b', cr: NAMED });
+    await word(r, b, { op: 'void', table: 0, stake: v.stake });
+    assert.deepEqual(receipts(b2).map((x) => x.j), [v.cj], 'the account\'s other socket hears it too');
+  }, NAMED);
+});
 
 test('AUDIT CARDS-4 M relay: the sweep forgets a spent stake only past the void\'s reach and a day; and an account\'s cash-outs all past their life', () => withRoom(async ({ r, nowS }) => {
   const DAY = 24 * 3600, reach = CARD_RECEIPT_TTL_S;

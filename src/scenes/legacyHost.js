@@ -1007,7 +1007,8 @@ export function createLegacyHost(deps) {
   const ownDay = () => courtDayOf(deps.own() ?? 0);
   /**
    * THE TALK'S ROWS for a Living World resident (scenes/townTalk.js legacyTopics): courtship, a proposal, the wedding's
-   * word, the family - each `{ label, legacy: { question(tone), answer(tone) } }`. `ctx`: the resident's regard of the
+   * word, the family - each `{ label, legacy: { question(tone), answer(tone, taste) } }` (TONE-TASTE: `taste` how the
+   * resident took the tone, talkTopics.js toneTaste). `ctx`: the resident's regard of the
    * one played today, the one played's Personality and Etiquette, the town's name.
    * @param {any} res @param {{ regard:number, personality?:number, etiquette?:number, townName?:string }} ctx
    */
@@ -1016,17 +1017,17 @@ export function createLegacyHost(deps) {
     if (!family || past || !me || !deps.on() || !playedHere(me) || !res?.id) return [];
     return topicsFor(family, me, res, ctx.regard | 0).map((t) => ({
       label: topicLabel(t),
-      legacy: { question: (tone) => topicQuestion(t, tone), answer: (tone) => answerTopic(t, res, tone, ctx) },
+      legacy: { question: (tone) => topicQuestion(t, tone), answer: (tone, taste) => answerTopic(t, res, taste, ctx) },
     }));
   }
-  function answerTopic(t, res, tone, ctx) {
+  function answerTopic(t, res, taste, ctx) {
     const me = current();
     const first = splitName(res.name)[0];
     if (!me) return '';
     if (t === TOPIC.court) {
-      const r = court(me, res, { day: ownDay(), townName: ctx.townName, personality: ctx.personality, etiquette: ctx.etiquette, tone, roll: rng() });
+      const r = court(me, res, { day: ownDay(), townName: ctx.townName, personality: ctx.personality, etiquette: ctx.etiquette, taste, roll: rng() });
       if (!r.again) { touch(family); store(); }
-      return r.again ? MARRIAGE_TEXT.again(first) : MARRIAGE_TEXT.courted(first, r.affection);
+      return r.again ? MARRIAGE_TEXT.again(first) : r.cooled ? MARRIAGE_TEXT.cooled(first) : MARRIAGE_TEXT.courted(first, r.affection);   // TONE-TASTE
     }
     if (t === TOPIC.propose) {
       if (!propose(me, res.id)) return MARRIAGE_TEXT.again(first);

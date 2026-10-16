@@ -15,9 +15,10 @@ import {
   WHEEL_TURNS, RUDDER_DEG, faceSkin, companionGeometry, DRIVE_TRIGGER_AT,
 } from '../src/world/galleonModel.js';
 import { SAILS } from '../src/world/galleonRig.js';
-import { galleonCut, galleonGlow, registerGalleonArt, _resetGalleonArt, GALLEON_ARCHIVE, TEX, BANDS, GALLEON_SOURCES, GALLEON_NIGHT, NIGHT_RECORD_OFFSET } from '../src/world/galleonArt.js';
-import { DF, SEE_THROUGH_WINDOW, PANE_GLOW } from '../src/world/classicArt.js';
-import { fakeClassicRgba, texelOf, texel, TIMBER, PANE } from './classicArtFake.mjs';
+import {
+  galleonArt, galleonGlow, galleonCut, GALLEON_NIGHT, registerGalleonArt, _resetGalleonArt, GALLEON_ARCHIVE, TEX, BANDS, GALLEON_TEX_SIZE,
+  hullSideLivery, castleLivery, sternWindowsLivery,
+} from '../src/world/galleonArt.js';
 import { newell, norm } from '../src/world/galleonMesh.js';
 import { createGalleonGunDeck, recoilAt, HOLD_S, RUN_IN_X, RUN_OUT_X, RECOIL, KICK_S, HAUL_S } from '../src/systems/naval/galleonGunDeck.js';
 import { loadComeSailAwayModels, CSA_MODEL_URLS, GALLEON_MODEL_URL } from '../src/systems/comeSailAwayModels.js';
@@ -348,56 +349,51 @@ test('GALLEON HER RIG: five sails by Come Sail Away\'s names - three square (two
 
 // ── her pictures ────────────────────────────────────────────────────────────────────────────────────────────────────
 
-test('GALLEON HER PICTURES (DF-ART, Mac: "use daggerfall textures instead of AI generated"): each record a TEX entry under GALLEON_ARCHIVE names the Daggerfall record she wears - Come Sail Away\'s own picks for its hulls (its planking, decks, sails, masts, rope, doors and iron) - read from the player\'s own ARENA2 as a stand-in on the vendor door, opaque; registered once (twenty-three stand-ins and two night twins); her stern windows\' two slices alone SEEN THROUGH - Daggerfall\'s leaded window, its glass cut out between its leads (Mac: "windows should always be see through") - and each its NIGHT TWIN past her records (Mac: "See-through by day, lit at night"): the same window, every texel whole, the day\'s holes its glass, and its glow PANE_GLOW exactly there, black on its frame and leads, cut as it is built (mutants: registered twice, a picture read from the wrong record, the glass left whole, a twin cut, the glow on the leads)', async () => {
-  assert.deepEqual(Object.keys(GALLEON_SOURCES).map(Number), Object.values(TEX), 'a Daggerfall record for every record of hers');
-  const csa = { hullSide0: DF.hullPlanks, deck: DF.deck, canvas: DF.sailcloth, spar: DF.spar, rope: DF.rope, door: DF.door, iron: DF.iron };
-  for (const [name, from] of Object.entries(csa)) assert.deepEqual(GALLEON_SOURCES[TEX[name]], from, `${name}: Come Sail Away's own record`);
-  assert.deepEqual(DF.hullPlanks, [50, 6], 'her planking the mod\'s hulls\' (vendor/come-sail-away/Models/prefabs.json 050_6)');
+test('GALLEON HER PICTURES: painted at load from numbers alone - the same bytes every time - a record a TEX entry under GALLEON_ARCHIVE, each 64 x 64 (GALLEON-2, Mac: "textures should be 64x64"); registered with the vendor textures once (twenty-five stand-ins: her twenty-three and her stern gallery\'s two night twins - DF-LOOK), her stern windows\' two slices alone glowing by night, each built with its glass cut out exactly where it glows and its twin built whole (mutants: a picture seeded off the clock, registered twice, the glow everywhere, a picture off 64, the glass left whole, the twin cut)', async () => {
+  const hash = (art) => createHash('sha256').update(JSON.stringify(art.map(([r, p]) => [r, p.width, p.height, Buffer.from(p.data).toString('base64')]))).digest('hex');
+  const a = galleonArt(), b = galleonArt();
+  assert.equal(hash(a), hash(b), 'the same bytes');
+  assert.deepEqual(a.map(([r]) => r), Object.values(TEX), 'a picture a record, in record order');
+  assert.equal(GALLEON_TEX_SIZE, 64);
+  for (const [r, p] of a) {
+    assert.deepEqual([p.width, p.height], [64, 64], `record ${r}: 64 x 64`);
+    assert.equal(p.data.length, p.width * p.height * 4);
+  }
+  for (const r of BANDS.sternWindows.recs) assert.ok(galleonGlow(r)?.data.some((v, i) => i % 4 === 0 && v > 0), `her stern windows glow (record ${r})`);
+  for (const r of [TEX.hullSide0, TEX.castle0, TEX.castle1, TEX.deck]) assert.equal(galleonGlow(r), null, 'nothing else');
   _resetGalleonArt();
   const added = [];
   const add = (entries) => { added.push(...entries); return entries.length; };
-  const twins = Object.values(GALLEON_NIGHT);
-  assert.deepEqual(Object.entries(GALLEON_NIGHT).map(([r, n]) => [Number(r), n]), BANDS.sternWindows.recs.map((r) => [r, r + NIGHT_RECORD_OFFSET]), 'a night twin for each stern slice');
-  assert.ok(twins.every((n) => n > Math.max(...Object.values(TEX))), 'past every record of hers');
-  assert.equal(registerGalleonArt(add), Object.keys(TEX).length + twins.length);
+  assert.equal(registerGalleonArt(add), Object.keys(TEX).length + BANDS.sternWindows.recs.length);
   assert.equal(registerGalleonArt(add), 0, 'once');
   assert.ok(added.every((e) => e.archive === GALLEON_ARCHIVE && e.standIn === true && e.frame === 0 && typeof e.build === 'function'), 'stand-ins under her own archive');
-  assert.ok(twins.every((n) => galleonGlow(n) === null), 'her glow uncut until her twins are built');
-  const ctx = { classicRgba: fakeClassicRgba() };
-  const built = new Map();
-  for (const e of added) built.set(e.record, await e.build(ctx));
-  for (const [day, night] of Object.entries(GALLEON_NIGHT)) {
-    const d = built.get(Number(day)), pic = built.get(night), glow = galleonGlow(night);
-    assert.ok(glow && glow.width === pic.width && glow.height === pic.height && pic.width === d.width && pic.height === d.height, `twin ${night}: the day window's size, its glow cut`);
-    let lit = 0;
-    for (let i = 0; i < pic.data.length; i += 4) {
-      assert.equal(pic.data[i + 3], 255, `twin ${night}: whole`);
-      const hole = d.data[i + 3] === 0, rgb = [...pic.data.subarray(i, i + 3)], g = [...glow.data.subarray(i, i + 4)];
-      if (hole) { lit++; assert.deepEqual(rgb, [...PANE], `twin ${night}: the day's hole its glass`); assert.deepEqual(g, [...PANE_GLOW, 255], 'its glass glowing'); }
-      else { assert.deepEqual(rgb, [...d.data.subarray(i, i + 3)], `twin ${night}: framed as the day window`); assert.deepEqual(g, [0, 0, 0, 255], 'its frame and leads dark'); }
+  const built = await added.find((e) => e.record === TEX.castle0).build();
+  assert.ok(Buffer.from(built.data).equals(Buffer.from(a.find(([r]) => r === TEX.castle0)[1].data)), 'built as painted');
+  // DF-LOOK (DF-ART II and III kept): by day her stern gallery's glass a hole, by night its twin whole
+  for (const r of BANDS.sternWindows.recs) {
+    const painted = a.find(([q]) => q === r)[1], glow = galleonGlow(r);
+    const day = await added.find((e) => e.record === r).build(), night = await added.find((e) => e.record === GALLEON_NIGHT[r]).build();
+    assert.ok(Buffer.from(night.data).equals(Buffer.from(painted.data)), `slice ${r}: its night twin whole, as painted`);
+    assert.deepEqual(galleonGlow(GALLEON_NIGHT[r]), glow, `slice ${r}: its twin glows as it does`);
+    let holes = 0;
+    for (let i = 0; i < day.data.length; i += 4) {
+      assert.equal(day.data[i + 3], glow.data[i] > 0 ? 0 : 255, `slice ${r} texel ${i / 4}: ${glow.data[i] > 0 ? 'glass, a hole' : 'no glass, whole'}`);
+      if (glow.data[i] > 0) holes++; else assert.deepEqual([...day.data.subarray(i, i + 3)], [...painted.data.subarray(i, i + 3)], `slice ${r} texel ${i / 4}: as painted`);
     }
-    assert.ok(lit > 0, `twin ${night}: it glows`);
+    assert.ok(holes > 0, `slice ${r}: some glass`);
+    assert.ok(galleonCut(r) && !galleonCut(GALLEON_NIGHT[r]), `slice ${r} a cut-out, its twin not`);
   }
-  for (const e of added) {
-    const pic = built.get(e.record), from = GALLEON_SOURCES[e.record];
-    if (twins.includes(e.record)) continue;
-    if (BANDS.sternWindows.recs.includes(e.record)) {
-      assert.equal(from, SEE_THROUGH_WINDOW, `record ${e.record}: the window seen through`);
-      let holes = 0; for (let i = 3; i < pic.data.length; i += 4) if (pic.data[i] === 0) holes++;
-      assert.deepEqual(texel(pic, 2, 2), [...TIMBER, 255], 'its frame whole');
-      assert.ok(holes > 0 && holes < pic.width * pic.height * 0.8, `record ${e.record}: its glass a hole (${holes}), its frame and leads whole`);
-      continue;
-    }
-    assert.deepEqual(texel(pic, 3, 3), [...texelOf(from[0], from[1]), 255], `record ${e.record}: read from ${from.join('_')}, opaque`);
-  }
-  for (const r of Object.values(TEX)) assert.equal(galleonCut(r), BANDS.sternWindows.recs.includes(r), `record ${r}: ${galleonCut(r) ? 'a cut-out' : 'whole'}`);
-  assert.ok(twins.every((n) => !galleonCut(n) && galleonGlow(n)) && Object.values(TEX).every((r) => !galleonGlow(r)), 'her twins whole and glowing, her own records never glowing');
+  for (const r of [TEX.hullSide0, TEX.castle0, TEX.deck]) assert.equal(galleonCut(r), false, 'nothing else of hers cut');
   _resetGalleonArt();
-  assert.ok(twins.every((n) => galleonGlow(n) === null), 'reset: her glow uncut');
 });
 
-test('GALLEON-2 HER LIVERY IN SLICES (Mac: "textures should be 64x64"): her side\'s, her castle\'s and her stern\'s bands each cut into slices by height, each slice its own record (DF-ART: each wearing a Daggerfall record whole); every face of hers that wears one lies inside its band, and is drawn as pieces cut at its slices - each on the slice whose heights hold it, its v that height up the slice; every picture she draws one of hers (mutants: a slice\'s v off its height)', () => {
-  for (const name of ['hullSide', 'castle', 'sternWindows']) for (const r of BANDS[name].recs) assert.ok(GALLEON_SOURCES[r], `${name}: slice ${r} wears a Daggerfall record`);
+test('GALLEON-2 HER LIVERY IN SLICES (Mac: "textures should be 64x64"): her side\'s, her castle\'s and her stern\'s liveries each cut into 64-texel slices by height, the slices her livery again stacked top down; every face of hers that wears one lies inside its band, and is drawn as pieces cut at its slices - each on the slice whose heights hold it, its v that height up the slice; every picture she draws one of hers (mutants: the cut unmade, a slice\'s v off its height, the slices out of order)', () => {
+  const art = new Map(galleonArt());
+  for (const [name, livery] of [['hullSide', hullSideLivery()], ['castle', castleLivery()], ['sternWindows', sternWindowsLivery()]]) {
+    assert.equal(livery.height, 64 * BANDS[name].recs.length, `${name}: 64 rows a slice`);
+    const stacked = Buffer.concat(BANDS[name].recs.map((r) => Buffer.from(art.get(r).data)));
+    assert.ok(stacked.equals(Buffer.from(livery.data)), `${name}: its slices are its livery, top down`);
+  }
   // her faces inside their bands - none needs the outer slices' clamp
   let worn = 0;
   for (const p of bakeJson.parts) {

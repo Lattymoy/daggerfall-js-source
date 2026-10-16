@@ -897,6 +897,18 @@ and the quests' (dungeonContext.js) are 8b's.
   mortal (`wardrobeOf` 'none', beside the vampires): a Daedra or a god by
   faction type, Oblivion's or the Fey's by guild group - a prince's sprite
   is no person in clothes. A coven's witch is mortal and is dressed.
+  STALL-FLATS (`01-Overview/Field-Bugs-2026-10-15c.md`; "every animal and
+  food stand item turned into freaks", "clustered into groups and all have
+  their heads down"): nor any flat whose picture is no person's - a body
+  stands only for RDBLayout.NPCFlatArchives (`world/npcFlatArchives.js`
+  isNpcFlat, FlatTypes.NPC), the editor's 199 with the rest. Beautiful
+  Villages gives its market blocks' food, goods and animals a faction
+  (TVRNAS02, TEMPASB0, TEMPBSB0, RESIAS02: 584), so each was a StaticNPC
+  and, since MWNPC8b, a body - 101 in TVRNAS02 alone, turning to the eye
+  in a heap. They keep their billboards now, as DFU draws them; the
+  StaticNPC list is DFU's still (the click's own law, AUDIT WD3 G1, was
+  already the archive's). A quest's person keeps a body whatever FLATS.CFG
+  pictures them with (`questPerson`, worldModes.js questStandLook).
 - The bound is the lane's: the 'people' lanes take NPC_BODY_TIERS, and
   only one of the three ever runs a frame (the building, the dungeon or
   the street - the scene is one of them). (AMENDED BY MWNPC11, section
@@ -2030,6 +2042,15 @@ ten colours over ten faces.
   is a cuirass and greaves alone in Morrowind (mwItemMap.js's judgement rows),
   so a chain helm is never asked for - iron stands in. The kit's boots are the
   feet (one Daggerfall slot); a robe hides the legs (nothing is put under it).
+  BARE-BOOTS (`01-Overview/Field-Bugs-2026-10-15c.md`, "No boots model on
+  legendary boots"): the player's own pieces and a peer's had no such rule -
+  a chain piece imperial chain lacks answered "the classic sprite stands", on
+  a figure with no sprite, so chain boots, gauntlets and pauldrons stood bare
+  skin (one boot in five is chain off DFU's RandomArmorMaterial; the
+  Legendary in the report was innocent). `mwItemMap.js` gives Chain iron as
+  its chain's second token now, the wardrobe's own stand-in, and walks a
+  material's chain by PIECE (Adamantium's Tribunal set, no boots, then
+  ebony). Pinned in `test/fb1015c_bareboots.test.js`.
 - WHO IS WHICH ROLE. A standing person by their faction (`peopleBodies.js`
   wardrobeOf, KIND_ROLE): the old `steel` split - a knightly order's and a
   court's guard `knight`, a fighters' guild's `fighter`; a coven's witch and a

@@ -110,7 +110,8 @@ test('PROMO-NOW: the enhanced popup shows a member the line above its buttons; a
 
 test('PROMO-NOW: the interior host hands the online flag to the review and the line to the popup - both on the shared clock (mutant: the host offline)', () => {
   const wm = readFileSync(new URL('../src/scenes/worldModes.js', import.meta.url), 'utf8');
-  assert.ok(/steps: \(\) => onPushEffects\([\s\S]{0,700}?\n\s+promoteWhenEarned: sharedClockOn\(\),/.test(wm), 'the review: online, no wait');
-  assert.ok(wm.includes('rankNeeds: () => (sharedClockOn() ? rankNeedsLines(playerEntity, guild, memberships, store, { rankCeiling: host.rollRankCeiling?.() ?? null }) : null),'),
+  // PIN MOVED (ROLL-PACE, FIELD BUGS 2026-10-15f): online AND while the Roll paces it; the line under the book's ceiling, with the pace
+  assert.ok(/steps: \(\) => onPushEffects\([\s\S]{0,800}?\n\s+promoteWhenEarned: sharedClockOn\(\) && !!host\.rollPace\?\.\(guild\.factionId\),/.test(wm), 'the review: online, no wait');
+  assert.ok(wm.includes('rankNeeds: () => { const pace = sharedClockOn() ? host.rollPace?.(guild.factionId) ?? null : null; return sharedClockOn() ? rankNeedsLines(playerEntity, guild, memberships, store, { rankCeiling: pace?.book ?? null, pace }) : null; },'),
     'the line: online, under the Roll\'s ceiling');
 });

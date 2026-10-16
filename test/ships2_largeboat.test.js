@@ -15,10 +15,7 @@ import {
   ANCHOR_Z, LANTERNS, tillerEnd, largeBoatClips,
 } from '../src/world/largeBoatModel.js';
 import { PLANS, VARIANT_COUNT, sailKey, stayLines, LARGE_BOAT_RIG, MAST, FORESTAY_IN } from '../src/world/largeBoatRig.js';
-import { registerLargeBoatArt, _resetLargeBoatArt, LARGE_BOAT_ARCHIVE, TEX, LARGE_BOAT_SOURCES } from '../src/world/largeBoatArt.js';
-import { GALLEON_SOURCES, TEX as GALLEON_TEX } from '../src/world/galleonArt.js';
-import { DF } from '../src/world/classicArt.js';
-import { fakeClassicRgba, texelOf, texel } from './classicArtFake.mjs';
+import { largeBoatArt, registerLargeBoatArt, _resetLargeBoatArt, LARGE_BOAT_ARCHIVE, TEX } from '../src/world/largeBoatArt.js';
 import { RUDDER_DEG } from '../src/world/galleonModel.js';
 import { loadComeSailAwayModels, CSA_MODEL_URLS, CARRACK_MODEL_URL, LARGE_BOAT_MODEL_URL, decodeMeshGeometry } from '../src/systems/comeSailAwayModels.js';
 import { animatorOf, colliderBounds } from '../src/systems/comeSailAwayBoat.js';
@@ -320,16 +317,17 @@ test('SHIPS-2 LARGE BOAT RIG BOXES STAND FOR HER OWN PLAN: rigBoxesOf stands a b
 
 // ── her pictures ───────────────────────────────────────────────────────────────────────────────────────────────────
 
-test('SHIPS-2 LARGE BOAT HER PICTURES (DF-ART, Mac: "use daggerfall textures instead of AI generated"): a Daggerfall record a TEX record under LARGE_BOAT_ARCHIVE - the galleon\'s for the records she shares with her, Come Sail Away\'s planking for her side and her transom - registered with the vendor textures once, each a stand-in read from the player\'s own ARENA2, opaque; every face of hers drawn on a picture of hers (mutants: registered twice, a face on no picture)', async () => {
-  const records = new Set(Object.keys(LARGE_BOAT_SOURCES).map(Number));
-  assert.deepEqual([...records].sort((x, y) => x - y), [...new Set(Object.values(TEX))].sort((x, y) => x - y), 'a Daggerfall record a record');
-  const shared = ['hullBottom', 'hullInner', 'deck', 'trim', 'spar', 'iron', 'canvas', 'rope', 'gilt', 'grate', 'lid', 'door', 'beams', 'dark', 'underDeck'].filter((n) => n in TEX);
-  for (const name of shared) assert.deepEqual(LARGE_BOAT_SOURCES[TEX[name]], GALLEON_SOURCES[GALLEON_TEX[name]], `${name}: the galleon's`);
-  assert.deepEqual(LARGE_BOAT_SOURCES[TEX.hullSide0], DF.hullPlanks, 'her side Come Sail Away\'s planking');
+test('SHIPS-2 LARGE BOAT HER PICTURES: painted at load from numbers alone - the same bytes every time - a picture a TEX record under LARGE_BOAT_ARCHIVE, each 64 x 64; registered with the vendor textures once, each a stand-in built as painted; every face of hers drawn on a picture of hers (mutants: a picture seeded off the clock, registered twice, a picture off 64, a face on no picture)', async () => {
+  const hash = (art) => createHash('sha256').update(JSON.stringify(art.map(([r, p]) => [r, p.width, p.height, Buffer.from(p.data).toString('base64')]))).digest('hex');
+  const a = largeBoatArt(), b = largeBoatArt();
+  assert.equal(hash(a), hash(b), 'the same bytes');
+  assert.deepEqual(a.map(([r]) => r), [...new Set(Object.values(TEX))].sort((x, y) => x - y), 'a picture a record, in record order');
+  for (const [r, p] of a) assert.deepEqual([p.width, p.height, p.data.length], [64, 64, 64 * 64 * 4], `record ${r}`);
+  const records = new Set(a.map(([r]) => r));
   for (const [key, g] of Object.entries(built.meshes)) for (const s of g.slots ?? []) {
     if (s.record == null) continue;
     assert.equal(s.archive, LARGE_BOAT_ARCHIVE, `${key}: her archive`);
-    assert.ok(records.has(s.record), `${key}: record ${s.record} hers`);
+    assert.ok(records.has(s.record), `${key}: record ${s.record} painted`);
   }
   _resetLargeBoatArt();
   const added = [];
@@ -337,8 +335,8 @@ test('SHIPS-2 LARGE BOAT HER PICTURES (DF-ART, Mac: "use daggerfall textures ins
   assert.equal(registerLargeBoatArt(add), Object.keys(TEX).length);
   assert.equal(registerLargeBoatArt(add), 0, 'once');
   assert.ok(added.every((e) => e.archive === LARGE_BOAT_ARCHIVE && e.standIn === true && e.frame === 0 && typeof e.build === 'function'));
-  const one = await added.find((e) => e.record === TEX.hullSide0).build({ classicRgba: fakeClassicRgba() });
-  assert.deepEqual(texel(one, 5, 5), [...texelOf(...DF.hullPlanks), 255], 'built from her Daggerfall record, opaque');
+  const one = await added.find((e) => e.record === TEX.hullSide0).build();
+  assert.ok(Buffer.from(one.data).equals(Buffer.from(a.find(([r]) => r === TEX.hullSide0)[1].data)), 'built as painted');
   _resetLargeBoatArt();
 });
 

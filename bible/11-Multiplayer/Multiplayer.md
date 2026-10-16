@@ -34,7 +34,8 @@ until one falls (INT8, 2026-10-09: the relay referees it on its own vitality and
 is never touched, nobody drops to 1 health and nothing is healed: `06-Systems/Integrity-Arc.md` 5;
 `06-Systems/Community-Arc.md` DUEL1) - and, since WILD1
 (2026-10-07), ONE PLACE where it is not consensual: the Wrothgarian Mountains, an open zone where players may fight,
-a death drops the bag and the cart and a killer takes one worn piece (`11-Multiplayer/Wild-Zone.md`; INT9: the relay
+a death drops the bag and the cart (the cart only while the wagon is with them - CART-AWAY, 2026-10-15) and a killer
+takes one worn piece (`11-Multiplayer/Wild-Zone.md`; INT9: the relay
 referees its fights and the account service takes the drop off the record). Nobody's save changes
 shape because they played with a friend - and the one online progression, RENOWN (RENOWN1, 2026-09-24,
 Mac: "seperate unique to online but compatible"; named: "Lets officially call this Renown"), is a second level per character kept by the account service, never
