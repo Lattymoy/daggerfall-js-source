@@ -187,6 +187,21 @@ export function cutGlass(/** @type {{width:number,height:number,data:Uint8Array}
   return { width: pic.width, height: pic.height, data };
 }
 
+/**
+ * A PICTURE BESIDE ITS OWN COPIES - `src` laid `n` times across, as wide again: the one cell of a livery a face
+ * walks over four times without the face's own u repeating (WAGON-EMBLEM, world/wagonArt.js's open wagon's side).
+ * NEAREST, no seam and no blend: the copies are the same bytes, so the cloth a repeated cell wears is the cloth it
+ * wore when the texture itself repeated - which is the whole of the point, and the reason this is here rather than a
+ * stretched body.
+ * @param {{width:number,height:number,data:Uint8Array}} src @param {number} n
+ */
+export function repeated(/** @type {{width:number,height:number,data:Uint8Array}} */ src, n) {
+  const w = src.width * n, data = new Uint8Array(w * src.height * 4);
+  for (let y = 0; y < src.height; y++)
+    for (let k = 0; k < n; k++) data.set(src.data.subarray(y * src.width * 4, (y + 1) * src.width * 4), (y * w + k * src.width) * 4);
+  return { width: w, height: src.height, data };
+}
+
 /** A picture repeated at its own texel size over `w` x `h` - a tiling record laid on a face bigger than itself. */
 export function tiled(/** @type {{width:number,height:number,data:Uint8Array}} */ src, w, h) {
   const data = new Uint8Array(w * h * 4);
@@ -199,12 +214,15 @@ export function tiled(/** @type {{width:number,height:number,data:Uint8Array}} *
 
 /**
  * A COMPOSED picture: `body` (a Daggerfall record) laid whole over `size` (COMPOSE x COMPOSE unless given) - or
- * repeated at its own texel size (`tile`) - then each inset laid over it: a Daggerfall record, `crop`ped, `mirror`ed
- * whole, its `glass` cut out, laid over the layout's columns and rows `at` ({x0, y0, x1, y1}, inclusive, in a
- * 64-texel picture's texels) or over the picture's own texels `px`; a `clear` inset keeps its clear texels clear and
- * lays the rest over the body (a flat's subject on a board). Last, `paint` (the picture, top-down) - a sign's word
- * lettered on (world/merchantYardArt.js).
- * @param {{ body: readonly number[], size?: readonly number[], tile?: boolean, paint?: (pic: {width:number,height:number,data:Uint8Array}) => void,
+ * repeated at its own texel size (`tile`) - then `repeat` COPIES of it side by side across (WAGON-EMBLEM: the open
+ * wagon's side wears one cell of cloth four times inside its own picture, so the emblem on one of the cells is the
+ * only one on the wagon; the layout stays a cell's, `kx`, so an inset still lands where the 64-texel picture put it)
+ * - then each inset laid over it: a Daggerfall record, `crop`ped, `mirror`ed whole, its `glass` cut out, laid over the
+ * layout's columns and rows `at` ({x0, y0, x1, y1}, inclusive, in a 64-texel picture's texels) or over the picture's
+ * own texels `px`; a `clear` inset keeps its clear texels clear and lays the rest over the body (a flat's subject on a
+ * board). Last, `paint` (the WHOLE picture, top-down, all of it across) - a sign's word lettered on
+ * (world/merchantYardArt.js), a wagon's guild arms (world/wagonEmblem.js).
+ * @param {{ body: readonly number[], size?: readonly number[], tile?: boolean, repeat?: number, paint?: (pic: {width:number,height:number,data:Uint8Array}) => void,
  *   insets?: ReadonlyArray<{ from: readonly number[], at?: {x0:number,y0:number,x1:number,y1:number}, px?: {x0:number,y0:number,x1:number,y1:number}, crop?: readonly number[], mirror?: boolean, glass?: boolean, clear?: boolean }> }} spec
  * @param {(archive: number, record: number, frame?: number) => Promise<any>} classicRgba
  */
@@ -215,7 +233,8 @@ export async function composedPicture(spec, classicRgba) {
     return clear ? src : opaque(src);
   };
   const [W, H] = spec.size ?? [COMPOSE, COMPOSE], body = await read(spec.body);
-  const pic = spec.tile ? tiled(body, W, H) : resample(body, W, H), kx = W / LAYOUT, ky = H / LAYOUT;
+  const N = Math.max(1, Math.floor(spec.repeat ?? 1)), RW = W * N;
+  const pic = spec.tile ? tiled(body, RW, H) : repeated(resample(body, W, H), N), kx = W / LAYOUT, ky = H / LAYOUT;
   for (const ins of spec.insets ?? []) {
     let src = await read(ins.from, !!ins.clear);
     if (ins.crop) src = crop(src, ins.crop);
@@ -224,10 +243,10 @@ export async function composedPicture(spec, classicRgba) {
     const r = ins.px ?? { x0: ins.at.x0 * kx, y0: ins.at.y0 * ky, x1: (ins.at.x1 + 1) * kx - 1, y1: (ins.at.y1 + 1) * ky - 1 };
     const x0 = r.x0, y0 = r.y0, w = r.x1 + 1 - x0, h = r.y1 + 1 - y0;
     const laid = resample(src, w, h);
-    if (!ins.clear) { for (let y = 0; y < h; y++) pic.data.set(laid.data.subarray(y * w * 4, (y + 1) * w * 4), ((y0 + y) * W + x0) * 4); continue; }
+    if (!ins.clear) { for (let y = 0; y < h; y++) pic.data.set(laid.data.subarray(y * w * 4, (y + 1) * w * 4), ((y0 + y) * RW + x0) * 4); continue; }
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
       const s = (y * w + x) * 4;
-      if (laid.data[s + 3] >= 128) pic.data.set(laid.data.subarray(s, s + 3), ((y0 + y) * W + x0 + x) * 4);
+      if (laid.data[s + 3] >= 128) pic.data.set(laid.data.subarray(s, s + 3), ((y0 + y) * RW + x0 + x) * 4);
     }
   }
   spec.paint?.(pic);

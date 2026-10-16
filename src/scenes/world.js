@@ -869,6 +869,7 @@ import { createPartyPanel } from '../ui/partyPanel.js';   // SOC4: the party HUD
 import { MailBox, mailNoticeText } from '../net/mail.js';   // MAIL1: the letterbox the Letters tab draws and the frame polls
 import { PostBox, postNoticeText } from '../net/serverPost.js';   // SERVER-POST: the server's post the pause face's mailbox draws
 import { GuildBook } from '../net/guildBook.js';   // GUILD1b: the guild the Guild tab draws
+import { setWagonHeraldry } from '../world/wagonEmblem.js';   // WAGON-EMBLEM: the reader's guild arms on his open wagon's sides
 import { sellProceeds } from '../systems/tradeModes.js';   // GUILD-LETTER: a withdrawal weighed as the trade window weighs a sale
 import { realmLetterOfCredit } from '../net/realmGoldLaw.js';   // GUILD-LETTER: the letter the service writes on a realm record, one maker
 import { createSocialPanel, TRY_AGAIN_TEXT, NO_PARTY_TEXT, LETTERS_SIGNED_OUT_TEXT } from '../ui/socialPanel.js';   // SOC3: the friends + party panel the Social button opens; AUDIT SOC B17: and its word for a refused act, so the F-menu's line and the panel's note agree
@@ -23181,7 +23182,14 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       // AUDIT GUILD-YARD C3, AUDIT PROF-541 G1: a rank moved (a keeper made or unmade), found by whichever look, reads the
       // town again, as onHall does - its halls' `keeper` was the town's answer's, believed a minute
       onRank: () => { onlineHomes?.bump?.(); onlineHomes?.ensure?.(_musicLoc?.mapTableData?.mapId, { force: true })?.catch?.(() => {}); },
-    });
+    // WAGON-EMBLEM (Mac: "a guild master's emblem painted on the sides of their open wagon"): THE READER'S GUILD ARMS
+    // ON HIS OPEN WAGON'S SIDES - the book's own guild as it last answered, asked FRESH every time
+    // (world/wagonEmblem.js setWagonHeraldry takes a resolver, not a value: the wagon's pictures are built once, at
+    // the first wagon stood, and a value frozen here would keep whichever guild was standing at that moment). No
+    // guild at all is no emblem suppressed: the throne's own arms stand in, so there is always something to look at.
+    // ON THIS CLOSING LINE, DELIBERATELY: HOST-SPLIT says a host does not grow (bible/01-Overview/Host-Split.md) and
+    // bootWorld had none free - this is wiring and not behaviour, the one line the law asks a host to pay.
+    }); setWagonHeraldry(() => guildBook?.guild?.heraldry ?? null);
     socialPanel = createSocialPanel({
       social,
       mail,

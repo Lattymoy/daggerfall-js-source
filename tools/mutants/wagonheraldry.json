@@ -1,0 +1,92 @@
+[
+  {
+    "name": "WAGONEMBLEM-1-the-side-a-bare-record-again",
+    "file": "src/world/wagonArt.js",
+    "old": "[TEX.openSide]: emblemmedSide(DF.sailcloth)",
+    "new": "[TEX.openSide]: DF.sailcloth",
+    "tests": [
+      "test/wagonheraldry.test.js"
+    ],
+    "note": "The whole of WAGON-EMBLEM undone: the open wagon's outer side is a bare Daggerfall record again, which is not a composed picture, so composedPicture's `paint` is unreachable and there is no emblem to paint. The reader's guild's arms vanish from the wagon, and the livery's cloth is a bare record with it."
+  },
+  {
+    "name": "WAGONEMBLEM-2-the-emblem-at-the-tile's-corner",
+    "file": "src/world/wagonEmblem.js",
+    "old": "  return { x0: cell * cellW + Math.floor((cellW - w) / 2), y0: Math.floor((pic.height - h) / 2), w, h };",
+    "new": "  return { x0: 0, y0: 0, w, h };",
+    "tests": [
+      "test/wagonheraldry.test.js"
+    ],
+    "note": "emblemRect still gets the size right and stops placing it: the arms stand at the picture's top-left corner instead of the middle of their cell, hard against the seam the u runs over, and they overhang into the first cell - which the operator asked to be bare cloth."
+  },
+  {
+    "name": "WAGONEMBLEM-3-the-insets'-threshold-instead-of-a-blend",
+    "file": "src/world/wagonEmblem.js",
+    "old": "      if (a === 0) continue;",
+    "new": "      if (a < 128) { pic.data[d + 3] = 0; continue; }",
+    "tests": [
+      "test/wagonheraldry.test.js"
+    ],
+    "note": "The stamp's alpha blend replaced by the binary threshold composedPicture's insets use (classicArt.js): a shield's soft edge stops being paint on cloth and becomes a HOLE through it, and a half-covered texel is dropped rather than laid. test/wagons2.test.js holds every wagon texel whole or clear, and this stampRgba pin holds it too."
+  },
+  {
+    "name": "WAGONEMBLEM-4-the-stamp-wraps-at-the-edge",
+    "file": "src/world/wagonEmblem.js",
+    "old": "      if (dx < 0 || dx >= pic.width) continue;",
+    "new": "      if (dx < 0 || dx >= pic.width) dx = (dx + pic.width) % pic.width;",
+    "tests": [
+      "test/wagonheraldry.test.js"
+    ],
+    "note": "A stamp over an edge wraps instead of being cut: the emblem's own left quarter is stamped again down the right-hand seam, and the right-hand quarter comes back round to the left - the tile's repeat shows it as a smear the length of the wagon."
+  },
+  {
+    "name": "WAGONEMBLEM-5-the-box-square-in-texels",
+    "file": "src/world/wagonEmblem.js",
+    "old": "  const h = Math.min(pic.height, Math.max(1, Math.round((emblemM / bandM) * pic.height)));",
+    "new": "  const h = w;",
+    "tests": [
+      "test/wagonheraldry.test.js"
+    ],
+    "note": "The rectangle metered in texels instead of in metres - the obvious way to write it, and wrong on this face alone, where a texel is 5.1 mm across u and 8.3 mm down v. The shield comes out 1.0 m wide by 1.63 m tall on the wall: a banner-shaped smear, not the square emblem the metres asked for."
+  },
+  {
+    "name": "WAGONEMBLEM-6-the-repeat-not-suppressed",
+    "file": "src/world/wagonArt.js",
+    "old": "    body: cloth, size: Object.freeze([COMPOSE, COMPOSE]), repeat: SIDE_CELLS,",
+    "new": "    body: cloth, size: Object.freeze([COMPOSE, COMPOSE]), repeat: 1,",
+    "tests": [
+      "test/wagonheraldry.test.js"
+    ],
+    "note": "THE REPEAT NOT SUPPRESSED - the operator's whole complaint. The picture is one cell again while WAGON_TILE.openSide[0] still spans four of them, so the face's u runs off the end of the picture: under REPEAT that is a 5.2 m cloth with the arms stretched to five times their width, once, on the second cell's metre. This is what \"suppress the repeat\" looks like when it is done to the TILE and not to the picture."
+  },
+  {
+    "name": "WAGONEMBLEM-7-the-emblem-on-the-first-iteration",
+    "file": "src/world/wagonEmblem.js",
+    "old": "export const EMBLEM_CELL = 1;",
+    "new": "export const EMBLEM_CELL = 0;",
+    "tests": [
+      "test/wagonheraldry.test.js"
+    ],
+    "note": "The arms moved to the FIRST iteration (Mac: \"Can we make it only show on the second iteration?\" - the second). The first cell is pinned bare, and the arms' own colour is pinned absent from every cell but the one named."
+  },
+  {
+    "name": "WAGONEMBLEM-8-the-emblem-on-the-third-iteration",
+    "file": "src/world/wagonEmblem.js",
+    "old": "export const EMBLEM_CELL = 1;",
+    "new": "export const EMBLEM_CELL = 2;",
+    "tests": [
+      "test/wagonheraldry.test.js"
+    ],
+    "note": "The arms a cell further on - the third iteration (z 2.6 to 3.9 m), which is where the far side's arms landed before the u was un-flipped, and which would read as \"the second\" from the other end of the wagon. The pin holds the arms inside the SECOND tile's own metres."
+  },
+  {
+    "name": "WAGONEMBLEM-9-the-far-side-flip-back",
+    "file": "src/world/wagonModels.js",
+    "old": "  const banded = (name) => ({ band: BANDS[name], u: name === 'caravanSide' ? (p) => caravanSideU(p, n) : (p) => sideBandU(p, WAGON_TILE[name][0]) });",
+    "new": "  const banded = (name) => ({ band: BANDS[name], u: name === 'caravanSide' ? (p) => caravanSideU(p, n) : (p) => planarUv(p, n, [WAGON_TILE[name][0], 1])[0] });",
+    "tests": [
+      "test/wagonheraldry.test.js"
+    ],
+    "note": "planarUv's own far-side u flip put back (world/galleonMesh.js, \"a side\"): the far wall's picture mirrors about the wagon's middle, so the near side reads the arms at z 1.45 to 2.45 m and the far side reads the SAME texels at z 2.75 to 3.75 m. One pair of arms, a tile and a half apart, on one wagon."
+  }
+]

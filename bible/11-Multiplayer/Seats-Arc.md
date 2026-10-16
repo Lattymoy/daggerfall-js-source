@@ -887,7 +887,8 @@ Standing for this holder (a Charter it claimed, a seat taken since).
   sun, moon, star, eye, rose, tree. (GUILD2c, 2026-10-03: forty now - sixteen more, a divided field and a device's own
   colour; `11-Multiplayer/Guild-Overhaul.md`.)
 - Chosen by the Guildmaster on the Guild tab; changing either costs **500 Marks** and is refused in a siege week.
-- It is drawn on banners (3.4), the map ring, the frame of the guild tag, the siege HUD, the board and the Chronicle.
+- It is drawn on banners (3.4), the map ring, the frame of the guild tag, the siege HUD, the board, the Chronicle, and
+  (WAGON-EMBLEM, `06-Systems/Wagons.md`) on the outer sides of the reader's own open wagon, one pair to a wagon.
 
 BUILT (GUILD1d, 2026-09-30; `06-Systems/Online-Arc.md` GUILD1d): the palette and devices are `src/net/heraldryLaw.js`
 (the service keeps `{ field, border, device }` - the field the first colour, never Ash; the border the second), the
@@ -903,7 +904,15 @@ tag's frame, the siege HUD, the board and the Chronicle come with SEAT1a-SEASON1
 the guild tag's frame, on the siege HUD (`ui/siegeHud.js`) and in the Chronicle - one swatch, a small shield of the field,
 the border and the device (`ui/heraldrySwatch.js` over `ui/heraldryArt.js` shieldSvg): a peer's `<TAG>` framed in its
 border colour with its shield; each side's shield at its end of the HUD's bar; each Seat tab Chronicle line under the
-shield of the guild it is about, and the Hall of Records' book closed by a Roll of Arms in words. DECIDED: no wire
+shield of the guild it is about, and the Hall of Records' book closed by a Roll of Arms in words. WAGON-EMBLEM
+(2026-10-16, a prototype - `06-Systems/Wagons.md`): the reader's own guild's arms are painted over the open wagon's
+two long outer sides, ONCE each - on the second cell of a four-cell livery, so the arms stand on the second of the
+livery's 1.3 m tiles and nowhere else, the cloth around them being the same cloth, byte for byte, that repeated before
+(Mac: "Can we make it only show on the second iteration?"). The arms are read LIVE off the
+GuildBook the world already holds (`src/world/wagonEmblem.js` `setWagonHeraldry`, opened once beside the book in
+`src/scenes/world.js`) - no wire carries them; a guild with none wears the throne's own Crimson-and-Gold crown so that
+there is always an emblem to look at. Visual only, and the side is a livery's own: the paint of the open wagon changes
+the cloth under it and never the arms. DECIDED: no wire
 carries a guild's heraldry to these faces (a peer's token names its tag alone), so each reads it by the guild's tag
 (unique) off what the client already holds - the reader's own guild, the seats' list's holders and battles, a seat's
 standings (`net/heraldryIndex.js` heraldryByTag) - and a guild the client knows no heraldry of wears the plain tag, no

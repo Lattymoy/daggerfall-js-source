@@ -27,8 +27,10 @@
 // Each face wears its picture by `wagonFaceSkin` (world/largeBoatModel.js faceSkin's law): the sides' liveries banded on their
 // height, everything else tiled planar (world/galleonMesh.js planarUv), the wheels' faces and the caravan's ends laid
 // whole on their pictures - the cart's on its LEVEL frame (`cartLevel`), the caravan's sides from their middle
-// (`caravanSideU`). Not a DFU member. Ledger A (WAGONS1).
-import { WAGON_ARCHIVE, TEX, WAGON_TILE, BANDS, WAGON_SOURCES, CARAVAN_SIDE_WINDOW_U } from './wagonArt.js';
+// (`caravanSideU`). WAGON-EMBLEM: the open wagon's side reads its picture UN-FLIPPED (`sideBandU`, world/wagonArt.js) -
+// planarUv's own far-side flip mirrors a side's picture about the wagon's middle, which is free on cloth and put the
+// guild arms a tile and a half from one side to the other. Not a DFU member. Ledger A (WAGONS1).
+import { WAGON_ARCHIVE, TEX, WAGON_TILE, BANDS, WAGON_SOURCES, CARAVAN_SIDE_WINDOW_U, sideBandU } from './wagonArt.js';
 import { classicPictures } from './classicArt.js';   // DF-ART: the wagons' pictures, Daggerfall's own
 import { classicRgbaOf } from '../systems/textureReplacement.js';
 import { toColor32 } from '../formats/color32Order.js';
@@ -129,7 +131,7 @@ export function wagonFaceSkin(kind, role, n, c, pivot = null, R = 1) {
 /** wagonFaceSkin's law, on the frame the face is handed in. */
 function layFace(kind, role, n, c, pivot = null, R = 1) {
   const tiled = (rec, key = keyOf(rec)) => ({ rec, uv: (p) => planarUv(p, n, WAGON_TILE[key]) });
-  const banded = (name) => ({ band: BANDS[name], u: name === 'caravanSide' ? (p) => caravanSideU(p, n) : (p) => planarUv(p, n, [WAGON_TILE[name][0], 1])[0] });
+  const banded = (name) => ({ band: BANDS[name], u: name === 'caravanSide' ? (p) => caravanSideU(p, n) : (p) => sideBandU(p, WAGON_TILE[name][0]) });
   const up = n[1] > 0.7, down = n[1] < -0.7, side = Math.abs(n[0]) > 0.7, end = Math.abs(n[2]) > 0.7;
   if (role.startsWith('wheel')) return side ? { rec: TEX.wheel, uv: wheelUv(pivot ?? c, R) } : tiled(TEX.tyre);
   if (role.startsWith('axle') || role.startsWith('shaft')) return tiled(TEX.beam);

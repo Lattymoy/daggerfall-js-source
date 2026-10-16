@@ -961,6 +961,97 @@ mends it - the condition its item always carried (`06-Systems/Wagon-Upkeep.md`).
 as wear takes it, a wagon is Failing - slow, never broken, still driven. The team pulling a wagon pulls
 it at its horses' mean Strength under its load (`06-Systems/Horse-Care.md`, STEED1).
 
+## WAGON-EMBLEM (2026-10-16)
+
+Mac: "a guild master's emblem painted on the sides of their open wagon". The open wagon's two long outer walls wear the
+READER'S OWN GUILD'S ARMS - its field, its border and its device, the same drawing the Guild tab and the guild hall's
+door already use (`src/ui/heraldryArt.js`, `11-Multiplayer/Seats-Arc.md` 8.1). **A prototype**, stood to answer one
+question with human eyes: does an emblem read at riding distance at all? **Answered yes in play** - and then ruled on
+how many. What is here is the picture and the bridge; whose wagon it is on, whose arms it may be, and what a paint may
+choose are phase 2.
+
+### The side
+
+`src/world/wagonModels.js` `layFace` gives a face whose normal runs along x, looks OUT and stands under 2.6 m the open
+wagon's `TEX.openSide` - a **band**, not a plain face. Its v runs the whole of `BANDS.openSide` (0.94 m to 3.06 m, 2.12 m
+of wall) and its u is laid by `banded('openSide')` off `WAGON_TILE.openSide[0]`. Read off the bake rather than off
+these numbers (`test/wagonheraldry.test.js`), that wall runs **z -0.71 m to 5.12 m - 5.82 m of it**.
+
+### ONE EMBLEM, IN THE SECOND ITERATION
+
+Mac, of the result - the arms read perfectly, and there were four of them down a side, the last cut: "Can we make it
+only show on the second iteration?" **Ruled, and settled.**
+
+**WHERE THE SECOND ITERATION IS.** `planarUv` lays a side's u as its z over the tile (`src/world/galleonMesh.js`, its
+"a side" line), so with the tile at `SIDE_TILE_M` = 1.3 m the tile boundaries stood at **z 1.3 m, 2.6 m and 3.9 m**,
+and the arms at **z 1.447 m to 2.448 m** - the second tile's span, which is where they stand now.
+
+**THE TECHNIQUE: the repeat is broken in the PICTURE, not in the cloth.** The side's picture is `SIDE_CELLS` (four)
+copies of its own 256-square cell side by side (`src/world/classicArt.js` `repeated`, and `composedPicture`'s new
+`repeat`), and `WAGON_TILE.openSide[0]` is now `SIDE_CELLS * SIDE_TILE_M` = 5.2 m - so the face's u runs **once over all
+four cells** instead of four times over one. A cell is a quarter of the picture, so the cell boundaries fall at the
+**same 1.3 m, 2.6 m and 3.9 m** as the tile boundaries did, and the arms, painted on `EMBLEM_CELL` = 1 alone, stand
+exactly where the operator's second emblem stood. `EMBLEM_CELL` is the whole of that choice, and changing it moves
+which tile carries them.
+
+**THE WHY: the cloth must not be restretched to gain one emblem.** Every tile of a repeating texture is byte-identical,
+so "the arms on the second tile only" is impossible while the texture repeats - something has to give, and the obvious
+thing to give is the stretch. Stretching the TILE alone (`tools/mutants/wagonheraldry.json` WAGONEMBLEM-6) smears one
+cell of sailcloth over 5.2 m of wall: the weave 3.94-fold across, at a fifth of its across-resolution. **That is the
+whole reason this is a `repeat` on the picture and not a longer tile.** Every cell is the same `resample` of Daggerfall's
+sailcloth at 256 square, NEAREST - the very cell the repeating picture wore - and each is still displayed over 1.3 m of
+u, so a texel is still **5.1 mm across and 8.3 mm down**. The cloth is byte-for-byte the cloth of the picture that
+repeats, and cells 0, 2 and 3 are pinned to be the bare sailcloth.
+
+**THE FAR SIDE - a defect the change exposed, and a fix a reader must not undo.** `planarUv` flips u on a far wall
+(`n[0] >= 0 ? p[2] : -p[2]`), mirroring a side's picture about the wagon's middle. That is free on cloth, whose weave
+has no handedness, and while the arms were on a TILE the repeat hid it: they sat at the same z on both walls to within
+a texel. With the arms on ONE cell it showed - the near wall's stood at z 1.45 m and the **far wall's at z 2.75 m**, a
+tile and a half apart on one wagon. A side band's u is therefore laid un-flipped (`src/world/wagonArt.js` `sideBandU`,
+used by `layFace`'s `banded`), and both walls now read the same picture at the same z. **Pinned** (WAGONEMBLEM-9), because
+`planarUv` is the law everywhere else and looks like the tidier answer. The caravan's side is untouched: it keeps
+`caravanSideU`, and its windows still meet the room's.
+
+### A shield, not the hall's banner
+
+A cell is 1.3 m of u by 2.12 m of v, and the hall's banner is one part in three of its own box, so a banner on this
+cell is 0.34 m wide against a shield's 1.0 m - and the DEVICE, the thing that actually reads, is twice the size on the
+same square metre of cloth. `src/ui/heraldryArt.js`'s own HERALDRY-SHOWN says the same of every box that is not a
+banner's. Swapping it is one line (`drawWagonEmblem` in `src/world/wagonEmblem.js`).
+
+### The size question
+
+`size` is `[COMPOSE, COMPOSE]` **per cell** - 256 by 256, the composed size every other band's layout is read in (a
+64-texel livery layout, four texels to one) - and `repeat` lays four of them side by side, so the picture is 1024 by
+256. The cell is the only size that keeps `TEX.openSide` in the same layout as its neighbours, and it is the size the
+face wants: a texel of a cell is 1.3 m / 256 = **5.1 mm across** and 2.12 m / 256 = **8.3 mm down**. The
+emblem's rectangle is therefore measured in METRES off those two numbers and NOT in texels - a box square in texels
+comes out as a tall shield on the wall. `EMBLEM_M` is 1.0: a metre across a 1.3 m cell, so cloth shows either side of
+it, and it is the width a rider's eye reads as one thing at twenty paces.
+
+### The bridge
+
+`composedPicture`'s `paint` is handed the **assembled** picture as a mutable RGBA buffer, last, after the body and every
+inset (`src/world/classicArt.js`). `TEX.openSide` stops being a bare `[archive, record]` and becomes
+`{ body, size, repeat, paint }` (`src/world/wagonArt.js` `emblemmedSide`) - which is the only way `paint` is reachable
+at all. The arms are drawn into a Canvas2D context of the rectangle's own size, read back with `getImageData` and
+stamped over **one cell** of the cloth **alpha-blended** - the insets' binary threshold does not apply, and the
+destination's alpha is never touched, so an emblem is paint and never a hole (`test/wagons2.test.js` holds every wagon
+texel whole or clear).
+
+A runtime with no canvas (a Worker without `OffscreenCanvas`, and the suite) builds every wagon picture exactly as
+before, with the cloth bare. **Nothing rides the wire**: no field, no `RELAY_VERSION`, no `PARK_WAGON_LOOK_MAX`, and
+`LOOK_COUNT` is six still. The tilt and its inner face are still the sailcloth laid whole - they read edge-on, and a
+device there would be the same arms twice on one wagon. A paint past the first keeps the arms over its own cloth
+(`wagonLookSources`): a livery is not a guild. The ends and the centre are unbadged, as asked.
+
+### Pins
+
+- `test/wagonheraldry.test.js` - the side off the bake and where the second iteration is; ONE emblem on the second cell
+  and the bare cloth of the other three; the repeat gone and the cloth unchanged; both walls reading the same picture;
+  the door; the no-canvas runtime; the stamp; and a livery against a guild. Mutants
+  `tools/mutants/wagonheraldry.json` (9, all dead).
+
 ## The relay
 
 A parked team's record (HCC-PARK) now keeps the wagon's kind and whether a
@@ -1004,6 +1095,8 @@ comes back as the Small Cart, as built.
   `windows1_view.test.js`).
 - `test/wagonuv1.test.js` - WAGON-UV: the cart laid level, the caravan's
   windows centred (its mutants `tools/mutants/wagonuv1.json`).
+- `test/wagonheraldry.test.js` - WAGON-EMBLEM: the guild arms on the open
+  wagon's side.
 
 The mutants are in `tools/mutants/wagons1.json`, `wagons2.json`, `wagons2_wheels.json`, `wagons2_visit.json` and `wagons2_final.json`. Records re-aimed:
 `audit29.json`, `companionweight.json`, `disc8.json`, `disc24.json`,
