@@ -18,6 +18,7 @@ import { validHccRecord, HCC_WIRE_KIND } from '../systems/horseCartWire.js';
 import { thrownRecord } from '../systems/wagonWarden.js';   // AUDIT WARDEN1 R9: a caravan the town watch threw stands where it landed
 
 import { CARAVAN_STANDS_NATIVES } from '../systems/caravanRoom.js';   // the caravan the room stands on, where it stands - one reach for the visit and the owner's own room
+import { readWagonLookAll } from '../systems/wagonTimber.js';   // WAGON-TIMBER: the visit descriptor's own look is the paint's four, and the word's is NINE keys - the seed and the answer have to be read by the ONE law that knows both or a visitor repaints on arrival
 export { CARAVAN_STANDS_NATIVES };
 
 /** Whether a cell's record (`raw`, the park record's `r`) is a caravan still parked where `at` says (natives). */
@@ -47,7 +48,7 @@ export function createCaravanVisitLink({ onGone, onLook = null, may = null, Sess
     if (may && w && !may(w, visit)) { gone = true; due = true; why = 'shut'; return; }   // WAGONS2-VISIT (AUDIT): its door shut on me while I stood in it - out, as a moved caravan's visitor is
     const look = w?.look ?? null;
     const key = JSON.stringify(look);
-    if (key !== lookKey) { lookKey = key; onLook?.(look); }
+    if (key !== lookKey) { lookKey = key; onLook?.(look); }   // WAGON-TIMBER: `lookKey` is seeded ABOVE through readWagonLookAll and this answer is validHccRecord's NINE-key look - TWO readers, one shape each, and the visitor repaints its room with the paint it already had
   }
   return {
     close,
@@ -60,7 +61,7 @@ export function createCaravanVisitLink({ onGone, onLook = null, may = null, Sess
       if (!room || main.room === room || main.inRoom?.(room)) { close(); return; }
       if (source !== main || visit?.k !== v.k || visit?.room !== v.privateRoom) {
         close();
-        source = main; cell = room; visit = { k: v.k, at: [...v.at], room: v.privateRoom, owner: v.cabinOwner ?? null }; lookKey = JSON.stringify(v.look ?? null);
+        source = main; cell = room; visit = { k: v.k, at: [...v.at], room: v.privateRoom, owner: v.cabinOwner ?? null }; lookKey = JSON.stringify(readWagonLookAll(v.look));
         link = new Session({ url: main.url, id: main.id, secret: main.secret, name: main.name, look: main.look, mintToken: main.mintToken, presence: false });
         link.onParks = (r, list) => { if (r === cell) judge(caravanRecordOf((Array.isArray(list) ? list : []).find((e) => e?.k === visit?.k))); };
         link.onPark = (r, e) => { if (r === cell && e?.k === visit?.k) judge(caravanRecordOf(e)); };

@@ -90,10 +90,11 @@ import { toColor32 } from '../formats/color32Order.js';
 import { wagonGeometry, buildBakedWagonParts, rendererModelOf, pitchedPoint, teamSidesOf, TEAM, rigGrowOf, driverSeatFor, SHELL_CLEAR_M } from '../world/wagonModels.js';   // WAGONS1: Mac's wagons; WAGONS3: the team, the rig's grow, the bench; BENCH-CAM: the pivot's clearance
 import { seatRigInput, seatTopByte } from '../player/seatPose.js';   // WAGONS3: the driver's hands, and a seated peer's `st`
 import { newRope, stepRope, tubeModel, tubeInto, tubeVertexCount, ROPE } from '../systems/wagonRopes.js';   // WAGONS3: the harness
-import { WAGON_SOURCES, WAGON_ARCHIVE, wagonLookSources, isGlassRecord, LOOK_RECORDS, lookRecord, TEX as WAGON_TEX } from '../world/wagonArt.js';
+import { WAGON_SOURCES, WAGON_ARCHIVE, wagonLookSources, isGlassRecord, LOOK_RECORDS, lookRecord, TIMBER_LISTS, TEX as WAGON_TEX } from '../world/wagonArt.js';
 import { classicPictures } from '../world/classicArt.js';   // DF-ART: the wagons' pictures, Daggerfall's own
 import { caravanRoomModel } from '../world/caravanRoomModel.js';   // WAGONS2: the caravan's room, seen through its windows
 import { readWagonLook, wagonLookOfCode, WAGON_OUTSIDE_LOOKS, CARAVAN_INSIDE_LOOKS, CARAVAN_INSIDE_PARTS } from '../systems/wagonLooks.js';
+import { readWagonLookAll, TIMBER_FIELDS, TIMBER_CHOICE_LISTS } from '../systems/wagonTimber.js';   // WAGON-TIMBER: the look is NINE keys, and this is the one reader of all nine
 import { validWagonKind, wagonHitchOf, WAGON_KINDS, wagonHorsesOf } from '../systems/wagonKinds.js';
 import { CARAVAN_TEXT } from '../systems/caravanRoom.js';
 import { recolorHorse, horseLookCode, horseLookOfCode, lookSuffix } from '../systems/horseCoats.js';   // COATS1: the horses' looks, dyed as they upload
@@ -390,12 +391,28 @@ export function createHorseCartPool({
     uploadWagonPictures(wagonLookSources(list, i, names[i]));
   }
   /** The remap a wagon of `kind` wearing `look` is drawn by: each built record its paint repaints, to the paint's
-   *  (null for the wagon as built - its own pictures, no remap). `room` the caravan's inside's instead of its outside's. */
+   *  (null for the wagon as built - its own pictures, no remap). `room` the caravan's inside's instead of its outside's.
+   *
+   *  WAGON-TIMBER: the five TIMBER lists go through THIS door, beside the paint's own - `ensureLook` builds each
+   *  choice's pictures on first wear exactly as a painted wagon builds its paint records, and each built record is
+   *  remapped to that choice's, stride apart (world/wagonArt.js `timberFloor`, `timberInner`, `timberBeam`,
+   *  `timberBench`, `wheels`). They ride the BODY's remap and never the room's: the caravan's inside faces wear the
+   *  room's own five records (scenes/caravanRoom.js), and no wooden part is one of them.
+   *
+   *  AND THE KEY IS WHY A DYE REACHES EVERY PEER. The map is CACHED, and a cache keyed on the paint alone is the exact
+   *  stale-look bug the emblem already has: dye the beams on a wagon already wearing a livery and `key` is unchanged,
+   *  the cached map comes back, and the draw goes on asking for the built `TEX.beam` - for the player who dyed them
+   *  and for every peer reading their word. So the timber's five digits are IN the key, beside the paint's. The
+   *  emblem's own staleness is a different thing and is not solved here: its arms are painted INTO the built record's
+   *  picture, and that picture is uploaded once (`ensureWagonArt`), so a guild that changes mid-session keeps the arms
+   *  it was built with until reload. A dyed board is NOT that shape - a choice's records are a function of the list
+   *  and the choice alone (`_lookUp`), so nothing about them goes stale, and only the key had to learn. */
   function lookRemap(kind, look, room = false) {
-    const l = readWagonLook(look), k = validWagonKind(kind) ?? 'cart';
-    const lists = room ? CARAVAN_INSIDE_PARTS.map((part) => [part, l[part[0]], CARAVAN_INSIDE_LOOKS[part]]) : [[k, l.o, WAGON_OUTSIDE_LOOKS[k]]];
+    const l = room ? readWagonLook(look) : readWagonLookAll(look), k = validWagonKind(kind) ?? 'cart';
+    const lists = room ? CARAVAN_INSIDE_PARTS.map((part) => [part, l[part[0]], CARAVAN_INSIDE_LOOKS[part]])
+      : [[k, l.o, WAGON_OUTSIDE_LOOKS[k]], ...TIMBER_FIELDS.map((part) => [TIMBER_LISTS[part], l[part], TIMBER_CHOICE_LISTS[part]])];
     if (lists.every(([, i]) => !i)) return null;
-    const key = room ? `room:${l.w}.${l.f}.${l.c}` : `${k}:${l.o}`;
+    const key = room ? `room:${l.w}.${l.f}.${l.c}` : `${k}:${l.o}.${TIMBER_FIELDS.map((part) => l[part]).join('.')}`;
     let map = _remaps.get(key);
     if (!map) {
       map = new Map();
@@ -439,8 +456,10 @@ export function createHorseCartPool({
     return _parts;
   }
   const myKind = () => validWagonKind(wagonKind?.()) ?? 'cart';
-  /** WAGONS2: my driven wagon's paint (systems/wagonLooks.js), checked. */
-  const myLook = () => readWagonLook(wagonLook?.());
+  /** WAGONS2: my driven wagon's paint (systems/wagonLooks.js), checked. WAGON-TIMBER: and its own wood with it - the
+   *  whole `wagonLook`, all NINE keys, because the word and the draw both carry the timber beside the paint and a
+   *  four-key read here would drop five of them before either saw them. */
+  const myLook = () => readWagonLookAll(wagonLook?.());
   /** How far ahead of a wagon's rear axle its horse stands: the kind's own when Mac's wagon is drawn, the mod's 3.1
    *  for the classic one (HITCHED_HORSE_LOCAL_Z). */
   function hitchOf(kind = myKind()) {
@@ -601,7 +620,7 @@ export function createHorseCartPool({
     if (g.wheels) {
       const pitch = hitched ? parts.hitchPitch ?? 0 : 0;
       const body = pitchedMatrix(m, parts, pitch);
-      const l = typeof look === 'number' ? wagonLookOfCode(look) : readWagonLook(look);
+      const l = typeof look === 'number' ? wagonLookOfCode(look) : readWagonLookAll(look);   // WAGON-TIMBER: a peer's word brings all nine keys, and `readWagonLook` alone would drop the five it never heard of
       const paint = lookRemap(kind, l) ?? texRemap;
       r.drawMesh(g.body, body, paint, o);
       const steered = parts.bogie ? steeredMatrix(parts.bogie.kingpin, turn?.steer ?? 0) : null;

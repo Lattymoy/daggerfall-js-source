@@ -19,6 +19,7 @@
 
 import { stableWagonName, WAGON_KINDS } from '../systems/wagonKinds.js';   // WAGONS1: the Stable's card names the wagon driven
 import { paintDrivenWagon, outsidePaintRow, LOOK_TEXT } from '../systems/wagonLooks.js';   // WAGONS2: and paints it
+import { timberRows, timberedDrivenWagon, TIMBER_FIELDS } from '../systems/wagonTimber.js';   // WAGON-TIMBER: and dyes it
 import { restyleRiddenHorse, horseLookRows, birthHorses, HORSE_LOOK_PARTS } from '../systems/horseCoats.js';   // COATS1: and the horse's look
 import { requestFittedIcon, fittedImg } from './textureCanvas.js';
 import { WAGON_MODE, HORSE_MODE, TRANSPORT, HORSE_NAME_MAX } from '../systems/horseCartLaw.js';
@@ -43,12 +44,13 @@ export function _setHoldingsIconForTests(fn) { _icon = fn ?? ((p, box, onReady) 
  * @property {any} [view]   the runtime's stableView() while `hcc`
  * @property {string|null} [kind]   WAGONS1: the wagon driven ('cart', 'openWagon', 'caravan' - systems/wagonKinds.js)
  * @property {{ choices: string[], current: number }|null} [paint]   WAGONS2: its outside's paints, and its paint now
+ * @property {Array<{ part: string, name: string, choices: string[], current: number }>|null} [timber]   WAGON-TIMBER: its four wooden parts and its wheels, a row each, and the choice worn
  * @property {{ desc: string, rows: Array<{ part: string, name: string, choices: string[], current: number }> }|null} [look]   COATS1: the ridden horse's look - in words, and a row of choices a part (coat, pattern, legs)
  * @property {any} [care]   STEED1/WAGONS4: the upkeep's model (systems/upkeepRuntime.js model) - each horse's stats, bond, hunger and breath; the wagon's soundness; the oats, apples and kits carried
  *
  * @typedef {Object} HoldingsProvider
  * @property {() => StableModel} [stable]   the horse and the wagon
- * @property {(verb: 'summon'|'away'|'rename'|'paint'|'coat'|'pattern'|'legs'|'feed'|'treat'|'ride'|'kit', arg?: any) => { ok: boolean, text: string }} [stableAct]
+ * @property {(verb: 'summon'|'away'|'rename'|'paint'|'coat'|'pattern'|'legs'|'feed'|'treat'|'ride'|'kit'|'floor'|'inner'|'beam'|'bench'|'wheels', arg?: any) => { ok: boolean, text: string }} [stableAct]
  * @property {any} [fleet]   the fleet's model and acts (ui/fleetPage.js)
  * @property {{ model: () => any }} [captain]   CAPT-LOG: the captain's standing, letter, contracts and log (ui/captainPage.js)
  */
@@ -70,7 +72,7 @@ export const holdingsProvider = () => _provider;
 export function stableProviderFor({ runtime, on, hasHorse, hasCart, wagonKind = () => null, items = () => [], onPainted = () => {}, upkeep = null, pass = () => {} }) {
   const view = () => (on() ? runtime.stableView() : null);
   return {
-    stable: () => { birthHorses(items()); const v = view(); return { hcc: !!on(), hasHorse: !!hasHorse(), hasCart: !!hasCart(), view: v, kind: wagonKind() ?? null, paint: outsidePaintRow(items()), look: horseLookRows(items()), care: upkeep?.model({ near: upkeepReach(runtime, on()).near, name: v?.horseName ?? '' }) ?? null }; },   // WAGONS1: which wagon; WAGONS2: its paint; COATS1: the horse's look; STEED1/WAGONS4: their upkeep
+    stable: () => { birthHorses(items()); const v = view(); return { hcc: !!on(), hasHorse: !!hasHorse(), hasCart: !!hasCart(), view: v, kind: wagonKind() ?? null, paint: outsidePaintRow(items()), timber: timberRows(items()), look: horseLookRows(items()), care: upkeep?.model({ near: upkeepReach(runtime, on()).near, name: v?.horseName ?? '' }) ?? null }; },   // WAGONS1: which wagon; WAGONS2: its paint; WAGON-TIMBER: its four wooden parts and its wheels; COATS1: the horse's look; STEED1/WAGONS4: their upkeep
     stableAct: (verb, arg) => {
       if (upkeep && (verb === 'feed' || verb === 'treat' || verb === 'ride' || verb === 'kit')) {   // STEED1/WAGONS4: the upkeep's own acts, the mod on or off
         const r = upkeep.act(verb, arg, { ...upkeepReach(runtime, on()), pass });
@@ -78,6 +80,11 @@ export function stableProviderFor({ runtime, on, hasHorse, hasCart, wagonKind = 
         return r;
       }
       if (verb === 'paint') { const r = paintDrivenWagon(items(), 'outside', Number(arg) | 0); if (r.ok) onPainted(); return r; }   // WAGONS2: free, any time, the mod on or off - the paint is the wagon's
+      // WAGON-TIMBER: and the same for each of its five, free and any time - what a wagon is made of is the wagon's
+      // business. A press tells the host its word moved (`onPainted`), which is the ONLY thing that republishes: the
+      // host marks itself dirty, the next foes frame carries the new `ww`/`wr`, and a peer reads the beam that moved.
+      // A verb that is not a part falls through to the acts below, so 'floor' cannot shadow a horse's or a keeper's.
+      if (TIMBER_FIELDS.includes(/** @type {any} */ (verb))) { const r = timberedDrivenWagon(items(), /** @type {any} */ (verb), Number(arg) | 0); if (r.ok) onPainted(); return r; }
       if (HORSE_LOOK_PARTS.some((p) => p.part === verb)) { const r = restyleRiddenHorse(items(), verb, Number(arg) | 0); if (r.ok) onPainted(); return r; }   // COATS1: the same - the look is the horse's
       if (!on()) return { ok: false, text: `Turn on Horse Cart and Cargo (${optionPath('feat:mod-horse-cart-and-cargo')}) to call your horse and wagon.` };   // ORG2: where it lives, from the map
       if (verb === 'summon') return runtime.summonTransport();
@@ -335,11 +342,18 @@ let _draft = '';
 let _lookOpen = '';   // UI-CALM: whose look's pickers are open - 'horse', 'wagon', or none
 
 /** UI-CALM: a colour a look's swatch wears, by the name the card says - a horse's coats, a wagon's outside paints. A
- *  name with none is drawn as a word (the stepper). */
+ *  name with none is drawn as a word (the stepper). WAGON-TIMBER: the wood's and the wheels' seven names join it, and
+ *  `choiceRow`'s own rule is why all seven had to arrive together - ONE missing hex takes `colours.every(Boolean)`
+ *  false and demotes the WHOLE row to a stepper, so a wagon with five selectors would show five steppers because one
+ *  wood has no colour. `silvered` is in WHEEL_LOOKS and in no wood table (systems/wagonTimber.js), so the wheel's grey
+ *  and the wood's grey are separate names here and separate hexes can be separate later; the five the two tables SHARE
+ *  are one wood in both (that module's own law) and wear one hex, read off the dye/finish rather than invented beside it.
+ */
 export const LOOK_SWATCHES = Object.freeze({
   Bay: '#7a4527', Chestnut: '#9c5224', Black: '#26211e', Grey: '#9d9a93', Dun: '#b39a6b', Buckskin: '#c9a256', Palomino: '#dcbd7c',
   'Weathered oak': '#7d6a4f', Red: '#9a2f24', Blue: '#2f4f8a', Green: '#3d6a3a', White: '#e4ded0', 'Cream canvas': '#e3d6b4',
   Ochre: '#c08a2e', Oxblood: '#5e1d1b',
+  Oak: '#8a6a43', Pine: '#c9ab74', Ash: '#b0a68c', Walnut: '#5a3f27', Mahogany: '#8a3a24', Ebony: '#2a2422', Silvered: '#9aa0a3',
 });
 
 /**
@@ -461,9 +475,21 @@ export function drawStablePage(detail, rerender, { el, divider, meter = null } =
     const extra = [];
     if (v && v.limit > 0) extra.push(holdingMeter(el, meter, 'Load', v.kg, v.limit, 'thin'));
     if (care?.wagonUpkeep && care.wagon) extra.push(...wagonLines(el, meter, care.wagon, care, act));   // WAGONS4: its soundness, and a kit
-    if (m.paint) {   // WAGONS2: its outside's paints - UI-CALM: swatches, behind the same small press as the horse's look
-      extra.push(lookLine(el, 'wagon', `${LOOK_TEXT.paint}: ${m.paint.choices[m.paint.current] ?? ''}.`, rerender));
-      if (_lookOpen === 'wagon') extra.push(choiceRow(el, LOOK_TEXT.paint, m.paint, (i) => act('paint', i)));
+    if (m.paint || m.timber) {   // WAGONS2: its outside's paints - UI-CALM: swatches, behind the same small press as the horse's look
+      // WAGON-TIMBER: the five rows join it BEHIND THE SAME PRESS, not a sixth press of their own: they are one
+      // question - what this wagon is made of - and a card with six small presses on it is the wall of presses UI-CALM
+      // was called to take down. The line names the paint first (it is the first row) and the wood after it, and says
+      // which parts are dyed at all rather than listing five as they were built.
+      const words = [`${LOOK_TEXT.paint}: ${m.paint?.choices[m.paint.current] ?? ''}`];
+      if (m.timber) {
+        const dyed = m.timber.filter((r) => r.current > 0).map((r) => r.name.toLowerCase());
+        words.push(dyed.length ? t('wagon.timber.line', 'Timber: {parts}', { parts: dyed.join(', ') }) : t('wagon.timber.lineBuilt', 'Timber: as built'));   // L10N4: routed, so the ratchet holds
+      }
+      extra.push(lookLine(el, 'wagon', `${words.join(' · ')}.`, rerender));
+      if (_lookOpen === 'wagon') {
+        if (m.paint) extra.push(choiceRow(el, LOOK_TEXT.paint, m.paint, (i) => act('paint', i)));
+        for (const row of m.timber ?? []) extra.push(choiceRow(el, row.name, row, (i) => act(/** @type {any} */ (row.part), i)));
+      }
     }
     list.append(card(el, { art: WAGON_ART, glyph: '☸', name: stableWagonName(m.kind), words: words.wagon, sub: m.kind && m.kind !== 'cart' ? WAGON_KINDS[m.kind]?.name ?? null : null, extra, rerender }).item);   // WAGONS1: the wagon driven, by its kind
   }

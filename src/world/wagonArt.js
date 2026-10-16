@@ -53,8 +53,13 @@
 // test/wagontimber.test.js walks every one of them). The caravan's live inside records (CARAVAN_LIVE_CHOICE, choice 9 of
 // rooms 15-19) sit in their own bands above and share no base with these.
 //
-// VISUAL AND SAVED, NOT WIRED. No field, no RELAY_VERSION, no PARK_WAGON_LOOK_MAX, no change to `wl`; what pass 2 packs
-// is written down in systems/wagonTimber.js's header. Ledger A (WAGONS1).
+// WIRED (pass 2). Nothing here had to change: `wagonLookSources` already answered for the five lists, `LOOK_RECORDS`
+// already named their records, and a choice was always a record a stride from a base, so the pool's own door
+// (scenes/horseCartPool.js ensureLook/lookRemap) builds a dyed bed's pictures on first wear exactly as it builds a
+// painted wagon's, and remaps the drawn record to them. The wire rides beside the paint as two more numbers - `ww`
+// (the four parts) and `wr` (the wheels) - out of systems/wagonTimber.js, and RELAY_VERSION is world207. No field on a
+// record, no new list, no change to `wl`, and LOOK_COUNT is six still.
+// Ledger A (WAGONS1).
 import { DF, SEE_THROUGH_WINDOW, COMPOSE } from './classicArt.js';
 import { wagonWheelArt, wagonTyreArt, WHEEL_FINISHES } from './wagonWheelArt.js';
 import { paintWagonEmblem } from './wagonEmblem.js';

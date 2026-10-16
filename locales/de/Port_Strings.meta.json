@@ -19059,6 +19059,31 @@
   "tr": "6a09f46b2b06",
   "by": "claude-in-session"
  },
+ "wagon.timber.dyedMany": {
+  "en": "3d05768f7950",
+  "tr": "0e79b7006873",
+  "by": "claude-in-session"
+ },
+ "wagon.timber.dyedOne": {
+  "en": "75052582cd2e",
+  "tr": "1dc585ffc665",
+  "by": "claude-in-session"
+ },
+ "wagon.timber.line": {
+  "en": "470ccf86ca70",
+  "tr": "411c482d1f30",
+  "by": "claude-in-session"
+ },
+ "wagon.timber.lineBuilt": {
+  "en": "b7a1378aa5b4",
+  "tr": "09a324d7dd0d",
+  "by": "claude-in-session"
+ },
+ "wagon.timber.noWagon": {
+  "en": "b5428e8ba1f6",
+  "tr": "42ce46bc480d",
+  "by": "claude-in-session"
+ },
  "wagon.upkeep.boons.failing": {
   "en": "5e6a68b53a69",
   "tr": "ee9710af5c8a",

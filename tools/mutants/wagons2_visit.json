@@ -74,11 +74,12 @@
   {
     "name": "WAGONS2-VISIT-a-door-changed-with-no-word",
     "file": "src/systems/horseCartWire.js",
-    "old": "rec.wl ?? 0, rec.we ?? 0, rec.wg ?? '', rec.hc ?? 0]",
-    "new": "rec.wl ?? 0, rec.hc ?? 0]",
+    "old": "rec.wl ?? 0, rec.ww ?? 0, rec.wr ?? 0, rec.we ?? 0,",
+    "new": "rec.wl ?? 0, rec.we ?? 0,",
     "tests": [
       "test/wagons2_visit.test.js"
-    ]
+    ],
+    "note": "WAGONS2-VISIT: hccRecordKey with the visit's door `we`/`wg` off the change key - a caravan whose owner opens it to anyone publishes nothing when the door moves, so a peer keeps seeing it as his owner's alone. Re-aimed at WAGON-TIMBER's merge of 2026-10-16 (its `ww`/`wr` now stand between `wl` and `we` on that line): the span is the part of the key this record is about, so the timber above it is left alone and only the door is dropped."
   },
   {
     "name": "WAGONS2-VISIT-the-park-record-forgets-the-door",

@@ -914,8 +914,14 @@ GuildBook the world already holds (`src/world/wagonEmblem.js` `setWagonHeraldry`
 there is always an emblem to look at. Visual only, and the side is a livery's own: the paint of the open wagon changes
 the cloth under it and never the arms. WAGON-TIMBER (2026-10-16, `06-Systems/Wagons.md`) puts a CHOICE on the same
 wagon's own wood and wheels beside it - four wooden parts and the wheels, six choices each, saved on the item's one
-`wagonLook` field and, like the arms, on no word at all until pass 2: the paint of the open wagon and the timber of its
-bed are separate selectors by the operator's own word, and the arms sit over whatever cloth the paint chose. DECIDED: no wire
+`wagonLook` field and, since WAGON-TIMBER PASS 2 (2026-10-16, `06-Systems/Wagons.md`), ON THE WIRE as two more numbers
+beside the paint's one: `ww` (the four parts, the same base ladder `wl` uses, so the same 1295 bound and `wl` unmoved) and
+`wr` (the wheels alone, which the operator asked to be separate from the wood's). The live `hv` word carries both and a
+parked team's record keeps both (`net/wire.js` validParkData, PARK_WAGON_TIMBER_MAX / PARK_WAGON_WHEEL_MAX beside
+PARK_WAGON_LOOK_MAX) - RELAY_VERSION world207 - deploy the relay before the account service, which `account-deploy.yml` already waits for on `/health`, and the clients last. The paint of the open wagon and
+the timber of its bed are separate selectors by the operator's own word, and the arms sit over whatever cloth the paint
+chose. NEITHER the arms nor a part of the wood is a guild's heraldry, so nothing here waits on the token: a peer reads
+what the word says, and a tab on the old build loses its timber and never its team. DECIDED: no wire
 carries a guild's heraldry to these faces (a peer's token names its tag alone), so each reads it by the guild's tag
 (unique) off what the client already holds - the reader's own guild, the seats' list's holders and battles, a seat's
 standings (`net/heraldryIndex.js` heraldryByTag) - and a guild the client knows no heraldry of wears the plain tag, no

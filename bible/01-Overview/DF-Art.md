@@ -126,6 +126,13 @@ as Come Sail Away's own hulls do.
 - **A wagon's paint** (WAGONS2) still swaps: each choice past the first is drawn through its remap onto its own
   records, read and uploaded the first time a wagon wears it (`test/dfart_wagonlooks.test.js`, every kind and every
   choice, and every inside choice on the caravan's room).
+- **A wagon's own wood** (WAGON-TIMBER pass 2) swaps on the SAME door and the same terms: each of the four wooden
+  parts and the wheels go through `ensureLook` and `lookRemap`, so a dyed beam reads its record out of the player's ARENA2
+  and uploads it the first time a wagon wears that choice (`test/wagontimber2.test.js`, every list and every choice, and
+  the choice's picture pinned to the one ITS OWN list names - the wheels never take a wood's dye). **And it does not go
+  stale**: the remap cache key carries the timber, so a look changed mid-session is rebuilt rather than served from the
+  map built for the paint alone. (The emblem's arms are a DIFFERENT case and are not: they are painted into the built
+  record's picture, uploaded once, so a guild that changes mid-session keeps its arms until reload.)
 - **A record the player's data lacks** is left out, and its faces draw untextured, as a classic model's would. It never
   throws.
 

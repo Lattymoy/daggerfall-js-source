@@ -34,7 +34,8 @@ import { POSE_BOUND, POSE_Y_BOUND, sanitizeLabel, MAP_PIXELS_X, MAP_PIXELS_Y } f
 import { HORSE_NAME_MAX, CARGO_TIERS } from './horseCartLaw.js';
 import { wagonKindCode, wagonKindOfCode } from './wagonKinds.js';
 import { validPassengers, validPeerId, MAX_SEATS } from './wagonSeats.js';
-import { wagonLookCode, wagonLookOfCode, WAGON_LOOK_CODE_MAX } from './wagonLooks.js';
+import { wagonLookCode, WAGON_LOOK_CODE_MAX } from './wagonLooks.js';   // WAGON-TIMBER: and wagonLookOfWire below, which reads the paint's code through the paint's own law - this module no longer unpacks a look itself
+import { wagonTimberCode, wagonWheelCode, wagonLookOfWire, WAGON_TIMBER_CODE_MAX, WAGON_WHEEL_CODE_MAX } from './wagonTimber.js';
 import { caravanEntryCode, caravanEntryOfCode, caravanGuildTag, CARAVAN_GUILD_CODE } from './caravanVisit.js';
 import { horseLookCode, horseLookOfCode, HORSE_LOOK_CODE_MAX } from './horseCoats.js';
 
@@ -46,6 +47,21 @@ import { horseLookCode, horseLookOfCode, HORSE_LOOK_CODE_MAX } from './horseCoat
 // WAGONS2 (2026-10-09): AND ITS PAINT. A wagon's paint (systems/wagonLooks.js - its outside, and a caravan's inside)
 // is one number, `wl`, beside `wk` at the record's top (absent: the wagon as built - every word before WAGONS2), folded
 // into `w` as `look`; an older reader drops it and draws the wagon as built.
+
+// WAGON-TIMBER (2026-10-16, Mac, of the wagon's wood and of its wheels: "Ok so there is a separation of all the wooden
+// parts which is cool. Lets make a selector for each of them and send them over the wire using the same system that
+// already exists"; "I want the wheel options to be separate from the wood options"): AND ITS TIMBER. The wagon's own
+// wood is TWO more numbers beside `wl`, in the same ladder and the same field: `ww` - the four wooden parts
+// (systems/wagonTimber.js `floor` + 6*`inner` + 36*`beam` + 216*`bench`, 1..1295) - and `wr`, the wheels' own digit
+// (1..5), which Mac asked to be separate from the wood's and is. Both absent at 0, so every word before this bump
+// reads a wagon as built, and both folded into `w.look` beside the paint's four: ONE `wagonLook`, nine keys
+// (wagonTimber.js wagonLookOfWire is what puts the nine back together, because the paint's law is not to be asked
+// about the timber).
+//
+// hccRecordKey CARRIES BOTH, and that is the gate: it is the change key, so a field missing from it publishes nothing
+// when it moves - the player dyes their beams, their own wagon and every peer's keep the wood they had, with no error
+// anywhere to notice it by. ValidHccRecord is the second gate: a code the law does not make is the wagon as built
+// (a look never refuses a word), so a tab on an older build loses its timber rather than its team.
 
 // WAGONS2-VISIT (2026-10-09): AND WHO MAY ENTER IT. A caravan's door is its owner's to open (systems/caravanVisit.js):
 // `we`, the entry's code (1 the owner's party, 2 anyone, 3 the owner's guild; absent, the owner alone - every word before
@@ -72,7 +88,7 @@ const inBounds = (p) => Math.abs(p[0]) <= POSE_BOUND && Math.abs(p[2]) <= POSE_B
  * My word: the pool's view of the runtime as the wire says it. `view` is scenes/horseCartPool.js's
  * `shown()` - `{ wagon: { kind, position, rotation, tier, angle } | null, horse: { position, forward, walking } | null,
  * name }` in scene units; `toWire` converts a scene point to the wire frame.
- * @returns {{ w?: number[], h?: number[], n?: string, hc?: number, wk?: number, wh?: number, wl?: number, we?: number, wg?: string, ps?: any[], go?: number[], pn?: string[] } | null} null when nothing stands (the reader drops mine)
+ * @returns {{ w?: number[], h?: number[], n?: string, hc?: number, wk?: number, wh?: number, wl?: number, ww?: number, wr?: number, we?: number, wg?: string, ps?: any[], go?: number[], pn?: string[] } | null} null when nothing stands (the reader drops mine)
  */
 export function hccWireRecord(view, toWire = (p) => p) {
   if (!view) return null;
@@ -86,6 +102,10 @@ export function hccWireRecord(view, toWire = (p) => p) {
     if (w.hitched && (w.kind | 0) === HCC_WIRE_KIND.Deployed) out.wh = 1;
     const wl = wagonLookCode(w.look);   // WAGONS2: its paint
     if (wl) out.wl = wl;
+    // WAGON-TIMBER: and its own wood, in the same ladder - the four parts and then the wheels, each a number of its own
+    const ww = wagonTimberCode(w.look), wr = wagonWheelCode(w.look);
+    if (ww) out.ww = ww;
+    if (wr) out.wr = wr;
     const we = caravanEntryCode(w.entry);   // WAGONS2-VISIT: who may enter it, and with the guild's, the guild's tag
     if (we) { out.we = we; const wg = we === CARAVAN_GUILD_CODE ? caravanGuildTag(w.guild) : null; if (wg) out.wg = wg; }
     const ps = validPassengers(w.passengers);   // WAGONS1
@@ -125,7 +145,7 @@ export function validHccRecord(raw) {
     const len = Math.hypot(q[0], q[1], q[2], q[3]);
     if (!(len > 0.5 && len < 2)) return null;
     if (!TIERS.has(w[8])) return null;
-    out.w = { kind: w[0], position: p, rotation: q.map((v) => v / len), tier: w[8], angle: ((w[9] % 360) + 360) % 360, model: wagonKindOfCode(raw.wk ?? 0), hitched: raw.wh === 1, look: wagonLookOfCode(Number.isInteger(raw.wl) && raw.wl > 0 && raw.wl <= WAGON_LOOK_CODE_MAX ? raw.wl : 0), passengers: validPassengers(raw.ps) ?? [] };   // WAGONS1: an unknown kind is drawn as the cart; a passenger list that is not one seats nobody
+    out.w = { kind: w[0], position: p, rotation: q.map((v) => v / len), tier: w[8], angle: ((w[9] % 360) + 360) % 360, model: wagonKindOfCode(raw.wk ?? 0), hitched: raw.wh === 1, look: wagonLookOfWire(Number.isInteger(raw.wl) && raw.wl > 0 && raw.wl <= WAGON_LOOK_CODE_MAX ? raw.wl : 0, Number.isInteger(raw.ww) && raw.ww > 0 && raw.ww <= WAGON_TIMBER_CODE_MAX ? raw.ww : 0, Number.isInteger(raw.wr) && raw.wr > 0 && raw.wr <= WAGON_WHEEL_CODE_MAX ? raw.wr : 0), passengers: validPassengers(raw.ps) ?? [] };   // WAGONS1: an unknown kind is drawn as the cart; a passenger list that is not one seats nobody. WAGONS2 + WAGON-TIMBER: the look is all NINE keys - the paint's `wl`, the four parts' `ww` and the wheels' `wr`, each out of its own law's bound, and a code past it or absent is that half as built (the word is never refused for a look)
     out.w.entry = caravanEntryOfCode(raw.we); out.w.guild = out.w.entry === 'guild' ? caravanGuildTag(raw.wg) : null;   // WAGONS2-VISIT: who may enter it - the owner alone for anything the law does not know
   }
   // WAGONS1: a journey the owner's riders go on, and who was turned away - each dropped alone when it is not one
@@ -150,10 +170,15 @@ export function validHccRecord(raw) {
   return out;
 }
 
-/** A change key, so a frame carries the record only when the word moved (the full frame always does). */
+/** A change key, so a frame carries the record only when the word moved (the full frame always does).
+ *
+ *  WAGON-TIMBER: `ww` and `wr` are IN it, beside `wl` - and that is the whole of this slice's reach. A field absent
+ *  from here changes nothing the key can see, so the pool asks for no frame, the relay is told nothing, and a wagon
+ *  whose beams were dyed keeps the wood it had: for the player who dyed them and for every peer watching, with nothing
+ *  to see that anything went wrong. A number is on the wire only if the key can tell it moved. */
 export function hccRecordKey(rec) {
   if (!rec) return '';
-  return JSON.stringify([rec.w ?? 0, rec.h ?? 0, rec.n ?? '', rec.wk ?? 0, rec.wh ?? 0, rec.ps ?? 0, rec.go ?? 0, rec.pn ?? 0, rec.wl ?? 0, rec.we ?? 0, rec.wg ?? '', rec.hc ?? 0]);
+  return JSON.stringify([rec.w ?? 0, rec.h ?? 0, rec.n ?? '', rec.wk ?? 0, rec.wh ?? 0, rec.ps ?? 0, rec.go ?? 0, rec.pn ?? 0, rec.wl ?? 0, rec.ww ?? 0, rec.wr ?? 0, rec.we ?? 0, rec.wg ?? '', rec.hc ?? 0]);
 }
 
 /** The snap-or-ease a reader shows between two words: a step past `snap` metres is a teleport (the owner
