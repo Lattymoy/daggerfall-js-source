@@ -1737,7 +1737,7 @@ test('AUDIT-WH H4/L2/L3/L4/L6: every host branch that returns above the hover sa
   // street. A PIN MUST FAIL: delete the `dropDoorCache()` from setMode
   // and the first dies; write `mode = 'whatever'` anywhere and the
   // second does.
-  assert.match(wm, /const setMode = \(next\) => \{ dropDoorCache\(\); if \(next !== mode\) interiorWeapon\.silenceTorch\(\);[^\n]*? mode = next; if \(next !== 'interior'\) \{ privateVisitRoom = null; privateVisitOwner = null; \} \};/,
+  assert.match(wm, /const setMode = \(next\) => \{ dropDoorCache\(\); if \(next !== mode\) interiorWeapon\.silenceTorch\(\);[^\n]*? mode = next; if \(next !== 'interior'\) \{ privateVisitRoom = null; privateVisitOwner = null; \} if \(next === 'exterior'\) placeInstance = null; \};/,   // PIN MOVED (INSTANCES' audit): the place's instance goes with the mode too
     'the free rides the one write of mode');
   const rawModeWrites = (wm.match(/^\s*mode = (?!next;)/gm) ?? []);
   assert.equal(rawModeWrites.length, 0,

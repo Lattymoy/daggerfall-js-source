@@ -6294,7 +6294,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const mt = dfLocation?.mapTableData;
     if (!mt || !Number.isFinite(mt.longitude) || !Number.isFinite(mt.latitude)) return null;
     const p = longitudeLatitudeToMapPixel(mt.longitude, mt.latitude);
-    return { pixel: { x: p.x, y: p.y }, mapId: mt.mapId ?? null };
+    return { pixel: { x: p.x, y: p.y }, mapId: mt.mapId ?? null, ...(opts.placeRecord?.() ?? {}) };   // INSTANCES (the audit): and the instance it was entered as (`ins`) - a load re-enters it
   };
   function collectWorld() {
     return {

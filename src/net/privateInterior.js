@@ -20,7 +20,9 @@ export function caravanKeyOf(key) {
   const m = typeof key === 'string' && CARAVAN_ROOM.exec(key);
   return m ? m[1] : null;
 }
-const digest = async (s, bytes) => [...new Uint8Array(await globalThis.crypto.subtle.digest('SHA-256', new TextEncoder().encode(s))).slice(0, bytes)].map((b) => b.toString(16).padStart(2, '0')).join('');
+/** The first `bytes` of SHA-256 over `s`, in hex. INSTANCES: exported - an instance room's owner and epoch are digests
+ *  too (net/instanceRoom.js), one hash for the family. */
+export const digest = async (s, bytes) => [...new Uint8Array(await globalThis.crypto.subtle.digest('SHA-256', new TextEncoder().encode(s))).slice(0, bytes)].map((b) => b.toString(16).padStart(2, '0')).join('');
 
 export async function privateInteriorPrefix(account, character) {
   if (!identity(account) || !identity(character)) return null;

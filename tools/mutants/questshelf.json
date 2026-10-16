@@ -380,8 +380,8 @@
   {
     "name": "QS-A-a-shelf-received",
     "file": "src/systems/quest/machine.js",
-    "old": "    questData = { ...this._onThisClock(questData), ...NO_SHELF };   // TIME3: the sender's countdowns, on this character's clock\n    const quest = this._newQuest();",
-    "new": "    questData = this._onThisClock(questData);   // TIME3: the sender's countdowns, on this character's clock\n    const quest = this._newQuest();",
+    "old": "    questData = { ...this._onThisClock(questData), ...NO_SHELF, ...NO_INSTANCE };   // TIME3: the sender's countdowns, on this character's clock\n    const quest = this._newQuest();",
+    "new": "    questData = { ...this._onThisClock(questData), ...NO_INSTANCE };   // TIME3: the sender's countdowns, on this character's clock\n    const quest = this._newQuest();",
     "tests": [
       "test/questshelf.test.js"
     ]

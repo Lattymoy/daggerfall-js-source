@@ -46,7 +46,7 @@ test('UXB1-E: the plan is the lane\'s tables, whole - every forced pref, every f
   // SD-ONLINE (PIN MOVED): online the size law answers the WORLD's size for each dungeon (it was the whole dungeon), and
   // the world-dungeon-sizes row is forced on there - a registry row, so the forced prefs carry it and the sync copies it
   // home with Smaller Dungeons off (and the medium row off: the world's sizes win over it anyway)
-  assert.match(read('src/world/smallerDungeons.js'), /if \(online\) return onlineDungeonSize\(dfLocation\);/, '...which is the law the rows copy (DSIZE1: the size law answers a size; SD-ONLINE: online it is the world\'s)');
+  assert.match(read('src/world/smallerDungeons.js'), /if \(online\) return whole \? 'full' : onlineDungeonSize\(dfLocation\);/, '...which is the law the rows copy (DSIZE1: the size law answers a size; SD-ONLINE: online it is the world\'s - the public room\'s; PIN MOVED, INSTANCES: an instance and a quest\'s world ask for the dungeon whole)');
   assert.ok(ids.includes('prefs:worldDungeonSizes'), 'SD-ONLINE: the world\'s sizes, forced on online');
   assert.equal(ONLINE_FORCED_PREFS.worldDungeonSizes, true);
   assert.equal(ONLINE_FORCED_PREFS.mediumDungeons, false);

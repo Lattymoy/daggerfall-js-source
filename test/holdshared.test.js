@@ -55,8 +55,8 @@ const props = new Map();
   if (n.type === 'Property' && n.key?.name) props.set(n.key.name, WM.slice(n.start, n.end));
   for (const v of Object.values(n)) if (Array.isArray(v)) v.forEach(walk); else if (v && typeof v === 'object') walk(v);
 })(parse(WM, { ecmaVersion: 'latest', sourceType: 'module' }));
-const roomIdentityIn = (dungeonLoc) => Function('mode', 'dungeonLoc', 'isGateArena', 'isSdRealm', 'isArenaFloor', 'isStartDungeon', 'builtDungeonSize',
-  `return ({${props.get('roomIdentity')}}).roomIdentity();`)('dungeon', dungeonLoc, () => false, () => false, () => false, isStartDungeon, builtDungeonSize);
+const roomIdentityIn = (dungeonLoc) => Function('mode', 'dungeonLoc', 'isGateArena', 'isSdRealm', 'isArenaFloor', 'isStartDungeon', 'builtDungeonSize', 'host', 'placeInstance',
+  `return ({${props.get('roomIdentity')}}).roomIdentity();`)('dungeon', dungeonLoc, () => false, () => false, () => false, isStartDungeon, builtDungeonSize, {}, null);   // PIN MOVED (INSTANCES' audit): `placeInstance`, the mode's own - null, the public room   // INSTANCES: `host` - no door, so no instance (the public room this pins)
 
 // world.js's key block, executed from its source - the one the frame names its room by
 const W = read('src/scenes/world.js');
@@ -75,11 +75,11 @@ function keyIn(ident) {
 test('HOLD-SHARED: Privateer\'s Hold\'s room identity is every dungeon\'s, and the world host keys it its shared world room by its map id - `dungeon:m187853213`', () => {
   assert.ok(KEY_FROM > 0 && KEY_TO > KEY_FROM, 'the key block');
   const hold = roomIdentityIn(locationAt(109, 158));
-  assert.deepEqual(hold, { kind: 'dungeon', mapId: HOLD_MAP_ID, regionIndex: 17, name: "Privateer's Hold", size: 'full' });
+  assert.deepEqual(hold, { kind: 'dungeon', mapId: HOLD_MAP_ID, regionIndex: 17, name: "Privateer's Hold", size: 'full', instance: null });   // PIN MOVED (INSTANCES): its public room - no door entered it as an instance
   assert.equal(keyIn(hold), `dungeon:m${HOLD_MAP_ID}`);
   assert.equal(isWorldRoom(keyIn(hold)), true, 'a shared world room - its memory, foes, acts and loot');
   const other = roomIdentityIn(locationAt(120, 150, { name: 'Castle Necromoghan', mapId: 12345 }));
-  assert.deepEqual(other, { kind: 'dungeon', mapId: 12345, regionIndex: 17, name: 'Castle Necromoghan', size: 'full' });
+  assert.deepEqual(other, { kind: 'dungeon', mapId: 12345, regionIndex: 17, name: 'Castle Necromoghan', size: 'full', instance: null });
   assert.equal(keyIn(other), 'dungeon:m12345');
   assert.doesNotMatch(WM, /isTutorialHold|solo: true/, 'no solo dungeon in the mode machine');
   assert.doesNotMatch(W, /ident\?\.solo|identity\?\.solo|SoloMemory|soloHere/, 'nor in the world host');

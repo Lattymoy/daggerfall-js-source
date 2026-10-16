@@ -2,7 +2,7 @@
   {
     "name": "HOLD-ONCE-DOOR-OPEN",
     "file": "src/scenes/worldModes.js",
-    "old": "    if (!fromLoad && !holdOpen && host.dungeonOnline?.() && isPrivateersHold(hit?.dfLocation)) { say(HOLD_ONCE_TEXT); return false; }\n",
+    "old": "    if (!fromLoad && !holdOpen && !place?.instance && host.dungeonOnline?.() && isPrivateersHold(hit?.dfLocation)) { say(HOLD_ONCE_TEXT); return false; }\n",
     "new": "",
     "tests": [
       "test/holdonce.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "HOLD-ONCE-LOAD-REFUSED",
     "file": "src/scenes/worldModes.js",
-    "old": "    if (!fromLoad && !holdOpen && host.dungeonOnline?.()",
-    "new": "    if (!holdOpen && host.dungeonOnline?.()",
+    "old": "    if (!fromLoad && !holdOpen && !place?.instance && host.dungeonOnline?.()",
+    "new": "    if (!holdOpen && !place?.instance && host.dungeonOnline?.()",
     "tests": [
       "test/holdonce.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "HOLD-ONCE-NEW-GAME-REFUSED",
     "file": "src/scenes/worldModes.js",
-    "old": "    if (!fromLoad && !holdOpen && host.dungeonOnline?.()",
-    "new": "    if (!fromLoad && host.dungeonOnline?.()",
+    "old": "    if (!fromLoad && !holdOpen && !place?.instance && host.dungeonOnline?.()",
+    "new": "    if (!fromLoad && !place?.instance && host.dungeonOnline?.()",
     "tests": [
       "test/holdonce.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "HOLD-ONCE-OFFLINE-TOO",
     "file": "src/scenes/worldModes.js",
-    "old": "    if (!fromLoad && !holdOpen && host.dungeonOnline?.() && isPrivateersHold(",
-    "new": "    if (!fromLoad && !holdOpen && isPrivateersHold(",
+    "old": "    if (!fromLoad && !holdOpen && !place?.instance && host.dungeonOnline?.() && isPrivateersHold(",
+    "new": "    if (!fromLoad && !holdOpen && !place?.instance && isPrivateersHold(",
     "tests": [
       "test/holdonce.test.js"
     ],
@@ -70,8 +70,8 @@
   {
     "name": "HOLD-ONCE-START-DROPS-THE-WORD",
     "file": "src/scenes/worldModes.js",
-    "old": "    return tryEnterDungeon(hit, entries, { preferEnterMarker: true, fromLoad, holdOpen });",
-    "new": "    return tryEnterDungeon(hit, entries, { preferEnterMarker: true, fromLoad });",
+    "old": "    return tryEnterDungeon(hit, entries, { preferEnterMarker: true, fromLoad, holdOpen, recorded });",
+    "new": "    return tryEnterDungeon(hit, entries, { preferEnterMarker: true, fromLoad, recorded });",
     "tests": [
       "test/holdonce.test.js"
     ]
@@ -88,8 +88,8 @@
   {
     "name": "HOLD-ONCE-STAFF-UNMARKED",
     "file": "src/scenes/world.js",
-    "old": "      entered = await modes?.startInDungeon?.({ locationKey: d.locationKey ?? null, holdOpen: true });",
-    "new": "      entered = await modes?.startInDungeon?.({ locationKey: d.locationKey ?? null });",
+    "old": "entered = await modes?.startInDungeon?.({ locationKey: d.locationKey ?? null, holdOpen: true, recorded:",
+    "new": "entered = await modes?.startInDungeon?.({ locationKey: d.locationKey ?? null, recorded:",
     "tests": [
       "test/holdonce.test.js"
     ]
@@ -97,8 +97,8 @@
   {
     "name": "HOLD-ONCE-RECALL-OPENS",
     "file": "src/scenes/world.js",
-    "old": "        landed = !!(await modes?.startInDungeon?.());\n        if (landed) {",
-    "new": "        landed = !!(await modes?.startInDungeon?.({ holdOpen: true }));\n        if (landed) {",
+    "old": "        landed = !!(await modes?.startInDungeon?.({ recorded: a.dungeon ?? {} }));",
+    "new": "        landed = !!(await modes?.startInDungeon?.({ recorded: a.dungeon ?? {}, holdOpen: true }));",
     "tests": [
       "test/holdonce.test.js"
     ],

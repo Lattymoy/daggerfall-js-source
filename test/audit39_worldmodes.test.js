@@ -369,7 +369,7 @@ test('AUDIT39 #132: the interior drawHud passes cursorActive, the value the fram
 // ---------------------------------------------------------------
 
 test('AUDIT39 #164: the greeting-deferred entry catches, like the two host call sites', () => {
-  assert.match(WM, /new ChoiceWindow\(\{ lines \}\), \(\) => \{ enterInteriorCore\(hit, entries\)\.catch\(\(e\) => console\.error\(e\)\); \}\)/,
+  assert.match(WM, /new ChoiceWindow\(\{ lines \}\), \(\) => \{ enterBuildingDoor\(hit, entries\)\.catch\(\(e\) => console\.error\(e\)\); \}\)/,   // PIN MOVED (INSTANCES' audit): the door's own entry, which asks then enters - still caught
     'a refused interior is recoverable - it must not reach main.js\'s unhandledrejection overlay');
   // the throw the catch exists for is still the design
   assert.match(WM, /throw new Error\('no interior landing'\)/);

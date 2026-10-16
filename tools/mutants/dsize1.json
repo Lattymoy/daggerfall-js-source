@@ -66,7 +66,7 @@
   {
     "name": "SD-ONLINE-the-room-lays-it-whole",
     "file": "src/world/smallerDungeons.js",
-    "old": "  if (online) return onlineDungeonSize(dfLocation);",
+    "old": "  if (online) return whole ? 'full' : onlineDungeonSize(dfLocation);",
     "new": "  if (online) return 'full';",
     "tests": [
       "test/dsize1_mediumdungeons.test.js",
@@ -159,7 +159,7 @@
   {
     "name": "AUDIT-DELVE-E4-online-stamped-by-the-setting",
     "file": "src/world/smallerDungeons.js",
-    "old": "  if (online) return ONLINE_DUNGEONS_STATE;\n  if (enabled)",
+    "old": "  if (online) return SMALLER_DUNGEONS_STATE.Disabled;\n  if (enabled)",
     "new": "  if (enabled)",
     "tests": [
       "test/dsize1_mediumdungeons.test.js"
@@ -197,7 +197,7 @@
   {
     "name": "AUDIT-DELVE-E1-the-stamp-kept",
     "file": "src/systems/quest/questRepair.js",
-    "old": "  if (!unread) quest.smallerDungeonsState = ONLINE_DUNGEONS_STATE;\n  if (!moved) return false;",
+    "old": "  if (!unread) quest.smallerDungeonsState = SMALLER_DUNGEONS_STATE.Disabled;\n  if (!moved) return false;",
     "new": "  if (!moved) return false;",
     "tests": [
       "test/dsize1_mediumdungeons.test.js"
@@ -216,7 +216,7 @@
   {
     "name": "SD-ONLINE-E1-a-world-sized-quest-relaid",
     "file": "src/systems/quest/questRepair.js",
-    "old": "  if (!quest || quest.smallerDungeonsState === ONLINE_DUNGEONS_STATE) return false;",
+    "old": "  if (!quest || quest.smallerDungeonsState === SMALLER_DUNGEONS_STATE.Disabled) return false;",
     "new": "  if (!quest) return false;",
     "tests": [
       "test/dsize1_mediumdungeons.test.js"

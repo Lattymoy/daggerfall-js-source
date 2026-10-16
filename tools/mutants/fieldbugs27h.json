@@ -182,8 +182,8 @@
   {
     "name": "MAP-KEEP-load-fresh",
     "file": "src/scenes/world.js",
-    "old": "{ locationKey: extras.locationKey, fromLoad: true }",
-    "new": "{ locationKey: extras.locationKey, fromLoad: false }",
+    "old": "{ locationKey: extras.locationKey, fromLoad: true, recorded: extras.dungeon ?? {} }",
+    "new": "{ locationKey: extras.locationKey, fromLoad: false, recorded: extras.dungeon ?? {} }",
     "tests": [
       "test/mapkeep.test.js"
     ]

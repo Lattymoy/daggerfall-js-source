@@ -24,6 +24,7 @@ const NAMED = {
   'src/scenes/dungeonContext.js': 2,
   'src/scenes/exterior.js': 4,
   'src/scenes/hostCombat.js': 1,
+  'src/scenes/instanceDoor.js': 1,   // INSTANCES (the audit): the door's popup names its dungeon in the player's language
   'src/scenes/townTalk.js': 2,
   'src/scenes/world.js': 8,
   'src/scenes/worldModes.js': 5,   // SUMMON-OFFER: the summoning's no-offer line moved to the law module (daedraSummoning.js noQuestText)

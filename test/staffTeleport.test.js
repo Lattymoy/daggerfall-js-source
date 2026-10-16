@@ -218,7 +218,11 @@ test('STAFF-TP dungeon identity selects the target dungeon; interior entry uses 
     restoreInterior: async (_saved, pos) => { assert.equal(pos, null, 'no unchecked target position during the build'); return true; } };
   const prepare = hostFunction('prepareStaffDestination', { modes, _wodInside: false, playerSpawned: false,
     _teleportToPixel: async () => {}, staffLanding: (d) => d.pos, ohAbyss: null });
-  await prepare(d); assert.deepEqual(calls, [{ locationKey: 'dungeon:9812', holdOpen: true }]);   // PIN MOVED (HOLD-ONCE): staff may land by a player in Privateer's Hold
+  await prepare(d); assert.deepEqual(calls, [{ locationKey: 'dungeon:9812', holdOpen: true, recorded: { ins: null, whole: false, staff: true } }]);   // PIN MOVED (HOLD-ONCE): staff may land by a player in Privateer's Hold; PIN MOVED (INSTANCES' audit): in the room the player stands in - here its public room
+  const inst = validStaffDestination({ ...dungeon, locationKey: 'dungeon:9812', ins: '0123456789abcdef.89abcdef' });
+  assert.deepEqual([inst.ins, inst.whole], ['0123456789abcdef.89abcdef', true], 'an instance\'s place is the dungeon whole');
+  calls.length = 0; await prepare(inst);
+  assert.deepEqual(calls, [{ locationKey: 'dungeon:9812', holdOpen: true, recorded: { ins: '0123456789abcdef.89abcdef', whole: true, staff: true } }], 'staff land in the player\'s instance, which admits staff');
   await prepare(interior);
 });
 

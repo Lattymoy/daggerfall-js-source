@@ -158,7 +158,7 @@ test('BG1: the door arm carries DFU\'s two variables and DEFERS behind the box',
   // isBash;` (:517) now that a weapon swing can reach this arm. The
   // facts below - the Open spell raises BOTH, the pick raises only
   // isBrokenIn, the box defers - are unchanged.
-  const arm = wm.slice(wm.indexOf('let isBrokenIn = isBash;'), wm.indexOf('return enterInteriorCore(hit, entries);'));
+  const arm = wm.slice(wm.indexOf('let isBrokenIn = isBash;'), wm.indexOf('return enterBuildingDoor(hit, entries);'));   // PIN MOVED (INSTANCES' audit): the arm ends at the door's own entry, which asks then enters
   // the Open spell raises BOTH; the pick raises only isBrokenIn
   assert.match(arm, /opened = r\.opened;\n\s*if \(r\.opened\) isBrokenIn = true;/,
     'buildingUnlocked = isBrokenIn = true');
@@ -172,7 +172,7 @@ test('BG1: the door arm carries DFU\'s two variables and DEFERS behind the box',
   // throw) escaped to main.js's unhandledrejection handler and painted
   // CRASH over a running game. The catch is the one both host call
   // sites already put on the non-deferred arm.
-  assert.match(arm, /townTalk\.showOverlay\(new ChoiceWindow\(\{ lines \}\), \(\) => \{ enterInteriorCore\(hit, entries\)\.catch\(\(e\) => console\.error\(e\)\); \}\);/);
+  assert.match(arm, /townTalk\.showOverlay\(new ChoiceWindow\(\{ lines \}\), \(\) => \{ enterBuildingDoor\(hit, entries\)\.catch\(\(e\) => console\.error\(e\)\); \}\);/);   // PIN MOVED (INSTANCES' audit): the door's own entry - it asks, then enters
   // the HUD arm speaks and does NOT defer
   assert.match(arm, /if \(lines\.length && how === 'hud'\) for \(const l of lines\) townTalk\?\.say\?\.\(l, getInt\('GUI', 'ShopQualityHUDDelay', 1, 10\)\);/);
   // the house greeting is a RANDOM variant; the quality line is not
@@ -189,7 +189,7 @@ test('BG1/ROAD-B: the bash flag is CLOSED - the input landed and both arms with 
   const wm = read('src/scenes/worldModes.js');
   assert.ok(!wm.includes('// FLAGGED, and narrowed to what is actually missing:'),
     'the flag is closed, not left standing beside its fix');
-  const arm = wm.slice(wm.indexOf('let isBrokenIn = isBash;'), wm.indexOf('return enterInteriorCore(hit, entries);'));
+  const arm = wm.slice(wm.indexOf('let isBrokenIn = isBash;'), wm.indexOf('return enterBuildingDoor(hit, entries);'));   // PIN MOVED (INSTANCES' audit): the arm ends at the door's own entry, which asks then enters
   // :570-583 - "Classic makes a roll whether it is locked or not":
   // FailedRoll(25 - lock) ends the activation, and 10% of those are
   // noticed as the ATTEMPT.

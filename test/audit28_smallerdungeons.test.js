@@ -138,8 +138,8 @@ test('AUDIT 28 W4: Quest.Start freezes the state (Quest.cs:284), the save carrie
 
 test('AUDIT 28 W4: the entry seam - the location that gets BUILT is the sized clone, with the bridge\'s machine', () => {
   const modes = read('src/scenes/worldModes.js');
-  assert.match(modes, /const sized = dungeonLocationFor\(hit\.dfLocation, \{ questMachine: questBridge\?\.machine, online: host\.dungeonOnline\?\.\(\) \?\? false \}\);/,
-    'tryEnterDungeon does not size the location (AUDIT WORLD34 B2: and online, the room\'s one layout - SD-ONLINE: the medium size)');
+  assert.match(modes, /const sized = dungeonLocationFor\(hit\.dfLocation, \{ questMachine: questBridge\?\.machine, online: host\.dungeonOnline\?\.\(\) \?\? false, whole: !!place\?\.whole \}\);/,   // PIN MOVED (INSTANCES' audit): \`place\`, the entry decided
+    'tryEnterDungeon does not size the location (AUDIT WORLD34 B2: and online, the room\'s one layout - SD-ONLINE: the medium size; PIN MOVED, INSTANCES: and an instance, or a quest\'s dungeon where none can be had, whole)');
   assert.match(modes, /const dfLocation = ownDungeonLocation\(sized\);/, 'OH-E: and builds its own copy of it (MapsFile.GetLocation reads each caller its own)');
   const fn = modes.slice(modes.indexOf('async function tryEnterDungeon('));
   assert.ok(fn.indexOf('dungeonLocationFor(') < fn.indexOf('buildDungeonContext('), 'sized BEFORE the context is built');
@@ -176,8 +176,8 @@ test('AUDIT 28 F-B2: the quest layer\'s maps sizes getLocation/getLocationByName
   assert.ok(at > 0);
   const wrap = world.slice(at, at + 2600);
   assert.match(wrap, /maps: Object\.create\(maps, \{/, 'the quest maps is a wrap over the raw maps');
-  assert.match(wrap, /getLocation: \{ value: \(r, l\) => dungeonLocationFor\(maps\.getLocation\(r, l\), \{ questMachine: questBridge\?\.machine, online: params\.has\('online'\) \}\) \},/);
-  assert.match(wrap, /getLocationByName: \{ value: \(rn, ln\) => dungeonLocationFor\(maps\.getLocationByName\(rn, ln\), \{ questMachine: questBridge\?\.machine, online: params\.has\('online'\) \}\) \},/);   // the page flag, not the late const (a quest parsed at chargen reaches it first)
+  assert.match(wrap, /getLocation: \{ value: \(r, l\) => dungeonLocationFor\(maps\.getLocation\(r, l\), \{ questMachine: questBridge\?\.machine, online: params\.has\('online'\), whole: params\.has\('online'\) \}\) \},/);   // PIN MOVED, INSTANCES: online a quest's markers are chosen on the dungeon whole (bible/11-Multiplayer/Instances.md section 5)
+  assert.match(wrap, /getLocationByName: \{ value: \(rn, ln\) => dungeonLocationFor\(maps\.getLocationByName\(rn, ln\), \{ questMachine: questBridge\?\.machine, online: params\.has\('online'\), whole: params\.has\('online'\) \}\) \},/);   // the page flag, not the late const (a quest parsed at chargen reaches it first)
   // The prototype delegation keeps every other maps method reachable -
   // the quest layer also calls getClimateIndex, getRegion,
   // getRmbBlockName and readLocationIdFast on this object.

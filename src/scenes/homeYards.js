@@ -75,10 +75,23 @@ import { LIGHTS_ARCHIVE, CITY_LIGHT_RANGE, CITY_LIGHT_INTENSITY, CITY_LIGHT_COLO
 import { GLOBAL_SCALE } from '../world/meshReader.js';
 import { transformedAabb } from '../render/frustum.js';   // FB1009 HOME-FOOT: a model's ground where its placement stands it
 import { adoptLight } from '../render/lightId.js';   // LIGHT-ID: a row named by its lamp
+import { createBankAccounts, BANK_REGION_COUNT, goldRegion } from '../systems/banking.js';   // the yard's wallet (homeYardWallet)
+import { totalGoldAmount, payUndoable, addGold } from '../systems/court.js';
 
 /** YARD-LIGHT: the light a yard's lamp gives - the town's lantern's (DaggerfallLight [City]: range 18, intensity 1,
  *  white). The world host lights it as it lights theirs: the town lanterns' colour (CITY_LIGHT_COLOR_F32) and their
  *  flicker, at the lamp's own reach (yardLampRows). */
+/** HOME-YARD: what a yard's decorator spends - the player's purse and the region's bank account (EMPIRE-ACCOUNT: online,
+ *  the Empire's). Moved out of world.js's bootWorld whole (INSTANCES' HOST-SPLIT, 2026-10-15): it reads only `entity`. */
+export const homeYardWallet = (entity, region) => {
+  entity.bankAccounts ??= createBankAccounts(BANK_REGION_COUNT);
+  const a = entity.bankAccounts[goldRegion(entity.bankAccounts, region)] ?? null;   // EMPIRE-ACCOUNT: the Empire's account
+  return {
+    gold: totalGoldAmount(entity) + (a?.accountGold ?? 0),
+    pay: (n) => payUndoable(entity, n, a),   // MARKET-AUDIT: answering the undo of exactly what it took
+    credit: (n) => { addGold(entity, n); },
+  };
+};
 export const YARD_LAMP = Object.freeze({ range: CITY_LIGHT_RANGE, intensity: CITY_LIGHT_INTENSITY, color: CITY_LIGHT_COLOR });
 /** AUDIT YARD-LIGHT (L1): HOW MANY OF A YARD'S LAMPS LIGHT - the most TEXTURE.210 flats any Daggerfall town block stands
  *  (eight, in GRVEAL01, GRVEAS01, GRVEAM01, CUSTAA02 and CUSTAA04 of the 920 RMB blocks; most stand three to five).

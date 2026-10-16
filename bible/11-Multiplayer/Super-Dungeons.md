@@ -584,10 +584,13 @@ the room's law:
   blocks, to read a quarter Large, is his call - reported, unchanged.
 - **`dungeonSizeFor`**: online answers the world's size, whatever either switch or a quest's frozen copy says (the main
   story's dungeons and the arena undercroft stay whole, as they always have); offline the settings decide, as before.
-- **The quest stamp** online is `ONLINE_DUNGEONS_STATE` (4, appended past the medium size's 3): "each dungeon at the
-  world's size for it", so a quest started online builds its dungeons at their online sizes offline too.
-- **The re-lay** (AUDIT DELVE E1) turns around: an online character's quests stamped at any other size (DFU's NotSet
-  included) are re-laid on the room's builds and stamped with the world's sizes.
+- **The quest stamp** online is DFU's `Disabled`, the whole dungeon's, since INSTANCES (2026-10-15,
+  `11-Multiplayer/Instances.md` section 5): a quest's markers are chosen on the dungeon whole, the layout its instance
+  builds - a re-laid build can seal its entrance from them (the Hold of Coppering's medium). `ONLINE_DUNGEONS_STATE` (4)
+  is offline's word for the world's sizes asked for.
+- **The re-lay** (AUDIT DELVE E1) re-lays an online character's quests stamped at any other size (DFU's NotSet and the
+  world's sizes included) on the dungeon whole and stamps them `Disabled` (INSTANCES). A re-laid public room stands none
+  of a quest's things; its instance does.
 - **The rows**: `world-dungeon-sizes` (*Dungeon sizes as online*, Enhanced) asks for the world's sizes offline; online
   the lane forces it on and the sync copies it home, so offline play can match. Under DFU's Smaller switch, over the
   medium row, which is forced off online.

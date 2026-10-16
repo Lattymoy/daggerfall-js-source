@@ -97,8 +97,10 @@ test('SD-ONLINE: the size law - online the world\'s size whatever either switch 
   assert.equal(dungeonSizeFor(undercroft, { online: true }), 'full', 'the fighters\' hall keeps its blocks (ARENA5)');
   assert.equal(dungeonSizeFor({ hasDungeon: false }, { online: true }), 'full');
   // the quest stamp: online the world's sizes, whatever the switches say; offline too when they are asked for
-  assert.equal(smallerDungeonsStateNow(true, true, true, false), ONLINE_DUNGEONS_STATE);
-  assert.equal(smallerDungeonsStateNow(false, false, true, false), ONLINE_DUNGEONS_STATE);
+  // PIN MOVED (INSTANCES, bible/11-Multiplayer/Instances.md section 5): online a quest's stamp is the whole dungeon's - its
+  // markers are chosen on the layout its instance builds; the world's sizes are offline's ask alone
+  assert.equal(smallerDungeonsStateNow(true, true, true, false), SMALLER_DUNGEONS_STATE.Disabled);
+  assert.equal(smallerDungeonsStateNow(false, false, true, false), SMALLER_DUNGEONS_STATE.Disabled);
   assert.equal(smallerDungeonsStateNow(false, true, false, true), ONLINE_DUNGEONS_STATE, 'offline, asked for: the world\'s');
   assert.equal(smallerDungeonsStateNow(true, true, false, true), SMALLER_DUNGEONS_STATE.Enabled, 'Smaller wins');
   assert.equal(smallerDungeonsStateNow(false, true, false, false), MEDIUM_DUNGEONS_STATE);
@@ -157,7 +159,7 @@ test('SD-ONLINE: driven end to end - the online size law, the build and its room
 test('SD-ONLINE: the hosts carry the size - the mode machine\'s identity reads the build, the world host hands it to roomKeyFor', () => {
   const m = rd('src/scenes/worldModes.js'), w = rd('src/scenes/world.js');
   assert.match(m, /import \{ dungeonLocationFor, builtDungeonSize \} from '\.\.\/world\/smallerDungeons\.js';/);
-  assert.match(m, /\{ kind: 'dungeon', mapId: dungeonLoc\?\.mapTableData\?\.mapId \?\? null, regionIndex: dungeonLoc\?\.regionIndex \?\? -1, name: dungeonLoc\?\.name \?\? '', size: builtDungeonSize\(dungeonLoc\) \}/, 'the identity is the BUILT location\'s (dungeonLoc is the sized copy the context was built from)');
+  assert.match(m, /\{ kind: 'dungeon', mapId: dungeonLoc\?\.mapTableData\?\.mapId \?\? null, regionIndex: dungeonLoc\?\.regionIndex \?\? -1, name: dungeonLoc\?\.name \?\? '', size: builtDungeonSize\(dungeonLoc\), instance: placeInstance \}/, 'the identity is the BUILT location\'s (dungeonLoc is the sized copy the context was built from; PIN MOVED, INSTANCES: and the instance it was entered as - the mode\'s own, set at the build)');
   assert.match(m, /dungeonLoc = dfLocation;/, '...which is the one the transition built');
   assert.match(w, /layout: ident\?\.layout \?\? null,[^\n]*\n\s*size: ident\?\.kind === 'dungeon' \? \(ident\.size \?\? null\) : null,/, 'the room is named with it');
   assert.match(rd('src/net/online.js'), /if \(mode === 'dungeon'\) return loc \? `dungeon:\$\{loc\}\$\{dungeonRoomTag\(size\)\}` : null;/);

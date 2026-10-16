@@ -204,7 +204,11 @@ test('EMPIRE-ACCOUNT by source: the boot folds beside the amnesty, says so once 
   assert.ok(fold < w.indexOf('empireJoin({ entity: playerEntity'), 'before the join settles a loan');
   assert.match(w, /for \(const line of empireAccountLines\(empireFolded\)\) townTalk\.say\(line\);/);
   assert.match(w, /const account = playerEntity\.bankAccounts\[goldRegion\(playerEntity\.bankAccounts, region\)\] \?\? null;/, 'the market\'s wallet');
-  assert.match(w, /const a = playerEntity\.bankAccounts\[goldRegion\(playerEntity\.bankAccounts, region\)\] \?\? null;/, 'the yard\'s wallet');
+  // PIN MOVED (INSTANCES' HOST-SPLIT, 2026-10-15): the yard's wallet left bootWorld whole for scenes/homeYards.js, which reads
+  // only the player handed it; bootWorld hands it the player
+  assert.match(src('src/scenes/homeYards.js'), /const a = entity\.bankAccounts\[goldRegion\(entity\.bankAccounts, region\)\] \?\? null;/, 'the yard\'s wallet');
+  assert.doesNotMatch(src('src/scenes/homeYards.js'), /bankAccounts\[region\] \?\? null/, 'the yard\'s wallet reads no branch\'s own account');
+  assert.match(w, /wallet: \(region\) => homeYardWallet\(playerEntity, region\),/, '...handed the player');
   assert.match(w, /const account = playerEntity\.bankAccounts\[goldRegion\(playerEntity\.bankAccounts, _questRegionIndex\(\) \?\? 0\)\] \?\? null;/, 'the guild\'s wallet');
   assert.doesNotMatch(w, /bankAccounts\[region\] \?\? null/, 'no wallet reads a branch\'s own account');
   const m = src('src/scenes/worldModes.js');

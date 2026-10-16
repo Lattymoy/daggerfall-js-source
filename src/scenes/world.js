@@ -995,6 +995,7 @@ import { isStandFlat, standFlatId, standFlatRecord } from '../world/standFlats.j
 import { DECOR_DRAW, decorCullVerdict, offerDecorFigures } from './decorRoom.js';   // PERF-YARD: a placed piece's verdict, from the host's view test; MWNPC18: a yard's figures in their bodies
 import { createHomeYards, yardLampRows } from './homeYards.js';   // HOME-YARD: the town's yards, and the owner's decorator outside; YARD-LIGHT: a yard's lamps as the night's scene lights
 import { modelFootRects, footRectsAt } from './homeYards.js';   // FB1009 HOME-FOOT: a building's ground, its models' faces seen from above
+import { homeYardWallet } from './homeYards.js';   // INSTANCES' HOST-SPLIT: the yard's wallet, out of bootWorld (it reads only the player)
 import { loadIcon } from '../ui/textureCanvas.js';   // HOME-YARD: the decorator's pictures
 import { decorScanDeps } from '../systems/decorScan.js';   // HOME-YARD: the catalogue's scan (DECOR-DUNGEON: one constructor for both hosts)
 import { DOOR_TYPE } from '../world/meshReader.js';   // ARENA1: the undercroft's stair is a dungeon entrance (DECOR-DUNGEON: GLOBAL_SCALE went with the yards' scan deps, systems/decorScan.js)
@@ -1009,6 +1010,7 @@ import { createSunbaby, sunbabyLight, SUNBABY_WEATHER, sunbabyKey, createSunbaby
 import { relayKnowsLiveEvent } from '../net/wire.js';   // SUNBABY1: a word staged only on a relay that knows it
 import { createStaffTeleportClient, validStaffDestination, staffDestinationKey, followStaffPlayer } from '../net/staffTeleport.js';
 import { privateInteriorPrefix, privateInteriorRoom, privateBoatRoom, privateInteriorOf } from '../net/privateInterior.js';
+import { createInstanceDoor } from './instanceDoor.js';   // INSTANCES: public or an instance, at the door (bible/11-Multiplayer/Instances.md)
 // TESTBUILD: every player may use the staff's /god (/godmode), /fly, /heal, /tp - god mode also lifts the zone's travel law and makes map journeys instant
 const TEST_GODMODE = false;
 const isStaffT = (g) => TEST_GODMODE || isStaff(g);
@@ -13626,15 +13628,6 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // TOWN'S YARDS AND THE OWNER'S DECORATOR OUTSIDE (scenes/homeYards.js) - every online home's pieces outside, stood in
   // its pixel for everyone in the street, and the decorator on the owner's own lot (the lot's edge marked, a piece off
   // it refused). HOME-LOOK rides its panel: "Exterior", the house's outside painted. Online alone.
-  const homeYardWallet = (region) => {
-    playerEntity.bankAccounts ??= createBankAccounts(BANK_REGION_COUNT);
-    const a = playerEntity.bankAccounts[goldRegion(playerEntity.bankAccounts, region)] ?? null;   // EMPIRE-ACCOUNT: the Empire's account
-    return {
-      gold: totalGoldAmount(playerEntity) + (a?.accountGold ?? 0),
-      pay: (n) => payUndoable(playerEntity, n, a),   // MARKET-AUDIT: answering the undo of exactly what it took
-      credit: (n) => { addGold(playerEntity, n); },
-    };
-  };
   // GUILD1d: the halls' banners on the streets built (scenes/hallBanners.js), drawn in the frame after the duel walls
   const hallBanners = onlineHomes && bannerPass ? createHallBanners({
     built: () => built, homes: onlineHomes, translation: (px, py) => state.pixelTranslation(px, py), eye: () => cam.pos,
@@ -13687,7 +13680,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     trees: lowPolyTrees ? { door: lowPolyTrees, sway: (proto, share) => _lptSway.set(proto, Math.max(_lptSway.get(proto) ?? 0, share)), windfall: (proto, share) => _lptWindfall.set(proto, Math.max(_lptWindfall.get(proto) ?? 0, share)) } : null,   // DECOR-LPT: a yard's tree as Low Poly Trees' own - its 3D tree in the near set (lowPolyTreesFrame)
     character: () => characterIdOf(playerEntity),
     realm: () => (realmSession ? (o) => realmGoldAct({ session: realmSession, checkpoint: () => onlineCheckpoint(), ...o }) : null),
-    wallet: (region) => homeYardWallet(region), regionOf: (y) => built.get(`${y.px},${y.py}`)?.homeRegion ?? 0,
+    wallet: (region) => homeYardWallet(playerEntity, region), regionOf: (y) => built.get(`${y.px},${y.py}`)?.homeRegion ?? 0,   // INSTANCES' HOST-SPLIT: the wallet's body in scenes/homeYards.js
     doc: typeof document !== 'undefined' ? document : null, win: typeof window !== 'undefined' ? window : null, canvas, touch: isTouchDevice(),
     actionOf: (e) => actionOf(e, keys), locked: () => typeof document !== 'undefined' && document.pointerLockElement === canvas,
     cursorOff: () => setCursorActive(false), stick: () => touch?.axes() ?? gamepad?.axes() ?? null,
@@ -15389,7 +15382,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       local: inside.local,
       yaw: cam.yaw, pitch: cam.pitch,
       buildingKey: inside.buildingKey,
-      interior: inside.interior,
+      interior: inside.interior, dungeon: inside.dungeon ?? null,   // INSTANCES (the audit): a dungeon's room and layout, which the Recall hands back
     });
   }
 
@@ -15475,7 +15468,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         // door the quest respawner uses (:626-630 RespawnPlayer with
         // insideDungeon true). The anchor's local transform lands
         // after it, which is the respawner's RestorePosition (:242).
-        landed = !!(await modes?.startInDungeon?.());
+        landed = !!(await modes?.startInDungeon?.({ recorded: a.dungeon ?? {} }));   // INSTANCES (the audit): the room and layout the anchor was set in - an anchor from before records the public room
         if (landed) {
           // `landed` implies modes existed, but the wave-37 law is the
           // GUARD ON THE OBJECT above its declaration - hold the shape.
@@ -17006,7 +16999,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         } else {
           _wodInside = true;   // WOD6: a dungeon save lands inside - no marker hears this load
           await _teleportToPixel(pixel.x, pixel.y, null, { modEvent: 'load' });   // SIB2: SaveLoadManager.OnLoad
-          const entered = await (modes?.startInDungeon?.({ locationKey: extras.locationKey, fromLoad: true }) ?? false);   // StartDungeonInterior: the enter marker first, the saved position over it; CASTLE1: the SAVED dungeon's door, not the first one loaded
+          const entered = await (modes?.startInDungeon?.({ locationKey: extras.locationKey, fromLoad: true, recorded: extras.dungeon ?? {} }) ?? false);   // StartDungeonInterior: the enter marker first, the saved position over it; CASTLE1: the SAVED dungeon's door, not the first one loaded
           if (entered) { playerSpawned = true; await modes?.restoreDungeonSave?.(extras); }   // AUDIT OH-F B1: RestoreEnemyData whole before the mod loop below
           else { _wodInside = false; townTalk.say('(the dungeon has no entrance here - character restored at its door)'); }   // WOD6: it landed outside after all
           if (!entered) csaElsewhere = true;   // CSA-J (the audit): outside at its door, not where the save stood
@@ -20134,8 +20127,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     maps: Object.create(maps, {
       // the page flag off `params`, not `onlineOn` - that const is declared far below, and a quest parsed at chargen
       // asks for its dungeon before it is ("Parsing quest FAILED! Cannot access 'onlineOn' before initialization")
-      getLocation: { value: (r, l) => dungeonLocationFor(maps.getLocation(r, l), { questMachine: questBridge?.machine, online: params.has('online') }) },   // AUDIT WORLD34 B2: online, the room's one layout (SD-ONLINE: the world's size for it)
-      getLocationByName: { value: (rn, ln) => dungeonLocationFor(maps.getLocationByName(rn, ln), { questMachine: questBridge?.machine, online: params.has('online') }) },
+      getLocation: { value: (r, l) => dungeonLocationFor(maps.getLocation(r, l), { questMachine: questBridge?.machine, online: params.has('online'), whole: params.has('online') }) },   // INSTANCES: online a quest's markers are chosen on the dungeon whole - its instance's layout (bible/11-Multiplayer/Instances.md)   // AUDIT WORLD34 B2: online, the room's one layout (SD-ONLINE: the world's size for it)
+      getLocationByName: { value: (rn, ln) => dungeonLocationFor(maps.getLocationByName(rn, ln), { questMachine: questBridge?.machine, online: params.has('online'), whole: params.has('online') }) },
     }),
     getBlock: (name) => blocks.getBlockByName(name),
     // NPC1: the =symbol_ macro's flat caption. The quest machine has
@@ -21951,7 +21944,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const wc = inDungeon ? null : state.worldCoords(player.pos);
     const pixel = inDungeon ? { ...state.current } : playerTravelPixel();
     let dest = {
-      kind: mode, pixel,
+      kind: mode, pixel, ...(inDungeon ? inside?.dungeon ?? {} : {}),   // INSTANCES (the audit): a dungeon's room and layout (`ins`, `whole`) - a gate's and an Abyss's law keeps neither
       pos: inDungeon ? [...player.pos] : [wc.x, player.pos[1] - state.compensation[1], wc.z],
       yaw: cam.yaw, pitch: cam.pitch,
     };
@@ -21962,7 +21955,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       const door = inside?.interior?.door;
       dest.door = door && { ...door, buildingKey: door.buildingKey >>> 0 };
       dest.layout = identity?.layout ?? 'classic';
-      if (privateRoom) dest.privateRoom = privateRoom;
+      if (privateRoom) dest.privateRoom = privateRoom; else if (inside?.interior?.ins) dest.ins = inside.interior.ins;   // INSTANCES (the audit): and the instance the player stands in
       if (modes?.sailingCabin) { dest.sailingCabin = modes?.sailingCabin; dest.cabinOwner = modes?.cabinOwner ?? online?.id; }
     }
     if (inDungeon) {
@@ -22002,9 +21995,9 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     _wodInside = d.kind !== 'exterior';
     await _teleportToPixel(d.pixel.x, d.pixel.y); if (!allowed()) throw new Error('Teleport cancelled: your player is no longer ready.');
     let entered = d.kind === 'exterior';
-    if (d.kind === 'interior') entered = await modes?.restoreInterior?.({ door: d.door, ...(d.layout != null ? { layout: d.layout } : {}), ...(d.privateRoom ? { privateRoom: d.privateRoom } : {}), ...(d.sailingCabin ? { sailingCabin: d.sailingCabin, cabinOwner: d.cabinOwner } : {}) }, null, { strictDoor: true });
+    if (d.kind === 'interior') entered = await modes?.restoreInterior?.({ door: d.door, ...(d.layout != null ? { layout: d.layout } : {}), ...(d.privateRoom ? { privateRoom: d.privateRoom } : {}), ...(d.sailingCabin ? { sailingCabin: d.sailingCabin, cabinOwner: d.cabinOwner } : {}), ...(d.ins ? { ins: d.ins, staff: true } : {}) }, null, { strictDoor: true });
     else if (d.kind === 'dungeon') {
-      entered = await modes?.startInDungeon?.({ locationKey: d.locationKey ?? null, holdOpen: true });   // HOLD-ONCE: staff may land by a player in Privateer's Hold
+      entered = await modes?.startInDungeon?.({ locationKey: d.locationKey ?? null, holdOpen: true, recorded: { ins: d.ins ?? null, whole: d.whole === true, staff: true } });   // HOLD-ONCE: staff may land by a player in Privateer's Hold
       entered = entered && (modes?.dungeonLocation?.mapTableData?.mapId >>> 0) === d.mapId;
     } else if (d.kind === 'gate') entered = await modes?.enterGateArena?.(d.gate);
     else if (d.kind === 'abyss') {
@@ -26949,6 +26942,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       // validPartyPose already zeroes it outside a building, but this
       // host names its OWN law rather than leaning on the wire's).
       bk: mode === 'interior' ? (modes?.interiorBuilding?.buildingKey ?? null) : null,
+      ...instanceDoor.poseWord(mode, online?.room),   // INSTANCES: the instance room I stand in (`ins`), so a partner at its door is offered to join it
       // PARTY-REST4 (2026-09-21, per-request: "15m away from the leader do not change the healrate party
       // member MUST heal their health near the leader" - the bug this closed): a follower's mirror was
       // computing its OWN restKind() - a position check (bed/houseOwned/ship/byFire) asked of THEIR OWN feet,
@@ -29816,6 +29810,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     }   // AUDIT WORLD B6: the dungeon's and the building's death screens stand in the mode's slot   // AUDIT MWBODY B7: and no body stands frozen over the death screen
     _rezSeen = null;   // AUDIT CONTRIB A6: alive - the next death takes its own snapshot of what the party's poses say
     if (checkpointDue(now, _checkpointAt)) { if (realmSession?.idle) realmSession.idle(() => onlineCheckpoint()); else onlineCheckpoint(); }   // SCALE2b: the periodic one may be answered by the save the service holds (realmSaves.js idle)   // REALM P0.5: every two real minutes, alive and in the seat (the first such frame persists the join's call-in)
+    if (instanceDoor.refused(online)) modes?.forceExitToExterior?.();   // INSTANCES (the audit): alive, an instance's door shut on me (not of its owner's party - a kick, a lapse) - out, as the realm's door does, never left inside it alone
     const mode = modes?.mode ?? 'exterior';   // audit24_wave37: guarded on the OBJECT above its own declaration (the frame runs after it)
     const cabin = modes?.sailingCabin;
     const overworld = mode === 'exterior';
@@ -29837,6 +29832,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         buildingKey: ident?.buildingKey ?? 0,
         layout: ident?.layout ?? null,   // WD3 (AUDIT WD3 B3): an interior's room is its layout's
         size: ident?.kind === 'dungeon' ? (ident.size ?? null) : null,   // SD-ONLINE: and a dungeon's (`dungeon:m<id>.m` or `.s`, re-laid medium or small)
+        instance: ident?.instance ?? null,   // INSTANCES: the place's instance, entered through its door (scenes/instanceDoor.js) - its own room
       });
     }
     // the pose: MapsFile's frame in the overworld (the floating origin's
@@ -30278,6 +30274,11 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     },
     draw: ({ renderer: r, planes }) => drawOutsideStreet(r, planes),
   });
+  // INSTANCES (bible/11-Multiplayer/Instances.md): THE DOOR - public or an instance, at a dungeon or a building a quest of
+  // mine names, at Privateer's Hold, where a partner stands an instance; built once, asked by the modes host - a player's
+  // door its popup, every other way in its rule (scenes/instanceDoor.js). The room's key reads what the place was entered as
+  const instanceDoor = createInstanceDoor({ online: () => onlineOn, instanceOk: () => !!(online?.instanceOk || chatLinks?.get('world')?.instanceOk), account: () => social?.acct ?? null, character: () => realmSession?.id ?? null,
+    members: () => social?.others() ?? [], questMachine: () => questBridge?.machine ?? null, openOverlay: (w, onClosed) => townTalk.pushOverlay(w, onClosed), say: (l) => townTalk.say(l), wild: () => { const m = wildMapMask(), p = playerTravelPixel(); return !!m && wildInside(m, p.x, p.y); } });   // `wild`: inside the open zone nothing keeps an instance - its dungeons sealed, its halls the relay's to refuse
   // VAR, not const: the pointer and wheel listeners far above close over
   // this binding and are live before it is assigned, so it must exist
   // and read undefined rather than throw a TDZ ReferenceError. Every
@@ -30286,6 +30287,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   var modes = createWorldModes({
     climbFeel,   // CLIMB4: the one body's climb camera - the modal frames take it after their own motor step
     outsideView,   // RW1: the street through a building's glass (render/realWindows.js)
+    instanceDoor,   // INSTANCES: public or an instance, at the door (scenes/instanceDoor.js)
     seatedPeers: () => seatedPeerFeet(),   // CARDS2b (AUDIT CARDS B3): the others' seated feet, in this room's scene - their seats are taken
     cardOnline: { ok: () => !!online?.holdemOk, send: (w) => !!online?.sendHoldem(w), id: () => online?.id ?? null, welcomes: () => online?.holdemWelcomes ?? 0, room: () => online?.room ?? null },   // CARDS5: the relay that deals - a word to the room's card table, and who I am at it; CARDS6: the room a stake names
     cardStakes,   // CARDS6: a realm character's stakes at a relay's gold table (null off the realm)

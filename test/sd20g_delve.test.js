@@ -228,11 +228,14 @@ test('SD20g A QUEST SHARED ONLINE IS LAID ON THIS PAGE\'S SIZES, AND NO LINK RE-
     _enumerateDungeonQuestMarkers: () => markersOnline,
   };
   const world = { maps: { getRegion: () => ({ mapNameLookup: new Map([['Keep', 5]]) }), getLocation: () => ({ dungeon: { blocks: [{}] } }) } };
-  const quest = { smallerDungeonsState: SMALLER_DUNGEONS_STATE.Disabled, hooks: { world }, resources: new Map([['dun', place]]), tasks: new Map() };
-  assert.equal(relayQuestOnline(quest), true, 'its markers moved to the build');
+  // PIN MOVED (INSTANCES, bible/11-Multiplayer/Instances.md section 5): online a quest's markers are the dungeon WHOLE's (its
+  // quest's world asks for it whole - the layout its instance builds), so the copy re-laid is one a page before INSTANCES
+  // laid on the world's sizes; a copy laid whole is already right
+  const quest = { smallerDungeonsState: ONLINE_DUNGEONS_STATE, hooks: { world }, resources: new Map([['dun', place]]), tasks: new Map() };
+  assert.equal(relayQuestOnline(quest), true, 'its markers moved to the dungeon whole');
   assert.deepEqual(place.siteDetails.questSpawnMarkers, markersOnline.questSpawnMarkers);
-  assert.equal(quest.smallerDungeonsState, ONLINE_DUNGEONS_STATE, 'stamped the world\'s');
-  assert.equal(relayQuestOnline(quest), false, 'the world\'s already: nothing');
+  assert.equal(quest.smallerDungeonsState, SMALLER_DUNGEONS_STATE.Disabled, 'stamped the whole dungeon\'s');
+  assert.equal(relayQuestOnline(quest), false, 'the whole\'s already: nothing');
   const share = read('src/systems/questShare.js');
   // PIN MOVED (MEDIUM-DISTINCT's audit, 2026-10-08): the relay lays the copy on the world's sizes online, and on this page's
   // medium layout where the copy's dungeon moved, online and off

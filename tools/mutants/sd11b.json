@@ -218,8 +218,8 @@
   {
     "name": "SD11b-L7M1-the-gate-before-the-token",
     "file": "server/src/index.js",
-    "old": "if (!battle && !floor && !realmRoom) {",
-    "new": "if (!battle && !floor) {",
+    "old": "if (!battle && !floor && !realmRoom && !instRoom) {",
+    "new": "if (!battle && !floor && !instRoom) {",
     "tests": [
       "test/sd11b_relay.test.js"
     ]

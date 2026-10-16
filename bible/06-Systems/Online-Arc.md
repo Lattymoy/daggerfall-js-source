@@ -15636,6 +15636,9 @@ says so: "You cannot go back into Privateer's Hold." (`systems/startDungeon.js` 
   (the exterior fallback, as for any site with no entrance).
 - Offline, the Hold's door is DFU's. The relay is untouched: the Hold keeps its shared room (HOLD-SHARED, above), and
   every player in it is one who has not yet walked out.
+- INSTANCES (2026-10-15, `11-Multiplayer/Instances.md` section 6): what is refused is the Hold's PUBLIC room. At a relay
+  that admits instances (world208) its door offers "Your instance" - and a partner's - never Public; an instance of the
+  Hold is entered any time, for its owner and the owner's party.
 - Four hosts: `scenes/worldModes.js` holds the gate, and both town hosts build it; `scenes/world.js` marks its two
   ways in; `scenes/exterior.js` hands no `dungeonOnline` (offline, DFU's); `scenes/dungeonContext.js` enters no dungeon.
 

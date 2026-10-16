@@ -75,13 +75,13 @@ test('U31: the start cell comes from settings, and starting inside is gated the 
 
 test('U31: startInDungeon routes through tryEnterDungeon, which is what makes the dungeon exitable', () => {
   const modes = src('scenes/worldModes.js');
-  assert.match(modes, /async function startInDungeon\(\{ locationKey = null, fromLoad = false, holdOpen = false \} = \{\}\)/, 'the world host needs a start-inside entry point (CASTLE1: the load names its dungeon; MAP-KEEP: and says it is a load)');
+  assert.match(modes, /async function startInDungeon\(\{ locationKey = null, fromLoad = false, holdOpen = false, recorded = undefined \} = \{\}\)/, 'the world host needs a start-inside entry point (CASTLE1: the load names its dungeon; MAP-KEEP: and says it is a load)');   // PIN MOVED (INSTANCES' audit): and what a load, an anchor or a staff landing recorded of the place
   // The whole point: it must REUSE tryEnterDungeon rather than repeat
   // its body, because tryEnterDungeon is what records dungeonReturn -
   // the entrance-door candidates tryExitDungeon computes its landing
   // from. A copied body that skipped that would enter fine and strand
   // the player exactly as before.
-  const body = modes.slice(modes.indexOf('async function startInDungeon({ locationKey = null, fromLoad = false, holdOpen = false } = {})'));   // CASTLE1: the load names its dungeon; MAP-KEEP: and says it is one; PIN MOVED (HOLD-ONCE): and whether it may enter Privateer's Hold online
+  const body = modes.slice(modes.indexOf('async function startInDungeon({ locationKey = null, fromLoad = false, holdOpen = false, recorded = undefined } = {})'));   // CASTLE1: the load names its dungeon; MAP-KEEP: and says it is one; PIN MOVED (HOLD-ONCE): and whether it may enter Privateer's Hold online   // PIN MOVED (INSTANCES' audit): and what was recorded of the place
   const fnEnd = body.indexOf('\n  }');
   // DE1 re-anchored this from the exact argument list onto the call.
   // startInDungeon now passes { preferEnterMarker: true } - it is
@@ -90,7 +90,7 @@ test('U31: startInDungeon routes through tryEnterDungeon, which is what makes th
   // holds: REUSE the door path so dungeonReturn is recorded.
   assert.match(body.slice(0, fnEnd), /return tryEnterDungeon\(hit, entries[,)]/,
     'starting inside must go through the same door path that records dungeonReturn');
-  assert.match(body.slice(0, fnEnd), /\{ preferEnterMarker: true, fromLoad, holdOpen \}/,   // MAP-KEEP: the load's arm rides beside it; PIN MOVED (HOLD-ONCE): and `holdOpen`
+  assert.match(body.slice(0, fnEnd), /\{ preferEnterMarker: true, fromLoad, holdOpen, recorded \}/,   // MAP-KEEP: the load's arm rides beside it; PIN MOVED (HOLD-ONCE): and `holdOpen`   // PIN MOVED (INSTANCES' audit): and what was recorded
     'and it is the StartDungeonInterior member: the enter marker wins, the facing is north');
   assert.match(modes, /dungeonReturn = \{/, 'the exit landing still depends on dungeonReturn being recorded');
   // and it is on the API the host calls

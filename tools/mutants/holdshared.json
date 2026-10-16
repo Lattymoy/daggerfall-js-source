@@ -12,8 +12,8 @@
   {
     "name": "HOLD-SHARED-SOLO-MARK-BACK",
     "file": "src/scenes/worldModes.js",
-    "old": ", size: builtDungeonSize(dungeonLoc) })",
-    "new": ", size: builtDungeonSize(dungeonLoc), ...(isStartDungeon(dungeonLoc) ? { solo: true } : {}) })",
+    "old": ", size: builtDungeonSize(dungeonLoc), instance: placeInstance })",
+    "new": ", size: builtDungeonSize(dungeonLoc), instance: placeInstance, ...(isStartDungeon(dungeonLoc) ? { solo: true } : {}) })",
     "tests": [
       "test/holdshared.test.js"
     ],

@@ -281,9 +281,9 @@
   },
   {
     "name": "EMPIRE-ACCOUNT-yard-wallet-branch",
-    "file": "src/scenes/world.js",
-    "old": "    const a = playerEntity.bankAccounts[goldRegion(playerEntity.bankAccounts, region)] ?? null;",
-    "new": "    const a = playerEntity.bankAccounts[region] ?? null;",
+    "file": "src/scenes/homeYards.js",
+    "old": "  const a = entity.bankAccounts[goldRegion(entity.bankAccounts, region)] ?? null;",
+    "new": "  const a = entity.bankAccounts[region] ?? null;",
     "tests": [
       "test/empireaccount.test.js"
     ]

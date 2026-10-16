@@ -94,9 +94,9 @@ test('IS1: interiorSaveData - interior mode only, the live scene cached first, t
 
 test('IS1: ONE transition core - the click and the restore share TransitionInterior', () => {
   const src = read('src/scenes/worldModes.js');
-  assert.match(src, /return enterInteriorCore\(hit, entries\);\n  \}/,
+  assert.match(src, /return enterBuildingDoor\(hit, entries\);[^\n]*\n  \}[\s\S]*?const enterBuildingDoor = [\s\S]*?enterInteriorCore\(hit, entries, null, entry\)/,   // PIN MOVED (INSTANCES' audit): the click through the door's own entry, still the one core
     'tryEnter ends in the shared core, exactly as PlayerActivate routes through TransitionInterior');
-  assert.match(src, /async function enterInteriorCore\(hit, entries, restore = null\)/);
+  assert.match(src, /async function enterInteriorCore\(hit, entries, restore = null, entry = null\)/);   // PIN MOVED (INSTANCES): the door's row on its call back - one core still   // PIN MOVED (INSTANCES' audit): the entry its door decided - one core still
   // The restore takes the SAVED record whole - identity AND latch
   // (SerializablePlayer.cs:394-400 restores BuildingDiscoveryData +
   // IsPlayerInsideOpenShop rather than recomputing at the load hour).
@@ -128,7 +128,7 @@ test('IS1: restoreInterior - the identity trio, buildingKey disambiguation, the 
   }
   assert.match(body, /matches\.length > 1 && d\.buildingKey/,
     'twin blocks in one location disambiguate by buildingKey - DFU keys discovery on it (:1032)');
-  assert.match(body, /\{ building: strictDoor \|\| privateRoom \? buildingDataForDoor\?\.\(entry\) \?\? null : saved\.building \?\? null, pos, privateRoom \}/,
+  assert.match(body, /\{ building: strictDoor \|\| privateRoom \? buildingDataForDoor\?\.\(entry\) \?\? null : saved\.building \?\? null, pos, privateRoom, \.\.\.\(saved\.ins != null && !privateRoom \? \{ ins: saved\.ins, staff: saved\.staff === true \} : \{\}\) \}/,   // PIN MOVED (INSTANCES' audit): and the instance it recorded
     'ordinary loads retain the SAVED discovery record; exact staff travel resolves its live door');
   assert.match(body, /return mode === 'interior';/,
     'success is the MODE having changed, not the call having returned');

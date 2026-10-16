@@ -672,8 +672,8 @@
   {
     "name": "SEAT2a2-relay-attach",
     "file": "server/src/index.js",
-    "old": "sub: who.subject, ...(siegeSide ? { sd: siegeSide } : {}), mu: who.mu,",
-    "new": "sub: who.subject, mu: who.mu,",
+    "old": "sub: who.subject, ...(instParty ? { ip: 1 } : {}), ...(siegeSide ? { sd: siegeSide } : {}), mu: who.mu,",
+    "new": "sub: who.subject, ...(instParty ? { ip: 1 } : {}), mu: who.mu,",
     "tests": [
       "test/seat2a_battle.test.js",
       "test/seat2a_relay.test.js"

@@ -24,7 +24,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (rel) => readFileSync(join(root, rel), 'utf8');
 const WM = read('src/scenes/worldModes.js');
 /** ActivateStaticDoor's building block, matched not counted. */
-const ARM = WM.slice(WM.indexOf('let isBrokenIn = isBash;'), WM.indexOf('return enterInteriorCore(hit, entries);'));
+const ARM = WM.slice(WM.indexOf('let isBrokenIn = isBash;'), WM.indexOf('return enterBuildingDoor(hit, entries);'));   // PIN MOVED (INSTANCES' audit): the arm ends at the door's own entry, which asks then enters
 
 // ---------------------------------------------------------------
 // The rolls themselves (:570-583, :621-627)
@@ -70,7 +70,7 @@ test('ROAD-B: ActivateStaticDoor is one member with two callers, as C# has it', 
   // :507-509 - the bash sound, before the type routing, every door but
   // a dungeon exit, from the PLAYER (PlayerActivate's own source).
   const sound = WM.indexOf("if (isBash && hit.door.doorType !== DOOR_TYPE.DUNGEON_EXIT) audio.playOneShot(SOUND.PlayerDoorBash, 1);");
-  const route = WM.indexOf('if (hit.door.doorType === DOOR_TYPE.DUNGEON_ENTRANCE) return tryEnterDungeon(');
+  const route = WM.indexOf('if (hit.door.doorType === DOOR_TYPE.DUNGEON_ENTRANCE) return enterDungeonDoor(');   // PIN MOVED (INSTANCES' audit): the door's own entry
   assert.ok(sound > 0 && route > sound, 'the sound precedes the type routing');
 });
 

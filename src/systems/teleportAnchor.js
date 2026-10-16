@@ -58,6 +58,7 @@
 // different hosts and only they know how.
 
 import { stampLayout, layoutStampOfPixel } from './layoutPins.js';   // WD3: an anchor set inside keeps its town's layout
+import { instanceOfWord } from '../net/instanceRoom.js';   // INSTANCES (the audit): a dungeon anchor's room
 
 /** WorldContext (DaggerfallUnityEnums.cs:582-588), whole. The anchor
  *  carries one, and the interior arm of the compensation restore
@@ -94,6 +95,9 @@ export const ANCHOR_MUST_BE_SET = 4001;
  * @param {object|null} p.interior - the exteriorDoors +
  *   buildingDiscoveryData pair (:110-111), null outside a building.
  * @param {number} p.buildingKey - buildingDiscoveryData.buildingKey.
+ * @param {{ins?: string, whole?: boolean}|null} [p.dungeon] - INSTANCES (the audit): inside a dungeon, the room and the
+ *   layout the position stands in (worldModes.js anchorContext) - its instance's word and whether it was built whole -
+ *   which a Recall hands back (scenes/instanceDoor.js entryFor). Not a DFU field: DFU has one layout and no rooms.
  *
  * There is deliberately NO `worldCompensation` field, and so no port
  * of RestoreWorldCompensationHeight (:139-143). DFU stores the
@@ -108,7 +112,7 @@ export const ANCHOR_MUST_BE_SET = 4001;
  */
 export function makeAnchor({
   worldContext = WORLD_CONTEXT.Exterior, pixel, nativeX, nativeZ, y = 0,
-  local = null, yaw = 0, pitch = 0, interior = null, buildingKey = 0, terrainScale = null,
+  local = null, yaw = 0, pitch = 0, interior = null, buildingKey = 0, terrainScale = null, dungeon = null,
 } = {}) {
   const insideBuilding = worldContext === WORLD_CONTEXT.Interior;
   const insideDungeon = worldContext === WORLD_CONTEXT.Dungeon;
@@ -126,6 +130,7 @@ export function makeAnchor({
     insideBuilding, insideDungeon,
     buildingKey: insideBuilding ? buildingKey : 0,
     interior: insideBuilding ? interior : null,
+    dungeon: insideDungeon && dungeon ? { ...(instanceOfWord(dungeon.ins) ? { ins: dungeon.ins } : {}), whole: dungeon.whole === true } : null,   // INSTANCES (the audit)
   };
   // WD3: an anchor inside a building re-enters it by its door, and a door names a building only in the layout its town
   // stood in - so it carries that layout, and a load keeps the town in it (systems/layoutPins.js); none for classic

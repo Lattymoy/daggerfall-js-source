@@ -186,6 +186,7 @@ import { GUILD_TAG_RE } from './guildLaw.js';   // GUILD1c: a guild's tag is bad
 import { homeMapIdOk, homeBuildingKeyOk, HOME_ORDER_KEYS_MAX } from './homeLaw.js';   // QUEST-HOME: a home word's town and buildings, the homes' own shapes - homeLaw.js imports nothing, so the worker's graph stays flat
 import { RAID_KEY_RE, RAID_SIG_RE, RAID_TARGET_MIN, RAID_TARGET_MAX, RAID_TYPES, RAID_WORD_KILLS_MAX, RAID_ACCOUNTS_MAX, RAID_TOP_MAX, RAID_TOWNS_SHA_RE, RAID_TOWNS_CHUNK, RAID_TOWNS_CHUNKS_MAX } from './raidLaw.js';   // RAID3: a town raid's law - raidLaw.js imports nothing, so the worker's graph stays flat
 import { SIEGE_HIT, SIEGE_WORK_IDS, SIEGE_RAMS_MAX, SIEGE_WORK_TIER_MAX, siegeGateVitality, siegeRamVitality, isSiegeNpcId, SIEGE_NPC_MAX, SIEGE_NPC_KINDS, isBattleRoom } from './siegeRef.js';   // PVP-REF: a siege's blow kinds - siegeRef.js imports nothing, so the worker's graph stays flat; SEAT2b part two (b): the works a blow may name; part two (c): the relay's own fighters
+import { INSTANCE_TAG_SOURCE, isInstanceRoom } from './instanceRoom.js';   // INSTANCES: an instance's room is a world room (WORLD_ROOM) with a memory of its own length (worldTtlMsFor) - instanceRoom.js imports privateInterior.js alone, which the relay walks already
 import { privateInteriorOf } from './privateInterior.js';   // SLIM-FRAME: an owned interior's poses are MapsFile's (nativePoseRoom) - privateInterior.js imports nothing, and the relay walks it already
 import { validSdMarks, SD_ELEMENTS } from './sdMarks.js';   // SD18a: a Hollow's marks and its blows' elements - sdMarks.js imports nothing, so the worker's graph stays
 import { validArenaIn, validArenaOut } from './arenaLaw.js';   // ARENA4: the arena's words both ways - arenaLaw.js imports nothing, so the worker's graph stays flat
@@ -454,6 +455,13 @@ export const WORLD_CHUNK = 96 * 1024;
 export const WORLD_PREFIX = '{"t":"world"';
 /** A world room's memory is forgotten this long after the room last drained, unless someone came back (AUDIT WORLD A3). */
 export const WORLD_TTL_MS = 30 * 24 * 3600 * 1000;
+/** INSTANCES (bible/11-Multiplayer/Instances.md): an instance's memory is forgotten this long after its room last drained.
+ *  The public world is a bounded set of places; instances are a character's and a quest's, so they are not - and past
+ *  RESPAWN-30's half-hour a room's foes and containers are back anyway. A quest that ends never keys its room again
+ *  (net/instanceRoom.js, the epoch), so what it remembered goes with this clock. */
+export const INSTANCE_TTL_MS = 7 * 24 * 3600 * 1000;
+/** The memory's clock for a world room `key`: an instance's own, every other room's WORLD_TTL_MS. */
+export const worldTtlMsFor = (key) => (isInstanceRoom(key) ? INSTANCE_TTL_MS : WORLD_TTL_MS);
 /** WORLD8 (Mac: "I would like dungeons and the world to respawn every hour"): THE HOUR'S RESPAWN - a foe of the
  *  room's layout dead this long, and a container the room emptied this long ago, come back: the foe rebuilt fresh at
  *  its marker by the host (the stream then says so), the container this client's own roll again. The stamps are the
@@ -985,7 +993,11 @@ export const isRegionRoom = (key) => isChatRoom(key) && String(key).startsWith(C
 //  for WORLD_TTL_MS. So a re-laid dungeon's room carries its size, `dungeon:m<mapId>.m` or `.s` (DUNGEON_ROOM_TAGS,
 //  below), and two layouts never share a stream or a memory; a dungeon built whole keeps the room - and the memory -
 //  it always had.
-const WORLD_ROOM = /^(?:dungeon:m[1-9]\d{0,9}(?:\.[ms])?|interior:m[1-9]\d{0,9}\.[1-9]\d{0,7})$/;
+//  INSTANCES (2026-10-15, bible/11-Multiplayer/Instances.md): AND AN INSTANCE OF EITHER - the public room with its owner
+//  and epoch after it (net/instanceRoom.js INSTANCE_TAG_SOURCE, its one home), a dungeon's whole (never `.m` or `.s`).
+//  A world room like its public twin - its host, its acts, its loot, its memory (on worldTtlMsFor's clock) - which only
+//  its owner and the owner's party may enter (the relay's hello, instanceAdmits).
+const WORLD_ROOM = new RegExp(`^(?:dungeon:m[1-9]\\d{0,9}(?:\\.[ms]|${INSTANCE_TAG_SOURCE})?|interior:m[1-9]\\d{0,9}\\.[1-9]\\d{0,7}(?:${INSTANCE_TAG_SOURCE})?)$`);
 export const isWorldRoom = (key) => WORLD_ROOM.test(String(key ?? ''));
 /** SD-ONLINE: the tag a dungeon's room name carries for the size it was built at (smallerDungeons.js builtDungeonSize);
  *  the whole dungeon carries none. One home, both ends: roomKeyFor mints it, WORLD_ROOM admits it. */
@@ -1420,7 +1432,8 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
 // Integrated Arena spectator visibility with staff teleport, stable boat identity and private ownership; deploy relay before clients.
-export const RELAY_VERSION = 'world207';   // ONE-BODY (FIELD BUGS 2026-10-15c, bible/01-Overview/Field-Bugs-2026-10-15c.md; Mac: "One body per account"; NOT YET DEPLOYED; world206 on its branch, renumbered past main's SERPENT5 world206 at the merge): A PLACE STANDS ONE BODY AN ACCOUNT - a cell's room (the open country, a town) and a world room (a dungeon, an interior) close an account's older socket when it says hello again on a new one, as a gate's court, a siege's field and a Super dungeon's realm already did (server/src/index.js the hello's one-socket law). A relay deploy drops every socket, and a tab or a half-open socket that outlived the gap stood beside the account's new one - two bodies of one player, the friend's own page seeing the copy (`rosterFor` carries no account, so no client could tell them apart). Two tabs of one account in a place are one player now.
+export const RELAY_VERSION = 'world208';   // INSTANCES (2026-10-15, Mac: "lets implement an instanced system" - public or instanced at a quest's dungeon or building and at Privateer's Hold, "You and your party"; bible/11-Multiplayer/Instances.md; NOT YET DEPLOYED; world206 then world207 on its branch, renumbered past main's SERPENT5 world206 and ONE-BODY world207 at the merges): AN INSTANCE IS A WORLD ROOM OF ITS OWN - `<public room>.i<owner>.<epoch>` (net/instanceRoom.js, which joins the bundle): WORLD_ROOM admits it beside a dungeon whole and a building, its memory forgotten INSTANCE_TTL_MS after it drains (worldTtlMsFor), and the hello admits its owner, staff and the owner's party alone - the hub asked by the owner's digest on INSTANCE_INTERNAL_KIN (partyHoldsOwner, over the party as it stands: _myParty walks its lapsed seats), its silence busy, a no never kept; a member let in as the party (`ip`) is asked again off its pose every INSTANCE_KIN_KEEP_MS and refused out (INSTANCE_DOOR_WORD) once the hub says it is not; the hello's gate is spent after the token, by account (_battleHelloGate, a realm's); a zone hall keeps no instance (wdunHallOfRoom); a party pose says the instance ROOM a member stands in (`ins`, its key); a staff destination names the instance and the whole layout a player stands in (net/staffTeleport.js `ins`, `whole`). A page offers an instance only to a relay at INSTANCE_RELAY_MIN (208) or later.
+// world207:   ONE-BODY (FIELD BUGS 2026-10-15c, bible/01-Overview/Field-Bugs-2026-10-15c.md; Mac: "One body per account"; NOT YET DEPLOYED; world206 on its branch, renumbered past main's SERPENT5 world206 at the merge): A PLACE STANDS ONE BODY AN ACCOUNT - a cell's room (the open country, a town) and a world room (a dungeon, an interior) close an account's older socket when it says hello again on a new one, as a gate's court, a siege's field and a Super dungeon's realm already did (server/src/index.js the hello's one-socket law). A relay deploy drops every socket, and a tab or a half-open socket that outlived the gap stood beside the account's new one - two bodies of one player, the friend's own page seeing the copy (`rosterFor` carries no account, so no client could tell them apart). Two tabs of one account in a place are one player now.
 // world206:   SERPENT5 (2026-10-15, Mac: "A gilded weapon to the serpent + a rare chance of a title/aura drop"; bible/11-Multiplayer/Sea-Serpent.md section 17; NOT YET DEPLOYED; world205 on its branch, renumbered past main's PVP-LOOT + QUEST-HOME world205 at the merge): the vocabulary's two new words - COILBREAKER last of TITLES and THE MAELSTROM last of AURAS (net/identityToken.js), which the relay reads off every hello's token; nothing else in the law moved. Deploy the relay BEFORE the account service (acct135), or a token signing either word is refused whole
 // world205:   PVP-LOOT + QUEST-HOME (FIELD BUGS 2026-10-14, one pull request, one bump; NOT YET DEPLOYED - world201 on each branch, renumbered past main's CHAT-TRADE world201 and FIVE-ASKS world202 at the merge; world203 on the integration, renumbered past main's KG-SET world203 and KG5 world204 at the merge of main). PVP-LOOT (2026-10-14, the Discord's "Equipped items Disappear after looting in PvP zone" - bible/01-Overview/Field-Bugs-2026-10-14.md): THE FRIEND LAW IS THE DROP'S - a remains' take is refused a fallen's guildmate or party member only for a record of the drop; the record the service's order names (the killer's worn piece, net/wildLaw.js remainsNamedFor) is its killer's whoever the guilds and the hub count them, and takeFrom judges it alone. A guildmate's kill had the room refuse the killer the piece the service had already taken off the fallen's record. Then MAC'S TWO DECISIONS (2026-10-14; bible/11-Multiplayer/Wild-Zone.md sections 3 and 4): "Guildmates are friends" - the referee counts one guild kin, as a party, its truce and a duel (net/wildRef.js wildKin, at the relay and every client door); and "Yes, build it" - THE TWO-PHASE HANDOFF: a piece the service holds in escrow (the order's `we`) the room never hands as a record - its killer's take is answered a signed collect (`cr`, net/wildReceipt.js `g1`), kept with the remains (`wc`) and said again to every asking, which the killer's tab carries to the service; a tab asks the escrow only of a room at WILD_COLLECT_RELAY_MIN or later. QUEST-HOME (2026-10-15, Mac: "Close both" - of a quest's residence that was another player's home; bible/01-Overview/Field-Bugs-2026-10-14.md QUEST-HOME; world201 on its branch - deploy with or after the account service's acct136, in either order: a client sends a home order only to a hub whose welcome names world205, HOME_RELAY_MIN, and an older client drops the frame): THE HUB SAYS A HOME THAT MOVED TO EVERY PAGE ONLINE - the frame `home` both ways (a page carries the service's signed home order in, net/identityToken.js kind 'home'; the hub checks it with the key it holds and fans `{t:'home', l:[{m, u, d, i}]}` to every hub socket, a shard's by the bus), the words of the last HOME_WORDS_KEEP_MS held in the hub's storage (HOME_WORDS_KEY) and said on every welcome (_hubHelloWords), the order's own bucket (homeGate, HOME_ORDER_HZ_MAX).
 // world204:   KG5 (2026-10-15, bible/11-Multiplayer/Kings-Gambit.md sections 5.8 and 18; NOT YET DEPLOYED; world203 on its branch, renumbered past main's FIVE-ASKS world202 at the merge): THE RELAY RUNS THE KING'S GAMBIT - a room keeps King's Gambit tables at the cloth's index beside Hold'em's and Iliac Hand's (net/gambitTable.js), one game a cloth: two seats, each army said at Ready and dealt by the relay's own board and dice, the law's commands, a 60 s turn clock and its idle stand-up, a stand or a socket gone forfeiting; the green table only, friendly. A `gambit` frame, so a new bundle (net/gambitTable.js, net/kingsGambit.js, characters/enemyBasics.js and systems/mathf.js joined it) and a new name (SLAM8). KG6 (section 19, the same name - undeployed): the gold table's Ready a stake (CARDS6's escrow, net/gambitStakes.js), the pot's cash-outs, a rated game's signed result (net/gambitReceipt.js g1) and its `ack`, the GRANDMASTER in the token's titles.
@@ -2751,6 +2764,10 @@ export function validPartyPose(p) {
   // the full unsigned 32-bit range `roomKeyFor` itself already uses, so the wire can never disagree with the
   // room key it already agreed to share.
   out.bk = out.in === 2 ? uint(p.bk, 0xffffffff) : null;
+  // INSTANCES (bible/11-Multiplayer/Instances.md): inside, the instance room the member stands in (its key - the place's
+  // public room, owner and epoch: net/instanceRoom.js), so a partner at that very place - matched by the room, never by
+  // a pixel two places share - is offered to join it; said only when there is one, so every other pose reads as it did
+  if (out.in && isInstanceRoom(p.ins)) out.ins = p.ins;
   if (p.rest != null) {
     if (typeof p.rest !== 'object' || Array.isArray(p.rest)) return null;
     const mode = PARTY_REST_MODES.includes(p.rest.mode) ? p.rest.mode : null;
@@ -4195,6 +4212,16 @@ export const WDUN_SALT = 7;
 /** A zone hall's world room, `dungeon:m<mapId>` (wire.js WORLD_ROOM): salt in the high 12 bits, the pixel in the low 20. */
 export const spawnedHallMapId = (x, y) => (((WDUN_SALT << 20) | (y * 1000 + x)) >>> 0);   // world/spawnedDungeons.js spawnedMapId's own law
 export const wdunRoomKey = (h) => { const k = wdunHall(h); if (!k) return null; const [x, y] = k.split(',').map(Number); return `dungeon:m${spawnedHallMapId(x, y)}`; };
+/** INSTANCES (the audit): the zone hall a world room's key names - wdunRoomKey's inverse, its hall as wdunHall spells it -
+ *  or null. A hall keeps no instance (net/instanceRoom.js): its PvP, its locks and the hub's reset (WDUN_INTERNAL_RESET)
+ *  are its public room's, and a private copy of one would stand outside all three. */
+export const wdunHallOfRoom = (key) => {
+  const m = typeof key === 'string' ? /^dungeon:m([1-9]\d{0,9})$/.exec(key) : null;
+  const id = m ? Number(m[1]) : 0;
+  if (!id || id > 0xffffffff || id >>> 20 !== WDUN_SALT) return null;
+  const px = id & 0xfffff, h = wdunHall(`${px % 1000},${Math.floor(px / 1000)}`);
+  return h && wdunRoomKey(h) === key ? h : null;
+};
 export const wildGate = (bucket, nowMs) => tokenGate(bucket, nowMs, WILD_HZ_MAX);
 export const wildInGate = (bucket, nowMs) => tokenGate(bucket, nowMs, WILD_IN_HZ_MAX);
 /** A remains' id and a death's id: the duel's alphabet. */
