@@ -22458,8 +22458,9 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     online.onCaravan = (room, doc) => modes?.applyCaravanDecor?.(room, doc);   // WAGONS2-VISIT: what the caravan I visit holds, from its room
     online.onParks = (room, list) => hcc.replaceKept(room, list, campToScene, performance.now());   // HCC-PARK: and a cell's whole memory, after its welcome   // HCC-ONLINE: a peer's horse and wagon, the same frame, the same room test, through validHccRecord; and the peers' teams go wherever the pool's puppets go (a room change, a leave)
     online.onTrade = (id, data) => { tradeMgr.onFrame(id, data); };
-    online.onPeerDeath = (peer, pose, room) => {
-      remotePlayers?.addCorpse({ ...peer, acct: social?.accountOfPeer?.(peer.id) ?? null }, pose, room);   // PCORPSE3: the account, so the party-told copy never doubles it
+    online.onPeerDeath = (peer, pose, room, how) => {
+      // PCORPSE3: the account, so the party-told copy never doubles it; AUDIT ONLINE 3 F5: a death heard in an introduction (a body already lying when I came) is laid without its cry
+      remotePlayers?.addCorpse({ ...peer, acct: social?.accountOfPeer?.(peer.id) ?? null }, pose, room, { quiet: !!how?.intro });
       // PDEATH-FOES: the fallen player's foes come to me on its own handover frame (exteriorFoes.applyFoes, AUDIT CONTRIB P1)
     };   // PCORPSE1: another player fell - their class's body for a minute, and their cry   // TRADE1: a peer's trade frame, already projected and addressed to me (net/online.js)
     // ALLY-CAST: a party mate's spell at ME. THE RECEIVER DECIDES: a cast from anyone outside my party is dropped

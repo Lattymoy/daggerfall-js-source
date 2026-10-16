@@ -11,8 +11,8 @@
   {
     "name": "A2-every-socket-copy-is-a-death",
     "file": "src/net/online.js",
-    "old": "        if (!this._fallen.has(m.id)) {",
-    "new": "        if (true) {",
+    "old": "    if (!this._fallen.has(id)) {",
+    "new": "    if (true) {",
     "tests": [
       "test/auditcontrib.test.js"
     ]
