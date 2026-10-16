@@ -100,3 +100,10 @@ tools/shots/
 *.mutbak
 # TAMRIEL1: the fit probe's render of the player's own picture (tools/tamrielFitProbe.mjs default --out).
 tamriel-shots/
+
+# The SHELL PROMPT's own cache (oh-my-posh writes themes under .cache/ in
+# whatever directory it is invoked from) - the editor's tooling lives in
+# node_modules/.cache/ and is already covered by node_modules/. A stray
+# `git add -A` from the repo root would otherwise stage a stranger's
+# prompt themes.
+.cache/
