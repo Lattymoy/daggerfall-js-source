@@ -15846,7 +15846,8 @@ bodies are their foe's owner's roll taken under the owner's grant (WORLD6b-iii(c
 (MW-NPC K2), so the kit a foe fought with need not be the one its body holds; the death's subscribers run where a body's
 base is composed, so Physical Items throws a body's pieces out on every client, a body the memory lays included; an
 older build in the room reads the new word as M2's newer word ("Reload to open it"), and its own WORLD4 list still
-lands for everyone, migrated. Not seen with two real players from this container.
+lands for everyone, migrated. Not seen with two real players from this container - since played in two browsers
+(**Played end to end**, below).
 
 - **Pinned**: `test/partyloot.test.js` (10) - two and three peers mounted over the dungeon host's real loot doors and
   the real producers, at different levels, Luck, Renown, dice and Foraging switches, joined by a queuing relay: one base
@@ -15864,3 +15865,40 @@ lands for everyone, migrated. Not seen with two real players from this container
   theirs (a joiner's take in its pack at once, two copies of one piece between two joiners, a piece kept by the host
   under its window after the room granted it). `tools/mutants/partyloot.json`
   (30, all killed).
+- **Pinned over the wire** (2026-10-16): `test/partyloot_wire.test.js` (3) - the same law through the path the game
+  runs, where the queue above stands in for it. Two players, each the dungeon's real loot doors and this block
+  (`roomLootHost.js` createRoomLoot, under the host's construction of it) over the real producers WITH the dungeon's own
+  death and stream path (damageFoe, spawnCorpse, setFoeDead, applyFoeRecord, foesFrame, applyFoes), so the party
+  member's copy of a body falls when the host's foes frame says so; world.js's actSend, actFlush, foesStream and the
+  session's onAct and onFoes, and worldModes.js's dungeon arms, on a real `net/online.js` session each, into one real
+  relay Room (`server/src/index.js` over `test/fakeRoom.mjs`); the dungeon's frame is drawFoes' own two lines (the
+  sweep, the claims' tick). What the queue cannot show, each pinned: the host's birth reaching the party member BEFORE
+  the body falls there - held, and landed at the fall (`_roomPending`) - so the body opens on the host's base, and the
+  party member's open and close say nothing and leave the host's list as it was (the report's "Empty" and its wipe); a
+  blast past `ACT_HZ_MAX` - the session refuses the last births, world.js keeps their keys, the bodies its frame lays
+  first stand UNBORN on the party member (no window, nothing said, none of its own roll) until actFlush's heal re-reads
+  the host's word through `placeActionRecords` (`lootRecords` -> `roomRecordOf`); a party member's take from the
+  window - its close telling one claim and never the room's state, the piece out of the taker's pack until the host's
+  grant comes back over the Room, then one piece off both lists and in the taker's pack. A body's list is compared only
+  once its plaque NAMES one (an unborn body's null is never read as an empty base), what the dungeon tells its act door
+  is counted before world.js or the session see it, and a throw under the session's handlers - which the session
+  swallows, so one bad frame never takes the socket down - fails the test instead of reading as a word that never
+  landed (AUTO-HOLD's `notCarried`, new in the give, was such a name). `tools/mutants/partyloot_wire.json` (14, all killed); eight
+  of them `test/partyloot.test.js` cannot fail - the early birth dropped, the heal re-reading nothing, world.js keeping
+  no refused key, and the five that cut the wire's own doors (world.js's onAct and actFlush's read, worldModes.js's
+  three dungeon arms).
+- **Played end to end** (2026-10-16): `tools/partyLootProbe.mjs` - two players in the real game in headless Chromium
+  over the player's own ARENA2, online in Privateer's Hold against the real relay and account service in local workerd;
+  the host kills three foes and the joiner three (its blows riding to the host as hits); each copy's plaque is read
+  (`lootContents`: the room's base, the player's own bonus apart by roomLoot.js's own mark), then three windows through
+  the press's loot door and the enhanced pack's row click. The personal mark is checked loaded wherever the tree has
+  roomLoot.js (no run has rolled a bonus yet, so a mark that failed to load would read one as the room's). On this
+  tree, four runs (the last with main's AUTO-HOLD merged in): PASS - every body already named on both copies when the kills were done, 6 of 6 one base each time,
+  the joiner's untouched window leaving the host's base, the host's take staying taken on both under the joiner's open
+  window, the joiner's take coming off both bases as one piece (from multi-piece bodies too: the rest left alike on
+  both). On main before #923 (`ea09d8547b`), two runs: FAIL - the report as it was: 4 and 5 of 6 bodies differed (other
+  gold counts, another bow, one body empty for the host and holding meat for the joiner); in the second run the joiner's
+  untouched window replaced the host's 12 gold with its own 3 (the report's wipe); in both the joiner's stale close put
+  back a piece the host had taken; in the first the joiner's take replaced the host's list with the joiner's leftovers.
+  The press on a body before its word - the report's "Empty" window itself - is the wire test's; a probe cannot time it.
+  `test/partyloot_probe.test.js` (2) holds its seams and the doors they read.
