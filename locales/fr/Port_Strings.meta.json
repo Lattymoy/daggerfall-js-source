@@ -9074,16 +9074,6 @@
   "tr": "617a031fc283",
   "by": "claude-in-session"
  },
- "inventory.store.anyMaterial": {
-  "en": "8177dd78731e",
-  "tr": "985d9a641c9f",
-  "by": "claude-in-session"
- },
- "inventory.store.anyRarity": {
-  "en": "cc8474c6626b",
-  "tr": "e1d443a2d70f",
-  "by": "claude-in-session"
- },
  "inventory.store.containerFull": {
   "en": "25e48df7aefe",
   "tr": "602a3cd61ac3",
@@ -9094,9 +9084,19 @@
   "tr": "ae556a3f1714",
   "by": "claude-in-session"
  },
+ "inventory.store.materialMenu": {
+  "en": "d8169782b57c",
+  "tr": "73529d52fb45",
+  "by": "claude-in-session"
+ },
  "inventory.store.rarityIn": {
   "en": "4edd5e0b523a",
   "tr": "7fa8e23ed80d",
+  "by": "claude-in-session"
+ },
+ "inventory.store.rarityMenu": {
+  "en": "a3e1e99f2620",
+  "tr": "bfa5f821a79f",
   "by": "claude-in-session"
  },
  "inventory.store.stashAll": {

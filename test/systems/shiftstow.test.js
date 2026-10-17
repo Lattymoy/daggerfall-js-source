@@ -94,10 +94,11 @@ test('WAGON-FILTER on the enhanced pack: the wagon carries the search and the me
     assert.ok(search(), 'the wagon has its search');
     assert.equal(host.querySelectorAll('.storefilter').length, 1);
     const bar = host.querySelectorAll('.storefilter')[0];
-    const kids = ['storesearch', 'storecat'];
+    const kids = ['storecat'];
     if (lootRarityOn()) kids.push('storerarity');
     kids.push('storemat');   // MAT-FILTER: the metal menu stands beside the tiers
-    assert.deepEqual(bar.children.map((c) => c.className), kids, 'one row: the search beside the menus, nothing under them');
+    assert.deepEqual(bar.children.map((c) => c.className), ['storesearch', 'storemenus'], 'one bar: the search, then the menus as one group (FILTER-FIT: a narrow window moves the group under the search)');
+    assert.deepEqual(bar.children[1].children.map((c) => c.className), kids, 'the menus, in their order');
     assert.deepEqual(options(), ['All (3)', 'Materials (1)', 'Weapons (2)', 'Misc (1)']);
     click(rowOf('Dagger'), epoch());
     assert.equal(pack().picked, 'Dagger', 'a pack card open');

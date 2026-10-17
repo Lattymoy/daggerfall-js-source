@@ -5219,12 +5219,16 @@ ${paceControlsCss('tview')}
    fixed furniture (PX21e: the rows scroll, never the frame). AUDIT WAGON-FILTER C1: the first cut's wrapping chips and
    hint stood 202-236 px tall and left a phone on its side 1 px of list; one row is 44 px. The menu wears the search's
    dress, the brass on focus. */
-.storefilter { display: flex; align-items: center; gap: 6px; padding: 6px 10px; flex: 0 0 auto;
+.storefilter { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 6px 10px; flex: 0 0 auto;
   border-bottom: 2px solid rgba(125,116,96,0.3); }
+/* FILTER-FIT (2026-10-17): the menus keep their whole words. Where they do not fit beside the search - a container
+   of a few rows draws one column, a narrow window - they move under it together and share that row; on one row the
+   search takes the room left over. */
+.storemenus { display: flex; gap: 6px; flex: 1 1 auto; min-width: 0; }
 .storesearch, .storecat, .storerarity, .storemat { font: inherit; font-size: 13px; min-height: 32px; box-sizing: border-box; color: #d8cfae;
   background: rgba(0,0,0,0.35); border: 1px solid rgba(125,116,96,0.45); border-radius: 0; }
-.storesearch { flex: 1 1 0; min-width: 0; padding: 0 8px; }
-.storecat, .storerarity, .storemat { flex: 0 1 auto; max-width: 28%; padding: 0 4px; }
+.storesearch { flex: 999 1 140px; min-width: 0; padding: 0 8px; }
+.storecat, .storerarity, .storemat { flex: 1 1 0; min-width: 0; padding: 0 4px; text-overflow: ellipsis; }
 .storecat option, .storerarity option, .storemat option { color: #d8cfae; background: #10141a; }
 .storesearch::placeholder { color: #9c937d; }
 .storesearch:focus, .storecat:focus, .storerarity:focus, .storemat:focus { outline: none; border-color: var(--brass); }

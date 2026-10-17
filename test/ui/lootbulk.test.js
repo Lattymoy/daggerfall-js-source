@@ -64,7 +64,7 @@ test('LOOT-BULK storeFilter: the rarity menu lists the tiers the container holds
   assert.equal(storeRarityAccepts(plain, 'nonsense'), true, 'an id the ladder does not have shows everything');
   assert.deepEqual(filterStore([rare, plain], { rarity: 'rare' }, (it) => it.name), [rare]);
   assert.deepEqual(filterStore([rare, plain], { cat: 'weapons', rarity: 'common', query: 'dag' }, (it) => it.name), [plain]);
-  assert.deepEqual(storeRarityOptions([rare, plain, plain], 'legendary').map((c) => `${c.id}:${c.label}:${c.count}`), ['all:Any Rarity:3', 'common:Common:2', 'rare:Rare:1', 'legendary:Legendary:0']);
+  assert.deepEqual(storeRarityOptions([rare, plain, plain], 'legendary').map((c) => `${c.id}:${c.label}:${c.count}`), ['all:Rarity:3', 'common:Common:2', 'rare:Rare:1', 'legendary:Legendary:0']);
   assert.equal(CONTAINER_LIST_CAP, 64);
 });
 
@@ -81,7 +81,7 @@ test('LOOT-BULK storeFilter: the material menu lists the metals the container ho
   assert.equal(storeMaterialAccepts(book, 'nonsense'), true, 'an id the list does not have shows everything');
   assert.deepEqual(filterStore([ebony, leather, book], { material: 'Ebony' }, (it) => it.name), [ebony]);
   assert.deepEqual(storeMaterialOptions([ebony, leather, book], 'Steel').map((c) => `${c.id}:${c.count}`), ['all:3', 'Leather:1', 'Steel:0', 'Ebony:1']);
-  assert.equal(storeMaterialOptions([ebony], 'all')[0].label, 'Any Material');
+  assert.equal(storeMaterialOptions([ebony], 'all')[0].label, 'Material');
 });
 
 test('MAT-FILTER: the material menu finds a piece only by a metal its card says - never an unidentified piece below Rare, an artifact, or a helm under HelmAndShieldMaterialDisplay; an unidentified Rare says its metal and is found by it (mutants: the menu reads the raw metal)', () => {
@@ -114,7 +114,7 @@ test('LOOT-BULK on a container: a material narrows the rows the same way a rarit
   withLoot([], [ebony, iron], ({ material, rows }) => {
     const menu = material();
     assert.ok(menu, 'the container has its material menu');
-    assert.deepEqual([...menu.children].map((o) => o.textContent), ['Any Material (2)', 'Iron (1)', 'Ebony (1)']);
+    assert.deepEqual([...menu.children].map((o) => o.textContent), ['Material', 'Iron (1)', 'Ebony (1)']);
     menu.value = 'Ebony'; menu.onchange();
     assert.equal(rows().length, 1, 'only the ebony row');
     assert.match(rows()[0], /Ebony Blade/);
@@ -146,7 +146,7 @@ test('LOOT-BULK on a container: rarity narrows the rows; Take all stops on the f
   withLoot([], [rare, plain], ({ rarity, rows, press, e, lootItems }) => {
     const menu = rarity();
     assert.ok(menu, 'the container has its rarity menu');
-    assert.deepEqual([...menu.children].map((o) => o.textContent), ['Any Rarity (2)', 'Common (1)', 'Rare (1)']);
+    assert.deepEqual([...menu.children].map((o) => o.textContent), ['Rarity', 'Common (1)', 'Rare (1)']);
     menu.value = 'rare'; menu.onchange();
     assert.equal(rows().length, 1, 'only the rare row');
     press('Take all');
