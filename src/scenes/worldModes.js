@@ -115,6 +115,7 @@ import { createActivateGate, activateFrame } from '../systems/activateGate.js'; 
 import { FootstepMachine, pickFootstepSet, pickFootstepKind } from '../systems/footsteps.js';   // FS-slice; AUDIT DROPS E2: the kind the pose carries
 import { immersiveFootsteps } from '../systems/immersiveFootsteps.js';
 import { betterAmbience, classicFootstepAllowed } from '../systems/betterAmbience.js';   // BA1: Better Ambience - the shake, the dungeon's fog and light, the reverb, the indoor rain, its own stride   // IF1: Immersive Footsteps owns the stride and the three landing sounds once its clips are in (DisableVanillaFootsteps)
+import { drunkFeel } from '../systems/survival/drunkFeel.js';   // DRUNK1: the drink's sway and stumble, beside the shake
 import { applyFog, DUNGEON_FOG } from '../render/underwaterFog.js';
 import { gateArenaLocation, gateArenaBlocks, isGateArena, buildCourtModel, buildWalkSlabModel, walkSlabs, slabMatrix, courtFloorTris, courtLightsNear, withCourtLights, courtDoorAabb, COURT_ARCHIVE, COURT_FOG, COURT_TEXT } from '../world/gate/gateArena.js';   // WB3b: the Burning Court - a level made in code on this host's dungeon arm
 import { isSdRealm, sdRealmLocation, sdRealmBlocks, buildRealmModel, realmColliderTris, realmLightsWith, realmLighting, SD_REALM_ARCHIVE, SD_REALM_FOG } from '../world/superDungeon/sdRealm.js';   // SD5a: the Shattered Hour, a made level as the court is
@@ -10779,6 +10780,7 @@ export function createWorldModes(host) {
           waterSurfaceY: mode === 'dungeon' ? (_surf ?? null) : null, onExteriorWater: false, onExteriorWaterAny: false, onExteriorPath: false, onStaticGeometry: false, onFoot: true,
           winter: false, climateIndex: 0, loadInProgress: false, paused: overlayHeld,   // AUDIT-BA F3
         });
+        drunkFeel.frame(dt, { entity: playerEntity, player, paused: overlayHeld });   // DRUNK1: the drink's clock, its ease and its stumble (survival/drunkFeel.js), on the shake's pause
       }
     }
     // CSA-J (the audit): Come Sail Away's Update and LateUpdate AFTER the motor, as the street runs them - the helm's pin

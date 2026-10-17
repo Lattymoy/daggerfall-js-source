@@ -22,6 +22,7 @@ import { privateInteriorOf } from '../../src/net/privateInterior.js';
 import { worldCoordToMapPixel } from '../../src/world/streamingWorld.js';
 import { validStaffDestination } from '../../src/net/staffTeleport.js';
 import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
+import { chatSaid } from '../../src/systems/survival/drunkSpeech.js';   // DRUNK1: chatSend's Local line, said as the drink stands (sober here: the line itself)
 
 const read = (f) => readFileSync(new URL(`../../${f}`, import.meta.url), 'utf8');
 const HOLD_MAP_ID = 187853213;   // DaggerfallDungeon.cs:151 `case 187853213: // Daggerfall/Privateer's Hold`
@@ -110,10 +111,10 @@ test('HOLD-SHARED: in the Hold a Local line goes to the room, two party members 
   assert.ok(at > 0 && end > at, 'chatSend');
   const sent = [];
   const ok = new Function('online', 'chatLog', 'chanOld', 'guildOld', 'socialLink', 'chatLinks', 'social', 'myGuildTag',
-    'CHAN_OLD_RELAY_TEXT', 'GUILD_OLD_RELAY_TEXT', 'EMOTE_OLD_RELAY_TEXT', 'NO_PARTY_TEXT', 'NO_GUILD_TEXT',
+    'CHAN_OLD_RELAY_TEXT', 'GUILD_OLD_RELAY_TEXT', 'EMOTE_OLD_RELAY_TEXT', 'NO_PARTY_TEXT', 'NO_GUILD_TEXT', 'chatSaid',
     `${W.slice(at, end + 5)} return chatSend('local', 'hello');`)(
     { status: 'open', emoteOk: true, sendChat: (t) => { sent.push(t); return true; } }, { push: () => assert.fail('nothing said in its stead'), tab: () => null },
-    () => false, () => false, () => null, new Map(), null, () => null, 'old', 'old', 'old', 'no party', 'no guild');
+    () => false, () => false, () => null, new Map(), null, () => null, 'old', 'old', 'old', 'no party', 'no guild', chatSaid);
   assert.deepEqual({ ok, sent }, { ok: true, sent: ['hello'] }, 'the room hears it');
   assert.equal('SOLO_LOCAL_TEXT' in chat, false);
   const inHold = { px: 109, py: 158, in: 1, loc: "Privateer's Hold" };

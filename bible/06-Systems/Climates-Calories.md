@@ -2969,3 +2969,57 @@ street's frame wrote for the ear, DISC9/DISC11 - `weatherSim.js` fallingWeather)
 `env.falling` while the air and the sun keep the sky's word. Fog is not falling and keeps its row. The classic sky's
 level is 1: the mod's row, whole. The record: `01-Overview/bugs/Field-Bugs-2026-10-15f.md`.
 
+
+## DRUNK1 - THE DRINK, FELT AND HEARD (2026-10-17)
+
+Asked for: "Lets add that to the project" - camera sway, blur or double vision, stumbling, slurred speech, NPCs
+reacting - and "The slurred speech and NPCs reactions should just be modified text triggered by the state of
+drunkness." Until now being drunk was the stat swing, the bar's lines ("You are getting drunk..."), the status page's
+line and the amber tankard on the HUD (SURV5); nothing on screen moved. Neither DFU nor the mod has any of this: the
+port's own, built on the counter the tavern already keeps (`entity.survival.drunk`, one off every ten minutes).
+
+**One reading.** `survival/drunkFeel.js` `drunkStateOf` reads the counter against the LIVE endurance in the chip's own
+bands (`status.js` survivalHudChips: past half the endurance Drunk, past the endurance less ten Very drunk), so every
+effect starts with the chip and sobers with it; with the arc Off nothing is felt. The band's share (0 at the Drunk
+line, 1 at the endurance) sets a felt intensity - 0.35 at the line, one at the endurance - that eases at half a unit a
+second, so a drink comes on over two seconds and wears off the same way, and holds under a window (the shake's pause).
+
+**The eye, the feet and the lens** (`drunkFeel`, the game's one, driven by the four hosts beside Better Ambience):
+
+- THE SWAY - a slow roll (3.5 degrees), pitch (1.2) and yaw (1.8) and a few centimetres of eye drift, sums of unrelated
+  sines, folded into the frame's view matrix AFTER Better Ambience's shake: `world/viewFold.js` foldAfterShake (the shake's own fold moved there, a leaf, so the HUD never imports the mod), a fold
+  the one view-space call every host already makes runs after the shake whether the mod is on or off (FIELD-GUN6's
+  reasoning - one fold, not a fifth seam in four hosts, whose view lines the suite pins by source). The look, the aim
+  and the motor are untouched: the picture sways, the player does not turn.
+- THE STUMBLE - walking on the ground, now and then a lurch to one side: the motor's own blow push (`motor.js`
+  blowPush, TELL6e - stopped by a wall, never over an edge), 1.5 to 3.5 m/s across the walk, at a Poisson rate of up
+  to 0.3 a second and never two inside 1.5 s, with a roll kick on the view. Never standing still, in the air, the
+  saddle, the water, on a wall or under a knockdown.
+- THE LENS - a warm vignette that breathes at the screen's edge, painted by `hud.js` drawHud (the one host-agnostic
+  call, beside the blood on the lens) and alpha 0.45 at full. A HUD quad, not a post pass: blur and double vision would
+  need the frame as a texture, and the HUD draws over every host's world without one.
+
+The Climates & Calories row carries a part for all three - **Drunken sway** (`survivalDrunkFeel`, on by default, each
+player's own online, as the temperature plate is) - for a player the motion bothers. Switching it off leaves the words.
+
+**The words** (`survival/drunkSpeech.js`), text only, each line said as the drink stands WHEN it is said:
+
+- SLURRED SPEECH - what the player says: the talk window's player-says line (the question and the Work page's) and a
+  line said on the Local chat tab, the in-character one (`net/chat.js` CHAT_TABS) - slurred where world.js's chatSend
+  hands a Local line to the session, so a plain line, an /rp line and a /l line all pass, a gesture never. An s turns sh (always at the
+  endurance), a long word drags its last vowel, past the Drunk line an -ing loses its g, and a *hic* falls between words
+  (one a line Drunk, two Very drunk). Never inside the (( )) aside, never a word carrying markup (a macro's %, a link, a
+  mention), never on World, Region, Trade, LFG, Party or Guild - the player at the keyboard, not the character at the
+  bar - and never a slur that would run past the wire's line (`wire.js` CHAT_MAX), so the drink never costs the end of
+  what was typed.
+- NPC REACTIONS - what the NPC says back: a line after the greeting by band ("Had a few, have we?", "Sober up before
+  you talk to me."), and before an answer a word now and then (a quarter of the time Drunk, half Very drunk). The
+  answer itself is never changed: a quest's directions stay readable however drunk the asker.
+
+The door is `talkDoor.js` createTalkWindow, the one door under every conversation: `drunkTalk` hands NativeTalkWindow
+the greeting and a hooks object whose question and answer hooks say the drink, every other hook read through to the
+session's own object (its getters live, its own `this`), so both faces - classic and enhanced - show it.
+
+Pinned in `test/systems/survival/drunk1_feel.test.js` and `drunk1_speech.test.js`, the bands against the chip itself and
+the state off a real tavern pour, the talk lines through the real door; each law there was mutated by hand and failed
+its pin.

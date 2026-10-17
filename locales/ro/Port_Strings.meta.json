@@ -7839,6 +7839,11 @@
   "tr": "9ad8c1282dc2",
   "by": "claude-in-session"
  },
+ "features.mod.climatesCalories.drunkFeel": {
+  "en": "aeed26f01708",
+  "tr": "cd3366fa1805",
+  "by": "claude-in-session"
+ },
  "features.mod.climatesCalories.effect": {
   "en": "70f7bfca0841",
   "tr": "d74c0445e3f4",
@@ -19842,6 +19847,81 @@
  "summon.noQuest": {
   "en": "056fe9b45bd2",
   "tr": "e2758926197f",
+  "by": "claude-in-session"
+ },
+ "survival.drunk.answer.barelyUnderstand": {
+  "en": "88203b7579cf",
+  "tr": "d5d2eb597293",
+  "by": "claude-in-session"
+ },
+ "survival.drunk.answer.breath": {
+  "en": "0d65b1aa4b7c",
+  "tr": "15b1c9fc560c",
+  "by": "claude-in-session"
+ },
+ "survival.drunk.answer.hm": {
+  "en": "3b1f2ce64e98",
+  "tr": "f9473be659ec",
+  "by": "claude-in-session"
+ },
+ "survival.drunk.answer.plainly": {
+  "en": "c19810d42f7d",
+  "tr": "4556f22144e3",
+  "by": "claude-in-session"
+ },
+ "survival.drunk.answer.sitDown": {
+  "en": "cb272d90abeb",
+  "tr": "508b1040529b",
+  "by": "claude-in-session"
+ },
+ "survival.drunk.answer.slowDown": {
+  "en": "9de381c77fe3",
+  "tr": "33af970c8fc9",
+  "by": "claude-in-session"
+ },
+ "survival.drunk.answer.speakClearly": {
+  "en": "3f05e799ae10",
+  "tr": "e36f6f5830a3",
+  "by": "claude-in-session"
+ },
+ "survival.drunk.greet.atTheAle": {
+  "en": "3dc22bfd44a0",
+  "tr": "3ac1ad73b62c",
+  "by": "claude-in-session"
+ },
+ "survival.drunk.greet.barelyStand": {
+  "en": "12bce11ed5bf",
+  "tr": "ccb62978521b",
+  "by": "claude-in-session"
+ },
+ "survival.drunk.greet.fewHad": {
+  "en": "d8b4b6cee475",
+  "tr": "082a3db93ff5",
+  "by": "claude-in-session"
+ },
+ "survival.drunk.greet.reek": {
+  "en": "e365c2781594",
+  "tr": "950d5f1841bf",
+  "by": "claude-in-session"
+ },
+ "survival.drunk.greet.seeStraight": {
+  "en": "4f7f41a12209",
+  "tr": "d9c978cfb513",
+  "by": "claude-in-session"
+ },
+ "survival.drunk.greet.soberUp": {
+  "en": "cd09f58ffa74",
+  "tr": "2f0490dcbf4b",
+  "by": "claude-in-session"
+ },
+ "survival.drunk.greet.steadyOn": {
+  "en": "f4dc5f091b54",
+  "tr": "ccd30c021ed3",
+  "by": "claude-in-session"
+ },
+ "survival.drunk.greet.tavernFloor": {
+  "en": "e8d2cc23e5e4",
+  "tr": "f50f77579160",
   "by": "claude-in-session"
  },
  "trade.counter.cost.get": {

@@ -1637,8 +1637,10 @@ export const FEATURES = Object.freeze([
     control: Object.freeze({
       store: 'prefs', key: 'survival', initial: 'boons', online: 'player',   // BOONS-DEFAULT: difficulty.js SURVIVAL_DEFAULT
       tiers: Object.freeze([tier(false, OFF), tier('boons', () => t('features.mod.climatesCalories.boons', 'Boons')), tier('casual', () => t('features.mod.climatesCalories.casual', 'Casual')), tier('hard', () => t('features.mod.climatesCalories.hard', 'Hard'))]),
-      also: Object.freeze([Object.freeze({ store: 'prefs', key: 'survivalTempHud', initial: true, online: 'player' })]),
-      parts: Object.freeze([Object.freeze({ key: 'survivalTempHud', get label() { return t('features.mod.climatesCalories.tempHud', 'Temperature on the HUD'); } })]),
+      // DRUNK1 (2026-10-17): THE DRINK, FELT, IS A PART - the sway, the stumble and the lens (survival/drunkFeel.js), on by
+      // default and each player's own online, for the reason the plate is: what one player's eye does is no one else's
+      also: Object.freeze([Object.freeze({ store: 'prefs', key: 'survivalTempHud', initial: true, online: 'player' }), Object.freeze({ store: 'prefs', key: 'survivalDrunkFeel', initial: true, online: 'player' })]),
+      parts: Object.freeze([Object.freeze({ key: 'survivalTempHud', get label() { return t('features.mod.climatesCalories.tempHud', 'Temperature on the HUD'); } }), Object.freeze({ key: 'survivalDrunkFeel', get label() { return t('features.mod.climatesCalories.drunkFeel', 'Drunken sway'); } })]),
     }),
   }),
   // NAV (2026-09-28, Mac: "proper naval combat with a huge reference to assassins creed black flag ... directly integrate

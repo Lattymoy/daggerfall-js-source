@@ -158,6 +158,7 @@ import { maxFatigue, clampFatigue } from '../systems/statMods.js';   // AUDIT 23
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
 import { immersiveFootsteps } from '../systems/immersiveFootsteps.js';
 import { betterAmbience, classicFootstepAllowed } from '../systems/betterAmbience.js';   // BA1: Better Ambience - the shake, the dungeon's fog and light, the reverb, the indoor rain, its own stride   // IF1: Immersive Footsteps owns the stride and the three landing sounds once its clips are in (DisableVanillaFootsteps)
+import { drunkFeel } from '../systems/survival/drunkFeel.js';   // DRUNK1: the drink's sway and stumble, beside the shake
 import { calculateCastCost } from '../systems/spellcost.js';   // M2
 import { rangedDamageSpells } from '../systems/spellcast.js';   // U42: the flight probe's picker
 import { seasonValue, dateFromClassicMinutes, dateTimeString, midDateTimeString } from '../systems/gameDate.js';   // AUDIT 23 (wts-1); QX1: the notebook's header shapes
@@ -5474,6 +5475,7 @@ export async function bootExterior(canvas, renderer, params, status) {
           waterSurfaceY: null, onExteriorWater: _onWater, onExteriorWaterAny: _onWater, onExteriorPath: !!_surf.path, onStaticGeometry: !!_surf.staticGeometry, onFoot: isOnFoot(player.transportMode),
           winter: season === SEASON.Winter, climateIndex: locClimateIndex, loadInProgress: false, paused: _overlayHeld,   // AUDIT-BA F3
         });
+        drunkFeel.frame(dt, { entity: playerEntity, player, paused: _overlayHeld });   // DRUNK1: the drink's clock, its ease and its stumble (survival/drunkFeel.js), on the shake's pause
       }
       cam.pos = player.eyeAt();   // EV1: the interpolated render eye
       if (_driverSeat && player.transportMode === TRANSPORT_MODES.Cart) cam.pos = [_driverSeat.feet[0], _driverSeat.feet[1] + SEATED_EYE_HEIGHT, _driverSeat.feet[2]];   // WAGONS3: on my bench (last frame's seat until the wagon steps) - the picks aim from the eye on the screen

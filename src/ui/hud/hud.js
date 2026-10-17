@@ -28,6 +28,7 @@ import { drawCrosshairAndModeIcon, crosshairCentreY } from './hudCrosshair.js'; 
 import { playerDamageFlash } from '../damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage rides the one HUD call
 import { playerBloodScreen, SCREEN_SPATTER_MIN } from '../bloodScreen.js';   // BLOOD2e: blood on the lens rides the same call
 import { bloodScreenOn } from '../../combat/blood/bloodSwitch.js';   // BLOOD2e: its row
+import { drunkFeel } from '../../systems/survival/drunkFeel.js';   // DRUNK1: the drink's lens
 import { bloodAtlas, BLOOD_ATLAS_ARCHIVE, BLOOD_ATLAS_RECORD } from '../../combat/blood/bloodArt.js';   // BLOOD2e: the lens wears the marks' own atlas
 import { hudFade } from '../fadeLayer.js';   // D4: FadeBehaviour's target IS the HUD's parent panel
 import { drawHudLarge, dockedLargeHudHeight, largeHudEnabled } from './hudLarge.js';   // U45: the classic bottom bar - an ALTERNATIVE HUD, see below; E5: and the docked bar's height, the crosshair's re-centre term
@@ -620,6 +621,7 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
   if (blow && bloodScreenOn() && lastHealthLostPercent() >= SCREEN_SPATTER_MIN) playerBloodScreen.spatter(lastHealthLostPercent(), bloodAtlas());
   playerBloodScreen.tick(dt);
   if (playerBloodScreen.count && renderer.uploadTexture) playerBloodScreen.draw(renderer, canvas, renderer.uploadTexture(BLOOD_ATLAS_ARCHIVE, BLOOD_ATLAS_RECORD, bloodAtlas(), { smooth: true }));
+  drunkFeel.drawLens(renderer, canvas);   // DRUNK1: the drink's warm edge, over every host for the blood's reason - the hosts' frame eases it, this paints it
   // AUDIT 64 F34: the mid-screen label. What SetMidScreenText reads
   // off the live screen (:357-359) is fed every frame; the guard is
   // the LargeHUD SETTING, not whether a bar happens to be drawn.

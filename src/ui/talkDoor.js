@@ -39,6 +39,7 @@ import { mountEnhancedChunk } from './enhanced/enhancedChunk.js';   // MENU1: th
 import { registerOverlay } from './enhanced/enhancedOverlays.js';   // PX28: Tab puts it away
 import { NativeTalkWindow, talkArtLoaded } from './native/nativeTalk.js';
 import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
+import { drunkTalk } from '../systems/survival/drunkSpeech.js';   // DRUNK1: the drink, heard
 
 /** The gate a host asks before it opens a conversation window. The
  *  classic face needs TALK01I0 and its strips; the panel reads none
@@ -55,6 +56,9 @@ export function talkDoorReady() {
  */
 export function createTalkWindow(greeting, hooks) {
   noteFirstUse('talk');   // TUT1
+  // DRUNK1: the drink, heard - the greeting as said to a player in their cups, and the session's hooks with the
+  // player-says lines slurred and the answers reacted to (survival/drunkSpeech.js); a sober player's are their own
+  ({ greeting, hooks } = drunkTalk(greeting, hooks));
   const model = new NativeTalkWindow(greeting, hooks);
   // `document` for the reason the other doors give: node drives the
   // hosts headless and keeps the canvas window rather than getting a

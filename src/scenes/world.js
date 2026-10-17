@@ -227,6 +227,8 @@ import { hasCustomLocationPosition } from '../world/locationLayout.js';   // ROA
 import { FootstepMachine, pickFootstepSet, pickFootstepKind } from '../systems/footsteps.js';   // FS-slice; PEER-FS1: pickFootstepKind for the pose's own `fk`
 import { immersiveFootsteps, reportModCompatibilityIssues } from '../systems/immersiveFootsteps.js';
 import { betterAmbience, classicFootstepAllowed } from '../systems/betterAmbience.js';   // BA1: Better Ambience - the shake, the dungeon's fog and light, the reverb, the indoor rain, its own stride   // IF1: Immersive Footsteps owns the stride and the three landing sounds once its clips are in (DisableVanillaFootsteps)
+import { drunkFeel } from '../systems/survival/drunkFeel.js';   // DRUNK1: the drink's sway and stumble, beside the shake
+import { chatSaid } from '../systems/survival/drunkSpeech.js';   // DRUNK1: the Local tab's line, said as the drink stands
 import { createExteriorFoes, MAX_ACTIVE_ENCOUNTER_FOES, encounterCap, WILD_PACK_MULT, CAMP_CULL_DISTANCE, ENCOUNTER_CULL_DISTANCE, siteFoeSpawn, carrySiteFoe } from './exteriorFoes.js';   // X-slice; OW6: the pool's bound, a warband's too, and the culls a walk-away handover comes before
 import { createBreather, frameFitBudget } from '../systems/buildBreather.js';   // PERF7: the stream build yields to the frame; PERF-EXT24: a slice of what the frame left
 import { pieceIndex } from '../render/labGrass.js';   // PERF8: the piece under a point, by arithmetic
@@ -28095,6 +28097,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // EMOTE1: an action only down a session whose relay carries one - an older one would say the words bare
     const s = tabId === 'local' ? online : tabId === 'party' || tabId === 'guild' ? socialLink() : chatLinks.get(tabId);
     if (me && s?.status === 'open' && !s.emoteOk) return why(EMOTE_OLD_RELAY_TEXT);
+    if (tabId === 'local' && !me) text = chatSaid('local', text);   // DRUNK1: a line said aloud near you slurs with the drink (survival/drunkSpeech.js) - its (( )) aside kept, a gesture never
     if (tabId === 'local') return online?.sendChat(text, { me }) ?? false;
     if (tabId === 'party') {
       if (!social?.party) return why(NO_PARTY_TEXT);
@@ -33307,6 +33310,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
             waterSurfaceY: null, onExteriorWater: _onWater, onExteriorWaterAny: _onWater, onExteriorPath: !!_surf.path, onStaticGeometry: !!_surf.staticGeometry, onFoot: isOnFoot(player.transportMode),
             winter: season === SEASON.Winter, climateIndex: maps.getClimateIndex(_p.x, _p.y), loadInProgress: false, paused: _overlayHeld || _seasonHeld,   // AUDIT-BA F2/F3: the reposition rides rebase(); a held frame is a paused one
           });
+          drunkFeel.frame(dt, { entity: playerEntity, player, paused: _overlayHeld || _seasonHeld });   // DRUNK1: the drink's clock, its ease and its stumble (survival/drunkFeel.js), on the shake's pause
         }
         csaUpdate(dt);   // CSA-D: Come Sail Away's Update and LateUpdate after the motor - the helm's pin and the boat's move carry the body before the eye is taken from it
         // EV1: the interpolated render eye. AUDIT EV F-SIM5: rays and

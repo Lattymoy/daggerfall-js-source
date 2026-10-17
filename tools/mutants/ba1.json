@@ -172,7 +172,7 @@
   },
   {
     "name": "view-not-inverted",
-    "file": "src/systems/betterAmbience.js",
+    "file": "src/world/viewFold.js",
     "old": "  return multiply(rigidInverse(local), view);",
     "new": "  return multiply(local, view);",
     "tests": [

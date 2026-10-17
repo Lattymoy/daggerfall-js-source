@@ -48,7 +48,7 @@ import { rriNativeMaterialValue } from './roleplayRealismItems/rriItems.js';   /
 import { modSettingsOf } from './modSettings.js';
 import { audio as defaultAudio } from './audio.js';
 import { FOOTSTEP } from './footsteps.js';
-import { multiply, trs } from '../world/mat4.js';
+import { shakeView, afterShakeFolds } from '../world/viewFold.js';   // the one view-space fold, and the folds after the shake (DRUNK1)
 import { heardWeather, heardRainGain } from './weather/weatherSim.js';   // DISC9: the weather the player HEARS outdoors, not the sim's word; DISC11: and its level
 import { INDOOR_RAIN_GAIN, AMBIENT_RAIN_LOOP } from './ambientEffects.js';   // DISC11: the street's rain and its through-the-walls law
 import { immersiveFootsteps } from './immersiveFootsteps.js';
@@ -404,26 +404,9 @@ export function damageShake(shaker, s, amount, maxHealth) {
   shaker.shakeOnce(shakeAmount, s.roughness, s.fadeInTime, s.fadeOutTime);
 }
 
-/** The inverse of a rigid 4x4 (column-major): [R | t]^-1 = [R^T | -R^T t]. */
-export function rigidInverse(m) {
-  const r = new Float32Array(16);
-  r[0] = m[0]; r[1] = m[4]; r[2] = m[8];
-  r[4] = m[1]; r[5] = m[5]; r[6] = m[9];
-  r[8] = m[2]; r[9] = m[6]; r[10] = m[10];
-  r[12] = -(r[0] * m[12] + r[4] * m[13] + r[8] * m[14]);
-  r[13] = -(r[1] * m[12] + r[5] * m[13] + r[9] * m[14]);
-  r[14] = -(r[2] * m[12] + r[6] * m[13] + r[10] * m[14]);
-  r[15] = 1;
-  return r;
-}
-/** The shaker is the camera's PARENT (SetUpPlayer :41-49): a local offset and a local euler on the
- *  camera's own frame. In the port that is a rigid transform in VIEW space, folded into the view
- *  matrix the frame is drawn with; Unity's local +z is forward, the view's is -z. */
-export function shakeView(view, pos, rotDeg) {
-  if (!pos || (pos[0] === 0 && pos[1] === 0 && pos[2] === 0 && rotDeg[0] === 0 && rotDeg[1] === 0 && rotDeg[2] === 0)) return view;
-  const local = trs(pos[0], pos[1], -pos[2], rotDeg[0], rotDeg[1], rotDeg[2]);
-  return multiply(rigidInverse(local), view);
-}
+// THE ONE VIEW-SPACE FOLD lives in world/viewFold.js since DRUNK1 (a leaf the drink's sway imports without pulling this
+// module into the HUD's graph); re-exported here under the names the mod's port has always had.
+export { rigidInverse, shakeView } from '../world/viewFold.js';
 
 // --- Foggy dungeons (FoggyDungeonsMod.cs) -------------------------------------
 
@@ -587,7 +570,13 @@ export function createBetterAmbience({ audio = defaultAudio, settings = readBett
       shaker.update(m.paused ? 0 : Math.max(0, Number(dt) || 0));   // CameraShaker.Update - AUDIT-BA F3: Time.deltaTime is 0 under IsGamePaused, so a shake freezes under a window
       if (s.footstepsEnable && clipsLoaded) footsteps.update(m);   // BetterFootstepsComponentPlayer.Update
     },
-    view(view) { return s?.Enabled ? shakeView(view, shaker.posAddShake, shaker.rotAddShake) : view; },
+    // DRUNK1: and every fold after the shake (`foldAfterShake`) - the mod's switch is the shake's, not theirs, so they
+    // fold whatever it says
+    view(view) {
+      let v = s?.Enabled ? shakeView(view, shaker.posAddShake, shaker.rotAddShake) : view;
+      for (const fold of afterShakeFolds()) v = fold(v);   // TECHFX1: a loop, not a reduce's fresh closure a frame
+      return v;
+    },
     removeHealth(amount, maxHealth) { syncSettings(); if (s.Enabled) damageShake(shaker, s, amount, maxHealth); },
     /** FIELD-GUN6: a shake that is not a wound. DamageShaker is the
      *  mod's only producer and it prices a blow by how much of you it
@@ -635,6 +624,7 @@ export function createBetterAmbience({ audio = defaultAudio, settings = readBett
 }
 
 /** One component, every host (HT1's shape). */
+
 export const betterAmbience = createBetterAmbience();
 // DamageShaker on the player object: the same RemoveHealth message the flash rides (DamageShaker.cs:20-27)
 setRemoveHealthListener((amount) => betterAmbience.removeHealth(amount, playerEntity.maxHealth ?? 0));

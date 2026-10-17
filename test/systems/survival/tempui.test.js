@@ -265,8 +265,9 @@ test('TEMP-UI: the HUD plate, executed - UI-CALM: in the bottom-left corner\'s c
 
 test('TEMP-UI: the plate\'s part on the Climates & Calories row - on by default, each player\'s own online, a part of the drawer', () => {
   const row = FEATURES.find((f) => f.id === 'mod-climates-calories');
-  assert.deepEqual(row.control.also, [{ store: 'prefs', key: 'survivalTempHud', initial: true, online: 'player' }]);
-  assert.deepEqual(row.control.parts, [{ key: 'survivalTempHud', label: 'Temperature on the HUD' }]);
+  // DRUNK1 (2026-10-17): the row's second part, the drink's sway (survival/drunkFeel.js), beside the plate
+  assert.deepEqual(row.control.also, [{ store: 'prefs', key: 'survivalTempHud', initial: true, online: 'player' }, { store: 'prefs', key: 'survivalDrunkFeel', initial: true, online: 'player' }]);
+  assert.deepEqual(row.control.parts, [{ key: 'survivalTempHud', label: 'Temperature on the HUD' }, { key: 'survivalDrunkFeel', label: 'Drunken sway' }]);
   assert.equal(FEATURE_PREF_DEFAULTS.survivalTempHud, true);
   assert.equal(onlineForcedPref('survivalTempHud', '?online=1'), undefined);
 });
