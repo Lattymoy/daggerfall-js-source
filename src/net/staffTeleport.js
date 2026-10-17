@@ -3,6 +3,7 @@
 // authenticates staff and routes one target's fresh answer only to its asker.
 import { privateInteriorOf } from './privateInterior.js';
 import { boatUid, readSailingCabin } from './boatIdentity.js';
+import { instanceOfWord } from './instanceRoom.js';   // INSTANCES (the audit): a place's instance, where the player stands in one
 export const STAFF_TP_RELAY_MIN = 159;   // world156 now belongs to upstream's arena; unpublished local candidates through 158 are superseded by the combined law.
 export const STAFF_TP_TIMEOUT_MS = 8000;
 export const STAFF_TP_ERRORS = Object.freeze(['offline', 'ambiguous', 'busy', 'private', 'battle', 'unavailable', 'denied']);
@@ -13,6 +14,9 @@ const integer = (v, max = 0xffffffff) => Number.isSafeInteger(v) && v >= 0 && v 
 const point = (v, length = 3) => Array.isArray(v) && v.length === length && v.every(finite);
 const pixel = (v) => v && integer(v.x, 999) && integer(v.y, 499);
 const label = (v) => typeof v === 'string' && v.trim().length > 0 && v.length <= 64 && !/[\x00-\x1f\x7f]/.test(v);
+/** INSTANCES (the audit): the instance a building or a dungeon destination stands in (net/instanceRoom.js instanceWord's
+ *  `<owner>.<epoch>`) - staff land in the player's own room, which admits staff, never its public twin; absent, public. */
+const insOf = (d) => (d.ins != null && instanceOfWord(d.ins) ? { ins: d.ins } : {});
 
 // Keep the relay independent of the game world's layout loader. Missing stamps
 // are legacy classic towns; reject unknown or duplicate vendors rather than
@@ -50,12 +54,16 @@ export function validStaffDestination(d) {
     if (!b || !integer(b.blockIndex, 65535) || !integer(b.recordIndex, 65535) || !integer(b.doorIndex, 65535) || !integer(b.buildingKey)) return null;
     const room = d.privateRoom == null ? null : privateInteriorOf(d.privateRoom);
     if (d.privateRoom != null && (!room || room.buildingKey !== b.buildingKey)) return null;
-    return { ...out, ...(d.layout != null ? { layout } : {}), door: { blockIndex: b.blockIndex, recordIndex: b.recordIndex, doorIndex: b.doorIndex, buildingKey: b.buildingKey }, ...(room ? { privateRoom: d.privateRoom } : {}) };
+    if (d.ins != null && (room || !instanceOfWord(d.ins))) return null;   // INSTANCES: a private room is no instance's
+    return { ...out, ...(d.layout != null ? { layout } : {}), door: { blockIndex: b.blockIndex, recordIndex: b.recordIndex, doorIndex: b.doorIndex, buildingKey: b.buildingKey }, ...(room ? { privateRoom: d.privateRoom } : {}), ...insOf(d) };
   }
   if (d.kind === 'dungeon') {
     if (!integer(d.mapId)) return null;
     if (d.locationKey != null && !/^dungeon:(0|[1-9]\d{0,9})$/.test(d.locationKey)) return null;
-    return { ...out, mapId: d.mapId, ...(d.locationKey != null ? { locationKey: d.locationKey } : {}) };
+    if (d.ins != null && !instanceOfWord(d.ins)) return null;
+    // INSTANCES: `whole` - the dungeon as Daggerfall lays it (an instance's, or a whole public room's), which staff build to
+    // stand where the player does; absent, the world's own size for it
+    return { ...out, mapId: d.mapId, ...(d.locationKey != null ? { locationKey: d.locationKey } : {}), ...insOf(d), ...(d.whole === true || d.ins != null ? { whole: true } : {}) };
   }
   if (d.kind === 'gate') {
     const g = d.gate;
@@ -107,8 +115,8 @@ export function validStaffTeleportOut(m) {
 export function staffDestinationKey(d) {
   // A map pixel is part of an interior's identity; door keys repeat in towns.
   const site = `${d.kind}:${d.pixel.x},${d.pixel.y}`;
-  if (d.kind === 'interior') return `${site}:${JSON.stringify(d.sailingCabin ? [d.sailingCabin.uid, d.sailingCabin.hull, d.sailingCabin.origin, d.cabinOwner] : [d.door, staffLayout(d.layout)])}:${d.privateRoom ?? ''}`;
-  if (d.kind === 'dungeon') return `${site}:${d.mapId}:${d.locationKey ?? ''}`;
+  if (d.kind === 'interior') return `${site}:${JSON.stringify(d.sailingCabin ? [d.sailingCabin.uid, d.sailingCabin.hull, d.sailingCabin.origin, d.cabinOwner] : [d.door, staffLayout(d.layout)])}:${d.privateRoom ?? ''}:${d.ins ?? ''}`;   // INSTANCES: and its instance - the same door, another room
+  if (d.kind === 'dungeon') return `${site}:${d.mapId}:${d.locationKey ?? ''}:${d.ins ?? ''}:${d.whole ? 'w' : ''}`;
   if (d.kind === 'gate') return `gate:${d.gate.day}`;
   if (d.kind === 'abyss') return `${site}:${d.abyss.PitMapX},${d.abyss.PitMapY}:${d.abyss.TemplateRegionIndex},${d.abyss.TemplateLocationIndex}`;
   return site;

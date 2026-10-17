@@ -58,8 +58,8 @@ import { modSetting } from './modSettings.js';
 import { liveStat } from './statMods.js';
 import { registerFormulaOverride, dice100 } from '../combat/formulas.js';
 import { createWeapon } from '../combat/enemyEquipment.js';
-import { createRandomArmor } from './loot.js';
-import { mintCondition, setItemFields } from './itemTemplates.js';   // MAC-N1: SetItem's name + value, the one export
+import { createRandomArmor } from './loot/loot.js';
+import { mintCondition, setItemFields } from './item/itemTemplates.js';   // MAC-N1: SetItem's name + value, the one export
 import { registerEnemyDeathHandler } from '../scenes/corpseMarker.js';
 import { GOLD_TEMPLATE } from './inventory.js';
 

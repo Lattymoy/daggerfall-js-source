@@ -1,0 +1,20 @@
+[
+  {
+    "name": "EGLOOK-ATMOS-shade-ambient-void",
+    "file": "src/world/eliteGates/egAtmos.js",
+    "old": "    tri: Object.freeze({ sky: f3(1.1, 1.2, 1.6), equator: f3(0.75, 0.8, 1.05), ground: f3(0.4, 0.42, 0.58) }),",
+    "new": "    tri: Object.freeze({ sky: f3(0.08, 0.09, 0.13), equator: f3(0.05, 0.055, 0.075), ground: f3(0.03, 0.03, 0.045) }),",
+    "tests": [
+      "test/world/eliteGates/eglook_atmos.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-ATMOS-circle-read-as-galleries",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "export const egHallFog = (c) => egAtmosOf(egBandOfCircle(Number.isSafeInteger(c) && c > 0 ? c : 1)).fog;",
+    "new": "export const egHallFog = (c) => egAtmosOf(0).fog;",
+    "tests": [
+      "test/world/eliteGates/eglook_atmos.test.js"
+    ]
+  }
+]

@@ -5,8 +5,8 @@
     "old": "JSON.stringify([seat.key, seat.name, seat.region,",
     "new": "JSON.stringify([seat.name, seat.key, seat.region,",
     "tests": [
-      "test/seat1a_client.test.js",
-      "test/seat1a_service.test.js"
+      "test/net/seat1a_client.test.js",
+      "test/net/seat1a_service.test.js"
     ]
   },
   {
@@ -15,7 +15,7 @@
     "old": "n.length >= 1 && n.length <= 48 &&",
     "new": "n.length >= 1 && n.length <= 49 &&",
     "tests": [
-      "test/seat1a_client.test.js"
+      "test/net/seat1a_client.test.js"
     ]
   },
   {
@@ -24,8 +24,8 @@
     "old": " || name !== KINGDOMS[CROWN_SEAT_REGIONS[region]]?.name))",
     "new": "))",
     "tests": [
-      "test/seat1a_client.test.js",
-      "test/seat1a_service.test.js"
+      "test/net/seat1a_client.test.js",
+      "test/net/seat1a_service.test.js"
     ]
   },
   {
@@ -34,8 +34,8 @@
     "old": "(SEATS_SWITCH.includes(v) ? v : 'off')",
     "new": "(SEATS_SWITCH.includes(v) ? v : 'on')",
     "tests": [
-      "test/seat1a_client.test.js",
-      "test/seat1a_service.test.js"
+      "test/net/seat1a_client.test.js",
+      "test/net/seat1a_service.test.js"
     ]
   },
   {
@@ -44,8 +44,8 @@
     "old": "  const n = SEAT_WITNESS_UNMATCHED_MAX;\n",
     "new": "  const n = SEAT_WITNESS_UNMATCHED_MAX - 1;\n",
     "tests": [
-      "test/seat1a_client.test.js",
-      "test/seat1a_service.test.js"
+      "test/net/seat1a_client.test.js",
+      "test/net/seat1a_service.test.js"
     ]
   },
   {
@@ -54,8 +54,8 @@
     "old": "&& nowS < ts[i] + SEAT_WITNESS_IGNORED_S) { out.add(a); break; }",
     "new": ") { out.add(a); break; }",
     "tests": [
-      "test/seat1a_client.test.js",
-      "test/audit_seats_law.test.js"
+      "test/net/seat1a_client.test.js",
+      "test/net/audit_seats_law.test.js"
     ]
   },
   {
@@ -64,7 +64,7 @@
     "old": "if ((givers.get(`${r.key}\\n${r.report}`)?.size ?? 0) > 1) continue;",
     "new": "if ((givers.get(`${r.key}\\n${r.report}`)?.size ?? 0) > 99) continue;",
     "tests": [
-      "test/seat1a_client.test.js"
+      "test/net/seat1a_client.test.js"
     ]
   },
   {
@@ -73,7 +73,7 @@
     "old": ": `${seat.name}. Its Charter is unheld.`) + siege;",
     "new": ": `${seat.name}.`) + siege;",
     "tests": [
-      "test/seat1a_client.test.js"
+      "test/net/seat1a_client.test.js"
     ]
   },
   {
@@ -82,7 +82,7 @@
     "old": "MARCHES[seat.region].map((k) => KINGDOM_METALS[k])",
     "new": "[SEAT_RING_UNHELD]",
     "tests": [
-      "test/seat1a_client.test.js"
+      "test/net/seat1a_client.test.js"
     ]
   },
   {
@@ -91,7 +91,7 @@
     "old": "ONLINE_EPOCH_MS + 6 * 24 * H + 18 * H;",
     "new": "ONLINE_EPOCH_MS + 6 * 24 * H + 17 * H;",
     "tests": [
-      "test/seat1a_client.test.js"
+      "test/net/seat1a_client.test.js"
     ]
   },
   {
@@ -100,43 +100,43 @@
     "old": ">= SEAT_WEEK_MS - SEAT_RECKONING_MS ? 'reckoning'",
     "new": "> SEAT_WEEK_MS - SEAT_RECKONING_MS ? 'reckoning'",
     "tests": [
-      "test/seat1a_client.test.js"
+      "test/net/seat1a_client.test.js"
     ]
   },
   {
     "name": "SEAT1a-any-building-a-palace",
-    "file": "src/systems/townSeats.js",
+    "file": "src/systems/town/townSeats.js",
     "old": "(b) => b?.buildingType === BUILDING_TYPES.Palace)",
     "new": "(b) => b?.buildingType != null)",
     "tests": [
-      "test/seat1a_client.test.js"
+      "test/net/seat1a_client.test.js"
     ]
   },
   {
     "name": "SEAT1a-crown-with-a-palace-a-palace",
-    "file": "src/systems/townSeats.js",
+    "file": "src/systems/town/townSeats.js",
     "old": "tier: crown ? 'crown' : 'palace',",
     "new": "tier: hasPalace(loc) ? 'palace' : 'crown',",
     "tests": [
-      "test/seat1a_client.test.js"
+      "test/net/seat1a_client.test.js"
     ]
   },
   {
     "name": "SEAT1a-mod-rows-counted",
-    "file": "src/systems/townSeats.js",
+    "file": "src/systems/town/townSeats.js",
     "old": "    if (!loc || !isBase(loc)) continue;",
     "new": "    if (!loc) continue;",
     "tests": [
-      "test/seat1a_client.test.js"
+      "test/net/seat1a_client.test.js"
     ]
   },
   {
     "name": "SEAT1a-key-signed",
-    "file": "src/systems/townSeats.js",
+    "file": "src/systems/town/townSeats.js",
     "old": "key: loc.mapTableData.mapId >>> 0,",
     "new": "key: loc.mapTableData.mapId | 0,",
     "tests": [
-      "test/seat1a_client.test.js"
+      "test/net/seat1a_client.test.js"
     ]
   },
   {
@@ -145,7 +145,7 @@
     "old": "player.registered_at <= nowS - WITNESS.ageS;",
     "new": "player.registered_at <= nowS;",
     "tests": [
-      "test/seat1a_service.test.js"
+      "test/net/seat1a_service.test.js"
     ]
   },
   {
@@ -154,7 +154,7 @@
     "old": "  if (ignored.has(player.id)) return { ok: true, counted: false, why: 'ignored' };\n",
     "new": "",
     "tests": [
-      "test/seat1a_service.test.js"
+      "test/net/seat1a_service.test.js"
     ]
   },
   {
@@ -163,7 +163,7 @@
     "old": "    seats: seats.filter((s) => factConfirmed(s.fact)).map(view)",
     "new": "    seats: seats.filter((s) => s.fact.seat).map(view)",
     "tests": [
-      "test/seat1a_service.test.js"
+      "test/net/seat1a_service.test.js"
     ]
   },
   {
@@ -172,7 +172,7 @@
     "old": "  if (await struck(db, s.key)) return { error: 'seat-struck' };\n",
     "new": "",
     "tests": [
-      "test/seat1a_service.test.js"
+      "test/net/seat1a_service.test.js"
     ]
   },
   {
@@ -181,7 +181,7 @@
     "old": "  if (!isDeveloper(dev, env)) return { error: 'not-developer' };\n  if (!seatKeyOk(key))",
     "new": "  if (!seatKeyOk(key))",
     "tests": [
-      "test/seat1a_service.test.js"
+      "test/net/seat1a_service.test.js"
     ]
   },
   {
@@ -190,7 +190,7 @@
     "old": "SELECT ?1, ?2, 'strike', json_set(",
     "new": "SELECT ?1, ?2, 'struck', json_set(",
     "tests": [
-      "test/seat1a_service.test.js"
+      "test/net/seat1a_service.test.js"
     ]
   },
   {
@@ -199,7 +199,7 @@
     "old": "s.agreeing.length === SEAT_WITNESSES_AUDIT) ||",
     "new": "s.agreeing.length >= SEAT_WITNESSES_AUDIT) ||",
     "tests": [
-      "test/seat1a_service.test.js"
+      "test/net/seat1a_service.test.js"
     ]
   },
   {
@@ -208,7 +208,7 @@
     "old": "export async function listSeats({ db, nowS }, player, env) {\n  if (!seatsOpenFor(player, env)) return { error: 'seats-closed' };\n",
     "new": "export async function listSeats({ db, nowS }, player, env) {\n",
     "tests": [
-      "test/seat1a_service.test.js"
+      "test/net/seat1a_service.test.js"
     ]
   },
   {
@@ -217,7 +217,7 @@
     "old": "SEAT_WITNESS_REPORTS_HOUR, 3600)",
     "new": "SEAT_WITNESS_REPORTS_HOUR + 1, 3600)",
     "tests": [
-      "test/seat1a_service.test.js"
+      "test/net/seat1a_service.test.js"
     ]
   },
   {
@@ -226,7 +226,7 @@
     "old": "\"INSERT OR IGNORE INTO world_witness (kind, key, account, report, region, at) VALUES ('seat', ?, ?, ?, ?, ?)\"",
     "new": "\"INSERT OR REPLACE INTO world_witness (kind, key, account, report, region, at) VALUES ('seat', ?, ?, ?, ?, ?)\"",
     "tests": [
-      "test/seat1a_service.test.js"
+      "test/net/seat1a_service.test.js"
     ]
   },
   {
@@ -235,7 +235,7 @@
     "old": "CHECK (kind IN ('pixel', 'dungeon', 'hub', 'seat'))",
     "new": "CHECK (kind IN ('pixel', 'dungeon', 'hub'))",
     "tests": [
-      "test/seat1a_service.test.js"
+      "test/net/seat1a_service.test.js"
     ]
   },
   {
@@ -244,7 +244,7 @@
     "old": "if (!force && nowMs() - at < SEAT_LIST_CACHE_MS &&",
     "new": "if (false && nowMs() - at < SEAT_LIST_CACHE_MS &&",
     "tests": [
-      "test/seat1a_client.test.js"
+      "test/net/seat1a_client.test.js"
     ]
   },
   {
@@ -253,7 +253,7 @@
     "old": "at = r?.error === 'no-session' ? -Infinity : nowMs();",
     "new": "at = nowMs();",
     "tests": [
-      "test/seat1a_client.test.js"
+      "test/net/seat1a_client.test.js"
     ]
   },
   {
@@ -262,7 +262,7 @@
     "old": "      if (t[String(s.key)] === dayNow()) return false;\n",
     "new": "",
     "tests": [
-      "test/seat1a_client.test.js"
+      "test/net/seat1a_client.test.js"
     ]
   },
   {
@@ -271,52 +271,52 @@
     "old": "if (!s || open !== true) return false;",
     "new": "if (!s) return false;",
     "tests": [
-      "test/seat1a_client.test.js"
+      "test/net/seat1a_client.test.js"
     ]
   },
   {
     "name": "SEAT1a-map-no-seat",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "    ...seatMarkOf(seatAt(m.summary)),",
     "new": "    ...seatMarkOf(null),",
     "tests": [
-      "test/seat1a_client.test.js"
+      "test/net/seat1a_client.test.js"
     ]
   },
   {
     "name": "SEAT1a-map-reach-ignores-the-ring",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": " + (m.seat ? SEAT_RING_PAD : 0);",
     "new": " + 0;",
     "tests": [
-      "test/seat1a_client.test.js"
+      "test/net/seat1a_client.test.js"
     ]
   },
   {
     "name": "SEAT1a-map-no-second-ring",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "  if (mark.second?.length) {",
     "new": "  if (false) {",
     "tests": [
-      "test/seat1a_client.test.js"
+      "test/net/seat1a_client.test.js"
     ]
   },
   {
     "name": "SEAT1a-map-no-crown",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "  if (mark.crown) {",
     "new": "  if (false) {",
     "tests": [
-      "test/seat1a_client.test.js"
+      "test/net/seat1a_client.test.js"
     ]
   },
   {
     "name": "SEAT1a-map-ring-over-the-glyph",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "  for (const [m, x, y] of inked) if (m.seatMark) paintSeatRing(ctx, x, y, markReach(m), m.seatMark);\n  for (const [m, x, y] of inked) paintGlyph(ctx, m.kind, x, y, true);",
     "new": "  for (const [m, x, y] of inked) paintGlyph(ctx, m.kind, x, y, true);\n  for (const [m, x, y] of inked) if (m.seatMark) paintSeatRing(ctx, x, y, markReach(m), m.seatMark);",
     "tests": [
-      "test/seat1a_client.test.js"
+      "test/net/seat1a_client.test.js"
     ]
   },
   {
@@ -325,7 +325,7 @@
     "old": "        seatAt: (s) => this.deps.seatAt?.(s) ?? null,",
     "new": "        seatAt: () => null,",
     "tests": [
-      "test/seat1a_client.test.js"
+      "test/net/seat1a_client.test.js"
     ]
   },
   {
@@ -334,7 +334,7 @@
     "old": "(centre[0] - cx) * ox + (centre[1] - cz) * oz < 0)",
     "new": "(centre[0] - cx) * ox + (centre[1] - cz) * oz > 0)",
     "tests": [
-      "test/seat1a_client.test.js"
+      "test/net/seat1a_client.test.js"
     ]
   },
   {
@@ -343,7 +343,7 @@
     "old": "boards.forEach((b, i) => { if (!bounty.has(i)) add(boardPennantAnchor(b)); });",
     "new": "boards.forEach((b) => { add(boardPennantAnchor(b)); });",
     "tests": [
-      "test/seat1a_client.test.js"
+      "test/net/seat1a_client.test.js"
     ]
   },
   {
@@ -352,7 +352,7 @@
     "old": "if (a && out.length < SEAT_BANNERS_MAX) out.push(a);",
     "new": "if (a) out.push(a);",
     "tests": [
-      "test/seat1a_client.test.js"
+      "test/net/seat1a_client.test.js"
     ]
   },
   {
@@ -361,7 +361,7 @@
     "old": "if (list[i]?.buildingType === BUILDING_TYPES.Palace) out.push",
     "new": "if (list[i]?.buildingType != null) out.push",
     "tests": [
-      "test/seat1a_client.test.js"
+      "test/net/seat1a_client.test.js"
     ]
   },
   {
@@ -370,7 +370,7 @@
     "old": "      const h = seat ? seatBannerOf(seat) : null;",
     "new": "      const h = seatBannerOf(seat ?? { region: 21 });",
     "tests": [
-      "test/seat1a_client.test.js"
+      "test/net/seat1a_client.test.js"
     ],
     "note": "SEAT1c (PIN MOVED): re-aimed by content."
   },
@@ -380,7 +380,7 @@
     "old": "if (seat) { townTalk.say(seatArrivalLine(seat), 5); seatBook.witness(seat); }",
     "new": "if (seat) { townTalk.say(seatArrivalLine(seat), 5); }",
     "tests": [
-      "test/seat1a_client.test.js"
+      "test/net/seat1a_client.test.js"
     ],
     "note": "SEAT1c (PIN MOVED): re-aimed by content - the arrival names its holder."
   },
@@ -390,7 +390,7 @@
     "old": "const seatHere = (mapId) => (seatBook?.open === true ? seatBook.dressed(seatAtMapId(townSeats, mapId)) : null);",
     "new": "const seatHere = (mapId) => (seatBook ? seatBook.dressed(seatAtMapId(townSeats, mapId)) : null);",
     "tests": [
-      "test/seat1a_client.test.js"
+      "test/net/seat1a_client.test.js"
     ],
     "note": "SEAT1c (PIN MOVED): re-aimed by content."
   },
@@ -400,7 +400,7 @@
     "old": "    for (const b of seatBanners?.list() ?? []) all.push(b);",
     "new": "    for (const b of []) all.push(b);",
     "tests": [
-      "test/seat1a_client.test.js"
+      "test/net/seat1a_client.test.js"
     ]
   }
 ]

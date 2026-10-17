@@ -5,7 +5,7 @@
     "old": "    if (pk.hold?.()) { this._fcStart = null; return false; }",
     "new": "    if (false) { this._fcStart = null; return false; }",
     "tests": [
-      "test/fb1001_climbnode.test.js"
+      "test/player/fb1001_climbnode.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    if (pk.hold?.()) { this._fcStart = null; return false; }",
     "new": "    if (!pk.hold?.()) { this._fcStart = null; return false; }",
     "tests": [
-      "test/fb1001_climbnode.test.js"
+      "test/player/fb1001_climbnode.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    if (pk.hold?.()) { this._fcStart = null; return false; }",
     "new": "    if (pk.hold?.()) return false;",
     "tests": [
-      "test/fb1001_climbnode.test.js"
+      "test/player/fb1001_climbnode.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    say,\n    hold,\n  };",
     "new": "    say,\n  };",
     "tests": [
-      "test/fb1001_climbnode.test.js"
+      "test/player/fb1001_climbnode.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "{ hold: () => !!gatherHost && (gatherHost.acting() || !!gatherHost.target) }",
     "new": "{ hold: () => !!gatherHost && gatherHost.acting() }",
     "tests": [
-      "test/fb1001_climbnode.test.js"
+      "test/player/fb1001_climbnode.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "{ hold: () => !!gatherHost && (gatherHost.acting() || !!gatherHost.target) }",
     "new": "{ hold: () => !!gatherHost && !!gatherHost.target }",
     "tests": [
-      "test/fb1001_climbnode.test.js"
+      "test/player/fb1001_climbnode.test.js"
     ]
   }
 ]

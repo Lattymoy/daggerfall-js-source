@@ -1,101 +1,101 @@
 [
   {
     "name": "DUEL1-accepter-begins-on-its-own-yes",
-    "file": "src/net/duelSession.js",
+    "file": "src/net/duel/duelSession.js",
     "old": "      waiting = { peer, s: a.s, at: now(), sub: a.sub };\n",
     "new": "      waiting = { peer, s: a.s, at: now(), sub: a.sub }; begin(peer, a.s, [0, 0, 0], a.sub);\n",
     "tests": [
-      "test/duel_session.test.js"
+      "test/net/duel/duel_session.test.js"
     ]
   },
   {
     "name": "DUEL1-start-never-sent",
-    "file": "src/net/duelSession.js",
+    "file": "src/net/duel/duelSession.js",
     "old": "          if (once({ k: 'start', to: from, s, c })) { begin(from, s, c, sub); return; }",
     "new": "          begin(from, s, c, sub); return;",
     "tests": [
-      "test/duel_session.test.js"
+      "test/net/duel/duel_session.test.js"
     ]
   },
   {
     "name": "DUEL1-a-yes-to-nothing-unanswered",
-    "file": "src/net/duelSession.js",
+    "file": "src/net/duel/duelSession.js",
     "old": "            if (!(duel && duel.peer === from && duel.s === d.s) && !engagedElsewhere(from)) answer(from, { k: 'cancel', to: from, s: d.s, why: duel ? 'busy' : 'timeout' });\n",
     "new": "",
     "tests": [
-      "test/duel_session.test.js"
+      "test/net/duel/duel_session.test.js"
     ]
   },
   {
     "name": "DUEL1-the-wait-unbounded",
-    "file": "src/net/duelSession.js",
+    "file": "src/net/duel/duelSession.js",
     "old": "      if (waiting && t - waiting.at > DUEL_START_WAIT_MS) {",
     "new": "      if (waiting && t - waiting.at > DUEL_START_WAIT_MS * 1e9) {",
     "tests": [
-      "test/duel_session.test.js"
+      "test/net/duel/duel_session.test.js"
     ]
   },
   {
     "name": "DUEL1-an-indoor-player-prompted",
-    "file": "src/net/duelSession.js",
+    "file": "src/net/duel/duelSession.js",
     "old": "          if (can()) { answer(from, { k: 'cancel', to: from, s: d.s, why: can() === 'outdoors' ? 'outdoors' : 'busy' }); return; }\n",
     "new": "",
     "tests": [
-      "test/duel_session.test.js"
+      "test/net/duel/duel_session.test.js"
     ]
   },
   {
     "name": "DUEL1-the-challenged-side-measures-nothing",
-    "file": "src/net/duelSession.js",
+    "file": "src/net/duel/duelSession.js",
     "old": "          if (near(from) !== true) { answer(from, { k: 'cancel', to: from, s: d.s, why: 'range' }); return; }\n",
     "new": "",
     "tests": [
-      "test/duel_session.test.js"
+      "test/net/duel/duel_session.test.js"
     ]
   },
   {
     "name": "DUEL1-a-blow-in-the-count",
-    "file": "src/net/duelSession.js",
+    "file": "src/net/duel/duelSession.js",
     "old": "      if (!d || counting(d) || (kind !== 'strike' && kind !== 'spell')) return 0;",
     "new": "      if (!d || (kind !== 'strike' && kind !== 'spell')) return 0;",
     "tests": [
-      "test/duel_session.test.js"
+      "test/net/duel/duel_session.test.js"
     ]
   },
   {
     "name": "DUEL1-the-heal-at-once",
-    "file": "src/net/duelSession.js",
+    "file": "src/net/duel/duelSession.js",
     "old": "        if (t - duel.overAt >= DUEL_HEAL_HOLD_MS) {",
     "new": "        if (t - duel.overAt >= 0) {",
     "tests": [
-      "test/duel_session.test.js"
+      "test/net/duel/duel_session.test.js"
     ]
   },
   {
     "name": "DUEL1-a-carried-off-duellist-s-leave-told-as-a-fall",
-    "file": "src/net/duelSession.js",
+    "file": "src/net/duel/duelSession.js",
     "old": "      if (me && worldGroundMetres(me, d.c) > DUEL_RADIUS_M + DUEL_OUT_SLACK_M) { post({ k: 'end', to: d.peer, s: d.s, why: 'left' }); finish('left', { lost: !counting(d) }); return; }",
     "new": "      if (me && worldGroundMetres(me, d.c) > DUEL_RADIUS_M + DUEL_OUT_SLACK_M) { post({ k: 'end', to: d.peer, s: d.s, why: 'fell' }); finish('fell', { lost: true }); return; }",
     "tests": [
-      "test/duel_session.test.js"
+      "test/net/duel/duel_session.test.js"
     ]
   },
   {
     "name": "DUEL1-the-opponent-s-stray-pose-a-verdict",
-    "file": "src/net/duelSession.js",
+    "file": "src/net/duel/duelSession.js",
     "old": "        if (t - d.outSince > DUEL_OUT_MS + DUEL_REF_LATE_MS) {",
     "new": "        if (t - d.outSince >= 0) {",
     "tests": [
-      "test/duel_session.test.js"
+      "test/net/duel/duel_session.test.js"
     ]
   },
   {
     "name": "DUEL1-clamp-moves-the-height",
-    "file": "src/net/duelSession.js",
+    "file": "src/net/duel/duelSession.js",
     "old": "  return [centre[0] + dx * k, centre[2] + dz * k];",
     "new": "  return [centre[0] + dx * k, centre[1], centre[2] + dz * k];",
     "tests": [
-      "test/duel_session.test.js"
+      "test/net/duel/duel_session.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "      if (d.why === undefined) { if (d.k === 'end') return null; break; }",
     "new": "      if (d.why === undefined) break;",
     "tests": [
-      "test/duel_wire.test.js"
+      "test/net/duel_wire.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "const CAST_RANGE_TYPES = Object.freeze([1, 2]);",
     "new": "const CAST_RANGE_TYPES = Object.freeze([1, 2, 3, 4]);",
     "tests": [
-      "test/duel_wire.test.js"
+      "test/net/duel_wire.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "      this._send(tws, JSON.stringify({ t: 'duel', id: a.id, ...(typeof a.sub === 'string' && a.sub ? { sub: a.sub } : {}), data: m.data }));",
     "new": "      this._send(tws, JSON.stringify({ t: 'duel', id: a.id, data: m.data }));",
     "tests": [
-      "test/duel_wire.test.js"
+      "test/net/duel_wire.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "      if (!this._senderFunnel(tws, a.id, now, 'duin', DUEL_HZ_MAX)) return;",
     "new": "      if (!this._senderFunnel(tws, a.id, now)) return;",
     "tests": [
-      "test/duel_wire.test.js"
+      "test/net/duel_wire.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "    if (!d || d.to === this.id || !this.duelOk) return false;",
     "new": "    if (!d || d.to === this.id) return false;",
     "tests": [
-      "test/duel_wire.test.js"
+      "test/net/duel_wire.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "(id, d) => this.onDuel?.(id, d, subOf(m)));",
     "new": "(id, d) => this.onDuel?.(id, d, null));",
     "tests": [
-      "test/duel_wire.test.js"
+      "test/net/duel_wire.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "    level: a.lv, raceId: a.r, stats, skillOverrides,",
     "new": "    level: a.lv, raceId: 0, stats, skillOverrides,",
     "tests": [
-      "test/duel_combat.test.js"
+      "test/combat/duel_combat.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "    [skillForTemplate(w?.t)]: a.sk[0],",
     "new": "    [SKILLS.LongBlade]: a.sk[0],",
     "tests": [
-      "test/duel_combat.test.js"
+      "test/combat/duel_combat.test.js"
     ]
   },
   {
@@ -176,16 +176,16 @@
     "old": "    if (Number(weapon.maxCondition) > 0) weapon.currentCondition = Math.max(0, Math.round((weapon.maxCondition * w.c) / 100));",
     "new": "    if (Number(weapon.maxCondition) > 0) weapon.currentCondition = weapon.maxCondition;",
     "tests": [
-      "test/duel_combat.test.js"
+      "test/combat/duel_combat.test.js"
     ]
   },
   {
     "name": "DUEL1-stub-swing-mods-ignored",
     "file": "src/combat/duelCombat.js",
-    "old": "    weapon, damageMod: swing.damage, toHitMod: swing.toHit,",
+    "old": "    weapon, damageMod: swing.damage, toHitMod: swing.toHit + (off ? offHandToHit(stub.stats.agility) : 0),",
     "new": "    weapon, damageMod: 0, toHitMod: 0,",
     "tests": [
-      "test/duel_combat.test.js"
+      "test/combat/duel_combat.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "    if (_playerAttackHook && attacker.isPlayer && !attacker.peer) {",
     "new": "    if (_playerAttackHook && attacker.isPlayer) {",
     "tests": [
-      "test/duel_combat.test.js"
+      "test/combat/duel_combat.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "  if (spare && wasAlive && entity.health - dmg < 1) {",
     "new": "  if (spare && wasAlive && entity.health - dmg < 0) {",
     "tests": [
-      "test/duel_combat.test.js"
+      "test/combat/duel_combat.test.js"
     ]
   },
   {
@@ -212,7 +212,7 @@
     "old": "        if (duelCast) list[i].bundleDuel = true;",
     "new": "",
     "tests": [
-      "test/duel_combat.test.js"
+      "test/combat/duel_combat.test.js"
     ]
   },
   {
@@ -221,7 +221,7 @@
     "old": "sinks.hurt(n, { fromPlayer: !a.caster || !!a.caster.isPlayer, bundleDuel: !!a.bundleDuel, round: true });",
     "new": "sinks.hurt(n, { fromPlayer: !a.caster || !!a.caster.isPlayer, round: true });",
     "tests": [
-      "test/duel_combat.test.js"
+      "test/combat/duel_combat.test.js"
     ]
   },
   {
@@ -230,7 +230,7 @@
     "old": "export const DUEL_SPELL_TYPES = Object.freeze(new Set([0, 1, 4, 5, 7, 19]));",
     "new": "export const DUEL_SPELL_TYPES = Object.freeze(new Set([0, 1, 4, 5, 7, 10, 19]));",
     "tests": [
-      "test/duel_combat.test.js"
+      "test/combat/duel_combat.test.js"
     ]
   },
   {
@@ -239,7 +239,7 @@
     "old": "  if (melee) return mines.some((m) => { const me = worldApart(d.p, m); return me.ground <= WEAPON_REACH + DUEL_MELEE_SLACK_M && me.up <= 3; });",
     "new": "  if (melee) return mines.some((m) => { const me = worldApart(d.p, m); return me.ground <= 2 * ringRadius; });",
     "tests": [
-      "test/duel_combat.test.js"
+      "test/combat/duel_combat.test.js"
     ]
   },
   {
@@ -248,7 +248,7 @@
     "old": "      this._step(step, moveInput, yaw, pitch);\n      this._pushStep(step);   // TELL6e: a blow's push, after the step's own move\n      if (this.arena) this._keepInArena();",
     "new": "      if (this.arena) this._keepInArena();\n      this._step(step, moveInput, yaw, pitch);\n      this._pushStep(step);   // TELL6e: a blow's push, after the step's own move",
     "tests": [
-      "test/duel_wall.test.js"
+      "test/player/duel_wall.test.js"
     ]
   },
   {
@@ -257,7 +257,7 @@
     "old": "    const to = clampToRing(this.pos, c, a.radius, CAPSULE_RADIUS);",
     "new": "    const to = clampToRing(this.pos, c, a.radius, 0);",
     "tests": [
-      "test/duel_wall.test.js"
+      "test/player/duel_wall.test.js"
     ]
   },
   {
@@ -266,7 +266,7 @@
     "old": "    if (out > 0) { this._airVelX -= out * nx; this._airVelZ -= out * nz; }",
     "new": "",
     "tests": [
-      "test/duel_wall.test.js"
+      "test/player/duel_wall.test.js"
     ]
   },
   {
@@ -275,7 +275,7 @@
     "old": "    if (this.arena) this.arena = { ...this.arena, centre: [this.arena.centre[0] + offset[0], this.arena.centre[1] + offset[1], this.arena.centre[2] + offset[2]] };",
     "new": "",
     "tests": [
-      "test/duel_wall.test.js"
+      "test/player/duel_wall.test.js"
     ]
   },
   {
@@ -284,7 +284,7 @@
     "old": "    this.arena = null;   // DUEL1: a placement is never a walk out of the ring - the host's duel law decides what it meant\n",
     "new": "",
     "tests": [
-      "test/duel_wall.test.js"
+      "test/player/duel_wall.test.js"
     ]
   },
   {
@@ -293,7 +293,7 @@
     "old": "    gl.depthMask(false);\n    gl.disable(gl.CULL_FACE);",
     "new": "    gl.depthMask(true);\n    gl.disable(gl.CULL_FACE);",
     "tests": [
-      "test/duel_wall.test.js"
+      "test/player/duel_wall.test.js"
     ]
   },
   {
@@ -302,7 +302,7 @@
     "old": "r.radius > 0 && r.alpha > 0.001)",
     "new": "r.radius > 0)",
     "tests": [
-      "test/duel_wall.test.js"
+      "test/player/duel_wall.test.js"
     ]
   },
   {
@@ -311,7 +311,7 @@
     "old": "  o = vec4(dwWaterFogAdd(uColor * light * uAlpha * fogFactorAt(vWorld), vWorld), 1.0);",
     "new": "  o = vec4(dwWaterFogAdd(uColor * light * uAlpha, vWorld), 1.0);",
     "tests": [
-      "test/duel_wall.test.js"
+      "test/player/duel_wall.test.js"
     ]
   },
   {
@@ -320,25 +320,25 @@
     "old": "AND winner = ?2 AND at > ?3 - ?5) < ?6\n",
     "new": "AND winner = ?2 AND at > ?3 - ?5) <= ?6\n",
     "tests": [
-      "test/duel_record.test.js"
+      "test/server/duel_record.test.js"
     ]
   },
   {
     "name": "DUEL1-kd-inverted",
-    "file": "src/net/duelRecord.js",
+    "file": "src/net/duel/duelRecord.js",
     "old": "  return l ? w / l : w;",
     "new": "  return w ? l / w : l;",
     "tests": [
-      "test/duel_record.test.js"
+      "test/server/duel_record.test.js"
     ]
   },
   {
     "name": "DUEL1-record-read-every-frame",
-    "file": "src/net/duelRecord.js",
+    "file": "src/net/duel/duelRecord.js",
     "old": "      if (!e || (!e.asking && now() - e.at >= ttlMs)) fetchOne(id);",
     "new": "      if (!e || !e.asking) fetchOne(id);",
     "tests": [
-      "test/duel_record.test.js"
+      "test/server/duel_record.test.js"
     ]
   },
   {
@@ -347,7 +347,7 @@
     "old": "      duel.addEventListener('click', () => { if (v.duel.enabled && shownPeer) onDuel(shownPeer); });",
     "new": "      duel.addEventListener('click', () => { if (shownPeer) onDuel(shownPeer); });",
     "tests": [
-      "test/duel_record.test.js"
+      "test/server/duel_record.test.js"
     ]
   },
   {
@@ -356,7 +356,7 @@
     "old": "    const top = list[0] ?? null;",
     "new": "    const top = list.at(-1) ?? null;",
     "tests": [
-      "test/duel_record.test.js"
+      "test/server/duel_record.test.js"
     ]
   },
   {
@@ -365,36 +365,36 @@
     "old": "  if (canDeclineDuel) rows.push({ key: 'duel-decline', label: 'Decline duel', enabled: true, why: null, act: { k: 'duel.decline', peer: peerId } });\n",
     "new": "",
     "tests": [
-      "test/duel_record.test.js"
+      "test/server/duel_record.test.js"
     ]
   },
   {
     "name": "DUEL1-a-declined-challenger-prompts-again-at-once",
-    "file": "src/net/duelSession.js",
+    "file": "src/net/duel/duelSession.js",
     "old": "          if (!incoming.has(from) && now() - (quiet.get(from) ?? -Infinity) < DUEL_REASK_MS) { answer(from, { k: 'no', to: from, s: d.s }); return; }",
     "new": "",
     "tests": [
-      "test/duel_session.test.js"
+      "test/net/duel/duel_session.test.js"
     ]
   },
   {
     "name": "DUEL1-the-winner-recorded-as-the-loser",
-    "file": "src/net/duelSession.js",
+    "file": "src/net/duel/duelSession.js",
     "old": "        const won = g.w !== '' && g.w === selfId(), lost = g.w !== '' && g.w !== selfId();",
     "new": "        const lost = g.w !== '' && g.w === selfId(), won = g.w !== '' && g.w !== selfId();",
     "tests": [
-      "test/duel_session.test.js",
-      "test/int8_duel_ref.test.js"
+      "test/net/duel/duel_session.test.js",
+      "test/net/duel/int8_duel_ref.test.js"
     ]
   },
   {
     "name": "DUEL1-a-third-player-s-blow-lands",
-    "file": "src/net/duelSession.js",
+    "file": "src/net/duel/duelSession.js",
     "old": "        if (!duel || duel.s !== g.s) return;",
     "new": "        if (!duel) return;",
     "tests": [
-      "test/duel_session.test.js",
-      "test/int8_duel_ref.test.js"
+      "test/net/duel/duel_session.test.js",
+      "test/net/duel/int8_duel_ref.test.js"
     ]
   }
 ]

@@ -5,7 +5,7 @@
     "old": "  recoveryNote(s, family, stage, say, now);   // WARM-SAID: the way out of the red, said once\n",
     "new": "",
     "tests": [
-      "test/fb0930_cc_said.test.js"
+      "test/systems/survival/fb0930_cc_said.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  delete s.notes[key];\n  const heard = `${family}@${r.from[from]}`;",
     "new": "  const heard = `${family}@${r.from[from]}`;",
     "tests": [
-      "test/fb0930_cc_said.test.js"
+      "test/systems/survival/fb0930_cc_said.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  if (!from || (r.atDry && stage)) return;",
     "new": "  if (!from) return;",
     "tests": [
-      "test/fb0930_cc_said.test.js"
+      "test/systems/survival/fb0930_cc_said.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "scorching: 'cooling', freezing: 'warming', deadly: 'warming'",
     "new": "scorching: 'cooling', deadly: 'warming'",
     "tests": [
-      "test/fb0930_cc_said.test.js"
+      "test/systems/survival/fb0930_cc_said.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "scorching: 'cooling', freezing: 'warming', deadly: 'warming'",
     "new": "scorching: 'cooling', freezing: 'warming'",
     "tests": [
-      "test/fb0930_cc_said.test.js"
+      "test/systems/survival/fb0930_cc_said.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "from: Object.freeze({ soaked: 'dried', drenched: 'dried' })",
     "new": "from: Object.freeze({ drenched: 'dried' })",
     "tests": [
-      "test/fb0930_cc_said.test.js"
+      "test/systems/survival/fb0930_cc_said.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "scorching: 'cooling', freezing: 'warming', deadly: 'warming'",
     "new": "scorching: 'warming', freezing: 'cooling', deadly: 'cooling'",
     "tests": [
-      "test/fb0930_cc_said.test.js"
+      "test/systems/survival/fb0930_cc_said.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "  if (replay) return;\n  const was = s.notes[family];\n  recoveryNote(s, family, stage, say, now);   // WARM-SAID: the way out of the red, said once\n",
     "new": "  recoveryNote(s, family, stage, say, now);   // WARM-SAID: the way out of the red, said once\n  if (replay) return;\n  const was = s.notes[family];\n",
     "tests": [
-      "test/fb0930_cc_said.test.js"
+      "test/systems/survival/fb0930_cc_said.test.js"
     ]
   }
 ]

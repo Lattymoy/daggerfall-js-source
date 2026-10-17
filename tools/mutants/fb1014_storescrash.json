@@ -1,11 +1,11 @@
 [
   {
     "name": "STORES-CRASH-the-head-asked-with-children-some",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "  for (const c of node?.children ?? []) if (holdsHead(c, id)) return true;\n  return false;",
     "new": "  return (node?.children ?? []).some((c) => holdsHead(c, id));",
     "tests": [
-      "test/fb1014_storescrash.test.js"
+      "test/net/fb1014_storescrash.test.js"
     ]
   }
 ]

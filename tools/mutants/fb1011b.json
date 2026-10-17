@@ -1,11 +1,11 @@
 [
   {
     "name": "CAMPFIRE-the-fire-someone",
-    "file": "src/scenes/livingRoads.js",
+    "file": "src/scenes/livingWorld/livingRoads.js",
     "old": "distM, talk: false, flat: FIRE_FLAT, body: false });",
     "new": "distM, talk: false, flat: FIRE_FLAT });",
     "tests": [
-      "test/fb1011b_campfire.test.js"
+      "test/systems/livingWorld/fb1011b_campfire.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "        if (!b.body) continue;   // CAMP-FIRE (FIELD BUGS 2026-10-11b): its flame drawn, never one of the fallen",
     "new": "",
     "tests": [
-      "test/fb1011b_campfire.test.js"
+      "test/systems/livingWorld/fb1011b_campfire.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "b.body = m.body !== false;",
     "new": "b.body = true;",
     "tests": [
-      "test/fb1011b_campfire.test.js"
+      "test/systems/livingWorld/fb1011b_campfire.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  if (kind !== 'mount') return activeWagonItem(items ?? []);",
     "new": "  if (kind !== 'mount') return (items ?? []).find((it) => it?.templateIndex === SMALL_CART_TEMPLATE) ?? null;",
     "tests": [
-      "test/fb1011b_cartslot.test.js"
+      "test/systems/fb1011b_cartslot.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  return (items ?? []).find((it) => it?.templateIndex === TRANSPORT_HORSE_TEMPLATE) ?? null;",
     "new": "  return activeWagonItem(items ?? []);",
     "tests": [
-      "test/fb1011b_cartslot.test.js"
+      "test/systems/fb1011b_cartslot.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "      stampIds?.({ items: entries.map((e) => e.item) });",
     "new": "",
     "tests": [
-      "test/fb1011b_offerid.test.js"
+      "test/systems/fb1011b_offerid.test.js"
     ]
   },
   {
@@ -59,16 +59,16 @@
     "old": "  const tradePack = checkpointedTradePack(createTradePack(playerEntity, { stampIds: stampItemIds }), () => onlineCheckpoint());",
     "new": "  const tradePack = checkpointedTradePack(createTradePack(playerEntity), () => onlineCheckpoint());",
     "tests": [
-      "test/fb1011b_offerid.test.js"
+      "test/systems/fb1011b_offerid.test.js"
     ]
   },
   {
     "name": "JUMPSLOW-the-cancel-back",
     "file": "src/player/motor.js",
-    "old": "    if (this.grounded && input.jump && !this._pkJumpLatch   // AUDIT CLIMB1 F7: not the Jump a move spent",
-    "new": "    if (this.grounded && input.jump && !this.slowFalling && !this._pkJumpLatch   // AUDIT CLIMB1 F7: not the Jump a move spent",
+    "old": "        && !this._pkJumpLatch   // AUDIT CLIMB1 F7: not the Jump a move spent\n",
+    "new": "        && !this.slowFalling && !this._pkJumpLatch   // AUDIT CLIMB1 F7: not the Jump a move spent\n",
     "tests": [
-      "test/fb1011b_jumpslow.test.js"
+      "test/player/fb1011b_jumpslow.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "      if (this.slowFalling && this.falling && !(this.jumping && this.velY > 0)) {   // JUMP-SLOW: a jump's rise is the jump's",
     "new": "      if (this.slowFalling && this.falling) {   // JUMP-SLOW: a jump's rise is the jump's",
     "tests": [
-      "test/fb1011b_jumpslow.test.js"
+      "test/player/fb1011b_jumpslow.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "!(this.jumping && this.velY > 0)) {   // JUMP-SLOW",
     "new": "!this.jumping) {   // JUMP-SLOW",
     "tests": [
-      "test/fb1011b_jumpslow.test.js"
+      "test/player/fb1011b_jumpslow.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "  if (item?.rarity === 'legendary') return 0;   // LEGEND-HELD",
     "new": "",
     "tests": [
-      "test/fb1011b_legendheld.test.js"
+      "test/systems/fb1011b_legendheld.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "  if (item?.rarity === 'legendary') return 0;   // LEGEND-HELD",
     "new": "  if (item?.rarity) return 0;   // LEGEND-HELD",
     "tests": [
-      "test/fb1011b_legendheld.test.js"
+      "test/systems/fb1011b_legendheld.test.js"
     ]
   },
   {
@@ -113,8 +113,8 @@
     "old": "  if (points.some(([px, pz]) => yardGapTo(lines, px, pz) < yardGapTo(own, px, pz))) return YARD_ON_OTHER;   // HOME-LINE; YARD-LINE: a lot's holder's",
     "new": "",
     "tests": [
-      "test/fb1011b_homeline.test.js",
-      "test/fb1009_yardfoot.test.js"
+      "test/scenes/fb1011b_homeline.test.js",
+      "test/world/fb1009_yardfoot.test.js"
     ]
   },
   {
@@ -123,7 +123,7 @@
     "old": "yardGapTo(lines, px, pz) < yardGapTo(own, px, pz)",
     "new": "yardGapTo(lines, px, pz) <= yardGapTo(own, px, pz)",
     "tests": [
-      "test/fb1011b_homeline.test.js"
+      "test/scenes/fb1011b_homeline.test.js"
     ]
   },
   {
@@ -132,7 +132,7 @@
     "old": "  if (points.some(([px, pz]) => yardGapTo(",
     "new": "  if ([[x, z]].some(([px, pz]) => yardGapTo(",
     "tests": [
-      "test/fb1011b_homeline.test.js"
+      "test/scenes/fb1011b_homeline.test.js"
     ]
   },
   {
@@ -141,7 +141,7 @@
     "old": "  if (portSays && wasAlive && entity.health - dmg < 1 && entity.health >= (entity.maxHealth ?? Infinity) && _foeBlow()) {",
     "new": "  if (false) {",
     "tests": [
-      "test/fb1011b_fullguard.test.js"
+      "test/systems/sigil/fb1011b_fullguard.test.js"
     ]
   },
   {
@@ -150,7 +150,7 @@
     "old": "entity.health >= (entity.maxHealth ?? Infinity) && _foeBlow()) {",
     "new": "entity.health >= (entity.maxHealth ?? Infinity)) {",
     "tests": [
-      "test/fb1011b_fullguard.test.js"
+      "test/systems/sigil/fb1011b_fullguard.test.js"
     ]
   },
   {
@@ -159,16 +159,16 @@
     "old": "entity.health >= (entity.maxHealth ?? Infinity) && _foeBlow()) {",
     "new": "_foeBlow()) {",
     "tests": [
-      "test/fb1011b_fullguard.test.js"
+      "test/systems/sigil/fb1011b_fullguard.test.js"
     ]
   },
   {
     "name": "FULLGUARD-the-probe-unset",
-    "file": "src/systems/sigilSetPowers.js",
+    "file": "src/systems/sigil/sigilSetPowers.js",
     "old": "setFoeBlowProbe(() => _pending != null);",
     "new": "",
     "tests": [
-      "test/fb1011b_fullguard.test.js"
+      "test/systems/sigil/fb1011b_fullguard.test.js"
     ]
   }
 ]

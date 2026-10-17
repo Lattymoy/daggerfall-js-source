@@ -26,7 +26,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 export const POI_DOC_VERSION = 1;
-/** A pixel's side in metres (world/terrainSampler.js TERRAIN_SIZE, held here so the law stands alone in the service). */
+/** A pixel's side in metres (world/terrain/terrainSampler.js TERRAIN_SIZE, held here so the law stands alone in the service). */
 export const POI_PIXEL_M = 819.2;
 export const POI_ID_RE = /^poi-[0-9a-f]{12}$/;
 /** A library shelf entry's id (POI-4b). */

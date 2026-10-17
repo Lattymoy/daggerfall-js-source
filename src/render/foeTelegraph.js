@@ -1,6 +1,6 @@
 // @ts-check
 // TACT4 - A FOE'S TELEGRAPH ON THE GROUND (bible/12-Enhanced-AI/Tactics-Arc.md): the world boss's floor telegraph
-// (render/gateTelegraph.js) at a foe's scale - one flat quad at the foe's feet, the shape the fragment's question
+// (render/gate/gateTelegraph.js) at a foe's scale - one flat quad at the foe's feet, the shape the fragment's question
 // against ai/foeBlows.js inBlow (the pins hold `blowField` to it point for point, and the shader's text to it): a dim
 // outline at once, filling outward as the wind-up runs, a bright flash at the landing. Depth-tested and never
 // depth-written, lifted and offset off the ground (SNOW-TELL: and over the deep snow). TELL2 (bible/12-Enhanced-AI/Feud-Arc.md 4.4): drawn in the boss's

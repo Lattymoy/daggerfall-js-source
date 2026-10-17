@@ -219,7 +219,7 @@ function addQuestItem(machine, adapter, siteType, quest, marker, item) {
 // laws below are the parenting as data; the dungeon host (scenes/worldModes.js dungeonQuestAdapter.standItem) hands
 // its stand the mover's live offset.
 
-/** GetDaggerfallMarker (GameObjectHelper.cs:1165-1186) over a laid-out dungeon (world/dungeonLayout.js layoutDungeon's
+/** GetDaggerfallMarker (GameObjectHelper.cs:1165-1186) over a laid-out dungeon (world/dungeon/dungeonLayout.js layoutDungeon's
  *  `blocks`): the ONE quest or item marker - archive 199 records 11/18, the two RDBLayout.cs:359-366 gives a
  *  DaggerfallMarker - whose MarkerID is `markerID`. The ID is block position + object position on both sides: the
  *  layout's `loadID` (world/rdbLayout.js) and the quest marker's `markerID` (place.js _enumerateDungeonQuestMarkers).

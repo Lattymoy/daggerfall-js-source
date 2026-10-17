@@ -5,7 +5,7 @@
     "old": "export const holidayKeptIn = (row, regionIndex) => row.region === 0xFF || row.region === regionIndex + 1;",
     "new": "export const holidayKeptIn = (row, regionIndex) => row.region === regionIndex + 1;",
     "tests": [
-      "test/holydays.test.js"
+      "test/systems/livingWorld/holydays.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "export const holidayKeptIn = (row, regionIndex) => row.region === 0xFF || row.region === regionIndex + 1;",
     "new": "export const holidayKeptIn = (row, regionIndex) => row.region === 0xFF || row.region === regionIndex;",
     "tests": [
-      "test/holydays.test.js"
+      "test/systems/livingWorld/holydays.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    if (!row || row.region === 0xFF) continue;   // never a day every region keeps",
     "new": "    if (!row) continue;",
     "tests": [
-      "test/holydays.test.js"
+      "test/systems/livingWorld/holydays.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    if (!row || row.region === 0xFF) continue;",
     "new": "    if (!row || row.region === 0xFF) return null;",
     "tests": [
-      "test/holydays.test.js"
+      "test/systems/livingWorld/holydays.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  byHome.set(home.mapId, temples);\n",
     "new": "",
     "tests": [
-      "test/holydays.test.js"
+      "test/systems/livingWorld/holydays.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "  const kept = byHome.get(home.mapId);",
     "new": "  const kept = byHome.values().next().value;",
     "tests": [
-      "test/holydays.test.js"
+      "test/systems/livingWorld/holydays.test.js"
     ]
   }
 ]

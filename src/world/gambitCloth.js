@@ -4,7 +4,7 @@
 // cell under a point of the table, and the way each side's cards face.
 //
 // THE LAY (5.3, AUDIT KG C1): along the table's own axes, square to the felt's edges, as Hold'em's board lies
-// (world/cardTables.js tableFrame's axisYaw), its foot - the host's king's row - at the edge nearest the host's chair.
+// (world/card/cardTables.js tableFrame's axisYaw), its foot - the host's king's row - at the edge nearest the host's chair.
 // From a long side the columns run along the table and the rows across it: KG_ROWS across the felt's short side, 7.08 cm
 // cells, a board 1.06 by 0.92 m. From an end the columns run across and the rows along: KG_COLS across the short side,
 // 6.13 cm cells. Column 0 is on the host's left as the host faces the board (the mod drew it on the screen's left).
@@ -12,9 +12,9 @@
 // from a long side's chair.
 //
 // Not a DFU member: Daggerfall Unity has no such game - the mod does. Ledger A row (THE KING'S GAMBIT).
-import { CARD_TABLE_W, CARD_TABLE_D, CARD_TABLE_RAIL } from './cardTableProp.js';
+import { CARD_TABLE_W, CARD_TABLE_D, CARD_TABLE_RAIL } from './card/cardTableProp.js';
 import { KG_COLS, KG_ROWS, KG_TILE } from '../net/kingsGambit.js';
-import { CARD_W, CARD_L } from './cardMotion.js';
+import { CARD_W, CARD_L } from './card/cardMotion.js';
 
 /** The felt inside the rail: its long and its short side, in metres. */
 export const GAMBIT_FELT_LONG = CARD_TABLE_W - 2 * CARD_TABLE_RAIL;
@@ -31,9 +31,9 @@ export const GAMBIT_CARD_LIFT = 0.0015;
  * centre on the mat, `cellAt(p)` the cell under a point of the table (or null off the board), `corners` the board's four
  * corners on the mat (the host's left foot first, round to the head).
  * KG5 (section 18): `flip` lays the board for the GUEST of an online game, who reads the relay's board turned about its
- * middle (net/gambitTable.js flipGambitState) - its rows and columns run the other way, so every turned cell lands on
+ * middle (net/gambit/gambitTable.js flipGambitState) - its rows and columns run the other way, so every turned cell lands on
  * the felt where the host's own lies: one board on the cloth, each player's king's row at its own foot.
- * @param {{centre: number[], axisYaw: number}} frame  world/cardTables.js tableFrame
+ * @param {{centre: number[], axisYaw: number}} frame  world/card/cardTables.js tableFrame
  * @param {number[]} hostFeet  the host's feet in their chair
  * @param {{flip?: boolean}} [o]
  */

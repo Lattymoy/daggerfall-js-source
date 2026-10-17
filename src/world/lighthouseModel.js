@@ -3,7 +3,7 @@
 // cottage; the lamp lit from dusk with a sweeping beam seen far out at sea; the keeper lets you climb to the gallery for
 // the view"): WHAT A PORT TOWN'S LIGHTHOUSE IS MADE OF - the port's own geometry in its own frame (y up from its ground,
 // its FRONT - its gate and its doors, the town's side - along +z, the SEA behind it along -z, x across), worn in the
-// port's own art (world/portArt.js) through the yards' face kit (world/merchantYardModels.js). Every face is wound
+// port's own art (world/portArt.js) through the yards' face kit (world/merchantYards/merchantYardModels.js). Every face is wound
 // outward and the collider is the same triangles - with one more: a GUARD round the gallery (`guardBand`), a closed
 // corridor the eye never sees - a band from the floor just inside the parapet and a lid over it to the lantern - so
 // neither a step back, nor a jump, nor a climb takes anyone off the gallery (AUDIT SHIPYARDS L4-1), stood by the pool
@@ -33,7 +33,7 @@
 // middle), and the climb - the door at the tower's foot and the hatch at its head (`LIGHTHOUSE_POINTS`).
 //
 // Pure: no renderer, no GL, no clock. Not a DFU member. Ledger A (SHIPYARDS, BEACON-TOWER).
-import { YARD_MESH_KIT, YARD_SINK, YARD_TILE_M } from './merchantYardModels.js';
+import { YARD_MESH_KIT, YARD_SINK, YARD_TILE_M } from './merchantYards/merchantYardModels.js';
 import { PORT_ARCHIVE, PORT_REC } from './portArt.js';
 import { PORT_FOOT } from './portSites.js';
 

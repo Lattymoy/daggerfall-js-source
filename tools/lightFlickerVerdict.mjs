@@ -3,7 +3,7 @@
 // and the pose door a no-op, the probe stood at the spawn, never before a tavern, and every pass read 0 - because it
 // judged only the still passes' 12-level share, and black and frozen IS still. Its boot wait fell through after 300 s,
 // a plan's exception went into a field nothing read, and "street" was reached wherever the boot left the camera. The
-// probe's summary and verdict are pure now (pinned in test/la_audit.test.js), and a pass must show what a real one
+// probe's summary and verdict are pure now (pinned in test/render/la_audit.test.js), and a pass must show what a real one
 // does:
 //   - every frame it asked for, in its scene's own mode, and no exception from its plan;
 //   - a picture: no pass whose brightest frame is black (mean luma under LUM_BLACK);

@@ -1,92 +1,92 @@
 [
   {
     "name": "D22G-abs-facing-back",
-    "file": "src/systems/automapFloors.js",
+    "file": "src/systems/automap/automapFloors.js",
     "old": "    const up = normals ? fileUp(m, normals, i0, i1, i2) : Math.abs(ny) / len;",
     "new": "    const up = Math.abs(ny) / len;",
     "tests": [
-      "test/disc22g_automap.test.js"
+      "test/ui/disc22g_automap.test.js"
     ]
   },
   {
     "name": "D22G-normal-not-turned",
-    "file": "src/systems/automapFloors.js",
+    "file": "src/systems/automap/automapFloors.js",
     "old": "  if (m) {\n    const ny = m[1] * x + m[5] * y + m[9] * z;",
     "new": "  if (false) {\n    const ny = m[1] * x + m[5] * y + m[9] * z;",
     "tests": [
-      "test/disc22g_automap.test.js"
+      "test/ui/disc22g_automap.test.js"
     ]
   },
   {
     "name": "D22G-steps-anchor-too",
-    "file": "src/systems/automapFloors.js",
+    "file": "src/systems/automap/automapFloors.js",
     "old": "    for (const l of [...run].filter((v) => v.area >= minArea).sort((a, b) => b.area - a.area)) {",
     "new": "    for (const l of [...run].sort((a, b) => b.area - a.area)) {",
     "tests": [
-      "test/disc22g_automap.test.js"
+      "test/ui/disc22g_automap.test.js"
     ]
   },
   {
     "name": "D22G-one-anchor-per-run",
-    "file": "src/systems/automapFloors.js",
+    "file": "src/systems/automap/automapFloors.js",
     "old": "      if (anchors.every((a) => Math.abs(a.y - l.y) >= minGap)) anchors.push(l);",
     "new": "      if (!anchors.length) anchors.push(l);",
     "tests": [
-      "test/disc22g_automap.test.js"
+      "test/ui/disc22g_automap.test.js"
     ]
   },
   {
     "name": "D22G-no-row-cache",
-    "file": "src/systems/automapFloors.js",
+    "file": "src/systems/automap/automapFloors.js",
     "old": "    if (!mine) { mine = rowFloorTriangles(r, []); _rowTris.set(r, mine); }",
     "new": "    mine = rowFloorTriangles(r, []);",
     "tests": [
-      "test/disc22g_automap.test.js"
+      "test/ui/disc22g_automap.test.js"
     ]
   },
   {
     "name": "D22G-openings-are-walls",
-    "file": "src/systems/automapFloors.js",
+    "file": "src/systems/automap/automapFloors.js",
     "old": "    if (open(ox, oy)) openings.push(seg);\n    else if (!pass?.(ox, oy)) walls.push(seg);",
     "new": "    walls.push(seg);",
     "tests": [
-      "test/disc22g_automap.test.js"
+      "test/ui/disc22g_automap.test.js"
     ]
   },
   {
     "name": "D22G-sheet-passes-no-full",
-    "file": "src/ui/automapSheet.js",
+    "file": "src/ui/automap/automapSheet.js",
     "old": "      full: fullFloor(f, index),",
     "new": "      full: null,",
     "tests": [
-      "test/disc22g_automap.test.js"
+      "test/ui/disc22g_automap.test.js"
     ]
   },
   {
     "name": "D22G-opens-on-floor-1",
-    "file": "src/ui/automapSheet.js",
+    "file": "src/ui/automap/automapSheet.js",
     "old": "    index = here >= 0 ? here : Math.max(0, Math.min(frame.sheets.length - 1, index));",
     "new": "    index = Math.max(0, Math.min(frame.sheets.length - 1, index));",
     "tests": [
-      "test/disc22g_automap.test.js"
+      "test/ui/disc22g_automap.test.js"
     ]
   },
   {
     "name": "D22G-frame-not-shared",
-    "file": "src/ui/automapSheet.js",
+    "file": "src/ui/automap/automapSheet.js",
     "old": "      if (rows.length) _frames.set(rows, base);",
     "new": "",
     "tests": [
-      "test/disc22g_automap.test.js"
+      "test/ui/disc22g_automap.test.js"
     ]
   },
   {
     "name": "D22G-home-whole-level",
-    "file": "src/ui/automapSheet.js",
+    "file": "src/ui/automap/automapSheet.js",
     "old": "      const scale = restScale(min, fit);   // capped first, so the centre holds",
     "new": "      const scale = min;   // capped first, so the centre holds",
     "tests": [
-      "test/disc22g_automap.test.js"
+      "test/ui/disc22g_automap.test.js"
     ]
   },
   {
@@ -95,88 +95,88 @@
     "old": "      const home = this._sheet?.homeView?.(limits) ?? { ox: 0, oy: 0, scale: scaleMinOf(limits) };",
     "new": "      const home = { ox: 0, oy: 0, scale: scaleMinOf(limits) };",
     "tests": [
-      "test/disc22g_automap.test.js"
+      "test/ui/disc22g_automap.test.js"
     ]
   },
   {
     "name": "D22G-mark-does-nothing",
-    "file": "src/ui/automapSheet.js",
+    "file": "src/ui/automap/automapSheet.js",
     "old": "      if (!lastView || !r?.notes || !f.sheets.length || typeof deps.askText !== 'function') return false;",
     "new": "      return false;",
     "tests": [
-      "test/disc22g_automap.test.js"
+      "test/ui/disc22g_automap.test.js"
     ]
   },
   {
     "name": "D22G-empty-note-kept",
-    "file": "src/ui/automapSheet.js",
+    "file": "src/ui/automap/automapSheet.js",
     "old": "        else if (!String(text).trim()) r.notes.delete(id);",
     "new": "",
     "tests": [
-      "test/disc22g_automap.test.js"
+      "test/ui/disc22g_automap.test.js"
     ]
   },
   {
     "name": "D22G-cancel-keeps-new",
-    "file": "src/ui/automapSheet.js",
+    "file": "src/ui/automap/automapSheet.js",
     "old": "        if (text == null) { if (fresh) r.notes.delete(id); }",
     "new": "        if (text == null) { /* kept */ }",
     "tests": [
-      "test/disc22g_automap.test.js"
+      "test/ui/disc22g_automap.test.js"
     ]
   },
   {
     "name": "D22G-note-anywhere",
-    "file": "src/ui/automapSheet.js",
+    "file": "src/ui/automap/automapSheet.js",
     "old": "        if (!solidOn && !onRevealedFloor(mx, my)) return false;",
     "new": "",
     "tests": [
-      "test/disc22g_automap.test.js"
+      "test/ui/disc22g_automap.test.js"
     ]
   },
   {
     "name": "D22G-links-dropped",
-    "file": "src/ui/automapSheet.js",
+    "file": "src/ui/automap/automapSheet.js",
     "old": "        links: linksHere(),",
     "new": "",
     "tests": [
-      "test/disc22g_automap.test.js"
+      "test/ui/disc22g_automap.test.js"
     ]
   },
   {
     "name": "D22G-no-other-storey-name",
-    "file": "src/ui/automapSheet.js",
+    "file": "src/ui/automap/automapSheet.js",
     "old": "there >= 0 && there !== index ? `to ${f.sheets[there].label}` : ''",
     "new": "''",
     "tests": [
-      "test/disc22g_automap.test.js"
+      "test/ui/disc22g_automap.test.js"
     ]
   },
   {
     "name": "D22G-home-key-dead",
-    "file": "src/ui/automapSheet.js",
+    "file": "src/ui/automap/automapSheet.js",
     "old": "      if (code === 'Home') {",
     "new": "      if (code === 'Home_') {",
     "tests": [
-      "test/disc22g_automap.test.js"
+      "test/ui/disc22g_automap.test.js"
     ]
   },
   {
     "name": "D22G-no-breath",
-    "file": "src/ui/automapSheet.js",
+    "file": "src/ui/automap/automapSheet.js",
     "old": "    breathes() { return !!entranceHere() || echoesBreathe() || readPartyBodies(deps.party).length > 0",
     "new": "    breathes() { return echoesBreathe() || readPartyBodies(deps.party).length > 0",
     "tests": [
-      "test/disc22g_automap.test.js"
+      "test/ui/disc22g_automap.test.js"
     ]
   },
   {
     "name": "D22G-openings-not-dashed",
-    "file": "src/ui/inkAutomap.js",
+    "file": "src/ui/ink/inkAutomap.js",
     "old": "    ctx.setLineDash?.([3, 4]);",
     "new": "    ctx.setLineDash?.([]);",
     "tests": [
-      "test/disc22g_automap.test.js"
+      "test/ui/disc22g_automap.test.js"
     ]
   }
 ]

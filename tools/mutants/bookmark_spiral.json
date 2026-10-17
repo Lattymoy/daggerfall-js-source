@@ -1,0 +1,62 @@
+[
+ {
+  "name": "SHEDLONG-route-back-in-set",
+  "file": "server-account/src/service.js",
+  "old": "export const ANY_REPLICA_ROUTES = new Map();",
+  "new": "export const ANY_REPLICA_ROUTES = new Map([['/v1/heartbeat', 'POST'], ['/v1/homes/town', 'POST']]);",
+  "tests": [
+   "test/server/bookmark_spiral.test.js"
+  ],
+  "note": "the polled reads with no bookmark back on the replica's queue"
+ },
+ {
+  "name": "BOOKMARKSPIRAL-any-everywhere",
+  "file": "server-account/src/service.js",
+  "old": "  return replicaDb(db, ANY_REPLICA_ROUTES.get(path) === method ? REPLICA_ANY : REPLICA_CONSTRAINT);",
+  "new": "  return replicaDb(db, REPLICA_ANY);",
+  "tests": [
+   "test/server/bookmark_spiral.test.js"
+  ],
+  "note": "every replica read with no bookmark off any instance - a caller's own write unread"
+ },
+ {
+  "name": "BOOKMARKSPIRAL-flag-unread",
+  "file": "server-account/src/service.js",
+  "old": "      if (key === DB_ANY) return constraint === REPLICA_ANY;",
+  "new": "      if (key === DB_ANY) return false;",
+  "tests": [
+   "test/server/bookmark_spiral.test.js"
+  ],
+  "note": "a session at any instance never says so - a session minted a moment ago refused"
+ },
+ {
+  "name": "BOOKMARKSPIRAL-no-primary-on-miss",
+  "file": "server-account/src/accounts.js",
+  "old": "  if (!row && db?.[DB_ANY] === true) row = await (db[DB_ROOT] ?? db).prepare(WHO_SQL).bind(hash).first();",
+  "new": "",
+  "tests": [
+   "test/server/bookmark_spiral.test.js"
+  ],
+  "note": "a guest minted a moment ago refused `auth` by a replica that has not heard of it"
+ },
+ {
+  "name": "BOOKMARKSPIRAL-primary-every-lookup",
+  "file": "server-account/src/accounts.js",
+  "old": "  if (!row && db?.[DB_ANY] === true) row = await (db[DB_ROOT] ?? db).prepare(WHO_SQL).bind(hash).first();",
+  "new": "  if (db?.[DB_ANY] === true) row = await (db[DB_ROOT] ?? db).prepare(WHO_SQL).bind(hash).first();",
+  "tests": [
+   "test/server/bookmark_spiral.test.js"
+  ],
+  "note": "the primary asked for every session again - the load moved nowhere"
+ },
+ {
+  "name": "BOOKMARKSPIRAL-miss-on-session",
+  "file": "server-account/src/accounts.js",
+  "old": "  if (!row && db?.[DB_ANY] === true) row = await (db[DB_ROOT] ?? db).prepare(WHO_SQL).bind(hash).first();",
+  "new": "  if (!row && db?.[DB_ANY] === true) row = await db.prepare(WHO_SQL).bind(hash).first();",
+  "tests": [
+   "test/server/bookmark_spiral.test.js"
+  ],
+  "note": "the miss asked again of the same replica"
+ }
+]

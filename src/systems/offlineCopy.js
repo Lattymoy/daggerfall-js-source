@@ -126,11 +126,11 @@ export const RAID_RECORD_VENDOR = 'world-events-raiding-parties';
 function dropLineage(copy) {
   if (copy.modData && typeof copy.modData === 'object') delete copy.modData[LEGACY_VENDOR];
 }
-/** AUDIT REST III D1: the bounty board's record (bountyBoard.js BOUNTY_VENDOR - pinned equal, test/auditrest3.test.js;
+/** AUDIT REST III D1: the bounty board's record (bountyBoard.js BOUNTY_VENDOR - pinned equal, test/systems/auditrest3.test.js;
  *  this module stays off the board's graph, as it does off the raid mod's). */
 export const BOUNTY_RECORD_VENDOR = 'bountyBoard';
 /** AUDIT CAPTAIN'S SEA L4: the captain's ledger's record (captainLedger.js CAPTAIN_SAVE_VENDOR - pinned equal,
- *  test/auditcaptsea.test.js; this module stays off the ledger's graph as it does off the board's). */
+ *  test/systems/naval/auditcaptsea.test.js; this module stays off the ledger's graph as it does off the board's). */
 export const CAPTAIN_RECORD_VENDOR = 'Captain';
 
 /** The copy an offline slot keeps: the world's stamps rebased onto the character's clock, `worldMinutes` dropped. */

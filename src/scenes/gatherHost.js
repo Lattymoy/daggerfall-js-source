@@ -62,12 +62,12 @@
 // One owner: the host builds it online, and disposes it with the page.
 // ═══════════════════════════════════════════════════════════════════
 import { utcDayOfMs, pixelKey, parseNodeKey } from '../net/nodeLaw.js';
-import { TERRAIN_SIZE } from '../world/terrainSampler.js';
+import { TERRAIN_SIZE } from '../world/terrain/terrainSampler.js';
 /** A map pixel's side in the scene (metres). */
 const PIXEL_M = TERRAIN_SIZE;
 import { rankName, professionName, DEEP_UNCONFIRMED_PER_DAY } from '../net/professionLaw.js';
-import { wearForagingTool } from '../systems/foragingInstall.js';
-import { materialCountLabel } from '../systems/profItems.js';
+import { wearForagingTool } from '../systems/foraging/foragingInstall.js';
+import { materialCountLabel } from '../systems/professions/profItems.js';
 import { accountRefusalText } from '../net/accountClient.js';
 import { DEFAULT_ACTIVATION_DISTANCE } from '../player/activate.js';
 import { harvestHauls } from '../ui/haulCards.js';   // HAUL-CARDS: a harvest's goods and XP as one card, on the enhanced skin
@@ -77,7 +77,7 @@ import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first tou
 import { createGatherEar } from '../systems/gatherSounds.js';   // GATHER-FEEL: the gathering's ear
 import { gatherBlowFeel, landedBlow, chunksFor, shedChunks, stepChunk, chunkSink, chunkBox, VEIN_CHUNKS } from '../systems/gatherBlow.js';   // GATHER-FEEL II: what a landed blow does besides its sound
 import { setBatchCrack, crackSeedOf } from '../systems/veinCrack.js';   // VEIN-CRACKS: a worked vein's cracks, on its own batch
-import { createGatherPose } from '../net/peerGather.js';   // PEER-ACTS: the act and its beats, on the pose the others draw
+import { createGatherPose } from '../net/peer/peerGather.js';   // PEER-ACTS: the act and its beats, on the pose the others draw
 
 /** A node answers E within DFU's activation distance, and within this many degrees of the look. */
 export const NODE_REACH = DEFAULT_ACTIVATION_DISTANCE;
@@ -119,6 +119,11 @@ export const ACT_POINTER = Object.freeze({ basket: 'cursor', mine: 'look', trace
  *  needs nothing; the net's gentle throw still lands where the look sends it (its state carries no `gentle`, and is
  *  named here so it never will by accident). */
 export const actPointer = (st) => (st?.gentle === true && st.kind !== 'fish' ? null : ACT_POINTER[st?.kind] ?? null);
+/** SKIN-PLAQUE (FIELD BUGS 2026-10-16c, "Quick loot is not suppressed when skinning"): WHILE AN ACT PLAYS THE LOOK IS
+ *  THE ACT'S - hoverHit's pick names nothing (systems/worldHover.js resolveHover: `if (key == null) return null`), so
+ *  the hosts' `?? ray` keeps it and the race's winner behind it (the body under the knife, its loot and its tooltip) is
+ *  not the plaque's either: E is the act's (AUDIT 29 D3), and the plaque never names what the press ignores. */
+export const ACT_OWNS_LOOK = Object.freeze({ key: null, distance: 0, reach: 0 });
 /** NODE-MARKS: the stood pixels walked for the marks - those within this many metres, past every kind's reach but a
  *  wider one a kind names for the player (`markReach` - AUDIT MINE-PERKS: a Prospector's 500 m alone walks further; a
  *  512 m walk for everyone was nine stood pixels' nodes asked a frame from a pixel's middle, where 256 is one). */
@@ -333,7 +338,7 @@ export function createGatherHost(deps) {
   let swings = [];
   /** GATHER-FEEL II: the view's answer to a landed blow (systems/gatherBlow.js gatherBlowFeel - BLOW-SHAKE) */
   const feel = deps.feel ?? gatherBlowFeel;
-  /** PEER-ACTS (GATHER-FEEL II): the act and its beats as the others see and hear them (net/peerGather.js) - fed each
+  /** PEER-ACTS (GATHER-FEEL II): the act and its beats as the others see and hear them (net/peer/peerGather.js) - fed each
    *  frame of an act beside the ear (a new act is heard afresh), read by the online frame's pose (`poseAct`) */
   const pose = createGatherPose();
   /** VEIN-CRACKS (GATHER-FEEL II): the node a cracking kind's act works (its flats a batch of their own while it does);
@@ -1061,7 +1066,7 @@ export function createGatherHost(deps) {
       clickHeld = !!down && taken;
       return taken;
     },
-    /** The tool in the hand for the rig (combat/weaponRig.js actTool): the act's, as DFU's own sprite. */
+    /** The tool in the hand for the rig (combat/weapon/weaponRig.js actTool): the act's, as DFU's own sprite. */
     handTool: () => (act?.hand ? act.hand(act) : follow?.hand ? follow.hand(follow) : null),   // GATHER-FEEL: and a finished act's last swing, until it runs out
     /** PEER-ACTS (GATHER-FEEL II): the pose's gathering fields (net/wire.js validPose `ga`, `gb`, `gm`) - the act the hand
      *  is on, as `handTool` holds it (the one playing, or a finished one's last swing), and the beats counted. */
@@ -1107,10 +1112,12 @@ export function createGatherHost(deps) {
      * PROF-MENU: THE NODE AS THE PLAQUE'S PICK - the target, while nothing plays, as a hit the plaque resolves to the
      * node's list (`hoverName`). A node with nothing to press yields to the ray's own winner in reach - the press goes
      * there (AUDIT 29 C1), and so does the plaque; with none, its refused rows are listed, their reasons said.
+     * While an act plays, ACT_OWNS_LOOK - a hit naming nothing, never null, so no winner behind it is named (SKIN-PLAQUE).
      * @param {any} [ray] the host's own race's winner this frame
      */
     hoverHit(ray = null) {
-      if (act || !target || book.state.open !== true || !live()) return null;
+      if (act) return ACT_OWNS_LOOK;   // SKIN-PLAQUE: the act's look, no plaque over it
+      if (!target || book.state.open !== true || !live()) return null;
       const rows = rowsFor(target);
       if (!rows.length) return null;
       if (!rows.some(pressable) && ray && ray.distance <= ray.reach) return null;

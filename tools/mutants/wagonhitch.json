@@ -1,56 +1,56 @@
 [
   {
     "name": "WAGON-HITCH-horizontal-eased-again",
-    "file": "src/systems/horseFollow.js",
+    "file": "src/systems/horse/horseFollow.js",
     "old": "  next.position = [next.lastValidPosition[0], y, next.lastValidPosition[2]];",
     "new": "  next.position = w.active ? vlerp(w.position, [next.lastValidPosition[0], y, next.lastValidPosition[2]], 1 - Math.exp(-POSITION_SMOOTHING_RATE * dt)) : [next.lastValidPosition[0], y, next.lastValidPosition[2]];",
     "tests": [
-      "test/wagonhitch.test.js"
+      "test/systems/horse/wagonhitch.test.js"
     ]
   },
   {
     "name": "WAGON-HITCH-the-mod-trail-length",
-    "file": "src/systems/horseCart.js",
+    "file": "src/systems/horse/horseCart.js",
     "old": "    const next = hitchedPoseStep(phys, wagonVisual.pose, hitchPoint, forward, hitchZ(), dt, seed, wagonVisual.parts?.bogie ?? null, seedForward);",
     "new": "    const next = hitchedPoseStep(phys, wagonVisual.pose, hitchPoint, forward, WAGON_FOLLOW_DISTANCE, dt, seed, wagonVisual.parts?.bogie ?? null, seedForward);",
     "tests": [
-      "test/wagonhitch.test.js"
+      "test/systems/horse/wagonhitch.test.js"
     ]
   },
   {
     "name": "WAGON-HITCH-drive-off-seed-dropped",
-    "file": "src/systems/horseCart.js",
+    "file": "src/systems/horse/horseCart.js",
     "old": "    hitchSeed = seed;",
     "new": "    hitchSeed = null;",
     "tests": [
-      "test/wagonhitch.test.js"
+      "test/systems/horse/wagonhitch.test.js"
     ]
   },
   {
     "name": "WAGON-HITCH-height-snapped",
-    "file": "src/systems/horseFollow.js",
+    "file": "src/systems/horse/horseFollow.js",
     "old": "    y = w.position[1] + (next.lastValidPosition[1] - w.position[1]) * posT;",
     "new": "    y = next.lastValidPosition[1];",
     "tests": [
-      "test/wagonhitch.test.js"
+      "test/systems/horse/wagonhitch.test.js"
     ]
   },
   {
     "name": "WAGON-HITCH-tilt-snapped",
-    "file": "src/systems/horseFollow.js",
+    "file": "src/systems/horse/horseFollow.js",
     "old": "    up = vsqr(u) > MATHF_EPSILON ? vnorm(u) : targetUp;",
     "new": "    up = targetUp;",
     "tests": [
-      "test/wagonhitch.test.js"
+      "test/systems/horse/wagonhitch.test.js"
     ]
   },
   {
     "name": "WAGON-HITCH-jump-not-relaid",
-    "file": "src/systems/horseCart.js",
+    "file": "src/systems/horse/horseCart.js",
     "old": "    if (hitch.observe(m.position, hitchJumpReach(dt))) relayHitch();",
     "new": "    hitch.observe(m.position, hitchJumpReach(dt));",
     "tests": [
-      "test/audit_hcc_branch.test.js"
+      "test/scenes/audit_hcc_branch.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "  const x = hitch[0] + (position[0] - hitch[0]) * g, z = hitch[2] + (position[2] - hitch[2]) * g;",
     "new": "  const x = position[0], z = position[2];",
     "tests": [
-      "test/wagonhitch.test.js"
+      "test/systems/horse/wagonhitch.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "      const driven = s.wagon.kind === HCC_WIRE_KIND.Trailing && !!s.wagon.hitch;",
     "new": "      const driven = !!s.wagon.hitch;",
     "tests": [
-      "test/wagonhitch.test.js"
+      "test/systems/horse/wagonhitch.test.js"
     ]
   },
   {
@@ -77,25 +77,25 @@
     "old": "      if (anchor) hitchPeerWagon(p, anchor, dt);",
     "new": "      if (anchor && false) hitchPeerWagon(p, anchor, dt);",
     "tests": [
-      "test/wagonhitch.test.js"
+      "test/systems/horse/wagonhitch.test.js"
     ]
   },
   {
     "name": "AUDIT-WAGON-HITCH-A1-pulled-from-the-drawn-position",
-    "file": "src/systems/horseFollow.js",
+    "file": "src/systems/horse/horseFollow.js",
     "old": "  const from = w.active ? (w.axle ?? w.position) :",
     "new": "  const from = w.active ? w.position :",
     "tests": [
-      "test/wagonhitch.test.js"
+      "test/systems/horse/wagonhitch.test.js"
     ]
   },
   {
     "name": "AUDIT-WAGON-HITCH-A1-parked-off-the-drawn-position",
-    "file": "src/systems/horseCart.js",
+    "file": "src/systems/horse/horseCart.js",
     "old": "  const wagonAxle = () => wagonVisual.pose.axle ?? wagonVisual.pose.position;",
     "new": "  const wagonAxle = () => wagonVisual.pose.position;",
     "tests": [
-      "test/wagonhitch.test.js"
+      "test/systems/horse/wagonhitch.test.js"
     ]
   },
   {
@@ -104,52 +104,52 @@
     "old": "      const at = g > 1 && axle ? grownHitchedPosition(axle, hitch, g, groundYAt, axle[1]) : grownHitchedPosition(position, hitch, g, groundYAt);",
     "new": "      const at = grownHitchedPosition(position, hitch, g, groundYAt);",
     "tests": [
-      "test/wagonhitch.test.js"
+      "test/systems/horse/wagonhitch.test.js"
     ]
   },
   {
     "name": "AUDIT-WAGON-HITCH-A3-the-flat-20m",
-    "file": "src/systems/horseCart.js",
+    "file": "src/systems/horse/horseCart.js",
     "old": "    if (hitch.observe(m.position, hitchJumpReach(dt))) relayHitch();",
     "new": "    if (hitch.observe(m.position)) relayHitch();",
     "tests": [
-      "test/wagonhitch.test.js"
+      "test/systems/horse/wagonhitch.test.js"
     ]
   },
   {
     "name": "AUDIT-WAGON-HITCH-A3-the-reach-closed",
-    "file": "src/systems/horseFollow.js",
+    "file": "src/systems/horse/horseFollow.js",
     "old": "    const jumped = !this.last || horizontalDistance(hitch, this.last) > reach;",
     "new": "    const jumped = !this.last || horizontalDistance(hitch, this.last) >= reach;",
     "tests": [
-      "test/wagonhitch.test.js"
+      "test/systems/horse/wagonhitch.test.js"
     ]
   },
   {
     "name": "AUDIT-WAGON-HITCH-H15-the-re-lay-kept-active",
-    "file": "src/systems/horseCart.js",
+    "file": "src/systems/horse/horseCart.js",
     "old": "    if (wagonVisual) { wagonVisual.pose.active = false; wagonVisual.pose.hasLastValid = false; }",
     "new": "    if (wagonVisual) { wagonVisual.pose.hasLastValid = false; }",
     "tests": [
-      "test/wagonhitch.test.js"
+      "test/systems/horse/wagonhitch.test.js"
     ]
   },
   {
     "name": "AUDIT-WAGON-HITCH-H4-the-following-arm-dropped",
-    "file": "src/systems/horseCart.js",
+    "file": "src/systems/horse/horseCart.js",
     "old": "    const seed = gp ? [...gp.position] : (wagonVisual && wagonActive() ? [...wagonPosition()] : (tryGetRelevantDeployedScene()?.anchor ?? null));",
     "new": "    const seed = gp ? [...gp.position] : (tryGetRelevantDeployedScene()?.anchor ?? null);",
     "tests": [
-      "test/wagonhitch.test.js"
+      "test/systems/horse/wagonhitch.test.js"
     ]
   },
   {
     "name": "AUDIT-WAGON-HITCH-H11-the-pending-seed-not-rebased",
-    "file": "src/systems/horseCart.js",
+    "file": "src/systems/horse/horseCart.js",
     "old": "    hitch.offset(d); if (hitchSeed) hitchSeed = vadd(hitchSeed, d); horseFollower.offset(d);",
     "new": "    hitch.offset(d); horseFollower.offset(d);",
     "tests": [
-      "test/wagonhitch.test.js"
+      "test/systems/horse/wagonhitch.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "    const from = far ? word : p.shownWagon;",
     "new": "    const from = p.shownWagon ?? word;",
     "tests": [
-      "test/wagonhitch.test.js"
+      "test/systems/horse/wagonhitch.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "    const y = far ? target : p.shownWagon[1] + (target - p.shownWagon[1]) * (1 - Math.exp(-POSITION_SMOOTHING_RATE * Math.max(0, dt)));",
     "new": "    const y = target;",
     "tests": [
-      "test/wagonhitch.test.js"
+      "test/systems/horse/wagonhitch.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "    const target = Number.isFinite(gy) ? gy + NORMAL_GROUND_OFFSET * Math.max(0, wordUp[1]) : word[1];",
     "new": "    const target = word[1];",
     "tests": [
-      "test/wagonhitch.test.js"
+      "test/systems/horse/wagonhitch.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "    p.shownRotation = quatLookRotation(fl > 1e-6 ? [f[0] / fl, f[1] / fl, f[2] / fl] : dir, up);",
     "new": "    p.shownRotation = [...p.wagon.rotation];",
     "tests": [
-      "test/wagonhitch.test.js"
+      "test/systems/horse/wagonhitch.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "    const t = far || !p.shownUp ? 1 : 1 - Math.exp(-ROTATION_SMOOTHING_RATE * dt);",
     "new": "    const t = 1;",
     "tests": [
-      "test/wagonhitch.test.js"
+      "test/systems/horse/wagonhitch.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "p.hitch = null; p.shownUp = null;",
     "new": "p.hitch = null;",
     "tests": [
-      "test/wagonhitch.test.js"
+      "test/systems/horse/wagonhitch.test.js"
     ]
   },
   {
@@ -212,7 +212,7 @@
     "old": "GROUND_RAY_HEIGHT + rise, q[2]], [0, -1, 0], GROUND_RAY_DISTANCE + 2 * rise)",
     "new": "GROUND_RAY_HEIGHT, q[2]], [0, -1, 0], GROUND_RAY_DISTANCE)",
     "tests": [
-      "test/wagonhitch.test.js"
+      "test/systems/horse/wagonhitch.test.js"
     ]
   },
   {
@@ -221,7 +221,7 @@
     "old": "    const o = grown ? NO_SHADOW : undefined;",
     "new": "    const o = undefined;",
     "tests": [
-      "test/wagonhitch.test.js"
+      "test/systems/horse/wagonhitch.test.js"
     ]
   },
   {
@@ -230,52 +230,52 @@
     "old": "  return { last: angle, acc: (((state.acc + step / (g > 1 ? g : 1)) % 360) + 360) % 360 };",
     "new": "  return { last: angle, acc: (((state.acc + step) % 360) + 360) % 360 };",
     "tests": [
-      "test/wagonhitch.test.js"
+      "test/systems/horse/wagonhitch.test.js"
     ]
   },
   {
     "name": "AUDIT-WAGON-HITCH-H12-the-facing-off-the-plane",
-    "file": "src/systems/horseFollow.js",
+    "file": "src/systems/horse/horseFollow.js",
     "old": "  let fwd = vsub(dir, vscale(up, vdot(dir, up)));",
     "new": "  let fwd = dir;",
     "tests": [
-      "test/wagonhitch.test.js"
+      "test/systems/horse/wagonhitch.test.js"
     ]
   },
   {
     "name": "AUDIT-WAGON-HITCH-M1-the-jump-reset-gone",
-    "file": "src/systems/horseCart.js",
+    "file": "src/systems/horse/horseCart.js",
     "old": "    if (!seed && (jumped || (!horseFollower.isCombatEvading && horseRecoveredThisFrame))) {",
     "new": "    if (false) {",
     "tests": [
-      "test/audit_hcc_branch.test.js"
+      "test/scenes/audit_hcc_branch.test.js"
     ]
   },
   {
     "name": "AUDIT-WAGON-HITCH-M1-the-jump-unread",
-    "file": "src/systems/horseCart.js",
+    "file": "src/systems/horse/horseCart.js",
     "old": "    if (!seed && (jumped || (!horseFollower.isCombatEvading && horseRecoveredThisFrame))) {",
     "new": "    if (!seed && ((!horseFollower.isCombatEvading && horseRecoveredThisFrame))) {",
     "tests": [
-      "test/audit_hcc_branch.test.js"
+      "test/scenes/audit_hcc_branch.test.js"
     ]
   },
   {
     "name": "AUDIT-WAGON-HITCH-M1-the-pose-kept-active",
-    "file": "src/systems/horseCart.js",
+    "file": "src/systems/horse/horseCart.js",
     "old": "      wagonVisual.pose.active = false; wagonVisual.pose.hasLastValid = false; hasLastValidGroundState = false; resetWheelMotionState();",
     "new": "      wagonVisual.pose.hasLastValid = false; hasLastValidGroundState = false; resetWheelMotionState();",
     "tests": [
-      "test/audit_hcc_branch.test.js"
+      "test/scenes/audit_hcc_branch.test.js"
     ]
   },
   {
     "name": "AUDIT-WAGON-HITCH-D-the-runtime-draws-by-the-trail-again",
-    "file": "src/systems/horseCart.js",
+    "file": "src/systems/horse/horseCart.js",
     "old": "import { HorseFollowController, WagonHitch, hitchedPoseStep, hitchJumpReach, tryFindGround } from './horseFollow.js';",
     "new": "import { HorseFollowController, WagonHitch, hitchedPoseStep, hitchJumpReach, tryFindGround, groundedPoseStep } from './horseFollow.js';",
     "tests": [
-      "test/hcc_scope.test.js"
+      "test/systems/horse/hcc_scope.test.js"
     ]
   },
   {
@@ -284,7 +284,7 @@
     "old": "    if (!wire && !noShadow && this._casting) this._shadows.recordMesh(",
     "new": "    if (!wire && this._casting) this._shadows.recordMesh(",
     "tests": [
-      "test/el2_shadows.test.js"
+      "test/render/el2_shadows.test.js"
     ]
   }
 ]

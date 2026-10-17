@@ -1,0 +1,163 @@
+[
+  {
+    "name": "EGLOOK-ART-flute-lost",
+    "file": "src/world/eliteGates/egBandArt.js",
+    "old": "const f = x % 8;",
+    "new": "const f = x % 9;",
+    "tests": ["test/world/eliteGates/eglook_kit_art.test.js"]
+  },
+  {
+    "name": "EGLOOK-ART-hexagon-two-round",
+    "file": "src/world/eliteGates/egBandArt.js",
+    "old": "around: Object.freeze([2, 2, 2, 3])",
+    "new": "around: Object.freeze([2, 2, 2, 2])",
+    "tests": ["test/world/eliteGates/eglook_kit_art.test.js"]
+  },
+  {
+    "name": "EGLOOK-ART-picture-off-its-map",
+    "file": "src/world/eliteGates/egBandArt.js",
+    "old": "const R = EG_BAND_RAMPS[band], W = 64, H = 128, albedo = image(W, H), emission = image(W, H), r = rng(seedOf(band, 64));",
+    "new": "const R = EG_BAND_RAMPS[band], W = 64, H = 120, albedo = image(W, H), emission = image(W, H), r = rng(seedOf(band, 64));",
+    "tests": ["test/world/eliteGates/eglook_kit_art.test.js"]
+  },
+  {
+    "name": "EGLOOK-ART-flame-past-its-cap",
+    "file": "src/world/eliteGates/egBandArt.js",
+    "old": "f[2] === albedo.colors[i + 2]; }), EG_MOLTEN_LUMA_MAX);",
+    "new": "f[2] === albedo.colors[i + 2]; }), 0.62);",
+    "tests": ["test/world/eliteGates/eglook_kit_art.test.js"]
+  },
+  {
+    "name": "EGLOOK-ART-moonlamp-finial-lit",
+    "file": "src/world/eliteGates/egBandArt.js",
+    "old": "capGlow(albedo, emission, (x, y) => y < 32 && albedo.colors[(y * S + x) * 4 + 3] > 127 && R.flame.some(",
+    "new": "capGlow(albedo, emission, (x, y) => y < 32 && albedo.colors[(y * S + x) * 4 + 3] > 127 && [...R.flame, R.fix[3]].some(",
+    "tests": ["test/world/eliteGates/eglook_kit_art.test.js"]
+  },
+  {
+    "name": "EGLOOK-ART-soulgem-past-its-cap",
+    "file": "src/world/eliteGates/egBandArt.js",
+    "old": "if (band === 1) capGlow(albedo, emission, () => true, EG_MOLTEN_LUMA_MAX);",
+    "new": "if (band === 1) capGlow(albedo, emission, () => true, 0.7);",
+    "tests": ["test/world/eliteGates/eglook_kit_art.test.js"]
+  },
+  {
+    "name": "EGLOOK-ART-quartz-lit",
+    "file": "src/world/eliteGates/egBandArt.js",
+    "old": "if (band === 1) capGlow(albedo, emission, () => true, EG_MOLTEN_LUMA_MAX);",
+    "new": "if (band !== 2) capGlow(albedo, emission, () => true, EG_MOLTEN_LUMA_MAX);",
+    "tests": ["test/world/eliteGates/eglook_kit_art.test.js"]
+  },
+  {
+    "name": "EGLOOK-ART-mosaic-past-the-seam-cap",
+    "file": "src/world/eliteGates/egBandArt.js",
+    "old": "y % 8 === 0); }, EG_SEAM_LUMA_MAX);",
+    "new": "y % 8 === 0); }, EG_MOLTEN_LUMA_MAX);",
+    "tests": ["test/world/eliteGates/eglook_kit_art.test.js"]
+  },
+  {
+    "name": "EGLOOK-ART-banner-glowing",
+    "file": "src/world/eliteGates/egBandArt.js",
+    "old": "// the torn edge frayed dark (charred in the Wellhead)\n    putTexel(albedo, x, y, c); putTexel(emission, x, y, [0, 0, 0]);",
+    "new": "// the torn edge frayed dark (charred in the Wellhead)\n    putTexel(albedo, x, y, c); putTexel(emission, x, y, scale(c, 0.3));",
+    "tests": ["test/world/eliteGates/eglook_kit_art.test.js"]
+  },
+  {
+    "name": "EGLOOK-ART-hole-in-the-sigil",
+    "file": "src/world/eliteGates/egBandArt.js",
+    "old": "for (const [hx, hy, hr] of holes) if (Math.hypot(x - hx, (y - hy) * 0.8) < hr) return true;",
+    "new": "for (const [hx, hy, hr] of holes) if (Math.hypot(x - hx, (y - hy) * 0.8) < hr || Math.hypot(x - 33, y - 44) < 1.5) return true;",
+    "tests": ["test/world/eliteGates/eglook_kit_art.test.js"]
+  },
+  {
+    "name": "EGLOOK-ART-fixture-body-cut",
+    "file": "src/world/eliteGates/egBandArt.js",
+    "old": "if (y < 32) {   // the light",
+    "new": "if (y < 40) {   // the light",
+    "tests": ["test/world/eliteGates/eglook_kit_art.test.js"]
+  },
+  {
+    "name": "EGLOOK-ART-host-loses-the-cutout",
+    "file": "src/scenes/eliteGates/egCircleHost.js",
+    "old": "rec, art.albedo, art.cutout ? { cutout: true } : undefined);",
+    "new": "rec, art.albedo);",
+    "tests": ["test/world/eliteGates/eglook_kit_art.test.js", "test/world/eliteGates/eglook_art.test.js"]
+  },
+  {
+    "name": "EGLOOK-ART-galleries-banner-red",
+    "file": "src/world/eliteGates/egBandArt.js",
+    "old": "cloth: r5([20, 26, 52], [30, 40, 76], [42, 56, 102], [56, 74, 128], [72, 94, 152]),",
+    "new": "cloth: r5([52, 26, 20], [76, 40, 30], [102, 56, 42], [128, 74, 56], [152, 94, 72]),",
+    "tests": ["test/world/eliteGates/eglook_kit_art.test.js"]
+  },
+  {
+    "name": "EGLOOK-ART-haze-not-the-bands-fog",
+    "file": "src/world/eliteGates/egBandArt.js",
+    "old": "haze: hazeOf(EG_ATMOS[1].fog.color),",
+    "new": "haze: hazeOf(EG_ATMOS[0].fog.color),",
+    "tests": ["test/world/eliteGates/eglook_kit_art.test.js"]
+  },
+  {
+    "name": "EGLOOK-ART-tips-left-stone",
+    "file": "src/world/eliteGates/egBandArt.js",
+    "old": "if (bayer(x, y) < f * 0.92)",
+    "new": "if (bayer(x, y) < f * 0.2)",
+    "tests": ["test/world/eliteGates/eglook_kit_art.test.js"]
+  },
+  {
+    "name": "EGLOOK-ART-gold-in-the-marble",
+    "file": "src/world/eliteGates/egBandArt.js",
+    "old": "if (band === 3) for (let row = 0; row < 2; row++) {   // the iron straps along the courses' joints, riveted",
+    "new": "if (band === 3 || band === 0) for (let row = 0; row < 2; row++) {   // the iron straps along the courses' joints, riveted",
+    "tests": ["test/world/eliteGates/eglook_kit_art.test.js"]
+  },
+  {
+    "name": "EGLOOK-ART-court-louder-than-its-floor",
+    "file": "src/world/eliteGates/egBandArt.js",
+    "old": "let t = quiet + 0.28 * tone(x, y) + 0.06 * (fine(x, y) - 0.5);",
+    "new": "let t = quiet + 0.28 * tone(x, y) + 1.4 * (fine(x, y) - 0.5);",
+    "tests": ["test/world/eliteGates/eglook_kit_art.test.js"]
+  },
+  {
+    "name": "EGLOOK-ART-walks-tesserae-lost-to-the-marble",
+    "file": "src/world/eliteGates/egBandArt.js",
+    "old": "rp = h < 0.16 ? R.stone : h < 0.24 ? R.accent : R.tile",
+    "new": "rp = h < 0.66 ? R.stone : h < 0.74 ? R.accent : R.tile",
+    "tests": ["test/world/eliteGates/eglook_kit_art.test.js"]
+  },
+  {
+    "name": "EGLOOK-ART-string-course-left-stone",
+    "file": "src/world/eliteGates/egBandArt.js",
+    "old": "if (band === 0) col.push(step(R.metal, 4), step(R.metal, 2), step(R.metal, 1), step(R.metal, 0));",
+    "new": "if (band === 0) col.push(step(R.stone, 4), step(R.stone, 2), step(R.stone, 1), step(R.stone, 0));",
+    "tests": ["test/world/eliteGates/eglook_kit_art.test.js"]
+  },
+  {
+    "name": "EGLOOK-ART-two-bands-one-frieze",
+    "file": "src/world/eliteGates/egBandArt.js",
+    "old": "  } else if (band === 1) {\n    const key = { o: [3, 0], B: [4, 0.75], b: [4, 0.45], h: [3, 0], T: [3, 0.1] };",
+    "new": "  } else if (band === 9) {\n    const key = { o: [3, 0], B: [4, 0.75], b: [4, 0.45], h: [3, 0], T: [3, 0.1] };",
+    "tests": ["test/world/eliteGates/eglook_kit_art.test.js"]
+  },
+  {
+    "name": "EGLOOK-ART-fixture-loses-its-cutout",
+    "file": "src/world/eliteGates/egBandArt.js",
+    "old": "f[2] === albedo.colors[i + 2]; }), EG_MOLTEN_LUMA_MAX);\n  return { albedo, emission, cutout: true };",
+    "new": "f[2] === albedo.colors[i + 2]; }), EG_MOLTEN_LUMA_MAX);\n  return { albedo, emission };",
+    "tests": ["test/world/eliteGates/eglook_kit_art.test.js", "test/world/eliteGates/eglook_art.test.js"]
+  },
+  {
+    "name": "EGLOOK-ART-cairn-court-past-the-seam-cap",
+    "file": "src/world/eliteGates/egBandArt.js",
+    "old": "Math.min(x, y) === 1, EG_SEAM_LUMA_MAX);",
+    "new": "Math.min(x, y) === 1, EG_MOLTEN_LUMA_MAX);",
+    "tests": ["test/world/eliteGates/eglook_art.test.js"]
+  },
+  {
+    "name": "EGLOOK-ART-galleries-court-glowing",
+    "file": "src/world/eliteGates/egBandArt.js",
+    "old": "if (band === 1) capGlow(albedo, emission, (x, y) => (x < 3 || y < 3)",
+    "new": "if (band <= 1) capGlow(albedo, emission, (x, y) => (x < 3 || y < 3)",
+    "tests": ["test/world/eliteGates/eglook_art.test.js"]
+  }
+]

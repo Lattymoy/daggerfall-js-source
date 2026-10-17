@@ -5,7 +5,7 @@
 // its kind (Personal, Party, Guild) and its flag's colour. On a flag it EDITS that waypoint: rename, recolour, follow
 // or stop following, travel there (where the map can), share it again (one of mine for a party or a guild), remove.
 //
-// THE HUD'S KIND OF THING, NOT A WINDOW (ui/travelViewHud.js's law): it registers with no overlay stack - the Overworld's
+// THE HUD'S KIND OF THING, NOT A WINDOW (ui/travel/travelViewHud.js's law): it registers with no overlay stack - the Overworld's
 // world runs on under it. It takes its own presses (a press inside it is never the map's or the world's), Escape closes
 // it (the host's overlayUp asks `waypointMenuOpen` so the view's own Escape waits), Enter answers it, and a press
 // anywhere outside lets it go. One at a time: a second replaces the first.
@@ -14,7 +14,7 @@ import {
   WAYPOINT_KINDS, WAYPOINT_COLORS, WAYPOINT_TEXT, WAYPOINT_NAME_MAX, waypointById, nextWaypointName, addWaypoint,
   renameWaypoint, recolorWaypoint, removeWaypoint, setWaypointFollowed, isWaypointFollowed, shareWaypoint,
   waypointSharingLive, cleanWaypointName,
-} from '../systems/mapWaypoints.js';
+} from '../systems/map/mapWaypoints.js';
 
 export const WAYPOINT_MENU_ID = 'wp-menu';
 const STYLE_ID = 'wp-menu-style';

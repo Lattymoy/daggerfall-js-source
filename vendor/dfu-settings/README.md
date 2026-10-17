@@ -27,7 +27,7 @@ own DATA, not ARENA2 and not the C# we translate.
   `ItemBuilder.cs`.
 - Hand-transcribing 171 defaults across 13 sections is exactly the
   lossy-second-copy shape AUDIT 17e F9 caught in the item templates.
-  Vendoring it means `systems/settings.js` parses the real bytes and a
+  Vendoring it means `systems/settings/settings.js` parses the real bytes and a
   pin can assert the parse against them.
 
 The label table matters as much as the defaults: it means the words a
@@ -37,7 +37,7 @@ than 171 labels invented here. `LypyL_GameConsole` becomes DFU's
 
 ## What reads them
 
-`src/systems/settings.js` parses this file into the settings store's
+`src/systems/settings/settings.js` parses this file into the settings store's
 sections, keys and default values. The port implements DFU's typed
 getters verbatim, including their failure modes (a bad bool reads
 False; a bad clamped int reads `min`, not the default).

@@ -1,20 +1,21 @@
 [
   {
     "name": "HOST-SPLIT-a-ceiling-under-its-host",
-    "file": "test/hostceiling.test.js",
-    "old": "['src/scenes/world.js', 'bootWorld', 21_679, MODULE]",
-    "new": "['src/scenes/world.js', 'bootWorld', 21_400, MODULE]",
+    "file": "test/scenes/hostceiling.test.js",
+    "old": "['src/scenes/world.js', 'bootWorld', 21_186, MODULE]",
+    "new": "['src/scenes/world.js', 'bootWorld', 20_900, MODULE]",
     "tests": [
-      "test/hostceiling.test.js"
-    ]
+      "test/scenes/hostceiling.test.js"
+    ],
+    "note": "PIN MOVED (FIELD BUGS 2026-10-16b GRAVE-PARTY): world.js's ceiling lowered 21,676 -> 21,638 on main's count (21,679 -> 21,641 on its branch before the merge; activateGrave out)."
   },
   {
     "name": "HOST-SPLIT-a-ceiling-left-high",
-    "file": "test/hostceiling.test.js",
+    "file": "test/scenes/hostceiling.test.js",
     "old": "['server/src/index.js', '_message', 1_093, METHOD]",
     "new": "['server/src/index.js', '_message', 2_000, METHOD]",
     "tests": [
-      "test/hostceiling.test.js"
+      "test/scenes/hostceiling.test.js"
     ]
   },
   {
@@ -23,7 +24,61 @@
     "old": "for (let i = Math.max(c.start, node.start); i < Math.min(c.end, node.end); i++) if (chars[i - node.start] !== '\\n') chars[i - node.start] = ' ';",
     "new": "for (let i = Math.max(c.start, node.start); i < Math.min(c.end, node.end); i++) if (chars[i - node.start] !== '\\n') chars[i - node.start] = chars[i - node.start];",
     "tests": [
-      "test/hostceiling.test.js"
+      "test/scenes/hostceiling.test.js"
+    ]
+  },
+  {
+    "name": "HOST-SPLIT-NAVAL-the-naval-ceiling-dropped",
+    "file": "test/scenes/hostceiling.test.js",
+    "old": "  ['src/scenes/naval/navalHost.js', 'createNavalHost', 3_942, MODULE],   // HOST-SPLIT NAVAL: a *Host.js grown into a knot of its own (3,692 code lines)\n",
+    "new": "",
+    "tests": [
+      "test/scenes/hostceiling.test.js"
+    ]
+  },
+  {
+    "name": "HOST-SPLIT-NAVAL-the-knot-never-reached",
+    "file": "test/scenes/hostceiling.test.js",
+    "old": "const KNOT = 2_000;",
+    "new": "const KNOT = 100_000;",
+    "tests": [
+      "test/scenes/hostceiling.test.js"
+    ]
+  },
+  {
+    "name": "HOST-SPLIT-NAVAL-the-walk-by-the-first-create-export-alone",
+    "file": "test/scenes/hostceiling.test.js",
+    "old": "    for (const { fn, name } of outermost(ast, KNOT)) {",
+    "new": "    for (const { fn, name } of outermost(ast, KNOT).filter((x) => x.name === /^export function (create\\w+)\\(/m.exec(src)?.[1])) {",
+    "tests": [
+      "test/scenes/hostceiling.test.js"
+    ]
+  },
+  {
+    "name": "HOST-SPLIT-NAVAL-the-sail-runtime-ceiling-dropped",
+    "file": "test/scenes/hostceiling.test.js",
+    "old": "  ['src/systems/comeSailAway/comeSailAway.js', 'createComeSailAwayRuntime', 2_315, MODULE],   // AUDIT HOST-SPLIT NAVAL: the Come Sail Away runtime, one scope of 2,065 code lines\n",
+    "new": "",
+    "tests": [
+      "test/scenes/hostceiling.test.js"
+    ]
+  },
+  {
+    "name": "HOST-SPLIT-the-walk-by-declarations-alone",
+    "file": "test/scenes/hostceiling.test.js",
+    "old": "  const isFn = (n) => /^(FunctionDeclaration|FunctionExpression|ArrowFunctionExpression)$/.test(n.type) && n.body?.type === 'BlockStatement';",
+    "new": "  const isFn = (n) => /^(FunctionDeclaration)$/.test(n.type) && n.body?.type === 'BlockStatement';",
+    "tests": [
+      "test/scenes/hostceiling.test.js"
+    ]
+  },
+  {
+    "name": "HOST-SPLIT-the-relay-not-walked",
+    "file": "test/scenes/hostceiling.test.js",
+    "old": "  const files = [...sources('src'), ...sources('server/src')];",
+    "new": "  const files = sources('src');",
+    "tests": [
+      "test/scenes/hostceiling.test.js"
     ]
   }
 ]

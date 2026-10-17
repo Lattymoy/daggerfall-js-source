@@ -5,8 +5,8 @@
     "old": "      const rect = screenTransform ? screenTransform({ x: 0, y: 0, w: W, h: H }) : null;",
     "new": "      const rect = screenTransform ? screenTransform({ x: 0, y: 0, w: W, h: H }) : { x: 0, y: 0, w: W, h: H };",
     "tests": [
-      "test/macr_fixes.test.js",
-      "test/disc13.test.js"
+      "test/ui/enhanced/macr_fixes.test.js",
+      "test/systems/disc13.test.js"
     ]
   },
   {
@@ -15,9 +15,9 @@
     "old": "      const proj = win ? frustum(-hw + win.k0 * px, -hw + (win.k0 + fw) * px, hh - (win.r0 + fh) * py, hh - win.r0 * py, near, far) : perspective(FP_FIELD_OF_VIEW, pw / ph, near, far);",
     "new": "      const proj = perspective(FP_FIELD_OF_VIEW, pw / ph, near, far);",
     "tests": [
-      "test/macr_fixes.test.js",
-      "test/fparm.test.js",
-      "test/disc13.test.js"
+      "test/ui/enhanced/macr_fixes.test.js",
+      "test/formats/morrowind/fparm.test.js",
+      "test/systems/disc13.test.js"
     ]
   },
   {
@@ -26,8 +26,8 @@
     "old": "        renderer.drawScreenQuad(tex, win.dst, { u0: 0, v0: fh / CHAR_SPRITE_RT_SIZE, u1: fw / CHAR_SPRITE_RT_SIZE, v1: 0 });",
     "new": "        renderer.drawScreenQuad(tex, rect, { u0: 0, v0: fh / CHAR_SPRITE_RT_SIZE, u1: fw / CHAR_SPRITE_RT_SIZE, v1: 0 });",
     "tests": [
-      "test/macr_fixes.test.js",
-      "test/disc13.test.js"
+      "test/ui/enhanced/macr_fixes.test.js",
+      "test/systems/disc13.test.js"
     ]
   },
   {
@@ -36,7 +36,7 @@
     "old": "  out[9] = (top + bottom) / (top - bottom);",
     "new": "  out[9] = 0;",
     "tests": [
-      "test/macr_fixes.test.js"
+      "test/ui/enhanced/macr_fixes.test.js"
     ]
   },
   {
@@ -45,7 +45,7 @@
     "old": "  if (e.repeat && act) return true;",
     "new": "",
     "tests": [
-      "test/macr_fixes.test.js"
+      "test/ui/enhanced/macr_fixes.test.js"
     ]
   },
   {
@@ -54,7 +54,7 @@
     "old": "{ if (!e.repeat && routeAction(act, hudCtx)) { e.preventDefault(); return true; } if (e.repeat) { e.preventDefault(); return true; } }   // MAC-R2",
     "new": "{ if (routeAction(act, hudCtx)) { e.preventDefault(); return true; } }   // MAC-R2",
     "tests": [
-      "test/macr_fixes.test.js"
+      "test/ui/enhanced/macr_fixes.test.js"
     ]
   },
   {
@@ -63,7 +63,7 @@
     "old": "  const light = kind === 'torch' || (kind === 'empty' && carries);",
     "new": "  const light = kind === 'torch' || carries;",
     "tests": [
-      "test/macr_fixes.test.js"
+      "test/ui/enhanced/macr_fixes.test.js"
     ]
   },
   {
@@ -72,7 +72,7 @@
     "old": "    if (typeof switchHand !== 'function') { say?.(QUICKSLOT_TEXT.noLight); return { kind: 'none' }; }",
     "new": "    say?.(QUICKSLOT_TEXT.noLight); if (typeof switchHand !== 'function') { return { kind: 'none' }; }",
     "tests": [
-      "test/macr_fixes.test.js"
+      "test/ui/enhanced/macr_fixes.test.js"
     ]
   },
   {
@@ -81,8 +81,8 @@
     "old": "  const light = kind === 'torch' || (kind === 'empty' && carries);",
     "new": "  const light = kind === 'empty' && carries;",
     "tests": [
-      "test/macr_fixes.test.js",
-      "test/qs4_offhand.test.js"
+      "test/ui/enhanced/macr_fixes.test.js",
+      "test/systems/qs4_offhand.test.js"
     ]
   },
   {
@@ -91,7 +91,7 @@
     "old": "  if (kind === 'swap') return { kind: 'swap' };",
     "new": "",
     "tests": [
-      "test/macr_fixes.test.js"
+      "test/ui/enhanced/macr_fixes.test.js"
     ]
   },
   {
@@ -100,17 +100,17 @@
     "old": "    return switchHand() === true ? { kind: 'hand' } : { kind: 'refused' };",
     "new": "    switchHand(); return { kind: 'hand' };",
     "tests": [
-      "test/macr_fixes.test.js"
+      "test/ui/enhanced/macr_fixes.test.js"
     ]
   },
   {
     "name": "MACR3-the-main-cell-holds-like-a-slot",
-    "file": "src/ui/enhancedHud.js",
+    "file": "src/ui/enhanced/enhancedHud.js",
     "old": "  cells.main.cell.addEventListener('pointerdown', tap(() => { liveOpts.quickSwitchHand?.(); }));",
     "new": "  bindHold(cells.main.cell, 'c1', () => liveOpts.quickSwitchHand?.());",
     "tests": [
-      "test/macr_fixes.test.js",
-      "test/qs3_hud.test.js"
+      "test/ui/enhanced/macr_fixes.test.js",
+      "test/ui/enhanced/qs3_hud.test.js"
     ]
   },
   {
@@ -119,53 +119,53 @@
     "old": "    offHandQuickslot({ entity: playerEntity, say: (l) => townTalk.say(l), switchHand: () => weaponRig.switchHand(), toggleLight: () => weaponRig.toggleLight() });   // MAC-R3: the hand's own act beside the light's",
     "new": "    offHandQuickslot({ entity: playerEntity, say: (l) => townTalk.say(l), toggleLight: () => weaponRig.toggleLight() });   // MAC-R3: the hand's own act beside the light's",
     "tests": [
-      "test/macr_fixes.test.js"
+      "test/ui/enhanced/macr_fixes.test.js"
     ]
   },
   {
     "name": "MACR4-the-capture-is-kept",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "    if (touch) { giveBack(); row.addEventListener?.('gotpointercapture', giveBack, { once: true }); }",
     "new": "    if (touch) { row.addEventListener?.('gotpointercapture', giveBack, { once: true }); }",
     "tests": [
-      "test/macr_fixes.test.js"
+      "test/ui/enhanced/macr_fixes.test.js"
     ]
   },
   {
     "name": "MACR4-the-lost-capture-end-put-back",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "    globalThis.addEventListener?.('pointercancel', onDragAbort, true);\n    globalThis.addEventListener?.('scroll', onDragScroll, true);",
     "new": "    globalThis.addEventListener?.('pointercancel', onDragAbort, true);\n    globalThis.addEventListener?.('lostpointercapture', onDragAbort, true);\n    globalThis.addEventListener?.('scroll', onDragScroll, true);",
     "tests": [
-      "test/macr_fixes.test.js",
-      "test/enhancedInventory.test.js"
+      "test/ui/enhanced/macr_fixes.test.js",
+      "test/ui/enhanced/enhancedInventory.test.js"
     ]
   },
   {
     "name": "MACR4-the-menu-watch-outlives-the-session",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "    globalThis.removeEventListener?.('contextmenu', onDragMenu, true);",
     "new": "",
     "tests": [
-      "test/macr_fixes.test.js"
+      "test/ui/enhanced/macr_fixes.test.js"
     ]
   },
   {
     "name": "MACR4-the-menu-is-watched-but-not-refused",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "const onDragMenu = (e) => { if (drag && e.cancelable) e.preventDefault(); };",
     "new": "const onDragMenu = (e) => { void e; };",
     "tests": [
-      "test/macr_fixes.test.js"
+      "test/ui/enhanced/macr_fixes.test.js"
     ]
   },
   {
     "name": "MACR4-the-callout-comes-back-on-the-tile",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": ".itemrow { touch-action: pan-y; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }",
     "new": ".itemrow { touch-action: pan-y; -webkit-user-select: none; user-select: none; }",
     "tests": [
-      "test/macr_fixes.test.js"
+      "test/ui/enhanced/macr_fixes.test.js"
     ]
   }
 ]

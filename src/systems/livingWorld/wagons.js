@@ -20,7 +20,7 @@
 // quarters), by its seed; a quarter if it was robbed (LW11/LW12 `robbed`).
 import { laneAt, NATIVE_PER_M } from './trips.js';
 import { lwSeed, textSeed } from './seed.js';
-import { HITCHED_HORSE_LOCAL_Z, HORSE_BOX_SIZE, wheelRotationDegrees, wrapWheelAngle } from '../horseCartLaw.js';
+import { HITCHED_HORSE_LOCAL_Z, HORSE_BOX_SIZE, wheelRotationDegrees, wrapWheelAngle } from '../horse/horseCartLaw.js';
 import { MEASURED } from '../../world/wagonModels.js';   // AUDIT LW-III: the Small Cart's footprint
 
 /** A merchant of a town this big (blocks) trades in two wagons. */

@@ -53,7 +53,7 @@ A painted picture goes up in **Daggerfall's look**: `dfLook(picture, lookSeed(ar
 
 | Model | Archive | Where the look is laid on |
 |---|---|---|
-| Galleon, carrack, large boat | 38131, 38141, 38171 | `shipStandIns` (`world/galleonArt.js`): each stand-in's build, on the texture door |
+| Galleon, carrack, large boat | 38131, 38141, 38171 | `shipStandIns` (`world/ships/galleonArt.js`): each stand-in's build, on the texture door |
 | Town hangings and rugs | 38202 | `townPictureEntries` (`world/townPictures.js`): each stand-in's build |
 | Wagons and caravan | 38181 | `scenes/horseCartPool.js` uploadWagonPicture, `scenes/caravanRoom.js` paintCaravanRoom, and the wagon's item icon (`world/wagonModels.js` wagonIconSource) |
 | Stable, Wagon Yard, Joinery | 38221 | `scenes/merchantYardsHost.js`, as the art goes up |
@@ -108,7 +108,7 @@ judged on contact sheets: each painted picture beside its looked one, and real r
 
 ## Pinned
 
-- `test/dflook.test.js` (8): with no palette, painted as painted; every opaque texel a palette colour, never index 0's;
+- `test/world/dflook.test.js` (8): with no palette, painted as painted; every opaque texel a palette colour, never index 0's;
   alpha untouched; the grain bounded, deterministic, its seed's own and clumped; hue above light; the port rows' shape;
   the pipeline's hand-over; every door.
 - **The windows:**

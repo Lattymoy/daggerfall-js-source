@@ -5,8 +5,8 @@
     "old": "  decalFs: EL_DECAL_FS,   // MAC-BUG W6: the blood marks' twin - without it a lane lights its marks on the classic program, which is the bug\n",
     "new": "",
     "tests": [
-      "test/blood1_decals.test.js",
-      "test/el1_enhancedlighting.test.js"
+      "test/combat/blood1_decals.test.js",
+      "test/render/el1_enhancedlighting.test.js"
     ]
   },
   {
@@ -15,7 +15,7 @@
     "old": "  vec3 albedo = elDecode(vColor.rgb)",
     "new": "  vec3 albedo = vColor.rgb",
     "tests": [
-      "test/blood1_decals.test.js"
+      "test/combat/blood1_decals.test.js"
     ]
   },
   {
@@ -24,7 +24,7 @@
     "old": "  outColor = vec4(elFinish(lit, vWorld), t.a * vColor.a);",
     "new": "  outColor = vec4(lit, t.a * vColor.a);",
     "tests": [
-      "test/blood1_decals.test.js"
+      "test/combat/blood1_decals.test.js"
     ]
   },
   {
@@ -33,8 +33,8 @@
     "old": "uniform vec4 uPointLights[${EL_MAX_LIGHTS}];\nuniform vec3 uPointColors[${EL_MAX_LIGHTS}];\nuniform vec4 uIndirect;\nuniform vec3 uIndirectColor;\nuniform vec3 uFogColor;\nuniform int uFogMode;\nuniform float uFogDensity;\nuniform vec2 uFogRange;\nuniform vec3 uCamPos;\nuniform vec3 uLightDir;\nuniform vec3 uDecalMoon;   // BLOOD AUDIT 5: the moon, by N.L as the mesh takes it (W4 folded its half into the ambient)\nuniform vec3 uMoonDir;\nuniform float uTrilight;   // BLOOD AUDIT 5: and the trilight ambient the mesh takes\nuniform vec3 uAmbientSky;\nuniform vec3 uAmbientGround;\nuniform float uPicture;   // WEAPON-MOUNT: a mounted PICTURE (the decorator's hung weapons and armour), not a film of blood\n${CLOUD_SHADOW_GLSL}\n${EL_GLSL}\n${SHADOW_GLSL}\n${AIR_CONTACT_GLSL}\n${EL_FOG_GLSL}\n${EL_POINT_LIT_GLSL}\nout vec4 outColor;\nvoid main() {\n  vec4 t = texture(uTex, vUV);",
     "new": "uniform vec4 uPointLights[16];\nuniform vec3 uPointColors[16];\nuniform vec4 uIndirect;\nuniform vec3 uIndirectColor;\nuniform vec3 uFogColor;\nuniform int uFogMode;\nuniform float uFogDensity;\nuniform vec2 uFogRange;\nuniform vec3 uCamPos;\nuniform vec3 uLightDir;\nuniform vec3 uDecalMoon;   // BLOOD AUDIT 5: the moon, by N.L as the mesh takes it (W4 folded its half into the ambient)\nuniform vec3 uMoonDir;\nuniform float uTrilight;   // BLOOD AUDIT 5: and the trilight ambient the mesh takes\nuniform vec3 uAmbientSky;\nuniform vec3 uAmbientGround;\nuniform float uPicture;   // WEAPON-MOUNT: a mounted PICTURE (the decorator's hung weapons and armour), not a film of blood\n${CLOUD_SHADOW_GLSL}\n${EL_GLSL}\n${SHADOW_GLSL}\n${AIR_CONTACT_GLSL}\n${EL_FOG_GLSL}\n${EL_POINT_LIT_GLSL}\nout vec4 outColor;\nvoid main() {\n  vec4 t = texture(uTex, vUV);",
     "tests": [
-      "test/blood1_decals.test.js",
-      "test/el1_enhancedlighting.test.js"
+      "test/combat/blood1_decals.test.js",
+      "test/render/el1_enhancedlighting.test.js"
     ]
   },
   {
@@ -43,7 +43,7 @@
     "old": "    this._uploadEl('decal');   // MAC-BUG W6: the exposure, the in-scatter, the shadow maps and the eye - what makes the lane's mark the lane's (a no-op on the classic set)\n",
     "new": "",
     "tests": [
-      "test/blood1_decals.test.js"
+      "test/combat/blood1_decals.test.js"
     ]
   },
   {
@@ -52,8 +52,8 @@
     "old": "    const dCount = Math.min(this._pointLights.length >> 2, this._decalLights);",
     "new": "    const dCount = Math.min(this._pointLights.length >> 2, CLASSIC_MAX_LIGHTS);",
     "tests": [
-      "test/blood1_decals.test.js",
-      "test/el1_enhancedlighting.test.js"
+      "test/combat/blood1_decals.test.js",
+      "test/render/el1_enhancedlighting.test.js"
     ]
   },
   {
@@ -62,7 +62,7 @@
     "old": "    this._uploadCloudShadow('decal');   // MAC-BUG W6 / BLOOD1 AUDIT 3: the mark takes the cloud's shadow as the flat beside it does, on both programs\n",
     "new": "",
     "tests": [
-      "test/blood1_decals.test.js"
+      "test/combat/blood1_decals.test.js"
     ]
   },
   {
@@ -71,8 +71,8 @@
     "old": "    this.decalProgram = set.decal;\n    this._decal = this._decalLocs(set.decal);\n",
     "new": "    if (!this.decalProgram) { this.decalProgram = set.decal; this._decal = this._decalLocs(set.decal); }\n",
     "tests": [
-      "test/blood1_decals.test.js",
-      "test/el1_enhancedlighting.test.js"
+      "test/combat/blood1_decals.test.js",
+      "test/render/el1_enhancedlighting.test.js"
     ]
   },
   {
@@ -81,7 +81,7 @@
     "old": "cloudShadowAt(vWorld) * sunShadowAt(vWorld, n) : 0.0;",
     "new": "cloudShadowAt(vWorld) * sunShadowAt(vWorld, vec3(0.0, 1.0, 0.0)) : 0.0;",
     "tests": [
-      "test/blood1_decals.test.js"
+      "test/combat/blood1_decals.test.js"
     ]
   }
 ]

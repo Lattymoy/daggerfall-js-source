@@ -23,7 +23,7 @@
 // through it do, the ray being capped at the surface for both. The sky,
 // which no program here draws, takes the same map in its own pass
 // (deepWatersRender.js drawSkyFog). Its one uniform is declared here with
-// its only reader: five vec4s from world/deepWaterLook.js
+// its only reader: five vec4s from world/deepWater/deepWaterLook.js
 // distanceFogUniforms, [0].x 0 when the effect is off (renderer.js
 // setWaterFog - a frame's, cleared by beginFrame).
 

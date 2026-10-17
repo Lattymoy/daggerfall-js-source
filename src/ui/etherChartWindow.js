@@ -2,8 +2,8 @@
 // ETHER-CHART (2026-10-11, the owner: "A brand new open sea map that allows you to traverse to the etheric sea";
 // bible/03-World/Eltheric-Ocean.md ETHER-CHART) - THE CHART OF THE ELTHERIC OCEAN: the map a captain keeps past the Veil, the
 // travel map's door's answer there (scenes/world.js toggleTravelMap) - the Bay's travel map has no sea past the Veil to
-// show, and no road to travel by. Drawn on a canvas in the naval windows' sheet (ui/navalPlunderWindow.js's style, the
-// door's slot - ui/navalPlunderDoor.js), off the world's word (scenes/etherHost.js chart): the ISLES CHARTED - a port's
+// show, and no road to travel by. Drawn on a canvas in the naval windows' sheet (ui/naval/navalPlunderWindow.js's style, the
+// door's slot - ui/naval/navalPlunderDoor.js), off the world's word (scenes/etherHost.js chart): the ISLES CHARTED - a port's
 // gold, a ruin's red, a wild isle's green, a rock's grey, each named as the zoom allows - the SHIP and her heading, THE
 // VEIL down the chart's east edge and the way home through it, the BANDS' bounds and names (each on its own deeper side,
 // the Shallows by the Veil), and the HAUNTS of the legends heard of, the square each is (dim while she lies sunk). Pan by
@@ -31,7 +31,7 @@
 // long; the world's edge drawn and hatched. A HAUNT is a washed square, a sunk legend's hatched and dashed, her name and
 // state on a plate in a clear corner of her square's part in view. The SHIP is a bone arrowhead in a brass ring and, off
 // the canvas, a pointer at the edge saying how far. The isle named is ringed, a bearing drawn to it from the ship and its
-// card beside it. AUDIT ETHER-CHART2 (bible/01-Overview/Audit-Ether-Chart2.md) took the chart's own words off the map:
+// card beside it. AUDIT ETHER-CHART2 (bible/01-Overview/audits/Audit-Ether-Chart2.md) took the chart's own words off the map:
 // a DEPTH RULER over it names each water in view, the Veil's and the world's edge, and the scale stands in the KEY under
 // it, which says what each mark is.
 //
@@ -39,12 +39,12 @@
 // `toChart`, `chartZoomAt`), the chart's model (`chartModel`), the scale (`scaleBar`), a name's two sides
 // (`labelBoxes`) and the edge's pointer (`edgePointer`). The painters are handed their contexts: `paintChart` the
 // chart, `paintRuler` the ruler, `paintScale` the key's bar, `paintMark` and `paintKey` a mark and a key's mark.
-import { closeOnOutsideTap } from './enhancedOverlays.js';
+import { closeOnOutsideTap } from './enhanced/enhancedOverlays.js';
 import { overlayAction, bindings } from './input.js';
 import { actionsForCode } from '../systems/inputActions.js';
-import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
-import { injectNavalKit } from './navalHud.js';
-import { injectNavalWindowStyle } from './navalPlunderWindow.js';
+import { injectEnhancedStyle, injectEnhancedFonts } from './enhanced/enhancedStyle.js';
+import { injectNavalKit } from './naval/navalHud.js';
+import { injectNavalWindowStyle } from './naval/navalPlunderWindow.js';
 import { PIXEL_STACK } from './pixelifyFive.js';
 import { TRAVEL_VIEW_BUTTON } from '../scenes/travelView.js';   // ETHER-OW: the Overworld door's words, the held map's own
 import { t } from '../systems/textManager.js';   // L10N4 (at the merge of main): the chart's words in the player's language, read when they are drawn

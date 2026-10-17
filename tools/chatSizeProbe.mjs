@@ -1,6 +1,6 @@
 // CHAT-SIZE, MEASURED (2026-09-23, Mac: "the ability to click and drag the chat to resize/along with the text").
 //
-// test/chatsize.test.js holds the law on a fake; this drags the REAL grip with the real mouse over the real sheets in
+// test/ui/chatsize.test.js holds the law on a fake; this drags the REAL grip with the real mouse over the real sheets in
 // Chromium and reads the layout back: the box's width, the list's height, a line's computed font size and a roster
 // row's, the Send button's (which must NOT scale - a thumb's target), and the friends panel's rectangle against the
 // chat box's - beside it on a wide screen, under it on a narrow one, and never over it (AUDIT SOC C13's law, which the

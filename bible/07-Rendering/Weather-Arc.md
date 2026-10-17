@@ -87,7 +87,7 @@ IsSnowFreeClimate serves the footsteps and the table never rolls snow
 for a snow-free zone, so nothing in DFU keeps rain off snow. This is a
 departure, recorded on the Ledger, and it is the enhanced lane's.
 
-**SNOWLESS1 (FIELD BUGS 2026-10-09 #1, `01-Overview/Field-Bugs-2026-10-09.md`).** The law asked the archive law alone
+**SNOWLESS1 (FIELD BUGS 2026-10-09 #1, `01-Overview/bugs/Field-Bugs-2026-10-09.md`).** The law asked the archive law alone
 (`groundIsSnowy`: climate type and season), so with Snowless Swamps and Jungles worn every winter rain and storm in an
 Ocean, Rainforest or Swamp climate fell as snow on its green ground (about 37% of a jungle's winter days), and snow
 systems the weather map drifts out of a snowy climate went on snowing over the desert, where nothing turned them back.
@@ -96,7 +96,7 @@ both ways: snow over a ground that wears none falls as rain (`overGround`, `mapG
 snow rains under the add-on too - the same enhanced-lane departure, recorded on the Ledger's row; the classic lane keeps
 every word.
 
-`test/weather2a_snowground.test.js`, `test/fb1009_snowless.test.js`.
+`test/systems/weather/weather2a_snowground.test.js`, `test/systems/fb1009_snowless.test.js`.
 
 ## C - CLOUD TYPES BY PLACE (WEATHER2c, 2026-09-14)
 
@@ -145,7 +145,7 @@ km across by default), resolved against the first camera position the
 controller hands and shifted with every recenter - for the eye and the
 probe, and the seam slice B fills with the field's cells.
 
-`test/weather2c_cloudcells.test.js`.
+`test/render/weather2c_cloudcells.test.js`.
 
 ## B - THE WEATHER FIELD (WEATHER2b, 2026-09-14)
 
@@ -158,7 +158,7 @@ six words a day, the player's zone's word applied, the sky that word
 to the horizon. A rain day rains everywhere in the Woodlands at once;
 a storm has no edge. The classic lane keeps that, 1:1.
 
-**The field** (`systems/weatherField.js`, pure). The ENHANCED lane
+**The field** (`systems/weather/weatherField.js`, pure). The ENHANCED lane
 reads the same six words - the sim's array, the shared day's roll
 online - as a field over the map. A precipitating word (rain, thunder,
 snow) becomes CELLS scattered over the zone's land: a jittered lattice
@@ -210,7 +210,7 @@ not yet rise with a storm's APPROACH before the crossing (the field
 knows the distance to the nearest rim; a later slice can hand it to
 the wind as a lead of its own).
 
-`test/weather2b_weatherfield.test.js`.
+`test/systems/weather/weather2b_weatherfield.test.js`.
 
 ## D - THE SANDSTORM (WEATHER2d, 2026-09-14)
 
@@ -264,7 +264,7 @@ wall as thickening haze on the ground before its cloud is entered) -
 the front's fog crossing carries the immersion today; the ambience's
 birds in a sandstorm (DFU's player, kept 1:1).
 
-`test/weather2d_sandstorm.test.js`.
+`test/systems/weather/weather2d_sandstorm.test.js`.
 
 ## WEATHER3 - THE WORLD WEATHER MAP (the design, before the code, 2026-09-22)
 
@@ -410,7 +410,7 @@ lifetimes that drifts the climate's weather fails the build.
 
 ### The slices
 
-- **A - The map law** (`systems/weatherMap.js`, pure): the lattice,
+- **A - The map law** (`systems/weather/weatherMap.js`, pure): the lattice,
   types, lifecycles, structure, the wind field, `weatherAt`, `systemsNear`,
   `forecastAt`; the calibration gate.
 - **B - The sim seam**: the lane's word, intensity, crossings and jumps
@@ -436,10 +436,10 @@ superseding CLK2's evolution and WEATHER2b's field on the lane.
 
 ### Slice A shipped - the map law (2026-09-22)
 
-`systems/weatherMap.js`, pure, and `systems/weatherTable.js` (DFU's
+`systems/weather/weatherMap.js`, pure, and `systems/weather/weatherTable.js` (DFU's
 table, dispatch and roll moved whole out of `weatherSim.js`, which
 re-exports every name, so the map and the sim read one table without an
-import cycle). Pinned by `test/weather3a_weathermap.test.js`, with
+import cycle). Pinned by `test/systems/weather/weather3a_weathermap.test.js`, with
 `tools/mutants/weather3a.json` at 14/14 dead. Three things the build
 taught, each a change from the design above:
 
@@ -483,7 +483,7 @@ about 0.3 ms.
 ### Slice B shipped - the sim seam (2026-09-22)
 
 The map is the sky on its lane: `weatherSim.js` WEATHER3b, pinned by
-`test/weather3b_simseam.test.js` (`tools/mutants/weather3b.json` 17/17
+`test/systems/weather/weather3b_simseam.test.js` (`tools/mutants/weather3b.json` 17/17
 dead), and approved by THE WORLD WEATHER MAP row in Ledger A.
 
 - **The lane** is the field's own (the enhanced skin, Enhanced
@@ -524,7 +524,7 @@ existed. Each now declares the non-map lane it tests, beside its reset.
 
 ### Slice C shipped - the sky (2026-09-22)
 
-The clouds read the map whole. `test/weather3c_sky.test.js` pins it
+The clouds read the map whole. `test/systems/weather/weather3c_sky.test.js` pins it
 (`tools/mutants/weather3c.json` 15/15 dead), and THE WORLD WEATHER MAP
 row now names it.
 
@@ -561,7 +561,7 @@ cells are cut in their own order on the worn word's row, as before.
 ### Slice D shipped - storms at a distance (2026-09-22)
 
 `systems/distantStorms.js` holds the law, pinned by
-`test/weather3d_distantstorms.test.js` (`tools/mutants/weather3d.json`
+`test/systems/weather3d_distantstorms.test.js` (`tools/mutants/weather3d.json`
 15/15 dead).
 
 - **The strikes** are the storm's and the minute's. Each game minute
@@ -638,7 +638,7 @@ by DISC17-C).
 
 Two independent reads of slices A-E. One read the runtime: does it run,
 and what did it break. The other read the records: do they say true
-things. Pinned by `test/weather3f_audit.test.js`
+things. Pinned by `test/systems/weather/weather3f_audit.test.js`
 (`tools/mutants/weather3f.json` 15/15 dead). The slices' own mutant
 records were re-aimed wherever F moved their source, and all six files
 are 0 survived, 0 stale.
@@ -748,7 +748,7 @@ lightly toward the pen. A legend on the sheet.
 removed by DISC17-C, 2026-09-24. The fronts, the cells and the sky's clip
 stand.)
 
-Pinned by `test/weather3g_fronts.test.js` (`tools/mutants/weather3g.json`
+Pinned by `test/systems/weather/weather3g_fronts.test.js` (`tools/mutants/weather3g.json`
 22/22 dead). The pins slices A-F held on the old shapes were re-aimed at
 the new law, and their mutant records moved with it: 3a 14/14, 3b 17/17,
 3c 15/15, 3d 15/15, 3e 15/15, 3f 15/15. The build taught four things the
@@ -811,7 +811,7 @@ Mac, on slice G's render: "I just feel like they look too much like blobs
 and blots". Then, choosing the direction: "make them irregular", and on
 the drawn prototype: "I like it, but the goal is not being overbearing on
 the map. It needs to be more subtle". Pinned by
-`test/weather3h_shapes.test.js` (`tools/mutants/weather3h.json` 20/20
+`test/systems/weather/weather3h_shapes.test.js` (`tools/mutants/weather3h.json` 20/20
 dead). The pins of slices A-G that read a system as a disc, or the map
 as washes, were re-aimed at the shapes and the regions.
 
@@ -891,13 +891,13 @@ keeps only a pattern it made.
 (The map's part of this slice - the steps' hatch, the painter, the
 hover, the key - was removed by DISC17-C, 2026-09-24. The law - the
 intensity tapering across the core, and the player wearing what falls
-after the ground law - stands, and `test/weather3i_strength.test.js`
+after the ground law - stands, and `test/systems/weather/weather3i_strength.test.js`
 keeps its two tests.)
 
 Mac, on slice H's render: "Let's make this more subtle and push the
 detail further". The detail chosen: strength inside a region, so light
 and heavy rain read differently. Pinned by
-`test/weather3i_strength.test.js` (`tools/mutants/weather3i.json`).
+`test/systems/weather/weather3i_strength.test.js` (`tools/mutants/weather3i.json`).
 
 **The root cause was in the law, not the map.**
 - `weatherFront.js` already said what intensity should do: "walking in
@@ -1033,7 +1033,7 @@ LightningPlayer) and a distant storm lit its own cloud (slice D). No channel was
   the player (the lane's lights are clustered and fall off over their range; a light at a foot kilometres off lit
   nothing). Under the mod its own flash keeps the light; the channels are drawn under it too (it draws none).
 - `?bolttest=<metres>` holds one ground strike that far east of the eye at its first stroke's peak, for shots.
-- Pinned by `test/bolt_lightning.test.js` (9 tests: the laws on the strike, the flicker, the channel, the column,
+- Pinned by `test/systems/bolt_lightning.test.js` (9 tests: the laws on the strike, the flicker, the channel, the column,
   the store, the storm overhead, the distant strikes, and both shaders run in JS).
 
 ## MAP-LAG - the map's weather, kept (2026-09-23) - REMOVED by DISC17-C
@@ -1049,7 +1049,7 @@ job a slice a frame and again only when the view comes to rest. The
 hover reads the forecast only when the pointer rests. The last refresh's
 read is kept for the next open. AUDIT WEATHER3 R2a's law stands (a pan
 reads no weather), and a pan now draws none either. Measures and pins:
-`01-Overview/Field-Bugs-2026-09-23.md`, MAP-LAG.
+`01-Overview/bugs/Field-Bugs-2026-09-23.md`, MAP-LAG.
 
 ## DISC17 - the map's weather removed, the far thunder held (2026-09-24)
 
@@ -1076,8 +1076,8 @@ entirely" and "Sometimes thunder ends abruptly".
   listener (`setListener` moves it) until its clip has run out. The storm
   overhead is DFU's ambience at a 3000 m reference, and neither a walk
   nor a recentre changes its level, so it is left as DFU has it.
-- Pinned by `test/disc17.test.js`; mutants `tools/mutants/disc17.json`.
-  `01-Overview/Field-Bugs-2026-09-23.md`, DISC17.
+- Pinned by `test/ui/disc17.test.js`; mutants `tools/mutants/disc17.json`.
+  `01-Overview/bugs/Field-Bugs-2026-09-23.md`, DISC17.
 
 ## DISC20-D - a storm strikes only where it is drawn (2026-09-24)
 
@@ -1099,8 +1099,8 @@ Mac: *"Lightning can be seen even when its not storming."*
   is drawn a snow squall, whole (R1). A storm with no clip strikes as
   before, every client still sees the same strikes, and a far storm's
   lightning is still seen from afar.
-- Pinned by `test/disc20.test.js` (D); mutants `tools/mutants/disc20.json`.
-  `01-Overview/Field-Bugs-2026-09-23.md`, DISC20-D.
+- Pinned by `test/systems/disc20.test.js` (D); mutants `tools/mutants/disc20.json`.
+  `01-Overview/bugs/Field-Bugs-2026-09-23.md`, DISC20-D.
 
 ## FLOW2 - the map's own work, cut to what it answers (2026-09-26)
 
@@ -1112,7 +1112,7 @@ front's once for all of its cells, makes a shape only for a candidate that is ke
 took, in the order it always took them, so no candidate moves another's - and draws a noise corner without making a
 generator for one number (`wind.js seededFirst`, `seededRng`'s own first draw: one `mulberryDraw` for both). THE SAME
 BITS: a snapshot of 840 skies, 400 winds and paths, the systems near 84 places and 21 forecasts compared byte for byte
-before and after, and goldens taken under the code before it pinned in test/flow2_fast_tests.test.js (the wind and its
+before and after, and goldens taken under the code before it pinned in test/systems/flow2_fast_tests.test.js (the wind and its
 path, the sky with its system's place and shape, a front's cells and where they were born). The gate runs in ~58 s.
 
 ## RAIN-LEAK - the fall's own clock, and what a shower lets go of (2026-10-11)
@@ -1143,15 +1143,15 @@ were not a leak but read like one:
   `new Float32Array(eye)` every frame; each host now fills one (`wxEye32`, `eye32`) made at boot - world.js inside
   `drawFalling`, not in the frame, whose bytecode PERF-V8 holds under three quarters of V8's ceiling.
 
-Pinned in test/rainleak.test.js on a recording GL and a recording audio context; `tools/mutants/rainleak.json`, 16, 16
-dead. What still mints an eye a frame - the bolts (test/bolt_lightning.test.js pins their eye as the view's own), and in
+Pinned in test/systems/rainleak.test.js on a recording GL and a recording audio context; `tools/mutants/rainleak.json`, 16, 16
+dead. What still mints an eye a frame - the bolts (test/systems/bolt_lightning.test.js pins their eye as the view's own), and in
 world.js the banners, the duel wall, the gate's pool and smoke, the omen and the loot lines - is outside the falling
 weather and was left as it stands.
 
 ## RAIN-HOURS and RAIN-HEART - a wet day rains for half of it, and a front can sprinkle (2026-10-13)
 
 Mac: *"I feel like it rains too much, also sometimes instead of downpours it should just sprinkle"* - the sprinkle for
-the second time (RAIN-SPRINKLE, `01-Overview/Field-Bugs-2026-10-01.md`, was the first).
+the second time (RAIN-SPRINKLE, `01-Overview/bugs/Field-Bugs-2026-10-01.md`, was the first).
 
 **Measured first.** The map's own `weatherAt`, 3,000 places a row over the whole map and twenty years of each season,
 and what falls drawn as the front draws it (`rollPeak` of the place's intensity, at the wander's mean). A woodland
@@ -1159,7 +1159,7 @@ spring stood under falling rain or a storm 36% of every hour, a swamp's 41%, a j
 Of that wet time 44-56% was drawn at half the rain's profile or more (13,000 drops and up), and 17-22% under 0.15, a
 sprinkle. Two causes, both in the map's law:
 
-- **RAIN-HOURS - a day's odds worn as hours.** The Chronicles' table (`systems/weatherTable.js`, DFU's digit for
+- **RAIN-HOURS - a day's odds worn as hours.** The Chronicles' table (`systems/weather/weatherTable.js`, DFU's digit for
   digit) is the odds of a DAY's weather, and DFU wears the day's word for all of it: a rain day rains twenty-four
   hours. Slice A solved the map's births to those odds as the share of TIME each word is worn, so the enhanced lane
   rained as long as DFU's whole rain days. A wet day is a day it rains, not a day of rain.
@@ -1170,7 +1170,7 @@ sprinkle. Two causes, both in the map's law:
   of its own. And a third or more of the wet time was a thunderstorm, which never sprinkles (WX2's `PRECIP_PEAK.storm`,
   kept).
 
-**The fix** (`systems/weatherMap.js`):
+**The fix** (`systems/weather/weatherMap.js`):
 - **`WET_HOURS`** (rain 0.5, thunder 0.5), in `targetShares` - the one place the table becomes the map's amounts. The
   map wears rain and thunder for half their odds. The hours they give up go to the dry words - clear air, cloud, the
   deck, fog, the desert's sand - each lifted by the one factor, so a climate keeps its character and only rains less.
@@ -1197,8 +1197,8 @@ sprinkle. Two causes, both in the map's law:
   downpour's (half the profile or more) - where every one poured.
 
 **Pins moved, each by content.**
-- `test/weather3a_weathermap.test.js`, THE CALIBRATION GATE: holds the sampled map to the row as the map wears it
-  (`targetShares`), and `test/rainhours.test.js` holds that law to the Chronicles' digits.
+- `test/systems/weather/weather3a_weathermap.test.js`, THE CALIBRATION GATE: holds the sampled map to the row as the map wears it
+  (`targetShares`), and `test/systems/weather/rainhours.test.js` holds that law to the Chronicles' digits.
 - The same file, the thinning pin: it named the swamp's spring, which had thinned nothing since slice G - its rain
   front's cloud skirt read 0.9999999999999993 of its share, a rounding residue the pin passed on. It now names the
   woodlands' summer deck (0.78 of its share) and the desert's (none), and the swamp's spring is the row that keeps the
@@ -1208,11 +1208,11 @@ sprinkle. Two causes, both in the map's law:
   band, and in every one the shaped read agreed with the worn word. Its ground-law half probed one line at one minute,
   which the moved map no longer rains on, and `WEATHER3a-ground-after-priority` survived it: each probe is now a place
   the bare map rains on (twenty at least).
-- `test/disc20.test.js`, DISC20-D: the report's afternoon grew a real storm in its four game hours (218 strikes, every
+- `test/systems/disc20.test.js`, DISC20-D: the report's afternoon grew a real storm in its four game hours (218 strikes, every
   one where the map paints thunder). The same minute about 600 km east is the report's condition on the map as it
   stands: sunny, 11 clipped cells in range, no strike - and 208 strikes and 6 claps with the clip gate dropped.
-- `test/flow2_fast_tests.test.js`: the sky's and the cells' goldens taken again under the new law.
-- `test/weather3a_weathermap.test.js`, THE LAW SOLVES THE TABLE: the day's shares are now taken by the Cox law written
+- `test/systems/flow2_fast_tests.test.js`: the sky's and the cells' goldens taken again under the new law.
+- `test/systems/weather/weather3a_weathermap.test.js`, THE LAW SOLVES THE TABLE: the day's shares are now taken by the Cox law written
   out in the test as well as by the module's own. With the storms halved, the gate's 2.6 points no longer told a linear
   cell law from the true one (the solve then 1.5 points off), and `WEATHER3g-cells-linear` survived until this check.
 
@@ -1232,6 +1232,11 @@ winter's 15% stand.
 A thunderstorm is still a storm, half as often and never a sprinkle: `WET_HOURS.thunder` is the knob if storms should
 be rarer than rain.
 
-Pinned by `test/rainhours.test.js` (4); `tools/mutants/rainhours.json`, 9, all dead; `weather3a.json` 14/14;
+Pinned by `test/systems/weather/rainhours.test.js` (4); `tools/mutants/rainhours.json`, 9, all dead; `weather3a.json` 14/14;
 `weather3g.json` 15 dead and 1 equivalent as recorded.
+
+WET-FALL (2026-10-15, a Discord report: "Player is getting wet despite it not raining. Possibly an oversight in reducing
+the rain?"): RAIN-HEART's level reached the drops, the look and the ear, and not the skin - the survival soak read the
+sim's word at the downpour's rate. It reads what falls now (`weatherSim.js` fallingWeather, the street's word and level
+as the ear's), `01-Overview/bugs/Field-Bugs-2026-10-15f.md`; `06-Systems/Climates-Calories.md` WET-FALL.
 

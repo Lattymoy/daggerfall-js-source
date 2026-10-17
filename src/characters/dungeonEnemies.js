@@ -23,8 +23,8 @@
 
 import { srand, randomRangeInclusive } from '../formats/dfRandom.js';
 import { ENCOUNTER_TABLES } from './encounterTables.js';
-import { MOBILE_TYPES } from './mobileTypes.js';
-import { getBool } from '../systems/settings.js';   // AUDIT 28 W3: AlternateRandomEnemySelection
+import { MOBILE_TYPES } from './mobile/mobileTypes.js';
+import { getBool } from '../systems/settings/settings.js';   // AUDIT 28 W3: AlternateRandomEnemySelection
 
 const EDITOR_FLATS_ARCHIVE = 199;   // TextureReader.EditorFlatsTextureArchive
 const FIXED_RECORD = 16;

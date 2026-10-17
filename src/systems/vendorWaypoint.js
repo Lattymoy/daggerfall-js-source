@@ -2,7 +2,7 @@
 // ═══════════════════════════════════════════════════════════════════
 // HOME-VENDOR (net/vendorLaw.js) - THE TRADER'S WAYPOINT (Mac: "you should be able to set a waypoint where the trader is
 // you want to buy from"). One waypoint at a time: the trader's house - its town's map id, the building's key there, whose
-// it is and the town's name. Setting it puts its own gold coin on both world maps (ui/vendorMapMark.js -
+// it is and the town's name. Setting it puts its own gold coin on both world maps (ui/vendor/vendorMapMark.js -
 // apart from the map's one yellow mark, which stays the player's), the house is named on the town map (scenes/world.js townHomes), and the compass
 // points at the town until the player stands in it. Cleared by hand, or on walking into the house.
 //
@@ -20,7 +20,7 @@ export const vendorWaypointVersion = () => _version;
 /** `map:key` of the waypoint's house, or null - the board's and the page's "is this row the waypoint". */
 export const vendorWaypointKey = () => (_wp ? `${_wp.map}:${_wp.buildingKey}` : null);
 
-/** SET the waypoint on a trader's house (both world maps draw its own coin - ui/vendorMapMark.js). False for a row that names no house. */
+/** SET the waypoint on a trader's house (both world maps draw its own coin - ui/vendor/vendorMapMark.js). False for a row that names no house. */
 export function setVendorWaypoint({ map, buildingKey, owner = '', town = '' } = /** @type {any} */ ({})) {
   if (!Number.isSafeInteger(map) || map <= 0 || !Number.isSafeInteger(buildingKey) || buildingKey <= 0) return false;
   _wp = Object.freeze({ map, buildingKey, owner: String(owner ?? ''), town: String(town ?? '') });

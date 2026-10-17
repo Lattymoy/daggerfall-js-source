@@ -5,7 +5,7 @@
     "old": "  } finally { setSeed(seed); }",
     "new": "  } finally { void seed; }",
     "tests": [
-      "test/wb12c_burning_doors.test.js"
+      "test/systems/wb12c_burning_doors.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "?? portBookTitle(id);",
     "new": "?? null;",
     "tests": [
-      "test/wb12c_burning_doors.test.js"
+      "test/systems/wb12c_burning_doors.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "export const bookFilePrice = (id) => (isPortBook(id) ?",
     "new": "export const bookFilePrice = (id) => (false ?",
     "tests": [
-      "test/wb12c_burning_doors.test.js"
+      "test/systems/wb12c_burning_doors.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "BOOK_ID_TITLES.has(key) || isPortBook(key) ?",
     "new": "BOOK_ID_TITLES.has(key) ?",
     "tests": [
-      "test/wb12c_burning_doors.test.js"
+      "test/systems/wb12c_burning_doors.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "out.push(row.center ? RSC.JustifyCenter : RSC.JustifyLeft);",
     "new": "out.push(RSC.JustifyLeft);",
     "tests": [
-      "test/wb12c_burning_doors.test.js"
+      "test/systems/wb12c_burning_doors.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "    out.push(RSC.EndOfPage);\n",
     "new": "    void RSC.EndOfPage;\n",
     "tests": [
-      "test/wb12c_burning_doors.test.js"
+      "test/systems/wb12c_burning_doors.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "      if (row.font) out.push(RSC.FontPrefix, row.font);\n",
     "new": "",
     "tests": [
-      "test/wb12c_burning_doors.test.js"
+      "test/systems/wb12c_burning_doors.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "names himself Ruhn.",
     "new": "names himself Ruin.",
     "tests": [
-      "test/wb12c_burning_doors.test.js"
+      "test/systems/wb12c_burning_doors.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "export const SHELF_BOOK_IDS = Object.freeze([...BOOK_IDS, ...PORT_BOOK_IDS]);",
     "new": "export const SHELF_BOOK_IDS = Object.freeze([...BOOK_IDS]);",
     "tests": [
-      "test/wb12c_burning_doors.test.js"
+      "test/systems/wb12c_burning_doors.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "        add(createShelfBook(rolls));",
     "new": "        add(createRandomBook(rolls));",
     "tests": [
-      "test/wb12c_burning_doors.test.js"
+      "test/systems/wb12c_burning_doors.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "        item = createRandomBook(rolls);   // A2: the book FILE's price, same member as the shelf",
     "new": "        item = createShelfBook(rolls);   // A2: the book FILE's price, same member as the shelf",
     "tests": [
-      "test/wb12c_burning_doors.test.js"
+      "test/systems/wb12c_burning_doors.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "import { getShelfBookID, bookTitle } from './books.js';",
     "new": "import { getRandomBookID as getShelfBookID, bookTitle } from './books.js';",
     "tests": [
-      "test/wb12c_burning_doors.test.js"
+      "test/systems/wb12c_burning_doors.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "    const port = openPortBook(item?.message ?? -1);",
     "new": "    const port = null;",
     "tests": [
-      "test/wb12c_burning_doors.test.js"
+      "test/systems/wb12c_burning_doors.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "      if (bookFile) await null;",
     "new": "      if (bookFile) void 0;",
     "tests": [
-      "test/wb12c_burning_doors.test.js"
+      "test/systems/wb12c_burning_doors.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "  if (book) _given = true;",
     "new": "  if (book) void 0;",
     "tests": [
-      "test/wb12c_burning_doors.test.js"
+      "test/systems/wb12c_burning_doors.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "  if (_given || !isSigilStone(item)) return null;",
     "new": "  if (_given || !item) return null;",
     "tests": [
-      "test/wb12c_burning_doors.test.js"
+      "test/systems/wb12c_burning_doors.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "  restoreSaveData: (r) => { _given = r?.given === true; },",
     "new": "  restoreSaveData: () => {},",
     "tests": [
-      "test/wb12c_burning_doors.test.js"
+      "test/systems/wb12c_burning_doors.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "    take: takeGateSpoil,\n",
     "new": "    take: takeSpoil,\n",
     "tests": [
-      "test/wb12c_burning_doors.test.js"
+      "test/systems/wb12c_burning_doors.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "recoverSpoils(_spoilsStore, takeGateSpoil, { who, saves: enumerateSaves().info.values(), onHanded: (rec) => spoilsPool.adopt(rec)",
     "new": "recoverSpoils(_spoilsStore, takeSpoil, { who, saves: enumerateSaves().info.values(), onHanded: (rec) => spoilsPool.adopt(rec)",
     "tests": [
-      "test/wb12c_burning_doors.test.js"
+      "test/systems/wb12c_burning_doors.test.js"
     ],
     "note": "SERPENT-SET (MUT-AIM): the serpent's crash door takes the ember's door too - aimed at the gate's by its pool."
   }

@@ -344,9 +344,9 @@ const fileResponse = (p, mime) => net.fetch(pathToFileURL(p).toString(), { bypas
 // storage, and the same traversal law.
 const LAUNCHER_DIR = path.join(__dirname, 'launcher');
 const LAUNCHER_URL = 'dagger://launcher/index.html';
-// DA12: the controller loop is the game's own front door's (src/ui/menuPad.js) - ONE module, packed beside the
+// DA12: the controller loop is the game's own front door's (src/ui/menu/menuPad.js) - ONE module, packed beside the
 // launcher's page (package.json build.files) and read from the source tree when the shell runs unpacked.
-const MENU_PAD = app.isPackaged ? path.join(LAUNCHER_DIR, 'menuPad.js') : path.join(__dirname, '..', 'src', 'ui', 'menuPad.js');
+const MENU_PAD = app.isPackaged ? path.join(LAUNCHER_DIR, 'menuPad.js') : path.join(__dirname, '..', 'src', 'ui', 'menu', 'menuPad.js');
 // AUDIT BR5: the launcher's wordmark is the product's logo, and the logo is the GAME's own file
 // (src/assets/branding/dfo-online.png, BR5) - packed beside the launcher's page as the pad module is and read from
 // the source tree unpacked, so the launcher can never draw a logo the game does not.
@@ -1234,6 +1234,12 @@ function buildMenu() {
         process.platform === 'darwin'
           ? { role: 'togglefullscreen' }
           : { role: 'togglefullscreen', accelerator: 'Alt+Enter' },
+        // AUDIT ANTICHEAT (Mac's call, 2026-10-17: kept): the installed game keeps
+        // DevTools. Its console is how a player hands over a field report's lines
+        // (bible/01-Overview/bugs/Field-Bugs-2026-10-13b.md), and taking it away
+        // shuts no door a cheater needs - the browser build plays online with F12,
+        // and this shell honours --remote-debugging-port - so what other players
+        // meet is the servers' to judge (bible/06-Systems/Integrity-Arc.md).
         { role: 'toggleDevTools' },
       ],
     },

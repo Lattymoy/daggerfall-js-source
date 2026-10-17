@@ -5,7 +5,7 @@
     "old": "export const YARD_RANGE_DEFAULT = YARD_DRAW_M;",
     "new": "export const YARD_RANGE_DEFAULT = 150;",
     "tests": [
-      "test/yardrange.test.js"
+      "test/scenes/yardrange.test.js"
     ],
     "note": "the default nearer than every yard was drawn"
   },
@@ -15,7 +15,7 @@
     "old": "[0, 75, 150, YARD_DRAW_M]",
     "new": "[75, 150, YARD_DRAW_M]",
     "tests": [
-      "test/yardrange.test.js"
+      "test/scenes/yardrange.test.js"
     ],
     "note": "no Off"
   },
@@ -25,17 +25,17 @@
     "old": "export const YARD_MIN_ANGLE = 1 / 300;",
     "new": "export const YARD_MIN_ANGLE = 1 / 30;",
     "tests": [
-      "test/yardrange.test.js"
+      "test/scenes/yardrange.test.js"
     ],
     "note": "pieces cut while plainly seen"
   },
   {
     "name": "YARD-RANGE-comparison",
-    "file": "src/scenes/decorRoom.js",
+    "file": "src/scenes/decor/decorRoom.js",
     "old": "  return half >= d * minAngle;",
     "new": "  return half > d * minAngle * 1.5;",
     "tests": [
-      "test/yardrange.test.js"
+      "test/scenes/yardrange.test.js"
     ],
     "note": "the bound moved"
   },
@@ -45,7 +45,7 @@
     "old": "      for (const y of yards.values()) if (nearEye(y, eye)) y.pool.batchesSeen(",
     "new": "      for (const y of yards.values()) if (true) y.pool.batchesSeen(",
     "tests": [
-      "test/yardrange.test.js"
+      "test/scenes/yardrange.test.js"
     ],
     "note": "every standing yard's flats, as before"
   },
@@ -55,7 +55,7 @@
     "old": "y.kept ? YARD_DRAW_M : range());",
     "new": "y.kept ? YARD_DRAW_M : YARD_DRAW_M);",
     "tests": [
-      "test/yardrange.test.js"
+      "test/scenes/yardrange.test.js"
     ],
     "note": "the choice never read"
   },
@@ -65,7 +65,7 @@
     "old": "y.kept ? YARD_DRAW_M : range());",
     "new": "range());",
     "tests": [
-      "test/yardrange.test.js"
+      "test/scenes/yardrange.test.js"
     ],
     "note": "my own yard cut by the choice"
   },
@@ -75,7 +75,7 @@
     "old": "const seenCull = (box) => (_eye && !decorBoxSeen(box, _eye, YARD_MIN_ANGLE) ? DECOR_SKIP :",
     "new": "const seenCull = (box) => (false ? DECOR_SKIP :",
     "tests": [
-      "test/yardrange.test.js"
+      "test/scenes/yardrange.test.js"
     ],
     "note": "a cup drawn at any distance"
   },
@@ -85,7 +85,7 @@
     "old": "        if (!homeOutsideKept(home) && range() === 0) continue;",
     "new": "        if (false) continue;",
     "tests": [
-      "test/yardrange.test.js"
+      "test/scenes/yardrange.test.js"
     ],
     "note": "Off still stands a stranger's yard (solid, lit)"
   },
@@ -95,7 +95,7 @@
     "old": "if (pieces && pieces !== y.src) {",
     "new": "if (pieces) {",
     "tests": [
-      "test/yardrange.test.js"
+      "test/scenes/yardrange.test.js"
     ],
     "note": "every piece of every town stringified every sync, as before"
   }

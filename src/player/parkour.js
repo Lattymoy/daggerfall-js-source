@@ -343,7 +343,7 @@ export function vaultDuration(rise, skill) {
 /** Roleplay & Realism's seam (AUDIT CLIMB1 F10): a registered gate answers a
  *  line when a climb must be refused ("You can't climb whilst holding your
  *  weapon."), null otherwise. The mantle and the clamber ask it; a vault is a
- *  leap and does not. One gate, the mod's (systems/rrInstall.js). */
+ *  leap and does not. One gate, the mod's (systems/roleplayRealism/rrInstall.js). */
 let _gate = null;
 export function registerParkourGate(fn) { _gate = typeof fn === 'function' ? fn : null; }
 export const parkourRefusal = () => _gate?.() ?? null;

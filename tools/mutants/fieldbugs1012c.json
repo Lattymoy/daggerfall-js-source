@@ -5,7 +5,7 @@
     "old": "  if (online && skill > R) return Math.trunc((value * (110 - R) * R) / (skill * divisor));",
     "new": "  if (false && skill > R) return Math.trunc((value * (110 - R) * R) / (skill * divisor));",
     "tests": [
-      "test/fb1012c_spellcost.test.js"
+      "test/systems/fb1012c_spellcost.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  if (online && skill > R) return Math.trunc((value * (110 - R) * R) / (skill * divisor));",
     "new": "  if (online && skill > R) return Math.trunc((value * (110 - R)) / divisor);",
     "tests": [
-      "test/fb1012c_spellcost.test.js"
+      "test/systems/fb1012c_spellcost.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  const R = SPELL_COST_SKILL_REFERENCE;",
     "new": "  const R = 110;",
     "tests": [
-      "test/fb1012c_spellcost.test.js"
+      "test/systems/fb1012c_spellcost.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "export function skillScaledCost(value, skill, divisor, { online = isOnlinePage() } = {}) {",
     "new": "export function skillScaledCost(value, skill, divisor, { online = false } = {}) {",
     "tests": [
-      "test/fb1012c_spellcost.test.js"
+      "test/systems/fb1012c_spellcost.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "export function effectCost(e, casterSkillOf, { online = isOnlinePage() } = {}) {",
     "new": "export function effectCost(e, casterSkillOf, { online = false } = {}) {",
     "tests": [
-      "test/fb1012c_spellcost.test.js"
+      "test/systems/fb1012c_spellcost.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "  return { gold, sp: skillScaledCost(gold, skill, 400, { online }) };   // SPELL-COST-PAST",
     "new": "  return { gold, sp: skillScaledCost(gold, skill, 400) };   // SPELL-COST-PAST",
     "tests": [
-      "test/fb1012c_spellcost.test.js"
+      "test/systems/fb1012c_spellcost.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "export function calculateCastCost(spell, casterEntity, { portMods = true, online = isOnlinePage() } = {}) {",
     "new": "export function calculateCastCost(spell, casterEntity, { portMods = true, online = false } = {}) {",
     "tests": [
-      "test/fb1012c_spellcost.test.js"
+      "test/systems/fb1012c_spellcost.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "    const c = effectCost(e, skillOf, { online });",
     "new": "    const c = effectCost(e, skillOf);",
     "tests": [
-      "test/fb1012c_spellcost.test.js"
+      "test/systems/fb1012c_spellcost.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "export function classicCastingCost(spell, skillOf = null, { online = isOnlinePage() } = {}) {",
     "new": "export function classicCastingCost(spell, skillOf = null, { online = false } = {}) {",
     "tests": [
-      "test/fb1012c_spellcost.test.js"
+      "test/systems/fb1012c_spellcost.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "    cost += skillScaledCost(classicCostFromSettings(CLASSIC_SETTINGS_TYPES[e.type] ?? 0, e, coef), skill, 100, { online });   // SPELL-COST-PAST",
     "new": "    cost += skillScaledCost(classicCostFromSettings(CLASSIC_SETTINGS_TYPES[e.type] ?? 0, e, coef), skill, 100);   // SPELL-COST-PAST",
     "tests": [
-      "test/fb1012c_spellcost.test.js"
+      "test/systems/fb1012c_spellcost.test.js"
     ]
   }
 ]

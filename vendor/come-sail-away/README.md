@@ -67,7 +67,7 @@ archive carries no licence text and no readme.**
   - `textures.json` - each picture's import settings (point-sampled, one
     mip; the waves repeat, the rest clamp).
 - `come-sail-away.files.json` - every file the extractor writes under
-  `Textures/`, with the bundle's sha256: the listing `test/doctrine.test.js`
+  `Textures/`, with the bundle's sha256: the listing `test/tooling/doctrine.test.js`
   holds that folder to, both ways. The bundle's own manifest cannot be that
   authority here, because it names pictures the port does not carry.
 - `Sounds/` - the five clips the assembly loads (`ComeSailAway.Start`:

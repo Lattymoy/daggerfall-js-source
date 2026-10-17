@@ -4,42 +4,42 @@
     "file": "src/systems/naval/navalAI.js",
     "old": "    if (dist < (held ? see * DISENGAGE : see) && hostile(ship, c, world) && !((ship.spare.get(c.id) ?? -Infinity) > ship.clock)) {",
     "new": "    if (hostile(ship, c, world) && dist < (held ? see * DISENGAGE : see) && !((ship.spare.get(c.id) ?? -Infinity) > ship.clock)) {",
-    "tests": ["test/navcost.test.js"]
+    "tests": ["test/systems/naval/navcost.test.js"]
   },
   {
     "name": "NC-threat-sized-up-unseen",
     "file": "src/systems/naval/navalAI.js",
     "old": "    if (dist < threatD && dist < nightSight(FLEE_RANGE, { night: !!world.night, lit })\n      && (c.kind",
     "new": "    if (true\n      && (c.kind",
-    "tests": ["test/navcost.test.js"]
+    "tests": ["test/systems/naval/navcost.test.js"]
   },
   {
     "name": "NC-no-hulls-met",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "        if (dx * dx + dz * dz > reach * reach) continue;",
     "new": "        continue;",
-    "tests": ["test/navcost.test.js"]
+    "tests": ["test/systems/naval/navcost.test.js"]
   },
   {
     "name": "NC-reach-short",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "reach = 2 * (a.hl + a.hw + b.hl + b.hw)",
     "new": "reach = 0.01 * (a.hl + a.hw + b.hl + b.hw)",
-    "tests": ["test/navcost.test.js"]
+    "tests": ["test/systems/naval/navcost.test.js"]
   },
   {
     "name": "NC-shoved-flat-kept",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      x.flat = null;\n",
     "new": "",
-    "tests": ["test/navcost.test.js"]
+    "tests": ["test/systems/naval/navcost.test.js"]
   },
   {
     "name": "NC-no-cull",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "        if (dx * dx + dz * dz > reach * reach) continue;",
     "new": "        if (false) continue;",
-    "tests": ["test/navcost.test.js"],
+    "tests": ["test/systems/naval/navcost.test.js"],
     "equivalent": true,
     "why": "the cull is the cost alone - past it hullOverlap answers null (the property pin), so measuring every pair gives the same pushes"
   }

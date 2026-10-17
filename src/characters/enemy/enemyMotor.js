@@ -1,0 +1,2324 @@
+// Enemy senses + pursuit (C8 E2). Verbatim port of the CLASSIC path
+// (EnhancedCombatAI = false) from DFU EnemyMotor.cs / EnemySenses.cs /
+// EnemyAttack.cs (MIT, Daggerfall Workshop):
+//   - sight = 4096 * MeshReader.GlobalScale, FOV 180, hearing 25
+//   - senses re-evaluate when the classic system timer (dt divided by
+//     0.0549254, the 0x46C memory-timer divisor) accumulates past 5
+//   - decisions gate on the CLASSIC UPDATE (0.0625s); turns happen IN
+//     PLACE at TurnToTarget's `const float turnSpeed = 20f`
+//     (EnemyMotor.cs:1348-1350 - classic's 11.25 survives only in
+//     that method's comment, "too slow for Daggerfall Unity's agile
+//     player movement", and is NOT the compiled constant) behind the
+//     5.625 deg move yaw-gate
+//   - moveSpeed = (LiveSpeed + dfWalkBase 150) * GlobalScale - "Monster
+//     speed of movement follows the same formula as for when the
+//     player walks"
+//   - classic stop distance vs the player = MeleeDistance 2.25, vs
+//     other AI = ClassicMeleeDistanceVsAI 1.5, picked per pass in
+//     TakeAction; "Classic always moves in for attack", never
+//     strafes or backs away
+// Departures (documented): eye height = feet + height * 5/6 (DFU:
+// transform.position + controller.center + height/3 under Unity CC
+// conventions); LOS raycasts the level collider only (entities are
+// not solid in it), so "seen" = an unobstructed ray to the target eye
+// - open swing doors are transparent for free because opening removes
+// their collider bucket (the C3/actionSystem rule). SightModifier /
+// HearingModifier are 0 for every entry in current DFU master.
+// E3 SHIPPED: callers pass each entity's real LiveSpeed (career
+// Speed). P13 SHIPPED: the stealth checks in detection - the
+// classic flow is sight, hearing GATED ON PRIOR DETECTION ("classic
+// stealth mechanics would be interfered with by hearing"), the
+// illusion gate per classic update, then the once-per-classic-minute
+// StealthCheck (odd minutes skipped while the player moves less than
+// half speed; a fast-moving player who has been encountered is
+// auto-detected; the Stealth skill tallies once per minute across
+// ALL foes via the shared senses context). The S8 half-sight
+// chameleon interim is REPLACED by the verbatim illusion gate
+// (IsBlending -> an 8%-per-classic-update see-through roll).
+
+import { GLOBAL_SCALE } from '../../world/meshReader.js';
+import { dice100 } from '../../combat/formulas.js';   // PT1: Dice100 has ONE home and this file had written it out twice
+import { CLASSIC_UPDATE_INTERVAL } from '../weaponStates.js';   // single source (GameManager.cs:42)
+import { CAPSULE_HEIGHT, CAPSULE_RADIUS, DF_WALK_BASE } from '../../player/motor.js';           // single source
+export { CLASSIC_UPDATE_INTERVAL };
+/** FOE-CATCHUP (2026-09-26, SquidKamer: "you drop to 1 fps for a few seconds and get jumped by everyone"; Mac, asked:
+ *  "Yes, add the cap"): THE MOST GAME TIME A FOE'S BODY CATCHES UP IN ONE FRAME. update() below steps at FIXED_DT for
+ *  whatever the frame hands it (up to MAX_FRAME_DT, and the world host's own 0.1 clamp): six steps a foe at 10 fps.
+ *  A foe's step is the port's dearest work - the path check's capsule casts, the sight rays - so under a crowd one
+ *  hitch made the next frame dearer, and that one dearer still: a few slow frames snowballed into seconds near 1 fps.
+ *  The pools hand their foes at most three steps' worth (20 fps and up, nothing changes); under that the foes move a
+ *  little slower than the world instead of the world stopping. The player's own motor is not capped. */
+export const FOE_MAX_FRAME_DT = 3 * FIXED_DT;
+/** AUDIT (the pre-merge audit, S2): every foe's move keeps its floor under a ceiling that holds it down (collider move's
+ *  `keepFloor`, SQUEEZE1) - a body of any height, not only one past the player's tallest stance. */
+const FOE_KEEPS_FLOOR = true;
+/** WERE-FRIGHT: how far ahead along the way away a fleeing foe's aim point stands (EnemyAI.flee). */
+const FLEE_AIM = 10;
+/** CREW-COMPANIONS: a follower stands inside FOLLOW_STOP of its leader, sets off again past FOLLOW_STOP +
+ *  FOLLOW_SLACK, and breaks off a fight that has drawn it past FOLLOW_LEASH. */
+export const FOLLOW_STOP = 3;
+export const FOLLOW_SLACK = 1.5;
+export const FOLLOW_LEASH = 20;
+/** COMPANION-TRAIL (FIELD BUGS 2026-10-04b, Mac: "Companion pathing is really rough. They're also walking towards to
+ *  the wall, next to the exit that leads to outside"): a follower with no clear line to its leader walks the LEADER'S
+ *  OWN TRAIL (`follow.trail`, the crumbs crewAshore.js drops where the player walked) - the newest crumb it can see,
+ *  looked for every FOLLOW_SIGHT_S with at most FOLLOW_SIGHT_TRIES casts, the next crumb once it is within
+ *  FOLLOW_CRUMB_REACH. The street, a building and a dungeon without the pathing motor have no baked route, and straight at
+ *  the leader a companion walked into the wall beside every doorway the player had gone through. A line is clear when
+ *  a FOLLOW_SIGHT_RADIUS capsule reaches within FOLLOW_CRUMB_REACH of the point and the point is no more than
+ *  FOLLOW_SIGHT_DY above or below; a crumb further than FOLLOW_CRUMB_FAR is never looked at. */
+export const FOLLOW_SIGHT_S = 0.25;
+export const FOLLOW_SIGHT_TRIES = 6;
+export const FOLLOW_CRUMB_REACH = 0.8;
+export const FOLLOW_SIGHT_RADIUS = 0.25;
+export const FOLLOW_SIGHT_DY = 1.2;
+export const FOLLOW_CRUMB_FAR = 50;
+/** COMPANION-TRAIL: a follower walks while it is within FOLLOW_YAW_GATE_DEG of its way (turning as it goes) where a
+ *  pursuer stops to turn past 5.625 - the pursuit's gate stopped a companion on every bend of the player's path - and,
+ *  further than FOLLOW_RUN_M from its leader, at FOLLOW_RUN_PACE of its walk: a foe's walk (5 m/s at Speed 50) is
+ *  slower than the player's run (about 8), so a companion fell back to the catch-up's portal at every long run. */
+export const FOLLOW_YAW_GATE_DEG = 30;
+export const FOLLOW_RUN_M = 8;
+export const FOLLOW_RUN_PACE = 1.6;
+export const foeFrameDt = (dt) => Math.min(dt, FOE_MAX_FRAME_DT);
+export const GIVE_UP_TICKS = 200;   // EnemyMotor.GiveUpTimer refill (classic ticks; ~12.5s)
+import { GRAVITY, FIXED_DT, MAX_FRAME_DT, CLASSIC_TO_UNITY_RATIO, FALL_DAMAGE_THRESHOLD } from '../../player/motor.js';   // the shared fall rule + the P16 fixed-timestep law; CH3: the fall threshold single-sources with the player's
+import { wrapAngle } from '../../world/mat4.js';   // ONCRASH1: the port's one angle wrap, which cannot loop
+import { MOBILE_TYPES } from '../mobile/mobileTypes.js';
+import { coverDistance } from '../../ai/cover.js';   // TACT1: billboards are cover (sight, the clear shot)
+import { tacticsStep, tacticsNow, breakWindup } from '../../ai/tactics.js';   // TACT2: the tactics brain; TELL1: its clock, for the stagger's end
+
+// C15 knockback (EnemyMotor.KnockbackMovement): classic units through
+// the speed ratio. Stored speed clamps at 40; motion caps at 25; the
+// hurt anim rides speed > 5; decay is 5 per CLASSIC UPDATE.
+const KB = (v) => v / (CLASSIC_TO_UNITY_RATIO / 10);
+export const KNOCKBACK_STORE_CAP = 40;
+export const KNOCKBACK_MOTION_CAP = 25;
+export const KNOCKBACK_HURT_THRESHOLD = 5;
+export const KNOCKBACK_DECAY_PER_CLASSIC = 5;
+
+export const SIGHT_RADIUS = 4096 * GLOBAL_SCALE;
+export const HEARING_RADIUS = 25;
+export const FIELD_OF_VIEW = 180;                    // deg
+export const MELEE_DISTANCE = 2.25;
+export const CLASSIC_MELEE_DISTANCE_VS_AI = 1.5;
+// EnemyAttack.cs:28-29 - the ranged band, 240/2048 classic units at
+// MeshReader.GlobalScale (= 6m / 51.2m), STRICT at both ends. AUDIT 24
+// (wave 35): declared HERE rather than in enemyAttack.js, because the
+// motor needs them for DoRangedAttack's stand-off and enemyAttack.js
+// already imports MELEE_DISTANCE from this module - declaring them
+// there and importing them here would close the third import cycle in
+// three waves. enemyAttack.js re-exports them for its own readers.
+export const MIN_RANGED_DISTANCE = 240 * GLOBAL_SCALE;
+export const MAX_RANGED_DISTANCE = 2048 * GLOBAL_SCALE;
+/** EnemySenses.lastHadLOSTimer (:455), refilled on sight or earshot and
+ *  decremented once per classic update. */
+export const LAST_HAD_LOS_TICKS = 200;
+/** GetDestination's search ramp (:553-556): searchMult climbs by one
+ *  per pass while it is <= 10 and the search position is inside the
+ *  stop distance, and is reset to 0 the moment the target is reachable
+ *  (:551) or the foe stops acting (HandleNoAction :362). */
+export const SEARCH_MULT_MAX = 10;
+/** ClearPathToPosition's default reach (:667) - GetDestination does NOT
+ *  use it, passing the distance to the PREVIOUS destination instead. */
+export const CLEAR_PATH_DEFAULT_DIST = 30;
+export const CLASSIC_TURN_DEG = 20;                  // per classic update (TurnToTarget's turnSpeed)
+// M3 / ONE DFU MEMBER ONE EXPORT: systemTimerUpdatesDivisor is a
+// PlayerMotor field in DFU (climbing divides by it too) - moved to
+// player/motor.js; re-exported so existing importers keep working.
+export { SYSTEM_TIMER_UPDATES_DIVISOR } from '../../player/motor.js';
+export const SENSES_INTERVAL_UNITS = 5;              // classicTargetUpdateTimer > 5
+export const MOVE_YAW_GATE_DEG = 5.625;
+// CH4 (the senses verify pass): the STOPPED "just look at target"
+// branch turns at a WIDER gate than AttemptMove's 5.625 - EnemyMotor
+// .cs:514 TargetIsWithinYawAngle(22.5f). A melee-stopped foe stands
+// up to 22.5deg off-face (the attack cone is 35.156, so it still
+// swings); the old 5.625 here made stopped foes micro-track.
+export const STOP_YAW_GATE_DEG = 22.5;
+export { DF_WALK_BASE };   // ONE HOME: player/motor.js, beside DF_CROUCH_BASE (wave 34 turned the import round)
+export const EYE_FRAC = 5 / 6;
+
+export const enemyMoveSpeed = (liveSpeed) => (liveSpeed + DF_WALK_BASE) * GLOBAL_SCALE;
+
+// ---- P13: stealth (EnemySenses.StealthCheck + FormulaHelper) ----
+/** FormulaHelper.CalculateStealthChance, verbatim: 2 x ((classic
+ *  distance units x live Stealth) >> 10) - C# int math. */
+export function stealthChance(distance, liveStealth) {
+  return 2 * ((Math.trunc(distance / GLOBAL_SCALE) * liveStealth) >> 10);
+}
+export const STEALTH_MAX_DISTANCE = 1024 * GLOBAL_SCALE;   // 25.6
+
+// The classic spawn/despawn bands (EnemySenses.Start's five distance
+// arrays, verbatim - index = MobileUnit.ClassicSpawnDistanceType,
+// which is NOT an EnemyBasics field: RDBLayout reads it off the
+// enemy marker's FlatResource.SoundIndex (RDBLayout.cs:1353, :1413,
+// :1485) and it rides SetEnemy into the mobile). Player-inside
+// (dungeons): a foe not yet "spawned" joins inside the SPAWN band,
+// an already-spawned foe leaves outside the wider DESPAWN band -
+// hysteresis, verbatim. Outdoors there is no band table and NO
+// vertical test at all: upperXZ is the flat classicSpawnDespawnExterior.
+export const CLASSIC_SPAWN_XZ_BY_TYPE = Object.freeze([1024, 384, 640, 768, 768, 768, 768].map((v) => v * GLOBAL_SCALE));
+export const CLASSIC_SPAWN_Y_UPPER_BY_TYPE = Object.freeze([128, 128, 128, 384, 768, 128, 256].map((v) => v * GLOBAL_SCALE));
+export const CLASSIC_SPAWN_Y_LOWER_BY_TYPE = Object.freeze([0, 0, 0, 0, -128, -768, 0].map((v) => v * GLOBAL_SCALE));
+export const CLASSIC_DESPAWN_XZ_BY_TYPE = Object.freeze([1024, 1024, 1024, 1024, 768, 768, 768].map((v) => v * GLOBAL_SCALE));
+export const CLASSIC_DESPAWN_Y_BY_TYPE = Object.freeze([384, 384, 384, 384, 768, 768, 768].map((v) => v * GLOBAL_SCALE));
+export const CLASSIC_SPAWN_DESPAWN_EXTERIOR = 4096 * GLOBAL_SCALE;
+// Row 0 (the default distance type) kept as named constants - the
+// stealth/rest consumers read them.
+export const CLASSIC_SPAWN_XZ = CLASSIC_SPAWN_XZ_BY_TYPE[0];
+export const CLASSIC_SPAWN_Y_UPPER = CLASSIC_SPAWN_Y_UPPER_BY_TYPE[0];
+export const CLASSIC_SPAWN_Y_LOWER = CLASSIC_SPAWN_Y_LOWER_BY_TYPE[0];
+export const CLASSIC_DESPAWN_XZ = CLASSIC_DESPAWN_XZ_BY_TYPE[0];
+export const CLASSIC_DESPAWN_Y = CLASSIC_DESPAWN_Y_BY_TYPE[0];
+
+/** The wouldBeSpawnedInClassic recompute (per classic update). yDiff
+ *  = foeY - playerY (SIGNED: the lower band uses the sign).
+ *  distanceType = the marker's ClassicSpawnDistanceType (row into the
+ *  five band arrays); playerInside = PlayerEnterExit.IsPlayerInside.
+ *  Out-of-range rows are reproduced, not clamped: DFU indexes short[7]
+ *  with the marker byte, and RDBLayout.cs:1478 notes fixed markers
+ *  "have garbage data in the 8 MSBs" - the corpus carries one such
+ *  marker (soundIndex 35). The IndexOutOfRangeException aborts
+ *  EnemySenses.Start, leaving all five band fields at their 0f
+ *  defaults, i.e. that foe is never spawned in classic indoors. */
+export function wouldBeSpawnedInClassic(distanceToPlayer, yDiff, already, distanceType = 0, playerInside = true) {
+  if (distanceToPlayer >= 1094 * GLOBAL_SCALE) return false;
+  const yAbs = Math.abs(yDiff);
+  // AUDIT 62 F17: the clamp is float insurance only. With both terms in
+  // one space (DFU's transforms) |yDiff| <= distanceToPlayer always, so
+  // the radicand cannot go negative; it went negative while the two
+  // arguments were measured differently, which is what F17 fixed.
+  const xz = Math.sqrt(Math.max(0, distanceToPlayer * distanceToPlayer - yAbs * yAbs));
+  if (!playerInside) return xz <= CLASSIC_SPAWN_DESPAWN_EXTERIOR;   // no Y test outdoors
+  const row = distanceType >= 0 && distanceType < CLASSIC_SPAWN_XZ_BY_TYPE.length ? distanceType : -1;
+  const band = (arr) => (row < 0 ? 0 : arr[row]);
+  const upperXZ = already ? band(CLASSIC_DESPAWN_XZ_BY_TYPE) : band(CLASSIC_SPAWN_XZ_BY_TYPE);
+  const upperY = already ? band(CLASSIC_DESPAWN_Y_BY_TYPE) : band(CLASSIC_SPAWN_Y_UPPER_BY_TYPE);
+  const lowerY = already ? 0 : band(CLASSIC_SPAWN_Y_LOWER_BY_TYPE);
+  if (xz > upperXZ) return false;
+  if (lowerY === 0) {
+    if (yAbs > upperY) return false;
+  } else if (yDiff < lowerY || yDiff > upperY) {
+    return false;
+  }
+  return true;
+}
+
+/** EnemySenses.BlockedByIllusionEffect, verbatim (rolled per CLASSIC
+ *  UPDATE): sees-through enemies are never blocked; an invisible
+ *  target always blocks; blending (chameleon) tries an 8% see-through,
+ *  a shade 4%; FailedRoll keeps the block. The three flags come from
+ *  the TARGET's entity either way - the player's off the senses
+ *  context, a foe target's off its candidate's concealment() closure
+ *  (A5 built that closure in the three foe pools; the Illusion effect
+ *  classes have written the flags entity-blind since S21). */
+export function blockedByIllusionEffect(seesThrough, { invisible = false, blending = false, shade = false } = {}, rolls = Math.random) {
+  if (seesThrough) return false;
+  if (invisible) return true;
+  if (!blending && !shade) return false;
+  // The roll happens ONLY in this branch (DFU rolls no dice for an
+  // unconcealed target - sequences must match).
+  const chance = blending ? 8 : 4;
+  return !dice100(chance, rolls());   // Dice100.FailedRoll
+}
+
+/** EnemySenses.CanHearTarget: inside the 25 radius (+HearingModifier
+ *  0 for every current entry), blocked when STATIC geometry sits
+ *  between. CH4 (the senses verify pass): the ray runs CENTER to
+ *  center - DFU casts from transform.position (the capsule center)
+ *  along directionToTarget (:942), not from the eye; the old
+ *  eye-origin sat h/3 too high. Departure (documented): our
+ *  collider's ray includes closed action doors (they are collider
+ *  buckets), which DFU's static-only mask lets sound pass - a
+ *  closed door muffles here. */
+export function canHearTarget(collider, feet, height, targetFeet, dist, centreOffset = height / 2, targetCentreOffset = CAPSULE_HEIGHT / 2) {
+  if (dist >= HEARING_RADIUS) return false;
+  const center = [feet[0], feet[1] + centreOffset, feet[2]];   // EnemySenses.cs:942 casts from transform.position
+  const ex = targetFeet[0] - center[0], ey = targetFeet[1] + targetCentreOffset - center[1], ez = targetFeet[2] - center[2];   // ...toward the target's transform
+  const el = Math.hypot(ex, ey, ez) || 1;
+  const hit = collider.raycast(center, [ex / el, ey / el, ez / el], el);
+  return !Number.isFinite(hit) || hit >= el - 1e-3;
+}
+
+const DEG = Math.PI / 180;
+const norm = wrapAngle;   // ONCRASH1: the port's one wrap. This was two `while` loops, and a PUPPET's yaw reaches them off the wire - at a large one the loop never falls and the tab hangs.
+
+/** Yaw of a horizontal direction in the engine convention fwd = (sin, 0, cos). */
+export const yawOf = (dx, dz) => Math.atan2(dx, dz);
+
+/** Within `deg` of facing dir? (TargetIsWithinYawAngle) */
+export function withinYaw(yaw, dx, dz, deg) {
+  return Math.abs(norm(yawOf(dx, dz) - yaw)) <= deg * DEG;
+}
+
+/** Classic in-place turn: rotate toward dir, clamped to maxDeg. Returns the new yaw. */
+export function turnTowards(yaw, dx, dz, maxDeg = CLASSIC_TURN_DEG) {
+  const d = norm(yawOf(dx, dz) - yaw);
+  const step = maxDeg * DEG;
+  return norm(yaw + Math.max(-step, Math.min(step, d)));
+}
+
+/**
+ * Verbatim CanSeeTarget: range gate, FOV gate against facing, then an
+ * eye-to-eye LOS ray against the level collider. C-slice: `blockerOut`
+ * (optional { key }) receives the BUCKET that blocked the ray -
+ * EnemySenses.CanSeeTarget:912-918 records an action door the sight
+ * ray strikes first, which is what OpenDoors later consumes.
+ */
+export function canSeeTarget(collider, feet, yaw, height, targetFeet, targetHeight = CAPSULE_HEIGHT, blockerOut = null, distIn = null, sightRadius = SIGHT_RADIUS) {
+  const dx = targetFeet[0] - feet[0], dz = targetFeet[2] - feet[2];
+  // REVIEW 2026-09-05: the radius gate is distanceToTarget (EnemySenses.cs:881),
+  // transform to transform - the caller's own measure when it has one.
+  const dist = distIn ?? Math.hypot(dx, (targetFeet[1] + targetHeight / 2) - (feet[1] + height / 2), dz);
+  const radius = Number.isFinite(sightRadius) && sightRadius > 0 ? sightRadius : SIGHT_RADIUS;   // CAMP-SIGHT: a per-foe override (wilderness camps), else DFU's own. P13: the S8 half-sight chameleon interim retired - concealment is the illusion gate now
+  if (dist >= radius) return false;
+  if (!withinYaw(yaw, dx, dz, FIELD_OF_VIEW / 2)) return false;
+  const eye = [feet[0], feet[1] + height * EYE_FRAC, feet[2]];
+  const tEye = [targetFeet[0], targetFeet[1] + targetHeight * EYE_FRAC, targetFeet[2]];
+  const ex = tEye[0] - eye[0], ey = tEye[1] - eye[1], ez = tEye[2] - eye[2];
+  const el = Math.hypot(ex, ey, ez) || 1;
+  if (blockerOut && collider.raycastHit) {
+    const h = collider.raycastHit(eye, [ex / el, ey / el, ez / el], Math.min(radius, el));
+    const seen = !Number.isFinite(h.dist) || h.dist >= el - 1e-3;
+    if (!seen) blockerOut.key = h.key;
+    return seen && !coveredSight(collider, eye, ex / el, ey / el, ez / el, el);
+  }
+  const hit = collider.raycast(eye, [ex / el, ey / el, ez / el], Math.min(radius, el));
+  return (!Number.isFinite(hit) || hit >= el - 1e-3) && !coveredSight(collider, eye, ex / el, ey / el, ez / el, el);
+}
+
+/** TACT1: does cover (a tree, a crate, a statue - ai/cover.js) stand between the eye and a target `el` away along
+ *  the unit (ux, uy, uz)? Never with the Enhanced AI switch off. A cover hit is no door, so `blockerOut` is left. */
+function coveredSight(collider, eye, ux, uy, uz, el) {
+  return coverDistance(collider, eye, [ux, uy, uz], el, true) < el - 1e-3;   // AUDIT TACT B2: a line of sight - one in a crown is seen in it
+}
+
+// EnemyMotor.cs:34 - the maximum distance to open a door.
+export const OPEN_DOOR_DISTANCE = 2;
+
+/** EnemyMotor.OpenDoors (:1425-1442), the classic path: a
+ *  CanOpenDoors foe whose LAST KNOWN DOOR (the sight ray's blocker)
+ *  is not open, not locked, and closer than 2m - foe to door CENTER
+ *  (EnemySenses:917) - toggles it. A MOVING door passes the IsOpen
+ *  test and ToggleDoor's own IsMoving gate refuses it, exactly as
+ *  DFU. The Enhanced-AI bash arm stays with its setting (unported).
+ *  Returns true when the toggle fired. */
+export function openDoorsStep(feet, canOpenDoors, door, toggleDoor) {
+  if (!canOpenDoors || !door) return false;
+  if (door.state === 'end') return false;                 // IsOpen
+  if ((door.currentLockValue ?? 0) > 0) return false;     // IsLocked
+  const d = Math.hypot(door.center[0] - feet[0], door.center[1] - feet[1], door.center[2] - feet[2]);
+  if (d >= OPEN_DOOR_DISTANCE) return false;
+  return !!toggleDoor(door);
+}
+
+
+/** Verbatim DaggerfallMobileUnit back-facing: 8 orientations at 45deg
+ *  from the angle between the foe's forward and the horizontal
+ *  direction TO the viewer; records mirror 5..7 -> 3..1 and
+ *  AnimStateRecord % 5 > 2 (records 3, 4) is the back arc. The sign
+ *  of the source's cross-product convention only swaps mirrored
+ *  diagonals, which land on the SAME records - back-facing is
+ *  sign-symmetric, so the |angle| form is exact. Unity's
+ *  Mathf.RoundToInt rounds half-to-EVEN (112.5deg -> orientation 2,
+ *  NOT back; 157.5 -> 4, back) - preserved. */
+export function isBackFacing(foeYaw, foeFeet, viewerPos) {
+  const dx = viewerPos[0] - foeFeet[0], dz = viewerPos[2] - foeFeet[2];
+  const a = Math.atan2(dx, dz) - foeYaw;
+  const deg = Math.abs(((a * 180 / Math.PI + 540) % 360) - 180);   // 0..180 off forward
+  const r = deg / 45;
+  const base = Math.floor(r), frac = r - base;
+  const orientation = frac > 0.5 ? base + 1 : frac < 0.5 ? base : (base % 2 === 0 ? base : base + 1);
+  const record = orientation > 4 ? 8 - orientation : orientation;
+  return record % 5 > 2;
+}
+
+// C12: the behaviour motors (EnemyMotor.cs flies/swims).
+export const MOBILE_SLAUGHTERFISH_ID = MOBILE_TYPES.Slaughterfish;   // the one swimmer that aims for the face (AUDIT 68 S05-mobile-id-literals: the table's id)
+export const WATER_HEAD_MARGIN = 100 * GLOBAL_SCALE;   // WaterMove: keep 2.5 under the surface
+export const FLYER_FLOOR_CLEARANCE = 1;         // FindGroundPosition((height/2) + 1)
+export const FLYER_FLOOR_LIFT = 0.1;            // direction.y forced up when skimming
+
+// ---- THE DETOUR MACHINE (AUDIT 24 wave 34) ----------------------------
+// EnemyMotor's AttemptMove is not "move": it is probe, then move OR
+// detour (EnemyMotor.cs:975-996). None of it was ported, so a foe
+// pressed into a wall and slid along it, and walked off any ledge in
+// its path. DFU refuses the step and commits to a way around.
+/** ObstacleCheck's cast (:1143): `controller.radius / Mathf.Sqrt(2f)` -
+ *  "follow walls at 45 degrees incidence". */
+export const OBSTACLE_CHECK_DISTANCE = CAPSULE_RADIUS / Math.SQRT2;
+/** The cast capsule's radius (:1154) - HALF the controller's. */
+export const OBSTACLE_CAST_RADIUS = CAPSULE_RADIUS / 2;
+/** :1151-1152. p1 sits `originalHeight * 0.1388` BELOW the controller
+ *  centre ("climbable step for the player is around 0.65 of 1.8; the
+ *  same ratio for the enemy"), p2 half a crouch-height above it. */
+export const OBSTACLE_P1_BELOW_CENTRE = 0.1388;
+export const DOOR_CROUCHING_HEIGHT = 1.65;      // :37, "how low enemies dive to pass thru doors"
+/** DOOR-JAM (FIELD BUGS 2026-10-14b): HeightAdjust's heightChangeTimer (:1462) - how long a foe that bumped something
+ *  on its sides keeps its controller at DOOR_CROUCHING_HEIGHT before it stands back up (_heightAdjust). */
+export const HEIGHT_CHANGE_SECONDS = 0.5;
+/** The upward-slope re-cast (:1182-1189): a capsule from 0.25 below
+ *  the centre, 0.75 of the height tall, aimed at a point one unit
+ *  ahead and one unit UP. Clear = a climbable slope, not an obstacle. */
+export const OBSTACLE_SLOPE_P1_BELOW_CENTRE = 0.25;
+export const OBSTACLE_SLOPE_P2_ABOVE_P1 = 0.75;
+/** FallCheck (:1211-1218): a downward ray from one unit ahead of the
+ *  controller centre, reaching `originalHeight * 0.5 + 1.5`. */
+export const FALL_CHECK_AHEAD = 1;
+export const FALL_CHECK_DROP = 1.5;
+/** FindDetour's state (:1010, :1033, :1094, :1133-1136). */
+export const DETOUR_VERTICAL_DODGE = 0.3;       // flyers/swimmers try up or down first
+export const DETOUR_UNSTUCK_RESET = 2;          // seconds clear before the clockwise choice resets
+export const DETOUR_CLOCKWISE_TIMER = 5;        // seconds the chosen hand is committed for
+export const DETOUR_SWEEP_STEP_DEG = 45;
+export const DETOUR_SWEEP_MAX_TRIES = 7;        // `if (count > 7) break`
+export const DETOUR_REACH = 2;                  // detourDestination = position + testMove * 2
+export const DETOUR_TIMER = 0.75;               // avoidObstaclesTimer
+export const DETOUR_ARRIVAL = 0.3;              // UpdateTimers zeroes the timer inside this
+
+/**
+ * Per-foe classic AI: senses on the system timer, decisions on the
+ * classic update, movement applied continuously at the decided state.
+ * C12: behaviour 'Flying'/'Spectral' = CanFly (3D pursuit at the
+ * target's face, no gravity, the floor-skim guard); 'Aquatic' =
+ * WaterMove (3D pursuit gated to below the block water surface via
+ * waterSurfaceY(x, z), the 2.5 head margin, beached = frozen).
+ */
+/** ARENA-FIX 8: a walk to a mark (EnemyAI.walkTo) is done this near it, metres. */
+export const WALK_ARRIVE_M = 0.35;
+
+export class EnemyAI {
+  constructor(collider, feet, yawRad, { liveSpeed = 50, isHostile = true, height = CAPSULE_HEIGHT, seesThroughInvisibility = false, behaviour = 'General', mobileId = -1, waterSurfaceY = null, spawnDistanceType = 0, playerInside = true, isActionDoor = null, rolls = Math.random, hasBowAttack = false, canCastRangedSpell = null, hasMagickaToCast = null, centreOffset = null, vitals = null } = {}) {
+    this.collider = collider;
+    /** ObstacleCheck's DaggerfallActionDoor arm (:1167-1176). The AI
+     *  cannot resolve a collider bucket key to an action object - the
+     *  HOST owns that registry, exactly as it already does for the
+     *  OpenDoors seam - so it asks. A host with no action doors (the
+     *  two exterior pools) answers false and the arm is simply never
+     *  taken, which is correct for it. */
+    this.isActionDoor = isActionDoor ?? (() => false);
+    this.rolls = rolls;
+    /** IsLevitating (EnemyMotor.cs:89). WRITTEN by the Levitate effect's
+     *  enemy arm - Levitate.SetEnemyMotor (:140-154) via
+     *  StartLevitating/StopLevitating - which the port folds into
+     *  effects.applyEnemyMotorEffectFlags, called by each foe pool
+     *  before update() the way the player's own levitate flag is folded
+     *  in scenes/shared.js. False for a foe carrying no Levitate. */
+    this.levitating = false;
+    this.feet = [feet[0], feet[1], feet[2]];
+    this.yaw = yawRad;
+    this.height = height;
+    // REVIEW 2026-09-05 (PR #55): where DFU's transform.position sits
+    // above the capsule bottom. SetupDemoEnemy justifies the controller
+    // BOTTOM, so the transform stays at the sprite CENTRE - idleH/2 over
+    // the feet - whatever the capsule's height became (halved for a
+    // flyer, floored at 1.6 for a rat). Every probe DFU casts from
+    // transform.position and every destination it measures against it
+    // read this, not height/2. The default keeps a caller that names
+    // no sprite (the tests' 1.8 capsule) exactly where it was.
+    this.centreOffset = centreOffset ?? height / 2;
+    // AUDIT 62 F23: the PLAYER target's LIVE controller height, cached
+    // once per step off the senses context (EnemyMotor.cs:532 reads
+    // `senses.Target.GetComponent<CharacterController>().height` every
+    // FixedUpdate; PlayerHeightChanger.cs:54-57 gives it 1.8 standing,
+    // 0.9 crouched, 2.6 mounted, 0.30 swimming). The 1.8 default is the
+    // headless charter - a caller that hands no context keeps exactly
+    // the capsule the port has always used.
+    this._playerHeight = CAPSULE_HEIGHT;
+    // CH3 (AUDIT 23 characters-8): EnemyMotor.ApplyFallDamage's
+    // tracking pair - LastGroundedY refreshes while grounded, and a
+    // landing after a past-threshold drop reports the distance for
+    // the host to bill (the enemy shares the player's formula, per
+    // the source's own comment).
+    this.lastGroundedY = feet[1];
+    this.landedFall = 0;   // > 0 for ONE host frame after a damaging landing
+    this._airborne = false;
+    this._restGrounded = false;   // C11's rest latch: true only while the grounded branch last left this foe resting on ground
+    // FIELD BUGS 2026-09-29 (the sea, #2): CharacterController.isGrounded - whether the controller's LAST Move stood it
+    // on something (CollisionFlags.Below), kept until the next Move, false for one that has never moved. Every branch
+    // below writes it from the move it makes; a step that makes none (a swimmer out of water, frozen) leaves it as the
+    // last one left it. Come Sail Away's riders read it (world.js csaEnemies): a swimmer in open water is on nothing.
+    this.isGrounded = false;
+    // DOOR-JAM (FIELD BUGS 2026-10-14b, the Discord: "Multiple enemies cannot pass through a doorway at the same time
+    // because their hitboxes collide"): EnemyMotor.HeightAdjust's state (:62-65). `height` is DFU's `originalHeight`
+    // (Start, :148) - every probe and aim below reads it, as every one of DFU's does (ObstacleCheck :1151-1152,
+    // FallCheck :1219, GetDestination :562) - and `controllerHeight` is the CharacterController's own, the one each
+    // Move sweeps: the same, until the foe bumps something on its sides; then DOOR_CROUCHING_HEIGHT for
+    // HEIGHT_CHANGE_SECONDS (_heightAdjust), so a body taller than a doorway's lintel ducks under it. `collidedSides`
+    // is the last Move's CollisionFlags.CollidedSides, kept until the next Move as isGrounded is (above).
+    this.controllerHeight = height;
+    this.collidedSides = false;
+    this._resetHeight = false;
+    this._heightChangeTimer = 0;
+    // AUDIT 39: TakeAction re-derives `moveSpeed` from
+    // `entity.Stats.LiveSpeed` EVERY FixedUpdate (:432), so a Drain or
+    // Fortify Speed on a foe moves it. A number captured at spawn
+    // cannot; callers that own the entity pass a THUNK over
+    // liveStat(entity, 'speed') and the read happens per step.
+    this._liveSpeed = typeof liveSpeed === 'function' ? liveSpeed : () => liveSpeed;
+    this.seesThroughInvisibility = seesThroughInvisibility;
+    // MobileUnit.ClassicSpawnDistanceType (the marker's SoundIndex) and
+    // PlayerEnterExit.IsPlayerInside - both feed the spawn-band recompute.
+    this.spawnDistanceType = spawnDistanceType;
+    this.playerInside = playerInside;
+    this.giveUpTimer = 0;   // G1: blind-pursuit ticks (EnemyMotor.GiveUpTimer)
+    // MT-i: EnemySenses.Target + the SecondaryTarget slot
+    // MakeEnemyHostileToAttacker writes (:197). A target is a
+    // CANDIDATE descriptor ({ isPlayer } sentinel or { ai, entity })
+    // from the host's shared list; null = no target = the :410-414
+    // blind arm. The machine (characters/enemy/enemyTargets.js) arms only
+    // through senses.targeting - unarmed callers keep the
+    // player-only path, which is DFU's own behavior with no other
+    // enemy in range.
+    this.target = null;
+    this.secondaryTarget = null;
+    this.classicTargetUpdateTimer = 0;   // EnemySenses.cs:74 - the GetTargets cadence
+    // EnemySenses.targetSenses (:56) is a persistent FIELD, and the
+    // mutual-target write reads it OUTSIDE the spawn-band gate - so
+    // it can be a target selected several passes ago.
+    this.targetSenses = null;
+    this.sawSecondaryTarget = false;   // :62 - written outside the Enhanced guard, read on the classic path
+    this._armedTargeting = false;
+    this._targetCandidate = null;
+    // The detour machine's whole state (wave 34), name-for-name with
+    // EnemyMotor's fields so the laws below read against the source.
+    this.obstacleDetected = false;
+    this.fallDetected = false;
+    this.foundUpwardSlope = false;
+    this.foundDoor = false;
+    this.avoidObstaclesTimer = 0;
+    this.detourDestination = [feet[0], feet[1], feet[2]];
+    this.destination = [feet[0], feet[1], feet[2]];
+    this.checkingClockwise = false;
+    this.checkingClockwiseTimer = 0;
+    this.didClockwiseCheck = false;
+    this.lastTimeWasStuck = -Infinity;
+    this._clock = 0;   // Time.time, accumulated on the fixed step
+    // EnemySenses' target-position memory (wave 35). null stands in for
+    // DFU's ResetPlayerPos sentinel (float.MaxValue on all three axes),
+    // which HandleNoAction (:359) reads as "never seen, take no action".
+    this.lastKnownTargetPos = null;
+    this.oldLastKnownTargetPos = null;
+    this.predictedTargetPos = null;
+    this.lastPositionDiff = [0, 0, 0];
+    // E6: EnemySenses.predictedTargetPosWithoutLead (:70) and
+    // targetPosPredictTimer (:71) - the two fields PredictNextTargetPos
+    // reads that nothing else did. null is the ResetPlayerPos sentinel
+    // again; the timer is the time since the last prediction pass.
+    this._predictedTargetPosWithoutLead = null;
+    this._targetPosPredictTimer = 0;
+    this.awareOfTargetForLastPrediction = false;
+    this.lastHadLOSTimer = 0;
+    this.searchMult = 0;
+    /** EnemyMotor.hasBowAttack (:131-137, off the MobileEnemy FLAGS) and
+     *  CanCastRangedSpell (:759). The motor needs both for
+     *  DoRangedAttack's band; the host owns the attack and cast
+     *  components that know the answers. */
+    this.hasBowAttack = hasBowAttack;
+    this.canCastRangedSpell = canCastRangedSpell ?? (() => false);
+    // D9: GetDestination's magic term is `entity.CurrentMagicka > 0`
+    // (:539-540) and NOTHING else - not CanCastRangedSpell, which is
+    // DoRangedAttack's alone (:573). One dep used to serve both.
+    this.hasMagickaToCast = hasMagickaToCast ?? (() => false);
+    this.flies = behaviour === 'Flying' || behaviour === 'Spectral';   // CanFly, verbatim
+    this.swims = behaviour === 'Aquatic';
+    // Flyers, LEVITATORS and the slaughterfish aim for the target FACE
+    // (PredictedTargetPos + targetHeight/2 above the center = feet +
+    // height); other swimmers aim at the center (no ground flatten).
+    // ROAD-Ar R4: the who-aims-where split is decided PER CALL in
+    // _getDestination, not frozen here - `levitating` is a live effect
+    // flag (effects.applyEnemyMotorEffectFlags) and the foe pools
+    // rewrite `ai.flies` for a transformed Seducer, so a birth-time
+    // constant answered for a shape the foe no longer has. Only the
+    // slaughterfish test is immutable, so only it is cached.
+    this.isFaceAimingSwimmer = this.swims && mobileId === MOBILE_SLAUGHTERFISH_ID;
+    this.waterSurfaceY = waterSurfaceY;
+    this.velY = 0;
+    this.detected = false;
+    this.inSight = false;
+    // EnemyMotor.Start:122 `IsHostile = mobile.Enemy.Reactions == Hostile`
+    // - a dungeon marker whose action byte is 99 stands down until it is
+    // struck (RDBLayout.AddEnemy :1519-1521). Pacification (C-slice)
+    // clears it too; damage restores it.
+    this.isHostile = isHostile;
+    /** TACT2: () => { health, maxHealth } - the brain's read of the body it drives (null: no read) */
+    this.vitals = vitals;
+    /** @type {number[]|null} TACT2: the brain's step (unit xz) - null, the classic walk along the yaw */
+    this._tacDir = null;
+    this._tacSpeed = 1;
+    // WERE-FRIGHT: the run from a fright (flee, below) - seconds left, and the point it runs from. No run by default.
+    this.fleeLeft = 0;
+    this.fleeFrom = null;
+    this.fleePace = 1;   // FLIGHT-FIRST: its run's share of its walk (flee, below)
+    /** CREW-COMPANIONS: the leader a companion keeps to (the host sets it; null for every other foe). COMPANION-TRAIL:
+     *  `trail` the crumbs where the leader walked, oldest first. @type {{ feet: () => (number[]|null), stop?: number, leash?: number, trail?: () => (number[][]|null) }|null} */
+    this.follow = null;
+    this._following = false;
+    this._followWalking = false;
+    this._followPace = 1;   // COMPANION-TRAIL: the walk's share while following
+    this._crumb = null; this._trailMode = null; this._trailT = 0;   // COMPANION-TRAIL: the crumb held, 'leader' | 'crumb' | null, the next look
+    this._returning = false;   // AUDIT CC-B3: drawn past the leash, coming home
+    // TakeAction:443-449 sets stopDistance BEFORE GetDestination, and
+    // both the approach test (:487) and the search ramp (:552) read it.
+    // Seeded here so a caller that drives _getDestination directly has
+    // the player value.
+    this.stopDistance = MELEE_DISTANCE;
+    this.justEncountered = false; // the first-detection EDGE (EnemySenses:504) - the host's pacify check consumes it
+    this.moving = false;
+    this._classicTimer = 0;
+    this._acc = 0;           // P17: the fixed-step accumulator (render dt in, 1/60 steps out)
+    this.knockbackSpeed = 0;   // C15: classic-through-ratio units; the scene sets it on landed hits
+    this.knockbackDir = null;  // the attack ray direction (3D - flyers take the y)
+    this.hurtKnock = false;    // per-step: speed above the hurt threshold (the scene's hurting input)
+    this.staggerUntil = 0;     // TELL1: a broken wind-up's stagger ends here, on the brain's clock (ai/tactics.js windupStruck)
+    this.staggered = false;    // per-step: staggered - CanAct false, its Hurt held (the scene's hurting input with hurtKnock)
+    this.overreachUntil = 0;   // TELL4: a missed telegraphed blow's punish window ends here, on the brain's clock (ai/tactics.js)
+    this.overreached = false;  // per-step: overreached - CanAct false as staggered, its swing's follow-through standing (no Hurt)
+    this.roarUntil = 0;        // RVN4: a last stand's roar holds it here, on the brain's clock, the Enhanced AI switch off (on, its ring's wind-up holds it)
+    this._dist = Infinity;
+    // P13 stealth state (EnemySenses fields)
+    this.hasEncounteredPlayer = false;
+    this.wouldBeSpawned = false;
+    this._blocked = false;               // blockedByIllusionEffect, rolled per classic tick
+    this._lastStealthMinute = -1;        // timeOfLastStealthCheck (per foe)
+  }
+
+  /** TakeAction:432 - `(entity.Stats.LiveSpeed + dfWalkBase) *
+   *  GlobalScale`, re-derived on every pass rather than captured. A
+   *  READ, not a field, so nothing can freeze it back. */
+  get speed() { return enemyMoveSpeed(this._liveSpeed() + this._edgeSpeed()); }
+  /** RVN2 (bible/12-Enhanced-AI/Feud-Arc.md 13.2): an Arrow-wise revenant's Speed while its target is far (its stand's
+   *  `revenant.edge`, systems/revenant/revenantFeud.js ADAPT) - none for any other body. */
+  _edgeSpeed() {
+    const e = this.vitals?.()?.revenant?.edge;
+    return e?.farSpeed > 0 && this._dist > e.farAt ? e.farSpeed : 0;
+  }
+
+  /** CH4 (the senses verify pass): the CLASSIC-gated senses halves.
+   *  DFU's FixedUpdate runs the spawn-band recompute (:260-310) and
+   *  the illusion roll (:444-449, the per-classic re-roll that makes
+   *  chameleon matter - the source's own comment) only on
+   *  GameManager.ClassicUpdate frames; sight/hearing/detection
+   *  resolve every FixedUpdate (see _senses). This half runs per
+   *  classic tick. */
+  _classicSenses(playerFeet, senses = null) {
+    // MT-i (the adversarial re-read): the LOS-timer decrement used to
+    // live HERE, at the top of the classic tick. It is NOT there in
+    // DFU - it sits at :446-447, in the SECOND ClassicUpdate block,
+    // BELOW the `if (target == null) ... return;` at :410-414. So a
+    // foe holding no target never decrements it: the timer freezes
+    // rather than draining. Unarmed the difference is unobservable
+    // (the player is always the target), which is why it survived
+    // wave 35 - armed it is not, so it moved to _classicPostTarget
+    // where the source keeps it.
+    if (!senses) return;
+    const dxp = playerFeet[0] - this.feet[0], dzp = playerFeet[2] - this.feet[2];
+    // AUDIT 62 F17: ONE transform-space y term feeds BOTH arguments.
+    // EnemySenses.cs:288 `YDiffToPlayer = transform.position.y -
+    // player.transform.position.y` and :376-377 `distanceToPlayer =
+    // (player.transform.position - transform.position).magnitude` are
+    // the same measure, and :290 reconstructs the XZ leg as
+    // sqrt(distanceToPlayer^2 - YDiffAbs^2) - so the pair must be one
+    // Pythagorean triple. The port had lifted the distance to the
+    // transforms (PR #57) and left the yDiff feet-to-feet, which is a
+    // (centreOffset - playerHeight/2) error: 0.7 for a 3.2 bat, -0.5
+    // for a rat, enough to flip the row-0 vertical band. Sign is
+    // preserved (enemy - player, DFU's :288) for the row-4/5 lower
+    // arms; Math.hypot is sign-blind, so the same value serves both.
+    // AUDIT 62 F23: the player half is the LIVE controller
+    // (PlayerHeightChanger.cs:475-478 keeps the capsule BOTTOM planted
+    // and moves the transform by heightChange/2), not the 1.8 constant.
+    const yDiff = (this.feet[1] + this.centreOffset) - (playerFeet[1] + this._playerHeight / 2);
+    const dist = Math.hypot(dxp, yDiff, dzp);   // distanceToPlayer (:376-377), transforms
+    // AUDIT WORLD3 C3: the distance to MY player, latched beside the spawn band that already measures it. `_dist` is
+    // the distance to the TARGET, which since WORLD3 can be another player entirely - the rest gate's proximity arm
+    // asked it and got the joiner's distance.
+    this._distLocal = dist;
+    this.wouldBeSpawned = wouldBeSpawnedInClassic(
+      dist, yDiff, this.wouldBeSpawned, this.spawnDistanceType, this.playerInside);
+  }
+
+  /** The illusion re-roll (:444-449), split out of _classicSenses at
+   *  MT-i so it runs AFTER the target block, DFU's Update order - and
+   *  because BlockedByIllusionEffect reads the TARGET's concealment
+   *  (:668-683): the player's flags ride the senses context as ever;
+   *  a foe target's ride its candidate's concealment() closure (the
+   *  host builds it over effects.js; absent = unconcealed). */
+  _classicPostTarget(senses) {
+    // EnemySenses.cs:443-449, the SECOND ClassicUpdate block - which
+    // the :410-414 null-target return sits ABOVE, so neither of these
+    // two runs on a tick that found no target.
+    if (this.lastHadLOSTimer > 0) this.lastHadLOSTimer--;
+    if (!senses) return;
+    // AUDIT WORLD3 C2: NOT-THE-LOCAL-PLAYER, not "a foe" - a PEER (WORLD3) carries isPlayer and has no concealment()
+    // of its own, so the old spelling read the LOCAL player's invisibility for a foe hunting somebody else: the host
+    // going invisible blinded every foe chasing the joiner. A peer takes the empty bag, which is what "I do not know"
+    // must mean here (a peer's flags are a later slice's wire field).
+    const notLocal = this._armedTargeting && this.target && (!this.target.isPlayer || this.target.isPeer === true);
+    const flags = notLocal
+      ? (this.target.concealment?.() ?? {})
+      : {
+          invisible: senses.playerInvisible ?? false,
+          blending: senses.playerBlending ?? false,
+          shade: senses.playerShade ?? false,
+        };
+    this._blocked = blockedByIllusionEffect(this.seesThroughInvisibility, flags, senses.rolls ?? Math.random);
+  }
+
+  /** EnemySenses' detection resolution. CH4: runs EVERY fixed step -
+   *  DFU resolves sight (:421/:428), the hearing gate (:433-436) and
+   *  detection (:451-470) every FixedUpdate, with the illusion block
+   *  standing between classic re-rolls (_classicSenses). senses
+   *  (optional, P13) = { gameMinutes, playerStealth,
+   *  movingLessThanHalfSpeed, playerBlending, playerInvisible,
+   *  playerShade, sharedStealth: { minute }, tallyStealth(), rolls }.
+   *  Without it (headless/test callers) the pre-P13 sight+proximity
+   *  shape applies. */
+  _senses(playerFeet, senses = null) {
+    const dx = playerFeet[0] - this.feet[0], dz = playerFeet[2] - this.feet[2];
+    // REVIEW 2026-09-05: EnemySenses.cs:425-426 `target.transform.position
+    // - transform.position` - TRANSFORM to transform, which the stop test,
+    // the melee gate, the ranged band, the hearing radius and the stealth
+    // gates all read. Feet to feet coincided with it only while every
+    // foe's transform sat 0.9 above its feet like the player's.
+    this._dist = Math.hypot(dx, (playerFeet[1] + this._targetCentreOffset()) - (this.feet[1] + this.centreOffset), dz);
+    // AUDIT WORLD3 C3: unarmed - a puppet's bare senses call, an unarmed pool - the senses ARE the local player's, so
+    // both latches follow from here (a puppet never reaches _step or the classic block).
+    if (!this._armedTargeting) { this._distLocal = this._dist; this.targetIsLocalPlayer = true; }
+    // C-slice: EnemySenses clears actionDoor at every CanSeeTarget
+    // (:879) and records the ray's blocking door; the host resolves
+    // the key against its action registry for OpenDoors.
+    const _blocker = { key: null };
+    // MT-i (the adversarial re-read): the destination eye is the
+    // TARGET's own controller height (:896-898), not a constant. It
+    // was the default capsule height here, which is exactly right for
+    // the player and wrong for every foe target that is not
+    // player-sized - a rat's eye sat a metre and a half too high, so
+    // a wall that hides it did not.
+    // AUDIT 62 F23: and the PLAYER arm names the live capsule rather
+    // than falling to canSeeTarget's 1.8 default - CanSeeTarget builds
+    // the target eye from `controller.center` + `controller.height / 3`
+    // (EnemySenses.cs:896-898), which for a crouched player is feet +
+    // 0.75, not feet + 1.50.
+    // AUDIT WORLD3 C1: ONE HOME for "the target's own capsule" - this was the THIRD reading of it and the only one
+    // WORLD3 left unpatched, so the ray to a PEER was aimed at the LOCAL player's live capsule (0.9 crouched) planted
+    // on the peer's feet, while _dist beside it already measured the peer's own.
+    const _targetHeight = this._targetHeight();
+    this.inSight = canSeeTarget(this.collider, this.feet, this.yaw, this.height, playerFeet, _targetHeight, _blocker, this._dist, this.sightRadius);   // CAMP-SIGHT: undefined = SIGHT_RADIUS   // the sight-radius gate (:881) reads distanceToTarget
+    this.doorKey = _blocker.key;
+    // AUDIT 24 (the re-read): DFU's NON-HOSTILE MODE is a TARGET drop,
+    // not an action skip. EnemySenses.Update:321-327 nulls `target`
+    // (and secondaryTarget) whenever `NoTargetMode || !motor.IsHostile`
+    // and the player is it, and a null target takes :410-414 -
+    // `targetInSight = false; detectedTarget = false; return;`. So a
+    // pacified foe reads BLIND, which is what stops it attacking; the
+    // components all keep ticking. The port had left both flags at
+    // their geometric values and stopped the attack component at the
+    // host instead, which dropped that foe's DFRandom draw off the one
+    // shared global stream every classic tick it stood pacified.
+    // MT-i: the ARMED exception to the pacified blind - DFU's
+    // Update:321-327 drops only the PLAYER as a pacified foe's
+    // target; a FOE target survives (a bear that attacks a pacified
+    // orc is fought back through MakeEnemyHostileToAttacker), so a
+    // pacified foe with a live foe target keeps its senses.
+    const foeTarget = this._armedTargeting && this._targetCandidate && !this._targetCandidate.isPlayer;
+    if (!this.isHostile && !foeTarget) {
+      this.inSight = false;
+      this.detected = false;
+      return;
+    }
+    if (!senses) {
+      // The port's no-stealth-context path (there is no such mode in DFU).
+      // It still owes the target-position memory, or a foe driven this way
+      // never has a destination at all and HandleNoAction freezes it.
+      this.detected = this.inSight || this._dist < HEARING_RADIUS;
+      if (this.detected) {
+        this.lastKnownTargetPos = [playerFeet[0], playerFeet[1], playerFeet[2]];
+        this.lastHadLOSTimer = LAST_HAD_LOS_TICKS;
+        this._encounterEdge();
+      }
+      this._trackPredictedPos();
+      return;
+    }
+    // hearing only once the target is already detected and unseen -
+    // "classic stealth mechanics would be interfered with by hearing"
+    const inEarshot = (this.detected && !this.inSight)
+      ? canHearTarget(this.collider, this.feet, this.height, playerFeet, this._dist, this.centreOffset, this._targetCentreOffset())
+      : false;
+    // AUDIT 24 (wave 35): the TARGET-POSITION MEMORY, which the port did
+    // not have at all - EnemySenses.cs:451-495. Sight or earshot writes
+    // the live position and refills lastHadLOSTimer; a bare STEALTH
+    // detection writes it only once that timer has run out, and the
+    // source says why in as many words: "this gives better pursuit
+    // behavior since enemies will go to the last spot they saw the
+    // player instead of walking into walls".
+    if (!this._blocked && (this.inSight || inEarshot)) {
+      this.detected = true;
+      this.lastKnownTargetPos = [playerFeet[0], playerFeet[1], playerFeet[2]];
+      this.lastHadLOSTimer = LAST_HAD_LOS_TICKS;
+    } else if (!this._blocked && this._stealthCheck(senses)) {
+      this.detected = true;
+      if (this.lastHadLOSTimer <= 0) this.lastKnownTargetPos = [playerFeet[0], playerFeet[1], playerFeet[2]];
+    } else this.detected = false;
+    if (this.detected) this._encounterEdge();
+
+    this._trackPredictedPos();
+  }
+
+  /** The first-encounter edge (EnemySenses:503-505): DFU's guard is
+   *  `detectedTarget && !hasEncounteredPlayer && target == player` -
+   *  detecting a FOE target (MT-i, armed pools) never spends the
+   *  player-encounter edge or the pacification roll it feeds. */
+  _encounterEdge() {
+    // AUDIT WORLD3 C4: a PEER is not my first meeting either - justEncountered's one consumer resolves the whole
+    // language check with the LOCAL player (its skill, its sheathed hand, its HUD line, its tally) and can stand the
+    // foe down on the host's roll for a foe that has only ever seen the joiner.
+    if (this._armedTargeting && this._targetCandidate && (!this._targetCandidate.isPlayer || this._targetCandidate.isPeer === true)) return;
+    if (!this.hasEncounteredPlayer) { this.hasEncounteredPlayer = true; this.justEncountered = true; }
+  }
+
+  /** EnemySenses.cs:472-495 - the tail of the detection block: the
+   *  prediction anchor, and the movement difference taken across two
+   *  consecutive prediction passes that both had sight. */
+  _trackPredictedPos() {
+    if (this.lastKnownTargetPos === null) return;
+    if (this.oldLastKnownTargetPos === null) this.oldLastKnownTargetPos = [...this.lastKnownTargetPos];
+    // :475-476. In the CLASSIC path the predicted position simply IS the
+    // last known one - `predictedTargetPos == ResetPlayerPos ||
+    // !EnhancedCombatAI` is true every pass, and PredictNextTargetPos is
+    // called only inside the Enhanced guard at :496-501. So the port has
+    // no lead prediction to write, and that is verbatim, not a gap.
+    this.predictedTargetPos = this.lastKnownTargetPos;
+    // :479-495, gated on targetPosPredict - a 0.0625s timer, which is the
+    // classic-update interval; the port folds it onto the classic tick.
+    // The DIFFERENCE is only taken across two CONSECUTIVE prediction
+    // passes that both had sight, which is what awareOfTargetForLast-
+    // Prediction is for; it survives the Enhanced guard because only the
+    // PredictNextTargetPos call sits inside it.
+    if (this._targetPosPredict) {
+      if (!this._blocked && this.inSight) {
+        if (this.awareOfTargetForLastPrediction) {
+          this.lastPositionDiff = [
+            this.lastKnownTargetPos[0] - this.oldLastKnownTargetPos[0],
+            this.lastKnownTargetPos[1] - this.oldLastKnownTargetPos[1],
+            this.lastKnownTargetPos[2] - this.oldLastKnownTargetPos[2],
+          ];
+        }
+        this.oldLastKnownTargetPos = [...this.lastKnownTargetPos];
+        this.awareOfTargetForLastPrediction = true;
+      } else {
+        this.awareOfTargetForLastPrediction = false;
+      }
+    }
+  }
+
+  /** EnemyMotor.MakeEnemyHostileToAttacker (G1): pre-load the give-up
+   *  timer so a crime-responding guard pursues without having seen the
+   *  player yet (guards get 200 * 3 classic ticks, verbatim). */
+  /**
+   * EnemyMotor.MakeEnemyHostileToAttacker (:186-211), the part that is
+   * not target bookkeeping: refill the give-up timer AND SEED THE
+   * REMEMBERED POSITION.
+   *
+   * AUDIT 24 (wave 36): the seed was missing, and wave 35 turned that
+   * from harmless into a freeze. HandleNoAction (:357-366) refuses to
+   * act at all while PredictedTargetPos is the ResetPlayerPos sentinel,
+   * so a watchman spawned hostile out of sight - which is how the watch
+   * arrives - now had a full give-up timer and nowhere to spend it. DFU
+   * hands it the attacker's position precisely so it walks to where the
+   * attack came from. (Found by the wave-35 scout, in wave 35.)
+   *
+   * `attackerFeet` is in the port's feet space, like everything else on
+   * this class; DFU stores a controller centre and the aim offset in
+   * GetDestination carries the difference.
+   */
+  makeHostileToPlayer(ticks = GIVE_UP_TICKS, attackerFeet = null) {
+    this.giveUpTimer = ticks;
+    if (!attackerFeet) return;
+    const at = [attackerFeet[0], attackerFeet[1], attackerFeet[2]];
+    this.lastKnownTargetPos = at;
+    this.oldLastKnownTargetPos = [...at];
+    this.predictedTargetPos = at;
+  }
+
+  /** MT-i: MakeEnemyHostileToAttacker's TARGET bookkeeping
+   *  (:193-202), which the method above's own comment called "the
+   *  part that is not target bookkeeping" while the port was
+   *  single-target. The reassign guard is verbatim: only when there
+   *  is no target, the current one is unseen, or it stands more than
+   *  2 units off. attacker is a candidate descriptor; the player arm
+   *  (:204-213) raises hostility here and the ally TEAM reset is the
+   *  entity-side half (enemyTargets.resetAllyTeamOnPlayerAttack -
+   *  the motor does not own entities). */
+  makeEnemyHostileToAttacker(attacker, attackerFeet = null, ticks = GIVE_UP_TICKS) {
+    if (attacker && (this.target == null || !this.inSight || this._dist > 2)) {
+      this.target = attacker;
+      this.secondaryTarget = attacker;
+      if (attackerFeet) {
+        const at = [attackerFeet[0], attackerFeet[1], attackerFeet[2]];
+        this.oldLastKnownTargetPos = [...at];
+        this.lastKnownTargetPos = at;
+        this.predictedTargetPos = at;
+      }
+      this.giveUpTimer = ticks;
+    }
+    if (attacker?.isPlayer) this.isHostile = true;
+  }
+
+  /** EnemySenses.StealthCheck, verbatim: a NON-HOSTILE enemy inside a
+   *  dungeon CASTLE never stealth-detects at all (:619-621) - the
+   *  palace guard ignores you until something turns the castle on you,
+   *  which is what MakeEnemiesHostile is for and why a castle door
+   *  bash calls it (DaggerfallActionDoor.cs:220-221). ROAD-B wired
+   *  both halves; this gate used to say "inert here (no castle
+   *  detection; foes are hostile-on-sight)", and BOTH clauses had
+   *  stopped being true - castleBlockAt has answered the first since
+   *  AUDIT 21 and RDBLayout's passive marker the second since AUDIT
+   *  39. The read is the senses context's, because it is a scene fact
+   *  (PlayerEnterExit's), not the motor's own; a host that does not
+   *  pass it (every above-ground one) leaves the gate false, which is
+   *  what NOT being in a castle means.
+   *  Then: un-spawnable-in-classic foes never stealth-detect; one check per
+   *  classic MINUTE (between minutes the standing detection holds);
+   *  a slow-moving player skips ODD minutes; a fast-moving player who
+   *  has been encountered is detected outright; the Stealth skill
+   *  tallies once per minute ACROSS foes (the shared minute rides the
+   *  scene's senses context, like PlayerEntity.TimeOfLastStealthCheck). */
+  _stealthCheck(senses) {
+    if (senses.insideDungeonCastle && !this.isHostile) return false;   // :619-621, the FIRST statement
+    if (!this.wouldBeSpawned) return false;
+    if (this._dist > STEALTH_MAX_DISTANCE) return false;
+    const gameMinutes = senses.gameMinutes ?? 0;
+    if (gameMinutes === this._lastStealthMinute) return this.detected;
+    // MT-i: StealthCheck's `if (target == player)` half (:633-650) -
+    // the half-speed minute skip, the encountered fast-mover
+    // auto-detect and the Stealth TALLY are the PLAYER target's; a
+    // foe target (armed pools) rolls on its own live Stealth below.
+    // AUDIT WORLD3 C5: a PEER takes neither half of the LOCAL player's stealth - not the half-speed minute skip, not
+    // the encountered auto-detect, and above all not the TALLY (a foe hunting the joiner advanced the host's Stealth)
+    // and not senses.playerStealth against a distance measured to the joiner. Its own skill is a later slice's wire
+    // field; until then the candidate answers 0, the same fallback the foe arm below already takes.
+    const foeTarget = this._armedTargeting && this._targetCandidate && (!this._targetCandidate.isPlayer || this._targetCandidate.isPeer === true);
+    if (!foeTarget) {
+      if (senses.movingLessThanHalfSpeed) {
+        if ((gameMinutes & 1) === 1) return this.detected;
+      } else if (this.hasEncounteredPlayer) {
+        return true;
+      }
+      if (senses.sharedStealth && senses.sharedStealth.minute !== gameMinutes) {
+        senses.tallyStealth?.();
+        senses.sharedStealth.minute = gameMinutes;
+      }
+    }
+    this._lastStealthMinute = gameMinutes;
+    // CalculateStealthChance(distanceToTarget, target) reads the
+    // TARGET's live Stealth (:654): the foe entity's uniform skill
+    // block (skillsLevel) or the candidate's own stealthOf override.
+    const liveStealth = foeTarget
+      ? (this._targetCandidate.stealthOf?.()
+        ?? (typeof this._targetCandidate.entity?.skills === 'number' ? this._targetCandidate.entity.skills : 0))
+      : (senses.playerStealth ?? 0);
+    const chance = stealthChance(this._dist, liveStealth);
+    const rolls = senses.rolls ?? Math.random;
+    return !dice100(chance, rolls());   // Dice100.FailedRoll(stealthChance) -> detected on a FAILED stealth roll
+  }
+
+  /** The controller CENTRE - DFU's `transform.position` for a
+   *  CharacterController, which every probe below is written from. The
+   *  port stores FEET. */
+  _centre() { return [this.feet[0], this.feet[1] + this.centreOffset, this.feet[2]]; }   // transform.position (REVIEW 2026-09-05: centreOffset, not height/2)
+
+  /**
+   * EnemySenses.PredictNextTargetPos (:541-616), the position the two
+   * shooting probes aim at - a LEAD, solved as a cone/line
+   * intersection against the target's own movement.
+   *
+   * Answers a CENTRE-space point (the target's feet plus half its
+   * capsule, the same lift `_getDestination` takes), or null for DFU's
+   * ResetPlayerPos sentinel - "nothing has ever been seen", which
+   * HasClearPathToShootProjectile reads as a refusal (:702-703).
+   *
+   * :551-560's FIRST arm is the only one reachable here. Both callers
+   * of this method sit behind `senses.TargetInSight` (DoRangedAttack's
+   * band condition, EnemyMotor.cs:572), so `targetInSight ||...` is
+   * true every time and `assumedCurrentPosition` is always
+   * lastKnownTargetPos; the else-arm's remembered no-lead prediction
+   * belongs to the one caller this port does not have,
+   * DaggerfallMissile's mid-flight re-aim. The field it feeds
+   * (predictedTargetPosWithoutLead) is still written at :612, because
+   * that write is what the arm would read.
+   *
+   * :563-570 is DFU's arithmetic quirk, kept: targetPosPredictTimer is
+   * zero only on the frame the prediction pass itself ran, so every
+   * other call divides ONE prediction interval's worth of movement by
+   * the SHORTER time since that pass and overstates the target's
+   * speed. It also rewrites lastPositionDiff as a side effect, and so
+   * does this.
+   */
+  predictNextTargetPos(interceptSpeed) {
+    if (this.lastKnownTargetPos === null) return null;   // ResetPlayerPos
+    if (this._predictedTargetPosWithoutLead === null) {
+      this._predictedTargetPosWithoutLead = [...this.lastKnownTargetPos];
+    }
+    const assumed = this.lastKnownTargetPos;
+    let divisor = CLASSIC_UPDATE_INTERVAL;   // predictionInterval (:34) = 0.0625
+    let diff = this.lastPositionDiff;
+    if (this._targetPosPredictTimer !== 0) {
+      divisor = this._targetPosPredictTimer;
+      const old = this.oldLastKnownTargetPos ?? assumed;
+      diff = [assumed[0] - old[0], assumed[1] - old[1], assumed[2] - old[2]];
+      this.lastPositionDiff = diff;
+    }
+    // The quadratic is solved centre-to-centre, as DFU's transform
+    // positions are; `assumed` is feet-space like every other position
+    // on this class, so it lifts by half the TARGET's capsule.
+    const c = this._centre();
+    const lift = this._targetCentreOffset();   // REVIEW 2026-09-05: the target's transform, not its capsule half
+    const d = [assumed[0] - c[0], assumed[1] + lift - c[1], assumed[2] - c[2]];
+    const v = [diff[0] / divisor, diff[1] / divisor, diff[2] / divisor];
+    const a = (v[0] * v[0] + v[1] * v[1] + v[2] * v[2]) - interceptSpeed * interceptSpeed;
+    const b = 2 * (d[0] * v[0] + d[1] * v[1] + d[2] * v[2]);
+    const cc = d[0] * d[0] + d[1] * d[1] + d[2] * d[2];
+    const at = [assumed[0], assumed[1] + lift, assumed[2]];
+    let prediction = [at[0], at[1], at[2]];
+    let t = -1;
+    if (Math.abs(a) >= 1e-5) {
+      const disc = b * b - 4 * a * cc;
+      if (disc >= 0) {
+        // "find the minimal positive solution" (:586-591).
+        const discSqrt = Math.sqrt(disc) * Math.sign(a);
+        t = (-b - discSqrt) / (2 * a);
+        if (t < 0) t = (-b + discSqrt) / (2 * a);
+      }
+    } else if (Math.abs(b) >= 1e-5) {
+      t = -cc / b;   // the degenerate case (:597-598)
+    }
+    if (t >= 0) {
+      prediction = [at[0] + v[0] * t, at[1] + v[1] * t, at[2] + v[2] * t];
+      // :605-609 - "Don't predict target will move through obstacles".
+      let px = prediction[0] - at[0], py = prediction[1] - at[1], pz = prediction[2] - at[2];
+      const pl = Math.hypot(px, py, pz);
+      if (pl > 1e-9) {
+        px /= pl; py /= pl; pz /= pl;
+        if (Number.isFinite(this.collider.raycast(at, [px, py, pz], pl))) prediction = at;
+      }
+    }
+    // :612-613 - the no-lead prediction stored for the next pass, in
+    // this class's feet space.
+    this._predictedTargetPosWithoutLead = [assumed[0] + diff[0], assumed[1] + diff[1], assumed[2] + diff[2]];
+    return prediction;
+  }
+
+  /**
+   * EnemyMotor.HasClearPathToShootProjectile (:698-741), verbatim -
+   * the last term of CanCastRangedSpell (:788, speed 25,
+   * DaggerfallMissile.ArmLength, radius 0.45) and of CanShootBow
+   * (:753, speed 35, origin 0, radius 0.15).
+   *
+   * Two of DFU's lines have nothing to do here, for the reason this
+   * file's header already gives about the level collider: entities are
+   * not in it. So :710-716's "exclude enemy collider from CheckSphere"
+   * is free - this caster's own body is not in the probe to begin with
+   * - and :729-733's "the thing I hit IS my target, so the path is
+   * clear" can never fire, because a hit is always level geometry and
+   * therefore always :736's "Something in the way". A clear shot hits
+   * nothing at all and falls through to :740.
+   *
+   * :708's own note is kept as behaviour: there is no point-blank
+   * special case, so a caster with its nose against a wall fails the
+   * CheckSphere and favours melee or a touch spell instead.
+   */
+  hasClearPathToShootProjectile(speed, originDistance, radius) {
+    const target = this.predictNextTargetPos(speed);
+    if (target === null) return false;   // :702-703
+    const c = this._centre();
+    let dx = target[0] - c[0], dy = target[1] - c[1], dz = target[2] - c[2];
+    const dist = Math.hypot(dx, dy, dz);
+    if (dist < 1e-9) return true;   // a zero direction sweeps nothing
+    dx /= dist; dy /= dist; dz /= dist;
+    // :718-724 - "Ensure there is space to spawn the projectile."
+    const origin = [c[0] + dx * originDistance, c[1] + dy * originDistance, c[2] + dz * originDistance];
+    if (this.collider.sphereOverlaps(origin, radius)) return false;
+    // :727 - the sweep runs from the shoot origin but over the distance
+    // measured from the BODY, so it overshoots by originDistance.
+    const hit = this.collider.sphereCast(origin, radius, [dx, dy, dz], dist);
+    // TACT1: and no cover between - an archer behind a tree steps out rather than loose into the bark
+    return !Number.isFinite(hit.dist) && !(coverDistance(this.collider, origin, [dx, dy, dz], dist - originDistance, true) < dist - originDistance - 1e-3);   // AUDIT TACT B2: to the target, which a crown it stands in does not hide
+  }
+
+  /**
+   * EnemyMotor.ObstacleCheck (:1140-1201), verbatim, with the two
+   * exemptions the port's collider cannot express folded out:
+   * entities are not in the collider (canSeeTarget says so), so the
+   * "the obstacle is my combat target" arm and the DaggerfallLoot arm
+   * can never fire - they are documented here rather than written as
+   * dead branches. The DaggerfallActionDoor arm CAN fire: doors are
+   * their own collider buckets, keyed by the action object, which is
+   * the same key EnemySenses already reads for OpenDoors.
+   */
+  _obstacleCheck(dir) {
+    this.obstacleDetected = false;
+    this.foundUpwardSlope = false;
+    this.foundDoor = false;
+    const c = this._centre();
+    const p1 = [c[0], c[1] - this.height * OBSTACLE_P1_BELOW_CENTRE, c[2]];
+    const p2 = [p1[0], p1[1] + Math.min(this.height, DOOR_CROUCHING_HEIGHT) / 2, p1[2]];
+    const hit = this.collider.capsuleCast(p1, p2, OBSTACLE_CAST_RADIUS, dir, OBSTACLE_CHECK_DISTANCE);
+    if (!Number.isFinite(hit.dist)) return;
+    this.obstacleDetected = true;
+    if (this.isActionDoor(hit.key)) {
+      this.obstacleDetected = false;
+      this.foundDoor = true;
+      // :1170-1175 - the door is only RECORDED as senses.LastKnownDoor
+      // when it is within 22.5 degrees of the way the foe is facing.
+      // Wave 34 dropped that gate, and FindDetour probes 45, 90, 135
+      // degrees off: a foe working its way round an obstacle would
+      // record - and the host would then open - a door up to 180
+      // degrees behind it. (Found by the wave-35 re-read.)
+      if (withinYaw(this.yaw, dir[0], dir[2], STOP_YAW_GATE_DEG)) this.doorKey = hit.key;
+      return;
+    }
+    if (this.swims || this.flies || this.levitating) return;
+    // The climbable upward slope: re-cast a TALLER capsule at a point
+    // one unit ahead and one unit up. Clear = walk into it.
+    const up = [c[0] + dir[0], c[1] + dir[1] + 1, c[2] + dir[2]];
+    let ux = up[0] - c[0], uy = up[1] - c[1], uz = up[2] - c[2];
+    const ul = Math.hypot(ux, uy, uz) || 1;
+    ux /= ul; uy /= ul; uz /= ul;
+    const q1 = [c[0], c[1] - this.height * OBSTACLE_SLOPE_P1_BELOW_CENTRE, c[2]];
+    const q2 = [q1[0], q1[1] + this.height * OBSTACLE_SLOPE_P2_ABOVE_P1, q1[2]];
+    if (!Number.isFinite(this.collider.capsuleCast(q1, q2, OBSTACLE_CAST_RADIUS, [ux, uy, uz], OBSTACLE_CHECK_DISTANCE).dist)) {
+      this.obstacleDetected = false;
+      this.foundUpwardSlope = true;
+    }
+  }
+
+  /** EnemyMotor.FallCheck (:1204-1219), verbatim - including the early
+   *  return, which is why ObstacleCheck must run FIRST: an obstacle, a
+   *  slope or a door all cancel the fall test outright. */
+  _fallCheck(dir) {
+    if (this.flies || this.levitating || this.swims
+      || this.obstacleDetected || this.foundUpwardSlope || this.foundDoor) {
+      this.fallDetected = false;
+      return;
+    }
+    const c = this._centre();
+    const origin = [c[0] + dir[0] * FALL_CHECK_AHEAD, c[1] + dir[1] * FALL_CHECK_AHEAD, c[2] + dir[2] * FALL_CHECK_AHEAD];
+    const reach = this.height * 0.5 + FALL_CHECK_DROP;
+    // THE ANALYTIC FLOOR IS GROUND TOO (Mac's playtest: guards ran in
+    // place and never chased). The exterior collider holds only the
+    // location MODELS as triangles - terrain and the town surface are
+    // the collider's heightAt floor, which move() walks but this ray
+    // could not see. So on any open ground the probe found no floor
+    // ahead, fallDetected latched EVERY step, and every guard and
+    // encounter foe stood running against a phantom cliff (the detour
+    // sweep fall-detects the same way in all eight directions). In
+    // DFU the same Physics.Raycast hits the terrain collider. A
+    // heightAt at/above the origin still counts as ground - there is
+    // floor there, not a drop.
+    const tri = this.collider.raycast(origin, [0, -1, 0], reach);
+    const analyticDrop = origin[1] - (this.collider.heightAt?.(origin[0], origin[2]) ?? -Infinity);
+    this.fallDetected = !(Number.isFinite(tri) || analyticDrop <= reach);
+  }
+
+  /** Rotate a direction about world up by `deg` - Quaternion.AngleAxis
+   *  on Vector3.up. Unity is LEFT-handed with +y up, so a positive
+   *  angle turns x toward -z... which in this port's yaw convention
+   *  (x = sin, z = cos) is the same clockwise-from-above sense. */
+  static _rotY(dir, deg) {
+    const r = (deg * Math.PI) / 180;
+    const cs = Math.cos(r), sn = Math.sin(r);
+    return [dir[0] * cs + dir[2] * sn, dir[1], -dir[0] * sn + dir[2] * cs];
+  }
+
+  /**
+   * EnemyMotor.FindDetour (:1002-1138), verbatim. The order matters and
+   * every part of it is load-bearing:
+   *   1. flyers and swimmers try a +/-0.3 vertical dodge FIRST, one way
+   *      then the other, and skip the whole horizontal sweep if it works;
+   *   2. two seconds clear of obstacles resets the committed hand;
+   *   3. otherwise, once per five seconds, choose a hand - 45 degrees
+   *      one way (picked at random), then the other, and if both are
+   *      blocked, by the signed angle from the direction-to-destination;
+   *      a SECOND choice inside those five seconds simply flips it;
+   *   4. sweep in 45-degree steps in the committed hand until something
+   *      is clear, giving up after eight tries and using the last probe
+   *      whether it is clear or not.
+   * The destination is two units along whatever came out, and the foe
+   * is committed to walking at it for 0.75s (which UpdateTimers cuts
+   * short on arrival).
+   */
+  _findDetour(dir2d, rolls = this.rolls) {
+    let testMove = [0, 0, 0];
+    let foundUpDown = false;
+    if (this.flies || this.swims || this.levitating) {
+      let mult = rolls() < 0.5 ? DETOUR_VERTICAL_DODGE : -DETOUR_VERTICAL_DODGE;   // Random.Range(0, 2)
+      const tryDodge = (m) => {
+        const v = [dir2d[0], dir2d[1] + m, dir2d[2]];
+        const l = Math.hypot(v[0], v[1], v[2]) || 1;
+        return [v[0] / l, v[1] / l, v[2] / l];
+      };
+      testMove = tryDodge(mult);
+      this._obstacleCheck(testMove);
+      if (this.obstacleDetected) {
+        mult *= -1;
+        testMove = tryDodge(mult);
+        this._obstacleCheck(testMove);
+      }
+      if (!this.obstacleDetected) foundUpDown = true;
+    }
+    if (!foundUpDown && this._clock - this.lastTimeWasStuck > DETOUR_UNSTUCK_RESET) {
+      this.checkingClockwiseTimer = 0;
+      this.didClockwiseCheck = false;
+    }
+    if (!foundUpDown && this.checkingClockwiseTimer <= 0) {
+      if (!this.didClockwiseCheck) {
+        let angle = rolls() < 0.5 ? 45 : -45;   // Random.Range(0, 2)
+        testMove = EnemyAI._rotY(dir2d, angle);
+        this._obstacleCheck(testMove);
+        this._fallCheck(testMove);
+        if (!this.obstacleDetected && !this.fallDetected) {
+          this.checkingClockwise = angle === 45;
+        } else {
+          angle *= -1;
+          testMove = EnemyAI._rotY(dir2d, angle);
+          this._obstacleCheck(testMove);
+          this._fallCheck(testMove);
+          if (!this.obstacleDetected && !this.fallDetected) {
+            this.checkingClockwise = angle === 45;
+          } else {
+            // Both blocked: pick the hand by the signed angle from the
+            // direction to the destination round to the way we are
+            // facing (Vector3.SignedAngle(toTarget, direction2d, up)).
+            const t = this.destination;
+            const c = this._centre();
+            const tx = t[0] - c[0], tz = t[2] - c[2];
+            const tl = Math.hypot(tx, tz) || 1;
+            const signed = (Math.atan2(dir2d[0], dir2d[2]) - Math.atan2(tx / tl, tz / tl)) * (180 / Math.PI);
+            const norm = ((signed + 180) % 360 + 360) % 360 - 180;
+            this.checkingClockwise = norm > 0;
+          }
+        }
+        this.checkingClockwiseTimer = DETOUR_CLOCKWISE_TIMER;
+        this.didClockwiseCheck = true;
+      } else {
+        this.didClockwiseCheck = false;
+        this.checkingClockwise = !this.checkingClockwise;
+        this.checkingClockwiseTimer = DETOUR_CLOCKWISE_TIMER;
+      }
+    }
+    if (!foundUpDown) {
+      let angle = 0;
+      let count = 0;
+      do {
+        angle += this.checkingClockwise ? DETOUR_SWEEP_STEP_DEG : -DETOUR_SWEEP_STEP_DEG;
+        testMove = EnemyAI._rotY(dir2d, angle);
+        this._obstacleCheck(testMove);
+        this._fallCheck(testMove);
+        count++;
+        if (count > DETOUR_SWEEP_MAX_TRIES) break;
+      } while (this.obstacleDetected || this.fallDetected);
+    }
+    // REVIEW 2026-09-05: `transform.position + testMove * reach`, kept
+    // in FEET-space like every other destination on this class (the
+    // motion direction subtracts feet, DFU's subtracts the transform -
+    // the same difference only if the centre offset cancels).
+    this.detourDestination = [
+      this.feet[0] + testMove[0] * DETOUR_REACH,
+      this.feet[1] + testMove[1] * DETOUR_REACH,
+      this.feet[2] + testMove[2] * DETOUR_REACH,
+    ];
+    if (this.avoidObstaclesTimer <= 0) this.avoidObstaclesTimer = DETOUR_TIMER;
+    this.lastTimeWasStuck = this._clock;
+  }
+
+  /** EnemyMotor.UpdateTimers (:389-410), the detour half: the timer
+   *  decays, and is CUT SHORT the moment the foe is within 0.3 of the
+   *  detour destination measured in the horizontal plane only. */
+  _updateDetourTimers(dt, canAct) {
+    if (this.avoidObstaclesTimer > 0) this.avoidObstaclesTimer -= dt;
+    if (this.avoidObstaclesTimer > 0 && canAct) {
+      const c = this._centre();
+      const dx = this.detourDestination[0] - c[0];
+      const dz = this.detourDestination[2] - c[2];
+      if (Math.hypot(dx, dz) <= DETOUR_ARRIVAL) this.avoidObstaclesTimer = 0;
+    }
+    if (this.checkingClockwiseTimer > 0) this.checkingClockwiseTimer -= dt;
+  }
+
+  /**
+   * EnemyMotor.ClearPathToPosition (:667-693), verbatim: "true if clear
+   * or if the combat target is the first obstacle hit".
+   *
+   * It is ObstacleCheck + FallCheck on the FLATTENED direction, then a
+   * sphere cast of half the controller radius along the UNFLATTENED one.
+   * The port's collider holds no entities, so DFU's "the first thing hit
+   * is my target" arm can never be taken - a sphere cast that hits
+   * anything at all here is level geometry, and the answer is false.
+   * Note both probes WRITE the detour flags, exactly as DFU's do; the
+   * caller re-probes before it moves.
+   *
+   * `location` is in DFU's `transform.position` space - a CONTROLLER
+   * CENTRE, not feet. The caller converts. Passing feet tilts the cast
+   * downward by half a body over its whole length and it hits the floor
+   * a few metres out, which is how this was found.
+   */
+  _clearPathToPosition(location, dist = CLEAR_PATH_DEFAULT_DIST) {
+    const c = this._centre();
+    let dx = location[0] - c[0], dy = location[1] - c[1], dz = location[2] - c[2];
+    const l = Math.hypot(dx, dy, dz) || 1;
+    dx /= l; dy /= l; dz /= l;
+    const flat = [dx, 0, dz];
+    const fl = Math.hypot(flat[0], flat[2]);
+    if (fl > 1e-9) { flat[0] /= fl; flat[2] /= fl; }
+    this._obstacleCheck(flat);
+    this._fallCheck(flat);
+    if (this.obstacleDetected || this.fallDetected) return false;
+    const hit = this.collider.capsuleCast(c, c, OBSTACLE_CAST_RADIUS, [dx, dy, dz], dist);
+    return !Number.isFinite(hit.dist);
+  }
+
+  /**
+   * EnemyMotor.GetDestination (:528-565), all three arms.
+   *
+   * AUDIT 24 (wave 35). Wave 34 ported the detour override alone, and
+   * left the port beelining at the player's LIVE position through walls:
+   * no path gate, no memory of where the target was last seen, and no
+   * search. The middle arm is the one that makes a foe give up on a
+   * player it cannot reach; the last is the one that sends it to the
+   * doorway you went through instead of into the wall beside it.
+   */
+  /** `senses.Target.GetComponent<CharacterController>().height`
+   *  (EnemyMotor.cs:532) - the TARGET's own capsule, which
+   *  GetDestination measures twice against. Unarmed (and against the
+   *  player) it is the one capsule constant the port has always used;
+   *  armed, a rat and a giant are not the same height and the source
+   *  says so in as many words. */
+  _targetHeight() {
+    const t = this._armedTargeting ? this._targetCandidate : null;
+    // AUDIT 62 F23: the PLAYER arm is the live capsule, not 1.8 - DFU
+    // reads the controller component itself, and a crouched player's is
+    // 0.9 (a mounted one's 2.6).
+    return (t && !t.isPlayer && t.ai?.height) || (t?.isPeer && t.height) || this._playerHeight;   // WORLD3: a peer's own capsule
+  }
+
+  /** REVIEW 2026-09-05 (PR #57 review): where the TARGET's transform sits
+   *  above its feet. The player's controller has no centre offset
+   *  (CAPSULE_HEIGHT/2); a foe target carries its own centreOffset (its
+   *  idle sprite's half, SetupDemoEnemy.cs:62-71 BOTTOM-justifies the
+   *  capsule by moving controller.center, never the transform). Every
+   *  place DFU reads senses.PredictedTargetPos / LastKnownTargetPos /
+   *  target.transform.position reconstructs the target's transform from
+   *  the feet the port stores with THIS, and only the face bump and the
+   *  grounded delta read the target's capsule (_targetHeight). */
+  _targetCentreOffset() {
+    const t = this._armedTargeting ? this._targetCandidate : null;
+    // AUDIT 62 F23: the player's transform tracks feet + liveHeight/2
+    // (PlayerHeightChanger.cs:477-478 moves it by heightChange/2 while
+    // the capsule bottom stays planted), so a crouched player's sits at
+    // feet + 0.45.
+    if (!t || t.isPlayer || !t.ai) return ((t?.isPeer && t.height) || this._playerHeight) / 2;   // WORLD3: a peer's own capsule
+    return t.ai.centreOffset ?? (t.ai.height ?? CAPSULE_HEIGHT) / 2;
+  }
+
+  /**
+   * GetDestination's VERTICAL for the clear-path/shooter arm
+   * (EnemyMotor.cs:541-544 + :559-564), from the target's PREDICTED FEET
+   * y to the feet-space y the motor steers at, in one place.
+   *
+   * AUDIT 62 F1: a subclass whose route ends at the same point this arm
+   * heads for must carry the same three terms - the target's transform
+   * lift, the flyer/levitator/slaughterfish face bump, and the grounded
+   * foe's own-height delta - and the one conversion back to feet. The
+   * one in the tree took the raw predicted feet instead, which is only
+   * the same number when a foe's capsule equals its idle sprite: a bat
+   * aimed 0.9 low, a rat 0.3. One method both callers share is the fix,
+   * so the two cannot drift apart again.
+   */
+  _aimY(predictedFeetY) {
+    const tHeight = this._targetHeight();
+    // senses.PredictedTargetPos is the target's TRANSFORM (:541); the
+    // port stores feet, so the target's own centre offset lifts it.
+    let y = predictedFeetY + this._targetCentreOffset();
+    // Flyers, levitators and the slaughterfish aim for the target FACE
+    // (:543-544) - `targetController.height * 0.5f` on top of the
+    // target's centre. The predicate is DFU's own `flies ||
+    // IsLevitating || (swims && Slaughterfish)` and is read LIVE -
+    // `levitating` changes with the effect. A plain swimmer takes the
+    // centre as it is (DFU's no-add case).
+    if (this.flies || this.levitating || this.isFaceAimingSwimmer) y += tHeight / 2;
+    // :559-564 - a GROUNDED foe aims at its own height, "otherwise short
+    // enemies' vector can aim up towards the target, which could
+    // interfere with distance-to-target calculations". The delta is
+    // `(targetController.height - originalHeight) / 2`: the TARGET's
+    // capsule against this foe's own (MT-ii: a rat hunting a giant).
+    if (this.avoidObstaclesTimer <= 0 && !this.flies && !this.levitating && !this.swims) y -= (tHeight - this.height) / 2;
+    return y - this.centreOffset;   // transform-space -> feet-space, once
+  }
+
+  _getDestination(playerFeet) {
+    const c = this._centre();
+    const tHeight = this._targetHeight();
+    if (this.avoidObstaclesTimer > 0) {
+      this.destination = this.detourDestination;
+      return;
+    }
+    // The `dist` argument is the distance to the PREVIOUS destination -
+    // GetDestination passes `(destination - transform.position).magnitude`
+    // rather than the default 30, so the gate reaches exactly as far as
+    // the foe was already heading. Kept.
+    const prev = this.destination ?? playerFeet;
+    // DFU measures centre-to-centre; both sides of the port's subtraction
+    // are feet-space, which is the same difference.
+    const prevDist = Math.hypot(prev[0] - this.feet[0], prev[1] - this.feet[1], prev[2] - this.feet[2]);
+    const predicted = this.predictedTargetPos ?? playerFeet;
+    // REVIEW 2026-09-05 (PR #55 review): GetDestination works in
+    // TRANSFORM-space end to end - the target's transform is its capsule
+    // centre (feet + tHeight/2, the player's controller has no centre
+    // offset) and this foe's transform sits centreOffset (idleH/2) above
+    // its feet. The port keeps FEET, so the destination is built in
+    // DFU's space below and converted ONCE at the end: destination -
+    // feet then equals DFU's destination - transform for every consumer
+    // that subtracts feet (_dir3, the stop distance, prevDist). Before
+    // this, the face-aim added the whole target height to FEET, so a
+    // bat pursued with its feet at the player's head - its sprite half
+    // a sprite above DFU's - which is the ceiling incident's second
+    // half, and the grounded arm's (tHeight - height)/2 was applied to
+    // a feet-space point (zero while every foe wore 1.8, wrong the day
+    // a rat's 1.6 or a giant's 2.6 arrived).
+    const tOff = this._targetCentreOffset();     // the target's TRANSFORM above its feet (0.9 for the player; a foe's idleH/2)
+    const predictedCentre = [predicted[0], predicted[1] + tOff, predicted[2]];
+    // ...or the foe is a shooter with the target in sight, in which case
+    // it heads for the target whether the path is clear or not (:539-540
+    // - `senses.TargetInSight && (hasBowAttack || entity.CurrentMagicka > 0)`).
+    if (this._clearPathToPosition(predictedCentre, prevDist)
+      || (this.inSight && (this.hasBowAttack || this.hasMagickaToCast()))) {
+      this.searchMult = 0;
+      // senses.PredictedTargetPos, with this arm's whole vertical -
+      // the transform lift, the face bump and the grounded delta - in
+      // _aimY, the one place a subclass can share it from.
+      this.destination = [predicted[0], this._aimY(predicted[1]), predicted[2]];
+      return;
+    }
+    // The SEARCH (:549-557): walk past the last known position along
+    // the direction the target was last moving, further each pass, and
+    // only while the search position is still inside the stop distance.
+    // LastKnownTargetPos is the target's transform (its centre).
+    const diff = this.lastPositionDiff;
+    const dl = Math.hypot(diff[0], diff[1], diff[2]);
+    const n = dl > 1e-9 ? [diff[0] / dl, diff[1] / dl, diff[2] / dl] : [0, 0, 0];
+    const base = this.lastKnownTargetPos ?? playerFeet;
+    const dest = [
+      base[0] + n[0] * this.searchMult,
+      base[1] + tOff + n[1] * this.searchMult,
+      base[2] + n[2] * this.searchMult,
+    ];
+    const sd = Math.hypot(dest[0] - c[0], dest[1] - c[1], dest[2] - c[2]);   // (searchPosition - transform.position).magnitude
+    if (this.searchMult <= SEARCH_MULT_MAX && sd <= this.stopDistance) this.searchMult++;
+    // :559-564 - a GROUNDED foe aims at its own height, "otherwise short
+    // enemies' vector can aim up towards the target, which could
+    // interfere with distance-to-target calculations". The delta is
+    // `(targetController.height - originalHeight) / 2`: the TARGET's
+    // capsule against this foe's own (MT-ii: a rat hunting a giant).
+    // The same clause _aimY carries for the arm above.
+    if (this.avoidObstaclesTimer <= 0 && !this.flies && !this.levitating && !this.swims) dest[1] -= (tHeight - this.height) / 2;
+    this.destination = [dest[0], dest[1] - this.centreOffset, dest[2]];   // transform-space -> feet-space, once
+  }
+
+  /**
+   * EnemyMotor.DoRangedAttack (:568-614), the CLASSIC path - and the
+   * `return true` at the end of it, which is the whole point.
+   *
+   * AUDIT 24 (wave 35): unported, so an archer or a ranged caster walked
+   * all the way to melee range and shot you in the face. TakeAction calls
+   * this BEFORE the advance/retreat decision (:468-470) and returns on
+   * true, so a shooter inside the 6..51.2 band with the target in sight
+   * does not pursue AT ALL: it turns to face and rolls its shot.
+   *
+   * The ROLL is not here. DFU rolls 1/32 for a bow and 1/40 for a spell
+   * inside this method; the port's attack and cast components own those
+   * (enemyAttack's BOW_SHOT_CHANCE, enemyCasting's decision), and putting
+   * a second roll here would draw off the shared stream twice. What the
+   * motor owes is the stand-off and the turn.
+   */
+  _doRangedAttack(dx, dz) {
+    const inRange = this._dist > MIN_RANGED_DISTANCE && this._dist < MAX_RANGED_DISTANCE;
+    if (!(inRange && this.inSight && this.detected && (this.hasBowAttack || this.canCastRangedSpell()))) return false;
+    // Within 22.5 degrees of the destination it shoots (the components'
+    // job); outside it, TurnToTarget. Either way it does not advance.
+    if (!withinYaw(this.yaw, dx, dz, STOP_YAW_GATE_DEG)) this.yaw = turnTowards(this.yaw, dx, dz);
+    this.moving = false;
+    return true;
+  }
+
+  /** HandleNoAction (:357-366), the UNCONDITIONAL half - no target,
+   *  the give-up timer spent, or a position never seen, and the search
+   *  ramp resets on EVERY arm. DFU also drops CanAct here; the port's
+   *  _classicTick keeps its own early returns for that half.
+   *
+   *  AUDIT 39r (R14): the first arm is DFU's `senses.Target == null`
+   *  (:359), which carries no hostility term. `!isHostile` is the
+   *  pacified player-drop half of it - but MT-iii established that a
+   *  FOE target survives that drop, so the caller passes the same
+   *  foeTarget the canAct/moving sites take, or a pacified foe that
+   *  acts and pursues gets its search ramp zeroed underneath it on
+   *  every step and searches at multiplier 0 forever. */
+  _handleNoAction(foeTarget = false) {
+    if ((!this.isHostile && !foeTarget) || this.giveUpTimer <= 0 || this.predictedTargetPos === null) {
+      this.searchMult = 0;
+    }
+  }
+
+  _classicTick(playerFeet, paused = false) {
+    // AUDIT 26 F010/F014: the GiveUpTimer refill/decrement used to live
+    // HERE, inside the CanAct-gated decision - fused, exactly what the
+    // finding names. It is UpdateTimers work and runs unconditionally
+    // now (_step), so a knocked-back or paralyzed foe still runs down
+    // its 12.5s blind-pursuit window. What remains here is TakeAction's
+    // own guard: by this point a detected foe has been refilled to 200,
+    // so `giveUpTimer <= 0` alone is DFU's HandleNoAction arm (:363 -
+    // no `!detected` term; the refill has already run).
+    if (this.giveUpTimer <= 0) { this.moving = false; return; }
+    // HandleNoAction's third arm (:357-366): a position never seen
+    // takes no action. The searchMult reset is hoisted with the rest
+    // of HandleNoAction (AUDIT 26 F012) - it fires on ALL THREE arms
+    // in _step, not just this one.
+    if (this.predictedTargetPos === null) { this.moving = false; return; }
+    // MT-iii (AUDIT 39) - TakeAction:443-449, the FIRST thing the
+    // classic path does, ahead of GetDestination because the search
+    // ramp reads it too (:552):
+    //   if (senses.Target == PlayerEntityBehaviour) stopDistance = MeleeDistance;
+    //   else stopDistance = ClassicMeleeDistanceVsAI;
+    // "Classic AI moves only as close as melee range. It uses a
+    // different range for the player and for other AI." The port held
+    // the 2.25 literal at both sites, so two infighting foes each
+    // halted 0.75 outside the 1.5 swing gate enemyAttack.js:"on the permissive"
+    // already honours - a stand-off that never resolved.
+    this.stopDistance = (this._armedTargeting && this.target && !this.target.isPlayer)
+      ? CLASSIC_MELEE_DISTANCE_VS_AI : MELEE_DISTANCE;
+    // GetDestination (:528-565), all three arms since wave 35.
+    const detouring = this.avoidObstaclesTimer > 0;
+    this._getDestination(playerFeet);
+    // ROAD-U - TakeAction's own return, at DFU's own place in it:
+    // "Do not change action if currently playing oneshot wants to stop
+    // actions" (:464-466), AFTER GetDestination (so the destination
+    // still resolves, side effects and all) and BEFORE the whole
+    // action ladder - DoRangedAttack, DoTouchSpell,
+    // EvaluateMoveInForAttack and every AttemptMove below it.
+    if (paused) { this.moving = false; return; }
+    const dx = this.destination[0] - this.feet[0], dz = this.destination[2] - this.feet[2];
+    // TACT2 (ai/tactics.js, the Enhanced AI switch on): the tokens, the ring, the beat after a blow, backing off,
+    // a coward's run, an archer's kiting - a foe in sight of its target, not detouring. Off, it answers false and
+    // touches nothing.
+    const _took = tacticsStep(this, dx, dz);
+    if (_took && (!detouring || this.fleeLeft > 0 || this._tac?.state === 'windup' || this._tac?.state === 'dash')) return;   // AUDIT TACT A6: a committed wind-up and a coward's run are never the detour's; TELL6: nor a charge's run
+    this._tacDir = null;
+    // Ranged attacks (:468-470) - the FIRST branch of TakeAction's
+    // action ladder, AHEAD of the detour (AUDIT 26 F011: the port took
+    // the detour first, so for up to 0.75s after an obstacle probe an
+    // archer walked its detour instead of standing off - it shot on
+    // the move; DFU's shooter in band with the target in sight stands
+    // off and shoots while avoidObstaclesTimer merely decays).
+    // DoRangedAttack reads senses.DistanceToTarget itself (:571-572),
+    // so the detour state does not change what it measures.
+    if (this._doRangedAttack(dx, dz)) return;
+    // "If detouring, always attempt to move" (:481-484) - ahead of the
+    // stop-distance test, which is why a detouring foe walks past its
+    // own melee range to get round.
+    if (detouring) {
+      if (!withinYaw(this.yaw, dx, dz, MOVE_YAW_GATE_DEG)) {
+        this.yaw = turnTowards(this.yaw, dx, dz);
+        this.moving = false;   // classic turns in place
+        return;
+      }
+      this.moving = true;
+      return;
+    }
+    // :479-482 - THE DISTANCE THE STOP TEST USES. It is the distance to
+    // the TARGET only while the target is in sight and no detour is
+    // running; otherwise it is the distance to the DESTINATION, which
+    // during a search is the last known position rather than wherever
+    // the player has since walked to. Wave 34 and the first cut of
+    // wave 35 both measured to the player unconditionally, so a foe
+    // searching a room it had lost you in would stop the moment YOU
+    // came within 2.25 of it - through the wall it could not see
+    // through. (Found by the wave-35 re-read.)
+    const distance = (this.avoidObstaclesTimer <= 0 && this.inSight)
+      ? this._dist
+      : Math.hypot(dx, this.destination[1] - this.feet[1], dz);
+    // classic stop: the stopDistance set above; always moves in for
+    // attack. CH4: the STOPPED turn rides the 22.5 "just look at
+    // target" gate (EnemyMotor.cs:514), NOT AttemptMove's 5.625 -
+    // a melee foe stands up to 22.5deg off-face.
+    if (distance <= this.stopDistance) {
+      this.moving = false;
+      if (!withinYaw(this.yaw, dx, dz, STOP_YAW_GATE_DEG)) this.yaw = turnTowards(this.yaw, dx, dz);
+      return;
+    }
+    if (!withinYaw(this.yaw, dx, dz, MOVE_YAW_GATE_DEG)) {
+      this.yaw = turnTowards(this.yaw, dx, dz);
+      this.moving = false;   // classic turns in place
+      return;
+    }
+    this.moving = true;
+  }
+
+  /** P17: the P16 fixed-timestep law, foe-side. DFU's EnemyMotor is a
+   *  FixedUpdate body - raw render-dt integration is exactly the
+   *  phone-framerate failure P16 root-caused for the player (gravity
+   *  error and capsule steps scaling with dt). The render loop hands
+   *  us frame dt; we accumulate and step the WHOLE body (senses
+   *  cadence + physics) at FIXED_DT, with the MAX_FRAME_DT jank
+   *  clamp. The classic-update timer drains identically (it only ever
+   *  sees 1/60 chunks now - deterministic at every frame rate).
+   *  C12: `paralyzed` mirrors DFU's CanAct=false + flyerFalls -
+   *  senses keep running, decisions and pursuit stop, grounded foes
+   *  and FLYERS fall ("intentional side-effect: paralyzed flying
+   *  enemies fall out of the air"), swimmers freeze in place. */
+  /** ROAD-U: `paused` is the host's
+   *  `mobile.IsPlayingOneShot() && mobile.OneShotPauseActionsWhilePlaying()`
+   *  (MobileUnit.cs:174-184 - the two Seducer transform states alone,
+   *  "Seducer should not move and attack while transforming"). DFU
+   *  spends it in TWO places this motor owns: TakeAction returns at
+   *  :464-466, before DoRangedAttack, DoTouchSpell,
+   *  EvaluateMoveInForAttack and every AttemptMove; and
+   *  KnockbackMovement returns at :267-269, before the shove, the
+   *  Hurt state, the decay and the CanAct/flyerFalls writes ("Prevent
+   *  stunlocking transforming Seducers"). Neither was reachable from
+   *  here - the whole predicate was spent on the mobile's own anim
+   *  intent - so a transforming Seducer FLEW ten metres at the player
+   *  (transform1 sets Behaviour = Flying) and could be shoved out of
+   *  its own transformation. */
+  update(dt, playerFeet, senses = null, paralyzed = false, paused = false) {
+    // WAGONS1: a companion riding in the back of the player's wagon (scenes/crewAshore.js `seat`) takes no step - its
+    // feet are the seat's, wherever the wagon carries it, and it neither falls, walks nor fights until it gets down
+    const seat = this.seat?.();
+    if (seat) {
+      this.feet[0] = seat.feet[0]; this.feet[1] = seat.feet[1]; this.feet[2] = seat.feet[2];
+      this.yaw = seat.yaw; this.velY = 0; this.moving = false; this.isGrounded = true; this._acc = 0;
+      return;
+    }
+    this._acc = (this._acc ?? 0) + Math.min(dt, MAX_FRAME_DT);
+    while (this._acc >= FIXED_DT) {
+      this._acc -= FIXED_DT;
+      this._step(FIXED_DT, playerFeet, senses, paralyzed, paused);
+      this._heightAdjust(FIXED_DT);   // DOOR-JAM: FixedUpdate's last call (EnemyMotor.cs:176), after every Move of the step
+    }
+  }
+
+  /**
+   * EnemyMotor.HeightAdjust (:1448-1479), verbatim - DOOR-JAM (FIELD BUGS 2026-10-14b). "If enemy bumps into something,
+   * temporarily reduce their height to 1.65, which should be short enough to fit through most if not all doorways."
+   * A foe whose last Move met something on its sides (`collidedSides`, collider.js move's `sides`) and whose own height
+   * is over DOOR_CROUCHING_HEIGHT sweeps at that height for HEIGHT_CHANGE_SECONDS, then stands back up. The capsule is
+   * BOTTOM-justified in the port (feet + height), so DFU's centre shift that keeps the sprite out of the ground
+   * (`centerChange`, :1455-1458 and :1467-1469) is the feet staying where they are. Its absence left every foe taller
+   * than a doorway's lintel walking into it for good: the obstacle probe stops under DOOR_CROUCHING_HEIGHT by design
+   * (_obstacleCheck's p2 - "how low enemies dive to pass thru doors"), so it saw nothing and bought no detour, and the
+   * capsule's head met the lintel every step - and since the port's foes push apart softly (characters/foeSpacing.js)
+   * every one that followed it stood in the same doorway beside it.
+   */
+  _heightAdjust(dt) {
+    if (!this._resetHeight && this.collidedSides && this.height > DOOR_CROUCHING_HEIGHT) {
+      this.controllerHeight = DOOR_CROUCHING_HEIGHT;
+      this._resetHeight = true;
+      this._heightChangeTimer = HEIGHT_CHANGE_SECONDS;
+    } else if (this._resetHeight && this._heightChangeTimer <= 0) {
+      this.controllerHeight = this.height;
+      this._resetHeight = false;
+    }
+    if (this._resetHeight && this._heightChangeTimer > 0) this._heightChangeTimer -= dt;
+  }
+
+  /** C15 KnockbackMovement's motion, verbatim (the comment at its call in _step): one step of the shove along the
+   *  attack ray, the hurt-anim flag, and the decay. Shared by the pursuit step and a frightened foe's run
+   *  (_fleeStep), which a blow shoves exactly as it shoves any foe. */
+  _knockbackStep(dt, classicTicks) {
+    if (this.knockbackSpeed > KB(KNOCKBACK_STORE_CAP)) this.knockbackSpeed = KB(KNOCKBACK_STORE_CAP);
+    this.hurtKnock = this.knockbackSpeed > KB(KNOCKBACK_HURT_THRESHOLD);
+    const sp = Math.min(this.knockbackSpeed, KB(KNOCKBACK_MOTION_CAP));
+    const d = this.knockbackDir ?? [0, 0, 0];
+    const mx = d[0] * sp * dt, myRaw = d[1] * sp * dt, mz = d[2] * sp * dt;
+    if (this.swims) {
+      const waterY = this.waterSurfaceY ? this.waterSurfaceY(this.feet[0], this.feet[2]) : null;
+      const center = this.feet[1] + this.centreOffset;   // EnemyMotor.cs:1333 controller.transform.position.y
+      if (waterY !== null && center < waterY) {
+        let my = myRaw;
+        if (my > 0 && center + WATER_HEAD_MARGIN >= waterY) my = 0;
+        const moveResult = this.collider.move(this.feet, mx, my, mz, this.controllerHeight, true, FOE_KEEPS_FLOOR);
+        this.isGrounded = moveResult.grounded;
+        this.collidedSides = !!moveResult.sides;   // DOOR-JAM: the Move's CollidedSides, for HeightAdjust
+      }
+    } else if (this.flies || this.levitating) {
+      // :293-298 - `else if (flies || IsLevitating) controller.Move(...)`,
+      // the full 3D ray. A LEVITATOR takes no gravity with it:
+      // KnockbackMovement raises flyerFalls, but ApplyGravity's
+      // flyer arm is `flyerFalls && flies && !IsLevitating`
+      // (:347) and its walker arm is `!flies && !swims &&
+      // !IsLevitating` (:335) - both refuse a levitating foe, so a
+      // knocked-back levitator sails and does not drop.
+      if (this.flies && !this.levitating) this.velY -= GRAVITY * dt;   // flyerFalls: a hit knocks them out of the air
+      else this.velY = 0;   // no gravity arm claims a levitator: the port's accumulator must not carry one either
+      const r = this.collider.move(this.feet, mx, myRaw + this.velY * dt, mz, this.controllerHeight, true, FOE_KEEPS_FLOOR);
+      this.isGrounded = r.grounded;
+      this.collidedSides = !!r.sides;   // DOOR-JAM
+      if (r.grounded) this.velY = 0;
+      this._trackFall(r.grounded);   // CH3: a knocked-down flyer lands hard
+    } else {
+      this.velY -= GRAVITY * dt;   // SimpleMove: horizontal motion, gravity applies
+      const r = this.collider.move(this.feet, mx, this.velY * dt, mz, this.controllerHeight, true, FOE_KEEPS_FLOOR);
+      this.isGrounded = r.grounded;
+      this.collidedSides = !!r.sides;   // DOOR-JAM
+      if (r.grounded) this.velY = 0;
+      this._trackFall(r.grounded);
+    }
+    this.knockbackSpeed -= classicTicks * KB(KNOCKBACK_DECAY_PER_CLASSIC);
+    if (this.knockbackSpeed < 0) this.knockbackSpeed = 0;
+    this._restGrounded = false;
+  }
+
+  /**
+   * WERE-FRIGHT (2026-09-29, the port's own - no DFU motor ever runs FROM anything): FRIGHTENED OFF. For `seconds`
+   * the foe drops its target and runs from `fromFeet`, by the pursuit's own laws turned round: per
+   * classic tick it turns (TurnToTarget's 20 degrees) in place until it is inside the 5.625 degree move gate of the
+   * way away, and only then runs, at its own move speed, through the same capsule, obstacle and ledge probes and
+   * gravity its pursuit walks with - and what blocks it buys DFU's own detour (_findDetour), which it runs round as a
+   * pursuer does. It decides nothing and senses nothing while it runs; the pool that frightened it retires it when
+   * `fleeLeft` is spent. A blow does not end the run: it shoves the foe as it shoves any (KnockbackMovement, the hurt
+   * anim with it), and a frightened man keeps running once the shove is spent.
+   * FLIGHT-FIRST: `pace` - its run at this share of its walk (1, the walk, for every run but the revenants' flee law's:
+   * a special foe running for its life outruns a running player, systems/revenant/revenant.js REVENANT_FLEE_PACE).
+   */
+  flee(fromFeet, seconds, pace = 1) {
+    breakWindup(this);   // AUDIT TELL B1: a routed foe's wind-up goes with its fight
+    this.fleeFrom = [fromFeet[0], fromFeet[1], fromFeet[2]];
+    this.fleeLeft = seconds;
+    this.fleePace = pace > 0 ? pace : 1;
+    this._tacDir = null;   // FLIGHT-FIRST: and the brain's step (TACT2's ring, its back-step) with it - its walk read that
+    this._tacSpeed = 1;    // step before its own way (_walkStep), so a foe that broke while circling ran on round the ring
+    // AUDIT WERE-FRIGHT F3: NOT its hostility. IsHostile false is DFU's PASSIVE foe - a blow on one turns the area
+    // (MakeEnemiesHostile) and friendly protection spares one from a swing - and a routed foe is neither. The run
+    // takes its target, which is all that stops it striking.
+    this.target = null;
+    this.secondaryTarget = null;
+    this.moving = false;   // it turns first
+    this.avoidObstaclesTimer = 0;
+    this.canAct = false;   // it decides and senses nothing from here (_fleeStep keeps these down each step) - so it
+    this.inSight = false;   // raises no alert and meets no one: the encounter edge the host's tongue roll consumes
+    this.detected = false;   // (tryLanguagePacification) is spent with the rest
+    this.justEncountered = false;
+  }
+
+  /** CREW-COMPANIONS: whether a companion turns to its leader this step. He fights a foe within the leash of his
+   *  LEADER that he can pursue; otherwise he keeps to the leader. AUDIT CC-B3/B4: once drawn past the leash he is
+   *  RETURNING - every target dropped, the secondary one too (a struck companion's attacker was pinned back on the next
+   *  tick, and he froze at the leash), until he is back inside `stop + FOLLOW_SLACK`; a foe standing off past the leash
+   *  of the leader (an archer at 30 m) is never run out to; and a target he holds but cannot pursue (never seen, given
+   *  up) leaves him following, never standing idle 15 m out. */
+  _followWanted() {
+    const leader = this.follow.feet?.();
+    if (!leader) return this.target == null;
+    const leash = this.follow.leash ?? FOLLOW_LEASH;
+    const home = Math.hypot(leader[0] - this.feet[0], leader[2] - this.feet[2]);
+    if (this._returning) {
+      if (home <= (this.follow.stop ?? FOLLOW_STOP) + FOLLOW_SLACK) this._returning = false;
+      else { this._dropTargets(); return true; }
+    }
+    if (this.target == null) return true;
+    const tf = this.target.ai?.feet ?? this.target.feet ?? null;
+    if (home > leash || (tf && Math.hypot(tf[0] - leader[0], tf[2] - leader[2]) > leash)) {
+      this._returning = home > leash;
+      this._dropTargets();
+      return true;
+    }
+    return this.predictedTargetPos == null || this.giveUpTimer <= 0;
+  }
+
+  /** CREW-COMPANIONS: every target a companion holds, let go (the secondary one and the senses on it included). */
+  _dropTargets() {
+    this.target = null; this.secondaryTarget = null; this.targetSenses = null;
+    this.lastKnownTargetPos = null; this.predictedTargetPos = null;
+  }
+
+  /** CREW-COMPANIONS: one step of keeping to the leader - stand inside `stop`, walk once past `stop + FOLLOW_SLACK`
+   *  (the slack keeps a companion from stuttering at the edge), turning in place on the classic ticks as a pursuer
+   *  does. `_followGoal` is the seam the pathing motor (src/ai) routes through. */
+  _followTicks(classicTicks, dt) {
+    const leader = this.follow.feet?.();
+    if (!leader) { this.moving = false; return; }
+    const d = Math.hypot(leader[0] - this.feet[0], leader[2] - this.feet[2]);
+    const stop = this.follow.stop ?? FOLLOW_STOP;
+    if (d <= stop || (!this._followWalking && d <= stop + FOLLOW_SLACK)) {
+      this._followWalking = false; this.moving = false; this._followPace = 1;
+      this._crumb = null; this._trailMode = null; this._trailT = 0;   // COMPANION-TRAIL: at heel - the next walk looks afresh
+      return;
+    }
+    this._followWalking = true;
+    this._followPace = d > FOLLOW_RUN_M ? FOLLOW_RUN_PACE : 1;   // COMPANION-TRAIL: fallen back, it hurries
+    const goal = this._followGoal(leader, dt);
+    this.destination = [goal[0], leader[1], goal[2]];
+    const aim = this.avoidObstaclesTimer > 0 ? this.detourDestination : this.destination;
+    const dx = aim[0] - this.feet[0];
+    const dz = aim[2] - this.feet[2];
+    for (let i = 0; i < classicTicks; i++) {
+      if (!withinYaw(this.yaw, dx, dz, MOVE_YAW_GATE_DEG)) this.yaw = turnTowards(this.yaw, dx, dz);   // classic turns, on the classic ticks
+    }
+    this.moving = withinYaw(this.yaw, dx, dz, FOLLOW_YAW_GATE_DEG);   // COMPANION-TRAIL: and walks on while it turns
+  }
+
+  /** CREW-COMPANIONS: where a following companion heads. COMPANION-TRAIL: the leader while it is in clear sight, else
+   *  the newest crumb of the leader's trail in sight, else the nearest crumb, else the leader (no trail: the straight
+   *  line it always walked). The pathing motor asks the trail first and takes its baked route when it has nothing. */
+  _followGoal(leader, dt) { return this._trailGoal(leader, dt) ?? this._nearestCrumb() ?? leader; }
+
+  /** COMPANION-TRAIL: whether a body walking from here would reach `to` - a FOLLOW_SIGHT_RADIUS capsule at the obstacle
+   *  probe's height (_obstacleCheck's points) cast flat at it, stopped no sooner than FOLLOW_CRUMB_REACH short of it
+   *  (a wall behind the point is not in the way), and the point within FOLLOW_SIGHT_DY of the feet. */
+  _clearLine(to) {
+    if (!(Math.abs(to[1] - this.feet[1]) <= FOLLOW_SIGHT_DY)) return false;
+    const dx = to[0] - this.feet[0], dz = to[2] - this.feet[2], d = Math.hypot(dx, dz);
+    if (d <= FOLLOW_CRUMB_REACH) return true;
+    const c = this._centre();
+    const p1 = [c[0], c[1] - this.height * OBSTACLE_P1_BELOW_CENTRE, c[2]];
+    const p2 = [p1[0], p1[1] + Math.min(this.height, DOOR_CROUCHING_HEIGHT) / 2, p1[2]];
+    return !(this.collider.capsuleCast(p1, p2, FOLLOW_SIGHT_RADIUS, [dx / d, 0, dz / d], d).dist < d - FOLLOW_CRUMB_REACH);
+  }
+
+  /** COMPANION-TRAIL: the trail's answer, or null when it has none - no trail, or no crumb in sight and none held. The
+   *  look (the line to the leader, then the crumbs newest first) runs every FOLLOW_SIGHT_S; between looks the held
+   *  answer stands, a held crumb giving way to the next once it is reached. */
+  _trailGoal(leader, dt) {
+    const trail = this.follow?.trail?.();
+    if (!trail?.length) { this._trailMode = null; this._crumb = null; return null; }
+    let i = this._crumb ? trail.indexOf(this._crumb) : -1;
+    if (this._trailMode === 'crumb' && i < 0) { this._trailMode = null; this._crumb = null; this._trailT = 0; }   // it left the trail (old, or the trail began again)
+    this._trailT -= dt;
+    if (this._trailT > 0) return this._trailMode === 'leader' ? leader : this._trailMode === 'crumb' ? this._crumbFrom(trail, i, leader) : null;
+    this._trailT = FOLLOW_SIGHT_S;
+    if (this._clearLine(leader)) { this._trailMode = 'leader'; this._crumb = null; return leader; }
+    const stride = Math.max(1, Math.ceil((trail.length - 1 - Math.max(i, 0)) / FOLLOW_SIGHT_TRIES));
+    for (let j = trail.length - 1, n = 0; j > i && n < FOLLOW_SIGHT_TRIES; j -= stride, n++) {
+      const p = trail[j];
+      if (Math.hypot(p[0] - this.feet[0], p[2] - this.feet[2]) > FOLLOW_CRUMB_FAR) continue;
+      if (this._clearLine(p)) { this._trailMode = 'crumb'; this._crumb = p; return this._crumbFrom(trail, j, leader); }
+    }
+    if (i >= 0) return this._crumbFrom(trail, i, leader);
+    this._trailMode = null; this._crumb = null;
+    return null;
+  }
+
+  /** COMPANION-TRAIL: the crumb at `i`, or the first after it not yet reached; past the newest, the leader. */
+  _crumbFrom(trail, i, leader) {
+    while (i < trail.length && Math.hypot(trail[i][0] - this.feet[0], trail[i][2] - this.feet[2]) <= FOLLOW_CRUMB_REACH) i++;
+    if (i >= trail.length) { this._trailMode = 'leader'; this._crumb = null; return leader; }
+    this._trailMode = 'crumb'; this._crumb = trail[i];
+    return this._crumb;
+  }
+
+  /** COMPANION-TRAIL: lost - no line to the leader nor to any crumb looked at - the nearest crumb inside
+   *  FOLLOW_CRUMB_FAR, held as the crumb to walk from (the next look tries the newer ones), or null. */
+  _nearestCrumb() {
+    const trail = this.follow?.trail?.();
+    if (!trail?.length) return null;
+    let best = -1, bd = FOLLOW_CRUMB_FAR;
+    for (let j = 0; j < trail.length; j++) {
+      const d = Math.hypot(trail[j][0] - this.feet[0], trail[j][2] - this.feet[2]);
+      if (d < bd) { bd = d; best = j; }
+    }
+    return best < 0 ? null : this._crumbFrom(trail, best, this.follow.feet?.() ?? trail[trail.length - 1]);
+  }
+
+  /** WERE-FRIGHT: one fixed step of the run (flee, above). */
+  _fleeStep(dt, paralyzed) {
+    this.fleeLeft -= dt;
+    this._clock += dt;   // the detour's stuck clock reads it
+    let classicTicks = 0;   // the motor's one classic cadence (_step's)
+    this._classicTimer += dt;
+    while (this._classicTimer >= CLASSIC_UPDATE_INTERVAL) { this._classicTimer -= CLASSIC_UPDATE_INTERVAL; classicTicks++; }
+    const knocked = this.knockbackSpeed > 0;
+    this.canAct = false;
+    this.inSight = false;
+    this.detected = false;
+    this._updateDetourTimers(dt, !paralyzed && !knocked);
+    this.hurtKnock = false;
+    if (knocked) { this._knockbackStep(dt, classicTicks); return; }   // a blow shoves it first; the run resumes after
+    // The way away, and the point FLEE_AIM along it - the "destination" _findDetour falls back on when both of its
+    // 45-degree probes are blocked. While a detour stands, the run aims round the obstacle instead.
+    let ax = this.feet[0] - this.fleeFrom[0];
+    let az = this.feet[2] - this.fleeFrom[2];
+    const al = Math.hypot(ax, az);
+    if (al > 1e-6) { ax /= al; az /= al; } else { ax = Math.sin(this.yaw); az = Math.cos(this.yaw); }
+    this.destination = [this.feet[0] + ax * FLEE_AIM, this.feet[1], this.feet[2] + az * FLEE_AIM];
+    const aim = this.avoidObstaclesTimer > 0 ? this.detourDestination : this.destination;
+    const dx = aim[0] - this.feet[0];
+    const dz = aim[2] - this.feet[2];
+    for (let i = 0; i < classicTicks; i++) {
+      if (withinYaw(this.yaw, dx, dz, MOVE_YAW_GATE_DEG)) this.moving = true;
+      else { this.yaw = turnTowards(this.yaw, dx, dz); this.moving = false; }   // classic turns in place
+    }
+    if (paralyzed) this.moving = false;
+    this._walkStep(dt, this.fleePace);   // the pursuit's own walk - the watch is frightened and walks; a special foe runs for its life (FLIGHT-FIRST)
+  }
+
+  /**
+   * ARENA-FIX 8 (2026-10-02, the port's own - DFU's arena is a mod's, and no DFU motor walks to a point it was told):
+   * A WALK TO A MARK. A bout's fighter walks in from its gate to its mark on the sand (scenes/arena/arenaBouts.js walkIn) by
+   * the pursuit's own laws - the classic turn in place inside the 5.625 degree move gate, the same capsule, obstacle,
+   * ledge and detour probes and gravity (`_walkStep`) - at `pace` of its move speed. It decides and senses nothing on
+   * the way (the bout holds it); at WALK_ARRIVE_M of the point it stops and `walkArrived` says so. A blow shoves it as
+   * any foe. `walkGoal = null` ends it where it stands, its pace with it: the pace is the walk's own step's
+   * (`_walkGoalStep`), never a field a later pursuit reads (AUDIT PRE-MERGE 1003 D1: it was, and put back only at the
+   * motor's own arrival - the bout ends every walk in itself, at its mark or the walk's limit, so every fighter that
+   * walked in fought its bout at WALK_PACE).
+   */
+  walkTo(point, { pace = 1 } = {}) {
+    this.walkGoal = [point[0], point[1], point[2]];
+    this._pace = pace;
+    this.walkArrived = false;
+    this.moving = false;
+  }
+  /** ARENA-FIX 8: one fixed step of the walk to a mark (walkTo). */
+  _walkGoalStep(dt, paralyzed) {
+    this._clock += dt;
+    let classicTicks = 0;
+    this._classicTimer += dt;
+    while (this._classicTimer >= CLASSIC_UPDATE_INTERVAL) { this._classicTimer -= CLASSIC_UPDATE_INTERVAL; classicTicks++; }
+    const knocked = this.knockbackSpeed > 0;
+    this.canAct = false;
+    this.inSight = false;
+    this.detected = false;
+    this._updateDetourTimers(dt, !paralyzed && !knocked);
+    this.hurtKnock = false;
+    if (knocked) { this._knockbackStep(dt, classicTicks); return; }
+    const g = this.walkGoal;
+    const left = Math.hypot(g[0] - this.feet[0], g[2] - this.feet[2]);
+    if (left <= WALK_ARRIVE_M) {
+      this.walkGoal = null; this.walkArrived = true; this.moving = false;
+      this._walkStep(dt);
+      return;
+    }
+    this.destination = [g[0], g[1], g[2]];
+    const aim = this.avoidObstaclesTimer > 0 ? this.detourDestination : this.destination;
+    const dx = aim[0] - this.feet[0];
+    const dz = aim[2] - this.feet[2];
+    for (let i = 0; i < classicTicks; i++) {
+      const facing = withinYaw(this.yaw, dx, dz, MOVE_YAW_GATE_DEG);
+      if (!facing) this.yaw = turnTowards(this.yaw, dx, dz);   // the classic turn in place, as the run's
+      this.moving = facing;
+    }
+    if (paralyzed) this.moving = false;
+    this._walkStep(dt, this._pace);   // AUDIT PRE-MERGE 1003 D1: the walk's pace, for its own step alone
+  }
+
+  _step(dt, playerFeet, senses, paralyzed = false, paused = false) {
+    if (this.fleeLeft > 0) { this._fleeStep(dt, paralyzed); return; }   // WERE-FRIGHT: a frightened foe only runs
+    if (this.walkGoal) { this._walkGoalStep(dt, paralyzed); return; }   // ARENA-FIX 8: a fighter walking to its mark
+    // CH4 (the senses verify pass): DFU's cadence split, exactly -
+    // sight/hearing/detection resolve EVERY FixedUpdate (the fixed
+    // step here); the spawn-band recompute and the illusion re-roll
+    // gate on ClassicUpdate (_classicSenses per classic tick); only
+    // classic TARGET SWITCHING rides the 5-unit system timer
+    // (single-target here, so that timer has nothing to switch -
+    // constants stay exported for E3 multi-target). Decisions stay
+    // on the classic update, reading the freshly resolved senses
+    // (DFU's senses-then-motor component order). senses = the P13
+    // stealth context (see _senses).
+    // C15: knockback is CanAct=false - decisions skip, senses run.
+    // ROAD-U: ...unless a pausing one-shot is playing, because
+    // KnockbackMovement's FIRST line is `if (mobile.EnemyState ==
+    // SeducerTransform1 || == SeducerTransform2) return;` (:267-269) -
+    // it returns above the whole block, so a transforming Seducer
+    // takes no shove, no Hurt state, no decay of the stored speed AND
+    // no CanAct/flyerFalls write. Folding the pause into `knocked`
+    // carries all four, in DFU's own order.
+    const knocked = this.knockbackSpeed > 0 && !paused;
+    // TELL1 (bible/12-Enhanced-AI/Feud-Arc.md 3.2): STAGGERED - its wind-up broken by a blow past its poise - it can do
+    // nothing, as a knock: CanAct false, standing, its Hurt held by the host. The port's own beat (no DFU motor has
+    // one), so it exists only with the Enhanced AI switch on, which alone stands a wind-up to break.
+    const staggered = this.staggerUntil > 0 && tacticsNow() < this.staggerUntil;
+    this.staggered = staggered;
+    // TELL4 (Feud-Arc.md 6.1): OVERREACHED - its telegraphed blow missed - locked as a stagger locks, but its Hurt is not
+    // asked (the sprite stands at its swing's follow-through). `locked` carries both wherever the stagger's lock reads.
+    const overreached = this.overreachUntil > 0 && tacticsNow() < this.overreachUntil;
+    this.overreached = overreached;
+    const locked = staggered || overreached || (this.roarUntil > 0 && tacticsNow() < this.roarUntil);   // RVN4: a roar's hold
+    // AUDIT 26 F010: CanAct, EXPOSED. HandleParalysis and
+    // KnockbackMovement clear it (:255, :317) and the attack/cast
+    // components' bow-roll and spell branches live behind
+    // `if (CanAct) TakeAction` in DFU (:171-172) - the port's
+    // components read this instead of re-deriving it, so a foe in
+    // hit-stun stops shooting and casting exactly as DFU's does.
+    // (The MELEE decision is CanAct-independent in DFU - EnemyAttack
+    // .FixedUpdate rolls it regardless - and stays ungated.)
+    // MT-iii (AUDIT 39): the hostility term is HandleNoAction's
+    // `senses.Target == null` (:359), not a CanAct term of its own -
+    // `grep IsHostile EnemyMotor.cs` finds writes at :122/:206 and no
+    // read. A pacified foe stops because EnemySenses:321-327 drops the
+    // PLAYER as its target; a FOE target survives that drop (this
+    // file's own _senses exception), and DFU's motor then pursues and
+    // turns towards it. The port ANDed IsHostile in flat, so a
+    // pacified foe another enemy was mauling stood rooted.
+    // AUDIT 39r (R15): and it is computed BELOW, after the target
+    // machine - reading `_armedTargeting`/`target` here read the
+    // PREVIOUS step's targeting state, so a pacified foe stayed frozen
+    // for the whole step on which it first acquired a foe target (and
+    // could never take the exception on its first armed step at all,
+    // the constructor seeding both to null/false). This file's own law,
+    // eight lines up: decisions read the freshly resolved senses.
+    // EnemyMotor.UpdateTimers runs every FixedUpdate, after
+    // HandleParalysis and KnockbackMovement have settled CanAct, and
+    // BEFORE TakeAction reads avoidObstaclesTimer (:166-172).
+    this._clock += dt;
+    this._updateDetourTimers(dt, !paralyzed && !knocked && !locked);
+    // MT-i: the host's targeting context arms the classic target
+    // machine - a closure over the pool's shared candidate list
+    // (enemyTargets.runTargetMachine; a hook, not an import, so the
+    // senses half stays cycle-free). Unarmed = player-only, as ever.
+    const targeting = senses?.targeting ?? null;
+    this._armedTargeting = !!targeting;
+    // AUDIT 62 F23: _getDestination is reached from the decision path
+    // with no senses argument, so the live player capsule is cached
+    // HERE, with the rest of the per-step senses reads, and read by
+    // _targetHeight/_targetCentreOffset and _classicSenses below.
+    this._playerHeight = senses?.playerHeight ?? CAPSULE_HEIGHT;
+    let classicTicks = 0;
+    this._classicTimer += dt;
+    while (this._classicTimer >= CLASSIC_UPDATE_INTERVAL) {
+      this._classicTimer -= CLASSIC_UPDATE_INTERVAL;
+      classicTicks++;
+      // DFU's Update order, per classic tick: the spawn-band block
+      // (:260-310), then the target machine (:312-405), then the
+      // NULL-TARGET RETURN (:410-414) - and only past it the second
+      // ClassicUpdate block with the illusion re-roll and the LOS
+      // decrement (:443-449). A tick that ends with no target runs
+      // NEITHER, which is why they sit together in one method.
+      this._classicSenses(playerFeet, senses);
+      if (targeting) targeting(this, playerFeet, dt);
+      if (!targeting || this.target != null) this._classicPostTarget(senses);
+    }
+    // EnemySenses.targetPosPredict (:249-257) is its own 0.0625s timer -
+    // the classic-update interval, independently phased. The port reads
+    // "a classic tick happened this step" as the same thing, and says so.
+    this._targetPosPredict = classicTicks > 0;
+    // E6: and the TIMER itself, which PredictNextTargetPos divides by
+    // (:566-570). DFU zeroes it on the pass frame and accumulates
+    // Time.deltaTime otherwise, so it reads "how long since the last
+    // prediction pass" - folded onto the classic tick like the flag.
+    this._targetPosPredictTimer = classicTicks > 0 ? 0 : this._targetPosPredictTimer + dt;
+    // MT-i: the senses aim at the TARGET's live feet - the player's
+    // when unarmed or the player is it, the foe candidate's when a
+    // GetTargets pass picked one. No target reads BLIND (:410-414):
+    // targetInSight false, detectedTarget false, return - the timers
+    // and HandleNoAction below still run, exactly as DFU's early
+    // return leaves FixedUpdate's remainder to the motor.
+    let targetFeet = playerFeet;
+    if (targeting) {
+      this._targetCandidate = this.target;
+      targetFeet = this.target == null ? null
+        : (this.target.isPlayer ? (this.target.feet ?? playerFeet) : this.target.ai.feet);   // WORLD3: a peer target at its own feet
+    } else this._targetCandidate = null;
+    // AUDIT WORLD3 C3: whose player these senses answer for. inSight/detected mean "this foe senses its TARGET", and
+    // since WORLD3 that can be another player in the room - the alert, the rest gate and the exhaustion collapse all
+    // read the pair and all mean MY player.
+    this.targetIsLocalPlayer = !this._armedTargeting || (this.target != null && this.target.isPlayer === true && this.target.isPeer !== true);
+    // MT-iii's hostility narrowing, now on THIS step's target machine.
+    const foeTarget = this._armedTargeting && this.target != null && !this.target.isPlayer;
+    this.canAct = !paralyzed && !knocked && !locked && (this.isHostile || foeTarget);
+    if (!this.canAct || paused) this._tacSkipped = true;   // AUDIT TACT D1/A3: a step it could not decide - the brain's word for a knock, never a clock's
+    // AUDIT TELL B1 (OPEN 4): a paralysis, a knock or a Calm BREAKS a wind-up, a run or a chain here and now - the brain is
+    // not asked while the foe cannot act, and a blow that waited for it held every blow, glinted and landed untold after
+    if (!this.canAct && this._tac?.state && !locked) breakWindup(this);
+    if (targeting && targetFeet == null) {
+      this.inSight = false;
+      this.detected = false;
+    } else {
+      this._senses(targetFeet, senses);
+    }
+    // AUDIT 26 F014 (UpdateTimers, UNCONDITIONAL - EnemyMotor.cs runs
+    // it every FixedUpdate at :170, after the CanAct writers and
+    // before the CanAct gate): detection refills GiveUpTimer to 200
+    // classic ticks (:419-420, every FixedUpdate); while undetected it
+    // counts down on the CLASSIC cadence (:423-424) and the foe keeps
+    // pursuing - 12.5s of blind chase. The port had both inside the
+    // gated decision, so a paralyzed foe froze its window and woke
+    // still hunting where DFU's had given up.
+    // AUDIT 26 F012 (HandleNoAction, UNCONDITIONAL - :168, ditto):
+    // no target (a pacified foe's equivalent - single-target port),
+    // the give-up timer spent, or a position never seen, and
+    // searchMult resets on EVERY arm (:357-366) - the port reset it
+    // on the third alone, so a foe that ramped its search to 10 and
+    // gave up resumed a later pursuit aiming 10 units past the
+    // last-known position. HandleNoAction runs BEFORE UpdateTimers'
+    // refill in DFU's order, and does here too.
+    this._handleNoAction(foeTarget);
+    if (this.detected) this.giveUpTimer = GIVE_UP_TICKS;
+    for (let i = 0; i < classicTicks; i++) {
+      if (!this.detected && this.giveUpTimer > 0) this.giveUpTimer--;
+      // C-slice: a pacified foe with NO foe target keeps its senses
+      // but takes no action - its senses hold no Target, so
+      // HandleNoAction drops CanAct. One with a foe target still acts.
+      if (this.canAct) this._classicTick(targetFeet ?? playerFeet, paused);   // MT-i: pursuit aims at the TARGET
+    }
+    // ROAD-U: `paused` joins the two intent clears. DFU calls
+    // TakeAction (and through it AttemptMove) every FixedUpdate, so
+    // its pause return stops the motion on the very frame the
+    // transform starts; the port's `moving` is a LATCH the classic
+    // tick sets, and a latch left standing would walk the Seducer on
+    // for up to a classic tick after DFU's has stopped dead.
+    if (paralyzed || paused || locked || !(this.isHostile || foeTarget)) this.moving = false;
+    // CREW-COMPANIONS: a companion (the host's `follow`) with no foe to fight - or one chased too far from its
+    // leader - keeps to the leader instead: the pursuit's own turn-then-walk, aimed at the leader's feet.
+    this._following = !!this.follow && !paralyzed && !paused && !knocked && !locked && this._followWanted();
+    if (this._following) this._followTicks(classicTicks, dt);
+
+    // C15 KnockbackMovement, verbatim: runs INSTEAD of pursuit (and
+    // regardless of paralysis - DFU calls it before the CanAct
+    // gates). Stored speed clamps at 40; the hurt anim rides
+    // speed > 5 (the MobileUnit refuses it mid-attack, the DFU
+    // state gate); motion caps at 25 along the attack ray; grounded
+    // foes take it via SimpleMove (y DROPPED, gravity applies),
+    // flyers take the full 3D ray AND fall (flyerFalls), swimmers
+    // ride the WaterMove gates; decay is 5 per classic tick.
+    this.hurtKnock = false;
+    if (knocked) { this._knockbackStep(dt, classicTicks); return; }   // CanAct = false: no pursuit this step
+
+    // C12 aquatic (WaterMove verbatim): movement exists ONLY while
+    // the controller center is below the block water surface; a
+    // beached (or waterless-block) fish is frozen - no gravity, no
+    // pursuit. Rising motion caps 2.5 under the surface. Paralyzed
+    // swimmers "just freeze in place".
+    if (this.swims) {
+      this._restGrounded = false;   // AUDIT 68 S04-rest-grounded-stale: only the grounded branch may vouch for the rest
+      if (paralyzed || !this.moving) return;
+      const waterY = this.waterSurfaceY ? this.waterSurfaceY(this.feet[0], this.feet[2]) : null;
+      const center = this.feet[1] + this.centreOffset;   // EnemyMotor.cs:1333 controller.transform.position.y
+      if (waterY === null || center >= waterY) return;
+      const d = this._dir3(this.destination);
+      // AttemptMove's probe (wave 34). A swimmer keeps its y in
+      // direction2d - only grounded foes flatten it (:978-979).
+      this._obstacleCheck(d);
+      this._fallCheck(d);
+      if (this.fallDetected || this.obstacleDetected) { this._findDetour(d); return; }
+      let my = d[1] * this.speed * dt;
+      if (my > 0 && center + WATER_HEAD_MARGIN >= waterY) my = 0;
+      const moveResult = this.collider.move(this.feet, d[0] * this.speed * dt, my, d[2] * this.speed * dt, this.controllerHeight, true, FOE_KEEPS_FLOOR);
+      this.isGrounded = moveResult.grounded;
+      this.collidedSides = !!moveResult.sides;   // DOOR-JAM
+      return;
+    }
+
+    // C12 flying (CanFly = Flying|Spectral): 3D pursuit at the face,
+    // NO gravity - except flyerFalls (paralysis) which drops them.
+    //
+    // A5: a LEVITATING foe rides the same branch, and rides it even
+    // while paralyzed. DFU's Move (:1006-1009) sends `flies ||
+    // IsLevitating || swims` through controller.Move with the y kept
+    // in direction2d (:978-979), and NO arm of ApplyGravity will take
+    // a levitator: the walker arm excludes IsLevitating (:335), the
+    // slow-fall arm excludes it (:328) and the flyerFalls arm excludes
+    // it too (:347). So paralysis, which drops a plain flyer out of
+    // the air, leaves a levitator hanging - it simply stops acting
+    // (moving is already false above), hovers, and re-anchors
+    // lastGroundedY per ApplyFallDamage's second arm (:1416, which
+    // names IsLevitating in its own right).
+    if ((this.flies && !paralyzed) || this.levitating) {
+      this.velY = 0;
+      this._restGrounded = false;   // AUDIT 68 S04-rest-grounded-stale: a latch kept through flight froze the next paralysis (or Levitate's end) mid-air
+      // CH3 (AUDIT 24 characters-1): ApplyFallDamage's SECOND arm -
+      // `else if ((flies && !flyerFalls) || IsLevitating ||
+      // IsSlowFalling) LastGroundedY = transform.position.y`
+      // (EnemyMotor.cs:1414-1417), with the source's own note "for
+      // flying enemies, lastGroundedY is really lastAltitudeControlY".
+      // A HOVERING flyer re-anchors to its current altitude every
+      // FixedUpdate, so the drop a knocked or paralyzed flyer is
+      // billed for measures from the altitude at the instant flight
+      // stopped - never from the last floor it happened to stand on.
+      // The arm runs after TakeAction, so the anchor is the POST-move
+      // altitude; `flies && !flyerFalls` is exactly this branch,
+      // knockback and paralysis both having returned above.
+      if (!this.moving) { this.lastGroundedY = this.feet[1]; return; }   // hover in place (turning included)
+      const d = this._dir3(this.destination);
+      // "Stop fliers from moving too near the floor during combat":
+      // descending with ground inside (height/2 + 1) below the center
+      // forces direction.y up to 0.1 (not renormalized, as DFU). Wave
+      // 34: the clause is gated on `avoidObstaclesTimer <= 0` (:925) -
+      // a flyer working its way round an obstacle is allowed to dive.
+      // A5: `flies` ALONE opens it (:925) - a levitator gets no floor
+      // lift, which is why the arm is spelled out rather than folded
+      // into the branch condition above.
+      // CEIL-GHOST (FIELD BUGS 2026-10-09c, "Ghost companion isn't showing health bar - clipping into ceiling"): AND
+      // DURING COMBAT - never while following. A companion steers its feet at the leader's (_followTicks), so a leader a
+      // hair below it read as a descent, the lift turned it up, and it climbed till its feet were a metre off the floor
+      // or its body met the ceiling - a ghost's whole height (2.6 m) into the roof, its bar over it and hidden.
+      if (this.flies && !this._following && this.avoidObstaclesTimer <= 0 && d[1] < 0) {
+        const hit = this.collider.raycast(
+          this._centre(), [0, -1, 0],   // FindGroundPosition rays from transform.position (:224)
+          this.height / 2 + FLYER_FLOOR_CLEARANCE);
+        if (Number.isFinite(hit)) d[1] = FLYER_FLOOR_LIFT;
+      }
+      // AttemptMove's probe (wave 34): a flyer keeps its y here too.
+      this._obstacleCheck(d);
+      this._fallCheck(d);
+      if (this.fallDetected || this.obstacleDetected) { this._findDetour(d); this.lastGroundedY = this.feet[1]; return; }
+      const moveResult = this.collider.move(this.feet, d[0] * this.speed * dt, d[1] * this.speed * dt, d[2] * this.speed * dt, this.controllerHeight, true, FOE_KEEPS_FLOOR);
+      this.isGrounded = moveResult.grounded;
+      this.collidedSides = !!moveResult.sides;   // DOOR-JAM
+      this.lastGroundedY = this.feet[1];   // the altitude-control anchor, post-move
+      return;
+    }
+
+    // Grounded (and falling paralyzed flyers): movement at the
+    // decided state via the SAME capsule contract the player walks on.
+    // REST FAST PATH (the C11 lag fix): an idle foe standing on
+    // solid ground has nothing to integrate - gravity would resolve
+    // to the same spot - so the capsule query is skipped entirely
+    // until it moves again (29 idle foes x 60Hz x a capsule move was
+    // the other half of the live lag). A mover sliding out from
+    // under a parked foe leaves it frozen mid-air until it next
+    // pursues - accepted: foes never ride movers (pre-C11 statics
+    // did not either).
+    this._walkStep(dt, this._following ? this._followPace : 1);   // COMPANION-TRAIL: a follower fallen back hurries
+  }
+
+  /** The grounded walker's step - _step's tail (the comment above its call), and a frightened foe's run (_fleeStep):
+   *  the rest fast path, gravity, AttemptMove's obstacle and ledge probes with DFU's detour, and the one capsule
+   *  move, at whatever `moving` the caller's classic tick decided - at `pace` of its speed, which only a walk to a mark
+   *  (_walkGoalStep) passes (AUDIT PRE-MERGE 1003 D1). */
+  _walkStep(dt, pace = 1) {
+    if (!this.moving && this._restGrounded) return;
+    this.velY -= GRAVITY * dt;
+    const dy = this.velY * dt;
+    let dxm = 0;
+    let dzm = 0;
+    if (this.moving) {
+      // AttemptMove's probe (wave 34). direction2d is the horizontal
+      // heading the foe is about to walk (:977-979 flattens y for a
+      // grounded foe); the port steers by yaw, which the 5.625 gate in
+      // _classicTick has already brought within 5.625 degrees of the
+      // direction to the destination.
+      const dir2d = this._tacDir ? [this._tacDir[0], 0, this._tacDir[1]] : [Math.sin(this.yaw), 0, Math.cos(this.yaw)];   // TACT2: a step the brain chose - back, or round the ring - facing the target
+      this._obstacleCheck(dir2d);
+      this._fallCheck(dir2d);
+      if (this.fallDetected || this.obstacleDetected) {
+        // The translation is the ELSE arm (:989-996) - a blocked foe
+        // does not move this step at all, it picks a way round. Gravity
+        // is separate (ApplyGravity, :167) and still applies.
+        if (this._tacDir) { this._tacDir = null; this._tacBlocked = true; this.moving = false; }   // TACT2: a wall or a drop behind it: it stands its ground (AUDIT TACT A1: and the brain hears of it; TACT5: for the rest of the classic tick too - never walked on the way it faces, into a detour)
+        else this._findDetour(dir2d);
+      } else {
+        const sp = this.speed * (this._tacDir ? this._tacSpeed : 1) * pace;   // TACT2: the brain's step at its share of a walk; ARENA-FIX 8: a walk to a mark at its pace (1 everywhere else - AUDIT PRE-MERGE 1003 D1: the walk's step's own, so none outlives the walk)
+        dxm = dir2d[0] * sp * dt;
+        dzm = dir2d[2] * sp * dt;
+      }
+    }
+    const r = this.collider.move(this.feet, dxm, dy, dzm, this.controllerHeight, true, FOE_KEEPS_FLOOR);
+    this.isGrounded = r.grounded;
+    this.collidedSides = !!r.sides;   // DOOR-JAM: the Move's CollidedSides, for HeightAdjust
+    if (r.grounded) this.velY = 0;
+    this._trackFall(r.grounded);   // CH3 (characters-8): walkers and falling paralyzed flyers
+    this._restGrounded = !this.moving && r.grounded;
+  }
+
+  /** ApplyFallDamage's tracking (EnemyMotor.cs:1383-1414): grounded
+   *  refreshes LastGroundedY; the grounded EDGE after airborne
+   *  measures the drop and reports a past-threshold landing through
+   *  landedFall (the host bills the damage + the clip). A flyer's
+   *  hover does not come through here - the hover branch re-anchors
+   *  lastGroundedY itself, per ApplyFallDamage's second arm, so a
+   *  knocked-down flyer measures from the altitude it was FLYING at,
+   *  not from the last floor it stood on. */
+  _trackFall(grounded) {
+    if (grounded) {
+      if (this._airborne) {
+        const drop = this.lastGroundedY - this.feet[1];
+        if (drop > FALL_DAMAGE_THRESHOLD) this.landedFall = drop;
+        this._airborne = false;
+      }
+      this.lastGroundedY = this.feet[1];
+    } else {
+      this._airborne = true;
+    }
+  }
+
+  /** The 3D pursuit direction to the aim point (face for flyers +
+   *  the slaughterfish, center for other swimmers), normalized. */
+  /** The unit direction to a point, as DFU's
+   *  `(destination - transform.position).normalized`.
+   *
+   *  AUDIT 24 (wave 35): the aim bump used to live HERE, added to
+   *  whatever it was handed. GetDestination is where DFU puts it
+   *  (:542-545), and once that was ported the flyer got it twice - it
+   *  aimed 1.8 above the target's head and stopped 3.6 short instead of
+   *  at melee range. One home: _getDestination applies the aim bump, this
+   *  returns the direction to the point it is given. */
+  _dir3(point) {
+    const dx = point[0] - this.feet[0];
+    const dy = point[1] - this.feet[1];
+    const dz = point[2] - this.feet[2];
+    const l = Math.hypot(dx, dy, dz) || 1;
+    return [dx / l, dy / l, dz / l];
+  }
+
+  /** WORLD2: the motor resumes LIVE from a PUPPET's pose (the seat came to this client): the feet and the yaw stand as
+   *  the stream left them and everything the motor decided on its own is forgotten - the grounding (the first step
+   *  would bill a phantom fall from the last grounded height), the target and its senses (re-acquired live, from where
+   *  the player actually stands), the path and the detour, the stuck clocks, the fixed-step accumulator a puppet frame
+   *  never drained, the knockback. isHostile and hasEncounteredPlayer stand: they are the foe's, not the frame's. */
+  resumeLive() {
+    this.target = null; this.secondaryTarget = null; this.targetSenses = null;
+    this.lastKnownTargetPos = null; this.oldLastKnownTargetPos = null; this.predictedTargetPos = null; this._predictedTargetPosWithoutLead = null;
+    this.lastHadLOSTimer = 0; this.giveUpTimer = 0; this.classicTargetUpdateTimer = 0;
+    this._standAfresh();
+  }
+
+  /** What the motor held of where it stood, forgotten - the feet stand: the grounding, the destination and the detour
+   *  with its flags and its stuck stamp, the fixed-step accumulator, the knockback, the trail's crumb, the door crouch.
+   *  resumeLive's half that is not the pursuit, and the half of FIELD BUGS 2026-10-16b INDOOR-WATCH's stand (a watchman
+   *  the host puts past the wall that stopped him) that is not the route - AUDIT W4: the stand had kept its own shorter
+   *  list, and a watchman crouched at that wall was stood crouched. One list, so the two never drift. */
+  _standAfresh() {
+    this.lastGroundedY = this.feet[1]; this._airborne = false; this.velY = 0; this.landedFall = 0;
+    this.destination = [this.feet[0], this.feet[1], this.feet[2]]; this.detourDestination = [this.feet[0], this.feet[1], this.feet[2]];
+    this.obstacleDetected = false; this.fallDetected = false; this.foundUpwardSlope = false; this.foundDoor = false;
+    this.avoidObstaclesTimer = 0; this.checkingClockwiseTimer = 0; this.didClockwiseCheck = false; this.lastTimeWasStuck = -Infinity;
+    this._acc = 0; this.knockbackSpeed = 0; this.hurtKnock = false; this.moving = false;
+    this._restGrounded = false;   // AUDIT WORLD2 B12: a foe that takes the seat standing still re-grounds on its first step, not its first move
+    this._crumb = null; this._trailMode = null; this._trailT = 0;   // COMPANION-TRAIL: stood afresh, it looks afresh
+    this.controllerHeight = this.height; this.collidedSides = false; this._resetHeight = false; this._heightChangeTimer = 0;   // DOOR-JAM: it stands at its own height, as a fresh controller does
+  }
+
+  /** FALL-HOLD (FIELD BUGS 2026-09-30b, ReynBlackwinter: "constant fps drop in overworld ... Resets after
+   *  saving\loading, heard its from an enemy endlessly falling through the ground somewhere"): A FRAME THE HOST HOLDS
+   *  THIS FOE ON steps nothing, so it senses nothing - PlayerMotor.holdFrame's law, foe-side. The streaming host holds
+   *  the player's motor until the pixel under him is built (world.js _seasonHoldKey); its pools now hold a foe whose
+   *  column has no built ground (`groundStands`, the host's heightAt finite). Stepped there, a walker fell for ever:
+   *  nothing here bounds a fall, a placed foe (a World of Daggerfall camp's) is never culled, and the save re-mints it
+   *  wherever it stood - over a pixel the load has not built. Every fixed step of the fall cost more: collider.move
+   *  sweeps in SUBSTEP_LEN pieces, 256 at most (DFU's CharacterController.Move is one sweep), ten capsule resolves a
+   *  piece - 770 a frame at a minute's fall, 2,560 from 201.6 s. The column alone is asked, never the height: a flyer,
+   *  a levitator or a swimmer over built ground, and a Deep Waters swimmer (a carved cell answers its seafloor), are
+   *  stepped as before. A sense latched before the hold would outlive it - `detected` spared it the relevance cull
+   *  (and held the encounter cap), `inSight` kept its melee deciding, either one or `wouldBeSpawned` refused the
+   *  player's rest (areEnemiesNearby). The first step after the hold senses afresh. */
+  holdFrame() {
+    this.inSight = false; this.detected = false; this.wouldBeSpawned = false;
+  }
+
+  /** AUDIT 68 S20-offset-ai-memory: the floating-origin recenter moves every WORLD position the motor holds, not the
+   *  feet alone. The fall anchor is DFU's own (FloatingOrigin.cs:128-130 -> EnemyMotor.AdjustLastGrounded, :235-238);
+   *  the pursuit memory is a departure (EnemySenses hears no OnPositionUpdate), else a foe hunting out of sight walks
+   *  819.2 m the wrong way. Aliases (predictedTargetPos IS lastKnownTargetPos, destination may BE detourDestination)
+   *  move once. */
+  offsetOrigin(offset) {
+    const moved = new Set();
+    for (const p of [this.feet, this.destination, this.detourDestination, this.lastKnownTargetPos, this.oldLastKnownTargetPos, this.predictedTargetPos, this._predictedTargetPosWithoutLead, this.fleeFrom]) {   // WERE-FRIGHT: the point a run is from
+      if (!p || moved.has(p)) continue;
+      moved.add(p);
+      p[0] += offset[0]; p[1] += offset[1]; p[2] += offset[2];
+    }
+    this.lastGroundedY += offset[1];
+    const head = this._tac?.dash?.head;   // AUDIT TELL B10: a charge's run sweeps from where it last stood - in the world, which moved
+    if (head) { head[0] += offset[0]; head[1] += offset[2]; }
+    this._crumb = null; this._trailMode = null; this._trailT = 0;   // COMPANION-TRAIL: the trail is the layer's, begun again on the leader's jump
+  }
+}

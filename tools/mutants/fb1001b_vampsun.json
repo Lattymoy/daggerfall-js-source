@@ -5,7 +5,7 @@
     "old": "(playerInSunlight(clockMinutes) ? (sunAverse ? -VAMPIRE_STAT_MOD : 0) : VAMPIRE_STAT_MOD)",
     "new": "(isDayFromMinutes(clockMinutes) ? (sunAverse ? -VAMPIRE_STAT_MOD : 0) : VAMPIRE_STAT_MOD)",
     "tests": [
-      "test/fb1001b_vampsun.test.js"
+      "test/systems/fb1001b_vampsun.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "(playerInSunlight(clockMinutes) ? (sunAverse ? -VAMPIRE_STAT_MOD : 0) : VAMPIRE_STAT_MOD)",
     "new": "(playerInSunlight(clockMinutes) ? (sunAverse ? VAMPIRE_STAT_MOD : 0) : VAMPIRE_STAT_MOD)",
     "tests": [
-      "test/fb1001b_vampsun.test.js"
+      "test/systems/fb1001b_vampsun.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "(playerInSunlight(clockMinutes) ? (sunAverse ? -VAMPIRE_STAT_MOD : 0) : VAMPIRE_STAT_MOD)",
     "new": "(playerInSunlight(clockMinutes) ? (sunAverse ? -VAMPIRE_STAT_MOD : 0) : 0)",
     "tests": [
-      "test/fb1001b_vampsun.test.js"
+      "test/systems/fb1001b_vampsun.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  const mod = vampireStatMod(skyMinutes, racialSunAverse(entity));",
     "new": "  const mod = -VAMPIRE_STAT_MOD;",
     "tests": [
-      "test/fb1001b_vampsun.test.js"
+      "test/systems/fb1001b_vampsun.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "&& !(_host?.isInside?.() ?? false)",
     "new": "",
     "tests": [
-      "test/fb1001b_vampsun.test.js"
+      "test/systems/fb1001b_vampsun.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "&& !(_host?.inPrison?.() ?? false)",
     "new": "",
     "tests": [
-      "test/fb1001b_vampsun.test.js"
+      "test/systems/fb1001b_vampsun.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "    isInside: () => mode !== 'exterior',",
     "new": "    isInside: () => mode === 'dungeon',",
     "tests": [
-      "test/fb1001b_vampsun.test.js"
+      "test/systems/fb1001b_vampsun.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "    inPrison: () => !!playerEntity.inPrison,",
     "new": "    inPrison: () => false,",
     "tests": [
-      "test/fb1001b_vampsun.test.js"
+      "test/systems/fb1001b_vampsun.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "    isInside: () => true,",
     "new": "    isInside: () => false,",
     "tests": [
-      "test/fb1001b_vampsun.test.js"
+      "test/systems/fb1001b_vampsun.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "      setPassiveSpecialsHost(_prevPassiveHost);",
     "new": "      void _prevPassiveHost;",
     "tests": [
-      "test/fb1001b_vampsun.test.js"
+      "test/systems/fb1001b_vampsun.test.js"
     ]
   }
 ]

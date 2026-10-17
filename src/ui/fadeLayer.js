@@ -23,9 +23,9 @@
 // `FadeBehaviour.FadeInProgress || Parent.BackgroundColor.a > 0.9`
 // (:46-47, commented "prevents conflict with fade in from black"):
 // without those two gates the flicker's Normal arm would clear a
-// smashed-black screen on the very next frame. ui/hudFlicker.js has
+// smashed-black screen on the very next frame. ui/hud/hudFlicker.js has
 // carried both parameters since AUDIT 28 W2d with nothing to feed
-// them; `ui/hud.js` feeds them from here now, and the flicker's write
+// them; `ui/hud/hud.js` feeds them from here now, and the flicker's write
 // lands in this module's `backgroundColor` rather than in a second
 // quad of its own.
 //

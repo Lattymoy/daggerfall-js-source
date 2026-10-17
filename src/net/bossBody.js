@@ -4,8 +4,8 @@
 // the relay's own count of each fighter's body in a boss fight (a gate's, an Abyss Dungeon's) and of each ship's hull
 // in a serpent's, kept beside the client's.
 //
-// A boss's blow was judged on the struck player's machine alone (co-op's law - net/gateStrike.js, net/sdStrike.js,
-// systems/serpentStrike.js), so a client that took none stood every fight out, earned the spoils' "stood" share, and
+// A boss's blow was judged on the struck player's machine alone (co-op's law - net/gate/gateStrike.js, net/superDungeon/sdStrike.js,
+// systems/serpent/serpentStrike.js), so a client that took none stood every fight out, earned the spoils' "stood" share, and
 // could carry a fight alone. Now the relay runs the same tests on the poses it holds (net/bossRef.js) and takes each
 // blow no saving throw answers off its OWN count (`v`, a share of the whole). The client's admissions never lower it -
 // a blow the client took and said before the relay judged it would be taken twice - so the count is the relay's
@@ -38,7 +38,7 @@ export const BODY_AFTER_MS = 400;
  *  the walk back are longer; a `dd` and a living pose a beat apart are no rise. */
 export const BODY_RISE_MS = 15_000;
 /** A ship the count wrecked floats again past this share of her hull - the sea's own law (systems/naval/navalYard.js
- *  FIELD_REFLOAT, held equal by test/int11_body.test.js: the relay's bundle does not carry the yard). */
+ *  FIELD_REFLOAT, held equal by test/net/int11_body.test.js: the relay's bundle does not carry the yard). */
 export const HULL_REFLOAT = 0.15;
 /** The most a mend line may hold or fill a second (a staff typo is refused, never obeyed). */
 export const BODY_LINE_MAX = 10;

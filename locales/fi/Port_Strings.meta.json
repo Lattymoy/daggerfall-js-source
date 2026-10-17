@@ -2949,6 +2949,16 @@
   "tr": "404e3156e0c4",
   "by": "claude-in-session"
  },
+ "combat.leadLeftHand": {
+  "en": "9a84e174d1b8",
+  "tr": "84a6eed18d46",
+  "by": "claude-in-session"
+ },
+ "combat.leadRightHand": {
+  "en": "40a5921dea29",
+  "tr": "a228bbe087c7",
+  "by": "claude-in-session"
+ },
  "credits.ambientText.terms": {
   "en": "c62316ae06a4",
   "tr": "bcf458206bce",
@@ -4337,6 +4347,16 @@
  "features.waterQuality.title": {
   "en": "0a474887b300",
   "tr": "7c05d355d0e1",
+  "by": "claude-in-session"
+ },
+ "features.weaponGlow.note": {
+  "en": "80be2112719a",
+  "tr": "a0dea1ea7427",
+  "by": "claude-in-session"
+ },
+ "features.weaponGlow.title": {
+  "en": "964f52fd55ec",
+  "tr": "70d6ff559860",
   "by": "claude-in-session"
  },
  "features.weatherEvents.note": {
@@ -8764,11 +8784,6 @@
   "tr": "9ed1000c9452",
   "by": "claude-in-session"
  },
- "prof.page.alchemy.xp": {
-  "en": "544b14e3df71",
-  "tr": "65155bda947e",
-  "by": "claude-in-session"
- },
  "prof.page.alchemy.xpFirst": {
   "en": "67f6f98ebe2d",
   "tr": "002a4e3a7e25",
@@ -9375,8 +9390,8 @@
   "by": "claude-in-session"
  },
  "prof.page.jewel.odds": {
-  "en": "367f776e5547",
-  "tr": "97ff14204cf8",
+  "en": "4519e6329a41",
+  "tr": "ea8c9bc7bfc0",
   "by": "claude-in-session"
  },
  "prof.page.jewel.points": {
@@ -11362,6 +11377,16 @@
  "stats.weapon": {
   "en": "ead533685e26",
   "tr": "0f2e39acf81b",
+  "by": "claude-in-session"
+ },
+ "stolen.card": {
+  "en": "f7ee1f5cc455",
+  "tr": "b1c427266f9b",
+  "by": "claude-in-session"
+ },
+ "stolen.taken": {
+  "en": "47f05fb5e818",
+  "tr": "2645235b5b8f",
   "by": "claude-in-session"
  },
  "summon.noQuest": {

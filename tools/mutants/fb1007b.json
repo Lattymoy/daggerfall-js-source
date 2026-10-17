@@ -1,39 +1,39 @@
 [
   {
     "name": "FB1007B-TOWER-FLOORS-REVERTED",
-    "file": "src/world/interiorLayout.js",
+    "file": "src/world/interior/interiorLayout.js",
     "old": "    } else if (obj.objectType === FLOOR_MODEL_TYPE) {",
     "new": "    } else if (false) {",
     "tests": [
-      "test/fb1007b_towerfloors.test.js"
+      "test/world/fb1007b_towerfloors.test.js"
     ],
     "why": "the field bug itself: a floor model placed as DFU places any model, centred on the storey it is written at"
   },
   {
     "name": "FB1007B-FLOOR-NOT-STOOD",
-    "file": "src/world/interiorLayout.js",
+    "file": "src/world/interior/interiorLayout.js",
     "old": "      py = -obj.yPos * GLOBAL_SCALE + -lowestY(model);",
     "new": "      py = -obj.yPos * GLOBAL_SCALE;",
     "tests": [
-      "test/fb1007b_towerfloors.test.js"
+      "test/world/fb1007b_towerfloors.test.js"
     ]
   },
   {
     "name": "FB1007B-FLOOR-TYPE-THIRTEEN",
-    "file": "src/world/interiorLayout.js",
+    "file": "src/world/interior/interiorLayout.js",
     "old": "export const FLOOR_MODEL_TYPE = 5;",
     "new": "export const FLOOR_MODEL_TYPE = 13;",
     "tests": [
-      "test/fb1007b_towerfloors.test.js"
+      "test/world/fb1007b_towerfloors.test.js"
     ]
   },
   {
     "name": "FB1007B-LOWEST-IS-HIGHEST",
-    "file": "src/world/interiorLayout.js",
+    "file": "src/world/interior/interiorLayout.js",
     "old": "    if (verts[i] < bottomY) bottomY = verts[i];",
     "new": "    if (verts[i] > bottomY) bottomY = verts[i];",
     "tests": [
-      "test/fb1007b_towerfloors.test.js"
+      "test/world/fb1007b_towerfloors.test.js"
     ]
   },
   {
@@ -42,7 +42,7 @@
     "old": "        || c.travelling   // CLIMB-TRAVEL",
     "new": "        || false   // CLIMB-TRAVEL",
     "tests": [
-      "test/fb1007b_climbtravel.test.js"
+      "test/systems/fb1007b_climbtravel.test.js"
     ],
     "why": "the field bug in the classic lane: the abort ladder never hears the journey"
   },
@@ -52,7 +52,7 @@
     "old": "      travelling: !!this.travelling?.(),   // CLIMB-TRAVEL: nor at a journey's pace",
     "new": "      travelling: false,   // CLIMB-TRAVEL: nor at a journey's pace",
     "tests": [
-      "test/fb1007b_climbtravel.test.js"
+      "test/systems/fb1007b_climbtravel.test.js"
     ]
   },
   {
@@ -61,7 +61,7 @@
     "old": "    const unheld = this.levitating || this.riding || this.paralyzed || !!this.travelling?.();",
     "new": "    const unheld = this.levitating || this.riding || this.paralyzed;",
     "tests": [
-      "test/fb1007b_climbtravel.test.js"
+      "test/systems/fb1007b_climbtravel.test.js"
     ],
     "why": "the field bug in the enhanced lane: the wall held, and taken, at a journey's pace"
   },
@@ -71,7 +71,7 @@
     "old": "carriedWeight: () => carriedWeight(playerEntity), travelling: () => travellingOutdoors(), climbing:",
     "new": "carriedWeight: () => carriedWeight(playerEntity), climbing:",
     "tests": [
-      "test/fb1007b_climbtravel.test.js"
+      "test/systems/fb1007b_climbtravel.test.js"
     ]
   },
   {
@@ -80,7 +80,7 @@
     "old": " && !csaBoatUnderMe() && !(player.climb?.isClimbing || player.mantling || player.onWall || player.holdPending),",
     "new": " && !csaBoatUnderMe(),",
     "tests": [
-      "test/fb1007b_climbtravel.test.js"
+      "test/systems/fb1007b_climbtravel.test.js"
     ]
   },
   {
@@ -89,7 +89,7 @@
     "old": "px.y === getInt('Startup', 'StartCellY')",
     "new": "true",
     "tests": [
-      "test/holdshared.test.js"
+      "test/net/holdshared.test.js"
     ]
   },
   {
@@ -98,7 +98,7 @@
     "old": "px.x === getInt('Startup', 'StartCellX')",
     "new": "px.x === 109",
     "tests": [
-      "test/holdshared.test.js"
+      "test/net/holdshared.test.js"
     ]
   },
   {
@@ -107,7 +107,7 @@
     "old": "            const isPrivateersHold = isStartDungeon(dfLocation);",
     "new": "            const isPrivateersHold = false;",
     "tests": [
-      "test/holdshared.test.js"
+      "test/net/holdshared.test.js"
     ]
   },
   {
@@ -116,7 +116,7 @@
     "old": "    family.seat = { ...t, at: Math.max((Number(family.seat?.at) || 0) + 1, Math.floor(deps.wall?.() ?? Date.now())) };\n",
     "new": "",
     "tests": [
-      "test/fb1007b_familyseat.test.js"
+      "test/systems/legacy/fb1007b_familyseat.test.js"
     ],
     "why": "the field bug itself: the seat the first town took, for good"
   },
@@ -126,7 +126,7 @@
     "old": "    family.seat = { ...t, at: Math.max((Number(family.seat?.at) || 0) + 1, Math.floor(deps.wall?.() ?? Date.now())) };",
     "new": "    family.seat = { ...t };",
     "tests": [
-      "test/fb1007b_familyseat.test.js"
+      "test/systems/legacy/fb1007b_familyseat.test.js"
     ]
   },
   {
@@ -135,7 +135,7 @@
     "old": "    return t && !(t.loc === family.seat?.loc && t.region === family.seat?.region) ? t : null;",
     "new": "    return t ?? null;",
     "tests": [
-      "test/fb1007b_familyseat.test.js"
+      "test/systems/legacy/fb1007b_familyseat.test.js"
     ]
   },
   {
@@ -144,7 +144,7 @@
     "old": "    if (!family || past || family.pending || !deps.on() || !p || !isAlive(p) || !playedHere(p)) return null;\n    const t = placeHere();\n    return t &&",
     "new": "    if (!family || past || !deps.on() || !p || !isAlive(p) || !playedHere(p)) return null;\n    const t = placeHere();\n    return t &&",
     "tests": [
-      "test/fb1007b_familyseat.test.js"
+      "test/systems/legacy/fb1007b_familyseat.test.js"
     ]
   },
   {
@@ -153,7 +153,7 @@
     "old": "  if (other.seat && (!mine.seat || (Number(other.seat.at) || 0) > (Number(mine.seat.at) || 0))) mine.seat = { ...other.seat };",
     "new": "  if (!mine.seat && other.seat) mine.seat = { ...other.seat };",
     "tests": [
-      "test/fb1007b_familyseat.test.js"
+      "test/systems/legacy/fb1007b_familyseat.test.js"
     ],
     "why": "the merge as it was: the newer copy by rev keeps its seat, a stale tab's old seat over the move"
   },
@@ -163,7 +163,7 @@
     "old": "      ...(Number(rec.seat.at) > 0 ? { at: Math.floor(Number(rec.seat.at)) } : {}) } : null,",
     "new": "      } : null,",
     "tests": [
-      "test/fb1007b_familyseat.test.js"
+      "test/systems/legacy/fb1007b_familyseat.test.js"
     ]
   },
   {
@@ -172,7 +172,7 @@
     "old": "      if (!armed) { _armed = 'seat';",
     "new": "      if (false) { _armed = 'seat';",
     "tests": [
-      "test/fb1007b_familyseat.test.js"
+      "test/systems/legacy/fb1007b_familyseat.test.js"
     ]
   },
   {
@@ -181,7 +181,7 @@
     "old": "    familySeatHere: () => legacyHost?.familySeatHere() ?? null,",
     "new": "    familySeatHere: () => null,",
     "tests": [
-      "test/fb1007b_familyseat.test.js"
+      "test/systems/legacy/fb1007b_familyseat.test.js"
     ]
   },
   {
@@ -190,7 +190,7 @@
     "old": "  const houseName = String(mine.surname ?? '').trim() || String(other.surname ?? '').trim();",
     "new": "  const houseName = String(mine.surname ?? '').trim();",
     "tests": [
-      "test/fb1007b_familyseat.test.js"
+      "test/systems/legacy/fb1007b_familyseat.test.js"
     ],
     "note": "AUDIT FB1007b S1: a nameless copy named for the moved seat - the house's name flipped"
   },
@@ -200,7 +200,7 @@
     "old": "  if (houseName) nameHouse(mine, houseName);",
     "new": "  if (houseName) mine.surname = houseName;",
     "tests": [
-      "test/fb1007b_familyseat.test.js"
+      "test/systems/legacy/fb1007b_familyseat.test.js"
     ],
     "note": "AUDIT FB1007b S1: the house named, a member a stale save left nameless left so"
   },
@@ -210,7 +210,7 @@
     "old": "at: Math.max((Number(family.seat?.at) || 0) + 1, Math.floor(deps.wall?.() ?? Date.now())) };",
     "new": "at: Math.floor(deps.wall?.() ?? Date.now()) };",
     "tests": [
-      "test/fb1007b_familyseat.test.js"
+      "test/systems/legacy/fb1007b_familyseat.test.js"
     ],
     "note": "AUDIT FB1007b S2: a move on a clock behind the seat's stamp loses every merge"
   },
@@ -220,7 +220,7 @@
     "old": "    if (!family || past || family.pending || !deps.on() || !p || !isAlive(p) || !playedHere(p)) return null;",
     "new": "    if (!family || family.pending || !deps.on() || !p || !isAlive(p) || !playedHere(p)) return null;",
     "tests": [
-      "test/fb1007b_familyseat.test.js"
+      "test/systems/legacy/fb1007b_familyseat.test.js"
     ],
     "note": "AUDIT FB1007b S3: the past played back moves the seat"
   },
@@ -230,7 +230,7 @@
     "old": "    if (!family || past || family.pending || !deps.on() || !p || !isAlive(p) || !playedHere(p)) return null;",
     "new": "    if (!family || past || family.pending || !p || !isAlive(p) || !playedHere(p)) return null;",
     "tests": [
-      "test/fb1007b_familyseat.test.js"
+      "test/systems/legacy/fb1007b_familyseat.test.js"
     ],
     "note": "AUDIT FB1007b S3: Legacy off, the seat moves"
   },
@@ -240,7 +240,7 @@
     "old": "    if (!family || past || family.pending || !deps.on() || !p || !isAlive(p) || !playedHere(p)) return null;",
     "new": "    if (!family || past || family.pending || !deps.on() || !p || !playedHere(p)) return null;",
     "tests": [
-      "test/fb1007b_familyseat.test.js"
+      "test/systems/legacy/fb1007b_familyseat.test.js"
     ],
     "note": "AUDIT FB1007b S3: the one played dead moves the seat"
   },
@@ -250,7 +250,7 @@
     "old": "    if (!family || past || family.pending || !deps.on() || !p || !isAlive(p) || !playedHere(p)) return null;",
     "new": "    if (!family || past || family.pending || !deps.on() || !p || !isAlive(p)) return null;",
     "tests": [
-      "test/fb1007b_familyseat.test.js"
+      "test/systems/legacy/fb1007b_familyseat.test.js"
     ],
     "note": "AUDIT FB1007b S3: another character's page moves the line's seat"
   },
@@ -260,7 +260,7 @@
     "old": "    return t && !(t.loc === family.seat?.loc && t.region === family.seat?.region) ? t : null;",
     "new": "    return t && !(t.loc === family.seat?.loc) ? t : null;",
     "tests": [
-      "test/fb1007b_familyseat.test.js"
+      "test/systems/legacy/fb1007b_familyseat.test.js"
     ],
     "note": "AUDIT FB1007b S3: a town of the seat's name in another region refused"
   },
@@ -270,7 +270,7 @@
     "old": "    const nameTaken = nameAtSeat(family);",
     "new": "    family.surname = `of ${t.loc}`; const nameTaken = nameAtSeat(family);",
     "tests": [
-      "test/fb1007b_familyseat.test.js"
+      "test/systems/legacy/fb1007b_familyseat.test.js"
     ],
     "note": "AUDIT FB1007b S3: a move renames the house for its new seat"
   },
@@ -280,7 +280,7 @@
     "old": "      _seatSaid = r.ok ? { ok: true, text: `${here.loc} is your family's seat now.` } : { ok: false, text: r.why ?? 'Not now.' };",
     "new": "      _seatSaid = { ok: true, text: `${here.loc} is your family's seat now.` };",
     "tests": [
-      "test/fb1007b_familyseat.test.js"
+      "test/systems/legacy/fb1007b_familyseat.test.js"
     ],
     "note": "AUDIT FB1007b S3: a refused move said as made"
   },
@@ -290,7 +290,7 @@
     "old": "export function disarmFamilyPages() { _said = null; _armed = null; _seatSaid = null; }",
     "new": "export function disarmFamilyPages() { _said = null; _armed = null; }",
     "tests": [
-      "test/fb1007b_familyseat.test.js"
+      "test/systems/legacy/fb1007b_familyseat.test.js"
     ],
     "note": "AUDIT FB1007b S3: the armed word outlives another page's press"
   },
@@ -300,7 +300,7 @@
     "old": "_homeSaid = null; _seatSaid = null; }",
     "new": "_homeSaid = null; }",
     "tests": [
-      "test/fb1007b_familyseat.test.js"
+      "test/systems/legacy/fb1007b_familyseat.test.js"
     ],
     "note": "AUDIT FB1007b S3: the armed word outlives the visit"
   },
@@ -310,7 +310,7 @@
     "old": "    if (_armed !== 'seat') { n.setAttribute('tabindex', '-1'); n.setAttribute('data-focus', 'fam-seat-said'); setTimeout(() => n.focus?.({ preventScroll: true }), 0); _seatSaid = null; }",
     "new": "    if (_armed !== 'seat') _seatSaid = null;",
     "tests": [
-      "test/fb1007b_familyseat.test.js"
+      "test/systems/legacy/fb1007b_familyseat.test.js"
     ],
     "note": "AUDIT FB1007b S4: the keyboard falls to the page after the move"
   },
@@ -320,7 +320,7 @@
     "old": "  } else if (prov.moveFamilySeat && family.seat?.loc && !family.pending && me && isAlive(me) && !prov.past?.()) {",
     "new": "  } else if (false) {",
     "tests": [
-      "test/fb1007b_familyseat.test.js"
+      "test/systems/legacy/fb1007b_familyseat.test.js"
     ],
     "note": "AUDIT FB1007b S5: the page silent where the move is not offered"
   },
@@ -330,7 +330,7 @@
     "old": "family.seat?.loc && !family.pending && me && isAlive(me)",
     "new": "family.seat?.loc && me && isAlive(me)",
     "tests": [
-      "test/fb1007b_familyseat.test.js"
+      "test/systems/legacy/fb1007b_familyseat.test.js"
     ],
     "note": "AUDIT FB1007b S5: a move hinted while a Succession waits"
   },
@@ -340,7 +340,7 @@
     "old": "me && isAlive(me) && !prov.past?.()) {",
     "new": "me && isAlive(me)) {",
     "tests": [
-      "test/fb1007b_familyseat.test.js"
+      "test/systems/legacy/fb1007b_familyseat.test.js"
     ],
     "note": "AUDIT FB1007b S5: a move hinted in the past played back"
   },
@@ -350,7 +350,7 @@
     "old": "  const travellingOutdoors = () => wildTravelling() && (modes?.mode ?? 'exterior') === 'exterior';",
     "new": "  const travellingOutdoors = () => wildTravelling();",
     "tests": [
-      "test/fb1007b_climbtravel.test.js"
+      "test/systems/fb1007b_climbtravel.test.js"
     ],
     "note": "AUDIT FB1007b C1: the keys' stale travel holds every wall indoors"
   },
@@ -360,7 +360,7 @@
     "old": "    if (climbingNow()) { tvSay(TRAVEL_VIEW_TEXT.climbing); return false; }   // AUDIT FB1007b C2\n",
     "new": "",
     "tests": [
-      "test/fb1007b_climbtravel.test.js"
+      "test/systems/fb1007b_climbtravel.test.js"
     ],
     "note": "AUDIT FB1007b C2: the view's click sets out from a wall"
   },
@@ -370,7 +370,7 @@
     "old": "    if (climbingNow()) { tvSay(TRAVEL_VIEW_TEXT.climbing); return true; }\n",
     "new": "",
     "tests": [
-      "test/fb1007b_climbtravel.test.js"
+      "test/systems/fb1007b_climbtravel.test.js"
     ],
     "note": "AUDIT FB1007b C2: the map's walked trip sets out from a wall"
   },
@@ -380,7 +380,7 @@
     "old": "    if (climbingNow()) { tvSay(TRAVEL_VIEW_TEXT.climbing); return true; }",
     "new": "    if (climbingNow()) { tvSay(TRAVEL_VIEW_TEXT.climbing); return false; }",
     "tests": [
-      "test/fb1007b_climbtravel.test.js"
+      "test/systems/fb1007b_climbtravel.test.js"
     ],
     "note": "AUDIT FB1007b C2: refused, the pick falls through to DFU's fast travel"
   },
@@ -390,7 +390,7 @@
     "old": " || player.onWall || player.holdPending),   // CLIMB-TRAVEL",
     "new": " || player.onWall),   // CLIMB-TRAVEL",
     "tests": [
-      "test/fb1007b_climbtravel.test.js"
+      "test/systems/fb1007b_climbtravel.test.js"
     ],
     "note": "AUDIT FB1007b C3: a load's hold read as a body on foot"
   },
@@ -400,7 +400,7 @@
     "old": "  get holdPending() { return !!this._pkRestore; }",
     "new": "  get holdPending() { return false; }",
     "tests": [
-      "test/fb1007b_climbtravel.test.js"
+      "test/systems/fb1007b_climbtravel.test.js"
     ],
     "note": "AUDIT FB1007b C3: the motor never says a hold waits"
   },
@@ -410,7 +410,7 @@
     "old": "      if (on && !unheld && !this._wall) this._pkRetake(r);",
     "new": "      if (on && !this._wall) this._pkRetake(r);",
     "tests": [
-      "test/fb1007b_climbtravel.test.js"
+      "test/systems/fb1007b_climbtravel.test.js"
     ],
     "note": "AUDIT FB1007b C4: a load's hold taken mid-journey, to be let go the same step (the climb lens's survivor)"
   },
@@ -420,7 +420,7 @@
     "old": "    return t && !(t.loc === family.seat?.loc && t.region === family.seat?.region) ? t : null;",
     "new": "    return t && !(t.region === family.seat?.region) ? t : null;",
     "tests": [
-      "test/fb1007b_familyseat.test.js"
+      "test/systems/legacy/fb1007b_familyseat.test.js"
     ],
     "note": "AUDIT FB1007b T2: every town of the seat's region refused"
   },
@@ -430,7 +430,7 @@
     "old": "  else if (saved.seat && (Number(saved.seat.at) || 0) > (Number(out.seat?.at) || 0)) out.seat = { ...saved.seat };\n",
     "new": "",
     "tests": [
-      "test/fb1007b_familyseat.test.js"
+      "test/systems/legacy/fb1007b_familyseat.test.js"
     ],
     "note": "AUDIT FB1007b T3: the store's copy newer, the save's later move lost"
   },
@@ -440,7 +440,7 @@
     "old": "(Number(other.seat.at) || 0) > (Number(mine.seat.at) || 0)",
     "new": "(Number(other.seat.at) || 0) > 0",
     "tests": [
-      "test/fb1007b_familyseat.test.js"
+      "test/systems/legacy/fb1007b_familyseat.test.js"
     ],
     "note": "AUDIT FB1007b T3: an earlier move stood over a later one"
   }

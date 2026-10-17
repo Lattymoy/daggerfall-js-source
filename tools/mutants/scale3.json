@@ -5,7 +5,7 @@
     "old": "    if (!u.startsWith(`${LOAD_SERVICE}/`)) throw new Error(`the load harness reaches its own services only - refused ${u}`);",
     "new": "",
     "tests": [
-      "test/scale3.test.js"
+      "test/net/scale3.test.js"
     ],
     "note": "a bot's call to any address goes out - the production service a fallback names among them"
   },
@@ -15,7 +15,7 @@
     "old": "    if (!u.startsWith(`${LOAD_SERVICE}/`)) throw new Error(",
     "new": "    if (!u.startsWith(`${LOAD_SERVICE}/`) && !u.includes('workers.dev')) throw new Error(",
     "tests": [
-      "test/scale3.test.js"
+      "test/net/scale3.test.js"
     ],
     "note": "the deployed service's address let through"
   },
@@ -25,7 +25,7 @@
     "old": "      if (!String(url).startsWith(allowed)) throw new Error(`the load harness reaches its own relay only - refused ${url}`);",
     "new": "",
     "tests": [
-      "test/scale3.test.js"
+      "test/net/scale3.test.js"
     ],
     "note": "a bot's socket to any relay"
   },
@@ -35,7 +35,7 @@
     "old": "          this.onclose?.({ type: 'close', code: 1006, reason: '', wasClean: false });",
     "new": "",
     "tests": [
-      "test/scale3.test.js"
+      "test/net/scale3.test.js"
     ],
     "note": "a refused connect left CONNECTING for ever, as Node leaves it - a fleet never back from a storm"
   },
@@ -45,7 +45,7 @@
     "old": "        if (opened) return;\n        setTimeout(() => {",
     "new": "        setTimeout(() => {",
     "tests": [
-      "test/scale3.test.js"
+      "test/net/scale3.test.js"
     ],
     "note": "an error on an open socket closed by the harness rather than its runtime"
   },
@@ -55,7 +55,7 @@
     "old": "    const v = typeof was === 'number' ? Number(raw) : String(raw);",
     "new": "    const v = raw;",
     "tests": [
-      "test/scale3.test.js"
+      "test/net/scale3.test.js"
     ],
     "note": "a number knob taken as text"
   },
@@ -65,7 +65,7 @@
     "old": "  const r = bot.mover ? bot.radius : 0;",
     "new": "  const r = bot.mover ? bot.radius * 20 : 0;",
     "tests": [
-      "test/scale3.test.js"
+      "test/net/scale3.test.js"
     ],
     "note": "a walk past the relay's range of the town"
   },
@@ -75,7 +75,7 @@
     "old": "  const cx = 13 + 2 * k, cy = 13;",
     "new": "  const cx = 13 + k, cy = 13;",
     "tests": [
-      "test/scale3.test.js"
+      "test/net/scale3.test.js"
     ],
     "note": "two towns a cell apart - one's halo the next one's cell"
   },
@@ -85,7 +85,7 @@
     "old": "  return JSON.stringify({ name: bot.name, level: 1, goldPieces: 100, items, place: poseAt(bot, at / 1000), at });",
     "new": "  return JSON.stringify({ name: bot.name, level: 1, goldPieces: 100, items, place: poseAt(bot, at / 1000) });",
     "tests": [
-      "test/scale3.test.js"
+      "test/net/scale3.test.js"
     ],
     "note": "a checkpoint's save without its moment"
   },
@@ -95,7 +95,7 @@
     "old": "  for (const f of finals) {\n    bots += f.bots;",
     "new": "  for (const f of finals.slice(1)) {\n    bots += f.bots;",
     "tests": [
-      "test/scale3.test.js"
+      "test/net/scale3.test.js"
     ],
     "note": "the first fleet's tallies left out of the run's"
   },
@@ -105,7 +105,7 @@
     "old": "  if (list.length < max) { list.push(v); return; }",
     "new": "  list.push(v); return;",
     "tests": [
-      "test/scale3.test.js"
+      "test/net/scale3.test.js"
     ],
     "note": "a crowded run's pose ages kept without bound"
   }

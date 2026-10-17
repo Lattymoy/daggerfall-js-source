@@ -22,7 +22,7 @@
 // tools/bakeThunderlock.mjs is the precedent and this follows it where
 // the two are the same thing - the source committed beside what it
 // makes, the numbers in a file somebody can read, the output re-made
-// byte for byte by test/mwbrig2.test.js - and departs where they are not:
+// byte for byte by test/formats/morrowind/mwbrig2.test.js - and departs where they are not:
 //
 //   WHERE IT SITS IS THE AUTHORING. Mac fitted the brigandine onto the
 //   Morrowind body in his scene (his answer, asked: "fitted in place"),
@@ -32,7 +32,7 @@
 //   was fitted to. MW-BRIG3: the scene's body is NOT the skeleton at rest
 //   - it stood lower, and drawn at the scene's height the brigandine sat
 //   under the torso - so its height is measured on the wearer at bind time
-//   (ownArmorModels.js `fitTo`, formats/mwSkinTransfer.js fitLift). The
+//   (ownArmorModels.js `fitTo`, formats/morrowind/mwSkinTransfer.js fitLift). The
 //   bake keeps the scene's numbers; the binder puts it on the body.
 //
 //   THE TEXTURE IS PAINTED, NOT BAKED. The Thunderlock's DDS was grown
@@ -41,7 +41,7 @@
 //   PNG, mip-chained, and the mesh keeps its own unwrap.
 //
 //   IT IS ONE PIECE, SKINNED FROM THE BODY AT BIND TIME (MW-BRIG2,
-//   formats/mwSkinTransfer.js). MW-BRIG1 split it at the belt and hung the
+//   formats/morrowind/mwSkinTransfer.js). MW-BRIG1 split it at the belt and hung the
 //   halves rigid on the Chest and Groin nodes. Skinned from the chest,
 //   groin, thighs and knees, the whole garment moves with the body it
 //   covers, and the skirt bends with the legs. (What moved it in game, in
@@ -55,7 +55,7 @@ import { meshToNif } from './nifWrite.mjs';
 import { previewSheet } from './meshSheets.mjs';
 import { readPng, writePng } from './pngIO.mjs';
 import { isMain } from './lib/isMain.mjs';
-import { BRIGANDINE_METALS } from '../src/characters/ownArmorModels.js';
+import { BRIGANDINE_METALS } from '../src/characters/ownModels/ownArmorModels.js';
 
 /** Mac's Blender export and the texture it names, committed so the bake
  *  is reproducible. (The FBX points at the PNG as "Steel.png"; it is

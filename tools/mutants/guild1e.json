@@ -5,7 +5,7 @@
     "old": "      WHERE EXISTS (SELECT 1 FROM guild_members WHERE player = ?3 AND char_id = ?4 AND guild_id = ?2)\n",
     "new": "      WHERE 1 = 1\n",
     "tests": [
-      "test/guild1e_service.test.js"
+      "test/net/guild1e_service.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "AND expires_at > ?8) < ?11`)",
     "new": "AND expires_at > ?8) <= ?11`)",
     "tests": [
-      "test/guild1e_service.test.js"
+      "test/net/guild1e_service.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "AND (COALESCE(p.muted_until, 0) <= ?2 OR n.author = ?3)",
     "new": "AND (1 = 1 OR n.author = ?3)",
     "tests": [
-      "test/guild1e_service.test.js"
+      "test/net/guild1e_service.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    WHERE n.guild_id = ?1 AND n.expires_at > ?2",
     "new": "    WHERE n.guild_id IS NOT NULL AND n.expires_at > ?2",
     "tests": [
-      "test/guild1e_service.test.js"
+      "test/net/guild1e_service.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": ".bind(me.guild_id, nowS, player.id, GUILD_NOTES_SHOWN).all();",
     "new": ".bind(me.guild_id, nowS, player.id, GUILD_NOTES_SHOWN + 1).all();",
     "tests": [
-      "test/guild1e_service.test.js"
+      "test/net/guild1e_service.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "rank IN (${HALL_POWERS.notes.join(', ')})))`)",
     "new": "rank IN (0, 1, 2)))`)",
     "tests": [
-      "test/guild1e_service.test.js"
+      "test/net/guild1e_service.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "DELETE FROM guild_notes WHERE id = ?1 AND guild_id = ?2\n",
     "new": "DELETE FROM guild_notes WHERE id = ?1 AND ?2 IS NOT NULL\n",
     "tests": [
-      "test/guild1e_service.test.js"
+      "test/net/guild1e_service.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "    AND (author = ?3 OR EXISTS",
     "new": "    AND (0 = 1 OR EXISTS",
     "tests": [
-      "test/guild1e_service.test.js"
+      "test/net/guild1e_service.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "  if (!boardOpenFor(player, env)) return { error: 'board-closed' };\n",
     "new": "",
     "tests": [
-      "test/guild1e_service.test.js"
+      "test/net/guild1e_service.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "  if (isMuted(player, nowS)) return { error: 'muted' };\n",
     "new": "",
     "tests": [
-      "test/guild1e_service.test.js"
+      "test/net/guild1e_service.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "  id: n.id, from: n.author_name, subject: maskText(n.subject),",
     "new": "  id: n.id, from: n.author_name, author: n.author, subject: maskText(n.subject),",
     "tests": [
-      "test/guild1e_service.test.js"
+      "test/net/guild1e_service.test.js"
     ]
   },
   {
@@ -104,8 +104,8 @@
     "old": "      keeper: hallMay(me.rank, 'notes'),",
     "new": "      keeper: false,",
     "tests": [
-      "test/guild1e_service.test.js",
-      "test/guild1e_client.test.js"
+      "test/net/guild1e_service.test.js",
+      "test/net/guild1e_client.test.js"
     ]
   },
   {
@@ -114,7 +114,7 @@
     "old": "  FOREIGN KEY (guild_id) REFERENCES guilds(id) ON DELETE CASCADE,",
     "new": "  FOREIGN KEY (guild_id) REFERENCES guilds(id),",
     "tests": [
-      "test/guild1e_service.test.js"
+      "test/net/guild1e_service.test.js"
     ]
   },
   {
@@ -123,8 +123,8 @@
     "old": "heraldry: heraldryOfRow(n.guild_heraldry) } } : {}),",
     "new": "heraldry: null } } : {}),",
     "tests": [
-      "test/guild1e_service.test.js",
-      "test/guild1e_client.test.js"
+      "test/net/guild1e_service.test.js",
+      "test/net/guild1e_client.test.js"
     ]
   },
   {
@@ -133,7 +133,7 @@
     "old": "  notes: Object.freeze([0, 1]),",
     "new": "  notes: Object.freeze([0, 1, 2]),",
     "tests": [
-      "test/guild1e_service.test.js"
+      "test/net/guild1e_service.test.js"
     ]
   },
   {
@@ -142,7 +142,7 @@
     "old": "if (!force && nowMs() - e.at < BOARD_CACHE_MS) return Promise.resolve({ data: e.data",
     "new": "if (false && nowMs() - e.at < BOARD_CACHE_MS) return Promise.resolve({ data: e.data",
     "tests": [
-      "test/guild1e_client.test.js"
+      "test/net/guild1e_client.test.js"
     ]
   },
   {
@@ -151,7 +151,7 @@
     "old": "(id) => door.guildPin({ character, ...note }, id)",
     "new": "() => door.guildPin({ character, ...note }, rid())",
     "tests": [
-      "test/guild1e_client.test.js"
+      "test/net/guild1e_client.test.js"
     ]
   },
   {
@@ -160,7 +160,7 @@
     "old": "      async () => { forgetGuild(character); await readGuild(character, { force: true }); }),",
     "new": "      async () => {}),",
     "tests": [
-      "test/guild1e_client.test.js"
+      "test/net/guild1e_client.test.js"
     ]
   },
   {
@@ -169,7 +169,7 @@
     "old": "text: after ? guildRefusal(r?.error) : accountRefusalText(r?.error)",
     "new": "text: accountRefusalText(r?.error)",
     "tests": [
-      "test/guild1e_client.test.js"
+      "test/net/guild1e_client.test.js"
     ]
   },
   {
@@ -178,7 +178,7 @@
     "old": "...(guildsShown() ? [['guilds', 'Guilds']] : []), ...(seatShown() ? [['seat', 'Seat']] : [])];",
     "new": "...(seatShown() ? [['seat', 'Seat']] : [])];",
     "tests": [
-      "test/guild1e_client.test.js"
+      "test/net/guild1e_client.test.js"
     ],
     "note": "SEAT1b (PIN MOVED): re-aimed by content - the board's tabs gained the Seat tab after Guilds."
   },
@@ -188,7 +188,7 @@
     "old": "(n) => n?.button === 'guild' && n.guild);",
     "new": "(n) => !!n?.guild);",
     "tests": [
-      "test/guild1e_client.test.js"
+      "test/net/guild1e_client.test.js"
     ]
   },
   {
@@ -197,7 +197,7 @@
     "old": "    if (!heraldry) return null;\n    const img",
     "new": "    return null;\n    const img",
     "tests": [
-      "test/guild1e_client.test.js"
+      "test/net/guild1e_client.test.js"
     ]
   },
   {
@@ -206,7 +206,7 @@
     "old": "    if (guildOnly) { loadGuild(force); return; }",
     "new": "    if (guildOnly) { loadGuild(force); }",
     "tests": [
-      "test/guild1e_client.test.js"
+      "test/net/guild1e_client.test.js"
     ]
   },
   {
@@ -215,25 +215,25 @@
     "old": "if (c.gnote && (c.gnote.mine || gme().keeper))",
     "new": "if (c.gnote && (c.gnote.mine || true))",
     "tests": [
-      "test/guild1e_client.test.js"
+      "test/net/guild1e_client.test.js"
     ]
   },
   {
     "name": "GUILD1e-board-in-a-home",
-    "file": "src/systems/decorCatalogue.js",
+    "file": "src/systems/decor/decorCatalogue.js",
     "old": "(!e.hall || (!!room?.hall && !room?.yard))",
     "new": "(!e.hall || true)",
     "tests": [
-      "test/guild1e_client.test.js"
+      "test/net/guild1e_client.test.js"
     ]
   },
   {
     "name": "GUILD1e-scan-without-the-board",
-    "file": "src/systems/decorScan.js",
+    "file": "src/systems/decor/decorScan.js",
     "old": "[...decorCatalogue(mods ? addDecorMods(read) : read), HALL_BOARD_ENTRY]",
     "new": "[...decorCatalogue(mods ? addDecorMods(read) : read)]",
     "tests": [
-      "test/guild1e_client.test.js"
+      "test/net/guild1e_client.test.js"
     ],
     "note": "DECOR-MODS (FIELD BUGS 2026-10-05b, PIN MOVED): re-aimed by content - the town mods' furnishings join before the board. AUDIT 05b (PIN MOVED): re-aimed by content - the mods join whatever is on (A3)."
   },
@@ -243,7 +243,7 @@
     "old": "piece?.model === BULLETIN_BOARD_MODEL_ID && !piece.item;",
     "new": "piece?.model != null && !piece.item;",
     "tests": [
-      "test/guild1e_client.test.js"
+      "test/net/guild1e_client.test.js"
     ]
   },
   {
@@ -252,7 +252,7 @@
     "old": "    if (!hallMemberHere()) { say(hallBoardShutLine(hallNameHere())); return; }\n",
     "new": "",
     "tests": [
-      "test/guild1e_client.test.js"
+      "test/net/guild1e_client.test.js"
     ]
   },
   {
@@ -261,7 +261,7 @@
     "old": "      guilds: true,   // GUILD1e",
     "new": "      guilds: false,   // GUILD1e",
     "tests": [
-      "test/guild1e_client.test.js"
+      "test/net/guild1e_client.test.js"
     ]
   },
   {
@@ -270,7 +270,7 @@
     "old": "guildOnly: { name: name || 'the guild' } }) : false);",
     "new": "guildOnly: null }) : false);",
     "tests": [
-      "test/guild1e_client.test.js"
+      "test/net/guild1e_client.test.js"
     ]
   }
 ]

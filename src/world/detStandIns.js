@@ -324,7 +324,7 @@ const DIVINE_TAPESTRIES = Object.freeze(DIVINES.map((god) => 45141 + DIVINES.ind
 const DIVINE_BANNERS = Object.freeze(DIVINES.map((_god, k) => 45150 + k));
 
 /** THE PICTURE EACH OF DET'S HANGINGS AND RUGS WEARS (world/townPictures.js, TOWN_PICTURE_ARCHIVE), by id - the one table
- *  its builder and its name in the house decorator (systems/decorMods.js decorModNaming) both read. AUDIT 05b A8: the
+ *  its builder and its name in the house decorator (systems/decor/decorMods.js decorModNaming) both read. AUDIT 05b A8: the
  *  name was read off the built model - a whole model built to name a piece, and none to be had while its switch was off. */
 export const DET_PICTURES = Object.freeze({
   ...Object.fromEntries(REGIONS.flatMap(([name, tapestry, flag]) => [[tapestry, PICTURE.regionTapestry(name)], [flag, PICTURE.regionBanner(name)]])),

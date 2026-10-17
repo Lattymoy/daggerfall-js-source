@@ -255,7 +255,7 @@ export function landWakingDebt(s, now) {
 
 /** SLEEP PAYS ITS DEBT BY ITS QUALITY: `minutes` asleep `sleeping` ('bed' | 'camp' | 'rough') take what they pay off the
  *  record's debt, never below the tier's rough floor, and the sleeper is awake from `now`. The minute law pays its
- *  minute here; REST-SLEEP1's short rest (systems/restAct.js sleepShortRest) a night's minutes at once, no clock moving. */
+ *  minute here; REST-SLEEP1's short rest (systems/rest/restAct.js sleepShortRest) a night's minutes at once, no clock moving. */
 export function paySleep(s, sleeping, minutes, now, rules = HARD_RULES) {
   const rate = sleeping === 'rough' ? 0.5 : 1.5;   // hours of debt per hour asleep
   const floor = sleeping === 'rough' ? SLEEP_FLOOR_AT[rules.roughSleepFloor] ?? 0 : 0;   // SURV-TIERS: Hard's rough night never pays below tired; Casual's pays down to nothing
@@ -570,7 +570,7 @@ export function survivalMinute(entity, now, env = {}, deps = {}) {
     // buy a separate, harsher damage law.
     //
     // Not in your sleep, and not sat by a fire - the same two words the
-    // temperature harm below uses. Nothing in `systems/rest.js` refuses a
+    // temperature harm below uses. Nothing in `systems/rest/rest.js` refuses a
     // rest for thirst, so a sleeper who could not wake to drink would be
     // killed by a window they were allowed to open.
     //
@@ -810,7 +810,7 @@ export function runSurvivalMinutes(entity, from, to, env, deps) {
   // the host's weather, which its window re-reads every few minutes.
   const jump = end - start > 1;
   const sky = deps.skyFollows && jump ? { ...env } : null;
-  if (sky && !env.resting && end - start > ROAD_MINUTES) Object.assign(sky, { weather: 'sunny', byFire: false, swimming: false, submerged: false, wading: false });
+  if (sky && !env.resting && end - start > ROAD_MINUTES) Object.assign(sky, { weather: 'sunny', falling: null, byFire: false, swimming: false, submerged: false, wading: false });
   const sinks = deps.sinks ?? {};
   // AUDIT C&C N2/H1: A JUMP NEVER EMPTIES THE POOL. In Hard every replayed minute drained the live pool, and at nothing
   // the host's collapse fired from inside the replay - a nested hour and a box each time: a three-day fast travel

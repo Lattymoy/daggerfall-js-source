@@ -40,6 +40,10 @@
 //   heatDegrees     LOOT15: degrees the heat is felt less
 //   fatigueLess     LOOT15: % less of the minute's fatigue drain (scenes/shared.js fatigueLossMultiplierFor)
 //   fallLess        LOOT15: % less of a fall's damage (scenes/shared.js applyFallLanding)
+//   magicka         EG15: points on the maximum magicka - the Battlemage's Bearing (systems/sigil/sigilSetPowers.js); the live
+//                   accessor reads it beside Renown's term (systems/chargen.js defineLiveMaxMagicka, through
+//                   systems/renownLayer.js foldMpOf), so a save takes it off with Renown's (offlineVitals) and the
+//                   magery's third is never taken of it (passiveSpecials.js)
 // and, for the item in hand rather than the wearer:
 //   weapon damage   registerWeaponDamageMod - a function over the
 //                   weapon's rolled damage (calculateAttackDamage)
@@ -63,11 +67,11 @@ export const EMPTY_MODS = Object.freeze({
   armorParts: Object.freeze(new Array(NUMBER_BODY_PARTS).fill(0)),
   stats: Object.freeze({}), statMax: Object.freeze({}), skills: Object.freeze({}), resist: Object.freeze({}), weightMult: 0,
   standing: Object.freeze(new Array(STANDING_CHANNELS).fill(0)),
-  ...Object.fromEntries(WARDROBE_CHANNELS.map((k) => [k, 0])),
+  ...Object.fromEntries(WARDROBE_CHANNELS.map((k) => [k, 0])), magicka: 0,   // EG15: the maximum magicka's points
 });
 /** A fresh, writable record for a fold to fill. */
 export const newMods = () => ({ armorParts: new Array(NUMBER_BODY_PARTS).fill(0), stats: {}, statMax: {}, skills: {}, resist: {}, weightMult: 0,
-  standing: new Array(STANDING_CHANNELS).fill(0), ...Object.fromEntries(WARDROBE_CHANNELS.map((k) => [k, 0])) });
+  standing: new Array(STANDING_CHANNELS).fill(0), ...Object.fromEntries(WARDROBE_CHANNELS.map((k) => [k, 0])), magicka: 0 });
 
 const _folds = new Map();
 /** Register a fold by name: `fn(entity) -> mods` (any channel may be
@@ -82,7 +86,7 @@ const _blowMods = new Map();
 /** SIGIL1: register a modifier over a WEAPON BLOW's whole damage - `fn(weapon, damage, attacker, target, info) -> damage`,
  *  read at the tail of FormulaHelper's weapon damage (after the strength, the material and the enemy-type term, before
  *  DFU's mod hook, its last line), where the
- *  attacker and the target are known: the online sigil (systems/sigil.js) is the one that needs them.
+ *  attacker and the target are known: the online sigil (systems/sigil/sigil.js) is the one that needs them.
  *  SET2: `info` is what the striker's host knew and the formula could not - `{ unaware }`, the struck foe had not
  *  noticed the striker (its AI's `detected`, read where the foe RECORD is in hand: combat/playerWeapon.js foeUnaware).
  *  Read under EITHER core - DFU's (combat/formulas.js weaponAttackDamage) and PCAAO's (combat/pcaao.js
@@ -118,6 +122,7 @@ export function computeEntityMods(entity) {
     out.weightMult += Number(m.weightMult) || 0;
     if (Array.isArray(m.standing)) for (let g = 0; g < STANDING_CHANNELS; g++) out.standing[g] += Number(m.standing[g]) || 0;   // LOOT14
     for (const k of WARDROBE_CHANNELS) out[k] += Number(m[k]) || 0;
+    out.magicka += m.magicka | 0;   // EG15: whole points
   }
   entity._mods = out;
   return out;

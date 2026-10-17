@@ -5,7 +5,7 @@
     "old": "  if (shelfStands(kept, today)) return kept;\n  if (store) for",
     "new": "  if (store) for",
     "tests": [
-      "test/guildshelf.test.js"
+      "test/systems/guildshelf.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  if (shelfStands(kept, today)) return kept;",
     "new": "  if (kept && Array.isArray(kept.items)) return kept;",
     "tests": [
-      "test/guildshelf.test.js"
+      "test/systems/guildshelf.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  if (store) store[service] = shelf;\n  return shelf;",
     "new": "  return shelf;",
     "tests": [
-      "test/guildshelf.test.js"
+      "test/systems/guildshelf.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  const kept = store?.[service];",
     "new": "  const kept = store && Object.values(store)[0];",
     "tests": [
-      "test/guildshelf.test.js"
+      "test/systems/guildshelf.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    .map(([service, s]) => [service, { day: s.day, items: s.items.map((it) => ({ ...it })) }])),",
     "new": "    .map(([service, s]) => [service, { day: s.day, items: [] }])),",
     "tests": [
-      "test/guildshelf.test.js"
+      "test/systems/guildshelf.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "    .map(([service, s]) => [service, { day: s.day, items: s.items.map((it) => ({ ...it })) }])),",
     "new": "    .map(([service, s]) => [service, { day: s.day, items: s.items }])),",
     "tests": [
-      "test/guildshelf.test.js"
+      "test/systems/guildshelf.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "      const shelf = guildShelf('BuyPotions', () => stockGuildPotions({ quality: shelfQuality(), gameMinutes: Math.floor(worldMinutes()) }));",
     "new": "      const shelf = { items: stockGuildPotions({ quality: shelfQuality(), gameMinutes: Math.floor(worldMinutes()) }) };",
     "tests": [
-      "test/guildshelf.test.js"
+      "test/systems/guildshelf.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "terrainScale: STREAMING_TERRAIN_SCALE, guildShelves };",
     "new": "terrainScale: STREAMING_TERRAIN_SCALE };",
     "tests": [
-      "test/guildshelf.test.js"
+      "test/systems/guildshelf.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "    interiorCtx.guildShelves = data.guildShelves ?? {};",
     "new": "    interiorCtx.guildShelves = {};",
     "tests": [
-      "test/guildshelf.test.js"
+      "test/systems/guildshelf.test.js"
     ]
   }
 ]

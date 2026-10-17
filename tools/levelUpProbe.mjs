@@ -367,7 +367,7 @@ for (const [label, viewport] of [
 // no breath bar, no effect chips, no needs strip - so the clearance
 // check below passed over a block 30px tall that is 111px tall in an
 // ordinary fight. It is filled here before it is measured, and a third
-// lane runs at `--hud-scale` 2, the top of ui/enhancedHud.js's own
+// lane runs at `--hud-scale` 2, the top of ui/enhanced/enhancedHud.js's own
 // range: a strip judged over an empty block at one scale is judged
 // against nothing.
 for (const [label, viewport, hudScale] of [

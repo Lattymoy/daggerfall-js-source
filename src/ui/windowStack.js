@@ -102,7 +102,7 @@ const HELD_BY = new WeakMap();
 /** PLEA-LOOP: TopWindow is the only window that receives input (the header above) - a window a stack holds UNDER
  *  another is COVERED, and answers nothing until it is the top again. The keys and the canvas reach the top alone
  *  through their host; a door that reaches a window directly - the enhanced keyed menu's buttons
- *  (ui/enhancedDialog.js drawEnhancedChoice) - asks this first. A window no stack holds (the boot menu's, chargen's) is
+ *  (ui/enhanced/enhancedDialog.js drawEnhancedChoice) - asks this first. A window no stack holds (the boot menu's, chargen's) is
  *  nobody's to cover. */
 export function windowCovered(win) {
   const stack = win ? HELD_BY.get(win) : null;
@@ -200,7 +200,7 @@ export function makeWindowStack({ hud = null, onTop = null, onWindowChange = nul
      *  no longer the hosts' pause question - counting it to decide
      *  whether the world is stopped was the per-host arithmetic
      *  `paused()` replaced, and no host does it now
-     *  (test/roadb_host_pause.test.js sweeps for it). */
+     *  (test/scenes/roadb_host_pause.test.js sweeps for it). */
     depth: () => windows.length - (hud ? 1 : 0),
 
     /** PushWindow (:79-91). RISE-STUCK: over a window that holds the

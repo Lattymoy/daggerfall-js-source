@@ -70,7 +70,7 @@
 // the test and take the GPU's early rejection from the whole pass.
 // ═══════════════════════════════════════════════════════════════════
 
-import { SCALED_OCEAN_ELEVATION, STREAMING_TERRAIN_SCALE, TERRAIN_SIZE } from '../world/terrainSampler.js';
+import { SCALED_OCEAN_ELEVATION, STREAMING_TERRAIN_SCALE, TERRAIN_SIZE } from '../world/terrain/terrainSampler.js';
 import { overworldTint, isWaterPixel, BASE_HEIGHT_SCALE } from '../ui/overworldModel.js';   // FAR-SEA1: and the overworld's own water rule, for the ring's sea
 import { reliefByteHeight, cliffFadeAt, CLIFF_REACH } from '../world/landforms.js';   // LANDFORM1: the landforms' lift on a pixel's byte; AUDIT LANDFORMS II I1: faded beside the sea
 import { perspective, mirrorProjectionX } from '../world/mat4.js';
@@ -131,7 +131,7 @@ export function buildFarRingGrid({ heightBytes, mapWidth, mapHeight, climateAt, 
   const sea = new Uint8Array(side * side);   // FAR-SEA1: 255 where the vertex is the sea - a water pixel at the sea's own height
   const clampX = (x) => Math.max(0, Math.min(mapWidth - 1, x));
   const clampY = (y) => Math.max(0, Math.min(mapHeight - 1, y));
-  // TAMRIEL2: past the map the host may hand the continent's own bytes (world/tamrielGround.js groundWoods); the map's
+  // TAMRIEL2: past the map the host may hand the continent's own bytes (world/tamriel/tamrielGround.js groundWoods); the map's
   // bytes stay the buffer's, read as ever - the clamp is the host's edge-of-the-world when it hands none
   const byteAt = byteAtPast
     ? (x, y) => (x >= 0 && y >= 0 && x < mapWidth && y < mapHeight ? heightBytes[y * mapWidth + x] : byteAtPast(x, y))

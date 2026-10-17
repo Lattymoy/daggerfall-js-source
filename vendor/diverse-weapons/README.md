@@ -28,7 +28,7 @@ no licence line of their own.]**
   the bundle carries FOR WEAPON WIDGET, verbatim: "Recommended settings
   for DW". The readme says "For Weapon Widget users, select Diverse
   Weapons settings preset in Weapon Widget mod options."
-  `src/combat/diverseWeapons.js` restates it as the store's own keys
+  `src/combat/diverseWeapons/diverseWeapons.js` restates it as the store's own keys
   and lays it over the player's Weapon Widget settings while the mod's
   `WeaponWidgetPreset` switch is on (their own values kept underneath).
 - `Readme.txt` - the zip's own readme, verbatim.
@@ -57,7 +57,7 @@ is written - every drawn pixel identical, every hidden pixel hidden; not
 byte-lossless, because the ghost colour under the transparent pixels
 collapses to one index. What the folder may hold is this manifest's own
 file list (`tools/diverseWeaponsIndex.mjs` derives the door's index from
-it; `test/doctrine.test.js` derives the folder's membership from it), so
+it; `test/tooling/doctrine.test.js` derives the folder's membership from it), so
 the port cannot quietly widen it. These sprites are the author's own
 paintings rather than renders of ARENA2, so Port-Doctrine's "a render of
 game data is game data" ruling - the one that keeps Weapon Widget's and

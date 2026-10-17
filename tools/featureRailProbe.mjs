@@ -14,7 +14,7 @@
 //
 // Measured at the FT15 trim: tallest note 619px -> 300px, with nothing
 // over 300 where five rows had been over 350. The ceiling below is the
-// same guard test/features.test.js holds in characters, in the unit the
+// same guard test/systems/features.test.js holds in characters, in the unit the
 // player actually sees.
 import { chromium } from 'playwright';
 import { FEATURES } from '../src/systems/features.js';

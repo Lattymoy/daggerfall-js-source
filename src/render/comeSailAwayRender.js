@@ -1,7 +1,7 @@
 // @ts-check
 // ═══════════════════════════════════════════════════════════════════
 // CSA-F (2026-09-27): COME SAIL AWAY'S WAVES, DRAWN - the wave object's
-// mesh (systems/comeSailAwayWaves.js) on the bundle's CurrentMaterial, its
+// mesh (systems/comeSailAway/comeSailAwayWaves.js) on the bundle's CurrentMaterial, its
 // shader Daggerfall/Dither/Wave as the bundle's compiled program has it:
 //
 //   - the frame, tiled ten times each way (_MainTex_ST), point-sampled and
@@ -31,7 +31,7 @@
 // mod's frames carry one level (m_MipCount 1), so a strip seen from a few
 // hundred metres picked one texel of dozens a pixel and boiled as the deck
 // bobbed the camera. Each paint is uploaded as its chain instead
-// (systems/comeSailAwayWaves.js wavePaintLevels): level 0 the paint itself,
+// (systems/comeSailAway/comeSailAwayWaves.js wavePaintLevels): level 0 the paint itself,
 // and past it the mean of the frame it composes, premultiplied - the snow at
 // its record's mean. The shader picks the level NEAREST_MIPMAP_NEAREST would
 // (GL ES 3.0 3.8.10, from the texel footprint): at level 0 - a texel a pixel
@@ -48,7 +48,7 @@
 
 import { buildProgram } from './glProgram.js';
 import { FOG_GLSL } from './fogGlsl.js';
-import { BAYER_8X8, WAVE_MATERIAL, wavePaintLevels, wavePictureMean } from '../systems/comeSailAwayWaves.js';
+import { BAYER_8X8, WAVE_MATERIAL, wavePaintLevels, wavePictureMean } from '../systems/comeSailAway/comeSailAwayWaves.js';
 import { WATER_LAYER_UNITS } from './waterSurface.js';   // FIELD BUGS 2026-09-29 (the sea) #4: the breakers' place in the sea's stack
 import { quatRotateInto } from '../world/quat.js';   // SHIP-FLAGS: quatRotate's answer, written in place
 const _flagP = [0, 0, 0], _flagN = [0, 0, 0];   // SHIP-FLAGS: the flag cubes' two scratch turns
@@ -299,7 +299,7 @@ export function softParticleTexture(size = 64) {
 const locs = (gl, p, names) => Object.fromEntries(names.map((n) => [n, gl.getUniformLocation(p, n)]));
 const LIGHT_FOG = ['uAmbient', 'uSunColor', 'uSunScale', 'uLightDir', 'uCamPos', 'uFogColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uDwFog', 'uFocus'];   // TV1: and the travel view's focus (fogGlsl.js FOCUS_GLSL)
 
-/** #4: a chain of levels (systems/comeSailAwayWaves.js wavePaintLevels), every level uploaded - texelFetch reads it,
+/** #4: a chain of levels (systems/comeSailAway/comeSailAwayWaves.js wavePaintLevels), every level uploaded - texelFetch reads it,
  *  at a level the shader picks. */
 const uploadLevels = (gl, levels) => {
   const tex = gl.createTexture();

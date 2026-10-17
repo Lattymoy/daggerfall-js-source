@@ -5,7 +5,7 @@
     "old": "      if (seatHeld.length && !m.cl) { this._refuse(ws, SEAT_ELSEWHERE, CLOSE_REPLACED); return; }\n",
     "new": "",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "if (seatHeld.length && !m.cl) {",
     "new": "if (seatHeld.length) {",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "      if (m.cl) for (const other of seatHeld) this._refuse(other, SEAT_ELSEWHERE, CLOSE_REPLACED);\n",
     "new": "",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "const seatHeld = isSocialRoom(a.key) && who.subject ?",
     "new": "const seatHeld = who.subject ?",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "b.id !== id && b.sub === sub && !this._dead.has(other)",
     "new": "b.id !== id && b.acct === sub && !this._dead.has(other)",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "b?.id && b.id !== id && b.sub === sub && !this._dead",
     "new": "b?.id && b.sub === sub && !this._dead",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ],
     "note": "SCALE5a (re-aimed by content): ONE-SEAT's other tabs read off the subject index (`_otherTabsOf`)."
   },
@@ -60,7 +60,7 @@
     "old": "      hello.cl = 1;\n",
     "new": "",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -69,7 +69,7 @@
     "old": "      if (m.cl !== 1) return { error: 'bad claim' };\n",
     "new": "",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -78,7 +78,7 @@
     "old": "    if (this.claim) frame.cl = 1;",
     "new": "    if (false) frame.cl = 1;",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -87,7 +87,7 @@
     "old": "      if (primary) this.claim = false;   // ONE-SEAT",
     "new": "      // ONE-SEAT",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -96,7 +96,7 @@
     "old": "if (code === CLOSE_REPLACED) { this.superseded = true; this.terminal = true;",
     "new": "if (code === CLOSE_REPLACED) { this.terminal = true;",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -105,7 +105,7 @@
     "old": "    if (this.superseded) return;   // ONE-SEAT: the seat is another tab's",
     "new": "    // ONE-SEAT: the seat is another tab's",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -114,7 +114,7 @@
     "old": "    if (this.superseded) return false;   // ONE-SEAT: a superseded session",
     "new": "    // ONE-SEAT: a superseded session",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -123,7 +123,7 @@
     "old": "    this.claim = !!claim;",
     "new": "    this.claim = false;",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -132,7 +132,7 @@
     "old": "  supersede() {\n    this.leave();\n",
     "new": "  supersede() {\n",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -141,7 +141,7 @@
     "old": "      if (!held) return;\n",
     "new": "",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -150,7 +150,7 @@
     "old": "if (!m || m.t !== 'seat' || m.n === nonce || !Number.isFinite(m.at)) return;",
     "new": "if (!m || m.t !== 'seat' || !Number.isFinite(m.at)) return;",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -159,7 +159,7 @@
     "old": "      held = false;\n      try { onLost(); }",
     "new": "      try { onLost(); }",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -168,7 +168,7 @@
     "old": "      const cls = act ? 'dfchat-here on' : 'dfchat-here';",
     "new": "      const cls = 'dfchat-here';",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -177,7 +177,7 @@
     "old": "      hereRun = act ? act.run : null;",
     "new": "      hereRun = null;",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -186,7 +186,7 @@
     "old": "      if (tab.room === SOCIAL_ROOM) link.claim = true;\n",
     "new": "",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -195,7 +195,7 @@
     "old": "    if (online.url) seatLock.claim();",
     "new": "    if (online.url) void 0;",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -204,7 +204,7 @@
     "old": "    if (seatOut()) {\n      if (!_seatLeft) leaveSeat(now);\n",
     "new": "    if (false) {\n      if (!_seatLeft) leaveSeat(now);\n",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -213,7 +213,7 @@
     "old": "        const handed = handOverFoes() || handOverRoomFoes();",
     "new": "        const handed = 0;",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -222,7 +222,7 @@
     "old": "    earning: () => !!online && !seatOut() && _renownCapHour !== renownHour(),",
     "new": "    earning: () => !!online && _renownCapHour !== renownHour(),",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ],
     "note": "SCALE4h (re-aimed by content): a spent hour's clause beside it."
   },
@@ -232,7 +232,7 @@
     "old": "      link.resume({ claim: room === SOCIAL_ROOM });",
     "new": "      link.resume();",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -241,7 +241,7 @@
     "old": "    for (const link of chatLinks?.values?.() ?? []) link.supersede();\n",
     "new": "",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -250,7 +250,7 @@
     "old": " this._deliver('superseded', () => this.onSuperseded?.()); return; }",
     "new": " return; }",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -259,7 +259,7 @@
     "old": "      link.onSuperseded = () => seatLostNow();\n      if (tab.room === SOCIAL_ROOM) link.onEvent",
     "new": "      link.onSuperseded = () => {};\n      if (tab.room === SOCIAL_ROOM) link.onEvent",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -268,7 +268,7 @@
     "old": "    _seatOut = true;\n    try { leaveSeat(performance.now()); }",
     "new": "    _seatOut = true;\n    try { void 0; }",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -277,7 +277,7 @@
     "old": "        chatNotice(SEAT_NOTICE);\n",
     "new": "",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -286,7 +286,7 @@
     "old": "_seatOut = false; _seatLeft = false; _seatSaid = false;",
     "new": "_seatOut = false; _seatLeft = false;",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -295,7 +295,7 @@
     "old": "    online?.supersede();\n    for (const link of chatLinks?.values?.() ?? []) link.supersede();\n    // AUDIT PRE-MERGE 1003 O9",
     "new": "    for (const link of chatLinks?.values?.() ?? []) link.supersede();\n    // AUDIT PRE-MERGE 1003 O9",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -304,7 +304,7 @@
     "old": "      if (!others.length && !carried && !this._swept) {",
     "new": "      if (!others.length && !this._swept) {",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ],
     "note": "SCALE5b (re-aimed by content): beside the drain's marker (`_swept`)."
   },
@@ -314,7 +314,7 @@
     "old": "      if (!others.length && !carried && !this._swept) {",
     "new": "      if (false) {",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ],
     "note": "SCALE5b (re-aimed by content): beside the drain's marker (`_swept`)."
   },
@@ -324,7 +324,7 @@
     "old": "const carried = !!replaced || (!!m.cl && seatHeld.length > 0);",
     "new": "const carried = !!m.cl && seatHeld.length > 0;",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -333,7 +333,7 @@
     "old": "const carried = !!replaced || (!!m.cl && seatHeld.length > 0);",
     "new": "const carried = !!replaced;",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -342,7 +342,7 @@
     "old": " && !this._dead.has(other) && !this._gone.has(other)) out.push(other);",
     "new": ") out.push(other);",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -351,7 +351,7 @@
     "old": " && !this._gone.has(other)) out.push(other);",
     "new": ") out.push(other);",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -360,7 +360,7 @@
     "old": "b.sub === sub && !this._dead.has(other) && !this._gone",
     "new": "b.sub === sub && !this._gone",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -369,7 +369,7 @@
     "old": "if (held && held !== m.secret) { this._refuse(ws, 'id taken'); return; }",
     "new": "if (held && held !== m.secret) { if (m.cl) for (const other of seatHeld) this._refuse(other, SEAT_ELSEWHERE, CLOSE_REPLACED); this._refuse(ws, 'id taken'); return; }",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -378,7 +378,7 @@
     "old": "  for (const t of ['pointerdown', 'mousedown', 'click', 'touchstart']) here.addEventListener(t, swallow);\n",
     "new": "",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -387,7 +387,7 @@
     "old": "root.append(peek, hint, status, here, openBtn,",
     "new": "root.append(peek, hint, status, openBtn,",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -396,7 +396,7 @@
     "old": "      const cls = act ? 'dfchat-here on' : 'dfchat-here';",
     "new": "      const cls = act && !hidden ? 'dfchat-here on' : 'dfchat-here';",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -405,7 +405,7 @@
     "old": ".dfchat[data-hidden=\"1\"] .dfchat-show { display: inline-flex; }",
     "new": ".dfchat[data-hidden=\"1\"] .dfchat-show { display: inline-flex; }\n.dfchat[data-hidden=\"1\"] .dfchat-here { display: none; }",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -414,7 +414,7 @@
     "old": "    if (!this.superseded) return;   // AUDIT ONESEAT H2",
     "new": "    // AUDIT ONESEAT H2",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -423,7 +423,7 @@
     "old": "} catch (e) { console.error('[online] the seat\\'s last word could not be said - leaving anyway:', e); }",
     "new": "} catch (e) { throw e; }",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -432,7 +432,7 @@
     "old": "    try { duelLeaveNow(); } catch { /* no duel built, none to end */ }\n    staffTeleportClient?.cancel();\n    cabinLink.close();\n    online?.supersede();",
     "new": "    staffTeleportClient?.cancel();\n    cabinLink.close();\n    online?.supersede();",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -441,7 +441,7 @@
     "old": "    camps.sweepOwners(new Set(), now); hcc.pruneKept([], now);\n",
     "new": "",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -450,7 +450,7 @@
     "old": "    setSigilOnline(false); setRenownLayer(playerEntity, null);",
     "new": "    setRenownLayer(playerEntity, null);",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -459,7 +459,7 @@
     "old": "    setSigilOnline(false); setRenownLayer(playerEntity, null);",
     "new": "    setSigilOnline(false);",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -468,7 +468,7 @@
     "old": "    setSigilOnline(true); setSigilRenown(renownNow); setRenownLayer(playerEntity, renownNow); computeEntityMods(playerEntity);   // AUDIT ONESEAT H3: online again (SET3: the sets' tiers with it)\n",
     "new": "",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -477,7 +477,7 @@
     "old": "    if (!seatOut()) setRenownLayer(playerEntity, level);",
     "new": "    setRenownLayer(playerEntity, level);",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -486,7 +486,7 @@
     "old": "    if (!online || !playerSpawned || seatOut()) return;",
     "new": "    if (!online || !playerSpawned) return;",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -495,7 +495,7 @@
     "old": "  get claim() { return this._claimAt != null && this._now() - this._claimAt <= CLAIM_TTL_MS; }",
     "new": "  get claim() { return this._claimAt != null; }",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -504,7 +504,7 @@
     "old": "      if (m.at < at || (m.at === at && String(m.n) < nonce)) { say(); return; }   // the older claim gives way - the other tab's\n",
     "new": "",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -513,7 +513,7 @@
     "old": "{ say(); return; }",
     "new": "return;",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -522,7 +522,7 @@
     "old": "      at = seen = Math.max(now(), seen + 1);",
     "new": "      at = seen = now();",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -531,7 +531,7 @@
     "old": "      link.onSuperseded = () => seatLostNow();\n      if (tab.room === SOCIAL_ROOM) link.onEvent",
     "new": "      if (tab.room === SOCIAL_ROOM) link.onSuperseded = () => seatLostNow();\n      if (tab.room === SOCIAL_ROOM) link.onEvent",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -540,7 +540,7 @@
     "old": "    if (online.url) seatLock.claim();",
     "new": "    seatLock.claim();",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -549,7 +549,7 @@
     "old": "    this.superseded = true;\n    this.terminal = true; this.terminalAt = this._now();\n",
     "new": "    this.superseded = true;\n",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -558,7 +558,7 @@
     "old": "      const room = chatLog?.tab(tabId)?.room ?? null;",
     "new": "      const room = link.room ?? null;",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -567,7 +567,7 @@
     "old": "    if (online?.room) {\n      try {\n        const handed",
     "new": "    if (online?.room && false) {\n      try {\n        const handed",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -576,7 +576,7 @@
     "old": "        worldPublish(now, true);\n      } catch (e) { console.error('[online] the seat",
     "new": "        // worldPublish(now, true);\n      } catch (e) { console.error('[online] the seat",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -585,7 +585,7 @@
     "old": "    exteriorFoes.clearPuppets(); modes?.clearOwnPuppets?.(); _foesRoom = null;\n    // AUDIT ONESEAT H5",
     "new": "    // AUDIT ONESEAT H5",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -594,7 +594,7 @@
     "old": "        setMidScreenText(SEAT_MID_TEXT);\n      }\n      peerBodies.destroy(); remotePlayers.sync([], onlineToScene); peerRiders?.destroy(); peerWalkers?.destroy();",
     "new": "        setMidScreenText(SEAT_MID_TEXT);\n      }\n      peerBodies.destroy(); remotePlayers.sync([], onlineToScene);",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -603,7 +603,7 @@
     "old": "setRenownLayer(playerEntity, null); computeEntityMods(playerEntity);",
     "new": "setRenownLayer(playerEntity, null);",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -612,7 +612,7 @@
     "old": "setRenownLayer(playerEntity, renownNow); computeEntityMods(playerEntity);",
     "new": "setRenownLayer(playerEntity, renownNow);",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   }
 ]

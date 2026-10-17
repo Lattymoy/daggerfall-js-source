@@ -80,5 +80,5 @@ line and the port's own tier rim), and what is not yet ported (placement -
 the hold, the throw, the freeze, the wheel - the contact shadow, and a
 body's items' saved places: they are laid round it again after a load,
 while a shift-drop is saved where it lies, as any pile is). Its fifteen
-departures are listed there; `bible/01-Overview/Audit-PI1.md` is the
+departures are listed there; `bible/01-Overview/audits/Audit-PI1.md` is the
 audit.

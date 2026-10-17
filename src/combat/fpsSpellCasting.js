@@ -35,7 +35,7 @@
 
 import { CifRciFile } from '../formats/cifRciFile.js';
 import { frameToColor32 } from './fpsWeapon.js';   // the ONE indexed-bitmap bake
-import { weaponOffsetHeight } from '../ui/hudLarge.js';
+import { weaponOffsetHeight } from '../ui/hud/hudLarge.js';
 import { validCastRate } from '../systems/castSpeed.js';   // CAST-SPEED: the rate a cast runs at
 
 /** nativeScreenWidth / nativeScreenHeight (:44-45). NOT 320x200: the
@@ -77,7 +77,7 @@ export const CAST_FRAME_PERIOD = 0.04;
 export const CAST_RECOVER_S = 0.7;
 
 /** MW-CAST1: the longest a release HELD for the Morrowind arm's own key waits (seconds from the cast) before it goes
- *  anyway - NEVER-TRAPS, the bow's HELD_HIT_MAX_S law (combat/weaponRig.js, MW-D42): a .kf with no "<type> release",
+ *  anyway - NEVER-TRAPS, the bow's HELD_HIT_MAX_S law (combat/weapon/weaponRig.js, MW-D42): a .kf with no "<type> release",
  *  an arm that loses its build mid-cast, and the spell still leaves, late rather than never. Morrowind's own casts
  *  release well inside it. */
 export const HELD_RELEASE_MAX_S = 1.5;

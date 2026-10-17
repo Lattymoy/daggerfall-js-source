@@ -54,10 +54,10 @@ import {
   MINUTES_PER_DAY, DAYS_PER_MONTH, isFullMoonFromMinutes, isFullMoonNightFromMinutes,
 } from './gameDate.js';
 import { EQUIP_SLOTS, equipTableOf, unequipSlot } from './equip.js';
-import { spellRecordOfIndex } from './loot.js';
+import { spellRecordOfIndex } from './loot/loot.js';
 import { SKILLS } from './skills.js';
 import { WEAPON_MATERIALS } from '../characters/weapons.js';
-import { KNIGHT_CITY_WATCH } from '../characters/mobileTypes.js';
+import { KNIGHT_CITY_WATCH } from '../characters/mobile/mobileTypes.js';
 
 /** InitMoveSoundTimer (LycanthropyEffect.cs:586-589): Random.Range(4,
  *  20), the FLOAT overload, so any real value in the band and not an
@@ -68,7 +68,7 @@ const initMoveSoundTimer = (rolls) =>
   MOVE_SOUND_MIN_SECONDS + rolls() * (MOVE_SOUND_MAX_SECONDS - MOVE_SOUND_MIN_SECONDS);
 import { ENCHANTMENT_TYPES } from './enchantments.js';
 import { cureAllDiseases, cureAllPoisons } from './effects.js';
-import { cureAllAttributes } from './guildServiceFlow.js';   // CURE-ALL: CureAllAttributes' one home (the guild's stat reset)
+import { cureAllAttributes } from './guild/guildServiceFlow.js';   // CURE-ALL: CureAllAttributes' one home (the guild's stat reset)
 import { fillVitalSigns } from './statMods.js';   // CURE-ALL: FillVitalSigns' one home
 import { SOUND } from './soundClips.js';   // V4: the transformed attack voices
 import { renownHpOf } from './renownLayer.js';   // AUDIT RENOWN1 GAME-4: the online layer rides above the limiter
@@ -443,7 +443,7 @@ export const racialSuppressPopulationSpawns = (entity) => isTransformedNow(entit
  * surrender like anyone. Here it cannot surrender; it roars (scenes/arrestFlow.js carries the box). The chance is
  * Mac's pick of the three offered: the beast's level against the level of the guard who halted it - 50%, five points
  * a level either way, never under 10 nor over 90. The city watch is minted three to six levels above the player
- * (DFU's Range(3, 7) on Knight_CityWatch, characters/enemyEntity.js makeEnemyEntity), so against the watch the roar
+ * (DFU's Range(3, 7) on Knight_CityWatch, characters/enemy/enemyEntity.js makeEnemyEntity), so against the watch the roar
  * runs 20-35%: an even guard is the formula's middle, not the street's.
  */
 export const FRIGHTEN_BASE_CHANCE = 50;

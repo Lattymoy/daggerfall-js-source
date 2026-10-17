@@ -4,167 +4,167 @@
     "file": "src/world/sunbabySky.js",
     "old": "  const from = index === 0 && since < SUNBABY_CYCLE_S ? face : SUNBABY_PHASES[(index + n - 1) % n].face;",
     "new": "  const from = SUNBABY_PHASES[(index + n - 1) % n].face;",
-    "tests": ["test/sunbaby2_phases.test.js"]
+    "tests": ["test/world/sunbaby2_phases.test.js"]
   },
   {
     "name": "SUNBABY2-phase-fire-early",
     "file": "src/world/sunbabySky.js",
     "old": "fire: face === 'evil' && k === 1 };",
     "new": "fire: face === 'evil' };",
-    "tests": ["test/sunbaby2_phases.test.js"]
+    "tests": ["test/world/sunbaby2_phases.test.js"]
   },
   {
     "name": "SUNBABY2-phase-no-morph",
     "file": "src/world/sunbabySky.js",
     "old": "  const x = clamp01((t - start) / SUNBABY_MORPH_S), k = x * x * (3 - 2 * x);",
     "new": "  const x = 1, k = x * x * (3 - 2 * x);",
-    "tests": ["test/sunbaby2_phases.test.js"]
+    "tests": ["test/world/sunbaby2_phases.test.js"]
   },
   {
     "name": "SUNBABY2-frame-joiner-told",
     "file": "src/world/sunbabySky.js",
     "old": "const line = target === 1 && seen !== null && p.face !== seen ? SUNBABY_FACE_LINES[p.face] : null;",
     "new": "const line = target === 1 && p.face !== seen ? SUNBABY_FACE_LINES[p.face] : null;",
-    "tests": ["test/sunbaby2_phases.test.js"]
+    "tests": ["test/world/sunbaby2_phases.test.js"]
   },
   {
     "name": "SUNBABY2-frame-moment-dropped-at-end",
     "file": "src/world/sunbabySky.js",
     "old": "      if (target) at = Number(ev.at);",
     "new": "      at = Number(ev?.at);",
-    "tests": ["test/sunbaby2_phases.test.js"]
+    "tests": ["test/world/sunbaby2_phases.test.js"]
   },
   {
     "name": "SUNBABY2-fire-chance-ignored",
     "file": "src/world/sunbabySky.js",
     "old": "    if (r() >= SUNBABY_FIRE_CHANCE) continue;",
     "new": "    r();",
-    "tests": ["test/sunbaby2_phases.test.js"]
+    "tests": ["test/world/sunbaby2_phases.test.js"]
   },
   {
     "name": "SUNBABY2-fire-slots-unbounded",
     "file": "src/world/sunbabySky.js",
     "old": "  const first = Math.max(Math.floor(fromMs / SUNBABY_FIRE_SLOT_MS), last - SUNBABY_FIRE_SLOTS_MAX + 1);",
     "new": "  const first = Math.floor(fromMs / SUNBABY_FIRE_SLOT_MS);",
-    "tests": ["test/sunbaby2_phases.test.js"]
+    "tests": ["test/world/sunbaby2_phases.test.js"]
   },
   {
     "name": "SUNBABY2-fireball-from-below",
     "file": "src/world/sunbabySky.js",
     "old": "from: [x + up[0] * F, y + up[1] * F, z + up[2] * F]",
     "new": "from: [x + up[0] * F, y - up[1] * F, z + up[2] * F]",
-    "tests": ["test/sunbaby2_phases.test.js"]
+    "tests": ["test/world/sunbaby2_phases.test.js"]
   },
   {
     "name": "SUNBABY2-fireball-ground-ignored",
     "file": "src/world/sunbabySky.js",
     "old": "  const g = ground ? ground(x, z) : NaN, y = Number.isFinite(g) ? g : eye[1];",
     "new": "  const g = NaN, y = Number.isFinite(g) ? g : eye[1];",
-    "tests": ["test/sunbaby2_phases.test.js"]
+    "tests": ["test/world/sunbaby2_phases.test.js"]
   },
   {
     "name": "SUNBABY2-rain-backlog",
     "file": "src/world/sunbabySky.js",
     "old": "      if (lastMs !== null && fire) for (const s of sunbabyFireballs(lastMs, sharedMs))",
     "new": "      if (fire) for (const s of sunbabyFireballs(lastMs ?? 0, sharedMs))",
-    "tests": ["test/sunbaby2_phases.test.js"]
+    "tests": ["test/world/sunbaby2_phases.test.js"]
   },
   {
     "name": "SUNBABY2-rain-fire-ungated",
     "file": "src/world/sunbabySky.js",
     "old": "      if (lastMs !== null && fire) for (const s of sunbabyFireballs(lastMs, sharedMs))",
     "new": "      if (lastMs !== null) for (const s of sunbabyFireballs(lastMs, sharedMs))",
-    "tests": ["test/sunbaby2_phases.test.js"]
+    "tests": ["test/world/sunbaby2_phases.test.js"]
   },
   {
     "name": "SUNBABY2-light-untinted",
     "file": "src/world/sunbabySky.js",
     "old": "  return new Float32Array([0, 1, 2].map((i) => (rgb[i] + Math.max(0, SUNBABY_AMBIENT[i] - rgb[i]) * k) * (1 + (SUNBABY_WRATH_TINT[i] - 1) * e)));",
     "new": "  return new Float32Array([0, 1, 2].map((i) => (rgb[i] + Math.max(0, SUNBABY_AMBIENT[i] - rgb[i]) * k) * (1 + 0 * e)));",
-    "tests": ["test/sunbaby1_event.test.js", "test/sunbaby2_phases.test.js"]
+    "tests": ["test/net/sunbaby1_event.test.js", "test/world/sunbaby2_phases.test.js"]
   },
   {
     "name": "SUNBABY2-key-untinted",
     "file": "src/world/sunbabySky.js",
     "old": "  return new Float32Array([0, 1, 2].map((i) => rgb[i] * (1 + (SUNBABY_WRATH_TINT[i] - 1) * e)));",
     "new": "  return new Float32Array([0, 1, 2].map((i) => rgb[i] * (1 + 0 * e)));",
-    "tests": ["test/sunbaby2_phases.test.js"]
+    "tests": ["test/world/sunbaby2_phases.test.js"]
   },
   {
     "name": "SUNBABY2-haze-unburnt",
     "file": "src/world/sunbabySky.js",
     "old": "export const sunbabyHaze = (rgb, w, evil = 0) => mix3(rgb, mix3(SUNBABY_HORIZON, SUNBABY_WRATH_HORIZON, clamp01(evil)), clamp01(w));",
     "new": "export const sunbabyHaze = (rgb, w, evil = 0) => mix3(rgb, mix3(SUNBABY_HORIZON, SUNBABY_WRATH_HORIZON, 0 * clamp01(evil)), clamp01(w));",
-    "tests": ["test/sunbaby1_event.test.js", "test/sunbaby2_phases.test.js"]
+    "tests": ["test/net/sunbaby1_event.test.js", "test/world/sunbaby2_phases.test.js"]
   },
   {
     "name": "SUNBABY2-pass-face-never-set",
     "file": "src/render/sunbabySkyRenderer.js",
     "old": "    gl.uniform2f(u.uFace, this.evil, this.todd);",
     "new": "    gl.uniform2f(u.uFace, 0, 0);",
-    "tests": ["test/sunbaby2_phases.test.js"]
+    "tests": ["test/world/sunbaby2_phases.test.js"]
   },
   {
     "name": "SUNBABY2-engine-landing-unchecked",
     "file": "src/scenes/hostMagic.js",
     "old": "          if (m.left <= 0) { showImpactFlash(m, m.to); retireMissile(m); continue; }",
     "new": "          void 0;",
-    "tests": ["test/sunbaby2_phases.test.js"]
+    "tests": ["test/world/sunbaby2_phases.test.js"]
   },
   {
     "name": "SUNBABY2-engine-silent",
     "file": "src/scenes/hostMagic.js",
     "old": "    if (m.sky) { try { audio.play3dId?.(",
     "new": "    if (false) { try { audio.play3dId?.(",
-    "tests": ["test/sunbaby2_phases.test.js"]
+    "tests": ["test/world/sunbaby2_phases.test.js"]
   },
   {
     "name": "SUNBABY2-engine-scale-dropped",
     "file": "src/scenes/hostMagic.js",
     "old": "    const size = m.scale ? { ...own, w: own.w * m.scale, h: own.h * m.scale } : own;",
     "new": "    const size = own;",
-    "tests": ["test/sunbaby2_phases.test.js"]
+    "tests": ["test/world/sunbaby2_phases.test.js"]
   },
   {
     "name": "SUNBABY2-host-face-never-told",
     "file": "src/scenes/world.js",
     "old": "    sky.setSunbabyFace(sunbabyFace.evil, sunbabyFace.todd);",
     "new": "    void 0;",
-    "tests": ["test/sunbaby2_phases.test.js"]
+    "tests": ["test/world/sunbaby2_phases.test.js"]
   },
   {
     "name": "SUNBABY2-host-pass-face-unpassed",
     "file": "src/scenes/shared.js",
     "old": "      if (sunbabySky) { sunbabySky.evil = sunbabyEvil; sunbabySky.todd = sunbabyTodd; }",
     "new": "      void 0;",
-    "tests": ["test/sunbaby2_phases.test.js"]
+    "tests": ["test/world/sunbaby2_phases.test.js"]
   },
   {
     "name": "SUNBABY2-host-fog-unburnt",
     "file": "src/scenes/shared.js",
     "old": "const c = sunbabyW > 0 ? sunbabyHaze(own, sunbabyW, sunbabyEvil) : own;",
     "new": "const c = sunbabyW > 0 ? sunbabyHaze(own, sunbabyW) : own;",
-    "tests": ["test/sunbaby1_event.test.js", "test/sunbaby2_phases.test.js"]
+    "tests": ["test/net/sunbaby1_event.test.js", "test/world/sunbaby2_phases.test.js"]
   },
   {
     "name": "SUNBABY2-host-line-unsaid",
     "file": "src/scenes/world.js",
     "old": "    if (sunbabyFace.line) townTalk.say(sunbabyFace.line);",
     "new": "    void 0;",
-    "tests": ["test/sunbaby2_phases.test.js"]
+    "tests": ["test/world/sunbaby2_phases.test.js"]
   },
   {
     "name": "SUNBABY2-host-fire-ungated",
     "file": "src/scenes/world.js",
     "old": "fire: sunbaby.on && sunbabyFace.fire, ground: sunbabyGround",
     "new": "fire: true, ground: sunbabyGround",
-    "tests": ["test/sunbaby2_phases.test.js"]
+    "tests": ["test/world/sunbaby2_phases.test.js"]
   },
   {
     "name": "SUNBABY2-host-fire-never-thrown",
     "file": "src/scenes/world.js",
     "old": ")) magic.skyFire(fb);",
     "new": ")) void fb;",
-    "tests": ["test/sunbaby2_phases.test.js"]
+    "tests": ["test/world/sunbaby2_phases.test.js"]
   }
 ]

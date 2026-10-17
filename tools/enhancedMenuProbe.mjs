@@ -78,13 +78,13 @@ async function run(label, opts) {
 
   // a real write, read back through the store
   const before = await page.evaluate(async () => {
-    const s = await import('/src/systems/settings.js');
+    const s = await import('/src/systems/settings/settings.js');
     return s.effectiveSettings().Enhancements.LoiterLimitInHours;
   });
   await page.locator('#enhanced-menu .row', { hasText: 'Maximum Wait Time' })
     .locator('.step').last().click();
   const after = await page.evaluate(async () => {
-    const s = await import('/src/systems/settings.js');
+    const s = await import('/src/systems/settings/settings.js');
     s._resetForTests();
     return s.effectiveSettings().Enhancements.LoiterLimitInHours;
   });

@@ -11,7 +11,7 @@
 
 import { BOOK_ID_TITLES } from './booksData.js';
 import { messageToBookFilename, BookFile } from '../formats/bookFile.js';
-import { templateByIndex, mintCondition } from './itemTemplates.js';
+import { templateByIndex, mintCondition } from './item/itemTemplates.js';
 import { localizedBookExists, localizedBookHeader } from './localizedBook.js';   // L10N3f: LocalizedBook.cs, a translation's books
 import { globalVarsTable } from './quest/tables.js';   // L10N3f: LocalizedBookMeetsConditions reads QuestMachine.GlobalVarsTable
 import { PORT_BOOK_IDS, isPortBook, portBookTitle, portBookPrice } from './portBooks.js';   // WB12c: the port's own books

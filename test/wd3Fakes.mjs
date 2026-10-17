@@ -1,6 +1,6 @@
 // WD3's fakes: a classic RMB block the size of a test, in the port's DFBlock shape (BlocksFile.readClassicBlock's), and
-// a BLOCKS.BSA holding a few of them - the pack's reader (test/wd3_pack.test.js) and the world-data door
-// (test/wd3_door.test.js) read through them.
+// a BLOCKS.BSA holding a few of them - the pack's reader (test/formats/worldData/wd3_pack.test.js) and the world-data door
+// (test/systems/wd3_door.test.js) read through them.
 import { BLOCK_TYPES } from '../src/formats/blocksFile.js';
 
 export const half = (models = [], flats = [], doors = []) => ({

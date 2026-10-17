@@ -3,7 +3,7 @@
 // FIRM1 (2026-10-13) - THE FIRMAMENT, AS THE SERVICE KEEPS IT: a character's passive tree (migration 0114), its two
 // purses read off what this service already holds - the Renown track (renownTracks.js) for Stars, the profession
 // tracks (professions.js) for Craft points - and every change judged by the one law both ends read
-// (src/net/firmamentLaw.js). The record is bible/06-Systems/Firmament.md.
+// (src/net/firmament/firmamentLaw.js). The record is bible/06-Systems/Firmament.md.
 //
 // WHOSE WORD. Nothing a client says about its tree is believed: a change names the WHOLE tree it wants, and the law
 // asks it here against the purses this service counts - a star the sky has not, a star not joined to its start, more
@@ -21,7 +21,7 @@
 
 import { mintId, overRate } from './accounts.js';
 import { prepareRealmRecord, realmActFirst, recordMovedOf, mustChange, dropObjects, dropIfUnnamed } from './realm.js';   // the respec's gold, on a realm character's record
-import { payFromSave } from '../../src/net/realmGoldLaw.js';
+import { payFromSave } from '../../src/net/realm/realmGoldLaw.js';
 import { isDeveloper } from './titles.js';
 import { marksOpenFor, balanceOf } from './marks.js';
 import { renownTrackOf, renownCharacterOk } from './renownTracks.js';
@@ -30,7 +30,7 @@ import { rankOfXp, PROFESSIONS } from '../../src/net/professionLaw.js';
 import {
   starsFor, craftPointsFor, treeFault, unpackTree, packTree, treeDiff, refundSilver, treeStats, pointsLeft, cleanKeys,
   FIRM_RID_RE, REFUND_FREE_BELOW_RENOWN, REFUND_SILVER_PER_STAR, FIRM_RESPEC_GOLD,
-} from '../../src/net/firmamentLaw.js';
+} from '../../src/net/firmament/firmamentLaw.js';
 
 /** The switch the service's config holds (FIRMAMENT_OPEN): off, dev (the developers alone), on. */
 export const FIRM_SWITCH = Object.freeze(['off', 'dev', 'on']);

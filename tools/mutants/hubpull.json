@@ -1,0 +1,202 @@
+[
+  {
+    "name": "HUB-PULL-no-loop-on-hello",
+    "file": "server/src/index.js",
+    "old": "    this._hubPollEnsure();   // HUB-PULL: a shard with anything to say holds a socket - it asks the bus for that socket's frames",
+    "new": "",
+    "tests": [
+      "test/net/hubpull.test.js"
+    ],
+    "note": "a hello starts no poll - nothing the bus says reaches the shard"
+  },
+  {
+    "name": "HUB-PULL-held-unanswered",
+    "file": "server/src/index.js",
+    "old": "if (held && this._outbox.get(hub)?.l.length) this._pollAnswer(hub, held);",
+    "new": "",
+    "tests": [
+      "test/net/hubpull.test.js"
+    ],
+    "note": "a delivery sealed leaves the held poll waiting out its HUB_POLL_MS"
+  },
+  {
+    "name": "HUB-PULL-never-held",
+    "file": "server/src/index.js",
+    "old": "if (rs || !b.w || this._outbox.get(hub)?.l.length) return this._pollReply(hub, rs);",
+    "new": "return this._pollReply(hub, rs);",
+    "tests": [
+      "test/net/hubpull.test.js"
+    ],
+    "note": "every poll answered at once - a shard asks without rest"
+  },
+  {
+    "name": "HUB-PULL-miss-ends-loop",
+    "file": "server/src/index.js",
+    "old": "        if (got == null) return;   // not a shard - nothing to ask",
+    "new": "        if (!got && got !== 0) return;",
+    "tests": [
+      "test/net/hubpull.test.js"
+    ],
+    "note": "a miss ends the shard's loop - it hears nothing more"
+  },
+  {
+    "name": "HUB-PULL-empty-unpaced",
+    "file": "server/src/index.js",
+    "old": "        else if (got === 0) await new Promise((r) => setTimeout(r, HUB_BATCH_MS));",
+    "new": "",
+    "tests": [
+      "test/net/hubpull.test.js"
+    ],
+    "note": "an answer of nothing asked again at once"
+  },
+  {
+    "name": "HUB-PULL-older-hanging",
+    "file": "server/src/index.js",
+    "old": "    if (held) this._pollAnswer(hub, held, false);",
+    "new": "",
+    "tests": [
+      "test/net/hubpull.test.js"
+    ],
+    "note": "the older poll left to its timer"
+  },
+  {
+    "name": "HUB-PULL-ack-unread",
+    "file": "server/src/index.js",
+    "old": "while (box.l.length && box.l[0].q <= ack.q) box.bytes -=",
+    "new": "while (false) box.bytes -=",
+    "tests": [
+      "test/net/hubpull.test.js"
+    ],
+    "note": "what a shard ran never let go"
+  },
+  {
+    "name": "HUB-PULL-hold-untimed",
+    "file": "server/src/index.js",
+    "old": "const p = { done, t: setTimeout(() => this._pollAnswer(hub, p), HUB_POLL_MS) };",
+    "new": "const p = { done, t: null };",
+    "tests": [
+      "test/net/hubpull.test.js"
+    ],
+    "note": "a held poll never answered by its clock"
+  },
+  {
+    "name": "HUB-PULL-gone-unkept",
+    "file": "server/src/index.js",
+    "old": "ran++; for (const vid of left) this._downGone.add(vid); }",
+    "new": "ran++; }",
+    "tests": [
+      "test/net/hubpull.test.js"
+    ],
+    "note": "the ids a delivery named that the shard no longer holds, never told"
+  },
+  {
+    "name": "HUB-PULL-gone-unread",
+    "file": "server/src/index.js",
+    "old": "for (const vid of Array.isArray(b.gone) ? b.gone : []) {",
+    "new": "for (const vid of []) {",
+    "tests": [
+      "test/net/hubpull.test.js"
+    ],
+    "note": "the bus never reads a poll's gone"
+  },
+  {
+    "name": "HUB-PULL-stale-unpaced",
+    "file": "server/src/index.js",
+    "old": "const left = await this._hubDownApply(d); if (!left) continue; ran++;",
+    "new": "const left = await this._hubDownApply(d); ran++; if (!left) continue;",
+    "tests": [
+      "test/net/hubpull.test.js"
+    ],
+    "note": "an answer of deliveries run before counted as new - a bus handing them again spins the loop"
+  },
+  {
+    "name": "HUB-PULL-AUDIT-rs-awaited",
+    "file": "server/src/index.js",
+    "old": "      if (!wait) await up;",
+    "new": "      await up;",
+    "tests": [
+      "test/net/hubpull.test.js"
+    ],
+    "note": "the rs hand-up awaited by the held poll - a shard owing the bus all the while polls nothing until its queue runs dry"
+  },
+  {
+    "name": "HUB-PULL-AUDIT-due-sync-left",
+    "file": "server/src/index.js",
+    "old": "if (this._up.length || Date.now() - this._hubSyncAt >= HUB_SYNC_MS) await this._hubUpFlush();",
+    "new": "if (this._up.length) await this._hubUpFlush();",
+    "tests": [
+      "test/net/hubpull.test.js"
+    ],
+    "note": "a sync rs made due while a hand-up was on the wire left for the alarm"
+  },
+  {
+    "name": "HUB-PULL-AUDIT-miss-unretried",
+    "file": "server/src/index.js",
+    "old": "          if (!this._upT) this._upT = setTimeout(() => { this._upT = null; this._hubUpFlush(); }, HUB_RETRY_MS);\n          return;",
+    "new": "          return;",
+    "tests": [
+      "test/net/hubpull.test.js"
+    ],
+    "note": "a hand-up that missed never tried again until the next event or the alarm"
+  },
+  {
+    "name": "HUB-PULL-AUDIT-backoff-unwoken",
+    "file": "server/src/index.js",
+    "old": "        this._pollWake?.();",
+    "new": "",
+    "tests": [
+      "test/net/hubpull.test.js"
+    ],
+    "note": "a poll backing off never woken by a hand-up the bus answered"
+  },
+  {
+    "name": "HUB-PULL-AUDIT-throw-ends-loop",
+    "file": "server/src/index.js",
+    "old": "try { got = await this._hubPoll(true); } catch (e) { console.warn('[shard] a poll threw', e?.message ?? e); got = false; }",
+    "new": "got = await this._hubPoll(true);",
+    "tests": [
+      "test/net/hubpull.test.js"
+    ],
+    "note": "one throw ends the poll loop"
+  },
+  {
+    "name": "HUB-PULL-AUDIT-rb-unsaid",
+    "file": "server/src/index.js",
+    "old": "...(this._rsBoot ? { rb: this._rsBoot } : {}), ",
+    "new": "",
+    "tests": [
+      "test/net/hubpull.test.js"
+    ],
+    "note": "the shard never says the rs it heard - told it again on every poll"
+  },
+  {
+    "name": "HUB-PULL-AUDIT-rb-unkept",
+    "file": "server/src/index.js",
+    "old": "if (typeof ans.rb === 'string') this._rsBoot = ans.rb;",
+    "new": "",
+    "tests": [
+      "test/net/hubpull.test.js"
+    ],
+    "note": "the shard never keeps the rs it heard"
+  },
+  {
+    "name": "HUB-PULL-AUDIT-rb-unnamed",
+    "file": "server/src/index.js",
+    "old": ",\"rs\":1,\"rb\":${JSON.stringify(this._boot)}",
+    "new": ",\"rs\":1",
+    "tests": [
+      "test/net/hubpull.test.js"
+    ],
+    "note": "the bus never names the instance that said rs"
+  },
+  {
+    "name": "HUB-PULL-AUDIT-rs-once",
+    "file": "server/src/index.js",
+    "old": "    const rs = b.rb !== this._boot;",
+    "new": "    const rs = b.rb !== this._boot && b.ack == null;",
+    "tests": [
+      "test/net/hubpull.test.js"
+    ],
+    "note": "rs spent once the shard has acknowledged anything - a lost rs answer never said again"
+  }
+]

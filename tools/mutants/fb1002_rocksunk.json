@@ -1,47 +1,47 @@
 [
   {
     "name": "ROCKSUNK-rocks-grounded-again",
-    "file": "src/world/wodLocationObjects.js",
+    "file": "src/world/worldOfDaggerfall/wodLocationObjects.js",
     "old": "export const isWodShrub = (modelId, siteName) => modelId === WOD_BUSH_MODEL && !WOD_ROCK_SITES.includes(siteName);",
     "new": "export const isWodShrub = (modelId, siteName) => modelId === WOD_BUSH_MODEL;",
     "tests": [
-      "test/fb1002_rocksunk.test.js"
+      "test/world/worldOfDaggerfall/fb1002_rocksunk.test.js"
     ]
   },
   {
     "name": "ROCKSUNK-mountains-forgotten",
-    "file": "src/world/wodLocationObjects.js",
+    "file": "src/world/worldOfDaggerfall/wodLocationObjects.js",
     "old": "export const WOD_ROCK_SITES = Object.freeze(['Rocks', 'Mountains']);",
     "new": "export const WOD_ROCK_SITES = Object.freeze(['Rocks']);",
     "tests": [
-      "test/fb1002_rocksunk.test.js"
+      "test/world/worldOfDaggerfall/fb1002_rocksunk.test.js"
     ]
   },
   {
     "name": "ROCKSUNK-any-model",
-    "file": "src/world/wodLocationObjects.js",
+    "file": "src/world/worldOfDaggerfall/wodLocationObjects.js",
     "old": "export const isWodShrub = (modelId, siteName) => modelId === WOD_BUSH_MODEL && !WOD_ROCK_SITES.includes(siteName);",
     "new": "export const isWodShrub = (modelId, siteName) => !WOD_ROCK_SITES.includes(siteName);",
     "tests": [
-      "test/fb1002_rocksunk.test.js"
+      "test/world/worldOfDaggerfall/fb1002_rocksunk.test.js"
     ]
   },
   {
     "name": "ROCKSUNK-host-asks-no-site",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "if (isWodShrub(m.modelId, wodPicks[m.pick]?.name)) {",
     "new": "if (isWodShrub(m.modelId, undefined)) {",
     "tests": [
-      "test/fb1002_rocksunk.test.js"
+      "test/world/worldOfDaggerfall/fb1002_rocksunk.test.js"
     ]
   },
   {
     "name": "ROCKSUNK-rock-sites-spelled-twice",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "const rockPick = (i) => WOD_ROCK_SITES.includes(wodPicks[i]?.name);",
     "new": "const rockPick = (i) => wodPicks[i]?.name === 'Rocks' || wodPicks[i]?.name === 'Mountains';",
     "tests": [
-      "test/fb1002_rocksunk.test.js"
+      "test/world/worldOfDaggerfall/fb1002_rocksunk.test.js"
     ]
   }
 ]

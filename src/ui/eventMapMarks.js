@@ -3,7 +3,7 @@
 // map for these type of events. I think we should fold in the raid PR in the repo, since it has a new type of world
 // event also"): THE WORLD'S EVENTS ON THE HELD MAP, AND THE CARD EACH ANSWERS A HOVER WITH.
 //
-// Two kinds stand on the enhanced map: the Oblivion Gate's ring (WB1, ui/gateMapMark.js) and a TOWN UNDER ATTACK
+// Two kinds stand on the enhanced map: the Oblivion Gate's ring (WB1, ui/gate/gateMapMark.js) and a TOWN UNDER ATTACK
 // (RAID1, systems/raidingParties.js) - a raided town while its raid runs: begun, not withdrawn, not cleansed. Each
 // answers the pointer with a TIP: a small card at the cursor saying what it is, where, and when it ends - the words the
 // chat said once, kept where the player can ask again (the field's player, looking at a ring that said only "Oblivion

@@ -5,7 +5,7 @@
     "old": "WHERE player = ? AND id = ? AND rev = ? AND rev < ?')",
     "new": "WHERE player = ? AND id = ? AND (rev = ? OR 1) AND (rev < ? OR 1)')",
     "tests": [
-      "test/legacy7_service.test.js"
+      "test/server/legacy7_service.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    if (had.model !== rec.model) return { error: 'lineage-model' };\n",
     "new": "",
     "tests": [
-      "test/legacy7_service.test.js"
+      "test/server/legacy7_service.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "WHERE (SELECT COUNT(*) FROM lineages WHERE player = ?) < ?',",
     "new": "WHERE (SELECT COUNT(*) FROM lineages WHERE player = ?) < ? + 1000',",
     "tests": [
-      "test/legacy7_service.test.js"
+      "test/server/legacy7_service.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  if (!p || p.died || p.retired != null || (p.kind ?? 'member') !== 'member' || p.minor) return { error: 'lineage-person' };",
     "new": "  if (!p || p.retired != null || (p.kind ?? 'member') !== 'member' || p.minor) return { error: 'lineage-person' };",
     "tests": [
-      "test/legacy7_service.test.js"
+      "test/server/legacy7_service.test.js"
     ]
   },
   {
@@ -41,16 +41,16 @@
     "old": "  return played ? { error: 'lineage-played' } : null;",
     "new": "  return null;",
     "tests": [
-      "test/legacy7_service.test.js"
+      "test/server/legacy7_service.test.js"
     ]
   },
   {
     "name": "LEGACY7-tomb-any-lease",
     "file": "server-account/src/legacy.js",
-    "old": "${lease == null ? '' : ' AND lease = ?'}",
-    "new": "${lease == null ? '' : ' AND (lease = ? OR 1)'}",
+    "old": "dead_at IS NULL${lease == null ? '' : ' AND lease = ?'}",
+    "new": "dead_at IS NULL${lease == null ? '' : ' AND (lease = ? OR 1)'}",
     "tests": [
-      "test/legacy7_service.test.js"
+      "test/server/legacy7_service.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "played_at = (SELECT played_s FROM players WHERE id = ?2) WHERE id = ?1 AND player = ?2 AND dead_at IS NULL'",
     "new": "played_at = (SELECT played_s FROM players WHERE id = ?2) WHERE id = ?1 AND player = ?2'",
     "tests": [
-      "test/legacy7_service.test.js"
+      "test/server/legacy7_service.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "if (row.dead_at != null) return { error: 'dead' };   // LEGACY7: the tombstone - nothing of the dead is written again",
     "new": "// LEGACY7: the tombstone - nothing of the dead is written again",
     "tests": [
-      "test/legacy7_service.test.js"
+      "test/server/legacy7_service.test.js"
     ]
   },
   {
@@ -77,10 +77,10 @@
     "old": "  if (!row || row.dead_at != null || row.lease == null) return none;",
     "new": "  if (!row || row.lease == null) return none;",
     "tests": [
-      "test/legacy7_service.test.js",
-      "test/scale4f.test.js"
+      "test/server/legacy7_service.test.js",
+      "test/server/scale4f.test.js"
     ],
-    "note": "SCALE4f (2026-10-10) re-aimed it by content: the four reads of the realm row are one (realm.js realmMintFacts); its tests its own again - test/scale4f.test.js's oracle stands a tombstone with a lease (a row no death writes) to hold the fold to the four, and kills it there. AUDIT SCALE II D-5: recorded equivalent until the audit found pins that kill it - test/scale4f.test.js; it said: INT9's audit: the door asks for a lease too (realm.js realmCharacterHeld, `lease IS NOT NULL`), and a death clears it in the statement that marks it dead (legacy.js: `SET dead_at = ?, dead_why = ?, lease = NULL`) - no tombstone holds a lease; the dead's refusal is pinned by test/legacy7_service.test.js."
+    "note": "SCALE4f (2026-10-10) re-aimed it by content: the four reads of the realm row are one (realm.js realmMintFacts); its tests its own again - test/server/scale4f.test.js's oracle stands a tombstone with a lease (a row no death writes) to hold the fold to the four, and kills it there. AUDIT SCALE II D-5: recorded equivalent until the audit found pins that kill it - test/server/scale4f.test.js; it said: INT9's audit: the door asks for a lease too (realm.js realmCharacterHeld, `lease IS NOT NULL`), and a death clears it in the statement that marks it dead (legacy.js: `SET dead_at = ?, dead_why = ?, lease = NULL`) - no tombstone holds a lease; the dead's refusal is pinned by test/server/legacy7_service.test.js."
   },
   {
     "name": "LEGACY7-dead-listed",
@@ -88,7 +88,7 @@
     "old": "    + ' WHERE r.player = ? AND r.dead_at IS NULL ORDER BY r.updated_at DESC LIMIT ?',",
     "new": "    + ' WHERE r.player = ? ORDER BY r.updated_at DESC LIMIT ?',",
     "tests": [
-      "test/legacy7_service.test.js"
+      "test/server/legacy7_service.test.js"
     ],
     "note": "LEGACY7 part two (PIN MOVED): re-aimed by content - the house rides beside it."
   },
@@ -98,7 +98,7 @@
     "old": "WHERE (SELECT COUNT(*) FROM realm_characters WHERE player = ? AND dead_at IS NULL) < ?',\n    ).bind(id, playerId, n, realmSummaryOf(summary), lease, nowS, nowS, nowS, born ? lineage : null",
     "new": "WHERE (SELECT COUNT(*) FROM realm_characters WHERE player = ?) < ?',\n    ).bind(id, playerId, n, realmSummaryOf(summary), lease, nowS, nowS, nowS, born ? lineage : null",
     "tests": [
-      "test/legacy7_service.test.js"
+      "test/server/legacy7_service.test.js"
     ]
   },
   {
@@ -107,7 +107,7 @@
     "old": "    if (had && !(had.bytes > 0) && had.dead_at == null) {",
     "new": "    if (false) {",
     "tests": [
-      "test/legacy7_service.test.js"
+      "test/server/legacy7_service.test.js"
     ]
   },
   {
@@ -116,7 +116,7 @@
     "old": "          const merged = mergeLines(record, r.data.record);",
     "new": "          const merged = readFamily(record);",
     "tests": [
-      "test/legacy7_online.test.js"
+      "test/systems/legacy/legacy7_online.test.js"
     ]
   },
   {
@@ -125,16 +125,16 @@
     "old": "  mergeFacts(base, other);\n",
     "new": "",
     "tests": [
-      "test/legacy7_online.test.js"
+      "test/systems/legacy/legacy7_online.test.js"
     ]
   },
   {
     "name": "LEGACY7-die-loses",
     "file": "src/systems/realmSaves.js",
-    "old": "      lost = 'dead';\n      pending = null;",
-    "new": "      lose('dead');\n      pending = null;",
+    "old": "      lost = 'dead';\n      rezHeld = hold && !closing && why === 'fell';\n      pending = null;",
+    "new": "      lose('dead');\n      rezHeld = hold && !closing && why === 'fell';\n      pending = null;",
     "tests": [
-      "test/legacy7_online.test.js"
+      "test/systems/legacy/legacy7_online.test.js"
     ]
   },
   {
@@ -143,16 +143,17 @@
     "old": "    family = foundFamily(deps.entity, { model: asked,",
     "new": "    family = foundFamily(deps.entity, { model: deps.online() ? MODELS.enduring : asked,",
     "tests": [
-      "test/legacy7_online.test.js"
+      "test/systems/legacy/legacy7_online.test.js"
     ]
   },
   {
     "name": "LEGACY7-fall-untombed",
     "file": "src/scenes/legacyHost.js",
-    "old": "    store();\n    entomb();\n    outcome = fallOutcome();",
+    "old": "    store();\n    entomb({ hold });\n    outcome = fallOutcome();",
     "new": "    store();\n    outcome = fallOutcome();",
+    "note": "PIN MOVED (FIELD BUGS 2026-10-16b REZ-BLOODLINE AUDIT R1): re-aimed by content - the death door writes the fall online too, its tombstone asked with its hold (legacyHost.js writeDeath)",
     "tests": [
-      "test/legacy7_online.test.js"
+      "test/systems/legacy/legacy7_online.test.js"
     ]
   },
   {
@@ -161,7 +162,7 @@
     "old": "    if (tomb) { const t = tomb; tomb = null; t.then((ok) => { if (ok) play(heir, null, { newborn }); }); return true; }\n",
     "new": "",
     "tests": [
-      "test/legacy7_online.test.js"
+      "test/systems/legacy/legacy7_online.test.js"
     ]
   },
   {
@@ -170,7 +171,7 @@
     "old": "    entomb();   // LEGACY7: online, a retired elder's character is the realm's tombstone too - never played again\n",
     "new": "",
     "tests": [
-      "test/legacy7_online.test.js"
+      "test/systems/legacy/legacy7_online.test.js"
     ]
   },
   {
@@ -179,7 +180,7 @@
     "old": "      if (ok) { store(); clearBirth(deps.tab()); return true; }",
     "new": "      if (true) { store(); clearBirth(deps.tab()); return true; }",
     "tests": [
-      "test/legacy7_online.test.js"
+      "test/systems/legacy/legacy7_online.test.js"
     ]
   },
   {
@@ -188,7 +189,7 @@
     "old": "    p.characterId = String(now);\n    touch(family);",
     "new": "    touch(family);",
     "tests": [
-      "test/legacy7_online.test.js"
+      "test/systems/legacy/legacy7_online.test.js"
     ]
   },
   {
@@ -197,7 +198,7 @@
     "old": "  if (p.has('online')) p.set('realmnew', '1');",
     "new": "",
     "tests": [
-      "test/legacy7_online.test.js"
+      "test/systems/legacy/legacy7_online.test.js"
     ]
   }
 ]

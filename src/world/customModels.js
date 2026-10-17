@@ -25,7 +25,7 @@ export function registerCustomModel(id, build, isOn = () => true, { climateFree 
   _models.set(Number(id), { build, isOn: typeof isOn === 'function' ? isOn : () => true, cached: null, climateFree: !!climateFree, needs: Object.freeze([...needs].map(Number)), buildSliced: typeof buildSliced === 'function' ? buildSliced : null });
 }
 /** AUDIT PRE-MERGE 1003 W6: the model registered for `id` (customModelFor's), built a breath at a time where its
- *  registration can (`buildSliced(ctx, breathe)` - the colosseum's seal, world/arenaCity.js) and the caller breathes
+ *  registration can (`buildSliced(ctx, breathe)` - the colosseum's seal, world/arena/arenaCity.js) and the caller breathes
  *  (scenes/dataPipeline.js getGpuMesh, handed a streamed pixel's breather by scenes/world.js); else customModelFor's own
  *  build. Built once either way. */
 export async function customModelBuilt(id, ctx = null, breathe = null) {

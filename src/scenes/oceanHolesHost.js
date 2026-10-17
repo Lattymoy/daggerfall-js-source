@@ -18,7 +18,7 @@
 // GetSeafloorBuildVersion, TryGetSeafloor, CommitSeafloorChanges,
 // RefreshLoadedTile, OnSeafloorBuilt) and the decorations' (RefreshLoadedTile,
 // ShouldSuppressDecoration) - the members ResolveDeepWatersApi finds. The
-// bake is the port's own (world/deepWatersBake.js: IsLoaded,
+// bake is the port's own (world/deepWater/deepWatersBake.js: IsLoaded,
 // MapPixelHasWaterCells, MapPixelHasLandCells, IsCarvedWater,
 // SampleEdgeDistanceMeters), so its "bake API unavailable" arm never runs
 // here - and PassesBakeFilter's unverified path with it, while the bake
@@ -38,10 +38,10 @@ import {
   MAX_FLOOR_WAIT_FRAMES, MINIMUM_DEPTH, MINIMUM_EDGE_DISTANCE, FLOOR_FLATTEN_VARIANCE, SURFACE_OUTER_RADIUS, SURFACE_MIASMA_MAX_PARTICLES,
   SURFACE_MIASMA_HEIGHT, OCEAN_HOLES_VENDOR,
 } from '../world/oceanHoles.js';
-import { isValidMapPixel } from '../world/deepWatersBake.js';   // ETHER-DEEP: IsValidMapPixel - the pits' map is the Bay's
-import { sampleMeshLocalY, TILE_WORLD_SIZE_F32 } from '../world/deepWaterFloor.js';   // AUDIT PRE-MERGE 0928 H4: terrainData.size, a float
+import { isValidMapPixel } from '../world/deepWater/deepWatersBake.js';   // ETHER-DEEP: IsValidMapPixel - the pits' map is the Bay's
+import { sampleMeshLocalY, TILE_WORLD_SIZE_F32 } from '../world/deepWater/deepWaterFloor.js';   // AUDIT PRE-MERGE 0928 H4: terrainData.size, a float
 import { modSetting, modSettingsGeneration } from '../systems/modSettings.js';
-import { OCEAN_CLIMATE } from '../world/terrainHelper.js';   // worldClimate 223: the unverified placement's own check
+import { OCEAN_CLIMATE } from '../world/terrain/terrainHelper.js';   // worldClimate 223: the unverified placement's own check
 
 const f32 = Math.fround;
 const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);

@@ -5,7 +5,7 @@
   "old": "    gl.uniform2f(c.origin, origin ? origin[0] : 0, origin ? origin[1] : 0);",
   "new": "    gl.uniform2f(c.origin, 0, 0);",
   "tests": [
-   "test/mwnpc2_onepass.test.js"
+   "test/render/mwnpc2_onepass.test.js"
   ]
  },
  {
@@ -14,7 +14,7 @@
   "old": "  if (renderer.characterSpriteBatchOpen) {",
   "new": "  if (false) {",
   "tests": [
-   "test/mwnpc2_onepass.test.js"
+   "test/render/mwnpc2_onepass.test.js"
   ]
  },
  {
@@ -23,7 +23,7 @@
   "old": "        gl.viewport(it.tx, it.ty, it.pw, it.ph);",
   "new": "        gl.viewport(0, 0, it.pw, it.ph);",
   "tests": [
-   "test/mwnpc2_onepass.test.js"
+   "test/render/mwnpc2_onepass.test.js"
   ]
  },
  {
@@ -32,7 +32,7 @@
   "old": "        gl.clearBufferfv(gl.COLOR, 0, SPRITE_CLEAR);   // transparent, by value: the clear colour (AUDIT 26 F034's borrow) is never touched\n",
   "new": "\n",
   "tests": [
-   "test/mwnpc2_onepass.test.js"
+   "test/render/mwnpc2_onepass.test.js"
   ]
  },
  {
@@ -41,7 +41,7 @@
   "old": "    x += it.pw + gutter;",
   "new": "    x += it.pw;",
   "tests": [
-   "test/mwnpc2_onepass.test.js"
+   "test/render/mwnpc2_onepass.test.js"
   ]
  },
  {
@@ -50,7 +50,7 @@
   "old": "    if (n > 0 && y + it.ph > size) break;",
   "new": "    if (false) break;",
   "tests": [
-   "test/mwnpc2_onepass.test.js"
+   "test/render/mwnpc2_onepass.test.js"
   ]
  },
  {
@@ -59,7 +59,7 @@
   "old": "    if (x > 0 && x + it.pw > size) { x = 0; y += row + gutter; row = 0; }",
   "new": "    if (x > 0 && x + it.pw > size) { x = 0; y += gutter; row = 0; }",
   "tests": [
-   "test/mwnpc2_onepass.test.js"
+   "test/render/mwnpc2_onepass.test.js"
   ]
  },
  {
@@ -68,7 +68,7 @@
   "old": "    b.open = false;\n    const items = b.items;",
   "new": "    const items = b.items;",
   "tests": [
-   "test/mwnpc2_onepass.test.js"
+   "test/render/mwnpc2_onepass.test.js"
   ]
  },
  {
@@ -77,7 +77,7 @@
   "old": "        this._cFrameStamp = -1;   // LA-COST1: its own camera's block, as the lone pass sends it\n",
   "new": "\n",
   "tests": [
-   "test/la_cost.test.js"
+   "test/render/la_cost.test.js"
   ]
  },
  {
@@ -86,7 +86,7 @@
   "old": "    renderer.beginCharacterSpriteBatch?.();\n    const frameBodies = () => {   // PERF-V8",
   "new": "    const frameBodies = () => {   // PERF-V8",
   "tests": [
-   "test/mwnpc2_onepass.test.js"
+   "test/render/mwnpc2_onepass.test.js"
   ]
  },
  {
@@ -95,7 +95,7 @@
   "old": "    this.stats.spriteBinds += binds;",
   "new": "    this.stats.spriteBinds += 0;",
   "tests": [
-   "test/mwnpc2_onepass.test.js"
+   "test/render/mwnpc2_onepass.test.js"
   ]
  }
 ]

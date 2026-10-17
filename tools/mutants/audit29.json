@@ -5,8 +5,8 @@
     "old": "pixelOk(x, y) && nodeKey({ kind: m[1], x, y, day, slot }) === s ?",
     "new": "pixelOk(x, y) ?",
     "tests": [
-      "test/audit29_laws.test.js",
-      "test/audit29_service.test.js"
+      "test/net/audit29_laws.test.js",
+      "test/net/audit29_service.test.js"
     ]
   },
   {
@@ -15,7 +15,7 @@
     "old": "dungeonOk(dungeon) && dveinKey({ dungeon, day, slot }) === s ?",
     "new": "dungeonOk(dungeon) ?",
     "tests": [
-      "test/audit29_laws.test.js"
+      "test/net/audit29_laws.test.js"
     ]
   },
   {
@@ -24,8 +24,8 @@
     "old": "  return nodeCount(climate, 'vein') + (sig?.slots ?? 0);",
     "new": "  return nodeCount(climate, 'vein');",
     "tests": [
-      "test/audit29_laws.test.js",
-      "test/audit29_service.test.js"
+      "test/net/audit29_laws.test.js",
+      "test/net/audit29_service.test.js"
     ]
   },
   {
@@ -34,7 +34,7 @@
     "old": "drawTier(unit('herb', x, y, day, slot, 3), confirmed ? HERB_TIERS : 2);",
     "new": "drawTier(unit('herb', x, y, day, slot, 3), HERB_TIERS);",
     "tests": [
-      "test/audit29_laws.test.js"
+      "test/net/audit29_laws.test.js"
     ]
   },
   {
@@ -43,7 +43,7 @@
     "old": "      const seen = after.get(r.report) ?? new Set();",
     "new": "      const seen = byReport.get(r.report) ?? new Set();",
     "tests": [
-      "test/audit29_laws.test.js"
+      "test/net/audit29_laws.test.js"
     ]
   },
   {
@@ -52,7 +52,7 @@
     "old": "tier = high.length ? high[high.length - 1] : tiers[tiers.length - 1];",
     "new": "tier = high.length ? high[0] : tiers[tiers.length - 1];",
     "tests": [
-      "test/audit29_laws.test.js"
+      "test/net/audit29_laws.test.js"
     ]
   },
   {
@@ -61,7 +61,7 @@
     "old": "  return tier < topTierOf(rank) - 2 ? Math.floor(xp / 4) : xp;",
     "new": "  return xp;",
     "tests": [
-      "test/audit29_laws.test.js"
+      "test/net/audit29_laws.test.js"
     ]
   },
   {
@@ -70,9 +70,9 @@
     "old": "(s) => s.id === specId && !s.later)",
     "new": "(s) => s.id === specId)",
     "tests": [
-      "test/audit29_laws.test.js",
-      "test/audit29_service.test.js",
-      "test/craft3_five.test.js"
+      "test/net/audit29_laws.test.js",
+      "test/net/audit29_service.test.js",
+      "test/net/craft3_five.test.js"
     ],
     "note": "CRAFT3's re-judge: survived on main too - nothing pinned that a choice still `later` (the Trophy Hunter, the Couturier, the Saddler) is refused; pinned in craft3_five's law."
   },
@@ -82,8 +82,8 @@
     "old": "      WHERE (?15 = 0 OR",
     "new": "      WHERE (SELECT COUNT(*) FROM node_harvests WHERE player = ?1 AND profession = ?9 AND day = ?6) < 120\n        AND (?15 = 0 OR",
     "tests": [
-      "test/audit29_service.test.js",
-      "test/cap_off.test.js"
+      "test/net/audit29_service.test.js",
+      "test/net/cap_off.test.js"
     ],
     "note": "RETIRED by CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\"): A3's account day is gone and its pin turned (a fifth character's harvest past 120 is credited) - the mutant puts the day back, and the turned pins kill it. It was the mutant that removed the day."
   },
@@ -93,8 +93,8 @@
     "old": "(?15 = 0 OR (SELECT COUNT(*) FROM node_harvests WHERE player = ?1 AND day = ?6 AND deep_unconfirmed = 1) < ?16)",
     "new": "1",
     "tests": [
-      "test/audit29_service.test.js",
-      "test/cap_off.test.js"
+      "test/net/audit29_service.test.js",
+      "test/net/cap_off.test.js"
     ],
     "note": "CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\") (PIN MOVED, re-aimed by content): the bound kept - the WHERE's first now, its numbers ?15 and ?16."
   },
@@ -104,7 +104,7 @@
     "old": "    if (witness) {\n      await db.prepare('INSERT OR IGNORE INTO world_witness",
     "new": "    if (witness && false) {\n      await db.prepare('INSERT OR IGNORE INTO world_witness",
     "tests": [
-      "test/audit29_service.test.js"
+      "test/net/audit29_service.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "    AND key IN (SELECT key FROM world_witness WHERE kind = 'pixel' AND region = ?)`).bind(region).all();",
     "new": "    AND region = ?`).bind(region).all();",
     "tests": [
-      "test/audit29_service.test.js"
+      "test/net/audit29_service.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "        MAX(0, MIN(?12, ?17 - COALESCE((SELECT xp FROM prof_tracks WHERE player = ?1 AND char_id = ?4 AND profession = ?9), 0))),",
     "new": "        ?12,",
     "tests": [
-      "test/audit29_service.test.js"
+      "test/net/audit29_service.test.js"
     ],
     "note": "CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\") (PIN MOVED, re-aimed by content): the track's bound is ?17 now."
   },
@@ -132,7 +132,7 @@
     "old": "        MAX(0, MIN(?8 + f * ?11, ${Number(cap)} - COALESCE((SELECT xp FROM prof_tracks WHERE player = ?1 AND char_id = ?2 AND profession = '${trackOf(r.xp ?? 'smithing')}'), 0))), ?9, ?10, f, ?12",
     "new": "        ?8 + f * ?11, ?9, ?10, f, ?12",
     "tests": [
-      "test/audit29_service.test.js"
+      "test/net/audit29_service.test.js"
     ],
     "note": "CRAFT3: re-aimed by content."
   },
@@ -142,7 +142,7 @@
     "old": "smeltXp(out.tier, count, rank)",
     "new": "smeltXp(out.tier, count)",
     "tests": [
-      "test/audit29_service.test.js"
+      "test/net/audit29_service.test.js"
     ],
     "note": "CRAFT3: re-aimed by content."
   },
@@ -152,7 +152,7 @@
     "old": "        AND EXISTS (SELECT 1 FROM marks_ledger WHERE actor = ?1 AND rid = ?8 AND kind = 'respec' AND who = ?9)`)",
     "new": "        AND EXISTS (SELECT 1 FROM marks_ledger WHERE actor = ?1 AND rid = ?8 AND kind = 'respec')`)",
     "tests": [
-      "test/audit29_service.test.js"
+      "test/net/audit29_service.test.js"
     ]
   },
   {
@@ -161,8 +161,8 @@
     "old": "  if (from !== current) return { error: 'prof-spec-stale' };\n",
     "new": "",
     "tests": [
-      "test/audit29_service.test.js",
-      "test/prof1_service.test.js"
+      "test/net/audit29_service.test.js",
+      "test/net/prof1_service.test.js"
     ]
   },
   {
@@ -171,7 +171,7 @@
     "old": "  if (choice) return choice.char_id === character && choice.profession === profession ? answer({ repeat: true }) : { error: 'prof-rid' };\n",
     "new": "",
     "tests": [
-      "test/audit29_service.test.js"
+      "test/net/audit29_service.test.js"
     ]
   },
   {
@@ -180,7 +180,7 @@
     "old": "        AND NOT EXISTS (SELECT 1 FROM writs WHERE filled_by = ?1 AND rid = ?4)\n        AND (SELECT COUNT(*) FROM writs WHERE filled_by = ?1 AND day = ?7) < ?8",
     "new": "        AND (SELECT COUNT(*) FROM writs WHERE filled_by = ?1 AND day = ?7) < ?8",
     "tests": [
-      "test/audit29_service.test.js"
+      "test/net/audit29_service.test.js"
     ]
   },
   {
@@ -189,7 +189,7 @@
     "old": "  if (w.filled_by === player.id) return answer(w, { repeat: true });\n",
     "new": "",
     "tests": [
-      "test/audit29_service.test.js"
+      "test/net/audit29_service.test.js"
     ]
   },
   {
@@ -198,7 +198,7 @@
     "old": "(n.kind === 'vein' ? veinSlots({ climate, region, confirmed }) : nodeCount(climate, n.kind))",
     "new": "nodeCount(climate, n.kind)",
     "tests": [
-      "test/audit29_service.test.js"
+      "test/net/audit29_service.test.js"
     ]
   },
   {
@@ -207,7 +207,7 @@
     "old": "      if (_refresh?.key === key) return _refresh.promise;\n",
     "new": "",
     "tests": [
-      "test/audit29_client.test.js"
+      "test/net/audit29_client.test.js"
     ]
   },
   {
@@ -216,7 +216,7 @@
     "old": "      if (!force && _lastRead.key === key && !_lastRead.r?.ok && now() - _lastRead.at < PROF_REFRESH_BACKOFF_MS) return _lastRead.r;\n",
     "new": "",
     "tests": [
-      "test/audit29_client.test.js"
+      "test/net/audit29_client.test.js"
     ]
   },
   {
@@ -225,7 +225,7 @@
     "old": "      return state.day !== dayOf(now()) && now() - state.readAt >= PROF_REFRESH_BACKOFF_MS;",
     "new": "      return state.day !== dayOf(now());",
     "tests": [
-      "test/audit29_client.test.js"
+      "test/net/audit29_client.test.js"
     ]
   },
   {
@@ -234,7 +234,7 @@
     "old": "      if (state.character !== character() || state.account !== account()) return true;",
     "new": "      if (state.character !== character()) return true;",
     "tests": [
-      "test/audit29_client.test.js"
+      "test/net/audit29_client.test.js"
     ]
   },
   {
@@ -243,7 +243,7 @@
     "old": "      if (state.open === false) return account() !== state.account || now() - state.readAt >= PROF_CLOSED_RECHECK_MS;",
     "new": "      if (state.open === false) return false;",
     "tests": [
-      "test/audit29_client.test.js"
+      "test/net/audit29_client.test.js"
     ]
   },
   {
@@ -252,7 +252,7 @@
     "old": "      if (!had) return { ok: true, text: '', material: w.material, qty: 0, elsewhere: true };\n",
     "new": "",
     "tests": [
-      "test/audit29_client.test.js"
+      "test/net/audit29_client.test.js"
     ]
   },
   {
@@ -261,7 +261,7 @@
     "old": "    if (v && !v.promise && now() - v.at > maxAgeMs) v = null;\n",
     "new": "",
     "tests": [
-      "test/audit29_client.test.js"
+      "test/net/audit29_client.test.js"
     ]
   },
   {
@@ -270,7 +270,7 @@
     "old": "door.spec(c, profession, rank, spec, from, m.id)",
     "new": "door.spec(c, profession, rank, spec, null, m.id)",
     "tests": [
-      "test/audit29_client.test.js"
+      "test/net/audit29_client.test.js"
     ]
   },
   {
@@ -279,16 +279,16 @@
     "old": "if (!r.kept && !r.elsewhere) onAnswer(h, r, ranks.get(r?.data?.track?.profession) ?? 0);",
     "new": "if (!r.kept && !r.elsewhere) onAnswer(h, r);",
     "tests": [
-      "test/audit29_host.test.js"
+      "test/scenes/audit29_host.test.js"
     ]
   },
   {
     "name": "AUDIT29-C1-the-page-redraws-on-the-backoff",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "  book.refresh().then(() => { if (book.state.readAt !== before) rerender(); }, () => {});",
     "new": "  book.refresh().then(() => { rerender(); }, () => {});",
     "tests": [
-      "test/audit29_client.test.js"
+      "test/net/audit29_client.test.js"
     ]
   },
   {
@@ -298,16 +298,16 @@
     "old": "export const stationsOffered = (trader = true) => DECOR_STATIONS.filter((k) => (k === VENDOR_STATION ? trader && forgeOffered() : !PROF_STATIONS.includes(k) || forgeOffered()));",
     "new": "export const stationsOffered = (trader = true) => DECOR_STATIONS.filter(() => trader || true);",
     "tests": [
-      "test/audit29_client.test.js"
+      "test/net/audit29_client.test.js"
     ]
   },
   {
     "name": "AUDIT29-B2-a-forge-on-the-classic-skin",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "export const forgeOffered = () => profPagesShown();",
     "new": "export const forgeOffered = () => true;",
     "tests": [
-      "test/audit29_client.test.js"
+      "test/net/audit29_client.test.js"
     ],
     "note": "CLASSIC-PAGES (LAW CHANGED, Mac: \"Enhanced pages + key\"): the classic skin is offered the Forge now - its pause opens the Stores page (ui/pauseDoor.js). Re-aimed at what B2 still holds: no Forge offered offline or for an account the switch has not opened to."
   },
@@ -317,7 +317,7 @@
     "old": "export const NODE_AIM_DEG = 12;",
     "new": "export const NODE_AIM_DEG = 25;",
     "tests": [
-      "test/audit29_host.test.js"
+      "test/scenes/audit29_host.test.js"
     ]
   },
   {
@@ -326,7 +326,7 @@
     "old": "    for (const c of seen) if (!deps.clear || deps.clear(pos, c.at, c.best.dungeon, c.best.interior)) return c.best;",
     "new": "    for (const c of seen) return c.best;",
     "tests": [
-      "test/audit29_host.test.js"
+      "test/scenes/audit29_host.test.js"
     ]
   },
   {
@@ -335,7 +335,7 @@
     "old": "Math.hypot(dx, dz) > reach || Math.abs(dy) > reach) continue;",
     "new": "Math.hypot(dx, dz) > reach) continue;",
     "tests": [
-      "test/audit29_host.test.js"
+      "test/scenes/audit29_host.test.js"
     ]
   },
   {
@@ -344,7 +344,7 @@
     "old": "    if (!plan || !plan.ready) { passedOn = needLine(plan, rank); return false; }",
     "new": "    if (!plan) return false;\n    if (!plan.ready) { passedOn = needLine(plan, rank); return true; }",
     "tests": [
-      "test/audit29_host.test.js"
+      "test/scenes/audit29_host.test.js"
     ]
   },
   {
@@ -353,7 +353,7 @@
     "old": "if (act) return !click;   // AUDIT 29 D3",
     "new": "if (act) return false;   // AUDIT 29 D3",
     "tests": [
-      "test/audit29_host.test.js"
+      "test/scenes/audit29_host.test.js"
     ]
   },
   {
@@ -362,7 +362,7 @@
     "old": "        if (act) { letGo(act); act.act.cancel(); act = null; }   // AUDIT 29 C5",
     "new": "        // AUDIT 29 C5",
     "tests": [
-      "test/audit29_host.test.js"
+      "test/scenes/audit29_host.test.js"
     ]
   },
   {
@@ -371,7 +371,7 @@
     "old": "        act.world = w ?? act.world;\n",
     "new": "",
     "tests": [
-      "test/audit29_host.test.js"
+      "test/scenes/audit29_host.test.js"
     ]
   },
   {
@@ -380,7 +380,7 @@
     "old": "        if (dungeon !== d || d.gen !== gen) { if (b) d.drop(b); return; }",
     "new": "        if (dungeon !== d) { if (b) d.drop(b); return; }",
     "tests": [
-      "test/audit29_host.test.js"
+      "test/scenes/audit29_host.test.js"
     ]
   },
   {
@@ -389,11 +389,11 @@
     "old": "      else if (!a && nodeKeyOf) restandNode(nodeKeyOf);\n      return;\n    }",
     "new": "      return;\n    }",
     "tests": [
-      "test/audit29_host.test.js"
+      "test/scenes/audit29_host.test.js"
     ],
     "note": "GATHER-SPEED/MARKET-SPEED (PIN MOVED): re-aimed by content - the reads batched.",
     "equivalent": true,
-    "why": "GATHER-SPEED: a kept harvest's node went with its act (net/profBook.js `gone` - taken, or being counted), so the answer through the pump stands its pixel again over what it already shows; kept as the book's own word on the node. The lapse's and the refusal's stand-again are pinned and killed in test/gatherspeed.test.js."
+    "why": "GATHER-SPEED: a kept harvest's node went with its act (net/profBook.js `gone` - taken, or being counted), so the answer through the pump stands its pixel again over what it already shows; kept as the book's own word on the node. The lapse's and the refusal's stand-again are pinned and killed in test/net/gatherspeed.test.js."
   },
   {
     "name": "AUDIT29-C10-every-pixel-for-the-compass",
@@ -401,7 +401,7 @@
     "old": "near ? nearPixels(near.pos, near.r) : stood.values()",
     "new": "stood.values()",
     "tests": [
-      "test/audit29_host.test.js"
+      "test/scenes/audit29_host.test.js"
     ]
   },
   {
@@ -410,7 +410,7 @@
     "old": "          if (!gentle && attack && st.find < BASKET_ACT.finds) st.early = true;\n",
     "new": "",
     "tests": [
-      "test/audit29_host.test.js"
+      "test/scenes/audit29_host.test.js"
     ]
   },
   {
@@ -419,8 +419,8 @@
     "old": "        if (!onPixel(foot[0], foot[1]) || insideRocks(solid, foot[0], foot[1])) continue;   // FOOT-IN; ROCK-NEAR\n",
     "new": "        if (!onPixel(foot[0], foot[1])) continue;   // FOOT-IN; ROCK-NEAR\n",
     "tests": [
-      "test/audit29_host.test.js",
-      "test/fb1001_rockfoot.test.js"
+      "test/scenes/audit29_host.test.js",
+      "test/world/worldOfDaggerfall/fb1001_rockfoot.test.js"
     ]
   },
   {
@@ -429,7 +429,7 @@
     "old": "collider.raycastHit(from, dir, PROF_VEIN_WALL_M, PROF_VEIN_ONLY)",
     "new": "collider.raycastHit(from, dir, PROF_VEIN_WALL_M)",
     "tests": [
-      "test/audit29_host.test.js"
+      "test/scenes/audit29_host.test.js"
     ]
   },
   {
@@ -438,16 +438,16 @@
     "old": "    if (e.profActEnded) return;\n",
     "new": "",
     "tests": [
-      "test/audit29_host.test.js"
+      "test/scenes/audit29_host.test.js"
     ]
   },
   {
     "name": "AUDIT29-D2-the-rig-swings-behind-the-tool",
-    "file": "src/combat/weaponRig.js",
+    "file": "src/combat/weapon/weaponRig.js",
     "old": "&& !fpsSpellCasting.isPlayingAnim && !climbing && !actTool();",
     "new": "&& !fpsSpellCasting.isPlayingAnim && !climbing;",
     "tests": [
-      "test/audit29_host.test.js"
+      "test/scenes/audit29_host.test.js"
     ]
   },
   {
@@ -456,7 +456,7 @@
     "old": "          if (f.fee > 0) { deductGold(playerEntity, f.fee); saveSoon.changed(); }\n          const out = smeltRecipe(",
     "new": "          if (f.fee > 0 && !r.data?.repeat) { deductGold(playerEntity, f.fee); saveSoon.changed(); }\n          const out = smeltRecipe(",
     "tests": [
-      "test/audit29_host.test.js"
+      "test/scenes/audit29_host.test.js"
     ]
   }
 ]

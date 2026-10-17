@@ -1,1088 +1,1090 @@
 [
- {
-  "name": "CROWN2-def-share",
-  "file": "src/net/townSeatLaw.js",
-  "old": "* Math.max(0, liegeReach) * FEALTY.reachShare + 1e-9)",
-  "new": "* Math.max(0, liegeReach) + 1e-9)",
-  "tests": [
-   "test/crown2_law.test.js"
-  ]
- },
- {
-  "name": "CROWN2-def-floor",
-  "file": "src/net/townSeatLaw.js",
-  "old": "  + Math.floor(Math.max(0, own?.influence ?? 0) * Math.max(0, liegeReach) * FEALTY.reachShare + 1e-9)",
-  "new": "  + (Math.max(0, own?.influence ?? 0) * Math.max(0, liegeReach) * FEALTY.reachShare)",
-  "tests": [
-   "test/crown2_law.test.js"
-  ]
- },
- {
-  "name": "CROWN2-def-neg",
-  "file": "src/net/townSeatLaw.js",
-  "old": "* Math.max(0, liegeReach) * FEALTY.reachShare",
-  "new": "* liegeReach * FEALTY.reachShare",
-  "tests": [
-   "test/crown2_law.test.js"
-  ]
- },
- {
-  "name": "CROWN2-def-gone",
-  "file": "src/net/townSeatLaw.js",
-  "old": "  + Math.floor(Math.max(0, own?.influence ?? 0) * Math.max(0, liegeReach) * FEALTY.reachShare + 1e-9)   // CROWN2",
-  "new": "  + 0   // CROWN2",
-  "tests": [
-   "test/crown2_law.test.js",
-   "test/crown2_service.test.js"
-  ]
- },
- {
-  "name": "CROWN2-plan-reach",
-  "file": "src/net/townSeatLaw.js",
-  "old": "!!s.holder.bonus, s.holder.liegeReach ?? 0);",
-  "new": "!!s.holder.bonus, 0);",
-  "tests": [
-   "test/crown2_law.test.js",
-   "test/crown2_service.test.js"
-  ]
- },
- {
-  "name": "CROWN2-plan-broke",
-  "file": "src/net/townSeatLaw.js",
-  "old": "brokeFealty: !!s.holder.brokeFealty,",
-  "new": "brokeFealty: false,",
-  "tests": [
-   "test/crown2_law.test.js",
-   "test/crown2_service.test.js"
-  ]
- },
- {
-  "name": "CROWN2-standing-row",
-  "file": "src/net/townSeatLaw.js",
-  "old": "  if (brokeFealty) add('fealtyBroken', STANDING_CHANGES.fealtyBroken);\n",
-  "new": "",
-  "tests": [
-   "test/crown2_law.test.js",
-   "test/crown2_service.test.js"
-  ]
- },
- {
-  "name": "CROWN2-standing-num",
-  "file": "src/net/townSeatLaw.js",
-  "old": "  fealtyBroken: -10,",
-  "new": "  fealtyBroken: -5,",
-  "tests": [
-   "test/crown2_law.test.js",
-   "test/crown2_service.test.js"
-  ]
- },
- {
-  "name": "CROWN2-consc-vassal",
-  "file": "src/net/townSeatLaw.js",
-  "old": "if (guild === crownGuild || vassals.has(guild)) continue;",
-  "new": "if (guild === crownGuild) continue;",
-  "tests": [
-   "test/crown2_law.test.js",
-   "test/crown2_service.test.js"
-  ]
- },
- {
-  "name": "CROWN2-fit-crown",
-  "file": "src/net/townSeatLaw.js",
-  "old": "  if ((vassalHolds ?? []).some((h) => h.tier === 'crown')) return null;\n",
-  "new": "",
-  "tests": [
-   "test/crown2_law.test.js",
-   "test/crown2_service.test.js"
-  ]
- },
- {
-  "name": "CROWN2-fit-march",
-  "file": "src/net/townSeatLaw.js",
-  "old": "(isMarch(h.region) ? MARCHES[h.region].includes(k) : kingdomOf(h.region) === k)",
-  "new": "(isMarch(h.region) ? true : kingdomOf(h.region) === k)",
-  "tests": [
-   "test/crown2_law.test.js"
-  ]
- },
- {
-  "name": "CROWN2-fit-kingdom",
-  "file": "src/net/townSeatLaw.js",
-  "old": "(isMarch(h.region) ? MARCHES[h.region].includes(k) : kingdomOf(h.region) === k)",
-  "new": "(isMarch(h.region) ? MARCHES[h.region].includes(k) : true)",
-  "tests": [
-   "test/crown2_law.test.js",
-   "test/crown2_service.test.js"
-  ]
- },
- {
-  "name": "CROWN2-fit-first",
-  "file": "src/net/townSeatLaw.js",
-  "old": "    if ((vassalHolds ?? []).some((h) => (isMarch(h.region) ? MARCHES[h.region].includes(k) : kingdomOf(h.region) === k))) return k;   // a palace: a crown holder returned above\n  }",
-  "new": "    if ((vassalHolds ?? []).some((h) => (isMarch(h.region) ? MARCHES[h.region].includes(k) : kingdomOf(h.region) === k))) return k;   // a palace: a crown holder returned above\n    return null;\n  }",
-  "tests": [
-   "test/crown2_law.test.js"
-  ]
- },
- {
-  "name": "CROWN2-reck-fits",
-  "file": "src/net/townSeatLaw.js",
-  "old": "fits: !!fealtyKingdom(chartersOf(f.vassal), chartersOf(f.liege)) }));",
-  "new": "fits: true }));",
-  "tests": [
-   "test/crown2_law.test.js",
-   "test/crown2_service.test.js"
-  ]
- },
- {
-  "name": "CROWN2-reck-broken",
-  "file": "src/net/townSeatLaw.js",
-  "old": "fealties.filter((f) => f.fits && !f.broken).map((f) => [f.vassal, f.liege])",
-  "new": "fealties.filter((f) => f.fits).map((f) => [f.vassal, f.liege])",
-  "tests": [
-   "test/crown2_law.test.js",
-   "test/crown2_service.test.js"
-  ]
- },
- {
-  "name": "CROWN2-reck-broken-by",
-  "file": "src/net/townSeatLaw.js",
-  "old": "broken: f.state === 'breaking' ? f.broken_by : null,",
-  "new": "broken: f.state === 'breaking' ? f.vassal : null,",
-  "tests": [
-   "test/crown2_law.test.js",
-   "test/crown2_service.test.js"
-  ]
- },
- {
-  "name": "CROWN2-reck-breakers",
-  "file": "src/net/townSeatLaw.js",
-  "old": "    breakers: new Set(fealties.filter((f) => f.broken).map((f) => f.broken)),",
-  "new": "    breakers: new Set(),",
-  "tests": [
-   "test/crown2_law.test.js",
-   "test/crown2_service.test.js"
-  ]
- },
- {
-  "name": "CROWN2-reck-reach",
-  "file": "src/net/townSeatLaw.js",
-  "old": "seatReach(seat, crownsHeld(chartersOf(liegeOf.get(guild))))",
-  "new": "seatReach(seat, crownsHeld(chartersOf(guild)))",
-  "tests": [
-   "test/crown2_law.test.js",
-   "test/crown2_service.test.js"
-  ]
- },
- {
-  "name": "CROWN2-tu-reach",
-  "file": "server-account/src/seatTurning.js",
-  "old": "        liegeReach: reckoned.liegeReach(h.guild_id, registry.get(key)),",
-  "new": "        liegeReach: 0,",
-  "tests": [
-   "test/crown2_service.test.js"
-  ]
- },
- {
-  "name": "CROWN2-tribute-rate",
-  "file": "src/net/townSeatLaw.js",
-  "old": "FEALTY = Object.freeze({ tribute: 0.05,",
-  "new": "FEALTY = Object.freeze({ tribute: 0.1,",
-  "tests": [
-   "test/crown2_law.test.js",
-   "test/crown2_service.test.js"
-  ]
- },
- {
-  "name": "CROWN2-tribute-floor",
-  "file": "src/net/townSeatLaw.js",
-  "old": "export const fealtyTribute = (tithe) => Math.floor(Math.max(0, Number(tithe) || 0) * FEALTY.tribute + 1e-9);",
-  "new": "export const fealtyTribute = (tithe) => Math.round(Math.max(0, Number(tithe) || 0) * FEALTY.tribute);",
-  "tests": [
-   "test/crown2_law.test.js"
-  ]
- },
- {
-  "name": "CROWN2-tribute-neg",
-  "file": "src/net/townSeatLaw.js",
-  "old": "Math.floor(Math.max(0, Number(tithe) || 0) * FEALTY.tribute",
-  "new": "Math.floor((Number(tithe) || 0) * FEALTY.tribute",
-  "tests": [
-   "test/crown2_law.test.js"
-  ]
- },
- {
-  "name": "CROWN2-share",
-  "file": "src/net/townSeatLaw.js",
-  "old": "reachShare: 0.5,",
-  "new": "reachShare: 1,",
-  "tests": [
-   "test/crown2_law.test.js",
-   "test/crown2_service.test.js"
-  ]
- },
- {
-  "name": "CROWN2-season",
-  "file": "src/net/townSeatLaw.js",
-  "old": "export const SEASON_WEEKS = 8;",
-  "new": "export const SEASON_WEEKS = 4;",
-  "tests": [
-   "test/crown2_law.test.js"
-  ]
- },
- {
-  "name": "CROWN2-until-next",
-  "file": "src/net/townSeatLaw.js",
-  "old": "(Math.floor(Math.max(0, week) / SEASON_WEEKS) + 1) * SEASON_WEEKS",
-  "new": "(Math.floor(Math.max(0, week) / SEASON_WEEKS)) * SEASON_WEEKS",
-  "tests": [
-   "test/crown2_law.test.js"
-  ]
- },
- {
-  "name": "CROWN2-until-neg",
-  "file": "src/net/townSeatLaw.js",
-  "old": "(Math.floor(Math.max(0, week) / SEASON_WEEKS) + 1)",
-  "new": "(Math.floor(week / SEASON_WEEKS) + 1)",
-  "tests": [
-   "test/crown2_law.test.js"
-  ]
- },
- {
-  "name": "CROWN2-bar-liege",
-  "file": "src/net/townSeatLaw.js",
-  "old": "  if (holder === liege || vassals.includes(holder)) return 'fealty-pledge';",
-  "new": "  if (vassals.includes(holder)) return 'fealty-pledge';",
-  "tests": [
-   "test/crown2_law.test.js",
-   "test/crown2_service.test.js"
-  ]
- },
- {
-  "name": "CROWN2-bar-vassal",
-  "file": "src/net/townSeatLaw.js",
-  "old": "  if (holder === liege || vassals.includes(holder)) return 'fealty-pledge';",
-  "new": "  if (holder === liege) return 'fealty-pledge';",
-  "tests": [
-   "test/crown2_law.test.js",
-   "test/crown2_service.test.js"
-  ]
- },
- {
-  "name": "CROWN2-bar-pact",
-  "file": "src/net/townSeatLaw.js",
-  "old": "  if (pacts.includes(holder)) return 'pact-pledge';\n",
-  "new": "",
-  "tests": [
-   "test/crown2_law.test.js",
-   "test/crown2_service.test.js"
-  ]
- },
- {
-  "name": "CROWN2-red-s",
-  "file": "src/net/townSeatLaw.js",
-  "old": "export const SEAT_RED_S = 24 * 3600;",
-  "new": "export const SEAT_RED_S = 12 * 3600;",
-  "tests": [
-   "test/crown2_law.test.js",
-   "test/crown2_service.test.js"
-  ]
- },
- {
-  "name": "CROWN2-red-text",
-  "file": "src/net/townSeatLaw.js",
-  "old": "has broken its Pact of non-aggression with ${guildWords(other)}.`",
-  "new": "has broken its Pact with ${guildWords(other)}.`",
-  "tests": [
-   "test/crown2_law.test.js",
-   "test/crown2_service.test.js",
-   "test/crown2_client.test.js"
-  ]
- },
- {
-  "name": "CROWN2-chron-sworn",
-  "file": "src/net/townSeatLaw.js",
-  "old": "    case 'fealty-sworn': return `${when}, ${guildWords(d.vassal)} swore fealty to ${guildWords(d.liege)}.`;\n",
-  "new": "",
-  "tests": [
-   "test/crown2_law.test.js"
-  ]
- },
- {
-  "name": "CROWN2-chron-breaker",
-  "file": "src/net/townSeatLaw.js",
-  "old": "return `${when}, ${guildWords(d.breaker)} broke the fealty",
-  "new": "return `${when}, ${guildWords(d.vassal)} broke the fealty",
-  "tests": [
-   "test/crown2_law.test.js"
-  ]
- },
- {
-  "name": "CROWN2-chron-marks",
-  "file": "src/net/townSeatLaw.js",
-  "old": "paid ${marksText(Number(d.marks ?? 0))} in fealty",
-  "new": "paid ${d.marks} silver in fealty",
-  "tests": [
-   "test/crown2_law.test.js"
-  ]
- },
- {
-  "name": "CROWN2-chron-lapsed",
-  "file": "src/net/townSeatLaw.js",
-  "old": "    case 'fealty-lapsed': return `${when}, the fealty between ${guildWords(d.vassal)} and ${guildWords(d.liege)} lapsed.`;\n",
-  "new": "",
-  "tests": [
-   "test/crown2_law.test.js"
-  ]
- },
- {
-  "name": "CROWN2-cap",
-  "file": "src/net/townSeatLaw.js",
-  "old": "return `${w[0].toUpperCase()}${w.slice(1)}`; };",
-  "new": "return w; };",
-  "tests": [
-   "test/crown2_client.test.js",
-   "test/seat2a_client.test.js",
-   "test/seat1c_client.test.js"
-  ]
- },
- {
-  "name": "CROWN2-rows-sworn-side",
-  "file": "src/net/townSeatLaw.js",
-  "old": "text: f.asVassal ? `Your guild is sworn to ${guildWords(f.liege)}.` : `${GuildWords(f.vassal)} is sworn to your guild.`",
-  "new": "text: !f.asVassal ? `Your guild is sworn to ${guildWords(f.liege)}.` : `${GuildWords(f.vassal)} is sworn to your guild.`",
-  "tests": [
-   "test/crown2_client.test.js"
-  ]
- },
- {
-  "name": "CROWN2-rows-breaking",
-  "file": "src/net/townSeatLaw.js",
-  "old": "ends at the Turning.`, act: null,",
-  "new": "ends at the Turning.`, act: 'fealty-break',",
-  "tests": [
-   "test/crown2_client.test.js"
-  ]
- },
- {
-  "name": "CROWN2-rows-breaking-state",
-  "file": "src/net/townSeatLaw.js",
-  "old": "    } else if (f.state === 'breaking') {",
-  "new": "    } else if (false) {",
-  "tests": [
-   "test/crown2_client.test.js"
-  ]
- },
- {
-  "name": "CROWN2-rows-mine",
-  "file": "src/net/townSeatLaw.js",
-  "old": "    } else if (f.mine) {\n      rows.push({ text: f.asVassal ? `Your guild offers to swear",
-  "new": "    } else if (!f.mine) {\n      rows.push({ text: f.asVassal ? `Your guild offers to swear",
-  "tests": [
-   "test/crown2_client.test.js"
-  ]
- },
- {
-  "name": "CROWN2-rows-offer-side",
-  "file": "src/net/townSeatLaw.js",
-  "old": "rows.push({ text: f.asVassal ? `Your guild offers to swear fealty to ${guildWords(f.liege)}.` : `Your guild offers to take ${guildWords(f.vassal)} as its vassal.`",
-  "new": "rows.push({ text: `Your guild offers to swear fealty to ${guildWords(f.liege)}.`",
-  "tests": [
-   "test/crown2_client.test.js"
-  ]
- },
- {
-  "name": "CROWN2-rows-asked-side",
-  "file": "src/net/townSeatLaw.js",
-  "old": "rows.push({ text: f.asVassal ? `${GuildWords(f.liege)} offers to take your guild as its vassal.` : `${GuildWords(f.vassal)} offers to swear fealty to your guild.`",
-  "new": "rows.push({ text: `${GuildWords(f.liege)} offers to take your guild as its vassal.`",
-  "tests": [
-   "test/crown2_client.test.js"
-  ]
- },
- {
-  "name": "CROWN2-rows-tag",
-  "file": "src/net/townSeatLaw.js",
-  "old": "    const other = f.asVassal ? f.liege : f.vassal;",
-  "new": "    const other = f.liege;",
-  "tests": [
-   "test/crown2_client.test.js"
-  ]
- },
- {
-  "name": "CROWN2-rows-pact-signed",
-  "file": "src/net/townSeatLaw.js",
-  "old": "    if (c.state === 'signed') rows.push(",
-  "new": "    if (false) rows.push(",
-  "tests": [
-   "test/crown2_client.test.js"
-  ]
- },
- {
-  "name": "CROWN2-rows-pact-mine",
-  "file": "src/net/townSeatLaw.js",
-  "old": "    else if (c.mine) rows.push({ text: `Your guild offers",
-  "new": "    else if (!c.mine) rows.push({ text: `Your guild offers",
-  "tests": [
-   "test/crown2_client.test.js"
-  ]
- },
- {
-  "name": "CROWN2-rows-pact-act",
-  "file": "src/net/townSeatLaw.js",
-  "old": "a Pact of non-aggression, until week ${c.until}.`, act: 'pact-accept'",
-  "new": "a Pact of non-aggression, until week ${c.until}.`, act: 'pact-withdraw'",
-  "tests": [
-   "test/crown2_client.test.js"
-  ]
- },
- {
-  "name": "CROWN2-acts-sign",
-  "file": "src/net/townSeatLaw.js",
-  "old": "'pact-accept': 'Sign',",
-  "new": "'pact-accept': 'Accept',",
-  "tests": [
-   "test/crown2_client.test.js"
-  ]
- },
- {
-  "name": "CROWN2-svc-as",
-  "file": "server-account/src/seatPolitics.js",
-  "old": "  if (as !== 'vassal' && as !== 'liege') return { error: 'fealty-unfit' };\n  if (await overRate",
-  "new": "  if (await overRate",
-  "tests": [
-   "test/crown2_service.test.js"
-  ]
- },
- {
-  "name": "CROWN2-svc-sides",
-  "file": "server-account/src/seatPolitics.js",
-  "old": "  const [vassal, liege] = as === 'vassal' ? [a.gid, other.id] : [other.id, a.gid];",
-  "new": "  const [vassal, liege] = [a.gid, other.id];",
-  "tests": [
-   "test/crown2_service.test.js"
-  ]
- },
- {
-  "name": "CROWN2-svc-fit",
-  "file": "server-account/src/seatPolitics.js",
-  "old": "  if (vassal === liege || !fealtyKingdom(await chartersOf(db, vassal), await chartersOf(db, liege))) return { error: 'fealty-unfit' };\n  if (await pledgedAgainst(db, weekAt(nowS), vassal, liege)) return { error: 'fealty-pledged' };",
-  "new": "  if (await pledgedAgainst(db, weekAt(nowS), vassal, liege)) return { error: 'fealty-pledged' };",
-  "tests": [
-   "test/crown2_service.test.js"
-  ]
- },
- {
-  "name": "CROWN2-svc-pledged",
-  "file": "server-account/src/seatPolitics.js",
-  "old": "  if (await pledgedAgainst(db, weekAt(nowS), vassal, liege)) return { error: 'fealty-pledged' };\n  const r = await db",
-  "new": "  const r = await db",
-  "tests": [
-   "test/crown2_service.test.js"
-  ]
- },
- {
-  "name": "CROWN2-svc-sworn",
-  "file": "server-account/src/seatPolitics.js",
-  "old": "ON CONFLICT (vassal) DO UPDATE SET liege = excluded.liege, offered_by = excluded.offered_by, at = excluded.at WHERE guild_fealty.state = 'offered'`)",
-  "new": "ON CONFLICT (vassal) DO UPDATE SET liege = excluded.liege, offered_by = excluded.offered_by, at = excluded.at, state = 'offered'`)",
-  "tests": [
-   "test/crown2_service.test.js"
-  ]
- },
- {
-  "name": "CROWN2-svc-accept-other",
-  "file": "server-account/src/seatPolitics.js",
-  "old": "WHERE state = 'offered' AND offered_by = ?1\n",
-  "new": "WHERE state = 'offered'\n",
-  "tests": [
-   "test/crown2_service.test.js"
-  ]
- },
- {
-  "name": "CROWN2-svc-accept-fit",
-  "file": "server-account/src/seatPolitics.js",
-  "old": "  if (!fealtyKingdom(vassalHolds, liegeHolds)) return { error: 'fealty-unfit' };\n",
-  "new": "",
-  "tests": [
-   "test/crown2_service.test.js"
-  ]
- },
- {
-  "name": "CROWN2-svc-accept-once",
-  "file": "server-account/src/seatPolitics.js",
-  "old": "WHERE vassal = ?1 AND state = 'offered'\").bind(row.vassal, week, nowS),",
-  "new": "WHERE vassal = ?1\").bind(row.vassal, week, nowS),",
-  "tests": [
-   "test/crown2_service.test.js"
-  ]
- },
- {
-  "name": "CROWN2-svc-chron",
-  "file": "server-account/src/seatPolitics.js",
-  "old": "  const keys = [...liegeHolds.filter((h) => h.tier === 'crown'), ...vassalHolds].map((h) => h.key);",
-  "new": "  const keys = vassalHolds.map((h) => h.key);",
-  "tests": [
-   "test/crown2_service.test.js"
-  ]
- },
- {
-  "name": "CROWN2-svc-break",
-  "file": "server-account/src/seatPolitics.js",
-  "old": "  const r = await db.prepare(`UPDATE guild_fealty SET state = 'breaking', broken_by = ?1, at = ?3 WHERE state = 'sworn'",
-  "new": "  const r = await db.prepare(`UPDATE guild_fealty SET state = 'breaking', broken_by = ?2, at = ?3 WHERE state = 'sworn'",
-  "tests": [
-   "test/crown2_service.test.js"
-  ]
- },
- {
-  "name": "CROWN2-svc-pact-self",
-  "file": "server-account/src/seatPolitics.js",
-  "old": "  if (other.id === a.gid) return { error: 'pact-self' };\n",
-  "new": "",
-  "tests": [
-   "test/crown2_service.test.js"
-  ]
- },
- {
-  "name": "CROWN2-svc-pact-pledged",
-  "file": "server-account/src/seatPolitics.js",
-  "old": "  if (await pledgedAgainst(db, week, a.gid, other.id)) return { error: 'pact-pledged' };\n",
-  "new": "",
-  "tests": [
-   "test/crown2_service.test.js"
-  ]
- },
- {
-  "name": "CROWN2-svc-pact-signed",
-  "file": "server-account/src/seatPolitics.js",
-  "old": "  if (was && was.state === 'signed' && Number(was.until_week) > week) return { error: 'pact-signed' };\n",
-  "new": "",
-  "tests": [
-   "test/crown2_service.test.js"
-  ]
- },
- {
-  "name": "CROWN2-svc-pact-accept",
-  "file": "server-account/src/seatPolitics.js",
-  "old": "  if (was && was.state === 'offered' && was.offered_by === other.id) {",
-  "new": "  if (was && was.state === 'offered') {",
-  "tests": [
-   "test/crown2_service.test.js"
-  ]
- },
- {
-  "name": "CROWN2-svc-pact-until",
-  "file": "server-account/src/seatPolitics.js",
-  "old": "  const until = pactUntil(week, seasonZeroOf(env?.SEASON_ZERO_WEEK));",
-  "new": "  const until = week;",
-  "tests": [
-   "test/crown2_service.test.js"
-  ]
- },
- {
-  "name": "CROWN2-svc-red",
-  "file": "server-account/src/seatPolitics.js",
-  "old": "    ...(signed ? [db.prepare('INSERT INTO town_seat_red (text, at) VALUES (?, ?)').bind(pactBrokenText(n.get(a.gid), n.get(other.id)), nowS)] : []),\n",
-  "new": "",
-  "tests": [
-   "test/crown2_service.test.js"
-  ]
- },
- {
-  "name": "CROWN2-svc-red-offer",
-  "file": "server-account/src/seatPolitics.js",
-  "old": "  const signed = was.state === 'signed' && Number(was.until_week) > weekAt(nowS);",
-  "new": "  const signed = true;",
-  "tests": [
-   "test/crown2_service.test.js"
-  ]
- },
- {
-  "name": "CROWN2-svc-red-day",
-  "file": "server-account/src/seatPolitics.js",
-  "old": ".bind(nowS - SEAT_RED_S, SEAT_RED_MAX).all();",
-  "new": ".bind(0, SEAT_RED_MAX).all();",
-  "tests": [
-   "test/crown2_service.test.js"
-  ]
- },
- {
-  "name": "CROWN2-svc-pact-none",
-  "file": "server-account/src/seatPolitics.js",
-  "old": "  if (!was) return { error: 'pact-none' };\n",
-  "new": "  if (!was) return { ok: true, announced: false };\n",
-  "tests": [
-   "test/crown2_service.test.js"
-  ]
- },
- {
-  "name": "CROWN2-svc-view-mine",
-  "file": "server-account/src/seatPolitics.js",
-  "old": "state: r.state, mine: r.offered_by === gid, asVassal: r.vassal === gid }))",
-  "new": "state: r.state, mine: true, asVassal: r.vassal === gid }))",
-  "tests": [
-   "test/crown2_service.test.js"
-  ]
- },
- {
-  "name": "CROWN2-svc-bans-liege",
-  "file": "server-account/src/seatPolitics.js",
-  "old": "    liege: f.find((r) => r.vassal === gid)?.liege ?? null,",
-  "new": "    liege: null,",
-  "tests": [
-   "test/crown2_service.test.js"
-  ]
- },
- {
-  "name": "CROWN2-svc-bans-vassals",
-  "file": "server-account/src/seatPolitics.js",
-  "old": "    vassals: f.filter((r) => r.liege === gid).map((r) => r.vassal),",
-  "new": "    vassals: [],",
-  "tests": [
-   "test/crown2_service.test.js"
-  ]
- },
- {
-  "name": "CROWN2-svc-bans-pacts",
-  "file": "server-account/src/seatPolitics.js",
-  "old": "    pacts: p.map((r) => (r.a === gid ? r.b : r.a)),",
-  "new": "    pacts: [],",
-  "tests": [
-   "test/crown2_service.test.js"
-  ]
- },
- {
-  "name": "CROWN2-inf-bar",
-  "file": "server-account/src/seatInfluence.js",
-  "old": "  if (barred) return { error: barred };\n",
-  "new": "",
-  "tests": [
-   "test/crown2_service.test.js"
-  ]
- },
- {
-  "name": "CROWN2-inf-sworn",
-  "file": "server-account/src/seatInfluence.js",
-  "old": "\"SELECT liege FROM guild_fealty WHERE vassal = ? AND state = 'sworn'\"",
-  "new": "\"SELECT liege FROM guild_fealty WHERE vassal = ?\"",
-  "tests": [
-   "test/crown2_service.test.js"
-  ]
- },
- {
-  "name": "CROWN2-inf-fits",
-  "file": "server-account/src/seatInfluence.js",
-  "old": "  const liegeReach = fits ? seatReach(seat, crownsHeld(liegeHolds)) : 0;",
-  "new": "  const liegeReach = liege ? seatReach(seat, crownsHeld(liegeHolds)) : 0;",
-  "tests": [
-   "test/crown2_service.test.js"
-  ]
- },
- {
-  "name": "CROWN2-inf-reach",
-  "file": "server-account/src/seatInfluence.js",
-  "old": "overreachOf(tiers.map((t) => t.tier)), held, liegeReach) : null;",
-  "new": "overreachOf(tiers.map((t) => t.tier)), held) : null;",
-  "tests": [
-   "test/crown2_service.test.js"
-  ]
- },
- {
-  "name": "CROWN2-inf-politics",
-  "file": "server-account/src/seatInfluence.js",
-  "old": "        politics: await politicsOf(db, me.guild_id, nowS),",
-  "new": "",
-  "tests": [
-   "test/crown2_service.test.js",
-   "test/seat1b_service.test.js"
-  ]
- },
- {
-  "name": "CROWN2-tu-tithes",
-  "file": "server-account/src/seatTurning.js",
-  "old": "  if (ruling.length || fealties.length) {",
-  "new": "  if (ruling.length) {",
-  "tests": [
-   "test/crown2_service.test.js"
-  ]
- },
- {
-  "name": "CROWN2-tu-broke",
-  "file": "server-account/src/seatTurning.js",
-  "old": "        brokeFealty: breakers.has(h.guild_id),",
-  "new": "        brokeFealty: false,",
-  "tests": [
-   "test/crown2_service.test.js"
-  ]
- },
- {
-  "name": "CROWN2-tu-vassals",
-  "file": "server-account/src/seatTurning.js",
-  "old": "    const vassals = new Set(fealties.filter((f) => f.liege === e.guild).map((f) => f.vassal));",
-  "new": "    const vassals = new Set();",
-  "tests": [
-   "test/crown2_service.test.js"
-  ]
- },
- {
-  "name": "CROWN2-tu-owed",
-  "file": "server-account/src/seatTurning.js",
-  "old": "    const owed = f.fits ? fealtyTribute(tithes.get(f.vassal) ?? 0) : 0;",
-  "new": "    const owed = 0;",
-  "tests": [
-   "test/crown2_service.test.js"
-  ]
- },
- {
-  "name": "CROWN2-tu-to",
-  "file": "server-account/src/seatTurning.js",
-  "old": "CASE WHEN ${to} THEN 'guild' ELSE 'burn' END, CASE WHEN ${to} THEN ?2 END, 'fealty-tribute'",
-  "new": "'burn', NULL, 'fealty-tribute'",
-  "tests": [
-   "test/crown2_service.test.js"
-  ]
- },
- {
-  "name": "CROWN2-tu-chron-tribute",
-  "file": "server-account/src/seatTurning.js",
-  "old": "      if (k != null) stmts.push(paidHistory(k, 'fealty-tribute', { vassal: names.get(f.vassal), liege: names.get(f.liege) }, `fealty-${week}-${f.vassal}`));   // AUDIT-SEATS: what was paid\n",
-  "new": "",
-  "tests": [
-   "test/crown2_service.test.js"
-  ]
- },
- {
-  "name": "CROWN2-tu-end",
-  "file": "server-account/src/seatTurning.js",
-  "old": "      stmts.push(db.prepare('DELETE FROM guild_fealty WHERE vassal = ? AND liege = ?').bind(f.vassal, f.liege));\n",
-  "new": "",
-  "tests": [
-   "test/crown2_service.test.js"
-  ]
- },
- {
-  "name": "CROWN2-tu-end-when",
-  "file": "server-account/src/seatTurning.js",
-  "old": "    if (f.broken || !f.fits) {",
-  "new": "    if (f.broken) {",
-  "tests": [
-   "test/crown2_service.test.js"
-  ]
- },
- {
-  "name": "CROWN2-tu-chron-end",
-  "file": "server-account/src/seatTurning.js",
-  "old": "history(k, f.broken ? 'fealty-broken' : 'fealty-lapsed',",
-  "new": "history(k, 'fealty-broken',",
-  "tests": [
-   "test/crown2_service.test.js"
-  ]
- },
- {
-  "name": "CROWN2-idx-red",
-  "file": "server-account/src/index.js",
-  "old": ", red: await redOf(ctx.db, nowS), zero: seasonZeroOf(env.SEASON_ZERO_WEEK) };",
-  "new": ", red: [], zero: seasonZeroOf(env.SEASON_ZERO_WEEK) };",
-  "tests": [
-   "test/crown2_service.test.js"
-  ]
- },
- {
-  "name": "CROWN2-idx-route-break",
-  "file": "server-account/src/index.js",
-  "old": "          '/v1/seats/pact/break': () => breakPact(ctx, who.player, env, body),\n",
-  "new": "",
-  "tests": [
-   "test/crown2_service.test.js"
-  ]
- },
- {
-  "name": "CROWN2-door-fealty",
-  "file": "src/net/accountClient.js",
-  "old": "    fealty: (character, tag, as) => post('/v1/seats/fealty', { character, tag, as }),",
-  "new": "    fealty: (character, tag, as) => post('/v1/seats/fealty', { character, tag }),",
-  "tests": [
-   "test/crown2_client.test.js"
-  ]
- },
- {
-  "name": "CROWN2-door-break-tag",
-  "file": "src/net/accountClient.js",
-  "old": "post('/v1/seats/fealty/break', { character, ...(tag ? { tag } : {}) }),",
-  "new": "post('/v1/seats/fealty/break', { character, tag }),",
-  "tests": [
-   "test/crown2_client.test.js"
-  ]
- },
- {
-  "name": "CROWN2-door-pact-break",
-  "file": "src/net/accountClient.js",
-  "old": "    pactBreak: (character, tag) => post('/v1/seats/pact/break', { character, tag }),",
-  "new": "    pactBreak: (character, tag) => post('/v1/seats/pact', { character, tag }),",
-  "tests": [
-   "test/crown2_client.test.js"
-  ]
- },
- {
-  "name": "CROWN2-book-as",
-  "file": "src/net/townSeatBook.js",
-  "old": "(as === 'vassal' ? `Your guild offers to swear fealty to <${tag}>.` : `Your guild offers to take <${tag}> as its vassal.`)",
-  "new": "`Your guild offers to swear fealty to <${tag}>.`",
-  "tests": [
-   "test/crown2_client.test.js"
-  ]
- },
- {
-  "name": "CROWN2-book-withdrawn",
-  "file": "src/net/townSeatBook.js",
-  "old": "(d.withdrawn ? 'Your guild\\'s offer of fealty is withdrawn.' :",
-  "new": "(false ? 'Your guild\\'s offer of fealty is withdrawn.' :",
-  "tests": [
-   "test/crown2_client.test.js"
-  ]
- },
- {
-  "name": "CROWN2-book-signed",
-  "file": "src/net/townSeatBook.js",
-  "old": "(d.signed ? `The Pact with <${tag}> is signed, until week ${d.until}.` :",
-  "new": "(false ? `The Pact with <${tag}> is signed, until week ${d.until}.` :",
-  "tests": [
-   "test/crown2_client.test.js"
-  ]
- },
- {
-  "name": "CROWN2-book-announced",
-  "file": "src/net/townSeatBook.js",
-  "old": "(d.announced ? `Your guild has broken its Pact with <${tag}>. Everyone has been told.` : `The offer of a Pact with",
-  "new": "(true ? `Your guild has broken its Pact with <${tag}>. Everyone has been told.` : `The offer of a Pact with",
-  "tests": [
-   "test/crown2_client.test.js"
-  ]
- },
- {
-  "name": "CROWN2-book-accept-path",
-  "file": "src/net/townSeatBook.js",
-  "old": "door.fealtyAccept(character(), tag)",
-  "new": "door.fealty(character(), tag)",
-  "tests": [
-   "test/crown2_client.test.js"
-  ]
- },
- {
-  "name": "CROWN2-book-refusal",
-  "file": "src/net/townSeatBook.js",
-  "old": "      return r?.ok ? { ok: true, text: said(r.data ?? {}) } : { ok: false, text: accountRefusalText(r?.error) };\n    },\n    /** Fealty offered",
-  "new": "      return { ok: true, text: said(r.data ?? {}) };\n    },\n    /** Fealty offered",
-  "tests": [
-   "test/crown2_client.test.js"
-  ]
- },
- {
-  "name": "CROWN2-red-said",
-  "file": "src/net/townSeatBook.js",
-  "old": "        sayRed(data?.red);   // CROWN2",
-  "new": "        // CROWN2",
-  "tests": [
-   "test/crown2_client.test.js"
-  ]
- },
- {
-  "name": "CROWN2-red-once",
-  "file": "src/net/townSeatBook.js",
-  "old": "&& !seen.includes(r.id))",
-  "new": "&& true)",
-  "tests": [
-   "test/crown2_client.test.js"
-  ]
- },
- {
-  "name": "CROWN2-red-false",
-  "file": "src/net/townSeatBook.js",
-  "old": "      .filter((r) => onRed({ text: r.text, at: Number(r.at) * 1000 }) !== false);",
-  "new": "      .filter((r) => (onRed({ text: r.text, at: Number(r.at) * 1000 }), true));",
-  "tests": [
-   "test/crown2_client.test.js"
-  ]
- },
- {
-  "name": "CROWN2-red-ms",
-  "file": "src/net/townSeatBook.js",
-  "old": "at: Number(r.at) * 1000 })",
-  "new": "at: Number(r.at) })",
-  "tests": [
-   "test/crown2_client.test.js"
-  ]
- },
- {
-  "name": "CROWN2-red-store",
-  "file": "src/net/townSeatBook.js",
-  "old": "    try { storage?.setItem?.(SEAT_RED_SEEN_KEY, JSON.stringify(redSeen)); } catch { /* this page keeps them */ }\n",
-  "new": "",
-  "tests": [
-   "test/crown2_client.test.js"
-  ]
- },
- {
-  "name": "CROWN2-red-cap",
-  "file": "src/net/townSeatBook.js",
-  "old": "    redSeen = [...seen, ...said.map((r) => r.id)].slice(-SEAT_RED_SEEN_MAX);",
-  "new": "    redSeen = [...seen, ...said.map((r) => r.id)];",
-  "tests": [
-   "test/crown2_client.test.js"
-  ]
- },
- {
-  "name": "CROWN2-red-bad",
-  "file": "src/net/townSeatBook.js",
-  "old": "Number.isSafeInteger(r?.id) && typeof r.text === 'string' && !seen",
-  "new": "Number.isSafeInteger(r?.id) && !seen",
-  "tests": [
-   "test/crown2_client.test.js"
-  ]
- },
- {
-  "name": "CROWN2-red-clock",
-  "file": "src/net/townSeatBook.js",
-  "old": "      if (!pending && (open === true || failed) && nowMs() - at >= (failed ? SEAT_LIST_RETRY_MS : SEAT_RED_READ_MS)) read({ force: true });",
-  "new": "      if (!pending && (open === true || failed)) read({ force: true });",
-  "tests": [
-   "test/crown2_client.test.js"
-  ]
- },
- {
-  "name": "CROWN2-red-shut",
-  "file": "src/net/townSeatBook.js",
-  "old": "      if (!pending && (open === true || failed) && nowMs()",
-  "new": "      if (!pending && nowMs()",
-  "tests": [
-   "test/crown2_client.test.js"
-  ]
- },
- {
-  "name": "CROWN2-red-read-ms",
-  "file": "src/net/townSeatBook.js",
-  "old": "export const SEAT_RED_READ_MS = 15 * 60_000;",
-  "new": "export const SEAT_RED_READ_MS = 5 * 60_000;",
-  "tests": [
-   "test/crown2_client.test.js"
-  ]
- },
- {
-  "name": "CROWN2-tab-node",
-  "file": "src/ui/seatTab.js",
-  "old": "      if (data.mine?.politics) mine.append(politicsNode(data.mine.politics, SEAT_LEVER_RANKS.includes(data.mine.rank)));   // CROWN2\n",
-  "new": "",
-  "tests": [
-   "test/crown2_client.test.js"
-  ]
- },
- {
-  "name": "CROWN2-tab-rank",
-  "file": "src/ui/seatTab.js",
-  "old": "politicsNode(data.mine.politics, SEAT_LEVER_RANKS.includes(data.mine.rank))",
-  "new": "politicsNode(data.mine.politics, true)",
-  "tests": [
-   "test/crown2_client.test.js"
-  ]
- },
- {
-  "name": "CROWN2-tab-empty",
-  "file": "src/ui/seatTab.js",
-  "old": "    if (!rows.length) out.append(el('p', 'notice-seat-mine', 'Your guild has no liege, no vassal and no Pact.'));\n",
-  "new": "",
-  "tests": [
-   "test/crown2_client.test.js"
-  ]
- },
- {
-  "name": "CROWN2-tab-lever",
-  "file": "src/ui/seatTab.js",
-  "old": "for (const k of lever ? [r.act, r.alt] : []) {",
-  "new": "for (const k of [r.act, r.alt]) {",
-  "tests": [
-   "test/crown2_client.test.js"
-  ]
- },
- {
-  "name": "CROWN2-tab-tag",
-  "file": "src/ui/seatTab.js",
-  "old": "act(() => acts[k](r.tag))",
-  "new": "act(() => acts[k](null))",
-  "tests": [
-   "test/crown2_client.test.js"
-  ]
- },
- {
-  "name": "CROWN2-tab-accept",
-  "file": "src/ui/seatTab.js",
-  "old": "'fealty-accept': (t) => book.acceptFealty(t),",
-  "new": "'fealty-accept': (t) => book.offerFealty(t, 'vassal'),",
-  "tests": [
-   "test/crown2_client.test.js"
-  ]
- },
- {
-  "name": "CROWN2-tab-pact-accept",
-  "file": "src/ui/seatTab.js",
-  "old": "'pact-accept': (t) => book.offerPact(t),",
-  "new": "'pact-accept': (t) => book.breakPact(t),",
-  "tests": [
-   "test/crown2_client.test.js"
-  ]
- },
- {
-  "name": "CROWN2-tab-offers-lever",
-  "file": "src/ui/seatTab.js",
-  "old": "    if (!lever) return out;\n",
-  "new": "",
-  "tests": [
-   "test/crown2_client.test.js"
-  ]
- },
- {
-  "name": "CROWN2-tab-notag",
-  "file": "src/ui/seatTab.js",
-  "old": "(politicsTag ? act(() => ask(politicsTag)) : null)",
-  "new": "act(() => ask(politicsTag))",
-  "tests": [
-   "test/crown2_client.test.js"
-  ]
- },
- {
-  "name": "CROWN2-tab-trim",
-  "file": "src/ui/seatTab.js",
-  "old": "politicsTag = tag.value.trim();",
-  "new": "politicsTag = tag.value;",
-  "tests": [
-   "test/crown2_client.test.js"
-  ]
- },
- {
-  "name": "CROWN2-tab-take",
-  "file": "src/ui/seatTab.js",
-  "old": "['notice-seat-take', 'Take as vassal', (t) => book.offerFealty(t, 'liege')],",
-  "new": "['notice-seat-take', 'Take as vassal', (t) => book.offerFealty(t, 'vassal')],",
-  "tests": [
-   "test/crown2_client.test.js"
-  ]
- },
- {
-  "name": "CROWN2-world-red",
-  "file": "src/scenes/world.js",
-  "old": "      onRed: (line) => (redChat ? redChat(line) : false),",
-  "new": "      onRed: (line) => (redChat ? redChat(line) : true),",
-  "tests": [
-   "test/crown2_client.test.js"
-  ]
- },
- {
-  "name": "CROWN2-world-tick",
-  "file": "src/scenes/world.js",
-  "old": "    seatBook?.redTick();   // CROWN2",
-  "new": "    // CROWN2",
-  "tests": [
-   "test/crown2_client.test.js"
-  ]
- }
+  {
+    "name": "CROWN2-def-share",
+    "file": "src/net/townSeatLaw.js",
+    "old": "* Math.max(0, liegeReach) * FEALTY.reachShare + 1e-9)",
+    "new": "* Math.max(0, liegeReach) + 1e-9)",
+    "tests": [
+      "test/net/crown2_law.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-def-floor",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  + Math.floor(Math.max(0, own?.influence ?? 0) * Math.max(0, liegeReach) * FEALTY.reachShare + 1e-9)",
+    "new": "  + (Math.max(0, own?.influence ?? 0) * Math.max(0, liegeReach) * FEALTY.reachShare)",
+    "tests": [
+      "test/net/crown2_law.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-def-neg",
+    "file": "src/net/townSeatLaw.js",
+    "old": "* Math.max(0, liegeReach) * FEALTY.reachShare",
+    "new": "* liegeReach * FEALTY.reachShare",
+    "tests": [
+      "test/net/crown2_law.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-def-gone",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  + Math.floor(Math.max(0, own?.influence ?? 0) * Math.max(0, liegeReach) * FEALTY.reachShare + 1e-9)   // CROWN2",
+    "new": "  + 0   // CROWN2",
+    "tests": [
+      "test/net/crown2_law.test.js",
+      "test/net/crown2_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-plan-reach",
+    "file": "src/net/townSeatLaw.js",
+    "old": "!!s.holder.bonus, s.holder.liegeReach ?? 0);",
+    "new": "!!s.holder.bonus, 0);",
+    "tests": [
+      "test/net/crown2_law.test.js",
+      "test/net/crown2_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-plan-broke",
+    "file": "src/net/townSeatLaw.js",
+    "old": "brokeFealty: !!s.holder.brokeFealty,",
+    "new": "brokeFealty: false,",
+    "tests": [
+      "test/net/crown2_law.test.js",
+      "test/net/crown2_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-standing-row",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  if (brokeFealty) add('fealtyBroken', STANDING_CHANGES.fealtyBroken);\n",
+    "new": "",
+    "tests": [
+      "test/net/crown2_law.test.js",
+      "test/net/crown2_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-standing-num",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  fealtyBroken: -10,",
+    "new": "  fealtyBroken: -5,",
+    "tests": [
+      "test/net/crown2_law.test.js",
+      "test/net/crown2_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-consc-vassal",
+    "file": "src/net/townSeatLaw.js",
+    "old": "if (guild === crownGuild || vassals.has(guild)) continue;",
+    "new": "if (guild === crownGuild) continue;",
+    "tests": [
+      "test/net/crown2_law.test.js",
+      "test/net/crown2_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-fit-crown",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  if ((vassalHolds ?? []).some((h) => h.tier === 'crown')) return null;\n",
+    "new": "",
+    "tests": [
+      "test/net/crown2_law.test.js",
+      "test/net/crown2_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-fit-march",
+    "file": "src/net/townSeatLaw.js",
+    "old": "(isMarch(h.region) ? MARCHES[h.region].includes(k) : kingdomOf(h.region) === k)",
+    "new": "(isMarch(h.region) ? true : kingdomOf(h.region) === k)",
+    "tests": [
+      "test/net/crown2_law.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-fit-kingdom",
+    "file": "src/net/townSeatLaw.js",
+    "old": "(isMarch(h.region) ? MARCHES[h.region].includes(k) : kingdomOf(h.region) === k)",
+    "new": "(isMarch(h.region) ? MARCHES[h.region].includes(k) : true)",
+    "tests": [
+      "test/net/crown2_law.test.js",
+      "test/net/crown2_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-fit-first",
+    "file": "src/net/townSeatLaw.js",
+    "old": "    if ((vassalHolds ?? []).some((h) => (isMarch(h.region) ? MARCHES[h.region].includes(k) : kingdomOf(h.region) === k))) return k;   // a palace: a crown holder returned above\n  }",
+    "new": "    if ((vassalHolds ?? []).some((h) => (isMarch(h.region) ? MARCHES[h.region].includes(k) : kingdomOf(h.region) === k))) return k;   // a palace: a crown holder returned above\n    return null;\n  }",
+    "tests": [
+      "test/net/crown2_law.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-reck-fits",
+    "file": "src/net/townSeatLaw.js",
+    "old": "fits: !!fealtyKingdom(chartersOf(f.vassal), chartersOf(f.liege)) }));",
+    "new": "fits: true }));",
+    "tests": [
+      "test/net/crown2_law.test.js",
+      "test/net/crown2_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-reck-broken",
+    "file": "src/net/townSeatLaw.js",
+    "old": "fealties.filter((f) => f.fits && !f.broken).map((f) => [f.vassal, f.liege])",
+    "new": "fealties.filter((f) => f.fits).map((f) => [f.vassal, f.liege])",
+    "tests": [
+      "test/net/crown2_law.test.js",
+      "test/net/crown2_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-reck-broken-by",
+    "file": "src/net/townSeatLaw.js",
+    "old": "broken: f.state === 'breaking' ? f.broken_by : null,",
+    "new": "broken: f.state === 'breaking' ? f.vassal : null,",
+    "tests": [
+      "test/net/crown2_law.test.js",
+      "test/net/crown2_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-reck-breakers",
+    "file": "src/net/townSeatLaw.js",
+    "old": "    breakers: new Set(fealties.filter((f) => f.broken).map((f) => f.broken)),",
+    "new": "    breakers: new Set(),",
+    "tests": [
+      "test/net/crown2_law.test.js",
+      "test/net/crown2_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-reck-reach",
+    "file": "src/net/townSeatLaw.js",
+    "old": "seatReach(seat, crownsHeld(chartersOf(liegeOf.get(guild))))",
+    "new": "seatReach(seat, crownsHeld(chartersOf(guild)))",
+    "tests": [
+      "test/net/crown2_law.test.js",
+      "test/net/crown2_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-tu-reach",
+    "file": "server-account/src/seatTurning.js",
+    "old": "        liegeReach: reckoned.liegeReach(h.guild_id, registry.get(key)),",
+    "new": "        liegeReach: 0,",
+    "tests": [
+      "test/net/crown2_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-tribute-rate",
+    "file": "src/net/townSeatLaw.js",
+    "old": "FEALTY = Object.freeze({ tribute: 0.05,",
+    "new": "FEALTY = Object.freeze({ tribute: 0.1,",
+    "tests": [
+      "test/net/crown2_law.test.js",
+      "test/net/crown2_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-tribute-floor",
+    "file": "src/net/townSeatLaw.js",
+    "old": "export const fealtyTribute = (tithe) => Math.floor(Math.max(0, Number(tithe) || 0) * FEALTY.tribute + 1e-9);",
+    "new": "export const fealtyTribute = (tithe) => Math.round(Math.max(0, Number(tithe) || 0) * FEALTY.tribute);",
+    "tests": [
+      "test/net/crown2_law.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-tribute-neg",
+    "file": "src/net/townSeatLaw.js",
+    "old": "Math.floor(Math.max(0, Number(tithe) || 0) * FEALTY.tribute",
+    "new": "Math.floor((Number(tithe) || 0) * FEALTY.tribute",
+    "tests": [
+      "test/net/crown2_law.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-share",
+    "file": "src/net/townSeatLaw.js",
+    "old": "reachShare: 0.5,",
+    "new": "reachShare: 1,",
+    "tests": [
+      "test/net/crown2_law.test.js",
+      "test/net/crown2_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-season",
+    "file": "src/net/townSeatLaw.js",
+    "old": "export const SEASON_WEEKS = 8;",
+    "new": "export const SEASON_WEEKS = 4;",
+    "tests": [
+      "test/net/crown2_law.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-until-next",
+    "file": "src/net/townSeatLaw.js",
+    "old": "(Math.floor(Math.max(0, week) / SEASON_WEEKS) + 1) * SEASON_WEEKS",
+    "new": "(Math.floor(Math.max(0, week) / SEASON_WEEKS)) * SEASON_WEEKS",
+    "tests": [
+      "test/net/crown2_law.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-until-neg",
+    "file": "src/net/townSeatLaw.js",
+    "old": "(Math.floor(Math.max(0, week) / SEASON_WEEKS) + 1)",
+    "new": "(Math.floor(week / SEASON_WEEKS) + 1)",
+    "tests": [
+      "test/net/crown2_law.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-bar-liege",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  if (holder === liege || vassals.includes(holder)) return 'fealty-pledge';",
+    "new": "  if (vassals.includes(holder)) return 'fealty-pledge';",
+    "tests": [
+      "test/net/crown2_law.test.js",
+      "test/net/crown2_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-bar-vassal",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  if (holder === liege || vassals.includes(holder)) return 'fealty-pledge';",
+    "new": "  if (holder === liege) return 'fealty-pledge';",
+    "tests": [
+      "test/net/crown2_law.test.js",
+      "test/net/crown2_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-bar-pact",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  if (pacts.includes(holder)) return 'pact-pledge';\n",
+    "new": "",
+    "tests": [
+      "test/net/crown2_law.test.js",
+      "test/net/crown2_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-red-s",
+    "file": "src/net/townSeatLaw.js",
+    "old": "export const SEAT_RED_S = 24 * 3600;",
+    "new": "export const SEAT_RED_S = 12 * 3600;",
+    "tests": [
+      "test/net/crown2_law.test.js",
+      "test/net/crown2_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-red-text",
+    "file": "src/net/townSeatLaw.js",
+    "old": "has broken its Pact of non-aggression with ${guildWords(other)}.`",
+    "new": "has broken its Pact with ${guildWords(other)}.`",
+    "tests": [
+      "test/net/crown2_law.test.js",
+      "test/net/crown2_service.test.js",
+      "test/net/crown2_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-chron-sworn",
+    "file": "src/net/townSeatLaw.js",
+    "old": "    case 'fealty-sworn': return `${when}, ${guildWords(d.vassal)} swore fealty to ${guildWords(d.liege)}.`;\n",
+    "new": "",
+    "tests": [
+      "test/net/crown2_law.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-chron-breaker",
+    "file": "src/net/townSeatLaw.js",
+    "old": "return `${when}, ${guildWords(d.breaker)} broke the fealty",
+    "new": "return `${when}, ${guildWords(d.vassal)} broke the fealty",
+    "tests": [
+      "test/net/crown2_law.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-chron-marks",
+    "file": "src/net/townSeatLaw.js",
+    "old": "paid ${marksText(Number(d.marks ?? 0))} in fealty",
+    "new": "paid ${d.marks} silver in fealty",
+    "tests": [
+      "test/net/crown2_law.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-chron-lapsed",
+    "file": "src/net/townSeatLaw.js",
+    "old": "    case 'fealty-lapsed': return `${when}, the fealty between ${guildWords(d.vassal)} and ${guildWords(d.liege)} lapsed.`;\n",
+    "new": "",
+    "tests": [
+      "test/net/crown2_law.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-cap",
+    "file": "src/net/townSeatLaw.js",
+    "old": "return `${w[0].toUpperCase()}${w.slice(1)}`; };",
+    "new": "return w; };",
+    "tests": [
+      "test/net/crown2_client.test.js",
+      "test/net/seat2a_client.test.js",
+      "test/ui/seat1c_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-rows-sworn-side",
+    "file": "src/net/townSeatLaw.js",
+    "old": "text: f.asVassal ? `Your guild is sworn to ${guildWords(f.liege)}.` : `${GuildWords(f.vassal)} is sworn to your guild.`",
+    "new": "text: !f.asVassal ? `Your guild is sworn to ${guildWords(f.liege)}.` : `${GuildWords(f.vassal)} is sworn to your guild.`",
+    "tests": [
+      "test/net/crown2_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-rows-breaking",
+    "file": "src/net/townSeatLaw.js",
+    "old": "ends at the Turning.`, act: null,",
+    "new": "ends at the Turning.`, act: 'fealty-break',",
+    "tests": [
+      "test/net/crown2_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-rows-breaking-state",
+    "file": "src/net/townSeatLaw.js",
+    "old": "    } else if (f.state === 'breaking') {",
+    "new": "    } else if (false) {",
+    "tests": [
+      "test/net/crown2_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-rows-mine",
+    "file": "src/net/townSeatLaw.js",
+    "old": "    } else if (f.mine) {\n      rows.push({ text: f.asVassal ? `Your guild offers to swear",
+    "new": "    } else if (!f.mine) {\n      rows.push({ text: f.asVassal ? `Your guild offers to swear",
+    "tests": [
+      "test/net/crown2_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-rows-offer-side",
+    "file": "src/net/townSeatLaw.js",
+    "old": "rows.push({ text: f.asVassal ? `Your guild offers to swear fealty to ${guildWords(f.liege)}.` : `Your guild offers to take ${guildWords(f.vassal)} as its vassal.`",
+    "new": "rows.push({ text: `Your guild offers to swear fealty to ${guildWords(f.liege)}.`",
+    "tests": [
+      "test/net/crown2_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-rows-asked-side",
+    "file": "src/net/townSeatLaw.js",
+    "old": "rows.push({ text: f.asVassal ? `${GuildWords(f.liege)} offers to take your guild as its vassal.` : `${GuildWords(f.vassal)} offers to swear fealty to your guild.`",
+    "new": "rows.push({ text: `${GuildWords(f.liege)} offers to take your guild as its vassal.`",
+    "tests": [
+      "test/net/crown2_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-rows-tag",
+    "file": "src/net/townSeatLaw.js",
+    "old": "    const other = f.asVassal ? f.liege : f.vassal;",
+    "new": "    const other = f.liege;",
+    "tests": [
+      "test/net/crown2_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-rows-pact-signed",
+    "file": "src/net/townSeatLaw.js",
+    "old": "    if (c.state === 'signed') rows.push(",
+    "new": "    if (false) rows.push(",
+    "tests": [
+      "test/net/crown2_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-rows-pact-mine",
+    "file": "src/net/townSeatLaw.js",
+    "old": "    else if (c.mine) rows.push({ text: `Your guild offers",
+    "new": "    else if (!c.mine) rows.push({ text: `Your guild offers",
+    "tests": [
+      "test/net/crown2_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-rows-pact-act",
+    "file": "src/net/townSeatLaw.js",
+    "old": "a Pact of non-aggression, until week ${c.until}.`, act: 'pact-accept'",
+    "new": "a Pact of non-aggression, until week ${c.until}.`, act: 'pact-withdraw'",
+    "tests": [
+      "test/net/crown2_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-acts-sign",
+    "file": "src/net/townSeatLaw.js",
+    "old": "'pact-accept': 'Sign',",
+    "new": "'pact-accept': 'Accept',",
+    "tests": [
+      "test/net/crown2_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-svc-as",
+    "file": "server-account/src/seatPolitics.js",
+    "old": "  if (as !== 'vassal' && as !== 'liege') return { error: 'fealty-unfit' };\n  if (await overRate",
+    "new": "  if (await overRate",
+    "tests": [
+      "test/net/crown2_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-svc-sides",
+    "file": "server-account/src/seatPolitics.js",
+    "old": "  const [vassal, liege] = as === 'vassal' ? [a.gid, other.id] : [other.id, a.gid];",
+    "new": "  const [vassal, liege] = [a.gid, other.id];",
+    "tests": [
+      "test/net/crown2_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-svc-fit",
+    "file": "server-account/src/seatPolitics.js",
+    "old": "  if (vassal === liege || !fealtyKingdom(await chartersOf(db, vassal), await chartersOf(db, liege))) return { error: 'fealty-unfit' };\n  if (await pledgedAgainst(db, weekAt(nowS), vassal, liege)) return { error: 'fealty-pledged' };",
+    "new": "  if (await pledgedAgainst(db, weekAt(nowS), vassal, liege)) return { error: 'fealty-pledged' };",
+    "tests": [
+      "test/net/crown2_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-svc-pledged",
+    "file": "server-account/src/seatPolitics.js",
+    "old": "  if (await pledgedAgainst(db, weekAt(nowS), vassal, liege)) return { error: 'fealty-pledged' };\n  const r = await db",
+    "new": "  const r = await db",
+    "tests": [
+      "test/net/crown2_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-svc-sworn",
+    "file": "server-account/src/seatPolitics.js",
+    "old": "ON CONFLICT (vassal) DO UPDATE SET liege = excluded.liege, offered_by = excluded.offered_by, at = excluded.at WHERE guild_fealty.state = 'offered'`)",
+    "new": "ON CONFLICT (vassal) DO UPDATE SET liege = excluded.liege, offered_by = excluded.offered_by, at = excluded.at, state = 'offered'`)",
+    "tests": [
+      "test/net/crown2_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-svc-accept-other",
+    "file": "server-account/src/seatPolitics.js",
+    "old": "WHERE state = 'offered' AND offered_by = ?1\n",
+    "new": "WHERE state = 'offered'\n",
+    "tests": [
+      "test/net/crown2_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-svc-accept-fit",
+    "file": "server-account/src/seatPolitics.js",
+    "old": "  if (!fealtyKingdom(vassalHolds, liegeHolds)) return { error: 'fealty-unfit' };\n",
+    "new": "",
+    "tests": [
+      "test/net/crown2_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-svc-accept-once",
+    "file": "server-account/src/seatPolitics.js",
+    "old": "WHERE vassal = ?1 AND state = 'offered'\").bind(row.vassal, week, nowS),",
+    "new": "WHERE vassal = ?1\").bind(row.vassal, week, nowS),",
+    "tests": [
+      "test/net/crown2_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-svc-chron",
+    "file": "server-account/src/seatPolitics.js",
+    "old": "  const keys = [...liegeHolds.filter((h) => h.tier === 'crown'), ...vassalHolds].map((h) => h.key);",
+    "new": "  const keys = vassalHolds.map((h) => h.key);",
+    "tests": [
+      "test/net/crown2_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-svc-break",
+    "file": "server-account/src/seatPolitics.js",
+    "old": "  const r = await db.prepare(`UPDATE guild_fealty SET state = 'breaking', broken_by = ?1, at = ?3 WHERE state = 'sworn'",
+    "new": "  const r = await db.prepare(`UPDATE guild_fealty SET state = 'breaking', broken_by = ?2, at = ?3 WHERE state = 'sworn'",
+    "tests": [
+      "test/net/crown2_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-svc-pact-self",
+    "file": "server-account/src/seatPolitics.js",
+    "old": "  if (other.id === a.gid) return { error: 'pact-self' };\n",
+    "new": "",
+    "tests": [
+      "test/net/crown2_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-svc-pact-pledged",
+    "file": "server-account/src/seatPolitics.js",
+    "old": "  if (await pledgedAgainst(db, week, a.gid, other.id)) return { error: 'pact-pledged' };\n",
+    "new": "",
+    "tests": [
+      "test/net/crown2_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-svc-pact-signed",
+    "file": "server-account/src/seatPolitics.js",
+    "old": "  if (was && was.state === 'signed' && Number(was.until_week) > week) return { error: 'pact-signed' };\n",
+    "new": "",
+    "tests": [
+      "test/net/crown2_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-svc-pact-accept",
+    "file": "server-account/src/seatPolitics.js",
+    "old": "  if (was && was.state === 'offered' && was.offered_by === other.id) {",
+    "new": "  if (was && was.state === 'offered') {",
+    "tests": [
+      "test/net/crown2_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-svc-pact-until",
+    "file": "server-account/src/seatPolitics.js",
+    "old": "  const until = pactUntil(week, seasonZeroOf(env?.SEASON_ZERO_WEEK));",
+    "new": "  const until = week;",
+    "tests": [
+      "test/net/crown2_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-svc-red",
+    "file": "server-account/src/seatPolitics.js",
+    "old": "    ...(signed ? [db.prepare('INSERT INTO town_seat_red (text, at) VALUES (?, ?)').bind(pactBrokenText(n.get(a.gid), n.get(other.id)), nowS)] : []),\n",
+    "new": "",
+    "tests": [
+      "test/net/crown2_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-svc-red-offer",
+    "file": "server-account/src/seatPolitics.js",
+    "old": "  const signed = was.state === 'signed' && Number(was.until_week) > weekAt(nowS);",
+    "new": "  const signed = true;",
+    "tests": [
+      "test/net/crown2_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-svc-red-day",
+    "file": "server-account/src/seatPolitics.js",
+    "old": ".bind(nowS - SEAT_RED_S, SEAT_RED_MAX);",
+    "new": ".bind(0, SEAT_RED_MAX);",
+    "tests": [
+      "test/net/crown2_service.test.js"
+    ],
+    "note": "PRIMARY-TRIPS (re-aimed by content): the day's bound on redRead, the statement the list's batch sends"
+  },
+  {
+    "name": "CROWN2-svc-pact-none",
+    "file": "server-account/src/seatPolitics.js",
+    "old": "  if (!was) return { error: 'pact-none' };\n",
+    "new": "  if (!was) return { ok: true, announced: false };\n",
+    "tests": [
+      "test/net/crown2_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-svc-view-mine",
+    "file": "server-account/src/seatPolitics.js",
+    "old": "state: r.state, mine: r.offered_by === gid, asVassal: r.vassal === gid }))",
+    "new": "state: r.state, mine: true, asVassal: r.vassal === gid }))",
+    "tests": [
+      "test/net/crown2_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-svc-bans-liege",
+    "file": "server-account/src/seatPolitics.js",
+    "old": "    liege: f.find((r) => r.vassal === gid)?.liege ?? null,",
+    "new": "    liege: null,",
+    "tests": [
+      "test/net/crown2_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-svc-bans-vassals",
+    "file": "server-account/src/seatPolitics.js",
+    "old": "    vassals: f.filter((r) => r.liege === gid).map((r) => r.vassal),",
+    "new": "    vassals: [],",
+    "tests": [
+      "test/net/crown2_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-svc-bans-pacts",
+    "file": "server-account/src/seatPolitics.js",
+    "old": "    pacts: p.map((r) => (r.a === gid ? r.b : r.a)),",
+    "new": "    pacts: [],",
+    "tests": [
+      "test/net/crown2_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-inf-bar",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "  if (barred) return { error: barred };\n",
+    "new": "",
+    "tests": [
+      "test/net/crown2_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-inf-sworn",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "\"SELECT liege FROM guild_fealty WHERE vassal = ? AND state = 'sworn'\"",
+    "new": "\"SELECT liege FROM guild_fealty WHERE vassal = ?\"",
+    "tests": [
+      "test/net/crown2_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-inf-fits",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "  const liegeReach = fits ? seatReach(seat, crownsHeld(liegeHolds)) : 0;",
+    "new": "  const liegeReach = liege ? seatReach(seat, crownsHeld(liegeHolds)) : 0;",
+    "tests": [
+      "test/net/crown2_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-inf-reach",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "overreachOf(tiers.map((t) => t.tier)), held, liegeReach) : null;",
+    "new": "overreachOf(tiers.map((t) => t.tier)), held) : null;",
+    "tests": [
+      "test/net/crown2_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-inf-politics",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "        politics: await politicsOf(db, me.guild_id, nowS),",
+    "new": "",
+    "tests": [
+      "test/net/crown2_service.test.js",
+      "test/net/seat1b_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-tu-tithes",
+    "file": "server-account/src/seatTurning.js",
+    "old": "  if (ruling.length || fealties.length) {",
+    "new": "  if (ruling.length) {",
+    "tests": [
+      "test/net/crown2_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-tu-broke",
+    "file": "server-account/src/seatTurning.js",
+    "old": "        brokeFealty: breakers.has(h.guild_id),",
+    "new": "        brokeFealty: false,",
+    "tests": [
+      "test/net/crown2_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-tu-vassals",
+    "file": "server-account/src/seatTurning.js",
+    "old": "    const vassals = new Set(fealties.filter((f) => f.liege === e.guild).map((f) => f.vassal));",
+    "new": "    const vassals = new Set();",
+    "tests": [
+      "test/net/crown2_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-tu-owed",
+    "file": "server-account/src/seatTurning.js",
+    "old": "    const owed = f.fits ? fealtyTribute(tithes.get(f.vassal) ?? 0) : 0;",
+    "new": "    const owed = 0;",
+    "tests": [
+      "test/net/crown2_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-tu-to",
+    "file": "server-account/src/seatTurning.js",
+    "old": "CASE WHEN ${to} THEN 'guild' ELSE 'burn' END, CASE WHEN ${to} THEN ?2 END, 'fealty-tribute'",
+    "new": "'burn', NULL, 'fealty-tribute'",
+    "tests": [
+      "test/net/crown2_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-tu-chron-tribute",
+    "file": "server-account/src/seatTurning.js",
+    "old": "      if (k != null) stmts.push(paidHistory(k, 'fealty-tribute', { vassal: names.get(f.vassal), liege: names.get(f.liege) }, `fealty-${week}-${f.vassal}`));   // AUDIT-SEATS: what was paid\n",
+    "new": "",
+    "tests": [
+      "test/net/crown2_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-tu-end",
+    "file": "server-account/src/seatTurning.js",
+    "old": "      stmts.push(db.prepare('DELETE FROM guild_fealty WHERE vassal = ? AND liege = ?').bind(f.vassal, f.liege));\n",
+    "new": "",
+    "tests": [
+      "test/net/crown2_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-tu-end-when",
+    "file": "server-account/src/seatTurning.js",
+    "old": "    if (f.broken || !f.fits) {",
+    "new": "    if (f.broken) {",
+    "tests": [
+      "test/net/crown2_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-tu-chron-end",
+    "file": "server-account/src/seatTurning.js",
+    "old": "history(k, f.broken ? 'fealty-broken' : 'fealty-lapsed',",
+    "new": "history(k, 'fealty-broken',",
+    "tests": [
+      "test/net/crown2_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-idx-red",
+    "file": "server-account/src/seatTurning.js",
+    "old": "return { red: redFrom(redRes?.results), seats:",
+    "new": "return { red: [], seats:",
+    "tests": [
+      "test/net/crown2_service.test.js"
+    ],
+    "note": "PRIMARY-TRIPS (re-aimed by content): the red lines ride seatsBoard's batch"
+  },
+  {
+    "name": "CROWN2-idx-route-break",
+    "file": "server-account/src/index.js",
+    "old": "          '/v1/seats/pact/break': () => breakPact(ctx, who.player, env, body),\n",
+    "new": "",
+    "tests": [
+      "test/net/crown2_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-door-fealty",
+    "file": "src/net/accountClient.js",
+    "old": "    fealty: (character, tag, as) => post('/v1/seats/fealty', { character, tag, as }),",
+    "new": "    fealty: (character, tag, as) => post('/v1/seats/fealty', { character, tag }),",
+    "tests": [
+      "test/net/crown2_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-door-break-tag",
+    "file": "src/net/accountClient.js",
+    "old": "post('/v1/seats/fealty/break', { character, ...(tag ? { tag } : {}) }),",
+    "new": "post('/v1/seats/fealty/break', { character, tag }),",
+    "tests": [
+      "test/net/crown2_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-door-pact-break",
+    "file": "src/net/accountClient.js",
+    "old": "    pactBreak: (character, tag) => post('/v1/seats/pact/break', { character, tag }),",
+    "new": "    pactBreak: (character, tag) => post('/v1/seats/pact', { character, tag }),",
+    "tests": [
+      "test/net/crown2_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-book-as",
+    "file": "src/net/townSeatBook.js",
+    "old": "(as === 'vassal' ? `Your guild offers to swear fealty to <${tag}>.` : `Your guild offers to take <${tag}> as its vassal.`)",
+    "new": "`Your guild offers to swear fealty to <${tag}>.`",
+    "tests": [
+      "test/net/crown2_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-book-withdrawn",
+    "file": "src/net/townSeatBook.js",
+    "old": "(d.withdrawn ? 'Your guild\\'s offer of fealty is withdrawn.' :",
+    "new": "(false ? 'Your guild\\'s offer of fealty is withdrawn.' :",
+    "tests": [
+      "test/net/crown2_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-book-signed",
+    "file": "src/net/townSeatBook.js",
+    "old": "(d.signed ? `The Pact with <${tag}> is signed, until week ${d.until}.` :",
+    "new": "(false ? `The Pact with <${tag}> is signed, until week ${d.until}.` :",
+    "tests": [
+      "test/net/crown2_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-book-announced",
+    "file": "src/net/townSeatBook.js",
+    "old": "(d.announced ? `Your guild has broken its Pact with <${tag}>. Everyone has been told.` : `The offer of a Pact with",
+    "new": "(true ? `Your guild has broken its Pact with <${tag}>. Everyone has been told.` : `The offer of a Pact with",
+    "tests": [
+      "test/net/crown2_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-book-accept-path",
+    "file": "src/net/townSeatBook.js",
+    "old": "door.fealtyAccept(character(), tag)",
+    "new": "door.fealty(character(), tag)",
+    "tests": [
+      "test/net/crown2_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-book-refusal",
+    "file": "src/net/townSeatBook.js",
+    "old": "      return r?.ok ? { ok: true, text: said(r.data ?? {}) } : { ok: false, text: accountRefusalText(r?.error) };\n    },\n    /** Fealty offered",
+    "new": "      return { ok: true, text: said(r.data ?? {}) };\n    },\n    /** Fealty offered",
+    "tests": [
+      "test/net/crown2_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-red-said",
+    "file": "src/net/townSeatBook.js",
+    "old": "        sayRed(data?.red);   // CROWN2",
+    "new": "        // CROWN2",
+    "tests": [
+      "test/net/crown2_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-red-once",
+    "file": "src/net/townSeatBook.js",
+    "old": "&& !seen.includes(r.id))",
+    "new": "&& true)",
+    "tests": [
+      "test/net/crown2_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-red-false",
+    "file": "src/net/townSeatBook.js",
+    "old": "      .filter((r) => onRed({ text: r.text, at: Number(r.at) * 1000 }) !== false);",
+    "new": "      .filter((r) => (onRed({ text: r.text, at: Number(r.at) * 1000 }), true));",
+    "tests": [
+      "test/net/crown2_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-red-ms",
+    "file": "src/net/townSeatBook.js",
+    "old": "at: Number(r.at) * 1000 })",
+    "new": "at: Number(r.at) })",
+    "tests": [
+      "test/net/crown2_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-red-store",
+    "file": "src/net/townSeatBook.js",
+    "old": "    try { storage?.setItem?.(SEAT_RED_SEEN_KEY, JSON.stringify(redSeen)); } catch { /* this page keeps them */ }\n",
+    "new": "",
+    "tests": [
+      "test/net/crown2_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-red-cap",
+    "file": "src/net/townSeatBook.js",
+    "old": "    redSeen = [...seen, ...said.map((r) => r.id)].slice(-SEAT_RED_SEEN_MAX);",
+    "new": "    redSeen = [...seen, ...said.map((r) => r.id)];",
+    "tests": [
+      "test/net/crown2_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-red-bad",
+    "file": "src/net/townSeatBook.js",
+    "old": "Number.isSafeInteger(r?.id) && typeof r.text === 'string' && !seen",
+    "new": "Number.isSafeInteger(r?.id) && !seen",
+    "tests": [
+      "test/net/crown2_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-red-clock",
+    "file": "src/net/townSeatBook.js",
+    "old": "      if (!pending && (open === true || failed) && nowMs() - at >= (failed ? SEAT_LIST_RETRY_MS : SEAT_RED_READ_MS)) read({ force: true });",
+    "new": "      if (!pending && (open === true || failed)) read({ force: true });",
+    "tests": [
+      "test/net/crown2_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-red-shut",
+    "file": "src/net/townSeatBook.js",
+    "old": "      if (!pending && (open === true || failed) && nowMs()",
+    "new": "      if (!pending && nowMs()",
+    "tests": [
+      "test/net/crown2_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-red-read-ms",
+    "file": "src/net/townSeatBook.js",
+    "old": "export const SEAT_RED_READ_MS = 15 * 60_000;",
+    "new": "export const SEAT_RED_READ_MS = 5 * 60_000;",
+    "tests": [
+      "test/net/crown2_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-tab-node",
+    "file": "src/ui/seatTab.js",
+    "old": "      if (data.mine?.politics) mine.append(politicsNode(data.mine.politics, SEAT_LEVER_RANKS.includes(data.mine.rank)));   // CROWN2\n",
+    "new": "",
+    "tests": [
+      "test/net/crown2_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-tab-rank",
+    "file": "src/ui/seatTab.js",
+    "old": "politicsNode(data.mine.politics, SEAT_LEVER_RANKS.includes(data.mine.rank))",
+    "new": "politicsNode(data.mine.politics, true)",
+    "tests": [
+      "test/net/crown2_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-tab-empty",
+    "file": "src/ui/seatTab.js",
+    "old": "    if (!rows.length) out.append(el('p', 'notice-seat-mine', 'Your guild has no liege, no vassal and no Pact.'));\n",
+    "new": "",
+    "tests": [
+      "test/net/crown2_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-tab-lever",
+    "file": "src/ui/seatTab.js",
+    "old": "for (const k of lever ? [r.act, r.alt] : []) {",
+    "new": "for (const k of [r.act, r.alt]) {",
+    "tests": [
+      "test/net/crown2_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-tab-tag",
+    "file": "src/ui/seatTab.js",
+    "old": "act(() => acts[k](r.tag))",
+    "new": "act(() => acts[k](null))",
+    "tests": [
+      "test/net/crown2_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-tab-accept",
+    "file": "src/ui/seatTab.js",
+    "old": "'fealty-accept': (t) => book.acceptFealty(t),",
+    "new": "'fealty-accept': (t) => book.offerFealty(t, 'vassal'),",
+    "tests": [
+      "test/net/crown2_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-tab-pact-accept",
+    "file": "src/ui/seatTab.js",
+    "old": "'pact-accept': (t) => book.offerPact(t),",
+    "new": "'pact-accept': (t) => book.breakPact(t),",
+    "tests": [
+      "test/net/crown2_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-tab-offers-lever",
+    "file": "src/ui/seatTab.js",
+    "old": "    if (!lever) return out;\n",
+    "new": "",
+    "tests": [
+      "test/net/crown2_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-tab-notag",
+    "file": "src/ui/seatTab.js",
+    "old": "(politicsTag ? act(() => ask(politicsTag)) : null)",
+    "new": "act(() => ask(politicsTag))",
+    "tests": [
+      "test/net/crown2_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-tab-trim",
+    "file": "src/ui/seatTab.js",
+    "old": "politicsTag = tag.value.trim();",
+    "new": "politicsTag = tag.value;",
+    "tests": [
+      "test/net/crown2_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-tab-take",
+    "file": "src/ui/seatTab.js",
+    "old": "['notice-seat-take', 'Take as vassal', (t) => book.offerFealty(t, 'liege')],",
+    "new": "['notice-seat-take', 'Take as vassal', (t) => book.offerFealty(t, 'vassal')],",
+    "tests": [
+      "test/net/crown2_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-world-red",
+    "file": "src/scenes/world.js",
+    "old": "      onRed: (line) => (redChat ? redChat(line) : false),",
+    "new": "      onRed: (line) => (redChat ? redChat(line) : true),",
+    "tests": [
+      "test/net/crown2_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN2-world-tick",
+    "file": "src/scenes/world.js",
+    "old": "    seatBook?.redTick();   // CROWN2",
+    "new": "    // CROWN2",
+    "tests": [
+      "test/net/crown2_client.test.js"
+    ]
+  }
 ]

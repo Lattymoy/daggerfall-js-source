@@ -9,7 +9,7 @@
 // are: the glyph (ui/techniqueGlyph.js - the HUD's chip wears the same one) in the blue the technique's marks wear on
 // the ground, the technique's name, its roll and the band it was rolled in; what a press does; and a foot - the key
 // and how it is pressed, then its price: the fatigue and the recovery (in the dashed frame the HUD's recovering chip
-// wears), one group that wraps whole. The facts are systems/lootRarity.js techniqueCardView's, and whether a duel
+// wears), one group that wraps whole. The facts are systems/loot/lootRarity.js techniqueCardView's, and whether a duel
 // sleeps the key is the runner's own question (sigil.js sigilDueling - combat/techniques.js refuses on it); this file
 // draws them.
 //
@@ -18,8 +18,8 @@
 // 59, and six of the Test Room's twelve detail cards scrolled; the glyph says what it is, as the HUD's chip does). The
 // INFO box's, `{ full: true }`, sets the word "Technique" over the name and adds the sentences - how the power was
 // rolled onto the technique's own blow, and how the key is pressed.
-import { techniqueCardView } from '../systems/lootRarity.js';
-import { sigilDueling } from '../systems/sigil.js';
+import { techniqueCardView } from '../systems/loot/lootRarity.js';
+import { sigilDueling } from '../systems/sigil/sigil.js';
 import { TECHNIQUE_GLYPH_SVG } from './techniqueGlyph.js';
 
 /** @param {string} tag @param {string|null} [cls] @param {string|null} [text] */

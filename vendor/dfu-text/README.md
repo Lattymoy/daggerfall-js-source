@@ -49,6 +49,6 @@ translate.
   direction hints - classic's "%loc is %di of here" doubled the
   building name in every answer frame that already names it). The
   whole file is here so that each such row is pinned to its source
-  (`test/macu_directions.test.js`) and so `tools/rscTableDiff.mjs` can
+  (`test/systems/talk/macu_directions.test.js`) and so `tools/rscTableDiff.mjs` can
   list the remaining divergences against a real ARENA2 without a
   download.

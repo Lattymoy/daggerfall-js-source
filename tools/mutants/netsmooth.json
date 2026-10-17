@@ -5,8 +5,8 @@
     "old": "export const nativePoseRoom = (key) => isCellRoom(key) || isBattleRoom(key) || !!privateInteriorOf(key);",
     "new": "export const nativePoseRoom = (key) => isCellRoom(key);",
     "tests": [
-      "test/netsmooth.test.js",
-      "test/slimframe.test.js"
+      "test/net/netsmooth.test.js",
+      "test/net/slimframe.test.js"
     ],
     "note": "A siege's battle, a Royal Tourney and an owned interior snap at 30 MapsFile units - 0.75 m, so a runner teleports every pose."
   },
@@ -16,8 +16,8 @@
     "old": "export const nativePoseRoom = (key) => isCellRoom(key) || isBattleRoom(key) || !!privateInteriorOf(key);",
     "new": "export const nativePoseRoom = (key) => isCellRoom(key) || isBattleRoom(key);",
     "tests": [
-      "test/netsmooth.test.js",
-      "test/slimframe.test.js"
+      "test/net/netsmooth.test.js",
+      "test/net/slimframe.test.js"
     ],
     "note": "An owned interior or boat, carried in MapsFile's frame, snaps in the scene's units."
   },
@@ -27,7 +27,7 @@
     "old": "    if (groundDist(shown, pose) > snapUnitsFor(room)) {   // NET-SMOOTH 1: in the units of the room it was heard in",
     "new": "    if (groundDist(shown, pose) > (String(this.room ?? '').startsWith('world:') ? SNAP_WORLD_UNITS : SNAP_SCENE_UNITS)) {   // NET-SMOOTH 1: in the units of the room it was heard in",
     "tests": [
-      "test/netsmooth.test.js"
+      "test/net/netsmooth.test.js"
     ],
     "note": "The law before: only a room named `world:` snaps in MapsFile's units."
   },
@@ -37,10 +37,10 @@
     "old": "    if (!fromSource && this._srcLive(p, now)) {",
     "new": "    if (false) {",
     "tests": [
-      "test/netsmooth.test.js",
-      "test/slam3.test.js",
-      "test/slam10.test.js",
-      "test/online.test.js"
+      "test/net/netsmooth.test.js",
+      "test/net/slam3.test.js",
+      "test/net/slam10.test.js",
+      "test/net/online.test.js"
     ],
     "note": "Every room's copy of a pose moves the peer - an older one landing second walks it back."
   },
@@ -50,7 +50,7 @@
     "old": "    if (now - p.srcAt > Math.max(SOURCE_STALE_MIN_MS, SOURCE_STALE_GAPS * (p.gap ?? 1000 / POSE_HZ))) return false;",
     "new": "",
     "tests": [
-      "test/netsmooth.test.js"
+      "test/net/netsmooth.test.js"
     ],
     "note": "A source that fell silent is kept for ever: the peer stands frozen while another room still hears it walk."
   },
@@ -60,7 +60,7 @@
     "old": "    if (p?.src === room) p.src = null;   // NET-SMOOTH 2: the room that spoke for it let it go - the next room heard speaks",
     "new": "",
     "tests": [
-      "test/netsmooth.test.js"
+      "test/net/netsmooth.test.js"
     ],
     "note": "The room that let the peer go still speaks for it until its silence runs out."
   },
@@ -70,7 +70,7 @@
     "old": "      if (seen && now - seen.at >= SOURCE_LEAD_MIN_MS) {",
     "new": "      if (false) {",
     "tests": [
-      "test/netsmooth.test.js"
+      "test/net/netsmooth.test.js"
     ],
     "note": "A slower Durable Object keeps the peer late for as long as it lives."
   },
@@ -80,7 +80,7 @@
     "old": "export const SOURCE_LEADS = 3;",
     "new": "export const SOURCE_LEADS = 1;",
     "tests": [
-      "test/netsmooth.test.js"
+      "test/net/netsmooth.test.js"
     ],
     "note": "One copy that happened to land first hands the peer over."
   },
@@ -90,7 +90,7 @@
     "old": "    if (pose) this._arrive(p, pose, now, room, true); else p.seenAt = now;",
     "new": "    if (pose) this._arrive(p, pose, now, this.room, true); else p.seenAt = now;",
     "tests": [
-      "test/netsmooth.test.js"
+      "test/net/netsmooth.test.js"
     ],
     "note": "Every introduction is read as the primary room's - a halo's join throws the peer back to where it said hello."
   },
@@ -100,10 +100,10 @@
     "old": "  const s = [...samples].sort((a, b) => a - b), mid = s.length >> 1;\n  return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;",
     "new": "  return samples.reduce((a, x) => a + x, 0) / samples.length;",
     "tests": [
-      "test/netsmooth.test.js",
-      "test/slam3.test.js",
-      "test/slam10.test.js",
-      "test/online.test.js"
+      "test/net/netsmooth.test.js",
+      "test/net/slam3.test.js",
+      "test/net/slam10.test.js",
+      "test/net/online.test.js"
     ],
     "note": "One stray interval drags the cadence."
   },
@@ -113,10 +113,10 @@
     "old": "    if (since != null && since >= GAP_MIN_MS && since <= PAUSE_MS) {",
     "new": "    if (since != null && since <= PAUSE_MS) {",
     "tests": [
-      "test/netsmooth.test.js",
-      "test/slam3.test.js",
-      "test/slam10.test.js",
-      "test/online.test.js"
+      "test/net/netsmooth.test.js",
+      "test/net/slam3.test.js",
+      "test/net/slam10.test.js",
+      "test/net/online.test.js"
     ],
     "note": "Two poses delivered together count as an interval - a backlog drags the cadence to the floor."
   },
@@ -126,10 +126,10 @@
     "old": "    if (since != null && since >= GAP_MIN_MS && since <= PAUSE_MS) {",
     "new": "    if (since != null && since >= GAP_MIN_MS) {",
     "tests": [
-      "test/netsmooth.test.js",
-      "test/slam3.test.js",
-      "test/slam10.test.js",
-      "test/online.test.js"
+      "test/net/netsmooth.test.js",
+      "test/net/slam3.test.js",
+      "test/net/slam10.test.js",
+      "test/net/online.test.js"
     ],
     "note": "Standing still counts as an interval - a peer who stops and goes walks in slow motion."
   },
@@ -139,7 +139,7 @@
     "old": "  return Math.min(cadence, Math.max(...samples.map((x) => Math.abs(x - cadence))));",
     "new": "  return 0;",
     "tests": [
-      "test/netsmooth.test.js"
+      "test/net/netsmooth.test.js"
     ],
     "note": "No jitter cushion: the peer stops at every late pose."
   },
@@ -149,7 +149,7 @@
     "old": "  return Math.min(cadence, Math.max(...samples.map((x) => Math.abs(x - cadence))));",
     "new": "  return Math.min(cadence, 2 * samples.reduce((a, x) => a + Math.abs(x - cadence), 0) / samples.length);",
     "tests": [
-      "test/netsmooth.test.js"
+      "test/net/netsmooth.test.js"
     ],
     "note": "Twice the mean lateness: overrun by every pose later than typical."
   },
@@ -159,7 +159,7 @@
     "old": "  return Math.min(cadence, Math.max(...samples.map((x) => Math.abs(x - cadence))));",
     "new": "  return Math.max(...samples.map((x) => Math.abs(x - cadence)));",
     "tests": [
-      "test/netsmooth.test.js"
+      "test/net/netsmooth.test.js"
     ],
     "note": "One stall's interval holds every peer seconds behind."
   },
@@ -169,10 +169,10 @@
     "old": "  if (since < cadence / FAST_SHARE) return since;\n",
     "new": "",
     "tests": [
-      "test/netsmooth.test.js",
-      "test/slam3.test.js",
-      "test/slam10.test.js",
-      "test/online.test.js"
+      "test/net/netsmooth.test.js",
+      "test/net/slam3.test.js",
+      "test/net/slam10.test.js",
+      "test/net/online.test.js"
     ],
     "note": "A peer promoted from the far tier walks its first near poses in slow motion, a second behind."
   },
@@ -182,7 +182,7 @@
     "old": "  return wasMoving ? Math.max(cadence, Math.min(GAP_MAX_MS, since) / 2) : cadence;",
     "new": "  return wasMoving ? Math.max(cadence, Math.min(GAP_MAX_MS, since)) : cadence;",
     "tests": [
-      "test/netsmooth.test.js"
+      "test/net/netsmooth.test.js"
     ],
     "note": "A stall's first pose crawls over the whole silence before the backlog is caught up."
   },
@@ -192,7 +192,7 @@
     "old": "  return wasMoving ? Math.max(cadence, Math.min(GAP_MAX_MS, since) / 2) : cadence;",
     "new": "  return Math.max(cadence, Math.min(GAP_MAX_MS, since) / 2);",
     "tests": [
-      "test/netsmooth.test.js"
+      "test/net/netsmooth.test.js"
     ],
     "note": "A peer who stood still, setting off, walks its first step over half the standing."
   },
@@ -202,7 +202,7 @@
     "old": "export const rateFor = (ahead, cushion, cadence, segment) => Math.max(PLAY_RATE_MIN, Math.min(segment > cadence ? 1 : PLAY_RATE_MAX,",
     "new": "export const rateFor = (ahead, cushion, cadence, segment) => Math.max(PLAY_RATE_MIN, Math.min(PLAY_RATE_MAX,",
     "tests": [
-      "test/netsmooth.test.js"
+      "test/net/netsmooth.test.js"
     ],
     "note": "Half a silence, already twice the pace, played at up to twice again."
   },
@@ -212,7 +212,7 @@
     "old": "    p.rate = rateFor(end + seg - p.cur, cushionOf(p.cadence, cadence), cadence, seg);",
     "new": "    p.rate = 1;",
     "tests": [
-      "test/netsmooth.test.js"
+      "test/net/netsmooth.test.js"
     ],
     "note": "A backlog is never caught up: every stall adds its length to how far behind the peer is drawn."
   },
@@ -222,7 +222,7 @@
     "old": "export const PLAY_RATE_MIN = 0.75;",
     "new": "export const PLAY_RATE_MIN = 0;",
     "tests": [
-      "test/netsmooth.test.js"
+      "test/net/netsmooth.test.js"
     ],
     "note": "A starved peer stands still waiting for its cushion."
   },
@@ -232,7 +232,7 @@
     "old": "    p.movedAt = now;\n    this._play(p, now);\n",
     "new": "    p.movedAt = now;\n",
     "tests": [
-      "test/netsmooth.test.js"
+      "test/net/netsmooth.test.js"
     ],
     "note": "The rate is set off where the cursor was a frame ago: the pace wobbles at every pose.",
     "equivalent": true,
@@ -244,7 +244,7 @@
     "old": "    if (p.path.length > PATH_MAX) p.path.splice(2, p.path.length - PATH_MAX);   // the oldest ahead past the one being walked",
     "new": "    if (p.path.length > PATH_MAX) p.path.splice(1, p.path.length - PATH_MAX);   // the oldest ahead past the one being walked",
     "tests": [
-      "test/netsmooth.test.js"
+      "test/net/netsmooth.test.js"
     ],
     "note": "A long backlog takes away the waypoint the peer is walking toward: a jump."
   }

@@ -14,7 +14,7 @@
 // and a LIGHTHOUSE, the lightkeeper's. Its DOCKS are the harbour's quays, found off the terrain (systems/naval/quays.js).
 // Like the yards they are not buildings: no building record, no deed, no quest place; each is found by a row of the
 // town's directory under a key no Daggerfall building can hold (`foundBuildingKey`), its ground and its name on the town
-// maps (world/merchantYardMap.js), and a mark on the Overworld (scenes/portHost.js).
+// maps (world/merchantYards/merchantYardMap.js), and a mark on the Overworld (scenes/portHost.js).
 //
 // WHO KEEPS THEM: a person of the town's own people, named on the region's bank off a seed of the town's map id and the
 // place's own salt (systems/merchantYards.js townKeeper - the yards' one draw), so every client meets the same
@@ -108,7 +108,7 @@ export function portPlaceName(place, { keeperName = '', townName = '' } = {}) {
 }
 
 /**
- * A PORT TOWN'S PLACES AS ROWS OF ITS TALK DIRECTORY - YARDS-FOUND's shape (systems/talkTopics.js
+ * A PORT TOWN'S PLACES AS ROWS OF ITS TALK DIRECTORY - YARDS-FOUND's shape (systems/talk/talkTopics.js
  * buildBuildingDirectory's: `name`, `buildingType`, `factionId`, `quality`, `position` in the location frame,
  * `buildingKey`), `yard` its place (the Where-is page groups by it, as it does the yards). `places` the host's -
  * `{ kind, x, z, name }` in the location frame (scenes/world.js portPlacesFor: the shipyard, its crew hall, the

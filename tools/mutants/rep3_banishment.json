@@ -5,7 +5,7 @@
     "old": "  const failed2 = !BANISHABLE_CRIMES.has(crime) || Math.floor(rolls() * 100) >= threshold2;",
     "new": "  const failed2 = Math.floor(rolls() * 100) >= threshold2;",
     "tests": [
-      "test/rep3_banishment.test.js"
+      "test/systems/rep3_banishment.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "(!BANISHABLE_CRIMES.has(crime) || Math.floor(rolls() * 100) >= threshold1)",
     "new": "(Math.floor(rolls() * 100) >= threshold1 || !BANISHABLE_CRIMES.has(crime))",
     "tests": [
-      "test/rep3_banishment.test.js"
+      "test/systems/rep3_banishment.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  if (worldNow >= r.banishedUntil) { liftBanishment(player, regionIndex); return false; }\n",
     "new": "",
     "tests": [
-      "test/rep3_banishment.test.js"
+      "test/systems/rep3_banishment.test.js"
     ]
   },
   {
@@ -32,16 +32,16 @@
     "old": "  r.banishedUntil = Number.isFinite(worldNow) ? banishmentEnd(worldNow) : null;   // BANISH-SKY: the calendar's thirty days\n  return true;",
     "new": "  return true;",
     "tests": [
-      "test/rep3_banishment.test.js"
+      "test/systems/rep3_banishment.test.js"
     ]
   },
   {
     "name": "REP3-the-term-dropped-on-save",
-    "file": "src/systems/regionConditions.js",
+    "file": "src/systems/region/regionConditions.js",
     "old": "    ...(Number.isFinite(r.banishedUntil) ? { b: r.banishedUntil } : {}),",
     "new": "    ...({}),",
     "tests": [
-      "test/rep3_banishment.test.js"
+      "test/systems/rep3_banishment.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "export function grantPardon(player, regionIndex, ownNow) {\n  liftBanishment(player, regionIndex);",
     "new": "export function grantPardon(player, regionIndex, ownNow) {",
     "tests": [
-      "test/rep3_banishment.test.js"
+      "test/systems/rep3_banishment.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "  return PARDON_BASE_PRICE * ((standingOf(player).pardons[regionIndex] ?? 0) + 1);",
     "new": "  return PARDON_BASE_PRICE;",
     "tests": [
-      "test/rep3_banishment.test.js"
+      "test/systems/rep3_banishment.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "        if (totalGoldAmount(entity) < o.price) return",
     "new": "        if (false) return",
     "tests": [
-      "test/rep3_banishment.test.js"
+      "test/systems/rep3_banishment.test.js"
     ]
   },
   {
@@ -77,8 +77,8 @@
     "old": "      banish(playerEntity, region(), trustedWorldMinutes());",
     "new": "      severePunishment(1);",
     "tests": [
-      "test/rep3_banishment.test.js",
-      "test/audit39_guildstravel.test.js"
+      "test/systems/rep3_banishment.test.js",
+      "test/systems/audit39_guildstravel.test.js"
     ]
   }
 ]

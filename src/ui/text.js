@@ -16,7 +16,7 @@
 
 import { FNT_GLYPH_COUNT, FNT_GLYPH_DIM, FNT_ASCII_START, FNT_GLYPH_SPACING } from '../formats/fntFile.js';
 import { packFontUrl, packBytes } from '../systems/uiPack.js';   // OVH2: a worn UI pack's SDF face
-import { getBool } from '../systems/settings.js';
+import { getBool } from '../systems/settings/settings.js';
 import { getLocalizedFont } from '../systems/textManager.js';   // L10N2: DaggerfallUI.GetFont's first ask
 import { createGlyphFace, FACE_POINT_SIZE } from './glyphFace.js';   // L10N2: TMP's dynamic atlas
 

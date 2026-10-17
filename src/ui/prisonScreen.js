@@ -55,11 +55,11 @@
 // native panel at the same anchor, so the screen is identical; what
 // differs is which object owns it.
 
-import { loadImg, nativeMetrics, drawImg, drawRect, shadowText, NATIVE_W } from './nativePanel.js';
+import { loadImg, nativeMetrics, drawImg, drawRect, shadowText, NATIVE_W } from './native/nativePanel.js';
 import { DFPalette } from '../formats/dfPalette.js';
 import { localizedText as coreText, processGrammar } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 import { isEnhanced } from '../systems/uiSkin.js';   // FONT3: the countdown in the enhanced face under that skin
-import { drawEnhancedHudLabel, midTextTopPx } from './enhancedHudText.js';   // FONT3: the mid-screen label's DOM face, one node per id
+import { drawEnhancedHudLabel, midTextTopPx } from './enhanced/enhancedHudText.js';   // FONT3: the mid-screen label's DOM face, one node per id
 import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
 
 /** nativeImgName / nativeImgName2 (:31-32). */
@@ -123,7 +123,7 @@ let _courtArt = null;
  *  by its constructor (dfPalette.js:"export class DFPalette") - and the courtroom draws
  *  as a solid red panel. The mint-your-own law belongs to PRIS00I0
  *  below and to those six names only; read
- *  test/incident_texture.test.js, which now sweeps both directions. */
+ *  test/formats/incident_texture.test.js, which now sweeps both directions. */
 export async function preloadCourtScreenArt(deps) {
   if (!_courtArt) _courtArt = { court: await loadImg(deps, COURT_IMG) };
   return _courtArt;

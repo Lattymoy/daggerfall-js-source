@@ -4,7 +4,7 @@
 // A lantern hung at the hip is a pendulum on a moving pivot. Neither Daggerfall nor Handheld Torches has one to
 // port (the mod's lantern is a first-person hand sprite; DFU has no lantern on any body), so this is the port's
 // own, stated once here and fed by both bodies that draw it: the Morrowind third-person body (combat/fpArm.js,
-// the lantern mesh at the pelvis) and Eye Of The Beholder's sprite (player/eotbBody.js, the lantern picture at
+// the lantern mesh at the pelvis) and Eye Of The Beholder's sprite (player/eyeOfTheBeholder/eotbBody.js, the lantern picture at
 // the sprite's hip). A second copy in either is how the two would come to swing differently.
 //
 // THE LAW. Two damped pendulums, one per axis of the body's own frame - FORE (positive: the lantern's foot swings

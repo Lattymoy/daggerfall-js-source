@@ -1,7 +1,7 @@
 // SD14c - THE HOUR'S MOTES, COMPILED, LINKED AND DRAWN IN A REAL BROWSER (the Deadlands' probe's method,
 // tools/deadlandsProbe.mjs).
 //
-// node holds the motes' law (test/sd14c_motes.test.js - sdMoteAt, the shader's own in JS); what node cannot answer is
+// node holds the motes' law (test/world/superDungeon/sd14c_motes.test.js - sdMoteAt, the shader's own in JS); what node cannot answer is
 // whether the GLSL COMPILES and LINKS in a real WebGL2 context, whether the points light the frame, and whether the
 // shader puts each mote where the JS law says. So: the repo's own modules served as they are, the pass drawn by its own
 // class over a cleared frame from the hall, the Steps and the arena, the frame read back - and, for motes of every kind
@@ -19,8 +19,8 @@ const out = []; const check = (n, ok, d = '') => { out.push(ok); console.log(`${
 const W = 640, H = 400;
 
 const PAGE = `<!doctype html><html><body style="margin:0;background:#000"><canvas id=c width=${W} height=${H}></canvas><script type=module>
-import { SdMotesRenderer, sdMoteVertices, sdMoteAt, SD_MOTES_TOTAL } from '/src/render/sdMotes.js';
-import { realmToDungeon } from '/src/net/sdBrain.js';
+import { SdMotesRenderer, sdMoteVertices, sdMoteAt, SD_MOTES_TOTAL } from '/src/render/superDungeon/sdMotes.js';
+import { realmToDungeon } from '/src/net/superDungeon/sdBrain.js';
 const gl = document.getElementById('c').getContext('webgl2', { alpha: false, preserveDrawingBuffer: true });
 let pass = null, err = null;
 try { pass = new SdMotesRenderer(gl); } catch (e) { err = String(e.message ?? e); }

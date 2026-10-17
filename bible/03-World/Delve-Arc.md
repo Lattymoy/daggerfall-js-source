@@ -10,7 +10,7 @@ asks for it by name (DSIZE1). The rest is legibility: what is near and can be wo
 and - asked for - where a quest's thing is. Every slice but one is an Enhanced row on the Features home with its own
 switch. Two things reach the classic skin, both rightly: DETECT-FINDS is SEARCH1's, ungated as SEARCH1 is; and a quest
 frozen at the medium size keeps its dungeon whatever the skin, as DFU's frozen Enabled outlives its setting. Ledger A:
-THE DELVE ARC row. AUDITED the same day (AUDIT DELVE, `01-Overview/Audit-Delve.md`), with MAPS.BSA and BLOCKS.BSA read
+THE DELVE ARC row. AUDITED the same day (AUDIT DELVE, `01-Overview/audits/Audit-Delve.md`), with MAPS.BSA and BLOCKS.BSA read
 whole outside the repository; not yet seen in the game.
 
 | Slice | What | Row | Default |
@@ -24,7 +24,7 @@ whole outside the repository; not yet seen in the game.
 
 ## SENSE1 - THE LOOK ROUND (SHIPPED 2026-10-05)
 
-`systems/dungeonSense.js`, read by `scenes/dungeonContext.js` (`senseLookRound`, `senseFrame`).
+`systems/dungeon/dungeonSense.js`, read by `scenes/dungeonContext.js` (`senseLookRound`, `senseFrame`).
 
 - **THE CUE IS INFO MODE.** Every letter key is spent (KB1), and Info is Daggerfall's examining stance, so an ASK for
   it underground - its key (F3 by default), the HUD's cycle, the pad's - is a look round. ChangeInteractionMode is a
@@ -58,11 +58,11 @@ whole outside the repository; not yet seen in the game.
   it said nothing, and the door band's `CheckComponent<DaggerfallActionDoor>` misses a DaggerfallActionDoorSpecial. Both
   hosts had the door band first for every `kind === 'door'`, so EVERY SECRET WALL UNDER THE CROSSHAIR SAID "Door", and a
   Direct-flagged action door said "Door" where the mod says "<Interact>". One function, the mod's order.
-- `test/sense1_dungeonsense.test.js` (20); `tools/mutants/sense1.json` (44).
+- `test/systems/sense1_dungeonsense.test.js` (20); `tools/mutants/sense1.json` (44).
 
 ## ECHO1 - THE CHAIN'S ECHO, AND ITS EXAMINE (SHIPPED 2026-10-05)
 
-`systems/dungeonEcho.js`, read by `scenes/dungeonContext.js` (`echoFrame`, the `act:`/`door:` arm of `_dungeonHoverName`).
+`systems/dungeon/dungeonEcho.js`, read by `scenes/dungeonContext.js` (`echoFrame`, the `act:`/`door:` arm of `_dungeonHoverName`).
 
 - **WHAT WAS SET GOING.** `ActionSystem.onPlayed(o, triggerType)` - an observer called in `receive` after the gate
   passes, before Play; nothing reads back. The context keeps the ActionObject plays (the cascade - what a press, a plate
@@ -75,7 +75,7 @@ whole outside the repository; not yet seen in the game.
   grinds as the stone it is (`isActionDoorObject`); `wayWord`: above/below past `ECHO_VERT_M`, the compass way past
   `ECHO_FLAT_M`, in the compass's own frame - +x east, +z north - `systems/compassWords.js`, the angler's too).
 - **THE MAP.** Each such mover goes in the echo book (`createEchoBook`, at most 8, the oldest out first) and on the held
-  map's dungeon sheet as an echo mark (`ui/automapSheet.js` kind `echo`, `ui/inkAutomap.js`: a ring breaking into four
+  map's dungeon sheet as an echo mark (`ui/automap/automapSheet.js` kind `echo`, `ui/ink/inkAutomap.js`: a ring breaking into four
   rays, in the way-in's pen, named "Moved" in the names' pen), seen or not - the press said which way, and the mark is
   where it said. The sheet breathes while one stands on the sheet in view; on the solid map one off the floor in view
   names its floor.
@@ -86,14 +86,14 @@ whole outside the repository; not yet seen in the game.
   north-east", "Works something above it"), walked without playing it (`chainMovers` along `ActionSystem.nextOf`, loop-
   and depth-safe to IsPlaying's own `PLAY_DEPTH_MAX`), from the object's own box. On the World Tooltips label; never
   under the author's `HideDefaultInteractTooltip`.
-- `test/echo1_dungeonecho.test.js` (11); `tools/mutants/echo1.json` (35).
+- `test/systems/echo1_dungeonecho.test.js` (11); `tools/mutants/echo1.json` (35).
 
 ## WAYOUT1 - THE WAY OUT ON THE COMPASS (SHIPPED 2026-10-05)
 
-`systems/wayOut.js`, read by `scenes/dungeonContext.js wayOutMark`, drawn by `ui/enhancedHud.js drawWayOutMark`
-(through `ui/hud.js drawHud`'s `wayOut`).
+`systems/wayOut.js`, read by `scenes/dungeonContext.js wayOutMark`, drawn by `ui/enhanced/enhancedHud.js drawWayOutMark`
+(through `ui/hud/hud.js drawHud`'s `wayOut`).
 
-- **THE TRAIL WALKED BACK.** The held map keeps where the player has STOOD (`systems/automap.js automapTrailTick`, a
+- **THE TRAIL WALKED BACK.** The held map keeps where the player has STOOD (`systems/automap/automap.js automapTrailTick`, a
   one-metre grid at the scan's 5 Hz, saved) - and every cell between two samples up to `TRAIL_FILL_M` (3 m) apart, since
   a run's sample skips a cell (AUDIT DELVE B1; past it the player was carried). A breadth-first field from the way in
   (the start marker - the map's own beacon) over those cells: two side by side (or one over the other) within
@@ -111,26 +111,26 @@ whole outside the repository; not yet seen in the game.
 - **THE MARK**: an arrow pointing up and out, a dark body (`WAY_BODY_CSS`) rimmed in the parchment's light
   (`WAY_MARK_CSS`), in its own band under the strip (clear of the quest's diamond and the letters), on the compass's
   bearing law, clamped; enhanced HUD only (the classic compass is DFU's).
-- `test/wayout1_wayout.test.js` (13, the real tick at the motor's speeds among them); `tools/mutants/wayout1.json` (34).
+- `test/systems/wayout1_wayout.test.js` (13, the real tick at the motor's speeds among them); `tools/mutants/wayout1.json` (34).
 
 ## GUIDE8 - THE GUIDANCE TIERS (SHIPPED 2026-10-05; the Town tier and the Exact tier indoors at AUDIT DELVE)
 
-`systems/questGuidance.js` (`GUIDANCE_TIERS`: Journal / Town / Exact). Underground, `scenes/worldModes.js
+`systems/quest/questGuidance.js` (`GUIDANCE_TIERS`: Journal / Town / Exact). Underground, `scenes/worldModes.js
 dungeonQuestMarksHere` (the host owns the stands and the quest foes) hands `questMarks` to `scenes/dungeonContext.js`,
 which draws them on the held map (`quests`) and the compass (`questCompassMark`, `questCompassPick`); indoors,
 `interiorQuestMarksHere` hands them to the interior's map and its compass; on the street, `scenes/world.js`.
 `06-Systems/Quest-Guide-Arc.md` GUIDE8 and DECISIONS 3.
 
 - **JOURNAL** is GUIDE5's law and the default.
-- **TOWN**: in the town of the building a quest's latest entry NAMES (its `_p_`, `ui/questLens.js entryTarget`'s
-  `building`), the held town map rings it, found or not (`townQuestBuildings`, `ui/townSheet.js`), and the compass points
+- **TOWN**: in the town of the building a quest's latest entry NAMES (its `_p_`, `ui/quest/questLens.js entryTarget`'s
+  `building`), the held town map rings it, found or not (`townQuestBuildings`, `ui/town/townSheet.js`), and the compass points
   at it (`townQuestCompassMark` - the building's place in the town map's own frame, `townBuildingLocal`, turned back by
   the translation and the origin the map opens with). The place the journal already gave, found in its streets.
 - **EXACT** holds the Town tier, and is the quest debugger's knowledge: every quest resource standing in the dungeon or
   the building - a stand that is active and not dead (an item not yet taken, a person), a live quest foe (a shared
   quest's foe a party mate's client owns too: `questFoeBehaviour`), a person of the place a quest has taken - never a
   hidden one (`dungeonQuestMarks`), named as the plaque names an item, a person or a foe by their own name.
-- **THE MAP**: GUIDE5's own diamond (`ui/inkMap.js paintQuestMark` - gold edged in ink, the followed quest's filled),
+- **THE MAP**: GUIDE5's own diamond (`ui/ink/inkMap.js paintQuestMark` - gold edged in ink, the followed quest's filled),
   its name under the spot in the names' pen, on its own storey (on the solid map, one off the floor in view names its
   floor); the hover says what a filled diamond is ("Followed quest") and measures to the diamond as well as the spot;
   the quest's floor is LISTED on the strip before it is walked and wears the diamond there (`floorStripLayout`'s `quest`,
@@ -138,7 +138,7 @@ which draws them on the held map (`quests`) and the compass (`questCompassMark`,
 - **THE COMPASS**: the followed quest's nearest mark, else the nearest (the enhanced compass's quest diamond); the
   tracker is fed while the Town or Exact tier is on (`followOn`).
 - Exact is the one tier that can spoil a search: off by default, its own row, the enhanced skin only.
-- `test/guide8_questguidance.test.js` (15, the echo's sheet mark with it); `tools/mutants/guide8.json` (34).
+- `test/ui/automap/guide8_questguidance.test.js` (15, the echo's sheet mark with it); `tools/mutants/guide8.json` (34).
 
 ## DETECT-FINDS - A SEARCHED OBJECT'S FIND IS TREASURE (SHIPPED 2026-10-05)
 
@@ -148,7 +148,7 @@ Treasure walks every DaggerfallLoot; SEARCH1's coffins, shelves, chests and crat
 nothing yet (the find is rolled at the search), so GetLootFlags gives it no Treasure bit - as an empty corpse. The
 street's searched headstones need nothing of their own: a grave's find is minted as a dropped pile (`scenes/world.js
 activateGrave` -> `droppedLoot.dropPile`), and the street's Detect walk carries every pile (pinned).
-`test/dsize1_mediumdungeons.test.js`.
+`test/systems/quest/dsize1_mediumdungeons.test.js`.
 
 ## DSIZE1 - MEDIUM DUNGEONS (SHIPPED 2026-10-05; REDESIGNED at AUDIT DELVE against MAPS.BSA)
 
@@ -158,7 +158,7 @@ own law (`regenerateDungeon`, the one body both sizes draw through) - its own bl
 DFRandom seeded on the MapId, so the same every visit - as two interior blocks side by side (the starting block first)
 and the six border blocks that close them: the commonest shape MAPS.BSA has (every one of its 1,162 eight-block
 dungeons). The first cut's cross of five over thirteen touched only the 159 dungeons over thirteen, every one of them
-four interior blocks in a ring of ten - it made them bigger inside (`01-Overview/Audit-Delve.md`, the real data). Every
+four interior blocks in a ring of ten - it made them bigger inside (`01-Overview/audits/Audit-Delve.md`, the real data). Every
 guard Smaller Dungeons keeps, Medium keeps (main story, the arena's undercroft, online, a quest's frozen size); Smaller
 Dungeons wins when both are on; DFU's `useSmallerDungeon` stays DFU's, verbatim. The quest freeze and the save stamp
 carry it as 3, APPENDED past DFU's NotSet/Disabled/Enabled (which stay verbatim); the load-time warp compares the stamp
@@ -168,12 +168,12 @@ Disabled: the room built every dungeon whole); a quest whose markers were chosen
 size where the medium size is either side (`adoptLinkedDungeonSize`, the machine's Start); and a quest frozen at another
 size loaded online is RE-LAID on the room's build (`systems/quest/questRepair.js`: its markers enumerated again, its
 placements put back, its stamp the room's). Its own row beside DFU's, which stays DFU's switch, whole.
-`test/dsize1_mediumdungeons.test.js` (11, DETECT-FINDS' with it, MAPS.BSA's with ARENA2); `tools/mutants/dsize1.json`
+`test/systems/quest/dsize1_mediumdungeons.test.js` (11, DETECT-FINDS' with it, MAPS.BSA's with ARENA2); `tools/mutants/dsize1.json`
 (27).
 
 **MEDIUM-DISTINCT (2026-10-08, Mac: "Medium dungeons just copy and paste 2 layouts together") - NEVER ONE INTERIOR
 BLOCK TWICE.** GetRandomBlock draws with replacement, and the medium size draws its two interior blocks from a pool of
-two to four (a dungeon of 10 to 22 blocks - `01-Overview/Audit-Delve.md`'s sizes; MAPS.BSA repeats names within a list
+two to four (a dungeon of 10 to 22 blocks - `01-Overview/audits/Audit-Delve.md`'s sizes; MAPS.BSA repeats names within a list
 too), so a quarter to a half of them laid the same block twice side by side: one area and its copy (the report's map,
 two identical halves). Now an interior block that repeats one already laid takes the pool's next block round from the
 repeated one's first place in it that is not laid (`world/smallerDungeons.js distinctInterior`, after the draws in
@@ -188,7 +188,7 @@ DFU's draw for draw. What the move would strand, held:
 - **A running quest** at a medium size (the medium stamp 3 or the world's sizes, 4) whose markers were chosen on the
   old layout: at every load, online and off, after `relayOnlineDungeons`, its dungeon Places are compared with the
   dungeon its world builds now and enumerated again where they differ, its placements put back, its stamp untouched
-  (`systems/quest/questRepair.js relayMovedLayouts`, wired in `scenes/questBridge.js` restore; the two re-lays share one
+  (`systems/quest/questRepair.js relayMovedLayouts`, wired in `scenes/quest/questBridge.js` restore; the two re-lays share one
   body, `relayDungeonPlaces`). DFU's stamps are left alone: neither of their builds moved.
 - **Online**, OPEN for Mac: the room is named by the size, not the draw (`dungeon:m<id>.m`), so a moved dungeon's room
   memory written before this build - kept up to thirty days after the room last drains - is the old layout's, read by
@@ -199,7 +199,7 @@ THE FOUR HOSTS: `scenes/worldModes.js` and `scenes/dungeonContext.js` build and 
 `scenes/exterior.js` size the quest layer's locations through it and load quests through the bridge, which runs the
 re-lay. AUDIT FIELD-BUGS 1008 (`01-Overview/Audit-Log.md`): the re-lay reads only a build that moved (`distinct`), offline
 only a dungeon a link holds (unlinked, the build is the settings'), and a shared copy arriving
-(`questRepair.js relayQuestMovedLayout`). `test/mediumdistinct.test.js` (4); `tools/mutants/mediumdistinct.json` (18), all dead.
+(`questRepair.js relayQuestMovedLayout`). `test/systems/quest/mediumdistinct.test.js` (4); `tools/mutants/mediumdistinct.json` (18), all dead.
 
 **SD-ONLINE (2026-10-05, Mac: "So medium dungeons will be the new by default option thats on (online only)", then "On
 second thought. Large, medium and small should all play into account online" - "World mixes sizes") - ONLINE EVERY
@@ -216,7 +216,7 @@ every dungeon whole and the relay keeps a room's memory for thirty days, so a re
 `dungeon:m<id>.s` or `dungeon:m<id>.m` (`net/online.js roomKeyFor`, reading `world/smallerDungeons.js
 builtDungeonSize` off the build through the mode machine's identity; `net/wire.js` WORLD_ROOM and DUNGEON_ROOM_TAGS -
 the relay's `world172` - `world171` on its branch, renumbered past main's CRYSTAL-FIST at the merge), while a dungeon built whole - the main story's, the undercroft, one the world leaves large, one
-no bigger than its size - keeps the room and the memory it always had. `test/sdonline.test.js` (10);
+no bigger than its size - keeps the room and the memory it always had. `test/systems/sdonline.test.js` (10);
 `tools/mutants/sdonline.json` (13).
 
 ## THE FOUR HOSTS

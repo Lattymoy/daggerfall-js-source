@@ -5,7 +5,7 @@
     "old": "positions.set(run.positions, v0 * 3); normals.set(run.normals, v0 * 3);",
     "new": "positions.set(Float32Array.of(...run.positions), v0 * 3); normals.set(run.normals, v0 * 3);",
     "tests": [
-      "test/auditpoi_gltf.test.js"
+      "test/poi/auditpoi_gltf.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "for (let k = 0; k < prim.idx.length; k++) slot[prim.idx[k]] = -2;",
     "new": "for (let k = 0; k < prim.pos.n; k++) slot[k] = -2;",
     "tests": [
-      "test/auditpoi_gltf.test.js"
+      "test/poi/auditpoi_gltf.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "      for (let k = 0; k < idx.length; k++) if (!(Number.isInteger(idx[k]) && idx[k] < pos.n)) fail('missing', { what: 'vertex', index: idx[k] });",
     "new": "",
     "tests": [
-      "test/auditpoi_gltf.test.js"
+      "test/poi/auditpoi_gltf.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    if (n * size > GLTF_READ_LIMITS.accessor) fail('too-large', { what: 'accessor', index: ai });",
     "new": "",
     "tests": [
-      "test/auditpoi_gltf.test.js"
+      "test/poi/auditpoi_gltf.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    if ((held += n * size) > GLTF_READ_LIMITS.total) fail('too-large', { what: 'model' });",
     "new": "    held += n * size;",
     "tests": [
-      "test/auditpoi_gltf.test.js"
+      "test/poi/auditpoi_gltf.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "    if (!whole(n)) fail('malformed', { what: 'accessor', index: ai });",
     "new": "",
     "tests": [
-      "test/auditpoi_gltf.test.js"
+      "test/poi/auditpoi_gltf.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "      if (!whole(base)) fail('malformed', { what: 'accessor', index: ai });",
     "new": "",
     "tests": [
-      "test/auditpoi_gltf.test.js"
+      "test/poi/auditpoi_gltf.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "      if (stride && stride < elem) fail('accessor-type', { index: ai });",
     "new": "",
     "tests": [
-      "test/auditpoi_gltf.test.js"
+      "test/poi/auditpoi_gltf.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "      if ((idx.byteOffset ?? 0) + sp.count * iComp.size > iv.bytes.byteLength || (val.byteOffset ?? 0) + sp.count * size * comp.size > vv.bytes.byteLength) fail('past-end', { what: 'accessor', index: ai });",
     "new": "",
     "tests": [
-      "test/auditpoi_gltf.test.js"
+      "test/poi/auditpoi_gltf.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "    if (im.bufferView !== undefined) bytes = viewBytes(im.bufferView).bytes;",
     "new": "    if (im.bufferView !== undefined) bytes = viewBytes(im.bufferView).bytes.slice();",
     "tests": [
-      "test/auditpoi_gltf.test.js"
+      "test/poi/auditpoi_gltf.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "    if (reached.has(ni)) fail('node-parents', { index: ni });",
     "new": "",
     "tests": [
-      "test/auditpoi_gltf.test.js"
+      "test/poi/auditpoi_gltf.test.js"
     ]
   },
   {
@@ -104,8 +104,8 @@
     "old": "    if (onPath.has(ni)) fail('node-cycle', { index: ni });",
     "new": "",
     "tests": [
-      "test/auditpoi_gltf.test.js",
-      "test/poi4_gltf.test.js"
+      "test/poi/auditpoi_gltf.test.js",
+      "test/poi/poi4_gltf.test.js"
     ]
   },
   {
@@ -114,7 +114,7 @@
     "old": "    if (!Number.isInteger(ni)) fail('missing', { what: 'node', index: ni });",
     "new": "",
     "tests": [
-      "test/auditpoi_gltf.test.js"
+      "test/poi/auditpoi_gltf.test.js"
     ]
   },
   {
@@ -123,7 +123,7 @@
     "old": "const roots = g.scenes?.[sceneIndex]?.nodes ?? nodes.map((_, i) => i).filter((i) => !parentOf.has(i));",
     "new": "const roots = g.scenes?.[sceneIndex]?.nodes ?? nodes.map((_, i) => i).filter((i) => !nodes.some((n) => (n.children ?? []).includes(i)));",
     "tests": [
-      "test/auditpoi_gltf.test.js"
+      "test/poi/auditpoi_gltf.test.js"
     ]
   },
   {
@@ -132,7 +132,7 @@
     "old": "const gltfErrorOf = (e) => (e instanceof GltfError ? e : new GltfError('malformed', {}, e));",
     "new": "const gltfErrorOf = (e) => e;",
     "tests": [
-      "test/auditpoi_gltf.test.js"
+      "test/poi/auditpoi_gltf.test.js"
     ]
   },
   {
@@ -141,7 +141,7 @@
     "old": "        try { json = JSON.parse(new TextDecoder().decode(body)); } catch { fail('glb-chunk'); }",
     "new": "        json = JSON.parse(new TextDecoder().decode(body));",
     "tests": [
-      "test/auditpoi_gltf.test.js"
+      "test/poi/auditpoi_gltf.test.js"
     ]
   },
   {
@@ -150,7 +150,7 @@
     "old": "  try { text = decodeURIComponent(m[3]); } catch { fail('data-uri'); }",
     "new": "  text = decodeURIComponent(m[3]);",
     "tests": [
-      "test/auditpoi_gltf.test.js"
+      "test/poi/auditpoi_gltf.test.js"
     ]
   },
   {
@@ -159,7 +159,7 @@
     "old": "const warn = (code, args = {}) => { const w = { code, ...args }, key = JSON.stringify(w); if (!said.has(key)) { said.add(key); warnings.push(w); } };",
     "new": "const warn = (code, args = {}) => { const w = { code, ...args }; if (!warnings.some((x) => JSON.stringify(x) === JSON.stringify(w))) warnings.push(w); };",
     "tests": [
-      "test/auditpoi_gltf.test.js"
+      "test/poi/auditpoi_gltf.test.js"
     ]
   },
   {
@@ -168,7 +168,7 @@
     "old": "        if ((vertices += list.length) > POI_MESH_LIMITS.vertices) { refused = 'too-many-vertices'; break; }",
     "new": "        vertices += list.length;",
     "tests": [
-      "test/auditpoi_gltf.test.js"
+      "test/poi/auditpoi_gltf.test.js"
     ]
   },
   {
@@ -177,7 +177,7 @@
     "old": "    const code = p.refused ?? poiMeshError(p.mesh);",
     "new": "    const code = poiMeshError(p.mesh);",
     "tests": [
-      "test/auditpoi_gltf.test.js"
+      "test/poi/auditpoi_gltf.test.js"
     ]
   },
   {
@@ -186,7 +186,7 @@
     "old": "      if (ti !== null) out.emissiveTexture = textureRef(ti, m);",
     "new": "      if (ti !== null) { out.emissiveTexture = textureRef(ti, m); out.emissiveFactor ??= [1, 1, 1]; }",
     "tests": [
-      "test/auditpoi_gltf.test.js"
+      "test/poi/auditpoi_gltf.test.js"
     ]
   },
   {
@@ -195,7 +195,7 @@
     "old": "        const tt = (mat?.base ?? mat?.emissive)?.transform ?? null;",
     "new": "        const tt = mat?.base?.transform ?? null;",
     "tests": [
-      "test/auditpoi_gltf.test.js"
+      "test/poi/auditpoi_gltf.test.js"
     ]
   },
   {
@@ -204,7 +204,7 @@
     "old": "      const tex = mat ? mat.base ?? mat.emissive : null;",
     "new": "      const tex = mat ? mat.base : null;",
     "tests": [
-      "test/auditpoi_gltf.test.js"
+      "test/poi/auditpoi_gltf.test.js"
     ]
   },
   {
@@ -213,7 +213,7 @@
     "old": "  const tex = m?.base ?? m?.emissive ?? null;",
     "new": "  const tex = m?.base ?? null;",
     "tests": [
-      "test/auditpoi_gltf.test.js"
+      "test/poi/auditpoi_gltf.test.js"
     ]
   },
   {
@@ -222,7 +222,7 @@
     "old": "    if (base && emissive && !samePlacement(base, emissive)) warn('emission-transform', { material: name });",
     "new": "",
     "tests": [
-      "test/auditpoi_gltf.test.js"
+      "test/poi/auditpoi_gltf.test.js"
     ]
   },
   {
@@ -231,7 +231,7 @@
     "old": "          if (skinned) { Mv = skinMatrix(joints, skinned, vi); Nv = normalMatrix(Mv); if (det3(Mv) < 0) turned[e] = 1; }",
     "new": "",
     "tests": [
-      "test/auditpoi_gltf.test.js"
+      "test/poi/auditpoi_gltf.test.js"
     ]
   },
   {
@@ -240,7 +240,7 @@
     "old": "    skins[inst.skin] = joints.map((j, k) => mul(globalOf(j), ibm ? ibm.data.subarray(k * 16, k * 16 + 16) : identity()));",
     "new": "    skins[inst.skin] = joints.map((j, k) => (ibm ? ibm.data.subarray(k * 16, k * 16 + 16) : identity()));",
     "tests": [
-      "test/auditpoi_gltf.test.js"
+      "test/poi/auditpoi_gltf.test.js"
     ]
   },
   {
@@ -249,7 +249,7 @@
     "old": "  if (sum !== 1) for (let i = 0; i < 16; i++) m[i] /= sum;",
     "new": "",
     "tests": [
-      "test/auditpoi_gltf.test.js"
+      "test/poi/auditpoi_gltf.test.js"
     ]
   },
   {
@@ -258,7 +258,7 @@
     "old": "          const f = turned ? !turned[a] : flip;",
     "new": "          const f = flip;",
     "tests": [
-      "test/auditpoi_gltf.test.js"
+      "test/poi/auditpoi_gltf.test.js"
     ]
   },
   {
@@ -267,7 +267,7 @@
     "old": "      type: 'point', color: l.color.map(srgbToLinear), intensity: l.intensity * Math.PI, range: l.radius,",
     "new": "      type: 'point', color: l.color.map(srgbToLinear), intensity: l.intensity, range: l.radius,",
     "tests": [
-      "test/auditpoi_gltf.test.js"
+      "test/poi/auditpoi_gltf.test.js"
     ]
   },
   {
@@ -276,7 +276,7 @@
     "old": "      type: 'point', color: l.color.map(srgbToLinear), intensity: l.intensity * Math.PI, range: l.radius,",
     "new": "      type: 'point', color: [...l.color], intensity: l.intensity * Math.PI, range: l.radius,",
     "tests": [
-      "test/auditpoi_gltf.test.js"
+      "test/poi/auditpoi_gltf.test.js"
     ]
   },
   {
@@ -285,7 +285,7 @@
     "old": "intensity: near(own?.intensity, intensity) ? own.intensity : intensity, flicker };",
     "new": "intensity, flicker };",
     "tests": [
-      "test/auditpoi_gltf.test.js"
+      "test/poi/auditpoi_gltf.test.js"
     ]
   },
   {
@@ -294,7 +294,7 @@
     "old": "intensity: near(own?.intensity, intensity) ? own.intensity : intensity, flicker };",
     "new": "intensity: own?.intensity ?? intensity, flicker };",
     "tests": [
-      "test/auditpoi_gltf.test.js"
+      "test/poi/auditpoi_gltf.test.js"
     ]
   },
   {
@@ -303,7 +303,7 @@
     "old": "  const flicker = typeof own?.flicker === 'boolean' ? own.flicker : fresh.flicker;",
     "new": "  const flicker = fresh.flicker;",
     "tests": [
-      "test/auditpoi_gltf.test.js"
+      "test/poi/auditpoi_gltf.test.js"
     ]
   },
   {
@@ -312,7 +312,7 @@
     "old": "      if (def?.type === 'point') lights.push(",
     "new": "      if (false) lights.push(",
     "tests": [
-      "test/auditpoi_gltf.test.js"
+      "test/poi/auditpoi_gltf.test.js"
     ]
   },
   {
@@ -321,7 +321,7 @@
     "old": "  const lights = (model.lights ?? []).map((l) => poiLightOf(l, newLight()));",
     "new": "  const lights = [];",
     "tests": [
-      "test/auditpoi_gltf.test.js"
+      "test/poi/auditpoi_gltf.test.js"
     ]
   },
   {
@@ -330,7 +330,7 @@
     "old": "  return { ok: true, asset: { name: prep.name, parts, lights: structuredClone(prep.lights ?? []) }, metas };",
     "new": "  return { ok: true, asset: { name: prep.name, parts }, metas };",
     "tests": [
-      "test/auditpoi_gltf.test.js"
+      "test/poi/auditpoi_gltf.test.js"
     ]
   },
   {
@@ -339,7 +339,7 @@
     "old": "  for (const ext of g.extensionsUsed ?? []) {",
     "new": "  for (const ext of []) {",
     "tests": [
-      "test/auditpoi_gltf.test.js"
+      "test/poi/auditpoi_gltf.test.js"
     ]
   },
   {
@@ -348,7 +348,7 @@
     "old": "    if (ext === 'EXT_mesh_gpu_instancing') warn('instancing');",
     "new": "    if (false) warn('instancing');",
     "tests": [
-      "test/auditpoi_gltf.test.js"
+      "test/poi/auditpoi_gltf.test.js"
     ]
   },
   {
@@ -357,7 +357,7 @@
     "old": "    if (GLTF_SUPPORTED_EXTENSIONS.includes(ext) || GLTF_QUIET_EXTENSIONS.includes(ext)) continue;",
     "new": "    if (GLTF_SUPPORTED_EXTENSIONS.includes(ext)) continue;",
     "tests": [
-      "test/auditpoi_gltf.test.js"
+      "test/poi/auditpoi_gltf.test.js"
     ]
   },
   {
@@ -366,7 +366,7 @@
     "old": "baseColorFactor: [srgbToLinear(m.color[0]), srgbToLinear(m.color[1]), srgbToLinear(m.color[2]), m.color[3]]",
     "new": "baseColorFactor: [...m.color]",
     "tests": [
-      "test/auditpoi_gltf.test.js"
+      "test/poi/auditpoi_gltf.test.js"
     ]
   },
   {
@@ -375,8 +375,8 @@
     "old": "    color: [0, 1, 2].map((k) => round6(linearToSrgb(clamp01(color[k])))).concat(clamp01(color[3] ?? 1)),",
     "new": "    color: [0, 1, 2].map((k) => round6(clamp01(color[k]))).concat(clamp01(color[3] ?? 1)),",
     "tests": [
-      "test/auditpoi_gltf.test.js",
-      "test/poi4_gltf.test.js"
+      "test/poi/auditpoi_gltf.test.js",
+      "test/poi/poi4_gltf.test.js"
     ]
   },
   {
@@ -385,7 +385,7 @@
     "old": "    color: [0, 1, 2].map((k) => round6(linearToSrgb(clamp01(color[k])))).concat(clamp01(color[3] ?? 1)),",
     "new": "    color: [0, 1, 2, 3].map((k) => round6(linearToSrgb(clamp01(color[k] ?? 1)))),",
     "tests": [
-      "test/auditpoi_gltf.test.js"
+      "test/poi/auditpoi_gltf.test.js"
     ]
   },
   {
@@ -394,8 +394,8 @@
     "old": "      out.emissiveFactor = m.emissiveColor.map((c) => srgbToLinear(c / k));",
     "new": "      out.emissiveFactor = m.emissiveColor.map((c) => c / k);",
     "tests": [
-      "test/auditpoi_gltf.test.js",
-      "test/poi6_review.test.js"
+      "test/poi/auditpoi_gltf.test.js",
+      "test/poi/poi6_review.test.js"
     ]
   },
   {
@@ -404,8 +404,8 @@
     "old": "    emissiveColor: (m?.emissiveFactor ?? [0, 0, 0]).map((c) => Math.min(Math.max(round6(linearToSrgb(clamp01(c)) * strength), 0), 16)),",
     "new": "    emissiveColor: (m?.emissiveFactor ?? [0, 0, 0]).map((c) => Math.min(Math.max(round6(clamp01(c) * strength), 0), 16)),",
     "tests": [
-      "test/auditpoi_gltf.test.js",
-      "test/poi4_gltf.test.js"
+      "test/poi/auditpoi_gltf.test.js",
+      "test/poi/poi4_gltf.test.js"
     ]
   }
 ]

@@ -12,7 +12,7 @@
 //
 // ═══ WHAT IT BAKES INTO ═══════════════════════════════════════════
 //
-// THE SHAPE flattenNif ALREADY EMITS (src/formats/mwNifMesh.js:"skinned:boolean,":
+// THE SHAPE flattenNif ALREADY EMITS (src/formats/morrowind/mwNifMesh.js:"skinned:boolean,":
 // positions / normals / uvs / colors / indices / material). Not a
 // second mesh format - the SAME one, because the Morrowind lane's whole
 // downstream (the arm's attach chain, the renderer's batch draw) is
@@ -39,7 +39,7 @@
 //    asking him to re-export is asking him to do by hand what the file
 //    already says. A convex polygon still FANS, corner for corner as it
 //    always did - so every mesh that baked before bakes to the same
-//    bytes (test/fieldgunmw.test.js holds the Thunderlock to that) -
+//    bytes (test/formats/morrowind/fieldgunmw.test.js holds the Thunderlock to that) -
 //    and only a polygon no ear clip can resolve, one that crosses
 //    itself, is refused.
 //
@@ -795,8 +795,10 @@ function assertRootObject(tree, model) {
 /** A layer element's value for corner `c`, honouring the two mapping
  *  modes Blender writes. ByPolygonVertex indexes by corner;
  *  ByVertice/ByVertex indexes by the corner's POSITION, which is a
- *  different number and the one this would silently read wrong. */
-function layerReader(layer, stride, valueKey, indexKey) {
+ *  different number and the one this would silently read wrong.
+ *  EG6c: exported - tools/fragBake.mjs reads each object's normals and
+ *  UVs through it (ONE EXPORT). */
+export function layerReader(layer, stride, valueKey, indexKey) {
   if (!layer) return null;
   const values = childNamed(layer, valueKey)?.props[0];
   if (!values) return null;
@@ -817,6 +819,42 @@ function layerReader(layer, stride, valueKey, indexKey) {
     const out = new Array(stride);
     for (let k = 0; k < stride; k++) out[k] = values[at + k];
     return out;
+  };
+}
+
+/**
+ * THE WELD (job 2 of the header), on its own so every bake that welds
+ * welds alike - EG6c: tools/fragBake.mjs welds each object of a scene
+ * through it (ONE EXPORT). `corner(c, positionIndex)` answers the vertex
+ * of corner `c` (its running index in PolygonVertexIndex, which the
+ * ByPolygonVertex layers count by) over position `positionIndex`: a new
+ * one the first time its AUTHORED triple is seen, the same one after.
+ * `position(i)` and `normal(n)` place a vertex and a normal on the way
+ * out; `out` is where they land (shared by several welders, each object
+ * its own `seen`, so two objects never weld into one another).
+ */
+export function cornerWelder({ readNormal, readUv, position, normal, out = { positions: [], normals: [], uvs: [] } }) {
+  const seen = new Map();
+  return {
+    out,
+    corner(c, positionIndex) {
+      const n = readNormal ? readNormal(c, positionIndex) : null;
+      const uv = readUv ? readUv(c, positionIndex) : null;
+      // The weld key is the AUTHORED triple, before placement: two
+      // corners that were one vertex in Blender are one here, and a hard
+      // edge or a UV seam keeps its split. Rounded, because a float that
+      // differs in its last bit is the same corner and an exact key would
+      // leave a seam nobody authored.
+      const key = `${positionIndex}|${n ? n.map((v) => v.toFixed(5)).join(',') : ''}|${uv ? uv.map((v) => v.toFixed(6)).join(',') : ''}`;
+      const hit = seen.get(key);
+      if (hit !== undefined) return hit;
+      const at = out.positions.length / 3;
+      out.positions.push(...position(positionIndex));
+      if (n) out.normals.push(...normal(n));
+      if (uv) out.uvs.push(uv[0], uv[1]);
+      seen.set(key, at);
+      return at;
+    },
   };
 }
 
@@ -943,31 +981,15 @@ export function bakeMesh(tree, { name = null, keepRotation = false, normalise = 
   // ── triangulate and weld ──────────────────────────────────────────
   const polys = polygonsOf(pvi);
   const wears = material === null ? null : materialReader(geo, polys.length);   // MW-HEADS1
-  const outPos = []; const outNrm = []; const outUv = []; const indices = [];
-  const seen = new Map();
+  const weld = cornerWelder({ readNormal, readUv, position: (i) => placePosition(positions.slice(i * 3, i * 3 + 3)), normal: placeNormal });
+  const { positions: outPos, normals: outNrm, uvs: outUv } = weld.out;
+  const indices = [];
   let corner = 0;
   let ngons = 0;
   let clipped = 0;
   let repeated = 0;   // MW-EBONY1: faces clipped once their repeated corners were dropped (earClipRepeated)
   let kept = 0;   // MW-HEADS1: the polygons the bake took (every one, without `material`)
-  const cornerOf = (c, positionIndex) => {
-    const n = readNormal ? readNormal(c, positionIndex) : null;
-    const uv = readUv ? readUv(c, positionIndex) : null;
-    // The weld key is the AUTHORED triple, before placement: two
-    // corners that were one vertex in Blender are one here, and a hard
-    // edge or a UV seam keeps its split. Rounded, because a float that
-    // differs in its last bit is the same corner and an exact key would
-    // leave a seam nobody authored.
-    const key = `${positionIndex}|${n ? n.map((v) => v.toFixed(5)).join(',') : ''}|${uv ? uv.map((v) => v.toFixed(6)).join(',') : ''}`;
-    const hit = seen.get(key);
-    if (hit !== undefined) return hit;
-    const at = outPos.length / 3;
-    outPos.push(...placePosition(positions.slice(positionIndex * 3, positionIndex * 3 + 3)));
-    if (n) outNrm.push(...placeNormal(n));
-    if (uv) outUv.push(uv[0], uv[1]);
-    seen.set(key, at);
-    return at;
-  };
+  const cornerOf = weld.corner;
 
   for (let pi = 0; pi < polys.length; pi++) {
     const poly = polys[pi];

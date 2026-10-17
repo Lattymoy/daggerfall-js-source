@@ -39,11 +39,11 @@
 // (PARTY-LOOT).
 import { groupReferenceLevel } from './mentorMode.js';
 import { RENOWN_LOOT_QUARTERS } from './renownLoot.js';
-import { validLootList, LOOT_LIST_MAX, LOOT_STACK_MAX } from './loot.js';
+import { validLootList, LOOT_LIST_MAX, LOOT_STACK_MAX } from './loot/loot.js';
 import { registerModSaveData } from './modSaveData.js';
 import { healingSupplyChances, mintHealingPotion, mintMagickaPotion } from './healingSupply.js';
-import { restLootChances, restItemsAvailable, createRestItem, REST_PILE_CHANCES, REST_FOE_CHANCES } from './restItems.js';
-import { WILD_TEXT } from './wildZone.js';
+import { restLootChances, restItemsAvailable, createRestItem, REST_PILE_CHANCES, REST_FOE_CHANCES } from './rest/restItems.js';
+import { WILD_TEXT } from './wild/wildZone.js';
 
 // ---- the dice -------------------------------------------------------------------------------------------------------
 
@@ -168,7 +168,7 @@ export const isRoomWord = (/** @type {any} */ rec) => !!rec && typeof rec === 'o
 // one writer. Every word carries its claims' ids, and the host's word its verdicts, so a seat that changes hands judges
 // what the last host left unanswered (roomClaimOrder) and never what it answered.
 
-/** What a loser is told - the remains' own line (systems/wildZone.js), one string for one refusal. */
+/** What a loser is told - the remains' own line (systems/wild/wildZone.js), one string for one refusal. */
 export const ROOM_TAKEN_TEXT = WILD_TEXT.taken;
 /** How long a claim stands taken in its claimer's view with no verdict before the piece comes back. */
 export const ROOM_CLAIM_TIMEOUT_MS = 4000;
@@ -430,7 +430,7 @@ export const bonusShare = (/** @type {number} */ baseP, /** @type {number} */ ow
 
 /**
  * THE SUPPLIES' SHARE OF A BONUS: each of RENOWN-LOOT's supply chances (the healing and Restore Power potions, the rest
- * supplies - systems/healingSupply.js, systems/restItems.js) from the base's share to the player's own, as one more draw
+ * supplies - systems/healingSupply.js, systems/rest/restItems.js) from the base's share to the player's own, as one more draw
  * at the step between them (bonusShare) - so the base's draw and the bonus's together hold a supply at the player's own
  * chance. `side` 'enemy' (a looting foe) or 'pile' (a deep pile, J-O - the caller's gate, as the subscribers' own). A
  * draw is taken for every chance whatever it lands, so the dice a later draw reads never move. Answers the items.

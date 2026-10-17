@@ -5,8 +5,8 @@
     "old": "    const m = PLACE_ROUND_CELLS;",
     "new": "    const m = side;",
     "tests": [
-      "test/fb1011e_wayround.test.js",
-      "test/fb1009c_walkwhole.test.js"
+      "test/world/fb1011e_wayround.test.js",
+      "test/world/fb1009c_walkwhole.test.js"
     ]
   },
   {
@@ -15,7 +15,7 @@
     "old": "export const PLACE_ROUND_CELLS = 2;",
     "new": "export const PLACE_ROUND_CELLS = 1;",
     "tests": [
-      "test/fb1011e_wayround.test.js"
+      "test/world/fb1011e_wayround.test.js"
     ]
   },
   {
@@ -24,8 +24,8 @@
     "old": "    pieces(after, i0, i1, k0, k1, out);",
     "new": "    pieces(after, i0, i1, k0, k1, () => false);",
     "tests": [
-      "test/fb1011e_wayround.test.js",
-      "test/fb1009c_walkwhole.test.js"
+      "test/world/fb1011e_wayround.test.js",
+      "test/world/fb1009c_walkwhole.test.js"
     ]
   },
   {
@@ -34,8 +34,8 @@
     "old": "    for (const [a0, a1, b0, b1] of stood) {",
     "new": "    for (const [a0, a1, b0, b1] of []) {",
     "tests": [
-      "test/fb1011e_wayround.test.js",
-      "test/taverntables.test.js"
+      "test/world/fb1011e_wayround.test.js",
+      "test/systems/card/taverntables.test.js"
     ]
   },
   {
@@ -44,8 +44,8 @@
     "old": "if (a0 > i1 + m || a1 < i0 - m || b0 > k1 + m || b1 < k0 - m) continue;",
     "new": "if (a0 > i1 || a1 < i0 || b0 > k1 || b1 < k0) continue;",
     "tests": [
-      "test/fb1011e_wayround.test.js",
-      "test/taverntables.test.js"
+      "test/world/fb1011e_wayround.test.js",
+      "test/systems/card/taverntables.test.js"
     ]
   },
   {
@@ -54,8 +54,8 @@
     "old": "Math.max(0, Math.ceil((rx - PLACE_BODY_R) / PLACE_CELL)) + PLACE_LANE_CELLS, rk",
     "new": "Math.max(0, Math.ceil((rx - PLACE_BODY_R) / PLACE_CELL)), rk",
     "tests": [
-      "test/fb1011e_wayround.test.js",
-      "test/taverntables.test.js"
+      "test/world/fb1011e_wayround.test.js",
+      "test/systems/card/taverntables.test.js"
     ]
   },
   {
@@ -64,10 +64,10 @@
     "old": "    if (out(fi, (first - fi) / side)) return true;\n",
     "new": "",
     "tests": [
-      "test/fb1011e_wayround.test.js",
-      "test/fb1009c_walkwhole.test.js",
-      "test/taverntable.test.js",
-      "test/taverntables.test.js"
+      "test/world/fb1011e_wayround.test.js",
+      "test/world/fb1009c_walkwhole.test.js",
+      "test/world/card/taverntable.test.js",
+      "test/systems/card/taverntables.test.js"
     ]
   },
   {
@@ -76,8 +76,8 @@
     "old": "      if (was === undefined) joined.set(before[c], after[c]);",
     "new": "      if (was === undefined || true) joined.set(before[c], after[c]);",
     "tests": [
-      "test/fb1011e_wayround.test.js",
-      "test/fb1009c_walkwhole.test.js"
+      "test/world/fb1011e_wayround.test.js",
+      "test/world/fb1009c_walkwhole.test.js"
     ]
   }
 ]

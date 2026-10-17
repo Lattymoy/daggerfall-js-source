@@ -1,5 +1,5 @@
 // PERF-SNOW bench (2026-10-10, Dudey: "snowfall and snow in general is pretty demanding"): THE SNOW'S CPU, A WALK.
-// systems/snowfallRuntime.js over test/snowfall1_runtime.test.js's synthetic world (planes of 128 x 128 tiles a map
+// systems/snowfallRuntime.js over test/render/snowfall1_runtime.test.js's synthetic world (planes of 128 x 128 tiles a map
 // pixel), with Basic Roads on every pixel (a network of roads and tracks, predicted as the classifier predicts them), the
 // player walking east at a run for FRAMES frames at 60 fps. Prints the frames' snow time (mean, p95, worst), the
 // allocations (the scavenges and mark-compacts a --trace-gc run counts are the caller's), and a hash of everything the

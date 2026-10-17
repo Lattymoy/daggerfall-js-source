@@ -46,7 +46,7 @@
 // spawner), isResting(), allowMagicRepairs (a DFU setting, default
 // false), say(msg).
 
-import { ENEMY_BASICS } from '../characters/enemyBasics.js';
+import { ENEMY_BASICS } from '../characters/enemy/enemyBasics.js';
 import { equipTableOf, lowerCondition, setEnchantmentHooks } from './equip.js';
 import { MINUTES_PER_DAY } from './gameDate.js';   // the canonical home - worldTick re-exports it and imports the pump below, so this leaf must not close the cycle
 import { syntheticTimeIncrease } from './effectBroker.js';   // AUDIT 63 F13: EntityEffectBroker.SyntheticTimeIncrease - a LEAF, for the same reason
@@ -63,8 +63,8 @@ import { applyDressStanding } from './clothingStanding.js';   // DRESS1 (2026-09
 import { ENCHANTMENT_TYPES } from '../formats/magicDef.js';
 import { SOCIAL_GROUP_COUNT } from '../formats/factionFile.js';   // AUDIT 63 F6: PlayerEntity.cs:128-129 sizes reactionMods at socialGroupCount = 11
 import { regenBarred } from './courtRules.js';   // WBX6: the Burning Court keeps no regeneration
-import { ITEM_TEMPLATES, templateByIndex, mendOrder, mintCondition, TRANSPORT_HORSE, TRANSPORT_SMALL_CART } from './itemTemplates.js';   // MEND-WORN: the mend order's one home, and the smith's refusal
-import { WEAPONS, WEAPON_CONDITION_POOL } from '../characters/weapons.js';   // MEND-WORN: a pool weapon's tick is the classic Dagger's share
+import { ITEM_TEMPLATES, templateByIndex, mendOrder, mintCondition, TRANSPORT_HORSE, TRANSPORT_SMALL_CART } from './item/itemTemplates.js';   // MEND-WORN: the mend order's one home, and the smith's refusal
+import { WEAPONS } from '../characters/weapons.js';   // MEND-WORN / MEND-ARMOUR: a tick is the classic Dagger's share
 import { repoolWeapon } from './conditionRepair.js';   // MEND-WORN: a weapon on its row's pool moves before a mend on the pool, as before a wear
 export { ENCHANTMENT_TYPES };
 
@@ -88,7 +88,7 @@ export const PAYLOAD = Object.freeze({
 // at the arm that spends it).
 export const REGEN_PER_ROUNDS = 4;            // RegensHealth.cs:25 (VampiricEffect.cs:27 shares the value)
 export const CONDITION_PER_ROUNDS = 4;        // RepairsObjects.cs:25 / ItemDeteriorates.cs:29
-export const CONDITION_AMOUNT = 1;            // RepairsObjects.cs:26 (MEND-WORN: a pool weapon's is POOL_WEAPON_MEND)
+export const CONDITION_AMOUNT = 1;            // RepairsObjects.cs:26 (MEND-ARMOUR: the floor - a tick mends repairsObjectsMend)
 export const DAMAGE_PER_ROUNDS = 4;           // UserTakesDamage.cs:27
 export const TIME_LEECH_PER_ROUNDS = 4;       // HealthLeech.cs:27
 export const LEECH_CAST_AMOUNT = 16;          // HealthLeech.cs:29
@@ -164,7 +164,7 @@ export const isEnchantedItem = (item) => !!itemEnchantments(item);
 // ported" - and M4's catalogue is that sum's missing half, so it
 // closed here and stays closed: legacyEnchantmentValue (:222-238) is
 // the sum, over VALUE_COUNTS_BELOW (:179), spellEnchantPtCost (:214)
-// and the SoulBound/CastWhen arms, and systems/loot.js:"value: legacyEnchantmentValue" prices
+// and the SoulBound/CastWhen arms, and systems/loot/loot.js:"value: legacyEnchantmentValue" prices
 // every minted legacy item through it.
 //
 // THE BOUND IS THE ENUM'S OWN ORDER (:604-605): only
@@ -366,14 +366,23 @@ export function mobileAffinityMatches(mobileType, paramType) {
 // uses in their condition (a tent's nights, a campfire's fuel). So every tick went to the oldest worn thing carried and
 // nothing the player wore was seen to mend; and WEAPON-POOL's pools (1,600 to 12,800) left a weapon a point a tick, a
 // 32nd of what a dagger had. The departures (Port-Ledger A, MEND-WORN): the mend order below, nothing a smith will not
-// repair, and a pool weapon's tick.
+// repair, and a pool weapon's tick - since MEND-ARMOUR (FIELD BUGS 2026-10-16b) every piece's, a fiftieth of its own.
 
-/** MEND-WORN: what one tick mends on a weapon whose condition is WEAPON-POOL's pool (Mac, asked: "Weapons as a classic
- *  dagger") - the share a classic Dagger's point was of its row (Daggerfall's Dagger, 50), on the pool: 1,600 / 50 =
- *  32, iron 2% a tick and Daedric 0.25%, so no weapon type mends slower than it did. A magic item's or an artifact's
- *  condition is its uses, not the pool (loot.js), and keeps DFU's point, as every other piece does. */
-export const POOL_WEAPON_MEND = Math.round(WEAPON_CONDITION_POOL / ITEM_TEMPLATES[WEAPONS.Dagger].hitPoints);
-const mendsOnPool = (it) => it.group === 'Weapons' && !it.magic && !it.artifact;
+/** MEND-ARMOUR (FIELD BUGS 2026-10-16b; the Discord: "my weapon WILL repair but no other worn items are repairing with
+ *  repair objects"): WHAT ONE TICK MENDS - a fiftieth of the piece's own condition, the share a classic Dagger's point
+ *  was of its row (Daggerfall's Dagger, 50: MEND-WORN's yardstick, Mac's "Weapons as a classic dagger"), and never less
+ *  than DFU's point (CONDITION_AMOUNT - Armbands' 15). ONE LAW for every piece the tick reaches - a weapon, armour,
+ *  clothing, a magic item's or an artifact's uses - so every worn piece's share climbs 2% a tick, whatever its kind,
+ *  its material or its size. MEND-WORN gave the share to a weapon on WEAPON-POOL's pool alone, and on the pool (32 a
+ *  tick: iron 2%, Daedric 0.25%), and left every other piece DFU's point (RepairsObjects.cs:26): an iron cuirass
+ *  (4,096) 1% every 41 ticks, a steel one (6,144) every 61, a Daedric one (32,768) every 328 - beside a blade that
+ *  climbed, the armour's % never moved. An iron weapon's tick is MEND-WORN's 32 still. */
+export const MEND_SHARE_OF = ITEM_TEMPLATES[WEAPONS.Dagger].hitPoints;
+/** AUDIT (FIELD BUGS 2026-10-16b MEND-ARMOUR): USES KEEP THE POINT. A MAGIC.DEF item's or an artifact's condition is its
+ *  USES (loot.js), and this round runs through every rest, fast travel and prison stay as well as play (worldTick.js's
+ *  catch-up, MAX_CATCHUP_ROUNDS): at a fiftieth a tick, one 8-hour rest gave a spent Cast When Used piece back 100 casts,
+ *  where the point gave it 12. A charge is not wear - it is mended at DFU's point, as it was before MEND-ARMOUR. */
+export const repairsObjectsMend = (it) => (it.magic || it.artifact ? CONDITION_AMOUNT : Math.max(CONDITION_AMOUNT, Math.round(it.maxCondition / MEND_SHARE_OF)));
 
 /** MEND-WORN: THE PIECE A REPAIRS OBJECTS TICK MENDS in `items` (the pack), or null. Among the pieces below their
  *  condition that a repair may touch, the first of MEND-TIERS' three tiers (mendTier: what is worn, then a worn piece
@@ -562,8 +571,8 @@ const REGISTRY = new Map([
    *  piece is repairsObjectsTarget's - what is worn first, the most
    *  worn first, a worn piece that wears itself after the rest of
    *  what is worn and ahead of the pack (MEND-TIERS) - by
-   *  POOL_WEAPON_MEND on a pool weapon and DFU's
-   *  point on the rest, never past its condition; a weapon still on
+   *  repairsObjectsMend, a fiftieth of its own condition (MEND-ARMOUR:
+   *  every piece alike), never past its condition; a weapon still on
    *  its row's pool moves to the one pool first, as it does before a
    *  wear (equip.js lowerCondition). */
   [T.RepairsObjects, {
@@ -573,7 +582,7 @@ const REGISTRY = new Map([
       const it = repairsObjectsTarget(entity.items, { allowMagicRepairs: ctx?.allowMagicRepairs ?? false });
       if (!it) return;
       repoolWeapon(it);
-      it.currentCondition = Math.min(it.maxCondition, it.currentCondition + (mendsOnPool(it) ? POOL_WEAPON_MEND : CONDITION_AMOUNT));
+      it.currentCondition = Math.min(it.maxCondition, it.currentCondition + repairsObjectsMend(it));
     },
   }],
   /** AbsorbsSpells.cs - Held constant: IsAbsorbingSpells. */
@@ -837,7 +846,7 @@ export function doItemEnchantmentPayloads(flags, item, { entity = null, target =
     if ((flags & PAYLOAD.Strikes) && (row.flags & PAYLOAD.Strikes)) {
       const r = row.strikes?.(env);
       if (r?.strikesModulateDamage) damageOut += r.strikesModulateDamage;
-      // AUDIT WBX F2 (2026-09-26): a blow on the Oblivion Gate's boss wears no gear (WBX6 - world/gateBoss.js's stand-in
+      // AUDIT WBX F2 (2026-09-26): a blow on the Oblivion Gate's boss wears no gear (WBX6 - world/gate/gateBoss.js's stand-in
       // carries `spareGear`), and that is every Strikes payload's bill too: a Cast When Strikes blade paid 10 a blow and
       // the Mace of Molag Bal the blow's damage, and a fight of hundreds of blows destroyed them
       applyResults(target?.spareGear && r?.durabilityLoss ? { ...r, durabilityLoss: 0 } : r, env);

@@ -47,7 +47,7 @@ await page.route('**/*', async (route) => {
 });
 await page.goto('http://probe.invalid/', { waitUntil: 'domcontentloaded' });
 
-const { ENHANCED_CSS, ENHANCED_FONTS_URL, ENHANCED_TOKENS } = await import('../src/ui/enhancedStyle.js');
+const { ENHANCED_CSS, ENHANCED_FONTS_URL, ENHANCED_TOKENS } = await import('../src/ui/enhanced/enhancedStyle.js');
 const UA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36';
 let fontCss = await (await fetch(ENHANCED_FONTS_URL, { headers: { 'user-agent': UA } })).text();
 for (const u of [...new Set([...fontCss.matchAll(/url\((https:\/\/fonts\.gstatic\.com\/[^)]+)\)/g)].map((m) => m[1]))]) {

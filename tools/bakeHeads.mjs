@@ -6,7 +6,7 @@
 // MW-HEADS1 (2026-10-13, the owner: "Everything we are doing is for the morrowwind model. This batch is for breton",
 // with daggerwind.fbx and six paintings; asked, every Breton man wears them - bible/04-Characters/Own-Heads.md). The
 // first batch of the port's own heads: three Breton men's heads and three hairs, in place of the Breton men's heads
-// Morrowind's own data carries (characters/ownHeadModels.js, formats/mwFirstPerson.js facePools).
+// Morrowind's own data carries (characters/ownModels/ownHeadModels.js, formats/morrowind/mwFirstPerson.js facePools).
 //
 //   THREE OBJECTS, EACH A HEAD AND A HAIR. The export carries `b_n_breton_m_hair_widow`, `b_n_breton_m_head_05.002`
 //   and `.003` - each a face in a head painting and a hair in a hair painting, two materials of one object. To the game
@@ -25,7 +25,7 @@
 //   vendored - and the first bake took the scene's +Y for the face's, as the scene's body faced: seen in game, the face
 //   hung backwards on the body. So the head's frame faces -Y - the scene turned half round about its crown
 //   (HEAD_FORWARD: the scene's -Y is the frame's +Y, the brigandine's turn), a rotation and no mirror, the back now at
-//   y +6.95 and the face ahead of the crown on -Y (test/mwheads1.test.js). Where the owner's scene stood them - z 125 over its floor - is where MW-STEEL5 measured the game drawing a
+//   y +6.95 and the face ahead of the crown on -Y (test/tooling/mwheads1.test.js). Where the owner's scene stood them - z 125 over its floor - is where MW-STEEL5 measured the game drawing a
 //   retail head over the T-posed scene's own (3.2 to 4.3 higher than its 113.15 to 129.2, and 125 puts these 3.46
 //   higher): the same height, read two ways.
 //

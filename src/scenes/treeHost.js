@@ -5,7 +5,7 @@
 // in the one gathering host (scenes/gatherHost.js).
 //
 //   THE TREES ARE THE FOREST'S. A built pixel keeps its tree flats -
-//   Daggerfall's own nature flats (world/terrainNature.js, one seeded
+//   Daggerfall's own nature flats (world/terrain/terrainNature.js, one seeded
 //   layout every client stands the same) whose record World of
 //   Daggerfall names a Tree (TREE_RECORDS, its LocationHelper table by
 //   the climate's summer archive; a winter archive is its summer
@@ -29,15 +29,15 @@ import { trees, nodeKey, WOOD_TABLES } from '../net/nodeLaw.js';
 import { FELLED } from '../ai/cover.js';   // AUDIT TACT B1: a felled tree is no cover
 import { tierOpen, TIER_RANKS, woodAxeBand, chopsFor, storesFullIn, goneIn, fullWordsIn, GROUND_WHERE, GROUND_WHERE_WORDS } from '../net/professionLaw.js';
 import { createChopAct } from '../systems/chopAct.js';
-import { FT } from '../systems/foragingLaw.js';
-import { foragingActRefusal, foragingToolIn, actChecksRefusal } from '../systems/foragingInstall.js';
-import { materialLabel } from '../systems/profItems.js';
+import { FT } from '../systems/foraging/foragingLaw.js';
+import { foragingActRefusal, foragingToolIn, actChecksRefusal } from '../systems/foraging/foragingInstall.js';
+import { materialLabel } from '../systems/professions/profItems.js';
 import { liveStat } from '../systems/statMods.js';
 import { getPref } from '../systems/uiPrefs.js';
-import { TERRAIN_SIZE } from '../world/terrainSampler.js';
-import { insideRocks, TREE_RECORDS, isTreeRecord, FOREST } from '../world/terrainNature.js';   // NODE-CLEAR: the rock check's one home; FOREST1: and the Tree records', and what the woods are
+import { TERRAIN_SIZE } from '../world/terrain/terrainSampler.js';
+import { insideRocks, TREE_RECORDS, isTreeRecord, FOREST } from '../world/terrain/terrainNature.js';   // NODE-CLEAR: the rock check's one home; FOREST1: and the Tree records', and what the woods are
 
-/** World of Daggerfall's Tree records (FOREST1: their home is world/terrainNature.js, where the forests read them). */
+/** World of Daggerfall's Tree records (FOREST1: their home is world/terrain/terrainNature.js, where the forests read them). */
 export { TREE_RECORDS, isTreeRecord };
 /** The stump a felled tree leaves: the archive's Tree Trunk (record 19) where the table names one; the logs at its foot
  *  the archive's Logs (record 31) where it has them. */

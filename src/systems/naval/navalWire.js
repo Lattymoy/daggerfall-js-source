@@ -3,7 +3,7 @@
 // blows on them, between the players in a cell. The port's own; pure.
 //
 // THE SEA IS THE ROOM'S, STOOD BY ONE. The open bay is cells (net/wire.js isCellRoom) - no host seat, no room memory -
-// so the ships a group of players meets are stood the way Iliac Puddle No More's deep is (scenes/deepWatersHost.js
+// so the ships a group of players meets are stood the way Iliac Puddle No More's deep is (scenes/deepWater/deepWatersHost.js
 // standsTheDeep, DEEP-SHARE): by ONE of them, the lowest id among the players within NAVAL_SHARE_RADIUS of each
 // other (systems/campEncounters.js amGroupRollOwner, with its hysteresis), who launches them, sails them and fights
 // them, and says them in `nv` on their own foes frame - beside Come Sail Away's `sa`, which already tells the others
@@ -90,7 +90,7 @@ import { LOT_KEYS, SALVAGE_LOT, isSalvage } from './navalPlunder.js';
 import { NOTORIETY } from './navalLaw.js';
 import { DENSITY_KEYS } from './navalDirector.js';
 import { REGION_NAMES } from '../../formats/mapsFile.js';
-import { HULL_NAMES, HULL_VARIANT_COUNTS } from '../comeSailAwayBoat.js';
+import { HULL_NAMES, HULL_VARIANT_COUNTS } from '../comeSailAway/comeSailAwayBoat.js';
 import { TEMPERS } from './navalAI.js';
 
 /** The radius within which players stand one sea between them (m): a ship's fighting reach and then some. */

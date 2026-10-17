@@ -3,17 +3,17 @@
 // to add the patron/kofi ingame on the main menu as 2 icons"): THE PROJECT'S ASKS, ONE HOME.
 //
 // Two doors ask for support now - the website's (index.html, the corner plaques U64 and PATREON1 built) and the game's
-// own front door (ui/enhancedMenu.js, two icons in the top-left corner) - and they must ask at the same addresses under
+// own front door (ui/enhanced/enhancedMenu.js, two icons in the top-left corner) - and they must ask at the same addresses under
 // the same marks. The game imports this module. The site is a document that runs no script, so scripts/landingHtml.mjs
 // injects SUPPORT_MARKS_CSS into it at serve and build - the seam that already gives it the skin's tokens and the
-// menu's night - and test/landing.test.js holds the site's links, README.md, SUPPORT.md and the repository's Sponsor
+// menu's night - and test/ui/enhanced/landing.test.js holds the site's links, README.md, SUPPORT.md and the repository's Sponsor
 // button (.github/FUNDING.yml) to SUPPORT_ASKS.
 //
 // PATREON1 (2026-09-25, Mac: "Replace website KOFI with patreon") had made Patreon the only ask. Ko-fi is back beside
 // it at Mac's new page; U64's ko-fi.com/dfjs is no longer the project's.
 //
 // THE MARKS ARE DRAWN, NOT PICTURED. Each is a pixel list painted in box-shadow, as the site's corner mark has been since
-// U64: the site carries no raster (test/landing.test.js, U60), and the door's pixel face is the same square pixel.
+// U64: the site carries no raster (test/ui/enhanced/landing.test.js, U60), and the door's pixel face is the same square pixel.
 // Patreon's is PATREON1's own drawing. Ko-fi's is U64's cup with one change: its handle is a RING. U64's handle was a
 // solid column, which read as a cup beside the words "Support on Ko-fi"; standing alone as an icon on the game's door
 // it read as a goblet, and the hole is what says mug (rendered both at 12x to choose). The body stays FILLED - U64's

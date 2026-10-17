@@ -79,9 +79,11 @@ async function sharded(N, busKey = SOCIAL_ROOM) {
     const ups = [];
     const shardRooms = (key) => ({ idFromName: (n) => n, get: () => ({ fetch: async (req) => { ups.push({ key, body: await req.text() }); return new Response('{"ok":1,"unknown":[]}'); } }) });
     const shards = new Map(keys.map((k) => { const R = fakeRoom(k, { ROOMS: shardRooms(k) }); return [k, { R, c: counted(R), t: { ms: 0 }, socks: [] }]; }));
-    const downs = [];
-    const busRooms = { idFromName: (n) => n, get: (hub) => ({ fetch: async (req) => { downs.push({ hub, body: await req.text() }); return new Response('{"ok":1,"gone":[]}'); } }) };
+    // HUB-PULL: the bus never calls a shard - what it seals for each waits in its outbox, taken here as the shard's poll
+    // would be answered with it (and run by the shard's own `_hubDownApply`, its JSON read as the poll's answer is)
+    const busRooms = { idFromName: (n) => n, get: () => ({ fetch: async () => new Response('{"ok":1}') }) };
     const bus = fakeRoom(busKey, { ROOMS: busRooms });
+    const takeDowns = () => { const out = []; for (const [hub, box] of bus.room._outbox) { for (const e of box.l.splice(0)) out.push({ hub, body: e.body }); box.bytes = 0; } return out; };
     const busT = { ms: 0 };
     let hellos = 0;
     const flushUp = async () => {
@@ -91,7 +93,7 @@ async function sharded(N, busKey = SOCIAL_ROOM) {
     const busDown = { ms: 0 }, shardDown = { ms: 0 };
     const flushDown = async () => {
       await timed(busDown, () => bus.room._downFlush());
-      for (const d of downs.splice(0)) { const s = shards.get(d.hub); await timed(shardDown, () => s.R.room._hubDownInternal(new Request('https://relay.internal/', { method: 'POST', body: d.body }))); }
+      for (const d of takeDowns()) { const s = shards.get(d.hub); await timed(shardDown, () => s.R.room._hubDownApply(JSON.parse(d.body))); }
     };
     // every shard's gate is its own: N hellos arrive at sixteen times the one hub's rate
     const step = Math.ceil(1000 / CHAT_HELLO_HZ_MAX) + 1;
@@ -121,9 +123,10 @@ async function sharded(N, busKey = SOCIAL_ROOM) {
     await flushUp();
     const downBytes = { n: 0 };
     await timed(busDown, () => bus.room._downFlush());
+    const downs = takeDowns();
     for (const d of downs) downBytes.n += d.body.length;
     const perShard = [];
-    for (const d of downs.splice(0)) { const s = shards.get(d.hub); const t0 = { ms: 0 }; await timed(t0, () => s.R.room._hubDownInternal(new Request('https://relay.internal/', { method: 'POST', body: d.body }))); perShard.push(t0.ms); }
+    for (const d of downs) { const s = shards.get(d.hub); const t0 = { ms: 0 }; await timed(t0, () => s.R.room._hubDownApply(JSON.parse(d.body))); perShard.push(t0.ms); }
     const sends = [...shards.values()].reduce((a, s) => a + s.c.sends, 0);
     const lineBusMs = busT.ms + busDown.ms;
     if (busKey !== SOCIAL_ROOM) return { N, shardHelloMs, busHelloMs, wave, lineBusMs, lineShardMaxMs: Math.max(...perShard), lineSends: sends, downBytes: downBytes.n, busSocks: bus.room._vsocks.size };   // a region's channel keeps no party

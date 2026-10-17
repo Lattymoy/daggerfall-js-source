@@ -9,7 +9,8 @@
 /** Compile `vsSrc` and `fsSrc` and link them into a program, in the order
  *  every pass wrote it: createProgram, then per stage createShader,
  *  shaderSource, compileShader, the COMPILE_STATUS check and attachShader,
- *  then linkProgram and the LINK_STATUS check. A fault throws the driver's
+ *  then linkProgram and the LINK_STATUS check; both shaders deleted after
+ *  (AUDIT EG V - they go with the program). A fault throws the driver's
  *  log - a constructor fault the boot probe sees - prefixed, when `label` is
  *  given, `${label} shader: ` or `${label} link: `. */
 export function buildProgram(gl, vsSrc, fsSrc, label = '') {
@@ -30,9 +31,15 @@ export function buildProgram(gl, vsSrc, fsSrc, label = '') {
   const vs = stage(gl.VERTEX_SHADER, vsSrc);
   const fs = stage(gl.FRAGMENT_SHADER, fsSrc);
   gl.linkProgram(prog);
+  let fault = /** @type {string|null} */ (null);
   if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
-    for (const sh of [vs, fs]) if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) throw new Error(`${label ? `${label} shader: ` : ''}${gl.getShaderInfoLog(sh)}`);
-    throw new Error(`${label ? `${label} link: ` : ''}${gl.getProgramInfoLog(prog)}`);
+    for (const sh of [vs, fs]) if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) { fault = `${label ? `${label} shader: ` : ''}${gl.getShaderInfoLog(sh)}`; break; }
+    fault ??= `${label ? `${label} link: ` : ''}${gl.getProgramInfoLog(prog)}`;
   }
+  // AUDIT EG V (lane 6's shader objects; EVERY ALLOCATION HAS AN OWNER): the two stages flagged for deletion once the link
+  // is read - attached, they live as long as the program and go with its deleteProgram. Kept, every pass rebuilt (the
+  // Spire's look each breach, the spans' ghosts each circle) left its two behind. A build that throws frees its program too.
+  gl.deleteShader(vs); gl.deleteShader(fs);
+  if (fault != null) { gl.deleteProgram(prog); throw new Error(fault); }
   return prog;
 }

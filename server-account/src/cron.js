@@ -18,12 +18,18 @@
 //   and the day's Motherlodes (motherlodes.js motherlodesOf). EVERY ONE OF THEM STILL RUNS ON ITS READ TOO, exactly as before - a read must never answer from a
 //   world the clock has not caught up with - but the clock has nearly always been first, so the read's own pass finds
 //   nothing due and writes nothing. Each was written for a race (two readers at once), so the clock is one more racer.
+//   REZ-BLOODLINE AUDIT R1 (2026-10-16): and the falls held for a party's Resurrect whose window closed with no tab to
+//   close it (legacy.js settleHolds) - the one with no read of its own: the tab that fell closes its own (realmDie),
+//   and a tab killed under its death screen has nobody else to.
 //
 //   EVERY HOUR (CRON_HOUR) - the sweeps the reads no longer run (the board's, the guild boards', the harvests', the
 //   market's history, each its module's own law, exported beside its table) and the retention the tables never had:
 //   a rate window a day past its start (RATE_ROW_KEEP_S - the longest window any bucket counts is an hour), a session
 //   idle past SESSION_IDLE_S (the very bound resolveSession refuses it at), an invitation past GUILD_INVITE_TTL_S
 //   (the bound every read of one asks).
+//   EG-ZM (bible/11-Multiplayer/Elite-Gates.md section 23, "The clock"): and the one settlement no read makes - a Weir
+//   Key's stake no receipt ever settled, spent once nothing can name it (eg.js spendLapsedStakes, EG_STAKE_CLOCK_S past its
+//   end) and its opener told in the mailbox.
 //
 // WHAT IS NOT PRUNED, AND WHY (the audit asked; read against the code, SCALE4b's record):
 //   - the act receipts (prof_withdrawals, prof_choices, guild_store_moves and their kind): a client keeps an
@@ -60,19 +66,21 @@ import { maintaining } from './service.js';
 import { WRIT_SETTLE_MAX } from '../../src/net/writLaw.js';
 import { seatsSwitchOf, seasonZeroOf } from '../../src/net/townSeatLaw.js';
 import { profSwitchOf } from '../../src/net/professionLaw.js';
-import { GUILD_INVITE_TTL_S } from '../../src/net/guildLaw.js';
+import { GUILD_INVITE_TTL_S } from '../../src/net/guild/guildLaw.js';
 import { utcDay } from '../../src/net/marksLaw.js';
-import { arenaSeasonOf } from '../../src/net/arenaLaw.js';
+import { arenaSeasonOf } from '../../src/net/arena/arenaLaw.js';
 import { REALM_FINDINGS_KEEP_S, REALM_WEALTH_KEEP_S } from './review.js';   // INT2/INT5: the judge's record's keeping
 import { WILD_FALLS_KEEP_S } from './wild.js';   // INT9: a death's drop's keeping
+import { settleHolds, REZ_SETTLE_MAX } from './legacy.js';   // REZ-BLOODLINE AUDIT R1: a held fall's window closed
+import { spendLapsedStakes } from './eg.js';   // EG-ZM: the Weir Key's stake's clock
 
-/** The two schedules - wrangler.toml's [triggers] crons name exactly these (test/scale4b.test.js holds the two to
+/** The two schedules - wrangler.toml's [triggers] crons name exactly these (test/server/scale4b.test.js holds the two to
  *  each other). The hour's minute is off the hour, where every other Worker's cron lands. */
 export const CRON_MINUTE = '* * * * *';
 export const CRON_HOUR = '41 * * * *';
 
 /** A rate window's row is dead once its window has closed; the longest window any bucket counts is an hour
- *  (accounts.js overRate's callers - test/scale4b.test.js sweeps every one), so a day past its start is two dozen
+ *  (accounts.js overRate's callers - test/server/scale4b.test.js sweeps every one), so a day past its start is two dozen
  *  windows dead. */
 export const RATE_ROW_KEEP_S = 24 * 3600;
 /** Rows one sweep's statement takes at once, and how many times a job asks again while it took a full page - a firing
@@ -145,6 +153,10 @@ export const MINUTE_JOBS = Object.freeze([
   ['iliac-champion', async (ctx) => iliacChampionClock(ctx)],
   // KG6: The King's Gambit's season #1 - its GRANDMASTER (gambit.js gambitChampionClock), Iliac Hand's law
   ['gambit-champion', async (ctx) => gambitChampionClock(ctx)],
+  // REZ-BLOODLINE AUDIT R1 (legacy.js settleHolds): a fall the death door held for a party's Resurrect whose window closed
+  // with no tab to close it - a page killed under its death screen - takes what a tombstone takes with it (its union, its
+  // guild seat, its pieces). The window is the realm's own (REZ_HOLD_S), so the minute is the read that catches it
+  ['rez-holds', (ctx) => rounds(() => settleHolds(ctx), REZ_SETTLE_MAX, ctx.budget)],
   ['motherlodes', async (ctx, env) => {
     const day = utcDay(ctx.nowS);
     if (profSwitchOf(env?.PROFESSIONS_OPEN) !== 'on' || lodesPicked === day) return 0;
@@ -197,6 +209,9 @@ export const HOUR_JOBS = Object.freeze([
   // while it is not, every trader's hours are marked as they pass (markPatronsShut), so opening it pays none of them -
   // behind `dev` too: no read reckons then (reckonPatrons asks the switch itself)
   ['patrons', async (ctx, env) => (marketOpenFor(null, env) ? (await reckonPatrons(ctx, {}, env)).sold : markPatronsShut(ctx))],
+  // EG-ZM (bible/11-Multiplayer/Elite-Gates.md section 23): a Weir Key's stake no receipt settled, spent by the clock once
+  // nothing can name it, its opener's letter in the same transaction - a page a statement pair, asked again while full
+  ['eg-stakes', (ctx) => rounds(() => spendLapsedStakes(ctx.db, ctx.nowS, SWEEP_ROWS), SWEEP_ROWS, ctx.budget)],
 ]);
 
 /** The jobs a schedule runs - none for a schedule this service does not keep (said, so a trigger renamed in

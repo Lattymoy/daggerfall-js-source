@@ -135,20 +135,20 @@ export const ACTIONS = Object.freeze([
   'TravelView',
   // PADWALK (Mac: "make ... walk mode bindable on controller"): one key or button that turns walking - DFU's slow,
   // quiet walk (Sneak) - on and off (player/walkMode.js). Appended, like every port action before it. Ships unbound;
-  // the Controls pane and the Controller bindings window (ui/plusPadBinds.js) both draw its row.
+  // the Controls pane and the Controller bindings window (ui/plus/plusPadBinds.js) both draw its row.
   'WalkMode',
   // VIEW-TOGGLE (Mac: "a force first person/third person toggle"): one press, the other view, for whichever body
   // answers (player/mwView.js mwViewTogglePerspective). Appended, like every port action before it.
   'TogglePerspective',
   // PROF1 (bible/06-Systems/Professions-Arc.md 8, 22): THE ACT CHOICE - at an herb patch, what Interact starts: the
   // herbs or the Basket's food. KB1's rule, one key one action: every letter and digit is spent, and `-`, `=` and `/`
-  // are the decorator's own keys (scenes/decorTool.js DECOR_FREE_KEYS), so it ships on the up arrow, which nothing
+  // are the decorator's own keys (scenes/decor/decorTool.js DECOR_FREE_KEYS), so it ships on the up arrow, which nothing
   // reads in play (THE MERGE: `;`, its key on its branch, is Come Sail Away's lantern - CSA-D, shipped first); the
   // prompt names it. (MERGE 2: after main's TogglePerspective, which shipped first.)
   'ActChoice',
   // HELM-KEYS (2026-09-29, the player: "Arrow keys should not only control your ship, but also setting and raising
   // your sails"): Come Sail Away's helm on the arrows - MORE SAIL and LESS SAIL, the port's own two steps through the
-  // mod's sail states (systems/comeSailAway.js MoreSail, LessSail), the down arrow's and the up arrow's (a DEFAULT
+  // mod's sail states (systems/comeSailAway/comeSailAway.js MoreSail, LessSail), the down arrow's and the up arrow's (a DEFAULT
   // SHARE beside ActChoice, below). Appended, like every port action before them.
   'BoatSailUp', 'BoatSailDown',
   // CLASSIC-PAGES (2026-09-30, Mac: "Enhanced pages + key"): THE PROFESSIONS KEY - the Professions and Stores pages on
@@ -182,8 +182,8 @@ export const ACTIONS = Object.freeze([
   'Spyglass',
   // UI-CALM (2026-10-14, a player: "the horse riding menu would be great in a blocky form in the bottom right and we
   // need a keybind to make it appear and disappear"): THE SADDLE PANEL'S KEY - one press shows the panel while riding, the
-  // next puts it away (ui/enhancedSaddle.js toggleSaddlePanel). On F2: the letters are spent, and Slash, Minus and
-  // Equal are the decorator's (scenes/decorTool.js DECOR_FREE_KEYS); F1-F4 are free since MODE-WHEEL let the four modes
+  // next puts it away (ui/enhanced/enhancedSaddle.js toggleSaddlePanel). On F2: the letters are spent, and Slash, Minus and
+  // Equal are the decorator's (scenes/decor/decorTool.js DECOR_FREE_KEYS); F1-F4 are free since MODE-WHEEL let the four modes
   // go, and a file that still keeps GrabMode on F2 keeps it (the action stands unbound until the player gives it a key).
   // Appended, like every port action before it.
   'SaddlePanel',
@@ -196,7 +196,7 @@ export const ACTIONS = Object.freeze([
  *  row they could not see, could not clear, and could not close the window past. So the port's own actions YIELD
  *  there: systems/controlsConfig.js checkDuplicates takes `{ yield: PORT_ACTIONS }` from the two classic windows
  *  and unbinds the port's row rather than colouring a clash nobody can resolve. The ENHANCED window passes nothing,
- *  because it draws the row (ui/enhancedControls.js over ACTION_GROUPS, the 'Online' group) and can rebind it.
+ *  because it draws the row (ui/enhanced/enhancedControls.js over ACTION_GROUPS, the 'Online' group) and can rebind it.
  *  QS2: the three quickslot actions join it for the same reason, off the same face - the enhanced pane draws them
  *  under their own 'Quickslots' heading and the classic windows cannot draw them at all. */
 export const PORT_ACTIONS = Object.freeze(['SocialInteract', 'QuickUse1', 'QuickUse2', 'QuickSwap', 'QuickOffHand', 'QuickSpell', 'QuickLootAll', 'QuickLootOpen', 'FreeMouse',
@@ -318,7 +318,7 @@ export const DEFAULT_BINDINGS = Object.freeze([
   // goes. Digit1-Digit4 are unspent by SetupDefaults, unspent by the port
   // (PX15's Tab, HT4's G, SOC5's F, HT's O and X are the whole of the port's
   // own spending) and unspent by every vendored mod's TextKey defaults - the
-  // HT4 pin in test/ht1_handheldtorches.test.js walks that whole set and is
+  // HT4 pin in test/systems/ht1_handheldtorches.test.js walks that whole set and is
   // what makes that a fact rather than a hope. They ride here, not in a host,
   // so a bindings file written before this slice gains them on the next boot:
   // loadOrCreateBindings follows every load with resetDefaults(store, true),
@@ -364,7 +364,7 @@ export const DEFAULT_BINDINGS = Object.freeze([
   ['F2', 'SaddlePanel'],   // UI-CALM: the saddle panel (Slash is the decorator's grid)
   // CSA-D: the mod ships C (Crouch's) and Period (Horse Cart and Cargo's summon): one key, one action, so the port's
   // defaults are free keys under the right hand - `'` and `;` (DECLARED, the Port-Ledger's Come Sail Away row; `/` is
-  // the decorator's own grid key, scenes/decorTool.js DECOR_FREE_KEYS)
+  // the decorator's own grid key, scenes/decor/decorTool.js DECOR_FREE_KEYS)
   ['Quote', 'BoatDisembark'],
   ['Semicolon', 'BoatToggleLight'],
   // CSA-E: the mod's Space is Jump's, so the sails' key is End (DECLARED beside the two above); the trim keeps the
@@ -381,7 +381,7 @@ export const DEFAULT_BINDINGS = Object.freeze([
   ['ArrowUp', 'ActChoice'],   // PROF1 (THE MERGE: `;` is Come Sail Away's lantern, CSA-D; the up arrow is read by no action in play)
   ['ArrowDown', 'BoatSailDown'],   // HELM-KEYS: less sail - the down arrow is read by nothing else in play (its More sail is DEFAULT_SHARES')
   // LEGACY1 (LEGACY-KEY, a recorded departure): Project Legacy ships G, which is Handheld Torches' drop here (vendored
-  // first). Every letter and digit is spent, and `-`, `=` and `/` are the decorator's own (scenes/decorTool.js
+  // first). Every letter and digit is spent, and `-`, `=` and `/` are the decorator's own (scenes/decor/decorTool.js
   // DECOR_FREE_KEYS), so the tree ships on the keypad's slash, read by nothing in play - and the pause window's Family
   // page is its door on every keyboard.
   ['NumpadDivide', 'LegacyFamily'],
@@ -496,8 +496,8 @@ export function actionLive(action) {
 
 /**
  * KB1: THE CONTROLS PAGE'S ORDER - every action, in the group a player looks for it under, with the words they would
- * use. ONE table, read by the enhanced Controls pane (ui/enhancedControls.js), the replace prompt's names
- * (systems/controlsConfig.js actionLabel) and bible Controls.md; test/kb1_keybinds.test.js holds that every action
+ * use. ONE table, read by the enhanced Controls pane (ui/enhanced/enhancedControls.js), the replace prompt's names
+ * (systems/controlsConfig.js actionLabel) and bible Controls.md; test/ui/kb1_keybinds.test.js holds that every action
  * in ACTIONS is in exactly one group or in HIDDEN_ACTIONS. A group with `mod` is that vendored mod's keys, drawn only
  * while the mod is on (the readers' actionLive gate is the same switch).
  *
@@ -1281,7 +1281,7 @@ export function loadKeyBinds(store, data) {
 // DFU keeps KeyBindings.txt BESIDE settings.ini, its own file with its
 // own serializer (GetKeyBindsSavePath) - so the port keeps its own
 // localStorage key beside the settings store's, same try/catch shield
-// as systems/settings.js:"- press draws, release".
+// as systems/settings/settings.js:"- press draws, release".
 const STORAGE_KEY = 'dagger.keybinds';
 
 // DA1: the storage seam - localStorage in a browser, the desktop
@@ -1568,9 +1568,9 @@ export function endFrame(state) {
 // GetUnaryKey - the combo's hit and the plain key's suppression - read
 // that stored flag. The four hosts that own a Set now fill it BEFORE their
 // dispatch ladder, as PollInput does (:1795-1809). Pinned from both
-// orders in test/g3_heldorder.test.js - the ring fill is its host
+// orders in test/systems/g3_heldorder.test.js - the ring fill is its host
 // sweep, discovered from `const keys = new Set();` - and in
-// test/a8_combos.test.js' two-modifier pair. (test/combohosts.test.js
+// test/systems/a8_combos.test.js' two-modifier pair. (test/systems/combohosts.test.js
 // is AUDIT 58's sweep of the Set ARGUMENT and carries neither claim.)
 //
 // GP1 (2026-09-11) PORTED THE AXES AND THE JOYSTICK: AxisActions and

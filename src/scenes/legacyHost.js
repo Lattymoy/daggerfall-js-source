@@ -3,7 +3,7 @@
 //
 // The law is systems/legacy/ (family.js the record and its inheritance, age.js the span and the toll, store.js where a
 // family lives and the birth's handoff, places.js the town an heir is born in, heirloom.js the heirloom, the remains
-// and the blessing); the windows are ui/familyPages.js (the pause window's Family tab) and ui/legacyDoor.js (the
+// and the blessing); the windows are ui/familyPages.js (the pause window's Family tab) and ui/legacy/legacyDoor.js (the
 // Succession). This file reaches the world only through the deps the world host (scenes/world.js) hands it, so a test
 // drives it headless.
 //
@@ -17,7 +17,9 @@
 //     onPlayerDeath, DFU's PlayerEntity.OnDeath the mod subscribed to): an Enduring member pays Arkay's toll, a member
 //     who falls for good is recorded dead with the Succession left WAITING ON THE RECORD (`family.pending`). The death
 //     screen's reset only presents what was decided (AUDIT LEGACY A1/B3: it was decided at the reset, and an F11 or a
-//     closed tab under the screen undid a permadeath);
+//     closed tab under the screen undid a permadeath). REZ-BLOODLINE: online the realm HOLDS the fall for a party's
+//     Resurrect while its window lasts - written at the door all the same, tombstone and all (AUDIT R1: held in this
+//     page's memory alone, a killed tab or a second device escaped it), and taken back by the realm's yes (`raise`);
 //   - BIRTHS a member through the boot (`?legacyborn=`) and the construction seam, and LOADS a member who has been
 //     played (their newest save) - a switch is the same two doors (S1-S4);
 //   - PLAYS THE PAST BACK AS THE PAST: a save of a member who is dead or retired, under either model, is refused for as
@@ -36,14 +38,16 @@ import {
 } from '../systems/legacy/family.js';
 import { houseWord } from '../systems/legacy/houseName.js';   // LEGACY-NAME: "the house of Sentinel", never "of of"
 import { loadFamily, storeFamily, leaveBirth, readBirth, clearBirth, listFamilies, mergeFacts, noteSeen, seenRevOf } from '../systems/legacy/store.js';
-import { takeRevived } from '../systems/legacy/revived.js';   // REVIVE: a death taken back, whichever copy says so
+import { takeRevived, stampRevived, dropRevived, revivedOf, REZ_HOLD_S } from '../systems/legacy/revived.js';   // REVIVE: a death taken back, whichever copy says so; REZ-BLOODLINE AUDIT R1: and a Resurrect's, the same way
 import { birthSearch } from '../systems/legacy/places.js';
 import { payToll, tollLine, ageOf, isElder, isSpent } from '../systems/legacy/age.js';
 import { liveVampirism } from '../systems/racialLive.js';   // AGELESS-CURSE
 import { liveLycanthropy } from '../systems/lycanthropy.js';   // AGELESS-CURSE
 import { legacySettings } from '../systems/legacy/settings.js';
 import { registerModSaveData } from '../systems/modSaveData.js';
-import { repairItemLists } from '../systems/save.js';   // ITEM-WALK B: the load's item repairs, on what leaves the line's record
+import { REALM_ACT_TRANSIENT } from '../systems/realmSaves.js';   // REZ-BLOODLINE AUDIT R1: a Resurrect's ask the realm never heard
+import { t } from '../systems/textManager.js';   // REZ-BLOODLINE AUDIT R1: the fallen told in their own language (L10N4)
+import { repairItemLists } from '../systems/save/save.js';   // ITEM-WALK B: the load's item repairs, on what leaves the line's record
 import { rollStats, rollSkills, spendPoolLowest, STAT_KEYS_ORDER } from '../systems/chargen.js';
 import { LEVELING_CLASSIC } from '../systems/oblivionLeveling.js';
 import { pickHeirloom, markHeirloom, mintRemainsItem, isRemainsItem, isHeirloom, attuneHeirloom, blessingOf, blessedIn, remainsGoldOf, REMAINS_LIST, BLESSING_POINTS } from '../systems/legacy/heirloom.js';
@@ -109,7 +113,18 @@ export const LEGACY_TEXT = Object.freeze({
   wedElsewhere: (name) => `${name} is wed into the house already. Your betrothal is over.`,
   // AUDIT LEGACY III O2/P1: online, the realm would not take the line's record (systems/legacy/realmLine.js onRefused)
   lineRefused: (why) => `The realm would not keep your family's record. ${why} This device keeps it.`,
+  // REZ-BLOODLINE AUDIT R1: a party's Resurrect the realm would not take (its window closed, another of the account's
+  // characters in play) or never heard - the fallen's own words; the caster's are the fallen's pose (`fg`)
+  raiseRefused: () => t('legacy.rez.refused', 'The realm will not let you rise. Your death stands.'),
+  raiseUnheard: () => t('legacy.rez.unheard', 'The realm did not hear the call that would raise you. Another may yet reach you.'),
 });
+
+/** REZ-BLOODLINE (FIELD BUGS 2026-10-16b): HOW LONG AN ONLINE DEATH IS HELD for a party's Resurrect (legacyHost onDeath) -
+ *  systems/legacy/revived.js REZ_HOLD_S, the realm's own window (server-account/src/legacy.js realmRaise): the longest an
+ *  online death screen stands and half a minute over. AUDIT R2: both count the wall clock - the screen too
+ *  (ui/deathScreen.js tick), which counted the frames' clamped time and outlasted the hold below ten frames a second - so
+ *  the screen's own reset (the player gone on) closes the window first, and the realm's closes after the page's. */
+export const REZ_HOLD_MS = REZ_HOLD_S * 1000;
 
 /** LEGACY4: the death quest's id prefix in the quest log, and its map ring's radius (the bounty board's). */
 export const LEGACY_QUEST_PREFIX = 'legacy:';
@@ -178,8 +193,9 @@ export function mergeFamily(stored, saved, cid) {
  *   residentNow?:(id:string) => any,   // AUDIT FB1010 C1: the census's resident as minted now (the wedding's look)
  *   regards?:() => any, regardDay?:() => number, sky?:() => number,
  *   killerOf?:(characterId:string, ownAt:number) => any, inheritFoe?:(rec:any) => boolean,
- *   stored?:(family:any) => void, tombstone?:(why?:'fell'|'retired') => (boolean|Promise<boolean>),
- *   realmId?:() => (string|null), look?:() => any, wall?:() => number,
+ *   stored?:(family:any) => void, tombstone?:(why?:'fell'|'retired', o?:{keepalive?:boolean, hold?:boolean}) => (boolean|Promise<boolean>),
+ *   raiseDeath?:(diedAt:number) => any,
+ *   realmId?:() => (string|null), look?:() => any, wall?:() => number, whenGone?:(fn:() => void) => void,
  * }} deps - AUDIT LEGACY II: `hasSave(cid)` whether a save of that character stands (a person's id stands only with one);
  *   `livingWorld()` whether the Living World runs (the line stands only in its towns). LEGACY6: `regards()` the Living
  *   World's relations of the one played and `regardDay()` their day; `sky()` the towns' minute (the house's news is
@@ -189,8 +205,11 @@ export function mergeFamily(stored, saved, cid) {
  *   fallen for good (realmSaves.js session die) - `why` 'retired' for an elder's mantle passed; part three: `realmId()` the
  *   realm character this tab plays (two players wed: wedRefusal); part four: `look()` what the one played wears (the
  *   hello's recipe, net/remotePlayers.js composeLook), written on them at every write. AUDIT LEGACY III P5: `wall()` the
- *   wall clock (Date.now by default) - when a member's own save last wrote them. PERMADEATH-HOUSES: `inheritHouse(row,
- *   fallen)` a house of the line's dead handed to the one played (takeDeeds)
+ *   wall clock (Date.now by default) - when a member's own save last wrote them, and REZ-BLOODLINE's hold's window.
+ *   PERMADEATH-HOUSES: `inheritHouse(row, fallen)` a house of the line's dead handed to the one played (takeDeeds).
+ *   REZ-BLOODLINE: `tombstone(why, { keepalive })` - the page going; `whenGone(fn)` hears the page go (pagehide by default).
+ *   AUDIT R1: `tombstone(why, { hold })` - the death door's fall, held for a Resurrect; `raiseDeath(diedAt)` - a party's
+ *   Resurrect asked of the realm (realmSaves.js session.raise), `{ ok }` or `{ ok: false, error }`.
  */
 export function createLegacyHost(deps) {
   const rng = deps.rng ?? Math.random;
@@ -205,6 +224,11 @@ export function createLegacyHost(deps) {
   /** The death the door saw, decided: the reset presents it. `deathSeen` - the door was heard for this death. */
   /** @type {any} */ let outcome = null;
   let deathSeen = false;
+  /** REZ-BLOODLINE: an online death HELD for a party's Resurrect while its window lasts - what the door read and wrote of
+   *  it (onDeath), and how a Resurrect stands: `ask` the realm's answer awaited, `granted` the call the realm let raise
+   *  them (the frame rises on it), `unheard` a call the realm never heard - or null. */
+  /** @type {any} */ let held = null;
+  const wallNow = () => Number(deps.wall?.() ?? Date.now());
   let elderSaid = false;
   /** The remains opened this visit, and the rests asked this visit - by remains id (AUDIT LEGACY H8). */
   const openedThisVisit = new Set();
@@ -321,6 +345,7 @@ export function createLegacyHost(deps) {
     restoreSaveData: (rec) => adopt(rec),
     // a new game: a born member's family, or none (the chargen's onCharacterMade founds one)
     newGame: () => {
+      if (held) decideDeath();   // REZ-BLOODLINE: a held death's window closed before the page plays anyone else
       past = null; outcome = null; deathSeen = false;
       residentsKept.clear();
       if (born) { family = born.family; return; }
@@ -331,6 +356,10 @@ export function createLegacyHost(deps) {
 
   /** A save's copy beside the store's (mergeFamily); the played character is the one this save is of. */
   function adopt(rec) {
+    // REZ-BLOODLINE: A LOAD OVER A HELD DEATH CLOSES ITS WINDOW FIRST - every load's door (F11, the pause's Load, a
+    // same-dungeon load: the mod's restore, systems/modSaveData.js). AUDIT R1: the death is written already, so the load
+    // reads it (A1/B3); a Resurrect the realm is answering then is the realm's (raiseAnswered)
+    if (held) decideDeath();
     past = null; outcome = null; deathSeen = false; elderSaid = false; bornShare = null;
     openedThisVisit.clear(); restAskedThisVisit.clear(); remainsSig = ''; residentsKept.clear(); openedSig.clear(); deedsSaid.clear();
     deps.letGoRemains?.();   // AUDIT FB1013d A2: every row's list is replaced below - a body stood over an old one goes now
@@ -399,7 +428,7 @@ export function createLegacyHost(deps) {
     if (pieces.length) {
       // ITEM-WALK B (2026-10-07): A BEQUEST IS REPAIRED AS IT IS PAID. It reaches its heir from the line's record, by no
       // load - at the heir's birth, or on their first days played - and that record may be the device's copy, never the
-      // save's (mergeFamily). So the load's item repairs (systems/save.js repairItemLists) run on the pieces paid, as a
+      // save's (mergeFamily). So the load's item repairs (systems/save/save.js repairItemLists) run on the pieces paid, as a
       // load runs them on every list a save holds; the line's record keeps its own, paid once.
       const given = pieces.map((it) => JSON.parse(JSON.stringify(it)));
       repairItemLists([given]);
@@ -465,8 +494,8 @@ export function createLegacyHost(deps) {
     if (deps.inheritFoe?.(foe)) deps.say(LEGACY_TEXT.hunted(foe.name, fallen.given));
   }
   /** LEGACY6: something the house's towns will talk of - at the town's minute, in `mapId` (and in the seat). */
-  function tellNews(kind, who, mapId) {
-    if (noteNews(family, kind, who, deps.sky?.() ?? deps.now(), mapId ?? null)) touch(family);
+  function tellNews(kind, who, mapId, at = deps.sky?.() ?? deps.now()) {
+    if (noteNews(family, kind, who, at, mapId ?? null)) touch(family);
   }
 
   // ---- the death -------------------------------------------------------------------------------------------------
@@ -484,12 +513,24 @@ export function createLegacyHost(deps) {
 
   /**
    * THE DEATH, AT THE DOOR (characters/playerEntity.js onPlayerDeath - every host's one damage door, the blow that
-   * crosses to zero): decided and written now, before any screen, mode exit or reload can intervene.
+   * crosses to zero): read and WRITTEN now, before any screen, mode exit or reload can intervene (AUDIT LEGACY A1/B3).
    *   - Enduring: Arkay's toll is paid, and the member will rise - unless their span was already spent, when they die of
-   *     their years and fall. ONLINE a spent member rises at the last breath: the final death waits on LEGACY7.
+   *     their years and fall.
    *   - Bloodline: the member falls - recorded dead (B13), the remains laid, the Succession left waiting on the
-   *     record. ONLINE Project Legacy has no say until the realm keeps lineages (LEGACY7): the room's respawn stands.
-   * Answers the outcome (the reset presents it), or null when Project Legacy has none.
+   *     record, and online the realm's tombstone asked (LEGACY7, `entomb`).
+   * REZ-BLOODLINE (FIELD BUGS 2026-10-16b, "he dies and I cast resurrection. It works for a moment then he disappears and
+   * remains dead"): ONLINE a party's Resurrect can still raise the fallen where they lie (systems/resurrect.js,
+   * RESURRECT1), so the death is HELD (`held`) for REZ_HOLD_MS - AUDIT R1: BY THE REALM, never by this page. It was held
+   * here unwritten, and a tab killed under its death screen (no pagehide: a crash, the task manager, a phone discarding
+   * it) or a join from another device took a permadeath with it. Now it is written here as offline - the line's record,
+   * the device's store and the realm's copy behind it - and the tombstone stamped at once with its `hold`
+   * (server-account/src/legacy.js realmDie: dead, the lease kept aside for a Resurrect). Inside the window a Resurrect asks
+   * the realm (`raise`), whose yes TAKES THE DEATH BACK the way an operator's revival does (`takeBack`, systems/legacy/
+   * revived.js): no death, no remains, no Succession, no tombstone - and an Enduring member's toll given back. The window
+   * closes at the first of the player going on (the reset, `deathOutcome`), its end (the slow tick), the page going
+   * (`pageGone`) or a load (`adopt`, a new game): the realm told (what a tombstone takes with it goes then) and the
+   * house's towns told of the death (`decideDeath`). Answers the outcome (the reset presents it), or null when Project
+   * Legacy has none.
    */
   function onDeath() {
     if (deathSeen) return outcome;   // one death, one decision - the door and the DEATH-KEPT re-ask both reach here
@@ -499,51 +540,201 @@ export function createLegacyHost(deps) {
     if (!family || !p || !deps.on() || past || family.pending || !isAlive(p) || p.retired != null || !deps.entity?.chargenDone) return null;
     writeCurrent();
     const d = { at: deps.now(), place: deps.here({ height: true }), gold: deps.gold(), by: deps.killer?.() ?? null, cause: 'fell' };   // AUDIT FB1013d B2: the remains' place keeps the height it was stood at - asked here alone
+    // REZ-BLOODLINE AUDIT R1: a death after one a Resurrect took back is a death of its own - its minute past that one's (a
+    // death taken back is known by its minute alone, revived.js: one at the same minute would be taken back with it)
+    d.at = Math.max(d.at, ...revivedOf(p).map((at) => at + 1));
+    const h = { familyId: family.id, personId: p.id, d, until: wallNow() + REZ_HOLD_MS, rise: null, toll: null, tollWas: 0, tollPaid: 0, remains: null, sky: 0, kept: null, ask: null, granted: null, unheard: null };
     if (family.model === MODELS.enduring) {
       const cursed = !!(deps.entity && (liveVampirism(deps.entity) || liveLycanthropy(deps.entity)));   // AGELESS-CURSE: a vampire or a lycanthrope pays no toll
-      const paid = payToll(p, legacySettings().tollShare, p.lived, { ageless: cursed });
-      touch(family);
-      store();
-      if (!paid.final) { outcome = { kind: 'rise', line: tollLine(p.given, paid) }; return outcome; }
-      d.cause = 'years';
+      const toll = { share: legacySettings().tollShare, lived: p.lived, ageless: cursed };
+      const paid = payToll({ ...p }, toll.share, toll.lived, toll);   // asked of a copy first: a span already spent is a fall
+      if (!paid.final) { h.rise = { kind: 'rise', line: tollLine(p.given, paid) }; h.toll = toll; }
+      else d.cause = 'years';
     }
-    // PERMADEATH-HOUSES: the deeds they die holding are the line's to hand on, as their purse is - the live ones (a house
-    // bought since their last save is theirs too: the gold it cost left the estate with it)
-    syncHousesNow(p);
-    recordDeath(family, p.id, { at: d.at, cause: d.cause, place: d.place, by: d.by });
-    tellNews('died', fullNameOf(p.given, p.surname), d.place?.mapId);
-    layDeathRemains(p, d);
-    family.pending = { fallenId: p.id, at: d.at, estate: estateOf(d.gold), bequest: [] };
-    touch(family);
-    store();
-    entomb();
-    outcome = fallOutcome();
+    if (!h.rise) {
+      // PERMADEATH-HOUSES: the deeds they die holding are the line's to hand on, as their purse is - the live ones (a house
+      // bought since their last save is theirs too: the gold it cost left the estate with it)
+      syncHousesNow(p);
+      h.remains = remainsOf(p, d);   // REZ-BLOODLINE: what they lie with is what they fell with (the open zone drops the pack after the door)
+      h.sky = deps.sky?.() ?? deps.now();
+    }
+    const online = deps.online();
+    writeDeath(h, { hold: online });
+    if (online) held = h;   // offline no party can raise them: decided at the door, as ever
     return outcome;
   }
+  /** REZ-BLOODLINE AUDIT R1: THE DEATH WRITTEN, AT THE DOOR - online as offline, off the facts the door read. `hold`:
+   *  online, where the realm holds the fall for a Resurrect (its tombstone asked with its hold) and the towns hear of it
+   *  once the window closes (decideDeath); what recordDeath takes off the fallen is kept for a Resurrect to give back. */
+  function writeDeath(h, { hold = false } = {}) {
+    const p = personOf(family, h.personId);
+    if (h.rise) {
+      h.tollWas = p.toll | 0;
+      payToll(p, h.toll.share, h.toll.lived, h.toll);   // the years the door counted
+      h.tollPaid = p.toll | 0;
+      touch(family);
+      store();
+      outcome = h.rise;
+      return;
+    }
+    h.kept = { look: p.look ?? null, heard: p.heard ?? null };
+    recordDeath(family, p.id, { at: h.d.at, cause: h.d.cause, place: h.d.place, by: h.d.by });
+    if (!hold) tellNews('died', fullNameOf(p.given, p.surname), h.d.place?.mapId, h.sky);
+    (family.remains ??= []).push(h.remains);
+    family.pending = { fallenId: p.id, at: h.d.at, estate: estateOf(h.d.gold), bequest: [] };
+    touch(family);
+    store();
+    entomb({ hold });
+    outcome = fallOutcome();
+  }
+  /** REZ-BLOODLINE: THE HOLD'S WINDOW CLOSED, the death the door wrote standing for good - the realm told (what a
+   *  tombstone takes with it goes now: legacy.js realmDie; a page that never says so leaves it to the realm's own clock,
+   *  settleHolds) and the house's towns told of it. A window the realm is still answering a Resurrect in is that answer's
+   *  (raiseAnswered), and one the realm let go the body's to rise on - its death taken back already (takeBack), so
+   *  nothing of it stands to close. `keepalive` - the page is going. Answers the outcome. */
+  function decideDeath({ keepalive = false } = {}) {
+    const h = held;
+    held = null;
+    if (!h || h.rise || h.ask) return outcome;
+    const p = family?.id === h.familyId ? personOf(family, h.personId) : null;
+    if (p?.died && Number(p.died.at) === h.d.at) {
+      tellNews('died', fullNameOf(p.given, p.surname), h.d.place?.mapId, h.sky);
+      touch(family);
+      store();
+      entomb({ keepalive });
+    }
+    return outcome;
+  }
+  /** REZ-BLOODLINE: the hold's window is over (the wall clock: a hidden tab's frames stand, its minutes do not) - and no
+   *  Resurrect the realm is answering, or let go, stands in it. */
+  const heldOver = () => !!held && !held.ask && !held.granted && wallNow() >= held.until;
+  /** REZ-BLOODLINE: MAY A PARTY'S RESURRECT RAISE THE ONE PLAYED? Not once their death is decided for good - the hold's
+   *  window over, or closed (the player gone on, a load, the page going, the realm's no). Their party pose says so (`fg`,
+   *  scenes/world.js composePartyPose), so the caster is told before a point is spent (scenes/hostMagic.js). Yes while a
+   *  death is held, and with nothing of the house's to say. Asks nothing and writes nothing. */
+  function raisable() {
+    if (held) return !heldOver();
+    const pend = family?.pending;
+    const fallen = pend ? personOf(family, pend.fallenId) : null;
+    return !(fallen?.died && playedHere(fallen));
+  }
+  /**
+   * REZ-BLOODLINE: A PARTY'S RESURRECT, ASKED by the fallen's own client before it rises (scenes/world.js, the death
+   * screen's frame, each frame of the call - `rez`, systems/resurrect.js rezFor; or the call the realm let go, `raised`).
+   * True: rise. False: the body stays down - for now, or for good. AUDIT R1: the fall is written and the realm holds it,
+   * so the realm is asked, once a call (`deps.raiseDeath`, askRaise), and the body stays down until it answers: its yes
+   * takes the death back and the next frame rises; a call it never heard leaves the next call to ask again; its no closes
+   * the window. An Enduring member's toll (the page's own - no tombstone stands for it) is given back at once. A window
+   * already over closes now.
+   */
+  function raise(rez = null) {
+    const h = held;
+    if (!h) return raisable();
+    if (h.granted) { held = null; deathSeen = false; outcome = null; return true; }
+    if (h.ask) return false;
+    if (heldOver()) { decideDeath(); return false; }
+    if (h.rise) { giveTollBack(h); held = null; deathSeen = false; outcome = null; return true; }
+    if (rez?.at != null && h.unheard === rez.at) return false;
+    askRaise(h, rez);
+    return false;
+  }
+  /** REZ-BLOODLINE AUDIT R1: the call the realm let raise the one played, while the body has not yet risen on it - the
+   *  frame rises on it though the caster's pose no longer carries it (systems/resurrect.js RESURRECT_HOLD_MS) - or null. */
+  const raised = () => held?.granted ?? null;
+  /** REZ-BLOODLINE AUDIT R1: THE REALM ASKED to take the death back - once its tombstone has answered (never a raise ahead
+   *  of the death it raises: the door's `hold` is in flight until then), under the lease that fell. */
+  function askRaise(h, rez) {
+    const ask = Promise.resolve(tomb).catch(() => false)
+      .then(() => (deps.raiseDeath ? deps.raiseDeath(h.d.at) : { ok: true }))
+      .then((r) => r ?? { ok: false, error: 'offline' }, () => ({ ok: false, error: 'offline' }));
+    h.ask = ask;
+    ask.then((r) => raiseAnswered(h, rez, r));
+  }
+  /** REZ-BLOODLINE AUDIT R1: THE REALM'S ANSWER to a Resurrect. Yes: the death taken back (on the copy this page plays now:
+   *  a load in between played their save on), and the body rises on the next frame. Never heard (offline, the service's
+   *  own trouble): said, and the next call asks again. No: said, and the window closed - the body stays down for good,
+   *  and the fallen's pose tells the next caster before a point is spent. A window closed meanwhile (a load) leaves a no to
+   *  the realm's own clock. */
+  function raiseAnswered(h, rez, r) {
+    h.ask = null;
+    if (r?.ok) {
+      takeBack(h);
+      if (held === h) h.granted = rez ?? { acct: null, name: null, at: null };
+      return;
+    }
+    if (held !== h) return;
+    if (REALM_ACT_TRANSIENT.includes(r?.error)) { h.unheard = rez?.at ?? null; deps.say(LEGACY_TEXT.raiseUnheard()); return; }
+    deps.say(LEGACY_TEXT.raiseRefused());
+    decideDeath();
+  }
+  /** REZ-BLOODLINE AUDIT R1: THE DEATH TAKEN BACK, the realm's yes in hand - unwritten the way an operator's revival
+   *  unwrites one (systems/legacy/revived.js): the person stamped with the death's minute, and the death dropped with the
+   *  remains and the Succession it laid - here, and in every copy that meets the stamp (the realm's own is stamped
+   *  already, legacy.js realmRaise: a copy that still carries the death drops it at its write and at every merge). What
+   *  recordDeath took off them (their look, the news they heard) given back; the past a load played them as, theirs to
+   *  play on. A load of another line in between leaves this page nothing of theirs to write: the realm's copy holds the
+   *  stamp, and the device's next read of the line takes it in (realmLine.js pull, store.js mergeFacts). */
+  function takeBack(h) {
+    const p = family?.id === h.familyId ? personOf(family, h.personId) : null;
+    if (!p) return;
+    stampRevived(p, h.d.at);
+    dropRevived(family);
+    if (h.kept?.look && !p.look) p.look = h.kept.look;
+    if (h.kept?.heard && !p.heard) p.heard = h.kept.heard;
+    if (past?.id === p.id && isAlive(p)) past = null;
+    touch(family);
+    store();
+  }
+  /** REZ-BLOODLINE: an Enduring member raised inside the window - Arkay's years the door took, given back. Only while the
+   *  record still says what the door wrote: a copy that has taken another's in since keeps the toll (store.js mergeFacts
+   *  keeps the greater - where the two cannot be told apart, the toll stands). */
+  function giveTollBack(h) {
+    const p = family?.id === h.familyId ? personOf(family, h.personId) : null;
+    if (!p || (p.toll | 0) !== h.tollPaid) return;
+    p.toll = h.tollWas;
+    touch(family);
+    store();
+  }
+  /** REZ-BLOODLINE: THE PAGE GOING (pagehide: a close, a reload, the back button) over a held death - its window closed
+   *  now, the realm told by keepalive, as the realm's leave is (the world host asks it ahead of the leave; heard here as
+   *  well). AUDIT R1: no longer what keeps a death - the realm holds it from the door, and a page that never says it
+   *  went (a killed tab) leaves the close to the realm's clock. A Resurrect the realm is answering is the realm's
+   *  (decideDeath closes none). */
+  function pageGone() { if (held) decideDeath({ keepalive: true }); }
+  (deps.whenGone ?? ((fn) => globalThis.addEventListener?.('pagehide', fn)))(pageGone);
   /** LEGACY7: ONLINE, A FALL IS THE REALM'S TOMBSTONE (server-account/src/legacy.js realmDie) - and an elder's
-   *  retirement, the other way a member is never played again - asked at the door, and
+   *  retirement, the other way a member is never played again - asked as the death is written, and
    *  again before anyone carries on (`succeed` waits on it): a character whose death the realm never heard could be
-   *  joined again from an older save. */
+   *  joined again from an older save. `keepalive` - REZ-BLOODLINE: the page is going (pageGone). `hold` - AUDIT R1: the
+   *  death door's fall, held for a Resurrect. */
   let tomb = null;
-  function entomb() {
+  function entomb({ keepalive = false, hold = false } = {}) {
     if (!deps.online() || !deps.tombstone) return null;
     // LEGACY7 part three: an elder's retirement says so - the realm keeps their union with another player's character
     const fallen = personOf(family, family?.pending?.fallenId);
     const why = fallen && !fallen.died && fallen.retired != null ? 'retired' : 'fell';
-    tomb = Promise.resolve(deps.tombstone(why)).then((ok) => { if (!ok) { tomb = null; deps.say(LEGACY_TEXT.unTombed); } return !!ok; }, () => { tomb = null; deps.say(LEGACY_TEXT.unTombed); return false; });
+    tomb = Promise.resolve(deps.tombstone(why, hold ? { keepalive, hold: true } : { keepalive })).then((ok) => { if (!ok) { tomb = null; deps.say(LEGACY_TEXT.unTombed); } return !!ok; }, () => { tomb = null; deps.say(LEGACY_TEXT.unTombed); return false; });
     return tomb;
   }
 
   /**
-   * THE DEATH'S OUTCOME, asked by the host at the death screen's reset - what the door decided:
-   *   - `{ kind: 'none' }`: Project Legacy has no say (off, no family, the past played back, online Bloodline) - the
-   *     host's own death stands;
+   * THE DEATH'S OUTCOME, asked by the host at the death screen's reset - what the door read and wrote, presented now
+   * (REZ-BLOODLINE: the player went on - a held death's window closes here):
+   *   - `{ kind: 'none' }`: Project Legacy has no say (off, no family, the past played back) - the host's own death
+   *     stands. AUDIT R1: and the player gone on while the realm answers a Resurrect, or after it let them go - the host's
+   *     own rise (D-ONLINE1's respawn); a no then closes the window, and the slow step offers the Succession;
    *   - `{ kind: 'rise', line }`: an Enduring member paid the toll - the host respawns them and says `line`;
    *   - `{ kind: 'fall', fallen, estate, choices, newborn }`: the member is dead for good - the host shows the
    *     Succession (it waits on the record until answered).
    */
   function deathOutcome() {
     if (!deathSeen) onDeath();   // a host whose door is not heard (a test, a death raised around the door) - decided now
+    if (held?.ask || held?.granted) {
+      deathSeen = false;
+      outcome = null;
+      return { kind: 'none' };
+    }
+    if (held) decideDeath();
     deathSeen = false;
     const out = outcome ?? (family?.pending && !past ? fallOutcome() : null) ?? { kind: 'none' };
     outcome = null;
@@ -557,8 +748,9 @@ export function createLegacyHost(deps) {
   /** At a final death: THE REMAINS lie where the fallen fell - their bones, the heirloom (Bloodline: its Features tile's
    *  chance; an Enduring elder dead of their years: always) and a tenth of the purse - a list the RECORD owns, opened as
    *  a container where they lie (AUDIT LEGACY H1/H6: a world pile was laid again at every visit and every reload, the
-   *  heirloom with it, and a pile collected with its pixel took its purse with it). `first` keeps the list as laid. */
-  function layDeathRemains(p, d) {
+   *  heirloom with it, and a pile collected with its pixel took its purse with it). `first` keeps the list as laid.
+   *  REZ-BLOODLINE: the row, made at the door off what the fallen carried there; the decision lays it (decideDeath). */
+  function remainsOf(p, d) {
     const chance = family.model === MODELS.bloodline ? legacySettings().heirloomChance : 1;
     const piece = rng() < chance ? pickHeirloom(deps.entity?.items) : null;
     const name = fullNameOf(p.given, p.surname);
@@ -568,10 +760,10 @@ export function createLegacyHost(deps) {
       ...(piece ? [markHeirloom(piece, { line: family.id, house: family.surname, of: p.id, from: name })] : []),
       ...(gold > 0 ? [goldStack(gold)] : []),
     ];
-    (family.remains ??= []).push({
+    return {
       id: `r${p.id}`, of: p.id, name, place: d.place ?? null, items, first: JSON.parse(JSON.stringify(items)),
       killer: d.by ?? null, at: d.at, state: 'lying', by: null, found: false,
-    });
+    };
   }
   /** The remains the one played may seek: every one of the line's still lying or carried - by them, by nobody, or by a
    *  member no longer there to carry them (dead or retired: the claim lapses, and the bones lie again). */
@@ -616,7 +808,7 @@ export function createLegacyHost(deps) {
   }
   /** FB1013d REMAINS-STAND: A LIST MADE READY TO BE TAKEN FROM where it lies - by its own window, or by its body (the
    *  world's stand, remainsToStand). It wears its remains' mark (AUDIT LEGACY II H4: the bones go back into it, and into
-   *  nothing that is not the character's own keeping - systems/itemTransfer.js planStore); the load's item repairs run
+   *  nothing that is not the character's own keeping - systems/item/itemTransfer.js planStore); the load's item repairs run
    *  on it once (ITEM-WALK B: whichever copy it came from) before its claim's mark; and, nobody's, it is noted as it
    *  stands before them - a change from here is a claim (claimTouched). */
   const repairedLists = new WeakSet();
@@ -964,10 +1156,16 @@ export function createLegacyHost(deps) {
    *   - null: nothing - and the seat noted, the elder said once, the estate paid, the death quest stepped.
    */
   function tick() {
-    // a death decided and never reset - a party's Resurrect raises the fallen where they lie - is over once they live
+    // REZ-BLOODLINE: a death held past its window - or a body up that no Resurrect raised (a respawn that never asked the
+    // reset: the court's day ended under the dead) - is decided now, as the reset would have decided it. AUDIT R1: one the
+    // realm is answering a Resurrect for waits on the answer; one it let go is over once the body is up (the reset's rise
+    // - decideDeath closes nothing of it)
+    if (held && !held.ask && (heldOver() || (deps.entity?.health ?? 0) > 0)) decideDeath();
+    // a death decided and never reset (that respawn) is over once they live
     if (deathSeen && (deps.entity?.health ?? 0) > 0) { deathSeen = false; outcome = null; }
     if (!family || !deps.on()) return null;
     if (unstored) store();   // AUDIT LEGACY II P1: a refused write, tried again - first: a death's above all
+    if (held) return null;   // REZ-BLOODLINE: the dead wait on the hold - nothing of the living one's runs over them
     if (past) return { past, fall: family.pending ? fallOutcome() : null };
     // FB1012d HEIR-CLONE: a page BEARING a member (`born`, until onBorn lands them) is the fall's answer - it offers the
     // Succession again to nobody. Online the birth waits on the realm (the world standing, the character made, its first
@@ -1369,6 +1567,10 @@ export function createLegacyHost(deps) {
     onDeath,
     deathOutcome,
     willRise,
+    raisable,
+    raise,
+    raised,
+    pageGone,
     fallOutcome,
     succeed,
     endLine,

@@ -5,34 +5,34 @@
     "old": "stop: HEEL_M + i * HEEL_STEP_M, trail: () => trail });",
     "new": "stop: HEEL_M + i * HEEL_STEP_M, trail: () => null });",
     "tests": [
-      "test/fb1004b_companions.test.js"
+      "test/scenes/fb1004b_companions.test.js"
     ]
   },
   {
     "name": "TRAIL-never-looked",
-    "file": "src/characters/enemyMotor.js",
+    "file": "src/characters/enemy/enemyMotor.js",
     "old": "_followGoal(leader, dt) { return this._trailGoal(leader, dt) ?? this._nearestCrumb() ?? leader; }",
     "new": "_followGoal(leader, dt) { return leader; }",
     "tests": [
-      "test/fb1004b_companions.test.js"
+      "test/scenes/fb1004b_companions.test.js"
     ]
   },
   {
     "name": "TRAIL-line-blind",
-    "file": "src/characters/enemyMotor.js",
+    "file": "src/characters/enemy/enemyMotor.js",
     "old": "    if (!(Math.abs(to[1] - this.feet[1]) <= FOLLOW_SIGHT_DY)) return false;",
     "new": "    return true;",
     "tests": [
-      "test/fb1004b_companions.test.js"
+      "test/scenes/fb1004b_companions.test.js"
     ]
   },
   {
     "name": "TRAIL-wall-behind-blocks",
-    "file": "src/characters/enemyMotor.js",
+    "file": "src/characters/enemy/enemyMotor.js",
     "old": ".dist < d - FOLLOW_CRUMB_REACH);",
     "new": ".dist < d + FOLLOW_SIGHT_RADIUS);",
     "tests": [
-      "test/fb1004b_companions.test.js"
+      "test/scenes/fb1004b_companions.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    if (L.grounded === false) return;   // a jump's arc",
     "new": "    // a jump's arc",
     "tests": [
-      "test/fb1004b_companions.test.js"
+      "test/scenes/fb1004b_companions.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "    if (trail.length > TRAIL_MAX) trail.shift();",
     "new": "",
     "tests": [
-      "test/fb1004b_companions.test.js"
+      "test/scenes/fb1004b_companions.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "leaderWas[2]) > TRAIL_JUMP_M) trail.length = 0;",
     "new": "leaderWas[2]) > TRAIL_JUMP_M) void 0;",
     "tests": [
-      "test/fb1004b_companions.test.js"
+      "test/scenes/fb1004b_companions.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "placeKey = key; epoch++; trail.length = 0; leaderWas = null; }",
     "new": "placeKey = key; epoch++; leaderWas = null; }",
     "tests": [
-      "test/fb1004b_companions.test.js"
+      "test/scenes/fb1004b_companions.test.js"
     ]
   },
   {
@@ -77,44 +77,44 @@
     "old": "    const trail = this._trailGoal(leader, dt);\n    if (trail) return trail;\n",
     "new": "",
     "tests": [
-      "test/fb1004b_companions.test.js",
-      "test/crewcompanions.test.js"
+      "test/scenes/fb1004b_companions.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
     "name": "TRAIL-pursuit-gate",
-    "file": "src/characters/enemyMotor.js",
+    "file": "src/characters/enemy/enemyMotor.js",
     "old": "this.moving = withinYaw(this.yaw, dx, dz, FOLLOW_YAW_GATE_DEG);",
     "new": "this.moving = withinYaw(this.yaw, dx, dz, MOVE_YAW_GATE_DEG);",
     "tests": [
-      "test/fb1004b_companions.test.js"
+      "test/scenes/fb1004b_companions.test.js"
     ]
   },
   {
     "name": "TRAIL-no-pace",
-    "file": "src/characters/enemyMotor.js",
+    "file": "src/characters/enemy/enemyMotor.js",
     "old": "this._walkStep(dt, this._following ? this._followPace : 1);",
     "new": "this._walkStep(dt);",
     "tests": [
-      "test/fb1004b_companions.test.js"
+      "test/scenes/fb1004b_companions.test.js"
     ]
   },
   {
     "name": "TRAIL-pace-always",
-    "file": "src/characters/enemyMotor.js",
+    "file": "src/characters/enemy/enemyMotor.js",
     "old": "this._followPace = d > FOLLOW_RUN_M ? FOLLOW_RUN_PACE : 1;",
     "new": "this._followPace = FOLLOW_RUN_PACE;",
     "tests": [
-      "test/fb1004b_companions.test.js"
+      "test/scenes/fb1004b_companions.test.js"
     ]
   },
   {
     "name": "QUIET-scale-dropped",
-    "file": "src/characters/enemySounds.js",
+    "file": "src/characters/enemy/enemySounds.js",
     "old": "const wait = companion ? this.waitTime * COMPANION_ATTRACT_SCALE : this.waitTime;",
     "new": "const wait = this.waitTime;",
     "tests": [
-      "test/fb1004b_companions.test.js"
+      "test/scenes/fb1004b_companions.test.js"
     ]
   },
   {
@@ -123,7 +123,7 @@
     "old": "enemySoundOccluded(collider, feet, playerFeet), { companion });",
     "new": "enemySoundOccluded(collider, feet, playerFeet));",
     "tests": [
-      "test/fb1004b_companions.test.js"
+      "test/scenes/fb1004b_companions.test.js"
     ]
   },
   {
@@ -132,7 +132,7 @@
     "old": "        if (!f.quietVoice) tickEnemySound(f.sounds, f.ai.feet, playerFeet, dt, { audio, collider, hearing: acuteHearingMultiplier(playerEntity), companion: f.companion != null });\n        // WORLD6b-ii",
     "new": "        if (!f.quietVoice) tickEnemySound(f.sounds, f.ai.feet, playerFeet, dt, { audio, collider, hearing: acuteHearingMultiplier(playerEntity) });\n        // WORLD6b-ii",
     "tests": [
-      "test/fb1004b_companions.test.js"
+      "test/scenes/fb1004b_companions.test.js"
     ]
   },
   {
@@ -141,7 +141,7 @@
     "old": "      tickEnemySound(f.sounds, f.ai.feet, playerFeet, dt, { audio, collider, hearing: acuteHearingMultiplier(playerEntity), companion: f.companion != null });\n      const seq",
     "new": "      tickEnemySound(f.sounds, f.ai.feet, playerFeet, dt, { audio, collider, hearing: acuteHearingMultiplier(playerEntity) });\n      const seq",
     "tests": [
-      "test/fb1004b_companions.test.js"
+      "test/scenes/fb1004b_companions.test.js"
     ]
   },
   {
@@ -150,7 +150,7 @@
     "old": "companion: f.companion != null });   // the barks are the foe's",
     "new": "});   // the barks are the foe's",
     "tests": [
-      "test/fb1004b_companions.test.js"
+      "test/scenes/fb1004b_companions.test.js"
     ]
   },
   {
@@ -159,7 +159,7 @@
     "old": "      tickEnemySound(f.sounds, f.ai.feet, playerFeet || eye, dt, { audio, collider, hearing: acuteHearingMultiplier(playerEntity), companion: f.companion != null });\n      // AUDIT 23",
     "new": "      tickEnemySound(f.sounds, f.ai.feet, playerFeet || eye, dt, { audio, collider, hearing: acuteHearingMultiplier(playerEntity) });\n      // AUDIT 23",
     "tests": [
-      "test/fb1004b_companions.test.js"
+      "test/scenes/fb1004b_companions.test.js"
     ]
   },
   {
@@ -168,7 +168,7 @@
     "old": "if (!quiet && p.at - soundAt >= PORTAL_SOUND_GAP_MS) {",
     "new": "if (!quiet) {",
     "tests": [
-      "test/fb1004b_companions.test.js"
+      "test/scenes/fb1004b_companions.test.js"
     ]
   },
   {
@@ -177,7 +177,7 @@
     "old": "this.playOneShotId(id, quiet ? quiet.volume : 1);",
     "new": "this.playOneShotId(id, 1);",
     "tests": [
-      "test/fb1004b_companions.test.js"
+      "test/scenes/fb1004b_companions.test.js"
     ]
   },
   {
@@ -186,7 +186,7 @@
     "old": "      if (now < (this._quietUntil?.get(id) ?? -Infinity)) return false;\n",
     "new": "",
     "tests": [
-      "test/fb1004b_companions.test.js"
+      "test/scenes/fb1004b_companions.test.js"
     ]
   },
   {
@@ -195,7 +195,7 @@
     "old": "const quiet = QUIET_QUEST_SOUNDS[id] ?? null;",
     "new": "const quiet = QUIET_QUEST_SOUNDS[386];",
     "tests": [
-      "test/fb1004b_companions.test.js"
+      "test/scenes/fb1004b_companions.test.js"
     ]
   },
   {
@@ -204,7 +204,7 @@
     "old": "  playQuestSound(id) {\n    if (this.isPlaying()) return false;",
     "new": "  playQuestSound(id) {",
     "tests": [
-      "test/fb1004b_companions.test.js"
+      "test/scenes/fb1004b_companions.test.js"
     ]
   },
   {
@@ -213,7 +213,7 @@
     "old": "playSound: (id) => questAudioSource.playQuestSound(id),",
     "new": "playSound: (id) => { questAudioSource.playOneShotId(id); return true; },",
     "tests": [
-      "test/fb1004b_companions.test.js"
+      "test/scenes/fb1004b_companions.test.js"
     ]
   },
   {
@@ -222,7 +222,7 @@
     "old": "playSound: (id) => _questAudioSource.playQuestSound(id),",
     "new": "playSound: (id) => { _questAudioSource.playOneShotId(id); return true; },",
     "tests": [
-      "test/fb1004b_companions.test.js"
+      "test/scenes/fb1004b_companions.test.js"
     ]
   }
 ]

@@ -10,7 +10,7 @@
 // A list is a JSON array of { name, file, old, new, tests[], equivalent?, why?, syntax? }. For each: copy the file aside,
 // replace the FIRST occurrence of `old` with `new` (the record must be exact - a mutant that does not apply is
 // reported, not skipped silently - and name ONE site: a text that stands twice is aimed at whichever copy is higher
-// up, so a copy added above the one it was written for takes its mutant; test/mutantdrift.test.js's MUT-AIM holds
+// up, so a copy added above the one it was written for takes its mutant; test/tooling/mutantdrift.test.js's MUT-AIM holds
 // every record to one), run the named tests, restore the file byte-for-byte, and say whether the mutant
 // SURVIVED (the pins cannot fail it) or died. A survivor is a finding. A mutant marked `equivalent: true` is one the
 // slice DECIDED to leave alive - redundant code kept as belt-and-braces, say - and `why` says so; it is expected to
@@ -121,8 +121,9 @@ const tally = (v) => { counts[v.kind]++; console.log(v.text); };
 
 /** Linked into a workspace, never copied (and never mutated there): the dependencies and the data. */
 const LINKED = new Set(['node_modules', 'public', 'vendor', 'bible']);
-/** Left out of a workspace: the repository's own history and build output. */
-const LEFT_OUT = (name) => name === '.git' || name === 'dist' || name.startsWith('dist-') || name === '.wrangler';
+/** Left out of a workspace: the repository's own history and build output, and the agents' worktrees under `.claude` (each
+ *  a whole tree - copied once a job they filled a disk). */
+const LEFT_OUT = (name) => name === '.git' || name === 'dist' || name.startsWith('dist-') || name === '.wrangler' || name === '.claude';
 
 /** A copy of this tree's code in a new temporary directory, its data linked; its own TMPDIR inside it. */
 function workspace() {

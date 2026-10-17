@@ -91,7 +91,7 @@ await page.goto('http://probe.invalid/', { waitUntil: 'domcontentloaded' });
 // the page needs no network and the probe stays hermetic. A modern
 // User-Agent is sent because Google serves ttf to anything it does not
 // recognise and woff2 to a browser.
-const { ENHANCED_CSS, ENHANCED_FONTS_URL } = await import('../src/ui/enhancedStyle.js');
+const { ENHANCED_CSS, ENHANCED_FONTS_URL } = await import('../src/ui/enhanced/enhancedStyle.js');
 const UA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36';
 let fontCss = await (await fetch(ENHANCED_FONTS_URL, { headers: { 'user-agent': UA } })).text();
 const urls = [...new Set([...fontCss.matchAll(/url\((https:\/\/fonts\.gstatic\.com\/[^)]+)\)/g)].map((m) => m[1]))];
@@ -118,7 +118,7 @@ const STAGES = [
 
 const measured = await page.evaluate(async (stages) => {
   const { AccountFlow } = await import('/src/ui/accountFlow.js');
-  const { accountCard } = await import('/src/ui/enhancedAccount.js');
+  const { accountCard } = await import('/src/ui/enhanced/enhancedAccount.js');
   const app = document.getElementById('app');
   app.style.cssText = 'padding:24px;max-width:640px;margin:0 auto;';
   const out = [];
@@ -202,7 +202,7 @@ const measured = await page.evaluate(async (stages) => {
 
 // THE SKIN'S OWN TOKENS, so the probe compares against the source of
 // truth rather than against hexes typed here.
-const { ENHANCED_TOKENS } = await import('../src/ui/enhancedStyle.js');
+const { ENHANCED_TOKENS } = await import('../src/ui/enhanced/enhancedStyle.js');
 const token = (name) => ENHANCED_TOKENS.match(new RegExp(`--${name}:\\s*([^;]+);`))?.[1]?.trim();
 const rgb = (hex) => {
   const h = hex.replace('#', '');
@@ -229,7 +229,7 @@ check('the recovery code is brass and large', codeRow?.codeColor === BRASS && pa
 check('the leading button wears brass', measured.filter((m) => m.primaryColor).every((m) => m.primaryColor === BRASS));
 
 // ═══ TERMS1: THE BOXES, MEASURED ══════════════════════════════════
-// test/terms1.test.js proves what the card BUILDS; this proves what a
+// test/ui/enhanced/terms1.test.js proves what the card BUILDS; this proves what a
 // player SEES - the rules applied, the rows tall enough for a thumb.
 const reg = measured.find((m) => m.stage === 'register');
 check('TERMS1: creating an account draws two boxes, both UNTICKED', reg?.agree.length === 2 && reg.agree.every((a) => a.type === 'checkbox' && a.checked === false),
@@ -242,7 +242,7 @@ check('TERMS1: each document opens outside the game, at the site', reg?.agree.ev
 check('TERMS1: no other stage draws a box', measured.filter((m) => m.stage !== 'register').every((m) => m.agree.length === 0));
 
 // ═══ NAME-AS: THE NAME IN GAME, MEASURED ═══════════════════════════
-// test/nameas_client.test.js proves what the card BUILDS; this proves the toggle is PAINTED - in the card's own colour
+// test/net/nameas_client.test.js proves what the card BUILDS; this proves the toggle is PAINTED - in the card's own colour
 // (a button with no title class inherits it: never the user agent's black on the card's dark), the chosen one at full
 // strength behind the doubled edge and the other dimmed, the line under them quiet and close to its buttons.
 const toggles = measured.filter((m) => m.nameAs);

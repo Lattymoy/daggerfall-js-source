@@ -5,8 +5,8 @@
     "old": "      const was = p.drawn, s = poseAlong(p.path, p.cur);",
     "new": "      const was = p.shown, s = poseAlong(p.path, p.cur);",
     "tests": [
-      "test/audit637_runinplace.test.js",
-      "test/runinplace.test.js"
+      "test/net/audit637_runinplace.test.js",
+      "test/net/runinplace.test.js"
     ]
   },
   {
@@ -15,8 +15,8 @@
     "old": "      p.shown = p.drawn = s;",
     "new": "      p.shown = s;",
     "tests": [
-      "test/audit637_runinplace.test.js",
-      "test/runinplace.test.js"
+      "test/net/audit637_runinplace.test.js",
+      "test/net/runinplace.test.js"
     ]
   },
   {
@@ -25,8 +25,8 @@
     "old": "now - p.drawnAt >= SHOWN_MOVE_HOLD_MS) s.mv = 0;",
     "new": "now - p.drawnAt > SHOWN_MOVE_HOLD_MS) s.mv = 0;",
     "tests": [
-      "test/audit637_runinplace.test.js",
-      "test/runinplace.test.js"
+      "test/net/audit637_runinplace.test.js",
+      "test/net/runinplace.test.js"
     ]
   },
   {
@@ -35,8 +35,8 @@
     "old": "now - p.drawnAt >= SHOWN_MOVE_HOLD_MS) s.mv = 0;",
     "new": "now - p.drawnAt >= SHOWN_MOVE_HOLD_MS / 2) s.mv = 0;",
     "tests": [
-      "test/audit637_runinplace.test.js",
-      "test/runinplace.test.js"
+      "test/net/audit637_runinplace.test.js",
+      "test/net/runinplace.test.js"
     ]
   },
   {
@@ -45,8 +45,8 @@
     "old": "      else if (s.mv && now - p.drawnAt",
     "new": "      else if (s.mv === 1 && now - p.drawnAt",
     "tests": [
-      "test/audit637_runinplace.test.js",
-      "test/runinplace.test.js"
+      "test/net/audit637_runinplace.test.js",
+      "test/net/runinplace.test.js"
     ]
   },
   {
@@ -55,8 +55,8 @@
     "old": " || s.y !== was.y || s.z !== was.z) p.drawnAt = now;",
     "new": " || s.y !== was.y) p.drawnAt = now;",
     "tests": [
-      "test/audit637_runinplace.test.js",
-      "test/runinplace.test.js"
+      "test/net/audit637_runinplace.test.js",
+      "test/net/runinplace.test.js"
     ]
   },
   {
@@ -65,8 +65,8 @@
     "old": " || s.y !== was.y || s.z !== was.z) p.drawnAt = now;",
     "new": " || s.z !== was.z) p.drawnAt = now;",
     "tests": [
-      "test/audit637_runinplace.test.js",
-      "test/runinplace.test.js"
+      "test/net/audit637_runinplace.test.js",
+      "test/net/runinplace.test.js"
     ]
   },
   {
@@ -75,8 +75,8 @@
     "old": "      if (!was || s.x !== was.x",
     "new": "      if (s.x !== was.x",
     "tests": [
-      "test/audit637_runinplace.test.js",
-      "test/runinplace.test.js"
+      "test/net/audit637_runinplace.test.js",
+      "test/net/runinplace.test.js"
     ]
   },
   {
@@ -85,8 +85,8 @@
     "old": "      p.cadence.push(dt);   // AUDIT 637 C2",
     "new": "      p.cadence.push(Math.min(GAP_MAX_MS, dt));   // AUDIT 637 C2",
     "tests": [
-      "test/audit637_runinplace.test.js",
-      "test/runinplace.test.js"
+      "test/net/audit637_runinplace.test.js",
+      "test/net/runinplace.test.js"
     ]
   },
   {
@@ -95,8 +95,8 @@
     "old": "    const longest = wasMoving ? Math.max(GAP_MAX_MS, cadence) : cadence;",
     "new": "    const longest = wasMoving ? GAP_MAX_MS : cadence;",
     "tests": [
-      "test/audit637_runinplace.test.js",
-      "test/runinplace.test.js"
+      "test/net/audit637_runinplace.test.js",
+      "test/net/runinplace.test.js"
     ]
   },
   {
@@ -105,8 +105,8 @@
     "old": "    const longest = wasMoving ? Math.max(GAP_MAX_MS, cadence) : cadence;",
     "new": "    const longest = wasMoving ? Infinity : cadence;",
     "tests": [
-      "test/audit637_runinplace.test.js",
-      "test/runinplace.test.js"
+      "test/net/audit637_runinplace.test.js",
+      "test/net/runinplace.test.js"
     ]
   },
   {
@@ -115,8 +115,8 @@
     "old": "    if (all === whoRowsSeen && everyone === whoAllSeen && total === whoTotalSeen && label === whoLabelSeen && menuFor === whoMenuSeen && query === whoQuerySeen) return;\n",
     "new": "",
     "tests": [
-      "test/audit637_roster.test.js",
-      "test/perfon3.test.js"
+      "test/net/audit637_roster.test.js",
+      "test/net/perfon3.test.js"
     ]
   },
   {
@@ -125,8 +125,8 @@
     "old": "    whoRowsSeen = all; whoAllSeen = everyone; whoTotalSeen = total;",
     "new": "    whoAllSeen = everyone; whoTotalSeen = total;",
     "tests": [
-      "test/audit637_roster.test.js",
-      "test/perfon3.test.js"
+      "test/net/audit637_roster.test.js",
+      "test/net/perfon3.test.js"
     ]
   },
   {
@@ -135,8 +135,8 @@
     "old": "  if (!Array.isArray(kept) || !Array.isArray(now)) return Object.is(kept, now);",
     "new": "  if (!Array.isArray(kept) || !Array.isArray(now)) return true;",
     "tests": [
-      "test/audit637_roster.test.js",
-      "test/perfon3.test.js"
+      "test/net/audit637_roster.test.js",
+      "test/net/perfon3.test.js"
     ]
   },
   {
@@ -145,8 +145,8 @@
     "old": "export const NAME_ORDER = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });",
     "new": "export const NAME_ORDER = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base', ignorePunctuation: true });",
     "tests": [
-      "test/audit637_roster.test.js",
-      "test/perfon3.test.js"
+      "test/net/audit637_roster.test.js",
+      "test/net/perfon3.test.js"
     ]
   },
   {
@@ -155,8 +155,8 @@
     "old": "export const NAME_ORDER = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });",
     "new": "export const NAME_ORDER = new Intl.Collator('en', { numeric: true, sensitivity: 'base' });",
     "tests": [
-      "test/audit637_roster.test.js",
-      "test/perfon3.test.js"
+      "test/net/audit637_roster.test.js",
+      "test/net/perfon3.test.js"
     ]
   },
   {
@@ -165,8 +165,8 @@
     "old": "  if (_rowMemo.size > ROW_MEMO_MAX) for (const [k, m] of _rowMemo) if (m.call < call - 1) _rowMemo.delete(k);   // AUDIT 637 A5",
     "new": "  if (_rowMemo.size > ROW_MEMO_MAX) _rowMemo.clear();   // AUDIT 637 A5",
     "tests": [
-      "test/audit637_roster.test.js",
-      "test/perfon3.test.js"
+      "test/net/audit637_roster.test.js",
+      "test/net/perfon3.test.js"
     ]
   },
   {
@@ -175,8 +175,8 @@
     "old": "  if (_rowMemo.size > ROW_MEMO_MAX) for (const [k, m] of _rowMemo) if (m.call < call - 1) _rowMemo.delete(k);   // AUDIT 637 A5",
     "new": "",
     "tests": [
-      "test/audit637_roster.test.js",
-      "test/perfon3.test.js"
+      "test/net/audit637_roster.test.js",
+      "test/net/perfon3.test.js"
     ]
   },
   {
@@ -185,8 +185,8 @@
     "old": "if (m.call < call - 1) _rowMemo.delete(k);",
     "new": "if (m.call < call) _rowMemo.delete(k);",
     "tests": [
-      "test/audit637_roster.test.js",
-      "test/perfon3.test.js"
+      "test/net/audit637_roster.test.js",
+      "test/net/perfon3.test.js"
     ]
   },
   {
@@ -195,8 +195,8 @@
     "old": "    const sorted = rows.slice().sort(byNameThenTag);\n    const out = Object.freeze(sorted.slice(0, ROSTER_ROWS_MAX));   // AUDIT 637 A6: the answer first, then the state that names it\n    _scratchIn = _lastIn;   // the old input becomes the next call's scratch; this call's list is kept as the new input\n    _lastIn = rows;\n    _lastOut = out;",
     "new": "    _scratchIn = _lastIn;   // the old input becomes the next call's scratch; this call's list is kept as the new input\n    _lastIn = rows;\n    const sorted = rows.slice().sort(byNameThenTag);\n    const out = Object.freeze(sorted.slice(0, ROSTER_ROWS_MAX));\n    _lastOut = out;",
     "tests": [
-      "test/audit637_roster.test.js",
-      "test/perfon3.test.js"
+      "test/net/audit637_roster.test.js",
+      "test/net/perfon3.test.js"
     ]
   },
   {
@@ -205,8 +205,8 @@
     "old": "  for (let i = 0; i < kept.length; i++) if (!Object.is(kept[i], now[i])) return false;",
     "new": "  for (let i = 0; i < kept.length; i++) if (kept[i] !== now[i]) return false;",
     "tests": [
-      "test/audit637_roster.test.js",
-      "test/perfon3.test.js"
+      "test/net/audit637_roster.test.js",
+      "test/net/perfon3.test.js"
     ]
   },
   {
@@ -215,8 +215,8 @@
     "old": "      freezeRow(row);   // AUDIT 637 A9\n",
     "new": "",
     "tests": [
-      "test/audit637_roster.test.js",
-      "test/perfon3.test.js"
+      "test/net/audit637_roster.test.js",
+      "test/net/perfon3.test.js"
     ]
   },
   {
@@ -225,8 +225,8 @@
     "old": "const freezeRow = (row) => { Object.freeze(row.glyphs); if (row.ts) Object.freeze(row.ts); return Object.freeze(row); };",
     "new": "const freezeRow = (row) => Object.freeze(row);",
     "tests": [
-      "test/audit637_roster.test.js",
-      "test/perfon3.test.js"
+      "test/net/audit637_roster.test.js",
+      "test/net/perfon3.test.js"
     ]
   },
   {
@@ -235,8 +235,8 @@
     "old": "    || NAME_ORDER.compare(String(a.name), String(b.name))",
     "new": "    || String(a.name).localeCompare(String(b.name), undefined, { numeric: true, sensitivity: 'base' })",
     "tests": [
-      "test/audit637_roster.test.js",
-      "test/soc3_socialpanel.test.js"
+      "test/net/audit637_roster.test.js",
+      "test/net/soc3_socialpanel.test.js"
     ]
   },
   {
@@ -245,8 +245,8 @@
     "old": "    || NAME_ORDER.compare(String(a.name), String(b.name))",
     "new": "    || NAME_ORDER.compare(String(b.name), String(a.name))",
     "tests": [
-      "test/audit637_roster.test.js",
-      "test/soc3_socialpanel.test.js"
+      "test/net/audit637_roster.test.js",
+      "test/net/soc3_socialpanel.test.js"
     ]
   },
   {
@@ -255,8 +255,8 @@
     "old": "  return 1e-3 + 1e-5 * s + CUBE_F32_FAR * far * s;",
     "new": "  return 1e-3 + 1e-5 * s;",
     "tests": [
-      "test/audit637_shadow.test.js",
-      "test/perfshadow1.test.js"
+      "test/render/audit637_shadow.test.js",
+      "test/render/perfshadow1.test.js"
     ]
   },
   {
@@ -265,8 +265,8 @@
     "old": "lim[o + 4] = cubeSlack(x, y, z, far);",
     "new": "lim[o + 4] = 0;",
     "tests": [
-      "test/audit637_shadow.test.js",
-      "test/perfshadow1.test.js"
+      "test/render/audit637_shadow.test.js",
+      "test/render/perfshadow1.test.js"
     ]
   },
   {
@@ -275,8 +275,8 @@
     "old": "if (bb[j]) bb[j].length = 0; else bb[j] = [];",
     "new": "if (!bb[j]) bb[j] = [];",
     "tests": [
-      "test/audit637_shadow.test.js",
-      "test/perfshadow1.test.js"
+      "test/render/audit637_shadow.test.js",
+      "test/render/perfshadow1.test.js"
     ]
   },
   {
@@ -285,8 +285,8 @@
     "old": "cube[4] = lim[o + 3] + cubeReach(rad) - rad + lim[o + 4];",
     "new": "cube[4] = lim[o + 3] + lim[o + 4];",
     "tests": [
-      "test/audit637_shadow.test.js",
-      "test/perfshadow1.test.js"
+      "test/render/audit637_shadow.test.js",
+      "test/render/perfshadow1.test.js"
     ]
   },
   {
@@ -295,8 +295,8 @@
     "old": "        const wl = Math.hypot(r.flatWind[0], r.flatWind[1]), law = windfallLawOn(r.windfall);   // the record's wind, for its quads' lean (quadRadius)",
     "new": "        const wl = 0, law = false;   // the record's wind, for its quads' lean (quadRadius)",
     "tests": [
-      "test/audit637_shadow.test.js",
-      "test/perfshadow1.test.js"
+      "test/render/audit637_shadow.test.js",
+      "test/render/perfshadow1.test.js"
     ]
   },
   {
@@ -305,8 +305,8 @@
     "old": "          if (cand) this._candidateQuads(rank);   // PERF-SHADOW1\n",
     "new": "\n",
     "tests": [
-      "test/audit637_shadow.test.js",
-      "test/perfshadow1.test.js"
+      "test/render/audit637_shadow.test.js",
+      "test/render/perfshadow1.test.js"
     ]
   },
   {
@@ -315,8 +315,8 @@
     "old": "          if (cand) this._candidateQuads(rank);   // PERF-SHADOW1 (a no-op when the static faces asked it above)",
     "new": "          // the quads not asked",
     "tests": [
-      "test/audit637_shadow.test.js",
-      "test/perfshadow1.test.js"
+      "test/render/audit637_shadow.test.js",
+      "test/render/perfshadow1.test.js"
     ]
   },
   {
@@ -325,8 +325,8 @@
     "old": "    this._candWalked = false;\n    let anyDyn = false;",
     "new": "    this._candWalked = false; if (casters.length) this._casterCandidates(L, casters, farOf);\n    let anyDyn = false;",
     "tests": [
-      "test/audit637_shadow.test.js",
-      "test/perfshadow1.test.js"
+      "test/render/audit637_shadow.test.js",
+      "test/render/perfshadow1.test.js"
     ]
   },
   {
@@ -335,8 +335,8 @@
     "old": "const dynNear = anyDyn ? this._dynamicNear(",
     "new": "const dynNear = true ? this._dynamicNear(",
     "tests": [
-      "test/audit637_shadow.test.js",
-      "test/perfshadow1.test.js"
+      "test/render/audit637_shadow.test.js",
+      "test/render/perfshadow1.test.js"
     ]
   },
   {
@@ -345,8 +345,8 @@
     "old": "for (let i = 0; i < this.count; i++) if (this.records[i].dynamic) { anyDyn = true; break; }",
     "new": "for (let i = 0; i < this.count; i++) if (this.records[i].kind === REC_BB && this.records[i].dynamic) { anyDyn = true; break; }",
     "tests": [
-      "test/audit637_shadow.test.js",
-      "test/perfshadow1.test.js"
+      "test/render/audit637_shadow.test.js",
+      "test/render/perfshadow1.test.js"
     ]
   },
   {
@@ -355,8 +355,8 @@
     "old": "  _casterCandidates(L, casters, farOf) {\n    this._candWalked = true;",
     "new": "  _casterCandidates(L, casters, farOf) {",
     "tests": [
-      "test/audit637_shadow.test.js",
-      "test/perfshadow1.test.js"
+      "test/render/audit637_shadow.test.js",
+      "test/render/perfshadow1.test.js"
     ]
   },
   {
@@ -365,8 +365,8 @@
     "old": "    for (const c of this._cands) { for (let j = 0; j < c.hw; j++) { const l = c.bb[j]; if (l) l.length = 0; } c.n = 0; c.hw = 0; }\n",
     "new": "",
     "tests": [
-      "test/audit637_shadow.test.js",
-      "test/perfshadow1.test.js"
+      "test/render/audit637_shadow.test.js",
+      "test/render/perfshadow1.test.js"
     ]
   },
   {
@@ -375,8 +375,8 @@
     "old": "    for (let k = 0; k < nC; k++) { const c = out[k]; if (c && c.n > c.hw) c.hw = c.n; }   // AUDIT 637 B4: as far as discard() must empty\n",
     "new": "",
     "tests": [
-      "test/audit637_shadow.test.js",
-      "test/perfshadow1.test.js"
+      "test/render/audit637_shadow.test.js",
+      "test/render/perfshadow1.test.js"
     ]
   },
   {
@@ -385,8 +385,8 @@
     "old": "  return !(d > R) || d === Infinity;",
     "new": "  return !(d > R);",
     "tests": [
-      "test/audit637_shadow.test.js",
-      "test/perfshadow1.test.js"
+      "test/render/audit637_shadow.test.js",
+      "test/render/perfshadow1.test.js"
     ]
   },
   {
@@ -395,8 +395,8 @@
     "old": "export const cubeReach = (r) => (r > 0 ? r * CUBE_REACH : r);",
     "new": "export const cubeReach = (r) => r * CUBE_REACH;",
     "tests": [
-      "test/audit637_shadow.test.js",
-      "test/perfshadow1.test.js"
+      "test/render/audit637_shadow.test.js",
+      "test/render/perfshadow1.test.js"
     ]
   }
 ]

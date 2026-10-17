@@ -1,6 +1,6 @@
 // Vendored from project-final's Rewrite Engine (rewrite/rig/limb.js) at C4a -
 // same-owner code, flat-pathed; byte-parity against the canonical copy
-// is pinned by test/rig.test.js over fixtures/bare-body-parity.json.
+// is pinned by test/characters/rig.test.js over fixtures/bare-body-parity.json.
 // Do not hand-diverge: upstream first, then re-vendor + re-capture.
 // Shared limb rig. Holds the analytic 3D two-bone IK that every limb runs:
 // the first-person legs today, and the third-person body's arms and legs later.

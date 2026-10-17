@@ -61,7 +61,7 @@
 // [/scale=] reach the label (a colour; wrapped at MaxWidth / scale, and
 // as tall as its rows times the scale - TextLabel.cs:604, :708, :789).
 
-import { loadImg, nativeMetrics, drawImg, shadowText } from './nativePanel.js';
+import { loadImg, nativeMetrics, drawImg, shadowText } from './native/nativePanel.js';
 import { drawMenuBackdrop } from './chargenArt.js';
 import { drawText, measureText, makeFont } from './text.js';
 import { FntFile } from '../formats/fntFile.js';   // ROAD-D D10: FontPrefix's five faces

@@ -35,16 +35,16 @@
 // open); the Work tab's day stands above its cards, not under the last; the cards straight; the words cut to what the
 // reader needs.
 //
-// THE HOUSE'S SHAPE, as the bounty board's (ui/bountyWindow.js) and the Broker's before it: a lazy chunk the door
+// THE HOUSE'S SHAPE, as the bounty board's (ui/bounty/bountyWindow.js) and the Broker's before it: a lazy chunk the door
 // (ui/noticeDoor.js) mounts in its own host - `mountNoticeBoard(host, deps)` answers `{ repaint, unmount }` - the back
 // key and a tap on the scrim leave through the door's own close. On the classic skins the window lays its own sheet,
 // the kit's rules cut to its selectors, so it wears the Enhanced Plus stone whichever UI is chosen (online forces the
 // enhanced lane, never necessarily its Plus face).
-import { closeOnOutsideTap } from './enhancedOverlays.js';
+import { closeOnOutsideTap } from './enhanced/enhancedOverlays.js';
 import { overlayAction, isTextEntryTarget } from './input.js';
-import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
-import { NOTICE_CSS, PROF_CSS } from './enhancedPlusStyle.js';
-import { frameCss } from './enhancedFrame.js';
+import { injectEnhancedStyle, injectEnhancedFonts } from './enhanced/enhancedStyle.js';
+import { NOTICE_CSS, PROF_CSS } from './enhanced/enhancedPlusStyle.js';
+import { frameCss } from './enhanced/enhancedFrame.js';
 import { isEnhancedPlus } from '../systems/uiSkin.js';
 import { scopeRules } from './brokerWindow.js';
 import {
@@ -56,13 +56,14 @@ import { hallPosterName, isChapterWrit, meritLineOf, chapterLineOf, chapterFocus
   chapterBandOf, chapterBandEffectsLine, chapterDutiesLine, meritEarnsOf, chapterSeasonOf,
   MERIT_WRIT, MERIT_RECEIPT, MERIT_TENURE_S, MERIT_CAP_WEEK, STRENGTH_START, STRENGTH_MIN, STRENGTH_MAX, STRENGTH_STEP_MAX, STRENGTH_IDLE, STRENGTH_SHORT, STRENGTH_TARGET,
   CHAPTER_FAILING_FALL, CHAPTER_FAILING_MEETS, CHAPTER_EVENT_EFFECTS, CHAPTER_BANDS, CHAPTER_SEATS, SEAT_RANK, SEAT_TENURE_S, SEAT_ACCOUNT_AGE_S,
-  SEAT_MERIT_WEEKS, CHAPTER_EVENTS, CHAPTER_PATRON_MIN, CHAPTER_PATRON_BAND } from '../net/npcChapterLaw.js';   // CHAP7b: a chapter's patron, a guildmaster's bid; GUILD3d: the chapter's card - its band's effects, its duties
+  SEAT_MERIT_WEEKS, CHAPTER_EVENTS, CHAPTER_PATRON_MIN, CHAPTER_PATRON_BAND, ROLL_BOOK_RANK_MAX, ROLL_GAIN_DAY_MAX, HALL_WRIT_REP, RECEIPT_REP } from '../net/npcChapterLaw.js';   // CHAP7b: a chapter's patron, a guildmaster's bid; GUILD3d: the chapter's card - its band's effects, its duties
 import { chapterSeasonLines, chapterBackChoices, chapterBackedLine } from '../net/chapterEvents.js';   // CHAP6c: a chapter's Season - its lines, a member's choices   // CHAP2a: a hall writ's guild, named; CHAP3a: a member's own writ, its Merit; CHAP3b: a chapter's Strength
+import { t } from '../systems/textManager.js';   // STANDING-WORDS: the guide's rank and standing, in the player's language
 import { movedFirstText } from '../net/bagLaw.js';   // AUDIT2 BAG1 K8: what went into the Stores before a refusal
 import { createMarketTab } from './marketTab.js';   // PROF5: the Market tab
 import { createWorkTab, writWalledText } from './workTab.js';   // PROF6: the Work tab's guild writs and commissions; WRIT-WALL: what no writ may spend, in words
 import { createSeatTab, boardFold } from './seatTab.js';   // SEAT1b: the Seat tab - a seat town's standings, pledges and Tribute
-import { createVendorTab } from './vendorTab.js';   // HOME-VENDOR: the Vendors tab, and a trader's stall
+import { createVendorTab } from './vendor/vendorTab.js';   // HOME-VENDOR: the Vendors tab, and a trader's stall
 import { bannerSvg } from './heraldryArt.js';   // GUILD1e: a guild's banner over its notes and its posters
 
 /** @param {string} tag @param {string|null} [cls] @param {string|null} [text] */
@@ -135,12 +136,19 @@ export function chapterGuide() {
   const patronBand = /** @type {{ name: string }} */ (CHAPTER_BANDS.find((b) => b.band === CHAPTER_PATRON_BAND)).name;
   return [
     ['What a chapter is', 'Each of Daggerfall\'s guilds - the Fighters and Mages Guilds, the temples, the knightly orders - keeps a chapter in every region where it has a hall, shared by every player online. The cards below are this region\'s. Join the guild at one of its halls, as you always would, and its chapters are yours.'],
-    ['Merit', `Your work for a chapter this week: ${n(MERIT_WRIT)} for filling your own chapter writ (one a day; goods you bought earn none), and a share of ${n(MERIT_RECEIPT)} for each Dagon's Breach closed or raided town defended in the region. It counts once you have been in the guild ${days(MERIT_TENURE_S)} days - at most ${n(MERIT_CAP_WEEK)} an account a week in each chapter, and in one chapter of each guild a week.`],
+    // STANDING-WORDS / SEAT-WORDS (Field-Bugs-2026-10-15g): the guide said what a chair is and never that a guild's own
+    // review stops below it, nor how the standing itself moves online
+    // AUDIT GUILD-WORDS L1-5, L3-3: a chair's services are its own chapter's halls', for a member at 7 (seatedBook); L3-2,
+    // L3-4, L3-5: the pace a quest keeps and the real day, a receipt's first of the day; II C-3: no quest is said free of
+    // its guild's losses; II C-5: a chapter writ, yours or the chapter's; II C-8: the day turns at midnight UTC
+    [t('notice.chapters.rank.name', 'Your rank'), t('notice.chapters.rank.words', 'A guild\'s own review still promotes you, up to rank {cap}. Ranks {officer} and {master} are the chairs below; a chair\'s services are at its own chapter\'s halls, for a member at rank {cap}.', { cap: ROLL_BOOK_RANK_MAX, officer: SEAT_RANK.officer, master: SEAT_RANK.master })],
+    [t('notice.chapters.standing.name', 'Standing'), t('notice.chapters.standing.words', 'The realm keeps your standing with each of these guilds. Quests raise it at most {max} a real day for each, the day turning at midnight UTC - a larger reward is owed and paid on the days after. Beyond that pace, a chapter writ (yours or the chapter\'s) adds {writ}, and a closed Breach or a defended town adds {receipt} to each of your guilds that keeps a chapter there ({writ} more for the day\'s first, where the chapter asks for it).', { max: ROLL_GAIN_DAY_MAX, writ: HALL_WRIT_REP, receipt: RECEIPT_REP })],
+    ['Merit', `Your work for a chapter this week: ${n(MERIT_WRIT)} for filling your own chapter writ (one a day; goods you bought earn none), and a share of ${n(MERIT_RECEIPT)} for each Dagon's Breach closed or raided town defended in the region. It counts once you have been in the guild ${days(MERIT_TENURE_S)} real days - at most ${n(MERIT_CAP_WEEK)} an account a week in each chapter, and in one chapter of each guild a week.`],
     // AUDIT PLAIN-UI W1: the whole of strengthAfter, failingWeekAfter, the Rivalry's swing and strengthSeasonEnd - "Merit
     // raises it" alone hid the week's mark, the fall back toward 50 and the Failing band's fall
     ['Strength', `The chapter's health, ${STRENGTH_MIN} to ${STRENGTH_MAX}, from ${STRENGTH_START}. The week's mark is ${STRENGTH_TARGET} Merit for every hundred players active (at least ${STRENGTH_TARGET}). At each Turning, Sunday 18:00 UTC, Strength rises 1 for each mark its members' Merit reached that week, up to ${STRENGTH_STEP_MAX}. A week short of the mark brings a chapter above ${STRENGTH_START} back ${STRENGTH_SHORT} toward it; a week with no Merit at all costs ${STRENGTH_IDLE}; a Failing chapter loses ${CHAPTER_FAILING_FALL} more unless its Merit reaches ${CHAPTER_FAILING_MEETS === 2 ? 'twice' : `${CHAPTER_FAILING_MEETS} times`} the mark. A Rivalry's winner takes ${CHAPTER_EVENT_EFFECTS.rivalrySwing} from the loser, and a Season's end brings every chapter halfway back to ${STRENGTH_START}.`],
     ['Band', `Strength's name: ${bands}. A band sets the halls' prices, their shelf and how many chapter writs they post - each card says what its band does.`],
-    ['The chairs', `Rank ${SEAT_RANK.master} (the Master) and rank ${SEAT_RANK.officer} (${CHAPTER_SEATS.officer} council chairs) go at each Turning to the members with the most Merit over the last ${SEAT_MERIT_WEEKS} weeks, among those ${days(SEAT_TENURE_S)} days in the guild, standing high enough in it for rank ${SEAT_RANK.officer}, on accounts ${days(SEAT_ACCOUNT_AGE_S)} days old. The Master names the week's Focus - the goods the chapter writs ask for.`],
+    ['The chairs', `Rank ${SEAT_RANK.master} (the Master) and rank ${SEAT_RANK.officer} (${CHAPTER_SEATS.officer} council chairs) go at each Turning to the members with the most Merit over the last ${SEAT_MERIT_WEEKS} weeks, among those ${days(SEAT_TENURE_S)} real days in the guild, standing high enough in it for rank ${SEAT_RANK.officer}, on accounts ${days(SEAT_ACCOUNT_AGE_S)} real days old. The Master names the week's Focus - the goods the chapter writs ask for.`],
     ['Season', `Each Season a chapter draws one event: ${events.slice(0, -1).join(', ')} or ${events[events.length - 1]}. A Schism or a Succession asks its members to back a side; the card says what this Season's does.`],
     ['Patron', `A player guild's Guildmaster may bid silver (at least ${n(CHAPTER_PATRON_MIN)}) for a chapter's patronage next Season. The highest bid is spent and the rest go home; the patron's members pay ${patronBand} prices for training and spells in its halls, or the chapter's own where better.`],
   ];
@@ -201,7 +209,7 @@ function injectSkin(doc = document) {
  *   seat?: ({ seat: any, book: any, nameOf?: (key: number) => (string|null) } | null), seatBattle?: (seat: any, fight: any) => boolean,
  *   seatRoyal?: (seat: any, royal: any, watch: boolean) => boolean, seatRecords?: (seat: any) => Promise<boolean>,
  *   vendors?: any, traderOnly?: { title: string, sub?: string } | null,
- * }} deps HOME-VENDOR: `vendors` the Vendors tab's host (ui/vendorTab.js), `traderOnly` a stall's window. `work` - PROF1's Court writs for the board's region (net/profBook.js), or null where the professions are not
+ * }} deps HOME-VENDOR: `vendors` the Vendors tab's host (ui/vendor/vendorTab.js), `traderOnly` a stall's window. `work` - PROF1's Court writs for the board's region (net/profBook.js), or null where the professions are not
  *   this account's; PROF6: with `writs` (net/writBook.js) the guild writs and commissions beside them (ui/workTab.js),
  *   `pieces` the pieces in the save that answer a commission; `market` - PROF5's Market tab's host (ui/marketTab.js createMarketTab's `m`), or null where the
  *   market is not; `guilds` - GUILD1e: the Guilds tab shown (online, the board open); `guildOnly` - the board in a guild's

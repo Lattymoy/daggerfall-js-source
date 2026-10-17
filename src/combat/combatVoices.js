@@ -17,7 +17,7 @@
 //     bow (WeaponManager.cs:385-389)
 
 import { RACES } from '../systems/races.js';
-import { getBool } from '../systems/settings.js';   // SETT: CombatVoices is a real setting now
+import { getBool } from '../systems/settings/settings.js';   // SETT: CombatVoices is a real setting now
 
 /** DaggerfallUnity.Settings.CombatVoices, read AT THE POINT OF USE as
  *  DFU reads it (EnemyAttack.cs:217, WeaponManager.cs:385) - not

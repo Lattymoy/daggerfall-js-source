@@ -4,76 +4,76 @@
     "file": "src/systems/smithItems.js",
     "old": "  if (item?.templateIndex === ARROW_TEMPLATE) return false;\n",
     "new": "",
-    "tests": ["test/mend_aim.test.js"]
+    "tests": ["test/systems/mend_aim.test.js"]
   },
   {
     "name": "MEND-AIM-loot-before-worn",
-    "file": "src/systems/itemTemplates.js",
+    "file": "src/systems/item/itemTemplates.js",
     "old": "export const mendOrder = (a, b) => wornFirst(b) - wornFirst(a) || conditionShare(a) - conditionShare(b);",
     "new": "export const mendOrder = (a, b) => conditionShare(a) - conditionShare(b);",
-    "tests": ["test/mend_aim.test.js"]
+    "tests": ["test/systems/mend_aim.test.js"]
   },
   {
     "name": "MEND-AIM-aim-ignored",
     "file": "src/systems/smithItems.js",
     "old": "  const it = target == null ? want[0] : want.includes(target) ? target : null;",
     "new": "  const it = want[0];",
-    "tests": ["test/mend_aim.test.js"]
+    "tests": ["test/systems/mend_aim.test.js"]
   },
   {
     "name": "MEND-AIM-never-asks",
     "file": "src/systems/smithItems.js",
     "old": "    if (targets.length > 1 || (targets.length === 1 && kitHeldBack(item, pack).length > 0)) return { kind: 'chooseTarget'",
     "new": "    if (targets.length > 99) return { kind: 'chooseTarget'",
-    "tests": ["test/mend_aim.test.js"]
+    "tests": ["test/systems/mend_aim.test.js"]
   },
   {
     "name": "MEND-AIM-corpse-pieces",
     "file": "src/systems/smithItems.js",
     "old": "  const pack = Array.isArray(localItems) ? localItems : collection;",
     "new": "  const pack = collection;",
-    "tests": ["test/mend_aim.test.js"]
+    "tests": ["test/systems/mend_aim.test.js"]
   },
   {
     "name": "MEND-AIM-door-drops-the-aim",
     "file": "src/systems/useItem.js",
     "old": "{ entity, rolls, nowMinute, localItems: bag, target, chooseTarget }",
     "new": "{ entity, rolls, nowMinute, localItems: bag }",
-    "tests": ["test/mend_aim.test.js"]
+    "tests": ["test/systems/mend_aim.test.js"]
   },
   {
     "name": "MEND-AIM-classic-never-asks",
-    "file": "src/ui/nativeInventory.js",
+    "file": "src/ui/native/nativeInventory.js",
     "old": "      target, chooseTarget: target == null,",
     "new": "      target, chooseTarget: false,",
-    "tests": ["test/mend_aim.test.js"]
+    "tests": ["test/systems/mend_aim.test.js"]
   },
   {
     "name": "MEND-AIM-classic-pick-unaimed",
-    "file": "src/ui/nativeInventory.js",
+    "file": "src/ui/native/nativeInventory.js",
     "old": "        onPick: (i) => this._use(r.item, collection, r.targets[i]),",
     "new": "        onPick: () => this._use(r.item, collection, r.targets[0]),",
-    "tests": ["test/mend_aim.test.js"]
+    "tests": ["test/systems/mend_aim.test.js"]
   },
   {
     "name": "MEND-AIM-pack-never-asks",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "  if (act.kind === 'chooseTarget') { askTarget(act, collection); return; }   // MEND-AIM\n",
     "new": "",
-    "tests": ["test/mend_aim.test.js"]
+    "tests": ["test/systems/mend_aim.test.js"]
   },
   {
     "name": "MEND-AIM-pack-row-unaimed",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "closeTarget(); use(act.item, collection, piece); };",
     "new": "closeTarget(); use(act.item, collection, act.targets[0]); };",
-    "tests": ["test/mend_aim.test.js"]
+    "tests": ["test/systems/mend_aim.test.js"]
   },
   {
     "name": "MEND-AIM-back-closes-the-pack",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "(infoEl || menuEl || dismantleEl || targetEl)",
     "new": "(infoEl || menuEl || dismantleEl)",
-    "tests": ["test/mend_aim.test.js"]
+    "tests": ["test/systems/mend_aim.test.js"]
   }
 ]

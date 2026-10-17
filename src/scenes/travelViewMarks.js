@@ -2,27 +2,27 @@
 // The host constructs it where the code stood. What it reads of the host's scope comes through `host`: the
 // settled names by value at construction, every live one (a `let` someone writes, a `const` made below) read at its
 // use as `host.<name>` - as the code read them where it was.
-import { bandLabel } from '../systems/travelBands.js';
-import { dungeonTierLabel } from '../world/dungeonLabel.js';
-import { farDistanceText, PIXEL_KM } from '../systems/travelFarPlaces.js';
+import { bandLabel } from '../systems/travel/travelBands.js';
+import { dungeonTierLabel } from '../world/dungeon/dungeonLabel.js';
+import { farDistanceText, PIXEL_KM } from '../systems/travel/travelFarPlaces.js';
 import { getPref } from '../systems/uiPrefs.js';
 import { isShipMark, travellerWorldOf } from '../systems/travellerMarks.js';
-import { isWaypointFollowed, mapPointToNative, shownWaypoints } from '../systems/mapWaypoints.js';
+import { isWaypointFollowed, mapPointToNative, shownWaypoints } from '../systems/map/mapWaypoints.js';
 import { livingWorldOn } from '../systems/livingWorld/livingSwitch.js';
 import { LODE_COMPASS_CSS, lodeLabel } from '../ui/lodeMapMark.js';
 import { mapPixelToWorldCoords } from '../world/streamingWorld.js';
-import { markShown, travellerKin } from '../systems/travelViewFilters.js';
+import { markShown, travellerKin } from '../systems/travel/travelViewFilters.js';
 import { NAME_RANGE } from '../net/remotePlayers.js';
 import { pixelOfNative, RAIDER_LABEL } from '../systems/seaRaiders.js';
 import { playerEntity } from '../characters/playerEntity.js';
 import { skyMinutes } from '../systems/worldTick.js';
-import { tierPhrase } from '../systems/dungeonTier.js';
+import { tierPhrase } from '../systems/dungeon/dungeonTier.js';
 import { RANGE_PIXELS as TV_BODY_RANGE } from '../net/wire.js';
-import { TV_DUNGEON_TYPES } from '../systems/travelDungeons.js';
+import { TV_DUNGEON_TYPES } from '../systems/travel/travelDungeons.js';
 import { vendorWaypoint } from '../systems/vendorWaypoint.js';
 import { warmAshesOn } from '../systems/warmAshesShips.js';
-import { WILD_MARK } from '../systems/wildAlert.js';
-import { WILD_TEXT } from '../systems/wildZone.js';
+import { WILD_MARK } from '../systems/wild/wildAlert.js';
+import { WILD_TEXT } from '../systems/wild/wildZone.js';
 
 /** @param {any} host */
 export function createTravelViewMarks(host) {
@@ -72,7 +72,7 @@ export function createTravelViewMarks(host) {
         marks.push({ key: g.key, at: tvSceneKept(g, g.x, g.z, TV_PLACE_LIFT), label: g.loc.name, sub: tier ? `${tier} - ${farDistanceText(km)}` : farDistanceText(km), kind: 'far dungeon', pick: true, edge: true });   // OW-FILTER: 'dungeon' - the look is the first word's, the filter's group the second's
       } else marks.push({ key: g.key, at: tvSceneKept(g, g.x, g.z, TV_PLACE_LIFT), label: '?', kind: 'lair' });
     }
-    // LW3: THE ROAD'S PARTIES - a caravan, pilgrims, a pedlar, each where it is and where it is bound (scenes/livingRoads.js)
+    // LW3: THE ROAD'S PARTIES - a caravan, pilgrims, a pedlar, each where it is and where it is bound (scenes/livingWorld/livingRoads.js)
     if (host.livingRoads && livingWorldOn()) {
       for (const m of host.livingRoads.marks()) if (markShown({ kind: m.kind })) marks.push({ key: m.key, at: [m.at[0], m.at[1] + 2, m.at[2]], label: m.label, kind: m.kind });
       // LW12: the hideouts of bands the character has heard of - rumoured, a ring
@@ -118,7 +118,7 @@ export function createTravelViewMarks(host) {
       if (!h) { h = {}; _tvBountyHold.set(b.id, h); }
       const km = (Math.hypot(x - here.x, z - here.z) / 32768) * PIXEL_KM;
       h.snap = { px, py, x, z, place: !!b.place, farmKey: b.farmKey ?? null };   // BOUNTY-SNAP: where its click walks
-      marks.push({ key: `bounty:${b.id}`, at: tvSceneKept(h, x, z, TV_PLACE_LIFT), label: `Bounty: ${b.label}`, sub: farDistanceText(km), kind: 'bounty', edge: true, pick: true });   // BOUNTY-SNAP: pressable, on its ring alone (ui/travelViewHud.js pickBox)
+      marks.push({ key: `bounty:${b.id}`, at: tvSceneKept(h, x, z, TV_PLACE_LIFT), label: `Bounty: ${b.label}`, sub: farDistanceText(km), kind: 'bounty', edge: true, pick: true });   // BOUNTY-SNAP: pressable, on its ring alone (ui/travel/travelViewHud.js pickBox)
     }
     for (const id of [..._tvBountyHold.keys()]) if (!bountyIds.has(id)) _tvBountyHold.delete(id);   // a bounty over lets its point go
     // HOME-VENDOR: THE TRADER'S WAYPOINT - its town's pixel, in Travel Options' mark's own yellow (`target`), named for

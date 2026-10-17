@@ -51,7 +51,7 @@ One sentence behind it: **inside is inside**. The context is DERIVED
 from the flags every host already keeps (`isPlayerInsideDungeon`,
 `isPlayerInside`, whether the map pixel carries a location), never
 declared by a host — a host that declares is a host that forgets.
-`systems/mapTabs.js`, pinned in `test/maptabs.test.js`.
+`systems/map/mapTabs.js`, pinned in `test/systems/map/maptabs.test.js`.
 
 **One key.** `AutoMap` opens the map wherever the player is, on
 whichever tab that place offers, and the tabs do the rest.
@@ -75,14 +75,14 @@ whichever tab that place offers, and the tabs do the rest.
 There is no floor field to read, and the arc checked rather than
 assumed: the `DungeonBlock` record parses x and z and no y
 (`formats/mapsFile.js`), every block is laid at y zero
-(`world/dungeonLayout.js`: *"Block (X, Z) sits at (X \* RDBSide, 0, Z
+(`world/dungeon/dungeonLayout.js`: *"Block (X, Z) sits at (X \* RDBSide, 0, Z
 \* RDBSide)"*), `originY` appears nowhere in `src/`, and inside a block
 the object roots are a 2D grid of models at whatever height they sit
 at. DFU answers the question with a cut plane the player slides, which
 is honest and unreadable — the player has to hunt for the height at
 which a room appears.
 
-So the storeys are DERIVED, in `systems/automapFloors.js`, from data
+So the storeys are DERIVED, in `systems/automap/automapFloors.js`, from data
 the reveal index already holds: every revealed row carries its CPU
 triangles and its placement matrix (`ROAD-C c2/S7` put them there for
 the picker).
@@ -133,11 +133,11 @@ them.
 The classic skin keeps DFU's own windows, whole and untouched — the
 native automap panel, the town map, the travel map, their chrome, their
 console verbs and their pins. This arc is the ENHANCED skin's, behind
-the same skin door `ui/travelMapDoor.js` already forks on. A departure
+the same skin door `ui/travel/travelMapDoor.js` already forks on. A departure
 here is a departure from DFU only where the enhanced skin is worn.
 
 MAP-TOGGLE (2026-09-22, Mac: "Yes needs to be a toggle"): the door is
-the skin AND a Features switch now (`enhanced-map`, `ui/mapSkin.js`),
+the skin AND a Features switch now (`enhanced-map`, `ui/map/mapSkin.js`),
 so a player may keep the enhanced skin and take DFU's three windows
 back; see Held-Map-Arc.md MAP-TOGGLE.
 
@@ -148,7 +148,7 @@ The held window is 2,244 lines and every one of them was audited twice
 front of them and routed the window through it, which is the difference
 between an architecture and a rewrite.
 
-The contract is `SHEET_MEMBERS` in `ui/mapStrip.js`, and it is three
+The contract is `SHEET_MEMBERS` in `ui/map/mapStrip.js`, and it is three
 things: the SPACE (`size`, which the pan and zoom clamp against), the
 INK (`ensure`, `staticKey`, `paintStatic`, `paintOverlay`) and the
 POINTER (`pickAt`, `hoverLabel`, `mark`), plus a clock and a
@@ -195,13 +195,13 @@ that inks nothing.
 ## The slices
 
 - **EM1 — the sheet contract and the tab strip.** SHIPPED: the tab law
-  (`systems/mapTabs.js`, 5 pins), the strip and the slot
-  (`ui/mapStrip.js`, 11 pins), and the window routed through the
+  (`systems/map/mapTabs.js`, 5 pins), the strip and the slot
+  (`ui/map/mapStrip.js`, 11 pins), and the window routed through the
   contract with the bay unchanged (`ui/heldMap.js`, 7 pins in its own
   suite). 31 mutants, 31 dead. The KEY WIRING waits for EM3/EM4: a key
   that opens a blank sheet is a regression, so `AutoMap` keeps its two
   windows until there is something to ink.
-- **EM2 — the floor model.** SHIPPED: `systems/automapFloors.js`, 14
+- **EM2 — the floor model.** SHIPPED: `systems/automap/automapFloors.js`, 14
   pins over hand-built geometry — two stacked rooms, a ramp, a wall, a
   sliver, a partly revealed hall, and the coastline chain landing on
   the room's true edges in world units. 29 mutants, 27 dead and 2
@@ -226,8 +226,8 @@ that inks nothing.
   guard written as `!(len > 0)` catches it, and only a fixture with a
   NaN vertex proves so.
 - **EM3 — the automap sheet**, and the key. SHIPPED:
-  `ui/inkAutomap.js` (12 pins), `ui/automapSheet.js` (16 pins),
-  `ui/automapDoor.js`, and the dungeon host plus both interior hosts
+  `ui/ink/inkAutomap.js` (12 pins), `ui/automap/automapSheet.js` (16 pins),
+  `ui/automap/automapDoor.js`, and the dungeon host plus both interior hosts
   wired through it. The wall is the outline of what was revealed, the
   wash is the floor walked this run (DFU's grayscale law read as ink
   rather than as brightness), the caret points where the player looks,
@@ -270,8 +270,8 @@ that inks nothing.
   (`HeldMapWindow` lives in `heldMap.js`, and the guess
   `heldMapWindow.js` is the kind of silent miss that library exists to
   prevent). Any future door works with no edit.
-- **EM4 — the town sheet.** SHIPPED: `ui/inkTown.js`,
-  `ui/townSheet.js`, `ui/townMapDoor.js`, and both exterior hosts wired
+- **EM4 — the town sheet.** SHIPPED: `ui/ink/inkTown.js`,
+  `ui/town/townSheet.js`, `ui/town/townMapDoor.js`, and both exterior hosts wired
   through it (15 pins).
 
   **The plan is TRACED, not stamped.** The shipped town map paints the
@@ -394,12 +394,12 @@ read heavier than a wall against the street.
 
 **THE SETS LIVED TWICE, AND THAT WAS A HAZARD RATHER THAN UNTIDINESS.**
 `ui/exteriorAutomapWindow.js` had the four byte groups for its stamp
-and `ui/inkTown.js` had them for its trace, and DFU's four colour
+and `ui/ink/inkTown.js` had them for its trace, and DFU's four colour
 defaults were typed out in *three* places in the classic window alone
 (the paint, the caption swatches, and the fallbacks beside them). A
 byte regrouped in one skin would have silently disagreed with the
 other: the same building drawn as a shop on one map and a house on the
-next. `ui/townQuarters.js` is the one home now, and both skins ask it.
+next. `ui/town/townQuarters.js` is the one home now, and both skins ask it.
 
 Everything downstream is derived from that one ladder rather than kept
 beside it — `isBuilt` is "belongs to a quarter", `isEnterable` is
@@ -482,7 +482,7 @@ ONE window with three sheets, and two laws that had been written for
 the travel map alone did not widen with it.
 
 **EM-BUG1 — one flag was answering two questions.** MAP-WEAPON gave the
-weapon rig a gate: `if (sheetWindowUp()) return;` (`combat/weaponRig.js`),
+weapon rig a gate: `if (sheetWindowUp()) return;` (`combat/weapon/weaponRig.js`),
 because hands holding a map are not also holding a sword. The host
 answered it off the window's own duck tag, `isTravelMap` — fine while
 this window WAS the travel map.
@@ -516,11 +516,11 @@ close arm was `code === 'Escape' || actionForCode(bindings(), code) ===
 door EM3 and EM4 added is behind the AUTOMAP key, so in a dungeon, a
 town or a building the map opened on M and refused to close on it. The
 classic twin has always taken its own binding back
-(`ui/automapWindow.js`); this one takes both actions now, on every
+(`ui/automap/automapWindow.js`); this one takes both actions now, on every
 sheet, because the tabs mean one window can be entered by either key and
 the player should not have to remember which.
 
-**WHAT LET THE FIRST ONE THROUGH.** `test/map3_heldpose.test.js` pinned
+**WHAT LET THE FIRST ONE THROUGH.** `test/combat/map3_heldpose.test.js` pinned
 the gate — and pinned it as `isTravelMap`, so when EM4 narrowed the tag
 the pin was updated to match the new shape and went green over the
 regression. A pin that asserts the wiring as it is will always agree
@@ -607,7 +607,7 @@ repo through this arc either.
 
 EM3 and EM4 opened this window from the M key on every host and handed
 it no `holder`, so the Morrowind hands lane (MAP3) stood only on the V
-key's travel map. The holder is combat/weaponRig.js's `sheetHolderOf`
+key's travel map. The holder is combat/weapon/weaponRig.js's `sheetHolderOf`
 now and every door on every host with a rig passes it; the record is
 Held-Map-Arc.md's MW-MAP1 section.
 
@@ -624,7 +624,7 @@ lies over another (`groupSheets`) - a cell is on the storey its own surface
 is nearest (`surfaceY`), the stairs between storeys are found
 (`levelField`, `storeyLinks`), drawn and taken with a press, the strip stops
 above the thumb and marks you and the way out, and the foot says the keys.
-The record is `01-Overview/Field-Bugs-2026-09-25.md` DISC25-A.
+The record is `01-Overview/bugs/Field-Bugs-2026-09-25.md` DISC25-A.
 
 ## TOWN-MARKS (2026-09-29) - the Notice Boards and the player housing on the town plan
 
@@ -652,8 +652,8 @@ all.
 - **The classic exterior automap is untouched:** it is DFU's own window and draws DFU's marks alone, as DISC23-A left
   the party. The `?exterior` probe host hands none.
 
-Code: `ui/townMapMarks.js` (the rows and the reading), `ui/inkTown.js` (`paintBoardMark`, `paintHomeMark`),
-`ui/townSheet.js`, `ui/townMapDoor.js`, `scenes/world.js` (`townBoardMarks`, `townHomes`). Pins:
-`test/town_marks.test.js` (9). Mutants: `tools/mutants/town_marks.json` (35, all dead); `disc23a.json`'s breathing
+Code: `ui/town/townMapMarks.js` (the rows and the reading), `ui/ink/inkTown.js` (`paintBoardMark`, `paintHomeMark`),
+`ui/town/townSheet.js`, `ui/town/townMapDoor.js`, `scenes/world.js` (`townBoardMarks`, `townHomes`). Pins:
+`test/ui/town/town_marks.test.js` (9). Mutants: `tools/mutants/town_marks.json` (35, all dead); `disc23a.json`'s breathing
 record and `survtiers3.json`'s two cite records re-aimed.
 

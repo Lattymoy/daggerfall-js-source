@@ -38,9 +38,9 @@
 // attachMesh is a plain getInstance under the bone, so no BoneOffset and
 // no mirror ride a holstered mesh - and no sheathing bone is "Left".
 
-import { MW_WEAPON_TYPE, ammoTypeFor } from '../formats/mwFirstPerson.js';
-import { findNodeByName, nodeTransformOf } from '../formats/mwCharacter.js';
-import { deref } from '../formats/mwNifFile.js';
+import { MW_WEAPON_TYPE, ammoTypeFor } from '../formats/morrowind/mwFirstPerson.js';
+import { findNodeByName, nodeTransformOf } from '../formats/morrowind/mwCharacter.js';
+import { deref } from '../formats/morrowind/mwNifFile.js';
 
 /** weapontype.cpp's mSheathingBone column: the addon's node for each type. */
 export const SHEATHING_BONE = Object.freeze({

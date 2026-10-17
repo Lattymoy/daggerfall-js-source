@@ -34,6 +34,7 @@
 // (server-account/src/marks.js), which keeps every balance and the one
 // ledger, and the client. Pure: no clock, no DOM, no network.
 // ═══════════════════════════════════════════════════════════════════
+import { EG_PAY_MARKS } from './eliteGates/egPay.js';   // EG-E1: what a Redoubt strikes - the pay law's own number
 
 /** The most an account's balance - or a guild's Marks treasury - holds. */
 export const MARKS_MAX = 10_000_000;
@@ -63,6 +64,10 @@ export const MARK_WORTH_GOLD = 10;
  *               an herb patch, a vein, a tree, a body, a net), `amount` its range, at most `perDay` an account a UTC day.
  *   find      - SILVER-FINDS: a loot find - a body, a treasure pile or a searched thing (`chance` the device's roll, each
  *               kind's own), `amount` the service's dice, at most `perDay` an account a UTC day.
+ *   eg        - EG-E1 (2026-10-12, Mac: "I said I want everything"; bible/11-Multiplayer/Elite-Gates.md section 19): a
+ *               Redoubt of the Elite Breach taken - its `w` receipt the relay signed at the lord's fall and the service
+ *               counted - EG_PAY_MARKS (20, net/eliteGates/egPay.js), once an account a Redoubt an arena week (the week's pay), under
+ *               the COMBAT cap.
  */
 export const MARKS_FAUCETS = Object.freeze({
   gate: Object.freeze({ amount: 50 }),
@@ -73,15 +78,17 @@ export const MARKS_FAUCETS = Object.freeze({
   serpent: Object.freeze({ amount: 40, stood: 0.5 }),
   gather: Object.freeze({ chance: 0.1, amount: Object.freeze([2, 5]), perDay: 30 }),
   find: Object.freeze({ chance: Object.freeze({ corpse: 0.05, pile: 0.12, search: 0.15 }), amount: Object.freeze([1, 4]), perDay: 20 }),
+  eg: Object.freeze({ amount: EG_PAY_MARKS }),   // EG-E1: a Redoubt the week pays (server-account/src/egEconomy.js)
 });
 /**
  * SILVER-WAYS: THE DAY'S COMBAT CAP - what the gates and the raids strike an account together, a UTC day. The gate was
  * two a day of its own (100); a fighter now earns by raids too, and the day's ceiling rose by one raid's worth and a
  * little (150 = three gates, or five raids, or two gates and a raid and part of another). The strike that meets the cap
  * pays what the day has left of it (`combatStrike`), never nothing for a few silver short. SERPENT-SET: a serpent slain
- * strikes under the same cap - a sailor reaches the day's silver at sea too, and the ceiling does not rise.
+ * strikes under the same cap - a sailor reaches the day's silver at sea too, and the ceiling does not rise. EG-E1: and a
+ * Redoubt of the Elite Breach taken (`eg`) - the Spire's fighter reaches it there, and the ceiling still does not rise.
  */
-export const MARKS_COMBAT = Object.freeze({ kinds: Object.freeze(['gate', 'raid', 'serpent']), perDay: 150 });
+export const MARKS_COMBAT = Object.freeze({ kinds: Object.freeze(['gate', 'raid', 'serpent', 'eg']), perDay: 150 });
 /** What a combat faucet's `amount` strikes when `earned` is the day's combat silver so far: the amount, or the day's last. */
 export const combatStrike = (amount, earned) => Math.max(0, Math.min(amount, MARKS_COMBAT.perDay - Math.max(0, earned)));
 /** The Bank of the Empire's exchange: Marks for gold, never the other way. */
@@ -155,6 +162,7 @@ export const MARKS_KINDS = Object.freeze({
   'patron-escrow': 'move',    // CHAP7a: a guild's bid for a chapter's patronage, from its treasury, held until the Season it bids for opens
   patron: 'burn',             // CHAP7a: the winning bid, burnt at the Turning that opens its Season (Chapters-Arc 8, CALL 6)
   'patron-return': 'move',    // CHAP7a: a losing bid, home to its guild at that Turning - burnt where the guild is gone or full
+  eg: 'mint',                 // EG-E1: a Redoubt of the Elite Breach taken - the relay's receipt, counted once a week (under the day's combat cap)
   firmament: 'burn',          // FIRM1: the Firmament's refunds - silver a star taken back, at Renown 10 and past (firmamentLaw.js refundSilver)
 });
 

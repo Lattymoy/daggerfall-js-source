@@ -110,7 +110,7 @@ elites (x3) and the Enhanced AI's slams (x1.75) on top of BAL2's crit, nothing c
 claymore slam killed a 110-health player from full in about one landed slam in ten. BAL2 stands; the damage door now
 leaves a player at full health at 1 when one foe's blow would kill them (`characters/playerEntity.js` hurtPlayer),
 before any death save, and the next blow kills as it always has. A fall, a spell or a world boss's strike is no blow.
-`01-Overview/Field-Bugs-2026-10-11b.md`.
+`01-Overview/bugs/Field-Bugs-2026-10-11b.md`.
 
 ## 5. BAL3 - the place sets the threat
 
@@ -290,7 +290,7 @@ thirteen. The simulation leaves out the formulas' tail (an elite, the mentor, a 
 
 ## 10. What shipped
 
-All four slices in one pull request, each with its pins and mutants (`test/bal_arc.test.js`, 14 tests since AUDIT
+All four slices in one pull request, each with its pins and mutants (`test/systems/bal_arc.test.js`, 14 tests since AUDIT
 BAL, below; `tools/mutants/bal.json`, 61 mutants).
 
 **BAL1** - `combat/pcaao.js` pcaaoAlterDamageBasedOnWepCondition and pcaaoAlterArmorReducBasedOnItemCondition take
@@ -298,14 +298,14 @@ BAL, below; `tools/mutants/bal.json`, 61 mutants).
 `modules.equipmentDamageEnhanced`. Pinned: every band at 0-100% both ways, edged and blunt, weapon and armour; through
 `pcaaoAttackDamage` (400 seeded swings of a fresh longsword at an Orc Warlord: x1.3 with the wear, x1 without; a
 foe's blow on fresh plate: more taken without the wear's 0.85); the stats card's headline swing (x1.3 / x1).
-`test/pcaao.test.js` (the mod's own numbers, its wear on) unmoved.
+`test/systems/pcaao.test.js` (the mod's own numbers, its wear on) unmoved.
 
 **BAL2** - one line for the hit (`chanceToHitMod = Math.ceil(F(skill(attacker, skillID) * F(1.5)))`), one roll for the
 crit (`crit / (4 - luckTerm)`), one multiplier and aim (`1 + floor(crit / 5) * 0.05`, `+floor(crit / 4)`), one classic
 arm without the module (`crit / 3` for `+crit / 3`). Pinned by execution: a class foe's landing over a hundred
 evenly spaced rolls on a bare player (Long Blade 20: 62; ten more skill, fifteen more to hit; the 97 clamp), its crit
 doubling a blow (10 -> 20) at the player's quarter (0.24 crits, 0.25 does not), and a crit's +25 to hit on a player
-who dodges at 100 (the 3% floor -> 25). PIN MOVED in `test/pcaao.test.js`: a monster's classic crit roll (crit/3 for
+who dodges at 100 (the 3% floor -> 25). PIN MOVED in `test/systems/pcaao.test.js`: a monster's classic crit roll (crit/3 for
 +crit/3) and its divisor (90 / (4 - 2) = 45%). PIN MOVED by the full suite: two overhaul blows whose first roll is a
 monster's crit (`audit39_combat`, `diseases`: 2 x 1.2 = 2.4 -> 2 is now 2 x 1.4 = 2.8 -> 3), and CI's
 `wear_vanilla` - an armed Knight's 300 blows on iron plate fall under 5 damage 29 or 52 times by the spawn's own
@@ -313,14 +313,14 @@ monster's crit (`audit39_combat`, `diseases`: 2 x 1.2 = 2.4 -> 2 is now 2 x 1.4 
 the test's 21 mutants still die).
 
 **BAL3** - `systems/skillSoftcap.js` PLACE_THREAT, placeVeteran, wildernessThreat and progressionScaling's `place`;
-`characters/enemyEntity.js` records `progression.place`; the two seams gated on `lootRarityOn`. Pinned: the numbers
+`characters/enemy/enemyEntity.js` records `progression.place`; the two seams gated on `lootRarityOn`. Pinned: the numbers
 and the section 5 table; every dungeon kind at its ladder tier; the max rule, the foe's share, the clamp, the overcap,
 three arguments SOFTCAP2's own; the wilds by execution (a crafted MONSTER.BSA, an Orc Warlord at midnight: x1.214
 health with the ladder, DFU's with it off or on a location's ground); the dungeon's seam and the four hosts by
 source (world.js's wilds pass the location rect; exterior.js's city and worldModes.js's interiors pass none).
 
 **BAL4** - `systems/eliteFoes.js` elitesAllowed; `systems/features.js` 'enhanced-ai' `initial: true`; `systems/uiPrefs.js`
-PREF1_ADOPT_NEW_DEFAULT; `ui/deathScreen.js` `rises` and riseHint, `ui/enhancedDeath.js` deathKeys' Rise; the hosts'
+PREF1_ADOPT_NEW_DEFAULT; `ui/deathScreen.js` `rises` and riseHint, `ui/enhanced/enhancedDeath.js` deathKeys' Rise; the hosts'
 `rises` (`world.js`, `worldModes.js` and its dungeon opts, `dungeonContext.js`); `legacyDeathReset`; Privateer's Hold;
 `systems/deathPenalty.js`'s header. Pinned: elites by the ladder and the lane, and the open world's own roll by
 execution; the AI's default, the brain's and the cover's switch; the death cost by execution (a rising screen states
@@ -373,7 +373,7 @@ form of balance"*. Mac: *"Make the best balancing decisions"*.
 THE CAUSE THE MEASUREMENT COULD NOT SEE. Section 2's builds wore plain steel or ebony - no loot line, no set. Two
 things the loot ladder hands out decide a fight without the player in it:
 
-1. **The thorns** (LOOT4, `systems/lootPowers.js`) paid back every worn line, summed to at most 25, on every foe's
+1. **The thorns** (LOOT4, `systems/loot/lootPowers.js`) paid back every worn line, summed to at most 25, on every foe's
    blow that took health - flat, with no roll to hit, past the foe's armour and past the metal it asks of a weapon (an
    Ancient Lich's is Mithril). Section 7's player deals an Ancient Lich in a Dragon's Den 13.35 a swing, so 25 was
    nearly two swings paid back for every blow it landed, and the kill with it: Meaner Monsters' 80-210 health at the
@@ -419,7 +419,7 @@ RECORDED, NOT CHANGED:
   under that copy's last point, and the owner lands it on its own. A copy that lags its owner's a hit behind could let
   one through - a two-client edge, not the report's lane.
 
-Pinned: `test/bal5_blowback.test.js` (5) by execution - the real Ancient Lich's row struck at a player in Rare thorns
+Pinned: `test/systems/bal5_blowback.test.js` (5) by execution - the real Ancient Lich's row struck at a player in Rare thorns
 lines through the real damage door, worn to its last point and never killed; Spite alone and both together the same;
 3,000 seeded Rare cuirasses never drawing Troll's Blood and drawing every other armour flavour; a piece that drew it
 lawful to `itemFindings`. `tools/mutants/bal5.json` (12, all dead).
@@ -516,10 +516,10 @@ RECORDED, NOT CHANGED:
 - **The referees' fist bounds** (BAL6-GAUNTLETS, read again by AUDIT CLAWS). Both clip a claim, never refuse it. The
   duel, the siege, the Royal Tourney, a siege work and the wild zone roll through the striker's sheet of
   `combat/duelCombat.js` (duelAttackerOf - against the neutral stand-in since AUDIT C&C H5), which holds every stat and
-  skill at 100 at most: there the siege's bound (`net/siegeRef.js` siegeBlowMax: the bare
+  skill at 100 at most: there the siege's bound (`net/siege/siegeRef.js` siegeBlowMax: the bare
   hand's 21 at skill 100 and the bonuses at their caps, x2) holds a beast in Daedric gauntlets with every bonus at its
   cap - 55 of its 56 before the critical and 110 of 112 after under the overhaul, 52 in DFU's core. The arena strikes
-  through the real entity, and its cap (`net/arenaLaw.js`: a bare hand's 41 at the softcap's 200, ARENA_MOD_MAX's 20,
+  through the real entity, and its cap (`net/arena/arenaLaw.js`: a bare hand's 41 at the softcap's 200, ARENA_MOD_MAX's 20,
   x2) already clips a level-30 beast's top critical, the beast's +30 Critical Strike taking the overhaul's multiplier
   past x2 (x2.3 at 130): a Khajiit hand-to-hand expert's bare critical 127 (5 clipped), in Daedric 140 (18). Both are
   the relay's, and neither moved here.
@@ -528,7 +528,7 @@ RECORDED, NOT CHANGED:
   reading it would make the beast stronger in PvP, not weaker.
 - **The wereboar** is the werewolf in another skin (the same advantages, claws and change), as in DFU.
 
-Pinned: `test/bal6_curses.test.js` (6) by execution - the advantages through liveStat and skillValue in both forms, at
+Pinned: `test/systems/bal6_curses.test.js` (6) by execution - the advantages through liveStat and skillValue in both forms, at
 the change's instant and after a round, a pre-BAL6 save's word rewritten; the heal's day, the Ring's change without it,
 the stamp clamped on a load; BAL6-CLAWS: 2,000 seeded beast swings at a Lich's Mithril whole, as at no metal, with
 the soft rule on and off and nothing said, a man's fist the same, and DFU's core seed for seed; BAL6-GAUNTLETS:
@@ -541,7 +541,7 @@ roof, bare and hooded. `tools/mutants/bal6.json` (26, all dead: BAL6-CLAWS retir
 four at the restored gates - the claws as silver in either core, the claws refused with DFU's line under the overhaul
 with its soft rule off, every fist gated; BAL6-GAUNTLETS aimed eleven - every fist's, iron's -1 taken, leather or chain
 a metal, a metal past Daedric, the wrong slot, either core without it, the metal as to-hit in either core, the card
-without it, and mintCondition's plate offset, which `test/audit23_systems.test.js` pins). AUDIT CLAWS's own, below.
+without it, and mintCondition's plate offset, which `test/systems/audit23_systems.test.js` pins). AUDIT CLAWS's own, below.
 
 ### AUDIT CLAWS (2026-10-12, the owner: "Audit this") - BAL6-CLAWS and BAL6-GAUNTLETS read again before they merge
 
@@ -549,7 +549,7 @@ Three independent lanes, each a cold read of the pull request (#841) against a f
 repros: every place a claw blow is struck, refereed, predicted or shown, and the beast-form flag's life; every gauntlet
 the game can put on and what it is made of; and what the change says and pins (every number recomputed, its pins
 mutated past their 26 records - 47 more, and 5). CI's own run found one more. Every finding was reproduced before it
-was fixed. FOUND, each fixed and pinned (`test/auditclaws.test.js` 4; `test/bal6_curses.test.js`'s pins strengthened,
+was fixed. FOUND, each fixed and pinned (`test/systems/auditclaws.test.js` 4; `test/systems/bal6_curses.test.js`'s pins strengthened,
 still 6; `tools/mutants/auditclaws.json` 22 of 22 dead, `bal6.json` 26 of 26):
 
 - **HIGH - A1: the gauntlets never reached a refereed blow.** The duel, the siege, the Royal Tourney, a siege work and
@@ -562,7 +562,7 @@ still 6; `tools/mutants/auditclaws.json` 22 of 22 dead, `bal6.json` 26 of 26):
   a neutral stand-in since, which carries no `cm`; the stub has no equip table either way). The client's
   alone: since INT8 the sheet never goes on the wire (a strike carries its rolled `d`), and the referees' bounds hold
   the claim (RECORDED above).
-- **MEDIUM - A2: a load kept the last game's beast form.** `systems/save.js` restorePlayer writes a save onto the same
+- **MEDIUM - A2: a load kept the last game's beast form.** `systems/save/save.js` restorePlayer writes a save onto the same
   entity, and it rebuilt the curse's marker but not `isInBeastForm`, its mirror. A man's save loaded over a transformed
   werewolf kept it (the curse's round returns at once with no curse), so his fist took the gauntlets' +6 and the
   street's politeness gate and the tells read a beast; a transformed save on a fresh page waited a round for it, the
@@ -572,7 +572,7 @@ still 6; `tools/mutants/auditclaws.json` 22 of 22 dead, `bal6.json` 26 of 26):
   code into treating this item as leather for forbidden checks"), and so do the forbidden-armour test, Better Ambience
   and Immersive Footsteps. The law read the raw material: a career barred from plate wore Daedric brigandine for
   Daedric claws - about half the Gloves-slot pieces random loot draws, and the Master Armorer sells them. FIXED: the
-  class's material (`systems/rriItems.js` rriNativeMaterialValue, the port's one reader of it).
+  class's material (`systems/roleplayRealismItems/rriItems.js` rriNativeMaterialValue, the port's one reader of it).
 - **LOW - B3: a broken pair kept its metal.** Survival's rust writes a worn piece's condition straight down and leaves
   it on, and a classic import keeps a worn 0-condition piece worn. FIXED: a broken piece (`equip.js` isBrokenItem) is
   no metal.
@@ -596,7 +596,7 @@ still 6; `tools/mutants/auditclaws.json` 22 of 22 dead, `bal6.json` 26 of 26):
   (`ui/statsCard.js` as it was); the card still models the cores for whatever entity it is handed, and the pages say
   what a player can see.
 - **LOW - CI: the account Worker bundles the law.** The account service reaches `combat/formulas.js`, so
-  `combat/clawMetal.js` joined its bundle without joining its deploy's path filter (`test/accountdeploy.test.js` walks
+  `combat/clawMetal.js` joined its bundle without joining its deploy's path filter (`test/server/accountdeploy.test.js` walks
   the graph): a change to it alone would never have deployed the service. FIXED
   (`.github/workflows/account-deploy.yml`). The change's own fast runs could not see it - a Worker's import walk
   imports nothing of the file and names it nowhere - so the suite's eight import-graph walks ran with them after.
@@ -610,8 +610,8 @@ RECORDED, NOT FIXED (each another arc's, or the relay's):
 - **The arena's fist cap clips a beast's top critical** (A5) - above, under the referees' fist bounds.
 - **The plate encoding is still written beside its home**: `combat/enemyEquipment.js` ARMOR_MATERIAL (Leather, Chain,
   PLATE_BASE), `net/recipeLaw.js` ARMOR_LEATHER/CHAIN/PLATE (read by `net/temperLaw.js` and `systems/smithItems.js`),
-  `systems/itemLaw.js`'s literal list of the thirteen, `ui/paperDoll.js`'s dye index (a second GetArmorDyeColor beside
-  `systems/itemDye.js` armorDyeColor), and `systems/itemInfo.js`'s name index (`& 0xff`, which names a quest's
+  `systems/item/itemLaw.js`'s literal list of the thirteen, `ui/paperDoll.js`'s dye index (a second GetArmorDyeColor beside
+  `systems/item/itemDye.js` armorDyeColor), and `systems/item/itemInfo.js`'s name index (`& 0xff`, which names a quest's
   materialless Gauntlets "Iron" while they are priced and armoured as leather).
 - **`systems/physicalItems.js` itemLook reads `nativeMaterialValue`**, which no producer writes: a leather and a Daedric
   pair share one look key in the world's item pool.
@@ -646,7 +646,7 @@ Four things decided a fight without the player in it:
 THE LAWS. Vampiric Effect is retired from the Rare weapon draw as BAL5 retired Troll's Blood (`retired`: the law and
 the market still read a piece that drew it as minted, so it keeps it; the item maker still sells it at DFU's price;
 Gortwog's Cleaver carries it as its record's - a Legendary's enchantment is never a flavour). The leech a weapon's lines
-and gems sum to is at most `LEECH_CAP` 10 (`systems/lootPowers.js`) - the top of a Legendary line's band, as THORNS_CAP
+and gems sum to is at most `LEECH_CAP` 10 (`systems/loot/lootPowers.js`) - the top of a Legendary line's band, as THORNS_CAP
 is; every line already rolled stays lawful. Hist-Sap is 1% a round, 2% under half. Open Hand's second blow lands for
 half (`share`, the record's), never less than a point; its card says so.
 
@@ -665,7 +665,7 @@ RECORDED, NOT CHANGED:
   stacked burst on a cooldown.
 - **Gortwog's Cleaver** keeps its record's Vampiric Effect: one named Legendary, never a random draw.
 
-Pinned: `test/bal7_loot.test.js` (3) by execution - 3,000 seeded Rare blades never drawing Vampiric Effect and drawing
+Pinned: `test/systems/bal7_loot.test.js` (3) by execution - 3,000 seeded Rare blades never drawing Vampiric Effect and drawing
 every other weapon flavour, a piece that drew it lawful, the Cleaver's record; a line and a gem healing 10 of 100;
 Hist-Sap's round at 61 and 42 of 100; Open Hand's 20 again for 10, a 1 for 1, a weapon's for nothing.
 `tools/mutants/bal7.json` (6). PIN MOVED: `loot5_powers` (Hist-Sap's 62 and 44 are 61 and 42, Open Hand's 7 is 4) and
@@ -689,15 +689,15 @@ BAL2's law for the foes - one rule for every striker - had not reached the refer
    backstab at all (`combat/duelCombat.js`), and AUDIT WB11 W2 found and fixed the same yaw-0 back on the crystals.
 
 THE LAWS. Every harm a fighter deals - blows and casts together, so a blade and a spell are never two ceilings - is at
-most `SIEGE_HARM` (`net/siegeRef.js`: the casts' own 180 in any 5 s), in `refereeBlow` and `refereeCast`, the one
-referee of the duel (`net/duelRef.js`), the Wild Zone (`net/wildRef.js`) and the siege's room (`server/src/index.js`).
+most `SIEGE_HARM` (`net/siege/siegeRef.js`: the casts' own 180 in any 5 s), in `refereeBlow` and `refereeCast`, the one
+referee of the duel (`net/duel/duelRef.js`), the Wild Zone (`net/wild/wildRef.js`) and the siege's room (`server/src/index.js`).
 A claim past it is judged and lands nothing (the striker's `clipped` counts it); a heal is no harm; a room's fighter
 from before BAL8 has dealt none. The arena's swing and shaft doors hand the rival no facing (`scenes/dungeonContext.js`:
 `_backFacing = false`, `playerFeet: null`) - no backstab at a player in any lane. The relay is `world197`.
 
 WHAT MOVES. Only a striker past 36 a second sustained: the kitted monk 45.8 -> 36; every measured sword, bow and gun
 stands (18.2, 26.5, 13). A spellsword's blows and casts share the one 180. The arena's bouts lose the free x3 from the
-rival's -z side. Not moved: the arena's own bucket (`net/arenaLaw.js` ARENA_BUCKET_RATE 40, depth 120), its own lane's.
+rival's -z side. Not moved: the arena's own bucket (`net/arena/arenaLaw.js` ARENA_BUCKET_RATE 40, depth 120), its own lane's.
 
 RECORDED, NOT CHANGED:
 
@@ -716,7 +716,7 @@ RECORDED, NOT CHANGED:
   x0.8 at a Mithril foe). The arena's blow table has no row for its template 560 (a bare hand's cap, 122, where its own
   would be ~96) - harmless at its numbers.
 
-Pinned: `test/bal8_pvp.test.js` (3) - the ceiling by execution (two blows reach 180, the third lands nothing, the
+Pinned: `test/net/siege/bal8_pvp.test.js` (3) - the ceiling by execution (two blows reach 180, the third lands nothing, the
 window slides at 5 s to the millisecond, casts and a blow sharing it, INT10's three still its own, a heal no harm, a
 fighter without the field); one referee for the three lanes and the arena's two doors by source.
 `tools/mutants/bal8.json` (7). PIN MOVED: `tools/mutants/pvpref.json`'s five clipping records, re-aimed by content; the
@@ -790,7 +790,7 @@ THE LAWS.
   and nothing trains slower than it did.
 - **BAL9b, THE SCHOOL PAST 100 IS ITS POTENCY** (CLIMB-PAST's law, for the school whose formula stops paying at 100).
   Online, each effective point of Destruction's CLIMB past 100 lands its damage-health effects - Damage Health and
-  Continuous Damage Health, the instant and every round - 1% harder: x1.4 at 200 (`systems/spellPower.js`
+  Continuous Damage Health, the instant and every round - 1% harder: x1.4 at 200 (`systems/spell/spellPower.js`
   schoolPotency, read by `systems/effects.js` casterDamageScaled with the blow's own rounding and floor of one; a spell
   the throw turned whole stays nothing). The climb is `skillSoftcap.js` climbedSkill - the one read the foes' edge
   takes, so the climb that raises them is the climb that pays; a worn Destruction line already pays in price (the live
@@ -815,7 +815,7 @@ THE LAWS.
 
   All the loot adds to a spell's landing, lines and powers together, is at most `SPELL_POWER_MOST` 50 (SPELL_CUT_MOST's
   50 for the price). Every one is MY entity's at a foe: never at a player (the loot arc's law 5), never a peer's, nothing
-  with the ladder off. The item law is at 3 (`systems/itemLaw.js` ITEM_LAW_VERSION) and the account service that judges
+  with the ladder off. The item law is at 3 (`systems/item/itemLaw.js` ITEM_LAW_VERSION) and the account service that judges
   by it at `acct121`, so an honest piece minted after the site deploys is never read as a forgery (AUDIT TECH1's "the law
   moves the service"); `spellPower.js` joins the account Worker's deploy filter.
 
@@ -873,7 +873,7 @@ owner made the call above): each pays in its own dimension by this section's law
 foe, never in a refereed fight, so the referee's heal ceiling (INT10's 40) is not reached. The bullet stood in the list
 above until AUDIT SCHOOLS (L5) moved it out: a change is no "recorded, not changed".
 
-Pinned: `test/bal9_destruction.test.js` (6) by execution - through the real cast engine's two landing doors (the
+Pinned: `test/systems/bal9_destruction.test.js` (6) by execution - through the real cast engine's two landing doors (the
 Lich's tier 135 noted, a cast at 120 weighing 1.125, a rat's never under the quarter, an ally's and a peer's strike
 spell nothing, a foe's spell on me its caster); through the real applySpell on a chargen'd mage mastered online and off
 (x1, x1.17, x1.4; a damage over time's round; nothing offline, at a player's stand-in, from a peer's or a foe's cast, on a

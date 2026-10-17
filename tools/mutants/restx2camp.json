@@ -1,39 +1,39 @@
 [
   {
     "name": "RESTX2-TIME3-the-rest-stands-the-quests-down-online",
-    "file": "src/systems/restSession.js",
+    "file": "src/systems/rest/restSession.js",
     "old": "      this.deps.tickQuests?.();",
     "new": "      if (!Number.isFinite(this.deps.sharedMinutes?.())) this.deps.tickQuests?.();",
     "tests": [
-      "test/restx2_online_rest.test.js"
+      "test/systems/rest/restx2_online_rest.test.js"
     ],
     "note": "TIME3 (SUPERSEDED, REVERSED): RESTX2 stood the quest tick down online and this record killed its removal; TIME3 made the removal the law (a quest's countdowns run on the character's clock, which the rest moves), so the record now kills the stand-down put back."
   },
   {
     "name": "RESTX2-the-session-hands-the-host-an-end-again",
-    "file": "src/systems/restSession.js",
+    "file": "src/systems/rest/restSession.js",
     "old": "      this.deps.advanceMinutes(MINUTES_PER_TICK);",
     "new": "      this.deps.advanceMinutes(MINUTES_PER_TICK, this.deps.sharedMinutes?.() ?? undefined);",
     "tests": [
-      "test/restx2_online_rest.test.js"
+      "test/systems/rest/restx2_online_rest.test.js"
     ]
   },
   {
     "name": "RESTX2-online-banks-no-real-time-RESTX1s-skip-back",
-    "file": "src/systems/restSession.js",
+    "file": "src/systems/rest/restSession.js",
     "old": "  _accrue(dt) {\n    this._timer += dt;\n  }",
     "new": "  _accrue(dt) {\n    if (!Number.isFinite(this.deps.sharedMinutes?.())) this._timer += dt;\n  }",
     "tests": [
-      "test/restx2_online_rest.test.js"
+      "test/systems/rest/restx2_online_rest.test.js"
     ]
   },
   {
     "name": "RESTX2-F1s-full-health-guard-put-back",
-    "file": "src/systems/restSession.js",
+    "file": "src/systems/rest/restSession.js",
     "old": "        this.deps.tickVitals();\n        if (--this.hoursRemaining < 1) done = REST_TEXT.wakeUp;",
     "new": "        if (!this.deps.fullyHealed?.()) this.deps.tickVitals();\n        if (--this.hoursRemaining < 1) done = REST_TEXT.wakeUp;",
     "tests": [
-      "test/restx2_online_rest.test.js"
+      "test/systems/rest/restx2_online_rest.test.js"
     ]
   },
   {
@@ -42,8 +42,8 @@
     "old": "  return `World time ${two(d.hour)}:${two(d.minute)} - you ${loiter ? 'wait' : 'rest'} on your own clock`;",
     "new": "  return `World time ${two(d.hour)}:${two(d.minute)} - resting does not move it`;",
     "tests": [
-      "test/ol2.test.js",
-      "test/restx2_online_rest.test.js"
+      "test/ui/ol2.test.js",
+      "test/systems/rest/restx2_online_rest.test.js"
     ]
   },
   {
@@ -52,7 +52,7 @@
     "old": "    const now = Math.floor(playerTicker.ownMinutes);",
     "new": "    const now = Math.floor(playerTicker.classicMinutes);",
     "tests": [
-      "test/restx2_online_rest.test.js"
+      "test/systems/rest/restx2_online_rest.test.js"
     ]
   },
   {
@@ -61,8 +61,8 @@
     "old": "    const now = Math.floor(playerTicker.ownMinutes);",
     "new": "    const now = Math.floor(playerTicker.classicMinutes);",
     "tests": [
-      "test/restx2_online_rest.test.js",
-      "test/exteriorfoes.test.js"
+      "test/systems/rest/restx2_online_rest.test.js",
+      "test/scenes/exteriorfoes.test.js"
     ]
   },
   {
@@ -71,7 +71,7 @@
     "old": "export const campWindowOpen = (gameMinutes) => Math.floor(gameMinutes) % CAMP_WINDOW_MINUTES === 0;",
     "new": "export const campWindowOpen = (gameMinutes) => Math.floor(gameMinutes) % (CAMP_WINDOW_MINUTES * 2) === 0;",
     "tests": [
-      "test/camp1_groups.test.js"
+      "test/systems/camp1_groups.test.js"
     ]
   },
   {
@@ -80,7 +80,7 @@
     "old": "const campGateOk = (ctx) => !(ctx.inside || ctx.inLocationRect || ctx.preventEnemySpawns);",
     "new": "const campGateOk = (ctx) => !(ctx.inside || ctx.preventEnemySpawns);",
     "tests": [
-      "test/camp1_groups.test.js"
+      "test/systems/camp1_groups.test.js"
     ]
   },
   {
@@ -89,7 +89,7 @@
     "old": "  if (!campWindowOpen(ctx.gameMinutes)) return null;\n  // GUARANTEED: no chance check here any more - every open window (once\n  // per 15 real minutes) spawns a group. See the header note above.\n  return rollGroupComposition(ctx, rolls);",
     "new": "  if (!campWindowOpen(ctx.gameMinutes)) return null;\n  if (!rollCampChance(rolls())) return null;\n  return rollGroupComposition(ctx, rolls);",
     "tests": [
-      "test/camp1_groups.test.js"
+      "test/systems/camp1_groups.test.js"
     ]
   },
   {
@@ -98,7 +98,7 @@
     "old": "  if (!rollCampChanceOnChunkLoad(rolls())) return null;\n  return rollGroupComposition(ctx, rolls);",
     "new": "  return rollGroupComposition(ctx, rolls);",
     "tests": [
-      "test/camp1_groups.test.js"
+      "test/systems/camp1_groups.test.js"
     ]
   },
   {
@@ -107,7 +107,7 @@
     "old": "  const near = (a, b) => { const dx = a[0] - b[0], dz = a[2] - b[2]; return dx * dx + dz * dz <= r2; };",
     "new": "  const near = (a, b) => { const dx = a[0] - b[0], dz = a[2] - b[2]; return dx * dx + dz * dz < r2; };",
     "tests": [
-      "test/camp1_groups.test.js"
+      "test/systems/camp1_groups.test.js"
     ]
   },
   {
@@ -116,7 +116,7 @@
     "old": "  all.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));",
     "new": "  all.sort((a, b) => (a.id > b.id ? -1 : a.id < b.id ? 1 : 0));",
     "tests": [
-      "test/camp1_groups.test.js"
+      "test/systems/camp1_groups.test.js"
     ]
   },
   {
@@ -125,7 +125,7 @@
     "old": "  if (myId == null || !myFeet || !peers?.length) return true;",
     "new": "  if (myId == null || !myFeet || !peers?.length) return false;",
     "tests": [
-      "test/camp1_groups.test.js"
+      "test/systems/camp1_groups.test.js"
     ]
   },
   {
@@ -134,7 +134,7 @@
     "old": "    spacing: kind === 'camp' ? CAMP_SPACING : PACK_SPACING,",
     "new": "    spacing: CAMP_SPACING,",
     "tests": [
-      "test/camp1_groups.test.js"
+      "test/systems/camp1_groups.test.js"
     ]
   },
   {
@@ -143,7 +143,7 @@
     "old": "      if ((modes?.mode ?? 'exterior') === 'exterior' && !playerEntity.isResting && !travelOptions?.isTravelActive && getPref('wildernessCamps') !== false && amGroupRollOwner(online?.id ?? null, player.feetAt(), peersNear())) {   // CAMP-REST: never while the player is resting or waiting; CAMP-TRAVEL (2026-09-25, Mac: \"it would stop players too often\"): nor while a Travel Options journey runs - the pixels a ride crosses roll no camps",
     "new": "      if ((modes?.mode ?? 'exterior') === 'exterior' && !playerEntity.isResting && !travelOptions?.isTravelActive && getPref('wildernessCamps') !== false) {   // CAMP-REST: never while the player is resting or waiting; CAMP-TRAVEL (2026-09-25, Mac: \"it would stop players too often\"): nor while a Travel Options journey runs - the pixels a ride crosses roll no camps",
     "tests": [
-      "test/camp1_groups.test.js"
+      "test/systems/camp1_groups.test.js"
     ]
   },
   {
@@ -152,7 +152,7 @@
     "old": "      if ((modes?.mode ?? 'exterior') === 'exterior' && !playerEntity.isResting && !travelOptions?.isTravelActive && getPref('wildernessCamps') !== false && amGroupRollOwner(online?.id ?? null, player.feetAt(), peersNear())) {   // CAMP-REST: never while the player is resting or waiting; CAMP-TRAVEL (2026-09-25, Mac: \"it would stop players too often\"): nor while a Travel Options journey runs - the pixels a ride crosses roll no camps",
     "new": "      if (!playerEntity.isResting && !travelOptions?.isTravelActive && getPref('wildernessCamps') !== false && amGroupRollOwner(online?.id ?? null, player.feetAt(), peersNear())) {",
     "tests": [
-      "test/camp1_groups.test.js"
+      "test/systems/camp1_groups.test.js"
     ]
   },
   {
@@ -161,7 +161,7 @@
     "old": "        if (!hadTarget && ai.target && f.campId != null) wakeCampmates(f);",
     "new": "        if (ai.target && f.campId != null) wakeCampmates(f);",
     "tests": [
-      "test/camp1_groups.test.js"
+      "test/systems/camp1_groups.test.js"
     ]
   },
   {
@@ -170,7 +170,7 @@
     "old": "      if (g === f || g.dead || g.campId !== f.campId || g.ai?.target) continue;",
     "new": "      if (g === f || g.dead || g.ai?.target) continue;",
     "tests": [
-      "test/camp1_groups.test.js"
+      "test/systems/camp1_groups.test.js"
     ]
   },
   {
@@ -179,7 +179,7 @@
     "old": "      exteriorFoes.update(foeDt, _pf, cam.pos, _foeSenses());",
     "new": "      exteriorFoes.update(townTalk.overlayActive ? 0 : dt, _pf, cam.pos, _foeSenses());",
     "tests": [
-      "test/winfoe1_foes_under_windows.test.js"
+      "test/scenes/winfoe1_foes_under_windows.test.js"
     ]
   },
   {
@@ -188,8 +188,8 @@
     "old": "      const popDt = townTalk.overlayActive ? 0 : dt;",
     "new": "      const popDt = dt;",
     "tests": [
-      "test/winfoe1_foes_under_windows.test.js",
-      "test/qx1_exterior_host.test.js"
+      "test/scenes/winfoe1_foes_under_windows.test.js",
+      "test/systems/qx1_exterior_host.test.js"
     ]
   },
   {
@@ -198,7 +198,7 @@
     "old": "  return Math.max(1, Math.floor(m * RESPAWN_HEALTH_FRACTION));",
     "new": "  return Math.floor(m * RESPAWN_HEALTH_FRACTION);",
     "tests": [
-      "test/donline1_respawn.test.js"
+      "test/scenes/donline1_respawn.test.js"
     ]
   },
   {
@@ -207,7 +207,7 @@
     "old": "  { kind: 'graveyard', match: (e) => e.locationType === LOCATION_TYPES.Graveyard && e.dungeonType === DUNGEON_TYPES.Cemetery },",
     "new": "  { kind: 'graveyard', match: (e) => e.locationType === LOCATION_TYPES.Graveyard },",
     "tests": [
-      "test/donline1_respawn.test.js"
+      "test/scenes/donline1_respawn.test.js"
     ]
   },
   {
@@ -216,7 +216,7 @@
     "old": "    const px = longitudeLatitudeToMapPixel(e.longitude, e.latitude);",
     "new": "    const px = longitudeLatitudeToMapPixel(e.latitude, e.longitude);",
     "tests": [
-      "test/donline1_respawn.test.js"
+      "test/scenes/donline1_respawn.test.js"
     ]
   },
   {
@@ -225,7 +225,7 @@
     "old": "  const _onlineWorldSession = () => onlineOn || !!(online && online.status === 'open' && (isWorldRoom(online.room) || isCellRoom(online.room)));",
     "new": "  const _onlineWorldSession = () => onlineOn || !!(online && online.status === 'open' && isWorldRoom(online.room));",
     "tests": [
-      "test/donline1_respawn.test.js"
+      "test/scenes/donline1_respawn.test.js"
     ]
   },
   {
@@ -234,7 +234,7 @@
     "old": "      if (mode !== 'exterior') modes?.forceExitToExterior();",
     "new": "      if (wasInDungeon) modes?.forceExitToExterior();",
     "tests": [
-      "test/donline1_respawn.test.js"
+      "test/scenes/donline1_respawn.test.js"
     ]
   },
   {
@@ -243,8 +243,8 @@
     "old": "      if (townTalk.overlay instanceof DeathScreen && _deathWasOnline) townTalk.overlay.input('confirm');",
     "new": "      if (false) townTalk.overlay.input('confirm');",
     "tests": [
-      "test/donline1_respawn.test.js",
-      "test/fixe_deathMenu.test.js"
+      "test/scenes/donline1_respawn.test.js",
+      "test/scenes/fixe_deathMenu.test.js"
     ]
   },
   {
@@ -253,8 +253,8 @@
     "old": "      if (_deathWasOnline == null) _deathWasOnline = _onlineWorldSession();   // D-ONLINE1: the modal hosts' deaths (a dungeon's, a building's) are captured here, BEFORE the leave below clears online.room\n      { const hourSlot = modes?.sdRealmSlot?.() ?? null; if (hourSlot != null) _sdFallen.add(hourSlot); }   // SD-ONELIFE: a death in the Hour is final for its Hollow (AUDIT SD III: under D-ONLINE1's capture, the block's first statement as AUDIT WORLD B6 and MWBODY1 hold it)\n      if (_wildGhost && online.room) online.tick();   // WILD1: the ghost's socket kept alive (its pings, its reconnect) - it sends no pose\n      if (_wildGhost && _wildGhostEndAt != null && Date.now() >= _wildGhostEndAt && !_wildDeposits.length) wildGhostLeave();   // AUDIT INT9: a hall's or a building's ghost, its deposit gone\n      if (online.room && !_wildGhost) {\n        // PCORPSE1: the body is left where it fell - one last pose, flagged, before the leave below takes the living figure\n        _deadMark = online._pose ? { k: online.room, x: online._pose.x, y: online._pose.y, z: online._pose.z, at: Date.now() } : null;\n        _partyComposedAt = -Infinity;\n        // PDEATH-FOES, AUDIT CONTRIB P1: my foes are the survivors' now (handOverFoes), named on my last frame BEFORE the\n        // death pose; what nobody took stays mine\n        const _handed = handOverFoes() || handOverRoomFoes();   // QUEST-PARTY phase 3b: or my building's\n        if (_handed) console.info(`[foes] handed ${_handed} foe(s) to the survivors`);\n        online.sendDeath?.();\n        // WILD1: a death in the open zone - the bag and the cart dropped to the room's remains while the room is still\n        // mine, and at another player's hand my worn gear offered to them: then my socket stays in the cell (a cell has\n        // no host to hand over) while my body lies, so their pick reaches me (wildDeathBegin sets _wildGhost)\n        wildDeathBegin();\n      }\n      if (online.room && !_wildGhost) { worldPublish(now, true); online.leave(); exteriorFoes.clearPuppets(); modes?.clearOwnPuppets?.(); _foesRoom = null; }\n",
     "new": "      { const hourSlot = modes?.sdRealmSlot?.() ?? null; if (hourSlot != null) _sdFallen.add(hourSlot); }   // SD-ONELIFE: a death in the Hour is final for its Hollow (AUDIT SD III: under D-ONLINE1's capture, the block's first statement as AUDIT WORLD B6 and MWBODY1 hold it)\n      if (_wildGhost && online.room) online.tick();   // WILD1: the ghost's socket kept alive (its pings, its reconnect) - it sends no pose\n      if (_wildGhost && _wildGhostEndAt != null && Date.now() >= _wildGhostEndAt && !_wildDeposits.length) wildGhostLeave();   // AUDIT INT9: a hall's or a building's ghost, its deposit gone\n      if (online.room && !_wildGhost) {\n        // PCORPSE1: the body is left where it fell - one last pose, flagged, before the leave below takes the living figure\n        _deadMark = online._pose ? { k: online.room, x: online._pose.x, y: online._pose.y, z: online._pose.z, at: Date.now() } : null;\n        _partyComposedAt = -Infinity;\n        // PDEATH-FOES, AUDIT CONTRIB P1: my foes are the survivors' now (handOverFoes), named on my last frame BEFORE the\n        // death pose; what nobody took stays mine\n        const _handed = handOverFoes() || handOverRoomFoes();   // QUEST-PARTY phase 3b: or my building's\n        if (_handed) console.info(`[foes] handed ${_handed} foe(s) to the survivors`);\n        online.sendDeath?.();\n        // WILD1: a death in the open zone - the bag and the cart dropped to the room's remains while the room is still\n        // mine, and at another player's hand my worn gear offered to them: then my socket stays in the cell (a cell has\n        // no host to hand over) while my body lies, so their pick reaches me (wildDeathBegin sets _wildGhost)\n        wildDeathBegin();\n      }\n      if (online.room && !_wildGhost) { worldPublish(now, true); online.leave(); exteriorFoes.clearPuppets(); modes?.clearOwnPuppets?.(); _foesRoom = null; }\n      if (_deathWasOnline == null) _deathWasOnline = _onlineWorldSession();   // D-ONLINE1: the modal hosts' deaths (a dungeon's, a building's) are captured here, BEFORE the leave below clears online.room\n",
     "tests": [
-      "test/donline1_respawn.test.js",
-      "test/auditworld.test.js"
+      "test/scenes/donline1_respawn.test.js",
+      "test/net/auditworld.test.js"
     ]
   }
 ]

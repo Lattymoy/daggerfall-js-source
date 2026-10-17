@@ -5,7 +5,7 @@
     "old": "    while (j < cps.length && isWordChar(cps[j])) j++;",
     "new": "    while (j < cps.length) j++;",
     "tests": [
-      "test/text_filter.test.js"
+      "test/net/text_filter.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    if (!single(k)) { k++; continue; }",
     "new": "    { k++; continue; }",
     "tests": [
-      "test/text_filter.test.js"
+      "test/net/text_filter.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    while (to > from && EDGE_TAIL.has(cps[to - 1])) to--;\n",
     "new": "",
     "tests": [
-      "test/text_filter.test.js"
+      "test/net/text_filter.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  const any = anywhereIn(flat);\n  if (any) return any.word;\n",
     "new": "",
     "tests": [
-      "test/text_filter.test.js"
+      "test/net/text_filter.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "const TEXT_LISTS = Object.freeze([{ kind: 'slur', words: SLURS }, { kind: 'crude', words: CRUDE }]);",
     "new": "const TEXT_LISTS = Object.freeze([{ kind: 'slur', words: SLURS }, { kind: 'crude', words: CRUDE }, { kind: 'impersonation', words: IMPERSONATION }]);",
     "tests": [
-      "test/text_filter.test.js"
+      "test/net/text_filter.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "  if (/^\\p{N}+$/u.test(word)) return null;\n",
     "new": "",
     "tests": [
-      "test/text_filter.test.js"
+      "test/net/text_filter.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "  if (any) return { ok: false, kind: any.kind, word: any.word, reason: `That name reads as \"${any.word}\". Please pick another.` };\n",
     "new": "",
     "tests": [
-      "test/text_filter.test.js"
+      "test/net/text_filter.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "  return maskText(s.trim());",
     "new": "  return s.trim();",
     "tests": [
-      "test/text_filter.test.js"
+      "test/net/text_filter.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "=> maskText(visibleText(String(line",
     "new": "=> String(visibleText(String(line",
     "tests": [
-      "test/text_filter.test.js"
+      "test/net/text_filter.test.js"
     ]
   },
   {
@@ -86,16 +86,16 @@
     "old": " && !textCaught(look.class) ? look.class.trim() : null;",
     "new": " ? look.class.trim() : null;",
     "tests": [
-      "test/text_filter.test.js"
+      "test/net/text_filter.test.js"
     ]
   },
   {
     "name": "TEXT-F1-the-typed-name-raw",
-    "file": "src/systems/itemInfo.js",
+    "file": "src/systems/item/itemInfo.js",
     "old": "    shown = maskText(name);",
     "new": "    shown = name;",
     "tests": [
-      "test/text_filter.test.js"
+      "test/net/text_filter.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "  return n && !textCaught(n) ? n : null;",
     "new": "  return n;",
     "tests": [
-      "test/text_filter.test.js"
+      "test/net/text_filter.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "subject: maskText(n.subject), body: maskText(n.body),",
     "new": "subject: n.subject, body: n.body,",
     "tests": [
-      "test/text_filter.test.js"
+      "test/net/text_filter.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "subject: maskText(x.subject), body: maskText(x.body),",
     "new": "subject: x.subject, body: x.body,",
     "tests": [
-      "test/text_filter.test.js"
+      "test/net/text_filter.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "subject: maskText(n.subject), body: maskText(n.body),",
     "new": "subject: n.subject, body: n.body,",
     "tests": [
-      "test/text_filter.test.js"
+      "test/net/text_filter.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "  if (caught) return { error: 'guild-rank-word', word: caught };\n",
     "new": "",
     "tests": [
-      "test/text_filter.test.js"
+      "test/net/text_filter.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "(r.error === 'guild-name-word' || r.error === 'guild-rank-word') && typeof r.word === 'string'",
     "new": "r.error === 'guild-name-word' && typeof r.word === 'string'",
     "tests": [
-      "test/text_filter.test.js"
+      "test/net/text_filter.test.js"
     ]
   }
 ]

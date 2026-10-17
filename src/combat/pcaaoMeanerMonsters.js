@@ -14,7 +14,7 @@
 // Ralzar's at mint, as PCAAO Awakes after its dependency. The rows are the C#'s, index for index, value for
 // value; every field the C# leaves alone is the base row's.
 //
-// A LEAF on purpose: characters/enemyEntity.js reads it when it mints a
+// A LEAF on purpose: characters/enemy/enemyEntity.js reads it when it mints a
 // foe, and that file must not reach the combat formulas.
 // ═══════════════════════════════════════════════════════════════════
 

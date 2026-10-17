@@ -19,7 +19,7 @@
 // window yet (Ledger C), so the flow mounts this from the start
 // menu's Load arm instead - see scenes/menu.js.
 
-import { nativeMetrics, drawImg, drawRect, shadowText, pointToNative, DEFAULT_TEXT_COLOR } from './nativePanel.js';
+import { nativeMetrics, drawImg, drawRect, shadowText, pointToNative, DEFAULT_TEXT_COLOR } from './native/nativePanel.js';
 import { audio } from '../systems/audio.js';   // AUDIT 64 F44: the three sounded click handlers
 import { SOUND } from '../systems/soundClips.js';
 

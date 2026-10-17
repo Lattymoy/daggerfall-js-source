@@ -1,0 +1,356 @@
+// FT18 (2026-09-25, Mac: "Add option to set all mods/enhancements off", "Add search bar to mods/enhancements in the
+// ingame pause menu", "Lets do a comprehensive reorganize and consolidation of our mod/enhancements. Determine toggles
+// that dont need to exist anymore or ways to clean up"). The Features home, reorganized:
+//   - TEN ROWS ARE FOUR. Grass (density + style), wind (sway + wisps), quick slots (the diamond + quickbar-or-hotbar)
+//     and blood (marks + overkill + lens + gore): one bar each, the rest PARTS in the tile's drawer. No key, default
+//     or consumer changed - the rows that are gone are declared on the row that covers them (`also`).
+//   - TWO GROUPS MORE: Interface (what is drawn over the world) and Sound (what you hear).
+//   - ALL OFF, AND RESTORE: every switch to Off, a row with no Off to Daggerfall's own (`classic`), kept so Restore
+//     can put it back; a choice with neither stays, and online the room's rows are not touched.
+//   - THE SEARCH: words over the title, the note, the labels, the parts and a mod's author.
+//   - AND WHAT THE AUDIT FOUND: the outdoors bar's Off did not say Off (so the tile never read off); the Morrowind
+//     card printed "null" (a moved key's row appended bare); Weapon Sheathing's tile never rebuilt the holster its
+//     effect line promised.
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { FEATURES, GROUPS, GROUP_ORDER, checkFeature, checkFeatures, resolveControl, featureSearchText, matchesFeatureQuery, FEATURE_PREF_DEFAULTS } from '../../src/systems/features.js';
+import '../../src/world/landView.js';
+import '../../src/world/outdoors.js';
+import { WIND_PARTS, windRead, windWrite, quickSlotsRead, quickSlotsWrite, BLOOD_PARTS, bloodRead, bloodWrite } from '../../src/systems/featureLanes.js';
+import { OUTDOORS_TIERS } from '../../src/world/outdoors.js';
+import { getPref, setPref, _resetForTests as resetPrefs } from '../../src/systems/uiPrefs.js';
+import { _resetForTests as resetSettings } from '../../src/systems/settings/settings.js';
+import { _resetModSettings, MOD_SETTINGS, modSetting, setModSetting } from '../../src/systems/modSettings.js';
+import { tileStates, classicSegment, allOffPlan, featuresAllOff, featuresRestore, featureTile, barReading, FEATURES_RESTORE_PREF, ALL_OFF_ASK, defaultSegment, featuresDefaults, RESET_ALL_ASK } from '../../src/ui/enhanced/enhancedMenu.js';
+import { modModules } from '../../src/systems/features.js';
+import { renderScaleSetting, _resetRenderScaleDoor } from '../../src/systems/renderScale.js';
+
+const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
+const read = (p) => readFileSync(join(root, p), 'utf8');
+const row = (id) => FEATURES.find((f) => f.id === id);
+const fresh = () => { resetPrefs(); resetSettings(); _resetModSettings(); };
+const label = (id) => { const st = tileStates(row(id)); return st.labels[st.at]; };
+
+test('FT18: two groups more - Interface and Sound - and every moved row stands where it is looked for (mutant: a group dropped from the order)', () => {
+  assert.deepEqual(GROUP_ORDER, ['sight', 'interface', 'sound', 'world', 'loot', 'combat', 'character']);
+  assert.equal(GROUPS.interface.label, 'Interface');
+  assert.equal(GROUPS.sound.label, 'Sound');
+  for (const g of GROUP_ORDER) assert.ok(FEATURES.some((f) => f.group === g), `${g} is not an empty heading`);
+  const at = Object.fromEntries(FEATURES.map((f) => [f.id, f.group]));
+  for (const id of ['enhanced-map', 'quick-slots', 'mod-world-tooltips', 'mod-ambient-text', 'near-death-warning', 'choose-guild-jobs']) assert.equal(at[id], 'interface', id);
+  for (const id of ['enhanced-sounds', 'mod-immersive-footsteps', 'combat-voices']) assert.equal(at[id], 'sound', id);
+  for (const id of ['mod-seasons-iliac-bay', 'mod-eye-of-the-beholder', 'grass', 'wind']) assert.equal(at[id], 'sight', id);
+  assert.equal(at['town-watch'], 'world');
+  assert.equal(at.blood, 'combat');
+  assert.deepEqual(checkFeatures(FEATURES), []);
+});
+
+test('FT18: ten rows are four, and nothing they offered is lost - every key, default and online answer is still declared (mutant: a covered pref left undeclared)', () => {
+  for (const gone of ['grass-density', 'grass-style', 'wind-wisps', 'flora-sway', 'quickslot-diamond', 'quickbar-style', 'blood-marks', 'blood-overkill', 'blood-screen', 'blood-gore']) {
+    assert.equal(row(gone), undefined, `${gone} is condensed`);
+  }
+  assert.equal(FEATURES.length, 105);   // WEAPON-GLOW1's Weapon glow (2026-10-16); KG3's The King's Gambit (2026-10-13) and UI-CALM's Calm HUD (2026-10-14), met at the merge; BODY-CARD's Billboard Look (2026-10-14); STEED1's Horse care and WAGONS4's Wagon upkeep (2026-10-11); RSH1's Readied Spellcasting Hands (2026-10-11); MWNPC5b's Morrowind People (2026-10-09, at MW-NPC's merge of main); RW1's Real windows (2026-10-09); TAMRIEL2's Land beyond the Bay and TAMRIEL1's Tamriel on the map (2026-10-08); SNOWFALL1's Snowfall, HAZE1's Heat Haze and WINDFALL1's Windfall (2026-10-08, at AUDIT ENVIRONS' merge of main); WATER-NEXT's Water quality (2026-10-07, at the Super Dungeons arc's merge of main); PI1's Physical Items and MW-SPELLFX1's Morrowind Spell Effects (2026-10-07, at the Super Dungeons arc's merge of main); VERGE1's clear roadsides and ECOTONE1's blended climates (2026-10-07); LANDFORM1's Landforms (2026-10-06); MW-STEEL1's Steel Helm (2026-10-06); SD-ONLINE (2026-10-05): the world's dungeon sizes; LEGACY1's Project Legacy (2026-10-05); LW2's living world (2026-10-04); THE DELVE ARC (2026-10-05): medium dungeons, the look round, the lever echoes, the way out, the quest guidance tiers; LOAD1's loading screens (2026-10-05); LPT1's Low Poly Trees (2026-10-05); FIELD BUGS 2026-10-04e: the road's encounters (WILD-ROAD); NEARBY-QUESTS (2026-10-04); IT1's Immersive Travel row (2026-10-04); WD3's Beautiful Villages and Beautiful Cities (2026-10-01); FOREST1's real forests (2026-10-01); CLIMB1's enhanced climbing (2026-09-30); GUIDE5's quest marks, GUIDE4's quest tracker and GUIDE3's quest herald (2026-09-29); NAV's Naval Combat row the port's own (2026-09-28); FORAGE1's Foraging row (2026-09-28, MERGE 2); IIL1-T's modded lighting (2026-09-27); PERF-SCALE's render scale (2026-09-25) is the one row added since; the sea update's four mod rows (AS1, DS1, WA1, DW-D) came with its merge, OH-A's Ocean Holes row after it, and CSA-A's Come Sail Away row; EM3-3D's 3D dungeon map (2026-09-27); RAID1's World Events - Raiding Parties (2026-09-27)
+  const want = { grassDensity: 1, grassStyle: 'meadow', floraSway: true, windWisps: true, quickbarStyle: 'hotbar', quickslots: true,   // HB-LYCFREE: the hotbar by default (PIN MOVED); MEADOW1: the meadow by default (PIN MOVED); GRASS-ON: the grass Full by default again, where AUDIT MEADOW1 had it Off (PIN MOVED)
+    'blood-gore': 'normal', 'blood-marks': true, 'blood-overkill': true, 'blood-screen': true };
+  for (const [k, v] of Object.entries(want)) assert.equal(FEATURE_PREF_DEFAULTS[k], v, `${k} keeps its default`);
+  assert.deepEqual(row('grass').control.parts.map((p) => p.key), ['grassStyle']);
+  assert.deepEqual(row('wind').control.parts.map((p) => p.key), ['floraSway', 'windWisps']);
+  assert.deepEqual(row('blood').control.parts.map((p) => p.key), ['blood-marks', 'blood-overkill', 'blood-screen']);
+  assert.equal(row('quick-slots').control.parts, undefined, 'three states on one bar need no drawer');
+});
+
+test('FT18: the laws of a condensed row - a covered pref declares itself, a part is the row\'s own key, a classic value is one of the row\'s (mutant: any check dropped)', () => {
+  const base = { id: 'x', title: 'X', note: 'n', group: 'sight', kinds: ['enhanced'] };
+  const ok = { ...base, control: { store: 'prefs', key: 'floraSway', initial: true, online: 'player', also: [{ store: 'prefs', key: 'windWisps', initial: true, online: 'player' }], parts: [{ key: 'windWisps', label: 'W' }] } };
+  assert.deepEqual(checkFeature(ok), []);
+  assert.deepEqual(checkFeature({ ...base, control: { ...ok.control, also: [{ store: 'prefs', key: 'windWisps', online: 'player' }] } }),
+    ["also: the covered pref 'windWisps' declares its initial value"]);
+  assert.deepEqual(checkFeature({ ...base, control: { ...ok.control, also: [{ store: 'prefs', key: 'windWisps', initial: true }] } }),
+    ["also: the covered pref 'windWisps' declares its online answer"]);
+  assert.deepEqual(checkFeature({ ...base, control: { ...ok.control, parts: [{ key: 'grassStyle', label: 'S' }] } }),
+    ["part 'grassStyle' is not the row's key or one it covers"]);
+  assert.deepEqual(checkFeature({ ...base, control: { ...ok.control, parts: [{ key: 'windWisps' }] } }), ["part 'windWisps' has no label"]);
+  assert.deepEqual(checkFeature({ ...base, control: { ...ok.control, parts: [] } }), ['parts is not a list']);
+  const tiered = { store: 'prefs', key: 'grassDensity', initial: 1, online: 'player', tiers: [[1, 'Full'], [0, 'Off']] };
+  assert.deepEqual(checkFeature({ ...base, control: { ...tiered, classic: 0 } }), []);
+  assert.deepEqual(checkFeature({ ...base, control: { ...tiered, classic: 7 } }), ["classic '7' is not one of the row's values"]);
+  assert.deepEqual(checkFeature({ ...base, kinds: ['classic'], control: { store: 'settings', key: 'Video/RandomDungeonTextures', classic: 0 } }), []);
+  assert.deepEqual(checkFeature({ ...base, kinds: ['classic'], control: { store: 'settings', key: 'Video/RandomDungeonTextures', classic: 'Classic' } }), ["classic 'Classic' is not one of the row's values"]);
+});
+
+test('FT18: the wind\'s bar is both - Off turns both off, On both on, and either on reads On (mutant: the read as one key, or the write as one)', () => {
+  fresh();
+  assert.equal(windRead(), true);
+  windWrite(false);
+  assert.deepEqual(WIND_PARTS.map((k) => getPref(k)), [false, false]);
+  assert.equal(windRead(), false);
+  setPref('windWisps', true);
+  assert.equal(windRead(), true, 'a tile that read Off with the wisps still blowing would be a lie');
+  windWrite(true);
+  assert.deepEqual(WIND_PARTS.map((k) => getPref(k)), [true, true]);
+  assert.equal(label('wind'), 'On');
+  const st = tileStates(row('wind'));
+  st.set(st.labels.indexOf('Off'));
+  assert.deepEqual(WIND_PARTS.map((k) => getPref(k)), [false, false], 'the tile\'s Off is the lane\'s');
+  fresh();
+});
+
+test('FT18: the quick slots are one bar of three - Off hides the diamond and keeps its keys, Hotbar wins the read (mutant: the hotbar\'s precedence, or Off writing the style)', () => {
+  fresh();
+  assert.equal(quickSlotsRead(), 'hotbar', 'the hotbar by default since HB-LYCFREE (QS and HB1 shipped the diamond; PIN MOVED)');
+  quickSlotsWrite('off');
+  assert.deepEqual([getPref('quickslots'), getPref('quickbarStyle')], [false, 'quickbar']);
+  assert.equal(quickSlotsRead(), 'off');
+  quickSlotsWrite('hotbar');
+  assert.equal(getPref('quickbarStyle'), 'hotbar');
+  assert.equal(quickSlotsRead(), 'hotbar', 'while the hotbar is up the diamond is put away, whatever its switch says (HB1)');
+  quickSlotsWrite('diamond');
+  assert.deepEqual([getPref('quickslots'), getPref('quickbarStyle')], [true, 'quickbar']);
+  assert.deepEqual(tileStates(row('quick-slots')).labels, ['Off', 'Diamond', 'Hotbar']);
+  fresh();
+});
+
+test('FT18: blood has an Off at last - the three parts off, the amount kept; an amount from Off brings all three back (mutant: Off read from one part, or the parts left off)', () => {
+  fresh();
+  assert.equal(bloodRead(), 'normal');
+  assert.deepEqual(tileStates(row('blood')).labels, ['Off', 'Light', 'Normal', 'Heavy', 'Abattoir']);
+  bloodWrite('heavy');
+  assert.equal(getPref('blood-gore'), 'heavy');
+  bloodWrite('off');
+  assert.deepEqual(BLOOD_PARTS.map((k) => getPref(k)), [false, false, false]);
+  assert.equal(getPref('blood-gore'), 'heavy', 'Off keeps the amount');
+  assert.equal(bloodRead(), 'off');
+  setPref('blood-screen', true);
+  assert.equal(bloodRead(), 'heavy', 'the lens alone is still blood');
+  bloodWrite('off');
+  bloodWrite('light');
+  assert.deepEqual(BLOOD_PARTS.map((k) => getPref(k)), [true, true, true], 'one press answers "blood or no blood" both ways');
+  assert.equal(getPref('blood-gore'), 'light');
+  setPref('blood-marks', false);
+  bloodWrite('normal');
+  assert.equal(getPref('blood-marks'), false, 'a player who turned one part off keeps it off when the amount moves');
+  bloodWrite('nonsense');
+  assert.equal(getPref('blood-gore'), 'normal', 'an amount that is no tier writes nothing');
+  fresh();
+});
+
+test('FT18: the search finds by any word - title, note, part, group or a mod\'s author - in any order, without accents or curly quotes (mutant: the note, the parts or the author left out)', () => {
+  const ids = (q) => FEATURES.filter((f) => matchesFeatureQuery(f, q)).map((f) => f.id);
+  assert.equal(ids('').length, FEATURES.length, 'an empty query finds everything');
+  assert.deepEqual(ids('kamer'), ['mod-windmills-kamer', 'mod-low-poly-trees', 'mod-world-of-daggerfall', 'mod-warm-ashes-ships', 'mod-world-events-raiding-parties'], 'by the author (Warm Ashes - Ships is Kamer\'s too, RAID1\'s World Events - Raiding Parties, and LPT1\'s Low Poly Trees - SquidKamer)');
+  assert.deepEqual(ids('hotbar'), ['quick-slots'], 'by what a condensed row folded in');
+  assert.deepEqual(ids('lens'), ['blood'], 'by a part');
+  assert.ok(ids('sway').includes('wind'));
+  assert.ok(ids('SOUND').includes('combat-voices'), 'by the group, whatever the case');
+  assert.ok(ids('wall dungeon').includes('dungeon-wall-style'), 'every word, any order');
+  assert.deepEqual(ids('kamer windmills'), ['mod-windmills-kamer'], 'EVERY word - World of Daggerfall is Kamer\'s too, and has no windmills');
+  assert.deepEqual(ids('zzqq'), []);
+  assert.ok(ids("region's climate").includes('dungeon-wall-style'), 'a straight quote finds a curly one');   // PIN MOVED: BR5 - the note's curly quote is the region's now
+  assert.match(featureSearchText(row('mod-pcaao')), /kirk\.o/);
+});
+
+test('FT18: All off - every switch to Off, a row with no Off to Daggerfall\'s own, a choice left alone - and Restore puts back exactly what was (mutant: the classic value ignored, a choice moved, or the keep lost)', () => {
+  fresh();
+  globalThis.location = { search: '' };
+  try {
+    // a player's own setup: blood heavy, the hotbar up, the wall style Random, land view at the enhanced reach
+    tileStates(row('blood')).set(3);
+    tileStates(row('quick-slots')).set(2);
+    tileStates(row('dungeon-wall-style')).set(3);
+    tileStates(row('cloud-quality')).set(2);
+    tileStates(row('render-scale')).set(4);   // AUDIT BRANCH-0925 PS-A1: the world drawn at half the window's pixels
+    _resetRenderScaleDoor();
+    assert.equal(renderScaleSetting(), 0.5);
+    const before = Object.fromEntries(FEATURES.map((f) => [f.id, tileStates(f) && label(f.id)]));
+    assert.equal(before['dungeon-wall-style'], 'Random');
+    // the plan: the land view goes to Daggerfall's 3, the walls to Classic, the clouds (a choice) nowhere
+    assert.equal(classicSegment(row('land-view-distance'), tileStates(row('land-view-distance'))), tileStates(row('land-view-distance')).labels.findIndex((l) => /\(3\)/.test(l)));
+    assert.equal(classicSegment(row('dungeon-wall-style'), tileStates(row('dungeon-wall-style'))), 0);
+    assert.equal(classicSegment(row('cloud-quality'), tileStates(row('cloud-quality'))), -1);
+    assert.equal(classicSegment(row('render-scale'), tileStates(row('render-scale'))), 0, 'AUDIT BRANCH-0925 PS-A1: the render scale has no Off - Daggerfall\'s own frame is the whole window, 100%');
+    assert.equal(classicSegment(row('grass'), tileStates(row('grass'))), 3, 'the Off that SAYS Off, wherever it stands');
+    assert.ok(!allOffPlan().some((m) => m.f.id === 'cloud-quality'));
+
+    const n = featuresAllOff();
+    assert.ok(n > 30, `it moved ${n} tiles`);
+    for (const f of FEATURES) {
+      const st = tileStates(f);
+      if (!st) continue;
+      const to = classicSegment(f, st);
+      if (to >= 0) assert.equal(st.at, to, `${f.id} is off`);
+    }
+    assert.equal(label('cloud-quality'), 'High', 'a choice keeps what it was');
+    assert.equal(getPref('grassStyle'), 'meadow', 'and so does a choice in a drawer');   // MEADOW1: the meadow by default (PIN MOVED)
+    assert.equal(label('dungeon-wall-style'), 'Classic');
+    assert.deepEqual([label('render-scale'), getPref('renderScale'), renderScaleSetting()], ['100%', 1, 1], 'the world drawn at the window\'s own size again - the renderer reads 100%');
+    assert.equal(label('enhanced-environments'), 'Off', 'the outdoors bar says Off now, so All off can find it');
+    assert.deepEqual(BLOOD_PARTS.map((k) => getPref(k)), [false, false, false]);
+    const keep = getPref(FEATURES_RESTORE_PREF);
+    assert.equal(keep.blood, 'Heavy');
+    assert.equal(keep['quick-slots'], 'Hotbar');
+    assert.equal(keep['render-scale'], '50%');
+
+    // a second press keeps the FIRST press's values - even for a tile turned back on in between
+    tileStates(row('blood')).set(1);
+    featuresAllOff();
+    assert.equal(getPref(FEATURES_RESTORE_PREF).blood, 'Heavy', 'not the Light pressed between the two');
+    assert.equal(label('blood'), 'Off');
+
+    featuresRestore();
+    for (const f of FEATURES) if (before[f.id]) assert.equal(label(f.id), before[f.id], `${f.id} is back`);
+    assert.equal(renderScaleSetting(), 0.5, 'and the render scale with them');
+    assert.equal(getPref(FEATURES_RESTORE_PREF), null, 'the keep is spent');
+  } finally { delete globalThis.location; fresh(); _resetRenderScaleDoor(); }
+});
+
+test('FT18: online, All off leaves the room\'s rows as the room has them (mutant: the lock ignored)', () => {
+  fresh();
+  globalThis.location = { search: '?online=1' };
+  try {
+    const locked = FEATURES.filter((f) => tileStates(f)?.locked).map((f) => f.id);
+    assert.ok(locked.includes('loot-rarity') && locked.includes('weather-events'), locked.join(', '));
+    featuresAllOff();
+    assert.equal(getPref('lootRarity'), true, 'forced on online, and untouched');
+    assert.ok(!Object.hasOwn(getPref(FEATURES_RESTORE_PREF) ?? {}, 'loot-rarity'), 'and not kept - nothing to restore');
+  } finally { delete globalThis.location; fresh(); }
+});
+
+test('FEATURES-DEFAULTS (issue #399): Defaults puts every tile, its drawer and a mod\'s modules back to how the game ships them - where All off then Restore only brings back the player\'s own (mutant: a tile, a part or a module left, or the keep kept)', () => {
+  fresh();
+  globalThis.location = { search: '' };
+  try {
+    const stock = Object.fromEntries(FEATURES.filter((f) => tileStates(f)).map((f) => [f.id, label(f.id)]));
+    for (const f of FEATURES) {   // a fresh shelf stands at every tile's default segment
+      const st = tileStates(f);
+      if (st && defaultSegment(f, st) >= 0) assert.equal(defaultSegment(f, st), st.at, `${f.id}'s default is the segment a fresh shelf reads`);
+    }
+    // the issue's player: they tinkered, then pressed All off and Restore - and got their own tinkering back
+    tileStates(row('blood')).set(3);
+    tileStates(row('quick-slots')).set(1);   // the Diamond - the Hotbar is how it ships
+    tileStates(row('dungeon-wall-style')).set(3);
+    tileStates(row('cloud-quality')).set(2);
+    setPref('grassStyle', 'smooth');
+    const vendor = FEATURES.map((f) => resolveControl(f)).find((c) => c?.store === 'mods' && modModules(c.vendor).some((k) => typeof MOD_SETTINGS[c.vendor].keys[k].default === 'boolean'))?.vendor;
+    assert.ok(vendor, 'a mod tile with a switchable module');
+    const mod = modModules(vendor).find((k) => typeof MOD_SETTINGS[vendor].keys[k].default === 'boolean');
+    setModSetting(vendor, mod, !MOD_SETTINGS[vendor].keys[mod].default);
+    featuresAllOff();
+    featuresRestore();
+    assert.equal(label('blood'), 'Heavy', 'Restore is the player\'s own, not the game\'s');
+
+    const n = featuresDefaults();
+    assert.ok(n >= 6, `it moved ${n}`);
+    for (const [id, l] of Object.entries(stock)) assert.equal(label(id), l, `${id} is back to how it ships`);
+    assert.equal(getPref('grassStyle'), 'meadow', 'a drawer\'s choice too');
+    assert.equal(modSetting(vendor, mod), MOD_SETTINGS[vendor].keys[mod].default, 'and a mod\'s module');
+    featuresAllOff();
+    featuresDefaults();
+    assert.equal(getPref(FEATURES_RESTORE_PREF), null, 'the All off keep is spent - there is nothing to go back to');
+    assert.equal(featuresDefaults(), 0, 'a second press moves nothing');
+  } finally { delete globalThis.location; fresh(); _resetRenderScaleDoor(); }
+});
+
+test('FEATURES-DEFAULTS (issue #399): online the room\'s rows stay as the room has them; the button sits beside All off and asks first (mutant: the lock ignored, or the confirm skipped)', () => {
+  fresh();
+  try {
+    // PIN MOVED (BAL4, bible/05-Combat/Balance-Arc.md section 6): the Enhanced AI ships On now, so the room's row that
+    // still ships Off is the dungeon sizes' - the same lock, the same lane
+    const forced = 'world-dungeon-sizes';
+    globalThis.location = { search: '' };
+    tileStates(row(forced)).set(1);   // the player's own, offline - it ships Off
+    globalThis.location = { search: '?online=1' };
+    const st = tileStates(row(forced));
+    assert.ok(st.locked && defaultSegment(row(forced), st) === 0, 'the room forces it On online, where it ships Off');
+    featuresDefaults();
+    assert.equal(label(forced), 'On', 'forced on online');
+    globalThis.location = { search: '' };
+    assert.equal(label(forced), 'On', 'and its shelf untouched - offline it is still the player\'s own, not the Off it ships');
+  } finally { delete globalThis.location; fresh(); }
+  assert.match(RESET_ALL_ASK, /key bindings are kept\./, 'and it says what it leaves');
+  // ORG2: the button is the Settings toolbar's one reset - beside All off, asked first - and it runs this
+  const menu = read('src/ui/enhanced/enhancedMenu.js');
+  const bar = menu.slice(menu.indexOf('function optionsToolbar('), menu.indexOf('\n}', menu.indexOf('function optionsToolbar(')));
+  // PIN MOVED (L10N4): the button's words said through t(), their English as FEATURES-DEFAULTS left them
+  assert.match(bar, /\{ label: t\('menu\.settings\.reset', 'Reset everything to defaults'\), onClick: \(\) => ask\(t\('menu\.settings\.resetTitle', 'Reset Everything'\), resetAllAsk\(\), t\('menu\.settings\.resetYes', 'Reset'\), \(\) => \{ resetEverything\(\); \}\) \}/, 'Defaults is asked first');
+  assert.match(menu, /function resetEverything\(\) \{\s*\n\s*resetToDefaults\(\); _eff = null;\s*\n\s*featuresDefaults\(\);\s*\n\}/, 'and puts every tile back');
+});
+
+test('FT18: the outdoors bar is a switch - its Off says Off - so its tile reads off and takes the Off fill (mutant: the long label back)', () => {
+  assert.deepEqual(OUTDOORS_TIERS.map(([, l]) => l), ['Off', 'Port sky', 'Dynamic Skies']);
+  fresh();
+  const st = tileStates(row('enhanced-environments'));
+  st.set(0);
+  const r = barReading(tileStates(row('enhanced-environments')));
+  assert.equal(r.switch, true);
+  assert.equal(r.on, false);
+  fresh();
+});
+
+test('FT18: a condensed tile opens its parts - switches as chips, a choice as a bar - each writing its own pref (mutant: the drawer never drawn, or a chip writing the row\'s key)', () => {
+  const fakeEl = (tag) => {
+    const n = { tag, children: [], className: '', textContent: '', title: '', style: {}, dataset: {}, attrs: {}, disabled: false,
+      append(...cs) { for (const c of cs) n.children.push(c); }, setAttribute(k, v) { n.attrs[k] = v; } };
+    return n;
+  };
+  const find = (n, cls, out = []) => {
+    if (typeof n.className === 'string' && n.className.split(/\s+/).includes(cls)) out.push(n);
+    for (const c of n.children ?? []) find(c, cls, out);
+    return out;
+  };
+  const text = (n) => (n.textContent ?? '') + (n.children ?? []).map(text).join('');
+  fresh();
+  globalThis.document = { createElement: fakeEl, createTextNode: (t) => ({ textContent: t }), querySelectorAll: () => [] };
+  try {
+    let t = featureTile(row('blood'));
+    const door = find(t, 'ft-tile-more')[0];
+    assert.match(text(door), /Marks stay · Overkill · On the lens/, 'the door names what it opens');
+    assert.equal(find(t, 'ft-tile-drawer').length, 0, 'shut until pressed');
+    door.onclick({ stopPropagation() {} });
+    t = featureTile(row('blood'));
+    const chips = find(t, 'ft-mchip');
+    assert.deepEqual(chips.map((c) => c.textContent), ['Marks stay', 'Overkill', 'On the lens']);
+    chips[2].onclick();
+    assert.equal(getPref('blood-screen'), false, 'the lens chip writes the lens');
+    assert.equal(getPref('blood-gore'), 'normal', 'and nothing else');
+    // a choice part is a bar
+    find(featureTile(row('grass')), 'ft-tile-more')[0].onclick({ stopPropagation() {} });
+    const g = featureTile(row('grass'));
+    const bars = find(g, 'ft-seg');
+    assert.equal(bars.length, 2, 'the density\'s bar and the style\'s');
+    const smooth = find(bars[1], 'ft-segb').find((b) => b.textContent === 'Smooth');
+    smooth.onclick({ stopPropagation() {} });
+    assert.equal(getPref('grassStyle'), 'smooth');
+    assert.equal(getPref('grassDensity'), 1);   // PIN MOVED (GRASS-ON): the density's own default, Full again
+    assert.equal(t.dataset.fid, 'blood', 'the search hides a tile by its id');
+  } finally { delete globalThis.document; fresh(); }
+});
+
+test('FT18 by source: the pane\'s search filters in place and All off asks first; the query is per mount; the Morrowind card draws no bare row (mutant: a repaint on every key, the confirm skipped, or the null back)', () => {
+  const menu = read('src/ui/enhanced/enhancedMenu.js');
+  // ORG2: the search is the Settings toolbar's, over every tab - it repaints the BODY under it in place, never the
+  // screen, so the field keeps its keys and its caret
+  const bar = menu.slice(menu.indexOf('function optionsToolbar('), menu.indexOf('\n}', menu.indexOf('function optionsToolbar(')));
+  assert.match(bar, /search\.type = 'search';/);
+  const typing = bar.slice(bar.indexOf('search.oninput = () => {'), bar.indexOf('\n  };', bar.indexOf('search.oninput = () => {')));
+  assert.match(typing, /optQuery = search\.value;[^\n]*\n\s*paintOptionsBody\(body, \{ pause \}\);/, 'typing filters the body');
+  assert.doesNotMatch(typing, /\brender\(\)/, 'it does not repaint the screen - the field keeps its keys');
+  assert.match(menu, /if \(item\.startsWith\('feat:'\)\) \{ const f = FEATURES\.find\(\(x\) => x\.id === item\.slice\(5\)\); return f \? featureSearchText\(f\) : ''; \}/, 'a row is found by the words the Features search read');
+  assert.match(menu, /\.flatMap\(\(item\) => itemNodes\(item, \{ \.\.\.ctx, any: true \}\)\);\s*\n\s*if \(!nodes\.length\) continue;/, 'a section left with nothing goes too');
+  assert.match(menu, /if \(!found\) body\.append\(empty\('No matches'\)\);/, 'and an empty search says so');
+  assert.match(bar, /\{ label: t\('menu\.features\.allOff', 'All off'\), onClick: \(\) => ask\(t\('menu\.features\.allOffTitle', 'Turn Everything Off'\), allOffAsk\(\), t\('menu\.features\.allOff', 'All off'\), \(\) => \{ featuresAllOff\(\); \}\) \}/, 'All off is asked first');
+  assert.match(bar, /\.\.\.\(kept && typeof kept === 'object' \? \[\{ label: t\('menu\.features\.restore', 'Restore'\),/, 'Restore only while there is something to restore');
+  assert.match(menu, /optQuery = '';   \/\/ FT18: a fresh visit searches nothing/);
+  // the menu's own key handler stands down for a text field, so typing in the search never walks the menu
+  assert.match(menu, /if \(t && \(t\.tagName === 'INPUT' \|\| t\.tagName === 'TEXTAREA' \|\| t\.isContentEditable\)\) return;/);
+  // MWA4: the card draws no switch row at all now - Attach and Remove data alone - so none can be a moved key's null
+  const at = menu.indexOf('export function morrowindCard(');
+  assert.ok(at > 0, 'the Morrowind assets card');
+  const card = menu.slice(at, menu.indexOf('\n}', at));
+  assert.doesNotMatch(card, /prefRow\(/, 'MWA4: no switch row on the card, so no bare row');
+  assert.doesNotMatch(card, /prefRow\('mwSheathing'/);
+  const css = read('src/ui/enhanced/enhancedStyle.js');
+  assert.match(read('src/systems/uiPrefs.js'), /featuresRestore: null,/, 'the keep is a pref: Restore survives a relaunch');
+});

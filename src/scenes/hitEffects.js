@@ -40,10 +40,10 @@
 
 import { FlatAnim, isAnimatedFlat, IMPACT_FPS, MISSILE_FPS } from '../render/flatAnimation.js';   // AUDIT 26 F033: ImpactBillboardFramesPerSecond   // FIELD-GUN14: a flying flat's own rate, which is the missile's
 import { billboardSize, centredBase } from '../world/rmbFlats.js';
-import { BLOODLESS_INDEX } from '../combat/bloodDecals.js';   // BLOOD1a: which foes bleed, for the art hand-off below
+import { BLOODLESS_INDEX } from '../combat/blood/bloodDecals.js';   // BLOOD1a: which foes bleed, for the art hand-off below
 
 /** EnemyBlood.cs:23. */
-import { createBleedLedger } from '../combat/bloodBleed.js';   // BLOOD2c
+import { createBleedLedger } from '../combat/blood/bloodBleed.js';   // BLOOD2c
 import { flashPlayerBleed } from '../ui/damageFlash.js';   // BLOOD2e: the reference's subtle flash with each of the player's own drips
 export const BLOOD_ARCHIVE = 380;
 /** BLOOD2d: the player's key in the marks' tracking table (a foe's is its own record). */
@@ -88,7 +88,7 @@ export function bloodCentre(feet, height) {
  * `tick(dt)` advances them and destroys the ones that have finished;
  * `batches()` hands the host what to draw, on the flats' axis.
  */
-/** PEERFX1: ONE OBSERVER OF EVERY BLOOD SPLASH, whichever host's pool drew it - the online layer (net/peerFx.js)
+/** PEERFX1: ONE OBSERVER OF EVERY BLOOD SPLASH, whichever host's pool drew it - the online layer (net/peer/peerFx.js)
  *  hears the player's own weapon blows here (a hit marked `fromPlayer`: melee, arrows, never a spell - no spell site
  *  splashes) to tell the players who can see it, and every splash to know one was already drawn. Null offline. */
 let _splashObserver = null;
@@ -119,7 +119,7 @@ export function createHitEffects({
   // list per frame and use batches() instead. One pool either way.
   const live = [];   // { batch, anim }
 
-  function spawn(record, pos, facing = null, { archive = BLOOD_ARCHIVE, fps = BLOOD_FPS, scale = 1, tracked = false, onTexture = null } = {}) {
+  function spawn(record, pos, facing = null, { archive = BLOOD_ARCHIVE, fps = BLOOD_FPS, scale = 1, tracked = false, onTexture = null, conceal = null } = {}) {
     if (!(record >= 0) || !pos) return null;
     const at = [pos[0], pos[1], pos[2]];
     if (facing) {
@@ -140,7 +140,7 @@ export function createHitEffects({
     // its centres into a STATIC_DRAW buffer and flight rides the
     // batch's origin uniform instead (the dungeon missile's own trick -
     // zero GL churn).
-    const entry = { batch: null, anim: null, dead: false, record, pos: at, at: [...at], size: null, archive, fps, scale, tracked };
+    const entry = { batch: null, anim: null, dead: false, record, pos: at, at: [...at], size: null, archive, fps, scale, tracked, conceal };   // EG-ZG: `conceal` - an ally's flash at THE QUIET COMPANY's share (the billboards' blended phase)
     live.push(entry);
     getTexture(archive).then((t) => {
       // the pool can be cleared while the archive warms (a scene torn
@@ -189,6 +189,7 @@ export function createHitEffects({
       // home). The origin deltas below are centre-to-centre and do not
       // move: the batch's base and its live position shift together.
       entry.batch = renderer.createBillboardBatch(archive, record, entry.size, [centredBase(entry.pos, entry.size)]);
+      if (entry.conceal) entry.batch.conceal = entry.conceal;   // EG-ZG (Elite-Gates.md section 25.4): drawn translucent, as a concealed foe's flat is
       entry.batch.frame = 0;
       onSpawn?.(entry.batch);
       // A single-frame record has no wrap to end on, so it would hang
@@ -265,7 +266,7 @@ export function createHitEffects({
     bleedPlayer: (dt, feet, entity) => {
       if (!marks || !feet || !entity) return 0;
       const health = entity.health ?? 0, maxHealth = entity.maxHealth ?? 0;
-      const view = () => ({ feet, health, maxHealth, bloodIndex: 0, dead: !(health > 0), corpse: false, strides: false, wound: !!entity.bleed });   // AUDIT TELL: a sweep's bleed drips (combat/bloodBleed.js WOUND_*)
+      const view = () => ({ feet, health, maxHealth, bloodIndex: 0, dead: !(health > 0), corpse: false, strides: false, wound: !!entity.bleed });   // AUDIT TELL: a sweep's bleed drips (combat/blood/bloodBleed.js WOUND_*)
       let n = 0;
       for (const a of bleeding.tick(dt, [PLAYER_WALKER], view)) {
         if (a.kind === 'drip' && marks.drip?.(a.bloodIndex, a.pos, a.count)) { n++; flashPlayerBleed(); }
@@ -295,7 +296,7 @@ export function createHitEffects({
      *  The flash ENDS on FlatAnim.done, which is DFU's OneShot
      *  self-destruct - not the missile's 0.6s lifetime, which governs
      *  the parent rather than the billboard. */
-    showImpactFlash: (archive, pos, scale = 1) => spawn(IMPACT_RECORD, pos, null, { archive, fps: IMPACT_FPS, scale }),   // SUNBABY2: a sky fireball's flash is drawn larger (`scale`)
+    showImpactFlash: (archive, pos, scale = 1, conceal = null) => spawn(IMPACT_RECORD, pos, null, { archive, fps: IMPACT_FPS, scale, conceal }),   // SUNBABY2: a sky fireball's flash is drawn larger (`scale`); EG-ZG: `conceal` an ally's, at THE QUIET COMPANY's share
     /** WW1: Weapon Widget's DoClang / DoThud (FPSWeaponClone IL 0xe0c,
      *  0xf58): TEXTURE.380 record 2, one-shot at 20 fps, twice its size,
      *  at the point the widget worked out. The CLANG's emissive material
@@ -372,6 +373,7 @@ export function createHitEffects({
         onRetire?.(e.batch);
         renderer.destroyBillboardBatch(e.batch);
         e.batch = renderer.createBillboardBatch(e.archive, e.record, e.size, [centredBase(e.pos, e.size)]);   // FIELD-GUN20: rebuilt where it was built - centred
+        if (e.conceal) e.batch.conceal = e.conceal;   // EG-ZG: and as translucent as it was
         e.batch.frame = e.anim?.frame ?? 0;
         if (e.tracked) e.batch.origin = [e.at[0] - e.pos[0], e.at[1] - e.pos[1], e.at[2] - e.pos[2]];   // FIELD-GUN14: a rebuilt batch starts at its centres again - the flight's delta has to be put back
         onSpawn?.(e.batch);

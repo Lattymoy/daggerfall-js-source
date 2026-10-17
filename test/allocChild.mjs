@@ -16,7 +16,7 @@
 // --no-concurrent-recompilation, compiled each caller the moment it turned hot,
 // before its callees - a different shape of optimised code, which inlined a call
 // whose boxed arguments the shipping engine makes; a still body posed again read
-// 48 bytes a frame concurrently and 1 synchronously.) test/allocchild.test.js
+// 48 bytes a frame concurrently and 1 synchronously.) test/tooling/allocchild.test.js
 // proves the settle under an artificially late compiler. Every suite that
 // measures allocation spawns its child with these.
 import { fileURLToPath } from 'node:url';

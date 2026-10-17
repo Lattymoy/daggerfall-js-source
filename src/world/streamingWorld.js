@@ -22,9 +22,9 @@
 //   - Init matches ResetStreamingWorld: compensation zeroed on x/z,
 //     mapOrigin = the player's current pixel.
 
-import { TERRAIN_SIZE } from './terrainSampler.js';
+import { TERRAIN_SIZE } from './terrain/terrainSampler.js';
 import { GLOBAL_SCALE } from './meshReader.js';
-import { WORLD_MAP_TILE_DIM, getLocationTerrainTileOrigin } from './terrainTiles.js';
+import { WORLD_MAP_TILE_DIM, getLocationTerrainTileOrigin } from './terrain/terrainTiles.js';
 
 export const TERRAIN_DISTANCE = 3;   // DFU's default (StreamingWorld.cs:56); D1: the world host passes the LIVE Experimental/TerrainDistance (1..4) into the constructor
 /** BUILD-RETRY (bible/06-Systems/Travel-View.md LOAD-OWED, the port's own - DFU's builds do not fail): the stream's own
@@ -190,7 +190,7 @@ export class StreamingWorldState {
   }
 
   /** TAMRIEL2 (2026-10-08, Mac: "only implement the land mass"): THE FRAME THE WORLD STREAMS OVER, past the map - the
-   *  continent's box in the map's own coordinates (world/tamrielFrame.js tamrielFrameInBay), set by the world host
+   *  continent's box in the map's own coordinates (world/tamriel/tamrielFrame.js tamrielFrameInBay), set by the world host
    *  when the land beyond the Bay is on, null for DFU's own edge of the world. `onMap` stays the MAP's law (World of
    *  Daggerfall's slots and every reader of the data ask it); `streams` is what the load list and the range ask. */
   static frame = null;

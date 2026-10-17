@@ -8,7 +8,7 @@
 //   ARENA2_PATH=<...> node tools/townQuestMarkers.mjs --classic                 and measure Daggerfall's own BLOCKS.BSA
 //
 // Every building interior the two vendored town packs lay out - each pack's RMB blocks, rebuilt over the player's own
-// BLOCKS.BSA as the world-data door rebuilds them - is laid out by world/interiorLayout.js over the models the port's
+// BLOCKS.BSA as the world-data door rebuilds them - is laid out by world/interior/interiorLayout.js over the models the port's
 // pipeline builds for it (scenes/dataPipeline.js buildGpuMesh: the town stand-ins and the alias beds, Kamer's
 // machinery, the seams patched, the rest out of the player's ARCH3D), and every quest marker in it (editor flats 199.11,
 // a spawn, and 199.18, an item) is measured against that geometry by the two tests the town-mods audit used:
@@ -54,12 +54,12 @@ export const WALK = Object.freeze({ cell: 0.25, head: 1.7, step: 0.65, reach: 2.
 /** The player's towns: the door holding both packs, BLOCKS.BSA, MAPS.BSA, and a model getter as the pipeline builds. */
 export async function openTownData(arena2) {
   const bytes = (f) => new Uint8Array(readFileSync(join(arena2, f)));
-  const W = await import('../src/formats/worldDataReplacement.js');
-  const { setValue } = await import('../src/systems/settings.js');
+  const W = await import('../src/formats/worldData/worldDataReplacement.js');
+  const { setValue } = await import('../src/systems/settings/settings.js');
   const { MapsFile } = await import('../src/formats/mapsFile.js');
   const { BlocksFile } = await import('../src/formats/blocksFile.js');
   const { Arch3dFile } = await import('../src/formats/arch3dFile.js');
-  const { openWorldDataPack } = await import('../src/formats/worldDataPack.js');
+  const { openWorldDataPack } = await import('../src/formats/worldData/worldDataPack.js');
   const { dfMeshToModel } = await import('../src/world/meshReader.js');
   const { patchSeams } = await import('../src/world/arch3dSeams.js');
   const { MACHINERY, MACHINERY_MODEL_ID } = await import('../src/world/windmillMesh.js');
@@ -117,7 +117,7 @@ export async function openTownData(arena2) {
 /** The triangles of a laid-out interior: [ax,ay,az, bx,by,bz, cx,cy,cz, nx,ny,nz] each, the normal turned to the
  *  mesh's own stored normal (the face the model shows). */
 export async function interiorTriangles(getModel, dfBlock, blockIndex, recordIndex) {
-  const { layoutInterior } = await import('../src/world/interiorLayout.js');
+  const { layoutInterior } = await import('../src/world/interior/interiorLayout.js');
   const warn = console.warn; console.warn = () => {};
   let layout;
   try { layout = layoutInterior(dfBlock, blockIndex, recordIndex, getModel); } finally { console.warn = warn; }

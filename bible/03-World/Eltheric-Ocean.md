@@ -16,7 +16,7 @@ Enemies should show on the world map just like in the bay"* - ETHER-OW: the Over
 risen past the Veil, its places the isles' and its enemies the Bay's own, seeded on the sea.
 
 The pre-merge audit (AUDIT CAPTAIN'S SEA, the owner: "Lets do a comprehensive audit, enaure this is insanely detailed
-and perfection. No exceptions") is `01-Overview/Audit-Captains-Sea.md`: its fixes stand in the sections below, each
+and perfection. No exceptions") is `01-Overview/audits/Audit-Captains-Sea.md`: its fixes stand in the sections below, each
 under its finding's id.
 
 **THE PORT'S OWN.** Nothing in Daggerfall or DFU lies past the Bay's western water, and nothing here is transcribed.
@@ -52,19 +52,19 @@ thousand leagues:
 
 | slice | what | modules |
 |---|---|---|
-| ETHER-SEA | THE SEA'S LAW: its box, the Veil, the depths and their bands; the isles' lattice, kinds, sizes, climates and names; the ground the kernel grows there, composed over the world's reader (the host's and the worker's), streamed, on the far ring | `world/ethericSea.js`, `world/streamingWorld.js` (`frames`), `world/terrainGenWorker.js`, `world/terrainGenClient.js`, `render/farRing.js` (`climatePast`, `pastOwn`), `world/landforms.js` (the climate past the table), `scenes/shared.js` (`etherSeaOn`, `etherCrossOutOn`), `scenes/world.js` (the composition, the region's name, the Overworld's water) |
+| ETHER-SEA | THE SEA'S LAW: its box, the Veil, the depths and their bands; the isles' lattice, kinds, sizes, climates and names; the ground the kernel grows there, composed over the world's reader (the host's and the worker's), streamed, on the far ring | `world/ethericSea.js`, `world/streamingWorld.js` (`frames`), `world/terrain/terrainGenWorker.js`, `world/terrain/terrainGenClient.js`, `render/farRing.js` (`climatePast`, `pastOwn`), `world/landforms.js` (the climate past the table), `scenes/shared.js` (`etherSeaOn`, `etherCrossOutOn`), `scenes/world.js` (the composition, the region's name, the Overworld's water) |
 | ETHER-PLACES | THE ISLES' PLACES: a port's town and a ruin's dungeon cloned off the game's own rows onto the isle's centre pixel under their own id, name and index; a ruin of the deep elite | `world/etherPlaces.js`, `scenes/world.js` (`_locationToBuild`, `etherPlaceAt`, the templates, the online wake) |
-| ETHER-PORTS | A FREEPORT: a port isle is a port to the deeds, the harbour book (its quays), the naval host's waters, the exchange (the Eltheric goods made there) and its own harbourmaster's tab - the legends' rumours and a chart of its waters | `scenes/world.js` (`etherPortAt`, `etherPortNear`, `etherPortOf`, the port seams), `scenes/etherHost.js` (`office`, `chartOffer`, `buyChart`), `ui/navalYardWindow.js` (`etherOfficeText`) |
-| ETHER-SHIPS | ITS TRAFFIC AND ITS LAW: corsairs and traders by the band, under the sea's names and the Isles' colours; no navy, no relief, no crown's law; corsairs' papers; the strands' casks | `systems/naval/etherShips.js`, `systems/naval/navalDirector.js` (`ctx.ether`), `scenes/navalHost.js` (`launch`, `chargeEther`, `etherCtx`, `pickStrand`), `scenes/etherHost.js` (`sites`, `gather`, `papers`), `systems/naval/shipKnowledge.js` (`coloursWords`) |
-| ETHER-LEGENDS | SIX LEGENDARY SHIPS: their classes, haunts, terrors, purses; launched in their haunts, risen again a month after their end; the rumours | `systems/naval/etherShips.js`, `systems/naval/navalShips.js` (the six classes, `LEGEND_LEVEL`), `systems/naval/navalDirector.js` (`legendSpawn`), `scenes/navalHost.js` (`legendMend`, `reachOf`), `scenes/etherHost.js` (`legendHere`, `legendEnded`, `rumours`) |
+| ETHER-PORTS | A FREEPORT: a port isle is a port to the deeds, the harbour book (its quays), the naval host's waters, the exchange (the Eltheric goods made there) and its own harbourmaster's tab - the legends' rumours and a chart of its waters | `scenes/world.js` (`etherPortAt`, `etherPortNear`, `etherPortOf`, the port seams), `scenes/etherHost.js` (`office`, `chartOffer`, `buyChart`), `ui/naval/navalYardWindow.js` (`etherOfficeText`) |
+| ETHER-SHIPS | ITS TRAFFIC AND ITS LAW: corsairs and traders by the band, under the sea's names and the Isles' colours; no navy, no relief, no crown's law; corsairs' papers; the strands' casks | `systems/naval/etherShips.js`, `systems/naval/navalDirector.js` (`ctx.ether`), `scenes/naval/navalHost.js` (`launch`, `chargeEther`, `etherCtx`, `pickStrand`), `scenes/etherHost.js` (`sites`, `gather`, `papers`), `systems/naval/shipKnowledge.js` (`coloursWords`) |
+| ETHER-LEGENDS | SIX LEGENDARY SHIPS: their classes, haunts, terrors, purses; launched in their haunts, risen again a month after their end; the rumours | `systems/naval/etherShips.js`, `systems/naval/navalShips.js` (the six classes, `LEGEND_LEVEL`), `systems/naval/navalDirector.js` (`legendSpawn`), `scenes/naval/navalHost.js` (`legendMend`, `reachOf`), `scenes/etherHost.js` (`legendHere`, `legendEnded`, `rumours`) |
 | ETHER-CROSSING | THE CROSSING: asked at a helm on the open Abecean and in the Veil, once each time the ship comes into those waters; the voyage carries the captain, the ship, her crew and her hold | `systems/naval/etherCrossing.js`, `scenes/world.js` (`etherCrossStep`, `etherCross`, `crossLandPx`) |
-| ETHER-CHART | THE CHART OF THE ELTHERIC OCEAN: the travel map's door past the Veil | `ui/etherChartWindow.js`, `ui/navalPlunderDoor.js` (its slot), `scenes/etherHost.js` (`chart`), `scenes/world.js` (`openEtherChart`) |
+| ETHER-CHART | THE CHART OF THE ELTHERIC OCEAN: the travel map's door past the Veil | `ui/etherChartWindow.js`, `ui/naval/navalPlunderDoor.js` (its slot), `scenes/etherHost.js` (`chart`), `scenes/world.js` (`openEtherChart`) |
 | ETHER-CHART2 | THE CHART READ AT A GLANCE: its words in the enhanced face and drawn last; a shape for each kind's mark; the depths as waters, a grid and a scale; the haunts washed and named in view; the ship ringed and pointed to; the isle named ringed, its bearing and its card; a key | `ui/etherChartWindow.js` (`chartModel`, `paintChart`, `scaleBar`, `labelBoxes`, `edgePointer`) |
 | ETHER-LIGHT | THE LIGHT PAST THE VEIL: cold and violet on land, sea and hulls | `world/ethericSea.js` (`etherLight`), `scenes/world.js` (the frame's lights) |
-| ELTHERIC | THE SEA'S NAME: the Eltheric Ocean, one word's home for every word a player reads of it | `world/ethericSea.js` (`ETHER_WORD`, `ETHER_SEA_NAME`, `ETHER_SEA_TITLE`), `world/etherPlaces.js` (`ETHER_REGION_NAME`), `ui/etherChartWindow.js`, `ui/navalYardWindow.js`, `scenes/etherHost.js`, `scenes/world.js`, `systems/naval/captainLedger.js`, `systems/naval/etherCrossing.js` |
-| ETHER-DEEP | ITS DEPTH: Iliac Puddle No More's bake over the sea's own frame - its floor carved, swum and walked as the Bay's; the pits held to the Bay | `world/etherWatersBake.js`, `world/deepWatersBake.js` (the frame, the flood, the raw reader's own bytes), `world/deepWaterTileData.js` (the frame's clamps), `world/deepWatersClient.js`, `world/deepWatersWorker.js`, `scenes/deepWatersHost.js` (the one gate, the frame's climates), `scenes/oceanHolesHost.js` (the hold), `scenes/world.js` (the places' rects, the near promote) |
+| ELTHERIC | THE SEA'S NAME: the Eltheric Ocean, one word's home for every word a player reads of it | `world/ethericSea.js` (`ETHER_WORD`, `ETHER_SEA_NAME`, `ETHER_SEA_TITLE`), `world/etherPlaces.js` (`ETHER_REGION_NAME`), `ui/etherChartWindow.js`, `ui/naval/navalYardWindow.js`, `scenes/etherHost.js`, `scenes/world.js`, `systems/naval/captainLedger.js`, `systems/naval/etherCrossing.js` |
+| ETHER-DEEP | ITS DEPTH: Iliac Puddle No More's bake over the sea's own frame - its floor carved, swum and walked as the Bay's; the pits held to the Bay | `world/etherWatersBake.js`, `world/deepWater/deepWatersBake.js` (the frame, the flood, the raw reader's own bytes), `world/deepWater/deepWaterTileData.js` (the frame's clamps), `world/deepWater/deepWatersClient.js`, `world/deepWater/deepWatersWorker.js`, `scenes/deepWater/deepWatersHost.js` (the one gate, the frame's climates), `scenes/oceanHolesHost.js` (the hold), `scenes/world.js` (the places' rects, the near promote) |
 | ETHER-NODES | ITS NODES: the nodes' law knows the sea's ground - an isle's node, a haul and a pixel's witnesses taken by the service as the Bay's | `net/nodeLaw.js` (`pixelOk`, the ids' spelling) - both ends |
-| ETHER-OW | THE OVERWORLD PAST THE VEIL: the chart's Overworld door; an isle's place the view's own (plated, at the edge, TV6's); the governor's ground the stream's; the bands and the raiders seeded on the sea, their chases heard; a raider stood there the sea's own corsair | `ui/etherChartWindow.js` (the door), `scenes/travelView.js` (`TRAVEL_VIEW_BUTTON`), `world/ethericSea.js` (`onBayOrEther`), `world/etherPlaces.js` (`etherPlaceIsle`, `etherPlaceRows`), `scenes/world.js` (`openEtherChart`, `etherPlaceClone`, `tvEtherPlace`, `tvPlaceSummary`, `travelViewFarPlaces`, `tvDungeonRowsAt`, the governor, `bandOk`, `tvRaidOpen`, `tvRaidSea`), `systems/travelBands.js` (`chaserPlaceOk`), `scenes/navalHost.js` (`raiders`) |
+| ETHER-OW | THE OVERWORLD PAST THE VEIL: the chart's Overworld door; an isle's place the view's own (plated, at the edge, TV6's); the governor's ground the stream's; the bands and the raiders seeded on the sea, their chases heard; a raider stood there the sea's own corsair | `ui/etherChartWindow.js` (the door), `scenes/travelView.js` (`TRAVEL_VIEW_BUTTON`), `world/ethericSea.js` (`onBayOrEther`), `world/etherPlaces.js` (`etherPlaceIsle`, `etherPlaceRows`), `scenes/world.js` (`openEtherChart`, `etherPlaceClone`, `tvEtherPlace`, `tvPlaceSummary`, `travelViewFarPlaces`, `tvDungeonRowsAt`, the governor, `bandOk`, `tvRaidOpen`, `tvRaidSea`), `systems/travel/travelBands.js` (`chaserPlaceOk`), `scenes/naval/navalHost.js` (`raiders`) |
 | (the ledger) | WHAT A CAPTAIN KEEPS OF IT: the isles charted, the legends ended and heard of, the strands gathered, the way out, the crossings - in the Captain save | `systems/naval/captainLedger.js` (`ether`, `chartIsle`, `endLegend`, `gathered`, `setCrossedFrom`, `crossed`, `hearLegend`), `scenes/etherHost.js` |
 
 THE FOUR HOSTS (Home.md; AUDIT CAPTAIN'S SEA H12 - the slices named none): the sea, its ships, the crossing, the chart
@@ -145,7 +145,7 @@ tile over the sea level, measured through the kernel; 0..1 none). `etherClimateA
 (1.5) past its rim, from its land's own centre (`lx`, `ly`) - the kernel's window carries an isle's land a pixel east and
 south of its bytes, and that pixel must wear the isle's textures - the Ocean's else. The Landforms' lands read the same
 climates past the Bay's table (`landforms.js` - G3: every isle's hills were shaped by the Bay's clamped corner pixel,
-999, 0). Through the kernel (measured, `test/ethersea.test.js`): every port and ruin
+999, 0). Through the kernel (measured, `test/world/ethersea.test.js`): every port and ruin
 stands on a dry plateau (a place can stand there), Veilhaven's own pixel is all land, its landfall's pixel
 (LANDFALL_OFF_PX 4 east) all water, an empty cell's middle all water.
 
@@ -226,7 +226,7 @@ A port isle answers as a port everywhere the Bay's ports are asked (`etherPortAt
 (`navalNearPort`, `navalPortHere` - `{ key, name, px, py, region, crown: null, ether: true }`), and the HARBOUR BOOK
 (`navalHarbourNear` - its town's rectangle, the harbour sounded off the terrain as any port's, its quays laid by
 QUAYS' law). No crown's: the harbour office's crown's tab stands none there, and THE FREEPORT'S HARBOURMASTER
-(`etherHost.office`, `ui/navalYardWindow.js etherOfficeText`) is the tab instead - the port's waters, every legend's
+(`etherHost.office`, `ui/naval/navalYardWindow.js etherOfficeText`) is the tab instead - the port's waters, every legend's
 rumour as the quay's talk (each legend then on the captain's chart - `hearLegend`), and a chart of its waters for sale:
 every isle within CHART_BUY_PX (40) charted, at CHART_BUY_PRICE 150 gold and 75 a band deeper. THE EXCHANGE is
 CAPT-TRADE's own: an Eltheric port makes the three Eltheric goods (cheap, a day's stock of 30) and wants every good of
@@ -360,7 +360,7 @@ where his tab is shown (X11). The helm's plate says "The Veil" in the Veil itsel
 The owner, 2026-10-12: *"I want to improve the [Eltheric] sea map, its icons, the highlight areas, etc and improve
 readability."* Read in Chromium before the change (`ui/etherChartWindow.js` mounted alone, a captain's word of a hundred
 isles charted and three legends heard of, at every zoom and a phone's width - the window needs no game data), the chart
-had six faults, and each is fixed where it starts. Its audit (`01-Overview/Audit-Ether-Chart2.md`, the owner: "Audit and
+had six faults, and each is fixed where it starts. Its audit (`01-Overview/audits/Audit-Ether-Chart2.md`, the owner: "Audit and
 ensure absolute perfection and detail") changed what follows where it is marked with its finding's id.
 
 - **ITS WORDS WERE IN A FACE NO ONE LOADS.** The canvas named "Cormorant Garamond"; the skin's one request carries
@@ -434,7 +434,7 @@ the sheet's narrow rule no longer stretches the Close button over half the heade
 it (THE FOUR HOSTS above).
 
 **Its words** are the text core's since the merge of main's localization arc (L10N4; `sea.chart.*`, read when they are
-drawn, drafted in the thirteen whole languages - `01-Overview/Audit-Ether-OW.md`); the sea's name and its bands',
+drawn, drafted in the thirteen whole languages - `01-Overview/audits/Audit-Ether-OW.md`); the sea's name and its bands',
 kinds' and compass words are `world/ethericSea.js`'s, passed in English until that module's routing.
 
 ## ETHER-LIGHT - the light past the Veil
@@ -449,12 +449,12 @@ handed back, sdBrassLight's law).
 
 The sea past the Veil is **the Eltheric Ocean** (2026-10-12, the owner: "Apparently the ocean is suppose to be eltheric
 not etheric"). It is the lore's ocean west of Tamriel and the name the world had already given the waters west of the
-Bay (`world/tamrielGeography.js` SEAS, the intro map's; `test/tamriel.test.js` "the Bay opens west to the Eltheric") -
+Bay (`world/tamriel/tamrielGeography.js` SEAS, the intro map's; `test/ui/tamriel.test.js` "the Bay opens west to the Eltheric") -
 one ocean, one name, the noun the owner's own. It was "the Etheric Sea", spelt in fourteen literals across eight modules;
 the word has one home now, `ethericSea.js:"export const ETHER_WORD = 'Eltheric';"`, and every word a player reads of the
 sea is made of it: the chart's title and its two labels, the harbourmaster's lede, the legend's end, the crossing's
 question and its landfall, the log's lines and trades, the isles' region's words and the unstreamed landing.
-`test/eltheric.test.js` holds the word, the names, the map's ocean the same, each reader made of it, and a scan of the
+`test/world/eltheric.test.js` holds the word, the names, the map's ocean the same, each reader made of it, and a scan of the
 source - no code spells the old name, and the new one is spelt in its home and the map's table alone. The chart's title,
 three letters longer, was cut on a phone held upright (`tools/etherChartProbe.mjs`): on a narrow screen it wraps now
 (`ETHER_CHART_CSS`), and the probe's five sizes pass.
@@ -471,7 +471,7 @@ THE CAUSE. Under the water past the Veil the ground was the kernel's clamp at Oc
 its floor the drawn ground (the owner: "the area below water is very shallow and has no depth"). Iliac Puddle No More,
 which carves the Bay's seabed (`03-World/Deep-Waters.md`), knows one map - IsValidMapPixel's 1000 x 500 - and every
 query it asks clamps to it: an Eltheric pixel's tile data (`_global`, `_climateAtPixel`) and every bake query read the
-Bay's corner pixel. ETHER-HOLD (below, and `01-Overview/Field-Bugs-2026-10-12.md`) had found that clamp the hard way -
+Bay's corner pixel. ETHER-HOLD (below, and `01-Overview/bugs/Field-Bugs-2026-10-12.md`) had found that clamp the hard way -
 a floor carved against the corner and a swim that read no water over it - and held the carve off the box altogether.
 
 THE LAW. A bake answers a FRAME of pixels (`deepWatersBake.js:"export const BAY_FRAME = Object.freeze({ x0: 0, y0: 0, w: MAP_W, h: MAP_H });"`):
@@ -530,7 +530,7 @@ no migration (its keys are text). Its law moved, so `ACCOUNT_VERSION` was acct12
 below; service.js's discipline: a deploy
 that did not happen looks exactly like one that did), and `world/ethericSea.js` - the box's one home - joins the account
 Worker's bundle, so the deploy's path filter carries it (`.github/workflows/account-deploy.yml`, held to the import
-graph by `test/accountdeploy.test.js`, which caught it in CI). `test/ether_nodes.test.js` holds the ground, the spelling, and the service end to end
+graph by `test/server/accountdeploy.test.js`, which caught it in CI). `test/net/ether_nodes.test.js` holds the ground, the spelling, and the service end to end
 over the real database.
 
 ## ETHER-OW - the Overworld past the Veil
@@ -580,7 +580,7 @@ cross water in a boat (OWS2). Five of its reads still held the Bay:
    level alone).
 5. **THE WORD.** A chase is shared on the chaser's frame (TV7b, OW6), and the word's place was the Bay's extent: every
    chase said past the Veil was dropped by the peers who heard it. A chaser's place is a pixel of the world now
-   (`systems/travelBands.js` `chaserPlaceOk` - `net/wire.js` `worldPixelOk`, TV-BEYOND's law). The relay's ids and cells
+   (`systems/travel/travelBands.js` `chaserPlaceOk` - `net/wire.js` `worldPixelOk`, TV-BEYOND's law). The relay's ids and cells
    took a sign already (TV-BEYOND): no relay version.
 
 **Measured, kept.** The route planner (OWS2's sea, TV-BEYOND's ground past the map) plans past the Veil as it does past
@@ -589,7 +589,7 @@ widest box held about the two ends, about twice the Bay's whole map (1,001 by 1,
 **Held.** The sea lanes (`laneOpen`: the Bay's packets between its ports) and the serpent's site stay the Bay's. The sea
 fight's own traffic - the director's corsairs and the legends - is drawn under the view as hulls and is not marked, as
 the Bay's own pirates are not; a raider is marked where she stands as a ship (NAV-R). The chart is still never pressed
-to travel: the Overworld is. The node law reads the one home with every answer unchanged (`test/ether_nodes.test.js`
+to travel: the Overworld is. The node law reads the one home with every answer unchanged (`test/net/ether_nodes.test.js`
 as it stood), so the account Worker's law did not move with ETHER-OW (AUDIT ETHER-OW C2-1 moved it, to acct125: a
 Motherlode is sited where a Watch receipt can name its pixel).
 **THE FOUR HOSTS.** The Overworld is the streaming host's alone (`06-Systems/Travel-View.md`): `scenes/world.js` wired;
@@ -621,7 +621,7 @@ the Veil", "Legends ended"; its trades count 'ether' and 'legend' ships.
 - **Deep Waters by its own bake; the pits the Bay's.** ETHER-HOLD (from play, 2026-10-11: a player over the side
   stood on a floor carved against the Bay's clamped corner, and could neither swim nor float back) held the carve off
   the box; ETHER-DEEP (above) carves it by its own frame, and a host told nothing of the sea still holds it
-  (test/ethersea_dwhold.test.js). Ocean Holes' pits stay the Bay's.
+  (test/world/ethersea_dwhold.test.js). Ocean Holes' pits stay the Bay's.
 - **Online**, the crossing is each player's own; a party is not carried across together, and a player aboard another's
   ship holds the crossing back.
 - **The Overworld's enemies, seeded on the sea** (ETHER-OW): the bands roam the isles and Warm Ashes' raiders sail the
@@ -629,54 +629,54 @@ the Veil", "Legends ended"; its trades count 'ether' and 'legend' ships.
 
 ## Pins
 
-`test/ethersea.test.js` (15): the box (the wire's bounds, positive units, clear of Tamriel's frame at every fit), the
+`test/world/ethersea.test.js` (15): the box (the wire's bounds, positive units, clear of Tamriel's frame at every fit), the
 Veil and the bands, the hash, the isles (the chance, the kinds' weights and ranges, every isle's land inside its cell,
 the cache), the open edge and strip and Veilhaven, the names, the ground (the fall, the noise, the detail, the climate's
 reach, the map's water law), the composition (every arm), through the kernel (dry places, the landfall's water), the
 crossing's waters, the goods, the stream's frames, the far ring's `climatePast`, by source (the host's composition and
-order, the worker's word, the module's purity), the light. `test/etherplaces.test.js` (7): the id's lane and base, the
+order, the worker's word, the module's purity), the light. `test/world/etherplaces.test.js` (7): the id's lane and base, the
 index, the templates' filters and order, the pick by kind, the clone field by field, the host's seams, the ports'
-seams. `test/ethership.test.js` (10): the six legends kept out of every draw, the names and colours, the weights, the
+seams. `test/systems/naval/ethership.test.js` (10): the six legends kept out of every draw, the names and colours, the weights, the
 haunts, the rumours, the director past the Veil (no navy, no relief, the pairs, a legend's chance and her one), at sea
 (names, colours, no crime, the log's trade, the purse, the papers, the plate), the mend and the veil, the strands, by
-source. `test/ethercross.test.js` (10): the ways and the gate, the voyage's targets and words, the crossing by source
+source. `test/systems/naval/ethercross.test.js` (10): the ways and the gate, the voyage's targets and words, the crossing by source
 (each step in its order), the ledger's record and its log lines, the host's waters and charting, the strands, the
 legends' host (rise, night, purse, the chart's sale, the papers' chance), the chart's sums and model, the doors.
-PIN MOVED: `test/nav_c_ships.test.js` (fifteen classes, nine drawn), `test/tougherships.test.js` (the legends'
-salvage), `test/terrainworker.test.js` (the worker's imports), `test/tamriel2.test.js` (the ring's bytes past the map),
-`test/auditlandforms.test.js` and `test/tv8_party_walk.test.js` (the far read's guard), `test/csa_close.test.js` (the
-crossing's pause), `test/seasonsIliacBay.test.js` (the crossing a travel), `test/sd19_presence.test.js`, `test/event1_live_event.test.js`,
-`test/sunbaby1_event.test.js`, `test/sunbaby2_phases.test.js` and `test/wbx8_gate_sky.test.js` (the lights leaned once
-more), `test/fb0929h_deedport.test.js` (the port test past the Veil - an isle's port is a port for the deed),
-`test/fb0929h_spawnplate.test.js` and `test/spawneddungeons.test.js` (the build past the Veil),
-`test/sd2d_castout.test.js` (an isle's ruin wakes at its own door). `test/fixtures/time1_census.json` names the new
+PIN MOVED: `test/systems/naval/nav_c_ships.test.js` (fifteen classes, nine drawn), `test/systems/naval/tougherships.test.js` (the legends'
+salvage), `test/world/terrain/terrainworker.test.js` (the worker's imports), `test/world/tamriel2.test.js` (the ring's bytes past the map),
+`test/world/terrain/auditlandforms.test.js` and `test/systems/travel/tv8_party_walk.test.js` (the far read's guard), `test/systems/comeSailAway/csa_close.test.js` (the
+crossing's pause), `test/systems/seasonsIliacBay.test.js` (the crossing a travel), `test/systems/superDungeon/sd19_presence.test.js`, `test/render/event1_live_event.test.js`,
+`test/net/sunbaby1_event.test.js`, `test/world/sunbaby2_phases.test.js` and `test/systems/gate/wbx8_gate_sky.test.js` (the lights leaned once
+more), `test/systems/comeSailAway/fb0929h_deedport.test.js` (the port test past the Veil - an isle's port is a port for the deed),
+`test/world/fb0929h_spawnplate.test.js` and `test/world/spawneddungeons.test.js` (the build past the Veil),
+`test/systems/superDungeon/sd2d_castout.test.js` (an isle's ruin wakes at its own door). `test/fixtures/time1_census.json` names the new
 clock readers: the Eltheric host's day on the event clock, the crossing's arrival on the sky
 (`bible/06-Systems/Online-Time-Arc.md` 5.2). Mutants `tools/mutants/ethersea.json`,
 `tools/mutants/etherplaces.json`, `tools/mutants/ethership.json`, `tools/mutants/ethercross.json`.
 
-AUDIT CAPTAIN'S SEA: `test/auditcaptsea.test.js` (68) holds the audit's findings, the sea's among them - the ground
+AUDIT CAPTAIN'S SEA: `test/systems/naval/auditcaptsea.test.js` (68) holds the audit's findings, the sea's among them - the ground
 (G1-G14: the margin, the switch split and the unstreamed landing, the isles' own lands, the ring's climate, water,
 plates and fade, raids, the World of Daggerfall pick, Masser's key, the compass's words), the places (H1, P1-P12: a
 harbour at every port, the game's hamlets for the haven - against the player's own data, ARENA2_PATH - the spawns,
 the rise, the Veil's refusal, quests, deeds, the port gate, the Fleet's side of the Veil, the exterior's ids), the
 crossing and the chart (X1-X18), the traffic and the legends (D1-D21) - in `tools/mutants/auditcaptsea.json`. Its
-fixes moved pins in `test/ethersea.test.js` (the margin 64, the port isle's land, the mouth, the climates),
-`test/etherplaces.test.js` (the havens, the ruin's port byte, the spawn filter, the quest region), `test/ethership.test.js`
-(H7's tautology), `test/ethercross.test.js` (the refusal, the move, the way back, the hearing, the bands, the heading),
-`test/moonlight.test.js` (Masser's key), `test/raid1_raidingParties.test.js` (no province past the Veil),
-`test/audit_wod_branch.test.js` and `test/gateclear.test.js` (the pick the Bay's), `test/portal1_stone.test.js` (the
-Veil's refusal), `test/travelmap.test.js` (the landing before the build), and P9's deed in eleven house suites; the
+fixes moved pins in `test/world/ethersea.test.js` (the margin 64, the port isle's land, the mouth, the climates),
+`test/world/etherplaces.test.js` (the havens, the ruin's port byte, the spawn filter, the quest region), `test/systems/naval/ethership.test.js`
+(H7's tautology), `test/systems/naval/ethercross.test.js` (the refusal, the move, the way back, the hearing, the bands, the heading),
+`test/render/moonlight.test.js` (Masser's key), `test/systems/raid1_raidingParties.test.js` (no province past the Veil),
+`test/world/worldOfDaggerfall/audit_wod_branch.test.js` and `test/world/gate/gateclear.test.js` (the pick the Bay's), `test/systems/portal1_stone.test.js` (the
+Veil's refusal), `test/formats/travelmap.test.js` (the landing before the build), and P9's deed in eleven house suites; the
 page names each.
 
-ETHER-CHART2: `test/etherchart2.test.js` (9) holds the chart read at a glance - the face, a mark's shape by kind (a
+ETHER-CHART2: `test/ui/etherchart2.test.js` (9) holds the chart read at a glance - the face, a mark's shape by kind (a
 stub context watching the painter), the marks before the names, the names in layers, the depths and the depth ruler,
 the grid and the scale, the haunts named in view, the ship's pointer, the isle named and the window's line - in
-`tools/mutants/etherchart2.json` (24). PIN MOVED: `test/auditcaptsea.test.js` X12/X14 read the model's own boxes (a
+`tools/mutants/etherchart2.json` (24). PIN MOVED: `test/systems/naval/auditcaptsea.test.js` X12/X14 read the model's own boxes (a
 name on either side of its isle; X14's crowded view x1's, since x2 letters every port within 40 pixels of Veilhaven now,
 and its ports-first check a second, crowded view where a lesser name met first still takes a port's only place - with
 two sides the old view could not fail `ACS-X14-ports-first`) and X12 the depth ruler (each band's water its own, bound
 to bound - AUDIT ETHER-CHART2 U2); three of its records are re-aimed at the new sites (`ACS-X14-overlap`,
-`ACS-X14-ports-first`, `ACS-X12-band-side`). AUDIT ETHER-CHART2: `test/audit_etherchart2.test.js` (16) holds the
+`ACS-X14-ports-first`, `ACS-X12-band-side`). AUDIT ETHER-CHART2: `test/ui/audit_etherchart2.test.js` (16) holds the
 audit's findings - the window's room, the ruler drawn, the world's edge, the scale in the key, the card, the face that
 lands late and the room watched; a haunt's plate never over a name; the painter watched draw for draw (each colour, the
 ship on her heading, the pointer, the rings, the bearing, the washes, every name at its own box, the key); the measure
@@ -687,41 +687,41 @@ of a cut name, a lone haunt name over her own square, the ports' marks alone and
 lists all die. `tools/etherChartProbe.mjs` measures in Chromium what node cannot: the mean letter, the window fitting at
 five sizes, the late face, a full captain's repaint.
 
-ELTHERIC, ETHER-DEEP, ETHER-NODES: `test/eltheric.test.js` (4) - the word and its readers, the source scanned, the
-chart's title wrapped; `test/ether_deep.test.js` (10) - the raw reader's bytes its own, the cells' rings over three rows,
+ELTHERIC, ETHER-DEEP, ETHER-NODES: `test/world/eltheric.test.js` (4) - the word and its readers, the source scanned, the
+chart's title wrapped; `test/world/deepWater/ether_deep.test.js` (10) - the raw reader's bytes its own, the cells' rings over three rows,
 the cell's flood the nine cells', the frame and the routing, the planes bounded, the places' rects, the open sea carved
-through the pixel builder to the Ocean's plain, the client and the worker, the host's every arm; `test/ether_nodes.test.js`
-(3) - the ground, the spelling, the service. `test/oh_host.test.js` holds the pits' hold. Mutants
+through the pixel builder to the Ocean's plain, the client and the worker, the host's every arm; `test/net/ether_nodes.test.js`
+(3) - the ground, the spelling, the service. `test/scenes/oh_host.test.js` holds the pits' hold. Mutants
 `tools/mutants/eltheric.json` (7), `tools/mutants/ether_deep.json` (23), `tools/mutants/ether_nodes.json` (6) - all
 die (three ETHER-DEEP records survived the first pins - a carved query and a misrouted row probed where the box's
 clamped edge answers the same, the host's word to its client never reached - and the pins were made to see them). PIN MOVED: every pin
-of the sea's words (`test/ethersea.test.js`, `test/ethercross.test.js`, `test/audit_etherchart2.test.js`,
-`test/auditcaptsea.test.js`), `test/tamriel2.test.js` (the near promote's gate the host's),
-`test/ethersea_dwhold.test.js` (a host told nothing of the sea), and `tools/mutants/dwa.json`'s two border seeds (the
+of the sea's words (`test/world/ethersea.test.js`, `test/systems/naval/ethercross.test.js`, `test/ui/audit_etherchart2.test.js`,
+`test/systems/naval/auditcaptsea.test.js`), `test/world/tamriel2.test.js` (the near promote's gate the host's),
+`test/world/ethersea_dwhold.test.js` (a host told nothing of the sea), and `tools/mutants/dwa.json`'s two border seeds (the
 flood's names the frame's), auditcaptsea's ACS-V1 and captlog's CL-ether-crowned (the words - AUDIT ETHER-OW D-17).
 
-ETHER-OW: `test/ether_ow.test.js` (9) - the chart's door mounted (hidden, shown at a paint, pressed, its key) and the
+ETHER-OW: `test/systems/travel/ether_ow.test.js` (9) - the chart's door mounted (hidden, shown at a paint, pressed, its key) and the
 host's (handed where the view can rise, the view lifted once the slot is empty), the governor's line over the real
 stream law, the places (the summary, known by chart or find, never stood, the index's first), the far ports and the
 ruins as TV6's (lifted and run), the bands' land and the raiders' sea over the sea's composed ground (bands and raiders
-seeded there, life by life), the chase word; `test/nav_r_raiders.test.js` (+1) - a raider stood past the Veil the sea's
+seeded there, life by life), the chase word; `test/systems/naval/nav_r_raiders.test.js` (+1) - a raider stood past the Veil the sea's
 corsair, drawn the band's levels over the captain's. Mutants `tools/mutants/ether_ow.json` (24). PIN MOVED (each to its
-new law): `test/ows3_raiders.test.js` (the raiders' open sea, the host's ground, the word's place past the world's edge),
-`test/tv7_bands.test.js` (the bands' land, the word's place), `test/tv5_far_places.test.js` (the settlements),
-`test/tv6_dungeons.test.js`, `test/ow5_audit.test.js` and `test/owdungeons.test.js` (the lists' rows lifted beside them), `test/tv2_click_to_move.test.js`
-and `test/tv_wasd.test.js` (the governor's ground), `test/audit_etherchart2.test.js` (the door a press of the row);
+new law): `test/systems/ows3_raiders.test.js` (the raiders' open sea, the host's ground, the word's place past the world's edge),
+`test/systems/travel/tv7_bands.test.js` (the bands' land, the word's place), `test/ui/travel/tv5_far_places.test.js` (the settlements),
+`test/systems/travel/tv6_dungeons.test.js`, `test/player/eyeOfTheBeholder/ow5_audit.test.js` and `test/world/owdungeons.test.js` (the lists' rows lifted beside them), `test/systems/travel/tv2_click_to_move.test.js`
+and `test/systems/travel/tv_wasd.test.js` (the governor's ground), `test/ui/audit_etherchart2.test.js` (the door a press of the row);
 re-aimed by content: `tools/mutants/ether_nodes.json` (EN-bay-alone, EN-law-margin), `ow3d.json` (OW3D3-rows-off-the-index),
 `ow4t.json` (OW4-B2-live-index), `ow5s.json` (the two S5 records), `tv7.json` (TV7b-off-the-map).
 
-AUDIT ETHER-OW (`01-Overview/Audit-Ether-OW.md`): `test/audit_etherow.test.js` (4) - the Motherlodes' ground (the
+AUDIT ETHER-OW (`01-Overview/audits/Audit-Ether-OW.md`): `test/systems/audit_etherow.test.js` (4) - the Motherlodes' ground (the
 Watch's, one home; the service end to end), a chart a plate at once, no boarding across the Veil; the lanes' other
-pins in their slices' files - `test/ether_deep.test.js` (the Bay's pixels off the bytes, every delegate routed, the
-keep exact and the near kept, a tile's climates and east edge, the dry check's held bits), `test/ether_ow.test.js`
+pins in their slices' files - `test/world/deepWater/ether_deep.test.js` (the Bay's pixels off the bytes, every delegate routed, the
+keep exact and the near kept, a tile's climates and east edge, the dry check's held bits), `test/systems/travel/ether_ow.test.js`
 (the find and the models past the Veil, the chase word's place, the bands off the continent's land, no raiders with the
-sea fight off), `test/nav_r_raiders.test.js` (the band's levels, not its tier), `test/oh_host.test.js` (the continent's
+sea fight off), `test/systems/naval/nav_r_raiders.test.js` (the band's levels, not its tier), `test/scenes/oh_host.test.js` (the continent's
 pits). `tools/mutants/audit_etherow.json` (47) all die. PIN MOVED: the account version (acct125) in nineteen suites and the relay's (world199),
-`test/seat1b_client.test.js` (the relay's mint), `test/audit68_worldjs.test.js` (the board asks the Veil), `test/ows3_raiders.test.js` (the raiders' host), and the lists' key in
-`test/tv6_dungeons.test.js`, `test/ow5_audit.test.js` and `test/owdungeons.test.js`; re-aimed by content: four records
+`test/net/seat1b_client.test.js` (the relay's mint), `test/world/audit68_worldjs.test.js` (the board asks the Veil), `test/systems/ows3_raiders.test.js` (the raiders' host), and the lists' key in
+`test/systems/travel/tv6_dungeons.test.js`, `test/player/eyeOfTheBeholder/ow5_audit.test.js` and `test/world/owdungeons.test.js`; re-aimed by content: four records
 of `tools/mutants/ether_deep.json`, `seat1b.json`'s relay record and `soc1.json`'s relay version.
 
 **Not verified here:** the look and feel in a real browser (the isles on the horizon, the light - the chart was read in

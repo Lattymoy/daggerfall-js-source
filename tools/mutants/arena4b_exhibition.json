@@ -1,74 +1,74 @@
 [
   {
     "name": "ARENA4b-EX-DRAW-TIER",
-    "file": "src/net/arenaExhibition.js",
+    "file": "src/net/arena/arenaExhibition.js",
     "old": "const pool = ARENA_LADDER_SPEC[tier].slice(0, ARENA_TIER_BOUTS)",
     "new": "const pool = ARENA_LADDER_SPEC[tier + 1].slice(0, ARENA_TIER_BOUTS)",
     "tests": [
-      "test/arena4b_exhibition.test.js"
+      "test/net/arena/arena4b_exhibition.test.js"
     ]
   },
   {
     "name": "ARENA4b-EX-BOUTID-SEED",
-    "file": "src/net/arenaExhibition.js",
+    "file": "src/net/arena/arenaExhibition.js",
     "old": "export const exhibitionBoutId = (hour) => arenaHash(hour, 1)",
     "new": "export const exhibitionBoutId = (hour) => arenaHash(hour, 2)",
     "tests": [
-      "test/arena4b_exhibition.test.js"
+      "test/net/arena/arena4b_exhibition.test.js"
     ]
   },
   {
     "name": "ARENA4b-EX-ROOM-HOUR",
-    "file": "src/net/arenaLaw.js",
+    "file": "src/net/arena/arenaLaw.js",
     "old": "return m ? Number(m[1]) : null; };",
     "new": "return m ? Number(m[1]) + 1 : null; };",
     "tests": [
-      "test/arena4b_exhibition.test.js"
+      "test/net/arena/arena4b_exhibition.test.js"
     ]
   },
   {
     "name": "ARENA4b-EX-ROOM-SPELLING",
-    "file": "src/net/arenaLaw.js",
+    "file": "src/net/arena/arenaLaw.js",
     "old": "export const ARENA_EX_ROOM_RE = /^arena:x(0|[1-9]\\d{0,8})$/;",
     "new": "export const ARENA_EX_ROOM_RE = /^arena:x(\\d{1,9})$/;",
     "tests": [
-      "test/arena4b_exhibition.test.js"
+      "test/net/arena/arena4b_exhibition.test.js"
     ]
   },
   {
     "name": "ARENA4b-EX-OPENING-WINDOW",
-    "file": "src/net/arenaExhibition.js",
+    "file": "src/net/arena/arenaExhibition.js",
     "old": "return ex && ex.open ? ex : null;",
     "new": "return ex;",
     "tests": [
-      "test/arena4b_exhibition.test.js"
+      "test/net/arena/arena4b_exhibition.test.js"
     ]
   },
   {
     "name": "ARENA4b-EX-OPENING-HOUR",
-    "file": "src/net/arenaExhibition.js",
+    "file": "src/net/arena/arenaExhibition.js",
     "old": "if (!Number.isSafeInteger(hour) || hourIndexOf(nowMinutes) !== hour) return null;",
     "new": "if (!Number.isSafeInteger(hour)) return null;",
     "tests": [
-      "test/arena4b_exhibition.test.js"
+      "test/net/arena/arena4b_exhibition.test.js"
     ]
   },
   {
     "name": "ARENA4b-EX-ADMITS-AHEAD",
-    "file": "src/net/arenaExhibition.js",
+    "file": "src/net/arena/arenaExhibition.js",
     "old": "hour >= now - EXHIBITION_KEPT_HOURS - 1 && hour <= now + 1; };",
     "new": "hour >= now - EXHIBITION_KEPT_HOURS - 1 && hour <= now + 10; };",
     "tests": [
-      "test/arena4b_exhibition.test.js"
+      "test/net/arena/arena4b_exhibition.test.js"
     ]
   },
   {
     "name": "ARENA4b-EX-ADMITS-BEHIND",
-    "file": "src/net/arenaExhibition.js",
+    "file": "src/net/arena/arenaExhibition.js",
     "old": "hour >= now - EXHIBITION_KEPT_HOURS - 1 && hour <= now + 1; };",
     "new": "hour >= 0 && hour <= now + 1; };",
     "tests": [
-      "test/arena4b_exhibition.test.js"
+      "test/net/arena/arena4b_exhibition.test.js"
     ]
   },
   {
@@ -77,79 +77,79 @@
     "old": "if (isArenaExhibitionRoom(key) && !exhibitionAdmits(",
     "new": "if (false && !exhibitionAdmits(",
     "tests": [
-      "test/arena4b_exhibition.test.js"
+      "test/net/arena/arena4b_exhibition.test.js"
     ]
   },
   {
     "name": "ARENA4b-EX-LAW-WAITS",
-    "file": "src/net/arenaBrain.js",
+    "file": "src/net/arena/arenaBrain.js",
     "old": "    startLaw(st, now);\n    return st;\n",
     "new": "    return st;\n",
     "tests": [
-      "test/arena4b_exhibition.test.js"
+      "test/net/arena/arena4b_exhibition.test.js"
     ]
   },
   {
     "name": "ARENA4b-EX-SIDES",
-    "file": "src/net/arenaBrain.js",
+    "file": "src/net/arena/arenaBrain.js",
     "old": "windup: body.windup, reach: body.reach, side: i,",
     "new": "windup: body.windup, reach: body.reach, side: 1 - i,",
     "tests": [
-      "test/arena4b_exhibition.test.js"
+      "test/net/arena/arena4b_exhibition.test.js"
     ]
   },
   {
     "name": "ARENA4b-EX-RECEIPT",
-    "file": "src/net/arenaBrain.js",
+    "file": "src/net/arena/arenaBrain.js",
     "old": "  if (st.kind === 'ex' || st.casual) return [];",
     "new": "  if (st.casual) return [];",
     "tests": [
-      "test/arena4b_exhibition.test.js"
+      "test/net/arena/arena4b_exhibition.test.js"
     ]
   },
   {
     "name": "ARENA4b-EX-STATE-HOUR",
-    "file": "src/net/arenaBrain.js",
+    "file": "src/net/arena/arenaBrain.js",
     "old": "...(st.kind === 'ex' ? { h: st.hour } : {})",
     "new": "...({})",
     "tests": [
-      "test/arena4b_exhibition.test.js"
+      "test/net/arena/arena4b_exhibition.test.js"
     ]
   },
   {
     "name": "ARENA4b-EX-LIVE-ENTRY",
-    "file": "src/net/arenaBrain.js",
+    "file": "src/net/arena/arenaBrain.js",
     "old": "if (st.kind === 'ex') return { o: st.o, kind: 'ex', h: st.hour, a: { b: ARENA_EX_BANNERS[0] }, b: { b: ARENA_EX_BANNERS[1] }, tier: st.tier, sp: st.spectators, at: st.at };",
     "new": "if (st.kind === 'ex') return { o: st.o, kind: 'ex', h: st.hour, a: { b: ARENA_EX_BANNERS[0] }, b: { b: ARENA_EX_BANNERS[1] }, sp: st.spectators, at: st.at };",
     "tests": [
-      "test/arena4b_exhibition.test.js"
+      "test/net/arena/arena4b_exhibition.test.js"
     ]
   },
   {
     "name": "ARENA4b-EX-WIRE-ST-HOUR",
-    "file": "src/net/arenaLaw.js",
+    "file": "src/net/arena/arenaLaw.js",
     "old": "      if (m.kind === 'ex' && int(m.h, 0, ARENA_HOUR_MAX) == null) return null;   // ARENA4b: an exhibition says its hour\n",
     "new": "",
     "tests": [
-      "test/arena4b_exhibition.test.js"
+      "test/net/arena/arena4b_exhibition.test.js"
     ]
   },
   {
     "name": "ARENA4b-EX-WIRE-LIVE-HOUR",
-    "file": "src/net/arenaLaw.js",
+    "file": "src/net/arena/arenaLaw.js",
     "old": "        if (ex && int(b.h, 0, ARENA_HOUR_MAX) == null) return null;\n",
     "new": "",
     "tests": [
-      "test/arena4b_exhibition.test.js"
+      "test/net/arena/arena4b_exhibition.test.js"
     ]
   },
   {
     "name": "ARENA4b-EX-WIRE-LIVE-BILL",
-    "file": "src/net/arenaLaw.js",
+    "file": "src/net/arena/arenaLaw.js",
     "old": "if ((!ex && !a) || (!ex && b.b && !z)",
     "new": "if ((!ex && !a) || (b.b && !z)",
     "tests": [
-      "test/arena4b_exhibition.test.js"
+      "test/net/arena/arena4b_exhibition.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "const ex = m.r === 's' ? exhibitionOpening(hour, sharedClassicMinutes(now)) : null;",
     "new": "const ex = exhibitionOpening(hour, sharedClassicMinutes(now));",
     "tests": [
-      "test/arena4b_exhibition.test.js"
+      "test/net/arena/arena4b_exhibition.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "const ex = m.r === 's' ? exhibitionOpening(hour, sharedClassicMinutes(now)) : null;",
     "new": "const ex = m.r === 's' ? exhibitionOpening(hour, hour * 60 + 1) : null;",
     "tests": [
-      "test/arena4b_exhibition.test.js"
+      "test/net/arena/arena4b_exhibition.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "      } else if (boutFinished(st) && (exRoom || fighterOfSub(st, a.sub))) {",
     "new": "      } else if (false) {",
     "tests": [
-      "test/arena4b_exhibition.test.js"
+      "test/net/arena/arena4b_exhibition.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "const keep = st.kind === 'ex' ? ARENA_EX_KEEP_MS : st.priv ? ARENA_PRIVATE_KEEP_MS : ARENA_KEEP_MS;",
     "new": "const keep = st.priv ? ARENA_PRIVATE_KEEP_MS : ARENA_KEEP_MS;",
     "tests": [
-      "test/arena4b_exhibition.test.js"
+      "test/net/arena/arena4b_exhibition.test.js"
     ]
   },
   {
@@ -194,9 +194,9 @@
     "old": "      if (isArenaPrivateRoom(a.key)) for (let i = others.length - 1; i >= 0; i--) if (unseen ||",
     "new": "      if (isArenaFloorRoom(a.key)) for (let i = others.length - 1; i >= 0; i--) if (unseen ||",
     "tests": [
-      "test/arena4b_exhibition.test.js",
-      "test/arena4_relay.test.js",
-      "test/hotfix1003_stands.test.js"
+      "test/net/arena/arena4b_exhibition.test.js",
+      "test/net/arena/arena4_relay.test.js",
+      "test/net/arena/hotfix1003_stands.test.js"
     ],
     "note": "HOTFIX 1003f (re-aimed by content): every floor's roster names everyone in it now; the filter is a private session's alone. This mutant runs it over every floor - an exhibition's or a bout's welcome draws nobody again."
   },
@@ -206,8 +206,8 @@
     "old": "      if (unseen) return;   // HOTFIX 1003f",
     "new": "      if (isArenaFloorRoom(a.key)) return;   // HOTFIX 1003f",
     "tests": [
-      "test/arena4b_exhibition.test.js",
-      "test/hotfix1003_stands.test.js"
+      "test/net/arena/arena4b_exhibition.test.js",
+      "test/net/arena/hotfix1003_stands.test.js"
     ],
     "note": "HOTFIX 1003f (re-aimed by content): a floor's hello is said to the room now (a private session's stranger's to nobody). This mutant is ARENA4's old silence: a watcher's hello said to nobody."
   },
@@ -217,16 +217,16 @@
     "old": "        else if (isArenaFloorRoom(a.key)) await this._boutWord(ws, a, m, now);",
     "new": "        else if (isArenaFloorRoom(a.key) && !isArenaExhibitionRoom(a.key)) await this._boutWord(ws, a, m, now);",
     "tests": [
-      "test/arena4b_exhibition.test.js"
+      "test/net/arena/arena4b_exhibition.test.js"
     ]
   },
   {
     "name": "ARENA4b-EX-FLOOR-ROOM",
-    "file": "src/net/arenaLaw.js",
+    "file": "src/net/arena/arenaLaw.js",
     "old": "isArenaExhibitionRoom(`arena:${o}`) || isArenaPrivateRoom(`arena:${o}`) ? `arena:${o}` : null);",
     "new": "isArenaExhibitionRoom(`arena:${o}`) || isArenaPrivateRoom(`arena:${o}`) ? arenaBoutRoom(o) : null);",
     "tests": [
-      "test/arena4b_exhibition.test.js"
+      "test/net/arena/arena4b_exhibition.test.js"
     ]
   }
 ]

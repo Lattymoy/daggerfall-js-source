@@ -5,7 +5,7 @@
     "old": "      out.push(...journeyBody());   // PARTY-UI\n",
     "new": "",
     "tests": [
-      "test/soc3_socialpanel.test.js"
+      "test/net/soc3_socialpanel.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    if (journeyKey() !== paintedJourney) ui++;",
     "new": "",
     "tests": [
-      "test/soc3_socialpanel.test.js"
+      "test/net/soc3_socialpanel.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "run: () => said(j.respond(false))",
     "new": "run: () => said(j.respond(true))",
     "tests": [
-      "test/soc3_socialpanel.test.js"
+      "test/net/soc3_socialpanel.test.js"
     ]
   },
   {
@@ -32,52 +32,52 @@
     "old": "    else if (st.away) {",
     "new": "    else if (false) {",
     "tests": [
-      "test/soc3_socialpanel.test.js"
+      "test/net/soc3_socialpanel.test.js"
     ]
   },
   {
     "name": "PARTY-UI-the-count-never-kept",
-    "file": "src/systems/partyTravel.js",
+    "file": "src/systems/party/partyTravel.js",
     "old": "    trip.count = count;",
     "new": "",
     "tests": [
-      "test/partytravel.test.js"
+      "test/systems/party/partytravel.test.js"
     ]
   },
   {
     "name": "PARTY-UI-the-count-never-updated",
-    "file": "src/systems/partyTravel.js",
+    "file": "src/systems/party/partyTravel.js",
     "old": "if (count !== t.count) { t.count = count; waitLabel(t, now); }",
     "new": "if (count !== t.count) { waitLabel(t, now); }",
     "tests": [
-      "test/partytravel.test.js"
+      "test/systems/party/partytravel.test.js"
     ]
   },
   {
     "name": "PARTY-UI-respond-a-toggle",
-    "file": "src/systems/partyTravel.js",
+    "file": "src/systems/party/partyTravel.js",
     "old": "answer(round.at, yes == null ? vote !== round.at : !!yes), said: true",
     "new": "answer(round.at, vote !== round.at), said: true",
     "tests": [
-      "test/partytravel.test.js"
+      "test/systems/party/partytravel.test.js"
     ]
   },
   {
     "name": "PARTY-UI-the-box-left-standing",
-    "file": "src/systems/partyTravel.js",
+    "file": "src/systems/party/partyTravel.js",
     "old": "    if (promptFor === round.at) closePrompt();\n    asked = round.at;\n    return { line: answer(round.at, yes",
     "new": "    asked = round.at;\n    return { line: answer(round.at, yes",
     "tests": [
-      "test/partytravel.test.js"
+      "test/systems/party/partytravel.test.js"
     ]
   },
   {
     "name": "PARTY-UI-gathered-unread",
-    "file": "src/systems/partyTravel.js",
+    "file": "src/systems/party/partyTravel.js",
     "old": "gathered: near === open.at",
     "new": "gathered: true",
     "tests": [
-      "test/partytravel.test.js"
+      "test/systems/party/partytravel.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "      journey: () => partyTravel,   // PARTY-UI: the Party tab's Journey - the session is made later in this host, so it is read when drawn\n",
     "new": "",
     "tests": [
-      "test/soc3_socialpanel.test.js"
+      "test/net/soc3_socialpanel.test.js"
     ]
   }
 ]

@@ -5,7 +5,7 @@
     "old": "    let out = CURATED_TOWNS.has(locationKey) ? new Set(CURATED_TOWNS.get(locationKey)) : null;   // TEMPLE-HOME: by the town's key",
     "new": "    let out = null;",
     "tests": [
-      "test/fb1004d_templehome.test.js"
+      "test/systems/fb1004d_templehome.test.js"
     ],
     "note": "the fault itself: the 34 temples stand the mod's TEMPASA2, where a quest person's local home finds no house"
   },
@@ -15,7 +15,7 @@
     "old": "    if (type == null) return out;",
     "new": "    if (type == null) return null;",
     "tests": [
-      "test/fb1004d_templehome.test.js"
+      "test/systems/fb1004d_templehome.test.js"
     ],
     "note": "world.js fills its index before the pins know a town's type or grid: the temple would be indexed as the mod's, and building it once the pins answer would ask for a TEMPASA2 the door no longer serves"
   },
@@ -25,7 +25,7 @@
     "old": "Object.freeze([4401, 4501, ",
     "new": "Object.freeze([4501, ",
     "tests": [
-      "test/fb1004d_templehome.test.js"
+      "test/systems/fb1004d_templehome.test.js"
     ],
     "note": "the list is every temple the pack lays out on TEMPASA2 alone"
   },
@@ -35,7 +35,7 @@
     "old": "    vendor: 'beautiful-villages', why: 'a temple with no house',",
     "new": "    vendor: 'beautiful-cities', why: 'a temple with no house',",
     "tests": [
-      "test/fb1004d_templehome.test.js"
+      "test/systems/fb1004d_templehome.test.js"
     ],
     "note": "the mod kept out is the one whose location files the 34 are"
   }

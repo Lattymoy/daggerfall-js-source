@@ -4,21 +4,21 @@
 // where the siege's field says they stand, doing what it says they do: each Daggerfall's own sprite at its own size
 // (a guard the City Watch, the rebels a Rogue, a Barbarian and a Thief by turns, the Captain a Warrior drawn a fifth
 // taller), walking, winding up and landing its blow, flinching, falling. The gate host's driver's way
-// (scenes/gateHost.js), in the town's own frame; never in `foes` - its bodies are the siege's arms' targets (scenes/
-// world.js), and every blow on one is the referee's (net/siegeSession.js).
+// (scenes/gate/gateHost.js), in the town's own frame; never in `foes` - its bodies are the siege's arms' targets (scenes/
+// world.js), and every blow on one is the referee's (net/siege/siegeSession.js).
 //
-// ONE SOURCE: the siege's state (net/siegeLink.js `npcs`, the field's frames folded). Nothing here is sent. PURE where it
+// ONE SOURCE: the siege's state (net/siege/siegeLink.js `npcs`, the field's frames folded). Nothing here is sent. PURE where it
 // can be: who each one is (siegeNpcLook) and what it is doing (siegeNpcAct); this file holds the sprites' textures and
 // batches and what it has already sounded.
 //
 // Not a DFU member. Ledger A (SEAT2b part two (c)).
-import { SIEGE_NPC } from '../net/siegeRef.js';
-import { siegeNpcShown } from '../net/siegeLink.js';
-import { ENEMY_BASICS } from '../characters/enemyBasics.js';
-import { KNIGHT_CITY_WATCH } from '../characters/mobileTypes.js';   // HALT-ONE: the Town Guard's hurt cry is no Halt
-import { stateAnims, HURT_ANIMS, HURT_ANIM_SPEED, PRIMARY_ATTACK_ANIM_SPEED } from '../characters/mobileUnit.js';
+import { SIEGE_NPC } from '../net/siege/siegeRef.js';
+import { siegeNpcShown } from '../net/siege/siegeLink.js';
+import { ENEMY_BASICS } from '../characters/enemy/enemyBasics.js';
+import { KNIGHT_CITY_WATCH } from '../characters/mobile/mobileTypes.js';   // HALT-ONE: the Town Guard's hurt cry is no Halt
+import { stateAnims, HURT_ANIMS, HURT_ANIM_SPEED, PRIMARY_ATTACK_ANIM_SPEED } from '../characters/mobile/mobileUnit.js';
 import { mobileBillboardSize } from '../world/rmbFlats.js';
-import { bossFrame } from '../world/gateBoss.js';
+import { bossFrame } from '../world/gate/gateBoss.js';
 import { createPopulationLane } from '../characters/npcBodies.js'; import { rosterLook } from '../characters/foeBodies.js'; import { rosterActor } from '../characters/rosterBodies.js';   // MWNPC10: the siege's fighters in their Morrowind bodies
 
 /** Who each kind is: its mobile (its sprite and its sounds - enemyBasics.js), its name, how much taller it is drawn. The
@@ -44,7 +44,7 @@ export const SIEGE_NPC_STRIKE_MS = 600;
 
 /**
  * WHAT ONE OF THEM IS DOING at `now` (the relay's clock, as its state's): `act` one of fall, gone, windup, strike, flinch,
- * walk, idle; `anims` the table that shows it; `frame` and `loop` as world/gateBoss.js bossFrame takes them. Pure.
+ * walk, idle; `anims` the table that shows it; `frame` and `loop` as world/gate/gateBoss.js bossFrame takes them. Pure.
  * @param {any} n a SiegeNpc @param {number} now @param {{ mobile: number }} look
  */
 export function siegeNpcAct(n, now, look) {
@@ -116,7 +116,7 @@ export function createSiegeNpcs({ renderer = null, getTexture = null, uploadReco
   function clear() { for (const b of bodies.values()) destroyBatch(b); bodies.clear(); _targets.length = 0; _batches.length = 0; }
   return {
     /** One frame: each one drawn where its walk has carried it, its blow and its hurt and its fall heard once, the bodies
-     *  my blows meet refilled. `npcs` the siege's (net/siegeLink.js), `now` the relay's clock. */
+     *  my blows meet refilled. `npcs` the siege's (net/siege/siegeLink.js), `now` the relay's clock. */
     frame(npcs, now) {
       _targets.length = 0; _batches.length = 0; _live.clear();
       for (const n of npcs ?? []) {

@@ -5,7 +5,7 @@
     "old": "\n            && (R ? faceNyTurned(tri, R) : faceNy(tri)) >= GROUND_NY;",
     "new": ";",
     "tests": [
-      "test/auditdisc28_motion.test.js"
+      "test/player/auditdisc28_motion.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "            && (R ? faceNyTurned(tri, R) : faceNy(tri)) >= GROUND_NY;",
     "new": "            && (R ? faceNyTurned(tri, R) : faceNy(tri)) > 1;",
     "tests": [
-      "test/auditdisc28_motion.test.js"
+      "test/player/auditdisc28_motion.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "return l > 0 ? Math.abs(ny) / l : 0;",
     "new": "return l > 0 ? Math.abs(nx) / l : 0;",
     "tests": [
-      "test/auditdisc28_motion.test.js"
+      "test/player/auditdisc28_motion.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "const lowOneWay = straddle ? axis : true;",
     "new": "const lowOneWay = straddle ? false : true;",
     "tests": [
-      "test/disc28_swim.test.js"
+      "test/player/disc28_swim.test.js"
     ]
   },
   {
@@ -41,25 +41,25 @@
     "old": "const lowOneWay = straddle ? axis : true;",
     "new": "const lowOneWay = straddle ? axis : false;",
     "tests": [
-      "test/disc28_swim.test.js"
+      "test/player/disc28_swim.test.js"
     ]
   },
   {
     "name": "AUDIT-DISC28-MO3-the-stroke-in-one-move",
-    "file": "src/scenes/deepWatersSwimMove.js",
+    "file": "src/scenes/deepWater/deepWatersSwimMove.js",
     "old": "  const n = Number.isFinite(m) ? Math.min(STROKE_PIECES_MAX, Math.max(1, Math.ceil(m / EXACT_SWEEP_MAX))) : 1;",
     "new": "  const n = 1;",
     "tests": [
-      "test/auditdisc28_motion.test.js"
+      "test/player/auditdisc28_motion.test.js"
     ]
   },
   {
     "name": "AUDIT-DISC28-MO3-one-piece-at-most",
-    "file": "src/scenes/deepWatersSwimMove.js",
+    "file": "src/scenes/deepWater/deepWatersSwimMove.js",
     "old": "const STROKE_PIECES_MAX = 8;",
     "new": "const STROKE_PIECES_MAX = 1;",
     "tests": [
-      "test/auditdisc28_motion.test.js"
+      "test/player/auditdisc28_motion.test.js"
     ]
   },
   {
@@ -68,34 +68,34 @@
     "old": "export const EXACT_SWEEP_MAX = SUBSTEPS_MAX * SUBSTEP_LEN;",
     "new": "export const EXACT_SWEEP_MAX = 2 * SUBSTEPS_MAX * SUBSTEP_LEN;",
     "tests": [
-      "test/auditdisc28_motion.test.js"
+      "test/player/auditdisc28_motion.test.js"
     ]
   },
   {
     "name": "AUDIT-DISC28-MO4-the-read-finds-nothing",
-    "file": "src/characters/enemyAnchor.js",
+    "file": "src/characters/enemy/enemyAnchor.js",
     "old": "return Number.isFinite(d) ? at[1] + 0.2 - d : null;",
     "new": "return null;",
     "tests": [
-      "test/disc28_flyer.test.js"
+      "test/characters/enemy/disc28_flyer.test.js"
     ]
   },
   {
     "name": "AUDIT-DISC28-MO4-the-read-from-the-marker-itself",
-    "file": "src/characters/enemyAnchor.js",
+    "file": "src/characters/enemy/enemyAnchor.js",
     "old": "collider.raycast([at[0], at[1] + 0.2, at[2]]",
     "new": "collider.raycast([at[0], at[1], at[2]]",
     "tests": [
-      "test/disc28_flyer.test.js"
+      "test/characters/enemy/disc28_flyer.test.js"
     ]
   },
   {
     "name": "AUDIT-DISC28-MO4-the-door-hangs-given-feet",
-    "file": "src/characters/enemyAnchor.js",
+    "file": "src/characters/enemy/enemyAnchor.js",
     "old": "return feetGiven ? [at[0], at[1], at[2]] : ",
     "new": "return ",
     "tests": [
-      "test/disc28_flyer.test.js"
+      "test/characters/enemy/disc28_flyer.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "flyerStandFeet(collider, [e.x, e.y, e.z], idleH, feetGiven)",
     "new": "flyerStandFeet(collider, [e.x, e.y, e.z], idleH)",
     "tests": [
-      "test/disc28_flyer.test.js"
+      "test/characters/enemy/disc28_flyer.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "flyerStandFeet(collider, [e.x, e.y, e.z], idleH, feetGiven)",
     "new": "[e.x, e.y - idleH / 2, e.z]",
     "tests": [
-      "test/disc28_flyer.test.js"
+      "test/characters/enemy/disc28_flyer.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "spawnDistanceType: 0 }, false, { puppet: true, feetGiven: true });   // DISC28-H: `r.f` is the owner's feet; AUDIT PRE-MERGE 0928 M1: the host's encounter",
     "new": "spawnDistanceType: 0 }, false, { puppet: true });   // DISC28-H: `r.f` is the owner's feet; AUDIT PRE-MERGE 0928 M1: the host's encounter",
     "tests": [
-      "test/disc28_flyer.test.js"
+      "test/characters/enemy/disc28_flyer.test.js"
     ]
   }
 ]

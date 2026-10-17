@@ -82,7 +82,7 @@ readers in `combat/fpArm.js` load what each stage will read before the
 stage runs - one `loadFromArchives` door, deduped and concurrent, the
 same `find` law as the synchronous read, and `findLoaded` naming any
 read that outran its load (the record of each site is in that file's
-`MW-LOAD:` notes; `test/mwload_fparm.test.js` attributes every
+`MW-LOAD:` notes; `test/formats/morrowind/mwload_fparm.test.js` attributes every
 synchronous archive read to its covering load). The item icon's
 getter stays synchronous, so on a lazy archive it is a two-phase
 door: the first ask kicks one load, answers null (the classic sprite
@@ -99,7 +99,7 @@ master with 2 KB records that is 20-50 ms a walk; on Morrowind.esm,
 whose records are a few dozen bytes each, the explorer measured
 1.0-2.7 s a walk, times six, times the three retail masters, and the
 memo that held the answers was per page load. So the six questions
-are now ONE pass (`extractArmRecords` in `formats/mwFirstPerson.js`,
+are now ONE pass (`extractArmRecords` in `formats/morrowind/mwFirstPerson.js`,
 riding the same per-record readers the six extractors call, pinned
 equal to them), and the answer - plain data, JSON whole - is KEPT:
 `loadMorrowindArmRecords` in `scenes/dataSource.js` writes it to the
@@ -150,8 +150,8 @@ frame's thread, one after another: MW-LOAD's own measurement is 55-59
 ms for a 1024x1024 DXT texture with its chain, 11-13 ms at 512, and a
 body with its clothes, armour and weapon names dozens.
 
-**MW-TEXTHREAD.** `formats/mwTextureClient.js` is a pool of module
-Workers (`formats/mwTextureWorker.js`, one fewer than the cores, at
+**MW-TEXTHREAD.** `formats/morrowind/mwTextureClient.js` is a pool of module
+Workers (`formats/morrowind/mwTextureWorker.js`, one fewer than the cores, at
 most `TEXTURE_WORKERS_MAX` 4) running the SAME decoder
 (`decodeTextureImage`), each level's pixels transferred back; the
 shape is `unityBundleClient.js`'s - an injectable factory, the bytes
@@ -206,7 +206,7 @@ rig: the arms' build now starts seconds earlier, and its decodes leave
 the frame's thread. The `[mw] arm built in N ms - archives, esm,
 meshes, textures, sweep` line on Mac's machine is the measurement to
 read next; `textures` is the span this slice moves off the thread.
-Pins: `test/mwtexthread.test.js` (12), `test/mwearly.test.js` (9);
+Pins: `test/formats/morrowind/mwtexthread.test.js` (12), `test/systems/mwearly.test.js` (9);
 mutants `tools/mutants/mwtexthread.json` (30 dead) and
 `tools/mutants/mwearly.json` (24 dead - the audit's below and the merge's
 two form records included).

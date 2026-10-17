@@ -44,7 +44,7 @@
 // ecotoneGlsl.js is this file's twin, term for term: test/
 // ecotone1.test.js runs the shader's function through test/glsl.mjs and
 // holds it to these). The ground reads the shares per fragment; the
-// layout (world/terrainNature.js) and the grass read the climate that
+// layout (world/terrain/terrainNature.js) and the grass read the climate that
 // owns a point (ecotoneOwner), so a tree, a blade and the ground under
 // them agree on which climate they are in.
 // ═══════════════════════════════════════════════════════════════════

@@ -1,0 +1,62 @@
+[
+  {
+    "name": "DO-ASK-retryable-unasked",
+    "file": "server/src/relayScale.js",
+    "old": "      if (i === 0 && err.retryable && !err.overloaded) continue;",
+    "new": "",
+    "tests": [
+      "test/server/doask.test.js"
+    ],
+    "note": "a room reset before it ran the upgrade never asked again"
+  },
+  {
+    "name": "DO-ASK-overloaded-asked",
+    "file": "server/src/relayScale.js",
+    "old": "&& err.retryable && !err.overloaded) continue;",
+    "new": "&& err.retryable) continue;",
+    "tests": [
+      "test/server/doask.test.js"
+    ],
+    "note": "an overloaded room asked again - its queue lengthened"
+  },
+  {
+    "name": "DO-ASK-asked-for-ever",
+    "file": "server/src/relayScale.js",
+    "old": "if (i === 0 && err.retryable",
+    "new": "if (err.retryable",
+    "tests": [
+      "test/server/doask.test.js"
+    ],
+    "note": "a retryable room asked again without end"
+  },
+  {
+    "name": "DO-ASK-thrown",
+    "file": "server/src/relayScale.js",
+    "old": "      console.warn('[worker] a room did not answer', name, err.message ?? e);",
+    "new": "      throw e;",
+    "tests": [
+      "test/server/doask.test.js"
+    ],
+    "note": "the failure thrown out of the Worker"
+  },
+  {
+    "name": "DO-ASK-door-unasked",
+    "file": "server/src/index.js",
+    "old": "    return askRoom(env.ROOMS, key, request);   // DO-ASK",
+    "new": "    return env.ROOMS.get(env.ROOMS.idFromName(key)).fetch(request);   // DO-ASK",
+    "tests": [
+      "test/server/doask.test.js"
+    ],
+    "note": "the Worker's own door asks a room bare"
+  },
+  {
+    "name": "DO-ASK-walk-unasked",
+    "file": "server/src/relayScale.js",
+    "old": "res = await askRoom(rooms, layerName(key, ly), new Request(request, { headers }));",
+    "new": "res = await rooms.get(rooms.idFromName(layerName(key, ly))).fetch(new Request(request, { headers }));",
+    "tests": [
+      "test/server/doask.test.js"
+    ],
+    "note": "a crowded place's walk asks its layers bare"
+  }
+]

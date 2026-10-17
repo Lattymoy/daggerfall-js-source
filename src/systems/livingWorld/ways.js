@@ -1,7 +1,7 @@
 // @ts-check
 // LW3 (2026-10-04, bible/06-Systems/Living-World.md): THE WAYS - the road a town's travellers walk to another town, the
-// Travel Options planner's own (`systems/travelRoute.js planRoute`) on the roads the world draws. The living world's
-// planner is HERE, not in the host: the host's one construction seam (TO-ROADS, test/fb0929d_toroads.test.js) is the
+// Travel Options planner's own (`systems/travel/travelRoute.js planRoute`) on the roads the world draws. The living world's
+// planner is HERE, not in the host: the host's one construction seam (TO-ROADS, test/systems/travel/fb0929d_toroads.test.js) is the
 // player's journey's, and a traveller's way is none of the player's settings.
 //
 // THE SAME WAY FOR EVERY READER (LW0 decision 2). A pair of towns is asked once, in ONE direction - the lower map id
@@ -25,7 +25,7 @@
 // pair about 180 (its land pieces folded, once) - so a frame's asking can run past the time by one pair, as LW3's two
 // could. The same pairs, planned by the same planner on the same network in the same direction - every way the one it
 // was - known in a tenth of the frames.
-import { planRoute } from '../travelRoute.js';
+import { planRoute } from '../travel/travelRoute.js';
 
 /** New pairs asked a frame - at the least (LW3). */
 export const WAYS_PER_FRAME = 2;

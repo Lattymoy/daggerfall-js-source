@@ -18,7 +18,7 @@ animated book in my repo project-raum").
   Daggerfall's FNT faces, so every inscription the book makes (the
   cover's title and subtitle, a page number, BLANK) goes through
   `BOOK.inscribe`, a seam the port points at its own glyph painter
-  (`src/ui/enhancedBook.js`). `BOOK.cover` carries the cover's words.
+  (`src/ui/enhanced/enhancedBook.js`). `BOOK.cover` carries the cover's words.
 - `book.js` gains `resizeBook(book, pw, ph)`, a sizing seam beside
   `layoutBook`: the port sizes the leaf off the view's height where
   Raum keys off the short edge, and the cover is cleared with it.

@@ -5,7 +5,7 @@
     "old": "sub: material(d.gem)?.family === 'gems' ? 'a gem' : null",
     "new": "sub: 'a gem'",
     "tests": [
-      "test/haulcards.test.js"
+      "test/systems/foraging/haulcards.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  main.latest = [...main.latest, 'head'];\n",
     "new": "",
     "tests": [
-      "test/haulcards.test.js"
+      "test/systems/foraging/haulcards.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "storesHaul(d.gem, came(d.gem, 1), { held: heldOf(carried ? d.gemCarried : d.gemStore),",
     "new": "storesHaul(d.gem, came(d.gem, 1), { held: null,",
     "tests": [
-      "test/haulcards.test.js"
+      "test/systems/foraging/haulcards.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "{ held: heldOf(carried ? d.extraCarried : d.extraStore), where }",
     "new": "{ held: null, where }",
     "tests": [
-      "test/haulcards.test.js"
+      "test/systems/foraging/haulcards.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    main.balance = Number.isSafeInteger(d.marks?.balance) ? d.marks.balance : null;",
     "new": "    main.balance = null;",
     "tests": [
-      "test/haulcards.test.js"
+      "test/systems/foraging/haulcards.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "c.lodeHeld.textContent = w.lode.held ?? '';",
     "new": "c.lodeHeld.textContent = '';",
     "tests": [
-      "test/haulcards.test.js"
+      "test/systems/foraging/haulcards.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "heights.push(r?.height ?? kid._pfH ?? first?.height ?? 0);",
     "new": "heights.push(r?.height ?? first?.height ?? 0);",
     "tests": [
-      "test/haulcards.test.js"
+      "test/systems/foraging/haulcards.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "font-size: 13px; padding-left: 10px; white-space: normal; }",
     "new": "font-size: 13px; padding-left: 10px; }",
     "tests": [
-      "test/haulcards.test.js"
+      "test/systems/foraging/haulcards.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": ".pickfeed-card.haul.is-note { color: ${T.stoneHi}; font-size: 13px;",
     "new": ".pickfeed-card.haul.is-note { color: ${T.stoneHi}; background-color: rgba(10,12,17,0.8); font-size: 13px;",
     "tests": [
-      "test/haulcards.test.js"
+      "test/systems/foraging/haulcards.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": ".pickfeed-card.haul.is-note { color: ${T.stoneHi};",
     "new": ".pickfeed-card.haul.is-note { color: ${T.stoneLit};",
     "tests": [
-      "test/haulcards.test.js"
+      "test/systems/foraging/haulcards.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": " c.lodeCoin.hidden = !w.lode.silver; }",
     "new": " }",
     "tests": [
-      "test/haulcards.test.js"
+      "test/systems/foraging/haulcards.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "const live = deps.active?.() === true || deps.activeDungeon?.() === true || deps.activeInterior?.() === true;",
     "new": "const live = true;",
     "tests": [
-      "test/haulcards.test.js"
+      "test/systems/foraging/haulcards.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "max-width: min(440px, calc(88vw / var(--hud-scale, 1)));",
     "new": "max-width: min(440px, 88vw);",
     "tests": [
-      "test/haulcards.test.js"
+      "test/systems/foraging/haulcards.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "max-width: calc(92vw / var(--hud-scale, 1));",
     "new": "max-width: 92vw;",
     "tests": [
-      "test/haulcards.test.js"
+      "test/systems/foraging/haulcards.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": ".haul-sub { flex: 0 1000 auto; min-width: 0;",
     "new": ".haul-sub {",
     "tests": [
-      "test/haulcards.test.js"
+      "test/systems/foraging/haulcards.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": ".pickfeed-card.haul.is-silver .pickfeed-name, .pickfeed-card.haul.is-treasury .pickfeed-name { flex-shrink: 0; }\n",
     "new": "",
     "tests": [
-      "test/haulcards.test.js"
+      "test/systems/foraging/haulcards.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "source: `Contract${c.tax > 0 ? ` (${num(c.tax)} tax)` : ''} - ${tag}`",
     "new": "source: `Contract - ${tag}${c.tax > 0 ? ` (${num(c.tax)} tax)` : ''}`",
     "tests": [
-      "test/haulcards.test.js"
+      "test/systems/foraging/haulcards.test.js"
     ]
   },
   {
@@ -158,16 +158,16 @@
     "old": "` (${num(c.tax)} tax)`",
     "new": "` (${c.tax} tax)`",
     "tests": [
-      "test/haulcards.test.js"
+      "test/systems/foraging/haulcards.test.js"
     ]
   },
   {
     "name": "AUDIT-HAUL-CARDS-C4-veil-stones-panel",
-    "file": "src/ui/enhancedFrame.js",
+    "file": "src/ui/enhanced/enhancedFrame.js",
     "old": "export const hudVeil = (th) => (th.ink && luminance(th.panel) > HUD_VEIL_LIGHT ? th.ink : th.panel);",
     "new": "export const hudVeil = (th) => th.panel;",
     "tests": [
-      "test/haulcards.test.js"
+      "test/systems/foraging/haulcards.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "  color: ${T.stoneHi}; border: 1px solid ${T.stoneLit}; }",
     "new": "  color: ${T.stoneHi}; border: 1px solid ${T.stoneLo}; }",
     "tests": [
-      "test/haulcards.test.js"
+      "test/systems/foraging/haulcards.test.js"
     ]
   }
 ]

@@ -1,14 +1,37 @@
 // @ts-check
 // MW-SPELLFX1 (2026-10-07): A MORROWIND EFFECT'S STREAMS ON THE GPU.
 //
-// formats/mwVfx.js answers an effect's frame as packed streams in the particle program's own format; this holds the
+// formats/morrowind/mwVfx.js answers an effect's frame as packed streams in the particle program's own format; this holds the
 // GL side of ONE running effect: a renderer particle effect per stream (render/renderer.js createParticleEffect),
 // made the first time the stream is seen at the size the effect can ever need (vfxCapacity), its draw state the
 // stream's, its texture set by FILE each frame - a flipbook changes it, the particle texture overrides it - each file's
 // GL texture made once and OWNED here, so the release frees exactly what this made and nothing a neighbour shares.
 // The arm (combat/fpArm.js, VFX_Hands on the hands) and the world layer (scenes/mwMagicFx.js) both drive one.
 
-import { wrapModes } from '../formats/mwTexture.js';
+import { wrapModes } from '../formats/morrowind/mwTexture.js';
+
+/** A stream's floats a vertex (render/renderer.js createParticleEffect's layout) and where its colour starts in them
+ *  (`aColor`, location 3, at byte 28). */
+export const VFX_VERTEX_FLOATS = 12;
+export const VFX_COLOR_AT = 7;
+/**
+ * EG-ZG (2026-10-12; bible/11-Multiplayer/Elite-Gates.md section 25.4 - THE QUIET COMPANY): a stream's quads at `alpha` of
+ * themselves, into `out` (the caller's, kept): each vertex's colour - its alpha where the blend reads the source's alpha
+ * (NiAlphaProperty's SRC_ALPHA and every other), all four where it adds the source as it is (`srcBlend` 0, ONE). The
+ * particle program multiplies the texel by this colour (render/renderer.js PARTICLE_FS), so an ally's effect draws at
+ * that share. Answers `out`. Pure but for `out`.
+ * @param {Float32Array} packed @param {number} count vertices @param {number} alpha @param {number} srcBlend @param {Float32Array} out
+ */
+export function vfxFade(packed, count, alpha, srcBlend, out) {
+  const n = count * VFX_VERTEX_FLOATS;
+  for (let i = 0; i < n; i++) out[i] = packed[i];
+  for (let v = 0; v < count; v++) {
+    const o = v * VFX_VERTEX_FLOATS + VFX_COLOR_AT;
+    if (srcBlend === 0) { out[o] *= alpha; out[o + 1] *= alpha; out[o + 2] *= alpha; }
+    out[o + 3] *= alpha;
+  }
+  return out;
+}
 
 /**
  * `renderer` the port's; `textures` a Map from a texture file to its decoded entry ({ image: { mips } } -
@@ -34,8 +57,9 @@ export function createVfxGpu(renderer, textures, capacity) {
 
   return {
     /** This frame's streams onto the GPU. Answers the live effects in stream order; a stream absent this frame is
-     *  hidden, not freed - it comes back the frame its node is visible again. */
-    sync(streams) {
+     *  hidden, not freed - it comes back the frame its node is visible again. EG-ZG: `alpha` the effect's share of itself
+     *  (an ally's during a Spire trial - vfxFade). */
+    sync(streams, alpha = 1) {
       if (released) return [];
       const live = new Set();
       const out = [];
@@ -50,7 +74,8 @@ export function createVfxGpu(renderer, textures, capacity) {
         e.blend = !!s.drawState?.blend; e.srcBlend = s.drawState?.srcBlend ?? 6; e.dstBlend = s.drawState?.dstBlend ?? 7;
         e.alphaCut = s.drawState?.alphaCut ?? 0; e.depthTest = s.drawState?.depthTest !== false; e.depthWrite = s.drawState?.depthWrite !== false;
         e.hidden = false;
-        renderer.updateParticleEffect(e, s.packed, s.count);
+        if (alpha < 1 && s.count > 0) { const need = s.count * VFX_VERTEX_FLOATS; if (!e.faded || e.faded.length < need) e.faded = new Float32Array(need); renderer.updateParticleEffect(e, vfxFade(s.packed, s.count, alpha, e.blend ? e.srcBlend : -1, e.faded), s.count); }   // EG-ZG
+        else renderer.updateParticleEffect(e, s.packed, s.count);
         live.add(s.key);
         out.push(e);
       }

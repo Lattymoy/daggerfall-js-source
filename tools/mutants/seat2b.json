@@ -5,10 +5,10 @@
     "old": "(seat?.tier === 'palace' && Number(seat?.walls ?? 0) >= 3)",
     "new": "(seat?.tier === 'palace' && Number(seat?.walls ?? 0) >= 2)",
     "tests": [
-      "test/seat2b_law.test.js",
-      "test/seat2b_client.test.js",
-      "test/prof11_law.test.js",
-      "test/seat2b_service.test.js"
+      "test/net/seat2b_law.test.js",
+      "test/net/seat2b_client.test.js",
+      "test/net/prof11_law.test.js",
+      "test/server/seat2b_service.test.js"
     ]
   },
   {
@@ -17,10 +17,10 @@
     "old": "if (w.where === 'gate') return seat?.tier === 'crown' ||",
     "new": "if (w.where === 'gate') return",
     "tests": [
-      "test/seat2b_law.test.js",
-      "test/seat2b_client.test.js",
-      "test/prof11_law.test.js",
-      "test/seat2b_service.test.js"
+      "test/net/seat2b_law.test.js",
+      "test/net/seat2b_client.test.js",
+      "test/net/prof11_law.test.js",
+      "test/server/seat2b_service.test.js"
     ]
   },
   {
@@ -29,11 +29,11 @@
     "old": "if (w.where === 'coast') return !!seat?.coastal;",
     "new": "if (w.where === 'coast') return true;",
     "tests": [
-      "test/seat2b_law.test.js",
-      "test/seat2b_client.test.js",
-      "test/prof11_law.test.js",
-      "test/seat2b_service.test.js",
-      "test/seat2b_client.test.js"
+      "test/net/seat2b_law.test.js",
+      "test/net/seat2b_client.test.js",
+      "test/net/prof11_law.test.js",
+      "test/server/seat2b_service.test.js",
+      "test/net/seat2b_client.test.js"
     ]
   },
   {
@@ -42,10 +42,10 @@
     "old": "needs: row.needs.map(([k, n]) => [k, isStone(k) ? fortificationStone(n, builder) : n])",
     "new": "needs: row.needs.map(([k, n]) => [k, fortificationStone(n, builder)])",
     "tests": [
-      "test/seat2b_law.test.js",
-      "test/seat2b_client.test.js",
-      "test/prof11_law.test.js",
-      "test/seat2b_service.test.js"
+      "test/net/seat2b_law.test.js",
+      "test/net/seat2b_client.test.js",
+      "test/net/prof11_law.test.js",
+      "test/server/seat2b_service.test.js"
     ]
   },
   {
@@ -54,10 +54,10 @@
     "old": "lastDeliveryS + (FORT_TIER_DAYS[t - 1] - (siegewright",
     "new": "lastDeliveryS + (FORT_TIER_DAYS[t - 1] - 1 - (siegewright",
     "tests": [
-      "test/seat2b_law.test.js",
-      "test/seat2b_client.test.js",
-      "test/prof11_law.test.js",
-      "test/seat2b_service.test.js"
+      "test/net/seat2b_law.test.js",
+      "test/net/seat2b_client.test.js",
+      "test/net/prof11_law.test.js",
+      "test/server/seat2b_service.test.js"
     ]
   },
   {
@@ -66,10 +66,10 @@
     "old": "Math.max(0, n - Math.max(0, Number(held?.get?.(k) ?? held?.[k] ?? 0)))",
     "new": "n",
     "tests": [
-      "test/seat2b_law.test.js",
-      "test/seat2b_client.test.js",
-      "test/prof11_law.test.js",
-      "test/seat2b_service.test.js"
+      "test/net/seat2b_law.test.js",
+      "test/net/seat2b_client.test.js",
+      "test/net/prof11_law.test.js",
+      "test/server/seat2b_service.test.js"
     ]
   },
   {
@@ -78,9 +78,9 @@
     "old": "id === 'walls' && fortifier ? Math.max(0, Number(t) || 0) : fortDropped(t)",
     "new": "Math.max(0, Number(t) || 0)",
     "tests": [
-      "test/seat2b_law.test.js",
-      "test/seat2b_client.test.js",
-      "test/prof11_law.test.js"
+      "test/net/seat2b_law.test.js",
+      "test/net/seat2b_client.test.js",
+      "test/net/prof11_law.test.js"
     ]
   },
   {
@@ -89,9 +89,9 @@
     "old": "id === 'walls' && fortifier ?",
     "new": "fortifier ?",
     "tests": [
-      "test/seat2b_law.test.js",
-      "test/seat2b_client.test.js",
-      "test/prof11_law.test.js"
+      "test/net/seat2b_law.test.js",
+      "test/net/seat2b_client.test.js",
+      "test/net/prof11_law.test.js"
     ]
   },
   {
@@ -100,9 +100,9 @@
     "old": "Object.fromEntries(Object.entries(forts ?? {}).map(([id, t]) => [id, fortDropped(t)]))",
     "new": "Object.fromEntries(Object.entries(forts ?? {}).map(([id, t]) => [id, t]))",
     "tests": [
-      "test/seat2b_law.test.js",
-      "test/seat2b_client.test.js",
-      "test/prof11_law.test.js"
+      "test/net/seat2b_law.test.js",
+      "test/net/seat2b_client.test.js",
+      "test/net/prof11_law.test.js"
     ]
   },
   {
@@ -111,10 +111,10 @@
     "old": "export const fortDropped = (t) => Math.max(0, Math.floor(Number(t) || 0) - 1);",
     "new": "export const fortDropped = (t) => Math.floor(Number(t) || 0) - 1;",
     "tests": [
-      "test/seat2b_law.test.js",
-      "test/seat2b_client.test.js",
-      "test/prof11_law.test.js",
-      "test/seat2b_service.test.js"
+      "test/net/seat2b_law.test.js",
+      "test/net/seat2b_client.test.js",
+      "test/net/prof11_law.test.js",
+      "test/server/seat2b_service.test.js"
     ]
   },
   {
@@ -123,9 +123,9 @@
     "old": "Math.max(WALLS_WAVE_MIN_MS, baseMs - WALLS_WAVE_STEP_MS",
     "new": "Math.max(0, baseMs - WALLS_WAVE_STEP_MS",
     "tests": [
-      "test/seat2b_law.test.js",
-      "test/seat2b_client.test.js",
-      "test/prof11_law.test.js"
+      "test/net/seat2b_law.test.js",
+      "test/net/seat2b_client.test.js",
+      "test/net/prof11_law.test.js"
     ]
   },
   {
@@ -134,10 +134,10 @@
     "old": "Math.round(GATEHOUSE.vitality * (1 + GATEHOUSE.perTier * Math.max(0, Math.min(3, Number(t) || 0))))",
     "new": "GATEHOUSE.vitality",
     "tests": [
-      "test/seat2b_law.test.js",
-      "test/seat2b_client.test.js",
-      "test/prof11_law.test.js",
-      "test/seat2b_client.test.js"
+      "test/net/seat2b_law.test.js",
+      "test/net/seat2b_client.test.js",
+      "test/net/prof11_law.test.js",
+      "test/net/seat2b_client.test.js"
     ]
   },
   {
@@ -146,9 +146,9 @@
     "old": "RAM.vitality * (siegewright ? 1 + RAM.siegewright : 1)",
     "new": "RAM.vitality",
     "tests": [
-      "test/seat2b_law.test.js",
-      "test/seat2b_client.test.js",
-      "test/prof11_law.test.js"
+      "test/net/seat2b_law.test.js",
+      "test/net/seat2b_client.test.js",
+      "test/net/prof11_law.test.js"
     ]
   },
   {
@@ -157,9 +157,9 @@
     "old": "(t >= 2 ? 0.25 : t === 1 ? 0.5 : null)",
     "new": "(t >= 2 ? 0.5 : t === 1 ? 0.25 : null)",
     "tests": [
-      "test/seat2b_law.test.js",
-      "test/seat2b_client.test.js",
-      "test/prof11_law.test.js"
+      "test/net/seat2b_law.test.js",
+      "test/net/seat2b_client.test.js",
+      "test/net/prof11_law.test.js"
     ]
   },
   {
@@ -168,10 +168,10 @@
     "old": "[0, 2, 4, 6][Math.max(0, Math.min(3, Number(t) || 0))]",
     "new": "[0, 2, 4, 5][Math.max(0, Math.min(3, Number(t) || 0))]",
     "tests": [
-      "test/seat2b_law.test.js",
-      "test/seat2b_client.test.js",
-      "test/prof11_law.test.js",
-      "test/seat2b_client.test.js"
+      "test/net/seat2b_law.test.js",
+      "test/net/seat2b_client.test.js",
+      "test/net/prof11_law.test.js",
+      "test/net/seat2b_client.test.js"
     ]
   },
   {
@@ -180,10 +180,10 @@
     "old": "Math.floor(base * (1 + 0.25 * Math.max(0, Math.min(3, Number(t) || 0))) + 1e-9)",
     "new": "base",
     "tests": [
-      "test/seat2b_law.test.js",
-      "test/seat2b_client.test.js",
-      "test/prof11_law.test.js",
-      "test/seat2b_service.test.js"
+      "test/net/seat2b_law.test.js",
+      "test/net/seat2b_client.test.js",
+      "test/net/prof11_law.test.js",
+      "test/server/seat2b_service.test.js"
     ]
   },
   {
@@ -192,10 +192,10 @@
     "old": "export const marketHallTitheCap = (baseCap, t) => baseCap + Math.max(0, Math.min(3, Number(t) || 0));",
     "new": "export const marketHallTitheCap = (baseCap, t) => baseCap;",
     "tests": [
-      "test/seat2b_law.test.js",
-      "test/seat2b_client.test.js",
-      "test/prof11_law.test.js",
-      "test/seat2b_service.test.js"
+      "test/net/seat2b_law.test.js",
+      "test/net/seat2b_client.test.js",
+      "test/net/prof11_law.test.js",
+      "test/server/seat2b_service.test.js"
     ]
   },
   {
@@ -204,10 +204,10 @@
     "old": "export const shrineStanding = (t) => Math.max(0, Math.min(2, Number(t) || 0));",
     "new": "export const shrineStanding = (t) => Math.max(0, Number(t) || 0);",
     "tests": [
-      "test/seat2b_law.test.js",
-      "test/seat2b_client.test.js",
-      "test/prof11_law.test.js",
-      "test/seat2b_client.test.js"
+      "test/net/seat2b_law.test.js",
+      "test/net/seat2b_client.test.js",
+      "test/net/prof11_law.test.js",
+      "test/net/seat2b_client.test.js"
     ]
   },
   {
@@ -216,9 +216,9 @@
     "old": "if (profs.includes(profession)) steps += Math.max(0, Number(forts?.[id] ?? 0) || 0);",
     "new": "if (profs.includes(profession)) steps += Math.min(1, Number(forts?.[id] ?? 0) || 0);",
     "tests": [
-      "test/seat2b_law.test.js",
-      "test/seat2b_client.test.js",
-      "test/prof11_law.test.js"
+      "test/net/seat2b_law.test.js",
+      "test/net/seat2b_client.test.js",
+      "test/net/prof11_law.test.js"
     ]
   },
   {
@@ -227,9 +227,9 @@
     "old": "export const harbourPort = (t) => Number(t) >= 1;",
     "new": "export const harbourPort = (t) => Number(t) >= 0;",
     "tests": [
-      "test/seat2b_law.test.js",
-      "test/seat2b_client.test.js",
-      "test/prof11_law.test.js"
+      "test/net/seat2b_law.test.js",
+      "test/net/seat2b_client.test.js",
+      "test/net/prof11_law.test.js"
     ]
   },
   {
@@ -238,9 +238,9 @@
     "old": "if (k === RAM_KIT_KEY && won && gated) rams += u;",
     "new": "if (k === RAM_KIT_KEY && won) rams += u;",
     "tests": [
-      "test/seat2b_law.test.js",
-      "test/seat2b_client.test.js",
-      "test/prof11_law.test.js"
+      "test/net/seat2b_law.test.js",
+      "test/net/seat2b_client.test.js",
+      "test/net/prof11_law.test.js"
     ]
   },
   {
@@ -249,9 +249,9 @@
     "old": "if (k === RAM_KIT_KEY && won && gated) rams += u;",
     "new": "if (k === RAM_KIT_KEY && gated) rams += u;",
     "tests": [
-      "test/seat2b_law.test.js",
-      "test/seat2b_client.test.js",
-      "test/prof11_law.test.js"
+      "test/net/seat2b_law.test.js",
+      "test/net/seat2b_client.test.js",
+      "test/net/prof11_law.test.js"
     ]
   },
   {
@@ -260,9 +260,9 @@
     "old": "export const revoltDue = (standing) => Number(standing) <= 0;",
     "new": "export const revoltDue = (standing) => Number(standing) <= 5;",
     "tests": [
-      "test/seat2b_law.test.js",
-      "test/seat2b_client.test.js",
-      "test/prof11_law.test.js"
+      "test/net/seat2b_law.test.js",
+      "test/net/seat2b_client.test.js",
+      "test/net/prof11_law.test.js"
     ]
   },
   {
@@ -271,10 +271,10 @@
     "old": "if (w.standsAt != null) return `${head} Tier ${w.building} stands ${whenOf(Number(w.standsAt) * 1000)}.`;",
     "new": "",
     "tests": [
-      "test/seat2b_client.test.js",
-      "test/seat2b_law.test.js",
-      "test/seat2b_client.test.js",
-      "test/prof11_law.test.js"
+      "test/net/seat2b_client.test.js",
+      "test/net/seat2b_law.test.js",
+      "test/net/seat2b_client.test.js",
+      "test/net/prof11_law.test.js"
     ]
   },
   {
@@ -283,10 +283,10 @@
     "old": "export const fortMaterialOk = (key) => FORT_MATERIALS.includes(key);",
     "new": "export const fortMaterialOk = (key) => typeof key === 'string';",
     "tests": [
-      "test/seat2b_law.test.js",
-      "test/seat2b_client.test.js",
-      "test/prof11_law.test.js",
-      "test/seat2b_service.test.js"
+      "test/net/seat2b_law.test.js",
+      "test/net/seat2b_client.test.js",
+      "test/net/prof11_law.test.js",
+      "test/server/seat2b_service.test.js"
     ]
   },
   {
@@ -295,7 +295,7 @@
     "old": "if (!SEAT_LEVER_RANKS.includes(Number(a.me.rank))) return { error: 'guild-rank' };",
     "new": "",
     "tests": [
-      "test/seat2b_service.test.js"
+      "test/server/seat2b_service.test.js"
     ]
   },
   {
@@ -304,7 +304,7 @@
     "old": "if (!hold || hold.guild_id !== a.me.guild_id) return { error: 'seat-not-held' };",
     "new": "if (!hold) return { error: 'seat-not-held' };",
     "tests": [
-      "test/seat2b_service.test.js"
+      "test/server/seat2b_service.test.js"
     ]
   },
   {
@@ -313,7 +313,7 @@
     "old": "if (cur?.building != null) return { error: 'fort-building' };",
     "new": "",
     "tests": [
-      "test/seat2b_service.test.js"
+      "test/server/seat2b_service.test.js"
     ]
   },
   {
@@ -322,7 +322,7 @@
     "old": "if (t > fortMaxTier(work)) return { error: 'fort-max' };",
     "new": "",
     "tests": [
-      "test/seat2b_service.test.js"
+      "test/server/seat2b_service.test.js"
     ]
   },
   {
@@ -331,7 +331,7 @@
     "old": "if (!fortMayRaise(work, { tier: hold.tier, coastal: port === true, walls: tiers.walls ?? 0 })) return { error: 'fort-not-here' };",
     "new": "",
     "tests": [
-      "test/seat2b_service.test.js"
+      "test/server/seat2b_service.test.js"
     ]
   },
   {
@@ -340,7 +340,7 @@
     "old": "WHERE COALESCE((SELECT balance FROM guild_marks WHERE guild_id = ?1), 0) >= ?2\n          AND EXISTS (SELECT 1 FROM town_seat_holds WHERE key = ?8 AND guild_id = ?1)",
     "new": "WHERE EXISTS (SELECT 1 FROM town_seat_holds WHERE key = ?8 AND guild_id = ?1)",
     "tests": [
-      "test/seat2b_service.test.js"
+      "test/server/seat2b_service.test.js"
     ]
   },
   {
@@ -349,7 +349,7 @@
     "old": "if (prior) return { ok: true, repeat: true, work, forts: await fortsOf(db, key, nowS) };",
     "new": "",
     "tests": [
-      "test/seat2b_service.test.js"
+      "test/server/seat2b_service.test.js"
     ]
   },
   {
@@ -358,7 +358,7 @@
     "old": "const builder = await isBuilder(db, player.id, character, nowS);",
     "new": "const builder = false;",
     "tests": [
-      "test/seat2b_service.test.js"
+      "test/server/seat2b_service.test.js"
     ]
   },
   {
@@ -367,7 +367,7 @@
     "old": "if (r.building == null || r.standsAt == null || r.standsAt > nowS) continue;",
     "new": "if (r.building == null || r.standsAt == null) continue;",
     "tests": [
-      "test/seat2b_service.test.js"
+      "test/server/seat2b_service.test.js"
     ],
     "equivalent": true,
     "why": "The raise's own UPDATE asks `stands_at <= ?` and its mustChange throws when no row moved, so a project read before its day rolls the batch back whole - the held units kept, no Chronicle row. The JS check only spares that doomed batch."
@@ -378,7 +378,7 @@
     "old": "        db.prepare('DELETE FROM town_seat_fort_held WHERE key = ? AND work = ?').bind(key, r.work),\n",
     "new": "",
     "tests": [
-      "test/seat2b_service.test.js"
+      "test/server/seat2b_service.test.js"
     ]
   },
   {
@@ -387,7 +387,7 @@
     "old": "    if (fortWanting(needs, has).every(([, n]) => n === 0)) {",
     "new": "    if (false) {",
     "tests": [
-      "test/seat2b_service.test.js"
+      "test/server/seat2b_service.test.js"
     ]
   },
   {
@@ -396,7 +396,7 @@
     "old": "const take = Math.min(want, left.get(k) ?? 0);",
     "new": "const take = left.get(k) ?? 0;",
     "tests": [
-      "test/seat2b_service.test.js"
+      "test/server/seat2b_service.test.js"
     ]
   },
   {
@@ -405,7 +405,7 @@
     "old": "    db.prepare('DELETE FROM town_seat_fort_held WHERE key = ?').bind(key),\n",
     "new": "",
     "tests": [
-      "test/seat2b_service.test.js"
+      "test/server/seat2b_service.test.js"
     ]
   },
   {
@@ -414,7 +414,7 @@
     "old": "THEN tier ELSE MAX(0, tier - 1) END,",
     "new": "THEN tier ELSE tier END,",
     "tests": [
-      "test/seat2b_service.test.js"
+      "test/server/seat2b_service.test.js"
     ]
   },
   {
@@ -423,7 +423,7 @@
     "old": "      building = NULL, stands_at = NULL, builder = 0, siegewright = 0, guild_id = NULL WHERE key = ?1`",
     "new": "      builder = 0, siegewright = 0, guild_id = NULL WHERE key = ?1`",
     "tests": [
-      "test/seat2b_service.test.js"
+      "test/server/seat2b_service.test.js"
     ]
   },
   {
@@ -432,7 +432,7 @@
     "old": "WHERE r.week = ? AND r.key = ? AND r.side = 'defend' ORDER BY r.at, r.account",
     "new": "WHERE r.week = ? AND r.key = ? ORDER BY r.at, r.account",
     "tests": [
-      "test/seat2b_service.test.js"
+      "test/server/seat2b_service.test.js"
     ]
   },
   {
@@ -441,7 +441,7 @@
     "old": "  if (await db.prepare('SELECT 1 FROM town_seat_fortifier WHERE season = ? AND key = ?').bind(seasonWeek, key).first()) return null;\n",
     "new": "",
     "tests": [
-      "test/seat2b_service.test.js"
+      "test/server/seat2b_service.test.js"
     ]
   },
   {
@@ -450,7 +450,7 @@
     "old": "  if (walls <= 0) return null;\n",
     "new": "",
     "tests": [
-      "test/seat2b_service.test.js"
+      "test/server/seat2b_service.test.js"
     ]
   },
   {
@@ -459,7 +459,7 @@
     "old": "  out.push(db.prepare('DELETE FROM town_seat_camps WHERE week = ?').bind(week));\n",
     "new": "",
     "tests": [
-      "test/seat2b_service.test.js"
+      "test/server/seat2b_service.test.js"
     ]
   },
   {
@@ -468,7 +468,7 @@
     "old": "gated: tierOf(c.key) === 'crown' || gate >= 1",
     "new": "gated: true",
     "tests": [
-      "test/seat2b_service.test.js"
+      "test/server/seat2b_service.test.js"
     ]
   },
   {
@@ -477,7 +477,7 @@
     "old": "[db.prepare('UPDATE town_seat_forts SET tier = MAX(0, tier - 1) WHERE tier > 0')]",
     "new": "[]",
     "tests": [
-      "test/seat2b_service.test.js"
+      "test/server/seat2b_service.test.js"
     ]
   },
   {
@@ -486,7 +486,7 @@
     "old": "x.pixel?.[0] === board[0] && x.pixel?.[1] === board[1]",
     "new": "x.pixel?.[0] === board[0]",
     "tests": [
-      "test/seat2b_service.test.js"
+      "test/server/seat2b_service.test.js"
     ]
   },
   {
@@ -495,7 +495,7 @@
     "old": "export const titheCapAt = async (db, key, tier, nowS) => marketHallTitheCap(TITHE_CAP[tier] ?? 0, await marketTierOf(db, key, nowS));",
     "new": "export const titheCapAt = async (db, key, tier, nowS) => TITHE_CAP[tier] ?? 0;",
     "tests": [
-      "test/seat2b_service.test.js"
+      "test/server/seat2b_service.test.js"
     ]
   },
   {
@@ -504,7 +504,7 @@
     "old": "  stmts.push(...(await campsSpent(db, week, next, plan.rights, (k) => registry.get(k)?.tier ?? 'palace')));\n",
     "new": "",
     "tests": [
-      "test/seat2b_service.test.js"
+      "test/server/seat2b_service.test.js"
     ]
   },
   {
@@ -513,7 +513,7 @@
     "old": "    if (!wipe) stmts.push(...fortsSeasonStatements(db));\n",
     "new": "",
     "tests": [
-      "test/seat2b_service.test.js"
+      "test/server/seat2b_service.test.js"
     ]
   },
   {
@@ -522,7 +522,7 @@
     "old": "    const fortifier = await fortifierAt(db, W, K, nowS, seasonWeek);",
     "new": "    const fortifier = null;",
     "tests": [
-      "test/seat2b_service.test.js"
+      "test/server/seat2b_service.test.js"
     ]
   },
   {
@@ -531,7 +531,7 @@
     "old": "  const listingsMax = await listingsCapAt(db, nowS, boardOf(board));   // SEAT2b (7.5)",
     "new": "  const listingsMax = 30;   // SEAT2b (7.5)",
     "tests": [
-      "test/seat2b_service.test.js"
+      "test/server/seat2b_service.test.js"
     ]
   },
   {
@@ -540,7 +540,7 @@
     "old": "  const cap = await titheCapAt(db, key, l.hold.tier, nowS);",
     "new": "  const cap = TITHE_CAP[l.hold.tier] ?? 0;",
     "tests": [
-      "test/seat2b_service.test.js"
+      "test/server/seat2b_service.test.js"
     ]
   },
   {
@@ -549,7 +549,7 @@
     "old": "    if (!fortMaterialOk(key) && key !== RAM_KIT_KEY) return { error: 'bad-material' };\n",
     "new": "",
     "tests": [
-      "test/seat2b_service.test.js"
+      "test/server/seat2b_service.test.js"
     ]
   },
   {
@@ -558,7 +558,7 @@
     "old": "      if (!pledged) return { error: 'seat-not-pledged' };\n",
     "new": "",
     "tests": [
-      "test/seat2b_service.test.js"
+      "test/server/seat2b_service.test.js"
     ]
   },
   {
@@ -567,7 +567,7 @@
     "old": "    if (!s || Number(s.region) !== region) return { error: 'writ-elsewhere' };",
     "new": "    if (!s) return { error: 'writ-elsewhere' };",
     "tests": [
-      "test/seat2b_service.test.js"
+      "test/server/seat2b_service.test.js"
     ]
   },
   {
@@ -576,7 +576,7 @@
     "old": "      if (Number(w.camp) !== 1) await supplyForts(db, Number(w.seat), nowS);",
     "new": "",
     "tests": [
-      "test/seat2b_service.test.js"
+      "test/server/seat2b_service.test.js"
     ]
   },
   {
@@ -585,7 +585,7 @@
     "old": "  AND expires_at > ${now} AND seat IS NULL), 0)`;",
     "new": "  AND expires_at > ${now}), 0)`;",
     "tests": [
-      "test/seat2b_service.test.js"
+      "test/server/seat2b_service.test.js"
     ]
   },
   {
@@ -594,7 +594,7 @@
     "old": "      const ruling = !!holder && data.mine?.guild === holder.guild.id && SEAT_LEVER_RANKS.includes(data.mine?.rank);",
     "new": "      const ruling = !!holder && data.mine?.guild === holder.guild.id;",
     "tests": [
-      "test/seat2b_client.test.js"
+      "test/net/seat2b_client.test.js"
     ]
   },
   {
@@ -603,7 +603,7 @@
     "old": "      const ruling = !!holder && data.mine?.guild === holder.guild.id && SEAT_LEVER_RANKS.includes(data.mine?.rank);",
     "new": "      const ruling = !!holder && SEAT_LEVER_RANKS.includes(data.mine?.rank);",
     "tests": [
-      "test/seat2b_client.test.js"
+      "test/net/seat2b_client.test.js"
     ]
   },
   {
@@ -612,7 +612,7 @@
     "old": "          forts, seat, port: host.port === true, busy: ui.busy(),",
     "new": "          forts, seat, port: true, busy: ui.busy(),",
     "tests": [
-      "test/seat2b_client.test.js"
+      "test/net/seat2b_client.test.js"
     ]
   },
   {
@@ -621,7 +621,7 @@
     "old": "      if (holder && forts) {",
     "new": "      if (forts) {",
     "tests": [
-      "test/seat2b_client.test.js"
+      "test/net/seat2b_client.test.js"
     ]
   },
   {
@@ -630,7 +630,7 @@
     "old": "          onBegin: (work) => act(() => book.fortFund(seat, work, host.port === true)),",
     "new": "          onBegin: (work) => ui.run(() => book.fortFund(seat, work, host.port === true)),",
     "tests": [
-      "test/seat2b_client.test.js"
+      "test/net/seat2b_client.test.js"
     ]
   },
   {
@@ -639,7 +639,7 @@
     "old": "    try { f = r.data && works ? await works : null; } catch { f = null; }",
     "new": "    f = null;",
     "tests": [
-      "test/seat2b_client.test.js"
+      "test/net/seat2b_client.test.js"
     ]
   },
   {
@@ -648,7 +648,7 @@
     "old": "      if (fortAsk?.ask !== ask) fortAsk = { ask, rid: rid() };",
     "new": "      fortAsk = { ask, rid: rid() };",
     "tests": [
-      "test/seat2b_client.test.js"
+      "test/net/seat2b_client.test.js"
     ]
   },
   {
@@ -657,7 +657,7 @@
     "old": "      if (r?.ok || (r?.error && !['offline', 'server', 'timeout'].includes(r.error))) { if (fortAsk?.rid === id) fortAsk = null; }",
     "new": "",
     "tests": [
-      "test/seat2b_client.test.js"
+      "test/net/seat2b_client.test.js"
     ]
   },
   {
@@ -666,7 +666,7 @@
     "old": "      if (open !== true) return { data: null, error: 'seats-closed' };\n      let r;\n      try { r = await door.forts(key); }",
     "new": "      let r;\n      try { r = await door.forts(key); }",
     "tests": [
-      "test/seat2b_client.test.js"
+      "test/net/seat2b_client.test.js"
     ]
   },
   {
@@ -675,7 +675,7 @@
     "old": "next <= fortMaxTier(w.id) &&",
     "new": "",
     "tests": [
-      "test/seat2b_client.test.js"
+      "test/net/seat2b_client.test.js"
     ]
   },
   {
@@ -684,7 +684,7 @@
     "old": "if (lever && row.building == null &&",
     "new": "if (lever &&",
     "tests": [
-      "test/seat2b_client.test.js"
+      "test/net/seat2b_client.test.js"
     ]
   },
   {
@@ -693,7 +693,7 @@
     "old": "    if (!row.tier && row.building == null && !fortMayRaise(w.id, { tier: seat.tier, coastal: port, walls })) continue;\n",
     "new": "",
     "tests": [
-      "test/seat2b_client.test.js"
+      "test/net/seat2b_client.test.js"
     ]
   },
   {
@@ -702,7 +702,7 @@
     "old": "  if (x?.camp) {",
     "new": "  if (false) {",
     "tests": [
-      "test/seat2b_client.test.js"
+      "test/net/seat2b_client.test.js"
     ]
   },
   {
@@ -711,7 +711,7 @@
     "old": "  if (war.guild !== guild) return { counted: false, why: 'not-its-guild' };\n",
     "new": "",
     "tests": [
-      "test/seat2b_service.test.js"
+      "test/server/seat2b_service.test.js"
     ]
   },
   {
@@ -720,7 +720,7 @@
     "old": "const rows = [['writ', Math.max(0, own) * value], ['bought', Math.max(0, bought) * value]]",
     "new": "const rows = [['writ', Math.max(0, own)], ['bought', Math.max(0, bought) * value]]",
     "tests": [
-      "test/seat2b_service.test.js"
+      "test/server/seat2b_service.test.js"
     ]
   },
   {
@@ -729,7 +729,7 @@
     "old": "['bought', Math.max(0, bought) * value]].filter(([, n]) => n > 0);",
     "new": "['writ', Math.max(0, bought) * value]].filter(([, n]) => n > 0);",
     "tests": [
-      "test/seat2b_service.test.js"
+      "test/server/seat2b_service.test.js"
     ]
   },
   {
@@ -738,7 +738,7 @@
     "old": "  const done = await db.batch([\n    bindStatement(db, at, player.id, nowS),\n",
     "new": "  const done = await db.batch([\n    db.prepare('SELECT 1'),\n",
     "tests": [
-      "test/seat2b_service.test.js"
+      "test/server/seat2b_service.test.js"
     ]
   },
   {
@@ -747,7 +747,7 @@
     "old": "      await creditSeatWrit(ctx, player, env, { character, key: Number(w.seat),",
     "new": "      if (0) await creditSeatWrit(ctx, player, env, { character, key: Number(w.seat),",
     "tests": [
-      "test/seat2b_service.test.js"
+      "test/server/seat2b_service.test.js"
     ]
   },
   {
@@ -756,7 +756,7 @@
     "old": "  const boughtSpent = w.seat != null ? Math.min(units, Math.max(0, Number((await storeOf(db, me, character, w.material)).bought ?? 0))) : 0;",
     "new": "  const boughtSpent = 0;",
     "tests": [
-      "test/seat2b_service.test.js"
+      "test/server/seat2b_service.test.js"
     ]
   },
   {
@@ -765,7 +765,7 @@
     "old": "if (battle?.kind !== 'siege' || !Number.isFinite(battle.startsAt) || battle.state === 'void') return '';",
     "new": "if (battle?.kind !== 'siege' || !Number.isFinite(battle.startsAt)) return '';",
     "tests": [
-      "test/audit_seats_law.test.js"
+      "test/net/audit_seats_law.test.js"
     ]
   },
   {
@@ -774,7 +774,7 @@
     "old": "  if (Number.isFinite(battle.endsAt) && nowMs >= battle.endsAt * 1000) return '';\n",
     "new": "",
     "tests": [
-      "test/audit_seats_law.test.js"
+      "test/net/audit_seats_law.test.js"
     ]
   }
 ]

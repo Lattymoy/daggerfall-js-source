@@ -15,12 +15,12 @@
 //   node tools/guardCostProbe.mjs 5 600 12   guards, frames, town side (buildings per row)
 //   node --cpu-prof tools/guardCostProbe.mjs  then read the .cpuprofile
 import { Collider } from '../src/player/collider.js';
-import { EnemyAI } from '../src/characters/enemyMotor.js';
-import { EnemySoundSource } from '../src/characters/enemySounds.js';
-import { runTargetMachine } from '../src/characters/enemyTargets.js';
+import { EnemyAI } from '../src/characters/enemy/enemyMotor.js';
+import { EnemySoundSource } from '../src/characters/enemy/enemySounds.js';
+import { runTargetMachine } from '../src/characters/enemy/enemyTargets.js';
 import { tickEnemySound } from '../src/scenes/hostCombat.js';
 import { sensesContext } from '../src/scenes/shared.js';
-import { KNIGHT_CITY_WATCH } from '../src/characters/mobileTypes.js';
+import { KNIGHT_CITY_WATCH } from '../src/characters/mobile/mobileTypes.js';
 
 const N = +(process.argv[2] ?? 5), FRAMES = +(process.argv[3] ?? 600), SIDE = +(process.argv[4] ?? 12);
 const I = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);

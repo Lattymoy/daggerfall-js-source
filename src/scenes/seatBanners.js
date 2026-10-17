@@ -12,7 +12,7 @@
 //   2. one beside each city gate (world/rmbLayout.js isCityGate), on its
 //      town side, at a post;
 //   3. one pennant above each Notice Board - a town's RUMOUR boards, every
-//      board BOUNTY1 did not take (systems/bountyBoard.js
+//      board BOUNTY1 did not take (systems/bounty/bountyBoard.js
 //      questBoardIndices).
 // and CASTLE-GATE (2026-10-02): a crown seat's two more flanking its
 // castle's entrance in the city - the lowest of the pixel's dungeon-

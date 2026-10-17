@@ -5,7 +5,7 @@
     "old": "    } else if (ownArms && i % RECOVERY_INTERVAL_MINUTES === 0 && !entity.preventNormalizingReputations) {",
     "new": "    } else if (false) {",
     "tests": [
-      "test/rep4_recovery.test.js"
+      "test/systems/rep4_recovery.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "      normalizeReputations(entity, entity.factionRep ?? null, { recoveryOnly: true });\n    }",
     "new": "      normalizeReputations(entity, entity.factionRep ?? null);\n    }",
     "tests": [
-      "test/rep4_recovery.test.js"
+      "test/systems/rep4_recovery.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    } else if (ownArms && i % RECOVERY_INTERVAL_MINUTES === 0",
     "new": "    } if (ownArms && i % RECOVERY_INTERVAL_MINUTES === 0",
     "tests": [
-      "test/rep4_recovery.test.js"
+      "test/systems/rep4_recovery.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "Math.floor((b - 1) / RECOVERY_INTERVAL_MINUTES) - Math.floor((a - 1) / RECOVERY_INTERVAL_MINUTES)",
     "new": "Math.floor((b - 1) / NORMALIZE_INTERVAL_MINUTES) - Math.floor((a - 1) / NORMALIZE_INTERVAL_MINUTES)",
     "tests": [
-      "test/rep4_recovery.test.js"
+      "test/systems/rep4_recovery.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  const points = rep < 0 ? Math.min(PENANCE_POINTS, -rep) : 0;",
     "new": "  const points = rep < 0 ? PENANCE_POINTS : 0;",
     "tests": [
-      "test/rep4_recovery.test.js"
+      "test/systems/rep4_recovery.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "  return PENANCE_BASE_PRICE * ((standingOf(player).penance[regionIndex] ?? 0) + 1);",
     "new": "  return PENANCE_BASE_PRICE;",
     "tests": [
-      "test/rep4_recovery.test.js"
+      "test/systems/rep4_recovery.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "const points = doPenance(entity, regionIndex);",
     "new": "const points = 0;",
     "tests": [
-      "test/rep4_recovery.test.js"
+      "test/systems/rep4_recovery.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "    if (Number.isInteger(region) && region >= 0 && entity) rewardContract(entity, region);\n",
     "new": "",
     "tests": [
-      "test/rep4_recovery.test.js"
+      "test/systems/rep4_recovery.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "  const points = Math.max(0, Math.min(CONTRACT_LEGAL_GAIN, LEGAL_REP_MAX - rep));",
     "new": "  const points = CONTRACT_LEGAL_GAIN;",
     "tests": [
-      "test/rep4_recovery.test.js"
+      "test/systems/rep4_recovery.test.js"
     ]
   }
 ]

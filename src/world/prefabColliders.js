@@ -20,7 +20,7 @@
 //   a box in its own frame).
 // - A MeshCollider is its mesh's triangles, met from either face - the
 //   port's standing reading of DFU's MeshColliders (player/collider.js,
-//   systems/automapPick.js: "both faces") - and a CONVEX one is the convex
+//   systems/automap/automapPick.js: "both faces") - and a CONVEX one is the convex
 //   hull of its mesh's vertices (convexHullPlanes; PhysX's hull cooking
 //   caps a hull at 255 polygons, which no hull these meshes make reaches,
 //   and a flat set of points cooks no hull at all - it answers nothing).

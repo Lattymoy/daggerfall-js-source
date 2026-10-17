@@ -25,8 +25,8 @@
 // (systems/worldTick.js imports this, the Thunderlock's wire).
 // ═══════════════════════════════════════════════════════════════════
 
-import { registerCustomTemplates, mintCondition, setItemFields, registerItemUseHandler } from './itemTemplates.js';
-import { registerUniqueFind } from './lootRarity.js';
+import { registerCustomTemplates, mintCondition, setItemFields, registerItemUseHandler } from './item/itemTemplates.js';
+import { registerUniqueFind } from './loot/lootRarity.js';
 import { isEnchanted } from './inventory.js';
 import { equipTableOf } from './equip.js';
 

@@ -5,97 +5,97 @@
     "old": "return terrainSampleHeightAt(p.samples, c(q[0] - o[0]), c(q[2] - o[2]), p._stride ?? 1); },",
     "new": "return surfaceHeightAt(p.samples, c(q[0] - o[0]), c(q[2] - o[2]), p._stride ?? 1); },",
     "tests": [
-      "test/field_csa2.test.js"
+      "test/systems/comeSailAway/field_csa2.test.js"
     ]
   },
   {
     "name": "FIELD-CSA2-step-unheld",
-    "file": "src/world/terrainSurface.js",
+    "file": "src/world/terrain/terrainSurface.js",
     "old": "export const unityHeightmapStep = (h) => Math.round(Math.min(1, Math.max(0, h)) * UNITY_HEIGHTMAP_MAX_HEIGHT);",
     "new": "export const unityHeightmapStep = (h) => Math.min(1, Math.max(0, h)) * UNITY_HEIGHTMAP_MAX_HEIGHT;",
     "tests": [
-      "test/field_csa2.test.js"
+      "test/systems/comeSailAway/field_csa2.test.js"
     ]
   },
   {
     "name": "FIELD-CSA2-step-truncated",
-    "file": "src/world/terrainSurface.js",
+    "file": "src/world/terrain/terrainSurface.js",
     "old": "export const unityHeightmapStep = (h) => Math.round(Math.min(1, Math.max(0, h)) * UNITY_HEIGHTMAP_MAX_HEIGHT);",
     "new": "export const unityHeightmapStep = (h) => Math.trunc(Math.min(1, Math.max(0, h)) * UNITY_HEIGHTMAP_MAX_HEIGHT);",
     "tests": [
-      "test/field_csa2.test.js"
+      "test/systems/comeSailAway/field_csa2.test.js"
     ]
   },
   {
     "name": "FIELD-CSA2-sixteen-bits-unsigned",
-    "file": "src/world/terrainSurface.js",
+    "file": "src/world/terrain/terrainSurface.js",
     "old": "export const UNITY_HEIGHTMAP_MAX_HEIGHT = 32766;",
     "new": "export const UNITY_HEIGHTMAP_MAX_HEIGHT = 65535;",
     "tests": [
-      "test/field_csa2.test.js"
+      "test/systems/comeSailAway/field_csa2.test.js"
     ]
   },
   {
     "name": "FIELD-CSA2-prefab-terrain-scale",
-    "file": "src/world/terrainSurface.js",
+    "file": "src/world/terrain/terrainSurface.js",
     "old": "const UNITY_HEIGHT_PER_STEP = Math.fround((MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE) / UNITY_HEIGHTMAP_MAX_HEIGHT);",
     "new": "const UNITY_HEIGHT_PER_STEP = Math.fround((MAX_TERRAIN_HEIGHT * 1.5) / UNITY_HEIGHTMAP_MAX_HEIGHT);",
     "tests": [
-      "test/field_csa2.test.js"
+      "test/systems/comeSailAway/field_csa2.test.js"
     ]
   },
   {
     "name": "FIELD-CSA2-height-not-a-float",
-    "file": "src/world/terrainSurface.js",
+    "file": "src/world/terrain/terrainSurface.js",
     "old": "  return f(h * UNITY_HEIGHT_PER_STEP);",
     "new": "  return h * UNITY_HEIGHT_PER_STEP;",
     "tests": [
-      "test/field_csa2.test.js"
+      "test/systems/comeSailAway/field_csa2.test.js"
     ]
   },
   {
     "name": "FIELD-CSA2-the-other-triangle",
-    "file": "src/world/terrainSurface.js",
+    "file": "src/world/terrain/terrainSurface.js",
     "old": "  if (u > v) {\n    const z10 = at(x1, z0);",
     "new": "  if (u < v) {\n    const z10 = at(x1, z0);",
     "tests": [
-      "test/field_csa2.test.js"
+      "test/systems/comeSailAway/field_csa2.test.js"
     ]
   },
   {
     "name": "FIELD-CSA2-x-half-reads-z",
-    "file": "src/world/terrainSurface.js",
+    "file": "src/world/terrain/terrainSurface.js",
     "old": "    h = f(f(z00 + f((z10 - z00) * u)) + f((z11 - z10) * v));",
     "new": "    h = f(f(z00 + f((z10 - z00) * v)) + f((z11 - z10) * u));",
     "tests": [
-      "test/field_csa2.test.js"
+      "test/systems/comeSailAway/field_csa2.test.js"
     ]
   },
   {
     "name": "FIELD-CSA2-z-half-reads-x",
-    "file": "src/world/terrainSurface.js",
+    "file": "src/world/terrain/terrainSurface.js",
     "old": "    h = f(f(z00 + f((z11 - z01) * u)) + f((z01 - z00) * v));",
     "new": "    h = f(f(z00 + f((z11 - z01) * v)) + f((z01 - z00) * u));",
     "tests": [
-      "test/field_csa2.test.js"
+      "test/systems/comeSailAway/field_csa2.test.js"
     ]
   },
   {
     "name": "FIELD-CSA2-corners-one-apart",
-    "file": "src/world/terrainSurface.js",
+    "file": "src/world/terrain/terrainSurface.js",
     "old": "  const x0 = qx * stride, z0 = qz * stride, x1 = x0 + stride, z1 = z0 + stride;\n  const z00 = at(x0, z0), z11 = at(x1, z1);",
     "new": "  const x0 = qx * stride, z0 = qz * stride, x1 = x0 + 1, z1 = z0 + 1;\n  const z00 = at(x0, z0), z11 = at(x1, z1);",
     "tests": [
-      "test/field_csa2.test.js"
+      "test/systems/comeSailAway/field_csa2.test.js"
     ]
   },
   {
     "name": "FIELD-CSA2-stride-dropped",
-    "file": "src/world/terrainSurface.js",
+    "file": "src/world/terrain/terrainSurface.js",
     "old": "  const quad = (TERRAIN_SIZE / (hDim - 1)) * stride;\n  const last = (hDim - 1) / stride - 1;        // the last quad's index\n  const at = (x, z) => unityHeightmapStep(",
     "new": "  const quad = TERRAIN_SIZE / (hDim - 1);\n  const last = (hDim - 1) / stride - 1;        // the last quad's index\n  const at = (x, z) => unityHeightmapStep(",
     "tests": [
-      "test/field_csa2.test.js"
+      "test/systems/comeSailAway/field_csa2.test.js"
     ]
   }
 ]

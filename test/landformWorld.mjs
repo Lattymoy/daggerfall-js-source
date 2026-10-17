@@ -1,8 +1,8 @@
 // LANDFORM1-3: THE LANDFORMS' SYNTHETIC WORLD - a WOODS.WLD the real reader loads and a network in Basic Roads' own
-// layout, so the landforms are pinned with no game data. One home for test/landform.test.js and AUDIT LANDFORMS'
-// pins (test/auditlandforms.test.js).
+// layout, so the landforms are pinned with no game data. One home for test/systems/landform.test.js and AUDIT LANDFORMS'
+// pins (test/world/terrain/auditlandforms.test.js).
 import { MAP_WIDTH, MAP_HEIGHT } from '../src/formats/woodsFile.js';
-import { DIR } from '../src/world/roadNetwork.js';
+import { DIR } from '../src/world/road/roadNetwork.js';
 
 /** A WOODS.WLD the real reader loads: the sea west of x = 100, land rising east, one mountain at (400, 250) up to the
  *  7-bit top, and four large-map cells taken in turn so the large heightmap is not one value everywhere. */
@@ -40,7 +40,7 @@ export function network({ water = true } = {}) {
   for (let x = 92; x <= 112; x++) set(n.roads, x, 200, DIR.E | DIR.W);               // a road down to the beach
   for (let x = 92; x <= 112; x++) set(n.rivers, x, 300, DIR.E | DIR.W);              // and a river out to sea
   // AUDIT LANDFORMS D8: a bend, a junction and their ends on the mountain's flank, where the arms' grades part - the
-  // arm-weighting law's own ground (test/auditlandforms.test.js walks it sample by sample)
+  // arm-weighting law's own ground (test/world/terrain/auditlandforms.test.js walks it sample by sample)
   set(n.roads, 350, 200, DIR.E);                                                     // an end
   for (let x = 351; x <= 353; x++) set(n.roads, x, 200, DIR.E | DIR.W);
   set(n.roads, 352, 200, DIR.S);                                                     // a junction: a road south

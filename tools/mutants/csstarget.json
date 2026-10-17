@@ -5,7 +5,7 @@
     "old": "    cssTarget: ['es2022', 'safari15', 'ios15'],\n",
     "new": "",
     "tests": [
-      "test/csstarget.test.js"
+      "test/tree/csstarget.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    cssTarget: ['es2022', 'safari15', 'ios15'],\n",
     "new": "    cssTarget: ['es2022', 'safari16.4', 'ios16.4'],\n",
     "tests": [
-      "test/csstarget.test.js"
+      "test/tree/csstarget.test.js"
     ]
   }
 ]

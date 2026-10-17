@@ -3,7 +3,7 @@
 // (unitybundleworker.test.js). A byte writer, the two type trees the
 // reader must walk (Texture2D, TextAsset), one SerializedFile of object
 // bodies, a literals-only LZ4 encoder, and the container around a CAB.
-import { COMMON_STRINGS, TEXTURE_FORMAT } from '../src/formats/unityBundle.js';
+import { COMMON_STRINGS, TEXTURE_FORMAT } from '../src/formats/unity/unityBundle.js';
 import { SEASONS_MOD } from '../src/systems/seasonsIliacBay.js';
 
 /** A byte writer with both endiannesses. */

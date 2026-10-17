@@ -8,11 +8,11 @@
 // texture (213/1) is the Wine Rack's world sprite (MAC-D2's tomato), and
 // no TEXTURE archive carries a cart. What the game DOES carry is the
 // cart itself - classic model 41214, the wagon Horse Cart and Cargo
-// trails behind the player (systems/horseCartLaw.js WAGON_MODEL_ID). So
+// trails behind the player (systems/horse/horseCartLaw.js WAGON_MODEL_ID). So
 // the cart's picture is that model, drawn once: textured, three-quarter
 // on, lit from the upper left, at item-picture size. (WAGONS1: Mac's
 // wagons since - the Small Cart's his Wagon Cart, each kind its own model
-// through the port's door below; systems/itemTemplates.js
+// through the port's door below; systems/item/itemTemplates.js
 // inventoryItemModel.)
 //
 // A CPU RASTERISER, NOT A GPU PASS, for the reason ui/meshStamp.js gives
@@ -24,7 +24,7 @@
 // THE OUTPUT IS color32 (formats/color32Order.js: RGBA bytes, row 0 the
 // picture's BOTTOM), the shape every TEXTURE record reaches the GL in, so
 // the classic list uploads it and draws it through the one V-flipped quad
-// it draws every item with (ui/itemScroller.js), and the DOM lists turn
+// it draws every item with (ui/item/itemScroller.js), and the DOM lists turn
 // it into a canvas the way they turn a replacement PNG (bitmapCanvas.js
 // color32Canvas).
 //
@@ -36,10 +36,10 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { color32Canvas } from './bitmapCanvas.js';
-import { WAGON_KINDS } from '../systems/wagonKinds.js';
+import { WAGON_KINDS } from '../systems/wagon/wagonKinds.js';
 
 /** WAGONS1: THE PORT'S OWN MODELS. Mac's wagons (world/wagonModels.js) are no ARCH3D record, so their pictures are
- *  drawn off the port's own build - an id of systems/wagonKinds.js WAGON_KINDS `icon` answers there, every other id
+ *  drawn off the port's own build - an id of systems/wagon/wagonKinds.js WAGON_KINDS `icon` answers there, every other id
  *  out of the player's ARCH3D as before. The build is imported when first asked for, so a list never loads it. */
 const PORT_ICON_KINDS = new Map(Object.values(WAGON_KINDS).map((k) => [k.icon, k.key]));
 const portSource = (id) => import('../world/wagonModels.js').then((m) => m.wagonIconSource(PORT_ICON_KINDS.get(id)));

@@ -6,7 +6,7 @@
 // GitHub releases API, a version compare, and a dialog that opens the
 // download page in the player's browser. This module is the compare -
 // pure, no Electron, no network - so `node --test` pins the ordering
-// laws (test/updatecheck.test.js) and app/main.cjs keeps only the
+// laws (test/tooling/updatecheck.test.js) and app/main.cjs keeps only the
 // fetch and the dialog.
 //
 // THE FAILURE DIRECTION IS SILENCE. A tag that does not parse, a

@@ -46,7 +46,7 @@ streaming world winter (per-pixel snow ground 303, nature 505, swapped
 building textures) with the summer console pin unchanged. Corpus sweep
 pinned: 735 distinct mesh (archive,record) pairs x 4 climates x 3
 seasons = 8820 combos, 6538 identity, 2282 swapped, 0 missing TEXTURE
-files. Pins in test/climate.test.js.
+files. Pins in test/formats/climate.test.js.
 
 ## Milestone R2 - window emission materials (SHIPPED)
 
@@ -62,7 +62,7 @@ non-windows, branchless) and `lit + mask.rgb * uEmissionColor`;
 uploadEmissionTexture / setWindowEmission; every scene's uploadRecord
 auto-uploads masks for window pairs; style from ?window=day|night|fog|
 custom set once in the dispatcher (DFU GetMaterial defaults to Day).
-`src/render/windowEmission.js`, pins in test/window.test.js (312/3 =
+`src/render/windowEmission.js`, pins in test/formats/window.test.js (312/3 =
 638 glass texels, 358/3 = 1440, 309/3 = 0 - real data variance).
 Daggerfall night shot: amber leaded windows across the whole city.
 NOTE tools/screenshot.mjs queries ride SHOT_QUERY env, not argv - a
@@ -107,7 +107,7 @@ with that cycle. MAGEAA00 pins: 3 lights, the shared lantern cross-checks
 flat y -0.05 (offset -6) vs light y 0.2 (-Y + size.h 4) on real data.
 Daggerfall city: 155 lights; before/after diff pools 28k pixels on walls
 and cobbles - subtle in daylight, correct until night ambient drops.
-`src/world/cityLights.js`, pins in test/world.test.js.
+`src/world/city/cityLights.js`, pins in test/world/world.test.js.
 
 ## Milestone R4 - painted skies (SHIPPED)
 
@@ -174,7 +174,7 @@ NITE); R3's ?window night gating is now the real clock (explicit
 (default noon), ?timescale=game-min/sec animates. Wired into exterior
 and streaming. Proofs: 22:00 city (0.25 ambient, amber windows, lantern
 pools, NITE sky), 6:30 dawn (blood sky, low east sun, lanterns still
-lit - verbatim), streaming night skyline. Pins in test/clock.test.js.
+lit - verbatim), streaming night skyline. Pins in test/world/clock.test.js.
 AUDIT NOTE (R5 audit): every constant re-verified against source,
 including the prefab-derived values - the SunlightRig LightCurve keys
 (slopes 2.8928573 / -2.8928576), rig light 0.6 / (0.8161765, 0.954361,
@@ -195,7 +195,7 @@ the PlayerAmbientLight term only.
 
 ## Milestone R6 - dungeon lighting (SHIPPED)
 
-`src/world/dungeonLights.js` collects verbatim RDBLayout.AddLight
+`src/world/dungeon/dungeonLights.js` collects verbatim RDBLayout.AddLight
 lights: one per RDB object of resource type Light, at
 (X, -Y, Z) * GlobalScale, range = LightResource.Radius * GlobalScale *
 3. Properties from the DaggerfallLight [Dungeon] prefab (read via git
@@ -257,7 +257,7 @@ harmless at 10x10 and noted as-written.
 
 ## Milestone R8 - interior point lights (SHIPPED)
 
-`src/world/interiorLights.js` is verbatim DaggerfallInterior.AddLight:
+`src/world/interior/interiorLights.js` is verbatim DaggerfallInterior.AddLight:
 one light per archive-210 flat (AmbientLitInteriors default off), at
 the billboard CENTRE - interior AddFlat raises the transform half the
 scaled height above the flat position - plus the per-record vertical
@@ -284,7 +284,7 @@ The streaming world's ground now renders the way DFU ships it: a
 129x129 height grid per map pixel plus a 128x128 tilemap byte texture,
 decoded per-fragment by the verbatim Daggerfall/TilemapTextureArray
 law - tileIndex = data >> 2, transform = data & 3, four rotation
-matrices + translations. `src/world/terrainSurface.js` carries the
+matrices + translations. `src/world/terrain/terrainSurface.js` carries the
 data side: convertTilemap is TerrainHelper.UpdateTileMapDataJob 1:1
 ((byte)(tile * 4) + rotate + flip * 2, FF water sentinel back to
 record 0 - ConvertWaterTiles defaults true, all pinned); the grid
@@ -432,7 +432,7 @@ are invisible, verbatim. Engine randomness on umRandom (Ledger A).
 streak pixels over the R12 rain baseline; snow shows 1449 bright-white
 flakes; flashtest brightens the storm scene mean by 3.23. Strobe
 determinism, the flash-then-off invariant, and clip classes are pinned
-in test/weather.test.js.
+in test/world/weather.test.js.
 
 ## H1 (2026-08-23): THE HANDEDNESS LAW - the world was the mirror image (SHIPPED)
 
@@ -462,7 +462,7 @@ unmirrored camera. MobileUnit's orientation/flip tables are verbatim
 DFU and were never re-tuned, so enemies come out DFU-correct in the
 same stroke.
 
-Pinned in `test/handedness.test.js` at the matrix level (world +x ->
+Pinned in `test/scenes/handedness.test.js` at the matrix level (world +x ->
 NDC x > 0, the input-web agreement, the deliberate viewmodel
 exception).
 
@@ -512,8 +512,8 @@ presentation that can match it.
 Owned by `Rendering.md`, which says EMPTY - and that is the answer.
 ~~Next up: spectral/firewall emission colors (lands with spectral enemies -
 Characters arc dependency).~~ The spectral half SHIPPED 2026-07-06 (see
-Characters-Arc E4); only GetFireWallColors32 is unported, and it waits on a
-firewall consumer rather than sitting on a queue. AUDIT 18 struck this line:
+Characters-Arc E4); GetFireWallColors32 shipped with its first consumer
+(EG-ZH, 2026-10-12 - the Elite Breach's fire falls, `11-Multiplayer/Elite-Gates.md`). AUDIT 18 struck this line:
 two pages gave opposite answers to whether the Rendering queue was empty.
 
 ## Milestone R12 - the exterior indirect player light (SHIPPED 2026-08-16)
@@ -618,7 +618,7 @@ the noon blue with its horizon haze, the dawn burn from the east, a
 midnight starfield, Masser half-lit among the stars, and a storm's
 heavy overcast.
 
-Pins: `test/enhancedSky.test.js`, 6 tests - the palette as an ordered
+Pins: `test/render/enhancedSky.test.js`, 6 tests - the palette as an ordered
 record interpolated in elevation with no colour in the shader; a
 weather row per type the sim can produce, ordered in cover and grey;
 the sun as worldClock's arc CONTINUED below the horizon (twilight is a
@@ -687,7 +687,7 @@ a star sets where the horizon is. The probe fingerprints where the
 bright points are: three hours on is a different sky, and still full of
 stars.
 
-Pins: 4 more in `test/enhancedSky.test.js` (10 now) - the ease
+Pins: 4 more in `test/render/enhancedSky.test.js` (10 now) - the ease
 (exponential, monotone, whole on the first call, no time no move,
 colours eased too, and the controller keeping one and walking it), the
 wheel (a full turn a day, one way, a unit pole off the zenith, the
@@ -846,7 +846,7 @@ it in DFU. Seen on SwiftShader through the lab's new door
 (`sky.html?sky=dynamic`, `tools/dynamicSkiesProbe.mjs`, 11/11): the
 layered clouds over the scattering blue, the disc at sunset over an
 orange sky, the twinkling star field. Pins: 20 in
-`test/dynamicSkies.test.js`. One probe-found fault fixed before landing:
+`test/systems/dynamicSkies.test.js`. One probe-found fault fixed before landing:
 every weather rendered Sunny, because the mod's own OnWeatherChange
 swallows the event that lands in Init's pending window and DFU's
 OnLoad is what papers over it - the port's first word is a load now.
@@ -865,7 +865,7 @@ read off the IL) is ported to `systems/seasonsIliacBay.js`; the
 textures are re-shaded classic flats and stay OUT of the repository by
 the doctrine's own sentence - they come from the player's own copy of
 the mod, the `.dfmod` itself through a UnityFS reader written for it
-(`formats/unityBundle.js`, validated 374/374 against a reference
+(`formats/unity/unityBundle.js`, validated 374/374 against a reference
 extraction) or the mod's folders, through the texture pick. Both
 climate hosts take the seasonal record per flat; the streaming host
 answers the mod's batch refresh with the winter flip's own re-skin
@@ -921,7 +921,7 @@ upload keeps its single LINEAR level.
 `archive_record`, whichever asked first decided the pixels the other
 drew with. The `#opaque` key ends that.
 
-Pins: 7 in `test/incident_dungeon_seams.test.js` (the alphaIndex
+Pins: 7 in `test/scenes/incident_dungeon_seams.test.js` (the alphaIndex
 values, the pipeline's doors, the shader clip, the two-key cache and
 the draw's preference, the mip chain and filters off the recorded GL
 calls, the clear colour's idempotence and the four hosts). Two EV2
@@ -984,7 +984,7 @@ frees every variant, and the two icon drawers ask for and read it.
 ### AUDIT 62 F27 (2026-09-07) - the `#opaque` key's rationale cited a DFU law that does not exist
 
 The comment at `renderer.js`'s `uploadTexture` key and the pin message
-in `test/incident_dungeon_seams.test.js` both said "DFU caches
+in `test/scenes/incident_dungeon_seams.test.js` both said "DFU caches
 materials per alphaIndex". It does not. `MaterialReader`'s cache key is
 `MakeTextureKey(archive, record, frame)` plus a key GROUP and nothing
 else (`MaterialReader.cs:961`, the hit taken at `:387-392`);
@@ -1041,8 +1041,8 @@ The function now answers `isCityLightsOn(minuteOfDay) ? 'night' :
 'day'` - the predicate the same module already exported one screen
 above, for the lanterns. No call site changed: the two exterior hosts
 were already the only consumers. The old pin was non-discriminating
-(22:00 and 12:00 answer the same under either law); `test/clock.test.js`
-and `test/audit64_time_weather.test.js` now pin the four hours where
+(22:00 and 12:00 answer the same under either law); `test/world/clock.test.js`
+and `test/systems/audit64_time_weather.test.js` now pin the four hours where
 the two properties disagree (17:00 and 07:59 night, 16:59 and 08:00
 day) and sweep the whole day asserting `windowStyleForTime(m) ===
 'night'` exactly when `isCityLightsOn(m)` - the two halves of one flag,
@@ -1134,7 +1134,7 @@ to carry; the culled ones drew no surviving fragment. The lab's whole
 scatter (`set`) still draws whole. `window.__grassStats().drawn` says
 what was submitted.
 
-**Pinned** in `test/perf2.test.js` (3): the culling executes against a
+**Pinned** in `test/render/perf2.test.js` (3): the culling executes against a
 stub GL that records the draws; the sky law and the hosts' order are
 text. Not a departure: the same fragments reach the buffer.
 
@@ -1172,7 +1172,7 @@ sums the sample it sees each tick and prints the per-frame mean under
 the script line - the GL call count, which is the CPU side of the
 GPU's work and the number the culls and the sort are meant to move.
 
-**Pinned** in `test/perf3.test.js` (2). Not a departure.
+**Pinned** in `test/systems/perf3.test.js` (2). Not a departure.
 
 **MAC4 (2026-09-11, Mac: "enemy animations are completely broken").**
 The key cache above re-minted on a change of `frame` only - the field
@@ -1185,7 +1185,7 @@ on the first draw, and every one of them stood on that first texture
 for the rest of the session - no walk, no swing, no turn - from the
 morning PERF3 landed until Mac met one. The key follows every field
 it is made of now (record, frame, archive - a transformed seducer
-swaps archives). `test/mac4_billboardkey.test.js` (2) drives the pass
+swaps archives). `test/scenes/mac4_billboardkey.test.js` (2) drives the pass
 over a stub context and reads the binds: a record change binds the
 new texture, a frame change binds the new texture, a repeat binds
 nothing; and the five producers are pinned to the shape that broke it.
@@ -1222,7 +1222,7 @@ pixel's: a visible pixel submits all its static vertices, which the
 GPU clips for far less than the calls cost. `destroyPixel` frees the
 mesh with the pixel; a season re-skin rebuilds it.
 
-**Pinned** in `test/perf4.test.js` (3). Not a departure. Not measured
+**Pinned** in `test/world/perf4.test.js` (3). Not a departure. Not measured
 here (no data, no GPU): the counter's draws line in a city is the
 number to read, before and after.
 
@@ -1245,7 +1245,7 @@ the dynamic objects follow as before. `drawList` stays whole: the
 automap reveals per model and walks it as it did. `destroy()` frees
 the mesh with the level.
 
-**Pinned** in `test/perf5.test.js` (2); the builder's arithmetic is
+**Pinned** in `test/scenes/perf5.test.js` (2); the builder's arithmetic is
 PERF4's. Not a departure. The interior contexts (a building's rooms,
 a few dozen models) are left as they are.
 
@@ -1262,7 +1262,7 @@ the batched entries, the doors and the machinery draw as before, and
 `drawList` stays whole for the automap. `destroy()` frees it. A tavern
 of a hundred models is a dozen calls.
 
-**Pinned** in `test/perf6.test.js` (1). Not a departure.
+**Pinned** in `test/scenes/perf6.test.js` (1). Not a departure.
 
 ## PERF7 - THE STREAM BUILD BREATHES (2026-09-11)
 
@@ -1286,7 +1286,7 @@ not in `built` and draws nothing, exactly as a cold-load pixel never
 did. The dungeon and interior builds run behind a mode change and are
 left as they are.
 
-**Pinned** in `test/perf7.test.js` (2). Not a departure.
+**Pinned** in `test/systems/perf7.test.js` (2). Not a departure.
 
 ## PERF8 - THE PIECE UNDER A BLADE, BY ARITHMETIC (2026-09-11)
 
@@ -1303,7 +1303,7 @@ and a point outside every piece is null either way - proven against
 four thousand random points in the test. The two closures keep their
 bodies and lose their loops.
 
-**Pinned** in `test/perf8.test.js` (2). Not a departure.
+**Pinned** in `test/render/perf8.test.js` (2). Not a departure.
 
 ## PERF9 - THE PERFORMANCE PROBE (2026-09-11)
 
@@ -1327,7 +1327,7 @@ A scene that never reports a second, throws on the page, or shows no
 fps fails the run: a probe that prints a dash and exits 0 is the
 disease probehygiene's T3 names.
 
-**Pinned** in `test/perf9.test.js` (2). Not a departure.
+**Pinned** in `test/systems/perf9.test.js` (2). Not a departure.
 
 ## PERF-TEX - THE UNIT THAT WAS ALREADY BOUND (2026-09-19)
 
@@ -1382,7 +1382,7 @@ converts to frames when a scene is draw-call bound - a streamed exterior
 at the default land view of 5 (121 pixels) usually is - and not when it
 is fill-bound. It is a floor raise, not a ceiling raise, and it is free.
 
-**Pinned** in `test/glstate.test.js` (4, EV6's own home): no bind in the
+**Pinned** in `test/render/glstate.test.js` (4, EV6's own home): no bind in the
 path is redundant, the saving is real against the unshadowed 4-a-draw,
 the effective GPU state is unchanged draw for draw, and every site in
 `renderer.js` that binds unit 1 either goes through the helper or clears
@@ -1431,7 +1431,7 @@ the shadow speaking for a unit it no longer owned: a wrong texture on
 screen, from a change whose entire claim is that it cannot move a pixel.
 All three shadows are cleared there now, and pinned to be.
 
-**Pinned** in `test/glstate.test.js` (3): no redundant bind or upload in
+**Pinned** in `test/render/glstate.test.js` (3): no redundant bind or upload in
 the pixel loop, a world that changes either still uploads, and every
 texture shadow is forgotten on a foreign pass. PERF3's own pin was
 re-aimed: its law is that the two stay OUT of the frame-constant block,
@@ -1480,7 +1480,7 @@ the caller meant and the quad draws in the last one's colour. Every
 uniform and every texture at all 55 draws is compared against the same
 scene with nothing remembered between quads. Identical.
 
-**Pinned** in `test/glstate.test.js` (2): the canvas, sampler and shared
+**Pinned** in `test/render/glstate.test.js` (2): the canvas, sampler and shared
 flags stop repeating while `dst` and `src` - which really are a quad's
 own - still go up every single time; and the equality above.
 
@@ -1641,7 +1641,8 @@ world pass that follows draws, for the rest of the session." Three things
 carry that weight now:
 
 1. **The source law.** Every method in `renderer.js` that issues a
-   `gl.draw*` is one of the three 2D primitives or calls `_close2D()`
+   `gl.draw*` is one of the three 2D primitives (four since WEAPON-GLOW1's
+   `drawScreenQuadGlow`, with its field's bake - `05-Combat/Weapon-Glow.md`) or calls `_close2D()`
    first, and so do the five seams where foreign GL runs. Read out of
    the source, so it cannot go vacuous.
 2. **The equality proof.** A mixed scene - UI runs interleaved with
@@ -1709,7 +1710,7 @@ block came out of its draw function into an `_ensureXProgram()` method
 byte for byte, guard included - so the draw path is EXACTLY what it was
 for anyone who never warms, and warming twice costs one property read.
 `renderer.warmSteps()` names the five; `render/warmPrograms.js` walks
-them one per `requestIdleCallback`, the shape `ui/enhancedChunk.js`
+them one per `requestIdleCallback`, the shape `ui/enhanced/enhancedChunk.js`
 settled on for MENU1 and for the same reason (five compiles back to back
 in one callback is the stall this exists to remove, moved somewhere less
 visible).
@@ -1728,14 +1729,14 @@ on-demand build for the renderer handed the enhanced deck without the
 lane's flag.
 
 **WHAT THIS DOES NOT CLAIM.** Unlike the three slices above, the SIZE of
-this win is not measured here and cannot be: `test/glstate.test.js` drives
+this win is not measured here and cannot be: `test/render/glstate.test.js` drives
 a Proxy stub, and a stub does not compile shaders. The claim is
 STRUCTURAL - the program is built before the first draw needs it rather
 than during it - and the number belongs to whatever driver the player is
 running. Saying otherwise would be inventing a figure, which is the one
 thing the three measured slices above were careful not to do.
 
-**Pinned** in `test/glstate.test.js` (6): `warmSteps` names exactly five
+**Pinned** in `test/render/glstate.test.js` (6): `warmSteps` names exactly five
 and warming builds every one; the steps are idempotent; an unwarmed
 renderer still builds on the draw and a warmed one does not build again;
 a step that throws does not take the rest of the warm with it; a warm
@@ -1881,7 +1882,7 @@ function learns to touch later are covered without being named.
 so the geometry is argued from absolute expectations and from the
 bytes that would reach the driver. Mac's eye is the next gate.
 
-**Pinned** in `test/perfon_text_run.test.js` (7). Campaign: 13 mutants,
+**Pinned** in `test/ui/perfon_text_run.test.js` (7). Campaign: 13 mutants,
 13 killed, plus the fourteenth against the sibling. Not a departure.
 
 ## PERF11 - one owner list a frame (2026-09-19)
@@ -1915,7 +1916,7 @@ behind it, not more guessing - there is no ARENA2 and no relay in this
 container, so nothing here was measured the way PERF-ON's names were.
 Said rather than implied.
 
-**Pinned** in `test/grasspath.test.js`.
+**Pinned** in `test/world/terrain/grasspath.test.js`.
 ## BOOT2 - A CURSOR MUST NOT NEED THE HUD: ONE EDGE, 4.1 MB (2026-09-20)
 
 **Where BOOT1 left the entry.** With the four hosts behind doors, the
@@ -1924,7 +1925,7 @@ bundle's boot set 28 chunks / 492 KB gzipped - `travel` (257 KB) and
 `spellcast` (55 KB) the largest of them. The menu's own direct imports were
 not the cause (no single one costs more than 88 KB exclusively); the cause
 was a hub edge further down. Cutting edges one at a time on the entry's
-graph and measuring each: **`ui/cursor.js -> ui/hud.js` carries 216 files
+graph and measuring each: **`ui/cursor.js -> ui/hud/hud.js` carries 216 files
 and 4,141 KB on its own** - `main.js` imports the cursor to install the
 document pointer, the cursor imports ONE pure function from the HUD
 (`bitmapToColor32`, an indexed bitmap through a palette), and the HUD
@@ -1940,7 +1941,7 @@ eleven modules imported it from there. It lives in
 becomes color32 (the row-order doors of AUDIT 62 F26 and HT3) - and every
 importer takes it from the leaf, `hud.js` included. No re-export: a
 re-export would put the hub edge back for whoever took the shortcut, and
-`test/boot2.test.js` holds that as a law rather than a hope.
+`test/render/boot2.test.js` holds that as a law rather than a hope.
 
 **Measured.** The entry's static reach: 259 files / 4,991 KB -> 43 files /
 841 KB. What remains is the renderer, the settings, the data source and the
@@ -1952,7 +1953,7 @@ which door it is going through. The bundle's boot set: 28 chunks / 492 KB ->
 MENU is interactive - the entry's set plus the menu chunk's own static
 closure plus the intro - are ~656 KB gzipped, the same as before this slice.
 The menu chunk reaches the world tick directly AND through
-`ui/enhancedHud.js`, and reaches `travel` through `systems/saveSlots.js ->
+`ui/enhanced/enhancedHud.js`, and reaches `travel` through `systems/save/saveSlots.js ->
 save.js -> weatherSim.js`; with several roots, no single cut helps, which is
 exactly what the exclusive-cost table said at the start. That is the next
 lever and a different shape of work: the clock (`worldMinutes`,
@@ -1975,7 +1976,7 @@ imported all four scene hosts - `bootExterior`, `bootInterior`,
 host's whole graph at module-evaluation time. **623 files and 13.4 MB of
 source were reached from the entry before `boot()` ran a line** - every
 scene, every system, every window - while the menu a player actually sees
-first (`ui/enhancedMenu.js`, `ui/introScreen.js`) was the thing loaded
+first (`ui/enhanced/enhancedMenu.js`, `ui/intro/introScreen.js`) was the thing loaded
 dynamically. The boot graph was inverted. Over the built bundle: 54 chunks,
 1,349 KB gzipped, had to arrive before the entry finished evaluating, and
 `main` alone was 517 KB of it.
@@ -2000,12 +2001,12 @@ through the same law.
 **Measured over the build.** The chunks a browser must fetch before the
 entry finishes evaluating: **54 -> 28; 1,349 KB -> 492 KB gzipped (-64%)**.
 Total JavaScript is unchanged (1,959 KB) - nothing was removed, it moved
-off the critical path. `test/boot1.test.js` walks the entry's static graph
+off the critical path. `test/scenes/boot1.test.js` walks the entry's static graph
 itself, transitively, with the host set derived from the tree, and holds a
 ceiling on the entry's reach so the graph cannot quietly re-invert. 3
 mutants, 3 killed.
 
-**And one thing the change found.** `test/moduleload_smoke.test.js` imports
+**And one thing the change found.** `test/tree/moduleload_smoke.test.js` imports
 every module under src/ in node and keeps a list of the eleven that cannot
 load, each with its reason. `src/main.js` was on it as "import.meta.glob" -
 and that was only ever true by inheritance: its static import of world.js
@@ -2021,7 +2022,7 @@ entry reads as the regression it is.
 
 **What is still on the boot path, and why.** `travel` (257 KB gzipped, the
 largest chunk left) and `spellcast` (55 KB) are reached statically from the
-menu floor - `ui/enhancedMenu.js`'s own static graph is 315 files and 6.2 MB
+menu floor - `ui/enhanced/enhancedMenu.js`'s own static graph is 315 files and 6.2 MB
 of source, and it pulls `world/windmillMesh.js` (250 KB) and 2.4 MB of
 `systems/` for things a menu does not draw. That is the next lever, and it
 is the menu's own import list, not the entry's.
@@ -2056,7 +2057,7 @@ that inlined nothing anywhere would be the opposite mistake, and is pinned
 against). The pins that held the old rule named the folders it held OUT -
 "every other vendor asset keeps the default", with dynamic-skies and
 handheld-torches as the examples - and are INVERTED rather than deleted.
-The new pin, `test/vendorinline.test.js`, is GENERATIVE: it walks vendor/
+The new pin, `test/ui/vendorinline.test.js`, is GENERATIVE: it walks vendor/
 itself, puts every file under the 4 KB default through the real rule read
 out of vite.config.js, and holds that every one is refused and every vendor
 folder is covered whether or not it has small art today. The next mod holds
@@ -2265,7 +2266,7 @@ online forces the enhanced lane, the enhanced lane has a `document`, and
 reached. The measured win is real and it is on a path players do not
 take. Nobody re-measured, because there was no instrument that could.**
 
-**Pinned** in `test/perfon2_peercull.test.js` (6). Mutants
+**Pinned** in `test/render/perfon2_peercull.test.js` (6). Mutants
 `tools/mutants/perfon2.json`: 13 - 13 dead, 0 survived.
 
 
@@ -2336,7 +2337,7 @@ The selection is untouched, and that is pinned rather than asserted: 60
 random towns, each selected both ways - a freshly built list, and the
 pool with stale entries past the live count - **identical every time**.
 
-**Pinned** in `test/perfon2_peercull.test.js`. Mutants
+**Pinned** in `test/render/perfon2_peercull.test.js`. Mutants
 `tools/mutants/perfon2.json`: 19 - 19 dead, 0 survived.
 
 **The lesson: EL8's schedule and the lantern flicker were each correct,
@@ -2412,7 +2413,7 @@ main pass's has since PERF3.
 in the suite could fail a mutant that stopped the lantern's flats turning
 to face it. It is pinned now.
 
-**Pinned** in `test/perfon2_peercull.test.js`. Mutants
+**Pinned** in `test/render/perfon2_peercull.test.js`. Mutants
 `tools/mutants/perfon2.json`: 22 - 22 dead, 0 survived.
 
 
@@ -2451,7 +2452,7 @@ the bottom anchor, exactly as PERF-CROWD's is and for the same reason.
 `?cull=off` turns it off with everything else, and `stats.bbCulled` says
 how many the frame skipped.
 
-**Pinned** in `test/perfon2_peercull.test.js`. Mutants
+**Pinned** in `test/render/perfon2_peercull.test.js`. Mutants
 `tools/mutants/perfon2.json`: 28 - 28 dead, 0 survived.
 
 **The lesson: the same one-line omission in eight places is not eight
@@ -2546,7 +2547,7 @@ not what it is short of.
 memory): the construct compiles, and `EXT_texture_filter_anisotropic`
 reports a maximum of 16 there.
 
-**Pinned** in `test/grain1_terrainmip.test.js` (4). Mutants
+**Pinned** in `test/render/grain1_terrainmip.test.js` (4). Mutants
 `tools/mutants/grain1.json`: 10 - 10 dead, 0 survived.
 
 **The lesson: "we cannot filter this" was true of the sampler it was
@@ -2619,7 +2620,7 @@ cannot move a sign, so every `aabbOutside` decision is bit-for-bit what
 it was - pinned over 10,000 boxes rather than argued. The cost is six
 square roots a frame.
 
-**Pinned** in `test/ghost1_spritecull.test.js` (6) - the measurement of
+**Pinned** in `test/render/ghost1_spritecull.test.js` (6) - the measurement of
 `|n|`, the over-cull sweep from the outside (quad corners projected
 through the same proj*view the shader uses), the conservative direction,
 the lift and its one home, and the EV3 equivalence. Mutants
@@ -2746,7 +2747,7 @@ per-pixel frustum cull that EV3 pays for). Both are real projects with a
 real trade, and neither is a line of code. Recorded as an open question
 rather than a plan.
 
-**Pinned** in `test/perfsun_fragment.test.js` (4). Mutants
+**Pinned** in `test/render/perfsun_fragment.test.js` (4). Mutants
 `tools/mutants/perfsun.json`: 15 - 15 dead, 0 survived. Two older
 records re-aimed by content (`el2.json`, `el7.json`) and EL7's own water
 pin with them.
@@ -2806,7 +2807,7 @@ uniform the optimiser drops reads back as null, the upload skips it, and
 foggy day. Source cannot answer that, so `tools/perfSunShaderProbe.mjs`
 links all four lane programs in a real driver and asks for the location.
 
-**Pinned** in `test/perffog_uniform.test.js` (4). Mutants
+**Pinned** in `test/render/perffog_uniform.test.js` (4). Mutants
 `tools/mutants/perffog.json`: 11 - 11 dead, 0 survived. EL1's fog pin
 and its `glsl-fog-blend-raw` mutant re-aimed by content: the law EL1
 states - the fog is blended in linear and re-encoded, so a fogged
@@ -2842,9 +2843,9 @@ lantern reaches (an exactly black glow costs nothing). No fragment decodes the f
 decoded uniform, its cache and its upload are gone with the need for them (above; PERF-FOG's law - never a
 per-fragment decode of the fog uniform - holds more strongly than it did).
 
-**Pins.** `test/perffog_uniform.test.js` rewritten to the law (the display-space blend in every lane shader and the
+**Pins.** `test/render/perffog_uniform.test.js` rewritten to the law (the display-space blend in every lane shader and the
 ring, no decoded twin anywhere, the glow still added in linear, the probe linking with `uFogColor`) and
-`test/el1_enhancedlighting.test.js`'s fog line - each failing on fdd099f46. Mutants `tools/mutants/eldistance.json`
+`test/render/el1_enhancedlighting.test.js`'s fog line - each failing on fdd099f46. Mutants `tools/mutants/eldistance.json`
 (5 dead); `el1.json`'s raw-blend record re-aimed; `perffog.json` keeps the probe's record, the ten on the removed
 uniform, cache and upload retired with their code.
 
@@ -2879,7 +2880,7 @@ only caller. One body, one early return, behind `!soft`. The saving
 stands almost entirely: the ground is where the fragments are, and flats
 are a thin slice beside it.
 
-**Pinned** in `test/perfsun_fragment.test.js`. The pin asks the CALL
+**Pinned** in `test/render/perfsun_fragment.test.js`. The pin asks the CALL
 SITES, not the shader text: every one of these shaders pastes
 `SHADOW_GLSL` and therefore contains *both* function names, so "which
 does this shader use" can only be asked of what is left when the block is
@@ -2958,7 +2959,7 @@ WEEDS1 with a WIDE short flat added (the one shape F5 could never catch),
 and F5's test over MESHES and terrain, at the top of the replay loop, is
 untouched and still live.
 
-**Pinned** in `test/weeds1_flatcasters.test.js` (4), including the
+**Pinned** in `test/render/weeds1_flatcasters.test.js` (4), including the
 subsumption checked arithmetically over five sprite shapes rather than
 argued. Mutants `tools/mutants/weeds1.json`: 8 - 8 dead. Six `bugs5.json`
 records re-aimed by content and one retired with the line it mutated.
@@ -3160,7 +3161,7 @@ falls back to the default rather than to the maximum. A driver with no
 extension answers 1 for every tier and the renderer then asks for
 nothing at all.
 
-**Pinned** in `test/grain1_terrainmip.test.js`. Mutants
+**Pinned** in `test/render/grain1_terrainmip.test.js`. Mutants
 `tools/mutants/grain1.json`: 15 - 15 dead, 0 survived.
 
 **The lesson: a number nobody can measure should not be spelled into the
@@ -3241,7 +3242,7 @@ composite's own bottom rows rather than at the mod's cloud fade. The
 reverted work is not in the diff; the habit that produced it is the thing
 worth recording.
 
-**Pinned** in `test/dsh1_horizon.test.js` (5): the greying at 0, at 1 and
+**Pinned** in `test/render/dsh1_horizon.test.js` (5): the greying at 0, at 1 and
 monotone between; `modHorizon` total against a missing shade, a missing
 row and a greyness off either end; the EASED row winning over the
 weather's name (the controller hands one and the name beside it is stale
@@ -3296,13 +3297,13 @@ Every callback of one browser frame is handed the same stamp, and the gate
 decides once per stamp - so the counter asks the same question and counts
 only the frames the game drew.
 
-**THE ROW.** `ui/settingsLaw.js` gave NUMBER_LAW `stops` and `offBelow`: the
+**THE ROW.** `ui/settings/settingsLaw.js` gave NUMBER_LAW `stops` and `offBelow`: the
 row walks Off, 30, 45, 60, 75, 90, 120, 144, 165, 240 and 300 (shift steps
 three), reads "Off" for any value under 30 and "60 fps" otherwise, and never
 offers 1-29, a cap DFU ignores. It is LIVE, so the pause menu's condensed
 settings carries it too.
 
-Pins: `test/fpscap1.test.js` (7 - the gate over 60 and 144 Hz stamps with
+Pins: `test/ui/settings/fpscap1.test.js` (7 - the gate over 60 and 144 Hz stamps with
 and without a wobble, one decision a stamp and no burst after a gap, the
 store read DFU's way, the stepped row, VSync unavailable, the four hosts'
 placement, the counter driven over a capped second); `perf1` and
@@ -3320,8 +3321,8 @@ it, where DFU's does nothing: the departure above stands there, in the app as in
 (`app/lib/frameRate.cjs`, over the page's own settings blob and its GetBool reading) and, with it off, launches with
 `disable-gpu-vsync` and `disable-frame-rate-limit`; this file's gate then does the holding, up to 300. VSync on, the
 default, changes nothing. In the app the VSync row is a switch that takes effect at the next start (the settings
-tier `restart`, `systems/settings.js` SHELL_AT_LAUNCH); in a browser it stays unavailable. Record:
-`01-Overview/Field-Bugs-2026-09-28e.md`; pins `test/disc28e_vsync.test.js` (7).
+tier `restart`, `systems/settings/settings.js` SHELL_AT_LAUNCH); in a browser it stays unavailable. Record:
+`01-Overview/bugs/Field-Bugs-2026-09-28e.md`; pins `test/ui/settings/disc28e_vsync.test.js` (7).
 
 **THE PACER (AUDIT 28e).** The gate above could not hold frames ABOVE the screen: with the wait lifted a browser frame
 that draws nothing costs a whole refresh (the display scheduler waits out the deadline of a frame with no damage), and

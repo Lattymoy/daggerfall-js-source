@@ -5,7 +5,7 @@
     "old": "Object.freeze({ id: 'calm', name: 'Calm', weight: 30 }),",
     "new": "Object.freeze({ id: 'calm', name: 'Calm', weight: 31 }),",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "Object.freeze({ id: 'rivalry', name: 'Rivalry', weight: 15 }),",
     "new": "Object.freeze({ id: 'rivalry', name: 'Rivalry', weight: 14 }),",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "typeof v === 'string' && /** @type {string[]} */ (EVENT_IDS).includes(v);",
     "new": "typeof v === 'string';",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "if (masters >= E.schismMasters) w.schism += E.schismMoved;",
     "new": "if (masters > E.schismMasters) w.schism += E.schismMoved;",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "if (masters >= E.schismMasters) w.schism += E.schismMoved;",
     "new": "",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "  if (band === 'ascendant') w.succession += E.successionAscendant;\n",
     "new": "",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "  if (hallHidden(faction)) w.crackdown *= E.crackdownHidden;\n",
     "new": "",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "  if (curfew) w.crackdown += E.crackdownCurfew;\n",
     "new": "",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "  if (hallHidden(faction)) w.crackdown *= E.crackdownHidden;\n  if (curfew) w.crackdown += E.crackdownCurfew;\n",
     "new": "  if (curfew) w.crackdown += E.crackdownCurfew;\n  if (hallHidden(faction)) w.crackdown *= E.crackdownHidden;\n",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "if (rivalBand === null) { w.calm += w.rivalry; w.rivalry = 0; }",
     "new": "if (rivalBand === null) { w.rivalry = 0; }",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "if (rivalBand === null) { w.calm += w.rivalry; w.rivalry = 0; }\n  else if",
     "new": "if (false) { w.calm += w.rivalry; w.rivalry = 0; }\n  else if",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "rivalBand === 'thriving' || rivalBand === 'ascendant'",
     "new": "rivalBand === 'ascendant'",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "rivalBand === 'thriving' || rivalBand === 'ascendant'",
     "new": "rivalBand === 'thriving'",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "crackdownMerit: 1.5, crackdownShut: 30,",
     "new": "crackdownMerit: 1.5, crackdownShut: 31,",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ],
     "note": "AUDIT CHAP5: re-aimed by content at the code its fixes moved."
   },
@@ -132,7 +132,7 @@
     "old": "gateHash(CHAPTER_EVENT_SALT, season, chapterTitleKey(faction, region))",
     "new": "gateHash(season, chapterTitleKey(faction, region))",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -141,7 +141,7 @@
     "old": "gateHash(CHAPTER_EVENT_SALT, season, chapterTitleKey(faction, region))",
     "new": "gateHash(CHAPTER_EVENT_SALT, season, faction)",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -150,7 +150,7 @@
     "old": "gateHash(CHAPTER_EVENT_SALT, season, chapterTitleKey(faction, region))",
     "new": "gateHash(CHAPTER_EVENT_SALT, chapterTitleKey(faction, region))",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -159,7 +159,7 @@
     "old": "if (!Number.isSafeInteger(season) || season < 0 || total <= 0) return 'calm';",
     "new": "if (!Number.isSafeInteger(season) || total <= 0) return 'calm';",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -168,7 +168,7 @@
     "old": "weights.reduce((a, b) => a + Math.max(0, whole(b)), 0)",
     "new": "weights.reduce((a, b) => a + whole(b), 0)",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -177,7 +177,7 @@
     "old": "    if (r < wt) return CHAPTER_EVENTS[i].id;",
     "new": "    if (r <= wt) return CHAPTER_EVENTS[i].id;",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -186,7 +186,7 @@
     "old": "  Object.freeze([GUILD_FACTION_IDS.MagesGuild, DIVINES.Julianos]),\n",
     "new": "",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -195,7 +195,7 @@
     "old": ".flatMap(([a, b]) => (a === faction ? [b] : b === faction ? [a] : []))",
     "new": ".flatMap(([a, b]) => (a === faction ? [b] : []))",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -204,7 +204,7 @@
     "old": "(b.strength > a.strength || (b.strength === a.strength && b.faction < a.faction) ? b : a)",
     "new": "(b.strength < a.strength || (b.strength === a.strength && b.faction < a.faction) ? b : a)",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -213,7 +213,7 @@
     "old": "(b.strength > a.strength || (b.strength === a.strength && b.faction < a.faction) ? b : a)",
     "new": "(b.strength > a.strength || (b.strength === a.strength && b.faction > a.faction) ? b : a)",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -222,7 +222,7 @@
     "old": "  if (!(ma > mb) && !(mb > ma)) return { a, b, won: null };\n",
     "new": "",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -231,7 +231,7 @@
     "old": "const lost = Math.min(E.rivalrySwing, l);",
     "new": "const lost = E.rivalrySwing;",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -240,7 +240,7 @@
     "old": "const won = Math.min(STRENGTH_MAX, w + lost);",
     "new": "const won = w + lost;",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -249,7 +249,7 @@
     "old": "Math.round(Math.max(0, Number(merit) || 0) * CHAPTER_EVENT_EFFECTS.crackdownMerit)",
     "new": "Math.floor(Math.max(0, Number(merit) || 0) * CHAPTER_EVENT_EFFECTS.crackdownMerit)",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ],
     "note": "AUDIT CHAP5 E1: the half again is Merit now (crackdownMerit)."
   },
@@ -259,8 +259,8 @@
     "old": "Math.round(Math.max(0, Number(merit) || 0) * CHAPTER_EVENT_EFFECTS.crackdownMerit)",
     "new": "Math.round((Number(merit) || 0) * CHAPTER_EVENT_EFFECTS.crackdownMerit)",
     "tests": [
-      "test/chap6a_events.test.js",
-      "test/audit_chap5.test.js"
+      "test/net/chap6a_events.test.js",
+      "test/net/audit_chap5.test.js"
     ],
     "note": "AUDIT CHAP5 E1: the half again is Merit now (crackdownMerit)."
   },
@@ -270,7 +270,7 @@
     "old": "Number(s) < CHAPTER_EVENT_EFFECTS.crackdownShut;",
     "new": "Number(s) <= CHAPTER_EVENT_EFFECTS.crackdownShut;",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -279,7 +279,7 @@
     "old": "  if (row?.kind === 'event' || row?.kind === 'season') return chapterSeasonLine(row);   // CHAP6a: a Season's own lines\n",
     "new": "",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -288,7 +288,7 @@
     "old": "(isRollFaction(f) && !hallHidden(f) ? `the ${hallPosterName(/** @type {number} */ (f))}` : 'its rival in the shadows')",
     "new": "(isRollFaction(f) ? `the ${hallPosterName(/** @type {number} */ (f))}` : 'its rival in the shadows')",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -297,7 +297,7 @@
     "old": "export function chapterSeasonLine(/** @type {any} */ row) {\n  if (!isRollFaction(row?.faction) || hallHidden(row.faction)) return null;",
     "new": "export function chapterSeasonLine(/** @type {any} */ row) {\n  if (!isRollFaction(row?.faction)) return null;",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -306,7 +306,7 @@
     "old": "(d.fell > 0 ? `${guild}'s decline cost it",
     "new": "(d.fell >= 0 ? `${guild}'s decline cost it",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -315,7 +315,7 @@
     "old": "d.event === 'crackdown' ? (d.shut ?",
     "new": "d.event === 'crackdown' ? (!d.shut ?",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -324,7 +324,7 @@
     "old": "d.event === 'rivalry' ? (d.won === true ?",
     "new": "d.event === 'rivalry' ? (d.won ?",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -333,7 +333,7 @@
     "old": ": d.won === false ? `${guild} lost its rivalry",
     "new": ": d.won !== true ? `${guild} lost its rivalry",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -342,7 +342,7 @@
     "old": ": d.event === 'ascendancy' ? `${guild} stood ascendant`\n",
     "new": ": d.event === 'ascendancy' ? null\n",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -351,7 +351,7 @@
     "old": "    const who = typeof row?.name === 'string' && row.name ? row.name : 'A member since gone';\n    return `Through",
     "new": "    const who = row?.name;\n    return `Through",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -360,7 +360,7 @@
     "old": "Object.assign(at(Number(r.faction), Number(r.region)), heldEvent(r), { prev: Number(r.strength) });",
     "new": "Object.assign(at(Number(r.faction), Number(r.region)), { prev: Number(r.strength) });",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -369,8 +369,8 @@
     "old": "(season && c.eventSeason === season.n ? c.event : null)",
     "new": "(c.event)",
     "tests": [
-      "test/chap6a_events.test.js",
-      "test/audit_guild3.test.js"
+      "test/net/chap6a_events.test.js",
+      "test/net/audit_guild3.test.js"
     ]
   },
   {
@@ -379,7 +379,7 @@
     "old": "const seasonRows = ends ? await seasonEnded(",
     "new": "const seasonRows = false ? await seasonEnded(",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -388,7 +388,7 @@
     "old": "if (next && next.start === week + 1) await seasonDrawn(",
     "new": "if (next) await seasonDrawn(",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -397,7 +397,7 @@
     "old": "c.event, c.eventSeason, JSON.stringify(c.data), c.shut, c.doctrine, c.doctrineSeason]);",
     "new": "c.event, c.eventSeason, JSON.stringify(c.data), null, c.doctrine, c.doctrineSeason]);",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -406,7 +406,7 @@
     "old": "          event = excluded.event, event_season = excluded.event_season,",
     "new": "          event_season = excluded.event_season,",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -415,7 +415,7 @@
     "old": "UPDATE npc_chapters SET strength = ?1, event = NULL, event_season = NULL, event_data = '{}', shut_season = NULL, doctrine = NULL, doctrine_season = NULL, patron = NULL, patron_season = NULL WHERE true",
     "new": "UPDATE npc_chapters SET strength = ?1, doctrine = NULL, doctrine_season = NULL, patron = NULL, patron_season = NULL WHERE true",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -424,7 +424,7 @@
     "old": "        .bind(week, nowS, JSON.stringify([...seasonRows, ...(patrons?.rows ?? [])])),\n",
     "new": "        .bind(week, nowS, JSON.stringify([...(patrons?.rows ?? [])])),\n",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -433,7 +433,7 @@
     "old": "const merit = await chapterMeritBetween(db, season.start, week);",
     "new": "const merit = await chapterMeritBetween(db, season.start + 1, week);",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -442,7 +442,7 @@
     "old": "const r = keys.has(rk) ? all.get(rk) : undefined;",
     "new": "const r = all.get(rk);",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -451,7 +451,7 @@
     "old": "    if (!raced.has(pair)) {",
     "new": "    if (true) {",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -460,7 +460,7 @@
     "old": "end.won === null ? null : end.won === 'a' ? k : rk",
     "new": "end.won === null ? null : end.won === 'a' ? rk : k",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -469,7 +469,7 @@
     "old": "won: winner == null ? null : winner === k",
     "new": "won: winner == null ? null : winner !== k",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -478,7 +478,7 @@
     "old": "if (shut) c.shut = season.n + 1;",
     "new": "if (shut) c.shut = season.n;",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -487,7 +487,7 @@
     "old": "const shut = crackdownShuts(c.s);",
     "new": "const shut = crackdownShuts(c.prev);",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -496,7 +496,7 @@
     "old": "if (e && e !== 'calm') out.push(",
     "new": "if (e) out.push(",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -505,7 +505,7 @@
     "old": "if (season.n > 0 && !opened && !trial) {",
     "new": "if (!opened && !trial) {",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ],
     "note": "AUDIT CHAP5: re-aimed by content at the code its fixes moved."
   },
@@ -515,7 +515,7 @@
     "old": "      ORDER BY s.faction, s.region`).bind(season.start - 1, season.start, week - 1).all();",
     "new": "      ORDER BY s.faction, s.region`).bind(season.start, season.start, week - 1).all();",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ],
     "note": "AUDIT CHAP5: re-aimed by content at the code its fixes moved."
   },
@@ -525,7 +525,7 @@
     "old": "FROM npc_chapter_seats s WHERE s.seat = 'master' AND s.since <= ?1",
     "new": "FROM npc_chapter_seats s WHERE s.since <= ?1",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ],
     "note": "AUDIT CHAP5: re-aimed by content at the code its fixes moved."
   },
@@ -535,7 +535,7 @@
     "old": "      if (keys.has(`${m.faction}|${m.region}`)) out.push([Number(m.faction), Number(m.region), 'season',",
     "new": "      if (true) out.push([Number(m.faction), Number(m.region), 'season',",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -544,7 +544,7 @@
     "old": "masters: masters.get(k) ?? 0,",
     "new": "masters: 0,",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -553,7 +553,7 @@
     "old": ".bind(ended.start - 1, week - 1).all();",
     "new": ".bind(ended.start, week - 1).all();",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -562,7 +562,7 @@
     "old": "curfew: curfew.has(c.region),",
     "new": "curfew: false,",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -571,7 +571,7 @@
     "old": "WHERE e.week = ?1 AND e.state = 'law' AND e.edict = 'curfew'`).bind(week).all();",
     "new": "WHERE e.week = ?1 AND e.state = 'law' AND e.edict = 'curfew'`).bind(week - 1).all();",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -580,7 +580,7 @@
     "old": "    if (!keys.has(k)) continue;\n    const rivals",
     "new": "    const rivals",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -589,7 +589,7 @@
     "old": "rivalBand: rival === null ? null : chapterBandOf(",
     "new": "rivalBand: rival === null ? null : 'steady' || chapterBandOf(",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -598,7 +598,7 @@
     "old": "faction: c.faction, band: chapterBandOf(c.s).band,",
     "new": "faction: c.faction, band: chapterBandOf(c.prev).band,",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -607,7 +607,7 @@
     "old": "c.data = c.event === 'rivalry' ? { rival } : {};",
     "new": "c.data = {};",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -616,7 +616,7 @@
     "old": "    c.eventSeason = n;\n",
     "new": "    c.eventSeason = n - 1;\n",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -625,7 +625,7 @@
     "old": "const event = e.eventSeason === n ? e.event : null;\n  const shut = e.shut === n;\n  const doctrine",
     "new": "const event = e.event;\n  const shut = e.shut === n;\n  const doctrine",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -634,7 +634,7 @@
     "old": "const event = e.eventSeason === n ? e.event : null;\n  const shut = e.shut === n;\n  const doctrine",
     "new": "const event = e.eventSeason === n ? e.event : null;\n  const shut = e.shut != null;\n  const doctrine",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -643,7 +643,7 @@
     "old": "Number.isSafeInteger(e.data.rival) && named(e.data.rival) ? e.data.rival : null;",
     "new": "Number.isSafeInteger(e.data.rival) ? e.data.rival : null;",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -652,7 +652,7 @@
     "old": "seats: seats.get(`${c.faction}|${c.region}`) ?? [], ...events.get(`${c.faction}|${c.region}`),\n",
     "new": "seats: seats.get(`${c.faction}|${c.region}`) ?? [],\n",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -661,7 +661,7 @@
     "old": "const events = new Map(results.map((/** @type {any} */ r) => [`${r.faction}|${r.region}`, eventView(r, n, (f) => !hallHidden(f))]));",
     "new": "const events = new Map(results.map((/** @type {any} */ r) => [`${r.faction}|${r.region}`, eventView(r, n, () => true)]));",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -670,7 +670,7 @@
     "old": "seasonNumberAt(nowS, zero), (f) => !hallHidden(f) || members.includes(f));",
     "new": "seasonNumberAt(nowS, zero), () => true);",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -679,7 +679,7 @@
     "old": "focuses: chapterFocusesOf(f) } : {}), ...events.get(f),",
     "new": "focuses: chapterFocusesOf(f) } : {}),",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -688,7 +688,7 @@
     "old": "chapters: halls ? await chapterLines(db, region, nowS, members, character, zero, player.id) : [],",
     "new": "chapters: halls ? await chapterLines(db, region, nowS, members, character, null, player.id) : [],",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -697,7 +697,7 @@
     "old": "const halls = chapters.filter((f) => !events.get(f)?.shut).flatMap(",
     "new": "const halls = chapters.flatMap(",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -706,7 +706,7 @@
     "old": "    const events = await regionEvents(db, region, seasonNumberAt(nowS, zero));\n    const halls",
     "new": "    const events = await regionEvents(db, region, seasonNumberAt(nowS, null));\n    const halls",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -715,7 +715,7 @@
     "old": "const want = members.filter((f) => chapters.has(f) && !events.get(f)?.shut);",
     "new": "const want = members.filter((f) => chapters.has(f));",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -724,7 +724,7 @@
     "old": "await postMemberWrits(db, day, region, nowS, character, members, zero);",
     "new": "await postMemberWrits(db, day, region, nowS, character, members);",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   }
 ]

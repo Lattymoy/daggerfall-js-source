@@ -5,7 +5,7 @@
     "old": "  return h >= COVER_MIN_H && w >= COVER_MIN_W;",
     "new": "  return w >= COVER_MIN_W;",
     "tests": [
-      "test/tact1.test.js"
+      "test/scenes/tact1.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  return h >= COVER_MIN_H && w >= COVER_MIN_W;",
     "new": "  return h >= COVER_MIN_H;",
     "tests": [
-      "test/tact1.test.js"
+      "test/scenes/tact1.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  if (NOT_COVER_ARCHIVES.has(archive)) return false;\n",
     "new": "\n",
     "tests": [
-      "test/tact1.test.js"
+      "test/scenes/tact1.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  if (ox * ox + oz * oz <= r * r && o[1] >= cy && o[1] <= top) return Infinity;",
     "new": "\n",
     "tests": [
-      "test/tact1.test.js"
+      "test/scenes/tact1.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "        if (y >= cy && y <= top) best = s;",
     "new": "        best = s;",
     "tests": [
-      "test/tact1.test.js"
+      "test/scenes/tact1.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "      if (s >= 0 && s <= maxDist) {",
     "new": "      if (s >= 0) {",
     "tests": [
-      "test/tact1.test.js"
+      "test/scenes/tact1.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "      const s = (-b - Math.sqrt(disc)) / a;",
     "new": "      const s = (-b + Math.sqrt(disc)) / a;",
     "tests": [
-      "test/tact1.test.js"
+      "test/scenes/tact1.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "  if (Math.abs(d[1]) > 1e-12) {",
     "new": "  if (false) {",
     "tests": [
-      "test/tact1.test.js"
+      "test/scenes/tact1.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "      lo[0] = origin[0] - t[0]; lo[1] = origin[1] - t[1]; lo[2] = origin[2] - t[2];",
     "new": "      lo[0] = origin[0]; lo[1] = origin[1]; lo[2] = origin[2];",
     "tests": [
-      "test/tact1.test.js"
+      "test/scenes/tact1.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "            if (s < best) best = s;",
     "new": "            if (s < best) return s;",
     "tests": [
-      "test/tact1.test.js"
+      "test/scenes/tact1.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "      const gz0 = Math.floor(Math.min(lo[2], ez) / COVER_CELL), gz1 = Math.floor(Math.max(lo[2], ez) / COVER_CELL);",
     "new": "      const gz0 = Math.floor(lo[2] / COVER_CELL), gz1 = gz0;",
     "tests": [
-      "test/tact1.test.js"
+      "test/scenes/tact1.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "  if (!cover || !cover.on()) return Infinity;",
     "new": "  if (!cover) return Infinity;",
     "tests": [
-      "test/tact1.test.js"
+      "test/scenes/tact1.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "      if (!(it?.r > 0) || !(it.h > 0) || !it.c || it.c.noCover) continue;",
     "new": "      if (!it || it.c?.noCover) continue;",
     "tests": [
-      "test/tact1.test.js"
+      "test/scenes/tact1.test.js"
     ]
   },
   {
@@ -122,34 +122,34 @@
     "old": "    if (!size || !isCoverFlat(archive, record, size)) continue;",
     "new": "    if (!size) continue;",
     "tests": [
-      "test/tact1.test.js"
+      "test/scenes/tact1.test.js"
     ]
   },
   {
     "name": "TACT1-sight-blind",
-    "file": "src/characters/enemyMotor.js",
+    "file": "src/characters/enemy/enemyMotor.js",
     "old": "  return (!Number.isFinite(hit) || hit >= el - 1e-3) && !coveredSight(collider, eye, ex / el, ey / el, ez / el, el);",
     "new": "  return (!Number.isFinite(hit) || hit >= el - 1e-3);",
     "tests": [
-      "test/tact1.test.js"
+      "test/scenes/tact1.test.js"
     ]
   },
   {
     "name": "TACT1-sight-door-arm-blind",
-    "file": "src/characters/enemyMotor.js",
+    "file": "src/characters/enemy/enemyMotor.js",
     "old": "    return seen && !coveredSight(collider, eye, ex / el, ey / el, ez / el, el);",
     "new": "    return seen;",
     "tests": [
-      "test/tact1.test.js"
+      "test/scenes/tact1.test.js"
     ]
   },
   {
     "name": "TACT1-shot-blind",
-    "file": "src/characters/enemyMotor.js",
+    "file": "src/characters/enemy/enemyMotor.js",
     "old": "    return !Number.isFinite(hit.dist) && !(coverDistance(this.collider, origin, [dx, dy, dz], dist - originDistance, true) < dist - originDistance - 1e-3);",
     "new": "    return !Number.isFinite(hit.dist);",
     "tests": [
-      "test/tact1.test.js"
+      "test/scenes/tact1.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "      const cs = c ? coverStep(coverDistance(c, m.pos, unit, reach), c.raycast(m.pos, unit, reach),",
     "new": "      const cs = c ? coverStep(Infinity, c.raycast(m.pos, unit, reach),",
     "tests": [
-      "test/tact1.test.js"
+      "test/scenes/tact1.test.js"
     ]
   },
   {
@@ -167,16 +167,16 @@
     "old": "    this.cover?.remove(bucketKey);   // TACT1: a bucket's cover leaves with it\n",
     "new": "\n",
     "tests": [
-      "test/tact1.test.js"
+      "test/scenes/tact1.test.js"
     ]
   },
   {
     "name": "TACT1-pixel-unstood",
-    "file": "src/scenes/world.js",
-    "old": "    if (coverItems.length) collider.cover.add(key, coverItems, ((o) => () => state.pixelTranslation(px, py, o))([0, 0, 0]));",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "    if (coverItems.length) collider.cover.add(key, coverItems, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0]));",
     "new": "    if (coverItems.length) collider.cover.add(key, coverItems);",
     "tests": [
-      "test/tact1.test.js"
+      "test/scenes/tact1.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "    if (isCoverFlat(archive, record, size)) for (const c of based) coverItems.push(coverProxy(c, size));",
     "new": "    if (isCoverFlat(archive, record, size)) for (const c of centers) coverItems.push(coverProxy(c, size));",
     "tests": [
-      "test/tact1.test.js"
+      "test/scenes/tact1.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "      const _cs = coverStep(coverDistance(collider, m.pos, _unit, reach), collider.raycast(m.pos, _unit, reach), reach, reach - step * _len, step * _len);",
     "new": "      const _cs = coverStep(Infinity, collider.raycast(m.pos, _unit, reach), reach, reach - step * _len, step * _len);",
     "tests": [
-      "test/tact1.test.js"
+      "test/scenes/tact1.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "          const clear = (!Number.isFinite(hit) || hit >= dist - 1e-3) && !(coverDistance(collider, eye, dir, dist, true) < dist - 1e-3);",
     "new": "          const clear = (!Number.isFinite(hit) || hit >= dist - 1e-3);",
     "tests": [
-      "test/tact1.test.js"
+      "test/scenes/tact1.test.js"
     ]
   }
 ]

@@ -5,7 +5,7 @@
     "old": "index >= 0 && index < CHAT_REGION_COUNT ? `${CHAT_REGION_PREFIX}${index}` : null",
     "new": "index >= 0 && index <= CHAT_REGION_COUNT ? `${CHAT_REGION_PREFIX}${index}` : null",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    return CHAT_LINE_CHANNELS.includes(m.ch) ? { t: 'chat', text, ch: m.ch, ...me } : { error: 'bad chat' };",
     "new": "    return CHAT_LINE_CHANNELS.includes(m.ch) ? { t: 'chat', text, ch: m.ch, ...me } : { t: 'chat', text, ...me };",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "return !!m && Number(m[1]) >= CHAN_RELAY_MIN; };",
     "new": "return !!m && Number(m[1]) > CHAN_RELAY_MIN; };",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "      for (const member of party.members) for (const other of this._socketsOf(member)) this._send(other, line);",
     "new": "      for (const [other, b] of [...this._all()]) if (b.id) this._send(other, line);",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "      for (const member of party.members) for (const other of this._socketsOf(member)) this._send(other, line);",
     "new": "      for (const member of party.members) for (const other of this._socketsOf(member)) if (other !== ws) this._send(other, line);",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "    const m = this._meterOf(ws);\n    m.junk = (m.junk ?? 0) + 1;",
     "new": "    const m = { junk: this._meterOf(ws).junk };\n    this._meters.set(ws, m);\n    m.junk = (m.junk ?? 0) + 1;",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "if (!isSocialRoom(a.key) || !a.acct) { this._junk(ws); return; }\n      if (!a.party) return;",
     "new": "if (!isSocialRoom(a.key) || !a.acct) return;\n      if (!a.party) return;",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "    if (ch === 'party') {\n      if (!isSocialRoom(a.key)",
     "new": "    if (ch === 'party' && a.party) {\n      if (!isSocialRoom(a.key)",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "      const budget = tokenGate(this._partyChat, now, PARTY_CHAT_ROOM_HZ_MAX);\n      this._partyChat = budget.bucket;",
     "new": "      const budget = tokenGate(this._roomChat, now, CHAT_ROOM_HZ_MAX);\n      this._roomChat = budget.bucket;",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "    // it - an older one projects `{t:'chat', text}` and would fan the party's line to everyone online\n    if (ch != null && (!CHAT_LINE_CHANNELS.includes(ch) || !(ch === 'guild' ? this.guildOk : this.chanOk))) return false;",
     "new": "    // it - an older one projects `{t:'chat', text}` and would fan the party's line to everyone online\n    if (ch != null && !CHAT_LINE_CHANNELS.includes(ch)) return false;",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "    // it - an older one projects `{t:'chat', text}` and would fan the party's line to everyone online\n    if (ch != null && (!CHAT_LINE_CHANNELS.includes(ch) || !(ch === 'guild' ? this.guildOk : this.chanOk))) return false;",
     "new": "    // it - an older one projects `{t:'chat', text}` and would fan the party's line to everyone online\n    if (ch != null && !(ch === 'guild' ? this.guildOk : this.chanOk)) return false;",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "      const ch = CHAT_LINE_CHANNELS.includes(m.ch) ? m.ch : null;\n      if (!this._lineIn(room, ch, now)) return;\n      // ACC1d",
     "new": "      const ch = typeof m.ch === 'string' ? m.ch : null;\n      if (!this._lineIn(room, ch, now)) return;\n      // ACC1d",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "    const g = ch === 'party' ? partyChatInGate(this._inPartyChat, now) : ch === 'guild' ? guildChatInGate(this._inGuildChat, now) : chatInGate(this._inChat.get(room), now);",
     "new": "    const g = ch === 'guild' ? guildChatInGate(this._inGuildChat, now) : chatInGate(this._inChat.get(room), now);",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "    const gate = castGate(this._castBucket, this._now());",
     "new": "    const gate = castGate(this._cbucket, this._now());",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "    const active = this.tab(this.active);\n    if (active && !this.open) active.unread++;",
     "new": "    for (const tab of this.tabs) if (!this.open) tab.unread++;",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "    for (const tab of this.tabs) this._keepOn(tab, line);",
     "new": "    for (const tab of this.tabs) this._keepOn(tab, { ...line });",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "    const heard = new Set();\n    for (const tab of this.tabs) {\n      if (!tab.shown) continue;",
     "new": "    const heard = { all: [], add(x) { this.all.push(x); }, [Symbol.iterator]() { return this.all[Symbol.iterator](); } };\n    for (const tab of this.tabs) {\n      if (!tab.shown) continue;",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ],
     "note": "PING1 (re-aimed by content): the Set made a list that keeps every copy - the game's line on every tab drawn once a tab."
   },
@@ -157,7 +157,7 @@
     "name": "CHAT-W-every-tab-peeked",
     "file": "src/net/chat.js",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ],
     "old": "      if (tab.id !== this.active && !tab.peekAll) { for",
     "new": "      if (false) { for",
@@ -167,7 +167,7 @@
     "name": "CHAT-W-party-dropped-from-the-peek",
     "file": "src/net/chat.js",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ],
     "old": "      if (tab.id !== this.active && !tab.peekAll) { for",
     "new": "      if (tab.id !== this.active) { for",
@@ -177,7 +177,7 @@
     "name": "CHAT-P-hidden-tab-peeked",
     "file": "src/net/chat.js",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ],
     "old": "      if (!tab.shown) continue;\n      // PING1",
     "new": "      if (false) continue;\n      // PING1",
@@ -189,7 +189,7 @@
     "old": "rolled ? 'roll' : sys ? '' : me === true ? 'me' : isOocText(text) ? 'ooc' : isRpText(text) ? 'rp' : ''",
     "new": "rolled ? 'roll' : me === true ? 'me' : isOocText(text) ? 'ooc' : isRpText(text) ? 'rp' : ''",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ]
   },
   {
@@ -198,7 +198,7 @@
     "old": "export const isOocText = (text) => /^\\(\\(/.test(String(text ?? '').trim());",
     "new": "export const isOocText = (text) => /\\(\\(/.test(String(text ?? '').trim());",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ]
   },
   {
@@ -207,7 +207,7 @@
     "old": "    tab.room = room; tab.place = place;",
     "new": "    tab.room = room; tab.place = place; tab.label = place ?? tab.label;",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ]
   },
   {
@@ -216,7 +216,7 @@
     "old": "  const dx = speaker[0] - listener[0], dz = speaker[2] - listener[2];\n  return Number.isFinite(dx) && Number.isFinite(dz) && dx * dx + dz * dz <= range * range;",
     "new": "  const dx = speaker[0] - listener[0], dz = speaker[2] - listener[2], dy = speaker[1] - listener[1];\n  return Number.isFinite(dx) && Number.isFinite(dz) && dx * dx + dy * dy + dz * dz <= range * range;",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ]
   },
   {
@@ -225,7 +225,7 @@
     "old": "  return !!who && inEarshot(here, who.feet, range);",
     "new": "  return !who || inEarshot(here, who.feet, range);",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ]
   },
   {
@@ -234,7 +234,7 @@
     "old": "  if (line?.mine) return true;\n  const who",
     "new": "  const who",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ]
   },
   {
@@ -243,7 +243,7 @@
     "old": "  if (current && now - hold.since < holdMs) return null;",
     "new": "",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ]
   },
   {
@@ -252,7 +252,7 @@
     "old": "  if (current && now - hold.since < holdMs) return null;",
     "new": "  if (now - hold.since < holdMs) return null;",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ]
   },
   {
@@ -261,7 +261,7 @@
     "old": "  if (!want || want === current) { hold.room = null; return null; }",
     "new": "  if (!want || want === current) return null;",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ]
   },
   {
@@ -270,7 +270,7 @@
     "old": "  if (t.startsWith('//')) return { kind: 'say', text: t.slice(1) };",
     "new": "",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ]
   },
   {
@@ -279,7 +279,7 @@
     "old": "{ kind: 'channel', tab: chan.tab, text: rest, wrap: chan.wrap }",
     "new": "{ kind: 'channel', tab: chan.tab, text: rest, wrap: null }",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ]
   },
   {
@@ -288,7 +288,7 @@
     "old": "  const name = m[1].toLowerCase();",
     "new": "  const name = m[1];",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ]
   },
   {
@@ -297,7 +297,7 @@
     "old": "    if (!p || !inEarshot(here, p.feet)) continue;",
     "new": "    if (!p) continue;",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ]
   },
   {
@@ -306,7 +306,7 @@
     "old": "  const label = typeof session?.label === 'string' && session.label ? session.label : 'Online';",
     "new": "  const label = 'Online';",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ]
   },
   {
@@ -315,7 +315,7 @@
     "old": "  if (line.system || line.mine || line.kind === 'ooc' || line.kind === 'roll' || line.kind === 'me') return false;",
     "new": "  if (line.system || line.mine || line.kind === 'roll' || line.kind === 'me') return false;",
     "tests": [
-      "test/name1_bubbles.test.js"
+      "test/net/name1_bubbles.test.js"
     ]
   },
   {
@@ -324,7 +324,7 @@
     "old": "    for (const tab of log?.tabs ?? []) {\n      const msgs",
     "new": "    for (const tab of (log?.tabs ?? []).filter((t) => t.id === 'world')) {\n      const msgs",
     "tests": [
-      "test/name1_bubbles.test.js"
+      "test/net/name1_bubbles.test.js"
     ]
   },
   {
@@ -333,7 +333,7 @@
     "old": "    for (const line of [...fresh].sort((a, b) => a.seq - b.seq)) {",
     "new": "    for (const line of [...fresh]) {",
     "tests": [
-      "test/name1_bubbles.test.js"
+      "test/net/name1_bubbles.test.js"
     ]
   },
   {
@@ -342,7 +342,7 @@
     "old": "    const tab = line.tab === log.active ? null : log.tab(line.tab);",
     "new": "    const tab = log.tab(line.tab);",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ]
   },
   {
@@ -351,7 +351,7 @@
     "old": "    if (!keep && went !== 'read') closePanel();",
     "new": "    if (!keep) closePanel();",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ]
   },
   {
@@ -360,7 +360,7 @@
     "old": "${line.kind === 'ooc' ? ' ooc' : ''}",
     "new": "",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ]
   },
   {
@@ -369,7 +369,7 @@
     "old": "    const ph = on ? `Say something - ${on.place ?? on.label}` : 'Say something';",
     "new": "    const ph = 'Say something';",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ]
   },
   {
@@ -378,8 +378,8 @@
     "old": "        if (red) return chatLinks.get('world')?.sendRed(red[1]) ?? false;",
     "new": "        if (red) return chatLinks.get(tabId)?.sendRed(red[1]) ?? false;",
     "tests": [
-      "test/chatchan.test.js",
-      "test/red1_server_say.test.js"
+      "test/net/chatchan.test.js",
+      "test/net/red1_server_say.test.js"
     ]
   },
   {
@@ -388,7 +388,7 @@
     "old": "    if (!link || !chatLinks.get('world')?.chanOk) return;",
     "new": "    if (!link) return;",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ]
   },
   {
@@ -397,7 +397,7 @@
     "old": "if (text) chatLog.push(partyNoteTab(note, social, tab.id), { text, system: true }); };",
     "new": "if (text) chatLog.push(tab.id, { text, system: true }); };",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ]
   },
   {
@@ -406,8 +406,8 @@
     "old": "      onSend: (tabId, text) => {\n        // SERVER-POST (AUDIT SERVER-POST: the classic skin's",
     "new": "      onSend: (tabId, text) => {\n        if (parseChatLine(text).kind === 'host') return false;\n        // SERVER-POST (AUDIT SERVER-POST: the classic skin's",
     "tests": [
-      "test/chatchan.test.js",
-      "test/chat1.test.js"
+      "test/net/chatchan.test.js",
+      "test/net/chat1.test.js"
     ]
   },
   {
@@ -416,7 +416,7 @@
     "old": "export const isChatRoom = (key) => CHAT_ROOMS.has(String(key ?? ''));",
     "new": "export const isChatRoom = (key) => String(key ?? '').startsWith('chat:');",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ]
   },
   {
@@ -425,7 +425,7 @@
     "old": "      const line = JSON.stringify({ ...frame, ch: 'party' });",
     "new": "      const line = JSON.stringify(frame);",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ]
   },
   {
@@ -434,7 +434,7 @@
     "old": "      this._partyChat = budget.bucket;\n      if (!budget.pass) return;",
     "new": "      this._partyChat = budget.bucket;",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ]
   },
   {
@@ -443,8 +443,8 @@
     "old": "    const frame = { t: 'chat', text: line, ...(ch != null ? { ch } : {}), ...(me ? { me: true } : {}) };",
     "new": "    const frame = { t: 'chat', text: line, ch, ...(me ? { me: true } : {}) };",
     "tests": [
-      "test/chatchan.test.js",
-      "test/chat1.test.js"
+      "test/net/chatchan.test.js",
+      "test/net/chat1.test.js"
     ]
   },
   {
@@ -453,7 +453,7 @@
     "old": "    const lines = [...heard].sort((a, b) => a.seq - b.seq);",
     "new": "    const lines = [...heard];",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ]
   },
   {
@@ -462,7 +462,7 @@
     "old": "    for (const line of lines.slice(-count)) {",
     "new": "    for (const line of lines) {",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ]
   },
   {
@@ -471,7 +471,7 @@
     "old": "    tab.room = room; tab.place = place;",
     "new": "    tab.room = room; tab.place = place; tab.messages = [];",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ]
   },
   {
@@ -480,7 +480,7 @@
     "old": "    if (tab.room === room && tab.place === place) return false;\n",
     "new": "",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ]
   },
   {
@@ -489,7 +489,7 @@
     "old": "export const CHAT_SAY_RANGE = 60;",
     "new": "export const CHAT_SAY_RANGE = 80;",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ]
   },
   {
@@ -498,7 +498,7 @@
     "old": "        if (cmd.kind === 'unknown') { note(unknownCommandText(cmd.name)); return false; }",
     "new": "        if (cmd.kind === 'unknown') return chatSend(tabId, text, tabId);",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ]
   },
   {
@@ -507,7 +507,7 @@
     "old": "names: Object.freeze(['local', 'l', 'say', 's'])",
     "new": "names: Object.freeze(['local', 'l', 'say'])",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ]
   },
   {
@@ -516,7 +516,7 @@
     "old": "      if (!social?.party) return why(NO_PARTY_TEXT);\n",
     "new": "",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ]
   },
   {
@@ -525,14 +525,14 @@
     "old": "      const name = tab.unread ? `${tab.label}, ${tab.unread} unread${tab.pings ? `, ${tab.pings} mentioning you` : ''}` : tab.label;",
     "new": "      const name = tab.label;",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ]
   },
   {
     "name": "CHAT-P-party-tab-shown-from-the-start",
     "file": "src/net/chat.js",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ],
     "old": "hint: 'Your party alone', hidden: true, peekAll: true }",
     "new": "hint: 'Your party alone', peekAll: true }"
@@ -541,7 +541,7 @@
     "name": "CHAT-P-select-into-a-hidden-tab",
     "file": "src/net/chat.js",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ],
     "old": "    if (!this.tab(id)?.shown || id === this.active) return false;",
     "new": "    if (!this.tab(id) || id === this.active) return false;"
@@ -550,7 +550,7 @@
     "name": "CHAT-P-front-left-on-a-hidden-tab",
     "file": "src/net/chat.js",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ],
     "old": "        this.active = this.tabs.find((t) => t.shown)?.id ?? null;\n        if (this.open && this.active) this.markRead(this.active);",
     "new": "        if (this.open && this.active) this.markRead(this.active);"
@@ -559,7 +559,7 @@
     "name": "CHAT-P-hidden-count-on-the-badge",
     "file": "src/net/chat.js",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ],
     "old": "n + (t.shown ? t.unread : 0)",
     "new": "n + t.unread"
@@ -568,7 +568,7 @@
     "name": "CHAT-P-every-party-note-on-the-party-tab",
     "file": "src/net/chat.js",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ],
     "old": "  if (!code.startsWith('party.') || !social?.party) return fallback;",
     "new": "  if (!code.startsWith('party.')) return fallback;"
@@ -577,7 +577,7 @@
     "name": "CHAT-P-my-removal-on-the-party-tab",
     "file": "src/net/chat.js",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ],
     "old": "  if (code === 'party.kicked' && note?.acct != null && note.acct === social.acct) return fallback;\n",
     "new": ""
@@ -586,7 +586,7 @@
     "name": "CHAT-P-the-bar-never-follows-the-party",
     "file": "src/scenes/world.js",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ],
     "old": "    chatLog.setShown('party', !!social?.party);",
     "new": ""
@@ -595,7 +595,7 @@
     "name": "CHAT-P-the-party-tab-drawn-while-hidden",
     "file": "src/ui/chatPanel.js",
     "tests": [
-      "test/chatchan.test.js"
+      "test/net/chatchan.test.js"
     ],
     "old": "const display = tab.shown ? '' : 'none';",
     "new": "const display = '';"

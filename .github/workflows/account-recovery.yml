@@ -65,7 +65,7 @@ jobs:
 
       # The tool checks the username's shape and the hash's form, and folds
       # the username as the service does - the statement is the tested one
-      # (test/recoverop.test.js), not one written again here.
+      # (test/server/recoverop.test.js), not one written again here.
       - name: Write the statement
         run: |
           set -euo pipefail

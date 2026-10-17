@@ -5,7 +5,7 @@
     "old": "  vec3 lightAcc = ambient + uDecalSun * (diff * cloudShadowAt(vWorld)) + uDecalMoon * mdiff + pointAcc + (iAtt * iAtt * max(dot(n, iL / max(iD, 1e-4)), 0.0)) * uIndirectColor;",
     "new": "  vec3 lightAcc = ambient;",
     "tests": [
-      "test/blood1_decals.test.js"
+      "test/combat/blood1_decals.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  vec3 lightAcc = ambient + uDecalSun * (diff * cloudShadowAt(vWorld)) + uDecalMoon * mdiff + pointAcc + (iAtt * iAtt * max(dot(n, iL / max(iD, 1e-4)), 0.0)) * uIndirectColor;",
     "new": "  vec3 lightAcc = ambient + uDecalMoon * mdiff + pointAcc + (iAtt * iAtt * max(dot(n, iL / max(iD, 1e-4)), 0.0)) * uIndirectColor;",
     "tests": [
-      "test/blood1_decals.test.js"
+      "test/combat/blood1_decals.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    gl.uniform1i(d.pointCount, dCount);",
     "new": "    gl.uniform1i(d.pointCount, 0);",
     "tests": [
-      "test/blood1_decals.test.js"
+      "test/combat/blood1_decals.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "      const mc = this._c3(this._moonColor, this._decB);",
     "new": "      const mc = this._c3(this._moonColor, this._decA);",
     "tests": [
-      "test/blood1_decals.test.js"
+      "test/combat/blood1_decals.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "        gl.uniform3f(d.tint, 1, 1, 1);\n        gl.uniform3f(d.sun, 0, 0, 0);",
     "new": "        gl.uniform3f(d.tint, 1, 1, 1);",
     "tests": [
-      "test/blood1_decals.test.js"
+      "test/combat/blood1_decals.test.js"
     ]
   },
   {
@@ -50,8 +50,8 @@
     "old": "    const dCount = Math.min(this._pointLights.length >> 2, this._decalLights);",
     "new": "    const dCount = this._pointLights.length >> 2;",
     "tests": [
-      "test/blood1_decals.test.js",
-      "test/el1_enhancedlighting.test.js"
+      "test/combat/blood1_decals.test.js",
+      "test/render/el1_enhancedlighting.test.js"
     ]
   }
 ]

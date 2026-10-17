@@ -121,7 +121,11 @@ const quarterTurn = (deg) => { const q = Math.round(deg / 90) * 90; return Math.
  *  Blender holds them - AUDIT GN-B1 cuts its faces there), `scene` the same placed in Mac's scene, `origin` where its
  *  own origin stands in the scene (AUDIT GN-B6). GATE-FBX: `read` names the objects a bake will bake (every one, for a
  *  ship's); one it declines is placed for its box alone (`unread`, no polygons) - its faces are never baked, so their
- *  sense is never asked (the gate is one object of a scene of 1,905, and one of the others is mirrored). */
+ *  sense is never asked (the gate is one object of a scene of 1,905, and one of the others is mirrored).
+ *  EG6c: a read object also carries its Geometry (`geo`, whose normal and UV layers tools/fbxMesh.mjs layerReader reads
+ *  - the ships and the gate lay their art in code and never ask) and `normal`, a normal placed as its vertices are: the
+ *  inverse transpose of the object's T*R*S and the file's frame (each axis by the reciprocal of its scale, then the
+ *  rotation and the frame - tools/fbxMesh.mjs bakeMesh's placeNormal), made unit. */
 export function sceneObjects(tree, read = () => true) {
   const objects = nodeAt(tree.nodes, 'Objects');
   if (!objects) throw new Error('no Objects section in this FBX');
@@ -180,7 +184,14 @@ export function sceneObjects(tree, read = () => true) {
     const matMap = matLayer ? childNamed(matLayer, 'MappingInformationType')?.props[0] : null;
     const polygons = polygonsOf(pvi);
     const polyMaterial = polygons.map((_, k) => (matIndex ? (matMap === 'AllSame' ? matIndex[0] : matIndex[k]) : -1));
-    out.push({ name, local, scene, origin: place([0, 0, 0]), polygons, polyMaterial, materials });
+    const normal = (n) => {
+      const s = [n[0] / S[0], n[1] / S[1], n[2] / S[2]];
+      const w = [R[0] * s[0] + R[1] * s[1] + R[2] * s[2], R[3] * s[0] + R[4] * s[1] + R[5] * s[2], R[6] * s[0] + R[7] * s[1] + R[8] * s[2]];
+      const v = [m[0] * w[0] + m[1] * w[1] + m[2] * w[2], m[3] * w[0] + m[4] * w[1] + m[5] * w[2], m[6] * w[0] + m[7] * w[1] + m[8] * w[2]];
+      const len = Math.hypot(v[0], v[1], v[2]);
+      return len > 1e-12 ? [v[0] / len, v[1] / len, v[2] / len] : [0, 0, 1];
+    };
+    out.push({ name, local, scene, origin: place([0, 0, 0]), polygons, polyMaterial, materials, geo, normal });
   }
   return out;
 }

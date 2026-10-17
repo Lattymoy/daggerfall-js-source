@@ -19,6 +19,7 @@
 // player equipment. LiveSpeed lives in PlayerMotor stats.
 import { SKILL_COUNT, SKILLS_RECENTLY_RAISED_WORDS } from '../systems/skills.js';
 import { SOCIAL_GROUP_COUNT } from '../formats/factionFile.js';   // AUDIT 65 SL-4: PlayerEntity.cs:128's socialGroupCount = 11
+import { pageHas } from '../systems/pageQuery.js';   // AUDIT ANTICHEAT A1: the probe gate's one parse a search
 
 export const playerEntity = {
   isPlayer: true,
@@ -75,9 +76,19 @@ export const playerEntity = {
 };
 
 /** Debug/probe surface: one place writes window.__player (audit
- *  2026-07-06b collapsed seven scattered assignments). */
+ *  2026-07-06b collapsed seven scattered assignments).
+ *  ANTICHEAT (#955): the live entity is published on a `?shot` boot alone -
+ *  the probes' (tools/*Probe.mjs) - and an online boot drops `?shot`
+ *  (onlineLane.js ONLINE_REFUSED_FLAGS), so a page that is played never
+ *  carries the one-line handle. It hides a handle; it is not a lock: what
+ *  another player sees, takes or is ranked against is the Integrity arc's,
+ *  decided where no client reaches (06-Systems/Integrity-Arc.md).
+ *  AUDIT ANTICHEAT A1: the gate reads pageQuery's memo - this runs in the
+ *  frame, and a URLSearchParams minted a call is PERF-URL's waste. */
 export function surfacePlayer() {
-  if (typeof window !== 'undefined') window.__playerEntity = playerEntity;
+  if (typeof window === 'undefined') return;
+  if (pageHas('shot')) window.__playerEntity = playerEntity;
+  else if ('__playerEntity' in window) delete window.__playerEntity;
 }
 
 // ── AUDIT 21 (hosts lane, F6): THE ONE DAMAGE DOOR ───────────────────
@@ -155,20 +166,35 @@ export function setAvoidDeathHook(fn) {
 
 /** THE damage door. Every path that can take player health goes through here.
  *  Returns true when this blow killed. */
+/** EG-ZR (2026-10-12, bible/11-Multiplayer/Elite-Gates.md section 15 - Shieldweaver: "your Shield spell soaks +20 / 35 /
+ *  50%", applied by "client (`hurtPlayer`'s pool)"): THE SHIELD POOL'S SOAK MODIFIERS, a named registry as the damage
+ *  modifiers below are (registerShieldSoakMod) - `fn(entity, entry) -> multiplier`, how much damage one point of that live
+ *  Shield entry's pool soaks (1 Daggerfall's; above 1 a pool that holds longer). With none registered, or every one
+ *  answering 1, the pool is X1's exactly. */
+const _shieldSoaks = new Map();
+/** The soak of one point of a Shield entry's pool - the product of every modifier over 1 (a modifier that throws is none). */
+function shieldSoakOf(entity, a) {
+  let k = 1;
+  for (const fn of _shieldSoaks.values()) { try { const v = fn(entity, a); if (Number.isFinite(v) && v > 1) k *= v; } catch { /* a Vestige is not the blow's problem */ } }
+  return k;
+}
 /** X1: consume `dmg` from any live Shield pool and answer what is
  *  left. Emptying the pool ENDS the effect at once (ResignAsIncumbent
- *  + RoundsRemaining = 0), and exactly zeroing it still busts it. */
+ *  + RoundsRemaining = 0), and exactly zeroing it still busts it.
+ *  EG-ZR: a point of the pool soaks `k` of damage (shieldSoakOf) - the
+ *  pool spends dmg / k, and the excess that gets through is whole points. */
 export function damageShieldPool(entity, dmg) {
   for (const a of entity?.activeEffects ?? []) {
     if (a.kind !== 'shield' || a.ended) continue;
     if (!(a.shieldRemaining > 0)) continue;   // a busted pool absorbs nothing
-    a.shieldRemaining -= dmg;
+    const k = _shieldSoaks.size ? shieldSoakOf(entity, a) : 1;
+    a.shieldRemaining -= k === 1 ? dmg : dmg / k;
     if (a.shieldRemaining <= 0) {
       const overflow = Math.abs(a.shieldRemaining);
       a.shieldRemaining = 0;
       a.ended = true;
       a.roundsRemaining = 0;
-      return overflow;   // only the excess gets through
+      return k === 1 ? overflow : Math.round(overflow * k);   // only the excess gets through
     }
     return 0;            // fully absorbed
   }
@@ -225,6 +251,9 @@ export const staffFly = () => _staff.fly;
  *  the typer's own and is not warded. A ward that throws wards nothing. */
 let _levitateWard = null;
 export function registerLevitateWard(fn) { _levitateWard = typeof fn === 'function' ? fn : null; }
+/** EG-H2 (bible/11-Multiplayer/Elite-Gates.md section 10.7): ONE WARD. The Spire's ward is OR'd into the one
+ *  registration (scenes/world.js - the made level's law, systems/madeLevel.js `levitate`, beside the siege's room), as
+ *  the page asks; EG-PLAY's second seam beside it (registerSpireLevitateWard) is retired. */
 export const levitateWarded = () => { try { return !!_levitateWard?.(); } catch { return false; } };
 /** AUDIT-SEATS G4 (Seats-Arc 6.6: "a free camera over the town"; 19: "a free camera (WASD, the mouse, the pad's
  *  sticks)"): A SPECTATOR'S FLIGHT, registered by the host that knows who watches a battle from its room (scenes/
@@ -262,6 +291,8 @@ const namedRegistry = (map) => (name, fn) => { if (typeof fn === 'function') map
 export const registerPlayerDamageMod = namedRegistry(_damageMods);
 export const registerPlayerDeathSave = namedRegistry(_deathSaves);
 export const registerPlayerHurtListener = namedRegistry(_hurtListeners);
+/** EG-ZR: a Shield pool's soak modifier (damageShieldPool, above - `fn(entity, entry) -> multiplier`). */
+export const registerShieldSoakMod = namedRegistry(_shieldSoaks);
 // AUDIT FINAL F10: THE DOOR OPENS - a DOOR-OPEN LISTENER, `fn(entity)`, told FIRST on every call, before the veto (a
 // SetHealth(0) door and a duel's too): each call is one hurt's word, so a foe's blow its door never landed - the veto, a
 // halving to nothing, a Shield that took it whole, or a party's weighing that called no door at all
@@ -309,7 +340,7 @@ function tellHurt(entity, dmg, before, after, saved = false) {
 }
 
 /**
- * INT9 (AUDIT): A DEATH ANOTHER'S WORD DECIDED - the open zone's referee's fall (net/wildRef.js): no withholding, no guild's
+ * INT9 (AUDIT): A DEATH ANOTHER'S WORD DECIDED - the open zone's referee's fall (net/wild/wildRef.js): no withholding, no guild's
  * AvoidDeath, no death save - the referee called it, and its drop follows it whatever this machine says (hurtPlayer's
  * doors turned it aside, and the fallen stood up with a fall already called on it). OnDeath's subscribers and the
  * presenter, as the transition always tells them. Answers whether it was a death.

@@ -5,7 +5,7 @@
     "old": "    for (const f of foes) { f.questBehaviour?.update(); if (f._keptTag || (f.questBehaviour && f._ownFrom == null)) keptKillTick(f); }",
     "new": "    for (const f of foes) { f.questBehaviour?.update(); }",
     "tests": [
-      "test/keptkill.test.js"
+      "test/systems/quest/keptkill.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    if (!tag || f._keptSaid || f._ownFrom != null || !(f.entity?.health <= 0)) return false;\n    f._keptSaid = true;\n    ownShare()",
     "new": "    if (!tag || f._keptSaid || f._ownFrom != null) return false;\n    f._keptSaid = true;\n    ownShare()",
     "tests": [
-      "test/keptkill.test.js"
+      "test/systems/quest/keptkill.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    f._keptSaid = true;\n    ownShare()?.onKeptDied?.({ q: tag.q, s: tag.s }, f._ownSeq);",
     "new": "    ownShare()?.onKeptDied?.({ q: tag.q, s: tag.s }, f._ownSeq);",
     "tests": [
-      "test/keptkill.test.js"
+      "test/systems/quest/keptkill.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    ownShare()?.onKeptDied?.({ q: tag.q, s: tag.s }, f._ownSeq);",
     "new": "    ownShare()?.onKeptDied?.({ q: tag.q, s: tag.s }, f._ownI);",
     "tests": [
-      "test/keptkill.test.js"
+      "test/systems/quest/keptkill.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "share?.onPuppetDied?.(f._pupQuest, f._ownFrom, f._ownI);",
     "new": "share?.onPuppetDied?.(f._pupQuest);",
     "tests": [
-      "test/keptkill.test.js"
+      "test/systems/quest/keptkill.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "      if (f._keptTag || f.questBehaviour) keptKillTick(f);",
     "new": "      void 0;",
     "tests": [
-      "test/keptkill.test.js"
+      "test/systems/quest/keptkill.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "    if (!tag || f._keptSaid || f.puppet || !(f.entity?.health <= 0)) return false;",
     "new": "    if (!tag || f._keptSaid || f.puppet) return false;",
     "tests": [
-      "test/keptkill.test.js"
+      "test/systems/quest/keptkill.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "_questShare?.onPuppetDied?.(f._pupQuest, f.puppet, f.seq);",
     "new": "_questShare?.onPuppetDied?.(f._pupQuest);",
     "tests": [
-      "test/keptkill.test.js"
+      "test/systems/quest/keptkill.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "    if (qk.length) out.qk = qk;\n",
     "new": "",
     "tests": [
-      "test/keptkill.test.js"
+      "test/systems/quest/keptkill.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "for (const r of p.qk.slice(0, KEPT_KILL_POSE_MAX)) {",
     "new": "for (const r of p.qk) {",
     "tests": [
-      "test/keptkill.test.js"
+      "test/systems/quest/keptkill.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "if (typeof r.q !== 'string' || !KEPT_KILL_QUEST_RE.test(r.q) || ",
     "new": "if (typeof r.q !== 'string' || ",
     "tests": [
-      "test/keptkill.test.js"
+      "test/systems/quest/keptkill.test.js"
     ]
   },
   {
@@ -104,61 +104,61 @@
     "old": "      if (!Number.isInteger(r.i) || r.i < 0 || r.i > KEPT_KILL_SEQ_MAX) continue;\n",
     "new": "      if (!Number.isFinite(r.i)) continue;\n",
     "tests": [
-      "test/keptkill.test.js"
+      "test/systems/quest/keptkill.test.js"
     ]
   },
   {
     "name": "KK-ledger-held-forever",
-    "file": "src/scenes/questFoeHost.js",
+    "file": "src/scenes/quest/questFoeHost.js",
     "old": "    this._said = this._said.filter((r) => now - r.at < this.holdMs);\n",
     "new": "",
     "tests": [
-      "test/keptkill.test.js"
+      "test/systems/quest/keptkill.test.js"
     ]
   },
   {
     "name": "KK-ledger-unbounded",
-    "file": "src/scenes/questFoeHost.js",
+    "file": "src/scenes/quest/questFoeHost.js",
     "old": "    if (this._said.length > this.max) this._said.splice(0, this._said.length - this.max);\n",
     "new": "",
     "tests": [
-      "test/keptkill.test.js"
+      "test/systems/quest/keptkill.test.js"
     ]
   },
   {
     "name": "KK-ledger-counts-twice",
-    "file": "src/scenes/questFoeHost.js",
+    "file": "src/scenes/quest/questFoeHost.js",
     "old": "    if (this._counted.has(k)) return false;\n",
     "new": "",
     "tests": [
-      "test/keptkill.test.js"
+      "test/systems/quest/keptkill.test.js"
     ]
   },
   {
     "name": "KK-ledger-never-forgets",
-    "file": "src/scenes/questFoeHost.js",
+    "file": "src/scenes/quest/questFoeHost.js",
     "old": "    for (const [k, at] of this._counted) if (now - at >= this.memoryMs) this._counted.delete(k);\n",
     "new": "",
     "tests": [
-      "test/keptkill.test.js"
+      "test/systems/quest/keptkill.test.js"
     ]
   },
   {
     "name": "KK-credit-no-ledger",
-    "file": "src/scenes/questFoeHost.js",
+    "file": "src/scenes/quest/questFoeHost.js",
     "old": "    if (!foe || !ledger.credit(owner, r.q, r.s, r.i, now)) continue;",
     "new": "    if (!foe) continue;",
     "tests": [
-      "test/keptkill.test.js"
+      "test/systems/quest/keptkill.test.js"
     ]
   },
   {
     "name": "KK-credit-no-injury",
-    "file": "src/scenes/questFoeHost.js",
+    "file": "src/scenes/quest/questFoeHost.js",
     "old": "    if (!foe.injuredTrigger) foe.setInjured?.();\n",
     "new": "",
     "tests": [
-      "test/keptkill.test.js"
+      "test/systems/quest/keptkill.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "      ...keptKillField(),   // KEPT-KILL",
     "new": "      // KEPT-KILL",
     "tests": [
-      "test/keptkill.test.js"
+      "test/systems/quest/keptkill.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "if (p?.qk && social.inMyParty(acct)) creditKeptKills(",
     "new": "if (p?.qk) creditKeptKills(",
     "tests": [
-      "test/keptkill.test.js"
+      "test/systems/quest/keptkill.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "      if (owner && Number.isInteger(i) && !keptKills.credit(owner, tag.q, tag.s, i, Date.now())) return;\n",
     "new": "",
     "tests": [
-      "test/keptkill.test.js"
+      "test/systems/quest/keptkill.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "    onKeptDied: (tag, i) => { keptKills.said(tag, i, Date.now()); },",
     "new": "    onKeptDied: () => {},",
     "tests": [
-      "test/keptkill.test.js"
+      "test/systems/quest/keptkill.test.js"
     ]
   }
 ]

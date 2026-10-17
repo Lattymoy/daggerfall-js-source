@@ -93,7 +93,7 @@ export class PlayerNotebook {
     this.messages = [];          // the 50-slot ring
     this.nextMessageIndex = 0;
     // JOURNAL-CLEAN (2026-09-30, Discord: "Should there be a way to clean both finished and unfinished quests from
-    // your journal for a cleaner look?"): the uids (as strings - the quest walk's own `id`, scenes/questBridge.js
+    // your journal for a cleaner look?"): the uids (as strings - the quest walk's own `id`, scenes/quest/questBridge.js
     // questLog) of the ACTIVE quests the player has hidden from the journal. Hiding is the journal's, not the
     // machine's: a hidden quest keeps running, its clock keeps counting and the HUD's marks keep pointing - only the
     // journal's list leaves it out until it is unhidden or it ends (addFinishedQuest drops its id as it files it).
@@ -297,7 +297,7 @@ export class PlayerNotebook {
 /**
  * JOURNAL1: THE WORDS THE NOTEBOOK CAN TAKE. DFU's WrapLinesIntoNote (below, verbatim) throws when the first 71
  * characters left to wrap carry no SPACE - and in DFU that is unreachable, because the note box stops at 70 (the
- * classic journal's own cap, ui/questJournal.js). The port reached it the moment a surface let a longer note through:
+ * classic journal's own cap, ui/quest/questJournal.js). The port reached it the moment a surface let a longer note through:
  * the enhanced chronicle's composer takes 200, so a pasted address or one long word threw out of its submit handler
  * and the note was lost; and a page another player shows you, or a letter you keep, can carry anything.
  *

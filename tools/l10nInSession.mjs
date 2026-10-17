@@ -3,9 +3,9 @@
 //
 // Mac's third decision: the port's own strings are translated in-session (the game's text goes through
 // tools/translate.mjs on his key). Every language the catalog marks machine-made covers the English catalog exactly
-// (test/l10n1b.test.js), and every row it holds is recorded in `<table>.meta.json` as the machine's
+// (test/systems/l10n1b.test.js), and every row it holds is recorded in `<table>.meta.json` as the machine's
 // (`claude-in-session`), so the pipeline redrafts it when its English moves and never mistakes it for a person's
-// (test/l10n6b.test.js). This is the one door such drafts come in by: a JSON file of `{ "<lang>": { "<key>": "text" } }`
+// (test/systems/l10n6b.test.js). This is the one door such drafts come in by: a JSON file of `{ "<lang>": { "<key>": "text" } }`
 // is checked row by row with the pipeline's own placeholder law (checkDraft - the English's ICU arguments by name,
 // a language's own plural categories allowed), merged into `locales/<lang>/Port_Strings.csv` in the catalog's order and
 // the port's own CSV form, and recorded. A row a PERSON wrote or edited is never replaced: it is reported and kept. A

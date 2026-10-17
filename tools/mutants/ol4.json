@@ -5,7 +5,7 @@
     "old": "  if (relieved && online && !classicOpen) {",
     "new": "  if (false) {",
     "tests": [
-      "test/lockpicking.test.js"
+      "test/systems/lockpicking.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  if (relieved && online && !classicOpen) {",
     "new": "  if (online && !classicOpen) {",
     "tests": [
-      "test/lockpicking.test.js"
+      "test/systems/lockpicking.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  if (relieved && online && !classicOpen) {",
     "new": "  if (relieved && !classicOpen) {",
     "tests": [
-      "test/lockpicking.test.js"
+      "test/systems/lockpicking.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  if (relieved && online && !classicOpen) {",
     "new": "  if (relieved && online && !classicOpen && !holidayClosed) {",
     "tests": [
-      "test/lockpicking.test.js"
+      "test/systems/lockpicking.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    return { open: true, classicOpen: false, staffing: SHOP_STAFFING.ONLINE_SHIFT };",
     "new": "    return { open: true, classicOpen: true, staffing: SHOP_STAFFING.ONLINE_SHIFT };",
     "tests": [
-      "test/lockpicking.test.js"
+      "test/systems/lockpicking.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "    return { open: true, classicOpen: false, staffing: SHOP_STAFFING.ONLINE_SHIFT };",
     "new": "    return { open: true, classicOpen: false, staffing: SHOP_STAFFING.CLASSIC };",
     "tests": [
-      "test/lockpicking.test.js"
+      "test/systems/lockpicking.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "  return buildingHoursState(buildingType, { ...opts, hour }).open;",
     "new": "  return buildingHoursState(buildingType, { hour }).open;",
     "tests": [
-      "test/lockpicking.test.js"
+      "test/systems/lockpicking.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "    return buildingHoursState(type, { hour, holidayId, online }).open;",
     "new": "    return buildingHoursState(type, { hour, holidayId }).open;",
     "tests": [
-      "test/lockpicking.test.js"
+      "test/systems/lockpicking.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "  return (OPEN_HOURS[buildingType] ?? 0) <= hour && (CLOSE_HOURS[buildingType] ?? 25) > hour;",
     "new": "  return (OPEN_HOURS[buildingType] ?? 0) <= hour && (CLOSE_HOURS[buildingType] ?? 25) >= hour;",
     "tests": [
-      "test/lockpicking.test.js"
+      "test/systems/lockpicking.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "  online = sharedClockOn(),   // AUDIT ALL O1",
     "new": "  online = false,   // AUDIT ALL O1",
     "tests": [
-      "test/lockpicking.test.js"
+      "test/systems/lockpicking.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "  hour = 12, holidayId = -1, online = sharedClockOn(),",
     "new": "  hour = 12, holidayId = -1, online = false,",
     "tests": [
-      "test/lockpicking.test.js"
+      "test/systems/lockpicking.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "  return buildingHoursState(buildingType, { ...opts, hour }).open;",
     "new": "  return buildingHoursState(buildingType, { hour, ...opts }).open;",
     "tests": [
-      "test/lockpicking.test.js"
+      "test/systems/lockpicking.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "export const onlineReliefBuilding = (type) => isShop(type) || type === BUILDING_TYPES.GuildHall\n",
     "new": "export const onlineReliefBuilding = (type) => isShop(type)\n",
     "tests": [
-      "test/lockpicking.test.js"
+      "test/systems/lockpicking.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "  const holidayClosed = shop && holidayId === HOLIDAYS.Suns_Rest;",
     "new": "  const holidayClosed = relieved && holidayId === HOLIDAYS.Suns_Rest;",
     "tests": [
-      "test/lockpicking.test.js"
+      "test/systems/lockpicking.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "    return (g?.hallAccessAnytime ?? false) || isBuildingOpen(type, hour, { online });",
     "new": "    return (g?.hallAccessAnytime ?? false) || isBuildingOpen(type, hour);",
     "tests": [
-      "test/lockpicking.test.js"
+      "test/systems/lockpicking.test.js"
     ]
   }
 ]

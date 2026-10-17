@@ -17,10 +17,10 @@
 
 import { audio, decodableCopy } from './audio.js';   // AUDIT 39: one decode door, one slice law
 import { MidiBsaFile } from '../formats/hmiFile.js';
-import { selectSong } from './songManager.js';
-import { SongPlayer, AudioSongPlayer, setMusicMuted, isMusicMuted } from './songPlayer.js';   // M-EXT: the replacement's player shares the volume law
+import { selectSong } from './song/songManager.js';
+import { SongPlayer, AudioSongPlayer, setMusicMuted, isMusicMuted } from './song/songPlayer.js';   // M-EXT: the replacement's player shares the volume law
 import { hasReplacement, replacementBytes } from './musicReplacement.js';   // M-EXT: SoundReplacement.TryImportSong
-import { onSettingChange } from './settings.js';   // 2026-08-27: MusicVolume applies live
+import { onSettingChange } from './settings/settings.js';   // 2026-08-27: MusicVolume applies live
 import { MidiOutSongPlayer, midiOutName, findMidiOutput, onMidiOutChange } from './midiOut.js';   // MIDI-OUT1: a device as the voice
 
 /** DISC20-B (2026-09-24, Mac: "Sometimes when music tracks switch, its very abrupt instead of seamlessly fading in
@@ -50,7 +50,7 @@ export class MusicService {
     this._booted = null;
     this._current = null;
     this._switch = null;   // DISC20-B: { from, to, timer } while a song fades out before the next
-    this._made = new Map();   // WB7: songs made in code (systems/gateScore.js), by their own names beside MIDI.BSA's
+    this._made = new Map();   // WB7: songs made in code (systems/gate/gateScore.js), by their own names beside MIDI.BSA's
     this._later = (fn, ms) => setTimeout(fn, ms);   // DISC20-B: the fade's clock, a seam for the tests
     this._cancelLater = (id) => clearTimeout(id);
     // 2026-08-27: the MusicVolume setting is LIVE in fact, not just in
@@ -85,6 +85,10 @@ export class MusicService {
 
   /** MIDI-OUT1: is the music on a device? */
   get midiOut() { return this._midiOut; }
+
+  /** EG-G2 (bible/11-Multiplayer/Elite-Gates.md section 26, THE SPIRE MIX): duck what sounds `db` decibels for `seconds`
+   *  (systems/song/songPlayer.js SongPlayer.duck - a MIDI device or a replacement track is not ducked). */
+  duck(db, seconds) { this.player?.duck?.(db, seconds); }
 
   /** Re-level whatever is sounding to the MusicVolume setting. */
   resyncGain() {

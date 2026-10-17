@@ -5,7 +5,7 @@
     "old": "    const l = Math.hypot(out[k * 4], out[k * 4 + 1], out[k * 4 + 2]) || 1;",
     "new": "    const l = 1;",
     "tests": [
-      "test/el5_field.test.js"
+      "test/render/el5_field.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "+ planes[k * 4 + 3] < -r) return false;",
     "new": "+ planes[k * 4 + 3] < r) return false;",
     "tests": [
-      "test/el5_field.test.js"
+      "test/render/el5_field.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  out[0] = (minX + maxX) / 2; out[1] = (minY + maxY) / 2; out[2] = (minZ + maxZ) / 2;",
     "new": "  out[0] = minX; out[1] = minY; out[2] = minZ;",
     "tests": [
-      "test/el5_field.test.js"
+      "test/render/el5_field.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  out[3] = Math.sqrt(r2);",
     "new": "  out[3] = r2;",
     "tests": [
-      "test/el5_field.test.js"
+      "test/render/el5_field.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  const at = (k) => (indices ? indices[start + k] : k) * stride;",
     "new": "  const at = (k) => (indices ? indices[k] : k) * stride;",
     "tests": [
-      "test/el5_field.test.js"
+      "test/render/el5_field.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "  return Math.max(Math.hypot(m[0], m[1], m[2]), Math.hypot(m[4], m[5], m[6]), Math.hypot(m[8], m[9], m[10]));",
     "new": "  return Math.min(Math.hypot(m[0], m[1], m[2]), Math.hypot(m[4], m[5], m[6]), Math.hypot(m[8], m[9], m[10]));",
     "tests": [
-      "test/el5_field.test.js"
+      "test/render/el5_field.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "  return !r.bounded || sphereInPlanes(planes, r.sphere[0], r.sphere[1], r.sphere[2], r.sphere[3]);",
     "new": "  return sphereInPlanes(planes, r.sphere[0], r.sphere[1], r.sphere[2], r.sphere[3]);",
     "tests": [
-      "test/el5_field.test.js"
+      "test/render/el5_field.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "  return !c || sphereInPlanes(planes, c[0], c[1], c[2], c[3]);",
     "new": "  return !!c && sphereInPlanes(planes, c[0], c[1], c[2], c[3]);",
     "tests": [
-      "test/el5_field.test.js"
+      "test/render/el5_field.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "export const SHADOW_POINT_CASTERS = 12;",
     "new": "export const SHADOW_POINT_CASTERS = 5;",
     "tests": [
-      "test/el5_field.test.js"
+      "test/render/el5_field.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "    if (picked.length > max) picked.pop();\n",
     "new": "",
     "tests": [
-      "test/el5_field.test.js"
+      "test/render/el5_field.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "    for (let rank = 0; rank < casters.length; rank++) {\n      const i = casters[rank], k = slotOf[rank];",
     "new": "    for (let rank = 0; rank < Math.min(1, casters.length); rank++) {\n      const i = casters[rank], k = slotOf[rank];",
     "tests": [
-      "test/el5_field.test.js"
+      "test/render/el5_field.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "this.pointParams[k * 4 + 3] = far;",
     "new": "this.pointParams[k * 4 + 3] = 0;",
     "tests": [
-      "test/el2_shadows.test.js"
+      "test/render/el2_shadows.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "      if (r.kind !== REC_BB && !recordVisible(planes, r)) { this.stats.culled++; continue; }\n",
     "new": "",
     "tests": [
-      "test/el5_field.test.js"
+      "test/render/el5_field.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "          if (cells ? !sphereInPlanes(planes, r.cellSpheres[k * 4], r.cellSpheres[k * 4 + 1], r.cellSpheres[k * 4 + 2], r.cellSpheres[k * 4 + 3]) : !subMeshVisible(planes, r, k)) { this.stats.culled++; continue; }\n",
     "new": "",
     "tests": [
-      "test/el5_field.test.js"
+      "test/render/el5_field.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "          if (!batchVisible(planes, b)) { this.stats.culled++; continue; }   // EL5\n",
     "new": "",
     "tests": [
-      "test/el5_field.test.js"
+      "test/render/el5_field.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "    r.bounded = !!mesh.bounds;\n    if (r.bounded) {\n      const sc = matrixScale(matrix);",
     "new": "    r.bounded = false;\n    if (r.bounded) {\n      const sc = matrixScale(matrix);",
     "tests": [
-      "test/el5_field.test.js"
+      "test/render/el5_field.test.js"
     ]
   },
   {
@@ -149,8 +149,8 @@
     "old": "vec2 cubeFaceUv(vec3 d, out int face, out float m) {\n  vec3 a = abs(d);\n  if (a.x >= a.y && a.x >= a.z) { face = d.x > 0.0 ? 0 : 1; m = a.x; }",
     "new": "vec2 cubeFaceUv(vec3 d, out int face, out float m) {\n  vec3 a = abs(d);\n  if (a.x >= a.y && a.x >= a.z) { face = d.x > 0.0 ? 1 : 0; m = a.x; }",
     "tests": [
-      "test/audit_reach.test.js",
-      "test/el5_field.test.js"
+      "test/render/audit_reach.test.js",
+      "test/render/el5_field.test.js"
     ]
   },
   {
@@ -159,7 +159,7 @@
     "old": "  float layer = float(k * 6 + face);",
     "new": "  float layer = float(face);",
     "tests": [
-      "test/el2_shadows.test.js"
+      "test/render/el2_shadows.test.js"
     ]
   },
   {
@@ -168,7 +168,7 @@
     "old": "  return k >= 0 ? casterShadowAt(k, L, wp, n) : 1.0;",
     "new": "  return k >= 0 ? casterShadowAt(k, L, wp, n) : 0.0;",
     "tests": [
-      "test/el5_field.test.js"
+      "test/render/el5_field.test.js"
     ]
   },
   {
@@ -177,7 +177,7 @@
     "old": "    gl.uniform1iv(loc.shadowIndex, this.shadowIndex);",
     "new": "    gl.uniform1i(loc.shadowIndex, this.shadowIndex[0]);",
     "tests": [
-      "test/el2_shadows.test.js"
+      "test/render/el2_shadows.test.js"
     ]
   },
   {
@@ -186,7 +186,7 @@
     "old": "this.pointTex = this._depthArray(SHADOW_POINT_SIZE, 6 * SHADOW_POINT_CASTERS, gl.LINEAR);",
     "new": "this.pointTex = this._depthArray(SHADOW_POINT_SIZE, 6, gl.LINEAR);",
     "tests": [
-      "test/el2_shadows.test.js"
+      "test/render/el2_shadows.test.js"
     ]
   },
   {
@@ -195,7 +195,7 @@
     "old": "export const AIR_GLARE_SLACK = 0.25;",
     "new": "export const AIR_GLARE_SLACK = 0.0;",
     "tests": [
-      "test/el5_field.test.js"
+      "test/render/el5_field.test.js"
     ]
   },
   {
@@ -204,7 +204,7 @@
     "old": "      for (int k = 0; k < ${AIR_GLARE_TAPS.length}; k++) sum += flame(vc + vec4(GLARE_TAP[k] * s, 0.0, 0.0), lantern);\n      vis = sum / ${glslFloat(AIR_GLARE_TAPS.length)};",
     "new": "      vis = flame(vc, lantern);",
     "tests": [
-      "test/el3_air.test.js"
+      "test/render/el3_air.test.js"
     ]
   },
   {
@@ -213,7 +213,7 @@
     "old": "  return uProjInfo.w / (z + uProjInfo.z);   // -viewZ: positive, along the eye's -z",
     "new": "  return -uProjInfo.w / (z + uProjInfo.z);   // -viewZ: positive, along the eye's -z",
     "tests": [
-      "test/el5_field.test.js"
+      "test/render/el5_field.test.js"
     ]
   },
   {
@@ -222,8 +222,8 @@
     "old": "      if (f.carried && f.carried[i]) continue;   // MAC-T1",
     "new": "      if (eye && Math.hypot(L[i * 4] - eye[0], L[i * 4 + 1] - eye[1], L[i * 4 + 2] - eye[2]) < 1.5) continue;\n      if (f.carried && f.carried[i]) continue;   // MAC-T1",
     "tests": [
-      "test/lightnear1.test.js",
-      "test/el7_polish.test.js"
+      "test/render/lightnear1.test.js",
+      "test/render/el7_polish.test.js"
     ]
   },
   {
@@ -232,7 +232,7 @@
     "old": "  e = (e - 0.5) * uGrade.w + 0.5;",
     "new": "  e = (e - 0.18) * uGrade.w + 0.18;",
     "tests": [
-      "test/el5_field.test.js"
+      "test/render/el5_field.test.js"
     ]
   },
   {
@@ -241,7 +241,7 @@
     "old": "    if (d >= uPointLights[i].w) continue;   // EL5: outside the window the term is exactly zero - no shadow taps, no glint, no pow for it\n",
     "new": "",
     "tests": [
-      "test/el5_field.test.js"
+      "test/render/el5_field.test.js"
     ]
   },
   {
@@ -250,7 +250,7 @@
     "old": "    if (d >= uPointLights[i].w) continue;   // EL5\n",
     "new": "",
     "tests": [
-      "test/el5_field.test.js"
+      "test/render/el5_field.test.js"
     ]
   },
   {
@@ -260,7 +260,7 @@
     "new": "    const bounds = measured ? measured.whole : null;",
     "why": "PERF-EXT23 re-aimed by content: createMesh takes a finishSliced merge's measured spheres, and measures them itself only when it is handed none - the arm this mutant is about.",
     "tests": [
-      "test/el5_field.test.js"
+      "test/render/el5_field.test.js"
     ]
   },
   {
@@ -270,7 +270,7 @@
     "new": ": boundsOf(model.positions) }));",
     "why": "PERF-EXT23 re-aimed by content: the sub-mesh sphere createMesh measures when no finishSliced spheres are handed in.",
     "tests": [
-      "test/el5_field.test.js"
+      "test/render/el5_field.test.js"
     ]
   },
   {
@@ -279,7 +279,7 @@
     "old": "    bounds[3] += quadHalfDiagonal(size);\n",
     "new": "",
     "tests": [
-      "test/el5_field.test.js"
+      "test/render/el5_field.test.js"
     ]
   },
   {
@@ -288,7 +288,7 @@
     "old": "    return { vao, buffers, indexCount: indexSet.count, bounds: boundsOf(positions) };   // EL5: the replays cull by it",
     "new": "    return { vao, buffers, indexCount: indexSet.count };",
     "tests": [
-      "test/el5_field.test.js"
+      "test/render/el5_field.test.js"
     ]
   }
 ]

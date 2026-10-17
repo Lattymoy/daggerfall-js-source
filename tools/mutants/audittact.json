@@ -5,8 +5,8 @@
     "old": "    if (s.kiting ? dist < TACT.KITE_OUT : dist < TACT.KITE_IN) {",
     "new": "    if (dist < 5) {",
     "tests": [
-      "test/audittact.test.js",
-      "test/tact5_feedback.test.js"
+      "test/scenes/audittact.test.js",
+      "test/characters/enemy/tact5_feedback.test.js"
     ]
   },
   {
@@ -15,18 +15,18 @@
     "old": "      if (ai._tacBlocked || now >= s.kiteUntil) {   // a wall behind it: cornered, it fights hand to hand",
     "new": "      if (now >= s.kiteUntil) {   // a wall behind it: cornered, it fights hand to hand",
     "tests": [
-      "test/audittact.test.js",
-      "test/tact5_feedback.test.js"
+      "test/scenes/audittact.test.js",
+      "test/characters/enemy/tact5_feedback.test.js"
     ]
   },
   {
     "name": "ATACT-A1-blocked-unheard",
-    "file": "src/characters/enemyMotor.js",
+    "file": "src/characters/enemy/enemyMotor.js",
     "old": "        if (this._tacDir) { this._tacDir = null; this._tacBlocked = true; this.moving = false; }",
     "new": "        if (this._tacDir) { this._tacDir = null; this.moving = false; }",
     "tests": [
-      "test/audittact.test.js",
-      "test/tact5_feedback.test.js"
+      "test/scenes/audittact.test.js",
+      "test/characters/enemy/tact5_feedback.test.js"
     ]
   },
   {
@@ -35,25 +35,25 @@
     "old": "    if (shot !== s.shot) { s.shot = shot; if (b.ranged.delete(ai)) b.waiting.set(ai, now); }",
     "new": "    if (shot !== s.shot) { s.shot = shot; }",
     "tests": [
-      "test/audittact.test.js"
+      "test/scenes/audittact.test.js"
     ]
   },
   {
     "name": "ATACT-A2-shot-uncounted",
-    "file": "src/characters/enemyAttack.js",
+    "file": "src/characters/enemy/enemyAttack.js",
     "old": "if (machineAttack(this.machine, strike)) { this.firedRanged = true; this.swingSeq++; this._held = false; ai._tacShot = (ai._tacShot ?? 0) + 1; ai._blowShot = null; }   // AUDIT TACT A2",
     "new": "if (machineAttack(this.machine, strike)) { this.firedRanged = true; this.swingSeq++; this._held = false; ai._blowShot = null; }   // AUDIT TACT A2",
     "tests": [
-      "test/audittact.test.js"
+      "test/scenes/audittact.test.js"
     ]
   },
   {
     "name": "ATACT-A3-skip-unflagged",
-    "file": "src/characters/enemyMotor.js",
+    "file": "src/characters/enemy/enemyMotor.js",
     "old": "    if (!this.canAct || paused) this._tacSkipped = true;",
     "new": "    if (paused) this._tacSkipped = true;",
     "tests": [
-      "test/audittact.test.js"
+      "test/scenes/audittact.test.js"
     ]
   },
   {
@@ -62,7 +62,7 @@
     "old": "export const tacticsNow = () => (_override ? _override() : _t);",
     "new": "export const tacticsNow = () => (_override ? _override() : performance.now() / 1000);",
     "tests": [
-      "test/audittact.test.js"
+      "test/scenes/audittact.test.js"
     ]
   },
   {
@@ -71,7 +71,7 @@
     "old": "export function tickTactics(dt) { if (dt > 0 && Number.isFinite(dt)) _t += dt; }",
     "new": "export function tickTactics(dt) { _t += Math.abs(dt) || 0.016; }",
     "tests": [
-      "test/audittact.test.js"
+      "test/scenes/audittact.test.js"
     ]
   },
   {
@@ -80,16 +80,16 @@
     "old": "  ai._tacStrike = false; ai._tacShoot = false; ai.moving = false;   // AUDIT TACT A4: no shot, no spell, mid-wind-up",
     "new": "  ai._tacStrike = false; ai.moving = false;   // AUDIT TACT A4: no shot, no spell, mid-wind-up",
     "tests": [
-      "test/audittact.test.js"
+      "test/scenes/audittact.test.js"
     ]
   },
   {
     "name": "ATACT-A4-swing-parked",
-    "file": "src/characters/enemyAttack.js",
+    "file": "src/characters/enemy/enemyAttack.js",
     "old": "        if (ai._blowAt != null && tacticsNow() - ai._blowAt > BLOW_SWING_LATE) { ai._blowVerdict = null; ai._blowMult = undefined; this._held = false; }",
     "new": "        if (ai._blowAt != null && tacticsNow() - ai._blowAt > 1e9) { ai._blowVerdict = null; ai._blowMult = undefined; this._held = false; }",
     "tests": [
-      "test/audittact.test.js"
+      "test/scenes/audittact.test.js"
     ]
   },
   {
@@ -98,7 +98,7 @@
     "old": "export function blowConnects(ai, classic, now = tacticsNow()) {",
     "new": "export function blowConnects(ai, classic, now = null) {",
     "tests": [
-      "test/audittact.test.js"
+      "test/scenes/audittact.test.js"
     ]
   },
   {
@@ -107,8 +107,8 @@
     "old": "const judgedHere = (ai, key) => (key === LOCAL ? !!_me : !ai?.target?.isPeer);",
     "new": "const judgedHere = (ai, key) => !!_me;",
     "tests": [
-      "test/audittact.test.js",
-      "test/tell8_online.test.js"
+      "test/scenes/audittact.test.js",
+      "test/ai/tell8_online.test.js"
     ],
     "note": "FEUD's MERGE of main's #586-#622 (PIN MOVED): re-aimed by content to judgedHere - AUDIT ARENA-LADDER's bout-mate verdict and TELL8's peer gate are one law there. TELL8 (PIN MOVED): re-aimed by content - the owner winds up at a peer it hunts (`tf` its target's feet, `atMe` the damage's gate), a peer's blow carries its class, the relay moved to world162."
   },
@@ -118,16 +118,16 @@
     "old": "  const hold = s.state === 'backoff' ? ring + TACT.BACKOFF_GAP : ring;",
     "new": "  const hold = ring;",
     "tests": [
-      "test/audittact.test.js"
+      "test/scenes/audittact.test.js"
     ]
   },
   {
     "name": "ATACT-A6-detour-walks",
-    "file": "src/characters/enemyMotor.js",
+    "file": "src/characters/enemy/enemyMotor.js",
     "old": "    if (_took && (!detouring || this.fleeLeft > 0 || this._tac?.state === 'windup' || this._tac?.state === 'dash')) return;",
     "new": "    if (_took && !detouring) return;",
     "tests": [
-      "test/audittact.test.js"
+      "test/scenes/audittact.test.js"
     ]
   },
   {
@@ -136,7 +136,7 @@
     "old": "    if (k !== LOCAL && !b.melee.size && !b.ranged.size && !b.waiting.size) _boards.delete(k);",
     "new": "    void k;",
     "tests": [
-      "test/audittact.test.js"
+      "test/scenes/audittact.test.js"
     ]
   },
   {
@@ -145,7 +145,7 @@
     "old": "    noteLocalPlayer(walkMode ? player.pos : cam.pos, [Math.sin(cam.yaw), 0, Math.cos(cam.yaw)]);   // TACT2: where I stand and face - AUDIT TACT D2: before the building's and the dungeon's frames too\n",
     "new": "\n",
     "tests": [
-      "test/audittact.test.js"
+      "test/scenes/audittact.test.js"
     ]
   },
   {
@@ -154,7 +154,7 @@
     "old": "  for (const b of [..._live.values(), ..._shards.map((x) => x.blow)]) { b.origin[0] += offset[0]; b.origin[1] += offset[1]; b.origin[2] += offset[2]; }",
     "new": "  void offset;",
     "tests": [
-      "test/audittact.test.js"
+      "test/scenes/audittact.test.js"
     ]
   },
   {
@@ -163,7 +163,7 @@
     "old": "      offsetTactics(r.offset);   // AUDIT TACT D3: the noted player and every live wind-up move with the world\n",
     "new": "\n",
     "tests": [
-      "test/audittact.test.js"
+      "test/scenes/audittact.test.js"
     ]
   },
   {
@@ -172,7 +172,7 @@
     "old": "    if (ai === except || b.cut != null || gone(ai, now)) continue;",
     "new": "    if (ai === except || b.cut != null) continue;",
     "tests": [
-      "test/audittact.test.js"
+      "test/scenes/audittact.test.js"
     ]
   },
   {
@@ -181,7 +181,7 @@
     "old": "    if (!phase || (now < b.land && gone(ai, now))) { _live.delete(ai); continue; }",
     "new": "    if (!phase) { _live.delete(ai); continue; }",
     "tests": [
-      "test/audittact.test.js"
+      "test/scenes/audittact.test.js"
     ]
   },
   {
@@ -190,7 +190,7 @@
     "old": "  b.slope = [hw == null ? 0 : clamp((hw - h0) / 2), hf == null ? 0 : clamp((hf - h0) / far)];",
     "new": "  b.slope = [0, 0];",
     "tests": [
-      "test/audittact.test.js"
+      "test/scenes/audittact.test.js"
     ]
   },
   {
@@ -199,7 +199,7 @@
     "old": "  const clamp = (v) => Math.max(-1, Math.min(1, v));",
     "new": "  const clamp = (v) => v;",
     "tests": [
-      "test/audittact.test.js"
+      "test/scenes/audittact.test.js"
     ]
   },
   {
@@ -208,7 +208,7 @@
     "old": "  float fogK = max(fogFactorAt(vWorld), uNearFloor);",
     "new": "  float fogK = 1.0;",
     "tests": [
-      "test/audittact.test.js"
+      "test/scenes/audittact.test.js"
     ]
   },
   {
@@ -217,7 +217,7 @@
     "old": "  if (FELLED.has(c0) || c0.noCover) return Infinity;",
     "new": "  if (c0.noCover) return Infinity;",
     "tests": [
-      "test/audittact.test.js"
+      "test/scenes/audittact.test.js"
     ]
   },
   {
@@ -226,7 +226,7 @@
     "old": "      if (felled) FELLED.add(c); else FELLED.delete(c);",
     "new": "      void felled;",
     "tests": [
-      "test/audittact.test.js"
+      "test/scenes/audittact.test.js"
     ]
   },
   {
@@ -235,7 +235,7 @@
     "old": "  if (endAt != null) {",
     "new": "  if (false) {",
     "tests": [
-      "test/audittact.test.js"
+      "test/scenes/audittact.test.js"
     ]
   },
   {
@@ -244,7 +244,7 @@
     "old": "    { c: base, r: Math.min(size.w * COVER_RADIUS_FRAC, COVER_TRUNK_R), h: from, lift: 0 },",
     "new": "    { c: base, r: size.w * COVER_RADIUS_FRAC, h: from, lift: 0 },",
     "tests": [
-      "test/audittact.test.js"
+      "test/scenes/audittact.test.js"
     ]
   },
   {
@@ -253,16 +253,16 @@
     "old": "    { c: base, r: size.w * COVER_RADIUS_FRAC, h: h - from, lift: from },",
     "new": "    { c: base, r: size.w * COVER_RADIUS_FRAC, h: h - from, lift: 0 },",
     "tests": [
-      "test/audittact.test.js"
+      "test/scenes/audittact.test.js"
     ]
   },
   {
     "name": "ATACT-B2-sight-not-sight",
-    "file": "src/characters/enemyMotor.js",
+    "file": "src/characters/enemy/enemyMotor.js",
     "old": "  return coverDistance(collider, eye, [ux, uy, uz], el, true) < el - 1e-3;",
     "new": "  return coverDistance(collider, eye, [ux, uy, uz], el) < el - 1e-3;",
     "tests": [
-      "test/audittact.test.js"
+      "test/scenes/audittact.test.js"
     ]
   },
   {
@@ -271,7 +271,7 @@
     "old": "      if (!(it?.r > 0) || !(it.h > 0) || !it.c || it.c.noCover) continue;",
     "new": "      if (!(it?.r > 0) || !(it.h > 0) || !it.c) continue;",
     "tests": [
-      "test/audittact.test.js"
+      "test/scenes/audittact.test.js"
     ]
   },
   {
@@ -280,7 +280,7 @@
     "old": "  return { stop: Infinity, advance: stepLen > 1e-9 ? Math.min(1, (cov - radius) / stepLen) : 1 };",
     "new": "  return { stop: cov, advance: 1 };",
     "tests": [
-      "test/audittact.test.js"
+      "test/scenes/audittact.test.js"
     ]
   },
   {
@@ -289,7 +289,7 @@
     "old": "      const adv = cs ? step * cs.advance : step;",
     "new": "      const adv = step;",
     "tests": [
-      "test/audittact.test.js"
+      "test/scenes/audittact.test.js"
     ]
   },
   {
@@ -298,7 +298,7 @@
     "old": "  if (foe.puppet) return !!foe._pupMine;",
     "new": "  if (foe.puppet) return !!foe.ai?.isHostile;",
     "tests": [
-      "test/audittact.test.js"
+      "test/scenes/audittact.test.js"
     ]
   },
   {
@@ -307,7 +307,7 @@
     "old": "      ...(f.ai && !(f.puppet ? f._pupMine : f.ai.isHostile) && f.companion == null ? { peaceful: true } : {}),",
     "new": "      ...(f.ai && !f.ai.isHostile && f.companion == null ? { peaceful: true } : {}),",
     "tests": [
-      "test/audittact.test.js"
+      "test/scenes/audittact.test.js"
     ]
   },
   {
@@ -316,7 +316,7 @@
     "old": "    if (Number.isFinite(down)) spot[1] = spot[1] + 0.1 - down;",
     "new": "    void down;",
     "tests": [
-      "test/audittact.test.js"
+      "test/scenes/audittact.test.js"
     ]
   },
   {
@@ -325,7 +325,7 @@
     "old": "    if (_tactDoorGen !== doorGeneration) { _tactDoorGen = doorGeneration; _tactDoorWorld = doorSpotsNear(buildingDoors, null, Infinity, shiftedDoor); }",
     "new": "    { _tactDoorGen = doorGeneration; _tactDoorWorld = doorSpotsNear(buildingDoors, null, Infinity, shiftedDoor); }",
     "tests": [
-      "test/audittact.test.js"
+      "test/scenes/audittact.test.js"
     ]
   },
   {
@@ -334,7 +334,7 @@
     "old": "  if (!foe || foe.companion != null || mode === 'steal') return false;",
     "new": "  if (!foe || mode === 'steal') return false;",
     "tests": [
-      "test/audittact.test.js"
+      "test/scenes/audittact.test.js"
     ]
   },
   {
@@ -343,7 +343,7 @@
     "old": "  if (!foe || foe.companion != null || mode === 'steal') return false;",
     "new": "  if (!foe || foe.companion != null) return false;",
     "tests": [
-      "test/audittact.test.js"
+      "test/scenes/audittact.test.js"
     ]
   },
   {
@@ -352,7 +352,7 @@
     "old": "  const doors = (targets ?? []).filter((t) => t?.door === true);",
     "new": "  const doors = targets ?? [];",
     "tests": [
-      "test/audittact.test.js"
+      "test/scenes/audittact.test.js"
     ]
   },
   {
@@ -361,7 +361,7 @@
     "old": "  if (!foeHit || mode === 'steal' || !(Number.isFinite(doorBehind)",
     "new": "  if (!foeHit || !(Number.isFinite(doorBehind)",
     "tests": [
-      "test/audittact.test.js"
+      "test/scenes/audittact.test.js"
     ]
   },
   {
@@ -370,7 +370,7 @@
     "old": "    if (o?.kind !== 'door' || !o.cpu?.positions || !o.base) continue;",
     "new": "    if (!o.cpu?.positions || !o.base) continue;",
     "tests": [
-      "test/audittact.test.js"
+      "test/scenes/audittact.test.js"
     ]
   },
   {
@@ -379,7 +379,7 @@
     "old": "    out.push({ pos: [cx, cy, cz], normal: ex < ez ? [1, 0, 0] : [0, 0, 1] });",
     "new": "    out.push({ pos: [cx, cy, cz], normal: ex < ez ? [0, 0, 1] : [1, 0, 0] });",
     "tests": [
-      "test/audittact.test.js"
+      "test/scenes/audittact.test.js"
     ]
   },
   {
@@ -388,7 +388,7 @@
     "old": "    gl.enable(gl.CULL_FACE);\n    gl.depthMask(true);",
     "new": "    gl.enable(gl.CULL_FACE);",
     "tests": [
-      "test/audittact.test.js"
+      "test/scenes/audittact.test.js"
     ]
   },
   {
@@ -397,7 +397,7 @@
     "old": "    gl.enable(gl.CULL_FACE);\n    gl.depthMask(true);",
     "new": "    gl.depthMask(true);",
     "tests": [
-      "test/audittact.test.js"
+      "test/scenes/audittact.test.js"
     ]
   },
   {
@@ -406,7 +406,7 @@
     "old": "    gl.depthMask(true);\n    gl.disable(gl.BLEND);",
     "new": "    gl.depthMask(true);",
     "tests": [
-      "test/audittact.test.js"
+      "test/scenes/audittact.test.js"
     ]
   },
   {
@@ -415,7 +415,7 @@
     "old": "          const dmg = blowScaled(g.ai, calculateAttackDamage(g.entity, playerEntity, {",
     "new": "          const dmg = ((_a, d) => d)(g.ai, calculateAttackDamage(g.entity, playerEntity, {",
     "tests": [
-      "test/audittact.test.js"
+      "test/scenes/audittact.test.js"
     ]
   },
   {
@@ -424,7 +424,7 @@
     "old": "      gl.uniform2f(U.uSlope, b.slope?.[0] ?? 0, b.slope?.[1] ?? 0);",
     "new": "      gl.uniform2f(U.uSlope, 0, 0);",
     "tests": [
-      "test/audittact.test.js"
+      "test/scenes/audittact.test.js"
     ]
   }
 ]

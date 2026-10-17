@@ -1,38 +1,38 @@
 [
   {
     "name": "PROF-SAVE-a-checkpoint-a-change",
-    "file": "src/systems/onlineCheckpoint.js",
+    "file": "src/systems/online/onlineCheckpoint.js",
     "old": "  const ask = () => { if (!queued) { queued = true; schedule(run); } };",
     "new": "  const ask = () => { queued = true; schedule(run); };",
     "tests": [
-      "test/profsave.test.js"
+      "test/systems/online/profsave.test.js"
     ]
   },
   {
     "name": "PROF-SAVE-saved-inside-the-act",
-    "file": "src/systems/onlineCheckpoint.js",
+    "file": "src/systems/online/onlineCheckpoint.js",
     "old": "    changed() { due = true; ask(); },",
     "new": "    changed() { due = true; if (save) { due = false; save(); } ask(); },",
     "tests": [
-      "test/profsave.test.js"
+      "test/systems/online/profsave.test.js"
     ]
   },
   {
     "name": "PROF-SAVE-the-early-change-lost",
-    "file": "src/systems/onlineCheckpoint.js",
+    "file": "src/systems/online/onlineCheckpoint.js",
     "old": "    ready(/** @type {() => unknown} */ fn) { save = fn; if (due) ask(); },",
     "new": "    ready(/** @type {() => unknown} */ fn) { save = fn; },",
     "tests": [
-      "test/profsave.test.js"
+      "test/systems/online/profsave.test.js"
     ]
   },
   {
     "name": "PROF-SAVE-the-early-change-dropped",
-    "file": "src/systems/onlineCheckpoint.js",
+    "file": "src/systems/online/onlineCheckpoint.js",
     "old": "    if (!save) return;   // no checkpoint yet: the change waits for `ready`\n    due = false;",
     "new": "    due = false;\n    if (!save) return;",
     "tests": [
-      "test/profsave.test.js"
+      "test/systems/online/profsave.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  if (Number.isSafeInteger(gold) && gold > 0) saved?.();\n",
     "new": "",
     "tests": [
-      "test/profsave.test.js"
+      "test/systems/online/profsave.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "  if (Number.isSafeInteger(gold) && gold > 0) saved?.();",
     "new": "  saved?.();",
     "tests": [
-      "test/profsave.test.js"
+      "test/systems/online/profsave.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "void host.marks.settle(marksSaleCredit(() => playerEntity.bankAccounts, bankRegion, host.saveSoon))",
     "new": "void host.marks.settle(marksSaleCredit(() => playerEntity.bankAccounts, bankRegion))",
     "tests": [
-      "test/profsave.test.js"
+      "test/systems/online/profsave.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "host.marks.sell(n, marksSaleCredit(() => playerEntity.bankAccounts, bankRegion, host.saveSoon), bankRegion())",
     "new": "host.marks.sell(n, marksSaleCredit(() => playerEntity.bankAccounts, bankRegion), bankRegion())",
     "tests": [
-      "test/profsave.test.js"
+      "test/systems/online/profsave.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "    saveSoon: () => saveSoon.changed(),   // PROF-SAVE: a Marks sale's gold in the Bank's account saved soon\n",
     "new": "",
     "tests": [
-      "test/profsave.test.js"
+      "test/systems/online/profsave.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "taken from the Stores into your pack.`); saveSoon.changed(); }",
     "new": "taken from the Stores into your pack.`); }",
     "tests": [
-      "test/profsave.test.js"
+      "test/systems/online/profsave.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "deductGold(playerEntity, Math.min(kept.fee, totalGoldAmount(playerEntity))); saveSoon.changed(); }",
     "new": "deductGold(playerEntity, Math.min(kept.fee, totalGoldAmount(playerEntity))); }",
     "tests": [
-      "test/profsave.test.js"
+      "test/systems/online/profsave.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "    if (pieces.length) { townTalk.say(craftedText(pieces)); saveSoon.changed(); }",
     "new": "    if (pieces.length) { townTalk.say(craftedText(pieces)); }",
     "tests": [
-      "test/profsave.test.js"
+      "test/systems/online/profsave.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "    townTalk.say(`${itemLongName(it)} is ${home ? 'among your home\\'s things' : 'in your pack'}.`);\n    saveSoon.changed();\n",
     "new": "    townTalk.say(`${itemLongName(it)} is ${home ? 'among your home\\'s things' : 'in your pack'}.`);\n",
     "tests": [
-      "test/profsave.test.js"
+      "test/systems/online/profsave.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "    list.splice(i, 1);\n    saveSoon.changed();\n    return true;",
     "new": "    list.splice(i, 1);\n    return true;",
     "tests": [
-      "test/profsave.test.js"
+      "test/systems/online/profsave.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "      list.splice(i, 1);\n      saveSoon.changed();\n    }",
     "new": "      list.splice(i, 1);\n    }",
     "tests": [
-      "test/profsave.test.js"
+      "test/systems/online/profsave.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "addItem((playerEntity.items ??= []), item, 'back');\n    saveSoon.changed();\n  };",
     "new": "addItem((playerEntity.items ??= []), item, 'back');\n  };",
     "tests": [
-      "test/profsave.test.js"
+      "test/systems/online/profsave.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "          if (f.fee > 0) { deductGold(playerEntity, f.fee); saveSoon.changed(); }",
     "new": "          if (f.fee > 0) { deductGold(playerEntity, f.fee); }",
     "tests": [
-      "test/profsave.test.js"
+      "test/systems/online/profsave.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "  saveSoon.ready(() => onlineCheckpoint());   // PROF-SAVE: the professions' changes saved by the same checkpoint, from here on",
     "new": "  // PROF-SAVE: the professions' changes saved by the same checkpoint, from here on",
     "tests": [
-      "test/profsave.test.js"
+      "test/systems/online/profsave.test.js"
     ]
   }
 ]

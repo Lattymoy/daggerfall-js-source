@@ -80,7 +80,7 @@ export function cleanBody(text) {
 /**
  * A letter's words, checked: the cleaned subject and body, or the ONE word that refuses them - the service's answer
  * and the form's, so the two cannot disagree about what a letter is. Each word is spelled `return { error: '...' }`
- * because test/accountflow.test.js walks this file for the words the service can answer with (it returns these
+ * because test/server/accountflow.test.js walks this file for the words the service can answer with (it returns these
  * verbatim), and a word it cannot see is a word a player meets raw.
  * @param {{subject?: unknown, body?: unknown}} letter
  * @returns {{ subject: string, body: string } | { error: 'no-subject' | 'subject-long' | 'no-body' | 'body-long' | 'body-lines' }}

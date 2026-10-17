@@ -1,0 +1,11 @@
+[
+  {
+    "name": "EGA3F-the-seal-unsaid",
+    "file": "src/net/wire.js",
+    "old": "export const EG_END_WORDS = Object.freeze(['tear', 'wipe', 'gone', 'last', 'empty', 'rehearsal', 'void', 'home', 'seal']);",
+    "new": "export const EG_END_WORDS = Object.freeze(['tear', 'wipe', 'gone', 'last', 'empty', 'rehearsal', 'void', 'home']);",
+    "tests": [
+      "test/net/eliteGates/egaudit3_bible.test.js"
+    ]
+  }
+]

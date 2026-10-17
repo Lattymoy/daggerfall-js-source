@@ -53,7 +53,7 @@ it is protectable:
 
 ## ROADS 1 - the network (2026-09-01)
 
-`world/roadNetwork.js`, PURE: it takes the settlement list and two
+`world/road/roadNetwork.js`, PURE: it takes the settlement list and two
 samplers and returns the two mask arrays, which is what lets it be
 pinned on a synthetic map in a container with no game data.
 
@@ -90,7 +90,7 @@ worse-judged at first. That is iteration on our own thing.
 
 ## ROADS 2 - the painter (2026-09-01)
 
-`world/roadPainter.js`, written from the design rather than ported.
+`world/road/roadPainter.js`, written from the design rather than ported.
 Row 0 of a pixel's tilemap is SOUTH and row 127 NORTH (terrainSampler
 :150-151, "y=0 of py equals y=128 of py+1"), so N paints up in y. Roads
 are tile 46 over any ground, with 47 (dirt) or 55 (grass) as the edge;
@@ -249,7 +249,7 @@ relief and a toggle back finds the cache stale again.
 
 ## Audit 46 (2026-09-02)
 
-Everything so far: `01-Overview/Audit-46.md`. 21 mutants, 21 dead. A1
+Everything so far: `01-Overview/audits/Audit-46.md`. 21 mutants, 21 dead. A1
 fixed (the map's stride), A10 cleared and pinned (message order keeps
 every chunk built with the network), four low notes recorded.
 
@@ -371,7 +371,7 @@ a handle-holding Proxy-GL.
 
 ## Audit 51 (2026-09-02) - parity by oracle
 
-`01-Overview/Audit-51.md`. The painter matches the mod's PaintPath byte
+`01-Overview/audits/Audit-51.md`. The painter matches the mod's PaintPath byte
 for byte over 651 cases (907 since the MODS AUDIT below); the smoother
 is SmoothRoadsJob; the arrays are his to the byte. ROADS 22's claim
 that the mod paints no ring is corrected there: it paves the rect's
@@ -391,7 +391,7 @@ AUDIT was a false entry; the smoother is his with nothing corrected.
 
 ## Audit 45 (2026-09-01)
 
-The deep pass over Roads 1-3: `01-Overview/Audit-45.md`. F1 the track
+The deep pass over Roads 1-3: `01-Overview/audits/Audit-45.md`. F1 the track
 set (farms out), F2 the build moved into the terrain worker, F3 the
 heuristic made admissible, F6 tracks merge with tracks. Three suspects
 cleared by the line that clears them. Four low findings recorded there.
@@ -614,7 +614,7 @@ section and the pin on the comment's text all asserted a departure the
 code did not have; all four now say the smoother is his with nothing
 corrected, and the pin asserts `NO DIVERGENCE` is what the module says.
 
-**The arrays are his by hash now.** `test/vendorIntegrity.test.js` pins
+**The arrays are his by hash now.** `test/tooling/vendorIntegrity.test.js` pins
 the sha256 of all four against `ajrb/dfunity-mods` master, verified
 this audit; Audit-51.md's "sha256 recorded in the test run" named a pin
 that did not exist. The hashes are in the vendor README too.
@@ -628,7 +628,7 @@ this port can meet, or a departure Mac already ruled:
 - The messaging API (`getPathData`, `getRoadPoint`, `getTrackPoint`,
   `getPathsPoint`, `scheduleRoadsJob`; BRM:18-22, 64-110; BRT:142-156)
   for other DFU mods - Travel Options asks it whether a pixel carries a
-  road. No mod bus here and no consumer; `systems/travel.js` keeps
+  road. No mod bus here and no consumer; `systems/travel/travel.js` keeps
   `byRoad` a permanent false by the Ledger row.
 - The fixed-city host (`?exterior`, `scenes/exterior.js`) runs no tile
   pipeline at all - no `generateTileData`, no `paintRoads` - so it
@@ -679,14 +679,14 @@ beside `withRoads`, and the worker transfers it. The host keeps it on the
 built pixel as `p.paths`, and `keep()` refuses a blade on a marked tile.
 
 Nothing about the tilemap the painter writes changes; without the array
-the painter is byte-for-byte what it was, which `test/grasspath.test.js`
+the painter is byte-for-byte what it was, which `test/world/terrain/grasspath.test.js`
 pins directly.
 
 The water half of the same report - *"some textures not taking the water
 tile"* - is GRASS-WET1, in `07-Rendering/Rendering.md`: the water-grass
 shore records a stream writes over grass (20-22, 49) are mostly-grass by
 texel count, so they passed `grassRecordsOf` and blades grew up out of
-the water. That one needed no new data: `world/waterCorners.js` already
+the water. That one needed no new data: `world/water/waterCorners.js` already
 owns the question, and the placer asks it now.
 
 ## LANDFORM2/3 - the roads and rivers cut into the land (2026-10-06)
@@ -718,7 +718,7 @@ before the track, his order, so the whole arm was water where the dirt track ran
 the road with its banks; LANDFORM3 cuts the painted water into the land, and the room's rivers are on - a straight
 sunken channel up to the town. `roadsProducer.js` `waterOffPaths` gives each such arm to its path, once, as the arrays
 load: the painter, the channel's cut and the maps all read the arrays, so all three agree. A crossing shares no arm,
-and its ford or causeway stands as it did. Pinned by `test/fb1009b_canalarm.test.js`.
+and its ford or causeway stands as it did. Pinned by `test/world/road/fb1009b_canalarm.test.js`.
 
 ## VERGE1 - clear roadsides: nothing of the wild stands over a road (2026-10-07, a port departure)
 
@@ -728,7 +728,7 @@ they slightly overlap"*.
 Every placer of the wild's flats asked ONE TILE - the one the flat's root
 stands on - and never how wide the thing standing there was:
 
-- DFU's scatter (`world/terrainNature.js` `dfuScatter`, Real forests off,
+- DFU's scatter (`world/terrain/terrainNature.js` `dfuScatter`, Real forests off,
   and every desert) roots each flat on its tile's south-west CORNER, so on
   a road's east and north sides the root is the road's edge and half the
   picture hangs over it;
@@ -739,7 +739,7 @@ stands on - and never how wide the thing standing there was:
   8.5, 8.96, 9.25, 10.88, 11.14, 5.8, 5.52 m), more at the tree's own
   scale (0.6-1.4).
 
-**The law** (`world/roadVerge.js`): a wild flat stands only where the DISC
+**The law** (`world/road/roadVerge.js`): a wild flat stands only where the DISC
 of its reach touches no road or track.
 
 - The road is Basic Roads' band - two tiles, 6.4 m either side of the line
@@ -802,7 +802,7 @@ them.
 roads and lays no wild nature: nothing to clear. `scenes/worldModes.js` and
 `scenes/dungeonContext.js` - no terrain nature.
 
-Pinned in `test/verge1.test.js` (the band's geometry, across pixels and at
+Pinned in `test/world/road/verge1.test.js` (the band's geometry, across pixels and at
 the map's edge, the reach and the crowns' bake byte for byte, F8 end to
 end, the herbs, the veins and the Motherlode, the switch and the host);
 mutants in `tools/mutants/verge1.json` (23, all dead). Not verified here:
@@ -825,7 +825,7 @@ paved ring Basic Roads lays round it ("Paint roads around locations").
 Nothing asked the streets either: they are the location's own tiles, not the
 network's band.
 
-**The law** (`world/roadVerge.js`): every Low Poly tree is DRAWN no wider than
+**The law** (`world/road/roadVerge.js`): every Low Poly tree is DRAWN no wider than
 the room its root has. A scale, never a move - the trunk, its collider and
 cover, Logging's tree and the room's ground stay where DFU stands the flat,
 and the mod draws the tree smaller, as it draws it at all, on the player's
@@ -858,7 +858,7 @@ roads, so it fits no tree (not wired: its location tilemap is the bench's
 own, and its streets were never asked of a road). `scenes/worldModes.js` and
 `scenes/dungeonContext.js` stand no terrain trees.
 
-Pinned in `test/lptfit.test.js` (5: the mask off the painter's own pixel and
+Pinned in `test/world/road/lptfit.test.js` (5: the mask off the painter's own pixel and
 the lookup, the room, the cap, the set, the host); `test/lpt1_lowpolytrees`'s
 host pin moved; mutants `tools/mutants/lptfit.json` (15, all dead) and
 `LPT1-flats-unscaled` re-aimed. Not verified here: no ARENA2, so no real

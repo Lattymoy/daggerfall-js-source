@@ -5,7 +5,7 @@
     "old": "    const loc = linked ? r.gl.getUniformLocation(prog, 'uFogColor') : null;",
     "new": "    const loc = linked ? true : null;",
     "tests": [
-      "test/perffog_uniform.test.js"
+      "test/render/perffog_uniform.test.js"
     ]
   }
 ]

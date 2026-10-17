@@ -1,0 +1,183 @@
+[
+  {
+    "name": "EGPLAY-a-quarter-turn-wrong",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "  if (q <= 36) return SIN_Q[36 - q];",
+    "new": "  if (q <= 36) return SIN_Q[q - 18];",
+    "tests": [
+      "test/net/eliteGates/egplay_law.test.js"
+    ]
+  },
+  {
+    "name": "EGPLAY-the-first-circle-drawn",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "  if (!rec) { rec = { plans: [null, FIRST_PLAN],",
+    "new": "  if (!rec) { rec = { plans: [null],",
+    "tests": [
+      "test/net/eliteGates/egplay_law.test.js"
+    ]
+  },
+  {
+    "name": "EGPLAY-the-hall-past-the-wire",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "export const EG_HALL_LEN_MAX = 158;",
+    "new": "export const EG_HALL_LEN_MAX = 200;",
+    "tests": [
+      "test/net/eliteGates/egplay_law.test.js"
+    ]
+  },
+  {
+    "name": "EGPLAY-a-counted-member-spends-again",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  if (B.mem[sub]?.in) { B.mem[sub].seenAt = now; return null; }",
+    "new": "  if (false) { B.mem[sub].seenAt = now; return null; }",
+    "tests": [
+      "test/net/eliteGates/egplay_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGPLAY-a-fall-owes-nothing",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  if (final) oweEnd(B, sub, 'fall', now);",
+    "new": "  if (false) oweEnd(B, sub, 'fall', now);",
+    "tests": [
+      "test/net/eliteGates/egfull_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGPLAY-the-void-past-a-quarter",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "Math.max(0, entity.health - EG_CAST_BACK_FLOOR * max)",
+    "new": "Math.max(0, entity.health)",
+    "tests": [
+      "test/net/eliteGates/egplay_client.test.js"
+    ]
+  },
+  {
+    "name": "EGPLAY-the-way-home-at-one-press",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "      if (Date.now() - homeAskAt > EG_HOME_CONFIRM_MS) { homeAskAt = Date.now();",
+    "new": "      if (false) { homeAskAt = Date.now();",
+    "tests": [
+      "test/net/eliteGates/egplay_client.test.js"
+    ]
+  },
+  {
+    "name": "EGPLAY-the-gate-shut-behind-the-company",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "      return E.h > h || (E.h === h &&",
+    "new": "      return (E.h === h &&",
+    "tests": [
+      "test/net/eliteGates/egplay_client.test.js"
+    ]
+  },
+  {
+    "name": "EGPLAY-the-redoubt-heals-nobody",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    if (why === 'rest' && p >= 1) { fillVitalSigns(entity); return; }",
+    "new": "    if (why === 'rest' && p >= 1) { return; }",
+    "tests": [
+      "test/net/eliteGates/egplay_client.test.js",
+      "test/net/eliteGates/egfull_client.test.js"
+    ]
+  },
+  {
+    "name": "EGPLAY-the-pull-never-stood",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "{ if (placeOn(E.h, E)) { placedH = E.h; say(EG_TEXT.pulled); } }",
+    "new": "{ if (false) { placedH = E.h; say(EG_TEXT.pulled); } }",
+    "tests": [
+      "test/net/eliteGates/egplay_client.test.js"
+    ]
+  },
+  {
+    "name": "EGPLAY-a-counted-receipt-kept",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "        if (egClaimDone(a)) { drop(); countedAdd(c); hub()",
+    "new": "        if (false) { drop(); countedAdd(c); hub()",
+    "tests": [
+      "test/net/eliteGates/egplay_client.test.js"
+    ]
+  },
+  {
+    "name": "EGPLAY-the-next-circle-never-built",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "{ if (E.sg === 'arrive' || returning === E.b) swapTo(E, c); return; }",
+    "new": "{ return; }",
+    "tests": [
+      "test/net/eliteGates/egplay_client.test.js"
+    ]
+  },
+  {
+    "name": "EGPLAY-the-count-never-red",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": ": shown < EG_HUD_LOW_MS ? 'low' :",
+    "new": ": shown < 0 ? 'low' :",
+    "tests": [
+      "test/net/eliteGates/egplay_client.test.js"
+    ]
+  },
+  {
+    "name": "EGPLAY-a-stranger-shown-the-call",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "  if (!c || !me || !c.co.some((r) => r[0] === me)) return null;",
+    "new": "  if (!c || !me) return null;",
+    "tests": [
+      "test/net/eliteGates/egplay_client.test.js"
+    ]
+  },
+  {
+    "name": "EGPLAY-the-void-never-casts-back",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "      if (safe && body.pos[1] < safeY + EG_VOID_Y) {",
+    "new": "      if (false && safe) {",
+    "tests": [
+      "test/net/eliteGates/egplay_client.test.js"
+    ]
+  },
+  {
+    "name": "EGPLAY-the-open-stakes-nothing",
+    "file": "server-account/src/eg.js",
+    "old": "      .bind(player.id, b, rh ? 0 : 1, until, day, rh, nowS),",
+    "new": "      .bind(player.id, b, 0, until, day, rh, nowS),",
+    "tests": [
+      "test/net/eliteGates/egplay_service.test.js"
+    ]
+  },
+  {
+    "name": "EGPLAY-an-open-with-no-landing",
+    "file": "src/net/wire.js",
+    "old": "return egOrder(m.z) && site ? { k: 'open', z: m.z, site } : null;",
+    "new": "return egOrder(m.z) ? { k: 'open', z: m.z, site } : null;",
+    "tests": [
+      "test/net/eliteGates/egplay_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGPLAY-the-breach-unheard",
+    "file": "src/scenes/world.js",
+    "old": "    online.onEg = (w, room) => egClient?.word(w, room);",
+    "new": "    online.onEg = null;",
+    "tests": [
+      "test/net/eliteGates/egplay_client.test.js"
+    ]
+  },
+  {
+    "name": "EGPLAY-the-gate-seams-the-gate-s-alone",
+    "file": "src/scenes/worldModes.js",
+    "old": "    host[gate] = (...a) => (mode === 'dungeon' && isEgHall(dungeonLoc) ? host[eg]?.(...a) ?? null : own?.(...a) ?? null);",
+    "new": "    host[gate] = (...a) => (own?.(...a) ?? null);",
+    "tests": [
+      "test/net/eliteGates/egplay_client.test.js"
+    ]
+  },
+  {
+    "name": "EGPLAY-the-spire-unwarded",
+    "file": "src/systems/madeLevel.js",
+    "old": "levitate: 'banned', slowfall: 'banned', techFlight",
+    "new": "levitate: null, slowfall: 'banned', techFlight",
+    "tests": [
+      "test/net/eliteGates/egplay_client.test.js"
+    ]
+  }
+]

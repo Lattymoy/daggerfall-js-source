@@ -1,20 +1,20 @@
 [
   {
     "name": "HORSE-TIERS-the-default-the-old-system",
-    "file": "src/systems/upkeepTiers.js",
+    "file": "src/systems/upkeep/upkeepTiers.js",
     "old": "export const HORSE_CARE_DEFAULT = 'boons';",
     "new": "export const HORSE_CARE_DEFAULT = 'hard';",
     "tests": [
-      "test/horsetiers.test.js"
+      "test/systems/horsetiers.test.js"
     ]
   },
   {
     "name": "HORSE-TIERS-a-tiers-field",
-    "file": "src/systems/upkeepTiers.js",
+    "file": "src/systems/upkeep/upkeepTiers.js",
     "old": "    paceFloor: true,         // the ride's pace is never under DFU's",
     "new": "    paceFloor: false,         // the ride's pace is never under DFU's",
     "tests": [
-      "test/horsetiers.test.js"
+      "test/systems/horsetiers.test.js"
     ]
   },
   {
@@ -23,25 +23,25 @@
     "old": "store: 'prefs', key: 'horseCare', initial: 'boons', online: 'player',",
     "new": "store: 'prefs', key: 'horseCare', initial: 'boons', online: true,",
     "tests": [
-      "test/horsetiers.test.js"
+      "test/systems/horsetiers.test.js"
     ]
   },
   {
     "name": "HORSE-TIERS-the-accessor-read-once",
-    "file": "src/systems/upkeepSwitch.js",
+    "file": "src/systems/upkeep/upkeepSwitch.js",
     "old": "export const horseCareRules = () => (isEnhanced() ? horseCareRulesForTier(horseCareTierOfStored(getPref(HORSE_CARE_PREF))) : null);",
     "new": "const HORSE_CARE_AT_LOAD = horseCareRulesForTier(horseCareTierOfStored(getPref(HORSE_CARE_PREF)));\nexport const horseCareRules = () => (isEnhanced() ? HORSE_CARE_AT_LOAD : null);",
     "tests": [
-      "test/horsetiers.test.js"
+      "test/systems/horsetiers.test.js"
     ]
   },
   {
     "name": "HORSE-TIERS-a-refused-gallop-walked",
-    "file": "src/systems/upkeepRuntime.js",
+    "file": "src/systems/upkeep/upkeepRuntime.js",
     "old": "    if (runAsked && !care.refusedRunWalks) return false;\n",
     "new": "",
     "tests": [
-      "test/horsetiers.test.js"
+      "test/systems/horsetiers.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "this.rideWalking = rideBase != null && !this.isRunning && rideWalks(this.transportMode, this._runMode);",
     "new": "this.rideWalking = rideBase != null && !this.isRunning && rideWalks(this.transportMode);",
     "tests": [
-      "test/horsetiers.test.js"
+      "test/systems/horsetiers.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "_rideBaseNow() { return rideWalks(this.transportMode, this._runMode) ? DF_WALK_BASE",
     "new": "_rideBaseNow() { return rideWalks(this.transportMode) ? DF_WALK_BASE",
     "tests": [
-      "test/horsetiers.test.js"
+      "test/systems/horsetiers.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "  return rules.paceFloor ? Math.max(1, k) : k;",
     "new": "  return k;",
     "tests": [
-      "test/horsetiers.test.js"
+      "test/systems/horsetiers.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "penalty = rules.hungerCosts ? HUNGER[hunger].penalty : 0;",
     "new": "penalty = HUNGER[hunger].penalty;",
     "tests": [
-      "test/horsetiers.test.js"
+      "test/systems/horsetiers.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "(rules.hungerCosts ? HUNGER[hunger]?.breath ?? 1 : 1)",
     "new": "(HUNGER[hunger]?.breath ?? 1)",
     "tests": [
-      "test/horsetiers.test.js"
+      "test/systems/horsetiers.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "export const teamDraftScale = (strength, load, rules = HORSE_CARE_HARD) => (rules.draftDrags ?",
     "new": "export const teamDraftScale = (strength, load, rules = HORSE_CARE_HARD) => (true ?",
     "tests": [
-      "test/horsetiers.test.js"
+      "test/systems/horsetiers.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "  const bond = rules.bondFades ? bondAt(item, now) : bondTenths(item) / 10;",
     "new": "  const bond = bondAt(item, now);",
     "tests": [
-      "test/horsetiers.test.js"
+      "test/systems/horsetiers.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "  const fade = fades ? fadeBy(item, now) : 0;",
     "new": "  const fade = fadeBy(item, now);",
     "tests": [
-      "test/horsetiers.test.js"
+      "test/systems/horsetiers.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "_prefs.horseCare = p.horseCare === HORSE_CARE_OLD_ON ? HORSE_CARE_OLD_ON_TIER : PREF_DEFAULTS.horseCare;",
     "new": "_prefs.horseCare = PREF_DEFAULTS.horseCare;",
     "tests": [
-      "test/horsetiers.test.js"
+      "test/systems/horsetiers.test.js"
     ]
   },
   {
@@ -131,16 +131,16 @@
     "old": "        if (p.horseCare !== undefined && !isStoredHorseCare(p.horseCare)) _prefs.horseCare =",
     "new": "        if (false) _prefs.horseCare =",
     "tests": [
-      "test/horsetiers.test.js"
+      "test/systems/horsetiers.test.js"
     ]
   },
   {
     "name": "HORSE-TIERS-offs-clock-left-running",
-    "file": "src/systems/upkeepRuntime.js",
+    "file": "src/systems/upkeep/upkeepRuntime.js",
     "old": "h.horseFed = Math.round(h.horseFed + (t - lastNow));",
     "new": "void h;",
     "tests": [
-      "test/horsetiers.test.js"
+      "test/systems/horsetiers.test.js"
     ]
   },
   {
@@ -149,16 +149,16 @@
     "old": "    if (!rules.bondFades && holdStarving(horse, now)) changed = true;   // HORSE-TIERS: Boons owes no fade, then or later\n",
     "new": "",
     "tests": [
-      "test/horsetiers.test.js"
+      "test/systems/horsetiers.test.js"
     ]
   },
   {
     "name": "HORSE-TIERS-the-chip-red-on-boons",
-    "file": "src/ui/enhancedSaddle.js",
+    "file": "src/ui/enhanced/enhancedSaddle.js",
     "old": "return h.hungerCosts === false && tone === 'low' ? 'warn' : tone; };",
     "new": "return tone; };",
     "tests": [
-      "test/horsetiers.test.js"
+      "test/systems/horsetiers.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "(care?.hungerCosts === false && h.hungerKey === 'starving' ? HUNGER_TONE.hungry : HUNGER_TONE[h.hungerKey] ?? '')",
     "new": "(HUNGER_TONE[h.hungerKey] ?? '')",
     "tests": [
-      "test/horsetiers.test.js"
+      "test/systems/horsetiers.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "(care?.hungerCosts === false ? HUNGER_LINE_BOONS : HUNGER_LINE)[h.hungerKey]",
     "new": "HUNGER_LINE[h.hungerKey]",
     "tests": [
-      "test/horsetiers.test.js"
+      "test/systems/horsetiers.test.js"
     ]
   }
 ]

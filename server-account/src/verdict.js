@@ -9,20 +9,26 @@
 // ═══ THE HOLD ══════════════════════════════════════════════════════
 //
 // `held` is the character's, and every route that hands its value to another player reads it (realm.js holdRefusal).
-// Its reasons stand in an order - staff's, the copies', the law's, the budget's - and each clears its own way:
+// Its reasons stand in an order - staff's, the law's, the budget's - and each clears its own way:
 //   - 'staff'  staff's own. Staff alone.
-//   - 'dupe'   DUPES_FOR_HOLD copies found in its records (ledger.js). Staff alone - a breach of the law over it is no
-//              way out (AUDIT INT: a 'law' checkpoint stepped a 'dupe' hold down, and the next clean one lifted it).
 //   - 'law'    a checkpoint held something no honest client mints. Cleared by the next clean checkpoint - the piece
-//              sold, dropped, gone - until STRIKES_FOR_REVIEW holds have come (a strike a hold, never a checkpoint: one
-//              piece carried six minutes is one strike, AUDIT INT); then by staff alone. Staff who find the law's word
-//              wrong clear it, and the same finding holds nothing again (`law_excused`).
+//              sold, dropped, gone - until STRIKES_FOR_TIMED holds have come (a strike a hold, never a checkpoint: one
+//              piece carried six minutes is one strike, AUDIT INT). That hold is TIMED (AUTO-HOLD): LAW_HOLD_S, and
+//              LAW_HOLD_REPEAT_S for each one after it, whatever the checkpoints in it say - a clean one is no way out -
+//              and the first checkpoint past its time lifts it as any law hold lifts. The strikes and the timed holds
+//              served are forgotten LAW_FADE_S after the last finding that held (or the last timed hold's end). Staff
+//              who find the law's word wrong clear it, and the same finding holds nothing again (`law_excused`).
 //   - 'budget' (only once staff turn `enforce` on) a gain past the bucket. Cleared when play refills it.
+//
+// A COPY HOLDS NO CHARACTER (AUTO-HOLD, 2026-10-16 - Mac: "I dont want to have to manually review"). The ledger locks
+// the copied PIECE (ledger.js item_dupes - it moves by no route) and the checkpoint's answer names it; the character
+// trades on. 'dupe' - DUPES_FOR_HOLD copies, staff alone to lift - is retired: no verdict writes it, a row still holding
+// it is lifted by its next checkpoint, and migration 0120 lifted every one standing.
 //
 // ═══ WHAT A VERDICT WRITES OVER ════════════════════════════════════
 //
-// The row as the checkpoint READ it (`judge_rev`): a staff act or a copy charged by another's checkpoint landing in
-// between moves the rev, and this verdict is not written - the next checkpoint judges again over the row as it stands
+// The row as the checkpoint READ it (`judge_rev`): a staff act landing in between moves the rev, and this verdict is not
+// written - the next checkpoint judges again over the row as it stands
 // (AUDIT INT: a staff hold landing mid-checkpoint was written over). The bucket is written as a change, so a win's
 // spoils granted in between (budget.js grantSpoils) are kept.
 //
@@ -34,10 +40,10 @@
 // character's baseline is a newborn's purse (REALM_BIRTH_WEALTH_MAX); one through customs, its level's allowance.
 // ═══════════════════════════════════════════════════════════════════
 
-import { judgeSave, judgeProducts, STRIKES_FOR_REVIEW, JUDGE_VERSION, FINDINGS_KEPT, WEALTH_VERSION } from './judge.js';
-import { ledgerStep, chargeSteps, DUPES_FOR_HOLD } from './ledger.js';
+import { judgeSave, judgeProducts, STRIKES_FOR_TIMED, JUDGE_VERSION, FINDINGS_KEPT, WEALTH_VERSION } from './judge.js';
+import { ledgerStep, chargeSteps } from './ledger.js';
 import { budgetConfig, bandOf, stepBudget } from './budget.js';
-import { customsAllowance } from '../../src/net/realmGoldLaw.js';
+import { customsAllowance } from '../../src/net/realm/realmGoldLaw.js';
 
 /** INT2's cutover (Mac: "Items judged, wealth baselined"): a character whose first judged wealth stands past this many
  *  of its level's customs allowance (realmGoldLaw.js customsAllowance) is flagged for staff - flagged, never held. */
@@ -46,21 +52,49 @@ export const OUTLIER_ALLOWANCES = 10;
  *  save's own level stands, and lane 4 judges it (Integrity-Arc). Generous: no honest level comes faster. */
 export const LEVEL_RISE_S = 300;
 const HOUR_S = 3600;
+const DAY_S = 24 * HOUR_S;
+/** AUTO-HOLD (2026-10-16, Mac's call): the law's timed hold - the first a week, each after it a month - and how long with
+ *  nothing found before the strikes and the timed holds served are forgotten. */
+export const LAW_HOLD_S = 7 * DAY_S;
+export const LAW_HOLD_REPEAT_S = 30 * DAY_S;
+export const LAW_FADE_S = 30 * DAY_S;
 
 /**
  * The hold a verdict comes to, from the one before it - pure. `law`: findings this checkpoint that hold (an excused
- * signature's hold none); `strikes`: the holds the law has come to, this one's with them; `dupes`: the copies the
- * character has been found holding, `fresh` this checkpoint's - a hold staff lifted stays lifted until a new one comes;
- * `over`: the budget's overrun; and `enforce`: whether the budget holds.
- * @param {{ prev: string | null, law: number, strikes: number, dupes: number, fresh: number, over: number, enforce: boolean }} v
+ * signature's hold none); `until`: the end of the law's timed hold (null for none) and `nowS` the checkpoint's time;
+ * `over`: the budget's overrun; and `enforce`: whether the budget holds. A reason no longer written ('dupe') lifts.
+ * @param {{ prev: string | null, law: number, until: number | null, nowS: number, over: number, enforce: boolean }} v
  * @returns {string | null}
  */
-export function holdOf({ prev, law, strikes, dupes, fresh, over, enforce }) {
+export function holdOf({ prev, law, until, nowS, over, enforce }) {
   if (prev === 'staff') return 'staff';
-  if (prev === 'dupe' || (fresh > 0 && dupes >= DUPES_FOR_HOLD)) return 'dupe';
-  if (law > 0 || (prev === 'law' && strikes >= STRIKES_FOR_REVIEW)) return 'law';
+  if (law > 0 || (until != null && until > nowS)) return 'law';
   if (enforce && over > 0) return 'budget';
   return null;
+}
+
+/**
+ * AUTO-HOLD: THE LAW'S COUNT after this checkpoint, from the row's - pure. `rising`: this checkpoint's finding is a new
+ * hold (a strike) - none inside a timed hold standing, where no new hold comes (a strike a hold; AUDIT AUTO-HOLD: a piece
+ * dropped and taken up three times inside the week was a month's hold); `holding`: it found something that holds. The strikes and the timed holds served fade LAW_FADE_S
+ * after `at` (the last finding that held, or the last timed hold's end); the STRIKES_FOR_TIMED-th strike starts a timed
+ * hold - LAW_HOLD_S the first, LAW_HOLD_REPEAT_S each after it - and the strikes count again from none. Answers
+ * `{ strikes, served, until, at }` - `until` the timed hold's end standing (null for none, or one run out).
+ * @param {{ strikes: number | null, served: number | null, until: number | null, at: number | null }} row
+ * @param {{ rising: boolean, holding: boolean, nowS: number }} v
+ */
+export function lawCountOf(row, { rising, holding, nowS }) {
+  const standing = row.until != null && row.until > nowS ? row.until : null;
+  const faded = row.at != null && nowS - row.at >= LAW_FADE_S;
+  const struck = (faded ? 0 : row.strikes ?? 0) + (rising && standing == null ? 1 : 0);
+  const served = faded ? 0 : row.served ?? 0;
+  // the fade counts from the last finding that held - never from inside a timed hold, whose end is the later
+  const at = holding ? Math.max(nowS, standing ?? 0) : faded ? null : row.at;
+  if (struck >= STRIKES_FOR_TIMED) {
+    const until = nowS + (served > 0 ? LAW_HOLD_REPEAT_S : LAW_HOLD_S);
+    return { strikes: 0, served: served + 1, until, at: until };
+  }
+  return { strikes: struck, served, until: standing, at };
 }
 
 /** A law finding's SIGNATURE: what was found, on what templates - the same pieces carried on find the same signature
@@ -93,8 +127,10 @@ export function trustedLevel({ seen, at, level, played }) {
  * level }` - null, or a null wealth: this save is its own).
  * @param {any} ctx @param {{ player: string, char: string, seq: number, key: string }} at @param {any} row
  * @param {any} save @param {any} summary @param {{ wealth: number | null, level: number | null } | null} [baseline]
+ * @param {{ mine: any, dupes: any, config: any } | null} [known] SAVE-BATCH: the ledger's reads and the config, answered in
+ * the checkpoint's first batch (realm.js checkpointRealm) - null, and they are asked here
  */
-export async function verdictOn({ db, nowS }, { player, char, seq, key }, row, save, summary, baseline = null) {
+export async function verdictOn({ db, nowS }, { player, char, seq, key }, row, save, summary, baseline = null, known = null) {
   const first = row.wealth == null;
   const playedS = Number.isSafeInteger(row.played_now) ? row.played_now : 0;
   const lv = trustedLevel({
@@ -105,14 +141,18 @@ export async function verdictOn({ db, nowS }, { player, char, seq, key }, row, s
   const judged = judgeSave(save, summary, { level: lv.level });
   const crafts = judged.provenances.length ? await judgeProducts(db, judged.provenances, player) : { findings: [], arrived: [] };
   const products = crafts.findings;
-  const ledger = await ledgerStep(db, { player, char, seq, nowS }, judged.pieces);
-  const lawFindings = [...judged.findings, ...products, ...ledger.forged.map((k) => ({ code: 'uid', at: k }))];
+  const ledger = await ledgerStep(db, { player, char, seq, nowS }, judged.pieces, known);   // SAVE-BATCH: its two reads answered in the checkpoint's first batch
+  // AUDIT AUTO-HOLD: a key on another piece names the piece it is on (its template, off its print) - "something it carries"
+  // was all its holder heard, and a griefer's planted one was a piece nobody could find
+  const printOf = new Map(judged.pieces.map((p) => [p.key, p.fp]));
+  const templateOfKey = (/** @type {string} */ k) => { const t = Number(String(printOf.get(k) ?? '').split(':')[0]); return Number.isSafeInteger(t) ? t : null; };
+  const lawFindings = [...judged.findings, ...products, ...ledger.forged.map((k) => ({ code: 'uid', at: k, t: templateOfKey(k) }))];
   const law = judged.count + products.length + ledger.forged.length;
   const sig = law > 0 ? lawSigOf(lawFindings) : null;
   const lawHolds = law > 0 && sig !== row.law_excused ? law : 0;
   // the budget: the rise since the last judgement (or the baseline) that no witness explains, against the bucket the
   // time played filled
-  const config = await budgetConfig(db);
+  const config = known?.config ?? await budgetConfig(db);   // SAVE-BATCH: and the config, where the isolate kept none
   const band = bandOf(config, lv.level);
   // the measure moved (WEALTH_VERSION): the stored record, measured again, is the base - and nothing witnessed since it
   const rebased = !first && baseline != null && baseline.wealth != null;
@@ -122,12 +162,15 @@ export async function verdictOn({ db, nowS }, { player, char, seq, key }, row, s
   const gain = judged.wealth - base - (first || rebased ? 0 : row.witnessed ?? 0) - arrivedWorth;
   const dPlayed = first || row.played_at == null ? 0 : Math.max(0, playedS - row.played_at);
   const budget = stepBudget({ allowance: first ? null : row.allowance ?? null, played: dPlayed, gain, band, enforce: config.enforce });
-  // the copies this checkpoint found this record holding - counted on the row by chargeSteps, after the verdict's write
+  // the copies this checkpoint found this record holding - found and counted on the row by chargeSteps, after the
+  // verdict's write; they hold nothing (AUTO-HOLD: the pieces are locked, ledger.js)
   const fresh = ledger.copies.length;
-  const dupes = (row.dupes ?? 0) + fresh;
-  const rising = lawHolds > 0 && (row.law_sig == null || row.law_sig === row.law_excused);
-  const strikes = (row.strikes ?? 0) + (rising ? 1 : 0);
-  const held = holdOf({ prev: row.held ?? null, law: lawHolds, strikes, dupes, fresh, over: budget.over, enforce: config.enforce });
+  // AUDIT AUTO-HOLD: a key on another piece holds while it is carried, and is NO STRIKE - it is no claim to the piece it was
+  // minted for (ledger.js), and a peer can hand one over a body or a chest: three planted were a week's hold for the one
+  // who took them up, as a contested claim would have been
+  const rising = lawHolds > 0 && lawFindings.some((f) => f.code !== 'uid') && (row.law_sig == null || row.law_sig === row.law_excused);
+  const count = lawCountOf({ strikes: row.strikes ?? null, served: row.law_holds ?? null, until: row.held_until ?? null, at: row.law_at ?? null }, { rising, holding: lawHolds > 0, nowS });
+  const held = holdOf({ prev: row.held ?? null, law: lawHolds, until: count.until, nowS, over: budget.over, enforce: config.enforce });
   // the cutover's outlier: a first judgement far past its level's line is flagged for staff, and holds nothing
   const outlier = first && judged.wealth > OUTLIER_ALLOWANCES * customsAllowance(lv.level);
   const clean = law === 0 && fresh === 0;
@@ -158,7 +201,10 @@ export async function verdictOn({ db, nowS }, { player, char, seq, key }, row, s
     judged_seq: seq,
     held,
     held_at: held == null ? null : held === row.held ? row.held_at ?? nowS : nowS,
-    strikes,
+    strikes: count.strikes,
+    held_until: count.until,
+    law_holds: count.served,
+    law_at: count.at,
     review: outlier ? 'outlier' : row.review ?? null,
     wealth: judged.wealth,
     allowance: budget.allowance,
@@ -172,11 +218,12 @@ export async function verdictOn({ db, nowS }, { player, char, seq, key }, row, s
     arms_top: judged.arms[0],
     arms_bow: judged.arms[1],
   };
-  // the first thing the law found, for the tab to name the piece to its player (only when it holds) - and a law hold
-  // that stands with nothing found (STRIKES_FOR_REVIEW come: staff's now) says so, `review`: the piece is gone, and
-  // "until it is gone" is no longer the way out (the Ring report: held still, and told only "something")
-  const why = held !== 'law' ? null : lawHolds ? (({ code, t }) => ({ code, t: t ?? null }))(lawFindings[0]) : { code: 'review', t: null };
-  return { steps: [verdictWrite(db, char, row, set), ...after], set, clean, law, copies: ledger.copies, over: budget.over, why };
+  // the first thing the law found, for the tab to name the piece to its player (only when it holds) - and a TIMED hold
+  // says its end, `until` (AUTO-HOLD): the piece gone or not, that is the way out (the Ring report: held still past the
+  // third, and told only "something")
+  const found = lawHolds ? (({ code, t }) => ({ code, t: t ?? null }))(lawFindings[0]) : null;
+  const why = held !== 'law' ? null : count.until != null ? { code: 'until', t: found?.t ?? null, until: count.until } : found;
+  return { steps: [verdictWrite(db, char, row, set), ...after], set, clean, law, copies: ledger.copies, over: budget.over, why, locked: ledger.locked };
 }
 
 /**
@@ -189,8 +236,9 @@ export function verdictWrite(db, char, row, s) {
     'UPDATE realm_characters SET judged_seq = ?2, held = ?3, held_at = ?4, strikes = ?5, review = ?6, wealth = ?7, witnessed = 0,'
     + ' allowance = CASE WHEN ?8 IS NULL OR allowance IS NULL THEN ?9 ELSE ?9 + (allowance - ?8) END,'
     + ' played_at = ?10, clean_obj = ?11, clean_seq = ?12, level_seen = ?13, level_at = ?14, law_sig = ?15, wealth_v = ?17,'
-    + ' arms_top = ?18, arms_bow = ?19'
+    + ' arms_top = ?18, arms_bow = ?19, held_until = ?20, law_holds = ?21, law_at = ?22'
     + ' WHERE id = ?1 AND judge_rev = ?16',
   ).bind(char, s.judged_seq, s.held, s.held_at, s.strikes, s.review, s.wealth, row.allowance ?? null, s.allowance, s.played_at,
-    s.clean_obj, s.clean_seq, s.level_seen, s.level_at, s.law_sig, row.judge_rev ?? 0, WEALTH_VERSION, s.arms_top ?? null, s.arms_bow ?? null);
+    s.clean_obj, s.clean_seq, s.level_seen, s.level_at, s.law_sig, row.judge_rev ?? 0, WEALTH_VERSION, s.arms_top ?? null, s.arms_bow ?? null,
+    s.held_until ?? null, s.law_holds ?? 0, s.law_at ?? null);
 }

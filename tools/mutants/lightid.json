@@ -5,7 +5,7 @@
     "old": "  if (out.ids) out.ids[i] = lightIdOf(l);\n",
     "new": "",
     "tests": [
-      "test/lightid.test.js"
+      "test/render/lightid.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "let id = l[LIGHT_ID] ?? _frozen.get(l);",
     "new": "let id;",
     "tests": [
-      "test/lightid.test.js"
+      "test/render/lightid.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "const _desc = { value: 0, writable: true, enumerable: false, configurable: false };",
     "new": "const _desc = { value: 0, writable: true, enumerable: true, configurable: false };",
     "tests": [
-      "test/lightid.test.js"
+      "test/render/lightid.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  nameLight(l, ++_seq);",
     "new": "  ++_seq;",
     "tests": [
-      "test/lightid.test.js"
+      "test/render/lightid.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  nameLight(e, lightIdOf(src));",
     "new": "  lightIdOf(src);",
     "tests": [
-      "test/lightid.test.js"
+      "test/render/lightid.test.js"
     ]
   },
   {
@@ -50,16 +50,16 @@
     "old": "  if (ids) for (let j = 0; j < count; j++) ids[at + j] = sids ? sids[from + j] : NO_LIGHT_ID;",
     "new": "  if (ids) for (let j = 0; j < count; j++) ids[at + j] = NO_LIGHT_ID;",
     "tests": [
-      "test/lightid.test.js"
+      "test/render/lightid.test.js"
     ]
   },
   {
     "name": "LIGHT-ID-nearest-written-by-hand",
-    "file": "src/world/cityLights.js",
+    "file": "src/world/city/cityLights.js",
     "old": "    packLight(out, i, l, Number.isFinite(w) ? w : CITY_LIGHT_RANGE);",
     "new": "    out[i * 4] = l.x; out[i * 4 + 1] = l.y; out[i * 4 + 2] = l.z; out[i * 4 + 3] = Number.isFinite(w) ? w : CITY_LIGHT_RANGE;",
     "tests": [
-      "test/lightid.test.js"
+      "test/render/lightid.test.js"
     ]
   },
   {
@@ -68,25 +68,25 @@
     "old": "  copyLights(out, live.length, base, 0, keep / 4);",
     "new": "  out.set(base.subarray(0, keep), live.length * 4);",
     "tests": [
-      "test/lightid.test.js"
+      "test/render/lightid.test.js"
     ]
   },
   {
     "name": "LIGHT-ID-the-court-written-by-hand",
-    "file": "src/world/gateArena.js",
+    "file": "src/world/gate/gateArena.js",
     "old": "packLight(data, n + i, l);",
     "new": "data.set([l.x, l.y, l.z, l.range], (n + i) * 4);",
     "tests": [
-      "test/lightid.test.js"
+      "test/render/lightid.test.js"
     ]
   },
   {
     "name": "LIGHT-ID-the-lantern-pool-keeps-its-slots-name",
-    "file": "src/world/cityLights.js",
+    "file": "src/world/city/cityLights.js",
     "old": "      adoptLight(e, l);   // LIGHT-ID",
     "new": "      void l;   // LIGHT-ID",
     "tests": [
-      "test/lightid.test.js"
+      "test/render/lightid.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "    const ids = lightIdsOf(data);",
     "new": "    const ids = null;",
     "tests": [
-      "test/lightid.test.js"
+      "test/render/lightid.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "      m.set(this._pointIds.subarray(0, keep), 1);\n      this._pointIds = m.subarray(0, keep + 1);",
     "new": "      this._pointIds = m.subarray(0, keep);",
     "tests": [
-      "test/lightid.test.js"
+      "test/render/lightid.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "if (!taken[k] && sid[k] === id) { slotOf[rank] = k; taken[k] = 1; own[rank] = 1; break; }",
     "new": "if (!taken[k] && sid[k] === id) { slotOf[rank] = k; taken[k] = 1; break; }",
     "tests": [
-      "test/lightid.test.js"
+      "test/render/lightid.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "const mover = own[rank] === 1 && !samePlace(sl, o, pos, 0) && SHADOW_TUNING.moverDirect !== false;",
     "new": "const mover = !samePlace(sl, o, pos, 0) && SHADOW_TUNING.moverDirect !== false;",
     "tests": [
-      "test/lightid.test.js"
+      "test/render/lightid.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "      if (!this.cacheOn || mover) {",
     "new": "      if (!this.cacheOn) {",
     "tests": [
-      "test/lightid.test.js"
+      "test/render/lightid.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "        this._slotCached[k] = 0; this._slotLiveDyn[k] = 0; this._faceDyn.fill(1, k * 6, k * 6 + 6);   // PERF-FACE: no cache to be equal to",
     "new": "        this._slotCached[k] = mover ? 1 : 0; this._slotLiveDyn[k] = 0; this._faceDyn.fill(1, k * 6, k * 6 + 6);   // PERF-FACE: no cache to be equal to",
     "tests": [
-      "test/lightid.test.js"
+      "test/render/lightid.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "      sid[k] = idOf(i);   // LIGHT-ID: whose maps these are",
     "new": "      sid[k] = NO_LIGHT_ID;   // LIGHT-ID: whose maps these are",
     "tests": [
-      "test/lightid.test.js"
+      "test/render/lightid.test.js"
     ]
   },
   {
@@ -158,8 +158,8 @@
     "old": "const hi = (i) => SHADOW_TUNING.loUnread !== false &&",
     "new": "const hi = (i) => false &&",
     "tests": [
-      "test/disc15.test.js",
-      "test/lightid.test.js"
+      "test/render/disc15.test.js",
+      "test/render/lightid.test.js"
     ]
   },
   {
@@ -168,7 +168,7 @@
     "old": "        if (fresh) { sl[o] = NaN; this._loBuilt[j] = 0; unminded[j] = 0; } else unminded[j] = 1;",
     "new": "        { sl[o] = NaN; this._loBuilt[j] = 0; unminded[j] = 0; }",
     "tests": [
-      "test/disc15.test.js"
+      "test/render/disc15.test.js"
     ]
   },
   {
@@ -177,7 +177,7 @@
     "old": "      if (!fresh && (!minded || rebuilds > 0)) {\n        sig = this._staticSignature(pos, far);\n        if (this._loSlotSig[j * 2] !== sig[0] || this._loSlotSig[j * 2 + 1] !== sig[1]) { draw = true; if (minded) rebuilds--; }",
     "new": "      if (!fresh && rebuilds > 0) {\n        sig = this._staticSignature(pos, far);\n        if (this._loSlotSig[j * 2] !== sig[0] || this._loSlotSig[j * 2 + 1] !== sig[1]) { draw = true; rebuilds--; }",
     "tests": [
-      "test/disc15.test.js"
+      "test/render/disc15.test.js"
     ]
   },
   {
@@ -186,7 +186,7 @@
     "old": "      if (!fresh && (!minded || rebuilds > 0)) {",
     "new": "      if (!fresh && minded && rebuilds > 0) {",
     "tests": [
-      "test/disc15.test.js"
+      "test/render/disc15.test.js"
     ]
   },
   {
@@ -195,43 +195,43 @@
     "old": "      let sig = null, draw = fresh;",
     "new": "      let sig = null, draw = fresh && (minded ? rebuilds-- > 0 : true);",
     "tests": [
-      "test/disc15.test.js"
+      "test/render/disc15.test.js"
     ]
   },
   {
     "name": "LIGHT-ID-his-glow-a-new-record-a-frame",
-    "file": "src/scenes/gateCourt.js",
+    "file": "src/scenes/gate/gateCourt.js",
     "old": "bossGlow(s, t, _glow)",
     "new": "bossGlow(s, t)",
     "tests": [
-      "test/lightid.test.js"
+      "test/render/lightid.test.js"
     ]
   },
   {
     "name": "LIGHT-ID-a-burst-slot-not-relit",
-    "file": "src/scenes/gateCourt.js",
+    "file": "src/scenes/gate/gateCourt.js",
     "old": "    else if (b.light) relight(b.light);",
     "new": "    else if (b.light) void b.light;",
     "tests": [
-      "test/lightid.test.js"
+      "test/render/lightid.test.js"
     ]
   },
   {
     "name": "LIGHT-ID-the-hours-pool-keeps-its-slots-name",
-    "file": "src/scenes/sdFx.js",
+    "file": "src/scenes/superDungeon/sdFx.js",
     "old": "    adoptLight(o, src);\n",
     "new": "",
     "tests": [
-      "test/lightid.test.js"
+      "test/render/lightid.test.js"
     ]
   },
   {
     "name": "LIGHT-ID-bossGlow-out-ignored",
-    "file": "src/world/gateBoss.js",
+    "file": "src/world/gate/gateBoss.js",
     "old": "    const o = out ?? { x: 0, y: 0, z: 0, range: 0, color: [0, 0, 0] };",
     "new": "    const o = { x: 0, y: 0, z: 0, range: 0, color: [0, 0, 0] };",
     "tests": [
-      "test/lightid.test.js"
+      "test/render/lightid.test.js"
     ]
   },
   {
@@ -240,7 +240,7 @@
     "old": "adoptLight({ ...l, color: _iilOn ? iilTorch(l).color : _dgColor }, l)",
     "new": "({ ...l, color: _iilOn ? iilTorch(l).color : _dgColor })",
     "tests": [
-      "test/lightid.test.js"
+      "test/render/lightid.test.js"
     ]
   },
   {
@@ -249,7 +249,7 @@
     "old": "adoptLight({ ...l, range: l.range * abyss.magicLightScale, color: (l.color ?? [1, 1, 1]).map((c) => c * abyss.magicLightScale) }, l)",
     "new": "({ ...l, range: l.range * abyss.magicLightScale, color: (l.color ?? [1, 1, 1]).map((c) => c * abyss.magicLightScale) })",
     "tests": [
-      "test/lightid.test.js"
+      "test/render/lightid.test.js"
     ]
   }
 ]

@@ -5,8 +5,8 @@
     "old": "export const RESPAWN_MS = 30 * 60 * 1000;",
     "new": "export const RESPAWN_MS = 3600 * 1000;",
     "tests": [
-      "test/world8.test.js",
-      "test/pvpdungeons_game.test.js"
+      "test/net/world8.test.js",
+      "test/systems/pvpdungeons_game.test.js"
     ]
   }
 ]

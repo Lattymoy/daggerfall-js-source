@@ -5,7 +5,7 @@
   "old": "    gl.uniform4f(c.glint, g ? g[0] : 0, g ? g[1] : 0, g ? g[2] : 0, g ? g[3] : 0);",
   "new": "    gl.uniform4f(c.glint, 0, 0, 0, 0);",
   "tests": [
-   "test/mwnpc5_bodyfx.test.js"
+   "test/render/mwnpc5_bodyfx.test.js"
   ]
  },
  {
@@ -14,7 +14,7 @@
   "old": "    gl.uniform4f(c.glint, g ? g[0] : 0, g ? g[1] : 0, g ? g[2] : 0, g ? g[3] : 0);",
   "new": "    if (g) gl.uniform4f(c.glint, g[0], g[1], g[2], g[3]);",
   "tests": [
-   "test/mwnpc5_bodyfx.test.js"
+   "test/render/mwnpc5_bodyfx.test.js"
   ]
  },
  {
@@ -23,7 +23,7 @@
   "old": "    gl.uniform2f(c.elite, fx?.elite || 0, fx?.time || 0);",
   "new": "    gl.uniform2f(c.elite, 0, 0);",
   "tests": [
-   "test/mwnpc5_bodyfx.test.js"
+   "test/render/mwnpc5_bodyfx.test.js"
   ]
  },
  {
@@ -32,7 +32,7 @@
   "old": "    gl.uniform2f(c.elite, fx?.elite || 0, fx?.time || 0);",
   "new": "    gl.uniform2f(c.elite, fx?.elite || 0, 0);",
   "tests": [
-   "test/mwnpc5_bodyfx.test.js"
+   "test/render/mwnpc5_bodyfx.test.js"
   ]
  },
  {
@@ -41,7 +41,7 @@
   "old": "    gl.uniform4f(c.dissolve, d ? d[0] : 0, d ? d[1] : 0, d ? d[2] : 0, d ? d[3] : 0);",
   "new": "    gl.uniform4f(c.dissolve, 0, 0, 0, 0);",
   "tests": [
-   "test/mwnpc5_bodyfx.test.js"
+   "test/render/mwnpc5_bodyfx.test.js"
   ]
  },
  {
@@ -50,7 +50,7 @@
   "old": "[it.tx / CHAR_SPRITE_RT_SIZE, it.ty / CHAR_SPRITE_RT_SIZE], q.fx, q.depth);",
   "new": "[it.tx / CHAR_SPRITE_RT_SIZE, it.ty / CHAR_SPRITE_RT_SIZE], null, q.depth);",
   "tests": [
-   "test/mwnpc5_bodyfx.test.js"
+   "test/render/mwnpc5_bodyfx.test.js"
   ]
  },
  {
@@ -59,7 +59,7 @@
   "old": "  if (fx.elite > 0) return 20;",
   "new": "  if (fx.elite > 0) return 2;",
   "tests": [
-   "test/mwnpc5_bodyfx.test.js"
+   "test/render/mwnpc5_bodyfx.test.js"
   ]
  },
  {
@@ -68,7 +68,7 @@
   "old": "  return fx.elite < 0 || fx.glint?.[3] > 0 ? 2 : 0;",
   "new": "  return fx.elite < 0 ? 2 : 0;",
   "tests": [
-   "test/mwnpc5_bodyfx.test.js"
+   "test/render/mwnpc5_bodyfx.test.js"
   ]
  },
  {
@@ -77,7 +77,7 @@
   "old": "  return fx.elite < 0 || fx.glint?.[3] > 0 ? 2 : 0;",
   "new": "  return fx.glint?.[3] > 0 ? 2 : 0;",
   "tests": [
-   "test/mwnpc5_bodyfx.test.js"
+   "test/render/mwnpc5_bodyfx.test.js"
   ]
  },
  {
@@ -86,7 +86,7 @@
   "old": "  if (!fx || fx.dissolve?.[0] > 0) return 0;",
   "new": "  if (!fx) return 0;",
   "tests": [
-   "test/mwnpc5_bodyfx.test.js"
+   "test/render/mwnpc5_bodyfx.test.js"
   ]
  },
  {
@@ -95,7 +95,7 @@
   "old": "  if (pad) {\n    const grow",
   "new": "  if (false) {\n    const grow",
   "tests": [
-   "test/mwnpc5_bodyfx.test.js"
+   "test/render/mwnpc5_bodyfx.test.js"
   ]
  },
  {
@@ -104,7 +104,7 @@
   "old": "    halfW += halfH * grow; halfH *= 1 + grow;",
   "new": "    halfH *= 1 + grow;",
   "tests": [
-   "test/mwnpc5_bodyfx.test.js"
+   "test/render/mwnpc5_bodyfx.test.js"
   ]
  },
  {
@@ -113,7 +113,7 @@
   "old": "    ph = Math.min(CHAR_SPRITE_RT_SIZE, ph + 2 * pad);",
   "new": "    ph = Math.min(CHAR_SPRITE_RT_SIZE, ph + pad);",
   "tests": [
-   "test/mwnpc5_bodyfx.test.js"
+   "test/render/mwnpc5_bodyfx.test.js"
   ]
  },
  {
@@ -122,7 +122,7 @@
   "old": "quad: { at, halfW, halfH, right, hitFlash, conceal, up: qUp, fx, depth } });",
   "new": "quad: { at, halfW, halfH, right, hitFlash, conceal, up: qUp, depth } });",
   "tests": [
-   "test/mwnpc5_bodyfx.test.js"
+   "test/render/mwnpc5_bodyfx.test.js"
   ]
  },
  {
@@ -131,34 +131,34 @@
   "old": "hitFlash, conceal, qUp, null, fx, depth);   // MWNPC5",
   "new": "hitFlash, conceal, qUp, null, null, depth);   // MWNPC5",
   "tests": [
-   "test/mwnpc5_bodyfx.test.js"
+   "test/render/mwnpc5_bodyfx.test.js"
   ]
  },
  {
   "name": "MWNPC5-drawthird-drops-fx",
   "file": "src/combat/fpArm.js",
-  "old": "{ center, halfW, halfH, anchor, hitFlash, conceal, up, fx }, proj, view, eye, MW_ARM_PIXEL);",
-  "new": "{ center, halfW, halfH, anchor, hitFlash, conceal, up }, proj, view, eye, MW_ARM_PIXEL);",
+  "old": "{ center, halfW, halfH, anchor, hitFlash, conceal, up, fx, glowLook: padLooks }, proj, view, eye, MW_ARM_PIXEL);",
+  "new": "{ center, halfW, halfH, anchor, hitFlash, conceal, up, glowLook: padLooks }, proj, view, eye, MW_ARM_PIXEL);",
   "tests": [
-   "test/mwnpc5_bodyfx.test.js"
+   "test/render/mwnpc5_bodyfx.test.js"
   ]
  },
  {
   "name": "MWNPC5-lane-drops-fxof",
-  "file": "src/net/peerBodies.js",
+  "file": "src/net/peer/peerBodies.js",
   "old": ", fx, cast, anchored, horse })",
   "new": ", fx: null, cast, anchored, horse })",
   "tests": [
-   "test/mwnpc5_bodyfx.test.js"
+   "test/render/mwnpc5_bodyfx.test.js"
   ]
  },
  {
   "name": "MWNPC5-lane-fxof-unkept",
-  "file": "src/net/peerBodies.js",
+  "file": "src/net/peer/peerBodies.js",
   "old": "    c.fxOf = fxOf;   // MWNPC5",
   "new": "    c.fxOf = null;   // MWNPC5",
   "tests": [
-   "test/mwnpc5_bodyfx.test.js"
+   "test/render/mwnpc5_bodyfx.test.js"
   ]
  }
 ]

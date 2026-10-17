@@ -3,16 +3,16 @@
 // SOUNDS - the ones Daggerfall never played and the enhanced skin adds.
 //
 // Three things ride it today:
-//   - the wind loop (systems/windAudio.js, WIND3): a soft, steady wind
+//   - the wind loop (systems/wind/windAudio.js, WIND3): a soft, steady wind
 //     under the enhanced outdoors, rising and falling with the wind's
 //     strength, silent indoors - a bed the port makes (FIELD-WIND1:
 //     Daggerfall's own wind clips, replayed end to end, were a moan every
 //     two seconds). It had its own row and pref (`windSound`) from WIND3
 //     to here; that row IS this row now.
-//   - the enhanced inventory's transfer cues (ui/enhancedInventory.js,
+//   - the enhanced inventory's transfer cues (ui/enhanced/enhancedInventory.js,
 //     MAC-O6): DoTransferItem's own gold clink and button click, which
 //     the classic window always played and the enhanced one never did.
-//   - the climb's sounds (player/climbSounds.js, CLIMB4): hands on stone,
+//   - the climb's sounds (player/climb/climbSounds.js, CLIMB4): hands on stone,
 //     boots on the wall, the haul over a sill, a leap's rush and the grit
 //     a failing grip lets go - eleven clips of the port's own
 //     (tools/climbSfx.mjs); Daggerfall's climber climbs in silence.

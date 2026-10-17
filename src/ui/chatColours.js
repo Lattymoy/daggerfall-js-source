@@ -6,13 +6,13 @@
 // ONE TABLE, TWO GROUNDS. Every colour comes twice: `light` for the dark grounds - Enhanced Plus's chat box, and the
 // lines that stand over the world while the chat is shut (each under the HUD's hard outline) - and `dark` for DFO
 // Grimoire's page, where the chat is written in ink. Each pair is tuned to read at 4.5:1 or better on its own ground
-// (test/chatcolours1.test.js measures every one against the grounds below), and the hues stay apart: a line's channel
+// (test/ui/chatcolours1.test.js measures every one against the grounds below), and the hues stay apart: a line's channel
 // is its words' colour, a speaker is their name's, and a line that names me wears the mention's gold.
 //
 // The channels the request named keep the colours it named; the three it did not (Language, Party) take hues none of
 // the others or the names use.
 
-/** The grounds the colours are read on - the darkest each can be (test/chatcolours1.test.js). Plus: the box's own
+/** The grounds the colours are read on - the darkest each can be (test/ui/chatcolours1.test.js). Plus: the box's own
  *  rgba(14,16,19,.84) over a white sky, its lightest; Grimoire: the cream page's darkest tenth, as measured off the
  *  rendered chat (the darkest twentieth of the cream page behind its lines). */
 export const CHAT_GROUNDS = Object.freeze({ light: '#343638', dark: '#c9a864' });

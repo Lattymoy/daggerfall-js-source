@@ -20,8 +20,8 @@
 //     ROAD_PARTY_MAX with the party's own extras (partyScale.js).
 // Off the road nothing changes. Pure. Not a DFU member - Ledger A (WILD-ROAD).
 
-import { ENEMY_BASICS } from '../characters/enemyBasics.js';
-import { SOLITARY_TYPES } from '../characters/mobileFactions.js';
+import { ENEMY_BASICS } from '../characters/enemy/enemyBasics.js';
+import { SOLITARY_TYPES } from '../characters/mobile/mobileFactions.js';
 
 /** SOLITARY_TYPES asked of any mobile id (the Set is typed by its own members). @param {number} t */
 const solitary = (t) => /** @type {Set<number>} */ (SOLITARY_TYPES).has(t);

@@ -5,7 +5,7 @@
     "old": "      rainWeather = rainLoop ? w : null;",
     "new": "      rainWeather = w;",
     "tests": [
-      "test/audit68_systems_a.test.js"
+      "test/systems/audit68_systems_a.test.js"
     ]
   },
   {
@@ -14,8 +14,8 @@
     "old": "    if (started) gate.pressCast = false;",
     "new": "",
     "tests": [
-      "test/audit68_systems_a.test.js",
-      "test/auditdisc7.test.js"
+      "test/systems/audit68_systems_a.test.js",
+      "test/systems/auditdisc7.test.js"
     ]
   },
   {
@@ -24,8 +24,8 @@
     "old": "  if (!isWearingArtifact(target, ARTIFACTS.RingOfNamira)) return;",
     "new": "  if (!Object.values(equipTableOf(target)).some((item) => item && (item.enchantments ?? []).some((e) => e?.type === ENCHANTMENT_TYPES.SpecialArtifactEffect && e.param === ARTIFACTS.RingOfNamira))) return;",
     "tests": [
-      "test/audit68_systems_a.test.js",
-      "test/artifacts.test.js"
+      "test/systems/audit68_systems_a.test.js",
+      "test/systems/artifacts.test.js"
     ]
   }
 ]

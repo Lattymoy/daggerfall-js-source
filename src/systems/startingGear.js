@@ -30,10 +30,10 @@
 import { addItem, addGoldPieces } from './inventory.js';   // E4: gold is the counter, not a bag stack
 import { giveWallet, isWalletItem } from './walletItem.js';   // WALLET1: the wallet rides the port's own tail
 import { equipItem } from './equip.js';
-import { templateByIndex, mintCondition, setItemFields } from './itemTemplates.js';   // MAC-N1: SetItem's name + value, the one export
+import { templateByIndex, mintCondition, setItemFields } from './item/itemTemplates.js';   // MAC-N1: SetItem's name + value, the one export
 import { CLOTHING_DYES } from '../characters/dyes.js';
 import { createWeapon } from '../combat/enemyEquipment.js';   // ItemBuilder.CreateWeapon's one home (the arrow arm)
-import { getBool } from './settings.js';   // SETT: PlayerTorchFromItems
+import { getBool } from './settings/settings.js';   // SETT: PlayerTorchFromItems
 import { survivalOn } from './survival/switch.js';   // AUDIT SURV E: the survival kit reaches the character chargen makes
 import { startingProvisions, startingCampfire } from './survival/items.js';
 import { sharedClockOn } from './worldTick.js';   // REST2: online the Campfire is the rest's

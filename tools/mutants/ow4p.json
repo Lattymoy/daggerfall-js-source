@@ -1,71 +1,71 @@
 [
   {
     "name": "OW4P1-reaim-same-walk",
-    "file": "src/systems/partyWalk.js",
+    "file": "src/systems/party/partyWalk.js",
     "old": "    if (live.h == null && !moved) return live;",
     "new": "    if (live.h == null) return live;",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "AUDIT OW4 P1: the leader re-aims a spot in the same pixel while it walks and gets the old walk back with the old sx/sz - the members walk on to A and are released there."
   },
   {
     "name": "OW4P1-one-axis",
-    "file": "src/systems/partyWalk.js",
+    "file": "src/systems/party/partyWalk.js",
     "old": "(Math.round(dest.point.x) !== live.sx || Math.round(dest.point.z) !== live.sz)",
     "new": "(Math.round(dest.point.x) !== live.sx)",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "AUDIT OW4 P1: a spot re-aimed north or south of the old one (the same x) is taken for the same point."
   },
   {
     "name": "OW4P1-walking-never-rerouted",
-    "file": "src/systems/partyWalk.js",
+    "file": "src/systems/party/partyWalk.js",
     "old": "return free && (journeying || !mine.balk) ? 'start' : null;",
     "new": "return free && !journeying && !mine.balk ? 'start' : null;",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "AUDIT OW4 P1: a member still walking an older set-out is never re-routed to the new one - they walk on to the old point."
   },
   {
     "name": "OW4P2-halt-forever",
-    "file": "src/systems/partyWalk.js",
+    "file": "src/systems/party/partyWalk.js",
     "old": "  if (walkHaltLapsed(tw, now)) return { tw: null, halt: false };   // AUDIT OW4 P2: off the pose, never set out again\n",
     "new": "",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "AUDIT OW4 P2: a halted walk never expires - a halted spot walk rides the pose for ever, and a Resume an hour later sets every yes-member out unasked."
   },
   {
     "name": "OW4P2-begin-revives",
-    "file": "src/systems/partyWalk.js",
+    "file": "src/systems/party/partyWalk.js",
     "old": "  const live = walkHaltLapsed(prev, now) ? null : prev;",
     "new": "  const live = prev;",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "AUDIT OW4 P2: a lapsed halt taken up again by the leader's click (nobody gathered) sets the old round out again."
   },
   {
     "name": "OW4P2-walking-lapses",
-    "file": "src/systems/partyWalk.js",
+    "file": "src/systems/party/partyWalk.js",
     "old": "  return !!tw && tw.h != null && now - tw.h > PARTY_WALK_HALT_MS;",
     "new": "  return !!tw && now - (tw.h ?? tw.go) > PARTY_WALK_HALT_MS;",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "AUDIT OW4 P2: a long walk that WALKS is taken for a lapsed halt - the leader's same click becomes a new round."
   },
   {
     "name": "OW4P2-bound-short",
-    "file": "src/systems/partyWalk.js",
+    "file": "src/systems/party/partyWalk.js",
     "old": "export const PARTY_WALK_HALT_MS = 5 * 60_000;",
     "new": "export const PARTY_WALK_HALT_MS = 60_000;",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "AUDIT OW4 P2: a bound shorter than a band's chase and its fight drops the walk from under a party still fighting."
   },
@@ -75,7 +75,7 @@
     "old": "    if (_walkBox && !townTalk.containsOverlay(_walkBox)) { _walkBox = null; _walkBoxRound = null; }",
     "new": "    if (_walkBox && townTalk.overlay !== _walkBox) { _walkBox = null; _walkBoxRound = null; }",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "AUDIT OW4 P3: the question with a window pushed over it is forgotten - it surfaces later untracked and answerable, never down with its round."
   },
@@ -85,7 +85,7 @@
     "old": "    box.withdraw();\n",
     "new": "",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "AUDIT OW4 P3: the question taken down while buried is left live (the identity guard leaves it) - it surfaces answerable past its round."
   },
@@ -95,7 +95,7 @@
     "old": "    if (walkAskStands({ tw: _walkHeard?.tw ?? null, round, now: walkNow(), danger: walkDanger() })) _walkMine = { at: round, yes, go: null };",
     "new": "    _walkMine = { at: round, yes, go: null };",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "AUDIT OW4 P3: a yes pressed after the asking (or with a foe near) still starts the member."
   },
@@ -105,7 +105,7 @@
     "old": "danger: walkDanger() })) _walkMine = { at: round, yes, go: null };",
     "new": "danger: false })) _walkMine = { at: round, yes, go: null };",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "AUDIT OW4 P3: a yes pressed with a foe come near, before the step takes the question down, still counts."
   },
@@ -115,7 +115,7 @@
     "old": "    containsOverlay(win) { return windows.containsWindow(win); },",
     "new": "    containsOverlay(win) { return overlay === win; },",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "AUDIT OW4 P3: the talk host answers for its slot, not its stack - a box under a pushed window reads as gone."
   },
@@ -125,27 +125,27 @@
     "old": "  withdraw() {\n    this.done = true;",
     "new": "  withdraw() {",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "AUDIT OW4 P3: a withdrawn question still answers - a key on it as it surfaces runs its arm."
   },
   {
     "name": "OW4P4-balk-is-stop",
-    "file": "src/systems/partyWalk.js",
+    "file": "src/systems/party/partyWalk.js",
     "old": "  return !stop ? null : WALK_BALKS.includes(/** @type {string} */ (why)) ? 'balk' : 'stop';",
     "new": "  return !stop ? null : 'stop';",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "AUDIT OW4 P4: a journey that cannot run is a plain stop - set out on every Resume, it stops at once and halts the party again."
   },
   {
     "name": "OW4P4-balk-restarted",
-    "file": "src/systems/partyWalk.js",
+    "file": "src/systems/party/partyWalk.js",
     "old": "free && (journeying || !mine.balk) ? 'start'",
     "new": "free ? 'start'",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "AUDIT OW4 P4: the balked member is set out by the party's next Resume, stops at once, and the leader halts again."
   },
@@ -155,7 +155,7 @@
     "old": "          if (report?.stopped) _walkStopWhy = report.stopped;",
     "new": "          if (report?.stopped) _walkStopWhy = null;",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "AUDIT OW4 P4: the travel frame never says why a journey stopped - every balk reads as a plain stop."
   },
@@ -165,7 +165,7 @@
     "old": "    _walkStopWhy = null;   // AUDIT OW4 P4: read once - a stop's reason is its own step's\n",
     "new": "",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "AUDIT OW4 P4: an old balk's reason outlives it - a later plain stop (a window) is read as a balk and the party passes the member by."
   },
@@ -175,7 +175,7 @@
     "old": "    if (stop === 'balk') _walkMine = { ..._walkMine, balk: true };",
     "new": "    if (stop === 'balk') _walkMine = { ..._walkMine };",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "AUDIT OW4 P4: the balk is said but not kept - the next set-out starts the member again."
   },
@@ -185,7 +185,7 @@
     "old": "    if (stop === 'stop' || stop === 'balk') _walkTs = now;",
     "new": "    if (stop === 'stop') _walkTs = now;",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "AUDIT OW4 P4: a balk is never said - the party walks on without the member, unhalted (a stop for one is no longer a stop for all)."
   },
@@ -195,7 +195,7 @@
     "old": "_walkMine = { ..._walkMine, go: tw.go, yes: ok, balk: false };",
     "new": "_walkMine = { ..._walkMine, go: tw.go, yes: ok };",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "AUDIT OW4 P4: the member who took their balk up themselves stays balked - a later plain stop and the party's Resume passes them by."
   },
@@ -205,17 +205,17 @@
     "old": "    && !worldMoveBusy() && !townTalk.overlay",
     "new": "    && !townTalk.overlay",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "AUDIT OW4 P5: a set-out landing during a fast-travel arrival plans the member's route from where the feet read mid-move."
   },
   {
     "name": "OW4P6-own-resume-halted",
-    "file": "src/systems/partyWalk.js",
+    "file": "src/systems/party/partyWalk.js",
     "old": "return !journeying ? null : was ? 'halt' : 'leave';",
     "new": "return journeying ? 'halt' : null;",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "AUDIT OW4 P6: a member's own Resume to the walk's place under a halt is stopped within a step, silently, for as long as the leader stands."
   },
@@ -225,7 +225,7 @@
     "old": "onWalk, was: _walkWas, free:",
     "new": "onWalk, free:",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "AUDIT OW4 P6: the host never says whether the halt stopped me - every own Resume under it reads as the halt landing, and is stopped."
   },
@@ -235,7 +235,7 @@
     "old": "    const gathered = memberPresent(leadRow) && distanceToPartyAccount(leadRow.acct) <= PARTY_WALK_RADIUS_M;",
     "new": "    const gathered = memberPresent(leadRow);",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "AUDIT OW4 P7: a member far off is asked (killed by the lifted run - no regex pins this line)."
   },
@@ -245,7 +245,7 @@
     "old": "    return s?.pixel ? { x: s.pixel.x, y: s.pixel.y, spot: false } : null;",
     "new": "    return null;",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "AUDIT OW4 P7: walkDestLive's third branch (the mod's own named journey) - the hand copy dropped it; the leader's Resume by the mod's map ends the walk (killed by the lifted run)."
   }

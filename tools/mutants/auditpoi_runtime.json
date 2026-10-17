@@ -5,7 +5,7 @@
     "old": "if (!sameStand(s.doc, e.doc)) s.place = null;",
     "new": "s.place = null;",
     "tests": [
-      "test/auditpoi_runtime.test.js"
+      "test/poi/auditpoi_runtime.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "if (!s.place || !(Math.abs(y - s.y) <= POI_Y_EPS)) {",
     "new": "if (!s.place || y !== s.y) {",
     "tests": [
-      "test/auditpoi_runtime.test.js"
+      "test/poi/auditpoi_runtime.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "(p.carry || !inside(p.localBox, f, t))",
     "new": "!inside(p.localBox, f, t)",
     "tests": [
-      "test/auditpoi_runtime.test.js"
+      "test/poi/auditpoi_runtime.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "if (!made) for (const p of parts) freePart(p);",
     "new": "void made;",
     "tests": [
-      "test/auditpoi_runtime.test.js"
+      "test/poi/auditpoi_runtime.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "try { job.it.return(undefined); }",
     "new": "try { void 0; }",
     "tests": [
-      "test/auditpoi_runtime.test.js"
+      "test/poi/auditpoi_runtime.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "      if (looks.get(l.look) === l) looks.delete(l.look);\n      throw e;",
     "new": "      throw e;",
     "tests": [
-      "test/auditpoi_runtime.test.js"
+      "test/poi/auditpoi_runtime.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "if (looks.get(l.look) !== l) return;   // AUDIT POI R3",
     "new": "if (false) return;   // AUDIT POI R3",
     "tests": [
-      "test/auditpoi_runtime.test.js"
+      "test/poi/auditpoi_runtime.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "    frameGrass();\n",
     "new": "    poiHost?.drawTranslucent(renderer, mwv.eye, yardCull);\n    frameGrass();\n",
     "tests": [
-      "test/auditpoi_runtime.test.js"
+      "test/poi/auditpoi_runtime.test.js"
     ]
   },
   {
@@ -77,8 +77,8 @@
     "old": "poiHost?.drawTranslucent(renderer, mwv.eye, yardCull);",
     "new": "poiHost?.drawTranslucent(renderer, cam.pos, yardCull);",
     "tests": [
-      "test/auditpoi_runtime.test.js",
-      "test/poi3b_panel.test.js"
+      "test/poi/auditpoi_runtime.test.js",
+      "test/poi/poi3b_panel.test.js"
     ]
   },
   {
@@ -87,7 +87,7 @@
     "old": "backFirst = m.twoSided && m.alpha === 'blend';",
     "new": "backFirst = false;",
     "tests": [
-      "test/auditpoi_runtime.test.js"
+      "test/poi/auditpoi_runtime.test.js"
     ]
   },
   {
@@ -96,7 +96,7 @@
     "old": "(cull && cull(p.box) !== DECOR_DRAW)",
     "new": "(cull && cull(p.box) === 2)",
     "tests": [
-      "test/auditpoi_runtime.test.js"
+      "test/poi/auditpoi_runtime.test.js"
     ]
   },
   {
@@ -105,7 +105,7 @@
     "old": "poiPartModelSteps(mesh, materials, recordOf, { scale });",
     "new": "poiPartModelSteps(mesh, materials, recordOf, { scale: null });",
     "tests": [
-      "test/auditpoi_runtime.test.js"
+      "test/poi/auditpoi_runtime.test.js"
     ]
   },
   {
@@ -114,7 +114,7 @@
     "old": "nx /= sx; ny /= sy; nz /= sz;",
     "new": "nx *= sx; ny *= sy; nz *= sz;",
     "tests": [
-      "test/auditpoi_runtime.test.js"
+      "test/poi/auditpoi_runtime.test.js"
     ]
   },
   {
@@ -123,7 +123,7 @@
     "old": "const k = 1 / sk[c];",
     "new": "const k = 1;",
     "tests": [
-      "test/auditpoi_runtime.test.js"
+      "test/poi/auditpoi_runtime.test.js"
     ]
   },
   {
@@ -132,7 +132,7 @@
     "old": "p.remodel = spawn(remodelSteps(p));",
     "new": "void 0;",
     "tests": [
-      "test/auditpoi_runtime.test.js"
+      "test/poi/auditpoi_runtime.test.js"
     ]
   },
   {
@@ -141,7 +141,7 @@
     "old": "      drawnOf(p);   // drawn this frame through the scale it now carries, never the last model's\n",
     "new": "",
     "tests": [
-      "test/auditpoi_runtime.test.js"
+      "test/poi/auditpoi_runtime.test.js"
     ]
   },
   {
@@ -150,7 +150,7 @@
     "old": "p.wound = mirrors(p.part.s) === mirrors(sk);",
     "new": "p.wound = true;",
     "tests": [
-      "test/auditpoi_runtime.test.js"
+      "test/poi/auditpoi_runtime.test.js"
     ]
   },
   {
@@ -159,16 +159,16 @@
     "old": "mirrored = !!scale && scale[0] * scale[1] * scale[2] < 0 }",
     "new": "mirrored = false }",
     "tests": [
-      "test/auditpoi_runtime.test.js"
+      "test/poi/auditpoi_runtime.test.js"
     ]
   },
   {
     "name": "AUDITPOI-R7-the-cap-unread",
-    "file": "src/ui/bountyMapMark.js",
+    "file": "src/ui/bounty/bountyMapMark.js",
     "old": "    if (out.length >= max) break;",
     "new": "    if (out.length >= BOUNTY_MARKS_MAX) break;",
     "tests": [
-      "test/auditpoi_runtime.test.js"
+      "test/poi/auditpoi_runtime.test.js"
     ]
   },
   {
@@ -177,16 +177,16 @@
     "old": "poiLegendText(), POI_MARKS_MAX);   // AUDIT POI R7",
     "new": "poiLegendText());   // AUDIT POI R7",
     "tests": [
-      "test/auditpoi_runtime.test.js"
+      "test/poi/auditpoi_runtime.test.js"
     ]
   },
   {
     "name": "AUDITPOI-R7-the-region-page-under-the-bountys-cap",
-    "file": "src/ui/travelMapWindow.js",
+    "file": "src/ui/travel/travelMapWindow.js",
     "old": "poiLegendText(), POI_MARKS_MAX);   // AUDIT POI R7",
     "new": "poiLegendText());   // AUDIT POI R7",
     "tests": [
-      "test/auditpoi_runtime.test.js"
+      "test/poi/auditpoi_runtime.test.js"
     ]
   },
   {
@@ -195,7 +195,7 @@
     "old": "if (units > 0 && clock() >= until) return false;",
     "new": "if (false) return false;",
     "tests": [
-      "test/auditpoi_runtime.test.js"
+      "test/poi/auditpoi_runtime.test.js"
     ]
   },
   {
@@ -204,7 +204,7 @@
     "old": "    standDown() {\n      const col = collider();",
     "new": "    standDown() {\n      for (const s of [...standing.values()]) takeDown(s);\n      const col = collider();",
     "tests": [
-      "test/auditpoi_runtime.test.js"
+      "test/poi/auditpoi_runtime.test.js"
     ]
   },
   {
@@ -213,7 +213,7 @@
     "old": "if (p.carry || turn()) {",
     "new": "if (true) {",
     "tests": [
-      "test/auditpoi_runtime.test.js"
+      "test/poi/auditpoi_runtime.test.js"
     ]
   },
   {
@@ -222,7 +222,7 @@
     "old": "if (p.carry || turn()) {",
     "new": "if (turn()) {",
     "tests": [
-      "test/auditpoi_runtime.test.js"
+      "test/poi/auditpoi_runtime.test.js"
     ]
   },
   {
@@ -231,7 +231,7 @@
     "old": "if (_torchesMode === 'exterior') poiHost?.standDown();",
     "new": "if (_torchesMode === 'exterior') poiHost?.destroyAll();",
     "tests": [
-      "test/auditpoi_runtime.test.js"
+      "test/poi/auditpoi_runtime.test.js"
     ]
   },
   {
@@ -240,7 +240,7 @@
     "old": "      yield null;\n      gl.readPixels(",
     "new": "      gl.readPixels(",
     "tests": [
-      "test/auditpoi_runtime.test.js"
+      "test/poi/auditpoi_runtime.test.js"
     ]
   },
   {
@@ -249,7 +249,7 @@
     "old": "if (m.alpha === 'blend' || cut !== null) yield* bleedClearSteps(out, w, h);",
     "new": "void bleedClearSteps;",
     "tests": [
-      "test/auditpoi_runtime.test.js"
+      "test/poi/auditpoi_runtime.test.js"
     ]
   },
   {
@@ -258,7 +258,7 @@
     "old": "for (let q = start; q < stop; q++) state[ring[q]] = 2;",
     "new": "void stop;",
     "tests": [
-      "test/auditpoi_runtime.test.js"
+      "test/poi/auditpoi_runtime.test.js"
     ]
   },
   {
@@ -267,7 +267,7 @@
     "old": "if (gl) { try { read = yield* readThroughGl(gl, bmp); } catch { read = null; } }",
     "new": "void readThroughGl;",
     "tests": [
-      "test/auditpoi_runtime.test.js"
+      "test/poi/auditpoi_runtime.test.js"
     ]
   },
   {
@@ -276,7 +276,7 @@
     "old": "{ premultiplyAlpha: 'none', colorSpaceConversion: 'none' }",
     "new": "{ premultiplyAlpha: 'default', colorSpaceConversion: 'none' }",
     "tests": [
-      "test/auditpoi_runtime.test.js"
+      "test/poi/auditpoi_runtime.test.js"
     ]
   },
   {
@@ -285,7 +285,7 @@
     "old": "if (decodedBytes <= keepDecodedBytes) break;",
     "new": "break;",
     "tests": [
-      "test/auditpoi_runtime.test.js"
+      "test/poi/auditpoi_runtime.test.js"
     ]
   },
   {
@@ -294,7 +294,7 @@
     "old": "return byPixel.get(py * 1000 + px) ?? NONE;",
     "new": "return byPixel.get(py * 1000 + px) ?? [];",
     "tests": [
-      "test/auditpoi_runtime.test.js"
+      "test/poi/auditpoi_runtime.test.js"
     ]
   },
   {
@@ -303,7 +303,7 @@
     "old": "bx = p.box ??= [0, 0, 0, 0, 0, 0];",
     "new": "bx = p.box = [0, 0, 0, 0, 0, 0];",
     "tests": [
-      "test/auditpoi_runtime.test.js"
+      "test/poi/auditpoi_runtime.test.js"
     ]
   },
   {
@@ -312,7 +312,7 @@
     "old": "          out.push(row);",
     "new": "          out.push({ ...row });",
     "tests": [
-      "test/auditpoi_runtime.test.js"
+      "test/poi/auditpoi_runtime.test.js"
     ]
   },
   {
@@ -321,7 +321,7 @@
     "old": "      again = true;\n      return asking.then(",
     "new": "      return asking.then(",
     "tests": [
-      "test/auditpoi_runtime.test.js"
+      "test/poi/auditpoi_runtime.test.js"
     ]
   },
   {
@@ -330,7 +330,7 @@
     "old": "if (b !== heldBase) { heldBase = b; etag = null; version = -1; floor = -1; }",
     "new": "if (b !== heldBase) { heldBase = b; }",
     "tests": [
-      "test/auditpoi_runtime.test.js"
+      "test/poi/auditpoi_runtime.test.js"
     ]
   },
   {
@@ -339,7 +339,7 @@
     "old": "if (!b || kept.base !== b) return false;",
     "new": "if (!b) return false;",
     "tests": [
-      "test/auditpoi_runtime.test.js"
+      "test/poi/auditpoi_runtime.test.js"
     ]
   },
   {
@@ -348,7 +348,7 @@
     "old": "if (Number.isInteger(body?.v) && body.v < floor)",
     "new": "if (false)",
     "tests": [
-      "test/auditpoi_runtime.test.js"
+      "test/poi/auditpoi_runtime.test.js"
     ]
   }
 ]

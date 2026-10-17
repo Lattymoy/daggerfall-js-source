@@ -1,5 +1,5 @@
 // THE MOD WORLD-DATA LOADER (RR3b) - a vendored mod's WorldData/*.json
-// into the world-data door (formats/worldDataReplacement.js), the way
+// into the world-data door (formats/worldData/worldDataReplacement.js), the way
 // ModManager hands DFU's WorldDataReplacement a mod's TextAssets. Vite's
 // glob turns each file into a lazy chunk (the fort's block is 230 KB);
 // loadModWorldData() reads them ALL once, before the first region loads,
@@ -8,13 +8,13 @@
 //
 // BROWSER-ONLY: import.meta.glob is a Vite compile-time macro - node
 // tests register their JSON on the door from fs.
-import { registerWorldDataAsset, registerWorldDataPack, installWorldDataReplacement, boundWorldDataBlocks, quietLocationOverrides, latchWorldDataDoor, worldDataDoorOpen } from '../formats/worldDataReplacement.js';
-import { rebuildWorldDataPatch, canonicalSha256 } from '../formats/worldDataPatch.js';
-import { openWorldDataPack, packFileSha256, readPackText } from '../formats/worldDataPack.js';
+import { registerWorldDataAsset, registerWorldDataPack, installWorldDataReplacement, boundWorldDataBlocks, quietLocationOverrides, latchWorldDataDoor, worldDataDoorOpen } from '../formats/worldData/worldDataReplacement.js';
+import { rebuildWorldDataPatch, canonicalSha256 } from '../formats/worldData/worldDataPatch.js';
+import { openWorldDataPack, packFileSha256, readPackText } from '../formats/worldData/worldDataPack.js';
 import { modSetting, latchModLoaded, modLatchedOn } from '../systems/modSettings.js';
 import { configureLayoutPins, vendorsPinnedIn } from '../systems/layoutPins.js';   // WD3: the layout a save's towns were made in
 import { installTownStandIns } from '../world/townStandIns.js';   // WD3: the peer mods' pieces the town packs place, the port's own
-import { installArena } from '../world/arenaCity.js';   // ARENA1: the Arena of Daggerfall - the port's own block, the city's edit and the colosseum
+import { installArena } from '../world/arena/arenaCity.js';   // ARENA1: the Arena of Daggerfall - the port's own block, the city's edit and the colosseum
 import { installImmersiveTravelGates } from '../world/immersiveTravelGates.js';   // IT1: the carriages, on whichever gate is served
 import { IMMERSIVE_TRAVEL_VENDOR, immersiveTravelLoaded } from '../systems/immersiveTravel.js';   // AUDIT IT1 G3: the mod loaded for the game
 
@@ -23,10 +23,10 @@ import { IMMERSIVE_TRAVEL_VENDOR, immersiveTravelLoaded } from '../systems/immer
 // on the macro - only a call would, and node never calls it.
 const globFiles = () => import.meta.glob('../../vendor/*/WorldData/*.json', { import: 'default' });
 // WD1: a mod whose world data is a whole classic block with its edits in it
-// ships the edit only (formats/worldDataPatch.js); rebuilt here from the
+// ships the edit only (formats/worldData/worldDataPatch.js); rebuilt here from the
 // player's BLOCKS.BSA and registered under the file's own DFU name.
 const globPatches = () => import.meta.glob('../../vendor/*/WorldDataPatches/*.json', { import: 'default' });
-// WD3: a mod whose world data is thousands of files ships ONE pack (formats/worldDataPack.js), gzipped, as a URL the
+// WD3: a mod whose world data is thousands of files ships ONE pack (formats/worldData/worldDataPack.js), gzipped, as a URL the
 // build emits beside the bundle (never a JS chunk, never inlined) - fetched only when its mod is loaded for the game.
 const globPacks = () => import.meta.glob('../../vendor/*/WorldDataPack/*.pack.json.gz', { eager: true, query: '?url', import: 'default' });
 const vendorOf = (path) => /vendor\/([^/]+)\/WorldData(?:Patches|Pack)?\//.exec(path)?.[1] ?? '';
@@ -48,7 +48,7 @@ export async function loadModWorldData() {
   if (_loaded) return _loaded;
   _loaded = (async () => {
     installWorldDataReplacement();
-    await installArena();   // ARENA1: behind no switch and no door - the arena stands in every layout (world/arenaCity.js)
+    await installArena();   // ARENA1: behind no switch and no door - the arena stands in every layout (world/arena/arenaCity.js)
     const door = latchWorldDataDoor();   // WD3 (AUDIT WD3 P2/P3): Replace Game Artwork (online, the room) read once for the game
     let n = 0;
     await Promise.all(Object.entries(globFiles()).map(async ([path, load]) => {

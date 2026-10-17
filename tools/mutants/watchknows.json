@@ -5,7 +5,7 @@
     "old": "return rep > 40 ? 'honoured'",
     "new": "return rep > 50 ? 'honoured'",
     "tests": [
-      "test/watchknows_watch.test.js"
+      "test/systems/livingWorld/watchknows_watch.test.js"
     ],
     "note": "Above 40 honoured: honored and up (legalBands.js)."
   },
@@ -15,7 +15,7 @@
     "old": ": rep > 10 ? 'respected'",
     "new": ": rep > 20 ? 'respected'",
     "tests": [
-      "test/watchknows_watch.test.js"
+      "test/systems/livingWorld/watchknows_watch.test.js"
     ],
     "note": "Above 10 respected: respected and admired."
   },
@@ -25,7 +25,7 @@
     "old": ": rep >= 0 ? 'citizen'",
     "new": ": rep > 0 ? 'citizen'",
     "tests": [
-      "test/watchknows_watch.test.js"
+      "test/systems/livingWorld/watchknows_watch.test.js"
     ],
     "note": "0 a common citizen, not watched."
   },
@@ -35,7 +35,7 @@
     "old": "  if (known) return 'known';\n",
     "new": "",
     "tests": [
-      "test/watchknows_watch.test.js"
+      "test/systems/livingWorld/watchknows_watch.test.js"
     ],
     "note": "A known criminal is known whatever the number says (banished)."
   },
@@ -45,7 +45,7 @@
     "old": "res.guard && this.entryOf(res, t)?.e.duty ?",
     "new": "res.guard ?",
     "tests": [
-      "test/watchknows_watch.test.js"
+      "test/systems/livingWorld/watchknows_watch.test.js"
     ],
     "note": "Off duty, a townsman: the street's own word."
   },
@@ -55,7 +55,7 @@
     "old": "const law = !cold && res.guard",
     "new": "const law = res.guard",
     "tests": [
-      "test/watchknows_watch.test.js"
+      "test/systems/livingWorld/watchknows_watch.test.js"
     ],
     "note": "A grudge of his own stays cold, whatever the law thinks."
   },
@@ -65,7 +65,7 @@
     "old": "this.o.legalStanding?.(this.o.town.region)",
     "new": "this.o.legalStanding?.(0)",
     "tests": [
-      "test/watchknows_watch.test.js"
+      "test/systems/livingWorld/watchknows_watch.test.js"
     ],
     "note": "The town's own region's law."
   },
@@ -75,7 +75,7 @@
     "old": " || pool === WATCH_GREETINGS.citizen;",
     "new": ";",
     "tests": [
-      "test/watchknows_watch.test.js"
+      "test/systems/livingWorld/watchknows_watch.test.js"
     ],
     "note": "To a common citizen now and then, as a stranger speaks."
   },
@@ -85,7 +85,7 @@
     "old": ", town: this.o.townName ?? ''",
     "new": "",
     "tests": [
-      "test/watchknows_watch.test.js"
+      "test/systems/livingWorld/watchknows_watch.test.js"
     ],
     "note": "The watched told the town's name."
   },
@@ -95,7 +95,7 @@
     "old": "  if (!WARNABLE_CRIMES.includes(crime)) return false;\n",
     "new": "",
     "tests": [
-      "test/watchknows_watch.test.js"
+      "test/systems/livingWorld/watchknows_watch.test.js"
     ],
     "note": "Only a minor offence is warned."
   },
@@ -105,7 +105,7 @@
     "old": "CRIMES.Vagrancy, CRIMES.Pickpocketing]);",
     "new": "CRIMES.Vagrancy, CRIMES.Pickpocketing, CRIMES.Theft]);",
     "tests": [
-      "test/watchknows_watch.test.js"
+      "test/systems/livingWorld/watchknows_watch.test.js"
     ],
     "note": "The four, no more."
   },
@@ -115,7 +115,7 @@
     "old": "  if (knownCriminal(player, regionIndex, { ownNow, worldNow })) return false;\n  return !Number.isFinite",
     "new": "  return !Number.isFinite",
     "tests": [
-      "test/watchknows_watch.test.js"
+      "test/systems/livingWorld/watchknows_watch.test.js"
     ],
     "note": "A known criminal's face the watch knows: never warned."
   },
@@ -125,7 +125,7 @@
     "old": "  return !Number.isFinite(standingOf(player).warned[regionIndex]);",
     "new": "  return true;",
     "tests": [
-      "test/watchknows_watch.test.js"
+      "test/systems/livingWorld/watchknows_watch.test.js"
     ],
     "note": "The first offence alone."
   },
@@ -135,7 +135,7 @@
     "old": "{ standingOf(player).warned[regionIndex] = ownNow; }",
     "new": "{ void player; void regionIndex; void ownNow; }",
     "tests": [
-      "test/watchknows_watch.test.js"
+      "test/systems/livingWorld/watchknows_watch.test.js"
     ],
     "note": "The warning noted."
   },
@@ -145,7 +145,7 @@
     "old": ", warned: { ...s.warned } };",
     "new": " };",
     "tests": [
-      "test/watchknows_watch.test.js"
+      "test/systems/livingWorld/watchknows_watch.test.js"
     ],
     "note": "The note saved."
   },
@@ -155,7 +155,7 @@
     "old": "  Object.assign(s.warned, num(snap?.warned));\n",
     "new": "",
     "tests": [
-      "test/watchknows_watch.test.js"
+      "test/systems/livingWorld/watchknows_watch.test.js"
     ],
     "note": "The note restored."
   },
@@ -165,7 +165,7 @@
     "old": "warnsFirst() && warningDue(",
     "new": "warningDue(",
     "tests": [
-      "test/watchknows_watch.test.js"
+      "test/systems/livingWorld/watchknows_watch.test.js"
     ],
     "note": "DFU's watch (the classic lane) always the box."
   },
@@ -175,7 +175,7 @@
     "old": "if (!beast && !playerEntity.haveShownSurrenderDialogue && warnsFirst()",
     "new": "if (!playerEntity.haveShownSurrenderDialogue && warnsFirst()",
     "tests": [
-      "test/watchknows_watch.test.js"
+      "test/systems/livingWorld/watchknows_watch.test.js"
     ],
     "note": "A beast halted as a beast."
   },
@@ -185,7 +185,7 @@
     "old": "if (!beast && !playerEntity.haveShownSurrenderDialogue && warnsFirst()",
     "new": "if (!beast && warnsFirst()",
     "tests": [
-      "test/watchknows_watch.test.js"
+      "test/systems/livingWorld/watchknows_watch.test.js"
     ],
     "note": "A chase the box asked in is the box's."
   },
@@ -195,7 +195,7 @@
     "old": "      chargeOnce();\n      noteWarning(",
     "new": "      noteWarning(",
     "tests": [
-      "test/watchknows_watch.test.js"
+      "test/systems/livingWorld/watchknows_watch.test.js"
     ],
     "note": "Charged as the box would."
   },
@@ -205,7 +205,7 @@
     "old": "      noteWarning(playerEntity, region(), ownMinutes());\n",
     "new": "",
     "tests": [
-      "test/watchknows_watch.test.js"
+      "test/systems/livingWorld/watchknows_watch.test.js"
     ],
     "note": "The warning noted where it is given."
   },
@@ -215,7 +215,7 @@
     "old": "      setCrimeCommitted(playerEntity, 0);\n      townTalk.showOverlay(new ChoiceWindow({ lines: warningLines(",
     "new": "      townTalk.showOverlay(new ChoiceWindow({ lines: warningLines(",
     "tests": [
-      "test/watchknows_watch.test.js"
+      "test/systems/livingWorld/watchknows_watch.test.js"
     ],
     "note": "The crime let go - the watch walks off with it."
   },
@@ -225,7 +225,7 @@
     "old": "lines: warningLines(crime, regionName(region())) }));\n      return true;",
     "new": "lines: warningLines(crime, regionName(region())) }));\n      return false;",
     "tests": [
-      "test/watchknows_watch.test.js"
+      "test/systems/livingWorld/watchknows_watch.test.js"
     ],
     "note": "The blow withheld."
   },
@@ -235,7 +235,7 @@
     "old": "`Hold! ${CRIME_NAMES[crime] ?? 'That'} is against the law of ${name}.`",
     "new": "`Halt! ${CRIME_NAMES[crime] ?? 'That'} is against the law of ${name}.`",
     "tests": [
-      "test/watchknows_watch.test.js"
+      "test/systems/livingWorld/watchknows_watch.test.js"
     ],
     "note": "Hold!, the crime by name, the region's."
   },
@@ -245,7 +245,7 @@
     "old": "warnsFirst: () => livingWorldOn(),",
     "new": "warnsFirst: () => true,",
     "tests": [
-      "test/watchknows_watch.test.js"
+      "test/systems/livingWorld/watchknows_watch.test.js"
     ],
     "note": "The living world's watch alone."
   }

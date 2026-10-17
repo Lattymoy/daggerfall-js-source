@@ -5,7 +5,7 @@
     "old": "if (sharedClockOn()) { if (tickInFlight()) { advanceOwnMinutes(minutes); _raiseWaiting = true; return null; } return this.tick(0, undefined, 0, minutes); }",
     "new": "if (sharedClockOn()) { if (tickInFlight()) { advanceOwnMinutes(minutes); _raiseWaiting = true; return null; } return this.tick(0, undefined, 0); }",
     "tests": [
-      "test/lived1.test.js"
+      "test/systems/lived1.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    _ownMinutes = classicMinutes + (worldTo - worldFrom) + (raiseMinutes > 0 ? raiseMinutes : 0);",
     "new": "    _ownMinutes = classicMinutes + (raiseMinutes > 0 ? raiseMinutes : 0);",
     "tests": [
-      "test/lived1.test.js"
+      "test/systems/lived1.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    classicMinutes = _ownMinutes ?? worldFrom;",
     "new": "    classicMinutes = ownMinutes();",
     "tests": [
-      "test/lived1.test.js"
+      "test/systems/lived1.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  const magicRoundWindow = claimMagicRounds(classicMinutes, next);",
     "new": "  const magicRoundWindow = claimMagicRounds(_sharedClock ? worldFrom : classicMinutes, _sharedClock ? worldTo : next);",
     "tests": [
-      "test/lived1.test.js"
+      "test/systems/lived1.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  const rounds = runMagicRoundsFor(entity, magicRoundWindow.from, magicRoundWindow.to, { sinks, rolls, say, skyMinutes: _sharedClock ? skyMinutes() : null });",
     "new": "  const rounds = runMagicRoundsFor(entity, magicRoundWindow.from, magicRoundWindow.to, { sinks, rolls, say, skyMinutes: null });",
     "tests": [
-      "test/lived1.test.js"
+      "test/systems/lived1.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "    vampirismMagicRound(entity, { nowMinutes: clockMinutes, skyMinutes: sky });",
     "new": "    vampirismMagicRound(entity, { nowMinutes: sky, skyMinutes: sky });",
     "tests": [
-      "test/lived1.test.js"
+      "test/systems/lived1.test.js"
     ]
   },
   {
@@ -59,8 +59,8 @@
     "old": "  const mod = vampireStatMod(skyMinutes, racialSunAverse(entity));",
     "new": "  const mod = vampireStatMod(nowMinutes, racialSunAverse(entity));",
     "tests": [
-      "test/lived1.test.js",
-      "test/vampday.test.js"
+      "test/systems/lived1.test.js",
+      "test/systems/vampday.test.js"
     ]
   },
   {
@@ -69,7 +69,7 @@
     "old": "    updateDiseases(entity, Math.floor((r + 1) / MINUTES_PER_DAY), sinks, rolls, say);",
     "new": "    updateDiseases(entity, Math.floor(sky / MINUTES_PER_DAY), sinks, rolls, say);",
     "tests": [
-      "test/lived1.test.js"
+      "test/systems/lived1.test.js"
     ]
   },
   {
@@ -78,7 +78,7 @@
     "old": "    runInfections(entity, Math.floor(clockMinutes / MINUTES_PER_DAY), { clockMinutes });",
     "new": "    runInfections(entity, Math.floor(sky / MINUTES_PER_DAY), { clockMinutes });",
     "tests": [
-      "test/lived1.test.js"
+      "test/systems/lived1.test.js"
     ]
   },
   {
@@ -87,7 +87,7 @@
     "old": "    runDayChange({ entity, lastMinutes, nowMinutes, rolls, say, arms: DAY_ARMS.own });",
     "new": "    runDayChange({ entity, lastMinutes: Math.floor(worldFrom), nowMinutes: Math.floor(worldTo), rolls, say, arms: DAY_ARMS.own });",
     "tests": [
-      "test/lived1.test.js"
+      "test/systems/lived1.test.js"
     ]
   },
   {
@@ -96,8 +96,8 @@
     "old": "    runCalendarArms(entity, lastMinutes, nowMinutes, { rolls, arms: DAY_ARMS.own });",
     "new": "    runCalendarArms(entity, Math.floor(worldFrom), Math.floor(worldTo), { rolls, arms: DAY_ARMS.own });",
     "tests": [
-      "test/lived1.test.js",
-      "test/auditdisc28_time.test.js"
+      "test/systems/lived1.test.js",
+      "test/systems/auditdisc28_time.test.js"
     ]
   },
   {
@@ -106,7 +106,7 @@
     "old": "    removeExpiredItems(entity, Math.floor(next));",
     "new": "    removeExpiredItems(entity, Math.floor(worldMinutes()));",
     "tests": [
-      "test/lived1.test.js"
+      "test/systems/lived1.test.js"
     ]
   },
   {
@@ -115,7 +115,7 @@
     "old": "  _sharedLastTick = _sharedClock ? nowMinutes : null;\n  return true;",
     "new": "  _sharedLastTick = _sharedClock ? (_sharedLastTick ?? nowMinutes) : null;\n  return true;",
     "tests": [
-      "test/lived1.test.js"
+      "test/systems/lived1.test.js"
     ]
   },
   {
@@ -124,43 +124,43 @@
     "old": "  if (_sharedClock) _sharedLastTick = nowMinutes;\n  entity.preventEnemySpawns = true;",
     "new": "  entity.preventEnemySpawns = true;",
     "tests": [
-      "test/lived1.test.js"
+      "test/systems/lived1.test.js"
     ]
   },
   {
     "name": "LIVED1-the-load-restores-the-worlds-minute-as-theirs",
-    "file": "src/systems/save.js",
+    "file": "src/systems/save/save.js",
     "old": "    setOwnMinutes(own);",
     "new": "    setOwnMinutes(at);",
     "tests": [
-      "test/lived1.test.js"
+      "test/systems/lived1.test.js"
     ]
   },
   {
     "name": "LIVED1-the-save-forgets-the-worlds-minute",
-    "file": "src/systems/save.js",
+    "file": "src/systems/save/save.js",
     "old": "  if (sharedClockOn()) snap.worldMinutes = worldMinutesToSave();\n",
     "new": "",
     "tests": [
-      "test/lived1.test.js"
+      "test/systems/lived1.test.js"
     ]
   },
   {
     "name": "LIVED1-the-absence-is-measured-on-the-characters-clock",
-    "file": "src/systems/save.js",
+    "file": "src/systems/save/save.js",
     "old": "const left = snap.joinFresh ? null : Number.isFinite(snap.worldMinutes) ? Math.floor(snap.worldMinutes) : own;",
     "new": "const left = snap.joinFresh ? null : own;",
     "tests": [
-      "test/lived1.test.js"
+      "test/systems/lived1.test.js"
     ]
   },
   {
     "name": "LIVED1-the-load-reads-the-needs-on-the-worlds-clock",
-    "file": "src/systems/save.js",
+    "file": "src/systems/save/save.js",
     "old": "    alignSurvival(entity, own, own);",
     "new": "    alignSurvival(entity, Math.floor(at), Math.floor(at));",
     "tests": [
-      "test/lived1.test.js"
+      "test/systems/lived1.test.js"
     ]
   },
   {
@@ -169,8 +169,8 @@
     "old": "  const left = Math.max(0, Math.ceil(untilMinutes - ownMinutes()));",
     "new": "  const left = Math.max(0, Math.ceil(untilMinutes - worldMinutes()));",
     "tests": [
-      "test/lived1.test.js",
-      "test/ol3.test.js"
+      "test/systems/lived1.test.js",
+      "test/systems/ol3.test.js"
     ]
   },
   {
@@ -179,8 +179,8 @@
     "old": "  const playMinutes = Math.ceil(left / ONLINE_MINUTES_PER_MS / 60000);",
     "new": "  const playMinutes = left;",
     "tests": [
-      "test/lived1.test.js",
-      "test/ol3.test.js"
+      "test/systems/lived1.test.js",
+      "test/systems/ol3.test.js"
     ]
   },
   {
@@ -189,7 +189,7 @@
     "old": "  const real = Math.max(1, Math.ceil(ms / 60000));",
     "new": "  const real = Math.max(1, Math.ceil(dusk - sky));",
     "tests": [
-      "test/lived1.test.js"
+      "test/systems/lived1.test.js"
     ]
   },
   {
@@ -198,7 +198,7 @@
     "old": "  function withNightfall(text) { const nf = worldNightfallText(); return nf ? `${text} ${nf}` : text; }",
     "new": "  function withNightfall(text) { return text; }",
     "tests": [
-      "test/lived1.test.js"
+      "test/systems/lived1.test.js"
     ]
   },
   {
@@ -207,8 +207,8 @@
     "old": "setSyntheticTimeIncrease(true); playerTicker.advance(computed.minutes);",
     "new": "setSyntheticTimeIncrease(true); if (!sharedClockOn()) playerTicker.advance(computed.minutes);",
     "tests": [
-      "test/lived1.test.js",
-      "test/audit64_travel.test.js"
+      "test/systems/lived1.test.js",
+      "test/systems/audit64_travel.test.js"
     ]
   },
   {
@@ -217,7 +217,7 @@
     "old": "      room, nowMinutes: now, date: { dayOfYear: dayOfYearFromMinutes(h.worldNow?.() ?? now) },",
     "new": "      room, nowMinutes: now, date: { dayOfYear: dayOfYearFromMinutes(now) },",
     "tests": [
-      "test/lived1.test.js"
+      "test/systems/lived1.test.js"
     ]
   },
   {
@@ -226,7 +226,7 @@
     "old": "      worldNow: () => Math.floor(skyMinutes()),   // LIVED1: the calendar",
     "new": "      worldNow: () => Math.floor(ownMinutes()),   // LIVED1: the calendar",
     "tests": [
-      "test/lived1.test.js"
+      "test/systems/lived1.test.js"
     ]
   },
   {
@@ -235,8 +235,8 @@
     "old": "const timeOfDay = ((Number.isFinite(ctx.skyMinutes) ? ctx.skyMinutes : ctx.gameMinutes) % 1440 + 1440) % 1440;",
     "new": "const timeOfDay = ((ctx.gameMinutes) % 1440 + 1440) % 1440;",
     "tests": [
-      "test/lived1.test.js",
-      "test/encounters.test.js"
+      "test/systems/lived1.test.js",
+      "test/systems/encounters.test.js"
     ]
   }
 ]

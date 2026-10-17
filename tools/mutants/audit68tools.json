@@ -5,7 +5,7 @@
     "old": "if (isMain(import.meta.url)) {\nconst entries = parseBookMapping(",
     "new": "if (true) {\nconst entries = parseBookMapping(",
     "tests": [
-      "test/audit68_tools.test.js"
+      "test/tooling/audit68_tools.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  return realpathSync(argv1) === realpathSync(fileURLToPath(url));",
     "new": "  return argv1 === fileURLToPath(url);",
     "tests": [
-      "test/audit68_tools.test.js"
+      "test/tooling/audit68_tools.test.js"
     ]
   },
   {
@@ -23,8 +23,8 @@
     "old": "    if (line.startsWith('-') || /^schema:/i.test(line)) continue;\n",
     "new": "",
     "tests": [
-      "test/audit68_tools.test.js",
-      "test/settingsText.test.js"
+      "test/tooling/audit68_tools.test.js",
+      "test/systems/settings/settingsText.test.js"
     ]
   },
   {
@@ -33,8 +33,8 @@
     "old": "        if (dir && dir !== target && !target.endsWith('/' + dir) && !dir.endsWith('/' + target)) continue;\n",
     "new": "",
     "tests": [
-      "test/audit68_tools.test.js",
-      "test/citemerge.test.js"
+      "test/tooling/audit68_tools.test.js",
+      "test/tooling/citemerge.test.js"
     ]
   },
   {
@@ -43,7 +43,7 @@
     "old": "        const bare = ambiguousBare && spelling !== 'ledger' && !dir;",
     "new": "        const bare = false;",
     "tests": [
-      "test/audit68_tools.test.js"
+      "test/tooling/audit68_tools.test.js"
     ]
   },
   {
@@ -52,7 +52,7 @@
     "old": "new RegExp(`(?<![\\\\w\\\\\\\\])(?:[\\\\w.-]+\\\\\\\\/)*${esc(stem)}",
     "new": "new RegExp(`(?<![\\\\w/])(?:[\\\\w.-]+\\\\\\\\/)*${esc(stem)}",
     "tests": [
-      "test/audit68_tools.test.js"
+      "test/tooling/audit68_tools.test.js"
     ]
   },
   {
@@ -61,7 +61,7 @@
     "old": "if (leftovers.length) {",
     "new": "if (false) {",
     "tests": [
-      "test/audit68_tools.test.js"
+      "test/tooling/audit68_tools.test.js"
     ]
   },
   {
@@ -70,7 +70,7 @@
     "old": "for (const sig of ['SIGINT', 'SIGTERM']) process.on(sig, () => { interrupted = sig; for (const c of children) c.kill(sig); });\n",
     "new": "",
     "tests": [
-      "test/audit68_tools.test.js"
+      "test/tooling/audit68_tools.test.js"
     ]
   },
   {
@@ -79,7 +79,7 @@
     "old": "  if (!m.syntax && /\\.[cm]?js$/.test(m.file)) {",
     "new": "  if (false) {",
     "tests": [
-      "test/audit68_tools.test.js"
+      "test/tooling/audit68_tools.test.js"
     ]
   },
   {
@@ -88,7 +88,7 @@
     "old": "timeout: 600000, maxBuffer: 1 << 28 });",
     "new": "timeout: 600000 });",
     "tests": [
-      "test/audit68_tools.test.js"
+      "test/tooling/audit68_tools.test.js"
     ]
   },
   {
@@ -97,8 +97,8 @@
     "old": "  if (localTag.startsWith(liveTag) || liveTag.startsWith(localTag)) {",
     "new": "  if (localTag === liveTag) {",
     "tests": [
-      "test/audit68_tools.test.js",
-      "test/verifydeploy.test.js"
+      "test/tooling/audit68_tools.test.js",
+      "test/tooling/verifydeploy.test.js"
     ]
   },
   {
@@ -107,7 +107,7 @@
     "old": "git rev-parse --short=12 HEAD",
     "new": "git rev-parse --short HEAD",
     "tests": [
-      "test/audit68_tools.test.js"
+      "test/tooling/audit68_tools.test.js"
     ]
   },
   {
@@ -116,7 +116,7 @@
     "old": "const secC = ledger.slice(startC, endC < 0 ? undefined : endC);",
     "new": "const secC = ledger.slice(startC);",
     "tests": [
-      "test/audit68_tools.test.js"
+      "test/tooling/audit68_tools.test.js"
     ]
   },
   {
@@ -125,7 +125,7 @@
     "old": "const cut = firstEntry < 0 ? bodyLines.length : firstEntry;",
     "new": "const cut = firstEntry < 0 ? process.exit(2) : firstEntry;",
     "tests": [
-      "test/audit68_tools.test.js"
+      "test/tooling/audit68_tools.test.js"
     ]
   },
   {
@@ -134,7 +134,7 @@
     "old": "  return dr ? drapedPiece(dr.name, dr.ramp) : [];",
     "new": "  return dr ? compress(drapedPiece(dr.name, dr.ramp)) : [];",
     "tests": [
-      "test/audit68_tools.test.js"
+      "test/tooling/audit68_tools.test.js"
     ]
   }
 ]

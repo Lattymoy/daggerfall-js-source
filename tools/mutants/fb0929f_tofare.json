@@ -1,16 +1,16 @@
 [
   {
     "name": "TO-FARE-the-fare-reads-a-stat-by-the-skill's-name",
-    "file": "src/ui/travelPopUp.js",
+    "file": "src/ui/travel/travelPopUp.js",
     "old": "    mercantile: e ? skillValue(e, SKILLS.Mercantile) : 0,",
     "new": "    mercantile: e ? (liveStat(e, 'mercantile') ?? 0) : 0,",
-    "tests": ["test/fb0929f_tofare.test.js", "test/heldmap.test.js"]
+    "tests": ["test/systems/fb0929f_tofare.test.js", "test/ui/heldmap.test.js"]
   },
   {
     "name": "TO-FARE-the-fare-reads-the-permanent-skill",
-    "file": "src/ui/travelPopUp.js",
+    "file": "src/ui/travel/travelPopUp.js",
     "old": "    mercantile: e ? skillValue(e, SKILLS.Mercantile) : 0,",
     "new": "    mercantile: e ? (e.skills?.[SKILLS.Mercantile] ?? 0) : 0,",
-    "tests": ["test/fb0929f_tofare.test.js", "test/heldmap.test.js"]
+    "tests": ["test/systems/fb0929f_tofare.test.js", "test/ui/heldmap.test.js"]
   }
 ]

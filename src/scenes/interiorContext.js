@@ -18,10 +18,10 @@
 
 import { IIL_FIREPLACE_MODELS } from '../systems/improvedInteriorLighting.js';   // IIL1
 import { FlatAnimator, armFlatAnim } from '../render/flatAnimation.js';   // FA1: the flats that move
-import { layoutInterior, INTERIOR_MARKER, PROP_MODEL_TYPE } from '../world/interiorLayout.js';
+import { layoutInterior, INTERIOR_MARKER, PROP_MODEL_TYPE } from '../world/interior/interiorLayout.js';
 import { multiply, transformPoint, identity } from '../world/mat4.js';
 import { StaticBatchBuilder, keyResolver } from '../render/staticBatch.js';   // PERF6: the room's static models as one mesh
-import { collectInteriorLights } from '../world/interiorLights.js';
+import { collectInteriorLights } from '../world/interior/interiorLights.js';
 import { applyClimate } from '../world/climateSwaps.js';
 import { remapSubMeshes, markRemapLaw } from '../world/texRemap.js';   // WM3: the one climate/dungeon remap seam; AUDIT MENU-ORDER C3: a table named by its law
 import { unityMaterialName } from '../systems/immersiveFootsteps.js';   // IF1: MaterialReader's material name, for the mod's floor walk
@@ -32,14 +32,14 @@ import { isChairModel } from '../world/chairSeat.js';   // SIT1: the seats a pla
 import { Collider } from '../player/collider.js';
 import { isHouseContainerModel } from '../systems/containers.js';
 import { isShopShelfModel } from '../systems/shopStock.js';   // E2
-import { isBedModel } from '../systems/rrRealism.js';   // RR1: the three bed models a click may rest on
+import { isBedModel } from '../systems/roleplayRealism/rrRealism.js';   // RR1: the three bed models a click may rest on
 import { placedTableSpot, TAVERN_CARD_TABLES } from '../world/placedCardTable.js';   // TAVERN-TABLE: where a tavern's card table stands; TAVERN-TABLES: and how many
-import { cardTablePropModel, paintFelt, paintWood, CARD_TABLE_BOX, CARD_TABLE_ARCHIVE, FELT_RECORD, WOOD_RECORD, FELT_RGB, GOLD_FELT_RECORD, GOLD_FELT_RGB } from '../world/cardTableProp.js';   // TAVERN-TABLE: the card table's own prop; TAVERN-TABLES: the gold table's red felt
+import { cardTablePropModel, paintFelt, paintWood, CARD_TABLE_BOX, CARD_TABLE_ARCHIVE, FELT_RECORD, WOOD_RECORD, FELT_RGB, GOLD_FELT_RECORD, GOLD_FELT_RGB } from '../world/card/cardTableProp.js';   // TAVERN-TABLE: the card table's own prop; TAVERN-TABLES: the gold table's red felt
 import { holdemGoldTable } from '../net/holdemTable.js';   // TAVERN-TABLES: which of them plays for gold - the relay's own index
 import { classicModelIdOf } from '../world/customModels.js';   // WD3: an alias is its classic model to the beds' test
 import { LADDER_MODEL_ID, doorWorldPosition } from '../player/enterExit.js';   // TAVERN-TABLE: a static door's place, for the card table to keep clear of
 import { MACHINERY_MODEL_ID } from '../world/windmillMesh.js';   // WM4b: the mill's machinery and its moving parts
-import { createBaseRoom, baseBucketOf } from './decorBase.js';   // BASE-HIDE: a furnishable room's own pieces, one at a time
+import { createBaseRoom, baseBucketOf } from './decor/decorBase.js';   // BASE-HIDE: a furnishable room's own pieces, one at a time
 import { decorBaseModelKey, decorBaseFlatKey } from '../net/decorLaw.js';   // BASE-HIDE: the layout's names for them
 import { mountMachineryChild } from '../world/windmills.js';
 import { collectInteriorPeople } from '../characters/interiorPeople.js';
@@ -54,15 +54,15 @@ import { ActionSystem } from '../world/actionSystem.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 import { worldAabb } from '../player/activate.js';   // ROAD-C c2/S9: the automap rows' world bounds
-import { enterInteriorAutomap, exitInteriorAutomap, buildRevealIndex, bindAutomapLayout, automapRevealTick, automapEntranceTick, automapTrailTick, SCAN_INTERVAL_S, registerAutomapConsoleCommands, capsuleCentreFromEye } from '../systems/automap.js';   // ROAD-C c2/S9; ROAD-E E3 the console verbs
-import { INTERIOR_ELEMENT_NAMES } from '../systems/automapModel.js';   // ROAD-C c2/S9
+import { enterInteriorAutomap, exitInteriorAutomap, buildRevealIndex, bindAutomapLayout, automapRevealTick, automapEntranceTick, automapTrailTick, SCAN_INTERVAL_S, registerAutomapConsoleCommands, capsuleCentreFromEye } from '../systems/automap/automap.js';   // ROAD-C c2/S9; ROAD-E E3 the console verbs
+import { INTERIOR_ELEMENT_NAMES } from '../systems/automap/automapModel.js';   // ROAD-C c2/S9
 // AUDIT 63 F22: AddFlats' own RandomTreasure arm - the gate, the
 // picture and the table index all live with the walk that finds the
 // markers, which is the member DFU puts them in.
 import { BUILDING_TYPES } from '../world/buildingNames.js';
 import { THIEVES_GUILD_FACTION_ID, DARK_BROTHERHOOD_FACTION_ID } from '../systems/crimeGuilds.js';   // FactionFile.cs:91/:135
-import { rollLootRarity, pileSource, INTERIOR_RARITY_TIER, stampWonWeapons } from '../systems/lootRarity.js';   // LR1: a tavern's pile rolls at the town's tier; SIGIL1: its weapons' sigils
-import { generateItems as generateLootItems, addPileLootExtras, DUNGEON_LOOT_KEYS, DROP_ICON_ARCHIVES } from '../systems/loot.js';
+import { rollLootRarity, pileSource, INTERIOR_RARITY_TIER, stampWonWeapons } from '../systems/loot/lootRarity.js';   // LR1: a tavern's pile rolls at the town's tier; SIGIL1: its weapons' sigils
+import { generateItems as generateLootItems, addPileLootExtras, DUNGEON_LOOT_KEYS, DROP_ICON_ARCHIVES } from '../systems/loot/loot.js';
 import { createCoverIndex, isCoverFlat, coverProxy } from '../ai/cover.js';   // TACT1: billboards are cover
 // TACT1: the Enhanced AI switch is ai/cover.js's to read (createCoverIndex's default), not this host's
 
@@ -327,7 +327,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
   // Library/Guild/Temple bookshelves route at activation (BS1), and
   // the OWNED-house arm lands below (HC1).
   const shelves = [];
-  const tables = [];   // CARDS2: the room's card tables (world/cardTables.js) - TAVERN-TABLE: the props a tavern stands (below; TAVERN-TABLES: the chips table, then the gold); the host seats them
+  const tables = [];   // CARDS2: the room's card tables (world/card/cardTables.js) - TAVERN-TABLE: the props a tavern stands (below; TAVERN-TABLES: the chips table, then the gold); the host seats them
   const beds = [];   // RR1: models 41000-41002 (RoleplayRealism.cs:126-128), listed always, activated under bedSleeping
   const chairs = [];   // SIT1 (world/chairSeat.js): the chairs, benches and thrones a player sits on - by model id, whatever its ObjectType
   // IF1: the combined mesh's materials, as Immersive Footsteps reads them
@@ -346,7 +346,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
   // BASE-HIDE (2026-09-26, Mac: "Remove bought houses decor"): A ROOM ITS OWNER MAY FURNISH (`opts.baseEditable` - an
   // online home, anyone's, or the player's own house or ship) STANDS ITS OWN FURNITURE PIECE BY PIECE - each prop model
   // its own draw (never the merge) and collider bucket, each flat its own batch and light - so a piece can be taken out
-  // and put back while the room stands (scenes/decorBase.js). Every other room is built as it always was. The ladder and
+  // and put back while the room stands (scenes/decor/decorBase.js). Every other room is built as it always was. The ladder and
   // the mill's machinery are the building's workings, not its furniture.
   const base = opts.baseEditable ? createBaseRoom({ drawList, batches: () => billboardBatches, lights: () => lights, collider }) : null;
   const iilFireplaces = [];   // IIL1: the fireplace models' centres (Improved Interior Lighting)
@@ -503,7 +503,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     dynamicDraws.push({ gpu, object: actions.addDoor(cpu, parent(d.matrix)) });
   }
 
-  // TAVERN-TABLE (world/cardTableProp.js, world/placedCardTable.js; the owner: "Lets instead place a specific table in
+  // TAVERN-TABLE (world/card/cardTableProp.js, world/placedCardTable.js; the owner: "Lets instead place a specific table in
   // each inn. A new property specifficaly used for the card table"): THE TAVERN'S CARD TABLE, ITS OWN PROP, where the host
   // asks for one (`opts.placeCardTable` - a tavern, scenes/worldModes.js). Its floor is found from the room's FIRST enter
   // marker - the record's, not the door walked through, so every client stands it in the same place - with the room's
@@ -857,7 +857,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
   // InitWhenInInteriorOrDungeon's BUILDING arm (Automap.cs:2482-2487),
   // in the one place both interior hosts build their room. The record
   // is minted here and dropped in destroy(): it is a session object,
-  // never a save's - see systems/automap.js's interior block for the
+  // never a save's - see systems/automap/automap.js's interior block for the
   // four DFU facts it reproduces and the one arm it declines.
   const automapModel = buildRevealIndex(automapEntries);
   const automapRec = enterInteriorAutomap({
@@ -949,7 +949,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     tables,    // CARDS2: the card tables
     beds,      // RR1: the bed models
     chairs,    // SIT1: the chairs, benches and thrones sat on (world/chairSeat.js)
-    base,      // BASE-HIDE: a furnishable room's own pieces (scenes/decorBase.js), null in any other room
+    base,      // BASE-HIDE: a furnishable room's own pieces (scenes/decor/decorBase.js), null in any other room
     enterMarkers,
     treasureMarkers,   // AUDIT 63 F22: AddFlats' RandomTreasure arm, gated by the host
     spawnPoints,

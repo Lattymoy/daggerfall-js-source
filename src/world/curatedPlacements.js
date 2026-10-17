@@ -1,5 +1,5 @@
 // @ts-check
-// FIELD BUGS 2026-10-09e - HILL-HOUSE (bible/01-Overview/Field-Bugs-2026-10-09e.md; the Discord's "Missing quest location
+// FIELD BUGS 2026-10-09e - HILL-HOUSE (bible/01-Overview/bugs/Field-Bugs-2026-10-09e.md; the Discord's "Missing quest location
 // house - An Item On Loan": "The residence I'm supposed to go to is either missing or under a hill"): A BUILDING THE
 // PACK'S OWN HILLS BURY, STOOD ON CLEAR GROUND OF ITS BLOCK.
 //
@@ -13,19 +13,23 @@
 // The house is moved, not the hill: each row stands one record of one pack block at a MEASURED spot of the same block -
 // the nearest to the author's on the block's ground, its footprint 1.5 m clear of every other piece, hill and flat of
 // the block and of the block's edge, its door and the four metres before it clear of every hill and piece
-// (tools/curatedPlacements.mjs measures it; test/fb1009e_hillhouse.test.js holds the row to the measurement on the
+// (tools/curatedPlacements.mjs measures it; test/tooling/fb1009e_hillhouse.test.js holds the row to the measurement on the
 // player's data) - with the author's own facing. Its RECORD is kept, so DFU's building key - (block x << 16) +
 // (block y << 8) + record - is the same house's: a quest made before this stands its person in the same house, now
 // standing where the player can reach it. The automap's bytes are stamped with the house's type at its new footprint, so
 // the town map draws it where its name is lettered; the hill's bytes at the old spot are the author's.
 //
-// Applied where a block becomes the port's (formats/worldDataReplacement.js getDFBlockReplacementData), once, for every
+// Applied where a block becomes the port's (formats/worldData/worldDataReplacement.js getDFBlockReplacementData), once, for every
 // consumer at once - the layout, the doors, the town map, the quest's building - beside the temple summoners
 // (world/curatedPeople.js), under the same two keys: the block's name as the town lays it and the pack that served it.
 // A later version of the pack that moves the house itself keeps its own: a row applies only to a record that stands
 // where the row found it. A curation of the mod's data (Port-Ledger A, HILL-HOUSE).
 
 export const HILL_HOUSE_VENDOR = 'beautiful-villages';
+/** HILL-HOUSE's rule for a door: its step and this many metres before it are the door's approach, clear of every hill
+ *  and piece (tools/curatedPlacements.mjs measured the row to it; FIELD BUGS 2026-10-15f TEMPLE-STEPS holds every
+ *  exterior door of both packs to it, and a HILL-SEAT pad's bank falls under it - world/townStandIns.js). */
+export const DOOR_APPROACH_M = 4;
 
 /** One record moved: `from` where the pack stands it (xPos, zPos, yRotation - RMB block units and Daggerfall's angle),
  *  `to` the measured spot, `model` its first exterior model, `automap` the 64 x 64 automap cells its footprint covers

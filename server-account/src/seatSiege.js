@@ -7,7 +7,7 @@
 // fighter's Honours.
 //
 // bible/11-Multiplayer/Seats-Arc.md 6.2, 6.5-6.8. The numbers are
-// src/net/townSeatLaw.js's; the battle is the relay's (net/siegeRef.js).
+// src/net/townSeatLaw.js's; the battle is the relay's (net/siege/siegeRef.js).
 //
 // FACT: the relay has no door to this service. So the pass is an order
 // this service signs and the room checks with the key it already holds
@@ -32,8 +32,8 @@ import { mustChange } from './realm.js';
 import { gatherStandings } from './seatInfluence.js';   // AUDIT-SEATS S8: a Tourney's dead heat as the Turning counted it
 import { utcDay, MARKS_MAX } from '../../src/net/marksLaw.js';
 import { mintSiegeOrder, siegeFieldValid } from '../../src/net/identityToken.js';
-import { SIEGE_RAMS_MAX } from '../../src/net/siegeRef.js';   // SEAT2b part two (b): the most Rams a pass carries
-import { verifySiegeReceipt, SIEGE_RECEIPT_TTL_S } from '../../src/net/siegeReceipt.js';   // AUDIT-SEATS R6: a late pass lives the receipt's week
+import { SIEGE_RAMS_MAX } from '../../src/net/siege/siegeRef.js';   // SEAT2b part two (b): the most Rams a pass carries
+import { verifySiegeReceipt, SIEGE_RECEIPT_TTL_S } from '../../src/net/siege/siegeReceipt.js';   // AUDIT-SEATS R6: a late pass lives the receipt's week
 import { RENOWN_XP_MAX, RENOWN_TRACKS_MAX } from '../../src/net/renown.js';
 import {
   seatWeekOf, seatKeyOk, settleField, passWindowEnds, passOpens, siegeWinner, siegeAftermath, spoilsOf, SIEGE_HONOURS,
@@ -138,7 +138,7 @@ export async function siegePass({ db, nowS, subtle }, player, env, { key, field,
 
 /**
  * SEAT2b part two (b) (Seats-Arc 6.2, 7.5): A SIEGE'S WORKS, FROZEN AT ITS FIRST PASS - `[walls, gatehouse, rams,
- * siegewright, barracks]` (net/siegeRef.js worksOf): each work's tier standing then (a project whose day has come
+ * siegewright, barracks]` (net/siege/siegeRef.js worksOf): each work's tier standing then (a project whose day has come
  * counted - fortTierAt, read without a write); the Gatehouse -1 at a palace that raised none (a crown's stands at 0);
  * the Rams the challenger's camp sent at the Turning (`town_seat_battles.rams`), none without a gate; 1 where a
  * Siegewright stands on the attacking roster (signing closed at the door's opening, so the roster is the battle's).
@@ -345,11 +345,11 @@ export async function claimSiege({ db, nowS, subtle }, player, env, { receipt, c
     throw new Error('claimSiege: the result was neither written nor found');   // a 500, never a quiet loss
   }
   const out = { result: r.result, winner: r.winner ?? null, applied };
-  if (c.h !== 1 || b.kind === 'revolt') return { ...out, honours: null };   // SEAT2b part two (c): a revolt earns none (net/siegeRef.js honoured)
+  if (c.h !== 1 || b.kind === 'revolt') return { ...out, honours: null };   // SEAT2b part two (c): a revolt earns none (net/siege/siegeRef.js honoured)
   if (typeof character !== 'string' || !CHAR_ID_RE.test(character)) return { error: 'honours-character' };
   // AUDIT SEATS-3 A3 (6.8: Honours "to the character"): the character this account signed onto the battle's roster, and no
   // other - not a Renown track or a Stores row opened under any id the request names. The result above is written whatever
-  // the answer here; a device playing another character keeps its receipt (net/siegeClaims.js) for the one that fought
+  // the answer here; a device playing another character keeps its receipt (net/siege/siegeClaims.js) for the one that fought
   const rostered = await db.prepare('SELECT char_id FROM town_seat_rosters WHERE week = ? AND key = ? AND account = ?').bind(c.sw, c.sk, player.id).first();
   if (!rostered || rostered.char_id !== character) return { error: 'honours-character' };
   if (await db.prepare('SELECT 1 FROM town_seat_honours WHERE week = ? AND key = ? AND account = ?').bind(c.sw, c.sk, player.id).first()) return { error: 'honours-twice' };

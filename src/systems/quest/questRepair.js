@@ -27,9 +27,10 @@
 //
 // Not a DFU member: DFU has no such pass (its quest debugger is a developer's console). Ledger A (QREPAIR).
 import { MARKER_PREFERENCE, SITE_TYPES } from './place.js';
-import { ONLINE_DUNGEONS_STATE, portSize } from '../../world/smallerDungeons.js';   // AUDIT DELVE E1 / SD-ONLINE: the sizes the room builds online; MEDIUM-DISTINCT: the two stamps whose builds are medium
-import { isOnlinePage } from '../onlineLane.js';   // MEDIUM-DISTINCT's audit: offline a dungeon no link holds is built by the settings
+import { SMALLER_DUNGEONS_STATE, portSize } from '../../world/smallerDungeons.js';   // AUDIT DELVE E1 / INSTANCES: the size a quest's markers know online (the whole dungeon's); MEDIUM-DISTINCT: the two stamps whose builds are medium
+import { isOnlinePage } from '../online/onlineLane.js';   // MEDIUM-DISTINCT's audit: offline a dungeon no link holds is built by the settings
 import { isShelved } from './quest.js';   // QUEST-SHELF's audit: the repair mends no quest set aside
+import { t } from '../textManager.js';   // QUEST-ELSEWHERE: its line in the player's language
 
 const PLACEMENTS = Object.freeze({ PlaceNpc: 'npcSymbol', PlaceItem: 'itemSymbol', PlaceFoe: 'foeSymbol' });
 
@@ -136,6 +137,13 @@ const markerAddresses = (list) => (list ?? []).map((m) => `${m?.dungeonX},${m?.d
  * all - and each of its dungeons compared with its online build (a dungeon whose online size is the stamp's size
  * agrees, and nothing moves). A quest one of whose dungeons could not be read here (no world, no such location, a
  * throw) keeps its stamp: the size its markers there still know.
+ *
+ * INSTANCES (2026-10-15, bible/11-Multiplayer/Instances.md): AND THAT SIZE IS THE DUNGEON WHOLE NOW. Online a quest's
+ * markers are chosen on Daggerfall's own layout (the quest's world asks smallerDungeons.js dungeonSizeFor for it whole),
+ * the layout its instance builds - so every stamp but DFU's Disabled is re-laid on the whole dungeon at the load, the
+ * world's sizes' ONLINE_DUNGEONS_STATE among them, and stamped Disabled. A re-laid public room stands none of a quest's
+ * targets (systems/instancePlaces.js questMountsHere); its instance, or its whole room where the relay keeps no instance,
+ * stands them all.
  */
 export function relayOnlineDungeons(machine, env = {}) {
   let relaid = 0;
@@ -146,13 +154,13 @@ export function relayOnlineDungeons(machine, env = {}) {
 }
 
 /** One quest's re-lay (relayOnlineDungeons, above): whether its markers moved. AUDIT SD III (D5): asked of a quest a
- *  party member shares online too (systems/questShare.js receiveSharedQuest) - an older page lays every dungeon whole,
+ *  party member shares online too (systems/quest/questShare.js receiveSharedQuest) - an older page lays every dungeon whole,
  *  and its copy pointed into blocks this page's world-sized build has not; the load's pass alone re-laid it, the next
  *  time this player loaded online. */
 export function relayQuestOnline(quest, env = {}) {
-  if (!quest || quest.smallerDungeonsState === ONLINE_DUNGEONS_STATE) return false;
+  if (!quest || quest.smallerDungeonsState === SMALLER_DUNGEONS_STATE.Disabled) return false;   // INSTANCES: the whole dungeon's, as its markers know it
   const { moved, unread } = relayDungeonPlaces(quest);
-  if (!unread) quest.smallerDungeonsState = ONLINE_DUNGEONS_STATE;
+  if (!unread) quest.smallerDungeonsState = SMALLER_DUNGEONS_STATE.Disabled;
   if (!moved) return false;
   putBackPlacements(quest, env);
   return true;
@@ -239,7 +247,7 @@ export function relayMovedLayouts(machine, env = {}, online = isOnlinePage()) {
   return relaid;
 }
 /**
- * One quest's half of relayMovedLayouts - and a shared copy's on arrival (systems/questShare.js: a party member on an
+ * One quest's half of relayMovedLayouts - and a shared copy's on arrival (systems/quest/questShare.js: a party member on an
  * older page lays the old layout, and their copy's markers point into it). MEDIUM-DISTINCT's audit: only a dungeon
  * whose build MOVED (`distinct` - the clone says it took a block again) is compared, so a load reads no block of a
  * dungeon the law never touched; and offline only a dungeon a link holds - with none, the build is the settings' (the
@@ -262,7 +270,7 @@ export function relayQuestMovedLayout(quest, machine, env = {}, online = isOnlin
  * Answers the counts and the line the player reads.
  */
 export function repairActiveQuests(machine, env = {}) {
-  const report = { quests: 0, people: 0, items: 0, foes: 0, relinked: 0, revealed: 0, topics: 0, failed: 0 };
+  const report = { quests: 0, people: 0, items: 0, foes: 0, relinked: 0, revealed: 0, topics: 0, failed: 0, elsewhere: false };
   // QUEST-SHELF's audit: nor one set aside - its links stood again, its things went back, while it was away. Its markers
   // still follow a moved layout (the relays above), so a reclaim finds them true.
   const quests = [...(machine?.quests?.values?.() ?? [])].filter((q) => questRunning(q) && !isShelved(q));
@@ -294,8 +302,9 @@ export function repairActiveQuests(machine, env = {}) {
         if (env.hasQuestTopics && env.addQuestTopics && !env.hasQuestTopics(quest)) { env.addQuestTopics(quest); report.topics++; }
       } catch { report.failed++; }
     }
-    // 4. where the player stands, now
-    try { env.mountCurrentSite?.(); } catch { report.failed++; }
+    // 4. where the player stands, now - QUEST-ELSEWHERE (FIELD BUGS 2026-10-16c): a re-laid public room mounts none of a
+    // quest's things (worldModes.js mountQuestResources answers 'elsewhere'), and the repair says where they are
+    try { if (env.mountCurrentSite?.() === 'elsewhere') report.elsewhere = true; } catch { report.failed++; }
   } finally {
     if (machine) machine.mountByName = was;
   }
@@ -305,7 +314,15 @@ export function repairActiveQuests(machine, env = {}) {
 
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
 
-/** The line the player reads after a repair. */
+/** QUEST-ELSEWHERE (FIELD BUGS 2026-10-16c; MD-Geist, "Quest Objective only spawned in 'Instance' Dungeon, not
+ *  'Public'": "the Objective just did not want to spawn (I tried the dungeon in 'Public' mode) even after 'Quest
+ *  Repair'"): online, a dungeon's public room is laid smaller for most dungeons, and a quest's things stand in the dungeon
+ *  laid whole - the player's instance (systems/instancePlaces.js questMountsHere). The repair found nothing missing, and
+ *  said only that. */
+export const questElsewhereLine = () => t('quest.repair.elsewhere', "Your quest's business in this dungeon is in your instance - the shared dungeon is laid smaller and holds none of it. Leave and enter again, choosing Your instance.");
+
+/** The line the player reads after a repair - QUEST-ELSEWHERE: where its things are, never "nothing was missing", when
+ *  the room the player stands in holds none of them. */
 export function questRepairText(r) {
   if (!r || !r.quests) return 'You have no active quests to repair.';
   const put = [r.people ? plural(r.people, 'person', 'people') : null, r.items ? plural(r.items, 'item', 'items') : null, r.foes ? plural(r.foes, 'foe', 'foes') : null].filter(Boolean);
@@ -314,6 +331,8 @@ export function questRepairText(r) {
   if (r.relinked) parts.push(`reconnected ${plural(r.relinked, 'place', 'places')}`);
   if (r.revealed) parts.push(`marked ${plural(r.revealed, 'location', 'locations')} on your map`);
   if (r.topics) parts.push(`restored what people know about ${plural(r.topics, 'quest', 'quests')}`);
-  const head = parts.length ? `Quests repaired: ${parts.join('; ')}.` : `Nothing was missing from ${r.quests === 1 ? 'your active quest' : `your ${r.quests} active quests`}.`;
-  return r.failed ? `${head} ${plural(r.failed, 'part', 'parts')} could not be checked.` : head;
+  const head = parts.length ? `Quests repaired: ${parts.join('; ')}.`
+    : r.elsewhere ? questElsewhereLine() : `Nothing was missing from ${r.quests === 1 ? 'your active quest' : `your ${r.quests} active quests`}.`;
+  const said = parts.length && r.elsewhere ? `${head} ${questElsewhereLine()}` : head;
+  return r.failed ? `${said} ${plural(r.failed, 'part', 'parts')} could not be checked.` : said;
 }

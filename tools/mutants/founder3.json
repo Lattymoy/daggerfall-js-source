@@ -4,7 +4,7 @@
     "file": "server-account/src/titles.js",
     "old": "firstPlayed(player) <= FOUNDER_UNTIL",
     "new": "player.registered_at <= FOUNDER_UNTIL",
-    "tests": ["test/founder3.test.js"],
+    "tests": ["test/server/founder3.test.js"],
     "note": "The bug itself: Founder read off when the account registered, so a player here as a guest since before the cutoff who registered after it holds nothing."
   },
   {
@@ -12,7 +12,7 @@
     "file": "server-account/src/titles.js",
     "old": "=> Math.min(\n  player.registered_at,\n  Number.isFinite(player.created_at) ? player.created_at : Infinity,\n  Number.isFinite(player.first_played_at) ? player.first_played_at : Infinity,",
     "new": "=> Math.max(\n  player.registered_at,\n  Number.isFinite(player.created_at) ? player.created_at : -Infinity,\n  Number.isFinite(player.first_played_at) ? player.first_played_at : -Infinity,",
-    "tests": ["test/founder3.test.js"],
+    "tests": ["test/server/founder3.test.js"],
     "note": "The later of the two stamps is the registration on every real row - the old rule by another road. FOUNDER4 (re-aimed by content): firstPlayed reads first_played_at too, one argument a line."
   },
   {
@@ -20,7 +20,7 @@
     "file": "server-account/src/titles.js",
     "old": "? player.created_at : Infinity,",
     "new": "? player.created_at : 0,",
-    "tests": ["test/founder3.test.js"],
+    "tests": ["test/server/founder3.test.js"],
     "note": "A row without a birth stamp read as born at the epoch: every such row a founder, however late it registered. FOUNDER4 (re-aimed by content): firstPlayed reads first_played_at too, one argument a line."
   },
   {
@@ -28,7 +28,7 @@
     "file": "server-account/src/titles.js",
     "old": "const firstPlayed = (player) => Math.min(\n  player.registered_at,\n  Number.isFinite(player.created_at) ? player.created_at : Infinity,\n  Number.isFinite(player.first_played_at) ? player.first_played_at : Infinity,   // FOUNDER4\n);",
     "new": "const firstPlayed = (player) => player.created_at;",
-    "tests": ["test/founder2.test.js", "test/founder3.test.js"],
+    "tests": ["test/server/founder2.test.js", "test/server/founder3.test.js"],
     "note": "A row without a birth stamp compares undefined, and a founder who registered before the cutoff loses it. FOUNDER4 (re-aimed by content): firstPlayed reads first_played_at too, one argument a line."
   },
   {
@@ -36,7 +36,7 @@
     "file": "server-account/src/titles.js",
     "old": "firstPlayed(player) <= FOUNDER_UNTIL",
     "new": "firstPlayed(player) < FOUNDER_UNTIL",
-    "tests": ["test/founder3.test.js"],
+    "tests": ["test/server/founder3.test.js"],
     "note": "A player first seen in the cutoff's own second is outside it."
   },
   {
@@ -44,7 +44,7 @@
     "file": "server-account/src/titles.js",
     "old": "  if (Number.isFinite(player?.registered_at) && firstPlayed(player) <= FOUNDER_UNTIL) held.push('founder');",
     "new": "  if (player && firstPlayed(player) <= FOUNDER_UNTIL) held.push('founder');",
-    "tests": ["test/founder3.test.js"],
+    "tests": ["test/server/founder3.test.js"],
     "note": "D1 gives a guest a NULL registered_at and Math.min reads null as 0, so without the guard every guest is a founder."
   }
 ]

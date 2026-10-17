@@ -29,7 +29,7 @@
 // and recorded in the Ledger; the port's startPoison refuses an
 // unregistered type the same way rather than indexing past its
 // tables.
-import { templateByIndex, itemUseHandler } from './itemTemplates.js';   // RRI2: ItemHelper's registered use handlers
+import { templateByIndex, itemUseHandler } from './item/itemTemplates.js';   // RRI2: ItemHelper's registered use handlers
 import './fletching.js';   // FLETCH: the pack's arrow craft - its wood's handlers, registered before the ladder asks
 import { doItemEnchantmentPayloads, PAYLOAD } from './enchantments.js';   // E2: the Used payload arm
 import { inflictPoison } from './poisons.js';
@@ -41,7 +41,8 @@ import { SURVIVAL_RULES } from './survival/difficulty.js';   // AUDIT SURV-TIERS
 import { setLightSource } from './lightSource.js';   // DISC7: the light in hand's one door
 import { localizedStrings } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 import { hoodCapable, hoodUp } from './survival/temperature.js';   // HOOD-SAID: the one hood law, for toggleHood
-import { sandPotionRefusal } from './arenaKit.js';   // AUDIT ARENA-LADDER: no potion on the sand
+import { sandPotionRefusal } from './arena/arenaKit.js';   // AUDIT ARENA-LADDER: no potion on the sand
+import { spirePotionRefusal, spirePotionDrunk } from './eliteGates/spireKit.js';   // EG-FULL: THE POTION LAW
 
 /** THE ARMS WHOSE DESTINATION WINDOW THE PORT HAS NOT BUILT, named so a use
  *  SAYS something rather than eating itself. Keyed by this module's own result
@@ -61,10 +62,10 @@ export const USE_PENDING = Object.freeze({
   openPortal: 'A portal can only be opened under the open sky.',   // PORTAL1: a host with no open world (systems/portalStone.js PORTAL_TEXT.notHere)
 });
 
-/** The template indices the predicates name (ItemEnums.cs) - INT9: their home is systems/itemKinds.js (a leaf the account
+/** The template indices the predicates name (ItemEnums.cs) - INT9: their home is systems/item/itemKinds.js (a leaf the account
  *  Worker bundles: a death in the zone's drop is the service's to take), re-exported here. */
-export { TEMPLATES } from './itemKinds.js';
-import { TEMPLATES, isLightSource, isPotion } from './itemKinds.js';
+export { TEMPLATES } from './item/itemKinds.js';
+import { TEMPLATES, isLightSource, isPotion } from './item/itemKinds.js';
 
 /** The first drug template, and DFU's own (wrong) offset. */
 export const FIRST_DRUG_TEMPLATE = 78;
@@ -72,8 +73,8 @@ export const DRUG_POISON_OFFSET = 66;   // verbatim; see the header
 
 // ── the predicates (DaggerfallUnityItem.cs :316-371) ──────────────
 
-// IsLightSource (:316-323) and IsPotion (:352-355) - INT9: in systems/itemKinds.js, re-exported here
-export { isLightSource, isPotion } from './itemKinds.js';
+// IsLightSource (:316-323) and IsPotion (:352-355) - INT9: in systems/item/itemKinds.js, re-exported here
+export { isLightSource, isPotion } from './item/itemKinds.js';
 /** IsPotionRecipe (:344-347). */
 export const isPotionRecipe = (it) => it?.group === 'MiscItems' && it.templateIndex === TEMPLATES.Potion_recipe;
 /** IsParchment (:360-363). */
@@ -341,8 +342,10 @@ export function useItem(item, collection, {
   // hook's failure callback, not immediately).
   else if (isBook(item)) out = { kind: 'book', item, failText: named('bookUnavailable') };
 
-  // AUDIT ARENA-LADDER: the sand's kit law - no potion in a bout of one's own, and the bottle is kept (systems/arenaKit.js)
+  // AUDIT ARENA-LADDER: the sand's kit law - no potion in a bout of one's own, and the bottle is kept (systems/arena/arenaKit.js)
   else if (isPotion(item) && sandPotionRefusal()) out = { kind: 'refused', refused: true, text: sandPotionRefusal() };
+  // EG-FULL: THE POTION LAW - two restoring potions a hall in an Elite Breach, and the bottle is kept (systems/eliteGates/spireKit.js)
+  else if (isPotion(item) && spirePotionRefusal(item)) out = { kind: 'refused', refused: true, text: spirePotionRefusal(item) };
 
   else if (isPotion(item)) {
     // DrinkPotion + RemoveOne. AUDIT 22 F5: RemoveOne takes THIS
@@ -359,6 +362,7 @@ export function useItem(item, collection, {
     // bottle naming no recipe is drunk and does nothing, exactly as
     // here.
     const drank = drinkPotion ? drinkPotion(item.potionRecipeKey ?? 0, Number.isInteger(item.potent) ? item.potent : 0) : null;   // PROF12: a Potent potion's share
+    spirePotionDrunk(item);   // EG-FULL: a restoring one counted against the hall's two
     out = drank ? { kind: 'potion', potion: drank } : { kind: 'potion', pending: true };
   }
 

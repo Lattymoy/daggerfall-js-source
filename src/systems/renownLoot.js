@@ -6,7 +6,7 @@
 // LOOT-EASE (section 19) gave every plain foe and every deep pile the same buff over the loot the live game had: three
 // pieces in four kept where PLAIN-LOOT kept two, the plain ladder a quarter bluer and half again yellower, healing
 // potions commoner, Restore Power and the rest supplies dropping at all online. Online that buff is now SCALED BY THE
-// ROLLER'S RENOWN, in the sigils' own five stages (systems/sigil.js renownSigilStage: Renown 1, 10, 20, 30 and 40):
+// ROLLER'S RENOWN, in the sigils' own five stages (systems/sigil/sigil.js renownSigilStage: Renown 1, 10, 20, 30 and 40):
 //
 //     stage      Renown   the buff      items kept   blue at level 0   healing (a foe)   Restore Power (a foe)
 //     Faint        1-9    half             62.5%          4.5%               8%                 3%
@@ -25,7 +25,7 @@
 // opener for its containers), as a foe's level and a pile's already follow that page's character. In a dungeon ROOM
 // (PARTY-LOOT, systems/roomLoot.js) a container's shared base rolls at the first stage, nobody's, and each player's own
 // Renown rolls their bonus over it - the base's share and the bonus's together the player's own stage. Read through SIGIL1's door
-// (systems/sigil.js sigilOnline / sigilRenown, set by scenes/world.js as the token's level is adopted), the one every
+// (systems/sigil/sigil.js sigilOnline / sigilRenown, set by scenes/world.js as the token's level is adopted), the one every
 // Renown-woken power reads. OFFLINE there is no Renown, and the loot is LOOT-EASE's whole (the "Bright" row) - Renown is
 // online's own progression. ONLINE BEFORE THE PAGE KNOWS ITS RENOWN (the moments before the first token), the first
 // stage: no roll is ever richer than the Renown behind it.
@@ -36,7 +36,7 @@
 // page; scenes/exterior.js is the offline town page and never goes online - LOOT-EASE's whole.
 //
 // Not a DFU member: Daggerfall has no Renown. Ledger A (RENOWN-LOOT).
-import { sigilOnline, sigilRenown, renownSigilStage } from './sigil.js';
+import { sigilOnline, sigilRenown, renownSigilStage } from './sigil/sigil.js';
 
 /** LOOT-EASE's buff at each Renown stage (renownSigilStage's 0..4), in quarters of it: half, three quarters, all, five
  *  quarters, half again. */

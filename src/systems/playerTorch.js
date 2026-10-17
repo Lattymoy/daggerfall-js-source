@@ -58,9 +58,9 @@
 // BRIGHTNESS, its default of 1.0 is a no-op, and mapping a brightness
 // slider onto a radius would be a worse lie than leaving it alone.
 
-import { templateByIndex } from './itemTemplates.js';
+import { templateByIndex } from './item/itemTemplates.js';
 import { isLightSource, expandItemMacro } from './useItem.js';
-import { getBool } from './settings.js';   // T1: EnablePlayerTorch reads its own setting, inside Update
+import { getBool } from './settings/settings.js';   // T1: EnablePlayerTorch reads its own setting, inside Update
 import { setLightSource } from './lightSource.js';   // DISC7: the light in hand's one door
 import { modSetting } from './modSettings.js';   // HT-WAIST: the lantern-at-the-waist switch, on Handheld Torches' pane
 import { localizedText } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
@@ -236,12 +236,12 @@ export function lanternAtWaist(item) {
 /** HT-WAIST-NET (2026-09-24): the pose's `hl` bit (net/wire.js validPose) - 1 while the lit light is a lantern hung
  *  at the waist (the one question above, asked of PlayerEntity.LightSource), ABSENT otherwise (the wire's omission
  *  law: a pose without one keeps the bytes it always had). The others' Morrowind bodies hang it at the hip off it
- *  (net/peerBodies.js); world.js puts it on every pose it sends. */
+ *  (net/peer/peerBodies.js); world.js puts it on every pose it sends. */
 export const waistLanternPoseBit = (light) => (lanternAtWaist(light) ? 1 : undefined);
 
 /** Where a body that DRAWS the hanging lantern puts it, when that is not the yaw-frame hip above: Eye Of The
  *  Beholder's sprite faces the way it walks, not the camera's yaw, so it hands the drawn lantern's point in
- *  here (player/eotbBody.js) and clears it when it stops drawing. `null`: LANTERN_HIP. */
+ *  here (player/eyeOfTheBeholder/eotbBody.js) and clears it when it stops drawing. `null`: LANTERN_HIP. */
 let _waistOverride = null;
 const _waistPoint = { left: 0, up: 0, forward: 0 };   // written in place: its writer runs every frame the lantern is drawn
 export function setPlayerWaistLightOverride(o) {

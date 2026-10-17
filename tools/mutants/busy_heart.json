@@ -1,0 +1,22 @@
+[
+ {
+  "name": "BUSYHEART-heartbeat-dropped",
+  "file": "src/net/busyLaw.js",
+  "old": "  ['/v1/heartbeat', 'POST'],        // BUSY-HEART",
+  "new": "  // BUSY-HEART",
+  "tests": [
+   "test/net/busy_heart.test.js"
+  ],
+  "note": "the heartbeat asked again three times in 2 s through an overload, and never shed"
+ },
+ {
+  "name": "BUSYHEART-motherlodes-dropped",
+  "file": "src/net/busyLaw.js",
+  "old": "  ['/v1/prof/motherlodes', 'POST'], // BUSY-HEART",
+  "new": "  // BUSY-HEART",
+  "tests": [
+   "test/net/busy_heart.test.js"
+  ],
+  "note": "the day's motherlodes asked on through an overload"
+ }
+]

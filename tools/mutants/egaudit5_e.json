@@ -1,0 +1,838 @@
+[
+  {
+    "name": "EGA5E-plank-removeBucket-dropped",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "    removeBucket: (k) => { const i = keys.indexOf(k); if (i >= 0) keys.splice(i, 1); return collider.removeBucket(k); },",
+    "new": "    removeBucket: () => {},",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e.test.js",
+      "test/net/eliteGates/egaudit3_law_bridge.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-plank-key-kept",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "const i = keys.indexOf(k); if (i >= 0) keys.splice(i, 1); return collider.removeBucket(k);",
+    "new": "return collider.removeBucket(k);",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-plank-host-literal-wrapper",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "egSpan.stand({ dynamicDraws, collider: egSpanCollider(collider, keys) });",
+    "new": "egSpan.stand({ dynamicDraws, collider: { addMesh: (...a) => { keys.push(a[0]); return collider.addMesh(...a); } } });",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-beat-pictures-comment-stale",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "the Beat's pictures are the breach's, freed at its end - egBeatTellDown",
+    "new": "the Beat's pictures are the session's - egBeatTellUp",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-shaders-kept",
+    "file": "src/render/glProgram.js",
+    "old": "  gl.deleteShader(vs); gl.deleteShader(fs);\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e.test.js",
+      "test/render/audit68_render_b.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-fragment-shader-kept",
+    "file": "src/render/glProgram.js",
+    "old": "  gl.deleteShader(vs); gl.deleteShader(fs);\n",
+    "new": "  gl.deleteShader(vs);\n",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-failed-program-kept",
+    "file": "src/render/glProgram.js",
+    "old": "if (fault != null) { gl.deleteProgram(prog); throw new Error(fault); }",
+    "new": "if (fault != null) { throw new Error(fault); }",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-telegraph-floor-buffer-kept",
+    "file": "src/render/gate/gateTelegraph.js",
+    "old": "for (const b of [this.vbo, this.walkVbo, this.floorVbo]) if (b) gl.deleteBuffer(b);",
+    "new": "for (const b of [this.vbo, this.walkVbo]) if (b) gl.deleteBuffer(b);",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-telegraph-floor-vao-kept",
+    "file": "src/render/gate/gateTelegraph.js",
+    "old": "for (const v of [this.vao, this.walkVao, this.floorVao]) if (v) gl.deleteVertexArray(v);",
+    "new": "for (const v of [this.vao, this.walkVao]) if (v) gl.deleteVertexArray(v);",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-telegraph-program-kept",
+    "file": "src/render/gate/gateTelegraph.js",
+    "old": "    if (this.program) gl.deleteProgram(this.program);\n    this.vao = null; this.walkVao = null;",
+    "new": "    this.vao = null; this.walkVao = null;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-telegraph-destroy-twice",
+    "file": "src/render/gate/gateTelegraph.js",
+    "old": "    this.gl = null;\n    for (const v of [this.vao, this.walkVao, this.floorVao])",
+    "new": "    for (const v of [this.vao, this.walkVao, this.floorVao])",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-crystal-glow-vao-kept",
+    "file": "src/render/courtCrystals.js",
+    "old": "for (const v of [this.vao, this.glowVao]) if (v) gl.deleteVertexArray(v);",
+    "new": "for (const v of [this.vao]) if (v) gl.deleteVertexArray(v);",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-crystal-glow-buffer-kept",
+    "file": "src/render/courtCrystals.js",
+    "old": "for (const b of [...(this.bufs ?? []), this.glowBuf]) if (b) gl.deleteBuffer(b);",
+    "new": "for (const b of [...(this.bufs ?? [])]) if (b) gl.deleteBuffer(b);",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-crystal-glow-program-kept",
+    "file": "src/render/courtCrystals.js",
+    "old": "for (const p of [this.program, this.glowProgram]) if (p) gl.deleteProgram(p);",
+    "new": "for (const p of [this.program]) if (p) gl.deleteProgram(p);",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-crystal-destroyed-draws",
+    "file": "src/render/courtCrystals.js",
+    "old": "    if (!this.gl) return;   // AUDIT EG V (L6-5): a destroyed pass draws nothing",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-fight-telegraph-pass-kept-at-leave",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "      try { p0?.destroy(); } catch { /* gone with its context */ }",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-fight-crystal-pass-kept-at-leave",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "      try { c0?.destroy(); } catch { /* gone with its context */ }",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-edge-line-viewport-unpassed",
+    "file": "src/scenes/eliteGates/egLookDraw.js",
+    "old": "return lines.draw(proj, view, eye, ts, fog, streamers, n, alphas, vp?.[2] ?? 0, vp?.[3] ?? 0, trail, tn);",
+    "new": "return lines.draw(proj, view, eye, ts, fog, streamers, n, alphas, 0, 0, trail, tn);",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e.test.js"
+    ],
+    "note": "AUDIT EG V (h): re-aimed by content - the trail joined the line pass's arguments"
+  },
+  {
+    "name": "EGA5E-edge-line-client-unpassed",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "egAccessNow(win).palette, renderer?._worldViewportPx, trail.n ? trail.segs : null, trail.n);",
+    "new": "egAccessNow(win).palette, null, trail.n ? trail.segs : null, trail.n);",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e.test.js"
+    ],
+    "note": "AUDIT EG V (h): re-aimed by content - the trail joined drawOver's arguments"
+  },
+  {
+    "name": "EGA5E-tether-chain-no-strip",
+    "file": "src/render/gate/gateTelegraph.js",
+    "old": "const across = sh.pool === TELEGRAPH_POOL.path || sh.pool === TELEGRAPH_POOL_SPIRE.chain ? sh.halfW",
+    "new": "const across = sh.pool === TELEGRAPH_POOL.path ? sh.halfW",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e_look.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-tether-pull-no-strip",
+    "file": "src/render/gate/gateTelegraph.js",
+    "old": ": sh.pool === TELEGRAPH_POOL_SPIRE.pull ? 2 * sh.halfW + TELEGRAPH_TICK_REACH : NaN;",
+    "new": ": NaN;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e_look.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-tether-tick-narrow",
+    "file": "src/render/gate/gateTelegraph.js",
+    "old": "? 2 * sh.halfW + TELEGRAPH_TICK_REACH : NaN;",
+    "new": "? sh.halfW + TELEGRAPH_TICK_REACH : NaN;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e_look.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-tether-shader-tick-wider",
+    "file": "src/render/gate/gateTelegraph.js",
+    "old": "2.0 * uHalfW + ${TELEGRAPH_TICK_REACH.toFixed(2)}, ld)",
+    "new": "2.0 * uHalfW + 0.3, ld)",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e_look.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-tether-bounds-wide",
+    "file": "src/render/gate/gateTelegraph.js",
+    "old": "stripW(sh) || sh.halfW + M);",
+    "new": "sh.halfW + M);",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e_look.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-tether-floor-unstripped",
+    "file": "src/world/eliteGates/egTelegraph.js",
+    "old": "strip = telegraphStrip(sh, K.strip);",
+    "new": "strip = null;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e_look.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-strip-clip-across-unread",
+    "file": "src/world/eliteGates/egTelegraph.js",
+    "old": "      n = cutLine(_pa, n, _pb, 2);\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e_look.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-strip-clip-whole-unchecked",
+    "file": "src/world/eliteGates/egTelegraph.js",
+    "old": "const whole = strip ? inStrip(tris, t) && inStrip(tris, t + 2) && inStrip(tris, t + 4) :",
+    "new": "const whole = strip ? inStrip(tris, t) :",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e_look.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-ring-reach-glow",
+    "file": "src/render/gate/gateTelegraph.js",
+    "old": "sh.pool === TELEGRAPH_POOL_SPIRE.ring ? TELEGRAPH_RING_REACH : M));",
+    "new": "sh.pool === TELEGRAPH_POOL_SPIRE.ring ? M : M));",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e_look.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-ring-line-uncut",
+    "file": "src/render/gate/gateTelegraph.js",
+    "old": "o = vec4(uColor * core * (edge <= ${TELEGRAPH_RING_REACH.toFixed(2)} ? 1.0 : 0.0) * f, 0.0);",
+    "new": "o = vec4(uColor * core * f, 0.0);",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e_look.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-rampart-vent-in-fire",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "sh.t = st.st === 'warn' ? st.k : 1; sh.flash = st.st === 'fire' ? 1 : 0; sh.alpha = 1; sh.color = PEND_COLOR;",
+    "new": "sh.t = st.st === 'warn' ? st.k : 1; sh.flash = st.st === 'fire' ? 1 : 0; sh.alpha = 1; sh.color = [1.0, 0.45, 0.12];",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e_look.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-span-vent-in-fire",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "sh.t = st.fire ? 1 : st.tell; sh.flash = st.fire ? 1 : 0; sh.alpha = 1; sh.color = PEND_COLOR;",
+    "new": "sh.t = st.fire ? 1 : st.tell; sh.flash = st.fire ? 1 : 0; sh.alpha = 1; sh.color = st.fire ? [1.0, 0.45, 0.12] : PEND_COLOR;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e_look.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-fragment-hazard-in-element",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "          sh.color = PEND_COLOR;   // AUDIT EG V (L5-3)",
+    "new": "          sh.color = p.st === 'tell' && hz.kind === 'fall' ? PEND_COLOR : p.el === 'fire' ? [1.0, 0.45, 0.12] : [1.0, 0.3, 0.2];   // AUDIT EG V (L5-3)",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e_look.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-fragment-hazard-live-in-element",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "          sh.color = PEND_COLOR;   // AUDIT EG V (L5-3)",
+    "new": "          sh.color = p.st === 'live' ? [1.0, 0.45, 0.12] : PEND_COLOR;   // AUDIT EG V (L5-3)",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e_look.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-lamps-no-budget",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "  return out.filter((_, i) => near.has(i));",
+    "new": "  return out;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e_look.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-lamps-budget-about-new-alone",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "if (by.length + 1 > N || by.some((j) => near.get(j) + 1 > N)) continue;",
+    "new": "if (by.length + 1 > N) continue;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e_look.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-lamps-meaningful-last",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "const lamp = (p, color = EG_LAMP.color, range = Number(EG_LAMP.range), pr = 0) =>",
+    "new": "const lamp = (p, color = EG_LAMP.color, range = Number(EG_LAMP.range), pr = 9) =>",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e_look.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-lamps-ring-one-side",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": ": tint, Number(EG_LAMP.range), 1 + spreadRank(k, n));",
+    "new": ": tint, Number(EG_LAMP.range), 1 + k);",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e_look.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-lamps-budget-13",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "export const EG_LAMP_BUDGET = Object.freeze({ n: 12, r: 40 });",
+    "new": "export const EG_LAMP_BUDGET = Object.freeze({ n: 13, r: 40 });",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e_look.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-lamps-radius-30",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "const { n: N, r: R } = EG_LAMP_BUDGET,",
+    "new": "const { n: N } = EG_LAMP_BUDGET, R = 30,",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e_look.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-plan-fresh-a-frame",
+    "file": "src/world/eliteGates/egTelegraph.js",
+    "old": "const K = keep ?? egFloorPlanKeep(), ranked = K.ranked, draws = K.plan.draws;",
+    "new": "const K = egFloorPlanKeep(), ranked = K.ranked, draws = K.plan.draws;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e_alloc.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-plan-draw-slots-anew",
+    "file": "src/world/eliteGates/egTelegraph.js",
+    "old": "const d = (K.slots[K.used++] ??= { sh: null, f: null, first: 0, count: 0, over: null, i: 0, own: { r: 0, courts: [[0, 0]] } });",
+    "new": "const d = { sh: null, f: null, first: 0, count: 0, over: null, i: 0, own: { r: 0, courts: [[0, 0]] } }; K.used++;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e_alloc.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-plan-ranks-anew",
+    "file": "src/world/eliteGates/egTelegraph.js",
+    "old": "r = (K.ranks[i] ??= { sh: null, i: 0, k0: 0, k1: 0, k2: 0 });",
+    "new": "r = { sh: null, i: 0, k0: 0, k1: 0, k2: 0 };",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e_alloc.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-plan-heights-a-set",
+    "file": "src/world/eliteGates/egTelegraph.js",
+    "old": "      if (!landsAt(floors, sh, f.y)) continue;",
+    "new": "      { const ys = new Set(); if (pinsFloors(sh)) for (const g of floors) if (anchorOn(g, sh)) ys.add(g.y); if (ys.size && !ys.has(f.y)) continue; }",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e_alloc.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-clip-edge-handed-boxed",
+    "file": "src/world/eliteGates/egTelegraph.js",
+    "old": "  const at = box[bi];\n",
+    "new": "  const at = [box[bi]][0];\n",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e_alloc.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-bounds-box-ignored",
+    "file": "src/render/gate/gateTelegraph.js",
+    "old": "  const b = out ?? [0, 0, 0, 0];\n",
+    "new": "  const b = [0, 0, 0, 0];\n",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e_alloc.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-fight-plan-keep-unpassed",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "egFloorPlan(_shapes, floors, myFeet(), floorBuf, undefined, planKeep)",
+    "new": "egFloorPlan(_shapes, floors, myFeet(), floorBuf)",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e_alloc.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-fight-company-every-ask",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "    if (companyMemo && t0 === companyAt && frameNo === companyFrame && E0 === companyState) return companyMemo;\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e_alloc.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-fight-blowby-anew",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "      const blowBy = _blowBy;\n      blowBy.clear();",
+    "new": "      const blowBy = new Map(); _blowBy.clear();",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e_alloc.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-fight-live-anew",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "      const live = _live;\n      live.clear();",
+    "new": "      const live = new Set(); _live.clear();",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e_alloc.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-fight-lords-anew",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "      const lordIds = _lordIds;\n      lordIds.clear();",
+    "new": "      const lordIds = new Set(); _lordIds.clear();",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e_alloc.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-fight-blows-filtered",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "      for (const bl of F.blows) if (!bl.cut || t - bl.cut < EG_FEINT_FADE_MS) _orderIn.push(bl);",
+    "new": "      for (const bl of F.blows.filter((q) => !q.cut || t - q.cut < EG_FEINT_FADE_MS)) _orderIn.push(bl);",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e_alloc.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-fight-marks-filtered",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "      for (const m of F.mk) if (m[0] === meSub && m[2] > t) { if (m[1] === 6) challenged = true; if (m[1] === 5) caged = true; }",
+    "new": "      for (const m of F.mk.filter((q) => q[0] === meSub && q[2] > t)) { if (m[1] === 6) challenged = true; if (m[1] === 5) caged = true; }",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e_alloc.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-fight-subs-anew",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "      const subs = _subs;\n      subs.clear();",
+    "new": "      const subs = new Set(); _subs.clear();",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e_alloc.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-fight-given-anew",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "      const given = _given, tg = now();",
+    "new": "      const given = new Map(), tg = now();",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e_alloc.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-fight-tether-closure",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "        const a = tetherEnd(tx[0], F, t, f, meSub), b = tetherEnd(tx[1], F, t, f, meSub);",
+    "new": "        const endOf = (x) => tetherEnd(x, F, t, f, meSub), a = endOf(tx[0]), b = endOf(tx[1]);",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e_alloc.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-mist-list-anew",
+    "file": "src/world/eliteGates/egLook.js",
+    "old": "export function egMistSheetsAt(sheets, t, out = []) {\n  let pool = _sheetSlots.get(out), n = 0;",
+    "new": "export function egMistSheetsAt(sheets, t, out0 = []) {\n  const out = []; let pool = _sheetSlots.get(out), n = 0;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e_alloc.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-mist-slots-lost",
+    "file": "src/world/eliteGates/egLook.js",
+    "old": "s = (pool[n] ??= { rect: [0, 0, 0, 0], y: 0, alpha: 0 });",
+    "new": "s = { rect: [0, 0, 0, 0], y: 0, alpha: 0 };",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e_alloc.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-mist-look-unkept",
+    "file": "src/scenes/eliteGates/egLookDraw.js",
+    "old": "egMistSheetsAt(sheets, ts, sheetsAt)",
+    "new": "egMistSheetsAt(sheets, ts)",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e_alloc.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-arch-empty-draws-anew",
+    "file": "src/scenes/eliteGates/egArch.js",
+    "old": "egArchDraw(a.place, a.open, a.spin)) : NO_LIST),",
+    "new": "egArchDraw(a.place, a.open, a.spin)) : []),",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e_alloc.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-arch-empty-targets-anew",
+    "file": "src/scenes/eliteGates/egArch.js",
+    "old": "      if (!arches.size) return NO_LIST;   // AUDIT EG V (L6-4)",
+    "new": "      if (!arches.size) return [];   // AUDIT EG V (L6-4)",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e_alloc.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-arch-clears-anew",
+    "file": "src/scenes/eliteGates/egArch.js",
+    "old": "      if (!arches.size) { if (clearsKey) { clearsKey = ''; clearsArr = NO_CLEARS; } return; }",
+    "new": "      if (!arches.size) { clearsArr = Object.freeze([]); return; }",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e_alloc.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-occluder-ray-anew",
+    "file": "src/scenes/worldModes.js",
+    "old": "    const ray = feet ? _egOccRay : _egOccNone;   // AUDIT EG V (L6-4): the ray kept, written a frame",
+    "new": "    const ray = feet ? { eye: null, points: [null, [0, 0, 0]], dt: 0 } : { eye: null, points: null, dt: 0 };",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e_alloc.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-panel-rebuilt-every-frame",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "  const same = panel && panelSame(panelKey, model, recap, focus, touch);",
+    "new": "  const same = false;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e_alloc.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-panel-card-words-unread",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": " || x.line !== y.line ||",
+    "new": " ||",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e_alloc.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-panel-focus-unread",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "  if (!k || k.focus !== focus || k.touch !== touch || !k.recap",
+    "new": "  if (!k || k.touch !== touch || !k.recap",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e_alloc.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-plan-heights-unread",
+    "file": "src/world/eliteGates/egTelegraph.js",
+    "old": "if (floors[k].y === y) return true; any = true; }",
+    "new": "any = true; }",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js",
+      "test/net/eliteGates/egaudit5_e_alloc.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-panel-recap-object",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "k.touch !== touch || !k.recap !== !recap)",
+    "new": "k.touch !== touch || k.recap !== recap)",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e_alloc.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-build-specs-left-out",
+    "file": "src/world/eliteGates/egCircleParts.js",
+    "old": "specs: egCircleSpecs(m.seed, m.c, geo), ",
+    "new": "",
+    "tests": [
+      "test/world/eliteGates/egaudit5_e_swap.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-build-dress-left-out",
+    "file": "src/world/eliteGates/egCircleParts.js",
+    "old": "art: band >= 0 ? egBandArt(band) : null",
+    "new": "art: null",
+    "tests": [
+      "test/world/eliteGates/egaudit5_e_swap.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-build-dress-another-band",
+    "file": "src/world/eliteGates/egCircleParts.js",
+    "old": "art: band >= 0 ? egBandArt(band) : null",
+    "new": "art: band >= 0 ? egBandArt((band + 1) % 4) : null",
+    "tests": [
+      "test/world/eliteGates/egaudit5_e_swap.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-build-dress-copied",
+    "file": "src/world/eliteGates/egCircleParts.js",
+    "old": "  for (const [, art] of parts?.art ?? []) { take(art?.albedo?.colors); take(art?.emission?.colors); }\n",
+    "new": "",
+    "tests": [
+      "test/world/eliteGates/egaudit5_e_swap.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-worker-band-dropped",
+    "file": "src/world/eliteGates/egCircleWorker.js",
+    "old": "const parts = egCircleBuild(m);",
+    "new": "const parts = egCircleBuild({ ...m, band: -1 });",
+    "tests": [
+      "test/world/eliteGates/egaudit5_e_swap.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-swap-band-unposted",
+    "file": "src/scenes/eliteGates/egSwap.js",
+    "old": "geo: geo || 0, band, given: given ?? null, lite: !!lite });",
+    "new": "geo: geo || 0, given: given ?? null, lite: !!lite });",
+    "tests": [
+      "test/world/eliteGates/egaudit5_e_swap.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-swap-peek-blind",
+    "file": "src/scenes/eliteGates/egSwap.js",
+    "old": "=== 'ready' ? job.parts : null; },",
+    "new": "=== 'ready' ? null : null; },",
+    "tests": [
+      "test/world/eliteGates/egaudit5_e_swap.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-prebuild-paints-here",
+    "file": "src/scenes/eliteGates/egCircleHost.js",
+    "old": "    const band = egBandOfCircle(r.c), st = egSwap.want(",
+    "new": "    egBandUp(r.c);\n    const band = egBandOfCircle(r.c), st = egSwap.want(",
+    "tests": [
+      "test/world/eliteGates/egaudit5_e_swap.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-prebuild-whole-dress-a-frame",
+    "file": "src/scenes/eliteGates/egCircleHost.js",
+    "old": "egSwapFeed(egSwap.peek(r.seed, r.c, r.geo ?? 0), band, 1);",
+    "new": "egSwapFeed(egSwap.peek(r.seed, r.c, r.geo ?? 0), band);",
+    "tests": [
+      "test/world/eliteGates/egaudit5_e_swap.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-prebuild-dress-asked-when-up",
+    "file": "src/scenes/eliteGates/egCircleHost.js",
+    "old": "egBandWhole(band) ? -1 : band, r.given, ground.lite);",
+    "new": "band, r.given, ground.lite);",
+    "tests": [
+      "test/world/eliteGates/egaudit5_e_swap.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-NEW2-given-never-taken",
+    "file": "src/world/eliteGates/egCircleParts.js",
+    "old": "  for (const s of Array.isArray(m.given) ? m.given : []) egSpecGive(s);\n",
+    "new": "",
+    "tests": [
+      "test/world/eliteGates/egaudit5_e_swap.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-NEW2-swap-never-hands",
+    "file": "src/scenes/eliteGates/egSwap.js",
+    "old": "band, given: given ?? null, lite: !!lite });",
+    "new": "band, given: null, lite: !!lite });",
+    "tests": [
+      "test/world/eliteGates/egaudit5_e_swap.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-NEW2-with-taken-for-without",
+    "file": "src/scenes/eliteGates/egSwap.js",
+    "old": "if (job?.key === key && job.g === g) return",
+    "new": "if (job?.key === key) return",
+    "tests": [
+      "test/world/eliteGates/egaudit5_e_swap.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-NEW2-host-never-hands",
+    "file": "src/scenes/eliteGates/egCircleHost.js",
+    "old": "-1 : band, r.given, ground.lite);",
+    "new": "-1 : band, null, ground.lite);",
+    "tests": [
+      "test/world/eliteGates/egaudit5_e_swap.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-swap-leaves-the-rest",
+    "file": "src/scenes/eliteGates/egCircleHost.js",
+    "old": "    egSwapFeed(parts, egBandOfCircle(r.c));   // AUDIT EG V",
+    "new": "    // AUDIT EG V",
+    "tests": [
+      "test/world/eliteGates/egaudit5_e_swap.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-feed-specs-ungiven",
+    "file": "src/scenes/eliteGates/egCircleHost.js",
+    "old": "if (s) { egSpecGive(s); continue; }",
+    "new": "if (s) continue;",
+    "tests": [
+      "test/world/eliteGates/egaudit5_e_swap.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-band-rec-unkept",
+    "file": "src/scenes/eliteGates/egCircleHost.js",
+    "old": "    _egBands.add(band); up.add(rec);",
+    "new": "    _egBands.add(band);",
+    "tests": [
+      "test/world/eliteGates/egaudit5_e_swap.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-band-rec-twice",
+    "file": "src/scenes/eliteGates/egCircleHost.js",
+    "old": "if (up.has(rec) || !renderer?.uploadTexture) return;",
+    "new": "if (!renderer?.uploadTexture) return;",
+    "tests": [
+      "test/world/eliteGates/egaudit5_e_swap.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-band-whole-at-first",
+    "file": "src/scenes/eliteGates/egCircleHost.js",
+    "old": "?.size ?? 0) >= EG_BAND_RECORDS.length;",
+    "new": "?.size ?? 0) >= 1;",
+    "tests": [
+      "test/world/eliteGates/egaudit5_e_swap.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-band-recs-kept-past-the-breach",
+    "file": "src/scenes/eliteGates/egCircleHost.js",
+    "old": "    _egBands.clear(); _egBandRecs.clear();",
+    "new": "    _egBands.clear();",
+    "tests": [
+      "test/world/eliteGates/egz_camera_host.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-mist-pass-sliced",
+    "file": "src/render/eliteGates/egMistPass.js",
+    "old": "      const s = sheets[k];\n",
+    "new": "      const s = sheets.slice(0, EG_MIST_MAX)[k];\n",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e_alloc.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-mist-pass-cap-lost",
+    "file": "src/render/eliteGates/egMistPass.js",
+    "old": "n = Math.min(sheets.length, EG_MIST_MAX); k < n;",
+    "new": "n = sheets.length; k < n;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e_alloc.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-panel-quiet-worked-out",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "  if (!E.offer?.v?.length && !askingAt(E, now)) return null;\n  return panelModelOf(E, me, now, voted);",
+    "new": "  return panelModelOf(E, me, now, voted);",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e_alloc.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-panel-word-open-unseen",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "if (as[k][2] > now) return true;",
+    "new": "if (as[k][2] > now) return false;",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js",
+      "test/net/eliteGates/egaudit3_pres.test.js",
+      "test/net/eliteGates/egfull_client.test.js"
+    ]
+  },
+  {
+    "name": "EGA5E-panel-touch-unread",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "|| k.touch !== touch ||",
+    "new": "||",
+    "why": "the merge of C and E: a panel drawn for the pad stands on a touch frame (its note and its close button are the touch's own)",
+    "tests": [
+      "test/net/eliteGates/egaudit5_e_alloc.test.js"
+    ]
+  }
+]

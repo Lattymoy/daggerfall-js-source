@@ -109,6 +109,21 @@ export const TITLE_TEXT = Object.freeze({
   seasonmaster: 'Season Master',  // CHAP6e: a Season's Master's, kept for good
   ilovelamp: 'I Love Lamp',       // LAMP-KEEPER II (2026-10-14, Mac: "the 'I Love Lamp' title"): a lamp keeper spoken to
   coilbreaker: 'Coilbreaker',     // SERPENT5 (2026-10-15, Sea-Serpent.md section 17): one dealing ship's serpent kill in twenty grants it
+  // EG-E2 (2026-10-12, bible/11-Multiplayer/Elite-Gates.md section 19, THE HONOURS): the Spire's thirteen, in the table's
+  // order - earned in the Elite Breach (server-account/src/egHonours.js), never bought
+  spirewalker: 'Spirewalker',
+  beaconlighter: 'Beacon-Lighter',
+  kynbane: 'Kynbane',
+  unfallen: 'The Unfallen',
+  lonebeacon: 'The Lone Beacon',
+  battlemage: 'Battlemage of the Spire',
+  wellheadwalker: 'Wellhead-Walker',
+  mastergallery: 'Master of the Galleries',
+  mastercairn: 'Master of the Cairn',
+  mastershade: 'Master of the Shade',
+  masterwellhead: 'Master of the Wellhead',
+  spirechampion: 'Spire Champion',
+  spirefirst: 'First of the Spire',
 });
 
 /** WB9g (2026-09-30, Mac: "an animated burning ground aura that circles the ground where your character stands"): AN
@@ -123,6 +138,9 @@ export const AURA_TEXT = Object.freeze({
   turninghour: 'The Turning Hour',   // SD9c: the Brass Remnant's wheel of brass gears and gold light, one kill in eight
   firsthour: 'The First Hour',   // HOURS-FIRST: The Turning Hour in the first dawn's light, Hour's First's own, granted with the title
   maelstrom: 'The Maelstrom',   // SERPENT5: the Old Coil's whirlpool of tide and foam, one dealing ship's serpent kill in fifty
+  beaconlight: 'Beaconlight',   // EG-E2: Kynbane's gold-white motes, granted with the title
+  burningstair: 'The Burning Stair',   // EG-E2: Wellhead-Walker's falling embers, granted with the title
+  firstlight: 'Firstlight',   // EG-E2: First of the Spire's dawn-white ring, granted with the title by name
 });
 
 /** SHADOW-FANG (2026-09-26, Mac): "SirMcMobdon gets a brand new
@@ -170,7 +188,7 @@ const OBLIVION_ABYSS = Object.freeze([0.302, 0.102, 0.580, 1]);   // #4d1a94
 
 /** PRIMARCH (2026-10-04, GA00250, relayed by the owner: "the title will be Primarch, the color will be that light gold
  *  color that you guys use in some places in the game menu", over a screenshot of their own name in the pause menu's
- *  pixel face - "that color"). That is #d8cfae: the pixel menu's text (ui/enhancedStyle.js `.px-mname`, the name in
+ *  pixel face - "that color"). That is #d8cfae: the pixel menu's text (ui/enhanced/enhancedStyle.js `.px-mname`, the name in
  *  the screenshot, and the menu's rows and the talk window's), sampled off the screenshot's letters at #d4ccb0 through
  *  its JPEG. ONE colour, as asked - no gradient; a one-colour title wears every face's black text shadow, and it read
  *  on all five grounds in Chromium at 13 to 64 px, snow included. A pin holds it to the menu's own rule. */
@@ -187,7 +205,7 @@ export const CRYSTAL_PURPLE = Object.freeze([0.639, 0.286, 0.643, 1]);   // #a34
 
 /** SD9b (2026-10-07, the Super Dungeons arc; bible/11-Multiplayer/Super-Dungeons.md section 11): HOURBREAKER - the
  *  Brass Remnant's title, one kill in four on its first write. Drawn in the Hour's own colours: the Remnant's brass into
- *  its bar's gold (ui/gateBossBar.js's brass theme, `.wb-boss-name`) into the light of its heart; its one colour the
+ *  its bar's gold (ui/gate/gateBossBar.js's brass theme, `.wb-boss-name`) into the light of its heart; its one colour the
  *  bar's gold, for a face that draws no gradient - yellower and darker than the Founder's, warmer than the Primarch's. */
 export const HOUR_BRASS = Object.freeze([0.71, 0.525, 0.184, 1]);   // #b5862f
 export const HOUR_GOLD = Object.freeze([0.91, 0.753, 0.376, 1]);    // #e8c060 - SD9c: The Turning Hour's light (render/auraRing.js TURNING_RGB reads all three from here)
@@ -207,6 +225,18 @@ export const HOUR_SUN = Object.freeze([1, 0.969, 0.918, 1]);         // #fff7ea
 export const COIL_SEA = Object.freeze([0.165, 0.561, 0.651, 1]);    // #2a8fa6
 export const COIL_TIDE = Object.freeze([0.122, 0.682, 0.549, 1]);   // #1fae8c
 export const COIL_FOAM = Object.freeze([0.847, 0.976, 0.937, 1]);   // #d8f9ef
+/** EG-E2 (2026-10-12, Mac: "I said I want everything"; bible/11-Multiplayer/Elite-Gates.md section 19, THE HONOURS): THE
+ *  SPIRE'S COLOURS, named once - the three titles whose auras are drawn in them read them here, as the auras do
+ *  (render/auraRing.js SPIRE_RGB): the beacon's flame and its white heart (Beacon-Lighter; Kynbane's Beaconlight, its
+ *  motes), the Kyn's blood (Kynbane), the Wellhead's ember and its coal (Wellhead-Walker; The Burning Stair), and the
+ *  dawn and its gold (First of the Spire; Firstlight, its ring). */
+export const SPIRE_BEACON = Object.freeze([1, 0.902, 0.62, 1]);        // #ffe69e - paler and whiter than the Crowned's gold
+export const SPIRE_BEACON_WHITE = Object.freeze([1, 0.976, 0.902, 1]); // #fff9e6
+export const SPIRE_KYN = Object.freeze([0.69, 0.157, 0.118, 1]);       // #b0281e - darker and bloodier than the Developer's red
+export const SPIRE_EMBER = Object.freeze([0.941, 0.416, 0.208, 1]);    // #f06a35 - redder than the Gatebreaker's fire
+export const SPIRE_COAL = Object.freeze([0.62, 0.122, 0.039, 1]);      // #9e1f0a
+export const SPIRE_DAWN = Object.freeze([0.992, 0.886, 0.816, 1]);     // #fde2d0 - a blush of dawn, paler than Hour's First's rose gold
+export const SPIRE_DAWN_GOLD = Object.freeze([1, 0.792, 0.522, 1]);    // #ffca85
 
 /** A title's colour, RGBA 0..1 - the same shape SOC4's PARTY_GREEN is
  *  in, so `nameLayer.cssRgba` turns it into CSS and `drawText` takes it
@@ -277,6 +307,23 @@ export const TITLE_RGBA = Object.freeze({
   // Founder's gold and the Hour's, lighter than the Dungeon Master's orange
   ilovelamp: Object.freeze([1, 0.698, 0.376, 1]),           // #ffb260
   coilbreaker: COIL_TIDE,                                   // SERPENT5: the tide's green, #1fae8c
+  // EG-E2: THE SPIRE'S THIRTEEN, none another title's - the Spire's dusk for its first step, the beacon's flame, the Kyn's
+  // blood, an unbroken ivory, a lone cold star, the Imperial Battlemages' blue, the Wellhead's ember; each band's Master
+  // its own ground's (the Galleries' old gilt, the Cairn's soul-gems, the Shade's night, the Wellhead's forge); the
+  // Champion's jade, and the first dawn for the first company
+  spirewalker: Object.freeze([0.62, 0.659, 0.8, 1]),        // #9ea8cc
+  beaconlighter: SPIRE_BEACON,
+  kynbane: SPIRE_KYN,
+  unfallen: Object.freeze([0.902, 0.882, 0.812, 1]),        // #e6e1cf
+  lonebeacon: Object.freeze([0.788, 0.894, 1, 1]),          // #c9e4ff
+  battlemage: Object.freeze([0.31, 0.4, 0.769, 1]),         // #4f66c4
+  wellheadwalker: SPIRE_EMBER,
+  mastergallery: Object.freeze([0.788, 0.647, 0.353, 1]),   // #c9a55a
+  mastercairn: Object.freeze([0.541, 0.859, 0.89, 1]),      // #8adbe3
+  mastershade: Object.freeze([0.424, 0.373, 0.682, 1]),     // #6c5fae
+  masterwellhead: Object.freeze([0.831, 0.333, 0.165, 1]),  // #d4552a
+  spirechampion: Object.freeze([0.275, 0.839, 0.549, 1]),   // #46d68c
+  spirefirst: SPIRE_DAWN,
 });
 
 /** SHADOW-FANG: A TITLE DRAWN AS A GRADIENT - its stops, RGBA 0..1, left
@@ -561,7 +608,7 @@ export function glyphBadges(peer) {
 
 /** ═══ ACC3c: THE COLOURS AS A STYLESHEET ═════════════════════════
  *
- * `ui/enhancedAccount.js` may not style itself - a pin holds it, and
+ * `ui/enhanced/enhancedAccount.js` may not style itself - a pin holds it, and
  * enhancedStyle.js's own header says why: two copies of a design
  * language is how the front door and the rooms behind it drift apart.
  * So the card writes a CLASS and the skin carries the colour, and the
@@ -576,7 +623,7 @@ export const badgeClass = (kind, key) => `${kind}-${key}`;
  *  the Gatebreaker's, the Oblivion Ward the Aegis of Oblivion's, the Golden Radiance the Primarch's (PRIMARCH), the Holo
  *  Shadow Cloak the Shadow Fang's black and crimson (SHADOW-CLOAK), the Seraph Wings the Founder's gold - the wings' own, where
  *  the developer's paint is a red (SERAPH-WINGS), the Crystal Resonance the Crystal Fist's purple (CRYSTAL-FIST). A pin walks AURA_TEXT and requires an entry. */
-export const AURA_PAINT = Object.freeze({ dagonfire: 'gatebreaker', oblivionward: 'aegis', radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker' });   // HOURS-FIRST: The First Hour in Hour's First's rose gold; SERPENT5: The Maelstrom in the Coilbreaker's sea
+export const AURA_PAINT = Object.freeze({ dagonfire: 'gatebreaker', oblivionward: 'aegis', radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst' });   // HOURS-FIRST: The First Hour in Hour's First's rose gold; SERPENT5: The Maelstrom in the Coilbreaker's sea; EG-E2: the Spire's three each in its title's paint
 /** SHADOW-FANG: `titlePaint`'s properties as CSS declarations, the colour
  *  left to the button (its border is drawn in it) - so a gradient title's
  *  word on the card is the SAME paint as over a head, not a second one. */
@@ -590,7 +637,7 @@ export const badgeCss = () => [
   // SHADOW-FANG: a gradient title's word (the card wraps it in .acttitleword) - the button keeps the plain colour
   ...TITLES.filter((t) => TITLE_GRADIENT[t]).map((t) => `.card button.acttitle.${badgeClass('tl', t)} .acttitleword { ${wordCss(t)} }`),
   ...GLYPHS.map((g) => `.card .acctglyph.${badgeClass('gl', g)} .acctglyphart { color: ${cssRgba(GLYPH_RGBA[g])}; }`),
-  // PROFILE-MENU: the title the profile's plate says it wears (ui/enhancedAccount.js plateFacts) - the button's colour,
+  // PROFILE-MENU: the title the profile's plate says it wears (ui/enhanced/enhancedAccount.js plateFacts) - the button's colour,
   // and a gradient title's word painted as the button's is
   ...TITLES.map((t) => `.card .acctworntitle.${badgeClass('tl', t)} { color: ${cssRgba(TITLE_RGBA[t])}; }`),
   ...TITLES.filter((t) => TITLE_GRADIENT[t]).map((t) => `.card .acctworntitle.${badgeClass('tl', t)} .acctwornword { ${wordCss(t)} }`),

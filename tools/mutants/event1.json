@@ -5,7 +5,7 @@
     "old": "return m.kind === '' || LIVE_EVENTS.includes(m.kind) ? { t: 'stage', kind: m.kind } : { error: 'bad stage' };",
     "new": "return LIVE_EVENTS.includes(m.kind) ? { t: 'stage', kind: m.kind } : { error: 'bad stage' };",
     "tests": [
-      "test/event1_live_event.test.js"
+      "test/render/event1_live_event.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "return m.kind === '' || LIVE_EVENTS.includes(m.kind) ? { t: 'stage', kind: m.kind } : { error: 'bad stage' };",
     "new": "return typeof m.kind === 'string' ? { t: 'stage', kind: m.kind } : { error: 'bad stage' };",
     "tests": [
-      "test/event1_live_event.test.js"
+      "test/render/event1_live_event.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "export const EVENT_RELAY_MIN = 110;",
     "new": "export const EVENT_RELAY_MIN = 109;",
     "tests": [
-      "test/event1_live_event.test.js"
+      "test/render/event1_live_event.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "&& Number.isSafeInteger(e.at) && e.at > 0;",
     "new": "&& Number.isFinite(e.at);",
     "tests": [
-      "test/event1_live_event.test.js"
+      "test/render/event1_live_event.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "      if (!Array.isArray(a.glyphs) || !a.glyphs.includes('dev')) return;   // silently, as RED1's\n",
     "new": "      void 0;\n",
     "tests": [
-      "test/event1_live_event.test.js"
+      "test/render/event1_live_event.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "'evbucket', 'evdrops', 'too many stages')) return;   // metered before the authority is asked (AUDIT 68)\n      if (!isSocialRoom(a.key)) { this._junk(ws); return; }",
     "new": "'evbucket', 'evdrops', 'too many stages')) return;   // metered before the authority is asked (AUDIT 68)\n      void 0;",
     "tests": [
-      "test/event1_live_event.test.js"
+      "test/render/event1_live_event.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "if (ev) await this.state.storage.put(EVENT_KEY, ev); else await this.state.storage.delete(EVENT_KEY);",
     "new": "if (!ev) await this.state.storage.delete(EVENT_KEY);",
     "tests": [
-      "test/event1_live_event.test.js"
+      "test/render/event1_live_event.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "if (ev) await this.state.storage.put(EVENT_KEY, ev); else await this.state.storage.delete(EVENT_KEY);",
     "new": "if (ev) await this.state.storage.put(EVENT_KEY, ev);",
     "tests": [
-      "test/event1_live_event.test.js"
+      "test/render/event1_live_event.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "for (const [other, b] of [...this._all()]) if (b.id) this._send(other, said);   // everyone in the hub, the stager included",
     "new": "void said;   // everyone in the hub, the stager included",
     "tests": [
-      "test/event1_live_event.test.js"
+      "test/render/event1_live_event.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "if (!this._spend(ws, now, eventGate, 'evbucket', 'evdrops', 'too many stages')) return;",
     "new": "void eventGate;",
     "tests": [
-      "test/event1_live_event.test.js"
+      "test/render/event1_live_event.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "now: Date.now(), ...(ev ? { ev } : {}), ...(tr.length ? { tr } : {}) }",
     "new": "now: Date.now(), ...(tr.length ? { tr } : {}) }",
     "tests": [
-      "test/event1_live_event.test.js"
+      "test/render/event1_live_event.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "const ev = isSocialRoom(a.key) && !shard ? await this._liveEvent() : null;",
     "new": "const ev = await this._liveEvent();",
     "tests": [
-      "test/event1_live_event.test.js"
+      "test/render/event1_live_event.test.js"
     ],
     "note": "SCALE5c (re-aimed by content): a shard joiner hears the event from the bus"
   },
@@ -114,7 +114,7 @@
     "old": "this._event = validLiveEvent(e) ? e : null;",
     "new": "this._event = e ?? null;",
     "tests": [
-      "test/event1_live_event.test.js"
+      "test/render/event1_live_event.test.js"
     ]
   },
   {
@@ -123,7 +123,7 @@
     "old": "{ kind: m.ev.kind, at: m.ev.at } : null, false);",
     "new": "{ kind: m.ev.kind, at: m.ev.at } : null, true);",
     "tests": [
-      "test/event1_live_event.test.js"
+      "test/render/event1_live_event.test.js"
     ]
   },
   {
@@ -132,7 +132,7 @@
     "old": "if (cur === ev || (cur && ev && cur.kind === ev.kind && cur.at === ev.at)) return;",
     "new": "if (cur === ev) return;",
     "tests": [
-      "test/event1_live_event.test.js"
+      "test/render/event1_live_event.test.js"
     ]
   },
   {
@@ -141,7 +141,7 @@
     "old": "if (!primary || !isSocialRoom(room)) return;\n      if (m.kind === '')",
     "new": "if (!primary) return;\n      if (m.kind === '')",
     "tests": [
-      "test/event1_live_event.test.js"
+      "test/render/event1_live_event.test.js"
     ]
   },
   {
@@ -150,7 +150,7 @@
     "old": "if (primary && isSocialRoom(room)) this._setEvent(",
     "new": "if (primary && isSocialRoom(room) && m.ev) this._setEvent(",
     "tests": [
-      "test/event1_live_event.test.js"
+      "test/render/event1_live_event.test.js"
     ]
   },
   {
@@ -159,7 +159,7 @@
     "old": "    this._setEvent(null, false);   // EVENT1: a player who leaves the server leaves its event",
     "new": "    void 0;   // EVENT1: a player who leaves the server leaves its event",
     "tests": [
-      "test/event1_live_event.test.js"
+      "test/render/event1_live_event.test.js"
     ]
   },
   {
@@ -168,7 +168,7 @@
     "old": "if (!this.eventOk || !isSocialRoom(this.room ?? '')) return false;",
     "new": "if (!isSocialRoom(this.room ?? '')) return false;",
     "tests": [
-      "test/event1_live_event.test.js"
+      "test/render/event1_live_event.test.js"
     ]
   },
   {
@@ -177,7 +177,7 @@
     "old": "if (!this.eventOk || !isSocialRoom(this.room ?? '')) return false;",
     "new": "if (!this.eventOk) return false;",
     "tests": [
-      "test/event1_live_event.test.js"
+      "test/render/event1_live_event.test.js"
     ]
   },
   {
@@ -186,7 +186,7 @@
     "old": "    const gate = eventGate(this._ebucket, this._now());\n    if (!gate.pass) return false;",
     "new": "    const gate = eventGate(this._ebucket, this._now());",
     "tests": [
-      "test/event1_live_event.test.js"
+      "test/render/event1_live_event.test.js"
     ]
   },
   {
@@ -195,7 +195,7 @@
     "old": "if (words.length === 1 && words[0] === 'off') return { kind: '' };",
     "new": "if (false) return { kind: '' };",
     "tests": [
-      "test/event1_live_event.test.js"
+      "test/render/event1_live_event.test.js"
     ]
   },
   {
@@ -204,7 +204,7 @@
     "old": "(sw !== 'on' && sw !== 'off')",
     "new": "false",
     "tests": [
-      "test/event1_live_event.test.js"
+      "test/render/event1_live_event.test.js"
     ]
   },
   {
@@ -213,7 +213,7 @@
     "old": "const k = Math.max(0, Math.min(1, w || 0));",
     "new": "const k = 1;",
     "tests": [
-      "test/event1_live_event.test.js"
+      "test/render/event1_live_event.test.js"
     ]
   },
   {
@@ -222,7 +222,7 @@
     "old": "LUMA[2] * rgb[2]) * DREAD_DIM);",
     "new": "LUMA[2] * rgb[2]));",
     "tests": [
-      "test/event1_live_event.test.js"
+      "test/render/event1_live_event.test.js"
     ]
   },
   {
@@ -231,7 +231,7 @@
     "old": "      if (!live) weight = target;",
     "new": "      weight = target;",
     "tests": [
-      "test/event1_live_event.test.js"
+      "test/render/event1_live_event.test.js"
     ]
   },
   {
@@ -240,7 +240,7 @@
     "old": "      if (!live) weight = target;",
     "new": "      if (false) weight = target;",
     "tests": [
-      "test/event1_live_event.test.js"
+      "test/render/event1_live_event.test.js"
     ]
   },
   {
@@ -249,7 +249,7 @@
     "old": "target = ev?.kind === DREAD_EVENT ? 1 : 0;",
     "new": "target = ev ? 1 : 0;",
     "tests": [
-      "test/event1_live_event.test.js"
+      "test/render/event1_live_event.test.js"
     ]
   },
   {
@@ -258,7 +258,7 @@
     "old": "if (r() >= DREAD_STRIKE_CHANCE * Math.min(1, w)) continue;",
     "new": "if (r() >= DREAD_STRIKE_CHANCE) continue;",
     "tests": [
-      "test/event1_live_event.test.js"
+      "test/render/event1_live_event.test.js"
     ]
   },
   {
@@ -267,7 +267,7 @@
     "old": "Math.max(Math.floor(fromMs / DREAD_SLOT_MS), last - DREAD_SLOTS_MAX + 1)",
     "new": "Math.floor(fromMs / DREAD_SLOT_MS)",
     "tests": [
-      "test/event1_live_event.test.js"
+      "test/render/event1_live_event.test.js"
     ]
   },
   {
@@ -276,7 +276,7 @@
     "old": "      if (lastMs !== null) {\n        const c = centre ?? eye;\n        for (const s of dreadStrikes(lastMs, sharedMs, weight, ring)) {",
     "new": "      {\n        const c = centre ?? eye;\n        for (const s of dreadStrikes(lastMs ?? sharedMs - DREAD_SLOTS_MAX * DREAD_SLOT_MS, sharedMs, weight, ring)) {",
     "tests": [
-      "test/event1_live_event.test.js"
+      "test/render/event1_live_event.test.js"
     ]
   },
   {
@@ -285,7 +285,7 @@
     "old": "dueMs: s.atMs + t.delay * 1000,",
     "new": "dueMs: s.atMs,",
     "tests": [
-      "test/event1_live_event.test.js"
+      "test/render/event1_live_event.test.js"
     ]
   },
   {
@@ -294,7 +294,7 @@
     "old": "kind: s.kind, strength: s.strength, color: DREAD_BOLT_COLOR });",
     "new": "kind: s.kind, strength: s.strength });",
     "tests": [
-      "test/event1_live_event.test.js"
+      "test/render/event1_live_event.test.js"
     ]
   },
   {
@@ -303,7 +303,7 @@
     "old": "if (b.color === DREAD_BOLT_COLOR && b.bright > best)",
     "new": "if (b.bright > best)",
     "tests": [
-      "test/event1_live_event.test.js"
+      "test/render/event1_live_event.test.js"
     ]
   },
   {
@@ -312,7 +312,7 @@
     "old": "bolts.push(b.color ? { segs: b.segs, bright, color: b.color } : { segs: b.segs, bright });",
     "new": "bolts.push({ segs: b.segs, bright });",
     "tests": [
-      "test/event1_live_event.test.js"
+      "test/render/event1_live_event.test.js"
     ]
   },
   {
@@ -321,7 +321,7 @@
     "old": "const fc = b.flashColor ?? FLASH_COLOR;",
     "new": "const fc = FLASH_COLOR;",
     "tests": [
-      "test/event1_live_event.test.js"
+      "test/render/event1_live_event.test.js"
     ]
   },
   {
@@ -330,7 +330,7 @@
     "old": ", ...(s.color ? { color: s.color } : {})",
     "new": "",
     "tests": [
-      "test/event1_live_event.test.js"
+      "test/render/event1_live_event.test.js"
     ]
   },
   {
@@ -339,7 +339,7 @@
     "old": "const c = b.color ?? BOLT_COLOR;",
     "new": "const c = BOLT_COLOR;",
     "tests": [
-      "test/event1_live_event.test.js"
+      "test/render/event1_live_event.test.js"
     ]
   },
   {
@@ -348,7 +348,7 @@
     "old": "brassGrade(dreadGrade(c.rgb / op, uDread), uBrass) * op",
     "new": "brassGrade(dreadGrade(c.rgb, uDread), uBrass)",
     "tests": [
-      "test/event1_live_event.test.js"
+      "test/render/event1_live_event.test.js"
     ]
   },
   {
@@ -357,7 +357,7 @@
     "old": "for (const r of [sky, enhancedSky, dynamicSky, clouds]) if (r) r.dread = dreadW;",
     "new": "for (const r of [sky, enhancedSky, dynamicSky]) if (r) r.dread = dreadW;",
     "tests": [
-      "test/event1_live_event.test.js"
+      "test/render/event1_live_event.test.js"
     ]
   },
   {
@@ -366,7 +366,7 @@
     "old": "const d = dreadW > 0 ? dreadGrade(c, dreadW) : c;",
     "new": "const d = c;",
     "tests": [
-      "test/event1_live_event.test.js"
+      "test/render/event1_live_event.test.js"
     ]
   },
   {
@@ -375,7 +375,7 @@
     "old": "dreadGlow = dreadW > 0 ? Math.max(0, Math.min(1, Number(glow) || 0)) : 0;",
     "new": "dreadGlow = Math.max(0, Math.min(1, Number(glow) || 0));",
     "tests": [
-      "test/event1_live_event.test.js"
+      "test/render/event1_live_event.test.js"
     ]
   },
   {
@@ -384,7 +384,7 @@
     "old": "if (tab.room === SOCIAL_ROOM) link.onEvent = (ev, o) => { dread.set(ev, o); sunbaby.set(ev, o); };",
     "new": "link.onEvent = (ev, o) => { dread.set(ev, o); sunbaby.set(ev, o); };",
     "tests": [
-      "test/event1_live_event.test.js"
+      "test/render/event1_live_event.test.js"
     ]
   },
   {
@@ -393,7 +393,7 @@
     "old": "          if (!hub?.eventOk) return say('The server cannot stage live events yet.');\n",
     "new": "",
     "tests": [
-      "test/event1_live_event.test.js"
+      "test/render/event1_live_event.test.js"
     ]
   }
 ]

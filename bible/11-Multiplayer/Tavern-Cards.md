@@ -1,6 +1,6 @@
 # TAVERN CARDS - a card table in every tavern (CARDS0, the design record)
 
-**Status: DESIGN RECORD, being built - CARDS1 SHIPPED (2026-10-07, section 10; Mac: "Do it"), CARDS2 SHIPPED (the same day, section 11; Mac: "Continue"), CARDS2b SHIPPED (section 12; Mac: "Continue") - the seated Morrowind body, the others' to see, on relay world178; AUDIT CARDS over all of it the same day (section 13, `01-Overview/Audit-Cards.md`); CARDS4 SHIPPED (section 14) and CARDS3 SHIPPED (section 15) together (Mac: "Do 3 and 4") - offline Hold'em against the tavern's regulars for gold, the cards and chips on the cloth; AUDIT CARDS-2 over all of it (section 16, `01-Overview/Audit-Cards-2.md`; Mac: "Perfection"); then (Mac: "Do 3 4 and 5") CARDS5 SHIPPED (section 17, the relay deals - online Hold'em between players, friendly), CARDS4b (section 18, the regulars seated in their chairs) and CARDS3b (section 19, the held hand, the peek, the chips dragged, the riffle); then (Mac: "I wanna do a deep comprehensive of everything and give the cards daggerfall especially themes") AUDIT CARDS-3 over all of it (section 20, `01-Overview/Audit-Cards-3.md`) and CARDS-BAY SHIPPED (section 21, the deck of the Iliac Bay); then (Mac: "#2 and cleanup") CARDS-TIDY (section 22) and CARDS6 SHIPPED (section 23, gold tables online - the stakes escrowed by the realm service); then (Mac: "2 and 3") AUDIT CARDS-4 over them (section 25, `01-Overview/Audit-Cards-4.md`) and CARDS6b SHIPPED (section 24, the top-up and gold owed elsewhere); then (Mac: "So what about card collections?") the Holdings rail's COLLECTIONS page, CARDS7 SHIPPED (Iliac Hand's rules) and CARDS8 SHIPPED (the first set, its painted faces, the Card Binder and the starter deck) - section 26. Then (Mac: "one last comprehensive audit") AUDIT CARDS-5 - section 27. Then (the owner: "Lets instead place a specific table in each inn. A new property specifficaly used for the card table") TAVERN-TABLE - section 28, every tavern's own card table, a prop of its own; then (the owner: "Audit this") AUDIT TAVERN-TABLE - section 29; then (Discord, live: "Card tables just aren't working at all right now" - "it doesnt let him use gold tables"; the owner: "Two tables per tavern") TAVERN-TABLES - section 30, the chips table and the gold table; then (AUDIT CARDS-6's lane E, found live on main) CARDS-TOUCH - section 31, a phone's finger at the table the table's, and (a live report: "Shes clicking deal me in but nothing happens") CARDS-SAID, a refused stake said on the panel. Then (Mac: "Lets build every inch of this. Dont forget about a card needing to come from the abyss dungeon also") CARDS9 SHIPPED (section 32, where cards come from - the Abyss Dungeon's Brass Remnant's card among the bosses'), CARDS10 SHIPPED (section 33, Iliac Hand at the table offline and online, the season board and its title) and CARDS2c and CARDS3c (section 34, the sprite lane seated, the squeeze, the click and the push, the frame cost measured) - relay world182 and account acct99 (world179 and acct97 on their branch, renumbered at the merges), NOT YET DEPLOYED. Then (Mac: "Lets do a deep and comprehensive audit. This must be perfection") AUDIT CARDS-6 - section 35. Then (the owner, 2026-10-13: "Lets improve the illiac bay minigame visuals and ensure the general card UI uses enhanced plus and our fonts. Currently it doesnt") CARDS-PLUS - section 38: the card UI in the Enhanced Plus kit and the game's face on every skin, and Iliac Hand's table made to read as a game. Then The King's Gambit's slices at this table (`Kings-Gambit.md`): KG-SET - section 40, nine cards more and the set's words in the player's language - and KG3 - section 41, the table's third game. Mac answered
+**Status: DESIGN RECORD, being built - CARDS1 SHIPPED (2026-10-07, section 10; Mac: "Do it"), CARDS2 SHIPPED (the same day, section 11; Mac: "Continue"), CARDS2b SHIPPED (section 12; Mac: "Continue") - the seated Morrowind body, the others' to see, on relay world178; AUDIT CARDS over all of it the same day (section 13, `01-Overview/audits/Audit-Cards.md`); CARDS4 SHIPPED (section 14) and CARDS3 SHIPPED (section 15) together (Mac: "Do 3 and 4") - offline Hold'em against the tavern's regulars for gold, the cards and chips on the cloth; AUDIT CARDS-2 over all of it (section 16, `01-Overview/audits/Audit-Cards-2.md`; Mac: "Perfection"); then (Mac: "Do 3 4 and 5") CARDS5 SHIPPED (section 17, the relay deals - online Hold'em between players, friendly), CARDS4b (section 18, the regulars seated in their chairs) and CARDS3b (section 19, the held hand, the peek, the chips dragged, the riffle); then (Mac: "I wanna do a deep comprehensive of everything and give the cards daggerfall especially themes") AUDIT CARDS-3 over all of it (section 20, `01-Overview/audits/Audit-Cards-3.md`) and CARDS-BAY SHIPPED (section 21, the deck of the Iliac Bay); then (Mac: "#2 and cleanup") CARDS-TIDY (section 22) and CARDS6 SHIPPED (section 23, gold tables online - the stakes escrowed by the realm service); then (Mac: "2 and 3") AUDIT CARDS-4 over them (section 25, `01-Overview/audits/Audit-Cards-4.md`) and CARDS6b SHIPPED (section 24, the top-up and gold owed elsewhere); then (Mac: "So what about card collections?") the Holdings rail's COLLECTIONS page, CARDS7 SHIPPED (Iliac Hand's rules) and CARDS8 SHIPPED (the first set, its painted faces, the Card Binder and the starter deck) - section 26. Then (Mac: "one last comprehensive audit") AUDIT CARDS-5 - section 27. Then (the owner: "Lets instead place a specific table in each inn. A new property specifficaly used for the card table") TAVERN-TABLE - section 28, every tavern's own card table, a prop of its own; then (the owner: "Audit this") AUDIT TAVERN-TABLE - section 29; then (Discord, live: "Card tables just aren't working at all right now" - "it doesnt let him use gold tables"; the owner: "Two tables per tavern") TAVERN-TABLES - section 30, the chips table and the gold table; then (AUDIT CARDS-6's lane E, found live on main) CARDS-TOUCH - section 31, a phone's finger at the table the table's, and (a live report: "Shes clicking deal me in but nothing happens") CARDS-SAID, a refused stake said on the panel. Then (Mac: "Lets build every inch of this. Dont forget about a card needing to come from the abyss dungeon also") CARDS9 SHIPPED (section 32, where cards come from - the Abyss Dungeon's Brass Remnant's card among the bosses'), CARDS10 SHIPPED (section 33, Iliac Hand at the table offline and online, the season board and its title) and CARDS2c and CARDS3c (section 34, the sprite lane seated, the squeeze, the click and the push, the frame cost measured) - relay world182 and account acct99 (world179 and acct97 on their branch, renumbered at the merges), NOT YET DEPLOYED. Then (Mac: "Lets do a deep and comprehensive audit. This must be perfection") AUDIT CARDS-6 - section 35. Then (the owner, 2026-10-13: "Lets improve the illiac bay minigame visuals and ensure the general card UI uses enhanced plus and our fonts. Currently it doesnt") CARDS-PLUS - section 38: the card UI in the Enhanced Plus kit and the game's face on every skin, and Iliac Hand's table made to read as a game. Then The King's Gambit's slices at this table (`Kings-Gambit.md`): KG-SET - section 40, nine cards more and the set's words in the player's language - and KG3 - section 41, the table's third game. Mac answered
 four of section 9's five questions the same day, and the house deck's art (Q5) on 2026-10-08; the collectible cards' art is still open. Every DECIDED below binds the build
 slices, and a slice that ships one records any change here first.**
 
@@ -96,7 +96,7 @@ narrows its Ledger section A row (`01-Overview/Port-Ledger.md`), the way DICE1 a
 
 - No-limit Texas Hold'em, two to six seats, the standard rules: blinds, two hole cards, the flop, the turn, the river,
   four betting rounds, the showdown, side pots for an all-in.
-- **DECIDED: the hand evaluator is one pure module** (`net/cardLaw.js` or its name at CARDS1), read by both ends like
+- **DECIDED: the hand evaluator is one pure module** (`net/card/cardLaw.js` or its name at CARDS1), read by both ends like
   `net/dice.js` is: five-of-seven best hand, every category from high card to the straight flush, the wheel (A-2-3-4-5),
   ties split by kicker, side pots by contribution. Its pins are deepEqual against hand-written tables, mutation-checked.
 - **DECIDED (Mac): stakes are gold.** Offline, the player's own purse. Online, see section 5.
@@ -117,7 +117,7 @@ narrows its Ledger section A row (`01-Overview/Port-Ledger.md`), the way DICE1 a
   a client asks (`bet`, `call`, `check`, `fold`, `raise`) and the relay answers with the new state. A seat that does not
   act in its time (MEASURE: 30 s) is checked if it can be, folded if not. A seat whose player leaves the room folds and
   is stood up at the hand's end.
-- **FACT:** a realm character's gold moves on its save through the service (`net/realmGoldLaw.js`, REALM P2.2, read by
+- **FACT:** a realm character's gold moves on its save through the service (`net/realm/realmGoldLaw.js`, REALM P2.2, read by
   `server-account/src/realm.js`). **DECIDED: online stakes are escrowed there.** Sitting down moves the buy-in from the
   character to the table; standing up moves the stack back. A stake the service does not hold is a stake nobody can
   enforce, so a character the service does not keep plays for no gold (a friendly table). BUILT: CARDS6 (section 23).
@@ -146,7 +146,7 @@ Their numbers (deck size, turn count, magicka cap) are MEASURE until CARDS7 play
 - Drawn from Daggerfall itself: the creatures (a rat, a skeletal warrior, an ancient vampire), the guilds and the
   temples, the knightly orders, the provinces, the Daedric Princes, the artifacts. Every card names the thing it
   pictures, and its power and text follow from what that thing is in the game (a Lich outranks an Orc).
-- **DECIDED: rarity is the loot's.** A card carries a tier of `RARITY_ORDER` (`src/systems/lootRarity.js`: common,
+- **DECIDED: rarity is the loot's.** A card carries a tier of `RARITY_ORDER` (`src/systems/loot/lootRarity.js`: common,
   magic, rare, legendary, aetheric, artifact - and GILDED1's gilded, joined at the merge of main, which no card of the first set wears) and draws with that tier's treatment, the way an item does.
 - **DECIDED: the art is ours.** A card's picture can never be an ARENA2 sprite or a render of one (Port-Doctrine, "A
   RENDER OF GAME DATA IS GAME DATA"). ANSWERED (section 9 Q5): painted in code (section 26).
@@ -225,7 +225,7 @@ Each ships alone and is verifiable without the next.
 
 Mac, after CARDS0's answers: **"Do it"**.
 
-`src/net/cardLaw.js` - pure, DOM-free, one home for both ends, the way `net/dice.js` is the dice's. Nothing draws, sits
+`src/net/card/cardLaw.js` - pure, DOM-free, one home for both ends, the way `net/dice.js` is the dice's. Nothing draws, sits
 or deals yet; the relay (CARDS5) and the patrons (CARDS4) will read it.
 
 - **The card** is an integer 0..51 - rank `c % 13` (the deuce 0 .. the ace 12), suit `Math.floor(c / 13)` (clubs,
@@ -253,7 +253,7 @@ or deals yet; the relay (CARDS5) and the patrons (CARDS4) will read it.
   from the seat left of the button; a hand won uncontested shows nothing. Every step returns a NEW state - a refused
   action is `null` and changes nothing, which is what lets a relay keep the last good one. `viewFor` is what a seat
   may see: its own hole cards, another's only shown down and still in, never the deck or the burns.
-- **Pins:** `test/cards1_cardlaw.test.js`, 14 tests, deepEqual against hand tables and whole hands played through.
+- **Pins:** `test/net/card/cards1_cardlaw.test.js`, 14 tests, deepEqual against hand tables and whole hands played through.
   `tools/mutants/cards1.json`: 40 mutants, 40 dead. Two survived the first pass - `parseCard` reading a capital suit,
   and the minimum bet carried from one street to the next - and each was pinned.
 - **Ledger:** section A row TAVERN CARDS - THE CARDS' LAW.
@@ -262,7 +262,7 @@ or deals yet; the relay (CARDS5) and the patrons (CARDS4) will read it.
 
 Mac: **"Continue"**.
 
-- **The table** (`src/world/cardTables.js`, pure). A card table is a table model a tavern already stands - no placed
+- **The table** (`src/world/card/cardTables.js`, pure). A card table is a table model a tavern already stands - no placed
   prop. FLAGGED: `CARD_TABLE_MODELS` holds the ONE id the tree can name as a table, 41130 ("Table" in the vendored
   World of Daggerfall's `LocationHelper.cs` model list; 41100 is a chair there, though two of our tests' fixtures call
   it a table). This container carries no ARENA2, so the tavern blocks' other tables could not be measured. The census
@@ -287,11 +287,11 @@ Mac: **"Continue"**.
   key). The `?interior` viewer (`scenes/interior.js`) flies a camera and has no body to seat.
 - **Not verified in a live tavern.** No ARENA2 here, so no browser probe reached a tavern: the seat is pinned by its
   law and by source. The first eye on it is Mac's, with the census.
-- **Pins:** `test/cards2_seat.test.js`, 8 tests. `tools/mutants/cards2.json`: 38, 38 dead; the one first-pass
+- **Pins:** `test/world/card/cards2_seat.test.js`, 8 tests. `tools/mutants/cards2.json`: 38, 38 dead; the one first-pass
   survivor was a finite guard the upper bound already made, and it was deleted rather than pinned.
 - **Ledger:** section A row TAVERN CARDS, narrowed to say CARDS2 landed and CARDS2b is open (CARDS2b landed after
   it; section 12). Superseded since: TAVERN-TABLE (section 28) retired the one id and the census - the card table is a
-  prop of its own, and the FLAGGED sentence above is gone from `world/cardTables.js`; the seated eye is 1.22 m (CARDS2b, the seated head's), the seats stand 0.35 m
+  prop of its own, and the FLAGGED sentence above is gone from `world/card/cardTables.js`; the seated eye is 1.22 m (CARDS2b, the seated head's), the seats stand 0.35 m
   out, square to their side and round the table's own box, and "the nearest free seat" counts the others' (AUDIT
   CARDS, section 13).
 
@@ -309,7 +309,7 @@ Mac: **"Continue"**.
   its pelvis stands at 1.09 m, its thigh 0.46 m, its shin 0.53 m. The first guess (a 0.45 m drop, the hands 0.55 m
   ahead) left the hips high and the hands 8 cm short of the table; the shipped numbers - a 0.48 m drop, the feet and
   the hands 0.45 m ahead - put the hips level with the knees over standing shins, the feet on their marks, and both
-  hands on the top to a millionth of a unit (`test/cards2b_seated.test.js` solves it). The seated eye is no longer its
+  hands on the top to a millionth of a unit (`test/net/peer/cards2b_seated.test.js` solves it). The seated eye is no longer its
   own guess: `SEATED_EYE_HEIGHT` is the standing eye (motor.js `EYE_HEIGHT`) lowered by the drop, 1.22 m, where the
   seated head is - and CARDS2's seats moved with it.
 - **My view** (`scenes/worldModes.js`). Seated, the view is the seat's own, first person - section 2's fixed seat
@@ -333,14 +333,14 @@ Mac: **"Continue"**.
 - **CARDS2c, open (BUILT at section 32 - the sprite sinks):** the sprite lane. Eye Of The Beholder has no sitting art, so a sprite body - mine in that lane, a
   peer's walker or paperdoll - stands at its seat facing the table.
 - **Not verified in a live tavern** (no ARENA2 here). The pose is verified on the real skeleton, not on screen.
-- **Pins:** `test/cards2b_seated.test.js`, 7 tests. `tools/mutants/cards2b.json`: 32, 32 dead (one survived the
+- **Pins:** `test/net/peer/cards2b_seated.test.js`, 7 tests. `tools/mutants/cards2b.json`: 32, 32 dead (one survived the
   first pass - the peer's table top, pinned at the default height, which a mutant dropping it could not move - and two
   records were re-aimed to parse).
 
 ## 13. AUDIT CARDS (2026-10-07): the arc audited
 
 Mac: **"Lets do a comprehensive audit on everything developed so far"**. Five lanes over a frozen snapshot, and the
-sweep of every test reading a touched host; the whole record is `01-Overview/Audit-Cards.md`. What it changed, here:
+sweep of every test reading a touched host; the whole record is `01-Overview/audits/Audit-Cards.md`. What it changed, here:
 
 - **The relay record (C1, C2).** `world175` was live; its row is main's again, and world178 carries CARDS1's dice lift
   beside the seat. The version chains in 37 test files were rebuilt from main: appended, never renamed.
@@ -367,20 +367,20 @@ sweep of every test reading a touched host; the whole record is `01-Overview/Aud
 Mac: **"Do 3 and 4"**. The first playable game: sit at a tavern's card table, buy in, and play no-limit Hold'em against
 the house's regulars until you stand, go broke or empty the table.
 
-- **The patrons' play** (`src/systems/cardPatrons.js`, pure). Before the flop a hand is its Chen score over twenty;
+- **The patrons' play** (`src/systems/card/cardPatrons.js`, pure). Before the flop a hand is its Chen score over twenty;
   after it, its equity - Monte Carlo over `EQUITY_SAMPLES` (200) deals of the unseen cards, a tie its share, cards known
   dead never dealt. Each patron is one of three tempers (`PATRON_TEMPERS`: tight, loose, a bluffer), four numbers each: the
   preflop line he plays from, the strength he raises with, how often he bets air, the edge over the pot's odds a call
   wants. A raise is sized off the pot - a half to the whole, more the stronger - and clamped to what the law allows.
   The bluff is the decision's FIRST draw (a constant source would spin the shuffle's rejection loop forever otherwise -
   found by the pins' first hang). Every decision is one `legalActions` allows, swept over thousands of seeded spots.
-- **The evening** (`src/systems/cardTableSession.js`, pure). The table's clock over the cards' law: the stakes by the
+- **The evening** (`src/systems/card/cardTableSession.js`, pure). The table's clock over the cards' law: the stakes by the
   tavern's quality (`TABLE_STAKES`: 1/2 to quality 7, 5/10 to 13, 25/50 above), the buy-in 20 to 100 big blinds and never past
   the purse, the regulars' purses 30 to 120 big blinds; a patron acts after `THINK_MS` and a seeded spread, the next
   hand waits `HAND_GAP_MS` after a showdown, a broke patron leaves (his chair shows empty), the evening is over
   `broke`, `empty` or `left`. Standing mid-hand folds you OUT OF TURN - `foldSeat` in the cards' law, the primitive
   CARDS5's leaver needs too (section 13) - your pot chips stay, the rest comes home.
-- **The panel** (`src/ui/cardTableHud.js`). The port's own panel, not a pausing window - the patrons play on - holding
+- **The panel** (`src/ui/card/cardTableHud.js`). The port's own panel, not a pausing window - the patrons play on - holding
   the cursor while it stands: the seats, the cards each may see, the pot, the buttons the law allows, a raise slider,
   the log. It swallows its own presses and keys (a slider's arrow is never a step that stands you up).
 - **The host** (`worldModes.js` - THE FOUR HOSTS, AUDIT CARDS-2 L13: the interior mode machine both `world.js` and
@@ -396,7 +396,7 @@ the house's regulars until you stand, go broke or empty the table.
   plays for chips and no purse is touched. Real-gold online tables are CARDS6's escrow.
 - **Open:** the regulars are names, not the room's living residents seated at the table (needs a host seam into the
   living world's crowd); the patrons do not talk.
-- **Pins:** `test/cards4_patrons.test.js` 4, `test/cards4_session.test.js` 5, `test/cards4_hud.test.js` 6.
+- **Pins:** `test/systems/card/cards4_patrons.test.js` 4, `test/systems/card/cards4_session.test.js` 5, `test/systems/card/cards4_hud.test.js` 6.
   `tools/mutants/cards4.json`: 17, all dead (three survived the first pass - a dead-card pin that compared a call
   with itself, an evening seed in which nobody went broke, and an empty chair nobody looked at; each pinned).
 
@@ -405,11 +405,11 @@ the house's regulars until you stand, go broke or empty the table.
 The same ask. Section 3's physics, closed-form in time so a slow or skipped frame lands on the same pose, seeded so a
 table's throws are its own.
 
-- **The motion** (`src/world/cardMotion.js`, pure). A throw from the dealer's hand (`DEAL_LIFT` over the top) on an
+- **The motion** (`src/world/card/cardMotion.js`, pure). A throw from the dealer's hand (`DEAL_LIFT` over the top) on an
   arc (`ARC_HEIGHT`) at `FLIGHT_SPEED`, never quicker than `FLIGHT_MIN_S`, spinning; a slide under the cloth's
   `SLIDE_DECEL` that stops EXACTLY on its rest with no speed left; a flip over the long edge (`FLIP_S`) or at its middle;
   chips stacked greedily from `CHIP_VALUES` in columns of `CHIP_STACK_MAX`, pushed over `PUSH_S`.
-- **The scene** (`src/world/cardScene.js`, pure). `tablePlaces` lays each seat's hole cards, bet and stack, the board
+- **The scene** (`src/world/card/cardScene.js`, pure). `tablePlaces` lays each seat's hole cards, bet and stack, the board
   along the long side, the burn at its head, the muck and the pot either side; `CardScene` turns the session's events
   into motions - the deal round from the dealer's left, the player's own two turned up where they lie, the board thrown
   face down and turned over its edge, a fold to the muck, a showdown's hands turned and the pot pushed to its winner -
@@ -427,13 +427,13 @@ table's throws are its own.
 - **Not yet:** the fanned hand and the peek, a drag of chips to bet (the panel's buttons do it), the shuffle's riffle;
   the frame cost on a phone (the lab draws 60-odd meshes with no measurable cost on the probe's software GL).
 - **Not verified in a live tavern** (no ARENA2 here): the lab's table stands for the room's.
-- **Pins:** `test/cards3_motion.test.js` 8, `test/cards3_draw.test.js` 6. `tools/mutants/cards3.json`: 15, all dead
+- **Pins:** `test/world/card/cards3_motion.test.js` 8, `test/net/card/cards3_draw.test.js` 6. `tools/mutants/cards3.json`: 15, all dead
   (two survived the first pass - a short throw's least flight and a careless `holeOf`; both pinned).
 
 ## 16. AUDIT CARDS-2 (2026-10-08): the arc audited again
 
 Mac: **"Lets do a deep comprehensive audit on everything so far. Perfection"**. Six lanes over a frozen snapshot, every
-finding reproduced on the live tree before and after its fix; the whole record is `01-Overview/Audit-Cards-2.md`. What it
+finding reproduced on the live tree before and after its fix; the whole record is `01-Overview/audits/Audit-Cards-2.md`. What it
 changed, here:
 
 - **The gold (H1, M2).** A load's road stands up WITHOUT cashing out (the save's purse is already the character's; the
@@ -467,7 +467,7 @@ Mac: **"Do 3 4 and 5"**. Section 5 built for the friendly table: players in one 
 holds every card.
 
 - **The relay's table** (`src/net/holdemTable.js`, pure and plain data - one home for the relay and its pins; with
-  `net/cardLaw.js` it joins the relay's bundle, `world178`, undeployed, re-hashed in place). A building's room keeps its
+  `net/card/cardLaw.js` it joins the relay's bundle, `world178`, undeployed, re-hashed in place). A building's room keeps its
   card tables by the table's index; A TABLE'S SEATS ARE ITS CHAIRS (the chair the client took - every client computes the
   same chairs from the same room, so every eye maps the cloth alike). The relay shuffles from its own CSPRNG
   (`shuffleDeck` over the dice's unbiased draw) and keeps the deck in the table, which no frame carries; each seat is
@@ -483,7 +483,7 @@ holds every card.
   found by the first pin, a spread would have written the one over the other).
 - **The relay** (`server/src/index.js`): only an interior's room keeps a table (AUDIT SCALE II R3-3 (c), SCALE5d: its place's object alone - a layer of a crowded interior seats nobody and stakes nothing); the tables checkpointed to storage (a
   hibernated room keeps its hands) and the alarm armed for the soonest clock or deal; a socket's leave stands it up.
-- **The client** (`src/systems/cardRemoteTable.js`): the relay's frames folded into the very shapes the offline evening
+- **The client** (`src/systems/card/cardRemoteTable.js`): the relay's frames folded into the very shapes the offline evening
   offers (`view`, `legal`, `drain`), the relay's clock moved onto this one, a hand already under way told as the events
   it took (`CATCH_UP_MS`) so a newcomer's cloth lies at rest at once (a room come into asks for each of its tables -
   AUDIT CARDS-3 D7; before it, nothing showed till the table's next event). The host (`worldModes.js`): online, sitting joins
@@ -494,8 +494,8 @@ holds every card.
 - **Not yet:** spectators near the table only (the whole room watches every table); a seat a player takes after the
   regulars began is the relay's table, not the regulars' game - his chair is his, and no regular is drawn in it (AUDIT
   CARDS-3 E-N3); real stakes (CARDS6).
-- **Pins:** `test/cards5_relay.test.js` 6 (the table, the deal's privacy, the clock and the leaver, the words both ways,
-  the client's session, the relay end to end on the fake room - three players, a hibernation), `test/cards5_client.test.js`
+- **Pins:** `test/net/cards5_relay.test.js` 6 (the table, the deal's privacy, the clock and the leaver, the words both ways,
+  the client's session, the relay end to end on the fake room - three players, a hibernation), `test/systems/cards5_client.test.js`
   9 (the remote table, three hosts over an in-process relay, the regulars instead; AUDIT CARDS-3's driven host seams). `tools/mutants/cards5.json`: 25, all
   dead.
 
@@ -503,7 +503,7 @@ holds every card.
 
 The same ask. CARDS4's regulars were names on the panel; now they sit at the table.
 
-- **Their bodies** (`src/world/cardRegulars.js`): each regular's look minted from the seed that names him (the town, the
+- **Their bodies** (`src/world/card/cardRegulars.js`): each regular's look minted from the seed that names him (the town, the
   building, the order - CARDS4's namer, which now answers its seeds too): his region's people (the name bank's race), a
   face, and a tavern-goer's clothes from Daggerfall's own templates in the slots they are worn in (`REGULAR_CLOTHES` - a
   shirt or tunic, trousers or a skirt, or a gown; shoes or boots). The interior host hands world.js its regulars every
@@ -512,14 +512,14 @@ The same ask. CARDS4's regulars were names on the panel; now they sit at the tab
   byte, as a seated peer is; the sprite lane stands at the chair, CARDS2c's open. They are freed the moment none sit.
 - **Their voices**: each action, a win and a broke regular's leaving said over his head for `BARK_MS` (`regularBark`), on
   the crew's one speech layer with the room's talk - with the living world off too.
-- **Pins:** `test/cards4b_regulars.test.js` 4, and the host block's own run in `auditcards2_host` (stood in the chairs,
+- **Pins:** `test/net/cards4b_regulars.test.js` 4, and the host block's own run in `auditcards2_host` (stood in the chairs,
   seated, a play voiced). `tools/mutants/cards4b.json`: 10, all dead.
 
 ## 19. CARDS3b (2026-10-08): the hand held, the chips dragged, the riffle
 
 The same ask; section 3's DECIDED hand and chips.
 
-- **The held hand** (`src/world/cardHand.js`): the player's two, once landed and turned on the cloth, are drawn held
+- **The held hand** (`src/world/card/cardHand.js`): the player's two, once landed and turned on the cloth, are drawn held
   before the eye (`heldMatrices` - the camera's own frame composed), low and a little right of the middle, fanned with the
   screen's right-hand card in front, leaning back the shy way; PEEKED - the cursor over them, or a press held on them -
   they come up toward the eye and spread (`PEEK_RATE` easing). Seen in the lab (`?cam=seat&peek=1`) and checked by the
@@ -537,12 +537,12 @@ The same ask; section 3's DECIDED hand and chips.
   it out.
 - **Recorded:** a thrown card's last centimetres may skim a seat's chip stack for a frame (the pin on chips through cards
   is a pin on cards at rest, every frame - AUDIT CARDS-3 found a pot share coming home through a resting card, fixed).
-- **Pins:** `test/cards3b_hand.test.js` 7. `tools/mutants/cards3b.json`: 14, all dead.
+- **Pins:** `test/world/card/cards3b_hand.test.js` 7. `tools/mutants/cards3b.json`: 14, all dead.
 
 ## 20. AUDIT CARDS-3 (2026-10-08): the arc audited a third time
 
 Mac: **"I wanna do a deep comprehensive of everything"**. Five lanes over a frozen snapshot of CARDS5, CARDS4b and
-CARDS3b (`01-Overview/Audit-Cards-3.md`): 4 HIGH, about 20 MED and a tail of LOW, every one reproduced and fixed or
+CARDS3b (`01-Overview/audits/Audit-Cards-3.md`): 4 HIGH, about 20 MED and a tail of LOW, every one reproduced and fixed or
 recorded. What changed in the record:
 
 - **The relay** (`world178`, undeployed, re-hashed in place): a refused sit moves nothing elsewhere; ONE SEAT AN
@@ -562,7 +562,7 @@ recorded. What changed in the record:
 - **THE FOUR HOSTS** (lane D): the card table is `worldModes.js`'s, mounted by world.js and exterior.js. world.js hands it
   `cardOnline` and `cardRegulars`; exterior.js hands it neither - in that host the table is the offline game and its
   regulars are names on the panel, unseen and unheard. The dungeon host has no tables.
-- **Pins:** `test/auditcards3_relay.test.js` 8, `test/auditcards3_host.test.js` 4, `test/auditcards3_pins.test.js` 7, and
+- **Pins:** `test/net/auditcards3_relay.test.js` 8, `test/world/card/auditcards3_host.test.js` 4, `test/world/card/auditcards3_pins.test.js` 7, and
   six driven host tests in `cards5_client`. `tools/mutants/auditcards3.json`: 111 dead, 2 equivalent.
 
 ## 21. CARDS-BAY (2026-10-08): the deck of the Iliac Bay
@@ -588,9 +588,9 @@ Iliac Bay's kingdoms as the suits, and their royals for the courts with the crow
   hand's names (a pair of kings, a flush) are the game's.
 - **THE ART IS OURS** (section 6.2): every face is painted from canvas paths in code - no ARENA2 pixel, no font glyph for
   a charge. ONE HOME: the cloth's atlas (`render/cardTableDraw.js`, its cells now 128 x 180 for the royals) and the
-  panel's little cards (`ui/cardTableHud.js`, each card its own painted face; a page with no canvas writes "K Daggerfall")
+  panel's little cards (`ui/card/cardTableHud.js`, each card its own painted face; a page with no canvas writes "K Daggerfall")
   are one painter. The panel's hover names the card ("Gothryd, King of Daggerfall", "The Seal of Wayrest").
-- **Pins:** `test/cardsbay_faces.test.js` 7 (the crowns, the royals against the game's roll, the pips, every face inked
+- **Pins:** `test/render/cardsbay_faces.test.js` 7 (the crowns, the royals against the game's roll, the pips, every face inked
   and drawn not written, the back, the panel painting with the same painter, no ARENA2 read). Mutants in
   `tools/mutants/auditcards3.json` (BAY-*).
 
@@ -598,7 +598,7 @@ Iliac Bay's kingdoms as the suits, and their royals for the courts with the crow
 
 Mac: **"#2 and cleanup"** - AUDIT CARDS-3's recorded-not-built, done beside CARDS6.
 
-- **The deck is one thing on the cloth** (`world/cardScene.js`, `world/cardMotion.js` `gatherMotion`, `GATHER_S`): a new
+- **The deck is one thing on the cloth** (`world/card/cardScene.js`, `world/card/cardMotion.js` `gatherMotion`, `GATHER_S`): a new
   hand no longer wipes the cloth - the last hand's cards are swept face down to the new dealer's deck place (any still
   on their way from the hand before simply join it), and only then does he riffle; between the riffle and the hand's
   end the squared deck lies there (`DECK_PLATES` for a whole deck), thinning card by card as it is dealt. The session's
@@ -634,7 +634,7 @@ player, the service's word one way and the relay's the other, each signed:
   room's is that room's - left unspent, nothing handed back (AUDIT CARDS-4 A2/B1: each room remembers only its own
   spends, so a refund here while the room it names still seated it was the stake paid twice); another account's is
   refused and left unspent. A room that cannot sign a cash-out seats and voids no stake ('stakes closed', B3).
-- **THE CASH-OUT** (`net/cardReceipt.js`, `c1`, the relay's fourth signature under GATE_SIGNING_KEY): a staked seat gone
+- **THE CASH-OUT** (`net/card/cardReceipt.js`, `c1`, the relay's fourth signature under GATE_SIGNING_KEY): a staked seat gone
   from the table - stood up, out of chips, gone from the room - leaves with a receipt for its stack (`stood`, `broke`); a
   refused sit's and a void's are the whole stake (`refused`, `void`). A leaver folded out of a hand that goes on is cashed
   out AT ONCE with his stack behind (he can win nothing more, and he is walking out of the room), never again at the
@@ -651,12 +651,12 @@ player, the service's word one way and the relay's the other, each signed:
   the stake, never more or less; a seat leaves with no more than every seat's deepest stake at its stakes; another
   account's receipt, another character's, an unsigned or rewritten one pay nothing.
 - **A STAKE NEVER SAT** (the sit never sent, its answer lost, the game closed while the service answered): the device
-  keeps its order (`net/cardStakes.js`), and once its minute is past (no room can sit it) hands it to the room it names
+  keeps its order (`net/card/cardStakes.js`), and once its minute is past (no room can sit it) hands it to the room it names
   (`void`) - spent there, the whole of it back in a `void` receipt, for as long as a receipt lives (AUDIT CARDS-4 C6:
   `HOLDEM_STAKE_VOID_S`, not a week). A lost stake answer is asked again by the same request: the same stake, the SAME
   order (A1: minted at the stake's own instant - a repeat is never a fresh minute to sit on), the purse paying it then
   if the service takes it then (C1).
-- **ON THE DEVICE** (`net/cardStakes.js`, world.js `cardStakes`): the stake is the record's own act (realmSaves.js
+- **ON THE DEVICE** (`net/card/cardStakes.js`, world.js `cardStakes`): the stake is the record's own act (realmSaves.js
   `realmGoldAct` - the purse checkpointed, the gold held out while asked); the request kept first, the order till the
   relay sits it; each receipt kept, its stake let go, acked to the room and claimed as the record's act. A cash-out frame
   is heard on any socket - the room just left included (online.js). The panel: a realm character online sits at the
@@ -668,8 +668,8 @@ player, the service's word one way and the relay's the other, each signed:
   finds it there when he does, within a receipt's life and the room's bound on what it owes one account (AUDIT CARDS-4
   D7); the host says on each visit what other rooms still owe him (section 24).
 - **Then:** the top-up and gold owed elsewhere (section 24); AUDIT CARDS-4 over all of it (section 25).
-- **Pins:** `test/cards6_service.test.js` 3 (on the real Worker over SQLite), `test/cards6_relay.test.js` 6 (the fake
-  room), `test/cards6_client.test.js` 4, `test/cards6_law.test.js` 2. `tools/mutants/cards6.json`: 36, all dead. AUDIT
+- **Pins:** `test/net/cards6_service.test.js` 3 (on the real Worker over SQLite), `test/net/cards6_relay.test.js` 6 (the fake
+  room), `test/net/card/cards6_client.test.js` 4, `test/net/cards6_law.test.js` 2. `tools/mutants/cards6.json`: 36, all dead. AUDIT
   CARDS-4 added to them (section 25).
 
 ## 24. CARDS6b (2026-10-08): the top-up, and gold owed elsewhere
@@ -682,9 +682,9 @@ Mac: **"2 and 3"** - section 23's "Not yet", built after AUDIT CARDS-4 (section 
   buy-in's (the service holds a top-up from `HOLDEM_TOPUP_MIN_BB`, `topup: true`); the relay checks it against the seat
   BEFORE it spends it - a refusal spends nothing, and the device voids it back in its room after its minute - reads the
   table again after the order's await, spends it, adds it to the stack, and settles it AT ONCE in a `joined` receipt
-  (`net/cardReceipt.js`: nothing back by it - its chips come home in the seat's own receipt). The panel offers "Top up
+  (`net/card/cardReceipt.js`: nothing back by it - its chips come home in the seat's own receipt). The panel offers "Top up
   N" between hands (the most from the purse to the table's most); the log says it.
-- **GOLD OWED ELSEWHERE** (`net/cardStakes.js` `elsewhere`, worldModes `cardElsewhereSay`): the device keeps a sat stake
+- **GOLD OWED ELSEWHERE** (`net/card/cardStakes.js` `elsewhere`, worldModes `cardElsewhereSay`): the device keeps a sat stake
   (AUDIT CARDS-4 C4) and the words for where it was staked (the building and its town). Each room keeps its own spends
   and its own cash-outs, so only that room hands a cash-out over or voids a stake back (AUDIT SCALE II R3-3 (c): a room's
   spends are its PLACE's - a void said in any layer is spent there, HOLDEM_INTERNAL_VOID, and its receipt owed in both;
@@ -693,12 +693,12 @@ Mac: **"2 and 3"** - section 23's "Not yet", built after AUDIT CARDS-4 (section 
   host says what other rooms still owe this character ("Gold you staked waits at card tables elsewhere - 500 at The
   Bilge, Wayrest. Each table hands it over when you return."). What nothing can bring home any more (past a receipt's
   life) the device lets go (`prune`).
-- **Pins:** `test/cards6b_topup.test.js` 3. Its mutants are in `tools/mutants/auditcards4.json` (the `AC4-T-` records).
+- **Pins:** `test/net/cards6b_topup.test.js` 3. Its mutants are in `tools/mutants/auditcards4.json` (the `AC4-T-` records).
 
 ## 25. AUDIT CARDS-4 (2026-10-08): the gold tables audited
 
 Mac: **"2 and 3"**. Five lanes over a frozen snapshot of sections 22-23, one of them the device, the relay and the
-service at once over about 14,000 gold evenings - the record is `01-Overview/Audit-Cards-4.md`. What it changed here:
+service at once over about 14,000 gold evenings - the record is `01-Overview/audits/Audit-Cards-4.md`. What it changed here:
 
 - **A stake asked again** after a lost answer is paid from the purse when the service takes it then (C1 - it was paid
   twice); kept on any word but the service's own refusal (C2); its repeat is the SAME order (A1).
@@ -712,7 +712,7 @@ service at once over about 14,000 gold evenings - the record is `01-Overview/Aud
   (D2); the approach has the watch's slack (D3); the watch closes at the sit (D4); the last pile goes with the gathered
   cards (D5); a table's hand shape is checked (D6).
 - **Recorded:** a staked player all in who drops while another must act is folded and forfeits (B7, the law's leaver).
-- **Pins:** `test/auditcards4_client.test.js`, `_pins`, `_tidy` and additions across the cards' tests;
+- **Pins:** `test/net/card/auditcards4_client.test.js`, `_pins`, `_tidy` and additions across the cards' tests;
   `tools/mutants/auditcards4.json` - every fix's record and every lane survivor's, three equivalent with why.
 
 ## 26. COLLECTIONS, CARDS7 and CARDS8 (2026-10-08): the codex and the cards, Iliac Hand's rules, the first set
@@ -722,11 +722,11 @@ collection"**; asked, **"One 'Collections' tab"**, the collectible cards **"Pain
 CARDS8"**.
 
 - **THE COLLECTIONS PAGE** (`ui/collectionsPage.js`, the Holdings rail's last entry): a Codex | Cards switch. The CODEX
-  part draws LOOT10's own rows (`systems/lootCodex.js`: every Legendary found and not, a row opened whole - its lines,
+  part draws LOOT10's own rows (`systems/loot/lootCodex.js`: every Legendary found and not, a row opened whole - its lines,
   power, lore and the day found - then the Aetheric sets), the rows the Reforge's Codex page draws, so the two never
   disagree; the pack's Codex button still opens that window. The CARDS part is the binder's (below). The page shows while
   Loot rarity makes Legendaries or a binder is carried.
-- **CARDS7, THE RULES** (`net/iliacHand.js`, pure - it imports only `cardLaw.js`, `dice.js` and the catalog, so the
+- **CARDS7, THE RULES** (`net/iliac/iliacHand.js`, pure - it imports only `cardLaw.js`, `dice.js` and the catalog, so the
   relay can run it later): section 6.1 as built. Two decks of 30 (two of a card, one of a Legendary or rarer); three
   holdings drawn from the locations; magicka the turn's number to ten (and a card's bonus); a hand of four, a card drawn
   a turn, seven at most; four cards a side of a holding. Both players COMMIT hidden, then the turn is revealed together -
@@ -740,7 +740,7 @@ CARDS8"**.
   Betony and Evermor's gifts, Castle Daggerfall and Privateer's Hold (no spells; the Hold's cards face down till the
   end), the Mages Guild Hall's cheaper spells, the vampire's crypt. Its numbers are MEASURE (section 6): in 3,000 random
   games each seat won over a thousand, about 85% decided on holdings, 1.5% drawn.
-- **CARDS8, THE FIRST SET** (`net/iliacCards.js`): 82 cards - 57 units, 14 spells (six of them the artifacts: Mehrunes'
+- **CARDS8, THE FIRST SET** (`net/iliac/iliacCards.js`): 82 cards - 57 units, 14 spells (six of them the artifacts: Mehrunes'
   Razor, the Wabbajack, Azura's Star, the Oghma Infinium, Chrysamere, the Sanguine Rose), 11 Princes - and 11
   locations, drawn from Daggerfall itself (its creatures, guilds, temples, knightly orders and Princes; King Gothryd).
   Rarity is the loot's tiers (common 26, magic 23, rare 13, legendary 12, aetheric 2 - Mehrunes Dagon and Molag Bal -
@@ -751,7 +751,7 @@ CARDS8"**.
   unit's square, a spell's rounded, a Prince's arch, a location's landscape); a magicka gem, a power shield; one of 35
   emblems drawn from paths; the name banner and the rules box; the back a compass rose of the Bay. No ARENA2 pixel, no
   raster.
-- **THE CARDS AS ITEMS** (`systems/iliacItems.js`; section 6.3): a card is template 581 named by its `card` - two of one
+- **THE CARDS AS ITEMS** (`systems/iliac/iliacItems.js`; section 6.3): a card is template 581 named by its `card` - two of one
   card stack, two cards never (`inventory.js` stacksWith), a split keeps it (splitStack); its name is the catalog's
   ("Card: Rat"), never stored; weightless, worth a coin, not bound - it moves as any unbound item does (the trades, a listing, a shelf), though no
   shop buys one (AUDIT CARDS-5 C2); CARDS9 sets its worth and its customs. The
@@ -760,7 +760,7 @@ CARDS8"**.
   sheet while it is carried - and holds the DECKS (`decks`, declared item fields, replaced whole when they change). Every
   character is given a binder and the starter deck's thirty cards once (`binderGift`: at chargen, and on an older save's
   load), the starter deck laid in it.
-- **THE DECK BUILDER** (`ui/cardBinderPage.js`, the Collections page's Cards): the collection in a grid of the painted
+- **THE DECK BUILDER** (`ui/card/cardBinderPage.js`, the Collections page's Cards): the collection in a grid of the painted
   faces - a held card at its count, an unheld one dim (what is still to find) - narrowed by kind; the decks with the
   rules' word on each and the pack's (a deck needs the cards it names); a deck built a press at a time (a card in the
   grid goes in, never more than the binder holds; one in the deck comes out) and kept once lawful; a deck taken apart on a
@@ -769,20 +769,20 @@ CARDS8"**.
   Hand at the table against patrons and online (CARDS10). A card minted offline that walks into the realm is worth
   nothing to its gold law today (it already moves there as any unbound item, worth a coin - AUDIT CARDS-5 C2); CARDS9
   decides its customs before cards have any source but the starter gift.
-- **Pins:** `test/cards7_rules.test.js` 27, `test/cards8_catalog.test.js` 8, `test/cards8_faces.test.js` 7,
-  `test/cards8_binder.test.js` 5. `tools/mutants/cards8.json` 21, all dead; the engine's own 22 were run by its
+- **Pins:** `test/net/iliac/cards7_rules.test.js` 27, `test/systems/loot/cards8_catalog.test.js` 8, `test/net/iliac/cards8_faces.test.js` 7,
+  `test/systems/item/cards8_binder.test.js` 5. `tools/mutants/cards8.json` 21, all dead; the engine's own 22 were run by its
   builder, all caught.
 
 ## 27. AUDIT CARDS-5 (2026-10-08): the Iliac Hand, its faces, the binder, the page and the gold tables again
 
 Mac: **"Alright, one last comprehensive audit to ensure this is perfection"**. Five lanes over a frozen snapshot of
-section 26 and the gold tables' AUDIT CARDS-4 fixes - the record is `01-Overview/Audit-Cards-5.md`. What it changed here:
+section 26 and the gold tables' AUDIT CARDS-4 fixes - the record is `01-Overview/audits/Audit-Cards-5.md`. What it changed here:
 
-- **The rules** (`net/iliacHand.js`): a weaken takes from the power the card shows, never below nothing (A1); an unveiled
+- **The rules** (`net/iliac/iliacHand.js`): a weaken takes from the power the card shows, never below nothing (A1); an unveiled
   card's ongoing text is its own once it is face up, never twice (A2); the reveal's tie is the deal's coin, then turn
   about (`state.coin`, drawn after the shuffles); a source that is not a 32-bit draw, or draws without end, is refused at
   the deal (`ILIAC_RAND_DRAWS_MAX`); the words say "round the table", "its owner summons", "one card".
-- **The catalog** (`net/iliacCards.js`): names, tags and flavor as Daggerfall has them (the Ancient Vampire, the Ice
+- **The catalog** (`net/iliac/iliacCards.js`): names, tags and flavor as Daggerfall has them (the Ancient Vampire, the Ice
   Atronach, the guilds' and the Knights of the Wheel's ids); each artifact its own picture (Azura's Star the gem), every
   Prince but Azura the Daedric sigil, the bat, the scorpion, the boar, the spriggan, the gargoyle, Banish, Recall and Turn
   Undead their own - fourteen new emblems, the beetle and the insect tag gone with no card to wear them; the list is the
@@ -802,7 +802,7 @@ section 26 and the gold tables' AUDIT CARDS-4 fixes - the record is `01-Overview
   stake at a chair its player is leaving is handed back, and the client never takes a chair it is leaving for its own
   (NEW-2); a request is let go only on a refusal or a never-asked, and an order for one let go elsewhere is kept again
   (NEW-3). Recorded: a top-up's row stays held until its receipt, so a character delete waits on it (N-4; no gold lost).
-- **Pins:** `test/auditcards5_gold.test.js`, `_items`, `_ui`; `cards7_rules` 31, `cards8_faces` 15, `cards8_catalog` 9;
+- **Pins:** `test/net/auditcards5_gold.test.js`, `_items`, `_ui`; `cards7_rules` 31, `cards8_faces` 15, `cards8_catalog` 9;
   `tools/mutants/auditcards5.json`.
 
 ## 28. TAVERN-TABLE (2026-10-08): every tavern's own card table, a prop of its own
@@ -814,9 +814,9 @@ A new property specifficaly used for the card table"**.
 - **The departure.** Section 2 decided no placed prop: a card table was a table Daggerfall already stood, and only 41130
   was nameable (section 11), so a tavern might have none. Now every tavern (`isTavern`) stands one card table of its
   own, and it is the ONLY card table: the interior context lists no model of Daggerfall's (the census tool,
-  `tools/cardTableCensus.mjs`, DELETED, and `CARD_TABLE_MODELS` went with the question - the flag in `world/cardTables.js` is
+  `tools/cardTableCensus.mjs`, DELETED, and `CARD_TABLE_MODELS` went with the question - the flag in `world/card/cardTables.js` is
   retired).
-- **The prop** (`world/cardTableProp.js`, pure). A poker table, 1.5 by 1 m: a wooden top 6 cm thick at 0.8 m (the
+- **The prop** (`world/card/cardTableProp.js`, pure). A poker table, 1.5 by 1 m: a wooden top 6 cm thick at 0.8 m (the
   seated pose's own table, `SEAT_TOP_DEFAULT`) on four 7 cm legs 10 cm in from the corners, the felt inlaid a 4 cm rail
   in, 2 mm proud, so the felt is the table's top and the cards lie on it; and a stool at each of its six seats, 0.48 m
   high, under the seated hips (AUDIT TAVERN-TABLE, section 29, set the top, the rail and the stools). The TABLE's own
@@ -841,12 +841,12 @@ A new property specifficaly used for the card table"**.
   entry room too small for the ring, the nearest cell was the mouth of the doorway the walk left it by. A spot is passed
   over now when its table and ring and a lane round them (`PLACE_LANE_CELLS`, one cell), taken out of the walk, leave a
   walked cell outside them unreachable from the entrance - the walk's own grid, so every client the same table. The
-  gold table's walk already goes round the first (it is in the collider). Pinned by `test/fb1009c_walkwhole.test.js`
+  gold table's walk already goes round the first (it is in the collider). Pinned by `test/world/fb1009c_walkwhole.test.js`
   (the real prop, a 10 cm flood of the player's capsule round it); the doorway's, the narrow hall's, the corridor's
-  and the lattice room's spots in `test/taverntable.test.js` moved with it; `tools/mutants/fb1009c_walkwhole.json`
+  and the lattice room's spots in `test/world/card/taverntable.test.js` moved with it; `tools/mutants/fb1009c_walkwhole.json`
   (`taverntable.json`'s TT-walk-order re-aimed by content).
   AND NEVER IN THE WAY (WAY-ROUND, FIELD BUGS 2026-10-11e, the same thread: "another one at Dancing Castle in
-  Pilliweyn"; `01-Overview/Field-Bugs-2026-10-11e.md`). Read on the player's own taverns (the freeware ARENA2, both town
+  Pilliweyn"; `01-Overview/bugs/Field-Bugs-2026-10-11e.md`). Read on the player's own taverns (the freeware ARENA2, both town
   packs), WALK-WHOLE moved neither table it was written for: the Gold Dungeon's only floor for the ring is the corridor
   its two halves meet by, every spot there cut the walk, and its fallback for such a room - "stands it where it stood
   (no tavern loses its table)", RETIRED - stood it there; and a spot in a doorway or the mouth of an opening passed
@@ -855,7 +855,7 @@ A new property specifficaly used for the card table"**.
   them, fall apart with those cells taken out - WALK-WHOLE's cut is one case of it, so its walk again from the
   entrance is gone - and a table already stood that the window meets is taken in whole, so the way round the gold
   table may go round the pair. A room with no spot left whole stands none, the chips table first: with the packs, two
-  tables in 13,298 taverns, one in 2,931, none in 1,935. Pinned by `test/fb1011e_wayround.test.js` (built rooms of the
+  tables in 13,298 taverns, one in 2,931, none in 1,935. Pinned by `test/world/fb1011e_wayround.test.js` (built rooms of the
   reported shapes, and every tavern the towns lay, gated on ARENA2_PATH, against the player's capsule);
   `tools/mutants/fb1011e_wayround.json` (8, all dead) and `fb1009c_walkwhole.json` (4, all dead) re-aimed.
 - **The table in the room** (`scenes/interiorContext.js`, `opts.placeCardTable`). Stood after the room's own models and
@@ -872,7 +872,7 @@ A new property specifficaly used for the card table"**.
   lay, built from the freeware ARENA2 through the real collider (gated on ARENA2_PATH); the build on a fake room
   through the real collider (its six seats found by the host's own seat probe, each over its stool). How it looks
   under the tavern's light is the owner's first eye; `cards.html` (`src/tools/cardsLab.js`) draws the same prop.
-- **Pins:** `test/taverntable.test.js`, 17 tests (15 at TAVERN-TABLE, 17 at its audit); `test/cards2_seat.test.js`
+- **Pins:** `test/world/card/taverntable.test.js`, 17 tests (15 at TAVERN-TABLE, 17 at its audit); `test/world/card/cards2_seat.test.js`
   re-aimed (the ids and the census gone, the context's one table the prop's). `tools/mutants/taverntable.json`: 80 -
   79 dead, 1 equivalent (the felt's nap transposed is another felt as good); `tools/mutants/cards2.json` loses the five
   records of the id and the census.
@@ -919,7 +919,7 @@ reproduced against the real code before it was fixed.
   its geometry, as any furniture placed after a save would (what the motor's resolve then does is not measured here,
   with no tavern to load into). The walk costs 16-59 ms
   in node on rooms of 264 to 48k triangles, once a visit, inside the async build.
-- **Pins:** `test/taverntable.test.js` 17; `tools/mutants/taverntable.json` 80 (79 dead, 1 equivalent).
+- **Pins:** `test/world/card/taverntable.test.js` 17; `tools/mutants/taverntable.json` 80 (79 dead, 1 equivalent).
 - **The merge.** #707 went in with `[skip ci]` on the owner's word ("Skip ci and merge"), before its own verify had
   run - and `[skip ci]` on a merge skips the deploy too. #708 recorded it, and its merge message QUOTED the marker in
   its body: GitHub reads the whole message, so that deploy was skipped as well (#703 and #704 met the same). #709's
@@ -961,7 +961,7 @@ Told the cause, the owner: **"Two tables per tavern"** - one always for gold (re
   says so in the console; the gold flag (`tables[i].gold`) is the law's own index (`holdemGoldTable(tables.length)`),
   so the room and the relay can never name two different gold tables. Each table its own mesh and key (`int:` the next
   placement index past the record's own, in turn); the wood uploaded once, a felt each.
-- **THE GOLD TABLE'S FELT IS RED** (`world/cardTableProp.js` `GOLD_FELT_RECORD`, `GOLD_FELT_RGB`; `paintFelt(rgb)`,
+- **THE GOLD TABLE'S FELT IS RED** (`world/card/cardTableProp.js` `GOLD_FELT_RECORD`, `GOLD_FELT_RGB`; `paintFelt(rgb)`,
   `cardTablePropModel({ felt })`) - the chips table's green beside it, told apart at a glance. `cards.html?gold` lays
   the lab's table red.
 - **THE HOST** (`scenes/worldModes.js` `cardTableGold`, `cardGoldBarred`). Online, the gold table seats a realm
@@ -970,39 +970,39 @@ Told the cause, the owner: **"Two tables per tavern"** - one always for gold (re
   relay is not dealing right now - the green table plays for chips."), never sat and stood up. A realm character plays
   for gold at the gold table (`goldOnline` is the gold table's alone) and for chips at the chips table, beside everyone
   else. Offline both tables are the regulars', for the purse's gold, as a tavern's table always was.
-- **Pins:** `test/taverntables.test.js` 9 (the law, the walk's box, the build in three rooms, the relay's report and
+- **Pins:** `test/systems/card/taverntables.test.js` 9 (the law, the walk's box, the build in three rooms, the relay's report and
   its index law, the relay's order by source, the host at both tables online, down and offline);
   `tools/mutants/taverntables.json` 21 (20 dead, 1 equivalent - the host's own reading of the room's mark, kept so the
   two never disagree). PIN MOVED: the relay's pins that stood a gold table at table 0 stand it at table 1, their
   orders naming it, and the ones that stood a second chips table at table 1 stand it at table 2
   (`auditcards3_relay`, `auditcards4_pins`, `auditcards5_gold`, `cards6_relay`, `cards6b_topup`); TAVERN-TABLE's
   build reads two tables (`taverntable`, `cards2_seat`); the host's gold line (`cards4_hud`, `cards6_client`); the
-  relay's version (world180, its law row in `test/relayversion.test.js`). `tools/mutants/taverntable.json`'s seven
+  relay's version (world180, its law row in `test/net/relayversion.test.js`). `tools/mutants/taverntable.json`'s seven
   interior records re-aimed by content.
 - **Deploy:** the relay first (world180 - its deploy drops every connected player, as a bump does), then the site.
 
 ## 31. CARDS-TOUCH and CARDS-SAID (2026-10-09): a phone's finger at the table is the table's; a refused stake said on the panel
 
-AUDIT CARDS-6 (over the Iliac Hand branch, `01-Overview/Audit-Cards-6.md` when it lands) found it in lane E as its first
+AUDIT CARDS-6 (over the Iliac Hand branch, `01-Overview/audits/Audit-Cards-6.md` when it lands) found it in lane E as its first
 HIGH, and it reproduced on main as it stood (section 30's merge): **on a phone, a tap on the player's own cards stood
 him up** - folded out of turn, cashed out.
 
 - **THE CAUSE.** The cards take a finger on the hand, the chips and the cloth at the capture phase
   (`scenes/worldModes.js` `cardPointerListen`, AUDIT CARDS-3 C5: pointer events, so a touch is a pointer too) - but
-  the touch layer (`ui/touch.js`) reads the raw TOUCH events, and read the same finger again: a still, short touch on
+  the touch layer (`ui/touch/touch.js`) reads the raw TOUCH events, and read the same finger again: a still, short touch on
   the right half is its TAP, the activate press along the finger's ray (`world.js` `inputHooks.tap` -> `_tapArmed` ->
   the activate gate -> `tryExit`), and seated the press stands him up (CARDS2: "the press stands you up and does
   nothing else"). A chip carried up the cloth was the layer's LOOK, turning the seated head under the chips; a held
   drag its swing. Driven in Chromium on main's own `touch.js` under the cards' listeners (390 x 844, touch): the tap
   on the held hand and the tap on the cloth each reached the host as a TAP, the chip drag as eight looks. The mouse
   never had it - the panel holds the cursor, and a press the cards take is cancelled before the seat sees it.
-- **THE FIX** (`ui/touch.js` `cardTable`, the hosts' `cardTable: () => !!modes?.cardSeated?.()` in `scenes/world.js`
+- **THE FIX** (`ui/touch/touch.js` `cardTable`, the hosts' `cardTable: () => !!modes?.cardSeated?.()` in `scenes/world.js`
   and `scenes/exterior.js` - both enter buildings through worldModes - over worldModes' `cardSeated`, true in an
   interior while a seat is held). While he sits, the layer's look, swing and tap stand down (a swing held into the
   seat let go once), and so do the gyro's turn and the stick's half tap (the lock pick). The stick still walks him off
   the seat (`leavesSeat`), and the panel's Stand up stands him - a phone's way up, as the E key and the swing are the
   keyboard's. The pad is untouched: it presses through its own keys, and its look and swing are its own.
-- **Pins:** `test/cardstouch.test.js` 4 (the real touch layer over test/audit0928_input.test.js's stub document, its
+- **Pins:** `test/ui/touch/cardstouch.test.js` 4 (the real touch layer over test/systems/audit0928_input.test.js's stub document, its
   hook the hosts' own line over worldModes' own `cardSeated`: seated - a tap, a drag, a hold-and-drag and the stick's
   tap say nothing; standing, and outside a building, each says what it always did; a swing held as he sits let go
   once; by source, both hosts, the gyro and the stick); `tools/mutants/cardstouch.json` 7 (all dead). PIN MOVED:
@@ -1014,7 +1014,7 @@ him up** - folded out of turn, cashed out.
   takes table 1, the relay's order names it); a refused one changed nothing on the panel. FIXED: the refusal is the
   panel's buy-in line too (`cardHudModel` `refused`, the buy-in beside it), until the next press - "The realm is holding
   your stake..." while it is asked. WHY the realm refused her: the next report named the words (section 36, CARDS-KEPT) -
-  "You have too many stakes waiting to be settled", the device's own refusal: its stakes book could keep nothing. Pins: `test/cardssaid.test.js` 1 (busy, a purse the record cannot cover,
+  "You have too many stakes waiting to be settled", the device's own refusal: its stakes book could keep nothing. Pins: `test/systems/card/cardssaid.test.js` 1 (busy, a purse the record cannot cover,
   stakes closed, any other word, a lost answer; the next press; a held stake sitting); `tools/mutants/cardssaid.json` 5
   (4 dead, 1 equivalent - the clearing at the press, which the asking line always covers). PIN MOVED:
   `auditcards4_pins` - the closed-game guard before the refusal, now the panel's; `tools/mutants/auditcards4.json`'s two
@@ -1023,12 +1023,12 @@ him up** - folded out of turn, cashed out.
 
 Mac: **"Lets build every inch of this. Dont forget about a card needing to come from the abyss dungeon also"**.
 
-- **A CARD'S WORTH** (`net/cardWorthLaw.js`, one home for the client and the account service): its tier's
+- **A CARD'S WORTH** (`net/card/cardWorthLaw.js`, one home for the client and the account service): its tier's
   (`CARD_WORTH`, MEASURE: a common 5 gold, a magic 20, a rare 75, a legendary 300, an aetheric 1,200, an artifact 2,500,
   a gilded 5,000), the item's `value`, set at the mint, kept by a card split off a stack, and refreshed on a load in
   every saved list (AUDIT CARDS-6 A6). A sealed pack is worth `CARD_PACK_WORTH` (171, its five cards' mean rounded up -
   A1). Still no shop buys a card (AUDIT CARDS-5 C2): the worth is never gold at a counter.
-- **FOES.** A slain creature drops its own card (`systems/cardSources.js` `FOE_CARDS`, by its mobile type - a rat a
+- **FOES.** A slain creature drops its own card (`systems/card/cardSources.js` `FOE_CARDS`, by its mobile type - a rat a
   rat, a Lich a Lich): one draw at its card's tier's chance (`FOE_CARD_PER_MILLE`, MEASURE: 16, 11, 7 and 3 per mille,
   common to legendary), twice as often for a titled foe; none for a revenant or a world boss (their spoils are their
   own). It goes onto the body through the real death door (`registerEnemyDeathHandler`) - and through the online
@@ -1056,7 +1056,7 @@ Mac: **"Lets build every inch of this. Dont forget about a card needing to come 
   how many stayed and a deck it broke. The service holds a customs character's first save to the same bound
   (`server-account/src/realm.js` firstSaveRefusal, 'customs-cards') and a character born online to the starter deck's
   worth and no pack ('realm-birth').
-- **Pins:** `test/cards9_sources.test.js` 7. `tools/mutants/cards9.json`: 26, all dead (one survived the first pass -
+- **Pins:** `test/systems/cards9_sources.test.js` 7. `tools/mutants/cards9.json`: 26, all dead (one survived the first pass -
   a draw re-placed that every kind a hoard names made equivalent; re-aimed at the draw's place in its hoard).
 
 ## 33. CARDS10 (2026-10-08): Iliac Hand at the table, offline and online, and the season board
@@ -1068,7 +1068,7 @@ The same ask.
   a free chair, stages a turn a card and a holding at a time (`stagedRefusal` - the rules' own `playsRefusal` said over
   the view, pinned equal over four hundred seeded positions) and commits it. Every road off the seat closes it, a game
   under way conceded (`scenes/iliacTableGame.js`; the interior host keeps one slot for it, emptied before it is told).
-- **THE REGULARS** (`systems/iliacPatrons.js`). A regular's temper is his seed's - careful, reckless or sly (`tight`,
+- **THE REGULARS** (`systems/iliac/iliacPatrons.js`). A regular's temper is his seed's - careful, reckless or sly (`tight`,
   `loose`, `bluffer`) - and his deck is his temper's and the tavern's grade's (the Hold'em stakes' own bands of the
   building's quality: a village's, a town's, a city's): the starter deck's curve card for card, his grade's upgrades (a
   town's two - one for a careful regular, whose second is a legendary a town's tiers refuse (AUDIT CARDS-6 B8) - a
@@ -1082,7 +1082,7 @@ The same ask.
   regular's own temper and his grade's deck (lane B's `b05_strength`, not committed), a careful hand won 58.9% against a
   village's regulars, 51.1% against a town's and 44.7% against a city's; a reckless one 61.2/55.8/46.9, a sly one
   58.3/49.5/42.6. The old 39% against a city is a hand that slips as a village regular does (37.7%; the village's 50.5%).
-- **THE EVENING** (`systems/iliacTableSession.js`): the regular thinks before he commits (`ILIAC_THINK_MS` and its
+- **THE EVENING** (`systems/iliac/iliacTableSession.js`): the regular thinks before he commits (`ILIAC_THINK_MS` and its
   spread), the turn turns over a beat after both have (`ILIAC_REVEAL_MS`); after the sixth, the result. FOR KEEPS each
   side stakes a card - the player's drawn at the deal, named, and lifted out of his pack into the table's keeping (AUDIT
   CARDS-6 B1): a win or a draw hands it back, a loss or standing up leaves it with the regular (a poison's or a need's
@@ -1094,7 +1094,7 @@ The same ask.
   over the next holding at any pair of chairs (AUDIT CARDS-6 B3) - every card read from the viewer's chair; a card new to
   the board thrown from its owner's own edge (`ILIAC_THROW_S`); one atlas of the painted faces, a plate made the first time its card is
   drawn, all freed with the game.
-- **ONLINE - THE RELAY DEALS** (`net/iliacTable.js`, relay world179): a room keeps its Iliac tables beside its Hold'em
+- **ONLINE - THE RELAY DEALS** (`net/iliac/iliacTable.js`, relay world179): a room keeps its Iliac tables beside its Hold'em
   ones, one game a table index at a time (each refuses the other's sit). Its own shuffle (`rand32`), each seat told its
   own view alone (`mine`: its hand, its plays), the room the spectator's (no hand, no deck ever framed); a commit heard,
   never seen; the turn turned over once both have committed, or by the clock (`ILIAC_TURN_MS`, 45 s - a pass for the
@@ -1110,8 +1110,8 @@ The same ask.
   (`/v1/cards/deck`, `server-account/src/iliac.js` deckOrderOf, the record checkpointed first); the relay checks the
   order's account and digest before it seats the deck ranked, and an order vouches for ONE game: the relay asks a ranked
   pair for fresh orders as it schedules each deal, and a seat with none plays that game friendly (AUDIT CARDS-6 C5/D2). A game between two ranked seats of two accounts is ranked:
-  its end - won, lost, drawn, or conceded - is signed (`net/iliacReceipt.js`, `i1`, the relay's key) and handed to both;
-  either carries it (`net/iliacClaims.js`) to `/v1/iliac/claim`, one row a game (migration `0095_iliac_ladder.sql` - 0093 on its branch, renumbered past main's 0093 and 0094 at the merge).
+  its end - won, lost, drawn, or conceded - is signed (`net/iliac/iliacReceipt.js`, `i1`, the relay's key) and handed to both;
+  either carries it (`net/iliac/iliacClaims.js`) to `/v1/iliac/claim`, one row a game (migration `0095_iliac_ladder.sql` - 0093 on its branch, renumbered past main's 0093 and 0094 at the merge).
 - **THE SEASON BOARD AND ITS TITLE** - the arena's way (`11-Multiplayer/Arena.md`): its seasons, its Elo, its pair's
   day and season caps; the board (`/v1/iliac/board`, shown in the panel online) and the season's #1 over
   `ILIAC_CHAMPION_MIN_GAMES` games against `ILIAC_CHAMPION_MIN_FOES` foes (10 and 5) wears **ILIAC CHAMPION** (the
@@ -1121,8 +1121,8 @@ The same ask.
   D13) - and a season nobody played counts nothing.
   Account acct97.
 - **Not verified in a live tavern** (no ARENA2 here), and the relay and the service are NOT YET DEPLOYED.
-- **Pins:** `test/cards10_table.test.js` 12, `test/cards10_relay.test.js` 7, `test/cards10_service.test.js` 3,
-  `test/cards10_client.test.js` 5, and the host's road in `test/auditcards2_host.test.js`. `tools/mutants/cards10.json`
+- **Pins:** `test/systems/cards10_table.test.js` 12, `test/net/iliac/cards10_relay.test.js` 7, `test/net/iliac/cards10_service.test.js` 3,
+  `test/net/iliac/cards10_client.test.js` 5, and the host's road in `test/systems/auditcards2_host.test.js`. `tools/mutants/cards10.json`
   (with section 34's): 75, all dead - five survived the first pass, each a finding now pinned (the sly regular's hold,
   the forfeit's payer, the book's bound, a full side's room, the draw's place); a Prince's own rule in a regular's deck
   was the same law said twice (every Prince costs four or more) and is gone.
@@ -1148,7 +1148,7 @@ The same ask: section 8's last open lines.
   m); from its own side, its near end or anyone standing, it shows from the shins up, a standing figure cut off by the
   floor (AUDIT CARDS-6 E16 - "behind the table, which hide them" was true from the far side alone; no sprite has a better
   pose). My own needs none: seated, my view is the seat's, first person (section 12).
-- **THE SQUEEZE, THE CLICK AND THE PUSH** (`world/cardHand.js`; section 3, DECIDED). A press on the held hand peeks it,
+- **THE SQUEEZE, THE CLICK AND THE PUSH** (`world/card/cardHand.js`; section 3, DECIDED). A press on the held hand peeks it,
   as before; pulled DOWN the screen while held it SQUEEZES - the front card drawn toward its foot off the other, with
   the finger (AUDIT CARDS-6 E22: it was drawn up the screen against the pull), and turned (`squeezeMatrix`), as far as
   the pull (`SQUEEZE_PULL`); on an upright phone the hand is held farther off and nearer the middle, inside both edges
@@ -1156,7 +1156,7 @@ The same ask: section 8's last open lines.
   view's height, `CLICK_MS`) checks when the law has a check, and a push UP the screen (`PUSH_FOLD`, more up than
   across) folds on the player's turn. The act is the panel's own press; the law still judges it. A press is ONE
   pointer's - a second finger, a cancel or a lost capture lets it go unread (E2) - and a finger the cards took is never
-  the touch layer's stick (`ui/touch.js` `cardHeld`, E1). Seen in the lab
+  the touch layer's stick (`ui/touch/touch.js` `cardHeld`, E1). Seen in the lab
   (`cards.html?...&squeeze=1`, the probe's `squeeze-seat` shot).
 - **THE FRAME COST, MEASURED** (`tools/cardsPhoneProbe.mjs`, the lab's `bench` and `&split`; re-measured by AUDIT
   CARDS-6 E15). On the probe's software GL (SwiftShader, every pixel the CPU's - a ceiling, not a phone's own number),
@@ -1171,14 +1171,14 @@ The same ask: section 8's last open lines.
   third of the cost or less; the cloth's cards are most of it, the phone's most of all (6.4-8.7 ms alone). The first
   measure's "the cost is the HELD HAND" and "runs differ by a millisecond or two" are withdrawn: its "no chips" row had
   counted 40 chips outside the draw (it reads 0 now), and three runs moved by more than the cost under load.
-- **Pins:** `test/cards2c_seated_sprite.test.js` 3, `test/cards3c_gestures.test.js` 3; their mutants in
+- **Pins:** `test/player/cards2c_seated_sprite.test.js` 3, `test/world/card/cards3c_gestures.test.js` 3; their mutants in
   `tools/mutants/cards10.json` (`CARDS2c-*`, `CARDS3c-*`), all dead.
 
 ## 35. AUDIT CARDS-6 (2026-10-09): where cards come from, Iliac Hand at the table and online, the season board
 
 Mac: **"Lets do a deep and comprehensive audit. This must be perfection"**. Five lanes over a frozen snapshot of
 sections 32-34, every finding reproduced again on the live tree after the merge of main and fixed or recorded - the
-record is `01-Overview/Audit-Cards-6.md`. What it changed here (sections 32-34 say it in place, each line tagged):
+record is `01-Overview/audits/Audit-Cards-6.md`. What it changed here (sections 32-34 say it in place, each line tagged):
 
 - **Where cards come from** (section 32): a sealed pack is worth `CARD_PACK_WORTH` (171) to the law and taken by
   customs as a card, a realm birth carries none (A1); a card or a pack stood as decor is counted and taken, its piece
@@ -1216,16 +1216,16 @@ record is `01-Overview/Audit-Cards-6.md`. What it changed here (sections 32-34 s
 - **OPEN for Mac:** the title can be farmed by throwaway accounts losing inside the pair's caps (D4 - the arena's law,
   kept; a guard on the title alone is passed by the same accounts playing each other once). DEFERRED: a Hold'em `act`
   naming its decision (C3 - a shipped wire, its window under one round trip). Recorded: A10, A11, B14, D14-D16.
-- **Pins:** `test/auditcards6_a.test.js` 10, `_b` 11, `_c` 17, `_d` 11, `_e` 10, and the pins each fix moved (the
+- **Pins:** `test/systems/auditcards6_a.test.js` 10, `_b` 11, `_c` 17, `_d` 11, `_e` 10, and the pins each fix moved (the
   record's list). `tools/mutants/auditcards6_a.json` to `_e.json`, every mutant dead.
 
 ## 36. CARDS-KEPT and CARDS-PANEL (2026-10-11): a gold table's first stake kept; the panel enhanced
 
-FIELD BUGS 2026-10-11 (`01-Overview/Field-Bugs-2026-10-11.md`, thread 1, Shortstori): "You have too many stakes waiting
+FIELD BUGS 2026-10-11 (`01-Overview/bugs/Field-Bugs-2026-10-11.md`, thread 1, Shortstori): "You have too many stakes waiting
 to be settled - visit the tables they were staked at first", at the first gold table, on every character. And the owner:
 "the card tables UI needs to be enhanced".
 
-- **CARDS-KEPT.** `net/cardStakes.js` (section 23) keeps its stakes and receipts as JSON through `storage.get`/`set` -
+- **CARDS-KEPT.** `net/card/cardStakes.js` (section 23) keeps its stakes and receipts as JSON through `storage.get`/`set` -
   the `{get, set}` store every one of its suites built it over - and `scenes/world.js` handed it `appStorage()`, the
   device's Storage (`getItem`/`setItem`). Every write threw into the book's own catch, so AUDIT CARDS-4 C6's check that a
   stake is KEPT before it is asked found nothing and refused every first buy-in as `cards-kept-full`, since CARDS6; the
@@ -1235,7 +1235,7 @@ to be settled - visit the tables they were staked at first", at the first gold t
   to name). THE FOUR HOSTS: the stakes book is `world.js`'s alone (the realm session is the streaming host's);
   `worldModes.js` reads it through `host.cardStakes`; `exterior.js` hands its modes no stakes book (its taverns' tables
   play offline, section 14) and `dungeonContext.js` has no tavern.
-- **CARDS-PANEL** (`ui/cardTableHud.js`). The model: the line's `tone` (`warn` - a refusal, a purse too thin to sit,
+- **CARDS-PANEL** (`ui/card/cardTableHud.js`). The model: the line's `tone` (`warn` - a refusal, a purse too thin to sit,
   the relay's refusal; `wait` - a stake being asked; `turn` - your turn), the buy-in's `picks` (`buyInPicks`: Min and
   Max) and the raise's (`raisePicks`: half the pot and the pot as a raise TO - the bet faced, then the pot once called or
   its half - on the slider's step, strictly inside the law's range; the floor is the slider's start, the ceiling All in),
@@ -1244,7 +1244,7 @@ to be settled - visit the tables they were staked at first", at the first gold t
   the seats, the board, the note and the log away so the cloth shows (the line and the buttons stay), kept across
   repaints; the log a line a sentence, the newest last and scrolled into view. Not the native-window rule's: no DFU
   window stands behind it (section 14).
-- **Pins:** `test/fb1011_cardskept.test.js` 5; PIN MOVED: `cards4_hud` - the buy-in's and the raise's models carry their
+- **Pins:** `test/scenes/fb1011_cardskept.test.js` 5; PIN MOVED: `cards4_hud` - the buy-in's and the raise's models carry their
   picks. `tools/mutants/fb1011_cardskept.json` 11, all dead.
 
 ## 37. ALL-IN (FIELD BUGS 2026-10-11g): a broke player's cloth is drawn with no table under it
@@ -1253,8 +1253,8 @@ The Discord's "Crash at card game" - "went all in and got this": the relay stand
 `scenes/worldModes.js` cardRemoteFrame's `lost` lets the relay's table go and keeps the cloth to play the hand out, and
 the same frame's draw read `(g.remote ?? g.session).view()` - null online. The draw reads no table as no view now
 (CardScene.poses takes one). "stood" and AUDIT CARDS-6 E8's "other game" took the same branch.
-- **Pins:** `test/auditcards6_e.test.js` 11 (the eleventh). `tools/mutants/fb1011g_allin.json` 1, dead. The record:
-  `01-Overview/Field-Bugs-2026-10-11g.md` ALL-IN.
+- **Pins:** `test/systems/auditcards6_e.test.js` 11 (the eleventh). `tools/mutants/fb1011g_allin.json` 1, dead. The record:
+  `01-Overview/bugs/Field-Bugs-2026-10-11g.md` ALL-IN.
 
 ## 38. CARDS-PLUS (2026-10-13): the card UI in the Enhanced Plus kit and the game's face; Iliac Hand's table made to read as a game
 
@@ -1264,7 +1264,7 @@ Currently it doesnt"**.
 - **WHAT WAS WRONG, MEASURED.** CARDS4 and CARDS10 each laid a sheet of its own - "the enhanced skin's dark plate and
   gold" - in Georgia, serif, set on the panel's root and again on every button: under the Plus sheet, in Chromium, both
   roots and their buttons computed `Georgia, serif`, so FONT3's face on the body reached no word of either. The kit
-  (`ui/enhancedFrame.js` FRAME_ROLES) named none of their surfaces, where PLUS-ONLY's law is that a new enhanced surface
+  (`ui/enhanced/enhancedFrame.js` FRAME_ROLES) named none of their surfaces, where PLUS-ONLY's law is that a new enhanced surface
   is dressed by it. Their generic words were the enhanced sheet's own bare components and took them: an Iliac holding's
   row (`.row`) a menu row's 11px 18px padding and its underline, Hold'em's little card (`.card`) a settings card's
   border and its 16px foot, the note (`.note`) a 10px top margin. The Collections page said it was "dressed by the
@@ -1273,7 +1273,7 @@ Currently it doesnt"**.
   their CSS size, past the painter's tile bound (`ILIAC_TILE_MAX_H`), so the hand wore the full face's rules box at 4px
   (AUDIT CARDS-5 made the tile face for exactly that size), beside a face cache of its own; and its log ran its sentences
   together under a hidden overflow, the newest cut off - the defect CARDS-PANEL fixed on the Hold'em panel alone.
-- **THE DRESS** (`ui/cardPanelKit.js`, the naval readout's way - a panel over the world, outside the window stack):
+- **THE DRESS** (`ui/card/cardPanelKit.js`, the naval readout's way - a panel over the world, outside the window stack):
   each panel's own sheet (`CARD_TABLE_CSS`, `ILIAC_TABLE_CSS`, exported so the sheets' reader evaluates them) writes
   geometry and words - the face's trio and its five on the root, every press, slider and field taking it (AUDIT
   CARDS-PLUS B11: a slider took it only then), an edge a width and a style and never a colour, the kit's (C3) - and the
@@ -1308,7 +1308,7 @@ Currently it doesnt"**.
   what the painter draws (`holdingLead` - the rules' own law over the power the view shows, a tie nobody's, the
   result's word once decided; `iliacOutcome`; each holding's `open` places - a staged unit takes one, a staged spell
   none; the line's `tone`; `spectator`; the presses' `kind`; `dealt` - A3). Every card is the binder's own painting at its CSS
-  size and the screen's ratio, 2 at most as the binder paints (`ui/cardBinderPage.js` cardCanvas), a fresh copy for each place it stands
+  size and the screen's ratio, 2 at most as the binder paints (`ui/card/cardBinderPage.js` cardCanvas), a fresh copy for each place it stands
   (`cardCanvasCopy`) - the tile face, one cache.
 - **THE COLLECTIONS PAGE**: the Codex | Cards switch, the binder's kind filters and a deck's chips are the kit's tiles,
   a codex row its list line, a deck its panel, a deck's name its field; the page's sheets give them the 2px edge the
@@ -1331,14 +1331,14 @@ Currently it doesnt"**.
   every word the new look added goes through the text core, read when it is shown - the verdict, the fold, the setup's
   heads and boxes, the track (the magicka by DFU's own key), the other player's line and state, the empty tray: 17 port
   keys - 15 under `cards.iliac.`, the fold's 2 under `cards.table.fold.` (both panels' fold since AUDIT CARDS-PLUS
-  B10/D5, `ui/cardPanelKit.js` foldWords - Hold'em's had stayed English) - drafted in the thirteen whole languages,
+  B10/D5, `ui/card/cardPanelKit.js` foldWords - Hold'em's had stayed English) - drafted in the thirteen whole languages,
   each one's glossary given the terms they settled (D6). The panel's older words are the
   routing batches' (L10N4's ratchet holds `iliacTableHud.js` at 63, six under its 69, and `cardTableHud.js` at 80, its
   fold's four words routed). The ratchet's scan read the
   kit's three new roles - `body .dfcards button[data-kind="primary"]` and its kin - as sentences: it reads a selector
   naming an id, an attribute or a pseudo-class as CSS now - every part a compound of CSS identifiers with a class among
   them (AUDIT CARDS-PLUS D1: without the class, "press [E] when ready" read as one).
-- **Pins:** `test/cardsplus.test.js` 9 (11 after AUDIT CARDS-PLUS, section 39). PIN MOVED: `auditcards6_b` B5 reads the regular's own tile (the name and
+- **Pins:** `test/ui/cardsplus.test.js` 9 (11 after AUDIT CARDS-PLUS, section 39). PIN MOVED: `auditcards6_b` B5 reads the regular's own tile (the name and
   temper on its first line, what the regular has paid under it); `plusdress1`'s warn rule carries Iliac Hand's concession.
   `tools/mutants/cardsplus.json` 39, all dead (82 after the audit). Re-judging the touched files' older records - 132
   before the merge of main, 142 after it, every one dead at the head (AUDIT CARDS-PLUS E9) - found one survivor on
@@ -1349,7 +1349,7 @@ Currently it doesnt"**.
 
 The owner: **"audit everything"**. Five lanes over a frozen snapshot of section 38 (the branch at a23c69cca), every
 finding reproduced again on the live tree after the merge of main and fixed or recorded - the record is
-`01-Overview/Audit-Cards-Plus.md`. What it changed (section 38 says it in place, each line tagged):
+`01-Overview/audits/Audit-Cards-Plus.md`. What it changed (section 38 says it in place, each line tagged):
 
 - **Iliac Hand's table** (lane A, `ui/iliacTableHud.js`): a relay's garbled `turns` or `room` grows no row - the track
   at `ILIAC_TURNS`, a lane's places at `ILIAC_ROOM`, as the gems and the backs were (A1: two million places took 38 s to
@@ -1370,14 +1370,14 @@ finding reproduced again on the live tree after the merge of main and fixed or r
   panels the dress's small windows (B4); a target a ring outside its plate (B5); an edge in the panels' sheets a width and
   a style, the kit's colour - the pot's outweighed the kit's chip - and the board wrapping its pot, which ran 31 px off
   a phone's panel at a full table's showdown (B6, C3); the winner's brass ground re-said by each colour after its panel
-  ground (B7, `ui/enhancedFrame.js` themeCss); a choice that cannot be made taking no pointer (B8); the keyboard on a
+  ground (B7, `ui/enhanced/enhancedFrame.js` themeCss); a choice that cannot be made taking no pointer (B8); the keyboard on a
   staged card shown (B9); every field and slider in the face (B11). The probe proves what it says (C5): every part a
   check reads counted there - 100 of its 314 checks had run over nothing - a gold table's note, a friendly game's, a
   full table at its river and its showdown, a 360 phone, a short window and a landscape phone under a finger, each
   state's mark read against its rest in every look, the fold by what is drawn, no card over another. C6 is section 38's
   words and the Ledger's F6 row.
 - **The words** (lane D): the scan's selector rule asks for a class and lets no digit open a name (D1); the fold says
-  what the player sees - "Collapse the panel", "Expand the panel" - on both panels, routed once (`ui/cardPanelKit.js`
+  what the player sees - "Collapse the panel", "Expand the panel" - on both panels, routed once (`ui/card/cardPanelKit.js`
   foldWords), its name to a screen reader too (D5, B10); the Norwegian ranked box and the Romanian "against" (D3, D4);
   each glossary given the terms the drafts settled (D6); the key count said truly (D2).
 - **The pins** (lane E): each panel's classic dressing read alone (E1); the duel's holder at an end where each side
@@ -1385,15 +1385,15 @@ finding reproduced again on the live tree after the merge of main and fixed or r
   44 px (E5); the fold's line and presses read kept (E6); the copy's corner and a ratio of 2 (E7); the four verdict
   words in French (E8); the record's numbers (E9); every claim a test title makes asserted (E10); the patch notes (E11);
   the narrow mutants and the corners left unpinned (E12).
-- **Recorded:** the client's view check (`net/iliacTable.js` viewOk) still bounds neither turns nor room - the module
+- **Recorded:** the client's view check (`net/iliac/iliacTable.js` viewOk) still bounds neither turns nor room - the module
   rides in the relay's bundle, so bounding it is a RELAY_VERSION of its own (SLAM8), the relay's next change's (A1); a
   watcher of a game's last board reads the current sitters' names, and a watcher's presses follow seat 0's commit (A9,
   before CARDS-PLUS); the folded seats and a disabled box's reason under AA, the concession 4.34:1 under the dress, a
   press's active nudge under the dress with reduced motion (B12 - before CARDS-PLUS, or the dress's own laws, every
   page's); the track's Magicka is DFU's key, English until a Daggerfall Unity pack is installed, the panel's older words
   the routing batches', the scan's first test quadratic on a long run of letters (D7).
-- **Pins:** `test/cardsplus.test.js` 11 (lane A's and lanes B and C's new; the rest extended), the scan's own test in
-  `test/l10n4_hardcoded.test.js`, `tools/cardPanelsProbe.mjs` (1,690 checks over 105 pages).
+- **Pins:** `test/ui/cardsplus.test.js` 11 (lane A's and lanes B and C's new; the rest extended), the scan's own test in
+  `test/systems/l10n4_hardcoded.test.js`, `tools/cardPanelsProbe.mjs` (1,690 checks over 105 pages).
   `tools/mutants/cardsplus.json` 82, all dead on the final tree (CP-watcher-end retired with the check it mutated,
   which A6's guard had made unreachable); records re-aimed by content: `auditcards6_b` AC6-B10-fallback-hand and
   AC6-B10-tab-walk, `fb1011_cardskept` CP-fold-forgotten. The 127 older records on the files the audit changed (25
@@ -1408,11 +1408,11 @@ relay's catalog.
 - **THE NINE:** the Grizzly Bear, the Sabretooth Tiger, the Spider, the Slaughterfish (commons), the Mummy (magic), the
   Frost and the Fire Daedra (rares), the Archer (common) and the Ranger (magic) - 94 cards and 11 holdings now; 69 units.
   Six emblems of their own (bear, cat, spider, fish, mummy, bow - `render/iliacCardFaces.js`, 57 glyphs). Their foes
-  drop them (`systems/cardSources.js` FOE_CARDS: the seven creatures that dropped none, and the Archer and the Ranger,
+  drop them (`systems/card/cardSources.js` FOE_CARDS: the seven creatures that dropped none, and the Archer and the Ranger,
   who dropped none); the packs, the regulars' decks and a card's worth read them off the catalog. The relay: world201.
 - **THE WORDS:** a card's rules and flavor are said in the player's language through the text core when they are shown
-  (`systems/iliacCardWords.js` - `cardRules`, `cardFlavor`), never written in the relay's catalog again: the catalog
-  (`net/iliacCards.js`) keeps the rules and the names, the face painter takes the words beside the card, the binder,
+  (`systems/iliac/iliacCardWords.js` - `cardRules`, `cardFlavor`), never written in the relay's catalog again: the catalog
+  (`net/iliac/iliacCards.js`) keeps the rules and the names, the face painter takes the words beside the card, the binder,
   a card item's lines and the table panel's titles read them, and the binder's faces are painted again under a new
   language. Every rules line's English is still EXACTLY `fxText`'s (section 26's law, its pin moved). Drafted into the
   thirteen whole languages; a card's name keeps Daggerfall's English until L10N4's cards batch shows it through Daggerfall
@@ -1420,9 +1420,9 @@ relay's catalog.
 - **MEASURE:** `tools/iliacBalance.mjs` (committed) re-runs section 33's measures: no seat's edge in 3,000 random games
   (49.0% / 49.9%, 1.1% drawn); the regulars' win rates within 3.3 points of the set before the nine
   (`Kings-Gambit.md` section 15's table).
-- **Pins:** `test/kgset_cards.test.js` (5 - the fifth the face's wrap kept off a no-break space, FOUND AT THE DRAFTS,
-  `Kings-Gambit.md` section 15); the moved pins of `test/cards8_catalog.test.js`, `test/cards8_faces.test.js`,
-  `test/cards8_binder.test.js`, `test/cards9_sources.test.js` and `test/auditcards5_items.test.js`; mutants
+- **Pins:** `test/systems/kgset_cards.test.js` (5 - the fifth the face's wrap kept off a no-break space, FOUND AT THE DRAFTS,
+  `Kings-Gambit.md` section 15); the moved pins of `test/systems/loot/cards8_catalog.test.js`, `test/net/iliac/cards8_faces.test.js`,
+  `test/systems/item/cards8_binder.test.js`, `test/systems/cards9_sources.test.js` and `test/systems/item/auditcards5_items.test.js`; mutants
   `tools/mutants/kgset.json`, 13, all dead; `tools/mutants/auditcards5.json` AC5-C-M7 and faces5-N02-tile-writes-rules
   re-aimed by content.
 
@@ -1443,7 +1443,7 @@ is played at this table, offline, against its regulars - a game of armies and ki
   parts, FRAME_ROLES name its surfaces beside the other two panels' (its sections, its information box, its result, its
   tiles, its list rows, its meters, its chips), the classic skin's cut carries them (under half the kit's rules now), the
   DFO Grimoire dress counts it among the small windows and re-says its marks; the WARN role's blood edge is its Forfeit
-  and its Stand up mid-game. The card panels' sheets and the chrome are held to FONT3's floor (`test/font3_readable.test.js`).
+  and its Stand up mid-game. The card panels' sheets and the chrome are held to FONT3's floor (`test/ui/font3_readable.test.js`).
 - **Pins:** `test/kg3_session`, `kg3_panel`, `kg3_host` (the last test runs this table's host block as the six harness
-  tests do), `kg3_draw`; `test/cardsplus.test.js`'s classic skin and face take the third panel. Mutants:
+  tests do), `kg3_draw`; `test/ui/cardsplus.test.js`'s classic skin and face take the third panel. Mutants:
   `tools/mutants/kg3.json`.

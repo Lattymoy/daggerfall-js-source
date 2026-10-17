@@ -1,4 +1,4 @@
-// A MORROWIND NIF, WRITTEN. The other end of src/formats/mwNifFile.js.
+// A MORROWIND NIF, WRITTEN. The other end of src/formats/morrowind/mwNifFile.js.
 //
 //     node tools/nifWrite.mjs <mesh.json> <out.nif> [--texture=NAME.dds]
 //                             [--node=NAME] [--keep-v]

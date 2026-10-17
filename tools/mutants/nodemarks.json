@@ -5,7 +5,7 @@
     "old": "    mark: (p) => (gone(p) ? null : PATCH_MARK),",
     "new": "    mark: () => null,",
     "tests": [
-      "test/nodemarks.test.js"
+      "test/scenes/nodemarks.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  const gone = (p) => goneIn(book, p.key, 'herbs') && goneIn(book, p.key, 'food');",
     "new": "  const gone = (p) => goneIn(book, p.key, 'herbs') || goneIn(book, p.key, 'food');",
     "tests": [
-      "test/nodemarks.test.js"
+      "test/scenes/nodemarks.test.js"
     ],
     "note": "GATHER-SPEED/MARKET-SPEED (PIN MOVED): re-aimed by content - the reads batched."
   },
@@ -24,7 +24,7 @@
     "old": "for (const n of s.nodes) { const k = kindOf(n); if (k) add(k, n, n.local[0] + tx, n.local[1] + ty, n.local[2] + tz); }",
     "new": "for (const n of s.nodes) { const k = kindOf(n); if (k) add(k, n, n.local[0] + tx, n.local[1] + ty + (n.lift ?? 0.3), n.local[2] + tz); }",
     "tests": [
-      "test/nodemarks.test.js"
+      "test/scenes/nodemarks.test.js"
     ]
   },
   {
@@ -33,7 +33,7 @@
     "old": "          const tx = tr[0], ty = tr[1], tz = tr[2];",
     "new": "          const tx = 0, ty = 0, tz = 0;",
     "tests": [
-      "test/nodemarks.test.js"
+      "test/scenes/nodemarks.test.js"
     ]
   },
   {
@@ -42,7 +42,7 @@
     "old": "      out.sort((a, b) => a.d - b.d);\n      if (out.length > max) out.length = max;",
     "new": "      out.sort((a, b) => b.d - a.d);\n      if (out.length > max) out.length = max;",
     "tests": [
-      "test/nodemarks.test.js"
+      "test/scenes/nodemarks.test.js"
     ]
   },
   {
@@ -51,7 +51,7 @@
     "old": "      if (out.length > max) out.length = max;",
     "new": "",
     "tests": [
-      "test/nodemarks.test.js"
+      "test/scenes/nodemarks.test.js"
     ]
   },
   {
@@ -60,7 +60,7 @@
     "old": "        if (!(d <= reach)) return;",
     "new": "        if (!(d <= MARK_WALK_M)) return;",
     "tests": [
-      "test/nodemarks.test.js"
+      "test/scenes/nodemarks.test.js"
     ]
   },
   {
@@ -69,7 +69,7 @@
     "old": "      if (book.state.open !== true || !isVec3(pos)) return out;",
     "new": "      if (!isVec3(pos)) return out;",
     "tests": [
-      "test/nodemarks.test.js"
+      "test/scenes/nodemarks.test.js"
     ]
   },
   {
@@ -78,7 +78,7 @@
     "old": "        const m = k.mark ? k.mark(n, markCtx) : (k.gone(n) ? null : NODE_MARK_SIZE);",
     "new": "        const m = k.mark ? k.mark(n, markCtx) : NODE_MARK_SIZE;",
     "tests": [
-      "test/nodemarks.test.js"
+      "test/scenes/nodemarks.test.js"
     ]
   },
   {
@@ -87,7 +87,7 @@
     "old": "      const under = !!dungeon;\n      if (under) {",
     "new": "      const under = !!dungeon;\n      if (false) {",
     "tests": [
-      "test/nodemarks.test.js"
+      "test/scenes/nodemarks.test.js"
     ]
   },
   {
@@ -96,7 +96,7 @@
     "old": "          if (isVec3(w)) add(k, n, w[0], w[1], w[2]);",
     "new": "          if (isVec3(w) && false) add(k, n, w[0], w[1], w[2]);",
     "tests": [
-      "test/nodemarks.test.js"
+      "test/scenes/nodemarks.test.js"
     ]
   },
   {
@@ -105,8 +105,8 @@
     "old": "      return (specs('mining')[50] === 'prospector' && PROSPECTOR_MARKS[n.what]) || MINE_MARKS[n.what] || MINE_MARKS.vein;",
     "new": "      return MINE_MARKS[n.what] || MINE_MARKS.vein;",
     "tests": [
-      "test/nodemarks.test.js",
-      "test/prof2_client.test.js"
+      "test/scenes/nodemarks.test.js",
+      "test/net/prof2_client.test.js"
     ]
   },
   {
@@ -115,7 +115,7 @@
     "old": "      if (gone(n)) return null;\n      if (n.what === 'motherlode') return MOTHERLODE_MARK;",
     "new": "      if (n.what === 'motherlode') return MOTHERLODE_MARK;",
     "tests": [
-      "test/nodemarks.test.js"
+      "test/scenes/nodemarks.test.js"
     ]
   },
   {
@@ -124,7 +124,7 @@
     "old": "    mark: (n) => (goneIn(book, n.key, 'logs') ? null : TREE_MARK),",
     "new": "    mark: () => TREE_MARK,",
     "tests": [
-      "test/nodemarks.test.js"
+      "test/scenes/nodemarks.test.js"
     ],
     "note": "GATHER-SPEED/MARKET-SPEED (PIN MOVED): re-aimed by content - the reads batched."
   },
@@ -134,7 +134,7 @@
     "old": "    mark: (n) => (n.school ? SCHOOL_MARK : null),",
     "new": "    mark: () => null,",
     "tests": [
-      "test/nodemarks.test.js"
+      "test/scenes/nodemarks.test.js"
     ]
   },
   {
@@ -143,7 +143,7 @@
     "old": "    mark: (b) => (goneIn(book, b.key, 'hide') ? null : BODY_MARK),",
     "new": "    mark: () => BODY_MARK,",
     "tests": [
-      "test/nodemarks.test.js"
+      "test/scenes/nodemarks.test.js"
     ],
     "note": "GATHER-SPEED/MARKET-SPEED (PIN MOVED): re-aimed by content - the reads batched."
   },
@@ -153,7 +153,7 @@
     "old": "  if (marks) for (let i = marks.length - 1; i >= 0; i--) { const m = marks[i]; put(m.at[0], m.at[2], m.profession, nodeMarkAlpha(m.d, m.reach)); }",
     "new": "  if (marks) for (let i = 0; i < marks.length; i++) { const m = marks[i]; put(m.at[0], m.at[2], m.profession, nodeMarkAlpha(m.d, m.reach)); }",
     "tests": [
-      "test/nodemarks.test.js"
+      "test/scenes/nodemarks.test.js"
     ]
   },
   {
@@ -162,7 +162,7 @@
     "old": "put(m.at[0], m.at[2], m.profession, nodeMarkAlpha(m.d, m.reach));",
     "new": "put(m.at[0], m.at[2], m.profession, 1);",
     "tests": [
-      "test/nodemarks.test.js"
+      "test/scenes/nodemarks.test.js"
     ]
   },
   {
@@ -171,52 +171,52 @@
     "old": "  for (const v of animals ?? []) put(v[0], v[1], 'hunting', 1);",
     "new": "",
     "tests": [
-      "test/nodemarks.test.js"
+      "test/scenes/nodemarks.test.js"
     ]
   },
   {
     "name": "NODE-MARKS-classic-one-colour",
-    "file": "src/ui/hud.js",
+    "file": "src/ui/hud/hud.js",
     "old": "    const rgb = nodeMarkRgb(t.mark);",
     "new": "    const rgb = nodeMarkRgb('mining');",
     "tests": [
-      "test/nodemarks.test.js"
+      "test/scenes/nodemarks.test.js"
     ]
   },
   {
     "name": "NODE-MARKS-classic-opacity-dropped",
-    "file": "src/ui/hud.js",
+    "file": "src/ui/hud/hud.js",
     "old": "_nodeCol[3] = Number.isFinite(t.a) ? t.a : 1;",
     "new": "_nodeCol[3] = 1;",
     "tests": [
-      "test/nodemarks.test.js"
+      "test/scenes/nodemarks.test.js"
     ]
   },
   {
     "name": "NODE-MARKS-classic-bearing-ignored",
-    "file": "src/ui/hud.js",
+    "file": "src/ui/hud/hud.js",
     "old": "    const lerp = Math.min(1, Math.max(0, compassMarkerLerp(t.xz, playerXZ, heading01)));\n    const mx = boxLeft + (boxRight - boxLeft) * lerp;\n    const rgb",
     "new": "    const lerp = 0.5;\n    const mx = boxLeft + (boxRight - boxLeft) * lerp;\n    const rgb",
     "tests": [
-      "test/nodemarks.test.js"
+      "test/scenes/nodemarks.test.js"
     ]
   },
   {
     "name": "NODE-MARKS-enhanced-one-colour",
-    "file": "src/ui/enhancedHud.js",
+    "file": "src/ui/enhanced/enhancedHud.js",
     "old": "    const c = nodeMarkCss(p.mark);",
     "new": "    const c = nodeMarkCss('mining');",
     "tests": [
-      "test/nodemarks.test.js"
+      "test/scenes/nodemarks.test.js"
     ]
   },
   {
     "name": "NODE-MARKS-enhanced-marks-never-placed",
-    "file": "src/ui/enhancedHud.js",
+    "file": "src/ui/enhanced/enhancedHud.js",
     "old": "  drawNodeMarks(opts.nodes ?? null, opts.playerXZ ?? null, heading01);",
     "new": "",
     "tests": [
-      "test/nodemarks.test.js"
+      "test/scenes/nodemarks.test.js"
     ]
   },
   {
@@ -225,7 +225,7 @@
     "old": "if (!n) { n = { kindle: 0, seen: frame, seed: nodeGlowSeed(m.key) }; state.nodes.set(m.key, n); } else n.kindle = Math.min(1, n.kindle + dt / NODE_GLOW_KINDLE_S);",
     "new": "if (!n) { n = { kindle: 1, seen: frame, seed: nodeGlowSeed(m.key) }; state.nodes.set(m.key, n); }",
     "tests": [
-      "test/nodemarks.test.js"
+      "test/scenes/nodemarks.test.js"
     ]
   },
   {
@@ -234,7 +234,7 @@
     "old": "      const alpha = n.kindle * (1 - smooth(NODE_GLOW_FADE_M, NODE_GLOW_M, d)) * (Number.isFinite(m.gain) ? Math.min(1, Math.max(0, m.gain)) : 1);",
     "new": "      const alpha = n.kindle * (Number.isFinite(m.gain) ? Math.min(1, Math.max(0, m.gain)) : 1);",
     "tests": [
-      "test/nodemarks.test.js"
+      "test/scenes/nodemarks.test.js"
     ]
   },
   {
@@ -243,7 +243,7 @@
     "old": "  for (const [key, n] of state.nodes) if (n.seen !== frame) state.nodes.delete(key);",
     "new": "",
     "tests": [
-      "test/nodemarks.test.js"
+      "test/scenes/nodemarks.test.js"
     ]
   },
   {
@@ -252,7 +252,7 @@
     "old": "      if (out.length >= NODE_GLOW_MAX) break;",
     "new": "",
     "tests": [
-      "test/nodemarks.test.js"
+      "test/scenes/nodemarks.test.js"
     ]
   },
   {
@@ -261,7 +261,7 @@
     "old": "  float up = smoothstep(0.0, 0.22, qy) * pow(max(1.0 - qy, 0.0), 1.5);",
     "new": "  float up = smoothstep(0.0, 0.22, 1.0 - qy) * pow(max(qy, 0.0), 1.5);",
     "tests": [
-      "test/nodemarks.test.js"
+      "test/scenes/nodemarks.test.js"
     ]
   },
   {
@@ -270,7 +270,7 @@
     "old": "export const NODE_GLOW_RATES = Object.freeze({ breath: 0.25, shimmer: 0.2, mote: 0.3, moteStep: 0.05, twinkle: 1.5 });",
     "new": "export const NODE_GLOW_RATES = Object.freeze({ breath: 0.25, shimmer: 0.2, mote: 0.3, moteStep: 0.0537, twinkle: 1.5 });",
     "tests": [
-      "test/nodemarks.test.js"
+      "test/scenes/nodemarks.test.js"
     ]
   },
   {
@@ -279,7 +279,7 @@
     "old": "  o = vec4(uColor * light * uAlpha * fogFactorAt(vWorld), 1.0);",
     "new": "  o = vec4(uColor * light * fogFactorAt(vWorld), 1.0);",
     "tests": [
-      "test/nodemarks.test.js"
+      "test/scenes/nodemarks.test.js"
     ]
   },
   {
@@ -288,7 +288,7 @@
     "old": "  vec3 base = uAt + vec3(dir.x, 0.0, dir.y) * min(uPull, fl * 0.5);",
     "new": "  vec3 base = uAt;",
     "tests": [
-      "test/nodemarks.test.js"
+      "test/scenes/nodemarks.test.js"
     ]
   },
   {
@@ -297,7 +297,7 @@
     "old": "    gl.depthMask(false);\n    gl.disable(gl.CULL_FACE);\n    for (const g of list) {",
     "new": "    gl.disable(gl.CULL_FACE);\n    for (const g of list) {",
     "tests": [
-      "test/nodemarks.test.js"
+      "test/scenes/nodemarks.test.js"
     ]
   },
   {
@@ -306,7 +306,7 @@
     "old": "      gl.uniform3f(U.uColor, g.rgb[0], g.rgb[1], g.rgb[2]);",
     "new": "",
     "tests": [
-      "test/nodemarks.test.js"
+      "test/scenes/nodemarks.test.js"
     ]
   },
   {
@@ -315,7 +315,7 @@
     "old": "    gl.uniform1f(U.uTime, nodeGlowClock(seconds));",
     "new": "    gl.uniform1f(U.uTime, seconds);",
     "tests": [
-      "test/nodemarks.test.js"
+      "test/scenes/nodemarks.test.js"
     ]
   },
   {
@@ -324,8 +324,8 @@
     "old": "peerBodies?.drawVeiled(); drawAuras(); nodeGlowPass.draw(travelView?.active ? null : nodeMarksAt(enchantFeet())); };",
     "new": "peerBodies?.drawVeiled(); drawAuras(); };",
     "tests": [
-      "test/nodemarks.test.js",
-      "test/invislook.test.js"
+      "test/scenes/nodemarks.test.js",
+      "test/net/invislook.test.js"
     ]
   },
   {
@@ -334,8 +334,8 @@
     "old": "nodeGlowPass.draw(travelView?.active ? null : nodeMarksAt(enchantFeet()));",
     "new": "nodeGlowPass.draw(nodeMarksAt(enchantFeet()));",
     "tests": [
-      "test/nodemarks.test.js",
-      "test/invislook.test.js"
+      "test/scenes/nodemarks.test.js",
+      "test/net/invislook.test.js"
     ]
   },
   {
@@ -344,7 +344,7 @@
     "old": "nodes: playerFeet ? withFireMarks(opts.nodeMarks?.(playerFeet) ?? null, dungeonFires, playerFeet) : null,",
     "new": "nodes: playerFeet ? withFireMarks(null, dungeonFires, playerFeet) : null,",
     "tests": [
-      "test/nodemarks.test.js"
+      "test/scenes/nodemarks.test.js"
     ],
     "note": "REST3 (PIN MOVED): the field now folds the campfires in (withFireMarks); re-aimed by content - the nodes unfed, the fires kept."
   },
@@ -354,7 +354,7 @@
     "old": "        if (!k.looseNodesOf || !k.marksLoose) continue;",
     "new": "        if (!k.looseNodesOf) continue;",
     "tests": [
-      "test/nodemarks.test.js"
+      "test/scenes/nodemarks.test.js"
     ]
   },
   {
@@ -363,7 +363,7 @@
     "old": "    marksLoose: true,\n",
     "new": "",
     "tests": [
-      "test/nodemarks.test.js"
+      "test/scenes/nodemarks.test.js"
     ]
   },
   {
@@ -372,7 +372,7 @@
     "old": "    if (!gatherHost || profBook?.state.open !== true || !feet) return null;",
     "new": "    if (!gatherHost || profBook?.state.open !== true || travelView?.active || !feet) return null;",
     "tests": [
-      "test/nodemarks.test.js"
+      "test/scenes/nodemarks.test.js"
     ]
   },
   {
@@ -381,7 +381,7 @@
     "old": "      if (!asked && marks?.length) { asked = true; idle(make); }",
     "new": "      if (!asked && marks?.length) { asked = true; make(); }",
     "tests": [
-      "test/nodemarks.test.js"
+      "test/scenes/nodemarks.test.js"
     ]
   },
   {
@@ -390,7 +390,7 @@
     "old": "      if (!asked && marks?.length) { asked = true; idle(make); }",
     "new": "      if (marks?.length) { asked = true; idle(make); }",
     "tests": [
-      "test/nodemarks.test.js"
+      "test/scenes/nodemarks.test.js"
     ]
   },
   {
@@ -399,7 +399,7 @@
     "old": "  const make = () => { if (dead) return; try { pass = build(renderer.gl); } catch (e) { console.warn('[prof] the nodes\\' glow would not build', e?.message ?? e); pass = null; } };   // SENSE1: an idle build after the end builds nothing",
     "new": "  const make = () => { if (dead) return; pass = build(renderer.gl); };",
     "tests": [
-      "test/nodemarks.test.js"
+      "test/scenes/nodemarks.test.js"
     ]
   },
   {
@@ -408,7 +408,7 @@
     "old": "      renderer.markForeignPass();\n      return pass.drawn;",
     "new": "      if (pass.drawn) renderer.markForeignPass();\n      return pass.drawn;",
     "tests": [
-      "test/nodemarks.test.js"
+      "test/scenes/nodemarks.test.js"
     ]
   },
   {
@@ -417,7 +417,7 @@
     "old": "{ mode: renderer._fogMode, density: renderer._fogDensity, range: renderer._fogRange, camPos: renderer._camPos, focus: renderer._focus }, reduced(t));",
     "new": "null, reduced(t));",
     "tests": [
-      "test/nodemarks.test.js"
+      "test/scenes/nodemarks.test.js"
     ]
   },
   {
@@ -426,7 +426,7 @@
     "old": "camPos: renderer._camPos, focus: renderer._focus }, reduced(t));",
     "new": "camPos: renderer._camPos, focus: renderer._focus }, false);",
     "tests": [
-      "test/nodemarks.test.js"
+      "test/scenes/nodemarks.test.js"
     ]
   },
   {
@@ -435,7 +435,7 @@
     "old": "  float tm = uTime * (1.0 - uStill);",
     "new": "  float tm = uTime;",
     "tests": [
-      "test/nodemarks.test.js"
+      "test/scenes/nodemarks.test.js"
     ]
   },
   {
@@ -444,7 +444,7 @@
     "old": " * across * up * (1.0 - uStill);",
     "new": " * across * up;",
     "tests": [
-      "test/nodemarks.test.js"
+      "test/scenes/nodemarks.test.js"
     ]
   },
   {
@@ -453,7 +453,7 @@
     "old": "    gl.uniform1f(U.uStill, still ? 1 : 0);\n",
     "new": "",
     "tests": [
-      "test/nodemarks.test.js"
+      "test/scenes/nodemarks.test.js"
     ]
   },
   {
@@ -462,52 +462,52 @@
     "old": "      const g = state.pool[out.length] ??= {",
     "new": "      const g = {",
     "tests": [
-      "test/nodemarks.test.js"
+      "test/scenes/nodemarks.test.js"
     ]
   },
   {
     "name": "AUDIT-NODE-MARKS-classic-nodes-drawn-last",
-    "file": "src/ui/hud.js",
+    "file": "src/ui/hud/hud.js",
     "old": "  // NODE-MARKS: every profession's nodes near (a Prospector's veins, 500 m; a Tracker's animals, 100 m) - FIRST, so the\n  drawNodeCompassMarks(renderer, nodes, playerXZ, heading01, { bx, by, bw, s });   // AUDIT: Detect markers, the party and the ships stand over them\n",
     "new": "",
     "tests": [
-      "test/nodemarks.test.js"
+      "test/scenes/nodemarks.test.js"
     ]
   },
   {
     "name": "AUDIT-NODE-MARKS-enhanced-no-layer",
-    "file": "src/ui/enhancedHud.js",
+    "file": "src/ui/enhanced/enhancedHud.js",
     "old": "    nodeLayer().append(node);",
     "new": "    parts.compass.append(node);",
     "tests": [
-      "test/nodemarks.test.js"
+      "test/scenes/nodemarks.test.js"
     ]
   },
   {
     "name": "AUDIT-NODE-MARKS-enhanced-layer-on-top",
-    "file": "src/ui/enhancedHud.js",
+    "file": "src/ui/enhanced/enhancedHud.js",
     "old": "  if (needle && typeof parts.compass.insertBefore === 'function') parts.compass.insertBefore(layer, needle.nextSibling ?? null);",
     "new": "  if (false) parts.compass.insertBefore(layer, needle.nextSibling ?? null);",
     "tests": [
-      "test/nodemarks.test.js"
+      "test/scenes/nodemarks.test.js"
     ]
   },
   {
     "name": "AUDIT-NODE-MARKS-enhanced-opacity-read-back",
-    "file": "src/ui/enhancedHud.js",
+    "file": "src/ui/enhanced/enhancedHud.js",
     "old": "    if (kept.a !== o) { kept.a = o; node.style.opacity = o; }",
     "new": "    if (node.style.opacity !== o) { kept.a = o; node.style.opacity = o; }",
     "tests": [
-      "test/nodemarks.test.js"
+      "test/scenes/nodemarks.test.js"
     ]
   },
   {
     "name": "AUDIT-NODE-MARKS-enhanced-left-read-back",
-    "file": "src/ui/enhancedHud.js",
+    "file": "src/ui/enhanced/enhancedHud.js",
     "old": "    if (kept.left !== l) { kept.left = l; node.style.left = l; }",
     "new": "    if (node.style.left !== l) { kept.left = l; node.style.left = l; }",
     "tests": [
-      "test/nodemarks.test.js"
+      "test/scenes/nodemarks.test.js"
     ]
   },
   {
@@ -516,7 +516,7 @@
     "old": "      if (book.state.open !== true || !isVec3(pos)) return out;",
     "new": "      if (book.state.open !== true || !Array.isArray(pos)) return out;",
     "tests": [
-      "test/nodemarks.test.js"
+      "test/scenes/nodemarks.test.js"
     ]
   },
   {
@@ -525,7 +525,7 @@
     "old": "  if (Array.isArray(marks) && isVec3(eye)) {",
     "new": "  if (Array.isArray(marks) && Array.isArray(eye)) {",
     "tests": [
-      "test/nodemarks.test.js"
+      "test/scenes/nodemarks.test.js"
     ]
   }
 ]

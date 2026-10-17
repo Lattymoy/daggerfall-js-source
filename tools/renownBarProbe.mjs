@@ -4,8 +4,8 @@
 //
 // Whether a bar is centred is a thing about pixels: a pin can say the row's rule reads `grid` with two equal outer
 // columns, and only a layout engine can say the bar's middle IS the vitals' middle. So the REAL HUD is drawn here
-// (ui/enhancedHud.js's drawEnhancedHud over the real sheets, the enhanced skin - Plus is its only dress) with a Renown
-// the page hands it through ui/hudRenown.js's own seam, at a desktop, a laptop and a phone both ways up, and for each
+// (ui/enhanced/enhancedHud.js's drawEnhancedHud over the real sheets, the enhanced skin - Plus is its only dress) with a Renown
+// the page hands it through ui/hud/hudRenown.js's own seam, at a desktop, a laptop and a phone both ways up, and for each
 // Renown state - a level part-way (with XP earned and not yet answered), a level's start, a level's last XP, the cap,
 // and a level with no total yet (the box alone) - it reads:
 //   - UI3 (2026-09-27, Mac: "more space for the XP bar and being able to fit the XP amounts inside"): THE NUMBERS IN
@@ -38,8 +38,8 @@ const OUT = process.env.SHOT_DIR ?? join(ROOT, 'tools/shots');
 const PAGE = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>RENOWN-BAR probe</title>
 <style>html,body{margin:0;height:100%;overflow:hidden;background:repeating-linear-gradient(45deg,#3b4a3a 0 14px,#324031 14px 28px)}</style></head><body>
 <script type="module">
-import { drawEnhancedHud } from '/src/ui/enhancedHud.js';
-import { setHudRenown } from '/src/ui/hudRenown.js';
+import { drawEnhancedHud } from '/src/ui/enhanced/enhancedHud.js';
+import { setHudRenown } from '/src/ui/hud/hudRenown.js';
 import { renownXpFor, RENOWN_MAX } from '/src/net/renown.js';
 const e = { name: 'Aelwyn', career: { name: 'Spellsword' }, stats: { strength: 50, endurance: 48, willpower: 50, intelligence: 50 },
   health: 30, maxHealth: 40, fatigue: 150, maxFatigue: 200, magicka: 14, maxMagicka: 20, items: [], spells: [] };

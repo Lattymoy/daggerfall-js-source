@@ -10,14 +10,14 @@ Its own description: "Displays hands when ready for spellcasting".
 Its source is vendored under `vendor/readied-spellcasting-hands/` (the two
 C# files and the manifest, which the bundle carries as TextAssets, and the
 zip's MIT licence; `tools/readiedHandsAssets.mjs` reproduces them through
-`src/formats/unityBundle.js`), it is credited on the About screen, and it is
+`src/formats/unity/unityBundle.js`), it is credited on the About screen, and it is
 one switch: Features -> Combat -> Readied Spellcasting Hands by jefetienne,
 on by default (MO1).
 
 ## What DFU shows, and what the mod changes
 
 A readied spell hides the weapon (`WeaponManager`'s `HasReadySpell` leg -
-the port's `shown()` in `src/combat/weaponRig.js`), and nothing takes its
+the port's `shown()` in `src/combat/weapon/weaponRig.js`), and nothing takes its
 place: the screen is empty until the click starts the cast's hands.
 
 The mod is DFU's `FPSSpellCasting`, copied whole as
@@ -42,7 +42,7 @@ the readied hands hold.
   is the spell record's `rangeType` 0; an element with no archive (DFU's
   `ElementTypes.None`, which `GetMagicAnimFilename` throws on) draws
   nothing, as for the cast.
-- `src/combat/weaponRig.js` - the draw, at the cast hands' own site, through
+- `src/combat/weapon/weaponRig.js` - the draw, at the cast hands' own site, through
   the same `drawSpellCastHands` at that frame: the same art cache, the same
   layout, the same large-HUD offset, the same first-person light (MAC-I).
   The rig takes the readied record as `readiedSpell()`, which each host

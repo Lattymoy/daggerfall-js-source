@@ -35,7 +35,7 @@
 // choose it (the LOOK view), free.
 //
 // The surfaces decide nothing: what may be placed, what it costs and
-// where it goes are the host's (scenes/decorTool.js). Handed the
+// where it goes are the host's (scenes/decor/decorTool.js). Handed the
 // document and the window so the pins drive them headless.
 //
 // Not a DFU member: Daggerfall Unity has no decorator. Ledger A.
@@ -43,18 +43,18 @@
 
 import { PIXELIFY_FIVE_FACE, PIXEL_FONT_CSS } from './pixelifyFive.js';
 import { isTextEntryTarget } from './input.js';
-import { registerOverlay } from './enhancedOverlays.js';   // PX28b: Tab puts it away, as it puts away every enhanced window
-import { DECOR_KINDS, DECOR_SIZES, decorSize, filterDecor } from '../systems/decorCatalogue.js';
+import { registerOverlay } from './enhanced/enhancedOverlays.js';   // PX28b: Tab puts it away, as it puts away every enhanced window
+import { DECOR_KINDS, DECOR_SIZES, decorSize, filterDecor } from '../systems/decor/decorCatalogue.js';
 import { decorRefund, DECOR_FURNITURE_GROUP, DECOR_STATIONS, DECOR_STATION_FEES, DECOR_STATION_NAMES } from '../net/decorLaw.js';
-import { forgeOffered, PROF_STATIONS } from './profPages.js';
+import { forgeOffered, PROF_STATIONS } from './professions/profPages.js';
 import { VENDOR_STATION } from '../net/vendorLaw.js';   // HOME-VENDOR: a hired trader
 import { rentRowSub, rentPriceStep, RENT_PRICE_STEPS, RENT_PRICE_FIRST } from '../systems/homeRent.js';   // HOME-RENT: the owner's rooms
 import {
   HOME_LOOK_PARTS, HOME_LOOK_PART_NAMES, HOME_LOOK_CLIMATES, HOME_LOOK_CLIMATE_NAMES, HOME_LOOK_SETS, HOME_LOOK_SET_NAMES, HOME_LOOK_DOOR_KEPT, homeLookOf, homeLookSig,
 } from '../net/homeLaw.js';   // HOME-LOOK: the house outside, painted
 import { homeLookSwatch } from '../world/homeLook.js';
-import { decorIsDoor } from '../systems/decorDoorways.js';   // HOME-DOORS (AUDIT): a door's controls
-import { DFICON_CSS } from './menuGlyphs.js';   // MENU-ORDER: a kind and a press each wear a picture
+import { decorIsDoor } from '../systems/decor/decorDoorways.js';   // HOME-DOORS (AUDIT): a door's controls
+import { DFICON_CSS } from './menu/menuGlyphs.js';   // MENU-ORDER: a kind and a press each wear a picture
 import { t } from '../systems/textManager.js';   // L10N4: MENU-ORDER's own words in the player's language
 /** The crafts a piece may be made here: every station, the Forge only where it works (AUDIT 29 B2). HOME-VENDOR: and a
  *  trader only where the market trades - online, the trades open (its stock is market listings). */
@@ -187,7 +187,7 @@ body .dfdecor-tabs .dfdecor-chip[aria-pressed="true"] { color: #f2c46b; box-shad
 .dfdecor-bar.touch .dfdecor-chip, .dfdecor-bar.touch .dfdecor-btn { min-height: 44px; min-width: 44px; touch-action: none; }
 .dfdecor-bar.touch { bottom: auto; top: calc(8px + env(safe-area-inset-top, 0px)); max-width: calc(100vw - 272px); }
 /* MENU-ORDER: a portrait phone's bar. Clear of the touch layer's top-left presses beside it, a 390px screen gave it 118px -
-   a word a line; under them (16px down, 48px tall, ui/touch.js) it has the screen's width */
+   a word a line; under them (16px down, 48px tall, ui/touch/touch.js) it has the screen's width */
 @media (orientation: portrait) { .dfdecor-bar.touch { top: calc(72px + env(safe-area-inset-top, 0px)); max-width: calc(100vw - 24px); } }
 /* MENU-ORDER: PICTURES BEFORE WORDS. A model has no picture until it turns in the preview: its kind's glyph stands in its
    tile over the letters, which stay for a reader. */
@@ -265,7 +265,7 @@ body .dfdecor-tabs .dfdecor-chip[aria-pressed="true"] { color: #f2c46b; box-shad
 }
 `;
 
-/** The sorts the panel offers (systems/decorCatalogue.js filterDecor's). */
+/** The sorts the panel offers (systems/decor/decorCatalogue.js filterDecor's). */
 export const DECOR_SORTS = Object.freeze({ common: 'Most common', price: 'Cheapest', name: 'By name' });
 /** MENU-ORDER: the two ways the lists are laid - pictures (tiles) or lines - and the views that tile (a room to rent and
  *  a part of the house to paint are words, never pictures). */
@@ -430,7 +430,7 @@ export function createDecorButton({ onPress, touch = false, doc = document }) {
 /**
  * THE PANEL. `open(view)` shows it; the host's frame calls `update(view)` while it is open. A view is:
  *   where     - whose room it is, as a line ("Your home", "Your house", "Your ship")
- *   entries   - the catalogue (systems/decorScan.js), or null while the blocks are read
+ *   entries   - the catalogue (systems/decor/decorScan.js), or null while the blocks are read
  *   progress  - 0..1, while the scan runs; ready - whether every size has been read
  *   radiusOf(entry), priceOf(entry) - the scan's measure and the law's price (null: not yet, or never)
  *   gold      - what the player can pay with (the purse and the bank); count, cap - the room's pieces and its limit

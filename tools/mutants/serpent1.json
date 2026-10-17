@@ -1,112 +1,112 @@
 [
   {
     "name": "SERPENT1-law-every-day",
-    "file": "src/net/serpentLaw.js",
+    "file": "src/net/serpent/serpentLaw.js",
     "old": "day >= 0 && day % SERPENT_EVERY_DAYS === SERPENT_DAY_PHASE;",
     "new": "day >= 0;",
     "tests": [
-      "test/serpent1_law.test.js"
+      "test/net/serpent/serpent1_law.test.js"
     ]
   },
   {
     "name": "SERPENT1-law-slain-sounds",
-    "file": "src/net/serpentLaw.js",
+    "file": "src/net/serpent/serpentLaw.js",
     "old": "const end = slain ? /** @type {number} */ (fellAt) : t.soundAt;",
     "new": "const end = t.soundAt;",
     "tests": [
-      "test/serpent1_law.test.js"
+      "test/net/serpent/serpent1_law.test.js"
     ]
   },
   {
     "name": "SERPENT1-law-admits-past-dive",
-    "file": "src/net/serpentLaw.js",
+    "file": "src/net/serpent/serpentLaw.js",
     "old": "return isSerpentDay(day) && nowMs >= t.riseAt && nowMs < t.soundAt; };",
     "new": "return isSerpentDay(day) && nowMs >= t.riseAt && nowMs < t.soundAt + SERPENT_DIVE_MS; };",
     "tests": [
-      "test/serpent1_law.test.js",
-      "test/serpent1_relay.test.js"
+      "test/net/serpent/serpent1_law.test.js",
+      "test/net/serpent/serpent1_relay.test.js"
     ]
   },
   {
     "name": "SERPENT1-receipt-version-unread",
-    "file": "src/net/serpentReceipt.js",
+    "file": "src/net/serpent/serpentReceipt.js",
     "old": "if (parts.length !== 3 || parts[0] !== SERPENT_RECEIPT_V) return null;",
     "new": "if (parts.length !== 3) return null;",
     "tests": [
-      "test/serpent1_relay.test.js"
+      "test/net/serpent/serpent1_relay.test.js"
     ]
   },
   {
     "name": "SERPENT1-receipt-raid-shape",
-    "file": "src/net/serpentReceipt.js",
+    "file": "src/net/serpent/serpentReceipt.js",
     "old": "|| c.w !== undefined ",
     "new": "",
     "tests": [
-      "test/serpent1_relay.test.js"
+      "test/net/serpent/serpent1_relay.test.js"
     ]
   },
   {
     "name": "SERPENT1-receipt-unsigned-honoured",
-    "file": "src/net/serpentReceipt.js",
+    "file": "src/net/serpent/serpentReceipt.js",
     "old": "if (!sig64) return { ok: false, why: 'unsigned' };",
     "new": "",
     "tests": [
-      "test/serpent1_relay.test.js"
+      "test/net/serpent/serpent1_relay.test.js"
     ]
   },
   {
     "name": "SERPENT1-brain-cap-off",
-    "file": "src/net/serpentBrain.js",
+    "file": "src/net/serpent/serpentBrain.js",
     "old": "const got = Math.max(0, Math.min(d, SERPENT_HIT_CAP_X * ref, bucket, left));",
     "new": "const got = Math.max(0, Math.min(d, bucket, left));",
     "tests": [
-      "test/serpent1_law.test.js"
+      "test/net/serpent/serpent1_law.test.js"
     ]
   },
   {
     "name": "SERPENT1-brain-head-always",
-    "file": "src/net/serpentBrain.js",
+    "file": "src/net/serpent/serpentBrain.js",
     "old": "const x = (z === ZONES.head && headExposed(f, pts, at, stun) ? HEAD_X : 1) * (stun ? STUN_X : 1);",
     "new": "const x = (z === ZONES.head ? HEAD_X : 1) * (stun ? STUN_X : 1);",
     "tests": [
-      "test/serpent1_law.test.js"
+      "test/net/serpent/serpent1_law.test.js"
     ]
   },
   {
     "name": "SERPENT1-brain-reach-unbounded",
-    "file": "src/net/serpentBrain.js",
+    "file": "src/net/serpent/serpentBrain.js",
     "old": "if (near && near.d <= reach) { pts = seen; at = now - back; break; }",
     "new": "if (near) { pts = seen; at = now - back; break; }",
     "tests": [
-      "test/serpent1_law.test.js"
+      "test/net/serpent/serpent1_law.test.js"
     ]
   },
   {
     "name": "SERPENT1-brain-everyone-earned",
-    "file": "src/net/serpentBrain.js",
+    "file": "src/net/serpent/serpentBrain.js",
     "old": "return (share > 0 && p.dealt >= SERPENT_PART_SHARE * share) || p.stoodMs >= SERPENT_STOOD_SHARE * fight;",
     "new": "return true;",
     "tests": [
-      "test/serpent1_law.test.js",
-      "test/serpent1_relay.test.js"
+      "test/net/serpent/serpent1_law.test.js",
+      "test/net/serpent/serpent1_relay.test.js"
     ]
   },
   {
     "name": "SERPENT1-brain-late-escape",
-    "file": "src/net/serpentBrain.js",
+    "file": "src/net/serpent/serpentBrain.js",
     "old": "    if (now - c.at > COIL_ESC_MS) return out;\n",
     "new": "",
     "tests": [
-      "test/serpent1_law.test.js"
+      "test/net/serpent/serpent1_law.test.js"
     ]
   },
   {
     "name": "SERPENT1-brain-ward-off",
-    "file": "src/net/serpentBrain.js",
+    "file": "src/net/serpent/serpentBrain.js",
     "old": "  if (now < f.shieldUntil) return out;\n",
     "new": "",
     "tests": [
-      "test/serpent1_law.test.js"
+      "test/net/serpent/serpent1_law.test.js"
     ]
   },
   {
@@ -115,7 +115,7 @@
     "old": "if (!(m.bv >= SERPENT_BRAIN_MIN)) { if (was) was[1].players[a.sub].stale = true; no('reload'); return; }",
     "new": "",
     "tests": [
-      "test/serpent1_relay.test.js"
+      "test/net/serpent/serpent1_relay.test.js"
     ]
   },
   {
@@ -124,7 +124,7 @@
     "old": "if (off > serpentBrain.ADMIT_R) { no('too far from its waters'); return; }",
     "new": "",
     "tests": [
-      "test/serpent1_relay.test.js"
+      "test/net/serpent/serpent1_relay.test.js"
     ]
   },
   {
@@ -133,16 +133,16 @@
     "old": "return Math.hypot(c.x, c.z) <= serpentBrain.FAN_R;",
     "new": "return true;",
     "tests": [
-      "test/serpent1_relay.test.js"
+      "test/net/serpent/serpent1_relay.test.js"
     ]
   },
   {
     "name": "SERPENT1-relay-receipt-unearned",
     "file": "server/src/index.js",
-    "old": "if (!serpentBrain.serpentEarned(f, sub)) continue;",
+    "old": "if (!SERPENT_SEAM.earned(f, sub)) continue;",
     "new": "",
     "tests": [
-      "test/serpent1_relay.test.js"
+      "test/net/serpent/serpent1_relay.test.js"
     ]
   },
   {
@@ -151,7 +151,7 @@
     "old": "if (cellRoomOfWire(m.sx, m.sz) !== a.key) { this._junk(ws); return; }",
     "new": "",
     "tests": [
-      "test/serpent1_relay.test.js"
+      "test/net/serpent/serpent1_relay.test.js"
     ]
   },
   {
@@ -160,7 +160,7 @@
     "old": "if (g && serpentHolds(g.d, now)) for (const fell of g.list)",
     "new": "if (g) for (const fell of g.list)",
     "tests": [
-      "test/serpent1_relay.test.js"
+      "test/net/serpent/serpent1_relay.test.js"
     ]
   },
   {
@@ -169,7 +169,7 @@
     "old": "if (g && serpentHolds(g.d, now)) for (const fell of g.list)",
     "new": "if (false) for (const fell of g.list)",
     "tests": [
-      "test/serpent1_relay.test.js"
+      "test/net/serpent/serpent1_relay.test.js"
     ]
   },
   {
@@ -178,7 +178,7 @@
     "old": "if (!player.handle) {",
     "new": "if (false) {",
     "tests": [
-      "test/serpent1_relay.test.js"
+      "test/net/serpent/serpent1_relay.test.js"
     ]
   },
   {
@@ -187,7 +187,7 @@
     "old": "db.prepare('INSERT OR IGNORE INTO serpent_spoils",
     "new": "db.prepare('INSERT OR REPLACE INTO serpent_spoils",
     "tests": [
-      "test/serpent1_relay.test.js"
+      "test/net/serpent/serpent1_relay.test.js"
     ]
   },
   {
@@ -196,7 +196,7 @@
     "old": "export const SERPENT_RELAY_MIN = 173;",
     "new": "export const SERPENT_RELAY_MIN = 172;",
     "tests": [
-      "test/serpent1_relay.test.js"
+      "test/net/serpent/serpent1_relay.test.js"
     ],
     "note": "PIN MOVED at the merge of main's #598 and #599: the first serpent relay is world164 (world162 on its branch, past PRIMARCH and SUNBABY1). PIN MOVED again at the merge of main's #600-#604: world165, past PARTY-LEAD's world164 - the mutant one below it, so a relay that closes the socket on the frame is never offered it. AUDIT SHIPS 2 XC2 (re-aimed by content): world172, SERPENT3's own brain - a relay with an older brain is never offered the fight; PIN MOVED at SERPENT3's merge of main: world173, past WATCH-FIX's world172."
   },
@@ -206,7 +206,7 @@
     "old": "export const RENOWN_SERPENT_QUESTS = 6;",
     "new": "export const RENOWN_SERPENT_QUESTS = 3;",
     "tests": [
-      "test/serpent1_relay.test.js"
+      "test/net/serpent/serpent1_relay.test.js"
     ]
   },
   {
@@ -215,7 +215,7 @@
     "old": "if (pending.size && t - pendingAt >= HIT_GATHER_MS) { pending = sayHits(pending, sw, 0); pendingAt = t; }",
     "new": "if (pending.size) { pending = sayHits(pending, sw, 0); pendingAt = t; }",
     "tests": [
-      "test/serpent1_client.test.js"
+      "test/systems/serpent1_client.test.js"
     ]
   },
   {
@@ -224,7 +224,7 @@
     "old": "    if (t < a.at) return;\n    resolved.add(a.i);",
     "new": "    if (t < a.at) return;",
     "tests": [
-      "test/serpent1_client.test.js"
+      "test/systems/serpent1_client.test.js"
     ]
   },
   {
@@ -233,7 +233,7 @@
     "old": "if (t > c.until + COIL_LOST_MS) { held = null; return; }",
     "new": "",
     "tests": [
-      "test/serpent1_client.test.js"
+      "test/systems/serpent1_client.test.js"
     ]
   },
   {
@@ -242,7 +242,7 @@
     "old": "if (t - held.at > COIL_WORD_WAIT_MS) held = null; return;",
     "new": "return;",
     "tests": [
-      "test/serpent1_client.test.js"
+      "test/systems/serpent1_client.test.js"
     ]
   },
   {
@@ -251,7 +251,7 @@
     "old": "const due = lastIn.day !== sw.day || (lastIn.hl !== hl && t - lastIn.at >= IN_CHANGE_MS) || t - lastIn.at >= (answered ? IN_RESEND_MS : IN_RETRY_MS);",
     "new": "const due = true;",
     "tests": [
-      "test/serpent1_client.test.js"
+      "test/systems/serpent1_client.test.js"
     ]
   },
   {
@@ -260,7 +260,7 @@
     "old": "const hl = b ? b.hull : -1;",
     "new": "const hl = b ? b.hull : 4;",
     "tests": [
-      "test/serpent1_client.test.js"
+      "test/systems/serpent1_client.test.js"
     ]
   },
   {
@@ -269,97 +269,97 @@
     "old": "if (s.mael && !s.fell && !s.gone) { const [x, z] = site(b.pos[0], b.pos[2]); const p = maelPull(s.mael, x, z, t); vx += p.v[0]; vz += p.v[1]; }",
     "new": "",
     "tests": [
-      "test/serpent1_client.test.js"
+      "test/systems/serpent1_client.test.js"
     ]
   },
   {
     "name": "SERPENT1-omen-line-twice",
-    "file": "src/systems/serpentOmen.js",
+    "file": "src/systems/serpent/serpentOmen.js",
     "old": "if (line && (t.day !== saidDay || rank > saidRank)) {",
     "new": "if (line && (t.day !== saidDay || rank >= saidRank)) {",
     "tests": [
-      "test/serpent1_client.test.js"
+      "test/systems/serpent1_client.test.js"
     ]
   },
   {
     "name": "SERPENT1-omen-site-cached",
-    "file": "src/systems/serpentOmen.js",
+    "file": "src/systems/serpent/serpentOmen.js",
     "old": "(!cache.site && now() - cache.at >= SITE_RETRY_MS)",
     "new": "false",
     "tests": [
-      "test/serpent1_client.test.js"
+      "test/systems/serpent1_client.test.js"
     ]
   },
   {
     "name": "SERPENT1-strike-middle-alone",
-    "file": "src/systems/serpentStrike.js",
+    "file": "src/systems/serpent/serpentStrike.js",
     "old": "return [[boat.x + fx, boat.z + fz], [boat.x, boat.z], [boat.x - fx, boat.z - fz]];",
     "new": "return [[boat.x, boat.z]];",
     "tests": [
-      "test/serpent1_client.test.js"
+      "test/systems/serpent1_client.test.js"
     ]
   },
   {
     "name": "SERPENT1-strike-ram-whole-lane",
-    "file": "src/systems/serpentStrike.js",
+    "file": "src/systems/serpent/serpentStrike.js",
     "old": "const run = Math.max(0, Math.min(len, ((t - atk.at) / 1000) * RAM_V));",
     "new": "const run = len;",
     "tests": [
-      "test/serpent1_client.test.js"
+      "test/systems/serpent1_client.test.js"
     ]
   },
   {
     "name": "SERPENT1-strike-grip-carry-dropped",
-    "file": "src/systems/serpentStrike.js",
+    "file": "src/systems/serpent/serpentStrike.js",
     "old": "const hull = carry.hull + (GRIP.hull * whole.maxHull + GRIP.base) * dtS * k, crew = carry.crew + GRIP.crew * dtS * k;",
     "new": "const hull = (GRIP.hull * whole.maxHull + GRIP.base) * dtS * k, crew = GRIP.crew * dtS * k;",
     "tests": [
-      "test/serpent1_client.test.js"
+      "test/systems/serpent1_client.test.js"
     ]
   },
   {
     "name": "SERPENT1-link-state-kill-lost",
-    "file": "src/net/serpentLink.js",
+    "file": "src/net/serpent/serpentLink.js",
     "old": "if (w.k === 'st' && w.fell && Number.isSafeInteger(w.d) && !falls.has(fallKey(w.d, w))) falls.set(",
     "new": "if (false) falls.set(",
     "tests": [
-      "test/serpent1_client.test.js"
+      "test/systems/serpent1_client.test.js"
     ]
   },
   {
     "name": "SERPENT1-link-refusal-every-word",
-    "file": "src/net/serpentLink.js",
+    "file": "src/net/serpent/serpentLink.js",
     "old": "if (!refused.has(w.m)) { refused.add(w.m); say(SERPENT_NO_TEXT[w.m] ?? w.m); }",
     "new": "say(SERPENT_NO_TEXT[w.m] ?? w.m);",
     "tests": [
-      "test/serpent1_client.test.js"
+      "test/systems/serpent1_client.test.js"
     ]
   },
   {
     "name": "SERPENT1-spoils-stood-full-gold",
-    "file": "src/systems/serpentSpoils.js",
+    "file": "src/systems/serpent/serpentSpoils.js",
     "old": "* (dealt ? 1 : STOOD_GOLD));",
     "new": ");",
     "tests": [
-      "test/serpent1_client.test.js"
+      "test/systems/serpent1_client.test.js"
     ]
   },
   {
     "name": "SERPENT1-sounds-roar-unpitched",
-    "file": "src/systems/serpentSounds.js",
+    "file": "src/systems/serpent/serpentSounds.js",
     "old": "roar: cue(DREUGH.barkSound, 0.42, 2.2, 60, 3200),",
     "new": "roar: cue(DREUGH.barkSound, 1, 2.2, 60, 3200),",
     "tests": [
-      "test/serpent1_client.test.js"
+      "test/systems/serpent1_client.test.js"
     ]
   },
   {
     "name": "SERPENT1-ink-serpent-in-gate-red",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "ctx.strokeStyle = ink?.ring ?? GATE_RING_CSS; ctx.lineWidth = 2.4;",
     "new": "ctx.strokeStyle = GATE_RING_CSS; ctx.lineWidth = 2.4;",
     "tests": [
-      "test/serpent1_client.test.js"
+      "test/systems/serpent1_client.test.js"
     ]
   },
   {
@@ -368,7 +368,7 @@
     "old": "wrath: !b.fell && soundIn <= SOUND_WARN_MS ?",
     "new": "wrath: !b.fell ?",
     "tests": [
-      "test/serpent1_client.test.js"
+      "test/systems/serpent1_client.test.js"
     ]
   },
   {
@@ -377,7 +377,7 @@
     "old": "    serpentFrame();   // SERPENT1",
     "new": "    // gone",
     "tests": [
-      "test/serpent1_client.test.js"
+      "test/systems/serpent1_client.test.js"
     ]
   },
   {
@@ -386,7 +386,7 @@
     "old": "    get serpent() { return serpentHost; },",
     "new": "",
     "tests": [
-      "test/serpent1_client.test.js"
+      "test/systems/serpent1_client.test.js"
     ]
   }
 ]

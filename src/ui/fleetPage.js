@@ -1,6 +1,6 @@
 // @ts-check
 // THE FLEET PAGE (HOLDINGS, 2026-10-03 - bible/03-World/Holdings.md; Mac: "Ships show their values, current health, and
-// option to repair if theres crew (even if youre away) etc"). On the pause menu's Holdings rail (ui/enhancedMenu.js
+// option to repair if theres crew (even if youre away) etc"). On the pause menu's Holdings rail (ui/enhanced/enhancedMenu.js
 // pauseHoldings): every ship the player holds, a card each -
 //  - her name (her captain's, else her hull's), her hull and rig, her worth, the bank's claim on her while it stands;
 //  - where she is: at the player's helm, lying near, afloat how far and which way, laid up at a port, in the pack;

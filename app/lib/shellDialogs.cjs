@@ -9,7 +9,7 @@
 // So the buttons, the default (what Enter presses) and the cancel (what
 // Escape and the window's close press) are data here, the answer that
 // DOES the thing is one predicate beside them, and
-// test/audit_install.test.js holds both: the safe answer is always the
+// test/tooling/audit_install.test.js holds both: the safe answer is always the
 // cancel, and on UNLOAD-ASK the default too - Enter must not throw an
 // evening away.
 //

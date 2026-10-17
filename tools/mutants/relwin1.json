@@ -5,7 +5,7 @@
     "old": "      \"artifactName\": \"DFO-Online-win-${arch}-portable.${ext}\"",
     "new": "      \"artifactName\": \"DFO-Online-win-${arch}-setup.${ext}\"",
     "tests": [
-      "test/relwin1.test.js"
+      "test/tooling/relwin1.test.js"
     ],
     "note": "BR5 (re-aimed by content): the name, its file form and the legal date moved."
   },
@@ -15,7 +15,7 @@
     "old": "    \"portable\": {\n      \"artifactName\": \"DFO-Online-win-${arch}-portable.${ext}\"\n    },",
     "new": "    \"portable\": {},",
     "tests": [
-      "test/relwin1.test.js"
+      "test/tooling/relwin1.test.js"
     ],
     "note": "BR5 (re-aimed by content): the name, its file form and the legal date moved."
   },
@@ -25,7 +25,7 @@
     "old": "      \"oneClick\": false,",
     "new": "      \"oneClick\": true,",
     "tests": [
-      "test/relwin1.test.js"
+      "test/tooling/relwin1.test.js"
     ]
   },
   {
@@ -34,7 +34,7 @@
     "old": "      \"allowToChangeInstallationDirectory\": true,",
     "new": "      \"allowToChangeInstallationDirectory\": false,",
     "tests": [
-      "test/relwin1.test.js"
+      "test/tooling/relwin1.test.js"
     ]
   },
   {
@@ -43,7 +43,7 @@
     "old": "          VERSION: ${{ needs.version.outputs.version }}\n        run: npm version \"$VERSION\"",
     "new": "          VERSION: ${{ needs.version.outputs.tag }}\n        run: npm version \"$VERSION\"",
     "tests": [
-      "test/updatecheck.test.js"
+      "test/tooling/updatecheck.test.js"
     ]
   },
   {
@@ -52,7 +52,7 @@
     "old": "            TAG=\"app-v${BASE}.$(git rev-list --count HEAD)\"",
     "new": "            TAG=\"app-v${BASE}.${{ github.run_number }}\"",
     "tests": [
-      "test/updatecheck.test.js"
+      "test/tooling/updatecheck.test.js"
     ]
   },
   {
@@ -61,7 +61,7 @@
     "old": "          fetch-depth: 0   # REL3: the version is the commit count, which needs the whole history",
     "new": "          fetch-depth: 1",
     "tests": [
-      "test/updatecheck.test.js"
+      "test/tooling/updatecheck.test.js"
     ]
   },
   {
@@ -70,7 +70,7 @@
     "old": "  \"version\": \"0.1.0\",",
     "new": "  \"version\": \"0.1.5\",",
     "tests": [
-      "test/updatecheck.test.js"
+      "test/tooling/updatecheck.test.js"
     ]
   },
   {
@@ -79,7 +79,7 @@
     "old": "  cancel-in-progress: false",
     "new": "  cancel-in-progress: true",
     "tests": [
-      "test/updatecheck.test.js"
+      "test/tooling/updatecheck.test.js"
     ]
   }
 ]

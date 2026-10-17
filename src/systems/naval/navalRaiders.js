@@ -6,12 +6,12 @@
 // class and name, sailing its seeded course (steered for where that course is RAIDER_LEAD_S on, so the sail on the map is
 // the sail met on the water) until its lookout (seaRaiders.js raiderSight: a day's 1,000 m, a night's 500) sights a
 // boat - then a captain like any pirate's (systems/naval/navalAI.js): the broadsides, the grapple, and Warm Ashes' own
-// raid on the boarded deck (WAQ_SHIP_SMALLRAID, scenes/navalHost.js beginFight). Sunk, taken, struck or given the slip,
+// raid on the boarded deck (WAQ_SHIP_SMALLRAID, scenes/naval/navalHost.js beginFight). Sunk, taken, struck or given the slip,
 // it is SPENT for its life - OWS3's own law, so the map does not raise it again.
 //
 // ONE COPY. A raider is stood by the client it is near - the chased traveller's own, as OWS3's chase was - and said in
 // that client's word (NAV-G) like any ship it stands. AUDIT NAV1 (online): her seed is who she is in every client's sea,
-// so a peer's copy of it is the handover's claim rule's (scenes/navalHost.js claimBeats - a taken-over copy holds her,
+// so a peer's copy of it is the handover's claim rule's (scenes/naval/navalHost.js claimBeats - a taken-over copy holds her,
 // else the lower id, TV7b's chaseYields law for a band two players chase): the weaker copy yields into the stronger's
 // puppet, the same hull, and none is stood beside a copy already in my sea. THE MERGE with main's OW6 (its raider
 // chases said on the cell's foes frames): a raider a peer HOLDS - their Overworld chase of it, or their sea's ship, each
@@ -23,7 +23,7 @@
 
 import { SHIP_CLASSES } from './navalShips.js';
 import { seededRng } from '../seaRaiders.js';
-import { chaseYields } from '../travelBands.js';   // TV7b: a chase two players share, kept by the lower id - one law
+import { chaseYields } from '../travel/travelBands.js';   // TV7b: a chase two players share, kept by the lower id - one law
 
 /** A raider within this of the player (m) is stood as a ship; one stood goes past RAIDER_DROP_M unless it fights. */
 export const RAIDER_STAND_M = 1200;

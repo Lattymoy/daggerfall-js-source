@@ -2,9 +2,9 @@
 // WAGONS1 (2026-10-09, Mac, sending his three wagons: "Here are 3 new models that will need to be textured"): THE
 // WAGONS' OWN ART, MADE AT THE LOAD.
 //
-// world/carrackArt.js's law, for Mac's Wagon Cart, Open Wagon and Caravan (tools/bakeWagons.mjs): painted from numbers
+// world/ships/carrackArt.js's law, for Mac's Wagon Cart, Open Wagon and Caravan (tools/bakeWagons.mjs): painted from numbers
 // on fixed seeds under a pseudo-archive of their own (WAGON_ARCHIVE), every picture 64 x 64, the fleet's palette and
-// tools (world/galleonArt.js) - so a wagon on a quay and the ship beside it are one hand's work. Nothing here is a
+// tools (world/ships/galleonArt.js) - so a wagon on a quay and the ship beside it are one hand's work. Nothing here is a
 // render of game data (Port-Doctrine): every texel is a number below.
 //
 // THE PICTURES. A working wagon's: weathered oak sideboards nailed to their stakes, pine floorboards along the bed,
@@ -17,8 +17,8 @@
 // lays it on the rear face; scenes/caravanRoom.js is what it opens) and a painted roof of boards.
 //
 // Each picture is `{ width, height, data }`, RGBA top-down. Not a DFU member. Ledger A (WAGONS1).
-import { C, picture, put, get, mix, shade, paintNoise as noise, paintBand as band, planks, GALLEON_TEX_SIZE, ironArt } from './galleonArt.js';
-import { mulberry32 } from '../combat/bloodArt.js';
+import { C, picture, put, get, mix, shade, paintNoise as noise, paintBand as band, planks, GALLEON_TEX_SIZE, ironArt } from './ships/galleonArt.js';
+import { mulberry32 } from '../combat/blood/bloodArt.js';
 
 /** The wagons' pseudo-archive: past the large boat's 38171 (38151 collided once - largeBoatArt.js). */
 export const WAGON_ARCHIVE = 38181;
@@ -28,9 +28,9 @@ export const TEX = Object.freeze({
   openSide: 8, tilt: 9, tiltInner: 10,
   caravanSide: 11, caravanFront: 12, caravanRear: 13, caravanRoof: 14,
   roomSide: 15, roomFront: 16, roomRear: 17, roomCeiling: 18, roomFloor: 19,   // WAGONS2: the caravan's room (world/caravanRoomModel.js)
-  harness: 20,   // WAGONS3: the traces and the reins (systems/wagonRopes.js)
+  harness: 20,   // WAGONS3: the traces and the reins (systems/wagon/wagonRopes.js)
 });
-/** How far each tiling picture repeats (metres a tile, u then v - world/galleonMesh.js planarUv's); a livery's u alone
+/** How far each tiling picture repeats (metres a tile, u then v - world/ships/galleonMesh.js planarUv's); a livery's u alone
  *  (its v is its height, `BANDS`); 0 where the picture is laid whole on its face (a wheel's, an end's). */
 export const WAGON_TILE = Object.freeze({
   floor: [1.6, 1.6], side: [1.6, 1.6], inner: [1.6, 1.6], beam: [1.2, 1.2], bench: [1.2, 1.2], tyre: [1.2, 1.2], wheel: [0, 0],
@@ -40,7 +40,7 @@ export const WAGON_TILE = Object.freeze({
   harness: [0, 0.5],   // WAGONS3: round the strap once, half a metre of it a tile along it
 });
 /** The two sides' liveries: one slice each over the wagons' side walls' height (both bodies stand 0.94 to 3.06 m - the
- *  bake's, test/wagons1.test.js pins it), `recs` top down. */
+ *  bake's, test/systems/item/wagons1.test.js pins it), `recs` top down. */
 export const SIDE_Y0 = 0.94, SIDE_Y1 = 3.06;
 export const BANDS = Object.freeze({
   openSide: Object.freeze({ y0: SIDE_Y0, y1: SIDE_Y1, recs: Object.freeze([TEX.openSide]) }),
@@ -65,7 +65,7 @@ const column = (img, x, col, y0 = 0, y1 = img.height) => { for (let y = y0; y < 
 /** A livery's row for a height over the wagon's side (`SIDE_Y0` its foot, row 63; `SIDE_Y1` its head, row 0). */
 export const sideRow = (y) => Math.max(0, Math.min(S - 1, Math.round(((SIDE_Y1 - y) / (SIDE_Y1 - SIDE_Y0)) * (S - 1))));
 
-// ── WAGONS2: the paints (systems/wagonLooks.js is their law) ───────────────────────────────────────────
+// ── WAGONS2: the paints (systems/wagon/wagonLooks.js is their law) ───────────────────────────────────────────
 
 /** A painted body's colours, [base, lit, dark] - each paint the law names that is a colour (the built ones - the cart's
  *  oak, the tilt's cream - are null: their pictures as WAGONS1 painted them). */
@@ -456,7 +456,7 @@ export function wagonArt() {
 }
 
 /**
- * WAGONS2: THE PICTURES A PAINT WEARS - `[record, picture]` for a list's `i`th choice (systems/wagonLooks.js): `list`
+ * WAGONS2: THE PICTURES A PAINT WEARS - `[record, picture]` for a list's `i`th choice (systems/wagon/wagonLooks.js): `list`
  * a kind (its outside) or one of the caravan's inside parts ('walls', 'floor', 'ceiling'), `name` the choice's name.
  * The built choice (0) wears the built records (wagonArt) and paints none here.
  */

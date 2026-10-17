@@ -30,7 +30,7 @@ import { islesNear, isleByKey, etherDepthAt, etherBandOf, BANDS, LEAGUE_PX, KIND
 import { ETHER_CHARTED_MAX } from '../systems/naval/captainLedger.js';   // AUDIT CAPTAIN'S SEA X5: the charts' room
 import { LEGENDS, legendAt, legendSails, legendAbroad, legendById, rumourOf } from '../systems/naval/etherShips.js';
 import { mintGood, goodById } from '../systems/naval/tradeGoods.js';
-import { mulberry32 } from '../combat/bloodArt.js';
+import { mulberry32 } from '../combat/blood/bloodArt.js';
 
 /** An isle comes onto the captain's charts within this many map pixels of the ship (Chebyshev) - its shore half a league
  *  to two leagues off. */
@@ -150,7 +150,7 @@ export function createEtherHost(deps) {
     return n;
   }
 
-  /** THE ELTHERIC HARBOURMASTER'S TAB (ui/navalYardWindow.js): the port, its waters, the legends' rumours, the chart -
+  /** THE ELTHERIC HARBOURMASTER'S TAB (ui/naval/navalYardWindow.js): the port, its waters, the legends' rumours, the chart -
    *  and `hear`, the quay's talk heard (every legend's haunt on the captain's charts) when the tab is shown: AUDIT CAPTAIN'S
    *  SEA X11 - the window reads this model on every render, and the shipwright's tab heard every legend. */
   function office(port) {

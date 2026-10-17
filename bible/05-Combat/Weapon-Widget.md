@@ -15,14 +15,14 @@ vendored under `vendor/weapon-widget/` (the manifest, the shipped
 modsettings, a README with the provenance and the permission line), it
 is credited on the About screen, it has a Mod Authored row on the
 Features home (FT9's shape) and its 41 keys under its card on the Mods
-page, and it is ported as `src/combat/weaponWidget.js` (the component),
-`src/combat/weaponWidgetMotion.js` (the parts that are arithmetic
+page, and it is ported as `src/combat/weapon/weaponWidget.js` (the component),
+`src/combat/weapon/weaponWidgetMotion.js` (the parts that are arithmetic
 rather than component - LoadSettings, the Offset/Bob/Inertia modules
 and GetWeaponRect's transform, split out 2026-09-19 so the gun lab can
 RUN them rather than copy them; the component imports them back and
-the arithmetic is untouched) and `src/combat/weaponWidgetAssets.js`
+the arithmetic is untouched) and `src/combat/weapon/weaponWidgetAssets.js`
 (the door for its textures). On
-by default (MO1). Pins: 14 in `test/ww1_weaponwidget.test.js`.
+by default (MO1). Pins: 14 in `test/combat/weapon/ww1_weaponwidget.test.js`.
 
 ## The source the port reads
 
@@ -40,7 +40,7 @@ are the port's own homes for them.
 
 ## The shape here
 
-The clone is a component the weapon rig (`combat/weaponRig.js`) owns,
+The clone is a component the weapon rig (`combat/weapon/weaponRig.js`) owns,
 one per host, fed what Unity handed it:
 
 - **`lateUpdate(dt, ctx)`** is `LateUpdate`, called after
@@ -150,7 +150,7 @@ DW-CLIP gave the half-size shift.
   (MW-D42d). The clone's release played ArrowShoot again, so every shot
   was heard twice - a tick apart on the sprite, and under the arm a
   twang at the click with no arrow, then the arrow with the second. The
-  clone looses in silence (`test/bowvoice.test.js`). Its MELEE swing
+  clone looses in silence (`test/systems/bowvoice.test.js`). Its MELEE swing
   sound at its release IS carried: it is the mod's moment, and the
   hosts' whiff on a miss is DFU's other one, as in DFU with the mod.
 - **The CLANG's emissive material** (above).
@@ -236,9 +236,9 @@ it - a sixth host cannot ship a partial one. The mod's own gate
 (`weaponWidget.js`: `if (m.standing) s = bobWhileIdle ? 0.1 : 0`)
 stands unchanged.
 
-Pinned in `test/ww2_idlebob.test.js` (2): the bag executed from a
+Pinned in `test/player/ww2_idlebob.test.js` (2): the bag executed from a
 player at rest, one walking and a bare one, and from the real motor;
-by source the five sites and the record. `test/ww1_weaponwidget.test.js`
+by source the five sites and the record. `test/combat/weapon/ww1_weaponwidget.test.js`
 restamped: the per-file grep that let a second, partial site pass is a
 per-site count now, and the Bob channel pin gained its idle half - the
 slight stride inside the 0.1 bound, and none at all with BobWhileIdle
@@ -340,7 +340,7 @@ which is why WW4 alone would have emptied the screen after the first
 swing. An Idle arriving at -1 takes frame 0; an Idle already holding a
 real frame (Recovery = Last Frame, the other callers) is untouched.
 
-Pins in `test/ww1_weaponwidget.test.js` (two): the three silent
+Pins in `test/combat/weapon/ww1_weaponwidget.test.js` (two): the three silent
 answers own the seam and draw nothing while no-weapon still falls
 through, and the rig's line reads it so; a full swing under the default
 recovery lands on frame 0 and draws the idle, while Last Frame is left
@@ -351,7 +351,7 @@ Beside it, unrelated to the widget but shipped in the same commit:
 `showStatus` - the status box wrapped `townTalk.lines`' formatted rows
 (`{ text, center }`) whole as a token's text; `statusInfoRows` takes
 both row shapes now (`systems/healthStatus.js`, pinned in
-`test/statusinfo.test.js`).
+`test/systems/statusinfo.test.js`).
 
 ## F1 - THE THRUST (2026-09-17, Mac: "when thrusting with a weapon, it can be glitchy")
 
@@ -372,6 +372,20 @@ flickering backwards over and over. Under Hide (the default) the frame
 went to -1 and the reverse's guard (`currentFrame > 0`) held, so the
 default player saw the double-speed reverse alone. `playWeaponAnimation`
 latches the reverse (`reversed`) and runs it once; the reverse itself is
-the mod's, to frame 0. Pinned in `test/ww1_weaponwidget.test.js`
+the mod's, to frame 0. Pinned in `test/combat/weapon/ww1_weaponwidget.test.js`
 (a StrikeUp under Last Frame descends its frames exactly once; under Hide
 as before). Mutants in `tools/mutants/bugs5.json`.
+
+## TWO-HANDS - a clone for each hand (2026-10-16)
+
+Both fists up or a pair of weapons (`Two-Hands.md`): the rig's clone is the RIGHT hand and `combat/twoHands/twoHands.js` owns a
+second, `offWidget`, for the left. Each is handed its hand's view of the one machine (`twoHands.view`) and the rig's
+swing ctx (`animCtx`: the striking hand), so each plays its own hand's blows and holds its idle through the other's (an
+off-hand blow's burden is ticks the machine holds at its end - TWO-HANDS AUDIT 2 - and the clone holds its last frame
+while the machine still attacks). A hand of a pair (`pairHand`) is never flipped by Handedness or Ambidexterity - it is drawn as a
+right hand, and the one on the left of the screen through `draw`'s `mirror` (its rect mirrored about the screen's
+middle, its UVs swapped). The left clone's coroutines resume at the frame's end with the right's (`endOfFrame`), and a
+pair's left-hand blow recoils the left clone. The left clone's sway (TWO-HANDS AUDIT 2) is the mod's own for a mirrored
+sprite: Bob outward, the mirror of the right's, and Inertia in the screen's direction (`pairRect`, the clone's `swayDx`),
+on the right clone's clock (`lateUpdate`'s `clockOf`); it is born at rest out of sight (`hidden`) and a punch thrown off
+the running arm winds up from below (`fromBelow`). One hand in use is the mod's one clone, unchanged.

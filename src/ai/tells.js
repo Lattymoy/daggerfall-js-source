@@ -127,7 +127,7 @@ export function poiseSpecial(entity) {
   if (entity.champion) s *= entity.champion === 'stalwart' ? TELL.POISE_STALWART : TELL.POISE_CHAMPION;
   const rank = entity.revenant?.rank | 0;
   if (rank > 0) s *= 1 + TELL.POISE_REVENANT_RANK * rank;
-  const edge = entity.revenant?.edge?.poise;   // RVN2: Braced, Steadfast (systems/revenantFeud.js ADAPT)
+  const edge = entity.revenant?.edge?.poise;   // RVN2: Braced, Steadfast (systems/revenant/revenantFeud.js ADAPT)
   if (edge > 0) s *= edge;
   return s;
 }

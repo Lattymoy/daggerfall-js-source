@@ -5,14 +5,14 @@
 // Every URL door in the port - `?online`, `?skin=`, `?air=off`, `?water=off`, `?lighting=classic`, `?blood=off` and
 // the rest - was a one-line predicate that minted a URLSearchParams and parsed `location.search` on EVERY call, and
 // the predicates are read inside the frame: every `getPref` and every `modSetting` asks `isOnlinePage` (the online
-// lane's forced keys, systems/onlineLane.js), and the skin is asked by whatever draws. Counted in the real game (a
+// lane's forced keys, systems/online/onlineLane.js), and the skin is asked by whatever draws. Counted in the real game (a
 // town in the rain, Knightstale, the world host settled): 84 parses a frame - 54 of them the online lane's, 24 the
 // skin's - at about 4.5 us each in headless Chromium on a quiet CPU (~0.4 ms a frame), where the same read keyed on
 // the search string is under 1 us (the `location.search` read it still pays is most of that).
 //
-// PERF-SUN (2026-09-19) paid exactly this for ONE door - the sway's `swayDisabled` in systems/windDrive.js keeps its
+// PERF-SUN (2026-09-19) paid exactly this for ONE door - the sway's `swayDisabled` in systems/wind/windDrive.js keeps its
 // answer until the search string changes, `cullDisabled`'s shape - and every door written since was written the old
-// way again, because the fix lived in one file. So the shape has ONE HOME now, and test/perfurl_doors.test.js sweeps
+// way again, because the fix lived in one file. So the shape has ONE HOME now, and test/systems/perfurl_doors.test.js sweeps
 // src/ for a door that parses on its own.
 //
 // WHY A SEARCH-KEYED MEMO AND NOT A LATCH. The page's search does change once: the boot publishes the params it

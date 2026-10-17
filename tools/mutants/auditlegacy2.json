@@ -5,7 +5,7 @@
     "old": "    if (!p || !isAlive(p) || !playedHere(p)) return null;",
     "new": "    if (!p || !isAlive(p)) return null;",
     "tests": [
-      "test/auditlegacy2.test.js"
+      "test/systems/legacy/auditlegacy2.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    // AUDIT LEGACY II B1: the waiting fall is answered when the heir LANDS",
     "new": "    settlePending(heir);\n    // AUDIT LEGACY II B1: the waiting fall is answered when the heir LANDS",
     "tests": [
-      "test/auditlegacy2.test.js"
+      "test/systems/legacy/auditlegacy2.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "      family = readFamily(was);\n      noteSeen(family, seen);   // the copy as it was, made from the store as that one was\n      deps.say(LEGACY_TEXT.notBorn(p.given));",
     "new": "      store();\n      deps.say(LEGACY_TEXT.notBorn(p.given));",
     "tests": [
-      "test/auditlegacy2.test.js"
+      "test/systems/legacy/auditlegacy2.test.js"
     ],
     "note": "LEGACY7 (PIN MOVED): re-aimed by content - the refusal's arm is `landed`'s now (an online birth's first save answers later)."
   },
@@ -33,7 +33,7 @@
     "old": "    if (p.characterId && (!deps.hasSave || deps.hasSave(p.characterId))) return null;",
     "new": "    if (p.characterId) return null;",
     "tests": [
-      "test/auditlegacy2.test.js"
+      "test/systems/legacy/auditlegacy2.test.js"
     ]
   },
   {
@@ -42,7 +42,7 @@
     "old": "    if (p.characterId && deps.hasSave && !deps.hasSave(p.characterId)) { p.characterId = null; touch(family); store(); }",
     "new": "",
     "tests": [
-      "test/auditlegacy2.test.js"
+      "test/systems/legacy/auditlegacy2.test.js"
     ]
   },
   {
@@ -51,7 +51,7 @@
     "old": "    if (r.by !== me.id) continue;   // nobody's, or another member's: the store's",
     "new": "    if (r.by != null && r.by !== me.id) continue;",
     "tests": [
-      "test/auditlegacy2.test.js"
+      "test/systems/legacy/auditlegacy2.test.js"
     ]
   },
   {
@@ -60,7 +60,7 @@
     "old": "        r.first = JSON.parse(JSON.stringify(r.items)); lapsed = true;",
     "new": "        lapsed = true;",
     "tests": [
-      "test/auditlegacy2.test.js"
+      "test/systems/legacy/auditlegacy2.test.js"
     ]
   },
   {
@@ -69,7 +69,7 @@
     "old": "    if (lapsed) { touch(family); store(); }",
     "new": "    if (lapsed) touch(family);",
     "tests": [
-      "test/auditlegacy2.test.js"
+      "test/systems/legacy/auditlegacy2.test.js"
     ]
   },
   {
@@ -78,7 +78,7 @@
     "old": "    if (r.by == null && !openedSig.has(r.id)) openedSig.set(r.id, itemsSig(r.items));",
     "new": "    if (r.by == null) r.by = current()?.id ?? null;",
     "tests": [
-      "test/auditlegacy2.test.js"
+      "test/systems/legacy/auditlegacy2.test.js"
     ]
   },
   {
@@ -87,7 +87,7 @@
     "old": "    }).concat(claimedByOthers().map((r) => {",
     "new": "    }).concat([].map((r) => {",
     "tests": [
-      "test/auditlegacy2.test.js"
+      "test/systems/legacy/auditlegacy2.test.js"
     ]
   },
   {
@@ -96,7 +96,7 @@
     "old": "    if (unstored) store();   // AUDIT LEGACY II P1: a refused write, tried again - first: a death's above all",
     "new": "",
     "tests": [
-      "test/auditlegacy2.test.js"
+      "test/systems/legacy/auditlegacy2.test.js"
     ]
   },
   {
@@ -105,7 +105,7 @@
     "old": "    if (!ok && !unstoredSaid) { unstoredSaid = true; deps.say(LEGACY_TEXT.notStored); }",
     "new": "",
     "tests": [
-      "test/auditlegacy2.test.js"
+      "test/systems/legacy/auditlegacy2.test.js"
     ]
   },
   {
@@ -114,7 +114,7 @@
     "old": "    payEstateOf(p);\n    takeDeeds(p);",
     "new": "    syncHousesNow(p);\n    payEstateOf(p);\n    takeDeeds(p);",
     "tests": [
-      "test/auditlegacy2.test.js"
+      "test/systems/legacy/auditlegacy2.test.js"
     ],
     "note": "PERMADEATH-HOUSES (PIN MOVED): re-aimed by content - the law it guards now stands at this line."
   },
@@ -124,8 +124,8 @@
     "old": "    if (held == null) return false;\n    return syncHouses(family, p.id, held, p.deedsTaken ?? []);",
     "new": "    return syncHouses(family, p.id, held, p.deedsTaken ?? []);",
     "tests": [
-      "test/auditlegacy2.test.js",
-      "test/legacy7_homes.test.js"
+      "test/systems/legacy/auditlegacy2.test.js",
+      "test/systems/legacy/legacy7_homes.test.js"
     ],
     "note": "LEGACY7 part five (PIN MOVED, the law changed by its own slice - Legacy-Arc 10b): online the realm's homes ARE the line's now (the realm keeps the line), so the record guards what F2/B4 left standing: a list the world has not read yet (null) learns nothing and DROPS nothing - without the guard an unread list emptied the member's houses at the next save. PERMADEATH-HOUSES (PIN MOVED): re-aimed by content - the law it guards now stands at this line."
   },
@@ -135,7 +135,7 @@
     "old": "    if (!saving) return;\n",
     "new": "    if (!saving) { const h = deps.houseHere?.() ?? null; p.parked = h && (family.houses ?? []).some((x) => sameHouse(x, h)) ? { mapId: h.mapId, buildingKey: h.buildingKey } : (deps.houseHere ? null : p.parked); return; }\n",
     "tests": [
-      "test/auditlegacy2.test.js"
+      "test/systems/legacy/auditlegacy2.test.js"
     ]
   },
   {
@@ -144,7 +144,7 @@
     "old": "      if (was?.sig === sigs[i]) return was.res;",
     "new": "",
     "tests": [
-      "test/auditlegacy2.test.js"
+      "test/systems/legacy/auditlegacy2.test.js"
     ]
   },
   {
@@ -153,7 +153,7 @@
     "old": "    if (!me) { family = null; return; }",
     "new": "    if (!me) return;",
     "tests": [
-      "test/auditlegacy2.test.js"
+      "test/systems/legacy/auditlegacy2.test.js"
     ]
   },
   {
@@ -162,7 +162,7 @@
     "old": " && (deps.livingWorld?.() ?? true);",
     "new": ";",
     "tests": [
-      "test/auditlegacy2.test.js"
+      "test/systems/legacy/auditlegacy2.test.js"
     ]
   },
   {
@@ -171,7 +171,7 @@
     "old": "    const refusal = why === 'none' ? LEGACY_TEXT.notNow : why;",
     "new": "    const refusal = why;",
     "tests": [
-      "test/auditlegacy2.test.js"
+      "test/systems/legacy/auditlegacy2.test.js"
     ]
   },
   {
@@ -180,7 +180,7 @@
     "old": "    if (was && (base != null ? was.rev !== base : was.rev >= family.rev)) {\n      mergeFacts(family, was);",
     "new": "    if (was && (base != null ? was.rev !== base : was.rev >= family.rev)) return false;\n    if (was && (base != null ? was.rev !== base : was.rev >= family.rev)) {\n      mergeFacts(family, was);",
     "tests": [
-      "test/auditlegacy2.test.js"
+      "test/systems/legacy/auditlegacy2.test.js"
     ]
   },
   {
@@ -189,7 +189,7 @@
     "old": "    if (!p.died && o.died) p.died = o.died;",
     "new": "",
     "tests": [
-      "test/auditlegacy2.test.js"
+      "test/systems/legacy/auditlegacy2.test.js"
     ]
   },
   {
@@ -198,7 +198,7 @@
     "old": "&& knew.get(other.pending.fallenId) === false) mine.pending",
     "new": "&& knew.has(other.pending.fallenId)) mine.pending",
     "tests": [
-      "test/auditlegacy2.test.js"
+      "test/systems/legacy/auditlegacy2.test.js"
     ]
   },
   {
@@ -207,7 +207,7 @@
     "old": "      if (holds(h)) next.push(h);",
     "new": "      if (holds(h)) continue;",
     "tests": [
-      "test/auditlegacy2.test.js"
+      "test/systems/legacy/auditlegacy2.test.js"
     ],
     "note": "PERMADEATH-HOUSES (PIN MOVED): re-aimed by content - the law it guards now stands at this line."
   },
@@ -217,7 +217,7 @@
     "old": "  for (const p of people) p.parents = p.parents.filter((q) => q !== p.id && !(byId.has(q) && ancestorOf(byId.get(q), p.id)));",
     "new": "",
     "tests": [
-      "test/auditlegacy2.test.js"
+      "test/systems/legacy/auditlegacy2.test.js"
     ]
   },
   {
@@ -226,7 +226,7 @@
     "old": "    first: Array.isArray(r.first) ? r.first.filter((it) => it && typeof it === 'object') : (Array.isArray(r.items) ? r.items.filter((it) => it && typeof it === 'object') : []),",
     "new": "",
     "tests": [
-      "test/auditlegacy2.test.js"
+      "test/systems/legacy/auditlegacy2.test.js"
     ]
   },
   {
@@ -235,7 +235,7 @@
     "old": "  if (!copy || typeof copy !== 'object') return copy;\n  dropLineage(copy);\n  const own",
     "new": "  if (!copy || typeof copy !== 'object') return copy;\n  const own",
     "tests": [
-      "test/auditlegacy2.test.js"
+      "test/systems/legacy/auditlegacy2.test.js"
     ]
   },
   {
@@ -244,16 +244,16 @@
     "old": "  dropLineage(copy);\n  if (!Number.isFinite(worldNow)) return copy;",
     "new": "  if (!Number.isFinite(worldNow)) return copy;",
     "tests": [
-      "test/auditlegacy2.test.js"
+      "test/systems/legacy/auditlegacy2.test.js"
     ]
   },
   {
     "name": "AUDIT-LEGACY-II-H4-bones-anywhere",
-    "file": "src/systems/itemTransfer.js",
+    "file": "src/systems/item/itemTransfer.js",
     "old": "  if (item.legacyRemains && !usingWagon && remote?.[REMAINS_LIST] !== item.legacyRemains.of) return { ok: false, refusal: REFUSAL.remains };",
     "new": "",
     "tests": [
-      "test/auditlegacy2.test.js"
+      "test/systems/legacy/auditlegacy2.test.js"
     ]
   },
   {
@@ -262,7 +262,7 @@
     "old": "    household: `F${family.id}`,",
     "new": "",
     "tests": [
-      "test/auditlegacy2.test.js"
+      "test/systems/legacy/auditlegacy2.test.js"
     ]
   },
   {
@@ -271,7 +271,7 @@
     "old": "    if (!res || res.household != null) return null;",
     "new": "    if (!res) return null;",
     "tests": [
-      "test/auditlegacy2.test.js"
+      "test/systems/legacy/auditlegacy2.test.js"
     ]
   },
   {
@@ -280,25 +280,25 @@
     "old": "e.day !== day || e.home !== res.home ||",
     "new": "e.day !== day ||",
     "tests": [
-      "test/auditlegacy2.test.js"
+      "test/systems/legacy/auditlegacy2.test.js"
     ]
   },
   {
     "name": "AUDIT-LEGACY-II-U1-held-key-presses",
-    "file": "src/ui/legacyDoor.js",
+    "file": "src/ui/legacy/legacyDoor.js",
     "old": "{ if (!e?.repeat) (btns[at] ?? btns[0]).click?.(); return true; }",
     "new": "{ (btns[at] ?? btns[0]).click?.(); return true; }",
     "tests": [
-      "test/auditlegacy2.test.js"
+      "test/systems/legacy/auditlegacy2.test.js"
     ]
   },
   {
     "name": "AUDIT-LEGACY-II-U14-back-over-the-succession",
-    "file": "src/ui/plusPad.js",
+    "file": "src/ui/plus/plusPad.js",
     "old": "  if (back) rows.push([[uiBack], 'Back']);",
     "new": "  rows.push([[uiBack], 'Back']);",
     "tests": [
-      "test/auditlegacy2.test.js"
+      "test/systems/legacy/auditlegacy2.test.js"
     ]
   },
   {
@@ -307,7 +307,7 @@
     "old": "  return e?.key === 'Tab' && !!e.target?.closest?.('[data-dom-focus]');",
     "new": "  return false;",
     "tests": [
-      "test/auditlegacy2.test.js"
+      "test/systems/legacy/auditlegacy2.test.js"
     ]
   }
 ]

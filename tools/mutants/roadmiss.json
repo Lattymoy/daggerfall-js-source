@@ -5,7 +5,7 @@
     "old": "    if (this._roadsMiss === day) return null;\n",
     "new": "",
     "tests": [
-      "test/roadmiss.test.js"
+      "test/systems/livingWorld/roadmiss.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    try { this._tickNow(playerPos, viewYaw); } finally { this._ticking = false; this._roadsMiss = null; }",
     "new": "    try { this._tickNow(playerPos, viewYaw); } finally { this._ticking = false; }",
     "tests": [
-      "test/roadmiss.test.js"
+      "test/systems/livingWorld/roadmiss.test.js"
     ]
   }
 ]

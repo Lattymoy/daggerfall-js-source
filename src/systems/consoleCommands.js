@@ -40,7 +40,7 @@
 // `DaggerfallUnity.Settings.LypyL_GameConsole` (ConsoleUI.ToggleConsole
 // :51-53) - the console is refused when the setting is off.
 
-import { getBool } from './settings.js';
+import { getBool } from './settings/settings.js';
 
 /** ConsoleCommand's ctor (ConsoleCommand.cs:12-18): an empty or
  *  all-whitespace description/usage is replaced by the stand-in. */

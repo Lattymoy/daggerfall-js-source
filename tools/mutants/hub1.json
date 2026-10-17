@@ -1,121 +1,121 @@
 [
   {
     "name": "HUB1-kind-order-reversed",
-    "file": "src/systems/regionHubs.js",
+    "file": "src/systems/region/regionHubs.js",
     "old": "[LOCATION_TYPES.TownCity]: 3,",
     "new": "[LOCATION_TYPES.TownCity]: 1,",
     "tests": [
-      "test/hub1.test.js"
+      "test/ui/ink/hub1.test.js"
     ]
   },
   {
     "name": "HUB1-name-unread",
-    "file": "src/systems/regionHubs.js",
+    "file": "src/systems/region/regionHubs.js",
     "old": "same(loc.name, regionName) ? 1 : 0,",
     "new": "0,",
     "tests": [
-      "test/hub1.test.js"
+      "test/ui/ink/hub1.test.js"
     ]
   },
   {
     "name": "HUB1-blocks-unread",
-    "file": "src/systems/regionHubs.js",
+    "file": "src/systems/region/regionHubs.js",
     "old": "const blocks = (ext?.width | 0) * (ext?.height | 0);",
     "new": "const blocks = 0;",
     "tests": [
-      "test/hub1.test.js"
+      "test/ui/ink/hub1.test.js"
     ]
   },
   {
     "name": "HUB1-buildings-unread",
-    "file": "src/systems/regionHubs.js",
+    "file": "src/systems/region/regionHubs.js",
     "old": "const buildings = loc.exterior?.buildingCount | 0;",
     "new": "const buildings = 0;",
     "tests": [
-      "test/hub1.test.js"
+      "test/ui/ink/hub1.test.js"
     ]
   },
   {
     "name": "HUB1-tie-reversed",
-    "file": "src/systems/regionHubs.js",
+    "file": "src/systems/region/regionHubs.js",
     "old": "-(loc.locationIndex | 0)];",
     "new": "(loc.locationIndex | 0)];",
     "tests": [
-      "test/hub1.test.js"
+      "test/ui/ink/hub1.test.js"
     ]
   },
   {
     "name": "HUB1-mod-row-counted",
-    "file": "src/systems/regionHubs.js",
+    "file": "src/systems/region/regionHubs.js",
     "old": "!Number.isInteger(loc.locationIndex) || !isBase(loc)) continue;",
     "new": "!Number.isInteger(loc.locationIndex)) continue;",
     "tests": [
-      "test/hub1.test.js"
+      "test/ui/ink/hub1.test.js"
     ]
   },
   {
     "name": "HUB1-capital-by-name-alone",
-    "file": "src/systems/regionHubs.js",
+    "file": "src/systems/region/regionHubs.js",
     "old": "HUB_CAPITALS.some((c) => same(c, loc.name) && same(c, regionName))",
     "new": "HUB_CAPITALS.some((c) => same(c, loc.name))",
     "tests": [
-      "test/hub1.test.js"
+      "test/ui/ink/hub1.test.js"
     ]
   },
   {
     "name": "HUB1-mapid-signed",
-    "file": "src/systems/regionHubs.js",
+    "file": "src/systems/region/regionHubs.js",
     "old": "mapId: loc.mapTableData.mapId >>> 0,",
     "new": "mapId: loc.mapTableData.mapId,",
     "tests": [
-      "test/hub1.test.js"
+      "test/ui/ink/hub1.test.js"
     ]
   },
   {
     "name": "HUB1-lookup-signed",
-    "file": "src/systems/regionHubs.js",
+    "file": "src/systems/region/regionHubs.js",
     "old": "hubs?.byMapId?.get(Number(mapId) >>> 0)",
     "new": "hubs?.byMapId?.get(Number(mapId))",
     "tests": [
-      "test/hub1.test.js"
+      "test/ui/ink/hub1.test.js"
     ]
   },
   {
     "name": "HUB1-name-case-kept",
-    "file": "src/systems/regionHubs.js",
+    "file": "src/systems/region/regionHubs.js",
     "old": "a.trim().toLowerCase() === b.trim().toLowerCase()",
     "new": "a === b",
     "tests": [
-      "test/hub1.test.js"
+      "test/ui/ink/hub1.test.js"
     ]
   },
   {
     "name": "HUB1-title-capital-on-hub",
-    "file": "src/systems/regionHubs.js",
+    "file": "src/systems/region/regionHubs.js",
     "old": "(hub.capital ? `Capital of the Kingdom of ${hub.regionName}` : `Hub of ${hub.regionName}`)",
     "new": "`Hub of ${hub.regionName}`",
     "tests": [
-      "test/hub1.test.js",
-      "test/heldmap.test.js"
+      "test/ui/ink/hub1.test.js",
+      "test/ui/heldmap.test.js"
     ]
   },
   {
     "name": "HUB1-map-word-flat",
-    "file": "src/systems/regionHubs.js",
+    "file": "src/systems/region/regionHubs.js",
     "old": "(hub.capital ? 'Capital' : 'Hub')",
     "new": "'Hub'",
     "tests": [
-      "test/hub1.test.js",
-      "test/heldmap.test.js"
+      "test/ui/ink/hub1.test.js",
+      "test/ui/heldmap.test.js"
     ]
   },
   {
     "name": "HUB1-arrival-words-flat",
-    "file": "src/systems/regionHubs.js",
+    "file": "src/systems/region/regionHubs.js",
     "old": "${hub.capital ? 'capital of the Kingdom of' : 'hub of'}",
     "new": "hub of",
     "tests": [
-      "test/hub1.test.js"
+      "test/ui/ink/hub1.test.js"
     ]
   },
   {
@@ -124,7 +124,7 @@
     "old": "    if (!this.loadRegion(region)) return 0;\n    return this._readLocationCount(region);",
     "new": "    return this._readLocationCount(region);",
     "tests": [
-      "test/hub1.test.js"
+      "test/ui/ink/hub1.test.js"
     ]
   },
   {
@@ -133,71 +133,71 @@
     "old": "    return this._readLocationCount(region);\n  }\n\n  /** DFRegion by name",
     "new": "    return this.getRegion(region)?.locationCount ?? 0;\n  }\n\n  /** DFRegion by name",
     "tests": [
-      "test/hub1.test.js"
+      "test/ui/ink/hub1.test.js"
     ]
   },
   {
     "name": "HUB1-marks-carry-no-hub",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "hub: hubAt(m.summary) ?? null,",
     "new": "hub: null,",
     "tests": [
-      "test/hub1.test.js",
-      "test/heldmap.test.js"
+      "test/ui/ink/hub1.test.js",
+      "test/ui/heldmap.test.js"
     ]
   },
   {
     "name": "HUB1-circle-over-the-glyph",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "  for (const [m, x, y] of inked) if (m.hub) paintHubCircle(ctx, x, y, markReach(m) - (m.seat ? SEAT_RING_PAD : 0), !!m.hub.capital);\n  // SEAT1a (Seats-Arc 3.3): a seat's ring, in HUB1's order - under the glyph, round any hub's circle\n  for (const [m, x, y] of inked) if (m.seatMark) paintSeatRing(ctx, x, y, markReach(m), m.seatMark);\n  for (const [m, x, y] of inked) paintGlyph(ctx, m.kind, x, y, true);",
     "new": "  // SEAT1a (Seats-Arc 3.3): a seat's ring, in HUB1's order - under the glyph, round any hub's circle\n  for (const [m, x, y] of inked) if (m.seatMark) paintSeatRing(ctx, x, y, markReach(m), m.seatMark);\n  for (const [m, x, y] of inked) paintGlyph(ctx, m.kind, x, y, true);\n  for (const [m, x, y] of inked) if (m.hub) paintHubCircle(ctx, x, y, markReach(m) - (m.seat ? SEAT_RING_PAD : 0), !!m.hub.capital);",
     "tests": [
-      "test/hub1.test.js"
+      "test/ui/ink/hub1.test.js"
     ]
   },
   {
     "name": "HUB1-colours-swapped",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "const c = capital ? HUB_CIRCLE.capital : HUB_CIRCLE.hub;",
     "new": "const c = capital ? HUB_CIRCLE.hub : HUB_CIRCLE.capital;",
     "tests": [
-      "test/hub1.test.js"
+      "test/ui/ink/hub1.test.js"
     ]
   },
   {
     "name": "HUB1-circle-no-reach",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "(m.hub ? HUB_CIRCLE_PAD : 0)",
     "new": "0",
     "tests": [
-      "test/hub1.test.js"
+      "test/ui/ink/hub1.test.js"
     ]
   },
   {
     "name": "HUB1-name-across-its-circle",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "    const glyph = markReach(m) + 1;",
     "new": "    const glyph = (GLYPH_R[m.kind] ?? 4) + 1;",
     "tests": [
-      "test/hub1.test.js"
+      "test/ui/ink/hub1.test.js"
     ]
   },
   {
     "name": "HUB1-neighbour-across-the-circle",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "    const r = markReach(m) + 1;",
     "new": "    const r = (GLYPH_R[m.kind] ?? 4) + 1;",
     "tests": [
-      "test/hub1.test.js"
+      "test/ui/ink/hub1.test.js"
     ]
   },
   {
     "name": "HUB1-circle-unfilled",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "  ctx.fillStyle = c.fill;\n  ctx.fill();\n",
     "new": "",
     "tests": [
-      "test/hub1.test.js"
+      "test/ui/ink/hub1.test.js"
     ]
   },
   {
@@ -206,7 +206,7 @@
     "old": "      if (l < baseCount) { _hubRows.push(loc); _bandPlacePixels.add(`${p.x},${p.y}`); }",
     "new": "      _hubRows.push(loc); if (l < baseCount) { _bandPlacePixels.add(`${p.x},${p.y}`); }",
     "tests": [
-      "test/hub1.test.js"
+      "test/ui/ink/hub1.test.js"
     ]
   },
   {
@@ -215,7 +215,7 @@
     "old": "hubAt: params.has('online') ? (summary) => hubAtMapId(regionHubs, summary?.mapID ?? summary?.mapId) : null,",
     "new": "hubAt: (summary) => hubAtMapId(regionHubs, summary?.mapID ?? summary?.mapId),",
     "tests": [
-      "test/hub1.test.js"
+      "test/ui/ink/hub1.test.js"
     ]
   },
   {
@@ -224,7 +224,7 @@
     "old": "        if (onlineOn) {\n          const mapId = _musicLoc?.mapTableData?.mapId;",
     "new": "        if (true) {\n          const mapId = _musicLoc?.mapTableData?.mapId;",
     "tests": [
-      "test/hub1.test.js"
+      "test/ui/ink/hub1.test.js"
     ]
   },
   {
@@ -233,7 +233,7 @@
     "old": "          else if (hub) townTalk.say(hubArrivalLine(hub), 5);",
     "new": "          else if (hub) void hubArrivalLine;",
     "tests": [
-      "test/hub1.test.js"
+      "test/ui/ink/hub1.test.js"
     ]
   },
   {
@@ -242,7 +242,7 @@
     "old": "const hub = m.hub ? ` (${hubMapWord(m.hub)})` : '';",
     "new": "const hub = '';",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -252,7 +252,7 @@
     "new": "const hubRows = [...(seat ? [seatInfoLine(seat, seat.holder?.guild ?? null)] : []), ...(tier ? [tier] : [])];",
     "note": "re-aimed BY CONTENT (FIELD BUGS 2026-10-04e SEAT-TIP): the seat's line names its holder; re-aimed BY CONTENT (TIER1): a dungeon's tier rides the same rows, after the seat",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -261,7 +261,7 @@
     "old": "rows: [...hubRows, toFormat(TO_TEXT.MsgNoKnowledge, title)]",
     "new": "rows: [toFormat(TO_TEXT.MsgNoKnowledge, title)]",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -270,8 +270,8 @@
     "old": "        hubAt: (s) => this.deps.hubAt?.(s) ?? null,   // HUB1",
     "new": "        // HUB1",
     "tests": [
-      "test/hub1.test.js",
-      "test/heldmap.test.js"
+      "test/ui/ink/hub1.test.js",
+      "test/ui/heldmap.test.js"
     ]
   }
 ]

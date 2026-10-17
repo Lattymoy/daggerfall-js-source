@@ -5,7 +5,7 @@
     "old": "  Number.isFinite(player.first_played_at) ? player.first_played_at : Infinity,   // FOUNDER4",
     "new": "  Infinity,   // FOUNDER4",
     "tests": [
-      "test/founder4.test.js"
+      "test/server/founder4.test.js"
     ],
     "note": "Founder reads the row's own first contact alone: every linked account still misses it."
   },
@@ -15,7 +15,7 @@
     "old": "INSERT OR IGNORE INTO founder_holdings (char_id, player)\n  SELECT character_id, player_id FROM saves WHERE character_id <> '';\n",
     "new": "",
     "tests": [
-      "test/founder4.test.js"
+      "test/server/founder4.test.js"
     ],
     "note": "A character carried by its cloud save links nothing - the commonest way a save reaches a second row."
   },
@@ -25,7 +25,7 @@
     "old": "  SELECT char_id, player FROM renown_tracks WHERE char_id <> '';",
     "new": "  SELECT char_id, player FROM renown_tracks WHERE 0;",
     "tests": [
-      "test/founder4.test.js"
+      "test/server/founder4.test.js"
     ],
     "note": "A character's Renown track links nothing."
   },
@@ -35,7 +35,7 @@
     "old": "  SELECT char_id, player FROM realm_census WHERE char_id <> '';",
     "new": "  SELECT char_id, player FROM realm_census WHERE 0;",
     "tests": [
-      "test/founder4.test.js"
+      "test/server/founder4.test.js"
     ],
     "note": "The realm's census of a character links nothing."
   },
@@ -45,7 +45,7 @@
     "old": "  SELECT origin_id, player FROM realm_characters WHERE origin_id IS NOT NULL AND origin_id <> '';",
     "new": "  SELECT origin_id, player FROM realm_characters WHERE 0;",
     "tests": [
-      "test/founder4.test.js"
+      "test/server/founder4.test.js"
     ],
     "note": "A realm character brought in from a character links nothing."
   },
@@ -55,7 +55,7 @@
     "old": "  SELECT origin_id, player FROM realm_passes WHERE origin_id IS NOT NULL AND origin_id <> '';",
     "new": "  SELECT origin_id, player FROM realm_passes WHERE 0;",
     "tests": [
-      "test/founder4.test.js"
+      "test/server/founder4.test.js"
     ],
     "note": "A customs pass spent on a character links nothing."
   },
@@ -65,7 +65,7 @@
     "old": "  JOIN founder_holdings theirs ON theirs.char_id = mine.char_id AND theirs.player <> mine.player\n  JOIN players o ON o.id = theirs.player\n  WHERE mine.player = players.id\n    AND",
     "new": "  JOIN founder_holdings theirs ON theirs.char_id = mine.char_id AND theirs.player = mine.player\n  JOIN players o ON o.id = theirs.player\n  WHERE mine.player = players.id\n    AND",
     "tests": [
-      "test/founder4.test.js"
+      "test/server/founder4.test.js"
     ],
     "note": "Each row linked to its own holdings: never earlier than itself, so nothing is ever written."
   },
@@ -75,7 +75,7 @@
     "old": "    AND MIN(o.created_at, COALESCE(o.registered_at, o.created_at)) < MIN(players.created_at, COALESCE(players.registered_at, players.created_at))\n",
     "new": "",
     "tests": [
-      "test/founder4.test.js"
+      "test/server/founder4.test.js"
     ],
     "note": "Every linked row is written, a later first play recorded as if it were earlier."
   },
@@ -85,7 +85,7 @@
     "old": "  SELECT MIN(MIN(o.created_at, COALESCE(o.registered_at, o.created_at)))",
     "new": "  SELECT MAX(MIN(o.created_at, COALESCE(o.registered_at, o.created_at)))",
     "tests": [
-      "test/founder4.test.js"
+      "test/server/founder4.test.js"
     ],
     "note": "An account linked to several rows takes the latest of them: one linked to a row from before the cutoff and a later one misses Founder."
   },
@@ -95,7 +95,7 @@
     "old": "WHERE EXISTS (\n  SELECT 1",
     "new": "WHERE players.registered_at IS NOT NULL AND EXISTS (\n  SELECT 1",
     "tests": [
-      "test/founder4.test.js"
+      "test/server/founder4.test.js"
     ],
     "note": "A guest linked to a row from before the cutoff - the desktop app's, not yet registered - gets nothing, and registering later does not give it Founder."
   },
@@ -105,7 +105,7 @@
     "old": "  SELECT MIN(MIN(o.created_at, COALESCE(o.registered_at, o.created_at)))",
     "new": "  SELECT MIN(MIN(o.created_at, COALESCE(o.registered_at, o.created_at), COALESCE(o.first_played_at, o.created_at)))",
     "tests": [
-      "test/founder4.test.js"
+      "test/server/founder4.test.js"
     ],
     "note": "Two hops: a row linked through a row in between takes the first row's date - a link nobody's save proves."
   },
@@ -115,7 +115,7 @@
     "old": "DROP TABLE founder_holdings;",
     "new": "SELECT 1;",
     "tests": [
-      "test/founder4.test.js"
+      "test/server/founder4.test.js"
     ],
     "note": "The holdings left standing in the live database: every account's characters in a table nothing reads."
   }

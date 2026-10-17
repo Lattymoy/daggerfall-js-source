@@ -6,7 +6,7 @@
 // The storm overhead is DFU's own: LightningPlayer's strobe and the
 // ambience's thunder one-shots, on the worn word (world/weather.js,
 // systems/ambientEffects.js). Every OTHER thunderstorm the world weather
-// map stands near the player (systems/weatherMap.js) was dark and silent
+// map stands near the player (systems/weather/weatherMap.js) was dark and silent
 // - a tower on the ridge that never lit. Now each strikes on its own
 // schedule: seeded by the storm and the game minute, so every client
 // under the shared clock sees the same strikes, and a storm at the height
@@ -22,9 +22,9 @@
 // function of the storm and the minute; the queue of thunder not yet
 // heard is the only state.
 
-import { seededRng } from './wind.js';
+import { seededRng } from './wind/wind.js';
 import { AMBIENT_SOUNDS } from './ambientEffects.js';
-import { envelope, SYSTEM_TYPES, radialOf, insideClip } from './weatherMap.js';
+import { envelope, SYSTEM_TYPES, radialOf, insideClip } from './weather/weatherMap.js';
 import { strikeOf, flickerAt, BOLT_LIFE_S } from './lightning.js';   // BOLT: the strike's kind, its strokes and its channel
 
 /** Metres a second - thunder's pace through the air. */

@@ -45,7 +45,7 @@ let installed = false;
  *  engine off for the game that boots it later (audio.ensure keeps its first answer), so with no data the host boots it
  *  with the game, as it always did. The reader is handed in, never imported: the HUD imports this module (through
  *  enhancedStyle.js), and a data module named here, even lazily, puts the quest machine in the HUD's reach (GUIDE3's
- *  walk, test/guide3_herald.test.js). */
+ *  walk, test/ui/quest/guide3_herald.test.js). */
 export async function wakeUiClickSound(getBytes) {
   if (!isEnhanced() || audio.enabled || audio._booted) return false;   // the click sounds only under the enhanced skin
   try {

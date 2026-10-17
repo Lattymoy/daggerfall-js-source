@@ -5,7 +5,7 @@
     "old": "  return HELM_WAY.steerFloor + (HELM_WAY.steerPeak - HELM_WAY.steerFloor) * x * Math.exp(1 - x);",
     "new": "  return (HELM_WAY.steerPeak - HELM_WAY.steerFloor) * x * Math.exp(1 - x);",
     "tests": [
-      "test/helmway.test.js"
+      "test/systems/naval/helmway.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  const x = Math.max(0, Number(v) || 0) / HELM_WAY.steerPeakV;",
     "new": "  const x = Math.max(0, Number(v) || 0) / (HELM_WAY.steerPeakV * 2);",
     "tests": [
-      "test/helmway.test.js"
+      "test/systems/naval/helmway.test.js"
     ]
   },
   {
@@ -23,63 +23,63 @@
     "old": "* x * Math.exp(1 - x);",
     "new": "* Math.min(1, x);",
     "tests": [
-      "test/helmway.test.js"
+      "test/systems/naval/helmway.test.js"
     ]
   },
   {
     "name": "HELM-WAY-rudder-unread",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "(responsive() ? steerage(way / sailFreeGain(boat)) : way)",
     "new": "(way)",
     "tests": [
-      "test/helmway.test.js"
+      "test/systems/naval/helmway.test.js"
     ]
   },
   {
     "name": "HELM-WAY-sail-rate",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "(responsive() ? HELM_WAY.sailAccel : 1)",
     "new": "(1)",
     "tests": [
-      "test/helmway.test.js"
+      "test/systems/naval/helmway.test.js"
     ]
   },
   {
     "name": "HELM-WAY-coast",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "(responsive() ? HELM_WAY.coast : 1)",
     "new": "(1)",
     "tests": [
-      "test/helmway.test.js"
+      "test/systems/naval/helmway.test.js"
     ]
   },
   {
     "name": "HELM-WAY-helm-rate",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "(responsive() ? HELM_WAY.turnAccelSail : 1)",
     "new": "(1)",
     "tests": [
-      "test/helmway.test.js"
+      "test/systems/naval/helmway.test.js"
     ]
   },
   {
     "name": "HELM-WAY-classic-moved",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "  const handed = () => !!deps.handling && isResponsive(deps.handling());",
     "new": "  const handed = () => true;",
     "tests": [
-      "test/helmway.test.js",
-      "test/csa_wind.test.js",
-      "test/csa_sailing.test.js"
+      "test/systems/naval/helmway.test.js",
+      "test/systems/comeSailAway/csa_wind.test.js",
+      "test/systems/comeSailAway/csa_sailing.test.js"
     ]
   },
   {
     "name": "HELM-WAY-hold-unread",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    const hold = !(boat.modifierCargoThreshold > 0) && responsive() ? CARGO_HOLD_MISSING : boat.modifierCargoThreshold;",
     "new": "    const hold = boat.modifierCargoThreshold;",
     "tests": [
-      "test/helmway.test.js"
+      "test/systems/naval/helmway.test.js"
     ]
   },
   {
@@ -88,8 +88,8 @@
     "old": "(HULL_HELM[ship.hull] ?? 1) * steerage(v) * DEG",
     "new": "(HULL_HELM[ship.hull] ?? 1) * v * DEG",
     "tests": [
-      "test/helmway.test.js",
-      "test/navaudit_captains.test.js"
+      "test/systems/naval/helmway.test.js",
+      "test/systems/naval/navaudit_captains.test.js"
     ]
   },
   {
@@ -98,7 +98,7 @@
     "old": "export const ACCEL = 1;",
     "new": "export const ACCEL = 0.35;",
     "tests": [
-      "test/helmway.test.js"
+      "test/systems/naval/helmway.test.js"
     ]
   },
   {
@@ -107,7 +107,7 @@
     "old": "export const DECEL = 0.6;",
     "new": "export const DECEL = 0.25;",
     "tests": [
-      "test/helmway.test.js"
+      "test/systems/naval/helmway.test.js"
     ]
   },
   {
@@ -116,8 +116,8 @@
     "old": "export const SWEEP_TURN = 10;",
     "new": "export const SWEEP_TURN = 5;",
     "tests": [
-      "test/helmway.test.js",
-      "test/navaudit_captains.test.js"
+      "test/systems/naval/helmway.test.js",
+      "test/systems/naval/navaudit_captains.test.js"
     ]
   },
   {
@@ -126,7 +126,7 @@
     "old": "ship.cls.speed / turnRateAt(ship, ship.cls.speed))",
     "new": "ship.speed / turnRateAt(ship, ship.speed))",
     "tests": [
-      "test/navaudit_captains.test.js"
+      "test/systems/naval/navaudit_captains.test.js"
     ]
   },
   {
@@ -135,8 +135,8 @@
     "old": "        else if (s.state === SHIP_STATES.afloat && unmanned()) s.state = SHIP_STATES.struck;",
     "new": "",
     "tests": [
-      "test/helmway.test.js",
-      "test/seapeace.test.js"
+      "test/systems/naval/helmway.test.js",
+      "test/systems/naval/seapeace.test.js"
     ]
   },
   {
@@ -145,8 +145,8 @@
     "old": "unmanned()) s.state = SHIP_STATES.struck;",
     "new": "unmanned()) { s.state = SHIP_STATES.struck; douse(); }",
     "tests": [
-      "test/helmway.test.js",
-      "test/navaudit_guns.test.js"
+      "test/systems/naval/helmway.test.js",
+      "test/systems/naval/navaudit_guns.test.js"
     ]
   },
   {
@@ -155,7 +155,7 @@
     "old": "s.hull > s.maxHull * STRUCK_AT && !unmanned()) s.state = SHIP_STATES.afloat;",
     "new": "s.hull > s.maxHull * STRUCK_AT) s.state = SHIP_STATES.afloat;",
     "tests": [
-      "test/helmway.test.js"
+      "test/systems/naval/helmway.test.js"
     ]
   },
   {
@@ -164,7 +164,7 @@
     "old": "    handling: () => getPref('naval-handling') ?? 'responsive',",
     "new": "    handling: () => 'classic',",
     "tests": [
-      "test/helmway.test.js"
+      "test/systems/naval/helmway.test.js"
     ]
   },
   {
@@ -173,7 +173,7 @@
     "old": "        Object.freeze({ key: 'naval-handling', get label() { return t('features.navalCombat.handling', 'Ship handling'); },\n          tiers: Object.freeze([tier('responsive', () => t('features.navalCombat.handling.responsive', 'Responsive')), tier('classic', () => t('features.navalCombat.handling.classic', 'Classic'))]) }),\n",
     "new": "",
     "tests": [
-      "test/helmway.test.js"
+      "test/systems/naval/helmway.test.js"
     ]
   }
 ]

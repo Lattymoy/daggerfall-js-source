@@ -2949,6 +2949,16 @@
   "tr": "9213b86d7058",
   "by": "claude-in-session"
  },
+ "combat.leadLeftHand": {
+  "en": "9a84e174d1b8",
+  "tr": "9fc9edb2f2cd",
+  "by": "claude-in-session"
+ },
+ "combat.leadRightHand": {
+  "en": "40a5921dea29",
+  "tr": "bb853dca10ae",
+  "by": "claude-in-session"
+ },
  "credits.ambientText.terms": {
   "en": "c62316ae06a4",
   "tr": "86396373828c",
@@ -4337,6 +4347,16 @@
  "features.waterQuality.title": {
   "en": "0a474887b300",
   "tr": "8de2a0d57c3c",
+  "by": "claude-in-session"
+ },
+ "features.weaponGlow.note": {
+  "en": "80be2112719a",
+  "tr": "3ecd3e30e0b5",
+  "by": "claude-in-session"
+ },
+ "features.weaponGlow.title": {
+  "en": "964f52fd55ec",
+  "tr": "bd5a82a2925a",
   "by": "claude-in-session"
  },
  "features.weatherEvents.note": {
@@ -10372,6 +10392,16 @@
  "stats.weapon": {
   "en": "ead533685e26",
   "tr": "f8f44ff994e1",
+  "by": "claude-in-session"
+ },
+ "stolen.card": {
+  "en": "f7ee1f5cc455",
+  "tr": "f3f8e00d8f7a",
+  "by": "claude-in-session"
+ },
+ "stolen.taken": {
+  "en": "47f05fb5e818",
+  "tr": "2f4c36fab23b",
   "by": "claude-in-session"
  },
  "summon.noQuest": {

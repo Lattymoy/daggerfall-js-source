@@ -6,9 +6,9 @@
 // 2026-10-15c: the merge of main beside the 2026-10-14 roll-up had put bootWorld 55 code lines past its ceiling).
 // The host hands in what it holds: its talk, the realm's session, the modes, the zone's account door and the
 // checkpoint; it calls `held` from the drop's receipt, `collectHeard` from the room's collect, `frame` from the zone's.
-import { WILD_TEXT } from '../systems/wildZone.js';
-import { itemLongName } from '../systems/itemInfo.js';
-import { validLootList } from '../systems/loot.js';
+import { WILD_TEXT } from '../systems/wild/wildZone.js';
+import { itemLongName } from '../systems/item/itemInfo.js';
+import { validLootList } from '../systems/loot/loot.js';
 import { addItem } from '../systems/inventory.js';
 import { realmGoldAct } from '../systems/realmSaves.js';
 import { DeathScreen } from '../ui/deathScreen.js';

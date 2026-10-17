@@ -5,7 +5,7 @@
     "old": "    const frameMotor = () => {   // PERF-V8: each `// PERF-V8` statement runs as a closure of its own, so the frame stays under V8's optimizing ceiling (bible/07-Rendering/Performance-Priority.md)\n    if (poiEditor?.active()) poiEditor.cameraFrame(dt, cam);",
     "new": "    {\n    if (poiEditor?.active()) poiEditor.cameraFrame(dt, cam);",
     "tests": [
-      "test/perfv8.test.js"
+      "test/scenes/perfv8.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    const framePixelWalk = () => {   // PERF-V8\n    for (const p of _pixelOrder) {",
     "new": "    {\n    for (const p of _pixelOrder) {",
     "tests": [
-      "test/perfv8.test.js"
+      "test/scenes/perfv8.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    };\n    frameHud();",
     "new": "    };\n    void frameHud;",
     "tests": [
-      "test/perfv8.test.js"
+      "test/scenes/perfv8.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    };\n    frameHud();",
     "new": "    };\n    frameHud();\n    frameHud?.();",
     "tests": [
-      "test/perfv8.test.js"
+      "test/scenes/perfv8.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    const frameHaze = () => {   // PERF-V8\n    if (hazeGl) {",
     "new": "    {\n    if (hazeGl) {",
     "tests": [
-      "test/perfv8.test.js"
+      "test/scenes/perfv8.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "      const _hzFoot = walkMode && playerSpawned ? player.pos : cam.pos;\n",
     "new": "      if (now < 0) { requestAnimationFrame(frame); return; }\n      const _hzFoot = walkMode && playerSpawned ? player.pos : cam.pos;\n",
     "tests": [
-      "test/perfv8.test.js"
+      "test/scenes/perfv8.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "      const _hzFoot = walkMode && playerSpawned ? player.pos : cam.pos;\n",
     "new": "      var _hzFoot = walkMode && playerSpawned ? player.pos : cam.pos;\n",
     "tests": [
-      "test/perfv8.test.js"
+      "test/scenes/perfv8.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "    };\n    frameHaze();",
     "new": "      void 0;\n    };\n    frameHaze();",
     "tests": [
-      "test/perfv8.test.js"
+      "test/scenes/perfv8.test.js"
     ]
   }
 ]

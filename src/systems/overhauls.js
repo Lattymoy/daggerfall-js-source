@@ -4,7 +4,7 @@
 // enhanced options should be in") - THE OVERHAULS: three panels, each ONE choice out of a set.
 //
 // An option is a WHOLE LOOK, not a new switch. Texture holds the texture packs - Classic, and Vanilla Enhanced (VE3,
-// systems/vanillaEnhanced.js), which ships with the port since VE4 (systems/vanillaEnhancedPack.js; Port-Doctrine
+// systems/vanillaEnhanced/vanillaEnhanced.js), which ships with the port since VE4 (systems/vanillaEnhanced/vanillaEnhancedPack.js; Port-Doctrine
 // records the exception) and is worn by switching its mods on. Sound is
 // the port's own sound switches taken together - the Features rows that change what the world
 // sounds like, set as Daggerfall has them (Classic) or as the port adds them (Enhanced) - so the panel and the Features
@@ -20,10 +20,10 @@ import { FEATURES, resolveControl } from './features.js';
 import { getPref, setPref } from './uiPrefs.js';
 import { pageParam } from './pageQuery.js';
 import { modSetting, setModSetting } from './modSettings.js';
-import { onlineForcedPref, onlineForcedModSetting } from './onlineLane.js';
+import { onlineForcedPref, onlineForcedModSetting } from './online/onlineLane.js';
 import { uiSkin, setUiSkin, SKIN_NAMES } from './uiSkin.js';
 import { activeUiPack, setUiPack, UI_PACKS, UI_PACK_NONE } from './uiPack.js';
-import { veBase, veAddons, veWorn, classicTexturesWorn, wearVanillaEnhanced, wearClassicTextures, classicBlocked, customTextureNote } from './vanillaEnhanced.js';   // VE3; VE4: its add-ons; AUDIT VE R10: a loose pack's say
+import { veBase, veAddons, veWorn, classicTexturesWorn, wearVanillaEnhanced, wearClassicTextures, classicBlocked, customTextureNote } from './vanillaEnhanced/vanillaEnhanced.js';   // VE3; VE4: its add-ons; AUDIT VE R10: a loose pack's say
 
 const row = (id) => {
   const f = FEATURES.find((x) => x.id === id);
@@ -99,7 +99,7 @@ const uiOption = (id, name, skin, pack, { by, blurb, dress = 'none', vendor = nu
   },
 });
 
-/** VE3: a texture look - the texture mods switched on or off as one (systems/vanillaEnhanced.js). VE4: `addons` lists
+/** VE3: a texture look - the texture mods switched on or off as one (systems/vanillaEnhanced/vanillaEnhanced.js). VE4: `addons` lists
  *  the look's optional mods, which the card offers as switches while the look is worn; `vendor` names the vendor/
  *  folder of the pack it wears (the credits' way to it). AUDIT VE R10: `blocked` says what stands in its way now (the
  *  card offers no Use while it does), or null. */

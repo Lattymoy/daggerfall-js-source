@@ -1,29 +1,29 @@
 [
   {
     "name": "BEACH-unread",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    } else if (IsBeached(boat) && deps.playerTerrain() != null) {",
     "new": "    } else if (false) {",
     "tests": [
-      "test/fb1002_seaheld.test.js"
+      "test/world/terrain/fb1002_seaheld.test.js"
     ]
   },
   {
     "name": "BEACH-unguarded",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    } else if (IsBeached(boat) && deps.playerTerrain() != null) {",
     "new": "    } else if (IsBeached(boat)) {",
     "tests": [
-      "test/fb1002_seaheld.test.js"
+      "test/world/terrain/fb1002_seaheld.test.js"
     ]
   },
   {
     "name": "BEACH-no-collision",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "      if (!IsBeached(boat)) CheckCollision(boat);",
     "new": "      void CheckCollision;",
     "tests": [
-      "test/fb1002_seaheld.test.js"
+      "test/world/terrain/fb1002_seaheld.test.js"
     ]
   }
 ]

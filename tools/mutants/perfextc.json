@@ -5,7 +5,7 @@
   "old": "  if (n === undefined) { n = discSweep(radius, cell, steps); _discMemo.set(key, n); }",
   "new": "  if (n === undefined) { n = discSweep(radius, cell, steps); }",
   "tests": [
-   "test/grassshift.test.js"
+   "test/world/terrain/grassshift.test.js"
   ]
  },
  {
@@ -14,7 +14,7 @@
   "old": "  const key = `${radius},${cell},${steps}`;",
   "new": "  const key = `${radius},${cell}`;",
   "tests": [
-   "test/grassshift.test.js"
+   "test/world/terrain/grassshift.test.js"
   ]
  },
  {
@@ -23,7 +23,7 @@
   "old": "  const key = `${radius},${cell},${steps}`;",
   "new": "  const key = `${radius},${steps}`;",
   "tests": [
-   "test/grassshift.test.js"
+   "test/world/terrain/grassshift.test.js"
   ]
  },
  {
@@ -32,7 +32,7 @@
   "old": "  if (labGrass) discSlotCount(LAB_GRASS.span);",
   "new": "  if (false) discSlotCount(LAB_GRASS.span);",
   "tests": [
-   "test/grassshift.test.js"
+   "test/world/terrain/grassshift.test.js"
   ]
  },
  {
@@ -41,8 +41,8 @@
   "old": "      labGrassField?.shiftOrigin(r.offset);   // PERF-EXT21",
   "new": "      labGrassField = null;   // PERF-EXT21",
   "tests": [
-   "test/grassshift.test.js",
-   "test/labGrass.test.js"
+   "test/world/terrain/grassshift.test.js",
+   "test/render/labGrass.test.js"
   ]
  },
  {
@@ -51,7 +51,7 @@
   "old": "      renderer.shiftSlots(offset);",
   "new": "      void renderer;",
   "tests": [
-   "test/grassshift.test.js"
+   "test/world/terrain/grassshift.test.js"
   ]
  },
  {
@@ -60,7 +60,7 @@
   "old": "      gx += offset[0]; gz += offset[2];",
   "new": "      gz += offset[2];",
   "tests": [
-   "test/grassshift.test.js"
+   "test/world/terrain/grassshift.test.js"
   ]
  },
  {
@@ -69,7 +69,7 @@
   "old": "      gx += offset[0]; gz += offset[2];",
   "new": "      gx += offset[0];",
   "tests": [
-   "test/grassshift.test.js"
+   "test/world/terrain/grassshift.test.js"
   ]
  },
  {
@@ -78,7 +78,7 @@
   "old": "      F[s * 4] += dx; F[s * 4 + 1] += dz; F[s * 4 + 2] += dy;",
   "new": "      F[s * 4] += dx; F[s * 4 + 1] += dz;",
   "tests": [
-   "test/grassshift.test.js"
+   "test/world/terrain/grassshift.test.js"
   ]
  },
  {
@@ -87,7 +87,7 @@
   "old": "      if (b) { b[0] += dx; b[1] += dy; b[2] += dz; b[3] += dx; b[4] += dy; b[5] += dz; }",
   "new": "      if (b) { b[1] += dy; b[4] += dy; }",
   "tests": [
-   "test/grassshift.test.js"
+   "test/world/terrain/grassshift.test.js"
   ]
  },
  {
@@ -96,7 +96,7 @@
   "old": "    this.slotFrame = new Float64Array(slots * 4);",
   "new": "    this.slotFrame = new Float32Array(slots * 4);",
   "tests": [
-   "test/grassshift.test.js"
+   "test/world/terrain/grassshift.test.js"
   ]
  },
  {
@@ -105,7 +105,7 @@
   "old": "      const cx0 = Math.floor((x0 - gx) / cell), cx1 = Math.floor((x1 - gx) / cell);",
   "new": "      const cx0 = Math.floor(x0 / cell), cx1 = Math.floor(x1 / cell);",
   "tests": [
-   "test/grassshift.test.js"
+   "test/world/terrain/grassshift.test.js"
   ]
  },
  {
@@ -114,7 +114,7 @@
   "old": "      const ecx = Math.floor((ex - gx) / cell), ecz = Math.floor((ez - gz) / cell);",
   "new": "      const ecx = Math.floor(ex / cell), ecz = Math.floor(ez / cell);",
   "tests": [
-   "test/grassshift.test.js"
+   "test/world/terrain/grassshift.test.js"
   ]
  },
  {
@@ -123,7 +123,7 @@
   "old": "    const x = fx + originX, z = fz + originZ;   // PERF-EXT21: in the scene's",
   "new": "    const x = fx, z = fz;   // PERF-EXT21: in the scene's",
   "tests": [
-   "test/grassshift.test.js"
+   "test/world/terrain/grassshift.test.js"
   ]
  },
  {
@@ -132,7 +132,7 @@
   "old": "    const tint = bakedTint(tRnd, fx, fz);",
   "new": "    const tint = bakedTint(tRnd, x, z);",
   "tests": [
-   "test/grassshift.test.js"
+   "test/world/terrain/grassshift.test.js"
   ]
  },
  {
@@ -141,18 +141,18 @@
   "old": "seed, cell, originX: gx, originZ: gz }));   // PERF-EXT21",
   "new": "seed, cell }));   // PERF-EXT21",
   "tests": [
-   "test/grassshift.test.js"
+   "test/world/terrain/grassshift.test.js"
   ]
  },
  {
   "name": "PERF-EXT21-only-a-location-publish-re-reads-the-grass-again",
-  "file": "src/scenes/world.js",
-  "old": "    if (labGrassField) {   // WOD2: a levelled camp moved the ground the same way; AUDIT BRANCH (WoD) m2: a rebuild that lost its site moved it back; PERF-EXT21: every publish re-reads it",
-  "new": "    if ((dfLocation || wodSite) && labGrassField) {   // WOD2: a levelled camp moved the ground the same way; AUDIT BRANCH (WoD) m2: a rebuild that lost its site moved it back; PERF-EXT21: every publish re-reads it",
+  "file": "src/scenes/pixelBuild.js",
+  "old": "    if (host.labGrassField) {   // WOD2: a levelled camp moved the ground the same way; AUDIT BRANCH (WoD) m2: a rebuild that lost its site moved it back; PERF-EXT21: every publish re-reads it",
+  "new": "    if ((dfLocation || wodSite) && host.labGrassField) {   // WOD2: a levelled camp moved the ground the same way; AUDIT BRANCH (WoD) m2: a rebuild that lost its site moved it back; PERF-EXT21: every publish re-reads it",
   "tests": [
-   "test/grassshift.test.js",
-   "test/audit_wod_branch.test.js",
-   "test/wod2_loader.test.js"
+   "test/world/terrain/grassshift.test.js",
+   "test/world/worldOfDaggerfall/audit_wod_branch.test.js",
+   "test/world/terrain/wod2_loader.test.js"
   ]
  },
  {
@@ -161,7 +161,7 @@
   "old": "    if (stride === 1 && labGrassField) {",
   "new": "    if (false && labGrassField) {",
   "tests": [
-   "test/grassshift.test.js"
+   "test/world/terrain/grassshift.test.js"
   ]
  },
  {
@@ -170,8 +170,8 @@
   "old": "    labGrassField = null;\n    // BLOOD1 AUDIT 2",
   "new": "    // BLOOD1 AUDIT 2",
   "tests": [
-   "test/grassshift.test.js",
-   "test/labGrass.test.js"
+   "test/world/terrain/grassshift.test.js",
+   "test/render/labGrass.test.js"
   ]
  },
  {
@@ -180,7 +180,7 @@
   "old": "          if (!stepGrassCell(st, GRASS_SLICE, ask)) { pending = { d, cx, cz, key, st }; continue; }",
   "new": "          if (!stepGrassCell(st, perCell, ask)) { pending = { d, cx, cz, key, st }; continue; }",
   "tests": [
-   "test/grassshift.test.js"
+   "test/world/terrain/grassshift.test.js"
   ]
  },
  {
@@ -189,7 +189,7 @@
   "old": "        if (stepGrassCell(pending.st, catchUp ? perCell : GRASS_SLICE, ask)) {",
   "new": "        if (stepGrassCell(pending.st, perCell, ask)) {",
   "tests": [
-   "test/grassshift.test.js"
+   "test/world/terrain/grassshift.test.js"
   ]
  },
  {
@@ -198,7 +198,7 @@
   "old": "  st.s = s; st.i = end; st.n = n; st.count = n;",
   "new": "  st.i = end; st.n = n; st.count = n;",
   "tests": [
-   "test/grassshift.test.js"
+   "test/world/terrain/grassshift.test.js"
   ]
  },
  {
@@ -207,7 +207,7 @@
   "old": "  st.s = s; st.i = end; st.n = n; st.count = n;",
   "new": "  st.s = s; st.i = end; st.count = n;",
   "tests": [
-   "test/grassshift.test.js"
+   "test/world/terrain/grassshift.test.js"
   ]
  },
  {
@@ -216,7 +216,7 @@
   "old": "          if (pending || sliced) continue;           // one slice a frame",
   "new": "          if (pending) continue;           // one slice a frame",
   "tests": [
-   "test/grassshift.test.js"
+   "test/world/terrain/grassshift.test.js"
   ]
  },
  {
@@ -225,7 +225,7 @@
   "old": "        if (!item.st && !catchUp && d > wholeR2) {   // PERF-EXT22: a rim cell on a walk",
   "new": "        if (!item.st && !catchUp) {   // PERF-EXT22: a rim cell on a walk",
   "tests": [
-   "test/grassshift.test.js"
+   "test/world/terrain/grassshift.test.js"
   ]
  },
  {
@@ -234,7 +234,7 @@
   "old": "export const GRASS_WHOLE_AT = 0.55;",
   "new": "export const GRASS_WHOLE_AT = 0.5;",
   "tests": [
-   "test/grassshift.test.js"
+   "test/world/terrain/grassshift.test.js"
   ]
  },
  {
@@ -243,7 +243,7 @@
   "old": "      const catchUp = missing > GRASS_CATCH_UP;",
   "new": "      const catchUp = false;",
   "tests": [
-   "test/grassshift.test.js"
+   "test/world/terrain/grassshift.test.js"
   ]
  },
  {
@@ -252,7 +252,7 @@
   "old": "      const catchUp = missing > GRASS_CATCH_UP;",
   "new": "      const catchUp = true;",
   "tests": [
-   "test/grassshift.test.js"
+   "test/world/terrain/grassshift.test.js"
   ]
  },
  {
@@ -261,7 +261,7 @@
   "old": "      pending = null;   // PERF-EXT22: a half-placed cell holds scene positions of the old frame",
   "new": "      void pending;   // PERF-EXT22: a half-placed cell holds scene positions of the old frame",
   "tests": [
-   "test/grassshift.test.js"
+   "test/world/terrain/grassshift.test.js"
   ]
  },
  {
@@ -270,7 +270,7 @@
   "old": "      if (pending && pending.cx >= cx0 && pending.cx <= cx1 && pending.cz >= cz0 && pending.cz <= cz1) pending = null;",
   "new": "      if (false) pending = null;",
   "tests": [
-   "test/grassshift.test.js"
+   "test/world/terrain/grassshift.test.js"
   ]
  },
  {
@@ -279,7 +279,7 @@
   "old": "      if (pending && nearSq(pending.cx, pending.cz, ex, ez) > fillR2) pending = null;",
   "new": "      if (false) pending = null;",
   "tests": [
-   "test/grassshift.test.js"
+   "test/world/terrain/grassshift.test.js"
   ]
  },
  {
@@ -288,7 +288,7 @@
   "old": "      const missing = want.length + (pending ? 1 : 0);",
   "new": "      const missing = want.length;",
   "tests": [
-   "test/grassshift.test.js"
+   "test/world/terrain/grassshift.test.js"
   ]
  },
  {
@@ -297,7 +297,7 @@
   "old": "          const st = beginGrassCell(cx, cz, { perCell, seed, cell, originX: gx, originZ: gz });",
   "new": "          const st = beginGrassCell(cx, cz, { perCell, seed, cell });",
   "tests": [
-   "test/grassshift.test.js"
+   "test/world/terrain/grassshift.test.js"
   ]
  },
  {
@@ -306,7 +306,7 @@
   "old": "renderer.writeSlot(slot, item.st ?? placeLabGrassCell(",
   "new": "renderer.writeSlot(slot, placeLabGrassCell(",
   "tests": [
-   "test/grassshift.test.js"
+   "test/world/terrain/grassshift.test.js"
   ]
  },
  {
@@ -315,7 +315,7 @@
   "old": "      v += c.positions.length / 3;\n      yield;",
   "new": "      v += c.positions.length / 3;",
   "tests": [
-   "test/publishtail.test.js"
+   "test/render/publishtail.test.js"
   ]
  },
  {
@@ -324,7 +324,7 @@
   "old": "      if (withBounds) { subs.push(boundsOf(positions, indices, start, at - start)); yield; }",
   "new": "      if (withBounds) { subs.push(boundsOf(positions, indices, start, at - start)); }",
   "tests": [
-   "test/publishtail.test.js"
+   "test/render/publishtail.test.js"
   ]
  },
  {
@@ -333,7 +333,7 @@
   "old": "      if (withBounds) { subs.push(boundsOf(positions, indices, start, at - start)); yield; }",
   "new": "      if (withBounds) { subs.push(boundsOf(positions)); yield; }",
   "tests": [
-   "test/publishtail.test.js"
+   "test/render/publishtail.test.js"
   ]
  },
  {
@@ -342,7 +342,7 @@
   "old": "    const whole = withBounds ? yield* boundsSteps(positions) : null;",
   "new": "    const whole = null;",
   "tests": [
-   "test/publishtail.test.js"
+   "test/render/publishtail.test.js"
   ]
  },
  {
@@ -351,7 +351,7 @@
   "old": "      if (r.done) return r.value;\n      await breathe();",
   "new": "      if (r.done) return r.value;",
   "tests": [
-   "test/publishtail.test.js"
+   "test/render/publishtail.test.js"
   ]
  },
  {
@@ -360,7 +360,7 @@
   "old": "  const sphere = new Float32Array(4);\n  if (n === 0) return sphere;",
   "new": "  const sphere = new Float64Array(4);\n  if (n === 0) return sphere;",
   "tests": [
-   "test/publishtail.test.js"
+   "test/render/publishtail.test.js"
   ]
  },
  {
@@ -369,7 +369,7 @@
   "old": "    for (let o = k0 * 3, end = Math.min(n, k0 + range) * 3; o < end; o += 3) {\n      const x = positions[o]",
   "new": "    for (let o = k0 * 3, end = Math.min(n, k0 + range) * 3 - 3; o < end; o += 3) {\n      const x = positions[o]",
   "tests": [
-   "test/publishtail.test.js"
+   "test/render/publishtail.test.js"
   ]
  },
  {
@@ -378,7 +378,7 @@
   "old": "  sphere[0] = (minX + maxX) / 2; sphere[1] = (minY + maxY) / 2; sphere[2] = (minZ + maxZ) / 2;",
   "new": "  sphere[0] = minX; sphere[1] = (minY + maxY) / 2; sphere[2] = (minZ + maxZ) / 2;",
   "tests": [
-   "test/publishtail.test.js"
+   "test/render/publishtail.test.js"
   ]
  },
  {
@@ -387,7 +387,7 @@
   "old": "    const bounds = measured ? measured.whole : boundsOf(model.positions);",
   "new": "    const bounds = boundsOf(model.positions);",
   "tests": [
-   "test/publishtail.test.js"
+   "test/render/publishtail.test.js"
   ]
  },
  {
@@ -396,37 +396,37 @@
   "old": "_bounds: measured ? measured.subs[i] : boundsOf(",
   "new": "_bounds: boundsOf(",
   "tests": [
-   "test/publishtail.test.js"
+   "test/render/publishtail.test.js"
   ]
  },
  {
   "name": "PERF-EXT23-the-world-host-merges-in-one-piece-again",
-  "file": "src/scenes/world.js",
+  "file": "src/scenes/pixelBuild.js",
   "old": "    const staticMerged = await staticBuilder.finishSliced(() => breather.breathe());   // PERF4",
   "new": "    const staticMerged = staticBuilder.finish();   // PERF4",
   "tests": [
-   "test/publishtail.test.js",
-   "test/perf4.test.js",
-   "test/wod4_privateershold.test.js"
+   "test/render/publishtail.test.js",
+   "test/world/perf4.test.js",
+   "test/world/worldOfDaggerfall/wod4_privateershold.test.js"
   ]
  },
  {
   "name": "PERF-EXT23-the-world-host-does-not-hand-the-spheres-over",
-  "file": "src/scenes/world.js",
+  "file": "src/scenes/pixelBuild.js",
   "old": "renderer.createMesh(staticMerged, { bounds: staticMerged.bounds })",
   "new": "renderer.createMesh(staticMerged)",
   "tests": [
-   "test/publishtail.test.js",
-   "test/perf4.test.js"
+   "test/render/publishtail.test.js",
+   "test/world/perf4.test.js"
   ]
  },
  {
   "name": "PERF-EXT23-the-flats-loop-never-breathes",
-  "file": "src/scenes/world.js",
+  "file": "src/scenes/pixelBuild.js",
   "old": "      await breather.breathe();   // PERF-EXT23: a flat group a breath",
   "new": "      // PERF-EXT23: a flat group a breath",
   "tests": [
-   "test/publishtail.test.js"
+   "test/render/publishtail.test.js"
   ]
  },
  {
@@ -435,7 +435,7 @@
   "old": "  return Math.max(BUILD_SLICE_FLOOR_MS, Math.min(BUILD_SLICE_MS, left));",
   "new": "  return BUILD_SLICE_MS;",
   "tests": [
-   "test/buildslice.test.js"
+   "test/systems/buildslice.test.js"
   ]
  },
  {
@@ -444,7 +444,7 @@
   "old": "  return Math.max(BUILD_SLICE_FLOOR_MS, Math.min(BUILD_SLICE_MS, left));",
   "new": "  return Math.max(0, Math.min(BUILD_SLICE_MS, left));",
   "tests": [
-   "test/buildslice.test.js"
+   "test/systems/buildslice.test.js"
   ]
  },
  {
@@ -453,7 +453,7 @@
   "old": "export const BUILD_SLICE_FLOOR_MS = 3;",
   "new": "export const BUILD_SLICE_FLOOR_MS = 1;",
   "tests": [
-   "test/buildslice.test.js"
+   "test/systems/buildslice.test.js"
   ]
  },
  {
@@ -462,7 +462,7 @@
   "old": "  const left = intervalMs - busyMs - BUILD_SLICE_MARGIN_MS;",
   "new": "  const left = intervalMs - busyMs;",
   "tests": [
-   "test/buildslice.test.js"
+   "test/systems/buildslice.test.js"
   ]
  },
  {
@@ -471,7 +471,7 @@
   "old": "  if (awaited || streamingMs > BUILD_STREAM_AGE_MS) return BUILD_SLICE_MS;",
   "new": "  if (awaited) return BUILD_SLICE_MS;",
   "tests": [
-   "test/buildslice.test.js"
+   "test/systems/buildslice.test.js"
   ]
  },
  {
@@ -480,7 +480,7 @@
   "old": "  if (awaited || streamingMs > BUILD_STREAM_AGE_MS) return BUILD_SLICE_MS;",
   "new": "  if (streamingMs > BUILD_STREAM_AGE_MS) return BUILD_SLICE_MS;",
   "tests": [
-   "test/buildslice.test.js"
+   "test/systems/buildslice.test.js"
   ]
  },
  {
@@ -489,7 +489,7 @@
   "old": "  if (Number.isNaN(left)) return BUILD_SLICE_MS;",
   "new": "  if (Number.isNaN(left)) return 0;",
   "tests": [
-   "test/buildslice.test.js"
+   "test/systems/buildslice.test.js"
   ]
  },
  {
@@ -498,7 +498,7 @@
   "old": "      sliceStart = now();\n      sliceFrame = framesNow();\n      sliceBudget = budget ? budget() : sliceMs;",
   "new": "      sliceStart = now();\n      sliceFrame = framesNow();",
   "tests": [
-   "test/buildslice.test.js"
+   "test/systems/buildslice.test.js"
   ]
  },
  {
@@ -507,7 +507,7 @@
   "old": "      if (sliceFrame !== null && sliceFrame === framesNow()) onSlice?.(spent);   // PERF-EXT24 (the review): a resumed slice no frame ran inside",
   "new": "      void spent;",
   "tests": [
-   "test/buildslice.test.js"
+   "test/systems/buildslice.test.js"
   ]
  },
  {
@@ -516,7 +516,7 @@
   "old": "  const busy = lastOwn + lent;",
   "new": "  const busy = lastOwn;",
   "tests": [
-   "test/buildslice.test.js"
+   "test/systems/buildslice.test.js"
   ]
  },
  {
@@ -525,7 +525,7 @@
   "old": "  lastOwn = Math.max(0, now - open);",
   "new": "  lastOwn = Math.max(0, now - open) + lent;",
   "tests": [
-   "test/buildslice.test.js"
+   "test/systems/buildslice.test.js"
   ]
  },
  {
@@ -534,7 +534,7 @@
   "old": "  lent = 0;\n  open = null;",
   "new": "  open = null;",
   "tests": [
-   "test/buildslice.test.js"
+   "test/systems/buildslice.test.js"
   ]
  },
  {
@@ -543,7 +543,7 @@
   "old": "  return s[intervalCount >> 1];",
   "new": "  return s.reduce((a, b) => a + b, 0) / intervalCount;",
   "tests": [
-   "test/buildslice.test.js"
+   "test/systems/buildslice.test.js"
   ]
  },
  {
@@ -552,7 +552,7 @@
   "old": "  addCpu(name, ms) { if (this.cpu && ms > 0) this.cpuZones.set(name, (this.cpuZones.get(name) ?? 0) + ms); }",
   "new": "  addCpu(name, ms) { void name; void ms; }",
   "tests": [
-   "test/buildslice.test.js"
+   "test/systems/buildslice.test.js"
   ]
  },
  {
@@ -561,8 +561,8 @@
   "old": "    budget: () => frameFitBudget({",
   "new": "    budget0: () => frameFitBudget({",
   "tests": [
-   "test/buildslice.test.js",
-   "test/perf7.test.js"
+   "test/systems/buildslice.test.js",
+   "test/systems/perf7.test.js"
   ]
  },
  {
@@ -571,7 +571,7 @@
   "old": "    onSlice: (ms) => { lendFrame(ms); meterFor(renderer.gl)?.addCpu('build', ms); },",
   "new": "    onSlice: (ms) => { meterFor(renderer.gl)?.addCpu('build', ms); },",
   "tests": [
-   "test/buildslice.test.js"
+   "test/systems/buildslice.test.js"
   ]
  },
  {
@@ -580,7 +580,7 @@
   "old": "    _streamSince ??= performance.now();   // PERF-EXT24: a run of streamed builds begins",
   "new": "    // PERF-EXT24: a run of streamed builds begins",
   "tests": [
-   "test/buildslice.test.js"
+   "test/systems/buildslice.test.js"
   ]
  },
  {
@@ -589,7 +589,7 @@
   "old": "    if (!queue.length) _streamSince = null;   // PERF-EXT24: and ends with the queue",
   "new": "    // PERF-EXT24: and ends with the queue",
   "tests": [
-   "test/buildslice.test.js"
+   "test/systems/buildslice.test.js"
   ]
  },
  {
@@ -598,7 +598,7 @@
   "old": "const cellKey = (gx, gz) => (gx + 0x100000) * 0x200000 + (gz + 0x100000);",
   "new": "const cellKey = (gx, gz) => (gx + 0x100000) * 0x100 + (gz + 0x100000);",
   "tests": [
-   "test/colliderkeys.test.js"
+   "test/player/colliderkeys.test.js"
   ]
  },
  {
@@ -607,7 +607,7 @@
   "old": "  tri[3] = [Math.min(a[0], b[0], c[0]), Math.min(a[1], b[1], c[1]), Math.min(a[2], b[2], c[2])];",
   "new": "  tri[3] = [Math.min(a[2], b[2], c[2]), Math.min(a[1], b[1], c[1]), Math.min(a[0], b[0], c[0])];",
   "tests": [
-   "test/colliderkeys.test.js"
+   "test/player/colliderkeys.test.js"
   ]
  },
  {
@@ -616,7 +616,7 @@
   "old": "          const k = cellKey(gx, gz);   // PERF-EXT25\n          let cell = bucket.grid.get(k);",
   "new": "          const k = cellKey(gz, gx);   // PERF-EXT25\n          let cell = bucket.grid.get(k);",
   "tests": [
-   "test/colliderkeys.test.js"
+   "test/player/colliderkeys.test.js"
   ]
  },
  {
@@ -625,7 +625,7 @@
   "old": "      for (let j = 0; j < 3; j++) {   // PERF-EXT25",
   "new": "      for (let j = 0; j < 2; j++) {   // PERF-EXT25",
   "tests": [
-   "test/colliderkeys.test.js"
+   "test/player/colliderkeys.test.js"
   ]
  },
  {
@@ -634,16 +634,16 @@
   "old": "      const cell = bucket.grid.get(cellKey(gx + ox, gz + oz));   // PERF-EXT25",
   "new": "      const cell = bucket.grid.get(cellKey(gx + ox, gz + ox));   // PERF-EXT25",
   "tests": [
-   "test/colliderkeys.test.js",
-   "test/perfcol1.test.js",
-   "test/name1_bubbles.test.js",
-   "test/audit_wod_branch.test.js",
-   "test/motorStairs.test.js",
-   "test/climbing.test.js",
-   "test/player.test.js",
-   "test/ph1_physics.test.js",
-   "test/arrowflight.test.js",
-   "test/disc8.test.js"
+   "test/player/colliderkeys.test.js",
+   "test/player/perfcol1.test.js",
+   "test/net/name1_bubbles.test.js",
+   "test/world/worldOfDaggerfall/audit_wod_branch.test.js",
+   "test/player/motorStairs.test.js",
+   "test/player/climbing.test.js",
+   "test/systems/player.test.js",
+   "test/player/ph1_physics.test.js",
+   "test/systems/arrowflight.test.js",
+   "test/systems/disc8.test.js"
   ]
  },
  {
@@ -652,16 +652,16 @@
   "old": "|| ly + r < box[o + 1] - BOX_SKIN ||",
   "new": "|| ly + r < box[o + 2] - BOX_SKIN ||",
   "tests": [
-   "test/colliderkeys.test.js",
-   "test/perfcol1.test.js",
-   "test/name1_bubbles.test.js",
-   "test/audit_wod_branch.test.js",
-   "test/motorStairs.test.js",
-   "test/climbing.test.js",
-   "test/player.test.js",
-   "test/ph1_physics.test.js",
-   "test/arrowflight.test.js",
-   "test/disc8.test.js"
+   "test/player/colliderkeys.test.js",
+   "test/player/perfcol1.test.js",
+   "test/net/name1_bubbles.test.js",
+   "test/world/worldOfDaggerfall/audit_wod_branch.test.js",
+   "test/player/motorStairs.test.js",
+   "test/player/climbing.test.js",
+   "test/systems/player.test.js",
+   "test/player/ph1_physics.test.js",
+   "test/systems/arrowflight.test.js",
+   "test/systems/disc8.test.js"
   ]
  },
  {
@@ -670,16 +670,16 @@
   "old": "d = dir[k], ok = k === 0 ? ox : k === 1 ? oy : oz;",
   "new": "d = dir[k], ok = k === 0 ? oz : k === 1 ? oy : ox;",
   "tests": [
-   "test/colliderkeys.test.js",
-   "test/perfcol1.test.js",
-   "test/name1_bubbles.test.js",
-   "test/audit_wod_branch.test.js",
-   "test/motorStairs.test.js",
-   "test/climbing.test.js",
-   "test/player.test.js",
-   "test/ph1_physics.test.js",
-   "test/arrowflight.test.js",
-   "test/disc8.test.js"
+   "test/player/colliderkeys.test.js",
+   "test/player/perfcol1.test.js",
+   "test/net/name1_bubbles.test.js",
+   "test/world/worldOfDaggerfall/audit_wod_branch.test.js",
+   "test/player/motorStairs.test.js",
+   "test/player/climbing.test.js",
+   "test/systems/player.test.js",
+   "test/player/ph1_physics.test.js",
+   "test/systems/arrowflight.test.js",
+   "test/systems/disc8.test.js"
   ]
  },
  {
@@ -688,16 +688,16 @@
   "old": "        const cell = bucket.grid.get(cellKey(cx, cz));   // PERF-EXT25",
   "new": "        const cell = bucket.grid.get(cellKey(cz, cx));   // PERF-EXT25",
   "tests": [
-   "test/colliderkeys.test.js",
-   "test/perfcol1.test.js",
-   "test/name1_bubbles.test.js",
-   "test/audit_wod_branch.test.js",
-   "test/motorStairs.test.js",
-   "test/climbing.test.js",
-   "test/player.test.js",
-   "test/ph1_physics.test.js",
-   "test/arrowflight.test.js",
-   "test/disc8.test.js"
+   "test/player/colliderkeys.test.js",
+   "test/player/perfcol1.test.js",
+   "test/net/name1_bubbles.test.js",
+   "test/world/worldOfDaggerfall/audit_wod_branch.test.js",
+   "test/player/motorStairs.test.js",
+   "test/player/climbing.test.js",
+   "test/systems/player.test.js",
+   "test/player/ph1_physics.test.js",
+   "test/systems/arrowflight.test.js",
+   "test/systems/disc8.test.js"
   ]
  },
  {
@@ -706,7 +706,7 @@
   "old": "    if (terrainGen.threaded) {\n      for (const p of restridePending.values()) promoteOffThread(p);",
   "new": "    if (false) {\n      for (const p of restridePending.values()) promoteOffThread(p);",
   "tests": [
-   "test/restrideworker.test.js"
+   "test/world/terrain/restrideworker.test.js"
   ]
  },
  {
@@ -715,7 +715,7 @@
   "old": "      restridePending.clear();\n      return;\n    }\n    let budget = RESTRIDE_PER_FRAME;",
   "new": "      return;\n    }\n    let budget = RESTRIDE_PER_FRAME;",
   "tests": [
-   "test/restrideworker.test.js"
+   "test/world/terrain/restrideworker.test.js"
   ]
  },
  {
@@ -724,7 +724,7 @@
   "old": "      if (built.get(key) !== p) return;                              // evicted, or rebuilt, while the worker built it",
   "new": "      // evicted, or rebuilt, while the worker built it",
   "tests": [
-   "test/restrideworker.test.js"
+   "test/world/terrain/restrideworker.test.js"
   ]
  },
  {
@@ -733,7 +733,7 @@
   "old": "      if (strideFor(p.px, p.py) !== 1 || p._stride === 1) return;   // walked back out, or promoted meanwhile",
   "new": "      if (p._stride === 1) return;   // walked back out, or promoted meanwhile",
   "tests": [
-   "test/restrideworker.test.js"
+   "test/world/terrain/restrideworker.test.js"
   ]
  },
  {
@@ -742,7 +742,7 @@
   "old": "      restrideTerrain(p, 1, grid);",
   "new": "      restrideTerrain(p, 1);",
   "tests": [
-   "test/restrideworker.test.js"
+   "test/world/terrain/restrideworker.test.js"
   ]
  },
  {
@@ -751,98 +751,98 @@
   "old": "      if (terrainGen.threaded) spendRestrides();   // PERF-EXT26",
   "new": "      // PERF-EXT26",
   "tests": [
-   "test/restrideworker.test.js"
+   "test/world/terrain/restrideworker.test.js"
   ]
  },
  {
   "name": "PERF-EXT26-the-worker-waits-for-the-roads-before-a-grid",
-  "file": "src/world/terrainGenWorker.js",
+  "file": "src/world/terrain/terrainGenWorker.js",
   "old": "    if (m.t === 'grid') { answerGrid(m); return; }",
   "new": "    if (m.t === 'grid' && !pendingRoads) { answerGrid(m); return; }",
   "tests": [
-   "test/restrideworker.test.js"
+   "test/world/terrain/restrideworker.test.js"
   ]
  },
  {
   "name": "PERF-EXT26-the-worker-copies-the-grid-back-instead-of-transferring",
-  "file": "src/world/terrainGenWorker.js",
+  "file": "src/world/terrain/terrainGenWorker.js",
   "old": "    globalThis.postMessage({ t: 'grid', id: m.id, positions, normals, bed }, transfer);",
   "new": "    globalThis.postMessage({ t: 'grid', id: m.id, positions, normals, bed });",
   "tests": [
-   "test/restrideworker.test.js"
+   "test/world/terrain/restrideworker.test.js"
   ]
  },
  {
   "name": "PERF-EXT26-a-failed-grid-answers-through-the-jobs-FIFO",
-  "file": "src/world/terrainGenWorker.js",
+  "file": "src/world/terrain/terrainGenWorker.js",
   "old": "    globalThis.postMessage({ t: 'gridError', id: m.id, message: e?.message ?? String(e) });",
   "new": "    globalThis.postMessage({ t: 'error', message: e?.message ?? String(e) });",
   "tests": [
-   "test/restrideworker.test.js"
+   "test/world/terrain/restrideworker.test.js"
   ]
  },
  {
   "name": "PERF-EXT26-the-worker-builds-a-different-grid",
-  "file": "src/world/terrainGenWorker.js",
+  "file": "src/world/terrain/terrainGenWorker.js",
   "old": "    const { positions, normals, bed } = restrideGrid({ ...m, woods, roads, sites, climates });",
   "new": "    const { positions, normals, bed } = restrideGrid({ ...m, woods, roads, sites, climates, stride: 4 });",
   "tests": [
-   "test/restrideworker.test.js"
+   "test/world/terrain/restrideworker.test.js"
   ]
  },
  {
   "name": "PERF-EXT26-the-client-routes-a-grid-reply-into-the-FIFO",
-  "file": "src/world/terrainGenClient.js",
+  "file": "src/world/terrain/terrainGenClient.js",
   "old": "        if (m.t === 'grid' || m.t === 'gridError') { this._gridAnswer(m); return; }",
   "new": "        if (m.t === 'gridError') { this._gridAnswer(m); return; }",
   "tests": [
-   "test/restrideworker.test.js"
+   "test/world/terrain/restrideworker.test.js"
   ]
  },
  {
   "name": "PERF-EXT26-the-client-transfers-the-pixels-own-samples",
-  "file": "src/world/terrainGenClient.js",
+  "file": "src/world/terrain/terrainGenClient.js",
   "old": "      this._worker.postMessage({ t: 'grid', id, ...job });",
   "new": "      this._worker.postMessage({ t: 'grid', id, ...job }, [job.samples.buffer]);",
   "tests": [
-   "test/restrideworker.test.js"
+   "test/world/terrain/restrideworker.test.js"
   ]
  },
  {
   "name": "PERF-EXT26-a-failed-grid-is-left-unbuilt",
-  "file": "src/world/terrainGenClient.js",
+  "file": "src/world/terrain/terrainGenClient.js",
   "old": "      g.resolve(restrideGrid({ woods: this._woods, roads: this._roads ?? null, sites: this._sites, climates: this._climates, ...g.job }));\n      return;",
   "new": "      g.resolve(null);\n      return;",
   "tests": [
-   "test/restrideworker.test.js"
+   "test/world/terrain/restrideworker.test.js"
   ]
  },
  {
   "name": "PERF-EXT26-a-dead-worker-strands-its-grids",
-  "file": "src/world/terrainGenClient.js",
+  "file": "src/world/terrain/terrainGenClient.js",
   "old": "    for (const g of grids) g.resolve(restrideGrid({ woods: this._woods, roads: this._roads ?? null, sites: this._sites, climates: this._climates, ...g.job }));",
   "new": "    void grids;",
   "tests": [
-   "test/restrideworker.test.js"
+   "test/world/terrain/restrideworker.test.js"
   ]
  },
  {
   "name": "PERF-EXT26-every-grid-shares-one-id",
-  "file": "src/world/terrainGenClient.js",
+  "file": "src/world/terrain/terrainGenClient.js",
   "old": "    const id = ++this._gridId;",
   "new": "    const id = this._gridId;",
   "tests": [
-   "test/restrideworker.test.js"
+   "test/world/terrain/restrideworker.test.js"
   ]
  },
  {
   "name": "PERF-EXT26-the-grid-law-drops-the-ghost-rows",
-  "file": "src/world/terrainGen.js",
+  "file": "src/world/terrain/terrainGen.js",
   "old": "  const grid = buildTerrainGrid(samples, stride, ghost);",
   "new": "  const grid = buildTerrainGrid(samples, stride, () => 0);",
   "tests": [
-   "test/restrideworker.test.js",
-   "test/terrainworker.test.js"
+   "test/world/terrain/restrideworker.test.js",
+   "test/world/terrain/terrainworker.test.js"
   ]
  },
  {
@@ -851,7 +851,7 @@
   "old": "      if (sliceFrame !== null && sliceFrame === framesNow()) onSlice?.(spent);",
   "new": "      if (sliceFrame !== null) onSlice?.(spent);",
   "tests": [
-   "test/buildslice.test.js"
+   "test/systems/buildslice.test.js"
   ]
  },
  {
@@ -860,7 +860,7 @@
   "old": "      if (sliceFrame !== null && sliceFrame === framesNow()) onSlice?.(spent);",
   "new": "      onSlice?.(spent);",
   "tests": [
-   "test/buildslice.test.js"
+   "test/systems/buildslice.test.js"
   ]
  },
  {
@@ -869,7 +869,7 @@
   "old": "    reset() { sliceStart = now(); sliceFrame = null;",
   "new": "    reset() { sliceStart = now(); sliceFrame = framesNow();",
   "tests": [
-   "test/buildslice.test.js"
+   "test/systems/buildslice.test.js"
   ]
  },
  {
@@ -878,7 +878,7 @@
   "old": "  let sliceFrame = null;",
   "new": "  let sliceFrame = framesNow();",
   "tests": [
-   "test/buildslice.test.js"
+   "test/systems/buildslice.test.js"
   ]
  },
  {
@@ -887,7 +887,7 @@
   "old": "      sliceFrame = framesNow();\n",
   "new": "      sliceFrame = -1;\n",
   "tests": [
-   "test/buildslice.test.js"
+   "test/systems/buildslice.test.js"
   ]
  },
  {
@@ -896,7 +896,7 @@
   "old": "  begun++;   // PERF-EXT24 (the review)",
   "new": "",
   "tests": [
-   "test/buildslice.test.js"
+   "test/systems/buildslice.test.js"
   ]
  },
  {
@@ -905,7 +905,7 @@
   "old": "    frames: framesBegun,   // PERF-EXT24 (the review): a slice a frame ran inside held a wait, and is not lent\n",
   "new": "",
   "tests": [
-   "test/buildslice.test.js"
+   "test/systems/buildslice.test.js"
   ]
  },
  {
@@ -914,7 +914,7 @@
   "old": "awaited: _awaitedBuilds > 0 }),",
   "new": "awaited: _streamSince == null }),",
   "tests": [
-   "test/buildslice.test.js"
+   "test/systems/buildslice.test.js"
   ]
  },
  {
@@ -923,7 +923,7 @@
   "old": "    _awaitedBuilds++;\n",
   "new": "",
   "tests": [
-   "test/buildslice.test.js"
+   "test/systems/buildslice.test.js"
   ]
  },
  {
@@ -932,7 +932,7 @@
   "old": "    finally { _awaitedBuilds--; }",
   "new": "    finally { void _awaitedBuilds; }",
   "tests": [
-   "test/buildslice.test.js"
+   "test/systems/buildslice.test.js"
   ]
  },
  {
@@ -941,7 +941,7 @@
   "old": "    try { dest = await awaitedBuild(first.px, first.py); }",
   "new": "    try { dest = await buildPixel(first.px, first.py); }",
   "tests": [
-   "test/buildslice.test.js"
+   "test/systems/buildslice.test.js"
   ]
  },
  {
@@ -950,7 +950,7 @@
   "old": "  const playerPixel = await awaitedBuild(first.px, first.py);",
   "new": "  const playerPixel = await buildPixel(first.px, first.py);",
   "tests": [
-   "test/buildslice.test.js"
+   "test/systems/buildslice.test.js"
   ]
  },
  {
@@ -959,7 +959,7 @@
   "old": "    _streamSince = null;   // PERF-EXT24 (the review): the sweep ended the old world's stream - the new one's two seconds start at its first pump\n",
   "new": "",
   "tests": [
-   "test/buildslice.test.js"
+   "test/systems/buildslice.test.js"
   ]
  },
  {
@@ -968,8 +968,8 @@
   "old": "  const wodSlots = new TerrainSlots();   // AUDIT BRANCH (WoD) L1-3\n",
   "new": "  const wodSlots = new TerrainSlots();   // AUDIT BRANCH (WoD) L1-3\n  const _wodSiteWas = new Set();\n",
   "tests": [
-   "test/grassshift.test.js",
-   "test/audit_wod_branch.test.js"
+   "test/world/terrain/grassshift.test.js",
+   "test/world/worldOfDaggerfall/audit_wod_branch.test.js"
   ]
  }
 ]

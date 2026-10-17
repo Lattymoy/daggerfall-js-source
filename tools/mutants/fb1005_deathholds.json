@@ -5,7 +5,7 @@
     "old": "  const released = (dead || force) ? endDeathHolds(entity) : [];",
     "new": "  const released = [];",
     "tests": [
-      "test/fb1005_deathholds.test.js"
+      "test/systems/fb1005_deathholds.test.js"
     ],
     "note": "the revival ends no hold: the ghost's paralysis wakes with the player again"
   },
@@ -15,7 +15,7 @@
     "old": "  const released = (dead || force) ? endDeathHolds(entity) : [];",
     "new": "  const released = endDeathHolds(entity);",
     "tests": [
-      "test/fb1005_deathholds.test.js"
+      "test/systems/fb1005_deathholds.test.js"
     ],
     "note": "a living release cures what holds it - a free cure, not a death's"
   },
@@ -25,7 +25,7 @@
     "old": "export const DEATH_HOLDS = Object.freeze(['paralyze', 'silenced', ",
     "new": "export const DEATH_HOLDS = Object.freeze(['silenced', ",
     "tests": [
-      "test/fb1005_deathholds.test.js"
+      "test/systems/fb1005_deathholds.test.js"
     ],
     "note": "the reported hold left off the list"
   },
@@ -35,7 +35,7 @@
     "old": "Object.freeze(['paralyze', 'silenced', 'continuousDamageFatigue',",
     "new": "Object.freeze(['paralyze', 'continuousDamageFatigue',",
     "tests": [
-      "test/fb1005_deathholds.test.js"
+      "test/systems/fb1005_deathholds.test.js"
     ],
     "note": "the Wraith's silence outlives the death"
   },
@@ -45,7 +45,7 @@
     "old": "'silenced', 'continuousDamageFatigue', 'continuousDamageSpellPoints']);",
     "new": "'silenced', 'continuousDamageSpellPoints']);",
     "tests": [
-      "test/fb1005_deathholds.test.js"
+      "test/systems/fb1005_deathholds.test.js"
     ],
     "note": "a fatigue drain defeats the revival's fatigue floor"
   },
@@ -55,7 +55,7 @@
     "old": "  for (const kind of released) cureAllOfKind(entity, kind);",
     "new": "  for (const kind of released) void kind;",
     "tests": [
-      "test/fb1005_deathholds.test.js"
+      "test/systems/fb1005_deathholds.test.js"
     ],
     "note": "the holds named as released and left on the entity"
   },
@@ -65,7 +65,7 @@
     "old": "  const released = DEATH_HOLDS.filter((k) => had.has(k));",
     "new": "  const released = [...DEATH_HOLDS, 'disease'].filter((k) => had.has(k));",
     "tests": [
-      "test/fb1005_deathholds.test.js"
+      "test/systems/fb1005_deathholds.test.js"
     ],
     "note": "dying cures a disease and an infection - the cheapest cure in the game"
   },
@@ -75,7 +75,7 @@
     "old": "  const released = (dead || force) ? endDeathHolds(entity) : [];",
     "new": "  const released = force ? endDeathHolds(entity) : [];",
     "tests": [
-      "test/fb1005_deathholds.test.js"
+      "test/systems/fb1005_deathholds.test.js"
     ],
     "note": "AUDIT FB1005 D1: a dead player's load (save.js) and the respawn's re-heal wake paralysed"
   }

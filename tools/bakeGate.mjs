@@ -8,20 +8,20 @@
 // header): 1,905 meshes - graves, crypts, crystals, a spiked tower, six lesser arches, a walled yard - and among them THE
 // GATE, one object (`OBJECT`, Cube.1688): two pillars on clawed feet, a flared lintel over them, the opening's top
 // corners cut in, three spines down each pillar's outside. 60 polygons; its two materials split the pillars, the
-// right a copy of the left (the spines are told apart by their shape - world/gateModel.js gateSpines). It is the one
+// right a copy of the left (the spines are told apart by their shape - world/gate/gateModel.js gateSpines). It is the one
 // object read; every other stands wholly clear of its box, and the bake says so of
 // each (`assertAlone`), so a piece of the gate exported as an object of its own is refused, never dropped. The file
-// embeds no texture - its materials are Blender's default grey - so the gate is painted (world/gateArt.js) and every
-// face laid on its picture by world/gateModel.js. The source is committed beside the bake, as the ships' are
+// embeds no texture - its materials are Blender's default grey - so the gate is painted (world/gate/gateArt.js) and every
+// face laid on its picture by world/gate/gateModel.js. The source is committed beside the bake, as the ships' are
 // (tools/shipBake.mjs): the bake is a DERIVATION, never a blob.
 //
-// ITS FRAME (`FRAME`): the gate's own (world/gateModel.js) - metres, the origin on the ground in the middle of the
+// ITS FRAME (`FRAME`): the gate's own (world/gate/gateModel.js) - metres, the origin on the ground in the middle of the
 // threshold, +y up, the pillars across x, the opening facing +z and -z. Mac's scene is Z up and RIGHT-handed, the
 // world LEFT-handed (world/mat4.js THE HANDEDNESS LAW - x east, y up, z north, as Daggerfall Unity's data is), so a scene
 // point (X, Y, Z) is the gate's ( X - x, Z - ground, Y - y ) times SCALE: a MIRROR in the numbers, which is what keeps
 // his gate his own in the world (AUDIT GATE-FBX G5: the turn this bake first used, ( X, Z, -Y ), stood it mirrored front
 // to back), and every polygon's corners REVERSED on the way through, as tools/shipBake.mjs bakePart reverses a ship's -
-// so each face's (b - a) x (c - a) points out of the stone, as world/gateModel.js faces' do. `x` and `y` are the
+// so each face's (b - a) x (c - a) points out of the stone, as world/gate/gateModel.js faces' do. `x` and `y` are the
 // object's own origin, to the bit - the middle of the cube Mac drew the lintel from (the spines stand 6 cm off it, as
 // drawn); `ground` the feet. SCALE 0.53 makes it 16.19 m tall, the 16.2 m of the gate it replaces (WB2's), so the
 // beacon, the light, the clearing and the court's fire keep their sense; Mac drew it 30.55 m.
@@ -29,7 +29,7 @@
 // tools/shipBake.mjs does the reading (sceneObjects - the export's axes, the Blender that wrote it, the transforms it
 // cannot read, all refused by name) and the cutting (fillFace - each polygon as Blender 5.1 cuts it, or refused).
 //
-// The output is a JSON a test re-bakes byte for byte (test/gatefbx.test.js).
+// The output is a JSON a test re-bakes byte for byte (test/tooling/gatefbx.test.js).
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { dirname, resolve } from 'node:path';

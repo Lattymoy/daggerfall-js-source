@@ -5,8 +5,8 @@
 // a tile with a water corner shows the water). Pure in the height map, which every client holds alike, so every client
 // finds the same ground dry. Not read: a location's flattening (terrainGen.js blendLocationTerrain) - the ground beside
 // a town is the kernel's; and the Rivers and Streams mod's painted water, which a player switches on for themselves.
-import { sampleKernel, HEIGHTMAP_DIMENSION } from './terrainSampler.js';
-import { sampleHeight, isWaterHeight } from './terrainTiles.js';
+import { sampleKernel, HEIGHTMAP_DIMENSION } from './terrain/terrainSampler.js';
+import { sampleHeight, isWaterHeight } from './terrain/terrainTiles.js';
 
 /**
  * Whether the terrain cell under a point of map pixel (`px`, `py`) is dry at all four of its corners - no water shows on

@@ -5,7 +5,7 @@
     "old": "  'ore:ebony': Object.freeze([0.32, 0.28, 0.42]),",
     "new": "  'ore:ebony': Object.freeze([0.7, 1.7, 0.5]),",
     "tests": [
-      "test/fb1011_veinwash.test.js"
+      "test/scenes/fb1011_veinwash.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  'metal:copper': Object.freeze([1.9, 1.0, 0.45]),\n",
     "new": "",
     "tests": [
-      "test/fb1011_veinwash.test.js"
+      "test/scenes/fb1011_veinwash.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "centers: mineFlats(n), tint: mineWash(n), dye: mineWash(n) ? ORE_DYE : 0 }],",
     "new": "centers: mineFlats(n), dye: mineWash(n) ? ORE_DYE : 0 }],",
     "tests": [
-      "test/fb1011_veinwash.test.js"
+      "test/scenes/fb1011_veinwash.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "        if (tint) batch.tint = tint;",
     "new": "        void tint;",
     "tests": [
-      "test/fb1011_veinwash.test.js"
+      "test/scenes/fb1011_veinwash.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "const gk = `${f.record}:${f.scale}:${f.tint ?? ''}:${f.dye ?? 0}${lone ? `#${n.key}` : ''}`;",
     "new": "const gk = `${f.record}:${f.scale}:${f.dye ?? 0}${lone ? `#${n.key}` : ''}`;",
     "tests": [
-      "test/fb1011_veinwash.test.js"
+      "test/scenes/fb1011_veinwash.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "        if (b && f.tint) b.tint = f.tint;",
     "new": "        void b;",
     "tests": [
-      "test/fb1011_veinwash.test.js"
+      "test/scenes/fb1011_veinwash.test.js"
     ]
   }
 ]

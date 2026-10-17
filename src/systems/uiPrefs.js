@@ -22,10 +22,10 @@ const SHELF_REV = 2;
 const PREF1_ADOPT_NEW_DEFAULT = Object.freeze(['lootRarity', 'enhancedAI']);   // BAL4: and the Enhanced AI - see loadPrefs
 
 import { appStorage } from './appStorage.js';   // DA1: the storage seam
-import { onlineForcedPref } from './onlineLane.js';   // OL1: the online lane's forcing, read before the shelf
+import { onlineForcedPref } from './online/onlineLane.js';   // OL1: the online lane's forcing, read before the shelf
 import { FEATURE_PREF_DEFAULTS } from './features.js';   // RF4: the port's own switches, declared once on their rows
 import { isStoredTier } from './survival/difficulty.js';   // SURV-TIERS: what the survival key may hold (an import-free leaf)
-import { isStoredHorseCare, HORSE_CARE_OLD_ON, HORSE_CARE_OLD_ON_TIER, isStoredWagonUpkeep, WAGON_UPKEEP_OLD_ON, WAGON_UPKEEP_OLD_ON_TIER } from './upkeepTiers.js';   // HORSE-TIERS / WAGON-TIERS: what the two upkeep keys may hold (a leaf too)
+import { isStoredHorseCare, HORSE_CARE_OLD_ON, HORSE_CARE_OLD_ON_TIER, isStoredWagonUpkeep, WAGON_UPKEEP_OLD_ON, WAGON_UPKEEP_OLD_ON_TIER } from './upkeep/upkeepTiers.js';   // HORSE-TIERS / WAGON-TIERS: what the two upkeep keys may hold (a leaf too)
 
 export const PREF_DEFAULTS = Object.freeze({
   // PX30c: the enhanced HUD's scale. It lives HERE and not in DFU's
@@ -43,17 +43,17 @@ export const PREF_DEFAULTS = Object.freeze({
   language: 'en',
   languageOffered: false,
   // MAP-SCALE (FIELD BUGS 2026-10-09e, "Desktop client in-game map icons and text too small on high resolutions"): the
-  // held map's interface scale - 'auto' (the screen's height over 1080) or a number (ui/mapScale.js).
+  // held map's interface scale - 'auto' (the screen's height over 1080) or a number (ui/map/mapScale.js).
   mapScale: 'auto',
   // EVERY-STANDING (FIELD BUGS 2026-10-09e, "Could we have a setting to see our reputation with every guild/kingdoms?"):
   // the character sheet's Standing page lists every organization's standing, not only the player's memberships
-  // (systems/factionStanding.js). STANDING-ON (2026-10-11, Mac: "should be on by default"): on - the shelf writes no
+  // (systems/faction/factionStanding.js). STANDING-ON (2026-10-11, Mac: "should be on by default"): on - the shelf writes no
   // default (PREF1), so a player who never pressed the row moves with it, and one who pressed it off keeps their Off.
   standingAll: true,
   // HUD-MOVE (2026-10-01, Mac: "make chat, hp mana stamina bar segment and all the element moveable and add a reset UI
   // and lock UI in the settings (lock should be on by default)"): the Enhanced Plus HUD's own layout. `hudLocked` is the
   // lock (on: nothing moves, the HUD is pointer-transparent as ever); `hudLayout` is { id: { x, y } }, each piece's
-  // nudge in screen pixels from where the sheet stands it (ui/hudLayout.js). null is every piece where the sheet puts it.
+  // nudge in screen pixels from where the sheet stands it (ui/hud/hudLayout.js). null is every piece where the sheet puts it.
   hudLocked: true,
   hudLayout: null,
   // HUD-MOVE (Mac: "an option to move the magicka, health and fatigue bar separately"): off, the three bars move as
@@ -76,7 +76,7 @@ export const PREF_DEFAULTS = Object.freeze({
   // PLUS1 (2026-09-25): Enhanced Plus - the refreshed dress over the enhanced skin (systems/uiSkin.js isEnhancedPlus).
   // PLUS-ONLY (2026-09-26): `enhancedPlus`, the switch between it and plain Enhanced (PLUS-DEFAULT turned it on), is
   // RETIRED - plain Enhanced is gone and Plus is simply the enhanced skin. A stored value is read by nothing.
-  // PLUS2: Enhanced Plus's colours - a ui/enhancedFrame.js PLUS_THEMES id; 'slate' is the kit as it ships.
+  // PLUS2: Enhanced Plus's colours - a ui/enhanced/enhancedFrame.js PLUS_THEMES id; 'slate' is the kit as it ships.
   plusTheme: 'slate',  plusCursor: true,   // PLUS6: the gauntlet cursor - off gives the system pointer back
   plusItemHover: true,   // PLUS7: the inventory's hover card - off keeps the right-click menu, drops the card
   // GRIM1 (2026-10-09): THE DFO GRIMOIRE DRESS over the enhanced skin ('none' or 'grimoire' - ui/grimoireDress.js), and
@@ -97,18 +97,22 @@ export const PREF_DEFAULTS = Object.freeze({
   chatTrade: false, chatLfg: false,
   packPhoneDoll: false,   // PACK-PHONE (FIELD BUGS 2026-09-30): the pack's body on a phone - hidden until the header's Body shows it
   // PADPLUS1: the Plus controller - the crossbar ('auto' while a pad is connected, 'on', 'off'), run as a toggle on
-  // the Run button, and the version of the one-time layout move already made (ui/plusPad.js)
+  // the Run button, and the version of the one-time layout move already made (ui/plus/plusPad.js)
   plusCrossbar: 'auto', plusToggleRun: true, plusPadLayout: 0,
-  // PADPLUS10: the d-pad's tap and hold per direction (null = the defaults, ui/plusPad.js PLUS_DPAD_DEFAULTS) and the
+  // PADPLUS10: the d-pad's tap and hold per direction (null = the defaults, ui/plus/plusPad.js PLUS_DPAD_DEFAULTS) and the
   // two sticks' sensitivity multipliers - the Controller bindings window writes them
   plusDpad: null, plusStickLeft: 1, plusStickRight: 1,
   // PAD-CURSOR: the controller cursor's assisted feel (systems/padCursor.js) - its curve, ramp, boost and the pull to
   // a control; off is DFU's linear cursor, on both skins
   padCursorAssist: true,
   // TECH-FX (bible/05-Combat/Weapon-Techniques.md THE FEEL): how much a weapon technique moves the screen - its camera
-  // springs, its shake and the hands' dip (combat/techniqueFx.js techniqueMotion); 0 moves nothing on the screen (its
+  // springs, its shake and the hands' dip (combat/technique/techniqueFx.js techniqueMotion); 0 moves nothing on the screen (its
   // burst and its sound stay). GATHER-FEEL II: and a gathering tool's landed blow (systems/gatherBlow.js gatherBlowFeel)
   techniqueMotion: 1,
+  // EG-G1 (bible/11-Multiplayer/Elite-Gates.md section 25.7): THE SPIRE'S ACCESSIBILITY (ui/eliteGates/egAccess.js) - the danger
+  // palette ('standard' | 'contrast' | 'deutan' | 'tritan'), a danger fill's light (0.5-1), and reduced motion (the
+  // system's setting does the same)
+  dangerPalette: 'standard', telegraphFill: 1, reducedMotion: false,
   // PEERMENU1: the player menu's two binds, keyboard and controller, each { code, hold } (null = the defaults: hold E,
   // hold A - systems/peerMenuBind.js). Online only.
   peerMenuKey: null, peerMenuPad: null,
@@ -129,7 +133,7 @@ export const PREF_DEFAULTS = Object.freeze({
   // element... camera movement, character movement and a more phone
   // built feel"). The touch layer's own knobs - DFU has no touch input
   // (Ledger A, TI1) so none of these is a DFU setting and none may go
-  // in the baked catalog. Read at the point of use by ui/touch.js; set
+  // in the baked catalog. Read at the point of use by ui/touch/touch.js; set
   // from the Enhanced pane's Touch card, which mounts only where the
   // device reports touch.
   touchLookSensitivity: 1,   // a multiplier on the mouse sensitivity the drag already rides (0.25..4)
@@ -139,7 +143,7 @@ export const PREF_DEFAULTS = Object.freeze({
   touchGyroSensitivity: 1,   // 1 = a degree of phone is a degree of camera
   touchHaptics: true,        // a short vibration on a button, an armed swipe and a lock
   touchFullscreen: true,     // the first touch asks for fullscreen and a landscape lock where the browser allows it
-  // TOUCH-BUTTONS (2026-09-27): the corner's three slots, from the corner in (ui/touchButtons.js) - TI1's two, and
+  // TOUCH-BUTTONS (2026-09-27): the corner's three slots, from the corner in (ui/touch/touchButtons.js) - TI1's two, and
   // TOUCH-HOLD's Interact (2026-10-01 part four: the professions' E, which a phone never had)
   touchButton1: 'Jump',
   touchButton2: 'ReadyWeapon',
@@ -153,7 +157,7 @@ export const PREF_DEFAULTS = Object.freeze({
   gentleActs: false,
   showToTravellers: true,   // TV3: off - the region's travellers do not see where I am (my party always does)
   // MWA4 (2026-09-25): `mwArms` (MWA1's arms switch) is retired - the attached Morrowind files are the switch, and
-  // Remove data the off (combat/weaponRig.js autoBuildArms, ui/enhancedMenu.js morrowindCard). A stored value is
+  // Remove data the off (combat/weapon/weaponRig.js autoBuildArms, ui/enhanced/enhancedMenu.js morrowindCard). A stored value is
   // read by nothing.
   // 2026-09-17 (per-request): a peer without a Morrowind body is drawn as their class's animated sprite by default
   // (net/remotePlayers.js classMobileType/_syncMobilePeer) - the same billboard a hostile Warrior/Mage/etc. already
@@ -164,19 +168,19 @@ export const PREF_DEFAULTS = Object.freeze({
   peerAttackSounds: true,   // PEER-FS2: other players' swing sounds - on by default
   peerFootsteps: true,   // PEER-FS1: other players' footstep sounds - on by default
   // GATE-CROWD (2026-10-07, Mac: "some type of filter when there are too many people"): how many other players an
-  // Oblivion Gate's court draws at once - the nearest, the party always (net/gateCrowd.js GATE_CROWD_TIERS; 0 everyone,
+  // Oblivion Gate's court draws at once - the nearest, the party always (net/gate/gateCrowd.js GATE_CROWD_TIERS; 0 everyone,
   // the default - Mac: "The default other setting should be everyone"). Its GATE_CROWD_DEFAULT, pinned equal by
-  // test/gatecrowd.test.js and not imported: the shelf is on the boot path, and the import made net/gateCrowd.js the
-  // entry's 69th file, past BOOT2's ceiling (test/boot2.test.js)
+  // test/systems/gatecrowd.test.js and not imported: the shelf is on the boot path, and the import made net/gate/gateCrowd.js the
+  // entry's 69th file, past BOOT2's ceiling (test/render/boot2.test.js)
   gateCrowd: 0,
   // PEER-RANGE (2026-10-10, the owner: "the rendering of players far out is contributing to poor performance"): how far
-  // out, in metres on the ground, other players are drawn - my party and the one I duel always (net/peerRange.js
+  // out, in metres on the ground, other players are drawn - my party and the one I duel always (net/peer/peerRange.js
   // PEER_RANGE_TIERS; 0 everyone the relay sends). The default 300, past a player's shot (200 m); its PEER_RANGE_DEFAULT, pinned
-  // equal by test/peerrange.test.js and not imported, for GATE-CROWD's reason above
+  // equal by test/systems/peerrange.test.js and not imported, for GATE-CROWD's reason above
   peerRange: 300,
   // YARD-RANGE (2026-10-11, a player: "20-40 fps in cities"): how far out, in metres on the ground, other players' yards are
   // drawn - one's own always (scenes/homeYards.js YARD_RANGE_TIERS; 0 none). The default 300, the distance every yard was
-  // drawn at before; its YARD_RANGE_DEFAULT, pinned equal by test/yardrange.test.js and not imported, for GATE-CROWD's reason
+  // drawn at before; its YARD_RANGE_DEFAULT, pinned equal by test/scenes/yardrange.test.js and not imported, for GATE-CROWD's reason
   yardRange: 300,
   nightCrickets: true,   // SNDREP1: the night crickets loop (SoundClips.AmbientCrickets) - on by default; off silences it
   distantHowl: true,     // SNDREP1: the distant howl (SoundClips.AmbientDistantHowl) - on by default; off silences it
@@ -348,7 +352,7 @@ export function savePrefs() {
   catch (e) { console.warn('[uiPrefs] screen preferences could not be saved', e); return false; }
 }
 /** The shelf's real overrides: every key whose value differs from the
- *  default, plus `open` and the stamp. Pure; pinned in test/pref1_shelf.test.js. */
+ *  default, plus `open` and the stamp. Pure; pinned in test/systems/pref1_shelf.test.js. */
 export function overridesOf(prefs) {
   const out = {};
   for (const [k, v] of Object.entries(prefs ?? {})) {

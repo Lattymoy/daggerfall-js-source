@@ -5,8 +5,8 @@
     "old": "    const half = Math.floor(calculateTradePrice(cost, shopQuality, best, false) * ONLINE_SALE_SHARE);",
     "new": "    const half = Math.floor(calculateTradePrice(cost, shopQuality, { mercantile, personality }, false) * ONLINE_SALE_SHARE);",
     "tests": [
-      "test/fb0929d_mercantile.test.js",
-      "test/realm0.test.js"
+      "test/systems/fb0929d_mercantile.test.js",
+      "test/systems/realm0.test.js"
     ]
   },
   {
@@ -15,8 +15,8 @@
     "old": "    const best = { mercantile: ONLINE_HAGGLE_MAX, personality: ONLINE_HAGGLE_MAX };",
     "new": "    const best = { mercantile: 50, personality: 50 };",
     "tests": [
-      "test/fb0929d_mercantile.test.js",
-      "test/realm0.test.js"
+      "test/systems/fb0929d_mercantile.test.js",
+      "test/systems/realm0.test.js"
     ]
   },
   {
@@ -25,8 +25,8 @@
     "old": "    const best = { mercantile: ONLINE_HAGGLE_MAX, personality: ONLINE_HAGGLE_MAX };",
     "new": "    const best = { mercantile: ONLINE_HAGGLE_MAX, personality };",
     "tests": [
-      "test/fb0929d_mercantile.test.js",
-      "test/realm0.test.js"
+      "test/systems/fb0929d_mercantile.test.js",
+      "test/systems/realm0.test.js"
     ]
   },
   {
@@ -35,8 +35,8 @@
     "old": "    if (!online) return sale;\n    const best",
     "new": "    return sale;\n    const best",
     "tests": [
-      "test/fb0929d_mercantile.test.js",
-      "test/realm0.test.js"
+      "test/systems/fb0929d_mercantile.test.js",
+      "test/systems/realm0.test.js"
     ]
   },
   {
@@ -45,9 +45,9 @@
     "old": "    return Math.max(slope, Math.min(sale, half, 1));",
     "new": "    return Math.min(sale, half);",
     "tests": [
-      "test/fb0929d_mercantile.test.js",
-      "test/fb0929f_mercantile.test.js",
-      "test/realm0.test.js"
+      "test/systems/fb0929d_mercantile.test.js",
+      "test/systems/fb0929f_mercantile.test.js",
+      "test/systems/realm0.test.js"
     ]
   },
   {
@@ -56,9 +56,9 @@
     "old": "export const ONLINE_SALE_SKILL_WEIGHT = 0.5;",
     "new": "export const ONLINE_SALE_SKILL_WEIGHT = 1;",
     "tests": [
-      "test/fb0929d_mercantile.test.js",
-      "test/fb0929f_mercantile.test.js",
-      "test/realm0.test.js"
+      "test/systems/fb0929d_mercantile.test.js",
+      "test/systems/fb0929f_mercantile.test.js",
+      "test/systems/realm0.test.js"
     ]
   },
   {
@@ -67,9 +67,9 @@
     "old": "(ONLINE_SALE_SKILL_WEIGHT * Math.min(sale, top)) / top));",
     "new": "(ONLINE_SALE_SKILL_WEIGHT * sale) / Math.min(sale, top)));",
     "tests": [
-      "test/fb0929d_mercantile.test.js",
-      "test/fb0929f_mercantile.test.js",
-      "test/realm0.test.js"
+      "test/systems/fb0929d_mercantile.test.js",
+      "test/systems/fb0929f_mercantile.test.js",
+      "test/systems/realm0.test.js"
     ]
   },
   {
@@ -78,9 +78,9 @@
     "old": "    const top = calculateTradePrice(cost, shopQuality, best, true, { online: false });",
     "new": "    const top = calculateTradePrice(cost, shopQuality, best, false, { online: false });",
     "tests": [
-      "test/fb0929d_mercantile.test.js",
-      "test/fb0929f_mercantile.test.js",
-      "test/realm0.test.js"
+      "test/systems/fb0929d_mercantile.test.js",
+      "test/systems/fb0929f_mercantile.test.js",
+      "test/systems/realm0.test.js"
     ]
   },
   {
@@ -89,9 +89,9 @@
     "old": "    return Math.max(slope, Math.min(sale, half, 1));",
     "new": "    return slope;",
     "tests": [
-      "test/fb0929d_mercantile.test.js",
-      "test/fb0929f_mercantile.test.js",
-      "test/realm0.test.js"
+      "test/systems/fb0929d_mercantile.test.js",
+      "test/systems/fb0929f_mercantile.test.js",
+      "test/systems/realm0.test.js"
     ]
   }
 ]

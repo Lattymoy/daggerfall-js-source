@@ -5,7 +5,7 @@
     "old": "Object.freeze({ rank: 1, at: 15, key: 'sworn'",
     "new": "Object.freeze({ rank: 1, at: 20, key: 'sworn'",
     "tests": [
-      "test/captlog.test.js"
+      "test/systems/naval/captlog.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "Object.freeze({ rank: 2, at: 50, key: 'privateer'",
     "new": "Object.freeze({ rank: 2, at: 60, key: 'privateer'",
     "tests": [
-      "test/captlog.test.js"
+      "test/systems/naval/captlog.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "Object.freeze({ rank: 3, at: 120, key: 'commodore'",
     "new": "Object.freeze({ rank: 3, at: 100, key: 'commodore'",
     "tests": [
-      "test/captlog.test.js"
+      "test/systems/naval/captlog.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "Object.freeze({ rank: 4, at: 250, key: 'admiral'",
     "new": "Object.freeze({ rank: 4, at: 200, key: 'admiral'",
     "tests": [
-      "test/captlog.test.js"
+      "test/systems/naval/captlog.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "for (const x of CROWN_RANKS) if (s >= x.at) r = x;",
     "new": "for (const x of CROWN_RANKS) if (s > x.at) r = x;",
     "tests": [
-      "test/captlog.test.js"
+      "test/systems/naval/captlog.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "wanting: Math.max(0, next.at - (Number(standing) || 0))",
     "new": "wanting: next.at",
     "tests": [
-      "test/captlog.test.js"
+      "test/systems/naval/captlog.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "Object.freeze({ yard: 0.05, pay: 0.1, offers: 1,",
     "new": "Object.freeze({ yard: 0.1, pay: 0.1, offers: 1,",
     "tests": [
-      "test/captlog.test.js"
+      "test/systems/naval/captlog.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "Object.freeze({ yard: 0.1, pay: 0.2, offers: 1, marque: true,",
     "new": "Object.freeze({ yard: 0.1, pay: 0.2, offers: 1, marque: false,",
     "tests": [
-      "test/captlog.test.js"
+      "test/systems/naval/captlog.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "Object.freeze({ yard: 0.15, pay: 0.3, offers: 2, marque: true, admiralty: true, seasoned: true, relief: false }),",
     "new": "Object.freeze({ yard: 0.15, pay: 0.3, offers: 2, marque: true, admiralty: false, seasoned: true, relief: false }),",
     "tests": [
-      "test/captlog.test.js"
+      "test/systems/naval/captlog.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "Object.freeze({ yard: 0.2, pay: 0.4, offers: 2, marque: true, admiralty: true, seasoned: true, relief: true }),",
     "new": "Object.freeze({ yard: 0.2, pay: 0.4, offers: 2, marque: true, admiralty: true, seasoned: true, relief: false }),",
     "tests": [
-      "test/captlog.test.js"
+      "test/systems/naval/captlog.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "export const PERKS_REFUSED_AT = 25;",
     "new": "export const PERKS_REFUSED_AT = 50;",
     "tests": [
-      "test/captlog.test.js"
+      "test/systems/naval/captlog.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "((Number(notoriety) || 0) >= PERKS_REFUSED_AT ? RANK_PERKS[0]",
     "new": "((Number(notoriety) || 0) > PERKS_REFUSED_AT ? RANK_PERKS[0]",
     "tests": [
-      "test/captlog.test.js"
+      "test/systems/naval/captlog.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "export const DEED_STANDING = Object.freeze({ sunk: 2, taken: 3, repelled: 2 });",
     "new": "export const DEED_STANDING = Object.freeze({ sunk: 3, taken: 3, repelled: 2 });",
     "tests": [
-      "test/captlog.test.js"
+      "test/systems/naval/captlog.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "export const DEED_STANDING = Object.freeze({ sunk: 2, taken: 3, repelled: 2 });",
     "new": "export const DEED_STANDING = Object.freeze({ sunk: 2, taken: 3, repelled: 1 });",
     "tests": [
-      "test/captlog.test.js"
+      "test/systems/naval/captlog.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "export const PIRACY_STANDING = Object.freeze({ fire: -5, sink: -8, board: -10 });",
     "new": "export const PIRACY_STANDING = Object.freeze({ fire: -2, sink: -8, board: -10 });",
     "tests": [
-      "test/captlog.test.js"
+      "test/systems/naval/captlog.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "export const MARQUE_STANDING = Object.freeze({ sink: 2, board: 3 });",
     "new": "export const MARQUE_STANDING = Object.freeze({ sink: 2, board: 2 });",
     "tests": [
-      "test/captlog.test.js"
+      "test/systems/naval/captlog.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "const size = (cls) => Math.max(1, Math.min(4, (cls?.cargo ?? 1) | 0));",
     "new": "const size = (cls) => 1;",
     "tests": [
-      "test/captlog.test.js"
+      "test/systems/naval/captlog.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "if (marque) return act === 'sink' ? MARQUE_STANDING.sink * size(cls)",
     "new": "if (false) return act === 'sink' ? MARQUE_STANDING.sink * size(cls)",
     "tests": [
-      "test/captlog.test.js"
+      "test/systems/naval/captlog.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "if (act === 'sink' && kind && kind in log.sunk) log.sunk[kind]++;",
     "new": "if (act === 'sink' && kind === 'x') log.sunk[kind]++;",
     "tests": [
-      "test/captlog.test.js"
+      "test/systems/naval/captlog.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "if (act === 'repel') log.repelled++;",
     "new": "if (act === 'x') log.repelled++;",
     "tests": [
-      "test/captlog.test.js"
+      "test/systems/naval/captlog.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "if (legend && (act === 'sink' || act === 'board') && !log.legends.includes(legend)) {",
     "new": "if (legend && (act === 'sink' || act === 'board')) {",
     "tests": [
-      "test/captlog.test.js"
+      "test/systems/naval/captlog.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "for (const c of crownNames()) { const ch = regard(c, LEGEND_STANDING); if (ch) changes.push(ch); }",
     "new": "for (const c of crownNames().slice(0, 1)) { const ch = regard(c, LEGEND_STANDING); if (ch) changes.push(ch); }",
     "tests": [
-      "test/captlog.test.js"
+      "test/systems/naval/captlog.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "if (trade === 'ether') return changes;   // the Eltheric Ocean knows no crown",
     "new": "if (trade === 'x') return changes;   // the Eltheric Ocean knows no crown",
     "tests": [
-      "test/captlog.test.js"
+      "test/systems/naval/captlog.test.js"
     ]
   },
   {
@@ -212,7 +212,7 @@
     "old": "const to = under ?? crown;",
     "new": "const to = crown ?? under;",
     "tests": [
-      "test/captlog.test.js"
+      "test/systems/naval/captlog.test.js"
     ]
   },
   {
@@ -221,7 +221,7 @@
     "old": "standing[crown] = Math.max(CROWN_STANDING_MIN, Math.min(CROWN_STANDING_MAX, Math.round(standing[crown] + n)));",
     "new": "standing[crown] = Math.max(CROWN_STANDING_MIN, Math.round(standing[crown] + n));",
     "tests": [
-      "test/captlog.test.js"
+      "test/systems/naval/captlog.test.js"
     ]
   },
   {
@@ -230,7 +230,7 @@
     "old": "    rankChanges.push(change);\n",
     "new": "",
     "tests": [
-      "test/captlog.test.js"
+      "test/systems/naval/captlog.test.js"
     ]
   },
   {
@@ -239,7 +239,7 @@
     "old": "if (LOG_CONTRACTS.includes(field)) { log.contracts[field] += Math.floor(n); return; }",
     "new": "if (LOG_CONTRACTS.includes(field)) return;",
     "tests": [
-      "test/captlog.test.js"
+      "test/systems/naval/captlog.test.js"
     ]
   },
   {
@@ -248,7 +248,7 @@
     "old": "if (!Number.isFinite(n) || n <= 0) return;\n      if (LOG_CONTRACTS",
     "new": "if (!Number.isFinite(n)) return;\n      if (LOG_CONTRACTS",
     "tests": [
-      "test/captlog.test.js"
+      "test/systems/naval/captlog.test.js"
     ]
   },
   {
@@ -257,7 +257,7 @@
     "old": "sailed(m) { if (Number.isFinite(m) && m > 0 && m < 1e5) log.sailed += m; },",
     "new": "sailed(m) { if (Number.isFinite(m) && m > 0) log.sailed += m; },",
     "tests": [
-      "test/captlog.test.js"
+      "test/systems/naval/captlog.test.js"
     ]
   },
   {
@@ -266,7 +266,7 @@
     "old": "(!log.best || worth > log.best.worth)",
     "new": "(true)",
     "tests": [
-      "test/captlog.test.js"
+      "test/systems/naval/captlog.test.js"
     ]
   },
   {
@@ -275,7 +275,7 @@
     "old": "deepest(d) { if (Number.isFinite(d) && d > log.deepest) log.deepest = Math.floor(d); },",
     "new": "deepest(d) { if (Number.isFinite(d)) log.deepest = Math.floor(d); },",
     "tests": [
-      "test/captlog.test.js"
+      "test/systems/naval/captlog.test.js"
     ]
   },
   {
@@ -284,7 +284,7 @@
     "old": "marque: (now) => (marque && Number.isFinite(now) && now < marque.until ? { ...marque } : null),",
     "new": "marque: (now) => (marque && Number.isFinite(now) && now <= marque.until ? { ...marque } : null),",
     "tests": [
-      "test/captlog.test.js"
+      "test/systems/naval/captlog.test.js"
     ]
   },
   {
@@ -293,7 +293,7 @@
     "old": "setMarque(crown, until) { if (crownNames().includes(crown) && Number.isFinite(until))",
     "new": "setMarque(crown, until) { if (Number.isFinite(until))",
     "tests": [
-      "test/captlog.test.js"
+      "test/systems/naval/captlog.test.js"
     ]
   },
   {
@@ -302,7 +302,7 @@
     "old": "standing[c] = Number.isFinite(v) ? Math.max(CROWN_STANDING_MIN, Math.min(CROWN_STANDING_MAX, Math.round(v))) : 0;",
     "new": "standing[c] = Number.isFinite(v) ? Math.round(v) : 0;",
     "tests": [
-      "test/captlog.test.js"
+      "test/systems/naval/captlog.test.js"
     ]
   },
   {
@@ -311,7 +311,7 @@
     "old": "for (const k of ['repelled', 'claimed', 'plunder', 'earned', 'traded', 'maps', 'islands', 'deepest']) log[k] = whole(l[k]);",
     "new": "for (const k of ['repelled', 'claimed', 'earned', 'traded', 'maps', 'islands', 'deepest']) log[k] = whole(l[k]);",
     "tests": [
-      "test/captlog.test.js"
+      "test/systems/naval/captlog.test.js"
     ]
   },
   {
@@ -320,7 +320,7 @@
     "old": "if (r.marque && crownNames().includes(r.marque.crown) && Number.isFinite(r.marque.until))",
     "new": "if (r.marque && Number.isFinite(r.marque.until))",
     "tests": [
-      "test/captlog.test.js"
+      "test/systems/naval/captlog.test.js"
     ]
   },
   {
@@ -329,7 +329,7 @@
     "old": "['Leagues sailed', leagueWords(log.sailed)],\n  ];",
     "new": "];",
     "tests": [
-      "test/captlog.test.js"
+      "test/systems/naval/captlog.test.js"
     ]
   },
   {
@@ -338,7 +338,7 @@
     "old": "const floor = Number.isFinite(rank.at) ? rank.at : Math.min(0, standing);",
     "new": "const floor = Math.min(0, standing);",
     "tests": [
-      "test/captlog.test.js"
+      "test/systems/naval/captlog.test.js"
     ]
   },
   {
@@ -347,7 +347,7 @@
     "old": "if (shipClass.faction === 'navy') return crownOf(0, 0, null, region).name;",
     "new": "if (shipClass.faction === 'navy') return null;",
     "tests": [
-      "test/captlog.test.js"
+      "test/systems/naval/captlog.test.js"
     ]
   },
   {
@@ -356,7 +356,7 @@
     "old": "if (home && r() < FLAG_HOME_SHARE) return home.name;",
     "new": "if (home && r() < 0) return home.name;",
     "tests": [
-      "test/captlog.test.js"
+      "test/systems/naval/captlog.test.js"
     ]
   },
   {
@@ -365,7 +365,7 @@
     "old": "if (shipClass.faction !== 'merchant') return null;",
     "new": "if (shipClass.faction === 'navy') return null;",
     "tests": [
-      "test/captlog.test.js"
+      "test/systems/naval/captlog.test.js"
     ]
   },
   {
@@ -374,7 +374,7 @@
     "old": "} else if (ship.faction === 'pirate' && act === 'repel') {",
     "new": "} else if (ship.faction === 'pirate' && act === 'x') {",
     "tests": [
-      "test/captlog.test.js"
+      "test/systems/naval/captlog.test.js"
     ]
   },
   {
@@ -383,106 +383,106 @@
     "old": "out.rewards.push({ ...(ship.flagship ? PIRATE_REWARD.flagship : PIRATE_REWARD.repelled), region });",
     "new": "out.rewards.push({ ...PIRATE_REWARD.repelled, region });",
     "tests": [
-      "test/captlog.test.js"
+      "test/systems/naval/captlog.test.js"
     ]
   },
   {
     "name": "CL-host-deed",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    cap.deed?.(act, s.cls, paid ? { crown: null } : { crown, marque: under });",
     "new": "    void cap;",
     "tests": [
-      "test/captlog.test.js"
+      "test/systems/naval/captlog.test.js"
     ]
   },
   {
     "name": "CL-host-rival-regard",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (under) cap.regard?.(s.flag, standingFor(act, s.cls));",
     "new": "    if (false) cap.regard?.(s.flag, standingFor(act, s.cls));",
     "tests": [
-      "test/captlog.test.js"
+      "test/systems/naval/captlog.test.js"
     ]
   },
   {
     "name": "CL-host-rival-crown",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    const crown = under ? s.flag : crownOfShip(s);",
     "new": "    const crown = crownOfShip(s);",
     "tests": [
-      "test/captlog.test.js"
+      "test/systems/naval/captlog.test.js"
     ]
   },
   {
     "name": "CL-host-tear",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      deps.captain?.tearMarque?.();\n",
     "new": "",
     "tests": [
-      "test/captlog.test.js"
+      "test/systems/naval/captlog.test.js"
     ]
   },
   {
     "name": "CL-host-quest-pays",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "for (const r of questPays || paid ? [] : law.rewards) {",
     "new": "for (const r of paid ? [] : law.rewards) {",
     "tests": [
-      "test/captlog.test.js"
+      "test/systems/naval/captlog.test.js"
     ]
   },
   {
     "name": "CL-host-repel-charged",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      chargePlayer('repel', entry, { questPays: !!b.quest && entry.ship.cls.flagship });",
     "new": "      void 0;",
     "tests": [
-      "test/captlog.test.js"
+      "test/systems/naval/captlog.test.js"
     ]
   },
   {
     "name": "CL-host-witness",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "w.ship.flag !== signed && dist2d(w.ship.pos, s.pos) < WITNESS_RANGE",
     "new": "dist2d(w.ship.pos, s.pos) < WITNESS_RANGE",
     "tests": [
-      "test/captlog.test.js"
+      "test/systems/naval/captlog.test.js"
     ]
   },
   {
     "name": "CL-host-flag",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    ship.flag = ether ? etherFlagOf(cls) : flagOf(cls, spec.seed, region);",
     "new": "    ship.flag = null;",
     "tests": [
-      "test/captlog.test.js"
+      "test/systems/naval/captlog.test.js"
     ]
   },
   {
     "name": "CL-host-sailed",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "deps.captain?.sailed?.(Math.hypot(v[0], v[2]) * total);",
     "new": "deps.captain?.sailed?.(0);",
     "tests": [
-      "test/captlog.test.js"
+      "test/systems/naval/captlog.test.js"
     ]
   },
   {
     "name": "CL-host-plunder",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    tallyPlunder(all.filter((it) => !left.includes(it)));",
     "new": "    void all;",
     "tests": [
-      "test/captlog.test.js"
+      "test/systems/naval/captlog.test.js"
     ]
   },
   {
     "name": "CL-host-claimed",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    deps.captain?.note?.('claimed');",
     "new": "    void 0;",
     "tests": [
-      "test/captlog.test.js"
+      "test/systems/naval/captlog.test.js"
     ]
   },
   {
@@ -491,7 +491,7 @@
     "old": "  registerModSaveData(CAPTAIN_SAVE_VENDOR, { ...captainLedger, restoreSaveData: (r) => { _rankLines.length = 0; captainLedger.restoreSaveData(r); } });",
     "new": "  void captainLedger;",
     "tests": [
-      "test/captlog.test.js"
+      "test/systems/naval/captlog.test.js"
     ]
   },
   {
@@ -500,7 +500,7 @@
     "old": "marque: () => captainLedger.marque(Math.floor(playerTicker.ownMinutes)),",
     "new": "marque: () => captainLedger.marque(Math.floor(worldMinutes())),",
     "tests": [
-      "test/captlog.test.js"
+      "test/systems/naval/captlog.test.js"
     ]
   },
   {
@@ -509,16 +509,16 @@
     "old": "deed: (act, cls, o) => { const r = captainLedger.deed(act, cls, o); captainSay(); return r; },",
     "new": "deed: (act, cls, o) => captainLedger.deed(act, cls, o),",
     "tests": [
-      "test/captlog.test.js"
+      "test/systems/naval/captlog.test.js"
     ]
   },
   {
     "name": "CL-host-quest-twice",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "{ questPays: !!b.quest && entry.ship.cls.flagship }",
     "new": "{ questPays: false }",
     "tests": [
-      "test/captlog.test.js"
+      "test/systems/naval/captlog.test.js"
     ]
   }
 ]

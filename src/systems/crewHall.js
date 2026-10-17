@@ -32,7 +32,7 @@
 //
 // Pure: no DOM, no clock (the host hands the day). Its seeds its own (mulberry32 on hash32), the global stream put back.
 import { hash32 } from '../world/spawnedDungeons.js';
-import { mulberry32 } from '../combat/bloodArt.js';
+import { mulberry32 } from '../combat/blood/bloodArt.js';
 import { residentName } from './livingWorld/census.js';
 import { getNameBankOfRegion, GENDERS } from '../characters/nameHelper.js';
 import { PLAYER_CREW, playerCrewCount, CREW_SHOWN } from './naval/crewLife.js';

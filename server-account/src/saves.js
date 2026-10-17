@@ -17,7 +17,7 @@
 //
 // ═══ A SLOT IS (character, save name) ══════════════════════════════
 //
-// NOT the local integer key. `systems/saveSlots.js` files a slot under
+// NOT the local integer key. `systems/save/saveSlots.js` files a slot under
 // the FIRST FREE integer (SAV4, from DFU's CreateNewSavePath), and that
 // integer is a fact about ONE store: two devices that saved in a
 // different order hold the same character's QuickSave under different

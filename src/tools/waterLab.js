@@ -9,12 +9,12 @@
 import { Renderer } from '../render/renderer.js';
 import { EnhancedSkyRenderer, skyState, sunSkyDirection } from '../render/enhancedSky.js';
 import { waterUniforms, buildWaterIndices } from '../render/waterSurface.js';
-import { WATER_DRAW_MASK_TABLE } from '../world/waterCorners.js';   // WATER-DRAW1: the lab is the PASS's lab
-import { buildTerrainGrid, buildTerrainIndices, convertTilemap, TERRAIN_TILE_DIM } from '../world/terrainSurface.js';
-import { waterBedOf } from '../world/waterBed.js';
-import { generateTileData, assignTiles } from '../world/terrainTiles.js';
-import { HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, SCALED_OCEAN_ELEVATION, TERRAIN_SIZE, STREAMING_TERRAIN_SCALE } from '../world/terrainSampler.js';
-import { WIND_ROW_CALM, WIND_ROW_SPAN } from '../systems/wind.js';
+import { WATER_DRAW_MASK_TABLE } from '../world/water/waterCorners.js';   // WATER-DRAW1: the lab is the PASS's lab
+import { buildTerrainGrid, buildTerrainIndices, convertTilemap, TERRAIN_TILE_DIM } from '../world/terrain/terrainSurface.js';
+import { waterBedOf } from '../world/water/waterBed.js';
+import { generateTileData, assignTiles } from '../world/terrain/terrainTiles.js';
+import { HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, SCALED_OCEAN_ELEVATION, TERRAIN_SIZE, STREAMING_TERRAIN_SCALE } from '../world/terrain/terrainSampler.js';
+import { WIND_ROW_CALM, WIND_ROW_SPAN } from '../systems/wind/wind.js';
 import { perspective, lookAt, identity, mirrorProjectionX } from '../world/mat4.js';
 
 const params = new URLSearchParams(location.search);

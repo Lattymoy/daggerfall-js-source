@@ -85,7 +85,7 @@ DFU's own layout:
 
 The credits carry the bundled pack's name, authors, licence and source. A pack's textures and videos are edits of
 Bethesda's assets and are never bundled, whatever the pack's terms say. `node tools/l10nPack.mjs` checks every bundled
-pack, and test/l10n6_tools.test.js holds the tree to it. No pack is bundled yet: one is added only once its authors'
+pack, and test/tooling/l10n6_tools.test.js holds the tree to it. No pack is bundled yet: one is added only once its authors'
 permission is in hand.
 
 ## The pipeline

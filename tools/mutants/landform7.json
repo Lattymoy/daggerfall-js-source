@@ -5,7 +5,7 @@
     "old": "  if (hill !== NO_HILLS && LANDFORM_DIALS.ease.keep < 1) {",
     "new": "  if (hill !== NO_HILLS && LANDFORM_DIALS.ease.keep < 0) {",
     "tests": [
-      "test/landform7.test.js"
+      "test/world/terrain/landform7.test.js"
     ]
   },
   {
@@ -14,8 +14,8 @@
     "old": "ease: Object.freeze({ road: 40, track: 28, keep: 0.35 }),",
     "new": "ease: Object.freeze({ road: 40, track: 28, keep: 0.6 }),",
     "tests": [
-      "test/landform7.test.js",
-      "test/auditlandforms.test.js"
+      "test/world/terrain/landform7.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -24,8 +24,8 @@
     "old": "ease: Object.freeze({ road: 40, track: 28, keep: 0.35 }),",
     "new": "ease: Object.freeze({ road: 20, track: 28, keep: 0.35 }),",
     "tests": [
-      "test/landform7.test.js",
-      "test/auditlandforms.test.js"
+      "test/world/terrain/landform7.test.js",
+      "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
@@ -34,7 +34,7 @@
     "old": "      const k = 1 - (1 - LANDFORM_DIALS.ease.keep) * (1 - smooth01(Math.sqrt(d2) / v.radius));",
     "new": "      const k = 1 - (1 - LANDFORM_DIALS.ease.keep) * (1 - Math.sqrt(d2) / v.radius);",
     "tests": [
-      "test/landform7.test.js"
+      "test/world/terrain/landform7.test.js"
     ]
   },
   {
@@ -43,7 +43,7 @@
     "old": "      if (k < e) e = k;",
     "new": "      e = k;",
     "tests": [
-      "test/landform7.test.js"
+      "test/world/terrain/landform7.test.js"
     ]
   },
   {
@@ -52,7 +52,7 @@
     "old": "    for (const [li, radius] of [[2, LANDFORM_DIALS.ease.track], [3, LANDFORM_DIALS.ease.road]]) {",
     "new": "    for (const [li, radius] of [[3, LANDFORM_DIALS.ease.road]]) {",
     "tests": [
-      "test/landform7.test.js"
+      "test/world/terrain/landform7.test.js"
     ]
   },
   {
@@ -61,7 +61,7 @@
     "old": "    for (const [li, radius] of [[2, LANDFORM_DIALS.ease.track], [3, LANDFORM_DIALS.ease.road]]) {",
     "new": "    for (const [li, radius] of [[2, LANDFORM_DIALS.ease.road], [3, LANDFORM_DIALS.ease.road]]) {",
     "tests": [
-      "test/landform7.test.js"
+      "test/world/terrain/landform7.test.js"
     ]
   },
   {
@@ -70,7 +70,7 @@
     "old": "      const segs = nets[li] ? armsAbout(nets[li], px, py, 1, span, half) : [];",
     "new": "      const segs = nets[li] ? armsAbout(nets[li], px, py, 0, span, half) : [];",
     "tests": [
-      "test/landform7.test.js"
+      "test/world/terrain/landform7.test.js"
     ]
   },
   {
@@ -79,7 +79,7 @@
     "old": "      if (easeways.length) hh *= easeAt(gx, gy);\n      if (valleys.length) hh = carve(gx, gy, hh, deepOut[0]);",
     "new": "      if (valleys.length) hh = carve(gx, gy, hh, deepOut[0]);\n      if (easeways.length) hh *= easeAt(gx, gy);",
     "tests": [
-      "test/landform7.test.js"
+      "test/world/terrain/landform7.test.js"
     ]
   },
   {
@@ -88,8 +88,8 @@
     "old": "      if (easeways.length) hh *= easeAt(gx, gy);",
     "new": "      if (easeways.length && list === near) hh *= easeAt(gx, gy);",
     "tests": [
-      "test/landform7.test.js",
-      "test/landform45.test.js"
+      "test/world/terrain/landform7.test.js",
+      "test/world/terrain/landform45.test.js"
     ]
   }
 ]

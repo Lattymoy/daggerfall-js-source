@@ -5,7 +5,7 @@
     "old": "result = 100 - entityEnchantArmorMod(target) - entityArmorPoints(target, struckBodyPart);",
     "new": "result = 100 - entityEnchantArmorMod(target) + entityArmorPoints(target, struckBodyPart);",
     "tests": [
-      "test/pcaao.test.js"
+      "test/systems/pcaao.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "      foe._killedBy = fromPlayer && peer && typeof peerId === 'string' ? peerId : null;   // AUDIT SET P-M3: whose blow - the joiner's own record says so (roomRecord's `v`)\n",
     "new": "",
     "tests": [
-      "test/audit68_dungeonctx.test.js"
+      "test/systems/audit68_dungeonctx.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": " if (f.dead && typeof f._killedBy === 'string' && performance.now() - (f._killedAt ?? -Infinity) <= KILLED_BY_MS) r.v = f._killedBy;",
     "new": "",
     "tests": [
-      "test/audit68_dungeonctx.test.js"
+      "test/systems/audit68_dungeonctx.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "if (r.d === 1 && !f.dead && r.v != null && r.v === (opts.selfId?.() ?? null)) reportPlayerKill(f.entity, REMOTE_KILL);",
     "new": "if (r.d === 1 && !f.dead && r.v != null) reportPlayerKill(f.entity, REMOTE_KILL);",
     "tests": [
-      "test/audit68_dungeonctx.test.js"
+      "test/systems/audit68_dungeonctx.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    f._killedBy = null;   // AUDIT SET P-M3: and its next death names its own striker\n",
     "new": "",
     "tests": [
-      "test/audit68_dungeonctx.test.js"
+      "test/systems/audit68_dungeonctx.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "|| r.d !== 1) return null; out.v = r.v; }",
     "new": ") return null; out.v = r.v; }",
     "tests": [
-      "test/audit68_dungeonctx.test.js"
+      "test/systems/audit68_dungeonctx.test.js"
     ]
   }
 ]

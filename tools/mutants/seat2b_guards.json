@@ -1,335 +1,335 @@
 [
   {
     "name": "SEAT2b2c-guards-count",
-    "file": "src/net/siegeRef.js",
+    "file": "src/net/siege/siegeRef.js",
     "old": "export const SIEGE_BARRACKS_GUARDS = Object.freeze([0, 2, 4, 6]);",
     "new": "export const SIEGE_BARRACKS_GUARDS = Object.freeze([0, 2, 4, 5]);",
     "tests": [
-      "test/seat2b_guards_law.test.js"
+      "test/net/seat2b_guards_law.test.js"
     ]
   },
   {
     "name": "SEAT2b2c-revolt-rebels",
-    "file": "src/net/siegeRef.js",
+    "file": "src/net/siege/siegeRef.js",
     "old": "captainRenown: 50, rebels: 12, windowMs: 2 * 3600 * 1000, ringM: 4 }",
     "new": "captainRenown: 50, rebels: 11, windowMs: 2 * 3600 * 1000, ringM: 4 }",
     "tests": [
-      "test/seat2b_guards_law.test.js"
+      "test/net/seat2b_guards_law.test.js"
     ]
   },
   {
     "name": "SEAT2b2c-revolt-ring",
-    "file": "src/net/siegeRef.js",
+    "file": "src/net/siege/siegeRef.js",
     "old": "rebels: 12, windowMs: 2 * 3600 * 1000, ringM: 4 }",
     "new": "rebels: 12, windowMs: 2 * 3600 * 1000, ringM: 5 }",
     "tests": [
-      "test/seat2b_guards_law.test.js"
+      "test/net/seat2b_guards_law.test.js"
     ]
   },
   {
     "name": "SEAT2b2c-revolt-length",
-    "file": "src/net/siegeRef.js",
+    "file": "src/net/siege/siegeRef.js",
     "old": "tourney: 20 * 60_000, revolt: 2 * 3600 * 1000 });",
     "new": "tourney: 20 * 60_000, revolt: 3600 * 1000 });",
     "tests": [
-      "test/seat2b_guards_law.test.js"
+      "test/net/seat2b_guards_law.test.js"
     ]
   },
   {
     "name": "SEAT2b2c-guard-damage",
-    "file": "src/net/siegeRef.js",
+    "file": "src/net/siege/siegeRef.js",
     "old": "everyMs: 2000, damage: 20, aggroM: 12, leashM: 24 }",
     "new": "everyMs: 2000, damage: 21, aggroM: 12, leashM: 24 }",
     "tests": [
-      "test/seat2b_guards_law.test.js",
-      "test/seat2b_guards_relay.test.js"
+      "test/net/seat2b_guards_law.test.js",
+      "test/net/siege/seat2b_guards_relay.test.js"
     ]
   },
   {
     "name": "SEAT2b2c-guard-aggro",
-    "file": "src/net/siegeRef.js",
+    "file": "src/net/siege/siegeRef.js",
     "old": "damage: 20, aggroM: 12, leashM: 24 }",
     "new": "damage: 20, aggroM: 13, leashM: 24 }",
     "tests": [
-      "test/seat2b_guards_law.test.js"
+      "test/net/seat2b_guards_law.test.js"
     ]
   },
   {
     "name": "SEAT2b2c-guard-leash",
-    "file": "src/net/siegeRef.js",
+    "file": "src/net/siege/siegeRef.js",
     "old": "damage: 20, aggroM: 12, leashM: 24 }",
     "new": "damage: 20, aggroM: 12, leashM: 25 }",
     "tests": [
-      "test/seat2b_guards_law.test.js"
+      "test/net/seat2b_guards_law.test.js"
     ]
   },
   {
     "name": "SEAT2b2c-guard-pace",
-    "file": "src/net/siegeRef.js",
+    "file": "src/net/siege/siegeRef.js",
     "old": "guard: Object.freeze({ code: 1, side: 'defend', lv: 30, speed: 5,",
     "new": "guard: Object.freeze({ code: 1, side: 'defend', lv: 30, speed: 6,",
     "tests": [
-      "test/seat2b_guards_law.test.js"
+      "test/net/seat2b_guards_law.test.js"
     ]
   },
   {
     "name": "SEAT2b2c-guard-renown",
-    "file": "src/net/siegeRef.js",
+    "file": "src/net/siege/siegeRef.js",
     "old": "guard: Object.freeze({ code: 1, side: 'defend', lv: 30,",
     "new": "guard: Object.freeze({ code: 1, side: 'defend', lv: 31,",
     "tests": [
-      "test/seat2b_guards_law.test.js",
-      "test/seat2b_guards_relay.test.js"
+      "test/net/seat2b_guards_law.test.js",
+      "test/net/siege/seat2b_guards_relay.test.js"
     ]
   },
   {
     "name": "SEAT2b2c-id-bound",
-    "file": "src/net/siegeRef.js",
+    "file": "src/net/siege/siegeRef.js",
     "old": "Number(id.slice(1)) < SIEGE_NPC_MAX;",
     "new": "Number(id.slice(1)) <= SIEGE_NPC_MAX;",
     "tests": [
-      "test/seat2b_guards_law.test.js"
+      "test/net/seat2b_guards_law.test.js"
     ]
   },
   {
     "name": "SEAT2b2c-posts-order",
-    "file": "src/net/siegeRef.js",
+    "file": "src/net/siege/siegeRef.js",
     "old": "const posts = [field.throne, ...[...field.banners].reverse()];",
     "new": "const posts = [field.throne, ...field.banners];",
     "tests": [
-      "test/seat2b_guards_law.test.js"
+      "test/net/seat2b_guards_law.test.js"
     ]
   },
   {
     "name": "SEAT2b2c-posts-throne",
-    "file": "src/net/siegeRef.js",
+    "file": "src/net/siege/siegeRef.js",
     "old": "const posts = [field.throne, ...[...field.banners].reverse()];",
     "new": "const posts = [...[...field.banners].reverse()];",
     "tests": [
-      "test/seat2b_guards_law.test.js"
+      "test/net/seat2b_guards_law.test.js"
     ]
   },
   {
     "name": "SEAT2b2c-npcs-tourney",
-    "file": "src/net/siegeRef.js",
+    "file": "src/net/siege/siegeRef.js",
     "old": "npcs: kind === 'revolt' ? revoltRising(field) : w ? siegeGuards(field, w.barracks) : [],",
     "new": "npcs: kind === 'revolt' ? revoltRising(field) : siegeGuards(field, w?.barracks ?? 1),",
     "tests": [
-      "test/seat2b_guards_law.test.js"
+      "test/net/seat2b_guards_law.test.js"
     ]
   },
   {
     "name": "SEAT2b2c-revolt-banners",
-    "file": "src/net/siegeRef.js",
+    "file": "src/net/siege/siegeRef.js",
     "old": "banners: kind === 'revolt' ? [] : field.banners.map(",
     "new": "banners: field.banners.map(",
     "tests": [
-      "test/seat2b_guards_law.test.js",
-      "test/seat2b_guards_relay.test.js"
+      "test/net/seat2b_guards_law.test.js",
+      "test/net/siege/seat2b_guards_relay.test.js"
     ]
   },
   {
     "name": "SEAT2b2c-walk-pace",
-    "file": "src/net/siegeRef.js",
+    "file": "src/net/siege/siegeRef.js",
     "old": "(SIEGE_NPC[n.kind]?.speed ?? 0) * SIEGE_UNITS_PER_M);",
     "new": "(SIEGE_NPC[n.kind]?.speed ?? 0) * SIEGE_UNITS_PER_M * 1.5);",
     "tests": [
-      "test/seat2b_guards_law.test.js",
-      "test/seat2b_guards_client.test.js"
+      "test/net/seat2b_guards_law.test.js",
+      "test/net/siege/seat2b_guards_client.test.js"
     ]
   },
   {
     "name": "SEAT2b2c-pose-ground",
-    "file": "src/net/siegeRef.js",
+    "file": "src/net/siege/siegeRef.js",
     "old": "return { x, y: ground ?? y, z };",
     "new": "return { x, y, z };",
     "tests": [
-      "test/seat2b_guards_law.test.js"
+      "test/net/seat2b_guards_law.test.js"
     ]
   },
   {
     "name": "SEAT2b2c-fell-guard-rises",
-    "file": "src/net/siegeRef.js",
+    "file": "src/net/siege/siegeRef.js",
     "old": "n.upAt = n.kind === 'guard' ? siegeNextWave(now, siegeWaveMs(b, 'defend')) : 0;",
     "new": "n.upAt = siegeNextWave(now, siegeWaveMs(b, 'defend'));",
     "tests": [
-      "test/seat2b_guards_law.test.js"
+      "test/net/seat2b_guards_law.test.js"
     ]
   },
   {
     "name": "SEAT2b2c-fell-stops",
-    "file": "src/net/siegeRef.js",
+    "file": "src/net/siege/siegeRef.js",
     "old": "  [n.x, n.z] = siegeNpcAt(n, now);\n  n.tx = n.x; n.tz = n.z; n.at = now;\n  n.hp = 0;",
     "new": "  n.hp = 0;",
     "tests": [
-      "test/seat2b_guards_law.test.js"
+      "test/net/seat2b_guards_law.test.js"
     ]
   },
   {
     "name": "SEAT2b2c-foe-sides",
-    "file": "src/net/siegeRef.js",
+    "file": "src/net/siege/siegeRef.js",
     "old": "SIEGE_NPC[n.kind]?.side !== side;",
     "new": "SIEGE_NPC[n.kind]?.side === side;",
     "tests": [
-      "test/seat2b_guards_law.test.js",
-      "test/seat2b_guards_relay.test.js"
+      "test/net/seat2b_guards_law.test.js",
+      "test/net/siege/seat2b_guards_relay.test.js"
     ]
   },
   {
     "name": "SEAT2b2c-rise-camp",
-    "file": "src/net/siegeRef.js",
+    "file": "src/net/siege/siegeRef.js",
     "old": "        const c = b.field.camps.defend;\n",
     "new": "        const c = n.post;\n",
     "tests": [
-      "test/seat2b_guards_law.test.js"
+      "test/net/seat2b_guards_law.test.js"
     ]
   },
   {
     "name": "SEAT2b2c-rise-protected",
-    "file": "src/net/siegeRef.js",
+    "file": "src/net/siege/siegeRef.js",
     "old": "safeTo: nowMs + SIEGE_PROTECT_MS, atk: null, tg: null, tgAt: 0 });",
     "new": "safeTo: 0, atk: null, tg: null, tgAt: 0 });",
     "tests": [
-      "test/seat2b_guards_law.test.js"
+      "test/net/seat2b_guards_law.test.js"
     ]
   },
   {
     "name": "SEAT2b2c-land-reach",
-    "file": "src/net/siegeRef.js",
+    "file": "src/net/siege/siegeRef.js",
     "old": "if (foeOf(K, f) && fromMe(f) <= K.landM && nowMs >= (f.safeTo ?? 0)) {",
     "new": "if (foeOf(K, f) && nowMs >= (f.safeTo ?? 0)) {",
     "tests": [
-      "test/seat2b_guards_law.test.js"
+      "test/net/seat2b_guards_law.test.js"
     ]
   },
   {
     "name": "SEAT2b2c-land-protected",
-    "file": "src/net/siegeRef.js",
+    "file": "src/net/siege/siegeRef.js",
     "old": "if (foeOf(K, f) && fromMe(f) <= K.landM && nowMs >= (f.safeTo ?? 0)) {",
     "new": "if (foeOf(K, f) && fromMe(f) <= K.landM) {",
     "tests": [
-      "test/seat2b_guards_law.test.js"
+      "test/net/seat2b_guards_law.test.js"
     ]
   },
   {
     "name": "SEAT2b2c-land-fall-wave",
-    "file": "src/net/siegeRef.js",
+    "file": "src/net/siege/siegeRef.js",
     "old": "if (fell) { f.down = true; f.upAt = siegeNextWave(nowMs, siegeWaveMs(b, f.side)); }",
     "new": "if (fell) f.down = true;",
     "tests": [
-      "test/seat2b_guards_law.test.js",
-      "test/seat2b_guards_relay.test.js"
+      "test/net/seat2b_guards_law.test.js",
+      "test/net/siege/seat2b_guards_relay.test.js"
     ]
   },
   {
     "name": "SEAT2b2c-foe-own-side",
-    "file": "src/net/siegeRef.js",
+    "file": "src/net/siege/siegeRef.js",
     "old": "(f.side === 'attack' || f.side === 'defend') && f.side !== K.side",
     "new": "(f.side === 'attack' || f.side === 'defend')",
     "tests": [
-      "test/seat2b_guards_law.test.js"
+      "test/net/seat2b_guards_law.test.js"
     ]
   },
   {
     "name": "SEAT2b2c-mark-leash",
-    "file": "src/net/siegeRef.js",
+    "file": "src/net/siege/siegeRef.js",
     "old": "if (!foeOf(K, f) || fromPost(f) > K.leashM || (f !== holds && fromMe(f) > K.aggroM)) continue;",
     "new": "if (!foeOf(K, f) || (f !== holds && fromMe(f) > K.aggroM)) continue;",
     "tests": [
-      "test/seat2b_guards_law.test.js"
+      "test/net/seat2b_guards_law.test.js"
     ]
   },
   {
     "name": "SEAT2b2c-mark-aggro",
-    "file": "src/net/siegeRef.js",
+    "file": "src/net/siege/siegeRef.js",
     "old": "if (!foeOf(K, f) || fromPost(f) > K.leashM || (f !== holds && fromMe(f) > K.aggroM)) continue;",
     "new": "if (!foeOf(K, f) || fromPost(f) > K.leashM) continue;",
     "tests": [
-      "test/seat2b_guards_law.test.js"
+      "test/net/seat2b_guards_law.test.js"
     ]
   },
   {
     "name": "SEAT2b2c-strike-reach",
-    "file": "src/net/siegeRef.js",
+    "file": "src/net/siege/siegeRef.js",
     "old": "if (mark && fromMe(mark) <= K.strikeM && nowMs >= n.next) {",
     "new": "if (mark && fromMe(mark) <= K.landM && nowMs >= n.next) {",
     "tests": [
-      "test/seat2b_guards_law.test.js"
+      "test/net/seat2b_guards_law.test.js"
     ]
   },
   {
     "name": "SEAT2b2c-strike-rate",
-    "file": "src/net/siegeRef.js",
+    "file": "src/net/siege/siegeRef.js",
     "old": "      n.next = nowMs + K.everyMs;\n",
     "new": "      n.next = nowMs;\n",
     "tests": [
-      "test/seat2b_guards_law.test.js"
+      "test/net/seat2b_guards_law.test.js"
     ]
   },
   {
     "name": "SEAT2b2c-walk-stop",
-    "file": "src/net/siegeRef.js",
+    "file": "src/net/siege/siegeRef.js",
     "old": "go = Math.max(0, d - SIEGE_NPC_STOP_M) / Math.max(d, 1e-6);",
     "new": "go = Math.max(0, d - 1) / Math.max(d, 1e-6);",
     "tests": [
-      "test/seat2b_guards_law.test.js"
+      "test/net/seat2b_guards_law.test.js"
     ]
   },
   {
     "name": "SEAT2b2c-presence",
-    "file": "src/net/siegeRef.js",
+    "file": "src/net/siege/siegeRef.js",
     "old": "    const p = presentAt(bodies, b.field.banners[i], ground);",
     "new": "    const p = presentAt(fighters, b.field.banners[i], ground);",
     "tests": [
-      "test/seat2b_guards_law.test.js"
+      "test/net/seat2b_guards_law.test.js"
     ]
   },
   {
     "name": "SEAT2b2c-revolt-end-defend",
-    "file": "src/net/siegeRef.js",
+    "file": "src/net/siege/siegeRef.js",
     "old": "    if (siegeRevoltDown(b)) return end(b, 'defend', out);   // 7.7: the Captain felled - the revolt put down\n",
     "new": "",
     "tests": [
-      "test/seat2b_guards_law.test.js",
-      "test/seat2b_guards_relay.test.js"
+      "test/net/seat2b_guards_law.test.js",
+      "test/net/siege/seat2b_guards_relay.test.js"
     ]
   },
   {
     "name": "SEAT2b2c-revolt-end-attack",
-    "file": "src/net/siegeRef.js",
+    "file": "src/net/siege/siegeRef.js",
     "old": "return nowMs >= b.endMs ? end(b, 'attack', out) : out;",
     "new": "return nowMs >= b.endMs ? end(b, 'defend', out) : out;",
     "tests": [
-      "test/seat2b_guards_law.test.js"
+      "test/net/seat2b_guards_law.test.js"
     ]
   },
   {
     "name": "SEAT2b2c-revolt-honours",
-    "file": "src/net/siegeRef.js",
+    "file": "src/net/siege/siegeRef.js",
     "old": "export const honoured = (f, b) => b.kind !== 'revolt' && (",
     "new": "export const honoured = (f, b) => (",
     "tests": [
-      "test/seat2b_guards_law.test.js",
-      "test/seat2b_guards_relay.test.js"
+      "test/net/seat2b_guards_law.test.js",
+      "test/net/siege/seat2b_guards_relay.test.js"
     ]
   },
   {
     "name": "SEAT2b2c-frame-np-moment",
-    "file": "src/net/siegeRef.js",
+    "file": "src/net/siege/siegeRef.js",
     "old": "const [px, pz] = siegeNpcAt(x, now);",
     "new": "const [px, pz] = [x.x, x.z];",
     "tests": [
-      "test/seat2b_guards_law.test.js"
+      "test/net/seat2b_guards_law.test.js"
     ]
   },
   {
     "name": "SEAT2b2c-frame-revolt-v",
-    "file": "src/net/siegeRef.js",
+    "file": "src/net/siege/siegeRef.js",
     "old": "...(b.kind === 'revolt' ? { v: 1 } : {}),",
     "new": "",
     "tests": [
-      "test/seat2b_guards_law.test.js",
-      "test/seat2b_guards_relay.test.js"
+      "test/net/seat2b_guards_law.test.js",
+      "test/net/siege/seat2b_guards_relay.test.js"
     ]
   },
   {
@@ -338,7 +338,7 @@
     "old": "const npc = isSiegeNpcId(m.to) && (m.k === 'blow' || m.k === 'cast');",
     "new": "const npc = isSiegeNpcId(m.to);",
     "tests": [
-      "test/seat2b_guards_law.test.js"
+      "test/net/seat2b_guards_law.test.js"
     ]
   },
   {
@@ -347,7 +347,7 @@
     "old": "isBody(m.id) && isBody(m.by) && (isId(m.id) || isId(m.by))",
     "new": "isBody(m.id) && isBody(m.by)",
     "tests": [
-      "test/seat2b_guards_law.test.js"
+      "test/net/seat2b_guards_law.test.js"
     ]
   },
   {
@@ -356,7 +356,7 @@
     "old": "if (!Array.isArray(r) || r.length !== 10 || !isSiegeNpcId(r[0]) || ids.has(r[0]) ||",
     "new": "if (!Array.isArray(r) || r.length !== 10 || !isSiegeNpcId(r[0]) ||",
     "tests": [
-      "test/seat2b_guards_law.test.js"
+      "test/net/seat2b_guards_law.test.js"
     ]
   },
   {
@@ -365,7 +365,7 @@
     "old": "(m.v === 1 ? m.b.length !== 0 : m.b.length < 3 || m.b.length > 4)",
     "new": "(m.v === 1 ? m.b.length > 4 : m.b.length < 3 || m.b.length > 4)",
     "tests": [
-      "test/seat2b_guards_law.test.js"
+      "test/net/seat2b_guards_law.test.js"
     ]
   },
   {
@@ -374,7 +374,7 @@
     "old": "  if (c.sn === 'revolt' && c.sd === 'attack') return false;   // SEAT2b part two (c): a revolt's rising is the relay's own\n",
     "new": "",
     "tests": [
-      "test/seat2b_guards_law.test.js"
+      "test/net/seat2b_guards_law.test.js"
     ]
   },
   {
@@ -383,7 +383,7 @@
     "old": "if ((m.k === 'cast' && m.h === 1) || !siegeNpcFoe(n, by.side) || n.down) return;",
     "new": "if (!siegeNpcFoe(n, by.side) || n.down) return;",
     "tests": [
-      "test/seat2b_guards_relay.test.js"
+      "test/net/siege/seat2b_guards_relay.test.js"
     ]
   },
   {
@@ -392,7 +392,7 @@
     "old": "if ((m.k === 'cast' && m.h === 1) || !siegeNpcFoe(n, by.side) || n.down) return;",
     "new": "if ((m.k === 'cast' && m.h === 1) || n.down) return;",
     "tests": [
-      "test/seat2b_guards_relay.test.js"
+      "test/net/siege/seat2b_guards_relay.test.js"
     ]
   },
   {
@@ -401,7 +401,7 @@
     "old": "      by.felled = (by.felled ?? 0) + 1;   // 6.8: a foe felled - Honours' other half\n",
     "new": "",
     "tests": [
-      "test/seat2b_guards_relay.test.js"
+      "test/net/siege/seat2b_guards_relay.test.js"
     ]
   },
   {
@@ -410,7 +410,7 @@
     "old": "    if (!n) { this._junk(ws); return; }\n    if ((m.k",
     "new": "    if (!n) return;\n    if ((m.k",
     "tests": [
-      "test/seat2b_guards_relay.test.js"
+      "test/net/siege/seat2b_guards_relay.test.js"
     ]
   },
   {
@@ -419,7 +419,7 @@
     "old": "this._siegeFan([{ k: 'hp', id: n.id, h: 0, m: n.max }, { k: 'fell', id: n.id, by: a.id }, siegeFieldFrame(b, this._siegeCounts(s), now)]);",
     "new": "this._siegeFan([{ k: 'hp', id: n.id, h: 0, m: n.max }]);",
     "tests": [
-      "test/seat2b_guards_relay.test.js"
+      "test/net/siege/seat2b_guards_relay.test.js"
     ]
   },
   {
@@ -428,7 +428,7 @@
     "old": "        struck.push({ k: 'hp', id: sk[1].id, h: e.h, m: e.m });\n",
     "new": "",
     "tests": [
-      "test/seat2b_guards_relay.test.js"
+      "test/net/siege/seat2b_guards_relay.test.js"
     ]
   },
   {
@@ -437,7 +437,7 @@
     "old": "        if (e.fell) struck.push({ k: 'fell', id: sk[1].id, by: e.n });\n",
     "new": "",
     "tests": [
-      "test/seat2b_guards_relay.test.js"
+      "test/net/siege/seat2b_guards_relay.test.js"
     ]
   },
   {
@@ -446,7 +446,7 @@
     "old": "f.here = !!this._siegeSocketOf(sub); f.sub = sub; list.push(f);",
     "new": "f.here = !!this._siegeSocketOf(sub); list.push(f);",
     "tests": [
-      "test/seat2b_guards_relay.test.js"
+      "test/net/siege/seat2b_guards_relay.test.js"
     ]
   },
   {
@@ -455,8 +455,8 @@
     "old": "if (unchallenged && revoltDue(w.standing)) revolts.push(",
     "new": "if (unchallenged && w.standing < 0) revolts.push(",
     "tests": [
-      "test/seat2b_guards_law.test.js",
-      "test/seat2b_revolt_service.test.js"
+      "test/net/seat2b_guards_law.test.js",
+      "test/net/seat2b_revolt_service.test.js"
     ]
   },
   {
@@ -465,7 +465,7 @@
     "old": "if (unchallenged && revoltDue(w.standing)) revolts.push(",
     "new": "if (revoltDue(w.standing)) revolts.push(",
     "tests": [
-      "test/seat2b_guards_law.test.js"
+      "test/net/seat2b_guards_law.test.js"
     ]
   },
   {
@@ -474,8 +474,8 @@
     "old": "    if (s.holder.revolted) { stateOf.set(s.key, 'revolt');",
     "new": "    if (false) { stateOf.set(s.key, 'revolt');",
     "tests": [
-      "test/seat2b_guards_law.test.js",
-      "test/seat2b_revolt_service.test.js"
+      "test/net/seat2b_guards_law.test.js",
+      "test/net/seat2b_revolt_service.test.js"
     ]
   },
   {
@@ -484,8 +484,8 @@
     "old": "    if (kind === 'revolt' && v.defend) return k;",
     "new": "    if (kind === 'revolt' && v.defend && joined) return k;",
     "tests": [
-      "test/seat2b_guards_law.test.js",
-      "test/seat2b_revolt_service.test.js"
+      "test/net/seat2b_guards_law.test.js",
+      "test/net/seat2b_revolt_service.test.js"
     ]
   },
   {
@@ -494,7 +494,7 @@
     "old": "export const atSiegeWindow = (b) => b?.kind === 'siege' || b?.kind === 'revolt';",
     "new": "export const atSiegeWindow = (b) => b?.kind === 'siege';",
     "tests": [
-      "test/seat2b_guards_law.test.js"
+      "test/net/seat2b_guards_law.test.js"
     ]
   },
   {
@@ -503,8 +503,8 @@
     "old": "(b.kind === 'tourney' || b.kind === 'revolt' ? BATTLE_LENGTH_MS[b.kind]",
     "new": "(b.kind === 'tourney' ? BATTLE_LENGTH_MS[b.kind]",
     "tests": [
-      "test/seat2b_guards_law.test.js",
-      "test/seat2b_revolt_service.test.js"
+      "test/net/seat2b_guards_law.test.js",
+      "test/net/seat2b_revolt_service.test.js"
     ]
   },
   {
@@ -513,7 +513,7 @@
     "old": ".bind(STANDING_CHANGES.revoltTo, K, b.defender),",
     "new": ".bind(STANDING_CHANGES.revoltTo + 1, K, b.defender),",
     "tests": [
-      "test/seat2b_revolt_service.test.js"
+      "test/net/seat2b_revolt_service.test.js"
     ]
   },
   {
@@ -522,7 +522,7 @@
     "old": "  db.prepare('DELETE FROM town_seat_holds WHERE key = ? AND guild_id = ?').bind(K, guild),\n",
     "new": "",
     "tests": [
-      "test/seat2b_revolt_service.test.js"
+      "test/net/seat2b_revolt_service.test.js"
     ]
   },
   {
@@ -531,7 +531,7 @@
     "old": "if (c.h !== 1 || b.kind === 'revolt') return { ...out, honours: null };",
     "new": "if (c.h !== 1) return { ...out, honours: null };",
     "tests": [
-      "test/seat2b_revolt_service.test.js"
+      "test/net/seat2b_revolt_service.test.js"
     ]
   },
   {
@@ -540,7 +540,7 @@
     "old": "nowS >= b.starts_at, b.kind);",
     "new": "nowS >= b.starts_at);",
     "tests": [
-      "test/seat2b_revolt_service.test.js"
+      "test/net/seat2b_revolt_service.test.js"
     ]
   },
   {
@@ -549,7 +549,7 @@
     "old": "    ...plan.revolts.map((r) => ({ key: r.key, kind: 'revolt', attacker: '', defender: r.guild })),\n",
     "new": "",
     "tests": [
-      "test/seat2b_revolt_service.test.js"
+      "test/net/seat2b_revolt_service.test.js"
     ]
   },
   {
@@ -558,7 +558,7 @@
     "old": "        revolted: revolted.has(key),   // SEAT2b part two (c)\n",
     "new": "",
     "tests": [
-      "test/seat2b_revolt_service.test.js"
+      "test/net/seat2b_revolt_service.test.js"
     ]
   },
   {
@@ -567,7 +567,7 @@
     "old": "if (u.kind !== 'revolt') stmts.push(history(key, 'siege-void',",
     "new": "stmts.push(history(key, 'siege-void',",
     "tests": [
-      "test/seat2b_revolt_service.test.js"
+      "test/net/seat2b_revolt_service.test.js"
     ]
   },
   {
@@ -576,88 +576,88 @@
     "old": "  for (const r of revolts) {\n    out.set(",
     "new": "  for (const r of revolts) {\n    if (r) continue;\n    out.set(",
     "tests": [
-      "test/seat2b_revolt_service.test.js"
+      "test/net/seat2b_revolt_service.test.js"
     ]
   },
   {
     "name": "SEAT2b2c-fold-npc-hp",
-    "file": "src/net/siegeLink.js",
+    "file": "src/net/siege/siegeLink.js",
     "old": "if (isSiegeNpcId(g.id)) return { ...s, npcs: npcMoved(s, g.id, (n) => ({ hp: g.h,",
     "new": "if (isSiegeNpcId(g.id) && false) return { ...s, npcs: npcMoved(s, g.id, (n) => ({ hp: g.h,",
     "tests": [
-      "test/seat2b_guards_client.test.js"
+      "test/net/siege/seat2b_guards_client.test.js"
     ]
   },
   {
     "name": "SEAT2b2c-fold-npc-fall-stops",
-    "file": "src/net/siegeLink.js",
+    "file": "src/net/siege/siegeLink.js",
     "old": "npcMoved(s, g.id, (n) => ({ ...stopped(n, now), hp: 0, down: true, atk: 0 }))",
     "new": "npcMoved(s, g.id, () => ({ hp: 0, down: true, atk: 0 }))",
     "tests": [
-      "test/seat2b_guards_client.test.js"
+      "test/net/siege/seat2b_guards_client.test.js"
     ]
   },
   {
     "name": "SEAT2b2c-hud-guards",
-    "file": "src/net/siegeLink.js",
+    "file": "src/net/siege/siegeLink.js",
     "old": "  const guards = siegeGuardsText(s);   // SEAT2b part two (c)\n  if (guards) out.push(guards);\n",
     "new": "",
     "tests": [
-      "test/seat2b_guards_client.test.js"
+      "test/net/siege/seat2b_guards_client.test.js"
     ]
   },
   {
     "name": "SEAT2b2c-hud-revolt-honour",
-    "file": "src/net/siegeLink.js",
+    "file": "src/net/siege/siegeLink.js",
     "old": "battle.kind === 'revolt' ? SIEGE_REVOLT_HONOUR : honours",
     "new": "honours",
     "tests": [
-      "test/seat2b_guards_client.test.js"
+      "test/net/siege/seat2b_guards_client.test.js"
     ]
   },
   {
     "name": "SEAT2b2c-clock-hours",
-    "file": "src/net/siegeLink.js",
+    "file": "src/net/siege/siegeLink.js",
     "old": "return t >= 3600 ?",
     "new": "return t >= 360000 ?",
     "tests": [
-      "test/seat2b_guards_client.test.js"
+      "test/net/siege/seat2b_guards_client.test.js"
     ]
   },
   {
     "name": "SEAT2b2c-session-npc-side",
-    "file": "src/net/siegeSession.js",
+    "file": "src/net/siege/siegeSession.js",
     "old": "return !!n && !n.down && !!SIEGE_NPC[n.kind] && SIEGE_NPC[n.kind].side !== s.side;",
     "new": "return !!n && !n.down && !!SIEGE_NPC[n.kind];",
     "tests": [
-      "test/seat2b_guards_client.test.js"
+      "test/net/siege/seat2b_guards_client.test.js"
     ]
   },
   {
     "name": "SEAT2b2c-session-npc-down",
-    "file": "src/net/siegeSession.js",
+    "file": "src/net/siege/siegeSession.js",
     "old": "return !!n && !n.down && !!SIEGE_NPC[n.kind] && SIEGE_NPC[n.kind].side !== s.side;",
     "new": "return !!n && !!SIEGE_NPC[n.kind] && SIEGE_NPC[n.kind].side !== s.side;",
     "tests": [
-      "test/seat2b_guards_client.test.js"
+      "test/net/siege/seat2b_guards_client.test.js"
     ]
   },
   {
     "name": "SEAT2b2c-session-npc-heal",
-    "file": "src/net/siegeSession.js",
+    "file": "src/net/siege/siegeSession.js",
     "old": "if (isSiegeNpcId(to)) return !heal && api.isFoe(to)",
     "new": "if (isSiegeNpcId(to)) return api.isFoe(to)",
     "tests": [
-      "test/seat2b_guards_client.test.js"
+      "test/net/siege/seat2b_guards_client.test.js"
     ]
   },
   {
     "name": "SEAT2b2c-session-captain-said",
-    "file": "src/net/siegeSession.js",
+    "file": "src/net/siege/siegeSession.js",
     "old": "if (g.k === 'fell' && isSiegeNpcId(g.id) && was.npcs.find((n) => n.id === g.id)?.kind === 'captain') say(SIEGE_SESSION_TEXT.captainDown);",
     "new": "",
     "tests": [
-      "test/seat2b_guards_client.test.js"
+      "test/net/siege/seat2b_guards_client.test.js"
     ]
   },
   {
@@ -666,7 +666,7 @@
     "old": "rebel: Object.freeze({ mobiles: Object.freeze([136, 143, 138]),",
     "new": "rebel: Object.freeze({ mobiles: Object.freeze([136]),",
     "tests": [
-      "test/seat2b_guards_client.test.js"
+      "test/net/siege/seat2b_guards_client.test.js"
     ]
   },
   {
@@ -675,7 +675,7 @@
     "old": "        if (!n.down) {\n          const T = (b.target",
     "new": "        if (true) {\n          const T = (b.target",
     "tests": [
-      "test/seat2b_guards_client.test.js"
+      "test/net/siege/seat2b_guards_client.test.js"
     ]
   },
   {
@@ -684,7 +684,7 @@
     "old": "if (now >= start && now < n.atk) return { act: 'windup'",
     "new": "if (now >= start && now < n.atk - 1e9) return { act: 'windup'",
     "tests": [
-      "test/seat2b_guards_client.test.js"
+      "test/net/siege/seat2b_guards_client.test.js"
     ]
   },
   {
@@ -693,7 +693,7 @@
     "old": "if (since >= SIEGE_NPC_FALL_MS || since < 0) return { act: 'gone'",
     "new": "if (since < 0) return { act: 'gone'",
     "tests": [
-      "test/seat2b_guards_client.test.js"
+      "test/net/siege/seat2b_guards_client.test.js"
     ]
   },
   {
@@ -702,7 +702,7 @@
     "old": "    if (siegeNpcs) for (const b of siegeNpcs.batches()) allBatches.push(b);   // SEAT2b part two (c): the guards, the rebels\n",
     "new": "",
     "tests": [
-      "test/seat2b_guards_client.test.js"
+      "test/net/siege/seat2b_guards_client.test.js"
     ]
   },
   {
@@ -711,7 +711,7 @@
     "old": "(peersNear()?.find((x) => x.id === peerId) ?? siegeNpcs?.body(peerId) ?? null) : null);",
     "new": "(peersNear()?.find((x) => x.id === peerId) ?? null) : null);",
     "tests": [
-      "test/seat2b_guards_client.test.js"
+      "test/net/siege/seat2b_guards_client.test.js"
     ]
   }
 ]

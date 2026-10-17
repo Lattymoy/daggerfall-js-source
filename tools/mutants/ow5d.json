@@ -5,17 +5,17 @@
     "old": "  const TV_FIND_REACH = 4;",
     "new": "  const TV_FIND_REACH = 1;",
     "tests": [
-      "test/tv6_dungeons.test.js"
+      "test/systems/travel/tv6_dungeons.test.js"
     ],
     "note": "The find's reach one pixel: a keep two pixels off, 942 m from the feet, is never found (AUDIT OW5 D1's list, kept at the merge)."
   },
   {
     "name": "OW5b-D1-lairs-spend-the-twelve",
-    "file": "src/systems/travelDungeons.js",
+    "file": "src/systems/travel/travelDungeons.js",
     "old": "  const inGrid = (g) => !g.found && Math.max(Math.abs(g.x - at.x), Math.abs(g.y - at.y)) <= grid;",
     "new": "  const inGrid = () => false;",
     "tests": [
-      "test/tv6_dungeons.test.js"
+      "test/systems/travel/tv6_dungeons.test.js"
     ],
     "note": "A '?' on the ground the view shows spends one of the twelve: twelve found about, and the keep next door has no mark."
   },
@@ -25,7 +25,7 @@
     "old": "        _locIndexGen += 1;   // AUDIT OW4 D5\n        locationIndex.delete(key);\n        return null;",
     "new": "        _locIndexGen += 1;   // AUDIT OW4 D5\n        _spawnLedger.forget(key);\n        locationIndex.delete(key);\n        return null;",
     "tests": [
-      "test/spawneddungeons.test.js"
+      "test/world/spawneddungeons.test.js"
     ],
     "note": "The expired spawn's row is forgotten: the pure roll stands the same dungeon again on a fresh seven days."
   },
@@ -35,17 +35,17 @@
     "old": "    if (loc?.spawned && !loc.wildHall && _spawnLedger.expired(key, _spawnClock()) && !_insideSpawn(key)) {",
     "new": "    if (false) {",
     "tests": [
-      "test/spawneddungeons.test.js"
+      "test/world/spawneddungeons.test.js"
     ],
     "note": "The build takes the index's word for a spawn it holds: it stands again at every rebuild whatever its clocks say."
   },
   {
     "name": "OW5b-D2-build-skips-the-ask",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "    const dfLocation = _locationToBuild(px, py) || null;",
     "new": "    const dfLocation = locationIndex.get(key) || spawnedDungeonAt(px, py) || null;",
     "tests": [
-      "test/spawneddungeons.test.js"
+      "test/world/spawneddungeons.test.js"
     ],
     "note": "The build bypasses the one ask: an expired spawn the index holds is built again."
   },
@@ -55,7 +55,7 @@
     "old": "return b ? b.location == null : _spawnLedger.expired(key, _spawnClock()); };",
     "new": "return _spawnLedger.expired(key, _spawnClock()); };",
     "tests": [
-      "test/tv6_dungeons.test.js"
+      "test/systems/travel/tv6_dungeons.test.js"
     ],
     "note": "A spawn still standing on built ground is gone from the Overworld: no plate, its walk refused, the dungeon in plain view."
   },
@@ -65,7 +65,7 @@
     "old": "point: { pixel: pix, x: n.x, z: n.z, door }, name: TRAVEL_VIEW_TEXT.spot }",
     "new": "point: { pixel: pix, x: n.x, z: n.z }, name: TRAVEL_VIEW_TEXT.spot }",
     "tests": [
-      "test/tv2_click_to_move.test.js"
+      "test/systems/travel/tv2_click_to_move.test.js"
     ],
     "note": "The walk's door is not kept with it: the map's Resume walks a far spawn as a bare spot."
   },
@@ -75,7 +75,7 @@
     "old": "r.point.pixel, { door: r.point.door ?? null, roads });",
     "new": "r.point.pixel, { door: r.point.door ?? (locationIndex.get(`${r.point.pixel.x},${r.point.pixel.y}`) ? locationWorldRect(locationIndex.get(`${r.point.pixel.x},${r.point.pixel.y}`), r.point.pixel.x, r.point.pixel.y) : null), roads });",
     "tests": [
-      "test/tv2_click_to_move.test.js"
+      "test/systems/travel/tv2_click_to_move.test.js"
     ],
     "note": "A spot clicked on a place's pixel resumes as that place's door, its end moved to the rect's edge."
   },
@@ -85,7 +85,7 @@
     "old": "      const there = summary ? null : tvLocationAt(tw.x, tw.y);",
     "new": "      const there = summary ? null : locationIndex.get(`${tw.x},${tw.y}`);",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "A member reads its own index: the leader's far spawn, never built for them, is a bare spot (the peaks refuse it)."
   },
@@ -95,7 +95,7 @@
     "old": " ?? (params.has('online') && !inEtherLaw(x, y) && spawnsDungeon(_spawnSalt, x, y) ? tvSpawnAt(x, y) : null);",
     "new": " ?? null;",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "What stands on an unbuilt pixel is only ever the index's."
   },
@@ -105,7 +105,7 @@
     "old": "  function applyPose(pose) {\n    overworldLoadReset();   // AUDIT OW5b D4: a load without a pose is a load all the same\n    if (!pose) return;",
     "new": "  function applyPose(pose) {\n    if (!pose) return;\n    overworldLoadReset();",
     "tests": [
-      "test/tv6_dungeons.test.js"
+      "test/systems/travel/tv6_dungeons.test.js"
     ],
     "note": "A save without a pose loads with the last run's chases, rudder and '?'s."
   }

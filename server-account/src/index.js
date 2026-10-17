@@ -68,6 +68,15 @@
 // WB5b, the gates closed. The caller is the account the receipt names:
 //   POST /v1/serpent/claim { receipt, character, name?, cid? } -> { recorded, slain, renown, spoils, order, marks?, title?, aura?, titleNew?, auraNew? }   (SERPENT1: a sea serpent's receipt; SERPENT-SET: `marks` its silver where it recorded); SERPENT5: the Old Coil's grants on its first write
 //   POST /v1/sd/claim    { receipt } -> { recorded, slot?, title?, aura?, broken }   (SD9b: a Brass Remnant's receipt - an Hour broken; Hourbreaker and The Turning Hour rolled on its first write)
+//   POST /v1/eg/keys     {} -> { keys, live, rehearsal, proven, redoubts, sink, annals, feats, first }   (EG-PLAY: the Weir Keys held, the live breach; EG-E1: `sink` the week's Panoply sale, { week, piece }; EG-E2: the Annals' pages kept, each lord's feats; EG-ZF: the first-time lines shown - and First of the Spire's letter, once, to an account its list names)
+//   POST /v1/eg/first    { bits } -> { first }   (EG-ZF: the first-time lines a client showed, OR'ed onto the account - guest 403, bits 400)
+//   POST /v1/eg/open     { rq, rh?, ew?, wg?, again? } -> { order, b, ez, keys, until, rh, at? }   (EG-PLAY: a key staked - or the day's Rehearsal - and the open order signed; idempotent on `rq`; EG-F: `ew` the start Redoubt, `wg` the Wager; AUDIT EG IV: `again` 1 the stake `rq` took asked after a lost answer - its order as of its `at`, none taken; refused guest 403, unproven 403, start 403 (`w`), rq/wager 400, live 409 (`b`), short 409 (`keys`), rehearsed 409, spent 409, none 404)
+//   POST /v1/eg/admit    { b } -> { order, b }   (EG-PLAY: a member's admission order; one live breach an account; refused guest 403, breach 400 (no stake opened it), spent 409 (its stake settled or its open window past), start 403 (`w`), live 409 (`b`))
+//   POST /v1/eg/claim    { receipt, character? } -> { recorded, q, b, w?, keys, ... }   (EG-PLAY: an `e1` - a Redoubt taken, a member's end, a void; EG-E1: a Redoubt's `paid`, `again`, `marks`, `deed`, `embers`, `purse`, `weir`, `pity`, an end's `rl`; EG-ZF: an end's `board`, the member's standing - { k: 'descent', br, rank } or { k: 'depths', rank }; EG-E2: `honours`, the titles a Redoubt newly granted)
+//   POST /v1/eg/sink     { piece } -> { ok, piece, week, purse }   (EG-E1: the Broker's Panoply piece, once a week for 20 embers - guest 403, piece 400, bought / short 409)
+//   POST /v1/eg/board    {} -> { ok, season, descent: { alone, few, company }, depths, deepest, proclamation, best }   (EG-E2: the Elite Breach's three boards - egHonours.js)
+//   POST /v1/eg/find     { tier } -> { found, keys, asks }   (EG-E3: a dungeon elite's find - 'super' | 'elite' | 'regular', the service's die, 6 asks a tier a day, 2 keys a week)
+//   POST /v1/eg/starts   { subs } -> { starts: { [sub]: [w, ..., 0] | null }, keys, rehearsal, rk }   (EG-F: the start window's preflight - which starts each member may make)
 //   POST /v1/lamp/claim  {} -> { granted, why? }   (LAMP-KEEPER II: a lamp keeper spoken to - I Love Lamp, laid once on the row; `why` 'held' | 'guest')
 //   POST /v1/gate/claim  { receipt, region?, character? } -> { recorded, stones, closed, seat? }   (WB12d: the row's embers, AUDIT WB12d A4; SEAT1b: `seat` the kill's influence)
 // MARKS1, Marks - an account's alone, behind MARKS_OPEN (marks.js); `rid` the act's own id:
@@ -110,7 +119,7 @@
 // kept one an account for a day); the level rides the token when the
 // mint names one:
 //   POST /v1/renown/xp { character, xp, name?, rid?, region? } -> { character, xp, level, credited, rose, order, max?, repeat? }   (SEAT1b: `region` where it was earned)
-// FIRM1, THE FIRMAMENT (firmament.js; the law src/net/firmamentLaw.js): a character's passive tree, its Stars the Renown
+// FIRM1, THE FIRMAMENT (firmament.js; the law src/net/firmament/firmamentLaw.js): a character's passive tree, its Stars the Renown
 // track's and its Craft points the profession tracks', every change the whole tree judged by the law, a refund's silver
 // burnt in the change's batch. Behind FIRMAMENT_OPEN:
 //   POST /v1/firmament/state { character }            -> { tree, renown, stars, craft, ranks, left, refund }
@@ -203,11 +212,12 @@ import { poiRolesOf, putPoiAsset, getPoiAsset, savePoiDraft, submitPoi, withdraw
 import { listSaves, putCard, putBlob, getBlob, deleteSave, saveCardOf } from './saves.js';
 import { signingKey, gatePublicKey } from './signing.js';
 import { stakeCards, cashoutCards } from './cards.js';   // CARDS6: a card table's stakes, escrowed
-import { deckOrderOf, claimIliac, iliacBoardOf, withIliacHonours } from './iliac.js';
-import { claimGambit, gambitBoardOf, withGambitHonours } from './gambit.js';   // KG6: The King's Gambit's season board and its GRANDMASTER   // CARDS10: a ranked seat's deck vouched for, Iliac Hand's season board and its title
+import { deckOrderOf, claimIliac, iliacBoardOf } from './iliac.js';
+import { claimGambit, gambitBoardOf } from './gambit.js';   // KG6: The King's Gambit's season board and its GRANDMASTER   // CARDS10: a ranked seat's deck vouched for, Iliac Hand's season board and its title
 import { titleWorn, glyphsOf, glyphsHidden, auraWorn } from './titles.js';
-import { claimArena, arenaAttempt, arenaBoardOf, arenaTeam, withArenaHonours, arenaRatingOf, ARENA_HONOUR_PATHS, ARENA_RENOWN_REGION } from './arena.js';   // ARENA4: the arena's records, its board, its banners, and the honours the mint reads
-import { arenaSeasonOf } from '../../src/net/arenaLaw.js';
+import { withHonours } from './honours.js';   // SIGN-BATCH: the three games' honours on a badge's row, in one batch
+import { claimArena, arenaAttempt, arenaBoardOf, arenaTeam, arenaRatingOf, ARENA_HONOUR_PATHS, ARENA_RENOWN_REGION } from './arena.js';   // ARENA4: the arena's records, its board, its banners, and the honours the mint reads
+import { arenaSeasonOf } from '../../src/net/arena/arenaLaw.js';
 import { BUSY_RETRY_AFTER_S } from '../../src/net/busyLaw.js';   // BUSY-GATE: how long an overload answer tells a client to stand back
 import { sendLetter, inboxOf, readLetter, deleteLetter } from './letters.js';   // MAIL1: the letters' routes
 import { postBoxOf, readPost, claimPost, deletePost } from './post.js';   // SERVER-POST: the server's post
@@ -221,6 +231,10 @@ import { contractRegionOfRaid } from '../../src/net/writLaw.js';   // CHAP2b: th
 import { claimRaid, raidRecordOf } from './raids.js';   // RAID4: the towns defended
 import { claimSerpent, serpentRecordOf } from './serpents.js';   // SERPENT1: the serpents slain
 import { claimSd, sdRecordOf } from './sds.js';   // SD9b: the Hours broken
+import { egKeysOf, openEg, admitEg, claimEg, rollWeirKey, findEg, egFirstSay, egGateWeir, egGateWeirAnswer } from './eg.js';   // EG-PLAY: the Elite Breach - the Weir Keys, the open, the admission, the claim; EG-E3: a dungeon elite's find
+import { egBoardOf, withEgHonours } from './egHonours.js';   // EG-E2: the Elite Breach's boards, and Spire Champion on the row
+import { egSink } from './egEconomy.js';   // EG-E1: the Broker's Panoply sink
+import { startsEg } from './egStarts.js';   // EG-F: the start window's preflight
 import { claimLamp } from './lamp.js';   // LAMP-KEEPER II: I Love Lamp, laid on the row
 import { voteHome } from './homeVotes.js';   // HOME-VOTE: a town's word on a player's house
 import { claimHome, releaseHome, setHomeEntry, homesInTown, homesOf, setHomeLook, homeLayoutsKept, arenaMoveHome, arenaMovesOf, arenaMoveSeen, holdDeed, inheritHome } from './homes.js';   // HOME1: the online homes' routes; HOME-LOOK: its outside; WD3: the towns' layouts; ARENA4b: the homes the arena displaced, moved; FIELD BUGS 2026-10-04d KNIGHT-HOUSE: a deed held
@@ -236,14 +250,14 @@ import { buyHall, sellHall, setHallEntry, setHeraldry } from './halls.js';   // 
 import { readGuildBoard, pinGuildNote, takeDownGuildNote } from './guildBoard.js';   // GUILD1e: a guild's own board
 import { listSeats, witnessSeat, strikeSeat, seatsOpenFor } from './townSeats.js';   // SEAT1a: the seats' witnessed registry
 import { pledgeSeat, claimWatch, creditGate, creditRenown, readStandings, payTribute, claimOrcCamp, readRecords } from './seatInfluence.js';   // SEAT1b: influence   // SEASON1 part two: an Orc Raid's camp
-import { settleDueOnce, seatsWithHolders, relinquishSeat, seatBadgeOf, seatTitlesOf } from './seatTurning.js';   // SEAT1c: the Turning, the Charters, their titles and glyphs
+import { settleDueOnce, seatsBoard, relinquishSeat, seatBadgeOf, seatTitlesOf } from './seatTurning.js';   // SEAT1c: the Turning, the Charters, their titles and glyphs
 import { setTithe, proclaimEdict, claimBounty } from './seatHolding.js';   // SEAT1d: the holder's levers, a Bounty's camp
 import { setWindow, signBattle, unsignBattle, hireSellsword, withdrawHire, siegesLive } from './seatBattles.js';   // SEAT2a: the battles' week
 import { siegePass, claimSiege, voidSiege } from './seatSiege.js';   // SEAT2a part three: the pass, the result, Honours   // VOID: a moderator's void
 import { royalPass, claimRoyal, keptTitleOf, KEPT_TITLES } from './seatRoyal.js';   // CROWN1 part two: the Royal Tourney's pass, its bouts, its champion's title (SEASON1: every title kept)
 import { ribbonOf } from './seatRibbons.js';   // SEASON1 part two: a Season's banner ribbon, on the token
 import { seatWeekOf, seasonOf, seasonZeroOf } from '../../src/net/townSeatLaw.js';   // SEASON1: the Season counted
-import { offerFealty, acceptFealty, breakFealty, offerPact, breakPact, redOf } from './seatPolitics.js';   // CROWN2: fealty and Pacts, the red lines
+import { offerFealty, acceptFealty, breakFealty, offerPact, breakPact } from './seatPolitics.js';   // CROWN2: fealty and Pacts, the red lines
 import { fundFort, readForts } from './seatForts.js';   // SEAT2b: a seat's fortifications
 
 /** SEAT1c: the account's row with the Charter titles it may wear laid on it (`seatTitles`, titles.js titlesHeld), while the
@@ -270,10 +284,10 @@ import {
 } from './realm.js';   // REALM P1: the realm's characters; ARENA4b: the level on a realm character's tile, the token's `cl`
 import { grantSpoils } from './budget.js';   // INT5: a signed win's spoils fill the playing character's budget
 import { reviewAct } from './review.js';   // INT6: the review of the judge's verdicts
-import { isGzip, gzipSizeOf, gunzipText, REALM_TEXT_MAX_BYTES } from '../../src/net/realmSaveCodec.js';   // REALM-GZIP: a save rides packed
+import { isGzip, gzipSizeOf, gunzipText, REALM_TEXT_MAX_BYTES } from '../../src/net/realm/realmSaveCodec.js';   // REALM-GZIP: a save rides packed
 import { tradeRealm, REALM_TRADE_BODY_MAX } from './realmTrade.js';   // REALM P2.1: a trade, settled here
 import { wildFall, wildCollect, wildReclaim, wildEscrows } from './wild.js';   // INT9: a death in the open zone's drop, taken off the record; MAC (2026-10-14): its killer's piece in escrow - collected, taken back, listed
-import { listLineages, putLineage, realmDie, realmWed, listUnions, LINEAGE_BODY_MAX, isTombstone } from './legacy.js';   // LEGACY7: Project Legacy's lines and the tombstone
+import { listLineages, putLineage, realmDie, realmRaise, realmWed, listUnions, LINEAGE_BODY_MAX, isTombstone } from './legacy.js';   // LEGACY7: Project Legacy's lines and the tombstone; REZ-BLOODLINE AUDIT R1: a Resurrect inside its hold
 import { measured, heartbeatPartsOf } from './metrics.js';   // SCALE1: every request counted (Workers Analytics Engine); AUDIT SCALE II A-3: a heartbeat's parts, of the body the route read
 import { runCron } from './cron.js';   // SCALE4b: the service's own clock
 import { heartbeat } from './heartbeat.js';   // SCALE4c: one request for a tab's three clocks
@@ -382,6 +396,7 @@ const REALM_STATUS = Object.freeze({
   dead: 410, 'no-lineage': 404, 'lineage-person': 409, 'lineage-played': 409, 'lineage-model': 409, 'too-many-lineages': 409,
   'wed-no-line': 409, 'wed-already': 409, 'wed-partner': 409, 'wed-spent': 409,   // LEGACY7 part three: a wedding the realm cannot make
   'lineage-too-large': 413,   // AUDIT LEGACY III O2/P1: a line's record past its bound - its own word, never a malformed body's
+  'not-dead': 409, 'raise-late': 409, 'raise-no-line': 409,   // REZ-BLOODLINE AUDIT R1: a Resurrect the realm will not take
 });
 /** CUSTOMS-PASS: a pass's refusals - a bad shape 400 (the default), a caller who is no developer 403, no such account
  *  404, a guest's name two accounts wear 409. */
@@ -440,6 +455,16 @@ const GUILD_STATUS = Object.freeze({
 /** MARKS1: each Marks refusal's status - not this account's (a guest, the switch, a rank, a developer's; AUDIT 625 S1:
  *  the finds of an account not yet a week registered) 403, no guild 404, short or capped 409, the hour's acts spent
  *  429, a bad shape 400 (the default). */
+/** EG-PLAY: each Elite Breach refusal's status - the service without its key 503, not this account's (a guest, another's
+ *  receipt) 403, a breach held or no key to stake 409, a bad shape 400 (the default). EG-E3: a find's day spent 409. */
+const EG_STATUS = Object.freeze({
+  'no-signing-key': 503, 'no-gate-key': 503,
+  guest: 403, 'not-yours': 403, unproven: 403,
+  live: 409, short: 409, rehearsed: 409, spent: 409, capped: 409,   // EG-E3: a find past its day's asks
+  bought: 409,   // EG-E1: the week's Panoply piece already bought
+  start: 403,   // EG-F: a start the account may not make (no carries)
+  none: 404,   // AUDIT EG IV (lane3 #1): an open asked again (`again`) whose request id took no key
+});
 const MARKS_STATUS = Object.freeze({
   'marks-need-account': 403, 'marks-closed': 403, 'marks-young': 403, 'not-developer': 403, 'guild-rank': 403, 'guilds-need-account': 403,
   'no-guild': 404,
@@ -917,9 +942,10 @@ const service = {
       // (arena.js championNow -> storeArenaChampion, iliac.js the same): counted off a replica as new as the session lookup,
       // the write put back a #1 a rated bout had just moved past, and the clock only re-stamps a kept #1
       const honoursCtx = { ...ctx, db: env.DB };
-      if (ARENA_HONOUR_PATHS.has(path)) who.player = await withArenaHonours(honoursCtx, who.player, nowS);
-      if (ARENA_HONOUR_PATHS.has(path)) who.player = await withIliacHonours(honoursCtx, who.player, nowS);   // CARDS10: and Iliac Hand's season #1 (iliac.js), on the same doors
-      if (ARENA_HONOUR_PATHS.has(path)) who.player = await withGambitHonours(honoursCtx, who.player, nowS);   // KG6: and The King's Gambit's (gambit.js)
+      // CARDS10: and Iliac Hand's season #1 (iliac.js), on the same doors; KG6: and The King's Gambit's (gambit.js);
+      // SIGN-BATCH: the three games' reads in ONE batch (honours.js withHonours), each answered as its with*Honours answers; EG-E2: and
+      // the Spire Champions - the last season's Descent's top tens (egHonours.js), read beside them
+      if (ARENA_HONOUR_PATHS.has(path)) who.player = await withEgHonours(honoursCtx, await withHonours(honoursCtx, who.player, nowS), nowS);
 
       if (path === '/v1/auth/token' && request.method === 'POST') {
         const key = await signingKey(env, subtle);
@@ -988,7 +1014,7 @@ const service = {
         // (RENOWN-CHAR: the named character's again - RENOWN-ACCOUNT read
         // the account's one track whichever was named.)
         // RENOWN4: and the track's TOTAL beside it in the answer (never in the token - a room needs the level, not the
-        // XP): the page's own bar is drawn from it the moment the character comes online (ui/hudRenown.js).
+        // XP): the page's own bar is drawn from it the moment the character comes online (ui/hud/hudRenown.js).
         const track = renownCharacterOk(body.character) ? ((await renownTrackOf(ctx, who.player.id, body.character)) ?? { xp: 0, level: 1 }) : null;
         const lv = track ? track.level : undefined;
         // GUILD1c: AND THE GUILD, the named character's - its id, its tag and its member row off the roster as it
@@ -1013,7 +1039,7 @@ const service = {
         // INT7: AND THAT REALM CHARACTER'S ARMS, `wa` - the most reach of its judged pack's lawful weapons and its bow
         // (realm.js realmMintFacts), every referee's clip of a blow between players. Absent before its first judged checkpoint.
         const wa = facts.wa;
-        // ARENA4: AND THE ACCOUNT'S ARENA RATING this season, for a registered account - the hall queues by it (net/arenaLaw.js
+        // ARENA4: AND THE ACCOUNT'S ARENA RATING this season, for a registered account - the hall queues by it (net/arena/arenaLaw.js
         // pairQueue), off the signature, never a word of the client's. A guest's token carries none (a guest is not queued).
         const ar = who.player.handle ? (await arenaRatingOf(ctx, who.player.id, arenaSeasonOf(nowS))).rating : undefined;
         // LEGACY7 part two: AND THAT REALM CHARACTER'S HOUSE (realm.js realmMintFacts, by legacy.js houseOn: its line's
@@ -1099,7 +1125,7 @@ const service = {
 
       if (path === '/v1/duel/claim' && request.method === 'POST') {
         // INT8 (bible/06-Systems/Integrity-Arc.md lane 2): A DUEL'S RESULT, THE RELAY'S - either fighter carries the receipt
-        // the referee handed it (src/net/duelReceipt.js `d1`); the session must be one of its two, never the body's word,
+        // the referee handed it (src/net/duel/duelReceipt.js `d1`); the session must be one of its two, never the body's word,
         // and accounts.js `claimDuel` counts it once (its bout's id) inside its bounds. No public half here yet: 503, and
         // the client keeps the receipt for its day.
         const r = await claimDuel(ctx, who.player, body.receipt, await gatePublicKey(env, subtle));
@@ -1109,7 +1135,7 @@ const service = {
 
       if (path === '/v1/wild/fall' && request.method === 'POST') {
         // INT9 (bible/06-Systems/Integrity-Arc.md lane 2): A DEATH IN THE OPEN ZONE'S DROP, TAKEN OFF THE FALLEN'S JUDGED
-        // RECORD (wild.js `wildFall`) - against the fall the relay signed (src/net/wildReceipt.js `f1`: the fallen's own tab
+        // RECORD (wild.js `wildFall`) - against the fall the relay signed (src/net/wild/wildReceipt.js `f1`: the fallen's own tab
         // with its record's `at`, its killer's after the grace), or none (a death to a foe: the caller's own record). The
         // answer's `order` is the service's word on the records, the room's to keep a deposit on.
         const r = await wildFall({ ...ctx, bucket: env.SAVES }, who.player, body, { gateKey: body.receipt !== undefined ? await gatePublicKey(env, subtle) : null, signing: await signingKey(env, subtle) });
@@ -1145,7 +1171,7 @@ const service = {
 
       if (path === '/v1/gate/claim' && request.method === 'POST') {
         // WB5b: THE ACCOUNT THE RECEIPT NAMES CARRIES IT HERE. The
-        // relay signed it at the kill (src/net/gateReceipt.js); the
+        // relay signed it at the kill (src/net/gate/gateReceipt.js); the
         // session says who is asking, never the body, and accounts.js
         // `claimGate` holds the rest - the signature, the account, the
         // one row a (day, account). No public half here yet is the
@@ -1156,6 +1182,7 @@ const service = {
         const r = await claimGate(ctx, who.player, body.receipt, await gatePublicKey(env, subtle), {
           strike: (d) => gateStrikeStatement(ctx, who.player, env, d), region: body.region ?? null,
           deeds: (d) => deedStatements(ctx, who.player, env, { kind: 'gate', event: deedEvent('gate', d), character, guard: [d] }),
+          weir: egGateWeir(ctx, who.player),   // AUDIT EG IV (lane3 #16): the Weir Key's roll in the claim's own batch (eg.js)
         });
         // AUDIT WB A5: a refused receipt says WHICH rung refused it - the client keeps one the service can mend (its key
         // not the relay's pair, a clock) and lets go of one it cannot
@@ -1165,7 +1192,7 @@ const service = {
         // (marks.js gateStrikeStatement: 50 under SILVER-WAYS' day's combat cap with the raids', the gate's own day its
         // line's id); `marks` null where Marks are not this account's
         const answer = { ...r };
-        delete answer.day; delete answer.struck; delete answer.deedStruck;   // the service's own: the line's day and whether the batch struck
+        delete answer.day; delete answer.struck; delete answer.deedStruck; delete answer.weirRow;   // the service's own: the line's day and whether the batch struck (AUDIT EG IV: and the key's row)
         if (r.recorded && !r.rite && r.deedStruck !== undefined) answer.deed = await deedAnswer(db, who.player, deedEvent('gate', r.day), r.deedStruck);   // SILVER-WAYS: where a deed was this claim's to try
         // SEAT1b (Seats-Arc 4.2): a kill recorded now is influence for the account's war-guild where it pledged in the
         // region the claim named (`seat` the answer: counted, or why not - the kill stands either way). WB12d: the rite
@@ -1174,12 +1201,15 @@ const service = {
         // CHAP2b (Chapters-Arc 3.3, 4): and the guilds the character is a member of on its Roll that keep a chapter there
         // remember it (npcReceipts.js - after the kill's row, never instead of it)
         if (r.recorded && !r.rite && body.region != null) answer.chapters = await creditReceipt(ctx, who.player, env, { character: body.character ?? null, kind: 'gate', id: r.day, region: body.region });
+        // EG-PLAY: a recorded breach closed rolls a Weir Key - the service's own die; AUDIT EG IV (lane3 #16): in the claim's
+        // own batch, the first decided by the row it wrote (eg.js egGateWeir), its row said here
+        if (r.recorded && !r.rite) answer.weir = egGateWeirAnswer(r.weirRow);
         return json(r.recorded && !r.rite ? { ...answer, marks: await gateStrikeAnswer(ctx, who.player, env, !!r.struck, r.day) } : answer, 200, origin);   // AUDIT WB12d (A2): the rite alone strikes no Drakes, and says none
       }
 
       if (path === '/v1/raid/claim' && request.method === 'POST') {
         // RAID4: THE ACCOUNT A RAID'S RECEIPT NAMES CARRIES IT HERE, with the character that fought it. The relay signed
-        // it at the cleanse (src/net/raidReceipt.js); the session says who is asking, never the body, and raids.js
+        // it at the cleanse (src/net/raid/raidReceipt.js); the session says who is asking, never the body, and raids.js
         // `claimRaid` holds the rest - the signature, the account, one row a (raid, account), the day's bound, the
         // Renown (RENOWN-CHAR: the fighting character's again). A level that ROSE comes back with a signed order, as a
         // Renown report's does.
@@ -1213,7 +1243,7 @@ const service = {
 
       if (path === '/v1/serpent/claim' && request.method === 'POST') {
         // SERPENT1: A SERPENT'S RECEIPT, CARRIED HERE BY THE ACCOUNT IT NAMES, with the character that fought it. The relay
-        // signed it at the kill (src/net/serpentReceipt.js); the session says who is asking, never the body, and serpents.js
+        // signed it at the kill (src/net/serpent/serpentReceipt.js); the session says who is asking, never the body, and serpents.js
         // `claimSerpent` holds the rest - the signature, the account, one row a (day, account), the Renown, the device's
         // hoard. A level that ROSE comes back with a signed order, as a raid's does.
         // SERPENT-SET: and its silver, a combat strike in the row's own batch (marks.js serpentStrikeStatement - 40, a ship
@@ -1232,12 +1262,39 @@ const service = {
 
       if (path === '/v1/sd/claim' && request.method === 'POST') {
         // SD9b: A BRASS REMNANT'S RECEIPT, CARRIED HERE BY THE ACCOUNT IT NAMES. The relay signed it at the fall
-        // (src/net/sdReceipt.js); the session says who is asking, never the body, and sds.js `claimSd` holds the rest - the
+        // (src/net/superDungeon/sdReceipt.js); the session says who is asking, never the body, and sds.js `claimSd` holds the rest - the
         // signature, the account, one row a (slot, account), and on that first write the Hour's grants off its seed. A
         // refusal says its rung, as the gate's does (AUDIT WB A5): the client keeps a receipt the service can mend.
         const r = await claimSd(ctx, who.player, body.receipt, await gatePublicKey(env, subtle));
         if (r.error) return json({ error: r.error, ...(r.why ? { why: r.why } : {}) }, r.error === 'no-gate-key' ? 503 : r.error === 'not-yours' ? 403 : 400, origin);
         if (r.recorded === true) await grantSpoils(ctx.db, who.player.id);   // INT5: a signed win's spoils, the budget's fill
+        if (r.recorded === true) return json({ ...r, weir: await rollWeirKey(ctx, who.player, { kind: 'sd' }) }, 200, origin);   // EG-PLAY: an Hour broken rolls a Weir Key, one in three
+        return json(r, 200, origin);
+      }
+
+      // ═══ EG-PLAY: THE ELITE BREACH ════════════════════════════════════
+      //
+      // Elite-Gates.md sections 5 and 23: the Weir Keys an account holds, the open that stakes one (or the day's Rehearsal)
+      // and signs the order the hub opens the breach on, a member's admission, and the relay's `e1` receipts (eg.js).
+      if (path.startsWith('/v1/eg/')) {
+        if (request.method !== 'POST') return no('method', 405, origin);
+        const act = {
+          '/v1/eg/keys': async () => ({ ...(await egKeysOf(ctx, who.player, env)), rk: String(env.GATE_PUBLIC_KEY ?? '') || null }),   // EG-F: and the relay's public half - a stranger's arch verified (egStarts.js); EG-ZF: `env`, First of the Spire's list
+          '/v1/eg/first': async () => egFirstSay(ctx, who.player, body),   // EG-ZF: the first-time lines shown, once an account
+          '/v1/eg/starts': async () => startsEg(ctx, who.player, body, String(env.GATE_PUBLIC_KEY ?? '') || null),   // EG-F: the start window's preflight
+          '/v1/eg/open': async () => openEg(ctx, who.player, body, await signingKey(env, subtle)),
+          '/v1/eg/admit': async () => admitEg(ctx, who.player, body, await signingKey(env, subtle)),
+          // EG-E1: what a Redoubt pays - the Marks' switch (`env`) and the claiming character, its guild's deed
+          '/v1/eg/claim': async () => claimEg(ctx, who.player, body.receipt, await gatePublicKey(env, subtle), { env, character: typeof body.character === 'string' ? body.character : null }),
+          '/v1/eg/sink': async () => egSink(ctx, who.player, body),   // EG-E1: the Broker's Panoply piece, once a week
+          '/v1/eg/board': async () => egBoardOf({ ...ctx, db: env.DB }, who.player, env),   // EG-E2: the three boards - on the binding, as a #1's count is (the last season's champions may be written here)
+          '/v1/eg/find': async () => findEg(ctx, who.player, body),   // EG-E3: a dungeon elite's find
+        }[path];
+        if (!act) return no('not-found', 404, origin);
+        const r = await act();
+        if ('error' in r) return json({ error: r.error, ...(r.why ? { why: r.why } : {}), ...(typeof r.b === 'string' ? { b: r.b } : {}), ...(Number.isSafeInteger(r.keys) ? { keys: r.keys } : {}),
+          ...(Number.isSafeInteger(r.w) ? { w: r.w } : {}), ...(typeof r.piece === 'string' ? { piece: r.piece } : {}), ...(Number.isSafeInteger(r.purse) ? { purse: r.purse, price: r.price } : {}) }, EG_STATUS[r.error] ?? 400, origin);   // EG-E1: the sink's - which piece, the purse and the price
+        if (path === '/v1/eg/claim' && r.recorded === true && r.q === 'w' && r.paid === true) await grantSpoils(ctx.db, who.player.id);   // INT5: a signed win's spoils, the budget's fill (EG-E1: a Redoubt the week pays)
         return json(r, 200, origin);
       }
 
@@ -1248,7 +1305,7 @@ const service = {
 
       if (path === '/v1/arena/claim' && request.method === 'POST') {
         // ARENA4: A BOUT'S RECEIPT, CARRIED HERE BY AN ACCOUNT IT NAMES. The relay refereed the bout and signed its result
-        // (src/net/arenaReceipt.js); arena.js `claimArena` holds the rest - the signature, the account, one row a bout, a
+        // (src/net/arena/arenaReceipt.js); arena.js `claimArena` holds the rest - the signature, the account, one row a bout, a
         // ladder win only as the account's next bout, both ratings for a bout between players. A refusal says its rung, as
         // the gate's does (AUDIT WB A5): the client keeps a receipt the service can mend and lets go of one it cannot.
         // ARENA4b: and a won bout's Renown to the character the claim names (arena.js arenaRenownFor - the renown law's own
@@ -1597,7 +1654,7 @@ const service = {
         const act = {
           '/v1/seats/list': async () => {
             const r = await listSeats(ctx, who.player, env);
-            return 'error' in r ? r : { ...r, seats: await seatsWithHolders(ctx.db, r.seats, nowS), red: await redOf(ctx.db, nowS), zero: seasonZeroOf(env.SEASON_ZERO_WEEK) };   // SEAT1c: each seat's holder and battle   // CROWN2: the server's red lines   // SEASON1 part two: the week Season 0 began, for the client's Tides
+            return 'error' in r ? r : { ...r, ...(await seatsBoard(ctx.db, r.seats, nowS)), zero: seasonZeroOf(env.SEASON_ZERO_WEEK) };   // SEAT-BATCH: the holders, battles, Edicts, works and red lines in one batch   // SEAT1c: each seat's holder and battle   // CROWN2: the server's red lines   // SEASON1 part two: the week Season 0 began, for the client's Tides
           },
           '/v1/seats/relinquish': () => relinquishSeat(ctx, who.player, env, body),   // SEAT1c: a Charter given up at its board
           '/v1/seats/witness': () => witnessSeat(ctx, who.player, env, body),
@@ -2142,7 +2199,8 @@ const service = {
           if (r.error === 'lineage-stale') return json(r, 409, origin);
           return answer(r);
         }
-        if (path === '/v1/realm/die') return answer(await realmDie(rctx, me, { id: body.id, lease: body.lease, why: body.why }));   // LEGACY7 part three: 'retired' keeps a union
+        if (path === '/v1/realm/die') return answer(await realmDie(rctx, me, { id: body.id, lease: body.lease, why: body.why, hold: body.hold ?? false }));   // LEGACY7 part three: 'retired' keeps a union; REZ-BLOODLINE AUDIT R1: `hold`, the death door's fall a Resurrect may take back
+        if (path === '/v1/realm/raise') return answer(await realmRaise(rctx, me, { id: body.id, lease: body.lease, diedAt: body.diedAt }));   // REZ-BLOODLINE AUDIT R1: a party's Resurrect inside the hold, under the lease that fell
         // LEGACY7 part three: a half of one wedding, and the account's unions
         // AUDIT LEGACY III O1/O3: the other's character as the relay stamped it, and a half taken back
         if (path === '/v1/realm/wed') return answer(await realmWed(rctx, me, { id: body.id, lease: body.lease, sid: body.sid, partner: body.partner, partnerChar: body.partnerChar, withdraw: body.withdraw === true }));

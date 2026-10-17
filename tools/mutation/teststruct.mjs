@@ -7,7 +7,7 @@ const ROOT = process.cwd();
 const TEST = path.join(ROOT, 'test');
 const out = [];
 
-for (const f of fs.readdirSync(TEST).filter(x => x.endsWith('.test.js')).sort()) {
+for (const f of fs.readdirSync(TEST, { recursive: true }).map(String).filter(x => x.endsWith('.test.js')).sort()) {   // TIDY5: the tests in their folders
   const text = fs.readFileSync(path.join(TEST, f), 'utf8');
   const lines = text.split('\n');
   // find top-level test( calls

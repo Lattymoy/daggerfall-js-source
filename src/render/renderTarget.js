@@ -7,7 +7,7 @@
 // map is marched into a texture a stripe per frame (VC3), and the
 // ground's shadow map likewise (VC4).
 //
-// THE UPLOAD LAW (bible/01-Overview/Audit-47.md): an UPLOAD path may
+// THE UPLOAD LAW (bible/01-Overview/audits/Audit-47.md): an UPLOAD path may
 // create, fill and parameterise, and may not draw, bind a framebuffer,
 // clear, set a viewport or leave a binding. Everything here that binds
 // a framebuffer is therefore a DRAW path by name - `withTarget` - and

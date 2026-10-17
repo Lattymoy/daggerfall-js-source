@@ -1,0 +1,619 @@
+[
+  {
+    "name": "EGPRES-a-phone-read-as-a-desk",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "if (!(Math.min(w, h) <= EG_PHONE_SHORT_PX)) return 'desktop';",
+    "new": "if (!(Math.max(w, h) <= EG_PHONE_SHORT_PX)) return 'desktop';",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-upright-and-sideways-swapped",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "return h >= w ? 'upright' : 'sideways';",
+    "new": "return h >= w ? 'sideways' : 'upright';",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-the-upright-decrees-unfolded",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "upright: Object.freeze({ dec: 'fold',",
+    "new": "upright: Object.freeze({ dec: 'row',",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-the-potion-pip-on-a-phone",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "potion: L.potion ? `${potions}/${EG_POTIONS_PER_HALL}` : '',",
+    "new": "potion: `${potions}/${EG_POTIONS_PER_HALL}`,",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-gold-at-ten-flat",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "shown > EG_CHIP_GOLD_MS ? 'gold'",
+    "new": "shown >= EG_CHIP_GOLD_MS ? 'gold'",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-red-at-two-flat",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "shown >= EG_CHIP_RED_MS ? 'white' : 'red'",
+    "new": "shown > EG_CHIP_RED_MS ? 'white' : 'red'",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-a-held-count-pulsing",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "pulse: !held && shown < EG_CHIP_PULSE_MS",
+    "new": "pulse: shown < EG_CHIP_PULSE_MS",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-the-seal-never-shown",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "const seal = lastWord < left;",
+    "new": "const seal = false;",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-the-rest-not-the-reason",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "if (E.sg === 'rest') return 'rest';",
+    "new": "if (E.sg === 'rest') return 'hold';",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-a-respite-never-runs",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "if (resp && now < resp.at + (Number(resp.t) || 0) * 1000) return 'respite';",
+    "new": "if (resp && now < resp.at) return 'respite';",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-the-press-unnamed",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "if (press) return EG_PRES_TEXT.gain(t, EG_PRES_TEXT.pressWhy);",
+    "new": "if (false) return EG_PRES_TEXT.gain(t, EG_PRES_TEXT.pressWhy);",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-the-last-word-unnamed",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "if (leftAfter >= lastWordLeft - 1000) return",
+    "new": "if (leftAfter >= lastWordLeft + 1000) return",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-a-warning-said-twice",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "if (!said.has(k) && left <= EG_CHIP_WARNINGS[k].at && left > 0)",
+    "new": "if (left <= EG_CHIP_WARNINGS[k].at && left > 0)",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-a-held-count-warns",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "if (!E?.b || E.end || !(E.wk > 0) || !(E.ca > 0)) return due;",
+    "new": "if (!E?.b || E.end || !(E.wk > 0)) return due;",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-the-court-warning-backwards",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "left < egCourtNeedMs(E.h)) { said.add('court');",
+    "new": "left > egCourtNeedMs(E.h)) { said.add('court');",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-the-court-a-hall-short",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "return (5 - slot) * EG_HALL_REF_MS",
+    "new": "return (4 - slot) * EG_HALL_REF_MS",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-the-band-card-every-hall",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "const bandCard = first || EG_BAND_FIRST_HALLS.includes(E.h);",
+    "new": "const bandCard = true;",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-the-twist-dropped",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "twist: egTwistShown(spec, E.dc) ? EG_TWIST_LINES[spec.twist] ?? '' : '',",
+    "new": "twist: '',",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-the-marker-on-the-wrong-side",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "const rel = Math.atan2(dx * rx + dz * rz, dx * fx + dz * fz);",
+    "new": "const rel = Math.atan2(-(dx * rx + dz * rz), dx * fx + dz * fz);",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-a-sleeping-lord-barred",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "b.role === EG_ROLE.lord && b.ph > 0 &&",
+    "new": "b.role === EG_ROLE.lord &&",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-the-champion-on-the-lords-bar",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "return bars[0]?.court ? { lord: bars[0], lord2: bars[1] ?? null } : { lord: null, lord2: null }; };",
+    "new": "return { lord: bars[0] ?? null, lord2: bars[1] ?? null }; };",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-the-last-life-unsaid",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "&& !mine.recall ? EG_PRES_TEXT.recallSpent : '',",
+    "new": "&& false ? EG_PRES_TEXT.recallSpent : '',",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-the-dpad-taken-with-nothing-open",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "export const egPadUp = ({ recap = false, panel = false, witness = false, bridge = false } = {}) => !!(recap || panel || witness || bridge);",
+    "new": "export const egPadUp = ({ recap = false, panel = false, witness = false, bridge = false } = {}) => !!(recap || panel || witness || bridge || true);",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-up-says-no",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "dir === 'up' ? { k: 'take' } : { k: 'no' }",
+    "new": "dir === 'up' ? { k: 'no' } : { k: 'no' }",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-a-tap-forsakes",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "if (kind === 'hold' && dir === 'down') return { k: 'forsake' };",
+    "new": "if (dir === 'down') return { k: 'forsake' };",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-the-folded-decrees-shown",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "put('dec', P.dec, model.decFold && !model.foldOpen ? '' : model.dec.join(' - '));",
+    "new": "put('dec', P.dec, model.dec.join(' - '));",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-the-card-rising-in-reduced-motion",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "m.fresh && !still ? ' in' : ''",
+    "new": "m.fresh ? ' in' : ''",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-the-palette-never-on-the-chip",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "if (danger && danger !== shown.danger) { shown.danger = danger; root.style.setProperty?.('--eg-danger', danger); }",
+    "new": "if (false) { shown.danger = danger; root.style.setProperty?.('--eg-danger', danger); }",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-the-ring-never-draining",
+    "file": "src/ui/eliteGates/egParty.js",
+    "old": "out.set(sub, prev.get(sub) ?? now);",
+    "new": "out.set(sub, now);",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-a-split-where-there-is-none",
+    "file": "src/ui/eliteGates/egParty.js",
+    "old": ".filter((r) => r === 0 || r === 1)).size > 1;",
+    "new": ".filter((r) => r === 0 || r === 1)).size >= 1;",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-the-cracked-sigil-on-the-fallen",
+    "file": "src/ui/eliteGates/egParty.js",
+    "old": "cracked: recall !== 1 && state === 'alive',",
+    "new": "cracked: recall !== 1,",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-the-ring-outside-a-trial",
+    "file": "src/ui/eliteGates/egParty.js",
+    "old": "const since0 = trial && state === 'alive' ? absent.get(sub) : undefined;",
+    "new": "const since0 = state === 'alive' ? absent.get(sub) : undefined;",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-a-witness-not-grey",
+    "file": "src/ui/eliteGates/egParty.js",
+    "old": "r.state === 'witness' || r.state === 'fallen' ? 'eg-wit' : ''",
+    "new": "''",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-the-rows-written-every-frame",
+    "file": "src/ui/partyPanel.js",
+    "old": "    if (key === spireWas) return;\n    spireWas = key;",
+    "new": "    spireWas = key;",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-the-place-line-never-given-back",
+    "file": "src/ui/partyPanel.js",
+    "old": "else if (card.egWhere) { card.egWhere = false; painted = -1; }",
+    "new": "else if (card.egWhere) { card.egWhere = false; }",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-the-watch-replaying-a-reload",
+    "file": "src/ui/eliteGates/egBeats.js",
+    "old": "memo.seen.add(key); return memo.primed; };",
+    "new": "memo.seen.add(key); return true; };",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-a-final-fall-teaching-the-recall",
+    "file": "src/ui/eliteGates/egBeats.js",
+    "old": "if (!f.fin) firsts.push('recall');",
+    "new": "firsts.push('recall');",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-a-beat-in-the-chat-uncalled",
+    "file": "src/ui/eliteGates/egBeats.js",
+    "old": "chat: words && B.chat && B.by !== 'client' ? words : null",
+    "new": "chat: words && B.by !== 'client' ? words : null",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-a-fight-line-said-twice",
+    "file": "src/ui/eliteGates/egBeats.js",
+    "old": "const own = B.by === null && !!words;",
+    "new": "const own = !!words;",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-the-door-the-wrong-sound",
+    "file": "src/ui/eliteGates/egBeats.js",
+    "old": "door: Object.freeze({ rec: 25, vol: 1, pitch: 0.8 }),",
+    "new": "door: Object.freeze({ rec: 24, vol: 1, pitch: 0.8 }),",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-a-first-line-said-again",
+    "file": "src/ui/eliteGates/egBeats.js",
+    "old": "if (wanted.includes(k) && !(b & (1 << i)))",
+    "new": "if (wanted.includes(k))",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-the-rehearsal-line-every-time",
+    "file": "src/ui/eliteGates/egBeats.js",
+    "old": "return (bits | 0) & bit ? { line: null",
+    "new": "return false ? { line: null",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-the-beat-buzzing-all-its-solid",
+    "file": "src/ui/eliteGates/egBeats.js",
+    "old": "if (into >= EG_BEAT_SOLID_S - EG_BEAT_WARN_S && into < EG_BEAT_SOLID_S)",
+    "new": "if (into >= 0 && into < EG_BEAT_SOLID_S)",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-a-peril-buzzed-twice",
+    "file": "src/ui/eliteGates/egBeats.js",
+    "old": "if (seen.has(bl.i) || bl.cut ||",
+    "new": "if (bl.cut ||",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-a-landed-blow-a-peril",
+    "file": "src/ui/eliteGates/egBeats.js",
+    "old": "!Array.isArray(bl.s) || bl.at <= now) continue;",
+    "new": "!Array.isArray(bl.s)) continue;",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-the-buzz-past-the-switch",
+    "file": "src/ui/eliteGates/egBeats.js",
+    "old": "if (!H || !on || !nav) return false;",
+    "new": "if (!H || !nav) return false;",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-a-rune-stood-on-chimed",
+    "file": "src/ui/eliteGates/egBeats.js",
+    "old": "b.k === EG_OBJ.rune && b.st === 1 &&",
+    "new": "b.k === EG_OBJ.rune && b.st >= 1 &&",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-a-first-line-reworded",
+    "file": "src/ui/eliteGates/egBeats.js",
+    "old": "home: 'Walk home to open your Reliquaries.',",
+    "new": "home: 'Walk home.',",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-a-fill-dimming-the-line",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "sh.edge = sh.mine ? brighter(pal.danger) : pal.danger;",
+    "new": "sh.edge = sh.mine ? brighter(pal.danger) : pal.danger.map((v) => v * fill);",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js",
+      "test/world/eliteGates/eglook_lines.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-the-gold-read-as-danger",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "if (sameRgb(sh.color, GOLD)) sh.color = pal.safety;",
+    "new": "if (sameRgb(sh.color, GOLD)) sh.color = pal.danger;",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-the-fill-never-dimmed",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "sh.fillK = fill * (",
+    "new": "sh.fillK = 1 * (",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js",
+      "test/world/eliteGates/eglook_lines.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-the-system-setting-ignored",
+    "file": "src/ui/eliteGates/egAccess.js",
+    "old": "    return !!motionQuery.get(win)?.matches;",
+    "new": "    return false;",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-high-contrast-not-magenta",
+    "file": "src/ui/eliteGates/egAccess.js",
+    "old": "danger: Object.freeze([1.0, 0.15, 0.75])",
+    "new": "danger: Object.freeze([1.0, 0.24, 0.28])",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-the-reliquaries-opened-by-a-tear",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "opened: EG_OPEN_ENDS.includes(why) ? run?.rel ?? 0 : 0",
+    "new": "opened: run?.rel ?? 0",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-a-sixth-run-kept",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "const list = [...egRecapsKept(store), { ...recap, at }].slice(-EG_RECAPS_KEPT);",
+    "new": "const list = [...egRecapsKept(store), { ...recap, at }].slice(-EG_RECAPS_KEPT - 1);",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-the-strip-without-its-lord",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "lord: hs.find((h) => h.lordName)?.lordName ?? ''",
+    "new": "lord: ''",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-the-reliquaries-all-at-once",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "Date.now() - pres.relAt >= 400) { pres.rel++;",
+    "new": "Date.now() - pres.relAt >= 0) { pres.rel++;",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-the-cost-shown-without-a-cost",
+    "note": "EG-ZR (PIN MOVED): re-aimed by content - the cast-back's beat carries Featherstep's cost (its share); AUDIT EG III (PIN MOVED): re-aimed by content - the cast-back's beat carries what it took of the health bar; its share now what was taken (0 at the floor), so the floor's cast-back is pinned to say nothing by test/net/eliteGates/egaudit3_pres.test.js too",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "castBackBeat(cut > 0, Math.round(cut) / (entity.maxHealth || 1));",
+    "new": "castBackBeat(true, Math.round(cut) / (entity.maxHealth || 1));",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js",
+      "test/net/eliteGates/egaudit3_pres.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-the-rewind-silent-without-a-cost",
+    "note": "EG-ZR (PIN MOVED): re-aimed by content - the cast-back's beat says the cost taken (Featherstep's)",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "if (cost) beatNow('castBack', { t: EG_PRES_TEXT.castBackCost(share) }); else playSound(EG_BEAT_SOUNDS.rewind);",
+    "new": "if (cost) beatNow('castBack', { t: EG_PRES_TEXT.castBackCost(share) });",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-no-recap-walking-home",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "if (!leaving && endSeen !== 'home') { endSeen = 'home';",
+    "new": "if (false) { endSeen = 'home';",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-the-pad-holding-every-press",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "return padGesture(dir, dir === 'down' && witness ? 'hold' : 'tap');",
+    "new": "return padGesture(dir, 'hold');",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-a-yes-or-no-one-option",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "egAskText(a[0], a[1]).opts.forEach((_, y) => items.push({ k: 'opt', q: a[0], y }));",
+    "new": "a[1].forEach((_, y) => items.push({ k: 'opt', q: a[0], y }));",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-the-gold-run-never-flying",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "if (b.k === 'goldRun') pres.gain =",
+    "new": "if (false) pres.gain =",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-the-hud-never-still",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "skin: isEnhanced() ? 'enhanced' : 'classic', still: acc.still,",
+    "new": "skin: isEnhanced() ? 'enhanced' : 'classic', still: false,",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-the-palette-off-the-hud",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "danger: rgbCss(acc.palette.danger), scale: hudScaleNow(),",
+    "new": "danger: '', scale: hudScaleNow(),",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-the-redoubt-gain-never-flying",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "if (text) pres.gain = { text, at: t }; }",
+    "new": "if (text) void text; }",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-the-pad-never-the-spires",
+    "file": "src/scenes/world.js",
+    "old": "inputHooks.helm = { up: () => eg() || helm.up(),",
+    "new": "inputHooks.helm = { up: () => helm.up(),",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGPRES-the-pass-drawn-past-the-palette",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "egLookShapes(_shapes, egAccessNow(), stageNow);",
+    "new": ";",
+    "tests": [
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  }
+]

@@ -21,7 +21,7 @@ import { buildProgram } from './glProgram.js';   // AUDIT 68 S17-gl-program-dup:
 import { realWindowsGlsl, RW_MAIN_DERIVS, RW_MAIN_CUTOUT, RW_MAIN_GLASS, RW_MAIN_ROOM, GLASS_NONE, GLASS_EXTERIOR, GLASS_INTERIOR, winModeFor, roomLightFor, sphereNdcRect, cropProjection, viewTargetSize, viewSkyFrom, viewRays, VIEW_BG_VS, VIEW_BG_FS, VIEW_PANES_MAX, VIEW_PANE_UNIT, VIEW_PANE_VS, VIEW_PANE_FS } from './realWindows.js';   // RW1: the real windows - the rooms, the glass, the view out
 import { MESH_ALPHA_GLSL, samplerParams, samplerKey } from './meshAlpha.js';   // POI-2: a translucent mesh draw, and a texture's own wrap and filter
 import { frameTarget, setFrameTarget } from './renderTarget.js';   // RW1: the view out's pass hands the frame target back as it found it (EL4's restore)
-import { CLIP_SENTINEL } from '../world/terrainSurface.js';   // FAR-CLIP1: the byte the terrain's clip variant discards - the TileMap format's module, already in this file's closure (waterCorners.js)
+import { CLIP_SENTINEL } from '../world/terrain/terrainSurface.js';   // FAR-CLIP1: the byte the terrain's clip variant discards - the TileMap format's module, already in this file's closure (waterCorners.js)
 /** AUDIT TECH-FX: the screen offset before any is set - one, frozen (Renderer `screenOffset`). */
 const NO_SCREEN_OFFSET = Object.freeze([0, 0]);
 
@@ -239,7 +239,7 @@ void main() {
 //   - the OPTIONAL skin channels 5-9, additive as aUV and aEmissive are: a VAO that never enables them reads
 //     constants, and `uSkin` 0 never looks at them - every voxel rig and every CPU-skinned mesh draws exactly what
 //     it drew;
-//   - uSkin 1 (one influence pair) or 2 (two): the position is BLENDED here off the palette (formats/mwGpuSkin.js -
+//   - uSkin 1 (one influence pair) or 2 (two): the position is BLENDED here off the palette (formats/morrowind/mwGpuSkin.js -
 //     its skinPoint is this function in JS, and the pins hold the two together): the influences' rows accumulated
 //     in slot order, the post composed onto the sum once (MW-D31), the result applied to the stream position;
 //   - `vNormalV` and `vRel`: the normal under its old name's job, and the posed position in the model's own axes
@@ -554,7 +554,7 @@ uniform vec3 uRight;
 uniform vec3 uUp;
 uniform vec3 uOrigin;
 uniform vec2 uSize;
-uniform vec4 uFlatWind;   // WIND3: the wind's rate x, z (m/s, the lab's rate from systems/windDrive.js), the clock, the gust
+uniform vec4 uFlatWind;   // WIND3: the wind's rate x, z (m/s, the lab's rate from systems/wind/windDrive.js), the clock, the gust
 uniform float uSway;      // WIND3: this batch's share of the lean (0 = stands still); WINDFALL1: its wind mask while the mod's law stands
 ${WINDFALL_SWAY_GLSL}
 uniform vec3 uTip;        // PROF4: a felled tree's fall - x, z the way it falls, the angle it has leaned (0 = stands)
@@ -782,8 +782,8 @@ import { multiply as mat4Multiply } from '../world/mat4.js';   // PERF-CROWD2: p
 import { PerfMeter, perfOn, perfZones, perfCpu, setMeter } from './perfMeter.js';   // EL8: `?perf`   // EL5: the bounds every bundle carries for the replays' culling   // EL2: the lane's shadow maps - a leaf that compiles nothing until a lane asks
 import { AirPass, AIR_ADAPT_UNIT as ADAPT_UNIT, AIR_CONTACT_UNIT as CONTACT_UNIT } from './airPass.js';   // EL3: the ambient occlusion, the bloom and the shafts - the same kind of leaf; EL4: the eye's unit; EL6: all of it off the frame's own depth, at the resolve
 import { RetroPass } from './retroPass.js';   // RETRO1: DFU's retro mode - the world's small image, its effect and its present (a leaf, the air pass's kind)
-import { decalIndices, DECAL_FLOATS_PER_VERTEX } from '../combat/bloodDecals.js';   // BLOOD1a: the index winding and the vertex stride are the decal module's, so the writer and the buffer cannot disagree about the format
-import { BLOOD_ABSORB_ENCODED, INK_DEPTH } from '../combat/bloodArt.js';
+import { decalIndices, DECAL_FLOATS_PER_VERTEX } from '../combat/blood/bloodDecals.js';   // BLOOD1a: the index winding and the vertex stride are the decal module's, so the writer and the buffer cannot disagree about the format
+import { BLOOD_ABSORB_ENCODED, INK_DEPTH } from '../combat/blood/bloodArt.js';
 import { glslFloat } from './airPass.js';   // AUDIT BLOOD3 F9: a dial at a whole number is an INT literal in GLSL, and vec3 * int does not compile   // BLOOD3: the film's absorption - the classic mark takes the depth, the lane takes the sheen too
 import { SHADE_DARK } from '../systems/concealDraw.js';   // ECV1 / AUDIT 65 PN-3: the shade's pull toward black, interpolated into BB_FS below - the shader restated 0.12 as a second literal. The LEAF, not systems/combatVisuals.js, which re-exports it: that module's graph would take this file's closure from 13 modules to 69
 import { FLAT_DISSOLVE_GLSL } from '../systems/dissolve.js';   // DISSOLVE: a sprite burnt away, or gathered through a portal (a leaf)
@@ -1102,9 +1102,9 @@ void main() {
 // variant available, so the sea-level water cap stays visible on mixed
 // land/water map pixels".
 //
-// The port's mark is the byte CLIP_SENTINEL (world/terrainSurface.js).
+// The port's mark is the byte CLIP_SENTINEL (world/terrain/terrainSurface.js).
 // DW-C left a clipped tile's QUAD out of the pixel's index set instead
-// (world/deepWaterCap.js clippedTerrainIndices) - the discard exactly while
+// (world/deepWater/deepWaterCap.js clippedTerrainIndices) - the discard exactly while
 // a tile is a quad, at stride 1. EV4's far ground draws at stride 4,
 // sixteen tiles a quad, and kept every quad not clipped whole; no terrain
 // program tested the byte, so a kept quad drew its clipped tiles as tile
@@ -1313,7 +1313,7 @@ void main() {
   // maroon it was (at full thickness the factor is exactly 1). The
   // LANE's twin carries the rest of the slice - the meniscus normal and
   // the sheen's Fresnel - because a classic mark has no glint to temper
-  // and no lantern rig to catch a rim with. See combat/bloodArt.js.
+  // and no lantern rig to catch a rim with. See combat/blood/bloodArt.js.
   // AUDIT BLOOD3 F1: the ink is the thickness INVERTED (bloodArt.js), so
   // the film reads it out rather than taking it for a density - BLOOD3
   // had this running backwards over every shape in the sheet. And the
@@ -1464,7 +1464,7 @@ export const VIEW_OUT_CLEAR = Object.freeze([0, 0, 0, 0]);
  *  (_uploadCloudShadow). It used to be 7, which is also where the
  *  Dynamic Skies pass lands `_MoonTex`: that mod binds its nine
  *  TEXTURE_SLOTS as `TEXTURE0 + i` (dynamicSkiesRenderer.js:"for (let i = 0; i < TEXTURE_SLOTS.length; i++)",
- *  over systems/dynamicSkies.js:"export const TEXTURE_SLOTS"'s nine names),
+ *  over systems/dynamicSkies/dynamicSkies.js:"export const TEXTURE_SLOTS"'s nine names),
  *  so unit 7 was written by a foreign pass while the renderer's
  *  per-program stamp still said the shadow map was there. 15 sits
  *  above the mod's nine and above every other pass in the tree (none
@@ -1541,13 +1541,21 @@ import { WATER_MAP_COLOR } from './underwaterFog.js';
 import { WATER_SURFACE_VS, waterSurfaceFs } from './waterSurface.js';   // WATER1: the enhanced water pass over the terrain grid
 import { WATER_LAYER_UNITS, WATER_SCENE_UNIT, WATER_SCENE_DEPTH_UNIT, NO_BED_DEPTH, WATER_RIPPLE_UNIT } from './waterSurface.js';   // FIELD BUGS 2026-09-29 (the sea) #4: WATER1's offset is the sea's surface film's
 import { WATER_BED_GLSL, waterBedMix } from './waterBedGlsl.js';   // WATER-NEXT 2: the ground under the water is a bed
-import { packWaterMask, WATER_DRAW_MASK_TABLE } from '../world/waterCorners.js';   // MAC2: the corner table's one home; WATER-DRAW1: the PASS takes the draw's table, not the feet's
+import { packWaterMask, WATER_DRAW_MASK_TABLE } from '../world/water/waterCorners.js';   // MAC2: the corner table's one home; WATER-DRAW1: the PASS takes the draw's table, not the feet's
 import { pageParam } from '../systems/pageQuery.js';   // PERF-URL: the page's query, parsed once a search
 import { SKIN_PAL_ROW, SKIN_PALETTE_UNIT } from './skinPalette.js';   // MWNPC1: the GPU skin's palette shape
 import { lightIdsOf, lightList, packLight } from './lightId.js';   // LIGHT-ID: each light's identity, lifted off its list for the shadow pass (and the flash packed through the seam)
 import { ecotoneGlsl, ECO_UNITS } from './ecotoneGlsl.js';   // ECOTONE1: the ground's share of its neighbours - the chunk, and the units their tile sets bind on
 import { SNOW_VS, snowTerrainFs, SNOW_UNITS, SNOW_LAYER, snowSurfaceRise } from './snowfallGlsl.js';   // SNOWFALL1: the mod's snow surface, lit as the ground is
+import { GLOW_SPRITE_VS, GLOW_SPRITE_FS, GLOW_FIELD_VS, GLOW_FIELD_FS, GLOW_FIELDS_MAX, GLOW_REACH_MAX, glowFieldReach, GLOW_MESH_FS, GLOW_CLOCK_PERIOD, GLOW_CHARGE_PULL, GLOW_DRAWS_MAX, GLOW_DEPTH_FLOOR, glowUnit, glowMeshVs, glowRingDraws } from './weaponGlowGlsl.js';   // WEAPON-GLOW1: a weapon's element, drawn
 const SNOW_UNIT_LIST = Object.entries(SNOW_UNITS);   // AUDIT ENVIRONS P1: the five pictures' units, listed once
+
+/** WEAPON-GLOW1: the glow's seconds, wrapped where every rate in it is whole (render/weaponGlowGlsl.js). A wall clock,
+ *  as the elite foes' glow is: a look, and the same look in every pass that draws one. */
+export const glowSeconds = (now = globalThis.performance?.now?.() ?? Date.now()) => (now / 1000) % GLOW_CLOCK_PERIOD;
+/** WEAPON-GLOW1: the Morrowind outline's draws per look, built once. */
+const _glowDraws = new Map();
+const glowDrawsFor = (look) => { let d = _glowDraws.get(look); if (!d) { d = glowRingDraws(look); _glowDraws.set(look, d); } return d; };
 
 /** The automap render panel, DFU's own rect on the 320x200 native
  *  screen (DaggerfallAutomapWindow's dummyPanelRenderAutomap /
@@ -1772,7 +1780,7 @@ export class Renderer {
     // DRAW pays; upload-time binds are creation cost, not frame cost.
     this._perf = perfOn() ? setMeter(gl, new PerfMeter(gl, perfZones(), perfCpu())) : null;   // EL8: `?perf` - a GPU-timed line every PERF_EVERY world frames; VC6d: `?perf=zones` per pass, and the meter is findable by its context (the sky's march marks its own span); PERF-CPU: `?perf=cpu` tiles the same zones on the MAIN THREAD's clock, which is the one a script-bound frame is losing
     this._perfOpen = false;   // AUDIT 68 S16-perf-no-resolve-leak: a world frame's meter frame begun and not yet closed (_perfClose)
-    this._frameStamp = 0;      // PERF3: bumped by beginFrame (and the state restores) - the terrain program's frame-constant block is uploaded once per stamp; LA-COST1: and the billboard's, the decal's and the character's, and bumped by every setter and seam that moves a value in any of the four (the law: test/la_cost.test.js)
+    this._frameStamp = 0;      // PERF3: bumped by beginFrame (and the state restores) - the terrain program's frame-constant block is uploaded once per stamp; LA-COST1: and the billboard's, the decal's and the character's, and bumped by every setter and seam that moves a value in any of the four (the law: test/render/la_cost.test.js)
     // PERF-CROWD2 (2026-09-19): THE BILLBOARD PASS CULLS, so that no host
     // has to remember to. PERF-ON2 found the peers submitted uncut and
     // PERF-CROWD found the whole town beside them - and then the same
@@ -1829,7 +1837,7 @@ export class Renderer {
     this._fogDensity = 0;
     this._fogRange = new Float32Array([0, 1]);
     // DW-C: Iliac Puddle No More's distance fog - fogGlsl.js uDwFog, five vec4s
-    // (world/deepWaterLook.js distanceFogUniforms). A FRAME's, as the cloud
+    // (world/deepWater/deepWaterLook.js distanceFogUniforms). A FRAME's, as the cloud
     // deck is: beginFrame clears it and the exterior host sets it after.
     this._dwFog = new Float32Array(20);
     this._seaHaze = new Float32Array(2);   // FAR-SEA1: the hold and the sea's height (setSeaHaze)
@@ -2011,7 +2019,7 @@ export class Renderer {
    * camera's rect every frame from the HUD's height; this is that
    * rect, in Unity's own normalized BOTTOM-LEFT space, which is also
    * gl.viewport's - so `{ x: 0, y: hudHeight, w: 1, h: 1 - hudHeight }`
-   * ports digit for digit (ui/hudLarge.js owns the arithmetic).
+   * ports digit for digit (ui/hud/hudLarge.js owns the arithmetic).
    *
    * CONSUMED BY THE NEXT beginFrame, exactly as DFU recomputes the
    * rect every frame ("Check size every frame as HUD height can
@@ -2114,7 +2122,7 @@ export class Renderer {
    *  `activeTexture` is a pure selector - it has no effect but to say
    *  which unit the next `bindTexture` means - so this shadow cannot
    *  change a picture on its own. What it CAN do is go stale, which is
-   *  why the funnel law (`test/glstate.test.js`) allows exactly one raw
+   *  why the funnel law (`test/render/glstate.test.js`) allows exactly one raw
    *  `gl.activeTexture` in this file, inside here. */
   _activeTexture(unit) {
     if (this._activeUnit === unit) return;
@@ -2188,7 +2196,7 @@ export class Renderer {
     // PERF-2D: THE ONE GAP THIS CHANGE CANNOT GUARD, MADE LOUD.
     //
     // Every path inside this file closes the 2D run before it needs the
-    // baseline, and `test/glstate.test.js` reads that law out of the
+    // baseline, and `test/render/glstate.test.js` reads that law out of the
     // source. The SKY, the rain, the wisps, the sand and the grass are
     // not inside this file: the hosts hand them `renderer.gl` at
     // construction and call `draw` on them directly, so nothing here can
@@ -3148,7 +3156,7 @@ export class Renderer {
    *  happens: on demand, at the head of everything that needs the
    *  baseline back, instead of eagerly after every quad.
    *
-   *  The law, and `test/glstate.test.js` reads it out of the source:
+   *  The law, and `test/render/glstate.test.js` reads it out of the source:
    *  **every method in this file that issues a `gl.draw*` either is one
    *  of the three 2D primitives or calls `_close2D()` first**, and so
    *  does every seam where foreign GL can run (`beginFrame`,
@@ -3275,11 +3283,14 @@ export class Renderer {
 
   /** PERF-COMPILE1 (2026-10-10, stutter): the renderer's OTHER on-demand programs, warmed at idle the same way
    *  (warmPrograms) - kept apart from warmSteps, whose list its pins count: the foes' telegraph pass (built at the
-   *  first wind-up a fight shows) and the real windows' background (built at the first building with glass). */
+   *  first wind-up a fight shows), the real windows' background (built at the first building with glass) and the weapon
+   *  glow's two (WEAPON-GLOW1, built at the first glowing weapon in a hand). */
   lazyWarmSteps() {
     return [
       () => { this._loadFoeTelegraph(); },
       () => { this._rwBg ??= this._rwBgProgram(); },
+      () => this._ensureWeaponGlowMeshProgram(),   // AUDIT WEAPON-GLOW MW-6: the glow's two, before the first glowing weapon
+      () => this._ensureWeaponGlowQuadProgram(),
     ];
   }
 
@@ -3336,7 +3347,7 @@ export class Renderer {
   }
 
   /**
-   * MWNPC1: A GPU-SKINNED CHARACTER MESH - formats/mwGpuSkin.js packSkinStream's static stream, uploaded ONCE, and
+   * MWNPC1: A GPU-SKINNED CHARACTER MESH - formats/morrowind/mwGpuSkin.js packSkinStream's static stream, uploaded ONCE, and
    * its palette texture (RGBA32F, `width` x `height`, three texels an entry). A pose re-uploads the palette alone
    * (updateSkinPalette); drawCharacter blends the stream in CHAR_SKIN_VS. `pairs` is the influence pairs a corner
    * carries (1 or 2). No sphere: the body is drawn only through the sprite target, which never casts (MW-CROWD) - an NPC's
@@ -3387,7 +3398,7 @@ export class Renderer {
   }
 
   /** MW-BOW1 x MWNPC1: a part that moved on its own clock - its corners alone put back into the static stream at
-   *  `offset` floats (formats/mwGpuSkin.js restreamMovedRows). Nothing else of the body is re-sent. */
+   *  `offset` floats (formats/morrowind/mwGpuSkin.js restreamMovedRows). Nothing else of the body is re-sent. */
   updateSkinStream(mesh, offset, data) {
     const gl = this.gl;
     if (!mesh || !mesh.skin || !mesh.vbo) return;
@@ -3472,7 +3483,7 @@ export class Renderer {
   /** Re-upload a character mesh's vertex stream in place (per-frame
    *  animation). `packed` must match the original layout/length. */
   /** MAC-Q: a particle EFFECT's GL objects - a VAO over PARTICLE_FLOATS
-   *  (formats/mwParticles.js packParticleQuads' stream), sized for
+   *  (formats/morrowind/mwParticles.js packParticleQuads' stream), sized for
    *  `capacity` quads and refilled each frame. Rides a character mesh's
    *  `effects` list and is drawn after its ranges. */
   createParticleEffect(capacity, state = {}) {
@@ -3517,7 +3528,7 @@ export class Renderer {
   }
 
   /** MW-SPELLFX1: MORROWIND'S SPELL EFFECTS IN THE WORLD PASS (scenes/mwMagicFx.js) - particle effects whose streams
-   *  are already in world space (formats/mwVfx.js), drawn with the identity model through the character path's own
+   *  are already in world space (formats/morrowind/mwVfx.js), drawn with the identity model through the character path's own
    *  particle draw: the NIF's blend function and depth flags, depth-tested against the world. Both faces, as the
    *  impact pass draws them (render/spellImpactFx.js): an effect's shells are seen from inside and out, and the
    *  Morrowind-to-world mirror turns every triangle over. The baseline's CULL_FACE comes back after. */
@@ -3685,6 +3696,14 @@ export class Renderer {
     // warning and a program that links clean.
     this._activeTexture(gl.TEXTURE0);
     gl.uniform1i(c.tex, 0);
+    // WEAPON-GLOW1: the held weapon's element, in a sprite pass alone (the arm's and a third-person body's picture -
+    // `_spriteDepth`, whose two passes set `_glowVpW`/`_glowVpH` before they draw) and never in the studio bake (a UI
+    // picture read back - the inventory's figure, an icon - is a still, and no moment of a glow is baked into it), while
+    // this body's palette is on its unit: the outline's rings BEFORE the body (at the back of the pass, so everything
+    // drawn after covers them) and its charge after; each hands charProgram back for the lines that follow
+    // TWO-HANDS: and a pair's LEFT blade its own (`mesh.offWeaponGlow` on the 'offweapon' ranges) - each hand its weapon's
+    const glow = !!(mesh.weaponGlow || mesh.offWeaponGlow) && this._spriteDepth > 0 && this._studioDepth === 0 && this._glowVpH > 0 && !!mesh.ranges;
+    if (glow) this._drawWeaponGlows(mesh, modelMatrix, skin, false);
     if (mesh.ranges && mesh.ranges.length) {
       for (const r of mesh.ranges) {
         // MW-D12: a HIDDEN range still owns its vertices and its texture
@@ -3708,6 +3727,7 @@ export class Renderer {
       gl.drawArrays(gl.TRIANGLES, 0, mesh.count);
       this.stats.texBinds++; this.stats.draws++;
     }
+    if (glow) this._drawWeaponGlows(mesh, modelMatrix, skin, true);
     gl.bindTexture(gl.TEXTURE_2D, null);
     this._tex0Bound = null;   // PERF-TEX3: this path owns unit 0 - the shadow may not speak for it
     gl.uniform1f(c.useTex, 0);
@@ -3726,6 +3746,113 @@ export class Renderer {
     // either: osgParticle draws in the transparent bin)
     if (mesh.effects && mesh.effects.length) this._drawParticleEffects(mesh, modelMatrix);
     gl.enable(gl.CULL_FACE);
+  }
+
+  /**
+   * WEAPON-GLOW1 (bible/05-Combat/Weapon-Glow.md): A MORROWIND WEAPON'S ELEMENT, inside drawCharacter's sprite pass -
+   * `mesh.weaponGlow` is `{ look, code, level, ramp }` (systems/weaponGlow.js, set by combat/fpArm.js), and the ranges
+   * it lights are the weapon's (`slot` 'weapon', shown). THE OUTLINE (`charge` false, before the body): every range
+   * again per draw of glowRingDraws - shifted in screen space by glow units (a Daggerfall pixel at this pass's
+   * height), opaque and depth-written at the back of the pass, outermost first and farthest, so the union of a ring's
+   * copies is the silhouette dilated to its band and the body drawn after covers them. THE CHARGE (`charge` true, after
+   * the body): the ranges once more, additive with alpha masked (the composite's cut stays the body's), at the body's
+   * own depth. Owns its program binding and hands back charProgram, and every state it touches back as drawCharacter
+   * keeps it: blend off, depth LESS and written, every colour channel. TWO-HANDS: `slot` and `g` - the ranges it lights
+   * and their glow - are the held weapon's by default; a pair's left blade ('offweapon') is lit with its own.
+   */
+  _drawWeaponGlow(mesh, modelMatrix, skin, charge, slot = 'weapon', g = mesh.weaponGlow) {
+    this._close2D();   // PERF-2D: drawCharacter's own baseline - closed already, said where the draw is
+    if (!g) return;
+    let any = false;
+    for (const r of mesh.ranges) if (r.slot === slot && !r.hidden) { any = true; break; }
+    if (!any || !g.ramp || !(g.code > 0)) return;
+    const gl = this.gl;
+    this._ensureWeaponGlowMeshProgram();
+    this._use(this.weaponGlowMeshProgram);
+    const u = this._wgm;
+    gl.uniformMatrix4fv(u.proj, false, this._proj);
+    gl.uniformMatrix4fv(u.view, false, this._view);
+    gl.uniformMatrix4fv(u.model, false, modelMatrix);
+    gl.uniform1f(u.skin, skin ? skin.pairs : 0);
+    gl.uniform1i(u.look, g.code);
+    gl.uniform1f(u.level, g.level);
+    gl.uniform1f(u.time, glowSeconds());
+    gl.uniform3fv(u.ramp, g.ramp);
+    // the glow's unit: the arm's lens's (fpArm.js `glowUnit`, so a Weapon Widget scale grows it with the arm), else
+    // this picture's own rows (AUDIT WEAPON-GLOW MW-3/MW-8); its place counted from the picture's corner (MW-4)
+    const unit = mesh.glowUnit > 0 ? mesh.glowUnit : glowUnit(this._glowVpH);
+    gl.uniform1f(u.unit, unit);
+    gl.uniform2f(u.origin, this._glowOx || 0, this._glowOy || 0);
+    this._tex0Bound = null;   // PERF-TEX3: this path owns unit 0 - the shadow may not speak for it
+    let n = 1;
+    if (!charge) {
+      // AUDIT WEAPON-GLOW MW-5: every ring and ember an instance - its row the shift in NDC, its depth, its band
+      const draws = glowDrawsFor(g.look);
+      const sx = (2 * unit) / this._glowVpW, sy = (2 * unit) / this._glowVpH;
+      if (!this._glowDrawRows) this._glowDrawRows = new Float32Array(GLOW_DRAWS_MAX * 4);   // built once, filled a draw
+      const rows = this._glowDrawRows;
+      n = Math.min(draws.length, GLOW_DRAWS_MAX);
+      for (let i = 0; i < n; i++) {
+        const d = draws[i];
+        rows[i * 4] = d.shift[0] * sx; rows[i * 4 + 1] = d.shift[1] * sy; rows[i * 4 + 2] = d.far; rows[i * 4 + 3] = d.ring;
+      }
+      gl.uniform4fv(u.draws, rows, 0, n * 4);
+      gl.uniform1i(u.instanced, 1);
+      gl.uniform1f(u.pull, 0);
+      gl.uniform1f(u.mode, 0);
+    } else {
+      gl.uniform1i(u.instanced, 0);
+      gl.uniform1f(u.pull, GLOW_CHARGE_PULL);
+      gl.uniform1f(u.mode, 1);
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.ONE, gl.ONE);
+      gl.colorMask(true, true, true, false);
+      gl.depthMask(false);
+      gl.depthFunc(gl.LEQUAL);
+    }
+    for (const r of mesh.ranges) {
+      if (r.slot !== slot || r.hidden) continue;
+      gl.uniform1f(u.useTex, r.tex ? 1 : 0);
+      gl.uniform1f(u.alphaCut, r.alphaCut || 0);
+      gl.bindTexture(gl.TEXTURE_2D, r.tex || this._blackTex);
+      this._tex0Bound = null;   // PERF-TEX3: this path owns unit 0 - the shadow may not speak for it
+      if (charge) { gl.drawArrays(gl.TRIANGLES, r.first, r.count); this.stats.draws++; }
+      else { gl.drawArraysInstanced(gl.TRIANGLES, r.first, r.count, n); this.stats.draws++; }   // every ring and ember, one draw
+    }
+    if (charge) {
+      gl.depthFunc(gl.LESS);
+      gl.depthMask(true);
+      gl.colorMask(true, true, true, true);
+      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+      gl.disable(gl.BLEND);
+    }
+    this._use(this.charProgram);
+  }
+
+  /** WEAPON-GLOW1 / TWO-HANDS: every weapon's glow on this mesh - the held weapon's, and a pair's left blade's with its
+   *  own element - each its own pass over its own ranges (an outline before the body, a charge after). */
+  _drawWeaponGlows(mesh, modelMatrix, skin, charge) {
+    if (mesh.weaponGlow) this._drawWeaponGlow(mesh, modelMatrix, skin, charge, 'weapon', mesh.weaponGlow);
+    if (mesh.offWeaponGlow) this._drawWeaponGlow(mesh, modelMatrix, skin, charge, 'offweapon', mesh.offWeaponGlow);
+  }
+
+  /** WEAPON-GLOW1: the Morrowind glow's program - the character program's skinned vertex shader with the glow's shift
+   *  (render/weaponGlowGlsl.js glowMeshVs), built on the first glowing weapon. Its samplers are constants: the range's
+   *  texture on unit 0, the skin's palette on its own. */
+  _ensureWeaponGlowMeshProgram() {
+    if (this.weaponGlowMeshProgram) return;
+    const gl = this.gl;
+    const p = this._buildProgram(glowMeshVs(CHAR_SKIN_VS), GLOW_MESH_FS);
+    const at = (n) => gl.getUniformLocation(p, n);
+    this._wgm = {
+      proj: at('uProj'), view: at('uView'), model: at('uModel'), skin: at('uSkin'), draws: at('uGlowDraw'), instanced: at('uGlowInstanced'),
+      pull: at('uGlowPull'), useTex: at('uUseTex'), alphaCut: at('uAlphaCut'), look: at('uLook'), level: at('uLevel'), time: at('uTime'),
+      ramp: at('uRamp'), mode: at('uMode'), unit: at('uUnit'), origin: at('uGlowOrigin'),
+    };
+    this._use(p);
+    gl.uniform1i(at('uTex'), 0);
+    gl.uniform1i(at('uSkinPalette'), SKIN_PALETTE_UNIT);
+    this.weaponGlowMeshProgram = p;
   }
 
   /**
@@ -3901,6 +4028,7 @@ export class Renderer {
     // setClearColor (:1953) is idempotent against the `_clearColor`
     // shadow this path no longer matches - AUDIT 26 F034's bug back,
     // permanently, off one caught exception.
+    this._glowVpW = pw; this._glowVpH = ph; this._glowOx = 0; this._glowOy = 0;   // WEAPON-GLOW1: the pass's pixels and its corner (read inside a sprite pass alone)
     try {
       this.drawCharacter(mesh, modelMatrix);
       if (also) for (const o of also) this.drawCharacter(o.mesh, o.model);   // COATS3D: a rider's horse, in the rider's picture
@@ -4019,6 +4147,7 @@ export class Renderer {
         gl.clear(gl.DEPTH_BUFFER_BIT);
         this._proj = it.proj; this._view = it.view;
         this._cFrameStamp = -1;   // LA-COST1: its own camera's block, as the lone pass sends it
+        this._glowVpW = it.pw; this._glowVpH = it.ph; this._glowOx = it.tx; this._glowOy = it.ty;   // WEAPON-GLOW1: the tile's pixels and its corner
         this.drawCharacter(it.mesh, it.model);
         if (it.also) for (const o of it.also) this.drawCharacter(o.mesh, o.model);   // COATS3D: a rider's horse, in the rider's picture
       }
@@ -4094,7 +4223,7 @@ export class Renderer {
   /** Composite the sprite into the world: camera-facing quad at the
    *  character's position, alpha-cut, fogged, depth-tested. */
   /** INVIS-LOOK (2026-09-27): `conceal`, optional - ECV1's visual ({ mode, alpha, t, phase }, systems/combatVisuals.js)
-   *  for a CONCEALED peer's Morrowind body (net/peerBodies.js drawVeiled): the billboard shader's own look on this
+   *  for a CONCEALED peer's Morrowind body (net/peer/peerBodies.js drawVeiled): the billboard shader's own look on this
    *  quad (the blend's ripple and opacity, the shade's dark), BLENDED with no depth write, as the billboards' concealed
    *  phase draws a concealed foe. None, and the quad is the opaque cut-out it always was. */
   /** AUDIT OW4 J6: `up`, optional - the quad's vertical when it leans (the travel view's leaned up, characterSprite.js
@@ -4210,6 +4339,7 @@ float tileAlpha(ivec2 p) {
 // behind the eye)
 float bodyDepth(float d) {
   if (uDepthK.w < 0.5) return gl_FragCoord.z;
+  if (d >= ${GLOW_DEPTH_FLOOR.toFixed(8)}) return gl_FragCoord.z;   // AUDIT WEAPON-GLOW MW-1: a weapon glow's ring stands at the back of its picture - its texel the quad's own, never a reach behind the body
   vec4 c = uProj * uView * vec4(vWorld + uDepthDir * (uDepthK.x + d * uDepthK.y - uDepthK.z), 1.0);
   return c.w > 1e-4 ? clamp(c.z / c.w * 0.5 + 0.5, 0.0, 1.0) : gl_FragCoord.z;
 }
@@ -4336,7 +4466,7 @@ void main() {
   // cannot serve them: it pins its up-axis to world Y (`cy +- halfH`),
   // so its quad is always vertical, and a decal's whole point is to lie
   // on the surface it landed on. These take a full surface basis -
-  // right and up both in the plane - which combat/bloodDecals.js works
+  // right and up both in the plane - which combat/blood/bloodDecals.js works
   // out and writes as four vertices.
   //
   // THE BUFFER IS THE RING. One slot per decal, written in place when
@@ -4680,6 +4810,147 @@ void main() {
     if (blend) gl.disable(gl.BLEND);
     // PERF-2D: the run stays open - _close2D hands the baseline back at
     // the head of whatever needs it next.
+  }
+
+  /**
+   * WEAPON-GLOW1 (bible/05-Combat/Weapon-Glow.md): THE FOURTH 2D PRIMITIVE - a classic weapon sprite's element outline,
+   * drawn over the frame drawScreenQuad just drew, on the same rect (`dst`, before the screen offset, as drawScreenQuad
+   * takes it) and source (`src`, its mirror). `glow` is systems/weaponGlow.js's spec (`win` render/weaponGlowGlsl.js
+   * GLOW_SPRITE_WINDOW). `frame` measures the frame (AUDIT WEAPON-GLOW SPR-3/SPR-4): `art` its size in Daggerfall's
+   * pixels - the cells the outline is measured in, so an HD frame's outline is a classic one's size (none: the rect's
+   * own on a 320 x 200 screen) - and `view` the screen its rect is laid out on, a side flush with it CUT, as the bottom
+   * always is (a first-person frame rises off the bottom of the view: its bottom row is the arm's cut, never its edge).
+   * The quad grows by the window on every side that is not cut - its top by the rows a cell looks DOWN (a cell over the
+   * frame finds the frame below it) - and reads the frame's FIELD (_glowField, baked the first time the frame is drawn
+   * so; SPR-1). Premultiplied, blended ONE, ONE_MINUS_SRC_ALPHA; the run stays open, as drawScreenQuad's does.
+   */
+  drawScreenQuadGlow(tex, dst, src = { u0: 0, v0: 0, u1: 1, v1: 1 }, glow = null, frame = null) {
+    if (!tex || !glow?.ramp || !(glow.code > 0) || !glow.win) return;
+    const gl = this.gl;
+    if (this._worldViewportPx) this.endWorldPass();
+    this._compositeAir();
+    this._ensureScreenQuadProgram();   // its VAO is the quad this draws
+    this._ensureWeaponGlowQuadProgram();
+    this._open2D(this._screenQuadVao);
+    const aw = Math.max(1, Math.round(frame?.art?.[0] ?? (dst.w * 320) / gl.drawingBufferWidth));
+    const ah = Math.max(1, Math.round(frame?.art?.[1] ?? (dst.h * 200) / gl.drawingBufferHeight));
+    const cutL = dst.x <= 0.5, cutR = dst.x + dst.w >= (frame?.view?.[0] ?? Infinity) - 0.5;
+    const mirror = src.u1 < src.u0;   // the field is the TEXTURE's: a mirrored frame's screen-left is its right
+    const field = this._glowField(tex, glow, aw, ah, mirror ? cutR : cutL, mirror ? cutL : cutR);
+    const [wx, , down] = glow.win;
+    this._use(this.weaponGlowQuadProgram);
+    const u = this._wgq;
+    const ox = this._screenOffset?.[0] ?? 0, oy = this._screenOffset?.[1] ?? 0;
+    gl.uniform4f(u.dst, dst.x + ox, dst.y + oy, dst.w, dst.h);
+    gl.uniform2f(u.canvas, gl.drawingBufferWidth, gl.drawingBufferHeight);
+    gl.uniform4f(u.src, src.u0, src.v0, src.u1, src.v1);
+    gl.uniform4f(u.pad, cutL ? 0 : wx, down, cutR ? 0 : wx, 0);
+    gl.uniform2i(u.art, aw, ah);
+    gl.uniform2i(u.fieldAt, wx, down);
+    gl.uniform1i(u.look, glow.code);
+    gl.uniform1f(u.level, glow.level);
+    gl.uniform1f(u.time, glowSeconds());
+    gl.uniform1f(u.dmax, glowFieldReach(glow.look));
+    gl.uniform1f(u.reachMax, GLOW_REACH_MAX[glow.look]);
+    gl.uniform3fv(u.ramp, glow.ramp);
+    this._bindEmission(field);   // unit 1, the field; unit 0 left active
+    this._bindTex0(tex);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
+    this.stats.draws++;
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.disable(gl.BLEND);
+  }
+
+  /** AUDIT WEAPON-GLOW SPR-1: THE FIELD a frame's outline reads (render/weaponGlowGlsl.js GLOW_FIELD_FS), its texture -
+   *  baked the first time the frame is drawn with a look and its cut sides (the texture's own), then read as it stands:
+   *  a frame never changes. One a frame, look and cut, a level's band moving over the same field; GLOW_FIELDS_MAX kept,
+   *  the least recently drawn deleted first. The bake is drawn inside drawScreenQuadGlow's own 2D run (depth and culling
+   *  off, as its quad needs them), into its own small target, and hands back the target and viewport a sprite pass
+   *  hands back (renderCharacterSprite: the frame's, or the canvas, and the world's rect), a UI scissor lifted for it and
+   *  put back, the blend off. */
+  _glowField(tex, glow, aw, ah, cutL, cutR) {
+    const gl = this.gl;
+    let byTex = this._glowFields.get(tex);
+    if (!byTex) { byTex = new Map(); this._glowFields.set(tex, byTex); }
+    const key = glow.code + 8 * ((cutL ? 1 : 0) + (cutR ? 2 : 0)) + 32 * (aw * 4096 + ah);
+    const hit = byTex.get(key);
+    if (hit) { hit.used = ++this._glowFieldClock; return hit.tex; }
+    const [wx, up, down] = glow.win;
+    const fw = aw + 2 * wx, fh = ah + down;   // no pad below: the bottom is always a cut
+    const ftex = gl.createTexture();
+    this._activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, ftex);
+    this._tex0Bound = null;   // PERF-TEX3: this path owns unit 0 - the shadow may not speak for it
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, fw, fh, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    if (!this._glowFbo) this._glowFbo = gl.createFramebuffer();
+    const sc = this._scissor;
+    try {
+      gl.bindFramebuffer(gl.FRAMEBUFFER, this._glowFbo);
+      gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, ftex, 0);
+      if (sc) gl.disable(gl.SCISSOR_TEST);
+      gl.viewport(0, 0, fw, fh);
+      gl.disable(gl.BLEND);
+      this._use(this.weaponGlowFieldProgram);
+      const u = this._wgf;
+      gl.uniform2i(u.art, aw, ah);
+      gl.uniform4i(u.fieldPad, wx, down, wx, 0);
+      gl.uniform3i(u.win, wx, up, down);
+      gl.uniform3i(u.cut, cutL ? 1 : 0, cutR ? 1 : 0, 1);
+      gl.uniform1i(u.look, glow.code);
+      gl.uniform1f(u.dmax, glowFieldReach(glow.look));
+      this._bindTex0(tex);
+      gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
+      this.stats.draws++;
+    } finally {
+      gl.bindFramebuffer(gl.FRAMEBUFFER, this._frameFbo ?? null);   // EL4: the frame, or the canvas
+      this._restoreWorldViewport();
+      if (sc) gl.enable(gl.SCISSOR_TEST);
+    }
+    const entry = { tex: ftex, used: ++this._glowFieldClock, byTex, key };
+    byTex.set(key, entry);
+    const list = this._glowFieldList;
+    list.push(entry);
+    if (list.length > GLOW_FIELDS_MAX) {
+      let old = 0;
+      for (let i = 1; i < list.length; i++) if (list[i].used < list[old].used) old = i;
+      const gone = list.splice(old, 1)[0];
+      gone.byTex.delete(gone.key);
+      gl.deleteTexture(gone.tex);
+    }
+    return ftex;
+  }
+
+  /** WEAPON-GLOW1: the sprite outline's two programs (render/weaponGlowGlsl.js) - the outline and its field's bake -
+   *  built on the first glowing frame, or warmed before it (lazyWarmSteps); the outline's frame on unit 0 for good, as the
+   *  screen quad's is, and its field on unit 1. */
+  _ensureWeaponGlowQuadProgram() {
+    if (this.weaponGlowQuadProgram) return;
+    const gl = this.gl;
+    const p = this._buildProgram(GLOW_SPRITE_VS, GLOW_SPRITE_FS);
+    const at = (n) => gl.getUniformLocation(p, n);
+    this._wgq = {
+      dst: at('uDst'), canvas: at('uCanvas'), src: at('uSrc'), pad: at('uPad'), art: at('uArt'), fieldAt: at('uFieldAt'),
+      look: at('uLook'), level: at('uLevel'), time: at('uTime'), ramp: at('uRamp'), dmax: at('uDmax'), reachMax: at('uReachMax'),
+    };
+    this._use(p);
+    gl.uniform1i(at('uTex'), 0);
+    gl.uniform1i(at('uField'), 1);
+    const f = this._buildProgram(GLOW_FIELD_VS, GLOW_FIELD_FS);
+    const fat = (n) => gl.getUniformLocation(f, n);
+    this._wgf = { art: fat('uArt'), fieldPad: fat('uFieldPad'), win: fat('uWin'), cut: fat('uCut'), look: fat('uLook'), dmax: fat('uDmax') };
+    this._use(f);
+    gl.uniform1i(fat('uTex'), 0);
+    this.weaponGlowFieldProgram = f;
+    this._glowFields = new WeakMap();   // the frame's texture -> its fields, by look, cut and size
+    this._glowFieldList = [];
+    this._glowFieldClock = 0;
+    this.weaponGlowQuadProgram = p;
   }
 
   /** PERF-WARM: build the screen-quad program, its sampler binding and
@@ -5211,6 +5482,17 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     return bundle;
   }
 
+  /** EG-ZN (2026-10-12, bible/11-Multiplayer/Elite-Gates.md section 11.8): A VIEW OF A MESH - `mesh`'s own VAO drawing
+   *  only `subMeshes` (runs of its own indices, `{ textureArchive, textureRecord, startIndex, primitiveCount }` each), so
+   *  a part of one upload draws apart from the rest (the Spire's occluders dithered out - scenes/eliteGates/egOcclude.js). It owns no
+   *  buffer and no VAO: drawn `noShadow` alone (the shadow record is its mesh's), never handed to destroyMesh (its mesh's
+   *  free is the free), never drawn once its mesh is dead - null for a dead or bufferless mesh. The sub-meshes are its
+   *  own copies, so drawMesh's stamps never land on the caller's. */
+  meshView(mesh, subMeshes) {
+    if (!mesh?.vao || mesh._dead || mesh.viewOf) return null;
+    return { vao: mesh.vao, subMeshes: subMeshes.map((sm) => ({ ...sm })), buffers: [], triIndices: mesh.triIndices, bounds: mesh.bounds, viewOf: mesh };
+  }
+
   /** CSA-B: A MESH WHOSE VERTICES MOVE - Come Sail Away's baked sails, which FixDeformations re-bakes every tenth
    *  of a second (world/skinnedBake.js). The positions and normals are written over the two buffers createMesh
    *  made - a bake never changes the vertex count, so the sizes match - and the bounds the shadow replays cull by
@@ -5384,7 +5666,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     const gl = this.gl;
     // EVERY global this pass can touch, saved by name. A thirteenth
     // one added to the renderer later must be added HERE - the source
-    // pin in test/roadc_panelframe.test.js is what enforces it.
+    // pin in test/ui/automap/roadc_panelframe.test.js is what enforces it.
     this._panelSaved = {
       screenOffset: this._screenOffset ? [...this._screenOffset] : [0, 0],
       clipY: this._clipY,
@@ -6072,7 +6354,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   }
 
   /** DW-C: Iliac Puddle No More's distance fog for this frame - the twenty
-   *  floats world/deepWaterLook.js distanceFogUniforms packs, or null for
+   *  floats world/deepWater/deepWaterLook.js distanceFogUniforms packs, or null for
    *  none. After beginFrame, which clears it: it is a frame's.
    *
    *  LA-COST6 (2026-09-27, found by the audit of Mac's "a deep audit on the enhanced lighting system"): UNDER THE SEA,
@@ -6607,7 +6889,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // frame writes into the rest is Smis, booleans, strings or objects,
     // which need no box (`sway`'s fraction is written once, by the host).
     // A field a batch gains anywhere in src/ belongs here too -
-    // test/perfextb.test.js sweeps the writes, and weighs the record.
+    // test/render/perfextb.test.js sweeps the writes, and weighs the record.
     // PERF-EXT1 (2026-09-25, the same players): `_place`, the placements on
     // a grid (bounds.js placementGrid), for a static batch of more than one
     // flat - a pixel-wide wood's sphere reaches every shadow in its pixel,
@@ -6831,7 +7113,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   }
 
   /** WATER-NEXT 2: THE WATER'S SHEET - the water pass's own surface: the grid AS IT STOOD before its bed was carved
-   *  (world/waterBed.js; `positions`, uploaded here), the bed's depth under each vertex on attribute 1 (`depths`), and
+   *  (world/water/waterBed.js; `positions`, uploaded here), the bed's depth under each vertex on attribute 1 (`depths`), and
    *  the water quads (`indices`). Without a bed (`positions` null: no vertex of the grid is under water - a one-tile
    *  stream) it rides the terrain's own position buffer and attribute 1 is the constant NO_BED_DEPTH: the water lies
    *  on the ground as WATER1's did, shallow. destroyWaterSurface frees what it owns. */
@@ -6880,7 +7162,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     return this._underWater;
   }
 
-  /** WATER-NEXT 4: THE RIPPLE FIELD the water reads this frame - world/waterRipples.js's (its `bytes`, `origin`,
+  /** WATER-NEXT 4: THE RIPPLE FIELD the water reads this frame - world/water/waterRipples.js's (its `bytes`, `origin`,
    *  `version`), or null for none. The host hands it over each frame; the texture is written only when the field moved. */
   setWaterRipples(field, span = 48, cells = 96) {
     this._ripples = field ?? null;   // AUDIT WATER-NEXT P4: the field itself, a frame's handing no object
@@ -7069,7 +7351,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   setCloudShadow(d) { d = d ?? null; if (d !== this._cloudShadow) { this._cloudShadow = d; this._csStamp++; } }   // VC4: the stamp moves only when the deck does (the hosts hand the same object per pixel)
 
   /** WIND3: the wind the flats lean with, for this frame - [rate x, rate
-   *  z, seconds, gust] (systems/windDrive.js's windV and gust), or null
+   *  z, seconds, gust] (systems/wind/windDrive.js's windV and gust), or null
    *  for none. Numbers only; uploaded by drawBillboards. A batch leans by
    *  this times its own `sway` (0 for everything but the climate's flora,
    *  floraSwayOf), so an interior or a dungeon that never sets it draws
@@ -7558,7 +7840,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   _drawWaterRows(L, rows, n) {
     this._close2D();   // PERF-2D: every draw hands the baseline back first (a no-op after the callers' own)
     const gl = this.gl;
-    gl.vertexAttrib1f(1, -NO_BED_DEPTH);   // a sheet without a bed: attribute 1 is a shallow constant (createWaterSheet) - AUDIT WATER-NEXT H2: negative, no bed under it (world/waterCorners.js SHEET_NO_BED)
+    gl.vertexAttrib1f(1, -NO_BED_DEPTH);   // a sheet without a bed: attribute 1 is a shallow constant (createWaterSheet) - AUDIT WATER-NEXT H2: negative, no bed under it (world/water/waterCorners.js SHEET_NO_BED)
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     gl.depthMask(false);
@@ -7613,7 +7895,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   }
 
   /**
-   * WATER-NEXT 2: THE OPEN SEA - Iliac Puddle No More's surface sheets (world/deepWaterSurface.js) drawn as water by
+   * WATER-NEXT 2: THE OPEN SEA - Iliac Puddle No More's surface sheets (world/deepWater/deepWaterSurface.js) drawn as water by
    * the water's own program (`uOpen`: no tilemap, no bed - its depth is the scene copy's, the floor it carved), in the
    * mod's own place in the frame (its Transparent queue). `list` the mod's surfaces ({h: {surface: {vao, count}},
    * model}), `liftY` its height over the pixel, `color` the mod's tint, `arrayTex` the ground tile array whose water

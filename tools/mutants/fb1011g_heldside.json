@@ -5,7 +5,7 @@
     "old": "refuse(db, sid, `${heldBy.error}:${heldA ? 'a' : 'b'}`, playerId, asker, true);",
     "new": "refuse(db, sid, heldBy.error, playerId, asker, true);",
     "tests": [
-      "test/fb1011g_heldside.test.js"
+      "test/systems/item/fb1011g_heldside.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "held: m[2] === side ? 'mine' : 'theirs'",
     "new": "held: m[2] !== side ? 'mine' : 'theirs'",
     "tests": [
-      "test/fb1011g_heldside.test.js"
+      "test/systems/item/fb1011g_heldside.test.js"
     ]
   },
   {
@@ -23,43 +23,43 @@
     "old": "`${heldBy.error}:${heldA ? 'a' : 'b'}`",
     "new": "`${heldBy.error}:${heldA ? 'b' : 'a'}`",
     "tests": [
-      "test/fb1011g_heldside.test.js"
+      "test/systems/item/fb1011g_heldside.test.js"
     ]
   },
   {
     "name": "HELD-SIDE-d-mine-unsaid",
-    "file": "src/net/realmTradeLaw.js",
+    "file": "src/net/realm/realmTradeLaw.js",
     "old": "  if (why === 'trade-held' && held === 'mine') {",
     "new": "  if (why === 'trade-held' && held === 'never') {",
     "tests": [
-      "test/fb1011g_heldside.test.js"
+      "test/systems/item/fb1011g_heldside.test.js"
     ]
   },
   {
     "name": "HELD-SIDE-e-the-reason-unread",
-    "file": "src/net/realmTradeLaw.js",
+    "file": "src/net/realm/realmTradeLaw.js",
     "old": "    const notice = typeof said === 'string' && said ? said : typeof reason === 'string' ? /** @type {Record<string, string>} */ (TRADE_HELD_NOTICES)[reason] : undefined;",
     "new": "    const notice = typeof said === 'string' && said ? said : undefined;",
     "tests": [
-      "test/fb1011g_heldside.test.js"
+      "test/systems/item/fb1011g_heldside.test.js"
     ]
   },
   {
     "name": "HELD-SIDE-f-theirs-unsaid",
-    "file": "src/net/realmTradeLaw.js",
+    "file": "src/net/realm/realmTradeLaw.js",
     "old": "  if (why === 'trade-held' && held === 'theirs') return",
     "new": "  if (why === 'trade-held' && held === 'never') return",
     "tests": [
-      "test/fb1011g_heldside.test.js"
+      "test/systems/item/fb1011g_heldside.test.js"
     ]
   },
   {
     "name": "HELD-SIDE-g-open-said-of-a-held-player",
-    "file": "src/net/realmTradeLaw.js",
+    "file": "src/net/realm/realmTradeLaw.js",
     "old": "${reason === null ? ' Your own trading is open.' : ''}",
     "new": "${' Your own trading is open.'}",
     "tests": [
-      "test/fb1011g_heldside.test.js"
+      "test/systems/item/fb1011g_heldside.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "why: a.data.why ?? 'refused', ...(a.data.held === 'mine' || a.data.held === 'theirs' ? { held: a.data.held } : {}) };",
     "new": "why: a.data.why ?? 'refused' };",
     "tests": [
-      "test/fb1011g_heldside.test.js"
+      "test/systems/item/fb1011g_heldside.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "realmTradeRefusalText(r.why ?? r.error ?? 'refused', r.held ?? null, session.tradeHeld, heldSaid?.() ?? null)",
     "new": "realmTradeRefusalText(r.why ?? r.error ?? 'refused', r.held ?? null, undefined, heldSaid?.() ?? null)",
     "tests": [
-      "test/fb1011g_heldside.test.js"
+      "test/systems/item/fb1011g_heldside.test.js"
     ]
   }
 ]

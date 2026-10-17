@@ -5,7 +5,7 @@
     "old": "    ...(uint(hl, 1) ? { hl: 1 } : {}),\n",
     "new": "",
     "tests": [
-      "test/htwaistnet_peers.test.js"
+      "test/net/htwaistnet_peers.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    || (a.hl | 0) !== (b.hl | 0)   // HT-WAIST-NET:",
     "new": "    || false   // HT-WAIST-NET:",
     "tests": [
-      "test/htwaistnet_peers.test.js"
+      "test/net/htwaistnet_peers.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    ...(to.hl ? { hl: 1 } : {}),",
     "new": "",
     "tests": [
-      "test/htwaistnet_peers.test.js"
+      "test/net/htwaistnet_peers.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "(lanternAtWaist(light) ? 1 : undefined)",
     "new": "(light ? 1 : undefined)",
     "tests": [
-      "test/htwaistnet_peers.test.js"
+      "test/net/htwaistnet_peers.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "(lanternAtWaist(light) ? 1 : undefined)",
     "new": "(lanternAtWaist(light) ? 1 : 0)",
     "tests": [
-      "test/htwaistnet_peers.test.js"
+      "test/net/htwaistnet_peers.test.js"
     ]
   },
   {
@@ -50,35 +50,35 @@
     "old": "      hl: waistLanternPoseBit(playerEntity.lightSource),",
     "new": "      hl: waistLanternPoseBit && undefined,",
     "tests": [
-      "test/htwaistnet_peers.test.js"
+      "test/net/htwaistnet_peers.test.js"
     ]
   },
   {
     "name": "HTWN-peer-body-never-asks",
-    "file": "src/net/peerBodies.js",
+    "file": "src/net/peer/peerBodies.js",
     "old": "    b.rig.setHipLight?.(!b.wolf && !!shown.hl);   // WEREWOLF1: and hangs nothing at the hip\n",
     "new": "",
     "tests": [
-      "test/htwaistnet_peers.test.js",
-      "test/htwaist_mwbody.test.js"
+      "test/net/htwaistnet_peers.test.js",
+      "test/combat/htwaist_mwbody.test.js"
     ]
   },
   {
     "name": "HTWN-peer-bit-inverted",
-    "file": "src/net/peerBodies.js",
+    "file": "src/net/peer/peerBodies.js",
     "old": "b.rig.setHipLight?.(!b.wolf && !!shown.hl);",
     "new": "b.rig.setHipLight?.(!b.wolf && !shown.hl);",
     "tests": [
-      "test/htwaistnet_peers.test.js"
+      "test/net/htwaistnet_peers.test.js"
     ]
   },
   {
     "name": "HTWN-peer-camera-fed-no-walk",
-    "file": "src/net/peerBodies.js",
+    "file": "src/net/peer/peerBodies.js",
     "old": "  c.move.forward = moving ? 1 : 0;",
     "new": "  c.move.forward = 0;",
     "tests": [
-      "test/htwaistnet_peers.test.js"
+      "test/net/htwaistnet_peers.test.js"
     ]
   }
 ]

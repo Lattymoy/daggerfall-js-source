@@ -4,7 +4,7 @@
 // standing in its collider, its horses and its keeper on the flats' axis, its wagons on show drawn as a parked wagon is,
 // the eye's boxes and their names, and the press - the trade (systems/merchantYards.js).
 //
-// WHERE: the host says (`sites`: each yard of every town built, its middle in the scene's x, z - world/merchantYardSites.js
+// WHERE: the host says (`sites`: each yard of every town built, its middle in the scene's x, z - world/merchantYards/merchantYardSites.js
 // placed it, carried by the host's own frame - its turn, its name and its keeper), and the ground there is the host's
 // (`groundAt`), read when a yard moves (a floating-origin recentre, across or up) and every YARD_GROUND_EVERY frames,
 // never every frame. A yard's collider bucket - its timber, its wagons' boxes, its horses' and its keeper's - is stood
@@ -14,7 +14,7 @@
 //
 // WHO STANDS IN IT: the Stable's three horses (Horse Cart and Cargo's own standing horse, eight views - its art the
 // pool's, `horseArt`), turned to the eye as a standing horse turns; the keeper, a person of the town's own race in its
-// idle record (characters/mobilePerson.js PERSON_TEXTURES, PERSON_IDLE_RECORD at PERSON_IDLE_FPS); in the Wagon Yard a
+// idle record (characters/mobile/mobilePerson.js PERSON_TEXTURES, PERSON_IDLE_RECORD at PERSON_IDLE_FPS); in the Wagon Yard a
 // Small Cart, an Open Wagon and a Caravan, Mac's own wagons (`showWagon` - scenes/horseCartPool.js drawShowWagon), each
 // its own box's middle on its place, its front to the street, its wheels on the ground.
 //
@@ -42,12 +42,12 @@
 //
 // Not a DFU member. Ledger A (MERCHANT-YARDS).
 import { YARD_KINDS, YARD_TEXT, YARD_ROWS, YARD_BENCH_ROW, CARPENTER_STEAL_TEXT, yardName, validYardKind, yardRowsFor } from '../systems/merchantYards.js';
-import { WAGON_KINDS } from '../systems/wagonKinds.js';
-import { YARD_FOOT } from '../world/merchantYardSites.js';
-import { buildYardModel, signBoxOf, yardPoints } from '../world/merchantYardModels.js';
-import { yardArt, YARD_ARCHIVE } from '../world/merchantYardArt.js';
+import { WAGON_KINDS } from '../systems/wagon/wagonKinds.js';
+import { YARD_FOOT } from '../world/merchantYards/merchantYardSites.js';
+import { buildYardModel, signBoxOf, yardPoints } from '../world/merchantYards/merchantYardModels.js';
+import { yardArt, YARD_ARCHIVE } from '../world/merchantYards/merchantYardArt.js';
 import { dfLook, lookSeed } from '../world/dfLook.js';   // DF-LOOK: the yards' pictures in Daggerfall's colours
-import { PERSON_TEXTURES, PERSON_IDLE_RECORD, PERSON_IDLE_FPS } from '../characters/mobilePerson.js';
+import { PERSON_TEXTURES, PERSON_IDLE_RECORD, PERSON_IDLE_FPS } from '../characters/mobile/mobilePerson.js';
 import { mobileBillboardSize } from '../world/rmbFlats.js';
 import { folkLookOf } from '../characters/folkBodies.js';   // AUDIT MW-NPC II P1: a keeper's body, in the outfit their picture wears
 import { personActor } from '../characters/peopleBodies.js';   // AUDIT MW-NPC II P1: and turned to the eye as a standing person is
@@ -56,10 +56,10 @@ import { textSeed } from '../systems/livingWorld/seed.js';
 import { RAY_DISTANCE, STATIC_NPC_ACTIVATION_DISTANCE, presentNpcInfoText } from '../player/activate.js';
 import { trs } from '../world/mat4.js';
 import { quatAngleAxis } from '../world/quat.js';
-import { calculateHorseOrientation, horseViewFor, HORSE_BOX_CENTER, HORSE_BOX_SIZE } from '../systems/horseCartLaw.js';
+import { calculateHorseOrientation, horseViewFor, HORSE_BOX_CENTER, HORSE_BOX_SIZE } from '../systems/horse/horseCartLaw.js';
 import { HORSE_ARCHIVE, horseStillRecord, HORSE_BILLBOARD_WIDTH, HORSE_BILLBOARD_HEIGHT, boxTriangles } from './horseCartPool.js';
 import { localAabb, transformedAabb } from '../render/frustum.js';   // PERF-YARD (AUDIT): a yard's box for the street's view test
-import { DECOR_DRAW, DECOR_SHADOW, DECOR_SKIP, castOnly } from './decorRoom.js';   // PERF-WAGON: the cast-only renderer the wagons' pool shares
+import { DECOR_DRAW, DECOR_SHADOW, DECOR_SKIP, castOnly } from './decor/decorRoom.js';   // PERF-WAGON: the cast-only renderer the wagons' pool shares
 
 /** The ground under a yard is read again every this many frames (a pixel built finer moves it). */
 export const YARD_GROUND_EVERY = 30;
@@ -450,8 +450,8 @@ export function createMerchantYards({
     /**
      * YARDS-FOUND (2026-10-10, from play: "The new stable and transport merchant shops dont show on town
      * maps/overworld"): EACH YARD STANDING, AS AN OVERWORLD MARK - its name over its ground (YARD_MARK_LIFT up), its kind
-     * the look's (`yard stable`, `yard transport` - ui/travelViewHud.js yardGlyph: its signboard's emblem) and the
-     * Towns switch's (systems/travelViewFilters.js markGroup). The yards of every town built about the player, as the
+     * the look's (`yard stable`, `yard transport` - ui/travel/travelViewHud.js yardGlyph: its signboard's emblem) and the
+     * Towns switch's (systems/travel/travelViewFilters.js markGroup). The yards of every town built about the player, as the
      * pool stands them - a town out of the build stands none, and is marked by its own plate.
      */
     overworldMarks() {

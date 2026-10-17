@@ -5,8 +5,8 @@
     "old": "  if (qx * qx + qy * qy + qz * qz <= r2) { out[0] = 0;",
     "new": "  if (false) { out[0] = 0;",
     "tests": [
-      "test/fb1002b_rocks.test.js",
-      "test/fb1002_rocks.test.js"
+      "test/systems/comeSailAway/fb1002b_rocks.test.js",
+      "test/systems/comeSailAway/fb1002_rocks.test.js"
     ]
   },
   {
@@ -15,8 +15,8 @@
     "old": "    if (s < 0) { s = -s; nx = -nx; ny = -ny; nz = -nz; }   // the side she is on",
     "new": "    // the side she is on",
     "tests": [
-      "test/fb1002b_rocks.test.js",
-      "test/fb1002_rocks.test.js"
+      "test/systems/comeSailAway/fb1002b_rocks.test.js",
+      "test/systems/comeSailAway/fb1002_rocks.test.js"
     ]
   },
   {
@@ -25,8 +25,8 @@
     "old": "    if (nd < -1e-12 && s >= r) {",
     "new": "    if (false) {",
     "tests": [
-      "test/fb1002b_rocks.test.js",
-      "test/fb1002_rocks.test.js"
+      "test/systems/comeSailAway/fb1002b_rocks.test.js",
+      "test/systems/comeSailAway/fb1002_rocks.test.js"
     ]
   },
   {
@@ -35,8 +35,8 @@
     "old": "        if (edgeSide(e1x, e1y, e1z, px - a[0], py - a[1], pz - a[2], n0x, n0y, n0z) >= tol",
     "new": "        if (true",
     "tests": [
-      "test/fb1002b_rocks.test.js",
-      "test/fb1002_rocks.test.js"
+      "test/systems/comeSailAway/fb1002b_rocks.test.js",
+      "test/systems/comeSailAway/fb1002_rocks.test.js"
     ]
   },
   {
@@ -45,8 +45,8 @@
     "old": "  let best = sweepEdge(cx, cy, cz, r2, dx, dy, dz, L, a, b, Infinity, out);",
     "new": "  let best = Infinity;",
     "tests": [
-      "test/fb1002b_rocks.test.js",
-      "test/fb1002_rocks.test.js"
+      "test/systems/comeSailAway/fb1002b_rocks.test.js",
+      "test/systems/comeSailAway/fb1002_rocks.test.js"
     ]
   },
   {
@@ -55,8 +55,8 @@
     "old": "  best = sweepEdge(cx, cy, cz, r2, dx, dy, dz, L, b, c, best, out);",
     "new": "",
     "tests": [
-      "test/fb1002b_rocks.test.js",
-      "test/fb1002_rocks.test.js"
+      "test/systems/comeSailAway/fb1002b_rocks.test.js",
+      "test/systems/comeSailAway/fb1002_rocks.test.js"
     ]
   },
   {
@@ -65,8 +65,8 @@
     "old": "  best = sweepCorner(cx, cy, cz, r2, dx, dy, dz, L, a, best, out);",
     "new": "",
     "tests": [
-      "test/fb1002b_rocks.test.js",
-      "test/fb1002_rocks.test.js"
+      "test/systems/comeSailAway/fb1002b_rocks.test.js",
+      "test/systems/comeSailAway/fb1002_rocks.test.js"
     ]
   },
   {
@@ -75,8 +75,8 @@
     "old": "  if (f < 0 || f > 1) return best;",
     "new": "  if (false) return best;",
     "tests": [
-      "test/fb1002b_rocks.test.js",
-      "test/fb1002_rocks.test.js"
+      "test/systems/comeSailAway/fb1002b_rocks.test.js",
+      "test/systems/comeSailAway/fb1002_rocks.test.js"
     ]
   },
   {
@@ -85,8 +85,8 @@
     "old": "  const tt = (-B - Math.sqrt(disc)) / (2 * A);",
     "new": "  const tt = (-B + Math.sqrt(disc)) / (2 * A);",
     "tests": [
-      "test/fb1002b_rocks.test.js",
-      "test/fb1002_rocks.test.js"
+      "test/systems/comeSailAway/fb1002b_rocks.test.js",
+      "test/systems/comeSailAway/fb1002_rocks.test.js"
     ]
   },
   {
@@ -95,8 +95,8 @@
     "old": "      if (skip && skip.has(key)) continue;\n      if (!(bucket.min[0] <= bucket.max[0])) continue;   // an empty bucket's box is inverted",
     "new": "      if (!(bucket.min[0] <= bucket.max[0])) continue;   // an empty bucket's box is inverted",
     "tests": [
-      "test/fb1002b_rocks.test.js",
-      "test/fb1002_rocks.test.js"
+      "test/systems/comeSailAway/fb1002b_rocks.test.js",
+      "test/systems/comeSailAway/fb1002_rocks.test.js"
     ]
   },
   {
@@ -105,8 +105,8 @@
     "old": "      if (!bucket.r) partsHolding(bucket, ox, oy, oz, held);",
     "new": "      partsHolding(bucket, ox, oy, oz, held);",
     "tests": [
-      "test/fb1002b_rocks.test.js",
-      "test/fb1002_rocks.test.js"
+      "test/systems/comeSailAway/fb1002b_rocks.test.js",
+      "test/systems/comeSailAway/fb1002_rocks.test.js"
     ]
   },
   {
@@ -115,8 +115,8 @@
     "old": "        if (held.has(part)) return;",
     "new": "        if (false) return;",
     "tests": [
-      "test/fb1002b_rocks.test.js",
-      "test/fb1002_rocks.test.js"
+      "test/systems/comeSailAway/fb1002b_rocks.test.js",
+      "test/systems/comeSailAway/fb1002_rocks.test.js"
     ]
   },
   {
@@ -125,8 +125,8 @@
     "old": "      const keel = bucket.r ? -Infinity : keelY - t[1];",
     "new": "      const keel = -Infinity;",
     "tests": [
-      "test/fb1002b_rocks.test.js",
-      "test/fb1002_rocks.test.js"
+      "test/systems/comeSailAway/fb1002b_rocks.test.js",
+      "test/systems/comeSailAway/fb1002_rocks.test.js"
     ]
   },
   {
@@ -135,8 +135,8 @@
     "old": "        if (!was || SWEEP_HIT[0] < was[0] || (SWEEP_HIT[0] === 0 && near < was[4]))",
     "new": "        if (!was || SWEEP_HIT[0] > was[0] || (SWEEP_HIT[0] === 0 && near < was[4]))",
     "tests": [
-      "test/fb1002b_rocks.test.js",
-      "test/fb1002_rocks.test.js"
+      "test/systems/comeSailAway/fb1002b_rocks.test.js",
+      "test/systems/comeSailAway/fb1002_rocks.test.js"
     ]
   },
   {
@@ -145,8 +145,8 @@
     "old": "        if (!was || SWEEP_HIT[0] < was[0] || (SWEEP_HIT[0] === 0 && near < was[4]))",
     "new": "        if (!was || SWEEP_HIT[0] < was[0])",
     "tests": [
-      "test/fb1002b_rocks.test.js",
-      "test/fb1002_rocks.test.js"
+      "test/systems/comeSailAway/fb1002b_rocks.test.js",
+      "test/systems/comeSailAway/fb1002_rocks.test.js"
     ]
   },
   {
@@ -155,8 +155,8 @@
     "old": "      if (bucket.wide.length) {\n        const half = maxDist / 2;",
     "new": "      if (false) {\n        const half = maxDist / 2;",
     "tests": [
-      "test/fb1002b_rocks.test.js",
-      "test/fb1002_rocks.test.js"
+      "test/systems/comeSailAway/fb1002b_rocks.test.js",
+      "test/systems/comeSailAway/fb1002_rocks.test.js"
     ]
   },
   {
@@ -165,8 +165,8 @@
     "old": "      for (let gx = gx0; gx <= gx1; gx++) {",
     "new": "      for (let gx = gx0; gx < gx1; gx++) {",
     "tests": [
-      "test/fb1002b_rocks.test.js",
-      "test/fb1002_rocks.test.js"
+      "test/systems/comeSailAway/fb1002b_rocks.test.js",
+      "test/systems/comeSailAway/fb1002_rocks.test.js"
     ]
   },
   {
@@ -175,8 +175,8 @@
     "old": "    for (const h of col?.hullSweepAll?.(o, r, d, dist, { keelY: opts?.keelY ?? -Infinity, skip }) ?? []) {",
     "new": "    for (const h of col?.hullSweepAll?.(o, r, d, dist, { keelY: -Infinity, skip }) ?? []) {",
     "tests": [
-      "test/fb1002b_rocks.test.js",
-      "test/fb1002_rocks.test.js"
+      "test/systems/comeSailAway/fb1002b_rocks.test.js",
+      "test/systems/comeSailAway/fb1002_rocks.test.js"
     ]
   },
   {
@@ -185,8 +185,8 @@
     "old": "    if (opts?.boat) for (const [k, b] of _csaBuckets) if (b.boat === opts.boat) skip.add(k);",
     "new": "    if (opts?.boat) for (const [k, b] of _csaBuckets) if (b.boat) skip.add(k);",
     "tests": [
-      "test/fb1002b_rocks.test.js",
-      "test/fb1002_rocks.test.js"
+      "test/systems/comeSailAway/fb1002b_rocks.test.js",
+      "test/systems/comeSailAway/fb1002_rocks.test.js"
     ]
   },
   {
@@ -195,69 +195,69 @@
     "old": "terrain: false, entity: false, ...(h.start ? { start: true } : {}) });",
     "new": "terrain: false, entity: false });",
     "tests": [
-      "test/fb1002b_rocks.test.js",
-      "test/fb1002_rocks.test.js"
+      "test/systems/comeSailAway/fb1002b_rocks.test.js",
+      "test/systems/comeSailAway/fb1002_rocks.test.js"
     ]
   },
   {
     "name": "CHECK-reach-twice",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    const reach = vMagnitude(val);",
     "new": "    const reach = vMagnitude(val4);",
     "tests": [
-      "test/fb1002b_rocks.test.js",
-      "test/fb1002_rocks.test.js",
-      "test/csa_sailing.test.js"
+      "test/systems/comeSailAway/fb1002b_rocks.test.js",
+      "test/systems/comeSailAway/fb1002_rocks.test.js",
+      "test/systems/comeSailAway/csa_sailing.test.js"
     ]
   },
   {
     "name": "CHECK-keel-box",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    const opts = { keelY: f(f(f(f(m[1] * local.center[0]) + f(m[5] * footY)) + f(m[9] * local.center[2])) + m[13]), boat };",
     "new": "    const opts = { keelY: world.min[1], boat };",
     "tests": [
-      "test/fb1002b_rocks.test.js",
-      "test/fb1002_rocks.test.js"
+      "test/systems/comeSailAway/fb1002b_rocks.test.js",
+      "test/systems/comeSailAway/fb1002_rocks.test.js"
     ]
   },
   {
     "name": "CHECK-herself-unhanded",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "+ f(m[9] * local.center[2])) + m[13]), boat };",
     "new": "+ f(m[9] * local.center[2])) + m[13]) };",
     "tests": [
-      "test/fb1002b_rocks.test.js",
-      "test/fb1002_rocks.test.js"
+      "test/systems/comeSailAway/fb1002b_rocks.test.js",
+      "test/systems/comeSailAway/fb1002_rocks.test.js"
     ]
   },
   {
     "name": "CHECK-start-twice",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "        if (!zeroPointOk && (hit.start || vEquals(hit.point, [0, 0, 0]))) continue;",
     "new": "        if (!zeroPointOk && vEquals(hit.point, [0, 0, 0])) continue;",
     "tests": [
-      "test/fb1002b_rocks.test.js",
-      "test/fb1002_rocks.test.js"
+      "test/systems/comeSailAway/fb1002b_rocks.test.js",
+      "test/systems/comeSailAway/fb1002_rocks.test.js"
     ]
   },
   {
     "name": "CHECK-start-from-root",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "vSub(hit.start ? center : boat.GameObject.position, hit.point)",
     "new": "vSub(boat.GameObject.position, hit.point)",
     "tests": [
-      "test/fb1002b_rocks.test.js",
-      "test/fb1002_rocks.test.js"
+      "test/systems/comeSailAway/fb1002b_rocks.test.js",
+      "test/systems/comeSailAway/fb1002_rocks.test.js"
     ]
   },
   {
     "name": "CHECK-start-none-kept",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "        if (hit.start && vEquals(off, [0, 0, 0])) continue;",
     "new": "        if (false) continue;",
     "tests": [
-      "test/fb1002b_rocks.test.js",
-      "test/fb1002_rocks.test.js"
+      "test/systems/comeSailAway/fb1002b_rocks.test.js",
+      "test/systems/comeSailAway/fb1002_rocks.test.js"
     ]
   }
 ]

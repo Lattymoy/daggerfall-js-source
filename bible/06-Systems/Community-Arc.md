@@ -48,7 +48,7 @@ arrives under them is counted on a bar under the list - `N new - jump to newest`
 reader who scrolls down on their own clears the same way. A tab change reads from its newest line (another
 conversation). Both listeners are the elements' own; the panel still adds exactly one window listener (D5).
 
-**Pins.** `test/chatscroll.test.js` (4) drives the panel over a fake that LAYS OUT - lines as tall as their text wraps,
+**Pins.** `test/ui/chatscroll.test.js` (4) drives the panel over a fake that LAYS OUT - lines as tall as their text wraps,
 badge parts included, a clamped scrollTop - so a hidden box that forgets its place, a badge that wraps after the
 scroll and a reader who scrolled up are all real there. `tools/mutants/chatscroll.json`: 7, 7 dead.
 `tools/chatScrollProbe.mjs` reads the real panel in Chromium: every open lands on the newest line, badged or not; a
@@ -84,7 +84,7 @@ beside, past the box's right edge; below, past the open box's floor (`min(220px,
 chat's own size). The old two rules stand for a page with no chat. The fit is re-said on the frame the screen changes
 (a rotate, a resized window), on a change only; the chat's one window listener stays the key's.
 
-**Pins.** `test/chatsize.test.js` (5): the law (the scale IS the width; the fit at the sheet's size is the old
+**Pins.** `test/ui/chatsize.test.js` (5): the law (the scale IS the width; the fit at the sheet's size is the old
 breakpoint), the drag (captured, both axes, kept across a session, published), the bounds, the keys and the reset, a
 reader kept on the newest line (and one who scrolled up left alone, another pointer's move and a right press
 ignored), the fit following the screen, and by source every text size on the scale and no button on it.
@@ -180,7 +180,7 @@ the channel's members (Online, or the region's name), the party's seats online, 
   (AUDIT ATTACH has since moved every meter off the attachment: the strike and the bucket are two meters of one
   record, so the class cannot recur.)
 - RED1-12 (the server line's inbound gate removed) SURVIVED on the commit before this one: its pin matched `chatInGate`
-  over a slice that also held the next arm. The gate is driven now (`test/red1_server_say.test.js`: a flood in one instant reaches the log at the room's rate).
+  over a slice that also held the next arm. The gate is driven now (`test/net/red1_server_say.test.js`: a flood in one instant reaches the log at the room's rate).
 
 **The bar.** Four tabs and the Social button asked 373px of the 350px bar in the narrowest box (tools/chatChanProbe.mjs,
 its first run), pushing Social past the box's edge - and with unread counts on three tabs they asked 468px of the
@@ -192,7 +192,7 @@ in a box under 400px (a CONTAINER query, because CHAT-SIZE lets the box be that 
 drop the capitals' spacing and the Social count becomes a dot as well (its own label still says it, AUDIT SOC C21); and
 only on a phone under about 380px wide does the strip scroll sideways - a swipe, never a squeeze.
 
-**Pins.** `test/chatchan.test.js` (16), over the real Room, the wire, a session on a fake socket, the log, the panel
+**Pins.** `test/net/chatchan.test.js` (16), over the real Room, the wire, a session on a fake socket, the log, the panel
 on a fake document, and the host by source. `tools/mutants/chatchan.json`: 56, 56 dead - CC-parser-before-unstuck
 lived from EMOTE1 on: EMOTE1 re-aimed the command-order pin to the parser over the shortcodes, and a second parser
 call put BEFORE the host's commands (which reads `/unstuck`, `/red`, `/mute` and `/ready` as the host's and would
@@ -236,7 +236,7 @@ up to 1000 sides and a modifier within 1000, refused rather than clamped - a rol
 and a refusal is said in words with the forms. A roll is drawn in its own colour, and never over a head: what stands
 over a head is what the character said, and a roll is the table's.
 
-**Pins.** `test/dice1.test.js` (10): the grammar and its bounds, the unbiased draw over a scripted source (three draws
+**Pins.** `test/net/dice1.test.js` (10): the grammar and its bounds, the unbiased draw over a scripted source (three draws
 thrown back, two kept), the client's check; over the real Room, one roll the same numbers to everyone with the asker
 included and all six faces of a d6 reached over the relay's real CSPRNG, the gate and its strikes, the mute, a party's
 roll heard by the party alone; the session's door (the world102 welcome, one a second, a channel only where the channels
@@ -266,7 +266,7 @@ gesture AT someone, bounded at 24 characters and only ever a name in the table's
 
 **The animations - words only, on purpose.** The others stand in the Morrowind body (MWBODY1), and its base animation
 groups are the idles (idle through idle9 - fidgets, none of them a gesture), the moves, the attacks and the casts, a
-knockdown and the deaths (formats/mwAnim.js). There is no wave, no bow, no dance to play, and a gesture drawn with the
+knockdown and the deaths (formats/morrowind/mwAnim.js). There is no wave, no bow, no dance to play, and a gesture drawn with the
 wrong clip would say something the player did not. So a gesture is a line until the bodies carry the clips; then the
 pose needs one field (the gesture, and when it began) and the relay one deploy.
 
@@ -290,7 +290,7 @@ to 93px, narrower than any the chat had before it. That is a container query, an
 the box's border, so the rule takes the border off (one constant draws the border and sizes the query): the first cut
 hid the button at the smallest box a drag makes.
 
-**Pins.** `test/emote1.test.js` (8): the joiner law and its fuzz; the action on the wire, over the real Room and a
+**Pins.** `test/net/emote1.test.js` (8): the joiner law and its fuzz; the action on the wire, over the real Room and a
 session on a fake socket (asked only of a world102 relay, believed only as `true`); the log's kind; the grammar (/me;
 every gesture parsed, each with its form AT a name; /emotes; every shortcode whole over the wire, a clock no code); the
 bubble's cut and its refusal of an action; the picker over a fake document (its order, the caret, Escape, the close, a
@@ -359,7 +359,7 @@ plaque's own padding (`--wp-pad-x`) at every width. Still imprecise and left as 
 below the plaque's TOP edge and does not count the label above the list, so on a very short window a long list can
 still run the plaque's foot past the screen.
 
-**Pins.** `test/lootstack.test.js` (14): the pile over real ray geometry (its members, their reach, the world occluding
+**Pins.** `test/ui/lootstack.test.js` (14): the pile over real ray geometry (its members, their reach, the world occluding
 one, the order), the pick answering the nearest and noting the pile (a list with no body untouched, looking away
 clearing it), the race unchanged against a pile of drops, `bodyPile` (the front's pile only, a copy), `lootPile` (the
 tabs, the open body always among them, none for one body, the pile carried back, the open body's own tab inert),
@@ -444,7 +444,7 @@ ride - the widest a place socket can carry - and found it already past the runti
 freezing a meter open. That was paid first, at the root, as AUDIT ATTACH (`06-Systems/Online-Arc.md`): every meter is
 the Room instance's now, and the card's meter was measured with every other arm's there (`test/placeWidest.mjs`).
 
-**Pins.** `test/inspect1.test.js` (10): the wire (an ask or an answer, never both; the card whole or nothing at every
+**Pins.** `test/ui/inspect1.test.js` (10): the wire (an ask or an answer, never both; the card whole or nothing at every
 bound, the attribute ceiling held to the sheet's live clamp; the widest card inside its frame; world102 the first relay
 that routes it); the relay over the real Room (to the one socket named, stamped; a channel or the hub nowhere; a frame
 at myself junk, a peer gone nothing; the cast arm's funnel shared - a card waits on the casts its sender spent,
@@ -485,9 +485,9 @@ rebased. Where the two touched the same thing, both are kept and each change bel
   two and the profile). Port-Status section 2's row identifiers were re-resolved by content, because LOOT-STACK's row
   moved every row below it by one.
 
-Pins re-aimed by content: `test/disc7.test.js` (the window branch, the press's bag), `test/peerplaque.test.js` (the
-namer's bag), `test/inspect1.test.js` (the three reads of the one bag, plus the plaque's Inspect row and its press by
-execution), `test/hcc_park.test.js` (the park bucket refilled on the instance), the RELAY_VERSION pins, and seven
+Pins re-aimed by content: `test/systems/disc7.test.js` (the window branch, the press's bag), `test/player/peerplaque.test.js` (the
+namer's bag), `test/ui/inspect1.test.js` (the three reads of the one bag, plus the plaque's Inspect row and its press by
+execution), `test/net/hcc_park.test.js` (the park bucket refilled on the instance), the RELAY_VERSION pins, and seven
 mutant records (inspect1 x2, peerplaque, soc1, lootstack, worldhover x2). Every mutant list whose target or tests the
 merge touched was rerun against a green baseline.
 
@@ -542,10 +542,10 @@ contracts, invitations)."
   - No push: a letter is found at the next look.
   - No sent box: the sender keeps nothing.
 - **The deploy.** The account worker moves to `acct6`, and the deploy applies migration 0007 through the ledger.
-  `src/net/letterLaw.js` joins the worker's deploy paths (test/accountdeploy.test.js caught it missing). The relay
+  `src/net/letterLaw.js` joins the worker's deploy paths (test/server/accountdeploy.test.js caught it missing). The relay
   sends no new frame, but `visibleText` moved within its bundle, so world102's LAW row is restated.
 
-Pins: `test/mail1.test.js` (17); `tools/mutants/mail1.json` (51, all dead - 50 since NAME-AS retired TAB-guest-friend-written, whose line it took out: `06-Systems/Accounts-And-Cloud-Saves-Arc.md` NAME-AS); `tools/mailProbe.mjs` (36 checks, 12
+Pins: `test/server/mail1.test.js` (17); `tools/mutants/mail1.json` (51, all dead - 50 since NAME-AS retired TAB-guest-friend-written, whose line it took out: `06-Systems/Accounts-And-Cloud-Saves-Arc.md` NAME-AS); `tools/mailProbe.mjs` (36 checks, 12
 photographs at a desktop, a narrow window and a phone). Re-aimed: ACC1b's table list, ACC1e's refusal walk (which reads
 letterLaw's words, since the service returns them verbatim), CHAT1's and AUDIT DROPS F's online-frame order, and
 SOC3's host pin.
@@ -627,7 +627,7 @@ Addison Knox, on Discord: "Player journals ... shared in-world for storytelling.
 - **The deploy.** world102's LAW row is restated, the relay's one deploy carrying the page frame. The account worker's
   behaviour does not change - its line law moved into wire.js, which it already bundled - so `acct6` stands.
 
-Pins: `test/journal1.test.js` (14); `tools/mutants/journal1.json` (69, all dead); `tools/journalProbe.mjs` (35 checks,
+Pins: `test/net/journal1.test.js` (14); `tools/mutants/journal1.json` (69, all dead); `tools/journalProbe.mjs` (35 checks,
 15 photographs at a desktop, a narrow window and a phone). Every other list whose target or test this slice touched
 was rerun (41 lists, 1,462 mutants): no survivor it caused. Re-aimed to the new code:
 - MAIL1's law pin and five of its mutants, for the line law's new home;
@@ -653,7 +653,7 @@ skin.
 - The button's line wraps now: the reason drops under its label, and a label wider than the column breaks at its
   spaces. The probe passes, with the button 82px tall on the phone (over the thumb's 44).
 
-Pinned in AUDIT SOC C8/C13's test (`test/soc3_socialpanel.test.js`); `tools/mutants/auditsoc.json` gains its mutant, dead.
+Pinned in AUDIT SOC C8/C13's test (`test/net/soc3_socialpanel.test.js`); `tools/mutants/auditsoc.json` gains its mutant, dead.
 
 ## A mutant record that names two sites (found by the arc's mutation rerun; older than the arc in part)
 
@@ -674,14 +674,14 @@ word. The record still applies, so AUDIT QS6 F7's sweep passes it, and the law i
 
 Each is aimed now by a line only its own site has, and dies.
 
-**The class is closed** in `test/mutantdrift.test.js` (MUT-AIM): every record names ONE site. The 25 records that
+**The class is closed** in `test/tooling/mutantdrift.test.js` (MUT-AIM): every record names ONE site. The 25 records that
 already named more than one are carried in a map with their count of sites, so a copy added or taken away fails as
 well; the map can only shrink. Two of them need more than an aim, and are recorded for their arcs:
 - `el2` glsl-point-off-dark: the point guard is pinned by a regex over the whole shader, which the other copy satisfies
   whichever one is mutated. Closed at DISC29-E (2026-09-28, found by its rerun of the render files' mutants): pinned
   by `pointShadowAt`'s own head (VOL1 pins `pointShadowOne`'s), the record aimed at that one site and off the map.
 - `macbugw5` W5-13 is named for the pool's gate and mutates the drip's. Aimed at each of the four gates in turn, only
-  `place()`'s dies (14 failing). Its tests (`test/blood1_decals.test.js`) never fail the drip, the footprint or the pool
+  `place()`'s dies (14 failing). Its tests (`test/combat/blood1_decals.test.js`) never fail the drip, the footprint or the pool
   asking for `raycastHit`, the door MAC-BUG W5 took them off.
 
 ## Two kinds of number the cite tools took for line cites (found at the sixth merge; older than the arc)
@@ -698,15 +698,15 @@ The struck row above it still reads "8076/8077", and DFU's TalkManager.cs answer
   "DaggerfallRestWindow.CanRest (:762-831)" in prose. A JS cite earlier in the row took each one for its own lines. Two
   more stops now end the region: a C# member just before its `(:N`, and, in a table row, each cell's edge. Run
   against the whole tree before they were written, the two stops exclude 99 continuations, and every one is C#.
-- **One law, as RF3's.** Both tools read `continuationsIn` and `regionStops`. Pinned in `test/citeshift.test.js` and
-  `test/citemerge.test.js`. `tools/mutants/citestops.json` has 5 mutants, all dead.
+- **One law, as RF3's.** Both tools read `continuationsIn` and `regionStops`. Pinned in `test/tooling/citeshift.test.js` and
+  `test/tooling/citemerge.test.js`. `tools/mutants/citestops.json` has 5 mutants, all dead.
 
 **Repaired by content.** The history (lines matched by their shape) says which loose slashes had moved:
 - Port-Ledger: "Work bands to 8076/8077" (DFU TalkManager.cs:2029-2035).
 - Audit-24: FixRdbData's blocks "1025/1034/1036" (DFU BlocksFile.cs:521, :576, :602).
 - Active-Arcs: "Peak change 42/255". Testing.md: the road tile's corner columns "(63/64)". Each is the value the
   history begins with.
-- `test/ledger.test.js` and Testing.md: "the ROADS 3/22 comment block". The two copies already disagreed (3/24 and
+- `test/systems/ledger.test.js` and Testing.md: "the ROADS 3/22 comment block". The two copies already disagreed (3/24 and
   3/43) in the history's first commit, so neither is a person's number. The block holds the ROADS 3 and ROADS 22
   comments, and ROADS 22 is the arc that wired Basic Roads' network there.
 
@@ -763,7 +763,7 @@ Mac: "a non-intrusive greeting message that says something along the lines of (u
 had `/help` (and `/emotes`) since CHAT-CHAN, and nothing told a player so. Each time the player goes online the chat
 greets them with one line, "Welcome! Type /help for chat commands.", on its first tab. It is theirs alone (a system
 line, never sent) and it is never counted unread (`net/chat.js` push's `quiet`), so it is there to read when they open
-the chat and no badge asks them to. The chat box's own hint is unchanged. `test/chathelp.test.js` (3),
+the chat and no badge asks them to. The chat box's own hint is unchanged. `test/net/chathelp.test.js` (3),
 `tools/mutants/chathelp.json` 4 of 4 dead.
 
 
@@ -784,7 +784,7 @@ Mac: "Party chat should only show if in a party", and "Messages sent in world ch
     if the chat is open. Its lines stay as history.
   - A party note lands on the Party tab only while a party holds. The note of my own removal lands on the tab I am
     reading, whatever order it and the party frame arrive in (`net/chat.js partyNoteTab`).
-- Pinned in `test/chatchan.test.js`, with re-aimed pins in `test/chat1.test.js`. Mutants: `tools/mutants/chatchan.json`
+- Pinned in `test/net/chatchan.test.js`, with re-aimed pins in `test/net/chat1.test.js`. Mutants: `tools/mutants/chatchan.json`
   `CHAT-W-*` and `CHAT-P-*`, all dead.
 
 ## DUEL1 - a duel between two players, in a ring of light (2026-09-24, Mac)
@@ -796,7 +796,7 @@ healed on duel end. Add a dueling K/D to the profile menu and player inspect pro
 account, on the main menu's account card.
 
 **Since INT8 (2026-10-09, `06-Systems/Integrity-Arc.md` section 5) the duel is the RELAY's to referee**: the bout,
-every blow and cast, the ring and the end are its (`net/duelRef.js`), at the Royal Tourney's vitality rather than the
+every blow and cast, the ring and the end are its (`net/duel/duelRef.js`), at the Royal Tourney's vitality rather than the
 save's health (so no one drops to 1 HP and nothing is healed at the end), and the record is its signed `d1` receipt
 claimed once (`/v1/duel/claim`) - the loser's own report retired. What follows is DUEL1 as it was built.
 
@@ -886,11 +886,11 @@ bound. Mounted duellists fight as they stand (the pose carries no crouch, and a 
 duel spell's reflection lands on nobody (the defender has no caster entity to send it back at). Onlookers are not held
 by a ring and can walk through it.
 
-**Pins.** `test/duel_session.test.js` (7), `test/duel_wire.test.js` (6), `test/duel_combat.test.js` (7),
-`test/duel_wall.test.js` (6), `test/duel_record.test.js` (7). `tools/mutants/duel.json`: 51, all dead (42 since INT8
+**Pins.** `test/net/duel/duel_session.test.js` (7), `test/net/duel_wire.test.js` (6), `test/combat/duel_combat.test.js` (7),
+`test/player/duel_wall.test.js` (6), `test/server/duel_record.test.js` (7). `tools/mutants/duel.json`: 51, all dead (42 since INT8
 retired the nine whose laws - the defender's resolve, the loser's report - are the referee's now; three survived the
 first run - an exactly lethal blow, a weapon whose skill is not a long blade's, a faded ring under the draw's cap - and
-each found a test that did not look; the tests look now). The relay is world107's (`test/relayversion.test.js`'s row);
+each found a test that did not look; the tests look now). The relay is world107's (`test/net/relayversion.test.js`'s row);
 the account service acct8's. Re-aimed: the version pins (world107, acct8), the foreign-pass counts (the wall is the
 world host's seventh), the moved source pins (the melee ladder, the arrows' targets, the travel map's refusal, the one
 bag of acts, the card arm, the cast funnel), and seven older mutant records whose lines the change reached.
@@ -899,8 +899,8 @@ bag of acts, the card arm, the cast funnel), and seven older mutant records whos
 
 Four independent reviews read DUEL1 and DISC21 end to end: the duel's trust boundaries (the wire, the relay, the
 account service), its rules and combat, regressions outside it, and DISC21 with the tests and the records. Every
-finding below was verified against its code path before it was fixed. `test/auditduel1.test.js` (4) pins them, with
-`test/duel_record.test.js` (8) for the record's SQL; `tools/mutants/auditduel1.json` has 28 mutants, all dead (22 since
+finding below was verified against its code path before it was fixed. `test/combat/auditduel1.test.js` (4) pins them, with
+`test/server/duel_record.test.js` (8) for the record's SQL; `tools/mutants/auditduel1.json` has 28 mutants, all dead (22 since
 INT8 retired the six of the mutual draw, the duel's heal and its fatigue floor - the referee's bar touches no save).
 
 **Blocker.**
@@ -974,7 +974,7 @@ the Language tab can join** (an older relay refuses the room key, and the tab sa
 World white, Region green, Guild purple, Local grey, Party teal, Language rose; a pip of the colour stands before each
 tab's name. System, server, DM, aside, action and roll lines keep their own colours. Every colour comes as a pair - light
 for Plus's box and for the lines over the world, dark for DFO Grimoire's page, where the chat is now written on the
-cream page - and `test/chatcolours1.test.js` holds each at 4.5:1 or better on the darkest ground it is drawn on.
+cream page - and `test/ui/chatcolours1.test.js` holds each at 4.5:1 or better on the darkest ground it is drawn on.
 The switch is the player's (`chatChannelColours`).
 
 **Names.** A name is never its words' colour (`NAME_COLOURS`): a stranger's brass (the page's red on Grimoire), my own a
@@ -997,7 +997,7 @@ the World channel's whole machinery with nothing new in it. The clutter is answe
 (`net/chat.js` `CHAT_TABS`, `trade` and `lfg`) stands on the bar only while the player has joined it (`chatTrade`,
 `chatLfg`, both off), and its link opens no socket until then - so a player who never joins sees the bar as it was,
 World, Region and Local. `/join trade`, `/join lfg` put a tab on the bar and bring it to the front; `/leave trade`,
-`/leave lfg` take it off (a bare `/leave` is still the battle's, `net/siegeSession.js` isBattleLeaveCommand); Settings >
+`/leave lfg` take it off (a bare `/leave` is still the battle's, `net/siege/siegeSession.js` isBattleLeaveCommand); Settings >
 Other players > Chat has the same two switches. `/trade` (or `/tr`) and `/lfg` say a line on the channel - said to one
 not joined, they join it and keep the line in the field, to be said once it opens. Neither tab peeks over the world
 from behind another tab: a market's chatter is not said TO the player, as a party's line is. The host's frame is
@@ -1035,7 +1035,7 @@ THE FOUR HOSTS: the chat is `scenes/world.js`'s alone (the log, the panel and th
 `scenes/exterior.js`, `scenes/worldModes.js` and `scenes/dungeonContext.js` host no chat, and are FLAGGED as such here:
 nothing to wire.
 
-Not a DFU member: Daggerfall Unity has no chat. Ledger A row (ONLINE). Pinned by `test/chattrade1.test.js`.
+Not a DFU member: Daggerfall Unity has no chat. Ledger A row (ONLINE). Pinned by `test/ui/chattrade1.test.js`.
 
 ## AUDIT CHAT-TRADE - the Trade and LFG channels, the picker and /rp, read again (2026-10-15, Mac: "Audit this")
 
@@ -1063,4 +1063,4 @@ Read and found sound: the relay gate on both ends (the World link's welcome, an 
 nothing); the room joined only while chosen and left when not; a bare `/leave` still the battle's; the roleplay mark
 never on a game line and behind an action's and an aside's; the colours at 4.5:1 on every ground; the picker's Escape
 and close. Known and kept as the emoji grid's: the picker is reached by the pointer and the touch, the field holding
-the keyboard's Tab (CHAT C7). Pinned in `test/chattrade1.test.js`; `tools/mutants/chattrade1.json` gains A2, A3, A5.
+the keyboard's Tab (CHAT C7). Pinned in `test/ui/chattrade1.test.js`; `tools/mutants/chattrade1.json` gains A2, A3, A5.

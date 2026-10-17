@@ -52,7 +52,7 @@ await page.screenshot({ path: `${OUT}/grim-frontdoor.png` });
 // ── the pack ─────────────────────────────────────────────────────────────────────────────────────────────────────────
 await page.evaluate(async () => {
   const { createInventoryWindow } = await import('/src/ui/inventoryDoor.js');
-  const { ITEM_TEMPLATES } = await import('/src/characters/paperdoll.js');
+  const { ITEM_TEMPLATES } = await import('/src/characters/paperdoll/paperdoll.js');
   const tp = ITEM_TEMPLATES.find((x) => x.name === 'Longsword');
   const e = { name: 'Aelwyn', stats: { strength: 50, endurance: 48 }, items: [{ name: tp.name, templateIndex: tp.index, group: 'Weapons', stackCount: 1, currentCondition: 50, maxCondition: 50 }] };
   globalThis.__inv = createInventoryWindow({ entity: e, items: () => e.items, wagonItems: () => [] });
@@ -96,7 +96,7 @@ await page.screenshot({ path: `${OUT}/grim-ascend.png` });
 await frontDoor();
 await page.evaluate(async () => {
   document.getElementById('enhanced-menu')?.remove();
-  const { drawEnhancedHud } = await import('/src/ui/enhancedHud.js');
+  const { drawEnhancedHud } = await import('/src/ui/enhanced/enhancedHud.js');
   const e = { name: 'A', stats: {}, health: 9, maxHealth: 40, fatigue: 150, maxFatigue: 200, magicka: 12, maxMagicka: 20, items: [], spells: [] };
   const f = () => { drawEnhancedHud(e, 0.25, 1 / 60, {}); requestAnimationFrame(f); }; f();
 });

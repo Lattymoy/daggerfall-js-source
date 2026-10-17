@@ -12,7 +12,7 @@
 // Deterministic end to end: same .fbx in, same bytes out - and that is
 // not a hope, it is GATED. `src/assets/mw/source/Pellet_Shot.fbx` is
 // committed beside the assets it produces and
-// test/fieldgunmw.test.js re-runs this function over it and compares
+// test/formats/morrowind/fieldgunmw.test.js re-runs this function over it and compares
 // the result to the committed .nif and .dds, byte for byte.
 //
 // COMMITTING THE SOURCE IS A DEPARTURE from tools/gunPaperdoll.mjs,
@@ -39,8 +39,8 @@ import { isMain } from './lib/isMain.mjs';
  * MORROWIND IS 69.99 UNITS TO THE METRE.
  *
  * Not a constant this file invents - `MW_UNITS_PER_METER` in
- * src/formats/mwFirstPerson.js is the port's own, read off the
- * reference, and test/fieldgunmw.test.js asserts the two agree. It is
+ * src/formats/morrowind/mwFirstPerson.js is the port's own, read off the
+ * reference, and test/formats/morrowind/fieldgunmw.test.js asserts the two agree. It is
  * restated here rather than imported because a bake must not drag the
  * Morrowind first-person module in behind it, and a number with a pin
  * on it is a number that cannot drift.

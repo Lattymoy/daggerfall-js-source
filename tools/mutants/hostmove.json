@@ -5,7 +5,7 @@
     "old": "    if ((n.type === 'ForOfStatement' || n.type === 'ForInStatement') && n.left.type !== 'VariableDeclaration') for (const nm of bound(n.left)) wrote.add(nm);",
     "new": "    void 0;",
     "tests": [
-      "test/hostmove.test.js"
+      "test/tooling/hostmove.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  const vars = hoistedVars(stmt);",
     "new": "  const vars = [];",
     "tests": [
-      "test/hostmove.test.js"
+      "test/tooling/hostmove.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "(d.kind === 'function' && neverWritten)",
     "new": "(d.kind === 'function')",
     "tests": [
-      "test/hostmove.test.js"
+      "test/tooling/hostmove.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "const ps = new Set(n.params.flatMap((p) => bound(p)));",
     "new": "const ps = new Set([...n.params.flatMap((p) => bound(p)), ...(n.body.type === 'BlockStatement' ? blockDecls(n.body.body) : [])]);",
     "tests": [
-      "test/hostmove.test.js"
+      "test/tooling/hostmove.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "if (namesIn(group.map((m) => m.stmt)).has(handle) || own.has(handle))",
     "new": "if (refs.some((r) => r.name === handle) || own.has(handle))",
     "tests": [
-      "test/hostmove.test.js"
+      "test/tooling/hostmove.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "if (alone) edits.push",
     "new": "if (true) edits.push",
     "tests": [
-      "test/hostmove.test.js"
+      "test/tooling/hostmove.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "    if (inString) { if (c === '\\\\') i++; else if (c === '\"') inString = false; continue; }",
     "new": "    if (false) { if (c === '\\\\') i++; else if (c === '\"') inString = false; continue; }",
     "tests": [
-      "test/hostmove.test.js"
+      "test/tooling/hostmove.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "(?<![\\\\w.-])",
     "new": "",
     "tests": [
-      "test/hostmove.test.js"
+      "test/tooling/hostmove.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "|| r.keyed;",
     "new": ";",
     "tests": [
-      "test/hostmove.test.js"
+      "test/tooling/hostmove.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "    if (src.slice(lineStart(c.start), c.start).trim()) break;\n",
     "new": "",
     "tests": [
-      "test/hostmove.test.js"
+      "test/tooling/hostmove.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "    if (n.type === 'MetaProperty') return;   // new.target, import.meta - no binding\n    if (n.type === 'Property' && n.shorthand",
     "new": "    if (n.type === 'Property' && n.shorthand",
     "tests": [
-      "test/hostmove.test.js"
+      "test/tooling/hostmove.test.js"
     ]
   }
 ]

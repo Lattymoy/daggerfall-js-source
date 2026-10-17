@@ -5,7 +5,7 @@
 //
 // What a puddle is, MEASURED on BLOCKS.BSA (every RMB block's ground, a census in the record, Water-Arc PUDDLE-DRY):
 // 920 blocks, 1,311 patches of water (4-connected, a tile counted wet where the draw's corner table gives it any water
-// corner - world/waterCorners.js WATER_DRAW_MASK_TABLE, the shore ring part of its pond). 674 of them are ONE tile:
+// corner - world/water/waterCorners.js WATER_DRAW_MASK_TABLE, the shore ring part of its pond). 674 of them are ONE tile:
 // 632 of those are DFU's shallow-water art (records 8, 9 and 23 - a pool painted on sand or grass, the "one square"
 // WATER-PUDDLE drew in its art's shape), the rest a lone shore corner or edge (a sliver) or one of the two lone record-0
 // tiles. The rest are ponds a block was laid out with - a water heart in its shore ring, a garden pond, the castles'
@@ -14,7 +14,7 @@
 // moved with it: 1,246 patches, 660 of one tile, 686 dried and 560 kept (Water-Arc WATER-DRAW2).
 //
 // THE RULE: a patch is a puddle when it is ONE tile, or every tile of it is shallow-water art (PUDDLE_RECORDS: DFU's
-// PlayerMotor.OnShallowWaterTile records the shore families do not hold, world/waterCorners.js SHALLOW_WHOLE, and
+// PlayerMotor.OnShallowWaterTile records the shore families do not hold, world/water/waterCorners.js SHALLOW_WHOLE, and
 // WATER-DRAW1's SHALLOW_DRAWN). A puddle's tiles take the ground most of their dry neighbours stand on (the eight
 // round each, in the block; the most common byte, its turn and flip kept; on a tie the first in the walk's order), so
 // a pool in the sand is sand. A patch with no dry neighbour is left as it is.
@@ -22,14 +22,14 @@
 // ONE DOOR. It runs where a block is served (formats/blocksFile.js getBlock, BLOCKS.BSA's and a world-data mod's
 // alike), so every reader of the ground - the streamed terrain's stamp (terrainTiles.js setLocationTiles), the fixed
 // town (scenes/exterior.js), the streamed town's tilemap (scenes/world.js), the layout (rmbLayout.js
-// buildGroundTilemap), the townsfolk's paths (cityNavigation.js), the town map (ui/inkTown.js) - sees one ground, and
+// buildGroundTilemap), the townsfolk's paths (cityNavigation.js), the town map (ui/ink/inkTown.js) - sees one ground, and
 // the feet, the grass and the paths follow it with no seam of their own. readClassicBlock (a mod's diff base) stays
 // BLOCKS.BSA's bytes.
 // ═══════════════════════════════════════════════════════════════════
-import { waterCorners, WATER_DRAW_MASK_TABLE } from './waterCorners.js';
+import { waterCorners, WATER_DRAW_MASK_TABLE } from './water/waterCorners.js';
 import { PUDDLE_RECORDS } from './puddleMask.js';   // the shallow-water art's records, one list (WATER-PUDDLE's)
-import { convertTile } from './terrainSurface.js';
-import { GROUND_RECORD_LIMIT as RECORD_LIMIT } from './terrainTiles.js';   // AUDIT WATER-NEXT m8: MeshReader.cs:487's marker, one home
+import { convertTile } from './terrain/terrainSurface.js';
+import { GROUND_RECORD_LIMIT as RECORD_LIMIT } from './terrain/terrainTiles.js';   // AUDIT WATER-NEXT m8: MeshReader.cs:487's marker, one home
 
 /** The shallow-water art: a patch made of these alone is a puddle, whatever its size. */
 const PUDDLE = new Set(PUDDLE_RECORDS);

@@ -338,7 +338,7 @@ const clamp01 = (x) => Math.max(0, Math.min(1, x));
  *  100 of the three best combat/magic skills (REAL permanent values). */
 /** BAL9b (bible/05-Combat/Balance-Arc.md section 15): A SKILL'S CLIMB - its permanent value as a formula reads it (past
  *  100 a mastered skill alone - SOFTCAP4 - at a quarter a point and the milestones), without what is worn or cast on it.
- *  What the foes' edge reads below, and what a school's potency reads (systems/spellPower.js schoolPotency): the climb
+ *  What the foes' edge reads below, and what a school's potency reads (systems/spell/spellPower.js schoolPotency): the climb
  *  that raises the foes is the climb that pays the caster. */
 export const climbedSkill = (entity, id) => effectiveSkill(masterCappedSkill(entity, entity?.skills?.[id] ?? 0, id));
 

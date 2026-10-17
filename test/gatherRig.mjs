@@ -1,6 +1,6 @@
 // GATHER-FEEL's rig, shared (GATHER-FEEL II, 2026-10-13): the gathering host (scenes/gatherHost.js) over the real kinds -
 // one flat Woodlands pixel's veins, patches and trees, a real book whose door's harvest answers when released, and an ear
-// with the sounds on over a bus of its own. test/gatherfeel.test.js (GATHER-FEEL) and the GATHER-FEEL II pins
+// with the sounds on over a bus of its own. test/systems/gatherfeel.test.js (GATHER-FEEL) and the GATHER-FEEL II pins
 // (test/gf2_*.test.js) drive the one host through it. The doors a pin hands it - `feel` (BLOW-SHAKE's), `renderer`
 // (VEIN-CRACKS' batches) - are the host's own deps; left out, the host is what GATHER-FEEL pinned.
 import assert from 'node:assert/strict';
@@ -13,9 +13,9 @@ import { herbKind } from '../src/scenes/herbHost.js';
 import { createGatherHost, aimAt } from '../src/scenes/gatherHost.js';
 import { createProfBook } from '../src/net/profBook.js';
 import { veins, trees, utcDayOfMs } from '../src/net/nodeLaw.js';
-import { setForagingHost } from '../src/systems/foragingInstall.js';
-import { FT } from '../src/systems/foragingLaw.js';
-import { HEIGHTMAP_DIMENSION, TERRAIN_SIZE } from '../src/world/terrainSampler.js';
+import { setForagingHost } from '../src/systems/foraging/foragingInstall.js';
+import { FT } from '../src/systems/foraging/foragingLaw.js';
+import { HEIGHTMAP_DIMENSION, TERRAIN_SIZE } from '../src/world/terrain/terrainSampler.js';
 
 /** A dice that answers its numbers in turn, round and round. */
 export const dice = (...seq) => { let i = 0; return () => seq[i++ % seq.length]; };

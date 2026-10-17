@@ -1,29 +1,29 @@
 [
   {
     "name": "A1-a-second-press-claims-again",
-    "file": "src/systems/onlineHomes.js",
+    "file": "src/systems/online/onlineHomes.js",
     "old": "  if (out.has(key)) return { ok: false, error: HOME_BUY_BUSY };\n",
     "new": "",
     "tests": [
-      "test/auditmergeplus_guild.test.js"
+      "test/net/auditmergeplus_guild.test.js"
     ]
   },
   {
     "name": "A1-the-hold-per-town",
-    "file": "src/systems/onlineHomes.js",
+    "file": "src/systems/online/onlineHomes.js",
     "old": "  const key = `${mapId}:${buildingKey}`;",
     "new": "  const key = `${mapId}`;",
     "tests": [
-      "test/auditmergeplus_guild.test.js"
+      "test/net/auditmergeplus_guild.test.js"
     ]
   },
   {
     "name": "A1-the-hold-never-let-go",
-    "file": "src/systems/onlineHomes.js",
+    "file": "src/systems/online/onlineHomes.js",
     "old": "  } finally {\n    out.delete(key);\n  }",
     "new": "  } finally {\n  }",
     "tests": [
-      "test/auditmergeplus_guild.test.js"
+      "test/net/auditmergeplus_guild.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    if (r.error === HOME_BUY_BUSY) return;",
     "new": "",
     "tests": [
-      "test/auditmergeplus_guild.test.js"
+      "test/net/auditmergeplus_guild.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    row = prev.id != null && at < 0 ? start : Math.max(floor, Math.min(rows - 1, (at >= 0 ? at : prev.row) + d));",
     "new": "    row = Math.max(floor, Math.min(rows - 1, (at >= 0 ? at : prev.row) + d));",
     "tests": [
-      "test/auditmergeplus_guild.test.js"
+      "test/net/auditmergeplus_guild.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "prev.id != null && at < 0 ? start :",
     "new": "prev.id != null && at < 0 ? 0 :",
     "tests": [
-      "test/auditmergeplus_guild.test.js"
+      "test/net/auditmergeplus_guild.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "prev.id != null && at < 0 ? start :",
     "new": "at < 0 ? start :",
     "tests": [
-      "test/auditmergeplus_guild.test.js"
+      "test/net/auditmergeplus_guild.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "  return { ok: true, badge: {}, out: { s: player.id, gi: a.me.guild_id, gm: `m${a.me.rid}` } };",
     "new": "  return { ok: true, badge: {} };",
     "tests": [
-      "test/auditmergeplus_guild.test.js"
+      "test/net/auditmergeplus_guild.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "db.prepare('DELETE FROM guild_members WHERE rowid = ? AND guild_id = ?').bind(a.me.rid, a.me.guild_id)",
     "new": "db.prepare('DELETE FROM guild_members WHERE player = ? AND char_id = ?').bind(player.id, character)",
     "tests": [
-      "test/auditmergeplus_guild.test.js"
+      "test/net/auditmergeplus_guild.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "  if (!r?.meta?.changes) return { error: 'no-guild' };\n",
     "new": "",
     "tests": [
-      "test/auditmergeplus_guild.test.js"
+      "test/net/auditmergeplus_guild.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "if (r?.meta?.changes) return { ok: true, disbanded: true, badge: {}, out: { s: player.id, gi: a.me.guild_id } };",
     "new": "if (r?.meta?.changes) return { ok: true, disbanded: true, badge: {} };",
     "tests": [
-      "test/auditmergeplus_guild.test.js"
+      "test/net/auditmergeplus_guild.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "disbanded: true, badge: {}, out: { s: player.id, gi: a.me.guild_id } }",
     "new": "disbanded: true, badge: {}, out: { s: player.id, gi: a.me.guild_id, gm: `m${a.me.rid}` } }",
     "tests": [
-      "test/auditmergeplus_guild.test.js"
+      "test/net/auditmergeplus_guild.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "      await this._saveGuildOuts(Math.floor(now / 1000));\n",
     "new": "",
     "tests": [
-      "test/auditmergeplus_guild.test.js"
+      "test/net/auditmergeplus_guild.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "    if (c.gi) await this._loadGuildOuts(nowS);",
     "new": "",
     "tests": [
-      "test/auditmergeplus_guild.test.js"
+      "test/net/auditmergeplus_guild.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "      if (r.claims.gi) await this._loadGuildOuts(Math.floor(now / 1000));",
     "new": "",
     "tests": [
-      "test/auditmergeplus_guild.test.js"
+      "test/net/auditmergeplus_guild.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "      await this._loadGuildOuts(Math.floor(now / 1000));   // AUDIT MERGE-PLUS A3: the storage copy first, so this write keeps it",
     "new": "",
     "tests": [
-      "test/auditmergeplus_guild.test.js"
+      "test/net/auditmergeplus_guild.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "const GUILD_OUT_KEEP_S = MAX_TTL_S + ORDER_TTL_S + 60;",
     "new": "const GUILD_OUT_KEEP_S = ORDER_TTL_S;",
     "tests": [
-      "test/auditmergeplus_guild.test.js"
+      "test/net/auditmergeplus_guild.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "    for (const [k, i] of this._guildOuts) if (i < nowS - GUILD_OUT_KEEP_S) this._guildOuts.delete(k);\n",
     "new": "",
     "tests": [
-      "test/auditmergeplus_guild.test.js"
+      "test/net/auditmergeplus_guild.test.js"
     ]
   },
   {
@@ -167,97 +167,97 @@
     "old": "!Number.isSafeInteger(i) || i < nowS - GUILD_OUT_KEEP_S) continue;",
     "new": "!Number.isSafeInteger(i)) continue;",
     "tests": [
-      "test/auditmergeplus_guild.test.js"
+      "test/net/auditmergeplus_guild.test.js"
     ]
   },
   {
     "name": "A4-the-workers-words-read-as-may-have-landed",
-    "file": "src/net/guildBook.js",
+    "file": "src/net/guild/guildBook.js",
     "old": "  'rate', 'body', 'too-large', 'method', 'not-found', 'no-database', 'no-player',\n",
     "new": "",
     "tests": [
-      "test/auditmergeplus_guild.test.js"
+      "test/net/auditmergeplus_guild.test.js"
     ]
   },
   {
     "name": "A4-rate-read-as-may-have-landed",
-    "file": "src/net/guildBook.js",
+    "file": "src/net/guild/guildBook.js",
     "old": "  'rate', 'body', 'too-large', 'method', 'not-found', 'no-database', 'no-player',",
     "new": "  'body', 'too-large', 'method', 'not-found', 'no-database', 'no-player',",
     "tests": [
-      "test/auditmergeplus_guild.test.js"
+      "test/net/auditmergeplus_guild.test.js"
     ]
   },
   {
     "name": "A4-body-read-as-may-have-landed",
-    "file": "src/net/guildBook.js",
+    "file": "src/net/guild/guildBook.js",
     "old": "  'rate', 'body', 'too-large', 'method', 'not-found', 'no-database', 'no-player',",
     "new": "  'rate', 'too-large', 'method', 'not-found', 'no-database', 'no-player',",
     "tests": [
-      "test/auditmergeplus_guild.test.js"
+      "test/net/auditmergeplus_guild.test.js"
     ]
   },
   {
     "name": "A4-too-large-read-as-may-have-landed",
-    "file": "src/net/guildBook.js",
+    "file": "src/net/guild/guildBook.js",
     "old": "  'rate', 'body', 'too-large', 'method', 'not-found', 'no-database', 'no-player',",
     "new": "  'rate', 'body', 'method', 'not-found', 'no-database', 'no-player',",
     "tests": [
-      "test/auditmergeplus_guild.test.js"
+      "test/net/auditmergeplus_guild.test.js"
     ]
   },
   {
     "name": "A4-method-read-as-may-have-landed",
-    "file": "src/net/guildBook.js",
+    "file": "src/net/guild/guildBook.js",
     "old": "  'rate', 'body', 'too-large', 'method', 'not-found', 'no-database', 'no-player',",
     "new": "  'rate', 'body', 'too-large', 'not-found', 'no-database', 'no-player',",
     "tests": [
-      "test/auditmergeplus_guild.test.js"
+      "test/net/auditmergeplus_guild.test.js"
     ]
   },
   {
     "name": "A4-not-found-read-as-may-have-landed",
-    "file": "src/net/guildBook.js",
+    "file": "src/net/guild/guildBook.js",
     "old": "  'rate', 'body', 'too-large', 'method', 'not-found', 'no-database', 'no-player',",
     "new": "  'rate', 'body', 'too-large', 'method', 'no-database', 'no-player',",
     "tests": [
-      "test/auditmergeplus_guild.test.js"
+      "test/net/auditmergeplus_guild.test.js"
     ]
   },
   {
     "name": "A4-no-database-read-as-may-have-landed",
-    "file": "src/net/guildBook.js",
+    "file": "src/net/guild/guildBook.js",
     "old": "  'rate', 'body', 'too-large', 'method', 'not-found', 'no-database', 'no-player',",
     "new": "  'rate', 'body', 'too-large', 'method', 'not-found', 'no-player',",
     "tests": [
-      "test/auditmergeplus_guild.test.js"
+      "test/net/auditmergeplus_guild.test.js"
     ]
   },
   {
     "name": "A4-no-player-read-as-may-have-landed",
-    "file": "src/net/guildBook.js",
+    "file": "src/net/guild/guildBook.js",
     "old": "  'rate', 'body', 'too-large', 'method', 'not-found', 'no-database', 'no-player',",
     "new": "  'rate', 'body', 'too-large', 'method', 'not-found', 'no-database',",
     "tests": [
-      "test/auditmergeplus_guild.test.js"
+      "test/net/auditmergeplus_guild.test.js"
     ]
   },
   {
     "name": "A5-the-acts-look-handed-the-one-in-flight",
-    "file": "src/net/guildBook.js",
+    "file": "src/net/guild/guildBook.js",
     "old": "      if (this._looking) await this._looking.catch(() => {});\n",
     "new": "",
     "tests": [
-      "test/auditmergeplus_guild.test.js"
+      "test/net/auditmergeplus_guild.test.js"
     ]
   },
   {
     "name": "A5-a-failed-look-fails-the-act",
-    "file": "src/net/guildBook.js",
+    "file": "src/net/guild/guildBook.js",
     "old": "await this._looking.catch(() => {});",
     "new": "await this._looking;",
     "tests": [
-      "test/auditmergeplus_guild.test.js"
+      "test/net/auditmergeplus_guild.test.js"
     ]
   },
   {
@@ -266,7 +266,7 @@
     "old": "const guild = renownCharacterOk(body.character) && body.guild === true ? await guildBadgeOf(ctx, who.player.id, body.character, member) : null;",
     "new": "const guild = renownCharacterOk(body.character) ? await guildBadgeOf(ctx, who.player.id, body.character, member) : null;",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ],
     "note": "SCALE4f part two (2026-10-10) re-aimed it by content: the mint reads the membership once (guilds.js mintMemberOf)."
   },
@@ -276,7 +276,7 @@
     "old": "character ? { character, guild: true } : {}",
     "new": "character ? { character } : {}",
     "tests": [
-      "test/renown1.test.js"
+      "test/net/renown1.test.js"
     ]
   }
 ]

@@ -5,7 +5,7 @@
     "old": "if (posed && m.p?.dd && typeof a.sub === 'string' && a.sub && isSdRoom(a.key)) await this._sdMarkFallen(a.key, a.sub);",
     "new": "if (false) await this._sdMarkFallen(a.key, a.sub);",
     "tests": [
-      "test/sd12_onelife.test.js"
+      "test/net/superDungeon/sd12_onelife.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "typeof a.sub === 'string' && a.sub && isSdRoom(a.key)) await this._sdMarkFallen",
     "new": "typeof a.sub === 'string' && a.sub) await this._sdMarkFallen",
     "tests": [
-      "test/sd12_onelife.test.js"
+      "test/net/superDungeon/sd12_onelife.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    if (sub && (realm.dead.includes(sub) || (realm.dead.length >= SD_FIGHTERS_MAX && (await this.state.storage.get(sdDeadKey(sub))) != null))) return SD_NO_FALLEN;",
     "new": "    if (false) return SD_NO_FALLEN;",
     "tests": [
-      "test/sd12_onelife.test.js"
+      "test/net/superDungeon/sd12_onelife.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "gu: strs(v.gu), dead: strs(v.dead) }",
     "new": "gu: strs(v.gu), dead: [] }",
     "tests": [
-      "test/sd12_onelife.test.js"
+      "test/net/superDungeon/sd12_onelife.test.js"
     ]
   },
   {
@@ -41,25 +41,25 @@
     "old": "    if (realm.dead.includes(sub)) return;\n    if (realm.dead.length >= SD_FIGHTERS_MAX) { await",
     "new": "    if (realm.dead.length >= SD_FIGHTERS_MAX) { await",
     "tests": [
-      "test/sd12_onelife.test.js"
+      "test/net/superDungeon/sd12_onelife.test.js"
     ]
   },
   {
     "name": "SD12-ONELIFE-the-fallen-let-through",
-    "file": "src/world/sdDungeon.js",
+    "file": "src/world/superDungeon/sdDungeon.js",
     "old": "  if (fallen) return SD_NO_FALLEN;\n",
     "new": "",
     "tests": [
-      "test/sd12_onelife.test.js"
+      "test/net/superDungeon/sd12_onelife.test.js"
     ]
   },
   {
     "name": "SD12-ONELIFE-one-memory-for-both",
-    "file": "src/world/sdDungeon.js",
+    "file": "src/world/superDungeon/sdDungeon.js",
     "old": "export const SD_FALLEN_KEY = 'sd12.fallen';",
     "new": "export const SD_FALLEN_KEY = SD_ENTERED_KEY;",
     "tests": [
-      "test/sd12_onelife.test.js"
+      "test/net/superDungeon/sd12_onelife.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "if (hourSlot != null) _sdFallen.add(hourSlot); }",
     "new": "if (hourSlot != null) void hourSlot; }",
     "tests": [
-      "test/sd12_onelife.test.js"
+      "test/net/superDungeon/sd12_onelife.test.js"
     ]
   },
   {
@@ -77,25 +77,25 @@
     "old": "{ entered: _sdEntered.has(s), fallen: _sdFallen.has(s) }",
     "new": "{ entered: _sdEntered.has(s) }",
     "tests": [
-      "test/sd12_onelife.test.js"
+      "test/net/superDungeon/sd12_onelife.test.js"
     ]
   },
   {
     "name": "SD12-ONELIFE-a-resurrect-in-the-hour",
     "file": "src/scenes/world.js",
-    "old": "const rez = social?.acct && modes?.sdRealmSlot?.() == null ? rezFor(",
+    "old": "const rez = social?.acct && madeRuleHere('resurrect') !== 'refused' ? rezFor(",
     "new": "const rez = social?.acct ? rezFor(",
     "tests": [
-      "test/sd12_onelife.test.js"
+      "test/net/superDungeon/sd12_onelife.test.js"
     ]
   },
   {
     "name": "SD12-ONELIFE-a-forgiving-death",
-    "file": "src/world/sdRealm.js",
+    "file": "src/world/superDungeon/sdRealm.js",
     "old": "casts you out for good. You wake",
     "new": "casts you out. You wake",
     "tests": [
-      "test/sd12_onelife.test.js"
+      "test/net/superDungeon/sd12_onelife.test.js"
     ]
   }
 ]

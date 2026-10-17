@@ -5,7 +5,7 @@
     "old": "export const PARTY_MAX = 8;",
     "new": "export const PARTY_MAX = 9;",
     "tests": [
-      "test/soc1_hub.test.js"
+      "test/net/soc1_hub.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "if (!acct || !asecret) return { error: 'bad account' };",
     "new": "if (!acct) return { error: 'bad account' };",
     "tests": [
-      "test/soc1_hub.test.js"
+      "test/net/soc1_hub.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  if (needs === 'target' && (!!acct === !!peer)) return null;   // one of the two, never both and never neither",
     "new": "  if (needs === 'target' && !acct && !peer) return null;",
     "tests": [
-      "test/soc1_hub.test.js"
+      "test/net/soc1_hub.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "if (!finite(v) || v < 0 || v > FOE_HEALTH_MAX) return null;\n    out[k] = Math.round(v);",
     "new": "if (!finite(v) || v < 0) return null;\n    out[k] = Math.round(v);",
     "tests": [
-      "test/soc1_hub.test.js"
+      "test/net/soc1_hub.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "out[k] = Math.round(v);",
     "new": "out[k] = v;",
     "tests": [
-      "test/soc1_hub.test.js"
+      "test/net/soc1_hub.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "return !filter || labelAllowed(s) ? s : '';",
     "new": "return s;",
     "tests": [
-      "test/soc1_hub.test.js"
+      "test/net/soc1_hub.test.js"
     ],
     "note": "SCALE5c (re-aimed by content): the filter verdict now kept (labelAllowed)"
   },
@@ -60,7 +60,7 @@
     "old": "if (!members.some((m) => m.acct === leader)) return null;",
     "new": "",
     "tests": [
-      "test/soc1_hub.test.js"
+      "test/net/soc1_hub.test.js"
     ]
   },
   {
@@ -69,7 +69,7 @@
     "old": "const row = one(r); if (!row) return null; out.push(row);",
     "new": "const row = one(r); if (!row) continue; out.push(row);",
     "tests": [
-      "test/soc1_hub.test.js"
+      "test/net/soc1_hub.test.js"
     ]
   },
   {
@@ -78,7 +78,7 @@
     "old": "if (m.k === 'note') { if (!NOTE_CODES.includes(m.code)) return null;",
     "new": "if (m.k === 'note') { if (typeof m.code !== 'string') return null;",
     "tests": [
-      "test/soc1_hub.test.js"
+      "test/net/soc1_hub.test.js"
     ]
   },
   {
@@ -87,7 +87,7 @@
     "old": "if (held && held !== m.asecret) { this._sayError(ws, 'account taken'); return; }",
     "new": "if (held && held !== m.asecret) { this._sayError(ws, 'account taken'); }",
     "tests": [
-      "test/soc1_hub.test.js"
+      "test/net/soc1_hub.test.js"
     ]
   },
   {
@@ -96,7 +96,7 @@
     "old": "await this._sayState(me, rec, now, ws);\n    if (me !== m.acct && !m.ps)",
     "new": "await this._sayState(me, rec, now);\n    if (me !== m.acct && !m.ps)",
     "tests": [
-      "test/soc1_hub.test.js"
+      "test/net/soc1_hub.test.js"
     ],
     "note": "AUDIT 2026-10-01 part five (re-aimed by content): FRIENDS-SYNC F5 put a line between them / a field on the line."
   },
@@ -106,7 +106,7 @@
     "old": "for (const f of rec.friends) this._sayTo(f, out, except);",
     "new": "for (const [other, b] of this._all()) if (other !== except && b.id) this._send(other, out);",
     "tests": [
-      "test/soc1_hub.test.js"
+      "test/net/soc1_hub.test.js"
     ]
   },
   {
@@ -115,10 +115,10 @@
     "old": "    let next = gone ? { ...rec, seen: now } : rec;",
     "new": "    let next = { ...rec, seen: now };",
     "tests": [
-      "test/soc1_hub.test.js"
+      "test/net/soc1_hub.test.js"
     ],
     "equivalent": true,
-    "why": "AUDIT QS6 F7: unobservable, and shown so rather than assumed. `next` is written to the store only under `if (gone)`, where the two agree; and a friend's presence row never reads `rec.seen` while the account is online (`_rowOf`: `seen: socks.length ? now : rec.seen`), so a `seen` stamped on a record that is not stored reaches nobody. The LAW - stamped when the last tab goes and not before - is pinned on the STORE in test/soc1_hub.test.js, which is where it is enforced."
+    "why": "AUDIT QS6 F7: unobservable, and shown so rather than assumed. `next` is written to the store only under `if (gone)`, where the two agree; and a friend's presence row never reads `rec.seen` while the account is online (`_rowOf`: `seen: socks.length ? now : rec.seen`), so a `seen` stamped on a record that is not stored reaches nobody. The LAW - stamped when the last tab goes and not before - is pinned on the STORE in test/net/soc1_hub.test.js, which is where it is enforced."
   },
   {
     "name": "S14-one-sided-friendship",
@@ -126,7 +126,7 @@
     "old": "const theirs = { ...trec, in: without(trec.in, me), out: without(trec.out, me), friends: trec.friends.includes(me) ? trec.friends : [...trec.friends, me] };",
     "new": "const theirs = { ...trec, in: without(trec.in, me), out: without(trec.out, me) };",
     "tests": [
-      "test/soc1_hub.test.js"
+      "test/net/soc1_hub.test.js"
     ]
   },
   {
@@ -135,7 +135,7 @@
     "old": "if (hasEntry(rec.in, them)) return this._friendAccept(me, rec, them, now);   // they asked first: a request back is a yes",
     "new": "",
     "tests": [
-      "test/soc1_hub.test.js"
+      "test/net/soc1_hub.test.js"
     ]
   },
   {
@@ -144,7 +144,7 @@
     "old": "this._sayNote(them, 'friend.requested', me, mine.name);",
     "new": "this._sayNote(me, 'friend.requested', me, mine.name);",
     "tests": [
-      "test/soc1_hub.test.js"
+      "test/net/soc1_hub.test.js"
     ]
   },
   {
@@ -153,7 +153,7 @@
     "old": "if (trec.friends.length >= FRIENDS_MAX) return 'their friend list is full';\n    if (rec.out.length >= PENDING_MAX) return 'too many requests out';",
     "new": "if (rec.out.length >= PENDING_MAX) return 'too many requests out';",
     "tests": [
-      "test/soc1_hub.test.js"
+      "test/net/soc1_hub.test.js"
     ]
   },
   {
@@ -162,7 +162,7 @@
     "old": "if (trec.in.length >= PENDING_MAX) return 'their inbox is full';",
     "new": "",
     "tests": [
-      "test/soc1_hub.test.js"
+      "test/net/soc1_hub.test.js"
     ]
   },
   {
@@ -171,7 +171,7 @@
     "old": "if (made) this._markParty(me, next.id);",
     "new": "",
     "tests": [
-      "test/soc1_hub.test.js"
+      "test/net/soc1_hub.test.js"
     ]
   },
   {
@@ -180,7 +180,7 @@
     "old": "this._sayTo(them, JSON.stringify({ t: 'social', k: 'invite', party: next.id,",
     "new": "this._sayTo(me, JSON.stringify({ t: 'social', k: 'invite', party: next.id,",
     "tests": [
-      "test/soc1_hub.test.js"
+      "test/net/soc1_hub.test.js"
     ]
   },
   {
@@ -189,7 +189,7 @@
     "old": "if (party.members.length >= PARTY_MAX) return 'the party is full';\n    const live",
     "new": "if (party.members.length > PARTY_MAX) return 'the party is full';\n    const live",
     "tests": [
-      "test/soc1_hub.test.js"
+      "test/net/soc1_hub.test.js"
     ]
   },
   {
@@ -198,7 +198,7 @@
     "old": "if (now - inv.at >= INVITE_TTL_MS) return refuse('that invite has lapsed');",
     "new": "",
     "tests": [
-      "test/soc1_hub.test.js"
+      "test/net/soc1_hub.test.js"
     ]
   },
   {
@@ -207,8 +207,8 @@
     "old": "const leader = party.leader === acct ? (members.find((id) => this._socketsOf(id).length) ?? members[0]) : party.leader;",
     "new": "const leader = party.leader === acct ? (members.find((id) => this._socketsOf(id).length) ?? members[members.length - 1]) : party.leader;",
     "tests": [
-      "test/soc1_hub.test.js",
-      "test/auditparty8.test.js"
+      "test/net/soc1_hub.test.js",
+      "test/net/auditparty8.test.js"
     ]
   },
   {
@@ -217,7 +217,7 @@
     "old": "if (!members.length) { await this._delParty(party.id); return null; }",
     "new": "if (!members.length) { return null; }",
     "tests": [
-      "test/soc1_hub.test.js"
+      "test/net/soc1_hub.test.js"
     ]
   },
   {
@@ -226,7 +226,7 @@
     "old": "    if (party.leader !== me) return 'only the leader can do that';\n    if (them === me) return 'that is you';\n    if (!party.members.includes(them)) return 'they are not in your party';\n    const trec",
     "new": "    if (them === me) return 'that is you';\n    if (!party.members.includes(them)) return 'they are not in your party';\n    const trec",
     "tests": [
-      "test/soc1_hub.test.js"
+      "test/net/soc1_hub.test.js"
     ],
     "note": "PARTY-LEAD (re-aimed by content): _partyLead asks the same first question - aimed at the kick's, by what follows it."
   },
@@ -236,7 +236,7 @@
     "old": "if (old) await this._partyOut(me, old, now, 'party.left', mine.name);",
     "new": "",
     "tests": [
-      "test/soc1_hub.test.js"
+      "test/net/soc1_hub.test.js"
     ]
   },
   {
@@ -245,7 +245,7 @@
     "old": "for (const member of party.members) if (member !== a.acct) for (const other of this._socketsOf(member)) this._send(other, out);",
     "new": "for (const member of party.members) for (const other of this._socketsOf(member)) if (other !== ws) this._send(other, out);",
     "tests": [
-      "test/soc1_hub.test.js"
+      "test/net/soc1_hub.test.js"
     ]
   },
   {
@@ -254,7 +254,7 @@
     "old": "return { ...this._rowOf(id, recs.get(id), now, except), p };",
     "new": "return { ...this._rowOf(id, recs.get(id), now, except), p: null };",
     "tests": [
-      "test/soc1_hub.test.js"
+      "test/net/soc1_hub.test.js"
     ]
   },
   {
@@ -263,7 +263,7 @@
     "old": "if (gone) { party = { ...party, away: { ...(party.away ?? {}), [a.acct]: now } }; await this._putParty(party); }",
     "new": "if (gone) { party = await this._partyOut(a.acct, party, now, 'party.left', next.name); if (!party) return; }",
     "tests": [
-      "test/soc1_hub.test.js"
+      "test/net/soc1_hub.test.js"
     ]
   },
   {
@@ -272,7 +272,7 @@
     "old": "const lapsed = party.members.filter((id) => party.away?.[id] != null && now - party.away[id] >= PARTY_OFFLINE_MS && !this._socketsOf(id).length);",
     "new": "const lapsed = [];",
     "tests": [
-      "test/soc1_hub.test.js"
+      "test/net/soc1_hub.test.js"
     ]
   },
   {
@@ -281,7 +281,7 @@
     "old": "a = this._meterSocial(ws, a, now); if (!a) return;\n      if (!isSocialRoom(a.key)) { this._junk(ws); return; }",
     "new": "if (!isSocialRoom(a.key)) { this._junk(ws); return; }",
     "tests": [
-      "test/soc1_hub.test.js"
+      "test/net/soc1_hub.test.js"
     ]
   },
   {
@@ -290,7 +290,7 @@
     "old": "if (!budget.pass) { this._sayError(ws, 'busy'); return; }",
     "new": "",
     "tests": [
-      "test/soc1_hub.test.js"
+      "test/net/soc1_hub.test.js"
     ]
   },
   {
@@ -299,7 +299,7 @@
     "old": "if (!isSocialRoom(a.key) || !a.acct) { this._junk(ws); return; }\n      this._setAttach(ws, { ...a, pm: { ...m.p, at: now } });",
     "new": "if (!a.acct) { this._junk(ws); return; }\n      this._setAttach(ws, { ...a, pm: { ...m.p, at: now } });",
     "tests": [
-      "test/soc1_hub.test.js"
+      "test/net/soc1_hub.test.js"
     ]
   },
   {
@@ -308,7 +308,7 @@
     "old": "async _putParty(party) { this._parties.set(party.id, party); await this.state.storage.put(partyKey(party.id), party); }",
     "new": "async _putParty(party) { this._parties.set(party.id, party); }",
     "tests": [
-      "test/soc1_hub.test.js"
+      "test/net/soc1_hub.test.js"
     ]
   },
   {
@@ -317,7 +317,7 @@
     "old": "    this._parties.clear(); for (const k of await this._keysOf('party:')) dead.push(k);",
     "new": "    this._parties.clear(); for (const p of ['party:', 'acct:']) for (const k of await this._keysOf(p)) dead.push(k);",
     "tests": [
-      "test/soc1_hub.test.js"
+      "test/net/soc1_hub.test.js"
     ]
   },
   {
@@ -326,7 +326,7 @@
     "old": "    this._parties.clear(); for (const k of await this._keysOf('party:')) dead.push(k);",
     "new": "    this._parties.clear();",
     "tests": [
-      "test/soc1_hub.test.js"
+      "test/net/soc1_hub.test.js"
     ]
   },
   {
@@ -335,19 +335,19 @@
     "old": "        const said = JSON.stringify(badged({ t: 'join', id: m.id, name: who.name, sub: who.subject, ...(jn != null ? { n: jn } : {}) }, who));\n",
     "new": "        const said = JSON.stringify(badged({ t: 'join', id: m.id, name: who.name, sub: who.subject, ...(jn != null ? { n: jn } : {}) }, who));\n        if (isSocialRoom(a.key) && m.acct) { try { await this._helloAccount(ws, m, now); } catch (e) { console.warn('[hub] account hello failed', e?.message ?? e); } }\n",
     "tests": [
-      "test/soc1_hub.test.js"
+      "test/net/soc1_hub.test.js"
     ],
     "note": "AUDIT SCALE5a (re-aimed by content): the join says the room's count. SCALE5a (re-aimed by content): the join says `re` for a reconnect. SCALE5c (re-aimed by content): the join n reads the hub count on a shard"
   },
   {
     "name": "S38-version-not-bumped",
     "file": "src/net/wire.js",
-    "old": "export const RELAY_VERSION = 'world207';",
+    "old": "export const RELAY_VERSION = 'world213';",
     "new": "export const RELAY_VERSION = 'world131';",
     "tests": [
-      "test/soc1_hub.test.js",
-      "test/relayversion.test.js"
+      "test/net/soc1_hub.test.js",
+      "test/net/relayversion.test.js"
     ],
-    "note": "ONE-BODY (PIN MOVED - FIELD BUGS 2026-10-15c, world206 on its branch, renumbered past main's SERPENT5 world206 at the merge): world207, one body an account in a cell or a dungeon. SERPENT5 (PIN MOVED): world206, Coilbreaker and The Maelstrom in the token's vocabulary. PVP-LOOT + QUEST-HOME (PIN MOVED, world201 on each branch, one bump past main's CHAT-TRADE world201 and FIVE-ASKS world202 at the merge, world203 on the integration, renumbered past main's KG-SET world203 and KG5 world204 at the merge of main - FIELD BUGS 2026-10-14): world205. KG5 (PIN MOVED, world203 on its branch, past main's FIVE-ASKS world202): world204, the relay runs The King's Gambit. KG-SET (PIN MOVED, world201 then world202 on its branch, past main's CHAT-TRADE world201 and FIVE-ASKS world202): world203, the Iliac set's catalog without its words and nine cards more. FIVE-ASKS (PIN MOVED, world201 on its branch, renumbered past main's CHAT-TRADE world201 at the merge): world202. CHAT-TRADE (PIN MOVED): world201. CHAT-LANG (PIN MOVED, world192 on its branch, past main's COATS1 world195): world196. COATS1 (PIN MOVED, world194 on its branch, renumbered past SLIM-FRAME at the merge): world195. SLIM-FRAME (PIN MOVED): world194. SERPENT4 (PIN MOVED, world192 on its branch, renumbered past SCALE5c's world192 at the merge): world193. SCALE5c (PIN MOVED): world192. SCALE5b (PIN MOVED): world191. AUDIT MW-NPC II (PIN MOVED, world188, then world189, on its branch, past INT11-INT14's world188 and SCALE5a's world189 at the merges): world190. SCALE5a (PIN MOVED): world189. INT11-INT14 (PIN MOVED, world186 on its branch, past SD-HERALD's world186 and WAGONS1's world187 at the merge): world188. WAGONS1 (PIN MOVED, world182, world183, world185 then world186 on its branch, past SD-HERALD's world186 at the fourth merge): world187. SD-HERALD (PIN MOVED, past INT7-INT10's world185 at the merge): world186. INT7-INT10 (PIN MOVED, past CHAP4c's world183 and PERF-RELAY1's world184 at the merges): world185. PERF-RELAY1 (PIN MOVED, past CHAP4c's world183 at the merge): world184. CHAP4c (PIN MOVED, past CARDS10's world182 at the merge): world183. CARDS10 (PIN MOVED, past TAVERN-TABLES' world180 and TV-BEYOND's world181 at the merges): world182. CHAP4c (PIN MOVED, past TV-BEYOND's world181 at the merge): world182. TV-BEYOND: world181. CHAP4c (PIN MOVED, past TAVERN-TABLES' world180 at the merge): world181. TAVERN-TABLES (PIN MOVED, past HOURS-FIRST's world179 at the merge): world180. SERVER-POST and HOURS-FIRST (PIN MOVED, past TAVERN CARDS' world178 at the merge): world179. TAVERN CARDS (PIN MOVED): world178. HERALD (PIN MOVED): world138. FRIENDS-SYNC (re-aimed by content): world141 - CLIMB5/CLIMB6 moved it on without this record; then world142, FRIENDS-SYNC's own. ELITE FOES (re-aimed by content): world143, the foe record's `z`. The Seats arc (re-aimed at its merges): world149, then world150 past main's ELITE FOES at the merge of #519-#523. WB12 (re-aimed at its merge): world151, past main's CLIMB5 and CLIMB6, FRIENDS-SYNC, ELITE FOES and the Seats arc (world141 on its branch). GLYPH-WEAR: world152. BROKER-CAGE (re-aimed by content): world153, the rite word's `c` and the hub's `cl`. The arena merge (re-aimed): world155, ARENA4 (world142 on its branch) past main's world142-world154. HOTFIX 1003f (re-aimed by content): world156, every arena floor draws everyone in it. Integrated worker candidate world159 preserves staff teleport and boat identity. AEGIS (re-aimed by content): world160, the Aegis of Oblivion's title, glyph and aura in the token's vocabulary. GUILD2 (re-aimed by content): world161, the guild and heraldry laws moved under the relay - world160 on its branch, past the DFO integration's world157-world159 and AEGIS's world160. PRIMARCH (re-aimed by content): world162, the Primarch's title, glyph and aura in the token's vocabulary. SUNBABY1 (re-aimed by content): world163, the sun baby's word on the hub's live events - world162 on its branch, past main's PRIMARCH. PARTY-LEAD (re-aimed by content): world164, the hub's party.lead act - world162 on its branch, renumbered past main's PRIMARCH and SUNBABY1 at the merge. SERPENT1 (re-aimed by content): world165, the serpent frame - world162 on its branch, past PRIMARCH and SUNBABY1, then world164 past PARTY-LEAD. SERPENT2 (re-aimed by content): world166, the serpent herald. SHADOW-CLOAK (PIN MOVED at its merges of main, past SERPENT1 and SERPENT2): world167. SERAPH-WINGS (PIN MOVED): world168. AUDIT ARENA-LADDER (PIN MOVED at its merges of main, past SHADOW-CLOAK and SERAPH-WINGS): world169. TELL8 (PIN MOVED): re-aimed by content - the owner winds up at a peer it hunts (`tf` its target's feet, `atMe` the damage's gate), a peer's blow carries its class, the relay moved to world162 on its branch. THE FEUD MERGE (re-aimed by content): world170 - TELL8's, AUDIT TELL's, RVN13's and FEUD WIRE's world162-world165 as one version, renumbered past main's world169. CRYSTAL-FIST (PIN MOVED at its merge of main, past THE FEUD MERGE): world171. WATCH-FIX (re-aimed by content): world172, the watch record's `lr` - the living-world resident a watchman stands for. SERPENT3 (re-aimed by content, then PIN MOVED at its merges of main, past CRYSTAL-FIST and WATCH-FIX): world173, the sea serpent brain - world171 on its branch. LEGACY7 (PIN MOVED): world174. SUPER-DUNGEONS (re-aimed by content, past CRYSTAL-FIST at one merge of main and past WATCH-FIX, SERPENT3 and LEGACY7 at the next): world175 - the arc's one version, SD-ONLINE's room per layout and SD3's `sd` frame, world171 on its branch, then world172."
+    "note": "EG-PLAY (PIN MOVED, world195, world206, world211 then world212 on its branch, renumbered past COATS1, CHAT-LANG, BAL8, SPAWN-REBIRTH, AUDIT ETHER-OW, PEER-ACTS, CHAT-TRADE, FIVE-ASKS, KG-SET, KG5, PVP-LOOT + QUEST-HOME, SERPENT5, ONE-BODY, INSTANCES, WEAPON-GLOW1, HUB-PULL + DO-ASK, TIDY2 and REZ-BLOODLINE + GRAVE-PARTY at the merges): world213. REZ-BLOODLINE + GRAVE-PARTY (PIN MOVED - FIELD BUGS 2026-10-16b; world208 on each branch, then world210 and world211 on this one, renumbered past main's INSTANCES world208, WEAPON-GLOW1 world209, HUB-PULL + DO-ASK world210 and TIDY2 world211 at the merges): world212, a party pose says a body fallen for good (`fg`), and a cell keeps the graves searched in it (`gr`). TIDY2 (PIN MOVED - world209 on its branch, renumbered past main's WEAPON-GLOW1 world209 and HUB-PULL + DO-ASK world210 at the merge): world211, the relay's files into feature folders, no behaviour moved. HUB-PULL + DO-ASK (PIN MOVED - world208 then world209 on its branch, renumbered past main's INSTANCES world208 and WEAPON-GLOW1 world209 at the merges): world210, the bus never calls a shard and the Worker asks a room reset before it ran once more. WEAPON-GLOW1 (PIN MOVED; world208 on its branch, renumbered past main's INSTANCES world208 at the merge): world209, a weapon in a hand carries its glow. INSTANCES (PIN MOVED): world208, an instance is a world room of its own. ONE-BODY (PIN MOVED - FIELD BUGS 2026-10-15c, world206 on its branch, renumbered past main's SERPENT5 world206 at the merge): world207, one body an account in a cell or a dungeon. SERPENT5 (PIN MOVED): world206, Coilbreaker and The Maelstrom in the token's vocabulary. PVP-LOOT + QUEST-HOME (PIN MOVED, world201 on each branch, one bump past main's CHAT-TRADE world201 and FIVE-ASKS world202 at the merge, world203 on the integration, renumbered past main's KG-SET world203 and KG5 world204 at the merge of main - FIELD BUGS 2026-10-14): world205. KG5 (PIN MOVED, world203 on its branch, past main's FIVE-ASKS world202): world204, the relay runs The King's Gambit. KG-SET (PIN MOVED, world201 then world202 on its branch, past main's CHAT-TRADE world201 and FIVE-ASKS world202): world203, the Iliac set's catalog without its words and nine cards more. FIVE-ASKS (PIN MOVED, world201 on its branch, renumbered past main's CHAT-TRADE world201 at the merge): world202. CHAT-TRADE (PIN MOVED): world201. CHAT-LANG (PIN MOVED, world192 on its branch, past main's COATS1 world195): world196. COATS1 (PIN MOVED, world194 on its branch, renumbered past SLIM-FRAME at the merge): world195. SLIM-FRAME (PIN MOVED): world194. SERPENT4 (PIN MOVED, world192 on its branch, renumbered past SCALE5c's world192 at the merge): world193. SCALE5c (PIN MOVED): world192. SCALE5b (PIN MOVED): world191. AUDIT MW-NPC II (PIN MOVED, world188, then world189, on its branch, past INT11-INT14's world188 and SCALE5a's world189 at the merges): world190. SCALE5a (PIN MOVED): world189. INT11-INT14 (PIN MOVED, world186 on its branch, past SD-HERALD's world186 and WAGONS1's world187 at the merge): world188. WAGONS1 (PIN MOVED, world182, world183, world185 then world186 on its branch, past SD-HERALD's world186 at the fourth merge): world187. SD-HERALD (PIN MOVED, past INT7-INT10's world185 at the merge): world186. INT7-INT10 (PIN MOVED, past CHAP4c's world183 and PERF-RELAY1's world184 at the merges): world185. PERF-RELAY1 (PIN MOVED, past CHAP4c's world183 at the merge): world184. CHAP4c (PIN MOVED, past CARDS10's world182 at the merge): world183. CARDS10 (PIN MOVED, past TAVERN-TABLES' world180 and TV-BEYOND's world181 at the merges): world182. CHAP4c (PIN MOVED, past TV-BEYOND's world181 at the merge): world182. TV-BEYOND: world181. CHAP4c (PIN MOVED, past TAVERN-TABLES' world180 at the merge): world181. TAVERN-TABLES (PIN MOVED, past HOURS-FIRST's world179 at the merge): world180. SERVER-POST and HOURS-FIRST (PIN MOVED, past TAVERN CARDS' world178 at the merge): world179. TAVERN CARDS (PIN MOVED): world178. HERALD (PIN MOVED): world138. FRIENDS-SYNC (re-aimed by content): world141 - CLIMB5/CLIMB6 moved it on without this record; then world142, FRIENDS-SYNC's own. ELITE FOES (re-aimed by content): world143, the foe record's `z`. The Seats arc (re-aimed at its merges): world149, then world150 past main's ELITE FOES at the merge of #519-#523. WB12 (re-aimed at its merge): world151, past main's CLIMB5 and CLIMB6, FRIENDS-SYNC, ELITE FOES and the Seats arc (world141 on its branch). GLYPH-WEAR: world152. BROKER-CAGE (re-aimed by content): world153, the rite word's `c` and the hub's `cl`. The arena merge (re-aimed): world155, ARENA4 (world142 on its branch) past main's world142-world154. HOTFIX 1003f (re-aimed by content): world156, every arena floor draws everyone in it. Integrated worker candidate world159 preserves staff teleport and boat identity. AEGIS (re-aimed by content): world160, the Aegis of Oblivion's title, glyph and aura in the token's vocabulary. GUILD2 (re-aimed by content): world161, the guild and heraldry laws moved under the relay - world160 on its branch, past the DFO integration's world157-world159 and AEGIS's world160. PRIMARCH (re-aimed by content): world162, the Primarch's title, glyph and aura in the token's vocabulary. SUNBABY1 (re-aimed by content): world163, the sun baby's word on the hub's live events - world162 on its branch, past main's PRIMARCH. PARTY-LEAD (re-aimed by content): world164, the hub's party.lead act - world162 on its branch, renumbered past main's PRIMARCH and SUNBABY1 at the merge. SERPENT1 (re-aimed by content): world165, the serpent frame - world162 on its branch, past PRIMARCH and SUNBABY1, then world164 past PARTY-LEAD. SERPENT2 (re-aimed by content): world166, the serpent herald. SHADOW-CLOAK (PIN MOVED at its merges of main, past SERPENT1 and SERPENT2): world167. SERAPH-WINGS (PIN MOVED): world168. AUDIT ARENA-LADDER (PIN MOVED at its merges of main, past SHADOW-CLOAK and SERAPH-WINGS): world169. TELL8 (PIN MOVED): re-aimed by content - the owner winds up at a peer it hunts (`tf` its target's feet, `atMe` the damage's gate), a peer's blow carries its class, the relay moved to world162 on its branch. THE FEUD MERGE (re-aimed by content): world170 - TELL8's, AUDIT TELL's, RVN13's and FEUD WIRE's world162-world165 as one version, renumbered past main's world169. CRYSTAL-FIST (PIN MOVED at its merge of main, past THE FEUD MERGE): world171. WATCH-FIX (re-aimed by content): world172, the watch record's `lr` - the living-world resident a watchman stands for. SERPENT3 (re-aimed by content, then PIN MOVED at its merges of main, past CRYSTAL-FIST and WATCH-FIX): world173, the sea serpent brain - world171 on its branch. LEGACY7 (PIN MOVED): world174. SUPER-DUNGEONS (re-aimed by content, past CRYSTAL-FIST at one merge of main and past WATCH-FIX, SERPENT3 and LEGACY7 at the next): world175 - the arc's one version, SD-ONLINE's room per layout and SD3's `sd` frame, world171 on its branch, then world172."
   }
 ]

@@ -55,7 +55,7 @@ HOLD-ONCE, `06-Systems/Online-Arc.md`.)
 Each player's quest state, dialogue state, travel map and history are
 their own. You walk together; the story you are in is yours.
 
-Why: the save envelope (`systems/save.js:"so a save from before"`) already splits the world
+Why: the save envelope (`systems/save/save.js:"so a save from before"`) already splits the world
 from the player - `position, pose, classicMinutes, world, locationKey`
 on one side; `quest, talk, travelMap, escortingFaces, interior` on the
 other. That line IS the replication boundary. A shared campaign would
@@ -76,7 +76,7 @@ In the open air, in a building and in a dungeon, and a host who leaves hands the
 marker's foe stands once for the party). And a kill of one counts for every copy of the quest, wherever its member
 stands - KEPT-KILL (2026-10-01, Mac: "If someone kills a quest target regardless of relation then it should ping the
 quest for the players involved regardless"): a foe handed to a member whose copy holds no such quest says its fall in
-that member's party pose (`qk`), and every linked copy counts it once (`01-Overview/Field-Bugs-2026-10-01.md`).
+that member's party pose (`qk`), and every linked copy counts it once (`01-Overview/bugs/Field-Bugs-2026-10-01.md`).
 `06-Systems/Online-Arc.md` (QUEST-PARTY).
 
 **And a world quest's - CURSE-SYNC (2026-09-27).** S0000977, the Curse of Daggerfall, is no player's story: every character runs it and no task counts its foes, so the ghosts and wraiths it stands in Daggerfall's streets at night ride the cell as an encounter's do - everyone sees them, strikes them and is hunted by them. `06-Systems/Online-Arc.md` (CURSE-SYNC).
@@ -164,7 +164,7 @@ oversight.
 PVP-REF (2026-10-01, `06-Systems/Online-Arc.md` PVP-REF): the one room
 where that stops being true is a SIEGE's (`siege:<seat>:<week>`), where a
 town's Charter changes hands - there the relay holds every fighter's
-vitality and judges every blow, cast and step (`src/net/siegeRef.js`,
+vitality and judges every blow, cast and step (`src/net/siege/siegeRef.js`,
 `11-Multiplayer/Seats-Arc.md` 6.1). Everywhere else this section stands.
 
 INT1-INT6 (2026-10-09, `06-Systems/Integrity-Arc.md`, Mac: "I want to do
@@ -196,7 +196,7 @@ boss's blow on this screen, the potion, the save - is still the client's.
 
 ### The state model is the save
 
-`systems/save.js` already knows how to snapshot the world and restore
+`systems/save/save.js` already knows how to snapshot the world and restore
 it. **A joining client receives the host's world snapshot through the
 same envelope a save file uses**, restores it the way `restore` does,
 and is then in the host's world at the host's time. The player half of
@@ -306,7 +306,7 @@ rows were in the DOM the whole time and the lines were in the log; they
 were drawn zero pixels tall. `flex: none` on the row is the fix: a chat
 line does not shrink, the list scrolls.
 
-**Why no pin caught it.** `test/chat1.test.js` drives the panel against
+**Why no pin caught it.** `test/net/chat1.test.js` drives the panel against
 a fake document, and a fake document has no layout - its boxes are
 whatever the fake says they are. That is the right tool for the panel's
 BEHAVIOUR (the keys, the IME, the grown list, the badge) and it can
@@ -317,7 +317,7 @@ actually hold:
   server and no game data - the panel's own sheet is the subject. It
   fails on the old CSS and passes on the new, and it checks the closed
   peek too, so a fix to the list cannot quietly break the overlay.
-- `test/chat1.test.js` holds the **law**, and states it over the SHEET
+- `test/net/chat1.test.js` holds the **law**, and states it over the SHEET
   rather than over `.dfchat-line`: the sheet still contains a
   fixed-height flex-column scroller (so the rule cannot go vacuous),
   and nothing in the sheet hides its overflow without also refusing to

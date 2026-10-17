@@ -1,721 +1,721 @@
 [
  {
   "name": "PVPREF-room-leading-zero",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "export const SIEGE_ROOM = /^siege:(0|[1-9]\\d{0,9}):(0|[1-9]\\d{0,5})$/;",
   "new": "export const SIEGE_ROOM = /^siege:(\\d{1,10}):(0|[1-9]\\d{0,5})$/;",
   "tests": [
-   "test/pvpref_law.test.js",
-   "test/pvpref_relay.test.js"
+   "test/systems/pvpref_law.test.js",
+   "test/net/siege/pvpref_relay.test.js"
   ]
  },
  {
   "name": "PVPREF-room-key-week-swapped",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "return m ? { key: Number(m[1]), week: Number(m[2]) } : null;",
   "new": "return m ? { key: Number(m[2]), week: Number(m[1]) } : null;",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-vitality-base",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "export const SIEGE_VITALITY = Object.freeze({ base: 300, perLevel: 2, levelMax: 50 });",
   "new": "export const SIEGE_VITALITY = Object.freeze({ base: 250, perLevel: 2, levelMax: 50 });",
   "tests": [
-   "test/pvpref_law.test.js",
-   "test/pvpref_relay.test.js"
+   "test/systems/pvpref_law.test.js",
+   "test/net/siege/pvpref_relay.test.js"
   ]
  },
  {
   "name": "PVPREF-vitality-per-level",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "export const SIEGE_VITALITY = Object.freeze({ base: 300, perLevel: 2, levelMax: 50 });",
   "new": "export const SIEGE_VITALITY = Object.freeze({ base: 300, perLevel: 3, levelMax: 50 });",
   "tests": [
-   "test/pvpref_law.test.js",
-   "test/pvpref_relay.test.js"
+   "test/systems/pvpref_law.test.js",
+   "test/net/siege/pvpref_relay.test.js"
   ]
  },
  {
   "name": "PVPREF-vitality-level-max",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "export const SIEGE_VITALITY = Object.freeze({ base: 300, perLevel: 2, levelMax: 50 });",
   "new": "export const SIEGE_VITALITY = Object.freeze({ base: 300, perLevel: 2, levelMax: 60 });",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-vitality-floor",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "SIEGE_VITALITY.perLevel * Math.max(1, Math.min(SIEGE_VITALITY.levelMax, Math.trunc(Number(lv) || 1)));",
   "new": "SIEGE_VITALITY.perLevel * Math.max(0, Math.min(SIEGE_VITALITY.levelMax, Math.trunc(Number(lv) || 1)));",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-vitality-rounds",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "SIEGE_VITALITY.perLevel * Math.max(1, Math.min(SIEGE_VITALITY.levelMax, Math.trunc(Number(lv) || 1)));",
   "new": "SIEGE_VITALITY.perLevel * Math.max(1, Math.min(SIEGE_VITALITY.levelMax, Math.round(Number(lv) || 1)));",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-units-per-m",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "export const SIEGE_UNITS_PER_M = 40;",
   "new": "export const SIEGE_UNITS_PER_M = 39.5;",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-reach-melee",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "export const SIEGE_REACH = Object.freeze({ melee: 2.5, shaft: 60, spell: 60, slack: 3 });",
   "new": "export const SIEGE_REACH = Object.freeze({ melee: 3, shaft: 60, spell: 60, slack: 3 });",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-reach-shaft",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "export const SIEGE_REACH = Object.freeze({ melee: 2.5, shaft: 60, spell: 60, slack: 3 });",
   "new": "export const SIEGE_REACH = Object.freeze({ melee: 2.5, shaft: 70, spell: 60, slack: 3 });",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-reach-spell",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "export const SIEGE_REACH = Object.freeze({ melee: 2.5, shaft: 60, spell: 60, slack: 3 });",
   "new": "export const SIEGE_REACH = Object.freeze({ melee: 2.5, shaft: 60, spell: 70, slack: 3 });",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-reach-slack",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "export const SIEGE_REACH = Object.freeze({ melee: 2.5, shaft: 60, spell: 60, slack: 3 });",
   "new": "export const SIEGE_REACH = Object.freeze({ melee: 2.5, shaft: 60, spell: 60, slack: 4 });",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-blows-hz",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "export const SIEGE_BLOWS_HZ = 4;",
   "new": "export const SIEGE_BLOWS_HZ = 5;",
   "tests": [
-   "test/pvpref_law.test.js",
-   "test/pvpref_measure.test.js"
+   "test/systems/pvpref_law.test.js",
+   "test/net/pvpref_measure.test.js"
   ]
  },
  {
   "name": "PVPREF-casts-max",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "export const SIEGE_CASTS = Object.freeze({ max: 3, windowMs: 5000, damageMax: 60, healMax: 40 });",
   "new": "export const SIEGE_CASTS = Object.freeze({ max: 4, windowMs: 5000, damageMax: 60, healMax: 40 });",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-casts-window",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "export const SIEGE_CASTS = Object.freeze({ max: 3, windowMs: 5000, damageMax: 60, healMax: 40 });",
   "new": "export const SIEGE_CASTS = Object.freeze({ max: 3, windowMs: 4000, damageMax: 60, healMax: 40 });",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-casts-damage-max",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "export const SIEGE_CASTS = Object.freeze({ max: 3, windowMs: 5000, damageMax: 60, healMax: 40 });",
   "new": "export const SIEGE_CASTS = Object.freeze({ max: 3, windowMs: 5000, damageMax: 80, healMax: 40 });",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-casts-heal-max",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "export const SIEGE_CASTS = Object.freeze({ max: 3, windowMs: 5000, damageMax: 60, healMax: 40 });",
   "new": "export const SIEGE_CASTS = Object.freeze({ max: 3, windowMs: 5000, damageMax: 60, healMax: 50 });",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-speed-design-start",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "export const SIEGE_SPEED = Object.freeze({ mps: 18, slackM: 0.5 });",
   "new": "export const SIEGE_SPEED = Object.freeze({ mps: 12.5, slackM: 0.5 });",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-speed-slack",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "export const SIEGE_SPEED = Object.freeze({ mps: 18, slackM: 0.5 });",
   "new": "export const SIEGE_SPEED = Object.freeze({ mps: 18, slackM: 1 });",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-wave-palace",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "export const SIEGE_WAVE_MS = Object.freeze({ palace: 20000, crown: 30000 });",
   "new": "export const SIEGE_WAVE_MS = Object.freeze({ palace: 15000, crown: 30000 });",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-wave-crown",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "export const SIEGE_WAVE_MS = Object.freeze({ palace: 20000, crown: 30000 });",
   "new": "export const SIEGE_WAVE_MS = Object.freeze({ palace: 20000, crown: 20000 });",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-protect",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "export const SIEGE_PROTECT_MS = 3000;",
   "new": "export const SIEGE_PROTECT_MS = 2000;",
   "tests": [
-   "test/pvpref_law.test.js",
-   "test/pvpref_relay.test.js"
+   "test/systems/pvpref_law.test.js",
+   "test/net/siege/pvpref_relay.test.js"
   ]
  },
  {
   "name": "PVPREF-fighters-max",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "export const SIEGE_FIGHTERS_MAX = 48;",
   "new": "export const SIEGE_FIGHTERS_MAX = 40;",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-table-dai-katana",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "  126: 18, 127: 12, 128: 16, 129: 16, 130: 18,",
   "new": "  126: 18, 127: 12, 128: 16, 129: 16, 130: 20,",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-table-dagger",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "  113: 6, 114: 8, 115: 8,",
   "new": "  113: 7, 114: 8, 115: 8,",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-thunderlock",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "export const SIEGE_THUNDERLOCK = Object.freeze({ template: 560, max: 26 });",
   "new": "export const SIEGE_THUNDERLOCK = Object.freeze({ template: 560, max: 24 });",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-material-daedric",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "export const SIEGE_MATERIAL_MOD = Object.freeze([-1, 0, 0, 1, 2, 3, 3, 4, 5, 6]);",
   "new": "export const SIEGE_MATERIAL_MOD = Object.freeze([-1, 0, 0, 1, 2, 3, 3, 4, 5, 7]);",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-material-iron",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "export const SIEGE_MATERIAL_MOD = Object.freeze([-1, 0, 0, 1, 2, 3, 3, 4, 5, 6]);",
   "new": "export const SIEGE_MATERIAL_MOD = Object.freeze([0, 0, 0, 1, 2, 3, 3, 4, 5, 6]);",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-fist-max",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "export const SIEGE_FIST_MAX = 21;",
   "new": "export const SIEGE_FIST_MAX = 24;",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-bonus-strength",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "export const SIEGE_BONUS = Object.freeze({ strength: 10, swing: 4, proficiency: 11, racial: 10 });",
   "new": "export const SIEGE_BONUS = Object.freeze({ strength: 5, swing: 4, proficiency: 11, racial: 10 });",
   "tests": [
-   "test/pvpref_law.test.js",
-   "test/pvpref_relay.test.js"
+   "test/systems/pvpref_law.test.js",
+   "test/net/siege/pvpref_relay.test.js"
   ]
  },
  {
   "name": "PVPREF-bonus-swing",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "export const SIEGE_BONUS = Object.freeze({ strength: 10, swing: 4, proficiency: 11, racial: 10 });",
   "new": "export const SIEGE_BONUS = Object.freeze({ strength: 10, swing: 3, proficiency: 11, racial: 10 });",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-bonus-proficiency",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "export const SIEGE_BONUS = Object.freeze({ strength: 10, swing: 4, proficiency: 11, racial: 10 });",
   "new": "export const SIEGE_BONUS = Object.freeze({ strength: 10, swing: 4, proficiency: 10, racial: 10 });",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-bonus-racial",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "export const SIEGE_BONUS = Object.freeze({ strength: 10, swing: 4, proficiency: 11, racial: 10 });",
   "new": "export const SIEGE_BONUS = Object.freeze({ strength: 10, swing: 4, proficiency: 11, racial: 0 });",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-crit",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "export const SIEGE_CRIT_MAX = 2;",
   "new": "export const SIEGE_CRIT_MAX = 3;",
   "tests": [
-   "test/pvpref_law.test.js",
-   "test/pvpref_relay.test.js"
+   "test/systems/pvpref_law.test.js",
+   "test/net/siege/pvpref_relay.test.js"
   ]
  },
  {
   "name": "PVPREF-fist-no-bonus",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "  if (w == null || w === -1) return (SIEGE_FIST_MAX + SIEGE_BONUS_MAX) * SIEGE_CRIT_MAX;",
   "new": "  if (w == null || w === -1) return SIEGE_FIST_MAX * SIEGE_CRIT_MAX;",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-unnamed-template",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "  if (!top) return null;\n",
   "new": "",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-material-ignored",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "  return top + (Number.isInteger(m) && m >= 0 && m < SIEGE_MATERIAL_MOD.length ? SIEGE_MATERIAL_MOD[m] : 0);",
   "new": "  return top;",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-material-past-table",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "  return top + (Number.isInteger(m) && m >= 0 && m < SIEGE_MATERIAL_MOD.length ? SIEGE_MATERIAL_MOD[m] : 0);",
   "new": "  return top + (Number.isInteger(m) && m >= 0 ? SIEGE_MATERIAL_MOD[m] : 0);",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-thunderlock-no-bow",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "export const siegeIsBow = (w) => w === SIEGE_WEAPONS.Short_Bow || w === SIEGE_WEAPONS.Long_Bow || w === SIEGE_THUNDERLOCK.template;",
   "new": "export const siegeIsBow = (w) => w === SIEGE_WEAPONS.Short_Bow || w === SIEGE_WEAPONS.Long_Bow;",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-held-any-material",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "i?.group === 'Weapons' && SIEGE_HAND_SLOTS.includes(i.equipSlot) && i.templateIndex === w && (i.material ?? 0) === m);",
   "new": "i?.group === 'Weapons' && SIEGE_HAND_SLOTS.includes(i.equipSlot) && i.templateIndex === w);",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-held-any-group",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "i?.group === 'Weapons' && SIEGE_HAND_SLOTS.includes(i.equipSlot) && i.templateIndex === w && (i.material ?? 0) === m);",
   "new": "SIEGE_HAND_SLOTS.includes(i.equipSlot) && i.templateIndex === w && (i.material ?? 0) === m);",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-held-fist-needs-look",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "  if (w === -1 || w == null) return { w: -1, m: 0 };",
   "new": "  if (w == null) return { w: -1, m: 0 };",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-rate-one-deep",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "rate: SIEGE_BLOWS_HZ, rateAt: now, casts: [], heals: [],",
   "new": "rate: 1, rateAt: now, casts: [], heals: [],",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-rate-refill-slow",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "  f.rate = Math.min(SIEGE_BLOWS_HZ, f.rate + ((now - f.rateAt) / 1000) * SIEGE_BLOWS_HZ);",
   "new": "  f.rate = Math.min(SIEGE_BLOWS_HZ, f.rate + ((now - f.rateAt) / 1000));",
   "tests": [
-   "test/pvpref_law.test.js",
-   "test/pvpref_measure.test.js"
+   "test/systems/pvpref_law.test.js",
+   "test/net/pvpref_measure.test.js"
   ]
  },
  {
   "name": "PVPREF-rate-deeper",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "  f.rate = Math.min(SIEGE_BLOWS_HZ, f.rate + ((now - f.rateAt) / 1000) * SIEGE_BLOWS_HZ);",
   "new": "  f.rate = Math.min(2 * SIEGE_BLOWS_HZ, f.rate + ((now - f.rateAt) / 1000) * SIEGE_BLOWS_HZ);",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-rate-floor",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "  if (f.rate < 1) return false;",
   "new": "  if (f.rate < 0) return false;",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-blow-protected-before-rate",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "  if (!spend(by, now)) return { ok: false, dealt: 0, fell: false, why: 'rate' };\n  if (now < to.safeTo) return { ok: false, dealt: 0, fell: false, why: 'protected' };",
   "new": "  if (now < to.safeTo) return { ok: false, dealt: 0, fell: false, why: 'protected' };\n  if (!spend(by, now)) return { ok: false, dealt: 0, fell: false, why: 'rate' };",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-blow-on-fallen",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "  if (by.down || to.down) return { ok: false, dealt: 0, fell: false, why: 'down' };\n  if (!spend(by, now))",
   "new": "  if (by.down) return { ok: false, dealt: 0, fell: false, why: 'down' };\n  if (!spend(by, now))",
   "tests": [
-   "test/pvpref_law.test.js",
-   "test/pvpref_relay.test.js"
+   "test/systems/pvpref_law.test.js",
+   "test/net/siege/pvpref_relay.test.js"
   ]
  },
  {
   "name": "PVPREF-blow-not-protected",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "  if (now < to.safeTo) return { ok: false, dealt: 0, fell: false, why: 'protected' };\n  if (!held)",
   "new": "  if (!held)",
   "tests": [
-   "test/pvpref_law.test.js",
-   "test/pvpref_relay.test.js"
+   "test/systems/pvpref_law.test.js",
+   "test/net/siege/pvpref_relay.test.js"
   ]
  },
  {
   "name": "PVPREF-blow-kind-one-way",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "  if (shaft !== siegeIsBow(held.w) ||",
   "new": "  if (shaft && !siegeIsBow(held.w) ||",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-blow-melee-shaft-reach",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "  const reach = (shaft ? SIEGE_REACH.shaft : SIEGE_REACH.melee) + SIEGE_REACH.slack;",
   "new": "  const reach = SIEGE_REACH.shaft + SIEGE_REACH.slack;",
   "tests": [
-   "test/pvpref_law.test.js",
-   "test/pvpref_relay.test.js"
+   "test/systems/pvpref_law.test.js",
+   "test/net/siege/pvpref_relay.test.js"
   ]
  },
  {
   "name": "PVPREF-blow-no-slack",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "  const reach = (shaft ? SIEGE_REACH.shaft : SIEGE_REACH.melee) + SIEGE_REACH.slack;",
   "new": "  const reach = shaft ? SIEGE_REACH.shaft : SIEGE_REACH.melee;",
   "tests": [
-   "test/pvpref_law.test.js",
-   "test/pvpref_relay.test.js"
+   "test/systems/pvpref_law.test.js",
+   "test/net/siege/pvpref_relay.test.js"
   ]
  },
  {
   "name": "PVPREF-blow-unclipped",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "  const got = Math.min(want, siegeBlowMax(held.w, held.m, wa), to.hp, harmRoom(by, now));   // BAL8: and the striker's harm ceiling",
   "new": "  const got = Math.min(want, to.hp, harmRoom(by, now));   // BAL8: and the striker's harm ceiling",
   "tests": [
-   "test/pvpref_law.test.js",
-   "test/pvpref_relay.test.js"
+   "test/systems/pvpref_law.test.js",
+   "test/net/siege/pvpref_relay.test.js"
   ]
  },
  {
   "name": "PVPREF-blow-past-left",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "  const got = Math.min(want, siegeBlowMax(held.w, held.m, wa), to.hp, harmRoom(by, now));   // BAL8: and the striker's harm ceiling",
   "new": "  const got = Math.min(want, siegeBlowMax(held.w, held.m, wa), harmRoom(by, now));   // BAL8: and the striker's harm ceiling",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-blow-fractional",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "  const want = Math.max(0, Math.trunc(Number(d) || 0));\n  const got = Math.min(want, siegeBlowMax(held.w, held.m, wa), to.hp, harmRoom(by, now));   // BAL8: and the striker's harm ceiling",
   "new": "  const want = Math.max(0, Number(d) || 0);\n  const got = Math.min(want, siegeBlowMax(held.w, held.m, wa), to.hp, harmRoom(by, now));   // BAL8: and the striker's harm ceiling",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-blow-below-nought",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "  const want = Math.max(0, Math.trunc(Number(d) || 0));\n  const got = Math.min(want, siegeBlowMax(held.w, held.m, wa), to.hp, harmRoom(by, now));   // BAL8: and the striker's harm ceiling",
   "new": "  const want = Math.trunc(Number(d) || 0);\n  const got = Math.min(want, siegeBlowMax(held.w, held.m, wa), to.hp, harmRoom(by, now));   // BAL8: and the striker's harm ceiling",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-blow-clipped-untallied",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "  by.clipped += want - got;\n  by.dealt += got;\n  to.hp -= got;\n  const fell = to.hp <= 0;\n  if (fell) to.down = true;\n  return { ok: true, dealt: got, fell, why: null };\n}\n\n/**\n * A CAST",
   "new": "  by.dealt += got;\n  to.hp -= got;\n  const fell = to.hp <= 0;\n  if (fell) to.down = true;\n  return { ok: true, dealt: got, fell, why: null };\n}\n\n/**\n * A CAST",
   "tests": [
-   "test/pvpref_law.test.js",
-   "test/pvpref_relay.test.js"
+   "test/systems/pvpref_law.test.js",
+   "test/net/siege/pvpref_relay.test.js"
   ]
  },
  {
   "name": "PVPREF-blow-no-fall",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "  const fell = to.hp <= 0;\n  if (fell) to.down = true;\n  return { ok: true, dealt: got, fell, why: null };\n}\n\n/**\n * A CAST",
   "new": "  const fell = to.hp < 0;\n  if (fell) to.down = true;\n  return { ok: true, dealt: got, fell, why: null };\n}\n\n/**\n * A CAST",
   "tests": [
-   "test/pvpref_law.test.js",
-   "test/pvpref_relay.test.js"
+   "test/systems/pvpref_law.test.js",
+   "test/net/siege/pvpref_relay.test.js"
   ]
  },
  {
   "name": "PVPREF-cast-fallen-caster",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "  if (by.down || to.down) return { ok: false, dealt: 0, fell: false, why: 'down' };\n  if (!from || !at || metres",
   "new": "  if (to.down) return { ok: false, dealt: 0, fell: false, why: 'down' };\n  if (!from || !at || metres",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-cast-no-reach",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "  if (!from || !at || metres(from, at) > SIEGE_REACH.spell + SIEGE_REACH.slack) return",
   "new": "  if (!from || !at) return",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-heal-unbounded",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "    if (by.heals.length >= SIEGE_CASTS.max) return { ok: false, dealt: 0, fell: false, why: 'rate' };\n",
   "new": "",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-heal-past-whole",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "    const got = Math.min(want, SIEGE_CASTS.healMax, to.max - to.hp);",
   "new": "    const got = Math.min(want, SIEGE_CASTS.healMax);",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-heal-at-damage-cap",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "    const got = Math.min(want, SIEGE_CASTS.healMax, to.max - to.hp);",
   "new": "    const got = Math.min(want, SIEGE_CASTS.damageMax, to.max - to.hp);",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-cast-self-damage",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "  if (by === to) return { ok: false, dealt: 0, fell: false, why: 'no-fighter' };\n  by.casts",
   "new": "  by.casts",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-cast-window-inclusive",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "  by.casts = by.casts.filter((t) => now - t < SIEGE_CASTS.windowMs);",
   "new": "  by.casts = by.casts.filter((t) => now - t <= SIEGE_CASTS.windowMs);",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-cast-one-more",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "  if (by.casts.length >= SIEGE_CASTS.max) return",
   "new": "  if (by.casts.length > SIEGE_CASTS.max) return",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-cast-not-protected",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "  by.casts.push(now);\n  if (now < to.safeTo) return { ok: false, dealt: 0, fell: false, why: 'protected' };\n",
   "new": "  by.casts.push(now);\n",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-cast-uncapped",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "  const got = Math.min(want, SIEGE_CASTS.damageMax, to.hp, harmRoom(by, now));   // BAL8: the blows' and the casts' one ceiling",
   "new": "  const got = Math.min(want, to.hp, harmRoom(by, now));   // BAL8: the blows' and the casts' one ceiling",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-step-first-refused",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "  if (!last) { if (f) f.stepM = full; return true; }",
   "new": "  if (!last) { if (f) f.stepM = full; return false; }",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-step-negative-time",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "  const earned = SIEGE_SPEED.mps * Math.min(SIEGE_STEP_WINDOW_MS, Math.max(0, dtMs)) / 1000;",
   "new": "  const earned = SIEGE_SPEED.mps * Math.min(SIEGE_STEP_WINDOW_MS, dtMs) / 1000;",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-step-judges-height",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "  const rise = Math.max(0, (next.y - last.y) || 0);",
   "new": "  const rise = Math.abs((next.y - last.y) || 0);",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-step-x-alone",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "  const len = Math.hypot((next.x - last.x) / SIEGE_UNITS_PER_M, (next.z - last.z) / SIEGE_UNITS_PER_M, rise / SIEGE_UNITS_PER_M);",
   "new": "  const len = Math.hypot((next.x - last.x) / SIEGE_UNITS_PER_M, rise / SIEGE_UNITS_PER_M);",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-wave-now",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "export const siegeNextWave = (now, waveMs) => (Math.floor(now / waveMs) + 1) * waveMs;",
   "new": "export const siegeNextWave = (now, waveMs) => Math.floor(now / waveMs) * waveMs;",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-rise-late",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "  if (!f.down || now < f.upAt) return false;",
   "new": "  if (!f.down || now <= f.upAt) return false;",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-rise-not-whole",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "  f.down = false; f.hp = f.max; f.safeTo",
   "new": "  f.down = false; f.safeTo",
   "tests": [
-   "test/pvpref_law.test.js",
-   "test/pvpref_relay.test.js"
+   "test/systems/pvpref_law.test.js",
+   "test/net/siege/pvpref_relay.test.js"
   ]
  },
  {
   "name": "PVPREF-rise-unprotected",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "f.safeTo = now + SIEGE_PROTECT_MS; f.casts = []; f.heals = [];",
   "new": "f.safeTo = now; f.casts = []; f.heals = [];",
   "tests": [
-   "test/pvpref_law.test.js",
-   "test/pvpref_relay.test.js"
+   "test/systems/pvpref_law.test.js",
+   "test/net/siege/pvpref_relay.test.js"
   ]
  },
  {
   "name": "PVPREF-rise-casts-kept",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "f.safeTo = now + SIEGE_PROTECT_MS; f.casts = []; f.heals = [];",
   "new": "f.safeTo = now + SIEGE_PROTECT_MS; f.heals = [];",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
   "name": "PVPREF-rise-heals-kept",
-  "file": "src/net/siegeRef.js",
+  "file": "src/net/siege/siegeRef.js",
   "old": "f.safeTo = now + SIEGE_PROTECT_MS; f.casts = []; f.heals = [];",
   "new": "f.safeTo = now + SIEGE_PROTECT_MS; f.casts = [];",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
@@ -724,7 +724,7 @@
   "old": "export const SIEGE_KINDS = Object.freeze(['in', 'blow', 'cast', 'ask', 'yes']);",
   "new": "export const SIEGE_KINDS = Object.freeze(['in', 'blow', 'ask', 'yes']);",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
@@ -733,7 +733,7 @@
   "old": "  if (typeof m.to !== 'string' || !(ID_RE.test(m.to) || (work && m.k === 'blow') || npc)) return null;\n  if (m.k === 'ask' || m.k === 'yes')",
   "new": "  if (typeof m.to !== 'string') return null;\n  if (m.k === 'ask' || m.k === 'yes')",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
@@ -742,7 +742,7 @@
   "old": "  if (!finite(m.d) || m.d <= 0 || m.d > SIEGE_DMG_WIRE_MAX) return null;",
   "new": "  if (!finite(m.d) || m.d < 0 || m.d > SIEGE_DMG_WIRE_MAX) return null;",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
@@ -751,7 +751,7 @@
   "old": "export const SIEGE_DMG_WIRE_MAX = 10_000;",
   "new": "export const SIEGE_DMG_WIRE_MAX = 1_000;",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
@@ -760,7 +760,7 @@
   "old": "  if (!finite(m.d) || m.d <= 0 || m.d > SIEGE_DMG_WIRE_MAX) return null;",
   "new": "  if (!finite(m.d) || m.d <= 0 || m.d >= SIEGE_DMG_WIRE_MAX) return null;",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
@@ -769,7 +769,7 @@
   "old": "  if (m.k === 'cast') return { k: 'cast', to: m.to, d: m.d, h: m.h === 1 ? 1 : 0 };",
   "new": "  if (m.k === 'cast') return { k: 'cast', to: m.to, d: m.d, h: m.h ? 1 : 0 };",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
@@ -778,7 +778,7 @@
   "old": "  if (!(m.w === -1 || intIn(m.w, 0, 65535)) || !intIn(m.m, 0, 9)) return null;",
   "new": "  if (!(m.w === -1 || intIn(m.w, 0, 65535)) || !intIn(m.m, 0, 10)) return null;",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
@@ -787,7 +787,7 @@
   "old": "  if (!(m.w === -1 || intIn(m.w, 0, 65535)) || !intIn(m.m, 0, 9)) return null;",
   "new": "  if (!intIn(m.w, 0, 65535) || !intIn(m.m, 0, 9)) return null;",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
@@ -796,7 +796,7 @@
   "old": "  if (m.r !== SIEGE_HIT.Melee && m.r !== SIEGE_HIT.Shaft) return null;",
   "new": "  if (m.r !== SIEGE_HIT.Melee && m.r !== SIEGE_HIT.Shaft && m.r !== SIEGE_HIT.Spell) return null;",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
@@ -805,7 +805,7 @@
   "old": "export const SIEGE_HZ_MAX = 8;",
   "new": "export const SIEGE_HZ_MAX = 16;",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
@@ -814,7 +814,7 @@
   "old": "export const SIEGE_RELAY_MIN = 146;",
   "new": "export const SIEGE_RELAY_MIN = 145;",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
@@ -823,7 +823,7 @@
   "old": "    if (!hasHello) return { error: 'siege before hello' };\n",
   "new": "",
   "tests": [
-   "test/pvpref_law.test.js"
+   "test/systems/pvpref_law.test.js"
   ]
  },
  {
@@ -832,7 +832,7 @@
   "old": "    if (key.startsWith('siege:') && !isSiegeRoom(key)) return json({ error: 'no such siege' }, 404);\n",
   "new": "",
   "tests": [
-   "test/pvpref_relay.test.js"
+   "test/net/siege/pvpref_relay.test.js"
   ]
  },
  {
@@ -841,7 +841,7 @@
   "old": "    if (!sp) return who.subject && Array.isArray(who.glyphs) && who.glyphs.includes('dev') && !s?.battle ? { side: null } : { no: 'the siege is not open' };",
   "new": "    if (!sp) return { side: null };",
   "tests": [
-   "test/pvpref_relay.test.js"
+   "test/net/siege/pvpref_relay.test.js"
   ]
  },
  {
@@ -850,7 +850,7 @@
   "old": "      if ((isGateRoom(a.key) || isBattleRoom(a.key) || isSdRoom(a.key) || isCellRoom(a.key) || isWorldRoom(a.key)) && who.subject) for (const [other, b] of [...this._all()])",
   "new": "      if ((isGateRoom(a.key) || isSdRoom(a.key) || isCellRoom(a.key) || isWorldRoom(a.key)) && who.subject) for (const [other, b] of [...this._all()])",
   "tests": [
-   "test/pvpref_relay.test.js"
+   "test/net/siege/pvpref_relay.test.js"
   ]
  },
  {
@@ -859,7 +859,7 @@
   "old": "      if (!isBattleRoom(a.key) || typeof a.sub !== 'string' || !a.sub) { this._junk(ws); return; }\n      try { await this._siegeFrame",
   "new": "      if (typeof a.sub !== 'string' || !a.sub) { this._junk(ws); return; }\n      try { await this._siegeFrame",
   "tests": [
-   "test/pvpref_relay.test.js"
+   "test/net/siege/pvpref_relay.test.js"
   ]
  },
  {
@@ -868,7 +868,7 @@
   "old": "    if (!by) { this._junk(ws); return; }   // a correct client says `in` first",
   "new": "    if (!by) return;   // a correct client says `in` first",
   "tests": [
-   "test/pvpref_relay.test.js"
+   "test/net/siege/pvpref_relay.test.js"
   ]
  },
  {
@@ -877,7 +877,7 @@
   "old": "    return Object.keys(s.fighters).length >= SIEGE_FIGHTERS_MAX ? 'the field is full' : null;",
   "new": "    return Object.keys(s.fighters).length > SIEGE_FIGHTERS_MAX ? 'the field is full' : null;",
   "tests": [
-   "test/pvpref_relay.test.js"
+   "test/net/siege/pvpref_relay.test.js"
   ]
  },
  {
@@ -886,7 +886,7 @@
   "old": "        s.fighters[a.sub] = { ...newFighter(a.lv, now), side, pose, poseAt: now };\n        if (camp) this._send(ws, JSON.stringify({ t: 'siege', k: 'back', p: pose }));\n        await this._siegeSave(now, true);",
   "new": "        s.fighters[a.sub] = { ...newFighter(a.lv, now), side, pose, poseAt: now };\n        if (camp) this._send(ws, JSON.stringify({ t: 'siege', k: 'back', p: pose }));\n        await this._siegeSave(now, false);",
   "tests": [
-   "test/pvpref_relay.test.js"
+   "test/net/siege/pvpref_relay.test.js"
   ]
  },
  {
@@ -895,7 +895,7 @@
   "old": "if (sk) st.push([sk[1].id, f.hp, f.max, f.down ? 1 : 0, ...(f.side === 'attack' || f.side === 'defend' ? [f.side === 'attack' ? 1 : 2] : [])]); }",
   "new": "if (sk) st.push([sk[1].id, f.max, f.max, f.down ? 1 : 0, ...(f.side === 'attack' || f.side === 'defend' ? [f.side === 'attack' ? 1 : 2] : [])]); }",
   "tests": [
-   "test/pvpref_relay.test.js"
+   "test/net/siege/pvpref_relay.test.js"
   ]
  },
  {
@@ -904,7 +904,7 @@
   "old": "    if (!look && m.k === 'blow') { look = (await this.state.storage.get(lookKey(a.id))) ?? null; if (look) this._looks.set(a.id, look); }\n",
   "new": "",
   "tests": [
-   "test/pvpref_relay.test.js"
+   "test/net/siege/pvpref_relay.test.js"
   ]
  },
  {
@@ -913,8 +913,8 @@
   "old": "    this._siegeFan(frames);\n    await this._siegeSave(now, res.fell);",
   "new": "    for (const fr of frames) this._send(ws, JSON.stringify({ t: 'siege', ...fr }));\n    await this._siegeSave(now, res.fell);",
   "tests": [
-   "test/pvpref_relay.test.js",
-   "test/pvpref_measure.test.js"
+   "test/net/siege/pvpref_relay.test.js",
+   "test/net/pvpref_measure.test.js"
   ]
  },
  {
@@ -923,7 +923,7 @@
   "old": "      to.upAt = siegeNextWave(now, b ? siegeWaveMs(b, to.side) : SIEGE_WAVE_MS.palace);",
   "new": "      to.upAt = now + SIEGE_WAVE_MS.palace;",
   "tests": [
-   "test/pvpref_relay.test.js"
+   "test/net/siege/pvpref_relay.test.js"
   ]
  },
  {
@@ -932,7 +932,7 @@
   "old": "      await this._siegeArm(to.upAt);\n",
   "new": "",
   "tests": [
-   "test/pvpref_relay.test.js"
+   "test/net/siege/pvpref_relay.test.js"
   ]
  },
  {
@@ -941,7 +941,7 @@
   "old": "    if (battle && !step) return;\n",
   "new": "",
   "tests": [
-   "test/pvpref_relay.test.js"
+   "test/net/siege/pvpref_relay.test.js"
   ]
  },
  {
@@ -950,7 +950,7 @@
   "old": "    f.pose = p; f.poseAt = now;\n    return 'body';",
   "new": "    f.poseAt = now;\n    return 'body';",
   "tests": [
-   "test/pvpref_relay.test.js"
+   "test/net/siege/pvpref_relay.test.js"
   ]
  },
  {
@@ -959,7 +959,7 @@
   "old": "    if (!royalStepOk(s.battle, a.sub, p) || !refereeStep(f.pose, p, now - (f.poseAt ?? now), f)) { this._send(ws, JSON.stringify({ t: 'siege', k: 'back', p: f.pose })); return false; }",
   "new": "    if (!royalStepOk(s.battle, a.sub, p) || !refereeStep(f.pose, p, now - (f.poseAt ?? now), f)) return false;",
   "tests": [
-   "test/pvpref_relay.test.js"
+   "test/net/siege/pvpref_relay.test.js"
   ]
  },
  {
@@ -968,7 +968,7 @@
   "old": "    if (!f) return 'eye';   // not a fighter: a spectator's camera is its own",
   "new": "    if (!f) return false;   // not a fighter: a spectator's camera is its own",
   "tests": [
-   "test/pvpref_relay.test.js"
+   "test/net/siege/pvpref_relay.test.js"
   ]
  },
  {
@@ -977,7 +977,7 @@
   "old": "        if (sk) frames.push({ k: 'up', id: sk[1].id, ...(b && f.side ? { p: f.pose } : {}) }, { k: 'hp', id: sk[1].id, h: f.hp, m: f.max });",
   "new": "        if (sk) frames.push({ k: 'hp', id: sk[1].id, h: f.hp, m: f.max });",
   "tests": [
-   "test/pvpref_relay.test.js"
+   "test/net/siege/pvpref_relay.test.js"
   ]
  },
  {
@@ -986,7 +986,7 @@
   "old": "    if (await this._siegeTick()) return;   // PVP-REF: a siege room's alarm is its fallen fighters' waves\n",
   "new": "",
   "tests": [
-   "test/pvpref_relay.test.js"
+   "test/net/siege/pvpref_relay.test.js"
   ]
  }
 ]

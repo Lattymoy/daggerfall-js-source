@@ -24,7 +24,7 @@
 //
 // Which interior texels are glass: an exterior window record drawn inside a building (DFU lays interiors out with the
 // same window table - DaggerfallInterior.cs:473/:517/:1270 apply WindowStyle.Disabled to them), and the panes of a
-// building interior set's window wall (world/interiorGlass.js - GLASS-ALL, read off the data). A context that is not
+// building interior set's window wall (world/interior/interiorGlass.js - GLASS-ALL, read off the data). A context that is not
 // ARENA2's declares its own glass with renderer.uploadGlassMask (white = glass) or with a cutout picture.
 //
 // Not a DFU member: the port's own presentation (Port-Doctrine, the renderer rebuilt on our stack).

@@ -3,7 +3,7 @@
 // icons with glyphs for each effect (climates and calories included)") - THE STATUS WIDGET, DRAWN WITH THE REAL
 // ARENA2 AND MEASURED.
 //
-// The REAL HUD (ui/enhancedHud.js over the real sheets, the enhanced skin) under a character carrying everything the
+// The REAL HUD (ui/enhanced/enhancedHud.js over the real sheets, the enhanced skin) under a character carrying everything the
 // widget can show at once - three spells (one mine, one another's and ending, one an item's), a set power, a poison, a
 // disease, and every need Climates & Calories raises (hungry, parched, drowsy, soaked, freezing, stiff, drunk) - with
 // the chat's own sheet and five peek lines at its corner, at a desktop, two laptops, a phone both ways up and a desktop
@@ -36,8 +36,8 @@ const PAGE = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewp
 <style>html,body{margin:0;height:100%;overflow:hidden;background:repeating-linear-gradient(45deg,#3b4a3a 0 14px,#324031 14px 28px)}</style></head><body>
 <script type="module">
 import { setPref } from '/src/systems/uiPrefs.js';
-import { drawEnhancedHud, setHudSetChips } from '/src/ui/enhancedHud.js';
-import { setHudRenown } from '/src/ui/hudRenown.js';
+import { drawEnhancedHud, setHudSetChips } from '/src/ui/enhanced/enhancedHud.js';
+import { setHudRenown } from '/src/ui/hud/hudRenown.js';
 import { renownXpFor } from '/src/net/renown.js';
 import { CHAT_CSS } from '/src/ui/chatPanel.js';
 import { POISONS } from '/src/systems/poisons.js';
@@ -78,7 +78,7 @@ chat.append(peek, hint, box);
 // AUDIT UI C1: an OFFLINE view has no chat at all - the compass and a foe's bar are what stand above the widget there
 if (!new URLSearchParams(location.search).has('offline')) document.body.append(chat);
 globalThis.__chatOpen = (on) => { chat.dataset.state = on ? 'open' : ''; };
-// a touch screen's top-left presses (ui/touch.js: the dial and the menu, 48 square at 16 and 72 down 16) - stand-ins
+// a touch screen's top-left presses (ui/touch/touch.js: the dial and the menu, 48 square at 16 and 72 down 16) - stand-ins
 if (matchMedia('(pointer: coarse) and (hover: none)').matches) for (const x of [16, 72]) {
   const b = document.createElement('div'); b.className = 'probe-touchbtn';
   b.style.cssText = 'position:fixed;left:' + x + 'px;top:16px;width:48px;height:48px;z-index:5;background:rgba(40,40,40,.6);border:1px solid rgba(255,255,255,.22);border-radius:14px';

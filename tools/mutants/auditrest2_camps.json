@@ -5,8 +5,8 @@
     "old": "      if (dungeonCtx) { if (load) dungeonCtx.camps?.dropOwn?.(); else carried = dungeonCtx.camps?.packOwnFires?.({ quiet: true }) ?? 0; }",
     "new": "      if (dungeonCtx) { if (!cacheScene) dungeonCtx.camps?.dropOwn?.(); else carried = dungeonCtx.camps?.packOwnFires?.({ quiet: true }) ?? 0; }",
     "tests": [
-      "test/auditrest2_camps.test.js",
-      "test/auditrestparty_camps.test.js"
+      "test/systems/auditrest2_camps.test.js",
+      "test/systems/survival/auditrestparty_camps.test.js"
     ]
   },
   {
@@ -15,7 +15,7 @@
     "old": "modes?.forceExitToExterior({ cacheScene: false, load: true });",
     "new": "modes?.forceExitToExterior({ cacheScene: false });",
     "tests": [
-      "test/auditrest2_camps.test.js"
+      "test/systems/auditrest2_camps.test.js"
     ]
   },
   {
@@ -24,7 +24,7 @@
     "old": "    if (n) onChanged?.();   // AUDIT REST II H1",
     "new": "    void n;   // AUDIT REST II H1",
     "tests": [
-      "test/auditrest2_camps.test.js"
+      "test/systems/auditrest2_camps.test.js"
     ]
   },
   {
@@ -33,7 +33,7 @@
     "old": "    if (n) onChanged?.();   // AUDIT REST II H1",
     "new": "    onChanged?.();   // AUDIT REST II H1",
     "tests": [
-      "test/auditrest2_camps.test.js"
+      "test/systems/auditrest2_camps.test.js"
     ]
   },
   {
@@ -42,7 +42,7 @@
     "old": "    openRest: () => { if (interiorOverlay?.done) { interiorOverlay = null; interiorWindows.reconcile(null); } interiorKeyCtx.toggleRest(); },\n",
     "new": "",
     "tests": [
-      "test/auditrest2_camps.test.js"
+      "test/systems/auditrest2_camps.test.js"
     ]
   },
   {
@@ -51,7 +51,7 @@
     "old": "interiorCamps.activate(key, getInteractionMode(), plaqueActionFor(key));",
     "new": "interiorCamps.activate(key, getInteractionMode());",
     "tests": [
-      "test/auditrest2_camps.test.js"
+      "test/systems/auditrest2_camps.test.js"
     ]
   },
   {
@@ -60,7 +60,7 @@
     "old": "    camps.tend();   // AUDIT REST II H3",
     "new": "    void 0;   // AUDIT REST II H3",
     "tests": [
-      "test/auditrest2_camps.test.js"
+      "test/systems/auditrest2_camps.test.js"
     ]
   },
   {
@@ -69,7 +69,7 @@
     "old": "  const tend = () => tendWhileResting(now());",
     "new": "  const tend = () => {};",
     "tests": [
-      "test/auditrest2_camps.test.js"
+      "test/systems/auditrest2_camps.test.js"
     ]
   },
   {
@@ -78,7 +78,7 @@
     "old": "    if (n) { if (!quiet) say(CAMP_TEXT.carriedOut); onChanged?.(); }",
     "new": "    if (n) { say(CAMP_TEXT.carriedOut); onChanged?.(); }",
     "tests": [
-      "test/auditrest2_camps.test.js"
+      "test/systems/auditrest2_camps.test.js"
     ]
   },
   {
@@ -87,7 +87,7 @@
     "old": "the lock never outlives a mode change\n    if (carried) say(CAMP_TEXT.carriedOut);",
     "new": "the lock never outlives a mode change\n    void carried;",
     "tests": [
-      "test/auditrest2_camps.test.js"
+      "test/systems/auditrest2_camps.test.js"
     ]
   },
   {
@@ -96,7 +96,7 @@
     "old": "the lock never outlives a mode change\n      if (carried) say(CAMP_TEXT.carriedOut);",
     "new": "the lock never outlives a mode change\n      void carried;",
     "tests": [
-      "test/auditrest2_camps.test.js"
+      "test/systems/auditrest2_camps.test.js"
     ]
   },
   {
@@ -105,7 +105,7 @@
     "old": "          standOuterCamps(); carrySavedFires();   // AUDIT REST II H5 + H6",
     "new": "          standOuterCamps();   // AUDIT REST II H5 + H6",
     "tests": [
-      "test/auditrest2_camps.test.js"
+      "test/systems/auditrest2_camps.test.js"
     ]
   },
   {
@@ -114,7 +114,7 @@
     "old": "          if (!entered) carrySavedFires();",
     "new": "          void entered;",
     "tests": [
-      "test/auditrest2_camps.test.js"
+      "test/systems/auditrest2_camps.test.js"
     ]
   },
   {
@@ -123,7 +123,7 @@
     "old": "          (playerEntity.items ??= []).push(...items);\n",
     "new": "",
     "tests": [
-      "test/auditrest2_camps.test.js"
+      "test/systems/auditrest2_camps.test.js"
     ]
   },
   {
@@ -132,7 +132,7 @@
     "old": "world: { ...collectWorld(), outerCamps: opts.outerCampsSave?.() ?? null },",
     "new": "world: collectWorld(),",
     "tests": [
-      "test/auditrest2_camps.test.js"
+      "test/systems/auditrest2_camps.test.js"
     ]
   },
   {
@@ -141,7 +141,7 @@
     "old": "    outerCampsSave: () => camps.snapshot(campToRecord),",
     "new": "    outerCampsSave: () => null,",
     "tests": [
-      "test/auditrest2_camps.test.js"
+      "test/systems/auditrest2_camps.test.js"
     ]
   },
   {
@@ -150,7 +150,7 @@
     "old": "          standOuterCamps();   // AUDIT REST II H6: the save's camps outside, in or out\n",
     "new": "",
     "tests": [
-      "test/auditrest2_camps.test.js"
+      "test/systems/auditrest2_camps.test.js"
     ]
   },
   {
@@ -159,7 +159,7 @@
     "old": "  .filter((r) => r?.kind === CAMP_KIND.Fire)   // a fire alone",
     "new": "  .filter((r) => !!r)   // a fire alone",
     "tests": [
-      "test/auditrest2_camps.test.js"
+      "test/systems/auditrest2_camps.test.js"
     ]
   },
   {
@@ -168,7 +168,7 @@
     "old": "  .map((r) => packCamp(r).item).filter(Boolean);",
     "new": "  .map(() => null).filter(Boolean);",
     "tests": [
-      "test/auditrest2_camps.test.js"
+      "test/systems/auditrest2_camps.test.js"
     ]
   },
   {
@@ -177,16 +177,16 @@
     "old": "worldTextureRecord: TORCH?.worldTextureRecord ?? 17, isNotRepairable: true },",
     "new": "worldTextureRecord: TORCH?.worldTextureRecord ?? 17 },",
     "tests": [
-      "test/auditrest2_camps.test.js"
+      "test/systems/auditrest2_camps.test.js"
     ]
   },
   {
     "name": "AUDITREST2-H7-a-supply-recharged",
-    "file": "src/systems/restItemRows.js",
+    "file": "src/systems/rest/restItemRows.js",
     "old": "  isNotRepairable: !stackable,",
     "new": "  isNotRepairable: false,",
     "tests": [
-      "test/auditrest2_camps.test.js"
+      "test/systems/auditrest2_camps.test.js"
     ]
   },
   {
@@ -195,7 +195,7 @@
     "old": "provisionsStock(quality, rolls, { campfires: shelfIndex === 0 })",
     "new": "provisionsStock(quality, rolls, { campfires: true })",
     "tests": [
-      "test/auditrest2_camps.test.js"
+      "test/systems/auditrest2_camps.test.js"
     ]
   },
   {
@@ -204,7 +204,7 @@
     "old": "    else if (sharedClockOn() && shelfIndex === 0) for (const it of campfireStock(rolls))",
     "new": "    else if (sharedClockOn()) for (const it of campfireStock(rolls))",
     "tests": [
-      "test/auditrest2_camps.test.js"
+      "test/systems/auditrest2_camps.test.js"
     ]
   },
   {
@@ -213,7 +213,7 @@
     "old": "  const fires = n(2, 4);",
     "new": "  const fires = campfires ? n(2, 4) : 0;",
     "tests": [
-      "test/auditrest2_camps.test.js"
+      "test/systems/auditrest2_camps.test.js"
     ]
   },
   {
@@ -222,7 +222,7 @@
     "old": "        if (!pixel) { standOuterCamps(); carrySavedFires(); }",
     "new": "        if (!pixel) { standOuterCamps(); }",
     "tests": [
-      "test/auditrest2_camps.test.js"
+      "test/systems/auditrest2_camps.test.js"
     ]
   },
   {
@@ -231,26 +231,26 @@
     "old": "...carriedItemLists(snap), ...(Array.isArray(snap.otherItems) ? [snap.otherItems] : [])])) {",
     "new": "...carriedItemLists(snap)])) {",
     "tests": [
-      "test/auditrest2_camps.test.js"
+      "test/systems/auditrest2_camps.test.js"
     ],
     "note": "AUDIT REST III B4 (PIN MOVED): the lists walked once, the foreign ones uncounted; re-aimed by content."
   },
   {
     "name": "AUDITREST2-H10-the-pack-unasked",
-    "file": "src/systems/restItems.js",
+    "file": "src/systems/rest/restItems.js",
     "old": "  if (entity && !(entity.items ?? []).includes(item)) return { kind: 'text', text: REST_ITEM_TEXT.candleNotCarried };",
     "new": "",
     "tests": [
-      "test/auditrest2_camps.test.js"
+      "test/systems/auditrest2_camps.test.js"
     ]
   },
   {
     "name": "AUDITREST2-H10-the-entity-dropped",
-    "file": "src/systems/restItems.js",
+    "file": "src/systems/rest/restItems.js",
     "old": "offlineUse((item, list, ctx) => useCandle(item, list, ctx?.entity))",
     "new": "offlineUse((item, list) => useCandle(item, list))",
     "tests": [
-      "test/auditrest2_camps.test.js"
+      "test/systems/auditrest2_camps.test.js"
     ]
   },
   {
@@ -259,7 +259,7 @@
     "old": "    const packed = kits.filter((it) => (it.currentCondition ?? 0) < capOf(it)).sort(",
     "new": "    const packed = kits.filter(() => true).sort(",
     "tests": [
-      "test/auditrest2_camps.test.js"
+      "test/systems/auditrest2_camps.test.js"
     ]
   },
   {
@@ -268,7 +268,7 @@
     "old": "say(near.length || kits.length ? REST_ITEM_TEXT.firewoodFull : REST_ITEM_TEXT.firewoodNone);",
     "new": "say(near.length ? REST_ITEM_TEXT.firewoodFull : REST_ITEM_TEXT.firewoodNone);",
     "tests": [
-      "test/auditrest2_camps.test.js"
+      "test/systems/auditrest2_camps.test.js"
     ],
     "note": "AUDIT REST III B3 (PIN MOVED): the fires in reach are a list now; re-aimed by content."
   },
@@ -278,7 +278,7 @@
     "old": "  if (online && !fireLit(camp, now)) {",
     "new": "  if (false) {",
     "tests": [
-      "test/auditrest2_camps.test.js"
+      "test/systems/auditrest2_camps.test.js"
     ]
   },
   {
@@ -287,7 +287,7 @@
     "old": "    return [...stoke, ...rows.filter((r) => (r.key !== 'rest' || restable) && r.key !== 'stoke')];",
     "new": "    return rows.filter((r) => r.key !== 'rest' || restable);",
     "tests": [
-      "test/auditrest2_camps.test.js"
+      "test/systems/auditrest2_camps.test.js"
     ],
     "note": "AUDIT REST III A3 (PIN MOVED): my own cold tent's Rest kept; re-aimed by content."
   },
@@ -297,7 +297,7 @@
     "old": "    if (lit && campMenu(c.rec, now(), mine(c), { online: sharedClockOn() }).some(",
     "new": "    if (lit && campMenu(c.rec, now(), mine(c)).some(",
     "tests": [
-      "test/auditrest2_camps.test.js"
+      "test/systems/auditrest2_camps.test.js"
     ]
   },
   {
@@ -306,16 +306,16 @@
     "old": "    const jar = c.rec.kind === CAMP_KIND.Fire && !!c.rec.jar;",
     "new": "    const jar = false;",
     "tests": [
-      "test/auditrest2_camps.test.js"
+      "test/systems/auditrest2_camps.test.js"
     ]
   },
   {
     "name": "AUDITREST2-H14-the-offline-bedroll-stocked",
-    "file": "src/systems/restItems.js",
+    "file": "src/systems/rest/restItems.js",
     "old": "    if (t === REST_ITEM.Bedroll && !online) continue;",
     "new": "",
     "tests": [
-      "test/auditrest2_camps.test.js"
+      "test/systems/auditrest2_camps.test.js"
     ]
   },
   {
@@ -324,8 +324,8 @@
     "old": "    if (sleepNow === 'exhausted' && !resting && !wakingHeld(s, now)) tire(DRAIN.exhausted, 'sleep');",
     "new": "    if (sleepNow === 'exhausted' && !resting) tire(DRAIN.exhausted, 'sleep');",
     "tests": [
-      "test/auditrest2_camps.test.js",
-      "test/to1_travelOptions.test.js"
+      "test/systems/auditrest2_camps.test.js",
+      "test/systems/travel/to1_travelOptions.test.js"
     ]
   }
 ]

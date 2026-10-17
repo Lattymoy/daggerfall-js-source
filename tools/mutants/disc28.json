@@ -1,38 +1,38 @@
 [
   {
     "name": "DISC28-A-pause-key-not-back",
-    "file": "src/ui/enhancedMenu.js",
+    "file": "src/ui/enhanced/enhancedMenu.js",
     "old": "if (overlayAction(e) !== 'back' && !pauseKey) return;",
     "new": "if (overlayAction(e) !== 'back') return;",
     "tests": [
-      "test/disc28_pause.test.js"
+      "test/ui/enhanced/disc28_pause.test.js"
     ]
   },
   {
     "name": "DISC28-A-repeat-closes",
-    "file": "src/ui/enhancedMenu.js",
+    "file": "src/ui/enhanced/enhancedMenu.js",
     "old": "    if (!e.repeat) backArmed = e.code;\n    return;\n",
     "new": "    if (!e.repeat) { backArmed = e.code; return; }\n",
     "tests": [
-      "test/disc28_pause.test.js"
+      "test/ui/enhanced/disc28_pause.test.js"
     ]
   },
   {
     "name": "DISC28-A-textkey-capture-eaten",
-    "file": "src/ui/enhancedMenu.js",
+    "file": "src/ui/enhanced/enhancedMenu.js",
     "old": "  if (textKeyCapture) return;\n",
     "new": "",
     "tests": [
-      "test/disc28_pause.test.js"
+      "test/ui/enhanced/disc28_pause.test.js"
     ]
   },
   {
     "name": "DISC28-A-textkey-capture-leaks",
-    "file": "src/ui/enhancedMenu.js",
+    "file": "src/ui/enhanced/enhancedMenu.js",
     "old": "        textKeyCapture = null;\n",
     "new": "",
     "tests": [
-      "test/disc28_pause.test.js"
+      "test/ui/enhanced/disc28_pause.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    if (!court) return;\n",
     "new": "",
     "tests": [
-      "test/disc28_arrest.test.js"
+      "test/scenes/disc28_arrest.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "            if (crimeId() === 0) return;\n            // WERE-FRIGHT: the question was a man's",
     "new": "            // WERE-FRIGHT: the question was a man's",
     "tests": [
-      "test/disc28_arrest.test.js"
+      "test/scenes/disc28_arrest.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "    if (box) box.done = true;\n",
     "new": "",
     "tests": [
-      "test/disc28_arrest.test.js"
+      "test/scenes/disc28_arrest.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "    awaitingSurrenderAnswer = false;\n    if (box) box.done = true;",
     "new": "    if (box) box.done = true;",
     "tests": [
-      "test/disc28_arrest.test.js"
+      "test/scenes/disc28_arrest.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "    if (crimeId() !== 0 || !surrenderBox) return;",
     "new": "    if (!surrenderBox) return;",
     "tests": [
-      "test/disc28_arrest.test.js"
+      "test/scenes/disc28_arrest.test.js"
     ]
   },
   {
@@ -86,34 +86,34 @@
     "old": "      arrestFlow.crimeCleared();",
     "new": "",
     "tests": [
-      "test/disc28_arrest.test.js"
+      "test/scenes/disc28_arrest.test.js"
     ]
   },
   {
     "name": "DISC28-C-shop-box-no-layer",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": ".trade-shell .sb-ask { position: absolute; inset: 0; display: flex; align-items: center;\n  justify-content: center; background: rgba(10,12,17,0.72); padding: 20px;\n  z-index: 10; }",
     "new": ".trade-shell .sb-ask { position: absolute; inset: 0; display: flex; align-items: center;\n  justify-content: center; background: rgba(10,12,17,0.72); padding: 20px; }",
     "tests": [
-      "test/disc28_shopbox.test.js"
+      "test/ui/enhanced/disc28_shopbox.test.js"
     ]
   },
   {
     "name": "DISC28-C-shop-box-under-the-rune",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": ".trade-shell .sb-ask { position: absolute; inset: 0; display: flex; align-items: center;\n  justify-content: center; background: rgba(10,12,17,0.72); padding: 20px;\n  z-index: 10; }",
     "new": ".trade-shell .sb-ask { position: absolute; inset: 0; display: flex; align-items: center;\n  justify-content: center; background: rgba(10,12,17,0.72); padding: 20px;\n  z-index: 2; }",
     "tests": [
-      "test/disc28_shopbox.test.js"
+      "test/ui/enhanced/disc28_shopbox.test.js"
     ]
   },
   {
     "name": "DISC28-D-rig-blind-to-speed",
-    "file": "src/combat/weaponRig.js",
+    "file": "src/combat/weapon/weaponRig.js",
     "old": "new PlayerWeapon({ liveSpeed: () => (entity ? liveStat(entity, 'speed') : 50) })",
     "new": "new PlayerWeapon({})",
     "tests": [
-      "test/disc28_speed.test.js"
+      "test/combat/disc28_speed.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "set liveSpeed(v) { this._liveSpeed = typeof v === 'function' ? v : () => v; }",
     "new": "set liveSpeed(v) { const x = typeof v === 'function' ? v() : v; this._liveSpeed = () => x; }",
     "tests": [
-      "test/disc28_speed.test.js"
+      "test/combat/disc28_speed.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "get liveSpeed() { return this._liveSpeed(); }",
     "new": "get liveSpeed() { return 50; }",
     "tests": [
-      "test/disc28_speed.test.js"
+      "test/combat/disc28_speed.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "if (dead || force) entity.fatigue = Math.max(entity.fatigue > 0 ? entity.fatigue : 0, respawnHealth(maxFatigue(entity)));",
     "new": "if ((dead || force) && !(entity.fatigue > 0)) entity.fatigue = respawnHealth(maxFatigue(entity));",
     "tests": [
-      "test/disc28_fatigue.test.js"
+      "test/systems/disc28_fatigue.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "const skipped = (dead || force) && sharedClockOn() ? skipDeadMinutes(entity, worldMinutes()) : false;",
     "new": "const skipped = false;",
     "tests": [
-      "test/disc28_fatigue.test.js"
+      "test/systems/disc28_fatigue.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "  entity.preventEnemySpawns = true;   // AUDIT DISC28 TM-2: every host's encounter loop reads it and lowers it - raised on every rise\n",
     "new": "  entity.preventEnemySpawns = true;   // AUDIT DISC28 TM-2: every host's encounter loop reads it and lowers it - raised on every rise\n  entity.lastGameMinutes = now;\n",
     "tests": [
-      "test/disc28_fatigue.test.js"
+      "test/systems/disc28_fatigue.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "  entity.preventEnemySpawns = true;   // AUDIT DISC28 TM-2: every host's encounter loop reads it and lowers it - raised on every rise\n",
     "new": "  entity.preventEnemySpawns = true;   // AUDIT DISC28 TM-2: every host's encounter loop reads it and lowers it - raised on every rise\n  if (entity.survival) entity.survival.lastMinute = now;\n",
     "tests": [
-      "test/disc28_fatigue.test.js"
+      "test/systems/disc28_fatigue.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "  if (Number.isFinite(worldLeft) && now > Math.floor(worldLeft)) normalizeAcross(entity, Math.floor(worldLeft), now);\n",
     "new": "",
     "tests": [
-      "test/disc28_fatigue.test.js"
+      "test/systems/disc28_fatigue.test.js"
     ]
   },
   {
@@ -185,8 +185,8 @@
     "old": "    runCalendarArms(entity, s, e, { rolls, arms: DAY_ARMS.world });   // AUDIT DISC28 TM-3: then the per-minute loop's world arms",
     "new": "    runCalendarArms(entity, s, e, { rolls, arms: DAY_ARMS.all });   // AUDIT DISC28 TM-3: then the per-minute loop's world arms",
     "tests": [
-      "test/disc28_fatigue.test.js",
-      "test/auditdisc28_time.test.js"
+      "test/systems/disc28_fatigue.test.js",
+      "test/systems/auditdisc28_time.test.js"
     ]
   },
   {
@@ -195,7 +195,7 @@
     "old": "Math.floor((b - 1) / RECOVERY_INTERVAL_MINUTES) - Math.floor((a - 1) / RECOVERY_INTERVAL_MINUTES)",
     "new": "Math.floor(b / RECOVERY_INTERVAL_MINUTES) - Math.floor(a / RECOVERY_INTERVAL_MINUTES)",
     "tests": [
-      "test/disc28_fatigue.test.js"
+      "test/systems/disc28_fatigue.test.js"
     ]
   },
   {
@@ -204,7 +204,7 @@
     "old": "  if (n <= 0 || entity.preventNormalizingReputations) return 0;",
     "new": "  if (n <= 0) return 0;",
     "tests": [
-      "test/disc28_fatigue.test.js"
+      "test/systems/disc28_fatigue.test.js"
     ]
   },
   {
@@ -213,7 +213,7 @@
     "old": "this._resolveCapsule(feet, out, height, Infinity, dy > 0);",
     "new": "this._resolveCapsule(feet, out, height, Infinity, false);",
     "tests": [
-      "test/disc28_swim.test.js"
+      "test/player/disc28_swim.test.js"
     ]
   },
   {
@@ -222,7 +222,7 @@
     "old": "&& (oneWayFloor === true || (R ? center[1] - dy : t[1] + (ly - dy)) < center[1] + oneWayFloor)\n            ",
     "new": "",
     "tests": [
-      "test/disc28_swim.test.js"
+      "test/player/disc28_swim.test.js"
     ]
   },
   {
@@ -231,35 +231,35 @@
     "old": "const lowOneWay = straddle ? axis : true;",
     "new": "const lowOneWay = straddle ? false : true;",
     "tests": [
-      "test/disc28_swim.test.js",
-      "test/ph1_physics.test.js"
+      "test/player/disc28_swim.test.js",
+      "test/player/ph1_physics.test.js"
     ]
   },
   {
     "name": "DISC28-H-hang-unfloored",
-    "file": "src/characters/enemyAnchor.js",
+    "file": "src/characters/enemy/enemyAnchor.js",
     "old": "  if (Number.isFinite(floorY) && floorY <= centre[1] && feet[1] < floorY) feet[1] = floorY;\n",
     "new": "",
     "tests": [
-      "test/disc28_flyer.test.js"
+      "test/characters/enemy/disc28_flyer.test.js"
     ]
   },
   {
     "name": "DISC28-H-floor-above-marker-lifts",
-    "file": "src/characters/enemyAnchor.js",
+    "file": "src/characters/enemy/enemyAnchor.js",
     "old": "floorY <= centre[1] && ",
     "new": "",
     "tests": [
-      "test/disc28_flyer.test.js"
+      "test/characters/enemy/disc28_flyer.test.js"
     ]
   },
   {
     "name": "DISC28-H-builder-reads-no-floor",
-    "file": "src/characters/enemyAnchor.js",
+    "file": "src/characters/enemy/enemyAnchor.js",
     "old": "flyerSpawnFeet(at, idleH, floorUnderHang(collider, at, idleH))",
     "new": "flyerSpawnFeet(at, idleH, null)",
     "tests": [
-      "test/disc28_flyer.test.js"
+      "test/characters/enemy/disc28_flyer.test.js"
     ]
   },
   {
@@ -268,7 +268,7 @@
     "old": "spawnDistanceType: 0 }, false, { puppet: true, feetGiven: true });   // DISC28-H: `r.f` is the owner's feet; AUDIT PRE-MERGE 0928 M1: the owner's foe",
     "new": "spawnDistanceType: 0 }, false, { puppet: true });   // DISC28-H: `r.f` is the owner's feet; AUDIT PRE-MERGE 0928 M1: the owner's foe",
     "tests": [
-      "test/disc28_flyer.test.js"
+      "test/characters/enemy/disc28_flyer.test.js"
     ]
   },
   {
@@ -277,7 +277,7 @@
     "old": "      if (data) this._finishedShares.push(data);",
     "new": "",
     "tests": [
-      "test/disc28_quest.test.js"
+      "test/systems/quest/disc28_quest.test.js"
     ]
   },
   {
@@ -286,7 +286,7 @@
     "old": "!quest._finishedBySync && this.sharedQuestNames",
     "new": "this.sharedQuestNames",
     "tests": [
-      "test/disc28_quest.test.js"
+      "test/systems/quest/disc28_quest.test.js"
     ]
   },
   {
@@ -295,7 +295,7 @@
     "old": "if (quest.questComplete && !quest.questTombstoned && !quest._finishedBySync",
     "new": "if (!quest.questTombstoned && !quest._finishedBySync",
     "tests": [
-      "test/disc28_quest.test.js"
+      "test/systems/quest/disc28_quest.test.js"
     ]
   },
   {
@@ -304,7 +304,7 @@
     "old": "    if (finishing) questData = { ...questData, questComplete: false, questTombstoned: false };\n",
     "new": "",
     "tests": [
-      "test/disc28_quest.test.js"
+      "test/systems/quest/disc28_quest.test.js"
     ]
   },
   {
@@ -313,7 +313,7 @@
     "old": "    if (finishing) { quest._finishedBySync = true; quest.endQuest(); }",
     "new": "    if (finishing) { quest._finishedBySync = true; }",
     "tests": [
-      "test/disc28_quest.test.js"
+      "test/systems/quest/disc28_quest.test.js"
     ]
   },
   {
@@ -322,34 +322,34 @@
     "old": "'TrainPc', 'GetItem', 'RevealLocation']);",
     "new": "'TrainPc', 'RevealLocation']);",
     "tests": [
-      "test/disc28_quest.test.js"
+      "test/systems/quest/disc28_quest.test.js"
     ]
   },
   {
     "name": "DISC28-I-final-makes-a-copy",
-    "file": "src/systems/questShare.js",
+    "file": "src/systems/quest/questShare.js",
     "old": "  if (safe.questComplete === true || shareEnvelopeEnding(safe)) return { ok: false, reason: 'finished' };\n",
     "new": "",
     "tests": [
-      "test/disc28_quest.test.js"
+      "test/systems/quest/disc28_quest.test.js"
     ]
   },
   {
     "name": "DISC28-I-signature-log-only",
-    "file": "src/systems/questShare.js",
+    "file": "src/systems/quest/questShare.js",
     "old": "    for (const action of task.actions ?? []) parts.push(action.isComplete ? 1 : 0);\n",
     "new": "",
     "tests": [
-      "test/disc28_quest.test.js"
+      "test/systems/quest/disc28_quest.test.js"
     ]
   },
   {
     "name": "DISC28-I-signature-no-trigger",
-    "file": "src/systems/questShare.js",
+    "file": "src/systems/quest/questShare.js",
     "old": "    parts.push(task.triggered ? 1 : 0);\n",
     "new": "",
     "tests": [
-      "test/disc28_quest.test.js"
+      "test/systems/quest/disc28_quest.test.js"
     ]
   },
   {
@@ -358,7 +358,7 @@
     "old": "    if (residencesOnly && !(buildingType >= HOUSE1 && buildingType <= HOUSE6)) return false;\n",
     "new": "",
     "tests": [
-      "test/disc28_quest.test.js"
+      "test/systems/quest/disc28_quest.test.js"
     ]
   },
   {
@@ -367,7 +367,7 @@
     "old": "buildingType <= HOUSE6)",
     "new": "buildingType <= BUILDING_TYPES.House4)",
     "tests": [
-      "test/disc28_quest.test.js"
+      "test/systems/quest/disc28_quest.test.js"
     ]
   },
   {
@@ -376,7 +376,7 @@
     "old": "site.buildingKey === buildingKey && site.mapId === mapId",
     "new": "site.buildingKey === buildingKey",
     "tests": [
-      "test/disc28_quest.test.js"
+      "test/systems/quest/disc28_quest.test.js"
     ]
   },
   {
@@ -385,7 +385,7 @@
     "old": "return questBridge.machine.isActiveQuestBuilding(questSceneCtx?.()?.mapId ?? 0, b.buildingKey, b.buildingType);",
     "new": "return questBridge.machine.getSiteLinks(SITE_TYPES.Building, questSceneCtx?.()?.mapId ?? 0, b.buildingKey).length > 0;",
     "tests": [
-      "test/disc28_quest.test.js"
+      "test/systems/quest/disc28_quest.test.js"
     ]
   },
   {
@@ -394,7 +394,7 @@
     "old": "data: { ...prepared.data, sync: 1, final: 1 }",
     "new": "data: { ...prepared.data, sync: 1 }",
     "tests": [
-      "test/disc28_quest.test.js"
+      "test/systems/quest/disc28_quest.test.js"
     ]
   },
   {
@@ -403,7 +403,7 @@
     "old": "  if (!renamed || renamed === rec.displayName) return false;   // HALL-STAMP: and a nameless Place names nothing",
     "new": "  return false;",
     "tests": [
-      "test/disc28_names.test.js"
+      "test/systems/disc28_names.test.js"
     ]
   },
   {
@@ -412,7 +412,7 @@
     "old": " || renamed === rec.displayName) return false;",
     "new": ") return false;",
     "tests": [
-      "test/disc28_names.test.js"
+      "test/systems/disc28_names.test.js"
     ]
   },
   {
@@ -421,7 +421,7 @@
     "old": "return r?.isQuestResource && r.pcLearnedAboutExistence ? (",
     "new": "return r?.isQuestResource ? (",
     "tests": [
-      "test/disc28_names.test.js"
+      "test/systems/disc28_names.test.js"
     ]
   }
 ]

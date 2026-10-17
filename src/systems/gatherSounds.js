@@ -19,7 +19,7 @@
 // rules untouched): thirty-six clips of the port's own (tools/
 // gatherSfx.mjs -> public/sfx/gather-*.wav, provenance in public/sfx/
 // SOURCES.md), registered on the bus under string keys the climb's way
-// (player/climbSounds.js), each at the node in the world (a node in
+// (player/climb/climbSounds.js), each at the node in the world (a node in
 // reach at its full volume), the net's where it landed, a hand's and a
 // chime at the ear. A blow sounds as it LANDS - the tool's swing is
 // DFU's melee strike, and its blow lands on the strike's hit frame
@@ -36,7 +36,7 @@
 // ═══════════════════════════════════════════════════════════════════
 import { APP_ROOT } from './appRoot.js';
 import { enhancedSoundsOn } from './enhancedSounds.js';
-import { profCue } from './profSounds.js';
+import { profCue } from './professions/profSounds.js';
 import { DEFAULT_ACTIVATION_DISTANCE } from '../player/activate.js';
 
 /** The sounds, each its clips' keys (a sound of several is never the one just heard). */
@@ -97,7 +97,7 @@ export const GATHER_SOUND = Object.freeze({
  * -28), where (`node` the node's place, `net` where the net landed, `ear` flat), its pitch, a jitter of its own (a chime
  * none), the shortest gap between two of it (a burst of kept answers rings once), how long after it is asked it sounds
  * (a rank's chime after the goods' bag), and its DFU stand-in on the classic skin - the cue the HUD said there before
- * GATHER-FEEL (systems/profSounds.js PROF_CUES), or none.
+ * GATHER-FEEL (systems/professions/profSounds.js PROF_CUES), or none.
  * @type {Readonly<Record<string, Readonly<{ sfx: string, volume: number, where: 'node'|'net'|'ear', pitch?: number, jitter?: number, gap?: number, after?: number, classic: string|null }>>>}
  */
 export const GATHER_SAY = Object.freeze({
@@ -269,7 +269,7 @@ const isVec3 = (v) => v != null && typeof v === 'object' && v.length >= 3 && Num
  * @param {{ audio?: any, on?: () => boolean, rand?: () => number, cue?: (name: string) => any, install?: boolean }} [o]
  *   `audio` the bus (playOneShot, play3d, registerSound); `on` the switch (the port's own sounds); `rand` the variety's
  *   dice (the pins' seam; Math.random bare - the port's own variety, no DFU draw); `cue` the classic skin's voice
- *   (systems/profSounds.js profCue); `install` false keeps the clips unloaded (a pin's bus has none).
+ *   (systems/professions/profSounds.js profCue); `install` false keeps the clips unloaded (a pin's bus has none).
  */
 export function createGatherEar({ audio = null, on = enhancedSoundsOn, rand = Math.random, cue = profCue, install = true } = {}) {
   /** the act last heard and its state as last heard; its node's place; where its net landed */

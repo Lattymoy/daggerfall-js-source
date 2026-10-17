@@ -141,7 +141,7 @@ export const hasAmbientText = (key, texts = AMBIENT_TEXTS) => Object.prototype.h
  *                  DRAWN and never did - the host's `say` is
  *                  townTalk.say, which is HudText.add, which is
  *                  PopupText. Under the enhanced skin those rows are
- *                  toasts in the notice stack (ui/enhancedNotice.js,
+ *                  toasts in the notice stack (ui/enhanced/enhancedNotice.js,
  *                  ENH-NOTICE3 - the slide-in panel Mac asked every
  *                  mod's text to use), so these lines are too, and
  *                  no line of this mod changed to do it.

@@ -4,27 +4,27 @@
     "file": "src/net/nodeLaw.js",
     "old": "export const UNCONFIRMED_VEIN_TIER = 3;",
     "new": "export const UNCONFIRMED_VEIN_TIER = 2;",
-    "tests": ["test/fb1009e_unwitnessedore.test.js"]
+    "tests": ["test/net/fb1009e_unwitnessedore.test.js"]
   },
   {
     "name": "UNWITNESSED-ORE-the-vein-held-to-two",
     "file": "src/net/nodeLaw.js",
     "old": "  const d = drawFromTable(table, unit('vein', x, y, day, slot, 3), unit('vein', x, y, day, slot, 4), confirmed || surveyed ? 7 : UNCONFIRMED_VEIN_TIER);",
     "new": "  const d = drawFromTable(table, unit('vein', x, y, day, slot, 3), unit('vein', x, y, day, slot, 4), confirmed || surveyed ? 7 : 2);",
-    "tests": ["test/fb1009e_unwitnessedore.test.js"]
+    "tests": ["test/net/fb1009e_unwitnessedore.test.js"]
   },
   {
     "name": "UNWITNESSED-ORE-the-court-held-to-two",
     "file": "src/net/nodeLaw.js",
     "old": "    for (const k of VEIN_TABLES[p.climate] ?? []) if (tierOfKey(k) <= (p.confirmed ? 7 : UNCONFIRMED_VEIN_TIER)) keys.add(k);",
     "new": "    for (const k of VEIN_TABLES[p.climate] ?? []) if (tierOfKey(k) <= (p.confirmed ? 7 : 2)) keys.add(k);",
-    "tests": ["test/fb1009e_unwitnessedore.test.js"]
+    "tests": ["test/net/fb1009e_unwitnessedore.test.js"]
   },
   {
     "name": "UNWITNESSED-ORE-the-page-says-nothing",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "    if (_sel === 'mining') pane.append(el('p', 'px-note', miningGroundLine()));   // UNWITNESSED-ORE",
     "new": "    void miningGroundLine;",
-    "tests": ["test/fb1009e_unwitnessedore.test.js"]
+    "tests": ["test/net/fb1009e_unwitnessedore.test.js"]
   }
 ]

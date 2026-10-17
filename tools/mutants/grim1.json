@@ -3,7 +3,7 @@
     "name": "GRIM1-gold-kept-gold",
     "file": "src/ui/grimoireDress.js",
     "tests": [
-      "test/grim1_dress.test.js"
+      "test/ui/grim1_dress.test.js"
     ],
     "old": "  if (h >= 38 && h <= 72) return hsla(5, 0.8, 0.29, a);",
     "new": "  if (h >= 38 && h <= 72) return hsla(h, 0.8, 0.29, a);"
@@ -12,7 +12,7 @@
     "name": "GRIM1-ink-lightened",
     "file": "src/ui/grimoireDress.js",
     "tests": [
-      "test/grim1_dress.test.js"
+      "test/ui/grim1_dress.test.js"
     ],
     "old": "  if (chroma(v) < 0.16) return hsla(26, 0.6, 0.21 - 0.13 * t, a);",
     "new": "  if (chroma(v) < 0.16) return hsla(26, 0.6, 0.41 - 0.13 * t, a);"
@@ -21,7 +21,7 @@
     "name": "GRIM1-dark-word-inked",
     "file": "src/ui/grimoireDress.js",
     "tests": [
-      "test/grim1_dress.test.js"
+      "test/ui/grim1_dress.test.js"
     ],
     "old": "  if (L < 0.42) return null;",
     "new": "  if (L < 0.02) return null;"
@@ -30,7 +30,7 @@
     "name": "GRIM1-wash-a-slab",
     "file": "src/ui/grimoireDress.js",
     "tests": [
-      "test/grim1_dress.test.js"
+      "test/ui/grim1_dress.test.js"
     ],
     "old": "  return hsla(30, 0.45, 0.32, Math.min(0.2, a * 0.16));",
     "new": "  return hsla(30, 0.45, 0.32, a);"
@@ -39,7 +39,7 @@
     "name": "GRIM1-diamond-kept",
     "file": "src/ui/grimoireDress.js",
     "tests": [
-      "test/grim1_dress.test.js"
+      "test/ui/grim1_dress.test.js"
     ],
     "old": "face.push(`content: none${imp}`);",
     "new": "face.push(`content: ${v}${imp}`);"
@@ -48,7 +48,7 @@
     "name": "GRIM1-scope-after-pseudo",
     "file": "src/ui/grimoireDress.js",
     "tests": [
-      "test/grim1_dress.test.js"
+      "test/ui/grim1_dress.test.js"
     ],
     "old": "  return `${head}${scope}${tail}`;",
     "new": "  return `${head}${tail}${scope}`;"
@@ -57,7 +57,7 @@
     "name": "GRIM1-face-left-pixel",
     "file": "src/ui/grimoireDress.js",
     "tests": [
-      "test/grim1_dress.test.js"
+      "test/ui/grim1_dress.test.js"
     ],
     "old": "    if ((prop === 'font-family' || prop === 'font') && PIXEL_FACE.test(v)) {",
     "new": "    if ((prop === 'font-family' || prop === 'font') && PIXEL_FACE.test(v) && false) {"
@@ -66,7 +66,7 @@
     "name": "GRIM1-vials-order-lost",
     "file": "src/ui/grimoireDress.js",
     "tests": [
-      "test/grim1_dress.test.js"
+      "test/ui/grim1_dress.test.js"
     ],
     "old": "${G}[data-grim-vitals=\"upright\"] .hud-health { order: 1; }",
     "new": "${G}[data-grim-vitals=\"upright\"] .hud-health { order: 4; }"
@@ -75,16 +75,16 @@
     "name": "GRIM1-dress-not-written",
     "file": "src/systems/overhauls.js",
     "tests": [
-      "test/grim1_dress.test.js"
+      "test/ui/grim1_dress.test.js"
     ],
     "old": "    if (skin === 'enhanced' && setPref('plusDress', dress) === false) url.searchParams.set('dress', dress);   // SKIN-CARRY",
     "new": "    if (skin === 'enhanced' && false) url.searchParams.set('dress', dress);   // SKIN-CARRY"
   },
   {
     "name": "GRIM1-theme-worn-under-dress",
-    "file": "src/ui/enhancedPlusStyle.js",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
     "tests": [
-      "test/grim1_dress.test.js"
+      "test/ui/grim1_dress.test.js"
     ],
     "old": "  if (plusDress() === GRIMOIRE_DRESS) { root.dataset.plusTheme = DEFAULT_PLUS_THEME; mountGrimoireDress(doc); return; }",
     "new": "  if (plusDress() === GRIMOIRE_DRESS) { root.dataset.plusTheme = plusTheme(); mountGrimoireDress(doc); return; }"
@@ -93,7 +93,7 @@
     "name": "GRIM1-face-off-the-grid",
     "file": "src/ui/grimoireDress.js",
     "tests": [
-      "test/grim1_dress.test.js"
+      "test/ui/grim1_dress.test.js"
     ],
     "old": "export const snapSize = (px) => (px <= 20 ? 16 : px <= 40 ? 32 : 48);",
     "new": "export const snapSize = (px) => px;"
@@ -102,7 +102,7 @@
     "name": "GRIM1-face-smoothed",
     "file": "src/ui/grimoireDress.js",
     "tests": [
-      "test/grim1_dress.test.js"
+      "test/ui/grim1_dress.test.js"
     ],
     "old": "face.push('-webkit-font-smoothing: none', 'font-synthesis: none', 'font-variant-ligatures: normal');",
     "new": "face.push('-webkit-font-smoothing: auto', 'font-synthesis: none', 'font-variant-ligatures: normal');"
@@ -111,7 +111,7 @@
     "name": "GRIM4-foe-a-tube",
     "file": "src/ui/grimoireDress.js",
     "tests": [
-      "test/grim1_dress.test.js"
+      "test/ui/grim1_dress.test.js"
     ],
     "old": "${G} .hud-foe .hud-foetrack .hud-fill { background: ${v('vialHealth')} 0 0 / ${px(86, 'gq')} 100% no-repeat, #8a1c18; }",
     "new": "${G} .hud-foe .hud-foetrack .hud-fill { background: ${tube('Health')}, #8a1c18; }"
@@ -120,7 +120,7 @@
     "name": "GRIM4-attribute-a-vial",
     "file": "src/ui/grimoireDress.js",
     "tests": [
-      "test/grim1_dress.test.js"
+      "test/ui/grim1_dress.test.js"
     ],
     "old": "${q('.px-mrow[data-grim-meter=\"attr\"] .px-meter')} { height: ${px(3, 'gq')} !important;",
     "new": "${q('.px-mrow[data-grim-meter=\"attr\"] .px-meter')} { height: ${VIAL_H} !important;"
@@ -129,7 +129,7 @@
     "name": "GRIM4-page-padding-lost",
     "file": "src/ui/grimoireDress.js",
     "tests": [
-      "test/grim1_dress.test.js"
+      "test/ui/grim1_dress.test.js"
     ],
     "old": "  padding: ${px(2)} calc(${px(2)} + ${px(BG - BO)}) ${px(1)} ${px(2)}; }",
     "new": "  padding: ${px(2)} calc(${px(2)} + ${px(BG - BO)}) ${px(1)} 0; }"
@@ -138,7 +138,7 @@
     "name": "GRIM4-compass-pixelated",
     "file": "src/ui/grimoireDress.js",
     "tests": [
-      "test/grim1_dress.test.js"
+      "test/ui/grim1_dress.test.js"
     ],
     "old": "bottom: var(--gcm); image-rendering: auto;",
     "new": "bottom: var(--gcm); image-rendering: pixelated;"
@@ -147,7 +147,7 @@
     "name": "GRIM4-card-shadow-kept",
     "file": "src/ui/grimoireDress.js",
     "tests": [
-      "test/grim1_dress.test.js"
+      "test/ui/grim1_dress.test.js"
     ],
     "old": "${G} .rvncard, ${G} .rvncard :not(.rvncard-rank, .rvncard-mood) { text-shadow: none !important; }",
     "new": "${G} .rvncard, ${G} .rvncard :not(.rvncard-rank, .rvncard-mood) { text-shadow: inherit; }"
@@ -156,7 +156,7 @@
     "name": "GRIM4-step-lettered",
     "file": "src/ui/grimoireDress.js",
     "tests": [
-      "test/grim1_dress.test.js"
+      "test/ui/grim1_dress.test.js"
     ],
     "old": "position: relative; width: 24px; min-width: 0; padding: 0; font-size: 0 !important;",
     "new": "position: relative; width: 24px; min-width: 0; padding: 0; font-size: 16px !important;"
@@ -165,7 +165,7 @@
     "name": "GRIM4-door-left-a-word",
     "file": "src/ui/grimoireDress.js",
     "tests": [
-      "test/grim1_dress.test.js"
+      "test/ui/grim1_dress.test.js"
     ],
     "old": "(${Object.keys(DIAL_ICONS).join('|')})",
     "new": "(${Object.keys(DIAL_ICONS).slice(1).join('|')})"
@@ -174,7 +174,7 @@
     "name": "GRIM4-book-resampled",
     "file": "src/ui/grimoireArt.js",
     "tests": [
-      "test/grim1_dress.test.js"
+      "test/ui/grim1_dress.test.js"
     ],
     "old": "  if (c.cells) return [c.cells[2], c.cells[3]];",
     "new": "  if (c.cells) return [Math.round(c.cells[2] * 1.25), Math.round(c.cells[3] * 1.25)];"
@@ -183,7 +183,7 @@
     "name": "GRIM4-outline-past-picture",
     "file": "src/ui/grimoireArt.js",
     "tests": [
-      "test/grim1_dress.test.js"
+      "test/ui/grim1_dress.test.js"
     ],
     "old": "skills: Object.freeze({ img: 'MAP100I0', h: 96, poly: Object.freeze([[603, 6],",
     "new": "skills: Object.freeze({ img: 'MAP100I0', h: 96, poly: Object.freeze([[603, -6],"
@@ -192,7 +192,7 @@
     "name": "GRIM5-foot-at-liquid-end",
     "file": "src/ui/grimoireDress.js",
     "tests": [
-      "test/grim1_dress.test.js"
+      "test/ui/grim1_dress.test.js"
     ],
     "old": "${empty ? '100%' : `calc(100cqw - ${px(VIAL_FOOT, u)})`} 0 /",
     "new": "${empty ? '100%' : `calc(100% - ${px(VIAL_FOOT, u)})`} 0 /"
@@ -201,7 +201,7 @@
     "name": "GRIM5-of-n-lifted",
     "file": "src/ui/grimoireDress.js",
     "tests": [
-      "test/grim1_dress.test.js"
+      "test/ui/grim1_dress.test.js"
     ],
     "old": "${G} .qtyfield > span { margin: 0 !important; padding: 0 !important; line-height: 20px; align-self: center; }",
     "new": "${G} .qtyfield > span { line-height: 20px; }"
@@ -210,7 +210,7 @@
     "name": "GRIM5-purse-on-baseline",
     "file": "src/ui/grimoireDress.js",
     "tests": [
-      "test/grim1_dress.test.js"
+      "test/ui/grim1_dress.test.js"
     ],
     "old": "${G} .pack-shell .packgold { align-items: center; }",
     "new": "${G} .pack-shell .packgold { align-items: baseline; }"
@@ -219,7 +219,7 @@
     "name": "GRIM5-rules-back",
     "file": "src/ui/grimoireDress.js",
     "tests": [
-      "test/grim1_dress.test.js"
+      "test/ui/grim1_dress.test.js"
     ],
     "old": "padding: 2px 10px !important; background: none !important; border: 0; text-align: left; }",
     "new": "padding: 2px 10px !important; background: none !important; border: 0; border-bottom: 1px dotted rgba(92,56,24,0.45); text-align: left; }"
@@ -228,7 +228,7 @@
     "name": "GRIM5-points-centred",
     "file": "src/ui/grimoireDress.js",
     "tests": [
-      "test/grim1_dress.test.js"
+      "test/ui/grim1_dress.test.js"
     ],
     "old": "  ${G} .lv-plate > .lv-count { grid-column: 2; grid-row: 1; justify-self: end; margin-right: -12px !important; }",
     "new": "  ${G} .lv-plate > .lv-count { grid-column: 1; grid-row: 1; justify-self: end; margin-right: -12px !important; }"
@@ -237,7 +237,7 @@
     "name": "GRIM6-ground-kept",
     "file": "src/ui/grimoireDress.js",
     "tests": [
-      "test/grim1_dress.test.js"
+      "test/ui/grim1_dress.test.js"
     ],
     "old": "${G} .px-ground { display: none !important; }",
     "new": "${G} .px-ground { opacity: 0; }"
@@ -246,7 +246,7 @@
     "name": "GRIM6-typed-word-white",
     "file": "src/ui/grimoireDress.js",
     "tests": [
-      "test/grim1_dress.test.js"
+      "test/ui/grim1_dress.test.js"
     ],
     "old": "${G} body .dfchat-input { color: ${T.ink} !important;",
     "new": "${G} body .dfchat-input { color: #ffffff !important;"
@@ -255,7 +255,7 @@
     "name": "GRIM6-points-at-48",
     "file": "src/ui/grimoireDress.js",
     "tests": [
-      "test/grim1_dress.test.js"
+      "test/ui/grim1_dress.test.js"
     ],
     "old": "${G} .lv-count { font-size: 32px !important; line-height: 32px;",
     "new": "${G} .lv-count { font-size: 48px !important; line-height: 32px;"
@@ -264,7 +264,7 @@
     "name": "GRIM6-slot-word-on-frame",
     "file": "src/ui/grimoireDress.js",
     "tests": [
-      "test/grim1_dress.test.js"
+      "test/ui/grim1_dress.test.js"
     ],
     "old": "${G} .pack-shell .equipped .wornrow { padding: ${px(5, 'gq')} ${px(5, 'gq')} ${px(7, 'gq')} ${px(6, 'gq')} !important; overflow: hidden; }",
     "new": "${G} .pack-shell .equipped .wornrow { overflow: hidden; }"

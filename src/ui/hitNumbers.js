@@ -132,7 +132,7 @@ export function tagHit(target, word, { now = Date.now() } = {}) {
 }
 
 /** FIELD BUGS 2026-10-15e ROSE-SEEN: a FOLLOW-UP BLOW of mine (Open Hand's second, Many Endings' echo -
- *  systems/lootPowers.js again) runs no formula, so the seam below never hears it and only the first blow rose: its own
+ *  systems/loot/lootPowers.js again) runs no formula, so the seam below never hears it and only the first blow rose: its own
  *  number, the power's name its tag. Only while the enhanced HUD has mounted the numbers. */
 export function showFollowUp(damage, word) {
   const n = Math.max(0, Math.round(damage || 0));

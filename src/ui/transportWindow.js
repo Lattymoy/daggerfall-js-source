@@ -29,7 +29,7 @@
 // the row is permanently the disabled art, which is exactly what a
 // shipless player sees in DFU.
 
-import { loadImg, drawImg, nativeMetrics } from './nativePanel.js';
+import { loadImg, drawImg, nativeMetrics } from './native/nativePanel.js';
 import { drawScreenDimBackdrop } from './chargenArt.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';

@@ -1,29 +1,29 @@
 [
   {
     "name": "SEAPEACE-hostileNear-ashore",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (!aboardShip()) return false;\n    if (deps.serpent?.near?.()) return true;   // SERPENT1: the sea serpent's waters about me",
     "new": "    if (deps.serpent?.near?.()) return true;   // SERPENT1: the sea serpent's waters about me",
     "tests": [
-      "test/seapeace.test.js"
+      "test/systems/naval/seapeace.test.js"
     ]
   },
   {
     "name": "SEAPEACE-threats-ashore",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "if (!enabled || !aboardShip()) return out;",
     "new": "if (!enabled) return out;",
     "tests": [
-      "test/seapeace.test.js"
+      "test/systems/naval/seapeace.test.js"
     ]
   },
   {
     "name": "SEAPEACE-hail-ashore",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (!aboardShip()) return;   // SEA-PEACE: the lookout's cry",
     "new": "    // SEA-PEACE: the lookout's cry",
     "tests": [
-      "test/seapeace.test.js"
+      "test/systems/naval/seapeace.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "() < bold ? TEMPERS.bold : TEMPERS.wary;",
     "new": "() >= bold ? TEMPERS.bold : TEMPERS.wary;",
     "tests": [
-      "test/seapeace.test.js"
+      "test/systems/naval/seapeace.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "mulberry32(((seed >>> 0) ^ TEMPER_SALT) >>> 0)()",
     "new": "mulberry32(seed >>> 0)()",
     "tests": [
-      "test/seapeace.test.js"
+      "test/systems/naval/seapeace.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "  if (cls.flagship) return TEMPERS.bold;\n",
     "new": "",
     "tests": [
-      "test/seapeace.test.js"
+      "test/systems/naval/seapeace.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "  const sides = a.tactic === 'bow' ? ['bow', 'starboard'] : ['starboard'];",
     "new": "  const sides = ['starboard', 'bow', 'stern'];",
     "tests": [
-      "test/seapeace.test.js"
+      "test/systems/naval/seapeace.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "    const balls = bat.muzzles.length / sides.length / (",
     "new": "    const balls = 2 * bat.muzzles.length / sides.length / (",
     "tests": [
-      "test/seapeace.test.js"
+      "test/systems/naval/seapeace.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "  const byHull = hull > 0 ? b.hullHp * Math.max(0, b.hullShare - STRUCK_AT) / hull : Infinity;",
     "new": "  const byHull = hull > 0 ? b.hullHp * (1 - STRUCK_AT) / hull : Infinity;",
     "tests": [
-      "test/seapeace.test.js"
+      "test/systems/naval/seapeace.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "  return theirs != null && odds(shipPower(ship), theirs) >= WARY_ODDS;",
     "new": "  return theirs != null && odds(theirs, shipPower(ship)) >= WARY_ODDS;",
     "tests": [
-      "test/seapeace.test.js"
+      "test/systems/naval/seapeace.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "  if (contact.crippled || share < GRAPPLE_HULL) return true;",
     "new": "  if (contact.crippled) return true;",
     "tests": [
-      "test/seapeace.test.js"
+      "test/systems/naval/seapeace.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "  if ((ship.provoked.get(contact.id) ?? -Infinity) > now - PROVOKED_S) return true;",
     "new": "  if (ship.temper !== TEMPERS.wary && (ship.provoked.get(contact.id) ?? -Infinity) > now - PROVOKED_S) return true;",
     "tests": [
-      "test/seapeace.test.js"
+      "test/systems/naval/seapeace.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "    || (ship.cls.faction === 'pirate' && ship.temper === TEMPERS.wary && !!threat && outguns(threat, ship));",
     "new": "    || false;",
     "tests": [
-      "test/seapeace.test.js"
+      "test/systems/naval/seapeace.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "away > CHASE_AWAY * own)",
     "new": "away > CHASE_AWAY * ev)",
     "tests": [
-      "test/seapeace.test.js"
+      "test/systems/naval/seapeace.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "const out = d > range * CHASE_SHEER ? 0 : range;",
     "new": "const out = range;",
     "tests": [
-      "test/seapeace.test.js"
+      "test/systems/naval/seapeace.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": " && offBow > ABAFT_DEG * DEG) {",
     "new": ") {",
     "tests": [
-      "test/seapeace.test.js"
+      "test/systems/naval/seapeace.test.js"
     ]
   },
   {
@@ -149,52 +149,52 @@
     "old": "} else if (prize && ship.damage.crew > 0 && ship.cls.faction !== 'merchant') {",
     "new": "} else if (false) {",
     "tests": [
-      "test/seapeace.test.js"
+      "test/systems/naval/seapeace.test.js"
     ]
   },
   {
     "name": "SEAPEACE-the-prize-never-fired",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      p.ship.damage.scuttle();\n",
     "new": "",
     "tests": [
-      "test/seapeace.test.js"
+      "test/systems/naval/seapeace.test.js"
     ]
   },
   {
     "name": "SEAPEACE-the-crew-uncharged",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      if (lost > 0) v.ship.damage.apply(",
     "new": "      if (false) v.ship.damage.apply(",
     "tests": [
-      "test/seapeace.test.js"
+      "test/systems/naval/seapeace.test.js"
     ]
   },
   {
     "name": "SEAPEACE-the-news-unbounded",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "const news = by === myId() || newsworthy(entry);",
     "new": "const news = true;",
     "tests": [
-      "test/seapeace.test.js"
+      "test/systems/naval/seapeace.test.js"
     ]
   },
   {
     "name": "SEAPEACE-the-lash-kept-under-fire",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (s.lashed) unlashPrize(entry);",
     "new": "",
     "tests": [
-      "test/seapeace.test.js"
+      "test/systems/naval/seapeace.test.js"
     ]
   },
   {
     "name": "SEAPEACE-the-prize-let-go-before-the-grapple",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      for (const x of ships) if (!x.theirs && chased.has(x.id)) x.engaged = true;",
     "new": "",
     "tests": [
-      "test/seapeace.test.js"
+      "test/systems/naval/seapeace.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "if (g.by === ship.id || !(world.now - g.at <= HEAR_S)) continue;",
     "new": "if (g.by === ship.id) continue;",
     "tests": [
-      "test/seapeace.test.js"
+      "test/systems/naval/seapeace.test.js"
     ]
   },
   {
@@ -212,7 +212,7 @@
     "old": "if (g.by === ship.id || !(world.now - g.at <= HEAR_S)) continue;",
     "new": "if (!(world.now - g.at <= HEAR_S)) continue;",
     "tests": [
-      "test/seapeace.test.js"
+      "test/systems/naval/seapeace.test.js"
     ]
   },
   {
@@ -221,16 +221,16 @@
     "old": "if (d > HEAR_GUNS_M || d < near || d >= bestD) continue;",
     "new": "if (d < near || d >= bestD) continue;",
     "tests": [
-      "test/seapeace.test.js"
+      "test/systems/naval/seapeace.test.js"
     ]
   },
   {
     "name": "SEAPEACE-the-report-unkept",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      if ((e.index ?? 0) === 0) heardGun(e.pos, gunfireBy(e.shooter));",
     "new": "",
     "tests": [
-      "test/seapeace.test.js"
+      "test/systems/naval/seapeace.test.js"
     ]
   },
   {
@@ -239,7 +239,7 @@
     "old": "if (!(r() < ENCOUNTER_CHANCE)) return null;",
     "new": "if (!(r() < 1)) return null;",
     "tests": [
-      "test/seapeace.test.js"
+      "test/systems/naval/seapeace.test.js"
     ]
   },
   {
@@ -248,7 +248,7 @@
     "old": "    const r = encounterRng(seed);",
     "new": "    const r = mulberry32(seed);",
     "tests": [
-      "test/seapeace.test.js"
+      "test/systems/naval/seapeace.test.js"
     ]
   },
   {
@@ -257,7 +257,7 @@
     "old": "odds(classPower(pirate), classPower(c)) >= WARY_ODDS);",
     "new": "true);",
     "tests": [
-      "test/seapeace.test.js"
+      "test/systems/naval/seapeace.test.js"
     ]
   },
   {
@@ -266,34 +266,34 @@
     "old": "if (alive + 2 <= (ctx.density ?? 0)) {",
     "new": "if (alive + 1 <= (ctx.density ?? 0)) {",
     "tests": [
-      "test/seapeace.test.js"
+      "test/systems/naval/seapeace.test.js"
     ]
   },
   {
     "name": "SEAPEACE-the-company-unlaunched",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "        if (out.spawn.company) launch(out.spawn.company);   // SEA-PEACE: two ships already at it",
     "new": "",
     "tests": [
-      "test/seapeace.test.js"
+      "test/systems/naval/seapeace.test.js"
     ]
   },
   {
     "name": "SEAPEACE-the-hand-launched-pirate-wary",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "e.ship.cls.faction === 'pirate' ? TEMPERS.bold : e.ship.temper;",
     "new": "e.ship.temper;",
     "tests": [
-      "test/seapeace.test.js"
+      "test/systems/naval/seapeace.test.js"
     ]
   },
   {
     "name": "SEAPEACE-a-crewless-boat-at-full-rate",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "crewed: !!boat.crewed, player: true });",
     "new": "crewed: true, player: true });",
     "tests": [
-      "test/seapeace.test.js"
+      "test/systems/naval/seapeace.test.js"
     ],
     "note": "CREW-HOLD/GALLEON-WEIGHT (2026-10-06): re-aimed by content - the line gained the crew's toughness or the weight."
   }

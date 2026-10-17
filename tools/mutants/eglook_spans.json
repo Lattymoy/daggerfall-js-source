@@ -1,0 +1,209 @@
+[
+  {
+    "name": "EGLOOK-SPANS-cornice-over-the-top",
+    "file": "src/world/eliteGates/egPlatformModel.js",
+    "old": "[[0, 0], [0, -0.07], [0.3, -0.07], [0.3, -0.36], [0, -0.52]]",
+    "new": "[[0, 0], [0, -0.07], [0.3, 0.02], [0.3, -0.36], [0, -0.52]]",
+    "tests": [
+      "test/world/eliteGates/eglook_spans.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-SPANS-cornice-past-the-teeth",
+    "file": "src/world/eliteGates/egPlatformModel.js",
+    "old": "[0.26, -0.2], [0.26, -0.3], [0, -0.46]]",
+    "new": "[0.46, -0.2], [0.46, -0.3], [0, -0.46]]",
+    "tests": [
+      "test/world/eliteGates/eglook_spans.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-SPANS-column-in-the-footprint",
+    "file": "src/world/eliteGates/egPlatformModel.js",
+    "old": "egCorniceReach(C.profile) + 0.6 * plan.column.R, r)",
+    "new": "egCorniceReach(C.profile) - 0.9 * plan.column.R, r)",
+    "tests": [
+      "test/world/eliteGates/eglook_spans.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-SPANS-riser-cut-out-of-its-box",
+    "file": "src/world/eliteGates/egPlatformModel.js",
+    "old": "Object.freeze({ h: 0.5, cut: 0.05, lip: 0.05 })",
+    "new": "Object.freeze({ h: 0.5, cut: -0.05, lip: 0.05 })",
+    "tests": [
+      "test/world/eliteGates/eglook_spans.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-SPANS-strata-a-fixed-depth",
+    "file": "src/world/eliteGates/egPlatformModel.js",
+    "old": "const foundV = (y) => Math.max(0, Math.min(1, -y / _fd));",
+    "new": "const foundV = (y) => Math.max(0, Math.min(1, -y / 5));",
+    "tests": [
+      "test/world/eliteGates/eglook_spans.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-SPANS-a-column-on-a-gust",
+    "file": "src/world/eliteGates/egPlatformModel.js",
+    "old": "SLABS.includes(kind) && kind !== 'gust' && roll < L.column.share",
+    "new": "SLABS.includes(kind) && roll < L.column.share",
+    "tests": [
+      "test/world/eliteGates/eglook_spans.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-SPANS-head-room-ignored",
+    "file": "src/world/eliteGates/egPlatformModel.js",
+    "old": "    depth = Math.min(depth, s.y - f.y - L.head);",
+    "new": "    depth = Math.min(depth, 99);",
+    "tests": [
+      "test/world/eliteGates/eglook_spans.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-SPANS-abutting-side-corniced",
+    "file": "src/world/eliteGates/egPlatformModel.js",
+    "old": "if (cornice[k] && overlaps(sideBox[k], f.box)) cornice[k] = false;",
+    "new": "if (cornice[k] && overlaps(sideBox[k], f.box)) cornice[k] = true;",
+    "tests": [
+      "test/world/eliteGates/eglook_spans.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-SPANS-drop-walls-corniced",
+    "file": "src/world/eliteGates/egPlatformModel.js",
+    "old": "kind === 'drop' ? [true, false, false, false]",
+    "new": "kind === 'drop' ? [true, true, true, true]",
+    "tests": [
+      "test/world/eliteGates/eglook_spans.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-SPANS-carriage-ends-corniced",
+    "file": "src/world/eliteGates/egPlatformModel.js",
+    "old": "CARRIAGES.includes(kind) ? [false, true, false, true] : [true, true, true, true];",
+    "new": "CARRIAGES.includes(kind) ? [true, true, true, true] : [true, true, true, true];",
+    "tests": [
+      "test/world/eliteGates/eglook_spans.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-SPANS-carriage-into-its-track",
+    "file": "src/world/eliteGates/egPlatformModel.js",
+    "old": "if (CARRIAGES.includes(plan.kind)) carriage(K, a, b);",
+    "new": "if (false) carriage(K, a, b);",
+    "tests": [
+      "test/world/eliteGates/eglook_spans.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-SPANS-hang-past-its-depth",
+    "file": "src/world/eliteGates/egPlatformModel.js",
+    "old": "len = Math.min(lerp(L.hang.len, r()), depth - T - L.hang.under);",
+    "new": "len = lerp(L.hang.len, r()) + 0.6;",
+    "tests": [
+      "test/world/eliteGates/eglook_spans.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-SPANS-lite-cornice-whole",
+    "file": "src/world/eliteGates/egPlatformModel.js",
+    "old": "  if (!lite) return C;",
+    "new": "  return C;",
+    "tests": [
+      "test/world/eliteGates/eglook_spans.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-SPANS-one-seed-every-piece",
+    "file": "src/world/eliteGates/egPlatformModel.js",
+    "old": "Math.imul(i + 13, 0x27d4eb2f)",
+    "new": "Math.imul(13, 0x27d4eb2f)",
+    "tests": [
+      "test/world/eliteGates/eglook_spans.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-SPANS-isle-strip-inside-its-rim",
+    "file": "src/world/eliteGates/egPlatformModel.js",
+    "old": "K.quad(REC.edge, at(k, radius + E.out, E.top), at(k, radius + E.out, E.foot), at(k1, radius + E.out, E.foot), at(k1, radius + E.out, E.top)",
+    "new": "K.quad(REC.edge, at(k, radius - E.out, E.top), at(k, radius - E.out, E.foot), at(k1, radius - E.out, E.foot), at(k1, radius - E.out, E.top)",
+    "tests": [
+      "test/world/eliteGates/eglook_spans.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-SPANS-crumble-stages-one-record",
+    "file": "src/world/eliteGates/egPlatformModel.js",
+    "old": "stages: [1, 2, 3].map((k) => as(box, EG_CRUMBLE_TELL_RECORDS[k]))",
+    "new": "stages: [1, 2, 3].map(() => as(box, EG_CRUMBLE_TELL_RECORDS[0]))",
+    "tests": [
+      "test/world/eliteGates/eglook_spans.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-SPANS-crumble-top-the-hours-basalt",
+    "file": "src/world/eliteGates/egPlatformArt.js",
+    "old": "return texel(floor, mx / 2 + 0.5, mz / 2 + 0.5);",
+    "new": "return ramp(SD_RAMP.basalt, 0.4, x, y);",
+    "tests": [
+      "test/world/eliteGates/eglook_spans.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-SPANS-beat-stone-stage-whole",
+    "file": "src/world/eliteGates/egPlatformArt.js",
+    "old": "q.warn.forEach((rec, k) => list.push([rec, egDissolveArt(dark, SD_BEAT_DISSOLVE.keep[k])]));",
+    "new": "q.warn.forEach((rec) => list.push([rec, egDissolveArt(dark, 16)]));",
+    "tests": [
+      "test/world/eliteGates/eglook_spans.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-SPANS-beat-stone-left-solid",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "return egPieceTellUp(renderer, band, { beat: true }) ? egBeatDressMaps(band, key) : egBeatTellMaps(band, key);",
+    "new": "return egBeatTellMaps(band, key);",
+    "tests": [
+      "test/world/eliteGates/eglook_spans.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-SPANS-a-kind-a-piece",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "place(kindOf(st.s), `piece:${st.key}`",
+    "new": "place(`piece:${st.key}`, `piece:${st.key}`",
+    "tests": [
+      "test/world/eliteGates/eglook_spans.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-SPANS-collider-the-looks",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "s.kind === 'drop' ? egDropTris(s.w, s.d) : egSlabTris(s.w, s.d));",
+    "new": "s.kind === 'drop' ? egSlabTris(s.w, s.d) : egSlabTris(s.w, s.d));",
+    "tests": [
+      "test/world/eliteGates/eglook_spans.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-SPANS-batch-every-copy-the-first-model",
+    "file": "src/scenes/eliteGates/egPieceBatch.js",
+    "old": "const s = k.slots[i], M = s.object?.matrix, B = k.models[k.mi[i]];",
+    "new": "const s = k.slots[i], M = s.object?.matrix, B = k.models[0];",
+    "tests": [
+      "test/world/eliteGates/eglook_spans.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-SPANS-batch-runs-the-first-models-length",
+    "file": "src/scenes/eliteGates/egPieceBatch.js",
+    "old": "for (let i = 0; i < c; i++) vo[i + 1] = vo[i] + k.models[k.mi[i]].verts;",
+    "new": "for (let i = 0; i < c; i++) vo[i + 1] = vo[i] + k.models[0].verts;",
+    "tests": [
+      "test/world/eliteGates/eglook_spans.test.js"
+    ]
+  }
+]

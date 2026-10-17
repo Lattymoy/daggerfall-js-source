@@ -21,7 +21,7 @@
 // at the wrap is the picture at zero. Pure where it can be: `nodeGlows` (who is drawn, how bright) and `nodeGlowClock`.
 //
 // AUDIT NODE-MARKS (Mac: "Audit this"): UNDER REDUCED MOTION IT STANDS STILL - the halo steady, no shimmer, the motes
-// held where they are (`uStill`), the professions' own law (ui/profHud.js: every act has a still form); its program is
+// held where they are (`uStill`), the professions' own law (ui/professions/profHud.js: every act has a still form); its program is
 // built at idle once a node is first marked, never on the frame that first lights one (PERF-WARM's law); and a pass that
 // ran is a foreign pass whatever it drew.
 //
@@ -49,7 +49,7 @@ export const NODE_GLOW_MOTE_R = 0.045;
 /** How much light each part adds at its brightest: the halo's body, the shimmer's band, a mote's heart. */
 export const NODE_GLOW_GAIN = Object.freeze({ halo: 0.3, shimmer: 0.14, mote: 0.85 });
 /** AUDIT DELVE D6: a glow's FORM - each part's share, [halo, shimmer, motes]: a node's is all three, whole; a sense
- *  mark carries its kind's (systems/dungeonSense.js SENSE_FORM), so the kinds differ in shape as well as colour. */
+ *  mark carries its kind's (systems/dungeon/dungeonSense.js SENSE_FORM), so the kinds differ in shape as well as colour. */
 export const NODE_GLOW_FORM = Object.freeze([1, 1, 1]);
 
 /** The clock, wrapped: whole cycles of every rate over its period, so no stutter at the wrap. Pure. */
@@ -109,7 +109,7 @@ export function nodeGlows(marks, eye, nowS, state, out) {
       const rgb = m.rgb ?? nodeMarkRgb(m.profession);
       const g = state.pool[out.length] ??= { at: m.at, w: 0, h: 0, rgb, alpha: 0, seed: 0, form: NODE_GLOW_FORM };
       g.at = m.at; g.w = m.w; g.h = m.h; g.rgb = rgb; g.alpha = alpha; g.seed = n.seed;
-      g.form = m.form ?? NODE_GLOW_FORM;   // AUDIT DELVE D6: a sense mark's own form (systems/dungeonSense.js SENSE_FORM); a node's is whole
+      g.form = m.form ?? NODE_GLOW_FORM;   // AUDIT DELVE D6: a sense mark's own form (systems/dungeon/dungeonSense.js SENSE_FORM); a node's is whole
       out.push(g);
     }
   }
@@ -275,7 +275,7 @@ export class NodeGlowRenderer {
   }
 }
 
-/** AUDIT NODE-MARKS: the system's reduced motion, asked once a second at most - ui/profHud.js's own reading. */
+/** AUDIT NODE-MARKS: the system's reduced motion, asked once a second at most - ui/professions/profHud.js's own reading. */
 function reducedMotionReader() {
   let at = -Infinity, reduced = false;
   return (nowS) => {

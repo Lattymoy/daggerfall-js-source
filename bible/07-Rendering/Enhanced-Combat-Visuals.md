@@ -26,7 +26,7 @@ the player; `WeaponManager.cs:549-552` for the player's own), and
 when the spell's rounds run out it reappears. Between the cast and either, there is nothing on screen.
 
 The port carries all of that verbatim: the spell table, the touch
-pick (`characters/enemyCasting.js`), the concealment flags
+pick (`characters/enemy/enemyCasting.js`), the concealment flags
 (`systems/effects.js`) and the A5 skip in every foe draw - the classic
 lane draws what DFU draws. Two things worth knowing beside it: DFU
 ships with Enhanced Combat AI ON, and that branch of its touch pick
@@ -97,7 +97,7 @@ person and neither does the port.
 
 ## Verification
 
-`test/combatVisuals.test.js` (7 tests): the switch, the law, the
+`test/systems/combatVisuals.test.js` (7 tests): the switch, the law, the
 reveal, `foeDraw` off real effect kinds, the renderer's phase on a
 recording GL, the shader's declarations and each mode's line, and the
 three hosts' seams. Not seen in a browser: the container has no

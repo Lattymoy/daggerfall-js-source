@@ -2,9 +2,9 @@
 // record is a link, never another deed, boat, cargo list or copy of stored items.
 import { cabinUid, cabinShipType, cabinSceneName } from './sailingCabin.js';
 import { SHIP_INTERIOR_MAP_IDS } from './banking.js';
-import { BUILDING_KEY_0 } from './talkTopics.js';
+import { BUILDING_KEY_0 } from './talk/talkTopics.js';
 import { interiorSceneName } from './sceneCache.js';
-import { BOAT_DEED_TEMPLATE, BOAT_PARTS_TEMPLATE } from './comeSailAwayItems.js';
+import { BOAT_DEED_TEMPLATE, BOAT_PARTS_TEMPLATE } from './comeSailAway/comeSailAwayItems.js';
 
 export { readBankCabinLink } from '../net/boatIdentity.js';
 import { readBankCabinLink } from '../net/boatIdentity.js';

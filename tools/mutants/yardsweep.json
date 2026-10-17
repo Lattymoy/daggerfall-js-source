@@ -5,7 +5,7 @@
     "old": "AS REAL) > 4;",
     "new": "AS REAL) > 48;",
     "tests": [
-      "test/yardsweep.test.js"
+      "test/server/yardsweep.test.js"
     ],
     "note": "the tower kept: the lot's widest bound"
   },
@@ -15,7 +15,7 @@
     "old": "AS REAL) > 4;",
     "new": "AS REAL) >= 4;",
     "tests": [
-      "test/yardsweep.test.js"
+      "test/server/yardsweep.test.js"
     ],
     "note": "a piece at the bound itself swept"
   },
@@ -25,7 +25,7 @@
     "old": "  WHERE yard = 1\n",
     "new": "  WHERE yard IN (0, 1)\n",
     "tests": [
-      "test/yardsweep.test.js"
+      "test/server/yardsweep.test.js"
     ],
     "note": "a room's high shelf swept"
   },
@@ -35,7 +35,7 @@
     "old": "    if (!p || !decorYardPieceOf(p) || !decorYardHighOk(p)) continue;",
     "new": "    if (!p || !decorYardPieceOf(p)) continue;",
     "tests": [
-      "test/yardsweep.test.js"
+      "test/server/yardsweep.test.js"
     ],
     "note": "the service serves a tower's piece"
   },
@@ -45,7 +45,7 @@
     "old": "y.pieces.map(decorYardPieceOf).filter((p) => p && decorYardHighOk(p))",
     "new": "y.pieces.map(decorYardPieceOf).filter(Boolean)",
     "tests": [
-      "test/yardsweep.test.js"
+      "test/server/yardsweep.test.js"
     ],
     "note": "the client stands a tower's piece an older service answers"
   }

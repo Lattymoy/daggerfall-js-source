@@ -17,7 +17,7 @@
 // a host, a renderer or a pool.
 //
 // WHICH RECORDS. The lights archive is 210 and its records are named in
-// world/interiorLights.js's per-record table (DFU's AddLight switch).
+// world/interior/interiorLights.js's per-record table (DFU's AddLight switch).
 // Three of them are an OPEN FLAME AT A HEIGHT YOU COULD COOK OVER, and
 // they are the whole list:
 //

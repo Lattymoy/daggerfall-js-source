@@ -26,7 +26,7 @@
 
 **Base:** *Configure Daggerfall — the Stone Hall* (category rail + list pane + permanent help + honest tiers).
 **Grafted:** the Deck's *value‑is‑a‑word* rule, ASCII‑33 glyph law, range‑equals‑clamp pin, drag‑suppresses‑tap, per‑row revert, save‑failure surfacing, INFO rows. The Five Pages' *unavailable readout* ("what you get instead"), permanent help panel, computed tally, reserved MODS panel, DFU's own words kept verbatim in a detail dialog.
-**Dropped as fatal:** `nativeMetrics` on this screen (halves phone text); hiding `unavailable` rows behind a filter (breaks `systems/settings.js:"unavailable: meaningless"`); reuse of `listPicker.js` / `messageBox.js` (own metric + un‑preloaded ARENA2 art pre‑game); reuse of `attachTouch` (drops the gameplay HUD over the screen); orientation gating; three‑state view filters; `stored` rows drawn identically to `live`; 1px low‑contrast focus ring; audio previews that are silent because `ensureAudio` never ran.
+**Dropped as fatal:** `nativeMetrics` on this screen (halves phone text); hiding `unavailable` rows behind a filter (breaks `systems/settings/settings.js:"unavailable: meaningless"`); reuse of `listPicker.js` / `messageBox.js` (own metric + un‑preloaded ARENA2 art pre‑game); reuse of `attachTouch` (drops the gameplay HUD over the screen); orientation gating; three‑state view filters; `stored` rows drawn identically to `live`; 1px low‑contrast focus ring; audio previews that are silent because `ensureAudio` never ran.
 
 **The one structural change that replaces all the view filters: TIER IS A GROUP.** Every category's list is three collapsible groups — `WORKS NOW`, `SAVED FOR LATER`, `NOT AVAILABLE HERE` — each with a live count in its heading. Nothing is ever hidden (the count is always on screen), the beginner sees a short list (the last two groups ship collapsed), and the veteran opens them with one keypress. There is no `common` flag, no `Show:` control, no `All keys` view.
 
@@ -36,23 +36,23 @@
 
 | Fact | Where |
 |---|---|
-| 171 keys / 13 sections, all raw strings | `src/systems/settingsDefaults.js`, pinned `test/settings.test.js:"Object.keys(DEFAULTS).length, 13"` |
-| Tier counts today: **8 live, 18 unavailable, 145 stored** | `src/systems/settings.js:"---- the tiers (see the header)"` |
+| 171 keys / 13 sections, all raw strings | `src/systems/settings/settingsDefaults.js`, pinned `test/systems/settings.test.js:"Object.keys(DEFAULTS).length, 13"` |
+| Tier counts today: **8 live, 18 unavailable, 145 stored** | `src/systems/settings/settings.js:"---- the tiers (see the header)"` |
 | `canvas.width = canvas.clientWidth` — CSS px, **DPR 1** | `src/render/renderer.js:"const w = this.canvas.clientWidth"` |
-| `nativeMetrics` floors to **s=1 on every phone in both orientations** | `src/ui/nativePanel.js:"export function nativeMetrics"` |
+| `nativeMetrics` floors to **s=1 on every phone in both orientations** | `src/ui/native/nativePanel.js:"export function nativeMetrics"` |
 | Today's launcher draws at a **hardcoded `s=2`** | `src/scenes/launcherScene.js:62`, `:82` | *(DELETED at FD1, 2026-09-11)*
-| FONT0003: `fixedWidth 5`, `fixedHeight 7`, space glyph 4 | pinned `test/audit18_ui_native.test.js:"assert.equal(f.fixedWidth, 5, 'FONT0003 header')"` |
+| FONT0003: `fixedWidth 5`, `fixedHeight 7`, space glyph 4 | pinned `test/ui/audit18_ui_native.test.js:"assert.equal(f.fixedWidth, 5, 'FONT0003 header')"` |
 | `FNT_ASCII_START = 33`; codes < 33 draw as a space; **no arrow / ellipsis / degree / middle‑dot glyph exists** | `src/formats/fntFile.js:"export const FNT_ASCII_START"`, `src/ui/text.js:"The fold, then DrawText's"` |
 | `measureText` takes `font.fnt`, returns virtual px at scale 1 | `src/ui/text.js:"Advance-only pass"` |
-| `drawRect` / `shadowText` / `drawImg` consume `{s, ox, oy}` — **any** metric object works | `src/ui/nativePanel.js:"img, m, x, y, w ="` |
+| `drawRect` / `shadowText` / `drawImg` consume `{s, ox, oy}` — **any** metric object works | `src/ui/native/nativePanel.js:"img, m, x, y, w ="` |
 | `layoutMessageBox` hard‑codes `(320‑w)/2, (200‑h)/2`; `drawMessageBox` returns `false` unless SPOP.RCI is preloaded — and nothing preloads it before the game | `src/ui/messageBox.js:"x = Math.round((320 - w) / 2)"`, `src/ui/messageBox.js:"export function drawMessageBox"` |
 | `ListPickerWindow.draw` calls `nativeMetrics(canvas)` **itself** | `src/ui/listPicker.js:"keeps the ListBox"` |
-| `attachTouch` is called only by world/interior/exterior/dungeon; it unconditionally builds F5/F6/☰/C/SV/LD + a movement stick claiming the left half of the viewport | `src/ui/touch.js:"export function attachTouch"` |
+| `attachTouch` is called only by world/interior/exterior/dungeon; it unconditionally builds F5/F6/☰/C/SV/LD + a movement stick claiming the left half of the viewport | `src/ui/touch/touch.js:"export function attachTouch"` |
 | `ensureAudio(fetch)` is exported from `src/scenes/shared.js:"export function ensureAudio"`, is safe un‑awaited, and `audio.ensure` attaches its own gesture‑resume (`src/systems/audio.js:"ensure(fetchBytes)"`, `ensure`) | — |
 | `audio._out()` re‑reads `Controls/SoundVolume` on every connection (`audio.js:"this._booted = null"`) — so a `DungeonDoorOpen` preview really demonstrates the slider | — |
 | `lookSettings.js:"ROAD-G G6 WIDENED"` clamps `MouseLookSensitivity` to **0.1..4.0** while DFU's slider runs to 16.0 | — |
-| `saveSettings()`'s boolean is discarded at `launcher.js:100, :122, :193` **and inside `systems/settings.js:"saveSettings();"`** | — |
-| `SETTINGS_LABELS` (139 entries) / `SETTINGS_INFO` (78) are keyed by **DFU UI control names**, not ini keys; **no production file imports them** | `src/systems/settingsText.js:"export const SETTINGS_LABELS"`, `src/systems/settingsText.js:"export const SETTINGS_INFO"` |
+| `saveSettings()`'s boolean is discarded at `launcher.js:100, :122, :193` **and inside `systems/settings/settings.js:"saveSettings();"`** | — |
+| `SETTINGS_LABELS` (139 entries) / `SETTINGS_INFO` (78) are keyed by **DFU UI control names**, not ini keys; **no production file imports them** | `src/systems/settings/settingsText.js:"export const SETTINGS_LABELS"`, `src/systems/settings/settingsText.js:"export const SETTINGS_INFO"` |
 | `wrapText(fnt, text, maxWidth)` exists | `src/ui/talkWindow.js:"Greedy word-wrap"` |
 | `SOUND.ButtonClick = 360`, `SOUND.DungeonDoorOpen = 25` | `src/systems/soundClips.js:"ButtonClick: 360"`, `src/systems/soundClips.js:"DungeonDoorOpen:"` |
 | `index.html` sets `user-scalable=no`, `touch-action:none`, `viewport-fit=cover`, no safe‑area insets | — |
@@ -497,7 +497,7 @@ Text inside a filled button (PLAY, a selected rail plate, a dialog button) is dr
 
 Rule 8 is the honesty rule: **the port never invents a range or an option name.** ~60 stored numeric keys become read‑only rows with a stated reason rather than sliders that pretend to know DFU's limits. Every bool remains fully operable because a bool needs no law beyond `True`/`False`.
 
-### 3.2 The law tables (`src/ui/settingsLaw.js`)
+### 3.2 The law tables (`src/ui/settings/settingsLaw.js`)
 
 **`ENUM_LAW`** — names and order are DFU's, verbatim, cited. `encode` says what the store holds.
 
@@ -534,7 +534,7 @@ Rule 8 is the honesty rule: **the port never invents a range or an option name.*
 | `Controls/JoystickMovementThreshold` | 0.05 | 1 | 0.05 | 0.2 | pct | **clamp** `systems/gamepad.js` (DFU's slider 0.0..1.0) |
 | `Controls/JoystickDeadzone` | 0 | 1 | 0.05 | 0.2 | pct | **clamp** `systems/gamepad.js` (DFU's slider 0.0..0.9) |
 
-**Range‑equals‑clamp law (pinned, T5).** A slider must never offer travel its consumer ignores. `MouseLookSensitivity` runs to 4.0, not DFU's 16.0, and its help line says: *"Daggerfall Unity allows up to 16; this port applies up to 4."* Every getter call in this screen passes **both** `min` and `max` — `systems/settings.js:"'GUI/EnableGeographicBackgrounds':"` clamps with `Math.min(max, …)`, so a min without a max yields `NaN`.
+**Range‑equals‑clamp law (pinned, T5).** A slider must never offer travel its consumer ignores. `MouseLookSensitivity` runs to 4.0, not DFU's 16.0, and its help line says: *"Daggerfall Unity allows up to 16; this port applies up to 4."* Every getter call in this screen passes **both** `min` and `max` — `systems/settings/settings.js:"'GUI/EnableGeographicBackgrounds':"` clamps with `Math.min(max, …)`, so a min without a max yields `NaN`.
 
 **`TEXT_LAW`** — `Controls/WeaponAttackThreshold`: `maxChars 5`, clamp `0.001..1.0` **on commit** (LAW `:444`).
 **`COLOUR_KEYS`** (8): `GUI/ToolTipTextColor`, `GUI/ToolTipBackgroundColor`, `Map/AutomapTempleColor`, `Map/AutomapShopColor`, `Map/AutomapTavernColor`, `Map/AutomapHouseColor`, `Map/DunMicMapInnerColor`, `Map/DunMicMapBorderColor`. Stored as **8‑hex `RRGGBBAA`** (alpha is load‑bearing: `ToolTipBackgroundColor` ships `404040D2`).
@@ -605,7 +605,7 @@ Coordinates below are relative to `ctrlRight = rx + rw - 3`, `ly = ry + rh - 9`.
 * Every commit calls `setValue` then `SOUND.ButtonClick` then schedules a save.
 * **Saves are debounced**: `saveSettings()` runs on `pointerup`, on `keyup`, after 250 ms idle, and unconditionally on leaving the screen. A drag never hammers `localStorage`.
 * **The boolean is consumed at every write site.** `saveSettings() === false` sets `win.saveFailed = true`, which paints `NOT SAVED` in the title bar (WARN) and raises a one‑per‑session dialog: *"Your settings could not be saved. This browser is blocking storage; private windows often do. Your changes will work until you close the tab."* This is new behaviour — all three current call sites discard the boolean.
-* **Per‑row revert**: `Backspace` on the focused row, and a `[ Reset ]` button inside the detail dialog, call `setValue(section, key, DEFAULTS[section][key])` — which `systems/settings.js:"The launcher row"` turns into deleting the override. The help status line always names the default when the row differs from it.
+* **Per‑row revert**: `Backspace` on the focused row, and a `[ Reset ]` button inside the detail dialog, call `setValue(section, key, DEFAULTS[section][key])` — which `systems/settings/settings.js:"The launcher row"` turns into deleting the override. The help status line always names the default when the row differs from it.
 * **Global reset** goes through a Yes/No dialog (`R` never fires bare — today `launcher.js:132` wipes 171 keys on one keystroke). "Yes" calls `resetToDefaults()` **and reads its return value** (see §9 companion change) plus `resetPrefs()`.
 
 ### 3.6 Dialogs — `src/ui/settingsDialog.js` (OURS, no ARENA2 art)  <!-- DELETED from the plan: folded into settingsWindow.js -->
@@ -636,7 +636,7 @@ Five dialogs:
 
 ### 4.1 The group is the disclosure
 
-`WORKS NOW (n)` / `SAVED FOR LATER (n)` / `NOT AVAILABLE HERE (n)` — always present with a live count, never filtered away. This satisfies `systems/settings.js:"unavailable: meaningless"` literally ("*a hidden setting is a setting the player cannot find out about*") while keeping the default view to one short group. No `stored` or `unavailable` row can ever be mistaken for a working one, because reaching it requires opening a group whose heading says what it holds.
+`WORKS NOW (n)` / `SAVED FOR LATER (n)` / `NOT AVAILABLE HERE (n)` — always present with a live count, never filtered away. This satisfies `systems/settings/settings.js:"unavailable: meaningless"` literally ("*a hidden setting is a setting the player cannot find out about*") while keeping the default view to one short group. No `stored` or `unavailable` row can ever be mistaken for a working one, because reaching it requires opening a group whose heading says what it holds.
 
 ### 4.2 Per‑row treatment
 
@@ -700,7 +700,7 @@ Category 7, `mods`, is a permanent rail plate. Its list, top to bottom:
 2. **`WORKS NOW (1)`** → the info row `Where Your Game Files Came From`, value from `deps.dataSourceLabel()` (§7.4): `bundled with the page` / `files you chose` / `saved in this browser`. `[ Read more ]` explains how a browser build reads ARENA2. **No `Change…` button** — re‑running `ensureArena2` requires `clearStoredData()`, which would wipe the player's ingested data with no rollback.
 3. **`NOT AVAILABLE HERE (7)` — open by default, only in this category.** The seven keys of §1.7, each with its readout, padlock and verbatim reason. Everywhere else hiding a dead switch behind a collapsed group is kindness; here an empty page would read as an unexplained blank, and the intro block has already told the truth at the threshold.
 
-**How it becomes real without redrawing the map.** When a mod system lands: the intro block's rect becomes the mod list (each row an ordinary `switch` with a load‑order number, using the row model unchanged and the list's existing scroll); the four `Enhancements/*` + `Experimental/CustomBooksImport` keys are deleted from `UNAVAILABLE` in `systems/settings.js:"not defer, 2 says"`; `tierOf` starts returning `stored`/`live`; the padlocks and readouts vanish; the group headings and the tally recompute themselves. **No new page, no new rail plate, no moved key, no relearned navigation, and no change to `settingsMap.js`.** That is the test of whether the home is real.
+**How it becomes real without redrawing the map.** When a mod system lands: the intro block's rect becomes the mod list (each row an ordinary `switch` with a load‑order number, using the row model unchanged and the list's existing scroll); the four `Enhancements/*` + `Experimental/CustomBooksImport` keys are deleted from `UNAVAILABLE` in `systems/settings/settings.js:"not defer, 2 says"`; `tierOf` starts returning `stored`/`live`; the padlocks and readouts vanish; the group headings and the tally recompute themselves. **No new page, no new rail plate, no moved key, no relearned navigation, and no change to `settingsMap.js`.** That is the test of whether the home is real.
 
 ---
 
@@ -749,13 +749,13 @@ No zebra striping (a 1.1:1 band does nothing but add a second ground to test aga
 | file | exports |
 |---|---|
 | `src/ui/settingsMetrics.js` | `PAGE_W`, `MIN_PAGE_W`, `MIN_PAGE_H`, `settingsMetrics(canvas, opts)`, `pointToPage(m, px, py)`, `tapMin(m)` | *(DELETED at FD1, 2026-09-11)*
-| `src/ui/settingsMap.js` | `CATEGORY_IDS` (ordered 7), `KEY_CATEGORY` (171 entries), `KEY_ORDER`, `categoryOf(key)`, `keysOf(catId)` |
-| `src/ui/settingsCopy.js` | `CATEGORIES` (`{id,title,blurb}`×7), `LABELS`, `HELP`, `READOUT`, `INSTEAD`, `DFU_TEXT_KEY`, `TIER_TEXT`, `DIALOG_TEXT`, `labelOf(key)`, `helpOf(key)` |
-| `src/ui/settingsLaw.js` | `ENUM_LAW`, `NUMBER_LAW`, `TEXT_LAW`, `COLOUR_KEYS`, `BLOCKED_REASON`, `widgetFor(key)`, `formatValue(key, raw)`, `parseColour(hex)`, `stepValue(key, raw, dir, coarse)` |
+| `src/ui/settings/settingsMap.js` | `CATEGORY_IDS` (ordered 7), `KEY_CATEGORY` (171 entries), `KEY_ORDER`, `categoryOf(key)`, `keysOf(catId)` |
+| `src/ui/settings/settingsCopy.js` | `CATEGORIES` (`{id,title,blurb}`×7), `LABELS`, `HELP`, `READOUT`, `INSTEAD`, `DFU_TEXT_KEY`, `TIER_TEXT`, `DIALOG_TEXT`, `labelOf(key)`, `helpOf(key)` |
+| `src/ui/settings/settingsLaw.js` | `ENUM_LAW`, `NUMBER_LAW`, `TEXT_LAW`, `COLOUR_KEYS`, `BLOCKED_REASON`, `widgetFor(key)`, `formatValue(key, raw)`, `parseColour(hex)`, `stepValue(key, raw, dir, coarse)` |
 | `src/ui/settingsWidgets.js` | `drawSwitch/drawEnum/drawNumber/drawColour/drawText/drawReadout/drawGroup/drawInfo/drawButton`, `drawTriangle(renderer,m,rect,dir,color)`, `drawPadlock(...)` — each takes `(renderer, m, font, item, state)` and draws **only** inside the rects `layout()` produced |  <!-- DELETED from the plan: folded into settingsWindow.js -->
 | `src/ui/settingsDialog.js` | `layoutDialog(font, m, {title, body, buttons, list})`, `drawDialog(renderer, m, font, d)`, `dialogHit(d, vx, vy)` (returns a button id or `'outside'`) |  <!-- DELETED from the plan: folded into settingsWindow.js -->
 | `src/ui/settingsWindow.js` | `class SettingsWindow` — see 7.3 | *(DELETED at FD1, 2026-09-11)*
-| `src/systems/uiPrefs.js` | `PREF_DEFAULTS`, `getPref(k)`, `setPref(k,v)`, `allPrefs()`, `resetPrefs()`. Storage key **`dagger.ui.v1`**, separate from `dagger.settings.v1`. Keys: `textScale` (0\|1), `category` (id), `open` (`{"video:stored":true,…}`), `seenLegend` (bool). Never touches the 171 — `test/settings.test.js:"ALL_KEYS.length, 171"` pins `ALL_KEYS.length === 171` and a 172nd key would break parity. |
+| `src/systems/uiPrefs.js` | `PREF_DEFAULTS`, `getPref(k)`, `setPref(k,v)`, `allPrefs()`, `resetPrefs()`. Storage key **`dagger.ui.v1`**, separate from `dagger.settings.v1`. Keys: `textScale` (0\|1), `category` (id), `open` (`{"video:stored":true,…}`), `seenLegend` (bool). Never touches the 171 — `test/systems/settings.test.js:"ALL_KEYS.length, 171"` pins `ALL_KEYS.length === 171` and a 172nd key would break parity. |
 | `src/ui/fullscreen.js` | `fullscreenSupported()`, `applyFullscreen(canvas)`, `isFullscreen()` — the consumer that makes `Video/Fullscreen` live (§9) |  <!-- DELETED from this slice: Video/Fullscreen stays unavailable, browser-owned -->
 
 ### 7.2 Existing modules reused (unchanged)
@@ -842,13 +842,13 @@ Probe surface `window.__settings()` replaces `window.__launcher()`; it reports `
 
 ### 7.5 Retired
 
-`src/ui/launcher.js` is DELETED (RETIRED). `tools/launcherProbe.mjs` is replaced by `tools/settingsProbe.mjs`. `test/settings.test.js`'s two `LauncherWindow` tests (`:165-202`, `:215-232`) are rewritten against `SettingsWindow` (see T8/T11) — note that they must assert in **screen** pixels, because the new `layout()` returns page‑space rects and `rect[0]+rect[2] <= 393` would otherwise be vacuously true.
+`src/ui/launcher.js` is DELETED (RETIRED). `tools/launcherProbe.mjs` is replaced by `tools/settingsProbe.mjs`. `test/systems/settings.test.js`'s two `LauncherWindow` tests (`:165-202`, `:215-232`) are rewritten against `SettingsWindow` (see T8/T11) — note that they must assert in **screen** pixels, because the new `layout()` returns page‑space rects and `rect[0]+rect[2] <= 393` would otherwise be vacuously true.
 
 ---
 
 ## 8. Test plan
 
-New file `test/settingsUI.test.js` unless noted. Real‑font assertions live behind the existing `skip: skipReal` / `ARENA2` convention (`test/audit18_ui_native.test.js:"const skipReal ="`); every other pin runs font‑free using the conservative upper bound `maxWidth(s) = s.length * (5 + 1)` (FONT0003 `fixedWidth 5` + `FNT_GLYPH_SPACING 1`), which can never under‑estimate.
+New file `test/ui/settings/settingsUI.test.js` unless noted. Real‑font assertions live behind the existing `skip: skipReal` / `ARENA2` convention (`test/ui/audit18_ui_native.test.js:"const skipReal ="`); every other pin runs font‑free using the conservative upper bound `maxWidth(s) = s.length * (5 + 1)` (FONT0003 `fixedWidth 5` + `FNT_GLYPH_SPACING 1`), which can never under‑estimate.
 
 **T1 — the map is total and disjoint.** Every `ALL_KEYS` entry appears in exactly one category; `KEY_CATEGORY` contains no key outside `ALL_KEYS`; total 171; per‑category counts are exactly `21/16/5/66/37/19/7`; `KEY_ORDER` is unique within each category. *A DFU re‑bake that adds or renames a key fails the build instead of quietly dropping a row off the screen.*
 
@@ -858,7 +858,7 @@ New file `test/settingsUI.test.js` unless noted. Real‑font assertions live beh
 
 **T4 — widget law is total.** `widgetFor` returns a known kind for all 171. Every `enum` has ≥ 2 values, a citation string and an `encode`; token enums' defaults are members of their own list; index enums' defaults parse to a valid index. Every `number` has `min < max`, `(max-min)` divisible by `step`, a `format`, and a `source`. Every colour key's default is `/^[0-9A-F]{8}$/i`. Every `blocked` key has a reason. No `unavailable` key resolves to an operable kind.
 
-**T5 — range equals consumer clamp.** For each `NUMBER_LAW` key that is also in `LIVE`, read the consumer file named in `LIVE`, regex its `get(Float|Int)('S','K', min, max)` literals, and assert they equal the row's `min`/`max`. Concretely pins `MouseLookSensitivity` at `0.1..4.0` against `lookSettings.js:"ROAD-G G6 WIDENED"`. Also: sweep `settingsLaw.js`/`settingsWindow.js` for any getter call passing a `min` without a `max` (that returns `NaN`, `systems/settings.js:"'GUI/EnableGeographicBackgrounds':"`).
+**T5 — range equals consumer clamp.** For each `NUMBER_LAW` key that is also in `LIVE`, read the consumer file named in `LIVE`, regex its `get(Float|Int)('S','K', min, max)` literals, and assert they equal the row's `min`/`max`. Concretely pins `MouseLookSensitivity` at `0.1..4.0` against `lookSettings.js:"ROAD-G G6 WIDENED"`. Also: sweep `settingsLaw.js`/`settingsWindow.js` for any getter call passing a `min` without a `max` (that returns `NaN`, `systems/settings/settings.js:"'GUI/EnableGeographicBackgrounds':"`).
 
 **T6 — tier honesty.** For every category: the three groups partition its rows; group counts equal the `tierOf` counts; no `unavailable` or `blocked` item exposes a `ctrlRect`; `live` is open by default; `stored` and `na` are closed by default **except** `mods:na`, which is open.
 
@@ -877,7 +877,7 @@ This single test would have caught the phone text halving, the 8‑px picker row
 
 **T10 — save failure is visible.** Stub `localStorage.setItem` to throw; a commit sets `saveFailed`; the title‑bar string contains `NOT SAVED`; the warning dialog raises exactly once per session; and `resetToDefaults()` returns `false` (requires the §9 change) so the Reset flow reports the failure too.
 
-**T11 — the lock‑out warning is a decision, not a notice.** Focusing `GUI/ShowOptionsAtStart` and pressing `Left` opens a confirm whose body matches `/\?launcher/`; choosing **No** leaves the value `True`; choosing **Yes** sets it `False`. Turning it back on raises no dialog. *(Replaces `test/settings.test.js` lines 215-232.)*
+**T11 — the lock‑out warning is a decision, not a notice.** Focusing `GUI/ShowOptionsAtStart` and pressing `Left` opens a confirm whose body matches `/\?launcher/`; choosing **No** leaves the value `True`; choosing **Yes** sets it `False`. Turning it back on raises no dialog. *(Replaces `test/systems/settings.test.js` lines 215-232.)*
 
 **T12 — the store stays 171.** `ALL_KEYS.length === 171` re‑asserted after the UI modules load; `uiPrefs` writes only `dagger.ui.v1`; `resetToDefaults()` leaves `dagger.ui.v1` untouched (the screen's Reset clears both, and says so in the confirm).
 
@@ -898,8 +898,8 @@ This single test would have caught the phone text halving, the 8‑px picker row
 | Law | Citation |
 |---|---|
 | 171 keys, 13 sections, defaults | `SettingsManager` / vendored `defaults.ini.txt` → `settingsDefaults.js`, pinned `settings.test.js:"the BAKE is the vendored"` |
-| Typed getters and their failure modes (unparseable bool → `False`; unparseable clamped int/float → `MIN`; `GetString` raw) | `SettingsManager.cs:911-996` → `systems/settings.js:"greeting, questions"` |
-| Booleans stringify capitalised `True`/`False` | C# `value.ToString()` → `systems/settings.js:"export function setValue"` |
+| Typed getters and their failure modes (unparseable bool → `False`; unparseable clamped int/float → `MIN`; `GetString` raw) | `SettingsManager.cs:911-996` → `systems/settings/settings.js:"greeting, questions"` |
+| Booleans stringify capitalised `True`/`False` | C# `value.ToString()` → `systems/settings/settings.js:"export function setValue"` |
 | Enum value **names and order** | `DaggerfallAdvancedSettingsWindow.cs:244-252, :277-282, :291-297, :298-305, :309-321, :327-341, :342-354, :360-379, :380-395` — table §3.2 |
 | Volume `DisplayUnits = 100`; MusicVolume live on scroll; SoundVolume plays `DungeonDoorOpen` on mouse‑up | `:268-274` |
 | `WeaponAttackThreshold` MaxCharacters 5, clamped `0.001..1.0` on save | `:444` |
@@ -922,11 +922,11 @@ The **seven categories, their order, titles, blurbs and the whole key→category
 
 ### 9.3 Required companion changes
 
-1. **`src/systems/settings.js:"export function resetToDefaults"`** — `resetToDefaults()` must `return saveSettings();`. Today it discards the boolean, so a reset that failed to persist reports success.
-2. **`src/systems/settings.js:"---- the tiers (see the header)"`** — move `'Video/Fullscreen'` out of `UNAVAILABLE` and into `LIVE` as `'src/ui/fullscreen.js'`. A settings toggle **is** the user gesture `canvas.requestFullscreen()` needs, so the reason "the browser owns fullscreen" is no longer true; `Video/ExclusiveFullscreen` stays unavailable. This gives the Video category a real `WORKS NOW` row. `src/ui/fullscreen.js` reads `getBool('Video','Fullscreen')`, calls `requestFullscreen`/`exitFullscreen` from the click handler, listens for `fullscreenchange` to write the value back, and reports `fullscreenSupported()` false (→ the row shows `not supported` as a readout) when the API is absent.  <!-- DELETED from this slice: Video/Fullscreen stays unavailable, browser-owned -->
+1. **`src/systems/settings/settings.js:"export function resetToDefaults"`** — `resetToDefaults()` must `return saveSettings();`. Today it discards the boolean, so a reset that failed to persist reports success.
+2. **`src/systems/settings/settings.js:"---- the tiers (see the header)"`** — move `'Video/Fullscreen'` out of `UNAVAILABLE` and into `LIVE` as `'src/ui/fullscreen.js'`. A settings toggle **is** the user gesture `canvas.requestFullscreen()` needs, so the reason "the browser owns fullscreen" is no longer true; `Video/ExclusiveFullscreen` stays unavailable. This gives the Video category a real `WORKS NOW` row. `src/ui/fullscreen.js` reads `getBool('Video','Fullscreen')`, calls `requestFullscreen`/`exitFullscreen` from the click handler, listens for `fullscreenchange` to write the value back, and reports `fullscreenSupported()` false (→ the row shows `not supported` as a readout) when the API is absent.  <!-- DELETED from this slice: Video/Fullscreen stays unavailable, browser-owned -->
 3. **`src/scenes/dataSource.js`** — add `export function dataSourceLabel()` returning one of the three short strings of §5, set at each `ensureArena2` branch.
 4. **`src/scenes/launcherScene.js`** — rewritten per §7.4. *(DELETED at FD1, 2026-09-11)*
-5. **Deletions/rewrites:** `src/ui/launcher.js` DELETED; `test/settings.test.js` lines 168-205 and 215-232 rewritten (T8, T11); `tools/launcherProbe.mjs` → `tools/settingsProbe.mjs` (T16).
+5. **Deletions/rewrites:** `src/ui/launcher.js` DELETED; `test/systems/settings.test.js` lines 168-205 and 215-232 rewritten (T8, T11); `tools/launcherProbe.mjs` → `tools/settingsProbe.mjs` (T16).
 
 ### 9.4 Explicitly **out** of this slice (record as Ledger rows)
 
@@ -945,14 +945,14 @@ detail." The categories were the only structure a page had. Interface drew forty
 tooltip's colour, a shop's sign and five map colours in the map's storage order - and Video's nine live rows sat over
 fifty-one folded ones with nothing to say which belonged together.
 
-- **Each category is cut into sections** (`ui/settingsMap.js` `CATEGORY_SECTIONS`): a title, a line of what it holds,
+- **Each category is cut into sections** (`ui/settings/settingsMap.js` `CATEGORY_SECTIONS`): a title, a line of what it holds,
   and its keys in the order they draw. The map is total and disjoint over every category's keys - stored, unavailable
-  and moved keys keep a place for the day they draw flat - and `test/org1_sections.test.js` pinned both ways (DELETED by ORG2, section 11 - `test/org2_options.test.js` holds the one map).
+  and moved keys keep a place for the day they draw flat - and `test/org1_sections.test.js` pinned both ways (DELETED by ORG2, section 11 - `test/systems/org2_options.test.js` holds the one map).
   Interface: HUD, Tooltips, Inventory talk & shops, Messages & prompts, Travel map, Town map, Dungeon map. Video:
   Display, Brightness & light, Retro look, Shadows, Textures & detail, Post effects. Game: Quests, Play, Starting a new
   game, Advanced. Controls: Mouse & looking, Attacking, Moving, Game controller, Touchscreen. Accessibility: Motion,
   Readability, Large status bar. Audio and Data & Mods are one section each.
-- **A page draws a head per section it fills** (`ui/enhancedMenu.js` `sectionedRows`): the title, how many rows, the
+- **A page draws a head per section it fills** (`ui/enhanced/enhancedMenu.js` `sectionedRows`): the title, how many rows, the
   line. A page that fills one section is its own heading and draws none. The port's own rows stand first in their
   section - a row says its section (`inSection`), else its category's `PORT_SECTION` (the quest repair under Quests,
   the pad's cursor under Game controller, the HUD's rows) - then the store keys in the section's order.
@@ -976,13 +976,13 @@ categories, the port's rows and the mods under Features in seven groups of their
 Settings > Video and the grass under Features > Sight; "the graphics" were behind two doors and a long scroll each.
 This supersedes section 1's category map and section 10.
 
-- **One map, tabs by subject** (`ui/settingsMap.js` `CATEGORIES`): Graphics, Gameplay, Combat, World, Interface,
+- **One map, tabs by subject** (`ui/settings/settingsMap.js` `CATEGORIES`): Graphics, Gameplay, Combat, World, Interface,
   Audio, Controls, Accessibility, Mods & files - each a title and SECTIONS (a title and its items in the order they
   draw). An item is one of DFU's keys (`Section/Key`), a Features row (`feat:<id>`), one of the port's own
   rows (`port:<id>`, the id each row carries as `dataset.opt`), a card (`card:morrowind`, `card:packs`,
   `card:peerSprites`, `card:nightSounds`) or one of the screen's own pieces (`preset:graphics`, `link:overhauls`,
   `bindings`, `mods-index`). THE MAP IS TOTAL AND DISJOINT over all three kinds of option: every DFU key, every
-  registry row and every port row the builders draw stands in exactly one section (`test/org2_options.test.js`, which
+  registry row and every port row the builders draw stands in exactly one section (`test/systems/org2_options.test.js`, which
   builds the port's rows on a fake touch device so the touch knobs are counted too). A key a Features row owns stands
   in that row's own section and draws nothing (FT13). `keysOf`/`categoryOf`/`orderOf` still answer DFU's keys alone.
 - **Every option is a row of one shape** - its name, its line, its control on the right - whichever store keeps it: DFU's
@@ -1022,12 +1022,12 @@ This supersedes section 1's category map and section 10.
 
 Gone with the doors: `paneFeatures`, `FEATURE_SECTIONS`/`featureSections`/`sectionOfFeature`, `CATEGORY_SECTIONS`,
 `sectionedRows`, `modsFooter`, `paneQuickSettings`, `portRows` and `DEFAULTS_ASK`. Every rail drops Features; a request
-still named `features` (an old link, a probe) lands on Settings. Pins: `test/org2_options.test.js` (7) and the
+still named `features` (an old link, a probe) lands on Settings. Pins: `test/systems/org2_options.test.js` (7) and the
 settings, features, controls and online pins re-aimed at the one screen; mutants `tools/mutants/org2.json` (18, all
 dead) and the re-aimed records in `audit27d`, `disc28e`, `ft18`, `modsonline1` and `mwa4`.
 
 **ORG2b - the copy cut (2026-10-09, Mac: "Reduce the amount of AI text bloat. Wayyyy too much overexplaining going
-on").** A tab and a section are their titles (`test/org2_options.test.js` holds the map to `id`/`title` and
+on").** A tab and a section are their titles (`test/systems/org2_options.test.js` holds the map to `id`/`title` and
 `id`/`title`/`sections`|`items`); no head over the page, no line under a section head; a DFU row is its label (ORG1's
 help line under it is gone - the help pane has it); a Features row is its name, labels and bar; the preset one short
 line; the tab card its count and Restore. The port's rows, the cards and the confirms are one short line each, the

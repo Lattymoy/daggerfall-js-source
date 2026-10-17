@@ -2,7 +2,7 @@
 // PROF4 (2026-09-28, Mac: "Continue") - THE PLANE, Carpentry's act at the workbench (bible/06-Systems/Professions-Arc.md
 // 9.4, 25): "a steady drag along the grain, deviation scored as the trace is". The grain runs across a board, a gentle
 // wave its own each act; the player presses at its head and draws the plane to its foot. Pure - a machine the
-// workbench's page feeds pointer positions (ui/profPages.js), as the heat is the anvil's (systems/heatAct.js).
+// workbench's page feeds pointer positions (ui/professions/profPages.js), as the heat is the anvil's (systems/heatAct.js).
 //
 // Positions are the board's: `x` 0 (the head) to 1 (the foot), `y` a share of its half-height, up positive. A pass is
 // clean when its mean deviation from the grain is within the tolerance (recipeLaw planeTolerance: the rank's, x the

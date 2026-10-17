@@ -5,7 +5,7 @@
   "old": "allIn(db, purseIds,",
   "new": "(async (db, ids, sql, before = [], after = []) => (await db.prepare(sql(ids.map(() => \"?\").join(\", \"))).bind(...before, ...ids, ...after).all()).results)(db, purseIds,",
   "tests": [
-   "test/seat1c_service.test.js"
+   "test/net/seat1c_service.test.js"
   ]
  },
  {
@@ -14,7 +14,7 @@
   "old": "allIn(db, list,",
   "new": "(async (db, ids, sql, before = [], after = []) => (await db.prepare(sql(ids.map(() => \"?\").join(\", \"))).bind(...before, ...ids, ...after).all()).results)(db, list,",
   "tests": [
-   "test/seat1c_service.test.js"
+   "test/net/seat1c_service.test.js"
   ]
  },
  {
@@ -23,7 +23,7 @@
   "old": "allIn(db, guilds, (qs) => `SELECT account",
   "new": "(async (db, ids, sql, before = [], after = []) => (await db.prepare(sql(ids.map(() => \"?\").join(\", \"))).bind(...before, ...ids, ...after).all()).results)(db, guilds, (qs) => `SELECT account",
   "tests": [
-   "test/seat1c_service.test.js"
+   "test/net/seat1c_service.test.js"
   ]
  },
  {
@@ -32,7 +32,7 @@
   "old": "allIn(db, guilds, (qs) => `SELECT h.player",
   "new": "(async (db, ids, sql, before = [], after = []) => (await db.prepare(sql(ids.map(() => \"?\").join(\", \"))).bind(...before, ...ids, ...after).all()).results)(db, guilds, (qs) => `SELECT h.player",
   "tests": [
-   "test/seat1c_service.test.js"
+   "test/net/seat1c_service.test.js"
   ]
  },
  {
@@ -41,7 +41,7 @@
   "old": "allIn(db, guilds, (qs) => `SELECT guild_id, tier",
   "new": "(async (db, ids, sql, before = [], after = []) => (await db.prepare(sql(ids.map(() => \"?\").join(\", \"))).bind(...before, ...ids, ...after).all()).results)(db, guilds, (qs) => `SELECT guild_id, tier",
   "tests": [
-   "test/seat1c_service.test.js"
+   "test/net/seat1c_service.test.js"
   ]
  },
  {
@@ -50,7 +50,7 @@
   "old": "allIn(db, ids, (qs) => `SELECT id, name, tag, heraldry",
   "new": "(async (db, ids, sql, before = [], after = []) => (await db.prepare(sql(ids.map(() => \"?\").join(\", \"))).bind(...before, ...ids, ...after).all()).results)(db, ids, (qs) => `SELECT id, name, tag, heraldry",
   "tests": [
-   "test/seat1c_service.test.js"
+   "test/net/seat1c_service.test.js"
   ]
  }
 ]

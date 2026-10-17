@@ -36,7 +36,7 @@ DFO over online game software - Dungeon Fighter Online, commonly DFO
 the mark is public. The name lives in one constant per surface below, so a
 change of it is a sweep and the logo.
 
-THREE LAWS, each pinned in `test/brand.test.js`:
+THREE LAWS, each pinned in `test/ui/brand.test.js`:
 
 - THE PRODUCT IS DFO ONLINE, DFO where a label is short. Every surface BR4
   named, swept for the old name whole and split: the landing page (title,
@@ -53,7 +53,7 @@ THREE LAWS, each pinned in `test/brand.test.js`:
   shot's file names (`dfo-...`), the Patreon link's page title, README,
   SUPPORT and the prototype pages. The macOS bundle becomes `DFO
   Online.app`; the folder search already skipped every `.app`, and an
-  older copy by the old name is still skipped (`test/da9_arena2detect.test.js`).
+  older copy by the old name is still skipped (`test/tooling/da9_arena2detect.test.js`).
 - THE ORIGINAL GAME IS NAMED ONLY WHERE IT MUST BE. It stays where it is
   the truth about something that is not this product: the copy a player
   brings (the landing page's gate now names it whole, The Elder Scrolls II:
@@ -62,7 +62,7 @@ THREE LAWS, each pinned in `test/brand.test.js`:
   trademark notice (new on the landing page's credits and in the README:
   The Elder Scrolls and Daggerfall are trademarks of ZeniMax Media Inc.),
   Daggerfall Unity and the mods by their own names, DFU's own settings text
-  (`systems/settingsText.js`, generated verbatim) and a mod's own switches,
+  (`systems/settings/settingsText.js`, generated verbatim) and a mod's own switches,
   and the Iliac Bay's places - the city, the kingdom, its bank, its crown,
   its ships and songs are the world's, not the brand's. Everywhere else a
   player reads "the original game" or "classic": the tagline (An
@@ -106,7 +106,7 @@ over BR4's empty rows is gone with them. And SUPPORT1's CORNERS' BAND, which
 pushes the door's stage below the corner marks wherever the wordmark reaches
 under one, is worked from the wordmark's width: (vw - min(321px, 50vw)) / 2 is
 under the marks' 234px reach below 789px wide, not 1008, so the band is
-`(min-width: 481px) and (max-width: 788px)` (`test/support1_asks.test.js`,
+`(min-width: 481px) and (max-width: 788px)` (`test/ui/enhanced/support1_asks.test.js`,
 its threshold mutant re-aimed). In a real browser: `tools/supportAsksProbe.mjs`
 22/22 - the asks on no opaque pixel of the new logo and DOOR-FIT, at 192
 sizes on both skins - and `tools/introProbe.mjs` 29/29, the title clearing
@@ -144,11 +144,11 @@ names still carried their version, so no copy asked for a file by name
 then. A copy on the notice transport (the Mac, the portable exe) does, and
 AUDIT BR5 found the rename stranded it (below).
 
-Pins: `test/brand.test.js` 8 -> 11 (BR5: the sweep, whole, split and in a
+Pins: `test/ui/brand.test.js` 8 -> 11 (BR5: the sweep, whole, split and in a
 file name; the original game named only where owed, read off the
-producers; the keys kept); `test/intro.test.js` (the PNG's hash and IHDR,
+producers; the keys kept); `test/ui/intro.test.js` (the PNG's hash and IHDR,
 the alt text, the retitled track, which now refuses the old name whole);
-`test/terms1.test.js` re-hashed at the new version; the doctrine
+`test/ui/enhanced/terms1.test.js` re-hashed at the new version; the doctrine
 allow-list row; PIN MOVEs where a pin quoted the old words or names - the
 feature rows (FT2, FT4, FT6, FT18, MAP-TOGGLE), the leveling (ORL1's
 knob, LEVEL-ONLINE-3), the skin shelf (SKIN2), the loom's line (PROF7), the
@@ -199,7 +199,7 @@ HIS FOUR CALLS:
   every account a build older than the service tries to make
   (`terms-stale`) - every installed desktop copy until it updates - which a
   rename does not earn. So both stay 2026-09-28, their dates with them,
-  the words re-hashed (`test/terms1.test.js`); BR5's version mutant
+  the words re-hashed (`test/ui/enhanced/terms1.test.js`); BR5's version mutant
   retired, TERMS1's two date mutants re-aimed back.
 - THE WORDMARK (his: "Use the new logo"). BR5 had kept BR3's TYPE
   wordmark on the landing page and the launcher, so the site and the
@@ -253,13 +253,13 @@ FIXED AS FOUND:
 Merged main (#780 GUILD3, #787 GUILD-SEEN, #784, #789 SLIM-FRAME, #785
 TUT1) first: main had taken acct113 and acct114, so BR5's version is
 acct115, with every pin and the four version records. Pins:
-`test/brand.test.js` 11 -> 12 (the drawn words; the old download names
+`test/ui/brand.test.js` 11 -> 12 (the drawn words; the old download names
 kept and exempted; the logo on the site and the launcher, sized from the
-IHDR), `test/rel4_release.test.js` 14 -> 15 (the aliases, the step's place,
-a real copy run, the asset lookup), PIN MOVEs in `test/landing.test.js`
-(the whitelist of one), `test/da8_launcher.test.js` (the CSP, the logo's
-serving and packing, the release link first), `test/da11_install_whole.test.js`
-(the logo packed into the archive beside the pad module), `test/terms1.test.js`
+IHDR), `test/tooling/rel4_release.test.js` 14 -> 15 (the aliases, the step's place,
+a real copy run, the asset lookup), PIN MOVEs in `test/ui/enhanced/landing.test.js`
+(the whitelist of one), `test/tooling/da8_launcher.test.js` (the CSP, the logo's
+serving and packing, the release link first), `test/tooling/da11_install_whole.test.js`
+(the logo packed into the archive beside the pad module), `test/ui/enhanced/terms1.test.js`
 (re-hashed at the kept version). Mutants: `tools/mutants/auditbr5.json`.
 
 ## BR4 DAGGERFALL ONLINE (2026-09-27, Mac's call)
@@ -320,7 +320,7 @@ THE WEBSITE KEEPS TYPE. BR3's ruling stands (Mac, 2026-09-14: the site's
 wordmark is text, not an uploaded logo) - `Daggerfall` over a tracked
 ONLINE now. The picture lives in the game.
 
-WHAT DID NOT MOVE, each pinned in `test/brand.test.js`: the Enhanced
+WHAT DID NOT MOVE, each pinned in `test/ui/brand.test.js`: the Enhanced
 SKIN's names (Enhanced Plus, Enhanced lighting and the rest are the
 port's own departures, not the product); `daggerfall-enhanced/custom-class`,
 the format every exported class file carries - rename it and each of
@@ -334,7 +334,7 @@ IN THE ART, for Mac: the tops of "The Elder Scrolls" touch the file's
 top edge and are cut flat there - a re-export with a few pixels of
 headroom fixes it, and nothing else needs to change for it.
 
-Pins: `test/brand.test.js` 4 -> 8; `test/intro.test.js` (the PNG's hash
+Pins: `test/ui/brand.test.js` 4 -> 8; `test/ui/intro.test.js` (the PNG's hash
 and IHDR, the retitled track); the doctrine allow-list row. Mutants:
 `tools/mutants/br4.json` 10 dead; `relwin1.json` re-aimed at the new
 artifact names, 9 dead.
@@ -356,7 +356,7 @@ point the player is looking at is the point they struck - with a
 little scatter so a flurry fans out. Enhanced only: the enhanced HUD
 registers the hook; the classic path never has one.
 
-ROSE-SEEN (`01-Overview/Field-Bugs-2026-10-15e.md`): a follow-up blow -
+ROSE-SEEN (`01-Overview/bugs/Field-Bugs-2026-10-15e.md`): a follow-up blow -
 Open Hand's second, Many Endings' echo - runs no formula, so the seam
 never heard it and the Rose looked like nothing. It raises its own
 number through `showFollowUp`, tagged with the power's name, under the
@@ -439,7 +439,7 @@ needle, which is how the audit missed it, and why no letter landed on the
 native-window hosts that hand it raw codes. It pushes the box now (the
 prompt above, `" > "`, MaxLineLenth 70, WidthOverride 318), and the
 confirm box's Y and N read the shortcut table (`hotkeyHit`); THE ROSTER
-(`test/classicinputbox.test.js`) names it.
+(`test/ui/classicinputbox.test.js`) names it.
 
 **What stays inline, and why.** The bank's transaction amount is a
 `TextBox` IN the panel in DFU too (DaggerfallBankingWindow.cs:185), and
@@ -450,17 +450,17 @@ window's hours prompt is a `DaggerfallInputMessageBox` in DFU (:619-624)
 and draws as one since CM2, but still keys through the window's own
 paced state machine (`value`, the `char:N` actions, the two refusals) -
 the one field this arc did not push. It is pinned as it is
-(`test/classicmodals.test.js`) and is the next slice if one is wanted.
+(`test/ui/classicmodals.test.js`) and is the next slice if one is wanted.
 
-**Pinned** in `test/classicinputbox.test.js` (10: the box under both
+**Pinned** in `test/ui/classicinputbox.test.js` (10: the box under both
 vocabularies, the cap, the numeric filter, close-before-callback, the
 `ActionInputBox` relation, the item maker's rename, THE ROSTER - every
 raiser in `src/ui` by DFU member, no other `typedChar` reader, and the
 eight retired inline fields gone by name - and CM9's note editor),
-`test/classicmodals.test.js` (4), `test/classiccharsheetmodal.test.js`
-(7), `test/classicinventorysplit.test.js` (4), `test/cm5_ctrlsplit.test.js`
-(2), `test/cm6_spellbookrename.test.js` (3), `test/cm7_spellmakerrename.test.js`
-(3), `test/cm8_travelmapfind.test.js` (3); the drop-gold, save-rename
+`test/ui/classicmodals.test.js` (4), `test/ui/classiccharsheetmodal.test.js`
+(7), `test/ui/native/classicinventorysplit.test.js` (4), `test/ui/native/cm5_ctrlsplit.test.js`
+(2), `test/ui/cm6_spellbookrename.test.js` (3), `test/ui/cm7_spellmakerrename.test.js`
+(3), `test/ui/travel/cm8_travelmapfind.test.js` (3); the drop-gold, save-rename
 and donation folds ride the pins those windows already had
 (`nativeinventory`, `wagon`, `saveslots`, `guildserviceflows`), rewritten
 to the pushed box. The `.github/workflows/check.yml` the PR added -
@@ -529,7 +529,7 @@ click, the save rename's Escape and its empty answer, the donation's
 Escape. Each is a pin now, with the box's cursor, shifted digit, seed
 and stamp-order laws beside them; a tautological roster assertion and a
 whitespace-exact CM9 source regex are gone (the note editor is driven
-live in `test/roadc_automap_notes.test.js` instead). Record errors
+live in `test/ui/automap/roadc_automap_notes.test.js` instead). Record errors
 fixed: the drop-gold cite (:1269-1284, not :1246-1256), the automap's
 file, the sheet's block, the Internal_Strings key (`levelProgress`),
 and four off-by-ones.
@@ -565,7 +565,7 @@ DECISION, not a notice, and keeps its own window on both skins - the
 `ActionInputBox`, the keyed `ChoiceWindow` menus, the rest window's
 states.
 
-**What was built.** `ui/enhancedNotice.js` (new): `drawEnhancedNotice
+**What was built.** `ui/enhanced/enhancedNotice.js` (new): `drawEnhancedNotice
 (frame, doc, key)` builds a `.notice-stack` fixed to the RIGHT edge,
 vertically centred, `aria-live="polite"`, and one `.notice` panel per
 OWNER key - the box's rows as `.notice-row`s (a string, a `{ text,
@@ -613,7 +613,7 @@ paying out.
 DFU's; the panel at the right edge is the port's, on the enhanced
 skin only. Ledger A section A row "THE NOTICE AT THE EDGE".
 
-**Tests.** `test/enhancedNotice.test.js` (12): the classic skin
+**Tests.** `test/ui/enhancedNotice.test.js` (12): the classic skin
 painting quads and raising no DOM and minting no key; the enhanced
 skin painting NO quads and one keyed panel with the rows in order, the
 centred mark, the hint and the sheet injected; the highlight row and
@@ -683,7 +683,7 @@ click arms read for a button hit is null while the panel is up, and
 every arm already guards it. The two homes' own release is the same
 `noticeRelease`.
 
-**Tests** (+5 in `test/enhancedNotice.test.js`): the seam alone
+**Tests** (+5 in `test/ui/enhancedNotice.test.js`): the seam alone
 (rows raise, repaint in place, null releases, the classic skin mints
 nothing, a released owner raises fresh); the guild service window
 over its test art (a text step is the panel with BOX1's single read
@@ -762,11 +762,11 @@ PushWindow (UserInterfaceManager.cs:79-91, ROAD-B B5); `previousWindow`
 and `highlightColor` ride through to the ActionTextBox. **THE LAW:
 notify decides WHICH MODEL, the draw decides WHICH FACE** - the door
 never imports the skin; the fork stays in `ui/actionText.js`,
-`ui/hudText.js`, `ui/midScreenText.js`.
+`ui/hud/hudText.js`, `ui/midScreenText.js`.
 
 **THE HUD LINE AS A TOAST.** `HudText` rows carry an id now
 (`frame().ids` beside `rows`), and under the enhanced skin `draw`
-hands the frame to `ui/enhancedNotice.js`'s `drawEnhancedToasts`: one
+hands the frame to `ui/enhanced/enhancedNotice.js`'s `drawEnhancedToasts`: one
 `.notice.notice-toast` panel per row in the SAME stack the box slides
 into, keyed `${model.key}:${id}`, no hint (nothing dismisses a toast),
 the popup's yellow on the box's dark. A row still in the frame keeps
@@ -778,7 +778,7 @@ move: the queue, the timer, the rubberband, the maxRows+1 cut, the
 notebook tail and the classic draw are PopupText's as FONT1 left them.
 The column is RETIRED - `drawEnhancedHudText`, `releaseEnhancedHudText`,
 the `.hudtext` rules, `HUD_TEXT_TOP_PX` and its four siblings, the
-chat-peek offsets, the narrow top - and `ui/enhancedHudText.js` keeps
+chat-peek offsets, the narrow top - and `ui/enhanced/enhancedHudText.js` keeps
 the mid-screen label and the online status line. `tools/font1Probe.mjs`
 measures the toasts (right edge, two models stacking, a long line
 wrapping, no hint) where it measured the column.
@@ -940,7 +940,7 @@ first pass had left in a lane's scratch, plus 27 for the findings.
   a four-that-is-five, a straddling overload range and a `.hmbox` cite
   four rules off, all corrected; six probe/test cites the shifter had
   carried along already wrong re-resolved by content and anchored in
-  `test/citedrift.test.js` (B18).
+  `test/scenes/citedrift.test.js` (B18).
 - **Named and left**: the watchdog's per-panel timer churn (~540
   set/clear pairs a second at eight toasts and a box - sub-millisecond,
   recorded so nobody measures it again); the standalone `?dungeon`
@@ -956,19 +956,19 @@ boxes, `worldModes.js`'s bookshelf refusal, the mobile-activate `modal:`
 dep, the dungeon's `hudBox`; and the keyed `ChoiceWindow` menus and the
 court flow, which are boxes WITH BUTTONS the door does not mint.
 
-**Pinned.** `test/notify.test.js` (17): routing, refusal, recency, the
+**Pinned.** `test/systems/notify.test.js` (17): routing, refusal, recency, the
 inactive presenter, the unregister, the fallback (inert), `hudText`/`popupMessage`
 with the delay, push and `onClosed`, the chain, the options, `toRows`,
 the skin pin, the migrated seams by source, the registrations as live
 code, the Travel Options wiring, and the mod driven with spies (arrival
 and refusal to the box, the no-path line to the HUD).
-`test/enhnotice3_hosts.test.js` (3): the three presenters and their
+`test/scenes/enhnotice3_hosts.test.js` (3): the three presenters and their
 order, the dungeon's adoption and dead guard, the one ladder, no
 window class under `src/systems`.
-`test/hudtext.test.js` rewritten onto the toasts (15);
-`test/enhancedNotice.test.js` +3 (`noticeHold`, `drawEnhancedToasts`, the box
-above the toasts), the roster widened; `test/tavernwindow.test.js` +3,
-`test/enhancedInventory.test.js` +3, `test/heldmap.test.js` +1 and two
+`test/ui/enhanced/hudtext.test.js` rewritten onto the toasts (15);
+`test/ui/enhancedNotice.test.js` +3 (`noticeHold`, `drawEnhancedToasts`, the box
+above the toasts), the roster widened; `test/ui/enhanced/tavernwindow.test.js` +3,
+`test/ui/enhanced/enhancedInventory.test.js` +3, `test/ui/heldmap.test.js` +1 and two
 re-pinned, `test/surv6_hunting.test.js` +2 (DELETED with the hunt, HUNT-OUT 2026-10-04); the old-law pins in
 `roadb_push_doors`, `ba1_betterambience`, `audit63_quests_talk`,
 `audit64_hud`, `audit24_wave22`, `waveD_dungeonHost` and `automap`
@@ -979,7 +979,7 @@ pass had left in a lane's scratch - one of them, the smuggled
 callback, a shape kill, since no shipping presenter reads the opts it
 adds); `tools/mutants/font1.json`'s 26 column records
 re-aimed by content - the 51 of the slice's 86 that name those four
-modules, `ui/hud.js` or `ui/midScreenText.js` run at once (51 dead), the
+modules, `ui/hud/hud.js` or `ui/midScreenText.js` run at once (51 dead), the
 whole list at the second audit (86 dead). Ledger A rows THE ONE DOOR EVERY MESSAGE GOES THROUGH
 and THE HUD LINE AS A TOAST.
 
@@ -1015,7 +1015,7 @@ the player should hear about a broken chunk from the door's overlay and
 not from a console line for a fetch nobody asked for; and it runs once,
 fire-and-forget - an awaited warm at the boot would BE the hitch.
 
-**Pinned** in `test/menu1_enhanced_chunk.test.js` (4).
+**Pinned** in `test/ui/enhanced/menu1_enhanced_chunk.test.js` (4).
 
 
 ## INTRO2 THE SCORE-LED INTRO (2026-09-18)
@@ -1141,7 +1141,7 @@ Skip keeps its own hit area.
 The scene's listeners, frame callback and WebGL allocations are disposed
 at handoff. The older classic data-backed title/splash remain on Begin.
 
-Verification lives in `test/intro.test.js`, the independent decoded-score
+Verification lives in `test/ui/intro.test.js`, the independent decoded-score
 check, and the browser probe/capture under `tools/intro*.mjs`. The rendered
 preview evaluates the actual scene at frame/30, muxing the original score
 at zero offset; it is a director's preview, not a hardware latency claim.
@@ -1186,7 +1186,7 @@ Begin and Skip - so it aims at the button's own top now.
 Skip keeps its corner: it is a control, not copy, and it is the only way
 to reach the menu without sitting through the film.
 
-Pins: `test/intro.test.js` (the removed strings and classes by name, the
+Pins: `test/ui/intro.test.js` (the removed strings and classes by name, the
 clip rather than the hide, the footer as the failure surface, both of the
 button's words, and the probe's new anchor). Mutants:
 `tools/mutants/introfield.json`, 7 dead.
@@ -1252,12 +1252,12 @@ None of these blocks anything; all are real.
                         CI and always will be, because this repo
                         holds no game data.
     THE TOUCH DOOR      No touch button opens ANY travel map -
-                        ui/touch.js's roster carries no V and no M.
+                        ui/touch/touch.js's roster carries no V and no M.
                         Pre-existing (map-consumers audit), and U61
                         makes it worth fixing: the overworld is the
                         first map a thumb could actually drive.
 
-    THE SPLIT POPUP     systems/itemTransfer.js:"or in the wagon;". TransferItem
+    THE SPLIT POPUP     systems/item/itemTransfer.js:"or in the wagon;". TransferItem
                         opens a numeric field DEFAULTED to maxAmount
                         when a stack will not fit whole (:1515);
                         BOTH skins take exactly what fits and never
@@ -1337,7 +1337,7 @@ and the drawn cup is Patreon's own mark on the same 4px grid (`.pmark`: the bar 
 disc in the brass - a 5x5 with its corners cut). Still no image and no third-party script; still the page's
 only ask - Ko-fi is gone from the page, the README, SUPPORT.md and the repository's Sponsor button
 (`.github/FUNDING.yml`). The Patreon tiers are the titles the account service grants (TITLE-N: Disciple, Apostle,
-Hierophant). Pinned in `test/landing.test.js` (U64 + PATREON1).
+Hierophant). Pinned in `test/ui/enhanced/landing.test.js` (U64 + PATREON1).
 
 AUDIT BRANCH-0925 PATREON1-F1 (2026-09-25, the pre-merge audit, Mac: "Audit before we merge"): the sweep had left
 `.github/FUNDING.yml` at `ko_fi: dfjs`, so GitHub's Sponsor button - in the header of every repo page the landing
@@ -1412,12 +1412,12 @@ phone keeps PX8's door, from the top. Against the CSS before the fix the same pr
 profile on the logo, with and without the long caption, the 159px caption, and the clipped top and last row); with it
 all pass.
 
-Pins: `test/support1_asks.test.js` (7) - the asks deepEqual Mac's addresses; the drawings pixel for pixel; `markCss`
+Pins: `test/ui/enhanced/support1_asks.test.js` (7) - the asks deepEqual Mac's addresses; the drawings pixel for pixel; `markCss`
 painting each pixel once on the 4px grid and laying out the whole drawing; the REAL front door mounted on the fake
 document drawing the two links (`_blank`, `noopener`, titled, labelled, marks aria-hidden) and the pause face none; the
 skin's plaque, cells, phone offsets, frame and motion; the band derived from both marks' numbers and the caption's px
 bound (the band's edge short of 1,024); and DOOR-FIT (the door's own scroller and auto margins over 480px, the base
-stage still centred for the pause face and the account window, a phone never centred). `test/landing.test.js`: the
+stage still centred for the pause face and the account window, a phone never centred). `test/ui/enhanced/landing.test.js`: the
 PATREON1 pin rewritten as U64 + PATREON1 + SUPPORT1 (the two asks in order at the module's addresses, each plaque
 whole, the door's room computed from the row, the phone row, no mark of the page's own - read off its rules, not its
 comments, the AUDIT SITE1 F10 lesson - and every ask the project makes naming the same two), and a new pin on the
@@ -1509,7 +1509,7 @@ computed family IS Jacquard 12 and `document.fonts` says it loaded, the
 body is Pixelify Sans, and the night is fixed with three gradient
 layers and 90 stars. 40/40 on desktop and Pixel 5.
 
-Pins: `test/landing.test.js` 12 (four new), 6 mutants dead.
+Pins: `test/ui/enhanced/landing.test.js` 12 (four new), 6 mutants dead.
 
 ## U62 THE SWITCH ON THE DOOR (2026-08-27, Mac's call)
 
@@ -1573,7 +1573,7 @@ rebuilding at the destination after the commit. A source pin holds
 beginFrame inside the camera-live arm, because the whole transition
 design is that ordering.
 
-THE FLIGHT IS THE LAW'S OWN PATH. systems/travel.js grew ONE export -
+THE FLIGHT IS THE LAW'S OWN PATH. systems/travel/travel.js grew ONE export -
 walkTravelPath, the classic longest-axis stepper extracted whole from
 calculateTravelTime, which now iterates it - so the route line and
 the camera fly exactly the pixels the time law charges. The pin that
@@ -1598,7 +1598,7 @@ map ARMED; teleport = arrival without the journey, so it gets the
 veil and NO flight; and the pick handed to onTravel is fastTravelTo's
 own {pixel, name, region, mapId, regionIndex, locationIndex}.
 
-THE DOOR is ui/travelMapDoor.js, the sixth of its shape, and the
+THE DOOR is ui/travel/travelMapDoor.js, the sixth of its shape, and the
 first whose fork is a STATIC import: the window must answer
 gotoPlace/activateTeleportationTravel synchronously (the journal and
 the guild service call them the same breath they open it), and the
@@ -1642,7 +1642,7 @@ the countdown-days animation became the flight.
 MAP1 (2026-09-18) RETIRED THIS SCREEN WHOLE: ui/overworldMap.js,
 render/overworldRenderer.js, tools/overworldProbe.mjs and
 test/overworldmap.test.js are gone; the enhanced map is the held
-parchment (ui/heldMap.js + ui/inkMap.js, bible/10-UI/Held-Map-Arc.md).
+parchment (ui/heldMap.js + ui/ink/inkMap.js, bible/10-UI/Held-Map-Arc.md).
 ui/overworldModel.js stays - its water, marker, trace and chain laws are
 the ink's. What follows is the record of the screen as it shipped.
 
@@ -1654,7 +1654,7 @@ saves/restores program, brackets cull both ways; the camera wraps
 mirrorProjectionX like every world pass - see THE REVIEW below for
 the first draft's "our data is right-handed" mistake),
 ui/overworldMap.js (the window: phases veilin/rise/map/flight/
-descend/hold/veilout, the chrome, the laws), ui/travelMapDoor.js.
+descend/hold/veilout, the chrome, the laws), ui/travel/travelMapDoor.js.
 The relief grid is cached per WOODS buffer across opens.
 
 PROVED: 28 node pins (test/overworldmap.test.js - the walk re-summed
@@ -1953,12 +1953,12 @@ Daggerfall Online (BR1, 2026-09-13; BR4, 2026-09-27); project-dagger is the repo
 and those stay.
 
 NOTED, NOT FIXED (Mac's call): there is no LICENSE file, and the
-doctrine's attribution rule names one. And test/doctrine.test.js's
+doctrine's attribution rule names one. And test/tooling/doctrine.test.js's
 allow-list carries a row for public/logo.png, a file that exists
 nowhere in the tree's history - harmless (the sweep checks tracked
 files against the list, not the reverse) and stale.
 
-Pins: `test/landing.test.js`, 8 tests, plus one in
+Pins: `test/ui/enhanced/landing.test.js`, 8 tests, plus one in
 `verifydeploy.test.js` for the nested entry ref; 8 mutations, 8 dead.
 Live: `tools/landingProbe.mjs` boots vite twice - once with no data
 folder, once with a fake one holding a fake ART_PAL.COL - and proves
@@ -2243,7 +2243,7 @@ and stopped being fine the moment a second one needed the same rungs.
 The choice at that point is EXTRACT OR COPY, and this port does not
 copy law: Port-Doctrine's translation rule allows simplification in
 structure and never in behaviour, and `audit24_onehome` is a standing
-gate against exactly the other outcome. So `systems/itemTransfer.js`
+gate against exactly the other outcome. So `systems/item/itemTransfer.js`
 now holds DaggerfallInventoryWindow.TransferItem, and the classic
 window calls it.
 
@@ -2359,7 +2359,7 @@ before the OPEN arm could be exercised.
 STILL CLASSIC, and the door still says so: the WAGON, LOOT PILES, the
 guild REWARD PICKER and DROP-GOLD. Those four share one thing this
 slice did not need - DFU's TRANSFER LADDER, which lives inside
-`ui/nativeInventory.js` as window methods rather than as anything
+`ui/native/nativeInventory.js` as window methods rather than as anything
 callable: the summoned-item refusal, the choose-one one-way rule, the
 750kg cart limit with its partial split-take, the carry gate and gold's
 own arithmetic. An enhanced remote pane needs that ladder, and there
@@ -2515,7 +2515,7 @@ picture of a person tells you how they look; this tells you what you
 are carrying, which is what the screen is for.
 
 IT IS INLINE SVG, NOT THE PROTOTYPE'S THREE.JS. `mountFigure` in
-`src/tools/enhancedVisuals.js` builds a small three.js scene and
+`src/tools/enhanced/enhancedVisuals.js` builds a small three.js scene and
 `enhanced.html` loads that library from a CDN - and the port already
 carries exactly one third-party request (Ledger A, the web fonts),
 which is one more than it wants. Twenty-seven positioned nodes need no
@@ -2527,7 +2527,7 @@ carries DFU's whole chain - the two-hander clearing both hands, a
 shield bumping a held two-hander, the forbidden and broken refusals,
 the swap delay billed per transition, the armour table and the
 enchantment hooks. The four tab pages are `TABS`/`filterByTab`. Weight,
-condition, material and damage strings are `systems/itemInfo.js`'s.
+condition, material and damage strings are `systems/item/itemInfo.js`'s.
 This module positions nodes and prints rows, and the node tests prove
 it by wearing a Claymore and watching both hands empty.
 
@@ -2661,7 +2661,7 @@ THE VACUOUS-FORK LESSON WAS NEEDED TWICE. The classic-skin pin ran
 headless, where `typeof document` is undefined, so BOTH skins fell to
 the classic branch and deleting `isEnhanced()` from the condition
 survived - the identical defect the first draft of
-`test/enhancedPause.test.js` shipped one slice earlier. It runs under
+`test/ui/enhanced/enhancedPause.test.js` shipped one slice earlier. It runs under
 the same four-property fake document now. Worth recording because it
 was not learned the first time.
 
@@ -2669,7 +2669,7 @@ NOT DRAWN HERE, recorded rather than dropped quietly: THE PAPERDOLL.
 The classic sheet composes it at DFU's (200,8) and the prototype
 answers the same slot with the 28-node body schematic - but that
 schematic is the INVENTORY's signature, it wants
-`src/tools/enhancedVisuals.js` and the three.js tag `enhanced.html` loads
+`src/tools/enhanced/enhancedVisuals.js` and the three.js tag `enhanced.html` loads
 from a CDN, and the port's doctrine already carries exactly one
 third-party request (Ledger A, the web fonts). It belongs to the
 inventory slice with the equip map it explains. The LEVEL-UP screen
@@ -2680,7 +2680,7 @@ which mutates stats through chargen's verbatim clamps.
 
 Escape opens the ENHANCED screen. `ui/pauseDoor.js` picks between it
 and the classic OPTN00I0 panel, the four hosts call what they always
-called, and the screen it mounts is the FRONT DOOR - `ui/enhancedMenu.js`
+called, and the screen it mounts is the FRONT DOOR - `ui/enhanced/enhancedMenu.js`
 in pause mode - not a second design.
 
 U49'S OWN COMPLAINT WAS STILL TRUE. Its record says the port's settings
@@ -2812,7 +2812,7 @@ about that changed; the CONTROLS grid stays classic-only - the enhanced
 settings pane renders all 171 DFU keys, and key REBINDING is not one of
 them; and the in-game screens behind this door - inventory, the sheet,
 the spellbook, the travel map, the journal - are all still classic. The
-prototype for those is `enhanced.html` + `src/tools/enhancedUI.js` and
+prototype for those is `enhanced.html` + `src/tools/enhanced/enhancedUI.js` and
 it is the next frontier, not this slice.
 
 ## U50 THE ENHANCED WIZARD (2026-08-25, Mac's call, ONE STAGE AT A TIME)
@@ -2918,7 +2918,7 @@ was no door back that was not a reload. Classic works that way because
 classic is a DOS program with a fixed 320x200 screen. Neither reason
 survives here.
 
-`ui/enhancedMenu.js` is one screen carrying continue, new game, load,
+`ui/enhanced/enhancedMenu.js` is one screen carrying continue, new game, load,
 settings, mods and about. `systems/uiSkin.js` chooses between it and the
 classic path, ENHANCED BY DEFAULT, with a toggle in both screens and a
 `?skin=` override that persists nothing (the pin that keeps the 25
@@ -2931,8 +2931,8 @@ the hit boxes drifted off the labels. Art that carries text cannot
 reflow, scale, localise or be read on a phone.
 
 THE LAW IS BORROWED, NOT REWRITTEN. The settings pane renders through
-the same four modules the classic screen uses - `systems/settings.js`,
-`ui/settingsMap.js`, `ui/settingsLaw.js`, `ui/settingsCopy.js` - and
+the same four modules the classic screen uses - `systems/settings/settings.js`,
+`ui/settings/settingsMap.js`, `ui/settings/settingsLaw.js`, `ui/settings/settingsCopy.js` - and
 `widgetFor` is total over all 171 keys, so the enhanced screen makes no
 judgement about any of them. ~850 lines of DFU-cited law reused
 untouched, ~650 lines of WebGL drawing replaced. The toggles WRITE:
@@ -2947,8 +2947,8 @@ classic door cannot do this and still gates first: it needs PICK03I0, a
 palette and FONT0003 before it can draw one word.
 
 ONE IMPLEMENTATION, TWO HOSTS. `/menu.html` and the game mount the same
-module; `src/tools/enhancedMenu.js` is four lines and `menu.html` carries
-no tokens or layout at all (`ui/enhancedStyle.js` owns both and injects
+module; `src/tools/enhanced/enhancedMenu.js` is four lines and `menu.html` carries
+no tokens or layout at all (`ui/enhanced/enhancedStyle.js` owns both and injects
 them at mount, so a player who chose classic never loads a byte of it).
 A prototype with its own copy of the design is a prototype arguing about
 a screen the player will never see.
@@ -2978,7 +2978,7 @@ the ARENA2 pick appear at that moment and not before, then checks
 The renderer gains ONE screen-space primitive: drawScreenQuad -
 positioned pixel-rect destination (top-left origin), source-UV
 window, textured (0.5 alpha cut) or solid color; depth off, NEAREST.
-src/ui/hud.js is the verbatim DFU-fullscreen HUD: vitals
+src/ui/hud/hud.js is the verbatim DFU-fullscreen HUD: vitals
 bottom-left from the classic bar art (MAIN03I0 health / MAIN04I0
 fatigue / MAIN05I0 magicka), each cropped BOTTOM-ANCHORED by
 current/max (the VerticalProgress shape; fatigue draws FULL,
@@ -3080,12 +3080,12 @@ Windows close on ESC. Backgrounds FLAGGED as U2/U3.
 
 ## U5 (HUD popup text): SHIPPED
 
-ui/hudText.js is the message queue (AddHUDText shape; PopupText's
+ui/hud/hudText.js is the message queue (AddHUDText shape; PopupText's
 column is TOP-centred, y=4 of the native panel - and since FONT1,
 2026-09-16, the classic bitmap draw is the classic skin's while the
 enhanced skin drew the same queue as a DOM column in the pixel face,
-ui/enhancedHudText.js - until ENH-NOTICE3, 2026-09-21, made each row a
-toast in the right-edge notice stack, ui/enhancedNotice.js): newest-last, 4-line cap, ~2s per line with a
+ui/enhanced/enhancedHudText.js - until ENH-NOTICE3, 2026-09-21, made each row a
+toast in the right-edge notice stack, ui/enhanced/enhancedNotice.js): newest-last, 4-line cap, ~2s per line with a
 0.4s fade, drawn just above the vitals in classic text. SEVEN
 consumers wired in the scene: pickup ('You take N items.'), skill
 raises ('Your X skill has improved.' - the classic phrasing),
@@ -3224,7 +3224,7 @@ has its front door. Ported from DaggerfallRestWindow's rules (the
 panel is the U-arc's clean text idiom; backgrounds stay FLAGGED
 pending art-name verification):
 
-- **The session machine** (systems/restSession.js, pure + pinned):
+- **The session machine** (systems/rest/restSession.js, pure + pinned):
   an hour of rest passes in 0.75 REAL seconds (loiter 1.25),
   advanced in six 10-classic-minute sub-ticks so world time - magic
   rounds, diseases, poisons, the once-per-change fatigue drain -
@@ -3280,7 +3280,7 @@ Mac's call: import the real Daggerfall menus/artwork. The IMG/CIF
 readers and all 333 UI art files were already in hand; this slice
 lays the foundation and retrofits the FIRST window.
 
-- ui/nativePanel.js - DFU's NativePanel semantics: every classic
+- ui/native/nativePanel.js - DFU's NativePanel semantics: every classic
   window authors in VIRTUAL 320x200 pixels; the screen mapping is
   integer scale (min 1) + centered letterbox (the hud.js law).
   loadImg (one IMG -> texture + size, deps-injected like loadHud),
@@ -3322,7 +3322,7 @@ The second native window - and the most-seen screen in the game:
 TALK01I0.IMG replaces the interim ChoiceWindow talk chain in BOTH
 exterior hosts (art-less sessions keep the chain - never trap).
 
-- ui/nativeTalk.js: DaggerfallTalkWindow's verbatim geometry as
+- ui/native/nativeTalk.js: DaggerfallTalkWindow's verbatim geometry as
   TALK_RECTS - the button column (Tell me about 4,4 / Where is 4,14
   / Location 4,26 / People 4,36 / Things 4,46 / Work 4,56, all
   107x10), Okay (4,186), Goodbye (118,183,67x10), the topic list
@@ -3368,7 +3368,7 @@ capability the inventory window will reuse).
   pipeline (getTexture + uploadRecord), warmed lazily per drawn
   item with the native size captured at warm (the GL handle carries
   no dimensions). Material-DYED weapon/armor icon variants FLAGGED.
-- ui/nativeTrade.js: INVE00I0.IMG base + INVE08I0.IMG buy-mode
+- ui/native/nativeTrade.js: INVE00I0.IMG base + INVE08I0.IMG buy-mode
   action panel at (222,10) + SHOP00I0.IMG cost strip at (49,13)
   with cost/gold labels at +28/+68 (all verified against
   DaggerfallTradeWindow - the FIRST guess TRAD00I0 does not exist;
@@ -3469,7 +3469,7 @@ up. Guessing cost three hotfixes; looking up costs one grep.
 The classic inventory screen on real art - the FIRST window built
 UNDER the native-window rule: every element below cites
 DaggerfallInventoryWindow.cs.
-- ui/nativeInventory.js: INVE00I0.IMG base; INVE01I0.IMG is DFU's
+- ui/native/nativeInventory.js: INVE00I0.IMG base; INVE01I0.IMG is DFU's
   SELECTED-state sheet (ImageReader.GetSubTexture cuts each active
   button from it at the button's own rect) - ported as drawImgSub
   on nativePanel (IMG top-down, straight UVs). Verbatim rects
@@ -3486,7 +3486,7 @@ DaggerfallInventoryWindow.cs.
   everything else. Defaults verbatim: WeaponsAndArmor tab
   (SelectTabPage on setup), Equip mode (selectedActionMode; Remove
   for loot targets pends with the loot flow).
-- ui/itemScroller.js: the ItemListScroller EXTRACTED to one shared
+- ui/item/itemScroller.js: the ItemListScroller EXTRACTED to one shared
   module (the 17d law - buttons at x9, the LEFT rail, no-upscale
   centring, FONT0004 stack labels) - nativeTrade rewired onto it,
   the inventory rides the same code. One layout, one fix site.
@@ -3549,7 +3549,7 @@ Suite 462/103.
 
 The paperdoll arc opens. Two halves, every law cited:
 - systems/equip.js: the MECHANICS half of ItemEquipTable over the
-  EXISTING C5a/C5c foundation (characters/paperdoll.js EQUIP_SLOTS
+  EXISTING C5a/C5c foundation (characters/paperdoll/paperdoll.js EQUIP_SLOTS
   + characters/equipTable.js's verbatim GetEquipSlot/GetItemHands,
   whose header always deferred "equip/unequip mechanics" to the
   Systems arc): EquipItem (arrows refused, SplitStack ONE off a
@@ -3565,7 +3565,7 @@ The paperdoll arc opens. Two halves, every law cited:
   THE NEAR-MISS (process): the first draft REBUILT GetEquipSlot/
   GetItemHands from the DFU source without checking the tree - the
   C5c foundation already carried them, and the duplicate overwrote
-  test/equip.test.js (the manifest drift guard caught the five
+  test/characters/equip.test.js (the manifest drift guard caught the five
   vanished tests at the gate). BEFORE porting a DFU class, grep the
   bible + tree for an existing port; the manifest guard is load-
   bearing - never bypass it.
@@ -3683,9 +3683,9 @@ each cited and pinned.
   ingredients / arrows / ReligiousItems / MiscItems
   (DaggerfallUnityItem.UseWorldTexture:1830-1855) - 111 of 288
   templates differ. The port only HAD the world texture because
-  systems/itemTemplatesData.js was a LOSSY second copy of
+  systems/item/itemTemplatesData.js was a LOSSY second copy of
   characters/itemTemplates.json. The two were verified identical
-  field-for-field, the copy was deleted, and systems/itemTemplates.js
+  field-for-field, the copy was deleted, and systems/item/itemTemplates.js
   now reads the verbatim DFU row - which also brings variants,
   drawOrder and enchantment points into the one place. inventoryItemImage
   ports GetInventoryTextureArchive/Record incl. the Katana +1 bump
@@ -3815,7 +3815,7 @@ honest.
 - F34 ONE DFU MEMBER, ONE EXPORT: droppedLoot.js re-declared
   randomTreasureArchive + randomTreasureIconIndices, regressing the
   single-sourcing the 2026-07-06b audit had already done in
-  systems/loot.js. Now imported and re-exported.
+  systems/loot/loot.js. Now imported and re-exported.
 - F35 A PIN MUST FAIL: equip.test.js asserted `bows >= 8`, a
   one-sided inequality that survives promoting ANY weapon to
   two-handed (mutation-proven with Mace). The whole 18-row
@@ -3970,7 +3970,7 @@ list - inventory, trade, loot - drew clothing off the morphology-0
 ARGONIAN row and armor off the men's Argonian archive, whoever was
 wearing it. The paperdoll had the law since U8g; the list did not,
 which is exactly the split ONE DFU MEMBER, ONE EXPORT exists to catch.
-`characters/paperdollArt.js` now owns `playerArchiveFor` and both
+`characters/paperdoll/paperdollArt.js` now owns `playerArchiveFor` and both
 windows resolve through it; `makeIconDrawer` takes the wearer.
 Eyeballed: a Khajiit female's short shirt is archive 238, not 235.
 
@@ -3995,7 +3995,7 @@ Khajiit identity addressing Breton bitmaps.
 
 **paperdollArt kept a third copy.** 17e F32 collapsed the armor
 material tables out of equip.js and paperDoll.js and stopped one file
-short. `characters/paperdollArt.js` still held the SetVariant clamps
+short. `characters/paperdoll/paperdollArt.js` still held the SetVariant clamps
 keyed by material FAMILY and a second export literally named
 `armorArchive` whose second argument was a RACE where the other's was
 a MORPHOLOGY. Same member, same name, incompatible arguments. It
@@ -4042,7 +4042,7 @@ goldAmount, trade and loot; a REMOTE list drawing its clothing on the
 PLAYER's morphology, because shop stock carries no owner identity;
 quicksave still living only in the dungeon host.
 
-Pins: `test/audit17f.test.js`, ten tests, each mutation-proven.
+Pins: `test/systems/audit17f.test.js`, ten tests, each mutation-proven.
 Probes: the chargen probe now asserts bag ORDER, template names, the
 starting spellbook and the wearer-addressed icon archive; the equip
 probe clears the derived tables instead of unhooking "the interim
@@ -4135,7 +4135,7 @@ once 17f gave gold its template - it sat behind it as a second pile
 It adds gold through the real producer now (TEST THE SHAPE THE
 PRODUCER MINTS).
 
-Pins: `test/chargenart.test.js`, seven tests, each mutation-proven.
+Pins: `test/systems/chargenart.test.js`, seven tests, each mutation-proven.
 Probed + eyeballed, every screen: "Name thyself" with the OK button,
 the Empire of Tamriel map with the verbatim prompt, "Choose thy face"
 with a Khajiit female portrait in the picker frame, the class scroll
@@ -4208,7 +4208,7 @@ ActionInputBox. The race table gained `descriptionId` and `clipId`
 2000, Breton 2003). Warmed in all three chargen hosts; worldModes
 hosts no popup (its `say` goes to the console, already flagged).
 
-Pins: `test/messagebox.test.js`, six tests, and the corrected
+Pins: `test/ui/messagebox.test.js`, six tests, and the corrected
 `textrsc` pins - each mutation-proven.
 Probed + eyeballed: the gender box on the province map with real MALE
 and FEMALE buttons, and the Redguard description reading as seven
@@ -4277,7 +4277,7 @@ floored at 10; y = scroll x (rail - height) / (total - displayed)) but
 the thumb is three texture slices this port has not identified, and
 inventing a colour would break the NATIVE-WINDOW RULE.
 
-Pins: `test/audit17g.test.js`, six tests, each mutation-proven.
+Pins: `test/ui/audit17g.test.js`, six tests, each mutation-proven.
 Probed: all seven exterior probes green, and the keyboard confirm
 opens the Khajiit description at 9 rows live.
 
@@ -4346,7 +4346,7 @@ the classic sequence is its own slice. The backstory TEXT the '#'/'!'
 tokens compose, and the reputation-change message box that closes the
 screen (reputationToken 35), pend with it.
 
-Pins: `test/biography.test.js`, 16 tests, each mutation-proven, plus a
+Pins: `test/systems/biography.test.js`, 16 tests, each mutation-proven, plus a
 CORPUS GATE walking all 18 shipping files - twelve full questions each
 that fit the ten buttons, and every one of their ~2200 effects a
 command we implement bar the twelve `&`.
@@ -4406,7 +4406,7 @@ WITHOUT pins rather than with fake ones: DigestRepChanges' `rf` arm
 (the split never parses a faction id anyway) joins the two BIOG parser
 rules S3e already recorded.
 
-Pins: `test/biography.test.js` grows to 21, the five new laws each
+Pins: `test/systems/biography.test.js` grows to 21, the five new laws each
 mutation-proven.
 Probed + eyeballed: the REFLEXES screen with classic's own text and
 the highlight band on AVERAGE, and the reputation box carrying the
@@ -4469,7 +4469,7 @@ at game start, after the entity setup that computes the sums). The 18
 BIOG files loaded at boot mirror the 18 CLASS files already loaded
 beside them, and only when chargen actually runs.
 
-Pins: `test/audit17h.test.js`, four tests, each mutation-proven -
+Pins: `test/systems/audit17h.test.js`, four tests, each mutation-proven -
 including the greeting compared either side of a save round trip,
 which is the assertion that would have caught this years of slices
 ago.
@@ -4499,7 +4499,7 @@ constructs anything, it WRAPS a flow for the exterior overlay seam.
 A dependency added tomorrow is added HERE, once, where no host can
 miss it.
 
-**The rule is enforced, not remembered.** `test/chargenseam.test.js`
+**The rule is enforced, not remembered.** `test/systems/chargenseam.test.js`
 sweeps `src/scenes` and fails if any host contains
 `new ChargenFlow(`. A host that news one up gets whatever
 dependencies existed the day it was written and silently misses every
@@ -4552,7 +4552,7 @@ PREVIOUS/NEXT show through the dim behind the scroll.
   testable without art the way `chargenHit` already was.
 
 **The guard rail.** A screen that ships keyboard-only is invisible on
-a phone, and three of them did. `test/chargenpointer.test.js` walks
+a phone, and three of them did. `test/systems/chargenpointer.test.js` walks
 every chargen state and requires EVERY one of its own controls to
 answer a click - not merely one of them, because a screen whose OK
 button works while its controls are dead is still keyboard-only in
@@ -4850,7 +4850,7 @@ live walk. Repaired to the classic sequence; both probes run again.
 Port-Ledger housekeeping: a stray `>>>>>>> origin/main` conflict
 marker in section C (left by the 2026-08-16 two-lane merge) deleted.
 
-Pins (test/classquestions.test.js, 23 with the pointer sweep): the
+Pins (test/ui/classquestions.test.js, 23 with the pointer sweep): the
 answer table deepEqual against the FALL.EXE literal AND every row
 covering all three paths; the linear-probe pick under a stuck PRNG;
 the nibble law on crafted and real headers; the no-cancel-arm law; the
@@ -4917,7 +4917,7 @@ that passes an entity inherits it), and 17k's fist crash proved the
 dungeon binding live (the null weapon CAME from the bound empty
 hand). Retired with this record rather than re-shipped.
 
-Pins (test/biomethod.test.js, 6): every class-accept arm lands on
+Pins (test/ui/biomethod.test.js, 6): every class-accept arm lands on
 the method screen and a missing question set skips it; the questions
 arm resets; the generate arm's pick law pinned at both PRNG extremes
 (rolls 0 -> answer a everywhere, rolls .999 -> the LAST answer, every
@@ -5030,7 +5030,7 @@ Ledger held it and the Ledger never did, which is the drift the
 Ledger exists to prevent: a departure narrated in an arc doc but
 absent from the table is not recorded at all.
 
-Pins (test/customclass.test.js, 28): the difficulty tally and its
+Pins (test/systems/customclass.test.js, 28): the difficulty tally and its
 multiplier at both ends of the legal band; the dagger's truncation
 and clamps; the picker's alphabetical unassigned list; the built
 career's DFCareer defaults, skills and stats, with its x0.50 spell
@@ -5116,7 +5116,7 @@ the claim actively hid the defect: a reviewer checking whether the
 behaviour was known would read the sentence and stop. The sentence is
 deleted rather than backfilled, because the departure is fixed.
 
-Pins (test/audit17m.test.js, 6), every one mutation-proven - restoring
+Pins (test/ui/audit17m.test.js, 6), every one mutation-proven - restoring
 the original defect fails three of them: the affinity landing on the
 document with the picker untouched; the whole back-out path ending in
 the BUILDER with the career intact; a list pick copying the row only
@@ -5192,7 +5192,7 @@ onto the list before opening the secondary picker and pops it on
 cancel; the port never pushes it. Same end state, and no frame in which
 a redraw could catch a primary with no secondary under it.
 
-Pins (test/specialadvantages.test.js, 27), each mutation-proven -
+Pins (test/systems/specialadvantages.test.js, 27), each mutation-proven -
 dropping the two adjust terms from the tally fails four of them, and
 the ONLY-ONE limit, the equal-secondary pair rule, the magery replace
 and the expert-proficiency shift each fail their own. Probed live by
@@ -5281,7 +5281,7 @@ rest.js's hasSpecialAbility), so what actually pends is the EFFECT,
 not the read. Both sentences re-pointed rather than left to imply a
 missing capability the port now has.
 
-Pins (test/audit17n.test.js, 7), each mutation-proven - reverting
+Pins (test/systems/audit17n.test.js, 7), each mutation-proven - reverting
 either half of F1 fails three and one respectively, and dropping the
 level scaling fails three. F1 is pinned on both entity shapes, on an
 attacker carrying neither, through real damage via
@@ -5321,8 +5321,8 @@ known".
 ## U23 - THE GUILD SERVICE POPUP, and the static NPC becomes clickable (2026-08-19)
 
 `src/ui/guildServiceWindow.js` + the interior host's static-NPC seam in
-`src/scenes/worldModes.js`. `test/guildservicewindow.test.js`, 8 tests.
-The law half is `systems/guildServiceFlow.js`, recorded in the Systems
+`src/scenes/worldModes.js`. `test/ui/guildservicewindow.test.js`, 8 tests.
+The law half is `systems/guild/guildServiceFlow.js`, recorded in the Systems
 arc; the calendar it needed is S28.
 
 **The thing that did not exist.** The people standing in a building
@@ -5402,7 +5402,7 @@ rows of their own.
 ## U24 - THE THREE GUILD SERVICE FLOWS + THE LIST PICKER (2026-08-19)
 
 `src/ui/listPicker.js` and `src/ui/guildServiceWindows.js`; the law is
-S29's `systems/guildServiceActions.js`. `test/guildserviceflows.test.js`,
+S29's `systems/guild/guildServiceActions.js`. `test/systems/guild/guildserviceflows.test.js`,
 17 tests.
 
 **None of DFU's three service classes has art of its own.** It says so
@@ -5460,10 +5460,10 @@ one-shot service list has nothing to preview.
 
 `src/systems/useItem.js` (DaggerfallInventoryWindow.UseItem :1661-1817
 + the DaggerfallUnityItem predicates and NextVariant),
-`src/systems/itemInfo.js` (ItemHelper.GetItemInfo :748-817 + the
+`src/systems/item/itemInfo.js` (ItemHelper.GetItemInfo :748-817 + the
 DaggerfallUnityItemMCP macros), and the wiring in
-`src/ui/nativeInventory.js`. `test/useitem.test.js` (12),
-`test/iteminfo.test.js` (9), `test/nativeinventory.test.js` (+4).
+`src/ui/native/nativeInventory.js`. `test/systems/useitem.test.js` (12),
+`test/systems/iteminfo.test.js` (9), `test/ui/nativeinventory.test.js` (+4).
 
 **The Use button has existed since U8d and did nothing.** The mode
 selected and every click fell through - the header said so, twice, for
@@ -5539,7 +5539,7 @@ its variant; the wagon says its line.
 `src/ui/input.js`; the keyed `InventoryWindow` in what was then
 `src/ui/inventory.js` (DELETED as a path at U42, when the last window
 left in it made it `src/ui/deathScreen.js`) is DELETED.
-`test/nativeinventory.test.js` (+2 sweeps).
+`test/ui/nativeinventory.test.js` (+2 sweeps).
 
 **The last host without it.** The exterior hosts moved to the classic
 window at U8d; the dungeon kept a text list, so underground there were
@@ -5627,7 +5627,7 @@ Mutations: 3 run, 3 killed (the flag dropped back to the no-op; the
 once-latch dropped so onCancel refires; the modal back cancelling
 the wizard).
 
-Pins: test/uicancel.test.js x3 (the flag - first-screen back sets
+Pins: test/systems/uicancel.test.js x3 (the flag - first-screen back sets
 it, the gender walk-back does not, the description box's No never
 does; the window - Escape fires onCancel once and goes dead with
 onDone untouched; the host sweep - the dungeon tickOverlay arm and
@@ -5678,7 +5678,7 @@ Mutations: 4 run, 4 killed (the exitTooFar gate dropped; the wagon
 transfer gate dropped; the no-loot auto-open dropped; the gold
 clamp dropped).
 
-Pins: test/wagon.test.js x4 (the ladder incl. the dungeon refusal
+Pins: test/scenes/wagon.test.js x4 (the ladder incl. the dungeon refusal
 and the toggle's remote identity; CheckWagonAccess's three opens -
 no-loot-on-the-wagon-in-Remove, loot-keeps-the-pile,
 no-cart-never-grants; the 750kg gates - the 375-of-400-books
@@ -5693,7 +5693,7 @@ exposed that the port had no settings at all - every value it branched
 on was a constant, recorded that morning as a Ledger row saying so.
 The row lasted a few hours.
 
-**The store** (`systems/settings.js`) is DFU's SettingsManager. The 13
+**The store** (`systems/settings/settings.js`) is DFU's SettingsManager. The 13
 sections, 171 keys and every default come from the VENDORED
 `defaults.ini.txt` (`vendor/dfu-settings`, MIT, the same route the
 quest pack took) baked by `scripts/bakeSettings.mjs` - hand-copying
@@ -5743,7 +5743,7 @@ THE DIVERGENCE SURVIVES AND IS NOW ENFORCED: EnhancedCombatAI ships
 True in DFU and is False here (the classic AI). It is tiered
 `unavailable` with that reason on screen, not offered as a toggle.
 
-Pins: test/settings.test.js x5 (the bake against the vendored bytes;
+Pins: test/systems/settings.test.js x5 (the bake against the vendored bytes;
 the getters' failure modes; the delta/reset behaviour; the LIVE tier
 proven by driving each consumer; and the tier map's honesty - which
 caught TWO lies in the map while this slice was being written, naming
@@ -6565,7 +6565,7 @@ correctly took ConfirmTrade's letter-of-credit branch and the probe
 asserted coins. It walks BOTH proceeds arms deliberately now, reading
 the window's own weighing rather than recomputing it. The same trap
 was found in FOURTEEN other probes and is gated in
-`test/probehygiene.test.js`.
+`test/tooling/probehygiene.test.js`.
 
 FLAGGED: the Identify SPELL arm (it pays in magicka and rolls per
 item) waits on the magic arc; the letter of credit is minted and
@@ -6870,7 +6870,7 @@ holds a single DaggerfallTravelMapWindow and re-PUSHES it, so its
 four filters and the popup's three choices survive a close - and
 SaveLoadManager writes them into every save as TravelMapSaveData.
 The port's windows are per-open objects, so that state moved to
-`systems/travelMapState.js` (the A2 zoom-memory shape) and rides
+`systems/travel/travelMapState.js` (the A2 zoom-memory shape) and rides
 `composeSessionState`, the one envelope composer both hosts already
 call. Two consequences worth naming: a filter set on the map is
 still set the next time V is pressed, and a save from before this
@@ -6970,18 +6970,18 @@ the quest journal's click-through travel (`GotoPlace`) has no journal
 door yet; TextureReplacement's custom region maps and region
 overlays have no door; and the HUD smash-to-black around the trip
 waited on a fade layer the port did not have - **CLOSED at ROAD-D D4**:
-`src/ui/fadeLayer.js` is FadeBehaviour.cs whole, and `ui/travelPopUp.js`
+`src/ui/fadeLayer.js` is FadeBehaviour.cs whole, and `ui/travel/travelPopUp.js`
 fires `hudFade.smashHUDToBlack()` on the frame the counter empties.
 
 ## U42 - THE SPELLBOOK (2026-08-24)
 
-`src/ui/spellbookWindow.js` + `src/ui/spellIcons.js` (both new); the
+`src/ui/spellbookWindow.js` + `src/ui/spell/spellIcons.js` (both new); the
 keyed window and `knownSpells` in `src/ui/inventory.js` are DELETED,
 and what is left of that module is the death screen, so the file is
 `src/ui/deathScreen.js` now. Wired in all four hosts;
-`src/systems/guildServiceFlow.js`'s two BuySpells nulls close;
+`src/systems/guild/guildServiceFlow.js`'s two BuySpells nulls close;
 `src/systems/spellcast.js` gains the probe helper the fallback used
-to be. `test/spellbookwindow.test.js` (new), four pins re-aimed.
+to be. `test/systems/spellbookwindow.test.js` (new), four pins re-aimed.
 
 **The last text stand-in on the daily loop is gone.** Every other
 window a player touches hourly had already moved onto its ARENA2 art
@@ -7129,7 +7129,7 @@ lookups.
   `GetSpellIcon` answers null outside `[0, Count)` and the panel
   shows its black background; the `index % 69` wrap is
   `SpellMakerWindow.SetIcon`'s law, applied at MINT time in
-  `systems/spellMaker.js`. A record carrying a bad icon byte now
+  `systems/spell/spellMaker.js`. A record carrying a bad icon byte now
   reads as a black square rather than as some other spell's icon.
 - **The effect labels read the wrong table.** `SetEffectLabels` goes
   through `EntityEffectBroker.GetEffectTemplate` - the whole registry
@@ -7252,10 +7252,10 @@ the bug.
 The Mages Guild's teleport service and the travel map's teleport mode
 had each been waiting on the other, in writing:
 
-- `ui/travelMapWindow.js` (U41): *"FLAGGED, idling loudly: … the guild
+- `ui/travel/travelMapWindow.js` (U41): *"FLAGGED, idling loudly: … the guild
   TELEPORT mode (ActivateTeleportationTravel + DaggerfallTeleportPopUp),
   **which waits on the guild arc's teleport service**."*
-- `systems/guildServiceFlow.js`: `Teleport: null, // FLAGGED: **the
+- `systems/guild/guildServiceFlow.js`: `Teleport: null, // FLAGGED: **the
   travel map's teleport mode**`
 
 Neither was waiting on anything that did not exist. Both flags retire
@@ -7332,9 +7332,9 @@ Pins: 7 in `teleportpopup.test.js` and 3 added to
 ## U43 - ONE DISPATCH: the windows work everywhere (2026-08-24)
 
 `src/ui/input.js` (routeKey grows the two journal doors) +
-`src/ui/questJournal.js` (a DisplayMode door) + `src/ui/charsheet.js`
-+ the four hosts. `test/inputmap.test.js` and
-`test/charsheetnav.test.js` (+2 each), two existing pins re-aimed.
+`src/ui/quest/questJournal.js` (a DisplayMode door) + `src/ui/charsheet.js`
++ the four hosts. `test/scenes/inputmap.test.js` and
+`test/ui/charsheetnav.test.js` (+2 each), two existing pins re-aimed.
 
 **Step through a shop door and seven windows stopped existing.**
 `GameManager.Update` (`:509-557`) is a single flat dispatch chain -
@@ -7368,7 +7368,7 @@ clicks, hovers and keys.
 **Two of GameManager's own actions had never been read at all.** L
 and N have been in the binding table since I1 and `grep` found no
 consumer anywhere in `src/` outside the table and the rebinding grid,
-while `ui/questJournal.js` sat fully built with all four of its
+while `ui/quest/questJournal.js` sat fully built with all four of its
 pages. They are ONE window with two doors:
 `dfuiOpenQuestJournalWindow` pushes it as it stands and
 `dfuiOpenNotebookWindow` sets `DisplayMode = Notebook` first
@@ -7464,7 +7464,7 @@ store since the MENU slice, and the pause window's FULL SCREEN button
 has been *writing* it since I3 — its own comment said "No large HUD
 exists in the port yet". The settings screen was reporting a working
 toggle for a feature that did not exist. The settings audit's
-both-ways tier map now names `ui/hudLarge.js` as its consumer, along
+both-ways tier map now names `ui/hud/hudLarge.js` as its consumer, along
 with the three that shape it.
 
 **THE OTHER DEAD SEAM WAS THE ONE THAT MATTERED.**
@@ -7569,10 +7569,10 @@ sprite drawn by scenes/world.js and the viewmodel is
 combat/fpsWeapon.js's one bottom-anchored quad. `horseOffsetHeight`
 (TransportManager.cs:304-309, which never asks about docking) and
 `weaponOffsetHeight` (FPSWeapon.cs:146-155, FORCED whenever the bar is
-docked whatever the setting says) live in `src/ui/hudLarge.js`, read by
+docked whatever the setting says) live in `src/ui/hud/hudLarge.js`, read by
 `ridingRect` in the world host and by fpsWeapon's default
 `offsetHeight`, and both keys are tiered live in
-`src/systems/settings.js`. Port-Ledger.md strikes the same clause. The interior
+`src/systems/settings/settings.js`. Port-Ledger.md strikes the same clause. The interior
 host's char-sheet and inventory panels swallow their click and do
 nothing, because F5 and F6 do not reach interiors either — the same
 arc, named in the same place.
@@ -7587,7 +7587,7 @@ not boot at all**. Two declarations move above their use. A gate for
 it landed here first and was **removed one slice later**: another
 session found the same crash from the other side — by starting the
 game, in a first-hour playthrough probe — and wrote
-`test/tdz.test.js`, which parses every file in `src/` to an AST and
+`test/tree/tdz.test.js`, which parses every file in `src/` to an AST and
 reports a reference evaluated in the same execution scope as a
 declaration it precedes. That is this law done properly over the whole
 tree rather than over three boot functions by line, and two gates for
@@ -7692,7 +7692,7 @@ pointer and nothing on empty screen.
 **FLAGGED:** `HUDEscortingNPCFaces`, the third component of that row,
 is quest-gated and not here. DFU's icon *packs*
 (`Resources/SpellIcons`) remain the Ledger note they already were on
-`ui/spellIcons.js`.
+`ui/spell/spellIcons.js`.
 
 Pins: 13 in `hudactivespells.test.js`. 10 mutations, 8 dead, 2
 recorded equivalent — the wrap test's guarded `>=` (a counter that
@@ -7839,7 +7839,7 @@ only that `restDecision` *appeared* in a file passed a toggle that
 hardcodes `{ kind: 'rest' }` and leaves the helper unused — both hosts
 survived that one.
 
-Pins: `test/restwhere.test.js`, 8 tests, **28 mutations, 28 dead**.
+Pins: `test/systems/rest/restwhere.test.js`, 8 tests, **28 mutations, 28 dead**.
 Two pins in `travelmapwindow.test.js` were re-aimed on the way past:
 one sliced `frame()` by a magic 900 characters, and the other checked
 for a `dispose` anywhere in the function rather than in the drain, and
@@ -7858,7 +7858,7 @@ carries toggleSheath. One press, two toggles, net nothing. Above ground
 and indoors the ctx had no toggleSheath, so one path fired and it
 worked - which is why it read as "dungeons only". routeKey now declines
 POLLED_ACTIONS (ReadyWeapon); the panel keeps routeAction. Pinned in
-test/sheathkey.test.js (the keyboard OFF, the panel ON, every host's
+test/scenes/sheathkey.test.js (the keyboard OFF, the panel ON, every host's
 poll and both dungeon routers present), 2 mutants dead.
 
 
@@ -8230,7 +8230,7 @@ unwind starts, whatever left it alive. The stale-loop FAMILY is
 closed by construction; the LIVE REPRO on the exact path (boot ->
 Continue -> pause -> Exit -> New Game, real ARENA2) is still owed to
 a data-bearing session to confirm which teardown was leaking and
-that no second cause hides behind it. test/frameowner.test.js pins
+that no second cause hides behind it. test/scenes/frameowner.test.js pins
 the generation law, the three hosts' claim+check, and both unwinds'
 claims; 4 mutations, 4 dead.
 
@@ -8312,7 +8312,7 @@ sticks. Suite green, build green.
 
 PX16 (Mac: "use the reference and develop the new inventory - go all
 out"): THE PACK WEARS THE PIXELS. The enhanced inventory
-(ui/enhancedInventory.js) is a LIVING window - wagon pairing,
+(ui/enhanced/enhancedInventory.js) is a LIVING window - wagon pairing,
 remote-first ordering, wear/use/stow with their refusals, the V4
 suppression, the F6 claim - so the slice is the wizard's pattern at
 full depth: the window's laws do not move, the ground and the paint
@@ -8901,7 +8901,7 @@ grant stood past the sixth row).
   Daggerfall's own answer, not an omission. (DISC22-C, 2026-09-24:
   the classic skins take quick loot too now, at Satranath's report and
   on Mac's parchment - a canvas panel for a LOOT LIST only, with quick
-  loot on; `01-Overview/Field-Bugs-2026-09-24.md` DISC22-C.) It tears down with the
+  loot on; `01-Overview/bugs/Field-Bugs-2026-09-24.md` DISC22-C.) It tears down with the
   host. The context's returned object needed a name (`api`) for the
   frame to ask itself, which is all that change is.
 
@@ -9144,7 +9144,7 @@ Pins: 3 more (6). 5 more mutations, 5 dead.
 Verified live: the book opens through the door on the enhanced skin,
 Ready calls the engine with the free flag and closes the window, and
 Delete on a vampire spell answers "Cannot delete special vampire
-spells." Pins: 3 in a new test/enhancedSpellbook.test.js. 4
+spells." Pins: 3 in a new test/ui/enhanced/enhancedSpellbook.test.js. 4
 mutations, 4 dead.
 
 SB-FX (2026-10-14, a player on Discord: "The spell details panel in
@@ -9210,7 +9210,7 @@ record the DFU way (above); and a made spell's record travels whole
 through a save (save.js snapshotPlayer, restored as the object it is) -
 pinned, settings and words alike, after a round trip.
 
-Pins: 2 more in test/enhancedSpellbook.test.js (9) - the player's spell
+Pins: 2 more in test/ui/enhanced/enhancedSpellbook.test.js (9) - the player's spell
 made through the real SpellMakerWindow (its clicks, its typed spinner
 field, Buy) and read by the book before and after a save, and the real
 SPELLS.STD swept, every stock effect its supported components alone
@@ -9317,7 +9317,7 @@ mistake three slices running. The family's shared parts share their
 selector now, and one pin holds all four together (head, chip row,
 chip, rail count) so there is no fourth.
 
-Pins: 8 in test/enhancedChronicle.test.js. 12 mutations, 12 dead.
+Pins: 8 in test/ui/enhanced/enhancedChronicle.test.js. 12 mutations, 12 dead.
 
 PX25 (Mac: "retire the ones you mentioned"; then "your lead"): THE
 SHEET'S DOORS, FIRST. The F5 overlay and the pause window's Stats page
@@ -9406,7 +9406,7 @@ Pins: 2 more (24 in enhancedPause.test.js). 8 mutations, 8 dead.
 PX27: THE F5 SHEET IS RETIRED. There were TWO enhanced character
 sheets - this door's overlay and the pause window's Stats page -
 reading the same four sections out of the same `sheetModel`, which
-enhancedMenu imports from ui/enhancedCharSheet.js. One of them was the
+enhancedMenu imports from ui/enhanced/enhancedCharSheet.js. One of them was the
 last pre-PX surface in the game and drew its three columns hard
 against the left edge. PX25 gave the Stats page the four buttons the
 overlay carried and PX26 sent the dial's north to it; F5 was the last
@@ -9433,7 +9433,7 @@ FOUND BY ONE OF THOSE PINS: the new overlay answered `destroy` and not
 `dispose`, and the hosts use both words. A real teardown bug, caught
 by a pin I was in the middle of rewriting.
 
-`ui/enhancedCharSheet.js` STAYS - `sheetModel` is the model both
+`ui/enhanced/enhancedCharSheet.js` STAYS - `sheetModel` is the model both
 sheets always read, and the one that remains reads it. What went is
 the view that drew the second.
 
@@ -9510,7 +9510,7 @@ TAB MEANS PUT THIS AWAY. The dial already closed ITSELF on a second
 press - openPixelDial's own toggle - but it could not close what it
 had OPENED. Press Tab, press Items, and the pack was up with Tab doing
 nothing, because each enhanced window owns its own keyboard and knows
-nothing of the others. `ui/enhancedOverlays.js` is the smallest honest
+nothing of the others. `ui/enhanced/enhancedOverlays.js` is the smallest honest
 fix: a STACK of close-arms that every enhanced overlay registers with
 on mount and clears on teardown, and Tab closes the top one before it
 would raise the dial. It holds FUNCTIONS, never DOM - a registry that
@@ -9649,7 +9649,7 @@ picker both read - and the effects row came back empty against a real
 entity. The same lesson as PX23's invented divider and PX24's
 flattened date, a third time: use what exists.
 
-Pins: 4 in a new test/enhancedHud.test.js. 6 mutations, 6 dead.
+Pins: 4 in a new test/ui/enhanced/enhancedHud.test.js. 6 mutations, 6 dead.
 Verified live with a struck foe, two effects and a real heading.
 
 PX30b - THE HANDS, AND THE BREATH. The reference's ability bar has no
@@ -9767,7 +9767,7 @@ keypress frees the mouse. The port's ActionInputBox (ShowTextWithInput
 four hosts share - refuses through `cursorToggleRefused()`, keeping
 C#'s strict-greater boundary: exactly 0.3s still refuses.
 
-Pins: 2 appended to `test/pointerlock.test.js`. Campaign: 4 mutants,
+Pins: 2 appended to `test/player/pointerlock.test.js`. Campaign: 4 mutants,
 4 killed.
 
 
@@ -9793,7 +9793,7 @@ the work's title in the shell's pixel face, `by <author>` in brass, a
 line of what, a dim line of terms, a link only where one is real. No
 URL is invented; a contact is what the author's own manifest says.
 
-**The rule, enforced.** `test/credits.test.js` sweeps `vendor/` against
+**The rule, enforced.** `test/systems/credits.test.js` sweeps `vendor/` against
 the table both ways: every folder there has a credit on the screen,
 every credit names a folder that exists, and that folder's README names
 the same author the screen does. A mod row must carry title, author,
@@ -9890,7 +9890,7 @@ the seam and sweeps for strays now; U41 and the two S40 pins asserted
 source shapes that moved, and now assert the behaviour they were always
 about, against the real host.
 
-Pins: 7 in `test/overlayreentry.test.js`, behaviour not sweeps - the
+Pins: 7 in `test/scenes/overlayreentry.test.js`, behaviour not sweeps - the
 slot is closure state and the window is a plain class, so the whole loop
 reproduces in Node with no GL and no ARENA2, and `createTownTalk` builds
 without either. Campaign: 8 mutants, 8 killed.
@@ -9947,7 +9947,7 @@ Lightning" with %it filled once identified and the bare "Mark" before.
 The crowding was the names, not the rows: DFU lists one row per ITEM
 and folds nothing, and identical potions are already one row because
 `addItem` stacks them (ItemCollection.AddItem / FindExistingStack's
-recipe term). Pinned in `test/ui1_usemagicitem.test.js` off the real
+recipe term). Pinned in `test/systems/ui1_usemagicitem.test.js` off the real
 producers (createPotion, mintHealingPotion, brewItems,
 createRegularMagicItem).
 
@@ -9959,7 +9959,7 @@ STRAIGHT to the trade or bank window, so the merchant's own GNRC01I0
 panel - and with it the TALK row - never appeared. DFU never opens
 either window without this in front of it.
 
-`ui/merchantServiceWindow.js` is the window whole, on its ported guild
+`ui/merchant/merchantServiceWindow.js` is the window whole, on its ported guild
 sibling's shape: the 130x42 panel that Center/Middle put at (95,79)
 over its own declared Position, the three child rects, the shadowless
 service label centred in its button, ButtonClick heading every handler
@@ -9979,7 +9979,7 @@ system's last tenth.
 
 ## THE ENHANCED PACK: grid, armour tab, height (2026-08-31) - REVERTED
 
-Mac asked for three things on `ui/enhancedInventory.js`: more height, a
+Mac asked for three things on `ui/enhanced/enhancedInventory.js`: more height, a
 grid, armour its own tab. What shipped BROKE THE PACK and was reverted
 whole (78324c99 + 2fb32c9a). Nothing of it is in the tree; this section
 is what it cost and what to do differently, because the asks are still
@@ -10262,11 +10262,11 @@ while a pausing window is up (:487-503) - a key typed into a window
 joins no ring there either. `dungeon.js` already had it first and says
 so; `worldModes.js` reads the outer host's Set and needed nothing.
 
-Pinned in `test/g3_heldorder.test.js` (9 tests, 12 mutations dead) from
+Pinned in `test/systems/g3_heldorder.test.js` (9 tests, 12 mutations dead) from
 both orders on DFU's own example, from the two shapes the derived latch
 got wrong (a disqualifier RELEASED before the modifier's clean frame
 never arrives, and a modifier held across the whole sequence), plus the
-discovered host sweep. `test/a8_combos.test.js`' two-modifier pair is
+discovered host sweep. `test/systems/a8_combos.test.js`' two-modifier pair is
 driven as ordered frames for the same reason. The
 held-order remainder is struck from `inputActions.js` and the section C
 clause it belonged to is struck in the Ledger's keybinding-registry
@@ -10281,7 +10281,7 @@ picker to it. This slice spent the seam: three consumers of
 `ui/verticalScrollBar.js` were still on the wrong edge, or on no edge at
 all, and each of them said so in a comment that cited the remainder as
 though it were still open. A comment that cites a closed remainder is a
-pointer at a stranger - the whole reason `test/citedrift.test.js`
+pointer at a stranger - the whole reason `test/scenes/citedrift.test.js`
 exists - and here it was doing something worse than misleading a reader:
 it was keeping three departures alive after their blockers had gone.
 
@@ -10342,7 +10342,7 @@ latch a thumb and never move it. The four-hosts rule's own failure mode,
 and silent, because nothing errors on a latch. The pin sweeps all six
 hover routes rather than trusting an edit.
 
-Pinned by `test/roadg_g4_dragrelease.test.js` (12 tests, 19 mutations
+Pinned by `test/ui/roadg_g4_dragrelease.test.js` (12 tests, 19 mutations
 killed - 17 at this slice, two more at AUDIT 62 F24/F25 below): the
 drag's arithmetic dies under the span-scale and the floor;
 the release dies under an emptied `release()` in either window, in the
@@ -10428,8 +10428,8 @@ in.
 
 **One structural move.** `DaggerfallLootDataTables.cs` is its own source
 file in DFU and is its own module here again
-(`systems/lootDataTables.js`, a leaf that imports nothing). Reading the
-table off `systems/loot.js` put `inventorySession.js` upstream of the
+(`systems/loot/lootDataTables.js`, a leaf that imports nothing). Reading the
+table off `systems/loot/loot.js` put `inventorySession.js` upstream of the
 whole loot generator and, through `potions.js`, built an import cycle
 that broke module initialisation across the tree - 228 test files red at
 once, none of them about loot. `loot.js` re-exports every name, so no
@@ -10457,8 +10457,8 @@ had neither method.
 
 ### PINS
 
-`test/road_g5_dropicons.test.js` (18 tests, 41 mutants driven, 41 dead)
-and four new tests in `test/bankpreview.test.js` (12 mutants driven, 12
+`test/systems/road_g5_dropicons.test.js` (18 tests, 41 mutants driven, 41 dead)
+and four new tests in `test/ui/bankpreview.test.js` (12 mutants driven, 12
 dead). The mutants are written beside the assertions that kill them.
 Nothing here has been seen in a browser: the two panels are GL draws and
 the standing rule since 2026-09-01 is that the owner verifies.
@@ -10523,7 +10523,7 @@ ADVANCED tab itself, which DFU paints with an
 `advanced_controls_button` texture out of its own Resources folder
 (DaggerfallControlsWindow.cs:114-120), and for `HSliderThumbLeft/Body/
 Right` and `checkbox_checked/unchecked`. All four are recorded the way
-`ui/travelPopUp.js` records its green checkbox: DFU's own art, not
+`ui/travel/travelPopUp.js` records its green checkbox: DFU's own art, not
 Daggerfall's, with a colour arm DFU ships for exactly this case.
 
 **WHAT SHIPPED**
@@ -10539,7 +10539,7 @@ Daggerfall's, with a colour arm DFU ships for exactly this case.
   `DaggerfallUI.AddSlider`, as a component: the three indicator modes,
   `DisplayUnits 20` and the `(max-min)+20` total it derives, the float
   mode's x10-and-round, the trough, the thumb with its 10px floor, the
-  paging click, the truncating drag. `ui/nativeTalk.js` had carried
+  paging click, the truncating drag. `ui/native/nativeTalk.js` had carried
   half of `DrawSlider` for the topic bar since AUDIT 58 and now
   delegates; `SetScrollIndex`'s clamp is `ui/verticalScrollBar.js`'s,
   because HorizontalSlider.cs's own header says "Reused code from
@@ -10565,7 +10565,7 @@ match or ZERO - a stored 0.45 reads "None", not nearest.
 
 **ONE DEPARTURE RETIRED ON THE WAY.** `ui/lookSettings.js` clamped
 MouseLookSensitivity at 4.0 against DFU's 0.1..16.0
-(SettingsManager.cs:524), and `ui/settingsLaw.js` mirrored the
+(SettingsManager.cs:524), and `ui/settings/settingsLaw.js` mirrored the
 narrowing under its range-equals-clamp law with the note "the port
 clamps at 4.0". Building DFU's slider verbatim would have offered
 travel the consumer ignored, so the clamp was widened to DFU's instead:
@@ -10597,13 +10597,13 @@ to the wrong code.
   so the edge was a silent no-op and one press glued a slider to the
   pointer for the rest of the popup's life, with the runaway value then
   written by the grid's save. `ControlsWindow.release()` forwards it now,
-  the ROAD-E E1 shape `ui/itemMakerWindow.js:"release() { this.picker?.release"` has carried since
+  the ROAD-E E1 shape `ui/item/itemMakerWindow.js:"release() { this.picker?.release"` has carried since
   Wave E, and it is `HorizontalSlider.cs:148-154`'s else arm.
 - **The wheel arm was dead.** `sliderScroll` ported MouseScrollUp/Down
   (:180-190) with no caller anywhere. `MouseControlsWindow.wheel(dir)`
   steps the slider the pointer is over - the last hovered point stands
   in for the position the overlay wheel seam does not carry, which is
-  `ui/automapWindow.js`'s own shape - and `ControlsWindow.wheel`
+  `ui/automap/automapWindow.js`'s own shape - and `ControlsWindow.wheel`
   forwards it, so all four hosts reach it.
 - **The checkboxes were clickable only on their 7x7 art.** DFU's
   `Checkbox` is a Panel that hangs the toggle on ITSELF (Checkbox.cs:84)
@@ -10625,7 +10625,7 @@ to the wrong code.
   `BaseScreenComponent` has no outline colour at all - `Outline.cs:29-31`
   owns it, and its default is `Color.white`, never overridden here. The
   border is white, the colour `ui/settingsWindow.js:779` and
-  `ui/spellIconPickerWindow.js` already drew theirs in.
+  `ui/spell/spellIconPickerWindow.js` already drew theirs in.
 - **The OnSavedKeyBinds header claimed the port's raise was DFU's.** It
   is not: DFU raises only after a successful write (InputManager.cs:926,
   :927, :928, with no try/catch in SaveKeyBinds :871-929), and the port
@@ -10646,8 +10646,8 @@ to the wrong code.
   very lane falsified; it names the ADVANCED window now, in the same
   five lines so both cites still resolve.
 
-**Pins:** `test/mousecontrols.test.js`, 21 tests, 47 mutations, 47
-dead. `test/ledger.test.js` holds the Ledger row from both sides - the
+**Pins:** `test/ui/mousecontrols.test.js`, 21 tests, 47 mutations, 47
+dead. `test/systems/ledger.test.js` holds the Ledger row from both sides - the
 struck clause and the module it names must both still be there.
 
 ## ROAD-G G7 - THE TWO WINDOWS D1 LEFT BEHIND (2026-09-04)
@@ -10681,7 +10681,7 @@ is DEAD, not refused. That is why the enable test rides the BUTTON in
 the switch rather than the `_pick` it calls - moving it onto the pick
 would answer the same for a click and differently for a key.
 
-**`ui/merchantServiceWindow.js` - DFU binds NOTHING, so the letters
+**`ui/merchant/merchantServiceWindow.js` - DFU binds NOTHING, so the letters
 really are ours.** `DaggerfallMerchantServicePopupWindow` adds talk,
 service and exit with a click handler alone (`:88-103`); unlike its
 guild sibling, which hangs `GuildsTalk`,
@@ -10694,11 +10694,11 @@ and the site cites it by name. The keyboard stays: every other native
 window here answers it, and one silent exception reads as a broken
 window rather than as fidelity.
 
-Pinned in `test/tr3_transportwindow.test.js` (three new tests, each
+Pinned in `test/systems/tr3_transportwindow.test.js` (three new tests, each
 reading the letter OUT OF `dialogShortcuts` so a change to the vendored
 data moves the pin with the game; 4 mutants, 4 killed) and, for the
-merchant half, by `test/ui2_merchantpopup.test.js`'s existing
-accelerator test plus `test/citedrift.test.js` CD1, which holds the row
+merchant half, by `test/ui/ui2_merchantpopup.test.js`'s existing
+accelerator test plus `test/scenes/citedrift.test.js` CD1, which holds the row
 and the by-name citation together.
 
 ## TI1 - MOBILE TOUCH INPUT: THE SWIPE, THE TAP, THE LOCK, THE DIAL (2026-09-05)
@@ -10721,7 +10721,7 @@ THE TWO FACTS THAT SHAPED IT.
 - The shipped `WeaponAttackThreshold` is 0.005 of the screen's longest
   side - five pixels on a phone. Feed a look-drag to the attack seam
   and every camera turn swings on its first frame. So a drag is
-  CLASSIFIED before a pixel is routed (`ui/touchGestures.js`): still
+  CLASSIFIED before a pixel is routed (`ui/touch/touchGestures.js`): still
   and short = TAP; fast (48 px inside 180 ms) = SWIPE; slow = LOOK;
   and LOCKED ON, any drag past the tap radius is the swipe, because the
   camera is facing the foe on its own and the drag has nothing else to
@@ -10776,9 +10776,9 @@ window is DOM and takes the finger directly). TOUCH-BUTTONS (2026-09-27, a
 player on Android: "I haven't been able to remap the android buttons on the
 bottom right ... I would much rather use a button to attack"): JUMP and
 SHEATHE are the defaults of THREE corner slots the Touch card fills from
-`ui/touchButtons.js`'s table, and ATTACK is one of the choices - a press is
+`ui/touch/touchButtons.js`'s table, and ATTACK is one of the choices - a press is
 a swing through the swipe's own seam, never a default
-(`01-Overview/Field-Bugs-2026-09-27e.md`).
+(`01-Overview/bugs/Field-Bugs-2026-09-27e.md`).
 
 The swipe holds the swing-settle law like the mouse button:
 `(rightHeld || swipeHeld)` in all three hosts, so a swing never pays
@@ -10786,7 +10786,7 @@ out a look it interrupted. AUDIT 39 F127 - "the touch attack hook
 nothing called" - is rewritten for the inverse condition: the hook is
 live, and it is pinned as one the layer calls.
 
-Pinned by `test/touchinput.test.js` (13): the ray with an ABSOLUTE
+Pinned by `test/player/touchinput.test.js` (13): the ray with an ABSOLUTE
 anchor (+x screen-right, +y screen-up at yaw 0, both directions) as
 well as the round-trip, the docked-HUD rect, invert4 against the real
 product; each gesture rule with its mutant (drop the buffer, ignore
@@ -10804,7 +10804,7 @@ THE LOOK. The first cut told a swipe from a look by SPEED - 48 px
 inside 180 ms - and a look-pan clears that in the first thirty
 milliseconds. Nearly every look became a swipe, and a swipe with the
 weapon sheathed is nothing: the right half looked dead. Speed cannot
-separate the two gestures; a HOLD can. `ui/touchGestures.js` now: a
+separate the two gestures; a HOLD can. `ui/touch/touchGestures.js` now: a
 drag that starts moving is the LOOK, live from its first move past the
 tap radius (the sub-radius motion paid in one lump); a finger held
 still for 160 ms and THEN dragged is the SWIPE - the press-and-stroke
@@ -10823,7 +10823,7 @@ speak - and the dot is placed back in the overlay's space. The whole
 chain - tap, the one-frame press through the REAL activate gate, the
 ray, the pick, the lock, and the dot projecting back under the finger,
 then the second tap unlocking - is now executed end to end in
-`test/touchinput.test.js`, with a foe deliberately left of centre.
+`test/player/touchinput.test.js`, with a foe deliberately left of centre.
 
 ### AUDIT 62 F6 - THE CLICK DELAY EVERY FINGER ARMED (2026-09-07)
 
@@ -10834,7 +10834,7 @@ addition (ROAD-Ar), modelling the relock click as the UI gesture
 (`UserInterfaceManager.cs:206`/`:214` -> `PlayerActivate.cs:1050-1054`,
 the only two callers in the reference; a world click never arms it).
 
-A finger can never hold the pointer lock - `ui/touch.js` says so in its
+A finger can never hold the pointer lock - `ui/touch/touch.js` says so in its
 own header, which is why the look rides `hooks.look` rather than
 `mousemove` - so that test was permanently true on a phone and EVERY
 finger-down opened a 0.3 s window. `systems/activateGate.js` writes
@@ -10887,7 +10887,7 @@ paused frame's delta is DISCARDED; `PlayerMouseLook.cs:238-244` sets
 `enableMouseLook = !GameManager.IsGamePaused` and returns before
 `ApplyLook`.
 
-The gate went into `route()` in `ui/touch.js`, the one door all three
+The gate went into `route()` in `ui/touch/touch.js`, the one door all three
 hosts share, fed by a new `paused()` hook - and the hosts pass the FULL
 predicate their mouse arms use, `gamePaused()` (`townTalk.overlayActive
 || modes.overlayHeld`) in world/exterior and `ctx.uiOverlayActive` in
@@ -10908,7 +10908,7 @@ Three rules:
 
 ### AUDIT 62 F8 - THE LAYER SPOKE DEFAULTS, NOT BINDINGS (2026-09-07)
 
-`ui/touch.js` promises in its header that it SPEAKS THE DESKTOP INPUT
+`ui/touch/touch.js` promises in its header that it SPEAKS THE DESKTOP INPUT
 LANGUAGE. It spoke the DEFAULT bindings: literal `Space`, `KeyZ`,
 `Escape`, `KeyW/KeyA/KeyS/KeyD/ShiftLeft`, and the hosts' tap stuffed a
 literal `Mouse0` into the held-keys set. Every consumer resolves BY
@@ -11119,7 +11119,7 @@ The `pauseWindow`/`restWindow` cite pass was half-done, too: it
 re-resolved the `exterior.js` half of a three-file sentence and left the
 `world.js` half naming a stranger (`:4121` landed inside the
 `ExteriorAutomapWindow` construction, `:4101` on a `locationName:`
-field). Both halves are now read by `test/citedrift.test.js` - the
+field). Both halves are now read by `test/scenes/citedrift.test.js` - the
 existing entries only ever captured the exterior number, which is how
 the other half went stale unnoticed. (The rest cite named `world.js` line 15410,
 the first of the host's TWO identical `act === 'Rest'` arms; ROAD-H H5
@@ -11143,7 +11143,7 @@ list clamps to the LAST page.
 
 **THE PORT.** Every host answers a pointer off its letterboxed 320x200
 panel with a fabricated `(-1, -1)` - `pointToNative`
-(`ui/nativePanel.js:"Screen point -> virtual"`) returns null out there, and
+(`ui/native/nativePanel.js:"Screen point -> virtual"`) returns null out there, and
 `scenes/townTalk.js`, both of `scenes/worldModes.js`' overlay slots and
 `scenes/dungeon.js` (through `scenes/dungeonContext.js`'s
 `overlayHover`) all substitute the pair. That is not a position; ROAD-C
@@ -11168,8 +11168,8 @@ c2 flight 2 caught the same pair driving the town map's chrome.
 **THE FIX.** `vy >= 0 &&` in front of the `update` call in both hovers
 - the arm `ui/chargen.js:"if (vy >= 0 && this.pickBar.update(!!(e?.buttons & 1), vy))"` and `ui/spellbookWindow.js:"&& vy >= 0 && this._syncScrollBar"` already
 carry. (The third guarded sibling is not the same arm:
-`ui/spellIconPickerWindow.js:"if (vx >= 0 && vy >= 0)"` tests `vx >= 0 && vy >= 0`, and
-`test/citedrift.test.js`'s CD8c pins that two-part shape by name.)
+`ui/spell/spellIconPickerWindow.js:"if (vx >= 0 && vy >= 0)"` tests `vx >= 0 && vy >= 0`, and
+`test/scenes/citedrift.test.js`'s CD8c pins that two-part shape by name.)
 The vy-only arm is the faithful one to add: DFU's `Update` reads
 `dragDistance.y` only, so horizontal cursor travel never moves
 `scrollIndex`, and the hosts fabricate BOTH halves of the pair
@@ -11178,7 +11178,7 @@ would. The FRAME is skipped, never
 the latch - `release()`, which every host delivers on pointerup, is
 the one thing that ends a drag.
 
-**PINNED** by `test/roadg_g4_dragrelease.test.js`'s G4-12, now "ANY of
+**PINNED** by `test/ui/roadg_g4_dragrelease.test.js`'s G4-12, now "ANY of
 the FIVE drags": each new machine is driven from an index the fling
 would be visible from (picker 40 items / scrollIndex 12 / thumb at
 bar-local 24.6, bank 30 houses / scroll 10 / thumb at 16), each takes
@@ -11210,7 +11210,7 @@ to the Ledger, "both" restored to Testing.md - all go red.
 
 **AND THE THREE SIBLINGS ARE NOT ONE ARM.** The first draft of the
 section above called `ui/chargen.js:"if (vy >= 0 && this.pickBar.update(!!(e?.buttons & 1), vy))"`, `ui/spellbookWindow.js:"&& vy >= 0 && this._syncScrollBar"`
-and `ui/spellIconPickerWindow.js:"if (vx >= 0 && vy >= 0)"` "the same arm". They are not:
+and `ui/spell/spellIconPickerWindow.js:"if (vx >= 0 && vy >= 0)"` "the same arm". They are not:
 the icon picker tests `vx >= 0 && vy >= 0`, the two-part shape CD8c
 pins by regex, while the other two test `vy` alone. The two new guards
 deliberately take the vy-only form, for the reason stated above - DFU's
@@ -11249,7 +11249,7 @@ DFU tests `InputManager.Actions.Rest` exactly ONCE in the whole of
 nothing at all. The four hosts were checked: the two outdoor hosts
 (`world.js`, `exterior.js`) each carry one arm; the interior and dungeon
 hosts reach the action through `routeAction`'s `case 'Rest'`
-(`ui/input.js`), which is one arm by construction. `test/roadh_residue.test.js`
+(`ui/input.js`), which is one arm by construction. `test/ui/touch/roadh_residue.test.js`
 sweeps the WHOLE of `src/` for the class - no file may write the same
 `if (act === '...')` statement twice - because one duplicate is a typo
 and the shape is what rots.
@@ -11356,7 +11356,7 @@ a touch button means, and the button must not be made dead - and drops
 only the keyup for a code someone else is still holding. `tap` and
 `tapAction` are now one path.
 
-Pinned in `test/roadh_residue.test.js`, three drives and a shape read;
+Pinned in `test/ui/touch/roadh_residue.test.js`, three drives and a shape read;
 the mutants (the keyup unguarded, `upCode(c)` with no keep set at either
 the button or `setStickKey`, `alt.Remove` dropped from `setBinding`, the
 load path routed through `setBinding`) all go red. Not seen on hardware:
@@ -11762,7 +11762,7 @@ sequence did not ask for. Both rows are bare F and L
 (`DialogShortcuts.txt:81-82`), so in DFU Ctrl+L, Shift+F and Alt+F do
 nothing at all.
 
-`ui/travelMapWindow.js` compared `code === 'KeyL'` and `code === 'KeyF'`
+`ui/travel/travelMapWindow.js` compared `code === 'KeyL'` and `code === 'KeyF'`
 - no table read, no mask. The window sets `isChoiceWindow`, and the host
 routing such a window passes the raw `KeyboardEvent`, so the modifier
 flags were present at the branch and simply not consulted: Shift+F opened
@@ -12107,7 +12107,7 @@ arc already carries. Three things follow from using the real walk:
 THE %q BLOCK STAYS LOCAL AND EMPTY-ON-MISSING. DFU renders
 "%q1b[nullMCP]" for a question with fewer than three tokens; the port
 renders nothing. That divergence predates this fix, is pinned as it
-stands (`test/biography.test.js`), and is not re-decided here - the
+stands (`test/systems/biography.test.js`), and is not re-decided here - the
 handler table's %q rows are overridden with the port's existing arms so
 the fix changes nothing about them. The stale comment that used to
 justify the empty form ("ExpandMacros appends a null value as empty")
@@ -12120,7 +12120,7 @@ player entity - it would answer the PREVIOUS character's race, or none.
 The chargen document's race is threaded in instead (`raceKey`,
 `raceName`), which is exactly the stand-in for BiogFile.cs:212's
 assignment; both skins thread it (`ui/chargenArt.js` `buildBackstory`,
-`ui/enhancedChargen.js` `attachChargenText`). And the SEED: DFU seeds
+`ui/enhanced/enhancedChargen.js` `attachChargenText`). And the SEED: DFU seeds
 each name draw with `(uint)parent.GetHashCode()`, the CLR identity hash
 on the BiogFile instance, which differs run to run inside DFU itself
 and has no port. One injectable per-biography seed stands in, with
@@ -12133,7 +12133,7 @@ NOT SaveVars' emperorSonNames, despite `%imp` reading those elsewhere -
 and the three names go through `MacroHelper.GetNameBank` (`:344-366`),
 whose Argonian arm is the IMPERIAL bank.
 
-Pins: `test/audit64_chargen.test.js`, seven laws - the eight races'
+Pins: `test/systems/audit64_chargen.test.js`, seven laws - the eight races'
 %hpn/%hpw against Internal_Strings, the %imp table and its `rand() % 6`
 index, the three seed offsets and their genders (including the Argonian
 bank), a 4126-shaped record leaving no '%' behind, the per-call cache
@@ -12156,7 +12156,7 @@ Both call sites hand the BiogFile in as the context provider
 
 The port substituted the signed integer, and did it TWICE - once in
 `ui/chargenArt.js` `repBoxRows` and once restated in
-`ui/enhancedChargen.js` `attachChargenText`. So the closing screen of
+`ui/enhanced/enhancedChargen.js` `attachChargenText`. So the closing screen of
 every chargen, on both skins and on both the questionnaire and the
 auto-generate arm, read "Commoners: -5" where classic reads
 "Commoners: Lower".
@@ -12170,7 +12170,7 @@ so the two can no longer drift. The per-group totals `digestRepChanges`
 computes are untouched: they are correct DFU (`BiogFile.cs:150-167`)
 and the summary tail still reads them as numbers.
 
-Pins: `test/audit64_chargen.test.js` - all three arms of GetChangeStr
+Pins: `test/systems/audit64_chargen.test.js` - all three arms of GetChangeStr
 through record 35 on the classic path AND through
 `attachChargenText`'s flow object, so a revert in either skin goes red.
 The bible record that had pinned the defect ("Probed live: 'Commoners:
@@ -12200,7 +12200,7 @@ the bonus-stats screen was the one site that got the zero arm wrong.
 
 The two pins that covered this block restated the port's own
 expression and only ever exercised negatives, so they were green before
-and after. `test/audit64_chargen.test.js` spells the picture out
+and after. `test/systems/audit64_chargen.test.js` spells the picture out
 (`n > 0 ? '+n' : n < 0 ? 'n' : '0'`) and pins all three sections,
 including a literal `['0','0','0','0']` in the zero band.
 
@@ -12277,13 +12277,13 @@ reachability accommodation and it predates this fix; with Y/N in place
 N now covers rejection, and the Escape arm is a candidate for removal
 under a Ledger row rather than in this lane.
 
-Pins: `test/audit64_chargen.test.js` - Return on the questions box
+Pins: `test/systems/audit64_chargen.test.js` - Return on the questions box
 leaves `qClassIndex === NO_CLASS_INDEX` and the flow on the class list,
 `char:y` adopts, `char:n` rejects, the mouse `{ confirmQClass }` still
 adopts, and Return is inert on the race and class-list boxes with Y
 accepting on both. Three older pins that asserted the port's
-Return-accepts (`test/classpicker.test.js`,
-`test/classquestions.test.js`, `test/audit17g.test.js`) are re-aimed at
+Return-accepts (`test/ui/classpicker.test.js`,
+`test/ui/classquestions.test.js`, `test/ui/audit17g.test.js`) are re-aimed at
 the reference law rather than deleted.
 
 ## AUDIT 64 F33 - THE SUMMARY'S BONUS POOL LEAKED BACKWARDS (2026-09-08)
@@ -12325,11 +12325,11 @@ bonus-stats page, and the feed for the spinner digit - reads the pool
 of the screen that is showing, and the enhanced skin's summary pane
 does the same for its section head and its OK label.
 
-Pins: `test/audit64_chargen.test.js` - the back-walk itself (spend
+Pins: `test/systems/audit64_chargen.test.js` - the back-walk itself (spend
 down on the summary, three backs, `statPool === 0` with the lowered
 stat standing), the OK gate reading the summary's pool and ignoring the
 other rollout's, the re-push zeroing only the summary's, and
-`statView`'s per-screen digit. Two pins in `test/summary.test.js` that
+`statView`'s per-screen digit. Two pins in `test/ui/summary.test.js` that
 set and asserted the shared field are re-aimed at `sumStatPool`.
 
 REVIEW ROUND (2026-09-08) - THE SELECTION IS PER-INSTANCE TOO. The
@@ -12364,10 +12364,10 @@ showing screen's. The bonus-stats screen's own keyboard 'up'/'down',
 `loadRoll` and the reroll's `SelectStat(0)` keep writing `statCursor`,
 because that IS the bonus-stats rollout.
 
-Pins: `test/audit64_chargen.test.js` - the bonus-stats window left on
+Pins: `test/systems/audit64_chargen.test.js` - the bonus-stats window left on
 Luck (index 7), a summary spinner moved to 3, and three cancels later
 the stats screen reading 7 with `statView` drawing on 7. Two
-`test/summary.test.js` pins that asserted the shared field on the
+`test/ui/summary.test.js` pins that asserted the shared field on the
 summary are re-aimed at `sumStatCursor`, and the SelectStat(0) pin now
 also asserts the other rollout keeps its row.
 
@@ -12376,7 +12376,7 @@ also asserts the other rollout keeps its row.
 `DaggerfallHUD` owns `popupText` **and** `midScreenTextLabel`
 (`DaggerfallHUD.cs:32-33`, two distinct fields). The first is
 `PopupText` - the stacking seven-row queue at the top of the native
-panel, ported since U5 as `ui/hudText.js`. The second is a single
+panel, ported since U5 as `ui/hud/hudText.js`. The second is a single
 `TextLabel`, `HorizontalAlignment.Center` at `Position (0, 146)`
 (`:175-177`, over `const int midScreenTextDefaultY = 146` at `:25`),
 with a timer of its own (`:50-51`, the `-1` sentinel and a 1.5 s
@@ -12421,7 +12421,7 @@ one surface everywhere); the `youAreTooFarAway` refusals at `:780`,
 `LookAtInteriorLock`'s whole difficulty ladder and `magicLock`
 (`:991-1007`) in `scenes/dungeonContext.js` and both exterior arms of
 `scenes/worldModes.js`; and `FPSWeapon.cs:365`'s `youHaveNoArrows` in
-`combat/weaponRig.js`.
+`combat/weapon/weaponRig.js`.
 
 Two of those needed care rather than a rename. `weaponRig`'s `say`
 sink also carries the shield refusal (`WeaponManager.cs:704-705`),
@@ -12514,7 +12514,7 @@ large-HUD repaint too, since `DaggerfallUI.cs:485-486` goes through
 that same overridden Draw. Update is NOT suppressed: the flicker's
 `NextCycle` (`:328`) and the vitals bookkeeping keep running.
 
-`ui/hudShortcuts.js` holds the flag and both shortcut arms.
+`ui/hud/hudShortcuts.js` holds the flag and both shortcut arms.
 `drawHud` reads it below the two MonoBehaviour members and above every
 paint; the enhanced skin is told to hide rather than skipped, because
 it is a persistent DOM overlay that stays painted unless told
@@ -12575,7 +12575,7 @@ Centring in DFU belongs to the NativePanel alone
 (`DaggerfallBaseWindow.cs:43-47`), which is what the port's
 `nativeMetrics` ox/oy models.
 
-`ui/hudEscortFaces.js` drew the column through `nativeMetrics`, so
+`ui/hud/hudEscortFaces.js` drew the column through `nativeMetrics`, so
 `HUDEscortingNPCFaces.cs:60-61`'s `startX 8, startY 36` were offset by
 the letterbox: at 1920x1080 the first face landed at (200, 220) where
 DFU puts it at (8, 36) x the fit scale. The offsets are dropped and
@@ -12614,7 +12614,7 @@ left and right clicks) and `:445`, `:454`, `:463`, `:472`, `:481`,
 `:490`, `:499`, `:508`, `:517`, `:526`, `:535` - each inside the
 `IsLargeHUDInteractable()` guard (`:388-390`) and BEFORE the
 `PostMessage` / `ChangeInteractionMode` / `ToggleSheath` the panel
-exists to send. `ui/hudLarge.js` had ported the rects, the routing and
+exists to send. `ui/hud/hudLarge.js` had ported the rects, the routing and
 the actions and played nothing, while thirty-two other port windows
 carried the same clip.
 
@@ -12737,7 +12737,7 @@ the law the line implements.
 small HUD it was unreachable in every host; `ui/fadeLayer.js`'s tint
 paints under a box again. Both come back with the chain.
 
-**Pins.** `test/audit64_hud.test.js` gained five: a message box paints
+**Pins.** `test/ui/hud/audit64_hud.test.js` gained five: a message box paints
 the whole small HUD; the stack's chain walk (both orders, the slot,
 the two DaggerfallAction boxes, and the four hosts' wiring); the
 enhanced skin's hide door and its escort column under both gates
@@ -12919,7 +12919,7 @@ The port shared one row builder between popup and panel and applied
 the pass nowhere, so the panel printed "Weight: 3 kilograms" into a
 third of the space it needs.
 
-`infoPanelShorten` in `systems/itemInfo.js` is the pass, with the six
+`infoPanelShorten` in `systems/item/itemInfo.js` is the pass, with the six
 strings named and cited; `replaceAll` is C#'s `string.Replace`, which
 replaces every occurrence, and the `?? ''` is DFU's `text != null`
 guard at `:1148`. It is applied at the ONE point both of DFU's arms
@@ -12962,8 +12962,8 @@ are plain Buttons and override neither. The port's `scrollerHit`
 already draws that line - `slot` is the items panel, `thumb`/`page-up`
 /`page-down` the rail, `up`/`down` the arrows.
 
-Adjacent, and TAKEN at MAC-N2 (2026-09-16, `01-Overview/Mac-Bugs-N.md`):
-`ui/nativeTrade.js` had no `wheel` either, and `DaggerfallTradeWindow`
+Adjacent, and TAKEN at MAC-N2 (2026-09-16, `01-Overview/bugs/Mac-Bugs-N.md`):
+`ui/native/nativeTrade.js` had no `wheel` either, and `DaggerfallTradeWindow`
 inherits the same two scrollers through `SetupItemListScrollers`. The
 same missing member on the same C# class in a second window - it
 carries the wheel now, one row a notch over either list or its rail,
@@ -13033,7 +13033,7 @@ including that the light-source arm is a reference IDENTITY compare -
 and `drawCellBackground`, which fills the whole cell and answers false
 for `Color.clear`. Both windows' cell loops paint it first.
 
-`ui/nativeTrade.js` takes it too, and with the ONE override the trade
+`ui/native/nativeTrade.js` takes it too, and with the ONE override the trade
 window has: `DaggerfallTradeWindow.cs:242-245` replaces the REMOTE
 scroller's handler in Repair mode with
 `RepairItemBackgroundColourHandler` (`:269-275`), which tints
@@ -13181,7 +13181,7 @@ THE ENHANCED SKIN HAD NO DOOR. The only rebinding UI in the port is
 the classic canvas ControlsWindow, reached from the classic pause
 window's CONTROLS button, and U51's enhanced pause listed Resume, Save,
 Load, Settings, Mods, About and Exit - never Controls. On the DEFAULT
-skin a player could not change a key at all. `ui/enhancedControls.js`
+skin a player could not change a key at all. `ui/enhanced/enhancedControls.js`
 is the pane: the same law (`systems/controlsConfig.js` - staging,
 duplicates, apply; `inputActions.js` - the registry and its save) with
 a DOM view in the skin's own classes; Escape → System → Controls in
@@ -13264,7 +13264,7 @@ was raw pixels at a flat gain, the stick was a keyboard, the buttons
 were monospace divs at bare pixel edges under the notch, the name
 prompt was `window.prompt`, and the address bar never went away.
 
-**The look** (`ui/touchLook.js lookNormalisation`, `ui/touch.js
+**The look** (`ui/touch/touchLook.js lookNormalisation`, `ui/touch/touch.js
 route`). A drag is a fraction of the canvas height now, referenced to
 the 400 px landscape phone TI1b was tuned on - at that height the
 factor is 1 and nothing changed; a canvas twice as tall turns half as
@@ -13316,7 +13316,7 @@ iOS Safari has no fullscreen for a page, so `public/manifest.webmanifest`
 (fullscreen, landscape, `start_url ./play/`, three icons drawn by
 `scripts/makeIcons.mjs` and committed) with Safari's `apple-mobile-web-
 app-*` metas makes the GAME page a home-screen app - the landing page
-links neither, by test/landing.test.js's own law that it references no
+links neither, by test/ui/enhanced/landing.test.js's own law that it references no
 file. Every control sits at `calc(Npx + env(safe-area-inset-side))`;
 the buttons are 48 px, the system face, frosted, and scale in on the
 press; the chargen name is an inline `<input>` that raises the phone's
@@ -13327,16 +13327,16 @@ Enter or the ✓ as the characters the classic window reads.
 the port's own shelf, beside the HUD scale, for the same reason: DFU
 has no touch input, the settings catalog is baked from its ini and
 holds exactly 171 keys. The Enhanced pane's Touch card
-(`ui/enhancedMenu.js`) sets them and mounts only where
+(`ui/enhanced/enhancedMenu.js`) sets them and mounts only where
 `isTouchDevice()` says so - a card of finger controls on a machine
 without a finger is the dead affordance the pane refuses.
 
-**Pinned** in `test/touchinput2.test.js` (13): the three pure functions
+**Pinned** in `test/ui/touch/touchinput2.test.js` (13): the three pure functions
 and the MoveAxes arm executed with their mutants named; the layer
 against AUDIT 62's stub (`axes()` under the pref, the normalised look,
 the fixed anchor's reach, the motion listener added and removed);
 text pins on the hosts, the pane, the prefs and the manifest.
-`test/audit62_touch.test.js` F7's look expectation takes the
+`test/scenes/audit62_touch.test.js` F7's look expectation takes the
 normalisation. **Not seen on hardware** - the same standing note as
 AUDIT 62's: the gain, the dead zone and the gyro's signs are the
 numbers a phone will correct.
@@ -13355,7 +13355,7 @@ after the Enhanced pane's "Build first-person arms", and `fpArm` is a
 module singleton that dies with the tab, so every launch began bare -
 not a first-launch bug, an every-launch one. The pane's Build now
 sets `mwArms` on the prefs shelf (only when the build stood) and
-Unload clears it; `combat/weaponRig.js autoBuildArms` is the one
+Unload clears it; `combat/weapon/weaponRig.js autoBuildArms` is the one
 home, four gates (a made character, the switch, the archives
 attached, the arm not already built), and each host that owns a rig
 calls it at every door a made character arrives through: the rig's
@@ -13373,7 +13373,7 @@ stutter a mean hides. Its switch is `showFps` on the prefs shelf
 the row takes effect at once; `?fps` forces it on for a probe. Off,
 the element is hidden and the loop only counts.
 
-**Pinned** in `test/mwarms_fps.test.js` (4). Not a Ledger row: the
+**Pinned** in `test/ui/enhanced/mwarms_fps.test.js` (4). Not a Ledger row: the
 counter is a diagnostic overlay with no game law in it, and the arms
 are the MW arc's already-recorded departure with a boot door added.
 
@@ -13408,7 +13408,7 @@ lab's field handed to `createGrassField`; 0 builds no renderer, as
 door, which still wins). Defaults unchanged: the enhanced look is the
 law, the dial is the escape for a machine that cannot hold it.
 
-**Pinned** in `test/perf1.test.js` (3). Not a Ledger row: no game law
+**Pinned** in `test/systems/perf1.test.js` (3). Not a Ledger row: no game law
 moves; the field and the march are the port's own and were already
 recorded.
 
@@ -13492,7 +13492,7 @@ its window is next") and the controller cursor in windows
 :556-573, :1518-1570) - a window takes the mouse, the keyboard and the
 Back button only. The Ledger row (`:609`) carries the narrowing.
 
-**Pinned** in `test/gamepad.test.js` (8): the axis keys, the pad in
+**Pinned** in `test/systems/gamepad.test.js` (8): the axis keys, the pad in
 Unity's frame, the stick, the camera, the store's round trip with an
 older file and an unknown name, the poller against a fake pad and a
 captured dispatch, the filter's floor, the four hosts and the tiers.
@@ -13544,7 +13544,7 @@ in one list, reddens the clashes, and a CONTINUE or a Back with
 clashes standing shows the multipleAssignments box, click or key to
 close.
 
-**Pinned** in `test/joystickwindow.test.js`. The flag at
+**Pinned** in `test/ui/joystickwindow.test.js`. The flag at
 `systems/inputActions.js` narrows to the controller cursor; the Ledger
 row (`:609`) says the window shipped. Not a departure.
 
@@ -13589,7 +13589,7 @@ turns out to call it.
 "AXES + JOYSTICK: no gamepad layer in the port" stood since I2; the
 open-flag list is six; the Ledger row (`:609`) says so.
 
-**Pinned** in `test/gamepad.test.js` (the GP3 test, against a fake
+**Pinned** in `test/systems/gamepad.test.js` (the GP3 test, against a fake
 canvas and an event factory). Not a departure.
 
 ## FD1 + SO1 - ONE FRONT DOOR, AND THE SETTINGS ORGANISED (2026-09-11)
@@ -13656,8 +13656,8 @@ press away. The classic in-game pause (ui/pauseWindow.js, DFU's own)
 is untouched; its FLAGGED note now names this door as the settings
 home.
 
-**Pinned** in `test/settingsUI.test.js` (the FD1 and SO1 pins) and
-`test/enhancedMenu.test.js` (the rails, the action contract, the
+**Pinned** in `test/ui/settings/settingsUI.test.js` (the FD1 and SO1 pins) and
+`test/systems/enhancedMenu.test.js` (the rails, the action contract, the
 Enhanced category's rows). Records: `Settings-Screen-Spec.md` is
 marked superseded; the launcher's Ledger row and the colour picker's
 say DELETED; `tools/enhancedMenuProbe.mjs` checks the classic rail and
@@ -13695,14 +13695,14 @@ the travel map wear, with one difference: it builds the CLASSIC
 window on both skins. `NativeTalkWindow` is where DFU's conversation
 law lives - the pages, the selection model, the toneLastUsed guard,
 the Q/A pair, the logbook's copy set and the OnPop note - and the
-panel (`ui/enhancedTalk.js`) is a second FACE over that same object.
+panel (`ui/enhanced/enhancedTalk.js`) is a second FACE over that same object.
 To make that honest the classic window's `click()` was split: the
 rect hit-test walks `BUTTON_ORDER` and lands on `press(name)`, the
 one handler per button (its sound, its greyed-category gate, its
 arm), and three index arms (`selectTopic`, `useTopic`,
 `selectConversation`) are the listboxes' own MouseClick /
 MouseDoubleClick laws. The panel presses names and draws the model's
-state; its `draw()` is never called. `test/enhancedTalk.test.js`
+state; its `draw()` is never called. `test/ui/native/enhancedTalk.test.js`
 drives one window by rect and another by name through a 23-step
 script over the whole surface and holds them equal after every step,
 down to the note filed on close.
@@ -13852,7 +13852,7 @@ stays the classic's: LocalizedBook's converted rows (one row per text
 token, sticky centring and FontPrefix, the empty line's reset),
 LayoutBookLabels' wrapping labels in their own face's rows, FontPrefix's
 five FNT faces, OpenBook on open, ButtonClick on exit. The face
-(`ui/enhancedBook.js`) adds the one thing a two-page book needs that
+(`ui/enhanced/enhancedBook.js`) adds the one thing a two-page book needs that
 a scroll does not: PAGINATION - the placed labels cut into leaves BY
 ROW, a row never straddling a leaf and no leaf opening on a blank row
 (a typesetter's rule DFU's scroll never meets), pure and pinned. The
@@ -13926,7 +13926,7 @@ classic mapping (`TEST_BOOKS`), minted through `createBook`, DFU's
 ItemBuilder.CreateBook, the named path a quest reward takes, so the
 item is the item a shelf would hand over and the reader - and the
 enhanced book over it - opens from the pack's USE without a shelf or a
-shop. Pinned in `test/testroom.test.js`.
+shop. Pinned in `test/systems/testroom.test.js`.
 
 ## EB4 - THE BOOK THAT NEVER SHOWED, AND THE CANVAS THAT DID (2026-09-12)
 
@@ -13954,7 +13954,7 @@ the dungeon host's own slot gate on it - a window that has said it is
 done is not a window a hand-off must yield to. And the door raises its
 canvas on the host's FIRST DRAW, never at construction: the first
 draw is the host's acceptance, and an overlay the host never draws
-leaves nothing behind. Both pinned in `test/enhancedBook.test.js`.
+leaves nothing behind. Both pinned in `test/ui/enhancedBook.test.js`.
 
 **The lesson, recorded.** A DOM overlay that mounts before its host
 has taken it is a leak waiting on any decline; the pause, pack,
@@ -13967,7 +13967,7 @@ handed over across an await.
 **Mac: "Also can you make it where tapping outside of any UI closes
 the UI."**
 
-One helper on the overlay registry (`ui/enhancedOverlays.js`
+One helper on the overlay registry (`ui/enhanced/enhancedOverlays.js`
 `closeOnOutsideTap`): wired on a window's SHELL - the scrim around the
 framed panel - it closes the window on a primary press that lands
 outside everything the window keeps (the panel, and whatever stands
@@ -13982,7 +13982,7 @@ delete YesNo stands inside the window, so a press on it is the box's),
 the CHRONICLE, and the TALK panel says goodbye through the model so
 the note is filed. The book already closed on a tap beside it
 (EB1) and the dial on its scrim (PX15). Pinned in
-`test/outsideTap.test.js`.
+`test/ui/enhanced/outsideTap.test.js`.
 
 ## PX31 - THE PACK'S PAGES (2026-09-12)
 
@@ -14073,7 +14073,7 @@ with no shader, keep skipping it as they did. GetEquipIndex is
 unchanged: DFU samples the STRIPPED texture's alpha, so a mask pixel
 was never a hit, and `slotAtPaperDoll` already said so.
 
-**Pinned (test/helmMask.test.js).** changeMask on a clone with the
+**Pinned (test/formats/helmMask.test.js).** changeMask on a clone with the
 C#'s `replaceWith` and its empty answer; the DOM icon and both
 classic drawers ask for the stripped art; uploadRecord through the
 production pipeline over a hand-built archive uploads the two mask
@@ -14083,7 +14083,7 @@ IMG/CIF bytes, the helm through a fake archive - proves a mask pixel
 shows the background, an index-0 corner the head, the helm its own
 colour, the body below, every pixel opaque. Not pinned against ARENA2
 here (no data in this sandbox); the real-record compose in
-test/equipmechanics.test.js still runs under ARENA2_PATH and does not read
+test/ui/equipmechanics.test.js still runs under ARENA2_PATH and does not read
 the mask ring, so it stands.
 
 ## MF1 - THE FIGURE STANDS (2026-09-12)
@@ -14141,7 +14141,7 @@ report from the chair says which of the two it is. Not sped up here:
 the sweep is a camera law (the far plane over a swing), and a cheaper
 bound would need retail data to prove it does not clip a knuckle.
 
-**Pinned (test/modelFigure.test.js).** The figure poses through
+**Pinned (test/ui/enhanced/modelFigure.test.js).** The figure poses through
 `portraitPose` before the upload, at the source's start, and reads no
 playhead; the helper climbs the body's sources for the drawn stance and
 memoises per body; the pack's figure block encodes nothing and sets no
@@ -14180,7 +14180,7 @@ false` - and the QG1 quest-click arm above each lock is gated too,
 since the stick's touch is no click. The look half's tap is unchanged.
 
 **Port-side.** DFU has no touch layer; TI1 is a recorded departure and
-this is its correction. Ledger row TS1. Pinned: `test/touchinput.test.js`
+this is its correction. Ledger row TS1. Pinned: `test/player/touchinput.test.js`
 TS1 (touch.js's call, the flag in every host, every ladder's end).
 
 ## PL2 - THE ENTER THAT CLOSES A WINDOW IS THE WINDOW'S (2026-09-12, Mac's report)
@@ -14216,7 +14216,7 @@ is read while the window is still up: a press under a window is the
 window's, and only a press with nothing up is the toggle. A typed DOM
 field keeps its Enter too (`isTextEntryTarget`, CG2). The unbind
 removes the capture listener. Ledger row PL2. Pinned:
-`test/cursortoggle.test.js` PL2.
+`test/systems/cursortoggle.test.js` PL2.
 
 ## PL3 - THE POINTER COMES BACK (2026-09-12, Mac's report)
 
@@ -14238,7 +14238,7 @@ and cursorActive is an instance field there (:32).
 **(2) Two surfaces that own Enter and the toggle never knew.** The
 toggle is a window capture listener bound at boot, so it runs before
 any listener bound later on the same target. The pixel dial (Tab) is
-on the overlay stack (`ui/enhancedOverlays.js`) but not in any host's
+on the overlay stack (`ui/enhanced/enhancedOverlays.js`) but not in any host's
 window predicate, and its Enter is its commit: Tab, Enter flipped the
 flag and released the lock, the dial committed, and the dial's close
 never relocked. The chat opens on the SAME Enter (CHAT_OPEN_ACTION is
@@ -14267,12 +14267,12 @@ and a finger never holds a lock. And the crash report (`#crash` in
 `main.js`) sat over the bottom 45% of the viewport with pointer-events
 auto, eating every click that should have relocked: it is
 pointer-events none now, a report and not a wall. Ledger row PL3.
-Pinned: `test/macfive.test.js` PL3 (two), `test/cursortoggle.test.js`,
-`test/chat1.test.js`.
+Pinned: `test/player/macfive.test.js` PL3 (two), `test/systems/cursortoggle.test.js`,
+`test/net/chat1.test.js`.
 
 ## RF6 - THE ENHANCED SKIN READS THE ONE NAME RESOLVER (2026-09-14, Mac's refactor pass, the sixth)
 
-THE FAULT. The enhanced inventory's line (`src/ui/enhancedInventory.js`
+THE FAULT. The enhanced inventory's line (`src/ui/enhanced/enhancedInventory.js`
 itemLine) and the loot plaque (`src/systems/worldHover.js` hoverLines) rebuilt
 ResolveItemLongName's arms by hand - ResolveItemName for the name,
 materialName for the sub-line, gated on "Armor or Weapons, identified"
@@ -14285,7 +14285,7 @@ signoff. The wear notices ("X is broken", "may not use X", "X cannot
 be worn") and the HUD's held-weapon plaque read the record's raw
 `name`, which names an unidentified magic item before Identify has.
 Every one of these was a departure from parity the enhanced skin took
-by re-deriving what `src/systems/itemInfo.js` already knew.
+by re-deriving what `src/systems/item/itemInfo.js` already knew.
 
 THE SHAPE. itemInfo.itemNameParts(item, { getQuest,
 differentiatePlantIngredients }) answers `{ name, material }` - the
@@ -14302,7 +14302,7 @@ template-less item its own name) is gone.
 
 Not proved in a browser here (no ARENA2); the pins run every loot
 table and every arm through the line and the plaque against the long
-name. `test/rf6_itemnames.test.js` (3); LR1's and U53's source pins
+name. `test/systems/rf6_itemnames.test.js` (3); LR1's and U53's source pins
 re-aimed at the parts.
 
 ## HT2 THE ACT ON A LIGHT SOURCE (2026-09-14, Mac: "So you cant equip the torch in your offhand, you can only drop it on the ground")
@@ -14326,7 +14326,7 @@ DFU's own equip click on a light source does not equip it, it USES it
 (:1976-1985) sends the item to `UseItem(item)` with NO collection
 (AUDIT 22 F6, so an equip click can consume nothing), and UseItem's
 light arm is what lights a torch in play. The port's CLASSIC window
-carries that arm (`ui/nativeInventory.js`, citing those lines). The
+carries that arm (`ui/native/nativeInventory.js`, citing those lines). The
 ENHANCED pack never grew it - and the enhanced skin is the DEFAULT
 (`systems/uiSkin.js`) and the only skin online (OL1), so in practice
 the port shipped with no way to light a torch from the pack at all.
@@ -14340,7 +14340,7 @@ torch is the lie that hid this: a button names what pressing it does.
 
 And the pack SAYS which light burns. The classic list paints that row
 gold (`ItemBackgroundColourHandler`'s lightSourceBackgroundColor, in
-`ui/itemScroller.js`); this skin had no way to tell three torches
+`ui/item/itemScroller.js`); this skin had no way to tell three torches
 apart, so `itemLine.lit` carries the same reference compare, the row's
 sub-line says `lit`, and the card's stat line reads `Lit: yes/no`
 where a wearable's reads `Worn`.
@@ -14350,7 +14350,7 @@ on a torch reads `Light | Drop | Use` with no Wear, the press lights
 THAT torch, one row says `lit`, the card comes back offering `Douse`
 over `Lit: yes`, dousing puts it out, and a sword still reads Wear.
 
-Ledger row HT2. Pinned by execution: `test/ht2_packlight.test.js` (5)
+Ledger row HT2. Pinned by execution: `test/systems/ht2_packlight.test.js` (5)
 - the root cause (every light source answers `EQUIP_SLOTS.None` and
 `equipItem` null), the act and its label through a light, a douse and
 a worn sword, the reference compare against a second identical torch,
@@ -14380,7 +14380,7 @@ rather than introducing one. The site has one text face plus a wordmark.
 The title is untouched, which is the one thing Mac named: `.wordmark`
 carries the family now, with `--brand` behind it exactly as before.
 
-**The pin is a COUNT, not a presence.** `test/landing.test.js` asserts
+**The pin is a COUNT, not a presence.** `test/ui/enhanced/landing.test.js` asserts
 that the STYLESHEET names Jacquard 12 exactly once - the credits line
 names the face again, deliberately - and that the rule naming it
 is `.wordmark` - because a pin that only checked the wordmark still has
@@ -14609,7 +14609,7 @@ rather than being explained afterwards.
 
 **And it keeps its place in the ladder.** The first cut reached for
 `z-index: 9000`, which is precisely the eyeballed number
-`test/mwattach.test.js` exists to stop - the asset picker must outrank
+`test/scenes/mwattach.test.js` exists to stop - the asset picker must outrank
 every overlay in `src/`. It rides above this screen's own layers and
 under the picker's 40, and the pin holds the range rather than the
 number.
@@ -14757,7 +14757,7 @@ presses often into a gesture:
 
 ### Pinned
 
-77 tests in `test/enhancedInventory.test.js`, of which the drag's are
+77 tests in `test/ui/enhanced/enhancedInventory.test.js`, of which the drag's are
 DRIVEN: the icon is carried and follows and the stylesheet reaches it;
 the word shown is the act performed on every arm; a dragged release is
 never a pick; every way out ends it (release, cancel, lost capture,
@@ -14787,7 +14787,7 @@ items off your character."*
 
 It did not, and the whole of the reason is one line. INV1 hung the
 gesture on the pack's rows - `itemRow`'s `if (from === 'local')
-dragFrom(row, item)` (`ui/enhancedInventory.js:"if (from === 'local') dragFrom"`) - and made the
+dragFrom(row, item)` (`ui/enhanced/enhancedInventory.js:"if (from === 'local') dragFrom"`) - and made the
 body a drop TARGET, with `equippedList` saying so in its own comment:
 *"the body is the equip target - `dragFrom`'s pointerup finds it by hit
 test, so the map needs no handler of its own"*. True for the direction
@@ -14848,7 +14848,7 @@ rows already had: `touch-action: pan-y` plus no long-press selection, and
 
 ### Pinned
 
-Three DRIVEN tests in `test/enhancedInventory.test.js`, through
+Three DRIVEN tests in `test/ui/enhanced/enhancedInventory.test.js`, through
 `test/invdrag.mjs`: a hold on a real worn panel really picks the piece
 up, the ghost says *Take off*, the dock lights, and the release takes it
 off into the bag with nothing on the ground; the world and the map are
@@ -14894,7 +14894,7 @@ the port's loot-ONLY frame, which DFU does not have, could get back to
 the pack it had replaced.
 
 And the Gold button on a body does the thing its shape promises.
-`dropGold` adds the minted stack to `remoteTarget` (`ui/enhancedInventory.js`'s
+`dropGold` adds the minted stack to `remoteTarget` (`ui/enhanced/enhancedInventory.js`'s
 `dropGold`), and in a loot session that is the container - so the field's
 own verb reads "Drop" and the act puts the purse INTO the corpse. Nobody
 opens a body to fund it.
@@ -14918,7 +14918,7 @@ the player's OWN storage is the one loot session that opens beside the
 pack - the host's `loot.storage` word, on an owned cupboard or ship's
 chest and an owner's placed storage piece - because a take-only frame
 made every one of them a box that could only be emptied
-(`01-Overview/Field-Bugs-2026-09-26.md`).
+(`01-Overview/bugs/Field-Bugs-2026-09-26.md`).
 
 ### The gate is the SESSION, not the frame
 
@@ -14943,7 +14943,7 @@ own panel): on the footer beside the purse, named for where the gold goes
 (*Drop gold*, *Store gold*, *Stow gold*), its field floating over the
 footer, and the remote bar carries none. A body's tray still never offers
 it - MAC-M2 B's line stands, since that frame is built without the pack.
-`test/golddrop.test.js`, `tools/mutants/golddrop.json`.
+`test/systems/golddrop.test.js`, `tools/mutants/golddrop.json`.
 
 AUDIT GOLD-DROP (2026-09-27) found the move unfinished in four places.
 **On a phone the button was off the screen**: the footer is one row
@@ -14969,7 +14969,7 @@ Measured in Chromium over the real module and sheet at 320-430 on a
 touch screen, 641-999, 800x600 and 1280: the button on the screen and
 opened by a real tap, the field's input and submit under the pointer,
 the list and the dock's foot unmoved by the field.
-`test/golddrop.test.js` (AUDIT GOLD-DROP 1-5),
+`test/systems/golddrop.test.js` (AUDIT GOLD-DROP 1-5),
 `tools/mutants/auditgolddrop.json`.
 
 AUDIT2 GOLD-DROP (2026-09-27, the second audit) found the fix had taken
@@ -15004,12 +15004,12 @@ Open, and not this fix's: the stacked list is under one row of tiles
 (with or without the field), at 800x600 and on a landscape phone the
 dock runs under the footer, and the remote window stands below a phone's
 screen and past the right edge below about 1400px wide.
-`test/golddrop.test.js` (AUDIT2 GOLD-DROP 1-4),
+`test/systems/golddrop.test.js` (AUDIT2 GOLD-DROP 1-4),
 `tools/mutants/auditgolddrop2.json`.
 
 ### Pinned
 
-Three DRIVEN tests in `test/enhancedInventory.test.js`: a loot session's
+Three DRIVEN tests in `test/ui/enhanced/enhancedInventory.test.js`: a loot session's
 bar is EMPTY with the gold field unreachable; a loot session with a cart
 draws `['Wagon']` and only that; and a normal pack carries its Gold
 button on its own footer before and after it drops something on the
@@ -15033,7 +15033,7 @@ Mac: "So now I want to add a toggle for the morrowind asset pack."
 
 There was one already, wearing two buttons. MWA1's `mwArms` pref was
 the one gate every consumer of the pack reads: `autoBuildArms` at
-every door a made character arrives through (`combat/weaponRig.js`),
+every door a made character arrives through (`combat/weapon/weaponRig.js`),
 the peer bodies online (`scenes/world.js`), and - through
 `fpArm.canThirdPerson()`, which `unload()` empties - the view seam,
 which hands third person to Eye Of The Beholder wherever the
@@ -15055,7 +15055,7 @@ row back off, with the refusal's reason on the card's stats as before.
 The default stays off - attaching data is not consenting to the
 departure; the row is.
 
-Pin: `test/mwarms_fps.test.js` (one added): the row on the card behind
+Pin: `test/ui/enhanced/mwarms_fps.test.js` (one added): the row on the card behind
 the data gate, the two arms of the toggle, the buttons gone, and the
 three consumers still reading the one pref.
 
@@ -15112,7 +15112,7 @@ it the moment the in-flight one settles, superseding whatever was
 queued for the rig it replaces; autoBuildArms does not warn on a
 queued build. `builtFor()` answers null when nothing stands.
 
-Pins: `test/mwarms_fps.test.js` (two added): `armsStandFor` on each
+Pins: `test/ui/enhanced/mwarms_fps.test.js` (two added): `armsStandFor` on each
 of the three identity terms and on `ready()`; `autoBuildArms` going on
 to the build when the standing arm is another's, and standing down
 when it is the entity's own; the gate line re-pinned on
@@ -15157,7 +15157,7 @@ the row's text size, which read as specks on a large monitor. They
 draw a minus sign and a plus now at the button's own size - 22px on
 the 34px button, 26px on the 44px thumb one.
 
-Pins: `test/ccrep.test.js` - repStep's clamp, group test and plain
+Pins: `test/ui/ccrep.test.js` - repStep's clamp, group test and plain
 zero; the flow opening the window, stepping the ledger, holding the
 exit until it balances, the reopened window's stale zero; the view
 drawing the window and pressing the flow's doors alone, the grid and
@@ -15200,7 +15200,7 @@ store's word, `setUiSkin` answers null on a refusal (the in-memory
 choice still stands for the page), and `switchSkin` carries a refused
 choice on the URL for the session.
 
-Pins: `test/dglnx_skincarry.test.js` - a refused store answers false
+Pins: `test/systems/dglnx_skincarry.test.js` - a refused store answers false
 and null and the page keeps the choice (a throwing localStorage,
 executed); switchSkin's carry by source; the folder arm's guard,
 progress, empty-pick and throw messages by source.
@@ -15220,7 +15220,7 @@ face - over an enhanced world whose HUD and windows are the pixel stack
 popup text - Ambient Text's lines among every other AddHUDText line
 (skill improved, loot, quest text) - drew in the 1996 bitmap font on BOTH
 skins: `say` -> `townTalk.say` -> `HudText.add` -> PopupText, drawn
-through `ui/text.js`; `ui/enhancedHud.js` never took the text. So did the
+through `ui/text.js`; `ui/enhanced/enhancedHud.js` never took the text. So did the
 mid-screen label (`ui/midScreenText.js`: the mode word, "You are too far
 away", the lockpick ladder) and the online status line drawn beside the
 names.
@@ -15236,17 +15236,17 @@ the game's own fonts inlined): Pixelify Sans runs x1.294 the width of
 Barlow at one size, so the chat line 14->13, tag/time 11->10, hint/status
 12->11, roster row 13->12, party name 14->13; no spill in either skin, the
 44px touch targets of AUDIT SOC C8 hold, a 24-character name box holds 20
-at 13px. The touch layer (`ui/touch.js`) takes an `enhanced` hook from the
+at 13px. The touch layer (`ui/touch/touch.js`) takes an `enhanced` hook from the
 host and draws its buttons, entry field and nav in the pixel face under
 the enhanced skin, the system face under the classic - in all four hosts,
 the naming field included (AUDIT FONT F5/F6).
 
 **The popup text** (as FONT1 built it; the column below was RETIRED at
 ENH-NOTICE3, 2026-09-21, for toasts in the notice stack - kept here as
-the record of the slice). `HudText.frame()` (`ui/hudText.js`) hands PopupText
+the record of the slice). `HudText.frame()` (`ui/hud/hudText.js`) hands PopupText
 .Draw's own frame - the rows, with DFU's `if (++count > maxCount) break`
 off-by-one (maxRows + 1), and the slide (`timer / popDelay`, only while
-negative) - to `ui/enhancedHudText.js`, a DOM column in the pixel face at
+negative) - to `ui/enhanced/enhancedHudText.js`, a DOM column in the pixel face at
 HUD_TEXT_TOP_PX (96, under the compass block that ends at 82; 253 with
 the chat mounted and 297 under the touch skin, clearing the chat's peek -
 AUDIT FONT F7), centred, moved not rebuilt, spent rows dropped, long
@@ -15265,12 +15265,12 @@ top-left where the classic drew it.
 THE HIDE DOOR (AUDIT 64 F37's law): a DOM column is not repainted, so
 "do not draw" is said - `else hud.hide()` at every gated site, all four
 hosts named (townTalk.frame for world.js and exterior.js, townTalk.hudFrame
-for worldModes.js, dungeonContext.js's own, `ui/hud.js` for the label) -
+for worldModes.js, dungeonContext.js's own, `ui/hud/hud.js` for the label) -
 and, since AUDIT FONT F3, on the dungeon hosts' overlay branch too, which
 returns above drawHud: `hideHudTextSurfaces` takes both surfaces down
 before that return.
 
-**Pinned** in `test/hudtext.test.js` (+6), chat1, soc3, soc4, soc5 (+1
+**Pinned** in `test/ui/enhanced/hudtext.test.js` (+6), chat1, soc3, soc4, soc5 (+1
 each) and audit64's F37 pin strengthened (the hide door counted per host);
 `tools/mutants/font1.json` 45 - 45 dead (each sheet back to `--data`, each
 five-face dropped, the smoothing flipped, the blur shadows back, the
@@ -15285,8 +15285,8 @@ exactly as the classic did; the enhanced HUD has no arrow counter (AUDIT
 WINDOWS, which the first record did not name: under the enhanced skin the
 death screen (`ui/deathScreen.js:"font, died, (canvas.width - measureText(font.fnt, died) * s)"`), the rest window's rows
 (`ui/restWindow.js:"rows = this.endLines"`), the save window (`ui/saveWindow.js`, eight
-`shadowText` sites), the travel popup (`ui/travelPopUp.js:"font, r.text ?? r"`), the quest
-journal (`ui/questJournal.js:"font, line, m.ox + (lx + 1)"`), every MessageBox row
+`shadowText` sites), the travel popup (`ui/travel/travelPopUp.js:"font, r.text ?? r"`), the quest
+journal (`ui/quest/questJournal.js:"font, line, m.ox + (lx + 1)"`), every MessageBox row
 (`ui/messageBox.js:"for (const c of r.cells)", 434`) and every ActionTextBox (`ui/actionText.js:"drawText(renderer, font, l, x + 12 * s, ty, s, TEXT)",
 152`) still draw in the bitmap font - each a native window under THE
 NATIVE-WINDOW RULE, whose face cannot move without its DFU metrics moving
@@ -15311,7 +15311,7 @@ ellipsised on a phone (F8). LOW: the narrow top as a literal (F9), the five
 in five sheets (F10, kept: one home, five uses, said so), 73% only at 16:10
 (F11), a teardown doc naming a caller that does not exist (F12), the
 canvas native windows unrecorded (F13, above). `tools/mutants/font1.json`
-86 - 86 dead; `test/hudtext.test.js` 17, `test/audit62_touch.test.js` 18.
+86 - 86 dead; `test/ui/enhanced/hudtext.test.js` 17, `test/scenes/audit62_touch.test.js` 18.
 
 ## QS - THE QUICKSLOT DIAMOND (2026-09-17)
 
@@ -15375,7 +15375,7 @@ through the cast engine (U44), RemoveOne off the stack, the drug arm -
 and says what the window would say: an explicit text, a TEXT.RSC id
 through the host's rows, the pending stand-in for a host with no hook
 (`USE_PENDING`, which QS2 moved to `systems/useItem.js` beside the result
-kinds it is keyed by, `ui/nativeInventory.js` re-exporting it, because a
+kinds it is keyed by, `ui/native/nativeInventory.js` re-exporting it, because a
 systems module reaching up into a window closed a cycle through
 `targetIconPanel` that killed five test files), the enchanted rider last.
 A potion drunk through a live hook says nothing: the effect is the HUD's
@@ -15447,8 +15447,8 @@ so the answer to "what is in slot 1" is in the list, not behind every
 tooltip. Five buttons fit one row on a 430px phone; the 44px target is
 untouched.
 
-### QS3 - the diamond, the tags, the glyphs (`ui/enhancedHud.js`,
-`ui/quickslotTags.js`, `ui/padGlyphs.js`, `ui/itemIconUrl.js`)
+### QS3 - the diamond, the tags, the glyphs (`ui/enhanced/enhancedHud.js`,
+`ui/quickslotTags.js`, `ui/padGlyphs.js`, `ui/item/itemIconUrl.js`)
 
 **Clipped, never rotated.** A 45-degree transform would rotate every
 sprite in the cell, and a rotated pixel sprite is a blurred one. So a
@@ -15457,7 +15457,7 @@ cell is two stacked squares under `clip-path: polygon(50% 0, 100% 50%,
 2px - with the content upright inside: the item's art (the Morrowind
 ground mesh where the rig has one, MW-D38, else the classic icon through
 `requestIcon`, else two letters, exactly the inventory tile's ladder -
-`modelIconUrl` moved to `ui/itemIconUrl.js` so the HUD does not import
+`modelIconUrl` moved to `ui/item/itemIconUrl.js` so the HUD does not import
 the 2200-line window; the wearer is passed as identity so the two draw
 the same picture), a 36x4 durability strip on the hands (brass, the
 health bar's red under 40%; a torch's is what is left to burn), the
@@ -15547,8 +15547,8 @@ the tooltip keeps filling slots.
 
 ### Pinned
 
-`test/quickslots.test.js` 10, `test/qs2_inputs.test.js` 11,
-`test/qs2_tooltip.test.js` 10, `test/qs3_hud.test.js` 11, one each in
+`test/systems/quickslots.test.js` 10, `test/systems/qs2_inputs.test.js` 11,
+`test/systems/qs2_tooltip.test.js` 10, `test/ui/enhanced/qs3_hud.test.js` 11, one each in
 `gamepad` and `features`; two PX30 pins re-aimed in `enhancedHud.test.js`
 (the readout listens to nothing but the three coarse-pointer taps the
 departure names; the two hands still arrive through drawHud's bag and
@@ -15564,8 +15564,8 @@ slot' and I can't attack anything". The weapon is the MAIN cell, whose chip is R
 pixel face reads as a 2 - and a new character's weapon starts sheathed, as classic's does; the 2 is QuickUse2's empty
 bottom slot. `systems/quickslots.js` `emptySlotLine`: the empty press adds "Press Z to ready your weapon." when the hand
 holds a weapon still sheathed - the main cell's own chip, the player's binding (`ui/quickslotTags.js` `quickslotHand`),
-read off the rig in the player's hands in each host and the interior mode's own. `test/disc21.test.js` (C).
-`01-Overview/Field-Bugs-2026-09-23.md`, DISC21-C.
+read off the rig in the player's hands in each host and the interior mode's own. `test/systems/disc21.test.js` (C).
+`01-Overview/bugs/Field-Bugs-2026-09-23.md`, DISC21-C.
 
 ### AUDIT QS - the arc audited the same day
 
@@ -15696,13 +15696,13 @@ pin walks them.
 
 ### Pinned
 
-`test/qs4_offhand.test.js` (3, driving a real Handheld Torches component
+`test/systems/qs4_offhand.test.js` (3, driving a real Handheld Torches component
 through the door: it lights, it douses, a full hand refuses in the mod's
 line, and the model adds nothing over it), the off-hand performer in
-`test/quickslots.test.js`, the tag law and the gauge in
-`test/qs3_hud.test.js`, the fourth action across
-`test/qs2_inputs.test.js`, `test/inputactions.test.js`,
-`test/enhancedControls.test.js` and `test/soc5_interact.test.js`.
+`test/systems/quickslots.test.js`, the tag law and the gauge in
+`test/ui/enhanced/qs3_hud.test.js`, the fourth action across
+`test/systems/qs2_inputs.test.js`, `test/systems/inputactions.test.js`,
+`test/ui/enhanced/enhancedControls.test.js` and `test/ui/soc5_interact.test.js`.
 Measured again in Chromium (`tools/qs3Probe.mjs`): every corner carries
 a chip at all three sizes, three scales and both stick anchors.
 
@@ -15824,10 +15824,10 @@ with that spell's price); the delete and sort prompts are constants and
 the rename box is live by design. A box that already carries `rows`
 keeps them.
 
-**Pins:** test/messagebox.test.js (+1: the helper), test/box1_latch.test.js
+**Pins:** test/ui/messagebox.test.js (+1: the helper), test/ui/box1_latch.test.js
 (2: both popups drawn six times, one read; the art seams
 `_setGuildServiceArtForTests` / `_setCovenArtForTests`),
-test/spellbookwindow.test.js (+1: one read per open, a new open a new
+test/systems/spellbookwindow.test.js (+1: one read per open, a new open a new
 read). tools/mutants/box1.json (6).
 
 ## TI3 - THE TOUCH-DEVICE LAW (2026-09-17, Mac: "Some desktop users are reportably recieving the mobile UI instead of desktop")
@@ -15841,7 +15841,7 @@ Touch card, the touch layouts of the chat, party and social panels,
 and, outside the shell, the LEAN data diet (no skies) - the whole
 "mobile UI".
 
-**The law.** `ui/touchDevice.js`, a leaf and the one home: a touch
+**The law.** `ui/touch/touchDevice.js`, a leaf and the one home: a touch
 device is one whose PRIMARY pointer is a finger - `(pointer: coarse)`
 AND `(hover: none)`, the pair AUDIT QS F8 already reached for the
 quickslot diamond. A touchscreen laptop answers fine + hover for its
@@ -15851,11 +15851,11 @@ The sniff is the FALLBACK, not the law: where `matchMedia` is absent
 `coarse` nor `fine` matches), a touch-capable page keeps its layer.
 `?touch=on` / `?touch=off` is the door for whoever the heuristic still
 gets wrong (an iPad with a trackpad answers fine + hover and is desktop
-here; the door puts the layer back). `ui/touch.js` re-exports the name
+here; the door puts the layer back). `ui/touch/touch.js` re-exports the name
 every caller imports; `scenes/dataSource.js`'s diet reads the same law,
 the shell still outranking it.
 
-**Pins:** test/touchdevice.test.js (4). tools/mutants/ti3.json (8).
+**Pins:** test/ui/touch/touchdevice.test.js (4). tools/mutants/ti3.json (8).
 
 ## QS6 - THE THIRD KEY IS A SPELL, AND A HELD KEY FILLS A SLOT (2026-09-17)
 
@@ -15874,8 +15874,8 @@ fill without opening anything.
 
 **A slot holds a KIND, and a spell's kind is its INDEX.** That is not a
 new idea invented here: a SPELLS.STD record number, or the negative one
-`systems/spellMaker.js` mints for a made spell, is already this port's
-name for "which spell" - it is what `systems/save.js` writes, what a
+`systems/spell/spellMaker.js` mints for a made spell, is already this port's
+name for "which spell" - it is what `systems/save/save.js` writes, what a
 restore reads back, and what the cast engine's own `setReadiedByIndex`
 resolves a readied spell by. So the slot keys on it, and three things
 fall out for free: a made spell rides, a RENAME in the spellbook follows
@@ -15980,14 +15980,14 @@ must not fire it.
 
 ### Pinned
 
-`test/qs6_spellslot.test.js` (13): the spell slot driven through a real
+`test/systems/qs6_spellslot.test.js` (13): the spell slot driven through a real
 cast engine (equip, unequip, the engine's refusals in its own words, the
 ghost, the empty book), the index key against a rename and a shared
 name, both cycles (wrap, direction, the near end, the neighbour's kind,
 kinds not records, nothing that is not a consumable), the tap/hold split
 on all three slots, the blocked frame, the stalled frame, the lamp, the
 save round trip, the off hand's fold, and the four host frames.
-`test/qs2_inputs.test.js` carries the registry half (the appended
+`test/systems/qs2_inputs.test.js` carries the registry half (the appended
 action, the moved default, the unbound swap, the polled three and the
 two self-routing ladders that must now decline them).
 `tools/mutants/qs6.json`: 31, all dead.
@@ -16015,7 +16015,7 @@ before the fix and a mutant that dies on it.
 ### F1 - a cite tool rewrote a number inside a PIN, and found five that nobody had ever read
 
 The merge ran `citeMerge`, which moved a cite number **inside a pick
-regex** in `test/citedrift.test.js`. That is WM3's own documented
+regex** in `test/scenes/citedrift.test.js`. That is WM3's own documented
 hazard, written at the top of that file: a literal in the pick decides
 whether an entry MATCHES and asserts nothing.
 
@@ -16104,8 +16104,8 @@ and two in `relayversion` had been stale for waves, their anchor having
 left `server/src/index.js` entirely.
 
 All ten re-aimed by content. And the class is closed:
-`test/mutantdrift.test.js` sweeps all 879 records the way
-`test/citedrift.test.js` sweeps the cites, because it is the same claim -
+`test/tooling/mutantdrift.test.js` sweeps all 879 records the way
+`test/scenes/citedrift.test.js` sweeps the cites, because it is the same claim -
 a reference into source rots. Twelve records in four unrelated arcs were
 ALREADY stale on the day it was written; they are carried in a named,
 dated list that can only shrink, rather than re-aimed inside a quickslot
@@ -16244,11 +16244,11 @@ already forced that colour to black, which is the whole bug.
 
 ### Pinned
 
-`test/mwtorch.test.js` (the attitude, executed over the axes),
-`test/mwnifmesh.test.js` (+2: `emissiveAt`'s substitution both ways on
+`test/combat/mwtorch.test.js` (the attitude, executed over the axes),
+`test/formats/morrowind/mwnifmesh.test.js` (+2: `emissiveAt`'s substitution both ways on
 one material, the absent field reading as no light rather than a throw,
-and the channel end to end), `test/ht1_handheldtorches.test.js` and
-`test/ht6_offhand.test.js` (+1: the equip moment reading the dial FRESH -
+and the channel end to end), `test/systems/ht1_handheldtorches.test.js` and
+`test/systems/ht6_offhand.test.js` (+1: the equip moment reading the dial FRESH -
 a survivor AUDIT QS6 F7's sweep exposed, because every fixture had set
 its dial before the first frame and a stale read looked identical).
 
@@ -16383,7 +16383,7 @@ own. The MOUSE codes ride the ring too: AUDIT 39r put them in `keys` for
 
 ### Pinned
 
-`test/mwcrouch_edges.test.js` (10) - the sub-frame tap both ways, the
+`test/player/mwcrouch_edges.test.js` (10) - the sub-frame tap both ways, the
 one-frame life of an edge, auto-repeat as one press, the combo arm's
 split (modifier HELD, key on the ring), a rebind moving the edge, the
 raw-code door, a driven motor crouching AND standing at 10 fps, and the
@@ -16457,7 +16457,7 @@ to the frame's hold machine, which the modal frame owns alone.
 
 ### Pinned
 
-`test/qs7_one_dispatch.test.js` (3) - the mechanism DRIVEN through the
+`test/systems/qs7_one_dispatch.test.js` (3) - the mechanism DRIVEN through the
 real mod (one press puts the torch out with one douse clip; two presses
 leave it lit with a douse AND an ignite, which is the sentence Mac
 wrote), the gate on both outer hosts with the social arm explicitly
@@ -16474,7 +16474,7 @@ work possibilities %2com[undefined]?"*
 
 `MacroHelper.cs`'s dictionary carries `%1com` (:44,
 `GreetingOrFollowUpText`) and has **no row for `%2com`** - 217 rows,
-diffed cell for cell against the C# by `test/macrocoverage.test.js`,
+diffed cell for cell against the C# by `test/systems/quest/macrocoverage.test.js`,
 with `%2com` in neither the handled set nor the null one. So `GetValue`
 takes its outermost else (:526-527) and answers `symbolStr +
 "[undefined]"`, and TEXT.RSC 7212 - the Work question, which reads
@@ -16513,7 +16513,7 @@ clothes. If that text is ever recovered the change is one handler.
 
 ### Pinned
 
-`test/talkunknown.test.js` (7) - the table fact that makes the sentinel
+`test/systems/talk/talkunknown.test.js` (7) - the table fact that makes the sentinel
 readable, Mac's sentence both ways, the whitespace law in each of the
 four places a macro can sit, the other three sentinels surviving
 (including BESIDE an unknown one, which is the case the early-out hides
@@ -16652,7 +16652,7 @@ Nothing in the interior light path is wrong, and the check was not a
 glance:
 
 - `AddLight`'s second switch (`DaggerfallInterior.cs:1034-1151`) is
-  transcribed cell for cell in `world/interiorLights.js`, re-read
+  transcribed cell for cell in `world/interior/interiorLights.js`, re-read
   against the live C# for this report. Every row matches, including the
   one that is BLUE: **record 8, the "Turkis lamp", is
   `Color(0.68, 1.0, 0.94)` in Daggerfall Unity** - turquoise is what
@@ -16679,9 +16679,9 @@ the turquoise one.
 
 ### Pinned
 
-`test/maca_camera_sphere.test.js` (6), `test/macc_window_keys.test.js`
-(5), `test/macd_quest_item_name.test.js` (5),
-`test/mace_corpse_window.test.js` (7), plus the grown pins in
+`test/player/maca_camera_sphere.test.js` (6), `test/ui/macc_window_keys.test.js`
+(5), `test/systems/quest/macd_quest_item_name.test.js` (5),
+`test/scenes/mace_corpse_window.test.js` (7), plus the grown pins in
 `audit24_wave38`, `cityguards` and `nativeinventory`.
 `tools/mutants/macbugs.json` (15, all dead).
 
@@ -16793,7 +16793,7 @@ parity gap on a different window, and it is not what was asked for.
 
 ### Pinned
 
-`test/macfg_fold_and_specials.test.js` (11).
+`test/ui/enhanced/macfg_fold_and_specials.test.js` (11).
 `tools/mutants/macfg.json` (20: 18 dead, 2 recorded equivalent - the
 tolerance read's order and the magery guard, both unreachable through
 any career the game can build).
@@ -16860,6 +16860,12 @@ flat in a black room goes black and the player reads that as the room,
 but a HAND that goes black is a hole in the middle of the screen, and
 you cannot tell a drawn weapon from a sheathed one.
 
+HORSE-LIT (2026-10-16, Mac: "Horses in first person should be affected
+by lighting"): the mount's sprite is drawn by `player/mountRig.js`, not
+this seam, and stayed white. It reads the same tint the same way now -
+the sprite and RR2's neck band - under the same switch
+(`01-Overview/bugs/Field-Bugs-2026-10-16.md`).
+
 ### MAC-P - and the Morrowind arms, which were worse
 
 *"morrowind's first person view also doesn't receive lighting and is
@@ -16921,7 +16927,7 @@ quad per particle and a sorted additive pass. It is a slice, not a fix,
 and it cannot be verified in this container at all - there is no
 Morrowind data here. Shipping an unverified flame is what MAC-B was
 refused for, so it is written down instead, with the pin that holds the
-premise (`test/machij_sprites_and_chat.test.js`).
+premise (`test/systems/machij_sprites_and_chat.test.js`).
 
 Worth saying, because it narrows the next attempt: the EMISSION channel
 is not the gap. A flame authored as a TRIANGLE with LightMode_Emissive
@@ -16929,7 +16935,7 @@ has drawn correctly since MWT2.
 
 ### Pinned
 
-`test/machij_sprites_and_chat.test.js` (14).
+`test/systems/machij_sprites_and_chat.test.js` (14).
 `tools/mutants/machijp.json` (20: 18 dead, 2 recorded equivalent).
 
 Two probes, because none of this is a law a node test can settle:
@@ -16965,7 +16971,7 @@ over the mean life, GravityAffector's `magic = 1.6f`, the
 
 ### Where it lives
 
-- `formats/mwNifMesh.js` walks the three particle geometries as it always
+- `formats/morrowind/mwNifMesh.js` walks the three particle geometries as it always
   walked them and, when a caller brings a sink, hands each one over WHOLE
   - the composed transform, the property chain and the enclosing
   NiBSParticleNode's flags (AutoPlay, LocalSpace), which is what
@@ -16973,12 +16979,12 @@ over the mean life, GravityAffector's `magic = 1.6f`, the
   change. NiAlphaProperty's blend FUNCTION and NiZBufferProperty's two bits
   reach the material now; nothing had asked for them before a drawable
   that blends.
-- `formats/mwParticles.js` is the descriptor and the running system.
+- `formats/morrowind/mwParticles.js` is the descriptor and the running system.
   `particleSystemsOf(nif)` answers what a file carries; `createParticleSystem`
   emits, operates and ages in the reference's own update order and answers
   `quads()` - centre, half-extent, colour, alpha - exactly as osgParticle
   would draw them. Pure: no GL, a `rolls` the pins can drive.
-- `formats/mwCharacter.js` `bindPart` carries a part's systems out beside
+- `formats/morrowind/mwCharacter.js` `bindPart` carries a part's systems out beside
   its batches; `mwFirstPerson.js` `bindPartsInto` puts them on
   `assembly.effects` with the SAME placement the part's rigid shapes take -
   the bone, the mirror, rule 14's offset, the part's attitude - because
@@ -17027,7 +17033,7 @@ its head.
 
 No Morrowind file could be opened in this container, so the torch's own
 flame was not seen. What was: every law against the reference's numbers
-(`test/macq_flame.test.js`, 20), the whole chain from a hand-built file to
+(`test/formats/morrowind/macq_flame.test.js`, 20), the whole chain from a hand-built file to
 pixels in a real GL context (`tools/macqFlameProbe.mjs` - the flame reads
 `[255,140,26]` where it stands, black beside it, black when hidden), and
 the seams (`bindPart`, `bindPartsInto`, `stepRigEffects`, the arm's two
@@ -17036,7 +17042,7 @@ Mac's.
 
 ### Pinned
 
-`test/macq_flame.test.js` (20). `tools/mutants/macq.json` (28: 27 dead,
+`test/formats/morrowind/macq_flame.test.js` (20). `tools/mutants/macq.json` (28: 27 dead,
 1 recorded equivalent). `tools/macqFlameProbe.mjs` 7/7.
 
 ## MAC-R2/R3/R4 - the doubled line, the hand cells, the hold under a repaint (2026-09-17)
@@ -17111,7 +17117,7 @@ Chrome, where it is implemented, not on a measurement made here. The
 fix costs nothing where the premise is false and the two phone doors
 are real either way.
 
-`test/macr_fixes.test.js` - 5 pins across the four. `tools/mutants/macr.json`
+`test/ui/enhanced/macr_fixes.test.js` - 5 pins across the four. `tools/mutants/macr.json`
 - 18 dead. AUDIT INV2's lost-capture pin, QS3's listener count and
 main-cell pins, drawHud's signature pins re-aimed.
 
@@ -17160,7 +17166,7 @@ the image" - in it the sky and trees show through the dark blade. So
 (the sheet gives `.hud-bladefull` no opacity). The probe reads both off
 the computed style.
 
-`test/foebar1_blade.test.js` - 2 pins. `tools/mutants/foebar1.json`.
+`test/ui/enhanced/foebar1_blade.test.js` - 2 pins. `tools/mutants/foebar1.json`.
 
 ## LV1 - THE ASCENSION: the enhanced skin's level-up window (2026-09-18, Mac)
 
@@ -17172,7 +17178,7 @@ UI in our own constellation vision."
 has forked on the skin for every screen since U52 EXCEPT this one: a
 level-up in the enhanced skin mounted `ui/charsheet.js`'s
 `LevelUpScreen` - eight `drawText` rows over a 92% dim, on the canvas,
-in FONT0003 - and `ui/enhancedCharSheet.js`'s own header said so in as
+in FONT0003 - and `ui/enhanced/enhancedCharSheet.js`'s own header said so in as
 many words ("THE LEVEL-UP SCREEN stays classic... Not this door's
 business"). That was the last screen the CHARACTER-SHEET DOOR still
 drew classic: `ui/charSheetDoor.js` has forked on the skin for every
@@ -17191,7 +17197,7 @@ DELETES THE SENTENCE.
 **Why a constellation, and why it is not Skyrim's.** Skyrim's level-up
 screen is a sky: your skills are stars and the camera is already
 pointed at them when you gain a level. What the port borrows from
-Skyrim is the INTERACTION MODEL `src/tools/enhancedUI.js` names - one
+Skyrim is the INTERACTION MODEL `src/tools/enhanced/enhancedUI.js` names - one
 thing at a time, targets big enough for a thumb, four directions and a
 confirm - and that model is exactly right for a screen whose whole job
 is "choose one of eight". What it does NOT borrow is the information
@@ -17222,7 +17228,7 @@ disagree - a werewolf's 100 was a 63 here.)
 **The window writes nothing.** a11's law is that the Level++ and the
 health roll live in ONE place and never in a window, and this one does
 not even hold a rollout: it is a second FACE on the live screen the
-door built. `ui/levelUpView.js` READS that screen and every act goes
+door built. `ui/levelUp/levelUpView.js` READS that screen and every act goes
 back through the screen's own `input` - select, then press, which is
 the same two moves the keyboard makes.
 
@@ -17247,7 +17253,7 @@ weakest major is dropped from the sum, only your best minor counts, a
 miscellaneous skill counts for nothing. That is
 `PlayerEntity.SetCurrentLevelUpSkillSum`, which Daggerfall states
 nowhere and which decides how the whole game advances. Because it is a
-SECOND reading of one law, `test/enhancedLevelUp.test.js` reconstructs
+SECOND reading of one law, `test/ui/enhancedLevelUp.test.js` reconstructs
 `levelUpSkillSum` out of those roles over 200 generated careers and
 holds it against the function itself: a drift fails there rather than
 teaching a player the wrong rule.
@@ -17309,7 +17315,7 @@ notice stays up, the door keeps the host's slot, and dismissing it
 re-offers the level-up on the next check at the cost of one discarded
 BonusPool draw (AUDIT 23's RNG-stream note; no player can observe it).
 
-`test/enhancedLevelUp.test.js` - 22 pins. `tools/mutants/lv1.json` -
+`test/ui/enhancedLevelUp.test.js` - 22 pins. `tools/mutants/lv1.json` -
 14 mutants, 14 dead, 0 survived. `tools/levelUpProbe.mjs` - 76/76
 (`npm run levelup`, against `npx vite --port 5199`).
 
@@ -17449,7 +17455,7 @@ window, the notice (without that arm a failed chunk drew "could not be
 loaded" over "You have risen.", two answers to one event), and a close
 that beat both.
 
-THE CHRONICLE'S OWN KEY. `ui/enhancedChronicle.js` answered `back` and
+THE CHRONICLE'S OWN KEY. `ui/enhanced/enhancedChronicle.js` answered `back` and
 nothing else, so L opened it and L did NOTHING - and not harmlessly:
 the overlay is `isChoiceWindow`, so both key seams hand the raw code to
 the window and return, which means the press was CONSUMED and answered
@@ -17495,14 +17501,14 @@ star's figure is still the permanent one the presses move, and the line under it
 point here shows only once that ends", "93 with its bonus", "43 for now". A view (Ascend from the Stats page) now shows
 the Stats page's own numbers. The classic skin's rollout is DFU's window and is untouched (DFU blanks the sheet's
 labels while levelling, :406-421). AUDIT 28e: the tint and the star's screen-reader words are the rows' own
-(`liveTint`, `starLabel` in `ui/levelUpView.js`), pinned with the two colours and the folds' channel; the tint outranks
+(`liveTint`, `starLabel` in `ui/levelUp/levelUpView.js`), pinned with the two colours and the folds' channel; the tint outranks
 a raised star's gold and yields to a full star's grey, by specificity; a point held at a FLOOR (a drained vampire by
 day, held at 1) is flagged as one at the ceiling is. THE LINE MOVED: in the pick name it wrapped to four lines on a
 phone and came and went with the choice, so the figure jumped and a tap landed on the wrong star. Each attribute's line
 now sits over its own blurb, and all eight lie in ONE grid cell with only the chosen one seen - the band is the
 tallest's whichever star is chosen, which also ends the blurbs' own jump (Luck's ran a line longer at some widths, and
 its blurb is a line shorter now); on a phone or a short screen the line takes its blurb's place. The level lane's
-probes, re-run: every aimed tap lands at every size tried, plain or cursed. `test/disc28e_ascendlive.test.js` (7),
+probes, re-run: every aimed tap lands at every size tried, plain or cursed. `test/systems/disc28e_ascendlive.test.js` (7),
 mutants in `tools/mutants/disc28e.json` (28).
 
 ## LV2 - THE RISING: the enhanced level-up notification (2026-09-19, Mac)
@@ -17579,7 +17585,7 @@ in the tree - world.js's ticker and rest arms and its arrival raise,
 exterior.js's two, worldModes.js's two and dungeonContext.js's -
 announces through `announceLevelUp` and hands it the host's OWN `open`
 thunk, because only a host knows how to put a window in its slot. The
-paint rides `ui/hud.js`'s `drawHud`, the one host-agnostic call all
+paint rides `ui/hud/hud.js`'s `drawHud`, the one host-agnostic call all
 four already make, with the enhanced HUD's own hide gate.
 
 **What the pins had to be taught.** The most important mutant this
@@ -17587,7 +17593,7 @@ slice has - THE WINDOW OPENS ITSELF AGAIN - survived the first suite:
 under node `typeof document === 'undefined'`, so every call took the
 CLASSIC arm and the arm the whole slice is about was unreachable. The
 three seams take a `doc` now, which is this tree's own idiom for "the
-page, or whatever a caller hands me" (ui/enhancedHudText.js's draws
+page, or whatever a caller hands me" (ui/enhanced/enhancedHudText.js's draws
 take it), and the enhanced arm is driven.
 
 **And a bookkeeping lesson worth writing down.** `tools/citeShift.mjs`
@@ -17601,7 +17607,7 @@ read HEAD's number at the same position in the same file, resolve it
 BY CONTENT in the working tree, and write that. Forty-seven cites came
 back. Run the tool once per base, or pair against HEAD - never both.
 
-`test/levelNotice.test.js` - 21 pins. `tools/mutants/lv2.json` - 30
+`test/ui/levelNotice.test.js` - 21 pins. `tools/mutants/lv2.json` - 30
 mutants, 28 dead, 2 recorded equivalent. `tools/levelUpProbe.mjs` -
 137/137, whose notice lanes mount the real enhanced HUD under the strip
 at desktop, on a phone and at the top of the HUD's own scale, and drive
@@ -17624,10 +17630,10 @@ slice did anyway**, which is the useful half of an audit: the tree had
 written both lessons down and the new code did not read them.
 
 **F1 - A DOOR THAT NAMED A CALLER THAT DOES NOT EXIST.**
-`destroyLevelNotices`' note said "a host tearing down (ui/hud.js's own
-destroy path)". `ui/hud.js` HAS no destroy path, and nothing in `src/`
+`destroyLevelNotices`' note said "a host tearing down (ui/hud/hud.js's own
+destroy path)". `ui/hud/hud.js` HAS no destroy path, and nothing in `src/`
 calls this function at all. It is the same false sentence AUDIT FONT
-F12 struck from `ui/enhancedHudText.js` lines 325-336 one file over, written
+F12 struck from `ui/enhanced/enhancedHudText.js` lines 325-336 one file over, written
 again, one arc later. The note is the sibling's corrected idiom now -
 the callers are the TESTS, the enhanced skin's elements live as long as
 the page does because every skin and scene change in this port ends in
@@ -17660,7 +17666,7 @@ thunk, so record 4020 came off disk on BOTH lanes and was dropped on
 the one that promises, in this module's own header, that "no game data
 is read to announce a level". No player ever saw a defect; the SENTENCE
 was false, which in this tree is the defect. The pin that was supposed
-to hold it only checked that `ui/levelNotice.js` imports no reader -
+to hold it only checked that `ui/levelUp/levelNotice.js` imports no reader -
 which it never did - so it could not see a call site handing one in.
 `rows` is a function now, called on the lane that shows it, and the pin
 DRIVES both arms and counts the reads instead of reading the source.
@@ -17681,7 +17687,7 @@ three of the block's four rows empty and the box it measured was 30px
 tall where an ordinary fight makes it 111.
 
 The fix is not a better number, it is the tree's own rule read the
-right way round. QS3 (`ui/enhancedHud.js:"QS3: THE QUICKSLOT DIAMOND, bottom-left"`) already says it, for
+right way round. QS3 (`ui/enhanced/enhancedHud.js:"QS3: THE QUICKSLOT DIAMOND, bottom-left"`) already says it, for
 the quickslot diamond, in the opposite direction: the diamond lives on
 the HUD root rather than in `.hud-bottom` **because** it is a CORNER,
 "and a corner block inside a centred flex column moves whenever a bar
@@ -17849,7 +17855,7 @@ container, so whether DFU itself consumes the last three is not
 verified here; they are recorded, pinned as exactly four, and a fifth
 - or one of these gaining a reader - reddens the suite.
 
-**Pinned** in `test/pad1.test.js` (10): the dispatch target with a fake
+**Pinned** in `test/ui/pad1.test.js` (10): the dispatch target with a fake
 document and the REAL synth; the twenty names both ways and every
 vendored mod's TextKey default (an axis-named setting and an unbound
 one excepted, by name); the layout's laws (pad-only, once each, off the
@@ -17943,7 +17949,7 @@ every frame.
 **3. It stood where the reticle was not.** The old rule was `bottom:
 16%`, with a comment saying it was "centred low so it never sits on the
 reticle" - avoiding the cross by standing far from it, because it had
-nowhere to read the cross's real place. `ui/hud.js` exports
+nowhere to read the cross's real place. `ui/hud/hud.js` exports
 `hudReticle` now, the two terms its own crosshair draw uses, so there
 is ONE answer to "where is the reticle" and the plaque asks it. It
 hangs a fixed gap BELOW the cross and grows downward: covered in no
@@ -18184,7 +18190,7 @@ has no plaque, hears a champion on its line instead (`Loot-Arc.md` section 17, C
 
 **RETIRED by HOVER-PLAIN (2026-10-03, Mac: "remove the crosshair tooltip. They should only have names/modifiers
 under their healthbar").** The exception is gone: `mobileEntityName(name, { hostile })` names no hostile foe, a champion,
-an elite or a revenant included; while one fights, its title stands on the target frame alone (`ui/hudFoeTarget.js`),
+an elite or a revenant included; while one fights, its title stands on the target frame alone (`ui/hud/hudFoeTarget.js`),
 and CHAMP-SAID's first-blow line stays. At peace it is named as ever, title and all (`liveEntityName` keeps `foeTitle`): a
 sworn companion by its own name, a calmed one, and a kneeling revenant - its motor still hostile, so the street's and
 the dungeon's arms pass `!f.yielded` (the street's `!f._pupYield` too) and its "- beaten" cue reads.
@@ -18300,6 +18306,11 @@ it.
 
 ## QUICK-LOOT - taking from the plaque, without a window (2026-09-22, Mac)
 
+SKIN-PLAQUE (2026-10-16, `01-Overview/bugs/Field-Bugs-2026-10-16c.md`; Mona Polca: "Quick loot is not suppressed when
+skinning"): while a gathering act plays, the plaque names nothing - the gathering host's pick is `ACT_OWNS_LOOK`
+(`scenes/gatherHost.js`), which the hosts keep over the race's winner, so the body under the knife, its rows and the
+lit row's tooltip stand down, and nothing is lit for the wheel or a take. E was the act's already (AUDIT 29 D3).
+
 Arc B of the world-hover arcs. Arc A put a plaque under the crosshair
 that names what you are looking at and lists what a pile or a body
 holds; this makes that list a way to TAKE. Mac asked "Arc B first",
@@ -18384,7 +18395,7 @@ has always opened, and the plaque stays the readout Arc A shipped.
 lesson.** Arc B's hosts were pinned by SOURCE TEXT - the rung is on this
 line, in this order - and nothing was pinned about what the feature
 does. A 24-mutant campaign killed two of its own mutants and let
-twenty-two live. `test/quickloot.test.js` is the answer: 21 tests that
+twenty-two live. `test/systems/quickloot.test.js` is the answer: 21 tests that
 drive the real module, and the campaign is 24 for 24.
 
 ## STATUS-LIVE + NOTICE-FIT - the readout does not stop the world, and the panel is as wide as what it says (2026-09-22, kurkku through Mac)
@@ -18527,7 +18538,7 @@ trust.
 round.** The dungeon frame's new draw first asked
 `dungeonCtx.overlayWindow()` - a PROBE SURFACE - and ROAD-tail's law is
 that a host asks the owning context for its pause and never reaches
-past it for the slot. `test/roadb_host_pause.test.js` reddened on it
+past it for the slot. `test/scenes/roadb_host_pause.test.js` reddened on it
 ("a probe surface is not a pause gate"), which is the sweep doing
 exactly the job it was written for. The context publishes the answer as
 its own word now, `unpausedOverlay`, beside the `uiOverlayActive` it is
@@ -18629,7 +18640,7 @@ game must never fail, and a backup that happens invisibly is a backup
 whose failure is also invisible. The listing is asked ONCE per visit and
 latches, because a pane repaints on every press.
 
-**Pinned** in `test/savetile.test.js` (11) and measured in
+**Pinned** in `test/ui/savetile.test.js` (11) and measured in
 `tools/saveTileProbe.mjs` (21 checks, `npm run savetile`). Mutants:
 `tools/mutants/tile.json`, 11, **10 dead and 1 recorded equivalent**, and
 `tools/mutants/audit312.json`, 10, **9 dead and 1 recorded equivalent**.
@@ -18645,7 +18656,7 @@ what changed on the tile.
 menu.** `cloudStateOf` is pure and beside the states it names, and it
 answers a refusal WORD rather than a sentence, because the sentences
 belong to `net/accountClient.js`'s one table. It moved because
-`ui/enhancedMenu.js` is DOM and a boot: three mutants of that arithmetic
+`ui/enhanced/enhancedMenu.js` is DOM and a boot: three mutants of that arithmetic
 survived THE WHOLE SUITE, and each is a lie about a player's own backup —
 an unfinished upload reading as a finished one, a listing never re-asked
 after a push, and every character's QuickSave sharing one slot key.
@@ -18740,7 +18751,7 @@ wears nothing rather than a guess. The SVG drawing is the roster's own,
 moved into one door (`glyphSvg`) the row and the line both use, and a
 document without an SVG namespace draws no glyph and does not throw.
 
-**Pinned** in `test/chatfit.test.js` (7), measured by
+**Pinned** in `test/ui/chatfit.test.js` (7), measured by
 `tools/chatFitProbe.mjs` (12 checks, two shots). Mutants
 `tools/mutants/chatfit.json`: 14, 14 dead. acc3wear's roster-order pin
 re-aimed at the row's line.
@@ -18757,11 +18768,11 @@ its layLine mutant re-aimed there.
 
 Five players, five root causes, one commit. The torch's two are recorded in `06-Systems/Handheld-Torches.md` (3ARMS + TORCH-BIND) and the corpse loot in `06-Systems/Online-Arc.md` (LOOT-REGEN); the three that are this arc's are below.
 
-**BLACK-ARMS (Revverie: "Weapon and torch are blacked out").** The classic weapon and the torch hand were solid black silhouettes in a lit dungeon, the Morrowind arms fine, every lighting toggle useless. MAC-I's first-person tint is `flatLightAt`, an RGB TRIPLE, and the rig hands it as it is to `drawScreenQuad`'s `color`, the shader's vec4: `color[3]` was `undefined`, `uniform4f` takes an unrestricted float and uploaded NaN, and the fragment's alpha came out NaN - which ANGLE/D3D and most drivers store as 0 on the premultiplied canvas, so the page's `#000` showed through every opaque texel: a silhouette with a perfect cutout, on Revverie's machine and not on ours (a driver that clamps NaN to 1 draws it right). The Morrowind lane never met it: `renderCharacterSprite` reads the triple's three and the RT is blitted with no colour at all. No toggle could touch it because the tint rides `firstPersonLighting` (Sight), not `enhancedLighting`. Fixed at the one seam every classic sprite ends in: `drawScreenQuad` defaults an absent alpha to 1 (the upload and its shadow, and `screenQuadBlends` the same). `tools/macfpLightProbe.mjs` now draws the TRIPLE and reads the alpha back - it had appended a 1 the runtime never passed, which is why "a quarter tint really is a quarter on screen" pinned the RGB and not the shape. Pin: `test/discord5.test.js` drives `Renderer.prototype.drawScreenQuad` over a recording stub - a triple uploads `[r, g, b, 1]`, finite, shadowed on the defaulted alpha.
+**BLACK-ARMS (Revverie: "Weapon and torch are blacked out").** The classic weapon and the torch hand were solid black silhouettes in a lit dungeon, the Morrowind arms fine, every lighting toggle useless. MAC-I's first-person tint is `flatLightAt`, an RGB TRIPLE, and the rig hands it as it is to `drawScreenQuad`'s `color`, the shader's vec4: `color[3]` was `undefined`, `uniform4f` takes an unrestricted float and uploaded NaN, and the fragment's alpha came out NaN - which ANGLE/D3D and most drivers store as 0 on the premultiplied canvas, so the page's `#000` showed through every opaque texel: a silhouette with a perfect cutout, on Revverie's machine and not on ours (a driver that clamps NaN to 1 draws it right). The Morrowind lane never met it: `renderCharacterSprite` reads the triple's three and the RT is blitted with no colour at all. No toggle could touch it because the tint rides `firstPersonLighting` (Sight), not `enhancedLighting`. Fixed at the one seam every classic sprite ends in: `drawScreenQuad` defaults an absent alpha to 1 (the upload and its shadow, and `screenQuadBlends` the same). `tools/macfpLightProbe.mjs` now draws the TRIPLE and reads the alpha back - it had appended a 1 the runtime never passed, which is why "a quarter tint really is a quarter on screen" pinned the RGB and not the shape. Pin: `test/systems/discord5.test.js` drives `Renderer.prototype.drawScreenQuad` over a recording stub - a triple uploads `[r, g, b, 1]`, finite, shadowed on the defaulted alpha.
 
-**TORCH-BIND, the Continue half (teuton: "Keybind changes do not stick?"; The Frog: "if you scroll up after rebinding, there should be a Continue or Confirm button ... it needs some streamlining").** Rebinds are staged and applied only on Continue, in the head card, 53 rows above the Quickslot and Mouse rows a player binds last, and every walk-away discards - so a player who bound a key at the foot and pressed Escape lost it and read "does not stick". The staging law stands (DFU's OnPop applies on leave; the enhanced pane says what it does in its own copy): the head card is `position: sticky` now, so Continue is in view while the list scrolls, and a second Continue closes the list in a foot card, the same `applyAndSave`. Pin: `test/discord5.test.js` mounts the pane - two Continues, the foot one saves.
+**TORCH-BIND, the Continue half (teuton: "Keybind changes do not stick?"; The Frog: "if you scroll up after rebinding, there should be a Continue or Confirm button ... it needs some streamlining").** Rebinds are staged and applied only on Continue, in the head card, 53 rows above the Quickslot and Mouse rows a player binds last, and every walk-away discards - so a player who bound a key at the foot and pressed Escape lost it and read "does not stick". The staging law stands (DFU's OnPop applies on leave; the enhanced pane says what it does in its own copy): the head card is `position: sticky` now, so Continue is in view while the list scrolls, and a second Continue closes the list in a foot card, the same `applyAndSave`. Pin: `test/systems/discord5.test.js` mounts the pane - two Continues, the foot one saves.
 
-**HOTSLOT (!Simple: "Cant change Hotslot spell").** The spell slot had ONE writer a player could reach: a 350 ms HOLD of the quick-spell key, said nowhere - the pane row read "Ready quickslot spell", the chip wore the bare key. A press readies the book's first spell and a second press unreadies it, so from the chair the key was a toggle stuck on spell one. On a phone it was a dead end: the chip that takes the hold was `display: none` until the slot was filled, and only the hold fills it. Four changes: the enhanced spellbook slots a spell - a Quickslot / Unslot button beside Ready, the pair the pack gives a consumable (`quickslotActs`); the empty chip is a SOCKET (`qspell-empty` since HUD-CLASS, below; drawn dim as "No spell", wearing its key, so the key is seen and a finger has a chip to fill - departure 4's law for the diamond's cells); the pane row says "(hold to cycle the book)"; and `spellCandidates` answers one entry per index - a bought stock spell, a classic import and the vampire/lycanthrope gifts each push a record without asking, and `findIndex` on a doubled book always landed on the first copy, the cycle stuck on one spell. The classic skin keeps the hold. Pins: `test/discord5.test.js` mounts the enhanced book over a DOM fake and slots, re-slots and unslots; the doubled book walks every spell; the socket and the label by source. `test/qs2_inputs.test.js` re-aimed to the label.
+**HOTSLOT (!Simple: "Cant change Hotslot spell").** The spell slot had ONE writer a player could reach: a 350 ms HOLD of the quick-spell key, said nowhere - the pane row read "Ready quickslot spell", the chip wore the bare key. A press readies the book's first spell and a second press unreadies it, so from the chair the key was a toggle stuck on spell one. On a phone it was a dead end: the chip that takes the hold was `display: none` until the slot was filled, and only the hold fills it. Four changes: the enhanced spellbook slots a spell - a Quickslot / Unslot button beside Ready, the pair the pack gives a consumable (`quickslotActs`); the empty chip is a SOCKET (`qspell-empty` since HUD-CLASS, below; drawn dim as "No spell", wearing its key, so the key is seen and a finger has a chip to fill - departure 4's law for the diamond's cells); the pane row says "(hold to cycle the book)"; and `spellCandidates` answers one entry per index - a bought stock spell, a classic import and the vampire/lycanthrope gifts each push a record without asking, and `findIndex` on a doubled book always landed on the first copy, the cycle stuck on one spell. The classic skin keeps the hold. Pins: `test/systems/discord5.test.js` mounts the enhanced book over a DOM fake and slots, re-slots and unslots; the doubled book walks every spell; the socket and the label by source. `test/systems/qs2_inputs.test.js` re-aimed to the label.
 
 Not verified in a browser: none of the five is reproducible headless. `tools/mutants/discord5.json`: 20 records, 20 dead.
 
@@ -18773,7 +18784,7 @@ one missing from the classic skin (the full audit: `06-Systems/Horse-Cart-And-Ca
 - **The naming prompt (U5).** "Name your horse:" is DFU's DaggerfallInputMessageBox, and `ui/inputMessageBox.js`
   drew its SPOP parchment in the bitmap font on both skins. ENH-NOTICE1's law stands - a field is a DECISION, not
   a click-anywhere notice, so it never joins the right-edge stack - and under the enhanced skin the box is now its
-  own window in the skin's face (`ui/enhancedInputBox.js`): centred (the top, for showAtTopOfScreen), the notice's
+  own window in the skin's face (`ui/enhanced/enhancedInputBox.js`): centred (the top, for showAtTopOfScreen), the notice's
   panel and brass rule, the text tokens, the label and the live entry with a caret on a field line, and a caption
   that says what closes a field ("Enter to accept · Escape to cancel", never the notice's "click or press a key").
   The model does not move: the host routes every key to `input`, the box stays modal. Every raiser of the one box
@@ -18805,14 +18816,14 @@ frame now: `'actions'`, a namer's verbs as rows - `resolveHover` makes one from 
 and the paint draws them in the loot list's rows. P and J never arm on a verb, a verb has no stats, and a plaque that
 stands down (a window, the skin) folds nothing, so no highlight outlives what it lit. The press reads the lit verb by key
 (`plaqueActionFor`, `plaqueActionSelection`): a player's acts (the F-menu's own, through its own door) and my horse's
-and wagon's (the mod's interaction mode per row). Record: `01-Overview/Field-Bugs-2026-09-23.md` (DISC7). Pins:
-`test/disc7.test.js`; mutants `tools/mutants/disc7.json`.
+and wagon's (the mod's interaction mode per row). Record: `01-Overview/bugs/Field-Bugs-2026-09-23.md` (DISC7). Pins:
+`test/systems/disc7.test.js`; mutants `tools/mutants/disc7.json`.
 
 AUDIT DISC7 (2026-09-23, Mac: "Do an audit before we merge"): a player's list starts UNLIT (`actionsUnlit` ->
 `startUnlit`; a plain click on a player is not a request sent, and passes to the ladder), F lights its first row
 (`plaqueLightFirst`), the lit verb follows its row by id when the list changes, the card's refused acts are listed in
 italics with their reason (`.wplaque-row.off`) and a press on one says it, a single lit verb leaves the wheel to the
-camera, and every door that takes the plaque down folds its highlight away. Pins: `test/auditdisc7.test.js`.
+camera, and every door that takes the plaque down folds its highlight away. Pins: `test/systems/auditdisc7.test.js`.
 
 ## UXB1 - THE UX BACKLOG (2026-09-25, a contributor's list: "if someone else wants to do any of these first go for it")
 
@@ -18831,8 +18842,12 @@ Fifteen items in five groups, each answered on both skins where both have the sc
   case in the question needs no second binding: Jump and Crouch already raise and lower a swimming or levitating body
   (LevitateMotor.cs:86-89; every motor host passes the pair). So the page says it - Float up and Float down carry "Jump
   (SPACE) rises too while you swim or levitate", in the live keys - and giving Jump's key to Float up is answered "you
-  need neither". The conflict itself is highlighted where it is decided: the replace question stands in the sticky head
-  over the list it no longer replaces, the row the key would go to edged in brass and the row that holds it in red.
+  need neither". The conflict itself is highlighted where it is decided: KEY-IN-USE-TIP (2026-10-15) moved the replace
+  question from the sticky head into a viewport-fitted modal tooltip for the binding being changed. It lives in the
+  browser's top layer, outside either Settings scrollport: its no-anchor fallback centres in the viewport, and CSS
+  anchors keep it beside the binding and flip it above or below to fit where they exist. Its first answer takes focus,
+  the page behind is inert, and the binding takes focus back after the answer. The row the key would go to is edged in
+  brass and the row that holds it in red.
 - **S - and then: "So you wont add multiple key bindings even when asked? I dont care if it goes against daggerfall."**
   So it is added, and recorded as a departure. The held-key question has a third answer, USE FOR BOTH (a button on the
   enhanced page, B in the classic grid and its ADVANCED popup), offered wherever every holder holds this very key: the
@@ -18844,9 +18859,10 @@ Fifteen items in five groups, each answered on both skins where both have the sc
   now finds only the clash no press resolves - a combo against its own modifier bound bare - still red or blue and still
   blocking; a share is green, and each of its rows names what else the key does. Measured in a browser on the way:
   the page's key-state colours had never drawn on the main menu's Settings (the door's `.shell .act` outranked them, so
-  even DFU's red clash was a plain key), and the sticky head the question stands in was a 35% wash with the rows
-  printed through it - both fixed (`enhancedStyle.js`, the UXB1-S rules).
-- **E - Sync from server**: `systems/onlineSync.js`, a card under the Online pane's rules. THERE IS NO HOST TO ASK: a relay
+  even DFU's red clash was a plain key), and the sticky head the question stood in was a 35% wash with the rows
+  printed through it - both fixed (`enhancedStyle.js`, the UXB1-S rules; the question later moved beside its row at
+  KEY-IN-USE-TIP).
+- **E - Sync from server**: `systems/online/onlineSync.js`, a card under the Online pane's rules. THERE IS NO HOST TO ASK: a relay
   serves the wire and /health and publishes no rules, because the rules are the online lane's - this build's, the same on
   every server. So the sync copies the lane into the offline stores (every forced pref, DFU setting and room mod key,
   and Smaller Dungeons off, since online every dungeon is full size), lists what differs before the press, and keeps
@@ -18875,7 +18891,7 @@ Fifteen items in five groups, each answered on both skins where both have the sc
 - **L - splitting a shop's stack** ("12 oil, I want 2"): the classic counter asks DFU's "how many" on a Control-click and
   when a stack only partly fits (TransferItem's gate); the enhanced counter carries a count on a clean stack. (Main's
   DISC25-F built the same split on both counters the same day; the merge kept DISC25-F's - one law in
-  `systems/itemTransfer.js`, the how-many field - and this list's two additions on top of it: the click's own Control,
+  `systems/item/itemTransfer.js`, the how-many field - and this list's two additions on top of it: the click's own Control,
   read off the pointer seam, and a returned lot rejoining its stack on both counters, AUDIT UXB1 F4.)
 - **M - the private-property question, clickable**: the keyed panel's click rows sat one row above their labels (a click
   on "Y - yes" answered No) - mended for every keyed menu - and the question is DFU's YesNo box now (`ui/yesNoBox.js`):
@@ -18973,8 +18989,8 @@ hidden), so at 1366 and 1280 wide the wagon stood from x 1058 to 1738, not one r
 scaling makes a 1366 screen 1093 CSS px, worse again. The HUD scale is `--hud-scale` on the HUD's own host
 (`enhancedHud.js`) and was never this window's; there is no window scale.
 
-The shell of a pack beside a side window is PAIRED (`ui/enhancedInventory.js`), and paired the two share the width
-(`ui/enhancedStyle.js`): from 641 px the side window is one 340 px column and the pack takes the rest
+The shell of a pack beside a side window is PAIRED (`ui/enhanced/enhancedInventory.js`), and paired the two share the width
+(`ui/enhanced/enhancedStyle.js`): from 641 px the side window is one 340 px column and the pack takes the rest
 (`min(1040px, calc(100vw - 32px - 18px - 340px))`); from 1770 px (the full pair and the page's margin) the wide
 two-column window returns. The phone keeps its stack; a body's window alone (PX20b) and the pack alone are untouched.
 Measured in Chromium off the real window: at 1366x657, 1366x768, 1280x720 and 1024x600 both frames lie inside the
@@ -18986,9 +19002,9 @@ there is no width for them under 1770, and a list you can scroll beats one you c
 pack is cramped. Seen, not changed: on a phone the side window stacks under a pack that is the screen's whole height,
 so its list starts below the fold.
 
-Pinned in `test/cartfit.test.js` (2: the wagon and storage pair, a body and the pack alone do not, through the real
+Pinned in `test/ui/enhanced/cartfit.test.js` (2: the wagon and storage pair, a body and the pack alone do not, through the real
 mount; the paired rules and their arithmetic). Mutants `tools/mutants/cart_fit.json` (4, all dead).
-`01-Overview/Field-Bugs-2026-09-27.md`.
+`01-Overview/bugs/Field-Bugs-2026-09-27.md`.
 
 ## ESC-LOCK - THE ESCAPE THE BROWSER KEEPS (2026-09-27, Mac's report)
 
@@ -19028,11 +19044,11 @@ Not proven in a real browser or the packaged app: a Playwright key press bypasse
 and no probe here holds a real lock. The corrected comments: `pointerLock.js`'s header, `pauseDoor.js` (MAC1),
 `townTalk.js` (MENU-RELOCK's keydown and keyup).
 
-Pinned in `test/esclock.test.js` (5: the loss delivered once, as a keydown and its keyup; never the page's release,
+Pinned in `test/player/esclock.test.js` (5: the loss delivered once, as a keydown and its keyup; never the page's release,
 a window's, a freed cursor's, an unfocused or hidden page's, a lock taken back, or a press the browser delivered;
 the disposer takes the listener and a pending delivery; the refused request asked of the shell once and re-run, a tab
 with no shell left alone; the bridge by source); `kb1_keybinds.test.js`'s sweep carries the reservation. Mutants
-`tools/mutants/esc_lock.json` (8, all dead). `01-Overview/Field-Bugs-2026-09-27.md`.
+`tools/mutants/esc_lock.json` (8, all dead). `01-Overview/bugs/Field-Bugs-2026-09-27.md`.
 
 **A THIRD RULE - GECKO ENDS A LOCK ON A TOUCH (TOUCH-UNLOCK, FIELD BUGS 2026-10-09c).** On Firefox for Android and its
 forks every tap opened the pause ("Touching anywhere onscreen in mobile opens the system menu"; Chrome played). Gecko
@@ -19043,7 +19059,7 @@ then relocked on its close, for the next tap to end. Blink never ends a lock on 
 holds a lock" (AUDIT 62 F6, PL3) held there. `bindCursorToggle` now hears the four touch events on the document's
 capture phase, and a loss within `TOUCH_UNLOCK_MS` (500 ms) of one is the finger's - never delivered; a loss with no
 touch near is the player's Escape as before, so a mouse and a keyboard are untouched (and a Firefox touchscreen laptop,
-the layer off, is covered too). Not proven on a device. Pinned in `test/fb1009c_touchunlock.test.js` (2);
+the layer off, is covered too). Not proven on a device. Pinned in `test/player/fb1009c_touchunlock.test.js` (2);
 `tools/mutants/fb1009c_touchunlock.json` (4, all dead; `esc_lock.json`'s relock record re-aimed by content).
 
 ## CARD-FIT - the item card fits its window and says what a glance needs (2026-09-28)
@@ -19051,9 +19067,9 @@ the layer off, is covered too). Not proven on a device. Pinned in `test/fb1009c_
 The Discord (#bug-reports, Cruor): *"New sigil items descriptor is a bit long! ... all the buttons on it's pop-up card
 are.. off the screen, because it's got a bit much on it!"* Mac: *"Address screenshot for current and future
 weapons/gear. Want to improve this and reduce text bloat"*. The whole record, before and after:
-`01-Overview/Field-Bugs-2026-09-28c.md` (renamed from `-28.md` at the merge with main, whose DISC28 batch took the name).
+`01-Overview/bugs/Field-Bugs-2026-09-28c.md` (renamed from `-28.md` at the merge with main, whose DISC28 batch took the name).
 
-- **The layout** (`ui/enhancedInventory.js`): `infoCard(..., { body: true })` puts the card's words in `.card-body`,
+- **The layout** (`ui/enhanced/enhancedInventory.js`): `infoCard(..., { body: true })` puts the card's words in `.card-body`,
   and the detail card hangs its buttons (`itemActs`) under the body. `fitCard(card, room)` writes the card's
   `max-height` and adds `CARD_FITS` (`card-compact`: the picture 56 px; `card-tight`: no picture) while the body is
   taller than it can show; past them the body scrolls (the one scroller - PX21f's "a tooltip is not a scroll box"
@@ -19061,16 +19077,16 @@ weapons/gear. Want to improve this and reduce text bloat"*. The whole record, be
   window's AND the screen's, less the tip's chrome; its position is written in the tip's own containing block
   (`tip.offsetParent`); a phone's card (<= 640 px) is a sheet at the screen's foot rising to `CARD_SHEET_SHARE` (0.8)
   of the screen, its close bar its own (hidden on a tip, which closes by a tap away).
-- **The sheet** (`ui/enhancedStyle.js`): the tip wears none of the phone column's sheet (`max-height: none; bottom:
+- **The sheet** (`ui/enhanced/enhancedStyle.js`): the tip wears none of the phone column's sheet (`max-height: none; bottom:
   auto; right: auto`); the card a flex column, its body `overflow-y: auto`, its buttons `flex: 0 0 auto` under a rule;
   the numbers as whole pairs (`div.pair` groups in the `dl`, flowing two a line on the card, stepping out of every
   other grid by `.stats > .pair { display: contents; }`); four buttons a row (`min-width: 64px` - LAYOUT1's 104 px is a
   dialog's); the lore's dim italic by its own class (`li.lore`), since the card's last line is no longer the lore.
-- **The words**: `systems/sigilSets.js` gives every tier a `brief` (BRIEF_MAX 32) and the view its `recover`;
+- **The words**: `systems/sigil/sigilSets.js` gives every tier a `brief` (BRIEF_MAX 32) and the view its `recover`;
   `ui/setCard.js` and `ui/sigilCard.js` draw a card dress by default and the whole dress with `{ full: true }` (the Info
-  box's, which also says the tier's lines and the lore); `systems/lootRarity.js` rarityLines takes `lore: false`.
+  box's, which also says the tier's lines and the lore); `systems/loot/lootRarity.js` rarityLines takes `lore: false`.
 - **Measured**: `tools/cardFitProbe.mjs` (new; 438 checks at six screens - every button of eight heavy cards pressed,
-  and read whole with no scroll on every screen 720 px tall and up). Pinned: `test/cardfit.test.js`; the old pins moved
+  and read whole with no scroll on every screen 720 px tall and up). Pinned: `test/ui/enhanced/cardfit.test.js`; the old pins moved
   to the two dresses (`set5_ui`, `sigilui1`, `auditset_c` U13, `lr1`, `tradeinfo`, `dw3_icons`, `enhancedInventory`
   PX21f). Mutants: `tools/mutants/cardfit.json` (33, all dead); five older records re-aimed where the card's code moved.
 - **The card audit's follow-ups** (the same day; the record's "AUDIT CARD"): `itemBriefLines(item, d, { worn })` - the
@@ -19110,14 +19126,14 @@ counter could not say whose it was: the indoor foot closed its frame token with 
 time was blank in every interior and dungeon. The streaming hosts' indoor foot is a whole frame and takes its sample
 now (`frameEnd`); the held frame and the standalone dungeon's overlay return still take none (AUDIT-WH2 L1-F4's own
 reason: a frame that bailed early did next to no work).
-`test/disc29_watchdog.test.js` (5); the notice, plaque and Yes/No suites re-aimed to the frame law;
-`tools/mutants/disc29.json` (DISC29-D, 10). `01-Overview/Field-Bugs-2026-09-28f.md` DISC29-D.
+`test/ui/enhanced/disc29_watchdog.test.js` (5); the notice, plaque and Yes/No suites re-aimed to the frame law;
+`tools/mutants/disc29.json` (DISC29-D, 10). `01-Overview/bugs/Field-Bugs-2026-09-28f.md` DISC29-D.
 
 ## TOAST-SPLIT - the toasts and the Notice Board share no class (2026-09-29, Mac: "So it seems like the enhanced plus UI regressed. The notifications arent enhanced plus anymore")
 
 The Notice Board (NOTICE1, `06-Systems/Online-Arc.md`) drew its cork in `.notice-body` and its small italic lines in
-`.notice-hint`: the HUD toast stack's own two classes (ENH-NOTICE1: `ui/enhancedNotice.js`, and the input box's and
-the Yes/No card's hint). Its sheet, `NOTICE_CSS` (`ui/enhancedPlusStyle.js`), has been in the Enhanced Plus sheet since
+`.notice-hint`: the HUD toast stack's own two classes (ENH-NOTICE1: `ui/enhanced/enhancedNotice.js`, and the input box's and
+the Yes/No card's hint). Its sheet, `NOTICE_CSS` (`ui/enhanced/enhancedPlusStyle.js`), has been in the Enhanced Plus sheet since
 MERGE 2, so for everyone on Enhanced Plus every toast's and every message box's words sat on a patch of brown cork
 (padded 14/16 px, scrolling), and a box's hint turned brown italic. The other way round, the toasts' sheet put its
 capitals, letter-spacing, rule and right alignment on the board's form lines, and capped the cork at 70% of the
@@ -19131,7 +19147,7 @@ gradient and its padding `14px 16px 16px`; with the fix, none and `0px`.
 - **The sheet a board lays on the classic skin** (`noticeSkinCss`) took the kit's rules for every selector naming
   "notice", the toast's `.notice` dress and fade among them; it takes the board's window, header and presses only
   (`.notice-shell`, `.notice-win`, `.notice-head`).
-- Pins: `test/toast_split.test.js` (4, red first): the toast's classes as its three drawers hand them; the board's
+- Pins: `test/ui/toast_split.test.js` (4, red first): the toast's classes as its three drawers hand them; the board's
   three windows draw none of them; no board sheet (the board's, the professions', the bounty board's, the classic
   skin's) names one, and the classic sheet keeps every rule of the board's window and nothing else; the toasts' sheet
   names none of the board's. `audit31_tabs` and `audit30_client` follow the new classes. Mutants:
@@ -19154,7 +19170,7 @@ already refused it for small text, AUDIT INSTALL); `--dim` (`#8b8578`) read at 4
 
 **The reading pair, in the one trio.** `PIXEL_READ_CSS` (`ui/pixelifyFive.js`) is `font-weight: 500; letter-spacing:
 0.5px` - 500 is the request's own second weight, so nothing new is fetched - and `PIXEL_FONT_CSS` ends with it, so
-every surface that wears the trio gets it and a rule that writes its own weight AFTER the trio keeps it. `ui/touch.js`
+every surface that wears the trio gets it and a rule that writes its own weight AFTER the trio keeps it. `ui/touch/touch.js`
 was the one place a weight stood BEFORE the trio (the entry field's 600 would have been lost); it was turned round.
 The gate's four Plus-dress rules wrote `font-weight: 400` after the trio to undo Cormorant's bold; the 400 came off.
 
@@ -19185,26 +19201,26 @@ the inherited trio puts the smoothing and the ligatures off under every hand-wri
 cannot come back through a root that forgot it.
 
 The surfaces named one by one:
-- **The death screen** (`ui/enhancedDeath.js`): YOU DIED and its line were the display serif (DEATH2's choice; the
+- **The death screen** (`ui/enhanced/enhancedDeath.js`): YOU DIED and its line were the display serif (DEATH2's choice; the
   Discord ask was "make it enhanced style"). The pixel face, named outright; the line upright (the face has no
   italic), the count at the keys' own tone.
-- **The gate's burning ground** (`ui/gateGroundView.js` `.wb-ground-warn`): the one gate surface the Plus dress never
+- **The gate's burning ground** (`ui/gate/gateGroundView.js` `.wb-ground-warn`): the one gate surface the Plus dress never
   reached - `body .wb-ground-warn` in the trio.
 - **The prison countdown** (`ui/prisonScreen.js`): the screen's one line was the bitmap face; under the enhanced skin
   it is the mid-screen label's DOM face at the label's native row (the horse's name is the same seam), and the window's
   `dispose` - which townTalk's drop and replace both call - takes it down.
-- **A draw list's words** (`ui/enhancedTextLayer.js`, new): Come Sail Away's position reading hands the host a list of
+- **A draw list's words** (`ui/enhanced/enhancedTextLayer.js`, new): Come Sail Away's position reading hands the host a list of
   quads and texts in canvas pixels. Under the enhanced skin a list that names a layer says its texts in a fixed DOM
   layer in the trio - a node per line, MOVED, the bitmap line's own top-left and colour and shadow step, set at 0.9 of
   the bitmap cell so DFU's 20px line spacing at scale 3 keeps clear - and the map window's dispose hides it. The wind
   widget's debug values name no layer and stay bitmap, as F8's lines do.
 - **The dungeon's readied-spell line** (`scenes/dungeonContext.js`): drawn on BOTH skins, so under the enhanced one the
   spell was said twice, once by the HUD caption and once in the bitmap face under it. The classic skin's alone now.
-- **The pad prompt bar** (`ui/plusPad.js`): `var(--pixel-font, "Pixelify Sans", ...)` named a variable nothing
+- **The pad prompt bar** (`ui/plus/plusPad.js`): `var(--pixel-font, "Pixelify Sans", ...)` named a variable nothing
   declares - bare Pixelify, no Silkscreen five, smoothed, ligatures on. The trio.
-- **The opening film** (`ui/introScreen.js`): Georgia and the system face; the trio, the five's face carried in its own
+- **The opening film** (`ui/intro/introScreen.js`): Georgia and the system face; the trio, the five's face carried in its own
   sheet (it mounts before the skin's) and the request made at mount (`?nofonts` still skips it).
-- **The two inline-only cards** (`ui/charSheetDoor.js` the level-up wait, `ui/enhancedChunk.js` the chunk notice):
+- **The two inline-only cards** (`ui/charSheetDoor.js` the level-up wait, `ui/enhanced/enhancedChunk.js` the chunk notice):
   "inline style only - the error path must not depend on anything that could be the thing that broke". They NAME the
   face first (`PIXEL_FAMILIES`, a leaf of constants in the entry bundle) and load nothing; the system face stands if
   the request never came.
@@ -19220,7 +19236,7 @@ readability this slice is for), the held map's INK (`inkMap.js` NAME_FACE, "THE 
 names are lettering on a drawn sheet), and the FPS read-out and the F8/CSA debug lines. The classic maps a player
 chooses under the enhanced skin (MAP-TOGGLE) keep their own bitmap text, as PORT0's `classicScope` says they should.
 
-**The FONT1 record's FONT2 list is stale** (and `ui/enhancedHudText.js`'s header with it): of its seven canvas windows,
+**The FONT1 record's FONT2 list is stale** (and `ui/enhanced/enhancedHudText.js`'s header with it): of its seven canvas windows,
 the death screen, the rest window, the quest journal, every MessageBox with buttons and every ActionTextBox now always
 open an enhanced DOM face; the save window is never built under the enhanced skin; the travel popup is reached only
 through the classic travel map a player chose. The input-box line was paid by AUDIT HCC U5.
@@ -19229,17 +19245,17 @@ through the classic travel map a player chose. The input-box line was paid by AU
 through the probe's route): the home screen and the Settings pane under the change - every text node's computed
 family is the pixel stack, and no text box clips. That was the whole of FONT3's own browser check, and it was too
 little: the in-game windows render without ARENA2 too (the repo's own probes and fixtures), and AUDIT FONT3
-(`01-Overview/Audit-Font3.md`) measured them on the base tree and on FONT3 and fixed what the floor and the tracking
+(`01-Overview/audits/Audit-Font3.md`) measured them on the base tree and on FONT3 and fixed what the floor and the tracking
 broke in fixed boxes - the naval plate's batteries, the party rows, the hotbar's corners on a phone, the accessory
-shelf's labels. Pins: `test/font3_readable.test.js` (9: the pair and the trio's order, the body and the
+shelf's labels. Pins: `test/ui/font3_readable.test.js` (9: the pair and the trio's order, the body and the
 tokens, the recovery code's reason, THE FLOOR over all 25 sheets, the dim's contrast and order, the named surfaces,
 the dungeon line, the text layer over a fake document, the prison label mounted and taken down). Followed:
-`test/audit39_uicore.test.js` (the touch layer's order), `test/audit0928_input.test.js` (the map seam's new free
+`test/ui/hud/audit39_uicore.test.js` (the touch layer's order), `test/systems/audit0928_input.test.js` (the map seam's new free
 name).
 
 ## TIMERS1 - THE HOURGLASS: EVERY SHARED MOMENT, COUNTED DOWN (2026-10-02, Mac: "we need to create a new unique UI element for reset times like the Sunday wars, oblivion gates, town raids, and anything else so the player can keep track of when things are and watch countdowns. Im thinking maybe an enhanced plus button on the pause menu next to the profile icon")
 
-**Where.** An hourglass beside the profile mark on the pause face (`ui/enhancedTimers.js` `timersMark`; `placeBeside`
+**Where.** An hourglass beside the profile mark on the pause face (`ui/enhanced/enhancedTimers.js` `timersMark`; `placeBeside`
 measures the mark, whose width is its caption's). The glass stands alone, with no word beside it (HOURGLASS-ALONE,
 2026-10-04, the owner: *remove the text "timer" from next of the hourglass*); its name is its label's and its
 title's. Online only: the hosts hand `hooks.timers`, which answers null
@@ -19250,9 +19266,9 @@ modes host (a building's pause) and the dungeon's opts all carry the world host'
 
 **What.** `systems/eventTimers.js` `eventTimerRows` lays every shared moment out as rows, each LIVE (counting to its end)
 or COMING (counting to its start), live first. It derives nothing: each row is its own law's answer -
-- the OBLIVION GATE (`net/gateLaw.js` `gateAt`/`gatePhase`/`gateTimes`): coming to its opening, live to its seal, then
+- the OBLIVION GATE (`net/gate/gateLaw.js` `gateAt`/`gatePhase`/`gateTimes`): coming to its opening, live to its seal, then
   live to its collapse; the gate after it once this one is under way; where it stands from the omen's site;
-- the SEA SERPENT (`net/serpentLaw.js` `serpentAt`/`serpentPhase`/`serpentTimes` - SERPENT2, 2026-10-04, the owner:
+- the SEA SERPENT (`net/serpent/serpentLaw.js` `serpentAt`/`serpentPhase`/`serpentTimes` - SERPENT2, 2026-10-04, the owner:
   "So this also shows in the pause menu timer?", then "This needs to happen"): coming to its rising, live to the storm
   that closes its waters, then live to its dive; the next serpent once this one is under way; a kill ends its row; the
   port it lies off from its bells on (the omen's `site.near`). Its own kind, `serpent`, after the gate's, in its ring's
@@ -19277,12 +19293,12 @@ timer's is (QT-LIVE1).
 
 **Seen in a browser** (Chromium 1280x800 and 390x844, the window and the hourglass mounted over the skin's own sheet
 with a fixture source): the hourglass stands 10px left of the profile mark on both; the window holds Now and Coming up,
-its rows scroll inside it. AUDIT TIMERS1 (`01-Overview/Audit-Timers1.md`) then drove the REAL pause face
+its rows scroll inside it. AUDIT TIMERS1 (`01-Overview/audits/Audit-Timers1.md`) then drove the REAL pause face
 (`mountEnhancedMenu` in pause mode) at four sizes, a rotation, the keyboard and a pad, and fixed what it found. Not seen:
-the live pause face online (no relay or ARENA2 here). Pins: `test/timers1.test.js`
+the live pause face online (no relay or ARENA2 here). Pins: `test/ui/enhanced/timers1.test.js`
 (9: the gate, the seat week, the battles, the raids and the two days, the order, the words, the window over a fake
 document - drawn, moved, a row gone, offline said - the hourglass and its placing, the wiring through all the hosts);
-`test/outsideTap.test.js` (the fourth scrim, the hourglass in the keep list).
+`test/ui/enhanced/outsideTap.test.js` (the fourth scrim, the hourglass in the keep list).
 
 ## WAGON-FILTER and SHIFT-STOW - the player's own stores, filtered and filled (2026-10-04, Mac: "The wagon needs a filter option and shift click to deposit items (like materials) needs to be a thing")
 
@@ -19327,7 +19343,7 @@ Port-Ledger A: THE PLAYER'S OWN STORES, FILTERED and SHIFT AND A CLICK STOW THE 
 **Seen.** At the slice, by execution on the fake document (`test/invdrag.mjs`). Its audit drove the real pack in
 Chromium through vite and Playwright, from the scratchpad (below).
 
-**Proof.** `test/shiftstow.test.js` (9 after the audit): the filter law; the one row, the menu and the search
+**Proof.** `test/systems/shiftstow.test.js` (9 after the audit): the filter law; the one row, the menu and the search
 refilling in place, a take from the narrowed list, Back, no bar over a corpse; the filter fresh per store; the search
 blind to a hidden name; Shift into the wagon, a plain click still a pick, the refused piece never worn, nothing on the
 ground; the how-many field not applying; the 750 kg taking what fits, and the storage; the classic latch, the arm in
@@ -19370,44 +19386,44 @@ from the scratchpad, the pack mounted over a wagon of thirteen):
 The Feud arc's screen slice (`bible/12-Enhanced-AI/Feud-Arc.md` section 11 and its TELL9 record), on the enhanced HUD
 and both skins' debuffs, under the Enhanced AI switch:
 
-- **The target frame follows a threat** (`ui/hudFoeTarget.js markFoeThreat`): a foe whose wind-up at me begins takes
+- **The target frame follows a threat** (`ui/hud/hudFoeTarget.js markFoeThreat`): a foe whose wind-up at me begins takes
   the frame unless I struck another in the last 2 s. Before it the frame followed only the foes I struck (PX30).
 - **The poise track** under the frame's health (`.hud-foepoise`, drawn from `foeTarget().poise` - the brain's reading,
   registered by `scenes/hostCombat.js`, so the HUD's leaf imports no brain): empty, amber and filling, red and hatched
   "Iron", a white flash "Staggered" (none under reduced motion), "Open". The quest card clears the taller frame.
 - **Words on the hit** (`ui/hitNumbers.js HIT_TAGS`): "Stagger", "Holds", "Open" join the number my blow just raised
   on that foe (or rise alone); "Perfect" at a perfect dodge; "Weakness" waits on RVN3.
-- **The bleed's own icon** (`ui/hudStatus.js STATUS_GLYPHS.bleed`, two drops of blood): the status widget's tile -
+- **The bleed's own icon** (`ui/hud/hudStatus.js STATUS_GLYPHS.bleed`, two drops of blood): the status widget's tile -
   which had not shown the bleed at all - and the classic debuff row's.
 - **Telegraph contrast**, a part of the Enhanced AI row on the Features home.
 
-Pins: `test/tell9_screen.test.js` (9); `tools/foeTelegraphProbe.mjs` (the contrast off a real frame).
+Pins: `test/ui/enhanced/tell9_screen.test.js` (9); `tools/foeTelegraphProbe.mjs` (the contrast off a real frame).
 
 
 ## HUD-CLASS - every class the HUD writes is its own (2026-10-05, the field fixes' audit)
 
 POISE-BOX (field, the owner's screenshot - "enemies seem to have this black transparent bar"; `12-Enhanced-AI/Feud-Arc.md`,
-TELL9's record): the poise track's idle state wore the bare word `empty`, and the windows' sheet (`ui/enhancedStyle.js`)
+TELL9's record): the poise track's idle state wore the bare word `empty`, and the windows' sheet (`ui/enhanced/enhancedStyle.js`)
 names its components with bare words - `.empty` (the "nothing here" box: a dashed border, 26 px of padding, 16 px under
 it), `.side` (a column on the `--ink` ground). Every module under `src/ui` may lay a sheet in the one game document, so a
 HUD element wearing one of those words wears the component. The audit found three more, each measured in Chromium on the
 real HUD over the real sheets, and each gone with the word made the widget's own:
 
-- **The status widget beside the diamond** (`ui/enhancedHud.js`; `side` to `stat-side`, and `tight` and `noroom` to
+- **The status widget beside the diamond** (`ui/enhanced/enhancedHud.js`; `side` to `stat-side`, and `tight` and `noroom` to
   `stat-tight` and `stat-noroom` with it): the `.side` column's `--ink` ground stood a dark box behind the tiles - a
   phone on its side, or a laptop with the chat open, in the diamond quickslot style.
 - **The empty spell socket** (HOTSLOT; `empty` to `qspell-empty`): `.empty`'s 16 px margin under it - the caption 41 px
   tall where it is 25, everything above it lifted 16 px, on every character with no quick spell.
-- **An empty gun battery** (`ui/navalHud.js`; `empty` to `gun-empty`): the same margin under the plate - its row
+- **An empty gun battery** (`ui/naval/navalHud.js`; `empty` to `gun-empty`): the same margin under the plate - its row
   36.3 px to 52.3 px, the battery rose 116.8 px to 132.8 px.
 
 The pin reads RULES and WRITES, never source text (`test/sheetRules.mjs`). The sheets: every string the UI's modules
 export that reads as CSS, evaluated - 65 of them, a selector built from a list read as built (the layout editor's,
-`ui/hudLayout.js HUD_LAYOUT_CSS`, exported for it) - and the literals of the ones no module exports, read by a walker
+`ui/hud/hudLayout.js HUD_LAYOUT_CSS`, exported for it) - and the literals of the ones no module exports, read by a walker
 that takes a text as CSS only when the whole of it is. The writes: every class word the HUD's two modules write
 (`classList`, `className`, `setAttribute('class')`, markup) - a helper's at its callers, a callback's through its host -
 and each word the data chooses named with what its producer mints: a status tile's kind, a bitten span's frame, a
-plate's chip, the target card's state, a ship's faction, a crew line's word. `test/hudclass_sheets.test.js` (4): no rule
+plate's chip, the target card's state, a ship's faction, a crew line's word. `test/ui/naval/hudclass_sheets.test.js` (4): no rule
 from outside the HUD styles a class the HUD writes - and, given the field's bare words back, it finds `.side` and
 `.empty`; `tools/mutants/hudclass.json` (12 dead). POISE-BOX's own pin (`tell9_screen`) reads the same rules now: it had
 read source text, where a JS read like `b.empty` stood as a selector. PIN MOVED: `ui3_status`, `discord5`, `nav_f_ui`,
@@ -19419,13 +19435,13 @@ read source text, where a JS read like `b.empty` stood as a selector. PIN MOVED:
 Three surfaces the Plus refresh had never reached, done as one pass because they are one look: the card the corner
 portrait opens, the doors under the wordmark, and the page in front of the game.
 
-**PROFILE-MENU - the card is a profile** (`ui/enhancedAccount.js`, its sheet in `ui/enhancedStyle.js`). Signed in, the
+**PROFILE-MENU - the card is a profile** (`ui/enhanced/enhancedAccount.js`, its sheet in `ui/enhanced/enhancedStyle.js`). Signed in, the
 account card was one centred column of key-and-value rows (up to fourteen) - who you are, what you have done and what the account
 is, all at one weight - with the Renown rows wrapping to three lines on a phone, where the window also stood from the
 top of the screen to its middle with the menu reading through the scrim under it. It reads now in the order a player
 looks:
 
-- **The plate**: the portrait the corner mark wears - the same character (`ui/enhancedMenu.js` `profileCharacter`, one
+- **The plate**: the portrait the corner mark wears - the same character (`ui/enhanced/enhancedMenu.js` `profileCharacter`, one
   function the mark and the card both ask: paused, the one being played; at the door, the newest finished save), its face
   asked for as a copy and drawn once (a face that lands after the card is up repaints it, and the same canvas moves into
   every repaint's well) - with the hooded silhouette until then, and for good with none. Under it the name with its
@@ -19445,11 +19461,11 @@ is in it. Two columns where the card is wide and both have something in them (a 
 under the wordmark, takes the height on a short screen, and keeps its row of presses - Close among them - stuck at its
 foot. On a phone every account stage is the screen's, under a heavier scrim (the sign-in forms included: more room than
 the 58dvh window over a menu reading through). Two facts are still said twice, as the old card said them: a registered
-account's name is its username, and the first character's Renown is the chip by the name and its own row. Under Plus a deed's tile is a panel (`ui/enhancedFrame.js` panel role).
+account's name is its username, and the first character's Renown is the chip by the name and its own row. Under Plus a deed's tile is a panel (`ui/enhanced/enhancedFrame.js` panel role).
 The card still brings no design language of its own - no style from script, no colour - so the bars are the browser's
 `<progress>` told how to draw by the sheet.
 
-**PLUS-MENU - the doors in stone** (`ui/enhancedPlusStyle.js` `MENU_CSS`). The front door was the one enhanced screen
+**PLUS-MENU - the doors in stone** (`ui/enhanced/enhancedPlusStyle.js` `MENU_CSS`). The front door was the one enhanced screen
 the kit never reached: eight words floating on the night while the About plaque, the asks and the profile mark were
 carved. The doors (`.doorbtn`) play the kit's BUTTON role now - raised
 stone, brass under the pointer and the pad, sunk while held, and every Plus colour's ground, since the theme rules are
@@ -19460,7 +19476,7 @@ on the door under the pointer, and are hidden from a reader - a door is named by
 the 44px floor a size down, so the rail stands above the foot's plaques on a tall phone (PX8's scroll still holds where
 it cannot). The rule under the wordmark is gilt.
 
-**PLUS-SITE - the website in the game's stone** (`ui/enhancedFrame.js` `siteKitCss`, injected by
+**PLUS-SITE - the website in the game's stone** (`ui/enhanced/enhancedFrame.js` `siteKitCss`, injected by
 `scripts/landingHtml.mjs` as `#plus-kit`). The site wears the kit's roles in the kit's tones: a section is a carved
 window with its name on the lit band at its head, a box inside it a panel (the three columns, the nine features, each
 step, each question with its answer - the `<dl>`s' pairs now stand a `<div>` each), a step's numeral sits in a well, and
@@ -19471,7 +19487,7 @@ colour of the page's own (each box the page declares gives its edge and room and
 injected after the page's sheet, as the night and the marks are), and the plaque and the ask keep the About plaque's
 edge as their fallback. One source: the site's stone and the game's are both `FRAME_TONES`.
 
-`test/plus_menu_site.test.js` (7); `tools/mutants/plus_menu_site.json` (24 dead at the slice, 52 and 3 equivalent after its audit). PIN MOVED: `landing` U63 (the plaque
+`test/ui/enhanced/plus_menu_site.test.js` (7); `tools/mutants/plus_menu_site.json` (24 dead at the slice, 52 and 3 equivalent after its audit). PIN MOVED: `landing` U63 (the plaque
 edge was the page's only box; the kit's boxes give their edge and no colour), `profile1_badge` and
 `profile2_pause_profile` (the character's law is `profileCharacter`, which the card asks too). Re-aimed:
 `tools/mutants/renown1.json` RENOWN1-heading-changed-for-everyone (the heading lands in the plate),
@@ -19516,7 +19532,7 @@ before it was paid.
   phone window's full rule, the site's brass under the pointer, its sinking press and its name band, the duels' share
   rounding (14 of 20 cannot tell round from floor), the guest's note in its section, and the class sweep's two blind
   spots (an SVG's class is an attribute, and a prefix passed for its longer name - `.acctworn` for `.acctworntitle`). Each
-  is pinned in `test/plus_menu_site.test.js`, and the list holds them: 52 dead. The landing's colourless-box count is
+  is pinned in `test/ui/enhanced/plus_menu_site.test.js`, and the list holds them: 52 dead. The landing's colourless-box count is
   exact (6), not at least. A comment that called the portrait a well and the bars meters under Plus said what the kit
   does not do; it says what it does.
 
@@ -19536,7 +19552,7 @@ colourless count; `tools/enhancedMenuProbe.mjs` reads a door's word.
 ## SERVER-POST - THE MAILBOX BESIDE THE HOURGLASS (2026-10-08, Mac: "Let's develop an ingame server mailbox that goes next to the hourglass in the pause menu. It should show notifications whenever players have a message. First use is to utilize it for players being granted items.")
 
 The server's post (`06-Systems/Accounts-And-Cloud-Saves-Arc.md` SERVER-POST) drawn on the pause face, online, as TIMERS1's
-hourglass is: `ui/enhancedPost.js`.
+hourglass is: `ui/enhanced/enhancedPost.js`.
 
 - **The envelope** (`postMark`): a pixel envelope - brass edge, parchment, a red seal - left of the hourglass
   (`anchorPost`: each placing stands the hourglass off the profile's measured box first and the envelope off the
@@ -19548,7 +19564,7 @@ hourglass is: `ui/enhancedPost.js`.
 - **The window** (`postWindow`), on the hourglass's own stage (`.px-timersstage`, centred, its own padding): the pieces
   waiting gifts first, then the unread, newest first - a brass dot on the unread and the waiting gifts (said too, " -
   unread", for a reader that cannot see the dot), an item named in its rarity's own colour (`data-rarity`, a literal
-  rule a rung - the stylesheet imports no game code, and `test/serverpost_client.test.js` holds each to `RARITIES`; the
+  rule a rung - the stylesheet imports no game code, and `test/net/serverpost_client.test.js` holds each to `RARITIES`; the
   Stone theme's lighter three for its dark ground) with *Waiting* or *Claimed*; a piece opened, its words, its item with **Claim** (*The
   Hourlock is in your pack.*; labelled "Claim" and the item's name; one claim a press, the button down at once), and
   **Throw away** only once nothing waits in it. The states said: looking, signed out, a guest (the account's own
@@ -19575,7 +19591,7 @@ hourglass is: `ui/enhancedPost.js`.
   envelope.
 - **The notification** beside the count: a line on the world tab when a look finds post (`postNoticeText`), the
   letterbox's own manner.
-- Pins: `test/serverpost_client.test.js`; PIN MOVED: `test/outsideTap.test.js` (five scrims, the envelope inside the
+- Pins: `test/net/serverpost_client.test.js`; PIN MOVED: `test/ui/enhanced/outsideTap.test.js` (five scrims, the envelope inside the
   pause face's; the face under the account window inert; the window's place reset on a tap outside).
 
 
@@ -19585,6 +19601,125 @@ A player expelled from the Mages Guild: "since I don't am part of the guild anym
 them ... I personally feel that could be a setting". The enhanced Standing page listed the guilds the player belongs to
 alone. With the Interface tab's Character sheet row on, "Every faction's standing" (prefs `standingAll`, on by
 default since STANDING-ON, 2026-10-11 - Mac: "should be on by default"), it lists every organization's reputation from the live faction store under its divider
-(`systems/factionStanding.js` standingGroups, drawn by `enhancedMenu.js` statsEveryStanding): the guilds, the temples,
+(`systems/faction/factionStanding.js` standingGroups, drawn by `enhancedMenu.js` statsEveryStanding): the guilds, the temples,
 the knightly orders, the kingdoms, the covens, the vampire clans, the Daedric Princes - a membership under Guilds above,
-with its rank, never twice. The classic skin's sheet is untouched. The record: `01-Overview/Field-Bugs-2026-10-09e.md`.
+with its rank, never twice. The classic skin's sheet is untouched. The record: `01-Overview/bugs/Field-Bugs-2026-10-09e.md`.
+
+## VIRT - THE LONG PACK: the rows on screen, a picture into its tile, the pictures kept by use (2026-10-16)
+
+A report against `ui/enhanced/enhancedInventory.js` and `ui/textureCanvas.js`: a container of hundreds of pieces opened slowly,
+froze while its pictures landed and repainted the whole window on every pick. Measured in a browser
+(`tools/packVirtProbe.mjs`: 700 pieces of 351 kinds over 312 pictures, synthetic archives, no ARENA2, this machine's
+Chromium; the same probe on the tree before), it was worse than reported. Three causes, each fixed where it stood:
+
+1. EVERY LANDING REPAINTED THE WINDOW. A cold picture's `onReady` was `render`, and a render rebuilt every row, so a
+   pile of 312 cold pictures was 311 whole repaints of 700 rows - 46 s of long tasks before the loot window settled (22 s
+   for a 700-piece page of the pack). A tile drawn on its initials now waits in `_waitingTiles`; a landing asks for ONE
+   pass on the next frame (`tileLanded`), and the pass gives each waiting tile the tile `itemTile` draws for its line
+   and box, the wear bar carried over (`liveTile`, `paintLandedTiles`). The pictures that land together are one pass,
+   a tile still waiting stays waiting, a tile a repaint threw away is dropped, and the pack is not repainted at all
+   (`__pack()` counts the passes and the tiles painted: `landings`, `painted`). The card's, the gems' and the fate
+   portrait's pictures still repaint, one picture each.
+2. EVERY PASS BUILT EVERY ROW. A list past `VIRTUAL_MIN` (120) rows - the dock's page, the side window's rows - draws
+   the rows in its visible band and half a band each side (never under two lines), and two spacers stand in for the
+   rest (`ui/virtualRows.js`). The layout is MEASURED: the columns are the rows sharing the first row's top, the pitch
+   the next line's top less the first's, and a spacer is whole lines of that pitch less the one gap the layout puts
+   beside it - the dock's wrapping tiles, the loot window's two grid tracks and its one column on a pair, a desktop
+   and a phone, all the same law. A scroll keeps the rows it keeps (never moved, never rebuilt) and builds the rows
+   that enter; a list that cannot be measured is drawn whole. The windowed list is no scroll anchor
+   (`overflow-anchor: none`): Chrome's hold on a node while whole lines were swapped for spacer landed a jump to the
+   foot 22 px short. A repaint measures the new lists before a scroll is given back (`syncLists({ draw: false })`),
+   and aims them after (`syncLists()`), and so does the store's search refilling its list in place; a resize that
+   keeps the slots' boxes measures them again. The window follows the list's own scroll even when an outer box hides
+   the list whole (a phone's paired store, below the fixed host's fold - the layout as it stood, not touched here).
+3. THE FITTED PICTURES WERE TOO FEW. `FIT_CACHE_MAX` (AUDIT UI A4) kept 600, and the probe's pile at the pack's box
+   and the loot window's together is 624 pictures - a pass down it made every picture again. The bound is 2000, and
+   at most `FIT_CACHE_BYTES` (12 MB) of picture since AUDIT VIRT; a hit goes to the back of the line, so what goes is
+   what was asked for least recently - the pictures a screen keeps asking for stay. (The order alone would not have
+   saved a list longer than the bound: a pass down one asks every picture once, and the oldest asked is the next
+   wanted. Windowing is what keeps a pass short.)
+
+And an item's line is read once a pass (`lineOf`, by the item, an epoch every `render` opens): the store's search
+read every name and then every row its line, on every key typed. `itemLine` stays pure.
+
+Measured, before / after, 700 pieces on a desktop (1440x900; a phone, 393x851 at 2.625, measured alike):
+
+| | the loot window | the player's storage | a page of the pack |
+| --- | --- | --- | --- |
+| cold, opened to settled | 46.1 s, 311 repaints / 0.20 s, 2 | 2.3 s, 14 repaints / 0.24 s, 2 | 22.1 s, 171 repaints / 0.20 s, 2 |
+| warm open, to the frame | 305 ms / 69 ms | 297 ms / 74 ms | 285 ms / 66 ms |
+| a pick (a take, in a pile) | 968 ms / 72 ms | 1092 ms / 66 ms | 2017 ms / 126 ms |
+
+What a player sees is the list it was: the probe scrolls each list to six depths and finds every drawn row at its
+own piece's place to the pixel and none in view missing, the list one height at every scroll, its columns still, the
+scroll kept through a press and a search, the last piece flush at the foot, the search's focus kept. No DFU member is
+touched - the classic skin's lists are `ui/item/itemScroller.js`'s, untouched - and nothing here is a departure from DFU's
+behaviour. Two things a player can see did change, both by AUDIT VIRT and both in the loot window's sheet: its two
+columns are always one width (they were as wide as their widest name, and ran past a phone's window), and its last
+row keeps its unseen border's 2 px. Pins: `test/systems/virt_pack.test.js` (the window over a document that lays its rows
+out; the cache; real replacement records landing into a mounted pack's tiles; a long loot list laid out inside the
+mounted pack); mutants `tools/mutants/virt.json` (42: 41 dead, 1 equivalent as recorded); re-aimed by content:
+`ui1.json`'s UI1-the-second-waiter-dropped and AUDIT-UI-A4-the-cache-unbounded, `shiftstow.json`'s
+AUDIT-WAGON-FILTER-S8.
+
+### AUDIT VIRT (2026-10-16, "Please audit this")
+
+Four lenses read the slice cold, each against HEAD and the tree before it, in node and in Chromium: the windowing law
+(`ui/virtualRows.js`), its seams in the pack, the fitted-picture cache, and the record, the pins and the probe. No
+lens touched the tree; every finding was fixed after the four had reported (Home.md, DO NOT FIX WHILE THE VERIFIER IS
+READING). What they found, and what became of it:
+
+- A SEARCH THREW THE SCROLL (two lenses). The store's search and its category refill the list in place, and the
+  refill aimed its window at once: the browser laid out the first 48 rows as the whole list and clamped the scroll to
+  their foot - 23,198 px became 2,150, on every key. The refill now measures and stands its spacers, gives the scroll
+  back, then aims (`fillRemoteList`), as a repaint does.
+- THE PHONE'S COLUMNS MOVED. The loot window's two tracks were `1fr 1fr`, and a bare `1fr` is never narrower than its
+  widest unwrapped name - so the tracks were sized by the rows drawn, and changed width as the list scrolled (205,
+  237, 222 px). The whole list's had run past the phone's window too (476 px of 410). Two equal tracks now,
+  `repeat(2, minmax(0, 1fr))`, the name's own ellipsis taking the rest.
+- A PAD'S HOVER CARD STOOD BESIDE NOTHING. The pad's cursor sends its leave only when it moves; its stick scrolled the
+  hovered row out of the window, and the card stayed up (it jumped to the corner when its late picture landed). A
+  window that moves tells the pack (`onAim`), and a card whose row went is put away (`rowsMoved`).
+- A CARRIED TILE ACROSS A SCROLL. The drag's scroll listener heard the wheel before the window had drawn the rows
+  under the still pointer, so the ghost said nothing over the row a release then moved the piece to; and the carried
+  tile's dim stayed on a row the window had taken away and drawn again. The drag aims the windows first
+  (`onDragScroll`) and finds its row by its item (`dragTo`).
+- A FOCUSED ROW SCROLLED AWAY dropped the keyboard's focus to the page, and Home and Page Down did nothing after. The
+  list's own scroller takes it, out of the Tab order (`keepFocus`). And the window's fallback for a list hidden whole
+  reads the box that scrolls, not the first that merely clips (the dock's own column, whose box is the whole list) -
+  latent, no layout reached it.
+- 2 PX: the loot window's last row had no border, so a long one-column list was 2 px taller until the window reached
+  its foot. The border is unseen now, not gone (`border-bottom-color: transparent`).
+- THE CACHE NEVER HEARD THE MODS CHANGE (older than VIRT, made worse by it). requestIcon drops its pictures when the
+  attached texture mods change (DFMOD1-E); the fitted cache never did, so a slot kept the last mod's picture - and
+  since VIRT's order kept it for as long as it was asked. It is dropped whole with them now, and a picture still
+  being made from the replaced set is not kept. A source gone between its landing and its read (the same change) left
+  an entry that stood as a picture that never comes; it is asked again. A picture put out while it was made came back
+  as it landed without the bound being kept; the bound is kept then too. And the cache is held to `FIT_CACHE_BYTES`:
+  2000 of a phone's pictures were 10 to 18 MB (measured over 322 real item pictures: 3 KB at a desktop's ratio, 5 to
+  9 KB at a phone's). A picture that never comes still keeps up to eight waiters for as long as a screen asks for
+  it - bounded, and older than VIRT.
+- THE RECORD SAID MORE THAN WAS TRUE: 351 kinds of picture (312), the order as what saved a long list (the bound
+  did), "a few kilobytes" (a phone's are more), the 2 px as one layout's (any odd count), and a comment on the waiting
+  tiles' guard, `itemTile`'s doc and `__pack`'s count each describing the code before VIRT. Corrected above and in
+  place; `10-UI/Slots-Hotbar-Status.md` A4 and the Testing manifest said 600.
+- THE PINS PINNED LESS THAN THEIR TITLES. Nineteen of one lens's mutants survived, and twelve of another's thirteen: the fake
+  document laid no list out, so no pack list was ever windowed in node; the scroll listener was never heard; a picture
+  landing alone, a partial last line, the band's clips and the margin after a real aim were never driven; "the
+  pictures that land together are one pass" was one picture. The tests now lay a long loot list out inside the mounted
+  pack (its scroll clamped at each layout, as a browser clamps it), hold three pictures behind three gates, hear the
+  scroll, and drive each of those; 42 mutants, 41 dead, 1 equivalent as recorded (a window measured on new columns
+  that its old range still covers starts at 0 - the alignment check is the law's own guard, unreached). The fake
+  document's `replaceWith` moves a node as the DOM's does.
+- THE PROBE PROVED LESS THAN IT SAID: rows named by their names (19 distinct over 700 pieces), placed to the nearest
+  line, the list's height never compared, a press never asked to have done anything, the settle never asked to have
+  painted. It reads every row by its own piece now, to the pixel, with none in view missing, the height at every
+  scroll against its foot's, each press's act, every picture painted, and the audit's five behaviours above; the tree
+  before the audit fails 15 of its checks (90 there - it has no landing count to ask), the tree after none (102 of 102). `tools/enhancedIconProbe.mjs`'s repaint
+  count measured nothing once a landing stopped repainting; it counts the landings now - unrun here, because that
+  probe stops at the front door's intro and account stage, which it predates.
+
+The whole suite on the slice: 28,025 passed and one failed - `test/systems/professions/fb1013e_writwall.test.js`, the notice board's writs
+(its "a mix" card not found). It fails the same way on the commit before VIRT, in the same 248-file batch at four at a
+time, and passes alone and under a loaded CPU on both: older than this slice, and left for its own.
+

@@ -5,7 +5,7 @@
     "old": "const t = titheCap == null ? titheStanding(tier, tithe) : titheStanding(tier, tithe, titheCap);",
     "new": "const t = titheStanding(tier, tithe);",
     "tests": [
-      "test/audit_seats2.test.js"
+      "test/net/audit_seats2.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "export function titheStanding(tier, pct, cap = TITHE_CAP[tier] ?? 0) {",
     "new": "export function titheStanding(tier, pct, _cap = TITHE_CAP[tier] ?? 0) { const cap = TITHE_CAP[tier] ?? 0;",
     "tests": [
-      "test/audit_seats2.test.js"
+      "test/net/audit_seats2.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "marketHallTitheCap(TITHE_CAP[seat?.tier] ?? 0, seat?.forts?.market ?? 0);",
     "new": "marketHallTitheCap(TITHE_CAP[seat?.tier] ?? 0, 0);",
     "tests": [
-      "test/audit_seats2.test.js"
+      "test/net/audit_seats2.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "const cap = seatTitheCap(seat);",
     "new": "const cap = TITHE_CAP[seat.tier] ?? 0;",
     "tests": [
-      "test/audit_seats2.test.js"
+      "test/net/audit_seats2.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "titheCap: marketHallTitheCap(TITHE_CAP[h.tier] ?? 0, f.market ?? 0) }",
     "new": "titheCap: TITHE_CAP[h.tier] ?? 0 }",
     "tests": [
-      "test/audit_seats2.test.js"
+      "test/net/audit_seats2.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "if (then !== me.guild_id && b.kind !== 'revolt') return",
     "new": "if (then !== me.guild_id) return",
     "tests": [
-      "test/seat2b_revolt_service.test.js"
+      "test/net/seat2b_revolt_service.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": ": id === 'gatehouse' && seatTier === 'crown' ?",
     "new": ": id === 'gatehouse' && seatTier === 'palace-never' ?",
     "tests": [
-      "test/audit_seats2.test.js"
+      "test/net/audit_seats2.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "export const APOTHECARY_OPEN = true;",
     "new": "export const APOTHECARY_OPEN = false;",
     "tests": [
-      "test/audit_seats2.test.js"
+      "test/net/audit_seats2.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "`seat-window:${player.id}`",
     "new": "`seat-lever:${player.id}`",
     "tests": [
-      "test/audit_seats2.test.js"
+      "test/net/audit_seats2.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "    if (!siegeNpcInReach(n, by.pose, b.ground ?? null)) return;",
     "new": "    if (false) return;",
     "tests": [
-      "test/audit_seats2_relay.test.js"
+      "test/net/audit_seats2_relay.test.js"
     ]
   },
   {
@@ -95,25 +95,25 @@
     "old": "    siegeNpcProvoked(n, a.sub, now);",
     "new": "    void 0;",
     "tests": [
-      "test/audit_seats2_relay.test.js"
+      "test/net/audit_seats2_relay.test.js"
     ]
   },
   {
     "name": "AUDIT-SEATS2-R1-leash",
-    "file": "src/net/siegeRef.js",
+    "file": "src/net/siege/siegeRef.js",
     "old": "n.post[0], n.post[1]) <= (SIEGE_NPC[n.kind]?.leashM ?? 0) + (SIEGE_NPC[n.kind]?.landM ?? 0)\n",
     "new": "n.post[0], n.post[1]) <= (SIEGE_NPC[n.kind]?.aggroM ?? 0) + (SIEGE_NPC[n.kind]?.landM ?? 0)\n",
     "tests": [
-      "test/audit_seats2_relay.test.js"
+      "test/net/audit_seats2_relay.test.js"
     ]
   },
   {
     "name": "AUDIT-SEATS2-R1-down",
-    "file": "src/net/siegeRef.js",
+    "file": "src/net/siege/siegeRef.js",
     "old": "  if (!n || n.down || !sub) return;\n  n.tg = sub;",
     "new": "  if (!n || !sub) return;\n  n.tg = sub;",
     "tests": [
-      "test/audit_seats2_relay.test.js"
+      "test/net/audit_seats2_relay.test.js"
     ]
   },
   {
@@ -122,16 +122,16 @@
     "old": "this._siegeFan([siegeFieldFrame(b, this._siegeCounts(s), now)]);   // AUDIT SEATS-2 R2",
     "new": "this._siegeFan([siegeFieldFrame(b, this._siegeCounts(s))]);   // AUDIT SEATS-2 R2",
     "tests": [
-      "test/audit_seats2_relay.test.js"
+      "test/net/audit_seats2_relay.test.js"
     ]
   },
   {
     "name": "AUDIT-SEATS2-R3-clamp",
-    "file": "src/net/siegeRef.js",
+    "file": "src/net/siege/siegeRef.js",
     "old": "th: Math.min(Math.floor(b.throne), (SIEGE_THRONE[b.tier] ?? SIEGE_THRONE.palace).holdS),",
     "new": "th: Math.floor(b.throne),",
     "tests": [
-      "test/audit_seats2_relay.test.js"
+      "test/net/audit_seats2_relay.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "    if (nowMs - _hallsReadAt < 1000) return;\n",
     "new": "",
     "tests": [
-      "test/audit_seats2_client.test.js"
+      "test/net/siege/audit_seats2_client.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "      if (h && !was) loadHomeDecor();",
     "new": "      if (h && was) loadHomeDecor();",
     "tests": [
-      "test/audit_seats2_client.test.js"
+      "test/net/siege/audit_seats2_client.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "    _crownTried = ctx;   // AUDIT SEATS-2 C1",
     "new": "    // AUDIT SEATS-2 C1",
     "tests": [
-      "test/audit_seats2_client.test.js"
+      "test/net/siege/audit_seats2_client.test.js"
     ]
   },
   {
@@ -167,16 +167,16 @@
     "old": "    seatHallsFrame(performance.now());",
     "new": "    void 0;",
     "tests": [
-      "test/audit_seats2_client.test.js"
+      "test/net/siege/audit_seats2_client.test.js"
     ]
   },
   {
     "name": "AUDIT-SEATS2-C2-fall",
-    "file": "src/net/siegeLink.js",
+    "file": "src/net/siege/siegeLink.js",
     "old": "if (was?.down && down === 1) return { ...was, hp, max };",
     "new": "if (was?.down && down === 2) return { ...was, hp, max };",
     "tests": [
-      "test/audit_seats2_client.test.js"
+      "test/net/siege/audit_seats2_client.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "    if (townTalk.overlay !== board) { try { w?.dispose?.(); } catch { /* already gone */ } return false; }\n    if (!w) return false;\n",
     "new": "    if (!w) return false;\n",
     "tests": [
-      "test/audit_seats2_client.test.js"
+      "test/net/siege/audit_seats2_client.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": " else if (interiorSeatHall && !interiorHome) { say(CROWN_HALL_TEXT.chestShut(interiorSeatHall.name)); return; }",
     "new": "",
     "tests": [
-      "test/audit_seats2_client.test.js"
+      "test/net/siege/audit_seats2_client.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "(seatOut() || townTalk.overlay instanceof DeathScreen || modes?.deathUp?.())) { siegeHud?.hide(); siegeNpcs?.leave(); }",
     "new": "(seatOut() || townTalk.overlay instanceof DeathScreen || modes?.deathUp?.())) { void 0; }",
     "tests": [
-      "test/audit_seats2_client.test.js"
+      "test/net/siege/audit_seats2_client.test.js"
     ]
   },
   {
@@ -212,7 +212,7 @@
     "old": "(seatOut() || townTalk.overlay instanceof DeathScreen || modes?.deathUp?.())) {",
     "new": "(seatOut())) {",
     "tests": [
-      "test/audit_seats2_client.test.js"
+      "test/net/siege/audit_seats2_client.test.js"
     ]
   }
 ]

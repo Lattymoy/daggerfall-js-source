@@ -37,7 +37,7 @@
 /** components/misc/constants.hpp:10 - the reference's own unit bridge.
  *  ONE HOME: minted in the format layer (mwFirstPerson.js), re-exported
  *  here because it is part of this module's contract too. */
-import { MW_UNITS_PER_METER } from '../formats/mwFirstPerson.js';
+import { MW_UNITS_PER_METER } from '../formats/morrowind/mwFirstPerson.js';
 import { seaZoomStep, SEA_ZOOM_RATIO } from './seaZoom.js';   // FIELD BUGS 2026-09-29 (the sea) #3: the zoom at a helm
 export { MW_UNITS_PER_METER };
 

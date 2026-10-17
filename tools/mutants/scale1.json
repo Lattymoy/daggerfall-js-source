@@ -5,7 +5,7 @@
     "old": "const stale = !Number.isSafeInteger(session.last_seen) || nowS - session.last_seen >= SESSION_TOUCH_S;",
     "new": "const stale = true;",
     "tests": [
-      "test/scale1.test.js"
+      "test/net/scale1.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  if (Number.isSafeInteger(nowS) && stale) {",
     "new": "  if (false) {",
     "tests": [
-      "test/scale1.test.js"
+      "test/net/scale1.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    sink.writeDataPoint({",
     "new": "    void ({",
     "tests": [
-      "test/scale1.test.js"
+      "test/net/scale1.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  if (slot) return `/v1/saves/:slot${slot.part ? `/${slot.part}` : ''}`;",
     "new": "  if (slot) return path;",
     "tests": [
-      "test/scale1.test.js"
+      "test/net/scale1.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  if (realmPathOf(path)) return '/v1/realm/:id/data';",
     "new": "  if (realmPathOf(path)) return path;",
     "tests": [
-      "test/scale1.test.js"
+      "test/net/scale1.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "tally.n += 1; return timedStatement(target.prepare(...args), tally, args[0]);",
     "new": "return timedStatement(target.prepare(...args), tally, args[0]);",
     "tests": [
-      "test/scale1.test.js"
+      "test/net/scale1.test.js"
     ],
     "note": "SCALE4f (2026-10-10) re-aimed it by content: a prepared statement is timed too (timedStatement). SCALE4h (re-aimed by content): the statement's SQL carried."
   },
@@ -60,7 +60,7 @@
     "old": "  } catch { /* a metric never costs a request */ }",
     "new": "  } finally { /* a metric never costs a request */ }",
     "tests": [
-      "test/scale1.test.js"
+      "test/net/scale1.test.js"
     ]
   },
   {
@@ -69,7 +69,7 @@
     "old": "    return typeof body?.error === 'string' ? body.error.slice(0, 64) : '';",
     "new": "    return '';",
     "tests": [
-      "test/scale1.test.js"
+      "test/net/scale1.test.js"
     ]
   },
   {
@@ -78,7 +78,7 @@
     "old": "CREATE INDEX IF NOT EXISTS idx_home_decor_pv ON home_decor (json_extract(item, '$.pv'));\n",
     "new": "",
     "tests": [
-      "test/scale1.test.js"
+      "test/net/scale1.test.js"
     ]
   },
   {
@@ -87,7 +87,7 @@
     "old": "CREATE INDEX IF NOT EXISTS idx_market_deliveries_provenance ON market_deliveries (provenance, collected);   -- SCALE1 (0043)\n",
     "new": "",
     "tests": [
-      "test/scale1.test.js"
+      "test/net/scale1.test.js"
     ],
     "note": "MARKET-AUDIT (PIN MOVED: 0043): MARKET-ANY's 0044 rebuilds the table and makes the index again - the live definition is 0044's; dropped from 0043 alone it survived."
   },
@@ -97,7 +97,7 @@
     "old": "CREATE INDEX IF NOT EXISTS idx_market_deliveries_at ON market_deliveries (collected, at);   -- SCALE1 (0043)\n",
     "new": "",
     "tests": [
-      "test/scale1.test.js"
+      "test/net/scale1.test.js"
     ],
     "note": "MARKET-AUDIT (PIN MOVED: 0043): MARKET-ANY's 0044 rebuilds the table and makes the index again - the live definition is 0044's; dropped from 0043 alone it survived."
   },
@@ -107,7 +107,7 @@
     "old": "CREATE INDEX IF NOT EXISTS idx_realm_trades_waiting ON realm_trades (a_player, a_char, state);\n",
     "new": "",
     "tests": [
-      "test/scale1.test.js"
+      "test/net/scale1.test.js"
     ]
   },
   {
@@ -116,7 +116,7 @@
     "old": "CREATE INDEX IF NOT EXISTS idx_players_played ON players (played_at) WHERE handle IS NOT NULL;\n",
     "new": "",
     "tests": [
-      "test/scale1.test.js"
+      "test/net/scale1.test.js"
     ]
   },
   {
@@ -125,7 +125,7 @@
     "old": "CREATE INDEX IF NOT EXISTS idx_realm_census_char ON realm_census (char_id, spent);\n",
     "new": "",
     "tests": [
-      "test/scale1.test.js"
+      "test/net/scale1.test.js"
     ]
   },
   {
@@ -134,7 +134,7 @@
     "old": "CREATE INDEX IF NOT EXISTS idx_market_fills_day ON market_fills (day);\n",
     "new": "",
     "tests": [
-      "test/scale1.test.js"
+      "test/net/scale1.test.js"
     ]
   },
   {
@@ -143,7 +143,7 @@
     "old": "CREATE INDEX IF NOT EXISTS idx_market_listings_closed ON market_listings (closed_at);   -- SCALE1 (0043)\n",
     "new": "",
     "tests": [
-      "test/scale1.test.js"
+      "test/net/scale1.test.js"
     ],
     "note": "MARKET-AUDIT (PIN MOVED: 0043): MARKET-ANY's 0044 rebuilds the table and makes the index again - the live definition is 0044's; dropped from 0043 alone it survived."
   },
@@ -153,7 +153,7 @@
     "old": "CREATE INDEX IF NOT EXISTS idx_market_orders_closed ON market_orders (closed_at);\n",
     "new": "",
     "tests": [
-      "test/scale1.test.js"
+      "test/net/scale1.test.js"
     ]
   },
   {
@@ -162,7 +162,7 @@
     "old": "CREATE INDEX IF NOT EXISTS idx_market_bids_at ON market_bids (at);\n",
     "new": "",
     "tests": [
-      "test/scale1.test.js"
+      "test/net/scale1.test.js"
     ]
   },
   {
@@ -171,7 +171,7 @@
     "old": "CREATE INDEX IF NOT EXISTS idx_node_harvests_day ON node_harvests (day);\n",
     "new": "",
     "tests": [
-      "test/scale1.test.js"
+      "test/net/scale1.test.js"
     ]
   },
   {
@@ -180,7 +180,7 @@
     "old": "CREATE INDEX IF NOT EXISTS idx_guild_writs_unreturned ON guild_writs (returned, state);\n",
     "new": "",
     "tests": [
-      "test/scale1.test.js"
+      "test/net/scale1.test.js"
     ]
   },
   {
@@ -189,7 +189,7 @@
     "old": "      ${keys ? 'AND material IN (SELECT value FROM json_each(?2))' : ''} ${local ? `AND region = ?${keys ? 3 : 2}` : ''} ORDER BY price, at LIMIT ${local ? MARKET_SHOWN / 2 : MARKET_SHOWN}`;\n    const binds = [nowS, ...(keys ? [JSON.stringify(keys)] : [])];",
     "new": "      ${keys ? `AND material IN (${keys.map((_, i) => `?${i + 2}`).join(', ')})` : ''} ${local ? `AND region = ?${keys ? keys.length + 2 : 2}` : ''} ORDER BY price, at LIMIT ${local ? MARKET_SHOWN / 2 : MARKET_SHOWN}`;\n    const binds = [nowS, ...(keys ?? [])];",
     "tests": [
-      "test/scale1.test.js"
+      "test/net/scale1.test.js"
     ]
   },
   {
@@ -198,7 +198,7 @@
     "old": "    (SELECT value FROM json_each(?2))`).bind(today - MARKET_MEDIAN_DAYS, JSON.stringify(keys));",
     "new": "    (${keys.map((_, i) => `?${i + 2}`).join(', ')})`).bind(today - MARKET_MEDIAN_DAYS, ...keys);",
     "tests": [
-      "test/scale1.test.js"
+      "test/net/scale1.test.js"
     ],
     "note": "GATHER-SPEED/MARKET-SPEED (PIN MOVED): re-aimed by content - the reads batched."
   },
@@ -208,7 +208,7 @@
     "old": "  deploy:\n    needs: verify\n",
     "new": "  deploy:\n",
     "tests": [
-      "test/scale1.test.js"
+      "test/net/scale1.test.js"
     ]
   },
   {
@@ -217,7 +217,7 @@
     "old": "          b=$($WRANGLER d1 time-travel info \"$DB_NAME\" --json | jq -r '.bookmark // empty' || true)\n          if [ -z \"$b\" ]; then\n            echo \"::warning::could not read the database's Time Travel bookmark before the migrations\"",
     "new": "          b=''\n          if [ -z \"$b\" ]; then\n            echo \"::warning::could not read the database's Time Travel bookmark before the migrations\"",
     "tests": [
-      "test/scale1.test.js"
+      "test/net/scale1.test.js"
     ]
   },
   {
@@ -226,7 +226,7 @@
     "old": "    needs: [drift, verify]\n",
     "new": "    needs: [drift]\n",
     "tests": [
-      "test/scale1.test.js"
+      "test/net/scale1.test.js"
     ]
   },
   {
@@ -235,7 +235,7 @@
     "old": "(needs.verify.result == 'success' || needs.verify.result == 'skipped')",
     "new": "(needs.verify.result != 'cancelled')",
     "tests": [
-      "test/scale1.test.js"
+      "test/net/scale1.test.js"
     ]
   },
   {
@@ -244,7 +244,7 @@
     "old": "Math.max(0, Math.round(ms * (0.5 + rand())))",
     "new": "Math.max(0, Math.round(ms))",
     "tests": [
-      "test/scale1.test.js"
+      "test/net/scale1.test.js"
     ]
   },
   {
@@ -253,7 +253,7 @@
     "old": "export const ASK_AGAIN_NOW = Object.freeze(['offline', 'server']);",
     "new": "export const ASK_AGAIN_NOW = Object.freeze(['offline', 'server', 'rate', 'maintenance']);",
     "tests": [
-      "test/scale1.test.js"
+      "test/net/scale1.test.js"
     ]
   },
   {
@@ -262,7 +262,7 @@
     "old": "      if (r?.ok || !ASK_AGAIN_NOW.includes(r?.error)) return r;   // SCALE1: `rate` and `maintenance` go back kept, to the pump",
     "new": "      if (r?.ok || !RETRY.includes(r?.error)) return r;",
     "tests": [
-      "test/scale1.test.js"
+      "test/net/scale1.test.js"
     ]
   },
   {
@@ -271,7 +271,7 @@
     "old": "await sleep(jittered(PROF_RETRY_MS[Math.min(i - 1, PROF_RETRY_MS.length - 1)]));",
     "new": "await sleep(PROF_RETRY_MS[Math.min(i - 1, PROF_RETRY_MS.length - 1)]);",
     "tests": [
-      "test/scale1.test.js"
+      "test/net/scale1.test.js"
     ]
   },
   {
@@ -280,7 +280,7 @@
     "old": "      if (r?.ok || !ASK_AGAIN_NOW.includes(r?.error)) return r;   // SCALE1: `rate` goes back kept, to the pump",
     "new": "      if (r?.ok || !RETRY.includes(r?.error)) return r;",
     "tests": [
-      "test/scale1.test.js"
+      "test/net/scale1.test.js"
     ]
   },
   {
@@ -289,7 +289,7 @@
     "old": "await sleep(jittered(MARKET_RETRY_MS[Math.min(i - 1, MARKET_RETRY_MS.length - 1)]));",
     "new": "await sleep(MARKET_RETRY_MS[Math.min(i - 1, MARKET_RETRY_MS.length - 1)]);",
     "tests": [
-      "test/scale1.test.js"
+      "test/net/scale1.test.js"
     ]
   },
   {
@@ -298,7 +298,7 @@
     "old": "      if (r?.ok || !ASK_AGAIN_NOW.includes(r?.error)) return r;   // SCALE1: `rate` goes back kept, to the pump",
     "new": "      if (r?.ok || !RETRY.includes(r?.error)) return r;",
     "tests": [
-      "test/scale1.test.js"
+      "test/net/scale1.test.js"
     ]
   },
   {
@@ -307,7 +307,7 @@
     "old": "await sleep(jittered(WRIT_RETRY_MS[Math.min(i - 1, WRIT_RETRY_MS.length - 1)]));",
     "new": "await sleep(WRIT_RETRY_MS[Math.min(i - 1, WRIT_RETRY_MS.length - 1)]);",
     "tests": [
-      "test/scale1.test.js"
+      "test/net/scale1.test.js"
     ]
   },
   {
@@ -316,7 +316,7 @@
     "old": "      if (i > 0) await sleep(jittered(MARKS_RETRY_MS[Math.min(i - 1, MARKS_RETRY_MS.length - 1)]));   // SCALE1\n",
     "new": "",
     "tests": [
-      "test/scale1.test.js"
+      "test/net/scale1.test.js"
     ]
   }
 ]

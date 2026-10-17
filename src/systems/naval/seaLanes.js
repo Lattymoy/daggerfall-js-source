@@ -26,7 +26,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { hash32 } from '../../world/spawnedDungeons.js';
-import { mulberry32 } from '../../combat/bloodArt.js';
+import { mulberry32 } from '../../combat/blood/bloodArt.js';
 import { classFor, HULL } from './navalShips.js';
 import { nativeOfPixel, NATIVE_PIXEL } from '../seaRaiders.js';
 

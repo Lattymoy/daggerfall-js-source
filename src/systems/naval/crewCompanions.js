@@ -2,7 +2,7 @@
 // CREW-COMPANIONS (2026-09-30, Mac: "introduce the ability to take them along as companions in the world that travel
 // with you and can fight by your side" - "Up to 2", "Knocked out", and through every door: "maybe this is a time for a
 // refactor?") - THE PARTY ASHORE, pure. Which of the player's named hands (shipCrew.js) walk with the player, which
-// rest aboard after a knock, and what each carries between places (his health). The host (scenes/navalHost.js) keeps
+// rest aboard after a knock, and what each carries between places (his health). The host (scenes/naval/navalHost.js) keeps
 // one and saves it beside the crews; the world's companion layer (scenes/crewAshore.js) stands the party in whatever
 // place the player is - the street, a building, a dungeon - and hands every change back here. DECLARED - Daggerfall
 // has no followers, and Come Sail Away's crew never leaves the boat.

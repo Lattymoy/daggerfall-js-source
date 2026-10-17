@@ -52,7 +52,7 @@ export function etherPlaceIsle(x, y) {
   return isle && isle.px === x && isle.py === y && PLACE_KINDS.includes(isle.kind) ? isle : null;
 }
 /** ETHER-OW: the isles of a kind whose places stand within `reach` map pixels of `at` (a circle, as the Overworld's far
- *  lists read the Bay's - systems/travelFarPlaces.js farPlaces, systems/travelDungeons.js nearDungeons), nearest first:
+ *  lists read the Bay's - systems/travel/travelFarPlaces.js farPlaces, systems/travel/travelDungeons.js nearDungeons), nearest first:
  *  `{ x, y, isle, row: { mapID, regionIndex } }` - a row in MAPS.BSA's own shape (travelDungeons.js dungeonRows), its
  *  map id the place's own. @param {{x:number, y:number}} at @param {number} reach @param {'port'|'ruin'} kind */
 export function etherPlaceRows(at, reach, kind) {

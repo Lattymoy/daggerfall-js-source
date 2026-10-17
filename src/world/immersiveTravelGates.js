@@ -9,7 +9,7 @@
 // THE DEPARTURE (the owner's choice, "Add carriages to either"): Beautiful Cities ships the same four names - its own
 // redrawn gates - and 52 composites built on them (`WALLAA08.FARMAA00` and the rest, a wall and a farm made one), at a
 // higher priority, and online the room owns it. DFU's rule is one mod's file a name, so there the gates would carry no
-// driver. Here the mod's appended records are a LAYER (formats/worldDataReplacement.js registerWorldDataLayer): laid
+// driver. Here the mod's appended records are a LAYER (formats/worldData/worldDataReplacement.js registerWorldDataLayer): laid
 // onto whichever of those files the door serves, in the block's own coordinates, under the same header counts the
 // editor leaves (DFU lays a block out by its arrays). Where the mod's own patch is what is served it already carries
 // them, and the layer stands aside.
@@ -17,7 +17,7 @@
 // NOT SEEN: how the carriages sit among Beautiful Cities' own gate furniture - this container has no ARENA2 to lay a
 // town out in. The bible's page names it for the owner's eyes.
 
-import { registerWorldDataLayer } from '../formats/worldDataReplacement.js';
+import { registerWorldDataLayer } from '../formats/worldData/worldDataReplacement.js';
 
 /** The four gate blocks the mod edits, and Beautiful Cities' composites on them: `WALLAA08.RMB.json`,
  *  `WALLAA08.FARMAA00.RMB.json` - the gate is the name's first part. */

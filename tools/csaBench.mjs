@@ -1,14 +1,16 @@
 // PERF-SAILS1 (2026-10-10, Dudey's `?perf=cpu` readout in a port at night: `sails` 5-7.6 ms a frame): THE BOATS' FRAME.
-// Come Sail Away's pool (scenes/comeSailAwayPool.js) over the vendored hulls, N ships standing in a row, its `frame`
+// Come Sail Away's pool (scenes/comeSailAway/comeSailAwayPool.js) over the vendored hulls, N ships standing in a row, its `frame`
 // (the walk, the holders' bakes, the lanterns, the flats) and its `draw` (to a stand-in renderer) timed over FRAMES frames after a warm-up. No GL: the
-// renderer and the picture pipeline are stand-ins (test/audit0928_online.test.js's), so the time is the pool's own.
+// renderer and the picture pipeline are stand-ins (test/scenes/audit0928_online.test.js's), so the time is the pool's own.
 //
 //   node tools/csaBench.mjs [ships=12] [frames=600]      BOB=1: each hull pitched and rolled every frame, as navalHost's
 //                                                        poseShip rocks a ship in a wind (her MeshObject's local turn)
+//   ANIM=1 node tools/csaBench.mjs [ships=12] [frames=600]   PERF-SAILS4: the ships' animators instead (navalHost's poseShip
+//                                                        steps each every frame within NEAR_LIFE_M) - every one of them, standing
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { createComeSailAwayPool } from '../src/scenes/comeSailAwayPool.js';
-import { Boat } from '../src/systems/comeSailAwayBoat.js';
+import { createComeSailAwayPool } from '../src/scenes/comeSailAway/comeSailAwayPool.js';
+import { Boat, boatAnimators } from '../src/systems/comeSailAway/comeSailAwayBoat.js';
 
 const fileFetch = async (url) => {
   const bytes = readFileSync(fileURLToPath(url));
@@ -29,6 +31,14 @@ for (let i = 0; i < SHIPS; i++) { const b = pool.spawnSeaNow(new Boat(i % 5, 0))
 const world = { cityLightsOn: true, playerPosition: [0, 0, 0] };
 for (let f = 0; f < 60; f++) { pool.frame(1 / 60, world); pool.draw(); }
 await new Promise((res) => setTimeout(res, 50));   // the bakes' uploads land
+if (process.env.ANIM === '1') {
+  const anims = pool.seaBoats.flatMap((b) => boatAnimators(b));
+  for (let f = 0; f < 60; f++) for (const a of anims) a.update(1 / 60);
+  const ta = performance.now();
+  for (let f = 0; f < FRAMES; f++) for (const a of anims) a.update(1 / 60);
+  console.log(`ships ${SHIPS} (${anims.length} animators): the animators' frame ${((performance.now() - ta) / FRAMES).toFixed(3)} ms`);
+  process.exit(0);
+}
 const t0 = performance.now();
 const BOB = process.env.BOB === '1';
 const bob = (f) => { if (!BOB) return; for (const b of pool.seaBoats) if (b.MeshObject) { const a = Math.sin(f * 0.05) * 0.02, c = Math.cos(f * 0.07) * 0.03; b.MeshObject.localRotation = [Math.sin(a / 2), 0, Math.sin(c / 2), Math.cos(a / 2) * Math.cos(c / 2)]; } };

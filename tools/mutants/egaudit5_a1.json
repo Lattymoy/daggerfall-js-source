@@ -1,0 +1,781 @@
+[
+  {
+    "name": "EGA5A1-dec-dropped",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  if (dec.length && B.next) B.next.dc = [...(B.next.dc ?? []), ...egDecreesChosen(B, dec)];",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1.test.js",
+      "test/net/eliteGates/egfull_relay.test.js"
+    ],
+    "why": "L2-1: the decrees' asks dropped unread at their close"
+  },
+  {
+    "name": "EGA5A1-dec-vote-ignored",
+    "file": "src/net/eliteGates/egRun.js",
+    "old": "    const at = egAskResult(a, true), id = a.o[at] ?? a.o[0];",
+    "new": "    const at = 0, id = a.o[at] ?? a.o[0];",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1.test.js"
+    ],
+    "why": "L2-1: the company's vote ignored (the first shown always)"
+  },
+  {
+    "name": "EGA5A1-dec-rank-lost",
+    "file": "src/net/eliteGates/egRun.js",
+    "old": "    out.push([id, B.next?.up === a.q.slice(4) ? 2 : 1]);",
+    "new": "    out.push([id, 1]);",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1.test.js"
+    ],
+    "why": "L2-1: the rank II from circle 10 lost"
+  },
+  {
+    "name": "EGA5A1-dec-not-carried",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  B.dc = [...(B.next?.c === c ? B.next.dc ?? [] : []), ...egDecreesChosen(B, due)];",
+    "new": "  B.dc = egDecreesChosen(B, due);",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1.test.js",
+      "test/net/eliteGates/egfull_relay.test.js"
+    ],
+    "why": "L2-1: the chosen decrees not carried to the next circle"
+  },
+  {
+    "name": "EGA5A1-nx-unsaid",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  if (dec.length) out.push(egStateOf(B, now));   // the beacon's word: the next circle's decrees chosen",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1.test.js"
+    ],
+    "why": "L2-11: the beacon's word not said at the close"
+  },
+  {
+    "name": "EGA5A1-nx-state",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "    nx: egNextOf(B),",
+    "new": "    nx: [],",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1.test.js"
+    ],
+    "why": "L2-11: `nx` never on the state"
+  },
+  {
+    "name": "EGA5A1-nx-wire",
+    "file": "src/net/wire.js",
+    "old": "        dc, nx, pr: m.pr ?? '',",
+    "new": "        dc, pr: m.pr ?? '',",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1.test.js"
+    ],
+    "why": "L2-11: the wire dropping `nx`"
+  },
+  {
+    "name": "EGA5A1-nx-link",
+    "file": "src/net/eliteGates/egLink.js",
+    "old": "dc: w.dc, nx: w.nx ?? [], pr: w.pr,",
+    "new": "dc: w.dc, pr: w.pr,",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1.test.js"
+    ],
+    "why": "L2-11: the link dropping `nx`"
+  },
+  {
+    "name": "EGA5A1-nx-this-lord",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "  const c = egCircleOfHall(E.h) + 1, key = egBossOf(E.seed, c)",
+    "new": "  const c = egCircleOfHall(E.h), key = egBossOf(E.seed, c)",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1.test.js"
+    ],
+    "why": "L2-11: this circle's lord named, not the next"
+  },
+  {
+    "name": "EGA5A1-nx-second-lord",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "${two ? ` - and ${card(two)}` : ''}",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1.test.js"
+    ],
+    "why": "L2-11: the Twin Court's second lord unnamed on the beacon"
+  },
+  {
+    "name": "EGA5A1-nx-out-of-rest",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "  if (!E?.b || E.sg !== 'rest' || !(E.h > 0)) return '';",
+    "new": "  if (!E?.b || !(E.h > 0)) return '';",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1.test.js"
+    ],
+    "why": "L2-11: the beacon's line kept past the rest"
+  },
+  {
+    "name": "EGA5A1-nx-classic-hud",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "dec: E.sg === 'rest' ? egNextCircleText(E) : dec.length",
+    "new": "dec: dec.length",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1.test.js"
+    ],
+    "why": "L2-11: the classic HUD's rest line without it"
+  },
+  {
+    "name": "EGA5A1-nx-spire-hud",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "E.sg === 'rest' ? egRestLine(E, run, restP) : '', egNextCircleText(E), egBridgeLine(",
+    "new": "E.sg === 'rest' ? egRestLine(E, run, restP) : '', egBridgeLine(",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1.test.js"
+    ],
+    "why": "L2-11: the Spire HUD's stage line without it"
+  },
+  {
+    "name": "EGA5A1-nx-sg-check",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "export const egNextOf = (B) => (B.sg === 'rest' && B.next?.c",
+    "new": "export const egNextOf = (B) => (B.next?.c",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1.test.js"
+    ],
+    "why": "redundant with the circle check: B.next is the next circle's only from its rest's window to nextCircle, and outside a rest egCircleOfHall(B.h) + 1 is never its circle",
+    "equivalent": true
+  },
+  {
+    "name": "EGA5A1-bargain-free-unasked",
+    "file": "src/net/eliteGates/egRun.js",
+    "old": "export const egBargainOpen = (B) => !(B.bargainDc ?? []).length && egBargainFams(B).length > 0;",
+    "new": "export const egBargainOpen = (B) => !(B.bargainDc ?? []).length;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1.test.js"
+    ],
+    "why": "L2-4: a Bargain asked with no family free"
+  },
+  {
+    "name": "EGA5A1-bargain-pool-empty",
+    "file": "src/net/eliteGates/egRun.js",
+    "old": "  return EG_DECREE_FAMILIES.filter((f) => !used.has(f) && bargainPool(B, f).length > 0);",
+    "new": "  return EG_DECREE_FAMILIES.filter((f) => !used.has(f));",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1.test.js"
+    ],
+    "why": "every family keeps a decree a Bargain may draw at any circle (the ground Ashfall and Sparks, the legion four besides Swarm-Mother, the covenant two, the lord four, the blows four), so no free family has an empty pool",
+    "equivalent": true
+  },
+  {
+    "name": "EGA5A1-bargain-held-family",
+    "file": "src/net/eliteGates/egRun.js",
+    "old": "  const used = new Set([...egStandingFams(B), ...(B.dc ?? []).map(([id]) => EG_DECREES[id]?.fam)]);\n  return EG_DECREE_FAMILIES",
+    "new": "  const used = new Set([...egStandingFams(B)]);\n  return EG_DECREE_FAMILIES",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1.test.js"
+    ],
+    "why": "L2-4: a Bargain's draw from a family the circle holds"
+  },
+  {
+    "name": "EGA5A1-twist-shown",
+    "file": "src/net/eliteGates/egRun.js",
+    "old": "EG_DECREE_FAMILIES.every((f) => (dc ?? []).some(([id]) => EG_DECREES[id]?.fam === f)) ? null",
+    "new": "false ? null",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1.test.js"
+    ],
+    "why": "L2-4: the shrine's line shown with no family free"
+  },
+  {
+    "name": "EGA5A1-twist-card",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "    twist: egTwistShown(spec, E.dc) ? EG_TWIST_LINES[spec.twist] ?? '' : '',",
+    "new": "    twist: spec.twist ? EG_TWIST_LINES[spec.twist] ?? '' : '',",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1.test.js"
+    ],
+    "why": "L2-4: the arrival card offering a shrine that never asks"
+  },
+  {
+    "name": "EGA5A1-twist-classic",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "egTwistShown(spec, E.dc) ? EG_TWIST_NAMES[spec.twist] : ''",
+    "new": "spec?.twist ? EG_TWIST_NAMES[spec.twist] : ''",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1.test.js"
+    ],
+    "why": "L2-4: the classic HUD naming a Bargain that never asks"
+  },
+  {
+    "name": "EGA5A1-twist-witness",
+    "file": "src/world/eliteGates/egLights.js",
+    "old": "  return egTwistShown(next, E.dc) ? EG_TWIST_LINES[next.twist] ?? '' : '';",
+    "new": "  return next.twist ? EG_TWIST_LINES[next.twist] ?? '' : '';",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1.test.js"
+    ],
+    "why": "L2-4: a witness shown a shrine that never asks"
+  },
+  {
+    "name": "EGA5A1-bargain-band",
+    "file": "src/net/eliteGates/egRun.js",
+    "old": "D.key !== 'crumbling' && decreeOpen(D, c, B.seed, from));",
+    "new": "D.key !== 'crumbling');",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1.test.js"
+    ],
+    "why": "L2-5: the band unasked - Swarm-Mother in the Galleries"
+  },
+  {
+    "name": "EGA5A1-bargain-spans",
+    "file": "src/net/eliteGates/egRun.js",
+    "old": "D.fam === f && D.key !== 'gale' && D.key !== 'crumbling' && decreeOpen",
+    "new": "D.fam === f && decreeOpen",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1.test.js"
+    ],
+    "why": "L2-5: a Bargain redrawing the spans"
+  },
+  {
+    "name": "EGA5A1-fray-flat",
+    "file": "src/net/eliteGates/egRun.js",
+    "old": "EG_FRAYING_FRAY + 2 * Math.floor((Math.max(1, c) - 1) / 5) - (rank",
+    "new": "EG_FRAYING_FRAY - (rank",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1.test.js"
+    ],
+    "why": "L2-10: the fray not rising with the road"
+  },
+  {
+    "name": "EGA5A1-fray-rank",
+    "file": "src/net/eliteGates/egRun.js",
+    "old": "(rank >= 2 ? EG_FRAYING_II_TURNS : 0)",
+    "new": "(rank >= 3 ? EG_FRAYING_II_TURNS : 0)",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1.test.js"
+    ],
+    "why": "L2-10: rank II's fray rank I's"
+  },
+  {
+    "name": "EGA5A1-fray-uncapped",
+    "file": "src/net/eliteGates/egRun.js",
+    "old": "export const egFrayOf = (c, rank = 1) => Math.min(SD_FRAY_MAX, EG_FRAYING_FRAY",
+    "new": "export const egFrayOf = (c, rank = 1) => Math.min(Infinity, EG_FRAYING_FRAY",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1.test.js"
+    ],
+    "why": "L2-10: a fray past the Hour's default"
+  },
+  {
+    "name": "EGA5A1-fray-deep",
+    "file": "src/net/eliteGates/egRun.js",
+    "old": "export const egFrayingOpen = (seed, c, from = 1) => egFrayOf(c) < SD_FRAY_MAX && egCirclePlan",
+    "new": "export const egFrayingOpen = (seed, c, from = 1) => egCirclePlan",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1.test.js"
+    ],
+    "why": "L2-10: drawn past circle 30"
+  },
+  {
+    "name": "EGA5A1-fray-any-circle",
+    "file": "src/net/eliteGates/egRun.js",
+    "old": "egCirclePlan(seed, c).some((p, i) => p.kind === 'athenaeum' && i + 1 >= from);",
+    "new": "egCirclePlan(seed, c).some((p, i) => i + 1 >= from);",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1.test.js"
+    ],
+    "why": "L2-10: drawn in a circle with no Athenaeum"
+  },
+  {
+    "name": "EGA5A1-fray-behind",
+    "file": "src/net/eliteGates/egRun.js",
+    "old": "p.kind === 'athenaeum' && i + 1 >= from);",
+    "new": "p.kind === 'athenaeum');",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1.test.js"
+    ],
+    "why": "L2-10: a Bargain's Fraying behind its Athenaeum"
+  },
+  {
+    "name": "EGA5A1-fray-open",
+    "file": "src/net/eliteGates/egRun.js",
+    "old": "&& (D.key !== 'fraying' || egFrayingOpen(seed, c, from));",
+    "new": ";",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1.test.js"
+    ],
+    "why": "L2-10: The Fraying drawn anywhere"
+  },
+  {
+    "name": "EGA5A1-fray-seed",
+    "file": "src/net/eliteGates/egRun.js",
+    "old": "D.fam === f && decreeOpen(D, c, B.seed)).sort(",
+    "new": "D.fam === f && decreeOpen(D, c)).sort(",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1.test.js"
+    ],
+    "why": "L2-10: the circle's plan read off another seed"
+  },
+  {
+    "name": "EGA5A1-fray-orrery",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "...(F.D.fraying ? { fray: egFrayOf(spec.c, F.D.fraying) } : {})",
+    "new": "...{}",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1.test.js"
+    ],
+    "why": "L2-10: the Orrery's fray never fed"
+  },
+  {
+    "name": "EGA5A1-fray-orrery-rank",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "{ fray: egFrayOf(spec.c, F.D.fraying) }",
+    "new": "{ fray: egFrayOf(spec.c, 1) }",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1.test.js"
+    ],
+    "why": "L2-10: the Orrery's fray at rank I under rank II"
+  },
+  {
+    "name": "EGA5A1-fray-family",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "key: 'fraying', fam: 'ground',",
+    "new": "key: 'fraying', fam: 'legion',",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1.test.js",
+      "test/net/eliteGates/egarch_law.test.js",
+      "test/net/eliteGates/egfull_law.test.js"
+    ],
+    "why": "L2-10: The Fraying in another family"
+  },
+  {
+    "name": "EGA5A1-fray-wager-family",
+    "file": "src/net/eliteGates/egStartLaw.js",
+    "old": "'lord', 'lord', 'lord', 'lord', 'ground',",
+    "new": "'lord', 'lord', 'lord', 'lord', 'legion',",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1.test.js",
+      "test/net/eliteGates/egarch_law.test.js"
+    ],
+    "why": "L2-10: the Wager's copy of its family off"
+  },
+  {
+    "name": "EGA5A1-lean-first-only",
+    "file": "src/net/eliteGates/egRun.js",
+    "old": "const first = nth === 1;",
+    "new": "const first = w === 1;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1.test.js"
+    ],
+    "why": "L2-13: the Lean at Redoubt 1 alone",
+    "note": "AUDIT EG V (h): re-aimed by content - the Redoubt's place in this breach named `nth`"
+  },
+  {
+    "name": "EGA5A1-lean-blade",
+    "file": "src/net/eliteGates/egRun.js",
+    "old": "  return (kinds[k] ?? 0) > 0 ? k : null;",
+    "new": "  return k;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1.test.js"
+    ],
+    "why": "L2-13: a blowless member leaned to Blade"
+  },
+  {
+    "name": "EGA5A1-lean-vestige",
+    "file": "src/net/eliteGates/egVestige.js",
+    "old": "  const leanFam = lean != null ? (lean === 0",
+    "new": "  const leanFam = w === 1 && lean != null ? (lean === 0",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1.test.js"
+    ],
+    "why": "L2-13: the offer leaning at Redoubt 1 alone"
+  },
+  {
+    "name": "EGA5A1-picks-one",
+    "file": "src/net/eliteGates/egRun.js",
+    "old": "    while (m.offer?.length && m.picks > 0) if (!egPick(B, sub, m.offer[0])) break;",
+    "new": "    if (m.offer?.length && m.picks > 0) egPick(B, sub, m.offer[0]);",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1.test.js"
+    ],
+    "why": "L2-15: one pick taken at the close"
+  },
+  {
+    "name": "EGA5A1-picks-open",
+    "file": "src/net/eliteGates/egRun.js",
+    "old": "    m.offer = null; m.picks = 0;\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1.test.js"
+    ],
+    "why": "L2-15: the offer left open past the rest"
+  },
+  {
+    "name": "EGA5A1-pick-trial",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "    case 'pick': if (mm.alive && B.sg === 'rest' && egPick(",
+    "new": "    case 'pick': if (mm.alive && egPick(",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1.test.js"
+    ],
+    "why": "L2-15: a pick in a trial"
+  },
+  {
+    "name": "EGA5A1-surplus-trial",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "const o = B.sg === 'rest' ? egSurplus(",
+    "new": "const o = true ? egSurplus(",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1.test.js"
+    ],
+    "why": "L2-15: a Surplus in a trial"
+  },
+  {
+    "name": "EGA5A1-respite-once",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  if (again) { egAsk(B, 'ready', [1], now, out); if (B.resp >= EG_RESPITE_MIN_MS) egAsk(B, 'respite', [1], now, out); }",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1.test.js"
+    ],
+    "why": "L3-17: the respite asked once a rest"
+  },
+  {
+    "name": "EGA5A1-respite-no-ready",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  if (again) { egAsk(B, 'ready', [1], now, out); if",
+    "new": "  if (again) { if",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1.test.js"
+    ],
+    "why": "L3-17: the Ready not put again with the respite"
+  },
+  {
+    "name": "EGA5A1-respite-overspent",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (B.resp >= EG_RESPITE_MIN_MS) egAsk(B, 'respite', [1], now, out); }",
+    "new": "egAsk(B, 'respite', [1], now, out); }",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1.test.js"
+    ],
+    "why": "L3-17: the respite asked with the budget spent"
+  },
+  {
+    "name": "EGA5A1-respite-order",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  const due = egAsksDue(B, now).sort((a, b) => (a.q === 'respite' ? 1 : 0) - (b.q === 'respite' ? 1 : 0));",
+    "new": "  const due = egAsksDue(B, now).sort((a, b) => (a.q === 'respite' ? 0 : 1) - (b.q === 'respite' ? 0 : 1));",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1.test.js"
+    ],
+    "why": "L3-17: the Ready acted on after the respite - cutting it short"
+  },
+  {
+    "name": "EGA5A1-here-any-hall",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "export const egPosedHere = (B) => living(B).filter(([, m]) => m.pose?.h === B.h)",
+    "new": "export const egPosedHere = (B) => living(B).filter(([, m]) => m.pose)",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1_legion.test.js"
+    ],
+    "why": "L2-2: a pose of any hall read"
+  },
+  {
+    "name": "EGA5A1-here-home",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "export const egPosedHere = (B) => living(B).filter(",
+    "new": "export const egPosedHere = (B) => Object.entries(B.mem).filter(([, m]) => m.alive && m.in).filter(",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1_legion.test.js"
+    ],
+    "why": "L2-2: the home ones in `here`"
+  },
+  {
+    "name": "EGA5A1-blow-pose-hall",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  mm.pose = { x: p.x, z: p.z, h: B.h };",
+    "new": "  mm.pose = p;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1_legion.test.js"
+    ],
+    "why": "L2-2: the blow's pose hall-less"
+  },
+  {
+    "name": "EGA5A1-due-home",
+    "file": "src/net/eliteGates/egRun.js",
+    "old": "filter((o) => o.alive && o.in && !o.home).map((o) => egVOf(o.vs, 'fallensdue'))",
+    "new": "filter((o) => o.alive && o.in).map((o) => egVOf(o.vs, 'fallensdue'))",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1_legion.test.js"
+    ],
+    "why": "L2-2: Fallen's Due over home holders"
+  },
+  {
+    "name": "EGA5A1-watch-any-hall",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  const L = living(B).filter(([, m]) => m.pose?.h === B.h), out = [];",
+    "new": "  const L = living(B).filter(([, m]) => m.pose), out = [];",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1_legion.test.js"
+    ],
+    "why": "L2-2: Watchfire by an earlier hall's pose"
+  },
+  {
+    "name": "EGA5A1-room-statues",
+    "file": "src/net/eliteGates/egLegion.js",
+    "old": " && !egHas(b, EG_FL.friend) && !egHas(b, EG_FL.dormant)).length);",
+    "new": " && !egHas(b, EG_FL.friend)).length);",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1_legion.test.js"
+    ],
+    "why": "L2-3: the statues counted asleep"
+  },
+  {
+    "name": "EGA5A1-still-anywhere",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  const still = B.still && egStillHolds(spec) ? EG_STILL_MS : 0;",
+    "new": "  const still = B.still ? EG_STILL_MS : 0;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1_legion.test.js"
+    ],
+    "why": "L2-6: spent in a hall with nothing to hold"
+  },
+  {
+    "name": "EGA5A1-still-span",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "{ F.waveAt = now + 4000 + still; F.packAt",
+    "new": "{ F.waveAt = now + 4000; F.packAt",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1_legion.test.js"
+    ],
+    "why": "L2-6: a span's shadows unheld"
+  },
+  {
+    "name": "EGA5A1-still-yard",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  F.waveAt = now + 4000 + still;\n  F.still = still;",
+    "new": "  F.waveAt = now + 4000;\n  F.still = still;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1_legion.test.js"
+    ],
+    "why": "L2-6: a Rift-Yard's rifts unheld"
+  },
+  {
+    "name": "EGA5A1-still-rampart",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "      F.waveAt = now + 6000 + still;",
+    "new": "      F.waveAt = now + 6000;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1_legion.test.js"
+    ],
+    "why": "L2-6: the Rampart's march overwriting Stillness"
+  },
+  {
+    "name": "EGA5A1-still-squad",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "F.waveAt = now + EG_SQUAD_HOLD_MS + still;",
+    "new": "F.waveAt = now + EG_SQUAD_HOLD_MS;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1_legion.test.js"
+    ],
+    "why": "L2-6: the march behind a squad unheld",
+    "note": "AUDIT EG V (h): re-aimed by content - one squad law for the Rift-Yard and the Rampart (squadTwist)"
+  },
+  {
+    "name": "EGA5A1-still-ath",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "    F.waveAt = now + EG_LOCK_EVERY_MS + still;",
+    "new": "    F.waveAt = now + EG_LOCK_EVERY_MS;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1_legion.test.js"
+    ],
+    "why": "L2-6: the Athenaeum's pressure overwriting Stillness"
+  },
+  {
+    "name": "EGA5A1-still-court",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "F.waveAt = now + EG_ESCORT_EVERY_MS + (F.still ?? 0); F.lordAt = now;",
+    "new": "F.waveAt = now + EG_ESCORT_EVERY_MS; F.lordAt = now;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1_legion.test.js"
+    ],
+    "why": "L2-6: the Court's first escort unheld"
+  },
+  {
+    "name": "EGA5A1-still-proving",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "    if (still) F.escortAt = now + still; else provingEscort(F, spec, rng, now, out);",
+    "new": "    provingEscort(F, spec, rng, now, out);",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1_legion.test.js"
+    ],
+    "why": "L2-6: the escort risen at the wake under Stillness"
+  },
+  {
+    "name": "EGA5A1-still-proving-late",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "    if (F.escortAt > 0 && now >= F.escortAt) { F.escortAt = 0; provingEscort(F, spec, rng, now, out); }",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1_legion.test.js"
+    ],
+    "why": "L2-6: the held escort never risen"
+  },
+  {
+    "name": "EGA5A1-still-brink",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "!(spec.kind === 'scriptorium' || spec.kind === 'brink' ||",
+    "new": "!(spec.kind === 'scriptorium' ||",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1_legion.test.js"
+    ],
+    "why": "L2-6: a Brink spending it"
+  },
+  {
+    "name": "EGA5A1-still-gauntlet",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "|| (spec.kind === 'rampart' && spec.variant === 'gauntlet') ||",
+    "new": "||",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1_legion.test.js"
+    ],
+    "why": "L2-6: a Gauntlet spending it"
+  },
+  {
+    "name": "EGA5A1-still-champion",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "|| (spec.kind === 'deepway' && (spec.spots?.chamber?.[0]?.obj ?? 0) === 1));",
+    "new": ");",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1_legion.test.js"
+    ],
+    "why": "L2-6: a Deepway's champion chamber spending it"
+  },
+  {
+    "name": "EGA5A1-shield-host-front",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  if (egShieldTurns(a, p.x, p.z)) return 0;\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1_legion.test.js"
+    ],
+    "why": "L2-7: the front unread in a host hit"
+  },
+  {
+    "name": "EGA5A1-shield-host-soak",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "a.hp -= n; egShieldSoak(F, a, got, out); }",
+    "new": "a.hp -= n; }",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1_legion.test.js"
+    ],
+    "why": "L2-7: the soak skipped in a host hit"
+  },
+  {
+    "name": "EGA5A1-shield-turns-behind",
+    "file": "src/net/eliteGates/egLegion.js",
+    "old": "(b.shield ?? 0) > 0 && !egFromBehind(b, px, pz);",
+    "new": "(b.shield ?? 0) > 0;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1_legion.test.js"
+    ],
+    "why": "L2-7: the shield turning blows from behind too"
+  },
+  {
+    "name": "EGA5A1-shield-soak-hp",
+    "file": "src/net/eliteGates/egLegion.js",
+    "old": "  b.shield -= soak; b.hp += soak;",
+    "new": "  b.shield -= soak;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1_legion.test.js"
+    ],
+    "why": "L2-7: the soak not given back to the body"
+  },
+  {
+    "name": "EGA5A1-shield-mark-kept",
+    "file": "src/net/eliteGates/egLegion.js",
+    "old": "  if (b.shield <= 0) egSetFl(F, b, EG_FL.shielded, false, out);",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1_legion.test.js"
+    ],
+    "why": "L2-7: the shield's mark kept past its breaking"
+  },
+  {
+    "name": "EGA5A1-spring-no-sapper",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "        if (F.brokenAnchors?.length && egLegionRoom(F) > 0) egLegionRaise(F, [EG_KIND.sapper], [[spring.x, spring.z]], now, out, { wave: F.waveNo });",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1_legion.test.js"
+    ],
+    "why": "L2-8: no Sapper raised"
+  },
+  {
+    "name": "EGA5A1-spring-past-cap",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "        if (F.brokenAnchors?.length && egLegionRoom(F) > 0) egLegionRaise(",
+    "new": "        if (F.brokenAnchors?.length) egLegionRaise(",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1_legion.test.js"
+    ],
+    "why": "L2-8: a Sapper raised past the cap"
+  },
+  {
+    "name": "EGA5A1-spring-unbroken",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "        if (F.brokenAnchors?.length && egLegionRoom(F) > 0) egLegionRaise(",
+    "new": "        if (egLegionRoom(F) > 0) egLegionRaise(",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1_legion.test.js"
+    ],
+    "why": "L2-8: a Sapper raised with every anchor standing"
+  },
+  {
+    "name": "EGA5A1-swarm-default",
+    "file": "src/net/eliteGates/egLegion.js",
+    "old": "{ swarm = F?.D?.swarm ?? 0, waveNo = 0,",
+    "new": "{ swarm = 0, waveNo = 0,",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1_legion.test.js"
+    ],
+    "why": "L2-12: the fight's decree unread by a wave its caller does not name it for"
+  },
+  {
+    "name": "EGA5A1-horn-held",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "egLegionSummon(F, [EG_KIND.kynval], [Number.isFinite(spotY(spec, at)) ? [at.x, at.z, spotY(spec, at)] : [at.x, at.z]], now, out, { need: 1, wave: 0 });",
+    "new": "egLegionSummon(F, [EG_KIND.kynval], [Number.isFinite(spotY(spec, at)) ? [at.x, at.z, spotY(spec, at)] : [at.x, at.z]], now, out, { need: 0, wave: 0 });",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1_legion.test.js"
+    ],
+    "why": "L2-16: the Kynval held to the room"
+  },
+  {
+    "name": "EGA5A1-ath-mixed",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "spec.fight.r - 3, k, rng), k, null, EG_KIND.harrier);",
+    "new": "spec.fight.r - 3, k, rng), k);",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1_legion.test.js"
+    ],
+    "why": "L3-20: a mixed wave"
+  },
+  {
+    "name": "EGA5A1-ath-only-unread",
+    "file": "src/net/eliteGates/egLegion.js",
+    "old": "  if (only != null) for (let i = 0; i < size; i++) out.push(only);\n  else {",
+    "new": "  if (false) for (let i = 0; i < size; i++) out.push(only);\n  else {",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1_legion.test.js"
+    ],
+    "why": "L3-20: `only` unread"
+  },
+  {
+    "name": "EGA5A1-ath-count",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "const k = Math.ceil(F.n / 4); wave(ringSpots(spec, spec.fight.x",
+    "new": "const k = Math.ceil(F.n / 2); wave(ringSpots(spec, spec.fight.x",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a1_legion.test.js"
+    ],
+    "why": "L3-20: the count off"
+  }
+]

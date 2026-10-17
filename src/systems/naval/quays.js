@@ -42,8 +42,8 @@
 import { alongside, berthSize, BERTH_HULL } from './shipLife.js';
 import { hullBuild, MOD_BUILDS } from './navalShips.js';   // GALLEON-HOLDINGS: hull 2's gangway follows the build that stands (SHIPS-2: hull 4's too)
 import { hash32 } from '../../world/spawnedDungeons.js';
-import { mulberry32 } from '../../combat/bloodArt.js';
-import { SHORE_TERRAIN_FIT_METERS } from '../../world/deepWaterFloor.js';   // HARBOUR-BOOK: the shelf a pier crosses
+import { mulberry32 } from '../../combat/blood/bloodArt.js';
+import { SHORE_TERRAIN_FIT_METERS } from '../../world/deepWater/deepWaterFloor.js';   // HARBOUR-BOOK: the shelf a pier crosses
 
 /** The water between her widest and the quay's face (m) - the fenders' room. */
 export const QUAY_GAP = 0.8;

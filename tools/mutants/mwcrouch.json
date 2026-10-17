@@ -5,7 +5,7 @@
     "old": "  edges.downFrame = edges.down; edges.upFrame = edges.up;\n  d.clear(); u.clear();\n  edges.down = d; edges.up = u;",
     "new": "  edges.downFrame = edges.down; edges.upFrame = edges.up;\n  edges.down = d; edges.up = u;",
     "tests": [
-      "test/mwcrouch_edges.test.js"
+      "test/player/mwcrouch_edges.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "export function beginInputFrame(edges) {\n  if (!edges) return;",
     "new": "export function beginInputFrame(edges) {\n  if (edges) return;",
     "tests": [
-      "test/mwcrouch_edges.test.js"
+      "test/player/mwcrouch_edges.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "export function noteKeyDown(edges, code, repeat = false) { if (edges && !repeat) { edges.down.add(code); edges.own?.add(code); } }",
     "new": "export function noteKeyDown(edges, code, repeat = false) { if (edges || !repeat) { edges.down.add(code); edges.own?.add(code); } }",
     "tests": [
-      "test/mwcrouch_edges.test.js"
+      "test/player/mwcrouch_edges.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    if (!pollModifier(store, keys, mod)) return false;\n    return ring.has(key);",
     "new": "    if (!pollModifier(store, keys, mod)) return false;\n    return keys.has(key);",
     "tests": [
-      "test/mwcrouch_edges.test.js"
+      "test/player/mwcrouch_edges.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  if (!ring.has(code)) return false;",
     "new": "  if (!keys.has(code)) return false;",
     "tests": [
-      "test/mwcrouch_edges.test.js"
+      "test/player/mwcrouch_edges.test.js"
     ]
   },
   {
@@ -50,9 +50,9 @@
     "old": "  let hm = null;\n  for (const m of comboModifiers(store)) if (keys.has(m)) hm = m;",
     "new": "  let hm = null;\n  for (const m of comboModifiers(store)) if (!keys.has(m)) hm = m;",
     "tests": [
-      "test/mwcrouch_edges.test.js",
-      "test/g3_heldorder.test.js",
-      "test/a8_combos.test.js"
+      "test/player/mwcrouch_edges.test.js",
+      "test/systems/g3_heldorder.test.js",
+      "test/systems/a8_combos.test.js"
     ]
   },
   {
@@ -61,7 +61,7 @@
     "old": "export function pressed(edges, keys, action) { return edgeAction(edges?.downFrame, keys, action); }",
     "new": "export function pressed(edges, keys, action) { return edgeAction(edges?.upFrame, keys, action); }",
     "tests": [
-      "test/mwcrouch_edges.test.js"
+      "test/player/mwcrouch_edges.test.js"
     ]
   },
   {
@@ -70,7 +70,7 @@
     "old": "export function released(edges, keys, action) { return edgeAction(edges?.upFrame, keys, action); }",
     "new": "export function released(edges, keys, action) { return edgeAction(edges?.downFrame, keys, action); }",
     "tests": [
-      "test/mwcrouch_edges.test.js"
+      "test/player/mwcrouch_edges.test.js"
     ]
   },
   {
@@ -79,7 +79,7 @@
     "old": "function edgeAction(ring, keys, action) {\n  if (!ring || !ring.size || !actionLive(action)) return false;",
     "new": "function edgeAction(ring, keys, action) {\n  if (!ring || !actionLive(action)) return false;\n  if (!ring.size) ring = keys;",
     "tests": [
-      "test/mwcrouch_edges.test.js"
+      "test/player/mwcrouch_edges.test.js"
     ]
   },
   {
@@ -88,7 +88,7 @@
     "old": "        const crouchPress = !helmBrace && pressed(latch.edge, keys, 'Crouch');",
     "new": "        const crouchPress = !helmBrace && held(keys, 'Crouch');",
     "tests": [
-      "test/mwcrouch_edges.test.js"
+      "test/player/mwcrouch_edges.test.js"
     ]
   },
   {
@@ -97,7 +97,7 @@
     "old": "    beginInputFrame(keyEdge);   // MWCROUCH",
     "new": "",
     "tests": [
-      "test/mwcrouch_edges.test.js"
+      "test/player/mwcrouch_edges.test.js"
     ]
   },
   {
@@ -106,7 +106,7 @@
     "old": "noteKeyUp(latch.edge, e.code); if (e.code === 'Escape') backButtonHeld = false;",
     "new": "if (e.code === 'Escape') backButtonHeld = false;",
     "tests": [
-      "test/mwcrouch_edges.test.js"
+      "test/player/mwcrouch_edges.test.js"
     ]
   },
   {
@@ -115,8 +115,8 @@
     "old": "    if (released(latch.edge, keys, 'SwitchHand')) {",
     "new": "    if (pressed(latch.edge, keys, 'SwitchHand')) {",
     "tests": [
-      "test/mwcrouch_edges.test.js",
-      "test/sheathkey.test.js"
+      "test/player/mwcrouch_edges.test.js",
+      "test/scenes/sheathkey.test.js"
     ]
   },
   {
@@ -125,7 +125,7 @@
     "old": "        down: crouchHeld || held(keys, 'FloatDown'),",
     "new": "        down: crouchPress || held(keys, 'FloatDown'),",
     "tests": [
-      "test/mwcrouch_edges.test.js"
+      "test/player/mwcrouch_edges.test.js"
     ]
   }
 ]

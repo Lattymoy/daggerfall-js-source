@@ -1,11 +1,11 @@
 [
   {
     "name": "INFECTION-KEPT-the-temple-ends-every-disease",
-    "file": "src/systems/guildServiceActions.js",
-    "old": "import { cureDiseasesInfectionsLast } from './effects.js';",
-    "new": "import { cureAllDiseases as cureDiseasesInfectionsLast } from './effects.js';",
+    "file": "src/systems/guild/guildServiceActions.js",
+    "old": "import { cureDiseasesInfectionsLast } from '../effects.js';",
+    "new": "import { cureAllDiseases as cureDiseasesInfectionsLast } from '../effects.js';",
     "tests": [
-      "test/fb0929h_infectionkept.test.js"
+      "test/systems/fb0929h_infectionkept.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "export const cureDiseasesInfectionsLast = (t) => cureAllOfKind(t, 'disease', plainDiseaseLive(t));",
     "new": "export const cureDiseasesInfectionsLast = (t) => cureAllOfKind(t, 'disease');",
     "tests": [
-      "test/fb0929h_infectionkept.test.js"
+      "test/systems/fb0929h_infectionkept.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "export const cureDiseasesInfectionsLast = (t) => cureAllOfKind(t, 'disease', plainDiseaseLive(t));",
     "new": "export const cureDiseasesInfectionsLast = (t) => cureAllOfKind(t, 'disease', true);",
     "tests": [
-      "test/fb0929h_infectionkept.test.js"
+      "test/systems/fb0929h_infectionkept.test.js"
     ]
   },
   {
@@ -32,8 +32,8 @@
     "old": "      cureAllOfKind(target, CURE_KINDS[e.subType], ctx?.strangerCast === true || plainDiseaseLive(target));",
     "new": "      cureAllOfKind(target, CURE_KINDS[e.subType], ctx?.strangerCast === true);",
     "tests": [
-      "test/fb0929h_infectionkept.test.js",
-      "test/spellgift.test.js"
+      "test/systems/fb0929h_infectionkept.test.js",
+      "test/systems/spellgift.test.js"
     ]
   },
   {
@@ -42,8 +42,8 @@
     "old": "      cureAllOfKind(target, CURE_KINDS[e.subType], ctx?.strangerCast === true || plainDiseaseLive(target));",
     "new": "      cureAllOfKind(target, CURE_KINDS[e.subType], true);",
     "tests": [
-      "test/fb0929h_infectionkept.test.js",
-      "test/spellgift.test.js"
+      "test/systems/fb0929h_infectionkept.test.js",
+      "test/systems/spellgift.test.js"
     ]
   },
   {
@@ -52,8 +52,8 @@
     "old": "  return live.filter((a) => !a.infection).length || live.length;",
     "new": "  return live.length;",
     "tests": [
-      "test/fb0929h_infectionkept.test.js",
-      "test/infection.test.js"
+      "test/systems/fb0929h_infectionkept.test.js",
+      "test/systems/infection.test.js"
     ]
   },
   {
@@ -62,8 +62,8 @@
     "old": "  return live.filter((a) => !a.infection).length || live.length;",
     "new": "  return live.filter((a) => !a.infection).length;",
     "tests": [
-      "test/fb0929h_infectionkept.test.js",
-      "test/infection.test.js"
+      "test/systems/fb0929h_infectionkept.test.js",
+      "test/systems/infection.test.js"
     ]
   },
   {
@@ -72,7 +72,7 @@
     "old": "import { cureAllDiseases, cureAllPoisons } from './effects.js';",
     "new": "import { cureDiseasesInfectionsLast as cureAllDiseases, cureAllPoisons } from './effects.js';",
     "tests": [
-      "test/fb0929h_infectionkept.test.js"
+      "test/systems/fb0929h_infectionkept.test.js"
     ]
   }
 ]

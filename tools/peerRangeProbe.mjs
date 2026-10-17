@@ -6,7 +6,7 @@
 // What a crowd costs the frame when most of it stands far out - the
 // world cell's case: the relay hands the screen every player within
 // three map pixels (net/wire.js RANGE_PIXELS, nearly 2,500 m). It drives
-// the REAL net/peerRange.js cut in front of the REAL RemotePlayers on its
+// the REAL net/peer/peerRange.js cut in front of the REAL RemotePlayers on its
 // class-sprite path (each peer a MobileUnit, stepped and faced every
 // frame) and the REAL Renderer's drawBillboards over a counting GL, once
 // at "Everyone" (range 0 - the cut off, the frame as it was before
@@ -31,7 +31,7 @@
 //   node tools/peerRangeProbe.mjs
 // ═══════════════════════════════════════════════════════════════════
 import { RemotePlayers } from '../src/net/remotePlayers.js';
-import { createPeerRange, PEER_RANGE_TIERS } from '../src/net/peerRange.js';
+import { createPeerRange, PEER_RANGE_TIERS } from '../src/net/peer/peerRange.js';
 import { Renderer } from '../src/render/renderer.js';
 
 function countingRenderer() {

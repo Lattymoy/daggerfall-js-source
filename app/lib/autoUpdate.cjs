@@ -34,7 +34,7 @@
 //     over it before it ever ran (AUDIT INSTALL L3-4).
 //
 // Pure, no Electron, so `node --test` pins the table
-// (test/autoupdate.test.js) and app/main.cjs keeps only the wiring.
+// (test/tooling/autoupdate.test.js) and app/main.cjs keeps only the wiring.
 'use strict';
 
 /**

@@ -67,7 +67,7 @@ dataset = "daggerfall_accounts"
 # D1-NEAR (2026-10-12, from play: "a lot of UI elements that utilize the
 # server (like searching players, the guild menu, etc) take an insane
 # amount of time to load"; bible/11-Multiplayer/Scale-Arc.md D1-NEAR,
-# audited in bible/01-Overview/Audit-D1-Near.md): THE WORKER RUNS BESIDE
+# audited in bible/01-Overview/audits/Audit-D1-Near.md): THE WORKER RUNS BESIDE
 # ITS DATABASE'S PRIMARY, BY NAME. A request here makes its D1 round trips
 # one after another - a guild look thirteen or fourteen, a seat board
 # nineteen to thirty-five - and each pays the distance between the Worker
@@ -99,7 +99,7 @@ region = "aws:us-west-1"
 # guilds' writs and contracts, the seats' Turning, the day's
 # Motherlodes); each hour the sweeps no read runs any more and the
 # retention the tables never had. The two strings are src/cron.js's
-# CRON_MINUTE and CRON_HOUR - test/scale4b.test.js holds them together,
+# CRON_MINUTE and CRON_HOUR - test/server/scale4b.test.js holds them together,
 # because a schedule this file names and the module does not runs
 # nothing. `wrangler deploy` publishes them with the Worker.
 [triggers]
@@ -108,9 +108,9 @@ crons = ["* * * * *", "41 * * * *"]
 [vars]
 # Answered by /health so a deploy that did not happen cannot look like
 # one that did. Kept in step with ACCOUNT_VERSION in src/service.js.
-ACCOUNT_VERSION = "acct138"
+ACCOUNT_VERSION = "acct149"
 # WB5b: THE RELAY'S PUBLIC HALF, GATE_PUBLIC_KEY - the key an Oblivion
-# Gate's kill receipts verify with (src/net/gateReceipt.js) - is NOT a
+# Gate's kill receipts verify with (src/net/gate/gateReceipt.js) - is NOT a
 # var here. GATE-KEYS (2026-09-26): the account deploy mints the pair
 # once (.github/workflows/account-deploy.yml, "Mint the gate receipt
 # pair") and puts this half as a SECRET on this Worker, the private one,
@@ -147,7 +147,17 @@ ALLOWED_ORIGIN = "*"
 # set and the developers' Seraph Wings. The handle exactly - "RookieG(Dev)"
 # (a handle may carry brackets, net/handleShape.js HANDLE_RE) is another
 # account and holds none of it.
-DEVELOPER_HANDLES = "Lattymoy,trashBattery,LostMyLeg,Tabby,RookieG"
+# DEV5 (2026-10-16, Mac: "Remove trashBattery ingame as a dev"): off the
+# list, and the whole set goes with the handle - the title, the glyph, the
+# wings, /red, /mute and /unmute, the developer's acts (titles.js
+# isDeveloper) and the POI editor's builder door - on their next token
+# and next call.
+# DEV6 (2026-10-16, Mac: "Give roderic the developer access ingame
+# (title/glyph)"): Roderic, the fifth again, with the same whole set - the
+# title, the glyph, the Seraph Wings, /red, /mute and /unmute, the developer's
+# acts and the POI editor's builder door - on their next token and next call.
+# Case-folded as every list is: the account roderic, Roderic or RODERIC.
+DEVELOPER_HANDLES = "Lattymoy,LostMyLeg,Tabby,RookieG,Roderic"
 # POI-1 (2026-10-14, the POI editor; bible/06-Systems/POI-Editor-Arc.md): WHO BUILDS AND WHO APPROVES. Mac, asked how a
 # POI reaches players: "I need to be able to approve changes"; asked who uses the editor: "Developers + Builders". A
 # BUILDER imports models, places POIs, saves drafts and submits them - every developer above is one, and BUILDER_HANDLES
@@ -183,6 +193,13 @@ FOUNDER_HANDLES = ""
 # First Hour (titles.js isHoursFirst). Comma-separated handles,
 # case-insensitive, the same as the lines above; held while listed.
 HOURS_FIRST_HANDLES = "aether,ArtemisGodfrey,CycleD0se,Duck,Kobakk,MackyWackyDeeJew,mayaamano,Nirnroot,ofrizz,rosalina,ShikiX3,Temegast,Terra"
+# EG-E2 (2026-10-12, bible/11-Multiplayer/Elite-Gates.md section 19, THE
+# HONOURS): FIRST OF THE SPIRE - the first company ever to take Redoubt 10
+# of the Elite Breach, by name, granted as Hour's First is. The title First
+# of the Spire and its aura, Firstlight (titles.js isSpireFirst). EMPTY until
+# that company comes: its Redoubt 10 receipts' accounts go here (and the
+# mailbox, as Hour's First's did). Comma-separated handles, case-insensitive.
+EG_FIRST_HANDLES = ""
 # TITLE-N (2026-09-24, Mac): the Dungeon Master - the orange title, the
 # die beside the name, and /dm's orange line (the relay reads the right
 # off the `dm` glyph in the signed token, as /red reads `dev`). "This
@@ -344,12 +361,12 @@ migrations_dir = "migrations"
 # checkout, then run wrangler. Nothing is committed back.
 #
 # The sentinel below is what the workflow substitutes, so the two are
-# one fact in two files - and test/accountdeploy.test.js reads both and
+# one fact in two files - and test/server/accountdeploy.test.js reads both and
 # fails if they ever stop agreeing.
 database_id = "resolved-by-account-deploy-workflow"
 
 # IDENTITY_PRIVATE_KEY is NOT here and must never be. It is a secret
-# (`wrangler secret put`), and test/accountworker.test.js reads this
+# (`wrangler secret put`), and test/server/accountworker.test.js reads this
 # file to make sure nobody ever pastes one in.
 #
 # IDENTITY_PUBLIC_KEY is not here either, for the opposite reason: it is
@@ -360,7 +377,7 @@ database_id = "resolved-by-account-deploy-workflow"
 
 # ── ACC2: THE SAVE BLOBS ───────────────────────────────────────────
 # R2 rather than D1 for one measured reason: a Daggerfall save already
-# hits QuotaExceededError in localStorage (systems/save.js handles it by
+# hits QuotaExceededError in localStorage (systems/save/save.js handles it by
 # name), which puts its size class above D1's practical per-row ceiling
 # and above a Worker's JSON body cap. R2 also has no egress fee, which
 # matters for a game nobody pays for.

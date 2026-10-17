@@ -60,8 +60,11 @@ export const forgetChapters = () => _kept.clear();
 /** AUDIT CHAP3 S3: the statement that moves the version of every region a town's reports name - `keySql` the town's
  *  key test over world_witness (?1 its value), ?2 now, `guard` an SQL condition the statement asks (the witness's:
  *  that its own insert changed something). */
+// HALL-PLAN (2026-10-16, bible/11-Multiplayer/Scale-Arc.md HALL-PLAN): `+region` - SQLite answered `DISTINCT region` off
+// the (kind, region) index, walking every hall report of every town (some 19,000 rows a witness on the live database)
+// where the key's own rows are a handful; the unary plus leaves the index on (kind, key) the planner's, the answer the same
 const bumpRegions = (/** @type {any} */ db, /** @type {string} */ keySql, /** @type {string} */ key, /** @type {number} */ nowS, guard = '1') => db.prepare(
-  `INSERT INTO npc_hall_regions (region, ver, done, at) SELECT DISTINCT region, 1, 0, ?2 FROM world_witness
+  `INSERT INTO npc_hall_regions (region, ver, done, at) SELECT DISTINCT +region, 1, 0, ?2 FROM world_witness
     WHERE kind = '${HALL_WITNESS_KIND}' AND ${keySql} AND ${guard}
     ON CONFLICT (region) DO UPDATE SET ver = npc_hall_regions.ver + 1`).bind(key, nowS);
 

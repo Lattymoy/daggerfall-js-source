@@ -8,7 +8,7 @@
 // arms, which had stood open since E1 and are answered here: the two
 // readers below are wired into the enchant ctx at world.js:"V2c filled inSunlight/inHolyPlace"
 // off the host seam that worldModes.js:"now: () => Math.floor(skyMinutes())" and dungeonContext.js:"const _prevPassiveHost"
-// register (bible/01-Overview/Port-Ledger.md:819 strikes the pair
+// register (bible/01-Overview/Port-Ledger.md:821 strikes the pair
 // through as closed, V2c 2026-08-27).
 //
 // THE TWO FLAGS ARE SMALL LAWS, verbatim:
@@ -37,7 +37,7 @@
 
 import { isDayFromMinutes } from './gameDate.js';
 import { SPECIAL_ABILITY_BITS, REGENERATION_FLAGS } from './specialAdvantages.js';
-import { renownMpOf } from './renownLayer.js';   // AUDIT RENOWN1 GAME-5: the magery's third is of Daggerfall's own maximum, never the online layer
+import { onlineMpOf } from './renownLayer.js';   // AUDIT RENOWN1 GAME-5: the magery's third is of Daggerfall's own maximum, never the online layer (EG15: nor the folds' magicka)
 import { regenBarred } from './courtRules.js';   // WBX6: the Burning Court keeps no regeneration
 import { cloakState } from './survival/temperature.js';   // HOOD-CAREER: the ONE "is the hood up" - the felt temperature's, never a second list
 
@@ -158,7 +158,7 @@ export function passiveSpecialsMagicRound(entity, { nowMinutes = 0, clockMinutes
   // thirds of itself online, and a save (offlineVitals, which takes off the whole layer) came back at about 6% of the
   // magicka it had. Taken off here by subtraction, and safely: with the modifier zeroed the accessor's floor cannot
   // bite (the spell points are never below 0), so what it answers is exactly the raw value plus the layer.
-  const raw = Math.max(0, (entity.maxMagicka ?? 0) - renownMpOf(entity));
+  const raw = Math.max(0, (entity.maxMagicka ?? 0) - onlineMpOf(entity));   // EG15: Renown's and the folds' (the Battlemage's Bearing) - both above the floor
   entity.maxMagickaModifier = _mod;
   const dark = !isDay || (_host?.isInside?.() ?? false);
   if (dark) {

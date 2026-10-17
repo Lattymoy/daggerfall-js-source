@@ -6,7 +6,7 @@
 //
 // Material follows the armour family (paperdollArt MATERIAL_FAMILY):
 // Plate -> steel, Chain -> mail, Leather -> leather.
-import { MATERIAL_FAMILY } from './paperdollArt.js';
+import { MATERIAL_FAMILY } from './paperdoll/paperdollArt.js';
 
 const B = 'body', LL = 'legL', LR = 'legR', AL = 'armL', AR = 'armR';
 

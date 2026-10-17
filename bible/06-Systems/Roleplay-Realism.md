@@ -33,8 +33,8 @@ port's own site for the C# member, the switch read at the call (a pane
 toggle takes effect at the next roll) - except the class enemies'
 appearance, which DFU writes into `EnemyBasics.Enemies` at Awake and
 the port writes at install (the Features row says *when the game next
-loads*). Three modules: `systems/rrRealism.js` (the laws, a leaf),
-`systems/rrInstall.js` (InitMod's registrations, run by the scene boot
+loads*). Three modules: `systems/roleplayRealism/rrRealism.js` (the laws, a leaf),
+`systems/roleplayRealism/rrInstall.js` (InitMod's registrations, run by the scene boot
 after Items'), and the seams they hang on.
 
 | module / mod law | DFU seam | the port's site |
@@ -47,7 +47,7 @@ after Items'), and the seams they hang on.
 | classicStrengthDamageBonus: `DamageModifier_classicDisplay` (:314-317) | FormulaHelper.DamageModifier | `formulas.js damageModifier` (PCO1's slot, chained) |
 | loanAmountPerLevel: `CalculateMaxBankLoan` (:98, :309-312) | FormulaHelper.cs:2008-2010 | `banking.registerMaxBankLoan` |
 | shipPorts: `IsShipAvailiable` (:610-631) | `TransportManager.ShipAvailiable`, the delegate | `ship.setShipAvailable`; `mountRig` asks with `shipLocation()` = `{ locationLoaded, portTown, onShip }` from the host (DISC13-D: it said `loaded`, which the delegate never read) |
-| encumbranceEffects: `EncumbranceEffects_OnNewMagicRound` (:580-598) | EntityEffectBroker.OnNewMagicRound | `worldTick.registerMagicRoundHook` (the fatigue) + `entityMods.registerEntityFold` (MergeDirectStatMods' channel - the speed) - BALANCE1 (2026-09-27): the round's fatigue on the port's exertion scale (x0.75), its fraction carried on the entity so a light overload's 1 a minute still costs (the pre-merge audit 0927b); `01-Overview/Field-Bugs-2026-09-27-phone-backup-drains.md` |
+| encumbranceEffects: `EncumbranceEffects_OnNewMagicRound` (:580-598) | EntityEffectBroker.OnNewMagicRound | `worldTick.registerMagicRoundHook` (the fatigue) + `entityMods.registerEntityFold` (MergeDirectStatMods' channel - the speed) - BALANCE1 (2026-09-27): the round's fatigue on the port's exertion scale (x0.75), its fraction carried on the entity so a light overload's 1 a minute still costs (the pre-merge audit 0927b); `01-Overview/bugs/Field-Bugs-2026-09-27-phone-backup-drains.md` |
 | bandaging: `UseBandage` (:600-608), `if (rrItemsMod == null && bandaging)` | ItemHelper.RegisterItemUseHandler | never registered - the port carries Items always; `rrBandageHeal` ported for the record |
 | autoExtinguishLight (:633-640) | PlayerEnterExit.OnPreTransition ToDungeonExterior | `worldModes` at the dungeon exit, the light's own "You douse the %it." box |
 | purificationPotion: `CureDiseasePotionRR` | `RegisterEffectTemplate(..., true)` - the recipes replaced | `potions.overridePotionRecipes` |
@@ -112,7 +112,7 @@ Read against the C#:
   Ship row stayed dark everywhere except aboard, which is why turning
   Travel Options' port rule off changed nothing. The host answers
   `locationLoaded` now, so a player who switches the rule on gets the
-  mod's port rule and not a ban (`test/disc13.test.js`).
+  mod's port rule and not a ban (`test/systems/disc13.test.js`).
 - **Purification** keeps its eight ingredients (the same recipe key)
   with HealHealth and CurePoison `(3,1)` where DFU's carries HealHealth
   and Invisibility `(13,0)`.
@@ -163,7 +163,7 @@ its arms to `rrInstall.js`.
   gender (GetGender182/184's tables verbatim), `faceVariant = nameSeed
   % 29` under 24 (four in five), `outfitVariant = nameSeed % 4`, the
   climate race's walker archive (Redguard, Nord, else Breton - GetClimateRace; REGIONAL-FOLK, a departure: a region
-  FALL.EXE calls Redguard has Redguard residents, as its street - `characters/mobilePerson.js` walkerRace)
+  FALL.EXE calls Redguard has Redguard residents, as its street - `characters/mobile/mobilePerson.js` walkerRace)
   at the idle record, and `flatsDict[bornFlat] = { faceIndex }` - the
   port's `setFlatFaceOverride`, which `dataPipeline.flatFaceIndex`
   reads before FLATS.CFG. The Villager Variety arm (:948-978) has no
@@ -175,7 +175,7 @@ its arms to `rrInstall.js`.
   (2026-09-26): lazy means ASKED FOR - the interior person's stand never
   asked, so the classic 197 records drew in their place (record 6 is a
   street lamp); it asks before the upload now
-  (`01-Overview/Field-Bugs-2026-09-26.md`).
+  (`01-Overview/bugs/Field-Bugs-2026-09-26.md`).
 - **EnhancedRiding** (EnhancedRiding.cs). `CanRunUnlessRidingCart`
   (:95-99) on `transport.setCanRunOverride`: no gallop with the cart
   nor in a town unless GallopingInTowns (the host's `inTown`, `riding`,
@@ -231,7 +231,7 @@ its arms to `rrInstall.js`.
 
 RoleplayRealism.cs:241-256 registers what the line needs and DFU's
 mod hooks provide; the port had none of the four hooks, so this slice
-is as much DFU as mod. Laws in `systems/rrQuestLine.js`; the install
+is as much DFU as mod. Laws in `systems/roleplayRealism/rrQuestLine.js`; the install
 adds InitMod's four calls to `rrInstall.js`.
 
 - **The quest list** - `QuestListsManager.RegisterQuestList(
@@ -241,7 +241,7 @@ adds InitMod's four calls to `rrInstall.js`.
   (`RRMSTARM0` Mountain Rumors - Fighters rank 9, one-time; `RRMSTARM1`
   The Master Armorer and `RRMSTARM2` A Careless Price, chained from it)
   are vendored verbatim under `vendor/roleplay-realism/Quests/` and ride
-  the pack loader's globs (`scenes/questData.js`), the list into the
+  the pack loader's globs (`scenes/quest/questData.js`), the list into the
   tables map and the sources into the pack's. All three parse under the
   port's parser with no line pended.
 - **The two tables** - `PlacesTable.AddIntoTable` / `FactionsTable.
@@ -303,9 +303,9 @@ building ... variant _master` rebuilds it (faction 1022, an Armorer of
 quality 20, seed 632, a 33-model interior).
 
 They come through **WorldDataReplacement.cs, ported whole** as
-`formats/worldDataReplacement.js`:
+`formats/worldData/worldDataReplacement.js`:
 
-- **The door.** `formats/worldDataDoor.js` is a leaf both readers
+- **The door.** `formats/worldData/worldDataDoor.js` is a leaf both readers
   import; the replacement module installs itself there (a cycle would
   otherwise run readers -> door -> readers' enums). MapsFile asks it at
   LoadRegion's tail (:984, the region's additional locations), at
@@ -516,7 +516,7 @@ PitchMaxLimit snap and the 75-degree floor; the walker at 1 FPS against
 the mod's 5; a negative nameSeed; two deliberate C# slip fixes in RR3a;
 the title reload after a world-data install.
 
-Suite `test/auditrr.test.js` (15). The float32 edges, the neck band,
+Suite `test/systems/auditrr.test.js` (15). The float32 edges, the neck band,
 the riding contacts, the negative key, the class virtuals and the
 override context are pinned by execution; the hosts' wiring by source.
 
@@ -633,7 +633,7 @@ them over frames - a stall at most, not a difference in what stands.
 `modelFromJson` drops XScale/YScale/ZScale (RMBLayout.cs:76) - a
 general port gap, no RR file carries them.
 
-Suite `test/auditrr2.test.js` (17). Extra Weight, the cry's gender, the
+Suite `test/systems/auditrr2.test.js` (17). Extra Weight, the cry's gender, the
 riding contacts' latch and direction, the wire clamp, the stored fur
 weight, the equip delay, the merged table, the shelf's stack, the
 synthetic gate, the pitch clamp and the variant flag by execution; the
@@ -652,7 +652,7 @@ the property: `GetMaxEncumbrance` (`DaggerfallEntity.cs:272`,
 IncreasedWeightAllowanceMultiplier)`. The port's own version of that
 property is `entityMaxEncumbrance` (`combat/formulas.js`) - the pack,
 both character sheets, the carry, trade and bank gates all read it -
-and `encumbranceOf` (`systems/rrInstall.js`) alone read the bare
+and `encumbranceOf` (`systems/roleplayRealism/rrInstall.js`) alone read the bare
 formula off live strength. So a player whose weight allowance (the
 enchantment, and the Loot Rarity weight affixes that ride the same
 multiplier, `06-Systems/Loot-Rarity.md`) lifted the pack to 502 took
@@ -663,16 +663,16 @@ penalty starts at 75% of the number the pack shows. Horse and cart add
 nothing to the ceiling, in DFU or in Horse Cart and Cargo - the wagon
 is its own 750 kg (`ItemHelper.WagonKgLimit`).
 
-Pinned in `test/rr1_realism.test.js` ENC-CEIL (the allowance from the
+Pinned in `test/systems/rr1_realism.test.js` ENC-CEIL (the allowance from the
 real producer; literals off the real ceiling of 90); mutants
 `tools/mutants/enc_ceil.json` (3, all dead).
-`01-Overview/Field-Bugs-2026-09-27.md`.
+`01-Overview/bugs/Field-Bugs-2026-09-27.md`.
 
 ## Record
 
-`vendor/roleplay-realism/`. Suites `test/rr1_realism.test.js` (12),
-`test/rr2_realism.test.js` (12), `test/rr3_questline.test.js` (11),
-`test/rr3b_worlddata.test.js` (9), `test/auditrr.test.js` (15), `test/auditrr2.test.js` (17). Campaigns `tools/mutants/rr1.json`
+`vendor/roleplay-realism/`. Suites `test/systems/rr1_realism.test.js` (12),
+`test/systems/rr2_realism.test.js` (12), `test/systems/quest/rr3_questline.test.js` (11),
+`test/systems/talk/rr3b_worlddata.test.js` (9), `test/systems/auditrr.test.js` (15), `test/systems/auditrr2.test.js` (17). Campaigns `tools/mutants/rr1.json`
 (18: 17 dead, 1 equivalent - RR1-17 went with the seam it aimed at, FGH2H-R), `tools/mutants/rr2.json` (28 dead),
 `tools/mutants/rr3.json` (33: 31 dead, 2 equivalent),
 `tools/mutants/rr3b.json` (24 dead).

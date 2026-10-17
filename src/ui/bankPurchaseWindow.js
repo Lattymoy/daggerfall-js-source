@@ -38,7 +38,7 @@
 // binds each button to a DaggerfallShortcut hotkey; the accelerators
 // here are ours.
 
-import { loadImg, nativeMetrics, drawImg, drawImgCrop, shadowText } from './nativePanel.js';
+import { loadImg, nativeMetrics, drawImg, drawImgCrop, shadowText } from './native/nativePanel.js';
 import { drawScreenDimBackdrop } from './chargenArt.js';
 import { VerticalScrollBar, drawScrollThumb } from './verticalScrollBar.js';   // G5: SetupScrollBar (:303-314)
 import { audio } from '../systems/audio.js';

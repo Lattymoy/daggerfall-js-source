@@ -1,6 +1,6 @@
 // @ts-check
 // TELL2 (bible/12-Enhanced-AI/Feud-Arc.md section 4.4; Mac, 2026-10-04: "breath more depth into it"): A TELEGRAPH'S
-// LOOK, a LEAF of GLSL importing nothing - the world boss's readable line (render/gateTelegraph.js, WB13a) at a foe's
+// LOOK, a LEAF of GLSL importing nothing - the world boss's readable line (render/gate/gateTelegraph.js, WB13a) at a foe's
 // scale, for the foe's pass (render/foeTelegraph.js) to compose. The boss's own pass imports the boss's brain and is never
 // imported whole; this is the part of its look a foe's mark needs:
 //   - THE LINE: two pixels wide wherever it is seen (its width read off the outline's own screen derivative), a dark

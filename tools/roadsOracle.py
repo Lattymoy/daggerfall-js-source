@@ -2,7 +2,7 @@
 """AUDIT 51: THE ORACLE. BasicRoadsTexturing.cs's PaintPath, PaintPathTile,
 PaintPathWithSubPathJoins and the job's paint order, transliterated line
 for line from the MIT source (Copyright (C) 2020 Hazelnut). It emits the
-tilemap the MOD would paint for each case; test/roadsParity.test.js runs
+tilemap the MOD would paint for each case; test/world/road/roadsParity.test.js runs
 our painter on the same cases and compares byte for byte. A difference
 is a parity bug by definition, not a matter of reading.
 
@@ -10,7 +10,7 @@ Regenerate:  python3 tools/roadsOracle.py > test/fixtures/roads-oracle.json
 
 MODS AUDIT (2026-09-08): PaintPathWithSubPathJoins' centre-join body
 below is GENERATED from the C# by tools/roadsJoins.py, which emits the
-same tree for src/world/roadPainter.js - the two are one reading of the
+same tree for src/world/road/roadPainter.js - the two are one reading of the
 source. The first transliteration carried four of his seventy-six
 statements and the painter the same four, so the fixture could not see
 the other seventy-two.

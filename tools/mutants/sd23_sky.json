@@ -5,8 +5,8 @@
     "old": "DOOR_TYPE.DUNGEON_ENTRANCE).map(shiftedDoor);",
     "new": "DOOR_TYPE.DUNGEON_ENTRANCE).map((d) => d.door);",
     "tests": [
-      "test/sd23_sky.test.js",
-      "test/sd5a_realm.test.js"
+      "test/world/sd23_sky.test.js",
+      "test/world/superDungeon/sd5a_realm.test.js"
     ]
   },
   {
@@ -15,7 +15,7 @@
     "old": "doorWorldPosition(shiftedDoor(e))",
     "new": "doorWorldPosition(e.door)",
     "tests": [
-      "test/sd23_sky.test.js"
+      "test/world/sd23_sky.test.js"
     ]
   },
   {
@@ -24,7 +24,7 @@
     "old": "    matrix[13] = m[13] + t[1];",
     "new": "    matrix[13] = m[13];",
     "tests": [
-      "test/sd23_sky.test.js"
+      "test/world/sd23_sky.test.js"
     ]
   },
   {
@@ -33,7 +33,7 @@
     "old": "    matrix[12] = m[12] + t[0];",
     "new": "    matrix[12] = m[12];",
     "tests": [
-      "test/sd23_sky.test.js"
+      "test/world/sd23_sky.test.js"
     ]
   }
 ]

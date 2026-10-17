@@ -65,7 +65,7 @@ export { RENOWN_MAX };
  * come in minutes, level 10 in an evening, level 20 in a few weeks of
  * evenings, and level 50 in hundreds of hours. The XP follows the level
  * of what was fought, and a class foe stands at the character's OWN
- * Daggerfall level (characters/enemyEntity.js), as does a quest's pay -
+ * Daggerfall level (characters/enemy/enemyEntity.js), as does a quest's pay -
  * so a character that levelled offline climbed ten times faster online
  * (AUDIT RENOWN1 DATA-6), until RENOWN3 read every foe and quest against
  * the character's Renown (below), and RENOWN-ACCOUNT paid every source three
@@ -206,7 +206,7 @@ export const renownKillXp = (foeLevel, renown = null) => renownRate(RENOWN_KILL_
 export const renownQuestXp = (characterLevel, renown = null) => renownRate(RENOWN_QUEST_XP_BASE + RENOWN_QUEST_XP_PER_LEVEL * Math.min(clampInt(characterLevel, 1, RENOWN_QUEST_LEVEL_MAX), renownCeiling(renown)));
 
 /** RAID4 (2026-09-28, Mac on World Events - Raiding Parties online: "3. We can also add renown and it's own atheric +
- *  armor sets"): A TOWN DEFENDED - a raid's cleanse the relay signed for this account (net/raidReceipt.js) - is worth
+ *  armor sets"): A TOWN DEFENDED - a raid's cleanse the relay signed for this account (net/raid/raidReceipt.js) - is worth
  *  RENOWN_RAID_QUESTS quests at the ladder's top quest level, read no higher than the Renown allows (RENOWN3's
  *  ceiling), at the quests' rate (RENOWN-ACCOUNT): Renown 1 takes 585, Renown 10 1,395, Renown 27 and up 2,925 (780,
  *  1,860 and 3,900 at the full rate). The account service credits it once a raid an account, to the Renown of the character that fought it,
@@ -214,7 +214,7 @@ export const renownQuestXp = (characterLevel, renown = null) => renownRate(RENOW
 export const RENOWN_RAID_QUESTS = 3;
 export const renownRaidXp = (renown = null) => RENOWN_RAID_QUESTS * renownQuestXp(RENOWN_QUEST_LEVEL_MAX, renown);
 /** SERPENT1 (2026-10-04, Mac: "a large scale sea serpent in the ocean"): A SERPENT SLAIN - Sethrakul's kill the relay
- *  signed for this account (net/serpentReceipt.js) - is worth RENOWN_SERPENT_QUESTS quests at the ladder's top quest
+ *  signed for this account (net/serpent/serpentReceipt.js) - is worth RENOWN_SERPENT_QUESTS quests at the ladder's top quest
  *  level, read no higher than the Renown allows, at the quests' rate: twice a town defended, for the Bay's rarest fight
  *  (one every four real hours). Credited once a serpent an account, to the character that fought it, charged to the
  *  account's hour (server-account/src/serpents.js). */
@@ -281,7 +281,7 @@ export const RENOWN_REPORT_MS = 60_000;
 /** SCALE4h (2026-10-11, the plan's "10k writes"; bible/11-Multiplayer/Scale-Arc.md SCALE4h): HOW OFTEN IT GOES
  *  OTHERWISE. A fighter's report every minute was half the statements and half the rows a fighting player-hour wrote to
  *  the one primary (tools/hotWritesBench.mjs), and most of its answers said nothing the page did not know: the bar draws
- *  what is earned and not yet answered (ui/hudRenown.js, the ghost), so the answer only moves the ghost into the fill. */
+ *  what is earned and not yet answered (ui/hud/hudRenown.js, the ghost), so the answer only moves the ghost into the fill. */
 export const RENOWN_COALESCE_MS = 5 * 60_000;
 /** AUDIT RENOWN1 DATA-4/GAME-9: A REPORT'S OWN NAME - sixteen hex digits the client draws once per report and sends
  *  again, unchanged, with every retry of that same report, so a report the service took whose answer was lost is
@@ -299,7 +299,7 @@ export function renownText(level) {
   return String(level);
 }
 
-/** A count with its thousands marked ("12,500") - the profile's row and the HUD's bar (ui/hudRenown.js) alike. */
+/** A count with its thousands marked ("12,500") - the profile's row and the HUD's bar (ui/hud/hudRenown.js) alike. */
 export const groupedXp = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
 /** A track's progress in words: "1,234 / 5,510 XP to Renown 10", or "the highest there is" at the cap (AUDIT RENOWN1

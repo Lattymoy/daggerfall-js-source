@@ -5,7 +5,7 @@
     "old": "  return Math.floor(Math.sqrt(x / 10));",
     "new": "  return Math.round(Math.sqrt(x / 10));",
     "tests": [
-      "test/prof1_law.test.js"
+      "test/systems/foraging/prof1_law.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "export const xpForRank = (n) => 10 * n * n;",
     "new": "export const xpForRank = (n) => 100 * n;",
     "tests": [
-      "test/prof1_law.test.js"
+      "test/systems/foraging/prof1_law.test.js"
     ]
   },
   {
@@ -23,8 +23,8 @@
     "old": "export const TIER_RANKS = Object.freeze([0, 10, 25, 40, 55, 70, 90]);",
     "new": "export const TIER_RANKS = Object.freeze([0, 10, 20, 40, 55, 70, 90]);",
     "tests": [
-      "test/prof1_law.test.js",
-      "test/prof1_service.test.js"
+      "test/systems/foraging/prof1_law.test.js",
+      "test/net/prof1_service.test.js"
     ]
   },
   {
@@ -33,8 +33,8 @@
     "old": "  if (clean) xp = Math.floor((xp * 3) / 2);",
     "new": "",
     "tests": [
-      "test/prof1_law.test.js",
-      "test/prof1_service.test.js"
+      "test/systems/foraging/prof1_law.test.js",
+      "test/net/prof1_service.test.js"
     ]
   },
   {
@@ -43,7 +43,7 @@
     "old": "  if (tier < topTierOf(rank) - 2) xp = Math.floor(xp / 4);",
     "new": "",
     "tests": [
-      "test/prof1_law.test.js"
+      "test/systems/foraging/prof1_law.test.js"
     ]
   },
   {
@@ -52,8 +52,8 @@
     "old": "export const writXp = (pay) => 2 * pay;",
     "new": "export const writXp = (pay) => pay;",
     "tests": [
-      "test/prof1_law.test.js",
-      "test/prof1_service.test.js"
+      "test/systems/foraging/prof1_law.test.js",
+      "test/net/prof1_service.test.js"
     ]
   },
   {
@@ -62,7 +62,7 @@
     "old": "export const DEEP_UNCONFIRMED_PER_DAY = 4;",
     "new": "export const HARVESTS_PER_DAY = 60;\nexport const DEEP_UNCONFIRMED_PER_DAY = 4;",
     "tests": [
-      "test/cap_off.test.js"
+      "test/net/cap_off.test.js"
     ],
     "note": "RETIRED by CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\"): the law exports no day's cap - the mutant exports the sixty again. It was the mutant that made the day seventy."
   },
@@ -72,8 +72,8 @@
     "old": "export const STORES_MAX = 5000;",
     "new": "export const STORES_MAX = 50000;",
     "tests": [
-      "test/prof1_law.test.js",
-      "test/prof1_service.test.js"
+      "test/systems/foraging/prof1_law.test.js",
+      "test/net/prof1_service.test.js"
     ]
   },
   {
@@ -82,7 +82,7 @@
     "old": "export const profSwitchOf = (v) => (PROF_SWITCH.includes(v) ? v : 'off');",
     "new": "export const profSwitchOf = (v) => (PROF_SWITCH.includes(v) ? v : 'on');",
     "tests": [
-      "test/prof1_law.test.js"
+      "test/systems/foraging/prof1_law.test.js"
     ]
   },
   {
@@ -91,8 +91,8 @@
     "old": "export const regionPlantGroup = (region) => (REGION_RACES[region] === 1 ? 'p2' : 'p1');",
     "new": "export const regionPlantGroup = (region) => (REGION_RACES[region] === 0 ? 'p2' : 'p1');",
     "tests": [
-      "test/prof1_law.test.js",
-      "test/prof1_client.test.js"
+      "test/systems/foraging/prof1_law.test.js",
+      "test/systems/prof1_client.test.js"
     ]
   },
   {
@@ -101,8 +101,8 @@
     "old": "  if (PLANT_GROUP_TEMPLATES[g].includes(templateIndex)) return g;",
     "new": "  return g;",
     "tests": [
-      "test/prof1_law.test.js",
-      "test/prof1_service.test.js"
+      "test/systems/foraging/prof1_law.test.js",
+      "test/net/prof1_service.test.js"
     ]
   },
   {
@@ -111,7 +111,7 @@
     "old": "export const courtWritCount = (active) => 6 * Math.max(1, Math.ceil(Math.max(0, Number(active) || 0) / 100));",
     "new": "export const courtWritCount = (active) => 6;",
     "tests": [
-      "test/prof1_law.test.js"
+      "test/systems/foraging/prof1_law.test.js"
     ]
   },
   {
@@ -120,8 +120,8 @@
     "old": "export const writPay = (units, value) => (units * value * 6) / 5;",
     "new": "export const writPay = (units, value) => (units * value * 3) / 2;",
     "tests": [
-      "test/prof1_law.test.js",
-      "test/prof1_service.test.js"
+      "test/systems/foraging/prof1_law.test.js",
+      "test/net/prof1_service.test.js"
     ]
   },
   {
@@ -130,8 +130,8 @@
     "old": "    out[row.respec_rank] = row.respec_to;",
     "new": "",
     "tests": [
-      "test/prof1_law.test.js",
-      "test/prof1_service.test.js"
+      "test/systems/foraging/prof1_law.test.js",
+      "test/net/prof1_service.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "export const basketStep = (finds) => (finds >= 3 ? 1.5 : finds === 2 ? 1.25 : 1);",
     "new": "export const basketStep = (finds) => (finds >= 3 ? 1.5 : 1);",
     "tests": [
-      "test/prof1_law.test.js"
+      "test/systems/foraging/prof1_law.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "    for (let t = 0; t < table.length; t++) if (table[t].includes(templateIndex) && (best === null || t + 1 < best)) best = t + 1;",
     "new": "    for (let t = 0; t < table.length; t++) if (table[t].includes(templateIndex) && (best === null || t + 1 > best)) best = t + 1;",
     "tests": [
-      "test/prof1_law.test.js"
+      "test/systems/foraging/prof1_law.test.js"
     ]
   },
   {
@@ -158,8 +158,8 @@
     "old": "export const herbInSeason = (templateIndex, season) => season !== SEASONS.Winter || !WINTER_BARE.includes(templateIndex);",
     "new": "export const herbInSeason = (templateIndex, season) => true;",
     "tests": [
-      "test/prof1_law.test.js",
-      "test/prof1_client.test.js"
+      "test/systems/foraging/prof1_law.test.js",
+      "test/systems/prof1_client.test.js"
     ]
   },
   {
@@ -168,7 +168,7 @@
     "old": "drawTier(unit('herb', x, y, day, slot, 3), confirmed ? HERB_TIERS : 2);",
     "new": "drawTier(unit('herb', x, y, day, slot, 3), HERB_TIERS);",
     "tests": [
-      "test/prof1_law.test.js"
+      "test/systems/foraging/prof1_law.test.js"
     ]
   },
   {
@@ -177,7 +177,7 @@
     "old": "  if (seasonalEye) return { slot, u, v, tier, herb: first, offSeason: true };",
     "new": "",
     "tests": [
-      "test/prof1_law.test.js"
+      "test/systems/foraging/prof1_law.test.js"
     ]
   },
   {
@@ -186,7 +186,7 @@
     "old": "  if (bruised) y = Math.max(1, y - 1);",
     "new": "  if (bruised) y = y - 1;",
     "tests": [
-      "test/prof1_law.test.js"
+      "test/systems/foraging/prof1_law.test.js"
     ]
   },
   {
@@ -195,7 +195,7 @@
     "old": "  return whole + (chance < y - whole - 1e-9 ? 1 : 0);",
     "new": "  return whole;",
     "tests": [
-      "test/prof1_law.test.js"
+      "test/systems/foraging/prof1_law.test.js"
     ]
   },
   {
@@ -204,8 +204,8 @@
     "old": "export const WITNESS = Object.freeze({ ageS: 7 * 86_400, confirm: 3, dispute: 2 });",
     "new": "export const WITNESS = Object.freeze({ ageS: 7 * 86_400, confirm: 2, dispute: 2 });",
     "tests": [
-      "test/prof1_law.test.js",
-      "test/prof1_service.test.js"
+      "test/systems/foraging/prof1_law.test.js",
+      "test/net/prof1_service.test.js"
     ]
   },
   {
@@ -214,7 +214,7 @@
     "old": "  if (confirmed) return { state: disputed ? 'disputed' : 'confirmed', ...parse(confirmed) };",
     "new": "  if (confirmed && !disputed) return { state: 'confirmed', ...parse(confirmed) };",
     "tests": [
-      "test/prof1_law.test.js"
+      "test/systems/foraging/prof1_law.test.js"
     ]
   },
   {
@@ -223,8 +223,8 @@
     "old": "    const upTo = p.confirmed ? HERB_TIERS : 2;",
     "new": "    const upTo = HERB_TIERS;",
     "tests": [
-      "test/prof1_law.test.js",
-      "test/prof1_service.test.js"
+      "test/systems/foraging/prof1_law.test.js",
+      "test/net/prof1_service.test.js"
     ]
   },
   {
@@ -233,7 +233,7 @@
     "old": "    if (slot === 0 || !low.length) tier = high.length ? high[high.length - 1] : tiers[tiers.length - 1];",
     "new": "    if (!low.length) tier = high.length ? high[high.length - 1] : tiers[tiers.length - 1];",
     "tests": [
-      "test/prof1_law.test.js"
+      "test/systems/foraging/prof1_law.test.js"
     ]
   },
   {
@@ -242,7 +242,7 @@
     "old": "  return s === 'on' || (s === 'dev' && isDeveloper(player, env));",
     "new": "  return s !== 'off';",
     "tests": [
-      "test/prof1_service.test.js"
+      "test/net/prof1_service.test.js"
     ]
   },
   {
@@ -251,7 +251,7 @@
     "old": "  if (accountKind(player) !== 'linked') return { error: 'prof-need-account' };",
     "new": "",
     "tests": [
-      "test/prof1_service.test.js"
+      "test/net/prof1_service.test.js"
     ]
   },
   {
@@ -260,7 +260,7 @@
     "old": "  if (prior) return harvestAnswer(db, player, env, prior, nowS, { repeat: true });   // before the switch: a harvest made is a harvest answered",
     "new": "",
     "tests": [
-      "test/prof1_service.test.js"
+      "test/net/prof1_service.test.js"
     ],
     "note": "SILVER-FINDS (PIN MOVED): a harvest asked again says its find too (gatherMarksOf) - re-aimed by content. GATHER-SPEED/MARKET-SPEED (PIN MOVED): re-aimed by content - the reads batched."
   },
@@ -270,7 +270,7 @@
     "old": "  if (n.day !== day) return { error: 'prof-day' };   // PROF0 19: a node whose UTC day has ended lapses",
     "new": "",
     "tests": [
-      "test/prof1_service.test.js"
+      "test/net/prof1_service.test.js"
     ]
   },
   {
@@ -279,7 +279,7 @@
     "old": "  if (!Number.isSafeInteger(at) || at < nowS - HARVEST_LATE_S || at > nowS + HARVEST_EARLY_S || utcDay(at) !== day) return { error: 'prof-late' };",
     "new": "  if (!Number.isSafeInteger(at)) return { error: 'prof-late' };",
     "tests": [
-      "test/prof1_service.test.js"
+      "test/net/prof1_service.test.js"
     ]
   },
   {
@@ -288,7 +288,7 @@
     "old": "  if (confirmed && (fact.climate !== climate || fact.region !== region)) {\n",
     "new": "  if (false) {\n",
     "tests": [
-      "test/prof1_service.test.js"
+      "test/net/prof1_service.test.js"
     ]
   },
   {
@@ -297,7 +297,7 @@
     "old": "      tier = patch.tier;\n      if (!tierOpen(rank, tier)) return { error: 'prof-rank' };",
     "new": "      tier = patch.tier;",
     "tests": [
-      "test/prof1_service.test.js"
+      "test/net/prof1_service.test.js"
     ]
   },
   {
@@ -306,7 +306,7 @@
     "old": "    clean = !common && act?.clean === true && !bruised;",
     "new": "    clean = !common && act?.clean === true;",
     "tests": [
-      "test/prof1_service.test.js"
+      "test/net/prof1_service.test.js"
     ]
   },
   {
@@ -315,8 +315,8 @@
     "old": "      WHERE (?15 = 0 OR",
     "new": "      WHERE (SELECT COUNT(*) FROM node_harvests WHERE player = ?1 AND char_id = ?4 AND profession = ?9 AND day = ?6) < 60\n        AND (?15 = 0 OR",
     "tests": [
-      "test/prof1_service.test.js",
-      "test/cap_off.test.js"
+      "test/net/prof1_service.test.js",
+      "test/net/cap_off.test.js"
     ],
     "note": "RETIRED by CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\"): the character's day of sixty is gone and the pin turned (the sixty-first credited) - the mutant asks the sixty again. It was the mutant that uncapped the day."
   },
@@ -326,7 +326,7 @@
     "old": "SELECT ?6, ?7, ?8, ?1, ?4, ?9, ?5, MIN(?10, ?11 - ${stored},\n",
     "new": "SELECT ?6, ?7, ?8, ?1, ?4, ?9, ?5, MIN(?10, ?10,\n",
     "tests": [
-      "test/prof1_service.test.js"
+      "test/net/prof1_service.test.js"
     ]
   },
   {
@@ -335,7 +335,7 @@
     "old": "  const witness = !isBody && Number.isSafeInteger(player.registered_at) && player.registered_at <= nowS - WITNESS.ageS ? 1 : 0;",
     "new": "  const witness = 1;",
     "tests": [
-      "test/prof1_service.test.js"
+      "test/net/prof1_service.test.js"
     ]
   },
   {
@@ -344,7 +344,7 @@
     "old": "    db.prepare(`UPDATE prof_stores SET qty = qty - MAX(0, ${qtySql} - ${bought})",
     "new": "    db.prepare(`UPDATE prof_stores SET qty = qty - MIN(qty, ${qtySql})",
     "tests": [
-      "test/prof1_service.test.js"
+      "test/net/prof1_service.test.js"
     ]
   },
   {
@@ -353,7 +353,7 @@
     "old": "      WHERE id = ?5 AND filled_by IS NULL AND expires_at > ?3",
     "new": "      WHERE id = ?5 AND expires_at > ?3",
     "tests": [
-      "test/prof1_service.test.js"
+      "test/net/prof1_service.test.js"
     ]
   },
   {
@@ -362,7 +362,7 @@
     "old": "        AND (SELECT COUNT(*) FROM writs WHERE filled_by = ?1 AND day = ?7) < ?8",
     "new": "        AND 1 = 1",
     "tests": [
-      "test/prof1_service.test.js"
+      "test/net/prof1_service.test.js"
     ]
   },
   {
@@ -371,7 +371,7 @@
     "old": "        AND ${spendableSql('?1', '?2', 'writs.material')} >= writs.qty",
     "new": "        AND 1 = 1",
     "tests": [
-      "test/prof1_service.test.js"
+      "test/net/prof1_service.test.js"
     ]
   },
   {
@@ -380,7 +380,7 @@
     "old": "      SELECT 'mint', NULL, 'account', ?1, 'writ', pay, ?7, ?3, ?1, NULL, 'writ:' || id FROM writs WHERE id = ?5 AND n = ?6`)",
     "new": "      SELECT 'mint', NULL, 'account', ?1, 'writ', pay, ?7, ?3, ?1, NULL, 'writ:' || id FROM writs WHERE id = ?5 AND n = 'none'`)",
     "tests": [
-      "test/prof1_service.test.js"
+      "test/net/prof1_service.test.js"
     ]
   },
   {
@@ -389,7 +389,7 @@
     "old": "  if (!table.length) return;\n  const active",
     "new": "  const active",
     "tests": [
-      "test/prof1_service.test.js"
+      "test/net/prof1_service.test.js"
     ]
   },
   {
@@ -398,7 +398,7 @@
     "old": "      WHERE COALESCE((SELECT balance FROM marks WHERE account = ?1), 0) >= ?4\n        AND NOT EXISTS",
     "new": "      WHERE 1 = 1\n        AND NOT EXISTS",
     "tests": [
-      "test/prof1_service.test.js"
+      "test/net/prof1_service.test.js"
     ]
   },
   {
@@ -407,7 +407,7 @@
     "old": "      character: h.character, node: h.node, kind: h.kind, climate: h.climate, region: h.region, act: h.act, at: h.at, rid: h.rid,",
     "new": "      character: h.character, node: h.node, kind: h.kind, climate: h.climate, region: h.region, act: h.act, at: h.at, rid: `${h.rid}x${Date.now()}`,",
     "tests": [
-      "test/prof1_client.test.js"
+      "test/systems/prof1_client.test.js"
     ]
   },
   {
@@ -416,7 +416,7 @@
     "old": "          if (lapsed) {",
     "new": "          if (false) {",
     "tests": [
-      "test/prof1_client.test.js"
+      "test/systems/prof1_client.test.js"
     ],
     "note": "AUDIT BAG1 + GUILD2 (PIN MOVED): re-aimed by content - a lapse is a block now (a carried harvest is asked once first, B1)."
   },
@@ -426,7 +426,7 @@
     "old": "    if (keptAnswer(r)) return { ok: false, kept: true, text: t('prof.page.stores.withdrawKept', 'The Stores have your order and will send it when the counting-house answers.') };",
     "new": "    if (keptAnswer(r)) { mint(w.material, w.qty); return { ok: false, kept: true, text: '' }; }",
     "tests": [
-      "test/prof1_client.test.js"
+      "test/systems/prof1_client.test.js"
     ]
   },
   {
@@ -435,7 +435,7 @@
     "old": "        const r = await ask(() => door.deliver(c, writId, m.id));\n        m.promise = null;\n        if (!keptAnswer(r)) ids.delete(key);",
     "new": "        const r = await ask(() => door.deliver(c, writId, m.id));\n        m.promise = null;\n        ids.delete(key);",
     "tests": [
-      "test/prof1_client.test.js"
+      "test/systems/prof1_client.test.js"
     ]
   },
   {
@@ -444,7 +444,7 @@
     "old": "        if (!held) { st.cancelled = true; return st; }   // let go before the end: nothing lost",
     "new": "",
     "tests": [
-      "test/prof1_client.test.js"
+      "test/systems/prof1_client.test.js"
     ]
   },
   {
@@ -453,7 +453,7 @@
     "old": "        if (!gentle && (turned > st.window || moved > HERB_ACT.moveM)) st.bruised = true;",
     "new": "        if (turned > st.window || moved > HERB_ACT.moveM) st.bruised = true;",
     "tests": [
-      "test/prof1_client.test.js"
+      "test/systems/prof1_client.test.js"
     ]
   },
   {
@@ -462,7 +462,7 @@
     "old": "const turnDeg = (a, b) => { let d = (a - b) % 360; if (d > 180) d -= 360; if (d < -180) d += 360; return Math.abs(d); };",
     "new": "const turnDeg = (a, b) => Math.abs(a - b);",
     "tests": [
-      "test/prof1_client.test.js"
+      "test/systems/prof1_client.test.js"
     ]
   },
   {
@@ -471,7 +471,7 @@
     "old": "  if (patch.tier > 1 && !sickle) return { kind, verb: `Pick ${name}`, rest: 'needs a Sickle', ready: false, both };",
     "new": "",
     "tests": [
-      "test/prof1_client.test.js"
+      "test/systems/prof1_client.test.js"
     ]
   },
   {
@@ -480,34 +480,34 @@
     "old": "  let kind = basket ? 'food' : 'herbs';",
     "new": "  let kind = basket ? 'herbs' : 'food';",
     "tests": [
-      "test/prof1_client.test.js"
+      "test/systems/prof1_client.test.js"
     ]
   },
   {
     "name": "PROF1-54-online-the-foods-shelve-too",
-    "file": "src/systems/foragingInstall.js",
+    "file": "src/systems/foraging/foragingInstall.js",
     "old": "  return isOnlinePage() ? [...TOOL_TEMPLATES] : [];",
     "new": "  return isOnlinePage() ? FORAGING_TEMPLATES.map((t) => t.index) : [];",
     "tests": [
-      "test/prof1_client.test.js"
+      "test/systems/prof1_client.test.js"
     ]
   },
   {
     "name": "PROF1-55-online-nothing-shelves",
-    "file": "src/systems/foragingInstall.js",
+    "file": "src/systems/foraging/foragingInstall.js",
     "old": "  return isOnlinePage() ? [...TOOL_TEMPLATES] : [];",
     "new": "  return [];",
     "tests": [
-      "test/prof1_client.test.js"
+      "test/systems/prof1_client.test.js"
     ]
   },
   {
     "name": "PROF1-56-patches-in-towns",
-    "file": "src/world/terrainNature.js",
+    "file": "src/world/terrain/terrainNature.js",
     "old": "  if (locationRect && x >= locationRect.xMin - NATURE_CLEARANCE && x < locationRect.xMax + NATURE_CLEARANCE",
     "new": "  if (false && locationRect && x >= locationRect.xMin - NATURE_CLEARANCE && x < locationRect.xMax + NATURE_CLEARANCE",
     "tests": [
-      "test/prof1_client.test.js"
+      "test/systems/prof1_client.test.js"
     ]
   },
   {
@@ -516,16 +516,16 @@
     "old": "      b.disabled = busy || workBusy || held < w.qty || full;",
     "new": "      b.disabled = busy || workBusy || full;",
     "tests": [
-      "test/prof1_client.test.js"
+      "test/systems/prof1_client.test.js"
     ]
   },
   {
     "name": "PROF1-58-the-food-ignores-cc",
-    "file": "src/systems/profItems.js",
+    "file": "src/systems/professions/profItems.js",
     "old": "  if (key === 'food:apple') return fruitTemplate('Apple', cc);",
     "new": "  if (key === 'food:apple') return fruitTemplate('Apple', false);",
     "tests": [
-      "test/prof1_client.test.js"
+      "test/systems/prof1_client.test.js"
     ]
   }
 ]

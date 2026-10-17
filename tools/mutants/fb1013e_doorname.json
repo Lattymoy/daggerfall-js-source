@@ -5,7 +5,7 @@
     "old": "      const bd = doorBuilding(entry);\n",
     "new": "      const bd = buildingUnderRay(eye, dir);\n",
     "tests": [
-      "test/fb1013e_doorname.test.js"
+      "test/systems/fb1013e_doorname.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    const bd = entry ? buildingDataForDoor?.(entry) ?? null : null;",
     "new": "    const bd = null;",
     "tests": [
-      "test/fb1013e_doorname.test.js"
+      "test/systems/fb1013e_doorname.test.js"
     ]
   }
 ]

@@ -5,7 +5,7 @@
     "old": "    if (!next) return this._unseat(held);",
     "new": "    if (!next) return false;",
     "tests": [
-      "test/fb1004d_reseatgaps.test.js"
+      "test/systems/quest/fb1004d_reseatgaps.test.js"
     ],
     "note": "the fault itself: a site no building of its kind stands for names a stranger by its old key"
   },
@@ -15,7 +15,7 @@
     "old": "    if (recordStands(held)) return sd.unseated ? this._seatBack(held) : false;",
     "new": "    if (recordStands(held)) return false;",
     "tests": [
-      "test/fb1004d_reseatgaps.test.js"
+      "test/systems/quest/fb1004d_reseatgaps.test.js"
     ],
     "note": "an unseated site whose town stands in its layout again is its building again"
   },
@@ -25,7 +25,7 @@
     "old": "    const held = sd.unseated ? { ...sd, ...sd.unseated } : sd;   // RESEAT-GAPS: an unseated site is asked by its own record",
     "new": "    const held = sd;   // RESEAT-GAPS: an unseated site is asked by its own record",
     "tests": [
-      "test/fb1004d_reseatgaps.test.js"
+      "test/systems/quest/fb1004d_reseatgaps.test.js"
     ],
     "note": "an unseated site is asked by the record it keeps - never again tried, it is stranded for good"
   },
@@ -35,7 +35,7 @@
     "old": "unseated: { buildingKey: held.buildingKey, ...(layout ? { layout } : {}) } };",
     "new": "unseated: { buildingKey: 0, ...(layout ? { layout } : {}) } };",
     "tests": [
-      "test/fb1004d_reseatgaps.test.js"
+      "test/systems/quest/fb1004d_reseatgaps.test.js"
     ],
     "note": "the record keeps the key it was chosen at"
   },
@@ -45,7 +45,7 @@
     "old": "    this.siteDetails = { ...record, buildingKey: 0, unseated:",
     "new": "    this.siteDetails = { ...record, buildingKey: held.buildingKey, unseated:",
     "tests": [
-      "test/fb1004d_reseatgaps.test.js"
+      "test/systems/quest/fb1004d_reseatgaps.test.js"
     ],
     "note": "unseated names no building - the old key is a stranger's"
   },
@@ -55,7 +55,7 @@
     "old": "    const s = site?.unseated ? { ...site, ...site.unseated } : site;",
     "new": "    const s = site;",
     "tests": [
-      "test/fb1004d_reseatgaps.test.js"
+      "test/systems/quest/fb1004d_reseatgaps.test.js"
     ],
     "note": "an unseated site still asks for the layout it was chosen in, so a pack that could not load brings it back"
   },
@@ -65,7 +65,7 @@
     "old": "          && place.siteDetails.buildingKey === buildingKey && recordStands(place.siteDetails)) return true;",
     "new": "          && place.siteDetails.buildingKey === buildingKey) return true;",
     "tests": [
-      "test/fb1004d_reseatgaps.test.js"
+      "test/systems/quest/fb1004d_reseatgaps.test.js"
     ],
     "note": "a sibling not chosen again yet keeps another out of the building its old key names"
   },
@@ -75,7 +75,7 @@
     "old": "        && site.buildingKey === buildingKey && recordStands(site)) return true;",
     "new": "        && site.buildingKey === buildingKey) return true;",
     "tests": [
-      "test/fb1004d_reseatgaps.test.js"
+      "test/systems/quest/fb1004d_reseatgaps.test.js"
     ],
     "note": "an active quest site not chosen again yet keeps another out of the building its old key names"
   }

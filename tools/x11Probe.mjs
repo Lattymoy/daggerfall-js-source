@@ -53,7 +53,7 @@ await page.waitForFunction(() => window.__shotReady === true, null, { timeout: 2
 // The shipped maker builds every record, in the page, so the probe
 // cannot drift from the real packing.
 const mkSpell = (slots, rangeType) => page.evaluate(async ([s, rt]) => {
-  const { buildCustomSpell, blankEffectSettings } = await import('/src/systems/spellMaker.js');
+  const { buildCustomSpell, blankEffectSettings } = await import('/src/systems/spell/spellMaker.js');
   return buildCustomSpell({
     slots: s.map((x) => ({ type: x.type, subType: x.subType, settings: { ...blankEffectSettings(), ...x.settings } })),
     rangeType: rt,
@@ -191,7 +191,7 @@ const kinds = () => page.evaluate(() => (window.__playerEntity.activeEffects ?? 
   // flip dressed as a test (the first run of this probe failed exactly
   // that way, with the reflection working perfectly).
   const bounced = await page.evaluate(async () => {
-    const { buildCustomSpell, blankEffectSettings } = await import('/src/systems/spellMaker.js');
+    const { buildCustomSpell, blankEffectSettings } = await import('/src/systems/spell/spellMaker.js');
     const live = (window.__liveFoeRecords() ?? []);
     if (!live.length) return { skip: 'no foes' };
     const rec = live[0].ref;
@@ -282,7 +282,7 @@ if (pageErrors.length !== realErrors.length) console.log('  [note] CURSOR.IMG is
 {
   const before = await page.evaluate(() => JSON.parse(window.__candle()).count);
   const lit = await page.evaluate(async () => {
-    const st = await import('/src/systems/settings.js');
+    const st = await import('/src/systems/settings/settings.js');
     const ui = await import('/src/systems/useItem.js');
     const pt = await import('/src/systems/playerTorch.js');
     // the SHIPPED setting, the SHIPPED use door
@@ -319,14 +319,14 @@ if (pageErrors.length !== realErrors.length) console.log('  [note] CURSOR.IMG is
   await frames(3);
   await shot('04-torch-lit');
   await page.evaluate(async () => {
-    const st = await import('/src/systems/settings.js');
+    const st = await import('/src/systems/settings/settings.js');
     st.setValue('Enhancements', 'PlayerTorchFromItems', 'False');
     window.__playerEntity.lightSource = null;
   });
   await frames(3);
   await shot('05-torch-doused');
   await page.evaluate(async () => {
-    const st = await import('/src/systems/settings.js');
+    const st = await import('/src/systems/settings/settings.js');
     st.setValue('Enhancements', 'PlayerTorchFromItems', 'True');
     const e = window.__playerEntity;
     e.lightSource = (e.items ?? []).find((i) => i.templateIndex === 247) ?? null;
@@ -351,7 +351,7 @@ if (pageErrors.length !== realErrors.length) console.log('  [note] CURSOR.IMG is
   });
   check('and it burns a point of fuel on the wall clock', burned.now === burned.start - 1, burned);
   await page.evaluate(async () => {
-    const st = await import('/src/systems/settings.js');
+    const st = await import('/src/systems/settings/settings.js');
     st.setValue('Enhancements', 'PlayerTorchFromItems', 'False');
   });
 }

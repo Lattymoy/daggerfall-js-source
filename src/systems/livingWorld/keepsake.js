@@ -9,7 +9,7 @@
 // (`livingKeepsake`: their id, name, town and home). It does not stack, and no shelf stocks it.
 // CARRIED HOME (`keepsakeFor`): the keepsake of one who lived in a town's home, among what the player carries - the
 // household's moment when the player speaks with one of them (livingTown.js moment).
-import { registerCustomTemplates, setItemFields, mintCondition } from '../itemTemplates.js';
+import { registerCustomTemplates, setItemFields, mintCondition } from '../item/itemTemplates.js';
 import { lwSeed, textSeed } from './seed.js';
 
 /** The keepsake's template index - free after the port's own (survival's 1700s). */

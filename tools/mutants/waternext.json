@@ -1,137 +1,137 @@
 [
   {
     "name": "BED-one-vote-enough",
-    "file": "src/world/waterBed.js",
+    "file": "src/world/water/waterBed.js",
     "old": "      if (south && west && !(table[bytes[rowS + cx - 1]] & 8)) continue;",
     "new": "      if (south && west && (table[bytes[rowS + cx - 1]] & 8)) { wet[vz * gx + vx] = 1; any = true; continue; }",
     "tests": [
-      "test/waterbed.test.js"
+      "test/world/terrain/waterbed.test.js"
     ]
   },
   {
     "name": "BED-the-edge-a-bank",
-    "file": "src/world/waterBed.js",
+    "file": "src/world/water/waterBed.js",
     "old": "      if (!((south || north) && (west || east))) continue;   // a tile past the map's edge is no vote - and no tile, no vertex",
     "new": "      if (!(south && north && west && east)) continue;   // a tile past the map's edge is no vote - and no tile, no vertex",
     "tests": [
-      "test/waterbed.test.js"
+      "test/world/terrain/waterbed.test.js"
     ]
   },
   {
     "name": "BED-no-diagonal",
-    "file": "src/world/waterBed.js",
+    "file": "src/world/water/waterBed.js",
     "old": "        if (x > 0 && d[i - gx - 1] + 4 < v) v = d[i - gx - 1] + 4;",
     "new": "        if (x > 0 && d[i - gx - 1] + 99 < v) v = d[i - gx - 1] + 99;",
     "tests": [
-      "test/waterbed.test.js"
+      "test/world/terrain/waterbed.test.js"
     ]
   },
   {
     "name": "BED-ease-out-again",
-    "file": "src/world/waterBed.js",
+    "file": "src/world/water/waterBed.js",
     "old": "export const bedProfile = (t) => { const c = Math.min(1, Math.max(0, t)); return c * c * (3 - 2 * c); };",
     "new": "export const bedProfile = (t) => { const c = Math.min(1, Math.max(0, t)); return c * (2 - c); };",
     "tests": [
-      "test/waterbed.test.js"
+      "test/world/terrain/waterbed.test.js"
     ]
   },
   {
     "name": "BED-unbounded",
-    "file": "src/world/waterBed.js",
+    "file": "src/world/water/waterBed.js",
     "old": "export const bedProfile = (t) => { const c = Math.min(1, Math.max(0, t));",
     "new": "export const bedProfile = (t) => { const c = Math.max(0, t);",
     "tests": [
-      "test/waterbed.test.js"
+      "test/world/terrain/waterbed.test.js"
     ]
   },
   {
     "name": "BED-carve-in-place",
-    "file": "src/world/waterBed.js",
+    "file": "src/world/water/waterBed.js",
     "old": "  const p = positions.slice(), nm = normals.slice();",
     "new": "  const p = positions, nm = normals;",
     "tests": [
-      "test/waterbed.test.js"
+      "test/world/terrain/waterbed.test.js"
     ]
   },
   {
     "name": "BED-normals-flat",
-    "file": "src/world/waterBed.js",
+    "file": "src/world/water/waterBed.js",
     "old": "      nm[i * 3] = nx / l; nm[i * 3 + 1] = 1 / l; nm[i * 3 + 2] = nz / l;",
     "new": "      void l;",
     "tests": [
-      "test/waterbed.test.js"
+      "test/world/terrain/waterbed.test.js"
     ]
   },
   {
     "name": "BED-skirt-left",
-    "file": "src/world/waterBed.js",
+    "file": "src/world/water/waterBed.js",
     "old": "    for (const edge of edges) for (let i = 0; i < gx; i++, o++) p[o * 3 + 1] -= depths[edge(i)];",
     "new": "    for (const edge of edges) for (let i = 0; i < gx; i++, o++) void edge;",
     "tests": [
-      "test/waterbed.test.js"
+      "test/world/terrain/waterbed.test.js"
     ]
   },
   {
     "name": "BED-host-uncarved",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "    const terrain = renderer.createTerrainSurface(carved?.positions ?? positions, carved?.normals ?? normals,",
     "new": "    const terrain = renderer.createTerrainSurface(positions, normals,",
     "tests": [
-      "test/waterbed.test.js"
+      "test/world/terrain/waterbed.test.js"
     ]
   },
   {
     "name": "RIPPLE-stir-lifts",
-    "file": "src/world/waterRipples.js",
+    "file": "src/world/water/waterRipples.js",
     "old": "        cur[idx(gx, gz)] -= strength * 0.5 * (1 + Math.cos(Math.PI * d));",
     "new": "        cur[idx(gx, gz)] += strength * 0.5 * (1 + Math.cos(Math.PI * d));",
     "tests": [
-      "test/waterripples.test.js"
+      "test/world/water/waterripples.test.js"
     ]
   },
   {
     "name": "RIPPLE-no-damping",
-    "file": "src/world/waterRipples.js",
+    "file": "src/world/water/waterRipples.js",
     "old": "          const v = ((cur[i - 1] + cur[i + 1] + cur[i - cells] + cur[i + cells]) * 0.5 - prev[i]) * damping;",
     "new": "          const v = ((cur[i - 1] + cur[i + 1] + cur[i - cells] + cur[i + cells]) * 0.5 - prev[i]);",
     "tests": [
-      "test/waterripples.test.js"
+      "test/world/water/waterripples.test.js"
     ]
   },
   {
     "name": "RIPPLE-no-cap",
-    "file": "src/world/waterRipples.js",
+    "file": "src/world/water/waterRipples.js",
     "old": "    acc = Math.min(acc + Math.max(0, dt), 4 / hz);",
     "new": "    acc = acc + Math.max(0, dt);",
     "tests": [
-      "test/waterripples.test.js"
+      "test/world/water/waterripples.test.js"
     ]
   },
   {
     "name": "RIPPLE-contents-left",
-    "file": "src/world/waterRipples.js",
+    "file": "src/world/water/waterRipples.js",
     "old": "    slide(cur, dx, dz); slide(prev, dx, dz);",
     "new": "    ",
     "tests": [
-      "test/waterripples.test.js"
+      "test/world/water/waterripples.test.js"
     ]
   },
   {
     "name": "RIPPLE-bias",
-    "file": "src/world/waterRipples.js",
+    "file": "src/world/water/waterRipples.js",
     "old": "      for (let i = 0; i < n; i++) bytes[i] = Math.max(1, Math.min(255, Math.round(128 + cur[i] / RIPPLE_SCALE)));",
     "new": "      for (let i = 0; i < n; i++) bytes[i] = Math.max(1, Math.min(255, Math.round(127 + cur[i] / RIPPLE_SCALE)));",
     "tests": [
-      "test/waterripples.test.js"
+      "test/world/water/waterripples.test.js"
     ]
   },
   {
     "name": "RIPPLE-speed-ignored",
-    "file": "src/world/waterRipples.js",
+    "file": "src/world/water/waterRipples.js",
     "old": "export const stirOf = (speed, swimming) => (swimming ? 0.035 : 0.02) + Math.min(speed, 8) * 0.012;",
     "new": "export const stirOf = (speed, swimming) => (swimming ? 0.035 : 0.02);",
     "tests": [
-      "test/waterripples.test.js"
+      "test/world/water/waterripples.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "    this._tex1Bound = null;   // unit 1 is the billboards' emission unit",
     "new": "    void 0;   // unit 1 is the billboards' emission unit",
     "tests": [
-      "test/waterripples.test.js"
+      "test/world/water/waterripples.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "export const SWELL_GALE = 0.34;",
     "new": "export const SWELL_GALE = 0.05;",
     "tests": [
-      "test/waternext.test.js"
+      "test/render/waternext.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "export const SWELL_G = 9.8;",
     "new": "export const SWELL_G = 1.0;",
     "tests": [
-      "test/waternext.test.js"
+      "test/render/waternext.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "  float grow = uOpen == 1 ? 1.0 : (aDepth < 0.0 ? 0.0 : smoothstep(${SHELF_SHEET_DEPTH.toFixed(3)}, ${(SHELF_SHEET_DEPTH + SWELL_DEPTH).toFixed(3)}, aDepth));",
     "new": "  float grow = uOpen == 1 ? 1.0 : (aDepth < 0.0 ? 0.0 : 1.0);",
     "tests": [
-      "test/waternext.test.js"
+      "test/render/waternext.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "    if (pushedD < here) uv = uv0; else path = max(pushedD - here, bedPath);",
     "new": "    path = max(pushedD - here, bedPath);",
     "tests": [
-      "test/waternext.test.js"
+      "test/render/waternext.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "    path = max(bedD - here, bedPath);   // the scene's measure",
     "new": "    path = max(bedD - here, 0.0);   // the scene's measure",
     "tests": [
-      "test/waternext.test.js"
+      "test/render/waternext.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "precision highp int;   // WATER-NEXT 2",
     "new": "// WATER-NEXT 2",
     "tests": [
-      "test/waternext.test.js"
+      "test/render/waternext.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "  float shore = 1.0 - smoothstep(0.0, band, vdepth - sw.x * ${FOAM_RUNUP.toFixed(2)});",
     "new": "  float shore = 1.0 - smoothstep(0.0, band, vdepth);",
     "tests": [
-      "test/waternext.test.js"
+      "test/render/waternext.test.js"
     ]
   },
   {
@@ -212,7 +212,7 @@
     "old": "* smoothstep(0.55, 0.9, uWindStrength);",
     "new": "* 1.0;",
     "tests": [
-      "test/waternext.test.js"
+      "test/render/waternext.test.js"
     ]
   },
   {
@@ -221,7 +221,7 @@
     "old": "  edge = max(edge, foam * smoothstep(0.0, 0.2, edge));",
     "new": "  edge = edge;",
     "tests": [
-      "test/waternext.test.js"
+      "test/render/waternext.test.js"
     ]
   },
   {
@@ -230,7 +230,7 @@
     "old": "    if (this._underWater !== undefined) return this._underWater;",
     "new": "    void 0;",
     "tests": [
-      "test/waternext.test.js"
+      "test/render/waternext.test.js"
     ]
   },
   {
@@ -239,7 +239,7 @@
     "old": "  if (uWaterBed < 0.5) return vec2(0.0);",
     "new": "  if (uWaterBed < -1.0) return vec2(0.0);",
     "tests": [
-      "test/waternext.test.js"
+      "test/render/waternext.test.js"
     ]
   },
   {
@@ -248,7 +248,7 @@
     "old": "  if (${PUDDLE_RECORDS.map((r) => `rec == ${r}u`).join(' || ')}) return vec2(0.0);",
     "new": "  if (false) return vec2(0.0);",
     "tests": [
-      "test/waternext.test.js"
+      "test/render/waternext.test.js"
     ]
   },
   {
@@ -257,7 +257,7 @@
     "old": "  waterBed = false;",
     "new": "  waterBed = true;",
     "tests": [
-      "test/waternext.test.js"
+      "test/render/waternext.test.js"
     ]
   },
   {
@@ -266,7 +266,7 @@
     "old": "  renderer.waterBed = waterOn;   // WATER-NEXT 2",
     "new": "  void waterOn;   // WATER-NEXT 2",
     "tests": [
-      "test/waternext.test.js"
+      "test/render/waternext.test.js"
     ]
   },
   {
@@ -275,7 +275,7 @@
     "old": "  if (uOpen == 1 && uSceneOn == 1) edge *= smoothstep(0.0, 0.12, vdepth);",
     "new": "  if (false) edge *= smoothstep(0.0, 0.12, vdepth);",
     "tests": [
-      "test/waternext.test.js"
+      "test/render/waternext.test.js"
     ]
   },
   {
@@ -284,7 +284,7 @@
     "old": "      columnOn: f.s.spawnSurfaces && !f.underwater && !waterOn,",
     "new": "      columnOn: f.s.spawnSurfaces && !f.underwater,",
     "tests": [
-      "test/waternext.test.js"
+      "test/render/waternext.test.js"
     ]
   },
   {
@@ -293,7 +293,7 @@
     "old": "    if (!csaRender || waterOn) return;",
     "new": "    if (!csaRender) return;",
     "tests": [
-      "test/waternext.test.js"
+      "test/render/waternext.test.js"
     ]
   },
   {
@@ -302,7 +302,7 @@
     "old": "(this._air && this._frameFbo && !this.waterSimple)",
     "new": "(this._air && this._frameFbo)",
     "tests": [
-      "test/waternext.test.js"
+      "test/render/waternext.test.js"
     ]
   },
   {
@@ -311,7 +311,7 @@
     "old": "  const ripples = waterOn && !renderer.waterSimple ? createRippleStir(createRipples()) : null;",
     "new": "  const ripples = waterOn ? createRippleStir(createRipples()) : null;",
     "tests": [
-      "test/waternext.test.js"
+      "test/render/waternext.test.js"
     ]
   }
 ]

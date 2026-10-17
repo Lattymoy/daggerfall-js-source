@@ -5,7 +5,7 @@
     "old": "    return !!g?.defender && (getBool('MeleeAttacks', 'MeleeAttackFriendlyProtection') || !!raidHere());",
     "new": "    return !!g?.defender && getBool('MeleeAttacks', 'MeleeAttackFriendlyProtection');",
     "tests": [
-      "test/fb0929_raidguards.test.js"
+      "test/scenes/fb0929_raidguards.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    return !!g?.defender && (getBool('MeleeAttacks', 'MeleeAttackFriendlyProtection') || !!raidHere());",
     "new": "    return !!raidHere() || !!g?.defender && getBool('MeleeAttacks', 'MeleeAttackFriendlyProtection');",
     "tests": [
-      "test/fb0929_raidguards.test.js"
+      "test/scenes/fb0929_raidguards.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    if (fromPlayer && !peer && g.defender && raidHere()) return;",
     "new": "    if (false) return;",
     "tests": [
-      "test/fb0929_raidguards.test.js"
+      "test/scenes/fb0929_raidguards.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    if (fromPlayer && !peer && g.defender && raidHere()) return;",
     "new": "    if (!peer && g.defender && raidHere()) return;",
     "tests": [
-      "test/fb0929_raidguards.test.js"
+      "test/scenes/fb0929_raidguards.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    const live = guards.filter((g) => !g.dead && !playerSpares(g));",
     "new": "    const live = guards.filter((g) => !g.dead);",
     "tests": [
-      "test/fb0929_raidguards.test.js"
+      "test/scenes/fb0929_raidguards.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "    raidHere: () => raidDefendingHere(),",
     "new": "    raidHere: () => false,",
     "tests": [
-      "test/fb0929_raidguards.test.js"
+      "test/scenes/fb0929_raidguards.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "guards: () => cityGuards.guards.filter((g) => !cityGuards.playerSpares(g)),",
     "new": "guards: () => cityGuards.guards,",
     "tests": [
-      "test/fb0929_raidguards.test.js"
+      "test/scenes/fb0929_raidguards.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "    if (f.region === region && f.ggroup === GUILD_GROUPS.KnightlyOrder && orders.has(f.id)) {",
     "new": "    if (f.ggroup === GUILD_GROUPS.KnightlyOrder && orders.has(f.id)) {",
     "tests": [
-      "test/fb0929_raidguards.test.js"
+      "test/scenes/fb0929_raidguards.test.js"
     ]
   }
 ]

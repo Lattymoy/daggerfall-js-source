@@ -2,7 +2,7 @@
 // (vendor/immersive-travel/ImmersiveTravel.dll) - the int32 arrays its static constructors fill with
 // RuntimeHelpers.InitializeArray from <PrivateImplementationDetails> field data. The IL dump shows the ldtoken and the
 // size (il/ImmersiveTravel.il.txt, CarriageMap::.cctor IL_15b0-15c2, SeafarersMap::.cctor IL_1957-1983) but not the
-// bytes; test/it1_immersivetravel.test.js finds each table, byte for byte and whole, in the vendored DLL.
+// bytes; test/systems/guild/it1_immersivetravel.test.js finds each table, byte for byte and whole, in the vendored DLL.
 //
 // A leaf: numbers alone, so the laws (systems/immersiveTravel.js) and a test can read them without the world.
 

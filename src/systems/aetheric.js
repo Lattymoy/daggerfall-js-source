@@ -8,7 +8,7 @@
 //
 // ═══ AETHERIC ══════════════════════════════════════════════════════
 //
-// The ladder's top rung under Artifact (systems/lootRarity.js RARITIES:
+// The ladder's top rung under Artifact (systems/loot/lootRarity.js RARITIES:
 // rank 4, the artifact's moved to 5): a colour of its own - the aether's
 // pale blue-white - a pip, a frame, a price. NOTHING ROLLS IT: the
 // ladder's roll (applyRarity) takes the rolled tiers alone, so no drop,
@@ -23,7 +23,7 @@
 // The set of Valkynaz Ruhn, Warden of the Burning Gate: nine pieces of
 // Daedric make - the nine places a set is worn - each a FIXED RECORD
 // (a name, a line of lore, three affixes at the TOP of the Legendary
-// band) wearing a sigil of its own set (systems/sigilSets.js 'ruhn',
+// band) wearing a sigil of its own set (systems/sigil/sigilSets.js 'ruhn',
 // whose tiers are the Burning Gate, Cleave and the Wrath of the
 // Warden). The Gatecleaver is a set weapon and carries the widest
 // band's top blow as well (SIGIL_POWER_MAX) - a BATTLE AXE, Daggerfall's
@@ -35,7 +35,7 @@
 //
 // ═══ THE DROP ══════════════════════════════════════════════════════
 //
-// A kill's spoils (systems/gateSpoils.js rollSpoils) roll ONE MORE THING
+// A kill's spoils (systems/gate/gateSpoils.js rollSpoils) roll ONE MORE THING
 // after everything they rolled before - so every earlier spoils, gold
 // to the last Magic piece, stays exactly what it was for its seed: a
 // Regalia piece REGALIA_CHANCE of the time, which one by the same seed.
@@ -44,7 +44,7 @@
 //
 // Mac, on World Events - Raiding Parties online: "3. We can also add
 // renown and it's own atheric + armor sets". Three more Aetheric sets,
-// one a raiding party (systems/sigilSets.js 'oath', 'thieftaker',
+// one a raiding party (systems/sigil/sigilSets.js 'oath', 'thieftaker',
 // 'orcsbane'), nine fixed records each - the nine places, a one-handed
 // weapon and a shield worn together - of the party's own make: the
 // knights' Mithril, the bandits' Elven, the orcs' own Orcish (the horde's
@@ -59,32 +59,44 @@
 //
 // Mac: "The serpent boss needs to use the currency from oblivion gate
 // and have its own equipment rewards". One more Aetheric set,
-// Sethrakul's Coilscale (systems/sigilSets.js 'coilscale'): nine fixed
+// Sethrakul's Coilscale (systems/sigil/sigilSets.js 'coilscale'): nine fixed
 // records of Ebony - the deep's own black - a one-handed Katana and a
 // shield among them. Its affixes and its blow stand at the Legendary
 // band's MIDDLE: a world boss at sea, over a town's thanks and under
 // the gate's Warden. A ship that dealt the serpent its share finds a
 // piece in its hoard SERPENT_SET_CHANCE of the time
-// (systems/serpentSpoils.js), rolled after everything the hoard rolled
+// (systems/serpent/serpentSpoils.js), rolled after everything the hoard rolled
 // before; no drop, shelf or Broker carries it, as no raid set's is.
 //
 // SD9d (2026-10-07, the Super Dungeons arc): and THE BRASS OF NUMIDIUM
-// (systems/sigilSets.js 'numidium'), what the Warp kept of the Walking
+// (systems/sigil/sigilSets.js 'numidium'), what the Warp kept of the Walking
 // Brass: nine fixed records of Dwarven make - the Dwemer's brass - a
 // round shield and a one-handed Longsword among them, every number at
 // the Legendary band's TOP, as the Regalia's (the hardest fight in the
 // game). The Brass Remnant's spoils carry a piece NUMIDIUM_SET_CHANCE
 // of the time, rolled after everything they rolled before.
+//
+// EG15 (2026-10-12, the Elite Gates arc): and THE BATTLEMAGE'S PANOPLY
+// (systems/sigil/sigilSets.js 'panoply'), the war-gear the Imperial
+// Battlemages wore in the Spire, taken by the Kyn: nine fixed records
+// of Mithril - a kite shield and a one-handed Saber among them - every
+// number at the Legendary band's TOP, as the Regalia's and the Brass's
+// (the Spire's top drop). No resistance on any piece: the set's 2-piece
+// tier raises every one. It rolls no drop of its own - a Redoubt's
+// spoils decide WHETHER (systems/eliteGates/egSpoils.js rollEgSpoils) and
+// mintPanoplyPiece picks WHICH; the Broker's weekly sink mints one by
+// its id (panoplyPieceById, the pay law's EG_PANOPLY_IDS).
 // ═══════════════════════════════════════════════════════════════════
 
-import { setItemFields, mintCondition, itemBaseValue } from './itemTemplates.js';
+import { setItemFields, mintCondition, itemBaseValue } from './item/itemTemplates.js';
 import { ARMOR_MATERIAL } from './armorMaterials.js';
 import { WEAPON_MATERIALS } from '../characters/weapons.js';
 import { createWeapon } from '../combat/enemyEquipment.js';
-import { affixesWorth, validAffix, AFFIX_RANGES, registerAethericLore } from './lootRarity.js';
+import { affixesWorth, validAffix, AFFIX_RANGES, registerAethericLore } from './loot/lootRarity.js';
 import { SKILLS } from './skills.js';
-import { SIGIL_POWER_MAX, SIGIL_BANDS } from './sigil.js';
-import { setPieceKind, setById, raidSetOf } from './sigilSets.js';   // AUDIT SET D6: the kinds a set counts, for the wire's cross-check
+import { SIGIL_POWER_MAX, SIGIL_BANDS } from './sigil/sigil.js';
+import { setPieceKind, setById, raidSetOf } from './sigil/sigilSets.js';   // AUDIT SET D6: the kinds a set counts, for the wire's cross-check
+import { EG_PANOPLY_IDS } from '../net/eliteGates/egPay.js';   // EG15: the nine ids the account service's sink sells by (pure, no imports)
 
 /** The tier's id, as `item.rarity` wears it. */
 export const AETHERIC = 'aetheric';
@@ -259,9 +271,38 @@ export const NUMIDIUM_SET_PIECES = Object.freeze([
   brass('hour-hand', 'The Hour-Hand', 'Weapons', 120, [t('damage'), t('stat', 'strength'), t('skill', SKILLS.LongBlade)],
     'Broken from the colossus\'s heart-clock. It points at what is about to end.'),
 ]);
+// ── EG15: THE BATTLEMAGE'S PANOPLY ──────────────────────────────────
+/** EG15 (2026-10-12, Mac: "I said I want everything"; bible/11-Multiplayer/Elite-Gates.md section 19): the war-gear the
+ *  Imperial Battlemages wore in the Spire, taken by the Kyn - nine in the places' order (the seven body pieces, a kite
+ *  shield and a ONE-HANDED Saber, so all nine are worn at once), Mithril, light enough for a spellsword. Every affix at
+ *  the Legendary band's TOP and the Spire-Saber's blow the sigil's greatest (the Regalia's and the Brass's measure: the
+ *  Spire's top drop - "No Gilded piece"). NO RESISTANCE on any piece: Battlemage's Bearing, the 2-piece tier, raises
+ *  every one, so the set alone stands at +15 an element at most, far under the saving throw's immunity (the Regalia's
+ *  AUDIT FINAL lesson). Each record's id is `panoply-<key>`, the pay law's (net/eliteGates/egPay.js EG_PANOPLY_IDS). */
+const mithril = (key, name, group, templateIndex, affixes, lore) => record(`panoply-${key}`, name, group, templateIndex, 'panoply', 'Mithril', SIGIL_POWER_MAX, affixes, lore);
+export const PANOPLY_SET_PIECES = Object.freeze([
+  mithril('warhelm', "The Battlemage's Warhelm", 'Armor', 107, [t('armor'), t('stat', 'intelligence'), t('skill', SKILLS.Destruction)],
+    'Its crest names a Battlemage who fell at the Weir Gate. A Kynreeve wore it to his Court after.'),
+  mithril('right-pauldron', "The Battlemage's Right Pauldron", 'Armor', 106, [t('armor'), t('stat', 'strength'), t('skill', SKILLS.LongBlade)],
+    'The Spire\'s eagle is struck through with a Dremora\'s mark. The Mithril under it held.'),
+  mithril('left-pauldron', "The Battlemage's Left Pauldron", 'Armor', 105, [t('armor'), t('stat', 'willpower'), t('skill', SKILLS.Alteration)],
+    'Worn on the casting arm, and cut so it never slows a spell.'),
+  mithril('cuirass', "The Battlemage's Cuirass", 'Armor', 102, [t('armor'), t('stat', 'endurance'), t('stat', 'intelligence')],
+    'Mithril over a Battlemage\'s heart. The Kyn hung it in a Court for a banner.'),
+  mithril('gauntlets', "The Battlemage's Gauntlets", 'Armor', 103, [t('armor'), t('stat', 'agility'), t('skill', SKILLS.CriticalStrike)],
+    'Thin at the fingers for the casting, thick at the knuckles for the blade.'),
+  mithril('greaves', "The Battlemage's Greaves", 'Armor', 104, [t('armor'), t('stat', 'speed'), t('weight')],
+    'They stood the Armsmaster\'s drills in the Spire\'s yards ten thousand times.'),
+  mithril('boots', "The Battlemage's Boots", 'Armor', 108, [t('armor'), t('stat', 'luck'), t('skill', SKILLS.Dodging)],
+    'The slipstream never moved them. The Kyn marched them across the void.'),
+  mithril('shield', 'The Spire-Shield', 'Armor', 111, [t('armor'), t('stat', 'willpower'), t('skill', SKILLS.Restoration)],
+    'The academy\'s eagle on a kite of Mithril. A Kynmarcher\'s claws scored it, and it held.'),
+  mithril('saber', 'The Spire-Saber', 'Weapons', 119, [t('damage'), t('stat', 'intelligence'), t('skill', SKILLS.LongBlade)],
+    'Every Battlemage carried one into the Spire in 3E 398. Few carried one out.'),
+]);
 /** EVERY AETHERIC RECORD - the Regalia, then the raiding parties', then (SERPENT-SET) the Old Coil's, then (SD9d) the
- *  Walking Brass's - and the one every reader asks. */
-export const AETHERIC_RECORDS = Object.freeze([...REGALIA, ...RAID_SET_PIECES, ...SERPENT_SET_PIECES, ...NUMIDIUM_SET_PIECES]);
+ *  Walking Brass's, then (EG15) the Battlemages' - and the one every reader asks. */
+export const AETHERIC_RECORDS = Object.freeze([...REGALIA, ...RAID_SET_PIECES, ...SERPENT_SET_PIECES, ...NUMIDIUM_SET_PIECES, ...PANOPLY_SET_PIECES]);
 export const aethericById = (id) => AETHERIC_RECORDS.find((r) => r.id === id) ?? null;
 registerAethericLore((item) => aethericById(item?.aetheric)?.lore ?? null);   // the card's last line, as a Legendary's
 /** A record's make as the item wears it: its material's id in its group's table. */
@@ -293,7 +334,7 @@ export function mintAetheric(r, { party = 1 } = {}) {
 }
 
 /**
- * AUDIT SET D6: THE MARKS AGREE WITH THE ITEM - for an item off the wire (systems/loot.js validLootItem: a shelf, a
+ * AUDIT SET D6: THE MARKS AGREE WITH THE ITEM - for an item off the wire (systems/loot/loot.js validLootItem: a shelf, a
  * chest, a body every client in the room lands). Each field's own kind is itemFields.js's; these are the checks no one
  * field can make, and a peer's forged mark failed none of them - a Regalia sigil on any Daedric cuirass was a piece of
  * Ruhn's Regalia to every card and every power:
@@ -360,7 +401,7 @@ export function rollRaidSetPiece(party, rolls = Math.random) {
 /** SERPENT-SET: the share of a hoard - a ship that DEALT Sethrakul its share - that carries a piece of the Coilscale: a
  *  town's thanks' own share (RAID_SET_CHANCE), the set being the serpent's alone (no drop, shelf or Broker carries it). */
 export const SERPENT_SET_CHANCE = RAID_SET_CHANCE;
-/** SERPENT-SET, THE HOARD'S LAST ROLL (systems/serpentSpoils.js, after everything it rolled before - every earlier
+/** SERPENT-SET, THE HOARD'S LAST ROLL (systems/serpent/serpentSpoils.js, after everything it rolled before - every earlier
  *  hoard stays what it was for its seed): null most times; else one Coilscale piece, the same seed choosing which. One
  *  roll when nothing drops, two when a piece does. */
 export function rollSerpentSetPiece(rolls = Math.random) {
@@ -371,10 +412,24 @@ export function rollSerpentSetPiece(rolls = Math.random) {
 /** SD9d: the share of the Brass Remnant's spoils that carries a piece of the Brass of Numidium - a third (the design's: the
  *  hardest fight, the rarest feat - a Hollow rises after a rest and falls once). */
 export const NUMIDIUM_SET_CHANCE = 1 / 3;
-/** SD9d, THE SPOILS' LAST ROLL (systems/sdSpoils.js, after everything they rolled before - every earlier spoils stays what
+/** SD9d, THE SPOILS' LAST ROLL (systems/superDungeon/sdSpoils.js, after everything they rolled before - every earlier spoils stays what
  *  it was for its seed): null most times; else one Numidium piece, the same seed choosing which. One roll when nothing
  *  drops, two when a piece does. */
 export function rollNumidiumPiece(rolls = Math.random) {
   if (!(rolls() < NUMIDIUM_SET_CHANCE)) return null;
   return mintAetheric(NUMIDIUM_SET_PIECES[Math.min(NUMIDIUM_SET_PIECES.length - 1, Math.floor(rolls() * NUMIDIUM_SET_PIECES.length))]);
+}
+
+/** EG15, WHICH PANOPLY PIECE (systems/eliteGates/egSpoils.js rollEgSpoils, once its own draw - net/eliteGates/egPay.js egPanoplyHit, or the
+ *  service's pity - has said one drops): one of the nine at even odds, off ONE draw of `rolls`. It decides nothing about
+ *  WHETHER: no chance of its own, so the pay law's odds and the service's pity count stay the one word on a drop. */
+export function mintPanoplyPiece(rolls = Math.random) {
+  const n = PANOPLY_SET_PIECES.length;
+  return mintAetheric(PANOPLY_SET_PIECES[Math.max(0, Math.min(n - 1, Math.floor(rolls() * n) || 0))]);
+}
+/** EG15, THE SINK'S PIECE (the Broker's weekly sale of the buyer's choosing, the account service's `eg_sink`): the piece
+ *  the pay law names by its id (net/eliteGates/egPay.js EG_PANOPLY_IDS), freshly minted - null for any other id. */
+export function panoplyPieceById(id) {
+  const r = EG_PANOPLY_IDS.includes(id) ? aethericById(id) : null;
+  return r ? mintAetheric(r) : null;
 }

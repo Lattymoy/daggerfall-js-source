@@ -47,7 +47,7 @@ export function billboardKey(b) {
 // exact depth TIE, two coplanar quads overlapping (every flat faces the same way, so any two whose origins sit at one
 // depth along the view are coplanar), where the FIRST drawn keeps the pixel. So nothing is relaxed: keys ascend as
 // the string compare had them, and one key's batches keep the order they came in, as the stable Array sort kept
-// them. The same draws, in the same order, for the same picture (test/la_cost.test.js holds it to the old sort).
+// them. The same draws, in the same order, for the same picture (test/render/la_cost.test.js holds it to the old sort).
 
 /** key string -> id, and id -> key string: the intern table. It holds a string per texture key the session has
  *  minted - the same set the renderer's texture cache holds a GL texture for - and never shrinks. */

@@ -2,27 +2,27 @@
 // is the ONE place a trade reaches the player's real inventory: what may be offered, how an offer is written for the
 // wire, how the peer's records are minted here, how goods are taken out (reserved) and put back, and whether a lot fits.
 //
-// THE LAWS IT BORROWS, not rewrites (the same standing rule ui/enhancedTrade.js states for the shop):
-//   - the wire projection is systems/loot.js validLootList/validLootItem - the clamp every peer-borne item already goes
+// THE LAWS IT BORROWS, not rewrites (the same standing rule ui/enhanced/enhancedTrade.js states for the shop):
+//   - the wire projection is systems/loot/loot.js validLootList/validLootItem - the clamp every peer-borne item already goes
 //     through (WORLD4): shape and depth bounds, a declared-field kind check, the value floored at what the port itself
 //     mints, `equipSlot` and `questItem` stripped (they are the RECEIVER's marks, never the sender's word);
 //   - what may not be offered is the pack's own refusals: worn gear (systems/equip.js isEquipped - a staged worn item
 //     would leave equip.slots pointing at it, AUDIT 17e F4), quest items (the quest owns them), summoned items (they
-//     vanish on a clock), gold-piece items (gold is offered as gold), and bound pieces (SS1, systems/itemBound.js: a
+//     vanish on a clock), gold-piece items (gold is offered as gold), and bound pieces (SS1, systems/item/itemBound.js: a
 //     Sigil Stone is never handed to another player - and a peer's lot carrying one is refused whole, below), and a
-//     Come Sail Away boat's deed or parts (AUDIT REALM2 T1: the realm's own law, net/realmTradeLaw.js BOAT_TEMPLATES);
+//     Come Sail Away boat's deed or parts (AUDIT REALM2 T1: the realm's own law, net/realm/realmTradeLaw.js BOAT_TEMPLATES);
 //   - weight is systems/inventory.js's own arithmetic against combat/formulas.js entityMaxEncumbrance.
 import { isBagItem } from '../net/bagLaw.js';   // BAG1
-import { activeWagonItem } from './wagonKinds.js';   // WAGONS2 (AUDIT)
-import { validLootList } from './loot.js';
-import { itemLongName } from './itemInfo.js';   // MARKET-ANY: a pack piece named as the pack names it
+import { activeWagonItem } from './wagon/wagonKinds.js';   // WAGONS2 (AUDIT)
+import { validLootList } from './loot/loot.js';
+import { itemLongName } from './item/itemInfo.js';   // MARKET-ANY: a pack piece named as the pack names it
 import { goodRefusal, GOOD_REFUSAL_WORDS } from '../net/marketLaw.js';   // MARKET-ANY: what may list from the pack
 import { splitStack, addItem, itemWeight, totalWeight, carriedWeight, isSummoned, isGoldPieces, addGoldPieces, goldPiecesOf, GOLD_PIECE_WEIGHT_KG } from './inventory.js';
 import { isEquipped } from './equip.js';
-import { clearLightSourceOnLeave } from './itemTransfer.js';
+import { clearLightSourceOnLeave } from './item/itemTransfer.js';
 import { entityMaxEncumbrance } from '../combat/formulas.js';
-import { isBound, BOUND_TRADE_TEXT } from './itemBound.js';   // SS1: a bound piece never leaves for another player
-import { BOAT_TEMPLATES } from '../net/realmTradeLaw.js';   // AUDIT REALM2 T1: nor a boat's deed or parts - what they stand for stays in the giver's save
+import { isBound, boundTradeText } from './item/itemBound.js';   // SS1: a bound piece never leaves for another player
+import { BOAT_TEMPLATES } from '../net/realm/realmTradeLaw.js';   // AUDIT REALM2 T1: nor a boat's deed or parts - what they stand for stays in the giver's save
 
 /** BAG1: the Materials Bag stays with its owner - a list of its own rides with it (systems/materialsBag.js), which no
  *  trade moves; every General Store sells another. */
@@ -34,7 +34,7 @@ export function tradeRefusal(item) {
   if (item.questItem) return 'Quest items cannot be traded.';
   if (isSummoned(item)) return 'Summoned items cannot be traded.';
   if (isGoldPieces(item)) return 'Offer gold with the gold box.';
-  if (isBound(item)) return BOUND_TRADE_TEXT;   // SS1
+  if (isBound(item)) return boundTradeText(item);   // SS1; AUDIT AUTO-HOLD: a piece the realm locked, in its own words
   if (BOAT_TEMPLATES.includes(item.templateIndex)) return 'Boat deeds and boat parts cannot be traded.';   // AUDIT REALM2 T1
   if (isBagItem(item)) return BAG_TRADE_TEXT;   // BAG1: the bag is its owner's
   return null;
@@ -98,8 +98,8 @@ export function createTradePack(entity, { stampIds = null } = {}) {
     unwire(records) { const items = validLootList(records); return items && !items.some(isBound) ? items : null; },
 
     /** AUDIT REALM L1-F1: where each offered item stands in the pack - its index in the list a save writes as `items`
-     *  (systems/save.js snapshotPlayer keeps the order) - read BEFORE the goods are reserved, so a realm trade's half
-     *  names the very records its checkpoint holds (net/realmTradeLaw.js realmTradePickOf); -1 for one not here. */
+     *  (systems/save/save.js snapshotPlayer keeps the order) - read BEFORE the goods are reserved, so a realm trade's half
+     *  names the very records its checkpoint holds (net/realm/realmTradeLaw.js realmTradePickOf); -1 for one not here. */
     picks(entries) { const items = list(); return entries.map(({ item }) => items.indexOf(item)); },
 
     /** Take the goods OUT of the pack (reserve). All-or-nothing: a lot that is not entirely here comes back null. */

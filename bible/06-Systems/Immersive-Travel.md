@@ -50,7 +50,7 @@ ships them and named where they stand.
 | `src/systems/immersiveTravelTables.js` | the three tables the static constructors fill out of field data: 40 capitals, 15 large docks, 382 dock pixels |
 | `src/world/immersiveTravelGates.js` | the gate records as a layer on whichever gate block is served (below) |
 | `tools/immersiveTravelPatches.mjs` | the four gate patches out of the shipped bundle |
-| `src/ui/travelMapWindow.js`, `src/ui/travelPopUp.js` | the classic skin: the CarriageMap's five-texel page, its refusal box, the mod's three popups |
+| `src/ui/travel/travelMapWindow.js`, `src/ui/travel/travelPopUp.js` | the classic skin: the CarriageMap's five-texel page, its refusal box, the mod's three popups |
 | `src/ui/heldMap.js` | the enhanced sheet: the same maps and popups as the sheet's card |
 | `src/scenes/world.js` | `openImmersiveMap` (the services' push, and online the sun's refusal), PlayerGPS for the laws (`itHere`) |
 | `src/scenes/worldModes.js` | a street merchant's popup in the street's slot, and the service's door (`enemiesNearby`, `openImmersiveMap`) |
@@ -156,7 +156,7 @@ classic block reads 32 slots (28 removed - Warm Ashes' patches, diffed against a
 real BSA, remove the same), and a scale of 1 on the two classic models, whose
 records carry none (6 sets). What it cannot carry is any other round-trip change
 to a classic record (an automap byte, a rotation's equivalent). The loader checks each rebuild against the
-author's sha256 and says when it differs, and `test/it1_worlddata.test.js`
+author's sha256 and says when it differs, and `test/formats/worldData/it1_worlddata.test.js`
 checks all four with `ARENA2_PATH` set. **OWED:** that run, on a machine with
 the ARENA2 - and if it differs, `node tools/immersiveTravelPatches.mjs
 <immersivetravel.dfmod> <arena2>`, which writes WD1's own diff, checked.
@@ -182,7 +182,7 @@ owner's eyes, once.
 
 ## Online
 
-The mod is the room's (`systems/onlineLane.js`): its switch for the floor's
+The mod is the room's (`systems/online/onlineLane.js`): its switch for the floor's
 reason (collidable carriages at every gate), and Disable Normal Travel held
 **off** - so the map's trips stay Travel Options' walked journeys (TRAVEL-ONLINE
 whole) and a driver's fare is fast travel over land (a port's ship passage the
@@ -251,13 +251,13 @@ character's own clock (LIVED1).
     the mod as here, at every walled city's WALLAA09 gate. While the mod is
     loaded the flat wears classic's own bearded man's face (182.3, 429), written
     into FLATS.CFG's dictionary as Roleplay & Realism writes it
-    (`immersiveTravel.js` `IT_DRIVER_FACE`). `test/fb1009b_driverface.test.js`.
+    (`immersiveTravel.js` `IT_DRIVER_FACE`). `test/systems/fb1009b_driverface.test.js`.
 
 ## Pins
 
-`test/it1_immersivetravel.test.js` (13), `test/it1_worlddata.test.js` (5, one
-with `ARENA2_PATH`), `test/it1_heldmap.test.js` (4), `test/it1_classicmap.test.js`
+`test/systems/guild/it1_immersivetravel.test.js` (13), `test/formats/worldData/it1_worlddata.test.js` (5, one
+with `ARENA2_PATH`), `test/systems/travel/it1_heldmap.test.js` (4), `test/systems/it1_classicmap.test.js`
 (2); `tools/mutants/it1.json` (35, all dead; AUDIT IT1 W3 retired IT1-26). AUDITED the same day (AUDIT IT1,
-`01-Overview/Audit-IT1.md`): `test/auditit1.test.js` (16) and
+`01-Overview/audits/Audit-IT1.md`): `test/systems/auditit1.test.js` (16) and
 `tools/mutants/auditit1.json` (30, all dead). Not seen in a browser: no ARENA2,
 no GPU in this container.

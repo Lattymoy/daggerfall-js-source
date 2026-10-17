@@ -6,7 +6,7 @@
     "new": "    stamina: { floor: 0.5, hotFrom: 51, coldFrom: -31, bareFeet: false, duringRest: false, repaid: true, fireWarms: true },",
     "why": "the needs take half the pool in Boons",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -16,7 +16,7 @@
     "new": "    stamina: { floor: 0, hotFrom: 51, coldFrom: -31, bareFeet: false, duringRest: false, repaid: true, fireWarms: true },",
     "why": "the needs empty the pool in Boons",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -26,7 +26,7 @@
     "new": "    stamina: { floor: 1, hotFrom: 51, coldFrom: -31, bareFeet: true, duringRest: false, repaid: true, fireWarms: true },",
     "why": "AUDIT SURV-BOONS D4: the barefoot tax alone - INERT under a floor of the whole pool (needs.js tire charges nothing at all there), and the table's literal pin holds the value",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -36,7 +36,7 @@
     "new": "    stamina: { floor: 1, hotFrom: 51, coldFrom: -31, bareFeet: false, duringRest: true, repaid: true, fireWarms: true },",
     "why": "the heat and the cold charge a Boons rest - inert under the floor, held by the table's literal pin",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -46,7 +46,7 @@
     "new": "    stamina: { floor: 1, hotFrom: 51, coldFrom: -31, bareFeet: false, duringRest: false, repaid: false, fireWarms: true },",
     "why": "AUDIT SURV-BOONS B2: a loan carried in from Casual thrown away",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -56,7 +56,7 @@
     "new": "    stamina: { floor: 1, hotFrom: 51, coldFrom: -31, bareFeet: false, duringRest: false, repaid: true, fireWarms: false },",
     "why": "a lit fire does not answer the cold in Boons - the page says Freezing beside it",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -66,7 +66,7 @@
     "new": "    stamina: { floor: 1, hotFrom: 50, coldFrom: -31, bareFeet: false, duringRest: false, repaid: true, fireWarms: true },",
     "why": "the band one degree into amber - held by the table's literal pin",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -76,7 +76,7 @@
     "new": "    attributes: true,\n    health: false,\n    rust: false,\n    sickness: false,\n    roughRest: { recovery: 1, encounters: 1, stiffHours: 0 },\n    roughSleepFloor: null,\n    restGate: false,\n    blackout: false,\n    wastedMeal: false,\n    boons: true,",
     "why": "the needs take attributes in Boons",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "new": "    attributes: false,\n    health: true,\n    rust: false,\n    sickness: false,\n    roughRest: { recovery: 1, encounters: 1, stiffHours: 0 },\n    roughSleepFloor: null,\n    restGate: false,\n    blackout: false,\n    wastedMeal: false,\n    boons: true,",
     "why": "the needs wound in Boons",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -96,7 +96,7 @@
     "new": "    attributes: false,\n    health: false,\n    rust: true,\n    sickness: false,\n    roughRest: { recovery: 1, encounters: 1, stiffHours: 0 },\n    roughSleepFloor: null,\n    restGate: false,\n    blackout: false,\n    wastedMeal: false,\n    boons: true,",
     "why": "wet armour rusts in Boons",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -106,7 +106,7 @@
     "new": "    attributes: false,\n    health: false,\n    rust: false,\n    sickness: true,\n    roughRest: { recovery: 1, encounters: 1, stiffHours: 0 },\n    roughSleepFloor: null,\n    restGate: false,\n    blackout: false,\n    wastedMeal: false,\n    boons: true,",
     "why": "a raw meal rolls for sickness in Boons",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -116,7 +116,7 @@
     "new": "    attributes: false,\n    health: false,\n    rust: false,\n    sickness: false,\n    roughRest: { recovery: 0.5, encounters: 1, stiffHours: 0 },\n    roughSleepFloor: null,\n    restGate: false,\n    blackout: false,\n    wastedMeal: false,\n    boons: true,",
     "why": "the rest window keeps half the hour",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -126,7 +126,7 @@
     "new": "    attributes: false,\n    health: false,\n    rust: false,\n    sickness: false,\n    roughRest: { recovery: 1, encounters: 2, stiffHours: 0 },\n    roughSleepFloor: null,\n    restGate: false,\n    blackout: false,\n    wastedMeal: false,\n    boons: true,",
     "why": "the rest window rolls twice",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -136,7 +136,7 @@
     "new": "    attributes: false,\n    health: false,\n    rust: false,\n    sickness: false,\n    roughRest: { recovery: 1, encounters: 1, stiffHours: 4 },\n    roughSleepFloor: null,\n    restGate: false,\n    blackout: false,\n    wastedMeal: false,\n    boons: true,",
     "why": "a stiff morning in Boons",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -146,7 +146,7 @@
     "new": "    attributes: false,\n    health: false,\n    rust: false,\n    sickness: false,\n    roughRest: { recovery: 1, encounters: 1, stiffHours: 0 },\n    roughSleepFloor: 'tired',\n    restGate: false,\n    blackout: false,\n    wastedMeal: false,\n    boons: true,",
     "why": "a rough night never pays below tired",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -156,7 +156,7 @@
     "new": "    attributes: false,\n    health: false,\n    rust: false,\n    sickness: false,\n    roughRest: { recovery: 1, encounters: 1, stiffHours: 0 },\n    roughSleepFloor: null,\n    restGate: true,\n    blackout: false,\n    wastedMeal: false,\n    boons: true,",
     "why": "the gate refuses a Boons sleep",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -166,7 +166,7 @@
     "new": "    attributes: false,\n    health: false,\n    rust: false,\n    sickness: false,\n    roughRest: { recovery: 1, encounters: 1, stiffHours: 0 },\n    roughSleepFloor: null,\n    restGate: false,\n    blackout: true,\n    wastedMeal: false,\n    boons: true,",
     "why": "the barkeep pours a Boons drinker to a blackout",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "new": "    attributes: false,\n    health: false,\n    rust: false,\n    sickness: false,\n    roughRest: { recovery: 1, encounters: 1, stiffHours: 0 },\n    roughSleepFloor: null,\n    restGate: false,\n    blackout: false,\n    wastedMeal: true,\n    boons: true,",
     "why": "AUDIT SURV-BOONS D2: a meal sold to a full stomach and wasted",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -186,7 +186,7 @@
     "new": "    boons: false,         // a need met earns",
     "why": "Boons earns nothing",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -196,7 +196,7 @@
     "new": "    boons: true,        // SURV-BOONS: a need met earns a bonus - Boons alone",
     "why": "Casual earns boons",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -206,7 +206,7 @@
     "new": "    wastedMeal: true,\n    boons: true,",
     "why": "Hard earns boons",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -216,8 +216,8 @@
     "new": "[SURVIVAL_OFF, 'casual', 'hard']",
     "why": "the tier is not a tier",
     "tests": [
-      "test/survboons.test.js",
-      "test/survtiers.test.js"
+      "test/systems/survival/survboons.test.js",
+      "test/systems/survival/survtiers.test.js"
     ]
   },
   {
@@ -227,8 +227,8 @@
     "new": "boons: 'Boons', casual: 'casual'",
     "why": "Boons stored under a name the load drops",
     "tests": [
-      "test/survboons.test.js",
-      "test/survtiers.test.js"
+      "test/systems/survival/survboons.test.js",
+      "test/systems/survival/survtiers.test.js"
     ]
   },
   {
@@ -238,8 +238,8 @@
     "new": "[tier(false, OFF), tier('casual', () => t('features.mod.climatesCalories.casual', 'Casual')), tier('hard', () => t('features.mod.climatesCalories.hard', 'Hard'))]",
     "why": "the bar has no Boons segment",
     "tests": [
-      "test/survboons.test.js",
-      "test/survtiers.test.js"
+      "test/systems/survival/survboons.test.js",
+      "test/systems/survival/survtiers.test.js"
     ]
   },
   {
@@ -249,7 +249,7 @@
     "new": "if (!(n > 0)) return;",
     "why": "AUDIT SURV-BOONS D1/A4: the fatigue above a pool that just shrank drained",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -259,7 +259,7 @@
     "new": "if (rules?.boons && minutes > 0)",
     "why": "the rest window banks Well rested",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -269,7 +269,7 @@
     "new": "if (sleeping !== 'rough' && minutes > 0)",
     "why": "Casual and Hard bank Well rested",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -279,7 +279,7 @@
     "new": "export const WELL_RESTED_PER_SLEEP_MINUTE = 1.6;",
     "why": "a night banks a little more (AUDIT SURV-BOONS D3: pinned as a literal)",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -289,7 +289,7 @@
     "new": "export const WELL_RESTED_MAX_MINUTES = 11 * 60;",
     "why": "the bank's ceiling an hour short",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -299,7 +299,7 @@
     "new": "s.wellRested = (s.wellRested ?? 0) + WELL_RESTED_PER_SLEEP_MINUTE * minutes;",
     "why": "the bank has no ceiling",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -309,7 +309,7 @@
     "new": "    if (hungerStage(hungerMinutes(s, now)) !== 'starving') out.push('fed');",
     "why": "Well fed lasts to Starving",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -319,7 +319,7 @@
     "new": "    if ((s.thirst ?? 0) < NEED.THIRSTY - 5) out.push('quenched');",
     "why": "Quenched lapses five early (AUDIT SURV-BOONS D4: both edges)",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -329,7 +329,7 @@
     "new": "if (s.wellRested > 0) out.push('rested');",
     "why": "AUDIT SURV-BOONS A1: Well rested beside an Exhausted chip",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -339,7 +339,7 @@
     "new": "    if (out.length >= 2) out.push('thriving');",
     "why": "Thriving for two of three",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -349,7 +349,7 @@
     "new": "  const out = [];\n  if (true) {",
     "why": "a vampire earns the needs' boons",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -359,7 +359,7 @@
     "new": "  for (const id of s.boons ?? [])",
     "why": "a stale grant pays in Casual and Hard",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -369,7 +369,7 @@
     "new": "if (!rules.boons && ('boons' in s || 'wellRested' in s)) {",
     "why": "turning from Boons keeps the boons on the record",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -379,7 +379,7 @@
     "new": "if (!rules.boons && ('boons' in s))",
     "why": "AUDIT SURV-BOONS D9: a bank with no grant survives the turn",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -389,7 +389,7 @@
     "new": "delete s.wellRested; }\n",
     "why": "a return to Boons never says a boon again",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -399,7 +399,7 @@
     "new": "",
     "why": "AUDIT SURV-BOONS A9: Off carries the bank and the grant",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -409,7 +409,7 @@
     "new": "",
     "why": "Well rested lasts for ever",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -419,7 +419,7 @@
     "new": "    if (s.wellRested > 0) s.wellRested",
     "why": "Well rested is spent while sleeping",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -429,7 +429,7 @@
     "new": "    const hearth = !!env.byFire && !sleeping && !replay;",
     "why": "the hearth pays at rest and in a loiter",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -439,7 +439,7 @@
     "new": "    const hearth = !resting && !sleeping && !replay;",
     "why": "the hearth without a fire",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -449,7 +449,7 @@
     "new": "    const hearth = !!env.byFire && !resting && !sleeping;",
     "why": "AUDIT SURV-BOONS A3: a jump's replayed minutes paid the hearth - training by a brazier cost nothing",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -459,7 +459,7 @@
     "new": "      const give = HEARTH_FATIGUE;",
     "why": "the hearth fills past the pool",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -469,7 +469,7 @@
     "new": "export const HEARTH_FATIGUE = FATIGUE_MULTIPLIER / 2;",
     "why": "half a point a minute (AUDIT SURV-BOONS D3: pinned as a literal)",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -479,7 +479,7 @@
     "new": "say?.(SURVIVAL_TEXT.boon[id]);",
     "why": "a boon said every minute",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -489,7 +489,7 @@
     "new": "    for (const id of SAID_BOONS) {",
     "why": "AUDIT SURV-BOONS C1/A5: a jump says boons gained and lost inside it",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -499,7 +499,7 @@
     "new": "SURVIVAL_TEXT.boon[id], { once: true }); }",
     "why": "AUDIT SURV-BOONS D5: a lapsed boon never said again",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -509,7 +509,7 @@
     "new": "    fed: 'You feel fed.',",
     "why": "the line, pinned as words (D8)",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -519,7 +519,7 @@
     "new": "  fed: Object.freeze({ strength: 4, endurance: 5 }),",
     "why": "Well fed's strength a point short",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -529,7 +529,7 @@
     "new": "  rested: Object.freeze({ intelligence: 5, willpower: 4 }),",
     "why": "Well rested's willpower a point short",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -539,7 +539,7 @@
     "new": "  thriving: Object.freeze({ luck: 6 }),",
     "why": "Thriving's luck a point over",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -549,7 +549,7 @@
     "new": "lastMinute: now, notes: {} });",
     "why": "AUDIT SURV-BOONS C3: a fresh start says every boon again",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -559,17 +559,17 @@
     "new": ".filter((id) => BOON_IDS.includes(id))",
     "why": "a hearth note kept that no line is said for",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
     "name": "SURVBOONS-the-load-forgets-the-lines",
-    "file": "src/systems/save.js",
+    "file": "src/systems/save/save.js",
     "old": "{ ...snap.survival, notes: savedNotes(snap.survival) }",
     "new": "{ ...snap.survival, notes: {} }",
     "why": "AUDIT SURV-BOONS C3: every load said every boon again",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -579,7 +579,7 @@
     "new": "const tires = r.stamina.floor <= 1, takes = !!r.attributes;",
     "why": "a need is red in Boons",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -589,7 +589,7 @@
     "new": "    for (const id",
     "why": "AUDIT SURV-BOONS C6: the drink's chip gone in Boons",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -599,7 +599,7 @@
     "new": "const chip = { key: `boon:${id}`, text: w[0], level: 'warn', glyph: w[1] };",
     "why": "a boon framed as a need",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -609,7 +609,7 @@
     "new": "",
     "why": "Well rested says no hours",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -619,7 +619,7 @@
     "new": "chip.foot = `${Math.round(s.wellRested / 60)}h`;",
     "why": "AUDIT SURV-BOONS D7: 61 minutes said one hour",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -629,7 +629,7 @@
     "new": "      if (s.wellRested > 0) chip.foot",
     "why": "AUDIT SURV-BOONS D7: every boon footed with the bank",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -640,7 +640,7 @@
     "why": "the page says no boon",
     "note": "AUDIT C&C (lens S): re-aimed by content - the bank's hours are a line of their own (STATUS_TEXT.restedFor), pushed after the boon's.",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -651,7 +651,7 @@
     "why": "AUDIT SURV-BOONS C14: a turn of the tier shown a minute late",
     "note": "BOONS-DEFAULT (2026-10-13): re-aimed by content - a record no rewarding tier wrote reads as Casual, not the default.",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -661,7 +661,7 @@
     "new": "lines.push(STATUS_TEXT.sleep[sleep]);",
     "why": "AUDIT SURV-BOONS C5/D12: 'well rested' beside a strip with no Well rested",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -671,7 +671,7 @@
     "new": "${'hours'}",
     "why": "AUDIT SURV-BOONS C10: '1 hours left'",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -681,7 +681,7 @@
     "new": "`+${BOON[id][k]} ${k}`",
     "why": "AUDIT SURV-BOONS C11: '+5 strength'",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -691,7 +691,7 @@
     "new": "if (id === 'hearth') return 'The fire restores your stamina.';",
     "why": "the hearth's page line, pinned as words",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -701,37 +701,37 @@
     "new": "hearth: Object.freeze(['Hearth', 'rested'])",
     "why": "AUDIT SURV-BOONS C7: the hearth on REST1's campfire",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
     "name": "SURVBOONS-buff-tile-amber",
-    "file": "src/ui/hudStatus.js",
+    "file": "src/ui/hud/hudStatus.js",
     "old": "kind: c.level === 'boon' ? 'buff' : c.level",
     "new": "kind: c.level === 'boon' ? 'warn' : c.level",
     "why": "a boon tile framed amber",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
     "name": "SURVBOONS-glyph-ignored",
-    "file": "src/ui/hudStatus.js",
+    "file": "src/ui/hud/hudStatus.js",
     "old": "  if (typeof chip?.glyph === 'string') return Object.hasOwn(STATUS_GLYPHS, chip.glyph) ? chip.glyph : null;   // SURV-BOONS: a boon names its own\n",
     "new": "",
     "why": "a boon tile without its glyph",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
     "name": "SURVBOONS-tutorial-on-a-boon",
-    "file": "src/ui/enhancedHud.js",
+    "file": "src/ui/enhanced/enhancedHud.js",
     "old": "if (needs.some((c) => c.level !== 'boon')) noteFirstUse('survival');",
     "new": "if (needs.length) noteFirstUse('survival');",
     "why": "AUDIT SURV-BOONS C2: a fresh Boons character met the first-need page in its first minute",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -742,7 +742,7 @@
     "why": "the page names no Boons",
     "note": "BOONS-DEFAULT (2026-10-13): re-aimed by content - the page names Boons the default.",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -752,7 +752,7 @@
     "new": "  if (!survivalOn()) return [];",
     "why": "AUDIT SURV-BOONS C13: the Boons rows in another tier",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -762,8 +762,8 @@
     "new": "export const SURVIVAL_DEFAULT = 'casual';",
     "why": "BOONS-DEFAULT (2026-10-13, Mac: \"make boons the default\"): the default back to Casual",
     "tests": [
-      "test/survtiers.test.js",
-      "test/survboons.test.js"
+      "test/systems/survival/survtiers.test.js",
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -773,7 +773,7 @@
     "new": "store: 'prefs', key: 'survival', initial: 'casual', online: 'player',",
     "why": "BOONS-DEFAULT: the Features row - the shelf's default (RF4) - back to Casual",
     "tests": [
-      "test/survtiers.test.js"
+      "test/systems/survival/survtiers.test.js"
     ]
   },
   {
@@ -783,8 +783,8 @@
     "new": "SURVIVAL_RULES.boons : SURVIVAL_RULES[SURVIVAL_DEFAULT]);",
     "why": "BOONS-DEFAULT: a record no rewarding tier wrote (no `boons`) read as the default - Boons now - so Casual's page lost its word and its chips their red",
     "tests": [
-      "test/survboons.test.js",
-      "test/surv5_ui.test.js"
+      "test/systems/survival/survboons.test.js",
+      "test/systems/survival/surv5_ui.test.js"
     ]
   },
   {
@@ -794,7 +794,7 @@
     "new": "'Survival can be Off, Boons, Casual (the default) or Hard.",
     "why": "BOONS-DEFAULT: the first-need page names Casual the default",
     "tests": [
-      "test/survboons.test.js"
+      "test/systems/survival/survboons.test.js"
     ]
   },
   {
@@ -804,8 +804,8 @@
     "new": "Boons (neglect costs nothing",
     "why": "BOONS-DEFAULT: the credits do not name the default",
     "tests": [
-      "test/auditcc_ui.test.js",
-      "test/survboons.test.js"
+      "test/systems/auditcc_ui.test.js",
+      "test/systems/survival/survboons.test.js"
     ]
   }
 ]

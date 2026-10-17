@@ -5,7 +5,7 @@
   "old": "region = \"aws:us-west-1\"",
   "new": "mode = \"smart\"",
   "tests": [
-   "test/d1near.test.js"
+   "test/bible/d1near.test.js"
   ]
  },
  {
@@ -14,7 +14,7 @@
   "old": "region = \"aws:us-west-1\"",
   "new": "region = \"aws:ap-southeast-2\"",
   "tests": [
-   "test/d1near.test.js"
+   "test/bible/d1near.test.js"
   ]
  },
  {
@@ -23,7 +23,7 @@
   "old": "[placement]\nregion = \"aws:us-west-1\"\n",
   "new": "",
   "tests": [
-   "test/d1near.test.js"
+   "test/bible/d1near.test.js"
   ]
  },
  {
@@ -32,7 +32,7 @@
   "old": "            echo \"$primary - wrangler.toml [placement] should name the cloud region nearest it.\"\n          } >> \"$GITHUB_STEP_SUMMARY\"",
   "new": "            echo \"$primary - wrangler.toml [placement] should name the cloud region nearest it.\"\n          } >> /dev/null",
   "tests": [
-   "test/d1near.test.js"
+   "test/bible/d1near.test.js"
   ]
  },
  {
@@ -41,7 +41,7 @@
   "old": "sed -n 's/^cf-placement:[[:space:]]*//Ip'",
   "new": "sed -n 's/^cf-placement:[[:space:]]*//p'",
   "tests": [
-   "test/d1near.test.js"
+   "test/bible/d1near.test.js"
   ]
  },
  {
@@ -50,7 +50,7 @@
   "old": "seen=\"$seen ${at:-none}\"",
   "new": "seen=\"$seen ${at}\"",
   "tests": [
-   "test/d1near.test.js"
+   "test/bible/d1near.test.js"
   ]
  },
  {
@@ -59,7 +59,7 @@
   "old": "~$(( s > h ? s - h : 0 )) ms",
   "new": "~$(( s )) ms",
   "tests": [
-   "test/d1near.test.js"
+   "test/bible/d1near.test.js"
   ]
  },
  {
@@ -68,7 +68,7 @@
   "old": "v[int((NR + 1) / 2)]",
   "new": "v[NR]",
   "tests": [
-   "test/d1near.test.js"
+   "test/bible/d1near.test.js"
   ]
  },
  {
@@ -77,7 +77,7 @@
   "old": "The module's header carries the query. Smart Placement was",
   "new": "The module's header carries the query. Smart Placement runs the Worker near its database. Smart Placement was",
   "tests": [
-   "test/d1near.test.js"
+   "test/bible/d1near.test.js"
   ]
  }
 ]

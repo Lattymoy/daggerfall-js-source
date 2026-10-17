@@ -5,7 +5,7 @@
     "old": "const bootWorld = (...a) => import('./scenes/world.js').then((m) => m.bootWorld(...a));",
     "new": "import { bootWorld } from './scenes/world.js';",
     "tests": [
-      "test/boot1.test.js"
+      "test/scenes/boot1.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    import('./scenes/world.js').catch(() => {});",
     "new": "    import('./scenes/world.js');",
     "tests": [
-      "test/boot1.test.js"
+      "test/scenes/boot1.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    import('./scenes/world.js').catch(() => {});\n",
     "new": "",
     "tests": [
-      "test/boot1.test.js"
+      "test/scenes/boot1.test.js"
     ]
   }
 ]

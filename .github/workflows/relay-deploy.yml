@@ -82,12 +82,15 @@ jobs:
           if [ -n "$v" ] && [ "$v" != "$got" ]; then echo "deploying=true" >> "$GITHUB_OUTPUT"; else echo "deploying=false" >> "$GITHUB_OUTPUT"; fi
           echo "source says '${v}', live says '${got:-unreachable}'"
 
+  # EG6a: and the Elite Breach's course sweep at 500 seeds a band, not a pull request's 25 - a relay that draws the halls
+  # is deployed only when every course of them a real motor crossed (eg-sweep.yml)
   verify:
     needs: drift
     if: needs.drift.outputs.deploying == 'true'
     uses: ./.github/workflows/verify.yml
     with:
       build: false
+      sweep: 500
 
   deploy:
     needs: [drift, verify]
@@ -204,15 +207,66 @@ jobs:
             sleep 300
           done
 
+      # ═══ EG-H2 (bible/11-Multiplayer/Elite-Gates.md section 22): THE SPIRE'S DRAIN AND HOLD ═══
+      #
+      # A deploy restarts every Elite Breach's room. The relay's public `/v1/eg/live` (it names no breach) says how many
+      # are live, whether every one stands between trials, the spec laws they were opened under and the longest's last
+      # word. THE DRAIN: a breach under a law this build does not draw (src/net/eliteGates/egDurable.js EG_LAWS - the line below
+      # reads it) would be voided by its own room as it wakes, so the deploy waits until none is live or the longest's
+      # last word has passed - a developer shuts the road meanwhile (`/relay egDrain on`, and `off` after). THE HOLD:
+      # otherwise it waits, at most twenty minutes, until every live breach is between trials (a closing, a swap or a
+      # rest) - a room that wakes there holds the count until its company is back, then gives the gap back. A room woken
+      # mid-trial gives the gap back too. An unanswered question is not a breach, and `force` deploys at once (a breach
+      # whose law this build does not draw is voided: its stake returned, its Redoubts kept).
+      - name: The Spire's drain and hold
+        if: steps.live.outputs.version != steps.ver.outputs.version && github.event.inputs.force != 'true'
+        run: |
+          url='https://daggerfall-online.mackcothran.workers.dev/v1/eg/live'
+          laws=$(grep -oP "^export const EG_LAWS = Object\.freeze\(\{\K[^}]*" src/net/eliteGates/egDurable.js | grep -oP '\d+(?=:)' | tr '\n' ' ')
+          echo "this build draws the spec laws: ${laws}"
+          tries=0
+          while :; do
+            got=$(curl -fsS --max-time 15 "$url" || true)
+            if [ -z "$got" ]; then echo "::warning::/v1/eg/live did not answer - not waiting on it"; break; fi
+            live=$(printf '%s' "$got" | sed -n 's/.*"live":\([0-9]*\).*/\1/p')
+            if [ "${live:-0}" = "0" ]; then echo "no Elite Breach is live"; break; fi
+            stale=''
+            for v in $(printf '%s' "$got" | sed -n 's/.*"laws":\[\([0-9,]*\)\].*/\1/p' | tr ',' ' '); do case " $laws " in *" $v "*) ;; *) stale="$stale $v";; esac; done
+            if [ -n "$stale" ]; then
+              until=$(printf '%s' "$got" | sed -n 's/.*"until":\([0-9]*\).*/\1/p')
+              if [ "${until:-0}" -le "$(( $(date +%s) * 1000 ))" ]; then echo "the longest breach's last word has passed"; break; fi
+              echo "THE DRAIN: ${live} breach(es) live under law(s)${stale} this build does not draw (${got}) - waiting five minutes (shut the road meanwhile: /relay egDrain on)"
+              sleep 300
+              continue
+            fi
+            if printf '%s' "$got" | grep -q '"between":true'; then echo "THE HOLD: every live breach stands between trials - each room holds for its company as it wakes"; break; fi
+            tries=$((tries + 1))
+            if [ "$tries" -ge 80 ]; then echo "::warning::a breach stayed in a trial for twenty minutes - deploying; its room gives the gap back as it wakes"; break; fi
+            echo "THE HOLD: a breach is in a trial (${got}) - asking again in fifteen seconds"
+            sleep 15
+          done
+
+      # EG-ZA (bible/11-Multiplayer/Elite-Gates.md section 22): A FORCE DEPLOY VOIDS EVERY LIVE ELITE BREACH, never spends
+      # its keys. The deploy stamps the Worker with the moment before it goes (`EG_VOID_BEFORE`, epoch ms): a breach's room
+      # woken under the stamp whose breach opened before it ends it as a void (src/net/eliteGates/egDurable.js egForceVoided) - the
+      # entered members' end receipts say `void` and its opener who never entered is handed the void itself, so every stake
+      # comes back and the Redoubts taken stay. The next deploy carries no stamp.
       - name: Deploy
         if: steps.live.outputs.version != steps.ver.outputs.version
         working-directory: server
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          FORCE: ${{ github.event.inputs.force }}
         run: |
           echo "deploying ${{ steps.ver.outputs.version }} over ${{ steps.live.outputs.version }}"
           echo "every connected player's socket is about to drop and reconnect"
-          npx --yes wrangler@4 deploy
+          if [ "$FORCE" = "true" ]; then
+            stamp=$(date +%s%3N)
+            echo "a FORCE deploy: every Elite Breach opened before ${stamp} is voided as its room wakes (its stakes returned, its Redoubts kept)"
+            npx --yes wrangler@4 deploy --var "EG_VOID_BEFORE:${stamp}"
+          else
+            npx --yes wrangler@4 deploy
+          fi
 
       # AND PROVE IT LANDED. The client's own deploy has been verified BY
       # CONTENT since U60 (`tools/verify-deploy.mjs`, whose header says HTTP

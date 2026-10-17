@@ -14,7 +14,7 @@
 // left arm: drawn as it is from the left, mirrored from the right).
 //
 // THE LAW (`ClimbHands`, pure: no renderer, no clock but the `dt` it is handed) reads the climb's snapshot
-// (player/climbPose.js climbRigInput) and the view, and answers each sprite's rect on DFU's 320x200 design surface. The
+// (player/climb/climbPose.js climbRigInput) and the view, and answers each sprite's rect on DFU's 320x200 design surface. The
 // hands do what the climbing body does (AUDIT CLIMB-HANDS: ClimbPose is the one choreography - its gaits, its moves'
 // windows - drawn here as a hand's way on the wall relative to the body, GAIT_PX to the metre):
 //   - THE HOLD: both fists up, the arms running off the bottom of the screen; a still hang sways on the arms, the two
@@ -48,18 +48,18 @@
 //
 // The enhanced climb only (the motor's hold, a move in flight): DFU's own climb keeps WeaponManager's empty screen.
 
-import { FEEL, tremble } from '../player/climbFeel.js';
+import { FEEL, tremble } from '../player/climb/climbFeel.js';
 import { PARKOUR_GRIP_LOW, PARKOUR_HANG_DROP, PARKOUR_LIP_FOLLOW } from '../player/parkour.js';
-import { POSE, gait, shimmyGait, wallFrame } from '../player/climbPose.js';
+import { POSE, gait, shimmyGait, wallFrame } from '../player/climb/climbPose.js';
 import { decodePng } from '../systems/textureReplacement.js';
 import { toScreenOrder } from '../formats/color32Order.js';
 import { APP_ROOT } from '../systems/appRoot.js';
 import { wrapAngle } from '../world/mat4.js';   // the one home for an angle into (-PI, PI] (audit24's ratchet)
-import { weaponOffsetHeight } from '../ui/hudLarge.js';   // AUDIT CLIMB-HANDS: the large HUD's bar, the classic sprite's own lift
+import { weaponOffsetHeight } from '../ui/hud/hudLarge.js';   // AUDIT CLIMB-HANDS: the large HUD's bar, the classic sprite's own lift
 import { worldRectPx } from '../player/tapRay.js';   // CLIMB-HANDS II: the world's strip in canvas pixels (ROAD-E E5's one home)
-import { SETTINGS_DEFAULTS } from '../systems/settingsDefaults.js';   // CLIMB-HANDS II: DFU's own FieldOfView, the lens a bare law sees through
+import { SETTINGS_DEFAULTS } from '../systems/settings/settingsDefaults.js';   // CLIMB-HANDS II: DFU's own FieldOfView, the lens a bare law sees through
 
-/** DFU's design surface (FPSWeapon's 320x200) - module-local: ui/nativePanel.js exports the names (audit24's ratchet). */
+/** DFU's design surface (FPSWeapon's 320x200) - module-local: ui/native/nativePanel.js exports the names (audit24's ratchet). */
 const NATIVE_W = 320;
 const NATIVE_H = 200;
 const DEG = Math.PI / 180;

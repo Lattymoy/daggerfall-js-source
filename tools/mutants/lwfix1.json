@@ -5,8 +5,8 @@
     "old": "    const loc = modes?.dungeonCtx?.abyss?.location?.();",
     "new": "    const loc = modes?.dungeonCtx?.location?.();",
     "tests": [
-      "test/lw6_deep.test.js",
-      "test/lwfix1_review.test.js"
+      "test/systems/livingWorld/lw6_deep.test.js",
+      "test/systems/livingWorld/lwfix1_review.test.js"
     ]
   },
   {
@@ -15,7 +15,7 @@
     "old": "keepsakeFor(this.o.keepsakes?.() ?? [], res.town, res.home, res.id, (id) => this._homeOfPlace(id));",
     "new": "keepsakeFor(this.o.keepsakes?.() ?? [], this.o.town.mapId, res.home, res.id, (id) => this._homeOfPlace(id));",
     "tests": [
-      "test/lwfix1_review.test.js"
+      "test/systems/livingWorld/lwfix1_review.test.js"
     ]
   },
   {
@@ -24,35 +24,35 @@
     "old": "    for (const k of this.kinOf(res)) if (k.town === res.town) rel?.note(k.id, 'helped', day);",
     "new": "    for (const k of this.kinOf(res)) rel?.note(k.id, 'helped', day);",
     "tests": [
-      "test/lwfix1_review.test.js"
+      "test/systems/livingWorld/lwfix1_review.test.js"
     ]
   },
   {
     "name": "LW-FIX1-walker-place",
-    "file": "src/scenes/livingIndoors.js",
+    "file": "src/scenes/livingWorld/livingIndoors.js",
     "old": "&& unseen(placeOf(s))) stood.delete(id);",
     "new": "&& unseen(room.spots[s.spot])) stood.delete(id);",
     "tests": [
-      "test/lwfix1_review.test.js"
+      "test/systems/livingWorld/lwfix1_review.test.js"
     ]
   },
   {
     "name": "LW-FIX1-round-deal",
-    "file": "src/scenes/livingIndoors.js",
+    "file": "src/scenes/livingWorld/livingIndoors.js",
     "old": "          company.set(ti, co = { ids, since: was ? was.s + SLOT_LINES * beat.lineMin : t, carry: was ? co.circle : null, circle: null });",
     "new": "          company.set(ti, co = { ids, since: t, carry: null, circle: null });",
     "tests": [
-      "test/lwfix1_review.test.js"
+      "test/systems/livingWorld/lwfix1_review.test.js"
     ],
     "note": "LW-TALK (re-aimed by content): never re-dealt mid-script - one who sits down mid-exchange waits for its last line (the company carried)."
   },
   {
     "name": "LW-FIX1-gone",
-    "file": "src/scenes/livingIndoors.js",
+    "file": "src/scenes/livingWorld/livingIndoors.js",
     "old": "const was = co?.circle && co.circle.members.every((m) => at.some((x) => x.id === m.id)) ? exchangeAt(co.circle, t, beat.lineMin) : null;",
     "new": "const was = co?.circle ? exchangeAt(co.circle, t, beat.lineMin) : null;",
     "tests": [
-      "test/lwfix1_review.test.js"
+      "test/systems/livingWorld/lwfix1_review.test.js"
     ],
     "note": "LW-TALK (re-aimed by content): one of a circle gone, its talk is over at once - never carried without them."
   },
@@ -62,7 +62,7 @@
     "old": " && !turns.spared.has(key) && !turns.slain.has(key) && !turns.died.has(key) && !livingDivers",
     "new": " && !turns.spared.has(key) && !turns.died.has(key) && !livingDivers",
     "tests": [
-      "test/lwfix1_review.test.js"
+      "test/systems/livingWorld/lwfix1_review.test.js"
     ]
   },
   {
@@ -71,7 +71,7 @@
     "old": " && !turns.spared.has(key) && !turns.slain.has(key) && !turns.died.has(key) && !livingDivers",
     "new": " && !turns.spared.has(key) && !turns.slain.has(key) && !livingDivers",
     "tests": [
-      "test/lwfix1_review.test.js"
+      "test/systems/livingWorld/lwfix1_review.test.js"
     ]
   },
   {
@@ -80,7 +80,7 @@
     "old": "      livingTurnsFresh();   // LW-FIX1: a turn made below",
     "new": "      void 0;   // LW-FIX1: a turn made below",
     "tests": [
-      "test/lwfix1_review.test.js"
+      "test/systems/livingWorld/lwfix1_review.test.js"
     ]
   },
   {
@@ -89,7 +89,7 @@
     "old": "      livingTurnsFresh();   // LW-FIX1: the books fresh below too",
     "new": "      void 0;   // LW-FIX1: the books fresh below too",
     "tests": [
-      "test/lwfix1_review.test.js"
+      "test/systems/livingWorld/lwfix1_review.test.js"
     ]
   },
   {
@@ -98,7 +98,7 @@
     "old": "_mode() !== 'interior') { if (livingIndoors?.size || livingIndoors?.spots().length) livingIndoors.clear(); return; }",
     "new": "_mode() !== 'interior') { if (livingIndoors?.size) livingIndoors.clear(); return; }",
     "tests": [
-      "test/lwfix1_review.test.js"
+      "test/systems/livingWorld/lwfix1_review.test.js"
     ]
   },
   {
@@ -107,7 +107,7 @@
     "old": "    if (livingIndoors?.size || livingIndoors?.spots().length) livingIndoors.clear();   // LW8: the street again",
     "new": "    if (livingIndoors?.size) livingIndoors.clear();   // LW8: the street again",
     "tests": [
-      "test/lwfix1_review.test.js"
+      "test/systems/livingWorld/lwfix1_review.test.js"
     ]
   }
 ]

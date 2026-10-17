@@ -129,17 +129,33 @@
 //     spokes - STEPPING on the second as a clock's escapement does (eased over a quarter of each second, held the rest:
 //     turningWheelAngle), two turns over the clock; a light that does not turn gleaming on the brass as it passes under;
 //     outside it the Hour's dial, a line of gold and its twelve marks - the Hour's own the longer - turning BACK, as the
-//     Hour's sky's hands do (render/sdSky.js); gold light pooled at the feet, breathing.
+//     Hour's sky's hands do (render/superDungeon/sdSky.js); gold light pooled at the feet, breathing.
 //   - THE WALL, the pass's strip at the teeth's tips: the wheel's edge seen from the side - its teeth's faces passing
 //     round with it, gold along their top - gold light rising off it, gone by the knee, and TURNING_MOTES motes rising.
 // It kindles UP, as the radiance does. Every rate whole over the clock (turningRatesWhole); the teeth, the spokes and
 // the marks whole round, so no seam behind the wearer. No third draw, no host changed.
 //
+// EG-E2 (2026-10-12, Mac: "I said I want everything"; bible/11-Multiplayer/Elite-Gates.md section 19, THE HONOURS): THE
+// SPIRE'S THREE, the ninth to eleventh looks, each its own kind and added whole, in the Spire's colours (ui/playerBadge.js
+// SPIRE_*), each granted with its title (server-account/src/egHonours.js):
+//   - BEACONLIGHT (Kynbane's, 8): GOLD-WHITE MOTES - BEACON_LIGHTS beacons of white fire on a thin gold ring at the feet,
+//     lit one after another round it as the Spire's were and fading after, in a pool of gold-white light; off the ring
+//     BEACON_MOTES gold-white motes rising past the chest, swaying as they climb. It kindles UP.
+//   - THE BURNING STAIR (Wellhead-Walker's, 9): FALLING EMBERS - a spiral stair of STAIR_STEPS steps burning round the
+//     feet, each a little hotter than the one above it, its risers' lips lit, the whole stair turning DOWN; over it
+//     STAIR_EMBERS embers falling from over the head, cooling as they fall. It kindles DOWN - the embers' first fall.
+//   - FIRSTLIGHT (First of the Spire's, 10): A DAWN-WHITE RING - one crisp line of the dawn's white at the feet in a
+//     dawn-gold glow, a sunrise of light circling it slowly, and a low veil of pale light rising off it, gone by the
+//     shin. It kindles UP.
+// Every rate whole over the clock (spireRatesWhole); the beacons and the steps whole round, so no seam behind the wearer
+// but the stair's own top. No third draw, no host changed. THE QUIET COMPANY (Elite-Gates.md section 25.4 - a cosmetic
+// aura draws nothing during a trial) is the host's to say: `auraWearers` takes no room, and no host is wired here.
+//
 // Not a DFU member. Ledger A (WB).
 import { FOG_FACTOR_GLSL } from './labGrass.js';
 import { buildProgram } from './glProgram.js';
 import { wrapAngle } from '../world/mat4.js';
-import { GLYPH_PATH, GLYPH_DETAIL, CRYSTAL_PURPLE, HOUR_BRASS, HOUR_GOLD, HOUR_LIGHT, HOUR_DAWN, HOUR_PEARL, HOUR_SUN, COIL_SEA, COIL_TIDE, COIL_FOAM } from '../ui/playerBadge.js';   // SHADOW-CLOAK: the wearer's own glyph, its emblem; CRYSTAL-FIST AUDIT: the Crystal Fist's purple, the resonance's one colour
+import { GLYPH_PATH, GLYPH_DETAIL, CRYSTAL_PURPLE, HOUR_BRASS, HOUR_GOLD, HOUR_LIGHT, HOUR_DAWN, HOUR_PEARL, HOUR_SUN, COIL_SEA, COIL_TIDE, COIL_FOAM, SPIRE_BEACON, SPIRE_BEACON_WHITE, SPIRE_EMBER, SPIRE_COAL, SPIRE_DAWN, SPIRE_DAWN_GOLD } from '../ui/playerBadge.js';   // SHADOW-CLOAK: the wearer's own glyph, its emblem; CRYSTAL-FIST AUDIT: the Crystal Fist's purple, the resonance's one colour
 
 /** The ring's radius about the feet (m), the ground quad's half-width, the flames' height, and the ground's lift. */
 export const AURA_RING_R = 0.85;
@@ -420,7 +436,7 @@ export const TURNING_H = 0.62;            // the wall: the wheel's edge, and the
 export const TURNING_EDGE_M = 0.05;       // the wheel's thickness, seen from the side
 export const TURNING_MOTES = 14;
 /** Its rates, in turns a second: the wheel two turns over the clock - stepping on the second, a clock's escapement; the
- *  dial one turn BACK (the Hour's hands run backwards - render/sdSky.js); the light's breath; the motes' rise. */
+ *  dial one turn BACK (the Hour's hands run backwards - render/superDungeon/sdSky.js); the light's breath; the motes' rise. */
 export const TURNING_HZ = Object.freeze({ wheel: 1 / 60, dial: 1 / 120, pulse: 1 / 4, mote: 1 / 6 });
 /** The wheel's step takes the first quarter of each second, and it holds the rest. */
 export const TURNING_STEP_S = 0.25;
@@ -458,7 +474,7 @@ export function turningWheelAngle(t) {
   return -Math.PI * 2 * TURNING_HZ.wheel * (s + e * e * (3 - 2 * e));
 }
 /** The dial's turn at `t`: backwards, smoothly - ANTICLOCKWISE as the eye sees the ground, as the Hour's sky's hands turn
- *  (render/sdSky.js). Pure. AUDIT SD II (L2 F13): the ground's angle (atan(p.y, p.x), p = (x, z) about the feet) grows
+ *  (render/superDungeon/sdSky.js). Pure. AUDIT SD II (L2 F13): the ground's angle (atan(p.y, p.x), p = (x, z) about the feet) grows
  *  anticlockwise on the screen - +x right and +z up it, the one mirror's law (world/mat4.js) - so BACK is the angle
  *  growing; it fell, and the dial turned clockwise, forward. */
 export const turningDialAngle = (t) => Math.PI * 2 * TURNING_HZ.dial * t;
@@ -513,6 +529,44 @@ export function maelstromDropAt(m, t) {
   const f = (x) => x - Math.floor(x);
   return { u: f(h1 + maelstromSpin(t) / (Math.PI * 2)), life: f((t / Math.round(1 / MAELSTROM_HZ.drop)) * (1 + (m % 3)) + h2) };
 }
+// EG-E2 (2026-10-12, Elite-Gates.md section 19): THE SPIRE'S THREE - Beaconlight, The Burning Stair and Firstlight.
+export const BEACONLIGHT_R = 0.8;              // Beaconlight: the ring its beacons stand on, m
+export const BEACON_LIGHTS = 8;           // the beacons round it
+export const BEACON_H = 1.7;              // the motes' climb, past the chest
+export const BEACON_MOTES = 22;
+/** Its rates: the beacons lit round once in eight seconds, the light's breath, the motes' rise. */
+export const BEACON_HZ = Object.freeze({ kindle: 1 / 8, pulse: 1 / 4, mote: 1 / 5 });
+export const STAIR_R = 0.75;              // The Burning Stair: the stair's outer edge (and the embers' fall about it), m
+export const STAIR_W = 0.22;              // the steps' tread, inward from it
+export const STAIR_STEPS = 12;
+export const STAIR_H = 1.9;               // the embers fall from over the head
+export const STAIR_EMBERS = 20;
+/** Its rates: the stair turning down, its fire's flare, the embers' fall. */
+export const STAIR_HZ = Object.freeze({ descend: 1 / 12, flare: 1 / 2, ember: 1 / 4 });
+export const DAWN_R = 0.9;                // Firstlight: its ring, m
+export const DAWN_RING_M = 0.024;         // the ring's line
+export const DAWN_H = 0.35;               // the veil off it, gone by the shin
+/** Its rates: the sunrise round the ring, the light's breath; and its veil's flow (cells a second up the lattice). */
+export const DAWN_HZ = Object.freeze({ sweep: 1 / 24, breath: 1 / 6 });
+export const DAWN_FLOW = Object.freeze({ veil: 0.5 });
+export const spireRatesWhole = () => [...Object.values(BEACON_HZ), ...Object.values(STAIR_HZ), ...Object.values(DAWN_HZ), ...Object.values(DAWN_FLOW)]
+  .every((r) => r > 0 && Number.isInteger(Math.round(r * AURA_CLOCK_PERIOD * 1e6) / 1e6));
+/** The Spire's colours (ui/playerBadge.js SPIRE_*): the beacon's gold and white, the ember, its coal and the flame
+ *  between the ember and the beacon, the dawn's white and its gold. */
+export const SPIRE_RGB = Object.freeze({
+  beacon: Object.freeze(SPIRE_BEACON.slice(0, 3)), white: Object.freeze(SPIRE_BEACON_WHITE.slice(0, 3)),
+  ember: Object.freeze(SPIRE_EMBER.slice(0, 3)), coal: Object.freeze(SPIRE_COAL.slice(0, 3)),
+  flame: Object.freeze([0, 1, 2].map((i) => Math.round((SPIRE_EMBER[i] + SPIRE_BEACON[i]) / 2 * 1000) / 1000)),
+  dawn: Object.freeze(SPIRE_DAWN.slice(0, 3)), dawnGold: Object.freeze(SPIRE_DAWN_GOLD.slice(0, 3)),
+});
+/** EG-E2: which of Beaconlight's beacons stands nearest the ground's angle `a` (radians), 0..BEACON_LIGHTS-1, and how
+ *  long since it was lit in its round (0 just lit .. 1 about to be lit again) at clock `t` - lit one after another, as
+ *  the shader lights them (beaconGround). Pure. */
+export function beaconLit(a, t) {
+  const k = Math.floor((((a / (Math.PI * 2)) % 1) + 1) % 1 * BEACON_LIGHTS + 0.5) % BEACON_LIGHTS;
+  const age = (((t * BEACON_HZ.kindle - k / BEACON_LIGHTS) % 1) + 1) % 1;
+  return { k, age };
+}
 
 /** AEGIS: HOW EACH AURA IS DRAWN - its kind in the shader (`uAura`), its ring's radius, its wall's height and how many
  *  symbols float off it (the third draw - none for the fire). A pin walks AURAS and requires one each. SHADOW-CLOAK: and,
@@ -528,6 +582,9 @@ export const AURA_LOOK = Object.freeze({
   turninghour: Object.freeze({ kind: 6, ringR: TURNING_R + TURNING_TOOTH_M, flameH: TURNING_H, glyphs: 0 }),   // SD9c: the wheel at the feet, its edge on the strip at its teeth's tips
   firsthour: Object.freeze({ kind: 7, ringR: TURNING_R + TURNING_TOOTH_M, flameH: TURNING_H, glyphs: 0 }),   // HOURS-FIRST: the same wheel, in the first dawn's light
   maelstrom: Object.freeze({ kind: 8, ringR: MAELSTROM_R, flameH: MAELSTROM_H, glyphs: 0 }),   // SERPENT5: the pool at the feet, its curl and spray on the strip at its lip
+  beaconlight: Object.freeze({ kind: 9, ringR: BEACONLIGHT_R, flameH: BEACON_H, glyphs: 0 }),   // EG-E2: the beacons at the feet, their motes on the strip
+  burningstair: Object.freeze({ kind: 10, ringR: STAIR_R, flameH: STAIR_H, glyphs: 0 }),   // EG-E2: the stair at the feet, its embers falling on the strip
+  firstlight: Object.freeze({ kind: 11, ringR: DAWN_R, flameH: DAWN_H, glyphs: 0 }),   // EG-E2: the dawn's ring at the feet, its veil on the strip
 });
 /** The look a wearer's aura is drawn with - Dagon's Fire for one that names none (the fire was the only aura before). */
 export const auraLookOf = (aura) => (typeof aura === 'string' && Object.hasOwn(AURA_LOOK, aura) ? AURA_LOOK[aura] : AURA_LOOK.dagonfire);
@@ -928,6 +985,120 @@ vec3 maelstromWall(vec2 q) {
   // kindled UP, as the wheel's light is: the spray rising from the feet
   float kindled = clamp((uKindle * 1.25 - v) / 0.15, 0.0, 1.0);
   return kindled * col;
+}
+`;
+
+/** EG-E2: THE SPIRE'S THREE LOOKS - each a ground (`p` metres about the feet) and a wall (the strip: `q` = (u round, v up)),
+ *  added whole. They read The Turning Hour's helpers (turnPixel, turnBand) and the fire's periodic noise. */
+const SPIRE_GLSL = `
+const vec3 SP_BEACON = ${v3(SPIRE_RGB.beacon)};
+const vec3 SP_WHITE = ${v3(SPIRE_RGB.white)};
+const vec3 SP_EMBER = ${v3(SPIRE_RGB.ember)};
+const vec3 SP_COAL = ${v3(SPIRE_RGB.coal)};
+const vec3 SP_FLAME = ${v3(SPIRE_RGB.flame)};
+const vec3 SP_DAWN = ${v3(SPIRE_RGB.dawn)};
+const vec3 SP_DAWN_GOLD = ${v3(SPIRE_RGB.dawnGold)};
+float spireFade(float r) { return 1.0 - smoothstep(uGroundR - 0.2, uGroundR, r); }
+// BEACONLIGHT
+float beaconBreath() { return 0.85 + 0.15 * sin(uTime * TAU ${hzGlsl(BEACON_HZ.pulse)}); }
+vec3 beaconGround(vec2 p) {
+  float r = length(p);
+  if (r > uGroundR) discard;
+  float breath = beaconBreath();
+  // THE POOL of gold-white light about the feet, and THE RING the beacons stand on, a thin line of gold
+  float dr = r - uRingR;
+  vec3 col = SP_BEACON * exp(-r * r / 0.35) * 0.22 * breath + SP_BEACON * exp(-dr * dr / 0.0009) * 0.35 * breath;
+  // never the angle at the middle, where atan(0, 0) is no number (the resonance's AUDIT)
+  if (r > 0.05) {
+    // THE BEACONS: white fire on the ring, lit one after another round it (beaconLit) and fading after
+    float a = atan(p.y, p.x);
+    float k = floor(fract(a / TAU) * ${BEACON_LIGHTS.toFixed(1)} + 0.5);
+    float ak = k / ${BEACON_LIGHTS.toFixed(1)} * TAU;
+    vec2 d = p - vec2(cos(ak), sin(ak)) * uRingR;
+    float age = fract(uTime ${hzGlsl(BEACON_HZ.kindle)} - k / ${BEACON_LIGHTS.toFixed(1)});
+    col += (SP_WHITE * 0.9 + SP_BEACON * 0.4) * exp(-dot(d, d) / 0.0025) * (0.3 + 0.7 * exp(-age * 4.0));
+  }
+  return col * uKindle * spireFade(r);
+}
+vec3 beaconWall(vec2 q) {
+  float u = q.x, v = q.y;
+  // a faint rise of gold off the ring, gone by the knee
+  vec3 col = SP_BEACON * 0.1 * (1.0 - smoothstep(0.0, 0.25, v)) * beaconBreath();
+  // THE MOTES: gold-white, rising off the ring past the chest, each at its own place and pace, swaying as they climb
+  float circ = TAU * uRingR, motes = 0.0;
+  for (int m = 0; m < ${BEACON_MOTES}; m++) {
+    float fm = float(m);
+    float h1 = fract(sin(fm * 91.17 + 0.7) * 43758.5453), h2 = fract(sin(fm * 33.71 + 2.9) * 24634.6345);
+    float mv = fract(uTime ${hzGlsl(BEACON_HZ.mote)} * (1.0 + mod(fm, 3.0)) + h2);
+    vec2 dm = vec2((fract(u - h1 + 0.5) - 0.5) * circ + 0.04 * sin(TAU * (mv * 2.0 + h1)), (v - mv) * uFlameH);
+    motes += exp(-dot(dm, dm) / 0.0003) * (1.0 - mv) * smoothstep(0.0, 0.06, mv);
+  }
+  col += (SP_WHITE * 0.7 + SP_BEACON * 0.5) * motes;
+  // kindled UP: the light rising from the feet
+  return col * clamp(uKindle * 1.25 - v, 0.0, 0.15) / 0.15;
+}
+// THE BURNING STAIR
+float stairFlare() { return 0.8 + 0.2 * sin(uTime * TAU ${hzGlsl(STAIR_HZ.flare)}); }
+vec3 stairGround(vec2 p) {
+  float r = length(p);
+  if (r > uGroundR) discard;
+  float px = turnPixel(), flare = stairFlare();
+  // THE COAL's glow under the feet
+  vec3 col = SP_COAL * exp(-r * r / 0.3) * 0.3 * flare;
+  if (r > 0.05) {
+    // THE STAIR: its steps round the feet, each a little hotter than the one above it, the whole of it turning DOWN
+    float a = atan(p.y, p.x);
+    float s = fract(a / TAU - uTime ${hzGlsl(STAIR_HZ.descend)}) * ${STAIR_STEPS.toFixed(1)};
+    float k = floor(s), f = fract(s), heat = (k + 1.0) / ${STAIR_STEPS.toFixed(1)};
+    float tread = turnBand(r, uRingR - ${STAIR_W.toFixed(3)}, uRingR, px);
+    float riser = 1.0 - smoothstep(0.0, 0.07, f);   // the step's lip, lit, along its leading edge
+    float gap = smoothstep(0.0, 0.03, f) * (1.0 - smoothstep(0.97, 1.0, f));   // and a dark line between two steps
+    col += mix(SP_COAL, SP_EMBER, heat) * (0.3 + 0.6 * heat) * tread * gap * flare + SP_FLAME * tread * riser * 0.7 * heat;
+  }
+  return col * uKindle * spireFade(r);
+}
+vec3 stairWall(vec2 q) {
+  float u = q.x, v = q.y, flare = stairFlare();
+  // the stair's heat rising off it, gone by the knee
+  vec3 col = SP_EMBER * 0.1 * (1.0 - smoothstep(0.0, 0.2, v)) * flare;
+  // THE EMBERS, FALLING from over the head, each at its own place and pace, drifting - a streak longer than it is wide,
+  // cooling as it falls
+  float circ = TAU * uRingR, embers = 0.0;
+  for (int m = 0; m < ${STAIR_EMBERS}; m++) {
+    float fm = float(m);
+    float h1 = fract(sin(fm * 57.31 + 1.3) * 43758.5453), h2 = fract(sin(fm * 21.77 + 4.1) * 24634.6345);
+    float mv = 1.0 - fract(uTime ${hzGlsl(STAIR_HZ.ember)} * (1.0 + mod(fm, 3.0)) + h2);
+    vec2 dm = vec2((fract(u - h1 + 0.5) - 0.5) * circ + 0.05 * sin(TAU * (mv + h1)), (v - mv) * uFlameH * 0.35);
+    embers += exp(-dot(dm, dm) / 0.0004) * (0.25 + 0.75 * mv) * smoothstep(0.0, 0.08, mv) * (1.0 - smoothstep(0.9, 1.0, mv));
+  }
+  col += (SP_FLAME * 0.6 + SP_EMBER * 0.6) * embers;
+  // kindled DOWN: the embers' first fall, from over the head to the stair
+  return col * clamp(uKindle * 1.25 - (1.0 - v), 0.0, 0.15) / 0.15;
+}
+// FIRSTLIGHT
+float dawnBreath() { return 0.85 + 0.15 * sin(uTime * TAU ${hzGlsl(DAWN_HZ.breath)}); }
+vec3 dawnGround(vec2 p) {
+  float r = length(p);
+  if (r > uGroundR) discard;
+  float px = turnPixel(), breath = dawnBreath();
+  // THE RING: one crisp line of the dawn's white, its edge a pixel wide, in a dawn-gold glow; the light within it pale
+  float dr = r - uRingR;
+  float ring = turnBand(r, uRingR - ${(DAWN_RING_M / 2).toFixed(3)}, uRingR + ${(DAWN_RING_M / 2).toFixed(3)}, px);
+  vec3 col = SP_DAWN * ring * 0.85 + SP_DAWN_GOLD * exp(-dr * dr / 0.004) * 0.25 * breath + SP_DAWN_GOLD * exp(-r * r / 0.3) * 0.1 * breath;
+  if (r > 0.05) {
+    // THE SUNRISE: a light circling the ring slowly, as the sun climbs round the edge of the world
+    float a = atan(p.y, p.x);
+    float sweep = pow(max(0.5 + 0.5 * cos(a - uTime * TAU ${hzGlsl(DAWN_HZ.sweep)}), 0.0), 10.0);
+    col += SP_DAWN * sweep * exp(-dr * dr / 0.002) * 0.6;
+  }
+  return col * uKindle * spireFade(r);
+}
+vec3 dawnWall(vec2 q) {
+  float u = q.x, v = q.y;
+  // THE VEIL: pale light rising off the ring in streaks, gone by the shin
+  float n = vnoiseP(vec2(u * 48.0, v * 1.2 - uTime * ${DAWN_FLOW.veil.toFixed(3)}), vec2(48.0, ${(DAWN_FLOW.veil * AURA_CLOCK_PERIOD).toFixed(1)}));
+  vec3 col = (SP_DAWN * 0.5 + SP_DAWN_GOLD * 0.5) * (n * n * (1.0 - v) * (1.0 - v) * 0.45 + exp(-v * 6.0) * 0.15) * dawnBreath();
+  return col * clamp(uKindle * 1.25 - v, 0.0, 0.15) / 0.15;
 }
 `;
 /** SHADOW-CLOAK: A GLYPH'S OUTLINE AS STRAIGHT EDGES - an SVG path of absolute M, L, Q and Z (ui/playerBadge.js
@@ -1535,7 +1706,7 @@ export const AURA_FS = HEAD + `in vec2 vP;
 in vec3 vWorld;
 in vec3 vS;             // AEGIS: a floating symbol's age, rune and number
 uniform int uKind;
-uniform int uAura;      // AEGIS: 0 Dagon's Fire, 1 the Oblivion Ward, 2 the Golden Radiance (AURA_LOOK - PRIMARCH), 3 the Holo Shadow Cloak (SHADOW-CLOAK), 4 the Seraph Wings (SERAPH-WINGS), 5 the Crystal Resonance (CRYSTAL-FIST), 6 The Turning Hour (SD9c), 7 The First Hour (HOURS-FIRST), 8 The Maelstrom (SERPENT5)
+uniform int uAura;      // AEGIS: 0 Dagon's Fire, 1 the Oblivion Ward, 2 the Golden Radiance (AURA_LOOK - PRIMARCH), 3 the Holo Shadow Cloak (SHADOW-CLOAK), 4 the Seraph Wings (SERAPH-WINGS), 5 the Crystal Resonance (CRYSTAL-FIST), 6 The Turning Hour (SD9c), 7 The First Hour (HOURS-FIRST), 8 The Maelstrom (SERPENT5), 9 Beaconlight, 10 The Burning Stair, 11 Firstlight (EG-E2)
 uniform vec3 uAt;       // PRIMARCH: the feet - the axis the radiance's column stands on
 uniform float uYaw;     // SHADOW-CLOAK: the wearer's facing - the cloak's opening is at their front
 uniform int uSide;      // SHADOW-CLOAK: which side of the cloth this draw lays - 0 its lining (front faces culled), 1 its outside (back faces culled)
@@ -1550,7 +1721,7 @@ uniform vec3 uCamPos;
 out vec4 o;
 ${FOG_FACTOR_GLSL}${NOISE_GLSL}
 const float TAU = 6.283185307179586;
-${WARD_GLSL}${RADIANCE_GLSL}${RESONANCE_GLSL}${TURNING_GLSL}${MAELSTROM_GLSL}${CLOAK_SHAPE_GLSL}${CLOAK_FS_GLSL}${WING_SHARED_GLSL}${WING_FS_GLSL}
+${WARD_GLSL}${RADIANCE_GLSL}${RESONANCE_GLSL}${TURNING_GLSL}${MAELSTROM_GLSL}${SPIRE_GLSL}${CLOAK_SHAPE_GLSL}${CLOAK_FS_GLSL}${WING_SHARED_GLSL}${WING_FS_GLSL}
 void main() {
   if (uAura == 4) { vec3 wl = uKind == 0 ? wingsGround(vP) : uKind == 1 ? wingStrand(vP, vS) : vS.y > 1.5 ? wingHalo(vP, vS.x) : wingMote(vP, vS); o = vec4(wl * fogFactorAt(vWorld), 1.0); return; }   // SERAPH-WINGS: added whole; kindled within (the strands unfurl)
   if (uAura == 3) {   // SHADOW-CLOAK: premultiplied - the light it adds, and how much the shadow covers; both fogged
@@ -1563,6 +1734,9 @@ void main() {
   if (uAura == 6) { vec3 c = uKind == 0 ? turningGround(vP) : turningWall(vP); o = vec4(c * fogFactorAt(vWorld), 1.0); return; }   // SD9c: added whole, kindled within (the ground fades in, the strip rises)
   if (uAura == 7) { vec3 c = uKind == 0 ? firstGround(vP) : firstWall(vP); o = vec4(c * fogFactorAt(vWorld), 1.0); return; }   // HOURS-FIRST: The First Hour, as The Turning Hour is drawn
   if (uAura == 8) { vec3 c = uKind == 0 ? maelstromGround(vP) : maelstromWall(vP); o = vec4(c * fogFactorAt(vWorld), 1.0); return; }   // SERPENT5: added whole, kindled within (the pool fades in, the spray rises)
+  if (uAura == 9) { vec3 c = uKind == 0 ? beaconGround(vP) : beaconWall(vP); o = vec4(c * fogFactorAt(vWorld), 1.0); return; }   // EG-E2: Beaconlight, added whole, kindled within
+  if (uAura == 10) { vec3 c = uKind == 0 ? stairGround(vP) : stairWall(vP); o = vec4(c * fogFactorAt(vWorld), 1.0); return; }   // EG-E2: The Burning Stair
+  if (uAura == 11) { vec3 c = uKind == 0 ? dawnGround(vP) : dawnWall(vP); o = vec4(c * fogFactorAt(vWorld), 1.0); return; }   // EG-E2: Firstlight
   if (uAura == 2) { vec3 rad = uKind == 0 ? radianceGround(vP) : radianceWall(vP); o = vec4(rad * uKindle * fogFactorAt(vWorld), 1.0); return; }   // PRIMARCH
   if (uAura == 1) { vec3 ward = uKind == 0 ? wardGround(vP) : uKind == 1 ? wardWall(vP) : wardSymbol(vP, vS); o = vec4(ward * uKindle * fogFactorAt(vWorld), 1.0); return; }   // AEGIS
   // every rate a whole number of cycles over the clock, in turns a second times TAU - never a rounded radian rate, which
@@ -1743,7 +1917,7 @@ export function auraSpriteBones(fig) {
 }
 /** A peer's sprite figure as the pose `auraCapeStep` takes - at the wearer's own feet - or null. SPRITE-FACE (2026-10-05,
  *  Mac: "The sprite rotation on character input is a little finicky and make the aura misallign"): FACING AS ITS PICTURE
- *  DOES - `face` the sprite layer's { yaw, turn } (net/peerRiders.js faceOf): hung on the picture's facing, its eight-way
+ *  DOES - `face` the sprite layer's { yaw, turn } (net/peer/peerRiders.js faceOf): hung on the picture's facing, its eight-way
  *  view, where the pose's own facing runs up to half a view off it; swung by the pose's (`turn`). A sprite with a face and
  *  no figure (a rider's, the horse's picture) is faced and hung from the rest pose; neither, null. Pure. */
 export const auraSpritePosed = (w, fig, face = null) => (fig || face

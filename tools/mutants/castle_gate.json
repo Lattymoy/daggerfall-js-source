@@ -4,146 +4,146 @@
   "file": "src/systems/siegeField.js",
   "old": "    if (Number.isFinite(y) && y < low - 1e-6) { low = y; best = { door: d.door, box: [...d.box], normal }; }",
   "new": "    if (Number.isFinite(y) && -y < low - 1e-6) { low = -y; best = { door: d.door, box: [...d.box], normal }; }",
-  "tests": ["test/castle_gate.test.js"]
+  "tests": ["test/scenes/castle_gate.test.js"]
  },
  {
   "name": "CASTLE-GATE-last-on-tie",
   "file": "src/systems/siegeField.js",
   "old": "    if (Number.isFinite(y) && y < low - 1e-6) { low = y; best = { door: d.door, box: [...d.box], normal }; }",
   "new": "    if (Number.isFinite(y) && y <= low + 1e-6) { low = y; best = { door: d.door, box: [...d.box], normal }; }",
-  "tests": ["test/castle_gate.test.js"]
+  "tests": ["test/scenes/castle_gate.test.js"]
  },
  {
   "name": "CASTLE-GATE-box-shared",
   "file": "src/systems/siegeField.js",
   "old": "    if (Number.isFinite(y) && y < low - 1e-6) { low = y; best = { door: d.door, box: [...d.box], normal }; }",
   "new": "    if (Number.isFinite(y) && y < low - 1e-6) { low = y; best = { door: d.door, box: d.box, normal }; }",
-  "tests": ["test/castle_gate.test.js"]
+  "tests": ["test/scenes/castle_gate.test.js"]
  },
  {
   "name": "CASTLE-GATE-banners-dropped",
   "file": "src/scenes/seatBanners.js",
   "old": "  pair(castle);   // CASTLE-GATE: a crown's two at its castle's entrance",
   "new": "",
-  "tests": ["test/castle_gate.test.js"]
+  "tests": ["test/scenes/castle_gate.test.js"]
  },
  {
   "name": "CASTLE-GATE-banners-last",
   "file": "src/scenes/seatBanners.js",
   "old": "  pair(castle);   // CASTLE-GATE: a crown's two at its castle's entrance\n  for (const g of gates) add(gateBannerAnchor(g, centre));",
   "new": "  for (const g of gates) add(gateBannerAnchor(g, centre));\n  pair(castle);",
-  "tests": ["test/castle_gate.test.js"]
+  "tests": ["test/scenes/castle_gate.test.js"]
  },
  {
   "name": "CASTLE-GATE-doors-ungathered",
-  "file": "src/scenes/world.js",
+  "file": "src/scenes/pixelBuild.js",
   "old": "            if (dfLocation.hasDungeon) for (const d of cpu.doors) if (d.type === DOOR_TYPE.DUNGEON_ENTRANCE) pixelDungeonDoors.push({ door: doorCornersOf(d, local), box, normal: doorNormalOf(d, local), arena: b.blockName === ARENA_BLOCK });   // CASTLE-GATE (AUDIT G1: its outward normal; AUDIT PRE-MERGE 1003 W7: the undercroft's stair, no castle's - castleEntranceOf passes it over)\n",
   "new": "",
-  "tests": ["test/castle_gate.test.js"]
+  "tests": ["test/scenes/castle_gate.test.js"]
  },
  {
   "name": "CASTLE-GATE-every-tier",
-  "file": "src/scenes/world.js",
+  "file": "src/scenes/pixelBuild.js",
   "old": "    const castleGate = seatTier === 'crown' ? castleEntranceOf(pixelDungeonDoors) : null;",
   "new": "    const castleGate = castleEntranceOf(pixelDungeonDoors);",
-  "tests": ["test/castle_gate.test.js"]
+  "tests": ["test/scenes/castle_gate.test.js"]
  },
  {
   "name": "CASTLE-GATE-field-unhanded",
-  "file": "src/scenes/world.js",
+  "file": "src/scenes/pixelBuild.js",
   "old": "      tier: seatTier, castle: castleGate,\n",
   "new": "      tier: seatTier,\n",
-  "tests": ["test/castle_gate.test.js"]
+  "tests": ["test/scenes/castle_gate.test.js"]
  },
  {
   "name": "CASTLE-GATE-banners-unhanded",
-  "file": "src/scenes/world.js",
+  "file": "src/scenes/pixelBuild.js",
   "old": "      frames: pixelHomeFrames, palaceKeys: seatPalaceKeys, castle: castleGate,\n",
   "new": "      frames: pixelHomeFrames, palaceKeys: seatPalaceKeys,\n",
-  "tests": ["test/castle_gate.test.js"]
+  "tests": ["test/scenes/castle_gate.test.js"]
  },
  {
   "name": "CASTLE-GATE-G2-lower-corner",
   "file": "src/systems/siegeField.js",
   "old": "    const y = (d.door.a[1] + d.door.b[1]) / 2;",
   "new": "    const y = Math.min(d.door.a[1], d.door.b[1]);",
-  "tests": ["test/castle_gate.test.js"]
+  "tests": ["test/scenes/castle_gate.test.js"]
  },
  {
   "name": "CASTLE-GATE-G3-unfaceable-taken",
   "file": "src/systems/siegeField.js",
   "old": "    if (!doorFace({ door: d.door, box: d.box, normal })) continue;   // AUDIT G3: a door no face is taken from\n",
   "new": "",
-  "tests": ["test/castle_gate.test.js"]
+  "tests": ["test/scenes/castle_gate.test.js"]
  },
  {
   "name": "CASTLE-GATE-G1-normal-not-carried",
   "file": "src/systems/siegeField.js",
   "old": "    if (Number.isFinite(y) && y < low - 1e-6) { low = y; best = { door: d.door, box: [...d.box], normal }; }",
   "new": "    if (Number.isFinite(y) && y < low - 1e-6) { low = y; best = { door: d.door, box: [...d.box], normal: null }; }",
-  "tests": ["test/castle_gate.test.js"]
+  "tests": ["test/scenes/castle_gate.test.js"]
  },
  {
   "name": "CASTLE-GATE-G1-normal-ignored",
   "file": "src/systems/siegeField.js",
   "old": "  const dn = Array.isArray(normal) ? ox * normal[0] + oz * normal[2] : NaN;",
   "new": "  const dn = NaN;",
-  "tests": ["test/castle_gate.test.js"]
+  "tests": ["test/scenes/castle_gate.test.js"]
  },
  {
   "name": "CASTLE-GATE-G1-sign-reversed",
   "file": "src/systems/siegeField.js",
   "old": "  if (Number.isFinite(dn) && Math.abs(dn) >= 0.5) return dn < 0 ? [-ox, -oz] : [ox, oz];",
   "new": "  if (Number.isFinite(dn) && Math.abs(dn) >= 0.5) return dn > 0 ? [-ox, -oz] : [ox, oz];",
-  "tests": ["test/castle_gate.test.js"]
+  "tests": ["test/scenes/castle_gate.test.js"]
  },
  {
   "name": "CASTLE-GATE-G1-any-normal",
   "file": "src/systems/siegeField.js",
   "old": "  if (Number.isFinite(dn) && Math.abs(dn) >= 0.5) return dn < 0 ? [-ox, -oz] : [ox, oz];",
   "new": "  if (Number.isFinite(dn)) return dn < 0 ? [-ox, -oz] : [ox, oz];",
-  "tests": ["test/castle_gate.test.js"]
+  "tests": ["test/scenes/castle_gate.test.js"]
  },
  {
   "name": "CASTLE-GATE-G1-any-lean",
   "file": "src/systems/siegeField.js",
   "old": "  if (Number.isFinite(dn) && Math.abs(dn) >= 0.5) return dn < 0 ? [-ox, -oz] : [ox, oz];",
   "new": "  if (Number.isFinite(dn) && dn !== 0) return dn < 0 ? [-ox, -oz] : [ox, oz];",
-  "tests": ["test/castle_gate.test.js"]
+  "tests": ["test/scenes/castle_gate.test.js"]
  },
  {
   "name": "CASTLE-GATE-G1-field-face-boxed",
   "file": "src/systems/siegeField.js",
   "old": "  return { at: [cx, cz], out: doorFaceSign(-rz / w, rx / w, cx, cz, box, frame.normal) };",
   "new": "  return { at: [cx, cz], out: doorFaceSign(-rz / w, rx / w, cx, cz, box, null) };",
-  "tests": ["test/castle_gate.test.js"]
+  "tests": ["test/scenes/castle_gate.test.js"]
  },
  {
   "name": "CASTLE-GATE-G1-banners-face-boxed",
   "file": "src/scenes/hallBanners.js",
   "old": "  const [ox, oz] = doorFaceSign(-rz, rx, cx, cz, box, frame.normal);",
   "new": "  const [ox, oz] = doorFaceSign(-rz, rx, cx, cz, box, null);",
-  "tests": ["test/castle_gate.test.js"]
+  "tests": ["test/scenes/castle_gate.test.js"]
  },
  {
   "name": "CASTLE-GATE-G1-normal-translated",
   "file": "src/scenes/hallBanners.js",
   "old": "  const v = [m[0] * n.x + m[4] * n.y + m[8] * n.z,",
   "new": "  const v = [m[0] * n.x + m[4] * n.y + m[8] * n.z + m[12],",
-  "tests": ["test/castle_gate.test.js"]
+  "tests": ["test/scenes/castle_gate.test.js"]
  },
  {
   "name": "CASTLE-GATE-G1-normal-unnormalised",
   "file": "src/scenes/hallBanners.js",
   "old": "  return l > 1e-9 ? v.map((c) => c / l) : null;",
   "new": "  return l > 1e-9 ? v : null;",
-  "tests": ["test/castle_gate.test.js"]
+  "tests": ["test/scenes/castle_gate.test.js"]
  },
  {
   "name": "CASTLE-GATE-G1-normal-ungathered",
-  "file": "src/scenes/world.js",
+  "file": "src/scenes/pixelBuild.js",
   "old": "pixelDungeonDoors.push({ door: doorCornersOf(d, local), box, normal: doorNormalOf(d, local), arena: b.blockName === ARENA_BLOCK });",
   "new": "pixelDungeonDoors.push({ door: doorCornersOf(d, local), box, arena: b.blockName === ARENA_BLOCK });",
-  "tests": ["test/castle_gate.test.js"]
+  "tests": ["test/scenes/castle_gate.test.js"]
  }
 ]

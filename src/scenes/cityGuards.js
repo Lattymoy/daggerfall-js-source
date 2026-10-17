@@ -26,7 +26,7 @@
 //
 // Enemy-vs-enemy is IN - the MT-ii wave paid the C15 residual this
 // header used to hold open. _armed wraps a host's senses with
-// runTargetMachine (characters/enemyTargets.js) whenever the host
+// runTargetMachine (characters/enemy/enemyTargets.js) whenever the host
 // hands over `candidates`, and MeleeDamage takes DFU's two-arm split
 // (EnemyAttack.cs:199-209): a selected non-player target eats a real
 // swing through applyDamageToNonPlayer (scenes/hostCombat.js). A host
@@ -52,7 +52,7 @@ import { playerWeaponHitEntity } from '../systems/worldTick.js';   // DISC10-D H
 import { setCrimeCommitted } from '../systems/court.js';   // V4: the one crime setter (SuppressCrime)
 import { tallyCrimeGuildRequirements } from '../systems/crimeGuilds.js';   // CG2: the TG/DB tally
 import { entityIsParalyzed, applyEnemyMotorEffectFlags, concealmentFlags } from '../systems/effects.js';   // AUDIT 24 (wave 32): the watch is paralysable too   // A5: the enemy Levitate arm, the foe-target concealment closure + EntityConcealmentBehaviour's visual
-import { hasMagickaToCast } from '../characters/enemyCasting.js';   // AUDIT 24 (wave 35) / D9: GetDestination's magic term
+import { hasMagickaToCast } from '../characters/enemy/enemyCasting.js';   // AUDIT 24 (wave 35) / D9: GetDestination's magic term
 import { setEnemyAlert } from '../systems/encounters.js';   // AUDIT 24 (wave 36): EnemySenses:531-535 / EnemyDeath:131-136
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE, CAPSULE_RADIUS, CAPSULE_HEIGHT } from '../player/motor.js';   // AUDIT 24 (wave 36): ApplyFallDamage, for the watch too   // ROAD-B: PlayerController.radius, for the indoor arm's door clearance
 import { findLowestOuterInteriorDoor } from '../player/enterExit.js';   // ROAD-B: DaggerfallInterior.FindLowestOuterInteriorDoor
@@ -60,18 +60,20 @@ import { coverDistance } from '../ai/cover.js';   // TACT1: a witness does not s
 import { blowConnects, blowScaled } from '../ai/foeBlows.js';   // TACT4
 import { foeGlint } from '../ai/tactics.js';   // TELL2: a wind-up's glint (bible/12-Enhanced-AI/Feud-Arc.md section 4.2)
 import { SOUND } from '../systems/soundClips.js';
-import { ENEMY_BASICS } from '../characters/enemyBasics.js';
-import { copyEffectEntry } from '../systems/save.js';   // AUDIT 26 F217
-import { KNIGHT_CITY_WATCH } from '../characters/mobileTypes.js';
-import { MobileUnit } from '../characters/mobileUnit.js';
-import { EnemyAI, withinYaw, isBackFacing, foeFrameDt } from '../characters/enemyMotor.js';
+import { ENEMY_BASICS } from '../characters/enemy/enemyBasics.js';
+import { copyEffectEntry } from '../systems/save/save.js';   // AUDIT 26 F217
+import { KNIGHT_CITY_WATCH } from '../characters/mobile/mobileTypes.js';
+import { MobileUnit } from '../characters/mobile/mobileUnit.js';
+import { EnemyAI, withinYaw, isBackFacing, foeFrameDt } from '../characters/enemy/enemyMotor.js';
+import { EnhancedEnemyAI } from '../ai/enhancedMotor.js';   // FIELD BUGS 2026-10-16b INDOOR-WATCH: the routes, where the host hands a mesh (`nav`)
+import { getPref } from '../systems/uiPrefs.js';   // INDOOR-WATCH: the Enhanced AI switch, as the dungeon's construction sites read it
 import { spaceFoes, DOORWAY_DEPTH } from '../characters/foeSpacing.js';   // FOE-SPACING: the watch keeps apart   // TACT3c: past the threshold
-import { runTargetMachine, isPlayerTarget, PLAYER_TARGET, resetAllyTeamOnPlayerAttack, wireRecipient, bumpAtkCount, staticTeamOf } from '../characters/enemyTargets.js';   // AUDIT WATCH1: the wire's spellings, one home   // MT-ii   // ROAD-G G1: MakeEnemyHostileToAttacker's entity-side half, for the watch too
+import { runTargetMachine, isPlayerTarget, PLAYER_TARGET, resetAllyTeamOnPlayerAttack, wireRecipient, bumpAtkCount, staticTeamOf } from '../characters/enemy/enemyTargets.js';   // AUDIT WATCH1: the wire's spellings, one home   // MT-ii   // ROAD-G G1: MakeEnemyHostileToAttacker's entity-side half, for the watch too
 import { applyDamageToNonPlayer, spawnEnemyLoot, windupDoor, tellCues, landBlowEffect } from './hostCombat.js';   // MT-ii: EnemyAttack.ApplyDamageToNonPlayer; TELL1: the poise door
 import { TELL } from '../ai/tells.js';   // TELL1: the breaking blow's shove
-import { stampWonWeapons } from '../systems/lootRarity.js';   // SIGIL1: a body's weapons won online
-import { EnemyAttack } from '../characters/enemyAttack.js';
-import { makeEnemyEntity } from '../characters/enemyEntity.js';
+import { stampWonWeapons } from '../systems/loot/lootRarity.js';   // SIGIL1: a body's weapons won online
+import { EnemyAttack } from '../characters/enemy/enemyAttack.js';
+import { makeEnemyEntity } from '../characters/enemy/enemyEntity.js';
 import { ClassFile } from '../formats/classFile.js';
 import { inflictPoison } from '../systems/poisons.js';
 import {
@@ -88,23 +90,23 @@ import {
   tryLanguagePacification,         // AUDIT 24 (wave 42)
 } from './hostCombat.js';   // AUDIT 18: the laws every host must share
 import { billboardSize, mobileBillboardSize } from '../world/rmbFlats.js';
-import { enemyControllerHeight, idleSpriteHeight } from '../characters/enemyAnchor.js';   // REVIEW 2026-09-05 (PR #55): the watch wore the player's capsule
+import { enemyControllerHeight, idleSpriteHeight } from '../characters/enemy/enemyAnchor.js';   // REVIEW 2026-09-05 (PR #55): the watch wore the player's capsule
 import { tallySkill, SKILLS } from '../systems/skills.js';
 import { WEAPON_REACH } from '../combat/playerWeapon.js';
-import { getBool } from '../systems/settings.js';   // AUDIT DISC19: MeleeAttackFriendlyProtection, which the defenders' cross-pool sparing is
+import { getBool } from '../systems/settings/settings.js';   // AUDIT DISC19: MeleeAttackFriendlyProtection, which the defenders' cross-pool sparing is
 import { rayPersonDistance } from './townTalk.js';
 import { mintCorpseMarker, playBodyFall, playRareDrop, corpseLootTargets, physicalCorpseSources, corpseEntryFor, corpseContents, openCorpseLoot, pileBody, sayEnemyDied, raiseEnemyDeath, corpseEntityName } from './corpseMarker.js';
 import { rollCorpseKit } from '../systems/foeLootCap.js';   // KIT-ROLL: a plain foe's kit, laddered at its death by every body door
 import { liveFoeTargets, liveFoeFor } from '../player/activate.js';   // WORLD-HOVER H2: the LIVE bodies, in the shape the hover's one seam takes
 import { corpseName, mobileEntityName, liveEntityName } from '../systems/worldTooltips.js';   // WORLD-HOVER: "<who> (dead)", the mod's own word (.cs:526); H2: and a LIVE one's, when it is not hostile (.cs:304-312)
-import { enemyDisplayName } from '../characters/enemyBasics.js';   // the port's own name, the index law in one place (a LIVE one's fallback)
+import { enemyDisplayName } from '../characters/enemy/enemyBasics.js';   // the port's own name, the index law in one place (a LIVE one's fallback)
 import { bloodCentre } from './hitEffects.js';   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
-import { bloodHit, LETHAL_HIT } from '../combat/bloodDecals.js';   // BLOOD1b: the blow, in the shape the mark's ladder reads
-import { EnemySoundSource, acuteHearingMultiplier, WatchVoice, ATTRACT_RADIUS, OCCLUDED_VOLUME_SCALE } from '../characters/enemySounds.js';   // AUDIT 24 (wave 41): EnemySounds.cs, one home; HALT-ONE: the watch's one voice
-import { placeFoeEnv, entityOccupancy } from './questFoeHost.js';   // D9: FoeSpawner.PlaceFoeFreely's env, over THIS pool's collider
+import { bloodHit, LETHAL_HIT } from '../combat/blood/bloodDecals.js';   // BLOOD1b: the blow, in the shape the mark's ladder reads
+import { EnemySoundSource, acuteHearingMultiplier, WatchVoice, ATTRACT_RADIUS, OCCLUDED_VOLUME_SCALE } from '../characters/enemy/enemySounds.js';   // AUDIT 24 (wave 41): EnemySounds.cs, one home; HALT-ONE: the watch's one voice
+import { placeFoeEnv, entityOccupancy } from './quest/questFoeHost.js';   // D9: FoeSpawner.PlaceFoeFreely's env, over THIS pool's collider
 import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // D9: PlayerEntity.cs:687 spawns through FoeSpawner like everything else
 import { SPAWNER_ARMS } from '../systems/encounters.js';   // the CreateFoeSpawner call-site table - cityGuards is one of its rows
-import { popAllowChange, POP_VISIBLE_RANGE } from '../systems/townPopulation.js';   // WATCH-LEAVES: a defender walking off goes only where a walker may
+import { popAllowChange, POP_VISIBLE_RANGE } from '../systems/town/townPopulation.js';   // WATCH-LEAVES: a defender walking off goes only where a walker may
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, the one home the other placement hosts read
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage   // AUDIT 24 (wave 38): EnemyDeath's one home
 import { combatVisualsOn, foeDraw, markConcealedHit } from '../systems/combatVisuals.js';   // ECV1: what the enhanced skin draws for a concealed foe
@@ -124,7 +126,7 @@ export const MAX_ACTIVE_GUARD_SPAWNS = 5;
 /** WERE-FRIGHT: how long a watchman frightened off by a beast runs before he is gone (frighten, below) - long
  *  enough to be seen running, some twenty-odd metres at the watch's pace. The port's own number. */
 export const FRIGHTENED_RUN_SECONDS = 5;
-/** WATCH-LEAVES (bible/01-Overview/Field-Bugs-2026-10-12e.md): one leg of a stood-down defender's walk off - aimed
+/** WATCH-LEAVES (bible/01-Overview/bugs/Field-Bugs-2026-10-12e.md): one leg of a stood-down defender's walk off - aimed
  *  away from where the player stands as it begins, and aimed afresh from where they stand at its end. The port's own
  *  number: short enough that a player who moves is walked away from, not followed. */
 export const DEFENDER_LEAVE_LEG_SECONDS = 3;
@@ -205,7 +207,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
   isActionDoor = null,
   // HALT-ONE (2026-10-05, Mac: "reduce the HALT noise"): the living watch's lane - () => true where the town is the
   // living world's (scenes/world.js, scenes/worldModes.js: livingWorldOn). The watch then CALLS AS ONE
-  // (characters/enemySounds.js WatchVoice): one Halt as it first comes for the player, then at most one every
+  // (characters/enemy/enemySounds.js WatchVoice): one Halt as it first comes for the player, then at most one every
   // HALT_GAP_S from the whole watch while it is after him; never a defender's, a pacified, running or walking-away
   // watchman's, and nobody's while a window is over the world (`windowUp`). Off - the classic skin, the row off, the
   // fixed-city page - EnemySounds.FixedUpdate per watchman, 1:1.
@@ -213,7 +215,12 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
   windowUp = () => false,
   // WATCH-LEAVES: () => the camera's yaw, for the walk-off's one law (popAllowChange: behind the player's view). A host
   // that hands none (null) has its defenders go by the distance term alone - never in a view it cannot read.
-  viewYaw = () => null }) {
+  viewYaw = () => null,
+  // FIELD BUGS 2026-10-16b INDOOR-WATCH (ENHANCED AI 5's interior half, scenes/interiorNav.js): the room's mesh -
+  // `{ chf, world, goal }`, the bake's thunk, the routes' world and the off-mesh goal - where the host has one (the mode machine's building);
+  // with the Enhanced AI switch on a watchman walks the routes (EnhancedEnemyAI), as a dungeon's foe does. The street's
+  // two pools hand none and keep the classic motor.
+  nav = null }) {
   // AUDIT 23 (hosts-3): currentMinute is REQUIRED - the () => 0 default
   // let a guard's poisoned hit anchor at minute 0, and the next world
   // tick (absolute clock ~523,530) caught the whole course up at once.
@@ -294,7 +301,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
    *  the same street in that window - a second crime's, the minute's sweep, a swing, the town watch's summons - turned the
    *  same walker again: two watchmen from one. So a walker is CLAIMED across the await, and one its host says is off the
    *  street already (`live()` false: a pool read before another arm took it) is never turned. The guard stood MARKS whom
-   *  it stands for (`livingFrom` - the living world's resident, its identity as it was turned: scenes/livingWatch.js
+   *  it stands for (`livingFrom` - the living world's resident, its identity as it was turned: scenes/livingWorld/livingWatch.js
    *  follows it). Answers the guard, or null (refused, or the world it was posted to is gone - the walker then stays). */
   async function turnNpc(p, attackerFeet, opts = undefined) {
     const who = p.person ?? p;
@@ -343,7 +350,8 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       // watchman's controller like any other enemy's.)
       if (gen !== epoch) return null;
       const idleH = idleSpriteHeight(tex);
-      const ai = new EnemyAI(collider, pending.feet, yaw, {
+      const ai = new (nav && getPref('enhancedAI') ? EnhancedEnemyAI : EnemyAI)(collider, pending.feet, yaw, {   // INDOOR-WATCH: the switch chooses the motor where the room has a mesh; the bake is read per step
+        nav: nav?.chf, navWorld: nav?.world, navGoal: nav?.goal, navSeed: Math.imul(_nextGuardId + 1, 0x9e3779b1) >>> 0,   // the dungeon's three (its seed off the spawn's yaw; the watch faces one way, so off his number), and the room's goal for a player off its mesh (AUDIT W1)
         liveSpeed: () => liveStat(entity, 'speed'),   // AUDIT 39: EnemyMotor.cs:432 re-reads LiveSpeed per FixedUpdate
         seesThroughInvisibility: basics.seesThroughInvisibility ?? false,
         height: enemyControllerHeight(idleH, basics.behaviour ?? 'General'),   // REVIEW 2026-09-05: SetupDemoEnemy.cs:103-115
@@ -687,7 +695,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     return null;
   }
 
-  /** DISC19-F: THE WATCH DEFENDS THE TOWN (systems/townWatch.js
+  /** DISC19-F: THE WATCH DEFENDS THE TOWN (systems/town/townWatch.js
    *  decides when; this is the arrival). The crime response's own two
    *  arms, with the defenders minted as the player's allies and sent at
    *  the threat nearest them:
@@ -957,7 +965,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       if (fromPlayer && !peer) reportPlayerKill(g.entity, { kind: 'melee' });   // SET2: MY blow killed him (a set's "each kill")
       g.corpse = true;   // G3: only a KILLED guard is lootable (walk-aways vanish with their items)
       releaseGuardBatch(g);
-      g.killedBy = peer ? 'peer' : fromPlayer ? 'player' : 'other';   // WATCH-FIX: whose hand - the player's own blow (DFU's `source == Player`, :203) is the living world's deed; any other its loss (scenes/livingWatch.js)
+      g.killedBy = peer ? 'peer' : fromPlayer ? 'player' : 'other';   // WATCH-FIX: whose hand - the player's own blow (DFU's `source == Player`, :203) is the living world's deed; any other its loss (scenes/livingWorld/livingWatch.js)
       // EnemyDeath:131-136 - the clear gates on `senses.Target ==
       // PlayerEntityBehaviour`, which MT-ii makes observable.
       if (isPlayerTarget(g.ai?.target) && g.ai?.detected) setEnemyAlert(playerEntity, false);
@@ -1597,7 +1605,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     // guard was ALIVE: 22 fatigue a swing near the watch, 11
     // everywhere else. The dungeon never had it, which is what the
     // shape should have been all along.
-    if (any) tallySwingSkills(playerEntity, playerWeapon.weapon);
+    if (any) tallySwingSkills(playerEntity, playerWeapon.weapon, playerWeapon.blowWeight);
     return any;
   }
 
@@ -1846,7 +1854,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
         items: (g.entity.items ?? []).map((it) => ({ ...it })),
         activeEffects: (g.entity.activeEffects ?? []).map(copyEffectEntry),
         hostile: g.ai.isHostile !== false,
-        ...(typeof g.livingFrom?.id === 'string' ? { living: g.livingFrom.id } : {}),   // WATCH-FIX: the resident he stands for, by id - a load finds him again (scenes/livingWatch.js)
+        ...(typeof g.livingFrom?.id === 'string' ? { living: g.livingFrom.id } : {}),   // WATCH-FIX: the resident he stands for, by id - a load finds him again (scenes/livingWorld/livingWatch.js)
       };
     });
   }
@@ -1910,7 +1918,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     // (the record above) and the fall arm inside update(), which need
     // ARENA2 to reach, and WATCH1's `watch.hurt` net seam (world.js's
     // exteriorFoes.setNet), which hands `{ fromPlayer: false, peer: true }`
-    // through `hurtGuard` and is the one a test drives (test/watch1.test.js).
+    // through `hurtGuard` and is the one a test drives (test/characters/enemy/watch1.test.js).
     _damage: (i, dmg, opts) => { const g = guards[i]; if (g && !g.dead) damageGuard(g, dmg, [0, 0, 0], null, opts); },   // probe/test seam through the REAL death path
     _debug: () => guards.map((g) => ({ dead: g.dead, hp: g.entity.health, pos: g.ai.feet.map((v) => +v.toFixed(1)), detected: g.ai.detected, state: g.attack.machine.state, moving: g.ai.moving, dist: +(g.ai._dist ?? -1).toFixed(1), giveUp: g.ai.giveUpTimer })) };
 }

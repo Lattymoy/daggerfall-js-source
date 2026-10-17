@@ -1,0 +1,1823 @@
+// PX30 - THE GAMEPLAY HUD.
+//
+// Mac's reference is ESO's Clean UI: a compass strip across the top, a
+// named target bar under it, three vitals along the bottom, and the
+// effects beneath them (UI3: a widget of their own now, ui/hud/hudStatus.js). This is that reading in the pixel language
+// this arc has built - the same Bayer-dithered ground, the same
+// Pixelify face, the same brass and bone and the classic shadowed
+// pair, the same square 2px frames, and states that SNAP.
+//
+// IT IS A READOUT, NOT A WINDOW. Nothing here takes a click, nothing
+// registers with the overlay stack, and Tab does not close it: it is
+// the game's own face. That is why it does not go through a door.
+//
+// AND IT IS DRAWN FROM THE ONE HOST-AGNOSTIC CALL. `drawHud` is what
+// all four hosts already make, "last, over the viewmodel" - so the
+// enhanced HUD rides it exactly as the damage flash does, and no host
+// can forget it or run it twice. The classic HUD is untouched and
+// still draws for the classic skin; this replaces it for the enhanced
+// one, which is what a skin is.
+//
+// UPDATED, NOT REBUILT. A per-frame innerHTML is the entrance-replay
+// bug (PX19k) at sixty times a second. The DOM is made once and each
+// frame writes only what CHANGED - a width, a number, a name - so a
+// still frame costs four string compares.
+//
+// ── QS3: THE QUICKSLOT DIAMOND, AND ITS TWO DEPARTURES ───────────
+//
+// Mac's second reference is the bottom-left diamond of the Demon's
+// Souls remake: four diamond cells in a larger diamond - the off hand
+// on the left, the weapon on the right, two consumables above and
+// below - each with the item's own art, a durability strip on the
+// hands, a count on the consumables, and the key that presses it at
+// the outer point. It REPLACES the "Ready"/"Hand" plaques PX30b put
+// under the vitals: those said the same two things in words, in a
+// place the eye does not go, and could say nothing at all about a
+// potion. The model is systems/quickslots.js; this draws it.
+//
+// DEPARTURE 1 - AN EMPTY CELL IS A SOCKET, NOT AN ABSENCE. PX30b's
+// law is that a plaque draws only when filled, because an empty one is
+// PX14's drawn door. That law stands where it was made and does not
+// reach here, because THE SHAPE IS THE READOUT: four cells at four
+// points ARE the diamond, and a diamond with a corner missing is not a
+// diamond - it is a wedge the player has to re-read every time the
+// last potion is drunk. An empty cell is drawn as a SOCKET (the frame
+// at a third of its alpha, nothing inside), which is not a door that
+// opens nothing: it says a slot exists and that filling it is the
+// inventory tooltip's job. The lead records it in the bible.
+//
+// DEPARTURE 2 - ON A PHONE, THE CELLS TAKE A TAP. "Nothing here takes
+// a click" is this file's own first law and it is kept everywhere else
+// - the `.hud` root is still `pointer-events: none` and nothing
+// registers with the overlay stack. But under `pointer: coarse` the
+// four cells take one, because a phone has no Digit1, no Digit2 and no
+// Digit3, and AUDIT SOC C9 is the lesson this repeats: SOC5's F had no
+// phone control for a whole arc and online on a phone could open
+// neither door it led to. A control a platform cannot reach is a
+// feature that platform does not have. The handlers are bound ONCE in
+// build() and read the live options bag from a module variable, so a
+// frame still costs no listener work.
+import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
+import { retroScreenRect } from '../../systems/retroMode.js';   // RETRO-UI: the pillarbox's rect, DFU's CustomScreenRect
+import { stepGhost, chunkFrame, GHOST_HOLD } from '../barLoss.js';   // VB2 / FRAME1: a bar's loss (AUDIT NAV1: shared with the sea fight's card)
+import { mountHitNumbers, healNumberFor, showNumber } from '../hitNumbers.js';   // HN1; PARTY-BUFFS: the heal a frame shows
+import { maxRoundsRemaining } from '../hud/hudActiveSpells.js';
+import { liveBundles, canEndBundle, endBundle, endedSpellText } from '../../systems/mysticism.js'; import { shownSpellName } from '../../systems/loot/loot.js';   // PX30: the ONE bundle walk the HUD already uses; BUFF-END: and which of them the player may end; L10N3e: a spell's name as the book shows it
+import { hudText } from '../../systems/notify.js';   // BUFF-END: the ended spell's one line
+import { cursorActive } from '../../player/pointerLock.js';   // BUFF-END: the freed mouse ends a spell
+import { overlayOpen } from './enhancedOverlays.js';
+import { getPref } from '../../systems/uiPrefs.js';   // PX30c: the port's own prefs, not DFU's settings
+import { hudRenown } from '../hud/hudRenown.js';   // RENOWN4: my own Renown, under the vitals
+import { survivalHudChips } from '../../systems/survival/status.js';   // SURV5: the needs (UI3: tiles in the status widget)
+import { statusTiles, afflictionRows, statusGlyphSrc, statRoom, statSide, statPlace, statOverflow, STAT_TILE, STAT_GAP, STAT_METRICS, STAT_SHORT_QUERY, STAT_MIDDLE_CLEAR } from '../hud/hudStatus.js';   // UI3: the status widget
+import { sigilRuneTileSrc } from '../sigilRune.js';   // UI3: a set power's tile is its set's rune
+import { techniqueGlyphTileSrc } from '../techniqueGlyph.js';   // TECH-CARD: a technique's tile is its own glyph, the card block's
+import { liveVampirism } from '../../systems/racialLive.js';   // AUDIT SURV C: no hunger or sleep chip on a vampire
+import { survivalOn, survivalRules } from '../../systems/survival/switch.js';   // AUDIT SURV-BOONS C14: and the live tier's rules
+import { temperatureReadout, levelSaid } from '../../systems/survival/status.js';   // TEMP-UI: the temperature plate's reading; AUDIT C&C S14: its level in words
+import { feltNow } from '../../systems/survival/env.js';   // TEMP-UI: live, where the body stands this frame
+
+import { ownMinutes, sharedClockOn } from '../../systems/worldTick.js';   // LIVED1: the needs' strip reads the character's own clock   // REST1: and the Next night tile is online's
+import { nightRealMinutesLeft } from '../../systems/rest/restAct.js';   // REST1: the night interval's minutes left
+import { compassScroll, breathShortThreshold, compassMarkerLerp, DETECT_MARKER_RGB } from '../hud/hud.js';
+import { PARTY_GREEN_CSS } from '../../net/social.js';   // COMPASS-PARTY: the party's one green
+import { maxBreath, maxFatigue, liveStat } from '../../systems/statMods.js';   // PX30b/PX30d: DFU's own ceilings
+// QS3: the quickslot diamond. The MODEL is systems/quickslots.js and
+// nothing about it is restated here; the ICON is the one the inventory
+// window draws (ui/item/itemIconUrl.js, moved out of that 2200-line screen
+// rather than importing it); the TAGS are their own pure module.
+import { quickslotView, quickslotKey, cycleQuickslot, quickslotCycling, spellQuickslot,
+  QUICK_HOLD_MS, QUICK_STEP_MS } from '../../systems/quickslots.js';   // QS6: the phone's own hold - a finger cycles a slot the way a held key does
+import { modelIconUrl } from '../item/itemIconUrl.js';
+import { fpArm } from '../../combat/fpArm.js';   // the Morrowind ground mesh the inventory takes through its deps bag
+import { requestFittedIcon, showFitted } from '../textureCanvas.js';
+import { spellIconPicture } from './enhancedArt.js';   // UI2: the spell chip wears its spell's icon
+import { screenDpr, clampDpr } from '../iconFit.js';
+import { inventoryItemImage } from '../../systems/item/itemTemplates.js';
+import { quickslotTag, quickslotOffTag, quickslotSpellTag, tagKey, CELL_ACTIONS } from '../quickslotTags.js';   // QS6: the caption's spell chip names its own action
+import { glyphSvg, padFamily } from '../padGlyphs.js';
+import { hdGlyphSvg } from '../padGlyphsHD.js';   // PADPLUS1: Plus draws the pad's buttons as vectors
+import { TECH_CHIP_COLOUR } from '../../combat/technique/techniqueRoster.js';   // TECH1: a technique's chip wears its marks' blue (the roster is a leaf)
+import { rarityAttr, RARITIES } from '../../systems/loot/lootRarity.js';   // RARITY-UI: a quickslot cell's frame wears its item's tier; LOOT5: a power chip the Legendary's colour
+import { validSigil } from '../../systems/sigil/sigil.js';   // SIGIL-UI: and a sigil weapon's rune
+import { markSetFrame, setShades } from '../setCard.js';   // SET5: a set piece's rune in its set's colour; a set power's chip in it
+import { setIdOf, setById } from '../../systems/sigil/sigilSets.js';
+import { controllerLook } from '../../player/lookFilter.js';   // GP1's own latch: "the last input was the pad"
+import { bindings } from '../input.js';
+// (breathShortThreshold lives in hud.js, imported below with compassScroll)
+import { foeTarget, foeTargetRef, tickFoeTarget } from '../hud/hudFoeTarget.js';
+// PX32: the reticle's LAWS are the classic module's - which setting shows
+// a crosshair, which style makes the mode word the crosshair, which
+// styles show a corner word - imported rather than restated.
+import { crosshairEnabled, interactionIconStyle, iconReplacesCrosshair, modeIconEnabled, MODE_LABEL } from '../hud/hudCrosshair.js';
+import { getInteractionMode } from '../../player/interactionMode.js';
+import { tickHudLayout, hudArranging } from '../hud/hudLayout.js';   // HUD-MOVE: the movable pieces, the lock and the reset
+import { mountHotbarDock, drawEnhancedHotbar, detachHotbarDock, hotbarMode } from './enhancedHotbar.js';   // HB1: the hotbar, the diamond's alternative (one or the other)
+import { setEnhancedMidTextScale } from './enhancedHudText.js';   // AUDIT FONT F2: the mid-screen label is a layer beside this one, not inside it (the popup column it once scaled too is a toast in the notice stack since ENH-NOTICE3)
+import { QUEST_MARK_CSS } from '../quest/questMarks.js'; import { nodeMarkCss } from '../nodeMarks.js';   // GUIDE5: the tracker's quest on the compass, in the marks' one gold; NODE-MARKS: a profession's nodes in its own colour
+import { WAY_MARK_CSS, WAY_BODY_CSS } from '../../systems/wayOut.js';   // WAYOUT1: the way out's mark
+import { BOAT_GLYPH_URL } from '../boatMarks.js';   // BOAT-MARK: my boats on the strip, a sail over a hull
+import { SERPENT_RING_MAP_CSS } from '../serpentMapMark.js';   // SERPENT1: the sea serpent on the strip, in its ring's green
+import { SD_RING_MAP_CSS } from '../superDungeon/sdMapMark.js';   // SD2c: the Super dungeon on the strip, in its ring's brass
+import { noteFirstUse } from '../../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
+
+/**
+ * PX30c (Mac: "is there anyway I can adjust the sizing?"): THE HUD'S
+ * SCALE, as a setting rather than a constant.
+ *
+ * NAMED `enhancedHudScale`, not `hudScale`: the classic HUD already
+ * declares a `hudScale(canvas)` of its own - the canvas fit - and
+ * audit24's one-home pin caught the collision on the first full run.
+ * Two functions with one name in one UI is exactly what that pin is
+ * for.
+ *
+ * It lives in the PORT'S OWN PREFS (`uiPrefs`), not in DFU's settings,
+ * and two pins said so before I listened: settingsDefaults.js is BAKED
+ * from DFU's vendored ini and nothing hand-edits it, and the tier
+ * map's own law is that every key in it "is a real DFU setting". This
+ * is not one - DFU has no HUD of this shape to scale - so it sits
+ * beside the other things only this port has.
+ *
+ * Clamped, because a HUD is not a place to let a typo hide the game:
+ * half size still reads, and double fills a phone.
+ */
+export const HUD_SCALE_MIN = 0.5;
+export const HUD_SCALE_MAX = 2;
+/** AUDIT NAV1 (the presentation): the bottom column - the vitals and the hotbar over them - and the quick block while
+ *  the HUD stands: the sea fight's ship plate keeps clear of the one, its card aside of the other (ui/naval/navalHud.js
+ *  placeParts), as the card keeps under the helm panel's bar. */
+export const enhancedHudBottom = () => (host ? parts?.bottom ?? null : null);
+export const enhancedHudQuick = () => (host ? parts?.quick ?? null : null);
+export const enhancedHudScale = () => {
+  const v = Number(getPref('hudScale'));
+  if (!Number.isFinite(v) || v <= 0) return 1;
+  return Math.max(HUD_SCALE_MIN, Math.min(HUD_SCALE_MAX, v));
+};
+
+/** The compass strip's eight points, in the order a turning player
+ *  meets them. DFU's own compass is a scrolling strip of the same
+ *  circle; this is that circle written in letters. */
+export const COMPASS_POINTS = Object.freeze([
+  ['N', 0], ['NE', 0.125], ['E', 0.25], ['SE', 0.375],
+  ['S', 0.5], ['SW', 0.625], ['W', 0.75], ['NW', 0.875],
+]);
+
+/** How much of the circle the strip shows at once. A quarter is the
+ *  reference's own bite: wide enough that two points are always in
+ *  view, narrow enough that turning MOVES. */
+export const COMPASS_SPAN = 0.25;
+
+/** QS5: the wear gauge is SVG, and an SVG node minted with
+ *  `createElement` is an unknown HTML element that draws nothing - the
+ *  namespace is the whole of the difference. */
+const SVG_NS = 'http://www.w3.org/2000/svg';
+const svgEl = (doc, tag, cls) => {
+  const n = doc.createElementNS(SVG_NS, tag);
+  if (cls) n.setAttribute('class', cls);
+  return n;
+};
+
+// FOEBAR1: the blade face's two pictures RIDE THE MODULE. `new URL(...,
+// import.meta.url)` is the pattern the workers use (ai/nav/navClient.js): vite
+// serves it in dev and bundles it with the page's base in a build, and
+// node resolves it to a file URL it never fetches. public/ was wrong for
+// this: it is served at the root alone, and the game runs at /play/, where
+// a page-relative ./hud/ is the SPA page and a root-absolute /hud/ is not
+// under the build's './' base.
+const BLADE_EMPTY_URL = new URL('../assets/foe-blade-empty.png', import.meta.url).href;
+const BLADE_FULL_URL = new URL('../assets/foe-blade-full.png', import.meta.url).href;
+const el = (tag, cls, text) => {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (text != null) n.textContent = text;
+  return n;
+};
+
+/**
+ * Where a heading sits on the strip, as 0..1 across it, or null when
+ * it is off the visible span. Pure - the whole geometry of the
+ * compass, and the only thing here worth testing without a browser.
+ *
+ * `heading01` is the player's own heading, the same 0..1 the classic
+ * compass scrolls by (hud.js compassScroll).
+ */
+export function compassPlace(point01, heading01, span = COMPASS_SPAN) {
+  // Shortest way round the circle: a point at 0.98 is just LEFT of a
+  // player facing 0.02, not most of a turn to the right.
+  let d = point01 - heading01;
+  d -= Math.round(d);
+  const half = span / 2;
+  if (d < -half || d > half) return null;
+  return (d + half) / span;
+}
+
+// AUDIT 39 F133 - THE DETECT MARKERS RIDE THIS COMPASS TOO.
+// The three Detect effects draw nothing themselves: each registers
+// with the compass and HUDCompass.Draw runs DrawCompass() then
+// DrawTrackedObjects() (:198-252), one marker per detected object. So
+// a skin that REPLACES the classic compass owes the player the
+// markers, or a Detect costs spell points and shows nothing.
+// The bearing is the classic box's own (hud.js compassMarkerLerp) with
+// Mathf.Lerp's clamp, and it lands on this strip because both windows
+// are the same quarter turn: 64/258 of the classic strip, COMPASS_SPAN
+// here. The SHAPE is this skin's - a 5x3 triangle in DFU's own
+// (154,24,8), drawn as a CSS border wedge.
+//
+// LAZY, and for the reason hud.js's own ToolTip is: hud.js imports
+// this module, so reading its exports at THIS module's top level runs
+// before hud.js has evaluated them. Built on first marker instead.
+const detectMarkCss = () => 'position:absolute;bottom:0;width:0;height:0;margin-left:-3px;'
+  + 'border-left:3px solid transparent;border-right:3px solid transparent;'
+  + `border-top:4px solid rgb(${DETECT_MARKER_RGB[0]},${DETECT_MARKER_RGB[1]},${DETECT_MARKER_RGB[2]});`
+  + 'pointer-events:none';
+
+/** The marker row, pooled: nodes are made once and re-placed, the same
+ *  updated-not-rebuilt law the rest of this HUD keeps. */
+function drawDetectMarkers(detected, playerXZ, heading01) {
+  const list = (detected && playerXZ) ? detected : [];
+  while (parts.detectMarks.length < list.length) {
+    const node = el('i', 'hud-detect');
+    node.style.cssText = detectMarkCss();
+    parts.compass.append(node);
+    parts.detectMarks.push(node);
+  }
+  for (let i = 0; i < parts.detectMarks.length; i++) {
+    const node = parts.detectMarks[i];
+    if (i >= list.length) {
+      if (node.style.display !== 'none') node.style.display = 'none';
+      continue;
+    }
+    if (node.style.display === 'none') node.style.display = '';
+    const at = Math.min(1, Math.max(0, compassMarkerLerp(list[i], playerXZ, heading01)));
+    const l = `${(at * 100).toFixed(1)}%`;
+    if (node.style.left !== l) node.style.left = l;
+  }
+}
+
+// WB1 (2026-09-25): THE OBLIVION GATE'S MARK - one diamond in the gate's own colour (ui/gate/gateMapMark.js GATE_RING_CSS),
+// riding the Detect markers' bearing law (compassMarkerLerp, clamp and all), so a gate behind the player stands at the
+// strip's end on the side to turn toward. The host hands it only while the player is inside the omen's ring and the
+// gate stands (scenes/world.js gateCompassMark); otherwise it is hidden, never removed - the updated-not-rebuilt law.
+const gateMarkCss = () => 'position:absolute;top:50%;width:7px;height:7px;margin:-4px 0 0 -4px;transform:rotate(45deg);'
+  + 'background:#ff5a2a;box-shadow:0 0 6px 2px rgba(255,90,42,0.75);pointer-events:none';
+function drawGateMark(gate, playerXZ, heading01) {
+  if (!parts.gateMark) {
+    const node = el('i', 'hud-gate');
+    node.style.cssText = gateMarkCss();
+    parts.compass.append(node);
+    parts.gateMark = node;
+  }
+  const node = parts.gateMark;
+  if (!gate || !playerXZ) { if (node.style.display !== 'none') node.style.display = 'none'; return; }
+  if (node.style.display === 'none') node.style.display = '';
+  const at = Math.min(1, Math.max(0, compassMarkerLerp(gate, playerXZ, heading01)));
+  const l = `${(at * 100).toFixed(1)}%`;
+  if (node.style.left !== l) node.style.left = l;
+}
+
+// EG-F (bible/11-Multiplayer/Elite-Gates.md section 6.4): AN ELITE BREACH'S ARCH - the gate's diamond in the arch's gold
+// (scenes/eliteGates/egArch.js EG_ARCH_GOLD - the Spire's "it holds"), where my company's arch stands while the call stands (scenes/
+// world.js through egClient.archCompass); the gate's bearing law, hidden never removed.
+const archMarkCss = () => 'position:absolute;top:50%;width:7px;height:7px;margin:-4px 0 0 -4px;transform:rotate(45deg);'
+  + 'background:#ffc752;box-shadow:0 0 6px 2px rgba(255,199,82,0.75);pointer-events:none';
+function drawArchMark(arch, playerXZ, heading01) {
+  if (!parts.archMark) {
+    const node = el('i', 'hud-egarch');
+    node.style.cssText = archMarkCss();
+    parts.compass.append(node);
+    parts.archMark = node;
+  }
+  const node = parts.archMark;
+  if (!arch || !playerXZ) { if (node.style.display !== 'none') node.style.display = 'none'; return; }
+  if (node.style.display === 'none') node.style.display = '';
+  const at = Math.min(1, Math.max(0, compassMarkerLerp(arch, playerXZ, heading01)));
+  const l = `${(at * 100).toFixed(1)}%`;
+  if (node.style.left !== l) node.style.left = l;
+}
+
+// SERPENT1: THE SEA SERPENT'S MARK - the gate's diamond in the sea's green (ui/serpentMapMark.js), where it hunts while
+// the player sails inside its ring (scenes/world.js serpentCompassMark); the gate's bearing law, hidden never removed.
+const serpentMarkCss = () => 'position:absolute;top:50%;width:8px;height:8px;margin:-4px 0 0 -4px;transform:rotate(45deg);'
+  + `background:${SERPENT_RING_MAP_CSS};box-shadow:0 0 6px 2px rgba(63,214,198,0.75);pointer-events:none`;
+function drawSerpentMark(sp, playerXZ, heading01) {
+  if (!parts.serpentMark) {
+    const node = el('i', 'hud-serpent');
+    node.style.cssText = serpentMarkCss();
+    parts.compass.append(node);
+    parts.serpentMark = node;
+  }
+  const node = parts.serpentMark;
+  if (!sp || !playerXZ) { if (node.style.display !== 'none') node.style.display = 'none'; return; }
+  if (node.style.display === 'none') node.style.display = '';
+  const at = Math.min(1, Math.max(0, compassMarkerLerp(sp, playerXZ, heading01)));
+  const l = `${(at * 100).toFixed(1)}%`;
+  if (node.style.left !== l) node.style.left = l;
+}
+
+// SD2c: THE SUPER DUNGEON'S MARK - a found Hollow's door, a round mark in its ring's brass (ui/superDungeon/sdMapMark.js) - a place, not
+// the gate's or the serpent's diamond - while the player stands within SD_COMPASS_M of it outside (scenes/world.js
+// sdCompassMark); the gate's bearing law, hidden never removed.
+const sdMarkCss = () => 'position:absolute;top:50%;width:9px;height:9px;margin:-5px 0 0 -5px;border-radius:50%;box-sizing:border-box;'
+  + `border:2px solid ${SD_RING_MAP_CSS};background:rgba(10,12,17,0.65);box-shadow:0 0 6px 2px rgba(232,178,74,0.7);pointer-events:none`;
+function drawSdMark(sd, playerXZ, heading01) {
+  if (!parts.sdMark) {
+    const node = el('i', 'hud-sd');
+    node.style.cssText = sdMarkCss();
+    parts.compass.append(node);
+    parts.sdMark = node;
+  }
+  const node = parts.sdMark;
+  if (!sd || !playerXZ) { if (node.style.display !== 'none') node.style.display = 'none'; return; }
+  if (node.style.display === 'none') node.style.display = '';
+  const at = Math.min(1, Math.max(0, compassMarkerLerp(sd, playerXZ, heading01)));
+  const l = `${(at * 100).toFixed(1)}%`;
+  if (node.style.left !== l) node.style.left = l;
+}
+
+// GUIDE5: THE QUEST'S MARK - the place the tracker's quest points, one diamond in the journal's gold (ui/quest/questMarks.js
+// QUEST_MARK_CSS), HOLLOW and edged dark so it never reads as the gate's burning one, riding the same bearing law
+// (compassMarkerLerp, clamp and all): a place behind the player stands at the strip's end on the side to turn toward.
+// The host hands it only on the street and only for a place the player's map holds (scenes/world.js questCompassMark);
+// otherwise it is hidden, never removed - the updated-not-rebuilt law.
+const questMarkCss = () => 'position:absolute;top:50%;box-sizing:border-box;width:10px;height:10px;margin:-5px 0 0 -5px;'
+  + `transform:rotate(45deg);border:2px solid ${QUEST_MARK_CSS};background:rgba(10,12,17,0.7);`
+  + 'box-shadow:0 0 3px 1px rgba(0,0,0,0.85);pointer-events:none';
+function drawQuestMark(quest, playerXZ, heading01) {
+  if (!parts.questMark) {
+    const node = el('i', 'hud-quest');
+    node.style.cssText = questMarkCss();
+    parts.compass.append(node);
+    parts.questMark = node;
+  }
+  const node = parts.questMark;
+  if (!quest || !playerXZ) { if (node.style.display !== 'none') node.style.display = 'none'; return; }
+  if (node.style.display === 'none') node.style.display = '';
+  const at = Math.min(1, Math.max(0, compassMarkerLerp(quest, playerXZ, heading01)));
+  const l = `${(at * 100).toFixed(1)}%`;
+  if (node.style.left !== l) node.style.left = l;
+}
+
+// WAYOUT1 (the delve arc): THE WAY OUT - underground, an arrow pointing up and out in the parchment's light, where the
+// walked trail leads back to the way in (systems/wayOut.js: the farthest cell the eye can see along it), on the same
+// bearing law, clamp and all. The dungeon hands it (scenes/dungeonContext.js wayOutMark); hidden, never removed.
+// AUDIT DELVE D9: ITS OWN BAND, UNDER THE STRIP - pointing up into it - so it never covers the quest's diamond (the same
+// law, the same clamp: both behind the player stood at one end, the arrow on top) nor sits among the letters; and a dark
+// body rimmed in the parchment's light (WAY_BODY_CSS under WAY_MARK_CSS), which reads on the dark of a dungeon and on
+// the pale of the letters alike (the pale arrow alone was 1.26:1 against them).
+const wayOutMarkCss = () => 'position:absolute;top:100%;width:0;height:0;margin:3px 0 0 -6px;'
+  + `border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:11px solid ${WAY_BODY_CSS};`
+  + `filter:drop-shadow(0 0 0.8px ${WAY_MARK_CSS}) drop-shadow(0 0 0.8px ${WAY_MARK_CSS}) drop-shadow(0 0 1.5px rgba(0,0,0,0.9));pointer-events:none`;
+function drawWayOutMark(way, playerXZ, heading01) {
+  if (!parts.wayOutMark) {
+    const node = el('i', 'hud-wayout');
+    node.style.cssText = wayOutMarkCss();
+    parts.compass.append(node);
+    parts.wayOutMark = node;
+  }
+  const node = parts.wayOutMark;
+  if (!way || !playerXZ) { if (node.style.display !== 'none') node.style.display = 'none'; return; }
+  if (node.style.display === 'none') node.style.display = '';
+  const at = Math.min(1, Math.max(0, compassMarkerLerp(way, playerXZ, heading01)));
+  const l = `${(at * 100).toFixed(1)}%`;
+  if (node.style.left !== l) node.style.left = l;
+}
+
+// COMPASS-PARTY (2026-09-27, Discord - Ashley: "being able to see where party members are on compass? - just lil green
+// marks that point in that direction"): THE PARTY ON THE STRIP - the Detect markers' triangle, a pixel wider, and their
+// bearing law (compassMarkerLerp, clamp and all), in the party's one green. Pooled and hidden, never removed.
+const partyMarkCss = (colour = PARTY_GREEN_CSS) => 'position:absolute;bottom:0;width:0;height:0;margin-left:-4px;'
+  + 'border-left:4px solid transparent;border-right:4px solid transparent;'
+  + `border-top:5px solid ${colour};filter:drop-shadow(0 0 1px rgba(0,0,0,0.9));pointer-events:none`;
+/** The party's marks on the strip. PROF2's Prospector's veins rode this pool in their copper; NODE-MARKS draws every
+ *  profession's nodes in their own colours, through their own pool (drawNodeMarks, at the foot of this file - its
+ *  colours ui/nodeMarks.js's). */
+function drawPartyMarks(points, playerXZ, heading01) {
+  const list = (points && playerXZ) ? points : [];
+  while (parts.partyMarks.length < list.length) {
+    const node = el('i', 'hud-party');
+    node.style.cssText = partyMarkCss();
+    parts.compass.append(node);
+    parts.partyMarks.push(node);
+  }
+  for (let i = 0; i < parts.partyMarks.length; i++) {
+    const node = parts.partyMarks[i];
+    if (i >= list.length) {
+      if (node.style.display !== 'none') node.style.display = 'none';
+      continue;
+    }
+    if (node.style.display === 'none') node.style.display = '';
+    const at = Math.min(1, Math.max(0, compassMarkerLerp(list[i], playerXZ, heading01)));
+    const l = `${(at * 100).toFixed(1)}%`;
+    if (node.style.left !== l) node.style.left = l;
+  }
+}
+
+// AUDIT NAV1 (the helm): THE SEA'S SHIPS ON THE STRIP - the party's triangle turned up (a bow, never a mate's mark),
+// standing on the strip's top edge, by the same bearing law, in what she is to me: hostile red, a ship bone, struck grey.
+// Pooled and hidden, never removed.
+export const SHIP_MARK_CSS = Object.freeze({ hostile: '#ee5745', ship: '#ebe0c2', struck: '#8f8f8f' });
+const shipMarkCss = () => 'position:absolute;top:0;width:0;height:0;margin-left:-4px;'
+  + 'border-left:4px solid transparent;border-right:4px solid transparent;border-bottom:5px solid;'
+  + 'filter:drop-shadow(0 0 1px rgba(0,0,0,0.9));pointer-events:none';
+function drawShipMarks(ships, playerXZ, heading01) {
+  const list = (ships && playerXZ) ? ships : [];
+  while (parts.shipMarks.length < list.length) {
+    const node = el('i', 'hud-ship');
+    node.style.cssText = shipMarkCss();
+    parts.compass.append(node);
+    parts.shipMarks.push(node);
+  }
+  for (let i = 0; i < parts.shipMarks.length; i++) {
+    const node = parts.shipMarks[i];
+    if (i >= list.length) {
+      if (node.style.display !== 'none') node.style.display = 'none';
+      continue;
+    }
+    if (node.style.display === 'none') node.style.display = '';
+    const at = Math.min(1, Math.max(0, compassMarkerLerp([list[i].x, list[i].z], playerXZ, heading01)));
+    const l = `${(at * 100).toFixed(1)}%`;
+    if (node.style.left !== l) node.style.left = l;
+    const c = SHIP_MARK_CSS[list[i].kind] ?? SHIP_MARK_CSS.ship;
+    if (node.style.borderBottomColor !== c) node.style.borderBottomColor = c;
+  }
+}
+
+// BOAT-MARK (2026-10-01, "I want to build a compass icon that tracks your boat"): MY BOATS ON THE STRIP - a little boat
+// (ui/boatMarks.js BOAT_GLYPH_URL: a sail over a hull in the boats' teal, edged dark) on the strip's middle where the
+// quest's and the gate's diamonds stand, by the same bearing law (compassMarkerLerp, clamp and all): a boat behind
+// stands at the strip's end on the side to turn toward. `points` scene XZ (ui/boatMarks.js boatCompassPoints). Pooled
+// and hidden, never removed; each bearing kept on the node (`_bm`), never read back from a style that normalises it.
+const boatMarkCss = () => 'position:absolute;top:50%;width:14px;height:12px;margin:-6px 0 0 -7px;'
+  + `background:${BOAT_GLYPH_URL} center / 100% 100% no-repeat;filter:drop-shadow(0 0 1px rgba(0,0,0,0.9));pointer-events:none`;
+function drawBoatMarks(points, playerXZ, heading01) {
+  const list = (points && playerXZ) ? points : [];
+  while (parts.boatMarks.length < list.length) {
+    const node = el('i', 'hud-boat');
+    node.style.cssText = boatMarkCss();
+    node._bm = { left: '' };
+    parts.compass.append(node);
+    parts.boatMarks.push(node);
+  }
+  for (let i = 0; i < parts.boatMarks.length; i++) {
+    const node = parts.boatMarks[i];
+    if (i >= list.length) {
+      if (node.style.display !== 'none') node.style.display = 'none';
+      continue;
+    }
+    if (node.style.display === 'none') node.style.display = '';
+    const at = Math.min(1, Math.max(0, compassMarkerLerp(list[i], playerXZ, heading01)));
+    const l = `${(at * 100).toFixed(1)}%`;
+    if (node._bm.left !== l) { node._bm.left = l; node.style.left = l; }
+  }
+}
+
+/** The effects: name, rounds left, whether it is going, and (UI3) its ICON00I0 icon, whether I cast it on myself and
+ *  whether a party mate did - the status widget's spell tiles. */
+export function effectRows(entity) {
+  // THE ONE BUNDLE WALK - `liveBundles` folds a cast's entries into one bundle and is what the HUD, the Dispel picker
+  // and the classic icons (hudActiveSpells.js activeSpellIcons, whose order - mine first - and laws this keeps) all
+  // read; the first draft invented a second walk that read a shape nothing produces, and the row came back empty.
+  // AUDIT UI C5: each tile reads ITS bundle's rounds - they had been looked up by name, so my Heal beside a mate's Heal
+  // (two bundles, never merged - ALLY-CAST C2) wore the mate's count.
+  const bundles = liveBundles(entity).filter((b) => b?.showIcon);
+  const row = (b) => {
+    const rounds = maxRoundsRemaining(b);
+    return {
+      name: String(shownSpellName({ index: b.spellIndex, name: b.name }) ?? '').replace(/^!+/, ''),   // L10N3e: bundle.name, a stock spell's in the player's language (HUDActiveSpells.cs:304, EntityEffectBroker.cs:877)
+      rounds,
+      expiring: rounds < 2,
+      item: b.bundleType === 'HeldMagicItem',
+      icon: b.icon ?? 0,     // UI3: the widget draws the spell's own icon
+      self: !!b.selfCast,    // UI3: a buff (mine on me) or a debuff (another's)...
+      ally: !!b.ally,        // ...or a party mate's gift, a buff (AUDIT UI C3)
+      bundleId: b.bundleId,  // BUFF-END: the tile's own bundle...
+      endable: canEndBundle(b),   // ...and whether it is the player's to end
+    };
+  };
+  return [...bundles.filter((b) => b.selfCast).map(row), ...bundles.filter((b) => !b.selfCast).map(row)];
+}
+
+let host = null;
+let parts = null;
+const last = {};
+
+/** Write only when it changed - the whole reason this is cheap. */
+const put = (node, key, value) => {
+  if (last[key] === value) return;
+  last[key] = value;
+  node.textContent = value;
+};
+/** FOEBAR1: how far the blade's fill is clipped in from EACH tip, as a
+ *  percentage of its width, for a health fraction `pct` (0..100): the
+ *  two blades recede toward the hub together, so half of what is lost
+ *  comes off each end. Full is 0, empty is 50 (the two clips meet at the
+ *  hub), and the clamp is the same one `width` gives the plain fill. */
+export const bladeInset = (pct) => (100 - Math.max(0, Math.min(100, pct))) / 2;
+const clipInset = (node, key, side) => {
+  const v = `inset(0 ${side.toFixed(2)}% 0 ${side.toFixed(2)}%)`;
+  if (last[key] === v) return;
+  last[key] = v;
+  node.style.clipPath = v;
+};
+/** VB2: the lost chunk's hold and drain, and its one frame - the law in ui/barLoss.js now (AUDIT NAV1: the sea fight's
+ *  card reads a hit the same way), exported here as ever. */
+export { GHOST_HOLD, GHOST_RATE, stepGhost } from '../barLoss.js';
+/** VB2: at or below this percentage the health bar's frame warns. */
+export const LOW_HEALTH_PCT = 25;
+const ghosts = {};
+/** FRAME1b: the last health (percent) the foe bar showed for each foe,
+ *  keyed by the entity - so a foe struck again after its bar faded, or
+ *  after the player switched to another foe, starts its loss readout
+ *  from where ITS bar stood. A foe never shown before is taken as full:
+ *  the frame appears on the first blow, after the damage has landed,
+ *  and without this the first hit on any foe broke nothing off. */
+const foeSeen = new WeakMap();
+/** FRAME1: the smallest loss (percent of the bar, in ONE frame) that
+ *  breaks a piece off. A spell's cost or a blow clears it; the trickle
+ *  of a sprint's fatigue does not, so the bar is not raining pieces. */
+export const CHUNK_MIN_LOSS = 1.5;
+export const FOE_CHUNK_MIN_LOSS = 0.5;
+/** FRAME1: which piece and which animation the n-th loss runs (ui/barLoss.js), exported here as ever. */
+export { chunkFrame } from '../barLoss.js';
+const chunkCount = {};
+function dropChunk(key, chunks, to, from) {
+  const n = (chunkCount[key] = (chunkCount[key] ?? -1) + 1);
+  const { index, cls } = chunkFrame(n);
+  const c = chunks[index];
+  c.style.left = `${to.toFixed(1)}%`;
+  c.style.width = `${(from - to).toFixed(1)}%`;
+  c.className = `hud-chunk ${cls}`;
+}
+/** FRAME1c: a fallen piece is put AWAY, not left parked on its last
+ *  frame. The pieces animate with `forwards`, and an animation restarts
+ *  when its element comes back from display:none - every window hides
+ *  the HUD, so on each close the last pieces to fall fell again and the
+ *  bar seemed to lose health it had not lost. Cleared when the fall ends
+ *  (the ::after piece is the longer of the two) and whenever the HUD
+ *  hides, since a fall cut short by a window never reaches its end. */
+function stowChunk(c) { if (c && c.className !== 'hud-chunk') c.className = 'hud-chunk'; }
+function armChunks(chunks) {
+  for (const c of chunks) {
+    c.addEventListener?.('animationend', (e) => {
+      if (String(e.animationName ?? '').startsWith('hud-chunk-r')) stowChunk(c);
+    });
+  }
+}
+function stowAllChunks(p) {
+  for (const k of ['magicka', 'health', 'fatigue']) for (const c of p[k]?.chunks ?? []) stowChunk(c);
+  for (const c of p.foeChunks ?? []) stowChunk(c);
+}
+/** FRAME1: one frame of a bar's loss readout - the held pale strip, and
+ *  a falling piece when this frame took a real bite. */
+function lossTick(key, part, pct, dt, minLoss) {
+  const prev = ghosts[key] ?? null;
+  const g = stepGhost(prev, pct, dt);
+  ghosts[key] = g;
+  width(part.ghost, `${key}G`, g.at);
+  if (prev && part.chunks && prev.pct - g.pct >= minLoss) dropChunk(key, part.chunks, g.pct, prev.pct);
+}
+const width = (node, key, pct) => {
+  const v = `${Math.max(0, Math.min(100, pct)).toFixed(1)}%`;
+  if (last[key] === v) return;
+  last[key] = v;
+  node.style.width = v;
+};
+
+function build(doc) {
+  injectEnhancedStyle();
+  injectEnhancedFonts();
+  // HN1: the damage numbers register with the formula seam the moment
+  // the enhanced HUD exists - and only then, so the classic skin never
+  // has a hook installed.
+  mountHitNumbers();
+  const root = doc.createElement('div');
+  root.className = 'hud';
+  root.setAttribute('aria-hidden', 'true');   // a HUD is not a reading order
+
+  // TOP: the compass strip, and the target under it.
+  const top = el('div', 'hud-top');
+  const compass = el('div', 'hud-compass');
+  const strip = el('div', 'hud-strip');
+  const marks = COMPASS_POINTS.map(([label, at]) => {
+    const m = el('span', `hud-point${label.length === 1 ? ' hud-cardinal' : ''}`, label);
+    m.dataset.at = String(at);
+    strip.append(m);
+    return m;
+  });
+  compass.append(strip, el('i', 'hud-needle'));
+  // TEMP-UI (2026-10-12, the owner: "add a temperature widget to the UI"): THE TEMPERATURE PLATE, at the compass's right
+  // end - where the eye already goes for where you are, and the one place at the top that stands clear of the quest card
+  // (92px down the right edge), the status widget (the left edge) and the foe's bar (under the compass's middle). Its
+  // glyph says the way the reading runs (a snowflake, the sun, a thermometer for comfortable), then the number, the
+  // word, and a scale from deadly cold to scorching with the comfortable band in its middle and a mark where you stand.
+  // It reads the felt temperature LIVE (survival/env.js feltNow: the minute law's own sum where the body stands this
+  // frame - AUDIT TEMP-UI E9: the record's `felt` waits a game minute, so a door read the street's for five seconds) and
+  // wears the level the strip's chip gives that reading - the chip reads the same live reading (AUDIT C&C S9) - amber
+  // felt, red where the live tier charges for it (survival/status.js needLevel - RED MEANS IT COSTS), said in words on
+  // its title and marked where it costs (AUDIT C&C S14). Only while Climates & Calories is on and its part
+  // (`survivalTempHud`, the row's drawer) is. AUDIT C&C S3: a HUD piece of its own inside the compass (ui/hud/hudLayout.js
+  // HUD_PIECES 'temp'), with its own X - the compass switched off leaves it standing; a phone keeps the glyph and the
+  // number.
+  const temp = el('div', 'hud-temp');
+  const tempGlyph = el('img', 'hud-tempglyph');
+  tempGlyph.alt = '';
+  tempGlyph.draggable = false;
+  const tempNum = el('span', 'hud-tempnum');
+  const tempWord = el('span', 'hud-tempword');
+  const tempScale = el('span', 'hud-tempscale');
+  const tempMark = el('i', 'hud-tempmark');
+  tempScale.append(tempMark);
+  temp.append(tempGlyph, tempNum, tempWord, tempScale);
+  temp.style.display = 'none';
+  // UI-CALM (2026-10-14, a player: "I like the temperature indicator, but it would fit better in the bottom-left
+  // corner"): the plate stands in the CORNER now - the caption's first word, beside the mode's (below: `cap`), where the
+  // status widget's needs already stand - no longer off the compass's end across the sky. Its own piece still
+  // (ui/hud/hudLayout.js HUD_PIECES 'temp', inside the quick block), and it says no more than it must: comfortable, the glyph
+  // and the number; felt or costing, its word and its scale too.
+  top.append(compass);
+
+  const foe = el('div', 'hud-foe');
+  const foeName = el('div', 'hud-foename');
+  const foeTrack = el('div', 'hud-track hud-foetrack');
+  const foeFill = el('i', 'hud-fill');
+  foeTrack.append(foeFill);
+  // FRAME1: the foe's bar loses health the way yours does - a pale chunk
+  // that holds and drains, and a piece that breaks off and falls.
+  // (DROPS-AUDIT F1 built these under Plus alone; PLUS-DEAD: Plus is the only enhanced dress, so they always stand)
+  const foeGhost = el('i', 'hud-ghost');
+  const foeChunks = [el('i', 'hud-chunk'), el('i', 'hud-chunk')];
+  foeTrack.append(foeGhost, ...foeChunks); armChunks(foeChunks);
+  // FOEBAR1 (2026-09-17, Mac, from a friend's two pictures): THE BLADE -
+  // an alternate face for the same readout. Two pictures under the one
+  // track: the dark twin-bladed shape with the skull hub is the empty
+  // bar, the red one is the fill, and the fill is CLIPPED from both tips
+  // toward the hub as the foe's health falls (bladeInset). Which face
+  // shows is prefs.foeBarStyle ('bar' | 'blade'), read each draw; the
+  // plain track stays exactly what it was for 'bar'.
+  const foeBlade = el('div', 'hud-foeblade');
+  const foeBladeEmpty = el('i', 'hud-bladeempty');
+  const foeBladeFull = el('i', 'hud-bladefull');
+  foeBladeEmpty.style.backgroundImage = `url("${BLADE_EMPTY_URL}")`;
+  foeBladeFull.style.backgroundImage = `url("${BLADE_FULL_URL}")`;
+  foeBlade.append(foeBladeEmpty, foeBladeFull);
+  // TELL9 (bible/12-Enhanced-AI/Feud-Arc.md 11.1): THE POISE TRACK under the health - a foe's wind-up read: empty, amber
+  // and filling toward its poise, red and hatched "Iron", a white flash "Staggered", "Open"; none for a foe with no brain
+  const foePoise = el('div', 'hud-foepoise');
+  const foePoiseFill = el('i', 'hud-poisefill');
+  const foePoiseWord = el('span', 'hud-poiseword');
+  foePoise.append(foePoiseFill, foePoiseWord);
+  foe.append(foeName, foeTrack, foeBlade, foePoise);
+  top.append(foe);
+  root.append(top);
+
+  // BOTTOM: the three vitals, then the effects beneath them.
+  const bottom = el('div', 'hud-bottom');
+  // HB1: THE HOTBAR'S PLACE - the top of the bottom column, over the
+  // vitals, so it rides the HUD's scale and rises with the vitals when
+  // the effects row grows under them. `display: contents` (the hotbar's
+  // sheet), so an empty dock costs the column no gap.
+  const hotDock = el('div', 'hud-hotdock');
+  bottom.append(hotDock);
+  // PX30b: THE BREATH BAR, above the vitals. DFU draws it only while
+  // you are holding breath (HUDBreathBar: Amount 0 draws nothing) and
+  // turns it RED below (endurance >> 3) + 4 - the classic's own two
+  // laws, imported rather than restated. It is the one bar that draws
+  // under BOTH huds in DFU, which is why it belongs here and not in
+  // the branch above.
+  const breath = el('div', 'hud-breath');
+  const breathTrack = el('div', 'hud-track');
+  const breathFill = el('i', 'hud-fill');
+  breathTrack.append(breathFill);
+  breath.append(el('span', 'hud-breathlabel', 'Breath'), breathTrack);
+  bottom.append(breath);
+  // CLIMB2: THE GRIP, beside it and in its likeness - drawn while the hands
+  // hold a wall and while the grip comes back after, short when it is failing
+  // (the motor says which: player/motor.js gripShown).
+  // STEED1: the same bar is the ridden horse's breath while there is no grip (a rider holds no wall), its word the horse's.
+  const grip = el('div', 'hud-breath hud-grip');
+  const gripTrack = el('div', 'hud-track');
+  const gripFill = el('i', 'hud-fill');
+  const gripLabel = el('span', 'hud-breathlabel', 'Grip');
+  gripTrack.append(gripFill);
+  grip.append(gripLabel, gripTrack);
+  bottom.append(grip);
+  const bars = el('div', 'hud-bars');
+  // PX30c (Mac: "for the status bars, can we use percentages and
+  // organize them within the bar itself"): THE NUMBER GOES INSIDE.
+  // A figure beside a bar is a second thing to look at; a percentage
+  // ON the bar is the bar saying what it means. The label rides in
+  // there too, so each bar names itself rather than relying on a
+  // colour a player has to learn.
+  const vital = (kind, label) => {
+    const wrap = el('div', `hud-vital hud-${kind}`);
+    const track = el('div', 'hud-track');
+    const fill = el('i', 'hud-fill');
+    const num = el('span', 'hud-num');
+    track.append(fill, el('span', 'hud-vlabel', label), num);
+    // VB2: THE LOST CHUNK. A pale strip behind the fill that holds where
+    // the bar WAS for a beat and then drains down to it, so a hit reads
+    // as how much it took rather than only where it left you. It sits
+    // UNDER the fill by z-index (the track isolates), so the fill covers
+    // all of it but the part that was lost.
+    // (DROPS-AUDIT F1 built these under Plus alone - plain Enhanced's sheet had no rule taking them out of the track's
+    // flex row; PLUS-DEAD: Plus is the only enhanced dress, so they always stand)
+    const ghost = el('i', 'hud-ghost');
+    // FRAME1: the two pieces a loss breaks off, taken in turn (see dropChunk).
+    const chunks = [el('i', 'hud-chunk'), el('i', 'hud-chunk')];
+    track.append(ghost, ...chunks); armChunks(chunks);
+    wrap.append(track);
+    bars.append(wrap);
+    return { fill, num, ghost, chunks, wrap };
+  };
+  // Magicka left, health centre, fatigue right - the reference's own
+  // order, and DFU's own three.
+  const magicka = vital('magicka', 'Magicka');
+  const health = vital('health', 'Health');
+  const fatigue = vital('fatigue', 'Fatigue');
+  bottom.append(bars);
+  // RENOWN4 (Mac: "why is there no way to view my renown ingame?" and "Plus XP bar"): MY RENOWN, under the vitals and
+  // as wide as them - the box every name wears, the bar to the next level with what is earned and not yet answered
+  // faint after the fill, and the numbers. Online only: the row draws only while ui/hud/hudRenown.js has one.
+  // RENOWN-BAR (2026-09-26, Mac: "remove the xp amount ... then center the bar properly", and then "keep the other bar
+  // and remove the xp. Just have it visible in the player profile"): the row is the box, the bar and an empty column the
+  // box's width (the sheet's grid), so the bar's middle is the vitals'.
+  // UI3 (2026-09-27, Mac: the effects to a widget of their own, "which then gives more space for the XP bar and being
+  // able to fit the XP amounts inside"): THE XP GOES IN THE BAR - the foot's status row is gone, so the bar is the
+  // vitals' own height and says its numbers the way they say theirs, inside it ("5,420 / 13,800 XP"; "Highest" at the
+  // cap). The row keeps its 22px, which the quickslot block's lifts count.
+  const renown = el('div', 'hud-renown');
+  const renownBox = el('span', 'hud-renownbox');
+  const renownTrack = el('div', 'hud-track hud-renowntrack');
+  const renownFill = el('i', 'hud-fill');
+  const renownGhost = el('i', 'hud-renownghost');
+  const renownNum = el('span', 'hud-renownnum');   // UI3: the numbers, over the fill and the ghost
+  renownTrack.append(renownFill, renownGhost, renownNum);
+  renown.append(renownBox, renownTrack);
+  bottom.append(renown);
+  // UI3: the foot ends at the Renown row - the effects and the needs (PLUS1b's one status row under it) are the status
+  // widget's tiles now, at the left edge (built with the quickslot block below, which it stands on)
+  root.append(bottom);
+
+  // PX32: THE RETICLE. The enhanced branch returns before the classic
+  // draws its crosshair and mode word, so the enhanced skin had NEITHER
+  // - a player could not see where they were aiming or which mode they
+  // were in. Same laws as hudCrosshair.js, in the pixel language: a
+  // square cross in bone with the classic shadow; under the styles
+  // where the icon IS the crosshair, the mode's WORD stands at the
+  // centre instead (Grab alone keeps the plain cross - it is the mode
+  // you aim in); under the others, the word sits in the corner.
+  const reticle = el('div', 'hud-reticle');
+  const cross = el('i', 'hud-cross');
+  const centreWord = el('span', 'hud-modeword hud-modecentre');
+  reticle.append(cross, centreWord);
+  root.append(reticle);
+
+  // QS3: THE QUICKSLOT DIAMOND, bottom-left, on `root` rather than in
+  // `.hud-bottom` - the bottom column is centred and this is anchored
+  // to a corner, and a corner block inside a centred flex column moves
+  // whenever a bar beside it changes width.
+  //
+  // THE MODE WORD LIVES HERE NOW. It stood at left 24 / bottom 24,
+  // which is exactly where the diamond goes, so rather than move one
+  // out of the other's way it becomes the diamond's CAPTION - the
+  // interaction mode and the readied spell on one row above the cells,
+  // which is where a player already looks. Its show/hide laws are
+  // untouched (the `rk` key below); only its place changed.
+  const quick = el('div', 'hud-quick');
+  const cap = el('div', 'hud-qcap');
+  const cornerWord = el('span', 'hud-modeword hud-modecorner');
+  const readied = el('div', 'hud-readied');
+  // QS6 - THE SPELL CHIP. The diamond's four corners are the two hands
+  // and the two consumables; a spell is in none of them, and a fifth
+  // corner is not a diamond. It belongs on the CAPTION, which is the row
+  // the readied spell already stood on - so the slot's spell and the
+  // spell in hand are read in one glance, at the place a player already
+  // looks, with the key that changes it printed on it.
+  const spellChip = el('div', 'hud-qspell');
+  const spellTag = el('span', 'hud-qstag hud-qspkey');
+  const spellGlyph = el('img', 'hud-qsglyph');
+  spellGlyph.alt = '';
+  const spellText = el('span', 'hud-qstext');
+  spellTag.append(spellGlyph, spellText);
+  const spellName = el('span', 'hud-qspname');
+  const spellIcon = el('img', 'hud-qspicon');   // UI2: the spell's own ICON00I0 icon, before its name
+  spellIcon.alt = '';
+  spellIcon.draggable = false;
+  spellIcon.style.display = 'none';
+  spellChip.append(spellTag, spellIcon, spellName);
+  cap.append(temp, cornerWord, spellChip, readied);   // UI-CALM: the temperature plate first, in the corner
+  const diamond = el('div', 'hud-qdiamond');
+  // A cell is FOUR elements, and the reason is the pixel language: a
+  // rotated square would blur every sprite in it, so the diamond is a
+  // clip-path on the frame and the ground and the content inside is
+  // never rotated at all.
+  const cellOf = (slot) => {
+    const cell = el('div', `hud-qcell hud-q${slot}`);
+    cell.append(el('i', 'hud-qframe'), el('i', 'hud-qground'));
+    const body = el('div', 'hud-qbody');
+    const icon = el('img', 'hud-qicon');
+    icon.alt = '';
+    const init = el('span', 'hud-qinit');
+    body.append(icon, init);
+    // QS5 (Mac: "We need a better design for durability instead of the
+    // line sitting inside with the sprite"): THE CELL'S OWN LOWER EDGES
+    // ARE THE GAUGE. A bar under the art was a second object in a cell
+    // 84px wide, and it stole the room the sprite wanted; the diamond
+    // already draws two lines under the picture - its own bottom-left
+    // and bottom-right edges - and a gauge that IS the frame costs the
+    // art nothing. It drains from the bottom POINT outward, so a
+    // battered sword keeps a stub at the point and a fresh one is lit
+    // corner to corner, and the two halves fill symmetrically because
+    // the shape is symmetric.
+    const gauge = svgEl(doc, 'svg', 'hud-qwear');
+    gauge.setAttribute('viewBox', '0 0 100 100');
+    gauge.setAttribute('shape-rendering', 'crispEdges');
+    gauge.setAttribute('aria-hidden', 'true');
+    const track = svgEl(doc, 'path', 'hud-qwtrack');
+    track.setAttribute('d', `M ${WEAR_L} M ${WEAR_R}`);   // AUDIT SURV E: two open arms, not one path with a hole in its numbers (Chromium logged the old `d` every build and drew half the track)
+    const wearL = svgEl(doc, 'path', 'hud-qwfill');
+    wearL.setAttribute('d', `M ${WEAR_L}`);
+    const wearR = svgEl(doc, 'path', 'hud-qwfill');
+    wearR.setAttribute('d', `M ${WEAR_R}`);
+    for (const p of [wearL, wearR]) { p.setAttribute('stroke-dasharray', String(WEAR_LEN)); p.setAttribute('stroke-dashoffset', '0'); }
+    gauge.append(track, wearL, wearR);
+    const count = el('span', 'hud-qcount');
+    cell.append(body, gauge, count);
+    diamond.append(cell);
+    return { cell, icon, init, wear: [wearL, wearR], count };
+  };
+  const cells = { c1: cellOf('c1'), off: cellOf('off'), main: cellOf('main'), c2: cellOf('c2') };
+  const tags = {};
+  for (const [slot, at] of [['c1', 'top'], ['off', 'left'], ['main', 'right'], ['c2', 'bottom']]) {
+    const tag = el('span', `hud-qstag hud-qs${at}`);
+    const img = el('img', 'hud-qsglyph');
+    img.alt = '';
+    const text = el('span', 'hud-qstext');
+    tag.append(img, text);
+    diamond.append(tag);
+    tags[slot] = { tag, img, text };
+  }
+  // UI3: THE STATUS WIDGET stands on the caption - the block's first child, so it rides the block's corner and scale
+  // and grows up from the caption (the block is anchored by its bottom), never down into the diamond
+  const stat = el('div', 'hud-stat');
+  bindStatEnding(stat);   // BUFF-END
+  quick.append(stat, cap, diamond);
+  root.append(quick);
+  // DEPARTURE 2 (see the header): the only listeners this readout owns.
+  // Bound once, reading the LIVE options bag - a frame binds nothing.
+  // AUDIT QS F8: a FINGER, not a mouse that happens to live on a
+  // machine with a touchscreen - Chromium answers `pointer: coarse` for
+  // one, and a mouse click on the diamond swallowed a swing.
+  const finger = (e) => !(e && e.pointerType != null && e.pointerType !== 'touch' && e.pointerType !== 'pen');
+  const tap = (fn) => (e) => {
+    if (!finger(e)) return;
+    e?.preventDefault?.(); fn();
+  };
+  // QS6 - THE FINGER HOLDS TOO. Mac asked for one key that does two
+  // things - a tap performs the slot, a hold cycles what is in it - and
+  // a phone has no key to hold. The cells ARE the phone's keys (that is
+  // DEPARTURE 2's whole claim), so they carry the same pair, on the same
+  // two numbers the frame's machine uses, over the model's one cycle.
+  // The entity is the one the last frame drew, which is the one the
+  // player is.
+  // AUDIT QS6 F3 - THE FINGER'S TIMERS MUST DIE WITH THE HUD. A hold that is
+  // still cycling when a host tears the HUD down (a fast travel, a scene
+  // change) left its `setInterval` running for the life of the page: the node
+  // is gone, so no `pointerup` can ever reach it. It is held here so
+  // `destroyEnhancedHud` can stop it, which is the same law QS3 stated for
+  // the listeners ("the bound-once handlers went with the nodes").
+  const holdTap = (slot, act) => {
+    let arm = null; let step = null; let cycled = false;
+    const stop = () => { clearTimeout(arm); clearInterval(step); arm = null; step = null; };
+    const turn = () => { cycleQuickslot(slot, { entity: liveEntity }); last.quick = null; last.qspell = null; };
+    return {
+      down(e) {
+        if (!finger(e)) return;
+        e?.preventDefault?.();
+        stop();
+        cycled = false;
+        arm = setTimeout(() => { cycled = true; turn(); step = setInterval(turn, QUICK_STEP_MS); }, QUICK_HOLD_MS);
+      },
+      up(e) {
+        if (!finger(e)) return;
+        const held = cycled;
+        stop();
+        // A HOLD IS NOT A PRESS: the choosing was the act.
+        if (!held) act();
+      },
+      off() { stop(); cycled = true; },   // the finger left the cell: neither press nor further turn
+    };
+  };
+  const bindHold = (node, slot, act) => {
+    const h = holdTap(slot, act);
+    holds.push(h);   // AUDIT QS6 F3: a teardown has to be able to stop them
+    node.addEventListener('pointerdown', h.down);
+    node.addEventListener('pointerup', h.up);
+    node.addEventListener('pointercancel', h.off);
+    node.addEventListener('pointerleave', h.off);
+  };
+  bindHold(cells.c1.cell, 'c1', () => liveOpts.quickUse?.(1));
+  bindHold(cells.c2.cell, 'c2', () => liveOpts.quickUse?.(2));
+  bindHold(spellChip, 'spell', () => liveOpts.quickSpell?.());
+  // QS4: the off cell presses what it SHOWS - the swap where it offers
+  // one, the off hand's own light act everywhere else. It does NOT hold:
+  // what the off hand offers is whatever is in that hand, not a list.
+  cells.off.cell.addEventListener('pointerdown', tap(() => {
+    if (offKind === 'swap') liveOpts.quickSwap?.(); else liveOpts.quickOffHand?.();
+  }));
+  // MAC-R3 (Mac: "Tapping the equip hand in the quickbar doesn't switch to
+  // your other weapon in hand (still bound to H)"): the MAIN cell is the
+  // weapon in hand, and a hand cell's own act is the other hand - DFU's
+  // SwitchHand. It does not hold: what is in the hand is not a list.
+  cells.main.cell.addEventListener('pointerdown', tap(() => { liveOpts.quickSwitchHand?.(); }));
+
+  doc.body.append(root);
+  return { root, bottom, bars, compass, marks, detectMarks: [], partyMarks: [], shipMarks: [], nodeMarks: [], boatMarks: [], gateMark: null, archMark: null, serpentMark: null, sdMark: null, questMark: null, wayOutMark: null, foe, foeName, foeFill, foeGhost, foeChunks, foeBladeFull, foePoise, foePoiseFill, foePoiseWord, magicka, health, fatigue,
+    temp: { el: temp, glyph: tempGlyph, num: tempNum, word: tempWord, mark: tempMark },   // TEMP-UI: the temperature plate
+    stat, quickCap: cap, quickDiamond: diamond, top,   // UI3: the status widget, the caption it stands on, the diamond it may stand beside and the top block over it (its band is measured from them)
+    renown, renownBox, renownFill, renownGhost, renownNum,
+    breath, breathFill, grip, gripFill, gripLabel, readied, reticle, cross, centreWord, cornerWord,
+    quick, quickCells: cells, quickTags: tags, hotDock,
+    spellChip: { chip: spellChip, tag: spellTag, img: spellGlyph, text: spellText, name: spellName, icon: spellIcon } };
+}
+
+/** DEPARTURE 2's two module variables: the bag the bound-once handlers
+ *  read, and what is standing in the off hand - a tap on that cell is a
+ *  swap only while a swap is what it offers. */
+let liveOpts = {};
+let offKind = null;
+/** The entity whose diamond this is - `inventoryItemImage` picks a
+ *  clothing or armour archive by who wears it, and the inventory
+ *  window passes the same identity, so the two draw the same picture. */
+let liveEntity = null;
+/** AUDIT QS6 F3: the finger-hold handles, so a teardown can stop a timer
+ *  the removed node can no longer deliver a `pointerup` to. */
+const holds = [];
+
+/** Below this the durability strip takes the health bar's red. DFU's
+ *  own repair prompt has no such line - this is the port's, and it is
+ *  the one number the strip exists to warn about. */
+export const QUICK_WORN_PCT = 40;
+
+/** QS5 - THE GAUGE'S GEOMETRY, in the cell's own 100x100 box. The
+ *  rhombus has its corners at the edge midpoints, so its lower two
+ *  edges run (0,50) - (50,100) - (100,50); the gauge is that V drawn
+ *  INSIDE the frame (a stroke on the boundary itself would be halved by
+ *  the cell's clip-path), each half starting at the bottom point so the
+ *  two drain together. WEAR_LEN is the half's length - the hypotenuse
+ *  of a 44 by 44 triangle - and the dash offset is what the condition
+ *  writes. */
+const WEAR_INSET = 44;
+const WEAR_L = `50 ${50 + WEAR_INSET} L ${50 - WEAR_INSET} 50`;
+const WEAR_R = `50 ${50 + WEAR_INSET} L ${50 + WEAR_INSET} 50`;
+const WEAR_LEN = Math.round(Math.hypot(WEAR_INSET, WEAR_INSET) * 10) / 10;
+
+/** The item's kind, for "has this cell's picture changed" - the
+ *  quickslot model's own key, which is the fields that make two records
+ *  the same thing to a player. Condition is not in it, so a weapon
+ *  taking a knock does not re-request its icon sixty times. */
+const iconKeyOf = (item) => (item ? quickslotKey(item) : '');
+
+/** itemTile's own fallback (enhancedInventory.js): two letters, in the
+ *  pixel face, when neither icon lands. */
+const initialsOf = (name) => String(name ?? '').split(/\s+/).filter(Boolean)
+  .map((w) => w[0]).join('').slice(0, 2).toUpperCase();
+
+/**
+ * One frame. Called from drawHud, with what drawHud already has.
+ *
+ * `vitals` is the player entity (drawHud's own argument), `heading01`
+ * the same heading the classic compass scrolls by.
+ *
+ * `opts`, all of them optional and all of them drawHud's own:
+ *   hidden          - the HUD is off or covered; the overlay is TOLD
+ *   readied         - the readied spell, for the caption chip
+ *   weapon          - the weapon in hand, the diamond's main cell
+ *   weaponSheathed  - and whether it is put away (QS3)
+ *   detected        - the Detect markers over the compass
+ *   playerXZ        - where they are measured from
+ *   quickUse(n)     - the phone's tap on consumable slot n (QS3)
+ *   quickSwap()     - and on the off hand while it offers a swap
+ *   quickOffHand()  - the off hand's own press in every other state (QS4)
+ */
+/** RETRO-UI (FIELD BUGS 2026-10-03): DFU lays its HUD out in CustomScreenRect - under retro mode's pillarbox, the
+ *  picture's rect (ViewportChanger.cs :138-140) - and the enhanced HUD stood over the black bars. Its root is inset to
+ *  the pillars, as the held map's (DISC25-B), and the pieces fixed at the screen's edges apart from it (the notices,
+ *  the quest tracker, the status line, the revenant's cards) read the pillar off `--ui-pillar`. Written on a change. */
+let _pillar = null;
+/** AUDIT PRE-MERGE 1003b M2: the picture's width the quest card and the arena's versus bar both fit in (the bar's half and
+ *  the card's 268 from the edge - AUDIT PRE-MERGE 1003 U4's 1100, which read the WINDOW's width). */
+const ARENA_CARD_ROOM_PX = 1100;
+let _narrow = null;
+function wearUiPillar(doc, root) {
+  const ui = retroScreenRect(globalThis.innerWidth || 0, globalThis.innerHeight || 0);
+  // AUDIT PRE-MERGE 1003b M2: inside the pillarbox the card stands in the picture, so the room is the picture's - at
+  // 1366x768 in 4:3 the card overlapped the bar 36x54 px while the window's 1366 said there was room
+  const narrow = !!ui && ui.w <= ARENA_CARD_ROOM_PX;
+  if (narrow !== _narrow) {
+    _narrow = narrow;
+    if (narrow) doc.documentElement?.setAttribute?.('data-ui-narrow', ''); else doc.documentElement?.removeAttribute?.('data-ui-narrow');
+  }
+  const inset = ui ? `${ui.x}px` : '';
+  if (inset === _pillar) return;
+  _pillar = inset;
+  root.style.left = inset; root.style.right = inset;
+  if (inset) doc.documentElement?.style?.setProperty?.('--ui-pillar', inset);
+  else doc.documentElement?.style?.removeProperty?.('--ui-pillar');
+}
+
+export function drawEnhancedHud(vitals, heading01, dt = 0, opts = {}) {
+  const { hidden = false } = opts;
+  if (typeof document === 'undefined') return;
+  if (!host) { parts = build(document); host = parts.root; mountHotbarDock(parts.hotDock); }
+  tickHudLayout(document);   // HUD-MOVE: starts once - the player's layout and the lock; its sweeps are its own interval's (PERF-HUD1)
+  wearUiPillar(document, host);   // RETRO-UI: inside retro mode's pillarbox, as the held map stands (DISC25-B)
+  tickFoeTarget(dt);
+  // HB1: the hotbar hears every frame, hidden or not - a hidden HUD is
+  // exactly when it may still be up under the pack as a drop target.
+  drawEnhancedHotbar(vitals, opts);
+  if (hidden) {
+    if (last.hidden !== true) { last.hidden = true; host.style.display = 'none'; stowAllChunks(parts); }   // FRAME1c
+    last.hpSeen = null;   // PARTY-BUFFS: what a window restored (a rest, a level-up, a load, a rise) is no heal to float
+    return;
+  }
+  if (last.hidden !== false) { last.hidden = false; host.style.display = ''; }
+
+  // PX30c: the scale, as a CSS variable the whole sheet reads - so one
+  // write moves every bar, chip and letter together rather than
+  // thirty. Guarded, like every other write here.
+  const scale = enhancedHudScale();
+  if (last.scale !== scale) {
+    last.scale = scale;
+    host.style.setProperty('--hud-scale', String(scale));
+    // HN1: the damage numbers read the same scale, on their own layer.
+    document.getElementById('enhanced-hitnums')?.style.setProperty('--hud-scale', String(scale));
+    // AUDIT FONT F2: ...and so does the mid-screen label, a layer of
+    // its own beside this one that never INHERITED the variable - a
+    // sibling of `.hud` on document.body, not a child of it. (The
+    // popup column this once scaled too is a toast in the notice stack
+    // since ENH-NOTICE3, at the box's size, and takes no HUD scale.)
+    setEnhancedMidTextScale(scale, document);
+  }
+
+  // THE COMPASS. Each point is placed by the same shortest-way-round
+  // law, and one off the span is hidden rather than clamped to an edge
+  // - a marker pinned to the rim says "north is exactly there", which
+  // is a lie the classic compass takes care not to tell either.
+  // GRIM3: the heading said on the compass too, so a dress that draws the strip as one picture (DFO Grimoire's - the
+  // pack's own COMPASS strip in its COMPBOX dome) slides it by the same law
+  const hv = (((heading01 % 1) + 1) % 1).toFixed(4);
+  if (last.heading !== hv) { last.heading = hv; parts.compass.style.setProperty('--hud-heading', hv); }
+  for (const m of parts.marks) {
+    const at = compassPlace(Number(m.dataset.at), heading01);
+    if (at === null) {
+      if (m.style.display !== 'none') m.style.display = 'none';
+    } else {
+      if (m.style.display === 'none') m.style.display = '';
+      const l = `${(at * 100).toFixed(1)}%`;
+      if (m.style.left !== l) m.style.left = l;
+    }
+  }
+  // ...and the Detect markers over the same strip.
+  drawDetectMarkers(opts.detected ?? null, opts.playerXZ ?? null, heading01);
+  drawGateMark(opts.gate ?? null, opts.playerXZ ?? null, heading01);   // WB1
+  drawArchMark(opts.arch ?? null, opts.playerXZ ?? null, heading01);   // EG-F
+  drawSerpentMark(opts.serpent ?? null, opts.playerXZ ?? null, heading01);   // SERPENT1
+  drawSdMark(opts.sd ?? null, opts.playerXZ ?? null, heading01);   // SD2c
+  drawQuestMark(opts.quest ?? null, opts.playerXZ ?? null, heading01);   // GUIDE5
+  drawWayOutMark(opts.wayOut ?? null, opts.playerXZ ?? null, heading01);   // WAYOUT1
+  drawPartyMarks(opts.party ?? null, opts.playerXZ ?? null, heading01);   // COMPASS-PARTY
+  drawShipMarks(opts.ships ?? null, opts.playerXZ ?? null, heading01);   // AUDIT NAV1: the sea's ships
+  drawBoatMarks(opts.boats ?? null, opts.playerXZ ?? null, heading01);   // BOAT-MARK: my boats
+  drawNodeMarks(opts.nodes ?? null, opts.playerXZ ?? null, heading01);   // NODE-MARKS: the professions' nodes (PROF2: a Prospector's veins; PROF7: a Tracker's animals)
+
+  // THE TARGET, when there is one.
+  const t = foeTarget();
+  if (!t) {
+    if (last.foe !== null) { last.foe = null; parts.foe.classList.remove('on'); }
+    last.foeRef = null;
+    if (last.foePoise !== null) { last.foePoise = null; last.foePoiseRef = null; parts.foe.classList.remove('poised'); parts.foePoise.className = 'hud-foepoise'; }
+  } else {
+    if (last.foe !== t.name) { last.foe = t.name; parts.foe.classList.add('on'); }
+    // FRAME1b: the loss readout follows the FOE, not its name. Keyed on the
+    // name, two foes called "Rat" shared one ghost, and switching between
+    // them broke a piece off from the other rat's health - a chunk hanging
+    // across the middle of the bar, nowhere near this foe's fill.
+    const ref = foeTargetRef();
+    const foePct = (t.health / t.maxHealth) * 100;
+    if (last.foeRef !== ref) {
+      last.foeRef = ref;
+      const was = Math.max(0, Math.min(100, (ref && foeSeen.get(ref)) ?? 100));
+      ghosts.foe = { at: was, pct: was, hold: GHOST_HOLD };
+    }
+    put(parts.foeName, 'foeName', t.name);
+    width(parts.foeFill, 'foeFill', foePct);
+    lossTick('foe', { ghost: parts.foeGhost, chunks: parts.foeChunks }, foePct, dt, FOE_CHUNK_MIN_LOSS);
+    if (ref) foeSeen.set(ref, foePct);
+    // FOEBAR1: the blade face, when the pref says so - the class picks
+    // which of the two children shows, and the red picture is clipped in
+    // from both tips by the same fraction the plain fill gives up.
+    const blade = getPref('foeBarStyle') === 'blade';
+    if (last.foeStyle !== blade) { last.foeStyle = blade; parts.foe.classList.toggle('blade', blade); }
+    if (blade) clipInset(parts.foeBladeFull, 'foeBlade', bladeInset(foePct));
+    const o = t.fade < 1 ? String(t.fade.toFixed(2)) : '';
+    if (parts.foe.style.opacity !== o) parts.foe.style.opacity = o;
+    // TELL9 (11.1): the poise track - its state a class (the sheet's colour, the hatch, the flash), its fill, its word
+    // POISE-QUIET (2026-10-06, the player: "the block under the monsters hp must go"): an EMPTY track (no wind-up, no
+    // iron, no stagger, no opening) is not drawn - the bar stands alone until the foe's poise has something to say
+    const p = t.poise && t.poise.state && t.poise.state !== 'empty' ? t.poise : null;
+    const pk = p ? p.state : '';
+    if (last.foePoise !== pk || last.foePoiseRef !== ref) {
+      // AUDIT TELL U4: the flash is a break's - THIS foe going into its stagger, never the bar turned onto one already in it
+      const flash = pk === 'staggered' && last.foePoiseRef === ref && last.foePoise !== 'staggered';
+      last.foePoise = pk; last.foePoiseRef = ref;
+      parts.foe.classList.toggle('poised', !!p);
+      // POISE-BOX (field, 2026-10-05): the state classes are the track's own, `poise-` each - as bare words, 'empty'
+      // took the sheet's `.empty` component (a dashed box with 26px of padding) and the idle track stood 54px tall
+      parts.foePoise.className = `hud-foepoise${p ? ` poise-${p.state}` : ''}${flash ? ' poise-flash' : ''}`;
+    }
+    if (p) {
+      width(parts.foePoiseFill, 'foePoiseFill', p.fill * 100);
+      put(parts.foePoiseWord, 'foePoiseWord', p.word);
+    }
+  }
+
+  // THE VITALS. maxFatigue is the (Str+End)x64 ceiling the classic
+  // bars already use; this reads the same snapshot drawHud composed.
+  // PX30d (Mac: "the stamina percentage is a super large percentage"):
+  // FATIGUE HAS NO FIELD, IT HAS A LAW. DFU stores fatigue x64 and
+  // computes the ceiling as (Strength + Endurance) x 64 - there is no
+  // `maxFatigue` on the entity at all, so `vitals.maxFatigue || 1`
+  // divided by ONE and a real player read 576000%.
+  //
+  // The classic HUD never had this bug because it composes a snapshot
+  // with `maxFatigue(vitals)` in it (hud.js's `cur`, S15's own line) -
+  // and my branch returns BEFORE that snapshot is built, so it was
+  // reading the raw entity while the classic read the law. The same
+  // law, from the same module, is the fix.
+  const rows = [
+    ['magicka', parts.magicka, vitals.magicka ?? 0, vitals.maxMagicka || 1],
+    ['health', parts.health, vitals.health ?? 0, vitals.maxHealth || 1],
+    ['fatigue', parts.fatigue, vitals.fatigue ?? 0, maxFatigue(vitals) || vitals.maxFatigue || 1],
+  ];
+  for (const [key, part, now, max] of rows) {
+    const pct = (now / max) * 100;
+    width(part.fill, `${key}W`, pct);
+    // A percentage, rounded the way a player reads it - and never 0%
+    // while there is anything left, because "0%" on a living bar is
+    // the same lie "0 min" would have been on the quest timer.
+    // Clamped to 100 as well as floored at 1: a bar cannot be more
+    // than full, and a number that says otherwise is a bug wearing a
+    // percent sign rather than something a player should have to read.
+    const shown = now > 0 ? Math.max(1, Math.min(100, Math.round(pct))) : 0;
+    put(part.num, `${key}N`, `${shown}%`);
+    // VB2: the lost chunk behind the fill, and the health frame's warning.
+    lossTick(key, part, pct, dt, CHUNK_MIN_LOSS);
+    const low = key === 'health' && now > 0 && pct <= LOW_HEALTH_PCT;
+    if (last[`${key}Low`] !== low) { last[`${key}Low`] = low; part.wrap.classList.toggle('low', low); }
+  }
+
+  // UI-CALM (2026-10-14, a player: "Not everything needs to be visible constantly. Show information when it's
+  // relevant."): THE VITALS REST WHEN THEY HAVE NOTHING TO SAY - all three full (a magicka of none counts full), no foe
+  // in the target bar, for VITALS_REST_S seconds: the bars fade away, and the first point lost, spent or still to
+  // regain brings them back at once. Skyrim's own law, and Daggerfall's world kept clear of a readout it does not need.
+  // The player's choice (`hudCalm`, the Calm HUD row); never while the HUD is being arranged (its editor shows it).
+  // AUDIT UICALM-FIRM1 L4 N1: full is short of no whole point (a share of the maximum let 300 Health lose one unseen);
+  // L4 M3: and never at rest while the HUD is arranged - split, each bar is the editor's and their box was left at rest
+  const allFull = rows.every(([key, , now, max]) => (key === 'magicka' && !(Number(vitals.maxMagicka) > 0)) || now > max - 1);
+  const calm = getPref(HUD_CALM_PREF) !== false && !hudArranging() && allFull && !parts.foe?.classList?.contains?.('on');
+  last.calmFor = calm ? (last.calmFor ?? 0) + (dt > 0 ? dt : 0) : 0;
+  const rest = calm && last.calmFor >= VITALS_REST_S;
+  if (last.vitalsRest !== rest) { last.vitalsRest = rest; parts.bars?.classList?.toggle?.('rest', rest); }
+
+  // PARTY-BUFFS: a heal I took - mine, a potion's, a friend's - rises as "+N" off the reticle (hitNumbers.js); one
+  // taken under a window is not measured (AUDIT B10: the hidden frame forgets - a rest's restoring is no heal)
+  const hpNow = Number(vitals.health ?? 0);
+  const heal = healNumberFor(last.hpSeen, hpNow);
+  if (heal) showNumber(heal);
+  last.hpSeen = hpNow;
+
+  // RENOWN4: MY RENOWN - the row while the page knows my level (online), its bar while it knows the total too.
+  const rv = hudRenown();
+  if (last.renownOn !== !!rv) { last.renownOn = !!rv; parts.renown.classList.toggle('on', !!rv); }
+  if (rv) {
+    put(parts.renownBox, 'renownL', String(rv.level));
+    if (last.renownBar !== rv.bar) { last.renownBar = rv.bar; parts.renown.classList.toggle('nobar', !rv.bar); }
+    width(parts.renownFill, 'renownW', rv.frac * 100);
+    const g = `${(Math.max(0, Math.min(1, rv.frac)) * 100).toFixed(1)}%`;
+    if (last.renownGL !== g) { last.renownGL = g; parts.renownGhost.style.left = g; }
+    width(parts.renownGhost, 'renownGW', rv.ghost * 100);
+    put(parts.renownNum, 'renownT', rv.text);   // UI3: the XP in the bar
+  }
+
+  // THE BREATH. DFU's own two laws: drawn only while holding breath,
+  // and short below (endurance >> 3) + 4.
+  const held = vitals.currentBreath ?? 0;
+  const showBreath = held > 0;
+  if (last.breathOn !== showBreath) {
+    last.breathOn = showBreath;
+    parts.breath.classList.toggle('on', showBreath);
+  }
+  if (showBreath) {
+    const mb = maxBreath(vitals) || 1;
+    width(parts.breathFill, 'breathW', (held / mb) * 100);
+    const short = breathShortThreshold(liveStat(vitals, 'endurance')) > held;
+    if (last.breathShort !== short) {
+      last.breathShort = short;
+      parts.breath.classList.toggle('short', short);
+    }
+  }
+
+  // CLIMB2: THE GRIP - the host's `grip` ({ amount, low } or null). STEED1: else the ridden horse's breath (`steed`, the
+  // same shape - systems/upkeep/upkeepRuntime.js bar), in the grip's place and under the horse's word.
+  const gr = opts.grip ?? opts.steed ?? null;
+  const gripWord = opts.grip ? 'Grip' : 'Horse';
+  if (last.gripWord !== gripWord && parts.gripLabel) { last.gripWord = gripWord; parts.gripLabel.textContent = gripWord; }
+  if (last.gripOn !== !!gr) {
+    last.gripOn = !!gr;
+    parts.grip.classList.toggle('on', !!gr);
+  }
+  if (gr) {
+    width(parts.gripFill, 'gripW', Math.max(0, Math.min(1, gr.amount)) * 100);
+    if (last.gripShort !== !!gr.low) {
+      last.gripShort = !!gr.low;
+      parts.grip.classList.toggle('short', !!gr.low);
+    }
+  }
+
+  // THE READIED SPELL, the diamond's second caption chip. It is still
+  // drawn ONLY when one is readied - PX30b's law holds for a chip that
+  // carries a NAME, which says nothing at all when there is no spell.
+  // (The cells below are a different case; see the header.)
+  const readySpell = opts.readied ?? null;
+  // QS6: ...and NOT when the spell in hand is the one the spell chip is
+  // already naming. Two chips a hand's width apart carrying the same
+  // word is not a readout, it is a stutter - the chip below says it is
+  // readied by lighting up, which is one thing said once.
+  const slotSpell = spellQuickslot();
+  // AUDIT FONT3 F3: ...and only while something else IS naming it. With the diamond switched off and no hotbar up,
+  // the spell chip is hidden (.nodiamond), so the caption is the one readout left - FONT3 took the dungeon's bitmap
+  // line, which had been the only one in that setup underground (and there had been none above ground).
+  const named = getPref('quickslots') !== false || hotbarMode();
+  const doubled = named && !!readySpell && !!slotSpell && slotSpell.index === readySpell.index;
+  const readyName = readySpell && !doubled ? String(shownSpellName(readySpell) ?? '') : null;   // L10N3e: as the book shows it
+  if (last.readied !== readyName) {
+    last.readied = readyName;
+    parts.readied.classList.toggle('on', !!readyName);
+    parts.readied.textContent = '';
+    if (readyName) {
+      parts.readied.append(el('span', 'hud-readykind', 'Ready'), el('span', 'hud-readyname', readyName));
+    }
+  }
+
+  // ── QS3: THE QUICKSLOT DIAMOND ──────────────────────────────────
+  drawQuickslots(vitals, opts);
+
+  // THE RETICLE, on the classic's own laws. The cursor up hides it all,
+  // as the classic hides its own (the whole HUD is hidden then).
+  const style = interactionIconStyle();
+  const asCross = iconReplacesCrosshair(style);
+  const mode = getInteractionMode();
+  const label = MODE_LABEL[mode] ?? '';
+  // AUDIT DEEP T1-9: under the travel view there is nothing at the centre to aim at - the reticle and the mode's word go,
+  // the vitals and the hotbar stay
+  const aim = !opts.reticleHidden;
+  const showCross = aim && crosshairEnabled() && !(asCross && mode !== 'grab');
+  const showCentreWord = aim && crosshairEnabled() && asCross && mode !== 'grab' && !!label;
+  const showCorner = aim && !asCross && modeIconEnabled(style) && !!label;
+  const rk = `${showCross}|${showCentreWord ? label : ''}|${showCorner ? label : ''}`;
+  if (last.reticle !== rk) {
+    last.reticle = rk;
+    parts.cross.style.display = showCross ? '' : 'none';
+    parts.centreWord.textContent = showCentreWord ? label : '';
+    parts.centreWord.style.display = showCentreWord ? '' : 'none';
+    parts.cornerWord.textContent = showCorner ? label : '';
+    parts.cornerWord.style.display = showCorner ? '' : 'none';
+  }
+
+  // UI3: THE STATUS WIDGET - the spells, the set powers, the poisons and diseases and the needs, a square tile each
+  // AUDIT C&C S9 (decision D3): ONE TEMPERATURE READING A FRAME - the strip's chip and the plate read the same live one
+  const live = survivalOn() ? feltNow(vitals) : null;
+  drawStatus(vitals, opts, live);
+  drawTemp(vitals, live);   // TEMP-UI: the temperature plate
+}
+
+/** UI-CALM: the Calm HUD row's switch (systems/features.js) - the vitals rest when full, on unless switched off. */
+export const HUD_CALM_PREF = 'hudCalm';
+/** UI-CALM: how long the vitals stand full and untouched before they rest (s). */
+export const VITALS_REST_S = 4;
+/** TEMP-UI: the temperature plate's part on the Climates & Calories row (systems/features.js) - shown unless switched off. */
+export const TEMP_HUD_PREF = 'survivalTempHud';
+/** TEMP-UI: the glyph for the way a reading runs (ui/hud/hudStatus.js STATUS_GLYPHS). */
+const TEMP_GLYPHS = Object.freeze({ cold: 'cold', hot: 'hot', mild: 'thermo' });
+/** TEMP-UI - ONE FRAME OF THE TEMPERATURE PLATE: written only when what it says changes (the reading moves once a game
+ *  minute; the frame is sixty a second). `live` is the frame's one live reading (AUDIT C&C S9), the record's with none. */
+function drawTemp(vitals, live = null) {
+  const on = survivalOn() && getPref(TEMP_HUD_PREF) !== false;
+  const r = on ? temperatureReadout(vitals, live ? live.felt : undefined, { rules: survivalRules(), env: live?.env ?? null }) : null;
+  const k = r ? `${r.text}|${r.label}|${r.level}|${r.side}|${r.at.toFixed(3)}` : '';
+  const t = parts.temp;
+  if (last.temp !== k) {
+    last.temp = k;
+    if (!r) { t.el.style.display = 'none'; return; }
+    t.el.style.display = '';
+    t.el.dataset.side = r.side;
+    t.el.dataset.level = r.level;
+    t.glyph.src = statusGlyphSrc(TEMP_GLYPHS[r.side]) ?? '';
+    t.num.textContent = r.text;
+    t.word.textContent = r.label;
+    t.mark.style.left = `${(r.at * 100).toFixed(1)}%`;
+    // AUDIT C&C S14: what its level means, in words - and the sheet marks a costing plate (`!`): its frame's colour said it alone
+    const said = `Felt temperature ${r.text}: ${levelSaid(r.label, r.level)}`;
+    t.el.title = said;
+    t.el.setAttribute('aria-label', said);
+  }
+}
+/* TEMP-UI's fitTemp (the plate's places off the compass's right end - beside it, compact, hung under it, aside - kept
+   clear of the FPS read-out, a foe's bar, the quest card and the party list) is retired with the place it measured:
+   UI-CALM stands the plate in the corner's caption, which no screen edge and nothing at the top right can meet. */
+
+/** UI3: frames between two measures of the widget's band - a layout read is not free, and a band moves only when the
+ *  chat, the escorts or the quickslot block do. */
+const STAT_MEASURE_EVERY = 30;
+/** UI3: the band before it is measured (a first frame, a host with no layout): five rows. */
+const STAT_DEFAULT_ROOM = 5 * STAT_TILE + 4 * STAT_GAP;
+/** UI3: what may stand above the widget, measured where it stands (AUDIT UI C1/C4: offline nothing had bounded the band
+ *  and a long list climbed into the compass; a notched phone's presses stand below its safe area, not at 16): the
+ *  chat's box and the Social panel open over it, the gate boss's bar, the journey bar, the online status line and the
+ *  touch layer's presses - with the HUD's own top block (the compass, a foe's bar) and the escort faces beside them. */
+const STAT_ABOVE = '.dfchat, .dfsocial[data-open="1"], .wb-boss-bar, .travelpanel-bar, .hudstatus, .dftouch-btn';
+
+/**
+ * UI3 - ONE FRAME OF THE STATUS WIDGET (ui/hud/hudStatus.js). What it says is rebuilt only when it changes - a countdown
+ * that ticks every round would otherwise rebuild it every frame - and its band now and then: the grid's rows are the
+ * tiles the band holds (never more than there are tiles), so a long list wraps into a next column before it meets
+ * what stands above it; with no band above the caption it stands beside the diamond; and where there is no room for
+ * the names (statPlace) they go.
+ */
+function drawStatus(vitals, opts, live = null) {
+  last.statEntity = vitals;   // BUFF-END: the entity a right-click ends a spell on is the one this frame drew
+  // BUFF-END: the freed mouse (Enter, or FreeMouse) with no window up and no pad in hand - the hotbar's own mouse mode -
+  // lets a spell the player may end take the pointer; the rest of the HUD stays pointer-transparent
+  const ending = cursorActive() && !overlayOpen() && !controllerLook();
+  if (last.statEnding !== ending) { last.statEnding = ending; parts.stat.classList.toggle('ending', ending); }
+  const spells = effectRows(vitals);
+  const powers = setPowerChips(vitals);   // SET5: the set powers (the host's - setHudSetChips)
+  powers.push(...techniqueChips(vitals));   // TECH1: and the weapon's technique beside them (the host's - setHudTechniqueChips)
+  // SURV5: the needs - one a felt need (survival/status.js), none while every need is met, and none with the switch off
+  const needs = survivalOn() ? survivalHudChips(vitals, Math.floor(ownMinutes()), { vampire: !!liveVampirism(vitals), endurance: liveStat(vitals, 'endurance'), rules: survivalRules(), live }) : [];   // AUDIT SURV C: the vampire's strip, the page's drunk bands; AUDIT SURV-BOONS C14: the live tier's, so a turn shows at once (AUDIT C&C S5: and its levels are that tier's); AUDIT C&C S9: the plate's live reading
+  if (needs.some((c) => c.level !== 'boon')) noteFirstUse('survival');   // TUT1: the first felt need - AUDIT SURV-BOONS C2: a boon is none (a fresh Boons character is fed and watered, and met the page in its first minute)
+  const rested = sharedClockOn() ? { minutes: nightRealMinutesLeft(vitals, ownMinutes()) } : null;   // REST1: the night interval, online
+  const all = statusTiles({ spells, powers, afflictions: afflictionRows(vitals), needs, rested });
+  const zone = zoneTile();
+  if (zone) all.unshift(...statusTiles({ zone }));   // WILD1: the open zone's tile, first
+  // a new window size or HUD scale is a new band at once (AUDIT UI C: a rotation left the old band for half a second)
+  const vp = `${globalThis.innerWidth}x${globalThis.innerHeight}x${last.scale ?? 1}`;
+  if (last.statVp !== vp) { last.statVp = vp; last.statTick = -1; }
+  last.statTick = ((last.statTick ?? -1) + 1) % STAT_MEASURE_EVERY;
+  if (last.statTick === 0) measureStatBand(opts);
+  const metrics = last.statShort ? STAT_METRICS.short : STAT_METRICS.full;   // a phone on its side: the smaller tiles
+  const { side, rows, columns, tight, none } = statPlace({ room: last.statRoom ?? STAT_DEFAULT_ROOM, sideRoom: last.statSideRoom ?? 0, count: all.length, metrics,
+    aboveWidth: last.statAboveWidth ?? Infinity, sideWidth: last.statSideWidth ?? Infinity });
+  const tiles = statOverflow(all, { rows, columns });   // past the screen's middle: the last few folded into "+N"
+  const tmpl = `repeat(${Math.max(1, Math.min(tiles.length, rows))}, ${metrics.tile}px)`;
+  if (last.statRows !== tmpl) { last.statRows = tmpl; parts.stat.style.gridTemplateRows = tmpl; }
+  if (last.statTight !== tight) { last.statTight = tight; parts.stat.classList.toggle('stat-tight', tight); }
+  if (last.statSide !== side) { last.statSide = side; parts.stat.classList.toggle('stat-side', side); }   // HUD-CLASS (AUDIT 2026-10-05): the widget's states are its own words, stat-<state> - as the bare 'side' it took the sheet's .side column (its --ink ground), a dark box behind the tiles beside the diamond
+  if (last.statNone !== none) { last.statNone = none; parts.stat.classList.toggle('stat-noroom', none); }   // no band anywhere: it steps aside
+  const top = side ? `${last.statSideOffset ?? 0}px` : '';   // beside the diamond: from under what stands above
+  if (last.statTop !== top) { last.statTop = top; parts.stat.style.top = top; }
+  const dpr = clampDpr(screenDpr() * (last.scale ?? 1));   // the block rides the HUD's scale: a spell's icon is fitted at it
+  const key = `${tiles.map((t) => `${t.key}:${t.kind}:${t.name}:${t.foot ?? ''}:${t.blink ? 1 : 0}:${t.item ? 1 : 0}:${t.recovering ? 1 : 0}:${t.spell ?? ''}:${t.glyph ?? ''}:${t.set ?? ''}:${t.endable ? t.bundle : ''}`).join('|')}#${dpr}#${metrics.pic}`;   // BUFF-END: a tile's bundle rides the key - it is what a right-click ends   // AUDIT UI C: the ratio, not the scale alone - a zoom or a new monitor refits
+  if (last.stat === key) return;
+  last.stat = key;
+  parts.stat.replaceChildren(...tiles.map((t) => statTile(t, dpr, metrics.pic)));
+}
+
+/** BUFF-END: a spell tile's hover, where it can be ended. */
+export const END_SPELL_HINT = 'Right-click to end this spell';
+/** AUDIT 27h B1: A PRESS AND ITS RELEASE ARE ONE GESTURE, owned where the PRESS landed. The widget swallowed a release
+ *  wherever it landed on a tile, so a right press begun on the world (a gap between tiles, a tile that lets clicks
+ *  through) and let go over an endable tile never reached the host: its rightHeld stayed up - the look frozen, a held
+ *  swing (WeaponSwingMode 2) swinging on - and where the menu comes with the release (Windows) the tile's spell ended
+ *  too. `took` is the press this widget stopped (the spell, not the node - a blink rebuilds the tiles mid-press);
+ *  `forget` runs on EVERY press anywhere first (the window's capture), so no press of the world's inherits it. */
+export function endingGesture(cellOf, end) {
+  let took = null;
+  return {
+    forget: () => { took = null; },
+    down: (e) => {
+      const cell = cellOf(e);
+      if (!cell) return;
+      took = { bundle: cell.dataset.bundle, button: e.button };
+      e.stopPropagation();
+    },
+    up: (e) => { if (took && took.button === e.button) e.stopPropagation(); },
+    menu: (e) => {
+      const cell = cellOf(e);
+      if (!cell) return;
+      e.preventDefault();
+      if (took?.bundle !== cell.dataset.bundle || took.button !== 2) return;   // the right press began on THIS spell's tile, or it is no end
+      end(Number(cell.dataset.bundle));
+    },
+  };
+}
+/** BUFF-END (Zerofyre on Discord: "An option to right click cancel buffs on yourself like most RPGs"): THE WIDGET'S
+ *  OWN POINTER, bound once. With the mouse freed a right-click on a spell the player may end ends it (mysticism.js
+ *  endBundle) and says so; the press is the widget's, as a hotbar socket's is (HB1c) - every host swings from a
+ *  WINDOW mousedown, so it goes no further. Anything else on the widget stays the world's. */
+function bindStatEnding(stat) {
+  const cellOf = (e) => (stat.classList.contains('ending') ? e.target?.closest?.('.hst-cell.can-end') ?? null : null);
+  const g = endingGesture(cellOf, (bundle) => {
+    const name = endBundle(last.statEntity, bundle);
+    if (name) hudText(endedSpellText(name));
+    last.stat = null;   // the widget redraws on the next frame without it
+  });
+  globalThis.addEventListener?.('mousedown', g.forget, true);
+  holds.push({ off: () => globalThis.removeEventListener?.('mousedown', g.forget, true) });   // the HUD's teardown takes it
+  stat.addEventListener('mousedown', g.down);
+  stat.addEventListener('mouseup', g.up);
+  stat.addEventListener('contextmenu', g.menu);
+}
+
+/** UI3: one tile - its frame's kind, its picture (a spell's icon, a set's rune, a glyph), its foot and its name. */
+function statTile(t, dpr, box) {
+  const cell = el('div', `hst-cell ${t.kind}${t.blink ? ' blink' : ''}${t.item ? ' item' : ''}${t.recovering ? ' recovering' : ''}${t.cost ? ' hst-cost' : ''}`);   // AUDIT C&C S14: a costing need marked (the sheet's `!`)
+  if (t.endable && t.bundle != null) {   // BUFF-END: a spell the player may end, by a right-click with the mouse freed
+    cell.classList.add('can-end');
+    cell.dataset.bundle = String(t.bundle);
+    cell.title = END_SPELL_HINT;
+  }
+  if (t.say) { cell.title = t.say; cell.setAttribute('aria-label', t.say); }   // AUDIT C&C S14: a need's level in words
+  const tile = el('span', 'hst-tile');
+  const pic = el('img', 'hst-pic');
+  pic.alt = '';
+  pic.draggable = false;
+  if (t.spell != null) {
+    // the icon lands async: the frame stands empty until it does, and its landing rebuilds the widget
+    const fit = spellIconPicture(t.spell, { box, dpr, onReady: () => { last.stat = null; } });
+    if (fit) showFitted(pic, fit); else pic.style.visibility = 'hidden';
+  } else if (t.kind === 'more') {
+    pic.style.display = 'none';   // "+N": its foot is the whole of it, in the tile's middle
+  } else if (t.set) {
+    const set = setById(t.set);
+    const colour = set?.colour ?? (t.set === 'legendary' ? RARITIES.legendary.colour : undefined);   // LOOT5: a Legendary power's chip wears the tier's own orange
+    const shade = t.set === 'technique' ? TECH_CHIP_COLOUR : colour;   // TECH1: a weapon's technique, its marks' own blue
+    cell.dataset.set = t.set;
+    for (const [k, v] of Object.entries(setShades(shade))) cell.style.setProperty(k, v);
+    pic.src = t.set === 'technique' ? techniqueGlyphTileSrc(shade) : sigilRuneTileSrc(shade);   // TECH-CARD: the technique's own glyph, as its block on the card wears it
+  } else if (t.glyph) {
+    cell.dataset.glyph = t.glyph;
+    pic.src = statusGlyphSrc(t.glyph) ?? '';
+  }
+  tile.append(pic);
+  if (t.foot) tile.append(el('span', 'hst-foot', t.foot));
+  cell.append(tile, el('span', 'hst-name', t.name));
+  return cell;
+}
+
+/** UI3: the widget's band - from the caption it stands on up to the lowest of what stands above it, anywhere between
+ *  its left edge and the screen's middle (STAT_ABOVE, the HUD's top block, the host's `escortBottom`) - and the
+ *  diamond's own height, the room beside it (none while it is put away). */
+function measureStatBand(opts) {
+  const cap = parts.quickCap?.getBoundingClientRect?.();
+  if (!cap || !(cap.height > 0)) return;   // no layout here (a stub document, a hidden block): the band stands
+  const right = Math.max(cap.left + 1, (Number(globalThis.innerWidth) || 0) / 2);
+  const rects = [parts.top?.getBoundingClientRect?.(), ...[...(document.querySelectorAll?.(STAT_ABOVE) ?? [])].map((n) => n.getBoundingClientRect?.())]
+    .filter((r) => r && r.height > 0 && r.width > 0);
+  // the lowest edge of what stands between `x0` and the middle and starts above `limit`
+  const lowest = (x0, limit) => rects.reduce((b, r) => (r.left < right && r.right > x0 && r.top < limit ? Math.max(b, r.bottom) : b), 0);
+  const dia = parts.quickDiamond?.getBoundingClientRect?.();
+  const block = parts.quick.getBoundingClientRect?.();
+  // ABOVE the caption: what starts over it. BESIDE the diamond: what crosses the diamond's own rows right of the block -
+  // a phone on its side puts the chat's lines there, starting below the caption's top (AUDIT UI: the scan above alone
+  // let the widget stand under them)
+  let above = lowest(cap.left, cap.top);
+  let besideAbove = dia && dia.height > 0 && block ? lowest(block.right, dia.bottom) : above;
+  if (Number.isFinite(opts.escortBottom)) { above = Math.max(above, opts.escortBottom); besideAbove = Math.max(besideAbove, opts.escortBottom); }
+  const scale = last.scale ?? 1;
+  last.statShort = !!globalThis.matchMedia?.(STAT_SHORT_QUERY)?.matches;
+  last.statRoom = statRoom({ captionTop: cap.top, above, scale });
+  const beside = statSide({ captionTop: cap.top, diamondBottom: dia && dia.height > 0 ? dia.bottom : Number.NaN, above: besideAbove, scale });
+  last.statSideRoom = beside.room;
+  last.statSideOffset = beside.offset;
+  // how wide it may run, in the block's pixels: from where it starts - the caption's left, or past the block's right
+  // edge (the sheet's .side margin, 8) - to the screen's middle, less the reticle's clearance
+  const middle = (Number(globalThis.innerWidth) || 0) / 2 - STAT_MIDDLE_CLEAR;
+  last.statAboveWidth = middle > 0 ? (middle - cap.left) / scale : Infinity;
+  last.statSideWidth = middle > 0 && block ? (middle - block.right) / scale - 8 : Infinity;
+}
+
+/**
+ * QS3 - ONE FRAME OF THE DIAMOND.
+ *
+ * A SIGNATURE FIRST. Everything the four cells and the four tags can
+ * say is folded into one string, and an unchanged string skips every
+ * write below it - the same law the rest of this file keeps, applied
+ * once to a block of twenty nodes rather than twenty times over.
+ */
+function drawQuickslots(vitals, opts) {
+  liveOpts = opts;
+  liveEntity = vitals ?? null;
+  const view = quickslotView(vitals, { weapon: opts.weapon ?? null, sheathed: opts.weaponSheathed ?? false,
+    readiedIndex: opts.readied?.index ?? null });   // QS6: the chip lights for the spell actually in hand
+  offKind = view.off.kind;
+  // THE PAD'S FAMILY, not the input layer's local: `controllerLook` is
+  // GP1's own importable latch for "the last input was the pad", and
+  // padGlyphs holds which kind of pad it is.
+  const family = padFamily();
+  const controller = controllerLook() && !!family;
+  const tagOpts = { bindings: bindings(), controller, family: family ?? 'xbox' };
+  const tags = {
+    main: quickslotTag(CELL_ACTIONS.main, tagOpts),
+    off: quickslotOffTag(view.off.kind, tagOpts),
+    c1: quickslotTag(CELL_ACTIONS.c1, tagOpts),
+    c2: quickslotTag(CELL_ACTIONS.c2, tagOpts),
+    spell: quickslotSpellTag(tagOpts),   // QS6
+  };
+  // TI2: a FIXED virtual stick sits bottom-left at inset 36 radius 56,
+  // which is this block's own corner - so the block steps right of it,
+  // by a class rather than by a second set of coordinates.
+  const fixedStick = getPref('touchStickAnchor') === 'fixed';
+  if (last.qstick !== fixedStick) {
+    last.qstick = fixedStick;
+    parts.quick.classList.toggle('stickclear', fixedStick);
+  }
+  // THE SWITCH (systems/features.js 'quickslot-diamond'): off hides the
+  // diamond and its tags, and nothing else - the caption keeps the mode
+  // word, the keys keep working, the tooltip keeps filling slots. A
+  // player who turned the picture off did not ask to lose the presses.
+  const off = getPref('quickslots') === false;
+  if (last.qoff !== off) {
+    last.qoff = off;
+    parts.quick.classList.toggle('nodiamond', off);
+  }
+  // HB1: ONE BAR OR THE OTHER. The hotbar up puts the diamond and its
+  // spell chip away (the caption keeps the mode word and the readied
+  // spell); the keys the diamond answered are the hotbar's while it is.
+  const hb = hotbarMode();
+  if (last.qhotbar !== hb) {
+    last.qhotbar = hb;
+    parts.quick.classList.toggle('hotbarmode', hb);
+  }
+  // QS6: THE SPELL CHIP, above the `off` return - it is the caption's,
+  // and the caption is what the switch keeps. Its own guard, because a
+  // spell name changing is not a reason to rewrite twenty cells.
+  drawSpellChip(view, tags.spell);
+  if (off || hb) return;   // HB1: the diamond is put away - nothing of it to paint
+  const pct = (c) => (Number.isFinite(c) ? String(Math.round(c)) : '');
+  const m = view.main, o = view.off;
+  const sig = [
+    m ? `${m.name}|${pct(m.condition)}|${m.sheathed ? 1 : 0}` : '',
+    `${o.kind}|${o.name ?? ''}|${pct(o.condition)}|${o.item ? 1 : 0}`,
+    ...['c1', 'c2'].map((k) => (view[k] ? `${view[k].name}|${view[k].count}` : '')),
+    ...['main', 'off', 'c1', 'c2'].map((k) => tagKey(tags[k])),
+    // AUDIT QS6 F4: THE LAMP IS PART OF WHAT THE BLOCK SAYS. It was written
+    // below the early return, so it came on with the cycle that changed a
+    // name and then NEVER WENT OUT - nothing else changes when a hold ends,
+    // so the signature was identical and the write was unreachable. A cell
+    // left glowing is a cell that lies about what the thumb is doing.
+    quickslotCycling() ?? '',
+    // AUDIT UI B5: and the size its pictures are made at - the HUD's scale, the screen's ratio, the narrow sheet's box -
+    // or a new scale left the cells' pictures at the old one (at 2x, 1x pictures drawn twice their size, blurred)
+    `${last.scale ?? 1}x${screenDpr()}${(Number(globalThis.innerWidth) || 1000) <= 860 ? 'n' : ''}`,
+  ].join('~');
+  if (last.quick === sig) return;
+  last.quick = sig;
+
+  quickCell(parts.quickCells.main, 'main', {
+    item: m?.item ?? null, name: m?.name ?? null, condition: m ? m.condition : null,
+    socket: !m, sheathed: !!m?.sheathed, ghost: false, count: null,
+  });
+  quickCell(parts.quickCells.off, 'off', {
+    item: o.item, name: o.name, condition: o.condition,
+    socket: o.kind === 'empty', sheathed: false, ghost: o.kind === 'swap' && !o.item && !o.bare, count: null,
+  });
+  for (const k of ['c1', 'c2']) {
+    const c = view[k];
+    quickCell(parts.quickCells[k], k, {
+      item: c?.item ?? null, name: c?.name ?? null, condition: null,
+      socket: !c, sheathed: false, ghost: !!c && c.count === 0, count: c ? c.count : null,
+    });
+  }
+  for (const k of ['main', 'off', 'c1', 'c2']) quickTag(parts.quickTags[k], k, tags[k]);
+  // QS6: the cell a hold is turning right now wears the lamp, so a
+  // player watching the diamond sees which slot their thumb is in.
+  const lamp = quickslotCycling();
+  if (last.qlamp !== lamp) {
+    last.qlamp = lamp;
+    for (const k of ['c1', 'c2']) parts.quickCells[k].cell.classList.toggle('cycling', lamp === k);
+  }
+}
+
+/** UI2: the spell chip's icon box - the chip's 19px line, a 16px icon at one to one. */
+const SPELL_CHIP_BOX = 18;
+/** UI2: the diamond's cell picture boxes - the sheet's `.hud-qicon` caps (44, and 32 under QUICK_NARROW) less two a
+ *  side, pinned against the sheet in test/systems/ui2_hotbar.test.js. */
+const QUICK_BOX = 40, QUICK_BOX_NARROW = 28;
+const QUICK_NARROW = '(max-width: 860px)';
+
+/** QS6 - THE CAPTION'S SPELL CHIP: the key that readies it, the name,
+ *  and three states - EMPTY (nothing chosen yet, so nothing is drawn),
+ *  a GHOST (a spell the book no longer holds), and READIED (it is in
+ *  hand, and the same press puts it away). */
+function drawSpellChip(view, tag) {
+  const sp = view.spell;
+  const lamp = quickslotCycling() === 'spell';
+  const sig = sp ? `${sp.index}|${sp.name}|${sp.spell?.noIcon ? 'n' : ''}${sp.spell?.icon ?? ''}|${sp.spell ? 1 : 0}|${sp.readied ? 1 : 0}|${lamp ? 1 : 0}|${tagKey(tag)}|${last.scale ?? 1}` : `-|${tagKey(tag)}`;
+  if (last.qspell === sig) return;
+  last.qspell = sig;
+  const chip = parts.spellChip;
+  // UI2: THE SPELL'S OWN ICON before its name, fitted at the HUD's scale (the chip rides its transform); nothing for an
+  // empty slot or a spell the book no longer holds - the name says which it was
+  const pic = sp?.spell && !sp.spell.noIcon ? spellIconPicture(sp.spell.icon, { box: SPELL_CHIP_BOX, dpr: clampDpr(screenDpr() * (last.scale ?? 1)), onReady: () => { last.qspell = null; } }) : null;
+  if (pic) { showFitted(chip.icon, pic); chip.icon.style.display = ''; } else { chip.icon.removeAttribute('src'); chip.icon.style.display = 'none'; }
+  chip.chip.classList.toggle('on', !!sp);
+  // HOTSLOT (2026-09-22): an EMPTY slot is a socket, as the diamond's
+  // cells are (departure 4) - drawn dim with its key, so the key is
+  // seen and, on a phone, the first tap has a chip to land on (the
+  // tap fills it from the book: spellQuickslotPress). Hidden, the slot
+  // could never be filled without a keyboard.
+  chip.chip.classList.toggle('qspell-empty', !sp);   // HUD-CLASS: its own word - the bare 'empty' took the sheet's .empty component, its 16px margin under the caption
+  if (!sp) {
+    chip.chip.classList.remove('readied', 'ghost', 'cycling');
+    chip.name.textContent = 'No spell';
+    quickTag(chip, 'spellcap', tag);
+    return;
+  }
+  chip.chip.classList.toggle('readied', !!sp.readied);
+  chip.chip.classList.toggle('ghost', !sp.spell);
+  chip.chip.classList.toggle('cycling', lamp);
+  chip.name.textContent = sp.name || '';
+  quickTag(chip, 'spellcap', tag);
+}
+
+/** One cell's state, art, strip and count. Every write is guarded on
+ *  its own key as well as the block's signature, because a condition
+ *  that ticked is not a reason to re-request a picture. */
+/** SET5: THE SET POWERS' CHIPS, the host's to give (scenes/world.js hands systems/sigil/sigilSetPowers.js setHudChips) - this
+ *  file never imports the powers: they register into the magic round's ticker, which imports half the game, and a
+ *  surface importing them closed a cycle. `fn(entity) -> [{ key, set, name, text, state }]`. */
+let _setChips = null;
+export function setHudSetChips(fn) { _setChips = typeof fn === 'function' ? fn : null; }
+/** WILD1: the host's word on the open zone - `{ name }` while the player stands in it, else null (systems/wild/wildZone.js). */
+let _zone = null;
+export function setHudZone(fn) { _zone = typeof fn === 'function' ? fn : null; }
+const zoneTile = () => { try { return _zone?.() ?? null; } catch { return null; } };
+const setPowerChips = (vitals) => { try { return _setChips?.(vitals) ?? []; } catch { return []; } };
+/** TECH1 (bible/05-Combat/Weapon-Techniques.md): the host's word on the weapon's technique - its chip, after the set powers'
+ *  (combat/techniques.js techniqueHudChips, read off the rig that owns the frame). */
+let _techChips = null;
+export function setHudTechniqueChips(fn) { _techChips = typeof fn === 'function' ? fn : null; }
+const techniqueChips = (vitals) => { try { return _techChips?.(vitals) ?? []; } catch { return []; } };
+
+function quickCell(part, slot, s) {
+  const cls = part.cell.classList;
+  // RARITY-UI / SIGIL-UI: the cell's frame wears its item's tier and a sigil weapon's rune, written on a change only
+  const worn = s.socket ? null : s.item;
+  const frameKey = worn ? `${rarityAttr(worn) ?? ''}|${validSigil(worn.sigil) ? 1 : 0}|${setIdOf(worn) ?? ''}` : '';   // SET5: and its set
+  if (last[`${slot}Frame`] !== frameKey) {
+    last[`${slot}Frame`] = frameKey;
+    const rar = worn ? rarityAttr(worn) : null;
+    if (rar) part.cell.dataset.rarity = rar; else delete part.cell.dataset.rarity;
+    if (worn && validSigil(worn.sigil)) part.cell.dataset.sigil = ''; else delete part.cell.dataset.sigil;
+    markSetFrame(part.cell, worn);   // SET5: a set piece's rune in its set's colour
+  }
+  const state = `${s.socket ? 's' : ''}${s.sheathed ? 'h' : ''}${s.ghost ? 'g' : ''}`;
+  if (last[`${slot}State`] !== state) {
+    last[`${slot}State`] = state;
+    cls.toggle('socket', !!s.socket);
+    cls.toggle('sheathed', !!s.sheathed);
+    cls.toggle('ghost', !!s.ghost);
+  }
+  quickIcon(part, slot, s.socket ? null : s.item, s.name);
+  // THE DURABILITY STRIP, on the hands only - a potion has no condition
+  // a player can act on and the model hands none. For a TORCH it is
+  // what is left to burn: Handheld Torches burns currentCondition down,
+  // so `conditionPercentage` already says exactly that.
+  const hasBar = !s.socket && Number.isFinite(s.condition);
+  if (last[`${slot}Bar`] !== hasBar) { last[`${slot}Bar`] = hasBar; cls.toggle('hasbar', hasBar); }
+  if (hasBar) {
+    // The dash hides what is GONE, from each side corner inward, so what
+    // is left stands at the bottom point of the diamond.
+    const off = (WEAR_LEN * (1 - Math.max(0, Math.min(100, s.condition)) / 100)).toFixed(1);
+    if (last[`${slot}BarW`] !== off) {
+      last[`${slot}BarW`] = off;
+      for (const p of part.wear) p.setAttribute('stroke-dashoffset', off);
+    }
+    const worn = s.condition < QUICK_WORN_PCT;
+    if (last[`${slot}Worn`] !== worn) { last[`${slot}Worn`] = worn; cls.toggle('worn', worn); }
+  }
+  // THE COUNT - and a ghost still draws its 0, which is the whole point
+  // of a slot that keeps its kind when the pack runs out.
+  put(part.count, `${slot}Count`, s.socket || s.count == null ? '' : String(s.count));
+}
+
+/** The cell's picture: the Morrowind ground mesh where the rig has one
+ *  (MW-D38), else the classic icon, else the two letters. Requested
+ *  only when the cell's ITEM changed; a record that lands cold marks
+ *  the block dirty so the NEXT frame draws it, rather than rebuilding
+ *  anything from inside a render. */
+function quickIcon(part, slot, item, name) {
+  // UI2: FITTED to the cell (ui/iconFit.js - the pack's law) at the HUD's scale, the diamond riding its transform: 40px
+  // (the sheet's 44 less two a side), 28 where a narrow screen's sheet draws 32
+  const box = globalThis.matchMedia?.(QUICK_NARROW)?.matches ? QUICK_BOX_NARROW : QUICK_BOX;
+  const dpr = clampDpr(screenDpr() * (last.scale ?? 1));
+  const key = `${iconKeyOf(item)}@${box}x${dpr}`;
+  if (last[`${slot}Icon`] === key) return;
+  last[`${slot}Icon`] = key;
+  const image = item ? inventoryItemImage(item, liveEntity ?? undefined) : null;
+  const mw = item ? modelIconUrl(item, Math.round(box * dpr), fpArm) : null;
+  const pic = item
+    ? (mw ? { src: mw, w: box, h: box, smooth: true }
+      : (image ? requestFittedIcon(image.archive, image.record, { box, dpr, dye: image.dye, dyeTarget: image.dyeTarget, onReady: () => { last[`${slot}Icon`] = null; last.quick = null; } }) : null))
+    : null;
+  // NOT SQUASHED, for enhancedInventory itemTile's own reason: a dagger
+  // is tall and narrow and a cuirass wide - the fitted picture carries
+  // its own width and height, its longest side the box's.
+  if (pic) { showFitted(part.icon, pic); part.icon.style.display = ''; }
+  else { part.icon.removeAttribute('src'); part.icon.style.display = 'none'; }
+  const letters = !pic && item ? initialsOf(name) : '';
+  part.init.textContent = letters;
+  part.init.style.display = letters ? '' : 'none';
+}
+
+/** One tag chip: the pad's glyph, the key's classic name, or nothing at
+ *  all. Keyed by a string, so a frame that changed neither writes
+ *  neither - and an UNBOUND action writes nothing, never 'NONE'. */
+function quickTag(part, slot, t) {
+  const k = tagKey(t);
+  if (last[`${slot}Tag`] === k) return;
+  last[`${slot}Tag`] = k;
+  part.tag.classList.toggle('on', !!t);
+  // The chip's KIND is a class, so the touch-first sheet can hide a
+  // keyboard chip on a device with no keyboard and keep a pad's glyph.
+  part.tag.classList.toggle('key', !!t && t.kind === 'key');
+  part.tag.classList.toggle('glyph', !!t && t.kind === 'glyph');
+  if (t && t.kind === 'glyph') {
+    part.img.src = hdGlyphSvg(t.family, t.code, { size: 32 }) ?? glyphSvg(t.family, t.code, { size: 12 }) ?? '';   // PADPLUS1
+    part.img.style.display = '';
+    part.text.textContent = '';
+  } else {
+    part.img.removeAttribute('src');
+    part.img.style.display = 'none';
+    part.text.textContent = t ? t.text : '';
+  }
+}
+
+/** A host tearing down. */
+export function destroyEnhancedHud() {
+  for (const h of holds) h.off();   // AUDIT QS6 F3: a finger mid-cycle does not outlive the HUD
+  detachHotbarDock();   // HB1: the bar's contents are the model's; its place went with the HUD
+  holds.length = 0;
+  try { host?.remove(); } catch { /* already gone */ }
+  host = null; parts = null;
+  liveOpts = {}; offKind = null; liveEntity = null;   // QS3: the bound-once handlers went with the nodes
+  for (const k of Object.keys(last)) delete last[k];
+}
+
+export { compassScroll };
+
+// NODE-MARKS (2026-10-01, Mac: "Any profession node, like herbs, should appear on the compass"): THE PROFESSIONS' NODES
+// ON THE STRIP - the party's triangle, by the same bearing law, each in its profession's colour (ui/nodeMarks.js
+// nodeMarkCss) at its own opacity, the nearer brighter; `points` NodeCompassPoints, the nearest last so it stands over
+// the rest. Pooled and hidden, never removed. AUDIT NODE-MARKS: in a layer of their own just over the tape and the
+// needle (`nodeLayer`), so every other mark - a Detect marker, a mate, the gate, the quest, a ship - stands over them
+// whenever it was made; and each write is kept on the node itself (`_nm`), never read back from the style, which
+// normalises what it is given ("1.00" reads "1") and so was written again every frame.
+function nodeLayer() {
+  if (parts.nodeLayer) return parts.nodeLayer;
+  const layer = el('div', 'hud-nodes');
+  layer.style.cssText = 'position:absolute;inset:0;pointer-events:none';
+  const needle = parts.compass.children?.[1] ?? null;   // build(): the strip, then the needle, then every mark made since
+  if (needle && typeof parts.compass.insertBefore === 'function') parts.compass.insertBefore(layer, needle.nextSibling ?? null);
+  else parts.compass.append(layer);
+  parts.nodeLayer = layer;
+  return layer;
+}
+function drawNodeMarks(points, playerXZ, heading01) {
+  const list = (points && playerXZ) ? points : [];
+  while (parts.nodeMarks.length < list.length) {
+    const node = el('i', 'hud-node');
+    node.style.cssText = partyMarkCss();
+    node._nm = { left: '', colour: '', a: '' };
+    nodeLayer().append(node);
+    parts.nodeMarks.push(node);
+  }
+  for (let i = 0; i < parts.nodeMarks.length; i++) {
+    const node = parts.nodeMarks[i];
+    if (i >= list.length) {
+      if (node.style.display !== 'none') node.style.display = 'none';
+      continue;
+    }
+    if (node.style.display === 'none') node.style.display = '';
+    const p = list[i], kept = node._nm;
+    const at = Math.min(1, Math.max(0, compassMarkerLerp(p.xz, playerXZ, heading01)));
+    const l = `${(at * 100).toFixed(1)}%`;
+    if (kept.left !== l) { kept.left = l; node.style.left = l; }
+    const c = nodeMarkCss(p.mark);
+    if (kept.colour !== c) { kept.colour = c; node.style.borderTopColor = c; }
+    const o = (Number.isFinite(p.a) ? p.a : 1).toFixed(2);
+    if (kept.a !== o) { kept.a = o; node.style.opacity = o; }
+  }
+}

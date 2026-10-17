@@ -18,7 +18,9 @@
 //   - a COUNT comparison against the shelf as it stood when the window
 //     opened, and nothing else. No chance, no guards, no crime record.
 //     Robbing a closed shop earns you Thieves Guild credit and no
-//     trouble at all, which is classic's own answer.
+//     trouble at all, which is classic's own answer. (The count is
+//     DFU's; the port reads the shop's keeping since STOLEN-GOODS
+//     AUDIT S1 - shopShelfTheft below.)
 //
 //   PRIVATE PROPERTY (:2277-2281 -> AttemptPrivatePropertyTheft :1848-1863)
 //       TallyCrimeGuildRequirements(true, 1);
@@ -32,11 +34,15 @@
 // THE BASKET, and why this port does not need one. DFU accumulates
 // `theftBasket` as the player clicks - added on a take, removed on a
 // put-back - because the window must WEIGH what was taken. The set it
-// ends up holding is exactly "present in the container when the window
+// ends up holding is "present in the container when the window
 // opened, absent when it closed", so a snapshot diff answers the same
 // question from the same two facts. Putting one of your OWN items into
 // the container does not enter it either way (DFU's RemoveItem finds
-// nothing to remove; the diff sees a gain, not a loss).
+// nothing to remove; the diff sees a gain, not a loss). STOLEN-GOODS
+// AUDIT S1 (2026-10-16): nearly - DFU's basket holds the half a SPLIT
+// minted too, which a diff of the list never sees (the stack still
+// stands); the snapshot is the owner's keeping now, which the take grows
+// by that half (theftBasket below), and the shelf arm reads it too.
 //
 // AND THE NEAR-MISS THAT WROTE ITSELF DOWN. The tree had
 // `Math.floor(rolls() * 100) >= chance` written out inline in three
@@ -53,10 +59,18 @@ import { totalWeight } from './inventory.js';
 /** The theft basket, as a diff. `before` is the container's contents
  *  when the window opened, `after` when it closed; the answer is what
  *  left. Identity is by REFERENCE, which is the port's item identity
- *  everywhere else - two Iron Daggers are two objects. */
+ *  everywhere else - two Iron Daggers are two objects.
+ *  STOLEN-GOODS AUDIT S1 (2026-10-16): `before` is THE OWNER'S KEEPING,
+ *  the Set the host takes as the window opens and hands the window as
+ *  `loot.stolenFrom` - which the take grows by the half a split mints
+ *  off the owner's stack (systems/stolenGoods.js takenFromKeeping). So
+ *  the basket counts a partial take too, as DFU's own basket holds the
+ *  split item it added (the diff of the list saw the stack still
+ *  standing, and four arrows of a stranger's ten were no theft), and it
+ *  is what the mark marked - the one Set both read. Any iterable. */
 export function theftBasket(before, after) {
   const kept = new Set(after ?? []);
-  return (before ?? []).filter((it) => !kept.has(it));
+  return [...(before ?? [])].filter((it) => !kept.has(it));
 }
 
 /** `(int)theftBasket.GetWeight() + theftBasket.Count` (:1852). The
@@ -124,8 +138,12 @@ export function shopliftAttempt({ basket, pickpocketSkill = 0, shopQuality = 0, 
   return { weightAndNumItems, chance, caught: dice100(chance, rolls()) };
 }
 
-/** The shop-shelf arm (:681-687). DFU compares the shelf's COUNT with
- *  what it held when the window opened, so putting an item of your own
- *  onto the shelf can mask a theft of one - kept, because the count
- *  comparison IS the member. */
-export const shopShelfTheft = (beforeCount, afterCount) => afterCount < beforeCount;
+/** The shop-shelf arm (:681-687): a Thieves Guild tally when the shut
+ *  shelf gave up anything of the shop's. STOLEN-GOODS AUDIT S1
+ *  (2026-10-16), a departure: DFU compares the shelf's COUNT with what
+ *  it held when the window opened, so a piece of your own put down hid
+ *  the shop's piece taken, and a handful off a stack was no theft - while
+ *  the mark (systems/stolenGoods.js) marked both. The shelf reads the
+ *  shop's keeping now, as the private-property arm reads the owner's:
+ *  any piece of the shop's gone out of it (theftBasket). */
+export const shopShelfTheft = (keeping, after) => theftBasket(keeping, after).length > 0;

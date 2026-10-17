@@ -41,15 +41,15 @@
 // sfx_footstep_water_001 anywhere): TryImportAudioClips skips the miss
 // and the list plays five, verbatim.
 
-import { EQUIP_SLOTS } from '../characters/paperdoll.js';
+import { EQUIP_SLOTS } from '../characters/paperdoll/paperdoll.js';
 import { equipTableOf } from './equip.js';
 import { ARMOR_MATERIAL } from './armorMaterials.js';
-import { rriNativeMaterialValue } from './rriItems.js';   // DISC29-B: the class's NativeMaterialValue, the port's one reader
+import { rriNativeMaterialValue } from './roleplayRealismItems/rriItems.js';   // DISC29-B: the class's NativeMaterialValue, the port's one reader
 import { modSettingsOf } from './modSettings.js';
 import { audio as defaultAudio } from './audio.js';
 import { FOOTSTEP } from './footsteps.js';
 import { multiply, trs } from '../world/mat4.js';
-import { heardWeather, heardRainGain } from './weatherSim.js';   // DISC9: the weather the player HEARS outdoors, not the sim's word; DISC11: and its level
+import { heardWeather, heardRainGain } from './weather/weatherSim.js';   // DISC9: the weather the player HEARS outdoors, not the sim's word; DISC11: and its level
 import { INDOOR_RAIN_GAIN, AMBIENT_RAIN_LOOP } from './ambientEffects.js';   // DISC11: the street's rain and its through-the-walls law
 import { immersiveFootsteps } from './immersiveFootsteps.js';
 import { isSnowFreeClimate } from '../world/weather.js';
@@ -515,6 +515,10 @@ export function createBetterAmbience({ audio = defaultAudio, settings = readBett
 
   // ReverbMod.Update: on the inside-dungeon edge, UpdateReverbZone
   function updateReverb(inDungeon) {
+    // EG-ZH (bible/11-Multiplayer/Elite-Gates.md section 11.9): A HELD ZONE IS ITS HOLDER'S - the Spire's halls hold the
+    // reverb (audio.holdReverb) and this component yields, its cache forgotten: the zone it last set is gone, so the first
+    // frame after the release asserts its wish again
+    if (audio.reverbHeld?.() != null) { reverbOn = null; return; }
     const want = s.Enabled && inDungeon ? reverbPresetFor(s.reverbLevel) : null;
     if (want === reverbOn) return;
     reverbOn = want;

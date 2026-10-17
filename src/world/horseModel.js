@@ -10,18 +10,18 @@
 // in it): a skinned body and its mane and tail cards on a 33-bone skeleton, in its own frame (metres, Z up, +Y the way
 // it faces - Morrowind's basis, so it stands in the Morrowind body's pass as the body does), and four gaits. This
 // module is everything about it that is not GL:
-//  - THE STREAM (horseSkinStream): the meshes as the character pass's GPU skin draws them (formats/mwGpuSkin.js's
+//  - THE STREAM (horseSkinStream): the meshes as the character pass's GPU skin draws them (formats/morrowind/mwGpuSkin.js's
 //    corner: the fourteen static floats, one influence pair, the post) - the body, then the cards, a range each;
 //  - THE GAIT (stepHorseGait, gaitFor): which of idle, walk, trot and gallop a horse going `speed` plays, at the rate
 //    its stride covers the ground (the bake's measured speed a gait), crossfaded GAIT_FADE seconds into the next;
 //  - THE POSE (writeHorsePalette): the gait's bones composed parent-first and written as the skin's palette - entry 0
 //    the identity (every corner's post), entry 1 + b bone b's skin (its pose times its inverse bind);
 //  - THE TEXEL MAP (horseTexelMap): where each texel of the body's picture lies on the horse, which the 3D dye
-//    (systems/horseCoats.js recolorHorseTexels) lays a look by - the sprites' law, on the horse's own surface.
+//    (systems/horse/horseCoats.js recolorHorseTexels) lays a look by - the sprites' law, on the horse's own surface.
 //
 // Pure: no DOM, no GL, no clock. Not a DFU member: Daggerfall's horse is a sprite. Ledger A (COATS3D).
-import { texelPlanes } from '../systems/horseCoats.js';
-import { SKIN_STATIC_FLOATS, skinStreamFloats } from '../formats/mwGpuSkin.js';
+import { texelPlanes } from '../systems/horse/horseCoats.js';
+import { SKIN_STATIC_FLOATS, skinStreamFloats } from '../formats/morrowind/mwGpuSkin.js';
 import { SKIN_PAL_ROW } from '../render/skinPalette.js';
 
 /** The bake and its two pictures (the body's, the mane and tail cards'). */
@@ -157,7 +157,7 @@ function rowsOf(m) {
 
 /**
  * THE POSE: gait state `g`'s bones written into `pal` as the GPU skin's palette (three texels an entry, rows
- * [a0 a1 a2 t0] [a3 a4 a5 t1] [a6 a7 a8 t2] - formats/mwGpuSkin.js writeSkinPalette's layout). Fading, the two gaits'
+ * [a0 a1 a2 t0] [a3 a4 a5 t1] [a6 a7 a8 t2] - formats/morrowind/mwGpuSkin.js writeSkinPalette's layout). Fading, the two gaits'
  * locals blend (translations lerped, rotations nlerped) before they compose. Answers `pal`.
  */
 export function writeHorsePalette(bake, g, pal, scratch = horsePoseScratch(bake)) {
@@ -211,7 +211,7 @@ function affine(a, b, out, o = 0) {
 }
 
 /**
- * THE STREAM: the bake's meshes, de-indexed, as the character pass's GPU skin reads a corner (formats/mwGpuSkin.js:
+ * THE STREAM: the bake's meshes, de-indexed, as the character pass's GPU skin reads a corner (formats/morrowind/mwGpuSkin.js:
  * position, diffuse, normal, UV, emission - SKIN_STATIC_FLOATS - then the four influences' palette entries and their
  * weights, then the post). Every corner's post is entry 0, the identity: the horse's skin is its bones alone. The
  * diffuse is white and the emission none (the pictures are the colour). The bake's UVs are FBX's, v up; the pass
@@ -275,7 +275,7 @@ export const TEXEL_GUTTER = 2;
  * THE TEXEL MAP: where each texel of the body's `width` x `height` picture lies on the horse - the body's triangles
  * laid out on the picture by their UVs (v up, so a texel's row is from the top: 1 - v), each texel inside one taking
  * its bind position and normal between the triangle's corners. Answers `{ width, height, hide, planes, up }` for
- * systems/horseCoats.js recolorHorseTexels: `hide` 1 where the body's hide draws (no triangle's texel is 0, nor one
+ * systems/horse/horseCoats.js recolorHorseTexels: `hide` 1 where the body's hide draws (no triangle's texel is 0, nor one
  * under the hooves' crown - the horn keeps the art's), `planes` the texel's frames (texelPlanes), `up` its height over
  * the crown as a share of the hide's. The texels just past an island's edge take their nearest inside's place, TEXEL_GUTTER
  * deep, so a filtered or mipped sample at an edge is dyed with it.

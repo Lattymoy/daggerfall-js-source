@@ -5,7 +5,7 @@
     "old": "    if (e.type === 'noteOff') return;   // the player's own (_voice, _release)\n",
     "new": "",
     "tests": [
-      "test/midiout1.test.js"
+      "test/systems/midiout1.test.js"
     ],
     "note": "Every HMI note is released twice, and the stream's release of a note at its own length lands where a re-strike of it has already sounded - the doubling this player exists to avoid."
   },
@@ -15,7 +15,7 @@
     "old": "    const v = scaledVolume(this._raw7[ch], this._scale(at));\n    this._send([0xb0 | ch, 7, v], at);",
     "new": "    const v = this._raw7[ch];\n    this._send([0xb0 | ch, 7, v], at);",
     "tests": [
-      "test/midiout1.test.js"
+      "test/systems/midiout1.test.js"
     ],
     "note": "The music slider, the video mute, the song's own level and every fade stop reaching the device: the song plays at its own CC7 whatever the player asked."
   },
@@ -25,7 +25,7 @@
     "old": "    const at = t - MIDI_GAP_S;",
     "new": "    const at = t + MIDI_GAP_S;",
     "tests": [
-      "test/midiout1.test.js"
+      "test/systems/midiout1.test.js"
     ],
     "note": "The reset lands after the song's tick-0 program changes and volumes and undoes them: every song plays its first pass on piano at full volume."
   },
@@ -35,7 +35,7 @@
     "old": "  resyncGain() { this._relevel(this.ctx.currentTime); }",
     "new": "  resyncGain() {}",
     "tests": [
-      "test/midiout1.test.js"
+      "test/systems/midiout1.test.js"
     ],
     "note": "The slider is heard at the next song, not this one - the bug the 2026-08-27 fix closed for the synth, back on the device."
   },
@@ -45,7 +45,7 @@
     "old": "  _scale(t) { return trackGain() * songLevel(this.song) * this._fadeAt(t); }",
     "new": "  _scale(t) { return songLevel(this.song) * this._fadeAt(t); }",
     "tests": [
-      "test/midiout1.test.js"
+      "test/systems/midiout1.test.js"
     ],
     "note": "Neither the slider nor the video mute reaches the device: a cutscene plays over the music at full volume."
   },
@@ -55,7 +55,7 @@
     "old": "  _scale(t) { return trackGain() * songLevel(this.song) * this._fadeAt(t); }",
     "new": "  _scale(t) { return trackGain() * this._fadeAt(t); }",
     "tests": [
-      "test/midiout1.test.js"
+      "test/systems/midiout1.test.js"
     ],
     "note": "The boss fight's score (WBX9) plays at the dungeon's level on a device, under the tracks it was made to stand over."
   },
@@ -65,7 +65,7 @@
     "old": "    if (t >= t1) return to;",
     "new": "    if (t >= t0) return to;",
     "tests": [
-      "test/midiout1.test.js"
+      "test/systems/midiout1.test.js"
     ],
     "note": "A switch cuts instead of fading (DISC20-B): the level jumps to the fade's end at its first pump."
   },
@@ -75,7 +75,7 @@
     "old": "this._send([0x80 | n.channel, n.note, 0], Math.max(now, n.on + MIDI_GAP_S));",
     "new": "this._send([0x80 | n.channel, n.note, 0], now);",
     "tests": [
-      "test/midiout1.test.js"
+      "test/systems/midiout1.test.js"
     ],
     "note": "A note-on queued in the window is released at the stop's instant, BEFORE it sounds - so it sounds after, and hangs on a device with no clear() (Chrome)."
   },
@@ -85,7 +85,7 @@
     "old": "        if (quiet > now + MIDI_GAP_S) this._send(m, quiet);   // and again after anything the window had queued\n",
     "new": "",
     "tests": [
-      "test/midiout1.test.js"
+      "test/systems/midiout1.test.js"
     ],
     "note": "A pedal-down or a note the window had queued after the stop's instant outlives the all-notes-off and holds into the next song."
   },
@@ -95,7 +95,7 @@
     "old": "    const t = Math.max(this.ctx.currentTime + lead, this._quietAt + 2 * MIDI_GAP_S);",
     "new": "    const t = this.ctx.currentTime + lead;",
     "tests": [
-      "test/midiout1.test.js"
+      "test/systems/midiout1.test.js"
     ],
     "note": "The next song starts under the stopped one's queued quiet: its reset and first notes are answered by an all-notes-off meant for the song before."
   },
@@ -105,7 +105,7 @@
     "old": "    for (const e of last.values()) this._control(e, now);\n",
     "new": "",
     "tests": [
-      "test/midiout1.test.js"
+      "test/systems/midiout1.test.js"
     ],
     "note": "After a stalled tab the player's own state moves on and the device's does not: the song resumes on the instruments and volumes from before the gap."
   },
@@ -115,7 +115,7 @@
     "old": "      return [0xe0 | ch, v & 0x7f, v >> 7];",
     "new": "      return [0xe0 | ch, v >> 7, v & 0x7f];",
     "tests": [
-      "test/midiout1.test.js"
+      "test/systems/midiout1.test.js"
     ],
     "note": "Pitch bend is LSB then MSB; swapped, a centred bend is a full bend down and every song plays out of tune."
   },
@@ -125,7 +125,7 @@
     "old": "    case 'noteOn': return [0x90 | ch, clamp7(e.note), clamp7(e.velocity)];",
     "new": "    case 'noteOn': return [0x90 | ch, clamp7(e.note), e.velocity];",
     "tests": [
-      "test/midiout1.test.js"
+      "test/systems/midiout1.test.js"
     ],
     "note": "The court's score adds accents past 127; a data byte with bit 7 set is a status byte to the device, and the stream after it is garbage."
   },
@@ -135,7 +135,7 @@
     "old": "    case 'polyPressure': return [0xa0 | ch,",
     "new": "    case 'polyPressure': return [0xb0 | ch,",
     "tests": [
-      "test/midiout1.test.js"
+      "test/systems/midiout1.test.js"
     ],
     "note": "Aftertouch sent as a controller change: the note's pressure becomes controller <note>, whatever that is."
   },
@@ -145,7 +145,7 @@
     "old": "  if (e.type === 'controller') return e.controller >= 120 ? null : `c${e.channel}:${e.controller}`;",
     "new": "  if (e.type === 'controller') return `c${e.channel}:${e.controller}`;",
     "tests": [
-      "test/midiout1.test.js"
+      "test/systems/midiout1.test.js"
     ],
     "note": "A stall re-sends a channel-mode controller as if it were state: an all-notes-off or a reset-all-controllers lands after the state it was meant to precede."
   },
@@ -155,7 +155,7 @@
     "old": "    this._unsubscribeMidi = onMidiOutChange(() => this.adoptMidiOut());",
     "new": "    this._unsubscribeMidi = onMidiOutChange(() => {});",
     "tests": [
-      "test/midiout1.test.js"
+      "test/systems/midiout1.test.js"
     ],
     "note": "The row writes the shelf and nothing moves until a reload."
   },
@@ -165,7 +165,7 @@
     "old": "  for (const o of a.outputs.values()) if (o.name === name && o.state !== 'disconnected') return o;",
     "new": "  for (const o of a.outputs.values()) if (o.name === name) return o;",
     "tests": [
-      "test/midiout1.test.js"
+      "test/systems/midiout1.test.js"
     ],
     "note": "A device pulled out mid-song keeps the music: the game goes silent instead of handing it back to the synth."
   },
@@ -175,17 +175,17 @@
     "old": "    if (ask !== this._midiAsk || output === this._midiOut) return;",
     "new": "    if (output === this._midiOut) return;",
     "tests": [
-      "test/midiout1.test.js"
+      "test/systems/midiout1.test.js"
     ],
     "note": "ASYNC NEVER DROPS, the other half: a pick the player has already moved past restarts the song on that device before the latest lands."
   },
   {
     "name": "MO1-the-device-row-unmapped",
-    "file": "src/ui/settingsMap.js",
+    "file": "src/ui/settings/settingsMap.js",
     "old": "      \"Audio/AlternateMusic\", \"Audio/SoundFont\", \"port:midiOut\"]),",
     "new": "      \"Audio/AlternateMusic\", \"Audio/SoundFont\"]),",
     "tests": [
-      "test/midiout1.test.js"
+      "test/systems/midiout1.test.js"
     ],
     "note": "The row is drawn by its builder and placed nowhere: no player can reach the device pick."
   },
@@ -195,7 +195,7 @@
     "old": "Math.round(clamp7(raw) * Math.sqrt(g))",
     "new": "Math.round(clamp7(raw) * g)",
     "tests": [
-      "test/midiout1.test.js"
+      "test/systems/midiout1.test.js"
     ],
     "note": "The audit's first finding: GM's CC7 is a square law, so a linear scale plays the default volume at -12 dB and every fade along the square."
   },
@@ -205,7 +205,7 @@
     "old": "    if (this._notes.some((n) => n.channel === e.channel && n.note === key)) {",
     "new": "    if (false) {",
     "tests": [
-      "test/midiout1.test.js"
+      "test/systems/midiout1.test.js"
     ],
     "note": "A key struck again while it sounds is cut by the earlier note's release - the FM synth holds both."
   },
@@ -215,7 +215,7 @@
     "old": "      if (k) { last.delete(k); last.set(k, e); }",
     "new": "      if (k) last.set(k, e);",
     "tests": [
-      "test/midiout1.test.js"
+      "test/systems/midiout1.test.js"
     ],
     "note": "A Map keeps the order a key was FIRST set: a bank select lands after the program it selects."
   },
@@ -225,7 +225,7 @@
     "old": "    if (quietAlready) return;\n",
     "new": "",
     "tests": [
-      "test/midiout1.test.js"
+      "test/systems/midiout1.test.js"
     ],
     "note": "Every play's own stop (and a switch's second stop) sends a 64-message quiet burst, and the next origin waits on it."
   },
@@ -235,17 +235,17 @@
     "old": "    else if (output && this._pending && this.playSong(this._pending)) this._pending = null;\n",
     "new": "",
     "tests": [
-      "test/midiout1.test.js"
+      "test/systems/midiout1.test.js"
     ],
     "note": "A song asked for before the first gesture stays silent on a device until a click, though a device needs no AudioContext."
   },
   {
     "name": "MO1A-6-restore-writes-the-shelf-alone",
-    "file": "src/ui/enhancedMenu.js",
+    "file": "src/ui/enhanced/enhancedMenu.js",
     "old": "    if (pref === MIDI_OUT_PREF) setMidiOut(PREF_DEFAULTS[pref]);",
     "new": "    if (false) setMidiOut(PREF_DEFAULTS[pref]);",
     "tests": [
-      "test/midiout1.test.js"
+      "test/systems/midiout1.test.js"
     ],
     "note": "The Audio tab's Restore shows Off and the music stays on the device until a reload."
   },
@@ -255,7 +255,7 @@
     "old": "    if (fresh) player.fadeTo?.(0, 0);\n    const ok = player.play(song);",
     "new": "    const ok = player.play(song);",
     "tests": [
-      "test/midiout1.test.js"
+      "test/systems/midiout1.test.js"
     ],
     "note": "The MIDI player queues its first window inside play() at the fade it holds: a fresh player strikes the opening notes at full, then drops to nothing for the rise."
   },
@@ -265,7 +265,7 @@
     "old": "  const names = ['', ...new Set((outputs ?? []).map((o) => o.name))];",
     "new": "  const names = ['', ...(outputs ?? []).map((o) => o.name)];",
     "tests": [
-      "test/midiout1.test.js"
+      "test/systems/midiout1.test.js"
     ],
     "note": "Two devices sharing a name: the walk re-picks the same name forever and never reaches Off."
   },
@@ -275,7 +275,7 @@
     "old": "  if (at < 0) return names[Math.min(1, names.length - 1)];",
     "new": "  if (at < 0) return '';",
     "tests": [
-      "test/midiout1.test.js"
+      "test/systems/midiout1.test.js"
     ],
     "note": "With the saved device pulled, the next click turns MIDI out off instead of moving to the device that is there."
   }

@@ -21,7 +21,7 @@ looked for (`lefaySpotOf`'s `exit` and `camp`): THE WAY OUT OF THE HOLD (AUDIT F
 character climbing out of the dungeon is stood on (`player/enterExit.js` `dungeonEntranceLanding` over the block's own
 dungeon-entrance door, measured by both exterior hosts as they stand it - `lefayExitOf`), closed `MONUMENT_LANDING_M`
 (3.2 m) either side of the line from `MONUMENT_DOOR_BACK_M` (4 m) behind it, the doorway, to `MONUMENT_WALK_M` (8 m)
-ahead of it, the walk out - and World of Daggerfall's camp round the Hold (`world/wodPrivateersHold.js` `HOLD_MODELS`,
+ahead of it, the walk out - and World of Daggerfall's camp round the Hold (`world/worldOfDaggerfall/wodPrivateersHold.js` `HOLD_MODELS`,
 handed in by both exterior hosts; its ruins `MONUMENT_RUIN_KEEP_M`, 8 m, the rest `MONUMENT_CAMP_KEEP_M`, 4 m), closed
 whether the mod stands the camp or not, so a client with it off stands the monument where one with it on does. The
 search starts at the exit landing (`lefaySpot`'s `from`), so it stands beside the walk out - the first thing a new
@@ -31,7 +31,7 @@ arrival never stands on it, B1), its landing closed, and with no marker to the g
 in the console (B8). The Hold is no town (locationType 4, no wandering people): there is no people's navgrid to carve, and
 `carveLefay` stays for one that has. LEFAY1's law, which follows, is otherwise unchanged: the spot is the open ground
 nearest that start, read off the location's own navgrid
-(`world/cityNavigation.js`, DFU's CityNavigation carve: every automap byte a building, a tree or a lamp draws is closed,
+(`world/city/cityNavigation.js`, DFU's CityNavigation carve: every automap byte a building, a tree or a lamp draws is closed,
 and the water with it): the nearest cell whose every cell centred within `MONUMENT_CLEAR_M` (5.8 m) of it is open - open
 ground to 5.6 m from its middle at the least, past the flowers' ring at its foot, and a ring of open cells round the
 people's carve (below) to walk round it by - each road cell under it
@@ -45,7 +45,7 @@ disc (`carveLefay`) - so they walk round it, a walker's sprite clear of the flow
 0.4 m below the ground so a gentle slope never shows light under it), a marble pedestal (its base moulding, its die and
 its cornice), a bronze plaque proud of each face of the die, and a marble obelisk to 6.4 m tipped in gilt to 6.95 m
 (`buildLefayModel`). Every face is wound outward (the world pass culls the back). Its pictures are the port's own, made
-at boot from noise under the pseudo-archive 38211 (`world/lefayArt.js`, `world/gateArt.js`'s law): granite, marble,
+at boot from noise under the pseudo-archive 38211 (`world/lefayArt.js`, `world/gate/gateArt.js`'s law): granite, marble,
 gilt, plain bronze, and the plaque - bronze, bevelled, with the inscription cut into it in square capitals:
 
     JULIAN LEFAY
@@ -56,13 +56,13 @@ gilt, plain bronze, and the plaque - bronze, bevelled, with the inscription cut 
 No game data: nothing of the monument's stone comes from ARENA2.
 
 **The flowers.** Daggerfall's own - TEXTURE.254's red and yellow roses, red and yellow flowers and white rose, the arena
-crowd's table (`systems/arenaCrowd.js` `THROWN_FLOWERS`, imported, never copied). A press on the monument throws one
+crowd's table (`systems/arena/arenaCrowd.js` `THROWN_FLOWERS`, imported, never copied). A press on the monument throws one
 from the hand (0.35 m under the eye) on an 850 ms arc, 0.9 m over the line at its middle, to a rest on the thrower's
 side (within 0.7 rad of the bearing to them): on the top step (35% of throws), the middle (30%), the lowest (20%) or the
 ground at its foot (15%) (`tossRest`, `flowerPlace`, `tossPoint`). At most one every 1.2 s. It is laid where it lands.
 
 **The tribute is the character's.** Each character keeps how many it laid and the newest 48 where they lay
-(`normalTribute`, `layFlower`; `systems/save.js` carries `lefayTribute` in the player's snapshot - a save from before
+(`normalTribute`, `layFlower`; `systems/save/save.js` carries `lefayTribute` in the player's snapshot - a save from before
 it laid none). A pile laid stands there again after a load. NOTHING IS SENT: another player sees their own pile, not
 yours, and does not see your throw.
 
@@ -99,12 +99,12 @@ capsule's radius about them (`bodyTrapped`, AUDIT SET W1's law) - until they ste
 carries a body on its steps with it). A vertical recentre (the site's compensation) re-reads its ground at once. Its mesh is made
 once; the laid pile is one billboard batch to a kind of flower, made again when the character's pile changes, riding
 the monument's middle; a flower in flight is a batch of its own, freed when it lands. A transition lays what is in
-flight - but a flower thrown before a save was restored (`systems/save.js` `restoresSoFar`, any load) lands nowhere. `dispose` frees the mesh and every batch. A game folder that will not give TEXTURE.254 leaves the flowers
+flight - but a flower thrown before a save was restored (`systems/save/save.js` `restoresSoFar`, any load) lands nowhere. `dispose` frees the mesh and every batch. A game folder that will not give TEXTURE.254 leaves the flowers
 unseen, and the count still counts.
 
 ## Verification
 
-- `test/lefay1_monument.test.js` (21): the place (HOLD-MONUMENT: the Hold, and Gothway Garden no longer); the
+- `test/world/lefay1_monument.test.js` (21): the place (HOLD-MONUMENT: the Hold, and Gothway Garden no longer); the
   Hold's spot (beside the exit landing and never on the way out - AUDIT FIVE-ASKS B1/B2 - or, with no door, beside its
   start marker and never on its landing, clear of every model of the camp - and handed no camp,
   among them; the camp closed only in a block of its name; no marker, the grid's middle; neither host closes the camp
@@ -138,7 +138,7 @@ and a NaN bearing refused.
 pins, 31 of them surviving, and the record read against the code). B1 (major): a flower still in the air at a quick
 load was laid in the LOADED character's pile - `restorePlayer` ran before the load's `destroyAll`, which lands what is
 in flight - so a quickload within 850 ms of a throw added a flower to the save loaded, or to another character.
-Each throw is stamped with the save's restore count (`systems/save.js` `restoresSoFar`, PORTAL1's), and one that lands
+Each throw is stamped with the save's restore count (`systems/save/save.js` `restoresSoFar`, PORTAL1's), and one that lands
 after the count moved is freed and laid nowhere - every load at once, the quick load's and the classic import's
 (lens C's C4 found the latter). B2-B5: the pins the
 survivors showed missing - the pool's own laws (a flight laid when its town goes, the lit row over the mode, no "0

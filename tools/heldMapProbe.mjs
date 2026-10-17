@@ -6,7 +6,7 @@
 // panning, zooming toward the cursor, picking a mark and marking one,
 // the card and the boxes as DOM the player can click, and the window
 // walking open -> map -> closing -> done against a real clock. The LAWS
-// are pinned in node (test/heldmap.test.js); here every number the
+// are pinned in node (test/ui/heldmap.test.js); here every number the
 // screen shows is re-checked against the modules imported INTO the page.
 //
 // CI has no ARENA2 and never will, so the bay is SYNTHETIC: a 96x64
@@ -84,12 +84,12 @@ async function mount(page, { armed = false, gotoPlace = null, mod = false, party
       globalThis.__armCanvas = cv;
       globalThis.__armBuilt = { ok: built.ok, stage: built.stage, error: built.error };
     }
-    const { createTravelMapWindow } = await import('/src/ui/travelMapDoor.js');
-    const travel = await import('/src/systems/travel.js');
-    const ink = await import('/src/ui/inkMap.js');
+    const { createTravelMapWindow } = await import('/src/ui/travel/travelMapDoor.js');
+    const travel = await import('/src/systems/travel/travel.js');
+    const ink = await import('/src/ui/ink/inkMap.js');
     const held = await import('/src/ui/heldMap.js');
     const mapsFile = await import('/src/formats/mapsFile.js');
-    const ports = await import('/src/systems/travelPorts.js');
+    const ports = await import('/src/systems/travel/travelPorts.js');
 
     const W = 96, H = 64;
     const bytes = new Uint8Array(W * H);
@@ -144,7 +144,7 @@ async function mount(page, { armed = false, gotoPlace = null, mod = false, party
     // and card) and raidMapMarks over a raid record in rollRaids' own shape, on Lowmarsh
     let events = {};
     if (events2) {
-      const [{ raidMapMarks }, omenMod, lawMod] = await Promise.all([import('/src/ui/eventMapMarks.js'), import('/src/systems/gateOmen.js'), import('/src/net/gateLaw.js')]);
+      const [{ raidMapMarks }, omenMod, lawMod] = await Promise.all([import('/src/ui/eventMapMarks.js'), import('/src/systems/gate/gateOmen.js'), import('/src/net/gate/gateLaw.js')]);
       const t = lawMod.gateTimes(9);
       const clock = { now: t.openAt + 1000 };
       const omen = omenMod.createGateOmen({ now: () => clock.now, say: () => {},

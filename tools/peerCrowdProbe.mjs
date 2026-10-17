@@ -25,7 +25,7 @@
 //
 //   node tools/peerCrowdProbe.mjs
 // ═══════════════════════════════════════════════════════════════════
-import { PeerBodies, BODIES_MAX } from '../src/net/peerBodies.js';
+import { PeerBodies, BODIES_MAX } from '../src/net/peer/peerBodies.js';
 import { createFpArm } from '../src/combat/fpArm.js';
 import { fixtureBodyDeps, countingRenderer } from '../test/fixtures/mw/bodyRig.mjs';
 

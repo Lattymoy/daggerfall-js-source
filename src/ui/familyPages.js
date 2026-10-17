@@ -2,7 +2,7 @@
 // LEGACY3 (2026-10-05, bible/06-Systems/Legacy-Arc.md section 11; Mac: "implement it into the pause menu as a new
 // tab"): THE FAMILY TAB's own pages - Project Legacy's `FamilyLegacyWindow` and `FamilyLegacyInformationPanel`,
 // rebuilt in the Enhanced Plus window as the Holdings tab's pages are (ui/holdingsPages.js): a rail of pages in the
-// pause window (ui/enhancedMenu.js pauseFamily), each drawn here over a PROVIDER the world host sets
+// pause window (ui/enhanced/enhancedMenu.js pauseFamily), each drawn here over a PROVIDER the world host sets
 // (setFamilyProvider), so this file touches no runtime.
 //
 //  - THE FAMILY TREE: every generation a row, couples side by side, children hung beneath (systems/legacy/tree.js -
@@ -16,7 +16,7 @@
 //  - THE HOUSE ON THE CHARACTER SHEET (sheetHouse): the one played's own facts off their card, on the pause window's
 //    Stats page - the model, the generation, and an Enduring house's age, toll and elder's word.
 //
-// Dressed by the stone-and-brass kit's roles (ui/enhancedFrame.js FRAME_ROLES): this sheet writes geometry and the
+// Dressed by the stone-and-brass kit's roles (ui/enhanced/enhancedFrame.js FRAME_ROLES): this sheet writes geometry and the
 // words' colours alone.
 import { layoutTree } from '../systems/legacy/tree.js';
 import { MODELS, NO_LINEAGE, personOf, currentOf, isAlive, parentsOf, childrenOf, siblingsOf, fullNameOf, BLOOD_MAX, HEARTH_MAX, ESTATE_SHARE, ESTATE_MAX } from '../systems/legacy/family.js';
@@ -27,7 +27,7 @@ import { homeOf, familyHome, sameHouse } from '../systems/legacy/household.js'; 
 import { houseLine } from '../net/houseLaw.js';   // LEGACY7 part three: a player spouse's own house on their card
 import { houseWord } from '../systems/legacy/houseName.js';   // LEGACY-NAME: a seat's house said once
 import { facePose } from '../systems/legacy/facePose.js';   // AUDIT LEGACY III P17: a person's portrait, asked one way
-import { optionPath } from './settingsMap.js';   // ORG2
+import { optionPath } from './settings/settingsMap.js';   // ORG2
 // PLAIN-UI: How it works says the law's own numbers
 import { HEIRLOOM_DAMAGE_PER_GEN, HEIRLOOM_ARMOR_PER_GEN, HEIRLOOM_GEN_MAX, REMAINS_GOLD_SHARE, REMAINS_GOLD_MAX, BLESSING_POINTS, BLESSING_SKILL_MAX } from '../systems/legacy/heirloom.js';
 import { AFFECTION_MAX, CHILD_DAYS, CHILD_CHANCE, CHILDREN_MAX } from '../systems/legacy/marriage.js';
@@ -221,7 +221,7 @@ export const SHEET_HOUSE_TEXT = Object.freeze({
  * THE HOUSE ON THE CHARACTER SHEET (bible/06-Systems/Legacy-Arc.md section 11 - the arc's first plan: "the age and the
  * elder's word on the character sheet"; AUDIT LEGACY F2 found it never built). The one played's house as their card
  * says it: the model and their generation, and in an Enduring house their age against their span, Arkay's toll and the
- * elder's word (ui/enhancedMenu.js statsCharacter draws it). Null with no house to show: Project Legacy off, no family,
+ * elder's word (ui/enhanced/enhancedMenu.js statsCharacter draws it). Null with no house to show: Project Legacy off, no family,
  * the one played none of it, or fallen. Pure over the provider.
  * @returns {{ title: string, rows: [string, string][], word: string|null } | null}
  */

@@ -1,8 +1,8 @@
 # The Cloak - the port's own cloak, and what hangs around it
 
 `tools/bakeCloak.mjs` (the bake, its one bone CHEST_BONE) on `tools/bakeSteelPlate.mjs`'s machinery + `tools/meshSubdivide.mjs` (Loop
-subdivision, MW-CLOAK2) + `src/characters/ownClothingModels.js` (the garments that wear it, the dye's painting) +
-`src/formats/mwItemMap.js` (composeWornArmor) + `src/formats/mwCloakFit.js` (the three fits) + `src/combat/fpArm.js`
+subdivision, MW-CLOAK2) + `src/characters/ownModels/ownClothingModels.js` (the garments that wear it, the dye's painting) +
+`src/formats/morrowind/mwItemMap.js` (composeWornArmor) + `src/formats/morrowind/mwCloakFit.js` (the three fits) + `src/combat/fpArm.js`
 (fitThirdPersonCloak, where the third-person body takes them) (MW-CLOAK1, Mac, 2026-10-09; MW-CLOAK2, smoothed round
 the shoulders, the same day; AUDIT MW-CLOAK, held in motion, the same day; MW-CAPE-RIGID, on the chest alone, 2026-10-14)
 
@@ -197,7 +197,7 @@ the seated hem in the floor, and hip gear past its cap leaning back further than
 
 ## How it was proven
 
-`test/mwcloak1.test.js` (7): the bake byte for byte, each DDS its painting, the export's hash, one object, no
+`test/tooling/mwcloak1.test.js` (7): the bake byte for byte, each DDS its painting, the export's hash, one object, no
 Morrowind painting; the scene placement, `Tri Cloak 0`, ONE bone - the chest - in every painting, every vertex wholly
 its own, and (the hang the ebony plate and the townsfolk keep) a leg never a child or a parent blend (a synthetic rig,
 the thigh's weight the hang's alone); the four garments, the dye map, no slot, no shadow, never in the first person,
@@ -206,11 +206,11 @@ either stride, either arm or a clavicle, carried rigidly by the chest leant back
 lean once fitted; fit 1 on the ebony plate (the live cloak re-skinned at
 once, a walk and each arm swung back keeping the pauldrons clear, a second fit moving nothing, a folded cloak); fit 2 on
 the vendored daedric greatsword, longbow, iron longsword and iron dagger (the pitched sword's normals turned with it);
-and the build's wiring by source, the icon among it, and no seat swap left in it. `test/mwcloak2.test.js` (3): one level's arithmetic on a small
+and the build's wiring by source, the icon among it, and no seat swap left in it. `test/tooling/mwcloak2.test.js` (3): one level's arithmetic on a small
 net (its counts, a flat net staying flat, an edge's 3/8-1/8 rule on an uneven quad, an old vertex's rules on the rim
 and off it, Loop's beta on a bump, the normals and the UVs, its own bounds; a seam, an edge three faces share and a bow
 tie refused); the cloak's shoulders measured before and after; and the fit's push - its slope eased and not, straight
-back, its mean - and its normals, whatever the winding. `test/auditmwcloak.test.js` (5), on the shared fixture
+back, its mean - and its normals, whatever the winding. `test/formats/morrowind/auditmwcloak.test.js` (5), on the shared fixture
 `test/fixtures/mw/cloakRig.mjs` and its ten-pose sweep: fit 1 held over the poses (at rest alone an arm swung back
 brought a pauldron through, and without the lean, leaning back brought the tassets through); the greatsword, the steel
 longbow, the longsword and the crossbow through the cloak leaning back and only then as fitted at rest, tied to it

@@ -11,7 +11,7 @@
 // no picture, no tier, no total - and a raid's or a gate's silver only in
 // the chat. Each is a CARD under the crosshair now, the loot's own band
 // and dress: the goods its material's picture (the pack's item, as a
-// withdrawal would make it - systems/profItems.js mintMaterialItem), "+3"
+// withdrawal would make it - systems/professions/profItems.js mintMaterialItem), "+3"
 // and its name in its tier's colour, "STORES 41" (they are never in the
 // pack - GATHER-SAID's reports), and the XP on the same card, its rank's
 // progress a bar; silver a coin, its source and the balance, a combat
@@ -25,22 +25,22 @@
 // ═══════════════════════════════════════════════════════════════════
 import { xpForRank, rankOfXp, professionName, PROF_RANK_MAX } from '../net/professionLaw.js';
 import { material } from '../net/nodeLaw.js';
-import { materialCountLabel, mintMaterialItem } from '../systems/profItems.js';
-import { inventoryItemImage } from '../systems/itemTemplates.js';
-import { lootRarityOn } from '../systems/lootRarity.js';
+import { materialCountLabel, mintMaterialItem } from '../systems/professions/profItems.js';
+import { inventoryItemImage } from '../systems/item/itemTemplates.js';
+import { lootRarityOn } from '../systems/loot/lootRarity.js';
 import { MARKS_COMBAT, MARKS_FAUCETS } from '../net/marksLaw.js';
 
 /** A strike the day's combat cap refused, as its muted card says it - the chat's own line keeps the whole of it.
- *  SERPENT-SET: the serpents strike under the same cap. */
-export const HAUL_CAPPED_TEXT = `No silver - the day's ${MARKS_COMBAT.perDay} for breaches, towns and serpents is reached`;
+ *  SERPENT-SET: the serpents strike under the same cap; EG-E1: and the Spire's Redoubts. */
+export const HAUL_CAPPED_TEXT = `No silver - the day's ${MARKS_COMBAT.perDay} for breaches, towns, serpents and Redoubts is reached`;
 /** A gather card holds a little longer than a pickup's (ui/pickupFeed.js PICKUP_FEED_HOLD_MS) - it says more. */
 export const HAUL_HOLD_MS = 3200;
 /** A Motherlode's card stands longer still - the day's one. */
 export const LODE_HOLD_MS = 5000;
 
-/** A material's tier as the cards colour it: the loot's own rarity names (ui/enhancedPlusStyle.js RARITY_VARS) -
+/** A material's tier as the cards colour it: the loot's own rarity names (ui/enhanced/enhancedPlusStyle.js RARITY_VARS) -
  *  tiers 1 and 2 plain, 3 magic's blue, 4 rare's gold, 5 legendary's orange, 6 artifact's violet; none while the
- *  player has the loot's tiers off (systems/lootRarity.js), as an item's own name would wear none. */
+ *  player has the loot's tiers off (systems/loot/lootRarity.js), as an item's own name would wear none. */
 export const TIER_RARITY = Object.freeze([null, null, null, 'magic', 'rare', 'legendary', 'artifact']);
 export const tierRarity = (tier, on = lootRarityOn()) => (on && Number.isSafeInteger(tier) ? TIER_RARITY[tier] ?? null : null);
 
@@ -170,14 +170,14 @@ export function findHaul(found, kind) {
   });
 }
 
-/** A combat claim's source, as its silver card says it. SERPENT-SET: a serpent slain. */
-export const CLAIM_SOURCE = Object.freeze({ gate: 'Breach closed', raid: 'Town defended', serpent: 'Serpent slain' });
+/** A combat claim's source, as its silver card says it. SERPENT-SET: a serpent slain. EG-E1: a Redoubt of the Elite Breach. */
+export const CLAIM_SOURCE = Object.freeze({ gate: 'Breach closed', raid: 'Town defended', serpent: 'Serpent slain', eg: 'Redoubt taken' });
 /**
- * A COUNTED CLAIM'S SILVER AS ITS CARDS (a raid's, a gate's or - SERPENT-SET - a serpent's answer: net/marksBook.js
- * claimLines' own data): its strike (the day's combat bar on it, or the cap's muted card), the guild deed it completed
- * (into the treasury - brass, never the account's coin) and each contract that paid it. The chat keeps its lines; these
- * are what the eye catches.
- * @param {any} data @param {'raid'|'gate'|'serpent'} kind
+ * A COUNTED CLAIM'S SILVER AS ITS CARDS (a raid's, a gate's or - SERPENT-SET - a serpent's answer; EG-E1: a Redoubt's:
+ * net/marksBook.js claimLines' own data): its strike (the day's combat bar on it, or the cap's muted card), the guild
+ * deed it completed (into the treasury - brass, never the account's coin) and each contract that paid it. The chat keeps
+ * its lines; these are what the eye catches.
+ * @param {any} data @param {'raid'|'gate'|'serpent'|'eg'} kind
  */
 export function claimHauls(data, kind = 'gate') {
   if (!data || typeof data !== 'object') return [];

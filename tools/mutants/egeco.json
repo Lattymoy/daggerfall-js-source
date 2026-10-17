@@ -1,0 +1,227 @@
+[
+  {
+    "name": "EGECO-a-fall-still-unbroken",
+    "file": "src/net/eliteGates/egFeats.js",
+    "old": "  if (!((F.fellThisHall ?? 0) > 0)) bits |= 1;",
+    "new": "  bits |= 1;",
+    "tests": [
+      "test/net/eliteGates/egeco_feats.test.js"
+    ]
+  },
+  {
+    "name": "EGECO-a-slow-fall-swift",
+    "file": "src/net/eliteGates/egFeats.js",
+    "old": "ctx.now - F.lordAt <= EG_FEAT_SWIFT_MS) bits |= 2;",
+    "new": "ctx.now - F.lordAt <= EG_FEAT_SWIFT_MS * 10) bits |= 2;",
+    "tests": [
+      "test/net/eliteGates/egeco_feats.test.js"
+    ]
+  },
+  {
+    "name": "EGECO-a-bridges-catch-forgiven",
+    "file": "src/net/eliteGates/egFeats.js",
+    "old": " && !egCaughtBy(F, EG_FEAT_BRIDGE).length }",
+    "new": " }",
+    "tests": [
+      "test/net/eliteGates/egeco_feats.test.js"
+    ]
+  },
+  {
+    "name": "EGECO-the-feats-left-off",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": ", ...(lk ? { lk, ft } : {}),\n      sh: total",
+    "new": ",\n      sh: total",
+    "tests": [
+      "test/net/eliteGates/egeco_feats.test.js"
+    ]
+  },
+  {
+    "name": "EGECO-a-fourth-bit",
+    "file": "src/net/eliteGates/egReceipt.js",
+    "old": "  if (c.ft !== undefined && !int(c.ft, 0, 7)) return false;",
+    "new": "  if (c.ft !== undefined && !int(c.ft, 0, 15)) return false;",
+    "tests": [
+      "test/net/eliteGates/egeco_feats.test.js"
+    ]
+  },
+  {
+    "name": "EGECO-the-says-uncounted",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  for (let k = from; k < out.length; k++) if (out[k]?.k === 'esay') {",
+    "new": "  for (let k = from; k < from; k++) if (out[k]?.k === 'esay') {",
+    "tests": [
+      "test/net/eliteGates/egeco_feats.test.js"
+    ]
+  },
+  {
+    "name": "EGECO-a-lords-arm-only-rare",
+    "file": "src/systems/eliteGates/egLordArms.js",
+    "old": "  applyRarity(item, 'legendary', rolls);",
+    "new": "  applyRarity(item, 'rare', rolls);",
+    "tests": [
+      "test/systems/eliteGates/egeco_spoils.test.js"
+    ]
+  },
+  {
+    "name": "EGECO-the-ladders-name-kept",
+    "file": "src/systems/eliteGates/egLordArms.js",
+    "old": "  item.name = arm.name;\n",
+    "new": "",
+    "tests": [
+      "test/systems/eliteGates/egeco_spoils.test.js"
+    ]
+  },
+  {
+    "name": "EGECO-a-base-swapped",
+    "file": "src/systems/eliteGates/egLordArms.js",
+    "old": "twins: Object.freeze({ name: 'Rivalry', template: W['Dai-Katana'] }),",
+    "new": "twins: Object.freeze({ name: 'Rivalry', template: W.Katana }),",
+    "tests": [
+      "test/systems/eliteGates/egeco_spoils.test.js"
+    ]
+  },
+  {
+    "name": "EGECO-a-lords-card-rarer",
+    "file": "src/systems/bossCards.js",
+    "old": "  dusk: 200, stalker: 200, seyth: 200, colossus: 200, wyrm: 200, garoth: 200,",
+    "new": "  dusk: 200, stalker: 100, seyth: 200, colossus: 200, wyrm: 200, garoth: 200,",
+    "tests": [
+      "test/systems/eliteGates/egeco_spoils.test.js"
+    ]
+  },
+  {
+    "name": "EGECO-the-second-pass-on-the-first-seed",
+    "file": "src/systems/eliteGates/egSpoils.js",
+    "old": "    passes.push(rollPass(egPassSeed(seed, p), lv, w, { lord, panoply: pity.includes(p) || egPanoplyHit(seed >>> 0, w, p) }));",
+    "new": "    passes.push(rollPass(egPassSeed(seed, 0), lv, w, { lord, panoply: pity.includes(p) || egPanoplyHit(seed >>> 0, w, p) }));",
+    "tests": [
+      "test/systems/eliteGates/egeco_spoils.test.js"
+    ]
+  },
+  {
+    "name": "EGECO-gold-alone-still-throws",
+    "file": "src/systems/eliteGates/egSpoils.js",
+    "old": "    if (goldOnly) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/systems/eliteGates/egeco_spoils.test.js"
+    ]
+  },
+  {
+    "name": "EGECO-a-fourth-magic",
+    "file": "src/systems/eliteGates/egSpoils.js",
+    "old": "  const more = 1 + Math.min(2, Math.floor(rolls() * 3));",
+    "new": "  const more = 2 + Math.min(2, Math.floor(rolls() * 3));",
+    "tests": [
+      "test/systems/eliteGates/egeco_spoils.test.js"
+    ]
+  },
+  {
+    "name": "EGECO-the-arm-every-time",
+    "file": "src/systems/eliteGates/egSpoils.js",
+    "old": "  const named = rolls() * EG_LORD_ARM_IN < 1 && o.lord ? egLordArm(o.lord, lv, rolls) : null;",
+    "new": "  const named = rolls() * EG_LORD_ARM_IN < 8 && o.lord ? egLordArm(o.lord, lv, rolls) : null;",
+    "tests": [
+      "test/systems/eliteGates/egeco_spoils.test.js"
+    ]
+  },
+  {
+    "name": "EGECO-the-gold-flat",
+    "file": "src/systems/eliteGates/egSpoils.js",
+    "old": "Math.min(EG_SPOILS_GOLD_MAX, 1 + EG_SPOILS_GOLD_STEP * (Math.max(1, w | 0) - 1))",
+    "new": "1",
+    "tests": [
+      "test/systems/eliteGates/egeco_spoils.test.js"
+    ]
+  },
+  {
+    "name": "EGECO-the-legendary-share-flat",
+    "file": "src/systems/eliteGates/egSpoils.js",
+    "old": "rolls() < egLegendaryShare(w) ? 'legendary' : 'rare'",
+    "new": "rolls() < 0.65 ? 'legendary' : 'rare'",
+    "tests": [
+      "test/systems/eliteGates/egeco_spoils.test.js"
+    ]
+  },
+  {
+    "name": "EGECO-the-panoply-off-the-spoils-stream",
+    "file": "src/systems/eliteGates/egSpoils.js",
+    "old": "  if (o.panoply) {",
+    "new": "  if (o.panoply || which * 4 < 1) {",
+    "tests": [
+      "test/systems/eliteGates/egeco_spoils.test.js"
+    ]
+  },
+  {
+    "name": "EGECO-the-pity-ignored",
+    "file": "src/systems/eliteGates/egSpoils.js",
+    "old": "panoply: pity.includes(p) || egPanoplyHit(seed >>> 0, w, p) }",
+    "new": "panoply: egPanoplyHit(seed >>> 0, w, p) }",
+    "tests": [
+      "test/systems/eliteGates/egeco_spoils.test.js"
+    ]
+  },
+  {
+    "name": "EGECO-the-choice-only-on-a-hit",
+    "file": "src/systems/eliteGates/egSpoils.js",
+    "old": "  const which = rolls();\n",
+    "new": "  const which = 0.5;\n",
+    "tests": [
+      "test/systems/eliteGates/egeco_spoils.test.js"
+    ]
+  },
+  {
+    "name": "EGECO-the-claim-without-its-character",
+    "file": "src/scenes/world.js",
+    "old": "claim: (r) => _accountEg.claim(r, characterIdOf(playerEntity)).then(weirHeard) }",
+    "new": "claim: (r) => _accountEg.claim(r).then(weirHeard) }",
+    "tests": [
+      "test/scenes/eliteGates/egeco_hosts.test.js"
+    ]
+  },
+  {
+    "name": "EGECO-the-sink-unpassed",
+    "file": "src/scenes/world.js",
+    "old": "      panoply: _accountEg ? panoplyDeps : null,",
+    "new": "      panoply: null,",
+    "tests": [
+      "test/scenes/eliteGates/egeco_hosts.test.js"
+    ]
+  },
+  {
+    "name": "EGECO-the-redoubt-never-told",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "rdSeen = E.h; redoubt?.(E.rd);",
+    "new": "rdSeen = E.h;",
+    "tests": [
+      "test/scenes/eliteGates/egeco_hosts.test.js"
+    ]
+  },
+  {
+    "name": "EGECO-auras-in-a-trial",
+    "file": "src/scenes/world.js",
+    "old": "    if (egClient?.quiet?.()) return;",
+    "new": "    if (false) return;",
+    "tests": [
+      "test/scenes/eliteGates/egeco_hosts.test.js"
+    ]
+  },
+  {
+    "name": "EGECO-the-striker-unnamed",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "by: foe._killedBy ?? null });",
+    "new": "by: null });",
+    "tests": [
+      "test/scenes/eliteGates/egeco_hosts.test.js"
+    ]
+  },
+  {
+    "name": "EGECO-the-joiners-door-unwired",
+    "file": "src/scenes/dungeonContext.js",
+    "old": " egFindStruck(f.entity, roomLootOn() && roomCanonOfFoe(f) != null).catch(() => {});",
+    "new": " void 0;",
+    "tests": [
+      "test/scenes/eliteGates/egeco_hosts.test.js"
+    ]
+  }
+]

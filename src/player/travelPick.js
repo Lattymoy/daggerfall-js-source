@@ -66,7 +66,7 @@ export function groundHit(eye, dir, heightAt, { maxDist = TV_PICK_MAX, stepMin =
   return { point: null, dist: Infinity, unbuilt };
 }
 
-/** A pointer event's viewport point as the canvas's own CSS pixels - what tapRay reads (ui/touch.js does the same). */
+/** A pointer event's viewport point as the canvas's own CSS pixels - what tapRay reads (ui/touch/touch.js does the same). */
 export function canvasPoint(clientX, clientY, rect) {
   return [clientX - (rect?.left ?? 0), clientY - (rect?.top ?? 0)];
 }

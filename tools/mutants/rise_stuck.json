@@ -5,7 +5,7 @@
     "old": "    this.holdsTop = true;\n",
     "new": "",
     "tests": [
-      "test/risestuck.test.js"
+      "test/systems/travel/risestuck.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "      if (holdsTop(t) && !isHud(t)) {",
     "new": "      if (false && holdsTop(t) && !isHud(t)) {",
     "tests": [
-      "test/risestuck.test.js"
+      "test/systems/travel/risestuck.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "        addWindow(win, windows.length - 1);",
     "new": "        addWindow(win);",
     "tests": [
-      "test/risestuck.test.js"
+      "test/systems/travel/risestuck.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    if (overlay !== win) { _suspendedCallbacks.push(onClosed); return true; }",
     "new": "    if (overlay !== win) { return true; }",
     "tests": [
-      "test/risestuck.test.js"
+      "test/systems/travel/risestuck.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    if (overlay !== win) { _suspendedCallbacks.push(onClosed); return true; }",
     "new": "    if (overlay !== win) { _suspendedCallbacks.push(_onOverlayClosed); _onOverlayClosed = onClosed; return true; }",
     "tests": [
-      "test/risestuck.test.js"
+      "test/systems/travel/risestuck.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "      try { travelOptions?.messages.pauseTravel(); } catch (e) { console.error('[travel] the journey did not stop at the death:', e?.message ?? e); }\n",
     "new": "",
     "tests": [
-      "test/risestuck.test.js"
+      "test/systems/travel/risestuck.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "      closeDeathScreen();   // AUDIT RISE-REST F1: whichever host holds it\n",
     "new": "",
     "tests": [
-      "test/risestuck.test.js"
+      "test/systems/travel/risestuck.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "    if (ov instanceof DeathScreen) { ov.restoreView(); townTalk.closeOverlay(ov); }\n    else modes?.clearDeath?.();\n  }",
     "new": "    if (ov instanceof DeathScreen) { ov.restoreView(); townTalk.closeOverlay(ov); }\n  }",
     "tests": [
-      "test/risestuck.test.js"
+      "test/systems/travel/risestuck.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "    closeDeathScreen();\n    townTalk.say(RESURRECT_TEXT.raised(rez.name));",
     "new": "    { const ov = townTalk.overlay; if (ov instanceof DeathScreen) { ov.restoreView(); townTalk.closeOverlay(); } else modes?.clearDeath?.(); }\n    townTalk.say(RESURRECT_TEXT.raised(rez.name));",
     "tests": [
-      "test/risestuck.test.js"
+      "test/systems/travel/risestuck.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "      if (holdsTop(top())) return;\n      api.eachCoveredWindow(fn);",
     "new": "      api.eachCoveredWindow(fn);",
     "tests": [
-      "test/risestuck.test.js"
+      "test/systems/travel/risestuck.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "      windows.eachPaintedBeneath((w) => w.draw(renderer, canvas, font, s));",
     "new": "      windows.eachCoveredWindow((w) => w.draw(renderer, canvas, font, s));",
     "tests": [
-      "test/risestuck.test.js"
+      "test/systems/travel/risestuck.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "      try { travelOptions?.messages.pauseTravel(); } catch (e) { console.error('[travel] the journey did not stop at the death:', e?.message ?? e); }\n",
     "new": "      travelOptions?.messages.pauseTravel();\n",
     "tests": [
-      "test/risestuck.test.js"
+      "test/systems/travel/risestuck.test.js"
     ]
   }
 ]

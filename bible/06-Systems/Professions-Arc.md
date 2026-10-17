@@ -25,13 +25,13 @@ src/net/nodeLaw.js (the nodes). Appendix B lists them in one place.
 ## 1. The laws this arc keeps
 
 1. **ONLINE ONLY; DAGGERFALL'S MAKERS UNTOUCHED.** FACT: Daggerfall has no crafting skill; its three makers - the
-   potion maker (`src/systems/potions.js`, 20 recipes), the spellmaker (`src/systems/spellMaker.js`) and the item
+   potion maker (`src/systems/potions.js`, 20 recipes), the spellmaker (`src/systems/spell/spellMaker.js`) and the item
    maker (`src/systems/enchanting.js`) - are ported 1:1 and use no skill. Offline they stay that. A profession is a
    Ledger A departure, online's alone, and offline play earns nothing toward one (DECIDED; Renown's law).
 2. **DAGGERFALL'S ITEMS FIRST.** A material is one of DFU's own items wherever DFU has one (the 8 gems, 25 plants, 23
    creature parts and 11 metals, section 4); a product is one of DFU's own templates at one of DFU's own materials. A
    crafted Dwarven longsword IS Daggerfall's Dwarven longsword. New templates only for what Daggerfall lacks, in the
-   **reserved range 600-699** (4.8), registered through `registerCustomTemplates` (`src/systems/itemTemplates.js`)
+   **reserved range 600-699** (4.8), registered through `registerCustomTemplates` (`src/systems/item/itemTemplates.js`)
    as RRI (513-526), Climates & Calories (530-541), the Thunderlock (560-561) and the Sigil Stone (570) already are.
    **The tools are Foraging's own** (Wood-Axe 1600, Pick-Axe 1601, Sickle 1602, Fishing-Net 1603, Basket 1607 -
    Harbinger451's mod, ported 1:1, `06-Systems/Foraging.md`, FORAGE0); the range adds only the Skinning Knife (603).
@@ -59,7 +59,7 @@ src/net/nodeLaw.js (the nodes). Appendix B lists them in one place.
    heard (`seen`), so a lost answer never cuts units the pack is about to get; and the count is a ceiling, not a census -
    a client that says it holds more than it does keeps its count uncut, bounded by what the service handed out.
 4. **THE NODES ARE THE CLOCK'S.** Which nodes exist today is a pure function of the UTC day and the map pixel, as the
-   Oblivion Gate's site is (`src/net/gateLaw.js`); **yields are rolled by the service**, never the client.
+   Oblivion Gate's site is (`src/net/gate/gateLaw.js`); **yields are rolled by the service**, never the client.
 5. **THE HANDS DO THE WORK** - DECIDED (Mac: "Active player involvement"). Every harvest is an act the player plays
    (section 5), and an act played well gives more - within a bound a modified client cannot break (5.1).
 6. **NO NEW COMMITTED ART IN THE FIRST SLICES** - DECIDED. Tools in the hand are DFU's own weapon sprites (and the
@@ -69,7 +69,7 @@ src/net/nodeLaw.js (the nodes). Appendix B lists them in one place.
    author's own art, vendored with Mac's word of permission - a mod's work carried, not art the port made (FORAGE0
    law 5).
 7. **CRAFTING DOES NOT RETIRE LOOT.** FACT: Loot Rarity's tiers are Common, Magic, Rare, Legendary, Aetheric, Artifact
-   (`src/systems/lootRarity.js`); Sigil Sets are online set gear (`11-Multiplayer/Sigil-Sets.md`). DECIDED: a craft
+   (`src/systems/loot/lootRarity.js`); Sigil Sets are online set gear (`11-Multiplayer/Sigil-Sets.md`). DECIDED: a craft
    reaches **Rare** at most (a Masterwork); Legendary, Aetheric, Artifact and Sigil pieces are never craftable.
 8. **MARKS, NOT GOLD** - DECIDED (Mac: "New currency"). Everything this arc prices between players is in Marks
    (10.5), which only the server holds and only server-witnessed acts mint - SILVER-FINDS (10.5, Mac: "Silver should be
@@ -83,23 +83,23 @@ src/net/nodeLaw.js (the nodes). Appendix B lists them in one place.
 | Foundation | Where | Use here |
 |---|---|---|
 | DFU's makers | `potions.js` (+ `potionMakerWindow.js`), `spellMaker.js`, `enchanting.js` (+ `itemMakerWindow.js`) | Alchemy and Enchanting are layers over them |
-| DFU's items | `src/characters/itemTemplates.json`; `GROUP_TEMPLATE_INDICES` (`src/systems/itemTemplatesData.js`) | Every material and product named in section 4 |
+| DFU's items | `src/characters/itemTemplates.json`; `GROUP_TEMPLATE_INDICES` (`src/systems/item/itemTemplatesData.js`) | Every material and product named in section 4 |
 | Home stations | `DECOR_STATIONS`, `DECOR_STATION_FEES` (`src/net/decorLaw.js`); the account service's decor | Alchemy/spells/enchant stations placed for a licence; new station kinds join the list |
 | Repair | `src/systems/repairService.js` | Repair kits (Smithing) |
 | Climates & Calories | `src/systems/survival/` - camps, the Skillet, cooking at fires and hearths, foraging, corpse meat; templates 530-541 (Camping Equipment, Rations, Apple, Orange, Bread, Raw Fish, Cooked Fish, Meat, Raw Meat, Waterskin, Skillet, Campfire Kit) | Cooking's ground; Hunting's butchery |
 | Deep Waters fish | templates 9001-9007 (Longnose Butterflyfish, Largemouth Bass, Canary Rockfish, Crucian Carp, Mackerel, White Zebra Angelfish, Juvenile Finulon), each with its waters (`PASSIVE_FISH_SPECIES`, `src/world/passiveFish.js`: Tropical, Temperate, Swamp, Desert, OpenOcean, Cold) | Fishing's haul (the species named; the Stores keep Raw Fish, 5.2) |
-| World of Daggerfall | 209,436 rock-field prefabs among 227,938 (`03-World/World-Of-Daggerfall.md`); WOD7's shared camps (`src/world/wodShared.js`) | Mining's anchors; bounties |
-| Terrain nature | `src/world/terrainNature.js` | Logging's and Herbalism's anchors |
+| World of Daggerfall | 209,436 rock-field prefabs among 227,938 (`03-World/World-Of-Daggerfall.md`); WOD7's shared camps (`src/world/worldOfDaggerfall/wodShared.js`) | Mining's anchors; bounties |
+| Terrain nature | `src/world/terrain/terrainNature.js` | Logging's and Herbalism's anchors |
 | Climates | `mapsFile.js`: Ocean, Desert, Desert2, Mountain, Rainforest, Swamp, Subtropical, MountainWoods, Woodlands, HauntedWoodlands | Every native table (section 4) |
-| Dyes | `src/systems/itemDye.js` | Outfitting |
+| Dyes | `src/systems/item/itemDye.js` | Outfitting |
 | Bulletin boards | `BULLETIN_BOARD_MODEL_ID` (`src/world/rmbLayout.js`), `src/systems/bulletinBoard.js` (ROAD A9) | The Notice Board (10.1) |
-| Player trade | TRADE1 (`src/net/tradeSession.js`, `src/ui/enhancedPlayerTrade.js`) | Stays how loot changes hands |
+| Player trade | TRADE1 (`src/net/tradeSession.js`, `src/ui/enhanced/enhancedPlayerTrade.js`) | Stays how loot changes hands |
 | Held objects | `src/combat/heldPose.js` (MAP3) - the Morrowind arms' held-sheet pose only; the classic lane's held map is a bottom-anchored sprite that hides the weapon from its place in the draw ladder (MAP-WEAPON, `10-UI/Held-Map-Arc.md`) | The net and the basket in the hand (5.1) |
-| Sigil Stones | template 570 (`src/systems/gateSpoils.js`) | Daedric smithing |
+| Sigil Stones | template 570 (`src/systems/gate/gateSpoils.js`) | Daedric smithing |
 | Gold | the save's; the guild treasury is the only gold a server holds | Why Marks exist (10.5) |
 
-**Standing since FORAGE1-FORAGE3 (2026-09-28)**: Foraging (`06-Systems/Foraging.md`, `src/systems/foragingLaw.js`,
-`src/systems/foragingInstall.js`): the tools and their shelves, their checks (daylight, no foe near, not encumbered),
+**Standing since FORAGE1-FORAGE3 (2026-09-28)**: Foraging (`06-Systems/Foraging.md`, `src/systems/foraging/foragingLaw.js`,
+`src/systems/foraging/foragingInstall.js`): the tools and their shelves, their checks (daylight, no foe near, not encumbered),
 the Basket's foods, the attribute pairs, and the tools in loot (a shelf's and a house's hook, every pile at its index,
 the corpses - FORAGE3), and online the quests' time as a wait (FORAGE4). Foraging stands whole in both lanes.
 
@@ -134,7 +134,7 @@ Enchanting - ten professions a character holds, with the five that gather.
   at the highest tier the rank opens**: every haul is tier 1 and herbs stop at tier 3, so their own tiers would have
   held Fishing at a Novice's pace and quartered every herb past rank 70 (the Basket's food keeps its tier). DECIDED, AUDIT 32 S1 - Mac: "Whatever you think is best": **no +500 for a recipe made wholly of goods
   only a counter sells** (4.5's Linen and Wool, never gathered) - the counter's supply has no end, and 152 recipes of
-  it bought Outfitting 87 for 811 Marks.
+  it bought Outfitting 87 for 811 Marks. Said at every station and in the craft's word since CRAFT-FIRST-SHOWN (41.9).
 - All XP is service-witnessed: the service performed the harvest, the craft, the delivery.
 - **Tiers**, the ladder every material, node and recipe sits on - the rank each needs:
 
@@ -365,7 +365,7 @@ DECIDED (Mac: "tree chopping, picking up ingredients, fishing, etc. Active playe
   encumbered; the tool, its wear, the foe and the load are the client's courtesy, which the service never sees.
   **ANY-HOUR** (2026-10-01, Mac: *"Remove the time limit for professions. Should be available at any time"*): no act
   keeps hours - the daylight 07:00-17:59 the acts borrowed (and the service enforced, `prof-night`) is gone from every
-  profession, client and service (`01-Overview/Field-Bugs-2026-10-01.md` part four); Foraging's own Use keeps the mod's
+  profession, client and service (`01-Overview/bugs/Field-Bugs-2026-10-01.md` part four); Foraging's own Use keeps the mod's
   day.
 - **Wear**: a completed act lowers the tool's condition by 1, as a Foraging use does; a tool lasts 50 harvests.
 - **The attribute bands**: Foraging's attribute pair for the tool widens or narrows the act's skill window - x0.85,
@@ -402,7 +402,7 @@ DECIDED (Mac: "tree chopping, picking up ingredients, fishing, etc. Active playe
 
 **What the net brings up** (Fishing): the species is Deep Waters' for the water (FACT, `PASSIVE_FISH_SPECIES`:
 Tropical, Temperate, Swamp, Desert, OpenOcean, Cold), the pixel's climate choosing the waters by Deep Waters' own
-`climateToBiome` (`src/world/underwaterDecorations.js`, imported, not re-typed); the sea adds a **Pearl** (DFU 77) in 1
+`climateToBiome` (`src/world/underwater/underwaterDecorations.js`, imported, not re-typed); the sea adds a **Pearl** (DFU 77) in 1
 haul of 50 (Pearl Diver x3) and a **Slaughterfish** in 1 of 100 - the heaviest haul - which yields Slaughterfish
 Scales. **The haul lands in the Stores as Raw Fish** - one material, tier 1, 1 Mark - the species named in the toast
 ("+2 Largemouth Bass, as Raw Fish"). Withdrawn to the pack, Raw Fish becomes the template Foraging's own code would
@@ -415,7 +415,7 @@ else Foraging's Fish (1605). A **trophy** is the species' own Deep Waters templa
   patch once both its harvests are taken (its herbs, and the Basket's food).
 - The sounds are ~~DFU's own from the player's data (the wood and stone hits, the splash)~~ the port's own on the
   enhanced skin - the axe in the wood, the pick on the stone, the leaves, the knife, the net, the tree's groan and fall,
-  each heard as its blow lands (GATHER-FEEL, section 44) - and DFU's own on the classic skin (`systems/profSounds.js`),
+  each heard as its blow lands (GATHER-FEEL, section 44) - and DFU's own on the classic skin (`systems/professions/profSounds.js`),
   and Immersive Footsteps' and Better Ambience's where they are on.
 - Weather and the hour matter: the net fills fastest in the first and last daylight hours (07:00-07:59 and 17:00-17:59 -
   a bonus; ANY-HOUR: the wilderness no longer closes at night); rain wets the herbs (the steady window -20%); a storm
@@ -438,7 +438,7 @@ else Foraging's Fish (1605). A **trophy** is the species' own Deep Waters templa
   harvest was refused `bad-node`, its witnesses `bad-pixels`. The service at acct124; `world/ethericSea.js` in the account
   deploy's path filter (the law imports it). The ground's one home is `ethericSea.js` `onBayOrEther` (ETHER-OW,
   2026-10-13: the Overworld's bands and raiders are born on it too; the law's answers unchanged). A Motherlode is not
-  sited there (AUDIT ETHER-OW C2-1, `01-Overview/Audit-Ether-OW.md`): a strike asks the relay's Watch receipt of the
+  sited there (AUDIT ETHER-OW C2-1, `01-Overview/audits/Audit-Ether-OW.md`): a strike asks the relay's Watch receipt of the
   site's pixel, and the Watch's ground is the Bay's map (`net/watchReceipt.js` `watchPixelOk` - one home, the relay's mint,
   the service's receipt and `motherlodeSites` reading it); the isles' confirmed pixels are never a site. The service at
   acct125, the relay at world199 (its answers as they were).
@@ -460,9 +460,9 @@ BOULDERS (FIELD BUGS 2026-10-01, Mac: "Fix the rest"; the service's acct47): the
 
 MORE-NODES (2026-10-02, Mac: "increase all profession nodes", asked: "Double"; the service's acct48): the trees, the herb patches and the veins twice what they were, every climate (the table above). The day's sixty a profession (and the account's bound) are unchanged, so what doubles is how close the next node stands, not what a day yields (CAP-OFF, 2026-10-07: the sixty and the account's bound are gone - the nodes and the walk between them are the day's whole bound). A signature region's veins stand in the slots after the climate's (a Mountain's thirteenth, Daggerfall's fifth and sixth in the woods).
 
-UNWITNESSED-ORE (FIELD BUGS 2026-10-09e, the Discord's "Mining veins": "I mined about 200-300 veins of iron, but there were not a single vein of silver, gold, platinum or mithril in the mountains ... maybe Mountain area and MountainWoods area are bugged"; the service's acct102): not a bug - the law. A vein on a pixel nobody else had vouched for was held to tier 2, and the Mountain's table holds Iron at 1 and nothing again until Silver at 3: every mountain pixel a lone miner worked stood Iron alone, the Mountain Woods never its Silver, and a lone miner's word confirms nothing (three accounts a week old, the witnessed world above), so the far mountains never came to the rest. A vein on such ground is held where a dungeon's deep vein already is on anyone's word - `UNCONFIRMED_VEIN_TIER`, 3 (`net/nodeLaw.js`, the one cap the wilderness vein, the deep vein and the Court's vein metals read) - so the Mountain stands Silver beside its Iron (73 : 27 by the weights) and the Mountain Woods its Silver beside its three; no other climate's table holds a tier 3, so no other ground moves. Gold, Platinum, Mithril and a region's signature still wait on the witnesses, and a lie about a pixel buys Silver at most - what a dungeon's vein already gives it. The herbs and the trees keep 2. The Mining page says so in the player's words (`ui/profPages.js` MINING_GROUND_LINE). PIN MOVED: PROF2's "an unconfirmed Mountain pixel yields Iron alone" (`test/prof2_law.test.js`). Pinned by `test/fb1009e_unwitnessedore.test.js`; `tools/mutants/fb1009e_unwitnessedore.json` (4, all dead). ORE-MAP (`01-Overview/Field-Bugs-2026-10-11d.md`): the held map's bare ground says it for a place - its veins, its dungeons', its kingdom's own ore and whether its ground is witnessed (`ui/oreMapTip.js`).
+UNWITNESSED-ORE (FIELD BUGS 2026-10-09e, the Discord's "Mining veins": "I mined about 200-300 veins of iron, but there were not a single vein of silver, gold, platinum or mithril in the mountains ... maybe Mountain area and MountainWoods area are bugged"; the service's acct102): not a bug - the law. A vein on a pixel nobody else had vouched for was held to tier 2, and the Mountain's table holds Iron at 1 and nothing again until Silver at 3: every mountain pixel a lone miner worked stood Iron alone, the Mountain Woods never its Silver, and a lone miner's word confirms nothing (three accounts a week old, the witnessed world above), so the far mountains never came to the rest. A vein on such ground is held where a dungeon's deep vein already is on anyone's word - `UNCONFIRMED_VEIN_TIER`, 3 (`net/nodeLaw.js`, the one cap the wilderness vein, the deep vein and the Court's vein metals read) - so the Mountain stands Silver beside its Iron (73 : 27 by the weights) and the Mountain Woods its Silver beside its three; no other climate's table holds a tier 3, so no other ground moves. Gold, Platinum, Mithril and a region's signature still wait on the witnesses, and a lie about a pixel buys Silver at most - what a dungeon's vein already gives it. The herbs and the trees keep 2. The Mining page says so in the player's words (`ui/professions/profPages.js` MINING_GROUND_LINE). PIN MOVED: PROF2's "an unconfirmed Mountain pixel yields Iron alone" (`test/net/prof2_law.test.js`). Pinned by `test/net/fb1009e_unwitnessedore.test.js`; `tools/mutants/fb1009e_unwitnessedore.json` (4, all dead). ORE-MAP (`01-Overview/bugs/Field-Bugs-2026-10-11d.md`): the held map's bare ground says it for a place - its veins, its dungeons', its kingdom's own ore and whether its ground is witnessed (`ui/oreMapTip.js`).
 
-GATHER-OW (2026-10-02, Mac: "allow them to appear in the overworld without being overwhelming, maybe a glyph marker showing where a group of them are"; asked: "Groups nearby"): on the Overworld each profession's group on a stood pixel - its nodes not yet worked today, as NODE-MARKS would mark them - is one diamond in its compass colour at their middle, its count beside it ("Mining ×6"), the nearest twelve within 3 km (the land streams three pixels out), read again twice a second; the view's filters have a Gathering switch. Not a click of its own: a click there walks to the ground under it. None with the professions shut, nor underground; Hunting's bodies are no group. `scenes/gatherHost.js` overworldGroups, `systems/travelViewFilters.js`, `ui/travelViewHud.js`, `scenes/travelViewMarks.js` travelViewMarks (out of world.js since HOST-SPLIT 1).
+GATHER-OW (2026-10-02, Mac: "allow them to appear in the overworld without being overwhelming, maybe a glyph marker showing where a group of them are"; asked: "Groups nearby"): on the Overworld each profession's group on a stood pixel - its nodes not yet worked today, as NODE-MARKS would mark them - is one diamond in its compass colour at their middle, its count beside it ("Mining ×6"), the nearest twelve within 3 km (the land streams three pixels out), read again twice a second; the view's filters have a Gathering switch. Not a click of its own: a click there walks to the ground under it. None with the professions shut, nor underground; Hunting's bodies are no group. `scenes/gatherHost.js` overworldGroups, `systems/travel/travelViewFilters.js`, `ui/travel/travelViewHud.js`, `scenes/travelViewMarks.js` travelViewMarks (out of world.js since HOST-SPLIT 1).
 
 - **A node's tier** rolls on the climate's table, higher tiers rarer (tier 1: 40%, 2: 25%, 3: 15%, 4: 10%, 5: 6%,
   6: 4%); a region's signature (4.7) replaces one vein a pixel with its signature ore.
@@ -547,7 +547,7 @@ laid out for the phone's touch layer as for the desktop.
   be worked the prompt says what it needs ("[E] Mine Silver - needs Mining 25"), E goes on to the door, the chest or
   the foe beside it (AUDIT 29 C1), and when nothing else takes the press the node says its need as a toast, the
   player's own rank beside a rank short - "Mine Silver: needs Mining 25 - your Mining is 0" (VEIN-NEED,
-  `01-Overview/Field-Bugs-2026-09-29h.md`).
+  `01-Overview/bugs/Field-Bugs-2026-09-29h.md`).
 - **The act's meter**: centred on the crosshair, 160 px across at 1080p (30% larger on touch); the ring, the glint,
   the hold meter, the search, the trace and the haul bar each have a still form for Reduced motion.
 - **The haul**: toasts on the right, 4 at most, 3 seconds each - "+3 Oak Logs to your Stores", "+45 Logging XP
@@ -584,7 +584,7 @@ when people gather these items"; a mockup of four screens answered; then "Dude t
 to your Stores"), the XP, a rank's rise, a Motherlode's silver - no picture, no tier, no Stores count, four at most
 (GATHER-SAID had to keep the goods' line from being pushed out by its own XP). A raid's or a gate's silver, a guild
 deed and a contract's pay were said in the chat alone. The enhanced skin already had a better face for a gain: the
-loot's PICKUP-FEED (`ui/pickupFeed.js`, `01-Overview/Field-Bugs-2026-10-01d.md`) - cards under the crosshair, a picture,
+loot's PICKUP-FEED (`ui/pickupFeed.js`, `01-Overview/bugs/Field-Bugs-2026-10-01d.md`) - cards under the crosshair, a picture,
 a tier's colour, a bump that adds.
 
 **DECIDED: the pickup feed carries them, one family, one band** (Mac's mockup: the centre, the loot's own place - a
@@ -619,7 +619,7 @@ each answer into cards (pure); the feed (`showHaul`) draws them beside the picku
   asked first - under the suite's load the scheduler lets either held batch go first, and it failed one run in a few;
   it reads them by what each was paid now (its two mutants still dead). And the card's head and STORES tag were drawn
   at 10 px, under the face's 11 px floor (FONT3) - 11 now.
-- **Pinned**: `test/haulcards.test.js` (9); `tools/mutants/haulcards.json` (34, all dead). PIN MOVED: pickupfeed (the
+- **Pinned**: `test/systems/foraging/haulcards.test.js` (9); `tools/mutants/haulcards.json` (34, all dead). PIN MOVED: pickupfeed (the
   reduced-motion rule, the world host's import), prof8_client (the kind told `hauled`), silverways_client and marks1
   (the claims' `onMarks`), auditsilver_service (B1's pair by its pay); `10-UI/UI.md`'s module count (290). Mutant
   records re-aimed by content: pickupfeed (five), gathersaid (the goods unkept), prof2b (the silver unsaid);
@@ -630,7 +630,7 @@ each answer into cards (pure); the feed (`showHaul`) draws them beside the picku
 Three independent passes read the PR cold - the feed's law and face (scripts over the real module and the real sheet in
 Chromium), the cards' data against every kind's old lines (every material key run), and the look in a real browser
 (74 runs: long names, mixed stacks, HUD scales 0.75-1.5, the Plus themes, reduced motion) - and the author's re-read.
-FOUND, each fixed and pinned (`test/haulcards.test.js`, `tools/mutants/audithaul.json`):
+FOUND, each fixed and pinned (`test/systems/foraging/haulcards.test.js`, `tools/mutants/audithaul.json`):
 
 - **MEDIUM - A1: a card the band put out flickered every frame.** A hidden card measures nothing and was read as the
   first card's height - a tall harvest card under three pickups in a 129-155 px band "fitted" the next frame, stood
@@ -663,7 +663,7 @@ heights read in the order the cards stand; a silver or note card never asks for 
 its box; the watchdog and ticker armed as a pickup's; every note an act says parses to its head; a kept answer's card
 right (a Motherlode's included); every gathered material's picture real and its tier sane; a refused claim shows no
 card; the classic skin builds nothing.
-- **Pinned**: `test/haulcards.test.js` (14 - five the audit's); `tools/mutants/audithaul.json` (20, all dead). PIN MOVED:
+- **Pinned**: `test/systems/foraging/haulcards.test.js` (14 - five the audit's); `tools/mutants/audithaul.json` (20, all dead). PIN MOVED:
   haulcards (the contract's words, the live world, the Motherlode's purse). Re-aimed by content: haulcards (three); the
   haul list run whole again, 34 dead; pickupfeed.json and gathersaid.json again, 67 dead; the probe 319/319.
 
@@ -706,7 +706,7 @@ CRAFT-PROCS (FIELD BUGS 2026-10-13e; a player: "Added potency and cast speed, ca
 crafted jewelry"): the roll is the loot door's whole roll now. The mint took the tier's `applyRarity` and never the
 door's last pass, and every line that does something is drawn in that pass alone (LOOT4), so no crafted piece carried
 one. A Superior and a Masterwork take the pass after the roll, on the same stream off the
-record's seed (`systems/smithItems.js` mintPiece, `systems/lootRarity.js` lastPass): one such line, 20 times in 100 on a
+record's seed (`systems/smithItems.js` mintPiece, `systems/loot/lootRarity.js` lastPass): one such line, 20 times in 100 on a
 Superior and 35 on a Masterwork, as a loot door's Magic and Rare take it. A jewel's is focus, castSpeed, potency or
 wellspring, a weapon's one of five, armour's thorns, and the Loot Rarity switch is not asked (the piece is its record's
 on every client; the line's reader asks it). THE RECORD SAYS WHICH LAW MINTS IT: the service stamps `v` 1 at the craft
@@ -850,7 +850,7 @@ etc".
   provenance id (the listing takes the item out of the save; the service holds the record; only the id's **owner**
   may list it, and an id has one live listing at a time - so a duplicated copy can never be sold beside its original,
   section 18). A piece from the pack lists **for gold alone** (MARKET-ANY, FIELD BUGS 2026-10-01 #2 -
-  `01-Overview/Field-Bugs-2026-10-01.md`): a realm character's record is the service's (REALM P1), so the listing takes
+  `01-Overview/bugs/Field-Bugs-2026-10-01.md`): a realm character's record is the service's (REALM P1), so the listing takes
   the record's own piece out of the seller's record in its batch and a delivery puts it into the buyer's - the realm
   trade's move, no new trust; never for Drakes (Marks), since the service never inspects a checkpoint after the first save and a
   save-edited piece would buy them (law 3). Bound, worn, locked, quest and summoned pieces, gold and letters, boat deeds
@@ -909,9 +909,10 @@ save's" - GUILD1), so anything paid in purse gold can be paid by a client that n
 | Oblivion Gate receipts | 50 a receipt (100 under a Daedric Incursion, SEAT0 9.3) | ~~**2 a UTC day** an account~~ SILVER-WAYS: the day's **combat cap**, 150 an account a UTC day with the raids' and (SERPENT-SET) the serpents' (below) - FACT, a gate rises every game day, twelve a real day, and `gate_kills` keys on the game day, so the gate's own law allows twelve |
 | Towns defended (SILVER-WAYS) | 30 a raid's receipt (RAID3's `w1`, counted once a raid and account - RAID4) | the day's **combat cap** with the gates' and the serpents': 150 an account a UTC day, the day's last strike what it has left |
 | Sea serpents slain (SERPENT-SET) | 40 a serpent's receipt (SERPENT1's `l1`, counted once a serpent day and account), a ship that stood 20 | the day's **combat cap** with the gates' and the raids' - the ceiling unmoved (`11-Multiplayer/Sea-Serpent.md` section 8) |
+| Elite Breach Redoubts (EG-E1) | 20 a Redoubt's receipt (the relay's `e1` `w`), paid once an account a Redoubt an arena week (`11-Multiplayer/Elite-Gates.md` section 19) | the day's **combat cap** with the gates', the raids' and the serpents' - the ceiling unmoved |
 | A gathering's find (SILVER-FINDS) | 2-5, the service's dice in one counted harvest of ten - any of the five acts | **30** an account a UTC day, the day's last find what is left - bounded, not witnessed |
 | A loot find (SILVER-FINDS) | 1-4, the service's dice; the device rolls each container once - a foe's body 5%, a treasure pile 12%, a search's find 15% | **20** an account a UTC day, the day's last find what is left - bounded, not witnessed |
-| Guild deeds (SILVER-WAYS) | 25 into the guild's treasury, never an account's | where 3 of a guild's accounts - each a character 7 days in it - claimed one raid or one gate; 4 a guild a UTC day |
+| Guild deeds (SILVER-WAYS) | 25 into the guild's treasury, never an account's | where 3 of a guild's accounts - each a character 7 days in it - claimed one raid, one gate or (EG-E1) one Redoubt of one breach; 4 a guild a UTC day |
 | Siege Honours (SEAT0 6.8) | 50 / 25 | one a siege |
 | Motherlodes (PROF2b - BUILT, section 38) | 10 a find | 1 an account a day (3 Motherlodes a day server-wide, 20 strikers each) |
 
@@ -976,12 +977,12 @@ save's" - GUILD1), so anything paid in purse gold can be paid by a client that n
     `scenes/gatherHost.js`), else its line; a loot find's card the same coin - where it was found its source, its
     faucet's day its bar (the loot's 20, the gathering's 30). The Bank's card says the day's finds beside the combat's
     (whose row names the serpents now).
-  - Pinned: `test/silverfinds_service.test.js`, `test/silverfinds_client.test.js` and a gathering-host pin in
-    `test/haulcards.test.js`; `tools/mutants/silverfinds.json` (86, all dead - the first run's one survivor, the book's
+  - Pinned: `test/net/silverfinds_service.test.js`, `test/net/silverfinds_client.test.js` and a gathering-host pin in
+    `test/systems/foraging/haulcards.test.js`; `tools/mutants/silverfinds.json` (86, all dead - the first run's one survivor, the book's
     kind check, lived under a pin whose scripted door answered nothing either way; the pin now asks whether the door
     was asked). ACCOUNT_VERSION acct84 (acct83 on the branch, renumbered past CRYSTAL-FIST's at the merge of main), with SERPENT-SET. Forcing every harvest to find (the chance at 1) left all 139
     harvest pins green - none reads a balance a find could move.
-  - **AUDIT 625 (2026-10-05, `01-Overview/Audit-625.md`)** - Mac's call on S1, "A week old, like witnesses": both
+  - **AUDIT 625 (2026-10-05, `01-Overview/audits/Audit-625.md`)** - Mac's call on S1, "A week old, like witnesses": both
     faucets open to an account a WEEK registered (`nodeLaw.js` WITNESS.ageS, the witnesses' own age) - bounded, not
     witnessed, every account added was another day's cap; a younger one's loot find is `marks-young` (403) and its
     harvest finds none though the dice found one, asked after the line as the switch is (S1; the book then holds the
@@ -994,8 +995,8 @@ save's" - GUILD1), so anything paid in purse gold can be paid by a client that n
     the same pile), an interior's by its town, building and marker - leaving and coming back rolls nothing again (S5).
     A door rolls once it OPENED - a window that stood, or the quick door's take - never on a pack the host refused (D6);
     a peer's body of arrows alone rolls none, as one's own (S7). The weekly report counts the accounts at both finds'
-    caps beside the combat's and the Bank's (S6). Pinned: `test/audit625_silver.test.js` and the AUDIT 625 pins of
-    `test/silverfinds_service.test.js`; `tools/mutants/audit625.json`.
+    caps beside the combat's and the Bank's (S6). Pinned: `test/net/audit625_silver.test.js` and the AUDIT 625 pins of
+    `test/net/silverfinds_service.test.js`; `tools/mutants/audit625.json`.
 
 ### 10.6 Player notes
 
@@ -1065,11 +1066,11 @@ Mac: **"Go"**. What the design above left open, DECIDED here (the record's, at M
   window in the overlay slot; the fixed city (`scenes/exterior.js`) keeps DFU's board (FLAGGED by name: it hands the
   shared mode machine no `openNoticeBoard`); the building interiors and the dungeons have no boards.
 
-`test/notice1.test.js` (17) - the law, the schema, the switch, read and pin, take down and report, moderation and the
+`test/net/notice1.test.js` (17) - the law, the schema, the switch, read and pin, take down and report, moderation and the
 mute, the recruitment note, the server's word, expiry and the hour, the book (the cache, the stale board, what was
 read, one request id through every retry), the refusals, the cards' order, the wiring and the one door, the count in
 the names' pass, the measure. `tools/mutants/notice1.json`, 26 mutations, 26 dead. AUDIT 28 (`06-Systems/Online-Arc.md`
-AUDIT 28): `test/audit28_notice.test.js` (14) - N1-N16 fixed, among them THE MODAL CONTRACT's pin this section owed (the
+AUDIT 28): `test/net/audit28_notice.test.js` (14) - N1-N16 fixed, among them THE MODAL CONTRACT's pin this section owed (the
 note's answer plan, one shape from every exit) and the window driven on the minimal DOM.
 
 ### 10.8 GOLD-MARKET - a listing's currency (DECIDED 2026-09-30, Mac: "Allow trading with gold or drakes on the marketplace"; "Gold listings, walled"; BUILT the same day)
@@ -1115,12 +1116,12 @@ read `region = ?1` and a fill from any other board was refused `market-elsewhere
   outside the lister's region paying a courier.
 - **Not changed**: a home's trader (HOME-VENDOR) stays a stall a buyer visits - its stock is bought at it alone.
 - **As built**: `server-account/src/market.js` marketRead (orders) and marketFill; `src/ui/marketTab.js` orderRow;
-  `test/globalmarket.test.js`; `tools/mutants/globalmarket.json`.
+  `test/net/globalmarket.test.js`; `tools/mutants/globalmarket.json`.
 
 ### 10.10 MARKET-AUDIT - the board audited (2026-10-04, Mac: "I think the ingame market board is broken. Please audit this")
 
 Three lanes - the service, the client's book, the tab and its host - read the market end to end over the real Worker
-and reproduced each finding before it was fixed (`test/marketaudit.test.js`, `tools/mutants/marketaudit.json`).
+and reproduced each finding before it was fixed (`test/net/marketaudit.test.js`, `tools/mutants/marketaudit.json`).
 
 - **MARKET-BAG - the break a player sees.** Since BAG1 every harvest is carried (bag, then pack), and the List form and
   a fill read the Stores alone: a gatherer's List form offered no material and every order said "0 in your Stores",
@@ -1145,7 +1146,7 @@ and reproduced each finding before it was fixed (`test/marketaudit.test.js`, `to
   failed read keeps the view's filters and the counters. U6: an act's word stays with its view. U7: another character's
   delivery says it waits for that one, and is not asked after.
 - **The rest, fixed (2026-10-05, Mac: "Fix everything").** Every realm act that pays out of the purse reserves through
-  one law, `net/realmGoldLaw.js` walletReserve: the payment's own undo (`systems/court.js` payUndoable - the purse and
+  one law, `net/realm/realmGoldLaw.js` walletReserve: the payment's own undo (`systems/court.js` payUndoable - the purse and
   its letters, then the account, each given back where it was, once) on a refusal or a `repeat`, and a wallet's whole-cost
   `credit` only where its `pay` answers none - the guild's founding and deposits, a room's rent, a home's claim, a decor
   piece and its change, as the market's gold buy; every online wallet's `pay` answers it (`world.js`, `worldModes.js`
@@ -1160,7 +1161,7 @@ and reproduced each finding before it was fixed (`test/marketaudit.test.js`, `to
   posted settles first, as a listing does; the default Materials view keeps the board's own region's fifty cheapest
   beside the Bay's hundred. The host: the Market tab stands while the professions' read is unanswered (its own read says
   whether it is open). `MARKET-ANY-service-the-goods-family-unfiltered` is recorded equivalent - the Goods view's
-  family is chosen in its query; the JS filter after it is belt-and-braces. `test/marketaudit2.test.js`,
+  family is chosen in its query; the JS filter after it is belt-and-braces. `test/systems/marketaudit2.test.js`,
   `tools/mutants/marketaudit2.json`.
 
 ### 10.11 BOARD-UI - one Notice Board a town (reverted 2026-10-07), and the board laid out to be read (2026-10-06)
@@ -1172,11 +1173,11 @@ of the board for better organization, instruction and readability"**.
 
 - **ONE-BOARD - the double boards** (REVERTED 2026-10-07, below; this is the record of what it did).
   FACT: BOUNTY1 takes every other board of a town by position (two give one, five give two), and NOTICE1 made every board left a Notice Board - so a town of three boards or more stood two or three,
-  each with its "3 new", its mark on the town map and, at a seat, its pennant. Now one (`systems/bountyBoard.js`
+  each with its "3 new", its mark on the town map and, at a seat, its pennant. Now one (`systems/bounty/bountyBoard.js`
   noticeBoardIndex): of the boards BOUNTY1 left, the one nearest the town's middle (`townCentreOf`, the mean of its
   buildings' places), the first by position on a tie. The rest stay Daggerfall's rumour boards, as every board is
   offline; BOUNTY1's split is untouched. Every seam reads the one law with the same inputs: the press, the count over
-  the board, the town underfoot and the town map (`ui/townMapMarks.js` townBoardRows takes the index) through one memo a
+  the board, the town underfoot and the town map (`ui/town/townMapMarks.js` townBoardRows takes the index) through one memo a
   pixel (`scenes/world.js` noticeBoardOf); a seat's pennant at the build's own measure (`scenes/seatBanners.js`
   seatBannerAnchors' `notice`); and the siege field's Market banner (`systems/siegeField.js` - its own walk until AUDIT
   657 B7, which broke a tie by the boards' order). It names itself "Notice Board" on hover while the board is open
@@ -1186,11 +1187,11 @@ of the board for better organization, instruction and readability"**.
   stands no board.
 - **ONE-BOARD REVERTED** (2026-10-07, Mac: "We recently made a change reducing the amount of notice boards in cities and
   id like to revert just that change"). Every board BOUNTY1 did not take is a Notice Board again, as NOTICE1 built it:
-  the press, the count over each board, the town underfoot, a mark on the town map for each (`ui/townMapMarks.js`
+  the press, the count over each board, the town underfoot, a mark on the town map for each (`ui/town/townMapMarks.js`
   townBoardRows takes BOUNTY1's split again) and a seat's pennant over each (`scenes/seatBanners.js` seatBannerAnchors'
   `bounty` again); `scenes/world.js` noticeBoardOf is gone. Kept: the hover's "Notice Board" (now every Notice Board's,
-  while the board is open) and `systems/bountyBoard.js` noticeBoardIndex, the siege field's Market alone (AUDIT 657 B7's
-  tie law). The rest of BOARD-UI stands. Pins: `test/board_ui.test.js`'s host test pins every board, and the pins
+  while the board is open) and `systems/bounty/bountyBoard.js` noticeBoardIndex, the siege field's Market alone (AUDIT 657 B7's
+  tie law). The rest of BOARD-UI stands. Pins: `test/ui/board_ui.test.js`'s host test pins every board, and the pins
   ONE-BOARD moved in `notice1`, `seat1a_client` and `town_marks` moved back (each PIN MOVED); mutants: three
   `board_ui.json` records re-aimed at the restored seams, and `seat1a.json`, `town_marks.json` and
   `audit_seats3_world.json` aimed where they stood before ONE-BOARD - all dead.
@@ -1212,12 +1213,12 @@ of the board for better organization, instruction and readability"**.
   straight into your Stores" (the Apothecaries' sixteen stood under every Materials read), kept open across a redraw;
   My listings in named parts (the List form, Your listings, auctions, bids, buy orders); each form's fields under their
   names (a stall's "Put up a piece" form's too, AUDIT 657 B3); the Vendors tab's columns named as the Market's
-  (`ui/vendorTab.js`). FOUND: the List press wore `market-list`, the lists' own class, whose rule took its padding - a
+  (`ui/vendor/vendorTab.js`). FOUND: the List press wore `market-list`, the lists' own class, whose rule took its padding - a
   36px sliver since PROF5. And in this slice's own labelled field a select took AUDIT 31 U14's 160px flex-basis as its
   height - the slice's own, found before it shipped.
 - **Faster.** The window and its tabs are a lazy chunk fetched at the first press - on the deployed site a round trip
   before anything drew. It is one of the chunks the one home warms in idle time once the world boots
-  (`ui/enhancedChunk.js` WARM_CHUNKS, MENU1-WARM - the tenth of thirteen, one an idle callback), so a press after the
+  (`ui/enhanced/enhancedChunk.js` WARM_CHUNKS, MENU1-WARM - the tenth of thirteen, one an idle callback), so a press after the
   warm finds it in the module map, and one in the boot's first moments may still wait for it; the door still mounts
   it through `mountEnhancedChunk` (MENU1: no door fetches a chunk on its own - the whole suite caught a fetch-ahead of
   the door's own on this branch). The Market's first view is read as the board opens (`prefetch`), so its tab answers
@@ -1245,8 +1246,8 @@ of the board for better organization, instruction and readability"**.
   doesnt explain anything") moved the guide up under the Charter, open for a reader not yet in the region's war, beside
   a What this is panel with the reader's next step and a folded Words on this board (`10-UI/Plain-Words.md`).
 
-Code: the files above, `ui/workTab.js`, `ui/vendorTab.js`, `net/townSeatLaw.js` (the tab's own two lines) and
-`ui/enhancedPlusStyle.js` (NOTICE_CSS, PROF_CSS). Pins: `test/board_ui.test.js` (10); the pins whose words were cut
+Code: the files above, `ui/workTab.js`, `ui/vendor/vendorTab.js`, `net/townSeatLaw.js` (the tab's own two lines) and
+`ui/enhanced/enhancedPlusStyle.js` (NOTICE_CSS, PROF_CSS). Pins: `test/ui/board_ui.test.js` (10); the pins whose words were cut
 moved with them, each marked PIN MOVED (AUDIT 657 D7 marked the twelve that were not). Mutants: `tools/mutants/board_ui.json`, 33, all dead; twenty-five records
 re-aimed by content and judged again (24 dead, AUDIT31-tab-hint-add-late equivalent as recorded); and the 294 records
 over the code the slice touched judged whole - 291 dead, one equivalent as recorded, two survivors that survive on main
@@ -1259,7 +1260,7 @@ Mac: **"Can you look at gathering minigame performance and how the server affect
 market"**, then **"Do everything. A comprehensive improvement"**.
 
 FACT, read off the code before anything moved: neither waits on the relay. The gathering act is the client's alone
-(the act machines and `ui/profReticle.js` ask nothing of the wire); its end asks `/v1/prof/harvest`, and every market
+(the act machines and `ui/professions/profReticle.js` ask nothing of the wire); its end asks `/v1/prof/harvest`, and every market
 look and act is a `/v1/market/*` POST - both the account service's, on D1. Every `first()` and `all()` there is a round
 trip from the Worker to the database's one primary, and each was asked one after another:
 
@@ -1306,7 +1307,7 @@ THE FOUR HOSTS: the gathering host is one (`scenes/gatherHost.js`, built online 
 press): `world.js` and `worldModes.js` WIRED through it; `exterior.js` and `dungeonContext.js` hold no gathering of their
 own (a dungeon's veins are the same host's). Port-Ledger: nothing of DFU's - Daggerfall has no service.
 
-Version: `acct119` (no migration; acct118 on its branch, renumbered past SEAT-LEASE at the merge). Code: the files above. Pins: `test/gatherspeed.test.js` (10; 14 with the audit's below) - the round trips
+Version: `acct119` (no migration; acct118 on its branch, renumbered past SEAT-LEASE at the merge). Code: the files above. Pins: `test/net/gatherspeed.test.js` (10; 14 with the audit's below) - the round trips
 counted, a statement's own call one and a batch one; the answers held to their shape (a harvest's answer and its repeat
 say the same); the seats' rows read once for six asks; the node down as its act ends, up again on a refusal and a
 lapse; the parse and the pump's idle; the cache's minute and the tab's one draw. PIN MOVED: `seat1d_client` (the Levy
@@ -1335,7 +1336,7 @@ against the code before anything moved:
 | G8 | `goneIn` stood between STORES-ROOM's comment and `storesFullIn` | FIXED: above it |
 | G9 | The kept table parsed by two copies of the same code | FIXED (`parseKept`, one) |
 
-Pins: `test/gatherspeed.test.js` (+4: G1, G2, G5, G7). Mutants: eight more in `tools/mutants/gatherspeed.json` (32), and
+Pins: `test/net/gatherspeed.test.js` (+4: G1, G2, G5, G7). Mutants: eight more in `tools/mutants/gatherspeed.json` (32), and
 the records the fixes moved re-aimed by content - 38 dead, AUDIT29-C4 equivalent as recorded.
 
 ## 11. Writs - the Work tab
@@ -1517,7 +1518,7 @@ Every PROF slice's record names all four (Home.md, THE FOUR HOSTS RULE, 17e), ea
 | **ASYNC NEVER DROPS** | A harvest, a craft, a delivery, a listing each carry a request id; a second press while one is in flight coalesces; a lost answer is re-asked with the same id and answered, never credited twice (Renown's `last_rid`) |
 | **EVERY ALLOCATION HAS AN OWNER** | Node billboards are owned by their terrain tile's batch and freed at stream-out; a felled tree's falling flat by the node; the act meter by its overlay; the tool's sprite by the weapon rig |
 | **THE ONE CONSTRUCTION SEAM** | One constructor builds a station's window and one the board's, for every host; a test sweeps the source for a stray `new` |
-| **THE NATIVE-WINDOW RULE** | The offline bulletin board's parchment is native and keeps its ROAD A9 cites; DFU's potion and item makers stay native and untouched; every new window is the port's own Enhanced Plus window and cites `src/ui/enhancedStyle.js` |
+| **THE NATIVE-WINDOW RULE** | The offline bulletin board's parchment is native and keeps its ROAD A9 cites; DFU's potion and item makers stay native and untouched; every new window is the port's own Enhanced Plus window and cites `src/ui/enhanced/enhancedStyle.js` |
 | **A SLICE CLOSES ITS LEDGER ROW** | MARKS1, NOTICE1 and PROF1 each add their Port-Ledger section A row (MARKS: THE SERVER'S CURRENCY; THE BOARD, ONLINE; PROFESSIONS); PROF2 added its own (MINING); later slices add theirs or narrow these |
 | **THE RELAY VERSION** | The activity field on the pose and the in-person check are relay changes: a `RELAY_VERSION` and a LAW row each |
 
@@ -1537,7 +1538,7 @@ Every PROF slice's record names all four (Home.md, THE FOUR HOSTS RULE, 17e), ea
   a sale and an auction's close take their seat's holder's rate and write the Tithe's own line (`tithe`, to the
   holder's treasury, or burnt where the guild is gone or its cap holds), and a courier's share goes the same way; a
   guild writ's delivery and a commission's fill take none (Seats-Arc 7.2: "a writ has no fee"), and the law's nought
-  (`MARKET_TITHE_PCT`) stays the default where no seat holds the board (`test/audit31_law.test.js`).
+  (`MARKET_TITHE_PCT`) stays the default where no seat holds the board (`test/net/audit31_law.test.js`).
 - **A guild disbands** (or its last member leaves): refused while its gold treasury or its guild Stores hold anything
   (GUILD1's rule, grown a clause - BUILT with PROF6, and while one of its writs stands, or a closed one's pay waits for
   the treasury's room - AUDIT 31 A15: section 28), while it holds a Charter and while a Right of Siege or a Tourney is pending (SEAT0
@@ -1552,7 +1553,7 @@ Every PROF slice's record names all four (Home.md, THE FOUR HOSTS RULE, 17e), ea
   listing at a time** - so a crafted sword can be bought and resold forever, and a duplicated copy in a save can never
   be sold as well, because its id's owner has moved on.
 - **A crafted item goes offline.** It is DFU's own item, and its extra fields ride the save - FACT, the save snapshots
-  every item whole (`snap.items = (entity.items ?? []).map((it) => ({ ...it }))`, `src/systems/save.js`), as Loot Rarity's
+  every item whole (`snap.items = (entity.items ?? []).map((it) => ({ ...it }))`, `src/systems/save/save.js`), as Loot Rarity's
   `rarity` already rides. Offline it is simply the item it is. A classic-save export (`src/systems/classicSave.js`)
   carries DFU's fields alone, so there it becomes the plain DFU item it always was.
 - **A Masterwork's maker renames**: the mark keeps the name at the moment of making - it is history.
@@ -1695,7 +1696,7 @@ what was found (FACT):
   node table, 4.3's herb tables, the seasons, a pixel's day of patches, the yields, the witnessed pixel). Both ends
   read them; recipeLaw.js comes with the first craft (PROF3).
 - **An herb is DFU's own item, north or south.** FACT: DFU keeps two groups of plants - PlantIngredients1, named
-  "(northern)" below template 18, and PlantIngredients2, "(southern)" (`src/systems/itemInfo.js` itemNameParts) - and
+  "(northern)" below template 18, and PlantIngredients2, "(southern)" (`src/systems/item/itemInfo.js` itemNameParts) - and
   nine plants are in both (Twigs, Green Leaves, Red and Yellow Flowers, Root Tendrils, Root Bulb, Green, Red and Yellow
   Berries). DECIDED: an herb's group is its pixel's region's by FALL.EXE's own table (`REGION_RACES`: a Breton region
   northern, a Redguard one southern); a plant only one group holds is that group's wherever it grows. So the Stores keep
@@ -1727,8 +1728,8 @@ what was found (FACT):
   setting): every act plain. Reduced motion is the system's own (FACT: the port has no setting of its own - every window
   reads `prefers-reduced-motion`); under it the meters are still bars.
 - **The act choice key** (8): `ActChoice`, the Controls page's Professions group, default the up arrow (FACT: every
-  letter and digit is bound, and `-`, `=` and `/` are the decorator's own keys - `scenes/decorTool.js` DECOR_FREE_KEYS -
-  so the sweep that holds every raw key to its action, `test/inputmap.test.js` I2, refused `=`; it shipped on `;` until
+  letter and digit is bound, and `-`, `=` and `/` are the decorator's own keys - `scenes/decor/decorTool.js` DECOR_FREE_KEYS -
+  so the sweep that holds every raw key to its action, `test/scenes/inputmap.test.js` I2, refused `=`; it shipped on `;` until
   the merge of main, whose Come Sail Away took `;` for its lantern first (CSA-D) - the up arrow is read by no action in
   play).
 - **Court writs** (11): a region posts once its ground is witnessed - the service knows no hub (SEAT0 3.2), and a region
@@ -1756,14 +1757,14 @@ what was found (FACT):
   **FLAGGED**). **Dungeons** (`scenes/dungeonContext.js`): no herbs - their
   veins are PROF2's.
 - **The tool in the hand**: for the steady hand's length the classic lane's rig draws the Sickle as DFU's Tanto
-  (template 114), its idle frame, and nothing else (`combat/weaponRig.js` `actTool`, above the sheathe gates, as the
+  (template 114), its idle frame, and nothing else (`combat/weapon/weaponRig.js` `actTool`, above the sheathe gates, as the
   held map's classic lane takes the hands). **The Morrowind lane keeps its stance - FLAGGED**: its arm draws a modelled
   weapon, not a sprite, and no model of a sickle is attached.
-- **The pages**: the Professions and Stores pages are two more sections on the Stats page's rail (`ui/enhancedMenu.js`
-  statsSections, `ui/profPages.js`), shown online while the professions are the account's; a page gone (the switch,
+- **The pages**: the Professions and Stores pages are two more sections on the Stats page's rail (`ui/enhanced/enhancedMenu.js`
+  statsSections, `ui/professions/profPages.js`), shown online while the professions are the account's; a page gone (the switch,
   offline) is never drawn. The specialisation cards sit on the Professions page, a change armed and confirmed in place.
 - **Gentle acts** is a setting on the Professions page (`uiPrefs` `gentleActs`, off): the player's own, never the
-  online lane's (`systems/onlineLane.js` ONLINE_PLAYERS_OWN_PREFS).
+  online lane's (`systems/online/onlineLane.js` ONLINE_PLAYERS_OWN_PREFS).
 - **The hover** (8's World Tooltips line) is **not built**: the prompt says what a patch holds and what it needs
   (the herbs or the Basket, taken, the rank, the Sickle, the Basket, the Stores' room, the day's count).
 - **The pad and touch** (AUDIT 29, corrected: this line said they reach an act through Interact): the pad's A is the
@@ -1772,7 +1773,7 @@ what was found (FACT):
   built.
 - **Not here, named**: the held map's worked patches; an unbruised herb's Potent chance (PROF12 - the Stores keep no
   quality in PROF1).
-- **Pinned**: `test/prof1_law.test.js` (14), `test/prof1_service.test.js` (13), `test/prof1_client.test.js` (15);
+- **Pinned**: `test/systems/foraging/prof1_law.test.js` (14), `test/net/prof1_service.test.js` (13), `test/systems/prof1_client.test.js` (15);
   `tools/mutants/prof1.json`, 58 mutants, every one dead. The done-when is `prof1_client`'s DONE WHEN: an herb
   harvested through the real Worker, withdrawn into the pack, minted as DFU's own plant and mixed by DFU's recipe law.
 
@@ -1785,7 +1786,7 @@ instruction), and what was found (FACT):
   region signatures (4.7), the gems (4.6), smelting at a forge, the ores and ingots (610-630) and the stone (673-674)
   as items, the Prospector's compass, and the Court writs asking for metal and stone. **Not here, named**: the
   **Motherlodes** (section 6 - a relay room's socket check and the hub's warning; PROF2b) and **gate-touched ground**
-  (4.7 - the gate's pixel is the client's to find, `src/net/gateLaw.js`, and a receipt carries no pixel today, so
+  (4.7 - the gate's pixel is the client's to find, `src/net/gate/gateLaw.js`, and a receipt carries no pixel today, so
   three fighters cannot yet agree where it stood; PROF2b); Daedric smelting (its Daedra's Heart and Sigil Stone cannot
   enter the Stores until Hunting and the gate's gift put them there - law 3); the held map's marks; a vein's cracks.
 - **The kingdoms are one home.** FACT: nothing in the tree maps a region to a kingdom but SEAT0 4.3's table.
@@ -1806,7 +1807,7 @@ instruction), and what was found (FACT):
   Adamantium (the only open-world surface Adamantium). On a pixel not confirmed the slot is an ordinary vein - a
   signature is tier 4 to 6 and such a pixel's veins are worth tiers 1-3 (UNWITNESSED-ORE). The Marches keep their +25%.
 - **Where a node stands** (section 6: "the nearest suitable anchor"). FACT: World of Daggerfall is forced on for the
-  online lane (`src/systems/onlineLane.js`) and 209,436 of its 227,938 instances are `Rocks` layouts, 2,502
+  online lane (`src/systems/online/onlineLane.js`) and 209,436 of its 227,938 instances are `Rocks` layouts, 2,502
   `Mountains` (`03-World/World-Of-Daggerfall.md`), so every client of a room stands the same rock pieces. DECIDED: a
   **vein** stands at the foot of the rock-field piece nearest its law point (the piece's own box, on the side facing
   that point) where the pixel has one; else on the terrain's stone tile (tile 3, `terrainNature.js`) nearest its point
@@ -1819,9 +1820,9 @@ instruction), and what was found (FACT):
   node, and a field's few open sides ran out at two or three). The node's picture is its material's own
   item flat (TEXTURE.254, the metal's own, a new ore Lodestone's; a boulder's loose stone Lodestone's), a small
   cluster at the piece's foot, as PROF1's patches are the herb's own flat (law 6). VEIN-WASH
-  (`01-Overview/Field-Bugs-2026-10-11d.md`): an ore on a picture another ore shares wears its own wash
+  (`01-Overview/bugs/Field-Bugs-2026-10-11d.md`): an ore on a picture another ore shares wears its own wash
   (`scenes/mineHost.js` ORE_WASH - 4.8's "tinted per ore"); Lead keeps DFU's colours. VEIN-HUE
-  (`01-Overview/Field-Bugs-2026-10-12b.md`): every wash is its hue at full spread, Lodestone wears one of its own (the
+  (`01-Overview/bugs/Field-Bugs-2026-10-12b.md`): every wash is its hue at full spread, Lodestone wears one of its own (the
   boulder's loose stone is its lump, unwashed), and a washed vein's wash is its colour (`ORE_DYE`, `uBatchDye`: the
   lit flat's brightness in the wash's hue), not a multiply over the picture's own.
 - **The dungeon veins** (section 6): `1 + hash % 4` a dungeon a UTC day, a dungeon named by DFU's own identity
@@ -1856,7 +1857,7 @@ instruction), and what was found (FACT):
   the new ores (610-615), ingots (620-630) and stone (673 Rough, 674 Cut) are registered custom templates (as the Sigil
   Stone 570 is, `gateSpoils.js`), their pictures DFU's own (an ore Lodestone's, 254/66; an ingot Iron's, 254/63; stone
   Lodestone's) recoloured by DFU's own law - FACT, GetItemImage's ChangeDye with the metal's DyeColor over the
-  WeaponsAndArmor swatch (`systems/itemDye.js`, ItemHelper.cs:473-476) is how DFU colours an Ebony blade apart from an
+  WeaponsAndArmor swatch (`systems/item/itemDye.js`, ItemHelper.cs:473-476) is how DFU colours an Ebony blade apart from an
   Iron one - an ingot its metal's dye, an ore its metal's; stone is Lodestone's lump as it is. Brass (DFU 67) is
   smelted, tier 2.
 - **Smelting** (4.1): at a forge, no act - 2 of a raw metal make 1 ingot (Iron, Silver, and the six ores); Brass is 1
@@ -1866,7 +1867,7 @@ instruction), and what was found (FACT):
   Up to 100 a smelt. **The forge**: a Weaponsmith's or an Armorer's (50 gold a smelt, the use fee, paid from the purse)
   or a home's **forge** station - HOME-STATIONS grows a fourth craft (`DECOR_STATIONS`, its licence 50,000 gold as the
   alchemy station's - offered, sold and worked only where the Stores page is: online, the professions the account's,
-  AUDIT 29; on either skin since CLASSIC-PAGES). The Forge is a section of the Stores page (`ui/profPages.js`, the
+  AUDIT 29; on either skin since CLASSIC-PAGES). The Forge is a section of the Stores page (`ui/professions/profPages.js`, the
   Enhanced pause menu; CLASSIC-PAGES, 2026-09-30: a door pressed for a professions page - the Professions key, the down arrow, or
   a station - opens that page on the classic skin too, `ui/pauseDoor.js` openPauseFlow), live while
   the player stands inside a Weaponsmith's or an Armorer's (`scenes/worldModes.js` forgeHere; the fee paid on the
@@ -1879,7 +1880,7 @@ instruction), and what was found (FACT):
   has boulders. Never an ingot, Cut Stone or a gem (smelted, cut or found, not the ground's). A metal's or stone's writ
   XP is Mining's.
 - **The Prospector** (3.3): the veins stood within 200 m (500 since MINE-PERKS, section 43; a dungeon's still 200) are marked on the compass, both skins, beside the party's
-  marks (`ui/hud.js`, `ui/enhancedHud.js`). The held map's marks are not built (as PROF1's patches'). NODE-MARKS
+  marks (`ui/hud/hud.js`, `ui/enhanced/enhancedHud.js`). The held map's marks are not built (as PROF1's patches'). NODE-MARKS
   (section 31) since: every node is marked within 150 m, and the Prospector's veins from 200 m - the mine kind's own
   `mark` (`PROSPECTOR_MARKS`).
 - **One gathering host.** FACT: the streaming world's Herbalism was one host (`scenes/herbHost.js`), and every
@@ -1898,7 +1899,7 @@ As built:
 - **The four hosts** (17.1). **The streaming world** stands every kind through `scenes/gatherHost.js`: Herbalism is
   `herbKind` (`scenes/herbHost.js`), Mining `mineKind` (`scenes/mineHost.js`). A built pixel carries its rock pieces
   (`rocks`: the boxes of World of Daggerfall's placements named `Rocks` or `Mountains` that stood - after the road's
-  clearance - `world/worldOfDaggerfall.js` picks now carry their name). **The fixed city** - **FLAGGED by name**, as
+  clearance - `world/worldOfDaggerfall/worldOfDaggerfall.js` picks now carry their name). **The fixed city** - **FLAGGED by name**, as
   PROF1's. **Building interiors**: the forge (above). **Dungeons**: `scenes/dungeonContext.js` hands the host its
   identity (`MapId & 0xfffff`, none for a spawned dungeon), its wall ray (`veinWall`: from a foe marker at chest
   height, a near-vertical face within 12 m) and its own flats' doors; the mode machine tells the host a dungeon was
@@ -1916,12 +1917,12 @@ As built:
 - **A PROF1 pin that proved nothing half the time** (FOUND, fixed): the Stores-overflow pin's harvest rolled 1 to 3, and
   a roll of 1 fits one unit of room with or without the cut - its mutant survived at random. The pin steers the
   service's dice to their top.
-- **Pinned**: `test/prof2_law.test.js` (11), `test/prof2_service.test.js` (9), `test/prof2_client.test.js` (14);
+- **Pinned**: `test/net/prof2_law.test.js` (11), `test/net/prof2_service.test.js` (9), `test/net/prof2_client.test.js` (14);
   `tools/mutants/prof2.json`, 40 mutants, every one dead. The done-when is `prof2_client`'s DONE WHEN: a confirmed
   Wayrest pixel's first vein stood at its rock piece is Mithril, mined through the real Worker, smelted at a forge into
   a Mithril Ingot and withdrawn as its registered template.
 - **FIELD BUGS 2026-10-01 part four** ("minig is broken doesnt work"; Mac: "Also mining, the life skill, is broken";
-  `01-Overview/Field-Bugs-2026-10-01.md`): an act's strike is either button (ACT-CLICK - mid-act a left click had been
+  `01-Overview/bugs/Field-Bugs-2026-10-01.md`): an act's strike is either button (ACT-CLICK - mid-act a left click had been
   the act's and nothing else) and a finger's or a pad's Attack or a tap (ACT-TOUCH, `scenes/gatherHost.js` strike - the
   hooks had refused every such press mid-act, so no vein was ever mined on a phone or a pad); a node is found anywhere up
   its upright, base to aim point - a boulder by its stones - and of the nodes in the cone the first SEEN nearest the look
@@ -1941,7 +1942,7 @@ Mac: **"Lets keep moving"** (PROF3 after the merge of main). What the design abo
   695 is PROF6b's - AUDIT 31 R8: PROF6 gave it its own slice, 28 - and the Motherlode's, PROF2b), a seat's Forge step (SEAT2b - AUDIT-SEATS: it said SEAT1b), listing and trading a provenance
   item (PROF5, and TRADE1's hand-over, section 18), Disenchanting and enchanting a provenance item (PROF12).
 - **The anvil is the forge's other half.** FACT: "the forge stands since PROF2" (section 15) - a Weaponsmith's or an
-  Armorer's, or a home's forge station, the Stores page's Forge section (`ui/profPages.js`). DECIDED: the anvil stands
+  Armorer's, or a home's forge station, the Stores page's Forge section (`ui/professions/profPages.js`). DECIDED: the anvil stands
   wherever the forge does - smelting is the forge's, smithing the anvil's - as its own section of the Stores page (named,
   not pictured - as built, below). A smith's anvil asks the forge's use fee (50 gold a craft, the purse's); a home's
   asks none. The fee rides the kept craft (`net/profBook.js` craft's `fee`) and is paid by the tab that mints its
@@ -1990,12 +1991,12 @@ Mac: **"Lets keep moving"** (PROF3 after the merge of main). What the design abo
 - **The product record** (9.1): `p1.<claims>.<signature>` - the provenance id (16 hex digits, the service's CSPRNG,
   unique across the server), the account, the character, the recipe, the quality, the maker and the seed, and `a: 1`
   where the piece bears its maker's mark (a Masterwork, or a Master Joiner's furniture - AUDIT 30, so the name is the
-  service's word too) - signed with the account service's identity key (a raid receipt's shape, `net/raidReceipt.js`:
+  service's word too) - signed with the account service's identity key (a raid receipt's shape, `net/raid/raidReceipt.js`:
   the version inside the signed bytes, claim fields disjoint from every other signed shape's). The maker's name is
   `recipeLaw.js` makerName's (controls and lone surrogates dropped, 32 characters, no pair split), and a record longer
   than its reader's 512 is never minted (AUDIT 30). The service keeps it in `products` (section 14: provenance,
   owner, template, material, quality, maker, made at) and the piece carries only its id - a signature is longer than the
-  trade wire's string bound (FACT, `systems/loot.js` validLootItem: 128).
+  trade wire's string bound (FACT, `systems/loot/loot.js` validLootItem: 128).
 - **The heat** (9.4): at the anvil, the ingot's glow rises and falls; strike three times while it is in the band. The
   band's width is Smithing's attribute pair, (STR + AGI) / 2, on Foraging's four bands (5.1). Space, Enter or a click
   strikes; Esc lets the act go with nothing spent. Three strikes in the band are a clean act (one step); fewer are a
@@ -2027,13 +2028,13 @@ As built:
   `wind.js` seededRng - the same generator the gate's and the raid's spoils roll with); `quality`, `provenance`, `maker`
   and a kit's `kitMetal` are declared item fields (`itemFields.js`). A Masterwork's long name is its mark before its
   material (`itemInfo.js` itemNameParts); a crafted piece's tooltip and card open with its quality and "Made by" line
-  (`recipeLaw.js` pieceLines, `ui/itemScroller.js`, `ui/enhancedInventory.js`).
+  (`recipeLaw.js` pieceLines, `ui/item/itemScroller.js`, `ui/enhanced/enhancedInventory.js`).
 - **The book** (`net/profBook.js`) KEEPS a craft before it asks it - its pieces are the save's once the service answers,
   so a lost answer is asked again (the same id; the service's row answers the same pieces) and the pieces are minted on
   the answer, once: the tab that lets the craft go mints it (AUDIT 29 C5's law), and the host mints a piece only when the
   pack holds no piece of its provenance (`scenes/world.js` profMintCraft). A kept craft is settled where a kept
   withdrawal is (the Stores page opened, the book's settle). One craft at a time.
-- **The anvil** is a section of the Stores page under the Forge (`ui/profPages.js` drawAnvil): the families (Weapons,
+- **The anvil** is a section of the Stores page under the Forge (`ui/professions/profPages.js` drawAnvil): the families (Weapons,
   Armour, Tools, Repair Kits) and the metals, each recipe with "can make now", "wants its inputs" or the rank it asks;
   the chosen recipe's inputs as the Stores hold them, and at a smith's forge a "Buy N from the smith" beside a short
   fitting; the odds at the smith's margin; **Craft** (the heat, unless Gentle acts) and **Quick craft**. The heat is a
@@ -2043,7 +2044,7 @@ As built:
   smith's fee the purse cannot meet is not offered: "The smith asks 50 gold a craft; you carry N." The piece's picture
   of DFU's anvil (INVE's) is not drawn - FACT: the Stores page is the Enhanced menu's DOM, and DFU's container images
   are classic-window art (`ui/targetIconPanel.js`), so the section is named, not pictured.
-- **The Repair Kit** (692) is registered with the ores and ingots (`systems/profTemplates.js`), DFU's Warhammer's world
+- **The Repair Kit** (692) is registered with the ores and ingots (`systems/professions/profTemplates.js`), DFU's Warhammer's world
   picture dyed by its metal. DECIDED: **used from the pack, it mends the most-worn weapon or armour of its metal** (the
   lowest share of its condition left, an equipped piece first on a tie) by a quarter of its condition, never past three
   quarters (KIT-CEILING, 2026-10-01 - whole until then; `06-Systems/Economy-Arc.md`), and is spent; with nothing of its
@@ -2051,7 +2052,7 @@ As built:
   picker was the decision here (DFU's use is one press); MEND-AIM put one over it - the worn pieces first, and "Mend
   which?" when there is a choice. Offline as online - a kit is the pack's (`scenes/shared.js` installs its use in every
   host).
-- **Pinned**: `test/prof3_law.test.js` (6), `test/prof3_service.test.js` (5), `test/prof3_client.test.js` (7);
+- **Pinned**: `test/net/prof3_law.test.js` (6), `test/net/prof3_service.test.js` (5), `test/systems/prof3_client.test.js` (7);
   `tools/mutants/prof3.json`, 59 mutants, every one dead (AUDIT 32 R6: 57 dead and two recorded equivalent since PROF7 -
   the stock's "never withdrawn" gate, law and service, has nothing left to refuse). The done-when is `prof3_client`'s DONE WHEN: a Mithril
   Longsword's Cured Leather bought from the smith for Marks and the sword made at the anvil with a clean heat through the
@@ -2070,7 +2071,7 @@ Mac's instruction - "make the decisions ... This is your baby"), and what was fo
   arrows (Hunting's feathers, PROF7), the Ram Kit's making and use (its Bear Hides are Hunting's, its siege SEAT2's),
   Siegewright (SEAT2), the held map's marks, "Craft x N" (9.3's third button - neither station has it yet).
 - **FOUND - PROF3 left Smithing unpractised on the Professions page.** The page's list of practised professions
-  (`ui/profPages.js` PRACTISED) held Herbalism and Mining alone, so Smithing's four specialisation cards stood locked
+  (`ui/professions/profPages.js` PRACTISED) held Herbalism and Mining alone, so Smithing's four specialisation cards stood locked
   and its pane still said "the rest of the craft comes later" - the service took the choice (`chooseSpec` asks no such
   list); the page never offered it. Smithing, Logging and Carpentry are practised now, each with its unlocks by tier.
 - **The woods** (4.2), each climate's: Woodlands Oak and Cherry; MountainWoods Pine and Oak; Mountain Pine; Swamp Oak;
@@ -2088,7 +2089,7 @@ Mac's instruction - "make the decisions ... This is your baby"), and what was fo
   `PINE_WOOD`); an unconfirmed Rainforest or Subtropical pixel stands its Pine and nothing past it - still no Teak on
   anyone's word. The Court's writ table names that Pine. The Mountain and Mountain Woods are untouched.
 - **Where a tree stands** (section 6: "a tree flat for a tree"). FACT: the streaming world lays out Daggerfall's own
-  nature flats per pixel from a seeded roll (`world/terrainNature.js` layoutNature - every client the same forest), one
+  nature flats per pixel from a seeded roll (`world/terrain/terrainNature.js` layoutNature - every client the same forest), one
   merged billboard batch per (archive, record) (`scenes/world.js`), and nothing kept which flat was a tree. FACT: World
   of Daggerfall names the nature records (`vendor/world-of-daggerfall/Scripts/LocationHelper.cs` billboards: 504's trees
   12-18, 25 and 30, its trunks 19-20, its logs 31; each climate archive's own), and a winter archive is its summer
@@ -2171,7 +2172,7 @@ Mac's instruction - "make the decisions ... This is your baby"), and what was fo
   planes plain.
 - **The furniture goes to DECOR.** FACT: DECOR2b keeps a player's furniture in the save's `furnishings` (`scenes/
   worldModes.js` decorHome), its "Your things" rows, set down free as any model of its kind the owner chooses
-  (`systems/decorFurnish.js`); a piece of furniture in the pack is never offered. DECIDED: a crafted table, chair or bed
+  (`systems/decor/decorFurnish.js`); a piece of furniture in the pack is never offered. DECIDED: a crafted table, chair or bed
   is minted into the furnishings, as the furnisher's delivery is, and DECOR places it - the done-when. **Its mark goes
   with it**: a set-down piece's descriptor (`net/decorLaw.js` decorItemOf) carries its provenance id, and the account
   service writes the maker's mark into the placed row only from its own `products` row - the owner's, the template's -
@@ -2207,8 +2208,8 @@ As built:
   508, 510; LOGS_ARCHIVES 504, 508 - AUDIT 30 R13). The fall is the billboard shader's (`render/renderer.js` `uTip`:
   the way it falls, away from the player, and the angle it has leaned, FALL_ANGLE over FALL_S's 1.5 s, the batch then
   destroyed - no fade, AUDIT 30 R10), its shadow dropped. The ring and its meter are
-  `systems/chopAct.js` and `ui/profHud.js` (a bar under reduced motion); the Wood-Axe in the hand is DFU's War Axe.
-- **The workbench** is a section of the Stores page beside the Forge and the Anvil (`ui/profPages.js` drawWorkbench):
+  `systems/chopAct.js` and `ui/professions/profHud.js` (a bar under reduced motion); the Wood-Axe in the hand is DFU's War Axe.
+- **The workbench** is a section of the Stores page beside the Forge and the Anvil (`ui/professions/profPages.js` drawWorkbench):
   the saws of the logs held, the families (Staves, Bows, Arrows, Furniture, Tools, Siege) and the woods, each recipe's
   inputs as the Stores hold them, a bed's Linen bought from the furnisher, "Use a Heartwood" where a recipe takes one,
   **Craft** (the plane, unless Gentle acts) and **Quick craft**. It stands at a Furniture Store (50 gold a craft or a
@@ -2220,8 +2221,8 @@ As built:
   arrows twenty in one stack with no provenance, furniture DFU's template worth its quality's condition multiplier and
   marked by its record; a marked piece's name is its maker's (`itemInfo.js`, `itemFields.js` `marked`). Furniture is
   minted into `playerEntity.furnishings`, never the pack (`scenes/world.js` profMintCraft), and DECOR's descriptor
-  carries its provenance and mark (`systems/decorItems.js`).
-- **Pinned**: `test/prof4_law.test.js` (8), `test/prof4_service.test.js` (6), `test/prof4_client.test.js` (8);
+  carries its provenance and mark (`systems/decor/decorItems.js`).
+- **Pinned**: `test/net/prof4_law.test.js` (8), `test/net/prof4_service.test.js` (6), `test/systems/prof4_client.test.js` (8);
   `tools/mutants/prof4.json`, 87 mutants, 86 dead and one recorded equivalent (the chops' floor of three, which no
   tree's count reaches today). The done-when is `prof4_client`'s DONE WHEN: an Oak felled, its logs sawn at the
   workbench, a Small Oak Table made through the real Worker and minted among the home's things, listed by DECOR, set
@@ -2254,7 +2255,7 @@ Mac's instruction - "make the decisions ... This is your baby"), and what was fo
   fast travel's worth - the Stores are the character's in every town, so an honest player who travels buys "here" too
   - and the courier is the price of not going.
 - **The courier's road is witnessed** (SEAT0 3.2, "every fact the servers need that only ARENA2 knows"). FOUND: the
-  hubs are the client's alone (`systems/regionHubs.js`, HUB1) and the service holds no map pixel. DECIDED: a new kind
+  hubs are the client's alone (`systems/region/regionHubs.js`, HUB1) and the service holds no map pixel. DECIDED: a new kind
   in `world_witness`, **`hub`** - keyed by the region, its report the hub town's map pixel (`x,y`) - written from a
   week-old registered account, as a harvest writes its pixel: a listing, an order and a fill write the board's
   region's hub alone, a purchase both ends' (each client derives every region's hub from its own MAPS.BSA, so it can
@@ -2388,10 +2389,10 @@ Mac's instruction - "make the decisions ... This is your baby"), and what was fo
   kept craft (PROF3) was settled only when a withdrawal was kept beside it - `pendingCrafts` had no reader - so a craft
   whose answer was lost waited for an unrelated withdrawal; the Stores page settles either now, and the Market tab
   settles its own.
-- **FOUND: PROF4's plane was drawn undressed.** Its board's SVG (`ui/profPages.js` planeBoard) carries the classes
+- **FOUND: PROF4's plane was drawn undressed.** Its board's SVG (`ui/professions/profPages.js` planeBoard) carries the classes
   `prof-board`, `prof-grain`, `prof-trail`, `prof-boardhead` and `prof-plane`, and no rule in `src/` dressed them - an
   SVG polyline with no rule paints its fill black and its line not at all, so the grain was a black shape and the
-  player's stroke invisible. Dressed here (`ui/enhancedPlusStyle.js` PROF_CSS): the board its height and
+  player's stroke invisible. Dressed here (`ui/enhanced/enhancedPlusStyle.js` PROF_CSS): the board its height and
   `touch-action: none`, the grain and the trail as lines, the head a pale band.
 - **The service** is `acct25`; `0032_market.sql` holds the listings, the sales (a purchase's row, its courier and its
   arrival), the orders and their fills, the price table, the reports, the deliveries (a piece's arrival or return) and
@@ -2434,7 +2435,7 @@ As built:
 - **The book** is `net/marketBook.js`; every answer's balance goes to the Marks book, so the Bank's counter and the
   account card read the same Marks, and the Stores counts it carries (`store`, `stores`) to the professions book
   (AUDIT 30).
-- **Pinned**: `test/prof5_law.test.js` (7), `test/prof5_service.test.js` (8), `test/prof5_client.test.js` (6);
+- **Pinned**: `test/net/prof5_law.test.js` (7), `test/net/prof5_service.test.js` (8), `test/net/prof5_client.test.js` (6);
   `tools/mutants/prof5.json`, 109 mutants, 105 dead and four recorded equivalent (the listing fee's floor, which no
   listing's worth reaches; the catalogue's filter, which every key the unyielded leave passes today; a reader's report
   count, dropped twice; since AUDIT 30 S7, a load's room guard at its delivery, which the settle's read now keeps).
@@ -2538,12 +2539,12 @@ As built:
   race test's two bids at once were served one after the other by the harness, so it proved nothing of the guard - it
   is now staged (Bob's decision waits while Cid's whole bid lands); `MARKS1-13` aimed at `0025_marks.sql`'s trigger,
   which `0032_market.sql` rebuilt, and survived since PROF5 - re-aimed at the live one, dead.
-- **Pinned**: `test/prof5b_law.test.js` (3), `test/prof5b_service.test.js` (5), `test/prof5b_client.test.js` (4);
+- **Pinned**: `test/net/prof5b_law.test.js` (3), `test/net/prof5b_service.test.js` (5), `test/net/prof5b_client.test.js` (4);
   `tools/mutants/prof5b.json`, 44 mutants (AUDIT PROF-541 R2-S4's four among them), 39 dead and five recorded equivalent (the raise's floor of a Mark, which the
   ceiling of 5% of a whole Mark already gives; the post's Masterwork guard, the cancel's standing-bid word, the bid's
   leader word and its low word - each an early refusal whose decision asks the same). AUDIT 31 R5: the last two were
   NOT equivalent - the early words come before the courier's road, so a leader's bid under the next, or a low bid from
-  a board with no known road, said the road; pinned (`test/audit31_service.test.js`), they are dead now (37 dead, three
+  a board with no known road, said the road; pinned (`test/net/audit31_service.test.js`), they are dead now (37 dead, three
   equivalent).
 - **AUDIT 31** (Online-Arc "AUDIT 31") corrected this section in place, each line marked. **The four hosts** (17.1 -
   AUDIT 31 H7: this section did not say): the streaming world wires the Auctions view as it wires the Market tab (26);
@@ -2572,7 +2573,7 @@ Mac's instruction - "make the decisions ... This is your baby"), and what was fo
   commission move Marks, so they are open where the professions and the Marks both are; the note's button where the
   board also is. No switch of its own.
 - **Guild writs - who posts.** The **Guildmaster**, or an **Officer** within the guild's **writ budget** for the week
-  (11) - GUILD1's ranks, FACT integers (0 Guildmaster, 1 Officer, `src/net/guildLaw.js`); a Member or Recruit never
+  (11) - GUILD1's ranks, FACT integers (0 Guildmaster, 1 Officer, `src/net/guild/guildLaw.js`); a Member or Recruit never
   (`guild-rank`). The budget is the Guildmaster's to set on the Guild tab, 0 to 10,000,000 Marks (the Marks cap),
   **0 until set** (so an Officer posts nothing a Guildmaster did not allow); it is one budget for the guild's Officers
   together, spent by the escrow of what they post in the week (a withdrawn writ's escrow stays spent - the budget
@@ -2729,7 +2730,7 @@ As built:
   (now the ledger's escrow end); a commission's fill wrote its piece's delivery and its lines `FROM commissions WHERE
   EXISTS (...)` - every commission row while the guard held (caught by the refusals pin before it shipped); dropping
   `board_notes` for its rebuild would have cascaded its reports away (they ride a copy across).
-- **Pinned**: `test/prof6_law.test.js` (4), `test/prof6_service.test.js` (7), `test/prof6_client.test.js` (7);
+- **Pinned**: `test/net/prof6_law.test.js` (4), `test/net/prof6_service.test.js` (7), `test/net/prof6_client.test.js` (7);
   `tools/mutants/prof6.json`, 77 mutants, 76 dead and one recorded equivalent (the budget's early rank word, whose
   decision asks the rank itself). The done-when is `prof6_service`'s DONE WHEN, through the real Worker; `prof6_client`'s
   the books'.
@@ -2738,8 +2739,8 @@ As built:
   things, wagon, a repairer's hands), and the Guild tab's guild Stores wherever the social panel opens; the fixed city
   keeps DFU's board (NOTICE1's flag); the interiors and dungeons have no boards.
 - **AUDIT 31** (Online-Arc "AUDIT 31") corrected this section in place, each line marked; its pins are
-  `test/audit31_law.test.js`, `test/audit31_service.test.js`, `test/audit31_client.test.js` and
-  `test/audit31_tabs.test.js`, its mutants `tools/mutants/audit31.json`.
+  `test/net/audit31_law.test.js`, `test/net/audit31_service.test.js`, `test/net/audit31_client.test.js` and
+  `test/ui/audit31_tabs.test.js`, its mutants `tools/mutants/audit31.json`.
 
 ## 29. PROF7 - Hunting, the Skinning Knife and Outfitting, as built (SHIPPED 2026-09-30, live since SWITCH-ON)
 
@@ -2754,7 +2755,7 @@ Mac: **"Do it"** (2026-09-29, PROF7 after the VEIN-NEED fix: "What was next on t
   **Trophy Hunter** ("a trophy decor piece from a tier 5+ kill"), **Couturier** ("two-colour dyes") and **Saddler**
   ("a wagon upgrade of +100 kg") are named and never chosen (`later`, as the Motherlode Sense is and the Siegewright was until SEAT2b part two) -
   FACT: DFU gives each nothing to stand as - no trophy piece exists among its templates; a DFU garment takes ONE dye (its
-  `dye` field, `systems/itemDye.js`); DFU's wagon has one limit, the Horse Cart's. Each waits on Mac's word for what it
+  `dye` field, `systems/item/itemDye.js`); DFU's wagon has one limit, the Horse Cart's. Each waits on Mac's word for what it
   should be.
 - **The switches**: none of its own - the professions', live for everyone since SWITCH-ON (`PROFESSIONS_OPEN = "on"`).
 - **"A body your own blow felled"** (5.2). FACT: no body records its killer - the loot handlers hear a death with no
@@ -2827,7 +2828,7 @@ Mac: **"Do it"** (2026-09-29, PROF7 after the VEIN-NEED fix: "What was next on t
   fully encumbered!"); never inside and never the daylight - AUDIT 32 H6: underground, the dungeon's own foes are the
   foe near (the host answered none there, for the knife and PROF2's dungeon Pick-Axe alike). Foraging's check law is one home (`foragingLaw.js`
   checksRefusal): the knife names its order and its lines (`professionLaw.js` KNIFE_CHECKS, KNIFE_REFUSALS).
-- **The Skinning Knife** (603, 4.8; FORAGE0 14.2): registered with the professions' rows (`systems/profTemplates.js`) -
+- **The Skinning Knife** (603, 4.8; FORAGE0 14.2): registered with the professions' rows (`systems/professions/profTemplates.js`) -
   UselessItems2, rarity 10, one to a slot, **0.5 kg, 50 uses, 100 gold**, DFU's Dagger's picture (TEXTURE.207 record
   5); **shelved online only** by DFU's own custom-item loop - General Stores and Pawn Shops, as Foraging's six are
   (law 6's exception, for 603); **made at the anvil** (9.3: 1 Iron Ingot, 1 Pine Plank, rank 0), its quality its life;
@@ -2916,9 +2917,9 @@ As built:
   and `systems/stitchAct.js`, pure.
 - **The client**: `scenes/huntHost.js` (the stamps, a pool's bodies, the plan, the kind, a Tracker's marks) in
   `scenes/gatherHost.js` (loose nodes: a kind's own places, the act following its body, the harvest's `ask`, the chip's
-  tally); the trace's meter on the HUD (`ui/profHud.js`); the Loom on the Stores page and Hunting and Outfitting
-  practised on the Professions page, Hunting's day the account's (`ui/profPages.js`); the knife's row, shelves and mint
-  (`systems/profTemplates.js`, `systems/smithItems.js`); the hides, parts and butchery withdrawn (`systems/profItems.js`);
+  tally); the trace's meter on the HUD (`ui/professions/profHud.js`); the Loom on the Stores page and Hunting and Outfitting
+  practised on the Professions page, Hunting's day the account's (`ui/professions/profPages.js`); the knife's row, shelves and mint
+  (`systems/professions/profTemplates.js`, `systems/smithItems.js`); the hides, parts and butchery withdrawn (`systems/professions/profItems.js`);
   the wiring in `scenes/world.js` (the kill listener, the street's and the dungeon's bodies, the loom's provider, a
   craft's station by its profession, the Weavers' counter by name, a Butcher's meat, the Tracker's marks) and
   `scenes/worldModes.js` (`loomHere`).
@@ -2928,7 +2929,7 @@ As built:
   region into the witness statement - D1 binds no `undefined` (caught by the service pin before it shipped). A craft's
   station, its keeper, its words and its kept line are one table now (`world.js` craftStation), where the anvil's and
   the workbench's were two branches of every sentence.
-- **Pinned**: `test/prof7_law.test.js` (11), `test/prof7_service.test.js` (7), `test/prof7_client.test.js` (9);
+- **Pinned**: `test/net/prof7_law.test.js` (11), `test/net/prof7_service.test.js` (7), `test/systems/prof7_client.test.js` (9);
   `tools/mutants/prof7.json`, 119 mutants, 118 dead and one recorded equivalent (the witness's `!isBody`, which the
   witness table's NOT NULL key also holds). The earlier lists re-aimed by content where PROF7 moved their code (twenty),
   and two of PROF3's recorded equivalent: its "the stock is never withdrawn" gate has nothing left to refuse. The
@@ -2959,7 +2960,7 @@ As built:
   nearby". THE FOUR HOSTS: `world.js` (the street) and `worldModes.js` (a building; a dungeon through
   `dungeonContext.js`, unchanged) skin; `exterior.js` - FLAGGED by name: the fixed city stands no professions. NOT DONE:
   a building's body is no NODE-MARK - neither on the compass nor in the glow (`world.js` nodeMarksAt keeps "null in a
-  building"), and a Tracker marks the street's animals alone. Pinned: `test/fb1007_indoorskin.test.js` (4) - the
+  building"), and a Tracker marks the street's animals alone. Pinned: `test/systems/quest/fb1007_indoorskin.test.js` (4) - the
   quest's own Foe resources parsed from the vendored script, stood by the real pool's `spawnFoe` as
   tryPlaceInteriorQuestFoe stands them and felled through its damage door; `tools/mutants/fb1007_indoorskin.json`, 13
   mutants, 13 dead. Re-aimed by content: fifteen records of ten lists (the dungeon's three ladder arms and its VEIN-NEED
@@ -3028,7 +3029,7 @@ asked). What sections 5.2, 6 and 3.3 left open for PROF8, DECIDED here, and what
   state and every haul's answer say the account's hauls today.
 - **Found and FLAGGED, not built here**: the net is not drawn in the hand (5.1's "the item's own picture" on the classic
   lane - the act's `hand` is none, as the Basket's).
-- **Pinned**: `test/prof8_law.test.js` (7), `test/prof8_service.test.js` (3, through the real Worker), `test/prof8_client
+- **Pinned**: `test/net/prof8_law.test.js` (7), `test/net/prof8_service.test.js` (3, through the real Worker), `test/prof8_client
   .test.js` (12). Mutants: `tools/mutants/prof8.json` (34, all dead).
 
 ## 31. NODE-MARKS - every node on the compass, and its glow, as built (BUILT 2026-10-01)
@@ -3062,8 +3063,8 @@ and nothing in the world set a node apart from the ground about it. DECIDED here
   told from them by shape alone (diamonds on the strip's middle; a ship's triangle points up, a node's down).
 - **The compass, both skins.** The party's 5x3 triangle and the Detect markers' bearing law (clamped), each in its
   profession's colour, the nearer brighter (`nodeMarkAlpha`: whole at the feet, 45% dimmer at its reach), the nearest
-  drawn last, over the rest - the classic box (`ui/hud.js` drawNodeCompassMarks) and the enhanced strip
-  (`ui/enhancedHud.js`, a pooled `hud-node` a node) - and UNDER every other mark (AUDIT, below). A Tracker's animals ride the same list in Hunting's colour. The
+  drawn last, over the rest - the classic box (`ui/hud/hud.js` drawNodeCompassMarks) and the enhanced strip
+  (`ui/enhanced/enhancedHud.js`, a pooled `hud-node` a node) - and UNDER every other mark (AUDIT, below). A Tracker's animals ride the same list in Hunting's colour. The
   drawHud option is `nodes` (it was `veins`). The street's frame hands it (`world.js` professionMarks), and the
   dungeon's at its own feet (`dungeonContext.js`, through `worldModes.js` `nodeMarks` and the host's
   `professionMarks`).
@@ -3083,14 +3084,14 @@ and nothing in the world set a node apart from the ground about it. DECIDED here
 - **Not built, named**: the held map's node marks (section 21's "the held map marks the patches and veins a character
   has worked before" - still as PROF1 and PROF2 left it); no setting turns the glow or the marks off (the professions'
   own switch does).
-- **Pinned**: `test/nodemarks.test.js` (19); `tools/nodeGlowProbe.mjs` compiles, links and draws the glow in a real WebGL2
+- **Pinned**: `test/scenes/nodemarks.test.js` (19); `tools/nodeGlowProbe.mjs` compiles, links and draws the glow in a real WebGL2
   context over a stand-in node and wall, and through the world host's own pass with the renderer's typed camera, and
   reads the frame back (14 checks). Mutants: `tools/mutants/nodemarks.json` (58, all dead).
 
 ### AUDIT NODE-MARKS (2026-10-01, Mac: "Audit this")
 
 Two lanes: the author's own adversarial re-read, and an independent pass that read the commit cold. FOUND, each fixed and
-pinned (`test/nodemarks.test.js`, `tools/mutants/nodemarks.json`):
+pinned (`test/scenes/nodemarks.test.js`, `tools/mutants/nodemarks.json`):
 
 - **HIGH - no node was ever marked in play, and a Prospector's veins went with them** (the independent pass). The host's
   `marks` refused any feet that were not a plain Array (`Array.isArray(pos)`), and the player's feet are the motor's
@@ -3106,7 +3107,7 @@ pinned (`test/nodemarks.test.js`, `tools/mutants/nodemarks.json`):
 - **MEDIUM - the compass lost every mark under the travel view.** One gate (`nodeMarksAt`) served the compass and the
   glow, and the compass is drawn under the view (only the reticle hides) - PROF2's Prospector's veins had shown there.
   FIXED: the compass keeps them; the glow alone is gated, at its hook.
-- **MEDIUM - the glow moved under reduced motion.** The professions' own law (`ui/profHud.js`: every act has a still
+- **MEDIUM - the glow moved under reduced motion.** The professions' own law (`ui/professions/profHud.js`: every act has a still
   form for the system's reduced motion) was not kept: the halo breathed, the shimmer climbed, the motes rose. FIXED: a
   still form (`uStill`) - the halo steady, no shimmer, every mote held at its own place - read once a second, as the
   professions' HUD reads it.
@@ -3139,7 +3140,7 @@ NOT CHANGED, named: the large HUD marks no node, as it marks no mate.
 
 ## 32. AUDIT 2026-10-01 part four - the professions sound (Mac: "let's do a comprehensive audit on this and also ensure the other professions are sound")
 
-Five lanes and a re-read; the record and every finding's reproduction are `01-Overview/Field-Bugs-2026-10-01.md` part
+Five lanes and a re-read; the record and every finding's reproduction are `01-Overview/bugs/Field-Bugs-2026-10-01.md` part
 four (its last section). What the arc's laws now say, by section:
 
 - **5 (the acts)**: **ANY-HOUR** - no act keeps hours (above). An act's strike is never a held stroke's repeat (the Plus
@@ -3173,7 +3174,7 @@ four (its last section). What the arc's laws now say, by section:
 Mac: "They should use the same menu the loot menu uses and not an interaction button" (asked, "One loot-style list");
 then, of the illustrated panels PROF-SCENES built, "move away from the overcomplicated minigame visuals and instead use
 the mechanics on something that doesnt cover the screen" (asked, "Around the crosshair"; the stations, "keep them
-simple"). The record is `01-Overview/Field-Bugs-2026-10-01d.md`; every act's rules, timings and report are 5's and 8's,
+simple"). The record is `01-Overview/bugs/Field-Bugs-2026-10-01d.md`; every act's rules, timings and report are 5's and 8's,
 unmoved.
 
 - **The list (PROF-MENU).** A node under the look is the world plaque's list, the loot pile's own: its name, its
@@ -3182,15 +3183,15 @@ unmoved.
   click, the activate key, a tap - and a hold-act so started is held by the press, as a tool's Use holds it. ActChoice
   walks the rows. Without the plaque (classic, touch) a list window asks. 21's prompt stays the fallback's line.
 - **The act (PROF-RETICLE, replacing PROF-SCENES).** No box and no title: each act's mechanic on and about the reticle
-  (`ui/profReticle.js`, `ui/profActStyle.js`) through the frame's own lens (`ui/worldPlaque.js` `reticleAnchor`) -
+  (`ui/professions/profReticle.js`, `ui/professions/profActStyle.js`) through the frame's own lens (`ui/worldPlaque.js` `reticleAnchor`) -
   the mine's points and the knife's line where they stand on the node, the glint's double reach and the trace's
   tolerance at their true size; the chop's ring, the hold's arc, the Basket's glint, the float and the haul's bar about
   the crosshair; the count's pips and one hint under it that fades after 2.5 s unchanged. Still forms under reduced
-  motion; every cue a sound (`systems/profSounds.js` - GATHER-FEEL, section 44: the gathering's ear says them now,
+  motion; every cue a sound (`systems/professions/profSounds.js` - GATHER-FEEL, section 44: the gathering's ear says them now,
   `systems/gatherSounds.js`, the HUD none).
 - **The stations (PROF-STATIONS).** The heat, the stitch's beat and the plane keep their bars and rules, dressed in the
-  plaque's frame and the kit's tones (`ui/profStationStyle.js`); no pictures.
-- **The mouse (HERB-CURSOR, `01-Overview/Field-Bugs-2026-10-02.md` part four, and its audit).** The Basket's glints
+  plaque's frame and the kit's tones (`ui/professions/profStationStyle.js`); no pictures.
+- **The mouse (HERB-CURSOR, `01-Overview/bugs/Field-Bugs-2026-10-02.md` part four, and its audit).** The Basket's glints
   stand about the crosshair, where the look cannot put them under it: its act holds the cursor free while it plays (no
   hold with a pad in hand) and hands the look back at its end - an Escape's on its keyup (`scenes/gatherHost.js`
   `ACT_POINTER`/`actPointer`, `player/pointerLock.js` `holdCursor`); its hint is "click the glint". The mine's points,
@@ -3198,9 +3199,9 @@ unmoved.
   stays taken. The ring, the hand and the steady hold need neither, and an act played gently nothing (but the net's
   throw). Any press while a glint shows still finds it (5's rule, unmoved).
 
-`test/profreticle.test.js` (10), `test/fb0930b_toolsaid.test.js` (+5); `tools/mutants/profreticle.json` (57),
-`profmenu.json`; `tools/profReticleProbe.mjs`. HERB-CURSOR: `test/fb1002_herbcursor.test.js` (6),
-`test/fb1002_herbcursor_audit.test.js` (10); `tools/mutants/fb1002_herbcursor.json` (17),
+`test/systems/profreticle.test.js` (10), `test/systems/fb0930b_toolsaid.test.js` (+5); `tools/mutants/profreticle.json` (57),
+`profmenu.json`; `tools/profReticleProbe.mjs`. HERB-CURSOR: `test/systems/foraging/fb1002_herbcursor.test.js` (6),
+`test/systems/fb1002_herbcursor_audit.test.js` (10); `tools/mutants/fb1002_herbcursor.json` (17),
 `fb1002_herbcursor_audit.json` (14).
 
 ## 34. PROF11 - Masonry, as built (BUILT 2026-10-01)
@@ -3234,8 +3235,8 @@ PROF11, DECIDED here, and what was found (FACT):
   fortifierAt).
 - **The pages**: the Stores page's Mason's Bench; Masonry practised on the Professions page; a work's XP said as its own
   profession's (FOUND: it said Smithing's).
-- **Pinned**: `test/prof11_law.test.js` (11), `test/prof11_service.test.js` (7, through the real Worker),
-  `test/prof11_client.test.js` (7). Mutants: `tools/mutants/prof11.json` (138, all dead).
+- **Pinned**: `test/net/prof11_law.test.js` (11), `test/net/prof11_service.test.js` (7, through the real Worker),
+  `test/systems/prof11_client.test.js` (7). Mutants: `tools/mutants/prof11.json` (138, all dead).
 
 ## 35. PROF9 - Cooking, as built (BUILT 2026-10-02)
 
@@ -3283,7 +3284,7 @@ three). What sections 3.2, 3.3, 4.8, 9.3 and 9.4 left open for PROF9, DECIDED he
   Foraging's four bands. The bar runs dough to crust to char, its window an edged band (a shape as well as a colour);
   under reduced motion the bar is still. **Quick cook**, **Gentle acts**, **one act a page**, **Escape sets the pan aside**
   (nothing spent) and the page shut under it as every station's act (AUDIT 30-32's laws).
-- **The dishes as items** (4.8: "pack (food) | C&C's Meat / Cooked Fish / Bread"; `systems/profTemplates.js`). Each stands
+- **The dishes as items** (4.8: "pack (food) | C&C's Meat / Cooked Fish / Bread"; `systems/professions/profTemplates.js`). Each stands
   on a C&C food's own row, **imported, never typed again**: the Stew and the Feast the Meat's picture, the Supper the Cooked
   Fish's, the Tart the Bread's; the food's weight (a feast four times it) and three times its price (a feast twelve);
   one a piece, never stacked, never shelved. NOT LAID ON, for Mac: 4.8's "tinted" - DFU's dye swatch reaches no food's
@@ -3369,8 +3370,8 @@ three). What sections 3.2, 3.3, 4.8, 9.3 and 9.4 left open for PROF9, DECIDED he
   alchemy station's steps, the fire's `cookSteps`), and the feast's share is `cookItems.js` shareFeastWith, both driven by
   tests; the hall door's gate is `onlineHomes.js` hallEntryTurnable, the row's and the press's. Pinned (four tests), 17
   mutants added, all dead; seven re-aimed (prof9, guild_yard, guild1d).
-- **Pinned**: `test/prof9_law.test.js` (9), `test/prof9_service.test.js` (5, through the real Worker),
-  `test/prof9_client.test.js` (21). Mutants: `tools/mutants/prof9.json` (162, all dead - AUDIT PROF-541 R2-S7's three among them).
+- **Pinned**: `test/net/prof9_law.test.js` (9), `test/net/prof9_service.test.js` (5, through the real Worker),
+  `test/systems/prof9_client.test.js` (21). Mutants: `tools/mutants/prof9.json` (162, all dead - AUDIT PROF-541 R2-S7's three among them).
 
 ## 36. PROF10 - Jewelcrafting, as built (BUILT 2026-10-02)
 
@@ -3386,7 +3387,7 @@ Mac: **"2 and 4"** (2026-10-02: the Apothecary waits on Alchemy, Cooking and Jew
   its licence the workbench's 50,000), a hall member's as the others'. `scenes/worldModes.js` jewellerHere. The service
   cannot see the bench (as it cannot see the forge, 23). The Stores page's **The Jeweller's Bench**.
 - **The eight pieces** (9.3; `recipeLaw.js` JEWEL_PIECES). DFU's own Jewellery templates, **imported, never re-typed**: each
-  read by its place in DFU's Jewellery enum (`systems/itemTemplatesData.js` GROUP_TEMPLATE_INDICES - Amulet 133, Bracer 134,
+  read by its place in DFU's Jewellery enum (`systems/item/itemTemplatesData.js` GROUP_TEMPLATE_INDICES - Amulet 133, Bracer 134,
   Ring 135, Bracelet 136, Mark 137, Torc 138, Cloth Amulet 139, Wand 140), its word 9.3's and DFU's template name, pinned
   equal (the service's bundle carries the enum and no item table - FOUND: the account deploy's path filter now lists
   `itemTemplatesData.js`, which the Worker bundles since). Inputs as 9.3 writes them: Ring 1 metal (and a gem, if wanted),
@@ -3472,8 +3473,8 @@ Mac: **"2 and 4"** (2026-10-02: the Apothecary waits on Alchemy, Cooking and Jew
   only "The item maker spends them.". **J6** - J1's cap took the most over every hand, the minted hand not stored: the
   jeweller's hand is **written on the piece** (`hand`, 1 or 2, `itemFields.js`; a hand its recipe takes alone) and the
   cap is that hand's (`craftedJewelPoints`) - no hand, no hand's share.
-- **Pinned**: `test/prof10_law.test.js` (10), `test/prof10_service.test.js` (7, through the real Worker),
-  `test/prof10_client.test.js` (13). Mutants: `tools/mutants/prof10.json` (166, all dead).
+- **Pinned**: `test/net/prof10_law.test.js` (10), `test/net/prof10_service.test.js` (7, through the real Worker),
+  `test/systems/prof10_client.test.js` (13). Mutants: `tools/mutants/prof10.json` (166, all dead).
 
 ## 37. PROF12 - Alchemy and the Enchanting layer, as built (BUILT 2026-10-02)
 
@@ -3500,7 +3501,7 @@ Seats-Arc 7.5). What sections 1, 2, 3.3, 4.1, 4.3, 4.5, 9.3 and 9.4 left open fo
   transmutation as every station's fee, paid as the potions are bottled - or a home's **`alchemy` station** (HOME-STATIONS'
   first, its 50,000 licence; a hall member's). `scenes/worldModes.js` alchemyHere. The station's own press opens DFU's
   potion maker, 1:1 - online it asks first, the maker or the brew on the Stores page (STATION-DOOR,
-  `01-Overview/Field-Bugs-2026-10-11f.md`). The Stores page's **The Alchemy Station**.
+  `01-Overview/bugs/Field-Bugs-2026-10-11f.md`). The Stores page's **The Alchemy Station**.
 - **The brew** (9.3: "the service runs DFU's own recipe law on them ... the same twenty recipes, and no new ones, make the
   same potions, into the pack"; `/v1/prof/brew`, `server-account/src/alchemy.js` brewAtStation). The request names the
   potion and the cauldron **as the Stores hold it** (`keys` - an herb its northern or southern, the brewer's: the page
@@ -3649,8 +3650,8 @@ Seats-Arc 7.5). What sections 1, 2, 3.3, 4.1, 4.3, 4.5, 9.3 and 9.4 left open fo
   (no provenance in the pack, never listed) disenchanted - refused (`prof-no-essence`, `pieceListable`); **S7** (LOW) a
   dish's 500 paid twice, north and south - once a dish (`firstCraftKey`, J7's "once per piece and base"); **S8** the
   service's route list. Pinned in eight tests, 19 mutants added, all dead; four re-aimed by content (prof12, seat2b_peace).
-- **Pinned**: `test/prof12_law.test.js` (15), `test/prof12_service.test.js` (13, through the real Worker),
-  `test/prof12_client.test.js` (16), `test/prof12_apothecary.test.js` (4, the Apothecary through the real Worker). Mutants:
+- **Pinned**: `test/systems/prof12_law.test.js` (15), `test/net/prof12_service.test.js` (13, through the real Worker),
+  `test/systems/prof12_client.test.js` (16), `test/net/prof12_apothecary.test.js` (4, the Apothecary through the real Worker). Mutants:
   `tools/mutants/prof12.json` (206: 205 dead - AUDIT PROF-541 R2's six among them - and PROF12-spends-no-hash recorded equivalent - B1's ingredient comparison holds everything DFU's hash refused).
 
 ## 38. PROF2b - the Motherlodes, as built (BUILT 2026-10-03)
@@ -3670,7 +3671,7 @@ warning - and left four things open. DECIDED here (the record's, at Mac's instru
 - **When.** Each in its own third of the UTC day, rising within its third's first six hours on a whole minute, standing
   two hours or until its twenty have struck it - so every part of the world's day sees one.
 - **The warning - every client's own.** FACT: the hub pushes nothing on a clock today; the gate's omen is each client's
-  own off the shared clock (`systems/gateOmen.js`). DECIDED: the same - `net/motherlodeBook.js` reads the day's three
+  own off the shared clock (`systems/gate/gateOmen.js`). DECIDED: the same - `net/motherlodeBook.js` reads the day's three
   (`/v1/prof/motherlodes`: their pixels, ores, hours, strikers and this account's find) on arrival, every five minutes,
   at the UTC day's turn and for another character, says the warning in the chat ten minutes ahead (a Motherlode Sense's
   thirty) and the rising once, each once a session. No relay change, no relay deploy.
@@ -3722,14 +3723,14 @@ warning - and left four things open. DECIDED here (the record's, at Mac's instru
   is applied only to the account and character that requested it. A Watch receipt is checked against the current
   account at receipt arrival and at the strike, even within the frame's one-second account cache. This prevents a
   departed account's found marker or receipt from being used by its successor. The server's signed-receipt checks
-  are unchanged. `test/motherlode_identity_regression.test.js` reproduces both identity races and pins the fixes;
+  are unchanged. `test/net/motherlode_identity_regression.test.js` reproduces both identity races and pins the fixes;
   the frame cache remains in use. Native account switching and live multiplayer acceptance remain open.
 - **As built**: `src/net/motherlodeLaw.js`, `src/net/motherlodeBook.js`, `server-account/src/motherlodes.js`,
   `server-account/migrations/0072_motherlodes.sql`, `src/scenes/mineHost.js`, `src/scenes/gatherHost.js` (`restandAt`),
   `src/net/profBook.js` (`watch`), `src/net/accountClient.js` (`motherlodes`, the refusals), `src/scenes/world.js`; acct71 (acct66 on its branch).
-  Pinned: `test/prof2b_motherlode.test.js` (6), `test/prof2b_client.test.js` (7); `tools/mutants/prof2b.json` (32, all
-  dead). AUDIT 29 A17's two pins moved (the Sense chosen as any). The audit's: `test/auditsilver_service.test.js` (C1-C3),
-  `test/auditsilver_client.test.js` (D1-D7), `tools/mutants/auditsilver.json`.
+  Pinned: `test/net/prof2b_motherlode.test.js` (6), `test/net/prof2b_client.test.js` (7); `tools/mutants/prof2b.json` (32, all
+  dead). AUDIT 29 A17's two pins moved (the Sense chosen as any). The audit's: `test/net/auditsilver_service.test.js` (C1-C3),
+  `test/net/auditsilver_client.test.js` (D1-D7), `tools/mutants/auditsilver.json`.
 
 ## 39. BAG1 - the Materials Bag, as built (BUILT 2026-10-03)
 
@@ -3755,7 +3756,7 @@ between a modified client and an unbounded claim go with it: **"Keep both"**.
   `herbHost.js`, `fishHost.js`, `huntHost.js`), the book learns nothing from the four refusals (`net/profBook.js`), the
   gathering host closes no craft (`scenes/gatherHost.js`), the chip under the compass says the count alone - "Mining 34 -
   12 today" - and the Professions tab's day line too ("Today: 12 harvests"; Fishing's hauls, Hunting's hides beside the
-  rare three - `ui/profPages.js`). The daily reset's line names no gathering limit (`systems/eventTimers.js`).
+  rare three - `ui/professions/profPages.js`). The daily reset's line names no gathering limit (`systems/eventTimers.js`).
 - **What stands (Mac's word).** Four veins a day an account in dungeons nobody has vouched for (AUDIT 29 A5: a dungeon's
   id is the client's word) and three hides of tiers 5-6 an account a day (section 6: the tier is the client's claim) -
   each still decided in the INSERT and refused at its count, past every old day. And the rest of section 6 and 20: each
@@ -3771,7 +3772,7 @@ between a modified client and an unbounded claim go with it: **"Keep both"**.
   `worldModes.js`); `exterior.js` and `dungeonContext.js` build none.
 - **As built**: `src/net/professionLaw.js`, `server-account/src/professions.js`, `server-account/src/index.js` (the four
   statuses gone), `src/net/accountClient.js`, `src/net/profBook.js`, `src/scenes/gatherHost.js`, the five kinds,
-  `src/ui/profPages.js`, `src/systems/eventTimers.js`; acct91, no migration. Pinned: `test/cap_off.test.js` (5); the pins
+  `src/ui/professions/profPages.js`, `src/systems/eventTimers.js`; acct91, no migration. Pinned: `test/net/cap_off.test.js` (5); the pins
   that held the caps turned to say they are gone, each a PIN MOVED (`prof1_law`, `prof1_service`, `prof2_service`,
   `prof7_law`, `prof7_service`, `prof8_law`, `prof8_service`, `audit29_service` A3, `audit32_service` L2,
   `audit32_client` B2, `silverfinds_service`, `fb1001_ground` and `fb1001_audit` REFUSALS-LEARNED, `fb0929h_veinneed`,
@@ -3837,7 +3838,7 @@ Nothing here touches law 1 (offline stays DFU's makers), law 3 (the Stores) or l
   nothing kept, the works before it done and said (`refined`), their products in the Stores. `chain: false` asks no
   work. **No new door**: every work is `/v1/prof/smelt`, its XP, its origin (own or bought, smeltOrigin) and its bounds
   the service's as ever, and the service is not changed.
-- **The stations** - `src/ui/profPages.js`: the anvil, the workbench, the loom, the mason's bench and the jeweller's
+- **The stations** - `src/ui/professions/profPages.js`: the anvil, the workbench, the loom, the mason's bench and the jeweller's
   bench say **"can make from raw"** on a recipe the chain covers, say under it what is refined first and from what
   ("Refined first, here: smelt Iron Ingot x3, burn Charcoal x3, smelt Steel Ingot x3, cure Cured Leather x1 - from Iron
   x6, Pine Log x3, Rat Pelt x2. Their XP is the works' own; what is left over stays in your Stores."), or what the raw goods are short of, and offer Craft and Quick craft on it. The fire's
@@ -3849,8 +3850,8 @@ Nothing here touches law 1 (offline stays DFU's makers), law 3 (the Stores) or l
   station, 9.1; the fee was the press's, and the chain is one press).
 - **The four hosts**: `scenes/world.js` wired (the stations' pages and the craft's answer are its alone); `worldModes.js`,
   `exterior.js` and `dungeonContext.js` build no station page - none to wire.
-- **As built**: `src/net/chainLaw.js` (new), `src/net/profBook.js`, `src/ui/profPages.js`, `src/scenes/world.js`.
-  Pinned: `test/craft1_chain.test.js` (10 at the build; 16 since AUDIT CRAFT1, 41.4) - the done-when through the real Worker (a Steel Longsword from raw goods in
+- **As built**: `src/net/chainLaw.js` (new), `src/net/profBook.js`, `src/ui/professions/profPages.js`, `src/scenes/world.js`.
+  Pinned: `test/net/craft1_chain.test.js` (10 at the build; 16 since AUDIT CRAFT1, 41.4) - the done-when through the real Worker (a Steel Longsword from raw goods in
   one press: the four works asked in order as the service's own, every unit spent, Smithing the works' XP and the
   craft's), the law, the book over a stand-in door, the anvil page, the host. `tools/mutants/craft1.json` (15 at the build, all dead; 51 since 41.4 - 49 dead, 2 equivalent as recorded).
   FOUND, and taken out rather than pinned: a cheapest-first sort that no product's table order ever needed (its mutant
@@ -3899,7 +3900,7 @@ recorded `equivalent` with its reason:
 | aside | The book ran a chain for a recipe its rank does not open, then the craft was refused `prof-rank` | no chain for a recipe the rank does not open - the craft is asked as ever |
 
 Kept as they are: the counter's "Buy" beside an input the chain would make (a choice - buy rather than refine); a
-`prof-chain` style (none needed, the note is the kit's). Pinned: `test/craft1_chain.test.js` (16 - +6 for the audit);
+`prof-chain` style (none needed, the note is the kit's). Pinned: `test/net/craft1_chain.test.js` (16 - +6 for the audit);
 `tools/mutants/craft1.json` (51: 49 dead, 2 equivalent as recorded - +36). PIN MOVED again (the kept word says the chain): `audit30_client` C4 +
 A4, `prof12_client` R2-C2, `prof3_client` wiring. Re-aimed by content, each still dead: `audit32` B4, `prof9`'s,
 `prof10`'s and `prof11`'s hands-not-at-the-bench (the hands held under a craft too).
@@ -3926,7 +3927,7 @@ A4, `prof12_client` R2-C2, `prof3_client` wiring. Re-aimed by content, each stil
   40 (the Wand: 16, two an input, 18 kin) under D1's 100. No migration: `prof_crafts` keeps each craft's recipe as it
   always did, so a character's history counts as it stands - an Adamantium Longsword made last week is this week's
   Ebony Longsword's first.
-- **The stations** - `src/ui/profPages.js`: the anvil lists its family's patterns (the Weapons 15, the Armour 18, the
+- **The stations** - `src/ui/professions/profPages.js`: the anvil lists its family's patterns (the Weapons 15, the Armour 18, the
   Tools 5, the Repair Kit - 39, not 308 rows behind a metal row), the workbench its (13 - the Arrows one pattern, its
   fletching the material), the loom its (the leathers 7; a garment of the clothing shown - 41 men's, 35 women's - the
   cloth row gone, the clothing row kept; the furnishings 9; the Fishing-Net), the fire its four dishes (the herb's way
@@ -3941,8 +3942,8 @@ A4, `prof12_client` R2-C2, `prof3_client` wiring. Re-aimed by content, each stil
   way each, and the jeweller's bench already listed by piece, then base, then gem (PROF10).
 - **The four hosts**: unchanged from CRAFT1 - `scenes/world.js` builds the station pages; `worldModes.js`, `exterior.js`
   and `dungeonContext.js` build none, so none to wire.
-- **As built**: `src/net/recipeLaw.js`, `server-account/src/professions.js`, `src/ui/profPages.js`. Pinned:
-  `test/craft2_patterns.test.js` (7) - the done-when through the real Worker (an Adamantium Longsword its first, an
+- **As built**: `src/net/recipeLaw.js`, `server-account/src/professions.js`, `src/ui/professions/profPages.js`. Pinned:
+  `test/net/craft2_patterns.test.js` (7) - the done-when through the real Worker (an Adamantium Longsword its first, an
   Ebony one after it none, a Mithril one its own, an Ebony Broadsword its own, a Ghostwood Wand none after an Ironwood
   one), the law, `pickedOf`, the anvil, the workbench and the loom. `tools/mutants/craft2.json` (24, all dead). FOUND by
   the mutants: a family turned and turned back kept no pattern by nothing a pin read, and the Silk's word shown under
@@ -3991,7 +3992,7 @@ A4, `prof12_client` R2-C2, `prof3_client` wiring. Re-aimed by content, each stil
   effect at once, a change on its way at that rank replaced, the bit spent - its own `prof_choices` row decides, as the
   free first choice's does; answered `free`.
 - **The client** - `src/net/profBook.js` `track` answers a discipline with its craft's track; `choose` asks the craft's.
-  `src/ui/profPages.js`: the Professions tab the ten; a merged craft's four cards a rank, each its discipline's name
+  `src/ui/professions/profPages.js`: the Professions tab the ten; a merged craft's four cards a rank, each its discipline's name
   (`prof-of`), a free change said ("Change: free, once"; "Press again: free, in effect at once"); its Unlocks both
   disciplines' (`unlocksOf` - each named, by tier, a tier's first discipline first); the stations say the craft
   ("Building 10" at the workbench and the mason's bench, "Smithing 25" at the jeweller's, "Provisioning" at the fire and
@@ -3999,10 +4000,10 @@ A4, `prof12_client` R2-C2, `prof3_client` wiring. Re-aimed by content, each stil
 - **The four hosts**: `scenes/world.js` wired (the station pages and the crafts' answers are its alone); `worldModes.js`
   reads Enchanting's discount and the stations through the pages and the book (no track id of its own); `exterior.js`
   and `dungeonContext.js` read no profession track - none to wire.
-- **As built**: `src/net/professionLaw.js`, `src/net/recipeLaw.js`, `src/net/profBook.js`, `src/ui/profPages.js`,
-  `src/ui/enhancedPlusStyle.js` (`.prof-of`), `src/scenes/world.js`, `server-account/src/professions.js`,
+- **As built**: `src/net/professionLaw.js`, `src/net/recipeLaw.js`, `src/net/profBook.js`, `src/ui/professions/profPages.js`,
+  `src/ui/enhanced/enhancedPlusStyle.js` (`.prof-of`), `src/scenes/world.js`, `server-account/src/professions.js`,
   `server-account/src/alchemy.js`, `server-account/src/seatForts.js`, `server-account/migrations/0088_five_crafts.sql`.
-  Pinned: `test/craft3_five.test.js` (10) - the done-when through the real Worker (a Silver Ring and an Iron Dagger raise
+  Pinned: `test/net/craft3_five.test.js` (10) - the done-when through the real Worker (a Silver Ring and an Iron Dagger raise
   one Smithing, the state ten tracks, one row), the merge as 0088 writes it over the eight tracks as they stood (the
   higher's XP and choices, the free ranks, the changes on their way kept and dropped, one in effect folded, the limit
   after it), the law, the free change through the Worker (no Marks, once, the next paid; an older client's discipline
@@ -4048,7 +4049,7 @@ A4, `prof12_client` R2-C2, `prof3_client` wiring. Re-aimed by content, each stil
   once reforged that line alone), a known piece, never worn, rolled on the service's seed. `recipeLaw.js pieceLines`: a
   found piece a temper raised says its quality ("Fine", "Superior").
 - **The client** - `src/net/profBook.js` `temper` (the input from the bag and the pack first, as a craft's) and
-  `reforge`, each kept by its ask until an answer comes. `src/ui/profPages.js`: Temper at the Anvil and Temper at the
+  `reforge`, each kept by its ask until an answer comes. `src/ui/professions/profPages.js`: Temper at the Anvil and Temper at the
   Loom beside each station - every piece the craft tempers, its step, its input and XP, Temper pressed or the rank said,
   the input short said; Reforge with Essence at the enchanting station - its rank below 50, each line a press from it,
   the Essence short said. The station's fee is a temper's and a reforge's, as a craft's and a disenchant's.
@@ -4056,10 +4057,10 @@ A4, `prof12_client` R2-C2, `prof3_client` wiring. Re-aimed by content, each stil
   the line laid on the answer); `worldModes.js` holds the stations the pages read and no piece of its own; `exterior.js`
   and `dungeonContext.js` hold no station - none to wire.
 - **As built**: `src/net/temperLaw.js`, `src/net/recipeLaw.js`, `src/net/profBook.js`, `src/net/accountClient.js`,
-  `src/systems/smithItems.js`, `src/ui/profPages.js`, `src/scenes/world.js`, `server-account/src/professions.js`,
+  `src/systems/smithItems.js`, `src/ui/professions/profPages.js`, `src/scenes/world.js`, `server-account/src/professions.js`,
   `server-account/src/alchemy.js`, `server-account/src/index.js`, `server-account/src/service.js`,
   `server-account/migrations/0089_temper_reforge.sql`, `.github/workflows/account-deploy.yml`. Pinned:
-  `test/craft4_temper.test.js` (8) - the done-when through the real Worker (a found Steel Longsword Standard to Fine to
+  `test/net/craft4_temper.test.js` (8) - the done-when through the real Worker (a found Steel Longsword Standard to Fine to
   Superior, 2 ingots each, the craft's XP, its card), a made piece's row and record re-signed and the piece what it
   mints, the temper's refusals, the law, the Reforge with Essence through the Worker and on the piece, the pages, the
   host. `tools/mutants/craft4.json` (71: 67 dead, 4 equivalent as recorded - two by the tables' order, one by the
@@ -4097,14 +4098,67 @@ A4, `prof12_client` R2-C2, `prof3_client` wiring. Re-aimed by content, each stil
   installSmithing`), the anvil the pages'.
 - **The account version**: `ACCOUNT_VERSION` acct93 (`server-account/src/service.js`, `wrangler.toml`) for CRAFT2 to
   CRAFT5's service, once.
-- **As built**: `src/net/recipeLaw.js`, `src/net/productRecord.js`, `src/systems/smithItems.js`, `src/ui/profPages.js`,
+- **As built**: `src/net/recipeLaw.js`, `src/net/productRecord.js`, `src/systems/smithItems.js`, `src/ui/professions/profPages.js`,
   `server-account/src/professions.js`, `server-account/src/service.js`, `server-account/wrangler.toml`. Pinned:
-  `test/craft5_consumables.test.js` (5) - the done-when (a Superior kit mends a Steel Longsword at 70% to 90%, a Standard
+  `test/net/craft5_consumables.test.js` (5) - the done-when (a Superior kit mends a Steel Longsword at 70% to 90%, a Standard
   one to 75%; a Masterwork's 90%; a field kit and a kit made before 75%; a piece at 80% a Superior kit's; the card, the
   word, the refusal), the law and the record, a kit's craft through the real Worker answered and signed at a quality,
   the dish and the Potent potion measured, the anvil's box. `tools/mutants/craft5.json` (24, all dead). PIN MOVED:
   `prof3_law` (a kit's record its quality), `prof3_service` (a kit's craft answered a quality), `repair_rate` (the
   anvil's kit line), and the account version's pins (acct93).
+
+### 41.9 CRAFT-FIRST-SHOWN - the first-make 500 said where it is earned (BUILT 2026-10-15, FIELD BUGS 2026-10-15f)
+
+The Discord, 2026-10-13: "Outfitting xp (first-time craft bonus): The first time craft bonus is not applying to the
+outfitting. I got somehow it once from...Fishing net? Then never after."
+
+- **FOUND - the law held, and nothing said it.** AUDIT 32 S1 (3.2; `06-Systems/Online-Arc.md` S1) withholds the 500 from
+  a recipe made wholly of goods only a counter sells (`recipeLaw.js` `firstCraftPays` over `professionLaw.js`
+  `COUNTER_ONLY`): 152 of the loom's patterns - 144 garments, the rugs and tapestries and the Fishing-Net, every one
+  wholly the Weavers' Linen and Wool (MEASURED, pinned). The Fishing-Net never paid; a bolt-and-Cured-Leather boot
+  does. The service decided it and answered `first` (`server-account/src/professions.js` `craftAtAnvil` - `first` is
+  recorded for every first craft, the 500 laid on only where it pays). But no station said a craft's XP (the anvil,
+  the workbench, the loom and the mason's bench said none; the jeweller's bench and the fire said theirs without the
+  first), and the craft's word read `xp` and never `first`.
+- **DECIDED (the owner): keep S1 - it stops 76,000 XP of first crafts being bought with the counter's cloth - and say
+  the rule.** Client only: no service, relay or account version moved.
+- **The words** - `src/ui/craftXpWords.js` (new), the module the host and the pages read:
+  - `craftXpLine` - a station box's line for its picked recipe, at the craft's track's rank: "20 Outfitting XP, and 500
+    more the first time you make this piece at this tier." (`craftXp`, the quarter past two tiers included, and the
+    500 the first of its PATTERN AT ITS TIER - `firstCraftKey`, 41.5), or, where the recipe pays none, "20 Outfitting XP.
+    Made only of cloth from the Weavers, it earns no first-time bonus."
+  - `dishFirstLine` - the fire's: "The first time you cook this dish: 500 more Provisioning XP." beside the pans' XP
+    (`cookXp`). `masonWorksFirstLine` - the mason's bench's works (`smeltAtForge` keys a work's first by the work):
+    "Your first cut and your first mix each earn 500 more Building XP."
+  - `craftXpText` - the craft's word, from the service's answer: "(+520 Smithing XP, with the first-time bonus)" for a
+    first that paid, "(+20 Outfitting XP - your first, but cloth from the Weavers earns no first-time bonus)" for a
+    first of the cloth, the XP alone otherwise.
+- **FACT - the client cannot know which patterns were made.** The service's state answers the tracks, the Stores and
+  the day (`profState`), never `prof_crafts`, so a box says what a first craft pays, never whether this pattern's is
+  still owed; the craft's answer says whether it was one, and its word says so after.
+- **The stations** - `src/ui/professions/profPages.js`: the anvil's, the workbench's, the loom's and a Sculptor's carving's boxes say
+  `craftXpLine` under their odds where the recipe is open at the rank; the jeweller's odds give up their XP clause
+  (`prof.page.jewel.odds`) to the same line; the mason's bench says its works' first under the works; the fire its
+  dish's; and the alchemy station's potion wholly of the Apothecaries' goods (`brewFirstPays`, S1's law for a brew)
+  says why its first pays nothing, where it said its XP alone. THE NATIVE-WINDOW RULE: these are the Stores page's own
+  station boxes, the port's own design (17.2's row, section 21), not a window DFU has - no DFU source to cite.
+- **The four hosts**: `scenes/world.js` says the word with one call (its `craft`'s return reads `craftXpText(rec,
+  r.data, st.xp)`; HOST-SPLIT - no line added to bootWorld); `worldModes.js`, `exterior.js` and `dungeonContext.js` build
+  no station page and no craft word - none to wire.
+- **The words in the player's language**: eight new keys (`prof.craft.xp`, `.xpFirst`, `.xpFirstShop`;
+  `prof.page.craft.xpFirst`, `.xpShop`; `prof.page.fire.first`; `prof.page.mason.worksFirst`;
+  `prof.page.alchemy.xpShop`, which replaces `prof.page.alchemy.xp`) and `prof.page.jewel.odds` without its XP clause -
+  drafted in-session in the thirteen whole languages (`tools/l10nInSession.mjs`; each glossary given "first-time bonus"
+  and "cloth"), the twelve drafting languages owing them with the rest (`06-Systems/Localization-Arc.md` L10N6) - but
+  the three of them that held the jeweller's row (Finnish, Japanese, Polish) had it cut the same, or it named arguments
+  the English no longer has (`test/systems/l10n1b.test.js`); the craft's word around them is still the host's English, as it was.
+- **As built**: `src/ui/craftXpWords.js` (new), `src/ui/professions/profPages.js`, `src/scenes/world.js`,
+  `locales/*/Port_Strings.csv` and their records, the thirteen glossaries. Pinned: `test/net/fb1015f_firstcraft.test.js`
+  (3) - the law the words say (the 152, all the Weavers' cloth; both works and every dish pay), the craft's word from
+  the real Worker's answer through the book (a Linen Straps' first, a Linen Boots' first, a second of each; in French),
+  the host's one call, and every station's box read off the real book. `tools/mutants/fb1015f_firstcraft.json` (20, all
+  dead). PIN MOVED: `craft1_chain` (the host's craft word, its chain still first) and `prof10_client` (the jeweller's
+  XP its own line).
 
 ## 42. PROF-FOUND - the station shops found as every shop is (BUILT 2026-10-12)
 
@@ -4117,7 +4171,7 @@ station an Alchemist's, the enchanting station a Mages Guild hall (Cooking asks 
 types were already on the Where-is page under DFU's own groups and drawn as shops (or, the guild hall, in the temple's
 colour) on both town maps. The ninth was not: the **Furniture Store** - a shop classic never opened, opened by the port
 as the furnisher's counter (DECOR2b) and Carpentry's workbench (PROF4, section 25). DFU keeps its type off the Where-is
-page (TalkManager CheckBuildingTypeInSkipList, `systems/topicTree.js` and `systems/talkTopics.js`, both verbatim) and
+page (TalkManager CheckBuildingTypeInSkipList, `systems/topicTree.js` and `systems/talk/talkTopics.js`, both verbatim) and
 groups its automap byte (8, its type plus one) with the houses (ExteriorAutomap.cs:1482-1541), so a player hunting a
 workbench saw a house and could ask nobody.
 
@@ -4130,7 +4184,7 @@ workbench saw a house and could ask nobody.
   mark it on your map", which discovers it so the map names it). Its own variable, as the yards': C#'s shared one flows
   into the General section and the palace arm untouched. Without an engine, `scenes/townTalk.js` directoryByCategory
   lays the same group in the same place. DFU's skip list and TOPIC_CATEGORIES stay as they are.
-- **The town maps**: `ui/townQuarters.js` moves the opened shops' bytes (OPENED_SHOP_BYTES, made by byteOfType - the
+- **The town maps**: `ui/town/townQuarters.js` moves the opened shops' bytes (OPENED_SHOP_BYTES, made by byteOfType - the
   `+ 1`'s one home now, quarterOfType reads it too) out of DFU's house group into its shop group, so the classic window
   paints a Furniture Store in the shop's colour and the enhanced sheet washes it and letters its name in a shop's ink.
   The discovery law is kept: a store is named once it is entered or an NPC marks it, as every shop is.
@@ -4139,7 +4193,7 @@ THE FOUR HOSTS (PROF-FOUND): `scenes/world.js` and `scenes/exterior.js` - WIRED,
 map from the shared modules (createTownTalk, createTownMapWindow); `scenes/worldModes.js` - WIRED, its interiors' talk
 asks the host's same tree; `scenes/dungeonContext.js` - no town.
 
-Pinned: `test/proffound1.test.js` (5) - every station's shop type, read off the interior host, asked after and drawn as
+Pinned: `test/systems/proffound1.test.js` (5) - every station's shop type, read off the interior host, asked after and drawn as
 built ground; the group's place, head and rows; the answer's compass, roll and mark; the bytes, the classic window's
 colour and the sheet's ink; the fallback's order. `tools/mutants/proffound1.json` (9, all dead). Re-aimed:
 `tools/mutants/em34.json` EM7-2 (the plus-one's drift, now byteOfType's). Not seen in a real town (no ARENA2 here).
@@ -4171,7 +4225,7 @@ from 200 m (`PROSPECT_M`) - the thread's arithmetic is right. GATHER-OW (section
 profession a pixel, "Mining ×6", for everyone. A dungeon's 1-4 veins a day stood a third of a metre off the wall the
 ray found and half a metre up (`scenes/dungeonContext.js` profVeinWall), and their flats - turned to the eye, spread
 about that point - went into the wall at any look but a near square one. A Deep Delver's x1.5 was its whole effect.
-LODE-MARK (`01-Overview/Field-Bugs-2026-10-12g.md`) puts a Motherlode on everyone's compass from its warning, so the
+LODE-MARK (`01-Overview/bugs/Field-Bugs-2026-10-12g.md`) puts a Motherlode on everyone's compass from its warning, so the
 Sense's thirty minutes were twenty minutes more of one compass mark, and no map marked one. A clean finish on a boulder
 already yields Cut Stone (section 23), so the Stonebreaker gave only the unclean finishes' cut.
 
@@ -4226,7 +4280,7 @@ THE FOUR HOSTS (MINE-PERKS): `scenes/world.js` - WIRED (the maps' `lodes`, the O
 marks ride the dungeon's own `nodeMarks`); `scenes/worldModes.js` - no node stands in a building, nothing to wire;
 `scenes/exterior.js` - FLAGGED by name, as PROF2's: the fixed city has no gathering host.
 
-Pinned: `test/mineperks.test.js` (12; 18 since 43.1). `tools/mutants/mineperks.json` (28, all dead; 41 since 43.1). PINS MOVED: `prof2_law` (the
+Pinned: `test/ui/mineperks.test.js` (12; 18 since 43.1). `tools/mutants/mineperks.json` (28, all dead; 41 since 43.1). PINS MOVED: `prof2_law` (the
 Deep Delver's x2), `prof2_service` (its six), `prof2_client` (`PROSPECT_M`), `fb1009e_unwitnessedore` (the vein's cap
 read `confirmed || surveyed`), `fb1011_oremap` (the card's `surveyed`), `fb1004e_overworld` (the legend's `_lodes`).
 Re-aimed by content: `tools/mutants/fb1001_boulders.json` GATHER-OW-the-cap-unasked, `fb1009e_unwitnessedore.json`
@@ -4235,7 +4289,7 @@ UNWITNESSED-ORE-the-vein-held-to-two, `prof2.json` PROF2-6-unconfirmed-any-tier.
 ### 43.1 AUDIT MINE-PERKS (2026-10-13, Mac: "Audit and ensure this is as perfect as it can be")
 
 Two cold passes read the merged commit (`41051130e`, main's ETHER-OW and FIELD BUGS 2026-10-13b in): the law, the
-service and the Overworld, and the maps and the record. No HIGH. FOUND, each fixed and pinned (`test/mineperks.test.js`,
+service and the Overworld, and the maps and the record. No HIGH. FOUND, each fixed and pinned (`test/ui/mineperks.test.js`,
 `tools/mutants/mineperks.json`):
 
 - **A Prospector's Overworld lost most veins** (MEDIUM). A vein its kind marks alone left its pixel's group, and only the
@@ -4275,13 +4329,13 @@ service and the Overworld, and the maps and the record. No HIGH. FOUND, each fix
   Prospector. FIXED: a Sense's Motherlodes there too, Mining's glyph in the aqua, held at the edge with its distance as a
   bounty is (`scenes/travelViewMarks.js` travelViewMarks, out of world.js since HOST-SPLIT 1), under the Gathering switch.
 - **The Mining page told a Surveyor "Silver at most"** (LOW). FIXED: a line under it for a Surveyor alone
-  (`ui/profPages.js` MINING_SURVEYOR_LINE), the choice named by its card.
+  (`ui/professions/profPages.js` MINING_SURVEYOR_LINE), the choice named by its card.
 - **The words were English alone** (LOW). ROUTE-BRIEF routes one-word labels too. FIXED: `prof.lode.legend`,
   `prof.lode.name`, `prof.lode.rises` and `prof.page.how.miningSurveyor` through the text core, drafted in-session into
   the thirteen whole languages (glossary "Motherlode" added for de, id and nb).
 - **The record and its comments** (LOW): the Testing.md row of `prof2_service` (half again, the Stonebreaker), section
-  23's and 31's and Ledger A's PROF2 200 m, the comments in `scenes/world.js`, `ui/hud.js` and `net/nodeLaw.js`, an import
-  comment the change moved in `ui/travelMapWindow.js` - each brought to what stands.
+  23's and 31's and Ledger A's PROF2 200 m, the comments in `scenes/world.js`, `ui/hud/hud.js` and `net/nodeLaw.js`, an import
+  comment the change moved in `ui/travel/travelMapWindow.js` - each brought to what stands.
 
 CHECKED, SOUND (the passes'): the Surveyor's self-witness is bounded as 43 says - surface veins on unconfirmed ground,
 `specsAt`, slots bounded by `veinSlots(confirmed)` on both sides, no signature, March, Tide or dungeon; a surveyed vein is
@@ -4298,10 +4352,10 @@ Mac: "I want to improve gathering, add gathering sounds and overall make the exp
 
 **What stood (MEASURED).**
 
-- **The acts said DAGGER.SND's combat and window clips** (PROF-SCENES' table, `systems/profSounds.js`): a chop and a
+- **The acts said DAGGER.SND's combat and window clips** (PROF-SCENES' table, `systems/professions/profSounds.js`): a chop and a
   plain strike a blow's Hit1-5, a Clean Cut and a strike on the glint the parry's ring (Parry6), a clean finish the
   lock's click (ActivateLockUnlock), the Basket's find and the knife's every point the window button's click, a bruise and
-  a slip the high swing. The HUD said them as it drew the reticle (`ui/profHud.js` setMeter, PROF-RETICLE's `actCues`),
+  a slip the high swing. The HUD said them as it drew the reticle (`ui/professions/profHud.js` setMeter, PROF-RETICLE's `actCues`),
   flat, on the frame the press counted.
 - **Most of an act said nothing**: the kneel and the herb pulled; the tree's creak at half its chops (5.2 - `chopAct`
   raised `creaked` for "the host plays it once", and nothing did: the hint alone said "it creaks"); the tree's fall and
@@ -4324,7 +4378,7 @@ Mac: "I want to improve gathering, add gathering sounds and overall make the exp
   on stone (three), on the glint (the ore's ring), a vein's rubble; hands among leaves (two), a herb pulled, a herb
   bruised, the Basket's find, a glint's sparkle; the knife through hide (three), its slip, the pelt peeled; the net
   thrown, landing, a plip by the floats (two), the tug, the catch fighting (two), the net hauled in; a clean finish's two
-  bell notes, the goods' satchel, a rank's four. Each its row in `public/sfx/SOURCES.md` and `test/doctrine.test.js`.
+  bell notes, the goods' satchel, a rank's four. Each its row in `public/sfx/SOURCES.md` and `test/tooling/doctrine.test.js`.
 - **The ear** (`systems/gatherSounds.js` createGatherEar), built and fed every frame by the gathering host. It hears an
   act's beats off its machine's own state (`actBeats` - an act's first frame read against the machine's beginning, so a
   net thrown on the frame it was cast, by a tapped E, is heard), and says a blow as it LANDS (`landsIn`, below - AUDIT
@@ -4373,23 +4427,23 @@ NOT HEARD HERE: the clips were designed against their spectrograms and the four 
 --measure`: attack, crest, tail, brightness) - this container plays no sound - so their character and the mix are for
 Mac's ear.
 
-Pinned: `test/gatherfeel.test.js` (19) - the clips shipped, whole and baked deterministically, every clip a beat's; the
+Pinned: `test/systems/gatherfeel.test.js` (19) - the clips shipped, whole and baked deterministically, every clip a beat's; the
 fall's ground at FALL_S; the clips registered once; MELEE_HIT_SHARE and `landsIn`, the swing past the end; every act's
 beats off the real machines; the ear's landing time, place, reach, variety, pitch and chimes; the net's place and the
 water's clocks; a said beat, the gap, the rank's wait, `stop`; the classic skin; and the host over the real kinds - the
 tool through its last swing, the node at the landing, the rubble, an answer first, a refusal first, Escape, a patch going
 at its end, the tree's creak, fall and logs, the bus handed. `tools/mutants/gatherfeel.json` (52, all dead).
-PIN MOVED: PROF-RETICLE's cue test (`test/profreticle.test.js` - the HUD silent, the classic table standing) and its
-host pin (the clean chime the ear's); the harnesses of GATHER-SPEED (`test/gatherspeed.test.js`), AUDIT 29 C4, AUDIT 30
+PIN MOVED: PROF-RETICLE's cue test (`test/systems/profreticle.test.js` - the HUD silent, the classic table standing) and its
+host pin (the clean chime the ear's); the harnesses of GATHER-SPEED (`test/net/gatherspeed.test.js`), AUDIT 29 C4, AUDIT 30
 A5 and A11 and PROF4's host tick past the last blow's landing. Records re-aimed: `gatherspeed.json`
 GATHER-SPEED-act-end-stands-nothing (the landing's fall), `prof4.json` PROF4-logs-never-taken, `profreticle.json`
 PROFRETICLE-host-clean-cue; retired with the HUD's voice, PROFRETICLE-cues-unsaid and PROFRETICLE-cue-door-dead (the
 ear's act-unfed and switch-ignored stand in their place). Every existing record on a file whose logic the slice moved
 (AUDIT GATHER-FEEL R14: `scenes/world.js`, which it only handed the bus, aside - its records still apply,
-`test/mutantdrift.test.js`) was judged again - 398: 396 dead, the one recorded equivalent alive, and one SURVIVOR, which
+`test/tooling/mutantdrift.test.js`) was judged again - 398: 396 dead, the one recorded equivalent alive, and one SURVIVOR, which
 survives on the base commit too:
 VEIN-NEED-press-keeps-nothing (`fb0929h_veinneed.json`) - PROF-MENU's fallback in `press` answers the unlit press, and
-the row the plaque has lit was unpinned. Pinned now (`test/fb0929h_veinneed.test.js` +1); dead. Ledger A (PROFESSIONS,
+the row the plaque has lit was unpinned. Pinned now (`test/scenes/fb0929h_veinneed.test.js` +1); dead. Ledger A (PROFESSIONS,
 GATHER-FEEL).
 
 ## 45. GATHER-FEEL II - a blow felt, a vein cracked, a gatherer seen and heard (BUILT 2026-10-13)
@@ -4405,8 +4459,8 @@ Mac: "Do the not done" - section 44's three open items: a blow shook no camera; 
   dips its channel (the look cleave's 0.8 degrees, the eye execute's 6 cm, the hands whirlwind's 0.04 - AUDIT
   GATHER-FEEL F5/R1: three of the look's stood at 0.8 to 1.1, scaled now by the one share), with no shake, roll or lens
   of its own: an act repeats its blow every half second.
-- **One door.** It goes in through the technique springs' (`combat/techniqueFx.js` kickFx - techniqueCue's own kick
-  moved behind it, its lines unchanged), which every host's view already folds (`player/climbFeel.js`), and never
+- **One door.** It goes in through the technique springs' (`combat/technique/techniqueFx.js` kickFx - techniqueCue's own kick
+  moved behind it, its lines unchanged), which every host's view already folds (`player/climb/climbFeel.js`), and never
   through the look the act aims with: the glint's test reads the camera's yaw and pitch, which the springs leave alone.
 - **The port's own motion**: the enhanced skin alone (DFU moves no camera for a blow - CameraRecoiler and HeadBobber
   answer a wound and a step), at the player's own "Technique camera motion" (uiPrefs `techniqueMotion` - its note names
@@ -4459,7 +4513,7 @@ Mac: "Do the not done" - section 44's three open items: a blow shook no camera; 
 
 **PEER-ACTS - another player's gathering, seen and heard.** RELAY_VERSION **world200**, its LAW row (world199 on its branch, renumbered past main's AUDIT ETHER-OW world199 at the merge).
 
-- **The wire** (`net/wire.js` validPose, `gatherOf`): `ga` the act - `net/peerGather.js` GATHER_POSE_ACTS' index + 1:
+- **The wire** (`net/wire.js` validPose, `gatherOf`): `ga` the act - `net/peer/peerGather.js` GATHER_POSE_ACTS' index + 1:
   the axe at a trunk, the pick at a stone, a kneel by hand, with the sickle, with the Basket, with the knife, the net
   wound, flying, waiting, tugged, hauled - for as long as the hand is on it (the act playing, and a finished act's last
   swing - GATHER-FEEL's `follow`, the tool the gatherer's own hand holds); `gm` the net's throw in whole metres while
@@ -4479,7 +4533,7 @@ Mac: "Do the not done" - section 44's three open items: a blow shook no camera; 
 - **Every lane reads the same fields** and keeps its own record of what it last saw (`peerGatherSwing`: a first sight
   begins nothing - an act met mid-way is not replayed; the Morrowind body asleep follows it as it follows the swings,
   AUDIT GATHER-FEEL W3):
-  - the Morrowind body (`net/peerBodies.js` `_arm`) holds the act's tool - the classic arm's own stand-ins
+  - the Morrowind body (`net/peer/peerBodies.js` `_arm`) holds the act's tool - the classic arm's own stand-ins
     (GATHER_POSE_TOOLS: the War Axe for the Wood-Axe, the Warhammer for the Pick-Axe, the Tanto for the Sickle, the
     Dagger for the knife; pinned equal to the hosts' AXE_HAND, PICK_HAND, SICKLE_HAND, KNIFE_HAND), drawn through
     setWeapon as Morrowind's own iron of each - and swings it on each blow with the strike the gatherer's hand draws it
@@ -4487,7 +4541,7 @@ Mac: "Do the not done" - section 44's three open items: a blow shook no camera; 
     the net puts the weapon away. While an act kneels, its camera sneaks: Morrowind's crouched idle (it has no kneel);
   - the class sprite (`net/remotePlayers.js` `_syncMobilePeer`) strikes on each blow and on the throw, and kneels as a
     yielding foe kneels (REVENANT-FATE's held hurt frame), a one-shot or a walk played through;
-  - Eye Of The Beholder's walker (`net/peerRiders.js` `walkerHands`) stands ready while a tool is out and sheathed while
+  - Eye Of The Beholder's walker (`net/peer/peerRiders.js` `walkerHands`) stands ready while a tool is out and sheathed while
     the hands hold none - never a bow drawn or a spell readied at an act - and plays its melee clip's second stroke on
     each blow (a chop on an axe or a hammer, an overhead one on a sword), its first - a sweep of the arm - on the throw
     (WALK_GATHER_STROKES).
@@ -4537,33 +4591,33 @@ Chromium's WebGL2 in every variant, and a sheet of a cracked vein rendered there
 the peers' acts are pinned through the real host and a real relay Room between two sessions. Their look in a running
 game, two players at once, is for Mac's eye.
 
-AUDIT GATHER-FEEL (2026-10-13, Mac: "audit everything"): `01-Overview/Audit-Gather-Feel.md` - four cold lanes on a
+AUDIT GATHER-FEEL (2026-10-13, Mac: "audit everything"): `01-Overview/audits/Audit-Gather-Feel.md` - four cold lanes on a
 frozen snapshot of sections 44 and 45; thirty-four findings, one HIGH (every mining act's start blanked its pixel's
 flats for a frame), each fixed, pinned or recorded, and marked `AUDIT GATHER-FEEL <id>` above. A blow lands on one
 clock now, its machine's; an act is let go through one door; a peer drops a blow the gatherer took back; a net's water
 is heard at the net; the chunks lie on the ground they fall on; a refused tree's fall is heard no more. Pinned:
-`test/audit_gatherfeel.test.js` (22); `tools/mutants/auditgatherfeel.json` (81, all dead); forty-six records re-aimed
+`test/systems/audit_gatherfeel.test.js` (22); `tools/mutants/auditgatherfeel.json` (81, all dead); forty-six records re-aimed
 by content, each dead. Every existing record on the files whose logic the audit moved - `scenes/gatherHost.js`,
 `systems/gatherSounds.js`, `systems/chopAct.js`, `systems/mineAct.js`, `systems/gatherBlow.js`, `systems/audio.js`,
-`net/peerGather.js`, `net/peerBodies.js`, `net/remotePlayers.js`, `scenes/mineHost.js`, `scenes/treeHost.js`,
+`net/peer/peerGather.js`, `net/peer/peerBodies.js`, `net/remotePlayers.js`, `scenes/mineHost.js`, `scenes/treeHost.js`,
 `render/enhancedLighting.js` - was put to a rejudge on the tree merged with MINE-PERKS, with the audit's own list
 whole: 927, in the lists' name order. At the merge (Mac: "hurry up") 529 had been judged - 527 dead, the two recorded
 equivalents alive, no survivor - the audit's own 81 among them; the other 398, from `gatherfeel2.json`'s last 53 to
 `wwaudit.json`, were not judged here.
 
-Pinned: `test/gf2_blowshake.test.js` (8), `test/gf2_veincracks.test.js` (8), `test/gf2_peeracts.test.js` (12), over one
-rig shared with GATHER-FEEL's pins (`test/gatherRig.mjs` - `test/gatherfeel.test.js`'s own, lifted). Mutants:
+Pinned: `test/systems/gf2_blowshake.test.js` (8), `test/systems/gf2_veincracks.test.js` (8), `test/systems/gf2_peeracts.test.js` (12), over one
+rig shared with GATHER-FEEL's pins (`test/gatherRig.mjs` - `test/systems/gatherfeel.test.js`'s own, lifted). Mutants:
 `tools/mutants/gatherfeel2.json` (120: BLOW-SHAKE 17, VEIN-CRACKS 42, PEER-ACTS 61; all dead - VEIN-CRACKS' 43 less
 the dungeon's floor, retired with `DVEIN_UP_M` at the merge of MINE-PERKS).
 
-PIN MOVED: RELAY_VERSION world200 over thirty-nine relay pins (world199 on the branch, renumbered at the merge) and `test/disc7.test.js`'s list (AUDIT GATHER-FEEL R14), the LAW row in
-`test/relayversion.test.js`; the renderer's - the composition order (`test/dwf_audit.test.js`), the billboard pass's
-lines and its NOT list (`test/la_cost.test.js`), the batch's minted fields, 60 (`test/hard3_types.test.js`); the stood
-flats' counts (`test/gatherspeed.test.js`, `test/audit29_host.test.js` - a burst's batch is no node's flats); VEIN-HUE's
-group key (`test/fb1012b_veinhue.test.js`); the pose's arm, its line order (`test/mac7.test.js` - the gathering fields
-between the torch and the climb); the peers' rebase (`test/peerstride.test.js`); the lane's flat albedo
-(`test/blood1_decals.test.js` - the crack after the decode) and the classic one's (`test/audit39_render.test.js` R17 - the
-crack after the emission's cancel); the entry's static reach, 77 (`test/boot2.test.js` - `systems/veinCrack.js` on the
+PIN MOVED: RELAY_VERSION world200 over thirty-nine relay pins (world199 on the branch, renumbered at the merge) and `test/systems/disc7.test.js`'s list (AUDIT GATHER-FEEL R14), the LAW row in
+`test/net/relayversion.test.js`; the renderer's - the composition order (`test/scenes/dwf_audit.test.js`), the billboard pass's
+lines and its NOT list (`test/render/la_cost.test.js`), the batch's minted fields, 60 (`test/systems/save/hard3_types.test.js`); the stood
+flats' counts (`test/net/gatherspeed.test.js`, `test/scenes/audit29_host.test.js` - a burst's batch is no node's flats); VEIN-HUE's
+group key (`test/render/fb1012b_veinhue.test.js`); the pose's arm, its line order (`test/net/mac7.test.js` - the gathering fields
+between the torch and the climb); the peers' rebase (`test/net/peerstride.test.js`); the lane's flat albedo
+(`test/combat/blood1_decals.test.js` - the crack after the decode) and the classic one's (`test/render/audit39_render.test.js` R17 - the
+crack after the emission's cancel); the entry's static reach, 77 (`test/render/boot2.test.js` - `systems/veinCrack.js` on the
 renderer's path, a leaf of no imports, pinned so). Records re-aimed by content: `gatherfeel.json`
 GATHER-FEEL-follow-never-put-away (the stepAct line), `audit0928_render.json` AUDIT0928-N7, `audit29.json`
 AUDIT29-C5, `auditdrops.json` AD-E4, `cards2b.json` SB-wire-no-news, `disc12.json` DISC12-body-never-follows,
@@ -4571,17 +4625,17 @@ AUDIT29-C5, `auditdrops.json` AD-E4, `cards2b.json` SB-wire-no-news, `disc12.jso
 VEIN-WASH-e, `mwnpc4.json` MWNPC4-peer-dead-arms and -counts-not-followed, `perfextb.json` PERF-EXT10-2,
 `werewolf1.json` WEREWOLF1-peer-wolf-holds-the-sword and `soc1.json` S38-version-not-bumped - each dead.
 Every existing record on a file whose logic the slice moved - `scenes/gatherHost.js`, `scenes/mineHost.js`,
-`net/remotePlayers.js`, `net/peerBodies.js`, `net/peerRiders.js`, `combat/techniqueFx.js`, `render/renderer.js`,
+`net/remotePlayers.js`, `net/peer/peerBodies.js`, `net/peer/peerRiders.js`, `combat/technique/techniqueFx.js`, `render/renderer.js`,
 `render/enhancedLighting.js` and the slice's own three - was judged again: 1,381 (AUDIT GATHER-FEEL R14: 1,276 of other
 slices' lists and 105 of its own - its other two judged in its list's own run), of which 1,372 dead (67 of them after
-the three pins above were moved - `test/mac7.test.js`, `test/peerstride.test.js`, `test/blood1_decals.test.js` read the
+the three pins above were moved - `test/net/mac7.test.js`, `test/net/peerstride.test.js`, `test/combat/blood1_decals.test.js` read the
 lines the slice changed, and failed unmutated until then), 8 equivalent as recorded, and one SURVIVOR that survives on
 the base commit too: `mwt.json` MWT2-the-attribute-is-never-enabled-so-the-channel-reads-the-constant - the by-source
-pin in `test/mwnifmesh.test.js` matched MWNPC1's skinned mesh's twin line, so the rigid mesh's emission offset was
-unguarded. Pinned now by driving createCharacterMesh on a recording GL (`test/mwnifmesh.test.js` +1); dead. The files
+pin in `test/formats/morrowind/mwnifmesh.test.js` matched MWNPC1's skinned mesh's twin line, so the rigid mesh's emission offset was
+unguarded. Pinned now by driving createCharacterMesh on a recording GL (`test/formats/morrowind/mwnifmesh.test.js` +1); dead. The files
 the slice wires a line into (`scenes/world.js`, `scenes/dungeonContext.js`, `net/wire.js`, `net/online.js`,
-`ui/enhancedMenu.js`, `systems/uiPrefs.js`) were not judged whole again: their records still apply
-(`test/mutantdrift.test.js`), and those on the lines the slice moved were re-aimed and judged above.
+`ui/enhanced/enhancedMenu.js`, `systems/uiPrefs.js`) were not judged whole again: their records still apply
+(`test/tooling/mutantdrift.test.js`), and those on the lines the slice moved were re-aimed and judged above.
 Ledger A (PROFESSIONS, GATHER-FEEL II).
 
 ## Appendix A - a day of a gatherer

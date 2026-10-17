@@ -2,11 +2,13 @@
 // SERVER-POST (2026-10-08, Mac: "Let's develop an ingame server mailbox that goes next to the hourglass in the pause
 // menu. It should show notifications whenever players have a message. First use is to utilize it for players being
 // granted items."): THE SERVER'S POST - ITS LAW, the one file the service (server-account/src/post.js), the operator's
-// tool (tools/sendServerPost.mjs) and the client (net/serverPost.js, ui/enhancedPost.js) all read.
+// tool (tools/sendServerPost.mjs) and the client (net/serverPost.js, ui/enhanced/enhancedPost.js) all read.
 //
 // A piece of the post is the developers' to one account: a subject, a body, and at most ONE item, which its reader
 // claims into the online character they are playing. Nothing a player sends writes one - the operator's workflow
-// (.github/workflows/server-post.yml) is its only sender.
+// (.github/workflows/server-post.yml) is its sender, and (EG-ZF, 2026-10-12) the operator's list First of the Spire's letter's,
+// its words fixed (server-account/src/egHonours.js egFirstPost), and (EG-ZM) the service's hourly clock a spent Weir Key
+// stake's, its words fixed too (server-account/src/eg.js spendLapsedStakes).
 
 /** A piece's id: the service's mintId shape, or the operator's statement's `lower(hex(randomblob(12)))` - 24 hex. */
 export const POST_ID_RE = /^[A-Za-z0-9_-]{16,40}$/;

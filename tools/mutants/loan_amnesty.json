@@ -5,7 +5,7 @@
     "old": "    a.hasDefaulted = false;\n",
     "new": "",
     "tests": [
-      "test/loan_amnesty.test.js"
+      "test/systems/loan_amnesty.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    a.loanDueDate = 0;\n    a.hasDefaulted = false;",
     "new": "    a.hasDefaulted = false;",
     "tests": [
-      "test/loan_amnesty.test.js"
+      "test/systems/loan_amnesty.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    a.loanTotal = 0;\n    a.loanDueDate = 0;",
     "new": "    a.loanDueDate = 0;",
     "tests": [
-      "test/loan_amnesty.test.js"
+      "test/systems/loan_amnesty.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    a.loanTotal = 0;\n    a.loanDueDate = 0;",
     "new": "    a.accountGold = 0;\n    a.loanTotal = 0;\n    a.loanDueDate = 0;",
     "tests": [
-      "test/loan_amnesty.test.js"
+      "test/systems/loan_amnesty.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  snap.loanAmnesty = LOAN_AMNESTY;\n  let forgiven = 0, defaulted = 0;",
     "new": "  let forgiven = 0, defaulted = 0;",
     "tests": [
-      "test/loan_amnesty.test.js"
+      "test/systems/loan_amnesty.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "  if ((Number.isSafeInteger(snap.loanAmnesty) ? snap.loanAmnesty : 0) >= LOAN_AMNESTY) return null;\n",
     "new": "",
     "tests": [
-      "test/loan_amnesty.test.js"
+      "test/systems/loan_amnesty.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "    if (a.loanTotal > 0) forgiven += Math.trunc(a.loanTotal);",
     "new": "    if (a.loanTotal > 0) forgiven = Math.trunc(a.loanTotal);",
     "tests": [
-      "test/loan_amnesty.test.js"
+      "test/systems/loan_amnesty.test.js"
     ]
   },
   {
@@ -68,34 +68,34 @@
     "old": "  return forgiven > 0 || defaulted > 0 ? { forgiven, defaulted } : null;",
     "new": "  return forgiven > 0 ? { forgiven, defaulted } : null;",
     "tests": [
-      "test/loan_amnesty.test.js"
+      "test/systems/loan_amnesty.test.js"
     ]
   },
   {
     "name": "LOAN-AMNESTY-an-old-save-read-as-marked",
-    "file": "src/systems/save.js",
+    "file": "src/systems/save/save.js",
     "old": "entity.loanAmnesty = Number.isSafeInteger(snap.loanAmnesty) ? snap.loanAmnesty : 0;",
     "new": "entity.loanAmnesty = Number.isSafeInteger(snap.loanAmnesty) ? snap.loanAmnesty : LOAN_AMNESTY;",
     "tests": [
-      "test/loan_amnesty.test.js"
+      "test/systems/loan_amnesty.test.js"
     ]
   },
   {
     "name": "LOAN-AMNESTY-a-new-character-born-unmarked",
-    "file": "src/systems/save.js",
+    "file": "src/systems/save/save.js",
     "old": "snap.loanAmnesty = Number.isSafeInteger(entity.loanAmnesty) ? entity.loanAmnesty : LOAN_AMNESTY;",
     "new": "snap.loanAmnesty = Number.isSafeInteger(entity.loanAmnesty) ? entity.loanAmnesty : 0;",
     "tests": [
-      "test/loan_amnesty.test.js"
+      "test/systems/loan_amnesty.test.js"
     ]
   },
   {
     "name": "LOAN-AMNESTY-the-mark-not-saved",
-    "file": "src/systems/save.js",
+    "file": "src/systems/save/save.js",
     "old": "  snap.loanAmnesty = Number.isSafeInteger(entity.loanAmnesty) ? entity.loanAmnesty : LOAN_AMNESTY;",
     "new": "",
     "tests": [
-      "test/loan_amnesty.test.js"
+      "test/systems/loan_amnesty.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "  snap.loanAmnesty = LOAN_AMNESTY;   // LOAN-AMNESTY",
     "new": "  // LOAN-AMNESTY",
     "tests": [
-      "test/loan_amnesty.test.js"
+      "test/systems/loan_amnesty.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "const loansForgiven = realmBoot ? forgiveLoans(bootSnapRead) : null;",
     "new": "const loansForgiven = bootSnapRead ? forgiveLoans(bootSnapRead) : null;",
     "tests": [
-      "test/loan_amnesty.test.js"
+      "test/systems/loan_amnesty.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "  for (const line of loanAmnestyLines(loansForgiven)) townTalk.say(line);   // LOAN-AMNESTY: said once the world stands\n",
     "new": "",
     "tests": [
-      "test/loan_amnesty.test.js"
+      "test/systems/loan_amnesty.test.js"
     ]
   }
 ]

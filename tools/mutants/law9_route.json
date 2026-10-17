@@ -1,0 +1,247 @@
+[
+  {
+    "name": "ROUTE-a-point-s-height-unread",
+    "file": "src/net/eliteGates/egRoute.js",
+    "old": "const plan = !fin(y), Y = plan ? 0 : y * EG_ROUTE_Y_WEIGHT;",
+    "new": "const plan = !fin(y), Y = plan ? 0 : 0;",
+    "tests": ["test/net/eliteGates/law9_route.test.js"]
+  },
+  {
+    "name": "ROUTE-a-metre-under-weighs-as-one-over",
+    "file": "src/net/eliteGates/egRoute.js",
+    "old": "      if (ey < 0) ey *= EG_ROUTE_UNDER_X;",
+    "new": "      if (ey < 0) ey *= 1;",
+    "tests": ["test/net/eliteGates/law9_route.test.js"]
+  },
+  {
+    "name": "ROUTE-the-under-weight-on-the-wrong-side",
+    "file": "src/net/eliteGates/egRoute.js",
+    "old": "      if (ey < 0) ey *= EG_ROUTE_UNDER_X;",
+    "new": "      if (ey > 0) ey *= EG_ROUTE_UNDER_X;",
+    "tests": ["test/net/eliteGates/law9_route.test.js"]
+  },
+  {
+    "name": "ROUTE-the-run-on-ends-closed",
+    "file": "src/net/eliteGates/egRoute.js",
+    "old": "  const s = _s < 0 && !(o & 1) ? 0 : _s > G && !(o & 2) ? G : _s;",
+    "new": "  const s = _s < 0 ? 0 : _s > G ? G : _s;",
+    "tests": ["test/net/eliteGates/law9_route.test.js"]
+  },
+  {
+    "name": "ROUTE-the-door-end-never-open",
+    "file": "src/net/eliteGates/egRoute.js",
+    "old": "(l.b === src || l.b === dst ? 2 : 0)",
+    "new": "0",
+    "tests": ["test/net/eliteGates/law9_route.test.js"]
+  },
+  {
+    "name": "ROUTE-a-tie-to-the-higher-road",
+    "file": "src/net/eliteGates/egRoute.js",
+    "old": "(d2 === bd && C.road[i] < C.road[best])",
+    "new": "(d2 === bd && C.road[i] > C.road[best])",
+    "tests": ["test/net/eliteGates/law9_route.test.js"]
+  },
+  {
+    "name": "ROUTE-a-way-joined-to-nothing-read",
+    "file": "src/net/eliteGates/egRoute.js",
+    "old": "    if (!C.ok[i]) continue;\n",
+    "new": "",
+    "tests": ["test/net/eliteGates/law9_route.test.js"]
+  },
+  {
+    "name": "ROUTE-the-main-way-s-own-link-passed-over",
+    "file": "src/net/eliteGates/egRoute.js",
+    "old": "const k = ((l.road ?? 0) === 0 ? 0 : 1e9) + walked(R, l);",
+    "new": "const k = walked(R, l);",
+    "tests": ["test/net/eliteGates/law9_route.test.js"]
+  },
+  {
+    "name": "ROUTE-the-fork-s-other-way-never-taken",
+    "file": "src/net/eliteGates/egRoute.js",
+    "old": "(l) => walked(R, l) * ((l.road ?? 0) === r ? 1 : OFF_ROAD_X));",
+    "new": "(l) => walked(R, l));",
+    "tests": ["test/net/eliteGates/law9_route.test.js"]
+  },
+  {
+    "name": "ROUTE-the-proportion-read-from-the-far-end",
+    "file": "src/net/eliteGates/egRoute.js",
+    "old": "out[lo] + ((out[hi] - out[lo]) * wl) / (wl + wh)",
+    "new": "out[lo] + ((out[hi] - out[lo]) * wh) / (wl + wh)",
+    "tests": ["test/net/eliteGates/law9_route.test.js"]
+  },
+  {
+    "name": "ROUTE-a-way-said-backwards-kept",
+    "file": "src/net/eliteGates/egRoute.js",
+    "old": "const s = m0[2 * i + 1] < m0[2 * i] ? -1 : 1;",
+    "new": "const s = 1;",
+    "tests": ["test/net/eliteGates/law9_route.test.js"]
+  },
+  {
+    "name": "ROUTE-a-sheer-face-given-no-way",
+    "file": "src/net/eliteGates/egRoute.js",
+    "old": "    if (j >= 0) { C.dirX[i] = C.dirX[j]; C.dirZ[i] = C.dirZ[j]; } else C.dirZ[i] = 1;",
+    "new": "    C.dirZ[i] = 1;",
+    "tests": ["test/net/eliteGates/law9_route.test.js"]
+  },
+  {
+    "name": "ROUTE-a-plan-point-read-in-space",
+    "file": "src/net/eliteGates/egRoute.js",
+    "old": "(_plan ? C.kp[R][i] : C.k[R][i])",
+    "new": "C.k[R][i]",
+    "tests": ["test/net/eliteGates/law9_route.test.js"]
+  },
+  {
+    "name": "ROUTE-the-line-s-fork-midpoint-read-past",
+    "file": "src/net/eliteGates/egRoute.js",
+    "old": "return F && z >= F.z && x >= (F.lowX + F.x) / 2 ? 1 : 0;",
+    "new": "return F && z >= F.z && x > (F.lowX + F.x) / 2 ? 1 : 0;",
+    "tests": ["test/net/eliteGates/law9_route.test.js"]
+  },
+  {
+    "name": "ROUTE-the-line-s-fork-z-read-past",
+    "file": "src/net/eliteGates/egRoute.js",
+    "old": "return F && z >= F.z && x >= (F.lowX + F.x) / 2 ? 1 : 0;",
+    "new": "return F && z > F.z && x >= (F.lowX + F.x) / 2 ? 1 : 0;",
+    "tests": ["test/net/eliteGates/law9_route.test.js"]
+  },
+  {
+    "name": "ROUTE-law-9-s-bound-the-line-s-strip",
+    "file": "src/net/eliteGates/egRoute.js",
+    "old": "<= EG_ROUTE_BOUND.x + pad",
+    "new": "<= EG_LINE_HALF_X + pad",
+    "tests": ["test/net/eliteGates/law9_route.test.js"]
+  },
+  {
+    "name": "ROUTE-law-9-s-bound-from-zero",
+    "file": "src/net/eliteGates/egRoute.js",
+    "old": "z >= EG_ROUTE_BOUND.z0 - pad",
+    "new": "z >= -pad",
+    "tests": ["test/net/eliteGates/law9_route.test.js"]
+  },
+  {
+    "name": "ROUTE-law-9-s-bound-to-its-length",
+    "file": "src/net/eliteGates/egRoute.js",
+    "old": "z <= EG_ROUTE_BOUND.z1 + pad",
+    "new": "z <= spec.len + pad",
+    "tests": ["test/net/eliteGates/law9_route.test.js"]
+  },
+  {
+    "name": "ROUTE-across-the-way-flipped",
+    "file": "src/net/eliteGates/egRoute.js",
+    "old": "  out[1] = z + side * -dx + ahead * dz;",
+    "new": "  out[1] = z + side * dx + ahead * dz;",
+    "tests": ["test/net/eliteGates/law9_route.test.js"]
+  },
+  {
+    "name": "ROUTE-a-route-with-no-main-way-taken",
+    "file": "src/net/eliteGates/egRoute.js",
+    "old": " || !Array.isArray(R.main) || ",
+    "new": " || ",
+    "tests": ["test/net/eliteGates/law9_route.test.js"]
+  },
+  {
+    "name": "ROUTE-fair-the-cast-back-s-back-by-z",
+    "file": "src/net/eliteGates/egFair.js",
+    "old": "egRouteAlongAt(spec, p.x, p.y, p.z) < egRouteAlongAt(spec, L[1], L[2], L[3]) - EG_FAIR_SNAP_M",
+    "new": "p.z < L[3] - EG_FAIR_SNAP_M",
+    "tests": ["test/net/eliteGates/law9_route.test.js"]
+  },
+  {
+    "name": "ROUTE-fair-the-furthest-by-z",
+    "file": "src/net/eliteGates/egFair.js",
+    "old": "  const at = egRouteAlongAt(spec, p.x, p.y, p.z);",
+    "new": "  const at = p.z;",
+    "tests": ["test/net/eliteGates/law9_route.test.js"]
+  },
+  {
+    "name": "ROUTE-brain-the-toll-s-road-by-z",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "const a = egRouteAlong(spec, spec.arrive), e = egRouteAlong(spec, spec.end), road",
+    "new": "const a = spec.arrive.z, e = spec.end.z, road",
+    "tests": ["test/net/eliteGates/law9_route.test.js"]
+  },
+  {
+    "name": "ROUTE-brain-the-chains-by-z",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "by = (a, b) => egRouteAlong(spec, a) - egRouteAlong(spec, b);",
+    "new": "by = (a, b) => a.z - b.z;",
+    "tests": ["test/net/eliteGates/law9_route.test.js"]
+  },
+  {
+    "name": "ROUTE-brain-a-trail-s-road-by-the-fork-s-x",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "    if (egRouteRoadAt(spec, x, y, z) === 1) A.road = 1;",
+    "new": "    if (spec.fork && z >= spec.fork.z && x >= (spec.fork.lowX + spec.fork.x) / 2) A.road = 1;",
+    "tests": ["test/net/eliteGates/law9_route.test.js"]
+  },
+  {
+    "name": "ROUTE-brain-a-trail-s-road-in-plan-alone",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "    if (egRouteRoadAt(spec, x, y, z) === 1) A.road = 1;",
+    "new": "    if (egRouteRoadAt(spec, x, undefined, z) === 1) A.road = 1;",
+    "tests": ["test/net/eliteGates/law9_route.test.js"]
+  },
+  {
+    "name": "ROUTE-brain-the-low-road-without-the-fork",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "const onLowRoad = (spec, b) => !!spec.fork && egRouteRoad(spec, b) === 1;",
+    "new": "const onLowRoad = (spec, b) => egRouteRoad(spec, b) === 1;",
+    "tests": ["test/net/eliteGates/law9_route.test.js"]
+  },
+  {
+    "name": "ROUTE-brain-the-leader-by-z",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "    for (const q of inHall) la = Math.max(la, egRouteAlong(view, q));",
+    "new": "    la = egRouteAlong(view, inHall.reduce((p, q) => (q.z > p.z ? q : p)));",
+    "tests": ["test/net/eliteGates/law9_route.test.js"]
+  },
+  {
+    "name": "ROUTE-brain-the-leader-the-least-along",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "    for (const q of inHall) la = Math.max(la, egRouteAlong(view, q));",
+    "new": "    for (const q of inHall) la = Math.min(la, egRouteAlong(view, q));",
+    "tests": ["test/net/eliteGates/law9_route.test.js"]
+  },
+  {
+    "name": "ROUTE-brain-the-island-ahead-by-z",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "    const isle = egIsleAhead(isles, la, view);",
+    "new": "    const isle = egIsleAhead(isles, la);",
+    "tests": ["test/net/eliteGates/law9_route.test.js"]
+  },
+  {
+    "name": "ROUTE-brain-the-harriers-by-z",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "const [hx, hz] = egRouteAhead(view, m, EG_SHADOW_AHEAD_M, s * EG_SHADOW_SIDE_M, _ahead);",
+    "new": "const [hx, hz] = [m.x + s * EG_SHADOW_SIDE_M, m.z + EG_SHADOW_AHEAD_M];",
+    "tests": ["test/net/eliteGates/law9_route.test.js"]
+  },
+  {
+    "name": "ROUTE-legion-the-island-ahead-by-z",
+    "file": "src/net/eliteGates/egLegion.js",
+    "old": "    const a = spec ? egRouteAlong(spec, d) : d.z;",
+    "new": "    const a = d.z;",
+    "tests": ["test/net/eliteGates/law9_route.test.js"]
+  },
+  {
+    "name": "ROUTE-legion-a-diver-s-island-by-z",
+    "file": "src/net/eliteGates/egLegion.js",
+    "old": "egIsleAhead(ctx.isles, egRouteAlong(view, m), view)",
+    "new": "egIsleAhead(ctx.isles, m.z)",
+    "tests": ["test/net/eliteGates/law9_route.test.js"]
+  },
+  {
+    "name": "ROUTE-ruin-a-brink-s-thirds-by-z",
+    "file": "src/world/eliteGates/egRuin.js",
+    "old": "clamp(egRouteAlongAt(spec, x, y, z) / Math.max(1, spec.route ? egRouteLen(spec) : spec.len ?? 80), 0, 1)",
+    "new": "clamp(z / Math.max(1, spec.len ?? 80), 0, 1)",
+    "tests": ["test/net/eliteGates/law9_route.test.js"]
+  },
+  {
+    "name": "ROUTE-law-a-hall-s-ground-the-line-s",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "export const egInHall = (spec, sx, z, pad = 40) => egRouteInHall(spec, sx, z, pad);",
+    "new": "export const egInHall = (spec, sx, z, pad = 40) => Math.abs(sx - spec.x0) <= 120 + pad && z >= -pad && z <= spec.len + pad;",
+    "tests": ["test/net/eliteGates/law9_route.test.js"]
+  }
+]

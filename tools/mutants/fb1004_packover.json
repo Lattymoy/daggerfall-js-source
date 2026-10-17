@@ -5,7 +5,7 @@
     "old": "      try { got = (typeof carry?.give === 'function' ? carry.give(k, n) : carry?.mint(k, n)) ?? null; }",
     "new": "      try { got = carry?.mint(k, n) ?? null; }",
     "tests": [
-      "test/fb1004_packover.test.js"
+      "test/net/fb1004_packover.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "      const left = got ? Math.max(0, n - (got.bag | 0) - (got.pack | 0) - (got.over | 0)) : n;",
     "new": "      const left = got ? Math.max(0, n - (got.bag | 0) - (got.pack | 0)) : n;",
     "tests": [
-      "test/fb1004_packover.test.js"
+      "test/net/fb1004_packover.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "out.over += got.over | 0; }",
     "new": "}",
     "tests": [
-      "test/fb1004_packover.test.js"
+      "test/net/fb1004_packover.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  const p = { ...put, pack: (put.pack | 0) + (put.over | 0) };",
     "new": "  const p = { ...put };",
     "tests": [
-      "test/fb1004_packover.test.js"
+      "test/net/fb1004_packover.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  const said = (put.over | 0) > 0 ? `${to} - your pack is over its weight` : to;",
     "new": "  const said = to;",
     "tests": [
-      "test/fb1004_packover.test.js"
+      "test/net/fb1004_packover.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "hud.toast(BAG_WORDS.overWeight); }",
     "new": "}",
     "tests": [
-      "test/fb1004_packover.test.js"
+      "test/net/fb1004_packover.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "got.left, opts.cc, { slowRot: opts.slowRot === true, noRot: opts.noRot === true });",
     "new": "got.left, opts.cc, {});",
     "tests": [
-      "test/fb1004_packover.test.js"
+      "test/net/fb1004_packover.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "over = withdrawIntoPack(entity, key, got.left, opts.cc, {",
     "new": "over = withdrawIntoPack(entity, key, got.left, false, {",
     "tests": [
-      "test/fb1004_packover.test.js"
+      "test/net/fb1004_packover.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "if (got.bag + got.pack + got.over > 0) saveSoon.changed(); return got; },",
     "new": "if (got.bag + got.pack > 0) saveSoon.changed(); return got; },",
     "tests": [
-      "test/fb1004_packover.test.js"
+      "test/net/fb1004_packover.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "(d.put?.over ?? 0) > 0 && deps.nowMs() - overSaidAt >= OVER_SAID_MS) {",
     "new": "(d.put?.over ?? 0) > 0) {",
     "tests": [
-      "test/fb1004_packover.test.js"
+      "test/net/fb1004_packover.test.js"
     ]
   }
 ]

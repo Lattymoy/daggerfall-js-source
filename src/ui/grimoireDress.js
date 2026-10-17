@@ -18,7 +18,7 @@
 // stands at Slate underneath (the bare kit), so a Stone or Ember a player chose for Enhanced Plus is kept for when
 // they wear it again and never bleeds into this. Three sheets, all keyed on that attribute and all after every other:
 //   1. THE FACE        the pack's Alagard (FONT0003-SDF.ttf), over every family the enhanced sheets name
-//   2. THE KIT         every role of ui/enhancedFrame.js FRAME_ROLES repainted in the pack's materials, the HUD's
+//   2. THE KIT         every role of ui/enhanced/enhancedFrame.js FRAME_ROLES repainted in the pack's materials, the HUD's
 //                      vitals as the pack's three vials, the hotbar as its shelf boxes, the front door on its desk
 //   3. THE INK         Plus writes light words on dark stone; a page wants dark ink. Every rule of every enhanced sheet
 //                      on the page is read once (and every sheet injected later, as it lands) and re-said for the
@@ -28,7 +28,7 @@
 //                      inside a wooden one (a press, a shelf box, a band, a socket), where Plus's light words stand on
 //                      the dark wood as the pack's own gold-on-wood labels do.
 // The pictures are the pack's, cut at run time (ui/grimoireArt.js) - nothing new is committed.
-import { FRAME_ROLES, FRAME_CSS } from './enhancedFrame.js';
+import { FRAME_ROLES, FRAME_CSS } from './enhanced/enhancedFrame.js';
 import { CHANNEL_COLOURS, NAME_COLOURS, PING_COLOURS, RP_COLOURS, channelRules, pipRules } from './chatColours.js';   // CHAT-COLOURS, NAME-INK, PING1: the chat's colours on the page
 import { tierMarkCss } from './lootTierMarks.js';   // LOOT-MARKS: the quick loot's tier gem and wash, on the page
 import { buildGrimoireArt, grimoireFontUrl, grimoireImg, artVar, FRAME_ART, nativeSize, BOOK_SLICE, PLATE_SLICE,
@@ -92,7 +92,7 @@ export const GRIM_TONES = Object.freeze({
 const T = GRIM_TONES;
 
 // ── THE INK: colour, read and re-said ────────────────────────────────────────────────────────────────────────────────
-/** The enhanced sheet's own :root colours (ui/enhancedStyle.js), resolved before a value is re-said, so a `var(--bone)`
+/** The enhanced sheet's own :root colours (ui/enhanced/enhancedStyle.js), resolved before a value is re-said, so a `var(--bone)`
  *  word is inked as #e9e4d9 would be. */
 export const ENHANCED_VARS = Object.freeze({
   '--ink': '#0e1013', '--slate': '#171b21', '--iron': '#2b323b', '--bone': '#e9e4d9', '--dim': '#9a9486',
@@ -865,7 +865,7 @@ ${G} [data-grim-on="page"] { background: none !important; border-color: transpar
   color: ${T.ink} !important; text-shadow: 0 1px 0 rgba(255,240,205,0.4) !important; text-decoration: none; }
 ${G} [data-grim-on="page"].primary { color: ${T.red} !important; }
 /* HUD-CLASS: a chosen press (\`.on\` - a word the HUD writes too) is named by its own press root, so no rule of the dress
-   can reach the HUD's \`.on\` (test/hudclass_sheets.test.js); at rest only, so the hover after it still wins as it did */
+   can reach the HUD's \`.on\` (test/ui/naval/hudclass_sheets.test.js); at rest only, so the hover after it still wins as it did */
 ${at(PRESS_ROOTS, '[data-grim-on="page"].on:not(:hover):not(:focus-visible)')} { color: ${T.red} !important; }
 ${G} [data-grim-on="page"]:hover, ${G} [data-grim-on="page"]:focus-visible { color: ${T.redHi} !important; background: none !important;
   text-decoration: underline solid ${T.red}; text-underline-offset: 0.2em; outline: none; }
@@ -934,7 +934,7 @@ ${at(R.tile, ':active')} { box-shadow: 0 0 0 1px ${T.outline}; outline: 2px soli
 ${at(R.chip)} { background: ${WOOD(0.12)}; color: ${T.cream}; text-shadow: ${WORD_ON_WOOD};
   border-color: ${T.woodLit} #2a180a ${T.outline} ${T.woodMid}; box-shadow: 0 0 0 1px ${T.outline}, 2px 2px 0 rgba(0,0,0,0.35); }
 /* AUDIT C&C S4: ...and the HUD's temperature plate, a chip of this wood, keeps its levels on it - the status tiles' own
-   amber and red (ui/enhancedStyle.js .hst-cell.warn / .danger, which this dress leaves as they are). The wood's frame
+   amber and red (ui/enhanced/enhancedStyle.js .hst-cell.warn / .danger, which this dress leaves as they are). The wood's frame
    above outweighed the plate's level rules (three classes to two), and the plate wore the same wood felt, costing or
    comfortable */
 ${G} .hud-temp[data-level="warn"] { border-color: #f3cf86 #7a5424 #7a5424 #f3cf86; }
@@ -1191,7 +1191,7 @@ ${G} .hud-compass[data-hm-turn] .hud-strip { top: var(--gcm); bottom: calc(2 * v
 ${G} .hud-compass .hud-point { visibility: hidden; }
 ${G} .hud-needle { display: none; }
 /* GRIM-MARKS (2026-10-13, field video: "what are those colored edges, the blue and greenish ones"): the strip's marks
-   (ui/enhancedHud.js - Detect, the party, the professions' nodes, a ship, a boat, the gate, the quest) are laid by
+   (ui/enhanced/enhancedHud.js - Detect, the party, the professions' nodes, a ship, a boat, the gate, the quest) are laid by
    left: 0..100% OF THE COMPASS BOX and stood on its foot. Here the box is the wooden frame, the parchment two --gcm in
    from each side and one up from the foot, and the frame (::after, z 3) sits over all of it - so every mark ON the strip
    was buried under the wood, and a mark clamped to an end (a node or a mate BEHIND you: compassMarkerLerp's clamp) hung
@@ -1698,7 +1698,7 @@ ${G} .px-home:not(.px-over):not(.lv-sky) .px-rule { display: none; }
   ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky) > .px-stage:not(.px-acctstage) { display: block; padding: 0; }
   ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky) .px-wordmark { position: absolute; left: 50%; top: max(4px, calc(var(--gby) + var(--gbh) * 0.005));
     translate: -50% 0; width: min(calc(var(--gbw) * 0.3), 470px); z-index: 1; filter: drop-shadow(0 6px 10px rgba(0,0,0,0.6)); }
-  /* UI-CALM (ui/enhancedMenu.js drawDoors): THE BOOK'S TWO LEAVES ARE THE DOOR'S TWO PAGES - the two questions, The
+  /* UI-CALM (ui/enhanced/enhancedMenu.js drawDoors): THE BOOK'S TWO LEAVES ARE THE DOOR'S TWO PAGES - the two questions, The
      Realm (Online) on the left and Thine Own Tale (Offline) on the right, each its own head, its word and a line in a
      smaller hand under it; the offline level its games on the left and the way back on the right; Settings and
      Overhauls two small plaques across the foot of the book */
@@ -2299,7 +2299,7 @@ export const grimoireKitCss = () => snapCss(`${faceCss()}\n${kitCss()}\n${roster
 /** Every whole-pixel font size in a sheet moved to the face's grid (the kit's own, so it obeys its own law). */
 export const snapCss = (css) => css.replace(/font-size:\s*([\d.]+)px/g, (m, n) => `font-size: ${snapSize(+n)}px`);
 /** HUD-CLASS: the sheet evaluated once, as the dress lays it - the text the audit of the game's sheets reads
- *  (test/hudclass_sheets.test.js: a sheet whose selectors are built where it is laid is read only as an export). Pure:
+ *  (test/ui/naval/hudclass_sheets.test.js: a sheet whose selectors are built where it is laid is read only as an export). Pure:
  *  the card's choices are the root's attributes, never a rebuild. */
 export const GRIMOIRE_KIT_CSS = grimoireKitCss();
 

@@ -37,7 +37,7 @@ import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 import { SKILL_NAMES } from '../systems/skills.js';
 import { drawText, measureText } from './text.js';
-import { nativeMetrics } from './nativePanel.js';
+import { nativeMetrics } from './native/nativePanel.js';
 import { chargenArtLoaded, drawChargenNative, loadFaceSet, chargenHit, raceDescriptionLines, classDescriptionLines, textRecordLines, DOUBLE_CLICK_DELAY_MS, CLASS_LIST_ROWS, ADV_PICKER_ITEM_COUNT, PLAYER_REFLEXES, REFLEX_COUNT, QUESTION_ROW_H, QSCROLL_H, QSCROLL_TEXT_OFFSET, QSCROLL_FRAMES, PICK_SCROLL_RECT, startConstellationAnim, tickConstellationAnim, stopConstellationAnim } from './chargenArt.js';   // U10 / U17 / U18 / U20a
 
 // AUDIT 24 (wave 24): FormulaHelper.MaxStatValue, one home.
@@ -45,7 +45,7 @@ import { MAX_STAT_VALUE } from '../systems/statMods.js';
 import { hotkeyHit } from '../systems/dialogShortcuts.js';   // ROAD-E2: the DaggerfallShortcut table - the builder's ResetBonusPool
 import { VerticalScrollBar } from './verticalScrollBar.js';   // ROAD-E2: DFU's VerticalScrollBar, the picker's bar
 import { localizedStrings, localizedText, processGrammar, GrammarManager } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language; L10N3g: the grammar and the hero's gender
-import { raceDisplayName } from '../systems/talkSession.js';   // L10N3d: RaceTemplate.Name, read in the player's language
+import { raceDisplayName } from '../systems/talk/talkSession.js';   // L10N3d: RaceTemplate.Name, read in the player's language
 
 export { MAX_STAT_VALUE };
 
@@ -1183,7 +1183,7 @@ export class ChargenFlow {
    *  list to row 0. The FRAME is skipped, never the latch:
    *  `releasePickBar()` is what ends a drag, which is why the two
    *  sibling machines (`ui/spellbookWindow.js`,
-   *  `ui/spellIconPickerWindow.js`) carry the identical arm. */
+   *  `ui/spell/spellIconPickerWindow.js`) carry the identical arm. */
   hover(vx, vy, e = null) {
     const p = this.syncPickBar();
     if (!p) return;

@@ -33,6 +33,7 @@ import { localizedQuestMessage } from './localizedQuest.js';   // L10N3c: GetMes
 import { symbolToSaveData, symbolFromSaveData } from './symbol.js';
 import { smallerDungeonsStateNow } from '../../world/smallerDungeons.js';   // AUDIT 28 W4: Quest.cs:284's stamp
 import { askAgain } from './noAsksAgain.js';   // NO-ASKS-AGAIN (FIELD BUGS 2026-10-13e): a No that leads nowhere asks again
+import { isInstanceEpoch } from '../../net/instanceRoom.js';   // INSTANCES: a quest's instance epoch, its one spelling
 
 /** ShowMessagePopup's chunker (Quest.cs:777, 793-819): a message
  *  longer than 22 LINES becomes several click-through boxes. A line
@@ -166,6 +167,7 @@ export class Quest {
     this.shelvedAt = null;
     this.shelvedSites = null;
     this.shelvedItems = null;   // QUEST-SHELF-DROP: its items the pack held as it was set aside, by symbol
+    this.instanceEpoch = null;   // INSTANCES: its instance's epoch, minted when one first opens (systems/instancePlaces.js questInstanceEpoch)
   }
 
   // ---- Q1 structure ----
@@ -550,6 +552,7 @@ export class Quest {
       tasks: [...this.tasks.values()].map((t) => t.getSaveData()),
       oneTimeDisplayedMessages: [...this.oneTimeDisplayedMessages],
       shareId: this.shareId ?? null,   // DISC22-F: the shared copy's identity - the port's own member, absent in DFU's saves
+      instanceEpoch: this.instanceEpoch ?? null,   // INSTANCES: its instance's epoch once one opened (systems/instancePlaces.js questInstanceEpoch) - the port's own
       shelvedAt: this.shelvedAt ?? null,   // QUEST-SHELF: the port's own, absent in DFU's saves (an older envelope: not set aside)
       shelvedSites: this.shelvedSites ? [...this.shelvedSites] : null,
       shelvedItems: this.shelvedItems ? [...this.shelvedItems] : null,   // QUEST-SHELF-DROP
@@ -571,6 +574,7 @@ export class Quest {
     this.uid = data.uid;
     ensureUidAtLeast(data.uid);
     this.shareId = typeof data.shareId === 'string' && data.shareId ? data.shareId : null;   // DISC22-F
+    this.instanceEpoch = isInstanceEpoch(data.instanceEpoch) ? data.instanceEpoch : null;   // INSTANCES: an older envelope's quest mints one at its first instance
     this.shelvedAt = Number.isFinite(data.shelvedAt) && data.shelvedAt !== 0 ? data.shelvedAt : null;   // QUEST-SHELF
     this.shelvedSites = this.shelvedAt != null && Array.isArray(data.shelvedSites) ? data.shelvedSites.filter((n) => typeof n === 'string') : null;
     this.shelvedItems = this.shelvedAt != null && Array.isArray(data.shelvedItems) ? data.shelvedItems.filter((n) => typeof n === 'string') : null;   // QUEST-SHELF-DROP

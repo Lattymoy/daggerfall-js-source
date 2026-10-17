@@ -1,5 +1,5 @@
 // AUDIT ATTACH: THE WIDEST PLACE SOCKET, built over the real Room - shared by the tests that measure its attachment
-// (test/auditattach.test.js) and any slice that gives a place socket a new arm, which must add its frame to
+// (test/net/auditattach.test.js) and any slice that gives a place socket a new arm, which must add its frame to
 // placeFrames and its meter to PLACE_METER_FIELDS (or a field to PLACE_ATTACH_FIELDS) and be measured with the rest.
 import { NAME_MAX, POSE_BOUND, POSE_Y_BOUND, CAST_DEST_SENDERS_MAX, POSE_RIDE, POSE_RIDE_SPRITES, PAGE_HEAD_MAX, PAGE_LINE_MAX, PAGE_LINES_MAX } from '../src/net/wire.js';
 import { TITLES, GLYPHS, titleClaimed } from '../src/net/identityToken.js';

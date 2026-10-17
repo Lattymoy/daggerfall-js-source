@@ -6,7 +6,7 @@
 //
 // WHAT THEY REPLACE. The court stood on a SQUARE of fire 520 m across under a shell of flat fog-red: the fog hid the
 // square's middle and never its edge, and the shell was one colour. Both are gone from the court's mesh
-// (world/gateArena.js buildCourtModel); these two passes stand in their place, drawn in the court's world pass AFTER
+// (world/gate/gateArena.js buildCourtModel); these two passes stand in their place, drawn in the court's world pass AFTER
 // its solid geometry and BEFORE its flats (PERF2's law, render/skyRenderer.js: the court, the players and the boss's
 // body are drawn first, so the sea burns and the sky churns only where they show, and a flat blended over the sky is
 // drawn over it, never under).
@@ -109,7 +109,7 @@ export const SEA_R = 460;
 export const SEA_FADE = Object.freeze([260, 450]);
 export const SEA_RINGS = 36;
 export const SEA_SPOKES = 96;
-/** The sea's depth under the court's floor (world/gateArena.js LAVA_Y - pinned equal; render/ reads no world/ module). */
+/** The sea's depth under the court's floor (world/gate/gateArena.js LAVA_Y - pinned equal; render/ reads no world/ module). */
 export const DEAD_SEA_Y = -36;
 /** THE AIR'S LIFE: embers rising off the sea round the court (from past its edge, never up through its floor), a few
  *  off each brazier, and ash falling over it all - how many, and how long each lives (whole cycles a period, so the
@@ -124,7 +124,7 @@ export const ASH_TURNS = Object.freeze([10, 16]);
 export const EMBER_RING = Object.freeze([27, 95]);
 export const ASH_TOP = 45;
 export const ASH_RADIUS = 60;
-/** The most braziers the pass takes (world/gateArena.js courtBraziers has five - the sixth is the bridge's gap). */
+/** The most braziers the pass takes (world/gate/gateArena.js courtBraziers has five - the sixth is the bridge's gap). */
 export const LIFE_BRAZIERS_MAX = 6;
 /** The air's drift over the court: its speed (metres a second) and its turns round the compass a period. */
 export const WIND_SPEED = 1.4;
@@ -651,7 +651,7 @@ export class DeadlandsRenderer {
   /**
    * THE AIR'S LIFE - the ash laid over the frame and the embers added onto it, depth-tested and never written: after
    * the court's flats, beside its telegraph. `centre` the court's centre on its floor (the dungeon's frame),
-   * `braziers` the fire beds in the court's frame (world/gateArena.js courtBraziers), `viewH` the world image's height in
+   * `braziers` the fire beds in the court's frame (world/gate/gateArena.js courtBraziers), `viewH` the world image's height in
    * pixels (RETRO1's - render/lightningBolts.js reads it the same way; the drawing buffer's when not handed).
    */
   drawLife(proj, view, centre, seconds, fog = null, gain = 1, braziers = [], viewH = 0) {

@@ -20,7 +20,9 @@ const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 
 /** Hamilton product a * b (apply b, then a - Unity's operator order). */
 export function quatMultiply(a, b) {
-  const [ax, ay, az, aw] = a, [bx, by, bz, bw] = b;
+  // PERF-SAILS3: read by index - a destructuring walks the array's iterator, and a kept typed array's (a walk's local
+  // rotation, a node's world one) made an iterator and its results a call: the ships' frame's largest allocator
+  const ax = a[0], ay = a[1], az = a[2], aw = a[3], bx = b[0], by = b[1], bz = b[2], bw = b[3];
   return [
     aw * bx + ax * bw + ay * bz - az * by,
     aw * by - ax * bz + ay * bw + az * bx,
@@ -120,9 +122,10 @@ export function mat4FromQuatPos(q, p) {
   return m;
 }
 /** AUDIT PRE-MERGE 0928 R5: mat4.js quatToMat4's numbers, written into `out` (a walk's own storage) - its own copy
- *  because mat4.js is in the relay's bundle (test/relayversion.test.js RELAY_GRAPH), where a byte is a relay deploy;
- *  test/audit0928_online.test.js holds the two to the bit. */
-function quatToMat4Into([x, y, z, w], out) {
+ *  because mat4.js is in the relay's bundle (test/net/relayversion.test.js RELAY_GRAPH), where a byte is a relay deploy;
+ *  test/scenes/audit0928_online.test.js holds the two to the bit. */
+function quatToMat4Into(q, out) {
+  const x = q[0], y = q[1], z = q[2], w = q[3];   // PERF-SAILS3: by index, as quatMultiply reads (a walk's `lq` is a Float64Array's view)
   const xx = x * x, yy = y * y, zz = z * z;
   const xy = x * y, xz = x * z, yz = y * z, wx = w * x, wy = w * y, wz = w * z;
   out[0] = 1 - 2 * (yy + zz); out[1] = 2 * (xy + wz);     out[2] = 2 * (xz - wy);      out[3] = 0;

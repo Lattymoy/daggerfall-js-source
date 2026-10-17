@@ -5,7 +5,7 @@
     "old": "  out[0] = x0 + terrainSize / 2; out[1] = z0 + terrainSize / 2;\n",
     "new": "  if (live) { out[0] = p[0]; out[1] = p[2]; } else { out[0] = x0 + terrainSize / 2; out[1] = z0 + terrainSize / 2; }\n",
     "tests": [
-      "test/boatmark.test.js"
+      "test/ui/boatmark.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  if (live && !boat.inside\n    && p[0] >= x0",
     "new": "  if (false\n    && p[0] >= x0",
     "tests": [
-      "test/boatmark.test.js"
+      "test/ui/boatmark.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  if (boat?.GameObject?.activeSelf && !boat.inside) {",
     "new": "  if (false) {",
     "tests": [
-      "test/boatmark.test.js"
+      "test/ui/boatmark.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "p[0] >= x0 - BOAT_PIXEL_SLACK_M && p[0] <= x0 + terrainSize + BOAT_PIXEL_SLACK_M",
     "new": "p[0] >= x0 && p[0] <= x0 + terrainSize",
     "tests": [
-      "test/boatmark.test.js"
+      "test/ui/boatmark.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  if (boat?.GameObject?.activeSelf && !boat.inside) {",
     "new": "  if (boat?.GameObject?.activeSelf) {",
     "tests": [
-      "test/boatmark.test.js"
+      "test/ui/boatmark.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "  if (live && !boat.inside\n",
     "new": "  if (live\n",
     "tests": [
-      "test/boatmark.test.js"
+      "test/ui/boatmark.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "  const x0 = t[0], z0 = t[2];",
     "new": "  const x0 = 0, z0 = 0;",
     "tests": [
-      "test/boatmark.test.js"
+      "test/ui/boatmark.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "  const x0 = t[0], z0 = t[2];",
     "new": "  const x0 = t[2], z0 = t[0];",
     "tests": [
-      "test/boatmark.test.js"
+      "test/ui/boatmark.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "    if (!boat || boat === current) continue;",
     "new": "    if (!boat) continue;",
     "tests": [
-      "test/boatmark.test.js"
+      "test/ui/boatmark.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "    if (Math.hypot(p[0] - feet[0], p[1] - feet[2]) < BOAT_MARK_NEAR_M) continue;",
     "new": "    if (false) continue;",
     "tests": [
-      "test/boatmark.test.js"
+      "test/ui/boatmark.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "p[1] - feet[2]) < BOAT_MARK_NEAR_M",
     "new": "p[1] - feet[1]) < BOAT_MARK_NEAR_M",
     "tests": [
-      "test/boatmark.test.js"
+      "test/ui/boatmark.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "  return _points.length ? _points : null;",
     "new": "  return _points.length ? [..._points] : null;",
     "tests": [
-      "test/boatmark.test.js"
+      "test/ui/boatmark.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "0xe0 / 255, 0xb0 / 255",
     "new": "0xe0 / 256, 0xb0 / 255",
     "tests": [
-      "test/boatmark.test.js"
+      "test/ui/boatmark.test.js"
     ]
   },
   {
@@ -122,97 +122,97 @@
     "old": "  Object.freeze([Object.freeze([0, 7])]),",
     "new": "  Object.freeze([Object.freeze([0, 8])]),",
     "tests": [
-      "test/boatmark.test.js"
+      "test/ui/boatmark.test.js"
     ]
   },
   {
     "name": "BOAT-MARK-classic-the-bearing-ignored",
-    "file": "src/ui/hud.js",
+    "file": "src/ui/hud/hud.js",
     "old": "(boxRight - boxLeft) * lerp;\n    for (let r = 0; r < BOAT_GLYPH_ROWS.length; r++) {",
     "new": "(boxRight - boxLeft) * 0.5;\n    for (let r = 0; r < BOAT_GLYPH_ROWS.length; r++) {",
     "tests": [
-      "test/boatmark.test.js"
+      "test/ui/boatmark.test.js"
     ]
   },
   {
     "name": "BOAT-MARK-classic-the-glyph-hung-below-the-edge",
-    "file": "src/ui/hud.js",
+    "file": "src/ui/hud/hud.js",
     "old": "  const my = by - BOAT_GLYPH_ROWS.length * s;",
     "new": "  const my = by;",
     "tests": [
-      "test/boatmark.test.js"
+      "test/ui/boatmark.test.js"
     ]
   },
   {
     "name": "BOAT-MARK-classic-a-row-dropped",
-    "file": "src/ui/hud.js",
+    "file": "src/ui/hud/hud.js",
     "old": "    for (let r = 0; r < BOAT_GLYPH_ROWS.length; r++) {",
     "new": "    for (let r = 1; r < BOAT_GLYPH_ROWS.length; r++) {",
     "tests": [
-      "test/boatmark.test.js"
+      "test/ui/boatmark.test.js"
     ]
   },
   {
     "name": "BOAT-MARK-classic-the-boats-never-drawn",
-    "file": "src/ui/hud.js",
+    "file": "src/ui/hud/hud.js",
     "old": "  drawBoatCompassMarks(renderer, boats, playerXZ, heading01, { bx, by, bw, s });",
     "new": "  void boats;",
     "tests": [
-      "test/boatmark.test.js"
+      "test/ui/boatmark.test.js"
     ]
   },
   {
     "name": "BOAT-MARK-classic-the-boats-drawn-over-the-ships",
-    "file": "src/ui/hud.js",
+    "file": "src/ui/hud/hud.js",
     "old": "  drawShipCompassMarks(renderer, ships, playerXZ, heading01, { bx, by, bw, s });   // AUDIT NAV1: the sea's ships\n",
     "new": "  drawShipCompassMarks(renderer, ships, playerXZ, heading01, { bx, by, bw, s });   // AUDIT NAV1: the sea's ships\n  drawBoatCompassMarks(renderer, boats, playerXZ, heading01, { bx, by, bw, s });\n",
     "tests": [
-      "test/boatmark.test.js"
+      "test/ui/boatmark.test.js"
     ]
   },
   {
     "name": "BOAT-MARK-enhanced-the-boats-not-handed",
-    "file": "src/ui/hud.js",
+    "file": "src/ui/hud/hud.js",
     "old": "      boats: boats ?? null,",
     "new": "      boats: null,",
     "tests": [
-      "test/boatmark.test.js"
+      "test/ui/boatmark.test.js"
     ]
   },
   {
     "name": "BOAT-MARK-enhanced-the-marks-never-placed",
-    "file": "src/ui/enhancedHud.js",
+    "file": "src/ui/enhanced/enhancedHud.js",
     "old": "    if (node._bm.left !== l) { node._bm.left = l; node.style.left = l; }",
     "new": "    if (node._bm.left !== l) { node._bm.left = l; }",
     "tests": [
-      "test/boatmark.test.js"
+      "test/ui/boatmark.test.js"
     ]
   },
   {
     "name": "BOAT-MARK-enhanced-the-pool-rebuilt",
-    "file": "src/ui/enhancedHud.js",
+    "file": "src/ui/enhanced/enhancedHud.js",
     "old": "  while (parts.boatMarks.length < list.length) {",
     "new": "  parts.boatMarks.length = 0; while (parts.boatMarks.length < list.length) {",
     "tests": [
-      "test/boatmark.test.js"
+      "test/ui/boatmark.test.js"
     ]
   },
   {
     "name": "BOAT-MARK-enhanced-the-bearing-ignored",
-    "file": "src/ui/enhancedHud.js",
+    "file": "src/ui/enhanced/enhancedHud.js",
     "old": "compassMarkerLerp(list[i], playerXZ, heading01)));\n    const l = `${(at * 100).toFixed(1)}%`;\n    if (node._bm.left",
     "new": "0.5));\n    const l = `${(at * 100).toFixed(1)}%`;\n    if (node._bm.left",
     "tests": [
-      "test/boatmark.test.js"
+      "test/ui/boatmark.test.js"
     ]
   },
   {
     "name": "BOAT-MARK-enhanced-a-gone-boat-shown",
-    "file": "src/ui/enhancedHud.js",
+    "file": "src/ui/enhanced/enhancedHud.js",
     "old": "    const node = parts.boatMarks[i];\n    if (i >= list.length) {\n      if (node.style.display !== 'none') node.style.display = 'none';\n      continue;\n    }",
     "new": "    const node = parts.boatMarks[i];\n    if (i >= list.length) {\n      continue;\n    }",
     "tests": [
-      "test/boatmark.test.js"
+      "test/ui/boatmark.test.js"
     ]
   },
   {
@@ -221,7 +221,7 @@
     "old": "boats: csaRuntime && _mode() === 'exterior' ? boatCompassPoints(",
     "new": "boats: csaRuntime ? boatCompassPoints(",
     "tests": [
-      "test/boatmark.test.js"
+      "test/ui/boatmark.test.js"
     ]
   },
   {
@@ -230,7 +230,7 @@
     "old": "boatCompassPoints(csaRuntime.AllBoats, csaBoatUnderMe(), enchantFeet(),",
     "new": "boatCompassPoints(csaRuntime.AllBoats, null, enchantFeet(),",
     "tests": [
-      "test/boatmark.test.js"
+      "test/ui/boatmark.test.js"
     ]
   }
 ]

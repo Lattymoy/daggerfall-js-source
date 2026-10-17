@@ -1,83 +1,83 @@
 [
   {
     "name": "QSMAIN-chronicle-gate-open",
-    "file": "src/ui/enhancedChronicle.js",
+    "file": "src/ui/enhanced/enhancedChronicle.js",
     "old": "          ? deps.shelfDoor?.() : null;",
     "new": "          ? deps.shelfDoor?.() : deps.shelfDoor?.();",
     "tests": [
-      "test/questshelfmain.test.js"
+      "test/systems/quest/questshelfmain.test.js"
     ]
   },
   {
     "name": "QSMAIN-chronicle-door-unasked",
-    "file": "src/ui/enhancedChronicle.js",
+    "file": "src/ui/enhanced/enhancedChronicle.js",
     "old": "        if (clean?.abandon && clean.canAbandon?.(e.uid)) {",
     "new": "        if (clean?.abandon) {",
     "tests": [
-      "test/questshelfmain.test.js"
+      "test/systems/quest/questshelfmain.test.js"
     ]
   },
   {
     "name": "QSMAIN-chronicle-unarmed",
-    "file": "src/ui/enhancedChronicle.js",
+    "file": "src/ui/enhanced/enhancedChronicle.js",
     "old": "            if (bountyArmed !== `q:${e.uid}`) { bountyArmed = `q:${e.uid}`; render(); return; }",
     "new": "            void 0;",
     "tests": [
-      "test/questshelfmain.test.js"
+      "test/systems/quest/questshelfmain.test.js"
     ]
   },
   {
     "name": "QSMAIN-chronicle-silent",
-    "file": "src/ui/enhancedChronicle.js",
+    "file": "src/ui/enhanced/enhancedChronicle.js",
     "old": "            shelfWord = clean.abandon(e.uid)?.text ?? '';",
     "new": "            clean.abandon(e.uid);",
     "tests": [
-      "test/questshelfmain.test.js"
+      "test/systems/quest/questshelfmain.test.js"
     ]
   },
   {
     "name": "QSMAIN-chronicle-label-english",
-    "file": "src/ui/enhancedChronicle.js",
+    "file": "src/ui/enhanced/enhancedChronicle.js",
     "old": "t('chronicle.quests.abandon', 'Abandon')",
     "new": "'Abandon'",
     "tests": [
-      "test/questshelfmain.test.js"
+      "test/systems/quest/questshelfmain.test.js"
     ]
   },
   {
     "name": "QSMAIN-chronicle-armed-english",
-    "file": "src/ui/enhancedChronicle.js",
+    "file": "src/ui/enhanced/enhancedChronicle.js",
     "old": "t('chronicle.quests.abandonArmed', 'Click again')",
     "new": "'Click again'",
     "tests": [
-      "test/questshelfmain.test.js"
+      "test/systems/quest/questshelfmain.test.js"
     ]
   },
   {
     "name": "QSMAIN-chronicle-title-english",
-    "file": "src/ui/enhancedChronicle.js",
+    "file": "src/ui/enhanced/enhancedChronicle.js",
     "old": "t('chronicle.quests.abandonTitle', 'Give up this quest for now - reclaim it from the pause menu\\'s Quests tab')",
     "new": "'Give up this quest for now - reclaim it from the pause menu\\'s Quests tab'",
     "tests": [
-      "test/questshelfmain.test.js"
+      "test/systems/quest/questshelfmain.test.js"
     ]
   },
   {
     "name": "QSMAIN-chronicle-aria-english",
-    "file": "src/ui/enhancedChronicle.js",
+    "file": "src/ui/enhanced/enhancedChronicle.js",
     "old": "t('chronicle.quests.abandonLabel', 'Abandon this quest')",
     "new": "'Abandon this quest'",
     "tests": [
-      "test/questshelfmain.test.js"
+      "test/systems/quest/questshelfmain.test.js"
     ]
   },
   {
     "name": "QSMAIN-chronicle-armed-aria-english",
-    "file": "src/ui/enhancedChronicle.js",
+    "file": "src/ui/enhanced/enhancedChronicle.js",
     "old": "t('chronicle.quests.abandonArmedLabel', 'Click again to abandon this quest')",
     "new": "'Click again to abandon this quest'",
     "tests": [
-      "test/questshelfmain.test.js"
+      "test/systems/quest/questshelfmain.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "      shelfDoor: () => questBridge?.journalClean ?? null,   // QUEST-SHELF-MAIN",
     "new": "      // QUEST-SHELF-MAIN",
     "tests": [
-      "test/questshelfmain.test.js"
+      "test/systems/quest/questshelfmain.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "    shelfDoor: () => questBridge?.journalClean ?? null,   // QUEST-SHELF-MAIN",
     "new": "    // QUEST-SHELF-MAIN",
     "tests": [
-      "test/questshelfmain.test.js"
+      "test/systems/quest/questshelfmain.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "    shelfDoor: () => opts.questBridge?.journalClean ?? null,   // QUEST-SHELF-MAIN",
     "new": "    // QUEST-SHELF-MAIN",
     "tests": [
-      "test/questshelfmain.test.js"
+      "test/systems/quest/questshelfmain.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "    makeJournal: (mode) => makeJournalWindow(mode),",
     "new": "    makeJournal: () => null,",
     "tests": [
-      "test/questshelfmain.test.js"
+      "test/systems/quest/questshelfmain.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "    makeJournal: (mode) => makeJournalWindow(mode),",
     "new": "    makeJournal: () => null,",
     "tests": [
-      "test/questshelfmain.test.js"
+      "test/systems/quest/questshelfmain.test.js"
     ]
   }
 ]

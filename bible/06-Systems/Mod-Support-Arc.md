@@ -7,7 +7,7 @@ get this mod to work". This page is the record of the study.
 SUPERSEDED (2026-09-04 merge): main already carries the windmill - W2a
 vendored Kamer's models with the author's permission
 (vendor/windmills-kamer/, src/world/windmillMesh.js baked by
-scripts/bakeWindmill.mjs, pinned by test/windmillmesh.test.js) - built
+scripts/bakeWindmill.mjs, pinned by test/world/windmillmesh.test.js) - built
 by another session while this study was being written. The plan below
 was never started and stands as the study: the format findings (the
 FullSerializer dialect, the measured axis rule, the prefab decode) are
@@ -373,4 +373,4 @@ off (`pcaao`, `meanerMonsters`) say so where they mean it. With Dynamic
 Skies on the mod's skybox is the enhanced lane's sky as DS1 shipped it,
 with the volumetric clouds over it (DS2); the port's own dome draws while
 it is off. (The Pixelated sky switch sat on it from PS2 until FT3 removed it.) Ledger row MO1.
-Pinned: `test/macfive.test.js` MO1.
+Pinned: `test/player/macfive.test.js` MO1.

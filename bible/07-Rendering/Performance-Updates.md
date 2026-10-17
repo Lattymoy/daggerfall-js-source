@@ -5,8 +5,8 @@ worse and I want to be detailed in my approach to fix everything".*
 
 The reports this answers, as the field pages recorded them: SCRIPT-SPLIT's two counters outdoors (09-26, script 107.5
 and 203.6 ms), FIELD 2026-09-26c's "ship encounters you drop to 1 fps", Regi's "FPS are TANKING when my character loads
-into the outdoors" (`01-Overview/Field-Bugs-2026-09-28e.md`, in frame 63.8 ms) and Skeptikali's dungeon at 99.9% CPU
-(`01-Overview/Field-Bugs-2026-09-28f.md` DISC29-D). The updates they followed, by the merge that put each on `main`:
+into the outdoors" (`01-Overview/bugs/Field-Bugs-2026-09-28e.md`, in frame 63.8 ms) and Skeptikali's dungeon at 99.9% CPU
+(`01-Overview/bugs/Field-Bugs-2026-09-28f.md` DISC29-D). The updates they followed, by the merge that put each on `main`:
 
 | merged | PR | what |
 |---|---|---|
@@ -147,7 +147,7 @@ wind audio's, the blood marks', the wisps' and the first-person lighting's kill 
 together - for an answer that cannot change while the page is open.
 
 **Why it kept coming back.** PERF-SUN (2026-09-19) paid this exact cost for ONE door - `swayDisabled` in
-`systems/windDrive.js` keeps its answer until the search string changes (`cullDisabled`'s shape) - and every door
+`systems/wind/windDrive.js` keeps its answer until the search string changes (`cullDisabled`'s shape) - and every door
 written since was written the old way again, because the fix lived in one file. There was no shared parsed view of the
 page's query to reach for.
 
@@ -161,7 +161,7 @@ the UI pack, the air and contact doors, the shadow cache, the light clusters, th
 exposure doors, the ground tier, the water, the wisps, the wind audio, the blood marks, the first-person lighting, the
 combat visuals, the lighting mod's test door, the dungeon map, the fonts, the window motion and the world's grass door.
 
-**Held by count, and by a sweep.** `test/perfurl_doors.test.js` (4): a thousand reads of one search mint one parse;
+**Held by count, and by a sweep.** `test/systems/perfurl_doors.test.js` (4): a thousand reads of one search mint one parse;
 eight of the frame's doors a hundred times each off one search mint one; the boot's published URL is the answer the
 moment it lands; a window's own search is read, not the page's; and `new URLSearchParams(` appears in `src/` only at the
 home, `main.js`'s boot params, `realmBootSearch`'s builder, PERF-SUN's own sway memo and the once-a-page latches
@@ -169,12 +169,12 @@ home, `main.js`'s boot params, `realmBootSearch`'s builder, PERF-SUN's own sway 
 8 mutants, all dead. After it the census counts 0 parses a frame in the same town, and the same 4,486 GL calls - nothing
 drawn changed; the profile reads 0 ms of `URLSearchParams` and 0.02-0.05 ms for the doors.
 
-Recorded with it: BOOT2's static-reach ceiling (`test/boot2.test.js`) had been reached exactly (60) by the renderer's
+Recorded with it: BOOT2's static-reach ceiling (`test/render/boot2.test.js`) had been reached exactly (60) by the renderer's
 own growth since 2026-09-20; `pageQuery.js` is a leaf that imports nothing and makes it 61, and the ceiling moves to 64
 with the reason beside it - the hub laws, which are what the ceiling was for, are untouched. And the grass probe hook
 `window.__grassStats` had been answering without `cells` and `slots` since at least 2026-09-24: a comment sat in the
 middle of its object literal (`scenes/world.js`, beside `labGrassField.update`) and the two keys were inside it. They
-are code again, held by `test/perf2.test.js` through `codeOnly` (red on the old line).
+are code again, held by `test/render/perf2.test.js` through `codeOnly` (red on the old line).
 
 ## AUDIT PERF-URL — the PR read before it merges (2026-09-29)
 
@@ -197,14 +197,14 @@ in the tree).
   is asked" - unverified. What is true is that the publish writes `main.js`'s own params, which edit only the boot's
   door keys and, online, the refused power flags; the sweep now reads each latch's key off its line and holds it out
   of those sets, so a latch reads the same on either side of the publish. The latches stay: "read once a page" is
-  their own slices' pinned contract (`test/perfscale.test.js`, `test/clockArc.test.js`).
-- **A8 - a presence test passed as a reader.** AUDIT 58's knob pin (`test/doctrine.test.js`) had been loosened to
+  their own slices' pinned contract (`test/systems/perfscale.test.js`, `test/render/clockArc.test.js`).
+- **A8 - a presence test passed as a reader.** AUDIT 58's knob pin (`test/tooling/doctrine.test.js`) had been loosened to
   accept `pageHas('k'`, and every knob there hands a VALUE: `pageParam('k'` only.
-- **A2 - a URL's pathname is not a path.** `test/perfurl_doors.test.js` took its root from `.pathname`
+- **A2 - a URL's pathname is not a path.** `test/systems/perfurl_doors.test.js` took its root from `.pathname`
   (percent-encoded); `fileURLToPath`, as the repo's other pins do.
 
 **Not changed, and why.**
-- **The cite quotes in `test/citedrift.test.js`'s comments moved (+1).** Pre-existing: `tools/citeShift.mjs` moves
+- **The cite quotes in `test/scenes/citedrift.test.js`'s comments moved (+1).** Pre-existing: `tools/citeShift.mjs` moves
   them on every run - the same sentence read `world.js` line 17231 on 09-25, 22539 on 09-28, 22781 before this PR -
   because it cannot tell a quoted stale cite from a live one (its own header says what it cannot do). Recorded for the
   tool's next pass, not re-derived by hand here.
@@ -213,7 +213,7 @@ in the tree).
   A miss costs one parse - what every read cost before PERF-URL.
 - **BOOT2's ceiling at 64, not 61.** The test's own design: the ceiling "leaves room for a real need and none for a
   hub", and the hub law is its own assertion; a ceiling at the exact reach would redden the next real leaf.
-- **`test/perf2.test.js`'s hook slice.** The `-1` case is unreachable: the assertion before it matches the same prefix
+- **`test/render/perf2.test.js`'s hook slice.** The `-1` case is unreachable: the assertion before it matches the same prefix
   and fails first, with the right message.
 
 ## For Mac
@@ -226,5 +226,5 @@ in the tree).
   deterministic A/B first), deep waters' six programs warmed through PERF-WARM's idle queue, and the spoils glow built
   at the gate court's first use instead of every boot.
 - **The town at 22:00** reads 13% dearer on the GPU than on 09-25, inside four windows' noise - worth a longer run.
-- **Pre-existing, not this slice's:** with ARENA2 present, `test/audit18_ui_native.test.js` F8/F9 and F10b fail on
+- **Pre-existing, not this slice's:** with ARENA2 present, `test/ui/audit18_ui_native.test.js` F8/F9 and F10b fail on
   `main` too (`renderer.endUiRun is not a function` - the test's renderer stub predates `endUiRun`).

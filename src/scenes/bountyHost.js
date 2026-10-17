@@ -1,8 +1,8 @@
 // @ts-check
 // BOUNTY1 (2026-09-28): THE BOUNTY BOARD IN THE WORLD - the ledger held, the packs stood and counted, the purse paid.
 //
-// The law is systems/bountyBoard.js (what a board posts, what it pays) and systems/bountyReward.js (the piece); the
-// windows are ui/bountyWindow.js through ui/bountyDoor.js. This file is the host's half, and it reaches the world only
+// The law is systems/bounty/bountyBoard.js (what a board posts, what it pays) and systems/bounty/bountyReward.js (the piece); the
+// windows are ui/bounty/bountyWindow.js through ui/bounty/bountyDoor.js. This file is the host's half, and it reaches the world only
 // through the deps the world host (scenes/world.js) hands it - so it can be driven headless by a test.
 //
 // A HUNT, START TO END:
@@ -27,12 +27,12 @@ import {
   bountyDungeons, newBountyLedger, readBountyLedger, takeBounty, dropBounty, payBounty, lapseBounties, pruneBountyLedger,
   bountyPoseField, bountyPackOwner, bountyHuntKey, bountyTierFits, bountyMinutesLeft, rewardStory, BOUNTY_REWARD_TITLE, BOUNTY_ACTIVE_MAX,
   MINUTES_PER_DAY, bountyIdAtLevel, bountyPartyKills, bountyClearPays, restampNeverLapsed,
-} from '../systems/bountyBoard.js';
-import { mintBountyItem, bountyItemName, bountyRewardRows } from '../systems/bountyReward.js';
+} from '../systems/bounty/bountyBoard.js';
+import { mintBountyItem, bountyItemName, bountyRewardRows } from '../systems/bounty/bountyReward.js';
 import { registerModSaveData } from '../systems/modSaveData.js';
 import { addGoldPieces, addItem } from '../systems/inventory.js';
-import { BOUNTY_RING_R } from '../ui/bountyMapMark.js';
-import { setBountyJournal, BOUNTY_QUEST_PREFIX } from '../systems/bountyJournal.js';
+import { BOUNTY_RING_R } from '../ui/bounty/bountyMapMark.js';
+import { setBountyJournal, BOUNTY_QUEST_PREFIX } from '../systems/bounty/bountyJournal.js';
 import { rewardContract } from '../systems/standing.js';   // REP4: a contract finished, the region's law two points better
 import { sharedClockOn } from '../systems/worldTick.js';   // AUDIT REST II Q3: the never-lapse build's rows, re-stamped online
 
@@ -170,7 +170,7 @@ export function createBountyHost(deps) {
     canShare: (id) => !!social()?.inParty && ledger.held.some((h) => h.id === id && !h.shared),
   });
   const line = (text) => ({ formatting: 'text', text });
-  /** My bounties as the quest log's active quests (scenes/questBridge.js questLog's own shape): filed as side quests,
+  /** My bounties as the quest log's active quests (scenes/quest/questBridge.js questLog's own shape): filed as side quests,
    *  the notice as the entry, the kills, the place and the purse under it, and the time left as the quest's clock. */
   function questLogEntries() {
     const now = deps.now();

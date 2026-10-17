@@ -5,7 +5,7 @@
     "old": "AND l.vendor_id IS NOT NULL AND l.region = ?2 AND h.region = ?2",
     "new": "AND l.vendor_id IS NOT NULL AND h.region = ?2",
     "tests": [
-      "test/patronload2.test.js"
+      "test/server/patronload2.test.js"
     ],
     "note": "the newest pieces walk every open listing in the market again"
   },
@@ -15,7 +15,7 @@
     "old": "AND l.expires_at > ?1 AND l.region = ?2 AND h.region = ?2) WHERE v_rank = 1",
     "new": "AND l.expires_at > ?1 AND h.region = ?2) WHERE v_rank = 1",
     "tests": [
-      "test/patronload2.test.js"
+      "test/server/patronload2.test.js"
     ],
     "note": "each house's newest walks every open trader listing again"
   },
@@ -25,7 +25,7 @@
     "old": "CREATE INDEX IF NOT EXISTS idx_home_decor_piece ON home_decor (map_id, id, yard);",
     "new": "",
     "tests": [
-      "test/patronload2.test.js"
+      "test/server/patronload2.test.js"
     ],
     "note": "a trader found by its town alone - every piece in it"
   },
@@ -35,7 +35,7 @@
     "old": "ON home_decor (map_id, id, yard)",
     "new": "ON home_decor (map_id, id)",
     "tests": [
-      "test/patronload2.test.js"
+      "test/server/patronload2.test.js"
     ],
     "note": "two columns tie with idx_home_decor_yard and the planner keeps the old index"
   },
@@ -45,7 +45,7 @@
     "old": "CREATE INDEX IF NOT EXISTS idx_market_vendor_region ON market_listings (region, at) WHERE state = 'open' AND vendor_id IS NOT NULL;",
     "new": "",
     "tests": [
-      "test/patronload2.test.js"
+      "test/server/patronload2.test.js"
     ],
     "note": "the region asked with nothing to answer it"
   },
@@ -55,7 +55,7 @@
     "old": "ON market_listings (region, at) WHERE",
     "new": "ON market_listings (region) WHERE",
     "tests": [
-      "test/patronload2.test.js"
+      "test/server/patronload2.test.js"
     ],
     "note": "the newest sorted after reading them all, never stopped at the board's count"
   }

@@ -38,10 +38,10 @@
 // heir's bequest, a market or vault record, an old build's trade) is on the pool before a point of the old pool is
 // spent. Idempotent: a moved piece is on the pool, and nothing finds it to move again.
 
-import { mintCondition, ITEM_TEMPLATES, templateByIndex } from './itemTemplates.js';
+import { mintCondition, ITEM_TEMPLATES, templateByIndex } from './item/itemTemplates.js';
 import { ARROW_TEMPLATE } from './inventory.js';
 import { WEAPONS, WEAPON_MATERIALS, conditionMultipliersByMaterial } from '../characters/weapons.js';
-import { RRI_TEMPLATE_PATCHES } from './rriItems.js';
+import { RRI_TEMPLATE_PATCHES } from './roleplayRealismItems/rriItems.js';
 import { QUALITY_EFFECTS } from '../net/recipeLaw.js';
 
 /** The groups an equip check reads condition for. */

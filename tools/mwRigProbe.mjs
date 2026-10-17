@@ -1,7 +1,7 @@
 // MW-D9g: THE SEAM NOTHING HAS EVER RUN.
 //
 // mwArmProbe proves the ARM draws: it builds one and calls update/draw
-// itself. test/fparm.test.js proves the ENGINE's arithmetic. Both of them
+// itself. test/formats/morrowind/fparm.test.js proves the ENGINE's arithmetic. Both of them
 // drive fpArm DIRECTLY, and its own header says what that leaves out:
 // "weaponRig's branch, the four hosts' camera dep, and the enhanced-menu
 // card are pinned in node and proven by Mac in the game".
@@ -80,9 +80,9 @@ const out = await page.evaluate(async ({ bsa, esm }) => {
   const bytes = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
   const [{ Renderer }, { MwBsaFile }, fp, rig] = await Promise.all([
     import('/src/render/renderer.js'),
-    import('/src/formats/mwBsaFile.js'),
+    import('/src/formats/morrowind/mwBsaFile.js'),
     import('/src/combat/fpArm.js'),
-    import('/src/combat/weaponRig.js'),
+    import('/src/combat/weapon/weaponRig.js'),
   ]);
   const cv = document.createElement('canvas');
   cv.style.width = '960px'; cv.style.height = '720px';

@@ -14,7 +14,7 @@
 // typed here, so this cannot drift from what the game actually plays.
 
 import { readdirSync } from 'node:fs';
-import * as SM from '../src/systems/songManager.js';
+import * as SM from '../src/systems/song/songManager.js';
 import { replacementEntry, replacementKey } from '../src/systems/musicReplacement.js';
 import { isMain } from './lib/isMain.mjs';
 

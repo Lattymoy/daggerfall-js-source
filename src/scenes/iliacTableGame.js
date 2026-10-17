@@ -6,9 +6,9 @@
 //
 // THE GAME'S ROADS. Sitting at a card table opens Hold'em (CARDS4); its panel offers "Play Iliac Hand" (and a pack - the
 // house sells them: CARDS9). This game's panel (ui/iliacTableHud.js) asks for a deck (the binder's lawful decks the pack
-// holds - ui/cardBinderPage.js deckRefusal) and a regular (the table's free chairs, each with his temper and his deck:
-// systems/iliacPatrons.js, by his seed - the same deck every evening), and whether to play for a card; then it plays
-// the offline game (systems/iliacTableSession.js), the cloth showing it (world/iliacCloth.js, render/iliacTableDraw.js).
+// holds - ui/card/cardBinderPage.js deckRefusal) and a regular (the table's free chairs, each with his temper and his deck:
+// systems/iliac/iliacPatrons.js, by his seed - the same deck every evening), and whether to play for a card; then it plays
+// the offline game (systems/iliac/iliacTableSession.js), the cloth showing it (world/iliacCloth.js, render/iliacTableDraw.js).
 // Every road off the seat closes it: a game under way is conceded (for keeps, the player's card is the regular's).
 //
 // FOR KEEPS - AND ONLINE. A card won from a regular is minted on this device; a realm character's or an online page's
@@ -19,21 +19,21 @@
 // (a game under way is watched, the spectator's view), and "Sit at the table" sits the chosen deck in this chair - for
 // the season's board when the realm vouches for it (`ranked`: the service's deck order, asked first) - and waits for a
 // second player; the relay deals, runs the clock, and deals again after a game while both still sit. A ranked game's
-// signed result is carried by the host's claims (net/iliacClaims.js). Alone in the room, "Play a regular instead" plays
+// signed result is carried by the host's claims (net/iliac/iliacClaims.js). Alone in the room, "Play a regular instead" plays
 // the offline game, friendly. Standing up stands at the relay too (a game under way conceded there).
 //
 // Not a DFU member: Daggerfall Unity has no card games. Ledger A row (TAVERN CARDS).
-import { IliacTableSession, forfeitsFor, forfeitsAfter } from '../systems/iliacTableSession.js';
-import { patronDeck, ILIAC_TEMPER_NAMES } from '../systems/iliacPatrons.js';
-import { binderOf, binderDecks, mintIliacCard, isIliacCard } from '../systems/iliacItems.js';
+import { IliacTableSession, forfeitsFor, forfeitsAfter } from '../systems/iliac/iliacTableSession.js';
+import { patronDeck, ILIAC_TEMPER_NAMES } from '../systems/iliac/iliacPatrons.js';
+import { binderOf, binderDecks, mintIliacCard, isIliacCard } from '../systems/iliac/iliacItems.js';
 import { addItem } from '../systems/inventory.js';
-import { deckRefusal, DECK_REFUSAL_WORDS } from '../ui/cardBinderPage.js';
+import { deckRefusal, DECK_REFUSAL_WORDS } from '../ui/card/cardBinderPage.js';
 import { iliacHudModel, createIliacTableHud, stagedRefusal, ILIAC_REFUSAL_WORDS } from '../ui/iliacTableHud.js';
 import { iliacPlaces, iliacPoses, iliacLanded } from '../world/iliacCloth.js';
-import { RemoteIliacTable } from '../systems/iliacRemoteTable.js';
+import { RemoteIliacTable } from '../systems/iliac/iliacRemoteTable.js';
 import { createIliacTableDraw } from '../render/iliacTableDraw.js';
-import { cardById } from '../net/iliacCards.js';
-import { ILIAC_IDLE_TURNS } from '../net/iliacTable.js';
+import { cardById } from '../net/iliac/iliacCards.js';
+import { ILIAC_IDLE_TURNS } from '../net/iliac/iliacTable.js';
 import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
 
 /** A regular's temper at Iliac Hand by his seed - Hold'em's three names (AUDIT CARDS-6 B9: his Hold'em temper is that
@@ -163,7 +163,7 @@ export function openIliacTableGame(d) {
     }));
   };
   /** AUDIT CARDS-6 B1: one card `id` lifted out of the pack - a stack's one minted apart (a split mints a fresh record,
-   *  systems/iliacItems.js), a lone record taken whole - or null when the pack holds none. */
+   *  systems/iliac/iliacItems.js), a lone record taken whole - or null when the pack holds none. */
   const liftCard = (/** @type {any[]} */ items, /** @type {string|null} */ id) => {
     const at = id ? items.findIndex((x) => isIliacCard(x) && x.card === id) : -1;
     if (at < 0) return null;

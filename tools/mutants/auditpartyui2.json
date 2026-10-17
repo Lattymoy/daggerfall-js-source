@@ -5,7 +5,7 @@
     "old": "{ townTalk.say(localizedText('cannotTravelIndoors', CANNOT_TRAVEL_INDOORS_TEXT)); return false; }",
     "new": "{ return false; }",
     "tests": [
-      "test/partytravel.test.js"
+      "test/systems/party/partytravel.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "const CANNOT_TRAVEL_INDOORS_TEXT = 'You cannot travel while indoors.';",
     "new": "const CANNOT_TRAVEL_INDOORS_TEXT = 'You cannot travel indoors.';",
     "tests": [
-      "test/partytravel.test.js"
+      "test/systems/party/partytravel.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    if (gotoPlace) _travelGoto = gotoPlace;\n",
     "new": "",
     "tests": [
-      "test/partytravel.test.js"
+      "test/systems/party/partytravel.test.js"
     ]
   },
   {
@@ -32,16 +32,16 @@
     "old": "{ townTalk.say(localizedText('cannotTravelIndoors', CANNOT_TRAVEL_INDOORS_TEXT)); return false; }",
     "new": "{ _travelGoto = null; townTalk.say(localizedText('cannotTravelIndoors', CANNOT_TRAVEL_INDOORS_TEXT)); return false; }",
     "tests": [
-      "test/partytravel.test.js"
+      "test/systems/party/partytravel.test.js"
     ]
   },
   {
     "name": "AUDIT-PARTY-UI2-2-the-walk-read-as-a-journey",
-    "file": "src/systems/partyTravel.js",
+    "file": "src/systems/party/partyTravel.js",
     "old": "away: !!p && !host.journeying() && ",
     "new": "away: !!p && !host.moving() && ",
     "tests": [
-      "test/partytravel.test.js"
+      "test/systems/party/partytravel.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "    journeying: () => worldMoveBusy(),",
     "new": "    journeying: () => worldMoveBusy() || !!travelControlUI?.isShowing,",
     "tests": [
-      "test/partytravel.test.js"
+      "test/systems/party/partytravel.test.js"
     ]
   },
   {
@@ -59,16 +59,16 @@
     "old": "    outdoors: () => (modes?.mode ?? 'exterior') === 'exterior',",
     "new": "    outdoors: () => true,",
     "tests": [
-      "test/partytravel.test.js"
+      "test/systems/party/partytravel.test.js"
     ]
   },
   {
     "name": "AUDIT-PARTY-UI2-3-status-asks-who-is-gathered",
-    "file": "src/systems/partyTravel.js",
+    "file": "src/systems/party/partyTravel.js",
     "old": "hub: host.relayOk(), gathered: company, held: !!t",
     "new": "hub: host.relayOk(), gathered: host.gathered().length > 0, held: !!t",
     "tests": [
-      "test/partytravel.test.js"
+      "test/systems/party/partytravel.test.js"
     ]
   },
   {
@@ -77,34 +77,34 @@
     "old": "!st.hub ? 'Needs the server\\'s next update'\n          : st.held ? 'The party is still on its way' : !st.gathered ? 'Gather the party first' : null;",
     "new": "!st.gathered ? 'Gather the party first'\n          : st.held ? 'The party is still on its way' : !st.hub ? 'Needs the server\\'s next update' : null;",
     "tests": [
-      "test/soc3_socialpanel.test.js"
+      "test/net/soc3_socialpanel.test.js"
     ]
   },
   {
     "name": "AUDIT-PARTY-UI2-4-a-new-round-over-a-held-one",
-    "file": "src/systems/partyTravel.js",
+    "file": "src/systems/party/partyTravel.js",
     "old": "    if (trip && trip.go != null) return false;\n",
     "new": "",
     "tests": [
-      "test/partytravel.test.js"
+      "test/systems/party/partytravel.test.js"
     ]
   },
   {
     "name": "AUDIT-PARTY-UI2-4-an-open-round-held-too",
-    "file": "src/systems/partyTravel.js",
+    "file": "src/systems/party/partyTravel.js",
     "old": "if (trip && trip.go != null) return false;",
     "new": "if (trip) return false;",
     "tests": [
-      "test/partytravel.test.js"
+      "test/systems/party/partytravel.test.js"
     ]
   },
   {
     "name": "AUDIT-PARTY-UI2-4-held-never-said",
-    "file": "src/systems/partyTravel.js",
+    "file": "src/systems/party/partyTravel.js",
     "old": "gathered: company, held: !!t };",
     "new": "gathered: company, held: false };",
     "tests": [
-      "test/partytravel.test.js"
+      "test/systems/party/partytravel.test.js"
     ]
   },
   {
@@ -113,16 +113,16 @@
     "old": " : st.held ? 'The party is still on its way'",
     "new": "",
     "tests": [
-      "test/soc3_socialpanel.test.js"
+      "test/net/soc3_socialpanel.test.js"
     ]
   },
   {
     "name": "AUDIT-PARTY-UI2-the-no-round-flags-beside-a-round",
-    "file": "src/systems/partyTravel.js",
+    "file": "src/systems/party/partyTravel.js",
     "old": "set: t.go != null } };",
     "new": "set: t.go != null }, gathered: company };",
     "tests": [
-      "test/partytravel.test.js"
+      "test/systems/party/partytravel.test.js"
     ]
   }
 ]

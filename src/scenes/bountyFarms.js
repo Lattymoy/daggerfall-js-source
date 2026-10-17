@@ -1,7 +1,7 @@
 // @ts-check
 // BOUNTY-FARM (2026-09-28, Mac: "can you spawn some farmhouses there it says the granary is overrun? the thing is how
 // do those farmhouses despawn again"): A FARM ON A FARM BOUNTY'S PIXEL - the world host's props pool, on the gate's
-// and the camps' shape (scenes/gatePool.js, scenes/camps.js): models through the host's pipeline, a collider bucket of
+// and the camps' shape (scenes/gate/gatePool.js, scenes/camps.js): models through the host's pipeline, a collider bucket of
 // its own, drawn in the host's world pass.
 //
 // WHAT STANDS: a real farmstead - every model of the first RMB block of one of the game's eight nearest HomeFarms
@@ -24,7 +24,7 @@
 //   - a fast travel, a dungeon, a building, a load: every farm comes down (`destroyAll`, or the mode test in sync).
 //
 // Not a DFU member. Ledger A (BOUNTY-FARM).
-import { bountyHash } from '../systems/bountyBoard.js';
+import { bountyHash } from '../systems/bounty/bountyBoard.js';
 import { trs, multiply } from '../world/mat4.js';
 import { onFloatingFrame } from '../player/collider.js';   // PERF-COL2 (AUDIT): a farm's bucket rides the floating origin
 

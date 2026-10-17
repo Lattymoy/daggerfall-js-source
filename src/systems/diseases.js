@@ -41,7 +41,7 @@ import { isEntityImmuneToDisease } from './effects.js';   // AUDIT 63 F15: Assig
 import { INFECTION, startInfection } from './infection.js';   // V1: the three special infections OnMonsterHit mints
 import { FATIGUE_MULTIPLIER } from './statMods.js';
 import { dice100 } from '../combat/formulas.js';
-import { MOBILE_TYPES } from '../characters/mobileTypes.js';
+import { MOBILE_TYPES } from '../characters/mobile/mobileTypes.js';
 import { localizedText } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 import { noteFirstUse } from './tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
 
@@ -94,7 +94,7 @@ export const contractedMessageRecord = (diseaseType) => 100 + diseaseType;
 
 /** UI3: each disease's name, as its own contracted message says it (TEXT.RSC 100-116: "You have contracted Witches'
  *  Pox.", "...the Plague, a very serious...") - the name the Status box tells a player once incubation is over, and so
- *  the one the HUD's status widget may show from then (ui/hudStatus.js). Indexed by Diseases id. */
+ *  the one the HUD's status widget may show from then (ui/hud/hudStatus.js). Indexed by Diseases id. */
 export const DISEASE_NAMES = Object.freeze([
   "Witches' Pox", 'Plague', 'Yellow Fever', 'Stomach Rot', 'Consumption', 'Brain Fever', 'Swamp Rot', "Caliron's Curse",
   'Cholera', 'Leprosy', 'Wound Rot', 'Red Death', 'Blood Rot', 'Typhoid Fever', 'Dementia', 'Chrondiasis', 'Wizard Fever',

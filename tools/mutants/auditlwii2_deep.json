@@ -5,7 +5,7 @@
     "old": "          const away = feet.length ? Math.min(...feet.map((f) => Math.hypot(f[0] - L.feet[0], f[2] - L.feet[2]))) : Math.hypot(ref[0] - L.feet[0], ref[2] - L.feet[2]);",
     "new": "          const away = Math.hypot(ref[0] - L.feet[0], ref[2] - L.feet[2]);",
     "tests": [
-      "test/auditlwii2_deep.test.js"
+      "test/scenes/auditlwii2_deep.test.js"
     ],
     "note": "D1: left behind measured from where it goes, as before the fix"
   },
@@ -15,7 +15,7 @@
     "old": "const away = feet.length ? Math.min(...feet.map(",
     "new": "const away = feet.length ? Math.max(...feet.map(",
     "tests": [
-      "test/auditlwii2_deep.test.js"
+      "test/scenes/auditlwii2_deep.test.js"
     ],
     "note": "D1: the NEAREST standing member"
   },
@@ -25,7 +25,7 @@
     "old": "        for (const [mid, rec] of [...c.allies]) if (rec.dead && !c.fell.has(mid) && !deps.inPool(rec)) { c.allies.delete(mid); c.size--; }\n",
     "new": "",
     "tests": [
-      "test/auditlwii2_deep.test.js"
+      "test/scenes/auditlwii2_deep.test.js"
     ],
     "note": "D2: a body the load cut read as cut down beside the player"
   },
@@ -35,7 +35,7 @@
     "old": "        for (const [mid, rec] of [...c.foes]) if (rec.dead && !c.fell.has(mid) && !deps.inPool(rec)) c.foes.delete(mid);\n",
     "new": "",
     "tests": [
-      "test/auditlwii2_deep.test.js"
+      "test/scenes/auditlwii2_deep.test.js"
     ],
     "note": "D2: a hostile body the load cut read as slain"
   },
@@ -45,7 +45,7 @@
     "old": "{ c.allies.delete(mid); c.size--; }",
     "new": "{ c.allies.delete(mid); }",
     "tests": [
-      "test/auditlwii2_deep.test.js"
+      "test/scenes/auditlwii2_deep.test.js"
     ],
     "note": "D2: the cut forgotten from the strength it stood with too (no had-enough)"
   },
@@ -55,7 +55,7 @@
     "old": "if (rec.dead && !c.fell.has(mid) && !deps.inPool(rec)) { c.allies.delete(mid); c.size--; }",
     "new": "if (rec.dead && !c.fell.has(mid)) { c.allies.delete(mid); c.size--; }",
     "tests": [
-      "test/auditlwii2_deep.test.js"
+      "test/scenes/auditlwii2_deep.test.js"
     ],
     "note": "D2: a death in the pool is a death"
   },
@@ -65,7 +65,7 @@
     "old": "portalGates.clear(); livingDivers?.clear(); livingRemains?.clear();",
     "new": "portalGates.clear(); livingRemains?.clear();",
     "tests": [
-      "test/auditlwii2_deep.test.js"
+      "test/scenes/auditlwii2_deep.test.js"
     ],
     "note": "D2: the load door lets the divers go"
   },
@@ -75,7 +75,7 @@
     "old": "livingDivers?.clear(); livingRemains?.clear(); _livingRemainsPlace.clear(); }",
     "new": "livingDivers?.clear(); _livingRemainsPlace.clear(); }",
     "tests": [
-      "test/auditlwii2_deep.test.js"
+      "test/scenes/auditlwii2_deep.test.js"
     ],
     "note": "D2: the load door lets the remains go"
   },
@@ -85,17 +85,17 @@
     "old": "livingRemains?.clear(); _livingRemainsPlace.clear(); }   // PORTAL1",
     "new": "livingRemains?.clear(); }   // PORTAL1",
     "tests": [
-      "test/auditlwii2_deep.test.js"
+      "test/scenes/auditlwii2_deep.test.js"
     ],
     "note": "D2: ...and their places"
   },
   {
     "name": "AUDITLWII2-D2-remains-clear",
-    "file": "src/scenes/deepRemains.js",
+    "file": "src/scenes/livingWorld/deepRemains.js",
     "old": "    clear() { told.clear(); here.clear(); arriving = true; },",
     "new": "    clear() { told.clear(); arriving = true; },",
     "tests": [
-      "test/auditlwii2_deep.test.js"
+      "test/scenes/auditlwii2_deep.test.js"
     ],
     "note": "D2: a clear forgets the remains this visit laid (none read as taken)"
   },
@@ -105,7 +105,7 @@
     "old": "    if (livingDivers) { livingDivers.clear(); livingDivers = null; }   // AUDIT LW-II-2 D4 / H5",
     "new": "    // AUDIT LW-II-2 D4 / H5",
     "tests": [
-      "test/auditlwii2_deep.test.js"
+      "test/scenes/auditlwii2_deep.test.js"
     ],
     "note": "D4: the open world lets the divers go"
   },
@@ -115,7 +115,7 @@
     "old": "(_mode() === 'dungeon' && !!livingDivers?.offers(person, talk))",
     "new": "!!livingDivers?.offers(person, talk)",
     "tests": [
-      "test/auditlwii2_deep.test.js"
+      "test/scenes/auditlwii2_deep.test.js"
     ],
     "note": "D4: the talk door asks a company below in the dungeon alone"
   },
@@ -125,7 +125,7 @@
     "old": "        return !!shown;",
     "new": "        return true;",
     "tests": [
-      "test/auditlwii2_deep.test.js"
+      "test/scenes/auditlwii2_deep.test.js"
     ],
     "note": "D4: offers answers whether the choice mounted"
   },
@@ -135,7 +135,7 @@
     "old": "if (pile !== c.pile?.pile || pile?.roomWords !== c.pile?.words) c.pile",
     "new": "if (pile !== c.pile?.pile) c.pile",
     "tests": [
-      "test/auditlwii2_deep.test.js"
+      "test/scenes/auditlwii2_deep.test.js"
     ],
     "note": "D5: a peer's take through the room's word read as this player's"
   },
@@ -145,7 +145,7 @@
     "old": "      if (canon.startsWith('loot:')) { const p = lootPiles[Number(canon.slice(5))]; p.roomWords = (p.roomWords ?? 0) + 1; }",
     "new": "      if (canon.startsWith('loot:')) { const p = lootPiles[Number(canon.slice(5))]; void p; }",
     "tests": [
-      "test/auditlwii2_deep.test.js"
+      "test/scenes/auditlwii2_deep.test.js"
     ],
     "note": "D5: the room's word counted on the pile it lands in"
   },
@@ -155,27 +155,27 @@
     "old": "            for (const it of taken) c.pile.own.delete(it);",
     "new": "            for (const it of taken) c.pile.own.delete(it);\n            for (const it of items) c.pile.own.add(it);",
     "tests": [
-      "test/auditlwii2_deep.test.js"
+      "test/scenes/auditlwii2_deep.test.js"
     ],
     "note": "D5: a piece put in is no find of theirs (the count's baseline, as before)"
   },
   {
     "name": "AUDITLWII2-D6-pace",
-    "file": "src/scenes/deepRemains.js",
+    "file": "src/scenes/livingWorld/deepRemains.js",
     "old": "export const DEEP_APART_M = 1.5;",
     "new": "export const DEEP_APART_M = 0.5;",
     "tests": [
-      "test/auditlwii2_deep.test.js"
+      "test/scenes/auditlwii2_deep.test.js"
     ],
     "note": "D6: a pace, never within the remains' own 0.6 m"
   },
   {
     "name": "AUDITLWII2-D6-order",
-    "file": "src/scenes/deepRemains.js",
+    "file": "src/scenes/livingWorld/deepRemains.js",
     "old": "  return i < 0 ? 0 : (i - (fell.length - 1) / 2) * DEEP_APART_M;",
     "new": "  return 0;",
     "tests": [
-      "test/auditlwii2_deep.test.js"
+      "test/scenes/auditlwii2_deep.test.js"
     ],
     "note": "D6: side by side by their order"
   },
@@ -185,7 +185,7 @@
     "old": "          if (dx) { try { d.collider?.move(at, dx, 0, 0, 1.8); } catch { /* the stop's own floor */ } }\n",
     "new": "",
     "tests": [
-      "test/auditlwii2_deep.test.js"
+      "test/scenes/auditlwii2_deep.test.js"
     ],
     "note": "D6: the host walks each out from the stop's floor"
   },
@@ -195,7 +195,7 @@
     "old": "    if (ohAbyss?.shouldUpgradeLoot()) return null;\n",
     "new": "",
     "tests": [
-      "test/auditlwii2_deep.test.js"
+      "test/scenes/auditlwii2_deep.test.js"
     ],
     "note": "D7: no clear for an abyss build"
   },
@@ -205,7 +205,7 @@
     "old": "  if (trip.enc?.inside) return null;",
     "new": "  if (trip.enc) return null;",
     "tests": [
-      "test/auditlwii2_deep.test.js"
+      "test/scenes/auditlwii2_deep.test.js"
     ],
     "note": "D8: only a trouble met inside rules out the deep's fight"
   },
@@ -215,7 +215,7 @@
     "old": "  if (s.out && route?.legs.length) {",
     "new": "  if (false) {",
     "tests": [
-      "test/auditlwii2_deep.test.js"
+      "test/scenes/auditlwii2_deep.test.js"
     ],
     "note": "D9: on the way out, the reach's nearest stop"
   },
@@ -225,7 +225,7 @@
     "old": "if (Math.hypot(l.stop.x - o.x, l.stop.z - o.z) < Math.hypot(best.x - o.x, best.z - o.z)) best = l.stop;",
     "new": "if (Math.hypot(l.stop.x - o.x, l.stop.z - o.z) > Math.hypot(best.x - o.x, best.z - o.z)) best = l.stop;",
     "tests": [
-      "test/auditlwii2_deep.test.js"
+      "test/scenes/auditlwii2_deep.test.js"
     ],
     "note": "D9: the NEAREST"
   },
@@ -235,7 +235,7 @@
     "old": "  const start = blocks.find((b) => b.isStartingBlock) ?? blocks[0];",
     "new": "  const start = blocks[0];",
     "tests": [
-      "test/auditlwii2_deep.test.js"
+      "test/scenes/auditlwii2_deep.test.js"
     ],
     "note": "D10: no start marker - the starting block"
   },
@@ -245,7 +245,7 @@
     "old": "export const STOP_FOE = RANDOM_RECORD;",
     "new": "export const STOP_FOE = 15;",
     "tests": [
-      "test/auditlwii2_deep.test.js"
+      "test/scenes/auditlwii2_deep.test.js"
     ],
     "note": "D11: ONE DFU MEMBER, ONE EXPORT"
   },
@@ -255,7 +255,7 @@
     "old": "export const STOP_TREASURE = RANDOM_TREASURE_MARKER_RECORD;",
     "new": "export const STOP_TREASURE = 19;",
     "tests": [
-      "test/auditlwii2_deep.test.js"
+      "test/scenes/auditlwii2_deep.test.js"
     ],
     "note": "D11: ONE DFU MEMBER, ONE EXPORT"
   },
@@ -265,7 +265,7 @@
     "old": "      for (let j = i + 1; j < legs.length; j++) { legs[j].tIn += DEEP_FIGHT_MIN; legs[j].tOut += DEEP_FIGHT_MIN; }\n",
     "new": "      for (let j = i + 1; j < legs.length; j++) { legs[j].tIn += DEEP_FIGHT_MIN; legs[j].tOut += DEEP_FIGHT_MIN; }\n      while (legs.length && legs[legs.length - 1].tOut > mid) legs.pop();\n",
     "tests": [
-      "test/auditlwii2_deep.test.js"
+      "test/scenes/auditlwii2_deep.test.js"
     ],
     "note": "D13: the whole reach after the deep's fight, none trimmed (section 7.1)"
   },
@@ -275,7 +275,7 @@
     "old": "      try { livingDiversStep(now); } catch (e) { console.warn('[divers] step', e); }",
     "new": "      livingDiversStep(now);",
     "tests": [
-      "test/auditlwii2_deep.test.js"
+      "test/scenes/auditlwii2_deep.test.js"
     ],
     "note": "the divers' step wrapped as its neighbours are"
   },
@@ -285,7 +285,7 @@
     "old": "      try { livingRemainsStep(now); } catch (e) { console.warn('[remains] step', e); }",
     "new": "      livingRemainsStep(now);",
     "tests": [
-      "test/auditlwii2_deep.test.js"
+      "test/scenes/auditlwii2_deep.test.js"
     ],
     "note": "the remains' step wrapped as its neighbours are"
   },
@@ -295,7 +295,7 @@
     "old": "    const from = entry ? { x: entry.x, y: entry.y, z: entry.z } : { x: stops[0].x, z: stops[0].z };",
     "new": "    const from = { x: stops[0].x, z: stops[0].z };",
     "tests": [
-      "test/auditlwii2_deep.test.js"
+      "test/scenes/auditlwii2_deep.test.js"
     ],
     "note": "the build's cleared set routed from where the company came in (the entry), as the divers' own route is"
   },
@@ -305,7 +305,7 @@
     "old": "      for (let j = i + 1; j < legs.length; j++) { legs[j].tIn += DEEP_FIGHT_MIN; legs[j].tOut += DEEP_FIGHT_MIN; }\n",
     "new": "",
     "tests": [
-      "test/auditlwii2_deep.test.js"
+      "test/scenes/auditlwii2_deep.test.js"
     ],
     "note": "7.1: DEEP_FIGHT_MIN more there, THE REST OF THE REACH AFTER IT"
   },
@@ -315,7 +315,7 @@
     "old": "      const i = foes[Math.min(foes.length - 1, Math.floor(fightAt * foes.length))];",
     "new": "      const i = foes[0];",
     "tests": [
-      "test/auditlwii2_deep.test.js"
+      "test/scenes/auditlwii2_deep.test.js"
     ],
     "note": "7.1: at a foe stop OF THE SEED'S"
   },
@@ -325,7 +325,7 @@
     "old": "  const outT0 = Math.min(Math.max(last, dive.t1 - back), dive.t1);",
     "new": "  const outT0 = Math.min(last, dive.t1);",
     "tests": [
-      "test/auditlwii2_deep.test.js"
+      "test/scenes/auditlwii2_deep.test.js"
     ],
     "note": "7.1: resting at the last, then THE WAY OUT by the dive's end"
   },
@@ -335,7 +335,7 @@
     "old": "export const DIVER_ARRIVE_SLACK_M = 2;",
     "new": "export const DIVER_ARRIVE_SLACK_M = 20;",
     "tests": [
-      "test/auditlwii2_deep.test.js"
+      "test/scenes/auditlwii2_deep.test.js"
     ],
     "note": "DIVER_ARRIVE_SLACK_M, 2 m"
   }

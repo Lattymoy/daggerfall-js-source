@@ -1,0 +1,52 @@
+[
+  {
+    "name": "REFORGE-STACK-press-in-track",
+    "file": "src/ui/professions/profPages.js",
+    "old": "      presses.append(b);",
+    "new": "      row.append(b);",
+    "tests": [
+      "test/ui/fb1017_reforgestack.test.js"
+    ],
+    "why": "the report: every line's press in the row's one button cell, drawn on one another"
+  },
+  {
+    "name": "REFORGE-STACK-block-above",
+    "file": "src/ui/professions/profPages.js",
+    "old": "    row.append(presses);",
+    "new": "    row.prepend(presses);",
+    "tests": [
+      "test/ui/fb1017_reforgestack.test.js"
+    ],
+    "why": "the presses above the piece's name and price, not under them"
+  },
+  {
+    "name": "REFORGE-STACK-block-in-track",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
+    "old": ".prof-smelt > .prof-lines { grid-column: 1 / -1;",
+    "new": ".prof-smelt > .prof-lines { grid-column: 3;",
+    "tests": [
+      "test/ui/fb1017_reforgestack.test.js"
+    ],
+    "why": "the block in the button track: the name squeezed again"
+  },
+  {
+    "name": "REFORGE-STACK-presses-abreast",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
+    "old": ".prof-lines { grid-column: 1 / -1; display: flex; flex-direction: column;",
+    "new": ".prof-lines { grid-column: 1 / -1; display: flex; flex-direction: row;",
+    "tests": [
+      "test/ui/fb1017_reforgestack.test.js"
+    ],
+    "why": "the presses abreast, past the pane's edge on a phone"
+  },
+  {
+    "name": "REFORGE-STACK-short-in-count-track",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
+    "old": ".prof-smelt > .prof-short { grid-column: 1 / -1; }",
+    "new": ".prof-smelt > .prof-short { }",
+    "tests": [
+      "test/ui/fb1017_reforgestack.test.js"
+    ],
+    "why": "a row's short word flowed into the count's 64px track"
+  }
+]

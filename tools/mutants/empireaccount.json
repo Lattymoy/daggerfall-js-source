@@ -5,7 +5,7 @@
     "old": "  (online && validateRegion(accounts ?? [], EMPIRE_ACCOUNT_REGION) ? EMPIRE_ACCOUNT_REGION : regionIndex);",
     "new": "  (regionIndex);",
     "tests": [
-      "test/empireaccount.test.js"
+      "test/systems/empireaccount.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  (online && validateRegion(accounts ?? [], EMPIRE_ACCOUNT_REGION) ? EMPIRE_ACCOUNT_REGION : regionIndex);",
     "new": "  (online ? EMPIRE_ACCOUNT_REGION : regionIndex);",
     "tests": [
-      "test/empireaccount.test.js"
+      "test/systems/empireaccount.test.js"
     ]
   },
   {
@@ -23,16 +23,16 @@
     "old": "export const EMPIRE_ACCOUNT_REGION = 17;",
     "new": "export const EMPIRE_ACCOUNT_REGION = 18;",
     "tests": [
-      "test/empireaccount.test.js"
+      "test/systems/empireaccount.test.js"
     ]
   },
   {
     "name": "EMPIRE-ACCOUNT-service-not-daggerfall",
-    "file": "src/net/realmGoldLaw.js",
+    "file": "src/net/realm/realmGoldLaw.js",
     "old": "export const REALM_EMPIRE_ACCOUNT = 17;",
     "new": "export const REALM_EMPIRE_ACCOUNT = 18;",
     "tests": [
-      "test/empireaccount.test.js"
+      "test/systems/empireaccount.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    a.accountGold = 0;\n    branches++;",
     "new": "    branches++;",
     "tests": [
-      "test/empireaccount.test.js"
+      "test/systems/empireaccount.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "    empire.accountGold = (Number.isFinite(empire.accountGold) ? empire.accountGold : 0) + a.accountGold;\n",
     "new": "",
     "tests": [
-      "test/empireaccount.test.js"
+      "test/systems/empireaccount.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "!Number.isFinite(a.accountGold) || a.accountGold === 0) return;",
     "new": "!(a.accountGold > 0)) return;",
     "tests": [
-      "test/empireaccount.test.js"
+      "test/systems/empireaccount.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "  if (!(r?.gold > 0)) return [];\n  return ['The Bank of the Empire keeps one account now,'",
     "new": "  if (!r) return [];\n  return ['The Bank of the Empire keeps one account now,'",
     "tests": [
-      "test/empireaccount.test.js"
+      "test/systems/empireaccount.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "  const empireFolded = realmBoot ? foldEmpireAccounts(bootSnapRead) : null;",
     "new": "  const empireFolded = null;",
     "tests": [
-      "test/empireaccount.test.js"
+      "test/systems/empireaccount.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "  for (const line of empireAccountLines(empireFolded)) townTalk.say(line);",
     "new": "",
     "tests": [
-      "test/empireaccount.test.js"
+      "test/systems/empireaccount.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "  accounts[g].accountGold += amount;",
     "new": "  accounts[regionIndex].accountGold += amount;",
     "tests": [
-      "test/empireaccount.test.js"
+      "test/systems/empireaccount.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "  if (online) garnishDeposit(accounts, g, amount);",
     "new": "  if (online) garnishDeposit(accounts, regionIndex, amount);",
     "tests": [
-      "test/empireaccount.test.js"
+      "test/systems/empireaccount.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "    accounts[g].accountGold += loc.value ?? 0;",
     "new": "    accounts[regionIndex].accountGold += loc.value ?? 0;",
     "tests": [
-      "test/empireaccount.test.js"
+      "test/systems/empireaccount.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "  const bank = accounts[goldRegion(accounts, regionIndex, online)];   // EMPIRE-ACCOUNT: online, drawn on the Empire's account\n  if (amount > bank.accountGold)",
     "new": "  const bank = accounts[regionIndex];\n  if (amount > bank.accountGold)",
     "tests": [
-      "test/empireaccount.test.js"
+      "test/systems/empireaccount.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "  const bank = accounts[goldRegion(accounts, regionIndex, online)];   // EMPIRE-ACCOUNT: online, drawn on the Empire's account\n  const amountPlusCommission",
     "new": "  const bank = accounts[regionIndex];\n  const amountPlusCommission",
     "tests": [
-      "test/empireaccount.test.js"
+      "test/systems/empireaccount.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "  const bank = accounts[goldRegion(accounts, regionIndex, online)];   // EMPIRE-ACCOUNT: online, the loan stands here and the Empire's account pays it",
     "new": "  const bank = account;",
     "tests": [
-      "test/empireaccount.test.js"
+      "test/systems/empireaccount.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "  accounts[goldRegion(accounts, regionIndex, online)].accountGold += amount;   // EMPIRE-ACCOUNT: online, lent into the Empire's account",
     "new": "  account.accountGold += amount;",
     "tests": [
-      "test/empireaccount.test.js"
+      "test/systems/empireaccount.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "  account.loanTotal += calculateBankLoanRepayment(amount);",
     "new": "  accounts[goldRegion(accounts, regionIndex, online)].loanTotal += calculateBankLoanRepayment(amount);",
     "tests": [
-      "test/empireaccount.test.js"
+      "test/systems/empireaccount.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "accountTotal(accounts, goldRegion(accounts, regionIndex, online)));",
     "new": "accountTotal(accounts, regionIndex));",
     "tests": [
-      "test/empireaccount.test.js"
+      "test/systems/empireaccount.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "  const paidFirst = goldRegion(accounts, regionIndex, online);",
     "new": "  const paidFirst = regionIndex;",
     "tests": [
-      "test/empireaccount.test.js"
+      "test/systems/empireaccount.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "    const bank = accounts[goldRegion(accounts, r, online)];   // EMPIRE-ACCOUNT: online, the Empire's account pays first",
     "new": "    const bank = loan;",
     "tests": [
-      "test/empireaccount.test.js"
+      "test/systems/empireaccount.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "  const bank = accounts[goldRegion(accounts, regionIndex, hooks.online ?? isOnlinePage())];",
     "new": "  const bank = accounts[regionIndex];",
     "tests": [
-      "test/empireaccount.test.js"
+      "test/systems/empireaccount.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "  const price = shipSellPrice(ship);\n  accounts[goldRegion(accounts, regionIndex, online)].accountGold += price;",
     "new": "  const price = shipSellPrice(ship);\n  accounts[regionIndex].accountGold += price;",
     "tests": [
-      "test/empireaccount.test.js"
+      "test/systems/empireaccount.test.js"
     ]
   },
   {
@@ -212,7 +212,7 @@
     "old": "  const bank = accounts[goldRegion(accounts, regionIndex, online)];   // EMPIRE-ACCOUNT: online, the Empire's account pays\n  const account = bank.accountGold;",
     "new": "  const bank = accounts[regionIndex];\n  const account = bank.accountGold;",
     "tests": [
-      "test/empireaccount.test.js"
+      "test/systems/empireaccount.test.js"
     ]
   },
   {
@@ -221,7 +221,7 @@
     "old": "(scenes/worldModes.js deedSellPrice)\n  accounts[goldRegion(accounts, regionIndex, online)].accountGold += price;",
     "new": "(scenes/worldModes.js deedSellPrice)\n  accounts[regionIndex].accountGold += price;",
     "tests": [
-      "test/empireaccount.test.js"
+      "test/systems/empireaccount.test.js"
     ],
     "note": "AUDIT HOME-PRICE (PIN MOVED, re-aimed by content): the sale's price is its caller's to name now (C1), the line above it a comment."
   },
@@ -231,7 +231,7 @@
     "old": "  const bank = accounts[goldRegion(accounts, regionIndex, online)];   // EMPIRE-ACCOUNT: online, into the Empire's account\n  if (!Number.isSafeInteger(gold)",
     "new": "  const bank = accounts[regionIndex];\n  if (!Number.isSafeInteger(gold)",
     "tests": [
-      "test/empireaccount.test.js"
+      "test/systems/empireaccount.test.js"
     ]
   },
   {
@@ -240,34 +240,34 @@
     "old": "      account: String(accountTotal(a, goldRegion(a, r))),",
     "new": "      account: String(accountTotal(a, r)),",
     "tests": [
-      "test/empireaccount.test.js"
+      "test/systems/empireaccount.test.js"
     ]
   },
   {
     "name": "EMPIRE-ACCOUNT-service-pays-the-branch",
-    "file": "src/net/realmGoldLaw.js",
+    "file": "src/net/realm/realmGoldLaw.js",
     "old": "    ? save.bankAccounts[REALM_EMPIRE_ACCOUNT] ?? save.bankAccounts[",
     "new": "    ? save.bankAccounts[",
     "tests": [
-      "test/empireaccount.test.js"
+      "test/systems/empireaccount.test.js"
     ]
   },
   {
     "name": "EMPIRE-ACCOUNT-service-ignores-unfolded-branches",
-    "file": "src/net/realmGoldLaw.js",
+    "file": "src/net/realm/realmGoldLaw.js",
     "old": "  return [empire, ...save.bankAccounts.filter((/** @type {any} */ a) => a !== empire && !!a && typeof a === 'object')];",
     "new": "  return [empire];",
     "tests": [
-      "test/empireaccount.test.js"
+      "test/systems/empireaccount.test.js"
     ]
   },
   {
     "name": "EMPIRE-ACCOUNT-service-overdraws",
-    "file": "src/net/realmGoldLaw.js",
+    "file": "src/net/realm/realmGoldLaw.js",
     "old": "    const take = Math.min(owed, Math.max(0, Number(a.accountGold) || 0));",
     "new": "    const take = owed;",
     "tests": [
-      "test/empireaccount.test.js"
+      "test/systems/empireaccount.test.js"
     ]
   },
   {
@@ -276,16 +276,16 @@
     "old": "    const account = playerEntity.bankAccounts[goldRegion(playerEntity.bankAccounts, region)] ?? null;",
     "new": "    const account = playerEntity.bankAccounts[region] ?? null;",
     "tests": [
-      "test/empireaccount.test.js"
+      "test/systems/empireaccount.test.js"
     ]
   },
   {
     "name": "EMPIRE-ACCOUNT-yard-wallet-branch",
-    "file": "src/scenes/world.js",
-    "old": "    const a = playerEntity.bankAccounts[goldRegion(playerEntity.bankAccounts, region)] ?? null;",
-    "new": "    const a = playerEntity.bankAccounts[region] ?? null;",
+    "file": "src/scenes/homeYards.js",
+    "old": "  const a = entity.bankAccounts[goldRegion(entity.bankAccounts, region)] ?? null;",
+    "new": "  const a = entity.bankAccounts[region] ?? null;",
     "tests": [
-      "test/empireaccount.test.js"
+      "test/systems/empireaccount.test.js"
     ]
   },
   {
@@ -294,8 +294,8 @@
     "old": "        const account = playerEntity.bankAccounts[goldRegion(playerEntity.bankAccounts, _questRegionIndex() ?? 0)] ?? null;",
     "new": "        const account = playerEntity.bankAccounts[_questRegionIndex() ?? 0] ?? null;",
     "tests": [
-      "test/empireaccount.test.js",
-      "test/guild1b.test.js"
+      "test/systems/empireaccount.test.js",
+      "test/net/guild/guild1b.test.js"
     ]
   },
   {
@@ -304,7 +304,7 @@
     "old": "    return playerEntity.bankAccounts[goldRegion(playerEntity.bankAccounts, region)] ?? null;",
     "new": "    return playerEntity.bankAccounts[region] ?? null;",
     "tests": [
-      "test/empireaccount.test.js"
+      "test/systems/empireaccount.test.js"
     ]
   },
   {
@@ -313,7 +313,7 @@
     "old": "        accountGold: playerEntity.bankAccounts?.[goldRegion(playerEntity.bankAccounts, interiorOverlay.region)]?.accountGold ?? 0,",
     "new": "        accountGold: playerEntity.bankAccounts?.[interiorOverlay.region]?.accountGold ?? 0,",
     "tests": [
-      "test/empireaccount.test.js"
+      "test/systems/empireaccount.test.js"
     ]
   },
   {
@@ -322,7 +322,7 @@
     "old": "  if (isOnlinePage()) for (const line of empireDrawLines(",
     "new": "  if (false) for (const line of empireDrawLines(",
     "tests": [
-      "test/empireaccount.test.js"
+      "test/systems/empireaccount.test.js"
     ]
   },
   {
@@ -331,7 +331,7 @@
     "old": "  if (isOnlinePage()) for (const line of empireDrawLines(",
     "new": "  if (true) for (const line of empireDrawLines(",
     "tests": [
-      "test/empireaccount.test.js"
+      "test/systems/empireaccount.test.js"
     ]
   },
   {
@@ -340,7 +340,7 @@
     "old": "export const empireDrawLines = (taken, regionName = '') => (taken > 0",
     "new": "export const empireDrawLines = (taken, regionName = '') => (taken >= 0",
     "tests": [
-      "test/empireaccount.test.js"
+      "test/systems/empireaccount.test.js"
     ]
   },
   {
@@ -349,25 +349,25 @@
     "old": "export const bankedGold = (accounts) => (accounts ?? []).reduce((s, a) => s + (Number.isFinite(a?.accountGold) ? a.accountGold : 0), 0);",
     "new": "export const bankedGold = (accounts) => accounts?.[17]?.accountGold ?? 0;",
     "tests": [
-      "test/empireaccount.test.js"
+      "test/systems/empireaccount.test.js"
     ]
   },
   {
     "name": "EMPIRE-ACCOUNT-the-report-a-branch",
-    "file": "src/ui/enhancedPorts.js",
+    "file": "src/ui/enhanced/enhancedPorts.js",
     "old": "const gold = goldRegion(w.accounts ?? [], w.region), one = empire && gold === EMPIRE_ACCOUNT_REGION;",
     "new": "const gold = goldRegion(w.accounts ?? [], w.region), one = false;",
     "tests": [
-      "test/fb0930b_bankregion.test.js"
+      "test/systems/fb0930b_bankregion.test.js"
     ]
   },
   {
     "name": "EMPIRE-ACCOUNT-the-report-lists-the-empire-again",
-    "file": "src/ui/enhancedPorts.js",
+    "file": "src/ui/enhanced/enhancedPorts.js",
     "old": "(i !== gold && a?.accountGold > 0 ?",
     "new": "(i !== w.region && a?.accountGold > 0 ?",
     "tests": [
-      "test/fb0930b_bankregion.test.js"
+      "test/systems/fb0930b_bankregion.test.js"
     ]
   }
 ]

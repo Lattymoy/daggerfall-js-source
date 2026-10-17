@@ -41,14 +41,14 @@
 // flags the action system's box passes (:107-122): no parchment, and
 // shown at the TOP of the screen.
 
-import { nativeMetrics, shadowText, NATIVE_W } from './nativePanel.js';
+import { nativeMetrics, shadowText, NATIVE_W } from './native/nativePanel.js';
 import { layoutMessageBox, drawMessageBox, messageBoxArtLoaded } from './messageBox.js';
 import { drawText, measureText } from './text.js';
 import { typedChar } from './input.js';
 import { normalizeCode } from '../systems/dialogShortcuts.js';
 import { noteInputBoxClosed } from '../player/pointerLock.js';   // PL1: ReturnPlayerInputEvent's stamp (DaggerfallInputMessageBox.cs:301)
 import { isEnhanced } from '../systems/uiSkin.js';
-import { drawEnhancedInputBox, releaseEnhancedInputBox } from './enhancedInputBox.js';   // AUDIT HCC U5: the enhanced skin's face - the field's own window
+import { drawEnhancedInputBox, releaseEnhancedInputBox } from './enhanced/enhancedInputBox.js';   // AUDIT HCC U5: the enhanced skin's face - the field's own window
 
 /** AUDIT HCC U5: the caption under the enhanced face - what closes THIS box (Return raises, Escape cancels); never
  *  the notice's "click or press a key", which a field does not keep (a click reaches nothing, a key types). */
@@ -170,7 +170,7 @@ export class InputMessageBoxWindow {
     const entry = this.entryText();
     // AUDIT HCC U5 (Mac: "any new notifications or UI elements are enhancified"; FONT1: "Any enhanced UI or text must
     // be our enhanced version"): THE FACE IS THE SKIN'S, THE FIELD IS DFU'S. Under the enhanced skin the box is its
-    // own window in the skin's face (ui/enhancedInputBox.js - ENH-NOTICE1's law kept: a field is a decision, never a
+    // own window in the skin's face (ui/enhanced/enhancedInputBox.js - ENH-NOTICE1's law kept: a field is a decision, never a
     // click-anywhere notice) and nothing is painted here. The model does not move: the host still routes every key
     // to `input`, the box stays modal, Return and Escape keep their DFU meanings. Horse Cart and Cargo's naming
     // prompt is the one that brought it here; every raiser of the one DaggerfallInputMessageBox (ActionInputBox, the

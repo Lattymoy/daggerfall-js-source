@@ -5,7 +5,7 @@
     "old": "    const part = bucket.parts++;",
     "new": "    const part = 0;",
     "tests": [
-      "test/fb1002_rocks.test.js"
+      "test/systems/comeSailAway/fb1002_rocks.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    if (n & 1) out.add(part);",
     "new": "    if (n) out.add(part);",
     "tests": [
-      "test/fb1002_rocks.test.js"
+      "test/systems/comeSailAway/fb1002_rocks.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    for (const x of hits) { if (x - last > CROSSING_SAME) n++; last = x; }",
     "new": "    for (const x of hits) { n++; last = x; }",
     "tests": [
-      "test/fb1002_rocks.test.js"
+      "test/systems/comeSailAway/fb1002_rocks.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  if (bucket.wide.length) for (const ti of wideOnRay(bucket, lx, ly, lz, UP3, bucket.max[1] - ly + 1)) cross(ti);",
     "new": "  void UP3;",
     "tests": [
-      "test/fb1002_rocks.test.js"
+      "test/systems/comeSailAway/fb1002_rocks.test.js"
     ]
   },
   {
@@ -41,43 +41,43 @@
     "old": "    if (bucket.yHi[ti] < ly) return;\n    const tri = bucket.tris[ti];\n    const h = rayTriangle(lx, ly, lz, UP3,",
     "new": "    const tri = bucket.tris[ti];\n    const h = rayTriangle(lx, ly, lz, [0, -1, 0],",
     "tests": [
-      "test/fb1002_rocks.test.js"
+      "test/systems/comeSailAway/fb1002_rocks.test.js"
     ]
   },
   {
     "name": "AWAY-into-only",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "        if (vDot(state.MoveVectorCurrent, state.CollisionVector) <= 0) state.MoveVectorCurrent =",
     "new": "        if (true) state.MoveVectorCurrent =",
     "tests": [
-      "test/fb1002_rocks.test.js"
+      "test/systems/comeSailAway/fb1002_rocks.test.js"
     ]
   },
   {
     "name": "AWAY-no-rest-push",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "        if (vDot(state.MoveVectorCurrent, state.CollisionVector) <= 0) state.MoveVectorCurrent =",
     "new": "        if (vDot(state.MoveVectorCurrent, state.CollisionVector) < 0) state.MoveVectorCurrent =",
     "tests": [
-      "test/fb1002_rocks.test.js"
+      "test/systems/comeSailAway/fb1002_rocks.test.js"
     ]
   },
   {
     "name": "AWAY-current-taken",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "        if (vDot(val, state.CollisionVector) < 0) val = vProjectOnPlane(val, state.CollisionVector);",
     "new": "        val = vProjectOnPlane(val, state.CollisionVector);",
     "tests": [
-      "test/fb1002_rocks.test.js"
+      "test/systems/comeSailAway/fb1002_rocks.test.js"
     ]
   },
   {
     "name": "AWAY-current-onto-kept",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "        if (vDot(val, state.CollisionVector) < 0) val = vProjectOnPlane(val, state.CollisionVector);",
     "new": "        if (false) val = vProjectOnPlane(val, state.CollisionVector);",
     "tests": [
-      "test/fb1002_rocks.test.js"
+      "test/systems/comeSailAway/fb1002_rocks.test.js"
     ]
   }
 ]

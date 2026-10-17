@@ -5,7 +5,7 @@
     "old": "    await this._sayParty(next, now);\n    return null;\n  }\n}",
     "new": "    await this._sayParty(next, now);\n    return null;\n  }\n}\n// a comment is a different bundle",
     "tests": [
-      "test/relayversion.test.js"
+      "test/net/relayversion.test.js"
     ],
     "note": "PARTY-LEAD (re-aimed by content): _partyLead is the hub class's last method now."
   },
@@ -15,7 +15,7 @@
     "old": "export const POSE_FAR_SHARE = 4;",
     "new": "export const POSE_FAR_SHARE = 4;   // edited",
     "tests": [
-      "test/relayversion.test.js"
+      "test/net/relayversion.test.js"
     ]
   },
   {
@@ -24,7 +24,7 @@
     "old": "export function wrapAngle",
     "new": "// edited\nexport function wrapAngle",
     "tests": [
-      "test/relayversion.test.js"
+      "test/net/relayversion.test.js"
     ]
   },
   {
@@ -33,7 +33,7 @@
     "old": "export * from '../../src/net/wire.js';",
     "new": "export * from '../../src/net/wire.js';\n// edited",
     "tests": [
-      "test/relayversion.test.js"
+      "test/net/relayversion.test.js"
     ]
   },
   {
@@ -42,7 +42,7 @@
     "old": "import { roomOf, parseClient,",
     "new": "import './relay.js';\nimport { roomOf, parseClient,",
     "tests": [
-      "test/relayversion.test.js"
+      "test/net/relayversion.test.js"
     ]
   }
 ]

@@ -1,47 +1,47 @@
 [
   {
     "name": "ETHER-STRAND-the-far-boat-shown",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    if (boat.inside || (boat.MapPixel != null && pixelsApart(deps.currentMapPixel(), boat.MapPixel) > 1)) {",
     "new": "    if (boat.inside || (boat.MapPixel != null && pixelsApart(deps.currentMapPixel(), boat.MapPixel) > 1e9)) {",
     "tests": [
-      "test/fb1012d_etherstrand.test.js"
+      "test/systems/comeSailAway/fb1012d_etherstrand.test.js"
     ]
   },
   {
     "name": "ETHER-STRAND-the-loaded-far-boat-shown",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "      if (allBoat2.inside || (allBoat2.MapPixel != null && pixelsApart(deps.currentMapPixel(), allBoat2.MapPixel) > 1)) {",
     "new": "      if (allBoat2.inside || (allBoat2.MapPixel != null && pixelsApart(deps.currentMapPixel(), allBoat2.MapPixel) > 1e9)) {",
     "tests": [
-      "test/fb1012d_etherstrand.test.js"
+      "test/systems/comeSailAway/fb1012d_etherstrand.test.js"
     ]
   },
   {
     "name": "ETHER-STRAND-a-hulls-way-gone",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    state.boatCargoMod = mathfClamp(f(2 - f(num / threshold)), 0, 1);",
     "new": "    state.boatCargoMod = mathfClamp(f(2 - f(num / threshold)), 0, 0);",
     "tests": [
-      "test/fb1012d_etherstrand.test.js"
+      "test/systems/comeSailAway/fb1012d_etherstrand.test.js"
     ]
   },
   {
     "name": "ETHER-STRAND-the-carracks-hold",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "const hold = !(boat.modifierCargoThreshold > 0) && responsive() ? CARGO_HOLD_MISSING : boat.modifierCargoThreshold;",
     "new": "const hold = !(boat.modifierCargoThreshold > 0) && responsive() ? 1 : boat.modifierCargoThreshold;",
     "tests": [
-      "test/fb1012d_etherstrand.test.js"
+      "test/systems/comeSailAway/fb1012d_etherstrand.test.js"
     ]
   },
   {
     "name": "ETHER-STRAND-the-helms-word-unsaid",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "export const cargoModWords = (mod) => (mod < 0.5 ? \"You're going to need a bigger boat\"",
     "new": "export const cargoModWords = (mod) => (mod < 0 ? \"You're going to need a bigger boat\"",
     "tests": [
-      "test/fb1012d_etherstrand.test.js"
+      "test/systems/comeSailAway/fb1012d_etherstrand.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "      : apart ? 'She lies on the far side of the Veil - sail her across yourself.'",
     "new": "      : false ? 'She lies on the far side of the Veil - sail her across yourself.'",
     "tests": [
-      "test/fb1012d_etherstrand.test.js"
+      "test/systems/comeSailAway/fb1012d_etherstrand.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "return etherSea && inEther(p.x, p.y) !== hers;",
     "new": "return etherSea && inEther(p.x, p.y) === hers;",
     "tests": [
-      "test/fb1012d_etherstrand.test.js"
+      "test/systems/comeSailAway/fb1012d_etherstrand.test.js"
     ]
   },
   {
@@ -68,17 +68,17 @@
     "old": "      if (heavy) townTalk.say(heavy, 7);",
     "new": "      void heavy;",
     "tests": [
-      "test/fb1012d_etherstrand.test.js"
+      "test/systems/comeSailAway/fb1012d_etherstrand.test.js"
     ]
   },
   {
     "name": "ETHER-STRAND-the-words-two-homes",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "      const words = cargoModWords(state.boatCargoMod);",
     "new": "      const words = state.boatCargoMod < 0.5 ? \"You're going to need a bigger boat\" : null;",
     "tests": [
-      "test/fb1012d_etherstrand.test.js",
-      "test/csa_sailing.test.js"
+      "test/systems/comeSailAway/fb1012d_etherstrand.test.js",
+      "test/systems/comeSailAway/csa_sailing.test.js"
     ]
   }
 ]

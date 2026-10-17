@@ -3,7 +3,7 @@
 // from the omen until the breach opens, seen across the omen's ring: a dark plume rising from the altar's flame,
 // widening and leaning as it climbs, churning upward. Design: bible/11-Multiplayer/World-Bosses.md section 19 D.
 //
-// The gate's beacon's law (render/gatePass.js): fixed geometry (its column), every placement a uniform, the clock
+// The gate's beacon's law (render/gate/gatePass.js): fixed geometry (its column), every placement a uniform, the clock
 // handed wrapped and every rate whole cycles over it - the smoke's noise TILES along the column, and each octave climbs
 // a whole number of columns over SMOKE_CLOCK_PERIOD, so the wrap never shows. The column's rows and its noise run on
 // the billows' own height (smokeBillowOf), so its billows grow as they climb, and the biggest bulge its outline

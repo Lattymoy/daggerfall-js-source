@@ -23,7 +23,7 @@ export const HOW_MANY_DAYS_ID = 5102;
  *  same record DaggerfallTradeWindow and the guild services borrow.
  *  ONE DFU MEMBER, ONE EXPORT: the tavern re-exports the existing home
  *  rather than writing 454 down again, so a correction lands once. */
-export { NOT_ENOUGH_GOLD_ID } from './guildServiceActions.js';
+export { NOT_ENOUGH_GOLD_ID } from './guild/guildServiceActions.js';
 
 /** The recovered Internal_Strings lines. */
 export const ROOM_FREE_FOR_KNIGHT = 'The room is free for a knight such as you.';

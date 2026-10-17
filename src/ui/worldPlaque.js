@@ -39,11 +39,11 @@
 // at `(Screen.height - largeHUD.Rectangle.height) / 2` under a docked
 // large HUD (vendor .cs:1097-1112) - so ROAD-E E5's law, that a docked
 // bar moves the reticle, moves the plaque with it for free.
-import { injectEnhancedStyle, PLAQUE_MAX_W, STATS_W, STATS_GAP, STATS_MARGIN } from './enhancedStyle.js';   // QUICK-LOOT-STATS: the layout numbers live with the dress that draws them
+import { injectEnhancedStyle, PLAQUE_MAX_W, STATS_W, STATS_GAP, STATS_MARGIN } from './enhanced/enhancedStyle.js';   // QUICK-LOOT-STATS: the layout numbers live with the dress that draws them
 import { isEnhanced } from '../systems/uiSkin.js';
-import { isTouchDevice } from './touchDevice.js';
-import { crosshairCentreY, CROSSHAIR_ARM } from './hudCrosshair.js';
-import { hudReticle } from './hud.js';   // the reticle's own two terms, from their home
+import { isTouchDevice } from './touch/touchDevice.js';
+import { crosshairCentreY, CROSSHAIR_ARM } from './hud/hudCrosshair.js';
+import { hudReticle } from './hud/hud.js';   // the reticle's own two terms, from their home
 import { pickActivatableHit } from '../player/activate.js';
 import { getSeed, setSeed } from '../formats/dfRandom.js';   // CAT-MEOW: the readout keeps the classic stream
 import { frameMark } from '../systems/frameClock.js';   // AUDIT-WH P3: the frame in flight, so the gate's two terms are computed once in it
@@ -94,7 +94,7 @@ export function statsSide(anchorX, viewportWidth) {
 
 /** AUDIT-WH2 L3-F2: a plaque that has not been drawn for this long is
  *  gone - take it down. ENH-NOTICE1's own constant and its own reason
- *  (ui/enhancedNotice.js NOTICE_WATCHDOG_MS), at the same 400ms: long
+ *  (ui/enhanced/enhancedNotice.js NOTICE_WATCHDOG_MS), at the same 400ms: long
  *  enough that no honest frame rate trips it, short enough that a
  *  stranded name is a blink and not a fixture. */
 export const PLAQUE_WATCHDOG_MS = 400;
@@ -184,7 +184,7 @@ function blankDom() { if (node && shownSig !== null) { shownSig = null; blank(no
  * or the plaque hangs off it.
  *
  * Canvas pixels over the device ratio, the arithmetic
- * ui/enhancedHudText.js midTextTopPx already spells.
+ * ui/enhanced/enhancedHudText.js midTextTopPx already spells.
  */
 export function plaqueAnchor(canvas) {
   if (!canvas?.width || !canvas?.height) return null;

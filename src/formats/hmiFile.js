@@ -9,7 +9,7 @@
 // DEPARTURE in the Port-Ledger sense - it was written against the shipped bytes
 // of the user's own ARENA2/MIDI.BSA, not translated from C#. Every structural
 // claim below was established by parsing all 131 songs / 1286 tracks in the
-// retail archive and is pinned in test/hmi.test.js.
+// retail archive and is pinned in test/formats/hmi.test.js.
 //
 // NAMING: this slice was commissioned as "the XMI reader" and the bytes said
 // otherwise, so the file is hmiFile.js - the format it actually reads. The

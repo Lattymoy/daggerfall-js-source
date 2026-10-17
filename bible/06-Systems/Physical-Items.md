@@ -113,7 +113,7 @@ returns on `IsGamePaused` `[IL_1eb6]`): each host hands its own pause answer.
   refused with DFU's "cannotRemoveItem" (`[IL_0565]`).
 - **The move** (`QueueInventoryPhysicalDrop [IL_34b8]`): DFU's own TransferItem onto
   a fresh container. The port's is `shiftDrop` - the pack's own ground guards,
-  through the one transfer ladder (systems/itemTransfer.js planStore/applyTransfer):
+  through the one transfer ladder (systems/item/itemTransfer.js planStore/applyTransfer):
   the lock (LOCK1), a pack-only piece (WALLET1), a bound one (SS3: the ground is
   "elsewhere"), a loaded Materials Bag (BAG1), the floor's own word (HOUSE-DROP), the
   quest arm, and a map read rather than dropped (F156). The whole stack moves (a drop
@@ -169,7 +169,7 @@ Mac: *"This should work for both morrowind and the sprite system."* The layer as
 for the item's **Morrowind** picture first - `combat/fpArm.js mountPicture`, the
 item's Morrowind ground mesh face-on, the decor room's own door (MW-MOUNT) - while a
 Morrowind build stands (attached data is the switch, MWA4), and the pack's
-**classic** picture otherwise (`ui/itemIconColor32.js` - the classic TEXTURE art, a
+**classic** picture otherwise (`ui/item/itemIconColor32.js` - the classic TEXTURE art, a
 replacement, the item's dye, for the wearer's gender and race). A build that lands
 or goes (`mountPictureStamp`) has every item ask again. Either is cut to its visible
 texels and sized by the mod's law above, under the pseudo-archive 38161.
@@ -239,7 +239,7 @@ a peer's puppet.
 
 ## Online
 
-The player's own (`systems/onlineLane.js ONLINE_PLAYERS_OWN_MODS`). A peer's body
+The player's own (`systems/online/onlineLane.js ONLINE_PLAYERS_OWN_MODS`). A peer's body
 shows no items (its list is its owner's - lootFinds' own rule); a shift-drop is a
 pile like any drop. In the dungeon a body is the world room's container: an item
 taken off one is published as the quick door's take is (`publishLoot`, WORLD4 /
@@ -305,7 +305,7 @@ or off.
 
 ## Pins
 
-`test/pi1_physicalitems.test.js` (15): the record (the manifest and every declared
+`test/systems/pi1_physicalitems.test.js` (15): the record (the manifest and every declared
 key verbatim, the four undeclared ones named), the categories against `.cctor`'s
 list and over every item producer, the sizes and clamps with the IL's constants,
 the picture's box and cut, the scatter and the throw, the spiral (and its 0.1 m
@@ -319,6 +319,6 @@ off), the lines (a presented item's line is its own), the shift-drop law (the
 refusals, the whole stack, the map), and the seams (one maker, the four hosts'
 halves, both packs, both street pools).
 
-`test/audit_pi1.test.js` (20) holds the audit's fixes, one test a finding group
-(`01-Overview/Audit-PI1.md`). Mutants: `tools/mutants/pi1.json` (47) and
+`test/systems/audit_pi1.test.js` (20) holds the audit's fixes, one test a finding group
+(`01-Overview/audits/Audit-PI1.md`). Mutants: `tools/mutants/pi1.json` (47) and
 `tools/mutants/audit_pi1.json` (52), all dead.

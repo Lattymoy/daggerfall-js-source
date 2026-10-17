@@ -39,7 +39,7 @@
 // asks the hub link, and there is none.
 // ═══════════════════════════════════════════════════════════════════
 
-import { seededRng } from '../systems/wind.js';
+import { seededRng } from '../systems/wind/wind.js';
 import { thunderOf } from '../systems/distantStorms.js';
 
 /** The live event this file draws (net/wire.js LIVE_EVENTS). */

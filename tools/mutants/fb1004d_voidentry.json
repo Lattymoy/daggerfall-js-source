@@ -4,7 +4,7 @@
     "file": "src/player/enterExit.js",
     "old": "  if (standsAt) {",
     "new": "  if (false && standsAt) {",
-    "tests": ["test/fb1004d_voidentry.test.js"],
+    "tests": ["test/world/fb1004d_voidentry.test.js"],
     "note": "DFU's landing verbatim whatever stands under it: Warvale's house lands over nothing again"
   },
   {
@@ -12,7 +12,7 @@
     "file": "src/player/enterExit.js",
     "old": "      const at = [d.pos[0] + d.normal[0] * ENTER_DOOR_OFFSET, d.pos[1] + d.normal[1] * ENTER_DOOR_OFFSET, d.pos[2] + d.normal[2] * ENTER_DOOR_OFFSET];\n      if (standsAt(at)) return at;",
     "new": "      const at = [d.pos[0] + d.normal[0] * ENTER_DOOR_OFFSET, d.pos[1] + d.normal[1] * ENTER_DOOR_OFFSET, d.pos[2] + d.normal[2] * ENTER_DOOR_OFFSET];\n      return at;",
-    "tests": ["test/fb1004d_voidentry.test.js"],
+    "tests": ["test/world/fb1004d_voidentry.test.js"],
     "note": "the nearest door taken without asking for a floor: the copy's outward door wins again"
   },
   {
@@ -20,7 +20,7 @@
     "file": "src/player/enterExit.js",
     "old": "      const at = [d.pos[0] + d.normal[0] * ENTER_DOOR_OFFSET, d.pos[1] + d.normal[1] * ENTER_DOOR_OFFSET, d.pos[2] + d.normal[2] * ENTER_DOOR_OFFSET];",
     "new": "      const at = [d.pos[0] - d.normal[0] * ENTER_DOOR_OFFSET, d.pos[1] - d.normal[1] * ENTER_DOOR_OFFSET, d.pos[2] - d.normal[2] * ENTER_DOOR_OFFSET];",
-    "tests": ["test/fb1004d_voidentry.test.js"],
+    "tests": ["test/world/fb1004d_voidentry.test.js"],
     "note": "a door landing against its normal is not DFU's (radius + 0.4 along it)"
   },
   {
@@ -28,7 +28,7 @@
     "file": "src/player/enterExit.js",
     "old": "  }).sort((a, b) => a.d - b.d).map((e) => e.point);",
     "new": "  }).sort((a, b) => b.d - a.d).map((e) => e.point);",
-    "tests": ["test/fb1004d_voidentry.test.js"],
+    "tests": ["test/world/fb1004d_voidentry.test.js"],
     "note": "FindClosestInteriorDoor's order reversed: DFU's own floored landing would move"
   },
   {
@@ -36,7 +36,7 @@
     "file": "src/player/enterExit.js",
     "old": "    for (const m of byDistance(markers, exteriorDoorPos)) {",
     "new": "    for (const m of byDistance(markers, check)) {",
-    "tests": ["test/fb1004d_voidentry.test.js"],
+    "tests": ["test/world/fb1004d_voidentry.test.js"],
     "note": "the markers ranked from the nearest marker, not from the street's door (FindClosestEnterMarker's own measure)"
   },
   {
@@ -44,7 +44,7 @@
     "file": "src/player/enterExit.js",
     "old": "      const at = [m.pos[0], m.pos[1] + MARKER_UP_OFFSET, m.pos[2]];\n      if (standsAt(at)) return at;",
     "new": "      const at = [m.pos[0], m.pos[1] + MARKER_UP_OFFSET, m.pos[2]];\n      if (standsAt(at)) return null;",
-    "tests": ["test/fb1004d_voidentry.test.js"],
+    "tests": ["test/world/fb1004d_voidentry.test.js"],
     "note": "DFU's marker arm dropped from the failsafe: a room whose doors all land over nothing is refused though its marker stands"
   },
   {
@@ -52,7 +52,7 @@
     "file": "src/player/enterExit.js",
     "old": "      const at = [m.pos[0], m.pos[1] + MARKER_UP_OFFSET, m.pos[2]];",
     "new": "      const at = [m.pos[0], m.pos[1], m.pos[2]];",
-    "tests": ["test/fb1004d_voidentry.test.js"],
+    "tests": ["test/world/fb1004d_voidentry.test.js"],
     "note": "marker + up * (height * 0.6), DFU's (PlayerEnterExit.cs:756)"
   },
   {
@@ -60,7 +60,7 @@
     "file": "src/player/enterExit.js",
     "old": "  return footprintFloorY(collider, pos, maxDist) > -Infinity || Number.isFinite(collider.heightAt?.(pos[0], pos[2]));",
     "new": "  return true;",
-    "tests": ["test/fb1004d_voidentry.test.js"],
+    "tests": ["test/world/fb1004d_voidentry.test.js"],
     "note": "every spot stands: the void landing is taken"
   },
   {
@@ -68,7 +68,7 @@
     "file": "src/player/enterExit.js",
     "old": "  return footprintFloorY(collider, pos, maxDist) > -Infinity || Number.isFinite(collider.heightAt?.(pos[0], pos[2]));",
     "new": "  return footprintFloorY(collider, pos, maxDist) > -Infinity;",
-    "tests": ["test/fb1004d_voidentry.test.js"],
+    "tests": ["test/world/fb1004d_voidentry.test.js"],
     "note": "the collider's ground is floorLanding's floor too (TSR4c)"
   },
   {
@@ -76,7 +76,7 @@
     "file": "src/player/enterExit.js",
     "old": "  return box ? { at, belowY: box.min[1] - INTERIOR_VOID_DROP } : null;",
     "new": "  return box ? { at, belowY: box.min[1] + INTERIOR_VOID_DROP } : null;",
-    "tests": ["test/fb1004d_voidentry.test.js"],
+    "tests": ["test/world/fb1004d_voidentry.test.js"],
     "note": "the void's depth over the floor: a body standing in the room is 'rescued' every frame"
   },
   {
@@ -84,7 +84,7 @@
     "file": "src/player/enterExit.js",
     "old": "  return box ? { at, belowY: box.min[1] - INTERIOR_VOID_DROP } : null;",
     "new": "  return null;",
-    "tests": ["test/fb1004d_voidentry.test.js"],
+    "tests": ["test/world/fb1004d_voidentry.test.js"],
     "note": "no failsafe record: the void keeps the body"
   },
   {
@@ -92,7 +92,7 @@
     "file": "src/player/enterExit.js",
     "old": "export const INTERIOR_VOID_DROP = 10;",
     "new": "export const INTERIOR_VOID_DROP = 0;",
-    "tests": ["test/fb1004d_voidentry.test.js"],
+    "tests": ["test/world/fb1004d_voidentry.test.js"],
     "note": "a body a hair under the lowest triangle (a floor's skin) is not yet in the void"
   },
   {
@@ -100,7 +100,7 @@
     "file": "src/player/enterExit.js",
     "old": "  if (!rescue || !(player.pos[1] < rescue.belowY)) return false;",
     "new": "  if (!rescue || !(player.pos[1] <= rescue.belowY)) return false;",
-    "tests": ["test/fb1004d_voidentry.test.js"],
+    "tests": ["test/world/fb1004d_voidentry.test.js"],
     "note": "at the depth exactly is not under it"
   },
   {
@@ -108,7 +108,7 @@
     "file": "src/player/enterExit.js",
     "old": "  if (!rescue || !(player.pos[1] < rescue.belowY)) return false;",
     "new": "  if (!rescue || true) return false;",
-    "tests": ["test/fb1004d_voidentry.test.js"],
+    "tests": ["test/world/fb1004d_voidentry.test.js"],
     "note": "the failsafe never stands anyone"
   },
   {
@@ -116,7 +116,7 @@
     "file": "src/player/enterExit.js",
     "old": "  player.spawn(rescue.at[0], rescue.at[1], rescue.at[2]);",
     "new": "  player.spawn(player.pos[0], rescue.belowY, player.pos[2]);",
-    "tests": ["test/fb1004d_voidentry.test.js"],
+    "tests": ["test/world/fb1004d_voidentry.test.js"],
     "note": "stood back where it fell, not at the door"
   },
   {
@@ -124,7 +124,7 @@
     "file": "src/player/enterExit.js",
     "old": "export const NOTHING_OF_VALUE_TEXT = 'This house has nothing of value.';",
     "new": "export const NOTHING_OF_VALUE_TEXT = 'This house has nothing of value';",
-    "tests": ["test/fb1004d_voidentry.test.js"],
+    "tests": ["test/world/fb1004d_voidentry.test.js"],
     "note": "Internal_Strings_en.asset m_Id 8, verbatim"
   },
   {
@@ -132,7 +132,7 @@
     "file": "src/scenes/worldModes.js",
     "old": "        doorWorldPosition(hit.door), ctx.enterMarkers, ctx.doors, (p) => standsOnFloor(ctx.collider, p)) ?? void say(NOTHING_OF_VALUE_TEXT);",
     "new": "        doorWorldPosition(hit.door), ctx.enterMarkers, ctx.doors) ?? void say(NOTHING_OF_VALUE_TEXT);",
-    "tests": ["test/fb1004d_voidentry.test.js"],
+    "tests": ["test/world/fb1004d_voidentry.test.js"],
     "note": "the host hands the law no floor: Warvale's house #1 over nothing, the floorless room entered"
   },
   {
@@ -140,7 +140,7 @@
     "file": "src/scenes/worldModes.js",
     "old": "        doorWorldPosition(hit.door), ctx.enterMarkers, ctx.doors, (p) => standsOnFloor(ctx.collider, p)) ?? void say(NOTHING_OF_VALUE_TEXT);",
     "new": "        doorWorldPosition(hit.door), ctx.enterMarkers, ctx.doors, (p) => standsOnFloor(ctx.collider, p));",
-    "tests": ["test/fb1004d_voidentry.test.js"],
+    "tests": ["test/world/fb1004d_voidentry.test.js"],
     "note": "a refused room says nothing"
   },
   {
@@ -148,7 +148,7 @@
     "file": "src/scenes/worldModes.js",
     "old": "        }).catch((e) => { buildingHold.release(); if (live()) say(NOTHING_OF_VALUE_TEXT); throw e; });",
     "new": "        }).catch((e) => { buildingHold.release(); throw e; });",
-    "tests": ["test/fb1004d_voidentry.test.js"],
+    "tests": ["test/world/fb1004d_voidentry.test.js"],
     "note": "TransitionInterior's catch says the old chestnut (PlayerEnterExit.cs:725). INTEGRATION (FIELD BUGS 2026-10-04d, PIN MOVED): PLACE-LRU and VOID-ENTRY wrote this one catch line on two branches; merged as one line, each mutant re-aimed by content at its own half."
   },
   {
@@ -156,7 +156,7 @@
     "file": "src/scenes/worldModes.js",
     "old": "        }).catch((e) => { buildingHold.release(); if (live()) say(NOTHING_OF_VALUE_TEXT); throw e; });",
     "new": "        }).catch((e) => { buildingHold.release(); say(NOTHING_OF_VALUE_TEXT); throw e; });",
-    "tests": ["test/fb1004d_voidentry.test.js"],
+    "tests": ["test/world/fb1004d_voidentry.test.js"],
     "note": "a build the world moved under (a load, a teleport) is no house refusing anyone. INTEGRATION (FIELD BUGS 2026-10-04d, PIN MOVED): PLACE-LRU and VOID-ENTRY wrote this one catch line on two branches; merged as one line, each mutant re-aimed by content at its own half."
   },
   {
@@ -164,7 +164,7 @@
     "file": "src/scenes/worldModes.js",
     "old": "ctx.voidRescue = interiorVoidRescue(ctx.collider, floored);",
     "new": "ctx.voidRescue = null;",
-    "tests": ["test/fb1004d_voidentry.test.js"],
+    "tests": ["test/world/fb1004d_voidentry.test.js"],
     "note": "the entry leaves the failsafe nothing to stand a body by"
   },
   {
@@ -172,7 +172,7 @@
     "file": "src/scenes/worldModes.js",
     "old": "} else if (standFromVoid(interiorCtx.voidRescue, player)) { cam.pos = [...player.eye]; say(INTERIOR_VOID_TEXT); }",
     "new": "} else if (false) { cam.pos = [...player.eye]; say(INTERIOR_VOID_TEXT); }",
-    "tests": ["test/fb1004d_voidentry.test.js"],
+    "tests": ["test/world/fb1004d_voidentry.test.js"],
     "note": "frame() never asks the failsafe"
   },
   {
@@ -180,7 +180,7 @@
     "file": "src/scenes/worldModes.js",
     "old": "} else if (standFromVoid(interiorCtx.voidRescue, player)) { cam.pos = [...player.eye]; say(INTERIOR_VOID_TEXT); }",
     "new": "} else if (standFromVoid(interiorCtx.voidRescue, player)) { cam.pos = [...player.eye]; }",
-    "tests": ["test/fb1004d_voidentry.test.js"],
+    "tests": ["test/world/fb1004d_voidentry.test.js"],
     "note": "a body stood again is told why"
   },
   {
@@ -188,7 +188,7 @@
     "file": "src/scenes/worldModes.js",
     "old": "} else if (standFromVoid(interiorCtx.voidRescue, player)) { cam.pos = [...player.eye]; say(INTERIOR_VOID_TEXT); }",
     "new": "} else if (standFromVoid(interiorCtx.voidRescue, player)) { say(INTERIOR_VOID_TEXT); }",
-    "tests": ["test/fb1004d_voidentry.test.js"],
+    "tests": ["test/world/fb1004d_voidentry.test.js"],
     "note": "the camera follows the body (moveToBed's own two lines)"
   }
 ]

@@ -1,0 +1,47 @@
+[
+  {
+    "name": "FIRST-PICK-every-card-waits",
+    "file": "src/ui/professions/profPages.js",
+    "old": "      const waits = !!chosen && !!tr.respec && !free;",
+    "new": "      const waits = !!tr.respec;",
+    "tests": [
+      "test/net/fb1016b_firstpick.test.js"
+    ]
+  },
+  {
+    "name": "FIRST-PICK-the-free-change-waits",
+    "file": "src/ui/professions/profPages.js",
+    "old": "      const waits = !!chosen && !!tr.respec && !free;",
+    "new": "      const waits = !!chosen && !!tr.respec;",
+    "tests": [
+      "test/net/fb1016b_firstpick.test.js"
+    ]
+  },
+  {
+    "name": "FIRST-PICK-nothing-waits",
+    "file": "src/ui/professions/profPages.js",
+    "old": "      const waits = !!chosen && !!tr.respec && !free;",
+    "new": "      const waits = false;",
+    "tests": [
+      "test/net/fb1016b_firstpick.test.js"
+    ]
+  },
+  {
+    "name": "FIRST-PICK-the-price-said-while-waiting",
+    "file": "src/ui/professions/profPages.js",
+    "old": "      if (!locked && chosen && chosen !== s.id && !waits) {",
+    "new": "      if (!locked && chosen && chosen !== s.id) {",
+    "tests": [
+      "test/net/fb1016b_firstpick.test.js"
+    ]
+  },
+  {
+    "name": "FIRST-PICK-the-free-change-unsaid",
+    "file": "src/ui/professions/profPages.js",
+    "old": "      if (!locked && chosen && chosen !== s.id && !waits) {",
+    "new": "      if (!locked && chosen && chosen !== s.id && !tr.respec) {",
+    "tests": [
+      "test/net/fb1016b_firstpick.test.js"
+    ]
+  }
+]

@@ -1,0 +1,686 @@
+[
+  {
+    "name": "EGF-the-season-ignored-for-half-the-best",
+    "file": "src/net/eliteGates/egStartLaw.js",
+    "old": "const deeper = taken.length ? taken : (ok(",
+    "new": "const deeper = false ? taken : (ok(",
+    "tests": [
+      "test/net/eliteGates/egarch_law.test.js",
+      "test/net/eliteGates/egarch_service.test.js"
+    ]
+  },
+  {
+    "name": "EGF-hall-1-dropped",
+    "file": "src/net/eliteGates/egStartLaw.js",
+    "old": "return [...deeper.sort((a, b) => b - a), 0];",
+    "new": "return [...deeper.sort((a, b) => b - a)];",
+    "tests": [
+      "test/net/eliteGates/egarch_law.test.js",
+      "test/net/eliteGates/egarch_service.test.js"
+    ]
+  },
+  {
+    "name": "EGF-shallowest-first",
+    "file": "src/net/eliteGates/egStartLaw.js",
+    "old": "return [...deeper.sort((a, b) => b - a), 0];",
+    "new": "return [...deeper.sort((a, b) => a - b), 0];",
+    "tests": [
+      "test/net/eliteGates/egarch_law.test.js",
+      "test/net/eliteGates/egarch_service.test.js"
+    ]
+  },
+  {
+    "name": "EGF-a-carry",
+    "file": "src/net/eliteGates/egStartLaw.js",
+    "old": "Number.isSafeInteger(ew) && ew > 0 && starts.includes(ew));",
+    "new": "Number.isSafeInteger(ew) && ew > 0);",
+    "tests": [
+      "test/net/eliteGates/egarch_law.test.js",
+      "test/net/eliteGates/egarch_service.test.js"
+    ]
+  },
+  {
+    "name": "EGF-two-of-a-family-wagered",
+    "file": "src/net/eliteGates/egStartLaw.js",
+    "old": "if (!fam || fams.has(fam)) return null;",
+    "new": "if (!fam) return null;",
+    "tests": [
+      "test/net/eliteGates/egarch_law.test.js"
+    ]
+  },
+  {
+    "name": "EGF-a-fourth-wagered",
+    "file": "src/net/eliteGates/egStartLaw.js",
+    "old": "if (!Array.isArray(ids) || ids.length > EG_WAGER_MAX) return null;",
+    "new": "if (!Array.isArray(ids)) return null;",
+    "tests": [
+      "test/net/eliteGates/egarch_law.test.js"
+    ]
+  },
+  {
+    "name": "EGF-the-wager-on-a-rehearsal",
+    "file": "src/net/identityToken.js",
+    "old": "c.o === 'egopen' && c.rh === undefined && Array.isArray(c.ewg)",
+    "new": "c.o === 'egopen' && Array.isArray(c.ewg)",
+    "tests": [
+      "test/net/eliteGates/egarch_law.test.js"
+    ]
+  },
+  {
+    "name": "EGF-the-wager-dropped-at-the-mint",
+    "file": "src/net/identityToken.js",
+    "old": "...(Array.isArray(ewg) && ewg.length ? { ewg: [...ewg] } : {}), i: nowS",
+    "new": "i: nowS",
+    "tests": [
+      "test/net/eliteGates/egarch_law.test.js",
+      "test/net/eliteGates/egarch_service.test.js"
+    ]
+  },
+  {
+    "name": "EGF-the-start-hall-the-redoubt-s-own",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "ew > 0 ? egFirstHallOf(ew + 1) : 1);",
+    "new": "ew > 0 ? egFirstHallOf(ew) : 1);",
+    "tests": [
+      "test/net/eliteGates/egarch_law.test.js",
+      "test/net/eliteGates/egarch_client.test.js"
+    ]
+  },
+  {
+    "name": "EGF-the-footprint-after-the-breach-near",
+    "file": "src/scenes/eliteGates/egArch.js",
+    "old": "  if (f.within) return EG_TEXT.within(f.within);\n  if (f.nearGate || f.nearArch) return EG_TEXT.near;",
+    "new": "  if (f.nearGate || f.nearArch) return EG_TEXT.near;\n  if (f.within) return EG_TEXT.within(f.within);",
+    "tests": [
+      "test/net/eliteGates/egarch_law.test.js"
+    ]
+  },
+  {
+    "name": "EGF-held-after-the-road-shut",
+    "file": "src/scenes/eliteGates/egArch.js",
+    "old": "  if (f.held) return EG_TEXT.held;\n  if (f.opening) return EG_TEXT.opening;\n  if (f.shut) return EG_TEXT.shut;",
+    "new": "  if (f.shut) return EG_TEXT.shut;\n  if (f.held) return EG_TEXT.held;\n  if (f.opening) return EG_TEXT.opening;",
+    "tests": [
+      "test/net/eliteGates/egarch_law.test.js"
+    ]
+  },
+  {
+    "name": "EGF-no-room-never-said",
+    "file": "src/scenes/eliteGates/egArch.js",
+    "old": "  if (f.room === false) return EG_TEXT.room;",
+    "new": "  // gone",
+    "tests": [
+      "test/net/eliteGates/egarch_law.test.js",
+      "test/net/eliteGates/egarch_client.test.js"
+    ]
+  },
+  {
+    "name": "EGF-a-hold-s-own-words-lost",
+    "file": "src/scenes/eliteGates/egArch.js",
+    "old": "if (f.hold) return EG_TEXT.holds[f.hold] ?? EG_TEXT.holds.busy;",
+    "new": "if (f.hold) return EG_TEXT.holds.busy;",
+    "tests": [
+      "test/net/eliteGates/egarch_law.test.js",
+      "test/net/eliteGates/egarch_client.test.js"
+    ]
+  },
+  {
+    "name": "EGF-the-facts-unasked",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "return egKeyRefusal({ ...(f ?? {}), online:",
+    "new": "return egKeyRefusal({ online:",
+    "tests": [
+      "test/net/eliteGates/egarch_client.test.js"
+    ]
+  },
+  {
+    "name": "EGF-the-arch-not-turned-to-the-opener",
+    "file": "src/scenes/eliteGates/egArch.js",
+    "old": "archYaw = wrapYaw(yaw + Math.PI);",
+    "new": "archYaw = wrapYaw(yaw);",
+    "tests": [
+      "test/net/eliteGates/egarch_law.test.js"
+    ]
+  },
+  {
+    "name": "EGF-the-clearing-unasked",
+    "file": "src/scenes/eliteGates/egArch.js",
+    "old": "    if (Number.isFinite(hit)) return { refused: 'room' };",
+    "new": "    if (Number.isFinite(hit) && false) return { refused: 'room' };",
+    "tests": [
+      "test/net/eliteGates/egarch_law.test.js"
+    ]
+  },
+  {
+    "name": "EGF-a-foot-over-a-drop",
+    "file": "src/scenes/eliteGates/egArch.js",
+    "old": "(d) > PORTAL_GROUND_PROBE) return { refused: 'room' };",
+    "new": "(d) > PORTAL_GROUND_PROBE) return { at, yaw: archYaw };",
+    "tests": [
+      "test/net/eliteGates/egarch_law.test.js"
+    ]
+  },
+  {
+    "name": "EGF-the-wake-never-sinks-it",
+    "file": "src/scenes/eliteGates/egArch.js",
+    "old": "const sinkAt = Math.min(a.wk > 0 ? /** @type {number} */ (a.wk) : Infinity,",
+    "new": "const sinkAt = Math.min(Infinity,",
+    "tests": [
+      "test/net/eliteGates/egarch_law.test.js"
+    ]
+  },
+  {
+    "name": "EGF-the-rise-at-the-sink-s-rate",
+    "file": "src/scenes/eliteGates/egArch.js",
+    "old": "const up = Math.min(1, (now - a.op) / GATE_RISE_MS)",
+    "new": "const up = Math.min(1, (now - a.op) / GATE_COLLAPSE_MS)",
+    "tests": [
+      "test/net/eliteGates/egarch_law.test.js"
+    ]
+  },
+  {
+    "name": "EGF-its-foot-never-sunk",
+    "file": "src/scenes/eliteGates/egArch.js",
+    "old": "origin: [x, ground - (1 - eased) * sunk, z]",
+    "new": "origin: [x, ground, z]",
+    "tests": [
+      "test/net/eliteGates/egarch_law.test.js"
+    ]
+  },
+  {
+    "name": "EGF-the-beacon-the-gate-s-height",
+    "file": "src/scenes/eliteGates/egArch.js",
+    "old": "height: BEACON_BELOW_M + EG_ARCH_BEACON_UP_M,",
+    "new": "height: BEACON_BELOW_M + 800,",
+    "tests": [
+      "test/net/eliteGates/egarch_law.test.js"
+    ]
+  },
+  {
+    "name": "EGF-the-pass-capped-at-two",
+    "file": "src/render/gate/gatePass.js",
+    "old": "export const GATE_PASS_MAX = 4;",
+    "new": "export const GATE_PASS_MAX = 2;",
+    "tests": [
+      "test/net/eliteGates/egarch_law.test.js"
+    ]
+  },
+  {
+    "name": "EGF-the-gate-s-red-on-every-beacon",
+    "file": "src/render/gate/gatePass.js",
+    "old": "      gl.uniform3fv(this.bu.uColor, v.color);",
+    "new": "      gl.uniform3fv(this.bu.uColor, BEACON_COLOR);",
+    "tests": [
+      "test/net/eliteGates/egarch_law.test.js"
+    ]
+  },
+  {
+    "name": "EGF-the-scale-lost",
+    "file": "src/render/gate/gatePass.js",
+    "old": "      gl.uniform1f(this.mu.uScale, v.scale);",
+    "new": "      gl.uniform1f(this.mu.uScale, 1);",
+    "tests": [
+      "test/net/eliteGates/egarch_law.test.js"
+    ]
+  },
+  {
+    "name": "EGF-the-height-compiled-in",
+    "file": "src/render/gate/gatePass.js",
+    "old": "      gl.uniform1f(this.bu.uHeight, v.height);",
+    "new": "      gl.uniform1f(this.bu.uHeight, BEACON_HEIGHT_M);",
+    "tests": [
+      "test/net/eliteGates/egarch_law.test.js"
+    ]
+  },
+  {
+    "name": "EGF-the-foot-the-gate-s-always",
+    "file": "src/render/gate/gatePass.js",
+    "old": "foot: b && Number.isFinite(b.start) ? beaconFoot(below, b.start, height) : G.foot,",
+    "new": "foot: G.foot,",
+    "tests": [
+      "test/net/eliteGates/egarch_law.test.js"
+    ]
+  },
+  {
+    "name": "EGF-the-tint-lost",
+    "file": "src/render/gate/gatePass.js",
+    "old": "      gl.uniform3fv(this.mu.uTint, v.tint);",
+    "new": "      gl.uniform3fv(this.mu.uTint, GATE_PASS_GATE.tint);",
+    "tests": [
+      "test/net/eliteGates/egarch_law.test.js"
+    ]
+  },
+  {
+    "name": "EGF-a-set-s-arch-unasked",
+    "file": "src/world/gate/gateClearance.js",
+    "old": "return clear.list.some((c) => boxNearGate(c, px, py, x0, z0, x1, z1, margin));",
+    "new": "return boxNearGate(clear.list[0], px, py, x0, z0, x1, z1, margin);",
+    "tests": [
+      "test/net/eliteGates/egarch_law.test.js"
+    ]
+  },
+  {
+    "name": "EGF-an-arch-s-reach-the-gate-s",
+    "file": "src/world/gate/gateClearance.js",
+    "old": "  if (Number.isFinite(clear.r)) return boxNear(gx, gz, x0, z0, x1, z1, clear.r + margin);",
+    "new": "  // gone",
+    "tests": [
+      "test/net/eliteGates/egarch_law.test.js"
+    ]
+  },
+  {
+    "name": "EGF-a-pixel-built-again-for-a-far-arch",
+    "file": "src/world/gate/gateClearance.js",
+    "old": "|| come.some((c) => reachNearGate(p.wodReach, c, p.px, p.py))) again.push(p);",
+    "new": "|| come.length) again.push(p);",
+    "tests": [
+      "test/net/eliteGates/egarch_law.test.js"
+    ]
+  },
+  {
+    "name": "EGF-the-site-left-out-of-the-signed-bytes",
+    "file": "src/net/eliteGates/egCallSig.js",
+    "old": "|${s.px}|${s.py}|${s.x}|${s.y}|${s.z}|${s.yaw}`;",
+    "new": "|${s.px}|${s.py}|${s.yaw}`;",
+    "tests": [
+      "test/net/eliteGates/egarch_law.test.js"
+    ]
+  },
+  {
+    "name": "EGF-any-signature-taken",
+    "file": "src/net/eliteGates/egCallSig.js",
+    "old": "  try { return await subtle.verify({ name: 'Ed25519' }, publicKey, sig, enc.encode(egCallBytes(c))); } catch { return false; }",
+    "new": "  return true;",
+    "tests": [
+      "test/net/eliteGates/egarch_law.test.js",
+      "test/net/eliteGates/egarch_client.test.js"
+    ]
+  },
+  {
+    "name": "EGF-the-call-unsigned",
+    "file": "server/src/index.js",
+    "old": "    call.sg = await signEgCall(call, await this._receiptKeyOf(), { subtle: crypto.subtle });",
+    "new": "    call.sg = '';",
+    "tests": [
+      "test/net/eliteGates/egarch_client.test.js"
+    ]
+  },
+  {
+    "name": "EGF-the-wager-dropped-at-the-hub",
+    "file": "server/src/index.js",
+    "old": "co, site: m.site, ...(Array.isArray(c.ewg) ? { wg: c.ewg } : {}) };",
+    "new": "co, site: m.site };",
+    "tests": [
+      "test/net/eliteGates/egarch_client.test.js"
+    ]
+  },
+  {
+    "name": "EGF-a-deeper-start-begun-at-hall-1",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "B.h = egStartHall(B.ew);",
+    "new": "B.h = 1;",
+    "tests": [
+      "test/net/eliteGates/egarch_client.test.js"
+    ]
+  },
+  {
+    "name": "EGF-the-site-dropped-from-st",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "    ...(B.site ? { site: B.site } : {}) };",
+    "new": "    };",
+    "tests": [
+      "test/net/eliteGates/egarch_client.test.js"
+    ]
+  },
+  {
+    "name": "EGF-an-unverified-arch-stood",
+    "file": "src/scenes/eliteGates/egArch.js",
+    "old": "      verdicts.set(vk, ok);\n      if (!ok) return false;",
+    "new": "      verdicts.set(vk, ok);",
+    "tests": [
+      "test/net/eliteGates/egarch_client.test.js"
+    ]
+  },
+  {
+    "name": "EGF-a-third-stranger-s-arch",
+    "file": "src/scenes/eliteGates/egArch.js",
+    "old": "export const EG_ARCH_PER_CELL = 2;",
+    "new": "export const EG_ARCH_PER_CELL = 3;",
+    "tests": [
+      "test/net/eliteGates/egarch_client.test.js"
+    ]
+  },
+  {
+    "name": "EGF-an-arch-believed-far-from-its-opener",
+    "file": "src/scenes/eliteGates/egArch.js",
+    "old": "      if (Math.hypot(at[0] - from[0], at[2] - from[2]) > EG_ARCH_PEER_M) return false;",
+    "new": "      // believed anywhere",
+    "tests": [
+      "test/net/eliteGates/egarch_client.test.js"
+    ]
+  },
+  {
+    "name": "EGF-two-arches-an-opener",
+    "file": "src/scenes/eliteGates/egArch.js",
+    "old": "      if (strangers().some((a) => a.from === peer)) return false;   // one an opener",
+    "new": "      // any number an opener",
+    "tests": [
+      "test/net/eliteGates/egarch_client.test.js"
+    ]
+  },
+  {
+    "name": "EGF-the-company-told-its-own-name",
+    "file": "src/scenes/eliteGates/egArch.js",
+    "old": "...(ofCompany(a) ? [] : [EG_TEXT.company(a.o)])",
+    "new": "...[EG_TEXT.company(a.o)]",
+    "tests": [
+      "test/net/eliteGates/egarch_client.test.js"
+    ]
+  },
+  {
+    "name": "EGF-a-stranger-let-through",
+    "file": "src/scenes/eliteGates/egArch.js",
+    "old": "    if (!ofCompany(a)) { refuse(a, EG_TEXT.outside(a.o)); return false; }",
+    "new": "    // anyone",
+    "tests": [
+      "test/net/eliteGates/egarch_client.test.js"
+    ]
+  },
+  {
+    "name": "EGF-a-walk-through-the-sealed-ember",
+    "file": "src/scenes/eliteGates/egArch.js",
+    "old": "if (f && !a.place.coarse && a.place.phase === 'open') {",
+    "new": "if (f && !a.place.coarse) {",
+    "tests": [
+      "test/net/eliteGates/egarch_client.test.js"
+    ]
+  },
+  {
+    "name": "EGF-my-arch-said-from-afar",
+    "file": "src/scenes/eliteGates/egArch.js",
+    "old": "      if (Math.hypot(near[0] - a.place.origin[0], near[2] - a.place.origin[2]) > EG_ARCH_SAY_M) continue;",
+    "new": "      // from anywhere",
+    "tests": [
+      "test/net/eliteGates/egarch_client.test.js"
+    ]
+  },
+  {
+    "name": "EGF-my-own-arch-sighted",
+    "file": "src/scenes/eliteGates/egArch.js",
+    "old": "if (a.said || !a.place || a.os === me()) continue;",
+    "new": "if (a.said || !a.place) continue;",
+    "tests": [
+      "test/net/eliteGates/egarch_client.test.js"
+    ]
+  },
+  {
+    "name": "EGF-a-forgotten-call-s-arch-never-sinks",
+    "file": "src/scenes/eliteGates/egArch.js",
+    "old": "        if (c) drop(a); else if (!(a.end > 0)) a.end = t;",
+    "new": "        if (c) drop(a);",
+    "tests": [
+      "test/net/eliteGates/egarch_client.test.js"
+    ]
+  },
+  {
+    "name": "EGF-a-sink-begun-again",
+    "file": "src/scenes/eliteGates/egArch.js",
+    "old": "        if (c) drop(a); else if (!(a.end > 0)) a.end = t;",
+    "new": "        if (c) drop(a); else a.end = t;",
+    "tests": [
+      "test/net/eliteGates/egarch_client.test.js"
+    ]
+  },
+  {
+    "name": "EGF-a-sunk-arch-stood-again",
+    "file": "src/scenes/eliteGates/egArch.js",
+    "old": "if (sunk.has(c.b) || !egArchLife({ op: c.op, wk, end }, t)) return;",
+    "new": "if (!egArchLife({ op: c.op, wk, end }, t)) return;",
+    "tests": [
+      "test/net/eliteGates/egarch_client.test.js"
+    ]
+  },
+  {
+    "name": "EGF-the-start-window-skipped",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    if (startWindow) { askStart(); return ''; }",
+    "new": "    // skipped",
+    "tests": [
+      "test/net/eliteGates/egarch_client.test.js"
+    ]
+  },
+  {
+    "name": "EGF-the-portal-skipped",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "      if (callPortal && !viaArch) {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/net/eliteGates/egarch_client.test.js"
+    ]
+  },
+  {
+    "name": "EGF-the-opener-s-landing-lost",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "const landing = c.os === me() ? arches?.landing?.(c.b) ?? null : null;",
+    "new": "const landing = null;",
+    "tests": [
+      "test/net/eliteGates/egarch_client.test.js"
+    ]
+  },
+  {
+    "name": "EGF-the-horn-never-sounded",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "          if (hornFor !== key) { hornFor = key; soundEgHorn(audio); }",
+    "new": "          // silent",
+    "tests": [
+      "test/net/eliteGates/egarch_client.test.js"
+    ]
+  },
+  {
+    "name": "EGF-the-late-line-never-said",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "{ say(EG_TEXT.late(link.state().call.o)); answeredFor = ''; callPortal?.clear?.(); return true; }",
+    "new": "{ answeredFor = ''; return false; }",
+    "tests": [
+      "test/net/eliteGates/egarch_client.test.js"
+    ]
+  },
+  {
+    "name": "EGF-the-prompt-gone-for-good",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "answered: !!answeredFor && answeredFor === E.call?.b && (!!callPortal?.standing?.() || answering || inSpire()),",
+    "new": "answered: !!answeredFor && answeredFor === E.call?.b,",
+    "tests": [
+      "test/net/eliteGates/egarch_client.test.js"
+    ]
+  },
+  {
+    "name": "EGF-enter-answers-nothing",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "      if (!inSpire() && EG_CALL_KEYS.includes(code) && this.promptModel()?.answerable) { answer(); return true; }",
+    "new": "      // nothing",
+    "tests": [
+      "test/net/eliteGates/egarch_client.test.js"
+    ]
+  },
+  {
+    "name": "EGF-the-open-without-its-choice",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "open(!!c.rh, { ew: c.ew | 0, wg: c.wg ?? [] });",
+    "new": "open(!!c.rh);",
+    "tests": [
+      "test/net/eliteGates/egarch_client.test.js"
+    ]
+  },
+  {
+    "name": "EGF-answerable-while-sealed",
+    "file": "src/scenes/eliteGates/egCall.js",
+    "old": "return { text: EG_TEXT.sealed(egCountText(T.openAt - now)), answerable: false,",
+    "new": "return { text: EG_TEXT.sealed(egCountText(T.openAt - now)), answerable: true,",
+    "tests": [
+      "test/net/eliteGates/egarch_client.test.js"
+    ]
+  },
+  {
+    "name": "EGF-the-prompt-over-a-window",
+    "file": "src/scenes/eliteGates/egCall.js",
+    "old": "inSpire || answered || windowUp) return null;",
+    "new": "inSpire || answered) return null;",
+    "tests": [
+      "test/net/eliteGates/egarch_client.test.js"
+    ]
+  },
+  {
+    "name": "EGF-indoors-answerable",
+    "file": "src/scenes/eliteGates/egCall.js",
+    "old": ": { text: EG_TEXT.indoors, answerable: false, left };",
+    "new": ": { text: EG_TEXT.indoors, answerable: true, left };",
+    "tests": [
+      "test/net/eliteGates/egarch_client.test.js"
+    ]
+  },
+  {
+    "name": "EGF-the-horn-never-registered",
+    "file": "src/scenes/eliteGates/egCall.js",
+    "old": "if (!_hornMade.has(audio)) { if (!audio.registerSamples(EG_HORN_KEY, buildEgHorn(), EG_HORN_RATE)) return false; _hornMade.add(audio); }",
+    "new": "_hornMade.add(audio);",
+    "tests": [
+      "test/net/eliteGates/egarch_client.test.js"
+    ]
+  },
+  {
+    "name": "EGF-the-portal-s-holds-ignored",
+    "file": "src/scenes/eliteGates/egCall.js",
+    "old": "    tick: (feet) => pool.tick(feet, { hold }),",
+    "new": "    tick: (feet) => pool.tick(feet),",
+    "tests": [
+      "test/net/eliteGates/egarch_client.test.js"
+    ]
+  },
+  {
+    "name": "EGF-the-call-s-portal-never-drawn",
+    "file": "src/scenes/portalGates.js",
+    "old": "    batches: () => { const more = _also?.(); return more?.length ? [...fx.batches(), ...more] : fx.batches(); },",
+    "new": "    batches: () => fx.batches(),",
+    "tests": [
+      "test/net/eliteGates/egarch_client.test.js"
+    ]
+  },
+  {
+    "name": "EGF-the-ticks-off-the-opener-s-starts",
+    "file": "src/ui/eliteGates/egStartWindow.js",
+    "old": "const can = party.map((m) => Array.isArray(starts?.[m.sub]) && egMayStart(starts[m.sub], ew));",
+    "new": "const can = party.map(() => Array.isArray(starts?.[me]) && egMayStart(starts[me], ew));",
+    "tests": [
+      "test/net/eliteGates/egarch_client.test.js"
+    ]
+  },
+  {
+    "name": "EGF-the-question-never-asked",
+    "file": "src/ui/eliteGates/egStartWindow.js",
+    "old": "    if (!r.missing.length) { choose({ ew: r.ew, wg: [...wager], rh: false }); return; }",
+    "new": "    choose({ ew: r.ew, wg: [...wager], rh: false }); return;",
+    "tests": [
+      "test/net/eliteGates/egarch_client.test.js"
+    ]
+  },
+  {
+    "name": "EGF-chosen-twice",
+    "file": "src/ui/eliteGates/egStartWindow.js",
+    "old": "  function choose(c) {\n    if (done) return;",
+    "new": "  function choose(c) {",
+    "tests": [
+      "test/net/eliteGates/egarch_client.test.js"
+    ]
+  },
+  {
+    "name": "EGF-the-wager-s-law-unasked-in-the-window",
+    "file": "src/ui/eliteGates/egStartWindow.js",
+    "old": "  if (egWagerTakes(wager, id)) return { wager: /** @type {number[]} */ (egWagerOf([...wager, id])), why: null };",
+    "new": "  return { wager: [...wager, id], why: null };",
+    "tests": [
+      "test/net/eliteGates/egarch_client.test.js"
+    ]
+  },
+  {
+    "name": "EGF-the-row-past-the-end",
+    "file": "src/systems/eventTimers.js",
+    "old": "if (el && Number.isFinite(el.op) && !el.end) {",
+    "new": "if (el && Number.isFinite(el.op)) {",
+    "tests": [
+      "test/net/eliteGates/egarch_law.test.js"
+    ]
+  },
+  {
+    "name": "EGF-the-open-s-start-unchecked",
+    "file": "server-account/src/eg.js",
+    "old": "  if (ew > 0 && !egMayStart(await egStartsFor(db, player.id, nowS), ew)) return { error: 'start', w: ew };   // EG-F",
+    "new": "  // unchecked",
+    "tests": [
+      "test/net/eliteGates/egarch_service.test.js"
+    ]
+  },
+  {
+    "name": "EGF-an-admission-carried",
+    "file": "server-account/src/eg.js",
+    "old": "  if (ew > 0 && !egMayStart(await egStartsFor(db, player.id, nowS), ew)) return { error: 'start', w: ew };\n  const took",
+    "new": "  const took",
+    "tests": [
+      "test/net/eliteGates/egarch_service.test.js"
+    ]
+  },
+  {
+    "name": "EGF-the-admission-s-order-at-hall-1",
+    "file": "server-account/src/eg.js",
+    "old": "eb: b, ez: hex(rand(new Uint8Array(12))), ew }, key, { subtle, nowS });",
+    "new": "eb: b, ez: hex(rand(new Uint8Array(12))), ew: 0 }, key, { subtle, nowS });",
+    "tests": [
+      "test/net/eliteGates/egarch_service.test.js"
+    ]
+  },
+  {
+    "name": "EGF-the-order-s-wager-dropped",
+    "file": "server-account/src/eg.js",
+    "old": "ew, rh: rh ? 1 : undefined, ewg: wg.length ? wg : undefined }, key, { subtle, nowS });",
+    "new": "ew, rh: rh ? 1 : undefined }, key, { subtle, nowS });",
+    "tests": [
+      "test/net/eliteGates/egarch_service.test.js"
+    ]
+  },
+  {
+    "name": "EGF-the-stake-keeping-neither",
+    "file": "server-account/src/eg.js",
+    "old": ".bind(ez, player.id, b, rq, rh, nowS, until, ew, wg.join(',')),",
+    "new": ".bind(ez, player.id, b, rq, rh, nowS, until, 0, ''),",
+    "tests": [
+      "test/net/eliteGates/egarch_service.test.js"
+    ]
+  },
+  {
+    "name": "EGF-last-season-counted",
+    "file": "server-account/src/egStarts.js",
+    "old": ".bind(id, egSeasonStartS(nowS)).all();",
+    "new": ".bind(id, 0).all();",
+    "tests": [
+      "test/net/eliteGates/egarch_service.test.js"
+    ]
+  },
+  {
+    "name": "EGF-a-guest-answered-hall-1",
+    "file": "server-account/src/egStarts.js",
+    "old": "  if (!row?.handle) return null;",
+    "new": "  if (!row) return null;",
+    "tests": [
+      "test/net/eliteGates/egarch_service.test.js"
+    ]
+  },
+  {
+    "name": "EGF-the-relay-key-withheld",
+    "file": "server-account/src/index.js",
+    "old": "'/v1/eg/keys': async () => ({ ...(await egKeysOf(ctx, who.player, env)), rk: String(env.GATE_PUBLIC_KEY ?? '') || null }),",
+    "new": "'/v1/eg/keys': async () => egKeysOf(ctx, who.player, env),",
+    "tests": [
+      "test/net/eliteGates/egarch_service.test.js"
+    ]
+  }
+]

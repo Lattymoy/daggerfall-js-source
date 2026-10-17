@@ -4,7 +4,7 @@
 // as a lamp model. Anybody that interacts with the lamp model should earn the 'I Love Lamp' title. Implement exclusive
 // dialogue and ensure there is a loot popup for obtaining the title"): THE LAMP KEEPER, ITS LAW.
 //
-// THE BUG IT WAS (LAMP-KEEPER, FIELD BUGS 2026-09-26 - bible/01-Overview/Field-Bugs-2026-09-26.md report 15): Roleplay &
+// THE BUG IT WAS (LAMP-KEEPER, FIELD BUGS 2026-09-26 - bible/01-Overview/bugs/Field-Bugs-2026-09-26.md report 15): Roleplay &
 // Realism swaps a quality-13-plus shop's 182_2 keeper onto its own 197_6, registered lazy, and nothing asked for it - so
 // the classic TEXTURE.197 record 6 drew in its place, Kludge Town's street lamp, stretched by the mod's XML scale
 // (3 x 0.8), and a click on the lamp opened the shop. The fix (scenes/interiorContext.js standPerson's ask) stays.
@@ -31,7 +31,7 @@
 
 import { t } from './textManager.js';
 import { isShop } from './shopStock.js';
-import { seededRng } from './wind.js';
+import { seededRng } from './wind/wind.js';
 
 /** One day in this many a shop's keeper stands as the lamp. */
 export const LAMP_KEEPER_ODDS = 25;
@@ -40,10 +40,11 @@ export const LAMP_KEEPER_ARCHIVE = 182;
 export const LAMP_KEEPER_RECORDS = Object.freeze([0, 1, 2]);
 /** The lamp: Kludge Town's street lamp, the classic TEXTURE.197 record 6 the bug drew. */
 export const LAMP_CLASSIC = Object.freeze({ archive: 197, record: 6 });
-/** The port's own key its classic picture is uploaded under (after systems/portArt.js PORT_ARCHIVE's 38231; AUDIT
- *  FIVE-ASKS D7 - no other port key is 38241), so a
+/** The port's own key its classic picture is uploaded under (after world/portArt.js PORT_ARCHIVE's 38231, registered in
+ *  world/eliteGates/pseudoArchives.js; AUDIT FIVE-ASKS D7 took 38241, which the Elite Breach's Broken Galleries hold - EG-G2's
+ *  registry refused the pair at the merge of main into the Spire, and the lamp, a runtime key nothing stores, moved), so a
  *  pack's 197_6 - Roleplay & Realism's keeper - and the lamp never share one. */
-export const LAMP_ARCHIVE = 38241;
+export const LAMP_ARCHIVE = 38232;
 /** The title, in the vocabulary's spelling (net/identityToken.js TITLES; server-account/src/lamp.js LAMP_TITLE). */
 export const LAMP_TITLE = 'ilovelamp';
 /** The pick's own stream, salted ('LAMP'). */

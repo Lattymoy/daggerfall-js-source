@@ -1,0 +1,1851 @@
+[
+  {
+    "name": "EG6C-the-apart-margin-a-centimetre-short",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "export const EG_FRAG_APART_CM = 200;",
+    "new": "export const EG_FRAG_APART_CM = 199;",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-passage-under-its-headroom",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "Object.freeze({ passage: 350, chamber: 600, shaft: 350, course: 450 })",
+    "new": "Object.freeze({ passage: 340, chamber: 600, shaft: 350, course: 450 })",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js",
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-chamber-under-its-headroom",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "Object.freeze({ passage: 350, chamber: 600, shaft: 350, course: 450 })",
+    "new": "Object.freeze({ passage: 350, chamber: 590, shaft: 350, course: 450 })",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-the-course-under-the-fast-build",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "Object.freeze({ passage: 350, chamber: 600, shaft: 350, course: 450 })",
+    "new": "Object.freeze({ passage: 350, chamber: 600, shaft: 350, course: 440 })",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js",
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-socket-a-centimetre-off",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "export const EG_FRAG_SOCKET_TOL_CM = 10;",
+    "new": "export const EG_FRAG_SOCKET_TOL_CM = 11;",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js",
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-node-a-centimetre-up",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "export const EG_FRAG_NODE_ON_CM = 50;",
+    "new": "export const EG_FRAG_NODE_ON_CM = 51;",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-the-drawn-budget",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "Object.freeze({ tris: 12000, collider: 3000, lights: 4, draws: 12 })",
+    "new": "Object.freeze({ tris: 12001, collider: 3000, lights: 4, draws: 12 })",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-the-collider-budget",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "Object.freeze({ tris: 12000, collider: 3000, lights: 4, draws: 12 })",
+    "new": "Object.freeze({ tris: 12000, collider: 3001, lights: 4, draws: 12 })",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-the-lights-budget",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "Object.freeze({ tris: 12000, collider: 3000, lights: 4, draws: 12 })",
+    "new": "Object.freeze({ tris: 12000, collider: 3000, lights: 5, draws: 12 })",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js",
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-the-draws-budget",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "Object.freeze({ tris: 12000, collider: 3000, lights: 4, draws: 12 })",
+    "new": "Object.freeze({ tris: 12000, collider: 3000, lights: 4, draws: 13 })",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-no-hazard-anchor",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "export const EG_FRAG_ANCHORS = Object.freeze(['rift', 'caster', 'lurker', 'niche', 'engine', 'hazard']);",
+    "new": "export const EG_FRAG_ANCHORS = Object.freeze(['rift', 'caster', 'lurker', 'niche', 'engine']);",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-no-moon-light",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "export const EG_FRAG_LIGHTS = Object.freeze(['band', 'lava', 'moon']);",
+    "new": "export const EG_FRAG_LIGHTS = Object.freeze(['band', 'lava']);",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-no-jump-alcove",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "export const EG_FRAG_SEALS = Object.freeze(['seam', 'jump']);",
+    "new": "export const EG_FRAG_SEALS = Object.freeze(['seam']);",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-fire-fall-said-as-spots",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "EG_HAZARD_SHAPES = Object.freeze({ fall: 'sh',",
+    "new": "EG_HAZARD_SHAPES = Object.freeze({ fall: 'spots',",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-the-area-half-taken",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "a += p[0] * q[1] - q[0] * p[1]; }",
+    "new": "a += p[0] * q[1]; }",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js",
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-an-edge-not-its-own",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "&& z >= Math.min(az, bz) && z <= Math.max(az, bz)) return true;",
+    "new": "&& z >= Math.min(az, bz) && z <= Math.max(az, bz)) return false;",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js",
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-the-crossings-uncounted",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "if ((az > z) !== (bz > z) && x < ax + ((bx - ax) * (z - az)) / (bz - az)) inside = !inside;",
+    "new": "if ((az > z) !== (bz > z) && x < ax + ((bx - ax) * (z - az)) / (bz - az)) inside = true;",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js",
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-ceiling-at-the-floor-counted",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "for (const c of rec.ceil ?? []) if (c.y > y && (best === null",
+    "new": "for (const c of rec.ceil ?? []) if (c.y >= y && (best === null",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-the-highest-ceiling-taken",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "(best === null || c.y < best) && egFragInPoly(c.poly, x, z)) best = c.y;",
+    "new": "(best === null || c.y > best) && egFragInPoly(c.poly, x, z)) best = c.y;",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-apart-not-exactly-2-m",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "  a[3] + margin <= b[0] || b[3] + margin <= a[0] ||",
+    "new": "  a[3] + margin < b[0] || b[3] + margin < a[0] ||",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-apart-forgets-z",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "a[4] + margin <= b[1] || b[4] + margin <= a[1] || a[5] + margin <= b[2] || b[5] + margin <= a[2];",
+    "new": "a[4] + margin <= b[1] || b[4] + margin <= a[1];",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-apart-forgets-y-below",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "a[4] + margin <= b[1] || b[4] + margin <= a[1] || a[5]",
+    "new": "a[4] + margin <= b[1] || a[5]",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-box-laid-without-its-z",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "rec.box[2] + z, rec.box[3] + x",
+    "new": "rec.box[2], rec.box[3] + x",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-drift-unswept",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "const ax = c.kind === 'drift' || c.kind === 'slag' ? c.amp",
+    "new": "const ax = c.kind === 'slag' ? c.amp",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js",
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-spill-unswept",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "const ax = c.kind === 'drift' || c.kind === 'slag' ? c.amp",
+    "new": "const ax = c.kind === 'drift' ? c.amp",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-the-weight-without-its-half",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "Math.round((EG_PEND_REACH + EG_PEND_HALF) * 100)",
+    "new": "Math.round(EG_PEND_REACH * 100)",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-drum-unswept",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "const az = c.kind === 'rail' || c.kind === 'drum' ? c.amp : 0;",
+    "new": "const az = c.kind === 'rail' ? c.amp : 0;",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-sink-that-does-not-sink",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "c.y - (c.kind === 'sink' ? EG_SINK_GONE_M * 100 : 0)",
+    "new": "c.y",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-the-weight-not-over-its-gap",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "- az - (c.kind === 'pend' ? c.gap : 0)",
+    "new": "- az",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-lane-s-far-end-unplanned",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "if (h.sh) { take(h.sh[0], h.sh[1], h.w / 2); take(h.sh[2], h.sh[3], h.w / 2); }",
+    "new": "if (h.sh) { take(h.sh[0], h.sh[1], h.w / 2); }",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-spots-without-their-reach",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "for (const s of h.spots ?? []) take(s[0], s[1], h.r);",
+    "new": "for (const s of h.spots ?? []) take(s[0], s[1], 0);",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-cascade-unplanned",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "for (const q of h.lanes ?? []) { take(q[0], q[1], h.w / 2); take(q[2], q[3], h.w / 2); }",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-path-unplanned",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "if (h.path) { take(h.path[0] - h.path[2], h.path[1] - h.path[3], 0); take(h.path[0] + h.path[2], h.path[1] + h.path[3], 0); }",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-tide-unplanned",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "if (h.kind === 'tide') take(h.x, h.z, h.r);",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-the-havens-unreached",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "take(h.x, h.z, h.ring + EG_HAZARDS.eclipse.r * 100);",
+    "new": "take(h.x, h.z, h.ring);",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js",
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-the-mist-given-a-place",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "return box[0] === Infinity ? null : box;",
+    "new": "return box;",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-step-not-moved",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "({ i, kind: c.kind, span: 0, x: x0 + c.x / 100,",
+    "new": "({ i, kind: c.kind, span: 0, x: c.x / 100,",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-period-in-tenths",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "amp: c.amp / 100, period: c.period / 1000, phase: c.phase / 1000,",
+    "new": "amp: c.amp / 100, period: c.period / 100, phase: c.phase / 1000,",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js",
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-moon-s-beat-in-seconds",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "beat: c.kind === 'moon' ? z0 + c.beat / 100 : c.beat / 1000,",
+    "new": "beat: c.beat / 1000,",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-the-ground-after-lost",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "gap: c.gap / 100, road: 0, kit: rec.kit, after: c.after / 100 }));",
+    "new": "gap: c.gap / 100, road: 0, kit: rec.kit, after: 0 }));",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js",
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-hazard-not-moved-along",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "const at = (p) => [x0 + p[0] / 100, z0 + p[1] / 100];",
+    "new": "const at = (p) => [x0 + p[0] / 100, p[1] / 100];",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-hazard-s-height-not-moved",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "z: z0 + h.z / 100, y: y0 + h.y / 100, period: h.period / 1000,",
+    "new": "z: z0 + h.z / 100, y: h.y / 100, period: h.period / 1000,",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-path-s-swing-in-centimetres",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "h.path[2] / 100, h.path[3] / 100] : null }));",
+    "new": "h.path[2], h.path[3] / 100] : null }));",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-the-version-unasked",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "if (!rec || rec.v !== EG_FRAG_V) return [",
+    "new": "if (!rec) return [",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-float-let-through",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "if (!Number.isInteger(v)) why.push(`${at}: ${v} is not whole`);",
+    "new": "if (false) why.push(`${at}: ${v} is not whole`);",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-an-unknown-kit-let-through",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "if (!F) why.push(`kit ${rec.kit}: no such fragment`);",
+    "new": "if (false) why.push(`kit ${rec.kit}: no such fragment`);",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-another-band-s-kit",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "if (rec.band !== F.band) why.push(",
+    "new": "if (false) why.push(",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-class-the-kit-has-not",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "if (!F.classes.includes(rec.class)) why.push(",
+    "new": "if (false) why.push(",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-another-reverb",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "if (rec.reverb !== F.reverb) why.push(",
+    "new": "if (false) why.push(",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-an-unknown-play",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "if (!Array.isArray(rec.play) || rec.play.some((p) => !EG_PLAYS.includes(p))) why.push(",
+    "new": "if (!Array.isArray(rec.play)) why.push(",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-chamber-with-no-play",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "else if (rec.class === 'chamber' && !rec.play.length) why.push(",
+    "new": "else if (false) why.push(",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-flat-box",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "if (!Array.isArray(B) || B.length !== 6 || !(B[0] < B[3] && B[1] < B[4] && B[2] < B[5])) return",
+    "new": "if (!Array.isArray(B) || B.length !== 6) return",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-nothing-outside-the-box",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "if (x < B[0] || x > B[3] || y < B[1] || y > B[4] || z < B[2] || z > B[5]) why.push(",
+    "new": "if (x < B[0] || y < B[1] || y > B[4] || z < B[2] || z > B[5]) why.push(",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js",
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-the-mouth-anywhere",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "if (!S.in || S.in.x !== 0 || S.in.y !== 0 || S.in.z !== 0 || S.in.yaw !== 180) why.push(",
+    "new": "if (!S.in || S.in.y !== 0 || S.in.z !== 0 || S.in.yaw !== 180) why.push(",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-the-mouth-facing-anywhere",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "S.in.z !== 0 || S.in.yaw !== 180) why.push(",
+    "new": "S.in.z !== 0) why.push(",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-the-box-behind-the-mouth",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "if (B[2] < -EG_FRAG_SOCKET_TOL_CM) why.push(",
+    "new": "if (false) why.push(",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js",
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-no-exit-let-through",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "if (!Array.isArray(S.out) || !S.out.length) why.push('sockets.out: no exit');",
+    "new": "if (!Array.isArray(S.out)) why.push('sockets.out: no exit');",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-an-exit-facing-back",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "if (o.yaw !== 0) why.push(",
+    "new": "if (false) why.push(",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-an-exit-off-its-face",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "if (Math.abs(o.z - B[5]) > EG_FRAG_SOCKET_TOL_CM) why.push(",
+    "new": "if (false) why.push(",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js",
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-crouch-let-through",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "if (!(o.w > 0) || !(o.h >= EG_FRAG_HEADROOM_CM.passage)) why.push(",
+    "new": "if (!(o.w > 0)) why.push(",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-mouth-of-no-width",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "if (!(o.w > 0) || !(o.h >= EG_FRAG_HEADROOM_CM.passage)) why.push(",
+    "new": "if (!(o.h >= EG_FRAG_HEADROOM_CM.passage)) why.push(",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-no-floor-let-through",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "if (!floors.length) why.push('no floor');",
+    "new": "if (false) why.push('no floor');",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-chamber-with-no-fight",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "if (rec.class === 'chamber' && !floors.some((f) => f.fight)) why.push(",
+    "new": "if (false) why.push(",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-floor-wound-backward",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "if (!(f.poly?.length >= 3) || !(egFragArea2(f.poly) > 0)) why.push(`floors[${i}]",
+    "new": "if (!(f.poly?.length >= 3)) why.push(`floors[${i}]",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-ramp-wound-backward",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "if (!(q.poly?.length >= 3) || !(egFragArea2(q.poly.map((p) => [p[0], p[2]])) > 0)) why.push(",
+    "new": "if (!(q.poly?.length >= 3)) why.push(",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-ramp-s-rise-unread",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "else if (!(q.y1 > q.y0) || Math.min(...q.poly.map((p) => p[1])) !== q.y0 || Math.max(...q.poly.map((p) => p[1])) !== q.y1) why.push(",
+    "new": "else if (!(q.y1 > q.y0) || Math.min(...q.poly.map((p) => p[1])) !== q.y0) why.push(",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-flat-ramp",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "else if (!(q.y1 > q.y0) || Math.min(",
+    "new": "else if (Math.min(",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-an-open-edge-of-nothing",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "if (!floors[oe[0]] || !(oe[1] >= 0 && oe[1] < floors[oe[0]].poly.length)) why.push(",
+    "new": "if (!floors[oe[0]]) why.push(",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-ceiling-wound-backward",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "if (!(c.poly?.length >= 3) || !(egFragArea2(c.poly) > 0)) why.push('a ceiling",
+    "new": "if (!(c.poly?.length >= 3)) why.push('a ceiling",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-half-under-let-through",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "if (under.length && under.length < over.length) why.push(",
+    "new": "if (false) why.push(",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js",
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-floor-s-headroom-unasked",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "else if (under.length && Math.min(...under) - f.y < room) why.push(",
+    "new": "else if (false) why.push(",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js",
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-every-class-a-passage",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "const room = EG_FRAG_HEADROOM_CM[rec.class] ?? EG_FRAG_HEADROOM_CM.passage;",
+    "new": "const room = EG_FRAG_HEADROOM_CM.passage;",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-the-floor-s-edges-unasked",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "pts.push(p, [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2]); }",
+    "new": "pts.push(p); }",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-ramp-s-headroom-unasked",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "if (c !== null && c - p[1] < EG_FRAG_HEADROOM_CM.passage) { why.push(",
+    "new": "if (false) { why.push(",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-the-course-s-headroom-unasked",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "if (low.length && Math.min(...low) - c.y < EG_FRAG_HEADROOM_CM.course) why.push(",
+    "new": "if (false) why.push(",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js",
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-the-swing-s-ends-unasked",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "low = [[s[0], s[2]], [s[3], s[2]], [s[3], s[5]], [s[0], s[5]], [c.x, c.z]].map(",
+    "new": "low = [[c.x, c.z]].map(",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-node-of-no-reach",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "if (!(r > 0)) why.push(`graph.nodes[${i}]: no reach`);",
+    "new": "if (false) why.push(`graph.nodes[${i}]: no reach`);",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-node-in-the-air",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "if (!on) why.push(`graph.nodes[${i}] stands on no floor",
+    "new": "if (false) why.push(`graph.nodes[${i}] stands on no floor",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-node-at-any-height",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "const on = floors.some((f) => Math.abs(y - f.y) <= EG_FRAG_NODE_ON_CM && egFragInPoly(f.poly, x, z))",
+    "new": "const on = floors.some((f) => egFragInPoly(f.poly, x, z))",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-node-on-a-ramp-refused",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "|| ramps.some((q) => egFragInPoly(q.poly.map((p) => [p[0], p[2]]), x, z) && y >= q.y0",
+    "new": "|| ramps.some((q) => false && y >= q.y0",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-an-edge-backward",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "if (!(e[0] < e[1]) || !nodes[e[0]] || !nodes[e[1]]) why.push(",
+    "new": "if (!nodes[e[0]] || !nodes[e[1]]) why.push(",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-an-edge-to-no-node",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "if (!(e[0] < e[1]) || !nodes[e[0]] || !nodes[e[1]]) why.push(",
+    "new": "if (!(e[0] < e[1]) || !nodes[e[0]]) why.push(",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-an-edge-twice",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "else if (seen.has(`${e[0]}:${e[1]}`)) why.push(",
+    "new": "else if (false) why.push(",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-an-unknown-place",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "if (!EG_FRAG_ANCHORS.includes(k)) why.push(",
+    "new": "if (false) why.push(",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-an-unknown-hazard",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "if (!shape) { why.push(`hazards[${i}]: no hazard ${h.kind}`); continue; }",
+    "new": "if (!shape) continue;",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-hazard-in-another-s-shape",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "if (Object.entries(says).some(([k, v]) => v !== (k === shape)) ||",
+    "new": "if (Object.entries(says).some(([k, v]) => v && k !== shape) ||",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-the-hazard-law-unasked",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "if (!L.ok) why.push(`hazards[${i}]: ${L.why.join(', ')}`);",
+    "new": "if (false) why.push(`hazards[${i}]: ${L.why.join(', ')}`);",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js",
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-hazard-outside-let-be",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "if (plan) { holds(plan[0], h.y, plan[1], `hazards[${i}] (${h.kind})`); holds(plan[2], h.y, plan[3], `hazards[${i}] (${h.kind})`); }",
+    "new": "if (plan) { holds(plan[0], h.y, plan[1], `hazards[${i}] (${h.kind})`); }",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-piece-of-no-size",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "if (!(c.w > 0 && c.d > 0) || !(c.gap >= 0) || !(c.after >= 0)) why.push(",
+    "new": "if (!(c.gap >= 0) || !(c.after >= 0)) why.push(",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-negative-gap",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "if (!(c.w > 0 && c.d > 0) || !(c.gap >= 0) || !(c.after >= 0)) why.push(",
+    "new": "if (!(c.w > 0 && c.d > 0) || !(c.after >= 0)) why.push(",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-negative-ground-after",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "if (!(c.w > 0 && c.d > 0) || !(c.gap >= 0) || !(c.after >= 0)) why.push(",
+    "new": "if (!(c.w > 0 && c.d > 0) || !(c.gap >= 0)) why.push(",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-the-course-out-of-order",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "if (c.z - c.d / 2 < edge) why.push(",
+    "new": "if (false) why.push(",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-the-course-s-swing-outside",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "holds(s[0], s[1], s[2], `course[${i}] (${c.kind})`); holds(s[3], s[4], s[5], `course[${i}] (${c.kind})`);",
+    "new": "holds(s[0], s[1], s[2], `course[${i}] (${c.kind})`);",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-an-alcove-s-seal",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "if (!EG_FRAG_SEALS.includes(a.seal) || !EG_ALCOVE_HOLDS.includes(a.holds) || (a.side !== 1 && a.side !== -1)) why.push(",
+    "new": "if (!EG_ALCOVE_HOLDS.includes(a.holds) || (a.side !== 1 && a.side !== -1)) why.push(",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-an-alcove-s-keep",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "if (!EG_FRAG_SEALS.includes(a.seal) || !EG_ALCOVE_HOLDS.includes(a.holds) || (a.side !== 1 && a.side !== -1)) why.push(",
+    "new": "if (!EG_FRAG_SEALS.includes(a.seal) || (a.side !== 1 && a.side !== -1)) why.push(",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-an-alcove-on-no-side",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "if (!EG_FRAG_SEALS.includes(a.seal) || !EG_ALCOVE_HOLDS.includes(a.holds) || (a.side !== 1 && a.side !== -1)) why.push(",
+    "new": "if (!EG_FRAG_SEALS.includes(a.seal) || !EG_ALCOVE_HOLDS.includes(a.holds)) why.push(",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-light-of-no-kind",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "if (!EG_FRAG_LIGHTS.includes(l[3])) why.push(",
+    "new": "if (false) why.push(",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-light-outside",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "holds(l[0], l[1], l[2], `lights[${i}]`);",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-the-budget-unasked",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "if (!(rec.cost?.[k] >= 0) || rec.cost[k] > max) why.push(",
+    "new": "if (!(rec.cost?.[k] >= 0)) why.push(",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js",
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-cost-below-nought",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "if (!(rec.cost?.[k] >= 0) || rec.cost[k] > max) why.push(",
+    "new": "if (rec.cost[k] > max) why.push(",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-the-lights-miscounted",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "if (rec.cost && rec.cost.lights !== (rec.lights ?? []).length) why.push(",
+    "new": "if (false) why.push(",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-proof-of-anything",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "if (!P || !(P.moves >= 0) || !(P.crossFast >= 0) || !(P.crossSlow >= P.crossFast) || (P.moves === 0) !== !(rec.course ?? []).length) why.push(",
+    "new": "if (!P) why.push(",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-median-under-the-fastest",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "|| !(P.crossSlow >= P.crossFast) ||",
+    "new": "||",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-the-port-s-writer-on-one-word",
+    "file": "tools/fragBake.mjs",
+    "old": "if (names.every((n) => n === FRAG_REF_WRITER)) return",
+    "new": "if (names.some((n) => n === FRAG_REF_WRITER)) return",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-every-writer-a-blender",
+    "file": "tools/fragBake.mjs",
+    "old": "  if (names.every((n) => n === FRAG_REF_WRITER)) return 'port';\n",
+    "new": "",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-the-copy-suffix-kept",
+    "file": "tools/fragBake.mjs",
+    "old": "const t = name.replace(BLENDER_COPY, '').split('.');",
+    "new": "const t = name.split('.');",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-any-label",
+    "file": "tools/fragBake.mjs",
+    "old": "const label = (s) => (s !== undefined && LABEL.test(s) ? s",
+    "new": "const label = (s) => (s !== undefined ? s",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-any-word-count",
+    "file": "tools/fragBake.mjs",
+    "old": "const only = (n) => { if (t.length !== n) bad(",
+    "new": "const only = (n) => { if (false) bad(",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-any-kind",
+    "file": "tools/fragBake.mjs",
+    "old": "const of = (list) => (list.includes(t[1]) ? t[1]",
+    "new": "const of = (list) => (true ? t[1]",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-clock-word-let-through",
+    "file": "tools/fragBake.mjs",
+    "old": "if (!m || !may.includes(m[1])) bad(",
+    "new": "if (!m) bad(",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-word-twice",
+    "file": "tools/fragBake.mjs",
+    "old": "if (m[1] in o) bad(",
+    "new": "if (false) bad(",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-wisp-with-no-cycle",
+    "file": "tools/fragBake.mjs",
+    "old": "if (EG_HAZARD_SHAPES[k] === 'path' && !('per' in clock)) bad(",
+    "new": "if (false) bad(",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-piece-s-need-unasked",
+    "file": "tools/fragBake.mjs",
+    "old": "for (const w of c.need) if (!(w in clock)) bad(",
+    "new": "for (const w of c.need) if (false) bad(",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-drum-may-say-its-pace",
+    "file": "tools/fragBake.mjs",
+    "old": "drum: { need: ['amp'], may: ['ph'] }",
+    "new": "drum: { need: ['amp'], may: ['ph', 'per'] }",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-drift-without-its-period",
+    "file": "tools/fragBake.mjs",
+    "old": "drift: { need: ['amp', 'per'], may: ['ph'] }",
+    "new": "drift: { need: ['amp'], may: ['ph', 'per'] }",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-socket-in-any-word",
+    "file": "tools/fragBake.mjs",
+    "old": "if (t[1] !== 'out') bad('a socket is socket.in or socket.out.<label>');",
+    "new": "",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-one-face-a-boundary-twice",
+    "file": "tools/fragBake.mjs",
+    "old": "    if (n !== 1) continue;",
+    "new": "    if (n > 2) continue;",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-hole-let-be",
+    "file": "tools/fragBake.mjs",
+    "old": "for (const [u, vs] of next) if (vs.length !== 2) throw",
+    "new": "for (const [u, vs] of next) if (vs.length > 4) throw",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-another-loop-let-be",
+    "file": "tools/fragBake.mjs",
+    "old": "if (loop.length !== next.size) throw",
+    "new": "if (false) throw",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-an-outline-wound-backward",
+    "file": "tools/fragBake.mjs",
+    "old": "if (egFragArea2(ring.map((p) => [p[0], p[2]])) < 0) ring.reverse();",
+    "new": "",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-the-line-s-corners-kept",
+    "file": "tools/fragBake.mjs",
+    "old": "{ ring.splice(i, 1); changed = true; break; }",
+    "new": "{ changed = false; break; }",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-tilted-floor-let-be",
+    "file": "tools/fragBake.mjs",
+    "old": "if (Math.max(...ys) - Math.min(...ys) > 1) throw",
+    "new": "if (Math.max(...ys) - Math.min(...ys) > 10) throw",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-any-four-corners-a-rectangle",
+    "file": "tools/fragBake.mjs",
+    "old": "if (Math.abs(e[0][0] * e[1][0] + e[0][1] * e[1][1]) > (0.02 + 1.5 / Math.min(L[0], L[1])) * L[0] * L[1] || Math.abs(L[0] - L[2]) > 2 || Math.abs(L[1] - L[3]) > 2) throw",
+    "new": "if (false) throw",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-the-length-taken-for-the-width",
+    "file": "tools/fragBake.mjs",
+    "old": "const alongFirst = L[0] < L[1];",
+    "new": "const alongFirst = L[0] > L[1];",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-the-far-end-first",
+    "file": "tools/fragBake.mjs",
+    "old": "if (b[2] < a[2] || (b[2] === a[2] && b[0] < a[0])) [a, b] = [b, a];",
+    "new": "if (b[2] > a[2]) [a, b] = [b, a];",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-lane-across-the-other-way",
+    "file": "tools/fragBake.mjs",
+    "old": "if (b[2] < a[2] || (b[2] === a[2] && b[0] < a[0])) [a, b] = [b, a];",
+    "new": "if (b[2] < a[2]) [a, b] = [b, a];",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-an-oval-a-disc",
+    "file": "tools/fragBake.mjs",
+    "old": "if (Math.abs((b[3] - b[0]) - (b[5] - b[2])) > FRAG_ROUND_CM) throw",
+    "new": "if (false) throw",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-lane-not-drawn-in",
+    "file": "tools/fragBake.mjs",
+    "old": "k = len > r.w ? r.w / 2 / len : 0.5;",
+    "new": "k = 0;",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-two-sizes-one",
+    "file": "tools/fragBake.mjs",
+    "old": "if (Math.max(...sizes) - Math.min(...sizes) > FRAG_ROUND_CM) throw",
+    "new": "if (false) throw",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-one-of-several-taken",
+    "file": "tools/fragBake.mjs",
+    "old": "if (isles.length !== 1) throw new Error(`${o.name}: a ${mk.of} is one ${shape}",
+    "new": "if (false) throw new Error(`${o.name}: a ${mk.of} is one ${shape}",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-the-cascade-unordered",
+    "file": "tools/fragBake.mjs",
+    "old": ".sort((a, b) => (a.line[1] + a.line[3]) - (b.line[1] + b.line[3]) || (a.line[0] + a.line[2]) - (b.line[0] + b.line[2]));",
+    "new": ";",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-the-spots-unordered",
+    "file": "tools/fragBake.mjs",
+    "old": "const ds = isles.map((f) => discOf(o, pts, f)).sort((a, b) => a.z - b.z || a.x - b.x);",
+    "new": "const ds = isles.map((f) => discOf(o, pts, f));",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-path-s-swing-whole",
+    "file": "tools/fragBake.mjs",
+    "old": "Math.round((b[3] - b[0]) / 2), Math.round((b[5] - b[2]) / 2)]; h.y = b[1];",
+    "new": "b[3] - b[0], Math.round((b[5] - b[2]) / 2)]; h.y = b[1];",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-the-mist-at-its-top",
+    "file": "tools/fragBake.mjs",
+    "old": "else if (shape === 'level') h.y = extentOf(pts)[1];",
+    "new": "else if (shape === 'level') h.y = extentOf(pts)[4] + 1;",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-ring-taken-for-a-reach",
+    "file": "tools/fragBake.mjs",
+    "old": "if (shape === 'disc') h.r = d.r; else h.ring = d.r;",
+    "new": "h.r = d.r;",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-drum-at-its-own-pace",
+    "file": "tools/fragBake.mjs",
+    "old": "if (mk.of === 'drum') piece.period = Math.trunc((4 * piece.amp * 1000) / (EG_DRUM_MPS * 100));",
+    "new": "",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-moon-with-no-period",
+    "file": "tools/fragBake.mjs",
+    "old": "if (mk.of === 'moon') piece.period = EG_MOON_EVERY_S * 1000;",
+    "new": "",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-the-slag-s-lanes-unspread",
+    "file": "tools/fragBake.mjs",
+    "old": "if (mk.of === 'slag') { piece.amp = EG_SLAG_LANE_CM; piece.period = EG_SLAG_CYCLE_S * 1000; }",
+    "new": "if (mk.of === 'slag') { piece.period = EG_SLAG_CYCLE_S * 1000; }",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-the-piece-s-top-its-foot",
+    "file": "tools/fragBake.mjs",
+    "old": "x, y: b[4], z, w, d, amp: c.amp ?? 0",
+    "new": "x, y: b[1], z, w, d, amp: c.amp ?? 0",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-two-mouths",
+    "file": "tools/fragBake.mjs",
+    "old": "if (mouths.length !== 1) throw",
+    "new": "if (mouths.length < 1) throw",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-the-origin-the-mouth-s-top",
+    "file": "tools/fragBake.mjs",
+    "old": "const origin = [(mb[0][0] + mb[0][1]) / 2, (mb[1][0] + mb[1][1]) / 2, mb[2][0]];",
+    "new": "const origin = [(mb[0][0] + mb[0][1]) / 2, (mb[1][0] + mb[1][1]) / 2, mb[2][1]];",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-no-mirror",
+    "file": "tools/fragBake.mjs",
+    "old": "const toFrag = (p) => [p[0] - origin[0], p[2] - origin[2], p[1] - origin[1]];",
+    "new": "const toFrag = (p) => [p[0] - origin[0], p[1] - origin[1], p[2] - origin[2]];",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-an-unknown-kit-baked",
+    "file": "tools/fragBake.mjs",
+    "old": "if (!F) throw new Error(`kit ${spec.kit}: no such fragment",
+    "new": "if (false) throw new Error(`kit ${spec.kit}: no such fragment",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-socket-lying-down",
+    "file": "tools/fragBake.mjs",
+    "old": "if (b[5] - b[2] > 1) throw new Error(`${m.o.name}: a socket stands upright",
+    "new": "if (false) throw new Error(`${m.o.name}: a socket stands upright",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-an-opening-from-its-middle",
+    "file": "tools/fragBake.mjs",
+    "old": "return { x, y: b[1], z: Math.round((b[2] + b[5]) / 2), yaw, w, h: b[4] - b[1] };",
+    "new": "return { x, y: b[1], z: Math.round((b[2] + b[5]) / 2), yaw, w, h: b[4] - b[1] + 1 };",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-the-open-marker-s-reach",
+    "file": "tools/fragBake.mjs",
+    "old": "  const T = EG_FRAG_SOCKET_TOL_CM;",
+    "new": "  const T = 0;",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-an-open-marker-at-any-height",
+    "file": "tools/fragBake.mjs",
+    "old": "&& f.y >= u.b[1] - T && f.y <= u.b[4] + T);",
+    "new": ");",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-floor-never-runs-on",
+    "file": "tools/fragBake.mjs",
+    "old": "    if (under.length || runsOn) open.push([fi, e]);",
+    "new": "    if (under.length) open.push([fi, e]);",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-runs-on-at-any-height",
+    "file": "tools/fragBake.mjs",
+    "old": "floors.some((g, gi) => gi !== fi && g.y === f.y && [p, q, mid]",
+    "new": "floors.some((g, gi) => gi !== fi && [p, q, mid]",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-an-idle-open-marker",
+    "file": "tools/fragBake.mjs",
+    "old": "for (const u of opens) if (!u.used) throw",
+    "new": "for (const u of opens) if (false) throw",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-node-s-height-unasked",
+    "file": "tools/fragBake.mjs",
+    "old": "&& Math.abs(p[1] - n[1]) <= 100 ? i : -1)",
+    "new": "? i : -1)",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-an-edge-meets-two",
+    "file": "tools/fragBake.mjs",
+    "old": "if (hit.length !== 1) throw new Error(`${m.o.name}: an end of it meets",
+    "new": "if (hit.length < 1) throw new Error(`${m.o.name}: an end of it meets",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-an-edge-to-itself",
+    "file": "tools/fragBake.mjs",
+    "old": "if (ends[0] === ends[1]) throw new Error(",
+    "new": "if (false) throw new Error(",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-an-edge-unordered",
+    "file": "tools/fragBake.mjs",
+    "old": "return ends[0] < ends[1] ? ends : [ends[1], ends[0]];",
+    "new": "return ends;",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-an-anchor-at-its-top",
+    "file": "tools/fragBake.mjs",
+    "old": "anchors[m.mk.of].push([Math.round((b[0] + b[3]) / 2), b[1], Math.round((b[2] + b[5]) / 2)]);",
+    "new": "anchors[m.mk.of].push([Math.round((b[0] + b[3]) / 2), b[4], Math.round((b[2] + b[5]) / 2)]);",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-gap-from-the-mouth",
+    "file": "tools/fragBake.mjs",
+    "old": "...groundEnds.map(([, z1]) => (z1 <= near ? z1 : -Infinity)), sockets.in.z",
+    "new": "sockets.in.z",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-the-ground-after-from-the-exits",
+    "file": "tools/fragBake.mjs",
+    "old": "const after = Math.min(...groundEnds.map(([z0]) => (z0 >= far ? z0 : Infinity)), ...sockets.out",
+    "new": "const after = Math.min(...sockets.out",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-nothing-before-let-be",
+    "file": "tools/fragBake.mjs",
+    "old": "if (!(before > -Infinity)) throw",
+    "new": "if (false) throw",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-every-piece-ends-a-run",
+    "file": "tools/fragBake.mjs",
+    "old": "if (!next || next.z - next.d / 2 > after) {",
+    "new": "if (true) {",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-no-ground-after-let-be",
+    "file": "tools/fragBake.mjs",
+    "old": "if (!(after < Infinity)) throw",
+    "new": "if (false) throw",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-an-alcove-on-the-line",
+    "file": "tools/fragBake.mjs",
+    "old": "if (x === 0) throw new Error(`${m.o.name}: an alcove stands",
+    "new": "if (false) throw new Error(`${m.o.name}: an alcove stands",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-light-at-its-foot",
+    "file": "tools/fragBake.mjs",
+    "old": "[Math.round((b[0] + b[3]) / 2), Math.round((b[1] + b[4]) / 2), Math.round((b[2] + b[5]) / 2), m.mk.of]",
+    "new": "[Math.round((b[0] + b[3]) / 2), b[1], Math.round((b[2] + b[5]) / 2), m.mk.of]",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-art-without-normals",
+    "file": "tools/fragBake.mjs",
+    "old": "if (!readNormal || !readUv) throw",
+    "new": "if (!readUv) throw",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-art-without-uvs",
+    "file": "tools/fragBake.mjs",
+    "old": "if (!readNormal || !readUv) throw",
+    "new": "if (!readNormal) throw",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-the-normals-unmirrored",
+    "file": "tools/fragBake.mjs",
+    "old": "normal: (n) => { const v = o.normal(n); return [v[0], v[2], v[1]]; } });",
+    "new": "normal: (n) => { const v = o.normal(n); return [v[0], v[1], v[2]]; } });",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-the-copy-suffix-kept-on-a-material",
+    "file": "tools/fragBake.mjs",
+    "old": "const dress = name?.replace(BLENDER_COPY, '');",
+    "new": "const dress = name;",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-any-material-dress",
+    "file": "tools/fragBake.mjs",
+    "old": "if (!dress || !Object.hasOwn(EG_DRESS, dress)) throw",
+    "new": "if (!dress) throw",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-the-corners-unrun",
+    "file": "tools/fragBake.mjs",
+    "old": "      corner += poly.length;\n",
+    "new": "",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-the-mirror-s-winding-kept",
+    "file": "tools/fragBake.mjs",
+    "old": "byRecord.get(rec).indices.push(ring[a], ring[c], ring[b]); tris++; }",
+    "new": "byRecord.get(rec).indices.push(ring[a], ring[b], ring[c]); tris++; }",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-the-sub-meshes-unsorted",
+    "file": "tools/fragBake.mjs",
+    "old": "for (const rec of [...byRecord.keys()].sort((a, b) => a - b)) {",
+    "new": "for (const rec of [...byRecord.keys()]) {",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-the-collider-s-winding-kept",
+    "file": "tools/fragBake.mjs",
+    "old": "for (const vi of [poly[a], poly[c], poly[b]]) collider.push(",
+    "new": "for (const vi of [poly[a], poly[b], poly[c]]) collider.push(",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-the-box-without-the-art",
+    "file": "tools/fragBake.mjs",
+    "old": "for (let i = 0; i < positions.length; i += 3) all.push([cm(positions[i]), cm(positions[i + 1]), cm(positions[i + 2])]);",
+    "new": "",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-the-box-without-the-swing",
+    "file": "tools/fragBake.mjs",
+    "old": "for (const c of course) { const s = egFragSwept(c); all.push([s[0], s[1], s[2]], [s[3], s[4], s[5]]); }",
+    "new": "",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-the-box-without-the-sockets",
+    "file": "tools/fragBake.mjs",
+    "old": "for (const s of [sockets.in, ...sockets.out]) all.push(",
+    "new": "for (const s of []) all.push(",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-the-box-without-the-hazards",
+    "file": "tools/fragBake.mjs",
+    "old": "for (const h of hazards) { const p = egFragHazardPlan(h); if (p) all.push(",
+    "new": "for (const h of []) { const p = egFragHazardPlan(h); if (p) all.push(",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-sky-of-no-ceilings",
+    "file": "tools/fragBake.mjs",
+    "old": "ceil: ceils.length ? ceils : null,",
+    "new": "ceil: ceils,",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-the-solver-unasked",
+    "file": "tools/fragBake.mjs",
+    "old": "if (!P.ok) throw new Error(`${spec.id}: its inner course is not proven",
+    "new": "if (false) throw new Error(`${spec.id}: its inner course is not proven",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-the-proof-the-fastest-twice",
+    "file": "tools/fragBake.mjs",
+    "old": "crossSlow: Math.round(c.median * 1000), moves: c.n };",
+    "new": "crossSlow: Math.round(c.fast * 1000) + 1, moves: c.n };",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-the-reader-unasked",
+    "file": "tools/fragBake.mjs",
+    "old": "if (faults.length) throw new Error(`${spec.id}: the law half is refused",
+    "new": "if (false) throw new Error(`${spec.id}: the law half is refused",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-key-a-line-no-more",
+    "file": "tools/fragBake.mjs",
+    "old": ".join(',\\n')}\\n}\\n`;",
+    "new": ".join(', ')}\\n}\\n`;",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-the-list-calls-art-a-marker",
+    "file": "tools/fragBake.mjs",
+    "old": "return `${o.name.padEnd(28)} ${mk ? `${mk.kind}",
+    "new": "return `${o.name.padEnd(28)} ${true ? `${mk?.kind}",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-symmetric-rounding-lost",
+    "file": "tools/fragBake.mjs",
+    "old": "const cm = (m) => Math.sign(m) * Math.round(Math.abs(m) * 100) + 0;",
+    "new": "const cm = (m) => Math.round(m * 100) + 0;",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-no-weld",
+    "file": "tools/fbxMesh.mjs",
+    "old": "      if (hit !== undefined) return hit;",
+    "new": "",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js",
+      "test/tooling/fbxmesh.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-seam-welded",
+    "file": "tools/fbxMesh.mjs",
+    "old": "|${uv ? uv.map((v) => v.toFixed(6)).join(',') : ''}`;",
+    "new": "|`;",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js",
+      "test/tooling/fbxmesh.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-scale-applied-to-a-normal",
+    "file": "tools/shipBake.mjs",
+    "old": "const s = [n[0] / S[0], n[1] / S[1], n[2] / S[2]];",
+    "new": "const s = [n[0] * S[0], n[1] * S[1], n[2] * S[2]];",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-normal-unrotated",
+    "file": "tools/shipBake.mjs",
+    "old": "const w = [R[0] * s[0] + R[1] * s[1] + R[2] * s[2], R[3] * s[0] + R[4] * s[1] + R[5] * s[2], R[6] * s[0] + R[7] * s[1] + R[8] * s[2]];",
+    "new": "const w = s;",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-baked-mesh-unmoved",
+    "file": "src/world/eliteGates/meshKit.js",
+    "old": "g.p[i] = src.positions[v * 3] + at[0];",
+    "new": "g.p[i] = src.positions[v * 3];",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-baked-mesh-flat",
+    "file": "src/world/eliteGates/meshKit.js",
+    "old": "g.n[i] = src.normals[v * 3]; g.n[i + 1] = src.normals[v * 3 + 1];",
+    "new": "g.n[i] = 0; g.n[i + 1] = src.normals[v * 3 + 1];",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-baked-mesh-unmapped",
+    "file": "src/world/eliteGates/meshKit.js",
+    "old": "g.uv[j] = src.uvs[v * 2]; g.uv[j + 1] = src.uvs[v * 2 + 1];",
+    "new": "g.uv[j] = 0; g.uv[j + 1] = src.uvs[v * 2 + 1];",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-baked-mesh-from-its-start",
+    "file": "src/world/eliteGates/meshKit.js",
+    "old": "for (let k = start; k < start + count * 3; k++) {",
+    "new": "for (let k = 0; k < count * 3; k++) {",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-baked-mesh-uncounted",
+    "file": "src/world/eliteGates/meshKit.js",
+    "old": "      verts += count * 3;\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-faulty-law-registered",
+    "file": "src/net/eliteGates/egHeroFrags.js",
+    "old": "if (faults.length) throw new Error(`net/eliteGates/egHeroFrags.js:",
+    "new": "if (false) throw new Error(`net/eliteGates/egHeroFrags.js:",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-the-reference-laid",
+    "file": "src/net/eliteGates/egHeroFrags.js",
+    "old": "&& law.variant !== EG_HERO_REFERENCE);",
+    "new": ");",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-every-kit-s-heroes",
+    "file": "src/net/eliteGates/egHeroFrags.js",
+    "old": "filter((law) => law.kit === kit && law.variant",
+    "new": "filter((law) => law.variant",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-stray-mesh-registered",
+    "file": "src/world/eliteGates/egHeroFragModel.js",
+    "old": "if (!law || law.band !== mesh.band || law.bake.sha256 !== mesh.bake.sha256) throw",
+    "new": "if (!law) throw",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-mesh-of-another-bake",
+    "file": "src/world/eliteGates/egHeroFragModel.js",
+    "old": "|| law.bake.sha256 !== mesh.bake.sha256) throw",
+    "new": ") throw",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-the-fragment-laid-at-the-origin",
+    "file": "src/world/eliteGates/egHeroFragModel.js",
+    "old": "kit.mesh(s.record, mesh, { start: s.startIndex, count: s.primitiveCount, at });",
+    "new": "kit.mesh(s.record, mesh, { start: s.startIndex, count: s.primitiveCount });",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-another-band-s-archive",
+    "file": "src/world/eliteGates/egHeroFragModel.js",
+    "old": "pack(EG_BAND_ARCHIVES[EG_HERO_FRAGS[id].band]);",
+    "new": "pack(EG_BAND_ARCHIVES[1]);",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-the-collider-unmoved",
+    "file": "src/world/eliteGates/egHeroFragModel.js",
+    "old": "for (let i = 0; i < c.length; i++) out[i] = c[i] + at[i % 3];",
+    "new": "for (let i = 0; i < c.length; i++) out[i] = c[i];",
+    "tests": [
+      "test/net/eliteGates/eg6c_law.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-an-int64-off-by-one",
+    "file": "tools/fbxWrite.mjs",
+    "old": "b.writeBigInt64LE(BigInt(p.v));",
+    "new": "b.writeBigInt64LE(BigInt(p.v) + 1n);",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-raw-array-said-deflated",
+    "file": "tools/fbxWrite.mjs",
+    "old": "meta.writeUInt32LE(0, 4);",
+    "new": "meta.writeUInt32LE(1, 4);",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js",
+      "test/tooling/fbxmesh.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-the-origin-off-its-middle",
+    "file": "tools/egRefFragScene.mjs",
+    "old": "const o = lo.map((v, k) => Math.round(((v + hi[k]) / 2) * 1000) / 1000 + 0);",
+    "new": "const o = lo.map((v) => v);",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  },
+  {
+    "name": "EG6C-a-post-s-seam-closed",
+    "file": "tools/egRefFragScene.mjs",
+    "old": "u0 = k / 8, u1 = (k + 1) / 8;",
+    "new": "u0 = k / 8, u1 = ((k + 1) % 8) / 8;",
+    "tests": [
+      "test/tooling/eg6c_bake.test.js"
+    ]
+  }
+]

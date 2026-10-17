@@ -4,48 +4,48 @@
     "file": "src/scenes/horseCartPool.js",
     "old": "      if (h.stillS >= HARNESS_REST_S && (h.gpu || !renderer?.createMesh)) continue;\n",
     "new": "",
-    "tests": ["test/harnessrest.test.js"]
+    "tests": ["test/systems/horse/harnessrest.test.js"]
   },
   {
     "name": "HR-clock-unread",
     "file": "src/scenes/horseCartPool.js",
     "old": "      if (h.stillS >= HARNESS_REST_S && (h.gpu || !renderer?.createMesh)) continue;",
     "new": "      if (h.stillS >= 0 && (h.gpu || !renderer?.createMesh)) continue;",
-    "tests": ["test/harnessrest.test.js"]
+    "tests": ["test/systems/horse/harnessrest.test.js"]
   },
   {
     "name": "HR-from-last-frame",
     "file": "src/scenes/horseCartPool.js",
     "old": "      if (harnessStill(ends, h.restAt)) h.stillS += Math.max(0, dt);",
     "new": "      if (harnessStill(ends, h.restAt)) { h.stillS += Math.max(0, dt); h.restAt = ends.map((e) => ({ a: [...e.a], b: [...e.b], g: e.g })); }",
-    "tests": ["test/harnessrest.test.js"]
+    "tests": ["test/systems/horse/harnessrest.test.js"]
   },
   {
     "name": "HR-moved-unread",
     "file": "src/scenes/horseCartPool.js",
     "old": "  for (let i = 0; i < ends.length; i++) {\n    const e = ends[i], w = at[i];",
     "new": "  for (let i = 0; i < 0; i++) {\n    const e = ends[i], w = at[i];",
-    "tests": ["test/harnessrest.test.js"]
+    "tests": ["test/systems/horse/harnessrest.test.js"]
   },
   {
     "name": "HR-end-a-unread",
     "file": "src/scenes/horseCartPool.js",
     "old": "if (!(Math.abs(e.a[k] - w.a[k]) <= HARNESS_STILL_M && Math.abs(e.b[k] - w.b[k]) <= HARNESS_STILL_M)) return false;",
     "new": "if (!(Math.abs(e.b[k] - w.b[k]) <= HARNESS_STILL_M)) return false;",
-    "tests": ["test/harnessrest.test.js"]
+    "tests": ["test/systems/horse/harnessrest.test.js"]
   },
   {
     "name": "HR-scale-unread",
     "file": "src/scenes/horseCartPool.js",
     "old": "    if (e.g !== w.g) return false;\n",
     "new": "",
-    "tests": ["test/harnessrest.test.js"]
+    "tests": ["test/systems/horse/harnessrest.test.js"]
   },
   {
     "name": "HR-hair-wide",
     "file": "src/scenes/horseCartPool.js",
     "old": "export const HARNESS_STILL_M = 1e-4;",
     "new": "export const HARNESS_STILL_M = 1e-3;",
-    "tests": ["test/harnessrest.test.js"]
+    "tests": ["test/systems/horse/harnessrest.test.js"]
   }
 ]

@@ -5,7 +5,7 @@
     "old": "    document.addEventListener('pointerlockchange', () => { if ((_cursorActive || _cursorHolds.size) && document.pointerLockElement) releaseLook(); }, false);\n",
     "new": "",
     "tests": [
-      "test/fb0929_overworld_mouse.test.js"
+      "test/scenes/fb0929_overworld_mouse.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    document.addEventListener('pointerlockchange', () => { if ((_cursorActive || _cursorHolds.size) && document.pointerLockElement) releaseLook(); }, false);\n",
     "new": "    document.addEventListener('pointerlockchange', () => { if (document.pointerLockElement) releaseLook(); }, false);\n",
     "tests": [
-      "test/fb0929_overworld_mouse.test.js"
+      "test/scenes/fb0929_overworld_mouse.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    document.addEventListener('pointerlockchange', () => { if ((_cursorActive || _cursorHolds.size) && document.pointerLockElement) releaseLook(); }, false);\n",
     "new": "    document.addEventListener('pointerlockchange', () => { if ((_cursorActive || _cursorHolds.size) && !document.pointerLockElement) releaseLook(); }, false);\n",
     "tests": [
-      "test/fb0929_overworld_mouse.test.js"
+      "test/scenes/fb0929_overworld_mouse.test.js"
     ]
   }
 ]

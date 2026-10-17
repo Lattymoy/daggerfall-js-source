@@ -67,7 +67,7 @@ picked from "the keys that exist", would be a different mod.
   is.
 - **No textures, meshes or sounds** - the mod ships none. It draws
   through `DaggerfallUI.AddHUDText`, which is Daggerfall Unity's own
-  pop-up line; the port's equivalent is `src/ui/hudText.js`.
+  pop-up line; the port's equivalent is `src/ui/hud/hudText.js`.
 
 ## How it reaches the game
 

@@ -5,7 +5,7 @@
     "old": "      const attack = input.attack || (!!act && struck === act);",
     "new": "      const attack = input.attack;",
     "tests": [
-      "test/fb1001_mining.test.js"
+      "test/scenes/fb1001_mining.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "      struck = null;\n      if (act) {",
     "new": "      if (act) {",
     "tests": [
-      "test/fb1001_mining.test.js"
+      "test/scenes/fb1001_mining.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "(!!act && struck === act)",
     "new": "(!!act && !!struck)",
     "tests": [
-      "test/fb1001_mining.test.js"
+      "test/scenes/fb1001_mining.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "      const edge = !!held && !strikeHeld && !repeat;",
     "new": "      const edge = !!held && !repeat;",
     "tests": [
-      "test/fb1001_mining.test.js"
+      "test/scenes/fb1001_mining.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "      gatherHost?.strike(held, o?.repeat === true);   // ACT-TOUCH",
     "new": "      // gone   // ACT-TOUCH",
     "tests": [
-      "test/fb1001_mining.test.js"
+      "test/scenes/fb1001_mining.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "      if (gatherHost?.acting() && !opts?.lockOnly) { gatherHost.strike(true); gatherHost.strike(false); return; }   // ACT-TOUCH",
     "new": "      // gone   // ACT-TOUCH",
     "tests": [
-      "test/fb1001_mining.test.js"
+      "test/scenes/fb1001_mining.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "attack: pressed(latch.edge, keys, 'SwingWeapon') || pressed(latch.edge, keys, 'ActivateCenterObject'),",
     "new": "attack: pressed(latch.edge, keys, 'SwingWeapon'),",
     "tests": [
-      "test/fb1001_mining.test.js"
+      "test/scenes/fb1001_mining.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "attack: pressed(latch.edge, keys, 'SwingWeapon') || pressed(latch.edge, keys, 'ActivateCenterObject'),",
     "new": "attack: pressed(latch.edge, keys, 'SwingWeapon') || held(keys, 'ActivateCenterObject'),",
     "tests": [
-      "test/fb1001_mining.test.js"
+      "test/scenes/fb1001_mining.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "        const up = run > 0 ? Math.max(dy - lift, Math.min(dy - lift + top, (dir[1] * (dx * dx + dz * dz)) / run)) : dy;",
     "new": "        const up = dy;",
     "tests": [
-      "test/fb1001_mining.test.js"
+      "test/scenes/fb1001_mining.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "Math.max(dy - lift, Math.min(dy - lift + top,",
     "new": "Math.max(dy - 5, Math.min(dy - lift + top,",
     "tests": [
-      "test/fb1001_mining.test.js"
+      "test/scenes/fb1001_mining.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "Math.max(dy - lift, Math.min(dy - lift + top,",
     "new": "Math.max(dy - lift, Math.min(dy - lift + top + 5,",
     "tests": [
-      "test/fb1001_mining.test.js"
+      "test/scenes/fb1001_mining.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "    for (const c of seen) if (!deps.clear || deps.clear(pos, c.at, c.best.dungeon, c.best.interior)) return c.best;",
     "new": "    for (const c of seen.slice(0, 1)) if (!deps.clear || deps.clear(pos, c.at, c.best.dungeon, c.best.interior)) return c.best;",
     "tests": [
-      "test/fb1001_mining.test.js"
+      "test/scenes/fb1001_mining.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "    for (const c of seen) if (!deps.clear || deps.clear(pos, c.at, c.best.dungeon, c.best.interior)) return c.best;",
     "new": "    for (const c of seen) return c.best;",
     "tests": [
-      "test/fb1001_mining.test.js"
+      "test/scenes/fb1001_mining.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "      if (at && !insideRocks(rocks, at.x, at.z)) { best = at; bestD = d; }",
     "new": "      if (at) { best = at; bestD = d; }",
     "tests": [
-      "test/fb1001_mining.test.js"
+      "test/scenes/fb1001_mining.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "?? outside(natureStandsAt(samples, tilemap, locationRect, tx, ty, clear, beach));",
     "new": "?? natureStandsAt(samples, tilemap, locationRect, tx, ty, clear, beach);",
     "tests": [
-      "test/fb1001_mining.test.js"
+      "test/scenes/fb1001_mining.test.js"
     ]
   }
 ]

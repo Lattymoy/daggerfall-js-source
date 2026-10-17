@@ -8,7 +8,7 @@
 // `Assembly.GetManifestResourceStream` (HorseTextureSet.LoadAll,
 // HorseWalkAnimationSet.LoadAll). No other mod this port carries did
 // that; every earlier one shipped its art as Unity textures in the
-// bundle, which `formats/unityBundle.js` already opens. So this is the
+// bundle, which `formats/unity/unityBundle.js` already opens. So this is the
 // other door: the PE file's CLI header, its metadata root, the `#~`
 // table stream walked table by table (ECMA-335 II.22 - every table
 // before ManifestResource has to be measured to find it, which is why
@@ -16,7 +16,7 @@
 // ManifestResource rows resolved to `[length][bytes]` records in the
 // CLI resources blob. Pure: bytes in, `{ name, bytes }` out, so
 // `tools/hccAssets.mjs` reproduces `vendor/horse-cart-and-cargo/Textures/`
-// from the shipped bundle and `test/hcc_assets.test.js` pins that the
+// from the shipped bundle and `test/tooling/hcc_assets.test.js` pins that the
 // vendored files ARE the assembly's.
 
 const u16 = (b, o) => b[o] | (b[o + 1] << 8);

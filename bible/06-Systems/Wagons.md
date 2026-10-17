@@ -45,7 +45,7 @@ Two stations are skipped by name:
 - the handcart at X 74. This is the Tiny file's own station; Mac was unsure of
   it, and the Wagon Cart was chosen over it.
 
-The joined copies above Y 15 are skipped too. `test/wagons1_bake.test.js`
+The joined copies above Y 15 are skipped too. `test/tooling/wagons1_bake.test.js`
 re-bakes all three files byte for byte. It also refuses a scene that moves
 under a spec: a part out of its box, an object no spec names, or a skipped
 station standing inside a wagon.
@@ -53,7 +53,7 @@ station standing inside a wagon.
 None of the files carries a texture, so the art is painted.
 `src/world/wagonArt.js` paints fifteen 64 x 64 pictures from numbers (twenty
 since WAGONS2 added the caravan's room - below), using the
-fleet's tools (`src/world/galleonArt.js`) under the pseudo-archive 38181:
+fleet's tools (`src/world/ships/galleonArt.js`) under the pseudo-archive 38181:
 
 - oak sideboards, pine floorboards, dark oak running gear;
 - iron tyres and seven-spoke wheel faces;
@@ -77,7 +77,7 @@ Every part is lowered by Horse Cart and Cargo's one-metre ground offset
 
 ## The kinds
 
-`src/systems/wagonKinds.js` is the law. DFU has one cart: Transportation's
+`src/systems/wagon/wagonKinds.js` is the law. DFU has one cart: Transportation's
 Small Cart, template 93. Every "has a cart" check in the port asks for that
 template, so the new wagons are that same item with a mark: `wagonKind`
 (`openWagon` or `caravan`; absent means the Small Cart). The kinds:
@@ -98,14 +98,14 @@ How the kinds are wired in:
   then.
 - **Names**: a marked row keeps the template's name, as every minted row
   does; what it shows is the kind's name (`wagonItemName`, read first by
-  `src/systems/itemInfo.js` resolveItemName) - and, since the final audit,
+  `src/systems/item/itemInfo.js` resolveItemName) - and, since the final audit,
   the guild vault's Put in, its rows and its log line (the account service
   names the row, `server-account/src/guildVault.js` pieceName) and the keyed
   shelf (`src/scenes/worldModes.js` `_itemLabel`).
 - **Driving**: a player who owns more than one drives the best
   (`activeWagonItem`).
 - **Capacity**: the wagon store, both inventories and both counters read the
-  driven wagon's capacity (`wagonKgFor`; `src/systems/itemTransfer.js`
+  driven wagon's capacity (`wagonKgFor`; `src/systems/item/itemTransfer.js`
   planStore's `wagonKg`).
 - **Stable card and icon**: the Stable card names the kind, and the pack's
   icon is the kind's model.
@@ -119,7 +119,7 @@ drawn for the cart; Mac's Wagon Cart is. Eye of the Beholder's own cart
 **Departure (HITCH LENGTH).** Horse Cart and Cargo hitches its horse 3.1 m
 ahead of the wagon's axle (HITCHED_HORSE_LOCAL_Z, measured for 41214). Each of
 Mac's wagons is longer, so each kind carries its own hitch, measured off its
-model. `src/systems/horseCart.js` `hitchZ()` reads it from the presentation
+model. `src/systems/horse/horseCart.js` `hitchZ()` reads it from the presentation
 (`hitchOf`) at every site that read the constant, and the constant still
 answers when there is no presentation.
 
@@ -131,7 +131,7 @@ is level and its shafts sit at the horse's flank.
 
 ## The seats in the back (the Open Wagon)
 
-`src/systems/wagonSeats.js` is the law and `src/scenes/wagonRiders.js` runs
+`src/systems/wagon/wagonSeats.js` is the law and `src/scenes/wagon/wagonRiders.js` runs
 both ends of it on the world host.
 
 **A player rides by asking.**
@@ -159,20 +159,20 @@ them down beside the wagon.
 1. The owner's word says `go` and the travel waits a moment (GO_LEAD_MS) so
    the riders hear it.
 2. Each rider follows on the party's own journey
-   (`src/systems/partyTravel.js`), with no fare, since the owner paid.
+   (`src/systems/party/partyTravel.js`), with no fare, since the owner paid.
 3. They land beside the owner's wagon and sit down again.
 
 **Companions** take the seats the players have not, while the wagon goes with
 its owner (trailing behind the cart, or following). When it is parked they
 step down and walk at heel (`src/scenes/crewAshore.js` `seat`; the motor's
-seat gate in `src/characters/enemyMotor.js`).
+seat gate in `src/characters/enemy/enemyMotor.js`).
 
 **Departure (STANDING RIDERS).** Riders and companions ride STANDING in the
 bed. The port's people are billboards and DFU has no seated pose to give
 them.
 
 **The word rides the foes frame** (`hv`'s `wk`, `wh`, `ps`, `go`, `pn`;
-`src/systems/horseCartWire.js`), which the relay carries as it is. An older
+`src/systems/horse/horseCartWire.js`), which the relay carries as it is. An older
 client drops what it does not know.
 
 ## The caravan's room
@@ -248,7 +248,7 @@ rest, and the wagon's storage. Visitors: below.
 
 ### The paint
 
-`src/systems/wagonLooks.js` is the law. A wagon's paint rides its item:
+`src/systems/wagon/wagonLooks.js` is the law. A wagon's paint rides its item:
 `wagonLook` is `{ o, w, f, c }` - the outside (every kind), and the
 caravan's walls, floor and ceiling. Each list has six choices, the first the
 wagon as built. A look the law does not know reads as built; the built look
@@ -272,7 +272,7 @@ on the hv word and on a parked team's record. A bad code reads as built.
 
 ### The wheels
 
-Each wheel rolls on its own: `src/systems/horseCart.js` wheelContacts and
+Each wheel rolls on its own: `src/systems/horse/horseCart.js` wheelContacts and
 rolledAngles turn each by its own contact's travel, along its own heading,
 over its own radius. A wheel with no contact last time keeps its angle.
 
@@ -280,7 +280,7 @@ The open wagon's and the caravan's front axle, pole and front pair turn on
 their kingpin (`src/world/wagonModels.js` bogie). The lock is measured off
 the bake (steerLimitOf): **6.85 degrees** either way, since the front wheels
 stand outside the body's side. They trail as two bars
-(`src/systems/horseFollow.js` bogieAxle): the kingpin on the pole from the
+(`src/systems/horse/horseFollow.js` bogieAxle): the kingpin on the pole from the
 hitch, the body on the wheelbase from the kingpin.
 
 A dismount keeps each wheel's angle and the steer (`rest`); a load forgets
@@ -313,7 +313,7 @@ Mac's wagons' hitches are longer than the mod's 3.1 m, so the mod's reaches
 (the player 5 m from the wagon, the horse 3.5 m) could not be met. A team
 parked with its horse in the shafts could not be mounted again. The reaches
 now measure to the wagon's run, from its anchor forward by `hitch - 3.1`
-(`src/systems/horseCart.js` nearestOnWagon). The store's reach is measured
+(`src/systems/horse/horseCart.js` nearestOnWagon). The store's reach is measured
 the same way.
 
 ### Visits (WAGONS2-VISIT)
@@ -399,7 +399,7 @@ ones the owner's document lists, as the door is the owner's client's to keep
   told why ("<owner> has shut the caravan's door. You step outside.").
 - Who may enter is never carried to a new owner: `wagonEntry` is one of the
   receiver's marks the wire's clamp leaves behind
-  (`src/net/realmTradeLaw.js` RECEIVER_MARKS), and the vault's receipt drops
+  (`src/net/realm/realmTradeLaw.js` RECEIVER_MARKS), and the vault's receipt drops
   them too. A bought caravan opens to its owner alone.
 - The owner's name is the relay's stamp on the record, never a stale peer
   id's.
@@ -435,13 +435,13 @@ Items and economy, motion and drawing, the caravan's room, and online.
   keyed shop refuse it (`src/systems/tradePack.js` packTradeRefusal; the
   trade and the market say why, the vault and the keyed shop leave it off
   their lists), as the counter's Sell already drops it. Since the final
-  audit the account service refuses it too (`src/net/realmTradeLaw.js`
+  audit the account service refuses it too (`src/net/realm/realmTradeLaw.js`
   takeTradeGoods). A loaded caravan
   traded away had left 2000 kg on a 750 kg cart.
 - **The item law reads a wagon's mark.** `wagonKind` and `wagonLook` are
-  declared fields (`src/systems/itemFields.js`). A mark on anything but the
+  declared fields (`src/systems/item/itemFields.js`). A mark on anything but the
   Small Cart, or a marked kind below its own floor, is a `wagon` finding
-  (`src/systems/itemLaw.js`). The floor is the price the kind was first
+  (`src/systems/item/itemLaw.js`). The floor is the price the kind was first
   shelved at, so a wagon bought before WAGON-PRICE stays lawful.
 - **A room only onto its caravan.** A room is restored only while the
   caravan stands parked where it was entered (`CARAVAN_STANDS_NATIVES`): the
@@ -483,7 +483,7 @@ Items and economy, motion and drawing, the caravan's room, and online.
 
 The relay and the visits, the riders and the wheels, the caravan's room as a
 house, the windows' render half, and the items with the docs and the pins.
-Each fix is pinned in `test/wagons2_final.test.js` (or beside its own law's
+Each fix is pinned in `test/systems/wagons2_final.test.js` (or beside its own law's
 tests) and has its mutants in `tools/mutants/wagons2_final.json`.
 
 - **The relay** (re-hashed in place; world187 since main's INT7-INT10 and SD-HERALD took world185 and world186).
@@ -626,7 +626,7 @@ sprite stands on the bench's footboard, still.
 
 ### Two horses
 
-`src/systems/wagonKinds.js`: each kind's `horses` (1, 2, 2); horseCountOf
+`src/systems/wagon/wagonKinds.js`: each kind's `horses` (1, 2, 2); horseCountOf
 counts the pack's Horses item by item (a town's Stable sells as many as are
 bought - MERCHANT-YARDS took the horse off the General Store's shelf,
 `bible/03-World/Merchant-Yards.md`); wagonTeamShort says why the wagon driven
@@ -635,7 +635,7 @@ town's Stable." - or nothing. No horse at all is the mod's own refusal, said whe
 A short team's one horse is a horse (AUDIT WAGONS3 T3, horseCart.js `drivableCart`): its press and its plaque's rows
 ride it and the mount hotkey takes it - they answered Drive and Follow, both refused, and it could not be taken.
 
-The runtime (`src/systems/horseCart.js`, its `teamShort` dep) refuses a short
+The runtime (`src/systems/horse/horseCart.js`, its `teamShort` dep) refuses a short
 team wherever a team is hitched: the transport window's row
 (canUseCartTransport), its press and the hotkey (tryUseCartTransport), the
 mode set some other way (observeTransportMode), the plaque's and the horse's
@@ -670,7 +670,7 @@ two.
 
 ### The harness
 
-`src/systems/wagonRopes.js`: each rope a chain of Verlet points - gravity,
+`src/systems/wagon/wagonRopes.js`: each rope a chain of Verlet points - gravity,
 its last step carried on and damped, and every link held at its share of the
 span times the rope's slack, both ends pinned where the scene says. A trace
 hangs a little, a rein more. A rope sags, swings when the wagon turns or
@@ -746,7 +746,7 @@ as before.
 
 ### Pins (WAGONS3)
 
-`test/wagons3.test.js`. Mutants: `tools/mutants/wagons3.json`. Records
+`test/player/wagons3.test.js`. Mutants: `tools/mutants/wagons3.json`. Records
 re-aimed: `auditinvis.json`, `fbsea.json`, `hcc.json`, `macbugs.json`,
 `ow1.json`, `wagonhitch.json`, `wagons2.json`, `wagons2_wheels.json` (its
 "the bogie out of the bounds" recorded equivalent: the front axle's reach lies
@@ -794,7 +794,7 @@ real caller and fixed with its pin and its mutant
 - **Y4 - the wealth measure.** A Caravan's worth ceiling was DFU's cart's
   (12,200), under its own 25,000: an honest Caravan sold was counted a gain
   from nowhere. A marked wagon's ceiling is its kind's price
-  (`src/systems/itemLaw.js` worthCeiling); `WEALTH_VERSION` 2, so every stored
+  (`src/systems/item/itemLaw.js` worthCeiling); `WEALTH_VERSION` 2, so every stored
   record is measured again and the change is no one's gain. The account
   service deploys with it (itemLaw.js is in its graph, and this branch changes
   it already).
@@ -811,7 +811,7 @@ when i use my carriage"; the owner: "Thirs person view isnt working properly
 for wagon traversal".
 
 **The cause.** Both third-person cameras turn about a point on the driver:
-the sprite's camera (`src/player/eotbCamera.js`) about the head itself, the
+the sprite's camera (`src/player/eyeOfTheBeholder/eotbCamera.js`) about the head itself, the
 Morrowind camera (`src/player/mwCamera.js`) about its focal, FOCAL_HEIGHT
 over the feet. On the Caravan's bench the head stands 0.43 m under the roof
 and the room's front wall 0.37 m behind the seat. The sprite camera's cast
@@ -841,7 +841,7 @@ about a pivot over the wagon:
 - The hosts (`src/scenes/world.js`, `src/scenes/exterior.js`) hand
   `pivotFloor: _driverSeat ? hcc.cameraFloor() : null`.
 
-Measured on the fake world (`test/benchcam1.test.js`): the sprite's camera on
+Measured on the fake world (`test/player/benchcam1.test.js`): the sprite's camera on
 the Caravan stands its whole two metres level and looking down, and comes in
 no lower than the roof looking up. The Morrowind camera keeps its base
 distance (2.74 m) level and looking down, and holds 1.69 m looking up 0.2
@@ -852,9 +852,9 @@ THE FOUR HOSTS (BENCH-CAM): `src/scenes/world.js` and `src/scenes/exterior.js`
 wired; `src/scenes/worldModes.js` and `src/scenes/dungeonContext.js` drive no
 wagon.
 
-Pins: `test/benchcam1.test.js`; `test/wagons3.test.js`'s camera wall (PIN
+Pins: `test/player/benchcam1.test.js`; `test/player/wagons3.test.js`'s camera wall (PIN
 MOVED: the open wagon's tilt is a wall, its camera free from the pivot over
-it); `test/maca_camera_sphere.test.js`'s mwView pin (PIN MOVED: the call
+it); `test/player/maca_camera_sphere.test.js`'s mwView pin (PIN MOVED: the call
 carries `pivotFloor` after its two seams). Mutants: `tools/mutants/benchcam1.json`. Record retired:
 `AUDIT-WAGONS3-B1-every-body-a-cabin` (its law - the caravan's body alone a
 wall - is the one this slice reverses; BENCH-CAM-the-tilt-no-shell holds the
@@ -898,12 +898,12 @@ hitched. The wheels keep their own law (wheelUv, on their hub): they roll.
   and ten under (45 rows, 26 of them window). Inside, its sill stands 0.73 m
   over the floor (it was 0.84).
 
-Pins: `test/wagonuv1.test.js`, read off the built geometry - borne level,
+Pins: `test/world/wagonuv1.test.js`, read off the built geometry - borne level,
 every square face of the cart wears its picture as planarUv lays it on a
 level face, and each wheel's picture stands upright on its hub; the windows'
 glass stands the same each way from the body's middle, each window in the
 middle of its half, and centred between the trims in the picture.
-`test/wagons2.test.js`'s windows-meet pin holds the room to the side.
+`test/systems/wagon/wagons2.test.js`'s windows-meet pin holds the room to the side.
 Mutants: `tools/mutants/wagonuv1.json` (7, all dead).
 
 Seen through the port's own CPU rasteriser (`src/ui/modelIcon.js`
@@ -919,7 +919,7 @@ that others don't still see it."
 **The fault.** The caravan's room is a block of its own
 (`src/systems/caravanRoom.js` caravanRoomBlock), its lantern one of its flats,
 hung from the peak with its light (`CARAVAN_LANTERN`). The decorator takes
-out a room's own pieces through the base room (`src/scenes/decorBase.js`:
+out a room's own pieces through the base room (`src/scenes/decor/decorBase.js`:
 hide drops a flat's batch and its light together), and the owner's list of
 what is out was kept in the owner's save alone: an online home's room hands
 its `hidden` list to everyone from the account service, but a caravan's
@@ -947,7 +947,7 @@ The four hosts: `scenes/worldModes.js` WIRED (the document said and stood);
 onCaravan); `scenes/exterior.js` and `scenes/dungeonContext.js` stand no
 caravan room - FLAGGED as WAGONS2-VISIT left them.
 
-Pins: `test/wagons2_visit.test.js` (18) - the document's taken-out list
+Pins: `test/systems/wagons2_visit.test.js` (18) - the document's taken-out list
 (its law, its cap, a full room, an older document) and the interior host's
 room (the owner says it, the guest sets it, a document taking nothing out
 puts it back). Mutants: six in `tools/mutants/wagons2_visit.json`
@@ -990,19 +990,19 @@ comes back as the Small Cart, as built.
 
 ## Pins
 
-- `test/wagons1_bake.test.js` - the bake.
-- `test/wagons1.test.js` - the kinds, capacity, pictures, parts, measures,
+- `test/tooling/wagons1_bake.test.js` - the bake.
+- `test/systems/item/wagons1.test.js` - the kinds, capacity, pictures, parts, measures,
   faces, cargo, seats, icon, pool, cart's tilt, caravan's row, the word and
   the hosts.
-- `test/wagons1_seats.test.js` - the seats' words, the owner, the rider, the
+- `test/scenes/wagons1_seats.test.js` - the seats' words, the owner, the rider, the
   journey, the companions, the caravan and the interior host.
 
-- `test/wagons2.test.js`, `test/wagons2_wheels.test.js` - WAGONS2 and its audit.
-- `test/wagons2_visit.test.js`, `test/wagons2_visit_relay.test.js` - the visits.
-- `test/wagons2_final.test.js` - the final audit (and its riders' and
+- `test/systems/wagon/wagons2.test.js`, `test/systems/horse/wagons2_wheels.test.js` - WAGONS2 and its audit.
+- `test/systems/wagons2_visit.test.js`, `test/net/wagons2_visit_relay.test.js` - the visits.
+- `test/systems/wagons2_final.test.js` - the final audit (and its riders' and
   windows' pins beside their own, in `wagons2.test.js` and
   `windows1_view.test.js`).
-- `test/wagonuv1.test.js` - WAGON-UV: the cart laid level, the caravan's
+- `test/world/wagonuv1.test.js` - WAGON-UV: the cart laid level, the caravan's
   windows centred (its mutants `tools/mutants/wagonuv1.json`).
 
 The mutants are in `tools/mutants/wagons1.json`, `wagons2.json`, `wagons2_wheels.json`, `wagons2_visit.json` and `wagons2_final.json`. Records re-aimed:

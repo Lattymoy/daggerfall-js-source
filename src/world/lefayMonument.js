@@ -7,12 +7,12 @@
 // WHERE (HOLD-MONUMENT, 2026-10-14, Mac: "Move julian monument to outside of privateers hold"; LEFAY1 stood it in the
 // middle of Gothway Garden): outside Privateer's Hold - the Daggerfall region's dungeon every new character climbs out
 // of, its exterior the one 1x1 block CUSTAA30.RMB - in every read of it, Daggerfall's own layout or a pack's. The
-// location's own navgrid says what is open (world/cityNavigation.js: DFU's CityNavigation carve, every automap byte a
+// location's own navgrid says what is open (world/city/cityNavigation.js: DFU's CityNavigation carve, every automap byte a
 // building, a tree or a lamp has drawn closed, the water closed), and what the automap does not draw is closed on it
 // first: THE WAY OUT OF THE HOLD (AUDIT FIVE-ASKS B1) - the exit landing every player walks out of the dungeon onto
 // (player/enterExit.js dungeonEntranceLanding over the Hold's own dungeon-entrance door, which the hosts measure as they
 // stand its block and hand in as `exit`), its doorway behind it and the walk out ahead of it, MONUMENT_LANDING_M wide -
-// and World of Daggerfall's camp round the Hold (world/wodPrivateersHold.js HOLD_MODELS, which the hosts hand in too),
+// and World of Daggerfall's camp round the Hold (world/worldOfDaggerfall/wodPrivateersHold.js HOLD_MODELS, which the hosts hand in too),
 // closed with the camp on or off. The spot is the cell nearest that landing whose every cell centred within
 // MONUMENT_CLEAR_M of it is open ground, a road counted against it: beside the walk out, the first thing a character
 // climbing out of the Hold sees. A host with no door measured (a pack's block without it) falls back to the block's
@@ -24,15 +24,15 @@
 // tipped in gilt - the port's own geometry in the monument's own frame (y up from the ground at its middle, its faces
 // on the axes), cut from the port's own art (world/lefayArt.js, LEFAY_ARCHIVE): no game data at all.
 //
-// THE FLOWERS: Daggerfall's own (TEXTURE.254's roses and flowers - systems/arenaCrowd.js THROWN_FLOWERS, the arena
+// THE FLOWERS: Daggerfall's own (TEXTURE.254's roses and flowers - systems/arena/arenaCrowd.js THROWN_FLOWERS, the arena
 // crowd's), thrown from the hand on a short arc to a rest on one of the steps or the ground at their foot, on the
 // thrower's side. A character keeps the count of what it laid and the newest MONUMENT_FLOWERS_KEPT where they lay
-// (normalTribute - systems/save.js carries it), so a pile laid stands there again after a load.
+// (normalTribute - systems/save/save.js carries it), so a pile laid stands there again after a load.
 //
 // Not a DFU member. Ledger A (LEFAY).
 import { REGION_NAMES } from '../formats/mapsTables.js';
-import { CityNavigation, NAV_CELL, HALF_CELL } from './cityNavigation.js';
-import { THROWN_FLOWERS } from '../systems/arenaCrowd.js';
+import { CityNavigation, NAV_CELL, HALF_CELL } from './city/cityNavigation.js';
+import { THROWN_FLOWERS } from '../systems/arena/arenaCrowd.js';
 import { ROAD_WEIGHT } from '../systems/gothwayBoards.js';
 import { locationStartMarkers } from './locationEntrance.js';
 import { collectMiscFlats } from './rmbFlats.js';

@@ -5,7 +5,7 @@
     "old": "const r = s[3] * Math.sqrt(Math.max(m[0] * m[0]",
     "new": "const r = s[3] * Math.sqrt(1, Math.max(m[0] * m[0]",
     "tests": [
-      "test/perfwagon.test.js"
+      "test/systems/livingWorld/perfwagon.test.js"
     ]
   },
   {
@@ -14,52 +14,52 @@
     "old": "  const x = m[0] * s[0] + m[4] * s[1] + m[8] * s[2] + m[12];",
     "new": "  const x = m[0] * s[0] + m[4] * s[1] + m[8] * s[2];",
     "tests": [
-      "test/perfwagon.test.js"
+      "test/systems/livingWorld/perfwagon.test.js"
     ]
   },
   {
     "name": "PERF-WAGON-c-the-verdict-unread",
-    "file": "src/scenes/decorRoom.js",
+    "file": "src/scenes/decor/decorRoom.js",
     "old": "  const seen = cull && box ? cull(box) : DECOR_DRAW;",
     "new": "  const seen = DECOR_DRAW;",
     "tests": [
-      "test/perfwagon.test.js"
+      "test/systems/livingWorld/perfwagon.test.js"
     ]
   },
   {
     "name": "PERF-WAGON-d-the-cast-arm-drawn",
-    "file": "src/scenes/decorRoom.js",
+    "file": "src/scenes/decor/decorRoom.js",
     "old": "  (seen === DECOR_SHADOW ? castOnly(r) : r).drawMesh(mesh, m, remap, o);",
     "new": "  (seen === DECOR_SHADOW ? r : r).drawMesh(mesh, m, remap, o);",
     "tests": [
-      "test/perfwagon.test.js"
+      "test/systems/livingWorld/perfwagon.test.js"
     ]
   },
   {
     "name": "PERF-WAGON-e-the-skip-drawn",
-    "file": "src/scenes/decorRoom.js",
+    "file": "src/scenes/decor/decorRoom.js",
     "old": "  if (seen === DECOR_SKIP) return false;\n  (seen === DECOR_SHADOW",
     "new": "  (seen === DECOR_SHADOW",
     "tests": [
-      "test/perfwagon.test.js"
+      "test/systems/livingWorld/perfwagon.test.js"
     ]
   },
   {
     "name": "PERF-WAGON-f-a-cast-counted",
-    "file": "src/scenes/decorRoom.js",
+    "file": "src/scenes/decor/decorRoom.js",
     "old": "  (seen === DECOR_SHADOW ? castOnly(r) : r).drawMesh(mesh, m, remap, o);\n  return seen === DECOR_DRAW;",
     "new": "  (seen === DECOR_SHADOW ? castOnly(r) : r).drawMesh(mesh, m, remap, o);\n  return true;",
     "tests": [
-      "test/perfwagon.test.js"
+      "test/systems/livingWorld/perfwagon.test.js"
     ]
   },
   {
     "name": "PERF-WAGON-g-the-road-test-not-taken",
-    "file": "src/world/roadTeams.js",
+    "file": "src/world/road/roadTeams.js",
     "old": "const one = cull && pres.drawWagonSeen ?",
     "new": "const one = false ?",
     "tests": [
-      "test/perfwagon.test.js"
+      "test/systems/livingWorld/perfwagon.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "    return drawWagon(v === DECOR_SHADOW ? castOnly(r) : r, texRemap, position, rotation, tier, turn, scale, kind, hitched, look) && v === DECOR_DRAW;",
     "new": "    return drawWagon(r, texRemap, position, rotation, tier, turn, scale, kind, hitched, look) && v === DECOR_DRAW;",
     "tests": [
-      "test/perfwagon.test.js"
+      "test/systems/livingWorld/perfwagon.test.js"
     ]
   },
   {
@@ -77,16 +77,16 @@
     "old": "teamVerdict({ at: position, g: scale }, cull)",
     "new": "teamVerdict({ at: position, g: 1 }, cull)",
     "tests": [
-      "test/perfwagon.test.js"
+      "test/systems/livingWorld/perfwagon.test.js"
     ]
   },
   {
     "name": "PERF-WAGON-j-the-roads-hand-no-test",
-    "file": "src/scenes/livingRoads.js",
+    "file": "src/scenes/livingWorld/livingRoads.js",
     "old": "deps.teams?.draw(r, null, cull) ?? 0,",
     "new": "deps.teams?.draw(r, null, null) ?? 0,",
     "tests": [
-      "test/perfwagon.test.js"
+      "test/systems/livingWorld/perfwagon.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "const box = cull ? sphereAabb(h.gpu.bounds, WORLD_MATRIX, _harnessBox) : null;",
     "new": "const box = null;",
     "tests": [
-      "test/perfwagon.test.js"
+      "test/systems/livingWorld/perfwagon.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "if (box && cull(box) !== DECOR_DRAW) continue;",
     "new": "if (box && cull(box) === DECOR_SKIP) continue;",
     "tests": [
-      "test/perfwagon.test.js"
+      "test/systems/livingWorld/perfwagon.test.js"
     ]
   },
   {
@@ -113,16 +113,16 @@
     "old": "drawHarness(r, cull);   // WAGONS3",
     "new": "drawHarness(r, null);   // WAGONS3",
     "tests": [
-      "test/perfwagon.test.js"
+      "test/systems/livingWorld/perfwagon.test.js"
     ]
   },
   {
     "name": "PERF-WAGON-n-the-cart-box-unmade",
-    "file": "src/player/eotbWagon.js",
+    "file": "src/player/eyeOfTheBeholder/eotbWagon.js",
     "old": "cull && localBox ? transformedAabb(localBox, m) : null",
     "new": "null",
     "tests": [
-      "test/perfwagon.test.js"
+      "test/systems/livingWorld/perfwagon.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "return eotbWagon.draw(renderer, texRemap, cull);",
     "new": "return eotbWagon.draw(renderer, texRemap, null);",
     "tests": [
-      "test/perfwagon.test.js"
+      "test/systems/livingWorld/perfwagon.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "cull && _tent.box ? transformedAabb(_tent.box, m) : null",
     "new": "null",
     "tests": [
-      "test/perfwagon.test.js"
+      "test/systems/livingWorld/perfwagon.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "cull ? sphereAabb(tent.gpu.bounds, m) : null",
     "new": "null",
     "tests": [
-      "test/perfwagon.test.js"
+      "test/systems/livingWorld/perfwagon.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "    mwViewDrawWagon(renderer, null, yardCull);",
     "new": "    mwViewDrawWagon(renderer, null, null);",
     "tests": [
-      "test/perfwagon.test.js"
+      "test/systems/livingWorld/perfwagon.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "    camps.draw(renderer, null, yardCull);",
     "new": "    camps.draw(renderer, null, null);",
     "tests": [
-      "test/perfwagon.test.js"
+      "test/systems/livingWorld/perfwagon.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "livingRoads.drawTeams(renderer, yardCull);",
     "new": "livingRoads.drawTeams(renderer, null);",
     "tests": [
-      "test/perfwagon.test.js"
+      "test/systems/livingWorld/perfwagon.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "    _livingHideoutsHost?.draw(renderer, null, yardCull);",
     "new": "    _livingHideoutsHost?.draw(renderer, null, null);",
     "tests": [
-      "test/perfwagon.test.js"
+      "test/systems/livingWorld/perfwagon.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "const streetCull = (box) => (cullOn ? decorCullVerdict(_planes, box, streetReach) : DECOR_DRAW);",
     "new": "const streetCull = (box) => DECOR_DRAW;",
     "tests": [
-      "test/perfwagon.test.js"
+      "test/systems/livingWorld/perfwagon.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "    hcc.draw(renderer, texRemap, undefined, streetCull);",
     "new": "    hcc.draw(renderer, texRemap, undefined, null);",
     "tests": [
-      "test/perfwagon.test.js"
+      "test/systems/livingWorld/perfwagon.test.js"
     ]
   },
   {
@@ -212,7 +212,7 @@
     "old": "    camps.draw(renderer, texRemap, streetCull);",
     "new": "    camps.draw(renderer, texRemap, null);",
     "tests": [
-      "test/perfwagon.test.js"
+      "test/systems/livingWorld/perfwagon.test.js"
     ]
   },
   {
@@ -221,7 +221,7 @@
     "old": "    mwViewDrawWagon(renderer, texRemap, streetCull);",
     "new": "    mwViewDrawWagon(renderer, texRemap, null);",
     "tests": [
-      "test/perfwagon.test.js"
+      "test/systems/livingWorld/perfwagon.test.js"
     ]
   }
 ]

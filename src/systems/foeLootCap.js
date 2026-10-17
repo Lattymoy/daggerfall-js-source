@@ -38,13 +38,13 @@ import {
   socketPass,   // LOOT20
   weaponSocketPass,   // GEM1
   techniquePass,   // TECH1
-} from './lootRarity.js';
+} from './loot/lootRarity.js';
 import { isGoldPieces, ARROW_TEMPLATE } from './inventory.js';   // STUCK-ARROWS: the quiver rides past the cap
-import { wildFoeLoot } from './wildZone.js';   // WILD1: a foe of the open zone carries twice as much past its cap
+import { wildFoeLoot } from './wild/wildZone.js';   // WILD1: a foe of the open zone carries twice as much past its cap
 import { isPotion } from './useItem.js';   // CAP-SUPPLIES: a potion IS the glass bottle - DFU's IsPotion, its one export (AUDIT 625 L7)
-import { ENEMY_BASICS } from '../characters/enemyBasics.js';   // KIT-ROLL: the row every host hands its spawn
+import { ENEMY_BASICS } from '../characters/enemy/enemyBasics.js';   // KIT-ROLL: the row every host hands its spawn
 import { renownLootQuarters, lootEased } from './renownLoot.js';
-import { isCardRecord } from '../net/cardWorthLaw.js';   // CARDS9: a foe's card   // RENOWN-LOOT: the plain ladder by the roller's Renown
+import { isCardRecord } from '../net/card/cardWorthLaw.js';   // CARDS9: a foe's card   // RENOWN-LOOT: the plain ladder by the roller's Renown
 
 /** CARDS9 (Tavern-Cards section 32): A FOE'S CARD IS KEPT AS A MAGIC PIECE - its one rare draw is never thrown away for a
  *  common blade (rank 2: past a supply's 1 and a Common piece's 0, level with a Magic piece's). */

@@ -5,7 +5,7 @@
     "old": "const spot = (asked && askedSpotStands(asked, { minDistance, maxDistance }, feet)) || encounterSpot({ minDistance, maxDistance, lineOfSightCheck }, feet, yaw);",
     "new": "const spot = encounterSpot({ minDistance, maxDistance, lineOfSightCheck }, feet, yaw);",
     "tests": [
-      "test/auditrest2_fires.test.js"
+      "test/world/auditrest2_fires.test.js"
     ]
   },
   {
@@ -14,8 +14,8 @@
     "old": "y: q3(_motorYaw), s: [q2(spot.x), q2(spot.y), q2(spot.z)] } })) {",
     "new": "y: q3(_motorYaw) } })) {",
     "tests": [
-      "test/auditrest2_fires.test.js",
-      "test/restsync.test.js"
+      "test/world/auditrest2_fires.test.js",
+      "test/net/restsync.test.js"
     ]
   },
   {
@@ -24,7 +24,7 @@
     "old": "shared: true, asked: s })",
     "new": "shared: true, asked: null })",
     "tests": [
-      "test/auditrest2_fires.test.js"
+      "test/world/auditrest2_fires.test.js"
     ]
   },
   {
@@ -33,7 +33,7 @@
     "old": "if (!(d >= minDistance - e && d <= maxDistance + e) || d < e) return null;",
     "new": "if (d < e) return null;",
     "tests": [
-      "test/auditrest2_fires.test.js"
+      "test/world/auditrest2_fires.test.js"
     ]
   },
   {
@@ -42,7 +42,7 @@
     "old": "    if (collider.raycastHit(o, [dx / d, 0, dz / d], d).dist < d - e) return null;\n",
     "new": "",
     "tests": [
-      "test/auditrest2_fires.test.js"
+      "test/world/auditrest2_fires.test.js"
     ]
   },
   {
@@ -51,7 +51,7 @@
     "old": "    if (!(Math.abs(collider.raycastHit(s, [0, -1, 0], C.maxFloorDistance).dist - C.separationDistance) <= e)) return null;\n",
     "new": "",
     "tests": [
-      "test/auditrest2_fires.test.js"
+      "test/world/auditrest2_fires.test.js"
     ]
   },
   {
@@ -60,7 +60,7 @@
     "old": "if (collider.sphereOverlaps(s, C.overlapSphereRadius) || entityOccupancy((f) => f.ai?.feet, () => foes, feet)(p, C.overlapSphereRadius)) return null;",
     "new": "if (collider.sphereOverlaps(s, C.overlapSphereRadius)) return null;",
     "tests": [
-      "test/auditrest2_fires.test.js"
+      "test/world/auditrest2_fires.test.js"
     ]
   },
   {
@@ -69,7 +69,7 @@
     "old": "    if (sharedClockOn() && inFireWard(dungeonFires, p)) return null;\n    return p;",
     "new": "    return p;",
     "tests": [
-      "test/auditrest2_fires.test.js"
+      "test/world/auditrest2_fires.test.js"
     ]
   },
   {
@@ -78,8 +78,8 @@
     "old": "    if (Date.now() - _restAskSentAt < REST_ASK_GAP_MS + REST_ASK_WAIT_MS) return null;",
     "new": "",
     "tests": [
-      "test/auditrest2_fires.test.js",
-      "test/restsync.test.js"
+      "test/world/auditrest2_fires.test.js",
+      "test/net/restsync.test.js"
     ]
   },
   {
@@ -88,8 +88,8 @@
     "old": "      _restAskSentAt = Date.now();\n",
     "new": "",
     "tests": [
-      "test/auditrest2_fires.test.js",
-      "test/restsync.test.js"
+      "test/world/auditrest2_fires.test.js",
+      "test/net/restsync.test.js"
     ]
   },
   {
@@ -98,7 +98,7 @@
     "old": "      opts.outerCampsLoad?.(extras);",
     "new": "      void extras;",
     "tests": [
-      "test/auditrest3.test.js"
+      "test/systems/auditrest3.test.js"
     ]
   },
   {
@@ -107,7 +107,7 @@
     "old": "outerCampsLoad: (extras) => host.outerCampsLoad?.(extras),",
     "new": "outerCampsLoad: () => {},",
     "tests": [
-      "test/auditrest3.test.js"
+      "test/systems/auditrest3.test.js"
     ]
   },
   {
@@ -116,7 +116,7 @@
     "old": "outerCampsLoad: (extras) => standSavedOuterCamps(extras),",
     "new": "outerCampsLoad: () => {},",
     "tests": [
-      "test/auditrest3.test.js"
+      "test/systems/auditrest3.test.js"
     ]
   },
   {
@@ -125,8 +125,8 @@
     "old": "    camps.dropOwn(); camps.restore(rows, campFromNatives);\n  }",
     "new": "    camps.restore(rows, campFromNatives);\n  }",
     "tests": [
-      "test/auditrest3.test.js",
-      "test/auditrest2_camps.test.js"
+      "test/systems/auditrest3.test.js",
+      "test/systems/auditrest2_camps.test.js"
     ]
   },
   {
@@ -135,7 +135,7 @@
     "old": "const rows = savedScale === STREAMING_TERRAIN_SCALE && !landform ? outer : outer.map((r) => {",
     "new": "const rows = true ? outer : outer.map((r) => {",
     "tests": [
-      "test/auditrest3.test.js"
+      "test/systems/auditrest3.test.js"
     ]
   },
   {
@@ -144,7 +144,7 @@
     "old": "const standOuterCamps = () => standSavedOuterCamps(extras);",
     "new": "const standOuterCamps = () => {};",
     "tests": [
-      "test/auditrest2_camps.test.js"
+      "test/systems/auditrest2_camps.test.js"
     ]
   },
   {
@@ -153,7 +153,7 @@
     "old": "for (const h of Array.isArray(ledger?.held) ? ledger.held : []) if (h && Number.isFinite(h.takenAt)) h.takenAt = Math.max(0, h.takenAt + delta);",
     "new": "void ledger;",
     "tests": [
-      "test/auditrest3.test.js"
+      "test/systems/auditrest3.test.js"
     ]
   },
   {
@@ -162,7 +162,7 @@
     "old": "if (Number.isSafeInteger(paidAt[k])) paidAt[k] = Math.max(0, paidAt[k] + delta);",
     "new": "void k;",
     "tests": [
-      "test/auditrest3.test.js"
+      "test/systems/auditrest3.test.js"
     ]
   },
   {
@@ -171,7 +171,7 @@
     "old": "h.takenAt = Math.max(0, h.takenAt + delta);",
     "new": "h.takenAt = h.takenAt + delta;",
     "tests": [
-      "test/auditrest3.test.js"
+      "test/systems/auditrest3.test.js"
     ]
   },
   {
@@ -180,35 +180,35 @@
     "old": "paidAt[k] = Math.max(0, paidAt[k] + delta);",
     "new": "paidAt[k] = paidAt[k] + delta;",
     "tests": [
-      "test/auditrest3.test.js"
+      "test/systems/auditrest3.test.js"
     ]
   },
   {
     "name": "AUDITREST3-C1-the-debt-never-asked",
-    "file": "src/systems/partyRestLaw.js",
+    "file": "src/systems/party/partyRestLaw.js",
     "old": "(now - rec.answered >= gapMs || !!(typeof due === 'function' ? due() : due))",
     "new": "(now - rec.answered >= gapMs)",
     "tests": [
-      "test/auditrest3.test.js"
+      "test/systems/auditrest3.test.js"
     ]
   },
   {
     "name": "AUDITREST3-C1-always-owed",
-    "file": "src/systems/partyRestLaw.js",
+    "file": "src/systems/party/partyRestLaw.js",
     "old": "(now - rec.answered >= gapMs || !!(typeof due === 'function' ? due() : due))",
     "new": "(now - rec.answered >= gapMs || true)",
     "tests": [
-      "test/auditrest3.test.js",
-      "test/auditrest2_party.test.js"
+      "test/systems/auditrest3.test.js",
+      "test/systems/auditrest2_party.test.js"
     ]
   },
   {
     "name": "AUDITREST3-C1-the-debt-asked-first",
-    "file": "src/systems/partyRestLaw.js",
+    "file": "src/systems/party/partyRestLaw.js",
     "old": "(now - rec.answered >= gapMs || !!(typeof due === 'function' ? due() : due))",
     "new": "(!!(typeof due === 'function' ? due() : due) || now - rec.answered >= gapMs)",
     "tests": [
-      "test/auditrest3.test.js"
+      "test/systems/auditrest3.test.js"
     ]
   },
   {
@@ -217,26 +217,26 @@
     "old": ", isNightStamp, () => nightDue(playerEntity, ownMinutes()))) continue;",
     "new": ", isNightStamp)) continue;",
     "tests": [
-      "test/auditrest3.test.js",
-      "test/auditrest2_party.test.js"
+      "test/systems/auditrest3.test.js",
+      "test/systems/auditrest2_party.test.js"
     ]
   },
   {
     "name": "AUDITREST3-C3-only-a-whole-night-raises",
-    "file": "src/systems/restAct.js",
+    "file": "src/systems/rest/restAct.js",
     "old": "  const raise = !!r;\n  if (!night)",
     "new": "  const raise = nightWhole(r);\n  if (!night)",
     "tests": [
-      "test/auditrest2_party.test.js"
+      "test/systems/auditrest2_party.test.js"
     ]
   },
   {
     "name": "AUDITREST3-C3-a-rest-that-never-ran-raises",
-    "file": "src/systems/restAct.js",
+    "file": "src/systems/rest/restAct.js",
     "old": "  const raise = !!r;\n  if (!night)",
     "new": "  const raise = true;\n  if (!night)",
     "tests": [
-      "test/auditrest2_party.test.js"
+      "test/systems/auditrest2_party.test.js"
     ]
   },
   {
@@ -245,7 +245,7 @@
     "old": "for (const id of own ? Object.keys(own) : []) {",
     "new": "for (const id of []) {",
     "tests": [
-      "test/auditrest3.test.js"
+      "test/systems/auditrest3.test.js"
     ]
   },
   {
@@ -254,7 +254,7 @@
     "old": "        if (Array.isArray(sc.decor)) sc.decor = sc.decor.filter((/** @type {any} */ p) => p?.id !== id);\n",
     "new": "",
     "tests": [
-      "test/auditrest3.test.js"
+      "test/systems/auditrest3.test.js"
     ]
   },
   {
@@ -263,7 +263,7 @@
     "old": "p?.id !== id);\n        restKept++;",
     "new": "p?.id !== id);",
     "tests": [
-      "test/auditrest3.test.js"
+      "test/systems/auditrest3.test.js"
     ]
   },
   {
@@ -272,7 +272,7 @@
     "old": "if (!foreign.has(list)) restKept += n;",
     "new": "restKept += n;",
     "tests": [
-      "test/auditrest3.test.js"
+      "test/systems/auditrest3.test.js"
     ]
   },
   {
@@ -281,7 +281,7 @@
     "old": "if (c?.containerType === LOOT_CONTAINER_TYPES.ShopShelves && Array.isArray(c.items)) foreign.add(c.items);",
     "new": "void c;",
     "tests": [
-      "test/auditrest3.test.js"
+      "test/systems/auditrest3.test.js"
     ]
   },
   {
@@ -290,7 +290,7 @@
     "old": "    for (const pile of snap.world?.piles ?? []) if (Array.isArray(pile?.items)) foreign.add(pile.items);\n",
     "new": "",
     "tests": [
-      "test/auditrest3.test.js"
+      "test/systems/auditrest3.test.js"
     ]
   },
   {
@@ -299,7 +299,7 @@
     "old": "if (foe?.dead && Array.isArray(foe.items)) foreign.add(foe.items);",
     "new": "void foe;",
     "tests": [
-      "test/auditrest3.test.js"
+      "test/systems/auditrest3.test.js"
     ]
   },
   {
@@ -308,7 +308,7 @@
     "old": "for (const sc of scenes) for (const c of sc?.lootContainers ?? []) if (c?.containerType === LOOT_CONTAINER_TYPES.ShopShelves",
     "new": "for (const sc of scenes) for (const c of sc?.lootContainers ?? []) if (c?.containerType !== LOOT_CONTAINER_TYPES.Nothing",
     "tests": [
-      "test/auditrest3.test.js"
+      "test/systems/auditrest3.test.js"
     ]
   },
   {
@@ -317,8 +317,8 @@
     "old": "const placed = near.filter((c) => (c.rec.wear | 0) < CAMPFIRE_USES).sort(",
     "new": "const placed = near.filter((c) => true).sort(",
     "tests": [
-      "test/auditrest3.test.js",
-      "test/auditrest2_camps.test.js"
+      "test/systems/auditrest3.test.js",
+      "test/systems/auditrest2_camps.test.js"
     ]
   },
   {
@@ -327,8 +327,8 @@
     "old": ".sort((a, b) => (a.rec.wear | 0) - (b.rec.wear | 0))[0] ?? null;",
     "new": "[0] ?? null;",
     "tests": [
-      "test/auditrest3.test.js",
-      "test/auditrest2_camps.test.js"
+      "test/systems/auditrest3.test.js",
+      "test/systems/auditrest2_camps.test.js"
     ]
   },
   {
@@ -337,8 +337,8 @@
     "old": "say(near.length || kits.length ? REST_ITEM_TEXT.firewoodFull",
     "new": "say(kits.length ? REST_ITEM_TEXT.firewoodFull",
     "tests": [
-      "test/auditrest3.test.js",
-      "test/auditrest2_camps.test.js"
+      "test/systems/auditrest3.test.js",
+      "test/systems/auditrest2_camps.test.js"
     ]
   },
   {
@@ -347,7 +347,7 @@
     "old": "export const canStoke = (camp, now, mine) => !!camp && !!mine && ",
     "new": "export const canStoke = (camp, now, mine) => !!camp && (!!mine || camp.kind === CAMP_KIND.Tent) && ",
     "tests": [
-      "test/auditrest3.test.js"
+      "test/systems/auditrest3.test.js"
     ]
   },
   {
@@ -356,8 +356,8 @@
     "old": "const restable = mine && camp.kind === CAMP_KIND.Tent && (camp.wear | 0) > 0;",
     "new": "const restable = false;",
     "tests": [
-      "test/auditrest3.test.js",
-      "test/auditrest2_camps.test.js"
+      "test/systems/auditrest3.test.js",
+      "test/systems/auditrest2_camps.test.js"
     ]
   },
   {
@@ -366,8 +366,8 @@
     "old": "const restable = mine && camp.kind === CAMP_KIND.Tent && (camp.wear | 0) > 0;",
     "new": "const restable = true;",
     "tests": [
-      "test/auditrest3.test.js",
-      "test/auditrest2_camps.test.js"
+      "test/systems/auditrest3.test.js",
+      "test/systems/auditrest2_camps.test.js"
     ]
   },
   {
@@ -376,7 +376,7 @@
     "old": "const restable = mine && camp.kind === CAMP_KIND.Tent && (camp.wear | 0) > 0;",
     "new": "const restable = camp.kind === CAMP_KIND.Tent && (camp.wear | 0) > 0;",
     "tests": [
-      "test/auditrest3.test.js"
+      "test/systems/auditrest3.test.js"
     ]
   },
   {
@@ -385,7 +385,7 @@
     "old": "const restable = mine && camp.kind === CAMP_KIND.Tent && (camp.wear | 0) > 0;",
     "new": "const restable = mine && camp.kind === CAMP_KIND.Tent;",
     "tests": [
-      "test/auditrest3.test.js"
+      "test/systems/auditrest3.test.js"
     ]
   },
   {
@@ -394,7 +394,7 @@
     "old": "  if (camp.jar) return mine ? CAMP_TEXT.seeOwnJar : CAMP_TEXT.seeJar;",
     "new": "",
     "tests": [
-      "test/auditrest3.test.js"
+      "test/systems/auditrest3.test.js"
     ]
   },
   {
@@ -403,7 +403,7 @@
     "old": "  if (camp.jar) return mine ? CAMP_TEXT.seeOwnJar : CAMP_TEXT.seeJar;",
     "new": "  if (camp.jar) return mine ? CAMP_TEXT.seeJar : CAMP_TEXT.seeOwnJar;",
     "tests": [
-      "test/auditrest3.test.js"
+      "test/systems/auditrest3.test.js"
     ]
   },
   {
@@ -412,8 +412,8 @@
     "old": "    out.actions = campMenu(c.rec, now(), mine(c), { online: sharedClockOn() })",
     "new": "    out.actions = campMenu(c.rec, now(), mine(c), { online: false })",
     "tests": [
-      "test/auditrest3.test.js",
-      "test/auditrest2_camps.test.js"
+      "test/systems/auditrest3.test.js",
+      "test/systems/auditrest2_camps.test.js"
     ]
   },
   {
@@ -422,26 +422,26 @@
     "old": "if (lit && campMenu(c.rec, now(), mine(c), { online: sharedClockOn() })",
     "new": "if (lit && campMenu(c.rec, now(), mine(c), { online: false })",
     "tests": [
-      "test/auditrest3.test.js",
-      "test/auditrest2_camps.test.js"
+      "test/systems/auditrest3.test.js",
+      "test/systems/auditrest2_camps.test.js"
     ]
   },
   {
     "name": "AUDITREST3-C6-the-point-unasked",
-    "file": "src/systems/restAct.js",
+    "file": "src/systems/rest/restAct.js",
     "old": "  return !!opened?.point?.where && typeof restActNow === 'function' && !restActNow()?.point;",
     "new": "  return false;",
     "tests": [
-      "test/auditrest2_party.test.js"
+      "test/systems/auditrest2_party.test.js"
     ]
   },
   {
     "name": "AUDITREST3-C6-asked-of-a-bed",
-    "file": "src/systems/restAct.js",
+    "file": "src/systems/rest/restAct.js",
     "old": "  return !!opened?.point?.where && typeof restActNow === 'function' && !restActNow()?.point;",
     "new": "  return typeof restActNow === 'function' && !restActNow()?.point;",
     "tests": [
-      "test/auditrest2_party.test.js"
+      "test/systems/auditrest2_party.test.js"
     ]
   },
   {
@@ -450,17 +450,17 @@
     "old": ", () => this.deps.restAct?.() ?? null)) this._finishAct(); else { this._actHealth = channelHealTick(",
     "new": ")) this._finishAct(); else { this._actHealth = channelHealTick(",
     "tests": [
-      "test/auditrest2_party.test.js"
+      "test/systems/auditrest2_party.test.js"
     ],
     "note": "CAMP-ROLL (re-aimed by content): the camp wait's line carries the same call - aimed at the channel's own, by its note."
   },
   {
     "name": "AUDITREST3-C6-the-enhanced-card-unasked",
-    "file": "src/ui/enhancedRest.js",
+    "file": "src/ui/enhanced/enhancedRest.js",
     "old": ", () => deps.restAct?.() ?? null)) finishAct(); else { overlay._actHealth = channelHealTick(",
     "new": ")) finishAct(); else { overlay._actHealth = channelHealTick(",
     "tests": [
-      "test/auditrest2_party.test.js"
+      "test/systems/auditrest2_party.test.js"
     ],
     "note": "CAMP-ROLL (re-aimed by content): the camp wait's line carries the same call - aimed at the channel's own, by what follows it."
   },
@@ -470,7 +470,7 @@
     "old": "const kept = dungeonHearths.filter((h) => !isFixture(h?.archive, h?.record));",
     "new": "const kept = dungeonHearths.filter((h) => !h?.placed);",
     "tests": [
-      "test/auditrest2_fires.test.js"
+      "test/world/auditrest2_fires.test.js"
     ]
   },
   {
@@ -479,7 +479,7 @@
     "old": ", archive: f.archive, record: f.record });",
     "new": " });",
     "tests": [
-      "test/auditrest2_fires.test.js"
+      "test/world/auditrest2_fires.test.js"
     ]
   },
   {
@@ -488,7 +488,7 @@
     "old": "placed: true, archive, record });",
     "new": "placed: true });",
     "tests": [
-      "test/auditrest2_fires.test.js"
+      "test/world/auditrest2_fires.test.js"
     ]
   },
   {
@@ -497,7 +497,7 @@
     "old": "    const mirrored = !!m && m[0] * (m[5] * m[10] - m[6] * m[9])",
     "new": "    const mirrored = false && m[0] * (m[5] * m[10] - m[6] * m[9])",
     "tests": [
-      "test/auditrest3.test.js"
+      "test/systems/auditrest3.test.js"
     ]
   },
   {
@@ -506,7 +506,7 @@
     "old": "m[8] * (m[1] * m[6] - m[2] * m[5]) < 0;",
     "new": "m[8] * (m[1] * m[6] - m[2] * m[5]) < 1e9;",
     "tests": [
-      "test/auditrest3.test.js"
+      "test/systems/auditrest3.test.js"
     ]
   },
   {
@@ -515,9 +515,9 @@
     "old": "  K0C00Y07: Object.freeze(['2ransom']),",
     "new": "",
     "tests": [
-      "test/auditrest3.test.js",
-      "test/rest8_questwaits.test.js",
-      "test/auditrest2_quests.test.js"
+      "test/systems/auditrest3.test.js",
+      "test/systems/quest/rest8_questwaits.test.js",
+      "test/systems/quest/auditrest2_quests.test.js"
     ]
   },
   {
@@ -526,9 +526,9 @@
     "old": "  B0B71Y03: Object.freeze(['finddaughter']),",
     "new": "",
     "tests": [
-      "test/auditrest3.test.js",
-      "test/rest8_questwaits.test.js",
-      "test/auditrest2_quests.test.js"
+      "test/systems/auditrest3.test.js",
+      "test/systems/quest/rest8_questwaits.test.js",
+      "test/systems/quest/auditrest2_quests.test.js"
     ]
   }
 ]

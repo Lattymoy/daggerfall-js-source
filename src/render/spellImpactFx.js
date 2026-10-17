@@ -16,7 +16,7 @@
 //
 // Each burst also throws a short coloured light (`light()`) the host lights the walls with.
 //
-// The duel wall's law (render/duelWall.js, render/gateFx.js): ADDED onto the frame (ONE, ONE) so it only brightens,
+// The duel wall's law (render/duelWall.js, render/gate/gateFx.js): ADDED onto the frame (ONE, ONE) so it only brightens,
 // depth-tested against the world and never writing depth, fogged by the renderer's one fog block. One instanced quad
 // per spark, bolt segment, glint, ring or pool; the simulation is plain JS and the pass only draws what it is handed.
 // Not a DFU member.

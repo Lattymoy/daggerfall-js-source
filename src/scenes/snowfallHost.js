@@ -18,7 +18,7 @@ import { SnowCoverage, BasicRoadsTerrain, roadCorners, snowfallSettings, winterA
 import { SnowfallRuntime } from '../systems/snowfallRuntime.js';
 import { SnowfallSurface } from '../render/snowfallSurface.js';
 import { getWorldClimateSettings, worldCoordToMapPixel } from '../formats/mapsFile.js';
-import { getLocationTerrainTileOrigin } from '../world/terrainTiles.js';
+import { getLocationTerrainTileOrigin } from '../world/terrain/terrainTiles.js';
 import { weatherFlags } from '../world/weather.js';   // WeatherManager.IsSnowing, from its one home
 import { APP_ROOT } from '../systems/appRoot.js';
 import { winterGroundSnowless, dfmodGeneration } from '../systems/dfmodTextures.js';   // SNOWLESS1
@@ -340,7 +340,7 @@ export function snowfallNetwork(net, x, y) {
 /** BasicRoadsTerrain.TryCreate's authored scan: every block of `location` marked from its tile origin
  *  (TerrainHelper.GetLocationTerrainTileOrigin). Throws where a block will not read ("Authored block unavailable") -
  *  the pixel is then not classified, and no road or track lies under its snow. The block's name is BlocksFile.CheckName's,
- *  as the ground stamped under it is (world/terrainTiles.js setLocationTiles). */
+ *  as the ground stamped under it is (world/terrain/terrainTiles.js setLocationTiles). */
 export function authoredTiles(location, mapsFile, blocksFile, authored = new Uint8Array(16384)) {
   const o = getLocationTerrainTileOrigin(location);
   const { width, height } = location.exterior.exteriorData;

@@ -18,7 +18,7 @@ export function getMeleeWeaponAnimTime(liveSpeed, ctx = null) {
   if (o != null) return o;
   // SWING-LAW: a wielder the port knows (`ctx.entity` - the player's machine, the Weapon Widget's clone, the third-person
   // body) swings on the port's own law; one it does not (a foe's machine, a peer's walker at PEER_SWING_SPEED, the
-  // viewers) keeps DFU's line - which DFU never asks for a foe at all (characters/enemyAttack.js).
+  // viewers) keeps DFU's line - which DFU never asks for a foe at all (characters/enemy/enemyAttack.js).
   if (ctx?.entity) {
     const w = _swingReader?.(ctx) ?? null;
     return swingFrameSeconds(liveSpeed, {
@@ -39,7 +39,7 @@ export function getMeleeWeaponAnimTime(liveSpeed, ctx = null) {
 // bounded to [SWING_FRAME_MIN, SWING_FRAME_MAX]. A frame is never 0 (DFU's line was at 115, and the machine's loop
 // then never ended - Online-Arc "Recorded, not paid"). Roleplay & Realism's weaponSpeed and Items' weaponBalance keep
 // their own weight-and-Strength arithmetic as the Speed they read, and answer through this curve and this handling
-// (systems/rrRealism.js, systems/rriRealism.js). A declared departure: Ledger A (SWING-LAW).
+// (systems/roleplayRealism/rrRealism.js, systems/roleplayRealismItems/rriRealism.js). A declared departure: Ledger A (SWING-LAW).
 /** DFU's frame at Speed 50 - the swing every player had before DISC28-D, and this law's middle. */
 export const SWING_BASE_FRAME = (3 * (115 - 50)) / CLASSIC_FRAME_UPDATE;
 /** The TEMPO at Speed 0 and at 100: a straight line through 1 at 50 - each point of Speed takes the same 0.8% off the
@@ -94,7 +94,7 @@ export function swingFrameSeconds(speed, { heft = 1, handling = 1 } = {}) {
   return Math.max(SWING_FRAME_MIN, Math.min(SWING_FRAME_MAX, SWING_BASE_FRAME * swingTempo(speed) * heft * handling));
 }
 /** The weapon in the hand as the law reads it - `(ctx) => {weaponType, weight, strength, twoHanded}` or null - from a
- *  module that can read the equip table (combat/swingLaw.js, which registers it as it loads - combat/weaponRig.js
+ *  module that can read the equip table (combat/swingLaw.js, which registers it as it loads - combat/weapon/weaponRig.js
  *  imports it: AUDIT PRE-MERGE 0929 S5); this module is a leaf. Without one the
  *  law reads no heft, and the handling off `ctx.weaponType` alone. */
 let _swingReader = null;
@@ -163,7 +163,7 @@ export const LEFT_UNARMED_ANIMS = Object.freeze([0, 1, 2, 3, 4, 2, 1, 0]);
 /** WeaponManager.cs:343 - Random.Range((int)UpRight, (int)DownRight + 1)
  *  over MouseDirections {None, UpLeft, Up, UpRight, Left, Right,
  *  DownLeft, Down, DownRight}: indices 3..8. The swing-mode click's draw (combat/playerWeapon.js, which re-exports
- *  it) and the touch Attack button's (ui/touchButtons.js attackStroke) - one table. */
+ *  it) and the touch Attack button's (ui/touch/touchButtons.js attackStroke) - one table. */
 export const CLICK_ATTACK_DIRECTIONS = Object.freeze(['UpRight', 'Left', 'Right', 'DownLeft', 'Down', 'DownRight']);
 
 // WeaponManager.TrackMouseAttack verbatim: 15deg radial sections.
@@ -205,7 +205,7 @@ export function createWeaponMachine(isBow, isUnarmed = false) {
   // `frames` as the port's own fields. Null in every one of them is
   // "ask the classic formula", which is what a machine that never
   // sets them has always done.
-  return { isBow, isUnarmed, ranged: isBow, frames: null, tick: null, cooldown: null, hitFrame: null, state: 'Idle', frame: 0, ticks: 0, acc: 0, cooldownUntil: 0, now: 0, bowIdleDrawn: false, animIndex: 0, damageDone: false };
+  return { isBow, isUnarmed, ranged: isBow, frames: null, tick: null, cooldown: null, hitFrame: null, state: 'Idle', frame: 0, ticks: 0, acc: 0, cooldownUntil: 0, now: 0, bowIdleDrawn: false, animIndex: 0, damageDone: false, hold: 0 };
 }
 
 export function machineAttack(m, strikeState) {
@@ -216,6 +216,7 @@ export function machineAttack(m, strikeState) {
   if (!m.isBow || strikeState === 'Idle') { m.frame = 0; m.ticks = 0; }
   m.acc = 0;
   m.animIndex = 0; m.damageDone = false;   // leftUnarmedAnimIndex / isDamageFinished
+  m.hold = 0;   // TWO-HANDS (AUDIT 2): ticks held at the swing's end - set by its caller for an off-hand blow, else none
   return true;
 }
 
@@ -242,7 +243,7 @@ export function machineCancelBowDraw(m, liveSpeed = 50) {
  * and when it is done, in seconds from its first frame. The Morrowind arm is a picture of this machine (rule 24's note,
  * Morrowind-Rules.md: the hit frame is FPSWeapon's, not the .kf's), and a picture paced by the WEAP record's own speed
  * drew one blow while the machine struck two - the second refused, the hit landing mid-wind-up. The caller that starts
- * the arm's wind-up reads this at the strike's first frame (combat/weaponRig.js fpAttack) and the arm fits each section
+ * the arm's wind-up reads this at the strike's first frame (combat/weapon/weaponRig.js fpAttack) and the arm fits each section
  * of its blow into it (combat/fpArm.js blowRate).
  *
  * The machine steps ONCE per frame and drops the remainder (ARROW2, machineStep below), so a tick lasts the whole
@@ -260,9 +261,22 @@ export function blowSchedule(m, liveSpeed, animCtx = null, dt = 0) {
   if (m.isUnarmed && m.state === 'StrikeLeft') {
     return { seconds: LEFT_UNARMED_ANIMS.length * step, hitAt: (LEFT_UNARMED_ANIMS.indexOf(HIT_FRAME_MELEE) + 1) * step, step };
   }
-  const frames = (m.frames ?? MELEE_NUM_FRAMES)[m.state] ?? 5;
-  return { seconds: frames * step, hitAt: (m.hitFrame ?? HIT_FRAME_MELEE) * step, step };
+  // TWO-HANDS (AUDIT): timed from the frame the strike stands on - 0 for every strike DFU begins, 1 for a pair's flurry
+  // (handsLaw.js DUAL.FLURRY_FROM_FRAME: the blow thrown from the raised hand) - and (AUDIT 2) to the end of the ticks
+  // held after its last frame (an off-hand blow's burden), the hit before them
+  const at = Math.max(0, m.frame | 0);
+  return { seconds: (strikeTicks(m) + holdOf(m)) * step, hitAt: Math.max(0, (m.hitFrame ?? HIT_FRAME_MELEE) - at) * step, step };
 }
+
+/** TWO-HANDS (AUDIT 2): the ticks a melee strike just begun takes from the frame it stands on to its end - FPSWeapon's
+ *  eight-tick list for the unarmed strike to the left, else its frames past the one it stands on - before any held at
+ *  its end (`m.hold`, machineStep). What an off-hand blow's burden is reckoned on (combat/twoHands/handsLaw.js offHandHold). */
+export function strikeTicks(m) {
+  if (m.isUnarmed && m.state === 'StrikeLeft') return LEFT_UNARMED_ANIMS.length;
+  const frames = (m.frames ?? MELEE_NUM_FRAMES)[m.state] ?? 5;
+  return Math.max(0, frames - Math.max(0, m.frame | 0));
+}
+const holdOf = (m) => (m.hold > 0 ? m.hold | 0 : 0);
 
 export function machineStep(m, dt, liveSpeed, animCtx = null) {   // AUDIT-RR F1: the rig's { entity, weaponType, usingRightHand } for a registered GetMeleeWeaponAnimTime override
   m.now += dt;
@@ -337,6 +351,9 @@ export function machineStep(m, dt, liveSpeed, animCtx = null) {   // AUDIT-RR F1
       m.ticks++;                                        // held-time keeps counting (GetAnimTime)
       if (m.ticks * tick > MAX_BOW_HELD_DRAWN_SECONDS) { machineCancelBowDraw(m, liveSpeed); events.push('undraw'); break; }
     } else {
+      // TWO-HANDS (AUDIT 2): an off-hand blow's burden (combat/twoHands/handsLaw.js offHandHold) - whole ticks held on its last
+      // frame, after its hit, one a resume as every tick is; the picture's clones wait out a machine still attacking
+      if (m.hold > 0 && m.frame >= frames - 1) { m.hold -= 1; continue; }
       m.frame++;
       if (m.frame === (m.isBow ? BOW_SOUND_FRAME : -1)) events.push('bowSound');
       // FIELD-GUN7: the lab lands the shot on frame 1 - the muzzle

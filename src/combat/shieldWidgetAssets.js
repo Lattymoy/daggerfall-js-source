@@ -69,7 +69,7 @@ export const shieldSpritePath = (index) => `vendor/shield-widget/Textures/${shie
  *  setting and not this mod's business" - and that deference is exactly
  *  how 275 of these went into the boot chunk as 1.34 MB of base64. The
  *  project's setting now refuses to inline anything under vendor/
- *  (vite.config.js, test/vendorinline.test.js). */
+ *  (vite.config.js, test/ui/vendorinline.test.js). */
 export const shieldSpriteUrl = (index) => {
   const { archive, record, frame } = shieldTextureName(index);
   return new URL(`../../vendor/shield-widget/Textures/${archive}_${record}-${frame}.png`, import.meta.url).href;

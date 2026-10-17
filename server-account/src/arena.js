@@ -13,7 +13,7 @@
 // ═══ A ROW IS A RECEIPT ════════════════════════════════════════════
 //
 // Every result here was refereed by the relay and SIGNED by it
-// (src/net/arenaReceipt.js). The claim verifies the signature with the
+// (src/net/arena/arenaReceipt.js). The claim verifies the signature with the
 // relay's public half (the gate's own key, GATE_PUBLIC_KEY) and writes
 // ONE row keyed by the bout's id - so a receipt counts once whoever
 // carries it, and a bout between two players is one row whichever of
@@ -23,7 +23,7 @@
 //
 // A ladder WIN is written only where it is the account's next bout:
 // the won rows are only ever written in order, so their count IS the
-// next bout's key (src/net/arenaLaw.js ladderKey), and the INSERT asks
+// next bout's key (src/net/arena/arenaLaw.js ladderKey), and the INSERT asks
 // exactly that in its own WHERE. Two claims at once cannot both step,
 // and no receipt for the Grand Champion lands on an account that has not
 // won the thirty-nine bouts under it. A loss is kept whatever its order
@@ -39,12 +39,12 @@
 // the laurel while the account is the season's #1 - so the laurel passes
 // to whoever takes the top and lapses by itself, with no cron.
 // ═══════════════════════════════════════════════════════════════════
-import { verifyArenaReceipt } from '../../src/net/arenaReceipt.js';
+import { verifyArenaReceipt } from '../../src/net/arena/arenaReceipt.js';
 import {
   arenaSeasonOf, arenaSeasonEndsS, arenaSeasonDay, eloAfter, ARENA_ELO_START, arenaLadderOf, ladderKey, ARENA_BANNERS, ARENA_TEAM_POINTS,
   ARENA_TIERS, ARENA_TIER_BOUTS, ARENA_PAIR_DAY_MAX, ARENA_CHAMPION_MIN_BOUTS, arenaRatingOk, ARENA_ELO_MIN, ARENA_ELO_MAX,
   ARENA_CHAMPION_MIN_FOES, ARENA_PAIR_SEASON_MAX, ARENA_TICKET_RE, arenaNextOf, ARENA_BOUT_ID_RE, ARENA_ATTEMPT_LIFE_S,   // AUDIT ARENA-LADDER
-} from '../../src/net/arenaLaw.js';
+} from '../../src/net/arena/arenaLaw.js';
 import { boardNamesOf } from './boardNames.js';   // AUDIT CARDS-6 D3: a board's names wear every honour, Iliac Hand's too
 import { renownQuestXp } from '../../src/net/renown.js';   // ARENA4b: a bout's Renown, sized as quests are
 import { reportRenownXp, renownTrackOf, renownCharacterOk } from './renownTracks.js';   // ARENA4b: credited through the renown law's own door
@@ -133,11 +133,11 @@ export async function arenaPveOf({ db }, playerId) {
   const n = (v) => Number(v ?? 0) || 0;
   return { won, record: { wins: n(r?.wins), losses: n(r?.losses), yields: n(r?.yields), falls: n(r?.falls), ringouts: n(r?.ringouts) } };
 }
-/** The account's ladder, in the save ladder's own shape (src/net/arenaLaw.js arenaLadderOf). */
+/** The account's ladder, in the save ladder's own shape (src/net/arena/arenaLaw.js arenaLadderOf). */
 export async function arenaLadderOfAccount(ctx, playerId) {
   const { won, record } = await arenaPveOf(ctx, playerId);
   const L = arenaLadderOf(won, record);
-  // AUDIT ARENA-LADDER 2: `paid` - the current tier's bouts ever won, broken runs' too (src/systems/arenaLadder.js): a bout
+  // AUDIT ARENA-LADDER 2: `paid` - the current tier's bouts ever won, broken runs' too (src/systems/arena/arenaLadder.js): a bout
   // won again after a lost run is told so before it is fought (no purse, no points, no Renown - claimLadder's `repeat`)
   const p = await ctx.db.prepare(`SELECT COUNT(DISTINCT step) AS n FROM arena_pve WHERE player = ?1 AND tier = ?2 AND won = 1 AND step < ${ARENA_TIER_BOUTS}`).bind(playerId, L.tier).first();
   return { ...L, paid: Math.max(L.won ?? 0, Math.min(ARENA_TIER_BOUTS, Number(p?.n ?? 0) || 0)) };
@@ -209,7 +209,14 @@ export function _resetArenaCache() { _champ = { season: 0, at: -Infinity, id: nu
 async function championNow(ctx, nowS) {
   const season = arenaSeasonOf(nowS);
   if (_champ.season === season && nowS - _champ.at < ARENA_CHAMPION_CACHE_S) return _champ.id;
-  const kept = await ctx.db.prepare('SELECT player, at FROM arena_champions WHERE season = ?1').bind(season).first();
+  return championFrom(ctx, nowS, season, await championKeptRead(ctx.db, season).first());
+}
+/** SIGN-BATCH: a Grand Champion's row (the ladder's top tier's last bout won), as a statement - one home for both readers. */
+const grandRead = (/** @type {any} */ db, /** @type {string} */ id) => db.prepare(`SELECT 1 AS one FROM arena_pve WHERE player = ?1 AND tier = ${GRAND_TIER} AND step = ${ARENA_TIER_BOUTS} AND won = 1 LIMIT 1`).bind(id);
+/** SIGN-BATCH: the kept #1's row, as a statement. */
+const championKeptRead = (/** @type {any} */ db, /** @type {number} */ season) => db.prepare('SELECT player, at FROM arena_champions WHERE season = ?1').bind(season);
+/** The season's #1 from its kept row - counted again and stored where it is none or stale - and kept by this Worker. */
+async function championFrom(/** @type {any} */ ctx, /** @type {number} */ nowS, /** @type {number} */ season, /** @type {any} */ kept) {
   const id = kept && nowS - Number(kept.at) < ARENA_CHAMPION_STORED_S ? kept.player ?? null : await storeArenaChampion(ctx, season, nowS);
   _champ = { season, at: nowS, id };
   return id;
@@ -223,9 +230,26 @@ async function championNow(ctx, nowS) {
  */
 export async function arenaHonoursOf(ctx, player, nowS) {
   if (!player?.handle) return { grand: false, champion: false };
-  const g = await ctx.db.prepare(`SELECT 1 AS one FROM arena_pve WHERE player = ?1 AND tier = ${GRAND_TIER} AND step = ${ARENA_TIER_BOUTS} AND won = 1 LIMIT 1`).bind(player.id).first();
+  const g = await grandRead(ctx.db, player.id).first();
   const champion = (await championNow(ctx, nowS)) === player.id;
   return { grand: !!g, champion };
+}
+/** SIGN-BATCH (2026-10-16, the account database's primary at its ceiling of round trips - bible/11-Multiplayer/Scale-Arc.md
+ *  SIGN-BATCH): arenaHonoursOf as its reads - the Grand Champion's row, and the kept #1's where this Worker kept none - and
+ *  its answer from theirs, so the doors that read a badge (honours.js withHonours) ask the three games' honours in ONE
+ *  batch. The answer is arenaHonoursOf's: a stale #1 counted again and stored as championNow stores it. */
+export function arenaHonoursPlan(/** @type {any} */ ctx, /** @type {any} */ player, /** @type {number} */ nowS) {
+  if (!player?.handle) return { reads: [], from: async () => ({ grand: false, champion: false }) };
+  const season = arenaSeasonOf(nowS);
+  const cached = _champ.season === season && nowS - _champ.at < ARENA_CHAMPION_CACHE_S;
+  const keptId = cached ? _champ.id : null;   // PRIMARY-TRIPS audit: the #1 kept when the plan was made - read after the batch, another request's count of a new season could stand in its place
+  return {
+    reads: [grandRead(ctx.db, player.id), ...(cached ? [] : [championKeptRead(ctx.db, season)])],
+    from: async (/** @type {any[]} */ res) => ({
+      grand: !!res[0]?.results?.[0],
+      champion: (cached ? keptId : await championFrom(ctx, nowS, season, res[1]?.results?.[0] ?? null)) === player.id,
+    }),
+  };
 }
 /** The row with its honours on it - what titles.js reads (`arena`). */
 export async function withArenaHonours(ctx, player, nowS) {
@@ -318,7 +342,7 @@ async function claimLadder(ctx, player, c, season, banner) {
   const won = c.r === 1;
   const repeat = won && await wonBefore(db, player.id, c.q, c.u);
   if (repeat) banner = null;
-  // AUDIT ARENA-LADDER: A TICKETED ATTEMPT (`z`, net/arenaReceipt.js) - its row keyed by the ticket, the account's own
+  // AUDIT ARENA-LADDER: A TICKETED ATTEMPT (`z`, net/arena/arenaReceipt.js) - its row keyed by the ticket, the account's own
   // and this tier and bout's; a loss breaks the tier's run in the same write, and the attempt is done
   if (c.z !== undefined) {
     const att = await db.prepare('SELECT player, tier, step, room, at, done FROM arena_attempts WHERE id = ?1').bind(c.z).first();
@@ -407,7 +431,7 @@ async function claimPlayers(ctx, player, c, season) {
     }
     if (row) return { recorded: false, why: 'claimed', ...(await pvpAnswer(ctx, player.id, row)) };
   }
-  return { error: 'busy' };   // the receipt is kept and carried again (net/arenaClaims.js - every error but a receipt's)
+  return { error: 'busy' };   // the receipt is kept and carried again (net/arena/arenaClaims.js - every error but a receipt's)
 }
 /** AUDIT ARENA-LADDER 2: how long a done attempt is kept (a week - a receipt's own life), then let go. */
 export const ARENA_ATTEMPTS_KEEP_S = 7 * 86400;
@@ -415,7 +439,7 @@ export const ARENA_ATTEMPTS_KEEP_S = 7 * 86400;
  * AUDIT ARENA-LADDER: AN ATTEMPT AT THE ACCOUNT'S NEXT LADDER BOUT - its ticket (16 hex), which the relay opens the bout
  * for and signs into its receipt (`z`). Every attempt still open is FORFEIT first: its loss row written now (`forfeit`),
  * its tier's run broken - so a bout lost and never carried here is lost all the same, and one walked away from is too.
- * The client carries every receipt it holds before it asks (scenes/arenaOnline.js), so a win it fought is counted, not
+ * The client carries every receipt it holds before it asks (scenes/arena/arenaOnline.js), so a win it fought is counted, not
  * forfeit. `tier`/`bout` must be the account's next (`order` and the ladder otherwise - a device behind the climb).
  * A guest's attempt is minted and forfeit alike, and nothing of it is kept as a row (a guest's bouts are not counted).
  */
@@ -475,7 +499,7 @@ async function pvpAnswer(ctx, me, row) {
 // ── THE BANNERS ──────────────────────────────────────────────────────────────────────────────
 /**
  * JOIN OR QUIT A BANNER - `banner` 'red' or 'blue' to join, null to quit. Free; quitting is at once; the OTHER banner
- * is refused until the next season (`season`), the banner quit takes you back at once (systems/arenaLeague.js's law).
+ * is refused until the next season (`season`), the banner quit takes you back at once (systems/arena/arenaLeague.js's law).
  * A guest joins none (`guest`); a second banner while one is worn is `joined`.
  * @param {{ db: any, nowS: number }} ctx
  */
@@ -577,9 +601,11 @@ export async function arenaRecordsOf({ db }, me) {
 }
 
 // ── THE BOARD ────────────────────────────────────────────────────────────────────────────────
-/** The ranked rows cut to the top and the caller's own pinned under them when it is not among them. */
-function topWithMe(rows, me, top = ARENA_BOARD_TOP) {
-  rows.forEach((r, i) => { r.rank = i + 1; r.you = r.player === me; });
+/** The ranked rows cut to the top and the caller's own pinned under them when it is not among them. EG-E2: exported for
+ *  the Elite Breach's boards (egHonours.js egBoardOf), and `me` may be a test of a row - a Descent row is a company,
+ *  the caller's whichever names them - where every other board's is the caller's id. */
+export function topWithMe(rows, me, top = ARENA_BOARD_TOP) {
+  rows.forEach((r, i) => { r.rank = i + 1; r.you = typeof me === 'function' ? !!me(r) : r.player === me; });
   const shown = rows.slice(0, top);
   const mine = rows.find((r) => r.you) ?? null;
   return { rows: shown, pinned: mine && !shown.includes(mine) ? mine : null, total: rows.length };

@@ -1,19 +1,19 @@
 // ARENA3, MEASURED (2026-10-02, Mac: "Joining a team comes with it's own enhanced UI where you can view your ranking and
-// even player leaderboards"; "All UI elements and text must be enhanced UI plus"): THE ARENA WINDOW (ui/arenaWindow.js)
+// even player leaderboards"; "All UI elements and text must be enhanced UI plus"): THE ARENA WINDOW (ui/arena/arenaWindow.js)
 // drawn over the real sheets in Chromium - the Enhanced Plus skin and the classic skin's own sheet - at a desktop's
 // width, a narrow window's and a phone's, on every page (Bouts with the wager open, Ladder, Team, each Leaderboard,
 // Records, Rules), over a save with something on every page: a fighter of the Red Banner two tiers up, in the laurel,
 // with bouts behind them, a wager won and one waiting. Each must stand inside the viewport with nothing spilling
 // sideways and the page never scrolling sideways, its words in the pixel face, and every tab a `role="tab"`.
-// test/arena3_window.test.js holds the window's law on a fake page; this photographs what a fake cannot.
+// test/systems/arena/arena3_window.test.js holds the window's law on a fake page; this photographs what a fake cannot.
 // Photographs to SHOT_DIR (default tools/shots/, ignored).
 // ARENA4b: and THE WINDOW ONLINE over a realm's board (the service's `/v1/arena/board`, with the account's `me.record` and
 // `me.recent`): the Records page the account's (its note, its record, its last bouts - a rated bout's rating in its line),
 // no purses chip in the header, and the Leaderboards' fastest Grand Champion with the realm's Hall of Champions under it
-// (test/arena4b_window.test.js holds the law).
-// ARENA5: and YOUR LADDER REPLAY on the Records page - the save keeps three of its bouts (systems/arenaReplay.js), each
+// (test/systems/arena/arena4b_window.test.js holds the law).
+// ARENA5: and YOUR LADDER REPLAY on the Records page - the save keeps three of its bouts (systems/arena/arenaReplay.js), each
 // row the records keep carrying Watch the replay: inside the window at every width, and its press the host's
-// (`act('replay', { i })`); test/arena5_replay.test.js holds the law.
+// (`act('replay', { i })`); test/systems/arena/arena5_replay.test.js holds the law.
 //
 //     node tools/arenaWindowProbe.mjs
 import { createServer } from 'vite';
@@ -36,12 +36,12 @@ for (const [W, H, width] of [[1440, 900, 'desktop'], [800, 600, 'narrow'], [390,
   page.on('pageerror', (e) => errors.push(String(e.message)));
   await page.goto(`http://localhost:5244/play/?skin=${skin}&touch=off`);
   await page.evaluate(async () => {
-    const LG = await import('/src/systems/arenaLeague.js');
-    const BK = await import('/src/systems/arenaBook.js');
-    const AL = await import('/src/systems/arenaLadder.js');
-    const AB = await import('/src/systems/arenaBoard.js');
-    const RP = await import('/src/systems/arenaReplay.js');   // ARENA5
-    const { mountArenaWindow } = await import('/src/ui/arenaWindow.js');
+    const LG = await import('/src/systems/arena/arenaLeague.js');
+    const BK = await import('/src/systems/arena/arenaBook.js');
+    const AL = await import('/src/systems/arena/arenaLadder.js');
+    const AB = await import('/src/systems/arena/arenaBoard.js');
+    const RP = await import('/src/systems/arena/arenaReplay.js');   // ARENA5
+    const { mountArenaWindow } = await import('/src/ui/arena/arenaWindow.js');
     document.body.innerHTML = '';
     document.body.style.cssText = 'margin:0;background:repeating-linear-gradient(45deg,#2a2721 0 14px,#231f1a 14px 28px);height:100vh';
     // a save with something on every page: noon of day 200 of 3E 405, the Red Banner, in the laurel
@@ -85,9 +85,9 @@ for (const [W, H, width] of [[1440, 900, 'desktop'], [800, 600, 'narrow'], [390,
     if (online && !(await page.evaluate(() => !!window.__online))) {
       // ARENA4b: the window remounted over a realm's board - the account's record and last bouts, the realm's Hall
       await page.evaluate(async () => {
-        const AB = await import('/src/systems/arenaBoard.js');
-        const { mountArenaWindow } = await import('/src/ui/arenaWindow.js');
-        const L = await import('/src/net/arenaLaw.js');
+        const AB = await import('/src/systems/arena/arenaBoard.js');
+        const { mountArenaWindow } = await import('/src/ui/arena/arenaWindow.js');
+        const L = await import('/src/net/arena/arenaLaw.js');
         window.__arenaView.unmount();
         const atS = (n, d) => L.ARENA_SEASON_EPOCH_S + (n - 1) * L.ARENA_SEASON_S + (d - 1) * 86400 + 3600;
         const climb = (n) => L.arenaLadderOf(Array.from({ length: n }, (_, k) => ({ tier: Math.floor(k / 4), bout: k % 4 })), { wins: n, losses: 3, best: 5 });

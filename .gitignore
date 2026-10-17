@@ -100,3 +100,5 @@ tools/shots/
 *.mutbak
 # TAMRIEL1: the fit probe's render of the player's own picture (tools/tamrielFitProbe.mjs default --out).
 tamriel-shots/
+# WEAPON-GLOW1 (AUDIT DOC-16): the glow probe's pictures (tools/weaponGlowProbe.mjs default outDir) - no game data, never committed.
+weapon-glow-probe/

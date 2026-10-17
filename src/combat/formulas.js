@@ -20,7 +20,7 @@
 // biography adjustments and per-part armor SHIPPED - the first two
 // live in this very file.)
 
-import { MELEE_DISTANCE } from '../characters/enemyMotor.js';   // single source (EnemyAttack.cs:30)
+import { MELEE_DISTANCE } from '../characters/enemy/enemyMotor.js';   // single source (EnemyAttack.cs:30)
 import { CLASSIC_TO_UNITY_RATIO } from '../player/motor.js';   // C15 knockback units
 import { rand } from '../formats/dfRandom.js';
 import { enchantChanceToHitMod, doItemEnchantmentPayloads, PAYLOAD, isEnchantedItem, entityImprovedAdrenalineRush } from '../systems/enchantments.js';   // E1: the enchantment channels + the Strikes payload; AUDIT 39: ImprovesTalents' adrenaline flag lives in the fold's bag   // the monster multi-attack reflex gate (F2)
@@ -553,7 +553,7 @@ export function dropWeaponIfTargetImmune(weapon, targetEntity) {
  *  slot. Breaks speak and unequip through lowerCondition. */
 export function damageEquipment(attacker, target, damage, weapon, struckBodyPart, { rolls = Math.random, say = null } = {}) {
   // WBX6 (2026-09-26, Swololo on Discord: "I broke one and a half of a weapon during the fight"): A BLOW ON THE WARDEN
-  // OF THE BURNING GATE WEARS NOTHING. His body is a stand-in the relay judges (world/gateBoss.js bossStandIn carries
+  // OF THE BURNING GATE WEARS NOTHING. His body is a stand-in the relay judges (world/gate/gateBoss.js bossStandIn carries
   // `spareGear`), a fight measured in hundreds of blows, and it broke weapons it was never meant to. A departure (Ledger
   // A, WB): every other foe wears the gear as DFU's does, and the override below is never asked for him either.
   if (target?.spareGear) return;
@@ -581,7 +581,7 @@ export function damageEquipment(attacker, target, damage, weapon, struckBodyPart
   }
 }
 
-export function calculateAttackDamage(attacker, target, { weapon = null, damageMod = 0, toHitMod = 0, backstabChance = 0, weaponAnimTime = 0, rolls = Math.random, dfRand = rand, onMonsterHit = null, onInflictPoison = null, say = null, enchantCtx = null, playerReflexes = null, unaware = false, blowInfo = null } = {}) {
+export function calculateAttackDamage(attacker, target, { weapon = null, damageMod = 0, toHitMod = 0, backstabChance = 0, weaponAnimTime = 0, rolls = Math.random, dfRand = rand, onMonsterHit = null, onInflictPoison = null, say = null, enchantCtx = null, playerReflexes = null, unaware = false, blowInfo = null, blowShare = null, blowWeight = 1 } = {}) {
   if (!attacker || !target) return 0;
   // SOFTCAP1: THE FOE THIS BLOW WAS TRADED WITH, remembered on the player
   // for the tallies that follow it (hit or miss - a swing at a tough foe is
@@ -608,7 +608,7 @@ export function calculateAttackDamage(attacker, target, { weapon = null, damageM
       try { _playerAttackHook({ ...notes, damage, attacker, target, weapon }); } catch { /* a HUD is not the formula's problem */ }
     }
     // ARENA-FIX 9/10: every resolution, whoever swung - the arena's judges count the misses and its crowd hears the
-    // critical strikes (scenes/arenaBouts.js attackResolved)
+    // critical strikes (scenes/arena/arenaBouts.js attackResolved)
     if (_resolutionListeners.size) for (const fn of _resolutionListeners.values()) { try { fn({ ...notes, damage, attacker, target, weapon }); } catch { /* a listener is not the blow's problem */ } }
     return damage;
   };
@@ -621,10 +621,16 @@ export function calculateAttackDamage(attacker, target, { weapon = null, damageM
   // WIDGET-RECOIL (FIELD BUGS 2026-10-03, SlipperyPeasant: "I think the recoil module isnt working either"): a core
   // that rolls its own part hands it back (`onStruck`) - PCAAO's, on by default, rolled one the tail never saw, so the
   // struck hook said -1 on every blow and the Shield Widget's "Attack On Shield" Recoil (its default) never fired
-  const overridden = core ? core(attacker, target, { weapon, damageMod, toHitMod, backstabChance, weaponAnimTime, rolls, dfRand, onMonsterHit, onInflictPoison, say, playerReflexes, notes, onStruck: (part) => (struckPart = part), unaware }) : undefined;
+  const overridden = core ? core(attacker, target, { weapon, damageMod, toHitMod, backstabChance, weaponAnimTime, rolls, dfRand, onMonsterHit, onInflictPoison, say, playerReflexes, notes, onStruck: (part) => (struckPart = part), unaware, blowShare }) : undefined;
   let damage = 0;
+  // TWO-HANDS (AUDIT, bible/05-Combat/Two-Hands.md): THE BLOW'S SHARE - the off hand's (handsLaw.js offHandDamage), a
+  // function of the rolled damage - laid where the blow is rolled, before anything reads it: in the stock core ahead of
+  // the equipment's wear, after a mod's core; so the HUD, the strike listeners (a leech, an echo), the Strikes payloads
+  // and the report all see the blow that landed, never the whole roll. Null for every other blow. (AUDIT 2: a core that
+  // takes the share itself - PCAAO's, ahead of its own wear - says so, `notes.shared`, and is not shared twice.)
+  const shared = (d) => (blowShare && d > 0 ? blowShare(d) : d);
   if (overridden !== undefined) {
-    damage = overridden;
+    damage = notes.shared ? overridden : shared(overridden);
   } else {
   if (weapon && (target.minMetalToHit ?? -1) > weapon.material) {
     // L-slice (AUDIT 23 combat-16): FormulaHelper.cs:576-583 - a
@@ -737,7 +743,7 @@ export function calculateAttackDamage(attacker, target, { weapon = null, damageM
     if (onInflictPoison) onInflictPoison(attacker, target, weapon.poisonType);
     weapon.poisonType = -1;
   }
-  damage = Math.max(0, damage);
+  damage = shared(Math.max(0, damage));
   // FormulaHelper.cs:699-701: the equipment damages at the TAIL with
   // the clamped value, whatever the hit rolled.
   damageEquipment(attacker, target, damage, weapon, struck, { rolls, say });
@@ -797,7 +803,12 @@ export function calculateAttackDamage(attacker, target, { weapon = null, damageM
   // admits at zero is HealthLeech's use-stamp. The payloads can
   // modulate the damage (PotentVs +5, LowDamageVs -5) and the total
   // clamps at 0 inside the dispatcher.
-  if (weapon && isEnchantedItem(weapon) && (attacker.isPlayer || damage > 0)) {
+  // TWO-HANDS (AUDIT 2, bible/05-Combat/Two-Hands.md): THE BLOW'S WEIGHT - an off-hand blow is DUAL.OFF_DAMAGE of a blow
+  // (handsLaw.js OFF_HAND_BLOW) for what a blow sets off at its own rate rather than its damage's: on one roll it counts
+  // whole that share of the time, and otherwise sets off neither the weapon's Strikes payloads below (Cast When Strikes'
+  // spell, Potent Vs' five) nor a power's per-blow charge (the strike listeners' `blow`). Every other blow is whole.
+  const whole = !(blowWeight < 1) || rolls() < blowWeight;
+  if (weapon && isEnchantedItem(weapon) && (attacker.isPlayer || damage > 0) && whole) {
     damage = doItemEnchantmentPayloads(PAYLOAD.Strikes, weapon, {
       entity: attacker, target, damage,
       // AUDIT 39: null, not 0 - no caller passes an enchantCtx here, and
@@ -841,7 +852,7 @@ export function calculateAttackDamage(attacker, target, { weapon = null, damageM
   // core's crits, materials and armour, which PCAAO's apply after the blow modifiers), so a power that shares the blow
   // (Ruhn's Cleave) shares what landed, never the number before the struck foe's own armour took its part
   if (attacker.isPlayer && !attacker.peer && !target.isPlayer && damage > 0) {
-    const info = { backstab: notes.backstab };   // RVN1: and whether it was a backstab (the fight's ledger, systems/feudLedger.js)
+    const info = { backstab: notes.backstab, blow: whole };   // RVN1: and whether it was a backstab (the fight's ledger, systems/feudLedger.js); AUDIT 2: whether it counts whole for a per-blow charge
     for (const fn of _playerStrikeListeners.values()) { try { fn(attacker, target, damage, weapon, info); } catch { /* a set is not the blow's problem */ } }
   }
   return report(damage);

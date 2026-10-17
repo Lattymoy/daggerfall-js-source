@@ -1,0 +1,119 @@
+[
+  {
+    "name": "ROLL-PACE-the-first-day-uncounted",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "Math.max(0, utcDay(nowS) - utcDay(sinceS)) : 0) + 1;",
+    "new": "Math.max(0, utcDay(nowS) - utcDay(sinceS)) : 0);",
+    "tests": [
+      "test/systems/guild/fb1015f_rollpace.test.js"
+    ]
+  },
+  {
+    "name": "ROLL-PACE-the-reputation-unread",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "rollRankCapOf(Math.min(rollRep(standing.rep), paid))",
+    "new": "rollRankCapOf(paid)",
+    "tests": [
+      "test/systems/guild/fb1015f_rollpace.test.js"
+    ]
+  },
+  {
+    "name": "ROLL-PACE-the-book-unbounded",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "  return Math.min(ROLL_BOOK_RANK_MAX, rollRankCapOf(Math.min(rollRep(standing.rep), paid)));",
+    "new": "  return Math.min(9, rollRankCapOf(Math.min(rollRep(standing.rep), paid)));",
+    "tests": [
+      "test/systems/guild/fb1015f_rollpace.test.js"
+    ]
+  },
+  {
+    "name": "ROLL-PACE-a-promotion-before-the-first-word",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "  if (!standing) return 0;\n  const paid",
+    "new": "  if (!standing) return ROLL_BOOK_RANK_MAX;\n  const paid",
+    "tests": [
+      "test/systems/guild/fb1015f_rollpace.test.js"
+    ]
+  },
+  {
+    "name": "ROLL-PACE-the-reputation-s-null",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "  if (rollRep(standing.rep) < need) return null;\n",
+    "new": "",
+    "tests": [
+      "test/systems/guild/fb1015f_rollpace.test.js"
+    ]
+  },
+  {
+    "name": "ROLL-PACE-the-wait-off-by-a-day",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "Math.ceil(need / ROLL_GAIN_DAY_MAX) - rollPaceDays(standing.since, nowS));",
+    "new": "Math.ceil(need / ROLL_GAIN_DAY_MAX) - rollPaceDays(standing.since, nowS) + 1);",
+    "tests": [
+      "test/systems/guild/fb1015f_rollpace.test.js"
+    ]
+  },
+  {
+    "name": "ROLL-PACE-the-membership-s-start-unread",
+    "file": "src/net/npcRollTracker.js",
+    "old": "since: sinces.get(f) ?? null }",
+    "new": "since: null }",
+    "tests": [
+      "test/systems/guild/fb1015f_rollpace.test.js"
+    ]
+  },
+  {
+    "name": "ROLL-PACE-a-stopped-roll-paces",
+    "file": "src/net/npcRollTracker.js",
+    "old": "  if (!tracker || tracker.stopped) return null;\n  const standing",
+    "new": "  if (!tracker) return null;\n  const standing",
+    "tests": [
+      "test/systems/guild/fb1015f_rollpace.test.js"
+    ]
+  },
+  {
+    "name": "ROLL-PACE-the-host-s-ceiling-the-book-s",
+    "file": "src/scenes/worldModes.js",
+    "old": "        rankCeiling: host.rollPace?.(guild.factionId)?.ceiling ?? null,",
+    "new": "        rankCeiling: host.rollPace?.(guild.factionId)?.book ?? null,",
+    "tests": [
+      "test/systems/guild/fb1015f_rollpace.test.js"
+    ]
+  },
+  {
+    "name": "ROLL-PACE-no-wait-without-the-roll",
+    "file": "src/scenes/worldModes.js",
+    "old": "        promoteWhenEarned: sharedClockOn() && !!host.rollPace?.(guild.factionId),",
+    "new": "        promoteWhenEarned: sharedClockOn(),",
+    "tests": [
+      "test/systems/guild/fb1015f_rollpace.test.js"
+    ]
+  },
+  {
+    "name": "ROLL-PACE-the-hall-s-line-dropped",
+    "file": "src/systems/guild/guildServiceFlow.js",
+    "old": "  if (wait > 0) lines.push(t('guild.rankNeeds.paced',",
+    "new": "  if (false) lines.push(t('guild.rankNeeds.paced',",
+    "tests": [
+      "test/systems/guild/fb1015f_rollpace.test.js"
+    ]
+  },
+  {
+    "name": "ROLL-PACE-the-host-hands-none",
+    "file": "src/scenes/world.js",
+    "old": "    rollPace: (f) => rollPaceOf(rollTracker, f, Math.floor(Date.now() / 1000)),",
+    "new": "    rollPace: () => null,",
+    "tests": [
+      "test/systems/guild/fb1015f_rollpace.test.js"
+    ]
+  },
+  {
+    "name": "ROLL-PACE-the-held-rank-taken",
+    "file": "src/systems/guild/guilds.js",
+    "old": "Math.max(ceiling, Math.min(ruled, m.rank))",
+    "new": "ceiling",
+    "tests": [
+      "test/systems/guild/fb1015f_rollpace.test.js"
+    ]
+  }
+]

@@ -6,7 +6,7 @@
 // attributes, by their camelled names; `closest` and `querySelector(All)` walk the tree; the window's listeners are the
 // test's to fire (`doc.fire`).
 import { setPref, _resetForTests as resetPrefs } from '../src/systems/uiPrefs.js';
-import { HUD_LAYOUT_PREF, _resetHudLayoutForTests } from '../src/ui/hudLayout.js';
+import { HUD_LAYOUT_PREF, _resetHudLayoutForTests } from '../src/ui/hud/hudLayout.js';
 
 /** A compound selector - `.a`, `#b`, `[c]`, `[c="v"]`, `.a[c="v"]` - against one node. */
 function matchesCompound(n, sel) {

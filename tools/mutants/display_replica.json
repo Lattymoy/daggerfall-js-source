@@ -5,7 +5,7 @@
   "old": "  ['/v1/homes/town', 'POST'],\n  ['/v1/homes/mine', 'POST'],",
   "new": "  ['/v1/homes/mine', 'POST'],",
   "tests": [
-   "test/display_replica.test.js"
+   "test/server/display_replica.test.js"
   ],
   "note": "the busiest display read back on the binding"
  },
@@ -15,7 +15,7 @@
   "old": "  ['/v1/saves', 'GET'],\n  ['/v1/arena/board', 'POST'],\n]);",
   "new": "  ['/v1/saves', 'GET'],\n]);",
   "tests": [
-   "test/display_replica.test.js"
+   "test/server/display_replica.test.js"
   ],
   "note": "the arena's board back on the binding"
  },
@@ -25,7 +25,7 @@
   "old": "  ['/v1/homes/town', 'POST'],\n  ['/v1/homes/mine', 'POST'],",
   "new": "  ['/v1/homes/mine', 'POST'],",
   "tests": [
-   "test/display_replica.test.js"
+   "test/server/display_replica.test.js"
   ],
   "note": "the page sends no bookmark on a town's homes, and forgets its own on each"
  },
@@ -35,7 +35,7 @@
   "old": "const opener = typeof db?.withSession === 'function' ? db : root;",
   "new": "const opener = db;",
   "tests": [
-   "test/display_replica.test.js"
+   "test/server/display_replica.test.js"
   ],
   "note": "a seat read asked from a request's session reads on that session"
  }

@@ -1,6 +1,6 @@
 // SEAT-COUNT (bible/11-Multiplayer/Seats-Arc.md 3.1: "tools/seatCount.mjs ... walks MAPS.BSA from ARENA2_PATH exactly as
 // the boot pass does and prints every seat (region, kingdom, name, tier, hub or not, whether its blocks place a bulletin
-// board, the pixel) and the totals. It writes nothing to the tree; Mac runs it."). The seats are systems/townSeats.js
+// board, the pixel) and the totals. It writes nothing to the tree; Mac runs it."). The seats are systems/town/townSeats.js
 // deriveTownSeats over the game's own rows (the boot pass's, regionHubs.js pickRegionHubs's); each is laid out
 // (world/locationLayout.js) and its bulletin boards tallied as BOARD-COUNT tallies a hub's (tools/boardCount.mjs), so a
 // seat whose blocks place no Notice Board is named - PROF0 10.1's "a seat ... whose blocks place no board gets one".
@@ -14,8 +14,8 @@ import { isMain } from './lib/isMain.mjs';
 import { BlocksFile } from '../src/formats/blocksFile.js';
 import { MapsFile } from '../src/formats/mapsFile.js';
 import { layoutLocation } from '../src/world/locationLayout.js';
-import { pickRegionHubs } from '../src/systems/regionHubs.js';
-import { deriveTownSeats, seatTotals } from '../src/systems/townSeats.js';
+import { pickRegionHubs } from '../src/systems/region/regionHubs.js';
+import { deriveTownSeats, seatTotals } from '../src/systems/town/townSeats.js';
 import { boardTally } from './boardCount.mjs';
 
 /** The game's own rows, as the world host's boot pass collects them (a mod's appended rows never count). */

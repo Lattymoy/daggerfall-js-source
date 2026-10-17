@@ -115,9 +115,11 @@ export async function proclaimEdict({ db, nowS }, player, env, { character, key,
 
 /** THE EDICTS THAT RULE THIS WEEK, by seat key: `{ edict, guild, setAside, spent }`. */
 export async function edictsOf(db, week) {
-  const { results = [] } = await db.prepare("SELECT key, edict, guild_id, set_aside, spent FROM town_seat_edicts WHERE week = ? AND state = 'law'").bind(week).all();
-  return new Map(results.map((e) => [Number(e.key), { edict: e.edict, guild: e.guild_id, setAside: Number(e.set_aside), spent: Number(e.spent) }]));
+  return edictsFrom((await edictsRead(db, week).all()).results);
 }
+/** SEAT-BATCH (2026-10-16): edictsOf's statement and its answer apart, so the seats' list sends it in one batch. */
+export const edictsRead = (/** @type {any} */ db, /** @type {number} */ week) => db.prepare("SELECT key, edict, guild_id, set_aside, spent FROM town_seat_edicts WHERE week = ? AND state = 'law'").bind(week);
+export const edictsFrom = (/** @type {any[]} */ results = []) => new Map(results.map((e) => [Number(e.key), { edict: e.edict, guild: e.guild_id, setAside: Number(e.set_aside), spent: Number(e.spent) }]));
 
 /**
  * THE HOLDER'S OWN VIEW of its Charter (the Seat tab's lines, SEAT0 7.9) - `{ standing, tithe, titheWeek, edict, next,

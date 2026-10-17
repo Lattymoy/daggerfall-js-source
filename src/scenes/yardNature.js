@@ -5,7 +5,7 @@
 //
 // The owner: "There seems to be a lot of missing decor items with house
 // decoration"; asked which, the outdoor pieces for a yard among them. A
-// yard's nature piece is its climate's own (systems/decorCatalogue.js
+// yard's nature piece is its climate's own (systems/decor/decorCatalogue.js
 // DECOR_NATURE_BASES): the piece stores its set's SUMMER archive - the
 // one a climate names - and its record, and it is drawn as the pixel it
 // stands in draws the town's own nature (scenes/world.js buildPixelNow's
@@ -21,7 +21,7 @@
 //
 // at the piece's own scale, mirrored when it is turned half round as any
 // placed picture is (net/decorLaw.js decorFlatMirrored), leaning with the
-// wind as the town's flora leans (WIND3, systems/windDrive.js
+// wind as the town's flora leans (WIND3, systems/wind/windDrive.js
 // floraSwayOf - by its RECORD's height, a bush scaled up a bush still).
 // The yard stands its pieces again when its pixel is built again - a
 // season's turn, an install - as the town's own flats are.
@@ -45,7 +45,7 @@
 
 import { getNatureArchive } from '../world/climateSwaps.js';
 import { isNatureArchive } from '../world/rmbFlats.js';
-import { floraSwayOf } from '../systems/windDrive.js';
+import { floraSwayOf } from '../systems/wind/windDrive.js';
 import { windfallResponse } from '../systems/windfall.js';   // WINDFALL1: a piece's share of Windfall's lean (its record's wind mask)
 import { archivePrefix } from '../systems/seasonsIliacBay.js';   // WINDFALL1: the mod's tables for the season's atlases
 import { decorFlatMirrored } from '../net/decorLaw.js';
@@ -60,7 +60,7 @@ export const isNaturePiece = (piece) => piece?.model == null && Array.isArray(pi
  *  record - [archive, record]. */
 export const yardNatureFlat = (flat, season) => [getNatureArchive(flat[0], season), flat[1]];
 
-/** DECOR-LPT: a piece's turn (its record's yaw, degrees - scenes/decorRoom.js decorMatrix) as a 3D tree's (radians, the
+/** DECOR-LPT: a piece's turn (its record's yaw, degrees - scenes/decor/decorRoom.js decorMatrix) as a 3D tree's (radians, the
  *  same way round: BB_VS turns a tree as world/mat4.js trs turns a model about +Y). */
 export const yardTreeYaw = (piece) => (Number(piece?.rot?.[0]) || 0) * (Math.PI / 180);
 

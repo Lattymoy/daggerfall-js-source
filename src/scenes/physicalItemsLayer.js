@@ -16,7 +16,7 @@
 //
 // THE PICTURE, two ways (Mac: "This should work for both morrowind and the sprite system"): the item's Morrowind picture
 // while a Morrowind build stands (combat/fpArm.js mountPicture - the ground mesh face-on, the decor room's own door), else
-// the pack's own picture (ui/itemIconColor32.js - the classic art, a replacement, the item's dye). A build that lands or
+// the pack's own picture (ui/item/itemIconColor32.js - the classic art, a replacement, the item's dye). A build that lands or
 // goes (fpArm.js mountPictureStamp) has every item ask again. Either is cut to its visible texels and stood at the mod's
 // size (BuildVisual [IL_0982]).
 //
@@ -26,7 +26,7 @@
 // so the rarity row's switch reaches what already lies.
 //
 // AUDIT PI1 (2026-10-07, Mac: "Lets do a conprehensive audit and ensure this is perfection"): five readers, each one
-// dimension (the IL, the hosts, this layer, the draw, the pins and the records); bible/01-Overview/Audit-PI1.md is the
+// dimension (the IL, the hosts, this layer, the draw, the pins and the records); bible/01-Overview/audits/Audit-PI1.md is the
 // record, and every `AUDIT PI1 <id>` below names the finding it closes.
 //
 // Not a DFU member. Ledger A (PI).
@@ -41,8 +41,8 @@ import { registerEnemyDeathHandler } from './corpseMarker.js';
 import { setBatchGlint } from '../systems/hitFlash.js';
 import { lootCrown } from './lootLines.js';
 import { RAY_DISTANCE } from '../player/activate.js';
-import { itemIconColor32, itemIconKey } from '../ui/itemIconColor32.js';
-import { inventoryItemImage } from '../systems/itemTemplates.js';
+import { itemIconColor32, itemIconKey } from '../ui/item/itemIconColor32.js';
+import { inventoryItemImage } from '../systems/item/itemTemplates.js';
 import { toColor32 } from '../formats/color32Order.js';
 import { takeOneItem, quickLootSpend, tookItemText, QUICK_LOOT_REFUSED } from '../systems/quickLoot.js';
 import { isMap, USE_TEXT } from '../systems/useItem.js';

@@ -5,7 +5,7 @@
     "old": "        if (prepared.ok && !socialLink()?.shareQuest({ questName: prepared.questName, displayName: prepared.displayName, data: { ...prepared.data, sync: 1, final: 1 } })) break;",
     "new": "        if (prepared.ok) socialLink()?.shareQuest({ questName: prepared.questName, displayName: prepared.displayName, data: { ...prepared.data, sync: 1, final: 1 } });",
     "tests": [
-      "test/auditdisc28_quests.test.js"
+      "test/systems/quest/auditdisc28_quests.test.js"
     ]
   },
   {
@@ -14,8 +14,8 @@
     "old": "  nextFinishedShare() { return this._finishedShares[0] ?? null; }",
     "new": "  nextFinishedShare() { return null; }",
     "tests": [
-      "test/auditdisc28_quests.test.js",
-      "test/disc28_quest.test.js"
+      "test/systems/quest/auditdisc28_quests.test.js",
+      "test/systems/quest/disc28_quest.test.js"
     ]
   },
   {
@@ -24,7 +24,7 @@
     "old": "      if (quest.ticksToEnd > 0) continue;\n",
     "new": "",
     "tests": [
-      "test/auditdisc28_quests.test.js"
+      "test/systems/quest/auditdisc28_quests.test.js"
     ]
   },
   {
@@ -33,7 +33,7 @@
     "old": "    questSyncTick();\n    // AUDIT 66 F11: the torch sweep runs HERE",
     "new": "    // AUDIT 66 F11: the torch sweep runs HERE",
     "tests": [
-      "test/auditdisc28_quests.test.js"
+      "test/systems/quest/auditdisc28_quests.test.js"
     ]
   },
   {
@@ -42,7 +42,7 @@
     "old": "      if (quest.data?.final === 1 || (quest.data?.sync === 1 && result.reason === 'done')) return;",
     "new": "",
     "tests": [
-      "test/auditdisc28_quests.test.js"
+      "test/systems/quest/auditdisc28_quests.test.js"
     ]
   },
   {
@@ -51,7 +51,7 @@
     "old": "      if (quest.data?.final === 1 || (quest.data?.sync === 1 && result.reason === 'done')) return;",
     "new": "      if (quest.data?.final === 1) return;",
     "tests": [
-      "test/auditdisc28_quests.test.js"
+      "test/systems/quest/auditdisc28_quests.test.js"
     ]
   },
   {
@@ -60,7 +60,7 @@
     "old": "    if (quest.ticksToEnd > 0) return quest;\n",
     "new": "",
     "tests": [
-      "test/auditdisc28_quests.test.js"
+      "test/systems/quest/auditdisc28_quests.test.js"
     ]
   },
   {
@@ -69,27 +69,27 @@
     "old": "        if (!was && action.isComplete && REPLAYABLE_ONE_TIME_ACTIONS.has(action.typeName)) action.isComplete = false;",
     "new": "        if (!was && action.isComplete && REPLAYABLE_ONE_TIME_ACTIONS.has(action.typeName) && !(quest._armed ??= new Set()).has(`${t}:${a}`)) { quest._armed.add(`${t}:${a}`); action.isComplete = false; }",
     "tests": [
-      "test/auditdisc28_quests.test.js",
-      "test/auditdrops.test.js"
+      "test/systems/quest/auditdisc28_quests.test.js",
+      "test/systems/quest/auditdrops.test.js"
     ]
   },
   {
     "name": "AD28Q-S5-ending-makes-a-copy",
-    "file": "src/systems/questShare.js",
+    "file": "src/systems/quest/questShare.js",
     "old": "  if (safe.questComplete === true || shareEnvelopeEnding(safe)) return { ok: false, reason: 'finished' };",
     "new": "  if (safe.questComplete === true) return { ok: false, reason: 'finished' };",
     "tests": [
-      "test/auditdisc28_quests.test.js"
+      "test/systems/quest/auditdisc28_quests.test.js"
     ]
   },
   {
     "name": "AD28Q-S5-any-end-quest-reads-ending",
-    "file": "src/systems/questShare.js",
+    "file": "src/systems/quest/questShare.js",
     "old": "if (action?.type === 'EndQuest' && action.isComplete === true) return true;",
     "new": "if (action?.type === 'EndQuest') return true;",
     "tests": [
-      "test/auditdisc28_quests.test.js",
-      "test/disc28_quest.test.js"
+      "test/systems/quest/auditdisc28_quests.test.js",
+      "test/systems/quest/disc28_quest.test.js"
     ]
   },
   {
@@ -98,8 +98,8 @@
     "old": " && !(heirIsMe(r) && _questShare?.partyPeer?.(from))",
     "new": "",
     "tests": [
-      "test/auditdisc28_quests.test.js",
-      "test/questparty2.test.js"
+      "test/systems/quest/auditdisc28_quests.test.js",
+      "test/scenes/questparty2.test.js"
     ]
   },
   {
@@ -108,7 +108,7 @@
     "old": " && !(ownHeirIsMe(r) && share?.partyPeer?.(from))",
     "new": "",
     "tests": [
-      "test/questparty3c.test.js"
+      "test/scenes/questparty3c.test.js"
     ]
   },
   {
@@ -117,7 +117,7 @@
     "old": "    partyPeer: (id) => !!social?.isPartyPeer(id),",
     "new": "    partyPeer: () => false,",
     "tests": [
-      "test/auditdisc28_quests.test.js"
+      "test/systems/quest/auditdisc28_quests.test.js"
     ]
   },
   {
@@ -126,7 +126,7 @@
     "old": "  rec.displayName = renamed;\n",
     "new": "  rec.displayName = renamed; rec.customUserDisplayName = ''; rec.lastLockpickAttempt = 0;\n",
     "tests": [
-      "test/auditdisc28_quests.test.js"
+      "test/systems/quest/auditdisc28_quests.test.js"
     ]
   },
   {
@@ -135,7 +135,7 @@
     "old": "  if (questSource?.ownsHouse?.(rec.buildingKey)) return false;\n",
     "new": "",
     "tests": [
-      "test/auditdisc28_quests.test.js"
+      "test/systems/quest/auditdisc28_quests.test.js"
     ]
   },
   {
@@ -144,8 +144,8 @@
     "old": "  rec.oldDisplayName = rec.isOverrideName ? (rec.oldDisplayName ?? '') : rec.displayName;",
     "new": "  rec.oldDisplayName = rec.displayName;",
     "tests": [
-      "test/auditdisc28_quests.test.js",
-      "test/disc28_names.test.js"
+      "test/systems/quest/auditdisc28_quests.test.js",
+      "test/systems/disc28_names.test.js"
     ]
   },
   {
@@ -154,7 +154,7 @@
     "old": "    ownsHouse: (buildingKey) => isHouseOwned(playerEntity.houses ?? [], _questRegionIndex(), buildingKey),",
     "new": "    ownsHouse: () => false,",
     "tests": [
-      "test/auditdisc28_quests.test.js"
+      "test/systems/quest/auditdisc28_quests.test.js"
     ]
   },
   {
@@ -163,7 +163,7 @@
     "old": "    restampQuestNames(locId, { ...questBuildingSource, currentMapID: () => dfLoc.mapTableData?.mapId ?? 0 });   // the plan's own town\n",
     "new": "",
     "tests": [
-      "test/auditdisc28_quests.test.js"
+      "test/systems/quest/auditdisc28_quests.test.js"
     ]
   },
   {
@@ -172,7 +172,7 @@
     "old": "  for (const rec of _discovered.get(locationId)?.values() ?? []) if (restampQuestName(rec, questSource)) n++;\n",
     "new": "",
     "tests": [
-      "test/auditdisc28_quests.test.js"
+      "test/systems/quest/auditdisc28_quests.test.js"
     ]
   },
   {
@@ -181,7 +181,7 @@
     "old": " *   isActiveQuestBuilding(building) - PlayerActivate.IsActiveQuestBuilding\n",
     "new": " *   isActiveQuestBuilding(building) - the siteLinks walk (:1315-1329)\n",
     "tests": [
-      "test/auditdisc28_quests.test.js"
+      "test/systems/quest/auditdisc28_quests.test.js"
     ]
   },
   {
@@ -190,7 +190,7 @@
     "old": "        keepQuestRecord(from, key, r, qt);\n",
     "new": "",
     "tests": [
-      "test/auditdisc28_quests.test.js"
+      "test/systems/quest/auditdisc28_quests.test.js"
     ]
   },
   {
@@ -199,7 +199,7 @@
     "old": "    if (r.d === 1 || r.e || !_questShare?.partyPeer?.(from)) { _pupKept.delete(key); return; }",
     "new": "    if (r.e || !_questShare?.partyPeer?.(from)) { _pupKept.delete(key); return; }",
     "tests": [
-      "test/auditdisc28_quests.test.js"
+      "test/systems/quest/auditdisc28_quests.test.js"
     ]
   },
   {
@@ -208,7 +208,7 @@
     "old": "    if (r.d === 1 || r.e || !_questShare?.partyPeer?.(from)) { _pupKept.delete(key); return; }",
     "new": "    if (r.d === 1 || !_questShare?.partyPeer?.(from)) { _pupKept.delete(key); return; }",
     "tests": [
-      "test/auditdisc28_quests.test.js"
+      "test/systems/quest/auditdisc28_quests.test.js"
     ]
   },
   {
@@ -217,7 +217,7 @@
     "old": "    if (r.d === 1 || r.e || !_questShare?.partyPeer?.(from)) { _pupKept.delete(key); return; }",
     "new": "    if (r.d === 1 || r.e) { _pupKept.delete(key); return; }",
     "tests": [
-      "test/auditdisc28_quests.test.js"
+      "test/systems/quest/auditdisc28_quests.test.js"
     ]
   },
   {
@@ -226,7 +226,7 @@
     "old": "    if (!had) { let n = 0; for (const k of _pupKept.values()) if (k.from === from) n++; if (n >= QUEST_PUPPETS_MAX) return; }\n",
     "new": "",
     "tests": [
-      "test/auditdisc28_quests.test.js"
+      "test/systems/quest/auditdisc28_quests.test.js"
     ]
   },
   {
@@ -235,7 +235,7 @@
     "old": "    _pupKept.set(key, { from, r: { ...(had?.r ?? {}), ...r }, qt });",
     "new": "    _pupKept.set(key, { from, r, qt });",
     "tests": [
-      "test/auditdisc28_quests.test.js"
+      "test/systems/quest/auditdisc28_quests.test.js"
     ]
   },
   {
@@ -244,7 +244,7 @@
     "old": "    if (data.full === 1) for (const [key, k] of [..._pupKept]) if (k.from === from && !seen.has(k.r.i)) _pupKept.delete(key);   // AUDIT DISC28 QS-J: as a stood record goes\n",
     "new": "",
     "tests": [
-      "test/auditdisc28_quests.test.js"
+      "test/systems/quest/auditdisc28_quests.test.js"
     ]
   },
   {
@@ -253,7 +253,7 @@
     "old": "    _pupKept.clear();   // AUDIT DISC28 QS-J: and the records kept beside their puppets - the old cell's, nobody's to take here",
     "new": "",
     "tests": [
-      "test/auditdisc28_quests.test.js"
+      "test/systems/quest/auditdisc28_quests.test.js"
     ]
   },
   {
@@ -262,7 +262,7 @@
     "old": "      _pupKept.delete(key);   // AUDIT DISC28 QS-J: stood (or taken) from here, or no party's quest foe at all - no longer only kept",
     "new": "",
     "tests": [
-      "test/auditdisc28_quests.test.js"
+      "test/systems/quest/auditdisc28_quests.test.js"
     ]
   },
   {
@@ -271,7 +271,7 @@
     "old": "        const feet = gone && k.r.f ? _net?.toScene?.(k.r.f) : null;",
     "new": "        const feet = k.r.f ? _net?.toScene?.(k.r.f) : null;",
     "tests": [
-      "test/auditdisc28_quests.test.js"
+      "test/systems/quest/auditdisc28_quests.test.js"
     ]
   },
   {
@@ -280,7 +280,7 @@
     "old": "        if (feet && _questShare?.adoptsOrphan?.(from, { ai: { feet } })) standKeptOrphan(from, key, k.r, k.qt, feet);",
     "new": "        if (feet) standKeptOrphan(from, key, k.r, k.qt, feet);",
     "tests": [
-      "test/auditdisc28_quests.test.js"
+      "test/systems/quest/auditdisc28_quests.test.js"
     ]
   },
   {
@@ -289,7 +289,7 @@
     "old": "        if (adopt(from, nf)) console.info('[foes] took over an orphaned quest foe of the party\\'s (a kept record)');\n        else removePuppet(nf);",
     "new": "        removePuppet(nf);",
     "tests": [
-      "test/auditdisc28_quests.test.js"
+      "test/systems/quest/auditdisc28_quests.test.js"
     ]
   },
   {
@@ -298,7 +298,7 @@
     "old": "    _pupPending.set(key, { ...r, _quest: qt, _orphanMine: true });",
     "new": "    _pupPending.set(key, { ...r, _quest: qt });",
     "tests": [
-      "test/auditdisc28_quests.test.js"
+      "test/systems/quest/auditdisc28_quests.test.js"
     ]
   },
   {
@@ -307,7 +307,7 @@
     "old": "        if (!last?._orphanMine) { removePuppet(nf); return; }\n",
     "new": "",
     "tests": [
-      "test/auditdisc28_quests.test.js"
+      "test/systems/quest/auditdisc28_quests.test.js"
     ]
   },
   {
@@ -316,7 +316,7 @@
     "old": "        const pend = _pupPending.get(key);\n        if (pend?._orphanMine) pend._orphanMine = false;\n",
     "new": "",
     "tests": [
-      "test/auditdisc28_quests.test.js"
+      "test/systems/quest/auditdisc28_quests.test.js"
     ]
   },
   {
@@ -325,7 +325,7 @@
     "old": "        if (took) { _adopted.delete(key); if (r.d !== 1 && !took.dead && !took._gone) letGo(took); }",
     "new": "        if (took) { _adopted.delete(key); }",
     "tests": [
-      "test/auditdisc28_quests.test.js"
+      "test/systems/quest/auditdisc28_quests.test.js"
     ]
   },
   {
@@ -334,7 +334,7 @@
     "old": "          keepOwnRecord(from, key, r, qt);\n",
     "new": "",
     "tests": [
-      "test/questparty3c.test.js"
+      "test/scenes/questparty3c.test.js"
     ]
   },
   {
@@ -343,7 +343,7 @@
     "old": "    if (r.d === 1 || r.e || !ownShare()?.partyPeer?.(from)) { _ownKept.delete(key); return; }",
     "new": "    if (r.e || !ownShare()?.partyPeer?.(from)) { _ownKept.delete(key); return; }",
     "tests": [
-      "test/questparty3c.test.js"
+      "test/scenes/questparty3c.test.js"
     ]
   },
   {
@@ -352,7 +352,7 @@
     "old": "    if (r.d === 1 || r.e || !ownShare()?.partyPeer?.(from)) { _ownKept.delete(key); return; }",
     "new": "    if (r.d === 1 || !ownShare()?.partyPeer?.(from)) { _ownKept.delete(key); return; }",
     "tests": [
-      "test/questparty3c.test.js"
+      "test/scenes/questparty3c.test.js"
     ]
   },
   {
@@ -361,7 +361,7 @@
     "old": "    if (r.d === 1 || r.e || !ownShare()?.partyPeer?.(from)) { _ownKept.delete(key); return; }",
     "new": "    if (r.d === 1 || r.e) { _ownKept.delete(key); return; }",
     "tests": [
-      "test/questparty3c.test.js"
+      "test/scenes/questparty3c.test.js"
     ]
   },
   {
@@ -370,7 +370,7 @@
     "old": "    if (!had) { let n = 0; for (const k of _ownKept.values()) if (k.from === from) n++; if (n >= QUEST_PUPPETS_MAX) return; }\n",
     "new": "",
     "tests": [
-      "test/questparty3c.test.js"
+      "test/scenes/questparty3c.test.js"
     ]
   },
   {
@@ -379,7 +379,7 @@
     "old": "    _ownKept.set(key, { from, r: { ...(had?.r ?? {}), ...r }, qt });",
     "new": "    _ownKept.set(key, { from, r, qt });",
     "tests": [
-      "test/questparty3c.test.js"
+      "test/scenes/questparty3c.test.js"
     ]
   },
   {
@@ -388,7 +388,7 @@
     "old": "    if (data.full === 1) for (const [key, k] of [..._ownKept]) if (k.from === from && !named.has(k.r.i)) _ownKept.delete(key);   // AUDIT DISC28 QS-J: as a stood record goes\n",
     "new": "",
     "tests": [
-      "test/questparty3c.test.js"
+      "test/scenes/questparty3c.test.js"
     ]
   },
   {
@@ -397,7 +397,7 @@
     "old": "      named.add(r.i);\n",
     "new": "",
     "tests": [
-      "test/questparty3c.test.js"
+      "test/scenes/questparty3c.test.js"
     ]
   },
   {
@@ -406,7 +406,7 @@
     "old": "    _ownKept.clear();   // AUDIT DISC28 QS-J: nor a kept record anybody's to take",
     "new": "",
     "tests": [
-      "test/questparty3c.test.js"
+      "test/scenes/questparty3c.test.js"
     ]
   },
   {
@@ -415,7 +415,7 @@
     "old": "      _ownKept.delete(key);   // AUDIT DISC28 QS-J: stood (or taken) from here - no longer only kept",
     "new": "",
     "tests": [
-      "test/questparty3c.test.js"
+      "test/scenes/questparty3c.test.js"
     ]
   },
   {
@@ -424,7 +424,7 @@
     "old": "        if (!gone || !r.f || r.t == null || !canStandFoe(r.t) || _ownPending.has(key) || _ownPups.has(key)) continue;",
     "new": "        if (!r.f || r.t == null || !canStandFoe(r.t) || _ownPending.has(key) || _ownPups.has(key)) continue;",
     "tests": [
-      "test/questparty3c.test.js"
+      "test/scenes/questparty3c.test.js"
     ]
   },
   {
@@ -433,7 +433,7 @@
     "old": "        if (!share?.adoptsOrphan?.(from, { ai: { feet: r.f } })) continue;\n",
     "new": "",
     "tests": [
-      "test/questparty3c.test.js"
+      "test/scenes/questparty3c.test.js"
     ]
   },
   {
@@ -442,7 +442,7 @@
     "old": "        _ownPending.set(key, { ...r, _orphanMine: true });",
     "new": "        _ownPending.set(key, { ...r });",
     "tests": [
-      "test/questparty3c.test.js"
+      "test/scenes/questparty3c.test.js"
     ]
   },
   {
@@ -451,7 +451,7 @@
     "old": " && _ownOwners.get(from)?.gen !== gen && (ownHeirIsMe(newest) || !!newest._orphanMine);",
     "new": " && _ownOwners.get(from)?.gen !== gen && ownHeirIsMe(newest);",
     "tests": [
-      "test/questparty3c.test.js"
+      "test/scenes/questparty3c.test.js"
     ]
   },
   {
@@ -460,7 +460,7 @@
     "old": "    if (f.companion == null && (ownHeirIsMe(newest) || !!newest._orphanMine) && !adoptOwn(from, f, share) && heirOrphan) dropOwnPuppet(key, f);",
     "new": "    if (f.companion == null && ownHeirIsMe(newest) && !adoptOwn(from, f, share) && heirOrphan) dropOwnPuppet(key, f);",
     "tests": [
-      "test/questparty3c.test.js"
+      "test/scenes/questparty3c.test.js"
     ],
     "note": "AUDIT CREW (PIN MOVED): re-aimed by content at the line the co-op change extended."
   },
@@ -470,7 +470,7 @@
     "old": "          const pend = _ownPending.get(key);\n          if (pend?._orphanMine) pend._orphanMine = false;\n",
     "new": "",
     "tests": [
-      "test/questparty3c.test.js"
+      "test/scenes/questparty3c.test.js"
     ]
   },
   {
@@ -479,7 +479,7 @@
     "old": "          if (took) { _ownAdopted.delete(key); if (r.d !== 1 && !took.dead && !took._gone) letGoOwn(took); }",
     "new": "          if (took) { _ownAdopted.delete(key); }",
     "tests": [
-      "test/questparty3c.test.js"
+      "test/scenes/questparty3c.test.js"
     ]
   },
   {
@@ -488,7 +488,7 @@
     "old": "    this._questSent = { quest, at: now };\n",
     "new": "",
     "tests": [
-      "test/auditdisc28_quests.test.js"
+      "test/systems/quest/auditdisc28_quests.test.js"
     ]
   },
   {
@@ -497,7 +497,7 @@
     "old": "      if (f?.k === 'error' && f.m === 'busy' && this._questSent && ",
     "new": "      if (f?.k === 'error' && this._questSent && ",
     "tests": [
-      "test/auditdisc28_quests.test.js"
+      "test/systems/quest/auditdisc28_quests.test.js"
     ]
   },
   {
@@ -506,7 +506,7 @@
     "old": " && this._questSent && now - this._questSent.at <= QUEST_HUB_MIN_MS) {",
     "new": " && this._questSent) {",
     "tests": [
-      "test/auditdisc28_quests.test.js"
+      "test/systems/quest/auditdisc28_quests.test.js"
     ]
   },
   {
@@ -515,7 +515,7 @@
     "old": "    link.onQuestBusy = (quest) => { if (quest?.data?.final === 1) questBridge",
     "new": "    link.onQuestBusy = (quest) => { if (quest?.data) questBridge",
     "tests": [
-      "test/auditdisc28_quests.test.js"
+      "test/systems/quest/auditdisc28_quests.test.js"
     ]
   },
   {
@@ -524,7 +524,7 @@
     "old": "    if (data && this.finishedSharedQuestNames.has(data.questName) && !this._finishedShares.includes(data)) this._finishedShares.unshift(data);\n",
     "new": "",
     "tests": [
-      "test/auditdisc28_quests.test.js"
+      "test/systems/quest/auditdisc28_quests.test.js"
     ]
   },
   {
@@ -533,7 +533,7 @@
     "old": "    if (data && this.finishedSharedQuestNames.has(data.questName) && !this._finishedShares.includes(data))",
     "new": "    if (data && !this._finishedShares.includes(data))",
     "tests": [
-      "test/auditdisc28_quests.test.js"
+      "test/systems/quest/auditdisc28_quests.test.js"
     ]
   }
 ]

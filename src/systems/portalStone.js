@@ -5,9 +5,9 @@
 // When using this item, it opens a portal allowing you to traverse to anywhere on the map. This is a one use item that
 // stays open for a short time, allowing multiple players to traverse"): THE PORTAL STONE.
 //
-//   - THE STONE (systems/gateSpoils.js, template 572 beside the Welkynd Shard's 571): bound, stacking with its own kind.
+//   - THE STONE (systems/gate/gateSpoils.js, template 572 beside the Welkynd Shard's 571): bound, stacking with its own kind.
 //   - THE COUNTER: every shop's keeper (shopStock.js isShop - the nine kinds) sells one for PORTAL_STONE_SHARDS Welkynd
-//     Shards, from a row on the keeper's own popup (ui/merchantServiceWindow.js, ui/merchantRepairWindow.js, and the
+//     Shards, from a row on the keeper's own popup (ui/merchant/merchantServiceWindow.js, ui/merchant/merchantRepairWindow.js, and the
 //     Enhanced Plus panel) - never from a shelf: a shelf is the gold trade's, and nothing here is gold. ALWAYS IN STOCK:
 //     nothing is kept, so every sale mints a fresh stone.
 //   - THE USE: the pack's Use (or a hotbar press) hands the stone to the host's `openPortal` door - the open world's
@@ -27,10 +27,10 @@
 //
 // Not a DFU member - Ledger A.
 // ═══════════════════════════════════════════════════════════════════
-import { PORTAL_STONE, PORTAL_STONE_TEMPLATE, PORTAL_STONE_SHARDS, portalStones, isPortalStone, isWelkyndShard } from './gateSpoils.js';
+import { PORTAL_STONE, PORTAL_STONE_TEMPLATE, PORTAL_STONE_SHARDS, portalStones, isPortalStone, isWelkyndShard } from './gate/gateSpoils.js';
 import { shardsHeld, spendShards, shardsText } from './reforge.js';
 import { addItem } from './inventory.js';
-import { registerItemUseHandler } from './itemTemplates.js';
+import { registerItemUseHandler } from './item/itemTemplates.js';
 import { POSE_BOUND, POSE_Y_BOUND } from '../net/wire.js';
 import { MAX_MAP_PIXEL_X, MAX_MAP_PIXEL_Y } from '../formats/mapsTables.js';
 
@@ -102,7 +102,7 @@ export function portalHold({ dead = false, busy = false, duel = false, siege = f
   return null;
 }
 
-/** The stone's card lines (systems/itemInfo.js builds the name and the weight around them). */
+/** The stone's card lines (systems/item/itemInfo.js builds the name and the weight around them). */
 export const portalStoneLines = () => [
   'Opens a portal to any place on the map.',
   `It stands ${Math.round(PORTAL_OPEN_MS / 1000)} seconds, for anyone to step through.`,

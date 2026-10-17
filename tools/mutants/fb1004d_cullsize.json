@@ -5,7 +5,7 @@
     "old": "  out[3] = batchReach(b) + (b.size?.h ?? 0) * _flatLean;",
     "new": "  out[3] = s[3] + (b.size?.h ?? 0) * _flatLean;",
     "tests": [
-      "test/fb1004d_cullsize.test.js"
+      "test/scenes/fb1004d_cullsize.test.js"
     ],
     "note": "the base: the sphere keeps the radius the batch was born with - the street's foe culled on its { w: 1, h: 1 } placeholder, the cart's horse on its still picture"
   },
@@ -15,7 +15,7 @@
     "old": "  return q > r * r * (1 + 1e-6) ? Math.sqrt(q) : r;",
     "new": "  return r;",
     "tests": [
-      "test/fb1004d_cullsize.test.js"
+      "test/scenes/fb1004d_cullsize.test.js"
     ],
     "note": "batchReach answers the stored radius whatever the size drawn"
   },
@@ -25,7 +25,7 @@
     "old": "q > r * r * (1 + 1e-6) ?",
     "new": "q > r * r ?",
     "tests": [
-      "test/fb1004d_cullsize.test.js"
+      "test/scenes/fb1004d_cullsize.test.js"
     ],
     "note": "an unchanged batch whose float32 radius rounded down is handed the double's - its sphere no longer bit for bit what it was born with"
   },
@@ -35,7 +35,7 @@
     "old": "? Math.sqrt(q) : r;",
     "new": "? Math.sqrt(q) : Math.sqrt(q);",
     "tests": [
-      "test/fb1004d_cullsize.test.js"
+      "test/scenes/fb1004d_cullsize.test.js"
     ],
     "note": "the reach is the drawn size's alone: a pixel's wood loses its placements' spread, a flat drawn smaller shrinks its sphere"
   },
@@ -45,7 +45,7 @@
     "old": "z.h * z.h) * 0.25;",
     "new": "z.h * z.h) * 0.5;",
     "tests": [
-      "test/fb1004d_cullsize.test.js"
+      "test/scenes/fb1004d_cullsize.test.js"
     ],
     "note": "the square of the half-diagonal taken at a half, not a quarter - every flat grows past what it draws"
   },
@@ -55,7 +55,7 @@
     "old": "z.h * z.h) * 0.25;",
     "new": "z.h * z.h) * 0.2;",
     "tests": [
-      "test/fb1004d_cullsize.test.js"
+      "test/scenes/fb1004d_cullsize.test.js"
     ],
     "note": "the reach falls short of the quad's corners"
   },
@@ -65,7 +65,7 @@
     "old": "const q = (z.w * z.w + z.h * z.h)",
     "new": "const q = (z.h * z.h)",
     "tests": [
-      "test/fb1004d_cullsize.test.js"
+      "test/scenes/fb1004d_cullsize.test.js"
     ],
     "note": "the height alone - a square sprite's corners left outside"
   },
@@ -75,7 +75,7 @@
     "old": "  if (!z) return r;",
     "new": "  if (!z) return 0;",
     "tests": [
-      "test/fb1004d_cullsize.test.js"
+      "test/scenes/fb1004d_cullsize.test.js"
     ],
     "note": "a batch with no size loses its stored radius"
   }

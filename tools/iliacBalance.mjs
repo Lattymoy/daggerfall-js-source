@@ -18,9 +18,9 @@
 //   node tools/iliacBalance.mjs [--random N] [--regulars N] [--seed S] [--json]
 //     --random N     random games (default 3000; 0 skips them)
 //     --regulars N   games a temper of hand plays a grade's regulars (default 1200; 0 skips them)
-import { ILIAC_CARDS, ILIAC_TIERS, STARTER_DECK } from '../src/net/iliacCards.js';
-import { newGame, commit, reveal, result, legalPlays, playsRefusal, deckValid, ILIAC_DECK_SIZE, ILIAC_COPIES_MAX, ILIAC_LEGENDARY_COPIES_MAX } from '../src/net/iliacHand.js';
-import { patronPlays, patronDeck, seededUnit, ILIAC_TEMPER_NAMES } from '../src/systems/iliacPatrons.js';
+import { ILIAC_CARDS, ILIAC_TIERS, STARTER_DECK } from '../src/net/iliac/iliacCards.js';
+import { newGame, commit, reveal, result, legalPlays, playsRefusal, deckValid, ILIAC_DECK_SIZE, ILIAC_COPIES_MAX, ILIAC_LEGENDARY_COPIES_MAX } from '../src/net/iliac/iliacHand.js';
+import { patronPlays, patronDeck, seededUnit, ILIAC_TEMPER_NAMES } from '../src/systems/iliac/iliacPatrons.js';
 import { iliacTemperOf } from '../src/scenes/iliacTableGame.js';
 import { isMain } from './lib/isMain.mjs';
 

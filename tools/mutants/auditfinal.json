@@ -1,47 +1,47 @@
 [
   {
     "name": "AUDIT-FINAL-F1-the-strip-s-pick-keeps-the-field",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "onPick: (it) => { picked = it; goldEntry = null; pickedAt = 'worn';",
     "new": "onPick: (it) => { picked = it; pickedAt = 'worn';",
     "tests": [
-      "test/set5_ui.test.js"
+      "test/systems/set5_ui.test.js"
     ]
   },
   {
     "name": "AUDIT-FINAL-F2-the-picture-keyed-by-its-kind-alone",
-    "file": "src/ui/enhancedHotbar.js",
+    "file": "src/ui/enhanced/enhancedHotbar.js",
     "old": "${image ? `#${iconName(image.archive, image.record, image.dye, image.dyeTarget)}` : ''}",
     "new": "",
     "tests": [
-      "test/ui2_hotbar.test.js"
+      "test/systems/ui2_hotbar.test.js"
     ]
   },
   {
     "name": "AUDIT-FINAL-F2-the-dye-out-of-the-bar-s-signature",
-    "file": "src/ui/enhancedHotbar.js",
+    "file": "src/ui/enhanced/enhancedHotbar.js",
     "old": "      + `|${v.item && v.type !== 'spell' ? itemDyeColor(v.item) ?? '' : ''}`",
     "new": "",
     "tests": [
-      "test/ui2_hotbar.test.js"
+      "test/systems/ui2_hotbar.test.js"
     ]
   },
   {
     "name": "AUDIT-FINAL-F3-the-swatch-out-of-the-floor-s-key",
-    "file": "src/ui/itemIconColor32.js",
+    "file": "src/ui/item/itemIconColor32.js",
     "old": "  return `${img?.archive}_${img?.record}${token ? `_${token}` : ''}${dyed ? `_t${dyeTarget}d${dye}` : ''}`;",
     "new": "  return `${img?.archive}_${img?.record}${token ? `_${token}` : ''}`;",
     "tests": [
-      "test/wbx_gate_fixes.test.js"
+      "test/world/gate/wbx_gate_fixes.test.js"
     ]
   },
   {
     "name": "AUDIT-FINAL-F3-the-floor-asked-undyed",
-    "file": "src/ui/itemIconColor32.js",
+    "file": "src/ui/item/itemIconColor32.js",
     "old": "dye: img.dye, dyeTarget: img.dyeTarget ?? null });",
     "new": "dye: img.dye });",
     "tests": [
-      "test/wbx_gate_fixes.test.js"
+      "test/world/gate/wbx_gate_fixes.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "inventoryItemImage(item, wearer ?? undefined)",
     "new": "inventoryItemImage(item)",
     "tests": [
-      "test/set7_broker.test.js"
+      "test/systems/item/set7_broker.test.js"
     ]
   },
   {
@@ -59,8 +59,8 @@
     "old": " && performance.now() - (f._killedAt ?? -Infinity) <= KILLED_BY_MS) r.v = f._killedBy;",
     "new": ") r.v = f._killedBy;",
     "tests": [
-      "test/audit68_dungeonctx.test.js",
-      "test/elitepscale.test.js"
+      "test/systems/audit68_dungeonctx.test.js",
+      "test/scenes/elitepscale.test.js"
     ]
   },
   {
@@ -69,7 +69,7 @@
     "old": "  if (params.has('test') && testEntryById(params.get('test'))) return true;\n",
     "new": "",
     "tests": [
-      "test/auditset_c.test.js"
+      "test/systems/auditset_c.test.js"
     ]
   },
   {
@@ -78,17 +78,17 @@
     "old": "testRoomOnlineRefused(params, { snap: bootSnap });",
     "new": "testRoomOnlineRefused(params, { loadSlot, mostRecent: mostRecentRestorable });",
     "tests": [
-      "test/auditset_c.test.js",
-      "test/mwearly.test.js"
+      "test/systems/auditset_c.test.js",
+      "test/systems/mwearly.test.js"
     ]
   },
   {
     "name": "AUDIT-FINAL-F10-the-mark-taken-only-by-a-landed-hurt",
-    "file": "src/systems/sigilSetPowers.js",
+    "file": "src/systems/sigil/sigilSetPowers.js",
     "old": "  _pending = landedBlow();\n",
     "new": "  _pending = _blow;\n",
     "tests": [
-      "test/set3_powers.test.js"
+      "test/systems/set3_powers.test.js"
     ]
   },
   {
@@ -97,7 +97,7 @@
     "old": "  tellDoorOpen(entity);   // AUDIT FINAL F10: first - whatever the door says below, this call is its word\n",
     "new": "",
     "tests": [
-      "test/set3_powers.test.js"
+      "test/systems/set3_powers.test.js"
     ]
   },
   {
@@ -106,7 +106,7 @@
     "old": "else { playerBlowCameToNothing(playerEntity); audio",
     "new": "else { audio",
     "tests": [
-      "test/set3_powers.test.js"
+      "test/systems/set3_powers.test.js"
     ]
   },
   {
@@ -115,16 +115,16 @@
     "old": "} else playerBlowCameToNothing(playerEntity);   // AUDIT FINAL F10",
     "new": "}   // AUDIT FINAL F10",
     "tests": [
-      "test/set3_powers.test.js"
+      "test/systems/set3_powers.test.js"
     ]
   },
   {
     "name": "AUDIT-FINAL-F11-cleave-through-a-wall",
-    "file": "src/systems/sigilSetPowers.js",
+    "file": "src/systems/sigil/sigilSetPowers.js",
     "old": "    if (door.clear && !door.clear(struck.ai.feet, f.ai.feet)) continue;\n",
     "new": "",
     "tests": [
-      "test/set3_powers.test.js"
+      "test/systems/set3_powers.test.js"
     ]
   },
   {
@@ -133,7 +133,7 @@
     "old": "    if (f.entity?.team === 'PlayerAlly') return false;\n    const onWatch = !foes.includes(f);",
     "new": "    const onWatch = !foes.includes(f);",
     "tests": [
-      "test/auditworld6b.test.js"
+      "test/systems/auditworld6b.test.js"
     ]
   },
   {
@@ -142,7 +142,7 @@
     "old": "const fire = () => ({ id: 'resist', param: 'fire', value: REGALIA_FIRE_RESIST });",
     "new": "const fire = () => ({ id: 'resist', param: 'fire', value: top('resist') });",
     "tests": [
-      "test/set6_aetheric.test.js"
+      "test/systems/set6_aetheric.test.js"
     ]
   }
 ]

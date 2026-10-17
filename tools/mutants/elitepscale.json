@@ -5,7 +5,7 @@
     "old": "_weighHit(f, foeDeps.calculateAttackDamage(f.entity, foeDeps.playerEntity, {",
     "new": "((_f, d) => d)(f, foeDeps.calculateAttackDamage(f.entity, foeDeps.playerEntity, {",
     "tests": [
-      "test/elitepscale.test.js"
+      "test/scenes/elitepscale.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    return isRoomFoe(f) || f._ownFrom != null || ownRides(f);   // REST-SYNC: and a rest's encounter, which the room now shares; PSCALE-OWN: and a shared quest's, on the own lane; SUMMON-SYNC: and a loose stand",
     "new": "    return (isRoomFoe(f) && !f.entity?.elite) || f._ownFrom != null || ownRides(f);   // REST-SYNC: and a rest's encounter, which the room now shares; PSCALE-OWN: and a shared quest's, on the own lane; SUMMON-SYNC: and a loose stand",
     "tests": [
-      "test/elitepscale.test.js"
+      "test/scenes/elitepscale.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "            const size = campMembers(h.mobileTypes).length;",
     "new": "            const size = h.mobileTypes.length;",
     "tests": [
-      "test/elitepscale.test.js"
+      "test/scenes/elitepscale.test.js"
     ]
   }
 ]

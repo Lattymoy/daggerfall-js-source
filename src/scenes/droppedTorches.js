@@ -53,7 +53,7 @@
 // Bloodfall's GUID (no such mod); the Custom Tooltips names.
 
 import { GLOBAL_SCALE, pickFoeHit, RAY_DISTANCE, DEFAULT_ACTIVATION_DISTANCE } from '../player/activate.js';
-import { templateByIndex } from '../systems/itemTemplates.js';
+import { templateByIndex } from '../systems/item/itemTemplates.js';
 import { TEMPLATES } from '../systems/useItem.js';
 import { adoptLight } from '../render/lightId.js';   // LIGHT-ID: a light named by what burns, so the shadow pass knows one that moved
 import { applySpell, renewRounds } from '../systems/effects.js';

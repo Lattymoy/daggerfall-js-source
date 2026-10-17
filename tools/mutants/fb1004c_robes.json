@@ -1,11 +1,11 @@
 [
   {
     "name": "ROBES-helper-sends-nothing",
-    "file": "src/systems/itemTransfer.js",
+    "file": "src/systems/item/itemTransfer.js",
     "old": "  questItem.setPlayerClicked();\n  return true;",
     "new": "  return true;",
     "tests": [
-      "test/fb1004c_robes.test.js"
+      "test/systems/fb1004c_robes.test.js"
     ]
   },
   {
@@ -14,56 +14,56 @@
     "old": "  sendQuestItemClick(item, getQuest);\n",
     "new": "",
     "tests": [
-      "test/fb1004c_robes.test.js",
-      "test/quickloot.test.js"
+      "test/systems/fb1004c_robes.test.js",
+      "test/systems/quickloot.test.js"
     ]
   },
   {
     "name": "ROBES-menu-no-click",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "  if (from === 'remote') sendQuestItemClick(item, deps.getQuest ?? null);\n  const acts",
     "new": "  const acts",
     "tests": [
-      "test/fb1004c_robes.test.js"
+      "test/systems/fb1004c_robes.test.js"
     ]
   },
   {
     "name": "ROBES-quickact-no-click",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "{ sendQuestItemClick(item, deps.getQuest ?? null); take(item); return true; }",
     "new": "{ take(item); return true; }",
     "tests": [
-      "test/fb1004c_robes.test.js"
+      "test/systems/fb1004c_robes.test.js"
     ]
   },
   {
     "name": "ROBES-row-no-click",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "    if (from === 'remote') sendQuestItemClick(item, deps.getQuest ?? null);\n    // IG7",
     "new": "    // IG7",
     "tests": [
-      "test/fb1004c_robes.test.js",
-      "test/enhancedInventory.test.js"
+      "test/systems/fb1004c_robes.test.js",
+      "test/ui/enhanced/enhancedInventory.test.js"
     ]
   },
   {
     "name": "ROBES-row-clicks-local-too",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "    if (from === 'remote') sendQuestItemClick(item, deps.getQuest ?? null);\n    // IG7",
     "new": "    sendQuestItemClick(item, deps.getQuest ?? null);\n    // IG7",
     "tests": [
-      "test/fb1004c_robes.test.js",
-      "test/enhancedInventory.test.js"
+      "test/systems/fb1004c_robes.test.js",
+      "test/ui/enhanced/enhancedInventory.test.js"
     ]
   },
   {
     "name": "ROBES-native-no-click",
-    "file": "src/ui/nativeInventory.js",
+    "file": "src/ui/native/nativeInventory.js",
     "old": "    sendQuestItemClick(it, this.hooks.getQuest ?? null);   // WHERE-ROBES",
     "new": "    //",
     "tests": [
-      "test/fb1004c_robes.test.js",
-      "test/audit26_uicore.test.js"
+      "test/systems/fb1004c_robes.test.js",
+      "test/ui/native/audit26_uicore.test.js"
     ]
   },
   {
@@ -72,7 +72,7 @@
     "old": "export const questStandItem = (resource) => resource?.daggerfallUnityItem ?? null;",
     "new": "export const questStandItem = (resource) => resource?.daggerfallItem ?? resource?.item ?? null;",
     "tests": [
-      "test/fb1004c_robes.test.js"
+      "test/systems/fb1004c_robes.test.js"
     ]
   },
   {
@@ -81,7 +81,7 @@
     "old": "        const st = questFlats[Number(key.split(':')[1])];\n        const res = st?.behaviour?.targetResource ?? null;\n        if (!res || res.isPerson === true || res.isFoe === true) return null;\n        const t = questResourceName(questStandItem(res),",
     "new": "        const st = questFlats[Number(key.split(':')[1])];\n        const res = st?.behaviour?.targetResource ?? null;\n        if (!res || res.isPerson === true || res.isFoe === true) return null;\n        const t = questResourceName(res.daggerfallItem ?? res.item ?? null,",
     "tests": [
-      "test/fb1004c_robes.test.js"
+      "test/systems/fb1004c_robes.test.js"
     ]
   },
   {
@@ -90,7 +90,7 @@
     "old": "    const st = dungeonQuestFlats[Number(key.split(':')[1])];\n    const res = st?.behaviour?.targetResource ?? null;\n    if (!res || res.isPerson === true || res.isFoe === true) return null;\n    const t = questResourceName(questStandItem(res),",
     "new": "    const st = dungeonQuestFlats[Number(key.split(':')[1])];\n    const res = st?.behaviour?.targetResource ?? null;\n    if (!res || res.isPerson === true || res.isFoe === true) return null;\n    const t = questResourceName(res.daggerfallItem ?? res.item ?? null,",
     "tests": [
-      "test/fb1004c_robes.test.js"
+      "test/systems/fb1004c_robes.test.js"
     ]
   },
   {
@@ -99,7 +99,7 @@
     "old": "if (shelvesAct(interiorBuilding)) interiorCtx.shelves.forEach(",
     "new": "interiorCtx.shelves.forEach(",
     "tests": [
-      "test/fb1004c_robes.test.js"
+      "test/systems/fb1004c_robes.test.js"
     ]
   },
   {
@@ -108,7 +108,7 @@
     "old": "(hallOfRecordsHere(b) || isShop(b.buildingType) || isBookshelfBuilding(b.buildingType))",
     "new": "(isShop(b.buildingType) || isBookshelfBuilding(b.buildingType))",
     "tests": [
-      "test/fb1004c_robes.test.js"
+      "test/systems/fb1004c_robes.test.js"
     ]
   },
   {
@@ -117,7 +117,7 @@
     "old": "} else if (target.surface === true && collider.raycastHit && d <= bestDist) {",
     "new": "} else if (false) {",
     "tests": [
-      "test/fb1004c_robes.test.js"
+      "test/systems/fb1004c_robes.test.js"
     ]
   },
   {
@@ -126,7 +126,7 @@
     "old": "      if (!boxContains(target.aabb, [eye[0] + dir[0] * firstHit.dist, eye[1] + dir[1] * firstHit.dist, eye[2] + dir[2] * firstHit.dist], PICK_PARDON_M)) continue;\n      d = Math.max(d, firstHit.dist);",
     "new": "      d = Math.max(d, firstHit.dist);",
     "tests": [
-      "test/fb1004c_robes.test.js"
+      "test/systems/fb1004c_robes.test.js"
     ]
   },
   {
@@ -135,7 +135,7 @@
     "old": "      d = Math.max(d, firstHit.dist);\n    }",
     "new": "    }",
     "tests": [
-      "test/fb1004c_robes.test.js"
+      "test/systems/fb1004c_robes.test.js"
     ]
   },
   {
@@ -144,7 +144,7 @@
     "old": "reach: DEFAULT_ACTIVATION_DISTANCE, surface: true });   // WHERE-ROBES: the mattress",
     "new": "reach: DEFAULT_ACTIVATION_DISTANCE });   // WHERE-ROBES: the mattress",
     "tests": [
-      "test/fb1004c_robes.test.js"
+      "test/systems/fb1004c_robes.test.js"
     ]
   },
   {
@@ -153,7 +153,7 @@
     "old": "reach: TREASURE_ACTIVATION_DISTANCE, surface: true });",
     "new": "reach: TREASURE_ACTIVATION_DISTANCE });",
     "tests": [
-      "test/fb1004c_robes.test.js"
+      "test/systems/fb1004c_robes.test.js"
     ]
   },
   {
@@ -162,7 +162,7 @@
     "old": "reach: DEFAULT_ACTIVATION_DISTANCE, surface: true });   // WHERE-ROBES: its boards",
     "new": "reach: DEFAULT_ACTIVATION_DISTANCE });   // WHERE-ROBES: its boards",
     "tests": [
-      "test/fb1004c_robes.test.js"
+      "test/systems/fb1004c_robes.test.js"
     ]
   },
   {
@@ -171,7 +171,7 @@
     "old": "      if (was?.clicked && !r.hasPlayerClicked) r.setPlayerClicked();\n",
     "new": "",
     "tests": [
-      "test/fb1004c_robes.test.js"
+      "test/systems/fb1004c_robes.test.js"
     ]
   },
   {
@@ -180,16 +180,17 @@
     "old": "      if (was?.hidden && r.isItem) r.isHidden = true;\n",
     "new": "",
     "tests": [
-      "test/fb1004c_robes.test.js"
+      "test/systems/fb1004c_robes.test.js"
     ]
   },
   {
     "name": "ROBES-dungeon-search-box-raced",
     "file": "src/scenes/dungeonContext.js",
-    "old": "reach: SEARCH_REACH, surface: true }); });",
-    "new": "reach: SEARCH_REACH }); });",
+    "old": "lastPlayerFeet[1] + lastPlayerHeight : NaN), surface: true }); });",
+    "new": "lastPlayerFeet[1] + lastPlayerHeight : NaN) }); });",
     "tests": [
-      "test/fb1004c_robes.test.js"
-    ]
+      "test/systems/fb1004c_robes.test.js"
+    ],
+    "note": "PIN MOVED (FIELD BUGS 2026-10-16b GRAVE-PARTY): the reach is the body's now (searchReachFor) - re-aimed by content at the same `surface: true`."
   }
 ]

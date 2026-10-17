@@ -1,4 +1,4 @@
-// IMPORT-GRAPH1's fixture (test/accountdeploy.test.js): a line comment carrying a stray /* - the old walk opened a
+// IMPORT-GRAPH1's fixture (test/server/accountdeploy.test.js): a line comment carrying a stray /* - the old walk opened a
 // "block" here that ran to the last line's close and saw none of the imports between
 import { a } from './a.js';
 import { sep } from 'node:path';

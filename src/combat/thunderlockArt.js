@@ -7,7 +7,7 @@
 // and it arrives as one contact sheet rather than as records.
 //
 // So this is loadFpsWeaponArt's other half: fetch, decode, slice
-// (combat/gunSheet.js, the laws the gun lab settled), and hand back
+// (combat/gun/gunSheet.js, the laws the gun lab settled), and hand back
 // the SAME SHAPE the CIF path hands back -
 //   { weaponType, anims, records: [{ width, height, frames: [tex] }] }
 // - so drawFpsWeapon, the weapon rig and Weapon Widget's clone read it
@@ -23,11 +23,11 @@
 // background key that has to kill a white page without eating a
 // muzzle flash, are gunSheet.js's.
 
-import { FIRE_FRAMES, cellRect, keyBackground, contentBox, unionBox } from './gunSheet.js';
+import { FIRE_FRAMES, cellRect, keyBackground, contentBox, unionBox } from './gun/gunSheet.js';
 import { decodePng } from '../systems/textureReplacement.js';
 import { toScreenOrder } from '../formats/color32Order.js';   // FIELD-GUN3: HT3's law - a SCREEN QUAD's PNG keeps its rows
 import { WEAPON_TYPES, getWeaponAnims } from './fpsWeapon.js';
-import { GUN_FEEL } from './gunFeel.js';   // FIELD-GUN7: the lab's settled pose, one home
+import { GUN_FEEL } from './gun/gunFeel.js';   // FIELD-GUN7: the lab's settled pose, one home
 import { APP_ROOT } from '../systems/appRoot.js';   // AUDIT-THUNDERLOCK F7: the SITE root, not the document's
 
 /** The sheet, off the SITE ROOT rather than the document.

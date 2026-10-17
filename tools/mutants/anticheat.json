@@ -1,0 +1,90 @@
+[
+  {
+    "name": "ANTICHEAT-A1-gate-open",
+    "file": "src/characters/playerEntity.js",
+    "old": "  if (pageHas('shot')) window.__playerEntity = playerEntity;",
+    "new": "  if (true) window.__playerEntity = playerEntity;",
+    "why": "every page is handed the live entity again, as before #955",
+    "tests": ["test/characters/anticheat_surface.test.js"]
+  },
+  {
+    "name": "ANTICHEAT-A1-gate-word",
+    "file": "src/characters/playerEntity.js",
+    "old": "if (pageHas('shot'))",
+    "new": "if (pageHas('shots'))",
+    "why": "the probes' boot is handed nothing - every tools/*Probe.mjs that reads the handle breaks",
+    "tests": ["test/characters/anticheat_surface.test.js"]
+  },
+  {
+    "name": "ANTICHEAT-A1-stale-kept",
+    "file": "src/characters/playerEntity.js",
+    "old": "  else if ('__playerEntity' in window) delete window.__playerEntity;",
+    "new": "  else if ('__playerEntity' in window) void 0;",
+    "why": "a handle published before the search lost ?shot stays on the page",
+    "tests": ["test/characters/anticheat_surface.test.js"]
+  },
+  {
+    "name": "ANTICHEAT-A1-parse-a-call",
+    "file": "src/characters/playerEntity.js",
+    "old": "if (pageHas('shot')) window.__playerEntity",
+    "new": "if (new URLSearchParams(window.location?.search ?? '').has('shot')) window.__playerEntity",
+    "why": "#955's own cut: a URLSearchParams minted every call, in the frame",
+    "tests": ["test/characters/anticheat_surface.test.js", "test/systems/perfurl_doors.test.js"]
+  },
+  {
+    "name": "ANTICHEAT-A1-a-copy",
+    "file": "src/characters/playerEntity.js",
+    "old": "window.__playerEntity = playerEntity;",
+    "new": "window.__playerEntity = { ...playerEntity };",
+    "why": "the probes are handed a copy, and their writes land on nothing",
+    "tests": ["test/characters/anticheat_surface.test.js"]
+  },
+  {
+    "name": "ANTICHEAT-A2-readyRanged-ungated",
+    "file": "src/scenes/world.js",
+    "old": "  if (shotMode) window.__readyRanged = () =>",
+    "new": "  window.__readyRanged = () =>",
+    "why": "the cast probe's hook on every boot again",
+    "tests": ["test/tree/probegate.test.js"]
+  },
+  {
+    "name": "ANTICHEAT-A2-rig-ungated",
+    "file": "src/scenes/exterior.js",
+    "old": "    if (shotMode) window.__rig = rig;",
+    "new": "    window.__rig = rig;",
+    "why": "the bench's rig handle on every boot again",
+    "tests": ["test/tree/probegate.test.js"]
+  },
+  {
+    "name": "ANTICHEAT-A2-installers-ungated",
+    "file": "src/scenes/world.js",
+    "old": "  if (shotMode) { modes.installShotProbes(); installTownProbes(); }",
+    "new": "  { modes.installShotProbes(); installTownProbes(); }",
+    "why": "__addGold, __warpTo, __damageFoe and the rest of both installers on every boot, online too",
+    "tests": ["test/tree/probegate.test.js"]
+  },
+  {
+    "name": "ANTICHEAT-A2-always-on-both-ways",
+    "file": "src/scenes/world.js",
+    "old": "  window.__weaponDebug = () => JSON.stringify({",
+    "new": "  if (shotMode) window.__weaponDebug = () => JSON.stringify({",
+    "why": "a seam gated while its always-on name stays listed - the list is counted both ways",
+    "tests": ["test/tree/probegate.test.js"]
+  },
+  {
+    "name": "ANTICHEAT-devtools-packaged",
+    "file": "app/main.cjs",
+    "old": "        { role: 'toggleDevTools' },",
+    "new": "        ...(!app.isPackaged ? [{ role: 'toggleDevTools' }] : []),",
+    "why": "#955's own cut: the installed game loses the console a field report asks for",
+    "tests": ["test/tooling/anticheat_devtools.test.js"]
+  },
+  {
+    "name": "ANTICHEAT-devtools-webprefs",
+    "file": "app/main.cjs",
+    "old": "      sandbox: false,",
+    "new": "      sandbox: false,\n      devTools: !app.isPackaged,",
+    "why": "the same, one level down: the game's window built with its DevTools off",
+    "tests": ["test/tooling/anticheat_devtools.test.js"]
+  }
+]

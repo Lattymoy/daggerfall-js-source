@@ -7,9 +7,9 @@
 // teleport service, and guildServiceFlow's `Teleport` was a null
 // pointing back at the travel map. Two finished systems across a gap
 // nobody had closed - G5 closes it from BOTH ends, and neither
-// sentence survives: systems/guildServiceFlow.js's service table now
+// sentence survives: systems/guild/guildServiceFlow.js's service table now
 // reads `Teleport: 'guildServiceTeleport'`, and
-// ui/travelMapWindow.js's activateTeleportationTravel arms the map
+// ui/travel/travelMapWindow.js's activateTeleportationTravel arms the map
 // and raises this window on the destination pick.
 //
 // THE NATIVE-WINDOW RULE, element by element:
@@ -50,7 +50,7 @@
 // asynchronous where TeleportToCoordinates is not - the black has to
 // hold over the streamer's rebuild, which is the frame DFU is hiding.
 
-import { loadImg, nativeMetrics, drawImg, drawRect, shadowText } from './nativePanel.js';
+import { loadImg, nativeMetrics, drawImg, drawRect, shadowText } from './native/nativePanel.js';
 import { hudFade } from './fadeLayer.js';   // D4: FadeBehaviour
 
 /** TELE00I0's own size, which IS mainPanelRect's (:21). */

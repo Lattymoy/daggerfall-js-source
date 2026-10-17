@@ -4,7 +4,7 @@
 // SEAT0 drew them (bible/11-Multiplayer/Seats-Arc.md 4.3; Mac: "You").
 //
 // FACT: nothing in DFU maps a region to a kingdom, and its borderRegions
-// table (systems/factionRelations.js BORDER_REGIONS) is not laid out in
+// table (systems/faction/factionRelations.js BORDER_REGIONS) is not laid out in
 // region order, so SEAT0 drew the map from the bay itself - High Rock
 // north of it, Hammerfell south - in REGION_NAMES' own indices
 // (formats/mapsTables.js). This is that table, one home: the professions

@@ -4,7 +4,7 @@
 //
 // Asked: "allowing for prop placement on the outside within the limits of
 // their house". An online home's owner decorates its YARD as they decorate
-// its rooms: the same decorator (scenes/decorTool.js - the catalogue, the
+// its rooms: the same decorator (scenes/decor/decorTool.js - the catalogue, the
 // free camera, the price by size), opened standing on the lot, its pieces
 // kept on the account service beside the room's (a yard's own flag and cap -
 // net/decorLaw.js decorYardPieceOf) and stood for everyone walking the town.
@@ -26,8 +26,8 @@
 //
 // THE TOWN'S YARDS are read with the town (one answer for every home in it -
 // server-account/src/decor.js yardsOf), believed a minute as the homes are
-// (systems/onlineHomes.js), and each yard stood in its pixel as a room's
-// pieces stand in its room (scenes/decorRoom.js, one pool a yard): its own
+// (systems/online/onlineHomes.js), and each yard stood in its pixel as a room's
+// pieces stand in its room (scenes/decor/decorRoom.js, one pool a yard): its own
 // collider buckets on the world's collider, drawn in the world's passes, and
 // stood again where it stands when the world recentres (the pool places in
 // scene space - FB1001 YARD-RECENTRE: in place, by the host's recentre, before
@@ -45,7 +45,7 @@
 // "an outdoor lamp is the town's"), and nothing lit it as the town either, so
 // a lamp post placed outside stood dark beside the street's lit ones. Now a
 // TEXTURE.210 flat standing in a yard lights as Daggerfall lights every one
-// standing in a town block (RMBLayout.AddLight, world/cityLights.js): the
+// standing in a town block (RMBLayout.AddLight, world/city/cityLights.js): the
 // DaggerfallLight [City] at the flat's top, in the town lanterns' hours,
 // colour and flicker, ranked with the street's own (yardLampOf, `lamps`;
 // scenes/world.js). Nothing is stored and nothing is switched: a lamp placed
@@ -57,28 +57,41 @@
 // Online alone - a yard is an online home's. Not a DFU member. Ledger A.
 // ═══════════════════════════════════════════════════════════════════
 
-import { createDecorRoom, decorBoxSeen, DECOR_DRAW, DECOR_SKIP } from './decorRoom.js';   // YARD-RANGE: a piece too small to see
+import { createDecorRoom, decorBoxSeen, DECOR_DRAW, DECOR_SKIP } from './decor/decorRoom.js';   // YARD-RANGE: a piece too small to see
 import { YARD_RANGE_TIERS, YARD_RANGE_DEFAULT, yardRangeOf, YARD_DRAW_M } from '../net/yardRange.js';   // YARD-RANGE: how far a stranger's yard is drawn
-import { createDecorTool } from './decorTool.js';
+import { createDecorTool } from './decor/decorTool.js';
 import { decorYardPieceOf, DECOR_YARD_CAP, decorYardHighOk, DECOR_YARD_HIGH_WHY } from '../net/decorLaw.js';   // YARD-HEIGHT: how high a piece stands, and its words
 import { homeLookRecords } from '../world/homeLook.js';   // HOME-LOOK (AUDIT): the styles a roof's or a door's family holds
 import { onPathTile } from '../player/exteriorSurface.js';   // FB1001 ROAD-LOT: PlayerMotor.OnPathTile - Daggerfall's own road tiles
 import { RMB_TILE_SIDE } from '../world/locationEntrance.js';   // FB1001 ROAD-LOT: RMBLayout.RMBTileSide, a ground tile's side
-import { TERRAIN_TILE_DIM } from '../world/terrainSurface.js';
-import { homeOutsideKept, homeYardWhere, homeCandidate } from '../systems/onlineHomes.js';   // GUILD-YARD: a hall's keepers keep its outside
+import { TERRAIN_TILE_DIM } from '../world/terrain/terrainSurface.js';
+import { homeOutsideKept, homeYardWhere, homeCandidate } from '../systems/online/onlineHomes.js';   // GUILD-YARD: a hall's keepers keep its outside
 import { homeDecorShown } from '../net/homeVoteLaw.js';   // HOME-VOTE: a shunned home's yard stands for its insiders alone
 import { createYardNature, isNaturePiece, yardNatureFlat, yardTreeSet } from './yardNature.js';   // DECOR-OUTDOOR: a yard's trees and plants, in its town's season; DECOR-LPT: as Low Poly Trees' own
 import { remapSubMeshes } from '../world/texRemap.js';   // DECOR-OUTDOOR: a yard's models in its town's climate
 import { applyClimate } from '../world/climateSwaps.js';
 import { isNatureArchive, BLOCK_FLATS_OFFSET_Y } from '../world/rmbFlats.js';   // AUDIT YARD-LIGHT: and how far the town's flats stand below their lights
-import { LIGHTS_ARCHIVE, CITY_LIGHT_RANGE, CITY_LIGHT_INTENSITY, CITY_LIGHT_COLOR } from '../world/cityLights.js';   // YARD-LIGHT: the town's lantern
+import { LIGHTS_ARCHIVE, CITY_LIGHT_RANGE, CITY_LIGHT_INTENSITY, CITY_LIGHT_COLOR } from '../world/city/cityLights.js';   // YARD-LIGHT: the town's lantern
 import { GLOBAL_SCALE } from '../world/meshReader.js';
 import { transformedAabb } from '../render/frustum.js';   // FB1009 HOME-FOOT: a model's ground where its placement stands it
 import { adoptLight } from '../render/lightId.js';   // LIGHT-ID: a row named by its lamp
+import { createBankAccounts, BANK_REGION_COUNT, goldRegion } from '../systems/banking.js';   // the yard's wallet (homeYardWallet)
+import { totalGoldAmount, payUndoable, addGold } from '../systems/court.js';
 
 /** YARD-LIGHT: the light a yard's lamp gives - the town's lantern's (DaggerfallLight [City]: range 18, intensity 1,
  *  white). The world host lights it as it lights theirs: the town lanterns' colour (CITY_LIGHT_COLOR_F32) and their
  *  flicker, at the lamp's own reach (yardLampRows). */
+/** HOME-YARD: what a yard's decorator spends - the player's purse and the region's bank account (EMPIRE-ACCOUNT: online,
+ *  the Empire's). Moved out of world.js's bootWorld whole (INSTANCES' HOST-SPLIT, 2026-10-15): it reads only `entity`. */
+export const homeYardWallet = (entity, region) => {
+  entity.bankAccounts ??= createBankAccounts(BANK_REGION_COUNT);
+  const a = entity.bankAccounts[goldRegion(entity.bankAccounts, region)] ?? null;   // EMPIRE-ACCOUNT: the Empire's account
+  return {
+    gold: totalGoldAmount(entity) + (a?.accountGold ?? 0),
+    pay: (n) => payUndoable(entity, n, a),   // MARKET-AUDIT: answering the undo of exactly what it took
+    credit: (n) => { addGold(entity, n); },
+  };
+};
 export const YARD_LAMP = Object.freeze({ range: CITY_LIGHT_RANGE, intensity: CITY_LIGHT_INTENSITY, color: CITY_LIGHT_COLOR });
 /** AUDIT YARD-LIGHT (L1): HOW MANY OF A YARD'S LAMPS LIGHT - the most TEXTURE.210 flats any Daggerfall town block stands
  *  (eight, in GRVEAL01, GRVEAS01, GRVEAM01, CUSTAA02 and CUSTAA04 of the 920 RMB blocks; most stand three to five).
@@ -152,6 +165,11 @@ export const YARD_MARK_HIGH = 1;
 /** A town's yards, believed this long; an unanswered ask waits this long before the next. */
 export const YARD_TOWN_TTL_MS = 60_000;
 export const YARD_RETRY_MS = 10_000;
+/** PRIMARY-TRIPS audit (2026-10-16): how long the owner's own write stands over ANY answer of its town, asked after it
+ *  too - the service keeps a town's answer YARDS_KEPT_S (30 s) an isolate and reads it off a replica (YARDS-REPLICA,
+ *  server-account/src/decor.js), so an answer asked after the write can still be one from before it, kept, or a replica
+ *  behind. FB1001 YARD-STALE held a write over an answer asked before it alone. */
+export const YARD_WRITE_HOLD_MS = 60_000;
 /**
  * YARD-SHED (2026-10-06, the account service down - "D1 DB is overloaded. Requests queued for too long."): A TOWN'S
  * YARDS ARE ASKED ONLY WITHIN REACH, AND A FAILED ASK BACKS OFF. Every built pixel's town was asked every minute - the
@@ -411,7 +429,7 @@ export function yardLotEdges(lot, roads = []) {
 /** Whether a world point stands on the lot (or within `near` of it) - `origin` the frame's, in the world. */
 export const yardHolds = (lot, origin, p, near = 0) => !!lot && Array.isArray(p) && inRect(p[0] - origin[0], p[2] - origin[2], lot.lot, near);
 /**
- * THE LOT'S MARKED EDGE: its four sides as upright bands (the decal pass's quads - combat/bloodDecals.js writeDecalQuad's
+ * THE LOT'S MARKED EDGE: its four sides as upright bands (the decal pass's quads - combat/blood/bloodDecals.js writeDecalQuad's
  * shape), standing on the ground, in the world (`origin` the frame's). FB1001 ROAD-LOT: with the road taken out of it
  * (`roads` - yardRoadsOf), the edge runs along the road's side: the band is where a piece may stand up to.
  */
@@ -428,7 +446,7 @@ export function yardLotQuads(lot, origin, high = YARD_MARK_HIGH, roads = []) {
 /**
  * THE TOWN'S YARDS, AND THE OWNER'S DECORATOR OUTSIDE. `deps` (the world host's - scenes/world.js):
  *   api          - net/accountClient.js accountDecor: yards(mapId), place (with `yard`), move, remove
- *   homes        - systems/onlineHomes.js: homeAt(mapId, key) - whose a home is, and whether it is the character's own
+ *   homes        - systems/online/onlineHomes.js: homeAt(mapId, key) - whose a home is, and whether it is the character's own
  *   built()      - the world's built pixels (each `{ px, py, homeTown, homeFrames }` - homeFrames: key -> { at, box,
  *                  rects }, pixel-local; FB1009 HOME-FOOT: `rects` the ground its models' faces cover, footRectsAt's)
  *   translation(px, py) - a pixel's place in the scene now
@@ -480,7 +498,7 @@ export function createHomeYards(deps) {
   // answer READ BEFORE a write and landing after it never stands the yard as it was (the piece placed gone, the piece
   // moved back, the piece removed standing again, for the minute until the next read)
   let wrote = 0;
-  /** @type {Map<number, Map<number, {n: number, list: any[]}>>} */
+  /** @type {Map<number, Map<number, {n: number, at: number, list: any[]}>>} */
   const writes = new Map();
 
   function ensure(mapId) {
@@ -498,7 +516,7 @@ export function createHomeYards(deps) {
         if (!Number.isSafeInteger(y?.buildingKey) || !Array.isArray(y.pieces)) continue;
         byKey.set(y.buildingKey, y.pieces.map(decorYardPieceOf).filter((p) => p && decorYardHighOk(p)));   // YARD-SWEEP: nor a tower's piece from before YARD-HEIGHT
       }
-      for (const [bk, w] of writes.get(mapId) ?? []) if (w.n > asked) byKey.set(bk, w.list);   // YARD-STALE: written since it was asked
+      for (const [bk, w] of writes.get(mapId) ?? []) if (w.n > asked || now() - w.at < YARD_WRITE_HOLD_MS) byKey.set(bk, w.list);   // YARD-STALE: written since it was asked - or (PRIMARY-TRIPS audit) within YARD_WRITE_HOLD_MS of it
       towns.set(mapId, { at: now(), byKey });
       failed.delete(mapId);
     }, () => { failed.set(mapId, { at: now(), n: (failed.get(mapId)?.n ?? 0) + 1 }); }).finally(() => { asking.delete(mapId); });
@@ -671,7 +689,7 @@ export function createHomeYards(deps) {
     if (town) town.byKey.set(y.bk, list);
     y.sig = JSON.stringify(list);
     if (!writes.has(y.mapId)) writes.set(y.mapId, new Map());
-    writes.get(y.mapId).set(y.bk, { n: ++wrote, list });   // FB1001 YARD-STALE
+    writes.get(y.mapId).set(y.bk, { n: ++wrote, at: now(), list });   // FB1001 YARD-STALE
   }
   const homeDecor = deps.api ? {
     place: (a) => deps.api.place({ ...a, yard: true }),

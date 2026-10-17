@@ -128,10 +128,18 @@ export class PrefabNode {
   set rotation(q) { this.localRotation = this.parent ? normalizeQuat(quatMultiply(quatInverse(this.parent.rotation), q)) : [...q]; }
   /** Transform.lossyScale: the world rotation undone from the world rotation-and-scale, its diagonal. */
   get lossyScale() { return this.lossyScaleOf(this.worldMatrix()); }
-  /** AUDIT PRE-MERGE 0928 R5: lossyScale over the node's world matrix already in hand (a walk's), the same arithmetic. */
-  lossyScaleOf(world) {
-    const r = rs3(mat4FromQuatPosScale(this.rotation, ZERO3, ONE3, _rotScratch));
-    const m = mul3(transpose3(r), rs3(world));
+  /** AUDIT PRE-MERGE 0928 R5: lossyScale over the node's world matrix already in hand (a walk's), the same arithmetic.
+   *  PERF-SAILS3: into `out` when one is given - the product's diagonal alone, each term the one mul3 sums (rs3's
+   *  rows of the rotation, transposed, against the world's columns), in mul3's order: the same floats, no array made. */
+  lossyScaleOf(world, out = undefined) {
+    const R = mat4FromQuatPosScale(this.rotation, ZERO3, ONE3, _rotScratch);
+    if (out) {
+      out[0] = R[0] * world[0] + R[1] * world[1] + R[2] * world[2];
+      out[1] = R[4] * world[4] + R[5] * world[5] + R[6] * world[6];
+      out[2] = R[8] * world[8] + R[9] * world[9] + R[10] * world[10];
+      return out;
+    }
+    const m = mul3(transpose3(rs3(R)), rs3(world));
     return [m[0], m[4], m[8]];
   }
   /** Transform.InverseTransformPoint: a point in the root's frame, in this node's. */

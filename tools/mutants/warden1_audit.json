@@ -5,7 +5,7 @@
     "old": "const who = typeof e.sub === 'string' && e.sub ? e.sub : e.k;",
     "new": "const who = e.k;",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "for (const e of [...extra, ...own].slice(",
     "new": "for (const e of [...own, ...extra].slice(",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
@@ -23,8 +23,8 @@
     "old": "Math.abs(p[0] - q[0]) <= WARDEN_SPOT_NATIVES && Math.abs(p[1] - q[1]) <= WARDEN_SPOT_NATIVES;",
     "new": "p[0] === q[0] && p[1] === q[1] && JSON.stringify(a.h ?? null) === JSON.stringify(b.h ?? null);",
     "tests": [
-      "test/warden1_audit.test.js",
-      "test/warden1.test.js"
+      "test/systems/wagon/warden1_audit.test.js",
+      "test/systems/horse/warden1.test.js"
     ]
   },
   {
@@ -33,8 +33,8 @@
     "old": "Math.abs(p[0] - q[0]) <= WARDEN_SPOT_NATIVES && Math.abs(p[1] - q[1]) <= WARDEN_SPOT_NATIVES;",
     "new": "Math.abs(p[0] - q[0]) <= WARDEN_SPOT_NATIVES;",
     "tests": [
-      "test/warden1_audit.test.js",
-      "test/warden1.test.js"
+      "test/systems/wagon/warden1_audit.test.js",
+      "test/systems/horse/warden1.test.js"
     ]
   },
   {
@@ -43,7 +43,7 @@
     "old": "const ly = r.ly, spot = rec.w ? [rec.w[1], rec.w[3]] : null;",
     "new": "const ly = r.ly, spot = rec.w ? [rec.w[1], rec.w[3]] : rec.h ? [rec.h[0], rec.h[2]] : null;",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
@@ -52,7 +52,7 @@
     "old": "!e.y && Array.isArray(e.r?.w) && Array.isArray(e.r?.ly)",
     "new": "!e.y && Array.isArray(e.r?.ly)",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
@@ -61,7 +61,7 @@
     "old": "const ly = r.ly, spot = rec.w ? [rec.w[1], rec.w[3]] : null;",
     "new": "const ly = r.ly, spot = rec.w ? [a[0], a[1]] : null;",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
@@ -70,7 +70,7 @@
     "old": " && ly.every((v) => Math.abs(v) <= POSE_BOUND) && Math.abs(ly[0] - spot[0])",
     "new": " && Math.abs(ly[0] - spot[0])",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
@@ -79,8 +79,8 @@
     "old": "      try { await this._parkWarden(Date.now()); } catch (e) { this._parks = null; this._wardenAt = Date.now() + WARDEN_RETRY_MS; console.warn('[park] the watch', e?.message ?? e); }",
     "new": "      await this._parkWarden(Date.now());",
     "tests": [
-      "test/warden1_audit.test.js",
-      "test/warden1.test.js"
+      "test/systems/wagon/warden1_audit.test.js",
+      "test/systems/horse/warden1.test.js"
     ]
   },
   {
@@ -89,7 +89,7 @@
     "old": "catch (e) { this._parks = null; this._wardenAt = Date.now() + WARDEN_RETRY_MS;",
     "new": "catch (e) { this._wardenAt = Date.now() + WARDEN_RETRY_MS;",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
@@ -98,7 +98,7 @@
     "old": "this._parks = null; this._wardenAt = Date.now() + WARDEN_RETRY_MS;",
     "new": "this._parks = null; this._wardenAt = undefined;",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
@@ -107,8 +107,8 @@
     "old": "const s = JSON.stringify({ t: 'parkYeet', at: rec.y, from, to, k: rec.k });",
     "new": "const s = JSON.stringify({ t: 'parkYeet', at: rec.y, from, to });",
     "tests": [
-      "test/warden1_audit.test.js",
-      "test/warden1.test.js"
+      "test/systems/wagon/warden1_audit.test.js",
+      "test/systems/horse/warden1.test.js"
     ]
   },
   {
@@ -117,7 +117,7 @@
     "old": "b.sub === rec.sub && b.pk === rec.k) this._send(ws, s);",
     "new": "b.sub === rec.sub) this._send(ws, s);",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
@@ -126,7 +126,7 @@
     "old": "  if (m.k !== undefined && !(typeof m.k === 'string' && PARK_KEY_RE.test(m.k))) return null;\n",
     "new": "",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
@@ -135,218 +135,218 @@
     "old": " || Math.abs(m.to[1] - m.from[1]) > WARDEN_LAND_REACH) return null;\n  if (m.k",
     "new": ") return null;\n  if (m.k",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-WARDEN1-C1-record-every-horse",
-    "file": "src/systems/wagonWarden.js",
+    "file": "src/systems/wagon/wagonWarden.js",
     "old": "if (Array.isArray(r.h) && horseThrownWith(from, [r.h[0], r.h[2]]))",
     "new": "if (Array.isArray(r.h))",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-WARDEN1-C1-reach-one-axis",
-    "file": "src/systems/wagonWarden.js",
+    "file": "src/systems/wagon/wagonWarden.js",
     "old": " && Math.abs(horse[1] - wagon[1]) <= WARDEN_HORSE_BY_NATIVES;",
     "new": ";",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-WARDEN1-C1-adopt-every-horse",
-    "file": "src/systems/horseCart.js",
+    "file": "src/systems/horse/horseCart.js",
     "old": "const loose = hm === HORSE_MODE.LooseStationary && horseThrownWith([wagonState.WorldX, wagonState.WorldZ], [wagonState.HorseWorldX, wagonState.HorseWorldZ]);",
     "new": "const loose = hm === HORSE_MODE.LooseStationary;",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-WARDEN1-C3-reach-kept",
-    "file": "src/systems/horseCart.js",
+    "file": "src/systems/horse/horseCart.js",
     "old": "    if (loose) setHorseLoose(castWorldCoordinate(hx), castWorldCoordinate(hz), hh);\n    clearInteriorAccess();\n",
     "new": "    if (loose) setHorseLoose(castWorldCoordinate(hx), castWorldCoordinate(hz), hh);\n",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-WARDEN1-D11-adopt-unpersisted",
-    "file": "src/systems/horseCart.js",
+    "file": "src/systems/horse/horseCart.js",
     "old": "    if (!physicalPersistenceEnabled || wagonState.Mode !== WAGON_MODE.Deployed) return false;\n    const at = thrownTo(",
     "new": "    if (wagonState.Mode !== WAGON_MODE.Deployed) return false;\n    const at = thrownTo(",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-WARDEN1-D13-thrownTo-z",
-    "file": "src/systems/wagonWarden.js",
+    "file": "src/systems/wagon/wagonWarden.js",
     "old": " || Math.abs(anchor[1] - from[1]) > WARDEN_SAME_NATIVES) return null;",
     "new": ") return null;",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-WARDEN1-D13-word-z-reach",
-    "file": "src/systems/wagonWarden.js",
+    "file": "src/systems/wagon/wagonWarden.js",
     "old": " || Math.abs(stamp.ly[1] - anchor[1]) > WARDEN_LAND_REACH) return null;",
     "new": ") return null;",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-WARDEN1-R6-edges-unsorted",
-    "file": "src/systems/wagonWarden.js",
+    "file": "src/systems/wagon/wagonWarden.js",
     "old": "return [0, 1, 2, 3].sort((i, j) => d[i] - d[j] || i - j).map((i) => out[i]);",
     "new": "return [0, 1, 2, 3].map((i) => out[i]);",
     "tests": [
-      "test/warden1_audit.test.js",
-      "test/warden1.test.js"
+      "test/systems/wagon/warden1_audit.test.js",
+      "test/systems/horse/warden1.test.js"
     ]
   },
   {
     "name": "AUDIT-WARDEN1-R6-pixel-unread",
-    "file": "src/scenes/wagonWardenHost.js",
+    "file": "src/scenes/wagon/wagonWardenHost.js",
     "old": "const ly = lands.find((l) => { const q = mapPixelOfWire(l[0], l[1]); return q[0] === px[0] && q[1] === px[1]; })",
     "new": "const ly = lands.find(() => false)",
     "tests": [
-      "test/warden1_audit.test.js",
-      "test/warden1.test.js"
+      "test/systems/wagon/warden1_audit.test.js",
+      "test/systems/horse/warden1.test.js"
     ]
   },
   {
     "name": "AUDIT-WARDEN1-R6-cell-unread",
-    "file": "src/scenes/wagonWardenHost.js",
+    "file": "src/scenes/wagon/wagonWardenHost.js",
     "old": "      ?? lands.find((l) => cellRoomOfWire(l[0], l[1]) === cell) ?? lands[0];",
     "new": "      ?? lands[0];",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-WARDEN1-D12-stray-dropped",
-    "file": "src/scenes/wagonWardenHost.js",
+    "file": "src/scenes/wagon/wagonWardenHost.js",
     "old": "landingsOf([0, 0, nav.width * NAV_CELL, nav.height * NAV_CELL], mid, strayOf(a))",
     "new": "landingsOf([0, 0, nav.width * NAV_CELL, nav.height * NAV_CELL], mid, 0)",
     "tests": [
-      "test/warden1_audit.test.js",
-      "test/warden1.test.js"
+      "test/systems/wagon/warden1_audit.test.js",
+      "test/systems/horse/warden1.test.js"
     ]
   },
   {
     "name": "AUDIT-WARDEN1-C5-switch-unread",
-    "file": "src/scenes/wagonWardenHost.js",
+    "file": "src/scenes/wagon/wagonWardenHost.js",
     "old": "    if (hcc.enabled === false) return null;\n",
     "new": "",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-WARDEN1-D10-stamp-without-parts",
-    "file": "src/scenes/wagonWardenHost.js",
+    "file": "src/scenes/wagon/wagonWardenHost.js",
     "old": "    if (!box) return undefined;\n",
     "new": "    if (!box) return wardenStamp(a, now);\n",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-WARDEN1-D11-anchor-unpersisted",
-    "file": "src/scenes/wagonWardenHost.js",
+    "file": "src/scenes/wagon/wagonWardenHost.js",
     "old": "if (!st || v.persistence === false || st.Mode !== WAGON_MODE.Deployed) return null;",
     "new": "if (!st || st.Mode !== WAGON_MODE.Deployed) return null;",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-WARDEN1-D11-anchor-any-mode",
-    "file": "src/scenes/wagonWardenHost.js",
+    "file": "src/scenes/wagon/wagonWardenHost.js",
     "old": "if (!st || v.persistence === false || st.Mode !== WAGON_MODE.Deployed) return null;",
     "new": "if (!st || v.persistence === false) return null;",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-WARDEN1-C4-adopted-at-once",
-    "file": "src/scenes/wagonWardenHost.js",
+    "file": "src/scenes/wagon/wagonWardenHost.js",
     "old": "      pending.push({ at: y.at, from: [y.from[0], y.from[1]], to: [y.to[0], y.to[1]] });\n      return true;",
     "new": "      return throwMine(y.from, y.to);",
     "tests": [
-      "test/warden1_audit.test.js",
-      "test/warden1.test.js"
+      "test/systems/wagon/warden1_audit.test.js",
+      "test/systems/horse/warden1.test.js"
     ]
   },
   {
     "name": "AUDIT-WARDEN1-C4-kept-twice",
-    "file": "src/scenes/wagonWardenHost.js",
+    "file": "src/scenes/wagon/wagonWardenHost.js",
     "old": "      if (pending.some((p) => p.at === y.at && p.from[0] === y.from[0] && p.from[1] === y.from[1])) return false;\n",
     "new": "",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-WARDEN1-C4-restore-keeps-old",
-    "file": "src/scenes/wagonWardenHost.js",
+    "file": "src/scenes/wagon/wagonWardenHost.js",
     "old": "stamp = validWardenStamp(rec); pending.length = 0; }",
     "new": "stamp = validWardenStamp(rec); }",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-WARDEN1-C6-key-ignored",
-    "file": "src/scenes/wagonWardenHost.js",
+    "file": "src/scenes/wagon/wagonWardenHost.js",
     "old": "      if (y.k && k && y.k !== k) return false;\n",
     "new": "",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-WARDEN1-C7-mine-always-alive",
-    "file": "src/scenes/wagonWardenHost.js",
+    "file": "src/scenes/wagon/wagonWardenHost.js",
     "old": "const alive = () => { const a = anchorOf(); return !!a && !!landed && Math.abs(a[0] - landed[0]) <= WARDEN_SAME_NATIVES && Math.abs(a[1] - landed[1]) <= WARDEN_SAME_NATIVES; };",
     "new": "const alive = () => true;",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-WARDEN1-C7-reader-always-alive",
-    "file": "src/scenes/wagonWardenHost.js",
+    "file": "src/scenes/wagon/wagonWardenHost.js",
     "old": "const alive = () => { for (const x of hcc.kept?.values?.() ?? []) if (x.k === e.k && x.y === e.y) return true; return false; };",
     "new": "const alive = () => true;",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-WARDEN1-C7-show-alive-unasked",
-    "file": "src/scenes/wagonWardenShow.js",
+    "file": "src/scenes/wagon/wagonWardenShow.js",
     "old": "        if (s.held && s.alive && !s.alive()) { end(s); continue; }   // C7: no longer the team thrown\n",
     "new": "",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-WARDEN1-C9-any-live-wagon",
-    "file": "src/scenes/wagonWardenHost.js",
+    "file": "src/scenes/wagon/wagonWardenHost.js",
     "old": "const [snap, owners] = onSpot(live, spot) ? [live, [e.id, kept]]",
     "new": "const [snap, owners] = live ? [live, [e.id, kept]]",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
@@ -355,7 +355,7 @@
     "old": "      else if (h && --h.n <= 0) _held.delete(owner);",
     "new": "      else if (h) _held.delete(owner);",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
@@ -364,7 +364,7 @@
     "old": "if (h) { h.n++; h.lone = h.lone || !!lone; }",
     "new": "if (h) { h.n++; }",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
@@ -373,7 +373,7 @@
     "old": ".filter((h) => h.drawn && (h.hitched || f.hitched || lone))",
     "new": ".filter((h) => h.drawn)",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
@@ -382,7 +382,7 @@
     "old": ".filter((h) => h.drawn && (h.hitched || f.hitched || lone))",
     "new": ".filter((h) => h.drawn && (h.hitched || lone))",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
@@ -391,25 +391,25 @@
     "old": "    if (held?.lone) { _teamWalk.delete(owner); return []; }",
     "new": "    if (held) { _teamWalk.delete(owner); return []; }",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-WARDEN1-C2-mine-always-lone",
-    "file": "src/scenes/wagonWardenHost.js",
+    "file": "src/scenes/wagon/wagonWardenHost.js",
     "old": "hcc.teamSnapshot?.('', myHorseThrown(was))",
     "new": "hcc.teamSnapshot?.('', true)",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-WARDEN1-C2-reader-any-horse",
-    "file": "src/scenes/wagonWardenHost.js",
+    "file": "src/scenes/wagon/wagonWardenHost.js",
     "old": "horse = Array.isArray(e.r.h) && horseThrownWith(spot, [e.r.h[0], e.r.h[2]]);",
     "new": "horse = Array.isArray(e.r.h);",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
@@ -418,7 +418,7 @@
     "old": "=> drawWagon(r, texRemap, position, rotation, tier, turn, 1, kind, hitched, look),",
     "new": "=> drawWagon(r, texRemap, position, rotation, 0, turn, 1, kind, hitched, look),",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
@@ -427,25 +427,25 @@
     "old": "tier: w.tier ?? 0, turn,",
     "new": "tier: 0, turn,",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-WARDEN1-C8-show-unloaded",
-    "file": "src/scenes/wagonWardenShow.js",
+    "file": "src/scenes/wagon/wagonWardenShow.js",
     "old": "showWagon(r, null, s.drawn.at, s.drawn.rot, s.kind, s.look, s.tier, s.turn, s.hitched)",
     "new": "showWagon(r, null, s.drawn.at, s.drawn.rot, s.kind, s.look)",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-WARDEN1-C10-rider-left-seated",
-    "file": "src/scenes/wagonRiders.js",
+    "file": "src/scenes/wagon/wagonRiders.js",
     "old": "    if (r.held && ride.seat != null) { getDown(RIDE_TEXT.lifted); return; }",
     "new": "",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
@@ -454,16 +454,16 @@
     "old": "    try { if (!_loading) wagonWarden?.tick(); if (_mode() === 'exterior') wardenShows?.frame(cam.pos); } catch (e) { console.warn('[warden] the watch', e?.message ?? e); }\n    hccTick(dt, now);\n",
     "new": "    hccTick(dt, now);\n    try { if (!_loading) wagonWarden?.tick(); if (_mode() === 'exterior') wardenShows?.frame(cam.pos); } catch (e) { console.warn('[warden] the watch', e?.message ?? e); }\n",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-WARDEN1-C13-show-unconcealed",
-    "file": "src/scenes/wagonWardenShow.js",
+    "file": "src/scenes/wagon/wagonWardenShow.js",
     "old": "      if (s.conceal) h.batch.conceal = s.conceal;",
     "new": "",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
@@ -472,98 +472,98 @@
     "old": "conceal: p?.look ?? null,",
     "new": "conceal: null,",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-WARDEN1-D16-keeper-height",
-    "file": "src/scenes/wagonWardenShow.js",
+    "file": "src/scenes/wagon/wagonWardenShow.js",
     "old": "    if (!walking && Number.isFinite(sz.h) && sz.h > 0.5 && sz.h < 4) s.head = sz.h;",
     "new": "",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-WARDEN1-D7-lands-where-thrown-from",
-    "file": "src/scenes/wagonWardenShow.js",
+    "file": "src/scenes/wagon/wagonWardenShow.js",
     "old": "          s.to = vadd(landOrigin, quatRotate(s.rotT, s.mid));",
     "new": "          s.to = s.from;",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-WARDEN1-D1-dedupe-by-key-alone",
-    "file": "src/scenes/wagonWardenHost.js",
+    "file": "src/scenes/wagon/wagonWardenHost.js",
     "old": "if (x.k === e.k && x.y === e.y) return false;   // said already",
     "new": "if (x.k === e.k) return false;   // said already",
     "tests": [
-      "test/warden1_audit.test.js",
-      "test/warden1.test.js"
+      "test/systems/wagon/warden1_audit.test.js",
+      "test/systems/horse/warden1.test.js"
     ]
   },
   {
     "name": "AUDIT-WARDEN1-D4-far-off-played",
-    "file": "src/scenes/wagonWardenHost.js",
+    "file": "src/scenes/wagon/wagonWardenHost.js",
     "old": "<= WARDEN_SHOW_REACH; };",
     "new": "<= Infinity; };",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-WARDEN1-D4-reader-indoors",
-    "file": "src/scenes/wagonWardenHost.js",
+    "file": "src/scenes/wagon/wagonWardenHost.js",
     "old": "if (shows.playing(key) || !street()) return false;",
     "new": "if (shows.playing(key)) return false;",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-WARDEN1-D4-mine-indoors",
-    "file": "src/scenes/wagonWardenHost.js",
+    "file": "src/scenes/wagon/wagonWardenHost.js",
     "old": "const snap = street() && was ? hcc.teamSnapshot",
     "new": "const snap = was ? hcc.teamSnapshot",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-WARDEN1-D5-straight-jog",
-    "file": "src/scenes/wagonWardenHost.js",
+    "file": "src/scenes/wagon/wagonWardenHost.js",
     "old": "    pts.push([lift[0], lift[1]]);\n    return pts;",
     "new": "    return null;",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-WARDEN1-D5-set-out-outside",
-    "file": "src/scenes/wagonWardenHost.js",
+    "file": "src/scenes/wagon/wagonWardenHost.js",
     "old": "t.local[0] - away[0] * WARDEN_APPROACH_FROM, t.local[1] - away[1] * WARDEN_APPROACH_FROM",
     "new": "t.local[0] + away[0] * WARDEN_APPROACH_FROM, t.local[1] + away[1] * WARDEN_APPROACH_FROM",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-WARDEN1-D3-blocks-unbounded",
-    "file": "src/scenes/wagonWardenHost.js",
+    "file": "src/scenes/wagon/wagonWardenHost.js",
     "old": "    if (u < 0 || v < 0 || u >= nav.width * NAV_CELL || v >= nav.height * NAV_CELL) continue;\n    return { town",
     "new": "    return { town",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-WARDEN1-D3-origin-dropped",
-    "file": "src/scenes/wagonWardenHost.js",
+    "file": "src/scenes/wagon/wagonWardenHost.js",
     "old": "const ox = t[0] + p.locOrigin[0], oz = t[2] + p.locOrigin[2]",
     "new": "const ox = t[0], oz = t[2]",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
@@ -572,7 +572,7 @@
     "old": "street: () => _mode() === 'exterior' && !_loading,",
     "new": "street: () => true,",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
@@ -581,7 +581,7 @@
     "old": "townName: (id) => _townOfMapId.get(id >>> 0)?.name ?? '',",
     "new": "townName: () => '',",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
@@ -590,7 +590,7 @@
     "old": "notify: (lines) => { for (const l of lines) townTalk.say(l); },",
     "new": "notify: () => {},",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
@@ -599,7 +599,7 @@
     "old": "eye: () => cam.pos, street:",
     "new": "eye: () => null, street:",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
@@ -608,7 +608,7 @@
     "old": "getSaveData: () => wagonWarden?.getSaveData() ?? null,",
     "new": "getSaveData: () => null,",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
@@ -617,7 +617,7 @@
     "old": "restoreSaveData: (rec) => wagonWarden?.restoreSaveData(rec),",
     "new": "restoreSaveData: () => {},",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
@@ -626,7 +626,7 @@
     "old": "    myKey: () => myParkKey(),",
     "new": "    myKey: () => null,",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
@@ -635,7 +635,7 @@
     "old": "=> (e?.r != null && Number.isFinite(e.y) ? thrownRecord(e.r) : e?.r ?? null);",
     "new": "=> e?.r ?? null;",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   },
   {
@@ -644,7 +644,7 @@
     "old": "judge(caravanRecordOf((Array.isArray(list) ? list : []).find((e) => e?.k === visit?.k)));",
     "new": "judge((Array.isArray(list) ? list : []).find((e) => e?.k === visit?.k)?.r ?? null);",
     "tests": [
-      "test/warden1_audit.test.js"
+      "test/systems/wagon/warden1_audit.test.js"
     ]
   }
 ]

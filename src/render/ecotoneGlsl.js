@@ -2,7 +2,7 @@
 // ECOTONE1 (2026-10-07, Mac: "Making it where bione transitions are insta t and instead fade and transition naturally
 // into each other") - THE GROUND'S SHARE OF ITS NEIGHBOURS, in both terrain programs (renderer.js TERRAIN_FS and the
 // lane's EL_TERRAIN_FS). world/ecotone.js is the law and the reason; this is its twin in GLSL, term for term - the same
-// hash, the same lattices, the same constants (read from ECOTONE, never restated) - and test/ecotone1.test.js runs it
+// hash, the same lattices, the same constants (read from ECOTONE, never restated) - and test/systems/ecotone1.test.js runs it
 // through test/glsl.mjs against the JS.
 //
 // A terrain draw hands the pixel's neighbours' tile sets on units 3-5 (uEcoArr1-3: at most three, as a 3x3 of pixels

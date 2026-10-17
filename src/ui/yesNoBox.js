@@ -18,11 +18,11 @@
 //     button, which for YesNo is NO (AddCommonButtons :630-632, Update :313-324); and Escape does nothing, because a
 //     box with buttons cannot be cancelled (AddButton :383, AllowCancel = false).
 import { layoutMessageBox, drawMessageBox, messageBoxArtLoaded, messageBoxHit, MB_BUTTONS, fitBoxRows } from './messageBox.js';
-import { nativeMetrics } from './nativePanel.js';
+import { nativeMetrics } from './native/nativePanel.js';
 import { ChoiceWindow } from './talkWindow.js';
 import { isEnhanced } from '../systems/uiSkin.js';
 import { hotkeyHit } from '../systems/dialogShortcuts.js';
-import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
+import { injectEnhancedStyle, injectEnhancedFonts } from './enhanced/enhancedStyle.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 import { armDrawWatchdog, disarmDraw } from './drawWatchdog.js';   // DISC29-D: the watchdog counts frames, not milliseconds

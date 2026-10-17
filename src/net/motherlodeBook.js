@@ -10,7 +10,7 @@
 //     after a strike - each its pixel, its ore, its hours and its strikers;
 //     and the one this account found today.
 //   - THE WARNING, every client's own from the shared clock (the gate's
-//     omen's way, systems/gateOmen.js): MOTHERLODE_WARN_S ahead of a rising
+//     omen's way, systems/gate/gateOmen.js): MOTHERLODE_WARN_S ahead of a rising
 //     - a Motherlode Sense's 30 minutes - a line in the chat; another as it
 //     breaks ground. Each said once a session.
 //   - THE WATCH: the relay's `k1` receipts this socket is handed (one every

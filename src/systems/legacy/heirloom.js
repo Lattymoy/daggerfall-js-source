@@ -9,7 +9,7 @@
 //    always the one (an heirloom is handed down, not found again) - never a quest item, an Aetheric or artifact piece
 //    (AUDIT LEGACY H5: an artifact is minted `artifact: true` with no `rarity` - rarityOf reads both), a sigil's or a
 //    summoned piece (its timer would take the copy the moment it was picked up). Marked
-//    `heirloom: { line, house, of, from, gen, base }`; its long name carries the house (systems/itemInfo.js
+//    `heirloom: { line, house, of, from, gen, base }`; its long name carries the house (systems/item/itemInfo.js
 //    itemNameParts: "Hlaalu's Dwarven Longsword", the maker's mark's shape).
 //  - IT GROWS: each generation that carries it home counts (`gen`, at most HEIRLOOM_GEN_MAX): a weapon +5% damage a
 //    generation, armour +2 on the parts it covers a generation - folded onto whoever wears it.
@@ -17,11 +17,11 @@
 //    "The remains of Ysolde Hlaalu"), and a share of their purse.
 //  - THE BLESSING: remains laid to rest give the one who laid them +3 to the fallen's best skill, for good - at most +9
 //    on any one skill (BLESSING_SKILL_MAX).
-import { registerCustomTemplates, setItemFields, mintCondition, itemValueOf, templateByIndex } from '../itemTemplates.js';
+import { registerCustomTemplates, setItemFields, mintCondition, itemValueOf, templateByIndex } from '../item/itemTemplates.js';
 import { registerEntityFold, registerWeaponDamageMod, newMods, EMPTY_MODS } from '../entityMods.js';
 import { armorBodyParts } from '../equip.js';
 import { SKILL_COUNT } from '../skills.js';
-import { rarityOf } from '../lootRarity.js';
+import { rarityOf } from '../loot/lootRarity.js';
 import { isSummoned } from '../inventory.js';
 import { houseWord } from './houseName.js';   // LEGACY-NAME: a seat's house says itself once
 
@@ -104,7 +104,7 @@ export function mintRemainsItem({ line, of, name }) {
 export const isRemainsItem = (it) => it?.templateIndex === REMAINS_TEMPLATE && !!it?.legacyRemains;
 /** AUDIT LEGACY II H4: the mark a remains' list wears while it is open - the fallen's person id, under a symbol (never
  *  saved: JSON skips it). The bones go back into the list that bears their own mark, and into nothing else outside the
- *  character's keeping (systems/itemTransfer.js planStore): put in a chest or on the ground, they were in no list the
+ *  character's keeping (systems/item/itemTransfer.js planStore): put in a chest or on the ground, they were in no list the
  *  quest reads, lay again in the list, and two sets of bones were carried home. */
 export const REMAINS_LIST = Symbol.for('dagger.legacy.remainsList');
 

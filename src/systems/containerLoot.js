@@ -9,7 +9,7 @@
 // stocks - scenes/worldModes.js, both exterior hosts' interiors - raises
 // it at each place it stocks, and each mod subscribes by name, in the
 // order the mods load (UL1's shape, scenes/corpseMarker.js). RRI2's
-// three shelf subscribers are the first (systems/rriKits.js
+// three shelf subscribers are the first (systems/roleplayRealismItems/rriKits.js
 // onShopShelfStocked); the hosts had called them by name, and a house
 // container raised nothing.
 //
@@ -20,8 +20,8 @@
 // stream, where the host has one.
 // ═══════════════════════════════════════════════════════════════════
 
-import { onShopShelfStocked } from './rriKits.js';
-import { RRI_VENDOR } from './rriItems.js';
+import { onShopShelfStocked } from './roleplayRealismItems/rriKits.js';
+import { RRI_VENDOR } from './roleplayRealismItems/rriItems.js';
 
 /**
  * @typedef {object} ContainerLootArgs

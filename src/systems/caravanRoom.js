@@ -6,7 +6,7 @@
 // transition (scenes/worldModes.js interiorTransition), its door a logical anchor at the parked caravan (never drawn,
 // never clicked), and out again onto the ground behind the caravan's painted rear door (world/wagonModels.js doorFor).
 // It is the player's own: no one lives in it, no quest stands in it, it is kept for good in the save's scene cache under
-// one name (CARAVAN_SCENE_NAME - a character has one caravan), and the decorator (scenes/decorTool.js) furnishes it as
+// one name (CARAVAN_SCENE_NAME - a character has one caravan), and the decorator (scenes/decor/decorTool.js) furnishes it as
 // it furnishes a house or a ship, paid from the purse and kept in the save - its crafting stations, its storage, a bed
 // slept in. Inside, the wagon's storage is the room's chest too: Horse Cart and Cargo's door law gives the wagon's
 // inventory to a building whose door stands within its 50 m - and this door stands at the wagon.
@@ -15,7 +15,7 @@
 // inside/outside of house windows + the new wagon"; asked, "Caravan-shaped room"): THE ROOM IS THE CARAVAN'S OWN.
 // WAGONS1 borrowed the small ship's cabin (Warm Ashes' SHIPAA00.RMB), a room of another shape stood axis-aligned on the
 // wagon however it was parked. The room now is the caravan's inside (world/caravanRoomModel.js), one model in a block
-// of its own making (`caravanRoomBlock` - RMB's shape, read by world/interiorLayout.js as any record is: the model, an
+// of its own making (`caravanRoomBlock` - RMB's shape, read by world/interior/interiorLayout.js as any record is: the model, an
 // enter marker inside the door and a lantern under the roof), stood ON the caravan - at its pose, turned with it - so
 // its windows look out of the caravan's own windows onto where it stands. No ARENA2 block is read for it.
 //
@@ -27,7 +27,7 @@
 // WAGONS1 descriptor (v 1, never released) reads as unturned. Pure. Not a DFU member. Ledger A (WAGONS1, WAGONS2).
 import { GLOBAL_SCALE } from '../world/meshReader.js';
 import { EDITOR_FLATS_ARCHIVE } from '../world/rmbFlats.js';
-import { INTERIOR_MARKER } from '../world/interiorLayout.js';
+import { INTERIOR_MARKER } from '../world/interior/interiorLayout.js';
 
 /** The room's block name (no ARENA2 block carries it - the place hold and the automap key on it). */
 export const CARAVAN_BLOCK = 'CARAVAN [WAGONS2]';
@@ -44,7 +44,7 @@ export const CARAVAN_STANDS_TURN = 15;
 /** The least angle (degrees) between two headings. */
 export const turnGap = (a, b) => Math.abs(((((a - b) % 360) + 540) % 360) - 180);
 /** The lantern under the roof: Daggerfall's round lantern on its chain (archive 210 record 22 - the light it casts is
- *  world/interiorLights.js's for that record). */
+ *  world/interior/interiorLights.js's for that record). */
 export const CARAVAN_LANTERN_FLAT = Object.freeze([210, 22]);
 /** The room's scene-cache name: one a character, kept for good (worldModes addPermanentScene). */
 export const CARAVAN_SCENE_NAME = 'Caravan [WAGONS1]';
@@ -72,11 +72,11 @@ export function readCaravanRoom(v) {
 /** Whether a private room descriptor is a caravan's (the interior host keeps one slot for a ship's cabin or this). */
 export const isCaravanRoom = (room) => room?.kind === 'caravan';
 
-/** A point of the room's (lifted wagon frame, metres) as an RMB record carries it (world/interiorLayout.js's reading:
+/** A point of the room's (lifted wagon frame, metres) as an RMB record carries it (world/interior/interiorLayout.js's reading:
  *  x and z times GLOBAL_SCALE, y negated). */
 const rmbPoint = ([x, y, z]) => ({ xPos: x / GLOBAL_SCALE, yPos: -y / GLOBAL_SCALE, zPos: z / GLOBAL_SCALE });
 /**
- * THE ROOM'S BLOCK: a block in RMB's shape (BlocksFile's - world/interiorLayout.js layoutInterior reads it as it reads
+ * THE ROOM'S BLOCK: a block in RMB's shape (BlocksFile's - world/interior/interiorLayout.js layoutInterior reads it as it reads
  * any) holding one interior record: the room's model at the record's origin (`CARAVAN_ROOM_MODEL_ID` - not a prop, so
  * never furniture to take out), an enter marker at `enter` and the lantern hung from `lantern` (both points of the room -
  * world/caravanRoomModel.js CARAVAN_ENTER, CARAVAN_LANTERN), no door of its own (the host's synthesised exit stands at
@@ -90,7 +90,7 @@ export function caravanRoomBlock(enter, lantern) {
       block3dObjectRecords: [{ modelIdNum: CARAVAN_ROOM_MODEL_ID, objectType: 0, xPos: 0, yPos: 0, zPos: 0, xRotation: 0, yRotation: 0, zRotation: 0 }],
       blockFlatObjectRecords: [
         { textureArchive: EDITOR_FLATS_ARCHIVE, textureRecord: INTERIOR_MARKER.ENTER, ...rmbPoint(enter) },
-        { textureArchive: CARAVAN_LANTERN_FLAT[0], textureRecord: CARAVAN_LANTERN_FLAT[1], ...rmbPoint(lantern), hang: true },   // hung from the roof (world/interiorLayout.js)
+        { textureArchive: CARAVAN_LANTERN_FLAT[0], textureRecord: CARAVAN_LANTERN_FLAT[1], ...rmbPoint(lantern), hang: true },   // hung from the roof (world/interior/interiorLayout.js)
       ],
       blockDoorRecords: [], blockPeopleRecords: [], blockSection3Records: [],
     } }] },

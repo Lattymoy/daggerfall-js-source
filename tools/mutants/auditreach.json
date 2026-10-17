@@ -5,7 +5,7 @@
     "old": "      if (d <= eps2) { exact = s; break; }\n",
     "new": "",
     "tests": [
-      "test/audit_reach.test.js"
+      "test/render/audit_reach.test.js"
     ],
     "equivalent": true,
     "why": "the claim-once rule alone keeps a double door still (each draw's own placement is the nearest unclaimed one); the exact match is the early out, kept for the mover's case where a nearer placement of another instance could be claimed first in a later draw order"
@@ -16,7 +16,7 @@
     "old": "      if (d < bestD && s.seen !== this.frameNo) { bestD = d; best = s; }",
     "new": "      if (d < bestD) { bestD = d; best = s; }",
     "tests": [
-      "test/audit_reach.test.js"
+      "test/render/audit_reach.test.js"
     ]
   },
   {
@@ -25,7 +25,7 @@
     "old": "        s = this._stalest(o, inst);",
     "new": "        s = null;",
     "tests": [
-      "test/audit_reach.test.js"
+      "test/render/audit_reach.test.js"
     ]
   },
   {
@@ -34,7 +34,7 @@
     "old": "if (this.frameNo - inst[i].seen >= SHADOW_DYNAMIC_HOLD) list.push(inst[i]);",
     "new": "if (this.frameNo - inst[i].seen >= 0) list.push(inst[i]);",
     "tests": [
-      "test/audit_reach.test.js"
+      "test/render/audit_reach.test.js"
     ]
   },
   {
@@ -43,7 +43,7 @@
     "old": "const lookChanged = b._shSeen === true && !(b._shFrame === fr && b._shRec === rec && b._shFlip === flip);",
     "new": "const lookChanged = b._shSeen === true && !(b._shFrame === fr && b._shFlip === flip);",
     "tests": [
-      "test/audit_reach.test.js"
+      "test/render/audit_reach.test.js"
     ]
   },
   {
@@ -52,7 +52,7 @@
     "old": "const lookChanged = b._shSeen === true && !(b._shFrame === fr && b._shRec === rec && b._shFlip === flip);",
     "new": "const lookChanged = b._shSeen === true && !(b._shFrame === fr && b._shRec === rec);",
     "tests": [
-      "test/audit_reach.test.js"
+      "test/render/audit_reach.test.js"
     ]
   },
   {
@@ -61,7 +61,7 @@
     "old": "    for (let i = 0; i < this.count; i++) {\n      const r = this.records[i];\n      if (r.kind === REC_BB) {   // its batches' origins are the host's, moved;",
     "new": "    for (let i = 0; i < 0; i++) {\n      const r = this.records[i];\n      if (r.kind === REC_BB) {   // its batches' origins are the host's, moved;",
     "tests": [
-      "test/audit_reach.test.js"
+      "test/render/audit_reach.test.js"
     ]
   },
   {
@@ -70,7 +70,7 @@
     "old": "      r.sphere[0] += offset[0]; r.sphere[1] += offset[1]; r.sphere[2] += offset[2];\n",
     "new": "",
     "tests": [
-      "test/audit_reach.test.js"
+      "test/render/audit_reach.test.js"
     ]
   }
 ]

@@ -1,0 +1,789 @@
+[
+  {
+    "name": "EGLOOK-reg-touching-blocks-pass",
+    "file": "src/world/eliteGates/pseudoArchives.js",
+    "old": "if (sorted[i].from <= sorted[j].to && sorted[j].from <= sorted[i].to)",
+    "new": "if (sorted[i].from < sorted[j].to && sorted[j].from < sorted[i].to)",
+    "tests": [
+      "test/world/eliteGates/eglook_registry.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-reg-owner-misses-its-last",
+    "file": "src/world/eliteGates/pseudoArchives.js",
+    "old": "return PSEUDO_ARCHIVES.find((e) => n >= e.from && n <= e.to) ?? null;",
+    "new": "return PSEUDO_ARCHIVES.find((e) => n >= e.from && n < e.to) ?? null;",
+    "tests": [
+      "test/world/eliteGates/eglook_registry.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-reg-free-blind-to-size",
+    "file": "src/world/eliteGates/pseudoArchives.js",
+    "old": "const hit = PSEUDO_ARCHIVES.find((e) => at <= e.to && e.from <= at + size - 1);",
+    "new": "const hit = PSEUDO_ARCHIVES.find((e) => at <= e.to && e.from <= at);",
+    "tests": [
+      "test/world/eliteGates/eglook_registry.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-tier-eg-reads-regular",
+    "file": "src/systems/gateTier.js",
+    "old": "if (x.kind === 'eg' || (typeof x.b === 'string' && x.b.length > 0)) return 'elite';",
+    "new": "if (x.kind === 'eg' || (typeof x.b === 'string' && x.b.length > 0)) return 'regular';",
+    "tests": [
+      "test/world/eliteGates/eglook_registry.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-tier-regular-renamed",
+    "file": "src/systems/gateTier.js",
+    "old": "regular: \"Dagon's Breach\"",
+    "new": "regular: \"Regular Breach\"",
+    "tests": [
+      "test/world/eliteGates/eglook_registry.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-tier-own-company-named",
+    "file": "src/systems/gateTier.js",
+    "old": "if (!mine && opener) subs.push(",
+    "new": "if (opener) subs.push(",
+    "tests": [
+      "test/world/eliteGates/eglook_registry.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-tier-sight-unrounded",
+    "file": "src/systems/gateTier.js",
+    "old": "const m = Math.max(10, Math.round(metres / 10) * 10);",
+    "new": "const m = Math.round(metres);",
+    "tests": [
+      "test/world/eliteGates/eglook_registry.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-art-dress-kept-hours",
+    "file": "src/world/eliteGates/egBandArt.js",
+    "old": "EG_DRESS_RECORDS.includes(sm.textureRecord)) sm.textureArchive = archive;",
+    "new": "EG_DRESS_RECORDS.includes(sm.textureRecord)) sm.textureArchive = sm.textureArchive;",
+    "tests": [
+      "test/world/eliteGates/eglook_art.test.js",
+      "test/net/eliteGates/eglook_pieces.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-art-dress-every-record",
+    "file": "src/world/eliteGates/egBandArt.js",
+    "old": "if (sm.textureArchive === SD_REALM_ARCHIVE && EG_DRESS_RECORDS.includes(sm.textureRecord))",
+    "new": "if (sm.textureArchive === SD_REALM_ARCHIVE)",
+    "tests": [
+      "test/world/eliteGates/eglook_art.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-art-molten-past-luma",
+    "file": "src/world/eliteGates/egBandArt.js",
+    "old": "export const egMoltenGlow = (band) => Math.min(EG_MOLTEN_GLOW,",
+    "new": "export const egMoltenGlow = (band) => Math.max(EG_MOLTEN_GLOW,",
+    "tests": [
+      "test/world/eliteGates/eglook_art.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-art-edge-unlit",
+    "file": "src/world/eliteGates/egBandArt.js",
+    "old": "putTexel(emission, x, y, scale(c, SD_EDGE_GLOW));",
+    "new": "putTexel(emission, x, y, scale(c, 0));",
+    "tests": [
+      "test/world/eliteGates/eglook_art.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-art-brass-unlit",
+    "file": "src/world/eliteGates/egBandArt.js",
+    "old": "scale(step(R.metal, 4), SD_BRASS_EDGE_GLOW)",
+    "new": "scale(step(R.metal, 4), 0)",
+    "tests": [
+      "test/world/eliteGates/eglook_art.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-hall-magma-in-gold",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "quadTo(f, EG_DRESS.molten, P(d.x - r, y, d.z - r)",
+    "new": "quadTo(f, EG_DRESS.edge, P(d.x - r, y, d.z - r)",
+    "tests": [
+      "test/world/eliteGates/eglook_art.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-hall-channels-in-gold",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "r = fire && (i === 1 || i === 3) ? EG_DRESS.molten : rec;",
+    "new": "r = fire && (i === 1 || i === 3) ? EG_DRESS.edge : rec;",
+    "tests": [
+      "test/world/eliteGates/eglook_art.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-hall-circle-undressed",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "const model = egBandDress(packRealmFaces(f), band);",
+    "new": "const model = packRealmFaces(f);",
+    "tests": [
+      "test/world/eliteGates/eglook_art.test.js",
+      "test/world/eliteGates/eglook_halls.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-hall-gate-undressed",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "model: egBandDress(packRealmFaces(f), spec.band ?? 0)",
+    "new": "model: packRealmFaces(f)",
+    "tests": [
+      "test/world/eliteGates/eglook_art.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-span-own-draws-undressed",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "return renderer.createMesh(egBandDress(model, band));",
+    "new": "return renderer.createMesh(model);",
+    "tests": [
+      "test/world/eliteGates/eglook_art.test.js",
+      "test/net/eliteGates/eglook_pieces.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-span-batched-undressed",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "models.set(mk, m ? egBandDress(m, band) : null);",
+    "new": "models.set(mk, m ? m : null);",
+    "tests": [
+      "test/net/eliteGates/eglook_pieces.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-kit-faces-in",
+    "file": "src/world/eliteGates/meshKit.js",
+    "old": "if (dir) return dot(nn, out) >= 0;",
+    "new": "if (dir) return dot(nn, out) <= 0;",
+    "tests": [
+      "test/net/eliteGates/eglook_pieces.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-kit-lathe-normal-in",
+    "file": "src/world/eliteGates/meshKit.js",
+    "old": "const nr = y1 - y0, ny = -(r1 - r0), out = [nr * mid, ny, nr * mids];",
+    "new": "const nr = y1 - y0, ny = r1 - r0, out = [nr * mid, ny, nr * mids];",
+    "tests": [
+      "test/net/eliteGates/eglook_pieces.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-kit-grows-short",
+    "file": "src/world/eliteGates/meshKit.js",
+    "old": "while (cap < b.v + need) cap *= 2;",
+    "new": "while (cap < b.v) cap *= 2;",
+    "tests": [
+      "test/net/eliteGates/eglook_pieces.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-kit-grows-empty",
+    "file": "src/world/eliteGates/meshKit.js",
+    "old": "p.set(b.p.subarray(0, b.v * 3));",
+    "new": "p.set(b.p.subarray(0, 0));",
+    "tests": [
+      "test/net/eliteGates/eglook_pieces.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-kit-bounds-flat",
+    "file": "src/world/eliteGates/meshKit.js",
+    "old": "r = Math.max(r, Math.hypot(positions[i] - c[0], positions[i + 1] - c[1], positions[i + 2] - c[2]));",
+    "new": "r = Math.max(r, Math.hypot(positions[i] - c[0], positions[i + 2] - c[2]));",
+    "tests": [
+      "test/net/eliteGates/eglook_pieces.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-batch-gone-pieces-shown",
+    "file": "src/scenes/eliteGates/egPieceBatch.js",
+    "old": "let show = !s.hidden && !!M && M[15] !== 0;",
+    "new": "let show = !s.hidden && !!M;",
+    "tests": [
+      "test/net/eliteGates/eglook_pieces.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-batch-never-culls",
+    "file": "src/scenes/eliteGates/egPieceBatch.js",
+    "old": "if (show && planes && !sphereInPlanes(planes, B.centre[0] + x,",
+    "new": "if (false && planes && !sphereInPlanes(planes, B.centre[0] + x,",
+    "tests": [
+      "test/net/eliteGates/eglook_pieces.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-batch-no-pad",
+    "file": "src/scenes/eliteGates/egPieceBatch.js",
+    "old": "B.r + EG_BATCH_CULL_PAD)) { show = false; culled++; }",
+    "new": "B.r - EG_BATCH_CULL_PAD)) { show = false; culled++; }",
+    "tests": [
+      "test/net/eliteGates/eglook_pieces.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-batch-never-moves",
+    "file": "src/scenes/eliteGates/egPieceBatch.js",
+    "old": "if (show === was && (!show || (k.at[i * 3] === x && k.at[i * 3 + 1] === y && k.at[i * 3 + 2] === z))) continue;",
+    "new": "if (show === was) continue;",
+    "tests": [
+      "test/net/eliteGates/eglook_pieces.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-batch-uploads-every-frame",
+    "file": "src/scenes/eliteGates/egPieceBatch.js",
+    "old": "if (dirty && k.gpu) { try { renderer?.updateMeshVertices?.(",
+    "new": "if (k.gpu) { try { renderer?.updateMeshVertices?.(",
+    "tests": [
+      "test/net/eliteGates/eglook_pieces.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-batch-empty-drawn",
+    "file": "src/scenes/eliteGates/egPieceBatch.js",
+    "old": "if (k.draw) k.draw.hidden = !any;",
+    "new": "if (k.draw) k.draw.hidden = false;",
+    "tests": [
+      "test/net/eliteGates/eglook_pieces.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-batch-copies-share-verts",
+    "file": "src/scenes/eliteGates/egPieceBatch.js",
+    "old": "indices[at++] = m.indices[sm.startIndex + q] + vo[i];",
+    "new": "indices[at++] = m.indices[sm.startIndex + q];",
+    "tests": [
+      "test/net/eliteGates/eglook_pieces.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-batch-casts",
+    "file": "src/scenes/eliteGates/egPieceBatch.js",
+    "old": "noShadow: true, texRemap: null, hidden: true }",
+    "new": "noShadow: false, texRemap: null, hidden: true }",
+    "tests": [
+      "test/net/eliteGates/eglook_pieces.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-span-no-batch",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "batch = renderer?.createMesh && renderer?.updateMeshVertices ? createEgPieceBatch({ renderer }) : null;",
+    "new": "batch = null;",
+    "tests": [
+      "test/net/eliteGates/eglook_pieces.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-span-isles-never-culled",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "d.culled = !!planes && !sphereInPlanes(",
+    "new": "d.culled = false && !sphereInPlanes(",
+    "tests": [
+      "test/net/eliteGates/eglook_pieces.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-arm-no-cull",
+    "file": "src/scenes/worldModes.js",
+    "old": "if (isEgHall(dungeonLoc)) dungeonCtx.egSpanCull?.(proj, view);",
+    "new": "if (false) dungeonCtx.egSpanCull?.(proj, view);",
+    "tests": [
+      "test/net/eliteGates/eglook_pieces.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-edge-on-walls",
+    "file": "src/world/eliteGates/egLook.js",
+    "old": "if (b.role === 'cave' || egWallBand(spec, b) || egTubeBand(b)) continue;",
+    "new": "if (b.role === 'cave') continue;",
+    "tests": [
+      "test/world/eliteGates/eglook_lines.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-edge-isle-discs-rimmed",
+    "file": "src/world/eliteGates/egLook.js",
+    "old": "if (egIsleDisc(spec, d)) continue;",
+    "new": "if (false) continue;",
+    "tests": [
+      "test/world/eliteGates/eglook_lines.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-edge-rail-track-short",
+    "file": "src/world/eliteGates/egLook.js",
+    "old": "z1 = s.z + s.amp + s.d / 2;",
+    "new": "z1 = s.z + s.d / 2;",
+    "tests": [
+      "test/world/eliteGates/eglook_lines.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-edge-phone-thin",
+    "file": "src/world/eliteGates/egLook.js",
+    "old": "(h > 0 && h <= EG_EDGE_LINE.phoneH ? EG_EDGE_LINE.phonePx : EG_EDGE_LINE.px)",
+    "new": "(EG_EDGE_LINE.px)",
+    "tests": [
+      "test/world/eliteGates/eglook_lines.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-tells-streamers-in-still-air",
+    "file": "src/world/eliteGates/egLook.js",
+    "old": "if (!_breath.dir) return 0;",
+    "new": "if (false) return 0;",
+    "tests": [
+      "test/world/eliteGates/eglook_lines.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-mist-over-the-line",
+    "file": "src/world/eliteGates/egLook.js",
+    "old": "const top = Math.min(line, EG_MIST.rise - EG_MIST.below), r = (m.rect ??= sheetOf(m).rect),",
+    "new": "const top = EG_MIST.rise - EG_MIST.below, r = (m.rect ??= sheetOf(m).rect),",
+    "tests": [
+      "test/world/eliteGates/eglook_lines.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-fog-floor-lost",
+    "file": "src/world/eliteGates/egLook.js",
+    "old": "return Math.max(f, F.floor * ease);",
+    "new": "return f;",
+    "tests": [
+      "test/world/eliteGates/eglook_lines.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-fill-unclamped",
+    "file": "src/ui/eliteGates/egAccess.js",
+    "old": "Math.min(EG_FILL_MAX, Math.max(EG_FILL_MIN, n))",
+    "new": "n",
+    "tests": [
+      "test/world/eliteGates/eglook_lines.test.js",
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-quiet-aimed-other-full",
+    "file": "src/world/eliteGates/egLook.js",
+    "old": "aimedOther: trial ? 0.55 : 1",
+    "new": "aimedOther: 1",
+    "tests": [
+      "test/world/eliteGates/eglook_lines.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-quiet-auras-in-trial",
+    "file": "src/world/eliteGates/egLook.js",
+    "old": "auras: trial ? 0 : 1",
+    "new": "auras: 1",
+    "tests": [
+      "test/world/eliteGates/eglook_lines.test.js",
+      "test/scenes/eliteGates/eglook_hosts.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-stair-falls-reduced",
+    "file": "src/world/eliteGates/egLook.js",
+    "old": "(reduced ? 'cut' : EG_STAIR.bandFirst.includes(h) ? 'fall' : 'veil')",
+    "new": "(EG_STAIR.bandFirst.includes(h) ? 'fall' : 'veil')",
+    "tests": [
+      "test/world/eliteGates/eglook_lines.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-lab-deutan-safe-like-edge",
+    "file": "src/ui/eliteGates/egAccess.js",
+    "old": "deutan: Object.freeze({ key: 'deutan', get name() { return t('menu.spire.palette.deutan', 'Deutan-Protan'); }, danger: Object.freeze([0.62, 0.32, 1.0]), safety: Object.freeze([1.0, 0.86, 0.2])",
+    "new": "deutan: Object.freeze({ key: 'deutan', get name() { return t('menu.spire.palette.deutan', 'Deutan-Protan'); }, danger: Object.freeze([0.62, 0.32, 1.0]), safety: Object.freeze([0.6, 0.34, 0.95])",
+    "tests": [
+      "test/world/eliteGates/eglook_lines.test.js",
+      "test/net/eliteGates/egpres_hud.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-lines-track-solid",
+    "file": "src/render/eliteGates/egLinePass.js",
+    "old": "{ if (fract(vAlong / ${(2 * EG_TRACK.dash).toFixed(3)}) > 0.5) discard; c = uGold * 0.85; }",
+    "new": "{ c = uGold * 0.85; }",
+    "tests": [
+      "test/world/eliteGates/eglook_lines.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-lines-lost-in-fog",
+    "file": "src/render/eliteGates/egLinePass.js",
+    "old": "float f = max(fogFactorAt(vWorld), kept);",
+    "new": "float f = fogFactorAt(vWorld);",
+    "tests": [
+      "test/world/eliteGates/eglook_lines.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-mist-no-feather",
+    "file": "src/render/eliteGates/egMistPass.js",
+    "old": "if (a <= 0.004) discard;",
+    "new": "if (a < 0.0) discard;",
+    "tests": [
+      "test/world/eliteGates/eglook_lines.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-sky-deep-unlit",
+    "file": "src/render/eliteGates/egSkyMap.js",
+    "old": "col = mix(DEEP * (0.45 + 0.4 * dnoise(q * 2.5)), GLOW, heat);",
+    "new": "col = DEEP * 0.1;",
+    "tests": [
+      "test/world/eliteGates/eglook_lines.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-tele-spire-lost-in-fog",
+    "file": "src/render/gate/gateTelegraph.js",
+    "old": "float f = uAlpha * max(fogFactorAt(vWorld), kept);",
+    "new": "float f = uAlpha * fogFactorAt(vWorld);",
+    "tests": [
+      "test/world/eliteGates/eglook_lines.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-tele-fill-unscaled",
+    "file": "src/render/gate/gateTelegraph.js",
+    "old": "* inFade * uFillK * hatch;",
+    "new": "* inFade * hatch;",
+    "tests": [
+      "test/world/eliteGates/eglook_lines.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-tele-no-haven",
+    "file": "src/render/gate/gateTelegraph.js",
+    "old": "if (uPool == 3) {",
+    "new": "if (uPool == 33) {",
+    "tests": [
+      "test/world/eliteGates/eglook_lines.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-tele-single-keyline",
+    "file": "src/render/gate/gateTelegraph.js",
+    "old": "+ keyl * 0.55 + keyl2 * 0.75;",
+    "new": "+ keyl * 0.55;",
+    "tests": [
+      "test/world/eliteGates/eglook_lines.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-fight-mine-not-brighter",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "sh.edge = sh.mine ? brighter(pal.danger) : pal.danger;",
+    "new": "sh.edge = pal.danger;",
+    "tests": [
+      "test/world/eliteGates/eglook_lines.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-fight-aimed-other-full",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "sh.fillK = fill * (sh.pool === TELEGRAPH_POOL.blow && !sh.mine ? quiet.aimedOther : 1);",
+    "new": "sh.fillK = fill;",
+    "tests": [
+      "test/world/eliteGates/eglook_lines.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-fight-haven-burns",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "sh.fillK = 1; sh.pool = TELEGRAPH_POOL_HAVEN;",
+    "new": "sh.fillK = 1;",
+    "tests": [
+      "test/world/eliteGates/eglook_lines.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-fight-hours-pass",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "new GateTelegraphRenderer(gl, { spire: true })",
+    "new": "new GateTelegraphRenderer(gl)",
+    "tests": [
+      "test/world/eliteGates/eglook_lines.test.js",
+      "test/systems/eliteGates/eglook_score.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-fight-stings-every-frame",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "if (mine && standing && !stung.has(bl.i) && t < bl.at) {",
+    "new": "if (mine && standing && t < bl.at) {",
+    "tests": [
+      "test/systems/eliteGates/eglook_score.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-fight-barks-uncapped",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "mix.barks(_barks, cam(), (b) => play3(b.cue, b.at));",
+    "new": "for (const b of _barks) play3(b.cue, b.at);",
+    "tests": [
+      "test/systems/eliteGates/eglook_score.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-mix-critical-culled",
+    "file": "src/systems/eliteGates/egMix.js",
+    "old": "if (k >= per && !b.critical) continue;",
+    "new": "if (k >= per) continue;",
+    "tests": [
+      "test/systems/eliteGates/eglook_score.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-mix-adds-every-blow",
+    "file": "src/systems/eliteGates/egMix.js",
+    "old": "(kind === 'add' && now - lastAddAt >= EG_MIX.addGapMs)",
+    "new": "(kind === 'add')",
+    "tests": [
+      "test/systems/eliteGates/eglook_score.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-mix-no-duck",
+    "file": "src/systems/eliteGates/egMix.js",
+    "old": "music?.duck?.(EG_MIX.duckDb, EG_MIX.duckMs / 1000)",
+    "new": "music?.duck?.(0, EG_MIX.duckMs / 1000)",
+    "tests": [
+      "test/systems/eliteGates/eglook_score.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-mix-peers-full",
+    "file": "src/systems/eliteGates/egMix.js",
+    "old": "peerVolume: (v) => v * egDbGain(EG_MIX.peerDb),",
+    "new": "peerVolume: (v) => v,",
+    "tests": [
+      "test/systems/eliteGates/eglook_score.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-player-duck-up",
+    "file": "src/systems/song/songPlayer.js",
+    "old": "low = base * 10 ** (-db / 20)",
+    "new": "low = base * 10 ** (db / 20)",
+    "tests": [
+      "test/systems/eliteGates/eglook_score.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-player-duck-stays",
+    "file": "src/systems/song/songPlayer.js",
+    "old": "g.linearRampToValueAtTime(base, now + hold + EG_DUCK_BACK_S);",
+    "new": "g.linearRampToValueAtTime(low, now + hold + EG_DUCK_BACK_S);",
+    "tests": [
+      "test/systems/eliteGates/eglook_score.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-music-duck-dropped",
+    "file": "src/systems/music.js",
+    "old": "duck(db, seconds) { this.player?.duck?.(db, seconds); }",
+    "new": "duck(db, seconds) { }",
+    "tests": [
+      "test/systems/eliteGates/eglook_score.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-score-count-early",
+    "file": "src/systems/eliteGates/egScore.js",
+    "old": "p.countLeft <= SPIRE_COUNT_WARN_MS && (fight",
+    "new": "p.countLeft <= SPIRE_COUNT_WARN_MS * 2 && (fight",
+    "tests": [
+      "test/systems/eliteGates/eglook_score.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-score-hall-at-rest",
+    "file": "src/systems/eliteGates/egScore.js",
+    "old": "    hall: fight && !sleeping,",
+    "new": "    hall: !sleeping,",
+    "tests": [
+      "test/systems/eliteGates/eglook_score.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-score-valk-anywhere",
+    "file": "src/systems/eliteGates/egScore.js",
+    "old": "valk: fight && p.kind === 'court' && !!p.valk,",
+    "new": "valk: fight && !!p.valk,",
+    "tests": [
+      "test/systems/eliteGates/eglook_score.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-score-end-forever",
+    "file": "src/systems/eliteGates/egScore.js",
+    "old": "(place.sinceEnd ?? 0) < SPIRE_END_MS ? SPIRE_SONGS.end : SPIRE_SCORE_SILENCE",
+    "new": "SPIRE_SONGS.end",
+    "tests": [
+      "test/systems/eliteGates/eglook_score.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-score-one-order",
+    "file": "src/systems/eliteGates/egScore.js",
+    "old": "return orders[(seed >>> 0) % 6];",
+    "new": "return orders[0];",
+    "tests": [
+      "test/systems/eliteGates/eglook_score.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-score-lord-unhastened",
+    "file": "src/systems/eliteGates/egScore.js",
+    "old": "line(w, k, motif, 'brass', 112 + phase * 2,",
+    "new": "line(w, k, motif, 'brass', 112,",
+    "tests": [
+      "test/systems/eliteGates/eglook_score.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-score-reregisters",
+    "file": "src/systems/eliteGates/egScore.js",
+    "old": "if (k !== ctxKey) { ctxKey = k;",
+    "new": "if (true) { ctxKey = k;",
+    "tests": [
+      "test/systems/eliteGates/eglook_score.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-score-end-from-the-cue",
+    "file": "src/systems/eliteGates/egScore.js",
+    "old": "if (view.place.end && endAt === null) endAt = t + SCORE_STING_LEAD_MS;",
+    "new": "if (view.place.end && endAt === null) endAt = t;",
+    "tests": [
+      "test/systems/eliteGates/eglook_score.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-world-score-unasked",
+    "file": "src/scenes/world.js",
+    "old": "if (_spireScore.frame(egClient?.scoreView?.() ?? null)) return true;",
+    "new": "if (false) return true;",
+    "tests": [
+      "test/systems/eliteGates/eglook_score.test.js",
+      "test/scenes/eliteGates/eglook_hosts.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-client-auras-in-trial",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "quiet: () => inSpire() && egQuietCompany(link.state()?.sg, true).auras === 0,",
+    "new": "quiet: () => false,",
+    "tests": [
+      "test/scenes/eliteGates/eglook_hosts.test.js",
+      "test/scenes/eliteGates/egeco_hosts.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-arm-hours-sky",
+    "file": "src/scenes/worldModes.js",
+    "old": "if (isEgHall(dungeonLoc)) host.drawEgSky?.({ proj, view, eye: mwv.eye });",
+    "new": "if (isEgHall(dungeonLoc)) host.drawSdSky?.({ proj, view, eye: mwv.eye });",
+    "tests": [
+      "test/scenes/eliteGates/eglook_hosts.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-arm-band-art-every-stand",
+    "file": "src/scenes/eliteGates/egCircleHost.js",
+    "old": "if (egBandWhole(band) || !renderer?.uploadTexture) return;",
+    "new": "if (!renderer?.uploadTexture) return;",
+    "tests": [
+      "test/scenes/eliteGates/eglook_hosts.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-client-lines-dropped",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "const over = !!L?.drawOver(proj, view, eye, ts, fog, egAccessNow(win).palette, renderer?._worldViewportPx, trail.n ? trail.segs : null, trail.n);",
+    "new": "const over = false;",
+    "tests": [
+      "test/scenes/eliteGates/eglook_hosts.test.js"
+    ],
+    "note": "AUDIT EG V (h): re-aimed by content - the trail joined drawOver's arguments"
+  },
+  {
+    "name": "EGLOOK-client-look-kept",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "away() { fight?.leave(); if (look) { look.release(); look = null; } lawForget(); chartAway();",
+    "new": "away() { fight?.leave(); lawForget(); chartAway();",
+    "tests": [
+      "test/scenes/eliteGates/eglook_hosts.test.js"
+    ],
+    "note": "AUDIT EG V (h): re-aimed by content - the halls given forgotten beside it (lawForget)"
+  },
+  {
+    "name": "EGLOOK-draw-remade-every-frame",
+    "file": "src/scenes/eliteGates/egLookDraw.js",
+    "old": "if (k === key && specs.every((s, j) => s === made[j])) return false;",
+    "new": "if (false) return false;",
+    "tests": [
+      "test/scenes/eliteGates/eglook_hosts.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-swap-band-dress-under-the-veil",
+    "file": "src/scenes/eliteGates/egCircleHost.js",
+    "old": "    if (st === 'ready') egSwapFeed(egSwap.peek(r.seed, r.c, r.geo ?? 0), band, 1);\n",
+    "new": "",
+    "tests": [
+      "test/world/eliteGates/egswap_client.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-swap-old-waystones-kept",
+    "file": "src/scenes/eliteGates/egCircleHost.js",
+    "old": "gone = new Set([mesh, _egLookMesh, ...gates.map((g) => g.gpu)].filter(Boolean));",
+    "new": "gone = new Set([mesh, ...gates.map((g) => g.gpu)].filter(Boolean));",
+    "tests": [
+      "test/world/eliteGates/egswap_client.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-swap-no-waystones",
+    "file": "src/scenes/eliteGates/egCircleHost.js",
+    "old": "    if (_egLookMesh) ctx.dynamicDraws.push({ gpu: _egLookMesh, object: { matrix: identity() }, noShadow: true });\n    const n = parts.tris.length / 3",
+    "new": "    const n = parts.tris.length / 3",
+    "tests": [
+      "test/world/eliteGates/egswap_client.test.js",
+      "test/scenes/eliteGates/eglook_hosts.test.js"
+    ]
+  },
+  {
+    "name": "EGLOOK-lamp-on-the-galleries",
+    "file": "src/systems/lampKeeper.js",
+    "old": "export const LAMP_ARCHIVE = 38232;",
+    "new": "export const LAMP_ARCHIVE = 38241;",
+    "tests": [
+      "test/world/eliteGates/eglook_registry.test.js"
+    ],
+    "note": "AUDIT EG V, the merge of main: LAMP-KEEPER II's lamp back on the Spire's Broken Galleries (38241) - the registry's sweep and its collision refusal hold it off"
+  }
+]

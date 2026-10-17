@@ -3,7 +3,7 @@
 // interacted with it, accidentally said 'no' when it asked me to get it, and now i cant interact with it at all. Tried
 // restarting the game, didnt help."): A NO THAT LEADS NOWHERE ASKS AGAIN, ON THE NEXT CLICK. Not a DFU member - a
 // departure (Port-Ledger A, NO-ASKS-AGAIN), under the owner's standing rule for a player's soft-lock: "I dont care about
-// DFU. We're our own thing now" (bible/01-Overview/Field-Bugs-2026-09-30b.md).
+// DFU. We're our own thing now" (bible/01-Overview/bugs/Field-Bugs-2026-09-30b.md).
 //
 // WHAT IT DEPARTS FROM. K0C00Y05 (The Lost Child): `_S.07_ task: clicked npc _child_` / `prompt 1017 yes _S.09_ no
 // _no_`, and `variable _no_`, which nothing reads. Prompt.cs asks once - `allowRearm = false` in its constructor and

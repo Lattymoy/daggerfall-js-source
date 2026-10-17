@@ -14,7 +14,7 @@ const pal = { get: (i) => ({ r: (i * 7) & 255, g: (i * 5) & 255, b: (i * 3) & 25
 
 // Read the SHIPPED fit rather than recomputing it: this tool now checks
 // what actually goes out, not what a second copy of the maths says.
-import { buildPaperdollPayload } from '../src/characters/paperdollPayload.js';
+import { buildPaperdollPayload } from '../src/characters/paperdoll/paperdollPayload.js';
 const PAYLOAD = buildPaperdollPayload(null, null, null);
 const SHIPPED = new Map();
 for (const line of [PAYLOAD.undead, PAYLOAD.classes, PAYLOAD.daedra, PAYLOAD.beasts, PAYLOAD.villagers]) {
@@ -79,7 +79,7 @@ for (const [designs, opts] of LINES) {
     const k = fit(d);
     for (const r of rows) {
       const body = bodyAt(faces, r.y);
-      // The trunk only — see test/drapeclip.test.js for why measuring
+      // The trunk only — see test/characters/drapeclip.test.js for why measuring
       // against arms produced a correct number and a terrible garment.
       for (const [group, e] of Object.entries(body)) {
         if (group !== 'body') continue;

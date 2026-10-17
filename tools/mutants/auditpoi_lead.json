@@ -1,128 +1,128 @@
 [
   {
     "name": "AUDITPOI-L1-the-press-unheard",
-    "file": "src/ui/poiEditorPanel.js",
+    "file": "src/ui/poi/poiEditorPanel.js",
     "old": "  root.addEventListener('pointerdown', () => { pressAt = Date.now(); }, true);",
     "new": "  root.addEventListener('pointerdown', () => {}, true);",
     "tests": [
-      "test/auditpoi_lead.test.js"
+      "test/poi/auditpoi_lead.test.js"
     ]
   },
   {
     "name": "AUDITPOI-L1-the-release-unheard",
-    "file": "src/ui/poiEditorPanel.js",
+    "file": "src/ui/poi/poiEditorPanel.js",
     "old": "  const released = () => { setTimeout(() => { pressAt = -Infinity; schedule(); }, 0); };",
     "new": "  const released = () => { setTimeout(() => { schedule(); }, 0); };",
     "tests": [
-      "test/auditpoi_lead.test.js"
+      "test/poi/auditpoi_lead.test.js"
     ]
   },
   {
     "name": "AUDITPOI-L1-the-hold-unbounded",
-    "file": "src/ui/poiEditorPanel.js",
+    "file": "src/ui/poi/poiEditorPanel.js",
     "old": "    if (pressed < PRESS_HOLD_MS) { setTimeout(() => schedule(), PRESS_HOLD_MS - pressed + 1); return; }",
     "new": "    if (pressAt > -Infinity) { setTimeout(() => schedule(), PRESS_HOLD_MS); return; }",
     "tests": [
-      "test/auditpoi_lead.test.js"
+      "test/poi/auditpoi_lead.test.js"
     ]
   },
   {
     "name": "AUDITPOI-L1-the-destroyed-panel-drawn",
-    "file": "src/ui/poiEditorPanel.js",
+    "file": "src/ui/poi/poiEditorPanel.js",
     "old": "    if (gone) return;\n    const pressed = Date.now() - pressAt;",
     "new": "    const pressed = Date.now() - pressAt;",
     "tests": [
-      "test/auditpoi_lead.test.js"
+      "test/poi/auditpoi_lead.test.js"
     ]
   },
   {
     "name": "AUDITPOI-L2-the-unwrap-on-this-thread",
-    "file": "src/ui/poiUvPanel.js",
+    "file": "src/ui/poi/poiUvPanel.js",
     "old": "      ed.unwrapOffThread().then((n) => {",
     "new": "      Promise.resolve(ed.unwrap()).then((n) => {",
     "tests": [
-      "test/auditpoi_lead.test.js"
+      "test/poi/auditpoi_lead.test.js"
     ]
   },
   {
     "name": "AUDITPOI-L2-apply-unheld",
-    "file": "src/ui/poiUvPanel.js",
+    "file": "src/ui/poi/poiUvPanel.js",
     "old": "    apply.disabled = applying || ed.busy();",
     "new": "    apply.disabled = applying;",
     "tests": [
-      "test/auditpoi_lead.test.js"
+      "test/poi/auditpoi_lead.test.js"
     ]
   },
   {
     "name": "AUDITPOI-L2-applys-press-unguarded",
-    "file": "src/ui/poiUvPanel.js",
+    "file": "src/ui/poi/poiUvPanel.js",
     "old": "    if (applying || ed.busy()) return;",
     "new": "    if (applying) return;",
     "tests": [
-      "test/auditpoi_lead.test.js"
+      "test/poi/auditpoi_lead.test.js"
     ]
   },
   {
     "name": "AUDITPOI-L2-the-worker-kept-at-close",
-    "file": "src/ui/poiUvPanel.js",
+    "file": "src/ui/poi/poiUvPanel.js",
     "old": "closed = true; ed.dispose(); root.remove?.();",
     "new": "closed = true; root.remove?.();",
     "tests": [
-      "test/auditpoi_lead.test.js"
+      "test/poi/auditpoi_lead.test.js"
     ]
   },
   {
     "name": "AUDITPOI-L2-the-answer-said-after-close",
-    "file": "src/ui/poiUvPanel.js",
+    "file": "src/ui/poi/poiUvPanel.js",
     "old": "        if (closed) return;\n        say(t('poi.uv.unwrapped'",
     "new": "        say(t('poi.uv.unwrapped'",
     "tests": [
-      "test/auditpoi_lead.test.js"
+      "test/poi/auditpoi_lead.test.js"
     ]
   },
   {
     "name": "AUDITPOI-L2-the-let-go-unwrap-run-here",
-    "file": "src/poi/uvEdit.js",
+    "file": "src/poi/uv/uvEdit.js",
     "old": "      if (disposed) return 0;\n      if (!r) {",
     "new": "      if (!r) {",
     "tests": [
-      "test/auditpoi_lead.test.js"
+      "test/poi/auditpoi_lead.test.js"
     ]
   },
   {
     "name": "AUDITPOI-L2-a-let-go-editor-unwraps-again",
-    "file": "src/poi/uvEdit.js",
+    "file": "src/poi/uv/uvEdit.js",
     "old": "      if (busy || disposed) return 0;",
     "new": "      if (busy) return 0;",
     "tests": [
-      "test/auditpoi_lead.test.js"
+      "test/poi/auditpoi_lead.test.js"
     ]
   },
   {
     "name": "AUDITPOI-L3-lit-by-the-tools-corners",
-    "file": "src/ui/poiUvPanel.js",
+    "file": "src/ui/poi/poiUvPanel.js",
     "old": "    if (mode === 'vertex' && ed.selection().size) {",
     "new": "    if (mode === 'vertex') {",
     "tests": [
-      "test/auditpoi_lead.test.js"
+      "test/poi/auditpoi_lead.test.js"
     ]
   },
   {
     "name": "AUDITPOI-L4-openpack-inflating-the-whole-archive",
-    "file": "src/ui/poiEditorPanel.js",
+    "file": "src/ui/poi/poiEditorPanel.js",
     "old": "      pack = await readPackBytes(bytes);",
-    "new": "      pack = await (await import('../poi/poiPack.js')).readPack(await (await import('../scenes/dataSource.js')).readZipEntries({ arrayBuffer: async () => bytes.slice().buffer }));",
+    "new": "      pack = await (await import('../../poi/poiPack.js')).readPack(await (await import('../../scenes/dataSource.js')).readZipEntries({ arrayBuffer: async () => bytes.slice().buffer }));",
     "tests": [
-      "test/auditpoi_lead.test.js"
+      "test/poi/auditpoi_lead.test.js"
     ]
   },
   {
     "name": "AUDITPOI-L5-the-problems-undrawn",
-    "file": "src/ui/poiEditorPanel.js",
+    "file": "src/ui/poi/poiEditorPanel.js",
     "old": "    for (const p of (r.problems ?? []).slice(0, 12)) {",
     "new": "    for (const p of [].slice(0, 12)) {",
     "tests": [
-      "test/auditpoi_lead.test.js"
+      "test/poi/auditpoi_lead.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "      ...(Array.isArray(data?.problems) ? { problems: data.problems } : {}), status: res.status };",
     "new": "      status: res.status };",
     "tests": [
-      "test/auditpoi_lead.test.js"
+      "test/poi/auditpoi_lead.test.js"
     ]
   },
   {
@@ -140,16 +140,16 @@
     "old": "  if (split === 'nodes' && model.instances.length > POI_LIMITS.parts) fail(",
     "new": "  if (split === 'nodes' && model.instances.length > Infinity) fail(",
     "tests": [
-      "test/auditpoi_lead.test.js"
+      "test/poi/auditpoi_lead.test.js"
     ]
   },
   {
     "name": "AUDITPOI-L6-the-lists-change-outside-the-refusal",
-    "file": "src/ui/poiEditorPanel.js",
+    "file": "src/ui/poi/poiEditorPanel.js",
     "old": "(v) => { split = v; if (lastRead) shown(lastRead); });",
     "new": "(v) => { split = v; if (lastRead) show(lastRead); });",
     "tests": [
-      "test/auditpoi_lead.test.js"
+      "test/poi/auditpoi_lead.test.js"
     ]
   },
   {
@@ -158,25 +158,25 @@
     "old": "  'too-many-parts': (a) => t('poi.gltf.tooManyParts',",
     "new": "  'too-many-parts-unsaid': (a) => t('poi.gltf.tooManyParts',",
     "tests": [
-      "test/auditpoi_lead.test.js"
+      "test/poi/auditpoi_lead.test.js"
     ]
   },
   {
     "name": "AUDITPOI-L7-the-lights-unlisted",
-    "file": "src/ui/poiEditorPanel.js",
+    "file": "src/ui/poi/poiEditorPanel.js",
     "old": "      if (prep.lights?.length) rows.push(",
     "new": "      if (prep.lights?.length < 0) rows.push(",
     "tests": [
-      "test/auditpoi_lead.test.js"
+      "test/poi/auditpoi_lead.test.js"
     ]
   },
   {
     "name": "AUDITPOI-L7-kept-without-them",
-    "file": "src/ui/poiEditorPanel.js",
+    "file": "src/ui/poi/poiEditorPanel.js",
     "old": "lights: r.asset.lights ?? [], meshes });",
     "new": "lights: [], meshes });",
     "tests": [
-      "test/auditpoi_lead.test.js"
+      "test/poi/auditpoi_lead.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "  'not-finite': () => t('poi.mesh.notFinite',",
     "new": "  'not-finite-unsaid': () => t('poi.mesh.notFinite',",
     "tests": [
-      "test/auditpoi_lead.test.js"
+      "test/poi/auditpoi_lead.test.js"
     ]
   },
   {
@@ -194,52 +194,52 @@
     "old": "  'index-range': () => t('poi.mesh.indexRange',",
     "new": "  'index-range-unsaid': () => t('poi.mesh.indexRange',",
     "tests": [
-      "test/auditpoi_lead.test.js"
+      "test/poi/auditpoi_lead.test.js"
     ]
   },
   {
     "name": "AUDITPOI-L9-a-models-facts-its-submeshes-alone",
-    "file": "src/ui/poiEditorPanel.js",
+    "file": "src/ui/poi/poiEditorPanel.js",
     "old": "{ kind: 'mesh', ...poiMeshFacts(m.mesh), bytes: bytes.byteLength }",
     "new": "{ kind: 'mesh', submeshes: m.mesh.submeshes.length }",
     "tests": [
-      "test/auditpoi_lead.test.js"
+      "test/poi/auditpoi_lead.test.js"
     ]
   },
   {
     "name": "AUDITPOI-L9-a-pictures-bytes-unread",
-    "file": "src/ui/poiEditorPanel.js",
+    "file": "src/ui/poi/poiEditorPanel.js",
     "old": "{ kind: 'texture', w: im.w, h: im.h, bytes: bytes.byteLength }",
     "new": "{ kind: 'texture', w: im.w, h: im.h }",
     "tests": [
-      "test/auditpoi_lead.test.js"
+      "test/poi/auditpoi_lead.test.js"
     ]
   },
   {
     "name": "AUDITPOI-L9-a-picture-puts-bytes-untold",
-    "file": "src/ui/poiEditorPanel.js",
+    "file": "src/ui/poi/poiEditorPanel.js",
     "old": "{ kind: 'texture', ...r.data.meta, bytes: bytes.byteLength }",
     "new": "{ kind: 'texture', ...r.data.meta }",
     "tests": [
-      "test/auditpoi_lead.test.js"
+      "test/poi/auditpoi_lead.test.js"
     ]
   },
   {
     "name": "AUDITPOI-L9-a-uv-puts-bytes-untold",
-    "file": "src/ui/poiEditorPanel.js",
+    "file": "src/ui/poi/poiEditorPanel.js",
     "old": "{ kind: 'mesh', ...r.data.meta, bytes: out.byteLength }",
     "new": "{ kind: 'mesh', ...r.data.meta }",
     "tests": [
-      "test/auditpoi_lead.test.js"
+      "test/poi/auditpoi_lead.test.js"
     ]
   },
   {
     "name": "AUDITPOI-L9-a-packs-bytes-untold",
-    "file": "src/ui/poiEditorPanel.js",
+    "file": "src/ui/poi/poiEditorPanel.js",
     "old": "facts.put(sha, { ...a, bytes: bytes.byteLength });",
     "new": "facts.put(sha, { ...a, bytes });",
     "tests": [
-      "test/auditpoi_lead.test.js"
+      "test/poi/auditpoi_lead.test.js"
     ]
   },
   {
@@ -248,7 +248,7 @@
     "old": "{ kind: 'mesh', ...r.data.meta, bytes: p.bytes.byteLength }",
     "new": "{ kind: 'mesh', ...r.data.meta }",
     "tests": [
-      "test/auditpoi_lead.test.js"
+      "test/poi/auditpoi_lead.test.js"
     ]
   },
   {
@@ -257,7 +257,7 @@
     "old": "{ kind: 'texture', ...r.data.meta, bytes: im.bytes.byteLength }",
     "new": "{ kind: 'texture', ...r.data.meta }",
     "tests": [
-      "test/auditpoi_lead.test.js"
+      "test/poi/auditpoi_lead.test.js"
     ]
   },
   {
@@ -266,16 +266,16 @@
     "old": "{ kind: 'mesh', bytes, ...poiMeshFacts(d.mesh) }",
     "new": "{ kind: 'mesh', bytes, submeshes: d.mesh.submeshes.length }",
     "tests": [
-      "test/auditpoi_lead.test.js"
+      "test/poi/auditpoi_lead.test.js"
     ]
   },
   {
     "name": "AUDITPOI-L10-read-as-taken-back-to-its-own",
-    "file": "src/ui/poiEditorPanel.js",
+    "file": "src/ui/poi/poiEditorPanel.js",
     "old": "    if (r.data?.state === 'withdrawn') {",
     "new": "    if (r.data?.state === 'never') {",
     "tests": [
-      "test/auditpoi_lead.test.js"
+      "test/poi/auditpoi_lead.test.js"
     ]
   },
   {
@@ -284,7 +284,7 @@
     "old": "e.saved = unheld ? null : text(doc ?? e.doc);",
     "new": "e.saved = text(doc ?? e.doc);",
     "tests": [
-      "test/auditpoi_lead.test.js"
+      "test/poi/auditpoi_lead.test.js"
     ]
   },
   {
@@ -293,7 +293,7 @@
     "old": "const NAME_UNSAID_G = /[\\p{Cc}\\p{Cs}\\u{2028}\\u{2029}\\u{202a}-\\u{202e}\\u{2066}-\\u{2069}]/gu;",
     "new": "const NAME_UNSAID_G = /[\\u0000-\\u001f\\u007f]/g;",
     "tests": [
-      "test/auditpoi_lead.test.js"
+      "test/poi/auditpoi_lead.test.js"
     ]
   },
   {
@@ -302,7 +302,7 @@
     "old": ".slice(0, max).replace(/[\\uD800-\\uDBFF]$/, '').trim();",
     "new": ".slice(0, max).trim();",
     "tests": [
-      "test/auditpoi_lead.test.js"
+      "test/poi/auditpoi_lead.test.js"
     ]
   },
   {
@@ -311,7 +311,7 @@
     "old": "    if (had.error === 'poi-gone') continue;\n",
     "new": "",
     "tests": [
-      "test/auditpoi_packs.test.js"
+      "test/poi/auditpoi_packs.test.js"
     ]
   },
   {
@@ -320,7 +320,7 @@
     "old": "  const why = yield* poiMeshErrorSteps(mesh);",
     "new": "  const why = poiMeshError(mesh);",
     "tests": [
-      "test/auditpoi_lead.test.js"
+      "test/poi/auditpoi_lead.test.js"
     ]
   },
   {
@@ -329,7 +329,7 @@
     "old": "  const [min, max] = yield* meshBoxSteps(positions);",
     "new": "  const [min, max] = meshBoxOf(positions);",
     "tests": [
-      "test/auditpoi_lead.test.js"
+      "test/poi/auditpoi_lead.test.js"
     ]
   },
   {
@@ -338,7 +338,7 @@
     "old": "    const to = Math.min(p.length, from + POI_MESH_STEP);\n    for (let i = from; i < to; i += 3) {",
     "new": "    const to = Math.min(p.length, from + 3);\n    for (let i = from; i < to; i += 3) {",
     "tests": [
-      "test/auditpoi_lead.test.js"
+      "test/poi/auditpoi_lead.test.js"
     ]
   },
   {
@@ -347,7 +347,7 @@
     "old": "      for (let i = from; i < to; i++) if (!Number.isFinite(arr[i])) return 'not-finite';",
     "new": "      for (let i = from; i < from + 1; i++) if (!Number.isFinite(arr[i])) return 'not-finite';",
     "tests": [
-      "test/auditpoi_lead.test.js"
+      "test/poi/auditpoi_lead.test.js"
     ]
   },
   {
@@ -356,7 +356,7 @@
     "old": "    for (let i = from; i < to; i++) if (Math.abs(P[i]) > X) return 'too-large';",
     "new": "    for (let i = from; i < from + 1; i++) if (Math.abs(P[i]) > X) return 'too-large';",
     "tests": [
-      "test/auditpoi_lead.test.js"
+      "test/poi/auditpoi_lead.test.js"
     ]
   },
   {
@@ -365,17 +365,17 @@
     "old": "        const d = yield* decodePoiMeshSteps(yield feed.asset(part.mesh, { auth: auth() }));",
     "new": "        const d = ((g) => { for (;;) { const r = g.next(); if (r.done) return r.value; } })(decodePoiMeshSteps(yield feed.asset(part.mesh, { auth: auth() })));",
     "tests": [
-      "test/auditpoi_lead.test.js"
+      "test/poi/auditpoi_lead.test.js"
     ]
   },
   {
     "name": "AUDITPOI-ONCRASH1-the-angles-round-the-axis-unwrapped",
-    "file": "src/poi/uvMesh.js",
+    "file": "src/poi/uv/uvMesh.js",
     "old": "    ang[k] = ang[ref] + wrapAngle(ang[k] - ang[ref]);",
     "new": "    ang[k] = ang[k] + 0 * wrapAngle(ang[k] - ang[ref]);",
     "tests": [
-      "test/auditpoi_uv.test.js",
-      "test/poi5_uv.test.js"
+      "test/poi/auditpoi_uv.test.js",
+      "test/poi/poi5_uv.test.js"
     ]
   }
 ]

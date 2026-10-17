@@ -5,7 +5,7 @@
     "old": "    hearDeath(entity);   // AUDIT LEGACY: OnDeath's subscribers, before the screen\n",
     "new": "",
     "tests": [
-      "test/auditlegacy.test.js"
+      "test/systems/legacy/auditlegacy.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    if (deathSeen) return outcome;   // one death, one decision - the door and the DEATH-KEPT re-ask both reach here\n",
     "new": "",
     "tests": [
-      "test/auditlegacy.test.js"
+      "test/systems/legacy/auditlegacy.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "!modes?.deathUp?.() && !successionOpen()) presentPlayerDeath(playerEntity);",
     "new": "!modes?.deathUp?.()) presentPlayerDeath(playerEntity);",
     "tests": [
-      "test/auditlegacy.test.js"
+      "test/systems/legacy/auditlegacy.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    if (!isAlive(me) || me.retired != null) { past = me; return; }",
     "new": "    if (!isAlive(me) && family.model === MODELS.bloodline) { past = me; return; }",
     "tests": [
-      "test/auditlegacy.test.js"
+      "test/systems/legacy/auditlegacy.test.js"
     ]
   },
   {
@@ -41,10 +41,10 @@
     "old": "    if (past || !p || !deps.entity?.chargenDone || !isAlive(p) || p.retired != null) return;",
     "new": "    if (!p || !deps.entity?.chargenDone || !isAlive(p) || p.retired != null) return;",
     "tests": [
-      "test/auditlegacy.test.js"
+      "test/systems/legacy/auditlegacy.test.js"
     ],
     "equivalent": true,
-    "why": "FB1012d HEIR-CLONE (bible/01-Overview/Field-Bugs-2026-10-12d.md): writeCurrent now writes only the person who IS the character in the world (playedHere), so with the past played back the line's current is the past itself (dead or retired - the same line's own guards) or another member, whose character it is not: `past` here is belt-and-braces, kept because it says why before the character is asked. The pin's law (the dead never written into the heir) still holds, and test/fb1012d_familytree.test.js kills the guard that now carries it."
+    "why": "FB1012d HEIR-CLONE (bible/01-Overview/bugs/Field-Bugs-2026-10-12d.md): writeCurrent now writes only the person who IS the character in the world (playedHere), so with the past played back the line's current is the past itself (dead or retired - the same line's own guards) or another member, whose character it is not: `past` here is belt-and-braces, kept because it says why before the character is asked. The pin's law (the dead never written into the heir) still holds, and test/systems/legacy/fb1012d_familytree.test.js kills the guard that now carries it."
   },
   {
     "name": "AUDIT-LEGACY-A3-a-second-house",
@@ -52,7 +52,7 @@
     "old": "    const stored = saved ? loadFamily(deps.storage(), saved.id) : familyOfCharacter(cid);",
     "new": "    const stored = saved ? loadFamily(deps.storage(), saved.id) : null;",
     "tests": [
-      "test/auditlegacy.test.js"
+      "test/systems/legacy/auditlegacy.test.js"
     ]
   },
   {
@@ -61,7 +61,7 @@
     "old": "    if (family.pending && family.pending.fallenId !== me.id) settlePending(me);",
     "new": "    if (false) settlePending(me);",
     "tests": [
-      "test/auditlegacy.test.js"
+      "test/systems/legacy/auditlegacy.test.js"
     ]
   },
   {
@@ -70,7 +70,7 @@
     "old": "  me.estatePaid = Math.max(0, Math.floor(Number(was?.estatePaid) || 0));",
     "new": "  me.estatePaid = Math.max(0, Math.floor(Number(me.estatePaid) || 0));",
     "tests": [
-      "test/auditlegacy.test.js"
+      "test/systems/legacy/auditlegacy.test.js"
     ]
   },
   {
@@ -79,7 +79,7 @@
     "old": "    if (s) Object.assign(r, { items: JSON.parse(JSON.stringify(s.items ?? [])), state: s.state, restedAt: s.restedAt ?? null, found: !!s.found });",
     "new": "    if (s) Object.assign(r, {});",
     "tests": [
-      "test/auditlegacy.test.js"
+      "test/systems/legacy/auditlegacy.test.js"
     ],
     "note": "AUDIT LEGACY II (PIN MOVED): re-aimed by content - the law it guards now stands at this line."
   },
@@ -89,7 +89,7 @@
     "old": "    if (r.by !== me.id) continue;   // nobody's, or another member's: the store's\n",
     "new": "",
     "tests": [
-      "test/auditlegacy.test.js"
+      "test/systems/legacy/auditlegacy.test.js"
     ],
     "note": "AUDIT LEGACY II (PIN MOVED): re-aimed by content - the law it guards now stands at this line."
   },
@@ -99,7 +99,7 @@
     "old": "    p.groups = { primary: ids(raw.groups?.primary), major: ids(raw.groups?.major), minor: ids(raw.groups?.minor) };",
     "new": "    p.groups = { primary: [], major: [], minor: [], ...(raw.groups ?? {}) };",
     "tests": [
-      "test/auditlegacy.test.js"
+      "test/systems/legacy/auditlegacy.test.js"
     ]
   },
   {
@@ -108,7 +108,7 @@
     "old": "    if (family.ended != null) { family.ended = null; deps.say?.(LEGACY_TEXT.ended(family.surname)); }",
     "new": "    if (false) { family.ended = null; }",
     "tests": [
-      "test/auditlegacy.test.js"
+      "test/systems/legacy/auditlegacy.test.js"
     ]
   },
   {
@@ -117,20 +117,20 @@
     "old": "    const asked = isModel(chose) ? chose : deps.online() ? MODELS.enduring : s.model;",
     "new": "    const asked = isModel(chose) ? chose : s.model;",
     "tests": [
-      "test/legacy7_online.test.js",
-      "test/legacychoice.test.js"
+      "test/systems/legacy/legacy7_online.test.js",
+      "test/systems/legacychoice.test.js"
     ],
     "note": "LEGACY7 (PIN MOVED): re-aimed by content - B4's law kept where it still stands: a character founded at an online LOAD is Enduring (a chargen's answer is the founder's own now). LEGACY-CHOICE (PIN MOVED): online a house is founded at a birth alone now, so B4's law is the birth's - one no question was put to (the headless door) founds online's safe Enduring, never the tile's permadeath; re-aimed by content."
   },
   {
     "name": "AUDIT-LEGACY-B4-online-bloodline-falls",
     "file": "src/scenes/legacyHost.js",
-    "old": "      d.cause = 'years';\n    }\n    // PERMADEATH-HOUSES",
-    "new": "      d.cause = 'years';\n    } else if (deps.online()) {\n      outcome = { kind: 'none' };\n      return outcome;\n    }\n    // PERMADEATH-HOUSES",
+    "old": "      else d.cause = 'years';\n    }\n    if (!h.rise) {",
+    "new": "      else d.cause = 'years';\n    } else if (deps.online()) {\n      outcome = { kind: 'none' };\n      return outcome;\n    }\n    if (!h.rise) {",
     "tests": [
-      "test/auditlegacy.test.js"
+      "test/systems/legacy/auditlegacy.test.js"
     ],
-    "note": "LEGACY7 (PIN MOVED): re-aimed by content - the law inverted: online a Bloodline death falls (the realm's tombstone) - the mutant puts the room's death back. PERMADEATH-HOUSES (PIN MOVED): re-aimed by content - the law it guards now stands at this line."
+    "note": "LEGACY7 (PIN MOVED): re-aimed by content - the law inverted: online a Bloodline death falls (the realm's tombstone) - the mutant puts the room's death back. PERMADEATH-HOUSES (PIN MOVED): re-aimed by content - the law it guards now stands at this line. PIN MOVED (FIELD BUGS 2026-10-16b REZ-BLOODLINE): re-aimed by content - an online death is read at the door and written when it is decided (legacyHost.js decideDeath)"
   },
   {
     "name": "AUDIT-LEGACY-B4-online-succession",
@@ -138,7 +138,7 @@
     "old": "  function succeed(choice) {\n    if (!family) return false;",
     "new": "  function succeed(choice) {\n    if (!family || deps.online()) return false;",
     "tests": [
-      "test/auditlegacy.test.js"
+      "test/systems/legacy/auditlegacy.test.js"
     ],
     "note": "LEGACY7 (PIN MOVED): re-aimed by content - the law inverted: online the Succession is answered (into the realm) - the mutant shuts it again."
   },
@@ -148,7 +148,7 @@
     "old": "    if (!deps.saveNow()) return { ok: false, why: LEGACY_TEXT.notSaved };",
     "new": "    deps.saveNow();",
     "tests": [
-      "test/auditlegacy.test.js"
+      "test/systems/legacy/auditlegacy.test.js"
     ]
   },
   {
@@ -157,7 +157,7 @@
     "old": "    if (!deps.saveNow()) {\n      p.retired = null;",
     "new": "    if (false) {\n      p.retired = null;",
     "tests": [
-      "test/auditlegacy.test.js"
+      "test/systems/legacy/auditlegacy.test.js"
     ]
   },
   {
@@ -166,7 +166,7 @@
     "old": "  && (fallen.heir === true || (settings?.descendants ?? DESCENDANTS.random) === DESCENDANTS.always);",
     "new": "  && fallen.heir === true;",
     "tests": [
-      "test/auditlegacy.test.js"
+      "test/systems/legacy/auditlegacy.test.js"
     ]
   },
   {
@@ -175,7 +175,7 @@
     "old": "      r.by = me.id;\n      openedSig.delete(r.id);",
     "new": "      openedSig.delete(r.id);",
     "tests": [
-      "test/legacy4_heirloom.test.js"
+      "test/systems/legacy/legacy4_heirloom.test.js"
     ],
     "note": "AUDIT LEGACY II (PIN MOVED): re-aimed by content - the law it guards now stands at this line."
   },
@@ -185,7 +185,7 @@
     "old": "        if (openedThisVisit.has(r.id) || deps.inFight()) continue;",
     "new": "        if (deps.inFight()) continue;",
     "tests": [
-      "test/legacy4_heirloom.test.js"
+      "test/systems/legacy/legacy4_heirloom.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "      } else if (!inList && !kept) {",
     "new": "      } else if (false) {",
     "tests": [
-      "test/legacy4_heirloom.test.js"
+      "test/systems/legacy/legacy4_heirloom.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "    && !NEVER_RARITY.has(it.rarity) && !NEVER_RARITY.has(rarityOf(it)) && it.sigil == null",
     "new": "    && !NEVER_RARITY.has(it.rarity) && it.sigil == null",
     "tests": [
-      "test/legacy4_heirloom.test.js"
+      "test/systems/legacy/legacy4_heirloom.test.js"
     ]
   },
   {
@@ -212,7 +212,7 @@
     "old": "export const remainsGoldOf = (gold) => Math.min(REMAINS_GOLD_MAX, Math.max(0, Math.floor((Number(gold) || 0) * REMAINS_GOLD_SHARE)));",
     "new": "export const remainsGoldOf = (gold) => Math.max(0, Math.floor((Number(gold) || 0) * REMAINS_GOLD_SHARE));",
     "tests": [
-      "test/legacy4_heirloom.test.js"
+      "test/systems/legacy/legacy4_heirloom.test.js"
     ]
   },
   {
@@ -221,44 +221,44 @@
     "old": "        if (deps.askRest?.(r.name, () => layToRest(r))) restAskedThisVisit.add(r.id);   // asked only once it was SHOWN",
     "new": "        deps.askRest?.(r.name, () => layToRest(r)); restAskedThisVisit.add(r.id);",
     "tests": [
-      "test/legacy4_heirloom.test.js"
+      "test/systems/legacy/legacy4_heirloom.test.js"
     ]
   },
   {
     "name": "AUDIT-LEGACY-H9-house-not-in-the-name",
-    "file": "src/systems/itemInfo.js",
+    "file": "src/systems/item/itemInfo.js",
     "old": "  if (typeof house !== 'string' || !house || !itemIsIdentified(item)) return parts;",
     "new": "  if (true) return parts;",
     "tests": [
-      "test/legacy4_heirloom.test.js"
+      "test/systems/legacy/legacy4_heirloom.test.js"
     ]
   },
   {
     "name": "AUDIT-LEGACY-U3-keyboard-dead",
-    "file": "src/ui/legacyDoor.js",
+    "file": "src/ui/legacy/legacyDoor.js",
     "old": "{ if (!e?.repeat) (btns[at] ?? btns[0]).click?.(); return true; }",
     "new": "{ if (!e?.repeat) btns[0].click?.(); return true; }",
     "tests": [
-      "test/auditlegacy.test.js"
+      "test/systems/legacy/auditlegacy.test.js"
     ],
     "note": "AUDIT LEGACY II (PIN MOVED): re-aimed by content - the law it guards now stands at this line."
   },
   {
     "name": "AUDIT-LEGACY-U7-standard-toll-said",
-    "file": "src/ui/legacyModelChoice.js",
+    "file": "src/ui/legacy/legacyModelChoice.js",
     "old": "  const pct = Math.round(tollShare * 100);",
     "new": "  const pct = 6;",
     "tests": [
-      "test/legacy1_family.test.js"
+      "test/systems/legacy1_family.test.js"
     ]
   },
   {
     "name": "AUDIT-LEGACY-B4-bloodline-open-online",
-    "file": "src/ui/legacyModelChoice.js",
+    "file": "src/ui/legacy/legacyModelChoice.js",
     "old": "title: 'Bloodline', locked: false,",
     "new": "title: 'Bloodline', locked: !!online,",
     "tests": [
-      "test/legacy1_family.test.js"
+      "test/systems/legacy1_family.test.js"
     ],
     "note": "LEGACY7 (PIN MOVED): re-aimed by content - the law inverted: Bloodline is open online - the mutant shuts it again."
   }

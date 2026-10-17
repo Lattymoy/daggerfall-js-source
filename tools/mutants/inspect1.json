@@ -4,7 +4,7 @@
     "file": "src/net/wire.js",
     "old": "  if (d.ask === true && d.card === undefined) return { to, ask: true };",
     "new": "  if (d.ask === true) return { to, ask: true };",
-    "tests": ["test/inspect1.test.js"],
+    "tests": ["test/ui/inspect1.test.js"],
     "note": "An ask with a card on it passes as an ask - a frame the wire must refuse whole."
   },
   {
@@ -12,7 +12,7 @@
     "file": "src/net/wire.js",
     "old": "c.level >= 1 && c.level <= CARD_LEVEL_MAX",
     "new": "c.level >= 0 && c.level <= CARD_LEVEL_MAX",
-    "tests": ["test/inspect1.test.js"],
+    "tests": ["test/ui/inspect1.test.js"],
     "note": "Level 0 is no level a sheet draws."
   },
   {
@@ -20,7 +20,7 @@
     "file": "src/net/wire.js",
     "old": "  const attrs = c.attrs.map((v) => n(v, CARD_STAT_MAX));",
     "new": "  const attrs = c.attrs.map((v) => n(v, CARD_STAT_MAX + 1));",
-    "tests": ["test/inspect1.test.js"],
+    "tests": ["test/ui/inspect1.test.js"],
     "note": "101 past the live clamp the sheet draws under."
   },
   {
@@ -28,7 +28,7 @@
     "file": "src/net/wire.js",
     "old": "  if (!Array.isArray(c.attrs) || c.attrs.length !== CARD_ATTRS) return null;",
     "new": "  if (!Array.isArray(c.attrs) || c.attrs.length > CARD_ATTRS) return null;",
-    "tests": ["test/inspect1.test.js"],
+    "tests": ["test/ui/inspect1.test.js"],
     "note": "Seven attributes are half a sheet drawn as a whole one."
   },
   {
@@ -36,7 +36,7 @@
     "file": "src/net/wire.js",
     "old": "  const vitals = c.vitals.map((v) => n(v, CARD_VITAL_MAX));",
     "new": "  const vitals = c.vitals.map((v) => n(v, Infinity));",
-    "tests": ["test/inspect1.test.js"],
+    "tests": ["test/ui/inspect1.test.js"],
     "note": ""
   },
   {
@@ -44,7 +44,7 @@
     "file": "src/net/wire.js",
     "old": "  return { level, attrs, vitals, look: validLook(c.look) };",
     "new": "  return { level, attrs, vitals, look: c.look };",
-    "tests": ["test/inspect1.test.js"],
+    "tests": ["test/ui/inspect1.test.js"],
     "note": "A look the room's own law never projected - a field the doll does not know rides along."
   },
   {
@@ -52,7 +52,7 @@
     "file": "src/net/wire.js",
     "old": "export const CARD_RELAY_MIN = 102;",
     "new": "export const CARD_RELAY_MIN = 101;",
-    "tests": ["test/inspect1.test.js"],
+    "tests": ["test/ui/inspect1.test.js"],
     "note": "A card asked of world101 (main's DISC12 relay, the last before the arc), which closes the socket for a frame it does not know."
   },
   {
@@ -60,7 +60,7 @@
     "file": "src/net/wire.js",
     "old": "    if (text.length > CARD_FRAME_MAX) return { error: 'frame too large' };",
     "new": "",
-    "tests": ["test/inspect1.test.js"],
+    "tests": ["test/ui/inspect1.test.js"],
     "note": "The card frame without its size door."
   },
   {
@@ -68,7 +68,7 @@
     "file": "server/src/index.js",
     "old": "this._send(tws, JSON.stringify({ t: 'card', id: a.id, ...(typeof a.sub === 'string' && a.sub ? { sub: a.sub } : {}), data: m.data }));",
     "new": "for (const [other, b] of this._all()) if (other !== ws && b.id) this._send(other, JSON.stringify({ t: 'card', id: a.id, ...(typeof a.sub === 'string' && a.sub ? { sub: a.sub } : {}), data: m.data }));",
-    "tests": ["test/inspect1.test.js"],
+    "tests": ["test/ui/inspect1.test.js"],
     "note": "An ask or an answer heard by everyone in the room."
   },
   {
@@ -76,7 +76,7 @@
     "file": "server/src/index.js",
     "old": "JSON.stringify({ t: 'card', id: a.id, ...(typeof a.sub === 'string' && a.sub ? { sub: a.sub } : {}), data: m.data })",
     "new": "JSON.stringify({ t: 'card', ...(typeof a.sub === 'string' && a.sub ? { sub: a.sub } : {}), data: m.data })",
-    "tests": ["test/inspect1.test.js"],
+    "tests": ["test/ui/inspect1.test.js"],
     "note": "A card nobody can say whose it is."
   },
   {
@@ -84,7 +84,7 @@
     "file": "server/src/index.js",
     "old": "      a = this._meterCard(ws, a, now); if (!a) return;\n      if (isChatRoom(a.key) || isSocialRoom(a.key)) return;",
     "new": "      a = this._meterCard(ws, a, now); if (!a) return;",
-    "tests": ["test/inspect1.test.js"],
+    "tests": ["test/ui/inspect1.test.js"],
     "note": "A channel or the hub routes a card - nowhere to stand beside anyone."
   },
   {
@@ -92,7 +92,7 @@
     "file": "server/src/index.js",
     "old": "      a = this._meterCard(ws, a, now); if (!a) return;\n      if (isChatRoom(a.key) || isSocialRoom(a.key)) return;\n      const to = m.data.to;\n      if (to === a.id) { this._junk(ws); return; }",
     "new": "      a = this._meterCard(ws, a, now); if (!a) return;\n      if (isChatRoom(a.key) || isSocialRoom(a.key)) return;\n      const to = m.data.to;\n      if (to === a.id) return;",
-    "tests": ["test/inspect1.test.js"],
+    "tests": ["test/ui/inspect1.test.js"],
     "note": "A card at my own id is junk no longer counted."
   },
   {
@@ -100,7 +100,7 @@
     "file": "server/src/index.js",
     "old": "      // frame (_senderFunnel says why)\n      if (!this._senderFunnel(tws, a.id, now)) return;",
     "new": "      // frame (_senderFunnel says why)\n      { const tm = this._meterOf(tws); const f = tokenGate(tm.kin?.[a.id] ?? null, now, CAST_HZ_MAX); (tm.kin ??= {})[a.id] = f.bucket; if (!f.pass) return; }",
-    "tests": ["test/inspect1.test.js"],
+    "tests": ["test/ui/inspect1.test.js"],
     "note": "A second funnel for the card: one sender reaches one destination at twice the rate, a card beside every cast."
   },
   {
@@ -108,7 +108,7 @@
     "file": "server/src/index.js",
     "old": "      // frame (_senderFunnel says why)\n      if (!this._senderFunnel(tws, a.id, now)) return;",
     "new": "      // frame (_senderFunnel says why)",
-    "tests": ["test/inspect1.test.js"],
+    "tests": ["test/ui/inspect1.test.js"],
     "note": "No funnel onto the destination at all."
   },
   {
@@ -116,7 +116,7 @@
     "file": "server/src/index.js",
     "old": "'cardBucket', 'cardDrops', 'too many card frames') ? a : null; }",
     "new": "'cardBucket', 'cardDrops', 'too many card frames', Infinity) ? a : null; }",
-    "tests": ["test/inspect1.test.js", "test/auditattach.test.js"],
+    "tests": ["test/ui/inspect1.test.js", "test/net/auditattach.test.js"],
     "note": "A flood of card frames never closes its socket."
   },
   {
@@ -124,7 +124,7 @@
     "file": "server/src/index.js",
     "old": "  _meterCard(ws, a, now) { return this._spend(ws, now, cardGate, 'cardBucket', 'cardDrops', 'too many card frames') ? a : null; }",
     "new": "  _meterCard(ws, a, now) { this._spend(ws, now, cardGate, 'cardBucket', 'cardDrops', 'too many card frames'); return a; }",
-    "tests": ["test/inspect1.test.js", "test/auditattach.test.js"],
+    "tests": ["test/ui/inspect1.test.js", "test/net/auditattach.test.js"],
     "note": "Over the rate the frame goes on anyway - each destination's funnel is then the only bound, and a sender spreads its flood across them."
   },
   {
@@ -132,7 +132,7 @@
     "file": "src/net/online.js",
     "old": "    if (!d || d.to === this.id || !this.cardOk) return false;",
     "new": "    if (!d || d.to === this.id) return false;",
-    "tests": ["test/inspect1.test.js"],
+    "tests": ["test/ui/inspect1.test.js"],
     "note": "A card sent to a relay that closes the socket for it."
   },
   {
@@ -140,7 +140,7 @@
     "file": "src/net/online.js",
     "old": "    if (!d || d.to === this.id || !this.cardOk) return false;",
     "new": "    if (!d || !this.cardOk) return false;",
-    "tests": ["test/inspect1.test.js"],
+    "tests": ["test/ui/inspect1.test.js"],
     "equivalent": true,
     "why": "sendCard refuses any `to` no open socket of mine reports (_socketFor), and a room never reports my own id - the welcome's roster leaves me out and my own join is never sent back to me - so the self check is belt-and-braces, kept beside the trade and cast senders' identical one."
   },
@@ -149,7 +149,7 @@
     "file": "src/net/online.js",
     "old": "    const gate = cardGate(this._cardBucket, this._now());\n    if (!gate.pass) return false;",
     "new": "    const gate = cardGate(this._cardBucket, this._now());",
-    "tests": ["test/inspect1.test.js"],
+    "tests": ["test/ui/inspect1.test.js"],
     "note": "The link past CARD_HZ_MAX - the relay would strike it."
   },
   {
@@ -157,7 +157,7 @@
     "file": "src/net/online.js",
     "old": "      if (primary) this.cardOk = relaySupportsCard(relayV);   // INSPECT1",
     "new": "      if (primary) this.cardOk = true;   // INSPECT1",
-    "tests": ["test/inspect1.test.js"],
+    "tests": ["test/ui/inspect1.test.js"],
     "note": "The welcome's version never read."
   },
   {
@@ -165,7 +165,7 @@
     "file": "src/net/online.js",
     "old": "    if (!g.pass) {\n      if (!this._inDirectedSaid.has(kind))",
     "new": "    if (false) {\n      if (!this._inDirectedSaid.has(kind))",
-    "tests": ["test/inspect1.test.js"],
+    "tests": ["test/ui/inspect1.test.js"],
     "note": "Every card frame in delivered, however fast a sender floods."
   },
   {
@@ -173,7 +173,7 @@
     "file": "src/net/online.js",
     "old": "    if (d && d.to === this.id) this._deliver(kind, () => deliver(m.id, d));",
     "new": "    if (d) this._deliver(kind, () => deliver(m.id, d));",
-    "tests": ["test/inspect1.test.js"],
+    "tests": ["test/ui/inspect1.test.js"],
     "note": "A frame addressed to someone else delivered to me."
   },
   {
@@ -181,7 +181,7 @@
     "file": "src/net/online.js",
     "old": "    if (typeof m.id !== 'string' || m.id === this.id) return;\n    if (buckets.size > TRADE_IN_SENDERS_MAX)",
     "new": "    if (typeof m.id !== 'string') return;\n    if (buckets.size > TRADE_IN_SENDERS_MAX)",
-    "tests": ["test/inspect1.test.js"],
+    "tests": ["test/ui/inspect1.test.js"],
     "note": "My own frame back delivered as a peer's."
   },
   {
@@ -189,7 +189,7 @@
     "file": "src/net/profileCard.js",
     "old": "    attrs: STAT_KEYS_ORDER.map((k) => clampInt(liveStat(e, k), 0, CARD_STAT_MAX)),",
     "new": "    attrs: STAT_KEYS_ORDER.map((k) => clampInt(e.stats?.[k] ?? 0, 0, CARD_STAT_MAX)),",
-    "tests": ["test/inspect1.test.js"],
+    "tests": ["test/ui/inspect1.test.js"],
     "note": "Base attributes where their sheet shows live ones - a disease's -5 missing."
   },
   {
@@ -197,7 +197,7 @@
     "file": "src/net/profileCard.js",
     "old": "      clampInt(maxFatigue(e) / FATIGUE_MULTIPLIER, 0, CARD_VITAL_MAX),",
     "new": "      clampInt(maxFatigue(e), 0, CARD_VITAL_MAX),",
-    "tests": ["test/inspect1.test.js"],
+    "tests": ["test/ui/inspect1.test.js"],
     "note": "Fatigue in points, not the sheet's /64 figure."
   },
   {
@@ -205,7 +205,7 @@
     "file": "src/net/profileCard.js",
     "old": "    look: composeLook(e),",
     "new": "    look: {},",
-    "tests": ["test/inspect1.test.js"],
+    "tests": ["test/ui/inspect1.test.js"],
     "note": "The card carries a default look, not the one they wear now."
   },
   {
@@ -213,7 +213,7 @@
     "file": "src/net/profileCard.js",
     "old": "      if (at != null && now - at < intervalMs) return false;",
     "new": "",
-    "tests": ["test/inspect1.test.js"],
+    "tests": ["test/ui/inspect1.test.js"],
     "note": "Every ask answered - a stranger asking every frame makes me send every frame."
   },
   {
@@ -221,7 +221,7 @@
     "file": "src/net/profileCard.js",
     "old": "      if (last.size >= max) last.delete(last.keys().next().value);   // the stalest asker makes room",
     "new": "",
-    "tests": ["test/inspect1.test.js"],
+    "tests": ["test/ui/inspect1.test.js"],
     "note": "Askers remembered without end."
   },
   {
@@ -229,7 +229,7 @@
     "file": "src/net/profileCard.js",
     "old": "last.delete(last.keys().next().value)",
     "new": "last.delete([...last.keys()].pop())",
-    "tests": ["test/inspect1.test.js"],
+    "tests": ["test/ui/inspect1.test.js"],
     "note": "The newest asker forgotten to make room, the stalest kept."
   },
   {
@@ -237,7 +237,7 @@
     "file": "src/ui/profileWindow.js",
     "old": "  const worn = card?.look ?? look ?? null;",
     "new": "  const worn = look ?? card?.look ?? null;",
-    "tests": ["test/inspect1.test.js"],
+    "tests": ["test/ui/inspect1.test.js"],
     "note": "The room's copy of their look preferred to the one they wear now."
   },
   {
@@ -245,7 +245,7 @@
     "file": "src/ui/profileWindow.js",
     "old": "    title: titleBadge(peer),",
     "new": "    title: titleBadge(card ?? peer),",
-    "tests": ["test/inspect1.test.js"],
+    "tests": ["test/ui/inspect1.test.js"],
     "note": "A title off the card - a claim nobody granted."
   },
   {
@@ -253,7 +253,7 @@
     "file": "src/ui/profileWindow.js",
     "old": "    attrs: card ? STAT_KEYS_ORDER.map((key, i) => ({ key, short: ATTR_SHORT[i], label: ATTR_LABELS[i], value: card.attrs[i] })) : [],",
     "new": "    attrs: STAT_KEYS_ORDER.map((key, i) => ({ key, short: ATTR_SHORT[i], label: ATTR_LABELS[i], value: card?.attrs[i] ?? 0 })),",
-    "tests": ["test/inspect1.test.js"],
+    "tests": ["test/ui/inspect1.test.js"],
     "note": "A sheet of zeros drawn before any card came."
   },
   {
@@ -261,7 +261,7 @@
     "file": "src/ui/profileWindow.js",
     "old": "  for (const [slot, label] of GEAR_ROWS) {\n    const it = bySlot.get(slot);\n    if (it) rows.push({ slot: label, name: itemLongName(it), part: gearPartOf(slot, it) });\n  }",
     "new": "  for (const [slot, it] of bySlot) {\n    const label = GEAR_ROWS.find(([s]) => s === slot)?.[1];\n    if (label) rows.push({ slot: label, name: itemLongName(it), part: gearPartOf(slot, it) });\n  }",
-    "tests": ["test/inspect1.test.js"],
+    "tests": ["test/ui/inspect1.test.js"],
     "note": "The gear in the look's own order, not head to foot."
   },
   {
@@ -269,7 +269,7 @@
     "file": "src/ui/profileWindow.js",
     "old": "    if (!alive || !open || !peerId || peerId !== shownPeer || !view) return false;",
     "new": "    if (!alive || !open || !peerId || !view) return false;",
-    "tests": ["test/inspect1.test.js"],
+    "tests": ["test/ui/inspect1.test.js"],
     "note": "An answer drawn on another player's card."
   },
   {
@@ -277,7 +277,7 @@
     "file": "src/ui/profileWindow.js",
     "old": "    if (above()) return;   // a surface over this one owns the key - untouched, unstopped",
     "new": "",
-    "tests": ["test/inspect1.test.js"],
+    "tests": ["test/ui/inspect1.test.js"],
     "note": "Escape eaten while a surface stands over the card."
   },
   {
@@ -285,7 +285,7 @@
     "file": "src/ui/profileWindow.js",
     "old": "    if (!was) onOpen?.();",
     "new": "    onOpen?.();",
-    "tests": ["test/inspect1.test.js"],
+    "tests": ["test/ui/inspect1.test.js"],
     "note": "A second card over the first frees the pointer twice."
   },
   {
@@ -293,7 +293,7 @@
     "file": "src/ui/profileWindow.js",
     "old": "      if (covered && open) hide();",
     "new": "",
-    "tests": ["test/inspect1.test.js"],
+    "tests": ["test/ui/inspect1.test.js"],
     "note": "The card left standing over a window."
   },
   {
@@ -301,7 +301,7 @@
     "file": "src/ui/profileWindow.js",
     "old": " .dfprofile-name { font-size: 16px; } }",
     "new": " }",
-    "tests": ["test/inspect1.test.js"],
+    "tests": ["test/ui/inspect1.test.js"],
     "note": "A narrow card keeps the name's full size - the widest name breaks inside itself."
   },
   {
@@ -309,7 +309,7 @@
     "file": "src/ui/socialMenu.js",
     "old": "  if (canInspect !== undefined) rows.unshift({",
     "new": "  if (false) rows.unshift({",
-    "tests": ["test/inspect1.test.js"],
+    "tests": ["test/ui/inspect1.test.js"],
     "note": "No Inspect row."
   },
   {
@@ -317,7 +317,7 @@
     "file": "src/ui/socialMenu.js",
     "old": "  if (canInspect !== undefined) rows.unshift({",
     "new": "  if (true) rows.unshift({",
-    "tests": ["test/inspect1.test.js"],
+    "tests": ["test/ui/inspect1.test.js"],
     "note": "The row on a menu whose host never offered it."
   },
   {
@@ -325,7 +325,7 @@
     "file": "src/ui/playerBadge.js",
     "old": "    if (GLYPH_STROKE[g.key]) {\n      path.setAttribute('fill', 'none');",
     "new": "    if (false) {\n      path.setAttribute('fill', 'none');",
-    "tests": ["test/inspect1.test.js", "test/chatfit.test.js"],
+    "tests": ["test/ui/inspect1.test.js", "test/ui/chatfit.test.js"],
     "note": "A stroke glyph filled solid."
   },
   {
@@ -333,7 +333,7 @@
     "file": "src/ui/playerBadge.js",
     "old": "    path.setAttribute('stroke-width', String(strokeWidth));",
     "new": "    path.setAttribute('stroke-width', '1.8');",
-    "tests": ["test/inspect1.test.js", "test/chatfit.test.js"],
+    "tests": ["test/ui/inspect1.test.js", "test/ui/chatfit.test.js"],
     "note": "The face's own stroke ignored - the name layer's 1.6 drawn at the chat's 1.8."
   },
   {
@@ -341,7 +341,7 @@
     "file": "src/scenes/world.js",
     "old": "    const can = !!online?.cardOk;",
     "new": "    const can = true;",
-    "tests": ["test/inspect1.test.js"],
+    "tests": ["test/ui/inspect1.test.js"],
     "note": "An ask sent to a relay that closes the socket for it."
   },
   {
@@ -349,7 +349,7 @@
     "file": "src/scenes/world.js",
     "old": "      if (!d?.card || _profileAsk?.peerId !== id) return;",
     "new": "      if (!d?.card) return;",
-    "tests": ["test/inspect1.test.js"],
+    "tests": ["test/ui/inspect1.test.js"],
     "note": "Anyone's card drawn on the open profile."
   },
   {
@@ -357,7 +357,7 @@
     "file": "src/scenes/world.js",
     "old": "    if (performance.now() - _profileAsk.at < CARD_WAIT_MS) return;",
     "new": "    return;",
-    "tests": ["test/inspect1.test.js"],
+    "tests": ["test/ui/inspect1.test.js"],
     "note": "A card that never comes waited on forever, with nothing said."
   },
   {
@@ -365,7 +365,7 @@
     "file": "src/scenes/world.js",
     "old": "        if (!cardAnswers.pass(id, performance.now())) return;",
     "new": "",
-    "tests": ["test/inspect1.test.js"],
+    "tests": ["test/ui/inspect1.test.js"],
     "note": "Every ask answered at once."
   },
   {
@@ -373,7 +373,7 @@
     "file": "src/scenes/world.js",
     "old": "    if (profileWin?.isOpen()) { profileWin.hide(); return true; }   // INSPECT1: F again closes the profile, as it closes the F-menu",
     "new": "",
-    "tests": ["test/inspect1.test.js"],
+    "tests": ["test/ui/inspect1.test.js"],
     "note": "F with the profile up opens a menu over it."
   },
   {
@@ -381,7 +381,7 @@
     "file": "src/scenes/world.js",
     "old": "...tradeActionsFor(peerId), canInspect: true, canReadPage:",
     "new": "...tradeActionsFor(peerId), canReadPage:",
-    "tests": ["test/inspect1.test.js"],
+    "tests": ["test/ui/inspect1.test.js"],
     "note": "The host never offers the row - on the card or on the plaque (the merge's one bag, peerActsFor)."
   }
 ]

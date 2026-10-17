@@ -9,7 +9,7 @@
 // walker - the talk ray, the pickpocket, the watch's conversion, the trample - takes it unchanged.
 //
 // LW3: ARMED (`arm`). A resident walking out to the road, or home from it, in their gear (LW0 decision 5) wears their
-// class's sprite instead - the enemy's own eight-way MobileUnit (characters/mobileUnit.js, the band's and the crew's
+// class's sprite instead - the enemy's own eight-way MobileUnit (characters/mobile/mobileUnit.js, the band's and the crew's
 // body) on its class archive - and their own outfit again when the walk is done.
 //
 // LW-LOOKS (2026-10-06, "Class looks + still flats"): IN TOWN TOO - one whose calling is a class's walks the town in its
@@ -22,8 +22,8 @@
 // front view: every talker in a circle faced the camera, never the one they talked to (88,358 of 88,358 standing
 // frames), and the watch's post the street, never the road. The idle record is the politeness gate's alone - DFU's own
 // use of it: one who stops for the player turns to face them.
-import { MobilePerson, MOVE_RECORDS, MOVE_FLIPS, PERSON_MOVE_FPS, PERSON_IDLE_FPS, PERSON_IDLE_RECORD, PERSON_GUARD_IDLE_RECORD } from './mobilePerson.js';
-import { mobileOrientation, MobileUnit } from './mobileUnit.js';
+import { MobilePerson, MOVE_RECORDS, MOVE_FLIPS, PERSON_MOVE_FPS, PERSON_IDLE_FPS, PERSON_IDLE_RECORD, PERSON_GUARD_IDLE_RECORD } from './mobile/mobilePerson.js';
+import { mobileOrientation, MobileUnit } from './mobile/mobileUnit.js';
 import { FlatAnim } from '../render/flatAnimation.js';
 
 /** LW-TALK: the walk record's frame a standing resident holds. */

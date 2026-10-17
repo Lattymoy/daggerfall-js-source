@@ -21,7 +21,7 @@
 // the PHRASE the frames expect ("%di of here", "that way, just keep
 // going %di"), and that is the text below, verbatim from
 // vendor/dfu-text/Internal_RSC.csv (the source pin is
-// test/macu_directions.test.js).
+// test/systems/talk/macu_directions.test.js).
 //
 // The port keeps reading the player's TEXT.RSC for everything else:
 // this module carries only the rows where the table diverges from

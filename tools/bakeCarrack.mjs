@@ -6,7 +6,7 @@
 // SHIPS-2 (2026-10-07, Mac, sending Tiny_Ship.fbx, New_Ship_2.fbx and New_Ship_2_Shutter.fbx: "implement both of these
 // new ship placement models, UV Map/Texture, and ensure it matches the love we gave the other new ship model we
 // implemented"). Two ships come in the three files: NEW SHIP 2, the three-masted ship this bake reads, which stands in
-// for Come Sail Away's hull 4, the Carrack (world/carrackModel.js); and the Tiny Ship, hull 1's (tools/bakeLargeBoat.mjs).
+// for Come Sail Away's hull 4, the Carrack (world/ships/carrackModel.js); and the Tiny Ship, hull 1's (tools/bakeLargeBoat.mjs).
 //
 // THE THREE FILES ARE ONE SCENE SAVED THREE TIMES, each a Blender 5.1.1 export of the scene the galleon came out of
 // (tools/bakeGalleon.mjs): New_Ship_2_Shutter.fbx at 17:30:20 on 2026-10-02, New_Ship_2.fbx at 17:34:23 and
@@ -16,7 +16,7 @@
 // the other two, 0.33 m further inboard in Tiny_Ship.fbx. Tiny_Ship.fbx is the newest and the only one that holds the
 // Tiny Ship too, so it is the one committed (src/assets/ships/source/Tiny_Ship.fbx) and both ships bake out of it.
 // Neither file embeds a texture: their materials name Wood.png and floorboards.png on Mac's disk, as the galleon's did
-// - she is painted (world/carrackArt.js) and every face laid on its picture by world/carrackModel.js.
+// - she is painted (world/ships/carrackArt.js) and every face laid on its picture by world/ships/carrackModel.js.
 //
 // HER PARTS (`ROLES`, each in the box it was read standing in - tools/shipBake.mjs refuses one a re-export moved): she
 // is the galleon's hull drawn on - the same gun deck, main deck and six deck beams, five gunports a side but each
@@ -41,7 +41,7 @@
 // and her main deck 7.81. MIDSHIP 4.07 is the middle of her length (to 0.4 cm); CENTRELINE her hull object's own scene
 // Y, to the bit (AUDIT GN-B6).
 //
-// The output is a JSON a test re-bakes byte for byte (test/ships2_bake.test.js): the source is committed beside it, so
+// The output is a JSON a test re-bakes byte for byte (test/tooling/ships2_bake.test.js): the source is committed beside it, so
 // the file is a DERIVATION, never a blob.
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
@@ -71,7 +71,7 @@ export const ROLES = Object.freeze({
   'Cube.008': role('houseDoor', [[-1.294, 10.029, 11.483], [-1.048, 13.93, 15.486]]),
   'Cube.016': role('sternRail', [[-25.07, 4.181, 12.047], [-11.49, 19.738, 14.047]]),
   'Cube.037': role('gunportLid', [[-4.558, 19.771, 7.037], [-1.047, 21.996, 7.385]]),
-  // her six deck beams, aft to fore (one role - world/carrackModel.js draws them as one)
+  // her six deck beams, aft to fore (one role - world/ships/carrackModel.js draws them as one)
   'Cube.036': role('deckBeam', [[-16.22, 4.724, 10.458], [-15.114, 19.236, 11.565]]),
   'Cube.014': role('deckBeam', [[-7.727, 4.724, 10.458], [-6.621, 19.236, 11.565]]),
   'Cube.013': role('deckBeam', [[-0.553, 4.724, 10.458], [0.553, 19.236, 11.565]]),

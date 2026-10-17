@@ -5,7 +5,7 @@
     "old": "      await this._retireForged(me, now);\n",
     "new": "",
     "tests": [
-      "test/fb1001_friendsaudit.test.js"
+      "test/net/fb1001_friendsaudit.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "puts[id] = { ...r, friends: r.friends.filter((x) => x !== me), in: r.in.filter((e) => e.acct !== me), out: r.out.filter((e) => e.acct !== me) };",
     "new": "puts[id] = { ...r };",
     "tests": [
-      "test/fb1001_friendsaudit.test.js"
+      "test/net/fb1001_friendsaudit.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "const f = ids(r.friends, id).filter((x) => x !== me || fr.has(id)), rf = new Set(f);",
     "new": "const f = ids(r.friends, id), rf = new Set(f);",
     "tests": [
-      "test/fb1001_friendsaudit.test.js"
+      "test/net/fb1001_friendsaudit.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "b.acct !== (m.acct ? (who.subject || m.acct) : null)",
     "new": "b.acct !== m.acct",
     "tests": [
-      "test/fb1001_friendsaudit.test.js"
+      "test/net/fb1001_friendsaudit.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    if (me !== m.acct && !m.ps) this._sayError(ws, 'update the game to see your friends and party');",
     "new": "",
     "tests": [
-      "test/fb1001_friendsaudit.test.js"
+      "test/net/fb1001_friendsaudit.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "frame.asecret = this.asecret; frame.ps = 1; }",
     "new": "frame.asecret = this.asecret; }",
     "tests": [
-      "test/soc2_session.test.js"
+      "test/net/soc2_session.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "if (m.ps !== undefined) { if (m.ps !== 1) return { error: 'bad account' }; hello.ps = 1; }",
     "new": "if (m.ps !== undefined) { hello.ps = 1; }",
     "tests": [
-      "test/fb1001_friendsaudit.test.js"
+      "test/net/fb1001_friendsaudit.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": ".filter((e) => !fr.has(e.acct)),\n        out: rows([...mine.out, ...legacy.out], me, PENDING_MAX).filter((e) => !fr.has(e.acct)) };",
     "new": ",\n        out: rows([...mine.out, ...legacy.out], me, PENDING_MAX) };",
     "tests": [
-      "test/fb1001_friendsaudit.test.js"
+      "test/net/fb1001_friendsaudit.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "const friends = ids([...mine.friends, ...legacy.friends], me).slice(0, FRIENDS_MAX);",
     "new": "const friends = ids([...mine.friends, ...legacy.friends], null).slice(0, FRIENDS_MAX);",
     "tests": [
-      "test/fb1001_friendsaudit.test.js"
+      "test/net/fb1001_friendsaudit.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "      for (let i = 0; i < all.length; i += 128) await this._putAccts(Object.fromEntries(all.slice(i, i + 128)));   // SLAM5's wall",
     "new": "      for (let i = 0; i < all.length; i += 1e9) await this._putAccts(Object.fromEntries(all.slice(i, i + 1e9)));   // SLAM5's wall",
     "tests": [
-      "test/fb1001_friendsaudit.test.js"
+      "test/net/fb1001_friendsaudit.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "    for (const [id, r] of Object.entries(puts)) if (id !== me) await this._sayState(id, r, now);",
     "new": "",
     "tests": [
-      "test/fb1001_friendsaudit.test.js"
+      "test/net/fb1001_friendsaudit.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "ids([...mine.friends, ...legacy.friends], me).slice(0, FRIENDS_MAX)",
     "new": "ids([...mine.friends, ...legacy.friends], me)",
     "tests": [
-      "test/fb1001_friendsaudit.test.js"
+      "test/net/fb1001_friendsaudit.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "list = list.slice(0, ACCOUNT_TABS_MAX); }",
     "new": "list = list.slice(0, 1); }",
     "tests": [
-      "test/auditsoc.test.js"
+      "test/net/auditsoc.test.js"
     ],
     "note": "SCALE5a (re-aimed by content): the account index kept as sets, its bound read off them (`_socketsOf`)."
   },
@@ -123,7 +123,7 @@
     "old": "peers: socks.slice(0, ACCOUNT_TABS_MAX).map((ws) => this._attach(ws).id) };",
     "new": "peers: socks.slice(0, 1).map((ws) => this._attach(ws).id) };",
     "tests": [
-      "test/auditsoc.test.js"
+      "test/net/auditsoc.test.js"
     ]
   },
   {
@@ -132,7 +132,7 @@
     "old": "if (list.length > ACCOUNT_TABS_MAX) { const idx = this._all(); list.sort((x, y) => (idx.get(y)?.since ?? 0) - (idx.get(x)?.since ?? 0)); list = list.slice(0, ACCOUNT_TABS_MAX); }",
     "new": "if (list.length > ACCOUNT_TABS_MAX - 3) { const idx = this._all(); list.sort((x, y) => (idx.get(y)?.since ?? 0) - (idx.get(x)?.since ?? 0)); list = list.slice(0, ACCOUNT_TABS_MAX - 3); }",
     "tests": [
-      "test/auditsoc.test.js"
+      "test/net/auditsoc.test.js"
     ],
     "note": "SCALE5a (re-aimed by content): the account index kept as sets, its bound read off them (`_socketsOf`)."
   }

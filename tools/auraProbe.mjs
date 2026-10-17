@@ -1,6 +1,6 @@
 // WB9g - DAGON'S FIRE, COMPILED, LINKED AND DRAWN IN A REAL BROWSER.
 //
-// node holds the aura's law (test/wb9g_insignia.test.js: who is drawn, the clock's wrap, the pass over a fake GL); what
+// node holds the aura's law (test/net/wb9g_insignia.test.js: who is drawn, the clock's wrap, the pass over a fake GL); what
 // node cannot answer is whether the GLSL COMPILES and LINKS in a real WebGL2 context, and whether what it draws is the
 // fire it says: the ring burning at its radius and dim inside it, nothing past its edge, flames standing up out of it,
 // no seam where the angle's noise closes behind the wearer, no jump where the clock wraps, and nothing at all before it

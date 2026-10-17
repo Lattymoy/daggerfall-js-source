@@ -7,7 +7,7 @@
 // lights archive at 12 fps - FlatAnim picks the rate off the archive)
 // as one billboard batch, base-aligned at the spot, with a point light
 // over it while it burns. A TENT is model 41606 through the host's
-// pipeline (the wagon's getGpuMesh law, player/eotbWagon.js), stood
+// pipeline (the wagon's getGpuMesh law, player/eyeOfTheBeholder/eotbWagon.js), stood
 // TENT_BEHIND behind its fire and facing it. Both are one activation
 // target at CAMP_REACH under the host's one ray; Info and Talk name it,
 // Grab and Steal open the menu (a list picker: rest, cook, stoke, pack).
@@ -33,7 +33,7 @@ import { FlatAnim } from '../render/flatAnimation.js';
 import { trs, multiply, wrapAngle } from '../world/mat4.js';
 import { intoDeck, outOfDeck } from '../systems/naval/navalDeck.js';   // DECK-CAMP: a camp on a boat's deck rides her frame
 import { localAabb, transformedAabb } from '../render/frustum.js';
-import { drawSeen } from './decorRoom.js';   // PERF-WAGON: a tent by the street's view test
+import { drawSeen } from './decor/decorRoom.js';   // PERF-WAGON: a tent by the street's view test
 import { ListPickerWindow } from '../ui/listPicker.js';
 import { survivalOn } from '../systems/survival/switch.js';   // AUDIT SURV-TIERS: Off keeps what stands and uses none of it (shown, below); SURV-OFFSIGHT: it sees another's (seen)
 import {
@@ -44,7 +44,7 @@ import {
   validDeck, deckYaw, TENT_BEHIND,
 } from '../systems/survival/camp.js';
 import { isCampfireKit, CAMPFIRE_USES } from '../systems/survival/items.js';   // REST2: the Campfire is online's for everyone
-import { isBedroll, isEmberJar, isFirewood, spendCharge, REST_ITEM_TEXT, FIREWOOD_NIGHTS, BEDROLL_CHANNEL_SECONDS } from '../systems/restItems.js';   // REST6: the Bedroll, the Ember Jar, Firewood
+import { isBedroll, isEmberJar, isFirewood, spendCharge, REST_ITEM_TEXT, FIREWOOD_NIGHTS, BEDROLL_CHANNEL_SECONDS } from '../systems/rest/restItems.js';   // REST6: the Bedroll, the Ember Jar, Firewood
 import { REST_KIND } from '../systems/survival/rest.js';   // AUDIT SURV-TIERS (the third pass): a camp's rest tends its tent's fire
 import { hearthNear, hearthAabb } from '../systems/survival/hearth.js';   // HEARTH1: the world's own fires answer the same question this pool does
 import { adoptLight } from '../render/lightId.js';   // LIGHT-ID: a camp's fire named by its camp
@@ -182,7 +182,7 @@ export function createCamps({
    * with the rest of the arc.
    */
   // REST2 (bible/06-Systems/Rest-Arc.md section 3): ONLINE THE FIRES ARE EVERYONE'S. A rest online is an act at a fire
-  // or a bed (systems/restAct.js), so the Campfire, the camps it stands and the world's braziers are the rest's, not the
+  // or a bed (systems/rest/restAct.js), so the Campfire, the camps it stands and the world's braziers are the rest's, not the
   // arc's alone: online every door below opens with the arc Off too. Offline Off is SURV-OFFSIGHT's, unchanged.
   // ENDLESS PROVISIONS (2026-10-04, Mac: the Campfire Kit and Rations for everyone - "i can use and find all those without
   // climates and calories"): A CAMP IS EVERY TIER'S. It is placed, seen, named, rested at, cooked at, stoked and packed with
@@ -498,7 +498,7 @@ export function createCamps({
     // REST2: and the plaque's rows - the loot plaque's list of actions (systems/worldHover.js resolveHover), the camp
     // menu's own keys as the ids, so the lit row is what a press does (activate's `lit`)
     if (key.startsWith('hearth:')) {
-      const title = hearths?.()?.[Number(key.slice(7))]?.placed ? 'Campfire' : 'Fire';   // REST3: a dungeon's placed fire is a Campfire (world/dungeonFires.js)
+      const title = hearths?.()?.[Number(key.slice(7))]?.placed ? 'Campfire' : 'Fire';   // REST3: a dungeon's placed fire is a Campfire (world/dungeon/dungeonFires.js)
       return usable() ? { title, actions: HEARTH_ROWS.map((r) => ({ id: r.key, label: r.text })) } : { title };
     }
     const c = forKey(key);

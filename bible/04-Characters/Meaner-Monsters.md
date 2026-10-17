@@ -116,7 +116,7 @@ not vendored - DFU's "not loaded"). So:
   DaggerfallBillboard) on DFU's two rules. Nothing changes for an
   archive no mod names.
 
-## Pinned (`test/meanerMonsters.test.js`, 4)
+## Pinned (`test/characters/enemy/meanerMonsters.test.js`, 4)
 
 (AUDIT MM1 added to the same four: the corpse field's unpacking, the
 corpse xml inert without a PNG and live with one, the werewolf's corpse

@@ -5,7 +5,7 @@
     "old": "    ...fortsCapturedStatements(db, key, { fortifier: !!fortifier, nowS }),",
     "new": "    ...fortsCapturedStatements(db, key, { fortifier: !!fortifier }),",
     "tests": [
-      "test/audit_seats2_service.test.js"
+      "test/net/audit_seats2_service.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  const walls = await fortTierAt(db, key, 'walls', nowS);",
     "new": "  const walls = await fortTierAt(db, key, 'walls', -Infinity);",
     "tests": [
-      "test/audit_seats2_service.test.js"
+      "test/net/audit_seats2_service.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "stands_at <= ?1 AND (?3 IS NULL OR key = ?3)",
     "new": "stands_at > ?1 AND (?3 IS NULL OR key = ?3)",
     "tests": [
-      "test/audit_seats2_service.test.js"
+      "test/net/audit_seats2_service.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "stands_at <= ?1 AND (?3 IS NULL OR key = ?3)",
     "new": "stands_at <= ?1 AND (?3 IS NULL OR key <> ?3)",
     "tests": [
-      "test/audit_seats2_service.test.js"
+      "test/net/audit_seats2_service.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "DELETE FROM town_seat_fort_held WHERE EXISTS (SELECT 1 FROM town_seat_forts",
     "new": "DELETE FROM town_seat_fort_held WHERE 0 AND EXISTS (SELECT 1 FROM town_seat_forts",
     "tests": [
-      "test/audit_seats2_service.test.js"
+      "test/net/audit_seats2_service.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "siegewright = 0 WHERE ${due}`)",
     "new": "siegewright = 0 WHERE 0 AND ${due}`)",
     "tests": [
-      "test/audit_seats2_service.test.js"
+      "test/net/audit_seats2_service.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "json_object('work', work, 'tier', building)",
     "new": "json_object('work', work, 'tier', tier)",
     "tests": [
-      "test/audit_seats2_service.test.js"
+      "test/net/audit_seats2_service.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "CHECK (tithe >= 0 AND tithe <= 18)",
     "new": "CHECK (tithe >= 0 AND tithe <= 15)",
     "tests": [
-      "test/audit_seats2_service.test.js"
+      "test/net/audit_seats2_service.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "SET building = building - 1, stands_at = NULL WHERE tier > 0 AND building IS NOT NULL",
     "new": "SET stands_at = NULL WHERE tier > 0 AND building IS NOT NULL",
     "tests": [
-      "test/audit_seats2_service.test.js"
+      "test/net/audit_seats2_service.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "SET building = building - 1, stands_at = NULL WHERE tier > 0 AND building IS NOT NULL",
     "new": "SET building = building - 1 WHERE tier > 0 AND building IS NOT NULL",
     "tests": [
-      "test/audit_seats2_service.test.js"
+      "test/net/audit_seats2_service.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "FROM town_seat_fort_held WHERE qty > 0 AND ${lowered}",
     "new": "FROM town_seat_fort_held WHERE 0 AND qty > 0 AND ${lowered}",
     "tests": [
-      "test/audit_seats2_service.test.js"
+      "test/net/audit_seats2_service.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "DELETE FROM town_seat_fort_held WHERE ${lowered}",
     "new": "DELETE FROM town_seat_fort_held WHERE 0 AND ${lowered}",
     "tests": [
-      "test/audit_seats2_service.test.js"
+      "test/net/audit_seats2_service.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "f.tier > 0 AND f.building IS NOT NULL)",
     "new": "f.tier >= 0 AND f.building IS NOT NULL)",
     "tests": [
-      "test/audit_seats2_service.test.js"
+      "test/net/audit_seats2_service.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "    if (!wipe) stmts.push(campsWorn(db, next));",
     "new": "    if (!wipe) stmts.push(...[]);",
     "tests": [
-      "test/audit_seats2_service.test.js"
+      "test/net/audit_seats2_service.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "rams > 0 AND tier <> 'crown'",
     "new": "rams > 0",
     "tests": [
-      "test/audit_seats2_service.test.js"
+      "test/net/audit_seats2_service.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "f.work = 'gatehouse' AND f.tier >= 1)",
     "new": "f.work = 'gatehouse' AND f.tier >= 0)",
     "tests": [
-      "test/audit_seats2_service.test.js"
+      "test/net/audit_seats2_service.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "    ...fortsLapsedStatements(db, key, nowS),\n  ]);",
     "new": "  ]);",
     "tests": [
-      "test/audit_seats2_service.test.js"
+      "test/net/audit_seats2_service.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "const unheld = 'NOT EXISTS (SELECT 1 FROM town_seat_holds WHERE key = ?1)';",
     "new": "const unheld = '1';",
     "tests": [
-      "test/audit_seats2_service.test.js"
+      "test/net/audit_seats2_service.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "    ...fortsDueStatements(db, nowS, key),\n",
     "new": "",
     "tests": [
-      "test/audit_seats2_service.test.js"
+      "test/net/audit_seats2_service.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "WHERE key = ?1 AND building IS NOT NULL AND ${unheld}",
     "new": "WHERE 0 AND key = ?1 AND building IS NOT NULL AND ${unheld}",
     "tests": [
-      "test/audit_seats2_service.test.js"
+      "test/net/audit_seats2_service.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "FROM town_seat_fort_held WHERE key = ?1 AND qty > 0 AND ${unheld}",
     "new": "FROM town_seat_fort_held WHERE 0 AND key = ?1 AND qty > 0 AND ${unheld}",
     "tests": [
-      "test/audit_seats2_service.test.js"
+      "test/net/audit_seats2_service.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "      stmts.push(...fortsLapsedStatements(db, u.key, atS));",
     "new": "",
     "tests": [
-      "test/audit_seats2_service.test.js"
+      "test/net/audit_seats2_service.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "    stmts.push(...fortsLapsedStatements(db, Number(h.key), atS));",
     "new": "",
     "tests": [
-      "test/audit_seats2_service.test.js"
+      "test/net/audit_seats2_service.test.js"
     ]
   },
   {
@@ -212,7 +212,7 @@
     "old": "    ...fortsLapsedStatements(db, key, nowS),",
     "new": "",
     "tests": [
-      "test/audit_seats2_service.test.js"
+      "test/net/audit_seats2_service.test.js"
     ]
   },
   {
@@ -221,7 +221,7 @@
     "old": "  ...fortsLapsedStatements(db, K, nowS),   // AUDIT SEATS-2 S5: its building projects fall with the Charter\n",
     "new": "",
     "tests": [
-      "test/audit_seats2_service.test.js"
+      "test/net/audit_seats2_service.test.js"
     ]
   },
   {
@@ -230,7 +230,7 @@
     "old": "  return held ? null : { error: 'seat-not-held' };",
     "new": "  return null;",
     "tests": [
-      "test/audit_seats2_service.test.js"
+      "test/net/audit_seats2_service.test.js"
     ]
   },
   {
@@ -239,7 +239,7 @@
     "old": "    return pledged ? null : { error: 'seat-not-pledged' };",
     "new": "    return null;",
     "tests": [
-      "test/audit_seats2_service.test.js"
+      "test/net/audit_seats2_service.test.js"
     ]
   },
   {
@@ -248,7 +248,7 @@
     "old": "WHERE week = ? AND key = ? AND guild_id = ?').bind(seatWeek(nowS), Number(w.seat), w.guild_id)",
     "new": "WHERE week <= ? AND key = ? AND guild_id = ?').bind(seatWeek(nowS), Number(w.seat), w.guild_id)",
     "tests": [
-      "test/audit_seats2_service.test.js"
+      "test/net/audit_seats2_service.test.js"
     ]
   },
   {
@@ -257,7 +257,7 @@
     "old": "OR (w.camp = 0 AND EXISTS (SELECT 1 FROM town_seat_holds WHERE key = w.seat AND guild_id = w.guild_id))",
     "new": "OR (w.camp = 0)",
     "tests": [
-      "test/audit_seats2_service.test.js"
+      "test/net/audit_seats2_service.test.js"
     ]
   },
   {
@@ -266,7 +266,7 @@
     "old": "OR (w.camp = 1 AND EXISTS (SELECT 1 FROM town_seat_pledges WHERE week = ${week} AND key = w.seat AND guild_id = w.guild_id)))",
     "new": "OR (w.camp = 1))",
     "tests": [
-      "test/audit_seats2_service.test.js"
+      "test/net/audit_seats2_service.test.js"
     ]
   },
   {
@@ -275,7 +275,7 @@
     "old": "AND ${SEAT_WRIT_LIVE_SQL('?15')}",
     "new": "AND ${SEAT_WRIT_LIVE_SQL('?15 - 1')}",
     "tests": [
-      "test/audit_seats2_service.test.js"
+      "test/net/audit_seats2_service.test.js"
     ]
   },
   {
@@ -284,7 +284,7 @@
     "old": "  const lost = await seatWritLost(db, w, nowS);   // AUDIT SEATS-2 S6: the seat no longer its guild's to feed\n  if (lost) return lost;\n",
     "new": "",
     "tests": [
-      "test/audit_seats2_service.test.js"
+      "test/net/audit_seats2_service.test.js"
     ]
   }
 ]

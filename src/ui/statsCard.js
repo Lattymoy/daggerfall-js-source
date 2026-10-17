@@ -13,7 +13,7 @@
 import { computeCombatStats, signed } from '../combat/combatStats.js';
 import { dollArmour, overallArmour, tenth, PART_NAMES } from './armourCard.js';
 import { SKILL_NAMES, SKILLS } from '../systems/skills.js';
-import { itemLongName } from '../systems/itemInfo.js';
+import { itemLongName } from '../systems/item/itemInfo.js';
 import { PIXEL_STACK } from './pixelifyFive.js';   // the Enhanced Plus face: Pixelify Sans, its 5 from Silkscreen
 import { temperatureStatRows, boonStatRows } from './temperatureCard.js';   // TEMP-UI: the felt temperature's parts; AUDIT SURV-BOONS C13: and the boons
 import { savingChance, elementalResistanceChance, ELEMENTS, EFFECT_FLAGS } from '../systems/spellcast.js';   // STATS-RESIST: the saving throw's own law
@@ -321,7 +321,7 @@ export const STATS_CARD_CSS = `
 .sf-res .sf-pill.imm b { color: #8fd18a; }
 .sf-res .sf-pill.up b { color: #d9c27a; }
 .sf-res .sf-pill.down b { color: #e08a72; }
-/* STATS-CARD, dressed as Enhanced Plus. PAINT is the stone-and-brass kit's: every part has a ROLE in ui/enhancedFrame.js
+/* STATS-CARD, dressed as Enhanced Plus. PAINT is the stone-and-brass kit's: every part has a ROLE in ui/enhanced/enhancedFrame.js
    (the back is a panel, Stats / Paperdoll a button, the headline tiles and the armour pills chips, the foe chips tiles,
    each section a well with an engraved head, each line a rule), so all six Plus themes - Stone's grit and marble
    included - dress it, as they dress the pack beside it. This sheet is injected AFTER the kit, so it writes only what a

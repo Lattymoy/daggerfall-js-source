@@ -2,7 +2,7 @@
 // ═══════════════════════════════════════════════════════════════════
 // POI-5 (2026-10-14) - A SPARSE HERMITIAN POSITIVE-DEFINITE SYSTEM, SOLVED DIRECTLY.
 //
-// The UV editor's unwrap (poi/uvMesh.js unwrapLscm) is a least-squares system over every vertex of an island; an
+// The UV editor's unwrap (poi/uv/uvMesh.js unwrapLscm) is a least-squares system over every vertex of an island; an
 // iterative solve crawls on a large one (two pins far apart: the low frequencies take thousands of steps - an
 // 80,000-triangle sheet ran out of 6,000 and was still stretched a hundredfold). This is the direct solve the standard
 // unwrappers make (OpenNL's in Blender, libigl's): a Cholesky factorization of the normal matrix, in the order a

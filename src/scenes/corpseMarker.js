@@ -56,14 +56,14 @@
 
 import { capFoeLoot } from '../systems/foeLootCap.js';   // FOE-CAP: the death's cap, after its handlers
 import { championName, properName } from '../systems/champions.js';   // LOOT7: a champion's death line names it
-import { getBool } from '../systems/settings.js';   // AUDIT 28 W1: DisableEnemyDeathAlert
+import { getBool } from '../systems/settings/settings.js';   // AUDIT 28 W1: DisableEnemyDeathAlert
 import { floorLanding } from '../player/enterExit.js';
 import { billboardSize } from '../world/rmbFlats.js';
 import { addItem, takeOneInto } from '../systems/inventory.js';   // QUICK-LOOT B2: the one-item door, which the bulk take below is now written over
 import { SOUND } from '../systems/soundClips.js';
-import { lootRarityOn, bestRarity, RARITIES } from '../systems/lootRarity.js';   // LR3: the drop chime asks the body's best tier
+import { lootRarityOn, bestRarity, RARITIES } from '../systems/loot/lootRarity.js';   // LR3: the drop chime asks the body's best tier
 import { CORPSE_ACTIVATION_DISTANCE, RAY_DISTANCE } from '../player/activate.js';
-import { enemyDisplayName } from '../characters/enemyBasics.js';
+import { enemyDisplayName } from '../characters/enemy/enemyBasics.js';
 import { localizedText, getLocalizedEnemyName } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language; L10N3e: and the enemy's name
 import { silverFindAt } from '../systems/silverFinds.js';   // SILVER-FINDS: a body opened holds silver now and then
 

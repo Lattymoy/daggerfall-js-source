@@ -26,9 +26,9 @@ port is the mod's code.
 
 | DFU | port |
 |---|---|
-| `FPSWeapon.moddedWeaponHUDAnimsEnabled` (FPSWeapon.cs:97) - a static, false until a mod sets it | `moddedWeaponHUDAnimsEnabled()` - the mod's `Enabled` switch (`combat/diverseWeapons.js`) |
-| `WeaponBasics.GetModdedWeaponFilename(item)` - three tables: the named artifact CIFs, `<NAME>MAGIC.CIF`, `<NAME>.CIF`; a custom template answers `""` | `moddedWeaponFilename(item)`, verbatim, the Staff arm's loop included |
-| `FPSWeapon.GetWeaponTextureAtlas` :637-644 - the per-template name when the flag is on and a weapon is in hand, else `GetWeaponFilename` | `atlasFileName(item, classic)` |
+| `FPSWeapon.moddedWeaponHUDAnimsEnabled` (FPSWeapon.cs:97) - a static, false until a mod sets it | `moddedWeaponHUDAnimsEnabled()` - the mod's `Enabled` switch (`combat/diverseWeapons/diverseWeapons.js`) |
+| `WeaponBasics.GetModdedWeaponFilename(item)` - three tables: the named artifact CIFs, `<NAME>MAGIC.CIF`, `<NAME>.CIF`; a custom template answers `""` | `moddedWeaponFilename(item)`, verbatim, the Staff arm's loop included - and (WEAPON-GLOW1) `moddedWeaponFilename(item, enchanted)`, the MAGIC table's question the caller's to answer: the item's own enchantment by default, the plain set while an element's outline shows (`05-Combat/Weapon-Glow.md`) |
+| `FPSWeapon.GetWeaponTextureAtlas` :637-644 - the per-template name when the flag is on and a weapon is in hand, else `GetWeaponFilename` | `atlasFileName(item, classic)` (WEAPON-GLOW1: `atlasFileName(item, classic, enabled, enchanted)`, the same question passed through) |
 | :647 - `TryImportCifRci(name, record, frame, metalType)` for every frame; a hit replaces that frame | `loadFpsWeaponArt` (base lane) and the widget clone's `customTexture` |
 | :398-399 - an imported frame is drawn into the **classic record's** box | `loadFpsWeaponArt` keeps `size.width/height` from the CIF |
 | `TextureReplacement.GetNameCifRci` :795-801 - `<FILE>_<record>-<frame>_<Metal>`, None unsuffixed | the spelling in both lanes; `MATERIAL_NAMES` is `MetalTypes` index for index |
@@ -36,7 +36,7 @@ port is the mod's code.
 
 **Two lanes, one law.** The port draws the first-person weapon down
 its own `FPSWeapon` (`combat/fpsWeapon.js`) and down the Weapon Widget
-clone that is the default renderer (`combat/weaponWidget.js`). In DFU
+clone that is the default renderer (`combat/weapon/weaponWidget.js`). In DFU
 both read the same static and the same texture folder; here both call
 `atlasFileName` and ask `customWeaponImage`.
 
@@ -62,7 +62,7 @@ URL is computed off the app root (`systems/appRoot.js`, the held map's
 shape). What the folder may hold is the mod's own manifest:
 `tools/diverseWeaponsIndex.mjs` derives the door's index from it (1,298
 stems with a bitmask over MetalTypes' order - 39 KB where the names are
-350) and `test/doctrine.test.js` derives the folder's membership from
+350) and `test/tooling/doctrine.test.js` derives the folder's membership from
 it, so a name the set lacks is a miss without a fetch and a file the
 bundle did not ship cannot land there. The player's own `.dfmod`,
 attached, still answers first - a newer version's art wins.
@@ -73,7 +73,7 @@ frame draws, exactly as in DFU with no texture installed.
 
 ## The door
 
-`combat/diverseWeaponsAssets.js`, the widget door's shape: a name list
+`combat/diverseWeapons/diverseWeaponsAssets.js`, the widget door's shape: a name list
 and a loader from the textures pick, the bundle opened once by its
 manifest's GUID (`8e83d67c-a0ac-4935-a8c5-6b18c9f35bfc`), a texture by
 name. Two things differ from the widget's:
@@ -88,11 +88,11 @@ name. Two things differ from the widget's:
 - **The open runs in a Worker.** The bundle is 58 MB of LZ4 around
   1.69 GB of pixels in one serialized file (12,934 textures inline, no
   `.resS`), and indexing it is ~10 s of decompression. Two changes
-  carry it: `formats/unityBundle.js` keeps the blocks COMPRESSED (a
+  carry it: `formats/unity/unityBundle.js` keeps the blocks COMPRESSED (a
   file is a byte source, `read(offset, length)` decompresses only the
   blocks a range spans through a 32-block LRU - the whole bundle is
-  never in memory), and `formats/unityBundleClient.js` opens it in a
-  module Worker (`formats/unityBundleWorker.js`) in the terrain
+  never in memory), and `formats/unity/unityBundleClient.js` opens it in a
+  module Worker (`formats/unity/unityBundleWorker.js`) in the terrain
   worker's shape: the bytes cross as a copy, the index (text assets
   whole, textures by name and size) comes back, and each texture's
   pixels cross on demand, transferred, and are flipped into color32
@@ -178,7 +178,7 @@ file back, so the shipped off applies; `setModSetting` stamps the key
 when a player sets it from then on, so a choice made after the reset is
 kept across reloads (`KEY_MIGRATIONS`, which match on a value, could not
 tell the two apart). A file that never mentioned the mod is not grown
-one. `test/disc20.test.js` (E).
+one. `test/systems/disc20.test.js` (E).
 
 ## The icons (DW3)
 
@@ -203,21 +203,21 @@ doors carried one. DW3:
   map, dye)`, and `hasTextureReplacement` / `decodedTexture` /
   `decodedTextureTopDown` ask by it; a vendor entry may carry a `gate`
   read at lookup.
-- `systems/itemDye.js` `itemDyeColor(item)` - `DaggerfallUnityItem
+- `systems/item/itemDye.js` `itemDyeColor(item)` - `DaggerfallUnityItem
   .dyeColor` as the port's items carry it: a weapon's `dyeColor`
   (CreateWeapon :412), an armor's by material (CreateArmor :510,
   `armorDyeColor` verbatim), clothing's `dye`, an artifact's `Unchanged`
   (SetArtifact :611, the last writer), else `Unchanged` (SetItem :559).
   `inventoryItemImage` carries it as `dye`.
-- The three doors ask by it: the GL lists (`ui/itemScroller.js`,
-  `ui/nativeInventory.js` -> `dataPipeline.uploadRecord(..., { dye })`,
+- The three doors ask by it: the GL lists (`ui/item/itemScroller.js`,
+  `ui/native/nativeInventory.js` -> `dataPipeline.uploadRecord(..., { dye })`,
   which uploads a dyed swap under its own `#ui_<Dye>` variant and answers
   which; the size stays the classic record's, ItemListScroller.cs:440),
   the DOM screens (`ui/textureCanvas.js requestIcon(..., { dye })`, the
   replacement arm before the classic one), and the paper doll
   (`ui/paperDoll.js loadRecord(..., dye)`: the import arm first, blitted
   as RGBA as the vendor arm is, the remap untouched).
-- `combat/diverseWeaponsIcons.js` registers the shipped icons off the
+- `combat/diverseWeapons/diverseWeaponsIcons.js` registers the shipped icons off the
   index as vendor entries by dye (the bare stem for the silver ask; the
   one `_Silver` file skipped, since keyed by its dye it would be the
   bare key; `513`/`514` skipped, no template here draws them), loaded
@@ -226,7 +226,7 @@ doors carried one. DW3:
   and gated on the mod's switch at lookup, so the switch takes effect
   without a reload. Installed at the scene boot (`scenes/shared.js`),
   not at `worldTick`'s module scope, where the mod's law sits in an
-  import cycle (a TDZ, caught by `test/tdz.test.js`'s kind of failure
+  import cycle (a TDZ, caught by `test/tree/tdz.test.js`'s kind of failure
   on the first run).
 
 ### DYE-ICON (2026-09-26) - the classic arm dyes
@@ -243,7 +243,7 @@ ChangeDye has no Unchanged arm: 18 (Unchanged = Chain = Silver) is the
 leather armour are dyed too; a garment's 18 is its own swatch.
 
 - `characters/dyes.js changeDyeBitmap` - ChangeDye over a picture, into
-  a copy; `systems/itemDye.js itemDyeTarget` - which swatch (:473-476);
+  a copy; `systems/item/itemDye.js itemDyeTarget` - which swatch (:473-476);
   `inventoryItemImage` carries it as `dyeTarget` beside `dye`.
 - The GL door (`dataPipeline.uploadRecord(..., { dye, dyeTarget })`)
   dyes after the mask and uploads under `#ui_dye<dye>_<target>`. This
@@ -263,7 +263,7 @@ leather armour are dyed too; a garment's 18 is its own swatch.
   carries the item now, and `decorTool.js` thumbOf asks a mount by the
   dye and swatch its numbers name, as it hangs.
 
-Pinned in `test/dyeicon.test.js` (and the real TEXTURE.234 Daedric
+Pinned in `test/systems/item/dyeicon.test.js` (and the real TEXTURE.234 Daedric
 dagger, data-gated); `tools/mutants/dyeicon.json`. The audit's pins -
 the room's preview driven, the DOM door executed with a swatch, two
 metals of one record on one wall - in `tools/mutants/auditdyeicon.json`
@@ -339,7 +339,7 @@ arm's one exception (Silver is Unchanged), the item's dye at the doll
   by (`weaponRig.js`), so each template draws its own - the mod's
   purpose over DFU's cache slot. Recorded at the key, and here.
 
-Suite `test/auditdw.test.js` (5). Mutants: the archive preload taking
+Suite `test/combat/weapon/auditdw.test.js` (5). Mutants: the archive preload taking
 lazy entries, a frame awaited alone, the doubled flag ignored, the
 per-record ask dropped - all dead.
 
@@ -375,7 +375,7 @@ TrueTextureSize, a `w_` hit takes the doubled box and its shift.
 `vendor/diverse-weapons/` - the script verbatim, the manifest verbatim
 (12,937 files), the preset verbatim, the zip's readme. Campaign
 `tools/mutants/dw1.json` (21: 20 dead, 1 equivalent as recorded). Suites
-`test/dw1_diverseweapons.test.js`, `test/unitybundleworker.test.js`,
-`test/dw2_shipped.test.js`, `test/dw3_icons.test.js`, `test/auditdw.test.js`. The shipped set: `public/art/diverse-weapons/`
-(12,624 PNGs), `src/combat/diverseWeaponsIndex.js` (generated), the two
+`test/combat/weapon/dw1_diverseweapons.test.js`, `test/formats/unitybundleworker.test.js`,
+`test/tooling/dw2_shipped.test.js`, `test/systems/dw3_icons.test.js`, `test/combat/weapon/auditdw.test.js`. The shipped set: `public/art/diverse-weapons/`
+(12,624 PNGs), `src/combat/diverseWeapons/diverseWeaponsIndex.js` (generated), the two
 tools.

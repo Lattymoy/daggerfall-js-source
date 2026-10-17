@@ -39,7 +39,7 @@
 
 import { CRIMES } from './court.js';
 import { BUILDING_TYPES, isResidence } from '../world/buildingNames.js';   // H1: the houses-for-sale filter
-import { isOnlinePage } from './onlineLane.js';   // EMPIRE-BANK: online, the Empire lends a tenth
+import { isOnlinePage } from './online/onlineLane.js';   // EMPIRE-BANK: online, the Empire lends a tenth
 import { stampLayout, layoutStampOfMapId, recordStands } from './layoutPins.js';   // WD3: a deed keeps the layout its town was bought in
 import { GOLD_PIECE_WEIGHT_KG, letterOfCredit } from './inventory.js';
 import {
@@ -303,7 +303,7 @@ export function sellHouse(accounts, houses, regionIndex, { meshRadius = 0, found
  */
 /** shipInteriorSceneNames' two mapIds (:103-106). Both interiors are
  *  keyed with BuildingDirectory.buildingKey0, which already has a home
- *  in systems/talkTopics.js - a ship is not in any building directory,
+ *  in systems/talk/talkTopics.js - a ship is not in any building directory,
  *  so it takes the no-key key. */
 export const SHIP_INTERIOR_MAP_IDS = Object.freeze([1050578, 2102157]);
 
@@ -456,7 +456,7 @@ const mustValidate = (accounts, regionIndex) => {
  *  became the bank of the Empire). Gold paid in at any branch is drawn at any branch, and every deed, sale and wallet
  *  pays from it and into it. A LOAN STILL STANDS WHERE IT WAS TAKEN - its due date, its default and the reputation a
  *  default costs are that region's - but the gold it lends and the gold that repays it are the Empire account's.
- *  Offline, Daggerfall's sixty-two accounts stand. The service pays a realm record the same way (net/realmGoldLaw.js
+ *  Offline, Daggerfall's sixty-two accounts stand. The service pays a realm record the same way (net/realm/realmGoldLaw.js
  *  REALM_EMPIRE_ACCOUNT, pinned equal). */
 export const EMPIRE_ACCOUNT_REGION = 17;
 /** The index whose `accountGold` region `regionIndex`'s gold moves in: the Empire's online, the region's own offline (or

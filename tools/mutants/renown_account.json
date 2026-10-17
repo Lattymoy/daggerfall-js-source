@@ -5,7 +5,7 @@
     "old": "export const RENOWN_RATE_PCT = 75;",
     "new": "export const RENOWN_RATE_PCT = 100;",
     "tests": [
-      "test/renown_account.test.js"
+      "test/server/renown_account.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "export const renownRate = (fullXp) => Math.floor((",
     "new": "export const renownRate = (fullXp) => Math.round((",
     "tests": [
-      "test/renown_account.test.js"
+      "test/server/renown_account.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "=> renownRate(RENOWN_KILL_XP_PER_LEVEL * Math.min(clampInt(foeLevel",
     "new": "=> (RENOWN_KILL_XP_PER_LEVEL * Math.min(clampInt(foeLevel",
     "tests": [
-      "test/renown_account.test.js"
+      "test/server/renown_account.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "=> renownRate(RENOWN_QUEST_XP_BASE + ",
     "new": "=> (RENOWN_QUEST_XP_BASE + ",
     "tests": [
-      "test/renown_account.test.js"
+      "test/server/renown_account.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "export const RENOWN_XP_HOUR_MAX = 15_000;",
     "new": "export const RENOWN_XP_HOUR_MAX = 20_000;",
     "tests": [
-      "test/renown_account.test.js"
+      "test/server/renown_account.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "  SELECT t.player, MAX(t.xp),",
     "new": "  SELECT t.player, SUM(t.xp),",
     "tests": [
-      "test/renown_account.test.js"
+      "test/server/renown_account.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "  HAVING MAX(t.xp) > 0;",
     "new": "  HAVING MAX(t.xp) >= 0;",
     "tests": [
-      "test/renown_account.test.js"
+      "test/server/renown_account.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "ORDER BY r.updated_at DESC, r.char_id LIMIT 1),",
     "new": "ORDER BY r.updated_at ASC, r.char_id LIMIT 1),",
     "tests": [
-      "test/renown_account.test.js"
+      "test/server/renown_account.test.js"
     ]
   }
 ]

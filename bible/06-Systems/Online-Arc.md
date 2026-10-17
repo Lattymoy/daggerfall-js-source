@@ -31,7 +31,8 @@ shape, and that record says so at its head.
 (a hello once and first - an id and its secret, a name, a look, a pose
 - then poses at most `POSE_HZ_MAX` a second under a token bucket, and
 pings), the bounds of a name, a pose and a look (its items projected
-onto the six fields the doll reads), the room key's shape, the world's
+onto the six fields the doll reads, and a weapon in a hand's `glow` word -
+WEAPON-GLOW1, `05-Combat/Weapon-Glow.md`), the room key's shape, the world's
 cell shard, the range a pose travels inside a cell, what a joiner is
 told (the nearest `ROSTER_MAX`), the room's own gates (`HELLO_HZ_MAX`,
 `SOCKETS_MAX`, `DROP_STRIKES_MAX`). The relay (`server/src/relay.js`) re-exports it and the session
@@ -39,8 +40,8 @@ imports it, so what the relay refuses the client never sends and what
 the relay sends the client checks by the same law. The pose bound is
 the world's extent (`POSE_BOUND`, `WORLD_PIXEL_BOUND` - 8192 - pixels of
 `PIXEL_UNITS` either way; TV-BEYOND widened it from the map's 1024 when
-TAMRIEL2 streamed the land past the Bay, `01-Overview/Field-Bugs-2026-10-09.md`).
-`test/online_relay.test.js` executes it.
+TAMRIEL2 streamed the land past the Bay, `01-Overview/bugs/Field-Bugs-2026-10-09.md`).
+`test/server/online_relay.test.js` executes it.
 
 **The relay** - `server/` - is a Cloudflare Worker whose one Durable
 Object class, `Room` (`server/src/index.js`), holds the hibernatable
@@ -104,7 +105,7 @@ tab's own storage (`tabStorage`, the seam's; TABS1 - Mac: "even though
 I load in with a different save, it always says the character is open
 in another window": the id lived in the browser's storage, so two tabs
 of one browser were one player). The
-WebSocket class and the clock are handed in, so `test/online.test.js`
+WebSocket class and the clock are handed in, so `test/net/online.test.js`
 drives it over a fake socket.
 
 **The others, drawn** - `src/net/remotePlayers.js`. Every peer is drawn
@@ -139,7 +140,7 @@ and carries no session: its interior frame and its town room disagreed
 with this host's, and one host is one frame.
 
 **The door.** The front door's rail gains ONLINE on both skins
-(`src/ui/enhancedMenu.js` `paneOnline`): a name for over the head (24
+(`src/ui/enhanced/enhancedMenu.js` `paneOnline`): a name for over the head (24
 plain characters, the relay's bound, and the pane says so) and the
 relay to join, on the prefs shelf (`onlineName`, `onlineServer`); every
 restorable save is a card and the one pressed is the character brought
@@ -152,7 +153,7 @@ Saving stays local; the relay never sees the save.
 
 **Mac: "one thing we need to add so I can test myself is multiple save
 slots and then the ability to choose which save to use in online."**
-The slot store was SAV4's (`src/systems/saveSlots.js`: a save is the
+The slot store was SAV4's (`src/systems/save/saveSlots.js`: a save is the
 (character, slot name) pair, SaveLoadManager's own identity), and the
 classic save window had the whole list; the enhanced skin drew one
 card - the most recent - and its Save pane wrote QuickSave alone.
@@ -173,7 +174,7 @@ Now:
   `quickSave` arm, which hands it to the host's `saveAs` seam - the
   two verbs the MAC1 pin reads stay as they are.
 
-Pinned in `test/slots1.test.js` (3): the list executes over a fake
+Pinned in `test/systems/save/slots1.test.js` (3): the list executes over a fake
 storage; the seams hand a pick over once; the doors are pinned by
 source. Two browsers, two slots, two names over two heads: Mac's own
 test.
@@ -216,7 +217,7 @@ their cards draw every save, so they read every envelope.
   character's size) took the old pick 7.4 ms and the new one 1.1 ms;
   ten of 0.59 MB, 36.9 ms and 4.7 ms - ten envelopes read, then one.
 
-Pins `test/slots2.test.js` (4); mutants `tools/mutants/slots2.json`
+Pins `test/ui/enhanced/slots2.test.js` (4); mutants `tools/mutants/slots2.json`
 (8 dead).
 
 ## AUDIT ONLINE (2026-09-12)
@@ -287,8 +288,8 @@ What they found that was real:
   session pin and ten the relay's (a fixture that tested itself, the
   id's charset, the frame cap's edges, the gate's burst cap and its
   backwards clock), two assertions could not fail, one projection test
-  read source text. Rewritten: `test/online.test.js` (8) and
-  `test/online_relay.test.js` (7, the Room over fake sockets and a fake
+  read source text. Rewritten: `test/net/online.test.js` (8) and
+  `test/server/online_relay.test.js` (7, the Room over fake sockets and a fake
   state).
 
 ## MWBODY1 (2026-09-12): the others in the Morrowind body
@@ -301,7 +302,7 @@ the instance's closure, and what the module keeps at its level (the
 ESM walk, the textures, the face matches, the garment colours, the clip
 reports, the icons)
 is keyed by content and shared by design. So a peer is one more
-`createFpArm()` - `src/net/peerBodies.js`, `PeerBodies`:
+`createFpArm()` - `src/net/peer/peerBodies.js`, `PeerBodies`:
 
 - **Built from the look** through the same door the player's own arms
   take (`buildFpArm`): `peerBuildOpts` maps the look onto the inputs
@@ -393,7 +394,7 @@ below): strafe and backpedal play the forward walk; a body's textures are the in
 own (no sharing across peers of one look); the first-person arm is
 built and refused alongside the body it never draws.
 
-Pinned in `test/mwbody1.test.js` (7): the constants once and
+Pinned in `test/net/peer/mwbody1.test.js` (7): the constants once and
 literally; the look's mapping and the stub camera execute; PeerBodies
 over a fake rig factory shaped like the instance API (one rig per peer
 built one at a time, the view, the step, the draw only once stepped,
@@ -509,7 +510,7 @@ ability to add more tabs at a later time."**
   budget dropped is gone without a word beyond the missing echo; the
   dead cannot chat; a channel's capacity unmeasured past a handful.
 
-Pinned in `test/chat1.test.js` (7) - below.
+Pinned in `test/net/chat1.test.js` (7) - below.
 
 ## AUDIT CHAT (2026-09-12)
 
@@ -617,7 +618,7 @@ GetLocation, StartDungeonInterior) and `RestorePosition` after it
 beside insideDungeon (:215-217). The port now:
 
 - **carries where the dungeon stands**: `snapshotPlayer` takes
-  `dungeon` ({pixel, mapId}, `src/systems/save.js`) and hands it back
+  `dungeon` ({pixel, mapId}, `src/systems/save/save.js`) and hands it back
   from `restorePlayer`; the dungeon host's composer fills it from its
   own map row through MapsFile's pixel law. A save from before the
   field is found by its dungeon id across the world's location index
@@ -636,7 +637,7 @@ beside insideDungeon (:215-217). The port now:
   silent: a dungeon the world cannot find, or a location with no
   entrance, says so and leaves the character restored where it stands.
 
-Pinned in `test/mac6.test.js` (2): the envelope's field both ways and
+Pinned in `test/systems/save/mac6.test.js` (2): the envelope's field both ways and
 the finder over fake locations; the three hosts by source. Not seen
 with a real save from here - Mac's Privateer's Hold is the gate.
 
@@ -663,12 +664,12 @@ swung. Now:
 - **the session** (`src/net/online.js`): a draw or a swing is a change
   worth sending at once (`poseChanged`), and the eased pose carries the
   three whole (`lerpPose`).
-- **the rig** (`src/combat/weaponRig.js`): `swing` {n, strike} counts
+- **the rig** (`src/combat/weapon/weaponRig.js`): `swing` {n, strike} counts
   every strike the machine starts, BEFORE the Morrowind arm's own gate
   - a classic-skin player swings too, and the peers in Morrowind bodies
   must see it. The host (`src/scenes/world.js`) reads it and the
   sheath into every pose it sends, the hello's included.
-- **the body** (`src/net/peerBodies.js`): inside the update guard
+- **the body** (`src/net/peer/peerBodies.js`): inside the update guard
   (AUDIT MWBODY A1), the rig's weapon is drawn while the sender's is,
   a swing plays once per count with the wire's kind - never the count
   the body was born with (a late joiner does not replay an old blow),
@@ -704,7 +705,7 @@ Not done: the doll (the paperdoll billboard has no arm to swing), and
 a peer's cast is the arm's motion alone - no missile, no hands in the
 classic lane.
 
-Pinned in `test/mac7.test.js` (4): the wire's seven at both ends and
+Pinned in `test/net/mac7.test.js` (4): the wire's seven at both ends and
 the session's change and easing; the body over the fake rig with the
 doors recorded (drawn, sheathed, once per count, never on birth, never
 sheathed, the throw law; the hold and its withheld release, the arrow
@@ -786,7 +787,7 @@ their own foes until WORLD2 (below) made the layout's foes one
 simulation per room. The shape of a day is `WORLD_PUBLISH_MS`: a
 save's world published every fifteen seconds and on every farewell.
 
-Pinned in `test/world1.test.js` (4): the wire's world frame at both
+Pinned in `test/net/world1.test.js` (4): the wire's world frame at both
 ends (after hello, an object, past the small cap by its prefix alone,
 never past the large one; the world rooms; the constants one home);
 the Room over fake sockets and a fake state (the host in the welcome
@@ -939,7 +940,7 @@ one that stood fixed on the PR:
   the wire's pose list; **D12** `stats.worlds` minted lazily. All
   struck or amended.
 
-Pinned in `test/auditworld.test.js` (4): the relay over the one fake
+Pinned in `test/net/auditworld.test.js` (4): the relay over the one fake
 (the door before the parse and its meter, the cap kept by type, the
 map-id key and the alarm both ways, the reconnect's seat and the room's
 floor, the farewell once and the host's alone, the coalesced write by
@@ -1062,7 +1063,7 @@ overwrites what it carries; the foes past the layout's run - an
 encounter's, a summon's, a quest's - are each player's own, and since
 AUDIT WORLD3 D1 the peers do not ride their target machine at all.
 
-Pinned in `test/world2.test.js` (4): the wire's two frames at both
+Pinned in `test/net/world2.test.js` (4): the wire's two frames at both
 ends (the foes frame past the small cap by its prefix alone, never
 past its own whatever prefix it wore; the hit under the small cap; the
 stream's gate); the Room over the one fake (the stream fanned to
@@ -1205,7 +1206,7 @@ branch:
   it over", the bullet's "still comes back", AUDIT WORLD's "rewinds
   nothing for anyone else" - struck or amended.
 
-Pinned in `test/auditworld2.test.js` (3): the relay over the one fake
+Pinned in `test/net/auditworld2.test.js` (3): the relay over the one fake
 (the budgets one home and the byte gate, a duplicate-key frame
 spending the type's bucket, a large frame refused outside a world room
 and a small prefixed one ignored with the socket kept, a non-host's
@@ -1214,7 +1215,7 @@ budget and the hit funnel both dropping without a strike, a small
 unprefixed world frame metered, the heads); the session (a dead socket
 and a leave clearing the seat through the one door with the world
 host told, the hits' gate at home, my own id as the host, the stale
-constant); the record's struck sentences. `test/world2.test.js`'s
+constant); the record's struck sentences. `test/net/world2.test.js`'s
 hosts-by-source pins rewritten to the audited law and strengthened.
 Relay redeployed (ff7f7e70); live: the stream, the hit and the seat's
 move as before, a large frame in a town refused with the socket
@@ -1300,8 +1301,8 @@ the hit carries the striker.
   the striker (`peerId`) so `handleAttackFromPlayer` turns the foe on
   the PEER's candidate at the striker's feet, and lands the shaft
   where BowDamage puts it.
-- **The target machine** (`src/characters/enemyTargets.js`,
-  `src/characters/enemyMotor.js`): a peer candidate
+- **The target machine** (`src/characters/enemy/enemyTargets.js`,
+  `src/characters/enemy/enemyMotor.js`): a peer candidate
   (`{isPlayer, isPeer, id, feet, height, health}`) is a player to
   every gate of GetTargets (the team chain, the quest gate, the
   NoTarget mode - `isPlayerTarget` true; `isPeerTarget` names it),
@@ -1324,7 +1325,7 @@ overwrites what it carries; the bash's sound and the pick's line are the
 author's alone; the shared clock and weather and
 the quest clocks are slice 5; no player-versus-player.
 
-Pinned in `test/world3.test.js` (5): the wire and the Room over the one
+Pinned in `test/net/world3.test.js` (5): the wire and the Room over the one
 fake (the act from a hello'd socket under the small cap, fanned to
 everyone hello'd but its author, on its own bucket, under the room's
 budget, a town relaying none); the session (sendAct anyone's in a world
@@ -1440,7 +1441,7 @@ it:
   starting lock, or LockDoor's 16 where its own action locks it); a
   pick, a bash, an Open and a re-lock to the door's value are shared as
   before, and a Lock spell's lock is its caster's alone
-  (`01-Overview/Field-Bugs-2026-10-13e.md`).
+  (`01-Overview/bugs/Field-Bugs-2026-10-13e.md`).
 - **B3 (low)** `applyRemote` rang the RDB sound only when a TWEEN
   began, but `_play` rings it on every Play - so every zero-duration
   mover (an acting flat's Translation) slid in silence on every screen
@@ -1519,7 +1520,7 @@ one room fanned 85 of the 150 deliveries their frames asked for - the
 byte budget biting on the fan, every socket kept and no error frame -
 and an honest door still travelling afterwards.
 
-Pinned in `test/auditworld3.test.js` (4): the relay's act byte budget
+Pinned in `test/world/auditworld3.test.js` (4): the relay's act byte budget
 over the one fake (the fan costing the frame times its listeners, over
 it dropped and nobody struck, the frame budget still beside it); the
 action graph executed on bare graphs (the projection refusing every
@@ -1530,7 +1531,7 @@ the motor and the targets executed (the peer's own capsule, the
 target's concealment, the two latches and the rest gate over them, the
 encounter edge and the stealth tally kept for MY player, and each of
 them still firing for a foe hunting me); and the hosts and the record
-by source. `test/world3.test.js` restamped where the law moved, its
+by source. `test/net/world3.test.js` restamped where the law moved, its
 peer pin made to fail.
 
 ## WORLD4 (2026-09-13): the room's loot
@@ -1586,7 +1587,7 @@ shipped; PARTY-LOOT, below, is the law.
   `settleLootFlat` frees the flat of a pile the ROOM emptied while this
   player stood beside it (and re-mints one the room refilled - AUDIT
   WORLD4 C3/D2 gave the settle its second direction).
-- **The projection** (`src/systems/loot.js`): AUDIT WORLD3 A2's law
+- **The projection** (`src/systems/loot/loot.js`): AUDIT WORLD3 A2's law
   applied to the other thing the frame now carries. An item record is
   an OPEN shape (the inventory arc grows it; a magic item carries its
   enchantments), so `validLootItem`/`validLootList` CLAMP rather than
@@ -1617,7 +1618,7 @@ own; a container in a town, a cell or a building is nobody's yet
 layout's run - a quest spawn's, a summon's - is the player's own body
 to loot, as its foe is their own to fight.
 
-Pinned in `test/world4.test.js` (3): the projection executed (the empty
+Pinned in `test/net/world4.test.js` (3): the projection executed (the empty
 list valid, the copy a copy, the bounds on breadth, depth, strings,
 count and templateIndex, a magic item's enchantments surviving whole, a
 prototype key refused); the wire and the Room over the one fake (an
@@ -1717,12 +1718,12 @@ its owner's own.
   word was the whole list. The word is the takes against the room's
   base now, and a shaft that reached the body alive is a stored piece
   of it, said with the body's birth.
-- **D6/D7 the pins and the record.** Three of `test/world4.test.js`'s
+- **D6/D7 the pins and the record.** Three of `test/net/world4.test.js`'s
   source pins had `[\s\S]*?` gaps wide enough for a mutation to walk
   through, and the mint itself was unpinned; the quickload sentence
   above was left true of the doors and false of the piles.
 
-Pinned in `test/auditworld4.test.js` (6): the wire executed (the fit at
+Pinned in `test/systems/auditworld4.test.js` (6): the wire executed (the fit at
 its exact boundary, the session refusing on the same law it publishes
 with a rate token in hand, and the host's two arms by source - the
 union shed, then the act dropped, never re-pended); the projection and
@@ -1731,7 +1732,7 @@ honest array; the mint and the canon (the cap obeyed at the mint, said
 once, and every alias the old key read as one container refused); the
 claim, the deferral and the memory's due date; the memory's two halves;
 and the record itself, which must carry the sentences this audit
-struck. `test/world4.test.js` restamped where the law moved, its three
+struck. `test/net/world4.test.js` restamped where the law moved, its three
 slack pins closed and the mint pinned. No relay change and no deploy:
 every fix is client-side. Live against the relay already deployed
 (840669fa): a claim on the open, an emptied on the close, a door and a
@@ -1760,7 +1761,7 @@ Thirteen findings fixed, five recorded and not paid.
 `/^dungeon:m\d{1,8}$/`, ONE HOME at both ends - admitted eight digits
 of map id, and a real `MapTableData.MapId` is a 32-bit integer:
 Privateer's Hold is **187853213**, Daggerfall 1291010263, Wayrest
-630439035 (the port's own table, `world/dungeonTextures.js`
+630439035 (the port's own table, `world/dungeon/dungeonTextures.js`
 MAIN_STORY_DUNGEON_IDS, DFU's `IsMainStoryDungeon` verbatim). So every
 real dungeon minted a key the law refused, at the client and at the
 relay alike; the room was joined all the same (a key is a key), the
@@ -1771,10 +1772,10 @@ silent - both players kept their own authority and stepped their own
 foes, with no status line, no console line and no error frame, because
 a silent drop was the law's design for a town. Four slices shipped
 green over it because every fixture used a three-digit id, and
-`test/auditworld.test.js` PINNED `dungeon:m123456789` as no world room
+`test/net/auditworld.test.js` PINNED `dungeon:m123456789` as no world room
 (AUDIT WORLD A3's bound, written without a real number in hand). The
 bound is ten digits now, the unsigned 32-bit ceiling; the pin is
-turned; `test/auditworld34.test.js` runs the port's fourteen real ids
+turned; `test/net/auditworld34.test.js` runs the port's fourteen real ids
 through the law and two real sessions through the real Room in
 Privateer's Hold's own room. The same lesson BR3 had the same day: a
 law pinned on a synthetic value is not pinned.
@@ -1883,7 +1884,7 @@ client's own by design; no shared clock or weather (slice 5). The
 desktop app's three releases (app-v0.1.x, 2026-08-31) predate ONLINE1
 entirely - the site is the only place this code runs.
 
-Pinned in `test/auditworld34.test.js` (13): the law on the fourteen
+Pinned in `test/net/auditworld34.test.js` (13): the law on the fourteen
 real ids at both ends and the unsigned id; two real sessions through
 the real Room in `dungeon:m187853213` (foes, act and memory crossing)
 against the slug room (presence and nothing else); the reap (a
@@ -1894,7 +1895,7 @@ on `sendWorld`; the whole dungeon online through the law and the two
 seams; and by source the dead foe's retype, the heartbeat, the memory's
 two projections, the pending set, the console lines (executed on the
 session), the pane's copy, the relay's version and this record.
-`test/auditworld.test.js` A3 turned; the WORLD1-3 and AUDIT 28 source
+`test/net/auditworld.test.js` A3 turned; the WORLD1-3 and AUDIT 28 source
 pins restamped where the law moved. Relay change: yes - REDEPLOY.
 
 ## WORLD5 (2026-09-13): the shared clock and weather, the quest clocks stood down
@@ -1992,7 +1993,7 @@ frames (the drain is the exterior frame's, as ever); no shared moon,
 no shared holiday beyond what the date already decides. Relay change:
 the welcome's `now` - REDEPLOYED (RELAY_VERSION `world5`).
 
-Pinned in `test/world5.test.js` (8): the wire's constants against the
+Pinned in `test/systems/quest/world5.test.js` (8): the wire's constants against the
 calendar's and the ticker's, at both ends; the welcome's clock in a
 dungeon and a cell and not a channel, the session's offset and its
 refusal of a clock a year off; the ticker under the shared clock (the
@@ -2013,7 +2014,7 @@ AUDIT WORLD4 and ONLINE1 pins restamped where the law moved.
 each told the live report and made to find it: the wire, the relay and
 what the player is told; the weather and the boot; the clock and the
 ticker; the rest, the travel and the quests. Every finding below was
-EXECUTED against the real modules (`test/auditworld5.test.js` runs the
+EXECUTED against the real modules (`test/systems/auditworld5.test.js` runs the
 ticker, the rest session, the weather sim, the collapse and the save
 door under a shared clock the test holds) or cited to a line; the
 record says which. Fourteen findings fixed in this slice, the rest
@@ -2241,7 +2242,7 @@ year wrong reads the world's time uncorrected rather than not at all.
 sky locally. (9) `setSharedClock(null)` has no caller outside the
 tests: the clock is installed for the page's life.
 
-**Pinned** in `test/auditworld5.test.js` (nine tests): C1 through C8
+**Pinned** in `test/systems/auditworld5.test.js` (nine tests): C1 through C8
 executed, C9 through C14 by source. The WORLD5 pins moved with the law
 (`onClock`, the arrival, the relay's version and stamp, the rest's
 leap a sub-tick a frame); the AUDIT 24 wave 30, AUDIT 26 F204,
@@ -2269,7 +2270,7 @@ enabled, whatever the player's shelf says.
 > `SmoothRoads` a dial was giving the floor away anyway - is recorded
 > there.
 
-**A read, not a write.** The forcing lives in `systems/onlineLane.js`
+**A read, not a write.** The forcing lives in `systems/online/onlineLane.js`
 and is asked FIRST by the three places a switch is read - `uiSkin.js`
 (the skin), `uiPrefs.js getPref` (the port's own switches) and
 `modSettings.js modSetting` (a mod's `Enabled`). Nothing is forced at a
@@ -2302,7 +2303,7 @@ a material swap), as its own modsettings would leave them. The probes'
 URL kill doors (`?sky=classic`, `?water=off`, `?evolve=off`) stay
 doors: an online page never carries one.
 
-**The future half is a pin, not a promise.** `test/onlinelane.test.js`
+**The future half is a pin, not a promise.** `test/systems/onlinelane.test.js`
 walks every boolean key in `PREF_DEFAULTS` and fails on one the lane
 has neither forced (`ONLINE_FORCED_PREFS`) nor left to the player by
 name (`ONLINE_PLAYERS_OWN_PREFS`), pins that every key beginning
@@ -2330,7 +2331,7 @@ boots, and the six keys the menu decides (`BOOT_DOOR_KEYS`) are cleared
 off both copies before the menu runs, so a reload after an online
 session does not show the Mods pane locked for a player who has not
 chosen yet. One home, not a second read path. The record is
-`01-Overview/Mac-Bugs-N.md`.
+`01-Overview/bugs/Mac-Bugs-N.md`.
 
 ## MODS-ONLINE-2 (2026-09-22): the mods are the player's, the ground is the room's
 
@@ -2405,8 +2406,8 @@ stored it. The same mistake in the lane is what exposed it -
 forced setting value. All three doors take own keys now, vendor and key
 both.
 
-Pins: `test/modsonline.test.js` (7), `test/onlinelane.test.js`
-re-aimed, `test/worldhover.test.js` re-aimed; mutants:
+Pins: `test/systems/modsonline.test.js` (7), `test/systems/onlinelane.test.js`
+re-aimed, `test/systems/worldhover.test.js` re-aimed; mutants:
 `tools/mutants/modsonline1.json` 12, 12 dead.
 Not verified in a browser: no online session exists in this container.
 
@@ -2557,7 +2558,7 @@ from a survey of every piece of mutable world state outside a dungeon
   predicate - the memory, the acts, `sendWorld`/`sendAct`/`onAct`,
   the relay's own admission - follows without a second switch; the
   relay MUST BE REDEPLOYED (`RELAY_VERSION` `world6`).
-- **The pure half** (`src/world/interiorShared.js`): the memory
+- **The pure half** (`src/world/interior/interiorShared.js`): the memory
   mirrors the dungeon's and is subtracted the same way - the action
   records' SHARED half (`sharedRecord`, AUDIT WORLD3 B1), projected
   before they land (`validActionRecord`, A2/WORLD34 C2) and RESTORED
@@ -2610,7 +2611,7 @@ items, but the flow has no window to settle on; next); a last-writer-
 wins on a restock two players make in one day (each rolls their own
 and the later close stands, as the dungeon's loot already runs).
 
-Pinned in `test/world6.test.js` (6): the wire at both ends; the real
+Pinned in `test/systems/talk/world6.test.js` (6): the wire at both ends; the real
 Room keeping a building's memory and handing it on, a town's ignored;
 the pure half's vocabulary, records, landing, memory and re-read; the
 hosts by source. The WORLD1, WORLD3, WORLD5, AUDIT WORLD34 and AUDIT
@@ -2746,7 +2747,7 @@ is bounded. (4) Bookshelves, treasure piles, dropped piles, interior
 foes and guards, and a same-day double restock stay as WORLD6a
 recorded them.
 
-**Pinned** in `test/auditworld6a.test.js` (6): the root executed
+**Pinned** in `test/systems/loot/auditworld6a.test.js` (6): the root executed
 through the bag (A1), the price floor (B1), the day's bound and
 direction (A2/B2/A3), the law and the interior's cap at the relay and
 the client (B3/B4/B5), the stamp (B7), and A3-A7/B6/B8 by source. The
@@ -2885,7 +2886,7 @@ peer's copy of it hunts the peer.
   Superseded by 6b-iii(a): the foe casts at the peer it hunts (AUDIT
   WORLD6b-iii(a) C7 struck this line - two live laws contradicted).
 
-Pinned in `test/world6bii.test.js` (5), EXECUTED: the wire's target
+Pinned in `test/scenes/world6bii.test.js` (5), EXECUTED: the wire's target
 law; my foe picking the peer off the machine (the identity, the live
 feet, the record's `g`, its blow at the peer landing nothing on me, the
 peer gone dead to the machine, a puppet never a candidate); the
@@ -2930,7 +2931,7 @@ dungeon host's foes, per owner, with the audit's bounds.
   arm); what it handed was the PEER's feet as the blast's probe for
   the LOCAL player - paid by AUDIT WORLD6b-iii(a) C2.
 
-Pinned in `test/world6biii.test.js` (4), EXECUTED: the wire's c/s law;
+Pinned in `test/scenes/world6biii.test.js` (4), EXECUTED: the wire's c/s law;
 the owner's cast at a peer (the decision run against the stand-in,
 the missile's aim point, the blast with nothing of mine, the count and
 the spell on the record, at me the hook's own aim and my feet); the
@@ -2983,7 +2984,7 @@ empty.
   halo socket is retried on the session's clock; a terminal close ends
   the halo (the primary hears the same verdict on its own).
 
-Pinned in `test/world6biiib.test.js` (4), EXECUTED: the wire's geometry
+Pinned in `test/net/world6biiib.test.js` (4), EXECUTED: the wire's geometry
 (mid-cell, an edge, a corner, the hysteresis, the map's edge); the
 session over fake sockets (the halo hello'd and posed into, the merged
 roster, a peer's foes and blow and line through it, foes and chat
@@ -2999,7 +3000,7 @@ owner's cell); the world host by source.
 halo, B the geometry, the relay and the world host, C the pool, the
 hits and the hunt across the seam. Every finding verified against the
 code; paid at the root; pinned by execution in
-`test/auditworld6biiib.test.js` - the session driven in the world
+`test/net/auditworld6biiib.test.js` - the session driven in the world
 host's OWN frame order, which the slice's pin never was. No relay
 change.
 
@@ -3115,7 +3116,7 @@ change.
 - **C8 (note, recorded): the halo is silent on the HUD** - a halo that
   refuses to connect is never said; `statusLine` is the primary's.
 
-Pinned in `test/auditworld6biiib.test.js` (6), EXECUTED: the crossing
+Pinned in `test/net/auditworld6biiib.test.js` (6), EXECUTED: the crossing
 in the world host's own frame order (the halo kept on the crossing
 frame, the join at once, nothing closed, nobody wiped, the old cell
 held on and then let go); a dropped halo not promoted and the ordinary
@@ -3168,7 +3169,7 @@ reads no further.
   peer (WORLD6b's, live since 6b-i). The record clamps `h` into the
   wire's bound.
 
-Pinned in `test/world6biiic.test.js` (4), EXECUTED on two pools joined
+Pinned in `test/net/world6biiic.test.js` (4), EXECUTED on two pools joined
 by nets: the wire's `o`; the owner's body saying what it holds and the
 death record in bound; the puppet's body a target; the ask routed to
 the owner, nothing taken and nothing said; the grant through the
@@ -3185,7 +3186,7 @@ in parts; by source.
 puppet's corpse loot - A the owner's grant, B the taker's landing and
 the world host, C the wire, the relay, the session and the records.
 Every finding verified against the code; paid at the root; pinned by
-execution in `test/auditworld6biiic.test.js`. The relay changed
+execution in `test/scenes/auditworld6biiic.test.js`. The relay changed
 (`world64`): the hit arm counts bytes.
 
 ### The criticals
@@ -3288,7 +3289,7 @@ execution in `test/auditworld6biiic.test.js`. The relay changed
   as a blow with no damage; an older owner's bodies are never targets
   (no `o`).**
 
-Pinned in `test/auditworld6biiic.test.js` (7), EXECUTED: the owner's
+Pinned in `test/scenes/auditworld6biiic.test.js` (7), EXECUTED: the owner's
 laws (a peer unseen, a peer across the cell, a body not mine, a live
 foe, a quest's foe: silence; in reach the grant; the asker's budget);
 the refused projection (the unmintable item dropped and the rest
@@ -3347,7 +3348,7 @@ its own. Read against the code and the locks, it is not a gap:
   interior pool. The day the crime or a quest is shared, the pool is
   ready: it is the exterior pool's own factory, puppet arm and all.
 
-Pinned in `test/world6biiid.test.js` (1), by source: the interior
+Pinned in `test/scenes/world6biiid.test.js` (1), by source: the interior
 pool's spawn sites are the summon's, the quest's and the enchant
 replace alone; no net on it; the world host's frame out and in are the
 dungeon's; the fact and the lock in their records.
@@ -3358,7 +3359,7 @@ the cell's law, which the relay's own lane (OWN1) now carries in a
 world room: the pool gets its net, and the host's frame is still the
 dungeon's alone.
 
-Pinned in `test/world6b.test.js` (8), EXECUTED: the wire at both ends;
+Pinned in `test/systems/world6b.test.js` (8), EXECUTED: the wire at both ends;
 the real Room fanning a non-host's frame in a cell and routing a hit
 to `to`, the dungeon's law untouched; the session's four doors in a
 cell and in a world room; the pool on a crafted MONSTER.BSA with the
@@ -3447,7 +3448,7 @@ relay's own traffic:
   is heard.
 
 Relay `world65` (`world66` after the audit). Pinned in
-`test/world6biiie.test.js` (5), EXECUTED:
+`test/scenes/world6biiie.test.js` (5), EXECUTED:
 the wire's bounds and one home at both ends; two pools (the striker's
 dose at a puppet not on the shadow but on the hit with the kind and
 the shaft, spent once, the owner dosing its foe inside a damaging blow
@@ -3471,7 +3472,7 @@ c2combat (the poison pin reads the one door), the relay version pins.
 roster's bound: A the pools' poison door and the hit, B the wire, the
 relay and the session's `who`, C the dungeon twin, the records and the
 merge. Twenty-six findings; fourteen paid, the rest recorded. Every
-paid one is pinned by EXECUTION in `test/auditworld6biiie.test.js`
+paid one is pinned by EXECUTION in `test/scenes/auditworld6biiie.test.js`
 (6) where a rig can reach it, by source where it cannot.
 
 ### The majors
@@ -3621,7 +3622,7 @@ citedrift (the flight's hook), the relay version pins.
 and the session, B the encounter pool's puppet and stream arms, C the
 world host's wiring, the day's rolls, the record and the pins. Every
 finding verified against the code before it was paid; the pay-outs are
-root fixes, pinned by execution in `test/auditworld6b.test.js`, the
+root fixes, pinned by execution in `test/systems/auditworld6b.test.js`, the
 relay redeployed (`RELAY_VERSION` `world63`).
 
 ### A - the relay and the session
@@ -3816,7 +3817,7 @@ combat resolution, so the audit came before 6b-iii. Three opus lenses
 - A the owner's side of the hunt, B the puppet's side and the hit-in,
 C the wiring, the merge with the Features arc and the record. Every
 finding verified against the code; paid at the root; pinned by
-execution in `test/auditworld6bii.test.js`. No relay change.
+execution in `test/scenes/auditworld6bii.test.js`. No relay change.
 
 ### The criticals
 
@@ -3940,7 +3941,7 @@ execution in `test/auditworld6bii.test.js`. No relay change.
   `isPlayerTarget` throughout and would misfire the day peers enter
   its list (6b-iii's guards).
 
-Pinned in `test/auditworld6bii.test.js` (9), EXECUTED: the caster's
+Pinned in `test/scenes/auditworld6bii.test.js` (9), EXECUTED: the caster's
 suppressed tick and its wiring; the cull of a foe that walked off
 with a peer; a peer's blow with no candidate naming nobody; a fresh
 foe's empty target; the owner's blow budget and the leap; the
@@ -3959,7 +3960,7 @@ decision, the executor, the hosts' hooks), B the puppet's side (the
 streamed cast, the sinks, the budget), C the wire, the relay, the
 dungeon twin, the merge with main and the records. Every finding
 verified against the code; paid at the root; pinned by execution in
-`test/auditworld6biii.test.js`. No relay change: the relay never
+`test/scenes/auditworld6biii.test.js`. No relay change: the relay never
 projects a foes record (C1 - the live `world63` fans `c`/`s` as it
 fans any key), and the wire's new keys are bounded at both ends.
 
@@ -4124,7 +4125,7 @@ fans any key), and the wire's new keys are bounded at both ends.
   the slice's hunks and cite re-aims alone**; the suite line matched
   the count.
 
-Pinned in `test/auditworld6biii.test.js` (6), EXECUTED: the real
+Pinned in `test/scenes/auditworld6biii.test.js` (6), EXECUTED: the real
 decision at a peer (the imp's own list, the stand-in, Bob's transform,
 the record's c/s/u, the magicka spent); the engine's wall arm at the
 caster's level and a foe's blast skipping a puppet while mine reaches
@@ -4134,7 +4135,7 @@ six or beyond the band none, a touch beyond reach none), paralysis, the
 hurt against the streamed health; the direction law, the frozen
 stand-in, the u8; by source the three sinks, the leap before the
 bucket, the one counted release, the wall arm, the dungeon's probe and
-stand-in, the records. `test/world6biii.test.js` rewritten under the
+stand-in, the records. `test/scenes/world6biii.test.js` rewritten under the
 law (the wire's u/b and the u8; the blast measured against me at a
 peer, the owner's `u`; the puppet's own list, the cast's recipient, no
 spell no cast, the bands, the leap spending nothing); `world6bii`'s
@@ -4262,18 +4263,18 @@ deadline. A quest line's "=clock_ days" means played days online. The
 step is one home and one number; a machine that cannot hold a frame
 under two and a half real minutes charges one step per frame.
 
-Pinned in `test/world7.test.js` (3), EXECUTED over the real Clock and
+Pinned in `test/systems/quest/world7.test.js` (3), EXECUTED over the real Clock and
 the real machine: a frame charges its seconds, a gap of a step the
 step, a day away one step with the hour then finishing on played time
 and the same-named task started; a fourteen-day letter arriving after
 fourteen played days with a week away between each; a resume charging
 one step; offline a span charging whole and a quest with no seam as
 ever; a scheduled quest's hour under the step through the whole chain;
-the chain by source. `test/world5.test.js`'s stand-down pin re-spelt
-to the played step; `test/ol3.test.js` (2) re-spelt to the interval's
+the chain by source. `test/systems/quest/world5.test.js`'s stand-down pin re-spelt
+to the played step; `test/systems/ol3.test.js` (2) re-spelt to the interval's
 played time (executed: the backdate, the wave, the hour's gap forgiven
 to one step, the resume's full interval, offline whole);
-`test/auditworld5.test.js` C10 restamped. Suite 7483 across 758.
+`test/systems/auditworld5.test.js` C10 restamped. Suite 7483 across 758.
 
 ## RESTX1 (2026-09-15): online, a rest waits for nothing
 
@@ -4330,7 +4331,7 @@ tick that rides the same sub-tick. You healed; nothing else happened.
 
 ### Where it lives
 
-`systems/restSession.js`, and nowhere else. The session asks
+`systems/rest/restSession.js`, and nowhere else. The session asks
 `sharedMinutes` - the dep it already had from WORLD5 - so the predicate
 is "the shared clock is standing AND this is not a loiter". **THE FOUR
 HOSTS are untouched by this slice**, which is OL1's own shape: a lane is
@@ -4367,7 +4368,7 @@ were made to keep it small, each easy to change:
    question, not a correctness one.
 3. **Loiter was left alone.** See above.
 
-`test/restx1_online_rest.test.js` - 7 pins, 8 mutants, 8 dead. (RESTX2, 2026-09-17: the lane and its test are RETIRED; `test/restx2_online_rest.test.js` holds the law that replaced it - see RESTX2 below.)
+`test/restx1_online_rest.test.js` - 7 pins, 8 mutants, 8 dead. (RESTX2, 2026-09-17: the lane and its test are RETIRED; `test/systems/rest/restx2_online_rest.test.js` holds the law that replaced it - see RESTX2 below.)
 
 ## AUDIT RESTX + AUDIT OQ (2026-09-15)
 
@@ -4487,7 +4488,7 @@ DUNGEON-RESPAWN (2026-10-08, the owner, in the Wrothgarian zone's merge):
 a dungeon's hour is its own now - a normal dungeon's twenty minutes, an
 elite one's forty, the open zone's halls and a Super dungeon keeping
 `RESPAWN_MS` (half an hour since RESPAWN-30, 2026-10-14, Mac: "I meant the chest and foe respawn"); each foe and container still on its own clock
-(`src/systems/dungeonRespawn.js`, `11-Multiplayer/Wild-Zone.md` section 21).
+(`src/systems/dungeon/dungeonRespawn.js`, `11-Multiplayer/Wild-Zone.md` section 21).
 
 - **A foe.** The one corpse door stamps `_diedAt`; the memory's record
   carries it as `died`; a record applied keeps the ROOM's stamp, not
@@ -4528,7 +4529,7 @@ so loading it in an online session rebuilds what that save killed
 more than an hour ago, a second after the load (the law, not the
 save's word).
 
-Pinned in `test/world8.test.js` (2): the wire's law executed (the
+Pinned in `test/net/world8.test.js` (2): the wire's law executed (the
 hour, what is due and what is not - no stamp, no clock, a stamp
 ahead, a minute short - one home at both ends, the thirty days
 above); the dungeon by source (the stamp at the corpse door and in
@@ -4546,7 +4547,7 @@ roll). Suite 7485 across 759.
 A the Clock and the spawn interval, B the dungeon memory's foes (the
 stamp, the rebuild, the sweep, the stream), C the loot's stamps, the
 wire and the records. Thirty-three findings; twenty paid, the rest
-recorded. Pinned by EXECUTION in `test/auditworld78.test.js` (4)
+recorded. Pinned by EXECUTION in `test/systems/quest/auditworld78.test.js` (4)
 where a rig reaches, by source where it cannot.
 
 ### The criticals
@@ -4708,7 +4709,7 @@ and world7 (the clock line), auditworld (the memory's arm).
 
 ## Pinned
 
-`test/online_relay.test.js` (7): the wire's law with mutants (the range
+`test/server/online_relay.test.js` (7): the wire's law with mutants (the range
 widened, the gate that never refills or never caps, a pose before
 hello, the junk before the gear) and the Room over fake sockets and a
 fake state (the key on the attachment surviving a wake, the look in
@@ -4716,7 +4717,7 @@ storage, the roster with looks and its cap, the range fan-out, the
 leave, the replaced socket's silent close, the secret that guards an
 id, the hello gate, the socket cap, the over-rate strikes, the failed
 send, the worker's routes).
-`test/online.test.js` (9): the one law at both ends and the world's
+`test/net/online.test.js` (9): the one law at both ends and the world's
 bound, the room key by map id and its nulls, the pose's change and
 easing, the id, the session on its own clock over a fake socket, the
 socket's lifecycle and the terminal closes, the look and the stub
@@ -4724,7 +4725,7 @@ clamped, the others drawn through a fake renderer (the crop, the cache,
 the retry, the eviction, the name under the viewport rect), the
 compositor's door pure by source, OD1's doll standing up bottom-up. Not seen with two real players from
 here - Mac's two browsers are the gate.
-`test/chat1.test.js` (7), re-pinned by AUDIT CHAT: the wire's chat law
+`test/net/chat1.test.js` (7), re-pinned by AUDIT CHAT: the wire's chat law
 at both ends (the sanitizer's classes - every format character, the
 selectors, a lone surrogate, a stack of marks - and its idempotence
 fuzzed, the whitelist, the frame after hello, the gate's burst and
@@ -4746,46 +4747,46 @@ release passed, the pointer hooks, hidden under a window or an
 overlay, text never markup and tagged, the list grown, the touch
 button and form), the host by source (the dial on the stack). Not seen
 with two real players from here either.
-`test/mac6.test.js` (2): the dungeon save's field through the envelope
+`test/systems/save/mac6.test.js` (2): the dungeon save's field through the envelope
 both ways, the finder by dungeon id over fake locations (any iterable,
 the first match), the dungeon host's split load arm, the mode
 machine's forward and the boot's third arm by source.
-`test/mac7.test.js` (4): the pose's arm - drawn or held, swing count
+`test/net/mac7.test.js` (4): the pose's arm - drawn or held, swing count
 and kind, arrow, spell stance, cast count and range - at both ends
 (clamped, the WeaponStates order pinned against fpsWeapon's index and
 the cast ranges against spellcast's TargetTypes, a pose from before
 them sheathed, unswung, unarrowed and uncast), the session's change
 and easing, the body over a fake rig with every door recorded, the
 rig's two counters and the host's pose by source.
-`test/world1.test.js` (4): the wire's world frame at both ends and
+`test/net/world1.test.js` (4): the wire's world frame at both ends and
 the world rooms, the Room's host election and memory over fake
 sockets across a wake (chunked, republished smaller, served verbatim,
 the ignored frames, the sweeps that keep it), the session's host and
 sendWorld, the three hosts by source.
-`test/auditworld.test.js` (4): AUDIT WORLD's fixes - the relay's door
+`test/net/auditworld.test.js` (4): AUDIT WORLD's fixes - the relay's door
 before the parse, the cap by type, the map-id key and the alarm, the
 reconnect's seat and the room's floor, the farewell; the session's
 farewell; the body's doors in order, the pending strike, the loose
 law, the arrow's wait and commit, the re-latch; the hosts and the
 record by source.
-`test/world2.test.js` (4): the wire's foes frame and hit at both ends,
+`test/net/world2.test.js` (4): the wire's foes frame and hit at both ends,
 the Room's stream and hit routing over the one fake, the session's
 sendFoes/sendHit/onFoes/onHit, the hosts by source (the puppet branch,
 the frame out and in, the hit door, the handover) and the motor's
 resume executed - strengthened by AUDIT WORLD2.
-`test/auditworld2.test.js` (3): AUDIT WORLD2's fixes - the relay's
+`test/net/auditworld2.test.js` (3): AUDIT WORLD2's fixes - the relay's
 budgets, the type's bucket, the refusals, the strikes; the session's
 seat cleared on a dead socket and a leave, the hits' gate at home; the
 record.
-`test/world3.test.js` (5): the wire's act frame and the Room's fan
+`test/net/world3.test.js` (5): the wire's act frame and the Room's fan
 over the one fake, the session's sendAct/onAct, the action graph's
 change seam and remote apply executed, the target machine with a peer
 executed, the hosts by source.
-`test/auditworld3.test.js` (4): AUDIT WORLD3's fixes - the act fan's
+`test/world/auditworld3.test.js` (4): AUDIT WORLD3's fixes - the act fan's
 byte budget; the record projection, the picker's latch and the instant
 mover's sound, executed on bare graphs; the local player told from any
 player, executed on the motor; the hosts and the record by source.
-`test/world4.test.js` (3): the loot projection executed, the act
+`test/net/world4.test.js` (3): the loot projection executed, the act
 frame's loot half over the one fake and through the session, the
 dungeon host and the memory by source.
 
@@ -4808,7 +4809,7 @@ Morrowind bodies (MWBODY1) are meshes and were never affected.
 **The fix.** `cropRgba(rgba, w, r, { bottomUp: true })` writes the rows
 in reverse; `_composeDoll` asks for it. The classic composite and the
 inventory's own upload are untouched. Ledger row OD1. Pinned:
-`test/online.test.js` OD1 (the reversed crop, and the doll's upload
+`test/net/online.test.js` OD1 (the reversed crop, and the doll's upload
 with a marked top-left pixel on its last row).
 
 ## FOE1 - A COMMENT ATE THE HIT (2026-09-15, Mac relaying players)
@@ -4965,7 +4966,7 @@ arrival, that is not rare. The blow is dropped instead.
 - **A building interior streams no foes at all.** `makeInteriorFoes`
   never calls `setNet`, and the world host routes foes only for cells
   and dungeons - so every player rolls their own and sees different
-  enemies in the same shop, while `test/world6b.test.js` asserts
+  enemies in the same shop, while `test/systems/world6b.test.js` asserts
   `streamsFoes('interior:…') === true`. WORLD6b-iii(d) closed buildings'
   foes as "none by the lockbook"; the quest foe, the summoning's
   punishment and the watch are each the player's own by a lock already
@@ -5053,7 +5054,7 @@ The pin that matters for this arc is the per-peer MEASUREMENT: 1, 4 and
 symptom's own shape - what does one more peer cost - and it reddens if
 the name pass ever grows a per-glyph cost again.
 
-**Pinned** in `test/perfon_text_run.test.js` (7). NOT SEEN ON A GPU -
+**Pinned** in `test/ui/perfon_text_run.test.js` (7). NOT SEEN ON A GPU -
 there is no GL in the container; Mac's eye is the next gate.
 
 ## ONCRASH1 - ONE FRAME ENDED EVERYBODY'S RUN (2026-09-15, Mac)
@@ -5112,7 +5113,7 @@ while (d < -Math.PI) d += 2 * Math.PI;
 ```
 
 Four copies of that, in `net/online.js` (easing a peer's yaw),
-`net/peerBodies.js` (turning a peer's rig), `characters/enemyMotor.js`
+`net/peer/peerBodies.js` (turning a peer's rig), `characters/enemy/enemyMotor.js`
 (a puppet's facing) and `combat/fpArm.js` (the turn clip's rate) - all
 four of them **beside a correct, one-step `wrapAngle` in
 `player/lockOn.js` that none of them knew about.**
@@ -5149,7 +5150,7 @@ The seam is the likelier explanation for a crash overlay, and it is the
 one that makes the NEXT report diagnosable: the crash text names its
 frame now.
 
-**Pinned** in `test/oncrash1.test.js`, and then AUDITED - see below,
+**Pinned** in `test/net/oncrash1.test.js`, and then AUDITED - see below,
 because the pins were weaker than their own titles said.
 
 
@@ -5296,7 +5297,7 @@ is not yet a pin; no live relay and no second player were involved.**
   and the viewers, all read through `liveStat`.
 - Six accumulator loops (`acc += dt; while (acc >= step)`) with no
   `MAX_FRAME_DT` clamp, where `player/motor.js` and
-  `characters/enemyMotor.js` have one.
+  `characters/enemy/enemyMotor.js` have one.
 - `_peerHeights`, `remotePlayers._dolls`' failure entries and
   `peerBodies._failed` are never pruned.
 - `wrapAngle(-PI)` is `+PI` where the four loops answered `-PI`, and the
@@ -5379,7 +5380,7 @@ back, and anyone who walks closer resumes at the next pose.
 sort, no copy - because every ordinary room in the Bay would otherwise
 pay for an event it is not having.
 
-**Pinned** in `test/slam1.test.js` (6), driven over the real relay at the
+**Pinned** in `test/net/slam1.test.js` (6), driven over the real relay at the
 room's own admission rate: one pose reaches exactly `POSE_FAN_MAX`
 listeners and they are the contiguous NEAREST run (a first-N answer is
 wrong by construction in the fixture), a cell is bounded like a town,
@@ -5442,7 +5443,7 @@ slice changed: three hundred clients refused in the same instant come
 back spread over at least twenty distinct moments with no moment holding
 more than an eighth of them, against one single millisecond before.
 
-**Pinned** in `test/slam2.test.js` (4). **6 mutations, 6 dead.**
+**Pinned** in `test/net/slam2.test.js` (4). **6 mutations, 6 dead.**
 
 **Recorded, not paid:** `onopen` resets `_backoff` to the floor the
 instant the socket opens, before the relay has accepted the hello - so a
@@ -5502,7 +5503,7 @@ from `at`, which is also stamped when a roster entry first names a peer
 - and the time between hearing OF somebody and seeing them move is not
 an interval anybody is keeping. ONLINE1's own ease pin caught it.
 
-**Pinned** in `test/slam3.test.js` (5), driven over a real session:
+**Pinned** in `test/net/slam3.test.js` (5), driven over a real session:
 an ordinary room keeps `POSE_HZ` exactly, a crowd of 200 speaks at the
 floor and `sendPose` really refuses the ordinary interval there, a peer
 at 4 Hz is mid-ease at 125 ms rather than parked on its target, and the
@@ -5541,7 +5542,7 @@ All three keep a fresh entry: the retry window is what stops a broken
 look being re-composed or re-built on every frame, and sweeping early
 would trade a slow leak for a fast loop.
 
-**Pinned** in `test/slam4.test.js` (4). **7 mutations, 7 dead**,
+**Pinned** in `test/net/slam4.test.js` (4). **7 mutations, 7 dead**,
 including both halves of each: never swept, and swept while still fresh.
 
 
@@ -5592,7 +5593,7 @@ nearest 64" meant the first 64 in socket order.
 `nearestFan` is the one ranking now, at both doors, and the nesting the
 pin claimed is real and pinned.
 
-**Pinned** in `test/slam5.test.js` (5), driven over the real `Room`
+**Pinned** in `test/server/slam5.test.js` (5), driven over the real `Room`
 against storage that enforces the 128-key limit. **8 mutations, 8
 dead** - including one that survived the first cut: nothing asserted the
 roster still CARRIED its looks, and reading nothing from storage looks
@@ -5671,7 +5672,7 @@ A8/C6 holds unchanged.
 any of this to be true in the room** - nothing in CI deployed it then; since
 SRV-N/CI (PR #209) the push to main does, on a version drift.
 
-**Pinned** in `test/slam6.test.js` (6) and in the two re-aimed SLAM1
+**Pinned** in `test/net/slam6.test.js` (6) and in the two re-aimed SLAM1
 relay pins, driven over the real `Room` on the fake Durable Object.
 **14 mutations, 14 dead.** SLAM1's own test header carries a correction
 naming what this withdrew.
@@ -5755,7 +5756,7 @@ true only if the alpha crop averages under about half the panel - nobody
 measured that, so the bound stated here is the panel's.) That is the trade, taken deliberately: memory the machine has,
 against a compose storm and a flickering crowd it does not.
 
-**Pinned** in `test/slam7.test.js` (5), driven over `RemotePlayers` with
+**Pinned** in `test/net/slam7.test.js` (5), driven over `RemotePlayers` with
 counting fakes. **9 mutations, 9 dead** - one of them a survivor of the
 first cut: nothing asserted *which* spare the sweep takes, so evicting
 the newest spare instead of the oldest passed every pin. The LRU is a
@@ -5808,14 +5809,14 @@ relay's hello path and left the version at `world67`, so `world67` named
 both the relay that stops an event at 130 players and the one that does
 not - and `/health` is the only pre-flight check this port has, because
 the relay is deployed by hand. A comment asking politely is what failed,
-so the version is now bound to the law itself: `test/relayversion.test.js`
+so the version is now bound to the law itself: `test/net/relayversion.test.js`
 records sha256(`server/src/index.js` + `src/net/wire.js`) per version and
 fails until a new version with its own hash is added. Proven against the
 SLAM5 case verbatim.
 
 ### The pin that let it through
 
-`test/slam6.test.js` asserted
+`test/net/slam6.test.js` asserted
 `(POSE_FAR_SHARE * 1000) / POSE_HZ_MIN < PEER_TIMEOUT_MS` - which reduces
 to `1000 < 20000` and is about the rate of a peer that is MOVING. The
 peer at risk of the silence law is the one standing still. Mutating
@@ -5921,7 +5922,7 @@ are standing in.
   pin **cannot** be written against `fakeRoom`. Withdrawn.
 - **`wire.js` and `index.js` still called SLAM1's send counts "measured"
   and still carried "one object stops keeping up somewhere around two
-  hundred"** after `test/slam1.test.js` withdrew both. Struck there too.
+  hundred"** after `test/net/slam1.test.js` withdrew both. Struck there too.
 
 ### What the audit says about the pins
 
@@ -5934,14 +5935,14 @@ adequate, and they do not: **the mutation sets were never committed, so
 nobody could check.** They should be a committed script.
 
 Three further pin defects, all real:
-- `test/slam5.test.js` ships a literal tautology, `assert.equal(last, last)`,
+- `test/server/slam5.test.js` ships a literal tautology, `assert.equal(last, last)`,
   with a comment admitting the value is unused.
 - The comment-stripper three pins share (`replace(/\/\/[^\n]*/g, ' ')`)
   **eats a real line of `net/online.js`**, because `wss://` contains
   `//`. Everything after it on that line is invisible to every pin that
   reads the stripped source - including SLAM2's sweep for stray
   `Math.random`.
-- `test/slam4.test.js`'s `_peerHeights` pin is source text only: moving
+- `test/net/slam4.test.js`'s `_peerHeights` pin is source text only: moving
   the prune line after `return out;` (dead code, text unchanged) keeps it
   green.
 
@@ -6005,12 +6006,12 @@ it now, and `leave` is per room, as WORLD6b-iii(b) meant.
 
 **A version bump nearly relabelled deployed bytes.** The
 `world69 → world70` sed over the test files rewrote the *key* of the
-`world69` row in `test/relayversion.test.js`, so the row claimed `world70`
+`world69` row in `test/net/relayversion.test.js`, so the row claimed `world70`
 had `world69`'s hash. The pin caught it - which is what it is for - and
 the file now says to exclude itself from that sed. `RELAY_VERSION` is
 `world70`.
 
-**Pinned** in `test/slam9.test.js` (6): the full-room starvation case
+**Pinned** in `test/net/slam9.test.js` (6): the full-room starvation case
 driven for 40 simulated seconds; the round's fairness (the next five, not
 the first five again); the blip re-standing peers as themselves; the bound
 on `_known`; membership from a pose across a halo; and 200 asks in one
@@ -6080,9 +6081,9 @@ backlog, landing as a burst, halve the interval to the floor and dash. The
 `PLAY_RATE_MIN`..`PLAY_RATE_MAX` - and the pin reads the speed frame by frame.)*
 
 `RELAY_VERSION` is `world71` (this line first read `world72`: the later slices' version-bump seds relabelled it - the same in-place rewrite the ledger pin forbids for its rows, caught by the final audit); the version bump was run with
-`test/relayversion.test.js` excluded, as that file now says to.
+`test/net/relayversion.test.js` excluded, as that file now says to.
 
-**Pinned** in `test/slam10.test.js` (5) and in two re-aimed `slam6` pins
+**Pinned** in `test/net/slam10.test.js` (5) and in two re-aimed `slam6` pins
 and one `slam1` count that encoded the rank-sliced far tier. **9
 mutations, 9 dead**: the far tier back to rank slices (SLAM6 verbatim),
 the bucket read off the rank index, the hash made constant, the bucket
@@ -6139,7 +6140,7 @@ this room size - is the sender's to chunk, and is recorded below.
 
 `RELAY_VERSION` is `world72`.
 
-**Pinned** in `test/slam11.test.js` (6, the sixth added by PINS - the refused push): the plain bucket's cliff (so the
+**Pinned** in `test/net/slam11.test.js` (6, the sixth added by PINS - the refused push): the plain bucket's cliff (so the
 reason for borrowing stays true), the borrowing bucket's four laws, the
 memory landing past the old cliff on its own bucket once each, the act
 landing and waiting, and the foes fan *not* borrowing. `auditworld3`'s act
@@ -6205,7 +6206,7 @@ after `_evict`, or after `destroy()` at the page's hide - with nothing
 referencing it. Measured: sync fifty peers, destroy, fifty uploaded, none
 released. The late arrival frees its texture now.
 
-**Pinned** in `test/slam12.test.js` (8). Two lifecycle pins re-aimed to
+**Pinned** in `test/net/slam12.test.js` (8). Two lifecycle pins re-aimed to
 the jittered window (`online`: deterministic `rand`, the window's edges,
 "a good open resets it" → "the welcome resets it"; `chat1`: the retry read
 at the window's far edge). **10 mutations, 10 dead** - three of them
@@ -6413,7 +6414,7 @@ it; a welcome with no `v` is a relay older than world73 and is said as
 "unversioned". Nothing is refused: a skew is news, not a fault, and the
 old law still walks.
 
-**THE RELAY'S LAW IS THE BUNDLE.** `test/relayversion.test.js` hashes the
+**THE RELAY'S LAW IS THE BUNDLE.** `test/net/relayversion.test.js` hashes the
 worker's import graph from `server/src/index.js` (relay.js, wire.js,
 world/mat4.js), pins the graph, and from world73 records that hash. The
 rows before it stay under their day's two-file hash.
@@ -6422,7 +6423,7 @@ rows before it stay under their day's two-file hash.
 (`wire.js` x2, `index.js`), and `slam1`'s header and Testing.md row that
 repeated it.
 
-**Pins.** `test/slam13.test.js` (11): one home for the numbers, the seam
+**Pins.** `test/net/slam13.test.js` (11): one home for the numbers, the seam
 at the wire and the relay, the burst tiered and the heartbeat whole, the
 pass-patch `kept`, the sender's share both ways, the listener-at-a-time
 push with its rate and cap, the version in both welcomes, the session's
@@ -6493,7 +6494,7 @@ driven by leaves; the re-stood are recalled at the gate's pace and the
 answers clear it), `world6biiib` (a fresh halo roster keeps Ann,
 unconfirmed there, until she is silent past the timeout).
 
-**Pins.** `test/slam14.test.js` (6). Mutants: `tools/mutants/slam14.json`
+**Pins.** `test/net/slam14.test.js` (6). Mutants: `tools/mutants/slam14.json`
 - **15 mutations, 14 dead, 1 equivalent as recorded** (Y13: the constant
 and the recomputation are the same string; the saving is a
 `JSON.stringify` per look-less peer per frame, unobservable from outside;
@@ -6580,7 +6581,7 @@ the mutant list as `equivalent`, which is the proof of the redundancy.
 drawn dolls' look keys, not a body peer's, not an unshown peer's, rebuilt
 each frame.
 
-**Pins.** `test/slam15.test.js` (4). Mutants: `tools/mutants/slam15.json`
+**Pins.** `test/net/slam15.test.js` (4). Mutants: `tools/mutants/slam15.json`
 - **8 mutations, 7 dead, 1 equivalent as recorded**. Re-aimed: `chat1`'s
 pose-arm regex (two more lines before `still`), `slam8` K3 and `slam13`
 X6/X12 records to the merged source.
@@ -6733,7 +6734,7 @@ legible floor) with bottom edges 4.7-5.0 px above the head, bone
 and pointer-transparent, a 9-character bubble over two lines and a
 155-character line cut to 102 with `...`; at FOV 120 every name is at the
 9 px floor; on a 390x844 phone 22.5 / 15.0 / 9.0 px. Not in the game
-(ARENA2 absent). Pinned in `test/name1_bubbles.test.js` (20: the anchor at
+(ARENA2 absent). Pinned in `test/net/name1_bubbles.test.js` (20: the anchor at
 two depths, the size law by value and monotone and at two heights and two
 FOVs, the sight test against a REAL `player/collider.js` wall with the
 bucket boxes and the ray budget, the hysteresis over a flickering ray, the
@@ -6802,8 +6803,8 @@ if (!Number.isInteger(sf[k]) || sf[k] < -1 || sf[k] > 255) return null;
 
 They are not numbers in this port. `entity.team` is `MobileTeams`' NAME -
 'PlayerEnemy', 'PlayerAlly', 'Vermin' - which is what
-`characters/enemyEntity.js` defaults, what the whole of
-`characters/enemyTargets.js` compares, and what `combat/playerWeapon.js`
+`characters/enemy/enemyEntity.js` defaults, what the whole of
+`characters/enemy/enemyTargets.js` compares, and what `combat/playerWeapon.js`
 reads as `=== 'PlayerAlly'`. The number came from DFU's own serializer
 (`SerializableEnemy.cs:125`, `(int)entity.Team + 1`), which is the
 reading the port did not take. And the publisher hands the LIVE field
@@ -6822,7 +6823,7 @@ passed.
 **The pin that should have caught it encoded the bug.** ONCRASH1 A3's
 own test passed `team: 2`. That is the shape of a fault that survives a
 green suite: the test and the code made the same wrong reading, so they
-agreed. `test/respawn1.test.js` is deliberately not another example - it
+agreed. `test/net/respawn1.test.js` is deliberately not another example - it
 reads the PUBLISHER's field list out of `collectWorld`'s own record in
 the source, builds the record that publisher would really write, and
 asserts the door admits it whole and field by field. A field added to
@@ -6846,7 +6847,7 @@ deferred socket teardown, so it is not taken. The probe is kept, because
 the claim will be made again.
 
 The wire's law changed, so the relay's version did: **`world80`**, with
-its row in `test/relayversion.test.js` beside the bytes it names. The
+its row in `test/net/relayversion.test.js` beside the bytes it names. The
 deploy workflow (`relay-deploy.yml`) takes it to the worker on the push
 to main, because `/health` will report `world79` until it does.
 
@@ -6925,7 +6926,7 @@ is the rest's minute when handed one, and the rest deps hand
 character's own clock, which the rest's advance moves.] The dungeon's `_restAdvance` already read it; the
 interior's arm rolls nothing inside a building and is unchanged.
 
-`test/restx2_online_rest.test.js` - 8 pins; WORLD5's loiter pin, AUDIT
+`test/systems/rest/restx2_online_rest.test.js` - 8 pins; WORLD5's loiter pin, AUDIT
 WORLD5 C7/C8 and OL2 (5) re-aimed onto the timer; `restx1_online_rest`
 retired. `tools/mutants/restx2camp.json` carries RESTX2's ten.
 
@@ -6977,7 +6978,7 @@ and the fixed city keeps the bare form.
 Not carried: `window.__online`, a console debug hook the zip left on
 unconditionally. Not verified in a browser: no online session exists in
 this container; the door is pinned by source and the pick by law.
-`test/donline1_respawn.test.js` - 3 pins; FIX-E, AUDIT 21 F6, AUDIT
+`test/scenes/donline1_respawn.test.js` - 3 pins; FIX-E, AUDIT 21 F6, AUDIT
 WORLD B6 and MWBODY1 re-aimed. Mutants in `tools/mutants/restx2camp.json`.
 
 ## WATCH1 (2026-09-17): the criminal's watch rides the cell
@@ -7082,7 +7083,7 @@ flagged here by name; the dungeon's foes are the host's stream
 
 Not verified in a browser: no online session and no second player
 exist in this container; the whole path is pinned by execution across
-two real pools netted together (`test/watch1.test.js`, ~~5 pins~~ 6
+two real pools netted together (`test/characters/enemy/watch1.test.js`, ~~5 pins~~ 6
 after AUDIT ALL) and `tools/mutants/watch1.json` (~~33 mutants, 32
 dead~~ 39, 38 dead after AUDIT ALL, 1 equivalent as recorded). AUDIT WORLD6b-iii(b)'s C1 source pin, WORLD6b's net pin,
 WORLD6b-ii's and WORLD6b-iii(a)'s spelling pins, WORLD6b-iii(c)'s
@@ -7225,7 +7226,7 @@ minutes between the two deploys: the deployed relay answers the ping in its
 sleep already (the pair has been registered since CHAT1), fans a standing
 pose whole under a 2500 ms floor, and has no time-based reaping of its own.
 
-**Pins** (`test/relayh1.test.js`, 4): the numbers are one family (the
+**Pins** (`test/net/relayh1.test.js`, 4): the numbers are one family (the
 heartbeat >= 20 s, PING_MS and PEER_TIMEOUT_MS derived and not a literal beside
 it, the timeout under two minutes); the client's ping serialised IS the
 relay's auto-response request, read off `server/src/index.js` rather than a
@@ -7318,7 +7319,7 @@ past that bound, and the bound is load-bearing in two places at once:
 **The two halves must be paid together.** Arming a non-layout foe against peers
 while it is still unsynced is worse than leaving it alone: it would chase and
 swing at a player who cannot see it and has no damage frame to resolve the blow
-with. `test/world2.test.js` pins exactly that - the puppet gate and the
+with. `test/net/world2.test.js` pins exactly that - the puppet gate and the
 targeting bound are one expression, and widening either alone goes red.
 
 **The answer already exists and is proven.** WORLD6b built it for the open
@@ -7340,18 +7341,18 @@ layout leaves in FOES_FRAME_MAX); a joiner's rest asks the host for it (the act
 frame's `rs`), stands it as a puppet, strikes it by the room's number (`xs` on
 the hit) and loots its body as the room's `enc:<id>`. `isRoomFoe` - the layout's
 run plus the shared encounters - is the one expression both halves read, so the
-two are still paid together (`test/world2.test.js`). The quest foe and the
-summon stand where this section left them. `01-Overview/Field-Bugs-2026-09-26.md`
-REST-SYNC; `test/restsync.test.js`. AUDIT PRE-MERGE 0928 M1: an encounter whose species the
+two are still paid together (`test/net/world2.test.js`). The quest foe and the
+summon stand where this section left them. `01-Overview/bugs/Field-Bugs-2026-09-26.md`
+REST-SYNC; `test/net/restsync.test.js`. AUDIT PRE-MERGE 0928 M1: an encounter whose species the
 host's Ocean Holes abyss changes keeps its number (the rebuilt body takes the old one's place in the room),
 and a joiner stands it anew by that number; a joiner's copy is no spawn of its own for the abyss to process
-(`test/audit0928_merge.test.js`).
+(`test/characters/audit0928_merge.test.js`).
 
 **RETIRED 2026-09-27.** QUEST-PARTY phase 3c paid both halves for a shared quest's foe (its spawner's, on the room's
 own lane, to the party) and SUMMON-SYNC (below) for the summon's - a loose stand, its spawner's, on the same lane, to
 the whole room. A private quest's foe stays its player's own by Mac's party law ("Party shares them"), a decision rather
 than a hole, so the flag is off the board (`bible/Home.md`'s open flags answer 6); the note stays at the site in the
-past tense, and `test/world2.test.js` still holds the two halves in step.
+past tense, and `test/net/world2.test.js` still holds the two halves in step.
 
 ## OL5 (2026-09-20): the town gate and the guild hall, open at night online
 
@@ -7451,7 +7452,7 @@ is the hook for that
 presentation slice. The shared ECONOMY (one region memory, one owner
 walking the day, the reputation term) is the STOP list's open slice
 still. Not verified in a browser: no online session exists in this
-container; pinned in `test/lockpicking.test.js` (R1's hours pins,
+container; pinned in `test/systems/lockpicking.test.js` (R1's hours pins,
 extended in place) and `tools/mutants/ol4.json`.
 
 ## ECON1 (2026-09-17): the region's prices are the world's
@@ -7554,7 +7555,7 @@ walk and the world's; `dayRng` is the day's generator whoever asks, and
 No wire change, no relay change of this slice's (`RELAY_VERSION` is
 `world82` after the main merge - see MERGE below). Not verified in a
 browser: no online session exists in this container;
-`test/econ1_world_prices.test.js` (6 pins) drives the world's function,
+`test/systems/econ1_world_prices.test.js` (6 pins) drives the world's function,
 the seam, the day change online and offline, the tilt and the
 checkpoints; `tools/mutants/econ1.json` (27 mutants, 25 dead, 2
 equivalent as recorded). WORLD6b's and AUDIT WORLD6b C4/C5's day-walk
@@ -7573,7 +7574,7 @@ and were found by AUDIT ALL, not by the gates:
   Hardening.md writes down ("`citeShift` must not run mid-merge") -
   and DOUBLE-SHIFTED eleven citations into `cityGuards.js`,
   `exteriorFoes.js` and `enemyEntity.js` that the branch's own commits
-  had already re-aimed; `test/citedrift.test.js` sweeps none of them.
+  had already re-aimed; `test/scenes/citedrift.test.js` sweeps none of them.
   Restored to their true lines at AUDIT ALL.
 - **The relay version row was rewritten in place.** The merge moved one
   comment line in `wire.js` under `world81`, and OL4's commit relabelled
@@ -7636,46 +7637,46 @@ count four short, `buildTag.js` carrying a stamp for a commit the branch
 does not contain, a stale cap comment. All corrected here.
 
 Not verified in a browser: no online session exists in this container.
-Pins: `test/watch1.test.js` (6), `test/lockpicking.test.js` (9),
-`test/econ1_world_prices.test.js` (6); mutants: watch1 39 (38 dead, 1
+Pins: `test/characters/enemy/watch1.test.js` (6), `test/systems/lockpicking.test.js` (9),
+`test/systems/econ1_world_prices.test.js` (6); mutants: watch1 39 (38 dead, 1
 equivalent), ol4 12 (12 dead), econ1 27 (25 dead, 2 equivalent as
 recorded).
 
 ## DROPS (2026-09-22, Mac: "Alright this is a big one. These changes are made specific for our codebase") - four drops integrated, three additions
 
-**What arrived.** Four zips of whole files against older mains: `quest-sharing-FINAL`, `Trading`, `peer-footsteps-v3`, `EnemyDesyncDungeonFix`. Each file was three-way merged (`git merge-file`) against the main commit its copy was cut from (the smallest diff over the last six hundred), one drop at a time, conflicts resolved at BLOCK level - never a whole file taken from one side (that silently dropped main's hunks once before). The base-finder's smallest diff is not always the true base: for `ui/enhancedMenu.js` it chose a main from before BR1 and the merge quietly reverted the brand mark; the file was reset to main and only the two `prefRow` lines re-added. Every deletion against main was audited by hand; the rest were legitimate.
+**What arrived.** Four zips of whole files against older mains: `quest-sharing-FINAL`, `Trading`, `peer-footsteps-v3`, `EnemyDesyncDungeonFix`. Each file was three-way merged (`git merge-file`) against the main commit its copy was cut from (the smallest diff over the last six hundred), one drop at a time, conflicts resolved at BLOCK level - never a whole file taken from one side (that silently dropped main's hunks once before). The base-finder's smallest diff is not always the true base: for `ui/enhanced/enhancedMenu.js` it chose a main from before BR1 and the merge quietly reverted the brand mark; the file was reset to main and only the two `prefRow` lines re-added. Every deletion against main was audited by hand; the rest were legitimate.
 
-**QUEST1 - a quest shared with the party.** `systems/questShare.js` (the three receiver gates over the catalog's own membership/minReq/oneTime rows) and `systems/quest/machine.js` (`getShareableQuestData`, `receiveSharedQuest` - a real live Quest rebuilt through restoreSaveData's own loop from a wire envelope, `updateSharedQuest` for a later resync, `REPLAYABLE_ONE_TIME_ACTIONS` = TeleportPc/GivePc/TrainPc re-armed on the receiver - GetItem since DISC28-I, RevealLocation since FIELD BUGS 2026-10-13e SHARE-REVEAL (the partner's `reveal` marked only the clicker's map); PayMoney and GiveItem deliberately not). The wire: `{t:'quest'}` under `QUEST_FRAME_MAX` (64 KiB, a quest's save-data is not a pose), `QUEST_HZ_MAX` = 0.1 (one share per ten seconds, `QUEST_SEND_MS`), `questShareGate`/`questInGate` as plain cooldowns (a sub-1 rate never passes a token bucket - the drop's own BUG note), the hub fans it to the sender's party. The Share button sits in the chronicle's opened quest frame (`ui/enhancedChronicle.js`, `.cr-rm cr-share`), through `chronicleDoor.js` to world.js `shareQuestWithParty`; a received quest lands as a HUD line (`setMidScreenText`). `receiveSharedQuest` is the FOURTH door a live quest is born through, so `world5`/`world7`'s `questClockStepMax` count moved 3 -> 4.
+**QUEST1 - a quest shared with the party.** `systems/quest/questShare.js` (the three receiver gates over the catalog's own membership/minReq/oneTime rows) and `systems/quest/machine.js` (`getShareableQuestData`, `receiveSharedQuest` - a real live Quest rebuilt through restoreSaveData's own loop from a wire envelope, `updateSharedQuest` for a later resync, `REPLAYABLE_ONE_TIME_ACTIONS` = TeleportPc/GivePc/TrainPc re-armed on the receiver - GetItem since DISC28-I, RevealLocation since FIELD BUGS 2026-10-13e SHARE-REVEAL (the partner's `reveal` marked only the clicker's map); PayMoney and GiveItem deliberately not). The wire: `{t:'quest'}` under `QUEST_FRAME_MAX` (64 KiB, a quest's save-data is not a pose), `QUEST_HZ_MAX` = 0.1 (one share per ten seconds, `QUEST_SEND_MS`), `questShareGate`/`questInGate` as plain cooldowns (a sub-1 rate never passes a token bucket - the drop's own BUG note), the hub fans it to the sender's party. The Share button sits in the chronicle's opened quest frame (`ui/enhanced/enhancedChronicle.js`, `.cr-rm cr-share`), through `chronicleDoor.js` to world.js `shareQuestWithParty`; a received quest lands as a HUD line (`setMidScreenText`). `receiveSharedQuest` is the FOURTH door a live quest is born through, so `world5`/`world7`'s `questClockStepMax` count moved 3 -> 4.
 
-**TRADE1 - player-to-player trade.** `net/tradeSession.js` (the state machine: ask/yes/no, offer revisions, lock/confirm on both sides, commit only after MY goods left the socket - LOOT-DUP's law, `TRADE_RANGE_M` 5 metres between the two BODIES, never a pixel) and `systems/tradePack.js` (the real pack: reserve, release, apply). The wire: `{t:'trade', data}` projected by `validTradeData` per kind, `TRADE_FRAME_MAX` 12 KiB, routed by the relay to ONE peer inside one room (`server/src/index.js` `_meterTrade`), `sendTrade` down whichever open socket reports the peer (own cell or a halo - `_socketFor`), `TRADE_RELAY_MIN = 91` so a client never sends a frame an older relay would close the socket on (`relaySupportsTrade` off the welcome). The F-menu grew a third row (`ui/socialMenu.js` `canTrade`/`tradeLabel`: 'Accept trade' when the peer already asked), and the window is `ui/enhancedPlayerTrade.js` behind `ui/playerTradeDoor.js` - a DOM door in the enhanced skin alone, its overlay arms one per line so CRASH2's window gate reads it (the drop had them on one line and the gate reported the door unread). `tradeFrame()` ticks on the online frame after `chatFrame()`, before the dead return.
+**TRADE1 - player-to-player trade.** `net/tradeSession.js` (the state machine: ask/yes/no, offer revisions, lock/confirm on both sides, commit only after MY goods left the socket - LOOT-DUP's law, `TRADE_RANGE_M` 5 metres between the two BODIES, never a pixel) and `systems/tradePack.js` (the real pack: reserve, release, apply). The wire: `{t:'trade', data}` projected by `validTradeData` per kind, `TRADE_FRAME_MAX` 12 KiB, routed by the relay to ONE peer inside one room (`server/src/index.js` `_meterTrade`), `sendTrade` down whichever open socket reports the peer (own cell or a halo - `_socketFor`), `TRADE_RELAY_MIN = 91` so a client never sends a frame an older relay would close the socket on (`relaySupportsTrade` off the welcome). The F-menu grew a third row (`ui/socialMenu.js` `canTrade`/`tradeLabel`: 'Accept trade' when the peer already asked), and the window is `ui/enhanced/enhancedPlayerTrade.js` behind `ui/playerTradeDoor.js` - a DOM door in the enhanced skin alone, its overlay arms one per line so CRASH2's window gate reads it (the drop had them on one line and the gate reported the door unread). `tradeFrame()` ticks on the online frame after `chatFrame()`, before the dead return.
 
 **PARTY-REST1/2/3 - came in with the Trading drop's tree, kept whole.** `composePartyPose` carries `bk` (the building), `rest` (the leader's live session) and `ready` (this tab's `/ready` vote); a follower NEAR the leader (`nearAccount`: the same pixel/mode/building AND within `PARTY_REST_RADIUS` = 15 m by the bodies) mirrors the leader's nap through `partyRestFollowTick` - the SAME `RestWindow` class over `partyRestMirrorDeps()` (no encounter roll, no trespass charge of its own); the leader's `toggleRest` is gated by `partyRestGate` (everyone near must have typed `/ready`). The drop's world.js imported a `createRestWindow` from a `ui/restDoor.js` that is not in this tree - the app would not have loaded; restored to `new RestWindow(...)` in both places, and `restlodging`'s "one rest window path" pin now names the mirror as the one permitted second.
 
 **PEER-FS1/2 - peers heard.** The pose carries `fk` (the footstep-surface kind, `systems/footsteps.js FOOTSTEP_KIND` 0-5, cached on the exterior stride as `_lastFootstepKind` and composed into `arm`); `net/remotePlayers.js` runs a `FootstepMachine` per peer off their own pose and plays the clip pair (`FOOTSTEP_CLIP_SETS` - renamed from the drop's `FOOTSTEP_SETS`, which `immersiveFootsteps.js` already declares for its own set names) with a linear falloff 6 -> 30 m, and a swing sound on every `an` edge. Two switches, `peerFootsteps` and `peerAttackSounds`, on the peer-sprites card and in `ONLINE_PLAYERS_OWN_PREFS` (how OTHER players are heard on THIS machine, the same shape as `peerClassSprites`). `deps` may be null in a test, so the two sound doors read `this.deps?.audio`; `composeLook` keeps ONLINE-CLASS1's law (`class` OMITTED when the career has no name - a look is a cache key), which the drop had loosened to `class: null`.
 
-**SEAT-HEAL - the private dungeon.** A joiner whose host went quiet for `FOES_STALE_MS` took the foes for itself and never gave them back: `applyFoes` refused every frame while it was the authority, and the heartbeat that ends the authority is stamped only when a frame is APPLIED. `dungeonContext.js` `applyFoes` now wraps `applyFoesFrame`: an authority that receives a frame stands down and applies it, and takes the seat back only if the frame did not land. `test/seatheal.test.js` mounts the real statements (acorn-sliced) against a fake clock and session.
+**SEAT-HEAL - the private dungeon.** A joiner whose host went quiet for `FOES_STALE_MS` took the foes for itself and never gave them back: `applyFoes` refused every frame while it was the authority, and the heartbeat that ends the authority is stamped only when a frame is APPLIED. `dungeonContext.js` `applyFoes` now wraps `applyFoesFrame`: an authority that receives a frame stands down and applies it, and takes the seat back only if the frame did not land. `test/net/seatheal.test.js` mounts the real statements (acorn-sliced) against a fake clock and session.
 
-**The relay.** `RELAY_VERSION` = `world91` (`world92` since AUDIT DROPS below, which re-metered the two frames), ONE bump for the three wire changes (the quest frame, the trade frame, the pose's `fk`); `test/relayversion.test.js` carries the row's sha. The merge to main deploys it: `relay-deploy.yml` drift-deploys on every push to main when the live Worker's version is not `RELAY_VERSION` (keyed on that one constant since SRV-N/CI - AUDIT RELAY-H1's F1 above paid this same false claim once already), and the deploy drops every connected player once. Until the merge lands, a client on this branch against the live world90 relay reads `tradeOk` false off the welcome and the row says 'relay not updated' - the wire's own guard, not a step for anyone. The Cloudflare token lives in the GitHub Actions secret and nowhere else (Mac's decision).
+**The relay.** `RELAY_VERSION` = `world91` (`world92` since AUDIT DROPS below, which re-metered the two frames), ONE bump for the three wire changes (the quest frame, the trade frame, the pose's `fk`); `test/net/relayversion.test.js` carries the row's sha. The merge to main deploys it: `relay-deploy.yml` drift-deploys on every push to main when the live Worker's version is not `RELAY_VERSION` (keyed on that one constant since SRV-N/CI - AUDIT RELAY-H1's F1 above paid this same false claim once already), and the deploy drops every connected player once. Until the merge lands, a client on this branch against the live world90 relay reads `tradeOk` false off the welcome and the row says 'relay not updated' - the wire's own guard, not a step for anyone. The Cloudflare token lives in the GitHub Actions secret and nowhere else (Mac's decision).
 
 **Three additions, per the same request.**
 
 *PEER-PLAQUE1 - "Using the world tooltip implementation for other players and interaction prompt."* (The prompt line behind the interact key is gone since DISC7 ACT-MENU: the card's acts are the plaque's rows - see DISC7 and AUDIT DISC7 below.) Another player under the crosshair is one more racer in `raceWinner`'s one precedence (`peer`, between the townsperson and the foe - a body measured through the same cylinder, and the press has no arm for it: the F key is its own gesture). `player/socialPick.js` grew the pure half: `peerRayPick` dresses SOC5's own `pickPeerInFront` hit (SOCIAL_REACH, `rayPersonDistance`) as `{ key: 'peer:<id>', distance, reach }`, `peerIdOfKey`, and `peerPromptText` - the ENABLED acts alone, in the menu's own order and labels (`PEER_ACT_LABELS`, pinned equal to `socialMenuRows`), behind the LIVE interact binding (`getBinding(bindings(), 'SocialInteract')`, 'KeyF' -> 'F', no bracket when unbound - AUDIT SOC D10/C19), the trade row's own live label, and with nothing to offer the relation ('In your party' before 'Friend', else the name alone). world.js names it in the PORT's own `_hoverNamers` (ungated - DFU has no other players, so it sits with the cart and the camps above the mod's switch) as `<name> <glyph marks>` (`ui/playerBadge.js glyphMarks`, the classic face's plain-text glyphs); the building and the dungeon race and name it through two new host doors, `peerHoverPick(eye, dir)` and `peerHoverName(key)`, over the mode's own eye - `worldModes.js` interior pick/namer, `buildDungeonContext` opts, `ctx.addActivationNamer`, `dungeonContext.js` pick.
 
-*PARTY-REST4 - "Notification when youre not near the party leader for resting."* `partyRestFarNotice(leaderRest, near, leaderRow)` in world.js, called from `partyRestFollowTick` on the SAME `near` the mirror reads and before the mirror acts on it: the leader's pose carries a rest and I am not near enough - said ONCE on `setMidScreenText` ("<leader> is resting - come within 15 m of them to rest with the party.", the radius the one law's own number), the latch re-armed only when that rest has ended or I have come near (then the mirror opens instead), stood down with the party. A follower who walks out mid-nap is told the frame their mirror ends. Lifted out and driven in `test/restfar.test.js` (sixty far frames say it once).
+*PARTY-REST4 - "Notification when youre not near the party leader for resting."* `partyRestFarNotice(leaderRest, near, leaderRow)` in world.js, called from `partyRestFollowTick` on the SAME `near` the mirror reads and before the mirror acts on it: the leader's pose carries a rest and I am not near enough - said ONCE on `setMidScreenText` ("<leader> is resting - come within 15 m of them to rest with the party.", the radius the one law's own number), the latch re-armed only when that rest has ended or I have come near (then the mirror opens instead), stood down with the party. A follower who walks out mid-nap is told the frame their mirror ends. Lifted out and driven in `test/scenes/restfar.test.js` (sixty far frames say it once).
 
-*DROPS-FONT - "Ensuring enhanced font gets integrated with the new ui changes."* Verified and pinned rather than changed: the trade window's root is a `.px-home` (the one rule that carries `PIXEL_STACK`, unsmoothed, ligatures off) and its own sheet names no face; the gold field and the chronicle's Share button (`.cr-rm`) say `font: inherit` (a form control falls to the browser's face unless told); the F-menu's Trade row rides the `.dfpeer` card that already wears `PIXEL_FONT_CSS`. `test/tradefont.test.js`.
+*DROPS-FONT - "Ensuring enhanced font gets integrated with the new ui changes."* Verified and pinned rather than changed: the trade window's root is a `.px-home` (the one rule that carries `PIXEL_STACK`, unsmoothed, ligatures off) and its own sheet names no face; the gold field and the chronicle's Share button (`.cr-rm`) say `font: inherit` (a form control falls to the browser's face unless told); the F-menu's Trade row rides the `.dfpeer` card that already wears `PIXEL_FONT_CSS`. `test/ui/enhanced/tradefont.test.js`.
 
 **Types.** `net/tradeSession.js` opted into `// @ts-check` (HARD3: a seam file) and the checker was run to zero over the tree - the drops' JSDoc named `say`/`near`/`onEnd` as zero-argument functions, `remotePlayers`' deps contract lacked `uploadRecordFrame`/`audio`, the two per-peer maps were born lazily (`??=`) instead of in the constructor, `online.shareQuest`'s destructured default had no shape.
 
-Not verified in a browser: no online session exists in this container. Pins: `test/trade_session.test.js` (25, the drop's), `test/seatheal.test.js` (3, the drop's), `test/peerplaque.test.js` (5), `test/restfar.test.js` (2), `test/tradefont.test.js` (2); mutants: peerplaque 24 (23 dead, 1 equivalent as recorded), restfar 8 (8 dead), tradefont 5 (5 dead), worldhover re-aimed for the new racer (127 dead).
+Not verified in a browser: no online session exists in this container. Pins: `test/net/trade_session.test.js` (25, the drop's), `test/net/seatheal.test.js` (3, the drop's), `test/player/peerplaque.test.js` (5), `test/scenes/restfar.test.js` (2), `test/ui/enhanced/tradefont.test.js` (2); mutants: peerplaque 24 (23 dead, 1 equivalent as recorded), restfar 8 (8 dead), tradefont 5 (5 dead), worldhover re-aimed for the new racer (127 dead).
 
 ## AUDIT DROPS (2026-09-22, Mac: "Lets do an audit before merging") - three lenses over the four drops and the three additions, twenty findings paid
 
-Three opus lenses, one each over the merge and the wire, the additions and the host wiring, the records and the pins. The merge itself was sound: no line of main's was lost but one comment (the `/unstuck` guard's AUDIT 24 wave37 rationale, restored) and three test messages' history (RELAY-H1's and ACC1d's version notes in watch1/soc1_hub/econ1, restored). The drops' own logic was not. Every finding below is paid, and pinned by execution in `test/auditdrops.test.js` (14) with `tools/mutants/auditdrops.json` (45: 41 dead, 4 equivalent as recorded).
+Three opus lenses, one each over the merge and the wire, the additions and the host wiring, the records and the pins. The merge itself was sound: no line of main's was lost but one comment (the `/unstuck` guard's AUDIT 24 wave37 rationale, restored) and three test messages' history (RELAY-H1's and ACC1d's version notes in watch1/soc1_hub/econ1, restored). The drops' own logic was not. Every finding below is paid, and pinned by execution in `test/systems/quest/auditdrops.test.js` (14) with `tools/mutants/auditdrops.json` (45: 41 dead, 4 equivalent as recorded).
 
-**A - the quest envelope was trusted whole (lens 1, HIGH).** `receiveSharedQuest` built a live Quest straight from the sender's bytes: any party member could hand the receiver a `GivePc` of anything, a `TeleportPc`, a global-var link. The wire's `questName` gated the receipt but the quest was built from `data.questName` (a share named HARMLESS with the data of a quest the receiver already ran gave them a second live copy); the main quest was refused on SEND only. Now (`systems/questShare.js`): the data must be the quest it names; the main quest is refused on RECEIPT; the envelope's SHAPE - every task symbol and every action TYPE in order, every resource symbol and type - must be the receiver's OWN parse of that quest by name (`machine.parseQuestShape`, the same parser the lists use, `shapeMismatch`), refused as 'mismatch', or 'unknown' with no local source; and every Item resource's item is the receiver's own roll (`takeLocalItems`) - a typed `daggerfallUnityItem` never lands. What remains the sender's: the Places' `siteDetails` (the party goes to the same dungeon), the Persons, the Foes, the task/action STATE - which is the point of sharing. **A2 - live sync paid rewards twice (HIGH).** A partner who was behind resynced my finished quest back into play (tombstoned -> live, a completed GivePc pending again), and a later resync re-armed it: paid twice; once the tombstone expired, a resync counted as a fresh receipt and re-armed everything. Now: a resync onto a `questComplete`/`questTombstoned` copy is refused; a tombstone moves the name from `sharedQuestNames` to `finishedSharedQuestNames`, and a fresh receipt of a finished name is 'done' for the session; action completion is MONOTONIC across a resync (never true -> false off an older copy - it would run, reward and all, when its task next ticked); a reward is re-armed AT MOST ONCE per action for the life of the quest (`_rearmed`). (AUDIT DISC28 QS-4, 2026-09-28: the once is the FIRING's - an action that ran reads complete, and completion is monotonic - and `_rearmed` is retired: spent by the arming, it refused a reward armed and not yet fired when the next envelope landed, and the reward never ran.) **A3 - a malformed resync corrupted the live quest (MEDIUM).** `restoreSaveData` clears as it goes; `{tasks: 7}` left the live quest with no resources and no tasks. Now the resync is DRY-RUN on a scratch Quest first and refused whole; a fresh receipt the restore chokes on lands nothing.
+**A - the quest envelope was trusted whole (lens 1, HIGH).** `receiveSharedQuest` built a live Quest straight from the sender's bytes: any party member could hand the receiver a `GivePc` of anything, a `TeleportPc`, a global-var link. The wire's `questName` gated the receipt but the quest was built from `data.questName` (a share named HARMLESS with the data of a quest the receiver already ran gave them a second live copy); the main quest was refused on SEND only. Now (`systems/quest/questShare.js`): the data must be the quest it names; the main quest is refused on RECEIPT; the envelope's SHAPE - every task symbol and every action TYPE in order, every resource symbol and type - must be the receiver's OWN parse of that quest by name (`machine.parseQuestShape`, the same parser the lists use, `shapeMismatch`), refused as 'mismatch', or 'unknown' with no local source; and every Item resource's item is the receiver's own roll (`takeLocalItems`) - a typed `daggerfallUnityItem` never lands. What remains the sender's: the Places' `siteDetails` (the party goes to the same dungeon), the Persons, the Foes, the task/action STATE - which is the point of sharing. **A2 - live sync paid rewards twice (HIGH).** A partner who was behind resynced my finished quest back into play (tombstoned -> live, a completed GivePc pending again), and a later resync re-armed it: paid twice; once the tombstone expired, a resync counted as a fresh receipt and re-armed everything. Now: a resync onto a `questComplete`/`questTombstoned` copy is refused; a tombstone moves the name from `sharedQuestNames` to `finishedSharedQuestNames`, and a fresh receipt of a finished name is 'done' for the session; action completion is MONOTONIC across a resync (never true -> false off an older copy - it would run, reward and all, when its task next ticked); a reward is re-armed AT MOST ONCE per action for the life of the quest (`_rearmed`). (AUDIT DISC28 QS-4, 2026-09-28: the once is the FIRING's - an action that ran reads complete, and completion is monotonic - and `_rearmed` is retired: spent by the arming, it refused a reward armed and not yet fired when the next envelope landed, and the reward never ran.) **A3 - a malformed resync corrupted the live quest (MEDIUM).** `restoreSaveData` clears as it goes; `{tasks: 7}` left the live quest with no resources and no tasks. Now the resync is DRY-RUN on a scratch Quest first and refused whole; a fresh receipt the restore chokes on lands nothing.
 
-*SHARE-COPY (2026-09-26): A refused EVERY quest - the shape check compared the task symbols minted from the UID counter at parse, and the reference parse ran over the receiver's world. `01-Overview/Field-Bugs-2026-09-26.md`.*
+*SHARE-COPY (2026-09-26): A refused EVERY quest - the shape check compared the task symbols minted from the UID counter at parse, and the reference parse ran over the receiver's world. `01-Overview/bugs/Field-Bugs-2026-09-26.md`.*
 
 **B - the trade.** *B1 (MEDIUM):* editing my offer after my Confirm unlocked both sides at home while the peer, who had confirmed and committed against the old revision, had their goods refused as "not valid" - and lost (the drop's own rig: B's ring and 5 gold vanished). `setOffer` now refuses once `myConfirm` stands, and the window stages, unstages and types nothing after it. *B2 (LOW):* a forged commit arriving while my own commit was still queued ended the session with my reservation neither sent nor restored; `_finish` restores a reserved-but-unsent lot on every ending. *B3 (MEDIUM):* the relay's trade byte budget was the ROOM's - two sockets at `TRADE_HZ_MAX` x `TRADE_FRAME_MAX` spent it and an honest commit whose sender's goods were already gone was dropped; it is the SENDER's now (`a.tbytes`), and the client's inbound trade gate is per sender too (`_inTradeBuckets`), so a flood starves only the flooder. *B4 (found paying B3):* `validTradeData` bounded the DATA at the FRAME's cap, so the widest honest offer passed at home and was refused at the relay's door as 'frame too large' - which closes the socket. `TRADE_DATA_MAX` = the frame cap less the wrapper; what passes at home fits `parseClient` by construction, and `sendTrade` guards the trade cap, not the general one.
 
@@ -7685,7 +7686,7 @@ Three opus lenses, one each over the merge and the wire, the additions and the h
 
 **E - the additions and the peer sounds.** *E1 (MEDIUM):* indoors and underground the plaque painted over the F-menu the player had just opened on the very peer under the crosshair - the street's `pointerSurfaces` term never reached the two modal hosts; `pointerSurfaceUp` does now. *E2 (MEDIUM):* `fk` was cached on the street stride only, so a peer in a tavern crunched snow: the modal stride caches its kind off the very ctx its clip pair is picked from (`footstepKind`), and the pose reads the mode's. *E3 (LOW):* the modal plaque raced from the mode's eye while the F key races from `cam.pos` - in third person the two disagree; the plaque's pick is the key's own ray in every mode (`socialFwd`). *E4 (MEDIUM):* a BODY peer's stride machine and swing edge were never swept (the sweep walked `_batches`, which a body peer never joins - SLAM4's class), and a stale `an` played a phantom swing when they came back; swept against every peer seen. *E5:* the peer stride was fed the SCENE point, so a floating-origin recentre (819.2 units) was a step - the wire frame now ~~~~ (PEER-BUZZ, below: WRONG - the overworld's wire frame is forty scene units to one, and the fix was the buzz every player then reported; the stride is in scene units again, rebased at the recentre). *E6:* a swing sounded as the first weapon anywhere in the look, sheathed or not - the right-hand slot, and a fist while `wd` is 0. *F1:* the trade window's stack-quantity field had no `font: inherit` - every input in the window now.
 
-**The records (lens 3).** No re-aimed pin was weakened and every count and constant was true; the record named the wrong audit for the relay-deploy precedent (RELAY-H1's F1, not ONLINE-DUNGEON-FOES'), the Ledger said "a tenth-a-second cooldown" for one share per ten seconds, and 'in your party' lived in two files (one home now: `net/social.js WHY_IN_PARTY`). Re-aims the DROPS record left unsaid: `test/world2.test.js` moved its pin from `applyFoes` to `applyFoesFrame` (SEAT-HEAL's real change of law - the public door no longer refuses frames while it holds authority; seatheal pins the new behaviour); `watch1`, `econ1`, `auditworld2` (`'quest'` in the doc regex); mutants `slam15` Z6/Z7, `soc1` S38, `macfg` MAC-F. The drop laws no pin had held are held now (`test/auditdrops.test.js` F): the pose's `fk` clamp, the quest frame's own cap at the door, `relaySupportsTrade`, the real `tradePack` reserve/restore over a real entity, `tradeFrame` after `chatFrame` before the dead return. Left as found, on purpose: a modified client can offer gold or items it does not own (WORLD4's peer-loot trust - the receiver sees the offer before locking); peers' footsteps assume a grounded peer (the pose carries no swim/levitate bit); a shared TeleportPc lands the receiver at the sender's Place (party trust).
+**The records (lens 3).** No re-aimed pin was weakened and every count and constant was true; the record named the wrong audit for the relay-deploy precedent (RELAY-H1's F1, not ONLINE-DUNGEON-FOES'), the Ledger said "a tenth-a-second cooldown" for one share per ten seconds, and 'in your party' lived in two files (one home now: `net/social.js WHY_IN_PARTY`). Re-aims the DROPS record left unsaid: `test/net/world2.test.js` moved its pin from `applyFoes` to `applyFoesFrame` (SEAT-HEAL's real change of law - the public door no longer refuses frames while it holds authority; seatheal pins the new behaviour); `watch1`, `econ1`, `auditworld2` (`'quest'` in the doc regex); mutants `slam15` Z6/Z7, `soc1` S38, `macfg` MAC-F. The drop laws no pin had held are held now (`test/systems/quest/auditdrops.test.js` F): the pose's `fk` clamp, the quest frame's own cap at the door, `relaySupportsTrade`, the real `tradePack` reserve/restore over a real entity, `tradeFrame` after `chatFrame` before the dead return. Left as found, on purpose: a modified client can offer gold or items it does not own (WORLD4's peer-loot trust - the receiver sees the offer before locking); peers' footsteps assume a grounded peer (the pose carries no swim/levitate bit); a shared TeleportPc lands the receiver at the sender's Place (party trust).
 
 **The relay:** `world92` - the trade bytes per sender, the hub's quest cooldown, the quest budget's order, the trade data cap. The merge deploys it (`relay-deploy.yml`).
 
@@ -7693,11 +7694,11 @@ Not verified in a browser: no online session exists in this container.
 
 ## PARTY-REST DROP (2026-09-22, Mac: "Add this to the batch") - the party-rest feature zip integrated over the audit, one getter per host, world93
 
-Eight files from Mac's tree (`net/wire.js`, `ui/enhancedRest.js`, `scenes/world.js`, `scenes/worldModes.js`, `scenes/dungeonContext.js`, `scenes/shared.js`, `systems/restSession.js`, `systems/survival/rest.js`), each a whole-file copy against an older main, three-way merged per file against the main commit that minimised its diff, conflicts resolved at block level. What arrived, by the drop's own law names: PARTY-REST1 (the leader's live rest/loiter session rides the party pose; a follower near enough mirrors it - `partyRestFollowTick` every frame beside `partyFrame`, the mirror rolling no encounter of its own), PARTY-REST1c (ANY near resting member is mirrored, not the leader alone), PARTY-REST2/2b/2f/28 (`/ready` is a local chat command stamping `voteAt`, the vote expires in `PARTY_READY_TIMEOUT_MS`, `partyRestGate` refuses a rest until the near members are ready, `markPartyRestSpent` is the one reset every host runs on a granted rest, a refused gate clears back to -Infinity so a new vote can start), PARTY-REST4/4b (`partyRestMirrorDeps(restKind, targetAcct)` heals the follower at the leader's rate through `outdoorRestDeps.overrideRestKind`), PARTY-REST5/19 (the leader's `restEnemyAt` breaks every mirror; a follower's cancel rides `restCancelFor/At`), PARTY-REST6 (`restState` answers only while `state === 'resting'` - the wake box is not a live rest), PARTY-REST8 (`nearAccount`'s interior arm keys on `bk`, now 32-bit, PARTY-REST9), PARTY-REST10 (`restHour(entity, kind, tick, carry)`), PARTY-REST12/20/21/23/25/26/17/16/2d/2e (the gate's refusals and their cooldowns: `PARTY_REST_VOTE_COOLDOWN_MS` 60 s, `PARTY_REST_START_COOLDOWN_MS` 10 s), ONLINE-REST1 (the gate is enhanced+online only), TAVERN-REST1/GUILD-REST1 (`modes.insidePartyRestExempt`), STRANGER-REST1 (`strangerRestGate`: no rest within 100 m of a stranger outdoors, 30 m in a dungeon), REST-VITALS1/RESTFIX1/RESTFIX3/PARTY-REST1d (the enhanced rest window: vitals shown while healing, no rebuild per tick, the illegal-rest warning, pointer lock released for every member). The wire grew `rest.kind`, `voteAt`, `restEnemyAt`, `restCancelFor`, `restCancelAt`, `restStartedAt`; `RELAY_VERSION` is world93 (the LAW row hashed after the wire change; `server/src/index.js` is untouched by this drop - the version moves because the pose's shape did).
+Eight files from Mac's tree (`net/wire.js`, `ui/enhanced/enhancedRest.js`, `scenes/world.js`, `scenes/worldModes.js`, `scenes/dungeonContext.js`, `scenes/shared.js`, `systems/rest/restSession.js`, `systems/survival/rest.js`), each a whole-file copy against an older main, three-way merged per file against the main commit that minimised its diff, conflicts resolved at block level. What arrived, by the drop's own law names: PARTY-REST1 (the leader's live rest/loiter session rides the party pose; a follower near enough mirrors it - `partyRestFollowTick` every frame beside `partyFrame`, the mirror rolling no encounter of its own), PARTY-REST1c (ANY near resting member is mirrored, not the leader alone), PARTY-REST2/2b/2f/28 (`/ready` is a local chat command stamping `voteAt`, the vote expires in `PARTY_READY_TIMEOUT_MS`, `partyRestGate` refuses a rest until the near members are ready, `markPartyRestSpent` is the one reset every host runs on a granted rest, a refused gate clears back to -Infinity so a new vote can start), PARTY-REST4/4b (`partyRestMirrorDeps(restKind, targetAcct)` heals the follower at the leader's rate through `outdoorRestDeps.overrideRestKind`), PARTY-REST5/19 (the leader's `restEnemyAt` breaks every mirror; a follower's cancel rides `restCancelFor/At`), PARTY-REST6 (`restState` answers only while `state === 'resting'` - the wake box is not a live rest), PARTY-REST8 (`nearAccount`'s interior arm keys on `bk`, now 32-bit, PARTY-REST9), PARTY-REST10 (`restHour(entity, kind, tick, carry)`), PARTY-REST12/20/21/23/25/26/17/16/2d/2e (the gate's refusals and their cooldowns: `PARTY_REST_VOTE_COOLDOWN_MS` 60 s, `PARTY_REST_START_COOLDOWN_MS` 10 s), ONLINE-REST1 (the gate is enhanced+online only), TAVERN-REST1/GUILD-REST1 (`modes.insidePartyRestExempt`), STRANGER-REST1 (`strangerRestGate`: no rest within 100 m of a stranger outdoors, 30 m in a dungeon), REST-VITALS1/RESTFIX1/RESTFIX3/PARTY-REST1d (the enhanced rest window: vitals shown while healing, no rebuild per tick, the illegal-rest warning, pointer lock released for every member). The wire grew `rest.kind`, `voteAt`, `restEnemyAt`, `restCancelFor`, `restCancelAt`, `restStartedAt`; `RELAY_VERSION` is world93 (the LAW row hashed after the wire change; `server/src/index.js` is untouched by this drop - the version moves because the pose's shape did).
 
-**What the zip did not carry, written here.** The drop's three hosts import `ui/restDoor.js`, which no zip shipped: written - `createRestWindow(deps, ignoreAllocatedBed)` opens `ui/enhancedRest.js` under the enhanced skin (`openEnhancedRest`, the fixed host at z-index 13, `registerOverlay` around its `dispose`) and `new RestWindow(deps, ignoreAllocatedBed)` under the classic one; it touches no DOM itself, so CRASH2's door contract reads the view, not the door. The drop's own restlodging pins expect `createRestWindow` in `scenes/exterior.js` (not in the zip): converted. The drop's partyrest1 pins name `.rest-shell` rules `enhancedStyle.js` never had: added (the centred 420 px dialog, the hours field, the vitals line, `font-family: inherit` on the field - FONT1's law).
+**What the zip did not carry, written here.** The drop's three hosts import `ui/restDoor.js`, which no zip shipped: written - `createRestWindow(deps, ignoreAllocatedBed)` opens `ui/enhanced/enhancedRest.js` under the enhanced skin (`openEnhancedRest`, the fixed host at z-index 13, `registerOverlay` around its `dispose`) and `new RestWindow(deps, ignoreAllocatedBed)` under the classic one; it touches no DOM itself, so CRASH2's door contract reads the view, not the door. The drop's own restlodging pins expect `createRestWindow` in `scenes/exterior.js` (not in the zip): converted. The drop's partyrest1 pins name `.rest-shell` rules `enhancedStyle.js` never had: added (the centred 420 px dialog, the hours field, the vitals line, `font-family: inherit` on the field - FONT1's law).
 
-**Reconciled with AUDIT DROPS.** *D1 re-done, not doubled:* the drop wrote the building's `restState` getter onto `interiorKeyCtx` - the interior KEY table's own ctx, which the mode factory never returns - so `modes?.restState` read `undefined` from a tavern and broadcast `rest: null`: the very hole D1 had closed on the returned object. The merge left both, and in the dungeon two getters on one `api` literal (the later wins). One getter per host now, on the object world.js reads, in the drop's shape with its PARTY-REST6 words; pinned by count and by position (test/auditdrops.test.js D1), a shadowing plain key killed as a mutant. *D2's declined latch* is superseded by PARTY-REST19's own cancel fields and dropped. *D5* stands: the outdoor toggle runs `strangerRestGate` then `partyRestGate` then `markPartyRestSpent` only once `modes` exists. *PARTY-REST4 (mine, the far notice)* is renamed PARTY-REST-FAR1 so it no longer collides with the drop's PARTY-REST4 (the heal rate): it scans `social.others()` for ANY resting member I cannot mirror (PARTY-REST1c's law), falls back to 'A party member', and stays quiet while dead. `canRest` and `ILLEGAL_REST_WARNING` now have two window callers (restwhere's sweep admits the enhanced twin).
+**Reconciled with AUDIT DROPS.** *D1 re-done, not doubled:* the drop wrote the building's `restState` getter onto `interiorKeyCtx` - the interior KEY table's own ctx, which the mode factory never returns - so `modes?.restState` read `undefined` from a tavern and broadcast `rest: null`: the very hole D1 had closed on the returned object. The merge left both, and in the dungeon two getters on one `api` literal (the later wins). One getter per host now, on the object world.js reads, in the drop's shape with its PARTY-REST6 words; pinned by count and by position (test/systems/quest/auditdrops.test.js D1), a shadowing plain key killed as a mutant. *D2's declined latch* is superseded by PARTY-REST19's own cancel fields and dropped. *D5* stands: the outdoor toggle runs `strangerRestGate` then `partyRestGate` then `markPartyRestSpent` only once `modes` exists. *PARTY-REST4 (mine, the far notice)* is renamed PARTY-REST-FAR1 so it no longer collides with the drop's PARTY-REST4 (the heal rate): it scans `social.others()` for ANY resting member I cannot mirror (PARTY-REST1c's law), falls back to 'A party member', and stays quiet while dead. `canRest` and `ILLEGAL_REST_WARNING` now have two window callers (restwhere's sweep admits the enhanced twin).
 
 Not verified in a browser: no online session exists in this container.
 
@@ -7707,7 +7708,7 @@ Not verified in a browser: no online session exists in this container.
 
 ## LOOT-REGEN (2026-09-22, Satranath on Discord, online: "I get killed and go back into the dungeon, and all the guys I killed before have loot again") - a quick-loot take is the room's word
 
-WORLD8 says taken loot comes back one real hour after it fell, and the relay keeps a dungeon's memory thirty days; neither failed. The death is remembered (the corpse stands on re-entry) and the corpse's loot is NOT: `_lootSeen` gains a `corpse:<i>` only when the room is told about it, and the QUICK-LOOT door (B4, 2026-09-22) told it nothing - it read the WORLD4 claim as a WINDOW's act and made none for a take that opened nothing, returning before the claim. The memory strips every foe's `items` (AUDIT WORLD4 D4) and carries only the seen containers' records, so a quick-looted corpse had no record; `patchFoe` on re-entry stood the remembered death over the fresh build's OWN roll. Quick Loot is on by default and every ordinary press on a highlighted corpse row takes one item through that door (the window opens only on J), so it hit everyone; death is just how Satranath left. `dungeonContext.js`: a take says what is left the moment it lands - `publishLoot(key)`, the stamp (WORLD8), the record, the seen-set, the first-word memory push (D5) - and settles an emptied pile's flat as the window's `onEmptied` would; C6's window order stands untouched behind it (the window's claim follows its mount). Buildings need nothing: a building's memory keys are `shelf:`/`container:` alone, and a cell's corpses are nobody's memory. Pin: `test/discord5.test.js` (the door by source, the word's four parts); mutants in `tools/mutants/discord5.json` (the word removed, the flat unsettled). Not verified in a browser: no online session exists in this container.
+WORLD8 says taken loot comes back one real hour after it fell, and the relay keeps a dungeon's memory thirty days; neither failed. The death is remembered (the corpse stands on re-entry) and the corpse's loot is NOT: `_lootSeen` gains a `corpse:<i>` only when the room is told about it, and the QUICK-LOOT door (B4, 2026-09-22) told it nothing - it read the WORLD4 claim as a WINDOW's act and made none for a take that opened nothing, returning before the claim. The memory strips every foe's `items` (AUDIT WORLD4 D4) and carries only the seen containers' records, so a quick-looted corpse had no record; `patchFoe` on re-entry stood the remembered death over the fresh build's OWN roll. Quick Loot is on by default and every ordinary press on a highlighted corpse row takes one item through that door (the window opens only on J), so it hit everyone; death is just how Satranath left. `dungeonContext.js`: a take says what is left the moment it lands - `publishLoot(key)`, the stamp (WORLD8), the record, the seen-set, the first-word memory push (D5) - and settles an emptied pile's flat as the window's `onEmptied` would; C6's window order stands untouched behind it (the window's claim follows its mount). Buildings need nothing: a building's memory keys are `shelf:`/`container:` alone, and a cell's corpses are nobody's memory. Pin: `test/systems/discord5.test.js` (the door by source, the word's four parts); mutants in `tools/mutants/discord5.json` (the word removed, the flat unsettled). Not verified in a browser: no online session exists in this container.
 
 ## PEER-BUZZ (2026-09-22, Discord through Mac: "footstep sounds are broken", with a recording) - the peer stride was measured in world coordinates
 
@@ -7726,7 +7727,7 @@ The stride is measured in SCENE units, as the local machine's is, and the floati
 handles it for the local machine: world.js's recentre block calls `remotePlayers.rebaseFootsteps()` beside
 `footsteps.rebase()`, every peer machine drops its anchor, and the 819.2-unit jump re-seeds instead of walking.
 E5's own pin is re-aimed to that shape (a recentre with the rebase is no step), its mutant inverted (the wire frame
-back is the buzz), and `test/peerstride.test.js` drives the real seam at the real scale: a peer at 3 u/s for five
+back is the buzz), and `test/net/peerstride.test.js` drives the real seam at the real scale: a peer at 3 u/s for five
 seconds in the overworld makes a walker's six steps, not two hundred and forty; a standing peer none; a recentre
 rebased none, and the same jump unrebased one - the negative control that shows the rebase is what matters.
 `tools/mutants/peerstride.json`: 3, 3 dead. Not verified in a browser; the recording is the measurement.
@@ -7753,7 +7754,7 @@ the lens was running; the rest is paid here.
 - *A follower's Stop was ignored, or replayed.* `restCancelAt` was each follower's own `performance.now()`
   compared against ONE high-water mark for every sender: a Stop from a tab younger than the last canceller's did
   nothing (and that follower was pulled straight back in), and a reload of the rester's tab replayed an old
-  request on the next rest's first tick. `systems/partyRestLaw.js`: the marker is compared per sender against a
+  request on the next rest's first tick. `systems/party/partyRestLaw.js`: the marker is compared per sender against a
   snapshot taken as my rest begins (`snapshotCancels` in `markPartyRestSpent`, `cancelRequestFor` each tick), a
   mirror is nobody's target (`canceledByFollower: () => false` in its deps), and a follower's request is dropped
   when their next mirror starts.
@@ -7820,14 +7821,14 @@ the lens was running; the rest is paid here.
   would mark the still as stale); the notice stack and the junction map overlap the party rows (older than
   PARTY8); the bar hues are literals where the sheet has tokens.
 
-**Pins and mutants.** `test/auditparty8.test.js` (18) drives the law on a table (`stampOf`/`latestStamp`,
+**Pins and mutants.** `test/net/auditparty8.test.js` (18) drives the law on a table (`stampOf`/`latestStamp`,
 `memberPresent`, `voteStands`, the cancel markers, `mirrorKey`), the wire's `readyAt` and the byte budget's
 arithmetic, the picture (the offline seat's pose dropped, a pose a quiet change), the enhanced rest window under
 a fake document (the bed through canRest's guild arm - bed ZERO, which classic's truthiness skips - the expired
 room, the presence re-roll, the hours prompt's four arms, Escape and the stack, the until-healed meter), the body
 allocator (a mate seated first, a stranger never takes hers, a mate takes a stranger's), and the hub over the
 fake room (seven lapses say the lead once, the lead to an online seat, the ninth seat refused at the ACCEPT
-path); the world.js seams by source at the foot. `test/party8b.test.js` re-aimed to coordinates and extended
+path); the world.js seams by source at the foot. `test/net/party8b.test.js` re-aimed to coordinates and extended
 (the flare on a max that rose, on a one-point hit); nineteen pins in `partyrest1`/`auditdrops`/`restfar`/
 `restlodging`/`mwbody1` re-aimed to the fixed text; `partyrest1`'s dead slice (`(restKind) =>`, lens 3) stands
 as it was pinned by its own signature test. `tools/mutants/auditparty8.json`: 23, 23 dead. Five older records
@@ -7881,7 +7882,7 @@ own bundle of the same kind, dispelled as my own), with "Bran casts Heal on you.
 after it, as the health that actually moved. Friendly fire is off by construction and the relay never judges a
 spell.
 
-**Pins and mutants.** `test/allycast.test.js` (9): the law on a table (castable, the receiver's subset, the
+**Pins and mutants.** `test/systems/allycast.test.js` (9): the law on a table (castable, the receiver's subset, the
 reach, the frame, the lines), the wire's projection and parse, the relay's arm over the fake room (to the one
 socket, junk at self, nothing in the hub), the magic host driven as itself (a CasterOnly Heal read off a friend
 leaves as a touch and the caster is not healed; nobody there or a refused door and it heals as before; ByTouch
@@ -7894,7 +7895,7 @@ itself on the merge to main. Not verified in a browser: no online session exists
 Three lenses over ALLY-CAST as shipped: the CASTER'S (the release frame, the ready, the pick, the plaque), the
 WIRE'S and the RELAY'S (the frame's bounds, the funnel, the version), and the RECEIVER'S (the door the gift goes
 through, the bundle it becomes). Every finding below is paid in the same commit and pinned by execution in
-`test/allycast.test.js`; nothing was deferred.
+`test/systems/allycast.test.js`; nothing was deferred.
 
 **The caster's lens.**
 - A1 THE CONVERSION WAS INVISIBLE UNTIL IT FIRED. SetReadySpell's instant arm (:350-351) cast a CasterOnly spell
@@ -7975,7 +7976,7 @@ through, the bundle it becomes). Every finding below is paid in the same commit 
 **Departures recorded.** The gift lands as a self-cast (C1); a CasterOnly ready arms for a mate in reach (A1);
 "sent" is not "landed" (A8); a client ahead of its relay keeps its spells to itself (B1).
 
-**Pins and mutants.** `test/allycast.test.js` (14, from 9): the reach's arithmetic, the receiver's self-cast and
+**Pins and mutants.** `test/systems/allycast.test.js` (14, from 9): the reach's arithmetic, the receiver's self-cast and
 icon, the wire's new bounds and refusals (rangeType 0/3/4, level 31, byte 256, icon 69) and `relaySupportsCast`,
 the relay's junk counter, meter and per-sender funnel with the slot bound under 2 KiB, the link's door (a world96
 welcome, the gate, self, an unreported peer) and its inbound arm (own id, another's, a failed projection, the
@@ -7991,7 +7992,7 @@ deploys itself on the merge to main. Not verified in a browser: no online sessio
 Two archives from Mac's tree (`friendly-spells-patch_6`, `friendly-spells-and-Nightsound-toggle`), both whole-file
 copies cut from the PR #331 merge. Main had moved on since: ALLY-CAST and AUDIT ALLY-CAST (the `cast` frame, a
 party-only receiver, the gift landing as a self-cast), CRICKET-DUNGEON (the chorus stopped underground), and AUDIT
-PARTY8 / AUDIT PARTY-REST (`systems/partyRestLaw.js`, `voteStands`, the shared-clock `readyAt`). The caveat was
+PARTY8 / AUDIT PARTY-REST (`systems/party/partyRestLaw.js`, `voteStands`, the shared-clock `readyAt`). The caveat was
 not to override those. So nothing was copied over a file main had changed: each of the 29 files with real edits
 was a three-way merge against that base, and every doc file the drop carried differed from main only by its own
 citation shifts, so main's text stands and `tools/citeShift.mjs` re-maps it.
@@ -8024,7 +8025,7 @@ underground), a new arrow count a shaft. A drawn missile or shaft stops on a bod
 player's - flashes and applies NOTHING: the caster's own world decided what it hit, and a beneficial one of theirs
 reached its target through the cast frame. SPELLFX2: the cast sound is the element's, played at the peer
 (`audio.play3dId`). The pose change moves the relay's import graph, so `RELAY_VERSION` is world98 with its row in
-`test/relayversion.test.js`; the merge to main deploys it.
+`test/net/relayversion.test.js`; the merge to main deploys it.
 
 **SNDREP1 - A SOUND PACK, AND TWO SWITCHES.** `systems/soundReplacer.js`: DFU's loose `StreamingAssets/Sound/<name>.wav`
 for the crickets and the distant howl, attached by the player like a music pack and never bundled (the mod the
@@ -8054,7 +8055,7 @@ cooldown BEFORE marking me ready, so a refused start leaves no vote on the wire.
 dies with the leader's round and with the leader's grant, and a vote canceled by walking away takes the leader's
 own ready with it.
 
-`test/friendlyspells.test.js` (15 tests) pins it by execution and by source; `tools/mutants/friendlyspells.json`:
+`test/systems/friendlyspells.test.js` (15 tests) pins it by execution and by source; `tools/mutants/friendlyspells.json`:
 22, 22 dead. Re-aimed where the merged code moved them: the ALLY-CAST touch gate, CRICKET-DUNGEON's two mutants,
 the relay version mutant, the player-capsule census (AUDIT 62 F21, AUDIT 65 CV-2: three drawn arms added, each at
 the player's own radius), the pose's field list, and ALLY-CAST's three meter pins (a whole blast deep). Not verified in a browser with two players: no online
@@ -8081,10 +8082,10 @@ crafted gift - Mac's call, not taken here. `net/wire.js`'s comment over CAST_LEV
 comment edit is a relay version and a redeploy), and the sentence is to be corrected with the next relay change -
 the bound is the frame's, and the sender clamps to it.
 
-Pinned in `test/allycast.test.js` PEER-CAST (every level from 1 to a million mints a frame the wire takes, clamped at
+Pinned in `test/systems/allycast.test.js` PEER-CAST (every level from 1 to a million mints a frame the wire takes, clamped at
 30; the magic host driven with the wire's own door - a level-34 CasterOnly Heal leaves at 30 and the caster is not
 healed); the driven rig's door now sees the frame. Mutants `tools/mutants/peer_cast.json` (3, all dead).
-`01-Overview/Field-Bugs-2026-09-27.md`.
+`01-Overview/bugs/Field-Bugs-2026-09-27.md`.
 
 ## SPELL-GIFT (2026-09-27, Discord - Tabitha: "a LARGE amount of buffs & spells just don't work when cast on another person, even with touch. Normal regen seems okay, but Regen + Anything, Fortify Attributes, etc.") - a buff readied near a mate waits for the aim, and a stranger may be given the safe list
 
@@ -8110,7 +8111,7 @@ Shield the players took for "hard-coded self-only" is this: the maker lets Shiel
 
 **WHERE IT WILL LAND.** A readied spell aimed at a player it would land on raises the plaque with their name and
 "Cast Heal on Bran" alone - no verbs, no relation - menu or no menu (`scenes/world.js castPlaqueLine`): a cast
-about to land is no look. A gift sorts with the receiver's BUFFS (`ui/hudActiveSpells.js`: `selfCast || ally`).
+about to land is no look. A gift sorts with the receiver's BUFFS (`ui/hud/hudActiveSpells.js`: `selfCast || ally`).
 An area gift - around the caster or at range - reaching several says ONE line naming them all ("You cast Aura on
 Bran, Cass and Dee."), where it said a line per mate.
 
@@ -8128,9 +8129,9 @@ the socket named), and nothing changes on the wire.
 
 **Not changed:** the touch reach (3.7 m - the foe's own), the explosion radius (4.0 - DFU's), the caster outside
 their own blast (the port's ALLY-CAST law), and the three-effect cap. The party cards' view of what a mate carries,
-and a heal's number, are PARTY-BUFFS (below). Pins: `test/spellgift.test.js` (7), `tools/mutants/spell_gift.json`
-(13: 12 dead, 1 recorded equivalent); re-aimed: `test/allycast.test.js` (the pick, the receiver, the plaque, A1,
-A2/A6), `test/friendlyspells.test.js` (one line for a full party's blast, the marks).
+and a heal's number, are PARTY-BUFFS (below). Pins: `test/systems/spellgift.test.js` (7), `tools/mutants/spell_gift.json`
+(13: 12 dead, 1 recorded equivalent); re-aimed: `test/systems/allycast.test.js` (the pick, the receiver, the plaque, A1,
+A2/A6), `test/systems/friendlyspells.test.js` (one line for a full party's blast, the marks).
 
 ## PARTY-BUFFS (2026-09-27, Discord - Tabitha: "Allow us to see buff timers or SOME sort of indicator that we have placed a buff on a party teammate [preferably on their party portrait, maybe?] ... I'd also like floating Heal numbers") - a mate's live effects on their card, and heals float
 
@@ -8139,7 +8140,7 @@ nothing on the caster's side knows what landed or how long it lasts. The party c
 
 **A MATE'S EFFECTS ARE THEIRS TO SAY** (`net/partyBuffs.js` composePartyFx; `net/wire.js` validPartyPose `fx`). Each
 member's party pose carries their own live spell effects, built from the same bundles their HUD rows
-(`systems/mysticism.js liveBundles`, which is what `ui/hudActiveSpells.js` reads). Each entry has:
+(`systems/mysticism.js liveBundles`, which is what `ui/hud/hudActiveSpells.js` reads). Each entry has:
 
 - `i`: the spell's icon, within the spellbook's 0..CAST_ICON_MAX;
 - `r`: the rounds left, which is the bundle's most (DFU's GetMaxRoundsRemaining - the icon belongs to the whole cast);
@@ -8156,7 +8157,7 @@ sends a changed pose no faster than PARTY_SEND_MS, the same rate as a member wal
 **THE CARD** (`ui/partyPanel.js` paintFx). The effects are a row of 16 px tiles under the bars, drawn only while there
 are any, so a party with nothing on it is still just names and bars (PARTY8-B). Each tile shows:
 
-- the spell's icon, which is the enhanced spellbook's own cut of ICON00I0 (`ui/enhancedArt.js spellIconUrl`), or its
+- the spell's icon, which is the enhanced spellbook's own cut of ICON00I0 (`ui/enhanced/enhancedArt.js spellIconUrl`), or its
   first letters while the sheet is on its way ("Reg", "FS");
 - the rounds left, over the tile's corner;
 - the name, the rounds and "(harmful)" on its title.
@@ -8172,15 +8173,15 @@ only when what it says moves (the key includes whether the art has landed). An a
   follower's pose carries no `rest` (the session belongs to the rester), so without `rs` a party's night would have
   floated every hour.
 - On my own screen, a heal I take floats "+N" in green just under the reticle, on the damage numbers' layer
-  (`ui/hitNumbers.js healNumberFor`, drawn by `ui/enhancedHud.js`; enhanced only, like HN1). The heal can come from my
+  (`ui/hitNumbers.js healNumberFor`, drawn by `ui/enhanced/enhancedHud.js`; enhanced only, like HN1). The heal can come from my
   spell, a potion or a friend's gift. The HUD compares the health between two frames it drew. A hidden frame forgets
   the reading, so what a window restored is not floated: the rest window, the level-up, a load or the death screen
   all pause the game and hide the HUD.
 
 **Not changed:** DFU has no parties and no floating numbers. This rides the party HUD's own ONLINE row (Port-Ledger A)
 and HN1's enhanced-only law. The hub projects the pose through the same validPartyPose, so the relay must be deployed
-(RELAY_VERSION world120 - world119 on its branch, renumbered past main's AUDIT SET at the merge) before the cards fill. Pins: `test/partybuffs.test.js` (8), `tools/mutants/party_buffs.json` (24 dead). Re-aimed:
-`test/party8b.test.js` (the card's structure now has the effects row between the bars and the place).
+(RELAY_VERSION world120 - world119 on its branch, renumbered past main's AUDIT SET at the merge) before the cards fill. Pins: `test/ui/partybuffs.test.js` (8), `tools/mutants/party_buffs.json` (24 dead). Re-aimed:
+`test/net/party8b.test.js` (the card's structure now has the effects row between the bars and the place).
 
 ## COMPASS-PARTY (2026-09-27, Discord - Ashley: "being able to see where party members are on compass? - just lil green marks that point in that direction"; Satranath: "Party members show up on the map but not compass") - the party on both compasses
 
@@ -8202,9 +8203,9 @@ is the frame the Detect markers are measured in:
 stands at the end of the compass on the side to turn toward. Both are drawn in the party's one green (net/social.js
 PARTY_GREEN).
 
-- Classic: the Detect marker's 5x3 triangle, over the box's top edge (`ui/hud.js` drawPartyCompassMarks), drawn
+- Classic: the Detect marker's 5x3 triangle, over the box's top edge (`ui/hud/hud.js` drawPartyCompassMarks), drawn
   after the Detect markers.
-- Enhanced: a triangle a pixel wider on the strip (`ui/enhancedHud.js` drawPartyMarks). The marks are pooled and
+- Enhanced: a triangle a pixel wider on the strip (`ui/enhanced/enhancedHud.js` drawPartyMarks). The marks are pooled and
   hidden, never removed.
 
 The open world hands the whole party (`scenes/world.js` partyCompass). The building (`worldModes.js`) and the dungeon
@@ -8212,7 +8213,7 @@ The open world hands the whole party (`scenes/world.js` partyCompass). The build
 
 **Not changed:** the Detect markers and the gate mark. DFU's compass marks no party, so this extends Port-Ledger A's
 DISC23-A row (the party on the plans). No wire change: every field read was already on the pose. Pins:
-`test/compassparty.test.js` (4), `tools/mutants/compass_party.json` (14 dead).
+`test/ui/hud/compassparty.test.js` (4), `tools/mutants/compass_party.json` (14 dead).
 
 ## REST-OPT (2026-09-27, Discord - Tabitha: "Allow party members to choose not to rest with their party") - a party member may rest alone
 
@@ -8222,7 +8223,7 @@ was to leave the party, or to be in a tavern, temple or guild hall.
 
 **THE SWITCH.** "Rest with my party" (uiPrefs `restWithParty`, default on, the player's own online, in the Features
 pane's "Other players" card, beside the other online switches). Off, my party pose carries `nr: 1` (net/wire.js validPartyPose, omitted
-otherwise; RELAY_VERSION world120 - the merged relay, which carries PARTY-BUFFS' fields too), and the law is `systems/partyRestLaw.js`'s:
+otherwise; RELAY_VERSION world120 - the merged relay, which carries PARTY-BUFFS' fields too), and the law is `systems/party/partyRestLaw.js`'s:
 
 - `restsAlone(m)` - a member whose pose says `nr` is no voter, nobody to gather, and no rest to mirror.
 - `partyRestsTogether(mineOn, party, iLead)` - my rest is the party's only while my switch is on AND the leader's
@@ -8244,13 +8245,13 @@ otherwise; RELAY_VERSION world120 - the merged relay, which carries PARTY-BUFFS'
 A mirror already running when the switch goes off runs to its end.
 
 **Not changed:** the mirror's own laws, the vote's freshness, the tavern/temple/guild exemption. Pins:
-`test/restopt.test.js` (3), `tools/mutants/rest_opt.json` (17 dead). Re-aimed: `test/partyrest1.test.js` and
-`test/ovh4_partyrest.test.js` (the seams read `nearRestMembers` and `restTogether`), `tools/mutants/ovh4.json`
+`test/systems/party/restopt.test.js` (3), `tools/mutants/rest_opt.json` (17 dead). Re-aimed: `test/scenes/partyrest1.test.js` and
+`test/scenes/ovh4_partyrest.test.js` (the seams read `nearRestMembers` and `restTogether`), `tools/mutants/ovh4.json`
 and `tools/mutants/restfar.json` (by content).
 
 ## SHARE-MEND (2026-09-27, Discord - Tabitha: "Fix sharing Guild & Temple quests - It says the quests don't match up, can't share, etc.") - the envelope fits, a skew is named, and a sync's refusal is said once
 
-**THE MARKERS TRAVEL SLIM** (`systems/questShare.js` slimShareMarkers, fullShareMarkers). A dungeon Place carries
+**THE MARKERS TRAVEL SLIM** (`systems/quest/questShare.js` slimShareMarkers, fullShareMarkers). A dungeon Place carries
 every quest marker in the dungeon (place.js `_enumerateDungeonQuestMarkers`; DFU's SiteDetails keeps them all, and
 a save must), about 240 bytes each. A guild's or a temple's "clear the dungeon" sends the party to a big one:
 three hundred markers were 71 KB, over QUEST_SHARE_MAX_BYTES on their own. No marker may be dropped, because its
@@ -8289,22 +8290,22 @@ share is always answered.
 
 **Not changed:** the guild gate (DISC25-D - a Fighters, Mages, Thieves or Dark Brotherhood quest needs its guild;
 temple and knightly quests were never gated), the shape check (AUDIT DROPS A1, SHARE-COPY), the byte cap. No
-relay change: the envelope is opaque to the hub. Pins: `test/sharemend.test.js` (6), `tools/mutants/share_mend.json`
-(15 dead). Re-aimed: `test/disc25d_guild_share.test.js`, and the `auditdrops.json` and `disc25.json` records.
+relay change: the envelope is opaque to the hub. Pins: `test/systems/quest/sharemend.test.js` (6), `tools/mutants/share_mend.json`
+(15 dead). Re-aimed: `test/systems/quest/disc25d_guild_share.test.js`, and the `auditdrops.json` and `disc25.json` records.
 
 ## TRADE-INFO + TRADE-FIT (2026-09-27, Discord - Tabitha: "magic item stats on the trade hover (own and other's)"; "Show enchantment stats in the inventory and trade - Enhanced+ doesn't show enchants") - an item's magic in words, and an offer that cannot go says so
 
-**ONE LIST** (`ui/enhancedInventory.js` itemPowerLines). The Enhanced card read `rarityLines` alone, which names
+**ONE LIST** (`ui/enhanced/enhancedInventory.js` itemPowerLines). The Enhanced card read `rarityLines` alone, which names
 enchantments only for an item the loot tiers rolled (`item.rarity`). A DFU magic item - a shop's, a dungeon's, the
 item maker's - read "Magic" and nothing more, and with the tiers off it read nothing. The list is now:
 
 - the tier's lines (rarityLines);
 - for an enchanted item the tiers do not name (no `rarity`, or the tiers off), DFU's own Info-box powers
-  (`systems/itemPowers.js` magicPowersLines, the classic popup's words);
+  (`systems/item/itemPowers.js` magicPowersLines, the classic popup's words);
 - unidentified, "Powers unknown." - unless the tier list already said "Unidentified".
 
 The card, each trade row's hover (my pack, my offer and theirs) and the trade detail read it
-(`ui/enhancedPlayerTrade.js`).
+(`ui/enhanced/enhancedPlayerTrade.js`).
 
 **AN OFFER IS ONE FRAME** (`net/tradeSession.js` setOffer, `tradeFrameBytes`). An offer over TRADE_FRAME_MAX is never
 sent (net/online.js sendTrade - the relay would close the socket for it). It waited in the outbox for OUTBOX_TTL_MS,
@@ -8314,12 +8315,12 @@ AUDIT D1 corrected the measure: the socket's door is validTradeData's TRADE_DATA
 frame, and the commit the goods will ride is the longer frame - it is measured now, at the peer's revision's most
 (`tradeCommitBytes`, TRADE_REV_MAX).
 
-**Not changed:** the classic Info box, the wire's item law, TRADE_ITEMS_MAX. Pins: `test/tradeinfo.test.js` (3),
-`tools/mutants/trade_info.json` (8 dead). Re-aimed: `test/lr1_lootrarity.test.js` (the card reads itemPowerLines).
+**Not changed:** the classic Info box, the wire's item law, TRADE_ITEMS_MAX. Pins: `test/systems/tradeinfo.test.js` (3),
+`tools/mutants/trade_info.json` (8 dead). Re-aimed: `test/systems/lr1_lootrarity.test.js` (the card reads itemPowerLines).
 
 ## CHAT-POST (2026-09-27, Discord - Tabitha: "Link in chat / Post in chat"; "random magic items' details in chat") - an item posted in chat
 
-**ONE LINE** (`ui/enhancedInventory.js` itemChatText): the item's name in brackets, its headline stat (damage or
+**ONE LINE** (`ui/enhanced/enhancedInventory.js` itemChatText): the item's name in brackets, its headline stat (damage or
 armour), and its magic (itemPowerLines - TRADE-INFO's list, the card's own words). It is cut at a whole word to the
 chat's bound (net/wire.js CHAT_MAX) and ends "..." when cut. A chat line is words - the relay rebuilds a chat frame
 from its text alone - so the item travels as what a player would type to describe it; nothing is sent that a
@@ -8331,7 +8332,7 @@ chat's open tab through `chatSend` (`scenes/world.js` postItemInChat), so every 
 the Party tab, no guild for the Guild tab, an older relay. The building's pack posts through world.js's host object,
 and the dungeon's through worldModes into dungeonContext (THE FOUR HOSTS; exterior.js has no chat).
 
-**Not changed:** the chat's wire, its bound, its filters. Pins: `test/chatpost.test.js` (2),
+**Not changed:** the chat's wire, its bound, its filters. Pins: `test/systems/chatpost.test.js` (2),
 `tools/mutants/chat_post.json` (8 dead).
 
 ## CHAT-FIND (2026-10-11, the owner: "search for a player's name in the chat in every ui"; "put the search bar above the player list for better visibility") - the chat's search
@@ -8359,7 +8360,7 @@ before the host is asked); `/search` alone clears it; `/help` lists it. `/find` 
 (Mac's decision 2) made them the hub's search of everyone online, anywhere in the world, answered as a line in the tab
 that asked - this slice was cut before SCALE5c landed and first took `/find` too, and gave it back on the merge.
 
-Pins: `test/chat_find.test.js` (8). Mutants: `tools/mutants/chat_find.json`, 17, all dead. Re-aimed pins:
+Pins: `test/net/chat_find.test.js` (8). Mutants: `tools/mutants/chat_find.json`, 17, all dead. Re-aimed pins:
 `chatfit` (the column's order), `acc3wear` (the roster key carries the query); re-aimed mutant records: `audit637`
 A1a/A1b, `chatfit` the-inner, `perfon3` the-open-row (the roster's short-circuit carries the query).
 
@@ -8374,7 +8375,7 @@ once and is not the piece's own price (`paid`), so nothing of it comes back when
 its room sold, and the account service's sale arithmetic (decorSaleBack) is untouched. DECOR_STATION_SERVICES names
 the guild service each craft opens: the potion maker, the spell maker and the item maker.
 
-**THE PANEL AND THE TOOL** (`ui/decorPanel.js` decorStationWords, `scenes/decorTool.js` setStation). In the room
+**THE PANEL AND THE TOOL** (`ui/decorPanel.js` decorStationWords, `scenes/decor/decorTool.js` setStation). In the room
 view, "Station: Alchemy >" cycles the craft offered, free, and follows a newly chosen piece's own craft. "Make station
 - 50,000 gold" (or "Unmake station (nothing back)") acts on it through the panel's one change door (`onToggle`,
 `station:<craft>`):
@@ -8388,19 +8389,19 @@ view, "Station: Alchemy >" cycles the craft offered, free, and follows a newly c
 **THE PRESS** (`scenes/worldModes.js` useDecorStation). A station pressed by its owner opens its craft's maker
 through the guild service's own door (openServiceFlow, no guild), so the maker's own laws stand: the potion maker's
 ingredients, the spell maker's spellbook, and what each charges. A visitor is told whose home it is, as a storage
-piece's visitor is. STATION-DOOR (`01-Overview/Field-Bugs-2026-10-11f.md`): online, an alchemy or enchanting station
+piece's visitor is. STATION-DOOR (`01-Overview/bugs/Field-Bugs-2026-10-11f.md`): online, an alchemy or enchanting station
 asks first - its maker, or its profession's act on the Stores page (the brew, Disenchanting).
 
 **THE SERVICE** (`server-account/src/decor.js` placeJson). The craft is written with the place. ACCOUNT_VERSION
 acct16 (acct15 on its branch; main's FOUNDER3 took acct15 first) - the account Worker deploys from CI on a change to its bundle.
 
 **Not changed:** the makers, the guild services, the decor prices and refunds. It extends Port-Ledger A's DECOR1 row.
-Pins: `test/homestations.test.js` (4), `tools/mutants/home_stations.json` (14 dead). Re-aimed: the
+Pins: `test/ui/homestations.test.js` (4), `tools/mutants/home_stations.json` (14 dead). Re-aimed: the
 `decor1`/`decor1e`/`decor2a`/`gatekeys` records, and the account-version literals.
 
 ## AUDIT - the 2026-09-27 Discord batch ("Lets do a comprehensive audit on these changes")
 
-Six lenses, each finding checked against the code before anything moved; `01-Overview/Field-Bugs-2026-09-27e.md`
+Six lenses, each finding checked against the code before anything moved; `01-Overview/bugs/Field-Bugs-2026-09-27e.md`
 ## AUDIT is the record, with what stands and why. The online half:
 
 - **THE DUEL IS NOT A GIFT (SPELL-GIFT B1).** `allyTargetPick` and `allyMarksNear` draw from `giftablePeers` - never
@@ -8419,7 +8420,7 @@ Six lenses, each finding checked against the code before anything moved; `01-Ove
   `restOptOk` off the hub's welcome; world.js `restsWithParty()` is the switch as the party can hear it, read by the
   pose, `restTogether` and the vote's words. PARTY-TRAVEL's precedent: an older hub strips the field, and a switch
   it cannot carry is no switch.
-- **ANOTHER CAMP (C2).** `systems/partyRestLaw.js` restsApart: a mate resting (`rs`) alone, or resting at all while I
+- **ANOTHER CAMP (C2).** `systems/party/partyRestLaw.js` restsApart: a mate resting (`rs`) alone, or resting at all while I
   rest alone, is a camp of its own to STRANGER-REST's gate (REST_APART_TEXT) - two nights side by side had each
   rolled the night's foes for the whole party. A mate who opted out and stands awake beside the party is no camp.
 - **A NIGHT GRANTED ALONE (C3)** says `nr` to its end (`_restAloneNight`, set at markPartyRestSpent's grant and
@@ -8435,7 +8436,7 @@ Six lenses, each finding checked against the code before anything moved; `01-Ove
   holds OWN_RELAY_MIN at 118; decor1 drives the account service's station round trip.
 
 RELAY_VERSION world120 at the merge with main (world121 on its branch): the wire exports TRADE_REV_MAX and names REST_OPT_RELAY_MIN - the relay itself does nothing
-new. Pins: `test/audit27d.test.js` (9) and the slices' own suites; `tools/mutants/audit27d.json` (58, all dead).
+new. Pins: `test/systems/audit27d.test.js` (9) and the slices' own suites; `tools/mutants/audit27d.json` (58, all dead).
 
 ## RISE-STUCK (2026-09-27, Discord: "Stuck on death screen") - the death screen keeps the top, and a death ends the journey
 
@@ -8488,13 +8489,13 @@ law; no online and no journey there (its reset ends the run).
 Not looked into: why the journey climbed the wall at all - TRAVEL-NAV's steering means to stop short of one. A death
 on a journey is survivable now; the climb is its own report.
 
-Pinned in `test/risestuck.test.js` (8: a box pushed over the screen waits beneath it, the countdown still rises, the
+Pinned in `test/systems/travel/risestuck.test.js` (8: a box pushed over the screen waits beneath it, the countdown still rises, the
 rise takes the screen and the box comes up after with its own callback; a Resurrect's close hands the boxes their own
 callbacks in order; the stack's law and its control; the modal hosts' door shape; the journey's arrival under a paused
 window, and `pauseTravel` ending it with the destination kept, by source at the presenter, after the screen and
 guarded; the respawn's catch and the one close door, by source; nothing painted beneath the screen). Mutants
 `tools/mutants/rise_stuck.json` (12, all dead). Not proven in a browser or with two players.
-`01-Overview/Field-Bugs-2026-09-27c.md`.
+`01-Overview/bugs/Field-Bugs-2026-09-27c.md`.
 
 ## REST-ROUNDS (2026-09-27, Discord: "You can become a god with spell effects") - an online rest ages the effects
 
@@ -8530,14 +8531,14 @@ the first frame after the night pays the few real minutes it spanned.
 `interiorTicker.advance`. `scenes/dungeonContext.js` - `_restAdvance` already spent it; unchanged. `scenes/exterior.js`
 - hands it through; there is no online there, so it is null and the offline arm runs as before.
 
-Pinned in `test/restrounds.test.js` (6: an online night ages a real self-cast Regenerate by the same rounds as the
+Pinned in `test/systems/restrounds.test.js` (6: an online night ages a real self-cast Regenerate by the same rounds as the
 offline night, through the real RestSession and the hosts' dep shape; the reported loop - cast, rest, cast - stacks no
 more online than offline; the frames after the night re-anchor and real time ticks on; the window reaches the foe
 pools; every rest dep of the four hosts spends the end on the rounds, by source; AUDIT RISE-REST F2's night in a bed,
 online against offline). Re-aimed by content: `world5`
 (RaiseTime online), `restx2_online_rest`, `camp1_groups`, `exteriorfoes`, `partyrest1`, `restwhere`, `audit62_hosts`
 (which had been matching the camp meal's twin line since the rest's changed). Mutants `tools/mutants/rest_rounds.json`
-(9, all dead). `01-Overview/Field-Bugs-2026-09-27c.md`.
+(9, all dead). `01-Overview/bugs/Field-Bugs-2026-09-27c.md`.
 
 [SUPERSEDED BY LIVED1 (2026-09-29): the online arm above is gone. The ticker's `advance(minutes)`
 runs the same tick online as offline, on the character's own clock, so a rested night's rounds,
@@ -8551,7 +8552,7 @@ Horse Cart and Cargo (`06-Systems/Horse-Cart-And-Cargo.md`) is single-player: it
 following horse and trailing team are objects in one Unity scene. Online they stand in a shared cell, so the port
 carries them to everyone near, under the camps' law (SURV3) and no new one:
 
-- **The record** (`systems/horseCartWire.js`): what the pool SHOWS, not the save - the wagon's kind (trailing /
+- **The record** (`systems/horse/horseCartWire.js`): what the pool SHOWS, not the save - the wagon's kind (trailing /
   parked / following), base, rotation as Unity spells it, cargo tier and wheel angle; the horse's base, horizontal
   forward, walk frame and walking; the horse's name. Positions in the wire frame (natives, the compensation-free
   height), rounded to the centimetre. It rides as `hv` on the cell's foes frame beside `c`: on every full frame
@@ -8573,14 +8574,14 @@ carries them to everyone near, under the camps' law (SURV3) and no new one:
 - **No relay change**: the relay reads nothing inside a foes frame (AUDIT WORLD2), so `hv` needs no version and no
   law row; the pose already carries the transport mode a peer rides.
 
-Pinned: `test/hcc_pool.test.js` (the record, the door, the ease, the owner law by execution), `test/hcc_hosts.test.js`
+Pinned: `test/systems/horse/hcc_pool.test.js` (the record, the door, the ease, the owner law by execution), `test/player/hcc_hosts.test.js`
 (the stream, the setOnHcc landing, the sweep, the clears, the relay untouched). Not verified in a browser: no
 online session exists in this container.
 
 ### AUDIT HCC-ONLINE (2026-09-23, Mac: "Let's do an audit on this, ensure online is handled properly")
 
 One lens over the lane above, read whole; nine findings paid, one recorded (the full list with the other two lenses
-is `06-Systems/Horse-Cart-And-Cargo.md` AUDIT HCC; pins in `test/hcc_pool.test.js`, mutants in
+is `06-Systems/Horse-Cart-And-Cargo.md` AUDIT HCC; pins in `test/systems/horse/hcc_pool.test.js`, mutants in
 `tools/mutants/hcc.json`).
 
 - **The word lives in the wire frame (O1, O2).** A peer's team was converted to scene coordinates once, when it
@@ -8611,7 +8612,7 @@ is `06-Systems/Horse-Cart-And-Cargo.md` AUDIT HCC; pins in `test/hcc_pool.test.j
 ## HCC-PARK + HCC-TIP + RIDE (2026-09-23, Mac: "I think we should build that. And if not already, ensure this is compatible with our tooltip implementation and ensure it shows owned if another players. Also need to ensure over people see others riding on horses") - world98
 
 The full record is `06-Systems/Horse-Cart-And-Cargo.md`, section HCC-PARK, HCC-TIP and RIDE. Pins in
-`test/hcc_park.test.js` (11), mutants in `tools/mutants/hccpark.json` (22, every one dead).
+`test/net/hcc_park.test.js` (11), mutants in `tools/mutants/hccpark.json` (22, every one dead).
 
 - **A cell keeps a parked team (HCC-PARK).** A new client frame, `{t:'park', data}`, says MY parked wagon or
   waiting horse: its anchor in wire units and, while it is shown, the record the foes frame's `hv` already carries.
@@ -8629,7 +8630,7 @@ The full record is `06-Systems/Horse-Cart-And-Cargo.md`, section HCC-PARK, HCC-T
 - **The owned line (HCC-TIP).** A peer's horse or wagon hovers as the mod's own word for it with "Owned by <name>"
   under it, the owner's session name or the relay's stamp when they are away.
 - **The mount on the pose (RIDE).** `rd` (1 horse, 2 cart) and `rv` (the rider's Eye Of The Beholder mounted
-  sprite set) ride the pose, omitted on foot; a mount change is a pose change. `net/peerRiders.js` draws a riding
+  sprite set) ride the pose, omitted on foot; a mount change is a pose change. `net/peer/peerRiders.js` draws a riding
   peer with EOTB's mounted sprites, before the Morrowind bodies and the dolls, which stand nothing for a rider.
 - **The deploy.** RELAY_VERSION world99 with its law row (world98 was FRIENDLY-SPELLS', merged first). An older
   relay closes the socket on an unknown frame, so the client sends `park` only to world99 or later (`relaySupportsPark`, set on the primary welcome). The relay
@@ -8658,7 +8659,7 @@ so the branch merged main and moved its relay law to world99; the client's park 
   sprite is up (failed art retried), with no human footsteps, the name at the sprite's top, gone over the death
   screen, and its casts from the saddle's eye height.
 
-Pins: `test/hcc_park.test.js` (13); mutants `tools/mutants/hccpark.json` (35, all dead). RELAY_VERSION world99 with
+Pins: `test/net/hcc_park.test.js` (13); mutants `tools/mutants/hccpark.json` (35, all dead). RELAY_VERSION world99 with
 its law row (never deployed, so its row was still this branch's to write). The relay deploys itself on the merge to
 main and drops every connected player once. Not verified in a browser: no online session exists in this container.
 
@@ -8688,7 +8689,7 @@ The full list is `03-World/World-Of-Daggerfall.md` AUDIT BRANCH; this is its onl
   (`park`, HCC): a record written before it stands at the old height until its owner's client sends it again or it
   expires (`PARK_TTL_MS`, 72 h). The room's memory (WORLD1) holds keys, not heights. No relay change.
 
-Pins: `test/audit_wod_branch.test.js` (two pools, the world6b rig). No relay change.
+Pins: `test/world/worldOfDaggerfall/audit_wod_branch.test.js` (two pools, the world6b rig). No relay change.
 
 
 ## RIDE-SOUND + 3D-AUDIO (2026-09-23, DISC6, Mac: "Can we tackle the known limit along with the following bug reports") - the peers' hooves, and every peer sound at the peer
@@ -8702,9 +8703,9 @@ too (`peerSound` through `play3d`), where PEER-FS1 faked the falloff on a flat o
 
 The panning itself was mirrored for every positional sound in the port (the scene is left-handed, WebAudio
 right-handed) and equal-power, so nothing behind could be told from in front. Both are fixed at the audio door;
-the record is `01-Overview/Field-Bugs-2026-09-23.md` (DISC6-D). No wire or relay change: RELAY_VERSION stays.
+the record is `01-Overview/bugs/Field-Bugs-2026-09-23.md` (DISC6-D). No wire or relay change: RELAY_VERSION stays.
 
-Pins: `test/audio3d.test.js` (4); mutants `tools/mutants/audio3d.json` (17, all dead). ~~The pose carries no speed,
+Pins: `test/systems/audio3d.test.js` (4); mutants `tools/mutants/audio3d.json` (17, all dead). ~~The pose carries no speed,
 so a peer's horse keeps the fast clop (DFU's opening clip).~~ DISC7 put the rider's half-speed flag on the pose (`hs`,
 world100) and the clop swaps on it. Not verified in a browser.
 
@@ -8712,9 +8713,9 @@ world100) and the clop swaps on it. Not verified in a browser.
 
 A player under the crosshair lists the F-menu's enabled acts as the World Tooltips plaque's rows - the loot list's own
 wheel and highlight - and the activate key (or F) presses the lit one through the card's own door, re-read at the press.
-The card stays where the plaque cannot (touch, the classic skin). AUDIT DISC7: a player's list starts unlit (a plain click sends nothing; the wheel or F lights a row), every act the card offers is listed with a refused one's reason, the press re-picks the player on its own ray with walls blocking and never fires on a touch cast; the riders' loop stands on a stale pose, is made within earshot only and moves with the floating origin, and `hs` is latched off a moving frame - `01-Overview/Field-Bugs-2026-09-23.md` (AUDIT DISC7). The pose carries `hs`, the rider's half-speed flag, mounted and moving
+The card stays where the plaque cannot (touch, the classic skin). AUDIT DISC7: a player's list starts unlit (a plain click sends nothing; the wheel or F lights a row), every act the card offers is listed with a refused one's reason, the press re-picks the player on its own ray with walls blocking and never fires on a touch cast; the riders' loop stands on a stale pose, is made within earshot only and moves with the floating origin, and `hs` is latched off a moving frame - `01-Overview/bugs/Field-Bugs-2026-09-23.md` (AUDIT DISC7). The pose carries `hs`, the rider's half-speed flag, mounted and moving
 only and omitted at 0; the receiving riding loop swaps the clop on it. RELAY_VERSION world100 with its law row. Record:
-`01-Overview/Field-Bugs-2026-09-23.md` (DISC7). Pins: `test/disc7.test.js`.
+`01-Overview/bugs/Field-Bugs-2026-09-23.md` (DISC7). Pins: `test/systems/disc7.test.js`.
 
 ## WOD7 (2026-09-23, Mac: "and all the enemies are synced online?" ... "yes dude") - World of Daggerfall's camps, shared
 
@@ -8725,14 +8726,14 @@ M1's spent slots) and spends its own copy of each marker named (not one whose ca
 race goes to the first spring - the list carries each marker's age - and inside five seconds to the smaller id; the
 loser takes its camp down, a foe still building included. A camp foe hunts the peers. The treasure stays its springer's; a camp leaves with
 its owner; the relay remembers no marker. No wire or relay change: the tags ride the foes frame beside `c` and are
-checked at the reader (`world/wodShared.js`). The full record is `03-World/World-Of-Daggerfall.md` WOD7. Pins:
-`test/wod7_sharedcamps.test.js`; mutants `tools/mutants/wod7.json`.
+checked at the reader (`world/worldOfDaggerfall/wodShared.js`). The full record is `03-World/World-Of-Daggerfall.md` WOD7. Pins:
+`test/scenes/wod7_sharedcamps.test.js`; mutants `tools/mutants/wod7.json`.
 
 ## AUDIT ATTACH (2026-09-23, found by INSPECT1's measurement of the attachment its card meter would ride) - a socket's meters leave its attachment, world102
 
 INSPECT1 gives a place socket a new arm, and a new arm is a new meter. Before adding one, its test measured the
 attachment the meter would ride - the widest a place socket can carry, over the real Room - and found it already
-full. Two findings, paid in one commit and pinned by execution in `test/auditattach.test.js`.
+full. Two findings, paid in one commit and pinned by execution in `test/net/auditattach.test.js`.
 
 - A1 THE WIDEST PLACE ATTACHMENT WAS PAST THE RUNTIME'S 2 KiB. The runtime caps a hibernatable socket's attachment
   at 2 KiB and refuses a write past it WHOLE (`_setAttach` answers false). Every per-socket meter rode it: twenty
@@ -8770,7 +8771,7 @@ The class the move removes: a meter written back over a stale copy of the attach
 refunded the chat token that way (its strike wrote back the attachment read before the chat gate spent); the strike
 and the bucket are two meters of one record now, and neither write can undo the other.
 
-**Pins.** `test/auditattach.test.js` (3): the widest place attachment built over the real Room, its field list closed
+**Pins.** `test/net/auditattach.test.js` (3): the widest place attachment built over the real Room, its field list closed
 both ways - a field added to it fails until it is measured here or kept among the meters - and measured at half the
 runtime's cap at most (`test/placeWidest.mjs` builds it; a slice that gives a place socket a new arm adds its frame
 and its meter there); every arm's flood with every attachment write after the hello refused, passing its bucket and no
@@ -8812,7 +8813,7 @@ it in `PeerBodies._arm` through the rig's own `setHipLight` - bound once at the 
 path after, queued mid-build - and swings it off that body's stub camera. No RELAY_MIN: a pose field has never been
 gated (DISC12's `lh`/`wb`, PCORPSE1's `dd`); an older relay's `validPose` drops it and nothing closes. The HELD torch
 still rides nothing (MW-D51). Record: Handheld-Torches.md HT-WAIST ("Online: the others see it"). Pins:
-`test/htwaistnet_peers.test.js` - the door, the producer and its sender, a session through the real relay Room to the
+`test/net/htwaistnet_peers.test.js` - the door, the producer and its sender, a session through the real relay Room to the
 watcher's drawn pose, a peer's whole `createFpArm()` body hanging and hiding it, and its swing off the stub camera.
 
 ## WB1 (2026-09-25, Mac: "a gate of oblivion which takes place in a large boss arena with an oversized enemy with telegraphed attacks") - the Oblivion Gate's omen; see 11-Multiplayer/World-Bosses.md
@@ -8834,11 +8835,11 @@ Re-aimed: `peerplaque`'s tie-order pin and `worldhover`'s press-against-plaque d
 
 ## WB3a (2026-09-25, Mac: "a gate of oblivion which takes place in a large boss arena with an oversized enemy with telegraphed attacks") - the gate's boss room on the relay; see 11-Multiplayer/World-Bosses.md
 
-Option B, built: the relay's object is the authority over the boss. `net/gateBrain.js` is the whole fight as pure law
+Option B, built: the relay's object is the authority over the boss. `net/gate/gateBrain.js` is the whole fight as pure law
 (a point, a facing, a health bar, a clock and the players' feet - the arena is a flat disc so the boss needs no game),
 stepped by the object's alarm every 250 ms while someone stands in the court and checkpointed every two seconds; a
 blow is the client's own formula, believed as far as its level claim's bucket and the socket's own pose allow; the kill
-is stamped once, each earning account gets a receipt (`net/gateReceipt.js`, the relay's first signature - unsigned
+is stamped once, each earning account gets a receipt (`net/gate/gateReceipt.js`, the relay's first signature - unsigned
 until `GATE_SIGNING_KEY` is set) and the hub says it to everyone online through an internal door. The `gate:<day>` key
 is admitted only inside its day's window, at the Worker (no object minted) and at the hello (a newcomer while open, a
 fighter until the wrath's end). RELAY_VERSION world110 on its branch - world113 at the merge, past main's EVENT1 (world110), RENOWN1 (world111) and PARTY-TRAVEL (world112), with GATE_RELAY_MIN 113 - the bump drops every connected player once, and three files
@@ -8847,9 +8848,9 @@ join the bundle. The client half so far is the session's (`gateOk`, `sendGate`, 
 ## WB3b (2026-09-25, Mac: "a gate of oblivion which takes place in a large boss arena") - the Burning Court; see 11-Multiplayer/World-Bosses.md
 
 The gate's door opens now: at a relay that runs a gate's boss room (world113; world110 on its branch), walking through the fire enters the
-Burning Court - the dungeon host's own arm with a level made in code (`world/gateArena.js`), not a fifth host. Its
+Burning Court - the dungeon host's own arm with a level made in code (`world/gate/gateArena.js`), not a fifth host. Its
 room is the gate's `gate:<day>`; the level claim goes out once per welcome; the court's words land in
-`net/gateLink.js`, which the world's gate reads for its collapse and the chat for the kill line. A death there is cast
+`net/gate/gateLink.js`, which the world's gate reads for its collapse and the chat for the kill line. A death there is cast
 out before the gate, the day's end or going offline ends the court the same way, and the map, the rest, the save and
 the Recall mark are refused inside it. The boss is not drawn yet (WB4) - the relay runs him, and the court is where
 he will stand.
@@ -8859,7 +8860,7 @@ he will stand.
 Nothing new on the wire: the court's link already holds the relay's words, and this slice draws them. The boss stands
 where the relay says (his walk carried between its words, the charge down its lane), three times a Daedra Lord's size;
 the attack he winds up is drawn on the floor where it will land and said on his bar; and at its landing each client
-tests ITS OWN FEET against its shape - co-op's law, the struck player's machine (`net/gateStrike.js`) - and takes the
+tests ITS OWN FEET against its shape - co-op's law, the struck player's machine (`net/gate/gateStrike.js`) - and takes the
 blow through the dungeon context's own door. The relay never learns who was struck. The player's blows on him are
 WB4b.
 
@@ -8885,7 +8886,7 @@ keeps the day spent, so a reconnect that re-sends the receipt spews nothing twic
 The receipt is carried to the account service by the account it names and counted there once
 (`server-account/src/accounts.js claimGate`, `POST /v1/gate/claim`, acct10): verified with the relay's public half
 (`GATE_PUBLIC_KEY`) and naming the session's own account, one row a (day, account). The device keeps each receipt the
-relay hands the socket until an answer settles it (`net/gateClaims.js`), offered at once and again on the gate frame no
+relay hands the socket until an answer settles it (`net/gate/gateClaims.js`), offered at once and again on the gate frame no
 sooner than ten minutes after. The account card's *Gates closed* row and the Inspect card's line read the count.
 `tools/mintGateKeys.mjs` mints the pair; the relay's half is `GATE_SIGNING_KEY`. Nothing new on the wire.
 
@@ -8907,13 +8908,13 @@ nothing on the wire.
 ## WB6c (2026-09-25, Mac: "the transition and the arena needs to be an oblivion masterpiece") - the step through; see 11-Multiplayer/World-Bosses.md
 
 The gate's door and the court's way home are taken in fire - a vortex of flame closing over the screen, burning while
-the place beyond is built, opening onto it (`render/gateVeil.js`, `ui/gateVeil.js`); a court taken by force flashes.
+the place beyond is built, opening onto it (`render/gate/gateVeil.js`, `ui/gate/gateVeil.js`); a court taken by force flashes.
 Online alone, as the gate is; client only; nothing on the wire.
 
 ## WB7 (2026-09-25, Mac: "Proper boss audio during the boss fight") - his voice and his music; see 11-Multiplayer/World-Bosses.md
 
 The Burning Court's boss is heard - steps, growls, grunts, the ground's shock, thunder, his fall - and the court has its
-own score (`systems/gateScore.js`), chosen from the fight state the court's link already holds: his phase, the Wrath's
+own score (`systems/gate/gateScore.js`), chosen from the fight state the court's link already holds: his phase, the Wrath's
 time, his fall. Client only; nothing on the wire.
 
 ## AUDIT WB (2026-09-25, Mac: "A proper audit on everything") - the relay's half; see 11-Multiplayer/World-Bosses.md section 11
@@ -8932,7 +8933,7 @@ travel together". Online only - both arms ask for a party first, and the party i
 mirrored: the leader's proposal rides the leader's own party pose, a member's answer rides theirs, "gathered" is the
 rest law's own near (the same place and, outdoors, within PARTY_REST_RADIUS), an offline seat is nobody here, and a
 stale vote is refused - here by identity, since a vote names the round it answers. The law is
-`systems/partyTravelLaw.js`, its session `systems/partyTravel.js` (driven by the host's seams in `scenes/world.js`, so
+`systems/party/partyTravelLaw.js`, its session `systems/party/partyTravel.js` (driven by the host's seams in `scenes/world.js`, so
 the pins RUN a leader and a member against each other rather than grep the closures).
 
 **To the leader.** A member on another map pixel than the leader is offered the journey to them: unasked when they
@@ -8973,7 +8974,7 @@ world110 ships: until then the leader's client opens no round (`partyTravelOk` o
 PARTY_TRAVEL_RELAY_MIN) and the journey to the leader lands at the place's door (its pixel is the pose's own `px`/`py`).
 RELAY_VERSION world110; the widest hub attachment with every field at its bound measured under the runtime's 2 KiB.
 
-Records: `test/partytravel.test.js` (26); `tools/mutants/party-travel.json` (71, 71 dead); Systems.md counts the two
+Records: `test/systems/party/partytravel.test.js` (26); `tools/mutants/party-travel.json` (71, 71 dead); Systems.md counts the two
 modules.
 
 **AUDIT PARTY-TRAVEL (2026-09-25, the pre-merge review; Mac: "Audit before we merge").** Six faults found in the
@@ -9004,7 +9005,7 @@ Not changed, recorded for the owner: a gathered member who never answers still h
 calls it off (PARTY-REST's own "cannot start until all are ready", which the task mirrors) - the leader walks away from
 them or `/travel`s it off; and a leader's client could open rounds as fast as its poses leave (the rest vote has a
 cooldown, PARTY-REST21; this has none) - the member's answer is leaving the party. No wire change: the relay deploy is
-still world110's. Records: `test/partytravel.test.js` 26 -> 32; `tools/mutants/auditpartytravel.json` (21, 21 dead),
+still world110's. Records: `test/systems/party/partytravel.test.js` 26 -> 32; `tools/mutants/auditpartytravel.json` (21, 21 dead),
 four `party-travel.json` records re-aimed.
 
 **PARTY-UI (2026-09-26, Mac: "Instead of party chat commands, we need to add the party travel commands to the UI").**
@@ -9022,8 +9023,8 @@ asks nobody who is gathered: the leader's count is kept on the round as the tick
 The block is redrawn on the panel's live pass when the reading moves, because it moves on poses, which move no version
 (AUDIT PARTY8). The host hands the panel the session through a getter - it is made later in `world.js`. The chat's
 hints to travel to the leader name the tab first (*Travel to them from the Party tab, or type /leader.*); the round's
-line to a member under a window names none (AUDIT PARTY-UI, below). `test/partytravel.test.js` (+1: status and
-respond), `test/soc3_socialpanel.test.js` (+2: the block driven, the host by source); `tools/mutants/partyui.json`
+line to a member under a window names none (AUDIT PARTY-UI, below). `test/systems/party/partytravel.test.js` (+1: status and
+respond), `test/net/soc3_socialpanel.test.js` (+2: the block driven, the host by source); `tools/mutants/partyui.json`
 (10, 10 dead), two `party-travel.json` records re-aimed.
 
 **AUDIT PARTY-UI (2026-09-27, a read-only audit of the pass above).** Eight findings, each closed with a pin that fails
@@ -9060,8 +9061,8 @@ without it:
   come along.*). *Setting out for <place>* stood TRIP_FOLLOW_MS over a leader already there; the tab lets the round go
   when the leader's own journey arrives (the pose keeps it for the followers).
 The member's indoor Travel to <leader> is drawn disabled rather than hidden: the session's own line indoors ("...Travel
-to them from the Party tab, or type /leader.") sends the member to it. Records: `test/partytravel.test.js` 33 -> 37,
-`test/soc3_socialpanel.test.js` 30 -> 32; `tools/mutants/auditpartyui.json` (30, 30 dead); two `partyui.json`, two
+to them from the Party tab, or type /leader.") sends the member to it. Records: `test/systems/party/partytravel.test.js` 33 -> 37,
+`test/net/soc3_socialpanel.test.js` 30 -> 32; `tools/mutants/auditpartyui.json` (30, 30 dead); two `partyui.json`, two
 `party-travel.json` and one `mappov.json` record re-aimed.
 
 **AUDIT PARTY-UI2 (2026-09-27, a second read-only audit, of the fixes above).** Four findings, each closed with a pin
@@ -9087,11 +9088,11 @@ that fails without it:
   hub and before *Gather the party first*.
 The live pass also keyed on the leader's no-round flags beside a round that draws none of them: with two seats, a
 member pacing the radius under *Setting out* rebuilt the tab at every crossing (the audit's own s1 script, 6 in 6).
-`status()` carries them with no round alone. Records: `test/partytravel.test.js` 37 -> 41,
-`test/soc3_socialpanel.test.js` 32 -> 33; `tools/mutants/auditpartyui2.json` (14, 14 dead); five
+`status()` carries them with no round alone. Records: `test/systems/party/partytravel.test.js` 37 -> 41,
+`test/net/soc3_socialpanel.test.js` 32 -> 33; `tools/mutants/auditpartyui2.json` (14, 14 dead); five
 `auditpartyui.json` records and the `mappov.json` one re-aimed.
 
-**PARTY-READY (2026-10-01, Mac: "when party readying up, the ui element is hidden"; `01-Overview/Field-Bugs-2026-10-01c.md`).**
+**PARTY-READY (2026-10-01, Mac: "when party readying up, the ui element is hidden"; `01-Overview/bugs/Field-Bugs-2026-10-01c.md`).**
 The ready-up took its own controls off the screen. The leader's Travel map opens the travel map, a window over the HUD,
 and the Social panel closes under any such cover (SOC3) - so the round's count and Call off stood nowhere for the whole
 round, and the HUD's "Waiting for the party to ready up" stood PARTY_REST_FAR_SECONDS (4) of a round that runs
@@ -9107,9 +9108,9 @@ tab, the chat and the party's HUD out of the page as the ready-up began. Now:
   it unanswered is asked by the box (`tabOpen`, the host's `socialPanel` on its Party tab). `busy()` is left alone: it
   gates the tab's own Travel to <leader>.
 Not changed: the party HUD still hides under a pausing window (the box a member without the tab open is asked by), as
-the whole enhanced HUD does. Records: `test/partytravel.test.js` 41 -> 44 (it did not parse since the merge before
+the whole enhanced HUD does. Records: `test/systems/party/partytravel.test.js` 41 -> 44 (it did not parse since the merge before
 this one - an unescaped `'` in the RELAY_VERSION history; fixed - so every list naming it had killed nothing),
-`test/soc3_socialpanel.test.js` 33 -> 34; `tools/mutants/partyready.json` (14, 14 dead); one `auditpartyui.json` and
+`test/net/soc3_socialpanel.test.js` 33 -> 34; `tools/mutants/partyready.json` (14, 14 dead); one `auditpartyui.json` and
 one `party-travel.json` record re-aimed.
 
 ## EVENT1 (2026-09-25, Mac: "I wanna do a fun live event for the server. Wanna setup the infastructure for this without breaking anything. We have a lot of major updates today, but I want to turn the skies of Daggerfall into a detailed oblivion styled dread in prep for the world bosses. Red lightning and such") - a live event, staged for everyone online: the dread, world110
@@ -9130,14 +9131,14 @@ Asked two things first: how it is switched (Mac: **a staff command** - `/event d
 
 **It fades.** `createDread`: a change the player watched walks over DREAD_FADE_S (12 s) each way; a welcome's word is whole. Interiors and dungeons draw no sky, so the dread is outside, where the sky is.
 
-**Records.** test/event1_live_event.test.js (18); tools/mutants/event1.json (44, all dead). RELAY_VERSION world110 (`test/relayversion.test.js` row); the exact-version pins moved to it; the source pins of the sky seam re-aimed to the graded forms (audit18, clockArc, DS2, VC3, WATER1, ES1c); mutant records re-aimed where their text moved (B7's welcome, WEATHER3d's composite, DISC17-B now names its one site, SURVTIERS3's two cites). DISC17-B's mutant SURVIVED the re-aim once: its pins matched ANY thunder line of the host's shape, and the dread's own line stood in for the distant storms' - so the pins now hold EVERY thunder line far from the ear, one assertion a line (disc17), and the distant storms' line by its own loop (WEATHER3d); the mutant dies. Deploying world110 drops every connected player once (the relay's own law).
+**Records.** test/render/event1_live_event.test.js (18); tools/mutants/event1.json (44, all dead). RELAY_VERSION world110 (`test/net/relayversion.test.js` row); the exact-version pins moved to it; the source pins of the sky seam re-aimed to the graded forms (audit18, clockArc, DS2, VC3, WATER1, ES1c); mutant records re-aimed where their text moved (B7's welcome, WEATHER3d's composite, DISC17-B now names its one site, SURVTIERS3's two cites). DISC17-B's mutant SURVIVED the re-aim once: its pins matched ANY thunder line of the host's shape, and the dread's own line stood in for the distant storms' - so the pins now hold EVERY thunder line far from the ear, one assertion a line (disc17), and the distant storms' line by its own loop (WEATHER3d); the mutant dies. Deploying world110 drops every connected player once (the relay's own law).
 
 ## PSCALE1 (2026-09-25, Mac: "So to add onto this, I want enemy difficulty, enemy numbers, etc to scale approriately with party size") - a fight weighs what the party weighs
 
 Asked three things, Mac answered: "+50% HP, +10% dmg" a player past the first; outdoors "One roll per group"; in a
 dungeon "Everyone in it" counts. Daggerfall Unity has no other players, so every foe is sized for one; this is a
 Ledger A departure (`Port-Ledger.md` section A, A FIGHT WEIGHS WHAT THE PARTY WEIGHS), and it is online's alone -
-offline the party is one and every number is DFU's. The law is `src/systems/partyScale.js`, pure, the count an
+offline the party is one and every number is DFU's. The law is `src/systems/party/partyScale.js`, pure, the count an
 argument. **AUDIT PSCALE1 (below) changed who counts**: a fight's weight is now its FOE'S FIGHTERS - the players who
 struck it within thirty seconds (Mac: "Whoever fights it") - and the notes marked so below are corrected there.
 
@@ -9190,7 +9191,7 @@ struck it within thirty seconds (Mac: "Whoever fights it") - and the notes marke
 No relay change and no version: nothing on the wire moves (AUDIT PSCALE1 carried the fighters' count on the foe
 record, `n`); the authority weighs every blow on its foes, a peer's included, and each client weighs only the hits it
 takes (AUDIT PSCALE1 REC-10: this read "each client weighs its own blows", which is backwards). Pinned:
-`test/pscale1.test.js` (4): the law's numbers and bounds (the widest camp with its extras inside both caps); the
+`test/systems/party/pscale1.test.js` (4): the law's numbers and bounds (the widest camp with its extras inside both caps); the
 outdoor pool driven - a shared foe at N 4 loses five blows of 3 as 6 (health 94), alone a blow of 3 as 3, a scripted
 kill whole, a quest foe and a placed foe with no site unweighed and a site's camp foe weighed, a puppet's hit 13 for 10 and the watch's, an ally's and a quest foe's 10, an indoor pool's foe
 unweighed; and the wiring in world.js, worldModes.js, dungeonContext.js and exteriorFoes.js by source.
@@ -9263,7 +9264,7 @@ dungeon arm gone); no pool or mode is handed it any more.
 
 **The records (REC-1..13).** Eleven behavioural mutants survived the shipped pins (the dungeon's count, door and blow;
 the three count hand-offs; the archer; the outdoor count; the gate; the melee swing; the remainder) - every one is
-killed by `test/auditpscale1.test.js`, which MOUNTS the host slices from comment-stripped source (the dungeon's
+killed by `test/systems/auditpscale1.test.js`, which MOUNTS the host slices from comment-stripped source (the dungeon's
 helpers and door, the count, the gate and the extras, the camp, the placing pool, peersNear, the handover, the arrow
 handler) and drives the pools. The docs' misstatements are corrected: the damage rule is 10% a fighter past the
 first; the pinprick example is the 5th and 9th blows; the offline comments name the real mechanism (only my blows
@@ -9281,7 +9282,7 @@ reach an offline copy).
 - A heal on a joiner's or a reader's COPY is written unweighed until the next record carries the authority's.
 
 Relay: wire.js is in the relay's bundle, so world108's row (unshipped) is rewritten in place; the relay reads none of
-`n`. Pinned: `test/auditpscale1.test.js` (10), `test/pscale1.test.js` (4, re-aimed), and the older pins the change
+`n`. Pinned: `test/systems/auditpscale1.test.js` (10), `test/systems/party/pscale1.test.js` (4, re-aimed), and the older pins the change
 moved (audit68_dungeonctx's harness, auditworld6b's divert and cap, exteriorfoes' sink, renown1's door and bonus).
 Mutants: `tools/mutants/auditpscale1.json`, `tools/mutants/pscale1.json` (re-aimed), and restx2camp's and watch1's
 records re-aimed by content.
@@ -9295,13 +9296,13 @@ Mac answered "Bonus damage", "Magic and up, found online", "Bigger fights, stron
 then, of a sigil fixed at the drop ("Makes sigil a static element"; "What if the sigil is[n't] gaurenteed in of
 itself"), chose "Chance at the drop, then grows". Daggerfall Unity has neither online play nor Renown; this is a
 Ledger A departure (`Port-Ledger.md` section A, SOME WEAPONS WON ONLINE CARRY A SIGIL, AND IT GROWS), and what a sigil
-does is online's alone. The law is `src/systems/sigil.js`.
+does is online's alone. The law is `src/systems/sigil/sigil.js`.
 
-- **What a sigil is.** `item.sigil = { power, party, xp }`, a declared item field (`systems/itemFields.js`): it rides
+- **What a sigil is.** `item.sigil = { power, party, xp }`, a declared item field (`systems/item/itemFields.js`): it rides
   a save as the item does, and the wire's loot door checks it (`validLootItem` - a forged power or rank is no item at
   all). `power` is the per cent of damage it adds at its full rank; `party` the size of the fight that won it; `xp`
   what it has drunk.
-- **Who gets one** (`systems/lootRarity.js stampWonWeapons`). A Magic, Rare or Legendary weapon - never ammunition, an
+- **Who gets one** (`systems/loot/lootRarity.js stampWonWeapons`). A Magic, Rare or Legendary weapon - never ammunition, an
   artifact (its own tier has no band), a quest's item, armour, a Common weapon, or one already marked - in a list WON
   ONLINE: a body's at its death (the outdoor owner's kill door, the dungeon host's and the watch's; a dungeon joiner's
   own copy when the host's stream says it fell, at the host's count; a body the room's memory hands an arrival), and a
@@ -9350,7 +9351,7 @@ reads too.
   forged affix. What a sigil GIVES is held by the wielder's Renown, which the account service signs.
 - The weapon in my hand when a kill pays drinks its XP, whatever landed the last blow (a spell, an ally).
 
-No relay change and no version: the relay carries no item. Pinned: `test/sigil1.test.js` (7) - the law's numbers; the
+No relay change and no version: the relay carries no item. Pinned: `test/systems/sigil/sigil1.test.js` (7) - the law's numbers; the
 blow (the carry, every gate, FormulaHelper's tail); the stamp; the drink and the words; the item field on the wire;
 the outdoor pool driven (a fight of four marks the body's Magic sword at 3, a reader keeps the count through the body's
 record, offline marks nothing); the hosts, the drink mounted and every other door by source. The re-aimed pins:
@@ -9395,7 +9396,7 @@ materials that feed them are `06-Systems/Professions-Arc.md` (PROF0).
 ## HUB1 (2026-09-25, Mac: the hub, "a color coded circle indicator or something along those lines for distinguishing") - every region's main city is its hub
 
 Daggerfall Unity has neither online play nor hubs; this is a Ledger A departure (`Port-Ledger.md` section A, EVERY
-REGION'S MAIN CITY IS ITS HUB), online's alone. The law is `src/systems/regionHubs.js`, pure.
+REGION'S MAIN CITY IS ITS HUB), online's alone. The law is `src/systems/region/regionHubs.js`, pure.
 
 - **The rule** (`pickRegionHubs`), over each region's OWN rows. `MapsFile.baseLocationCount` is the count the
   region's own MAPNAMES holds; a world-data mod's rows are appended past it and never count, so a player with
@@ -9419,9 +9420,9 @@ REGION'S MAIN CITY IS ITS HUB), online's alone. The law is `src/systems/regionHu
 
 Online only: offline the host hands the map no hubs and says nothing on arrival. **Known limits.** A world-data file
 that REPLACES one of the game's own rows (`location-<r>-<i>.json`) could change a size the rule reads; none ship.
-No relay change, no account change. Pinned: `test/hub1.test.js` (5) - the rule over every tie, the words, the base
+No relay change, no account change. Pinned: `test/ui/ink/hub1.test.js` (5) - the rule over every tie, the words, the base
 count, the ink (the circles' colours and their order under the glyphs, names and neighbours set clear), the host by
-source; `test/heldmap.test.js` HUB1 window (1) - the label and the box driven, online, capital and offline.
+source; `test/ui/heldmap.test.js` HUB1 window (1) - the label and the box driven, online, capital and offline.
 `tools/mutants/hub1.json` (30).
 
 ## HOME1 (2026-09-25, Mac: "allowing online players to purchase housing in any location"; asked, "Housing is exclusive", bought "At its front door", a house bought offline "Stay offline only", who walks in "Owner chooses") - a house anyone can buy at its door, and its door is its owner's
@@ -9447,7 +9448,7 @@ took: three town homes a character, no upkeep.
   any session's to read, a guest's too - whose each is, who may enter, which are the caller's own - never a price or
   another account's character. A release answers what was paid. The account deleted, its homes go with it.
   Routes `/v1/homes/town|mine|claim|release|entry`, POST; the deploy's smoke reads a town and refuses a guest's claim.
-- **The client's reading** (`src/systems/onlineHomes.js`): a town at a time, asked as the player walks into it
+- **The client's reading** (`src/systems/online/onlineHomes.js`): a town at a time, asked as the player walks into it
   (`scenes/world.js`, the location rect's entry, beside HUB1's arrival line) and by any door of it, believed for a
   minute; an unanswered ask keeps what was known and waits ten seconds before the next; a door waits at most 2.5
   seconds for a town it has never heard from and then goes on under Daggerfall's law. `own` is read against the
@@ -9466,14 +9467,14 @@ took: three town homes a character, no upkeep.
   can be your home. It costs N gold, from your purse and your account at the Bank of the Empire. Buy it?" - HOME-PRICE
   (2026-10-04, `06-Systems/Economy-Arc.md`): the ground its model stands on at 300 gold a square metre, raised by its
   town's size, 5,000 to 250,000 (`net/homeLaw.js homeOnlinePrice`; the model the door's own record carries,
-  `systems/talkTopics.js buildingDataForDoor`, and the town's blocks, `townBlocks`), never Daggerfall's radius x 1280,
+  `systems/talk/talkTopics.js buildingDataForDoor`, and the town's blocks, `townBlocks`), never Daggerfall's radius x 1280,
   which stays the bank's offline; Yes claims it first and takes the gold only once the claim
   lands (the purse, letters of credit too, then the Empire's account - EMPIRE-ACCOUNT - as Daggerfall's PurchaseHouse pays), asking the
   purse again after the answer and giving the claim back if it can no longer be paid; No goes on to the door, as
   Daggerfall's Info click does. HOME-OFFER (2026-09-26, Mac: "Enhanced plus cant buy house"): HOME1 asked in Info
   mode alone, which nothing on the enhanced skins says, and the default mode is Grab - so a press on a house for sale
   walked in. The offer asks in any mode but Steal now, once a session per house outside Info (a No is remembered;
-  Info always asks) - `systems/onlineHomes.js homeDoorPrompt`, `test/homeoffer.test.js`. A house is a candidate when it is Daggerfall's for-sale house or an ordinary
+  Info always asks) - `systems/online/onlineHomes.js homeDoorPrompt`, `test/systems/online/homeoffer.test.js`. A house is a candidate when it is Daggerfall's for-sale house or an ordinary
   residence (House1-4) - never a faction's House2 - and is for sale when no active quest is set in it. In Info mode
   my own door is my menu: G go in, W who may enter (Only me, My party, Anyone), S sell it back - at Daggerfall's deed
   share (85%) of what the SERVICE says was paid, into the Empire's account, credited only once the service agrees;
@@ -9491,17 +9492,17 @@ took: three town homes a character, no upkeep.
   no one.
 - **The room.** An online home keeps its relay room (an owned offline house or a ship keeps none, as before), so its
   owner and their guests stand in it together and its doors are shared - but the room carries NO LOOT
-  (`world/interiorShared.js`, the bag's `home`): its memory names no cupboard, a peer's word about one never lands
+  (`world/interior/interiorShared.js`, the bag's `home`): its memory names no cupboard, a peer's word about one never lands
   (a word about `container:3` would have overwritten the owner's chest, and then been published back as the room's),
   and a refused act's records name none.
 - **Quests** (`systems/quest/place.js`, a departure: Daggerfall has one player): no quest stands in a player's home -
-  Mac's decision (2026-10-15, "Close both"; FIELD BUGS 2026-10-14 QUEST-HOME, `01-Overview/Field-Bugs-2026-10-14.md`).
+  Mac's decision (2026-10-15, "Close both"; FIELD BUGS 2026-10-14 QUEST-HOME, `01-Overview/bugs/Field-Bugs-2026-10-14.md`).
   A quest never picks its residence in one, in any town: the layouts read every online boot makes (WD3) names every
   town's homes by building (`server-account/src/homes.js` homeLayouts' `homes`, acct133), and every act that moves a
   home - a claim, a deed held or sold, a hall bought or sold, an arena move, a sale, a character deleted - answers a
   signed home order (`net/identityToken.js` kind `home`) that its client carries to the hub, which fans it to every page
   online and holds it for a page that joins after (relay world201); the registry keeps every home as it stands
-  (`systems/onlineHomes.js` hearEveryTown, hearHome, homeStands), and the quest machine's `isPlayerHome` asks it. A
+  (`systems/online/onlineHomes.js` hearEveryTown, hearHome, homeStands), and the quest machine's `isPlayerHome` asks it. A
   site its player has not reached whose building becomes a home is chosen again in its own town by the place's own law,
   its links, its journal name and its map mark following (`Place.repickHomedSite`, `QuestMachine.reseatHomedSites`);
   a site the player has stood in stays where they found it, and the quest rung opens the home to them.
@@ -9511,12 +9512,12 @@ building of its kind stays in the home, its quest rung letting its player in. An
 homes by the database's cascade, which no client carries to the hub: the pages online keep them as homes until their
 next boot's read, and a quest passes over those houses meanwhile. The
 gold is the save's, as all of it is. What a home holds lives in its owner's own save, never on the service - the
-next slices' decor (DECOR1) is the first thing kept there. No relay change (QUEST-HOME's home word, the hub's, came with world201). Pinned: `test/home1.test.js` (11) - the
+next slices' decor (DECOR1) is the first thing kept there. No relay change (QUEST-HOME's home word, the hub's, came with world201). Pinned: `test/server/home1.test.js` (11) - the
 law, the service through the real Worker with every migration applied (one owner, the cap a character's, the repeat,
 entry, release, the cascade), the rate, the client's door to it, the client's law and registry, buying and selling,
-the room without loot, the bank online, the door's model, the wiring by source; re-aimed by content in `test/auditworld6a.test.js`,
-`test/world6.test.js`, `test/housecontainers.test.js`, `test/houses.test.js`, `test/restlodging.test.js`,
-`test/worldhover.test.js`. `tools/mutants/home1.json`.
+the room without loot, the bank online, the door's model, the wiring by source; re-aimed by content in `test/systems/loot/auditworld6a.test.js`,
+`test/systems/talk/world6.test.js`, `test/world/housecontainers.test.js`, `test/systems/houses.test.js`, `test/scenes/restlodging.test.js`,
+`test/systems/worldhover.test.js`. `tools/mutants/home1.json`.
 
 ### HOME2 (2026-09-25, Mac: "We need to ensure any house can be bought"; offered the door's offer on any click but Steal and House5/House6 counted as houses - "Recommended + should use our tooltip implementation") - any house, bought through its door's own tooltip
 
@@ -9526,7 +9527,7 @@ to Info never met a single offer. And the account service's deploy after the mer
 migrations 0009-0013 applied, the guild trigger among them, and the live routes answered 401 minutes later), but a
 red deploy reads as a service that is not there.
 
-- **Every house type is a house** (`systems/onlineHomes.js homeCandidate`). House5 and House6 join House1-4 and the
+- **Every house type is a house** (`systems/online/onlineHomes.js homeCandidate`). House5 and House6 join House1-4 and the
   for-sale house - RMBLayout.IsResidence leaves them out, Mac's call is that any house sells. A guild's House2 (the
   Thieves Guild's, the Dark Brotherhood's) still never does: sold to one player it would shut the guild out.
 - **The door's verbs, on the plaque** (`homeBuyRows`, `homeOwnerRows`; `scenes/worldModes.js homeDoorVerbs`). Online,
@@ -9548,11 +9549,16 @@ red deploy reads as a service that is not there.
   path it does not know. Every new route's call goes through it. DEPLOY-FLAKE (2026-10-04, the owner: "A test
   failed on deploy"): a 5xx is asked again too. PR #592's run took its migration and its Worker, then read
   `renown/xp -> 500` once, seconds after the gate-key probe had read 500 and then 400. A 5xx comes from a batch that
-  failed whole and wrote nothing; one that still fails after half a minute is a broken route.
+  failed whole and wrote nothing; one that still fails after half a minute is a broken route. SMOKE-HANG
+  (2026-10-16, the owner's screenshot of PR #947's account deploy): no answer (`000`, curl 28 after 15 s) is asked
+  again too, as the guest mint's loops in the same file already ask it. #950's run read `homes/town -> 000` and
+  #947's `homes/decor -> 000` - the busiest reads, on a database that sheds load (Scale-Arc PRIMARY-TRIPS) - and
+  failed deploys whose Worker had taken and whose every other call answered. A hang that did write is no false pass
+  (a second first beat answers `playedS` above 0 and fails); a route that hangs on every ask still fails.
 
-Pinned: `test/home2.test.js` (4) - the law, the plaque's fold executed, the door by source, the deploy; re-aimed by
-content in `test/home1.test.js` (House5, the Info-only offer) and `test/worldhover.test.js` (the door cache).
-`tools/mutants/home2.json` (16, all dead); `home1.json` and `worldhover.json` records re-aimed.
+Pinned: `test/systems/home2.test.js` (4) - the law, the plaque's fold executed, the door by source, the deploy; re-aimed by
+content in `test/server/home1.test.js` (House5, the Info-only offer) and `test/systems/worldhover.test.js` (the door cache).
+`tools/mutants/home2.json` (19 with DEPLOY-FLAKE's and SMOKE-HANG's, all dead); `home1.json` and `worldhover.json` records re-aimed.
 
 ## DECOR1 (2026-09-25, Mac: "building our own unique version instead of porting" Kaedius's Decorator; decor "Gold per placement"; asked, the catalogue "Everything Daggerfall furnishes", priced "By size", opened from "A UI element that can be clicked to open the decorate panel. Allows free cam mode for placement and an intuitive scrolling menu with filters", offline "kept in the save") - the decorator, from the ground up
 
@@ -9587,7 +9593,7 @@ changes to a placed piece.
   stool into a statue. The home released (sold, or its account deleted) takes its pieces with it. Routes
   `/v1/homes/decor` (read) and `/v1/homes/decor/place|move|remove`; the client's door `net/accountClient.js
   accountDecor`; the deploy's smoke reads a room and refuses a guest's placement.
-- **The catalogue** (`src/systems/decorCatalogue.js`). Every PROP model and flat Daggerfall lays out inside its town
+- **The catalogue** (`src/systems/decor/decorCatalogue.js`). Every PROP model and flat Daggerfall lays out inside its town
   blocks' buildings (BLOCKS.BSA's RMB interiors), counted, the editor's markers (TEXTURE.199) and the ladder (placed,
   it would not be climbed) left out. Kinds by the game's own sets: beds, shop shelves, house containers, other
   furniture, and the flat archives (lights 210, clothing 204, boxes and bottles 205, arms and armour 207, books and
@@ -9601,19 +9607,19 @@ changes to a placed piece.
   families, or one of the 37 things Daggerfall stands outside them (measured: its statues, arms, pedestals, coffins,
   hangings), that stands doing nothing (no action, never a door), a flat but a marker, an acting flat or nature; found
   only there, a piece is "Dungeon furniture"; every place's names are numbered after the earlier places' (a room's
-  first), so no room's name moves (`01-Overview/Field-Bugs-2026-10-05b.md`). DECOR-MODS (the same record, the town
+  first), so no room's name moves (`01-Overview/bugs/Field-Bugs-2026-10-05b.md`). DECOR-MODS (the same record, the town
   mods' furnishings): and the pieces it stands in for what Beautiful Villages, Beautiful Cities and Detailed Ships place
   - 297, measured over their own blocks, a room's or a street's as the mods stand them, never the town's own structure -
-  named and numbered after every place of Daggerfall's (`systems/decorMods.js`), every one catalogued whatever is on and
+  named and numbered after every place of Daggerfall's (`systems/decor/decorMods.js`), every one catalogued whatever is on and
   offered while the port stands it (AUDIT 05b A3: asked as the offer is made).
 
-Pinned: `test/decor1.test.js` (4 of its 7) - the law, the store through the real Worker with every migration
+Pinned: `test/server/decor1.test.js` (4 of its 7) - the law, the store through the real Worker with every migration
 applied, the client's door and the deploy, the catalogue and its filters.
 
 **DECOR1c - the placed pieces in the room** (a room whose record holds pieces now stands them; placing them is
 DECOR1d's panel).
 
-- **Standing** (`src/scenes/decorRoom.js`, one pool per room, held by the building host `src/scenes/worldModes.js`
+- **Standing** (`src/scenes/decor/decorRoom.js`, one pool per room, held by the building host `src/scenes/worldModes.js`
   and emptied with the room at all three of its teardowns). A model stands with its origin at the building's origin
   plus its place, turned by yaw, pitch and roll, and scaled. It is its own collider bucket and its own eye target
   under one key, `decor:<id>`, so the ray is decided by the piece's own triangles, at the reach of the room's own
@@ -9641,7 +9647,7 @@ DECOR1d's panel).
 - **Named.** Pointed at, a storage model reads as the house container's own word. Every other piece is named once
   the decorator has read the catalogue (DECOR1d).
 
-Pinned: `test/decor1.test.js` (3 of its 7) - the pool over fakes of the host's own seams, the scene through the save
+Pinned: `test/server/decor1.test.js` (3 of its 7) - the pool over fakes of the host's own seams, the scene through the save
 and back, and the host's wiring. `tools/mutants/decor1.json` (54, DECOR1a's 32 among them).
 
 **DECOR1d - the decorator itself: the button, the panel, the free camera.**
@@ -9652,7 +9658,7 @@ and back, and the host's wiring. `tools/mutants/decor1.json` (54, DECOR1a's 32 a
 - **The panel** (`src/ui/decorPanel.js`). A window over the room: it sits in the room's own overlay slot (the
   enhanced merchant panel's pattern), so it pauses the room and frees the pointer as every window does, and
   Escape or Tab puts it away. The catalogue is read out of BLOCKS.BSA's town blocks a few blocks a frame the first
-  time the panel opens (`src/systems/decorScan.js`), and each piece's size is measured for its price: a model's
+  time the panel opens (`src/systems/decor/decorScan.js`), and each piece's size is measured for its price: a model's
   radius off its ARCH3D header, as the bank prices a house by its model; a flat's billboard, half its diagonal. A
   piece whose size cannot be read has no price and is not offered. The list is filtered by kind, by words, by size,
   by holds-things and by gives-light, and sorted most common first, cheapest first or by name. The piece pointed at
@@ -9660,7 +9666,7 @@ and back, and the host's wiring. `tools/mutants/decor1.json` (54, DECOR1a's 32 a
   automap's, and copied into the panel's own canvas, the panel over the game being opaque), a flat as its own
   picture (asked for as its row comes into view, never hundreds at once) - with its price and, when it cannot be placed, why: the gold short, the room full (200), or its size
   still being read.
-- **Placing** (`src/scenes/decorTool.js`, `src/systems/decorPlacer.js`). Place closes the panel and flies the
+- **Placing** (`src/scenes/decor/decorTool.js`, `src/systems/decor/decorPlacer.js`). Place closes the panel and flies the
   camera. Every key press is the decorator's while it flies, read as the action it is bound to (the controls
   registry's, so a rebinding holds), and none reaches the body, so the body stands still and nothing else fires
   under a placement; a key's release still reaches the game, so a key held into the flight is let go of. The walk
@@ -9682,7 +9688,7 @@ and back, and the host's wiring. `tools/mutants/decor1.json` (54, DECOR1a's 32 a
 Not yet (DECOR1e): moving, turning, resizing or removing a placed piece and the half back on removal; a home,
 house or ship sold with pieces in it; flying the camera by touch.
 
-Pinned: `test/decor1d.test.js` (13) - the scan, the placer, the panel, the button and the bar over a fake
+Pinned: `test/scenes/decor/decor1d.test.js` (13) - the scan, the placer, the panel, the button and the bar over a fake
 document, the tool over fakes of the host's seams, and the host's wiring by source. `tools/mutants/decor1d.json`
 (39).
 
@@ -9693,7 +9699,7 @@ document, the tool over fakes of the host's seams, and the host's wiring by sour
   it gives light, and the half a removal gives back. A piece chosen shows four changes - Move, Light (saying
   whether it is lit), Holds things (saying whether it does) and Remove. The panel opens again on whichever tab it
   was left on.
-- **Move** (`src/scenes/decorTool.js`). The same free camera as a placement, starting from the piece's own turn and
+- **Move** (`src/scenes/decor/decorTool.js`). The same free camera as a placement, starting from the piece's own turn and
   scale; the ghost is the piece itself, and the eye looks through the piece's own collider, so a piece nudged where
   it stands never lands on top of itself. Moving and turning are free; resized, it costs the difference when grown
   and gives half the difference back when shrunk (the law's `decorRescale`). The bar says "Moving <piece>" and
@@ -9723,9 +9729,9 @@ document, the tool over fakes of the host's seams, and the host's wiring by sour
 
 Not yet (DECOR2): placing real items, a furnisher's shop, weapon displays.
 
-Pinned: `test/decor1e.test.js` (8) - the room's view over a fake document; a move, a resize, a light, a hold and a
+Pinned: `test/systems/online/decor1e.test.js` (8) - the room's view over a fake document; a move, a resize, a light, a hold and a
 removal through the tool over fakes of the host's seams, offline and online; the touch screen's flight; the sale's
-parts, and the host's wiring by source. `test/decor1.test.js` (+1) - the service's count and half-sum at a release.
+parts, and the host's wiring by source. `test/server/decor1.test.js` (+1) - the service's count and half-sum at a release.
 The decorator pins' fakes have one home, `test/decorFakes.mjs` (the DECOR1d rig's pool lacked the room's own
 list and remove - a fake that lies passes a pin production would fail). `tools/mutants/decor1e.json` (60).
 
@@ -9735,7 +9741,7 @@ Three parts: DECOR2a the player's own things in a room, DECOR2b the furnisher, D
 
 **DECOR2a - your own things in a room.**
 
-- **What can stand** (`src/systems/decorItems.js`). An item from the pack stands in a room as the picture Daggerfall
+- **What can stand** (`src/systems/decor/decorItems.js`). An item from the pack stands in a room as the picture Daggerfall
   itself gives it in the world - the item's own picture first (an artifact's, a potion's own bottle), else its
   template's: a statue, a painting, a gem, a book, a plant, a lit candle or torch (lit as the catalogue's are). Never
   anything worn, a quest's item, a summoned thing, a map, coin, a vehicle, a deed, a letter of credit or the spellbook
@@ -9747,7 +9753,7 @@ Three parts: DECOR2a the player's own things in a room, DECOR2b the furnisher, D
   again. In the room's list it says it is yours, and its fourth change is "Take down": back into the pack, whole.
   Moved, turned or resized it stays free; it never holds things.
 - **The thing itself** is the save's the whole time it stands: the room keeps it by the piece's id
-  (`scenes/decorRoom.js`) and the scene carries it (`systems/sceneCache.js` decorOwn), as what a storage piece holds
+  (`scenes/decor/decorRoom.js`) and the scene carries it (`systems/sceneCache.js` decorOwn), as what a storage piece holds
   is kept. The piece is only how the room shows it. So an online home's piece carries no free text: `item` is the
   game's own numbers for which item it is - its template, group, material, variant, artifact and message
   (`src/net/decorLaw.js` decorItemOf) - which the account service keeps beside what the piece is
@@ -9763,12 +9769,12 @@ Three parts: DECOR2a the player's own things in a room, DECOR2b the furnisher, D
 - **Sold**: a home, house or ship sold gives the owner's own things back to the pack (Mac: "Back to pack") and pays
   half back only for the bought pieces; the offer and the sale say so.
 
-Pinned: `test/decor2a.test.js` (7), `test/decor1.test.js` (+1: the service's half). `tools/mutants/decor2a.json`
+Pinned: `test/systems/decor2a.test.js` (7), `test/server/decor1.test.js` (+1: the service's half). `tools/mutants/decor2a.json`
 (59).
 
 **DECOR2b - the furnisher.**
 
-- **What it sells** (`src/systems/decorFurnish.js`, `src/systems/shopStock.js`). Daggerfall's Furniture group: twenty-
+- **What it sells** (`src/systems/decor/decorFurnish.js`, `src/systems/shopStock.js`). Daggerfall's Furniture group: twenty-
   nine items (ItemTemplates 217-245) - beds, tables and chairs in oak, cherry, mahogany and teak, curtains, pillows,
   rugs, tapestries and skins. No loot table rolls them and no shop ever sold them: DFU's stock loop skips the group for
   every shop, and its Furniture Stores stand with empty shelves. Here the Furniture Store stocks them by Daggerfall's
@@ -9780,7 +9786,7 @@ Pinned: `test/decor2a.test.js` (7), `test/decor1.test.js` (+1: the service's hal
   character (the save's `furnishings`) and said once for the lot: "The Oak Chair will be delivered - set it down from
   the Decorate panel in any room you can decorate." On the shelf a piece shows its initials: Daggerfall gives the
   group no picture but the pillows', and the enhanced lists now draw none for archive 0, as the classic drawer never
-  did (`src/ui/enhancedInventory.js` itemLine), where they would have drawn TEXTURE.000's solid colour.
+  did (`src/ui/enhanced/enhancedInventory.js` itemLine), where they would have drawn TEXTURE.000's solid colour.
 - **Set down** from "Your things", listed after the pack's, free. A pillow stands as its own picture (TEXTURE.200
   record 11). Every other piece has no picture of its own (its row shows its kind's letters); "Choose its look" opens
   the panel's LOOK view - the catalogue on that piece's kinds alone (a bed any of the game's beds; a table or a chair
@@ -9796,28 +9802,28 @@ Pinned: `test/decor2a.test.js` (7), `test/decor1.test.js` (+1: the service's hal
 Not yet: delivered furniture is not sold back (the Furniture Store buys the group only from the pack, Daggerfall's own
 table).
 
-Pinned: `test/decor2b.test.js` (9), `test/decor1.test.js` (+1: the service keeps a model with the furniture's
+Pinned: `test/systems/decor/decor2b.test.js` (9), `test/server/decor1.test.js` (+1: the service keeps a model with the furniture's
 numbers). `tools/mutants/decor2b.json` (75, one equivalent: DFU's own skip kept for every other shop). Five older
 records re-aimed.
 
 **DECOR2c - weapons and shields mounted.**
 
-- **What hangs** (`src/systems/decorItems.js` decorMountOf, `src/net/decorLaw.js` decorIsMount). A weapon from the pack
+- **What hangs** (`src/systems/decor/decorItems.js` decorMountOf, `src/net/decorLaw.js` decorIsMount). A weapon from the pack
   (never the arrows) or a piece of armour hangs (ARMOR-MOUNT, 2026-09-26, Mac: "Cant set down armor in house - Would
   be awesome to display armor as well": DECOR2c hung the four shields alone, and armour never stands, so a cuirass had
-  no way into a room; every piece hangs now, `test/armormount.test.js`), as its own pack picture - the owner's body's, as the pack draws
+  no way into a room; every piece hangs now, `test/systems/item/armormount.test.js`), as its own pack picture - the owner's body's, as the pack draws
   it (a woman's weapons are Daggerfall's archive 233, a man's 234) - with its own numbers, free, and back into the pack
   whole when taken down, as every own thing is. Never anything worn, a quest's or a summoned one. Every client reads
   "a mount" off the item's own numbers, so a visitor sees it hang as the owner hung it; its dye is read off the same
   numbers (an artifact's colours its own). The law's archive bound rises from 511 to 999 so the port's own pictures -
   Roleplay & Realism's weapons at 513 and on - hang too.
-- **Hung ON a surface** (`src/systems/decorPlacer.js`). The flight sets it where the eye meets a wall - the ray's own
+- **Hung ON a surface** (`src/systems/decor/decorPlacer.js`). The flight sets it where the eye meets a wall - the ray's own
   surface normal, facing the eye - flat against it: its heading and tilt are the surface's (on a floor or a table the
   eye's own heading, so the picture reads upright from where the owner stands), the turn spins it clockwise on the
   surface, the grid snaps it across the surface and never off it, and the owner's lift moves it up the surface. It
   hangs two centimetres off the surface - the blood marks' own hair. With no surface in reach, the bar says to look at
   a wall. Moved, it keeps its spin.
-- **Drawn flat, not turned to the eye** (`src/scenes/decorRoom.js`). A mount is the one flat that never turns to the
+- **Drawn flat, not turned to the eye** (`src/scenes/decor/decorRoom.js`). A mount is the one flat that never turns to the
   eye: one quad, centred at its place and framed by its turn (`decorLaw.js` decorMountFrame - the frame's right is its
   viewer's right, so the picture never reads mirrored), drawn on the blood marks' own decal pass (a quad lying on a
   surface, lit by that surface's light, its clear texels cut out), after the room's solid models. Its picture is
@@ -9829,13 +9835,13 @@ records re-aimed.
   switch on, the texel taken as the colour, no film, no relief (`tools/bloodProbe.mjs`'s WEAPON-MOUNT rows, both sets).
 - **The picture it hangs as** (2026-09-26, Mac over the house: "long blade is right", "others are daedric but show
   steel", "changes after placment", "disapeared", and "Morrowind models if activated should show"). Three fixes, one
-  door (`src/scenes/decorRoom.js` loadMountPicture - the room and the ghost both ask it, so the ghost is what stands):
+  door (`src/scenes/decor/decorRoom.js` loadMountPicture - the room and the ghost both ask it, so the ghost is what stands):
   - DYE-ICON: the pack's classic picture is dyed by its metal now, as GetItemImage's classic arm is (ItemHelper.cs
     :463-478; `05-Combat/Diverse-Weapons.md` DYE-ICON) - the port drew every metal as the base picture, pack and wall
     alike. The swatch rides the mount's numbers (`decorItems.js` decorMountDyeTarget), an artifact's never dyed - one
     whose index was never recorded too (AUDIT DYE-ICON 7, below).
   - MOUNT-LAZY: the door decodes the record's own replacement by the dye before it uploads, as the pack's drawer does
-    (`ui/itemScroller.js` preloadIconRecord). A lazy one - Diverse Weapons' metals, Roleplay Realism Items' own
+    (`ui/item/itemScroller.js` preloadIconRecord). A lazy one - Diverse Weapons' metals, Roleplay Realism Items' own
     archives - is never decoded by the archive's preload, so a mount hung before any list drew its record hung as the
     classic picture, or as nothing where the mod's picture is the only one, and a ghost put up before the decode
     landed was not the picture that then stood.
@@ -9845,11 +9851,11 @@ records re-aimed.
     in metres), uploaded once under `mw-mount`. No build, no record, or a file that will not read: the dyed pack
     picture. The host refreshes the room's mounts when the build's stamp changes (`fpArm.mountPictureStamp` - the
     build's data generation, AUDIT DYE-ICON 4), so a build landing turns the wall Morrowind and one going turns it
-    back. Pinned: `test/mwmount.test.js`, `tools/mutants/mwmount.json`; DYE-ICON and MOUNT-LAZY in
-    `test/dyeicon.test.js`, `tools/mutants/dyeicon.json`.
+    back. Pinned: `test/formats/morrowind/mwmount.test.js`, `tools/mutants/mwmount.json`; DYE-ICON and MOUNT-LAZY in
+    `test/systems/item/dyeicon.test.js`, `tools/mutants/dyeicon.json`.
 - **AUDIT DYE-ICON (2026-09-27) - the audit of the three.** Checked and standing: the GL state, the picture's
   orientation and units, a build replaced mid-load, MOUNT-LAZY's fetch and decode caching, the cache keys. Pinned in
-  `test/dyeicon.test.js` and `test/mwmount.test.js`, `tools/mutants/auditdyeicon.json`:
+  `test/systems/item/dyeicon.test.js` and `test/formats/morrowind/mwmount.test.js`, `tools/mutants/auditdyeicon.json`:
   - **1 - the room's preview of a hung piece was undyed.** "In this room" asked by archive and record alone - the base
     metal's picture. The placed shape carries its item (`ui/decorPanel.js` placedShape) and `decorTool.js` thumbOf asks
     a mount by its dye and swatch.
@@ -9875,8 +9881,8 @@ records re-aimed.
     picture, not the item's 432/433 one); iconRecordOf picks a weapon's record without the archives' `has`, where the
     build asks it, so with an expansion's .esm attached and not its .bsa the icon and the mount can quietly stand as
     the classic picture.
-- **AUDIT DYE-ICON r3 (2026-09-27) - the second audit, of the first's fixes.** Pinned in `test/mwmount.test.js` and
-  `test/dyeicon.test.js`, `tools/mutants/auditdyeicon2.json`:
+- **AUDIT DYE-ICON r3 (2026-09-27) - the second audit, of the first's fixes.** Pinned in `test/formats/morrowind/mwmount.test.js` and
+  `test/systems/item/dyeicon.test.js`, `tools/mutants/auditdyeicon2.json`:
   - **1 - the ghost drew a texture the room had let go.** The ghost of a piece already hung is the room's very
     texture (an upload is kept by its key), and it asked the door past the room's keys: a refresh under a placement (a
     build gone or failed, another generation) let it go while the ghost still drew it - WebGL keeps the last bound
@@ -9896,13 +9902,13 @@ records re-aimed.
 Not yet: no one has seen a mount drawn in a room - there is no ARENA2 in this container; the frame's handedness is
 reasoned from the billboard pass's own texture and camera conventions and pinned, and is the one-look question.
 
-Pinned: `test/decor2c.test.js` (6), `test/decor1.test.js` (+1: the service keeps a mount of the port's own archive).
+Pinned: `test/systems/decor/decor2c.test.js` (6), `test/server/decor1.test.js` (+1: the service keeps a mount of the port's own archive).
 `tools/mutants/decor2c.json` (49 - ARMOR-MOUNT took out "any armour hung", now the law; its opposite is
 `tools/mutants/armormount.json`'s). Five older records re-aimed.
 
 **DECOR-SHELL (2026-09-26) - a placed piece stays in the room.** A player, relayed by Mac: *"decor they go poof"*,
 *"They are there / But its model disappearing / Placing models is different then the ones after"*. Four causes, read
-out of the code (`test/decorshell.test.js`, `tools/mutants/decorshell.json`):
+out of the code (`test/scenes/decor/decorshell.test.js`, `tools/mutants/decorshell.json`):
 - **The free camera flew through the room.** Nothing but the forty-metre leash held it, and the room's faces are
   one-sided - from outside, an open dollhouse. A piece set on the ceiling's top or behind a wall looked placed from up
   there, and was gone from the body's own eye: still listed, still solid, still named through the ceiling. The flight is
@@ -9918,7 +9924,7 @@ out of the code (`test/decorshell.test.js`, `tools/mutants/decorshell.json`):
   of it asks again (`decorRoom.js` modelOf).
 
 **AUDIT DECOR-SHELL (2026-09-27) - what the four left open.** A read-only audit of the commit
-(`test/decorshell.test.js` +7, `tools/mutants/auditdecorshell.json`):
+(`test/scenes/decor/decorshell.test.js` +7, `tools/mutants/auditdecorshell.json`):
 - **The skin was measured along the step, not from the face.** A step cut `DECOR_FLY_SKIN` back along itself stops
   only `DECOR_FLY_SKIN` x sin(angle) off a face it meets at a shallow angle: 3.5 mm over the floor gliding a degree
   down, 1.7 cm off a wall flown along at 5 degrees (39% of the screen past it). Under 1e-4 the collider's ray no longer
@@ -9948,7 +9954,7 @@ out of the code (`test/decorshell.test.js`, `tools/mutants/decorshell.json`):
   Each dies now, and the gate is driven (askDecorList) beside its source pins.
 
 **AUDIT2 DECOR-SHELL (2026-09-27) - the second audit, of the first's fixes.** No regression; 480k fuzzed frames over
-four real interiors crossed no face. Pinned in `test/decorshell.test.js` (+2), `tools/mutants/auditdecorshell2.json`:
+four real interiors crossed no face. Pinned in `test/scenes/decor/decorshell.test.js` (+2), `tools/mutants/auditdecorshell2.json`:
 - **Three pins the tests walked past.** The moved piece's skip was pinned only with its bucket last in the collider, so
   a skip that ended the push (`break` for `continue`, `player/collider.js` _resolveSphere) lived: in a room the pieces
   placed after it went unpushed. A fourth push lived, and so did the model cache without its in-flight mark
@@ -9970,14 +9976,14 @@ flying forward 0.1 m under a ceiling) - cosmetic.
 
 What Daggerfall furnished the room with is no longer fixed. A furnishable room - an online home (anyone's), the
 player's house, the ship - stands its prop models and flats one by one (`scenes/interiorContext.js`, the pool
-`scenes/decorBase.js`), each named by the layout (`net/decorLaw.js`: `m<placement>:<model>`,
+`scenes/decor/decorBase.js`), each named by the layout (`net/decorLaw.js`: `m<placement>:<model>`,
 `f<flat>:<archive>.<record>`), so the owner can take any piece out and put it back, free, from the panel's "Built in"
-view (`ui/decorPanel.js`, `scenes/decorTool.js setBase`). A piece out is out whole - draw, collider bucket, light,
+view (`ui/decorPanel.js`, `scenes/decor/decorTool.js setBase`). A piece out is out whole - draw, collider bucket, light,
 target - and one that holds anything never goes. The list of what is out is the room's scene offline (the save) and
 the account service's online (`home_hidden`, migration 0015; `06-Systems/Accounts-And-Cloud-Saves-Arc.md`), written
 whole by the owner first and stood once the service has it; the room every visitor walks into is the one its owner
-cleared. A sale brings the furniture back. `01-Overview/Field-Bugs-2026-09-26.md` BASE-HIDE;
-`test/basehide.test.js`; `tools/mutants/basehide.json`.
+cleared. A sale brings the furniture back. `01-Overview/bugs/Field-Bugs-2026-09-26.md` BASE-HIDE;
+`test/server/basehide.test.js`; `tools/mutants/basehide.json`.
 
 
 ## HOUSING (2026-09-30, asked: four improvements to the housing system) - a door between rooms, a room rented, the outside painted, the yard
@@ -10000,24 +10006,24 @@ home's alone - they are about other players.
 ### HOME-DOORS - a door hung in a doorway, and every doorway marked
 
 - **The door** is one of Daggerfall's own: the five interior door models DaggerfallInterior hangs (AddActionDoors'
-  9000 + the record's index of five - `world/interiorLayout.js` DOOR_MODEL_BASE_ID, DOOR_MODEL_COUNT, now exported
-  once), read into the catalogue from the town blocks' own door records (`systems/decorCatalogue.js` collectDecor -
+  9000 + the record's index of five - `world/interior/interiorLayout.js` DOOR_MODEL_BASE_ID, DOOR_MODEL_COUNT, now exported
+  once), read into the catalogue from the town blocks' own door records (`systems/decor/decorCatalogue.js` collectDecor -
   kind "Doors", named "Door N"), priced by size as any piece. The account service keeps it as the piece it is (a model
   id and a place): nothing on the service knows a door from a chair.
-- **Placed, it is one of the room's own action doors** (`scenes/decorRoom.js` hands a door piece to the host's
+- **Placed, it is one of the room's own action doors** (`scenes/decor/decorRoom.js` hands a door piece to the host's
   `doors` hooks; `scenes/worldModes.js` decorDoorHooks calls `world/actionSystem.js` addDoor with the piece's id as its
   position key - `act:decor:<id>`, the same key on every client and every visit). So it swings open and shut on
   Interact, blocks while shut, is drawn and ticked with the room's doors, named as a door on the hover, saved with them
   (a house's or a ship's) and shared through the room with whoever stands in it. Moved or removed, it is taken back out
   (`ActionSystem.removeDoor`, new: the object, its link and its bucket). No solid bucket or eye target of the pool's
   own - the door is both.
-- **Where one goes** (`systems/decorDoorways.js`): a DOORWAY - an opening in a wall between two floors the eye passes
-  between. The room finder (`systems/decorRooms.js`) now keeps the pairs of floors it joined (`links()`), and each is
+- **Where one goes** (`systems/decor/decorDoorways.js`): a DOORWAY - an opening in a wall between two floors the eye passes
+  between. The room finder (`systems/decor/decorRooms.js`) now keeps the pairs of floors it joined (`links()`), and each is
   looked across at waist height by rays along the way through, stepped sideways: the opening is the run that goes
   through, each jamb the first step either side that meets the wall - the same wall, going on past both jambs, no
   deeper than a wall is thick (1.2 m). Its middle is between the jambs and in the wall's thickness, on its floor, under
   its lintel (1.8 m at the least), 0.6 to 2.4 m wide. A passage is none (it narrows for its whole length); the gap
-  between two cupboards is none (the finder reads the room's SHELL alone - `scenes/decorBase.js` INTERIOR_SHELL_BUCKET,
+  between two cupboards is none (the finder reads the room's SHELL alone - `scenes/decor/decorBase.js` INTERIOR_SHELL_BUCKET,
   now named once); an opening a door already stands in is taken - one of the room's own (their hinges, open or shut) or
   a placed one.
 - **The easy element**: while a door is placed, every free doorway is MARKED on the decal pass - a bright frame round a
@@ -10053,13 +10059,13 @@ home's alone - they are about other players.
   comes with a sale. The town answer names each home's free rooms (`rent: { vacant, from }`) and, for the character
   the caller names, the end of its own tenancy (`tenant`) - which opens the door (`homeMayEnter`: a tenant walks in
   whoever else may).
-- **The door** (`systems/onlineHomes.js` homeVisitorRows, `scenes/worldModes.js` openHomeRent): a home with a room
+- **The door** (`systems/online/onlineHomes.js` homeVisitorRows, `scenes/worldModes.js` openHomeRent): a home with a room
   free lists "Rent a room: from N gold a day" on its plaque (and "Go in" where the door opens for me); a click on a home
   that would shut me out asks the same where no plaque is drawn. Which room, how many days (each with its cost), and the
   price asked again before it is paid (`systems/homeRent.js` rentHomeRoom - the purse pays at once and gets it back on
   a refusal). A tenant's plaque lists their own room to renew; walking in, they are told their days left, and may rest
   there (the rest window's `houseOwned`). A tenant is still a visitor: the cupboards stay shut, no drops, no spells.
-- **The owner** (the decorator's "Rooms to rent" tab, `ui/decorPanel.js`, `scenes/decorTool.js` rentView/rentAct,
+- **The owner** (the decorator's "Rooms to rent" tab, `ui/decorPanel.js`, `scenes/decor/decorTool.js` rentView/rentAct,
   through `worldModes.js` decorRentDoor): each room the house's walls part it into, beside the offer whose point stands
   in it (`homeRent.js` rentRoomsView - matched by place, never by number, since the room finder numbers afresh), a price
   stepped by -100/-10/+10/+100 and offered by the room's own point, "Stop offering", and "Collect rent: N gold". A house
@@ -10107,7 +10113,7 @@ home's alone - they are about other players.
 - **The frame** is the building's own place in its town (`world/rmbLayout.js` `recordAt`, the subrecord's origin -
   not a DFU field) in the world's axes, as a room's pieces stand from the door; `scenes/world.js` records each
   building's frame, the box round its models and - FB1009 HOME-FOOT - the ground its models stand on at the build
-  (`homeFrames`: `world.js:"const rects = footRectsAt(modelFeetOf(placed.modelIdNum, cpu), local);"`).
+  (`homeFrames`: `pixelBuild.js:"const rects = footRectsAt(modelFeetOf(placed.modelIdNum, cpu), local);"`).
 - **The lot** (`scenes/homeYards.js` yardLot, yardWhyNot): the box round the house and six metres round it, never inside
   the house (its roof neither) and never on another building's ground. FB1009 HOME-FOOT (the Discord's "Property
   Problem": "I can't place in front of my door but I can place in front of another's home"): a building's ground is
@@ -10126,10 +10132,10 @@ home's alone - they are about other players.
   its own cap and law (a yard piece moved stays a yard's); the room's list and cap are the room's own; the town's yards
   are read together at `/v1/homes/yards`, by any session.
 - **Standing** (`homeYards.js` createHomeYards): the town's yards read with the town (believed a minute, as its homes
-  are), each yard stood in its pixel as a room's pieces stand in its room (`scenes/decorRoom.js`, one pool a yard) - its
+  are), each yard stood in its pixel as a room's pieces stand in its room (`scenes/decor/decorRoom.js`, one pool a yard) - its
   own collider buckets on the world's collider, drawn in the world's mesh and billboard passes - and stood again where
   it stands when the world recentres; a pixel streamed out takes its yards down.
-- **The decorator outside**: the same tool (`scenes/decorTool.js`), opened by "Decorate" while the owner stands on
+- **The decorator outside**: the same tool (`scenes/decor/decorTool.js`), opened by "Decorate" while the owner stands on
   their own lot (or two metres off it) outdoors, afoot. The panel is a yard's - "Catalogue", "In this yard", "Exterior"
   (HOME-LOOK); no doors in its catalogue; no light, holding or craft buttons. The free camera flies from the eye and
   meets the ground (`Collider.surfaceHit`); the flight takes the stick and the eye from the body; a write goes to the
@@ -10161,15 +10167,15 @@ HOME-VOTE II (below).
 - **DECOR-FIGURE - one of Daggerfall's people stands at its own size.** A FIGURE is a piece that is a flat of a person's
   archive (RDBLayout.NPCFlatArchives - its one home now the leaf `world/npcFlatArchives.js`, re-exported by
   `world/rdbLayout.js`, so the decor law the account service bundles can read it) and never one's own item
-  (`net/decorLaw.js` decorIsFigure) - every one of the catalogue's Vendors (`systems/decorCatalogue.js`, HOME-VENDOR:
-  BLOCKS.BSA's people records stand in those archives alone - `test/people.test.js`), inside and in a yard alike. ONE
-  LAW, the archive: the placer (`systems/decorPlacer.js` decorEntrySized), the room's draw and the service all ask it.
+  (`net/decorLaw.js` decorIsFigure) - every one of the catalogue's Vendors (`systems/decor/decorCatalogue.js`, HOME-VENDOR:
+  BLOCKS.BSA's people records stand in those archives alone - `test/world/people.test.js`), inside and in a yard alike. ONE
+  LAW, the archive: the placer (`systems/decor/decorPlacer.js` decorEntrySized), the room's draw and the service all ask it.
   The placer takes no size step for one: placed at 1, and a figure grown or shrunk before is brought back to 1 when it
-  is moved - one grown gives its half back as any shrink does, one shrunk pays nothing (`scenes/decorTool.js`
+  is moved - one grown gives its half back as any shrink does, one shrunk pays nothing (`scenes/decor/decorTool.js`
   decorEditPrice: it stands at that size for everyone already). The bar hides Smaller and Bigger for it and its keys
-  line names no Size key (`ui/decorPanel.js` createDecorBar `sized`, told by `scenes/decorTool.js`); the - and = keys
+  line names no Size key (`ui/decorPanel.js` createDecorBar `sized`, told by `scenes/decor/decorTool.js`); the - and = keys
   do nothing. Every client draws a figure at its own size whatever its record says (decorDrawnScale -
-  `scenes/decorRoom.js`, the room's pool and every yard's), and a turn asks the lot for the ground it is drawn on
+  `scenes/decor/decorRoom.js`, the room's pool and every yard's), and a turn asks the lot for the ground it is drawn on
   (decorTool.js footprintOf). The service refuses a figure placed at another size, or moved to one (decorScaleOk -
   `server-account/src/decor.js` placeDecor, `bad-decor`, and moveDecor, `decor-figure` - II C2: its own words, for a
   stale copy's turn of a figure brought back to 1 on another device), and never takes an own item said beside a
@@ -10196,7 +10202,7 @@ HOME-VOTE II (below).
   its new row without the score - homes.js HOME_MOVE_CARRIED), and a home taken up by its line's heir keeps its own.
 - **HOME-VOTE - where it is cast: at the house.** A home's door's plaque lists the votes under whatever else the door
   does, where the plaque draws its list (II D1: `ui/worldPlaque.js` worldPlaqueOn - the classic face folds a door's rows
-  it never draws), to anyone who may vote on it (`systems/onlineHomes.js` homeVoteRows, homeVotable - the service's own line, read
+  it never draws), to anyone who may vote on it (`systems/online/onlineHomes.js` homeVoteRows, homeVotable - the service's own line, read
   off the town's answer: `mine`, a hall's `member` or `insider`): "Vote up" and "Vote down", the vote standing taken
   back by a row of its own ("Take back your vote up" - HOME_VOTE_VERB.clear), each row's verb the vote it sends
   (homeVoteOfVerb); the score and the reader's own vote are among the door's lines (homeVoteLines). Where those rows
@@ -10245,7 +10251,7 @@ HOME-VOTE II (below).
   then the page. A build from before HOME-VOTE reads the town's answer as before (the fields are new) and is handed no
   more of a shunned home's room and paint than a new one (AUDIT A3); its yards are the client's to hide. No relay
   change.
-- Pinned in `test/decorfigure.test.js` (8) and `test/homevote.test.js` (12); `tools/mutants/decorfigure.json` 19 dead
+- Pinned in `test/systems/decor/decorfigure.test.js` (8) and `test/net/homevote.test.js` (12); `tools/mutants/decorfigure.json` 19 dead
   and 1 equivalent as recorded, `tools/mutants/homevote.json` 94 dead and 1 equivalent as recorded (AUDIT HOME-VOTE
   II's and HOME-SHUN's among them). PIN MOVED: guild_yard's and homelook's look-merge pin (a look
   counts where it is shown - never lookOfHome, which would rebuild the owner's street under the painter's preview;
@@ -10300,14 +10306,14 @@ lines moved into homeVoteDoorText). FOUND, each fixed and pinned unless DOCUMENT
 - **LOW - C2: a figure grown before was refused a turn for a footprint it no longer has.** FIXED: footprintOf asks the
   drawn size.
 - **LOW - C3, D13: two laws of a figure** - the placer read the catalogue's kind, the room and the service the archive.
-  FIXED: one law, the archive; the corpus pins every interior person in those archives (`test/people.test.js`, where
+  FIXED: one law, the archive; the corpus pins every interior person in those archives (`test/world/people.test.js`, where
   ARENA2 stands - II D15: it is skipped in CI, which holds no game data).
 - **LOW - D7: the hour's bar and `no-home`'s status unpinned.** FIXED: 30 and 404 said.
 - **DOCUMENT - D10, D12, B6, B7: the record.** The counts, the PIN MOVED list, the merge's wording and when another
   viewer sees a vote turn round are corrected above; a tenant and a party member are visitors; a hall's banners stand.
 - **DOCUMENT - D14: two dead exports** (homeShunnedOwnerLine, the placer's `sized`). Retired: homeShunnedInsiderLine is
   the line both say, and the bar asks decorEntrySized.
-- Pinned in `test/homevote.test.js` and `test/decorfigure.test.js` (above); `tools/mutants/homevote.json` and
+- Pinned in `test/net/homevote.test.js` and `test/systems/decor/decorfigure.test.js` (above); `tools/mutants/homevote.json` and
   `decorfigure.json` (above), every new mutant dead.
 
 ### AUDIT HOME-VOTE II (2026-10-11, the owner: "Audit this") - DECOR-FIGURE and HOME-VOTE read a second time
@@ -10366,7 +10372,7 @@ fixed and pinned unless DOCUMENTED:
   "withheld by the service" (the room and paint - never the yard), the law's header and the corpus's CI skip -
   corrected. Two mutants are EQUIVALENT, recorded so: the turn trigger on `voted_at` (the upsert sets both columns)
   and the placer's figure by kind (every catalogue person is in the archives).
-- Pinned in `test/homevote.test.js` (four AUDIT II tests) and `test/decorfigure.test.js`; `tools/mutants/homevote.json`
+- Pinned in `test/net/homevote.test.js` (four AUDIT II tests) and `test/systems/decor/decorfigure.test.js`; `tools/mutants/homevote.json`
   and `decorfigure.json` - every AUDIT II mutant dead but the two equivalents.
 
 ### HOME-SHUN - a home is hidden at five votes down, not one (2026-10-12, from play)
@@ -10386,13 +10392,13 @@ a house. The system should primarily hide plagues that the majority hates."
 - **One law, every reader.** Everything that hides a home reads homeShunned: the room the service hands out
   (`server-account/src/homeVotes.js` homeShownTo, so a build from before HOME-SHUN is handed a home at -1 to -4 whole),
   the paint homesInTown says (`server-account/src/homes.js` lookFor), the client's room, yard and paint
-  (homeDecorShown), and the door's lines (`src/systems/onlineHomes.js` homeVoteLines). No migration: the score kept on
+  (homeDecorShown), and the door's lines (`src/systems/online/onlineHomes.js` homeVoteLines). No migration: the score kept on
   the row is unchanged, only what it means. A home that stood at -1 to -4 stands whole again at the next read of its
   town.
 - **The four hosts.** As HOME-VOTE: `scenes/world.js` and `scenes/worldModes.js` read the law and change no line;
   `scenes/exterior.js` and `scenes/dungeonContext.js` stand no online homes. ACCOUNT_VERSION is unchanged: the service
   reads the law it imports, and no route's shape moves - the deploy is the service and the page together, either first.
-- Pinned in `test/homevote.test.js` (12): -1 to -4 shown and -5, -6 shunned; a visitor shown at -1 and hidden at -5; the
+- Pinned in `test/net/homevote.test.js` (12): -1 to -4 shown and -5, -6 shunned; a visitor shown at -1 and hidden at -5; the
   owner, a member and the kin shown at -5; the service hands a home at -1 its whole room and at -5 its trader alone; a
   hall shunned by five votes down. PIN MOVED: every service pin that shunned a home by one vote now votes it down by
   five accounts (the test's `shun`); the yard's pin stands at HOME_SHUN_AT. Mutants: `tools/mutants/homevote.json`'s
@@ -10418,7 +10424,7 @@ lighting isnt shown lantern light anymore?"
   it as the town either: a lamp post placed in a yard stood dark beside the street's lit ones, while the yard's
   catalogue said "gives light" of every lamp.
 - **The law: an outdoor lamp IS the town's.** Daggerfall lights every TEXTURE.210 flat standing in a town block
-  (RMBLayout.AddLight - `world/cityLights.js` collectCityLights), so a yard's lights too (`scenes/homeYards.js`
+  (RMBLayout.AddLight - `world/city/cityLights.js` collectCityLights), so a yard's lights too (`scenes/homeYards.js`
   yardLampOf): the town's lantern (YARD_LAMP - DaggerfallLight [City]: range 18, intensity 1, white - the law's numbers;
   the frame lights it as it lights the street's, below), hung where the town hangs its own - the flat's drawn top and
   the 0.15 m the town's billboards are sunk by and their lights are not (YARD_LAMP_RAISE: `world/rmbFlats.js`
@@ -10426,7 +10432,7 @@ lighting isnt shown lantern light anymore?"
   L6). Any other piece gives none.
   Nothing is stored and nothing is switched: the piece still carries no light of its own, the service and its law are
   untouched, and a lamp placed before this lights as it stands.
-- **Standing.** The room's own machinery carries it (`scenes/decorRoom.js` `lampOf` - a host's law over the light a
+- **Standing.** The room's own machinery carries it (`scenes/decor/decorRoom.js` `lampOf` - a host's law over the light a
   piece gives, in place of the piece's own; a room passes none and gives the light its pieces carry, as ever): a yard's
   lamp is mounted into the yard's own list once its picture stands, moved in place with a recentre (restand, FB1001
   YARD-RECENTRE), and taken down with its piece or its pixel. `lamps()` answers each yard's first YARD_LAMPS_MAX (8)
@@ -10440,7 +10446,7 @@ lighting isnt shown lantern light anymore?"
   place). The lamp's flame flat is a TEXTURE.210 batch, so it never shadows its own light (EL6, SHADOW_LIGHT_FLATS).
 - **The four hosts.** `scenes/world.js` WIRED. `scenes/exterior.js` (the bench) stands no online homes - HOME-YARD's own
   FLAG - so no yard to light. `scenes/worldModes.js` and `scenes/dungeonContext.js` stand no street.
-- Pinned in `test/yardlight.test.js` (6) - the law, the flicker's slot, decorRoom under the host's law and a room
+- Pinned in `test/scenes/yardlight.test.js` (6) - the law, the flicker's slot, decorRoom under the host's law and a room
   without one, the real yard host, and world.js's own night composition run out of its source over a real Renderer
   (`test/yardLightRig.mjs`, shared with the audit's pins) - `tools/mutants/yardlight.json` 17 of 17 dead
   (YARDLIGHT-far-lit retired with the cut it pinned: AUDIT YARD-LIGHT L2). audit0928_render's R2 scope stands
@@ -10454,7 +10460,7 @@ lighting isnt shown lantern light anymore?"
 Four reads: three cold ones of the PR (#666), each with repros against its tree - A the frame and the light pipeline, B
 the numbers (the town's density, the frame's cost, a lamp's height and scale), C the pins and the record - and the
 author's own. Every finding was read again against the tree before a line changed. FOUND, each fixed and pinned
-(`test/audityardlight.test.js` 7, `test/yardlight.test.js` 6 re-aimed - both over `test/yardLightRig.mjs`, world.js's
+(`test/world/audityardlight.test.js` 7, `test/scenes/yardlight.test.js` 6 re-aimed - both over `test/yardLightRig.mjs`, world.js's
 own night composition; `tools/mutants/audityardlight.json` 13 of 13 dead, `yardlight.json` 17 of 17; and the 346
 mutants of the 42 other lists aimed at decorRoom.js, homeYards.js, decorTool.js or rmbFlats.js all still dead):
 
@@ -10462,7 +10468,7 @@ mutants of the 42 other lists aimed at decorRoom.js, homeYards.js, decorTool.js 
   flat among them lit: sixty lamps round one lot lit its ground nine times as bright as the brightest ground any
   Daggerfall town block lights, and near the yard they took the classic set's sixteen from the street. Measured over
   BLOCKS.BSA, the densest of its 920 town blocks stands eight (GRVEAL01, GRVEAS01, GRVEAM01, CUSTAA02, CUSTAA04); 340
-  stand none. FIXED (`scenes/homeYards.js` YARD_LAMPS_MAX, `scenes/decorRoom.js` pushLights): a yard lights its first
+  stand none. FIXED (`scenes/homeYards.js` YARD_LAMPS_MAX, `scenes/decor/decorRoom.js` pushLights): a yard lights its first
   eight lamps in the order its pieces stand; a ninth stands unlit, and lights when one before it is taken down.
 - **LOW - L2: a far yard's lamps went out at once.** (A) `lamps()` cut a yard past YARD_DRAW_M (300 m) of its origin
   from the eye - the model draw's own cull - so a walk away put a yard's lamps out together in one frame, unfaded,
@@ -10523,24 +10529,24 @@ placed turned in place, never picked up).
   or moved, a piece must stand within the bound. acct86.
 - **DECOR-TURN.** The panel's "In this room" (and "In this yard") view has Turn left and Turn right beside Move
   (`ui/decorPanel.js`): the chosen piece turned DECOR_TURN_STEP (15 degrees) about its upright where it stands - a hung
-  one spun on its wall, as its placing turns it - free, the panel staying up (`scenes/decorTool.js` turnPlaced). It is a
+  one spun on its wall, as its placing turns it - free, the panel staying up (`scenes/decor/decorTool.js` turnPlaced). It is a
   move of its turn alone: it turns at once, and an online home's piece is written once its presses settle
   (DECOR_TURN_SETTLE_MS - AUDIT YARD-HEIGHT Y1, below); a picture standing on its own faces the other way (Y6). A yard's piece turned onto the house, a road or another's
   ground is refused in the lot's own words, as its placing would be. A door is turned by its doorway (Move), never
   here.
-- Pinned in `test/yardheight.test.js` (6); `tools/mutants/yardheight.json` 14 of 14 dead.
+- Pinned in `test/net/yardheight.test.js` (6); `tools/mutants/yardheight.json` 14 of 14 dead.
 
 ### AUDIT YARD-HEIGHT (2026-10-06, Mac: "Audit") - YARD-HEIGHT and DECOR-TURN read again, before their deploy
 
 Two lanes: the author's own adversarial re-read of the PR (#641) - Y1 to Y4 - and an independent cold read of its diff,
-with repros against the committed tree - Y5 to Y8. FOUND, each fixed and pinned (`test/audityardheight.test.js`,
-`test/yardheight.test.js`; `tools/mutants/audityardheight.json` 14 of 14 dead, `yardheight.json` 14 of 14):
+with repros against the committed tree - Y5 to Y8. FOUND, each fixed and pinned (`test/systems/decor/audityardheight.test.js`,
+`test/net/yardheight.test.js`; `tools/mutants/audityardheight.json` 14 of 14 dead, `yardheight.json` 14 of 14):
 
 - **MEDIUM - Y1: every press of Turn was a write, and the piece stood still until it was answered.** turnPlaced wrote
   each press to the account service at once - a move is four statements on its database (the hour's count, the owner,
   the row, the write) and one of the hour's DECOR_OPS_MAX (600) - so a piece turned half round was twelve writes, on the
   database the yards had overloaded that morning (YARD-SHED); and the piece turned only when the answer came. FIXED
-  (`scenes/decorTool.js` turnPlaced, writeTurn): the piece turns at once, as the press is made, and an online home's is
+  (`scenes/decor/decorTool.js` turnPlaced, writeTurn): the piece turns at once, as the press is made, and an online home's is
   written once its presses settle - DECOR_TURN_SETTLE_MS (400 ms) after the last, that press's wait alone writing; a
   press while a write is answered is written after it, once. The write is the turn owed on the piece as it then stands,
   so a light put out meanwhile (written at once, as ever) is never written back on; refused, the turn alone is undone -
@@ -10558,7 +10564,7 @@ with repros against the committed tree - Y5 to Y8. FOUND, each fixed and pinned 
   from being in flight together: a Turn pressed while "Make station" was answered sent the piece without its craft, and
   landing second, the service's plain move wrote the station out - the 50,000 gold kept, nothing back (the cold read's
   repro: the row and the client's piece both stationless, the purse 50,000 down). A light and a turn the same. FIXED
-  (`scenes/decorTool.js` pieceWrite): one write of a piece at a time - a turn, a light, a hold, a station, a move and a
+  (`scenes/decor/decorTool.js` pieceWrite): one write of a piece at a time - a turn, a light, a hold, a station, a move and a
   removal each wait for the piece's write before it and read the piece as it then stands; a move writes the piece's
   turn itself, so a turn owed from the panel is written no more once the move stands.
 - **LOW - Y6: a picture turned showed nothing for six presses.** A flat standing on its own is a billboard - it shows
@@ -10615,7 +10621,7 @@ STORM-SHED's numbers named four costs it left standing (its "Not done here, meas
   (realmLine.js push asks again, and makes none once it landed). The clock's stamps ride the next save that changes
   anything; a death, a switch and a retirement write them fresh, and the page reads the played member's minutes live.
 - acct89 with migration 0086 (the deploy applies it before the Worker). The legacy save ships with the site. No relay
-  change, so merging drops nobody. Pinned in `test/stormshed2.test.js` (5); `tools/mutants/stormshed2.json` 28 of 28
+  change, so merging drops nobody. Pinned in `test/systems/legacy/stormshed2.test.js` (5); `tools/mutants/stormshed2.json` 28 of 28
   dead.
 
 ### STORM-SHED - a failed or slow ask never asked faster; the reads it multiplied made cheap (2026-10-06 evening)
@@ -10651,7 +10657,7 @@ The fix, at both ends:
   forgotten at once, a read across such a write never kept); a developer's list (the audit, AUDIT-SEATS T2) and every
   other act read the table as it stands. `metrics.js` countedDb's Proxy names the binding it wraps (`DB_ROOT`), so the
   rows are the isolate's, not a request's. Migration 0085 indexes a character's harvests by player, character and day.
-- No relay change: merging drops nobody. Pinned in `test/stormshed.test.js` (11); `tools/mutants/stormshed.json` 27 of
+- No relay change: merging drops nobody. Pinned in `test/net/stormshed.test.js` (11); `tools/mutants/stormshed.json` 27 of
   27 dead.
 - **Not done here, measured** (STORM-SHED 2, above, cut each at its root): the season's #1 (BOARD_SQL, about 1,037 rows) read by each isolate each minute for the
   mint's laurel - 109 million of the database's 760 million rows a day; `arenaRatingOf`'s two reads on every registered
@@ -10678,11 +10684,53 @@ was written against among them.
   decorYardHighOk beside decorYardPieceOf), and so does the client (`scenes/homeYards.js` ensure), so a piece an older
   isolate or an older service still answers is never drawn - not solid, not lit.
 - **The four hosts.** Yards stand in `scenes/world.js` alone; `scenes/exterior.js`, `scenes/worldModes.js` (interiors)
-  and `scenes/dungeonContext.js` stand none (test/decorlpt.test.js holds them to it).
+  and `scenes/dungeonContext.js` stand none (test/scenes/decorlpt.test.js holds them to it).
 - acct117 (with HANDLE-EMAIL, `06-Systems/Accounts-And-Cloud-Saves-Arc.md`).
-- **Pinned**: `test/yardsweep.test.js` (3) - the migration over the real database (a tower gone, the bound and below
+- **Pinned**: `test/server/yardsweep.test.js` (3) - the migration over the real database (a tower gone, the bound and below
   standing, a room's high shelf kept, a malformed place passed over, a second run nothing more), the town read, the
   client's yard over the real pool; `tools/mutants/yardsweep.json` (5, all killed).
+
+### STALL-SHAPE's re-seat - a yard's saved stalls and boulders, put back where their owners put them (2026-10-16)
+
+FIELD BUGS 2026-10-16b STALL-SHAPE (the Discord, 2026-10-15: "market stalls all shifted into the ground/walls" - a red
+awning against a wall, its counter half buried). A yard's piece records where its model's ORIGIN stands, worked out
+against the model as it stood the day it was placed: a model is lifted by its own bottom and set clear of a wall by its
+own reach (`systems/decor/decorPlacer.js` - "the RECORD says where the origin is - nothing is re-derived at a restore"). TEMPLE-STEPS
+(FIELD BUGS 2026-10-15f, the web's deploy done 2026-10-16T00:43:25Z) rebuilt two of the kinds a yard can hold about
+other origins: the market stalls at the prefab's 0.75 with their counter at the origin, where the stand-in had been the
+mesh at 1 with its back there - every saved stall drew 2.06 m (times its scale) further back, into the wall its owner had
+stood it against, and a quarter smaller; and the boulders at their prefabs' 2 to 8 about their meshes' middles - every
+saved one grew two to eight times. STALL-SHAPE rebuilt the pack's second stall (53113 on) 0.26 m further back again.
+
+- **The re-seat.** Migration `0121_yard_reseat.sql` (written by `tools/yardReseat.mjs`, whose header says why) moves each
+  saved stall's and boulder's origin so the box of its model as it now stands - turned by the piece's turn, times its
+  scale - has its middle over the ground and its foot where the box it was placed by had them, and divides its scale by
+  what the model grew (`k`: the stalls 0.75, each rock its prefab's), so it is the size its owner saw. Never under the
+  law's least scale (`DECOR_SCALE_MIN` - a boulder of 8 placed under 2 stands at 0.25, bigger than it was), never past the
+  yard's bound (`DECOR_YARD_POS_MAX`) nor up past `DECOR_YARD_HIGH`.
+- **By what it was placed.** The service's own clock says: `placed_at` before 1792111405 (TEMPLE-STEPS' deploy) - WD3's
+  stand-ins (unchanged from f3ed9e2097 to c2b52fdff1^); since - TEMPLE-STEPS', where only the second stall has moved. The
+  boxes are the stand-ins' own: WD3's evaluated off their builders at that revision, the present ones held to the live
+  builders by `test/world/fb1016b_stallshape.test.js`.
+- **Once.** The ledger applies it once; a re-seated place carries `"reseat": "STALL-SHAPE"` (decorPlaceOf reads past it -
+  a move writes a fresh place without it), and the statement never moves a place that carries it. A room's pieces (`yard`
+  0) and every other model are never asked; a place that is not JSON is passed over whatever order SQLite reads the terms
+  in (0109's care). The turn's cosine and sine are their series in plain arithmetic: no statement leans on SQLite's math
+  extension, which a D1 database is not promised to carry.
+- **What no record says.** A piece placed before the deploy and moved since was moved against TEMPLE-STEPS' box, and is
+  put back as if it had not been - its owner moves it once more. And a stall placed in the hour after the deploy by a
+  client still running the old build stands as TEMPLE-STEPS drew it.
+- **The rule it leaves.** A stand-in a saved piece stands by keeps its box, or comes with its pieces' re-seat: the test
+  holds the stalls' and the rocks' boxes to the ones this migration re-seated to, so the next change to either fails
+  there until its yards are put back too. Every other piece the decorator offers out of the town mods stands by its
+  stand-in's box the same way, unguarded (FLAGGED in the record).
+- **No service change, no relay change.** The Worker reads the places as it did (`server-account/src/decor.js` pieceOfRow);
+  the account service's deploy applies the migration. **The four hosts:** a yard stands in `scenes/world.js` alone (the
+  data moved, nothing of the host); `scenes/exterior.js`, `scenes/worldModes.js` and `scenes/dungeonContext.js` stand
+  none. The town's own stalls are `03-World/Beautiful-Towns.md`'s (the stand-ins' table).
+- **Pinned**: `test/world/fb1016b_stallshape.test.js` (the migration over the real service's rows, placed by the real placer
+  against the stand-ins of their day; the statement against the tool's law at every kind of turn; the migration the
+  tool's); `tools/mutants/fb1016b_stallshape.json`.
 
 ### YARD-SHED - a town's yards asked within reach, kept by the service, needing no session (2026-10-06)
 
@@ -10707,7 +10755,7 @@ The fix, at both ends:
   as a session is (ACCOUNT_MAX a minute) - no write to count it. acct85.
 - **The client** (`scenes/homeYards.js`) asks a town only while one of its homes is within YARD_ASK_M (500 m) of the
   player's feet, and each failure in a row doubles the wait, from YARD_RETRY_MS to YARD_RETRY_MAX_MS (5 minutes).
-- Pinned in `test/yardshed.test.js` (4); `tools/mutants/yardshed.json` 9 of 9 dead.
+- Pinned in `test/server/yardshed.test.js` (4); `tools/mutants/yardshed.json` 9 of 9 dead.
 
 ### KNIGHT-HOUSE - a house a Knightly Order gives is its knight's on every door (FIELD BUGS 2026-10-04d)
 
@@ -10719,7 +10767,7 @@ other player the same - whose claim then took it (measured on the real service: 
 for it again. Online the bank sells no house (HOME1), so the order's gift is the one deed made in the realm.
 
 - **The knight's door.** A building the character's own deed names - one the realm gave, standing in its layout
-  (`net/homeLaw.js` homeDeedOf, `systems/onlineHomes.js` realmDeedAt) - is never priced to it (`homeOfferPrice`). A deed
+  (`net/homeLaw.js` homeDeedOf, `systems/online/onlineHomes.js` realmDeedAt) - is never priced to it (`homeOfferPrice`). A deed
   customs carried in is an offline house and stays HOME1's ("Stay offline only").
 - **Held from everyone else.** The account service HOLDS such a deed's building (`/v1/homes/deed`,
   `server-account/src/homes.js` holdDeed, migration 0079 `homes.deed`): read off the character's realm record (the deed
@@ -10740,7 +10788,7 @@ for it again. Online the bank sells no house (HOME1), so the order's gift is the
 - **Not reconciled:** a knight's house another player claimed before this stands theirs (the knight's hold answers
   `home-taken`). Four hosts: `worldModes.js` (the door, the market, the Seneschal, the bank) and `world.js` (the boot's
   holds) WIRED; `exterior.js` builds worldModes offline with no registry (Daggerfall's law stands); `dungeonContext.js`
-  has no house door. Pinned by `test/fb1004d_knight_house.test.js`; `tools/mutants/fb1004d_knight_house.json`.
+  has no house door. Pinned by `test/systems/fb1004d_knight_house.test.js`; `tools/mutants/fb1004d_knight_house.json`.
 
 ### THE AUDIT (2026-09-30, asked: "let's do a nice audit on this. Just want to make sure it's perfect")
 
@@ -10783,12 +10831,12 @@ early price and offer checks, which the write's own guards repeat).
   yards shows the first by building key); a tenancy's end is read on the client's clock; a refused rent's reserve
   comes back to the region's account, as a refused home purchase's does.
 
-Pinned: `test/homedoors.test.js` (14), `test/homerent.test.js` (10), `test/homelook.test.js` (7),
-`test/homeyard.test.js` (7); re-aimed by content in `test/decor1.test.js` (the kinds' count, the host's pool),
-`test/basehide.test.js` (the shell's bucket named), `test/home1.test.js` (the homes' door built from `homesApi`),
-`test/home2.test.js` (HOME_VERB's rent), `test/realm6.test.js` (four realm acts in the building host),
-`test/accountworker.test.js` (the tables), `test/renown_char.test.js` (the migrations after 0035), `test/decor1e.test.js`
-and `test/decor2b.test.js` (the sale's line, the tap under a flight) and the ACCOUNT_VERSION pins (`acct37`).
+Pinned: `test/scenes/decor/homedoors.test.js` (14), `test/server/homerent.test.js` (10), `test/net/homelook.test.js` (7),
+`test/scenes/homeyard.test.js` (7); re-aimed by content in `test/server/decor1.test.js` (the kinds' count, the host's pool),
+`test/server/basehide.test.js` (the shell's bucket named), `test/server/home1.test.js` (the homes' door built from `homesApi`),
+`test/systems/home2.test.js` (HOME_VERB's rent), `test/server/realm6.test.js` (four realm acts in the building host),
+`test/server/accountworker.test.js` (the tables), `test/server/renown_char.test.js` (the migrations after 0035), `test/systems/online/decor1e.test.js`
+and `test/systems/decor/decor2b.test.js` (the sale's line, the tap under a flight) and the ACCOUNT_VERSION pins (`acct37`).
 
 
 ### HOME-VENDOR (2026-10-03, Mac: "add the ability for players that own houses to buy npcs that sell goods for them when someone visits the house ... make the available npcs visible on the board with a tab and item search filter"; asked, "Yes only in the house and you should be able to set a waypoint where the trader is ... Selfplaced npcs should sell stuff waaaaay longer") - a hired trader in a home
@@ -10799,10 +10847,10 @@ and `test/decor2b.test.js` (the sale's line, the tap under a flight) and the ACC
   trader: they stand VENDOR_LISTING_S (thirty days, not the market's 72 hours) and are bought at that trader alone. A
   vendor on the wire is `{ map, id }` - the home's town and the decor id. The directory is searched by EVERY word over
   the item, the owner and the town (vendorSearch).
-- **The catalogue** (`systems/decorCatalogue.js`): the people Daggerfall stands in its rooms (`blockPeopleRecords`) are
+- **The catalogue** (`systems/decor/decorCatalogue.js`): the people Daggerfall stands in its rooms (`blockPeopleRecords`) are
   catalogue pieces too, kind Vendors (Mac: "People category sounds wrong call it vendors") - placed, one is made the
   trader. NUDE-HOSTS (FIELD BUGS 2026-10-05b): Show Nudity governs them as it does the world's people - off, no nude
-  figure is offered, and one placed stands, flies and is pictured as its clothed stand-in (`01-Overview/Field-Bugs-2026-10-05b.md`).
+  figure is offered, and one placed stands, flies and is pictured as its clothed stand-in (`01-Overview/bugs/Field-Bugs-2026-10-05b.md`).
 - **The service** (`server-account/src/market.js` over `migrations/0080_home_vendors.sql` - `market_listings.vendor_map`,
   `vendor_id`; routes `/v1/market/vendor`, `/vendors`, `/myvendors`). A listing named at a trader is the owner's
   character's own trader (`vendor-not-yours`), in the HOME's region whatever the client says; it is filtered out of the
@@ -10813,14 +10861,14 @@ and `test/decor2b.test.js` (the sale's line, the tap under a flight) and the ACC
   keeps only the traders `homeMayEnter` lets the character in on. A guild's hall stands no trader.
 - **The client.** A trader pressed in its home (`scenes/worldModes.js` openHomeVendor -> `scenes/world.js`
   openHomeVendorWindow) opens its stall in the Notice Board's window (`ui/noticeWindow.js` `traderOnly`,
-  `ui/vendorTab.js`): a visitor buys off the purse; the owner takes a piece back or puts one up from the pack. The
+  `ui/vendor/vendorTab.js`): a visitor buys off the purse; the owner takes a piece back or puts one up from the pack. The
   board's Vendors tab lists the region's reachable traders, searched, a row setting the WAYPOINT
-  (`systems/vendorWaypoint.js`) - a gold coin on both world maps (`ui/vendorMapMark.js`, apart from the map's one yellow
+  (`systems/vendorWaypoint.js`) - a gold coin on both world maps (`ui/vendor/vendorMapMark.js`, apart from the map's one yellow
   mark, which stays the player's), the house named on the town map, the compass on the town from the street, a mark in
-  the Overworld's travel view; walking into the house clears it. The Vendor page (`ui/vendorPage.js`) on the pause
+  the Overworld's travel view; walking into the house clears it. The Vendor page (`ui/vendor/vendorPage.js`) on the pause
   window's Character rail under the Professions (Mac: "add a Vendor tab under professions (not in)") holds my traders,
   their stock, what they sold and the takings, collected into the account of the region I stand in.
-- **Pinned** in `test/homevendor_service.test.js` and `test/homevendor_ui.test.js`; `tools/mutants/homevendor.json`.
+- **Pinned** in `test/net/homevendor_service.test.js` and `test/ui/homevendor_ui.test.js`; `tools/mutants/homevendor.json`.
 
 ## GUILD1 (2026-09-25, Mac: "future ownership for online guilds"; asked, founding takes "Gold and Renown", a guild is joined "Per character", its ranks are "Four, renamed by the guildmaster", and the treasury is the "Guildmaster only" to take from) - a guild the players found, and the service keeps
 
@@ -10839,7 +10887,7 @@ guild's chat (through the token and the relay), **GUILD1d** the guild hall, a gu
 
 **GUILD1a - the guild, as the service keeps it.**
 
-- **The law** (`src/net/guildLaw.js`, which the service and the client both read). The bounds: 10,000 gold and
+- **The law** (`src/net/guild/guildLaw.js`, which the service and the client both read). The bounds: 10,000 gold and
   Renown 10 to found, 50 members, a name of 3 to 32 letters, digits, spaces, apostrophes and hyphens (tidied, and one
   guild a name whatever its case or spaces - `guildNameKey`), a tag of 2 to 4 capitals or digits (upper-cased). FOUR
   RANKS, highest first - Guildmaster (0), Officer (1), Member (2), Recruit (3) - whose POWERS are fixed: an officer
@@ -10900,14 +10948,14 @@ Not yet, at GUILD1a: nothing in the game called the door - GUILD1b's window is t
 (ACC1-CI); its trigger is the migrations' first, and wrangler's statement splitter keeps a trigger's `BEGIN ... END`
 whole (a port of SQLite's own `sqlite3_complete`, read in wrangler 4.140's source) - not yet run against a real D1.
 
-Pinned: `test/guild1.test.js` (9), `test/accountworker.test.js` (the tables). `tools/mutants/guild1.json` (83).
+Pinned: `test/server/guild1.test.js` (9), `test/server/accountworker.test.js` (the tables). `tools/mutants/guild1.json` (83).
 
 **GUILD1b - the Guild tab.**
 
 - **Where**: the Social panel's fourth tab, "Guild", beside Friends, Party and Letters (`ui/socialPanel.js`), present
   wherever the host hands the panel a guild book - online, as the Letters tab is where it has a letterbox. It opens on a
   fresh look when the last is older than GUILD_FRESH_MS (30 s), and draws the book, never the relay's picture.
-- **The book** (`net/guildBook.js` GuildBook, made in `scenes/world.js` beside the letterbox): the character's guild as
+- **The book** (`net/guild/guildBook.js` GuildBook, made in `scenes/world.js` beside the letterbox): the character's guild as
   the service last answered it and the account's invitations, one look at a time; no session reads as signed out and a
   guest as a guest, each its own sentence; every act goes through GUILD1a's door as the character playing, holds the
   tab `busy`, and ends in a fresh look, so the tab draws the service's word and never a guess.
@@ -10929,7 +10977,7 @@ Pinned: `test/guild1.test.js` (9), `test/accountworker.test.js` (the tables). `t
 
 Not yet at GUILD1b: the tag beside the name and the guild chat (GUILD1c, below), and the guild hall (GUILD1d).
 
-Pinned: `test/guild1b.test.js` (10). `tools/mutants/guild1b.json` (31).
+Pinned: `test/net/guild/guild1b.test.js` (10). `tools/mutants/guild1b.json` (31).
 
 **GUILD1c - the tag beside the name, and the guild's chat** (2026-09-25, Mac: "Do guild1c").
 
@@ -10944,10 +10992,10 @@ Pinned: `test/guild1b.test.js` (10). `tools/mutants/guild1b.json` (31).
 - **Where it shows**: `<HND>` right of the name, before the glyphs - over a head in both faces (`ui/nameLayer.js`; the
   bitmap run of `net/remotePlayers.js` drawNamePoints centred on the whole of it), on a chat line and in the roster
   (`ui/chatPanel.js`, `net/roster.js` - my own row too), and on the Inspect card (`ui/profileWindow.js`); one spelling,
-  `net/guildLaw.js` guildTagText. A peer in no guild wears the label it wore before.
+  `net/guild/guildLaw.js` guildTagText. A peer in no guild wears the label it wore before.
 - **A membership that moves is said at once.** A token is read once, at a hello. So every guild act that moves a
   membership answers a SIGNED ORDER (`guildOrdersOf`): founding, a join, a leave, a disbanding and the guild tab's look
-  say the actor's character's guild NOW (`{o:'guild'}`); the guild book (`net/guildBook.js` onOrders) hands a look's
+  say the actor's character's guild NOW (`{o:'guild'}`); the guild book (`net/guild/guildBook.js` onOrders) hands a look's
   order on when the membership it reads differs from the last one handed on - the first look always, since the page
   cannot know what its rooms were told - and the host carries it down every socket it holds (`net/online.js`
   sendGuildOrder: after each socket's own welcome names world115, one guild frame a socket every GUILD_SEND_MS, 1.5 s -
@@ -10977,13 +11025,13 @@ carrier alone - the others read it off their next roster (the hub fans no tag to
 list names only the members the hub introduced (CHAT_ROSTER_MAX), though every member's lines arrive; and the main
 menu's profile badge does not draw the tag.
 
-Pinned: `test/guild1c.test.js` (14), and the pins the new fields moved (the badge, the attachment, the tabs, the chat
+Pinned: `test/net/guild1c.test.js` (14), and the pins the new fields moved (the badge, the attachment, the tabs, the chat
 channel lists). `tools/mutants/guild1c.json` (64, all dead).
 
 **GUILD1d - the guild hall, the `guild` entry and heraldry** (2026-09-30, Mac: "Lets do this" - the guilds before the rest
 of the professions; `11-Multiplayer/Seats-Arc.md` 8, whose decisions it builds: SEAT0 left "decisions ... binding for the
 build slices"). One deploy of the account service (`acct43` - `acct42` on its branch, renumbered past main's REALM-GZIP at the merge, and `acct44` past main's SCALE1 at the next; migration 0046 now - 0045 until main's PATREON-LINK took it, 0044 until main's MARKET-ANY took it with `acct44` (the seats' `acct48` carries it), 0043 until SCALE1 took it); no relay change - the hall's law is its
-own module (`src/net/hallLaw.js`), never net/guildLaw.js, which is in the relay's bundle (SLAM8).
+own module (`src/net/hallLaw.js`), never net/guild/guildLaw.js, which is in the relay's bundle (SLAM8).
 
 - **The law** (`src/net/hallLaw.js`, both ends): a guild owns ONE home as its hall, bought from its gold treasury at
   the home's own price and half again (`guildHallPrice`, rounded up); its entries `guild` (its members, the default)
@@ -11029,7 +11077,7 @@ own module (`src/net/hallLaw.js`), never net/guildLaw.js, which is in the relay'
   field's for a hole, a stroke where a line is wanted - the port's own art; the banner the record's cloth, 1 by 3, the
   field the first colour, a border the second, the device centred in the second, its foot a swallowtail. One drawing,
   two faces: an SVG string for the Guild tab, a canvas for the world's cloth (Path2D reads the same path text).
-- **The door** (`systems/onlineHomes.js`, `scenes/worldModes.js`): a hall's door is "Your guild's hall" to its
+- **The door** (`systems/online/onlineHomes.js`, `scenes/worldModes.js`): a hall's door is "Your guild's hall" to its
   members and "<Guild>'s hall <TAG>" to everyone else ("This is the hall of <Guild>. Its doors open to its members.");
   its plaque lists "Go in" to its members and "Who may enter: Members / Anyone" to its keepers. Under a house anyone
   may buy, a guildmaster whose guild holds no hall reads a third row, "Buy it for <Guild>: N gold from the treasury",
@@ -11063,16 +11111,16 @@ HOME-YARD name a character - GUILD-YARD, below, built both); the banner at the d
 them at the first); heraldry is not yet on the map ring, the guild tag's frame, the siege HUD or the Chronicle
 (SEAT1a-SEASON1); a hall's price is the client's word, as a home's.
 
-Pinned: `test/guild1d_service.test.js` (5), `test/guild1d_client.test.js` (12); re-aimed by content in
-`test/home1.test.js` (the entries), `test/decor1.test.js`, `test/decor1d.test.js`, `test/decorshell.test.js` (the
-room's host), `test/glstate.test.js`, `test/farring.test.js`, `test/audit18_bible_docs.test.js` (the foreign passes)
+Pinned: `test/net/guild1d_service.test.js` (5), `test/net/guild1d_client.test.js` (12); re-aimed by content in
+`test/server/home1.test.js` (the entries), `test/server/decor1.test.js`, `test/scenes/decor/decor1d.test.js`, `test/scenes/decor/decorshell.test.js` (the
+room's host), `test/render/glstate.test.js`, `test/ui/farring.test.js`, `test/bible/audit18_bible_docs.test.js` (the foreign passes)
 and the ACCOUNT_VERSION pins (`acct43`, then `acct44`, now `acct48` with the seats). `tools/mutants/guild1d.json` (38, all dead).
 
 ### AUDIT GUILD1d (2026-09-30, Mac: "let's do an audit on this")
 
 Three lanes read the slice adversarially: the service's gold, state and races; who reaches a hall and what a visit
 does; the client's book, the Guild tab, the drawing and the banner pass. Every finding was checked against the code
-before it was fixed. None made gold or Drakes. Each fix is pinned in `test/auditguild1d.test.js` (11 tests: the
+before it was fixed. None made gold or Drakes. Each fix is pinned in `test/net/auditguild1d.test.js` (11 tests: the
 service's through the real Worker, a race by landing the other request, whole, between a read and its write) and
 carries a mutant in `tools/mutants/auditguild1d.json` (44 records, all dead).
 
@@ -11174,7 +11222,7 @@ migration (the look's column and the yard's flag stand on every homes row alread
   treasury (`hallPieceBack`, `hall-piece`), never to the keeper. The town's yards (`/v1/homes/yards`) carry the hall's.
 - **The sale**: `halls.js` sellHall's sum is every piece of the building, yard and room alike (`piecesBackOf`), half of
   what records paid back into the treasury with the deed share, and the yard goes with the row (the table's cascade).
-- **The client**: `systems/onlineHomes.js` homeOutsideKept - the playing character's own home, or a hall the town's
+- **The client**: `systems/online/onlineHomes.js` homeOutsideKept - the playing character's own home, or a hall the town's
   answer calls it a `keeper` of; `scenes/homeYards.js` stands an empty yard for its keeper (a yard with pieces for
   everyone), finds the keeper's lot under their feet, and opens the decorator there as "Your guild's yard"
   (`homeYardWhere`) with `hall` - the panel says a piece's half goes to the guild's treasury and the purse is given
@@ -11184,7 +11232,7 @@ migration (the look's column and the yard's flag stand on every homes row alread
 - Four hosts: `world.js` WIRED (the yards, the look); `worldModes.js` and `dungeonContext.js` stand no street;
   `exterior.js` (the bench) FLAGGED - no online homes, as HOME-LOOK and HOME-YARD.
 
-Pinned: `test/guild_yard.test.js` (9); re-aimed `test/guild1d_service.test.js` (a hall's yard stands) and the
+Pinned: `test/net/guild_yard.test.js` (9); re-aimed `test/net/guild1d_service.test.js` (a hall's yard stands) and the
 ACCOUNT_VERSION pins (`acct65`). `tools/mutants/guild_yard.json` (17, all dead); `guild1d.json`'s hall-yard record now
 a palace's (equivalent, as before), `housing.json`'s and `fb1001_yard.json`'s re-aimed by content.
 
@@ -11195,7 +11243,7 @@ a palace's (equivalent, as before), `housing.json`'s and `fb1001_yard.json`'s re
   first the town stood (`ownYardHere`, C1); the painted word is read before the write, a hall's failure "The hall could
   not be painted." (`paintAct`, C2); a rank moved (the guild book's refresh, `guildHall.info` - not an online frame's
   arm) reads the town again forced, as `onHall` does (C3); a hall's yard says "inside the hall" and "The hall's yard
-  already holds..." (`YARD_IN_HALL`, `decorWhyNot`'s `hall`). `test/guild_yard.test.js` (15, six new); the
+  already holds..." (`YARD_IN_HALL`, `decorWhyNot`'s `hall`). `test/net/guild_yard.test.js` (15, six new); the
   `guild_yard.json` mutants 29, all dead (the audit's three survivors - the tool's `where`, OWNS's home without its
   character, the hall's word for every yard refusal - among them); `guild1d.json`'s palace record renamed
   (`GUILD1d-the-palace-yard-refused-only-in-the-write`, equivalent as before).
@@ -11206,7 +11254,7 @@ a palace's (equivalent, as before), `housing.json`'s and `fb1001_yard.json`'s re
   town again forced (world.js, outside `onlineFrame`); `info` only looks. G2 - Y1's realm clause also took the hall
   door's "Who may enter" (`homeHallRows`, worldModes.js's press) from a local Officer whom `setHallEntry` (rank alone)
   answers: the town names `hallEntry` apart, by the rank, and the row and the press go by it. G3 - the ghost's bar in a
-  full hall yard (`placingWhy`'s `hall`) and the commit's cap pinned. `test/guild_yard.test.js` (16, one new); the
+  full hall yard (`placingWhy`'s `hall`) and the commit's cap pinned. `test/net/guild_yard.test.js` (16, one new); the
   `guild_yard.json` mutants 37, all dead.
 
 ### GUILD1e - a guild's own board
@@ -11232,7 +11280,7 @@ guild's own notes, members only"). Rides the undeployed `acct47` with GUILD1d (m
   The book (`net/noticeBook.js`) keeps the guild board's minute cache and a pin's request id as a town's, and speaks
   the guild board's own words for its refusals.
 - **The board in the hall** (Seats-Arc 8.2's "private guild board"): Daggerfall's own board model
-  (`rmbLayout.js` BULLETIN_BOARD_MODEL_ID), offered by the decorator in a guild's hall alone (`systems/decorCatalogue.js`
+  (`rmbLayout.js` BULLETIN_BOARD_MODEL_ID), offered by the decorator in a guild's hall alone (`systems/decor/decorCatalogue.js`
   HALL_BOARD_ENTRY, `decorRoomEntries` - never a home or a yard; appended to the scan, measured and priced as every
   piece). Placed in a hall, a member's press opens the Notice Board window on the guild's notes alone (`guildOnly` - no
   town read); its plaque reads "The Guild's Board"; anyone else is told "This board is <Guild>'s. Its notes are for its
@@ -11242,8 +11290,8 @@ guild's own notes, members only"). Rides the undeployed `acct47` with GUILD1d (m
 - **Four hosts**: `worldModes.js` WIRED (the hall's board pressed and hovered); `world.js` WIRED (the Guilds tab on
   town boards, the hall's board opened); `dungeonContext.js` and `exterior.js` FLAGGED - no online hall stands there.
 
-Pinned: `test/guild1e_service.test.js` (5), `test/guild1e_client.test.js` (5); re-aimed by content in
-`test/notice1.test.js` (a recruitment note's guild carries its heraldry) and `test/guild1d_client.test.js` (the hall's
+Pinned: `test/net/guild1e_service.test.js` (5), `test/net/guild1e_client.test.js` (5); re-aimed by content in
+`test/net/notice1.test.js` (a recruitment note's guild carries its heraldry) and `test/net/guild1d_client.test.js` (the hall's
 powers). `tools/mutants/guild1e.json` (30, all dead); four older records re-aimed (DECOR1c's visitor, PROF5's hidden
 market twice, NOTICE1's cache aimed at the town read alone).
 
@@ -11281,9 +11329,13 @@ scaled by it: a forged level would be paid more for every honest receipt.
   weekly report counts the accounts at the combat cap (`capped.combat`, where `capped.gate` stood). SERPENT-SET
   (2026-10-05): a sea serpent slain strikes under the same cap - 40, a ship that stood 20 (`MARKS_COMBAT.kinds` gate,
   raid, serpent; `11-Multiplayer/Sea-Serpent.md` section 8) - and the capped lines and cards name the serpents.
+  EG-E1 (2026-10-12): a Redoubt of the Elite Breach taken strikes under it too - 20, once an account a Redoubt an arena
+  week (`MARKS_COMBAT.kinds` gate, raid, serpent, eg; its line `eg:<week>:<Redoubt>`; `11-Multiplayer/Elite-Gates.md`
+  section 19) - and the capped lines, the cards and the Bank's card name the Redoubts.
 - **GUILD DEEDS** - the `guild-deed` faucet, into a guild's treasury, never an account's: when three of a guild's
   accounts - each claiming with a character seven days in the guild - have claimed the same raid (`raid:<key>`) or gate
-  (`gate:<game day>`), 25 silver; once an event a guild (the line `deed:<event>`, the guild its actor), at most four a
+  (`gate:<game day>`) - EG-E1: or the same Redoubt of the same breach (`eg:<breach>:<Redoubt>`), each claim the week
+  pays - 25 silver; once an event a guild (the line `deed:<event>`, the guild its actor), at most four a
   guild a UTC day - a deed the day's cap refused is struck by the next member's COUNTED claim of that event (AUDIT
   SILVER-WAYS A2). The mark and the strike ride the claim's own batch, by its own row (marks.js deedStatements;
   `guild_deed_marks`). One account is one mark an event, however many of its characters are in the guild - or in other
@@ -11306,14 +11358,14 @@ scaled by it: a forged level would be paid more for every honest receipt.
   the board's contracts ride `/v1/writs/list` (`contracts`, `yoursContracts`, `contractPost`). The Work tab's cards,
   "Yours" rows and post form (`ui/workTab.js`), every bound said before the press.
 - **What the player reads.** A counted raid says its town's line, then "30 silver struck to your account", a guild
-  deed it completed and each contract that paid it (net/marksBook.js claimLines, said by net/raidClaims.js and
-  net/gateClaims.js); a capped claim names the day's 150 for breaches closed and towns defended.
+  deed it completed and each contract that paid it (net/marksBook.js claimLines, said by net/raid/raidClaims.js and
+  net/gate/gateClaims.js); a capped claim names the day's 150 for breaches closed and towns defended.
 - **The economy.** The ceiling an account strikes from combat a day rose by 50 (100 to 150); a combat-only regular's
   week from about 75 to about 375 (half a gatherer's); deeds at most 700 a guild a week (a palace's upkeep is 2,500).
   The model's own 1.00 left out more sinks (forts, Festivals, heraldry, Tribute, respecs) than faucets (Honours,
   Motherlodes), so the room was there; the weekly report names `raid`, `guild-deed` and `motherlode` each, and PROF0
   16's four-week rule steers by them.
-- **Pinned**: `test/silverways_service.test.js` (8), `test/silverways_client.test.js` (6);
+- **Pinned**: `test/net/silverways_service.test.js` (8), `test/net/silverways_client.test.js` (6);
   `tools/mutants/silverways.json` (31, all dead). PIN MOVED: marks1 (the gate's cap, the report's cap, the mint sweep,
   the wiring), audit28_marks (M4, M10, M11), prof5_law (the mint kinds), wb12a_breach_words (the capped line),
   seat1b_client (the gate's word, the Watch's hand-off), raid4_rewards (unchanged answers without the silver hooks),
@@ -11325,8 +11377,8 @@ scaled by it: a forged level would be paid more for every honest receipt.
 
 Five lanes: four independent passes that read the PR's diff cold - the combat silver and the deeds, the contracts, the
 Motherlodes' service and law, the client - each with its repros against the real Worker over node:sqlite; and the
-author's own adversarial re-read. FOUND, each fixed and pinned (`test/auditsilver_service.test.js`,
-`test/auditsilver_client.test.js`, `tools/mutants/auditsilver.json`). Neither migration has been applied (the deploy
+author's own adversarial re-read. FOUND, each fixed and pinned (`test/net/auditsilver_service.test.js`,
+`test/net/auditsilver_client.test.js`, `tools/mutants/auditsilver.json`). Neither migration has been applied (the deploy
 runs from main), so `0071_silver_ways.sql` and `0072_motherlodes.sql` carry their fixes in place; acct71 still.
 
 - **MEDIUM - A1: one account's gate struck two guilds' deeds** (the deeds' pass). A gate's guard is its row's second
@@ -11402,7 +11454,7 @@ new string through `textContent`); the four hosts (gathering, claims and the Wat
 NOT CHANGED, named: an Officer who leaves the guild (or an alt account) can be paid by contracts posted within the
 budget - the writs' own exposure; a pay of 1 is taxed 1 every twentieth deed (the running total's way); a Motherlode
 rising in its day's first half hour warns short of a Sense's thirty (the day's three are picked at its turn).
-- **Pinned**: `test/auditsilver_service.test.js` (10), `test/auditsilver_client.test.js` (8);
+- **Pinned**: `test/net/auditsilver_service.test.js` (10), `test/net/auditsilver_client.test.js` (8);
   `tools/mutants/auditsilver.json` (32, all dead). PIN MOVED: prof2b_client (the rig's moment in the turn and a
   retry's minute; the ask called; the compass's list), prof7_client (the host's ask, called where it is a function), accountworker (`motherlode_days`). Mutant records re-aimed by
   content: prof2b (four), prof7 (the ask), silverways (the tax).
@@ -11415,7 +11467,7 @@ Rides the undeployed `acct47` (migration 0048 - `acct45` and 0047 until main's P
 the developers see the seats first). The arc's slice labels `acct47`-`acct60` are the branch's history: the arc deploys
 as `acct61`, and main's own `acct47` (BOULDERS) and `acct48` (MORE-NODES) are different releases.
 
-- **The derivation** (`src/systems/townSeats.js`, Seats-Arc 3.1): in the boot pass, over the rows `pickRegionHubs`
+- **The derivation** (`src/systems/town/townSeats.js`, Seats-Arc 3.1): in the boot pass, over the rows `pickRegionHubs`
   reads - MAPS.BSA's own, a world-data mod's never - a crown seat is a location named for Daggerfall, Wayrest or
   Sentinel standing in the region of that name (17, 23, 20); a palace seat every other location whose building records
   hold a Palace (buildingType 16). One seat a location; a capital with a palace record is a crown, never also a palace
@@ -11441,7 +11493,7 @@ as `acct61`, and main's own `acct47` (BOULDERS) and `acct48` (MORE-NODES) are di
 - **The arrival** (3.3): walking into a seat town says "Anticlere. Its Charter is unheld." (a crown: "Wayrest, capital
   of the Kingdom of Wayrest. Its Crown Charter is unheld.") in HUB1's place, and reports the seat; a hub that is no seat
   keeps HUB1's line.
-- **The map** (3.3; `ui/inkMap.js`, `ui/heldMap.js`): a seat's hollow ring in stone grey, under its glyph and round any
+- **The map** (3.3; `ui/ink/inkMap.js`, `ui/heldMap.js`): a seat's hollow ring in stone grey, under its glyph and round any
   hub's circle, the names kept clear of it (`markReach`); a crown in its kingdom's metal over a crown seat; a March's
   thin second ring half in each claiming crown's metal, a Free Land's green; the Charter's line in the map's box.
 - **The banners** (3.4; `src/scenes/seatBanners.js`): anchors measured where a seat town's pixel is built - the
@@ -11456,9 +11508,9 @@ Known limits (a later slice's): the held, Contested and siege-week marks, the ho
 "held by" come with SEAT1c; the crown seats' two banners at the castle's entrance (Seats-Arc 3.4's anchor 4) wait - the
 castle is a dungeon door the city block stands, not a building record; the seat count is Mac's to run and record.
 
-Pinned: `test/seat1a_service.test.js` (4), `test/seat1a_client.test.js` (8); re-aimed by content in
-`test/hub1.test.js` (the arrival), `test/bulletinboard.test.js` (a board's matrix), `test/guild1d_client.test.js`,
-`test/auditguild1d.test.js` and `test/tv4_weather_above.test.js` (the banners hung together), `test/accountworker.test.js`
+Pinned: `test/net/seat1a_service.test.js` (4), `test/net/seat1a_client.test.js` (8); re-aimed by content in
+`test/ui/ink/hub1.test.js` (the arrival), `test/systems/bulletinboard.test.js` (a board's matrix), `test/net/guild1d_client.test.js`,
+`test/net/auditguild1d.test.js` and `test/render/tv4_weather_above.test.js` (the banners hung together), `test/server/accountworker.test.js`
 (the schema). `tools/mutants/seat1a.json` (44, all dead); four HUB1 records re-aimed, all dead.
 
 ### SEAT1b - influence: the pledge, the Watch, gate kills, homes, Renown's region, Tribute, the standings
@@ -11489,7 +11541,7 @@ event (Seats-Arc 4.1-4.2, 12: "summed on read, capped on write"); every number i
   one 4 KiB request holds - or ten minutes after the oldest; the service counts each once (`UNIQUE (source, ref)`), in
   the week it was stood, at most 60 an account a UTC day of issue, asked in the INSERT.
 - **Gate kills** (`creditGate`): a gate claim now carries the region the claiming client's own scan puts the day's gate
-  in (`systems/gateSite.js` findGateSite) and the claiming character; `gate_kills.region` keeps it, and a recorded kill
+  in (`systems/gate/gateSite.js` findGateSite) and the claiming character; `gate_kills.region` keeps it, and a recorded kill
   in this week is written for the war-guild where it pledged in that region - 300, counted on read only where at least
   three of the day's claims agree on the region (a level top agrees on neither), 900 an account a week.
 - **Renown's region** (`creditRenown`; `net/renownTracker.js`): the tracker keeps XP by the region it was earned in and
@@ -11517,9 +11569,9 @@ service; the relay has no door to the account service, so each tick is a receipt
 the gate's and the raid's are. The stockpile's deliveries (the Writs source) ride SEAT1c with the Siege Camp they fill
 and the Turning that spends it; the sources' table admits their rows already, and the law reads them.
 
-Pinned: `test/seat1b_service.test.js` (7), `test/seat1b_client.test.js` (9); re-aimed by content in
-`test/wb5b_gate_claim.test.js` and `test/seat1a_client.test.js` (the claim's region, the book's door), the relay
-version pins (`world144`) and `test/accountworker.test.js` (the schema). `tools/mutants/seat1b.json` (55, all dead); six
+Pinned: `test/net/seat1b_service.test.js` (7), `test/net/seat1b_client.test.js` (9); re-aimed by content in
+`test/net/gate/wb5b_gate_claim.test.js` and `test/net/seat1a_client.test.js` (the claim's region, the book's door), the relay
+version pins (`world144`) and `test/server/accountworker.test.js` (the schema). `tools/mutants/seat1b.json` (55, all dead); six
 RENOWN1, AUDIT RENOWN1 and WB5b records re-aimed by content, all dead.
 
 ### SEAT1c - the Turning: the Charters claimed, Contested, the Rights of Siege, the Legacy, the Charter on the map
@@ -11555,7 +11607,7 @@ Rides the undeployed `acct47` (migration 0050 - `acct45` and 0049 until main's P
 - **The client** (`net/townSeatBook.js` dressed, `scenes/world.js` seatHere): a seat this client derived is dressed in
   what the service says of it. The arrival names the holder ("Anticlere, held by the Silver Hand <SH>."); the map's ring
   is filled with the holder's field and edged in its border, split in a Contested seat's two contenders' fields, its
-  edge burning in a siege week (`ui/inkMap.js` paintSeatRing); the seat's banners fly the holder's own heraldry, the
+  edge burning in a siege week (`ui/ink/inkMap.js` paintSeatRing); the seat's banners fly the holder's own heraldry, the
   kingdom's plain banner while unheld or for a holder with none (`seatBannerOf` - Seats-Arc 13's "a held seat's banners
   in the guild's colours"); the Seat tab (`ui/seatTab.js`) stands under the holder's banner with the holder, the
   battle, the claim or defence line and the Chronicle, and offers the holder's guildmaster its Charter's relinquish,
@@ -11580,11 +11632,11 @@ CROWN1 (the vocabulary is in place now, so neither moves the relay again); upkee
 Tourney names are fought in SEAT2a (until then they are the Chronicle's, and a Contested seat stays unheld); the
 stockpile's deliveries (the Writs source) and the Siege Camp ride SEAT2b with the fortifications that spend them.
 
-Pinned: `test/seat1c_service.test.js` (5), `test/seat1c_client.test.js` (5), `test/seat1c_titles.test.js` (4); re-aimed
-by content in the relay version pins (`world145`), the vocabulary's (`test/acc3titles.test.js`, `test/penitent.test.js`),
-the badge's paths (`test/acc3badge.test.js`, `test/nameadopt.test.js`, `test/wb9g_insignia.test.js`), and in
-`test/seat1a_service.test.js` (the list's holder and battle), `test/seat1a_client.test.js` (the mark's new fields, the
-dressed seat, the arrival), `test/seat1b_service.test.js` (the standings' shape) and `test/accountworker.test.js` (the
+Pinned: `test/net/seat1c_service.test.js` (5), `test/ui/seat1c_client.test.js` (5), `test/net/seat1c_titles.test.js` (4); re-aimed
+by content in the relay version pins (`world145`), the vocabulary's (`test/server/acc3titles.test.js`, `test/net/penitent.test.js`),
+the badge's paths (`test/net/acc3badge.test.js`, `test/net/nameadopt.test.js`, `test/net/wb9g_insignia.test.js`), and in
+`test/net/seat1a_service.test.js` (the list's holder and battle), `test/net/seat1a_client.test.js` (the mark's new fields, the
+dressed seat, the arrival), `test/net/seat1b_service.test.js` (the standings' shape) and `test/server/accountworker.test.js` (the
 schema). `tools/mutants/seat1c.json` (57, all dead) - two more were recorded EQUIVALENT and dropped: the settle's early
 read of its key (an optimisation - the key's own INSERT refuses a second settle whatever it reads) and the claim fee's
 balance guard (the treasury's own CHECK refuses an overdraft, so the batch rolls back either way); GUILD1d, SEAT1a,
@@ -11669,10 +11721,10 @@ Left for their slices, recorded: the siege's and the revolt's Standing rows (SEA
 law); the stockpile's writs and the Siege Camp (SEAT2b); the crown's Edicts, reach and the Marches (CROWN1); a vassal's
 tribute and Conscription as shares of the Tithe (CROWN1, CROWN2).
 
-Pinned: `test/seat1d_service.test.js` (6), `test/seat1d_client.test.js` (10); re-aimed in `test/seat1c_service.test.js`
-and `test/seat1c_client.test.js` (a holder now pays its upkeep, so the Turning's +5 is pinned beside a paid week at a
-Tithe that moves nothing), `test/audit31_law.test.js` (the Tithe's nought the default where no seat holds the board),
-`test/roadg_pools.test.js` (a cite), the account version pins. `tools/mutants/seat1d.json` (86, all dead) - one more
+Pinned: `test/net/seat1d_service.test.js` (6), `test/systems/seat1d_client.test.js` (10); re-aimed in `test/net/seat1c_service.test.js`
+and `test/ui/seat1c_client.test.js` (a holder now pays its upkeep, so the Turning's +5 is pinned beside a paid week at a
+Tithe that moves nothing), `test/net/audit31_law.test.js` (the Tithe's nought the default where no seat holds the board),
+`test/scenes/roadg_pools.test.js` (a cite), the account version pins. `tools/mutants/seat1d.json` (86, all dead) - one more
 was recorded EQUIVALENT and dropped: the Tithe's high row asked at three quarters inclusive (no whole-percent Tithe sits
 on three quarters of either cap, 7.5 or 11.25); GOLDMARKET, PROF5, SEAT1c, SIGIL1, SURVTIERS3 and AUDIT ALL A6 records
 re-aimed by content (PIN MOVED), all dead.
@@ -11683,7 +11735,7 @@ re-aimed by content (PIN MOVED), all dead.
 `world146` (`world140` until main's HERALD, LOOT7, WB11 and CLIMB5 took 138-141, `world138` until main's GATE-UX and KEPT-KILL took 136 and 137) - no account change. The room admits the developers alone (a verified token carrying the `dev` glyph) until
 SEAT2a schedules its battles and signs its sides. Seats-Arc 6.1.
 
-- **The law** (`src/net/siegeRef.js`, a LEAF - the relay bundles every byte it imports, so DFU's tables are COPIED and
+- **The law** (`src/net/siege/siegeRef.js`, a LEAF - the relay bundles every byte it imports, so DFU's tables are COPIED and
   pinned equal by test, the gate's way): `siege:<seat key>:<seat week>` rooms; **vitality** 300 + 2 x the Renown level
   the token carries, the level held to the token's own 1-50 (302-400); a **blow** `{ to, w, m, d, r }` accepted while
   both stand, the striker's bucket spent first (four a second, one second deep - the gate's), the target untouched for
@@ -11719,7 +11771,7 @@ SEAT2a schedules its battles and signs its sides. Seats-Arc 6.1.
   most that much and never the field; the look read back from storage on a woken object; the room's alarm raises the
   fallen at their wave. A spectator (any socket that never said `in`) is no target, strikes nothing, and its camera is
   its own. At most 48 fighters (6.4's crown: 20 a side and 4 sellswords a side).
-- **The measurement** (6.1's gate, `test/pvpref_measure.test.js`): the real Room on the fake object, 106 headless
+- **The measurement** (6.1's gate, `test/net/pvpref_measure.test.js`): the real Room on the fake object, 106 headless
   sockets for ten seconds of the room's clock - 40 fighters, 60 spectators and 6 sockets standing for SEAT2b's
   relay-run guards (their poses will be the relay's own fan), every one moving at the client's crowded rate (4 Hz at
   105 peers), each fighter striking at the referee's ceiling (every blow landing and fanned) and casting at the
@@ -11735,10 +11787,10 @@ on entry, Teleport, Recall and Levitate doing nothing; the room's window and its
 side-mate's alone, a blow never a side-mate's); the wave by the seat's tier; the Throne. The refereed duel ring the Royal
 Tourney stands on is CROWN1's.
 
-Pinned: `test/pvpref_law.test.js` (5), `test/pvpref_relay.test.js` (4), `test/pvpref_measure.test.js` (1); the relay
-version pins and `test/relayversion.test.js`'s world146 LAW row (its graph adds `src/net/siegeRef.js`). The suite's two
+Pinned: `test/systems/pvpref_law.test.js` (5), `test/net/siege/pvpref_relay.test.js` (4), `test/net/pvpref_measure.test.js` (1); the relay
+version pins and `test/net/relayversion.test.js`'s world146 LAW row (its graph adds `src/net/siege/siegeRef.js`). The suite's two
 catches: the account Worker bundles `wire.js`, so `siegeRef.js` joins `.github/workflows/account-deploy.yml`'s paths
-(`test/accountdeploy.test.js` walks the graph); and `test/chat1.test.js`'s AUDIT CHAT A3 pin, which read the pose arm
+(`test/server/accountdeploy.test.js` walks the graph); and `test/net/chat1.test.js`'s AUDIT CHAT A3 pin, which read the pose arm
 straight from `still` to the meter, names the siege step between them (PIN MOVED - a channel is never a siege's room).
 `tools/mutants/pvpref.json` (108, all dead) - two survived the first run and were killed by a sharper pin, recorded:
 the vitality's floor of one (a level of nought reads one through `|| 1`, so only a negative level tells the floor apart),
@@ -11786,8 +11838,8 @@ test now counts the writes); AUDIT WB A1's two one-seat records re-aimed (PIN MO
 Left for SEAT2a's relay half, recorded: the siege pass (the rosters signed into the relay's room), the battlefield
 (banners, the Throne), the forfeits, the result and Honours, the announcements in the server's voice, the client's fight.
 
-Pinned: `test/seat2a_service.test.js` (4), `test/seat2a_client.test.js` (5); the account version pins (`acct49`) and
-`test/accountworker.test.js` (the schema). `tools/mutants/seat2a.json` (74, all dead) - seven survived the first run and
+Pinned: `test/net/seat2a_service.test.js` (4), `test/net/seat2a_client.test.js` (5); the account version pins (`acct49`) and
+`test/server/accountworker.test.js` (the schema). `tools/mutants/seat2a.json` (74, all dead) - seven survived the first run and
 were killed by sharper pins (an old holder's window, the close said first, a hired account's other character in a
 side's guild, the sides' Sellsword count, a member seeing no contracts, the closed tab's offers, a signed contract's
 withdrawal); one more was recorded EQUIVALENT and dropped: the withdrawal's read widened to a signed contract (its guarded
@@ -11814,7 +11866,7 @@ relay `world147` - no account change; the service mints the pass and reads the r
 - **The sides** (6.2): a fighter enters at its side's camp (the relay says so, as a pull-back); never a blow or a harmful
   cast on a side-mate, a heal on a side-mate alone; nothing lands before the battle is joined or after it ends; the
   fallen rise at their camp on the tier's wave (20 s at a palace, 30 at a crown); a felling is the feller's, for Honours.
-- **The battlefield** (`net/siegeRef.js` battleStep, each second on the room's alarm from the first pass to the end,
+- **The battlefield** (`net/siege/siegeRef.js` battleStep, each second on the room's alarm from the first pass to the end,
   landing exactly on the start, a siege's forfeit mark and the end): a banner raised by a side standing alone within 8 m
   for 20 s, frozen while both stand there, its half-raise falling back a second a second when left and begun again by
   the other side; a fallen fighter, or one whose socket is gone, holds nothing. The Throne opens to the attackers at 2 of
@@ -11824,7 +11876,7 @@ relay `world147` - no account change; the service mints the pass and reads the r
   minutes is a forfeit, nobody at all `absent` (DECIDED: 6.5's no-shows are a siege's - a Tourney's absent contender
   simply holds no banners at its end). A beat counts five seconds at most. The field is fanned each second (`f`: each
   banner held, raised and by whom, the Throne's seconds, the clock, who is in).
-- **The receipt** (`net/siegeReceipt.js`, `s1`, the relay's fourth signature with the gate's key - `{s, sk, sw, sd, r, a,
+- **The receipt** (`net/siege/siegeReceipt.js`, `s1`, the relay's fourth signature with the gate's key - `{s, sk, sw, sd, r, a,
   h, i, e}`): at the end every sided fighter's is minted - the result, whether the attackers raised a banner (6.8: a
   siege nobody fought is not a victory), and its own Honours (stood half the battle in the room, or felled a foe) - and
   handed to it; the result said to everyone. DECIDED: one receipt a fighter, each carrying the result - the battle's
@@ -11836,9 +11888,9 @@ Left for part three (the service), recorded: the pass minted from the rosters an
 applied (6.5, 6.8), Honours claimed, `/v1/seats/sieges/live` and the deploy blackout. Part four (the client): the siege's
 session and HUD, its blows sent to the referee, the camp's respawn, the spectator's camera, the field from the town.
 
-Pinned: `test/seat2a_battle.test.js` (7), `test/seat2a_relay.test.js` (4 - the slice's gate: a headless 10v10 siege run
-to both endings, the forfeit and the absence besides); the order kinds' pins in `test/guild1c.test.js` and
-`test/renown1.test.js`, PVP-REF's out-kinds (PIN MOVED), and the relay pins (`world147`). `tools/mutants/seat2a2.json` (86, all
+Pinned: `test/net/seat2a_battle.test.js` (7), `test/net/siege/seat2a_relay.test.js` (4 - the slice's gate: a headless 10v10 siege run
+to both endings, the forfeit and the absence besides); the order kinds' pins in `test/net/guild1c.test.js` and
+`test/net/renown1.test.js`, PVP-REF's out-kinds (PIN MOVED), and the relay pins (`world147`). `tools/mutants/seat2a2.json` (86, all
 dead) - five survived the first run and were killed by sharper pins (a palace's field with a fourth banner, an attacker
 gone before the start, a Tourney's defenders' banner, the pass's two hours, a blow after the end); two hung the harness on
 an alarm that re-armed for ever, which now fails instead of spinning, and the keeping week is pinned. Seven older records
@@ -11887,9 +11939,9 @@ drawn out as `siegeFieldValid`, the same law - never shipped under the first has
 FLAGGED: the Siege-cracked Gem (PROF0 4.7) has no template; Lapidary's specialisation names it. Until it has one the
 Spoils roll between the other two.
 
-Pinned: `test/seat2a_siege_service.test.js` (4, through the real Worker), `test/seat2a_siege_client.test.js` (4); the
-account version pins (`acct50`), the schema (`test/accountworker.test.js`, PIN MOVED), the account deploy's paths
-(`src/net/siegeReceipt.js`). `tools/mutants/seat2a3.json` (70: 68 dead, 2 recorded EQUIVALENT) - nine survived the first
+Pinned: `test/net/seat2a_siege_service.test.js` (4, through the real Worker), `test/net/seat2a_siege_client.test.js` (4); the
+account version pins (`acct50`), the schema (`test/server/accountworker.test.js`, PIN MOVED), the account deploy's paths
+(`src/net/siege/siegeReceipt.js`). `tools/mutants/seat2a3.json` (70: 68 dead, 2 recorded EQUIVALENT) - nine survived the first
 run: seven were killed by sharper pins (the Turning reading the week's bonus and bars - a challenger past the holder's
 plain defence and short of its x1.2, its pledge for the week - a void battle's pass, a dead heat at equal influence, the
 forfeit's Chronicle row, an unsettled field's 409); two are EQUIVALENT - the settled field's `IS NULL` guard (only two
@@ -11913,24 +11965,24 @@ unchanged, never shipped under an earlier hash). Seats-Arc 6.2, 6.8, 19. With it
   fresh for it (`mintSiegePass`, bounded as the token is - an order lives a minute, so a reconnect asks again); its words
   read from that socket alone (`validSiegeOut`), the client's words sent only at a relay that fights battles
   (`siegeOk`), under the relay's own bucket.
-- **The session** (`net/siegeSession.js`, entered from the Seat tab's "Enter the battle" - "Watch the battle" for anyone
+- **The session** (`net/siege/siegeSession.js`, entered from the Seat tab's "Enter the battle" - "Watch the battle" for anyone
   unsigned - while the door is open): the pass asked with this game's field (an unsettled field asked again every 5 s,
   said in words); the world's room while it lasts (scenes/world.js keeps the battle's room over the town's cell); `in`
   said on every open socket; a pull-back and this fighter's own rise move it to the camp (the ground's height the
   motor's to settle); foes are the other side's standing fighters - a melee swing's arm reaches the nearest within reach
   and sight (the duel's test), rolled on the player's own sheet against a body of the same sheet and sent to the referee,
   which clips it; at the window's close it leaves and the town's cell is joined again.
-- **The HUD and the card** (`net/siegeLink.js` the fold and the words; `ui/siegeHud.js` the readout, updated not
+- **The HUD and the card** (`net/siege/siegeLink.js` the fold and the words; `ui/siegeHud.js` the readout, updated not
   rebuilt): 19's bar - the seat, the holder against the challenger, the clock to the start and to the end, each banner
   `^` the attackers', `o` the defenders', `~` a raise under way (DECIDED: the field's frame says who raises, not who
   contests), the Throne's share and rule; each side's fighters up and down; the vitality bar and the next wave; a
   spectator's count; the result card's title in 19's capitals, the time and banners, the Honours once answered, a Claim
   while a receipt waits.
-- **The receipts carried** (`net/siegeClaims.js`, the gate's claims' twin): a signed, unexpired receipt kept on the
+- **The receipts carried** (`net/siege/siegeClaims.js`, the gate's claims' twin): a signed, unexpired receipt kept on the
   device for its account and offered at once (and every ten minutes); let go when the service settles it - claimed,
   claimed before, a void battle, not the relay's - and kept for a refusal the service can mend (its key, a clock).
 
-Pinned: `test/seat2a_siege_play.test.js` (7). `tools/mutants/seat2a4.json` (85, all dead) - four survived the first run
+Pinned: `test/net/siege/seat2a_siege_play.test.js` (7). `tools/mutants/seat2a4.json` (85, all dead) - four survived the first run
 and were killed by sharper pins (a fighter whole again by its vitality alone, the tier's own wave, the nearest board
 not the first, a pass on a siege's hello alone).
 
@@ -11963,12 +12015,12 @@ reads nothing of it.
   (`STANDING_CHANGES.conscripted`), and the Chronicle says so at the crown (`conscription`) and at each seat
   (`conscripted`) - with the share due.
 
-Pinned: `test/crown1_law.test.js` (7), `test/crown1_service.test.js` (4), `test/crown1_client.test.js` (1).
+Pinned: `test/net/crown1_law.test.js` (7), `test/net/crown1_service.test.js` (4), `test/ui/crown1_client.test.js` (1).
 `tools/mutants/crown1.json` (48: 46 dead, 2 equivalent recorded - the read's own crown filter, which the law repeats,
 and a burnt Tithe's line, which names no guild). Seven survived the first run: two were dead code (the Free Land checks
 in `seatReach` and `conscriptionDue` - no kingdom or March holds one), removed; three were sharpened pins (a palace in
 a crown's own region, a crown seat never conscripted, a guild that took no Tithe never conscripted). PIN MOVED: the
-Edicts' list and Standing's rows (`test/seat1d_client.test.js`).
+Edicts' list and Standing's rows (`test/systems/seat1d_client.test.js`).
 
 ### CROWN1 (part two, the relay) - the Royal Tourney's room, its bouts and its ladder
 
@@ -11976,7 +12028,7 @@ Edicts' list and Standing's rows (`test/seat1d_client.test.js`).
 week in the crown's city, at the castle's entrance square: DUEL1's ring, but every blow refereed by PVP-REF in a
 siege:-shaped room - a defender-resolved duel cannot award a title - the relay keeping the ladder".
 
-- **The room** (`net/siegeRef.js` `ROYAL_ROOM`, `isBattleRoom`, `battleOfRoom`; the Worker's 404 for any other `royal:`
+- **The room** (`net/siege/siegeRef.js` `ROYAL_ROOM`, `isBattleRoom`, `battleOfRoom`; the Worker's 404 for any other `royal:`
   key): `royal:<crown seat key>:<seat week>` - DECIDED: not `siege:` itself, which holds one battle a seat a week, so a
   crown's siege and its Royal Tourney may share a week. It runs on the siege room's own machinery (`_siegeAdmit`,
   `_siegeFrame`, `_siegeStep`, `_siegeTick`), the battle's kind read off the pass and checked against the key's.
@@ -11994,16 +12046,16 @@ siege:-shaped room - a defender-resolved duel cannot award a title - the relay k
 - **The ladder**: a win and a loss for every decided bout - DECIDED: the same two counted at most three times a UTC day
   (`ROYAL_PAIR_DAY_MAX`; DUEL1's record counts ten, but a title is at stake). Said as `lad` (the top ten, most wins then
   fewest losses), with `bout` and `bend` (`c` whether it counted).
-- **The receipt** (`net/siegeReceipt.js` `t1`): the winner handed `{ s, l, sk, sw, n }` signed with the gate's key - the
+- **The receipt** (`net/siege/siegeReceipt.js` `t1`): the winner handed `{ s, l, sk, sw, n }` signed with the gate's key - the
   relay's fifth use of it, the version inside the signed bytes and the shapes disjoint (`s1` now refuses a loser) - and
   kept the room's week for a reconnect (`ROYAL_RC_KEEP`). The service counts the receipts it is given by the ladder's
   own rule and names the champion (part two, the service).
 
-Pinned: `test/crown1_royal_law.test.js` (9), `test/crown1_royal_relay.test.js` (5, over the real Room).
+Pinned: `test/net/crown1_royal_law.test.js` (9), `test/net/siege/crown1_royal_relay.test.js` (5, over the real Room).
 `tools/mutants/crown1_royal.json` (97, all dead - three survived the first run: the siege receipt's refusal of a
 loser and the heal between a bout's two were pinned; the accept's restore of both fighters' vitality was dead code,
 since a contender's vitality moves in a bout alone and every bout ends both whole - removed). PIN MOVED: the siege's
-kinds (`test/pvpref_law.test.js`), the step's source pin (`test/chat1.test.js`), the relay version pins.
+kinds (`test/systems/pvpref_law.test.js`), the step's source pin (`test/net/chat1.test.js`), the relay version pins.
 
 ### CROWN1 (part two, the service) - the Royal Tourney's Edict, pass, bouts and champion
 
@@ -12032,7 +12084,7 @@ kinds (`test/pvpref_law.test.js`), the step's source pin (`test/chat1.test.js`),
   account's newest, worn with its crown's key and the Season (`ts` `[key, 0]` - 0 until SEASON1 counts Seasons, as
   every seat title's), whatever character the account brings; `seatTitleText` now says the Season.
 
-Pinned: `test/crown1_royal_service.test.js` (4); `test/crown1_royal_law.test.js` grew a tenth (the service's law).
+Pinned: `test/net/crown1_royal_service.test.js` (4); `test/net/crown1_royal_law.test.js` grew a tenth (the service's law).
 `tools/mutants/crown1_royal_svc.json` (48, all dead - seven survived the first run: two were dead code (the ring's
 guard on a field's first account and the claim's `counted = 1` - past the third bout a day every row is uncounted),
 removed; five were sharpened pins (a ladder's rows out of order, a palace whose rows claim a Royal Tourney, a
@@ -12066,12 +12118,12 @@ New: `src/net/royalLink.js`, `src/net/royalSession.js`.
 - **The HUD** (`net/royalLink.js` `foldRoyal`, `royalHudModel`, drawn by the siege's own readout): the tourney, its
   prize and its end; the ring - empty, a bout's countdown or its clock; the ladder's first five; this player's vitality
   in a bout, its record, a challenge at it, its last bout's end (and whether the ladder counted it).
-- **The receipts** (`net/siegeClaims.js` `createRoyalClaims` - the siege's carrier, given its store, reader, settling
+- **The receipts** (`net/siege/siegeClaims.js` `createRoyalClaims` - the siege's carrier, given its store, reader, settling
   answers and size): a bout's `t1` kept and carried at once and every ten minutes until the service counts it, finds the
   tourney gone or over, or refuses a receipt that is not the relay's.
 - **The title**: "Champion of <Kingdom>, Season N" on the player's badge (`seatTitleText`, part two the service).
 
-Pinned: `test/crown1_royal_client.test.js` (7). `tools/mutants/crown1_royal_client.json` (58, all dead - seven survived
+Pinned: `test/net/crown1_royal_client.test.js` (7). `tools/mutants/crown1_royal_client.json` (58, all dead - seven survived
 the first run, each a pin that was vacuous or missing: the roll call's fallen, a day's ending in days, a bout not mine,
 a bout's end said ten seconds, another's bout giving me no foe and no ring, the bouts' own store). Nine of part four's
 records were re-aimed by content (the carrier's and the socket's lines, now any battle room's).
@@ -12122,7 +12174,7 @@ records were re-aimed by content (the carrier's and the socket's lines, now any 
 - A guild's name opening a sentence is now capitalised (`GuildWords`) - the red line, the rows, and SEAT2a's
   announcement and SEAT1c's battle line, which had opened with "the" (PIN MOVED in `seat2a_client`, `seat1c_client`).
 
-Pinned: `test/crown2_law.test.js` (5), `test/crown2_service.test.js` (5), `test/crown2_client.test.js` (5).
+Pinned: `test/net/crown2_law.test.js` (5), `test/net/crown2_service.test.js` (5), `test/net/crown2_client.test.js` (5).
 `tools/mutants/crown2.json` (118, all dead - twelve survived the first run: one was dead code (the fit's palace test, after
 the crown holder's return), removed; the Turning's fealty reckoning moved into the law, where its fit, break and reach
 are pinned (`fealtyReckoning`), the reach it hands pinned by source; the rest were missing pins - a second crown that
@@ -12169,8 +12221,8 @@ records re-aimed by content (SEAT1c's list and its defence's two, SEAT2a part th
 - **Not yet**: the banner ribbon a Keeper's guild wears (the token and the name tag - BUILT in part two, the banner
   ribbon, below); the fortifications' wear (SEAT2b has none); the Chronicle as a Hall of Records book (part three).
 
-Pinned: `test/season1_law.test.js` (4), `test/season1_service.test.js` (3 - a Season's end set against a twin service
-counting none), `test/season1_client.test.js` (1). `tools/mutants/season1.json` (61, all dead - two survived the first run, each a vacuous pin: a
+Pinned: `test/net/season1_law.test.js` (4), `test/net/season1_service.test.js` (3 - a Season's end set against a twin service
+counting none), `test/net/season1_client.test.js` (1). `tools/mutants/season1.json` (61, all dead - two survived the first run, each a vacuous pin: a
 week that is not whole was tested before Season 0, where every week is none; and an account's two kept titles shared
 their key and week, so a title's own row was never told apart - now a champion's from Season 0 beside them). PIN MOVED: the
 standings' shape (`seat1b_service`), the Turnings due and the mint's kept titles by source (`seat1c_client`,
@@ -12208,8 +12260,8 @@ Seats-Arc 9.3. New: `src/net/tideLaw.js`.
   Incursion's doubled Marks - DECIDED here: not paid on one account's word, because a kill's region is the client's word
   until three claims agree; AUDIT-SEATS pays it at the Turning, once they do.
 
-Pinned: `test/tide_law.test.js` (3), `test/tide_service.test.js` (2 - each against a twin service counting no Season,
-on the Marches' Incursion and Plague around T0), `test/tide_client.test.js` (1); `test/season1_service.test.js` now meets
+Pinned: `test/net/tide_law.test.js` (3), `test/net/tide_service.test.js` (2 - each against a twin service counting no Season,
+on the Marches' Incursion and Plague around T0), `test/ui/tide_client.test.js` (1); `test/net/season1_service.test.js` now meets
 week W's Royal Wedding in Wayrest (its +3 before the halving). `tools/mutants/tide.json` (43, all dead - two survived the first run and one record did not parse: the
 "no other Edict" pin had used Edicts with no price, now the Royal Tourney's; the Turning's own Tide was unpinned, now
 pinned by the Legacy it carries; the record that broke a ternary re-aimed). PIN MOVED: the
@@ -12234,7 +12286,7 @@ New: `server-account/src/tides.js` (`tideNow` - the seat week's Tide at a region
 - DECIDED: the sea (region 31) belongs to no land, so a haul at sea meets no Storm Season; a coast's haul meets its
   region's land's.
 
-Pinned: `test/tide_economy.test.js` (2 - the law; and through the real Worker a tree felled on confirmed ground in
+Pinned: `test/net/tide_economy.test.js` (2 - the law; and through the real Worker a tree felled on confirmed ground in
 Daggerfall's Harvest and Blight weeks, unconfirmed ground, and a courier into Daggerfall in its Bandit Summer, each
 against a twin service counting no Season). `tools/mutants/tide2.json` (26, all dead - one survived the first run: the net's Tide before a
 school's fish was pinned at the dice's top, where the order rounds alike; now at their foot). PIN MOVED: the account version
@@ -12263,7 +12315,7 @@ pins; two older mutant records (PROF4's tree, PROF8's net) re-aimed by content, 
   alone (the destination's land's Tide); offline every voyage is DFU's own. Every reckoning reads it - the travel
   window, the maps, the quest clock, the fare - so the time shown is the time taken.
 
-Pinned: `test/tide_orcs.test.js` (4 - the law; through the real Worker a camp in the Marches' Orc Raids against a twin
+Pinned: `test/net/tide_orcs.test.js` (4 - the law; through the real Worker a camp in the Marches' Orc Raids against a twin
 counting no Season, its caps and its standings; the day's cap across the Turning and the refusals; the client's book,
 Edicts and sea, and the wiring by source). `tools/mutants/tide3.json` (39, all dead - four survived the first run: the
 Tide's gate and the Edicts' `orcsAt` wanted a land with a Tide neither Calm nor Orc Raids, the week's cap a stronger
@@ -12293,7 +12345,7 @@ part two is whole.
   its claim, every glyph, an aura, a mute, the Renown cap, a guild, the realm's word and the ribbon - is 540 characters
   of body (523 without the ribbon - already past it), over the hello's old 512, so a token the service signed would
   have been refused as 'bad token'. Found by the
-  mapping, not the field: no account wears all of them today. AUDIT B8's pin (test/shadowfang.test.js) now wears them
+  mapping, not the field: no account wears all of them today. AUDIT B8's pin (test/ui/shadowfang.test.js) now wears them
   all; the verifier's 1024 still bounds the whole.
 - **The relay** (`world149`; `server/src/index.js` `_named` and the hello's attached row, `wire.js` `badged`): the
   ribbon off the verified token alone onto every row that names its wearer - the welcome, a join, a roster - never off
@@ -12305,7 +12357,7 @@ part two is whole.
   (`.dfname-ribbon`), its colours written when they change, off for none. The Overworld travel view's badge draws none
   yet.
 
-Pinned: `test/season1_ribbon.test.js` (4 - the law; through the real Worker a Season's end writing it and the mint
+Pinned: `test/net/season1_ribbon.test.js` (4 - the law; through the real Worker a Season's end writing it and the mint
 wearing it against a twin counting no Season; the token and the relay; the page). `tools/mutants/ribbon.json` (48: 47
 dead, 1 recorded equivalent - the mint's character gate, which a member row's own id shape already answers; one
 survived the first run, the re-stood peer's memory, now pinned; the token's bound held from both sides). PIN MOVED: the relay and account version pins
@@ -12341,7 +12393,7 @@ Seats-Arc 9.2. New: `src/ui/hallOfRecords.js`.
   meanwhile. A palace with no shelf-set model has no book. (AUDIT-SEATS built both: the castles' shelves, and the book
   from every seat's board.)
 
-Pinned: `test/season1_records.test.js` (4 - the law; the book through the reader's door; through the real Worker the
+Pinned: `test/ui/season1_records.test.js` (4 - the law; the book through the reader's door; through the real Worker the
 read, its bound and order, the standings' own eight; the page and the wiring by source). `tools/mutants/records.json`
 (39, all dead - two survived the first run: the book's author, pinned by its constant alone, and the standings' own
 eight, which no seat test had more than eight rows to tell). PIN MOVED: the account version pins; SEAT1c's Chronicle
@@ -12356,7 +12408,7 @@ the design, the client and the world's wiring, the design's coverage); every fin
 fix pinned and mutated. `acct60` (with PROF11 and SEAT2b part one, below); `world149` re-recorded (undeployed); the
 service lane's migration `0059_audit_seats.sql`.
 
-**The open items, finished** (`test/seats_finish.test.js`, 7):
+**The open items, finished** (`test/net/seats_finish.test.js`, 7):
 - an offer of fealty or of a Pact declined by the guild it was made to (`breakFealty`'s decline; the Seat tab's Decline
   beside each Accept);
 - a taken siege's length in the Chronicle (`minutes`, the battle's start to the end its receipts were signed at - 9.2's
@@ -12369,7 +12421,7 @@ service lane's migration `0059_audit_seats.sql`.
   dye) in the Spoils, a roll a third each; UNYIELDED keeps the Daedric Ingot alone, the sieges yielding the Warforged
   ingot and Standard-bearer's Silk.
 
-**The shared law** (`test/audit_seats_law.test.js`, 12):
+**The shared law** (`test/net/audit_seats_law.test.js`, 12):
 - L1 Season 1's Keepers - Season 0's last Turning claims nothing, so a Charter from Season 1's first Turning held it
   whole (`keptWholeSeason`); without it, no guild could be Keeper in Season 1 nor wear a ribbon in Season 2;
 - L2 the Rights of Siege ranked by the Unrest-risen influence (5.2 step 4);
@@ -12389,7 +12441,7 @@ service lane's migration `0059_audit_seats.sql`.
   mints (`siege-honours`, `gate-incursion`, `seat-strike-refund`), the `fort` burn, the escrows and fees (a sweep of
   every ledger INSERT in `server-account/src` pins it; PROF5's "no new faucet" pin moved to name them).
 
-**The relay** (`test/audit_seats_relay.test.js`, 15): R1 the climb judged with the run (falls free), and a fighter more
+**The relay** (`test/net/siege/audit_seats_relay.test.js`, 15): R1 the climb judged with the run (falls free), and a fighter more
 than 8 m off the field's ground stands at no point; R2 the step's allowance carried on the fighter, the pose gate spent
 before the referee judges; R3 a battle room's hello gate spent only after the token and the pass verify, by account;
 R4 a refused step spends the gate; R5 the Royal Tourney's bound counts contenders in the room; R6 a rostered fighter
@@ -12400,7 +12452,7 @@ T1 `th` - the attackers ever alone at the open Throne - on every `s1` receipt; T
 own camera's, told to nobody); T3 a side's place held five minutes for a fighter gone, then a substitute's - one back
 returns at its camp, down until its side's next wave.
 
-**The service** (`test/audit_seats_service.test.js`, 16): S1 a Bounty's unspent escrow burnt where its treasury is full,
+**The service** (`test/net/audit_seats_service.test.js`, 16): S1 a Bounty's unspent escrow burnt where its treasury is full,
 so the Turning never rolls back forever (`failed`, and the settle stops at that week); S2 each Sellsword contract its
 own statement; S3 every battle no result reached is VOID at its Turning - its escrow home, a siege's Right carried to
 next week as the challenger's one Right, a later result refused whole (`battle-void`); S4 a struck held seat's Charter
@@ -12412,13 +12464,13 @@ week (`heraldry-siege`); S11 the standings summed in SQL, the old rows pruned at
 Throne was reached +10 Standing, not +15, and the Chronicle's "The Throne was never reached."; T2 a disputed seat on the
 audit at once.
 
-**The client** (`test/audit_seats_client.test.js`, 22): C1 a battle or a Royal Tourney can be LEFT (the HUD's Leave, the
+**The client** (`test/net/audit_seats_client.test.js`, 22): C1 a battle or a Royal Tourney can be LEFT (the HUD's Leave, the
 card's Close, `/leave`, five seconds from the seat's town, a socket closed for good, a death); C2 one mint slot; C3 an
 unsettled field said once and asked again on a backing-off wait; C4 the arrival line waits on the seats' read; C5 the
 receipts offered again from the gate's frame; C6 both sessions on the relay's clock; C7 every claim answer reaches the
 card; C8 "You are signed for the first contender."; C9 a reload asked mid-read queued, the book's cache a generation
 on every clear; C10 the Watch's receipts kept through `auth`; C11 the Hall of Records read once at a time; C12 no
-per-frame Promise for the Watch's claim; C13 the relinquish button disarms itself. G1 `net/siegeHerald.js`: each battle
+per-frame Promise for the Watch's claim; C13 the relinquish button disarms itself. G1 `net/siege/siegeHerald.js`: each battle
 announced in red at the Turning, 24 h, 1 h and 5 min before; G5 arrows and harmful spells on a battle's foe go to the
 referee, Teleport, Recall and Levitate refused in a siege's room; G4 a spectator's free camera; G21 a crown's Throne,
 camp and Palace square placed before its castle's entrance where the town stands one (`siegeField.js` `castle` - the
@@ -12452,7 +12504,7 @@ slice, and SEAT2b's need). `06-Systems/Professions-Arc.md` 34 holds the whole re
 - **The Builder and the Fortifier** chosen since SEAT2b (below): a Builder's project asks nine tenths of the stone; a
   Fortifier on the defending roster keeps the Walls once a Season a seat.
 
-Pinned: `test/prof11_law.test.js` (11), `test/prof11_service.test.js` (7), `test/prof11_client.test.js` (7). Mutants:
+Pinned: `test/net/prof11_law.test.js` (11), `test/net/prof11_service.test.js` (7), `test/systems/prof11_client.test.js` (7). Mutants:
 `tools/mutants/prof11.json` (138, all dead - the two that held the Builder and Fortifier LOCKED re-aimed to lock them
 again, still dead).
 
@@ -12497,7 +12549,7 @@ Seats-Arc 7.5, 7.9, 4.2. Law (`src/net/fortLaw.js`), service (`server-account/sr
   part - the Walls' wave, the Gatehouse and its Rams, the Throne behind a breach, the Barracks' guards, the revolt.
   BUILT since: the works at peace (SEAT2b part two (a), below).
 
-Pinned: `test/seat2b_law.test.js` (7), `test/seat2b_service.test.js` (11, through the real Worker), `test/seat2b_client
+Pinned: `test/net/seat2b_law.test.js` (7), `test/server/seat2b_service.test.js` (11, through the real Worker), `test/seat2b_client
 .test.js` (5). Mutants: `tools/mutants/seat2b.json` (79: 78 dead, 1 equivalent recorded - the raise's own UPDATE holds
 the day the JS check spares).
 
@@ -12506,7 +12558,7 @@ the day the JS check spares).
 2026-10-01, Mac: "Finish the seats"; "Let's pick up 482" (PR 482's remaining scope). Seats-Arc 7.5, 4.2; Professions-Arc
 3.3, 4.8. Law (`src/net/fortLaw.js`, `townSeatLaw.js`, `professionLaw.js`, `recipeLaw.js`), service (`seatForts.js`,
 `seatInfluence.js`, `seatTurning.js`, `professions.js`, `writs.js`; migration `0062_seat_works_peace.sql`) and client
-(`src/net/townSeatBook.js`, `profBook.js`, `src/systems/travelPorts.js`, the Seat tab, the Stores page, the host).
+(`src/net/townSeatBook.js`, `profBook.js`, `src/systems/travel/travelPorts.js`, the Seat tab, the Stores page, the host).
 `acct61`; the relay untouched (its hash unchanged).
 
 - **The Siegewright's day** (Carpentry 100: "Rams +50% vitality; siege works a day sooner" - chosen now, no longer
@@ -12550,17 +12602,17 @@ the day the JS check spares).
   material (a sale makes it bought). The workbench says "You made a Ram Kit - it waits in your Stores"; the Stores page
   says its road is a Siege Camp's writ.
 
-Pinned: `test/seat2b_peace_law.test.js` (5), `test/seat2b_peace_service.test.js` (7, through the real Worker),
-`test/seat2b_peace_client.test.js` (5); twelve older tests' pins moved (PIN MOVED). Mutants: `tools/mutants/seat2b_peace.json`
+Pinned: `test/net/seat2b_peace_law.test.js` (5), `test/net/seat2b_peace_service.test.js` (7, through the real Worker),
+`test/ui/seat2b_peace_client.test.js` (5); twelve older tests' pins moved (PIN MOVED). Mutants: `tools/mutants/seat2b_peace.json`
 (63, all dead); sixteen older records re-aimed by content.
 
 ### SEAT2b part two (b) - the works in battle: the Walls' wave, the Gatehouse, the Rams
 
 2026-10-01, Mac: "Finish the seats"; "Let's pick up 482". Seats-Arc 6.2, 7.5; Professions-Arc 3.3. Law
-(`src/net/siegeRef.js` - its numbers net/fortLaw.js's, copied into the relay's leaf and pinned equal), the pass
+(`src/net/siege/siegeRef.js` - its numbers net/fortLaw.js's, copied into the relay's leaf and pinned equal), the pass
 (`src/net/identityToken.js` `sx`), the relay (`server/src/index.js` `_siegeWorkBlow`, the room's beat), the service
 (`server-account/src/seatSiege.js` siegePass; migration `0063_seat_works_battle.sql`) and the client
-(`src/net/siegeLink.js`, `siegeSession.js`, `ui/siegeHud.js`, the host's melee arm). `world150`; `acct61` (the account
+(`src/net/siege/siegeLink.js`, `siegeSession.js`, `ui/siegeHud.js`, the host's melee arm). `world150`; `acct61` (the account
 service's own unbumped - one deploy with part (a)).
 
 - **The works frozen at the door** (`town_seat_battles.works`): at the battle's first pass the service reads each work's
@@ -12598,19 +12650,19 @@ service's own unbumped - one deploy with part (a)).
   defender's wave the Walls' quicker; the chat says the breach and a Ram's end once. A swing that finds no foe falls to
   the work in reach - an attacker's at the Gatehouse, a defender's at the Ram - rolled as a blow on a foe is.
 
-Pinned: `test/seat2b_battle_law.test.js` (7), `test/seat2b_battle_relay.test.js` (3, over the real Room),
-`test/seat2b_battle_service.test.js` (2, through the real Worker), `test/seat2b_battle_client.test.js` (4); SEAT2a's
+Pinned: `test/net/seat2b_battle_law.test.js` (7), `test/net/siege/seat2b_battle_relay.test.js` (3, over the real Room),
+`test/net/seat2b_battle_service.test.js` (2, through the real Worker), `test/net/siege/seat2b_battle_client.test.js` (4); SEAT2a's
 crown Throne, the pass's claims and identityToken.js's imports moved (PIN MOVED); the relay's version pins moved on to
 world150. Mutants: `tools/mutants/seat2b_battle.json` (64, all dead); fourteen older records re-aimed by content.
 
 ### SEAT2b part two (c) - the relay's own fighters: the Barracks' guards and the revolt
 
-2026-10-01, Mac: "Finish the seats"; "Let's pick up 482". Seats-Arc 6.1, 6.3, 7.5, 7.7, 9.2. Law (`src/net/siegeRef.js` -
+2026-10-01, Mac: "Finish the seats"; "Let's pick up 482". Seats-Arc 6.1, 6.3, 7.5, 7.7, 9.2. Law (`src/net/siege/siegeRef.js` -
 the Barracks' and the revolt's numbers net/fortLaw.js's, copied into the relay's leaf and pinned equal; the schedule's
 `src/net/townSeatLaw.js`), the pass (`src/net/identityToken.js` - `sn` 'revolt'), the relay (`server/src/index.js`
 `_siegeNpcBlow`, the room's beat), the wire (`src/net/wire.js` validSiegeIn, validSiegeOut), the service
 (`server-account/src/seatTurning.js`, `seatSiege.js`, `seatInfluence.js`; migration `0064_seat_revolts.sql`) and the client
-(`src/net/siegeLink.js`, `siegeSession.js`, the new `src/scenes/siegeNpcs.js`, the host's arms). `world150` re-hashed in
+(`src/net/siege/siegeLink.js`, `siegeSession.js`, the new `src/scenes/siegeNpcs.js`, the host's arms). `world150` re-hashed in
 place (undeployed); `acct61` (one deploy with parts (a) and (b)). With it SEAT2b is whole.
 
 - **"The gate's brain with adds"** (7.5; World-Bosses.md 17): bodies the relay owns - each a fighter's vitality of its
@@ -12657,8 +12709,8 @@ place (undeployed); `acct61` (one deploy with parts (a) and (b)). With it SEAT2b
   bodies are the siege's melee, shaft and spell targets (never in `foes` - the gate host's law), found by the arms as a
   peer's are.
 
-Pinned: `test/seat2b_guards_law.test.js` (9), `test/seat2b_guards_relay.test.js` (3, over the real Room),
-`test/seat2b_revolt_service.test.js` (3, through the real Worker), `test/seat2b_guards_client.test.js` (5); the relay's
+Pinned: `test/net/seat2b_guards_law.test.js` (9), `test/net/siege/seat2b_guards_relay.test.js` (3, over the real Room),
+`test/net/seat2b_revolt_service.test.js` (3, through the real Worker), `test/net/siege/seat2b_guards_client.test.js` (5); the relay's
 world150 row re-hashed in place. Mutants: `tools/mutants/seat2b_guards.json` (78, all dead); twenty-nine older records
 re-aimed by content.
 
@@ -12667,7 +12719,7 @@ re-aimed by content.
 2026-10-02, Mac: "Please do" (the palace as the holder's guild hall). Seats-Arc 7.2. Law (`src/net/townSeatLaw.js`
 SEAT_HALL_DECOR_CAP, SEAT_HALL_CLEAR_M, seatHallOf, SEAT_HALL_TEXT), the service (`server-account/src/decor.js` - the seat
 store; `server-account/src/index.js` - the seats' switch; migration `0065_seat_hall.sql`) and the client
-(`src/net/accountClient.js` accountDecor's `seat`, `src/scenes/decorTool.js` charterWhyNot, `src/scenes/worldModes.js`
+(`src/net/accountClient.js` accountDecor's `seat`, `src/scenes/decor/decorTool.js` charterWhyNot, `src/scenes/worldModes.js`
 interiorSeatHall, `src/scenes/world.js` seatHall). `acct61` (one deploy with SEAT2b part two). Behind SEATS_OPEN.
 
 - **The hall** (7.2: "the palace interior is the holder's guild hall. The court stays where DFU stands it"): a palace
@@ -12692,7 +12744,7 @@ interiorSeatHall, `src/scenes/world.js` seatHall). `acct61` (one deploy with SEA
   Season's wipe, the guild gone), nothing given back, as a work's building project falls.
 - **The crown's hall**: CROWN-HALL's, below.
 
-Pinned: `test/seathall_service.test.js` (5, through the real Worker), `test/seathall_client.test.js` (5); sixteen older
+Pinned: `test/net/seathall_service.test.js` (5, through the real Worker), `test/net/seathall_client.test.js` (5); sixteen older
 source pins re-aimed (PIN MOVED (SEAT-HALL)). Mutants: `tools/mutants/seat_hall.json` (40, all dead).
 
 ### CROWN-HALL - the crown's castle as its holder's hall: the throne room
@@ -12720,7 +12772,7 @@ the hall - its throne room carries the holder's banners, the roster board and th
 - **Live**: the pieces stand once a visit; the holder, its banner and membership are read each frame and press, so a
   Charter changing hands while a visitor stands there changes them at once, and a Charter lapsed hides them.
 
-Pinned: `test/crownhall.test.js` (5; the placement over a real Collider); the counts it moved (PIN MOVED: the world
+Pinned: `test/systems/crownhall.test.js` (5; the placement over a real Collider); the counts it moved (PIN MOVED: the world
 host's foreign passes, 23 to 24 call sites and 18 to 19 in world.js; the dungeon's activation families, 5 to 6;
 Systems.md's modules, 346). Mutants: `tools/mutants/crown_hall.json` (28, all dead).
 
@@ -12758,8 +12810,8 @@ real Worker or the real Room, a node run of the law) before it was fixed and pin
   Chronicle, the Festival's staging, Standing's trend and the request ids recorded as NOT YET; stale migrations,
   versions, frames and statuses corrected; the patch notes said the castle's square and Gatehouse, now the palace's.
 
-Pinned: `test/audit_seats2.test.js` (3), `test/audit_seats2_service.test.js` (8), `test/audit_seats2_relay.test.js` (2),
-`test/audit_seats2_client.test.js` (2), `test/seat2b_revolt_service.test.js` (+1). Mutants: `tools/mutants/audit_seats2.json`
+Pinned: `test/net/audit_seats2.test.js` (3), `test/net/audit_seats2_service.test.js` (8), `test/net/audit_seats2_relay.test.js` (2),
+`test/net/siege/audit_seats2_client.test.js` (2), `test/net/seat2b_revolt_service.test.js` (+1). Mutants: `tools/mutants/audit_seats2.json`
 (24, all dead), `tools/mutants/audit_seats2_service.json` (32, all dead); older records re-aimed by content, all still
 dead.
 
@@ -12805,7 +12857,7 @@ use it, the seams of main's merges with the repository's health, the tests' own 
   `homerent` (a tenancy read on the real clock - it fails from 2027-01-16) and `chat1` (storms on the real clock) held
   to a stubbed one.
 
-Pinned: `test/audit_seats3_service.test.js` (11), `test/audit_seats3_relay.test.js` (7), `test/audit_seats3_client.test.js`
+Pinned: `test/server/audit_seats3_service.test.js` (11), `test/net/audit_seats3_relay.test.js` (7), `test/net/audit_seats3_client.test.js`
 (9). Mutants: `tools/mutants/audit_seats3_client.json` (20), `audit_seats3_service.json` (27), `audit_seats3_relay.json` (14),
 `audit_seats3_world.json` (5), and `seat_hall.json` +2, all dead; older records re-aimed by content, all still dead.
 
@@ -12825,7 +12877,7 @@ siege HUD ... and the Chronicle".
 - **The tag's frame** (`ui/nameLayer.js`): a peer's `<TAG>` whose heraldry is known sits on a dark plate edged in its
   border colour, its shield at the plate's left - written when it changes. Unknown: the plain tag.
 - **The siege HUD** (`ui/siegeHud.js`): the defender's shield at the bar's left, the challenger's at its right
-  (`net/siegeLink.js` siegeHudModel's `arms`; the session dresses the Seat tab's fight in the dressed seat's heraldry
+  (`net/siege/siegeLink.js` siegeHudModel's `arms`; the session dresses the Seat tab's fight in the dressed seat's heraldry
   once, at its entering - fightArmed). A revolt's rising town and a Royal Tourney show none.
 - **The Chronicle**: each Seat tab line under the shield of the guild it is about (`chronicleGuildOf`, the one its line
   names first), known from the standings' answer or the seats' list; the Hall of Records' book - the reader draws text
@@ -12836,12 +12888,12 @@ siege HUD ... and the Chronicle".
   attacker its line never names; the Roll of Arms lists only the guilds a row's line names, in the line's order; the
   index keeps each tag's guild name (`heraldryIndex`, `armsNamed`), and a Chronicle row's guild - the Seat tab's and the
   Roll's - wears arms only where the tag's guild bears its name too (a disbanded guild's tag taken by a new guild shows
-  none of the new arms), a name tag still by tag alone; and the Overworld's name face (`ui/travelViewHud.js` badgeSprite)
+  none of the new arms), a name tag still by tag alone; and the Overworld's name face (`ui/travel/travelViewHud.js` badgeSprite)
   frames a `<TAG>` as the name over a head does - the plate in the border colour and the shield drawn on its canvas
   (`ui/heraldryArt.js` drawShield) into the kept sprite, keyed by the heraldry - off the same lookup
   (setTravelViewArmsOf(seatArmsOf)).
 
-Pinned: `test/seat_heraldry_ui.test.js` (10). Mutants: `tools/mutants/seat_heraldry_ui.json` (75, all dead).
+Pinned: `test/ui/seat_heraldry_ui.test.js` (10). Mutants: `tools/mutants/seat_heraldry_ui.json` (75, all dead).
 
 ### SIEGE-VOID - a moderator voids a siege (`/siege void`) (2026-10-02)
 
@@ -12884,9 +12936,9 @@ Modelled end to end on the developer's `/seat strike <key>`.
   next week (`edict`). AUDIT 529 V3: a result written before the column keeps NULL - the void reads it as nothing kept,
   never as a seat nobody held.
 
-Pinned: `test/siege_void.test.js` (8). Mutants: `tools/mutants/siege_void.json` (39, all dead). A new route and a
+Pinned: `test/net/siege_void.test.js` (8). Mutants: `tools/mutants/siege_void.json` (39, all dead). A new route and a
 migration; no service version bump (no pin required one) and no relay change. AUDIT 529 (V1-V6): six more tests
-(`test/siege_void.test.js`, 14), the mutants 60 (21 more, all dead); the service `acct64`, naming this route and migration 0067 and
+(`test/net/siege_void.test.js`, 14), the mutants 60 (21 more, all dead); the service `acct64`, naming this route and migration 0067 and
 STANDING-TREND's `standing` rows, which rode acct63's deploy unnamed.
 
 ### STANDING-TREND and FESTIVAL-STAGE - Standing's trend, a Festival's town (2026-10-02)
@@ -12905,13 +12957,13 @@ Mac: "lets finish the build work" - two more of the Seats arc's NOT YETs (Seats-
   it); the holder's banners hang at more anchors measured where the pixel is built (festivalBannerAnchors: two beside
   each tavern's door, a pennant over each bounty board, at most 6; `scenes/seatBanners.js` createSeatBanners); and a
   lantern burns before every banner the town flies, in the street's lantern pool (festivalLanternsOf,
-  `world/cityLights.js` fillLanternPool's `extra`), lit dusk to dawn and flickering on the slots after the pixel's own.
+  `world/city/cityLights.js` fillLanternPool's `extra`), lit dusk to dawn and flickering on the slots after the pixel's own.
 - **Audited** (2026-10-02): the seats' list was read only at the session's start and a town's arrival, so a Festival (or a
   Curfew) outlived its week for a player who stayed in town past the Turning, and one that became law was never staged.
   A list read in an earlier seat week is now expired (`net/townSeatBook.js` read), and the book's frame tick (redTick,
   already called each online frame) reads it again once when the seat week turns, while the seats are open.
 
-Pinned: `test/seat_standing_festival.test.js` (8). Mutants: `tools/mutants/seat_standing_festival.json` (27, all dead).
+Pinned: `test/scenes/seat_standing_festival.test.js` (8). Mutants: `tools/mutants/seat_standing_festival.json` (27, all dead).
 
 ### CASTLE-GATE - a crown's field and banners at its castle's entrance (2026-10-02)
 
@@ -12939,7 +12991,7 @@ blocks stand.
   it (doorWorldPosition), not its lower corner; and a door no face can be taken from (narrower than 0.3 m) is passed
   over for the town's next, never dropping the crown back to the palace door.
 
-Pinned: `test/castle_gate.test.js` (8). Mutants: `tools/mutants/castle_gate.json` (21, all dead; guild1d.json's
+Pinned: `test/scenes/castle_gate.test.js` (8). Mutants: `tools/mutants/castle_gate.json` (21, all dead; guild1d.json's
 GUILD1d-banner-faces-the-building and seat2a4.json's SEAT2a4-field-face re-aimed at the shared face). Client alone - no
 relay, no service version.
 
@@ -12950,7 +13002,7 @@ Warm Ashes ship raid each fought their own thirteen pirates that only they could
 lock stands for everything but this (Multiplayer.md): a quest is still a copy each and the quest engine is untouched.
 
 - **Which foes ride.** A quest foe rides the cell's stream while its quest is kept in step with the party
-  (`machine.sharedQuestNames`) and its player is partied (`scenes/questFoeHost.js questShareTag`); the frame names it
+  (`machine.sharedQuestNames`) and its player is partied (`scenes/quest/questFoeHost.js questShareTag`); the frame names it
   in `qf` - [record number, quest name, foe symbol]. Every other quest foe stays its player's own, as before. Past the
   frame's 64 records a shared quest's foes ride first and the deep's last.
 - **Who sees them.** A reader stands them only for an owner in its party (`social.isPartyPeer`), under their own
@@ -12972,8 +13024,8 @@ Not yet (recorded): a host who leaves hands its quest foes to no one (they are n
 building quest foes still stand a copy each - phase 3. A quest foe's loot stays its host's (the take arm still refuses
 quest foes). Two receivers together with the sharer away each stand their own, as before.
 
-Pinned: `test/questparty.test.js` (6). `tools/mutants/questparty.json` (27 - its heir mutant retired in phase 2). Re-aimed: `test/auditworld6bii.test.js`,
-`test/world6bii.test.js`, `test/camp1_groups.test.js` (the hunt), `test/auditworld6biiib.test.js` (the blow's door),
+Pinned: `test/scenes/questparty.test.js` (6). `tools/mutants/questparty.json` (27 - its heir mutant retired in phase 2). Re-aimed: `test/scenes/auditworld6bii.test.js`,
+`test/scenes/world6bii.test.js`, `test/systems/camp1_groups.test.js` (the hunt), `test/net/auditworld6biiib.test.js` (the blow's door),
 and seventeen older mutant records.
 
 ## QUEST-PARTY phase 2 - A HOST WHO LEAVES HANDS ITS QUEST'S FOES TO THE PARTY (2026-09-26)
@@ -12987,14 +13039,14 @@ waves had counted as placed while the host stood them, was left with a quest it 
   a stranger.
 - **A sudden one** (an owner the cell's prune sweeps - a lost connection, a closed tab): the one party member the law
   names takes each of its live quest foes - it stands within 100 m of the foe and no party member there has a lower id
-  (`scenes/questFoeHost.js adoptsOrphanQuestFoe`, every member's view naming the same one); the rest let them go and see
+  (`scenes/quest/questFoeHost.js adoptsOrphanQuestFoe`, every member's view naming the same one); the rest let them go and see
   them again on the taker's stream. A plain foe still goes with its owner, as before (AUDIT CONTRIB's reason stands:
   survivors deciding for themselves took one foe twice).
 - **Either way the foe becomes the taker's quest's** (`exteriorFoes.js adopt`): bound through a behaviour over the
   taker's own copy's Foe (`questBehaviourFor`) - its injury and its death are that copy's own word from then, and it
   rides to the party as the taker's. A taker whose copy holds no such quest takes it as a foe like any other.
 
-Pinned: `test/questparty2.test.js` (5). `tools/mutants/questparty2.json` (11). Phase 1's heir mutant retired with the
+Pinned: `test/scenes/questparty2.test.js` (5). `tools/mutants/questparty2.json` (11). Phase 1's heir mutant retired with the
 gate it guarded; AUDIT CONTRIB P1's record is back on its own line.
 
 ## QUEST-PARTY phase 3a - OWN1: A WORLD ROOM'S SECOND LANE (2026-09-26)
@@ -13016,7 +13068,7 @@ building had no foe sync at all, and a party member's quest foes in a dungeon co
 
 A RELAY DEPLOY: world118 ships when this merges, and the deploy drops every connected player once.
 
-Pinned: `test/own1.test.js` (3). `tools/mutants/own1.json` (18 dead, 1 equivalent). Re-aimed: `test/auditworld2.test.js`
+Pinned: `test/net/own1.test.js` (3). `tools/mutants/own1.json` (18 dead, 1 equivalent). Re-aimed: `test/net/auditworld2.test.js`
 (parseClient's doc names the frame), the version pins of thirteen files, and three older mutant records (AUDIT DROPS
 F's cap, SLAM11 U7's fan budget, SOC1 S38's version). Next: the buildings' foes on it (3b), then the dungeons'
 shared quest foes (3c).
@@ -13047,8 +13099,8 @@ shared quest foe in a building - the palace's imp - stood a copy each, each memb
   id (`questMarkerYields`); a touched copy never stands down, and a body stands nothing down. The copy that stood down
   goes as the cull takes one (its resource uncoupled), and my copy of the quest counts the other's injury and kill.
 
-Pinned: `test/questparty3b.test.js` (6). `tools/mutants/questparty3b.json` (23 dead). Re-aimed: the building lock's
-pin (`test/world6biiid.test.js`, reopened), the world host's routes and room-change pins (`test/world1`, `world2`,
+Pinned: `test/scenes/questparty3b.test.js` (6). `tools/mutants/questparty3b.json` (23 dead). Re-aimed: the building lock's
+pin (`test/scenes/world6biiid.test.js`, reopened), the world host's routes and room-change pins (`test/world1`, `world2`,
 `world3`, `world6b`, `world6bii`, `world6biiib`, `auditworld`, `auditworld6b`), phase 2's heir pin, and five older
 mutant records. Next: the dungeons' shared quest foes (3c).
 
@@ -13083,8 +13135,8 @@ Not yet (recorded): a party member's quest foe is not weighed by the party's siz
 are the layout's, the host's) - closed by PSCALE-OWN (2026-09-27, below); a summon's foe past the run stays flagged, its
 player's own - closed by SUMMON-SYNC (2026-09-27, below), which retired the flag.
 
-Pinned: `test/questparty3c.test.js` (7), mounted over the context's own statements. `tools/mutants/questparty3c.json`
-(38 dead, 1 equivalent). Re-aimed: the flag's own pin (`test/world2.test.js` ONLINE-DUNGEON-FOES - both halves widened
+Pinned: `test/scenes/questparty3c.test.js` (7), mounted over the context's own statements. `tools/mutants/questparty3c.json`
+(38 dead, 1 equivalent). Re-aimed: the flag's own pin (`test/net/world2.test.js` ONLINE-DUNGEON-FOES - both halves widened
 together, one predicate), the dungeon's hit door, API, puppet gate and candidates (`world2`, `world3`, `auditworld3`,
 `infighting`, `dungeoninfighting`), the poison and attack doors (`world6biiie`, `auditworld6biiie`), the wire import
 (`world8`), the rest-sync mount (`landPeerBlow`), the dungeon's exit (`world1`), and six older mutant records.
@@ -13097,7 +13149,7 @@ shade; omitted at 0; `poseChanged` sends its edge at once; world118, OWN1's unsh
 gated). A reader draws a concealed peer as DFU draws every concealed entity that is not the player - not at all (no
 rider, body, walker, sprite or name; its cast still seen), skips it for the F key and the plaque, and hands both foe
 pools the flags through each peer candidate's `concealment()`, which enemyMotor's illusion gate already read.
-`01-Overview/Field-Bugs-2026-09-27b.md`. Pinned: `test/invisnet.test.js` (5). `tools/mutants/invisnet.json` (15 dead - the candle's at the merge).
+`01-Overview/bugs/Field-Bugs-2026-09-27b.md`. Pinned: `test/net/invisnet.test.js` (5). `tools/mutants/invisnet.json` (15 dead - the candle's at the merge).
 
 ## HOUSE-DROP (2026-09-27, Mac relaying reports: "In houses, players can drop items and the owner cannot see them"; asked, "Block visitor drops") - a visitor's floor refuses
 
@@ -13105,7 +13157,7 @@ A drop is the dropper's own (AUDIT WORLD B3) and an online home's room carries n
 someone else's online home stood on the visitor's screen alone. There, the ground now refuses: both inventory skins
 (the item and the gold), a light dropped or thrown, and a belt at the window's close that hands anything left back to
 the pack. The owner's own floor, an offline house and every other building are as they were.
-`01-Overview/Field-Bugs-2026-09-27b.md`. Pinned: `test/housedrop.test.js` (5). `tools/mutants/housedrop.json` (16 dead).
+`01-Overview/bugs/Field-Bugs-2026-09-27b.md`. Pinned: `test/systems/housedrop.test.js` (5). `tools/mutants/housedrop.json` (16 dead).
 
 ## INVIS-LOOK (2026-09-27, Mac: "Give invisibility the same invisibility we give enemies in enhanced AI. That transparent look") - a concealed peer, drawn as a concealed foe
 
@@ -13114,9 +13166,9 @@ a concealed foe's look takes) a concealed peer is drawn in the look ECV1 gives a
 translucent shimmer and ripple, a shade's dark silhouette - and, the one departure (asked), an INVISIBLE player takes
 the shimmer where a foe's invisibility is still not drawn (`systems/combatVisuals.js peerDraw`; its phase off the
 peer's id, `peerPhase`). The host reads it once a frame off the shown pose and hands it to every figure that can stand
-for the peer: the rider and the walker (`net/peerRiders.js`, the figure's `veil`, kept for a sprite made later), the
+for the peer: the rider and the walker (`net/peer/peerRiders.js`, the figure's `veil`, kept for a sprite made later), the
 class sprite and the doll (`net/remotePlayers.js`) - their billboard batches' `conceal`, the renderer's blended phase -
-and the Morrowind body (`net/peerBodies.js`): it keeps standing (no second figure under it) but leaves the body pass
+and the Morrowind body (`net/peer/peerBodies.js`): it keeps standing (no second figure under it) but leaves the body pass
 for `drawVeiled`, which draws it through the sprite box's quad with the billboard shader's own look
 (`render/renderer.js drawCharacterSpriteQuad`'s `conceal`: blended, no depth write, the ripple measured in the
 picture's span of the RT) AFTER each mode's opaque world - the exterior after the grass, the dungeon after the foes'
@@ -13124,7 +13176,7 @@ flats and before the water (`opts.lateWorldDraw`, WATER-D1's law), the building 
 over a concealed peer; a concealed walker's lantern is not drawn; no hit reveal (a blow on a peer lands on their own
 screen). F and the plaque still skip a concealed stranger (CONCEAL-MATE: a party mate stays open), and its foes still
 read its flags (INVIS-NET).
-`01-Overview/Field-Bugs-2026-09-27b.md`. Pinned: `test/invislook.test.js` (7). `tools/mutants/invislook.json` (31 dead).
+`01-Overview/bugs/Field-Bugs-2026-09-27b.md`. Pinned: `test/net/invislook.test.js` (7). `tools/mutants/invislook.json` (31 dead).
 
 ## CONCEAL-MATE (2026-10-07, a player: "you're not interactable with party members - would be a QoL if you can interact with at least your party members while chameleon or shadow form, invis etc on") - a concealed player stays open to their party
 
@@ -13138,7 +13190,7 @@ Nearby list, `pageReaders` and `giftablePeers` (SPELL-GIFT B1/B3 already kept a 
 this one now). A concealed STRANGER is still nobody's to press or name. What it does not change: the draw. On the
 classic lane a concealed mate still stands nowhere on my screen (INVIS-NET) - F reaches them where they stand, unseen;
 under Enhanced Combat Visuals they are drawn translucent (INVIS-LOOK) as before.
-Pinned: `test/invisnet.test.js` (+2). `tools/mutants/invisnet.json` (+5, 20 dead).
+Pinned: `test/net/invisnet.test.js` (+2). `tools/mutants/invisnet.json` (+5, 20 dead).
 
 ## KEPT-KILL (2026-10-01, Mac: "If someone kills a quest target regardless of relation then it should ping the quest for the players involved regardless") - a kept quest foe's fall reaches every copy
 
@@ -13148,10 +13200,10 @@ world, so a kill there with no linked copy in the room counted nowhere, and the 
 marker. Now the heir says it: a kept foe at zero health says its fall once (`keptKillTick`, both pools), the heir's party
 pose carries it for five minutes (`qk` - quest, Foe symbol, the foe's stream number; net/wire.js validPartyPose,
 RELAY_VERSION world137), and every member's linked copy counts the injury and the kill, wherever that member stands
-(`scenes/questFoeHost.js creditKeptKills`). A linked member in the room who saw the puppet fall counted it already: the
+(`scenes/quest/questFoeHost.js creditKeptKills`). A linked member in the room who saw the puppet fall counted it already: the
 puppet's death names its owner and number, and both doors ask one ledger (`KeptKillLedger`), so the kill counts once.
 A relay before world136 strips the field and nothing changes. The record and the report it answered:
-`01-Overview/Field-Bugs-2026-10-01.md`. Pinned: `test/keptkill.test.js` (7).
+`01-Overview/bugs/Field-Bugs-2026-10-01.md`. Pinned: `test/systems/quest/keptkill.test.js` (7).
 
 ## PSCALE-OWN (2026-09-27, Mac: "Finish the 2 gaps") - a shared quest's foe underground weighs the party
 
@@ -13165,7 +13217,7 @@ reads its runner's count off the record (`n`, which the own lane's record now ca
 the party striking it through me (`partyFoeLoses`), strikes each of us as a party's foe (`partyFoeHits`, off the
 owner's count on a puppet), heals as the bigger pool where it is run (`partyFoeHeals`) and not on a puppet, and its
 body's sigils roll at the party's count. My private quest's foe and my summoned ally stay unweighed.
-Pinned: `test/pscaleown.test.js` (3), mounted over the context's own statements with the real partyScale.
+Pinned: `test/scenes/quest/pscaleown.test.js` (3), mounted over the context's own statements with the real partyScale.
 `tools/mutants/pscaleown.json` (7 dead). Re-aimed: the helpers' mounts (`auditpscale1`, `audit68_dungeonctx`,
 `restsync` - `_runsFoe`, `ownQuestTag`), the elite pin (`elitepscale`), and six mutant records by content
 (`auditpscale1`, `elitepscale`, `pscale1`, `restsync`).
@@ -13197,7 +13249,7 @@ as a cell's loose stand is (WORLD6b), on the room's own lane (`scenes/dungeonCon
 - **The Wabbajack re-stands only what this copy runs** (`replaceFoeInPool`): a joiner's change of the seat's foe, or
   of another's stand, would ride the room beside the runner's foe.
 
-The ONLINE-DUNGEON-FOES flag is retired (above). Pinned: `test/summonsync.test.js` (9), mounted over the context's own
+The ONLINE-DUNGEON-FOES flag is retired (above). Pinned: `test/scenes/summonsync.test.js` (9), mounted over the context's own
 statements (the two handovers over world.js's own). `tools/mutants/summonsync.json` (24 dead). Re-aimed: the flag's pin (`world2`), the candidates pins
 (`auditworld3`, `dungeoninfighting`, `infighting`, `questparty3c`, `world3`), the 3c harness (`questparty3c`), the
 helpers' mounts (`auditpscale1`, `audit68_dungeonctx`, `restsync`, `pscaleown` - `ownRides`), the elite pin
@@ -13254,11 +13306,11 @@ re-aimed by the audit (T3): its first `new` also dropped WBX2 M3's spent-receipt
 
 A RELAY DEPLOY: world121 ships when this merges (world119, then world120, on this branch until main took both), and the deploy
 drops every connected player once. Pinned:
-`test/oneseat.test.js` (22) - the real Room over the fake object, the real session over a fake socket, the lock over a
+`test/net/oneseat.test.js` (22) - the real Room over the fake object, the real session over a fake socket, the lock over a
 fake channel and over the runtime's own, the button over the chat's fake DOM, and the host's seat code RUN, lifted
 from world.js (AUDIT ONESEAT T1). `tools/mutants/oneseat.json` (68 dead - two the merge's with main's SET3: the sets' stat tiers fold as the seat is left and taken back).
 
-**AUDIT ONESEAT** (2026-09-27, Mac: "Audit this" - `bible/01-Overview/Audit-OneSeat.md` is the record). Four lenses,
+**AUDIT ONESEAT** (2026-09-27, Mac: "Audit this" - `bible/01-Overview/audits/Audit-OneSeat.md` is the record). Four lenses,
 each reproducing what it reported. Fixed:
 - *The relay.* A seat that MOVES is not a drain (R1): a claim that closed the hub's lone other socket, or a
   reconnect over its own, left the room "empty" for the hello's sweep, which took every party in the hub (a
@@ -13289,7 +13341,7 @@ task counts them. Each player runs a copy, and a quest's foe rode nowhere (Multi
 opens it only for a quest the party shared, and a main quest is refused at the share gates) - so every player in the
 streets fought a haunting nobody else saw.
 
-- **The law** (`scenes/questFoeHost.js`): `WORLD_QUESTS` (S0000977 alone) are no player's story. `isWorldQuestFoe`
+- **The law** (`scenes/quest/questFoeHost.js`): `WORLD_QUESTS` (S0000977 alone) are no player's story. `isWorldQuestFoe`
   reads the quest's name off the foe's own behaviour (the quest it resolved, else by its uid), case-insensitive as
   IsProtectedQuest reads its list; `isPrivateQuestFoe` - a quest foe that is not a world quest's - is the one word the
   stream's gates read.
@@ -13310,9 +13362,9 @@ streets fought a haunting nobody else saw.
 
 **Not changed.** Every copy still rolls its own, so three players in the streets face three players' ghosts - as a
 cell's encounters already do (WORLD6b) - seen and fought together now. One haunting for everyone near is Mac's call.
-`01-Overview/Field-Bugs-2026-09-27d.md`.
+`01-Overview/bugs/Field-Bugs-2026-09-27d.md`.
 
-Pinned: `test/cursesync.test.js` (10) - the vendored S0000977 in a real machine, its wave bound by the real producer,
+Pinned: `test/systems/quest/cursesync.test.js` (10) - the vendored S0000977 in a real machine, its wave bound by the real producer,
 driven through real encounter pools and both handovers mounted. `tools/mutants/cursesync.json` (13 dead). Re-aimed by
 content: the handover pins (`auditpscale1`, `questparty2`, `questparty3b`, `summonsync`) and ten mutant records
 (`auditpace`, `auditqp`, `pscale1`, `questparty`, `questparty2`, `questparty3b`, `summonsync`), all dead.
@@ -13321,7 +13373,7 @@ content: the handover pins (`auditpscale1`, `questparty2`, `questparty3b`, `summ
 once its quest is known (a quest leaving the table no longer turns a fighting ghost private, and the gates read one
 lookup); the list's admission rule is pinned (no task counts a world quest's foes); IsProtectedQuest's name test has one
 home (`questNameIn`); the name the game mints from `start quest 977 977` is pinned. One party, one haunting is left
-open - PSCALE1's election cannot see who the curse stands for. `01-Overview/Field-Bugs-2026-09-27d.md`.
+open - PSCALE1's election cannot see who the curse stands for. `01-Overview/bugs/Field-Bugs-2026-09-27d.md`.
 
 ## CORPSE-GOLD (2026-09-27, the Discord: "out of sync dungeons can generate infinite gold upon entry if there are dead corpses of monsters") - a rebuilt body takes the room's word
 
@@ -13343,21 +13395,21 @@ index). A refused record is a hole now. A body the room has said nothing of wait
 
 Not closed: the memory is the host's alone and publishes every WORLD_PUBLISH_MS. A non-host who takes, leaves and
 re-enters inside that window reads the older memory, and a backgrounded host publishes nothing. A live loot word about a body whose rebuild is still loading its art is skipped too (no container yet), so that body takes the memory's record. That needs a design
-call (the host answering arrivals with its live loot words, or the relay keeping them). `01-Overview/Field-Bugs-2026-09-27f.md`;
-`test/corpsegold.test.js` mounts the real restore chain; `tools/mutants/corpsegold.json`.
+call (the host answering arrivals with its live loot words, or the relay keeping them). `01-Overview/bugs/Field-Bugs-2026-09-27f.md`;
+`test/systems/corpsegold.test.js` mounts the real restore chain; `tools/mutants/corpsegold.json`.
 
 ## THE 2026-09-27g DISCORD BATCH - one crash, the guild tab, the decorator, the bank, a visitor's magic
 
-Mac, with the Discord's list and a crash box. The batch's record is `01-Overview/Field-Bugs-2026-09-27g.md`; each slice
+Mac, with the Discord's list and a crash box. The batch's record is `01-Overview/bugs/Field-Bugs-2026-09-27g.md`; each slice
 below says what moved and where it is pinned. Mutants: `tools/mutants/fieldbugs27g.json`.
 
 **STATION-ROWS (the crash box: "TypeError: m.rows.map is not a function").** A home's Spellmaking station opens the
 spell maker through the guild dispatcher, whose maker arms hand their window back - and the spell maker keeps the
 host's TEXT.RSC reader as `rows`. Every reader of the dispatcher's answer took "has rows" for "is a box": the station
 mapped the reader as a list and threw on every press (the interior frame's crash), and the guild popup pushed the whole
-window onto itself as a message. One test now, `systems/guildServiceFlow.js` isServiceBox (rows that are a list),
+window onto itself as a message. One test now, `systems/guild/guildServiceFlow.js` isServiceBox (rows that are a list),
 read by the station, the popup's onService, the probe door and both popups' own box pushes (`ui/guildServiceWindow.js`,
-`ui/covenWindow.js`). `test/stationrows.test.js`.
+`ui/covenWindow.js`). `test/ui/stationrows.test.js`.
 
 **DECOR-MODFLATS ("Above #49 decorations stopped working. Most sprites decorations are invisable above this
 number").** The catalogue is read out of the world's own blocks, and the ships Detailed Ships lays in them carry its
@@ -13367,10 +13419,10 @@ nothing. `DECOR_ARCHIVE_MAX` is 99,999 now (the account service reads the same l
 the panel's row pictures ask `ui/textureCanvas.js` loadIcon, which read its answer four turns after the classic file's
 read - a race a mod's picture, which has no classic file and decodes in its own time, could lose, the panel keeping the
 null for good. The door waits for the picture now, landed or missed (a throw settles it too).
-`test/decormodflats.test.js`.
+`test/systems/decor/decormodflats.test.js`.
 
 **STATION-FEES ("Make crafting stations in interiors way more expensive").** DECOR_STATION_FEES is ten times the first
-pass: 50,000 gold for Alchemy, 100,000 for Spellmaking, 200,000 for Enchanting. `test/homestations.test.js`.
+pass: 50,000 gold for Alchemy, 100,000 for Spellmaking, 200,000 for Enchanting. `test/ui/homestations.test.js`.
 
 **GUILD-LIVE and GUILD-WRAP ("Buttons not selectable until closed and reopened. Depositing stretches names a lot with a
 syllable on each line").** The Guild tab's draft buttons - Found, Invite, Deposit, Withdraw, Rename ranks - were
@@ -13380,7 +13432,7 @@ state is read on every keystroke of the tab's fields and on the live pass, and w
 the press (Deposit had captured the amount at the build). A dead button's press does nothing, by the button's own word.
 A roster row's acts - a guildmaster's four, an invitation's two - are one group that wraps below the name (MAIL1's
 friends-row law), so a deposit's "a moment" beside every button no longer squeezes a name to a syllable a line.
-`test/guildlive.test.js`.
+`test/net/guild/guildlive.test.js`.
 
 **HOME-MAGIC ("Players can use magic in player non owned houses").** A visitor casts nothing in someone else's online
 home: no spell readied (a free ready, an item's, included), none fired - a spell readied outside is not fired inside -
@@ -13389,7 +13441,7 @@ castRefusal, the refusal said and the ready dropped, the silence gate's shape); 
 building (`scenes/worldModes.js` visitorMagicRefusal, HOUSE-DROP's test of who is a visitor); an item about to cast
 asks first (`barCast`), so Cast When Used spends no durability on a spell that never goes (`systems/enchantments.js`).
 Potions are drunk as ever. THE FOUR HOSTS: `world.js` hands the seam; `worldModes.js` answers it; `exterior.js` (the
-offline viewer) and `dungeonContext.js` have no online homes and hand none. `test/homemagic.test.js`.
+offline viewer) and `dungeonContext.js` have no online homes and hand none. `test/systems/homemagic.test.js`.
 
 **EMPIRE-BANK ("For online mode, the bank of daggerfall becomes the bank of the empire. The empire has come and has
 reduced loans substantially (90%)").** Online, every bank is "The Bank of the Empire" (`world/buildingNames.js`
@@ -13398,46 +13450,46 @@ name now on its door and its automap plate (`systems/discovery.js` shownBuilding
 discovered by). And the Empire lends a tenth of whatever the cap is - DFU's level x 50,000, or Roleplay & Realism's
 per-level choice, which the lane keeps on online - rounded down (`systems/banking.js` calculateMaxBankLoan,
 EMPIRE_LOAN_DIVISOR). The interest and the year to repay are the classic ones; offline, the bank is Daggerfall's.
-`test/empirebank.test.js`.
+`test/systems/empirebank.test.js`.
 
 **DECOR-FLIP ("Some sprites flipped (allow rotation)").** A billboard turns to the eye whatever its record says, so a
 placed picture's turn did nothing. Turned more than a quarter either way, a placed flat is now drawn mirrored - the
 renderer's flip is the sign of a batch's width - the ghost as it will stand, and the bar says what a turn does to a
 picture (`net/decorLaw.js` decorFlatMirrored). A mount spins on its wall and a model turns in earnest; neither
-mirrors. `test/decorflip.test.js`.
+mirrors. `test/net/decorflip.test.js`.
 
 **MW-ASSIGN ("Some sprites not assigned morrowind skin").** With Morrowind data attached a hung weapon or piece of
 armour is its Morrowind picture (MW-MOUNT), but only what the item map could read. Now also: the port's own weapons
 (the Thunderlock's shipped model, on the icon and on a wall as in the hand - `combat/fpArm.js` iconRecordOf);
-Roleplay & Realism Items' two weapons and twelve pieces of armour (`formats/mwFirstPerson.js` MOD_WEAPON_TO_MW,
-`formats/mwItemMap.js` MOD_ARMOR_ROWS - by the classic row of each one's shape, worn by the Morrowind body too, a
+Roleplay & Realism Items' two weapons and twelve pieces of armour (`formats/morrowind/mwFirstPerson.js` MOD_WEAPON_TO_MW,
+`formats/morrowind/mwItemMap.js` MOD_ARMOR_ROWS - by the classic row of each one's shape, worn by the Morrowind body too, a
 helm-shaped piece hiding the hair); and one's own thing set down - a garment - which stands as its Morrowind picture on
-the billboard pass (`scenes/decorRoom.js` MW_STAND_ARCHIVE, its ghost with it) where it stood as the classic pile of
-cloth. The census counts the mod's templates. `test/mwassign.test.js`.
+the billboard pass (`scenes/decor/decorRoom.js` MW_STAND_ARCHIVE, its ghost with it) where it stood as the classic pile of
+cloth. The census counts the mod's templates. `test/formats/morrowind/mwassign.test.js`.
 
 **DECOR-ROOMS ("For a house with multiple connects, add room switching tabs").** The decorator's flight starts at the
 eye, is leashed, and since DECOR-SHELL stops at every face - so a room behind a shut door was furnished by shutting
-the decorator, walking there and opening it again. `systems/decorRooms.js` finds a house's rooms in its own collider,
+the decorator, walking there and opening it again. `systems/decor/decorRooms.js` finds a house's rooms in its own collider,
 a few hundred rays a frame while the panel is up: floors a body stands on (headroom, and a ceiling over them), joined
 where the rise is a step and nothing stands between them at waist height - a wall, or a door as it stands now, exactly
 what the flight cannot pass. A house of two rooms or more gets a tab a room (`ui/decorPanel.js`): the eye's own room
 chosen first; the room's placed pieces and own furniture listed (and "Take all out" / "Put all back" meaning the
 room's all); and the next flight begins over the chosen room's floor, a piece moved from its own room
-(`scenes/decorTool.js` flightStart). `player/collider.js` gained `bounds()`. `test/decorrooms.test.js`.
+(`scenes/decor/decorTool.js` flightStart). `player/collider.js` gained `bounds()`. `test/systems/decor/decorrooms.test.js`.
 
 ## CSA-J ONLINE (2026-09-28) - a sailor's boats stand in the cell
 
 Come Sail Away (`03-World/Come-Sail-Away.md`) is single-player: a boat is a possession in its owner's save, placed
-and sailed on their client alone (`systems/onlineLane.js` ONLINE_PLAYERS_OWN_MODS). Online the others in a cell SEE
+and sailed on their client alone (`systems/online/onlineLane.js` ONLINE_PLAYERS_OWN_MODS). Online the others in a cell SEE
 it - DECLARED (36) on the mod's Port-Ledger row - under HCC-ONLINE's law and no new one:
 
-- **The record** (`systems/comeSailAwayWire.js`): what the presentation shows, not the save - each active boat's
+- **The record** (`systems/comeSailAway/comeSailAwayWire.js`): what the presentation shows, not the save - each active boat's
   hull, variant, root in the wire frame (to the centimetre) and turn (to four places), its raised sails as bits, the
   helm and the lanterns; at most eight. It rides as `sa` on the owner's own foes frame beside `c`, `hv` and `du`: on
   every full frame, and between them whenever the word moved (`scenes/world.js` csaWord); the mod off, one `null`.
 - **The door** (`validCsaRecord`): shape, POSE_BOUND / POSE_Y_BOUND, a known hull and variant, a quaternion within
   0.5..2 renormalised, the bits and two flags. A junk word drops the owner's whole record.
-- **The owner law** (`scenes/comeSailAwayPeers.js` applyOwner / sweepOwners / clearPeers): an owner's word replaces
+- **The owner law** (`scenes/comeSailAway/comeSailAwayPeers.js` applyOwner / sweepOwners / clearPeers): an owner's word replaces
   theirs alone and never mine; gone from the room or quiet past FOES_STALE_MS, their boats go with their puppets; a
   clear (a transition, a fast travel, a room change) takes every peer's; a viewer with the mod off stands nothing.
 - **The landing**: each boat built as SpawnBoat builds one into the pool's PEER list - drawn, baked and lit as a
@@ -13448,7 +13500,7 @@ it - DECLARED (36) on the mod's Port-Ledger row - under HCC-ONLINE's law and no 
 - **No relay change**: the relay reads nothing inside a foes frame (AUDIT WORLD2), so `sa` needs no version and no
   law row.
 
-Pinned: `test/csa_online.test.js` (6); mutants in `tools/mutants/csa_close.json`. Not verified in a browser with two
+Pinned: `test/systems/comeSailAway/csa_online.test.js` (6); mutants in `tools/mutants/csa_close.json`. Not verified in a browser with two
 players: no online session exists in this container.
 
 ## CSA-K ONLINE (2026-09-28) - sailing together (a player's ask: "I want people to be able to sail together, to walk on board as it moves")
@@ -13459,15 +13511,15 @@ field by field (`validPose`), so nothing rides there:
 
 - **The way**: `sa`'s `m`, a place for each of `b`'s - the boat at the helm's velocity through the wire frame and its
   turn, on the real clock at the owner's time scale; only while a boat is under way, so a moored fleet's record is the
-  one an older reader reads. Readers lead the boat along it (`scenes/comeSailAwayPeers.js`, capped at 0.6 s).
+  one an older reader reads. Readers lead the boat along it (`scenes/comeSailAway/comeSailAwayPeers.js`, capped at 0.6 s).
 - **Aboard**: `ab` on the passenger's own frame - `[owner, place, x, y, z]`, their feet in that boat's own frame to
   the centimetre; a word when it changes and on every full frame, null aboard nothing; the boats' owner law (gone,
   stale, a clear). Every reader - the boat's owner among them - stands the passenger on its own copy of that boat
-  (`scenes/comeSailAwayAboard.js` glue over `online.drawable()`), a frame ahead as it will be drawn.
+  (`scenes/comeSailAway/comeSailAwayAboard.js` glue over `online.drawable()`), a frame ahead as it will be drawn.
 - **Physics stays each client's**: another's boat stands in every player's collider as their own boats do, aboard it or
   not (FIELD BUGS 2026-10-01b: PR-WAGON1's law set aside for boats), the deck carrying whoever stands on it by its move; the owner's pack refuses while any `ab` stands on the boat.
 
-Pinned: `test/csa_together.test.js` (20); mutants in `tools/mutants/csa_together.json`. Not verified in a browser with
+Pinned: `test/systems/csa_together.test.js` (20); mutants in `tools/mutants/csa_together.json`. Not verified in a browser with
 two players, as CSA-J.
 
 ## OWS ONLINE (2026-09-28) - the ships on the map, the raiders seen coming (the player's asks on the Overworld)
@@ -13486,7 +13538,7 @@ The record is `06-Systems/Travel-View.md` OWS. No relay change, and nothing new 
 
 ## THE 2026-09-28 DISCORD BATCH - the pause key, the arrest, the dead span, the swimmer, the flyer, the shared quest
 
-Mac, with eleven Discord screenshots. The batch's record is `01-Overview/Field-Bugs-2026-09-28.md`; its online halves:
+Mac, with eleven Discord screenshots. The batch's record is `01-Overview/bugs/Field-Bugs-2026-09-28.md`; its online halves:
 
 - **DISC28-B** - the world runs under the surrender box (WORLD5), so the arrival's crime clear withdraws a standing
   question (`arrestFlow.crimeCleared`), and a court over no crime arms nothing. AUDIT DISC28 AR-1: a load ends the
@@ -13520,19 +13572,19 @@ and its copy stayed open. Clients take a build on their next reload (EVENT1's no
 
 A relay change, world122. The `raid` frame: a player standing in a raided town says its word (the raid as the day's roll
 made it, its own raiders' deaths, its strike) to the town's CELL, and the cell object keeps the raid's LEDGER in its
-storage (`raid:<key>`, `net/raidLaw.js`) - the count, credited per verified account as the most it has said and no
+storage (`raid:<key>`, `net/raid/raidLaw.js`) - the count, credited per verified account as the most it has said and no
 faster than raiders stand, kept when every socket leaves and across the object's sleep; the cleanse stamped once, with
-a receipt (`net/raidReceipt.js`, `w1`) minted under the gate's key for each account that struck and stood there, the
+a receipt (`net/raid/raidReceipt.js`, `w1`) minted under the gate's key for each account that struck and stood there, the
 ledger written with them before a word is said; `cl` fanned to the cell and told to the hub, which says it to everyone
 online and keeps the day's for a hello (`cls`). Cells had kept nothing but parked teams (HCC-PARK); a cell now arms an
 alarm for its ledgers' ends and a hub it must tell again. The design, the checks and the limits:
-`03-World/Raiding-Parties.md`, "The relay holds the raid (RAID3)". `test/raid3_raidLedger.test.js`;
+`03-World/Raiding-Parties.md`, "The relay holds the raid (RAID3)". `test/net/raid3_raidLedger.test.js`;
 `tools/mutants/raid3.json`.
 
 ## AUDIT RAID + AUDIT SETS (2026-09-28, Mac: "1. Audit this properly 2. Ensure online functionality is perfect") - world123
 
 A relay change, world123 (world122 never deployed; its raid frames carried no signature, so RAID_RELAY_MIN is 123). A
-town raid is its whole TUPLE - its key and its signature (`net/raidLaw.js raidSig`) - and its ledger is made only by a
+town raid is its whole TUPLE - its key and its signature (`net/raid/raidLaw.js raidSig`) - and its ledger is made only by a
 word from its town's own pixel; a cell's place is never taken from a cleansed raid or one being fought, one speaker
 holds two; a word is judged by its own law and time before any read; `st`, `cl` and `cls` carry the signature and the
 client hears only its own raid's; the receipts ride the cleanse to the hub, which keeps them a day under their account
@@ -13540,12 +13592,12 @@ client hears only its own raid's; the receipts ride the cleanse to the hub, whic
 before its copy moves; a halo's raid word waits on the halo's own relay. And a foe record carries `k`, its owner's
 maximum health (the exterior every record; the dungeon's full frame what its room holds and a delta at most twelve
 owed - the largest elite layout's worst case has no room for it on every record). `03-World/Raiding-Parties.md` "AUDIT RAID"; `11-Multiplayer/Sigil-Sets.md` "AUDIT SETS";
-`test/auditraid.test.js`, `test/auditsetsonline.test.js`.
+`test/net/auditraid.test.js`, `test/systems/auditsetsonline.test.js`.
 
 ## RAID-ROLL + AUDIT ONLINE 2 (2026-09-28, Mac: "Fix it and do another audit") - world124
 
 A relay change, world124. The relay reads every raid word against the DAY'S OWN ROLL: its start, target and party
-against the day's draws with no game data (`net/raidLaw.js raidDaySlots` - one generator for relay and client,
+against the day's draws with no game data (`net/raid/raidLaw.js raidDaySlots` - one generator for relay and client,
 `raidDayRandom`, and one roll, `rollRaidTowns`), and, once the hub holds the towns table, its whole tuple against the
 day's roll (`raidDayIds`). The table is the player's game data, so the relay is given only its hash
 (`RAID_TOWNS_SHA256`, a [vars] entry - `tools/raidTowns.mjs` says it): the hub asks each hello for the table by it
@@ -13554,23 +13606,23 @@ to the pin, and answers each cell's ask for a day (RAID_INTERNAL_DAY; a cell kee
 minute). An empty pin reads the slots alone. Beside it, on the client: a receipt's life is the relay's clock
 (the carriers kept a week-ahead device's receipts from ever being asked); a corpse grant the taker cannot read is
 answered `back` and put back on the body (a hit frame's field - the relay reads none of it). `03-World/
-Raiding-Parties.md` "RAID-ROLL" and "AUDIT ONLINE 2"; `test/raidroll.test.js`, `test/auditonline2.test.js`.
+Raiding-Parties.md` "RAID-ROLL" and "AUDIT ONLINE 2"; `test/systems/raidroll.test.js`, `test/net/auditonline2.test.js`.
 
 
 ## GATE-COLLAPSE (2026-09-28, Mac: "Count down to collapse") - world125
 
-A relay change by the law alone: `net/gateLaw.js` - the relay's since WB3 - counts the gate's sealed hours down to the
+A relay change by the law alone: `net/gate/gateLaw.js` - the relay's since WB3 - counts the gate's sealed hours down to the
 collapse (`gateCountdown`'s `closed` arm, `countdownWords`) and its seal line says when the gate goes. Nothing the relay
 reads, keeps or sends changed and no wire shape moved, but the law is the whole bundle (SLAM13), so world125 is a new
-row in `test/relayversion.test.js` and the pins of the current version moved with it. It ships with the raids' own
+row in `test/net/relayversion.test.js` and the pins of the current version moved with it. It ships with the raids' own
 undeployed world124 (#414, folded into the same branch): one deploy, one drop of every connected player.
-`01-Overview/Field-Bugs-2026-09-28b.md`, `11-Multiplayer/World-Bosses.md` "THE GATE IN THE ROCK".
+`01-Overview/bugs/Field-Bugs-2026-09-28b.md`, `11-Multiplayer/World-Bosses.md` "THE GATE IN THE ROCK".
 
 ## DISCORD-GATES (2026-09-28, Mac: "Discord live gates?") - world126
 
 The hub speaks outside the game for the first time: it posts each Oblivion Gate's omen (fifteen real minutes before
 the gate opens, pinging the opt-in role Mac named) and its kill to a Discord channel's webhook, off its own alarm
-(`net/gateHerald.js` joins the bundle). One new client word, to the hub alone: `gate` `site` - where this game found
+(`net/gate/gateHerald.js` joins the bundle). One new client word, to the hub alone: `gate` `site` - where this game found
 the gate the clock is about (`GATE_SITE_RELAY_MIN` 126; an older relay closes the socket on it, so a client says none
 there); the hub names the place two accounts agree on. The webhook is a Worker SECRET (`GATE_DISCORD_WEBHOOK`) and
 the role a var (`GATE_DISCORD_ROLE`); without the webhook the relay posts nothing and keeps nothing. Putting the secret
@@ -13581,7 +13633,7 @@ redeploys the Worker - one more drop of every connected player. `11-Multiplayer/
 Main's TV3 + AUDIT DEEP + OVERWORLD NAMES took world122 while the batch above stood on its branch as world122 to
 world126, none of them deployed. At the merge they are ONE relay past main's: **world123** - the raids' ledger and
 receipts (RAID3, AUDIT RAID, RAID-ROLL), the gate's countdown words (GATE-COLLAPSE) and the herald (DISCORD-GATES),
-over main's traveller marks. `test/relayversion.test.js` keeps main's world122 row and names the merged bytes once,
+over main's traveller marks. `test/net/relayversion.test.js` keeps main's world122 row and names the merged bytes once,
 the branch rows' hashes in its note (the renumbering law of every merge before it); `RAID_RELAY_MIN` stays 123 (main's
 world122 holds no raid) and `GATE_SITE_RELAY_MIN` is 123 (126 on the branch). One deploy, one drop of every
 connected player.
@@ -13613,7 +13665,7 @@ ANOTHER player (summon, kick, freeze, a shared clock) must be the relay's questi
 law), and is out of this slice by Mac's choice. `/spawn` and `/killall` were left out for the same reason: a town's
 foes are shared online, so both act on other players.
 
-`net/staffCommands.js` (pure); `test/staff1.test.js` (5); `tools/mutants/staff1.json` (16, all dead).
+`net/staffCommands.js` (pure); `test/net/staff1.test.js` (5); `tools/mutants/staff1.json` (16, all dead).
 
 ## VOICE1 reverted (2026-09-28, Mac: "Do not merge voice chat. Please revert voice chat but keep other changes") - world124 again
 
@@ -13623,7 +13675,7 @@ VOICE1 (proximity voice chat, world125) and AUDIT VOICE1 came out whole with PR 
 - the `PushToTalk` action and the voice prefs.
 
 The relay is world124's bytes again, and `RELAY_VERSION` names world124. world125's row stays in
-`test/relayversion.test.js` as the record of bytes that were deployed.
+`test/net/relayversion.test.js` as the record of bytes that were deployed.
 
 Kept: VIEW-TOGGLE (PR #427's other change - `TogglePerspective`, one press first person or third, on the mouse's
 forward side button), and the side-button plumbing it rides, which came with VOICE1:
@@ -13631,15 +13683,15 @@ forward side button), and the side-button plumbing it rides, which came with VOI
 - `systems/keyCodes.js`' Mouse3 and Mouse4;
 - the world host keeping the side buttons from the browser's Back and Forward.
 
-`test/viewtoggle.test.js` pins all three.
+`test/player/viewtoggle.test.js` pins all three.
 
 ## WB8 (2026-09-28, Mac: "give him unique and different modifers on every 2 hour spawn") - world128 (world126 on its branch)
 
 The gate's Warden comes MARKED - an aspect and two trials every gate (`11-Multiplayer/World-Bosses.md` section 13) -
 and the relay is the one that fights under them, so the relay moved:
 
-- **`net/gateMods.js` JOINS THE BUNDLE** (a leaf - the marks' tables): `net/gateLaw.js` draws each gate's marks from
-  its 112-gate cycle (`gateModsOf`, from the day alone), `net/gateBrain.js` fights under them (`fightProfile` - the
+- **`net/gate/gateMods.js` JOINS THE BUNDLE** (a leaf - the marks' tables): `net/gate/gateLaw.js` draws each gate's marks from
+  its 112-gate cycle (`gateModsOf`, from the day alone), `net/gate/gateBrain.js` fights under them (`fightProfile` - the
   unmarked profile is the constants exactly), and `net/wire.js` validates them.
 - **The fight is born marked**: the gate's room calls `newFight(..., gateModsOf(day))` and keeps the marks on the
   checkpointed fight (`md`); a fight woken from a checkpoint made before this deploy stays unmarked.
@@ -13649,16 +13701,16 @@ and the relay is the one that fights under them, so the relay moved:
   two words with one moment, and the court said the first name alone), his health after, the relay's moment.
 - **The brain's law is 3** (GATE_BRAIN_V, GATE_BRAIN_MIN): an `in` saying 2 is refused with GATE-RELOAD's words - a game
   that does not know the marks would judge a colossus's slam at the old reach and his frost as fire.
-- **The hub's omen post names tonight's marks** (`net/gateHerald.js omenPost`), in the tables' words alone.
+- **The hub's omen post names tonight's marks** (`net/gate/gateHerald.js omenPost`), in the tables' words alone.
 
-Relay world128 - world126 on its branch, never deployed, and one relay past main's OW6L (world127, the cell's overworld ledger) at the merge with #428-#432, the two in one relay (its row in `test/relayversion.test.js` - world125 is VOICE1's, deployed with PR #427 and reverted with #416 forty minutes later; the version pins of the suites that name it moved,
-each with its history). Pinned in `test/wb8b_gate_marks.test.js` (the wire and the relay's draw on the real Room).
+Relay world128 - world126 on its branch, never deployed, and one relay past main's OW6L (world127, the cell's overworld ledger) at the merge with #428-#432, the two in one relay (its row in `test/net/relayversion.test.js` - world125 is VOICE1's, deployed with PR #427 and reverted with #416 forty minutes later; the version pins of the suites that name it moved,
+each with its history). Pinned in `test/net/gate/wb8b_gate_marks.test.js` (the wire and the relay's draw on the real Room).
 
-AUDIT PRE-MERGE 0929 (`01-Overview/Audit-PreMerge-0929.md`, lens W1): only a fall with a real part in the fight behind
+AUDIT PRE-MERGE 0929 (`01-Overview/audits/Audit-PreMerge-0929.md`, lens W1): only a fall with a real part in the fight behind
 it feeds a Soul-Hungry Warden (`hasPart`, AUDIT WBX R2's bar - a fall is the fighter's own word, and twenty-five
 throwaway guests that said `in` dead and went took him from a fifth to all but full), no more than GATE_FEEDS_MAX (5) a
 fight; a Colossal Warden's cone reaches from his body (9.45 m), so R3's law holds under every set of marks. World126's
-row is restated with the audit's bytes - still undeployed. `test/audit0929_gate.test.js` (3, the throwaway guests on
+row is restated with the audit's bytes - still undeployed. `test/net/gate/audit0929_gate.test.js` (3, the throwaway guests on
 the real Room).
 
 
@@ -13667,7 +13719,7 @@ the real Room).
 The realm (`Realm-Arc.md`) never touched the relay: world124 before it and after. Its separation was the new build's
 law alone - a boot that never takes a local slot online - so a build from before the realm went on playing online as
 an offline character, and a character made there after the census froze could never come in
-(`01-Overview/Field-Bugs-2026-09-29b.md`). The relay now asks, at the door every room shares:
+(`01-Overview/bugs/Field-Bugs-2026-09-29b.md`). The relay now asks, at the door every room shares:
 
 - **The token carries the realm's word on the character** (`net/identityToken.js` `rc`): the account service signs 1
   when the character the mint names is one of the account's realm characters, else 0 (acct22).
@@ -13681,7 +13733,7 @@ an offline character, and a character made there after the census froze could ne
   stopped being its account's under it; it goes to the Online door with the realm's word (`realmSaves.js`
   `realmDoorShut`).
 
-Relay world130 (its row in `test/relayversion.test.js`). Pinned in `test/realmdoor.test.js` (the service, the relay and
+Relay world130 (its row in `test/net/relayversion.test.js`). Pinned in `test/net/realmdoor.test.js` (the service, the relay and
 the old build's HUD line, on the real Worker and the real Room under one key pair).
 
 ## LIVED1 (2026-09-29, Mac: "We need a better system for time online instead of a band aid fix. Something detailed and that really makes sense") - your own time, no relay change
@@ -13726,7 +13778,7 @@ character's.
 - OL3's real-time deadlines (said now in the character's time and in play, `ownTimeLeftText`);
 - RESTX2's `_onlineSimMinutes` and REST-ROUNDS / RISE-REST F2's online arm (MAC-LVL1's credit is retired
   in its own record, `09-Testing/Testing.md` mac_online_level's row and Active-Arcs' 2026-09-21 line);
-- C2's correction, C4's load alignment and OL3's (3), stamped by AUDIT LIVED1 (`01-Overview/Audit-Lived1.md`).
+- C2's correction, C4's load alignment and OL3's (3), stamped by AUDIT LIVED1 (`01-Overview/audits/Audit-Lived1.md`).
 
 **WORLD7 stands:** quest clocks charge played time. Moving the countdowns onto the character's clock
 is Lived-Time's OPEN 1.
@@ -13769,20 +13821,20 @@ call: two faucets bounded by the UTC day instead - a gathering's find and a loot
   answered is KEPT (on the device) and settles - paid into the region it was sold in, for the character that sold it,
   under the account that made it - the next time a bank counter opens (ASYNC NEVER DROPS); one ask in flight at a time,
   one kept sale an account and character (AUDIT 28 M1, M2, M7). The face: the Enhanced Plus bank's
-  **Marks** group (held, sold today, the price) and **Sell Marks** (`ui/enhancedPorts.js`, `ui/bankWindow.js`'s port-only
+  **Marks** group (held, sold today, the price) and **Sell Marks** (`ui/enhanced/enhancedPorts.js`, `ui/bankWindow.js`'s port-only
   `MARKS_ENTRY`); the counting box stays until the service answers - fifteen seconds a try at most (AUDIT 28 M6). **FLAGGED by name**: the Classic skin's bank is
   DFU's own BANK00I0 panel, which has no room for it - Marks are sold under Enhanced Plus.
 - **A guild's Marks treasury** (`/v1/marks/guild/deposit`, `/withdraw`): any member puts Marks in from the account's
   balance; the guildmaster alone takes them out, into their account. The guild's view (`/v1/guilds/mine`) carries
   `marks` and its latest lines where Marks are the viewer's (AUDIT 28 M5); the Guild tab shows the treasury beside the
-  gold one (`ui/socialPanel.js`, `net/guildBook.js` moveMarks). A guild that goes - a disband, or its last member's
+  gold one (`ui/socialPanel.js`, `net/guild/guildBook.js` moveMarks). A guild that goes - a disband, or its last member's
   leave - gives what its Marks treasury holds to its guildmaster, one `guild-withdraw` line in the same batch as the
   delete, and is refused only when that would pass the guildmaster's cap (AUDIT 28 M3: the leave's delete never looked
   at the Marks and the cascade took them with no line; M5: behind a switch the guildmaster could not pass, a guild
   holding Marks could never go). The tab says where they go.
 - **The account**: `/v1/marks/balance` (the balance, today's gate strikes and Bank sales against their caps), and the
-  account card's **Marks** row (`/v1/account`'s `marks`, `ui/enhancedAccount.js`). A counted gate says its Marks in the
-  chat (`net/gateClaims.js` onMarks).
+  account card's **Marks** row (`/v1/account`'s `marks`, `ui/enhanced/enhancedAccount.js`). A counted gate says its Marks in the
+  chat (`net/gate/gateClaims.js` onMarks).
 - **The weekly report** (`/v1/marks/report`, a developer's alone): the last seven UTC days' Marks struck by faucet, burnt
   by sink, moved; what is in circulation; the day-by-day line; the accounts at a cap, each once, with the account-days
   beside them (AUDIT 28 M10) - what PROF0 16 steers by.
@@ -13794,7 +13846,7 @@ call: two faucets bounded by the UTC day instead - a gathering's find and a loot
   ONE store (AUDIT WB A6), and hands it to `worldModes`' bank, the guild book and the gate claims); the fixed city, the standalone dungeon and the
   interior viewer run no online lane and hold no Marks.
 
-`test/marks1.test.js` (14) - the law and the one-way door, the schema's triggers and nets, the gate's faucet and its
+`test/net/marks1.test.js` (14) - the law and the one-way door, the schema's triggers and nets, the gate's faucet and its
 caps, the switch, the Bank and its repeats, the guild treasury and the disband, the report, the client's door, the
 sale end to end over the real Worker (lost answers, a kept sale settling into its own region for its own character),
 the Bank window, the gate's line, the wiring. `tools/mutants/marks1.json`, 20 mutations, 20 dead.
@@ -13843,7 +13895,7 @@ THE HOLDINGS ARC above left "the gold lost on death (the original pillars 5 and 
   message in online mode"), drawn once a death, not once a frame. Offline, or a loss of nothing, the screen keeps its
   words.
 
-`test/deathpenalty.test.js` (5); `test/donline1_respawn.test.js` and `test/risestuck.test.js` allow the line;
+`test/systems/deathpenalty.test.js` (5); `test/scenes/donline1_respawn.test.js` and `test/systems/travel/risestuck.test.js` allow the line;
 `tools/mutants/bounty1.json` DEATH-PENALTY-1 to 6, dead (DEATH-TENTH re-aimed the first: a fifth, not a tenth).
 AUDIT DEATH-TENTH (2026-10-04): the share is a DIVISOR (`DEATH_GOLD_DIVISOR` 10; `DEATH_GOLD_FRACTION` is its
 reciprocal) - `g * 0.1` rounds UP past 3 x 2^51 (0.1 is a hair over a tenth in binary), charging a purse ending in 9 a
@@ -13887,7 +13939,7 @@ departure (`Port-Ledger.md` section A, THE BOARD, ONLINE).
 - **The switch**: `BOARD_OPEN` in `server-account/wrangler.toml` - shipped at `dev`.
 - **Not built here**: the Work tab (PROF1 - built there, below), boards stood for a hub (NOTICE1b, if `tools/boardCount.mjs` names any).
 
-`test/notice1.test.js` (17); `tools/mutants/notice1.json`, 26 mutations, 26 dead. AUDIT 28 below.
+`test/net/notice1.test.js` (17); `tools/mutants/notice1.json`, 26 mutations, 26 dead. AUDIT 28 below.
 
 ## AUDIT 28 (2026-09-28, Mac: "let's audit everything we have so far before we continue") - the professions branch audited
 
@@ -13895,8 +13947,8 @@ Everything this branch built since it began - FORAGE1-4, MARKS1, BOUNTY1 with DE
 lenses at once (the Marks, the Notice Board, the bounty boards and the death penalty, Foraging, the four hosts'
 seams, and the bible against the code), after main's #417 (DIAL-LOAD, MAP-KEEP) was merged in. 81 findings, about
 65 once the lenses' overlaps are folded; every one verified against the code, most reproduced by a probe over the real
-Worker or the real module, and fixed with a pin that fails on the code before it. `test/audit28_marks.test.js` (17),
-`test/audit28_notice.test.js` (14), `test/audit28_bounty.test.js` (12), `test/audit28_forage.test.js` (10), over the
+Worker or the real module, and fixed with a pin that fails on the code before it. `test/net/audit28_marks.test.js` (17),
+`test/net/audit28_notice.test.js` (14), `test/scenes/audit28_bounty.test.js` (12), `test/systems/audit28_forage.test.js` (10), over the
 shared `test/accountDb.mjs` (the Worker on node:sqlite) and `test/chargenDom.mjs` (the minimal DOM, which gained
 `replaceChildren` and a click that can be stopped); `tools/mutants/audit28.json`, 62 mutations, 62 dead - and the
 records the fixes moved (marks1, guild1, guild1b, notice1, bounty1, forage4, auditsurv, auditdecorshell, soc1)
@@ -13920,11 +13972,11 @@ now); one mutant was equivalent (re-aimed behavioural).
 finished page has left the slot; the hunt page hears Escape as townTalk hands it (`back`); Enter and Space on a DOM
 window's own button are the browser's press, never prevented by townTalk (`ui/input.js` isDomControlTarget); a payday
 notice taken down unread goes back in its queue, and a death in the building's or the dungeon's own slot takes the
-street's DOM windows down (`scenes/bountyHost.js` requeue, `ui/bountyDoor.js` close(read)); and what was asked every
+street's DOM windows down (`scenes/bountyHost.js` requeue, `ui/bounty/bountyDoor.js` close(read)); and what was asked every
 frame is worked out once - a pixel's bounty boards (`boardSplitOf`), the count over a board, the Bank face's kept sale
 (H8).
 
-**The relay** moves to `world123` (a bounty row's `k`, `a`, `t`), its law recorded in `test/relayversion.test.js`, the
+**The relay** moves to `world123` (a bounty row's `k`, `a`, `t`), its law recorded in `test/net/relayversion.test.js`, the
 twelve pins that name the version moved with it. It deploys itself when this reaches main (`relay-deploy.yml`).
 **The account service** stays `acct18`: 0017 (0019 since the merge of main, 0026 since MERGE 2) gained `board_notes.char_id` and `board_notices.rid` in place - no deploy
 has applied it (the account service deploys from main alone).
@@ -13940,7 +13992,7 @@ departure (`Port-Ledger.md` section A, PROFESSIONS).
   foods), the Court writs; `src/net/nodeLaw.js` - a pixel's day of patches (the clock's: the UTC day, DFU's season at
   its first instant), the herb tables, the seasons, the yields, the witnessed pixel, a region's writs. The pure tables
   they share with the client moved to modules that read no file (`src/formats/mapsTables.js`,
-  `src/systems/foragingCore.js`), re-exported from their old homes.
+  `src/systems/foraging/foragingCore.js`), re-exported from their old homes.
 - **The store** (`server-account/migrations/0027_professions.sql`): `prof_tracks`, `prof_stores` (own and bought),
   `node_harvests` (a day's, kept two days), `prof_withdrawals`, `world_witness` (SEAT0 3.2's first kind, the pixel),
   `writ_days` and `writs` (the Court's).
@@ -13959,18 +14011,18 @@ departure (`Port-Ledger.md` section A, PROFESSIONS).
   minted once when it settles; a delivery's id kept across presses; a region's writs cached a minute);
   `src/scenes/herbHost.js` in `scenes/world.js` (the patches in each built pixel's own list, the target, the prompt,
   the act, Escape, the swing held off for an act's length, the Sickle in the hand on the classic lane);
-  `src/systems/herbAct.js` (the hand, the steady hand, the Basket's search; Gentle acts); `src/ui/profHud.js` (the
-  prompt, the meter, four toasts of three seconds, the day's chip, the rank's banner); `src/ui/profPages.js` (the
+  `src/systems/herbAct.js` (the hand, the steady hand, the Basket's search; Gentle acts); `src/ui/professions/profHud.js` (the
+  prompt, the meter, four toasts of three seconds, the day's chip, the rank's banner); `src/ui/professions/profPages.js` (the
   Professions and Stores pages on the Stats rail; withdraw to pack); `ui/noticeWindow.js`'s Work tab (the region's
-  writs, Take); `src/systems/profItems.js` (a material as DFU's own item). The refusals are the service's own words
+  writs, Take); `src/systems/professions/profItems.js` (a material as DFU's own item). The refusals are the service's own words
   (`net/accountClient.js`).
 - **FORAGE0 law 6's online exception**: online, Foraging's six tools shelve whatever its switch says
-  (`systems/foragingInstall.js`).
+  (`systems/foraging/foragingInstall.js`).
 - **The switch**: `PROFESSIONS_OPEN` in `server-account/wrangler.toml` - shipped at `dev`.
 - **Not built here** (PROF0 22): the hover, the pad's and touch's own act buttons, the held map's worked patches, the
   Morrowind lane's sickle (FLAGGED), nodes in the fixed city (FLAGGED).
 
-`test/prof1_law.test.js` (14), `test/prof1_service.test.js` (13), `test/prof1_client.test.js` (15);
+`test/systems/foraging/prof1_law.test.js` (14), `test/net/prof1_service.test.js` (13), `test/systems/prof1_client.test.js` (15);
 `tools/mutants/prof1.json`, 58 mutations, 58 dead.
 
 ## PROF2 (2026-09-28, Mac: "Go") - Mining and Quarrying, ores, ingots and the forge
@@ -13999,16 +14051,16 @@ departure (`Port-Ledger.md` section A, MINING).
   place of its own; the target, the prompt, the act, Escape in every mode, the tool in the hand, the toasts with a gem
   and the XP); `src/scenes/mineHost.js` (veins at the foot of the rock piece nearest their point, else a stone tile,
   else nature's ground; boulders only at a piece; a dungeon's veins on its walls; the plan; the Warhammer's StrikeDown
-  frames); `src/systems/mineAct.js` (the Pick-Axe's act); `src/systems/profTemplates.js` (the nineteen new templates on
+  frames); `src/systems/mineAct.js` (the Pick-Axe's act); `src/systems/professions/profTemplates.js` (the nineteen new templates on
   DFU's dyed pictures); `src/net/profBook.js` (the dungeons' witnessed state, a gem's Stores, the smelt, the asks on the
-  wire the pump skips); `src/ui/profHud.js` (the face, the glint, the aim and the pips); `src/ui/profPages.js` (Mining
-  practised, the Forge on the Stores page); the Prospector's veins on both compasses (`ui/hud.js`,
-  `ui/enhancedHud.js`); a home's forge station (`net/decorLaw.js`, 50,000 gold).
+  wire the pump skips); `src/ui/professions/profHud.js` (the face, the glint, the aim and the pips); `src/ui/professions/profPages.js` (Mining
+  practised, the Forge on the Stores page); the Prospector's veins on both compasses (`ui/hud/hud.js`,
+  `ui/enhanced/enhancedHud.js`); a home's forge station (`net/decorLaw.js`, 50,000 gold).
 - **The switch**: `PROFESSIONS_OPEN`, shipped at `dev`.
 - **Not built here** (PROF0 23): the Motherlodes and gate-touched ground (PROF2b), Daedric smelting, the held map's
   marks, a vein's cracks, the Morrowind lane's pick (FLAGGED), nodes in the fixed city (FLAGGED).
 
-`test/prof2_law.test.js` (11), `test/prof2_service.test.js` (9), `test/prof2_client.test.js` (14);
+`test/net/prof2_law.test.js` (11), `test/net/prof2_service.test.js` (9), `test/net/prof2_client.test.js` (14);
 `tools/mutants/prof2.json`, 40 mutations, 40 dead.
 
 ## AUDIT 29 (2026-09-28, Mac: "Lets audit everything so far before we continue") - the professions audited
@@ -14020,8 +14072,8 @@ overlaps are folded (a node read in a second spelling was found by two; the Forg
 three). Every one was verified against the code - most reproduced by a probe over the real Worker or the real module
 - and fixed with a pin that fails on the code before it; two were rejected in part (below). Main was not merged first:
 its 137 commits since the last merge touch 200 of this branch's files, almost all in line cites, and are their own
-work. `test/audit29_laws.test.js` (7), `test/audit29_service.test.js` (14), `test/audit29_client.test.js` (8),
-`test/audit29_host.test.js` (10); migration `0029_audit29.sql`, `acct21`; `tools/mutants/audit29.json` - and the
+work. `test/net/audit29_laws.test.js` (7), `test/net/audit29_service.test.js` (14), `test/net/audit29_client.test.js` (8),
+`test/scenes/audit29_host.test.js` (10); migration `0029_audit29.sql`, `acct21`; `tools/mutants/audit29.json` - and the
 records the fixes moved (prof1, prof2, home_stations, auditdisc7, survtiers3) re-aimed by content.
 
 **The service and the laws** (A1-A17). A node id with a leading zero anywhere (`vein:010:20:...`) parsed as the same
@@ -14066,7 +14118,7 @@ writes the slots on a tab's close (`beforeunload`); a crash is Marks' own shape,
 walls, from a floor away, and when it could not be worked (every dungeon vein below Mining 25): E takes a node twelve
 degrees from the crosshair, in reach in three dimensions, seen through the place's collider, and ready - else the
 press goes on to the door (and what the node needs, which went with the press, is said again when nothing else takes
-it - VEIN-NEED, `01-Overview/Field-Bugs-2026-09-29h.md`). Underground a click or a finger's tap started an act a swipe could not play and every swing
+it - VEIN-NEED, `01-Overview/bugs/Field-Bugs-2026-09-29h.md`). Underground a click or a finger's tap started an act a swipe could not play and every swing
 was held off: a dungeon vein takes Interact alone, above the quest foe's click. The vein wall's ray hit a closed door
 and stood a vein in a doorway that moved when it opened: the rays read the dungeon's own mesh, and a vein over a pit
 stands on the next bearing. A kept harvest answered through the pump said no rank's rise and left its node drawn: the
@@ -14102,21 +14154,21 @@ both built, or both numbered, is one now:
 
 - **The relay is world125.** Main's OVERWORLD NAMES (world122), THE MERGE (world123) and TV8 (world124) took the numbers
   the branch's BOUNTY1 (world122) and AUDIT 28 (world123) had used, neither deployed; the two are one relay past TV8
-  (`net/wire.js` RELAY_VERSION, `test/relayversion.test.js`'s world125 row). BOUNTY1's `bq`/`lv` and TV8's `tw`/`ts`
+  (`net/wire.js` RELAY_VERSION, `test/net/relayversion.test.js`'s world125 row). BOUNTY1's `bq`/`lv` and TV8's `tw`/`ts`
   ride the same party pose; a relay before world125 strips the bounty fields and nothing closes.
 - **The account service is acct22,** past main's RAID4 (acct17) and AUDIT RAID (acct18) and the branch's MARKS1 to
   AUDIT 29 (acct17-acct21, undeployed). The branch's migrations are 0018-0022 (0025-0029 since MERGE 2) (marks, board, professions, mining,
   audit29) behind main's 0016 (raid_cleanses) and 0017 (raid_spoils): D1 applies by name in order, and none of the
   five was ever applied anywhere. The account view carries main's `raids` beside the branch's `marks`.
 - **LootTables.OnLootSpawned, built twice, is one list.** FORAGE3 (the branch) and OH-E (main) each found the port
-  raising it inside J..O for RRI alone and each built it again. `systems/loot.js` keeps FORAGE3's named registry (RRI2
+  raising it inside J..O for RRI alone and each built it again. `systems/loot/loot.js` keeps FORAGE3's named registry (RRI2
   its seeded first subscriber, a thrower logged and the rest run) and OH-E's `tableLootSpawned` is an add-and-remove
   door onto the same Map; the raise carries both sides' args, `{ locationIndex, key, items, rolls, luck, where }`.
   The dungeon's pile passes its type's index, the player's luck and `where: 'dungeon'`.
 - **Come Sail Away's shelf subscriber is one of PlayerActivate.OnLootSpawned's** (`systems/containerLoot.js`, FORAGE3's
   one home), registered by the mod's name when the world is built - main had called it from a host hook at the two
   shelf doors, after RRI's; it runs after RRI's and the mods loaded before it, on a shop shelf alone.
-- **CSA-H's custom-item rows live in `systems/itemTemplates.js`,** GetCustomItemsForGroup's one home since FORAGE1:
+- **CSA-H's custom-item rows live in `systems/item/itemTemplates.js`,** GetCustomItemsForGroup's one home since FORAGE1:
   `registerCustomItemGroup` (Come Sail Away's boat parts and deed, Iliac Puddle No More's fish) is a provider that
   takes its place in the providers' order at its first row; `rriItems.js` answers RRI's own again.
 - **A camp's stand answers what stood or null** (`scenes/world.js` _standCampEncounter): main's AUDIT OW3/OW4 made it
@@ -14146,7 +14198,7 @@ departure (`Port-Ledger.md` section A, SMITHING: THE ANVIL, QUALITY AND PROVENAN
 - **A craft asked is kept** on the device before it is asked (`net/profBook.js`), its pieces minted once on the answer by
   the tab that lets it go, and never twice into one pack (the host's provenance check).
 - **FOUND and fixed:** a Quartermaster's smelt yielded one ingot a unit - PROF2 offered the choice and built no doubling.
-- **Pinned:** `test/prof3_law.test.js`, `test/prof3_service.test.js`, `test/prof3_client.test.js`;
+- **Pinned:** `test/net/prof3_law.test.js`, `test/net/prof3_service.test.js`, `test/systems/prof3_client.test.js`;
   `tools/mutants/prof3.json` (59, every one dead).
 
 ## PROF4 (2026-09-28, Mac: "Continue") - Logging, Carpentry and the furniture
@@ -14168,7 +14220,7 @@ Ledger A departure (`Port-Ledger.md` section A, LOGGING, CARPENTRY AND THE FURNI
   shader's (`uTip`, a tip and no fade) - so every player standing there sees the same forest, and the felled trees are
   the service's day.
 - **FOUND and fixed:** PROF3 left Smithing unpractised on the Professions page - its specialisation cards locked.
-- **Pinned:** `test/prof4_law.test.js`, `test/prof4_service.test.js`, `test/prof4_client.test.js`;
+- **Pinned:** `test/net/prof4_law.test.js`, `test/net/prof4_service.test.js`, `test/systems/prof4_client.test.js`;
   `tools/mutants/prof4.json` (87: 86 dead, one recorded equivalent).
 
 ## PROF5 (2026-09-29, Mac: "Continue") - The Market: listings, regional markets, couriers, buy orders and history
@@ -14196,7 +14248,7 @@ departure (`Port-Ledger.md` section A, THE MARKET).
   the Market tab's own "Your Marks" is the market book's, which the Weavers' purchase tells too (AUDIT 30 R7).
 - **FOUND and fixed:** a kept craft settled only beside a kept withdrawal; PROF4's plane board had no CSS; the
   `products` cascade against "forever".
-- **Pinned:** `test/prof5_law.test.js`, `test/prof5_service.test.js`, `test/prof5_client.test.js`;
+- **Pinned:** `test/net/prof5_law.test.js`, `test/net/prof5_service.test.js`, `test/net/prof5_client.test.js`;
   `tools/mutants/prof5.json` (109: 105 dead, four recorded equivalent - the fourth since AUDIT 30).
 
 ## AUDIT 30 (2026-09-29, Mac: "Do it") - PROF3 to PROF5 audited
@@ -14208,8 +14260,8 @@ the lenses' overlaps are folded (the market's one-at-a-time door found by two, t
 view, the sort and the Weavers' balance by the pages and the records both). Every one was verified against the code -
 the service's by a probe over the real Worker, the tab's in Chromium at 360 and 800 pixels - and fixed; the fixes with
 a behaviour are pinned by a test that fails on the code before it (40 pins, every one run red on the pre-fix code with
-only the new names shimmed). `test/audit30_laws.test.js` (7), `test/audit30_service.test.js` (12),
-`test/audit30_client.test.js` (15), `test/audit30_host.test.js` (6); `acct26` (no migration: no table changed);
+only the new names shimmed). `test/net/audit30_laws.test.js` (7), `test/net/audit30_service.test.js` (12),
+`test/net/audit30_client.test.js` (15), `test/net/audit30_host.test.js` (6); `acct26` (no migration: no table changed);
 `tools/mutants/audit30.json` (63, every one dead - the three that first survived, the rows' sort, the fall's node and a
 Heartwood's quick craft, killed by stronger pins) - and the 21 records the fixes moved (prof3, prof4, prof5, perfexta)
 re-aimed by content, every one dead but the catalogue's recorded equivalent (94 of 94 now, the unyielded out); two of
@@ -14320,7 +14372,7 @@ Ledger A departure, extended (`Port-Ledger.md` section A, THE MARKET).
   said the Marks book was told - it is the market's own book).
 - **FOUND and fixed:** the Market tab did not read again on `auction-low` - a bid another overtook left the old next bid
   on screen; `MARKS1-13` had aimed at a trigger `0032_market.sql` rebuilt, and survived unseen since PROF5.
-- **Pinned:** `test/prof5b_law.test.js`, `test/prof5b_service.test.js`, `test/prof5b_client.test.js`;
+- **Pinned:** `test/net/prof5b_law.test.js`, `test/net/prof5b_service.test.js`, `test/net/prof5b_client.test.js`;
   `tools/mutants/prof5b.json` (44: 39 dead, five recorded equivalent - AUDIT PROF-541 R2-S4's four among the dead).
 
 ## PROF6 (2026-09-29, Mac: "continue") - Guild writs, the guild Stores and commissions
@@ -14345,7 +14397,7 @@ departure (`Port-Ledger.md` section A, GUILD WRITS, THE GUILD STORES AND COMMISS
   report's escrow was the buy orders' column and never counted PROF5b's bids - it is the ledger's escrow end now; a
   commission's fill wrote its lines for every commission row while its guard held (`WHERE EXISTS` over the whole table
   - caught by the refusals pin, which held five, before it shipped).
-- **Pinned:** `test/prof6_law.test.js`, `test/prof6_service.test.js`, `test/prof6_client.test.js`;
+- **Pinned:** `test/net/prof6_law.test.js`, `test/net/prof6_service.test.js`, `test/net/prof6_client.test.js`;
   `tools/mutants/prof6.json`.
 
 ## AUDIT 31 (2026-09-29, Mac: "let's first do a comprehensive audit and ensure everything so far is perfect") - PROF5b and PROF6 audited
@@ -14356,8 +14408,8 @@ books, the acts and their hosts, the Work and Market tabs, and the records again
 lenses' overlaps are folded (the crafter's twenty found by three, the guild Stores' one read by three, the poster's
 collect by three, the Fill's picker and Yours by two each). Every one was verified - the service's by a probe over the
 real Worker (a race staged inside the batch where one was claimed), the tabs' in Chromium at 360 and 800 pixels - and
-fixed; each fix with a behaviour is pinned by a test that fails on the code before it: `test/audit31_law.test.js` (5),
-`test/audit31_service.test.js` (17), `test/audit31_client.test.js` (11), `test/audit31_tabs.test.js` (6); `acct29`
+fixed; each fix with a behaviour is pinned by a test that fails on the code before it: `test/net/audit31_law.test.js` (5),
+`test/net/audit31_service.test.js` (17), `test/net/audit31_client.test.js` (11), `test/ui/audit31_tabs.test.js` (6); `acct29`
 (no migration: no table changed); `tools/mutants/audit31.json` (88: 86 dead, two recorded equivalent - a sold close's
 owner guard the batch's own order already holds, and the late window's add, both 120 s today). The records the fixes
 moved (guild1, prof1, prof5, prof5b, prof6: 32) were re-aimed by content, and the eleven lists whose code the fixes
@@ -14455,7 +14507,7 @@ numbered, is one now:
 - **The relay is world131.** The branch's BOUNTY1 + AUDIT 28 were world125 on the branch, never deployed, and world125
   is main's VOICE1 (deployed, then reverted) - a number a deployed relay may carry is never reused; main went on to
   REALM-DOOR (world130). The bounty fields ride one relay past it (`net/wire.js` RELAY_VERSION,
-  `test/relayversion.test.js`'s world131 row); a relay before it strips `bq`, `lv` and a row's `k`, `a` and `t`.
+  `test/net/relayversion.test.js`'s world131 row); a relay before it strips `bq`, `lv` and a row's `k`, `a` and `t`.
 - **The account service is acct30,** past main's acct23 (HOUSE-LOSS and RESTORE, deployed) and the branch's acct29
   (AUDIT 31, undeployed). The branch's ten migrations are 0025-0034 (marks, board, professions, mining, audit29,
   smithing, logging, market, auctions, writs) behind main's 0018-0024 (realm_characters, realm_trades, realm_audit,
@@ -14471,7 +14523,7 @@ numbered, is one now:
   `/v1/renown/xp` does (no `character`, `max` at the cap), and `net/professionLaw.js` writRenown passes through
   renownRate: a tier-2 writ of 30 units pays 112, 150 at the full rate. (RENOWN-CHAR, below, made it the delivering
   character's track again, under the tracks' bound.)
-- **The loot pile's call carries both sides' arguments** (`systems/loot.js` addPileLootExtras): FORAGE3's
+- **The loot pile's call carries both sides' arguments** (`systems/loot/loot.js` addPileLootExtras): FORAGE3's
   `locationIndex` and `luck` for OnLootSpawned's subscribers, and REALM P0.4's `level` (online, a pile's gold divided
   back by the level) - at the dungeon's pile, the camp's and a tavern's.
 - **A camp's stand** answers what stood or null (THE MERGE), counts its camps off the pool's one counter and grows by
@@ -14490,7 +14542,7 @@ numbered, is one now:
   through `test/accountDb.mjs` `found` and `seatHome`, over main's own `test/realmSeat.mjs`. AUDIT REALM F1's
   BOUND_TEMPLATES pin reads the branch's two registrars (Foraging's and the professions' rows - none bound: a material
   and a tool change hands). Seven mutant records re-aimed by content; the pile's, the stand's and the card's re-killed.
-- **Main's own red, fixed here:** `test/tv6_dungeons.test.js` pinned travelViewWalkTo's options before TO-ROADS added
+- **Main's own red, fixed here:** `test/systems/travel/tv6_dungeons.test.js` pinned travelViewWalkTo's options before TO-ROADS added
   `roads`.
 - **LIVED1 (#442, "your own time") came in last:** a character keeps its own clock online. Foraging's quest time
   (FORAGE4's wait on the hunt's page - the wait page alone since HUNT-OUT, 2026-10-04) now also passes on that clock,
@@ -14533,7 +14585,7 @@ Asked how each character should start, Mac chose "Own + recent gains". The recor
   account's last report id, and `renown_accounts` stays as history.
 - **The relay is untouched** (world131): `src/net/renown.js` is not in its bundle, and a level beside a name was
   always the token's.
-- Pins: `test/renown_char.test.js` (7); `test/renown_account.test.js` keeps RENOWN-ACCOUNT's rate and 0021 (3); the
+- Pins: `test/server/renown_char.test.js` (7); `test/server/renown_account.test.js` keeps RENOWN-ACCOUNT's rate and 0021 (3); the
   pins RENOWN-ACCOUNT had rewritten put back. Mutants: `tools/mutants/renown_char.json` (17 dead, 1 recorded
   equivalent); 211 restored records across RENOWN1, AUDIT RENOWN1, RAID4, AUDIT RAID, RENOWN-BAR, RENOWN3 and RENOWN4,
   all dead.
@@ -14551,7 +14603,7 @@ Asked whether to switch on the three professions-branch switches, Mac chose **"B
 - **Marks and the professions stay at `dev`** until two fixes land:
   1. the pack is saved right after a professions act that changes it (MERGE 2 open question 2) - PROF-SAVE, below;
   2. a deleted realm character's Stores and deliveries are no longer stranded (open question 3) - PROF-DELETE, below.
-- Rides `acct31` with RENOWN-CHAR. `test/notice1.test.js` pins the line at `"on"`; the Notice Board's patch notes say
+- Rides `acct31` with RENOWN-CHAR. `test/net/notice1.test.js` pins the line at `"on"`; the Notice Board's patch notes say
   it is open to everyone.
 
 ## PROF-SAVE (2026-09-29, the first fix before Marks and the professions open) - a professions act that changes the save, saved at once
@@ -14561,7 +14613,7 @@ the Stores, a craft's pieces and its fee, a smelt's fee, a market piece bought, 
 away, and the Bank's Marks sold for gold. Each waited for the two-minute checkpoint or the exit save, and a crash in
 between lost what the service had already moved (the Stores spent, the Marks paid).
 
-- **`createSaveSoon`** (`systems/onlineCheckpoint.js`): a change asks ONE checkpoint on the next task, so a settle that
+- **`createSaveSoon`** (`systems/online/onlineCheckpoint.js`): a change asks ONE checkpoint on the next task, so a settle that
   mints ten pieces, or a craft and its fee, is one save. The checkpoint is handed in once the host has built it, and a
   change made before then (a kept act settled as the page boots) is saved at that point. It is the host's
   `onlineCheckpoint`, refused where the periodic one is; the next periodic checkpoint writes what a refused one did not.
@@ -14570,7 +14622,7 @@ between lost what the service had already moved (the Stores spent, the Marks pai
   `marketMint`, `marketTake`, `marketDrop` and `marketPutBack` each ask it. The Bank's Marks sale asks it through
   `systems/banking.js` `marksSaleCredit`'s new `saved`, which the modes hand the host's `saveSoon` for a sale and for a
   kept sale settled at the counter (`scenes/worldModes.js`).
-- Pins: `test/profsave.test.js` (3); the host pins in `audit29_host`, `audit30_client`, `prof3_client` and `marks1`
+- Pins: `test/systems/online/profsave.test.js` (3); the host pins in `audit29_host`, `audit30_client`, `prof3_client` and `marks1`
   follow the new lines. Mutants: `tools/mutants/profsave.json` (18, all dead); `audit29.json`'s fee record and
   `survtiers3.json`'s two cite records re-aimed by content.
 
@@ -14593,8 +14645,8 @@ wait on trades"**.
   Escrowed Marks come back to the account, never the character, so an outbid bid or a closed order holds nothing up.
   A guild Stores deposit stays the guild's, as when a member leaves.
 - **The words:** the door says what to settle (`net/accountClient.js`), and the delete dialog now names "its
-  professions and their Stores" (`ui/enhancedMenu.js`).
-- `acct32`. Pins: `test/profdelete.test.js` (3). Mutants: `tools/mutants/profdelete.json` (18, all dead).
+  professions and their Stores" (`ui/enhanced/enhancedMenu.js`).
+- `acct32`. Pins: `test/server/profdelete.test.js` (3). Mutants: `tools/mutants/profdelete.json` (18, all dead).
 
 ## SWITCH-ON (2026-09-29, Mac: "Fuck it lets switch everything on") - Marks and the professions opened to everyone
 
@@ -14610,7 +14662,7 @@ the account service that opens them is the one that already has them (`acct32`).
   until SEAT1. No route deletes an account.
 - **Still open:** MERGE 2's question 1 (realm-only professions routes). Online play is a realm character's at the
   relay's door, so only a modified client reaches the routes with another id.
-- `test/marks1.test.js` and `test/notice1.test.js` pin the three lines at `"on"`. The Marks and professions patch notes
+- `test/net/marks1.test.js` and `test/net/notice1.test.js` pin the three lines at `"on"`. The Marks and professions patch notes
   say they are open to everyone.
 
 ## DRAKES (2026-09-29, Mac: "Can we change the name of marks to something else") - the currency is called Drakes
@@ -14629,7 +14681,7 @@ Asked what to, Mac chose **"Drakes"** (an old Imperial coin): "250 Drakes", "1 D
   as their own name for the currency (MARKS1), and the rename is the client's words alone.
 - **Not the currency, and unchanged:** DFU's two Mark jewellery slots, the King's Mark, the travel map's "Mark a
   location", the blood marks' "Marks stay".
-- Pins: `test/drakes.test.js` (2; red on the tree before): the balance's words and two refusals, and a sweep of the
+- Pins: `test/ui/drakes.test.js` (2; red on the tree before): the balance's words and two refusals, and a sweep of the
   twelve files that show the currency for any word left saying "Mark"; the MARKS1, PROF and AUDIT 30/31 client pins
   read the new words. Mutants: `tools/mutants/drakes.json` (10, all dead); `audit31.json`'s past-balance record and
   `prof6.json`'s writ-filled record re-aimed by content.
@@ -14659,14 +14711,14 @@ count, so every sentence was reworded to read right, never just swapped.
 - **Nothing stored moved, and the code keeps its names.** The balances, the ledger, the routes, `MARKS_OPEN`, the
   constants (`HERALDRY_CHANGE_DRAKES`, `tributeDrakes`, the `heraldry-drakes` and `market-drakes-goods` refusal codes,
   the `notice-seat-drakes` class), the service and the relay versions all stand; comments keep "Drakes" where they
-  said it (a CSS comment in `ui/enhancedPlusStyle.js` and SQL comments in `server-account/src/market.js` and
+  said it (a CSS comment in `ui/enhanced/enhancedPlusStyle.js` and SQL comments in `server-account/src/market.js` and
   `writs.js` are inside strings, and no player reads them).
 - **The metal is the metal.** "Silver", "Silver Ingot" and `metal:silver` are untouched; a line that names both reads
   the currency lowercase mid-sentence.
-- Pins: `test/silver.test.js` (2; red on the tree before): `marksText` for 0, 1, 2, 1,240 and 10,000,000, five
+- Pins: `test/net/silver.test.js` (2; red on the tree before): `marksText` for 0, 1, 2, 1,240 and 10,000,000, five
   refusals and two seat lines; a sweep of the nineteen files that show the currency, comments blanked, and of every
   other file under `src/` and `server-account/src/`, for any word left saying "Drake", with the Bank's, the card's, the
-  treasury's, the Market's and the Work tab's words by name and the metal's two names standing. `test/drakes.test.js`
+  treasury's, the Market's and the Work tab's words by name and the metal's two names standing. `test/ui/drakes.test.js`
   reads the new words (its Marks sweep stands). Every client and law pin that read "Drakes" reads "silver". Mutants:
   `tools/mutants/silver.json` (14, all dead); `drakes.json`'s ten re-aimed at the new words;
   `crown1_royal_client.json`'s two prize records and `prof6.json`'s writ-filled record re-aimed by content,
@@ -14674,7 +14726,7 @@ count, so every sentence was reworded to read right, never just swapped.
 
 ## STRIKE-SHARED (2026-09-29, Mac: "Do #1") - a strike spell reaches a foe another player runs
 
-For Mac 4 of `01-Overview/Field-Bugs-2026-09-29g.md`, the shared-foe half. A Cast When Strikes spell on a foe
+For Mac 4 of `01-Overview/bugs/Field-Bugs-2026-09-29g.md`, the shared-foe half. A Cast When Strikes spell on a foe
 another player runs (a cell's puppet, a dungeon room's foe on a joiner, a party member's quest foe or loose stand) now
 rides the hit to that foe's owner whole. The hit carries `sp`, the record through the cast frame's `castSpellOf`, and
 `lv`, the striker's level. The owner lands it on the real foe through the cast engine's foe door, and its damage
@@ -14685,7 +14737,7 @@ else).
 - **The relay is world132.** It reads neither field: a hit is fanned opaque, and a foes frame is fanned unparsed. The
   number moved because the bundle's bytes did (`hitSpellOf`, `hitSpellFields` and `validFoeRecord` live in
   `src/net/wire.js`). An older relay carries both fields untouched, and an older client reads past them.
-- Pins: `test/strikeshared.test.js` (7). Mutants: `tools/mutants/strikeshared.json` (16, all dead).
+- Pins: `test/scenes/strikeshared.test.js` (7). Mutants: `tools/mutants/strikeshared.json` (16, all dead).
 
 ## LOAN-AMNESTY (2026-09-29, Mac: "Can we reset the loans for everyone online. The bank of the empire has decided to forgive everyone's loans") - every online loan forgiven, once
 
@@ -14699,7 +14751,7 @@ else).
 - **Once, and for existing online characters only.** A save carries `loanAmnesty`, the amnesty it has had
   (`LOAN_AMNESTY` 1). A save written before this build has none (0) and is forgiven as the character next boots online;
   it is then marked, and a loan taken afterwards is owed. Every save written after it carries the mark
-  (`systems/save.js`), so a character made now is born past it. A character crossing customs is marked as it crosses
+  (`systems/save/save.js`), so a character made now is born past it. A character crossing customs is marked as it crosses
   (`systems/realmCustoms.js` `applyCustoms`), so an offline loan walked online is called in as before, never forgiven.
 - **Where:** the realm boot (`scenes/world.js`), in the one parse of the save, after RESTORE's `reclaimFromDevice` and
   the test room's refusal - before the save is restored and before `empireJoin` settles a due loan into a default. Offline saves are never
@@ -14708,7 +14760,7 @@ else).
 - **When:** client only - no account version, no relay. A character reaches it at its next boot; one being played as
   this deploys, at the one after. The mark reaches the service at the next checkpoint; until then a re-boot forgives
   the same save again, to the same end (RESTORE's own law).
-- Pins: `test/loan_amnesty.test.js` (6, red on the tree before). Mutants: `tools/mutants/loan_amnesty.json` (14, all
+- Pins: `test/systems/loan_amnesty.test.js` (6, red on the tree before). Mutants: `tools/mutants/loan_amnesty.json` (14, all
   dead); `survtiers3.json`'s two cite records re-aimed.
 
 ## PROF7 (2026-09-29, Mac: "Do it") - Hunting, the Skinning Knife and Outfitting
@@ -14732,7 +14784,7 @@ since SWITCH-ON - no switch of its own.
 - **FOUND and fixed:** a body's harvest bound its absent region into the witness statement - D1 binds no `undefined`
   (the service pin's 500, before it shipped); the book never applied a harvest's `extraStore` (PROF4's Resin); the
   Professions page's Smithing unlocks lost three rows to a comment.
-- **Pinned:** `test/prof7_law.test.js`, `test/prof7_service.test.js`, `test/prof7_client.test.js` (the done-when
+- **Pinned:** `test/net/prof7_law.test.js`, `test/net/prof7_service.test.js`, `test/systems/prof7_client.test.js` (the done-when
   through the real Worker); `tools/mutants/prof7.json` (119: 118 dead, one recorded equivalent).
 
 ## AUDIT 32 (2026-09-30, Mac: "Audit this") - PROF7 audited
@@ -14744,8 +14796,8 @@ dungeon's foes by two, the choice key's words by two, a held key's repeats by tw
 two). Every one was verified - the service's by a probe over the real Worker, the pages and the HUD in Chromium at 360
 and 800 pixels - and every one fixed, S1 by the rule Mac left to the audit (below). Each fix with a behaviour is pinned
 by a test that fails on the code before it (every one run red on the pre-audit tree with only the new names shimmed):
-`test/audit32_law.test.js` (5), `test/audit32_service.test.js` (6), `test/audit32_client.test.js` (9),
-`test/audit32_pages.test.js` (9); `acct34`, and `acct35` for S1 (no migration: no table changed);
+`test/net/audit32_law.test.js` (5), `test/net/audit32_service.test.js` (6), `test/scenes/audit32_client.test.js` (9),
+`test/ui/audit32_pages.test.js` (9); `acct34`, and `acct35` for S1 (no migration: no table changed);
 `tools/mutants/audit32.json` (71, every one dead - the one that first survived, the reach measured per axis, killed by a
 body inside the reach across the ground and past it from the eye). The 21 records whose code the fixes moved (prof7 ten,
 audit29 three, prof3 two, audit30, prof1, prof5, forage1, fieldbugs_x, toast_split one each) were re-aimed by content,
@@ -14827,8 +14879,11 @@ garment" left 45,500 buyable (Outfitting 67) and a day's bound only slowed the s
 honest crafter's first crafts. The fifteen left - Cured Leather's armour and boots, a gathered good the smith's
 counter also sells at twice its worth (7,500 XP, Outfitting 27, 132 Marks) - keep 3.2's 500, as the planks do: a hunter's own leather and a logger's own
 planks earn what 3.2 promised them, and the counter's price is a gatherer's ceiling, not an endless faucet. Silk's
-garments keep theirs (Spider Silk is hunted); the first is still recorded (`first`), the XP answered as credited.
-`acct35`; pinned in `test/audit32_law.test.js` and `test/audit32_service.test.js` (S1, each run red on the code before
+garments keep theirs (Spider Silk is hunted); the first is still recorded (`first`), the XP answered as credited. CRAFT-FIRST-SHOWN
+(2026-10-15, FIELD BUGS 2026-10-15f - the Discord: "The first time craft bonus is not applying to the outfitting"): the
+rule kept and said - every station's box says its pattern's XP and the 500 its first lays on, or that the Weavers' cloth
+earns none, and the craft's word reads `first` (`06-Systems/Professions-Arc.md` 41.9).
+`acct35`; pinned in `test/net/audit32_law.test.js` and `test/net/audit32_service.test.js` (S1, each run red on the code before
 it), PROF7's Straps pin moved to the rule; eight mutants in `audit32.json`, every one dead. Professions-Arc 3.2, 13,
 29 and its appendix say it; the Outfitting patch notes tell the players.
 
@@ -14844,7 +14899,7 @@ is one now:
   branch's one migration, `0036_hunting.sql`, already runs after main's `0035_renown_characters.sql`; none is
   renumbered. The relay is main's world133 - the branch never moved it.
 - **Two batches under one letter.** Main's FIELD BUGS 2026-09-29h (eleven #bug-reports threads) and the branch's
-  (VEIN-NEED, one) were written under the same name on the same day. `01-Overview/Field-Bugs-2026-09-29h.md` keeps both:
+  (VEIN-NEED, one) were written under the same name on the same day. `01-Overview/bugs/Field-Bugs-2026-09-29h.md` keeps both:
   main's eleven first, VEIN-NEED as part two, so every cite of the page stands.
 - **Cites.** The files the branch touched only to re-aim cites take main's copy, and `tools/citeMerge.mjs origin/main
   HEAD --apply --struck` re-mapped each line from the side it came from (302 moved). The shared lines it held back as
@@ -14879,7 +14934,7 @@ What failed was what the HUD SAID of it, and the reports read that as nothing gi
   (`ACT_STOPPED_LINE`); Escape, the player's own, stays unsaid.
 - **The maintenance minute let the act go.** RESTORE's 503 is answered before any route, so the act never reached one;
   `maintenance` is an answer the book keeps and asks again (`profBook.js` RETRY), as it keeps `server` and `rate`.
-- **Pinned:** `test/gathersaid.test.js` (7, each red on the code before with only the new names shimmed); the prof2,
+- **Pinned:** `test/net/gathersaid.test.js` (7, each red on the code before with only the new names shimmed); the prof2,
   prof4 and prof7 client pins read the one line. Mutants: `tools/mutants/gathersaid.json` (13, all dead); prof4's
   Resin and prof7's butchery-count records re-aimed by content.
 - **For Mac** (found in the trace, not changed here): the classic skin's pause has no pages, so a classic player online
@@ -14908,7 +14963,7 @@ every vein table); the woods were the one gap.
   stays felled and one standing is read again under the new law. Deploy the account service first: an old service
   refuses a Novice's Pine as `prof-rank` until it lands; an old client beside a new service only shows the Oak's need.
 - **The XP curve is unchanged**: rank 10 is 67 plain tier-1 harvests or 46 clean ones (22 XP), inside a day's 60.
-- **Pinned:** `test/pineshare.test.js` (5; four red on the law before with only the new names shimmed, the fifth the
+- **Pinned:** `test/net/pineshare.test.js` (5; four red on the law before with only the new names shimmed, the fifth the
   Mountain's guard); prof4's law, service and client pins name the Oak they mean. Mutants:
   `tools/mutants/pineshare.json` (7, all dead); prof4's twenty tree records re-run, all dead.
 
@@ -14939,7 +14994,7 @@ nothing said.
   B2 still holds: no Forge offline.
 - **Kept as it was**: the Enhanced pages wear the base Enhanced sheet on the classic skin, as DISC22-B's Settings do;
   the profHud lays the professions' own sheet on every skin online.
-- **Pinned:** `test/classicpages.test.js` (4, each red on the code before with only the new names shimmed); the key's
+- **Pinned:** `test/systems/classicpages.test.js` (4, each red on the code before with only the new names shimmed); the key's
   count pins (inputactions, qs2, viewtoggle, prof1's Professions group) and AUDIT 29 B2 flipped. Mutants:
   `tools/mutants/classicpages.json` (9, all dead); gathersaid's two records re-aimed by content.
 
@@ -14981,7 +15036,7 @@ gold can now change hands the way a guild deposit or a house's price does - in t
   and a sale's currency; a sale's fee; a piece's `bought_with`; `market_gold`, `market_gold_prices`). Deploy the
   migration and the service before the client: an old service refuses every gold word as a bad act, and an old client
   beside a new service sees the Drakes' market as before.
-- **Pinned:** `test/goldmarket_service.test.js` (8) and `test/goldmarket_client.test.js` (9); the schema's table list
+- **Pinned:** `test/net/goldmarket_service.test.js` (8) and `test/net/goldmarket_client.test.js` (9); the schema's table list
   (accountworker ACC1b). Mutants: `tools/mutants/goldmarket.json` (35, all dead - AUDIT PROF-541 R2-S3's words among them).
 
 ## PROF8 (2026-09-30, Mac: "Continue the arc"; "XP follows your rank") - Fishing with the net
@@ -15000,7 +15055,7 @@ record; in short:
   prompt's words; the species named in the toast.
 - **The service**: **acct41**, migration `0042_fishing.sql`. Deploy the migration and the service before the client: an
   old service refuses every haul as a bad node.
-- **Pinned:** `test/prof8_law.test.js` (7), `test/prof8_service.test.js` (3), `test/prof8_client.test.js` (12). Mutants:
+- **Pinned:** `test/net/prof8_law.test.js` (7), `test/net/prof8_service.test.js` (3), `test/world/terrain/prof8_client.test.js` (12). Mutants:
   `tools/mutants/prof8.json` (34, all dead).
 
 ## EMPIRE-ACCOUNT (2026-10-01, the field - maya: "i deposited alot of letters of credit in a random bank somewhere but theyre gone in the daggerfall bank"; Regi: "irs taken money again"; Mac chose "2": online, every region one Empire-wide account) - one bank account online
@@ -15013,7 +15068,7 @@ record; in short:
   Empire's account, held at Daggerfall's index (EMPIRE-BANK: the bank of Daggerfall became the bank of the Empire).
   Deposits, letters of credit, withdrawals, a letter drawn, a ship or house bought or sold, the Marks sold, and the
   online wallets (the market, a home, its yard, decor, a guild) all pay from it and into it; the bank window shows it
-  at every branch, and BANK-REGION's report (`ui/enhancedPorts.js`, merged beside it from #488) reads online as the
+  at every branch, and BANK-REGION's report (`ui/enhanced/enhancedPorts.js`, merged beside it from #488) reads online as the
   one account - "Empire account" - with only a branch not yet folded beneath it. Offline, Daggerfall's sixty-two accounts stand; a short table with no Empire account keeps its own.
 - **A loan still stands where it was taken.** Its due date, its default and the reputation a default costs are that
   region's; the gold it lends and the gold that repays it are the Empire account's. The overdue sweep and the join's
@@ -15024,7 +15079,7 @@ record; in short:
   Empire's account - whatever its sign, so the total never changes - and every loan and default stays where it stands.
   Said once the world stands: "The Bank of the Empire keeps one account now, open at every branch. N gold came in from
   other regions." Once: a folded table moves nothing again.
-- **The service** (`net/realmGoldLaw.js` `REALM_EMPIRE_ACCOUNT`, pinned equal - the Worker does not bundle banking.js):
+- **The service** (`net/realm/realmGoldLaw.js` `REALM_EMPIRE_ACCOUNT`, pinned equal - the Worker does not bundle banking.js):
   a realm record pays from the Empire's account whatever region the wallet names, then from any branch a record not yet
   folded still keeps (one written before its character's first boot since this); a credit (a home sold, rent
   collected, a Mark's gold, the market's gold) lands in the Empire's account. A folded record and the client's wallet
@@ -15035,8 +15090,8 @@ record; in short:
 - **When:** the client and the account service together (the account deploy's path filter carries `realmGoldLaw.js`).
   A client older than this pays at a branch while the service pays the Empire's account first; the total is the same
   and the client's next checkpoint is the record.
-- Pins: `test/empireaccount.test.js` (10); `test/realm5.test.js`, `test/goldmarket_service.test.js` and
-  `test/guild1b.test.js` re-aimed at the one account, and `test/fb0930b_bankregion.test.js`'s online half. Mutants:
+- Pins: `test/systems/empireaccount.test.js` (10); `test/net/realm5.test.js`, `test/net/goldmarket_service.test.js` and
+  `test/net/guild/guild1b.test.js` re-aimed at the one account, and `test/systems/fb0930b_bankregion.test.js`'s online half. Mutants:
   `tools/mutants/empireaccount.json` (41, all dead); `realm0.json` (4), `realm5.json` (1), `auditrealm.json` (1),
   `fb0930b_bankregion.json` (3) and `survtiers3.json` (2) re-aimed by content.
 
@@ -15115,8 +15170,8 @@ room at a time" and a peer's real send times are estimated from arrivals. The re
 would then read them. *(It did, the same day - SCALE2b, below. Everything above stays as the fallback for a pose without
 a send time: an older relay strips it, an older client sends none.)*
 
-**Pinned** in `test/netsmooth.test.js` (9). Re-aimed: `test/slam3.test.js`'s bounds pin (a bunch measures nothing, a
-pause is not an interval, stop-and-go never moves it), `test/slam10.test.js`'s catch-up pin (the drawn speed frame by
+**Pinned** in `test/net/netsmooth.test.js` (9). Re-aimed: `test/net/slam3.test.js`'s bounds pin (a bunch measures nothing, a
+pause is not an interval, stop-and-go never moves it), `test/net/slam10.test.js`'s catch-up pin (the drawn speed frame by
 frame through a promotion and a demotion), and ONLINE1's merge pin (where Bob is drawn is read off his walk; the test
 had written `shown` by hand). `tools/mutants/netsmooth.json`: 23 mutants, 22 dead, 1 equivalent as recorded. The three
 easing mutants in `slam10.json` were re-aimed at the new law (all dead), and `slam14.json`'s Y6 was re-aimed by content.
@@ -15162,14 +15217,14 @@ live play):
 
 The stall row is the order paying off: the other room never stalled, and every pose came by it.
 
-**Pinned** in `test/scale2b.test.js` (the stamp, the order, the resync, the pace on a jittering line, the standing),
+**Pinned** in `test/net/scale2b.test.js` (the stamp, the order, the resync, the pace on a jittering line, the standing),
 beside the relay's half. ONLINE1's and CHAT1's pose-frame pins re-aimed at the stamped pose.
 
 ## SUNBABY1 (2026-10-04, "develop a command like /event dread that turns the sky into pretty flowers, clears weather and shows the sun as a big laughing baby ... Like teletubbies") - a second live event: the sun baby, world163
 
 EVENT1's door, a second word on it: `/event sunbaby` (or `/event sunbaby on`) stages it, `/event sunbaby off` or `/event off` ends it - the dev glyph, asked of the token by the relay, online players only, exactly as the dread. Everything EVENT1 built carries it (the `stage` frame, the hub's storage, the welcome's `ev`, `OnlineSession._setEvent`); the parts below are what is new.
 
-**The wire - a word, and the relay that first knows it.** `LIVE_EVENTS` appends `sunbaby` (`['dread', 'sunbaby']` - never reordered). The relay's `stage` arm reads LIVE_EVENTS, so it takes the word with no change of its own - but a relay before it answers the word `bad stage` and CLOSES the socket, so knowing the frame (`EVENT_RELAY_MIN` 110) is no longer knowing every word on it. `LIVE_EVENT_RELAY_MIN` names the first relay that knows each word (`dread` 110, `sunbaby` 163) and `relayKnowsLiveEvent(v, kind)` reads it; the session keeps the welcome's version (`eventV`) and `sendStage` sends a word only to a relay that knows it (the end, `''`, is any stage relay's). world.js says a word an older relay does not know in words ("The server cannot stage that event yet."). RELAY_VERSION world163 (`test/relayversion.test.js` row; world162 on its branch, renumbered past main's PRIMARCH at the merge); the exact-version pins moved to it, each marked. An old client reads the word as no event (EVENT1's law), so it is safe against every build before it.
+**The wire - a word, and the relay that first knows it.** `LIVE_EVENTS` appends `sunbaby` (`['dread', 'sunbaby']` - never reordered). The relay's `stage` arm reads LIVE_EVENTS, so it takes the word with no change of its own - but a relay before it answers the word `bad stage` and CLOSES the socket, so knowing the frame (`EVENT_RELAY_MIN` 110) is no longer knowing every word on it. `LIVE_EVENT_RELAY_MIN` names the first relay that knows each word (`dread` 110, `sunbaby` 163) and `relayKnowsLiveEvent(v, kind)` reads it; the session keeps the welcome's version (`eventV`) and `sendStage` sends a word only to a relay that knows it (the end, `''`, is any stage relay's). world.js says a word an older relay does not know in words ("The server cannot stage that event yet."). RELAY_VERSION world163 (`test/net/relayversion.test.js` row; world162 on its branch, renumbered past main's PRIMARCH at the merge); the exact-version pins moved to it, each marked. An old client reads the word as no event (EVENT1's law), so it is safe against every build before it.
 
 **The look - world/sunbabySky.js and render/sunbabySkyRenderer.js.** The dread is a grade because it keeps the sky's own light; this event replaces the sky, so it is ONE fullscreen pass drawn by the sky controller after the sky and its volumetric clouds (`createSkyController().draw`), at the far plane under LEQUAL (the land stands over it, as over any sky), blended by the event's weight - over the classic panorama, the port's dome and Dynamic Skies alike. A nursery-blue dome (`SUNBABY_ZENITH`, `SUNBABY_HORIZON`) full of drifting, slowly turning five- and six-petalled flowers in six colours on two layers of a ceiling grid (big overhead, small toward the horizon, faded into a pale band at it), and the SUN BABY: a big baby face (`SUNBABY_SUN_RADIUS` 0.19 rad, the rays reaching ~1.8 times it) in a gold rim with turning rays - eyes squeezed shut with laughing, rosy cheeks, a button nose, one curl, and a wide open mouth that giggles in bursts while the head bobs and tilts. All procedural, no texture and no game data; the GLSL (`SUNBABY_GLSL`) is generated from the tables, so a colour lives in one place, and every derivative its anti-aliasing reads is taken before a branch. The pass is built the first time the event shows (a session that never sees one never compiles it; a failed build warns and costs only the flowers) and draws nothing at weight 0.
 
@@ -15181,7 +15236,7 @@ EVENT1's door, a second word on it: `/event sunbaby` (or `/event sunbaby on`) st
 
 **The four hosts.** world.js (the streaming world - the online host, where the hub link lives) is WIRED. exterior.js (`?exterior`) has no hub link and stages no event - FLAGGED, as EVENT1 left it. worldModes.js (interiors) and dungeonContext.js draw no sky - FLAGGED: the event is outside, where the sky is (an indoor ear still hears the street's clear day: `setHeardWeather` takes the shown word).
 
-**Records.** test/sunbaby1_event.test.js (12): the word and its relay row, a real Room staging it and saying it on a late welcome, the session's word gate, the command, the fade and the rise, the land's haze, light and water, the GLSL from the tables, the pass over a recording GL (nothing at 0, every state put back, every allocation freed), and the host seams in shared.js and world.js. tools/mutants/sunbaby1.json (20, all dead). EVENT1's pins moved where the host's text moved (the hub's `onEvent`, the light) and two were made to fail again: the word's gate stands before the frame's, so `EVENT1-session-old-relay-sent` and `EVENT1-session-off-hub-sent` SURVIVED until the old-relay pin asked the END of an event and the off-hub session was given a relay that knows its words (event1.json: 44, all dead). The cite shift applied. Deploying world163 drops every connected player once (the relay's own law).
+**Records.** test/net/sunbaby1_event.test.js (12): the word and its relay row, a real Room staging it and saying it on a late welcome, the session's word gate, the command, the fade and the rise, the land's haze, light and water, the GLSL from the tables, the pass over a recording GL (nothing at 0, every state put back, every allocation freed), and the host seams in shared.js and world.js. tools/mutants/sunbaby1.json (20, all dead). EVENT1's pins moved where the host's text moved (the hub's `onEvent`, the light) and two were made to fail again: the word's gate stands before the frame's, so `EVENT1-session-old-relay-sent` and `EVENT1-session-off-hub-sent` SURVIVED until the old-relay pin asked the END of an event and the off-hub session was given a relay that knows its words (event1.json: 44, all dead). The cite shift applied. Deploying world163 drops every connected player once (the relay's own law).
 
 ## PARTY-LEAD (2026-10-04, the player: "add a make person party leader option for the leader when in a party") - the lead handed on
 
@@ -15200,9 +15255,9 @@ know (validSocialAct, CLOSE_POLICY) - so the client sends it only through world1
 repainting when the hub's word changes. NOT YET DEPLOYED: the merge deploys the relay (`relay-deploy.yml`, keyed on
 RELAY_VERSION). Not DFU's - Daggerfall Unity has no parties.
 
-Pinned: `test/partylead.test.js` (3: the wire and the floor, the hub's refusals and the hand-over, the client's gate),
-`test/soc3_socialpanel.test.js` PARTY-LEAD (the button), `tools/mutants/partylead.json` (14, all dead). The relay pins
-moved to world164 (`test/relayversion.test.js` its row); soc1's S25 record aimed at the kick's own check (the lead asks
+Pinned: `test/net/partylead.test.js` (3: the wire and the floor, the hub's refusals and the hand-over, the client's gate),
+`test/net/soc3_socialpanel.test.js` PARTY-LEAD (the button), `tools/mutants/partylead.json` (14, all dead). The relay pins
+moved to world164 (`test/net/relayversion.test.js` its row); soc1's S25 record aimed at the kick's own check (the lead asks
 the same first question), and relayversion's R1 at the hub's new last method.
 
 ## SUNBABY2 (2026-10-04, "using the /event command, let's improve sunbaby, give it phases where it turns evil and starts raining fireballs upon daggerfall", then "and also a phase where it turns into todd howard") - the sun baby's phases: the wrath, its fire, and Todd
@@ -15257,7 +15312,7 @@ ticked round the traveller (`tvStand`, the dread's eye) and thrown through `magi
 has no hub link - FLAGGED, as EVENT1 and SUNBABY1 left it. worldModes.js (interiors) and dungeonContext.js draw no sky
 and drop no fire - FLAGGED: the event is outside; a player who steps out of a building into a changed face is told it.
 
-**Records.** test/sunbaby2_phases.test.js (11): the cycle and its morphs, the frame's lines and the joiner, the fire's
+**Records.** test/world/sunbaby2_phases.test.js (11): the cycle and its morphs, the frame's lines and the joiner, the fire's
 slots, its landing and its rain, the land under the wrath, the GLSL from the tables and the pass's face, the engine's
 skyFire through a real `createPlayerMagic`, and the host seams. tools/mutants/sunbaby2.json (24, all dead). SUNBABY1's
 GLSL, fog, water and light pins and EVENT1's two light pins moved where the text moved (marked), and SUNBABY1's fog
@@ -15274,7 +15329,7 @@ to be whole (now one second in).
 circle half of it) and recompressed to a 256 JPEG of 11 KB by ImageMagick, ships as `src/assets/sunbaby/todd.jpg`
 (Vite bundles it: `SUNBABY_TODD_PHOTO_URL`, render/sunbabySkyRenderer.js). It is NOT the port's own art - a
 third-party photograph, kept at Mac's explicit request; the doctrine allow-list's row says so (`SUPPLIED`, no ARENA2
-pixel - test/doctrine.test.js). The pass fetches it when it is first built (the event's first showing, minutes before
+pixel - test/tooling/doctrine.test.js). The pass fetches it when it is first built (the event's first showing, minutes before
 Todd's phase), uploads it inside its next draw (mipmapped - it is drawn small; the unpack flip held off and put back as
 another pass left it), and only then tells the shader (`uToddPhotoOn`); until then, or if it never loads (a warning),
 the SUNBABY2 cartoon stands in. A black texel stands in the texture before it, so the sampler never reads an incomplete
@@ -15286,7 +15341,7 @@ out by Todd's weight like any face.
 **The four hosts.** Unchanged from SUNBABY2: the pass is the sky controller's; world.js WIRED, the other three
 FLAGGED.
 
-**Records.** test/sunbaby3_todd_photo.test.js (4): the file (a square 256 JPEG, small) and its doctrine row; the GLSL's
+**Records.** test/world/sunbaby3_todd_photo.test.js (4): the file (a square 256 JPEG, small) and its doctrine row; the GLSL's
 mapping from the table, right way up, the cartoon only where the photograph is not on; the pass's load, its one
 upload inside a frame with the flip guarded, the uniform, a failed load and a Node without Image. SUNBABY2's morph pins
 and the GLSL call pin, and SUNBABY1's derivative, outColor and dispose pins moved (marked). tools/mutants/sunbaby3.json
@@ -15309,14 +15364,14 @@ The design and the record are `11-Multiplayer/Sea-Serpent.md`. What it asks of t
   account).
 - **When:** the relay first, then the service (migration 0081 first), then the client. A client on an older relay sees
   the omen and no fight. Merging deploys world165 and acct78, which drops connected players once.
-- Pins: `test/serpent1_law.test.js`, `test/serpent1_relay.test.js`, `test/serpent1_client.test.js`. Mutants:
+- Pins: `test/net/serpent/serpent1_law.test.js`, `test/net/serpent/serpent1_relay.test.js`, `test/systems/serpent1_client.test.js`. Mutants:
   `tools/mutants/serpent1.json` (43, all dead). Re-aimed by content: `auditrealm2_client.json` (2), `eventtip.json`,
   `gatekeys.json`, `gateux.json`, `raid4.json`, `seapeace.json`, `survtiers3.json` (2) and `wb12d.json`.
-- **AUDIT SERPENT 2** (`01-Overview/Audit-Sea-Serpent.md`): every word a fight fans names its site (`sx`/`sz` on every
+- **AUDIT SERPENT 2** (`01-Overview/audits/Audit-Sea-Serpent.md`): every word a fight fans names its site (`sx`/`sz` on every
   `serpent` frame of a fight; `validSerpentOut` projects it) and the client folds its own site's alone - a forged
   site's fight heard on a halo socket in the next cell never reads as the client's serpent; a socket about two fights
   hears both. A refusal no longer mutes the client; the cell's other changes are the brain's and the room's (one
-  timeline rule, the far newcomer, the slain kept, a still fight unwritten). Pins: `test/serpent1_audit2.test.js`;
+  timeline rule, the far newcomer, the slain kept, a still fight unwritten). Pins: `test/net/serpent/serpent1_audit2.test.js`;
   mutants: `tools/mutants/serpent1_audit2.json` (14, all dead).
 
 ## SERPENT2 (2026-10-04, the owner: "So this also shows in the pause menu timer?", then "This needs to happen, the discord integration needs to happen") - the serpent's herald and its timers
@@ -15339,7 +15394,7 @@ The record is `11-Multiplayer/Sea-Serpent.md` section 14. What it asks of the on
 - **When:** the relay alone (world166) - the service is untouched. A client before it says no site; the herald then
   names no port and posts no kill until two accounts on a current client agree. Merging deploys world166, which drops
   connected players once.
-- Pins: `test/serpent2_herald.test.js` (13). `test/discordgates.test.js` stubs the serpent's herald on its hub, so it
+- Pins: `test/net/serpent/serpent2_herald.test.js` (13). `test/net/gate/discordgates.test.js` stubs the serpent's herald on its hub, so it
   pins the gate's alone. Mutants: `tools/mutants/serpent2.json` (49, all dead). Re-aimed by content:
   `discordgates.json` (8: the serpent's copy of the `site` law, the beat and the place made their old text stand twice;
   `heraldStamp` renamed), `wb12d.json` and `wb13b.json` (`heraldList`).
@@ -15368,7 +15423,7 @@ else's until they changed area; the Broker said as much ("Others see it once you
   door - and never after a mint, which said it already. THE FOUR HOSTS: world.js WIRED; `worldModes.js`,
   `dungeonContext.js` and `exterior.js` hold no session of their own - unchanged.
 - No relay change and no version: the relay's own reconnect law does it.
-- Pins: `test/auralive.test.js` (6) - end to end through the real Room (a peer draws the wings; no leave; the host's
+- Pins: `test/net/auralive.test.js` (6) - end to end through the real Room (a peer draws the wings; no leave; the host's
   seat kept; not superseded; taken off the same way), a run of changes one hello, the halo's socket, the refusals, the
   host's ask; `tools/mutants/auralive.json` (12).
 
@@ -15402,7 +15457,7 @@ both foe streams (the exterior's cells and the dungeon's rooms) carry a foe's te
 flags, `wy` its yaw, `wl` ms to its landing (relative: each client's foes run on their own clock), `wo` its origin,
 `wp` a leap's or a shot's point - and `ws` its stagger or overreach (`net/wire.js validFoeRecord`). Every puppet draws
 the mark, the glint, the held arm and the cues from them (`ai/puppetBlows.js`), and a wind-up AT a player is judged
-on that player's own machine at its landing - the world boss's law (`net/gateStrike.js`). An owner's foe now winds up
+on that player's own machine at its landing - the world boss's law (`net/gate/gateStrike.js`). An owner's foe now winds up
 at a peer it hunts as at its owner; the owner's own view of the peer's feet decides only its foe's punish window. A
 peer's blow on a foe winding up carries its class (`wc`, `hitClassOf`) so the owner's poise meter weighs it as its own.
 
@@ -15417,15 +15472,15 @@ in the Bay, which is the roads' own reason (MODS-ONLINE-2, above), and it joins
 `Enabled` and `SmoothRoads` in `ONLINE_ROOM_MOD_KEYS`. It is forced ON, past
 the mod's shipped off: a room that held the default would have no rivers at
 all. That makes it the one room key forced past its shipped default, and the
-pin that holds every other key to its default names it (`test/modsonline.test.js`
+pin that holds every other key to its default names it (`test/systems/modsonline.test.js`
 PAST_DEFAULT). The smoother's measurement above still holds - the smoother
-never moves a river's height - and `test/landform.test.js` measures the
+never moves a river's height - and `test/systems/landform.test.js` measures the
 kernel's half: the switch moves the ground under a river. The Mods pane locks
 the row online with the ground's words; offline it stays the player's, off as
 shipped, and the online sync (UXB1-E) copies the room's on home with the rest.
 The landforms' job lost its own river flag: the painter's switch is the cut's.
 
-AUDIT LANDFORMS (2026-10-07, `01-Overview/Audit-Landforms.md`) added three:
+AUDIT LANDFORMS (2026-10-07, `01-Overview/audits/Audit-Landforms.md`) added three:
 - C3, HIS NETWORK OR NONE YET: one failed fetch of Basic Roads' arrays stood
   that client on the port's own generated network - other roads, no rivers, so
   with the landforms a river pixel's ground a median 4.8 m off its peers'.
@@ -15433,7 +15488,7 @@ AUDIT LANDFORMS (2026-10-07, `01-Overview/Audit-Landforms.md`) added three:
   WOD6's backoff: 5 s, doubling to a minute, twelve more tries), the pixels
   roadless meanwhile and rebuilt when they land (ROADS 25); the port's own
   network only once every try has failed.
-- C4: the ground's lock note (`ui/enhancedMenu.js` ONLINE_GROUND_NOTE) names
+- C4: the ground's lock note (`ui/enhanced/enhancedMenu.js` ONLINE_GROUND_NOTE) names
   the rivers it now locks.
 - C2, TWO BUILDS IN ONE ROOM, named and left to Mac: nothing keeps a build
   without the landforms and one with them out of the same room (`worldRoom`
@@ -15463,13 +15518,13 @@ AUDIT LANDFORMS III (2026-10-07) added one:
   room's. Each site is its row as MAPS.BSA holds it now
   (`MapsFile.locationReplaced`, `readClassicLocation`), on every client.
 
-Pins: `test/landform.test.js`, `test/auditlandforms.test.js` (C3: the backoff
+Pins: `test/systems/landform.test.js`, `test/world/terrain/auditlandforms.test.js` (C3: the backoff
 and the host's landing, online and off; C4; G3: the fetch's timeout; J7: the
-retry on its own defaults), `test/auditlandforms3.test.js` (B1: the door
-asked, the host's classic rows), `test/modsonline.test.js` (the
-count, 47; the named key), `test/onlinelane.test.js` (the contrast re-aimed a
+retry on its own defaults), `test/world/terrain/auditlandforms3.test.js` (B1: the door
+asked, the host's classic rows), `test/systems/modsonline.test.js` (the
+count, 47; the named key), `test/systems/onlinelane.test.js` (the contrast re-aimed a
 third time, at the roads a travel map only draws),
-`test/uxb1e_onlinesync.test.js`; mutants: `tools/mutants/landform.json` (36,
+`test/systems/online/uxb1e_onlinesync.test.js`; mutants: `tools/mutants/landform.json` (36,
 all dead), `tools/mutants/auditlandforms.json` (the C3 and C4 records).
 Not verified in a browser: no online session exists in this container.
 
@@ -15514,14 +15569,14 @@ guildWordText); a custom class the filter catches is no class at all (`src/net/w
 projection, so no peer sees it); a maker's mark the filter catches is left off the piece (`src/net/recipeLaw.js`
 makerMark - the service's mint, the client's smith and cook mints, and the card and the furniture that show a mark;
 makerName stays the SHAPE law `src/net/decorLaw.js` reads to tell a forged mark); and a name the Item Maker gave a piece
-is starred wherever the pack names it (`src/systems/itemInfo.js` shownItemName, in resolveItemName and the macro and
+is starred wherever the pack names it (`src/systems/item/itemInfo.js` shownItemName, in resolveItemName and the macro and
 survival names - every holder, shelf and market). DFU's Item Maker window is untouched.
 
 Relay **world175** (the relay's parse runs both laws); ACCOUNT_VERSION **acct90** (no migration). The four hosts
 (`scenes/exterior.js`, `scenes/world.js`, `scenes/worldModes.js`, `scenes/dungeonContext.js`) are untouched - no seam
 of theirs moved.
 
-- **Pinned**: `test/text_filter.test.js` (9 - two of them through the real service: a note, a notice, a guild note and
+- **Pinned**: `test/net/text_filter.test.js` (9 - two of them through the real service: a note, a notice, a guild note and
   a letter kept and read starred; a rank's word refused and said); `tools/mutants/text_filter.json` (17, all dead).
   PIN MOVED: chatroster_namefilter (NAME-F2's import line), mail1 (wordsLine is still visibleText's, its words
   starred), legacy7_wed (WED_RELAY_MIN is world174, the relay having moved on), audit26_questitem (F077's soul-trap pin
@@ -15554,7 +15609,7 @@ law takes, every plaque, the widest outfit - and reads it at a desktop's width, 
 enhanced sheet and bare: every check passes. It loads with `?nointro` - the film takes Escape at the window, stopped,
 whenever it mounts before the card, which made the probe's Escape check a race.
 
-- **Pinned**: `test/profile_ui.test.js` (3); `tools/mutants/profile_ui.json` (9, all dead). PIN MOVED:
+- **Pinned**: `test/net/profile_ui.test.js` (3); `tools/mutants/profile_ui.json` (9, all dead). PIN MOVED:
   serpent1_auditclient (the serpents slain are a plaque). Re-aimed: inspect1.json INS-gear-out-of-order (the row carries
   its part).
 
@@ -15578,7 +15633,7 @@ nobody to hear, and says so (AUDIT FB1007b H5, with a page held out, the party c
 outside the Hold is the shared world again (its cell's room). The relay is untouched: an older client still joins the old
 room, and only with other older clients.
 
-AUDIT FB1007b (`01-Overview/Audit-FB1007b.md`): no room remembers the Hold, so every entry built it whole, its loot
+AUDIT FB1007b (`01-Overview/audits/Audit-FB1007b.md`): no room remembers the Hold, so every entry built it whole, its loot
 rolled anew at the player's level - online the page keeps its memory as a room keeps one, at the door out, laid back at
 the next door in (WORLD8's hour on it), forgotten by a load (H2); the hub's link hears the relay's clock for it, where
 the presence session hears no welcome (H4); and a staff `/tp` to a player there is refused as unavailable (H3).
@@ -15588,7 +15643,7 @@ Of every location in the world, the start cell holds one: Daggerfall's Privateer
 
 - **Pinned** (until the revert): `test/fb1007b_holdsolo.test.js` (9; one gated on ARENA2) - DELETED by HOLD-SHARED;
   `tools/mutants/fb1007b.json` (its FB1007B-HOLD / START-CELL / PH1 records and the audit's H records). Record:
-  `01-Overview/Field-Bugs-2026-10-07b.md`.
+  `01-Overview/bugs/Field-Bugs-2026-10-07b.md`.
 
 ## HOLD-SHARED (2026-10-12, asked: "I want to revert the change we made to privateers hold making it instanced") - Privateer's Hold is a shared world room again
 
@@ -15609,7 +15664,7 @@ its simulation (WORLD2), its acts (WORLD3), its loot (WORLD4) and a trade from a
   `scenes/dungeonContext.js` never keyed a room for the Hold (TUT1's start-cave tutorial in `dungeonContext.js` is
   untouched).
 
-- **Pinned**: `test/holdshared.test.js` (5) - the start cell, the identity and the key block, the staff teleport and the
+- **Pinned**: `test/net/holdshared.test.js` (5) - the start cell, the identity and the key block, the staff teleport and the
   Local line executed from their source, withMe, the Online pane and the Playing Online page; `tools/mutants/holdshared.json`
   (4, each a piece of HOLD-SOLO back, dead). Re-aimed: fb1007b.json's START-CELL and PH1 records (to holdshared; the
   13 HOLD and H records retired, 46 left), sdonline.json SD-ONLINE-the-identity-blind and auditparty8.json
@@ -15622,7 +15677,7 @@ the one funnel every dungeon entry takes (the door, startInDungeon's Recall, que
 the abyss, the undercroft, the arena floor) - refuses the Hold online before its gate (no hub's word, no build) and
 says so: "You cannot go back into Privateer's Hold." (`systems/startDungeon.js` HOLD_ONCE_TEXT).
 
-- The Hold is known by its map id - `systems/startDungeon.js` isPrivateersHold, `world/dungeonTextures.js`
+- The Hold is known by its map id - `systems/startDungeon.js` isPrivateersHold, `world/dungeon/dungeonTextures.js`
   PRIVATEERS_HOLD_MAP_ID (187853213, DaggerfallDungeon.IsMainStoryDungeon's first; MAIN_STORY_DUNGEON_IDS reads the
   same constant) - never the configured start cell, a setting that would otherwise open the real Hold.
 - What still enters: the new game's start (`scenes/world.js`, the classic start's `startInDungeon({ holdOpen: true })`),
@@ -15633,10 +15688,13 @@ says so: "You cannot go back into Privateer's Hold." (`systems/startDungeon.js` 
   (the exterior fallback, as for any site with no entrance).
 - Offline, the Hold's door is DFU's. The relay is untouched: the Hold keeps its shared room (HOLD-SHARED, above), and
   every player in it is one who has not yet walked out.
+- INSTANCES (2026-10-15, `11-Multiplayer/Instances.md` section 6): what is refused is the Hold's PUBLIC room. At a relay
+  that admits instances (world208) its door offers "Your instance" - and a partner's - never Public; an instance of the
+  Hold is entered any time, for its owner and the owner's party.
 - Four hosts: `scenes/worldModes.js` holds the gate, and both town hosts build it; `scenes/world.js` marks its two
   ways in; `scenes/exterior.js` hands no `dungeonOnline` (offline, DFU's); `scenes/dungeonContext.js` enters no dungeon.
 
-- **Pinned**: `test/holdonce.test.js` (3) - isPrivateersHold against a moved start cell; tryEnterDungeon executed from
+- **Pinned**: `test/systems/holdonce.test.js` (3) - isPrivateersHold against a moved start cell; tryEnterDungeon executed from
   its source, online and off, every arm; the ways in by source. `tools/mutants/holdonce.json` (11, all dead). PIN MOVED
   (`holdOpen` beside `fromLoad`): mapkeep, castle1, classicstart, dungeonentry, audit68_worldmodes (the Hold's refusal
   before the gate), fixc_firstStart (the new game's start), staffTeleport (the staff landing).
@@ -15644,13 +15702,13 @@ says so: "You cannot go back into Privateer's Hold." (`systems/startDungeon.js` 
 ## CARDS5 (2026-10-08, Mac: "Do 3 4 and 5") - the relay deals
 
 The relay's newest authority, beside the gate's boss and the arena's bout: a building's room keeps its card tables
-(`net/holdemTable.js`, with `net/cardLaw.js` in the bundle - `world178` at the merge, world176 on its branch). The `holdem`
+(`net/holdemTable.js`, with `net/card/cardLaw.js` in the bundle - `world178` at the merge, world176 on its branch). The `holdem`
 frame asks (sit, stand, act, look - `validHoldemIn`, `holdemGate`, `HOLDEM_RELAY_MIN`); the relay shuffles from its own
 CSPRNG, keeps the deck, tells each seat its own cards alone and the room the public hand, runs the seat clock on the alarm
 and folds a leaver out of turn; the tables checkpointed to storage. Friendly - no gold moves. The whole record is
 `11-Multiplayer/Tavern-Cards.md` section 17.
 
-AUDIT CARDS-3 (2026-10-08, `01-Overview/Audit-Cards-3.md`; the same row, re-hashed in place): one seat an account in a
+AUDIT CARDS-3 (2026-10-08, `01-Overview/audits/Audit-Cards-3.md`; the same row, re-hashed in place): one seat an account in a
 room; a refused sit moves nothing elsewhere; seats with no socket in the room stood up on the alarm and by an empty
 room's sweep; the room's sits on `holdemSitRoomGate`; a table of other chairs refused; a dropped player's own chair back.
 On the client, the frames restamped on the cloth's clock, and the chair found by the player's own id.
@@ -15661,9 +15719,9 @@ last said per table, `_holdemSaid`) - a wake, a table's first frame and a look s
 a delta asks for it (`look`). AUDIT CARDS-4 D1: the room frames are numbered per table (`n`), and a delta is laid only on
 the frame just before it - a socket that missed one asks for the table whole.
 
-CARDS6 (2026-10-08; the same row, re-hashed in place): GOLD TABLES. A sit may carry the service's stake order (`net/identityToken.js` kind `stake`), which the room checks with the key it holds and spends once; a staked seat's leaving is signed back as a cash-out receipt (`net/cardReceipt.js`, `c1`, GATE_SIGNING_KEY), owed to its account in the room till its `ack`; a stake never sat is `void`ed back. The service holds the stakes (`server-account/src/cards.js`). The whole record is `11-Multiplayer/Tavern-Cards.md` section 23.
+CARDS6 (2026-10-08; the same row, re-hashed in place): GOLD TABLES. A sit may carry the service's stake order (`net/identityToken.js` kind `stake`), which the room checks with the key it holds and spends once; a staked seat's leaving is signed back as a cash-out receipt (`net/card/cardReceipt.js`, `c1`, GATE_SIGNING_KEY), owed to its account in the room till its `ack`; a stake never sat is `void`ed back. The service holds the stakes (`server-account/src/cards.js`). The whole record is `11-Multiplayer/Tavern-Cards.md` section 23.
 
-AUDIT CARDS-4 and CARDS6b (2026-10-08, `01-Overview/Audit-Cards-4.md`, Tavern-Cards section 24; the same row, re-hashed
+AUDIT CARDS-4 and CARDS6b (2026-10-08, `01-Overview/audits/Audit-Cards-4.md`, Tavern-Cards section 24; the same row, re-hashed
 in place): another room's stake order is left unspent with nothing handed back; the table is read again after an
 order's await; a room that cannot sign a cash-out seats and voids no stake; a cash-out leaves the queue only once kept;
 a void reaches a receipt's life. And the `topup` word: a gold seat adds a stake of its own between hands, checked before
@@ -15702,7 +15760,7 @@ has no building and no re-roll (DFU's guard is IsPlayerInsideBuilding). Not repr
 that has not answered within the door's bound (`waitFor`) stands Daggerfall's house, its residents with it, for that
 visit.
 
-- **Pinned**: `test/fb1007_hallfolk.test.js` (4) - over the account service's own answer and the real mode machine;
+- **Pinned**: `test/world/fb1007_hallfolk.test.js` (4) - over the account service's own answer and the real mode machine;
   `tools/mutants/fb1007hallfolk.json` (4, all killed).
 
 ## PARTY-LOOT (2026-10-14, the field - "Loot | Data Sync Bug?"; Mac: "Shared base + personal bonus") - a room's container is one list for everyone, and a bonus of each player's own
@@ -15763,6 +15821,21 @@ one breath should end - each keeping it, or the room deciding): **"Host arbitrat
   rolls no pile of its own (the pile loop's `onlineRoom() ? [] :`), and a fallen copy's own list is emptied at its fall
   (`roomBodyBorn`), so a reader no gate stands before - LOOT11's line of light over a find (`lootFinds`), Hunting's body
   key (`corpseKeyOf`), the save - finds none of it either.
+- **ANOTHER BUILD'S WORD IS NO DEAD END** (GRAVE-PARTY, `01-Overview/bugs/Field-Bugs-2026-10-16b.md`: "objects in tombs are
+  un lootable"). A room container whose word this build cannot read (AUDIT SETS M2's `_lootUnreadable` - another build's
+  base signature, or a word `validRoomWord` refuses) was UNBORN for good: the mint waits on a word it will never read,
+  so its pile stood on the floor with no plaque and no press, and M2's own line was never reached. It is a TARGET again
+  (`scenes/roomLootHost.js` `roomUnborn` no longer holds it), and its press says M2's own line ("Something in here is
+  from a newer version of the game. Reload to open it.", `LOOT_NEWER_TEXT`) and opens nothing; its plaque names no list
+  (`lootContents`). A word it can read makes it the room's again (`landRoomWord`). AUDIT GRAVE-PARTY G2 (2026-10-16):
+  GRAVE-PARTY first opened it as the player's OWN (`roomPersonal`, "Another version of the game shares this room - what
+  you find here is yours alone."), and that was a dead end or a copy, never a find: an online pile is BUILT EMPTY (the
+  pile loop's `onlineRoom() ? [] :`), so a pile never composed here opened an empty list and its flat went at the close
+  (`settleLootFlat`); one composed here and turned unreadable handed its base out unclaimed beside every other build's
+  takes of the same base. Its own pin had hand-built a pile holding a list, which no online pile does. Gone, with its
+  string; and `roomSettle` reads a take under a window opened before the word turned unreadable again - lifted back out
+  of the pack and claimed of the host, one copy (the claim lapses, and the piece is back in the list, when no verdict
+  comes).
 - **THE WORD IS THE TAKES, AND THE HOST'S.** The room's word about a room container is no longer its list: `{k, g, lv,
   n, tm, h, x, c, s, si, y, t}` - its terms, its base's signature (`h`), the base places gone (`x`, a set that only
   grows), a base stack's count where it was drawn down (`c`, a count that only falls), the pieces stored in it (`s`,
@@ -15836,7 +15909,7 @@ base is composed, so Physical Items throws a body's pieces out on every client, 
 older build in the room reads the new word as M2's newer word ("Reload to open it"), and its own WORLD4 list still
 lands for everyone, migrated. Not seen with two real players from this container.
 
-- **Pinned**: `test/partyloot.test.js` (10) - two and three peers mounted over the dungeon host's real loot doors and
+- **Pinned**: `test/systems/partyloot.test.js` (10) - two and three peers mounted over the dungeon host's real loot doors and
   the real producers, at different levels, Luck, Renown, dice and Foraging switches, joined by a queuing relay: one base
   on every body and pile; a take removing the same piece for everyone; two takes in one breath both landing; THE HOST
   ARBITRATES - the same piece taken in one breath going to one player (the host against a joiner, two joiners), the

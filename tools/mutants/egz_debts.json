@@ -1,0 +1,445 @@
+[
+  {
+    "name": "EGZP-share-unapplied",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "const k = (1 - dr) * x, raw = strikeDamage(",
+    "new": "const k = x, raw = strikeDamage(",
+    "tests": [
+      "test/net/eliteGates/egz_debts.test.js"
+    ]
+  },
+  {
+    "name": "EGZP-share-unspared",
+    "note": "EG-ZR (PIN MOVED): re-aimed by content - a blow's share is of the body without Stoneskin's cushion (spireBodyMax)",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "raw = strikeDamage(pct * k, spireBodyMax(e), base * k)",
+    "new": "raw = strikeDamage(pct, spireBodyMax(e), base * k)",
+    "tests": [
+      "test/net/eliteGates/egz_debts.test.js"
+    ]
+  },
+  {
+    "name": "EGZP-points-unspared",
+    "note": "EG-ZR (PIN MOVED): re-aimed by content - a blow's share is of the body without Stoneskin's cushion (spireBodyMax)",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "raw = strikeDamage(pct * k, spireBodyMax(e), base * k)",
+    "new": "raw = strikeDamage(pct * k, spireBodyMax(e), base)",
+    "tests": [
+      "test/net/eliteGates/egz_debts.test.js"
+    ]
+  },
+  {
+    "name": "EGZP-blow-unshielded",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "landShare(bl.p, bl.b, bl.el, bl.nm, spared(E, F, bl), part * egTouchedX(F, bl, me(), t), true);",
+    "new": "landShare(bl.p, bl.b, bl.el, bl.nm, 0, part * egTouchedX(F, bl, me(), t), true);",
+    "tests": [
+      "test/net/eliteGates/egz_debts.test.js"
+    ]
+  },
+  {
+    "name": "EGZP-trail-unkept",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "if (standing) { trail.push([t, f[0], fy, f[1], hall]);",
+    "new": "if (false) { trail.push([t, f[0], fy, f[1], hall]);",
+    "tests": [
+      "test/net/eliteGates/egz_debts.test.js"
+    ]
+  },
+  {
+    "name": "EGZP-trail-wrong-hall",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "trail.push([t, f[0], fy, f[1], hall]);",
+    "new": "trail.push([t, f[0], fy, f[1], 0]);",
+    "tests": [
+      "test/net/eliteGates/egz_debts.test.js"
+    ]
+  },
+  {
+    "name": "EGZP-trail-untrimmed",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": " while (trail.length > 1 && trail[1][0] <= t - EG_TRAIL_MS) trail.shift(); }",
+    "new": " }",
+    "tests": [
+      "test/net/eliteGates/egz_debts.test.js"
+    ]
+  },
+  {
+    "name": "EGZP-trail-short",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "trail[1][0] <= t - EG_TRAIL_MS) trail.shift();",
+    "new": "trail[1][0] <= t - 500) trail.shift();",
+    "tests": [
+      "test/net/eliteGates/egz_debts.test.js"
+    ]
+  },
+  {
+    "name": "EGZP-companion-unshifted",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "return p && centre ? [p[0] - centre[0], p[1] - PEER_EYE_M - centre[1], p[2] - centre[2]] : null;",
+    "new": "return p && centre ? [p[0], p[1] - PEER_EYE_M - centre[1], p[2] - centre[2]] : null;",
+    "tests": [
+      "test/net/eliteGates/egz_debts.test.js"
+    ]
+  },
+  {
+    "name": "EGZP-companion-unseen-read",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "    if (p) bodies.push({ sub, tr: [[bl.at, p[0], p[1], p[2], B.h]] });",
+    "new": "    bodies.push({ sub, tr: [[bl.at, p[0], p[1], p[2], B.h]] });",
+    "tests": [
+      "test/net/eliteGates/egz_debts.test.js"
+    ]
+  },
+  {
+    "name": "EGZP-companion-stamp",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "tr: [[bl.at, p[0], p[1], p[2], B.h]] });",
+    "new": "tr: [[bl.at + 1, p[0], p[1], p[2], B.h]] });",
+    "tests": [
+      "test/net/eliteGates/egz_debts.test.js"
+    ]
+  },
+  {
+    "name": "EGZP-companion-hall",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "tr: [[bl.at, p[0], p[1], p[2], B.h]] });",
+    "new": "tr: [[bl.at, p[0], p[1], p[2], 0]] });",
+    "tests": [
+      "test/net/eliteGates/egz_debts.test.js"
+    ]
+  },
+  {
+    "name": "EGZP-mine-unread",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "bodies = [{ sub: me ?? '', tr }];",
+    "new": "bodies = [];",
+    "tests": [
+      "test/net/eliteGates/egz_debts.test.js"
+    ]
+  },
+  {
+    "name": "EGZP-thrower-dropped",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "at: bl.at, o: bl.o ?? 0 }, bodies);",
+    "new": "at: bl.at, o: 0 }, bodies);",
+    "tests": [
+      "test/net/eliteGates/egz_debts.test.js"
+    ]
+  },
+  {
+    "name": "EGZP-landing-dropped",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "{ sub: me ?? '', at: bl.at, o: bl.o ?? 0 }",
+    "new": "{ sub: me ?? '', at: 0, o: bl.o ?? 0 }",
+    "tests": [
+      "test/net/eliteGates/egz_debts.test.js"
+    ]
+  },
+  {
+    "name": "EGZP-row-in",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "mem[c[0]] = { in: m?.in, alive:",
+    "new": "mem[c[0]] = { in: true, alive:",
+    "tests": [
+      "test/net/eliteGates/egz_debts.test.js"
+    ]
+  },
+  {
+    "name": "EGZP-row-alive",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "alive: m?.alive, home:",
+    "new": "alive: true, home:",
+    "tests": [
+      "test/net/eliteGates/egz_debts.test.js"
+    ]
+  },
+  {
+    "name": "EGZP-row-home",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "home: m?.home, vs:",
+    "new": "home: false, vs:",
+    "tests": [
+      "test/net/eliteGates/egz_debts.test.js"
+    ]
+  },
+  {
+    "name": "EGZP-runs-unread",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "vs: run.vs, mast: run.mast,",
+    "new": "vs: [], mast: run.mast,",
+    "tests": [
+      "test/net/eliteGates/egz_debts.test.js"
+    ]
+  },
+  {
+    "name": "EGZP-mastery-unread",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "vs: run.vs, mast: run.mast,",
+    "new": "vs: run.vs, mast: -1,",
+    "tests": [
+      "test/net/eliteGates/egz_debts.test.js"
+    ]
+  },
+  {
+    "name": "EGZP-windows-unread",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "...(c[0] === me ? { ll } : {}) };",
+    "new": "...{} };",
+    "tests": [
+      "test/net/eliteGates/egz_debts.test.js"
+    ]
+  },
+  {
+    "name": "EGZP-windows-everyone",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "...(c[0] === me ? { ll } : {}) };",
+    "new": "...{ ll } };",
+    "tests": [
+      "test/net/eliteGates/egz_debts.test.js"
+    ]
+  },
+  {
+    "name": "EGZP-window-from",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "[at - EG_HEAL_WORD_MS, at + EG_LIFELINE_MS, v]",
+    "new": "[at, at + EG_LIFELINE_MS, v]",
+    "tests": [
+      "test/net/eliteGates/egz_debts.test.js"
+    ]
+  },
+  {
+    "name": "EGZP-window-until",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "[at - EG_HEAL_WORD_MS, at + EG_LIFELINE_MS, v]",
+    "new": "[at - EG_HEAL_WORD_MS, at + EG_LIFELINE_MS + 1, v]",
+    "tests": [
+      "test/net/eliteGates/egz_debts.test.js"
+    ]
+  },
+  {
+    "name": "EGZP-window-four",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "at + EG_LIFELINE_MS, v]].slice(-4);",
+    "new": "at + EG_LIFELINE_MS, v]].slice(-5);",
+    "tests": [
+      "test/net/eliteGates/egz_debts.test.js"
+    ]
+  },
+  {
+    "name": "EGZP-window-old-kept",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "[...ll.filter((w) => w[1] >= at - EG_TRAIL_MS), [at",
+    "new": "[...ll, [at",
+    "tests": [
+      "test/net/eliteGates/egz_debts.test.js"
+    ]
+  },
+  {
+    "name": "EGZP-window-nought",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "lifeline(v, at) { if (v > 0 && Number.isFinite(at))",
+    "new": "lifeline(v, at) { if (Number.isFinite(at))",
+    "tests": [
+      "test/net/eliteGates/egz_debts.test.js"
+    ]
+  },
+  {
+    "name": "EGZP-window-no-instant",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "lifeline(v, at) { if (v > 0 && Number.isFinite(at))",
+    "new": "lifeline(v, at) { if (v > 0)",
+    "tests": [
+      "test/net/eliteGates/egz_debts.test.js"
+    ]
+  },
+  {
+    "name": "EGZP-leave-keeps",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "      trail.length = 0; ll = [];   // EG-ZP\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egz_debts.test.js"
+    ]
+  },
+  {
+    "name": "EGZP-window-never-opened",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    lifelineSaid(h);   // EG-ZP\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egz_debts.test.js"
+    ]
+  },
+  {
+    "name": "EGZP-healer-unread",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "n >= min).map(([by]) => accountOf(by))",
+    "new": "n >= min).map(() => null)",
+    "tests": [
+      "test/net/eliteGates/egz_debts.test.js"
+    ]
+  },
+  {
+    "name": "EGZP-half-rtt-dropped",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "fight?.lifeline?.(v, t + egClockHalfRtt(clock));",
+    "new": "fight?.lifeline?.(v, t);",
+    "tests": [
+      "test/net/eliteGates/egz_debts.test.js"
+    ]
+  },
+  {
+    "name": "EGZP-own-heal-believed",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "for (const s of subs) if (s !== me) v = Math.max(",
+    "new": "for (const s of subs) v = Math.max(",
+    "tests": [
+      "test/net/eliteGates/egz_debts.test.js"
+    ]
+  },
+  {
+    "name": "EGZP-healer-misread",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "egVOf(egRunOfMember(E, s).vs, 'lifeline')",
+    "new": "egVOf(egRunOfMember(E, s).vs, 'mender')",
+    "tests": [
+      "test/net/eliteGates/egz_debts.test.js"
+    ]
+  },
+  {
+    "name": "EGZP-strongest-summed",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "v = Math.max(v, egVOf(egRunOfMember(E, s).vs, 'lifeline'));",
+    "new": "v += egVOf(egRunOfMember(E, s).vs, 'lifeline');",
+    "tests": [
+      "test/net/eliteGates/egz_debts.test.js"
+    ]
+  },
+  {
+    "name": "EGZP-frame-low-unnoted",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "        if (entity.health < entity.maxHealth * EG_LIFELINE_UNDER) lowAt = t;",
+    "new": "        void lowAt;",
+    "tests": [
+      "test/net/eliteGates/egz_debts.test.js"
+    ]
+  },
+  {
+    "name": "EGZP-frame-low-at-thirty",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "if (entity.health < entity.maxHealth * EG_LIFELINE_UNDER) lowAt = t;",
+    "new": "if (entity.health <= entity.maxHealth * EG_LIFELINE_UNDER) lowAt = t;",
+    "tests": [
+      "test/net/eliteGates/egz_debts.test.js"
+    ]
+  },
+  {
+    "name": "EGZP-heal-low-unnoted",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "      if (entity.health - n < entity.maxHealth * EG_LIFELINE_UNDER) lowAt = now();",
+    "new": "      void lowAt;",
+    "tests": [
+      "test/net/eliteGates/egz_debts.test.js"
+    ]
+  },
+  {
+    "name": "EGZP-heal-low-at-thirty",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "if (entity.health - n < entity.maxHealth * EG_LIFELINE_UNDER) lowAt = now();",
+    "new": "if (entity.health - n <= entity.maxHealth * EG_LIFELINE_UNDER) lowAt = now();",
+    "tests": [
+      "test/net/eliteGates/egz_debts.test.js"
+    ]
+  },
+  {
+    "name": "EGZP-look-short",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "if (v > 0 && t - lowAt <= EG_LIFELINE_LOOK_MS)",
+    "new": "if (v > 0 && t - lowAt < EG_LIFELINE_LOOK_MS)",
+    "tests": [
+      "test/net/eliteGates/egz_debts.test.js"
+    ]
+  },
+  {
+    "name": "EGZP-look-long",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "if (v > 0 && t - lowAt <= EG_LIFELINE_LOOK_MS)",
+    "new": "if (v > 0 && t - lowAt <= EG_LIFELINE_LOOK_MS + 1)",
+    "tests": [
+      "test/net/eliteGates/egz_debts.test.js"
+    ]
+  },
+  {
+    "name": "EGZP-host-accounts-unwired",
+    "file": "src/scenes/world.js",
+    "old": "accountOf: (id) => social?.accountOfPeer?.(id) ?? null,",
+    "new": "accountOf: () => null,",
+    "tests": [
+      "test/net/eliteGates/egz_debts.test.js"
+    ]
+  },
+  {
+    "name": "EGZP-teardown-unhanded",
+    "file": "src/scenes/eliteGates/egCircleHost.js",
+    "old": "    ctx.addTeardown?.(() => egCircleDown(ctx));",
+    "new": "    void egCircleDown;",
+    "tests": [
+      "test/world/eliteGates/egz_debts_circle.test.js"
+    ]
+  },
+  {
+    "name": "EGZP-teardown-unkept",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "addTeardown(fn) { if (typeof fn === 'function') _teardowns.push(fn); },",
+    "new": "addTeardown(fn) { if (typeof fn === 'function') void _teardowns; },",
+    "tests": [
+      "test/world/eliteGates/egz_debts_circle.test.js"
+    ]
+  },
+  {
+    "name": "EGZP-teardowns-never-run",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "{ try { fn(); } catch (e) { console.warn('[dungeon] a teardown failed:'",
+    "new": "{ try { void fn; } catch (e) { console.warn('[dungeon] a teardown failed:'",
+    "tests": [
+      "test/world/eliteGates/egz_debts_circle.test.js"
+    ]
+  },
+  {
+    "name": "EGZP-slot-emptied-after",
+    "file": "src/scenes/eliteGates/egCircleHost.js",
+    "old": "    _egMesh = null; _egMeshKey = ''; _egGates = []; _egLookMesh = null; _egLamps = [];",
+    "new": "    _egMeshKey = ''; _egGates = []; _egLookMesh = null; _egLamps = [];",
+    "tests": [
+      "test/world/eliteGates/egz_debts_circle.test.js"
+    ]
+  },
+  {
+    "name": "EGZP-key-kept",
+    "file": "src/scenes/eliteGates/egCircleHost.js",
+    "old": "_egMesh = null; _egMeshKey = ''; _egGates = []; _egLookMesh = null; _egLamps = [];",
+    "new": "_egMesh = null; _egGates = []; _egLookMesh = null; _egLamps = [];",
+    "tests": [
+      "test/world/eliteGates/egz_debts_circle.test.js"
+    ]
+  },
+  {
+    "name": "EGZP-lamps-kept",
+    "file": "src/scenes/eliteGates/egCircleHost.js",
+    "old": "_egGates = []; _egLookMesh = null; _egLamps = [];",
+    "new": "_egGates = []; _egLookMesh = null;",
+    "tests": [
+      "test/world/eliteGates/egz_debts_circle.test.js"
+    ]
+  },
+  {
+    "name": "EGZP-count-unsaid",
+    "file": "src/scenes/eliteGates/egCircleHost.js",
+    "old": "    return gone.size + ground.down(ctx.dynamicDraws);",
+    "new": "    return 0 + ground.down(ctx.dynamicDraws);",
+    "tests": [
+      "test/world/eliteGates/egz_debts_circle.test.js"
+    ]
+  }
+]

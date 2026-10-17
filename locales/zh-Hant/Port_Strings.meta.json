@@ -59,6 +59,16 @@
   "tr": "5ae648c5e129",
   "by": "claude-in-session"
  },
+ "combat.leadLeftHand": {
+  "en": "9a84e174d1b8",
+  "tr": "78ddc53db54a",
+  "by": "claude-in-session"
+ },
+ "combat.leadRightHand": {
+  "en": "40a5921dea29",
+  "tr": "536fddff7789",
+  "by": "claude-in-session"
+ },
  "features.calmHud.note": {
   "en": "aa9c398cb552",
   "tr": "8049fced4a23",
@@ -142,6 +152,16 @@
  "features.wagonUpkeep.title": {
   "en": "a9e06dd27985",
   "tr": "4a21cdcb13d9",
+  "by": "claude-in-session"
+ },
+ "features.weaponGlow.note": {
+  "en": "80be2112719a",
+  "tr": "740da62917a5",
+  "by": "claude-in-session"
+ },
+ "features.weaponGlow.title": {
+  "en": "964f52fd55ec",
+  "tr": "643f34648bd0",
   "by": "claude-in-session"
  },
  "firm.readFail.closed": {
@@ -857,6 +877,16 @@
  "stats.weapon": {
   "en": "ead533685e26",
   "tr": "6f0f16e0c098",
+  "by": "claude-in-session"
+ },
+ "stolen.card": {
+  "en": "f7ee1f5cc455",
+  "tr": "46c06b2f50eb",
+  "by": "claude-in-session"
+ },
+ "stolen.taken": {
+  "en": "47f05fb5e818",
+  "tr": "1243f3533981",
   "by": "claude-in-session"
  },
  "summon.noQuest": {

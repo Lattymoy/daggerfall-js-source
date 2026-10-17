@@ -17,7 +17,12 @@
 # token in .git/config (AUDIT INSTALL L1-1's law for that workflow).
 #
 # The shard count is in two places that must agree - the matrix and the
-# `/4` - and test/flow1_ci.test.js holds them together.
+# `/4` - and test/tooling/flow1_ci.test.js holds them together.
+#
+# EG6a (2026-10-12): and THE COURSE SWEEP - every Elite Breach course crossed
+# step by step by the real player motor, `sweep` seeds a band (25 here;
+# relay-deploy.yml asks 500), in eg-sweep.yml's four band jobs beside the
+# shards. test/tooling/eg6a_sweep.test.js holds the wiring.
 name: verify
 
 on:
@@ -31,6 +36,10 @@ on:
         description: Run the build as a part (the deploy builds its own site).
         type: boolean
         default: true
+      sweep:
+        description: Seeds a band the course sweep crosses with the real motor (eg-sweep.yml) - 25 on a pull request, 500 before a relay deploy.
+        type: number
+        default: 25
 
 permissions:
   contents: read
@@ -76,6 +85,12 @@ jobs:
         run: npm ci
       - name: Test shard ${{ matrix.shard }} of 4
         run: node tools/testShards.mjs ${{ matrix.shard }}/4
+
+  sweep:
+    uses: ./.github/workflows/eg-sweep.yml
+    with:
+      ref: ${{ inputs.ref }}
+      seeds: ${{ inputs.sweep }}
 
   build:
     if: ${{ inputs.build }}

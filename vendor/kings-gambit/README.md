@@ -38,7 +38,7 @@ innkeeper (four tiers, for a gold stake) or online against a friend, over public
 `bible/11-Multiplayer/Kings-Gambit.md` is the record: the mod read off its assembly (sections 1-2), the decisions
 (section 10), and each slice. The game is the tavern card table's third, beside Hold'em and Iliac Hand:
 
-- the law (`src/net/kingsGambit.js`, KG1) and the innkeeper's play, a regular's (`src/systems/gambitPatrons.js`, KG2),
+- the law (`src/net/kingsGambit.js`, KG1) and the innkeeper's play, a regular's (`src/systems/gambit/gambitPatrons.js`, KG2),
   ported verbatim - every table and every float32 comparison the mod's own;
 - its units the Iliac set's faces (KG-SET painted the nine with no card), its kings the Bay deck's four;
 - the evening at the table offline (KG3): the stake, a regular's night, the panel in the house's coat and words, the

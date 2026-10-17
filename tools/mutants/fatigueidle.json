@@ -5,7 +5,7 @@
     "old": "    let loss = activity.standing && !activity.swimming ? 0 : FATIGUE_LOSS.Default;",
     "new": "    let loss = FATIGUE_LOSS.Default;",
     "tests": [
-      "test/fatigue_idle.test.js"
+      "test/systems/fatigue_idle.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    let loss = activity.standing && !activity.swimming ? 0 : FATIGUE_LOSS.Default;",
     "new": "    let loss = activity.standing ? 0 : FATIGUE_LOSS.Default;",
     "tests": [
-      "test/fatigue_idle.test.js"
+      "test/systems/fatigue_idle.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "        running: player.isRunning && !player.standing && upkeep.riderPaysGallop(player.transportMode),   // AUDIT 23 (entity-2): PlayerEntity.cs:408; STEED1: a gallop is the horse's breath, not the rider's fatigue\n        standing: !!player.standing,   // FATIGUE-IDLE: standing still on the ground pays no minute's band (worldTick.js)\n",
     "new": "        running: player.isRunning && !player.standing && upkeep.riderPaysGallop(player.transportMode),   // AUDIT 23 (entity-2): PlayerEntity.cs:408; STEED1: a gallop is the horse's breath, not the rider's fatigue\n",
     "tests": [
-      "test/fatigue_idle.test.js"
+      "test/systems/fatigue_idle.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "        running: player.isRunning && !player.standing && upkeep.riderPaysGallop(player.transportMode),   // STEED1: a gallop is the horse's breath\n        standing: !!player.standing,   // FATIGUE-IDLE: standing still on the ground pays no minute's band (worldTick.js)\n",
     "new": "        running: player.isRunning && !player.standing && upkeep.riderPaysGallop(player.transportMode),   // STEED1: a gallop is the horse's breath\n",
     "tests": [
-      "test/fatigue_idle.test.js"
+      "test/systems/fatigue_idle.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "        running: player.isRunning && !player.standing,   // AUDIT 23 (entity-2)\n        standing: !!player.standing,   // FATIGUE-IDLE: standing still on the ground pays no minute's band (worldTick.js)\n",
     "new": "        running: player.isRunning && !player.standing,   // AUDIT 23 (entity-2)\n",
     "tests": [
-      "test/fatigue_idle.test.js"
+      "test/systems/fatigue_idle.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "runningTally: player.isRunning && !player.riding, standing: !!player.standing, ",
     "new": "runningTally: player.isRunning && !player.riding, ",
     "tests": [
-      "test/fatigue_idle.test.js"
+      "test/systems/fatigue_idle.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "runningTally: player.isRunning && !player.riding, standing: !!player.standing, ",
     "new": "runningTally: player.isRunning && !player.riding, ",
     "tests": [
-      "test/fatigue_idle.test.js"
+      "test/systems/fatigue_idle.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "      _activity.standing = standing;",
     "new": "      void standing;",
     "tests": [
-      "test/fatigue_idle.test.js"
+      "test/systems/fatigue_idle.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "climbing = false, standing = false, jumped = false,",
     "new": "climbing = false, standing = true, jumped = false,",
     "tests": [
-      "test/fatigue_idle.test.js"
+      "test/systems/fatigue_idle.test.js"
     ]
   }
 ]

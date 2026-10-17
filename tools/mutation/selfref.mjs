@@ -21,11 +21,11 @@ function splitArgs(s) {
   return out.map(x => x.trim());
 }
 
-for (const f of fs.readdirSync(TEST).filter(x => x.endsWith('.test.js')).sort()) {
+for (const f of fs.readdirSync(TEST, { recursive: true }).map(String).filter(x => x.endsWith('.test.js')).sort()) {   // TIDY5: the tests in their folders
   const text = fs.readFileSync(path.join(TEST, f), 'utf8');
   // imported production symbols
   const imported = new Set();
-  for (const m of text.matchAll(/import\s*\{([^}]*)\}\s*from\s*'(\.\.\/src[^']*)'/g)) {
+  for (const m of text.matchAll(/import\s*\{([^}]*)\}\s*from\s*'((?:\.\.\/)+src\/[^']*)'/g)) {
     for (const p of m[1].split(',')) {
       const n = p.trim().split(/\s+as\s+/).pop().trim();
       if (n) imported.add(n);

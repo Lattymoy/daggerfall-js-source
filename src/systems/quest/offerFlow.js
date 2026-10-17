@@ -48,6 +48,8 @@
 //   getLocalizedQuestDisplayName(questName) - the localization table
 //                                override for picker labels (null =
 //                                the quest's own DisplayName)
+//   sharedClock()              - the shared world (REPUTE-GATE:
+//                                onlineRepute.js; absent = offline)
 //
 // The GUILD object a host passes offerGuildQuest is DFU's Guild:
 // { isMember(), rank, deity, getReputation(),
@@ -61,6 +63,7 @@ import { QUEST_MESSAGES } from './quest.js';
 import { GUILD_GROUPS } from '../../formats/factionFile.js';
 import { GENDERS } from '../../characters/nameHelper.js';
 import { localizedText } from '../textManager.js';   // L10N3d: the wait box's two lines
+import { reputeGated } from './onlineRepute.js';   // REPUTE-GATE: online, two quests wait for their headers' standing
 
 /** DaggerfallQuestPopupWindow.cs:92 - TEXT.RSC's "You're too late, I
  *  gave the job to some spellsword" flavour family. */
@@ -200,7 +203,10 @@ export class QuestOfferFlow {
     let rank = guild.rank;
     const level = this.machine.deps.playerLevel?.() ?? 0;
     if (guild.isSatisfyQuestReqByLevel?.() && level > rank) rank = level;
-    this.questPool = this.questLists.getGuildQuestPool(guildGroup, status, factionId, guild.getReputation(), rank);
+    // REPUTE-GATE (onlineRepute.js): online, Guard the Guild and Protect an Honored Mage wait for the standing their
+    // headers name - offline the pool is DFU's
+    this.questPool = reputeGated(this.questLists.getGuildQuestPool(guildGroup, status, factionId, guild.getReputation(), rank),
+      guild.getReputation(), !!this.deps.sharedClock?.());
     if (this.deps.guildQuestListBox) {
       return {
         kind: 'gettingQuests',

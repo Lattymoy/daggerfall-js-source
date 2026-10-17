@@ -48,14 +48,14 @@ of them) and RGBA where it does not, each file read back and compared
 to its texel before the next is written - every drawn pixel identical.
 The `<rect>` beside 232 of them (the paper-doll placement
 `TextureReplacement.OverridePaperdollItemRect` reads) is written into
-`src/systems/rriIndex.js` beside each sprite's size. What the folder
-may hold is this manifest's own file list (`test/doctrine.test.js`
+`src/systems/roleplayRealismItems/rriIndex.js` beside each sprite's size. What the folder
+may hold is this manifest's own file list (`test/tooling/doctrine.test.js`
 derives the folder's membership from it).
 
 ## What is ported, and where
 
 - **RRI1** (2026-09-23): the fourteen item classes as
-  `src/systems/rriItems.js` (DFU's virtuals, dispatched from each of the
+  `src/systems/roleplayRealismItems/rriItems.js` (DFU's virtuals, dispatched from each of the
   port's law sites), the template rows and patches, the art on the
   texture-replacement door, the random makers' custom slots
   (`newWeapons`, `newArmor`). `bible/06-Systems/Roleplay-Realism-Items.md`

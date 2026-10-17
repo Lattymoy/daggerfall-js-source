@@ -1,0 +1,254 @@
+[
+  {
+    "name": "EGHERO-SHADE-a-moon-branch-moved",
+    "file": "tools/egHeroGloamScene.mjs",
+    "old": "Object.freeze({ label: 'b3', x: -1, w: 3, y0: 14.6, y1: 17.2, top: -0.5 }),",
+    "new": "Object.freeze({ label: 'b3', x: -1, w: 3, y0: 14.2, y1: 17.2, top: -0.5 }),",
+    "tests": [
+      "test/tooling/eghero_shade.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-SHADE-the-beams-phase",
+    "file": "tools/egHeroGloamScene.mjs",
+    "old": "export const GLOAM_MOON = Object.freeze({ ph: 2000, beat: 550 });",
+    "new": "export const GLOAM_MOON = Object.freeze({ ph: 2500, beat: 550 });",
+    "tests": [
+      "test/tooling/eghero_shade.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-SHADE-the-beams-origin-off-the-lip",
+    "file": "tools/egHeroGloamScene.mjs",
+    "old": "export const GLOAM_MOON = Object.freeze({ ph: 2000, beat: 550 });",
+    "new": "export const GLOAM_MOON = Object.freeze({ ph: 2000, beat: 600 });",
+    "tests": [
+      "test/tooling/eghero_shade.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-SHADE-the-mouths-edge-line-dropped",
+    "file": "tools/egHeroGloamScene.mjs",
+    "old": "  edge.level(-HW, 0, HW, 0.12, 0.01).level(-4, A - 0.12, 4, A, 0.01)",
+    "new": "  edge.level(-4, A - 0.12, 4, A, 0.01)",
+    "tests": [
+      "test/tooling/eghero_shade.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-SHADE-the-mirror-on-the-landing",
+    "file": "tools/egHeroGloamScene.mjs",
+    "old": "const MIRROR = Object.freeze({ x: 4.95, y: 2.3 });",
+    "new": "const MIRROR = Object.freeze({ x: 3.9, y: 2.3 });",
+    "tests": [
+      "test/tooling/eghero_shade.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-SHADE-the-thicket-pushed-inward",
+    "file": "tools/egHeroGloamScene.mjs",
+    "old": "      return [side * (W(y) + push), y, z];",
+    "new": "      return [side * (W(y) - push), y, z];",
+    "tests": [
+      "test/tooling/eghero_shade.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-SHADE-a-walk-edge-across-the-chasm",
+    "file": "tools/egHeroGloamScene.mjs",
+    "old": "['fw', 'exit'], ['fe', 'exit']]) strip(",
+    "new": "['fw', 'exit'], ['fe', 'exit'], ['lipnear', 'lipfar']]) strip(",
+    "tests": [
+      "test/tooling/eghero_shade.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-SHADE-a-point-drawn-as-a-folded-quad",
+    "file": "tools/egHeroGloamScene.mjs",
+    "old": "      if (radii[k + 1] === 0) m.face(",
+    "new": "      if (radii[k + 1] < 0) m.face(",
+    "tests": [
+      "test/tooling/eghero_shade.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-SHADE-a-sheets-normals-unflipped",
+    "file": "tools/egHeroGloamScene.mjs",
+    "old": "    return flip ? n.map((c) => -c + 0) : n;",
+    "new": "    return n;",
+    "tests": [
+      "test/tooling/eghero_shade.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-SHADE-the-landings-trunk-on-its-floor",
+    "file": "tools/egHeroGloamScene.mjs",
+    "old": "  [-5.4, 1.95, 0.7, -7, 7.6, -0.45, -0.3, 8, 0],",
+    "new": "  [-5.1, 1.95, 0.7, -7, 7.6, -0.45, -0.3, 8, 0],",
+    "tests": [
+      "test/tooling/eghero_shade.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-SHADE-the-galleries-height",
+    "file": "tools/egHeroEclipseScene.mjs",
+    "old": "up: 3.5, vault: 10,",
+    "new": "up: 3.6, vault: 10,",
+    "tests": [
+      "test/tooling/eghero_shade.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-SHADE-the-vault-under-a-chambers-headroom-over-the-galleries",
+    "file": "tools/egHeroEclipseScene.mjs",
+    "old": "up: 3.5, vault: 10,",
+    "new": "up: 3.5, vault: 9.4,",
+    "tests": [
+      "test/tooling/eghero_shade.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-SHADE-the-moon-shafts-ring",
+    "file": "tools/egHeroEclipseScene.mjs",
+    "old": "stairW: 3, ring: 9,",
+    "new": "stairW: 3, ring: 8,",
+    "tests": [
+      "test/tooling/eghero_shade.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-SHADE-the-eclipses-phase",
+    "file": "tools/egHeroEclipseScene.mjs",
+    "old": "hazard.eclipse.moon.ph12000",
+    "new": "hazard.eclipse.moon.ph14000",
+    "tests": [
+      "test/tooling/eghero_shade.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-SHADE-the-stairs-edge-lines-dropped",
+    "file": "tools/egHeroEclipseScene.mjs",
+    "old": "    for (let j = 0; j < STEPS; j++) edge.face(",
+    "new": "    for (let j = 0; j < 0; j++) edge.face(",
+    "tests": [
+      "test/tooling/eghero_shade.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-SHADE-a-galleries-front-line-dropped",
+    "file": "tools/egHeroEclipseScene.mjs",
+    "old": "    for (const [a, b] of [[G[5], G[6]], [G[6], G[0]]]) {\n      const dx = b[0] - a[0]",
+    "new": "    for (const [a, b] of [[G[5], G[6]]]) {\n      const dx = b[0] - a[0]",
+    "tests": [
+      "test/tooling/eghero_shade.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-SHADE-a-column-on-a-gallery",
+    "file": "tools/egHeroEclipseScene.mjs",
+    "old": "  const COLS = [19, 3, 5, 7, 15, 17].map(",
+    "new": "  const COLS = [19, 1, 5, 7, 15, 17].map(",
+    "tests": [
+      "test/tooling/eghero_shade.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-SHADE-a-stair-left-off-the-graph",
+    "file": "tools/egHeroEclipseScene.mjs",
+    "old": "['eflight', 'eflight2'], ['eflight2', 'egal'],",
+    "new": "['eflight', 'eflight2'],",
+    "tests": [
+      "test/tooling/eghero_shade.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-SHADE-the-dome-turned-inside-out",
+    "file": "tools/egHeroEclipseScene.mjs",
+    "old": "  rev(DOME_LOW, 0, true); rev(DOME_CAP, 0, true);",
+    "new": "  rev(DOME_LOW, 0, false); rev(DOME_CAP, 0, true);",
+    "tests": [
+      "test/tooling/eghero_shade.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-SHADE-the-gloam-baked-as-the-reference",
+    "file": "tools/bakeEgHeroGloam.mjs",
+    "old": "class: 'passage', variant: 'gloam',",
+    "new": "class: 'passage', variant: 'reference',",
+    "tests": [
+      "test/tooling/eghero_shade.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-SHADE-the-vaults-play-without-its-engine",
+    "file": "tools/bakeEgHeroEclipse.mjs",
+    "old": "play: Object.freeze(['balcony', 'engine']),",
+    "new": "play: Object.freeze(['balcony']),",
+    "tests": [
+      "test/tooling/eghero_shade.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-SHADE-the-thicket-left-out-of-the-law-registry",
+    "file": "src/net/eliteGates/egHeroFrags.js",
+    "old": "  EG_HERO_GLOAM_LAW,\n",
+    "new": "",
+    "tests": [
+      "test/tooling/eghero_shade.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-SHADE-the-vault-left-out-of-the-mesh-registry",
+    "file": "src/world/eliteGates/egHeroFragModel.js",
+    "old": "  EG_HERO_ECLIPSE_MESH,\n",
+    "new": "",
+    "tests": [
+      "test/tooling/eghero_shade.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-SHADE-the-eclipse-ring-of-the-law",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "export const EG_ECLIPSE_RING_M = 9;",
+    "new": "export const EG_ECLIPSE_RING_M = 10;",
+    "tests": [
+      "test/tooling/eghero_shade.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-SHADE-a-beams-reach-narrowed",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "export const EG_MOON_HALF = 3.5;",
+    "new": "export const EG_MOON_HALF = 3.2;",
+    "tests": [
+      "test/tooling/eghero_shade.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-SHADE-the-budget-under-the-thicket",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "export const EG_FRAG_BUDGET = Object.freeze({ tris: 12000, collider: 3000, lights: 4, draws: 12 });",
+    "new": "export const EG_FRAG_BUDGET = Object.freeze({ tris: 10000, collider: 3000, lights: 4, draws: 12 });",
+    "tests": [
+      "test/tooling/eghero_shade.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-SHADE-a-moon-branchs-period",
+    "file": "tools/fragBake.mjs",
+    "old": "  if (mk.of === 'moon') piece.period = EG_MOON_EVERY_S * 1000;",
+    "new": "  if (mk.of === 'moon') piece.period = EG_MOON_EVERY_S * 900;",
+    "tests": [
+      "test/tooling/eghero_shade.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-SHADE-the-twenty-metres-swept-short",
+    "file": "test/tooling/eghero_shade.test.js",
+    "old": "  for (let t = 0; t < EG_HAZARDS.eclipse.period / 1000; t += 2) {",
+    "new": "  for (let t = 0; t < 0; t += 2) {",
+    "tests": [
+      "test/tooling/eghero_shade.test.js"
+    ]
+  }
+]

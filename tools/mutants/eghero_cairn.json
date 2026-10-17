@@ -1,0 +1,227 @@
+[
+  {
+    "name": "EGHERO-CAIRN-a-rib-swung-into-the-bridges-flight",
+    "file": "tools/egHeroOssuaryScene.mjs",
+    "old": "[2.22, 4.7]",
+    "new": "[1.2, 4.7]",
+    "tests": [
+      "test/tooling/eghero_cairn.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-CAIRN-a-pillar-stood-in-the-nave",
+    "file": "tools/egHeroOssuaryScene.mjs",
+    "old": "PX: 3.6,",
+    "new": "PX: 3.3,",
+    "tests": [
+      "test/tooling/eghero_cairn.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-CAIRN-the-vault-let-down",
+    "file": "tools/egHeroOssuaryScene.mjs",
+    "old": "SPRING: 5.9,",
+    "new": "SPRING: 5.4,",
+    "tests": [
+      "test/tooling/eghero_cairn.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-CAIRN-a-chasm-lip-left-unlined",
+    "file": "tools/egHeroOssuaryScene.mjs",
+    "old": "[[0, 0.15], [ZA - 0.15, ZA], [ZB, ZB + 0.15]",
+    "new": "[[0, 0.15], [ZB, ZB + 0.15]",
+    "tests": [
+      "test/tooling/eghero_cairn.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-CAIRN-a-bone-bridge-too-deep-for-the-crumble",
+    "file": "tools/egHeroOssuaryScene.mjs",
+    "old": "Object.freeze([9.7, 12.1])",
+    "new": "Object.freeze([9.7, 12.8])",
+    "tests": [
+      "test/tooling/eghero_cairn.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-CAIRN-a-wisp-off-the-kits-clock",
+    "file": "tools/egHeroOssuaryScene.mjs",
+    "old": "hazard.wisp.near.per9000.ph4500",
+    "new": "hazard.wisp.near.per9500.ph4500",
+    "tests": [
+      "test/tooling/eghero_cairn.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-CAIRN-a-fifth-light",
+    "file": "tools/egHeroOssuaryScene.mjs",
+    "old": "cube('light.band.chasm', 0, 14, -3.2, 0.2);",
+    "new": "cube('light.band.chasm', 0, 14, -3.2, 0.2); cube('light.band.x', 0, 6, 3, 0.2); cube('light.band.y', 0, 22, 3, 0.2);",
+    "tests": [
+      "test/tooling/eghero_cairn.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-CAIRN-a-flight-past-the-step-down",
+    "file": "tools/egHeroMistStairScene.mjs",
+    "old": "[1.5, 10.2, 12.2, -1.8]",
+    "new": "[1.5, 10.2, 12.2, -2.0]",
+    "tests": [
+      "test/tooling/eghero_cairn.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-CAIRN-a-flight-gap-stretched",
+    "file": "tools/egHeroMistStairScene.mjs",
+    "old": "[-1.5, 14.8, 16.8, -2.7]",
+    "new": "[-1.5, 15.4, 17.4, -2.7]",
+    "tests": [
+      "test/tooling/eghero_cairn.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-CAIRN-a-pier-wider-than-its-flight",
+    "file": "tools/egHeroMistStairScene.mjs",
+    "old": "[0.94, cap - 0.6], [0.94, cap]",
+    "new": "[1.1, cap - 0.6], [1.1, cap]",
+    "tests": [
+      "test/tooling/eghero_cairn.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-CAIRN-the-mist-off-its-line",
+    "file": "tools/egHeroMistStairScene.mjs",
+    "old": "MIST: -10.6,",
+    "new": "MIST: -10.0,",
+    "tests": [
+      "test/tooling/eghero_cairn.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-CAIRN-the-foot-tunnel-let-down",
+    "file": "tools/egHeroMistStairScene.mjs",
+    "old": "TUNNEL: 4.6,",
+    "new": "TUNNEL: 4.4,",
+    "tests": [
+      "test/tooling/eghero_cairn.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-CAIRN-the-ossuary-a-reference",
+    "file": "tools/bakeEgHeroOssuary.mjs",
+    "old": "variant: 'ossuary'",
+    "new": "variant: 'reference'",
+    "tests": [
+      "test/tooling/eghero_cairn.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-CAIRN-the-mist-stair-a-passage",
+    "file": "tools/bakeEgHeroMistStair.mjs",
+    "old": "class: 'shaft'",
+    "new": "class: 'passage'",
+    "tests": [
+      "test/tooling/eghero_cairn.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-CAIRN-the-ossuary-unregistered",
+    "file": "src/net/eliteGates/egHeroFrags.js",
+    "old": "  EG_HERO_OSSUARY_LAW,\n",
+    "new": "",
+    "tests": [
+      "test/tooling/eghero_cairn.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-CAIRN-the-mist-stair-mesh-unregistered",
+    "file": "src/world/eliteGates/egHeroFragModel.js",
+    "old": "  EG_HERO_MIST_STAIR_MESH,\n",
+    "new": "",
+    "tests": [
+      "test/tooling/eghero_cairn.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-CAIRN-the-mirror-keeps-its-winding",
+    "file": "tools/egHeroKit.mjs",
+    "old": "m.face(pts.map((p) => [0 - p[0], p[1], p[2]]).reverse(), mat,",
+    "new": "m.face(pts.map((p) => [0 - p[0], p[1], p[2]]), mat,",
+    "tests": [
+      "test/tooling/eghero_cairn.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-CAIRN-a-wound-face-left",
+    "file": "tools/egHeroKit.mjs",
+    "old": ">= 0 ? q : q.reverse(), mat);",
+    "new": ">= 0 ? q : q, mat);",
+    "tests": [
+      "test/tooling/eghero_cairn.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-CAIRN-a-cut-short-of-its-knot",
+    "file": "tools/egHeroKit.mjs",
+    "old": "n = Math.max(1, Math.ceil(Math.abs(b - a) / max - 1e-9));",
+    "new": "n = Math.max(1, Math.floor(Math.abs(b - a) / max - 1e-9));",
+    "tests": [
+      "test/tooling/eghero_cairn.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-CAIRN-a-slanted-walk-strip-let-through",
+    "file": "tools/egHeroKit.mjs",
+    "old": "  throw new Error(`walkStrip: [${a}] to [${b}] runs neither along X nor along Y`);",
+    "new": "  return m;",
+    "tests": [
+      "test/tooling/eghero_cairn.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-CAIRN-a-gem-face-turned-in",
+    "file": "tools/egHeroKit.mjs",
+    "old": "M.face([c, a, b], mat);",
+    "new": "M.face([a, c, b], mat);",
+    "tests": [
+      "test/tooling/eghero_cairn.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-CAIRN-the-shafts-flight-moved",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "export const EG_SHAFT_FLIGHT_CM = 90;",
+    "new": "export const EG_SHAFT_FLIGHT_CM = 80;",
+    "tests": [
+      "test/tooling/eghero_cairn.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-CAIRN-the-ossuarys-piece-another",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "ossuary: Object.freeze(['bone'])",
+    "new": "ossuary: Object.freeze(['ledge'])",
+    "tests": [
+      "test/tooling/eghero_cairn.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-CAIRN-the-ossuarys-height-moved",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "halfW = 300; height = 560; chasm = 1000;",
+    "new": "halfW = 300; height = 570; chasm = 1000;",
+    "tests": [
+      "test/tooling/eghero_cairn.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-CAIRN-the-mist-shafts-line-moved",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "else if (kit === 'mist') hazards.push({ kind: 'mist', y: yB - 300,",
+    "new": "else if (kit === 'mist') hazards.push({ kind: 'mist', y: yB - 290,",
+    "tests": [
+      "test/tooling/eghero_cairn.test.js"
+    ]
+  }
+]

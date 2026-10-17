@@ -5,7 +5,7 @@
     "old": "  const once = (fn) => { if (busy) return null; busy =",
     "new": "  const once = (fn) => { busy =",
     "tests": [
-      "test/audit28_marks.test.js"
+      "test/net/audit28_marks.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    try { store?.set(MARKS_PENDING_KEY, out); _memory = null; } catch { _memory = { ...t }; }",
     "new": "    _memory = { ...t };\n    try { store?.set(MARKS_PENDING_KEY, out); } catch { /* memory */ }",
     "tests": [
-      "test/audit28_marks.test.js"
+      "test/net/audit28_marks.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  const slot = () => `${account() ?? ''}|${character() ?? ''}`;",
     "new": "  const slot = () => `|${character() ?? ''}`;",
     "tests": [
-      "test/audit28_marks.test.js"
+      "test/net/audit28_marks.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "        if (MARKS_FINAL.includes(r?.error)) keep(null, key);",
     "new": "        if (!RETRY.includes(r?.error)) keep(null, key);",
     "tests": [
-      "test/audit28_marks.test.js"
+      "test/net/audit28_marks.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  const prior = await lineOf(db, player.id, rid);\n  if (prior) return repeat(prior);   // AUDIT 28 M2: before the switch - a sale made is a sale answered\n  const closed = shut(player, env);\n  if (closed) return closed;",
     "new": "  const closed = shut(player, env);\n  if (closed) return closed;\n  const prior = await lineOf(db, player.id, rid);\n  if (prior) return repeat(prior);",
     "tests": [
-      "test/audit28_marks.test.js"
+      "test/net/audit28_marks.test.js"
     ]
   },
   {
@@ -50,17 +50,17 @@
     "old": "    guildMarksSweep(db, guildId, player, nowS, { alone }),\n",
     "new": "",
     "tests": [
-      "test/audit28_marks.test.js",
-      "test/marks1.test.js"
+      "test/net/audit28_marks.test.js",
+      "test/net/marks1.test.js"
     ]
   },
   {
     "name": "AUDIT28-M4-the-strike-outside-the-rows-batch",
     "file": "server-account/src/accounts.js",
-    "old": "  const [r, m, ...d] = stmt || deed ? await db.batch([kill, ...(stmt ? [stmt] : [db.prepare('SELECT 0')]), ...(deed ?? [])]) : [await kill.run(), null];",
-    "new": "  const [r, m, ...d] = stmt || deed ? [await kill.run(), stmt ? await stmt.run() : null, ...(deed ? await db.batch(deed) : [])] : [await kill.run(), null];",
+    "old": "  const [r, ...rest] = stmt || deed || roll ? await db.batch([kill, ...(roll ? [roll] : []), ...(stmt ? [stmt] : [db.prepare('SELECT 0')]), ...(deed ?? [])]) : [await kill.run(), null];",
+    "new": "  const [r, ...rest] = stmt || deed || roll ? [await kill.run(), ...(roll ? [await roll.run()] : []), stmt ? await stmt.run() : null, ...(deed ? await db.batch(deed) : [])] : [await kill.run(), null];",
     "tests": [
-      "test/audit28_marks.test.js"
+      "test/net/audit28_marks.test.js"
     ]
   },
   {
@@ -69,7 +69,7 @@
     "old": "    ...(marksOpen ? {\n      marks:",
     "new": "    ...(true ? {\n      marks:",
     "tests": [
-      "test/audit28_marks.test.js"
+      "test/net/audit28_marks.test.js"
     ]
   },
   {
@@ -78,7 +78,7 @@
     "old": "export function accountMarks({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {\n  const post = waitedPost({ fetch, storage }, waitMs);\n  return {\n    account:",
     "new": "export function accountMarks({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {\n  const post = sessionPost({ fetch, storage });\n  return {\n    account:",
     "tests": [
-      "test/audit28_marks.test.js"
+      "test/net/audit28_marks.test.js"
     ]
   },
   {
@@ -87,7 +87,7 @@
     "old": "        if (!RETRY.includes(r?.error)) moving.delete(key);",
     "new": "        moving.delete(key);",
     "tests": [
-      "test/audit28_marks.test.js"
+      "test/net/audit28_marks.test.js"
     ]
   },
   {
@@ -96,7 +96,7 @@
     "old": "    if (Number.isSafeInteger(data?.exchangedToday)) state.today",
     "new": "    if (false) state.today",
     "tests": [
-      "test/audit28_marks.test.js"
+      "test/net/audit28_marks.test.js"
     ]
   },
   {
@@ -105,7 +105,7 @@
     "old": "const combatCapped = await db.prepare(`SELECT COUNT(DISTINCT dst_id) AS n, COUNT(*) AS d",
     "new": "const combatCapped = await db.prepare(`SELECT COUNT(*) AS n, COUNT(*) AS d",
     "tests": [
-      "test/audit28_marks.test.js"
+      "test/net/audit28_marks.test.js"
     ]
   },
   {
@@ -114,7 +114,7 @@
     "old": "export const gateStrikeRid = (gameDay) => `gate:${gameDay}`;",
     "new": "export const gateStrikeRid = (gameDay) => `gate-day-${gameDay}`;",
     "tests": [
-      "test/audit28_marks.test.js"
+      "test/net/audit28_marks.test.js"
     ]
   },
   {
@@ -123,7 +123,7 @@
     "old": "    if (plan.kind === 'letter') { _letterPending = { draft: plan.draft, at: performance.now(), lost: NOTE_LETTER_LOST }; closeNoticeDoor(); return { ok: true }; }",
     "new": "    if (plan.kind === 'letter') { closeNoticeDoor(); return socialPanel?.openLetters?.({ draft: plan.draft }) ? { ok: true } : { ok: false, text: '' }; }",
     "tests": [
-      "test/audit28_notice.test.js"
+      "test/net/audit28_notice.test.js"
     ]
   },
   {
@@ -132,7 +132,7 @@
     "old": "  if (!letters || mail == null || mail === 'guest') return",
     "new": "  if (!letters || mail == null) return",
     "tests": [
-      "test/audit28_notice.test.js"
+      "test/net/audit28_notice.test.js"
     ]
   },
   {
@@ -141,8 +141,8 @@
     "old": "      AND (n.hidden <> 1 OR ?3 = 1 OR n.author = ?4)",
     "new": "      AND (n.hidden <> 1 OR ?3 = 1)",
     "tests": [
-      "test/audit28_notice.test.js",
-      "test/notice1.test.js"
+      "test/net/audit28_notice.test.js",
+      "test/net/notice1.test.js"
     ]
   },
   {
@@ -151,8 +151,8 @@
     "old": ": mine && n.hidden === 1 ? { hidden: true } : {}),",
     "new": ": {}),",
     "tests": [
-      "test/audit28_notice.test.js",
-      "test/notice1.test.js"
+      "test/net/audit28_notice.test.js",
+      "test/net/notice1.test.js"
     ]
   },
   {
@@ -161,8 +161,8 @@
     "old": " AND p.created_at <= ?2 - ?4) >= ?3`)",
     "new": ") >= ?3`)",
     "tests": [
-      "test/audit28_notice.test.js",
-      "test/notice1.test.js"
+      "test/net/audit28_notice.test.js",
+      "test/net/notice1.test.js"
     ]
   },
   {
@@ -171,7 +171,7 @@
     "old": "WHERE r.note_id = ?1 AND COALESCE(p.muted_until, 0) <= ?2 AND",
     "new": "WHERE r.note_id = ?1 AND",
     "tests": [
-      "test/audit28_notice.test.js"
+      "test/net/audit28_notice.test.js"
     ]
   },
   {
@@ -180,7 +180,7 @@
     "old": "const recruits = (n) => !!n.guild_name && n.author_rank != null && guildMay(Number(n.author_rank), 'invite');",
     "new": "const recruits = (n) => !!n.guild_name;",
     "tests": [
-      "test/audit28_notice.test.js"
+      "test/net/audit28_notice.test.js"
     ]
   },
   {
@@ -189,7 +189,7 @@
     "old": "      if (i > 0) await sleep(NOTICE_RETRY_MS[Math.min(i - 1, NOTICE_RETRY_MS.length - 1)]);\n",
     "new": "",
     "tests": [
-      "test/audit28_notice.test.js"
+      "test/net/audit28_notice.test.js"
     ]
   },
   {
@@ -198,7 +198,7 @@
     "old": "      if (!RETRY.includes(r?.error) && kept.get(key) === entry) kept.delete(key);",
     "new": "      if (kept.get(key) === entry) kept.delete(key);",
     "tests": [
-      "test/audit28_notice.test.js"
+      "test/net/audit28_notice.test.js"
     ]
   },
   {
@@ -207,7 +207,7 @@
     "old": "  const post = waitedPost({ fetch, storage }, waitMs);   // AUDIT 28 N6",
     "new": "  const post = sessionPost({ fetch, storage });   // AUDIT 28 N6",
     "tests": [
-      "test/audit28_notice.test.js"
+      "test/net/audit28_notice.test.js"
     ]
   },
   {
@@ -216,7 +216,7 @@
     "old": "  const r = await db.prepare('INSERT OR IGNORE INTO board_notices",
     "new": "  const r = await db.prepare('INSERT INTO board_notices",
     "tests": [
-      "test/audit28_notice.test.js"
+      "test/net/audit28_notice.test.js"
     ]
   },
   {
@@ -225,7 +225,7 @@
     "old": "      if (lost && gone.includes(r?.error)) return { ok: true, data: null, gone: true };\n",
     "new": "",
     "tests": [
-      "test/audit28_notice.test.js"
+      "test/net/audit28_notice.test.js"
     ]
   },
   {
@@ -234,7 +234,7 @@
     "old": "    if (!/UNIQUE/i.test(String(/** @type {any} */ (e)?.message ?? e))) throw e;\n",
     "new": "",
     "tests": [
-      "test/audit28_notice.test.js"
+      "test/net/audit28_notice.test.js"
     ]
   },
   {
@@ -243,7 +243,7 @@
     "old": "  async function act(start, after = 'board') {\n    if (busy) return;",
     "new": "  async function act(start, after = 'board') {",
     "tests": [
-      "test/audit28_notice.test.js"
+      "test/net/audit28_notice.test.js"
     ]
   },
   {
@@ -252,7 +252,7 @@
     "old": "    if (e.pending) return force ? e.pending.then(() => read(map, { force: true })) : e.pending;",
     "new": "    if (e.pending) return e.pending;",
     "tests": [
-      "test/audit28_notice.test.js"
+      "test/net/audit28_notice.test.js"
     ]
   },
   {
@@ -261,7 +261,7 @@
     "old": "const SHUT = Object.freeze(['board-closed', 'no-session', 'auth']);",
     "new": "const SHUT = Object.freeze(['board-closed']);",
     "tests": [
-      "test/audit28_notice.test.js"
+      "test/net/audit28_notice.test.js"
     ]
   },
   {
@@ -270,7 +270,7 @@
     "old": "  const seenTable = () => {\n    if (_seen) return _seen;",
     "new": "  const seenTable = () => {",
     "tests": [
-      "test/audit28_notice.test.js"
+      "test/net/audit28_notice.test.js"
     ]
   },
   {
@@ -279,7 +279,7 @@
     "old": "  const draft = deps.book.draft?.(map) ?? {",
     "new": "  const draft = {",
     "tests": [
-      "test/audit28_notice.test.js"
+      "test/net/audit28_notice.test.js"
     ]
   },
   {
@@ -288,7 +288,7 @@
     "old": "  return re.length <= LETTER_SUBJECT_MAX ? re : s;",
     "new": "  return re.slice(0, LETTER_SUBJECT_MAX);",
     "tests": [
-      "test/audit28_notice.test.js"
+      "test/net/audit28_notice.test.js"
     ]
   },
   {
@@ -297,26 +297,26 @@
     "old": "    if (mateCleared(bountyHuntKey(id))) return { ok: false, text: BOUNTY_REFUSALS.party };\n",
     "new": "",
     "tests": [
-      "test/audit28_bounty.test.js"
+      "test/scenes/audit28_bounty.test.js"
     ]
   },
   {
     "name": "AUDIT28-B1-a-clear-pays-a-bounty-taken-after-it",
-    "file": "src/systems/bountyBoard.js",
+    "file": "src/systems/bounty/bountyBoard.js",
     "old": "  return r?.c === 1 && Number.isSafeInteger(r.t) && Number.isFinite(takenAt) && r.t >= takenAt;",
     "new": "  return r?.c === 1;",
     "tests": [
-      "test/audit28_bounty.test.js",
-      "test/bounty1.test.js"
+      "test/scenes/audit28_bounty.test.js",
+      "test/systems/bounty1.test.js"
     ]
   },
   {
     "name": "AUDIT28-B2-a-retake-starts-from-nothing",
-    "file": "src/systems/bountyBoard.js",
+    "file": "src/systems/bounty/bountyBoard.js",
     "old": "  const killed = Math.max(0, ledger.droppedKilled?.[b.slotKey] ?? 0);",
     "new": "  const killed = 0;",
     "tests": [
-      "test/audit28_bounty.test.js"
+      "test/scenes/audit28_bounty.test.js"
     ]
   },
   {
@@ -325,25 +325,25 @@
     "old": "    if (b) adopt(b.slotKey, id);\n",
     "new": "",
     "tests": [
-      "test/audit28_bounty.test.js"
+      "test/scenes/audit28_bounty.test.js"
     ]
   },
   {
     "name": "AUDIT28-B3-a-standing-pack-owns-nothing",
-    "file": "src/systems/bountyBoard.js",
+    "file": "src/systems/bounty/bountyBoard.js",
     "old": "  if (standing.length) return standing[0];\n",
     "new": "",
     "tests": [
-      "test/audit28_bounty.test.js"
+      "test/scenes/audit28_bounty.test.js"
     ]
   },
   {
     "name": "AUDIT28-B3-the-gone-and-the-dead-own-it",
-    "file": "src/systems/bountyBoard.js",
+    "file": "src/systems/bounty/bountyBoard.js",
     "old": "m.p && m.online !== false && !(m.p.h === 0));",
     "new": "m.p);",
     "tests": [
-      "test/audit28_bounty.test.js"
+      "test/scenes/audit28_bounty.test.js"
     ]
   },
   {
@@ -352,7 +352,7 @@
     "old": "    poseField: () => bountyPoseField(ledger, paidIds, { standing: (id) => packs.has(id) }),",
     "new": "    poseField: () => bountyPoseField(ledger, paidIds),",
     "tests": [
-      "test/audit28_bounty.test.js"
+      "test/scenes/audit28_bounty.test.js"
     ]
   },
   {
@@ -361,7 +361,7 @@
     "old": "      if (k > h.killed) { h.killed = k; repaint(); }",
     "new": "      if (false) { h.killed = k; repaint(); }",
     "tests": [
-      "test/audit28_bounty.test.js"
+      "test/scenes/audit28_bounty.test.js"
     ]
   },
   {
@@ -370,8 +370,8 @@
     "old": "  const lost = Math.max(0, Math.min(purse, _stated ?? deathGoldLoss(purse)));",
     "new": "  const lost = deathGoldLoss(purse);",
     "tests": [
-      "test/audit28_bounty.test.js",
-      "test/deathpenalty.test.js"
+      "test/scenes/audit28_bounty.test.js",
+      "test/systems/deathpenalty.test.js"
     ]
   },
   {
@@ -380,7 +380,7 @@
     "old": "  _stated = null;   // spent: the next death speaks for itself\n",
     "new": "",
     "tests": [
-      "test/audit28_bounty.test.js"
+      "test/scenes/audit28_bounty.test.js"
     ]
   },
   {
@@ -389,16 +389,16 @@
     "old": "    for (const k of [...packs.keys()]) if (k.startsWith('retry:') || !ledger.held.some((h) => h.id === k)) packs.delete(k);",
     "new": "    packs.clear();",
     "tests": [
-      "test/audit28_bounty.test.js"
+      "test/scenes/audit28_bounty.test.js"
     ]
   },
   {
     "name": "AUDIT28-B7-the-oldest-clears-first",
-    "file": "src/systems/bountyBoard.js",
+    "file": "src/systems/bounty/bountyBoard.js",
     "old": ".sort((a, b) => b.t - a.t);",
     "new": ".sort((a, b) => a.t - b.t);",
     "tests": [
-      "test/audit28_bounty.test.js"
+      "test/scenes/audit28_bounty.test.js"
     ]
   },
   {
@@ -407,16 +407,16 @@
     "old": "    for (const h of ledger.held) if (h.takenAt > now) h.takenAt = now;\n",
     "new": "",
     "tests": [
-      "test/audit28_bounty.test.js"
+      "test/scenes/audit28_bounty.test.js"
     ]
   },
   {
     "name": "AUDIT28-B11-the-repaint-drops-the-focus",
-    "file": "src/ui/bountyWindow.js",
+    "file": "src/ui/bounty/bountyWindow.js",
     "old": "    if (keep) /** @type {HTMLElement|null} */ (win.querySelector?.(`.${keep}`))?.focus?.();",
     "new": "    if (keep && false) /** @type {HTMLElement|null} */ (win.querySelector?.(`.${keep}`))?.focus?.();",
     "tests": [
-      "test/audit28_bounty.test.js"
+      "test/scenes/audit28_bounty.test.js"
     ]
   },
   {
@@ -425,8 +425,8 @@
     "old": "  const mine = (id) => { const lv = deps.level(); return bountyTierFits(id, lv) ? (bountyIdAtLevel(id, lv) ?? id) : id; };",
     "new": "  const mine = (id) => id;",
     "tests": [
-      "test/audit28_bounty.test.js",
-      "test/bounty1.test.js"
+      "test/scenes/audit28_bounty.test.js",
+      "test/systems/bounty1.test.js"
     ]
   },
   {
@@ -435,7 +435,7 @@
     "old": " || occupied(t[0] + lx, t[2] + lz, half + 4, f)) continue;",
     "new": ") continue;",
     "tests": [
-      "test/audit28_bounty.test.js"
+      "test/scenes/audit28_bounty.test.js"
     ]
   },
   {
@@ -444,7 +444,7 @@
     "old": "        ...(k != null && k > 0 ? { k } : {}), ...(r.a === 1 ? { a: 1 } : {}), ...(r.c === 1 && t != null ? { t } : {}),\n",
     "new": "",
     "tests": [
-      "test/audit28_bounty.test.js"
+      "test/scenes/audit28_bounty.test.js"
     ]
   },
   {
@@ -453,8 +453,8 @@
     "old": "      r.seconds += real;   // the sum, uncut",
     "new": "      r.seconds = Math.min(FORAGING_WAIT_MAX_SECONDS, r.seconds + real);",
     "tests": [
-      "test/audit28_forage.test.js",
-      "test/forage4_wait.test.js"
+      "test/systems/audit28_forage.test.js",
+      "test/systems/quest/forage4_wait.test.js"
     ]
   },
   {
@@ -463,8 +463,8 @@
     "old": "    if (r === _ours) return r;\n",
     "new": "    if (r === _ours && r == null) return r;\n",
     "tests": [
-      "test/audit28_forage.test.js",
-      "test/forage4_wait.test.js"
+      "test/systems/audit28_forage.test.js",
+      "test/systems/quest/forage4_wait.test.js"
     ]
   },
   {
@@ -473,7 +473,7 @@
     "old": "      foragingWait.tick();   // AUDIT 28 F2",
     "new": "      // foragingWait.tick();   // AUDIT 28 F2",
     "tests": [
-      "test/audit28_forage.test.js"
+      "test/systems/audit28_forage.test.js"
     ]
   },
   {
@@ -482,7 +482,7 @@
     "old": "    for (const keep of sane?.held ?? []) _held.push({ fn: () => revive?.(keep), keep });\n",
     "new": "",
     "tests": [
-      "test/audit28_forage.test.js"
+      "test/systems/audit28_forage.test.js"
     ]
   },
   {
@@ -491,7 +491,7 @@
     "old": "const isPresent = (e) => !!e && (e.present == null || !!e.present());",
     "new": "const isPresent = (e) => !!e;",
     "tests": [
-      "test/audit28_forage.test.js"
+      "test/systems/audit28_forage.test.js"
     ]
   },
   {
@@ -500,7 +500,7 @@
     "old": "      for (let n = _held.length; n > 0 && _held.length && !pending() && !_win && !overlayActive(); n--) {",
     "new": "      for (let n = _held.length; n > 0 && _held.length && !pending() && !_win; n--) {",
     "tests": [
-      "test/audit28_forage.test.js"
+      "test/systems/audit28_forage.test.js"
     ],
     "note": "CHOP-WAIT (FIELD BUGS 2026-09-30, PIN MOVED): re-aimed BY CONTENT - the release's `while` is a `for` bounded by the boxes held when it began now; the slot test it drops is the same law, same killer."
   },
@@ -510,7 +510,7 @@
     "old": "  return !!t && (t.tagName === 'BUTTON' || t.tagName === 'SELECT' ||",
     "new": "  return !!t && (t.tagName === 'NONE' || t.tagName === 'SELECT' ||",
     "tests": [
-      "test/audit28_forage.test.js"
+      "test/systems/audit28_forage.test.js"
     ]
   },
   {
@@ -519,7 +519,7 @@
     "old": "    requeue: (n) => { if (n && !notices.includes(n)) notices.unshift(n); },",
     "new": "    requeue: () => {},",
     "tests": [
-      "test/audit28_forage.test.js"
+      "test/systems/audit28_forage.test.js"
     ]
   },
   {
@@ -528,7 +528,7 @@
     "old": "pose ? { px: pose.x, py: pose.y } : p.target",
     "new": "p.target",
     "tests": [
-      "test/audit28_bounty.test.js"
+      "test/scenes/audit28_bounty.test.js"
     ]
   },
   {
@@ -537,7 +537,7 @@
     "old": "    if (now - _peekAt >= 1000) { _peek = kept(); _peekAt = now; }",
     "new": "    _peek = kept(); _peekAt = now;",
     "tests": [
-      "test/audit28_marks.test.js"
+      "test/net/audit28_marks.test.js"
     ]
   },
   {
@@ -546,7 +546,7 @@
     "old": "        keep(null, key);   // the service looked and said no: nothing burnt, nothing owed",
     "new": "        keep(null);   // the service looked and said no: nothing burnt, nothing owed",
     "tests": [
-      "test/audit28_marks.test.js"
+      "test/net/audit28_marks.test.js"
     ]
   },
   {
@@ -555,7 +555,7 @@
     "old": "  const boardSplitOf = (p) => (p._boardSplit ??= (() => {",
     "new": "  const boardSplitOf = (p) => (p._boardSplit = (() => {",
     "tests": [
-      "test/audit28_forage.test.js"
+      "test/systems/audit28_forage.test.js"
     ]
   }
 ]

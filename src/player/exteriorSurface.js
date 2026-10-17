@@ -22,7 +22,7 @@
 //      sounds."
 //   2. StreamingWorld.PlayerTileMapIndex - the TERRAIN TILE RECORD
 //      under the player (StreamingWorld.cs:345, ported in
-//      world/terrainSurface.js as playerTileMapIndex). Record 0 is
+//      world/terrain/terrainSurface.js as playerTileMapIndex). Record 0 is
 //      water (:175-178); OnShallowWaterTile (:551-563) and OnPathTile
 //      (:568-574) enumerate the rest.
 //
@@ -96,7 +96,7 @@
 // MAC2 (2026-09-11) - THE PLAYER SWIMS WHERE THE SURFACE IS DRAWN
 // (Ledger A). DFU's record law above is kept whole, and ONE arm rides
 // ahead of it in exteriorWaterMethod: where the enhanced surface's own
-// corner table (world/waterCorners.js) puts water under the feet - the
+// corner table (world/water/waterCorners.js) puts water under the feet - the
 // bilinear coverage at the feet's fraction inside the tile, at or past
 // the shader's 0.5 diagonal - the player swims, water-walking excepted.
 // DFU wades a stream, a bank or a moat because their records are its
@@ -104,8 +104,8 @@
 // what reads as water swims. The hosts hand the fraction over beside the
 // raw byte (world.js / exterior.js playerGroundSample).
 
-import { playerTileMapIndex, WATER_TILE_INDEX, convertTile } from '../world/terrainSurface.js';
-import { waterCorners, waterCoverage } from '../world/waterCorners.js';   // MAC2: the surface pass's own corner table
+import { playerTileMapIndex, WATER_TILE_INDEX, convertTile } from '../world/terrain/terrainSurface.js';
+import { waterCorners, waterCoverage } from '../world/water/waterCorners.js';   // MAC2: the surface pass's own corner table
 
 /** PlayerMotor.OnExteriorWaterMethod (:79-87). "Defines the way
  *  player can interact with exterior water tiles. Unrelated to deep
@@ -273,7 +273,7 @@ export function exteriorWaterMethod({ onGround = false, tileIndex = -1, waterWal
  *  own shore diagonal (render/waterSurface.js: smoothstep about 0.5). */
 export const SWIM_COVERAGE = 0.5;
 /** MAC2: the surface pass's water coverage under the feet - the raw
- *  tilemap byte's water corners (world/waterCorners.js, indexed by the
+ *  tilemap byte's water corners (world/water/waterCorners.js, indexed by the
  *  CONVERTED byte as the shader indexes it) blended at the feet's
  *  fraction inside the tile, in the tilemap's own frame (x along the
  *  row, y along the column - the shader's `fract(vLocalXZ / tile)`).

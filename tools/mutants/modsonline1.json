@@ -1,98 +1,98 @@
 [
   {
     "name": "the-ground-is-freed-with-everything-else",
-    "file": "src/systems/onlineLane.js",
+    "file": "src/systems/online/onlineLane.js",
     "old": "  'roads-hazelnut': Object.freeze({\n    Enabled: true,        // which network is painted, and so which beds are smoothed\n    SmoothRoads: true,    // whether the beds are smoothed at all - the dial that gave the floor away\n    RiversAndStreams: true,   // LANDFORM3: whether rivers are painted, and so cut into the land - on, past the mod's shipped off (above)\n  }),",
     "new": "",
     "tests": [
-      "test/modsonline.test.js",
-      "test/onlinelane.test.js"
+      "test/systems/modsonline.test.js",
+      "test/systems/onlinelane.test.js"
     ]
   },
   {
     "name": "the-smoothing-goes-back-to-being-a-dial",
-    "file": "src/systems/onlineLane.js",
+    "file": "src/systems/online/onlineLane.js",
     "old": "    SmoothRoads: true,    // whether the beds are smoothed at all - the dial that gave the floor away\n",
     "new": "",
     "tests": [
-      "test/modsonline.test.js",
-      "test/onlinelane.test.js"
+      "test/systems/modsonline.test.js",
+      "test/systems/onlinelane.test.js"
     ]
   },
   {
     "name": "the-water-is-freed-though-it-moves-the-ground",
-    "file": "src/systems/onlineLane.js",
+    "file": "src/systems/online/onlineLane.js",
     "old": "    RiversAndStreams: true,   // LANDFORM3:",
     "new": "    // RiversAndStreams: true,   // LANDFORM3:",
     "tests": [
-      "test/modsonline.test.js"
+      "test/systems/modsonline.test.js"
     ]
   },
   {
     "name": "the-key-check-goes-so-every-switch-of-a-ground-mod-is-forced",
-    "file": "src/systems/onlineLane.js",
+    "file": "src/systems/online/onlineLane.js",
     "old": "  if (!room || !Object.hasOwn(room, key)) return undefined;",
     "new": "  if (!room) return undefined;",
     "tests": [
-      "test/modsonline.test.js"
+      "test/systems/modsonline.test.js"
     ]
   },
   {
     "name": "offline-starts-forcing-too",
-    "file": "src/systems/onlineLane.js",
+    "file": "src/systems/online/onlineLane.js",
     "old": "  return isOnlinePage(search) ? room[key] : undefined;",
     "new": "  return room[key];",
     "tests": [
-      "test/modsonline.test.js",
-      "test/onlinelane.test.js"
+      "test/systems/modsonline.test.js",
+      "test/systems/onlinelane.test.js"
     ]
   },
   {
     "name": "the-forced-value-is-invented-rather-than-the-mods-own",
-    "file": "src/systems/onlineLane.js",
+    "file": "src/systems/online/onlineLane.js",
     "old": "    Enabled: true,        // which network is painted, and so which beds are smoothed",
     "new": "    Enabled: false,",
     "tests": [
-      "test/modsonline.test.js"
+      "test/systems/modsonline.test.js"
     ]
   },
   {
     "name": "shield-widget-forced-again-though-the-block-is-the-defenders",
-    "file": "src/systems/onlineLane.js",
+    "file": "src/systems/online/onlineLane.js",
     "old": "  'shield-widget',               // the block is the DEFENDER's - damageShieldPool runs where the blow lands\n",
     "new": "",
     "tests": [
-      "test/modsonline.test.js",
-      "test/onlinelane.test.js"
+      "test/systems/modsonline.test.js",
+      "test/systems/onlinelane.test.js"
     ]
   },
   {
     "name": "the-menu-lock-gives-the-lanes-reason-for-a-ground-switch",
-    "file": "src/ui/enhancedMenu.js",
+    "file": "src/ui/enhanced/enhancedMenu.js",
     "old": "    if (ground !== undefined) lockOnline(b, null, { note: modLockNote(vendor, key), value: ground });",
     "new": "    if (ground !== undefined) lockOnline(b, null);",
     "tests": [
-      "test/modsonline.test.js",
-      "test/onlinelane.test.js"
+      "test/systems/modsonline.test.js",
+      "test/systems/onlinelane.test.js"
     ]
   },
   {
     "name": "the-mods-pane-goes-back-to-the-lanes-note",
-    "file": "src/ui/enhancedMenu.js",
+    "file": "src/ui/enhanced/enhancedMenu.js",
     "old": "  if (tab.id === 'mods' && isOnlinePage()) body.append(el('p', 'meta opt-note', noteText(ONLINE_MODS_NOTE)));",
     "new": "  if (tab.id === 'mods' && isOnlinePage()) body.append(el('p', 'meta opt-note', noteText(ONLINE_LOCK_NOTE)));",
     "tests": [
-      "test/modsonline.test.js",
-      "test/onlinelane.test.js"
+      "test/systems/modsonline.test.js",
+      "test/systems/onlinelane.test.js"
     ]
   },
   {
     "name": "the-smoother-stops-looking-at-the-road-bed",
-    "file": "src/world/roadPainter.js",
+    "file": "src/world/road/roadPainter.js",
     "old": "      if (tile !== 46 && tile !== 0xff) continue;",
     "new": "      if (tile !== 0xff) continue;",
     "tests": [
-      "test/modsonline.test.js"
+      "test/systems/modsonline.test.js"
     ]
   },
   {
@@ -101,7 +101,7 @@
     "old": "  (Object.hasOwn(MOD_SETTINGS, vendor) && Object.hasOwn(MOD_SETTINGS[vendor].keys, key) ? MOD_SETTINGS[vendor].keys[key] : undefined);",
     "new": "  MOD_SETTINGS[vendor]?.keys?.[key];",
     "tests": [
-      "test/modsonline.test.js"
+      "test/systems/modsonline.test.js"
     ]
   },
   {
@@ -110,7 +110,7 @@
     "old": "  (Object.hasOwn(MOD_SETTINGS, vendor) && Object.hasOwn(MOD_SETTINGS[vendor].keys, key) ? MOD_SETTINGS[vendor].keys[key] : undefined);",
     "new": "  (MOD_SETTINGS[vendor] && Object.hasOwn(MOD_SETTINGS[vendor].keys, key) ? MOD_SETTINGS[vendor].keys[key] : undefined);",
     "tests": [
-      "test/modsonline.test.js"
+      "test/systems/modsonline.test.js"
     ]
   },
   {
@@ -120,55 +120,55 @@
     "new": "store: 'prefs', key: 'survival', initial: 'boons', online: true,",
     "note": "BOONS-DEFAULT (2026-10-13): re-aimed by content - the row's default is Boons.",
     "tests": [
-      "test/modsonline.test.js",
-      "test/surv2_items.test.js"
+      "test/systems/modsonline.test.js",
+      "test/systems/surv2_items.test.js"
     ]
   },
   {
     "name": "the-balance-three-are-freed-again",
-    "file": "src/systems/onlineLane.js",
+    "file": "src/systems/online/onlineLane.js",
     "old": "  meanerMonsters: Object.freeze({ Enabled: true }),\n  pcaao: Object.freeze({ Enabled: true }),",
     "new": "",
     "tests": [
-      "test/modsonline.test.js",
-      "test/onlinelane.test.js"
+      "test/systems/modsonline.test.js",
+      "test/systems/onlinelane.test.js"
     ]
   },
   {
     "name": "the-loot-roll-is-freed-again",
-    "file": "src/systems/onlineLane.js",
+    "file": "src/systems/online/onlineLane.js",
     "old": "  unleveledLoot: Object.freeze({ Enabled: true }),\n",
     "new": "",
     "tests": [
-      "test/modsonline.test.js"
+      "test/systems/modsonline.test.js"
     ]
   },
   {
     "name": "every-locked-row-wears-the-grounds-reason-again",
-    "file": "src/ui/enhancedMenu.js",
+    "file": "src/ui/enhanced/enhancedMenu.js",
     "old": "ONLINE_GROUND_VENDORS.includes(vendor) || ONLINE_GROUND_KEYS[vendor]?.includes(key) ? ONLINE_GROUND_NOTE : ONLINE_RULESET_KEYS[vendor]?.includes(key) ? ONLINE_RULESET_NOTE : ONLINE_WORLD_EVENT_VENDORS.includes(vendor) ? ONLINE_WORLD_EVENT_NOTE : ONLINE_TRAVEL_VENDORS.includes(vendor) ? ONLINE_TRAVEL_NOTE : ONLINE_CARRIAGE_VENDORS.includes(vendor) ? ONLINE_CARRIAGE_NOTE : ONLINE_SHARED_NOTE",
     "new": "ONLINE_GROUND_NOTE",
     "tests": [
-      "test/modsonline.test.js",
-      "test/onlinelane.test.js"
+      "test/systems/modsonline.test.js",
+      "test/systems/onlinelane.test.js"
     ]
   },
   {
     "name": "the-ruleset-frees-intensive-training",
-    "file": "src/systems/onlineLane.js",
+    "file": "src/systems/online/onlineLane.js",
     "old": "    'RefinedTraining.intensiveTraining': false,\n",
     "new": "",
     "tests": [
-      "test/modsonline.test.js"
+      "test/systems/modsonline.test.js"
     ]
   },
   {
     "name": "the-ruleset-frees-weapon-speed",
-    "file": "src/systems/onlineLane.js",
+    "file": "src/systems/online/onlineLane.js",
     "old": "advancedArchery: true, weaponSpeed: true, weaponMaterials: true,",
     "new": "advancedArchery: true, weaponMaterials: true,",
     "tests": [
-      "test/modsonline.test.js"
+      "test/systems/modsonline.test.js"
     ]
   }
 ]

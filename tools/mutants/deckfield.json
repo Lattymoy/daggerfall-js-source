@@ -5,7 +5,7 @@
     "old": "    if (floor === 'deck') { woodFloorFootsteps(); return; }",
     "new": "    if (false) { woodFloorFootsteps(); return; }",
     "tests": [
-      "test/deckfield.test.js"
+      "test/systems/deckfield.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    if (floor !== lastFloor) { lastFloor = floor; lastTileMapIndex = FLOOR_LEFT; }",
     "new": "    if (floor !== lastFloor) { lastFloor = floor; }",
     "tests": [
-      "test/deckfield.test.js"
+      "test/systems/deckfield.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "m.onStaticGeometry && ((m.tileMapIndex ?? 0) === 0 || SHALLOW_WATER_TILES.has(m.tileMapIndex)) ? 'floor'",
     "new": "m.onStaticGeometry ? 'floor'",
     "tests": [
-      "test/deckfield.test.js"
+      "test/systems/deckfield.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    if (floor === 'floor') { checkToUseArmorFootsteps(); return; }",
     "new": "    if (false) { checkToUseArmorFootsteps(); return; }",
     "tests": [
-      "test/deckfield.test.js"
+      "test/systems/deckfield.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    if (boots && mat >= ARMOR_MATERIAL.Iron) currentClimateFootsteps = cur('PlateFootsteps');\n    else if (boots && mat >= ARMOR_MATERIAL.Chain)",
     "new": "    if (false) currentClimateFootsteps = cur('PlateFootsteps');\n    else if (boots && mat >= ARMOR_MATERIAL.Chain)",
     "tests": [
-      "test/deckfield.test.js"
+      "test/systems/deckfield.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "    surf.deck = surf.staticGeometry && isDeckBucket(_down.key);",
     "new": "    surf.deck = false;",
     "tests": [
-      "test/deckfield.test.js"
+      "test/systems/deckfield.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "paused: _overlayHeld || _seasonHeld || _travelSoundsOff || _csaFootstepsOff, entity: playerEntity,",
     "new": "paused: _overlayHeld || _seasonHeld || _travelSoundsOff, entity: playerEntity,",
     "tests": [
-      "test/deckfield.test.js"
+      "test/systems/deckfield.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "&& !(walkMode && player.isPlayerSwimming) && !playerAfloat(),",
     "new": "&& !(walkMode && player.isPlayerSwimming),",
     "tests": [
-      "test/deckfield.test.js"
+      "test/systems/deckfield.test.js"
     ]
   },
   {
@@ -77,34 +77,34 @@
     "old": "|| !!csaAboard.aboard?.boat || !!naval?.aboard?.() ||",
     "new": "|| !!csaAboard.aboard?.boat ||",
     "tests": [
-      "test/deckfield.test.js"
+      "test/systems/deckfield.test.js"
     ]
   },
   {
     "name": "SEA-HUNT-aboard-lost",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    aboard: () => aboardShip(),",
     "new": "    aboard: () => false,",
     "tests": [
-      "test/deckfield.test.js"
+      "test/systems/deckfield.test.js"
     ]
   },
   {
     "name": "GUN-HOLD-hold-ignored",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (!aiming) return false;\n    cancelAim();\n    deps.say?.('Hold fire.', 1.2);",
     "new": "    if (!aiming) return false;\n    deps.say?.('Hold fire.', 1.2);",
     "tests": [
-      "test/deckfield.test.js"
+      "test/systems/deckfield.test.js"
     ]
   },
   {
     "name": "GUN-HOLD-hold-always",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (!aiming) return false;\n    cancelAim();",
     "new": "    cancelAim();",
     "tests": [
-      "test/deckfield.test.js"
+      "test/systems/deckfield.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "const _holdFire = (_act.activate || _act.cast || useEdge) && !!naval?.aiming && naval.holdFire();",
     "new": "const _holdFire = false;",
     "tests": [
-      "test/deckfield.test.js"
+      "test/systems/deckfield.test.js"
     ]
   },
   {
@@ -122,37 +122,37 @@
     "old": "&& !modes.transitioning && !_holdFire) {",
     "new": "&& !modes.transitioning) {",
     "tests": [
-      "test/deckfield.test.js"
+      "test/systems/deckfield.test.js"
     ]
   },
   {
     "name": "GUN-HOLD-hint-unsaid",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "    hint: model.aiming && model.armed && !ship.wrecked ?",
     "new": "    hint: false ?",
     "tests": [
-      "test/deckfield.test.js",
-      "test/nav_f_ui.test.js"
+      "test/systems/deckfield.test.js",
+      "test/ui/naval/nav_f_ui.test.js"
     ]
   },
   {
     "name": "GUN-HOLD-wreck-hidden",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "model.aiming && model.armed && !ship.wrecked ?",
     "new": "model.aiming && model.armed ?",
     "tests": [
-      "test/deckfield.test.js",
-      "test/nav_f_ui.test.js"
+      "test/systems/deckfield.test.js",
+      "test/ui/naval/nav_f_ui.test.js"
     ]
   },
   {
     "name": "GUN-HOLD-pad-row-lost",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "  if (codes.board && model.aiming) rows.push([[codes.board], 'Hold fire']);",
     "new": "  if (false) rows.push([[codes.board], 'Hold fire']);",
     "tests": [
-      "test/deckfield.test.js",
-      "test/navaudit_presentation.test.js"
+      "test/systems/deckfield.test.js",
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   }
 ]

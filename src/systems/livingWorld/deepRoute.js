@@ -21,7 +21,7 @@
 import { lwSeed, lwRng, textSeed, rollInt } from './seed.js';
 import { DAY_MIN } from './dayPlan.js';
 import { RANDOM_RECORD } from '../../characters/dungeonEnemies.js';   // AUDIT LW-II-2 D11: the random foe marker's one home
-import { RANDOM_TREASURE_MARKER_RECORD } from '../loot.js';   // ...and the random treasure marker's
+import { RANDOM_TREASURE_MARKER_RECORD } from '../loot/loot.js';   // ...and the random treasure marker's
 
 /** The markers that are stops: the editor's random foe and random treasure (archive 199's records). AUDIT LW-II-2 D11:
  *  ONE DFU MEMBER, ONE EXPORT - their homes' (RDBLayout's records, read by the dungeon's foes and its loot), never two
