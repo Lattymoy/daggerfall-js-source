@@ -152,6 +152,20 @@ BOSS_BODY = ""
 # the spoils: the receipts go out unsigned, the players' loot rolls the
 # same, and the account service declines to record the kill.
 
+# ═══ VOICE-RELAY-DOOR: THE VOICE SERVICE'S SHARED SECRET ════════════
+#
+# VOICE_RELAY_SECRET is a Worker SECRET, never a var: the string the
+# voice service (server-voice/) sends on each presence and party-of ask
+# (header x-voice-relay-secret, src/net/voice/voiceWire.js
+# VOICE_RELAY_SECRET_HEADER), compared in constant time with this
+# relay's own copy (server/src/voiceDoor.js). Unset, the doors refuse
+# every ask - and so does the voice service, so voice stays off. Set it
+# with `npx wrangler secret put VOICE_RELAY_SECRET` here and the SAME
+# value as server-voice's VOICE_RELAY_SECRET; set on one side alone, the
+# two never agree. A secret is not the bundle's bytes: rotating it moves
+# no RELAY_VERSION and drops nobody. (bible/11-Multiplayer/Voice-Arc.md
+# section 6.)
+
 # AUDIT ONLINE A17: an uncaught error in the object is logged, not lost
 [observability]
 enabled = true

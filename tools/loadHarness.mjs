@@ -67,7 +67,7 @@
 //
 // It is NOT in the suite and has no Testing.md row, for the account probe's reason (tools/accountProbe.mjs): it needs a
 // toolchain and minutes. Its parts that can be pinned without one are - test/net/scale3.test.js.
-import { spawn, execFile } from 'node:child_process';
+import { spawn, execFile, spawnSync } from 'node:child_process';
 import { promisify } from 'node:util';
 import { mkdtempSync, writeFileSync, rmSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -372,7 +372,8 @@ async function healthy(port, path, waitS) {
 const started = new Set();
 function startDev(cwd, args, label) {
   const [bin, a] = wrangler(args);
-  const p = spawn(bin, a, { cwd, stdio: ['ignore', 'pipe', 'pipe'], detached: true });
+  // WINDOWS: a local wrangler.cmd shim needs a shell to spawn at all (detached + no shell throws EINVAL there).
+  const p = spawn(bin, a, { cwd, stdio: ['ignore', 'pipe', 'pipe'], detached: process.platform !== 'win32', shell: process.platform === 'win32' });
   p.label = label; p.log = '';
   const keep = (d) => { p.log = (p.log + d).slice(-20_000); };
   p.stdout.on('data', keep); p.stderr.on('data', keep);
@@ -382,9 +383,20 @@ function startDev(cwd, args, label) {
 function stopDev(p) {
   if (!p) return;
   started.delete(p);
+  // WINDOWS: no process groups under shell:true, so -pid is meaningless - taskkill /T reaches the shell's own children.
+  if (process.platform === 'win32') { try { spawnSync('taskkill', ['/pid', String(p.pid), '/T', '/F']); } catch { /* already gone */ } return; }
   try { process.kill(-p.pid, 'SIGKILL'); } catch { /* already gone */ }
 }
 export const stopAll = () => { for (const p of [...started]) stopDev(p); };
+// WINDOWS: taskkill returns before the OS actually frees the process's file handles (miniflare's sqlite-shm/-wal) - a
+// cleanup rmSync right after can hit EBUSY. Retry briefly rather than fail the whole run over a cleanup race.
+function rmStateRetrying(state) {
+  const sab = new Int32Array(new SharedArrayBuffer(4));
+  for (let i = 0; i < 20; i++) {
+    try { rmSync(state, { recursive: true, force: true }); return; } catch (e) { if (i === 19) throw e; }
+    Atomics.wait(sab, 0, 0, 250);   // a real synchronous sleep, not a CPU-spinning busy-wait
+  }
+}
 
 // ═══ THE SERVICES ══════════════════════════════════════════════════════════════════════════════════════════════════
 
@@ -403,7 +415,12 @@ export async function standServices(o, state) {
 
   console.log('== the account database: every migration, through wrangler\'s ledger');
   const [mb, ma] = wrangler(['d1', 'migrations', 'apply', 'daggerfall-accounts', '--local', '--persist-to', state]);
-  await run(mb, ma, { cwd: join(ROOT, 'server-account'), timeout: 600_000, maxBuffer: 64 * 1024 * 1024 });
+  // WINDOWS: the local wrangler.cmd shim needs a shell to run at all (see startDev's own note).
+  await run(mb, ma, { cwd: join(ROOT, 'server-account'), timeout: 600_000, maxBuffer: 64 * 1024 * 1024, shell: process.platform === 'win32' });
+  // WINDOWS: the migration's own sqlite handle on the D1 file can outlive the `wrangler d1` process's own exit by a beat
+  // (an async flush/close race) - the very next `wrangler dev` open sees SQLITE_BUSY and workerd aborts hard. A short
+  // pause here is cheaper than a crash-and-retry of the whole dev server a few lines down.
+  if (process.platform === 'win32') { const sab = new Int32Array(new SharedArrayBuffer(4)); Atomics.wait(sab, 0, 0, 1500); }
 
   const account = () => startDev(join(ROOT, 'server-account'), ['dev', join(ROOT, 'tools/loadAccountEntry.mjs'),
     '--config', join(ROOT, 'server-account/wrangler.toml'), '--local', '--persist-to', state, '--port', String(accountPort),
@@ -411,12 +428,29 @@ export async function standServices(o, state) {
   const relay = () => startDev(join(ROOT, 'server'), ['dev', '--config', join(ROOT, 'server/wrangler.toml'), '--local',
     '--persist-to', state, '--port', String(relayPort), '--ip', '127.0.0.1', '--inspector-port', String(relayPort + 100), '--env-file', relayEnv], 'relay');
   console.log('== booting both Workers in workerd');
-  const svc = { accountPort, relayPort, account: account(), relay: relay(), restartRelay: null };
-  if (!(await healthy(accountPort, '/v1/health', 180))) throw new Error(`the account service never answered:\n${svc.account.log.slice(-2000)}`);
+  // WINDOWS: `wrangler dev` opening a just-migrated/just-closed sqlite file (D1's, or a Durable Object's own on cold
+  // start) can race an OS-level lock release and abort with SQLITE_BUSY - intermittent, not the steady state, so
+  // retry a flaky boot a few times before giving up rather than failing the whole run over one bad start.
+  async function bootRetrying(make, healthPort, healthPath, label) {
+    let p = null;
+    for (let attempt = 1; attempt <= 4; attempt++) {
+      p = make();
+      if (await healthy(healthPort, healthPath, attempt === 1 ? 180 : 30)) return p;
+      const log = p.log.slice(-2000);
+      stopDev(p);
+      for (let i = 0; i < 20 && (await portHeld(healthPort)); i++) await sleep(250);
+      if (attempt === 4) throw new Error(`the ${label} never answered after ${attempt} attempts:\n${log}`);
+      console.log(`== the ${label} did not answer (attempt ${attempt}/4) - retrying`);
+      const sab = new Int32Array(new SharedArrayBuffer(4)); Atomics.wait(sab, 0, 0, 1500);
+    }
+    return p;
+  }
+  const svc = { accountPort, relayPort, account: null, relay: null, restartRelay: null };
+  svc.account = await bootRetrying(account, accountPort, '/v1/health', 'account service');
   // AUDIT SCALE C11: the private half read and the service up - it leaves the disk now, not at the run's end (the relay's
   // file holds the public half alone, and the storm restarts only the relay)
   rmSync(acctEnv, { force: true });
-  if (!(await healthy(relayPort, '/health', 180))) throw new Error(`the relay never answered:\n${svc.relay.log.slice(-2000)}`);
+  svc.relay = await bootRetrying(relay, relayPort, '/health', 'relay');
   svc.restartRelay = async () => {
     stopDev(svc.relay);
     for (let i = 0; i < 20 && (await portHeld(relayPort)); i++) await sleep(250);
@@ -863,7 +897,7 @@ async function main(o) {
     console.warn = restore.warn; console.info = restore.info;
     for (const f of fleets) f.stop?.();
     stopAll();
-    if (!o.keep) rmSync(state, { recursive: true, force: true });
+    if (!o.keep) rmStateRetrying(state);
     else console.log(`== the state is kept at ${state}`);
   }
   return out;

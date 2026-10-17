@@ -1,0 +1,32 @@
+# VOICE1 (2026-10-09): THE VOICE SERVICE as a Cloudflare Worker - the third Worker, beside the relay (server/) and the
+# account service (server-account/). Section 4 of bible/11-Multiplayer/Voice-Arc.md.
+#
+# WHY A THIRD WORKER and not a route on either: the relay's deploy drops every connected player (server/wrangler.toml
+# says why), and the account service holds the one private key - the voice service holds the MEDIA SERVER's secret,
+# a different trust, and a bug here must not be able to mint an identity. Two secrets, two Workers.
+#
+# The SFU itself cannot run on Cloudflare - WebRTC media needs UDP and a long-lived process - so this Worker is the
+# control plane and deploy/voice/compose.yaml is the media plane, on a host of yours. The Worker is OPTIONAL: the
+# same `handle` runs under node beside the SFU (server-voice/src/node.js), which is how the proof runs it and how a
+# fully self-hosted stack would. Deploy the Worker when you want the control plane on Cloudflare's edge and the
+# media on your box.
+#
+# Secrets (wrangler secret put): LIVEKIT_API_KEY, LIVEKIT_API_SECRET, IDENTITY_PUBLIC_KEY (not a secret, but set the
+# same way), VOICE_RELAY_SECRET (the relay's own, server/wrangler.toml). Vars below are the public ones.
+#
+# VOICE-REVOKE (bible/11-Multiplayer/Voice-Arc.md section 4): LIVEKIT_ADMIN_URL is REQUIRED - the https door to the
+# SFU's RoomService (the same host as LIVEKIT_URL, its http side). LiveKit reads a credential at the join alone, so a
+# seat is taken back only by the sweep below (src/revoker.js: a member gone from the party or the room removed, a
+# muted account's microphone shut); a service that cannot reach that door mints nothing (503 no-media-server).
+name = "daggerfall-voice"
+main = "src/index.js"
+compatibility_date = "2025-09-01"
+
+[vars]
+LIVEKIT_URL = "wss://voice.example.com"
+LIVEKIT_ADMIN_URL = "https://voice.example.com"
+CORS_ORIGIN = "https://lattymoy.github.io"
+
+# VOICE-REVOKE: the sweep, each minute (the node service's runs every VOICE_SWEEP_MS, 20 s)
+[triggers]
+crons = ["* * * * *"]

@@ -231,7 +231,7 @@ test('WIKIMAID the service end to end: SylviaBun registers, holds the title, the
 });
 
 test('WIKIMAID token and relay: a token may carry the title, the glyph and the warren and verifies; every glyph at once still fits; a word the vocabulary lacks is refused; the relay - world214 and after, the ones that know the words - reads all three out of the signature onto the peer\'s row (mutants: the vocabulary\'s words)', async () => {
-  assert.equal(RELAY_VERSION, 'world215', 'WIKIMAID moved it on: the vocabulary rides the relay\'s bundle - PIN MOVED: world215, SAFE (the chat safety arc and its audit; world214 on its branch, renumbered past WIKIMAID at the merge)');
+  assert.equal(RELAY_VERSION, 'world216', 'WIKIMAID moved it on: the vocabulary rides the relay\'s bundle - PIN MOVED: world216, VOICE-RELAY-DOOR (#967, brought onto main 2026-10-17; world181, then world213, world214 and world215, on its branch, renumbered past the world181-world212 of main, the world213 of EG-PLAY, the world214 of WIKIMAID and the world215 of SAFE at the merges - the two secret-gated relay doors for the voice service, presence by the room and the layer named and party-of with the hub\'s mute, `unavailable` when a room is silent); PIN MOVED: world215, SAFE (the chat safety arc and its audit; world214 on its branch, renumbered past WIKIMAID at the merge)');
   const kp = await subtle.generateKey({ name: 'Ed25519' }, true, ['sign', 'verify']);
   const pub = await importPublicKeyB64(Buffer.from(new Uint8Array(await subtle.exportKey('raw', kp.publicKey))).toString('base64url'), { subtle });
   const nowS = 1_760_000_000;

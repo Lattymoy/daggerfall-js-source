@@ -23099,6 +23099,41 @@
   "tr": "6a09f46b2b06",
   "by": "claude-in-session"
  },
+ "voice.refusal.badAnswer": {
+  "en": "a8a14a5fc04a",
+  "tr": "2d19ed58f415",
+  "by": "claude-in-session"
+ },
+ "voice.refusal.denied": {
+  "en": "2ae66a4d7881",
+  "tr": "f857fa9cb389",
+  "by": "claude-in-session"
+ },
+ "voice.refusal.dropped": {
+  "en": "45e733530429",
+  "tr": "0cf4c48f1a74",
+  "by": "claude-in-session"
+ },
+ "voice.refusal.droppedWhy": {
+  "en": "a61318c69a1e",
+  "tr": "56fdb2e6489a",
+  "by": "claude-in-session"
+ },
+ "voice.refusal.noService": {
+  "en": "5c297cfa3110",
+  "tr": "aa5427220b3d",
+  "by": "claude-in-session"
+ },
+ "voice.refusal.noToken": {
+  "en": "58a6f7da7722",
+  "tr": "881ae9e0c08b",
+  "by": "claude-in-session"
+ },
+ "voice.refusal.sfu": {
+  "en": "487c0d66021d",
+  "tr": "975c072a7ec4",
+  "by": "claude-in-session"
+ },
  "wagon.upkeep.boons.failing": {
   "en": "5e6a68b53a69",
   "tr": "ee9710af5c8a",

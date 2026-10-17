@@ -4532,5 +4532,18 @@
   ["test/law9_rooms.test.js","test/net/eliteGates/law9_rooms.test.js"],
   ["test/law9_route.test.js","test/net/eliteGates/law9_route.test.js"],
   ["test/lootbulk.test.js","test/ui/lootbulk.test.js"],
-  ["test/containerpreview.test.js","test/systems/containerpreview.test.js"]
+  ["test/containerpreview.test.js","test/systems/containerpreview.test.js"],
+  ["src/voice/voiceClient.js","src/net/voice/voiceClient.js"],
+  ["src/voice/voiceProximity.js","src/net/voice/voiceProximity.js"],
+  ["src/voice/voiceSettings.js","src/net/voice/voiceSettings.js"],
+  ["src/voice/voiceSpatialAudio.js","src/net/voice/voiceSpatialAudio.js"],
+  ["src/voice/voiceState.js","src/net/voice/voiceState.js"],
+  ["src/voice/voiceTransport.js","src/net/voice/voiceTransport.js"],
+  ["src/voice/voiceWire.js","src/net/voice/voiceWire.js"],
+  ["src/net/voiceNet.js","src/net/voice/voiceNet.js"],
+  ["test/voice1_client.test.js","test/net/voice/voice1_client.test.js"],
+  ["test/voice1_service.test.js","test/server/voice1_service.test.js"],
+  ["test/voice1_node_body_cap.test.js","test/server/voice1_node_body_cap.test.js"],
+  ["test/voice2_integration.test.js","test/ui/voice2_integration.test.js"],
+  ["test/ui/voice2_integration.test.js","test/net/voice/voice2_integration.test.js"]
 ]

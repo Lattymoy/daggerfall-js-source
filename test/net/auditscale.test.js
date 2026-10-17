@@ -776,7 +776,10 @@ test('AUDIT SCALE D12: the harness\'s counters - every frame and byte in and out
 test('AUDIT SCALE C11 C13: an interrupted run takes its state, and the private half leaves the disk once the service is up; the account entry answers as workerd\'s binding does - a column the row has not thrown, raw() counted once, each point stamped with its moment', async () => {
   const h = src('tools/loadHarness.mjs');
   assert.match(h, /const onSignal = \(\) => \{\s*for \(const f of fleets\) f\.stop\?\.\(\);\s*stopAll\(\);\s*if \(!o\.keep\) \{ try \{ rmSync\(state, \{ recursive: true, force: true \}\); \} catch \{[^}]*\} \}\s*process\.exit\(130\);/);
-  assert.match(h, /if \(!\(await healthy\(accountPort, '\/v1\/health', 180\)\)\)[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*rmSync\(acctEnv, \{ force: true \}\);/);
+  // PIN MOVED (PROX-VOICE, #967's Windows boot retry): the account service is stood by bootRetrying - each try asked
+  // healthy, the fourth unanswered thrown - and the private half leaves the disk on the line after it answers, as before
+  assert.match(h, /svc\.account = await bootRetrying\(account, accountPort, '\/v1\/health', 'account service'\);[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*rmSync\(acctEnv, \{ force: true \}\);/);
+  assert.match(h, /if \(await healthy\(healthPort, healthPath, attempt === 1 \? 180 : 30\)\) return p;[\s\S]{0,400}if \(attempt === 4\) throw new Error/);
   const e = src('tools/loadAccountEntry.mjs');
   assert.match(e, /if \(!\(col in row\)\) throw new Error\(`D1_COLUMN_NOTFOUND/);
   assert.match(e, /if \(key === 'raw'\) return async \([^)]*\) => \{ const r = await target\.raw\(opts\); note\(sql, null\); return r; \};/);

@@ -185,6 +185,8 @@ import { isStaff } from '../../src/net/staffCommands.js';
 import { RELAY_CFG_TTL_MS, RELAY_INTERNAL_CFG, mayRelayCfg, relayCfgValue } from '../../src/net/relayCfg.js';   // SCALE5b: the relay's settings, at run time
 import { busOf, shardOf, isChannelShard, isChannelBus, isRegionBus, isCourtCopy, courtOfCopy, upOf, HUB_INTERNAL_UP, HUB_INTERNAL_POLL, HUB_POLL_MS, HUB_OUTBOX_MAX, HUB_OUTBOX_BYTES, HUB_BATCH_MS, HUB_SYNC_MS, HUB_COUNT_MS, HUB_BATCH_MAX, CLOSE_HUB, HUB_FIND_MAX, HUB_FIND_ROOM_HZ_MAX, HUB_GUILD_WHO_MAX, HUB_WHO_KEEP_MS, HUB_FRAME_MAX, HUB_UP_HZ_MAX, HUB_UP_BURST, shardKeeps, foldFind, HUB_BATCH_BYTES, HUB_UP_QUEUE_BYTES, HUB_SILENT_MS, SHARD_LAW_KEYS, HUB_KEY_KEY } from '../../src/net/hubShards.js';   // SCALE5c: the hub, sixteen ways
 import { verifyToken, verifyOrder, verifyStakeOrderAnyAge, importPublicKeyB64, MAX_TTL_S, ORDER_TTL_S, renownIssuable, deckDigest, remainsDigest, _b64url } from '../../src/net/identityToken.js';   // MOD1: and the mute order, checked with the same key; AUDIT SAFE RELAY-10: and an order's claims read for its kind (`lawKindOf`)
+import { VOICE_PRESENCE_INTERNAL, VOICE_PARTY_OF_INTERNAL } from '../../src/net/voice/voiceWire.js';   // VOICE-RELAY-DOOR: the room's halves of the voice service's two doors
+import { isVoiceDoor, routeVoiceDoor } from './voiceDoor.js';   // VOICE-RELAY-DOOR: the Worker's halves - the secret, the ask's shape, the object asked
 /** ACC1d/F8: the most spent signatures one room remembers. Every entry
  *  expires within MAX_TTL_S and the hello gate bounds how fast they can
  *  arrive, so honest traffic never comes near this; it is here so a
@@ -610,6 +612,7 @@ export default {
     if (url.pathname === '/health') return json({ ok: true, service: 'daggerfall-online', version: RELAY_VERSION, t: Date.now() });
     if (url.pathname === EG_LIVE_PATH) return egLiveAsk(env.ROOMS);   // EG-H2: the Spire's live breaches, for the deploy's hold and drain
     if (url.pathname === SAFE_LAW_PATH) return lawDoor(request, env);   // SAFE4: a mute or ban the account service pushed, for the hub
+    if (isVoiceDoor(url.pathname)) return routeVoiceDoor(request, env, url.pathname);   // VOICE-RELAY-DOOR: server-voice's two questions, secret-gated (voiceDoor.js)
     const key = roomOf(url.pathname);
     if (!key || (key.startsWith('chat:') && !isChatRoom(key))) return json({ error: 'no such room' }, 404);   // AUDIT CHAT A1: no object is minted for a channel the port does not run
     if (key.startsWith('owned:') && !privateInteriorOf(key)) return json({ error: 'no such private room' }, 404);
@@ -1010,6 +1013,8 @@ export class Room {
     if (path === EG_INTERNAL_RCPT) return this._egRcInternal(request);   // EG-ZA: a breach's room telling the hub the receipts it minted
     if (path === HOLDEM_INTERNAL_VOID) return this._holdemVoidInternal(request);   // AUDIT SCALE II R3-3 (c): a layer's void, spent by its place
     if (path === SAFE_INTERNAL_LAW) return this._lawInternal(request);   // SAFE4: an order the account service pushed through the Worker's door
+    if (path === VOICE_PRESENCE_INTERNAL) return this._voicePresenceInternal(request);   // VOICE-RELAY-DOOR: this room's own word on who is hello'd into it
+    if (path === VOICE_PARTY_OF_INTERNAL) return this._voicePartyOfInternal(request);   // VOICE-RELAY-DOOR: the hub's word on an account's party
     const key = roomOf(new URL(request.url).pathname);
     if (!key || (key.startsWith('owned:') && !privateInteriorOf(key))) return json({ error: 'no such private room' }, 404);
     // AUDIT WB A1: A SEAT IS A HELLO'S. A socket that opened and never said hello kept its seat for as long as it stood
@@ -10159,6 +10164,38 @@ export class Room {
     for (const id of lapsed) { if (!party) break; const rec = await this._acct(id); party = await this._partyOut(id, party, now, 'party.lapsed', rec?.name ?? null, { leaderNote: false }); }
     if (party && party.leader !== leaderBefore) { const lrec = await this._acct(party.leader); for (const m of party.members) this._sayNote(m, 'party.leader', party.leader, lrec?.name ?? null); }
     return party;
+  }
+  /** VOICE-RELAY-DOOR: is `acct` hello'd into THIS object right now - by the verified subject on its sockets (`_bySub`),
+   *  never a client-typed body. Any room or layer may answer, and a gate's court for its copies' sockets too (it holds
+   *  them, `_courtHello`). */
+  async _voicePresenceInternal(request) {
+    let body = null;
+    try { body = await request.json(); } catch { body = null; }
+    const acct = typeof body?.acct === 'string' ? body.acct : null;
+    if (!acct) return json({ here: false }, 400);
+    return json({ here: (this._bySub().get(acct)?.size ?? 0) > 0 });
+  }
+  /** VOICE-RELAY-DOOR: where `acct` stands with the hub's bus (SOCIAL_ROOM) - the party it sits in now, read as every
+   *  hub reading does (`_myParty`: a lapsed seat walked out first, the record's stale pointer cleared), and the mute it
+   *  is under: `mu` off its sockets here, which every mute order the bus hears rewrites (MOD1 - the newest order wins
+   *  over a token minted before it), else the bus's own order for an account with no socket - and the ban it is under
+   *  (`bn`, SAFE4's `_bans`: the hub takes every ban the account service pushes, kept in storage). A voice credential and
+   *  the service's sweep read all three, so neither a party left nor a mute or a ban laid on ends at a token's say-so. */
+  async _voicePartyOfInternal(request) {
+    let body = null;
+    try { body = await request.json(); } catch { body = null; }
+    const acct = typeof body?.acct === 'string' ? body.acct : null;
+    if (!acct || acct.length > 128) return json({ party: null, mu: 0, bn: 0 }, 400);
+    const rec = await this._acct(acct);
+    const [party] = rec ? await this._myParty(acct, rec, Date.now()) : [null];
+    const socks = this._bySub().get(acct);
+    let mu = 0;
+    if (socks?.size) for (const ws of socks) mu = Math.max(mu, Number(this._attach(ws)?.mu) || 0);
+    else mu = Number(this._orders.get(acct)?.mu) || 0;
+    const nowS = Math.floor(Date.now() / 1000);
+    await this._loadBans(nowS);
+    const bn = Number(this._bans.get(acct)?.bn) || 0;
+    return json({ party: party?.id ?? null, mu, bn: bn > nowS ? bn : 0 });
   }
   /** The party an account sits in, as it stands - or null, the record's stale pointer cleared (a lapse, a drain, a kick
    *  while it was away). Returns [party, rec] with `rec` written when it changed. */
