@@ -709,6 +709,9 @@ export class PlayerMotor {
   /** TELL6e: a blow's push - `vx`, `vz` metres a second, decaying at BLOW_PUSH_DECAY, along the collider (a wall
    *  stops it) and never over an edge of more than BLOW_PUSH_EDGE. */
   blowPush(vx, vz) { this._pushX = vx; this._pushZ = vz; }
+  /** AUDIT DRUNK2: the push's speed now (m/s), read only - the drunk walk's weave (survival/drunkFeel.js) leaves a push
+   *  that is faster than what it set itself (a blow's knockback) to play out. No allocation. */
+  get pushSpeed() { return Math.hypot(this._pushX, this._pushZ); }
   /** TELL6e: a rattle - `seconds` at `share` of the walk. */
   blowRattle(seconds, share) { this._rattleLeft = Math.max(this._rattleLeft, seconds); this._rattleShare = share; }
   /** TELL6e: a knockdown - `seconds` with no move, the eye `drop` metres down at once and up again at its end.

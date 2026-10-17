@@ -295,6 +295,7 @@ import { fleetBook, fleetShip, titleDeed, knowShip, retitle, setShipPort, forget
 import { createFleetHost } from './fleetHost.js';   // HOLDINGS: the Fleet page's host half
 import { createQuayPool } from './quayPool.js';   // QUAYS: a harbour's quays, stood off its berths, and the gangways
 import { createLefayMonument } from './lefayMonumentHost.js';   // LEFAY1: the monument to Julian LeFay outside Privateer's Hold (HOLD-MONUMENT), and the flowers laid at it
+import { createDrunkSignsHost } from './drunkSignsHost.js';   // DRUNK4: the tavern signs a very drunk eye sees beside a few other buildings' doors
 import { createMerchantYards } from './merchantYardsHost.js';   // MERCHANT-YARDS: every city's and town's Stable and Wagon Yard, and their trade
 import { createPortHost, PORT_TEXT, stairRefusal, stairFeetY } from './portHost.js';   // SHIPYARDS: every port town's shipyard and lighthouse, their people, their press and the lamp - and the stair's refusals
 import { createShipyardHost } from './shipyardHost.js';   // SHIPYARDS: the shipmaster's window's host half
@@ -1646,6 +1647,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const locationIndex = new Map();
   let bountyFarms = null;   // BOUNTY-FARM: the farm pool, made beside the bounty pack's stander; read late (a transition, a load, the frame)
   let quays = null;   // QUAYS: the harbours' quays (scenes/quayPool.js), made beside the farms; read late (a transition, a load, the frame)
+  let drunkSignsHost = null;   // DRUNK4: the tavern signs a very drunk eye sees (scenes/drunkSignsHost.js), made beside the monument; read late (a load, the frame)
   let lefay = null;   // LEFAY1: the monument to Julian LeFay (scenes/lefayMonumentHost.js), made beside the Sigil Broker; read late (a transition, a load, the frame)
   let poiHost = null;   // POI-2: the approved POIs (scenes/poiHost.js), made beside the monument; read late (a transition, a load, the frame)
   let poiFeed = null;   // POI-2: the approved set they are read from (poi/poiFeed.js) - the editor's drafts laid over it (POI-3)
@@ -15751,6 +15753,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         bountyFarms?.destroyAll();   // BOUNTY-FARM: a load - the farms stand again from the loaded bounties
         quays?.destroyAll();   // QUAYS: and the quays, off the harbours found again
         lefay?.destroyAll();   // LEFAY1: and the monument - its collider down, stood again off the loaded world (a flower in the air lands nowhere: thrown before the restore - AUDIT LEFAY1 B1)
+        drunkSignsHost?.destroyAll();   // DRUNK4: and the drunk eye's signs - hung again the next frame the law picks them
         poiHost?.destroyAll();   // POI-2: and the POIs - their colliders down, stood again off the loaded world
         merchantYards?.destroyAll();   // MERCHANT-YARDS: and the yards, their colliders down, stood again off the loaded world
         portHost?.destroyAll(); closeShipyard();   // SHIPYARDS: and the shipyards and lighthouses, and the shipmaster's window over a world gone
@@ -25486,6 +25489,12 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     sound: () => audio.playOneShot(SOUND.SwingHighPitch, 0.4),   // the hand's swing, as a thrown torch's (systems/handheldTorches.js CLIPS.throwSwing)
     restores: restoresSoFar,   // AUDIT LEFAY1 B1: a flower thrown before a load, whichever load, lands nowhere
   });
+  // DRUNK4: THE TAVERN SIGNS A VERY DRUNK EYE SEES (scenes/drunkSignsHost.js) - a tankard sign beside the door of the few
+  // buildings the drink takes for taverns in the player's town; its pixel's door frames, carried by the live translation
+  drunkSignsHost = createDrunkSignsHost({
+    renderer, built: () => built, translation: (px, py, out) => state.pixelTranslation(px, py, out),
+    pixelNow: () => built.get(`${playerTravelPixel().x},${playerTravelPixel().y}`),
+  });
   // POI-2: THE APPROVED POIS (scenes/poiHost.js; bible/06-Systems/POI-Editor-Arc.md) - every POI the approver let into
   // the world (poi/poiFeed.js: the account service's open feed, asked each minute, kept for a start without the network)
   // stood on its pixel while the streamer holds it built: on the drawn ground, its colliders riding the pixel's floating
@@ -34849,6 +34858,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       if (playerSpawned) _townWatchFrame(foeDt);   // DISC19-F: the town's answer to what the pools just did
       if (playerSpawned) raidingPartiesFrame(gamePaused() ? 0 : foeDt);   // RAID1: the raids' Update - after the pools moved (a death counts on the frame it falls) and the watch answered, its clocks held by a pause (fix 7)
       markFoeReach([...cityGuards.guards, ...exteriorFoes.foes], { aboard: playerAfloat() && !(walkMode && playerSpawned && player.isPlayerSwimming), seaY: tvSeaY() });   // WATER-FOES: aboard and dry, a foe in the water reaches no one - no enemy nearby (the pools, the watch and the raids done)
+      if (drunkSignsHost) livePersonBatches.push(...drunkSignsHost.batches());   // DRUNK4: and the signs a very drunk eye sees beside a few doors
     }
     };
     framePools();

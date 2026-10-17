@@ -273,6 +273,7 @@ import { theftBasket, privatePropertyTheft, shopShelfTheft } from '../systems/th
 import { landSold } from '../systems/stolenGoods.js';   // STOLEN-GOODS: a stolen piece sold is the merchant's to be rid of, never shelved
 import { buildingGreeting, shopQualityPresentation } from '../systems/buildingGreeting.js';
 import { setUnleveledLootWorld, unleveledLootPreTransition, unleveledLootExteriorTransition } from '../systems/unleveledLoot.js';   // UL1: PlayerEnterExit's world and its transition events   // BG1: the shop quality + the householder's greeting
+import { phantomDoorText } from '../systems/survival/drunkSigns.js';   // DRUNK4: a very drunk eye reads a few other buildings' plaques as taverns'
 import { discoverBuilding, undiscoverBuilding, getDiscoveredBuilding, getLastLockpickAttempt, setLastLockpickAttempt, shownBuildingName } from '../systems/discovery.js';   // H3: selling a house takes its name back off the map
 import { BUILDING_KEY_0 } from '../systems/talk/talkTopics.js';   // H3: the no-key key both ship interiors are filed under
 import { carriedPieces } from '../systems/item/itemIds.js';   // AUTO-HOLD: the room's word never lands a piece I carry (world/interior/interiorShared.js)
@@ -7242,6 +7243,7 @@ export function createWorldModes(host) {
   let _doorTextHomes = -1;   // HOME1: the homes registry's version the text was read at - a town's answer, a sale, repaints the door
   let _doorTextVerbs = '';   // HOME2: whether the door's verbs were listed, and which buy was armed - a mode change or an arm repaints it
   let _doorText = null;
+  let _doorBd = null;   // DRUNK4: the building record `_doorText` names - the drunk eye's plaque reads it (drunkPlaque), never writes it
   /**
    * ...AND IT IS FREED WHEN THE MODE LEAVES THE STREET.
    *
@@ -7615,7 +7617,7 @@ export function createWorldModes(host) {
       // over a tavern's doorstep named the tavern's door, while the
       // click walked into the tavern. A door belongs to one building;
       // its plaque says that one. A departure from the mod (Ledger A).
-      const bd = doorBuilding(entry);
+      const bd = doorBuilding(entry); _doorBd = bd ?? _doorBd;
       if (!bd) return _doorText;
       const locId = discoveryLocationId?.() ?? null;
       if (!locId) return _doorText;
@@ -7666,6 +7668,8 @@ export function createWorldModes(host) {
   /** The town a building record is keyed by: the door's own location (buildingDataForDoor's `townMapId` - a streamed
    *  neighbour's door is not the town under the player), else the location under the player. */
   const homeTownOf = (b) => b?.townMapId || (questSceneCtx?.()?.mapId ?? 0);
+  /** DRUNK4: a plaque as the drunk eye reads it - a building the drink takes for a tavern is named for one (systems/survival/drunkSigns.js); presentation only, applied after the door's cache, never stored */
+  const drunkPlaque = (t, key) => phantomDoorText(t, typeof key === 'number' && key === _doorTextKey && t === _doorText ? _doorBd : null, homeTownOf(_doorBd));
   /** H1's IsHouseOwned for a building where it stands - DFU's (region, key) law; AUDIT CAPTAIN'S SEA P9: never a building
    *  of an isle's town (no house is sold past the Veil, and a Betony deed's key owned the same key in every isle town of
    *  region 19 - its residents gone, its cupboards the player's). */
@@ -14416,7 +14420,7 @@ export function createWorldModes(host) {
     exteriorActivationDistance,   // AUDIT 63 F33 (review): the rival distance the living-foe arm must beat
     exteriorActivationHit,   // FB1012d ALLY-YIELDS: ...and its pick, reach and all, for the race's `next`
     exteriorHoverPick,   // WORLD-HOVER: the plaque's winner, raced exactly as the press's is
-    exteriorHoverName,   // ...and what that winner is called
+    exteriorHoverName: (key, o) => drunkPlaque(exteriorHoverName(key, o), key),   // ...and what that winner is called (DRUNK4: as the drink reads it)
     openYardTrade,   // MERCHANT-YARDS: a yard's counter, opened from the street (scenes/world.js merchantYards' `open`)
     cabinHolds, cabinSold,   // SHIPYARDS: a ship sold at a shipyard - what her cabin still holds, and her cabin let go with her
     attemptExteriorDoorBash,   // ROAD-B: WeaponEnvDamage's static-door arm (PlayerActivate.cs:1056-1079)

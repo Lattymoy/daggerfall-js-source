@@ -159,6 +159,7 @@ import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   //
 import { immersiveFootsteps } from '../systems/immersiveFootsteps.js';
 import { betterAmbience, classicFootstepAllowed } from '../systems/betterAmbience.js';   // BA1: Better Ambience - the shake, the dungeon's fog and light, the reverb, the indoor rain, its own stride   // IF1: Immersive Footsteps owns the stride and the three landing sounds once its clips are in (DisableVanillaFootsteps)
 import { drunkFeel } from '../systems/survival/drunkFeel.js';   // DRUNK1: the drink's sway and stumble, beside the shake
+import { drunkSigns } from '../systems/survival/drunkSigns.js';   // DRUNK4: the town a very drunk eye mistakes buildings of for taverns
 import { calculateCastCost } from '../systems/spellcost.js';   // M2
 import { rangedDamageSpells } from '../systems/spellcast.js';   // U42: the flight probe's picker
 import { seasonValue, dateFromClassicMinutes, dateTimeString, midDateTimeString } from '../systems/gameDate.js';   // AUDIT 23 (wts-1); QX1: the notebook's header shapes
@@ -4616,6 +4617,8 @@ export async function bootExterior(canvas, renderer, params, status) {
       return { ...d, regionIndex: dfLocation.regionIndex, townBlocks: homeTownBlocks(dfLocation), name: townTalk.directory.find((e) => e.buildingKey === d.buildingKey)?.name ?? '' };   // HOME-PRICE: the town's size
     },
   });
+  // DRUNK4: the bench's town and its buildings, for the plaque a very drunk eye reads as a tavern's (worldModes' exteriorHoverName); the bench measures no door frames, so no sign hangs here
+  drunkSigns.provide({ town: () => dfLocation?.mapTableData?.mapId ?? 0, buildings: () => locationBuildings(dfLocation.exterior?.buildings ?? [], loc.blocks, { locationIndex: dfLocation.locationIndex ?? 0 }) });
   // FORAGE1: THE FOUR HOSTS RULE - the fixed city runs Foraging too: QAE's four actions on its machine, and its
   // answers to the six checks. The city is a town by construction (this host's widened rect, F061), so every
   // tool refuses with its settlement line here - as DFU does inside a town's rect.

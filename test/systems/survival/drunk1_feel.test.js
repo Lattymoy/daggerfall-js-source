@@ -105,7 +105,7 @@ test('DRUNK1: the stumble is the motor\'s blow push, sideways to the walk, and n
   const w = walker({ moveYaw: 0 });
   feel.frame(STUMBLE_GAP_S * 2, { entity: p, player: w });   // eases to the full intensity in one long step
   assert.equal(w.pushes.length, 1);
-  const speed = STUMBLE_SPEED.base + STUMBLE_SPEED.perIntensity * 1;
+  const speed = STUMBLE_SPEED.base + STUMBLE_SPEED.perIntensity * 1 + STUMBLE_SPEED.perGoggles * 1;   // DRUNK2: the goggles' share (one at full)
   assert.deepEqual(w.pushes[0].map((v) => Math.round(v * 1000) / 1000 + 0), [-speed, 0], 'yaw 0 walks along -z: the push is along x, the right vector (cos, 0, -sin) flipped');
   feel.frame(STUMBLE_GAP_S / 2, { entity: p, player: w });
   assert.equal(w.pushes.length, 1, 'inside the gap: none');

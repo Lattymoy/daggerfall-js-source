@@ -182,6 +182,7 @@ const HARDCODED = {
   'src/render/courtCrystals.js': 3,
   'src/render/deadlands.js': 4,
   'src/render/deepWatersRender.js': 13,
+  'src/render/drunkGoggles.js': 1,   // DRUNK2: the vertex shader's source, no sentence
   'src/render/duelWall.js': 1,
   'src/render/dynamicSkiesRenderer.js': 1,
   'src/render/eliteGates/egLightPass.js': 1,

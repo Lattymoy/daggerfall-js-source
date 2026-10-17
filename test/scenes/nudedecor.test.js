@@ -196,6 +196,7 @@ const NO_PERSON = Object.freeze({
   'src/scenes/comeSailAway/comeSailAwayPool.js': 'the vendored prefabs\' billboards - its people none of the table\'s (pinned below)',
   'src/scenes/corpseMarker.js': 'a foe\'s corpse',
   'src/scenes/droppedLoot.js': 'loot piles',
+  'src/scenes/drunkSignsHost.js': 'a phantom tavern\'s hanging sign, made in code (the drink\'s illusion)',   // DRUNK4
   'src/scenes/droppedTorches.js': 'torches',
   'src/scenes/exteriorFoes.js': 'foes as mobile units',
   'src/scenes/gate/gateCourt.js': 'the gate boss as a mobile unit, and his corpse',

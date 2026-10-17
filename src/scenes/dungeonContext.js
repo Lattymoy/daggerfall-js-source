@@ -300,6 +300,7 @@ import { NavClient } from '../ai/nav/navClient.js';   // ENHANCED AI 3b
 import { getPref } from '../systems/uiPrefs.js';
 import { createHostNpcBodies, npcBodiesOn } from '../characters/npcBodies.js';   // MWNPC5b: the foes in their Morrowind bodies
 import { isBodyFoe, foeActor, foeFx, foeId, foeSeed, applyWireLook, drawBodiesUnderWindow } from '../characters/foeBodies.js';
+import { foeVision } from '../systems/survival/drunkVisions.js';   // DRUNK3: a Very drunk player's creatures drawn as harmless ones
 import { createPopulationLane } from '../characters/npcBodies.js'; import { personActor } from '../characters/peopleBodies.js';   // MWNPC8b: the dungeon's standing people   // ENHANCED AI 3b: the Enhanced tab's switch
 import { raiseEnemyDeath, playRareDrop, pileBody, sayEnemyDied, corpseEntityName } from './corpseMarker.js';   // UL1: OnEnemyDeath; LR3: the drop chime; LOOT-STACK: a body as the loot window's tab; LOOT7-CHECK DUNGEON-DIED: the kill notice; L10N3e: a body's name as shown
 import { egFindStruck, egFindKill } from '../systems/eliteGates/egFind.js';   // EG-E3: the dungeon's find - a joiner's kill, asked by the joiner; PARTY-LOOT: a room's body's kill
@@ -8012,11 +8013,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         if (!_dv && f.portalFx && f.portalFx.dir === 'in') f.portalFx = null;
         setBatchDissolve(f.batch, _dv ? _dv[0] : 0, _dv ? _dv.slice(1) : undefined);
 
-        const out = f._mout;
+        const out = foeVision(f, f.mobileArchive, f.mobileTex, f._mout, getTexture);   // DRUNK3: what to DRAW - the foe's own sprite, or what a Very drunk eye takes it for (archive, tex, record, frame, flip); its clock, f._mout, is the real one's
         const rkey = `${out.record}#${out.frame}`;
-        if (!renderer.textures.has(`${f.mobileArchive}_${rkey}`)) uploadRecordFrame(f.mobileArchive, out.record, out.frame);
-        f.batch.record = rkey;
-        const sz = mobileBillboardSize(f.mobileTex, out.record);   // AUDIT MM1: a mobile unit's record cache carries the xml scale - a shared, cached object: read, never written
+        if (!renderer.textures.has(`${out.archive}_${rkey}`)) uploadRecordFrame(out.archive, out.record, out.frame);
+        f.batch.record = rkey; f.batch.archive = out.archive;
+        const sz = mobileBillboardSize(out.tex, out.record);   // AUDIT MM1: a mobile unit's record cache carries the xml scale - a shared, cached object: read, never written
         // C17: the texture-475 female casting records read too small
         // from the files - DFU post-scales 20-24 by 1.35 (OrientEnemy).
         // FB0930-FOE-RAYS: onto LOCALS. It multiplied the width and height ON the

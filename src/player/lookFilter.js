@@ -52,6 +52,16 @@ let _floorProvider = null;
 export function setPitchFloorProvider(fn) { _floorProvider = typeof fn === 'function' ? fn : null; }
 export const pitchFloor = () => { const d = _floorProvider?.(); return Number.isFinite(d) ? Math.min((Math.max(d, -90) * Math.PI) / 180, PITCH_FLOOR) : PITCH_FLOOR; };   // AUDIT-RR2 G23: `pitchMax = Mathf.Clamp(value, PitchMin, PitchMax)` (PlayerMouseLook.cs:87-90), PitchMin -90 - a steep bank cannot push the floor past vertical
 
+/** DRUNK2 (2026-10-17, asked for: "less control over your character" at higher drunk levels): a mod's FLOOR under the
+ *  look's smoothing - the drink's laggy, swimmy view (survival/drunkFeel.js lookSmoothingAt). DFU has no such seam
+ *  (the factor is the setting alone); the port's, modelled on the pitch floor's provider above. A registered provider
+ *  answers a smoothing factor (0..SMOOTHING_MAX, the setting's own scale) or 0 for none; `tick` uses the larger of it
+ *  and the setting (or the factor a caller hands it), never past SMOOTHING_MAX. With none set, or one answering 0, the
+ *  look is byte for byte the setting's own. */
+let _smoothingFloorProvider = null;
+export function setLookSmoothingFloor(fn) { _smoothingFloorProvider = typeof fn === 'function' ? fn : null; }
+export const lookSmoothingFloor = () => { const f = _smoothingFloorProvider?.(); return f > 0 ? Math.min(f, SMOOTHING_MAX) : 0; };
+
 /** GetFrameRateScaledFractionOfProgression (:100-105), verbatim - and
  *  AUDIT 68 S15-lookfilter-nan-dt0: at its two edges. A browser frame
  *  can repeat its timestamp (dt 0), where fraction 1 made 0/0 = NaN
@@ -187,7 +197,9 @@ export class LookFilter {
     // Clamp the TARGET pitch to the range, then owe only what remains.
     const targetPitch = Math.max(-pitchFloor(), Math.min(PITCH_LIMIT, cam.pitch + this.residualPitch));   // RR2: a mod's PitchMaxLimit rides the floor   // MAC1: the floor is the owner's, the ceiling the reference's
     this.residualPitch = targetPitch - cam.pitch;
-    const s = frameSmoothing(_controllerLook && smoothing < 0.5 ? 0.5 : smoothing, dt);   // GP1: the controller's floor
+    const lag = lookSmoothingFloor();   // DRUNK2: a mod's floor under the factor, raised before the controller's own (a number, no allocation)
+    const base = lag > 0 ? Math.min(SMOOTHING_MAX, Math.max(smoothing, lag)) : smoothing;
+    const s = frameSmoothing(_controllerLook && base < 0.5 ? 0.5 : base, dt);   // GP1: the controller's floor
     const stepYaw = this.residualYaw * (1 - s);
     const stepPitch = this.residualPitch * (1 - s);
     cam.yaw += stepYaw + this.turnYaw;   // AUDIT CLIMB-ARC F13: the game's turn, whole

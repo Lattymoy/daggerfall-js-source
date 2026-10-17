@@ -2,8 +2,8 @@
   {
     "name": "DOOR-NAME-the-plaque-reads-the-box",
     "file": "src/scenes/worldModes.js",
-    "old": "      const bd = doorBuilding(entry);\n",
-    "new": "      const bd = buildingUnderRay(eye, dir);\n",
+    "old": "      const bd = doorBuilding(entry); _doorBd = bd ?? _doorBd;\n",
+    "new": "      const bd = buildingUnderRay(eye, dir); _doorBd = bd ?? _doorBd;\n",
     "tests": [
       "test/systems/fb1013e_doorname.test.js"
     ]

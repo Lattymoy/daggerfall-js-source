@@ -134,8 +134,8 @@ test('MM1: the seams - the archive on a parsed TEXTURE.###, every billboard size
   }
   // AUDIT MM1: the mobile units through the mobile door (DaggerfallMobileUnit / MobilePersonBillboard), everything else static
   assert.match(rd('src/characters/enemy/enemyAnchor.js'), /return mobileBillboardSize\(t, 0\)\.h;/, 'the idle height reads the scaled record');
-  assert.match(rd('src/scenes/exteriorFoes.js'), /const sz0? = mobileBillboardSize\(f\.tex, o\.record\);/);   // ELITE FOES: `sz0`, then an elite's quarter more
-  assert.match(rd('src/scenes/dungeonContext.js'), /const sz = mobileBillboardSize\(f\.mobileTex, out\.record\);/);
+  assert.match(rd('src/scenes/exteriorFoes.js'), /const sz0? = mobileBillboardSize\(o\.tex, o\.record\);/);   // DRUNK3: `o` is the seam's answer (survival/drunkVisions.js foeVision) - the foe's own texture unless a Very drunk eye takes it for another; ELITE FOES: `sz0`, then an elite's quarter more
+  assert.match(rd('src/scenes/dungeonContext.js'), /const sz = mobileBillboardSize\(out\.tex, out\.record\);/);   // DRUNK3: `out` is the seam's answer
   assert.match(rd('src/scenes/cityGuards.js'), /const sz = mobileBillboardSize\(g\.tex, o\.record\);/);
   assert.match(hostText('src/scenes/world.js'), /const sz = mobileBillboardSize\(pt, out\.record\);/);
   assert.match(rd('src/scenes/exterior.js'), /const sz = mobileBillboardSize\(t, out\.record\);/);

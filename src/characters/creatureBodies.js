@@ -84,6 +84,10 @@ export function creatureLook(f) {
   // completes (MobileUnit.specialTransformationCompleted) - keeps her sprite: the match is the winged daedra she becomes,
   // which would give her away (the Sigil Broker's law, section 15a). A record with no mobile (the gate's host) is the daedra.
   if (f?.mobileType === M.DaedraSeducer && f.mobile && !f.mobile.specialTransformationCompleted) return null;
+  // DRUNK3: a LIVE foe a Very drunk eye takes for another creature (survival/drunkVisions.js foeVision marks it each frame
+  // it is drawn) keeps its SPRITE, which is that other creature - a Morrowind body would show what it really is. The
+  // mark lets go the frame the drink wears off, and a corpse (f.dead) is a corpse whatever the drink saw
+  if (f?._drunkSeen && !f.dead) return null;
   if (look?.veil) {
     // MWNPC13: a NAMED spectral - Lysandus, placed by his quest in his own archive (473) - keeps his own sprite: the
     // body is the stock ghost's, and he is no stock ghost
