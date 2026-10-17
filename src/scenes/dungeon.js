@@ -621,10 +621,13 @@ export async function bootDungeon(canvas, renderer, params, status) {
   // Verbatim DungeonFogSettings: exponential 0.005, fog color black.
   renderer.setFog('exp', 0.005, 0, 0, new Float32Array([0, 0, 0]));
 
-  // E3: the console's door, ungated - the database is one static class
-  // in DFU and every command registered anywhere is reachable from any
-  // scene, which is exactly what a static class means.
-  installConsoleProbe();
+  // E3: the console's door - the database is one static class in DFU
+  // and every command registered anywhere is reachable from any scene,
+  // which is exactly what a static class means. OFFLINE ONLY, as
+  // world.js carries it (AUDIT REALM2 M4): a reachable door is a cheat's
+  // delivery method - its verbs mint (a boat, a deed, gold) - and the
+  // online page's neighbours are not the player's to change.
+  if (!params.has('online')) installConsoleProbe();
 
   if (shotMode) {
     // Probe hooks (parity with the world scene): displace the camera and

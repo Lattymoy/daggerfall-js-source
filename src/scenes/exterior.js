@@ -4835,7 +4835,9 @@ export async function bootExterior(canvas, renderer, params, status) {
   // commands are still REACHABLE from here, because the database is one
   // static class in DFU and one module here.
   registerExteriorAutomapConsoleCommands({ isPlayerInside: () => (modes?.mode ?? 'exterior') !== 'exterior' });
-  installConsoleProbe();
+  // OFFLINE ONLY, as world.js carries it (AUDIT REALM2 M4): the door's
+  // verbs are the map's powers, and an online page never mounts it.
+  if (!params.has('online')) installConsoleProbe();
   if (shotMode) {
     window.__frame = window.__frame ?? 0;   // AUDIT 17e F37: the counter is now incremented, so seed it
     window.__renderer = renderer;   // EV2: the probe surface every host carries now (the dungeon's U38 precedent) - draw counts land against renderer.stats
