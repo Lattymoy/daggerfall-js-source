@@ -23,6 +23,7 @@ import { GuildBook } from '../../src/net/guild/guildBook.js';
 import { createSocialPanel } from '../../src/ui/socialPanel.js';
 import { SocialState } from '../../src/net/social.js';
 import { GUILD_RANK_NAMES } from '../../src/net/guild/guildLaw.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const noWait = () => Promise.resolve();
@@ -404,7 +405,7 @@ test('PROF6 wiring: the routes behind a session and in the Worker\'s table with 
   for (const r of routes) assert.ok(door.includes(`'${r}'`), r);
   const words = [...src('server-account/src/writs.js').matchAll(/error: '([a-z-]+)'/g)].map((m) => m[1]);
   for (const w of new Set(words)) assert.ok(REFUSALS[w], `a sentence for ${w}`);
-  const world = src('src/scenes/world.js');
+  const world = hostText('src/scenes/world.js');
   assert.match(world, /const writBook = params\.has\('online'\)\n\s+\? createWritBook\(\{ door: accountWrits/);
   assert.match(world, /writs: writBook, regionNameOf: \(r\) => REGION_NAMES\[r\] \?\? 'another region', pieces: commissionPieces,/);
   assert.match(world, /settle: \(\) => writBook\.settle\(marketPutBack, marketDrop\)/);

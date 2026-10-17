@@ -428,7 +428,7 @@
   {
     "name": "SD11c-L6F4-never-read",
     "file": "src/scenes/world.js",
-    "old": "    const diedInHour = modes?.sdRealmSlot?.() != null;",
+    "old": "    const diedInHour = madeRuleHere('death') === 'final';",
     "new": "    const diedInHour = false;",
     "tests": [
       "test/systems/sd11c_page.test.js"

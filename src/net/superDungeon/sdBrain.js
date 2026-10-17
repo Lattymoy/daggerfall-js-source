@@ -93,15 +93,17 @@ export const sdHourShown = (h) => sdHour(h) || SD_HOURS;
 /** The fewest turns that move a stone `t` hours (forward or back). */
 export const sdTurnsFor = (t) => Math.min(sdHour(t), SD_HOURS - sdHour(t));
 
-/** The slot's own seed for a draw (a slot is public; the draw is the law's, the same everywhere). */
-function sdSeed(s, salt) {
+/** The slot's own seed for a draw (a slot is public; the draw is the law's, the same everywhere). EG-PLAY: exported -
+ *  the Elite Breach's halls draw with the same mix (net/eliteGates/egLaw.js egSeed; ONE DFU MEMBER, ONE EXPORT). */
+export function sdSeed(s, salt) {
   let h = (Math.imul(s >>> 0, 0x9e3779b1) ^ salt) >>> 0;
   h = Math.imul(h ^ (h >>> 16), 0x85ebca6b);
   h = Math.imul(h ^ (h >>> 13), 0xc2b2ae35);
   return (h ^ (h >>> 16)) >>> 0;
 }
-/** mulberry32 - the port's seeded die, kept here so the relay's bundle takes this file whole. */
-function sdRng(seed) {
+/** mulberry32 - the port's seeded die, kept here so the relay's bundle takes this file whole. EG-PLAY: exported - the
+ *  Elite Breach's hall law rolls on it. */
+export function sdRng(seed) {
   let a = seed >>> 0;
   return () => {
     a = (a + 0x6d2b79f5) >>> 0;
@@ -164,10 +166,14 @@ const sdWayTurns = (way) => way.reduce((m, t) => m + sdTurnsFor(t), 0);
  * forward; `riddles` the six plaques' clues in the plaques' order, each `{ kind, a, b?, h?, k?, text }`. Null for a slot
  * the law does not know.
  */
-export function orreryOf(s) {
+export function orreryOf(s, opts = null) {
   if (!Number.isSafeInteger(s) || s < 1) return null;
-  const had = orreryCache.get(s);
+  // EG-FULL (Elite-Gates.md section 8.4, EG4): WIDENED - the Spire's Athenaeum asks its own turns range and fray; the
+  // Hour's call (no `opts`) draws byte for byte as it always did, its cache keyed as before
+  const key = opts ? `${s}:${opts.turnsMin}:${opts.turnsMax}:${opts.fray ?? ''}` : s;
+  const had = orreryCache.get(key);
   if (had) return had;
+  const tMin = opts?.turnsMin ?? SD_TRUTH_TURNS_MIN, tMax = opts?.turnsMax ?? SD_TRUTH_TURNS_MAX;
   const r = sdRng(sdSeed(s, SD_ORRERY_SALT));
   const n = SD_STONES.length;
   // THE GEARING: a hidden order; each stone after the first turns one or two stones before it, one or two hours either way
@@ -194,11 +200,11 @@ export function orreryOf(s) {
   // THE START: drawn until the way from it to the truth is SD_TRUTH_TURNS_MIN to SD_TRUTH_TURNS_MAX turns at its shortest
   let start, way;
   do { start = Array.from({ length: n }, () => sdPick(r, SD_HOURS)); way = solveGear(order, gear, start, truth); }
-  while (sdWayTurns(way) < SD_TRUTH_TURNS_MIN || sdWayTurns(way) > SD_TRUTH_TURNS_MAX);
+  while (sdWayTurns(way) < tMin || sdWayTurns(way) > tMax);
   const riddles = sdShuffle(r, clues).map((c) => Object.freeze({ ...c, text: sdRiddleText(c) }));
-  const o = Object.freeze({ s, order: Object.freeze(order), gear: Object.freeze(gear.map((g) => Object.freeze(g))), start: Object.freeze(start), way: Object.freeze(way), truth: Object.freeze(truth), riddles: Object.freeze(riddles) , fray: sdMarksLaw(sdMarksOf(s)).fray ?? SD_FRAY_MAX });   // SD18a: the Fraying's thirty-six
+  const o = Object.freeze({ s, order: Object.freeze(order), gear: Object.freeze(gear.map((g) => Object.freeze(g))), start: Object.freeze(start), way: Object.freeze(way), truth: Object.freeze(truth), riddles: Object.freeze(riddles) , fray: opts?.fray ?? (opts ? SD_FRAY_MAX : sdMarksLaw(sdMarksOf(s)).fray ?? SD_FRAY_MAX) });   // SD18a: the Fraying's thirty-six
   if (orreryCache.size >= 64) orreryCache.delete(orreryCache.keys().next().value);
-  orreryCache.set(s, o);
+  orreryCache.set(key, o);
   return o;
 }
 
@@ -266,6 +272,25 @@ export function orreryTurned(R, who, id, road, after, now) {
 /** Whom the snap lashes: the peers who turned this thread and did not bring the Concord nearer by it, net - at most
  *  `max`. */
 export const orreryLashed = (R, max = 256) => Object.entries(R.ids).filter(([, net]) => net >= 0).map(([id]) => id).slice(0, max);
+/**
+ * EG-H3 (2026-10-12; bible/11-Multiplayer/Elite-Gates.md sections 8.4 and 31, EG4): ONE TURN OF A STONE, JUDGED - the
+ * Hour's realm's judge (server/src/index.js _sdTurn) and the Spire's Athenaeum's (net/eliteGates/egBrain.js), one law over the one
+ * draw (orreryOf, widened): nothing while the Concord holds or while the stone's gear has not settled (SD_STONE_SETTLE_MS
+ * since `last[i]`); under THE STONES' RIGHTS (`R` - the Hour's thread; the Spire's company keeps none) a turner that may
+ * not turn now is told to wait (`{ wait: true }`), and a turn it takes is counted to it by the road before and after
+ * (orreryTurned); else the turn - orreryStep's answer. `lock` the hall's `{ st, f, ok }`. The judge the realm ran,
+ * extracted whole: THE GOLDEN FRAMES' Orrery (test/net/eliteGates/egseam_law.test.js) hold the Hour's every word to what it said.
+ * @returns {null | { wait: boolean, st?: number[], f?: number, ok?: boolean, x?: boolean, lit?: number }}
+ */
+export function orreryJudge(o, lock, last, i, a, now, R = null, who = '', id = '') {
+  if (lock.ok || now - (last[i] ?? 0) < SD_STONE_SETTLE_MS) return null;
+  if (R && !orreryMayTurn(R, who, now)) return { wait: true };
+  const road = R ? orreryShortest(o, lock.st) : 0;
+  const res = orreryStep(o, lock, i, a);
+  if (!res) return null;
+  if (R) orreryTurned(R, who, id, road, orreryShortest(o, orreryTurn(o, lock.st, i, a)), now);
+  return { wait: false, ...res };
+}
 
 /** Whether a pose (the realm's frame) reaches stone `i` - the relay allowing `slack` for a pose's lag. A pose that is no
  *  number reaches nothing (NaN compares false). */

@@ -144,8 +144,9 @@ test('SD-LOOK THE GRADE: the Hour\'s on the lane holds the eye down (key 0.12, a
   const W = read('src/scenes/worldModes.js');
   // PIN MOVED (INTERIOR-DIM, 2026-10-11): a building's room asks a grade of its own now (the interior arm); in the
   // dungeon arm the Hour is still the only one
-  assert.equal((W.match(/setSceneGrade/g) ?? []).length, 2, 'two grades: the Hour\'s and a room\'s');
-  assert.equal((W.match(/setSceneGrade\?\.\(SD_HOUR_GRADE\)/g) ?? []).length, 1);
+  assert.equal((W.match(/setSceneGrade/g) ?? []).length, 3, 'three grades: the Hour\'s, an Elite Breach\'s circle (its band\'s - EG-LOOK, PIN MOVED) and a room\'s');
+  assert.equal((W.match(/setSceneGrade\?\.\(SD_HOUR_GRADE\)/g) ?? []).length, 1);   // PIN MOVED (EG-LOOK, Elite-Gates-Look.md section 7): an Elite Breach's circle asks its band's own grade (world/eliteGates/egAtmos.js), no longer the Hour's
+  assert.match(W, /renderer\.setSceneGrade\?\.\(egHallGrade\(dungeonLoc\.egCircle\)\);/, 'the Spire asks its band\'s');
   assert.match(W, /if \(isSdRealm\(dungeonLoc\)\) \{ [^\n]*renderer\.setSceneGrade\?\.\(SD_HOUR_GRADE\); \}/, 'the Hour alone asks a grade in the dungeon arm: the Hollow keeps the defaults');
   assert.match(W, /renderer\.setSceneGrade\?\.\(interiorGrade\(!!renderer\.lightingLane\)\);/, 'and a building\'s room its own');
 });

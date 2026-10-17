@@ -61,7 +61,7 @@
   },
   {
     "name": "OW-WOD-LAG-host-no-settle",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "    collider.settle(key);\n    await breather.breathe();\n\n    // SIB1:",
     "new": "    await breather.breathe();\n\n    // SIB1:",
     "tests": [

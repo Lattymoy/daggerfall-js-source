@@ -20,8 +20,9 @@ import { mountEnhancedInventory, remoteModel } from '../../src/ui/enhanced/enhan
 import { NativeInventoryWindow, pileLabel } from '../../src/ui/native/nativeInventory.js';
 import { REMOTE_TARGET_ICON_RECT } from '../../src/ui/targetIconPanel.js';
 import { withDom } from '../invdrag.mjs';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
-const rd = (p) => readFileSync(new URL('../../' + p, import.meta.url), 'utf8');
+const rd = (p) => hostText(p);
 
 // ─── THE GEOMETRY: an eye at the origin looking down +z; a body is the corpse's own 1 x 0.6 x 1 box ─────────────
 

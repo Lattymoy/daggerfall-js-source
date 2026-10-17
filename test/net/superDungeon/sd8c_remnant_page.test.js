@@ -677,6 +677,6 @@ test('SD8c THE HOSTS, by source: the dungeon context makes the arena\'s set in t
   assert.match(W, /sdBlow: \(k, f\) => !!online\?\.sendSdBlow\?\.\(k, f\),/);
   assert.match(W, /serpentAway\(!onlineOn\);[^\n]*sdFightAway\(\);/);
   const R = read('server/src/index.js');
-  assert.match(R, /this\._send\(ws, JSON\.stringify\(\{ t: 'sd', \.\.\.remnantStateOf\(f\), me: 1 \}\)\);/);
+  assert.match(R, /this\._send\(ws, JSON\.stringify\(\{ t: 'sd', \.\.\.SD_SEAM\.stateOf\(f\), me: 1 \}\)\);/);   // PIN MOVED (EG-H3, EG3): through THE BOSS SEAM (net/bossSeam.js - the brain's own law, its frames byte for byte: test/net/eliteGates/egseam_law.test.js)
   assert.equal((R.match(/me: 1/g) ?? []).length, 1, 'said in the answer alone');
 });

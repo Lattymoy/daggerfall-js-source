@@ -13,6 +13,7 @@ import { createEotbCamera } from '../../../src/player/eyeOfTheBeholder/eotbCamer
 import { facingFor, boatForwardOf } from '../../../src/player/eyeOfTheBeholder/eotbBillboard.js';
 import { PrefabNode } from '../../../src/world/prefabNode.js';
 import { quatRotate, quatAngleAxis } from '../../../src/world/quat.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const DIR = new URL('../../../vendor/come-sail-away/Models/', import.meta.url);
 const json = (f) => JSON.parse(readFileSync(new URL(f, DIR), 'utf8'));
@@ -20,7 +21,7 @@ const MODELS = comeSailAwayModels({ prefabs: json('prefabs.json'), meshes: json(
 const close = (a, b, eps = 1e-4) => Math.abs(a - b) <= eps;
 const closeV = (a, b, eps = 1e-4, msg = '') => { assert.equal(a.length, b.length, msg); a.forEach((v, i) => assert.ok(close(v, b[i], eps), `${msg} [${i}] ${v} vs ${b[i]}`)); };
 const ctxFor = (player) => ({ models: MODELS, player: () => player, billboardSize: () => [0.8, 1.6], modelBounds: () => ({ min: [-1, 0, -1], max: [1, 1, 1] }) });
-const src = (p) => readFileSync(new URL(`../../../src/${p}`, import.meta.url), 'utf8');
+const src = (p) => hostText(`src/${p}`);
 
 /** A terrain record as the host hands it: every tile water unless told. */
 function terrain(x, y, { tile = 0 } = {}) {

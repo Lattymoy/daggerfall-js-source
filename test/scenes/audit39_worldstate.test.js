@@ -13,10 +13,11 @@ import { fileURLToPath } from 'node:url';
 import { createExteriorFoes } from '../../src/scenes/exteriorFoes.js';
 import { createCityGuards, GUARD_MOBILE_TYPE } from '../../src/scenes/cityGuards.js';
 import { ENEMY_BASICS } from '../../src/characters/enemy/enemyBasics.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const src = (f) => readFileSync(join(root, f), 'utf8');
-const WORLD = src('src/scenes/world.js');
+const WORLD = hostText('src/scenes/world.js');
 const EXTERIOR = src('src/scenes/exterior.js');
 const WORLD_MODES = src('src/scenes/worldModes.js');
 const HOSTS = [['world.js', WORLD], ['exterior.js', EXTERIOR]];

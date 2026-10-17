@@ -221,6 +221,7 @@ test('MW-D25: with no Morrowind body the wheel cannot leave first person, and th
 
 import { PITCH_LIMIT } from '../../src/player/mwCamera.js';
 import { mwViewPendingClicks, mwViewFrame as mwvf } from '../../src/player/mwView.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 test('MW-D30: the pitch clamp is the reference\'s own, and every host rides it', () => {
   // camera.cpp:323-331 - +/-(PI/2 - 0.000001f). The hand-rolled +/-1.5
@@ -230,7 +231,7 @@ test('MW-D30: the pitch clamp is the reference\'s own, and every host rides it',
   // one - an import of PITCH_LIMIT the host never read satisfied this pin while proving nothing.
   assert.match(readFileSync(new URL('../../src/player/lookFilter.js', import.meta.url), 'utf8'), /Math\.min\(PITCH_LIMIT, cam\.pitch \+ this\.residualPitch\)/);
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/dungeon.js', 'src/scenes/interior.js']) {
-    const src = readFileSync(new URL(`../../${host}`, import.meta.url), 'utf8');
+    const src = hostText(host);
     assert.ok(!/Math\.max\(-1\.5, Math\.min\(1\.5,/.test(src), `${host} clamps at PITCH_LIMIT, not 1.5`);
     assert.ok(/const lookFilter = new LookFilter\(\);/.test(src), `${host} rides the one clamp`);
   }
@@ -255,7 +256,7 @@ test('MW-D30: the pose carries the camera and the load FORCES it', () => {
   // rides the distance. The port's one pose-apply does both through
   // mwCamera.restore, and a pose without a camera (older save, the
   // classic import) leaves the live camera standing.
-  const src = readFileSync(new URL('../../src/scenes/world.js', import.meta.url), 'utf8');
+  const src = hostText('src/scenes/world.js');
   // AUDIT 39 (#24) MOVED THIS PIN: the pose grew `transport` after the
   // camera (the mount rides the quicksave now), so the camera is no
   // longer the pose's last key. The law pinned is the CARRY, not the tail.

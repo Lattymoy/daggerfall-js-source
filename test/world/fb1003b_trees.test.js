@@ -22,6 +22,7 @@ import { collectBlockFlats, isNatureArchive, NATURE_FLATS_Y } from '../../src/wo
 import { RMBRP_HILLS, RMBRP_PIECES, installTownStandIns, _resetTownStandIns, blockHillSeat, seatNatureFlat, drawnHillStandIn } from '../../src/world/townStandIns.js';
 import { _resetCustomModels } from '../../src/world/customModels.js';
 import { GLOBAL_SCALE } from '../../src/world/meshReader.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const SIX = ['RESIAS08.RMB', 'TVRNAS00.RMB', 'TVRNAS01.RMB', 'TVRNAS03.RMB', 'TEMPASH3.RMB', 'WEAPAS02.RMB'];
@@ -147,7 +148,7 @@ test('TREES-SEATED: no seat where the port draws no mound of its own - the stand
 });
 
 test('TREES-SEATED by source: the streamed world and the one-location exterior seat a block\'s nature-range flats on its drawn hills; the interior and dungeon hosts stand no RMB exterior flat', () => {
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /const hillSeat = blockHillSeat\(b\.layout\.models\);/);
   assert.match(w, /addFlat\(flat\.archive, flat\.record, fx, locLocal\[1\] \+ \(hillSeat && isNatureArchive\(flat\.archive\) \? seatNatureFlat\(hillSeat, flat\.x, flat\.z, NATURE_FLATS_Y \+ groundOffPlane\(samples, avg, fx, fz\)\) : flat\.y \+ lift\), fz\);/,
     'the higher of the drawn ground (NATURE-GROUND\'s) and the mounds, for the whole nature range; else the plane and its lift');

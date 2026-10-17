@@ -191,8 +191,8 @@
   {
     "name": "CHAP4B-FLOW-CEILING",
     "file": "src/systems/guild/guildServiceFlow.js",
-    "old": "updateRank(memberships, guild, entity, store, now, { revealLocation, ownsHouse, rankCeiling, promoteWhenEarned });",
-    "new": "updateRank(memberships, guild, entity, store, now, { revealLocation, ownsHouse, promoteWhenEarned });",
+    "old": "updateRank(memberships, guild, entity, store, now, { revealLocation, ownsHouse, rankCeiling, promoteWhenEarned, owed: standingOwedOf(guild.factionId) });",
+    "new": "updateRank(memberships, guild, entity, store, now, { revealLocation, ownsHouse, promoteWhenEarned, owed: standingOwedOf(guild.factionId) });",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js"
     ]

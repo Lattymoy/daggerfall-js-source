@@ -30,6 +30,7 @@ import { standService } from '../accountDb.mjs';
 import { seatRealm } from '../realmSeat.mjs';
 import { WILD_FALLS_KEEP_S } from '../../server-account/src/wild.js';
 import { HOUR_JOBS } from '../../server-account/src/cron.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const { subtle } = globalThis.crypto;
 const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
@@ -714,7 +715,7 @@ test('INT9 THE SERVICE, THE LEDGER AND THE FREEZE: a piece the ledger bars from 
 // ─── THE CLIENT ─────────────────────────────────────────────────────────────────────────────────────────────────
 
 test('INT9 THE CLIENT: a blow rolled on my own sheet and sent as a number; no defender\'s resolve; the referee\'s fall a DEATH no door turns aside (AUDIT INT9: the SetHealth(0) door\'s AvoidDeath and withholding stood a fallen up); my drop the service\'s act on my record, naming the room my remains lie in, and EXACTLY what it took out of my pack (AUDIT INT9: the game ran the law again without the ledger\'s word); the room given the service\'s records on its order, chunked by their bytes; a fall I won seized after the grace where the body fell (mutants: the defender\'s resolve kept; a drop of my own choosing taken; the seizure unread; the deposit in one heavy frame)', () => {
-  const w = rd('src/scenes/world.js'), o = rd('src/net/online.js');
+  const w = hostText('src/scenes/world.js'), o = rd('src/net/online.js');
   assert.ok(o.includes('if (primary) this.wildOk = relaySupportsWildRef(relayV);'), 'a relay that referees the zone, or none of it');
   assert.ok(o.includes("} else if (m.t === 'wref') {"));
   assert.ok(w.includes('online?.setWildZone?.(wildCan() ? 1 : 0);'));

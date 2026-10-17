@@ -36,6 +36,7 @@ import { makeWorld } from '../../hccWorld.mjs';
 import { syntheticWagon41214 } from '../../hccModel.mjs';
 import { WAGON_MODEL_ID } from '../../../src/systems/horse/horseCartLaw.js';
 import { CARGO_DEFINITIONS } from '../../../src/systems/wagon/wagon41214.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const rd = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 // a team in map pixel (100, 150): cell world:6,9 (hcc_park.test.js's)
@@ -403,7 +404,7 @@ test('WARDEN1 hosts: the online plumbing carries `y` and the owner\'s word; worl
   assert.match(o, /\.\.\.\(m\.data && Number\.isFinite\(m\.y\) \? \{ y: m\.y \} : \{\}\)/);
   assert.match(o, /\.\.\.\(Number\.isFinite\(e\.y\) \? \{ y: e\.y \} : \{\}\) \}\)\);/);
   assert.match(o, /const y = isCellRoom\(room\) \? validParkYeet\(m\) : null;\n\s*if \(y\) this\._deliver\('parkYeet', \(\) => this\.onParkYeet\?\.\(room, y\)\);/);
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /online\.onPark = \(room, e\) => \{ wagonWarden\?\.keptWord\(room, e\); hcc\.applyKept\(room, e, campToScene, performance\.now\(\)\); \};/);
   assert.match(w, /online\.onParkYeet = \(room, y\) => wagonWarden\?\.onParkYeet\(room, y\);/);
   assert.match(w, /wardenTown: dfLocation && isWardenTown\(dfLocation\.mapTableData\?\.locationType\) \? \(dfLocation\.mapTableData\?\.mapId \?\? 0\) >>> 0 : null,/);

@@ -24,9 +24,10 @@ import { PLACEMENTS, BODY, ROTOR } from '../../src/world/windmillMesh.js';
 import { skinnedBody } from '../../src/world/windmills.js';
 import { windmillsFor, attachWindmillRecord } from '../../src/world/rmbLayout.js';
 import { WINDMILL_INTERIOR } from '../../src/world/windmillInterior.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const src = (f) => readFileSync(join(root, f), 'utf8');
+const src = (f) => hostText(f);
 
 const EXTERIOR_HOSTS = ['src/scenes/exterior.js', 'src/scenes/world.js'];
 
@@ -62,7 +63,7 @@ test('WM2b: a mill only turns on a wind the sky actually knows', () => {
   assert.match(src('src/scenes/shared.js'), /wind\(\)\s*\{\s*\n?\s*return weatherRowNow \? weatherRowNow\.wind : null;/,
     'the sky controller no longer answers the eased wind, or answers zero instead of null');
   // world.js reads it ONCE a frame rather than once a mill.
-  assert.match(src('src/scenes/world.js'), /const windNow = sky\.wind\(\);/,
+  assert.match(hostText('src/scenes/world.js'), /const windNow = sky\.wind\(\);/,
     'world.js should read the wind once per frame, not per mill');
 });
 
@@ -84,7 +85,7 @@ test('WM2b: the streaming host phases mills on the MAP PIXEL, not the world', ()
   // The floating origin shifts the world under the player. A phase keyed
   // on world position would re-seed every mill on every origin shift -
   // every windmill in sight jumping to a new angle as you walk.
-  assert.match(src('src/scenes/world.js'), /rotorPhase\(px \+ local\[12\], py \+ local\[14\]\)/,
+  assert.match(hostText('src/scenes/world.js'), /rotorPhase\(px \+ local\[12\], py \+ local\[14\]\)/,
     'world.js phases mills on something other than the map pixel + local offset');
 });
 
@@ -116,7 +117,7 @@ test('WM2e: the mill is skinned for the climate it stands in', () => {
   // differ across them, and DESERT NEVER WINTERS - his prefabs and
   // ClimateSwaps.cs's own rule agreeing.
   for (const host of EXTERIOR_HOSTS) {
-    assert.match(src(host), /getWindmillMeshes\((?:town)?[cC]limateBase, season === SEASON\.Winter\)/,   // AUDIT WD3 G5: the world host's town climate
+    assert.match(src(host), /getWindmillMeshes\((?:town)?[cC]limateBase, (?:host\.)?season === SEASON\.Winter\)/,   // AUDIT WD3 G5: the world host's town climate (HOST-SPLIT 2: its pixel build reads the season live, host.season)
       `${host} uploads the mill without telling it which climate it stands in`);
   }
   const tex = (m) => m.subMeshes.map((sm) => `${sm.textureArchive}_${sm.textureRecord}`);

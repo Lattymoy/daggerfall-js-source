@@ -13,7 +13,7 @@
 // cached dungeon answers the same heights as a fresh bake. No change to
 // his file for it.
 import { navInputFromCollider, bakeSoup, SOUP_AGENT } from './navBake.js';
-import { trianglesToColliders, unpackColliders } from '../triRaster.js';
+import { trianglesToColliders } from '../triRaster.js';
 import { hydrateBakedNav, bakeNavData } from './navmesh.js';
 import { idbStore } from '../../world/roadsCache.js';
 
@@ -53,7 +53,9 @@ export function bakeHere(input, anchor, agent = SOUP_AGENT, anchors = null) {
 }
 
 /** Hydrate the compact form on this thread over `cols`, the boxes the
- *  bake was cut into (the height layer), then put the ground back. */
+ *  bake was cut into (the height layer) - an array of them, or the
+ *  worker's packed set as it landed (never unpacked: INDOOR-WATCH AUDIT
+ *  W2) - then put the ground back. */
 export function hydrateHere(baked, cols, input) {
   const chf = hydrateBakedNav(baked, cols);
   const floor = input.minY - 10;
@@ -121,7 +123,7 @@ export class NavClient {
   async _cols(input, cs, agent) {
     let failed = null;
     const m = this._worker ? await this._ask({ t: 'cols', cs, maxSlope: agent.maxSlope }, input).catch((e) => { failed = e; return null; }) : null;
-    if (m) return unpackColliders(m.cols);
+    if (m) return m.cols;   // INDOOR-WATCH AUDIT W2: packed, as they landed - the height layer indexes them so (navmesh.js buildPackedIndex)
     if (this._hadWorker && input.tris >= DEGENERATE_MIN_TRIS) {   // AUDIT PRE-MERGE 0928 N5: the bake path's rule on a cache hit too - a dead worker's large soup is not re-cut here (2.8 s on 25k triangles at the soup's cell)
       console.warn(`[enhanced-ai] the nav worker failed on ${input.tris} triangles - not re-cutting a cached bake on the main thread; the classic motor stands (the worker: ${workerWord(failed)})`);
       return null;
@@ -143,7 +145,7 @@ export class NavClient {
     let result = null, failed = null;
     if (this._worker) {
       const m = await this._ask({ t: 'bake', floor: input.minY - 10, anchor, anchors, agent }, input).catch((e) => { failed = e; return null; });   // AUDIT PRE-MERGE 0928 N4: the worker's own word is kept for the console
-      if (m) result = { ...m, cols: unpackColliders(m.cols) };
+      if (m) result = m;   // its boxes packed, as they landed (INDOOR-WATCH AUDIT W2: unpacking them was the landing's hitch)
     }
     // A WORKER THAT DIED IS NOT A REASON TO FREEZE THE PAGE (2026-09-27). The soup bake keeps its own cell now, so a
     // large dungeon is 5-11 s and up to ~1.3 GB (the corpus's largest) - AUDIT 59 F1's main-thread freeze, several

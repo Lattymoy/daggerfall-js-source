@@ -173,8 +173,8 @@
   {
     "name": "WB2-any-key-opens-the-gate",
     "file": "src/scenes/gate/gatePool.js",
-    "old": "    activate(key) { return typeof key === 'string' && key.startsWith('gate:') ? tryEnter() : false; },",
-    "new": "    activate(key) { return typeof key === 'string' ? tryEnter() : false; },",
+    "old": "return typeof key === 'string' && key.startsWith('gate:') ? tryEnter() : false; },",
+    "new": "return typeof key === 'string' ? tryEnter() : false; },",
     "tests": [
       "test/world/gate/wb2_gate.test.js"
     ]

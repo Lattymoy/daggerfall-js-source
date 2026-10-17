@@ -47,6 +47,7 @@ import { REGENERATION_FLAGS } from '../../../src/systems/specialAdvantages.js';
 import { damageEquipment } from '../../../src/combat/formulas.js';
 import { RELAY_VERSION } from '../../../src/net/wire.js';
 import { relayVersionAtLeast } from '../../relayVersion.mjs';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const read = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const W = (key, over = {}) => ({ i: 1, a: ATTACKS[key].id, at: 10000, x: 0, z: 0, yw: 0, tg: [], ...over });
@@ -144,7 +145,7 @@ test('WBX2 the portal home: nothing while he stands or falls; PORTAL_AFTER_MS in
 });
 
 test('WBX2 the seams: the court is handed the portal\'s door, and (SS3) no way home of its own - the portal is never walked through; the way home is one door (gateWayHome) - GATE-FBX: the portal\'s alone, the bridge\'s membrane gone - PRESSED through the court\'s exit doors - through the fire and never for the dead; the portal is drawn with the gate\'s own fire pass (mutants: SS3: the court handed a way home again)', () => {
-  const w = read('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.doesNotMatch(w, /wayHome:/, 'SS3: the court takes no way home');
   assert.match(w, /portalDoor: \(door\) => \{ modes\?\.dungeonCtx\?\.exitDoors\?\.push\?\.\(door\); \},/);
   const wm = read('src/scenes/worldModes.js');
@@ -253,7 +254,7 @@ test('WBX3 the picture, the burst and the pieces\' words: the icon\'s key is its
   assert.match(gc, /if \(spoils\.spew\(\{[^\n]*\}\)\) \{[^\n]*\n\s*say\(claims\.x === 'rite' \? COURT_STRIKE_TEXT\.spilledRite\(\) : COURT_STRIKE_TEXT\.spilled\(\)\);/);   // AUDIT WB12d (D20): the rite's ember by its own
   assert.match(COURT_STRIKE_TEXT.spilled(), /^Your spoils/, 'WB13b: "Your" says they are no one else\'s');
   assert.match(COURT_STRIKE_TEXT.spilledRite(), /^Your ember/);
-  assert.match(read('src/scenes/world.js'), /iconOf: \(item\) => itemIconColor32\(item, \{ identity: playerEntity \}\),/);   // AUDIT WBX S6: drawn for its wearer
+  assert.match(hostText('src/scenes/world.js'), /iconOf: \(item\) => itemIconColor32\(item, \{ identity: playerEntity \}\),/);   // AUDIT WBX S6: drawn for its wearer
   assert.ok(lineHeight('artifact') > lineHeight('legendary'));
 });
 
@@ -445,7 +446,7 @@ test('WBX6 no regeneration in the court: the Regenerate effect\'s round and a ca
   } finally { setCourtRules(false); }
   assert.match(read('src/systems/enchantments.js'), /if \(round % REGEN_PER_ROUNDS !== 0 \|\| regenBarred\(\)\) return;/, 'a RegensHealth enchantment: nothing');
   assert.match(read('src/systems/effects.js'), /if \(n > 0 && sinks\.heal && !regenBarred\(\)\) sinks\.heal\(n\);/);
-  assert.match(read('src/scenes/world.js'), /\n    setCourtRules\(modes\?\.gateArenaDay\?\.\(\) != null\);/, 'the frame sets it, every frame');
+  assert.match(hostText('src/scenes/world.js'), /\n    setCourtRules\(madeRuleHere\('regen'\) === 'off'\);/, 'the frame sets it, every frame');   // PIN MOVED (EG-H2, Elite-Gates.md section 24): the made level's law (systems/madeLevel.js) - the court's row, the Hour's and the Spire's
 });
 
 test('WBX6 no wear on the blows at him: his stand-in carries spareGear, and damageEquipment spares the weapon and the struck armour for it alone - every other foe wears the gear as DFU\'s does (mutants: the stand-in unflagged; the spare for everyone)', () => {
@@ -506,7 +507,7 @@ test('WBX7 the seams: a soul trap meets him (hostMagic), the dungeon context lay
   assert.match(dc, /if \(trap\) laid = !!opts\.onBossTrap\?\.\(\{ chance: trap\.chance, rounds: \(trap\.roundsRemaining \?\? 0\) \+ 1 \}\);/);
   assert.match(dc, /if \(!harm\) return laid \|\| sways;/, 'a trap alone still reaches him (WB8a: and a sway alone is spent on him)');
   assert.match(read('src/scenes/worldModes.js'), /onBossTrap: \(trap\) => !!host\.onBossTrap\?\.\(trap\),/);
-  const w = read('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /onBossTrap: \(trap\) => !!gateCourt\?\.trapped\(trap\),/);
   assert.match(w, /const r = attemptSoulTrap\(\{ activeEffects: \[\{ kind: 'soulTrap', chance \}\] \}, mobile, playerEntity\.items \?\? \[\], Math\.random\(\)\);/);
   assert.match(w, /if \(r\.alert && SOUL_TRAP_TEXT\[r\.alert\]\) setMidScreenText\(SOUL_TRAP_TEXT\[r\.alert\]\);/);

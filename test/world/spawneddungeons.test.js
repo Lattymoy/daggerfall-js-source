@@ -5,6 +5,7 @@ import { SPAWN_CHANCE, ANY_SPAWN_CHANCE, SALT_MAX, WORLD_SALT, hash32, spawnsDun
 import { TERRAIN_SIZE } from '../../src/world/terrain/terrainSampler.js';
 import { isWorldRoom } from '../../src/net/wire.js';
 import { getMapPixelID, longitudeLatitudeToMapPixel } from '../../src/formats/mapsFile.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 test('SPAWNED-DUNGEONS: the roll is a pure function of (salt, pixel) and lands near the chance', () => {
   assert.equal(SPAWN_CHANCE, 0.30);
@@ -84,7 +85,7 @@ test('SPAWNED-DUNGEONS: templates are real non-main-story dungeons, one-block ex
 
 test('SPAWNED-DUNGEONS by source: ONE choke point (buildPixelNow), online-only off the page params, wrapped, never a fresh roll per load', async () => {
   const { readFileSync } = await import('node:fs');
-  const w = readFileSync(new URL('../../src/scenes/world.js', import.meta.url), 'utf8');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /const dfLocation = _locationToBuild\(px, py\) \|\| null;/, 'the build asks what stands (AUDIT OW5b D2)');
   assert.match(w, /function _locationToBuild\(px, py\) \{[\s\S]{0,600}?return loc \|\| spawnedDungeonAt\(px, py\);\n  \}/, 'a real location always wins; only an empty pixel is asked');
   const i = w.indexOf('const spawnedDungeonAt = (px, py) => {');
@@ -101,7 +102,7 @@ test('SPAWNED-DUNGEONS by source: ONE choke point (buildPixelNow), online-only o
 
 test('SPAWNED-DUNGEONS3 by source: the player\'s OWN pixel, once, with the distance and direction from their feet in metres', async () => {
   const { readFileSync } = await import('node:fs');
-  const w = readFileSync(new URL('../../src/scenes/world.js', import.meta.url), 'utf8');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /queue\.push\(\.\.\.r\.load\);\s*\n\s*announceNearbySpawns\(r\.current\.x, r\.current\.y, walkMode \? player\.pos : cam\.pos\);/, 'said on the crossing, from where the player stands');
   const i = w.indexOf('function announceNearbySpawns(px, py, feet) {');
   assert.ok(i > 0, 'the announcer takes the feet');
@@ -306,7 +307,7 @@ test('SPAWN-REBIRTH: a save carries no life that is over - toJSON leaves out eve
 
 test('TTL1 by source: expiry is checked on the pixel build, and never while the player is in it', async () => {
   const { readFileSync } = await import('node:fs');
-  const w = readFileSync(new URL('../../src/scenes/world.js', import.meta.url), 'utf8');
+  const w = hostText('src/scenes/world.js');
   const i = w.indexOf('const spawnedDungeonAt = (px, py) => {');
   const fn = w.slice(i, w.indexOf('\n  };\n', i));
   assert.match(fn, /_spawnLedger\.expired\(key, _spawnClock\(\)\) && !_insideSpawn\(key\)/, 'both clocks AND the creator\'s "no player in it"');
@@ -377,7 +378,7 @@ test('TTL1: the ledger rides EVERY save - and the quickslots block it sat beside
 
 test('TTL1 by source: both hosts carry the ledger, so a save made underground keeps the clocks', async () => {
   const { readFileSync } = await import('node:fs');
-  const w = readFileSync(new URL('../../src/scenes/world.js', import.meta.url), 'utf8');
+  const w = hostText('src/scenes/world.js');
   const d = readFileSync(new URL('../../src/scenes/dungeonContext.js', import.meta.url), 'utf8');
   const m = readFileSync(new URL('../../src/scenes/worldModes.js', import.meta.url), 'utf8');
   assert.match(w, /composeSessionState\(\{ questBridge, talk: \{[^}]*\}, spawnLedger: _spawnLedger \}\)/);
@@ -396,7 +397,7 @@ test('TTL1 by source: both hosts carry the ledger, so a save made underground ke
 test('AUDIT OW5b D2 host run (SPAWN-REBIRTH): A SPAWN PAST ITS TIME IS GONE UNTIL IT STANDS AGAIN - standing it starts no clock, entering it does; past its time the build\'s probe and the build itself both leave its pixel empty, neither standing it again on a fresh clock; the wait over, the same dungeon stands with no clock running and the next entry starts the new life\'s; never while the player is in it; a real place always wins', async () => {
   const { readFileSync } = await import('node:fs');
   const { createSpawnLedger, GENERAL_TTL_MINUTES, REBIRTH_TTL_MINUTES } = await import('../../src/world/spawnedDungeons.js');
-  const w = readFileSync(new URL('../../src/scenes/world.js', import.meta.url), 'utf8');
+  const w = hostText('src/scenes/world.js');
   const i = w.indexOf('  const spawnedDungeonAt = (px, py) => {');
   const spawned = w.slice(i, w.indexOf('\n  };\n', i) + 5);
   const j = w.indexOf('  function _locationToBuild(px, py) {');

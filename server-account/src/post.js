@@ -11,7 +11,13 @@
 // This file is the four things its reader does with their own: list the
 // box, open one, CLAIM its item, and throw one away. Nothing here writes
 // a piece: the operator's workflow does (.github/workflows/server-post.yml,
-// tools/sendServerPost.mjs), and no route a player can reach sends one.
+// tools/sendServerPost.mjs), and no route a player can reach sends one of
+// a player's choosing. EG-ZF (2026-10-12): the one letter a list in the
+// operator's config sends - First of the Spire's, its words fixed, once an
+// account the list names (egHonours.js egFirstPost, at its balance's read).
+// EG-ZM (2026-10-12): and the service's own hourly clock's - a Weir Key's
+// stake spent with no receipt ever naming it, its words fixed, one a stake
+// (eg.js spendLapsedStakes, cron.js).
 //
 // ═══ A READER'S POST IS THEIRS ALONE ═══════════════════════════════
 //

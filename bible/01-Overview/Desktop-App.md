@@ -1066,3 +1066,13 @@ afford to lose with a cleared browser profile.
 
 Doctrine unchanged: ARENA2 never enters the repo, the build, or the
 packaged app - the shell READS the player's folder, bundles nothing.
+
+DevTools stay in the installed game (AUDIT ANTICHEAT, 2026-10-17 - Mac's
+call, on #955's proposal to mount View > Toggle Developer Tools in an
+unpackaged shell alone). The console is where a player reads a field
+report's lines from (`bugs/Field-Bugs-2026-10-13b.md`), and taking it away
+shuts no door a cheater needs: the browser build plays online with F12, and
+the shell honours Chromium's `--remote-debugging-port`. What other players
+meet is the servers' to judge (`06-Systems/Integrity-Arc.md`).
+`test/tooling/anticheat_devtools.test.js` holds the row and the record
+together; a change that takes DevTools away on purpose edits both.

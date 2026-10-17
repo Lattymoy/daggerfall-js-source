@@ -100,7 +100,7 @@
   },
   {
     "name": "the-host-never-finds-the-block",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "        if (wod && b.blockName === PRIVATEERS_HOLD_BLOCK) holdBlocks.push(originMatrix);   // WOD4\n",
     "new": "",
     "tests": [
@@ -109,7 +109,7 @@
   },
   {
     "name": "the-camp-keeps-its-default-textures",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "          await remapSubMeshes(gpu.subMeshes, texRemap, townClimateArchive, pipeline);\n          const local = multiply(origin, holdModelMatrix(hm));",
     "new": "          const local = multiply(origin, holdModelMatrix(hm));",
     "tests": [

@@ -168,7 +168,7 @@ import { MW_BODY_PARTS, isFirstPersonId } from './mwEsmFile.js';
 import FACE_TABLE from '../mwFaceTable.json' with { type: 'json' };
 import { GRAPH_ROOT, ACCUM_ROOT_NAMES } from './mwSkin.js';
 import { transferSkin, sourceSkin, fitLift, liftBatch } from './mwSkinTransfer.js';   // MW-BRIG2: a worn model skinned from the body under it; MW-BRIG3: and fitted onto it
-import { getTextKeyTime, animVelocity } from './mwAnim.js';
+import { getTextKeyTime, animVelocity, collectTextKeys, normalizeTextKeys, clipGroups, resetClip, parseAnimGroups, extractTracks } from './mwAnim.js';
 import { mat33Mul } from './mwNifMesh.js';   // AUDIT 68 S11-affine-dup: the one row-major 3x3 product
 import { batchMoves, posePartBatch, nodeAffineAt, nodeClockAt, clockFor } from './mwPartClock.js';   // MW-BOW1: a part's own clock
 import { applyClimbRig } from '../../combat/climbRig.js';   // CLIMB6: the climb's pose on the rig's own bones
@@ -3317,9 +3317,9 @@ export async function clipReport({ kfBytes, skeleton = null, group = 'Idle', cli
   const mod = {};
   try {
     ({ parseNif: mod.parseNif } = await import('./mwNifFile.js'));
-    ({ collectTextKeys: mod.collectTextKeys, normalizeTextKeys: mod.normalizeTextKeys,
-      clipGroups: mod.clipGroups, resetClip: mod.resetClip, parseAnimGroups: mod.parseAnimGroups,
-      extractTracks: mod.extractTracks } = await import('./mwAnim.js'));
+    // mwAnim.js is this module's own static import (above): a dynamic import of it split nothing off and only
+    // made the build warn (BUILD-LEFTOVERS) - its readers are here whatever the others' load does
+    Object.assign(mod, { collectTextKeys, normalizeTextKeys, clipGroups, resetClip, parseAnimGroups, extractTracks });
     ({ trackBinding: mod.trackBinding, accumRootRef: mod.accumRootRef } = await import('./mwSkin.js'));
   } catch (err) {
     return { ok: false, error: `readers unavailable: ${err.message}` };

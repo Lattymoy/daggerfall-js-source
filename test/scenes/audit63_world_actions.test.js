@@ -265,7 +265,8 @@ test('AUDIT 63 F42: both interior pools are handed the dep, and both forward it 
   for (const f of ['src/scenes/exteriorFoes.js', 'src/scenes/cityGuards.js']) {
     const body = src(f);
     assert.ok(body.includes('isActionDoor = null'), `${f} takes the dep, defaulted off`);
-    const ctor = body.slice(body.indexOf('new EnemyAI('), body.indexOf('new EnemyAI(') + 1600);
+    const at = body.indexOf("? EnhancedEnemyAI : EnemyAI)(");   // PIN MOVED (FIELD BUGS 2026-10-16b INDOOR-WATCH): the motor is the switch's choice where the room hands a mesh
+    const ctor = body.slice(at, at + 1600);
     assert.ok(ctor.includes('isActionDoor,'), `${f} hands it to the motor`);
   }
   for (const street of ['src/scenes/world.js', 'src/scenes/exterior.js']) {

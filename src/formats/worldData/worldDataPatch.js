@@ -54,14 +54,14 @@ export function rebuildWorldDataPatch(patch, blocksFile) {
   return patchJson(start, patch.ops, resolve);
 }
 
-/** sha256 of the canonical form, hex (WebCrypto in the browser, node's crypto under test). */
+/** sha256 of the canonical form, hex - WebCrypto, in the browser and under Node alike. */
 export async function canonicalSha256(json) {
   const bytes = new TextEncoder().encode(canonicalJson(json));
+  // BUILD-LEFTOVERS (AUDIT, the second read): every runtime this runs in has WebCrypto - a browser's secure context,
+  // and Node from 19 (package.json's engines: 20.19 and up). The `import('node:crypto')` fallback could never run in a
+  // browser (Vite stubs node: modules out of a bundle), and made every build warn that it had stubbed it
   const subtle = globalThis.crypto?.subtle;
-  if (subtle) {
-    const d = new Uint8Array(await subtle.digest('SHA-256', bytes));
-    return [...d].map((b) => b.toString(16).padStart(2, '0')).join('');
-  }
-  const { createHash } = await import('node:crypto');
-  return createHash('sha256').update(bytes).digest('hex');
+  if (!subtle) throw new Error('sha256 needs WebCrypto (crypto.subtle): a secure context - https, or localhost');
+  const d = new Uint8Array(await subtle.digest('SHA-256', bytes));
+  return [...d].map((b) => b.toString(16).padStart(2, '0')).join('');
 }

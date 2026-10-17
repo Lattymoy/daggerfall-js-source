@@ -10,6 +10,7 @@ import { addPileLootExtras, registerTabledLootHandler, tableLootSpawned } from '
 import { customItemsForGroup, registerCustomItemGroup, registerCustomItemsForGroup } from '../../src/systems/item/itemTemplates.js';
 import { raiseContainerLootSpawned, registerContainerLootHandler } from '../../src/systems/containerLoot.js';
 import { LOOT_CONTAINER_TYPES } from '../../src/systems/sceneCache.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 
@@ -37,7 +38,7 @@ test('THE MERGE: LootTables.OnLootSpawned is one list - a named subscriber and a
     registerTabledLootHandler('zz-merge-named', null);
     registerTabledLootHandler('zz-merge-after', null);
   }
-  assert.match(rd('src/scenes/world.js'), /const offTable = tableLootSpawned\.add\(\(e\) => ohUpgrade\(e\.key, e\.items, \[\], e\.where, e\.rolls \?\? Math\.random, e\.roller \?\? playerEntity\)\);/, 'OH-E subscribes through the door');   // PIN MOVED (PARTY-LOOT): the raiser's dice and roller ride the event
+  assert.match(hostText('src/scenes/world.js'), /const offTable = tableLootSpawned\.add\(\(e\) => ohUpgrade\(e\.key, e\.items, \[\], e\.where, e\.rolls \?\? Math\.random, e\.roller \?\? playerEntity\)\);/, 'OH-E subscribes through the door');   // PIN MOVED (PARTY-LOOT): the raiser's dice and roller ride the event
 });
 
 test('THE MERGE: CSA-H\'s rows are a provider in GetCustomItemsForGroup\'s one home - after the providers before its first row, in registration order, a row only while its mod is on, a second registration none', () => {
@@ -65,7 +66,7 @@ test('THE MERGE: Come Sail Away\'s shelf subscriber is one of PlayerActivate.OnL
     raiseContainerLootSpawned({ containerType: LOOT_CONTAINER_TYPES.HouseContainers, items: [{}], buildingType: 9, quality: 10 });
     assert.deepEqual(heard, [2], 'the shelf, not the house container');
   } finally { registerContainerLootHandler('zz-merge-shelf', null); }
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /registerContainerLootHandler\(COME_SAIL_AWAY_VENDOR, \(a\) => \{ if \(a\.containerType === LOOT_CONTAINER_TYPES\.ShopShelves\) csaShelfStocked\(a\.items\); \}\);/);
   assert.doesNotMatch(w, /csaShelfStocked: \(items\)/, 'no host hook beside the event');
   const m = rd('src/scenes/worldModes.js');

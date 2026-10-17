@@ -240,5 +240,5 @@ test('SD18a THE WIRE AND THE PAGE: a blow\'s shape bounded key by key, an elemen
   assert.ok(snapped === 36 || h.ok, `snapped back at its thirty-sixth turn: ${snapped}`);
   // the relay
   const src = readFileSync(new URL('../../../server/src/index.js', import.meta.url), 'utf8');
-  assert.match(src, /newRemnantFight\(s, \(f\?\.fi \?\? 0\) \+ 1, now, sdMarksOf\(s\)\);/);
+  assert.match(src, /SD_SEAM\.new\(\{ s, fi: \(f\?\.fi \?\? 0\) \+ 1, now, mk: sdMarksOf\(s\) \}\);/);   // PIN MOVED (EG-H3, EG3): through THE BOSS SEAM (net/bossSeam.js - the brain's own law, its frames byte for byte: test/net/eliteGates/egseam_law.test.js)
 });

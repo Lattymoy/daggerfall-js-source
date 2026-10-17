@@ -24,6 +24,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { reviveForPlay, endLethalDrains, LETHAL_DRAINS, respawnHealth } from '../../src/systems/deathRespawn.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const player = (over = {}) => ({ maxHealth: 40, health: 0, activeEffects: [], ...over });
 
@@ -123,7 +124,7 @@ test('DEATHLOOP1: EVERY revival that puts a living player back in the world ends
 
   // ...and the bare heal is gone from the paths that had it, so a
   // revival cannot be written as a health assignment again by accident.
-  const world = readFileSync(new URL('../../src/scenes/world.js', import.meta.url), 'utf8');
+  const world = hostText('src/scenes/world.js');
   assert.ok(!/playerEntity\.health = respawnHealth\(/.test(world),
     'the online respawn no longer sets health behind the law');
   const modes = readFileSync(new URL('../../src/scenes/worldModes.js', import.meta.url), 'utf8');

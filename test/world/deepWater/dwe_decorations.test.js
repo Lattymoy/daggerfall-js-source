@@ -20,6 +20,7 @@ import { HEIGHTMAP_DIMENSION } from '../../../src/world/terrain/terrainSampler.j
 import { DW_OCEAN_LOCAL_Y } from '../../../src/world/deepWater/deepWatersPixel.js';
 import { DW_WATER_THRESHOLD } from '../../../src/world/deepWater/deepWaterClassification.js';
 import { lookAt } from '../../../src/world/mat4.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const rd = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const f32 = Math.fround;
@@ -471,7 +472,7 @@ test('DW-E2: seen from over the sea a decoration takes the top\'s column share, 
   const draw = renderSrc.slice(renderSrc.indexOf('  drawDecorations(list, frame) {'), renderSrc.indexOf('  drawSkyFog() {'));
   assert.match(draw, /this\._columnUniforms\(u, frame\);/);
   assert.match(draw, /gl\.uniform3fv\(u\.uPixelOrigin, it\.origin\);/, 'the surface uv is pixel-local');
-  const world = rd('src/scenes/world.js');
+  const world = hostText('src/scenes/world.js');
   assert.match(world, /dwRender\.drawFloors\(_dwFloorList, dwColumnFrame\(f\)\);/);
   assert.match(world, /dwRender\.drawDecorations\(_dwDecorList, dwColumnFrame\(f\)\);/, 'the decorations take the floors\' frame');
   assert.match(world, /columnOn: f\.s\.spawnSurfaces && !f\.underwater && !waterOn,/);   // PIN MOVED (WATER-NEXT 2): off under the enhanced water, which measures its own column
@@ -483,7 +484,7 @@ test('DW-E2: the settings and the host wiring - the four decoration reads, the p
   assert.equal(s.radius, 2);
   assert.equal(s.frequency, scaledSliderValue(0.3, 3.75));
   assert.equal(s.maxPerTile, 1080);
-  const world = rd('src/scenes/world.js');
+  const world = hostText('src/scenes/world.js');
   assert.match(world, /if \(deepWaters\) deepWaters\.published\(built\.get\(key\), dwResult\);[^\n]*\n\s+if \(dwDecor\) dwDecor\.onPromote\(built\.get\(key\)\);/, 'HandlePromote after the floor builder\'s');
   assert.match(world, /if \(dwDecor\) dwDecor\.destroyed\(p\);/);
   assert.match(world, /queue\.push\(\.\.\.r\.load\);\n\s+announceNearbySpawns\([^\n]*\n\s+if \(dwDecor\) dwDecor\.onMapPixelChanged\(r\.current\);/, 'the crossing: PlayerGPS.OnMapPixelChanged');

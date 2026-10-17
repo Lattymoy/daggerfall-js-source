@@ -110,8 +110,8 @@
   {
     "name": "AC6-A5-classic-gate",
     "file": "src/systems/item/itemInfo.js",
-    "old": "isCardBinder(item) || isCardPack(item)) record = survivalInfoTokens(item);",
-    "new": "isCardBinder(item)) record = survivalInfoTokens(item);",
+    "old": "isCardBinder(item) || isCardPack(item) || isWeirKey(item)) record = survivalInfoTokens(item);",
+    "new": "isCardBinder(item) || isWeirKey(item)) record = survivalInfoTokens(item);",
     "tests": [
       "test/systems/auditcards6_a.test.js"
     ]

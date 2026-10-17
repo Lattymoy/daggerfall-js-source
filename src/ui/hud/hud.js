@@ -506,6 +506,7 @@ export function hideHudTextSurfaces(hudText = null) {
 
 export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
   { font = null, cursorActive = false, reticleHidden = false, windowCoversHud = null, hudHidden = false, detected = null, playerXZ = null, gate = null, quest = null, wayOut = null, party = null, ships = null, nodes = null, boats = null, largeHud = null, hover = null,
+    arch = null,   // EG-F: my company's Elite arch, scene XZ, while it stands - the compass's mark (scenes/eliteGates/egArch.js compass)
     grip = null,   // CLIMB2: the enhanced climb's grip, { amount, low } or null
     steed = null,   // STEED1: the ridden horse's breath, the same shape (systems/upkeep/upkeepRuntime.js bar) - drawn in the grip's place, a rider holding no wall
     readied = null, weapon = null, weaponSheathed = true, quickUse = null, quickSwap = null, quickOffHand = null, quickSpell = null, quickSwitchHand = null } = {}) {   // PX30b: for the enhanced HUD's hand plaques; AUDIT 28 W2: the arrow counter's gate; AUDIT 64 F35: the host's previousWindow answer; QS3: the diamond's sheathe state and its two phone taps; QS6: the caption's spell chip press
@@ -688,6 +689,7 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
       detected: detected ?? null,
       playerXZ: playerXZ ?? null,
       gate: gate ?? null,   // WB1: the Oblivion Gate's scene XZ while the player stands in its ring - the compass's own mark
+      arch: arch ?? null,   // EG-F: my company's Elite arch, scene XZ, while it stands (scenes/eliteGates/egArch.js compass)
       quest: quest ?? null,   // GUIDE5: the tracker's quest's place, scene XZ, on the street - the compass's quest mark
       wayOut: wayOut ?? null,   // WAYOUT1: underground, the way out along the walked trail, scene XZ (systems/wayOut.js)
       party: party ?? null,   // COMPASS-PARTY: the party's points (ui/partyMapMarks.js partyCompassPoints)

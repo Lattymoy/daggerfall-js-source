@@ -54,7 +54,7 @@ import { pickActivatable, pickActivatableHit, worldAabb, activationTargets, live
 // file owns as well as the three outside it.
 import { tryMobileEnemyActivate } from '../player/mobileEnemyActivate.js';
 import { FOUND_NOTHING_VALUABLE_TEXT_ID } from '../systems/talk/talk.js';
-import { SEARCH_REACH } from '../systems/searchables.js';   // SEARCH1: a headstone's reach, half a door's   // GetRandomText(8999)
+import { searchReachFor } from '../systems/searchables.js';   // SEARCH1: a headstone's reach, half a door's - GRAVE-PARTY: from the body to the stone   // GetRandomText(8999)
 import { LOCK_PICK_DISTANCE } from '../player/lockOn.js';   // AUDIT 62 F16/F28: the tap-to-lock reach, the same the exterior and standalone-dungeon arms use
 import { removeOne, addItem, isEnchanted, carriedWeight, letterOfCredit, LETTER_OF_CREDIT_TEMPLATE, spendAmmoFor, takeOneInto, isSummoned } from '../systems/inventory.js';   // U40: the sell filter, the encumbrance gate and the letter
 import { isEquipped, unequipSlot } from '../systems/equip.js';   // AUDIT 17e F4: worn gear is not merchandise
@@ -119,6 +119,11 @@ import { applyFog, DUNGEON_FOG } from '../render/underwaterFog.js';
 import { gateArenaLocation, gateArenaBlocks, isGateArena, buildCourtModel, buildWalkSlabModel, walkSlabs, slabMatrix, courtFloorTris, courtLightsNear, withCourtLights, courtDoorAabb, COURT_ARCHIVE, COURT_FOG, COURT_TEXT } from '../world/gate/gateArena.js';   // WB3b: the Burning Court - a level made in code on this host's dungeon arm
 import { isSdRealm, sdRealmLocation, sdRealmBlocks, buildRealmModel, realmColliderTris, realmLightsWith, realmLighting, SD_REALM_ARCHIVE, SD_REALM_FOG } from '../world/superDungeon/sdRealm.js';   // SD5a: the Shattered Hour, a made level as the court is
 import { realmArt } from '../world/superDungeon/sdRealmArt.js';   // SD5a: its art, made in code
+import { isEgHall, egHallLocation, egHallBlocks, egLightsWith, egHallLighting, egHallFog, egHallGrade } from '../world/eliteGates/egHall.js';   // EG-PLAY: an Elite Breach's circle, a made level as the Hour is
+import { egRoomKey } from '../net/eliteGates/egLaw.js';   // EG-PLAY: its room, its halls, its words
+import { createEgCircleHost } from './eliteGates/egCircleHost.js';   // HOST-SPLIT (EG-LOOK): an Elite Breach's circle on this screen, moved out of this host
+import { EG_OCCLUDE_CHEST_M } from './eliteGates/egOcclude.js';   // EG-ZN (section 11.8): the occluders between the camera and the body dithered out
+import { madeLevelOf } from '../systems/madeLevel.js';   // EG-H2 (Elite-Gates.md section 24): which made level stands under the player - one law
 import { SD_HOUR_GRADE } from '../world/superDungeon/sdLook.js';   // SD-LOOK: the Hour's grade on the lane
 /** SD-LOOK: the dungeon arm's two draw options for its dynamic draws (render/renderer.js drawMesh), made once - the hot
  *  loop makes nothing. */
@@ -180,6 +185,7 @@ import { hudScale } from '../ui/hud/hud.js';
 import { containerTextureRecord } from '../systems/containers.js';
 import { dungeonStartDoorFor } from '../systems/save/save.js';   // CASTLE1: the load's door is the saved dungeon's own
 import { composeNamer, composeContents } from '../systems/worldHover.js';   // INTERIOR-BODIES: the interior stands itemised bodies now, so its contents reader is a LADDER like the other three hosts' rather than one prefix
+import { createInteriorPeek } from '../systems/containerPreview.js';   // CONTAINER-PEEK: a cupboard's plaque lists what it already holds
 import { raceWinner } from '../player/activationRace.js';   // WORLD-HOVER: the race's WINNER, so the plaque names what the press would open
 import { worldHoverFrame, hideWorldPlaque, destroyWorldPlaque, worldPlaqueOn } from '../ui/worldPlaque.js';   // WORLD-HOVER: the one seam each host calls, and the hide door for the branches that return above it
 import { quickLootTake, quickLootSpend, plaqueActionFor } from '../systems/quickLoot.js'; import { showPickups } from '../ui/pickupFeed.js';   // QUICK-LOOT B4: the take, through the window's own door; HOME2: the verb the plaque lit over a door; PICKUP-FEED: what a take moved, as cards (the take's `took`)
@@ -264,6 +270,7 @@ import { peopleAreVisible, updateNpcPresence } from '../characters/interiorPeopl
 import { exteriorLockpickingChance, lookAtLockText, LOCKPICKING_SUCCESS_TEXT, LOCKPICKING_FAILURE_TEXT, isActionDoorObject } from '../world/actionSystem.js';   // AUDIT 63 F42: GetComponent<DaggerfallActionDoor>() with a name
 import { tallyCrimeGuildRequirements } from '../systems/crimeGuilds.js';   // CG2: the break-in tally
 import { theftBasket, privatePropertyTheft, shopShelfTheft } from '../systems/theft.js';   // PT1: the two stealing laws
+import { landSold } from '../systems/stolenGoods.js';   // STOLEN-GOODS: a stolen piece sold is the merchant's to be rid of, never shelved
 import { buildingGreeting, shopQualityPresentation } from '../systems/buildingGreeting.js';
 import { setUnleveledLootWorld, unleveledLootPreTransition, unleveledLootExteriorTransition } from '../systems/unleveledLoot.js';   // UL1: PlayerEnterExit's world and its transition events   // BG1: the shop quality + the householder's greeting
 import { discoverBuilding, undiscoverBuilding, getDiscoveredBuilding, getLastLockpickAttempt, setLastLockpickAttempt, shownBuildingName } from '../systems/discovery.js';   // H3: selling a house takes its name back off the map
@@ -439,6 +446,7 @@ import { chestIdentity, matchChests } from './chestRecords.js';   // HOLD-KEPT: 
 import { placeFoeEnv, placeRoomQuestFoe, entityOccupancy, questFoeGender, reviveQuestBehaviour as reviveQuestBehaviourFromSave, heldSpots, holdSpotWhile, restandMendedQuestFoe } from './quest/questFoeHost.js';   // B1 (PlaceFoeFreely reads the fieldOfView import below)   // AUDIT 63 F24: SerializableEnemy.cs:206-217 re-adds the component on restore
 import { standLooseFoe } from './hostEnchant.js';   // ROAD-G G1: SoulBound's break release / the Sanguine Rose, inside a building
 import { ENEMY_BASICS, enemyDisplayName } from '../characters/enemy/enemyBasics.js';   // MERGE: FinalizeFoe's Flying lift reads the behaviour flag // WORLD-HOVER H2: GetLocalizedEnemyName - Entity.Name for a live one (.cs:310)
+import { createInteriorNav } from './interiorNav.js';   // FIELD BUGS 2026-10-16b INDOOR-WATCH: ENHANCED AI 5's interior half - the room's mesh, its routes, NO ROUTE
 import { openDoorsStep, foeFrameDt } from '../characters/enemy/enemyMotor.js';   // AUDIT 63 F42: EnemyMotor.OpenDoors (EnemyMotor.cs:1424-1442), which lives in the motor and runs wherever an enemy does
 import { billboardSize } from '../world/rmbFlats.js';
 import { positionHash, staticNpcData } from './quest/questBridge.js';   // B7: the guild popup's TALK builds display data without re-registering the click
@@ -2273,7 +2281,7 @@ export function createWorldModes(host) {
    *  torn down with the context. */
   function makeInteriorFoes(ctx) {
     return createExteriorFoes({
-      renderer, collider: ctx.collider, fetchBytes, getTexture, uploadRecordFrame,
+      renderer, collider: ctx.collider, nav: interiorNav, fetchBytes, getTexture, uploadRecordFrame,   // INDOOR-WATCH: the room's mesh
       playerEntity, audio,
       // AUDIT 63 F42 (review round): ObstacleCheck's
       // GetComponent<DaggerfallActionDoor>() arm (EnemyMotor.cs:1158-1171),
@@ -2389,6 +2397,10 @@ export function createWorldModes(host) {
    *  OnTransitionExterior takes the interior's enemies with it, and
    *  the watch are enemies. */
   let interiorGuards = null;
+  /** FIELD BUGS 2026-10-16b INDOOR-WATCH (scenes/interiorNav.js): the room's navmesh - mounted with each building, released
+   *  with it, handed to both pools (the watch and the building's foes walk its routes with the Enhanced AI switch on),
+   *  its frame before they step: the routes' budget, the bake, and NO ROUTE's re-stand for a watchman cut off. */
+  const interiorNav = createInteriorNav();
   /** AUDIT 58 (hosts-consistency): THIS HOST'S ACTIVE ENEMY DATABASE,
    *  WRITTEN ONCE. DFU has ONE database per scene -
    *  ActiveGameObjectDatabase.GetActiveEnemyBehaviours() - and
@@ -2474,7 +2486,7 @@ export function createWorldModes(host) {
   });
   function makeInteriorGuards(ctx) {
     return createCityGuards({
-      renderer, collider: ctx.collider, fetchBytes, getTexture, uploadRecordFrame,
+      renderer, collider: ctx.collider, nav: interiorNav, fetchBytes, getTexture, uploadRecordFrame,   // INDOOR-WATCH: the room's mesh
       playerEntity, audio, shake: (k) => host.shakeCamera?.(k),   // AUDIT TELL H6: a watchman indoors staggered by my blow
       // AUDIT 63 F42: makeInteriorFoes' dep, on the pool standing
       // beside it and over the same collider - ObstacleCheck is
@@ -3194,7 +3206,7 @@ export function createWorldModes(host) {
       // INSTANCES: a re-laid public room online stands none of a quest's things - its markers are the dungeon whole's
       // (systems/instancePlaces.js questMountsHere); it says once where they are, and moves nothing (QUEST-VOID's re-lay
       // would carry them into this room's blocks)
-      if (!questMountsHere({ online: !!host.dungeonOnline?.(), builtSize: builtDungeonSize(dungeonLoc) })) { host.instanceDoor?.questElsewhere?.(dungeonLoc); return; }
+      if (!questMountsHere({ online: !!host.dungeonOnline?.(), builtSize: builtDungeonSize(dungeonLoc) })) { host.instanceDoor?.questElsewhere?.(dungeonLoc); return 'elsewhere'; }   // QUEST-ELSEWHERE: a repair says so
       // QUEST-VOID (questRepair.js relayBuiltDungeon): a quest target on a marker this build has not - its foe in the
       // void, its item in rock - is laid again on the dungeon as built before anything stands.
       relayingBuilt = true;
@@ -3551,6 +3563,12 @@ export function createWorldModes(host) {
       return null;
     },
   ]);
+  // CONTAINER-PEEK: what a house container or a placed chest already holds, for the plaque - the getters read the
+  // room's own word only while the crosshair is on one (systems/containerPreview.js createInteriorPeek)
+  const interiorPeek = createInteriorPeek({
+    containers: () => interiorCtx?.containers, decor: () => interiorDecor, owned: () => ownsThisInterior(),
+    shut: () => !!(interiorHome && !interiorHome.own) || !!privateVisitRoom || caravanGuestHere(), hall: () => hallMemberHere(), today: () => stockedToday(),
+  });
 
   /** BS1: the book reader on a bare id - the bookshelf picks by id,
    *  and makeOpenBookHook reads item.message, so a `{ message }`
@@ -3657,11 +3675,11 @@ export function createWorldModes(host) {
       // used to sit here promised "the shoplifting ROLL and its crime
       // tally"; the roll belongs to the house-container arm and never
       // to this one.
-      const shelfBefore = shelf.items.length;
+      const shelfBefore = new Set(shelf.items);   // STOLEN-GOODS AUDIT S1: the shop's keeping as the window opens - what the mark and the tally both read
       const win = interiorInventory({
-        loot: { items: () => shelf.items },
+        loot: { items: () => shelf.items, stolenFrom: shelfBefore },   // STOLEN-GOODS: a take of the shop's own piece off a shut shelf is a theft - the piece is marked as it lands
         onClose: () => {
-          if (shopShelfTheft(shelfBefore, shelf.items.length)) tallyCrimeGuildRequirements(playerEntity, true, 1);
+          if (shopShelfTheft(shelfBefore, shelf.items)) tallyCrimeGuildRequirements(playerEntity, true, 1);
           decorDeliverCarried();   // DECOR2b: furniture taken off the shelf is delivered, never carried
         },
       });
@@ -3976,7 +3994,7 @@ export function createWorldModes(host) {
       for (const it of staged) {
         const i = playerEntity.items.indexOf(it);
         if (i >= 0) playerEntity.items.splice(i, 1);
-        shelf.items.push(it);   // sold goods land on the open shelf
+        landSold(shelf.items, it);   // sold goods land on the open shelf - STOLEN-GOODS: an honest piece; a stolen one is gone
         setJunk(it, false);   // AUDIT LOOT II C5: the junk mark is the seller's word for what goes - gone, it is the merchant's, unmarked if bought back
       }
     } else if (mode === 'Repair') {
@@ -4097,7 +4115,7 @@ export function createWorldModes(host) {
     if (isEquipped(it)) unequipSlot(playerEntity, it.equipSlot);
     addGold(playerEntity, price);
     playerEntity.items.splice(playerEntity.items.indexOf(it), 1);
-    shelf.items.push(it);   // sold goods land on the open shelf (DFU's remoteItems)
+    landSold(shelf.items, it);   // sold goods land on the open shelf (DFU's remoteItems) - STOLEN-GOODS: an honest piece; a stolen one is gone
     setJunk(it, false);   // AUDIT LOOT II C5: sold, its junk mark ends
     tallySkill(playerEntity, SKILLS.Mercantile, 1);
     surfacePlayer();
@@ -7339,9 +7357,10 @@ export function createWorldModes(host) {
     // gate, because the refusal is spoken inside activateBulletinBoard.
     boards.forEach((aabb, i) => targets.push({ key: `board:${i}`, aabb, distance: RAY_DISTANCE, reach: BULLETIN_BOARD_ACTIVATION_DISTANCE }));
     // SEARCH1 (systems/searchables.js): a graveyard's headstones - the streaming host's (scenes/world.js graveTargets);
-    // the bench host stands none. The ray's distance, half a door's reach carried beside it.
+    // the bench host stands none. The ray's distance, half a door's reach carried beside it - GRAVE-PARTY (FIELD BUGS
+    // 2026-10-16): measured from the BODY to the stone's box (searchReachFor), as the dungeon's searchables are.
     const graves = host.graveTargets?.() ?? [];
-    graves.forEach((aabb, i) => targets.push({ key: `grave:${i}`, aabb, distance: RAY_DISTANCE, reach: SEARCH_REACH }));
+    graves.forEach((aabb, i) => targets.push({ key: `grave:${i}`, aabb, distance: RAY_DISTANCE, reach: searchReachFor(aabb, player.pos, player.eye[1]) }));
     // LEFAY1 (scenes/lefayMonumentHost.js): the monument to Julian LeFay outside Privateer's Hold - both exterior hosts stand it
     // (their `monumentTargets`), its steps' box and its column's met at its stone, its reach a static NPC's beside the ray's
     for (const t of host.monumentTargets?.() ?? []) targets.push(t);
@@ -8846,6 +8865,7 @@ export function createWorldModes(host) {
       // a click.
       const spot = restore?.pos ?? floored;
       player.spawn(spot[0], spot[1], spot[2]);
+      interiorNav.mount(ctx, spot);   // INDOOR-WATCH: the room's mesh, anchored on the arrival, the ways in and the doors' watch spots
       _hccLanded = true; host.horseCart?.()?.handleSuccessfulInteriorTransition({ type: 'ToBuildingInterior', buildingKey: interiorBuilding?.buildingKey ?? 0 });   // HCC: OnTransitionInterior [IL_99ac] - the wagon parks, the horse waits, the access id is this building's
       setMode('interior');
       host.unlockOn?.();   // AUDIT 62 F16/F28: the lock never outlives a mode change (its pin wants this on the next line)
@@ -9140,9 +9160,9 @@ export function createWorldModes(host) {
           // false, and is never a theft.
           let fresh = false;   // AUDIT WORLD6a A5: this open rolled the new day's stock (said at the window, not at the roll)
           const openLoot = (privateProperty = false) => {
-            const before = privateProperty ? [...(c.items ?? [])] : null;
+            const before = privateProperty ? new Set(c.items ?? []) : null;   // STOLEN-GOODS AUDIT S1: the owner's keeping - the mark's and the basket's one Set
             const win = interiorInventory({
-              loot: { items: () => c.items, storage: !privateProperty },   // SHIP-STORE: an owned house's or ship's cupboard is the player's storage, two-way
+              loot: { items: () => c.items, storage: !privateProperty, stolenFrom: before },   // SHIP-STORE: an owned house's or ship's cupboard is the player's storage, two-way; STOLEN-GOODS: a stranger's is a theft, each take of theirs marked as it lands
               onClose: () => {
                 if (!privateProperty) return;
                 const out = privatePropertyTheft({
@@ -9249,6 +9269,7 @@ export function createWorldModes(host) {
     interiorFoes = null;
     interiorGuards?.clearLive?.();   // ROAD-B: the watch are enemies too - same transition, same teardown
     interiorGuards = null;
+    interiorNav.release();   // INDOOR-WATCH: the room's mesh and its worker, with the room
     interiorDropped.restorePiles(null);   // ID1: the piles are cached above; free their batches with the scene
     interiorHitEffects.clear();   // HE1: a splash mid-animation must not follow the player into the next building
     interiorBloodMarks.clear();   // BLOOD1a (HARD1): ...and neither do the marks. Named HERE rather than left to ride the line above: the ring is its own binding, so its end is its own line, which is what makes the ownership auditable at every teardown path.
@@ -9333,6 +9354,19 @@ export function createWorldModes(host) {
     const site = r.site ?? null;
     const dfLocation = sdRealmLocation({ s: r.s, hollow: r.hollow ?? null, regionIndex: site?.regionIndex ?? -1, regionName: site?.regionName ?? '', climate: site?.climate ?? undefined });
     const hit = { dfLocation, blocksFile: sdRealmBlocks(blocks), sdRealm: r.s, sdHollow: r.hollow ?? null, climateBase: site?.climateBase ?? 2, season: site?.season ?? 0, group: sdRoomKey(r.s), door: null, dfBlock: null, recordIndex: -1 };
+    return gatedTransition((live) => dungeonTransition(hit, [], true, live));
+  }
+  /** EG-PLAY (bible/11-Multiplayer/Elite-Gates.md section 31, EG-PLAY): INTO AN ELITE BREACH'S CIRCLE (world/eliteGates/egHall.js) -
+   *  the Hour's law: this host's dungeon arm with a level made in code, entered from the open world where the member
+   *  answered the call (the world host steps the veil first - scenes/world.js egEnter). `r` is { b: the breach, seed: its
+   *  seed, c: the circle, site: the climate and region where it was answered }. The breach's room is the relay's
+   *  `eg:<b>`; the place answered from is the dungeon's way back (`from`), every way out's landing. */
+  async function enterEgHall(r) {
+    if (mode !== 'exterior' || !r || typeof r.b !== 'string' || !Number.isSafeInteger(r.c) || r.c < 1 || !(playerEntity.health > 0)) return false;
+    const site = r.site ?? null;
+    const dfLocation = egHallLocation({ b: r.b, seed: r.seed, c: r.c, geo: r.geo ?? 0, regionIndex: site?.regionIndex ?? -1, regionName: site?.regionName ?? '', climate: site?.climate ?? undefined });
+    const hit = { dfLocation, blocksFile: egHallBlocks(blocks), egHall: { b: r.b, seed: r.seed >>> 0, c: r.c, geo: r.geo ?? 0 }, climateBase: site?.climateBase ?? 2, season: site?.season ?? 0, group: egRoomKey(r.b), door: null, dfBlock: null, recordIndex: -1,
+      egFrom: r.landing?.pos ? r.landing : null }   // EG-F (section 6.4): the opener's landing - before the arch (world/gate/gateArena.js gateLandingFor, an arch record);
     return gatedTransition((live) => dungeonTransition(hit, [], true, live));
   }
   /** ARENA2: the floor's light and air - the sky open over the sand, the hour the torches are lit: a warm ambient the
@@ -9574,6 +9608,47 @@ export function createWorldModes(host) {
     ctx.addActivationTargets(() => (host.spoilTargets?.() ?? NO_TARGETS));
     ctx.addActivationNamer((key) => ((typeof key === 'string' && key.startsWith('spoil')) ? host.spoilName?.(key) ?? null : null));
   }
+  /** EG-PLAY: AN ELITE BREACH'S CIRCLE on this screen - its mesh, its band's dress, its waystones, its portcullises, its
+   *  occluders and THE SWAP (scenes/eliteGates/egCircleHost.js - HOST-SPLIT, EG-LOOK: moved out of this host, its seams read here). */
+  const egCircle = createEgCircleHost({ renderer, host, wm: { get mode() { return mode; }, get dungeonCtx() { return dungeonCtx; }, get dungeonLoc() { return dungeonLoc; } } });
+  const { standEgHall, egCircleFrame, egPrebuild, egSwapCircle, egBandsDown, egOcc, egSwap } = egCircle;
+  /** EG-ZN (2026-10-12, Elite-Gates.md section 11.8): THE OCCLUDERS DITHERED, this frame - after its beginFrame (the shadow
+   *  record open) and before the dynamic draws: the circle's rock a ray from the third-person eye to my body (its pivot and
+   *  its chest) crosses dithered out, the rest of the circle drawn whole (scenes/eliteGates/egOcclude.js). First person, a witness's
+   *  eye and a free camera try nothing, and whatever was dithering comes back whole. */
+  function egOccludeFrame(mwv, dt) {
+    const feet = mwv?.thirdPerson && mwv.focal && !host.egWitness?.() && !decorTool.flying() ? player.bodyFeetAt?.() ?? player.feetAt() : null;
+    const ray = feet ? _egOccRay : _egOccNone;   // AUDIT EG V (L6-4): the ray kept, written a frame
+    if (feet) { ray.eye = mwv.eye; ray.points[0] = mwv.focal; const c = ray.points[1]; c[0] = feet[0]; c[1] = feet[1] + EG_OCCLUDE_CHEST_M; c[2] = feet[2]; }
+    ray.dt = dt;
+    egOcc.frame(ray);
+    egOcc.draw(dungeonCtx?.texRemap ?? null);
+  }
+  /** AUDIT EG III (lane6 #1): THE WITNESS VIEW's eye cast against this context's own rock (its sphere's free distance, or
+   *  null) - AUDIT EG V (L6-4): one function, never a closure a Spire frame. */
+  const egEyeCast = (o, r, d, m) => { const h = player.collider?.sphereCast?.(o, r, d, m)?.dist; return Number.isFinite(h) ? h : null; };
+  /** AUDIT EG V (L6-4; Elite-Gates.md section 11.9): the occluders' ray - the eye, the focal and the chest - and the frame
+   *  with none, kept: every Spire frame made one and its chest point. */
+  const _egOccRay = { eye: null, points: [null, [0, 0, 0]], dt: 0 }, _egOccNone = { eye: null, points: null, dt: 0 };
+  /** EG-PLAY: A BODY STOOD ELSEWHERE IN THE CIRCLE (a pull to the next hall's plate, the void's cast-back) - the action
+   *  teleport's way (its settle, the eye with it), facing `yaw`, and the spans told where the void would cast it back to. */
+  function egPlace(at, yaw = null) {
+    if (mode !== 'dungeon' || !isEgHall(dungeonLoc) || !Array.isArray(at)) return false;
+    player.freezeMotor = TELEPORT_FREEZE_S; player.spawn(at[0], at[1], at[2]);   // the action teleport's settle
+    cam.pos = [...player.eye];
+    if (Number.isFinite(yaw)) cam.yaw = yaw;   // the pitch is the player's: only a DFU transition levels it (DE2)
+    dungeonCtx?.egSpanSafe?.(at);
+    return true;
+  }
+  // EG-PLAY: IN A HALL OF AN ELITE BREACH THE GATE'S SIX COMBAT SEAMS ARE THE HALL'S FIGHT'S (scenes/eliteGates/egFight.js, through the
+  // outer host's eg* seams) - the dungeon host's gate arms (the boss's, the crystals' and the host's bodies, and the doors
+  // their blows leave through) serve the hall unchanged; everywhere else each is the gate's own, as it was. And the
+  // hall's bodies ride the dungeon's billboards with the rest.
+  for (const [gate, eg] of [['gateBoss', 'egBoss'], ['onBossHit', 'egBossHit'], ['gateCrystals', 'egRifts'], ['onCrystalHit', 'egRiftHit'], ['gateHost', 'egHost'], ['onHostHit', 'egHostHit']]) {
+    const own = host[gate];
+    host[gate] = (...a) => (mode === 'dungeon' && isEgHall(dungeonLoc) ? host[eg]?.(...a) ?? null : own?.(...a) ?? null);
+  }
+  { const own = host.extraBillboards; host.extraBillboards = () => { const b = own?.() ?? []; return mode === 'dungeon' && isEgHall(dungeonLoc) ? [...b, ...(host.egBatches?.() ?? [])] : b; }; }
   /** WB6b: THE DEADLANDS' LAND stood into the court's context, after the court (whose art it is cut from): the islands
    *  among its draws, and each of the floor's shards with a matrix of its own - moved every frame on the sky's clock
    *  (the dungeon arm, before its draws), so the drift is the same on every screen. Made once a session; a land that
@@ -9948,6 +10023,7 @@ export function createWorldModes(host) {
       dungeonCtx = ctx;
       if (hit.gateArena) standCourt(ctx);   // WB3b: the court, before the start marker is read and before any namer
       if (hit.sdRealm != null) standSdRealm(ctx);   // SD5a: the Hour, before the start marker is read
+      if (hit.egHall) standEgHall(ctx, hit.egHall);   // EG-PLAY: an Elite Breach's circle, the same
       if (hit.arenaFloor) standArenaFloor(ctx);   // ARENA2: the floor's gates, before any namer
       // OH-D: DaggerfallDungeon.OnSetDungeon - SetDungeon raises it after LayoutDungeon, before TransitionDungeonInterior
       // reads the start marker. A listener may hand back the work it started (the port's foe rebuilds - DFU's are
@@ -10056,6 +10132,7 @@ export function createWorldModes(host) {
         // gone with it), as the arena's floor does (AUDIT PRE-MERGE 1003b C7) - never the dungeon's own frame read outside
         from: { pos: [player.pos[0], player.pos[1] + CAPSULE_HEIGHT / 2, player.pos[2]], normal: [Math.sin(cam.yaw), 0, Math.cos(cam.yaw)] },
       };
+      if (hit.egFrom) dungeonReturn.from = hit.egFrom;   // EG-F (section 6.4): the breach's opener lands before its arch
       // DE1: WHICH DFU MEMBER THIS IS. Walking in through the door is
       // TransitionDungeonInterior, which uses the START marker and
       // aborts where there is none; startInDungeon (a new game) is
@@ -10119,6 +10196,7 @@ export function createWorldModes(host) {
         // only faces when it found a door to face away from.
         cam.pitch = 0;
       }
+      if (hit.egHall) cam.yaw = 0;   // EG-PLAY: on a hall's plate, facing down its course
       if (hit.gateArena) cam.yaw = Math.PI;   // WB3b: arriving by the bridge, facing him across the court (the start marker's own facing levelled the pitch)
       if (hit.arenaFloor) cam.yaw = (ARENA_ARRIVE[hit.arenaFloor] ?? ARENA_ARRIVE.ladder).yaw;   // ARENA2: at my mark facing my opponent, or over the sand from the terrace
       mountQuestResources();   // B2: AddQuestResourceObjects(SiteTypes.Dungeon) on the transition, as PlayerEnterExit raises it
@@ -10290,7 +10368,8 @@ export function createWorldModes(host) {
       activateStaticNpc((dungeonCtx.npcTargets?.() ?? [])[Number(key.split(':')[1])]);   // WORLD-HOVER: the `person:` index is the registered producer's, so the handler reads THAT list - a second local copy is how the two drift
       return true;
     }
-    if (key.startsWith('sdrift:') || key.startsWith('sdreturn:') || key.startsWith('sdstone:') || key.startsWith('sdplaque:')) { dungeonCtx.sdPress?.(key); return true; }   // SD4b: a Super dungeon's Rift and Return (Super-Dungeons.md section 6) - the context's own
+    if (key.startsWith('sdrift:') || key.startsWith('sdreturn:') || key.startsWith('sdstone:') || key.startsWith('sdplaque:')) { dungeonCtx.sdPress?.(key); return true; }
+    if (key.startsWith('egstone:') || key.startsWith('egengine:')) { dungeonCtx.egPress?.(key); return true; }   // EG-FULL LAYER THREE: an Elite Breach's Orrery stone, a chamber's engine   // SD4b: a Super dungeon's Rift and Return (Super-Dungeons.md section 6) - the context's own
     if (key.startsWith('questflat:')) {
       // DQ1: buildingKey is 0 down here - StaticNPC reads it from the
       // runtime data and a dungeon has no building, the same reason
@@ -10303,6 +10382,7 @@ export function createWorldModes(host) {
       return true;
     }
     if (isGateArena(dungeonLoc)) { gateWayHome(); return true; }
+    if (isEgHall(dungeonLoc)) { host.egWayHome?.(); return true; }   // EG-PLAY: the Redoubt's way home - pressed, confirmed by the outer host
     if (isArenaFloor(dungeonLoc)) { if (host.arenaHolds?.()) { setMidScreenText(ARENA_TEXT.refuse.door); return true; } return exitDungeonNow(); }   // ARENA2: the gates are shut while my bout stands (the duel's law); no wagon on the sand   // WB6c: the way home is through the fire, as the way in was - taken at the top of the frame after it has closed (F-A5's deferral); and no wagon: it waits in Tamriel
     // AUDIT 28 W2c: THE EXIT-DOOR WAGON PROMPT (PlayerActivate.cs
     // :649-664). A dungeon exit with a Small_cart in the pack and
@@ -10595,6 +10675,9 @@ export function createWorldModes(host) {
     // motor runs the breath's push and the void's cast-back
     const sdBack = mode === 'dungeon' ? dungeonCtx?.sdStepsRide?.(dt, player, !overlayHeld) ?? null : null;
     if (sdBack) sdCastBack(sdBack);
+    // EG-PLAY: AN ELITE BREACH'S SPANS ride before the motor too, and the void's cast-back (its cost the outer host's)
+    const egBack = mode === 'dungeon' && isEgHall(dungeonLoc) ? dungeonCtx?.egSpanRide?.(dt, player, !overlayHeld && !host.egWitness?.()) ?? null : null;   // EG-FULL: a witness's body, put away under the hall, is never cast back
+    if (egBack && egPlace(egBack)) host.egCastBack?.();
     // AUDIT 26 (hosts-modal): THE MOTOR ITSELF STOPS under a window.
     // PauseGame(true) sets Time.timeScale = 0 (GameManager.cs:600-609),
     // which is not "no input" but no Update and no FixedUpdate at all -
@@ -10782,6 +10865,7 @@ export function createWorldModes(host) {
         parkoured: player.parkoured,   // CLIMB1
         odometer: player.odometer,   // MOVE-REAL: the ground the body covered - the movement skills past 100 count it
       });
+      interiorNav.frame(foeDt, player.pos, interiorGuards?.guards, !!player.grounded);   // INDOOR-WATCH: before both pools step - the routes' budget, the bake, NO ROUTE
       // IF: the pool's frame. Armed for MobileTeams targeting like
       // every other pool (MT) - the candidate list is this host's
       // whole active-enemy database, which is the pool itself.
@@ -10928,10 +11012,12 @@ export function createWorldModes(host) {
       ...(chairSeat ? { feet: chairSeat.feet } : {}),   // SIT1 (AUDIT FIVE-ASKS C0): third person looks round the chair the body is drawn on, not the capsule beside it (the bench's way - world.js's `seated` spread)
     });
     if (decorTool.flying()) mwv.eye = cam.pos;   // DECOR1d: the free camera looks from its own eye, never over the body's shoulder
+    if (mode === 'dungeon' && isEgHall(dungeonLoc)) host.egWitnessEye?.(mwv, dt, egEyeCast);   // AUDIT EG III (lane6 #1, Elite-Gates.md section 16.5): THE WITNESS VIEW's eye and THE FALL's sink - the Spire's frame is this one; damped, and colliding with this context's own rock
     if (cardSeat) mwv.eye = cam.pos;   // CARDS2: seated, the seat's own view - first person (Tavern-Cards.md section 2)
     const view = betterAmbience.view(lookAt(mwv.eye, [mwv.eye[0] + lookFwd[0], mwv.eye[1] + lookFwd[1], mwv.eye[2] + lookFwd[2]], [0, 1, 0]));   // BA1: the shaker sits between the follower and the camera; KG4: the lean's look over the board
     const aimView = view.slice();   // AUDIT CLIMB-ARC F10: the view the player aims with, before the climb's feel
     host.climbFeel?.view(view, !decorTool.flying() && !mwv.thirdPerson);   // CLIMB4: the climb's pitch, roll and eye - first person, never the decorator's free camera
+    if (mwv.look && !decorTool.flying() && !cardSeat) view.set(betterAmbience.view(lookAt(mwv.eye, [mwv.eye[0] + mwv.look[0], mwv.eye[1] + mwv.look[1], mwv.eye[2] + mwv.look[2]], [0, 1, 0])));   // EG-ZN (Elite-Gates.md section 11.8): over a shaft's ledge the camera looks along its own biased pitch (player/mwView.js) - after the aim is taken, which keeps the player's, and the climb's feel (first person's alone)
     host.reportFrame?.(proj, view);   // AUDIT 62 F16/F28: TI1's tap ray and lock dot ride the host's last frame, and only its EXTERIOR render wrote one
     const camRight = new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]);
 
@@ -10973,6 +11059,7 @@ export function createWorldModes(host) {
       renderer.setIndirectLight(NO_INDIRECT_POS, 0, NO_INDIRECT_COLOR);
       if (isGateArena(dungeonLoc)) { const _cl = courtLighting(deadlandsFlash(_deadS)); const _ct = dungeonTrilight(!!renderer.lightingLane, _cl.tri); renderer.setLighting(courtEquatorOf(_ct), 0, undefined, _ct); renderer.setMoonlight(_cl.key); }   // WB6a: the court is no dungeon - lit red from the sky, orange from the fire under it, and by the vortex's fire from behind the boss (the moon's term: the one directional light a dungeon frame leaves dark); the lane's dark rides the trilight as the fog's does   // WB6b: a strike in the sky flares over it, the moment the sky draws it
       if (isSdRealm(dungeonLoc)) { const _rl = realmLighting(); const _rt = dungeonTrilight(!!renderer.lightingLane, _rl.tri, _hourTri); renderer.setLighting(courtEquatorOf(_rt), 0, undefined, _rt); renderer.setMoonlight(_rl.key); }   // SD5a: the Hour's brass light and its clock-face's key, the court's way
+      if (isEgHall(dungeonLoc)) { const _el = egHallLighting(dungeonLoc.egCircle); const _et = dungeonTrilight(!!renderer.lightingLane, _el.tri, _hourTri); renderer.setLighting(courtEquatorOf(_et), 0, undefined, _et); renderer.setMoonlight(_el.key); }   // EG-PLAY: the Spire's light, the Hour's way
       if (isArenaFloor(dungeonLoc)) renderer.setLighting(new Float32Array(ARENA_FLOOR_AMBIENT), 0);   // ARENA2: an open sky over the sand at the torches' hour - the stands seen across it, not a dungeon's dark
       // AUDIT 26 F001: a dungeon mesh is textured by SetDungeonTextures
       // (DaggerfallMesh.cs:153-169), which calls GetMaterial with NO
@@ -10992,6 +11079,7 @@ export function createWorldModes(host) {
       { const _fog = dungeonFog(!!renderer.lightingLane, betterAmbience.dungeonFog() ?? DUNGEON_FOG); applyFog(renderer, dungeonCtx.underwaterFogSettings?.(cam.pos[1], player.pos, _fog) ?? _fog); }
       if (isArenaFloor(dungeonLoc)) applyFog(renderer, dungeonFog(!!renderer.lightingLane, ARENA_FLOOR_FOG));   // ARENA2: the night air over the colosseum, thin enough to see the far tiers
       if (isSdRealm(dungeonLoc)) { applyFog(renderer, dungeonFog(!!renderer.lightingLane, SD_REALM_FOG, _hourFog), _hourFogColor); renderer.setSceneGrade?.(SD_HOUR_GRADE); }   // SD5a: the Hour's brass haze over the dungeon's; SD-LOOK: and its grade - the eye held down, the void black   // AUDIT SD IV (R5): into kept ones, nothing made
+      if (isEgHall(dungeonLoc)) { applyFog(renderer, dungeonFog(!!renderer.lightingLane, egHallFog(dungeonLoc.egCircle), _hourFog), _hourFogColor); renderer.setSceneGrade?.(egHallGrade(dungeonLoc.egCircle)); egCircleFrame(mwv.eye); }   // EG-PLAY: the Spire's haze; EG-LOOK: its band's own haze and grade (world/eliteGates/egAtmos.js); its portcullises stood or sunk, its ruin and wreck placed about the eye (scenes/eliteGates/egCircleHost.js)
       if (isGateArena(dungeonLoc)) applyFog(renderer, dungeonFog(!!renderer.lightingLane, COURT_FOG));   // WB3b: the Deadlands' air in the court, over the dungeon's   // AUDIT-EL F6   // BA1: FoggyDungeons' linear fog is the base the water murk overrides
       // AUDIT DISC19: THE CANDLE BURNS WHITE UNDERGROUND TOO. One shared
       // colour lit every light down here - the dungeon's 0.8, or the lane's
@@ -11022,6 +11110,7 @@ export function createWorldModes(host) {
       // cap drops a far court's fire, never him
       if (isGateArena(dungeonLoc)) { const _court = withCourtLights(_dgLit, [...(host.gateCourtLights?.() ?? []), ...courtLightsNear(cam.pos)]); renderer.setPointLights(_court.data, null, _court.colors); }
       if (isSdRealm(dungeonLoc)) { const _hour = realmLightsWith(_dgLit, host.sdRealmLights?.() ?? NO_LIGHTS, cam.pos, host.sdLampDim?.() ?? null); renderer.setPointLights(_hour.data, null, _hour.colors); }   // SD5a: the Hour's lamps, after the player's own lights, nearest first; SD9e: the spoils' light before them, as the court's; AUDIT SD II (L2 F9): into the realm's own arrays, made once; SD-LOOK S7: the arena's dimmed through the Reset
+      if (isEgHall(dungeonLoc)) { const _sp = egLightsWith(_dgLit, host.egLights?.() ?? NO_LIGHTS, egCircle.lamps(), cam.pos); renderer.setPointLights(_sp.data, null, _sp.colors); }   // EG-PLAY: the Spire's lamps after the player's own lights, the fight's glows before them
       renderer.everyLightCasts();   // LA-SHADOW3: the level is drawn whole below (no view cull) - every torch keeps a shadow map, none lights through the rock as the nearest eight change (DISC15's rooms)
       renderer.setClearColor(INTERIOR_CLEAR);   // REVIEW 2026-09-05 (PR #55 review): the world-hosted dungeon/interior frame is THIS one - the host's own setClearColor sits after its `modes.frame` return
       renderer.setWorldViewport(worldViewportRect(canvas.clientWidth, canvas.clientHeight));   // E5: ViewportChanger.Update, every frame
@@ -11031,6 +11120,8 @@ export function createWorldModes(host) {
         mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.bodyFeetAt(), yaw: player.bodyYawFor(cam.yaw), viewYaw: cam.yaw });   // MW-D24; DISC18: the body at the capsule's own feet, not the camera's smoothed ones
         host.drawPeerBodies?.({ proj, view, eye: mwv.eye });   // MWBODY1: the others' bodies, after the player's own
       } finally { renderer.flushCharacterSpriteBatch?.(); }   // MWNPC2: every body's picture in one bind of the sprite target
+      if (isEgHall(dungeonLoc)) dungeonCtx.egSpanCull?.(proj, view);   // EG-G2: the Spire's pieces batched a kind and culled against this frame's frustum (scenes/eliteGates/egPieceBatch.js) - every one noShadow, so the shadow record never moves with a cull
+      if (isEgHall(dungeonLoc)) egOccludeFrame(mwv, dt);   // EG-ZN (section 11.8): the rock between the camera and my body dithered out
       if (dungeonCtx.staticBatch) renderer.drawMesh(dungeonCtx.staticBatch, BATCH_IDENTITY, null);   // PERF5: the level's static models, one call per texture
       for (const d of dungeonCtx.drawList) if (!d._batched) renderer.drawMesh(d.mesh, d.matrix, d.texRemap ?? dungeonCtx.texRemap);   // AUDIT PRE-MERGE 1003 W4: a climate-free model's own table
       for (const d of dungeonCtx.dynamicDraws) if (!d.hidden && !d.culled) renderer.drawMesh(d.gpu, d.object.matrix, d.texRemap ?? dungeonCtx.texRemap, d.noShadow ? DRAW_NO_SHADOW : DRAW_SHADOW);   // AUDIT SD II (L2 F11): a draw that says it is hidden (the Hour's gone steps and bodies) is no draw, and no shadow's record; SD-LOOK: a draw's own texRemap (a state's records), `noShadow` (a part that turns rebuilds no cube) and `culled` (a stage out of sight) - each read only where a draw carries it
@@ -11039,6 +11130,7 @@ export function createWorldModes(host) {
       drawArenaWall(); if (isArenaFloor(dungeonLoc)) host.drawSky?.(cam.yaw, cam.pitch + (host.climbFeel?.pitch?.() ?? 0), fieldOfView() + (host.climbFeel?.fovRad() ?? 0), largeHudWorldAspect(canvas.clientWidth, canvas.clientHeight), renderer.worldViewportPx ?? [0, 0, renderer.gl.drawingBufferWidth, renderer.gl.drawingBufferHeight]);   // ARENA5: the Hall of Champions' plaques - opaque, before the flats; HOTFIX 1003l (live: "the private sessions are missing the sky and the entrance is black"): the floor is drawn as a dungeon, cleared to black - the world's own sky over it now, after the opaque level (it shades only what nothing nearer claimed) and before the flats
       if (isGateArena(dungeonLoc)) host.drawGateBackdrop?.({ proj, view, eye: mwv.eye });   // WB6a: the Deadlands' sea and sky - after the court's solid geometry, so they burn only where they show (PERF2's law), before its flats, so a flat blended over the sky lands on it
       if (isSdRealm(dungeonLoc)) host.drawSdSky?.({ proj, view, eye: mwv.eye });   // SD5b: the Hour's sky - after its islands, before its flats (PERF2's law)
+      if (isEgHall(dungeonLoc)) host.drawEgSky?.({ proj, view, eye: mwv.eye });   // EG-PLAY; EG-G2: the Spire's own sky (render/eliteGates/egSkyPass.js - its band's void and the Spire's underside)
       dungeonCtx.flatAnims.tick(dt);   // FA1
       renderer.drawFoeTelegraphs?.(drawableBlows(tacticsNow(), player.pos));   // TACT4: a foe's wind-up on the ground
       renderer.drawFoeTelegraphs?.(techniqueMarksNow());   // TECH1: and the player's own marks, after the foes' (bible/05-Combat/Weapon-Techniques.md)
@@ -11056,6 +11148,7 @@ export function createWorldModes(host) {
       // so they are drawn here then, under it
       _sdLate.on = isSdRealm(dungeonLoc); _sdLate.proj = proj; _sdLate.view = view; _sdLate.eye = mwv.eye;
       if (_sdLate.on && dungeonCtx.uiOverlayActive) host.drawSdTelegraph?.(_sdLate);
+      if (isEgHall(dungeonLoc)) host.drawEgFight?.({ proj, view, eye: mwv.eye });   // EG-PLAY: a hall's telegraphs, vents and rifts - after the flats, the court's way
       // AUDIT 17e F1: this MUST return true like every other exit of
       // the dungeon branch. Returning undefined let the host fall
       // through and run its whole exterior frame on top - the town
@@ -11534,6 +11627,8 @@ export function createWorldModes(host) {
           (key) => (typeof key === 'string' && key.startsWith('droppedLoot:') ? (interiorDropped.contents?.(key) ?? null) : null),
           (key) => interiorFoes?.hoverContents?.(key) ?? null,
           (key) => interiorGuards?.hoverContents?.(key) ?? null,
+          // CONTAINER-PEEK: a house container and a placed chest, read-only - null until the list exists, so the plaque stays a name
+          interiorPeek,
         ]),
       });
       const _detected = detectFeed.tick(dt);
@@ -11626,8 +11721,8 @@ export function createWorldModes(host) {
 
   // Shot-mode hooks for everything modal (parity with the pre-P7 world
   // probes; __doors reads the host's live door registry).
-  window.__anim = (m) => { _charAnimMode = ['idle','walk','off'].includes(m) ? m : _charAnimMode; return _charAnimMode; };
   function installShotProbes() {
+    window.__anim = (m) => { _charAnimMode = ['idle','walk','off'].includes(m) ? m : _charAnimMode; return _charAnimMode; };   // AUDIT ANTICHEAT A2: inside the installer, not above it on every boot
     window.__doors = () => doorTargets().map((e, i) => (
       { i, pos: doorWorldPosition(e.door), normal: doorWorldNormal(e.door), record: e.recordIndex, block: e.dfBlock.name, type: e.door.doorType }));
     window.__enter = () => tryEnter();
@@ -13195,7 +13290,7 @@ export function createWorldModes(host) {
     // ONLINE1: what the host needs to name the room - the mounted dungeon's
     // location, the interior's building; null in the exterior
     // ARENA4: the floor's instance standing a relay's bout is that bout's room (`arena:b<id>`)
-    roomIdentity: () => (mode === 'dungeon' ? (isGateArena(dungeonLoc) ? { kind: 'gate', day: dungeonLoc.gate } : isSdRealm(dungeonLoc) ? { kind: 'sd', s: dungeonLoc.sdRealm } : isArenaFloor(dungeonLoc) && dungeonLoc.arenaBout ? { kind: 'arena', o: dungeonLoc.arenaBout } : { kind: 'dungeon', mapId: dungeonLoc?.mapTableData?.mapId ?? null, regionIndex: dungeonLoc?.regionIndex ?? -1, name: dungeonLoc?.name ?? '', size: builtDungeonSize(dungeonLoc), instance: placeInstance })   // WB3b: the court's room is its gate's own; SD-ONLINE: a dungeon's room is its layout's (the size it was BUILT at); HOLD-SHARED (2026-10-12): Privateer's Hold keys its shared room as every dungeon does (HOLD-SOLO's `solo` reverted)
+    roomIdentity: () => (mode === 'dungeon' ? (isGateArena(dungeonLoc) ? { kind: 'gate', day: dungeonLoc.gate } : isSdRealm(dungeonLoc) ? { kind: 'sd', s: dungeonLoc.sdRealm } : isEgHall(dungeonLoc) ? { kind: 'eg', b: dungeonLoc.egBreach } : isArenaFloor(dungeonLoc) && dungeonLoc.arenaBout ? { kind: 'arena', o: dungeonLoc.arenaBout } : { kind: 'dungeon', mapId: dungeonLoc?.mapTableData?.mapId ?? null, regionIndex: dungeonLoc?.regionIndex ?? -1, name: dungeonLoc?.name ?? '', size: builtDungeonSize(dungeonLoc), instance: placeInstance })   // WB3b: the court's room is its gate's own; SD-ONLINE: a dungeon's room is its layout's (the size it was BUILT at); HOLD-SHARED (2026-10-12): Privateer's Hold keys its shared room as every dungeon does (HOLD-SOLO's `solo` reverted)
       : mode === 'interior' ? { kind: 'interior', buildingKey: interiorBuilding?.buildingKey ?? 0, layout: _visitLayout, instance: placeInstance, ...(interiorCabin ? { boatUid: interiorCabin.uid } : {}), ...(_intShared?.owned ? { private: true, privateRoom: privateVisitRoom } : {}) } : null),   // personal interiors share presence in an owner-specific room, never world memory/loot
     get dungeonLocation() { return dungeonLoc; },   // B2: playerInside's dungeon arm
     /** X7: the Identify SPELL's window (Identify.cs:71-76 pushes the
@@ -13314,7 +13409,17 @@ export function createWorldModes(host) {
     enterGateArena,   // WB3b: the gate's door
     enterSdRealm,   // SD5a: the Shattered Hour's - the world host takes the player out of the Hollow first (scenes/world.js sdEnterRealm)
     stepThroughFire,   // SD5a: the veil the Rift's step is taken in, both ways (the world host's to call)
+    madeLevel: () => (mode === 'dungeon' ? madeLevelOf(dungeonLoc) : null),   // EG-H2 (Elite-Gates.md section 24): the made level under this player - 'court', 'hour', 'spire' or null (systems/madeLevel.js)
     sdRealmSlot: () => (mode === 'dungeon' && isSdRealm(dungeonLoc) ? dungeonLoc.sdRealm : null),   // SD5a: the Hour stands under this player
+    egHallBreach: () => (mode === 'dungeon' && isEgHall(dungeonLoc) ? dungeonLoc.egBreach : null),   // EG-PLAY: the breach whose circle stands under this player
+    egHallCircle: () => (mode === 'dungeon' && isEgHall(dungeonLoc) ? dungeonLoc.egCircle : null),   // EG-PLAY: and which circle it is
+    enterEgHall,   // EG-PLAY: into a breach's circle (the world host steps the veil)
+    egPlace,   // EG-PLAY: stood elsewhere in the circle - a pull to the next hall's plate
+    egLeave: () => { if (mode !== 'dungeon' || !isEgHall(dungeonLoc) || !dungeonCtx) return false; pendingDungeonExit = true; return true; },   // EG-PLAY: out of the breach at the top of the next frame, to where it was answered from (returnLanding's `from`)
+    egHallReturn: () => (mode === 'dungeon' && isEgHall(dungeonLoc) ? dungeonReturn?.from ?? null : null),   // EG-PLAY: where a death or a new circle stands me outside
+    egPrebuild, egSwapCircle, egSwapDrop: () => egSwap.drop(),   // EG-H3 (EG10): THE SWAP - the next circle built while the Court rests, stood in place; the build forgotten at the breach's end
+    egBandsDown,   // EG-ZN (section 29): the band textures freed at the breach's end (the client's word, out of the Spire)
+    egOccluders: () => egOcc.stats(),   // EG-ZN (section 11.8): the occluders' dither pass as it stands (probes, tests)
     enterArenaFloor, enterArenaUndercroft, arenaFloorStage, arenaPitStage, standOnArenaMark, leaveArenaFloor,   // ARENA6: a session's fighter to its mark and back, and out of the instance   // ARENA2: the floor's instance, the fighters' hall, the instance as a bout's stage
     enterAbyss,   // OH-D: the pit's way down
     /** OH-E: RemoveBorrowedQuestResources - every QuestResourceBehaviour under the live dungeon destroyed: the quest
@@ -13694,6 +13799,7 @@ export function createWorldModes(host) {
         interiorFoes = null;
         interiorGuards?.clearLive?.();   // ROAD-B: same teardown, the quest-teleport / load arm
         interiorGuards = null;
+        interiorNav.release();   // INDOOR-WATCH: the same, the quest-teleport / load arm
         interiorDropped.restorePiles(null);   // ID1: same teardown, the quest-teleport / load arm
         interiorTorches.destroyAll();   // AUDIT 66 F6: HT1's pool was the one that never joined this list - a quest teleport or a load out of a building left the room's torches lit, batched and burning in the ear
         interiorHitEffects.clear();   // HE1: the same

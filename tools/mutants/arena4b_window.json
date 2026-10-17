@@ -110,8 +110,8 @@
   {
     "name": "ARENA4B-CLIMB-WAIT-CARD",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "      for (const c of m.bouts.cards) if (c.kind === 'ladder') c.acts",
-    "new": "      for (const c of []) if (c.kind === 'ladder') c.acts",
+    "old": "      m.bouts.cards = m.bouts.cards.map((c) => (c.kind === 'ladder' ? ladderCardWaiting(away ?? O().climbWait) : c));",
+    "new": "      m.bouts.cards = m.bouts.cards.map((c) => c);",
     "tests": [
       "test/systems/arena/arena4b_window.test.js"
     ]
@@ -128,7 +128,7 @@
   {
     "name": "ARENA4B-RECORDS-SAVE-BEFORE-BOARD",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "      m.records = { ...recordsPageOnline(null, o), stats: [] };\n",
+    "old": "      m.records = { ...recordsPageOnline(null, o), stats: [], ...(away ? { empty: away } : {}) };\n",
     "new": "",
     "tests": [
       "test/systems/arena/arena4b_window.test.js"
@@ -137,10 +137,11 @@
   {
     "name": "ARENA4B-PURSES-BEFORE-BOARD",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "      m.header.purses = null;\n",
+    "old": "      m.header = { ...arenaHeaderOnline({ board: wait, name: o.name }), title: null, record: '' };\n",
     "new": "",
     "tests": [
-      "test/systems/arena/arena4b_window.test.js"
+      "test/systems/arena/arena4b_window.test.js",
+      "test/systems/arena/fb1016b_arenawait.test.js"
     ]
   },
   {

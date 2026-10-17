@@ -41,6 +41,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { corpseNearbyRecords, containerNearbyRecord, nearbyLootRecords } from '../../src/scenes/shared.js';
 import { updateNearbyObjects, getNearbyObjects, detectedMarkers, NEARBY } from '../../src/systems/nearbyObjects.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const read = (p) => readFileSync(join(ROOT, p), 'utf8');
@@ -133,7 +134,7 @@ test('DT1: all four hosts name their kinds to the one walk', () => {
     return src.slice(i, i + 900);
   };
   const wm = read('src/scenes/worldModes.js');
-  const w = read('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   const e = read('src/scenes/exterior.js');
   const d = read('src/scenes/dungeonContext.js');
   // the interior host: containers (shelves AND furniture) + its foes.

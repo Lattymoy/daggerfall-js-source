@@ -31,9 +31,10 @@ import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { raceActivation } from '../../src/player/activationRace.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const read = (p) => readFileSync(join(ROOT, p), 'utf8');
+const read = (p) => hostText(p);
 const at = (key, distance, reach = 3.2) => ({ key, distance, reach });
 
 test('HARD2: the body and the pile are decided by DISTANCE, and the tie goes to the body', () => {

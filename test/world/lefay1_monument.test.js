@@ -23,9 +23,10 @@ import { REGION_NAMES } from '../../src/formats/mapsTables.js';
 import { STATIC_NPC_ACTIVATION_DISTANCE, RAY_DISTANCE } from '../../src/player/activate.js';
 import { snapshotPlayer, restorePlayer } from '../../src/systems/save/save.js';
 import { PRIVATEERS_HOLD_BLOCK, HOLD_MODELS } from '../../src/world/worldOfDaggerfall/wodPrivateersHold.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const read = (f) => readFileSync(join(root, f), 'utf8');
+const read = (f) => hostText(f);
 
 /** A navgrid of `w` x `h` cells, every cell `weight` (stored as CityNavigation stores it). */
 function navOf(w, h, weight = 12) {
@@ -510,7 +511,7 @@ test('LEFAY1: THE PRESS - Read (or Info) reads it, Steal takes nothing, anything
 });
 
 test('LEFAY1: THE FOUR HOSTS - world.js and exterior.js stand it, the street press both share reaches it, the save carries it', () => {
-  const world = read('src/scenes/world.js'), ext = read('src/scenes/exterior.js'), modes = read('src/scenes/worldModes.js'), save = read('src/systems/save/save.js');
+  const world = hostText('src/scenes/world.js'), ext = read('src/scenes/exterior.js'), modes = read('src/scenes/worldModes.js'), save = read('src/systems/save/save.js');
   const dungeon = read('src/scenes/dungeonContext.js');
   for (const [name, src] of [['world.js', world], ['exterior.js', ext]]) {
     assert.match(src, /lefaySpot = lefaySpotOf\(loc, \{ camp: \{ block: PRIVATEERS_HOLD_BLOCK, models: HOLD_MODELS \}, exit: lefayExitOf\(dungeonEntranceLanding\(/, `${name} finds the spot off the place's own navgrid beside DFU's exit landing, WoD's camp closed on it (HOLD-MONUMENT, AUDIT FIVE-ASKS B1)`);
@@ -558,7 +559,7 @@ test('AUDIT LEFAY1 B1: a flower thrown before a load lands nowhere - never in th
   m.destroyAll();   // a transition lays one thrown since
   assert.equal(st.tribute.count, 5);
   // the world host hands it the save's own count
-  assert.match(read('src/scenes/world.js'), /restores: restoresSoFar,/);
+  assert.match(hostText('src/scenes/world.js'), /restores: restoresSoFar,/);
 });
 
 test('AUDIT LEFAY1 C2: a vertical recentre (the site\'s compensation) re-reads its ground at once', () => {
@@ -569,7 +570,7 @@ test('AUDIT LEFAY1 C2: a vertical recentre (the site\'s compensation) re-reads i
   st.ground = 2 - 500; st.site = [100, 50, -500];
   assert.deepEqual(m.frame(), [100, -498, 50], 'the next frame, not LEFAY_GROUND_EVERY frames on');
   assert.deepEqual([...log.buckets.get(LEFAY_KEY).m].slice(12, 15), [100, -498, 50]);
-  assert.match(read('src/scenes/world.js'), /_lefaySite\[2\] = state\.compensation\[1\];/);
+  assert.match(hostText('src/scenes/world.js'), /_lefaySite\[2\] = state\.compensation\[1\];/);
 });
 
 test('AUDIT LEFAY1 B2: THE POOL\'S OWN LAWS - a flight laid when its town goes, the lit row over the mode, no count line before a flower, the work done once', async () => {

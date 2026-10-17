@@ -17,8 +17,9 @@ import { createStandingWatch, STANDING_LOOK_MS } from '../../src/scenes/standing
 import { createCityGuards } from '../../src/scenes/cityGuards.js';
 import { CRIMES } from '../../src/systems/court.js';
 import { createRegionConditions } from '../../src/systems/region/regionConditions.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
-const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
+const src = (p) => hostText(p);
 const player = (legal = -20, gold = 5000) => ({ legalRep: { 3: legal }, goldPieces: gold, items: [], health: 50, regionConditions: createRegionConditions() });
 
 test('REP1: who the watch knows, and when it may stop them - under -10 or banished; two game hours between stops; a day\'s grace once the law is answered (mutants: DFU\'s line moved; no cooldown; no grace)', () => {
@@ -151,6 +152,6 @@ test('REP1: the hosts - the per-minute levy is gone from both, the stop is built
     assert.match(s, /\n\s*standingWatch\.frame\(\);/);
     assert.match(s, /installLegalNotices\(\{ playerEntity, say: /);
   }
-  assert.match(src('src/scenes/world.js'), /blocked: \(\) => townTalk\.overlayActive \|\| !!modes\?\.overlayHeld \|\| !!travelView\?\.active \|\| !!raidDefendingHere\(\)/,
+  assert.match(hostText('src/scenes/world.js'), /blocked: \(\) => townTalk\.overlayActive \|\| !!modes\?\.overlayHeld \|\| !!travelView\?\.active \|\| !!raidDefendingHere\(\)/,
     'a raid on the town holds the stop');
 });

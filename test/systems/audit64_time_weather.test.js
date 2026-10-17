@@ -17,9 +17,10 @@ import {
 } from '../../src/systems/holidays.js';
 import { LOCATION_TYPES } from '../../src/formats/mapsFile.js';
 import { dateToClassicMinutes } from '../../src/systems/gameDate.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const src = (f) => readFileSync(join(root, f), 'utf8');
+const src = (f) => hostText(f);
 
 // ---------------------------------------------------------------
 // F8: DaggerfallLocation.ApplyTimeAndSpace (Internal/

@@ -225,7 +225,8 @@ named `Update <n>` and the game shows it beside the commit
 (`01-Overview/Desktop-App.md` REL8).
 
 THE HOSTS DO NOT GROW (HOST-SPLIT, 2026-10-15). bootWorld, createWorldModes,
-buildDungeonContext and bootExterior each keep their whole state in one
+buildDungeonContext, bootExterior, navalHost's createNavalHost and Come Sail Away's
+createComeSailAwayRuntime each keep their whole state in one
 function's scope, and world.js grew from 8,897 lines to 36,374 in a month. New
 behaviour goes into a module the host wires (`fishHost.js` is the shape) - and
 on the relay into a Room method of its own, not into `_message` - never into the

@@ -7,6 +7,7 @@ import { tryLanguagePacification, SWING_WEAPON_FATIGUE_LOSS, SWING_FATIGUE_COST 
 import { enemyLanguageSkill, calculateEnemyPacification } from '../../src/combat/formulas.js';
 import { SKILLS, SKILL_NAMES, skillValue } from '../../src/systems/skills.js';
 import { KNIGHT_CITY_WATCH, MOBILE_TYPES } from '../../src/characters/mobile/mobileTypes.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 import { FATIGUE_DRAIN_SCALE } from '../../src/systems/statMods.js';   // BALANCE1
 
 const rd = (f) => readFileSync(new URL(`../../${f}`, import.meta.url), 'utf8');
@@ -153,7 +154,7 @@ test('audit24 wave42: the drawn weapon matters, and every pool asks the host for
   }
   // read LIVE, not captured: drawing your sword mid-approach has to
   // change the next foe's roll
-  assert.doesNotMatch(rd('src/scenes/world.js'), /playerWeaponSheathed: !!weaponRig/, 'a thunk, not a snapshot');
+  assert.doesNotMatch(hostText('src/scenes/world.js'), /playerWeaponSheathed: !!weaponRig/, 'a thunk, not a snapshot');
 });
 
 test('audit24 wave42: a swing costs eleven fatigue, ONCE, whatever is standing near you', () => {

@@ -55,7 +55,7 @@
   },
   {
     "name": "HOLD-MONUMENT-world-hands-no-camp",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "lefaySpotOf(loc, { camp: { block: PRIVATEERS_HOLD_BLOCK, models: HOLD_MODELS }, exit:",
     "new": "lefaySpotOf(loc, { exit:",
     "tests": [

@@ -174,7 +174,7 @@ test('SD9b THE WORKER: /v1/sd/claim behind a session and never open - the sessio
   assert.equal((await call('POST', '/v1/sd/claim', { receipt: r })).status, 401, 'a stranger claims nothing');
   const real = globalThis.crypto.getRandomValues.bind(globalThis.crypto);
   const draw = t.mock.method(globalThis.crypto, 'getRandomValues', (b) => (b.length === 4 ? rolling(seedFor(true, false))(b) : real(b)));
-  assert.deepEqual((await call('POST', '/v1/sd/claim', { receipt: r, account: them.id }, me.secret)).body, { recorded: true, slot: 7, title: true, aura: false, titleNew: true, auraNew: false, broken: 1 });
+  assert.deepEqual((await call('POST', '/v1/sd/claim', { receipt: r, account: them.id }, me.secret)).body, { recorded: true, slot: 7, title: true, aura: false, titleNew: true, auraNew: false, broken: 1, weir: { found: true, keys: 1 } });   // EG-PLAY: an Hour broken rolls a Weir Key off the same mocked die (server-account/src/eg.js rollWeirKey, one in three)
   draw.mock.restore();
   assert.equal((await call('POST', '/v1/sd/claim', { receipt: r }, them.secret)).status, 403, 'another\'s receipt');
   const forged = await call('POST', '/v1/sd/claim', { receipt: await hour(me.id, 8, (await relayPair()).priv) }, me.secret);

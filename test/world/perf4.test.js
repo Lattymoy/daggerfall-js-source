@@ -10,9 +10,10 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { StaticBatchBuilder, keyResolver } from '../../src/render/staticBatch.js';
 import { trs } from '../../src/world/mat4.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const read = (p) => readFileSync(join(root, p), 'utf8');
+const read = (p) => hostText(p);
 const near = (a, b, eps = 1e-5) => Math.abs(a - b) < eps;
 
 /** a two-triangle model: one quad in two sub-meshes, textures (7,1) and (7,2) */
@@ -62,7 +63,7 @@ test('PERF4 keyResolver: the pixel\'s remap is applied exactly as drawMesh appli
 });
 
 test('PERF4 pins: the world host merges each placed model as it arrives (gates stay out), uploads the merge once, draws it with the pixel matrix before the per-model loop, skips the batched models there, and frees it with the pixel (mutant: any one dropped)', () => {
-  const w = read('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /const staticBuilder = new StaticBatchBuilder\(\);\n\s+const resolveTexKey = keyResolver\(texRemap\);/, 'one builder per pixel build, resolving through the pixel\'s remap');
   assert.match(w, /models\.push\(entry\);\n\s+if \(!entry\._home && !isCityGate\(placed\.modelIdNum\) && cpu\.normals && cpu\.uvs\) \{ staticBuilder\.add\(cpu, local, climateFree \? ownTexKey : resolveTexKey\); entry\._batched = true; \}/, 'added right after the entry, after the remap was awaited; gates excluded');   // ARENA1 re-aim: a climate-free model (the colosseum) merges by its own empty table   // HOME-LOOK re-aim: a player's home stays out (drawn with its own table)
   // PERF-EXT23: merged a breath at a time, the spheres handed to the upload (test/render/publishtail.test.js)

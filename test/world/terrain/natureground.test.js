@@ -10,6 +10,7 @@ import { readFileSync } from 'node:fs';
 import { groundOffPlane, surfaceHeightAt } from '../../../src/world/terrain/terrainSurface.js';
 import { calcAvgMaxHeight, blendLocationTerrain } from '../../../src/world/terrain/terrainTiles.js';
 import { HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, STREAMING_TERRAIN_SCALE, TERRAIN_SIZE } from '../../../src/world/terrain/terrainSampler.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const src = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const H = HEIGHTMAP_DIMENSION;
@@ -40,7 +41,7 @@ test('NATURE-GROUND: inside the flattened rect a flat keeps the plane EXACTLY - 
 });
 
 test('NATURE-GROUND by source: the pixel build lifts the block\'s nature flats by the ground\'s offset, and nothing else it stands', () => {
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /const fx = locLocal\[0\] \+ b\.originX \+ flat\.x, fz = locLocal\[2\] \+ b\.originZ \+ flat\.z;/);
   assert.match(w, /const lift = flat\.archive === natureArchive \? groundOffPlane\(samples, avg, fx, fz\) : 0;/, 'the climate\'s nature archive alone - a lamp, a sign, an animal may stand on a model');
   // TREES-SEATED (test/world/fb1003b_trees.test.js): a block whose hills the port draws as its stand-ins seats its whole nature RANGE

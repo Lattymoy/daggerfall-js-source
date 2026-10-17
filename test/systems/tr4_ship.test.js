@@ -15,6 +15,7 @@ import {
 } from '../../src/world/locationEntrance.js';
 import { RMB_SIDE } from '../../src/world/locationLayout.js';
 import { MapsFile, longitudeLatitudeToMapPixel } from '../../src/formats/mapsFile.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 // TR4 - THE SHIP: TransportManager's ship arm (:79-84, :360-402), the
 // last slice of the transport arc. "Ship" is not a mode you travel IN -
@@ -82,7 +83,7 @@ test('TR4: the boarding memory SURVIVES a save (SerializablePlayer :180, :425)',
 });
 
 test('TR4: the picker\'s row is live for an owner, and Ship routes to the teleport rather than the mode', () => {
-  const world = read('src/scenes/world.js');
+  const world = hostText('src/scenes/world.js');
   // MAC-K3: the picker is `player/mountRig.js`'s now, and the Ship row
   // takes a SECOND gate - `!!onShip` - because the fixed-city host has
   // no world to sail across and a live row there would open onto
@@ -160,7 +161,7 @@ test('TR4-SHIPLAND: the boarding arrival routes through the location arm, not th
   // StreamingWorld.Update applies it (:266-295). Forcing the default
   // landing - dropping the `reposition` argument, or nulling `landing`
   // in the core - turns this red.
-  const world = read('src/scenes/world.js');
+  const world = hostText('src/scenes/world.js');
   assert.match(world, /await _teleportToPixel\(t\.go\.x, t\.go\.y, localPos, \{ reposition: t\.reposition, grounded: legacy \}\);/,
     'the boarding carries RandomStartMarker into the teleport');
   assert.match(world, /const wantsLanding = reposition === REPOSITION\.RandomStartMarker\s*\n\s*\|\| reposition === REPOSITION\.DirectionFromStartMarker;/,

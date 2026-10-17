@@ -20,8 +20,8 @@
   {
     "name": "GATESEEN-a-far-stone-drawn",
     "file": "src/scenes/gate/gatePool.js",
-    "old": "      if (!place || place.coarse || !mesh || !r?.drawMesh) return 0;",
-    "new": "      if (!place || !mesh || !r?.drawMesh) return 0;",
+    "old": "      if (!place || place.coarse || !mesh || !r?.drawMesh) return n;",
+    "new": "      if (!place || !mesh || !r?.drawMesh) return n;",
     "tests": [
       "test/scenes/gateseen.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "GATESEEN-a-far-light",
     "file": "src/scenes/gate/gatePool.js",
-    "old": "      if (!place || place.coarse || place.fade <= 0) return NO_GATE;",
-    "new": "      if (!place || place.fade <= 0) return NO_GATE;",
+    "old": "      if (!place || place.coarse || place.fade <= 0) return al.length ? al : NO_GATE;",
+    "new": "      if (!place || place.fade <= 0) return al.length ? al : NO_GATE;",
     "tests": [
       "test/scenes/gateseen.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "GATESEEN-a-far-target",
     "file": "src/scenes/gate/gatePool.js",
-    "old": "      if (!place || !place.risen || place.coarse) return NO_GATE;",
-    "new": "      if (!place || !place.risen) return NO_GATE;",
+    "old": "      if (!place || !place.risen || place.coarse) return at.length ? at : NO_GATE;",
+    "new": "      if (!place || !place.risen) return at.length ? at : NO_GATE;",
     "tests": [
       "test/scenes/gateseen.test.js"
     ]

@@ -91,6 +91,12 @@ export const COIL_STACKS = 5;
 export const COIL_SECONDS = 6;
 /** SERPENT-SET, Sethrakul's Coilscale (6): Shed Skin wakes when a foe's blow takes me below this share of my health. */
 export const SHED_BELOW = 0.35;
+/** EG15, The Battlemage's Panoply (6): the Reprieve wakes when a foe's blow takes me below this share of my health; its
+ *  shield holds this long; my allies within this many metres are shielded too, each for this share of its points. */
+export const REPRIEVE_BELOW = 0.2;
+export const REPRIEVE_SECONDS = 6;
+export const REPRIEVE_METRES = 8;
+export const REPRIEVE_ALLY_SHARE = 0.5;
 
 /** CARD-FIT (2026-09-28, Discord - Cruor: "New sigil items descriptor is a bit long!"): a tier's BRIEF - what it does in
  *  a few words, one line of the card's row, and every line a tooltip, a trade or a chat post prints of it; `text` stays
@@ -268,6 +274,26 @@ export const SIGIL_SETS = Object.freeze({
       tier(6, 'hour-turns', 'The Hour Turns', { heal: [15, 25], recover: [90, 60] },
         (v) => `A blow that would kill you does not: the Hour turns back, and ${v.heal}% of your health returns. Recovers in ${v.recover} s`,
         (v) => `Death turned back, heal ${v.heal}%`),
+    ]),
+  }),
+  // EG15 (2026-10-12, Mac: "I said I want everything"; bible/11-Multiplayer/Elite-Gates.md section 19): THE BATTLEMAGE'S
+  // PANOPLY - the war-gear the Imperial Battlemages wore in the Spire, taken by the Kyn: an Aetheric set no world drop,
+  // shelf or day's stock rolls; a Redoubt's spoils carry a piece (systems/eliteGates/egSpoils.js) and the Broker's weekly sink sells
+  // one by its id (the account service's). Its patron the Battlemages themselves; its colour Battlemage blue
+  // (Elite-Gates.md section 25.2's [92,124,196]: blue is yours).
+  panoply: Object.freeze({
+    id: 'panoply', name: "The Battlemage's Panoply", prince: 'The Imperial Battlemages', colour: '#5c7cc4', aetheric: true,
+    role: 'What the Kyn took from the Battlemages',
+    tiers: Object.freeze([
+      tier(2, 'battlemages-bearing', "Battlemage's Bearing", { resist: [5, 15], magicka: [10, 30] },
+        (v) => `+${v.resist} to every resistance, +${v.magicka} magicka`,
+        (v) => `+${v.resist} all resists, +${v.magicka} magicka`),
+      tier(4, 'battlemages-discipline', "Battlemage's Discipline", { armed: [20, 50], refund: [5, 15] },
+        (v) => `A spell you cast arms your next weapon blow with its element: +${v.armed}% of the blow. Each weapon blow returns ${v.refund}% of your last spell's cost as magicka`,
+        (v) => `Cast arms blow +${v.armed}%, ${v.refund}% MP back`),
+      tier(6, 'battlemages-reprieve', "Battlemage's Reprieve", { shield: [15, 40], recover: [240, 120] },
+        (v) => `When a foe's blow takes you below ${Math.round(REPRIEVE_BELOW * 100)}% health, a shield soaks ${v.shield}% of your max health for ${REPRIEVE_SECONDS} s, and allies within ${REPRIEVE_METRES} m are shielded for half of it. Recovers in ${v.recover} s`,
+        (v) => `Under ${Math.round(REPRIEVE_BELOW * 100)}%: shield ${v.shield}% of HP`),
     ]),
   }),
 });

@@ -18,6 +18,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { buildTerrainGrid, buildTerrainIndices, surfaceHeightAt } from '../../../src/world/terrain/terrainSurface.js';
 import { HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, STREAMING_TERRAIN_SCALE, TERRAIN_SIZE } from '../../../src/world/terrain/terrainSampler.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const hDim = HEIGHTMAP_DIMENSION;
 const CELL = TERRAIN_SIZE / (hDim - 1);
@@ -143,7 +144,7 @@ test('GRASS3: the law is NOT bilinear - a different surface, though on real grad
     assert.ok(g < BLADE / 5, `at a ${grade} grade the gap is ${g.toFixed(3)}u, well under a fifth of a blade - this was never a visible bug`);
   }
   // the placer reads the drawn surface now, and says so
-  const world = readFileSync(new URL('../../../src/scenes/world.js', import.meta.url), 'utf8');
+  const world = hostText('src/scenes/world.js');
   assert.match(world, /const h = surfaceHeightAt\(p\.samples, lx, lz, p\._stride \?\? 1\);/, 'the grass placer asks for the DRAWN height');
   assert.ok(!/s2\[x0 \* hDim \+ z0\] \* \(1 - ax\)/.test(world), 'and the bilinear read is gone, not merely unused');
 });
@@ -161,7 +162,7 @@ test('GRASS3: the far ring’s coarser mesh needs the far ring’s stride - and 
   // block of pixels around the player, so the nearest stride-4 ground is
   // two whole pixels away - 1,638 world units, against a grass range of
   // 250. The numbers are the host's own.
-  const world = readFileSync(new URL('../../../src/scenes/world.js', import.meta.url), 'utf8');
+  const world = hostText('src/scenes/world.js');
   assert.match(world, /const LOD_NEAR = 3;/, 'the far ring starts at chebyshev 3');
   assert.match(world, /const LOD_STRIDE = 4;/);
   assert.match(world, /\.filter\(\(p\) => p\._stride === 1 && p\.tilemapBytes/, 'and the grass only ever stands on the stride-1 ring');

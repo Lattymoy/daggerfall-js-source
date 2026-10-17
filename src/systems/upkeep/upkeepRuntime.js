@@ -245,27 +245,31 @@ export function createUpkeep({ items, now, horseCare = () => null, wagonUpkeep =
   }
 
   // ── the Stable card ──────────────────────────────────────────────
-  /** The card's horses and wagon: each horse's look, stats, bond, hunger and breath; the wagon's soundness. */
+  /** The card's horses and wagon: each horse's look, stats, bond, hunger and breath; the wagon's soundness.
+   *  FIELD BUGS 2026-10-16b HORSE-CARE-OFF ("turning horse care off completely hides my other horses"): every horse owned,
+   *  on every tier - Off, and any skin but the enhanced one (horseCareRules' null), each its place, whether it is ridden,
+   *  its name and its look, for its card and the choice to ride it; its care (stats, bond, hunger, breath) only where
+   *  horse care rules. */
   function model({ near = true, name = '' } = {}) {
     const its = pack(), t = now();
     const care = horseCare();
     // HORSE-TIERS: `tier` the tier's id and `hungerCosts` its word on hunger (the card's words and tones read them)
     const wcare = wagonUpkeep();
     const out = { horseCare: !!care, tier: care?.id ?? null, hungerCosts: !!care?.hungerCosts, wagonUpkeep: !!wcare, near: !!near, horses: /** @type {any[]} */ ([]), wagon: /** @type {any} */ (null), ...supplies() };
-    if (care) {
-      horsesIn(its).forEach((h, i) => {
-        const st = steedStats(h, t, care);
-        if (!st) return;
-        const f = fedUntil(h);
-        out.horses.push({
-          i, ridden: i === 0, name: i === 0 && name ? name : null, look: describeHorseLook(horseLookOf(h)),
-          stats: STEED_STATS.map((k) => ({ key: k, name: STEED_STAT_TEXT[k], born: st.born[k], now: st.stats[k] })),
-          ...bondWay(st.bond), bond: st.bond, tier: st.tier, bonus: st.bonus, penalty: st.penalty, hunger: HUNGER[st.hunger].name, hungerKey: st.hunger,
-          fedHours: f != null && f > t ? (f - t) / 60 : 0, full: f != null && f - t >= FULL_AHEAD,
-          breath: i === 0 ? breathShare(breathOf(h), st.stats) : 1, winded: i === 0 && !!breathOf(h).winded,
-        });
+    horsesIn(its).forEach((h, i) => {
+      const own = { i, ridden: i === 0, name: i === 0 && name ? name : null, look: describeHorseLook(horseLookOf(h)) };
+      if (!care) { out.horses.push(own); return; }   // HORSE-CARE-OFF: Off owns its horses all the same - no care to read
+      const st = steedStats(h, t, care);
+      if (!st) return;
+      const f = fedUntil(h);
+      out.horses.push({
+        ...own,
+        stats: STEED_STATS.map((k) => ({ key: k, name: STEED_STAT_TEXT[k], born: st.born[k], now: st.stats[k] })),
+        ...bondWay(st.bond), bond: st.bond, tier: st.tier, bonus: st.bonus, penalty: st.penalty, hunger: HUNGER[st.hunger].name, hungerKey: st.hunger,
+        fedHours: f != null && f > t ? (f - t) / 60 : 0, full: f != null && f - t >= FULL_AHEAD,
+        breath: i === 0 ? breathShare(breathOf(h), st.stats) : 1, winded: i === 0 && !!breathOf(h).winded,
       });
-    }
+    });
     const w = activeWagonItem(its);
     if (wcare && w) out.wagon = wagonCard(w, wcare);
     return out;

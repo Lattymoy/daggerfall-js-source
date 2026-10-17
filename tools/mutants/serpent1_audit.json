@@ -748,8 +748,8 @@
   {
     "name": "AUDIT-SERPENT-S8-relay-near",
     "file": "server/src/index.js",
-    "old": "present, off <= serpentBrain.ENGAGE_R)) {",
-    "new": "present, true)) {",
+    "old": "near: off <= serpentBrain.ENGAGE_R })) {",
+    "new": "near: true })) {",
     "tests": [
       "test/net/serpent/serpent1_auditrelay.test.js"
     ]

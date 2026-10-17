@@ -100,9 +100,9 @@
   },
   {
     "name": "SD5A-a-rest-in-the-Hour",
-    "file": "src/scenes/dungeonContext.js",
-    "old": "      if (_sdRealm) { hudText.add(SD_REALM_TEXT.noRest); return; }   // SD5a: nor a rest\n",
-    "new": "",
+    "file": "src/systems/madeLevel.js",
+    "old": "  hour: row({ save: 'refused', rest: 'refused',",
+    "new": "  hour: row({ save: 'refused', rest: null,",
     "tests": [
       "test/world/superDungeon/sd5a_realm.test.js"
     ]
@@ -163,9 +163,9 @@
   },
   {
     "name": "SD5A-a-Recall-out-of-the-Hour",
-    "file": "src/scenes/world.js",
-    "old": "    if (modes?.sdRealmSlot?.() != null) { sdSay(SD_REALM_TEXT.noRecall); return; }",
-    "new": "    if (false) { sdSay(SD_REALM_TEXT.noRecall); return; }",
+    "file": "src/systems/madeLevel.js",
+    "old": "recall: 'refused', portalStone: 'refused', companions: 'out', regen: 'off', levitate: 'banned',",
+    "new": "recall: null, portalStone: 'refused', companions: 'out', regen: 'off', levitate: 'banned',",
     "tests": [
       "test/world/superDungeon/sd5a_realm.test.js"
     ]
@@ -190,9 +190,9 @@
   },
   {
     "name": "SD5A-regeneration-in-the-Hour",
-    "file": "src/scenes/world.js",
-    "old": "    if (modes?.sdRealmSlot?.() != null) setCourtRules(true);",
-    "new": "    if (false) setCourtRules(true);",
+    "file": "src/systems/madeLevel.js",
+    "old": "regen: 'off', levitate: 'banned',",
+    "new": "regen: null, levitate: 'banned',",
     "tests": [
       "test/world/superDungeon/sd5a_realm.test.js"
     ]

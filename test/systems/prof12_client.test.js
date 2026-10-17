@@ -39,6 +39,7 @@ import {
 } from '../../src/ui/professions/profPages.js';
 import { setPref } from '../../src/systems/uiPrefs.js';
 import { utcDay } from '../../src/net/marksLaw.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const noWait = () => Promise.resolve();
@@ -339,7 +340,7 @@ test('PROF12 goods: the Apothecaries\' sixteen withdraw as DFU\'s own ingredient
   assert.match(m, /if \(\(m\.apothecaries \?\? \[\]\)\.length\) box\.append\(apothecariesNode\(\)\);/);
   assert.match(m, /if \(st\.view === 'materials'\) box\.append\(suppliersNode\(\)\);/);
   assert.match(m, /box\.append\(el\('h4', null, 'The Apothecaries\\' counter'\)\);/);
-  assert.match(src('src/scenes/world.js'), /apothecaries: APOTHECARY_STOCK,/);
+  assert.match(hostText('src/scenes/world.js'), /apothecaries: APOTHECARY_STOCK,/);
 });
 
 // ─── THE BOOK ────────────────────────────────────────────────────────
@@ -386,7 +387,7 @@ test('PROF12 wiring: the alchemy station an Alchemist\'s (open for trade) or a h
   assert.match(m, /if \(decorOwnerHere\(\) && interiorDecor\.list\(\)\.some\(\(p\) => p\?\.station === 'enchant'\)\) return \{ kind: 'home', fee: 0 \};/);
   assert.match(m, /goldDiscountPct: \(\) => enchantGoldPct\(\),/);
   assert.match(src('src/ui/item/itemMakerWindow.js'), /enchantDecision\(this\.selected, this\.powers, this\.sideEffects, \{ gold: this\.gold\(\), discountPct: this\.goldDiscountPct\(\) \}\)/);
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /alchemy: \(\) => modes\?\.alchemyHere\?\.\(\) \?\? null,/);
   assert.match(w, /const myHall = \(profession\) => hallStepsFor\(seatHere\(_musicLoc\?\.mapTableData\?\.mapId\), guildBook\?\.guild\?\.id \?\? null, profession\);\n\s*const alchemyHall = \(\) => myHall\('alchemy'\);/);   // PIN MOVED (AUDIT PROF-541 R2-H1): the guard fortLaw.js hallStepsFor's (prof9_client.test.js drives it)
   assert.match(w, /const \{ seat \} = alchemyHall\(\);\n\s*const r = await profBook\.brew\(potion, keys, \{ fee: f\.fee > 0 \? f\.fee : 0, seat \}, profMintCraft\);/);
@@ -441,7 +442,7 @@ test('AUDIT PROF12 E2 client: the Enchanting Station says a piece\'s XP by its r
   assert.match(page.text(), /Gold Ruby Ring2,160 points - 21 Arcane Essence, \+78 Enchanting XP/, 'tier 3 at a Master\'s 7: quartered');
   page.done();
   setProfessionsPages(null);
-  assert.match(src('src/scenes/world.js'), /essence: essenceOf\(points, profBook\?\.track\('enchanting'\)\?\.specs\?\.\[50\] === DISENCHANTER\), recipe: it\.recipe \}/);
+  assert.match(hostText('src/scenes/world.js'), /essence: essenceOf\(points, profBook\?\.track\('enchanting'\)\?\.specs\?\.\[50\] === DISENCHANTER\), recipe: it\.recipe \}/);
 });
 
 test('AUDIT PROF12 A2 client: a quick slot keeps a Potent potion and a plain one of the same recipe apart - two kinds, and the HUD\'s count each its own', async () => {
@@ -545,7 +546,7 @@ test('AUDIT PROF-541 B2 client: a realm character\'s disenchant names where its 
   await wire.disenchant('char-1', 'aaaaaaaaaaaaaaaa', 'rid-1', at);
   await wire.disenchant('char-1', 'aaaaaaaaaaaaaaaa', 'rid-2');
   assert.deepEqual(bodies.map((b) => b.realm ?? null), [at, null], 'the record where it stands, on the wire - and none for another character');
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /call: \(at\) => \{ if \(!here\(\)\) return Promise\.resolve\(\{ ok: false, error: 'elsewhere', elsewhere: true \}\); if \(!asked\) \{ asked = true; takeOut\(\); \} return out \? profBook\.disenchant\(provenance, at\) : Promise\.resolve\(\{ ok: false, error: 'prof-piece-gone' \}\); \},/);
   assert.match(w, /if \(r\?\.error === 'prof-no-piece' && r\?\.why === 'disenchanted' && takeOut\(\)\)/);
 });
@@ -560,7 +561,7 @@ test('AUDIT PROF-541 R2-C1/N1: a realm disenchant that LANDED (its first answer 
   const session = { async transact(call) { const r = await call({ id: 'r0123456789abcdef0123', lease: 'f'.repeat(32), seq: 5 }); return r; } };
   const r = await realmGoldAct({ session, checkpoint: () => {}, wait: noWait, call: (at) => book.disenchant('aaaaaaaaaaaaaaaa', at) });
   assert.deepEqual([r.ok, r.landed, r.data], [true, true, undefined], 'landed, its Essence and XP unsaid');
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /if \(paid\) deductGold\(playerEntity, Math\.min\(f\.fee, totalGoldAmount\(playerEntity\)\)\);\n(?:\s*\/\/[^\n]*\n)*\s*if \(!r\.data\) profBook\.refresh\(\{ force: true \}\)\.catch\(\(\) => \{\}\);/, 'a landed act: the state read again');
   assert.match(w, /if \(r\?\.error === 'prof-no-piece' && r\?\.why === 'disenchanted' && takeOut\(\)\) \{\n\s*const owed = f\.fee > 0 \? Math\.min\(f\.fee, totalGoldAmount\(playerEntity\)\) : 0;\n\s*if \(owed > 0\) deductGold\(playerEntity, owed\);\n\s*profBook\.refresh\(\{ force: true \}\)\.catch\(\(\) => \{\}\);/, 'disenchanted already: the fee paid, the state read again');
   assert.match(w, /and it leaves your pack\$\{owed > 0 \? `; you paid the enchanter \$\{owed\} gold` : ''\}\./);
@@ -568,7 +569,7 @@ test('AUDIT PROF-541 R2-C1/N1: a realm disenchant that LANDED (its first answer 
 
 test('AUDIT PROF-541 R2-C2: one latch holds every craft and brew (profBook _craftBusy), so the busy word names no station - not the anvil at the fire, nor the fire at the loom', async () => {
   assert.equal(accountRefusalText('prof-busy'), 'Your hands are busy with another craft.');
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.doesNotMatch(w, /'The anvil is still ringing|'Your last (?:work|dish|piece) is still on the/);
   assert.match(w, /if \(!r\?\.ok\) return \{ ok: false, text: r\?\.kept \? `\$\{st\.kept\}\$\{chain \? ` \$\{chain\}` : ''\}` : `\$\{accountRefusalText\(r\?\.error\)\}\$\{movedFirstText\(r\)\}\$\{chain \? ` \$\{chain\}` : ''\}` \};/);   // PIN MOVED (AUDIT2 BAG1 K8): and what went into the Stores first; (CRAFT1) and what the chain refined first - kept or refused (AUDIT CRAFT1 F3)
   // the latch is one: a brew under way refuses a dish

@@ -22,6 +22,7 @@ import { DAY_MIN } from '../../../src/systems/livingWorld/dayPlan.js';
 import { CLASSIC_MINUTES_PER_SECOND } from '../../../src/systems/worldTick.js';
 import { createRelations, FRIEND_AT } from '../../../src/systems/livingWorld/relations.js';
 import { streetGeometry } from '../../../src/systems/livingWorld/places.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const rd = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const I4 = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
@@ -316,12 +317,12 @@ test('WATCH-PROTECTS a townsperson struck down: the host\'s word is the town\'s 
 });
 
 test('WATCH-PROTECTS the hosts: the world host hands the monsters the street\'s people of the living world (none of the watch, the dead let go) beside its foes and watchmen, and the street the monsters to run from (its own foes alive and hostile, no ally or companion, in the town\'s frame); classic play, and the fixed-city page, none (mutants: the host\'s quarry, its dangers)', () => {
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /candidates: \(\) => \[\.\.\.cityGuards\.guards, \.\.\.exteriorFoes\.foes, \.\.\.livingQuarry\(\)\]/);
   assert.match(w, /const livingQuarry = \(\) => \{\n\s+if \(!livingWorldOn\(\) \|\| _mode\(\) !== 'exterior'\) return \[\];/);
   assert.match(w, /if \(!living\?\.town \|\| p\.guard\) continue;/);
   assert.match(w, /q = makeQuarry\(p, \(body\) => body\.living\.town\.killed\(body\.person\)\)/);
-  assert.match(w, /dangers: \(\) => livingDangers\(px, py, locOrigin\),/);
+  assert.match(w, /dangers: \(\) => host\.livingDangers\(px, py, locOrigin\),/);
   assert.match(w, /if \(f\.dead \|\| !f\.ai\?\.isHostile \|\| f\.companion != null \|\| f\.entity\?\.team === 'PlayerAlly'\) continue;/);
   assert.doesNotMatch(rd('src/scenes/exterior.js'), /livingQuarry|makeQuarry/, 'the fixed-city page: DFU\'s');
 });

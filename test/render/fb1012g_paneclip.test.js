@@ -12,8 +12,9 @@ import { Renderer } from '../../src/render/renderer.js';
 import { setFrameTarget } from '../../src/render/renderTarget.js';
 import { cropProjection, viewOutProjection, padRect, RW_MAIN_DERIVS, realWindowsGlsl, VIEW_PANE_UNIT, VIEW_PANES_MAX } from '../../src/render/realWindows.js';
 import { perspective, lookAt, mirrorProjectionX, identity, multiply, trs } from '../../src/world/mat4.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
-const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
+const rd = (p) => hostText(p);
 const I = identity();
 const px = { width: 1, height: 1, colors: new Uint8ClampedArray([255, 255, 255, 255]) };
 

@@ -123,8 +123,8 @@
   {
     "name": "WAGONTIMBER2-13-the-version-never-moved",
     "file": "src/net/wire.js",
-    "old": "export const RELAY_VERSION = 'world212';",
-    "new": "export const RELAY_VERSION = 'world211';",
+    "old": "export const RELAY_VERSION = 'world215';",
+    "new": "export const RELAY_VERSION = 'world214';",
     "tests": [
       "test/wagontimber2.test.js",
       "test/net/relayversion.test.js"

@@ -19,6 +19,7 @@ import { createChapterBanners } from '../../src/scenes/chapterBanners.js';
 import { bannerKeyOf, BANNER_REFRESH_MS } from '../../src/scenes/hallBanners.js';
 import { mountNoticeBoard } from '../../src/ui/noticeWindow.js';
 import { materialCountLabel } from '../../src/systems/professions/profItems.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const ANTICLERE = 21, FIGHTERS = 41, MAGES = 40, THIEVES = 42;
@@ -178,7 +179,7 @@ test('CHAP7b the board names each chapter\'s patron, and offers its own guild\'s
 // ── THE HOST ────────────────────────────────────────────────────────
 
 test('CHAP7b the wiring: the build keeps each town\'s halls by their guild; the banners on the halls\' pass; the hall priced with the reader\'s guild; the board\'s bid door (mutants: each seam)', () => {
-  const world = src('src/scenes/world.js');
+  const world = hostText('src/scenes/world.js');
   assert.match(world, /\.filter\(\(b\) => \(b\.buildingType === TALK_BUILDING_TYPES\.GuildHall \|\| b\.buildingType === TALK_BUILDING_TYPES\.Temple\) && b\.factionId > 0\)\n\s+\.map\(\(b\) => \[b\.buildingKey, b\.factionId\]\) : \[\]\);/);
   assert.match(world, /\n\s+chapterHalls: pixelChapterHalls,/);
   assert.match(world, /for \(const b of chapterBanners\?\.list\(\) \?\? \[\]\) all\.push\(b\);/);

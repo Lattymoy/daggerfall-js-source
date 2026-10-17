@@ -1066,3 +1066,25 @@ correctness, the online trust), every finding reproduced and fixed here:
 
 Deploy order: the account service (acct82, migration 0082) BEFORE the relay (world169), BEFORE the site. The record:
 `01-Overview/audits/Audit-Arena-Ladder.md`.
+
+## FIELD BUGS 2026-10-16b ARENA-WAIT - a reload offered the save's ladder to a Grand Champion
+
+A realm character who had fought all forty reloaded beside the gate, was offered Fight, fought, and found a 4-0 Pit
+Fighter in a season with no number. The online lane read "not yet welcomed" as offline: AUDIT PRE-MERGE 1003 O4 kept the
+last welcome's word across a reconnect, but the FIRST word after a load had none to keep, so until the relay's welcome
+every door ran ARENA3's law - the Herald's Fight off the save's ladder (the online climb never writes it), the bout and
+its purse this screen's, the window the save's "Season of 3E 406" header and seeded roster. Now on the online lane
+(`lane`, a realm character) before the relay has said (`OnlineSession.arenaHeard`) the arena WAITS
+(`scenes/arena/arenaOnline.js` waiting; `scenes/arena/arenaGate.js` takes its online arm): no Fight, the window the realm's season by
+the clock and its boards on their way, no wager settled by the house, the hour's bout the relay's. The account's climb
+was never touched. The record: `01-Overview/bugs/Field-Bugs-2026-10-16b.md`.
+
+AUDIT (2026-10-16) - ON THE ONLINE LANE THE OFFLINE ARENA NEVER RUNS (A4, the owner's decision), but for one word: a
+relay that said it opens no arena room (`arenaHeard` with `arenaOk` false - an older relay), the session neither
+superseded nor terminal. This departs from AUDIT PRE-MERGE 1003 O9, which read a seat given up as offline: that tab ran
+the save's ladder, paid its purses into the realm's save and settled an open online wager by the house's seeded record.
+A seat given up now shuts the doors and says, in ONE-SEAT's words (`net/oneSeat.js` SEAT_NOTICE), that the seat is
+elsewhere; a session no welcome can answer (terminal) shuts them with "The server cannot be reached" (A3), never "Still
+loading" for ever (`scenes/arena/arenaOnline.js` `shut`, `shutText`). And the window before the board shows nothing of the
+save's on its Ladder page or its ladder card either (A1): the ten tiers as the law has them, nobody's climb on them
+("Not loaded"), the card no bout and no purse.

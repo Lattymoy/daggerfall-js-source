@@ -571,8 +571,8 @@
   {
     "name": "SD11D-a-look-changed-mid-step",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "      if (phase === 'idle') takeLook(look, opts);\n",
-    "new": "      takeLook(look, opts);\n",
+    "old": "      if (phase === 'idle' || phase === 'opening') takeLook(look, opts);",
+    "new": "      takeLook(look, opts);",
     "tests": [
       "test/scenes/superDungeon/sd11d_words.test.js"
     ]

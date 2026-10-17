@@ -323,7 +323,7 @@ test('AUDIT VC6: the corpse\'s food rolls on the roll it is HANDED, and on the l
   // stays where its spawn loot's already is - but its luck is real.
   assert.match(src('src/scenes/cityGuards.js'), /raiseEnemyDeath\(g\.entity, \{ rolls: rand, luck: liveStat\(playerEntity, 'luck'\) \}\);/);
   assert.match(src('src/scenes/exteriorFoes.js'), /raiseEnemyDeath\(f\.entity, \{ rolls, luck: liveStat\(playerEntity, 'luck'\) \}\)/);
-  assert.match(src('src/scenes/dungeonContext.js'), /raiseEnemyDeath\(foe\.entity, \{ luck: liveStat\(playerEntity, 'luck'\) \}\)/);
+  assert.match(src('src/scenes/dungeonContext.js'), /raiseEnemyDeath\(foe\.entity, \{ luck: liveStat\(playerEntity, 'luck'\), by: foe\._killedBy \?\? null \}\)/);   // PIN MOVED (EG-E3): and the striker the foes stream names - a joiner's kill is the joiner's find
   for (const f of ['src/scenes/cityGuards.js', 'src/scenes/exteriorFoes.js', 'src/scenes/dungeonContext.js']) {
     assert.doesNotMatch(src(f), /raiseEnemyDeath\([a-zA-Z.]+\);/, `${f}: no raiser hands an entity alone any more`);
   }

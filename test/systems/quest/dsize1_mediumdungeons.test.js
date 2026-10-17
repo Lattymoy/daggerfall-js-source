@@ -313,9 +313,12 @@ test('DETECT-FINDS: a searched object\'s find is in the one loot walk, at its bo
   assert.equal(getNearbyObjects(scan, NEARBY.Treasure).length, 1);
   assert.match(src('src/scenes/dungeonContext.js'), /loot: \(\) => nearbyLootRecords\(\{ piles: \[\.\.\.lootPiles, \.\.\.droppedLoot\._piles\], foes, searched: searchables \}\),/);
   // AUDIT DELVE (the open item closed): the street's searched headstones need no walk of their own - a grave's find is
-  // minted as a dropped pile on the ground (world.js activateGrave), and the street's Detect walk carries every pile
+  // minted as a dropped pile on the ground (searchPartyHost.js activateGrave), and the street's Detect walk carries every pile
+  // PIN MOVED (FIELD BUGS 2026-10-16b GRAVE-PARTY): activateGrave left bootWorld for scenes/searchPartyHost.js
   const w = src('src/scenes/world.js');
-  const grave = w.slice(w.indexOf('function activateGrave(g, mode = \'grab\') {'), w.indexOf('const giveReward = (dfItem) => {'));
+  const sp = src('src/scenes/searchPartyHost.js');
+  const grave = sp.slice(sp.indexOf('function activateGrave(g, mode = \'grab\') {'), sp.indexOf('  return { activateGrave'));
+  assert.ok(grave.length > 0, 'the stone\'s search, in its module');
   assert.match(grave, /const pile = droppedLoot\.dropPile\(items, dropFeet\(\), /, 'the grave\'s find is a pile');
   assert.match(w, /loot: \(\) => nearbyLootRecords\(\{ piles: droppedLoot\._piles, foes: exteriorFoePool\(\) \}\),/, 'and the street walks the piles');
 });

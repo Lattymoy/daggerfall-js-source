@@ -27,9 +27,10 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { placeFoeFreely, PLACE_FOE_DEFAULTS } from '../../src/systems/quest/sceneMount.js';
 import { placeFoeEnv } from '../../src/scenes/quest/questFoeHost.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const HERE = dirname(dirname(fileURLToPath(import.meta.url)));
-const read = (rel) => readFileSync(join(HERE, '..', rel), 'utf8');
+const read = (rel) => hostText(rel);
 
 /** An open room: nothing to hit sideways, a floor 2 below, no capsules.
  *  `rolls` is a scripted sequence so each arm's draws are exact. */

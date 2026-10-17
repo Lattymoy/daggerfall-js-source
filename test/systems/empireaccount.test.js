@@ -17,6 +17,7 @@ import { deductGold, goldAmount } from '../../src/systems/court.js';
 import { letterOfCredit, LETTER_OF_CREDIT_TEMPLATE } from '../../src/systems/inventory.js';
 import { BankWindow } from '../../src/ui/bankWindow.js';
 import { empireJoin, runDayChange, DAY_ARMS } from '../../src/systems/worldTick.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const E = EMPIRE_ACCOUNT_REGION;
@@ -197,7 +198,7 @@ test('EMPIRE-ACCOUNT, the service: a realm record pays from the Empire\'s accoun
 });
 
 test('EMPIRE-ACCOUNT by source: the boot folds beside the amnesty, says so once the world stands, and every online wallet and the purchase window read the Empire\'s account', () => {
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   const fold = w.indexOf('const empireFolded = realmBoot ? foldEmpireAccounts(bootSnapRead) : null;');
   assert.ok(fold > 0);
   assert.ok(fold > w.indexOf('const loansForgiven = realmBoot ? forgiveLoans(bootSnapRead) : null;'), 'after the amnesty');

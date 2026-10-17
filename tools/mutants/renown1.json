@@ -255,9 +255,10 @@
   },
   {
     "name": "RENOWN1-layer-in-the-stored-health",
+    "note": "EG-ZR (PIN MOVED): re-aimed by content - the live maximum reads the Spire's Stoneskin beside Renown's (systems/renownLayer.js spireHpOf)",
     "file": "src/systems/chargen.js",
-    "old": "      return own + renownHpOf(this);",
-    "new": "      return own;",
+    "old": "      return own + renownHpOf(this) + spireHpOf(this);",
+    "new": "      return own + spireHpOf(this);",
     "tests": [
       "test/net/renown1.test.js"
     ]
@@ -274,11 +275,12 @@
   {
     "name": "RENOWN1-layered-health-saved",
     "file": "src/systems/save/save.js",
-    "old": "  if (renownHpOf(entity) || renownMpOf(entity)) Object.assign(snap, offlineVitals(entity));",
+    "old": "  if (renownHpOf(entity) || onlineMpOf(entity)) Object.assign(snap, offlineVitals(entity));",
     "new": "",
     "tests": [
       "test/net/renown1.test.js"
-    ]
+    ],
+    "note": "EG15 (PIN MOVED): the save asks for the folds' magicka too (onlineMpOf: Renown's and the Battlemage's Bearing) - re-aimed by content."
   },
   {
     "name": "RENOWN1-scale-kills",

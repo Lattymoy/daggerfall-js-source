@@ -16,6 +16,7 @@ import { gateTimes, isGateDay, GATE_COLLAPSE_MS, PIXEL_M } from '../../../src/ne
 import { GATE_TOWN_MAX_PX } from '../../../src/systems/gate/gateSite.js';
 import { dreadStrikes, createDreadStorm, DREAD_NEAR_M, DREAD_FAR_M, DREAD_BOLT_COLOR, DREAD_SLOT_MS } from '../../../src/world/dreadSky.js';
 import { thunderOf } from '../../../src/systems/distantStorms.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const read = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 let DAY = 1000;
@@ -121,7 +122,7 @@ test('WBX8 the gate\'s storm: the event\'s strikes\' law on a schedule of its ow
 });
 
 test('WBX8 the seams, by source: the host reads the omen\'s sky each exterior frame and takes the greater of it and the event\'s for the sky, the fog and the light; the gate\'s storm is its own, ticked every frame round the site, forgotten on a jump', () => {
-  const w = read('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /const gateStorm = createDreadStorm\(GATE_STORM_RING\);/);
   assert.match(w, /const gateSky = gateOmen\?\.sky\(tvStand, gateSkyTranslate\) \?\? null;/);
   assert.match(w, /const skyDreadW = Math\.max\(dreadW, gateSky\?\.weight \?\? 0\);/);

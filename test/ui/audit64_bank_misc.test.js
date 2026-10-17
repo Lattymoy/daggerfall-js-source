@@ -26,6 +26,7 @@ import { runDayChange, LOAN_REMINDER_HUD_DELAY } from '../../src/systems/worldTi
 import { CharSheet, CHARSHEET_RECTS } from '../../src/ui/charsheet.js';
 import { ActionTextBox } from '../../src/ui/actionText.js';
 import { layoutMessageBox, drawMessageBox, _setMessageBoxArtForTests } from '../../src/ui/messageBox.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const FONT = { fnt: { fixedWidth: 6, fixedHeight: 6, glyphWidth: () => 5 } };
 /** DaggerfallUI.cs:65 `DaggerfallUnityStatDrainedTextColor =
@@ -33,7 +34,7 @@ const FONT = { fnt: { fixedWidth: 6, fixedHeight: 6, glyphWidth: () => 5 } };
  *  pin stands even if the port's constant is renamed or moved. */
 const DRAINED = [190 / 255, 85 / 255, 24 / 255, 1];
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const src = (p) => readFileSync(join(ROOT, p), 'utf8');
+const src = (p) => hostText(p);
 
 // ── F55 ──────────────────────────────────────────────────────────────
 

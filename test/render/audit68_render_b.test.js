@@ -272,6 +272,8 @@ test('AUDIT 68 S17-gl-program-dup: one compile and link - the order every pass w
     'createShader:VERTEX_SHADER', 'shaderSource:vs-src', 'compileShader', 'attachShader',
     'createShader:FRAGMENT_SHADER', 'shaderSource:fs-src', 'compileShader', 'attachShader',
     'linkProgram', 'getProgramParameter',
+    // PIN MOVED (AUDIT EG V, e: lane 6's shader objects - both stages deleted once the link is read; they go with the program)
+    'deleteShader', 'deleteShader',
   ], 'PERF-COMPILE1: one sync point - the link status, asked once both stages and the link are in');
   ok = { COMPILE_STATUS: false, LINK_STATUS: false };   // PERF-COMPILE1: a stage that fails fails the link, and its log is the one thrown
   assert.throws(() => buildProgram(gl, 'v', 'f'), { message: 'ERROR: 0:1: boom' }, 'the driver\'s log, as every pass threw it');

@@ -16,6 +16,7 @@ import { nearestLights } from '../../src/world/city/cityLights.js';
 import { Renderer } from '../../src/render/renderer.js';
 import { BODY } from '../../src/world/windmillMesh.js';   // the frozen bake the field crash drew
 import { StreamingWorldState } from '../../src/world/streamingWorld.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 test('EV2: multiply - same product, provided out returned, aliasing safe, no allocation in the body', () => {
   const a = trs(1, 2, 3, 30, 60, 90);
@@ -163,7 +164,7 @@ test('EV2 HOTFIX: a FROZEN model draws and caches - createMesh copies the sub-me
 test('EV2: the shared up axis is one array, and the draw loops use it', () => {
   assert.deepEqual([...UP_Y], [0, 1, 0]);
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/worldModes.js', 'src/scenes/dungeon.js']) {
-    const src = readFileSync(f, 'utf8');
+    const src = hostText(f);
     assert.ok(!src.includes('new Float32Array([0, 1, 0])'), `${f} still allocates the up axis`);
     assert.ok(/\bUP_Y\b/.test(src), `${f} rides the shared axis`);
   }

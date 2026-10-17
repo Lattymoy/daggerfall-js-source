@@ -14,6 +14,7 @@ import {
 import { Collider } from '../../src/player/collider.js';
 import { canSeeTarget, EnemyAI } from '../../src/characters/enemy/enemyMotor.js';
 import { ArrowFlight } from '../../src/combat/arrowFlight.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const rd = (p) => readFileSync(new URL('../../' + p, import.meta.url), 'utf8');
 const TREE = { w: 3, h: 5 };
@@ -179,8 +180,8 @@ test('TACT1: an arrow meets the tree and is lost; the switch off, it flies throu
 test('TACT1: every host stands its cover on its collider, under the switch; every missile and the witnesses read it', () => {
   const sw = /collider\.cover = createCoverIndex\(\);/;   // the default: the switch, read in ai/cover.js alone
   for (const f of ['src/scenes/world.js', 'src/scenes/dungeonContext.js', 'src/scenes/interiorContext.js', 'src/scenes/exterior.js']) assert.match(rd(f), sw, f);
-  const w = rd('src/scenes/world.js');
-  assert.match(w, /collider\.cover\.remove\(key\);\n\s*if \(coverItems\.length\) collider\.cover\.add\(key, coverItems, \(\(o\) => \(\) => state\.pixelTranslation\(px, py, o\)\)\(\[0, 0, 0\]\)\);/, 'the pixel\'s, in its frame, under its bucket key');
+  const w = hostText('src/scenes/world.js');
+  assert.match(w, /collider\.cover\.remove\(key\);\n\s*if \(coverItems\.length\) collider\.cover\.add\(key, coverItems, \(\(o\) => \(\) => host\.state\.pixelTranslation\(px, py, o\)\)\(\[0, 0, 0\]\)\);/, 'the pixel\'s, in its frame, under its bucket key');
   assert.equal((w.match(/if \(isCoverFlat\(archive, record, (?:sib\.size|size|plain)\)\) for \(const c of centers\) coverItems\.push\((?:\.\.\.coverProxies|coverProxy)\(c, (?:sib\.size|size|plain)/g) ?? []).length, 4, 'the seasonal, the classic and the scaled groups, and (LPT1) a low-poly tree\'s far pictures - at the flat\'s own size, `plain` (AUDIT LPT D3)');
   assert.match(rd('src/scenes/dungeonContext.js'), /if \(isCoverFlat\(archive, record, size\)\) for \(const c of based\) coverItems\.push\(coverProxy\(c, size\)\);\n\s*\}\n\s*collider\.cover\.add\('tact1:flats', coverItems\);/, 'the dungeon\'s, at the BASE (an RDB flat\'s y is its centre)');
   assert.match(rd('src/scenes/interiorContext.js'), /if \(isCoverFlat\(archive, record, size\)\) collider\.cover\.add\('tact1:flats', centers\.map\(\(c\) => coverProxy\(c, size\)\)\);/);

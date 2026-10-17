@@ -12,8 +12,9 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { adoptsOrphanQuestFoe, questBehaviourFor, QUEST_SHARE_RADIUS } from '../../src/scenes/quest/questFoeHost.js';
 import { createExteriorFoes, validQuestTags } from '../../src/scenes/exteriorFoes.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
-const rd = (p) => readFileSync(new URL('../../' + p, import.meta.url), 'utf8');
+const rd = (p) => hostText(p);
 
 test('QUEST-PARTY 2: an orphan goes to the lowest id near it - me only if I stand near it and no nearer party member ranks below me', () => {
   const foe = [0, 0, 0];

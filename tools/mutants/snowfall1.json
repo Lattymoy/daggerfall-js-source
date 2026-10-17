@@ -328,7 +328,7 @@
   },
   {
     "name": "SNOWFALL1-world-promote-dropped",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "    snowfall.promoted(built.get(key));   // SNOWFALL1:",
     "new": "    // snowfall.promoted(built.get(key));   // SNOWFALL1:",
     "tests": [

@@ -2,8 +2,9 @@
   {
     "name": "AUDITLWII2-S1-takes-mark",
     "file": "src/net/patronLaw.js",
-    "old": "\n  && item[PATRON_COUNTER_MARK] !== true;",
-    "new": ";",
+    "old": "\n  && item[PATRON_COUNTER_MARK] !== true && item.stolen !== true;",
+    "new": "\n  && item.stolen !== true;",
+    "note": "STOLEN-GOODS AUDIT S6 (re-aimed by content): the stolen mark joined the counter's on the line - the mutant drops the counter's alone",
     "tests": [
       "test/systems/auditlwii2_service.test.js"
     ]

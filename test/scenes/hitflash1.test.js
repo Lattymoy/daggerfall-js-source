@@ -3,12 +3,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 import {
   HIT_FLASH_S, HIT_FLASH_HOLD_S, HIT_FLASH_PEAK, PUPPET_HURT_HOLD_S,
   hitFlashStrength, foeHitFlash, setBatchHitFlash, puppetHurtStep,
 } from '../../src/systems/hitFlash.js';
 
-const read = (p) => fs.readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
+const read = (p) => hostText(p);
 
 test('HITFLASH1 curve: held at the peak, then fades to nothing - and long enough to see (the old one was 0.12 s)', () => {
   assert.ok(HIT_FLASH_S >= 0.25, 'about a quarter second or more');

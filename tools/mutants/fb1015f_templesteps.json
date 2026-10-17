@@ -85,13 +85,13 @@
   {
     "name": "TEMPLESTEPS-9-stall-off-origin",
     "file": "src/world/townStandIns.js",
-    "old": "x0 = -2.75, x1 = 0.4, z0 = -2.48, z1 = 2.4;",
-    "new": "x0 = -0.4, x1 = 2.75, z0 = -2.48, z1 = 2.4;",
+    "old": "const X = (v) => v + dx, Y = (v) => v + dy, Z = (v) => v + dz;",
+    "new": "const X = (v) => v + dx + 2.35, Y = (v) => v + dy, Z = (v) => v + dz;",
     "tests": [
       "test/world/fb1015f_templesteps.test.js",
       "test/world/wd3_standins.test.js"
     ],
-    "note": "the stall built off its origin again, the mesh's width east of where Unity stands it"
+    "note": "the stall built off its origin again, the mesh's width east of where Unity stands it (re-aimed by content, FIELD BUGS 2026-10-16b STALL-SHAPE: the stall is built over RMBRP_STALL_FRAME, every x through X)"
   },
   {
     "name": "TEMPLESTEPS-10-top-covers",

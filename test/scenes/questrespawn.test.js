@@ -12,12 +12,13 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const read = (p) => readFileSync(join(ROOT, p), 'utf8');
 
 test('B3 seam gate: the respawn trio is mounted and composed from the existing halves', () => {
-  const world = read('src/scenes/world.js');
+  const world = hostText('src/scenes/world.js');
   const modes = read('src/scenes/worldModes.js');
   for (const seam of ['respawnPlayerAtSite:', 'isRespawning:', 'setPlayerScenePosition:']) {
     assert.ok(world.includes(seam), `questWorld mounts ${seam}`);

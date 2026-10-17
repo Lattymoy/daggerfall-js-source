@@ -10,6 +10,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { routeKey, typedChar } from '../../src/ui/input.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const ICONS = { getTexture: async () => ({ recordCount: 0 }), uploadRecord: () => {}, textures: new Map() };
 
@@ -185,7 +186,7 @@ test('U25 / THE ONE CONSTRUCTION SEAM: ONE inventory builder per host', () => {
   const REQUIRED = ['items:', 'entity:', 'icons:', 'rows:', 'nowMinute:', 'openSpellbook:',
     'revealMap:', 'drinkPotion:'];
   for (const f of ['src/scenes/exterior.js', 'src/scenes/world.js']) {
-    const src = readFileSync(join(root, f), 'utf8');
+    const src = hostText(f);
     const builders = (src.match(/createInventoryWindow\(\{/g) ?? []).length;
     assert.equal(builders, 1, `${f}: ONE builder, not ${builders}`);
     assert.doesNotMatch(src, /new NativeInventoryWindow\(/,
@@ -479,7 +480,7 @@ test('U47: the GOLD button fills the panel with its own two generated lines', ()
 });
 
 test('U47: the window is the guard, not its click method - and F11 no longer goes fullscreen', () => {
-  const code = (rel) => readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'src', rel), 'utf8');
+  const code = (rel) => hostText(`src/${rel}`);
   // AUDIT 18 routed 62: townTalk tested `overlay?.click`, so a click
   // on a window with no click handler fell through to requestLook and
   // grabbed pointer lock from under the menu.

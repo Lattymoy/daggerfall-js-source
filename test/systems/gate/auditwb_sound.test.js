@@ -15,6 +15,7 @@ import { GATE_STATE_EMPTY } from '../../../src/net/gate/gateLink.js';
 import { courtToDungeon, courtLights } from '../../../src/world/gate/gateArena.js';
 import { BOSS_CUES, HURT_SHARE, HURT_GAP_MS } from '../../../src/world/gate/gateBoss.js';
 import { createGateVeil, VEIL_OPEN_WAIT_TICKS } from '../../../src/ui/gate/gateVeil.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 import {
   anchoredClock, DEAD_SKY_FS, FALL_TURNS, FALL_SLIDE, DEAD_CLOCK_PERIOD, RIDGES_TOP, RIDGES, SIGIL_TOWER, LESSER_TOWERS,
 } from '../../../src/render/deadlands.js';
@@ -89,7 +90,7 @@ test('AUDIT WB D2 fadeOut is an ending, not a cut: the song fades over MUSIC_FAD
   // a fade asked during a switch: nothing starts after it
   svc.playSong('DAY'); svc.fadeOut(); flush();
   assert.equal(svc.current, null); assert.equal(svc.playing, false);
-  const w = read('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /const _courtScore = createCourtScore\(\);/);
 });
 
@@ -179,7 +180,7 @@ test('AUDIT WB D5 the veil holds shut on the frames the host has DRAWN since the
   assert.equal(veil.phase, 'opening', 'opened on the new place\'s frames');
   assert.equal(veil.warm(), true, 'built ahead: the same veil');
   assert.equal(p.canvases.length, 1);
-  const w = read('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.equal((w.match(/gateVeil\?\.frameDrawn\(\);   \/\/ AUDIT WB D5/g) ?? []).length, 2, 'the exterior\'s frame and the modal one both say it');
   assert.match(w, /try \{ if \(gatePool\?\.frame\(dt\)\) warmGateVeil\(\); \}/);
   assert.match(w, /idle\(\(\) => \{ try \{ gateVeil\.warm\(\); \} catch \{/);
@@ -246,7 +247,7 @@ test('AUDIT WB D10 what the court asks for every frame is made once: its lists r
   const m = read('src/scenes/worldModes.js');
   assert.match(m, /renderer\.setLighting\(courtEquatorOf\(_ct\), 0, undefined, _ct\);/);
   assert.doesNotMatch(m, /new Float32Array\(_ct\.equator\)/);
-  const w = read('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /const _courtBeds = courtBraziers\(\)\.map\(\(\[, p\]\) => p\);/);
   assert.doesNotMatch(w, /drawLife\(proj, view, courtToDungeon\(/);
 });

@@ -31,9 +31,10 @@ import { trs } from '../../src/world/mat4.js';
 import { CAPSULE_HEIGHT } from '../../src/player/motor.js';
 import { STATIC_NPC_ACTIVATION_DISTANCE, RAY_DISTANCE } from '../../src/player/activate.js';
 import { PERSON_TEXTURES, walkerRace } from '../../src/characters/mobile/mobilePerson.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const read = (f) => readFileSync(join(root, f), 'utf8');
+const read = (f) => hostText(f);
 
 /** A navgrid of `w` x `h` cells, every cell `weight` (CityNavigation's shape: weightAt). */
 function grid(w, h, weightAt = () => 1) {
@@ -127,7 +128,7 @@ test('MERCHANT-YARDS THE KEEPER: named on the region\'s bank on the town and the
   for (let m = 0; m < 200; m++) { const k = yardKeeper(m, 'transport', 17); seen.add(k.variant); sexes.add(k.sex); }
   assert.deepEqual([...seen].sort(), [0, 1, 2, 3], 'every outfit worn somewhere');
   assert.deepEqual([...sexes].sort(), ['female', 'male']);
-  assert.match(read('src/scenes/world.js'), /const mapId = \(dfLocation\.mapTableData\?\.mapId \?\? 0\) >>> 0, regionIndex = dfLocation\.regionIndex \?\? 0, race = walkerRace\(people, dfLocation\.regionIndex\);/, 'the town\'s own region - its keepers\' bank and its counter\'s');
+  assert.match(hostText('src/scenes/world.js'), /const mapId = \(dfLocation\.mapTableData\?\.mapId \?\? 0\) >>> 0, regionIndex = dfLocation\.regionIndex \?\? 0, race = walkerRace\(people, dfLocation\.regionIndex\);/, 'the town\'s own region - its keepers\' bank and its counter\'s');
 });
 
 test('MERCHANT-YARDS THE PLACE: its own ground open and off every road, a ring round it open (a road allowed there), its front onto a road, nearest the middle (mutants: a road under it; the ring unread; the front unread)', () => {
@@ -413,7 +414,7 @@ test('MERCHANT-YARDS THE YARD\'S FRAME IN THE SCENE: a point and a box turned wi
 });
 
 test('MERCHANT-YARDS THE FOUR HOSTS - world.js places, stands, draws and names them and hands the press; worldModes\' street ray reaches them and opens their counter; exterior.js flagged; the dungeon none', () => {
-  const world = read('src/scenes/world.js'), modes = read('src/scenes/worldModes.js'), host = read('src/scenes/merchantYardsHost.js');
+  const world = hostText('src/scenes/world.js'), modes = read('src/scenes/worldModes.js'), host = read('src/scenes/merchantYardsHost.js');
   const ext = read('src/scenes/exterior.js'), dungeon = read('src/scenes/dungeonContext.js');
   // PIN MOVED (AUDIT SHIPYARDS L3-3): a town's yards and its port's places in one pass - townPlacesFor asked once a build
   assert.match(world, /const places = yardTown \|\| portTown \? townPlacesFor\(dfLocation, lefaySpot, climate\?\.people, loc\) : null;\n\s*if \(yardTown\) yardSites = places\.yards;/);

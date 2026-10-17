@@ -36,8 +36,9 @@ import {
   OVER_ENCUMBERED_LIMIT, JUMP_SPEED, GRAVITY, DIAGONAL_FACTOR,
 } from '../../src/player/motor.js';
 import { Collider } from '../../src/player/collider.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
-const src = (p) => readFileSync(new URL(`../../src/${p}`, import.meta.url), 'utf8');
+const src = (p) => hostText(`src/${p}`);
 const I = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
 const DT = 1 / 60;
 const still = (over = {}) => ({ forward: 0, strafe: 0, run: false, jump: false, up: false, down: false, ...over });

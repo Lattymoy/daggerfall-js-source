@@ -105,6 +105,7 @@ import { intoDeck, outOfDeck, mainLevel, DECK_STEP } from '../../systems/naval/n
 import { CAPSULE_RADIUS } from '../../player/motor.js';   // AUDIT GN-D3: aboard under her main deck, a body's own reach (standsOn)
 import { createGalleonGunDeck } from '../../systems/naval/galleonGunDeck.js';   // GALLEON: her shutters and guns at work
 import { timeScale } from '../../systems/timeScale.js';   // AUDIT GN2-GN3: the real clock another player's word comes on
+import { markStolen } from '../../systems/stolenGoods.js';   // STOLEN-GOODS AUDIT S4: a lawful ship's hold, taken by Piracy, is stolen goods
 import { dockFor, madeFast, warpStep, quaySide, landwardOf, quayFrame, quayToScene, sceneToQuay, gangwayFoot, DOCK_WAY, DOCK_REACH_M, DOCK_REFUSED, GANGWAY_REACH, GANGWAY_ASHORE, GANGWAY_FACING, gangwaySide, QUAY_GAP, QUAY_WIDTH, QUAY_DECK_UP } from '../../systems/naval/quays.js';   // QUAYS: docking at a harbour's quays
 
 /** The record's name in the save's per-mod slot (systems/modSaveData.js) - the port's own, as the Sigil Broker's is. */
@@ -873,6 +874,9 @@ export function createNavalHost(deps) {
   const granted = new Map();
   /** KEEP-PLUNDER: the casks of the ships I sank, by floater id - the ones stowPlunder hauls in before the sea goes. */
   const myCasks = new Set();
+  /** STOLEN-GOODS AUDIT (S4's flotsam): of myCasks, those of a lawful ship's hold (lawfulGoods) - her owner's goods, stolen
+   *  however they come aboard (hauled, broken open swimming, the crew's stow). */
+  const stolenCasks = new Set();
   /** AUDIT NAV1 (online): each peer's own word of themselves - owner -> { law: { crown: notoriety }, me: their boat's
    *  { hull, crippled, boarders } | null } - the captains I stand judge each player by their own. */
   const peerSelf = new Map();
@@ -1597,6 +1601,13 @@ export function createNavalHost(deps) {
     return best;
   }
 
+  /** STOLEN-GOODS AUDIT (S4): whether a ship's goods are someone's keeping - a lawful ship's this side of the Veil, whose
+   *  boarding is Piracy and whose sinking follows a Piracy struck (navalLaw.js lawOf); a pirate's are a lawful prize, and
+   *  past the Veil no crown's writ runs. Her hold boarded and her casks I sank her for are marked alike: the cargo of a
+   *  ship sunk by another, or of one whose owner gave me the cask (AUDIT NAV1's claim), is salvage, and her wreckage's
+   *  stores (SALVAGE) are her fittings, no one's goods. */
+  const lawfulGoods = (entry) => !entry.ether && !!NAVAL_FACTIONS[entry.ship.cls.faction]?.lawful;
+
   function onSinking(entry, by) {
     const s = entry.ship;
     const drop = (lot, near, far) => {
@@ -1604,6 +1615,7 @@ export function createNavalHost(deps) {
       const id = String(u32());
       shots.dropFlotsam({ id, pos: [s.pos[0] + Math.sin(a) * r, deps.seaY(), s.pos[2] + Math.cos(a) * r], lot, from: s.cls.id, deep: !!entry.deep || !!entry.ether });   // CAPT-WATERS: her casks the deep's (ETHER-SEA: the Eltheric Ocean's as rich)
       if (by === myId()) myCasks.add(id);   // KEEP-PLUNDER: a ship I sank - her casks are mine to stow if the sea goes first
+      if (by === myId() && lawfulGoods(entry)) stolenCasks.add(id);   // STOLEN-GOODS AUDIT: her lots her owner's, as boarded
     };
     // her lots that float free
     for (const key of flotsamKeys(s.cls, s.seed)) drop(key, 6, 16);
@@ -1700,6 +1712,7 @@ export function createNavalHost(deps) {
       return;
     }
     const items = deps.hold?.(e.lot, holdTier(classById(e.from)) + (e.deep ? DEEP_TIER : 0)) ?? [];   // CAPT-WATERS: a deep ship's cask the richer
+    if (e.id != null && stolenCasks.delete(e.id)) markStolen(items);   // STOLEN-GOODS AUDIT: a lawful ship's lot I sank her for
     if (items.length) { deps.board?.giveItems?.(items, boat ?? null); crewEvent(boat, 'plunder'); notePlunder(items); }   // SHIP-CREW: a hold filled; CAPT-LOG: the plunder hauled
     const things = `${items.length} ${items.length === 1 ? 'thing' : 'things'}`;
     deps.say?.(swim ? (items.length ? `You break open a floating cask (${things} in it).` : 'You break open a floating cask. It is empty.')
@@ -3607,6 +3620,12 @@ export function createNavalHost(deps) {
     // the prize: her hold drawn once (whoever opens it again finds what is left), the boat that took her
     entry.prize = { hold: drawHold(entry.ship.cls, entry.ship.seed, (key, tier) => deps.hold?.(key, tier + (entry.deep ? DEEP_TIER : 0) + etherTier(entry)) ?? []), boat: b.boat ?? nearestBoat(entry.ship.pos), peerOrigin: b.peerOrigin ?? null, chosen: null, fate: null };   // CAPT-WATERS: a deep ship's hold the richer
     entry.prize.drawn = drawnPlunder(entry.prize.hold);   // AUDIT CAPTAIN'S SEA L12: her own, counted once each as they leave her
+    // STOLEN-GOODS AUDIT (2026-10-16, S4): A LAWFUL SHIP'S HOLD IS HER OWNER'S GOODS. Her boarding is Piracy (chargePlayer
+    // above: navalLaw.js lawOf's 'board'), so what she carried is taken from someone else's keeping - marked as her hold
+    // is drawn, so every way out of it carries the mark (Take all into the captor's hold or the pack, Open her hold, the
+    // crew's stow when the sea goes). A pirate's hold is a lawful prize (her end is rewarded), and past the Veil no crown's
+    // writ runs (chargeEther charges nothing) - neither is marked: the mark and the charge agree.
+    if (lawfulGoods(entry)) markStolen(entry.prize.hold);
     deps.captain?.prize?.(entry.ship.names?.name ?? classLine(entry.ship.cls, entry.ship.names?.crown), deps.worth?.(entry.prize.hold) ?? 0);   // CAPT-LOG: the richest prize
     endBoarding();   // the hands go home over the rail; her dead lie on her deck (entry.deck)
     openPrize(entry);
@@ -3662,6 +3681,7 @@ export function createNavalHost(deps) {
         continue;
       }
       const got = deps.hold?.(f.lot, holdTier(classById(f.from)) + (f.deep ? DEEP_TIER : 0)) ?? [];
+      if (stolenCasks.delete(f.id)) markStolen(got);   // STOLEN-GOODS AUDIT: stowed, still her owner's
       const r = got.length ? deps.board?.giveItems?.(got, into) ?? { left: got } : { left: [] };
       shots.removeFloater(f.id);
       casks++;
@@ -5229,6 +5249,7 @@ export function createNavalHost(deps) {
     warping = null; gangwaySaid = null;   // AUDIT HOLDINGS Q9: no warp nor gangway word carried across
     claims.clear(); granted.clear();
     myCasks.clear();   // KEEP-PLUNDER
+    stolenCasks.clear();
     seenVolleys.clear();
     hailCalls.clear();   // SHIP-WATCH
     flashes.length = 0;

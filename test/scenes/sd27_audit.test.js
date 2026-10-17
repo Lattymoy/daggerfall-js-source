@@ -9,6 +9,7 @@ import '../modsOff.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { madeLevelRule } from '../../src/systems/madeLevel.js';   // EG-H2: the made level's law
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { ALLOC_CHILD_ARGS } from '../allocChild.mjs';
@@ -40,7 +41,8 @@ test('AUDIT SD V (L1, Mac: "disable levitation inside the rift"): NO LEVITATE IN
   const D = read('src/scenes/dungeonContext.js'), W = read('src/scenes/world.js'), M = read('src/scenes/worldModes.js');
   assert.match(D, /playerLevitating: \(\) => hasActiveEffect\(playerEntity, 'levitate'\) && !levitateWarded\(\) \|\| staffFly\(\),/);
   assert.match(D, /import \{[^}]*\blevitateWarded\b[^}]*\} from '\.\.\/characters\/playerEntity\.js';/);
-  assert.match(W, /registerLevitateWard\(\(\) => inSiegeRoom\(\) \|\| modes\?\.sdRealmSlot\?\.\(\) != null\);/, 'the Hour is warded');
+  assert.match(W, /registerLevitateWard\(\(\) => inSiegeRoom\(\) \|\| madeRuleHere\('levitate'\) === 'banned'\);/, 'the Hour is warded');   // PIN MOVED (EG-H2, Elite-Gates.md section 24): the made level's law (systems/madeLevel.js): the Hour's and the Spire's rows ban it
+  assert.equal(madeLevelRule('hour', 'levitate'), 'banned');
   assert.match(M, /player\.levitating = dungeonCtx\.playerLevitating\(\);/, 'the dungeon arm reads it');
 });
 

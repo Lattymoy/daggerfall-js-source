@@ -32,6 +32,7 @@ import {
 } from '../../src/player/activate.js';
 import { corpseLootTargets } from '../../src/scenes/corpseMarker.js';   // AUDIT 65 MC-2: the body's own producer
 import { pickpocket } from '../../src/systems/talk/talk.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const seq = (...v) => { let i = 0; return () => v[Math.min(i++, v.length - 1)]; };
 const read = (p) => readFileSync(new URL(p, import.meta.url), 'utf8');
@@ -351,7 +352,7 @@ test('AUDIT 63 F33: all five activation ladders carry the arm - the four hosts a
   // refusal (:832-836) with it, since both run out to RayDistance.
   for (const [file, n] of [['../../src/scenes/world.js', 1], ['../../src/scenes/exterior.js', 1],
     ['../../src/scenes/worldModes.js', 2], ['../../src/scenes/dungeon.js', 1]]) {
-    const src = read(file);
+    const src = hostText(file.replace(/^(\.\.\/)+/, ''));   // AUDIT HOST-SPLIT 2, the second read: the host whole
     assert.ok(/tryMobileEnemyActivate/.test(src), `${file} has no ActivateMobileEnemy arm`);
     assert.equal((src.match(/_enemyArm\(/g) ?? []).length, n,
       `${file}: ONE call per ladder, decided against the ladder's own winner`);

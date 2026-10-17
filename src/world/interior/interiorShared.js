@@ -41,6 +41,7 @@
 import { sharedRecord, validActionRecord } from '../actionSystem.js';
 import { validLootList, LOOT_LIST_MAX } from '../../systems/loot/loot.js';
 import { peerHanded } from '../../systems/peerWord.js';   // SS3: a bound piece in a room's container never lands; HACKED-GOLD: nor a letter of credit (systems/peerWord.js)
+import { clearStolen } from '../../systems/stolenGoods.js';   // STOLEN-GOODS AUDIT S3: a shelf's or a cupboard's piece is its owner's, never stolen
 import { mintSharedStamp } from '../../net/wire.js';   // AUDIT WORLD6a B7: one stamp mint at the wire, twelve digits always
 
 /** The room's own key for a building - the SAME spelling roomKeyFor mints for the relay room (the map id unsigned,
@@ -111,7 +112,7 @@ export function interiorLootRecords(ctx, keys, tooBig = new Set()) {
       continue;
     }
     tooBig.delete(canon);
-    out.push({ k: canon, r: peerHanded(t.items).map((it) => ({ ...it })), d: Number.isFinite(t.stockedDate) ? t.stockedDate : 0 });   // AUDIT SS: never a bound piece on the wire - a stone left in one before SS3 stays off the room (an older build connected beside this one would land it); HACKED-GOLD: nor a letter of credit
+    out.push({ k: canon, r: peerHanded(t.items).map((it) => clearStolen({ ...it })), d: Number.isFinite(t.stockedDate) ? t.stockedDate : 0 });   // AUDIT SS: never a bound piece on the wire - a stone left in one before SS3 stays off the room (an older build connected beside this one would land it); HACKED-GOLD: nor a letter of credit; STOLEN-GOODS AUDIT S3: nor a theft's mark (a stash left on a shut shelf is no peer's theft, and an older build would land it)
   }
   return out;
 }
@@ -164,6 +165,12 @@ export function applyInteriorLoot(ctx, list, { seen = new Set(), openKey = null,
     if (!items) { if (unreadable && interiorLootTarget(ctx, canon)) { seen.add(canon); unreadable.add(canon); } continue; }
     const t = interiorLootTarget(ctx, canon);
     if (!t) continue;
+    // STOLEN-GOODS AUDIT (2026-10-16, S3): A SHELF'S OR A CUPBOARD'S PIECE IS ITS OWNER'S. No client of this build puts a
+    // marked piece in the room's word for a shelf (a stolen piece sold never reaches one - stolenGoods.js landSold), but an
+    // older build's sale, a stash left on a shut shelf or a hostile client's word could carry `stolen` - and an honest Buy
+    // off that shelf kept it, a stranger's purchase destroyed at its sale and taken at a verdict. Stripped as it lands; a
+    // take of it off the stranger's cupboard is marked by the taker's own keeping (itemTransfer.js applyTransfer).
+    for (const it of items) clearStolen(it);
     seen.add(canon);
     unreadable?.delete(canon);
     if (canon === openKey) { n++; continue; }

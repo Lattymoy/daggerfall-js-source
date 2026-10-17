@@ -27,6 +27,7 @@ import { doorCornersOf, hallBannerAnchors, createHallBanners, BANNER_TOP_M, BANN
 import {
   BannerRenderer, clothVertices, bannerClock, BANNER_ROWS, BANNER_CLOCK_PERIOD, BANNER_SWING_HZ, BANNER_RIPPLE_HZ, BANNER_W_M, BANNERS_MAX, BANNER_FS, BANNER_VS,
 } from '../../src/render/bannerPass.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const WOLF = { field: 'azure', border: 'gold', device: 'wolf' };
@@ -378,7 +379,7 @@ test('GUILD1d wired: the building host - the hall\'s rows and its buy, the chest
   assert.match(wm, /if \(interiorHome\?\.hall\) return \{ kind: 'home', hall: true, where: "Your guild's hall"/);
   assert.match(src('src/systems/homeRent.js'), /home\.own === true \|\| !!\(home\.hall && home\.member\) \|\| rentDaysLeft/);   // PIN MOVED (the merge of main's RENT-REST): a member's bed is the home's bed rule's, homeBedIsMine
   assert.match(wm, /if \(mode !== 'interior' \|\| !b \|\| !\(decorOwnerHere\(\) \|\| decorKeeperHere\(\)\)\) return null;/);
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /if \(hf && !hf\.door\) hf\.door = doorCornersOf\(cpu\.doors\[0\], local\);/);
   assert.match(w, /const hallBanners = onlineHomes && bannerPass \? createHallBanners\(\{/);
   assert.ok(w.indexOf('const hung = bannersHung();') < w.indexOf('    drawVeiledPeerBodies();   // INVIS-LOOK'), 'before every glow (AUDIT GUILD1d R3; SEAT1a: the seats\' banners with the halls\')');

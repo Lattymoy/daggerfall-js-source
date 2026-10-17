@@ -62,22 +62,22 @@
   {
     "name": "HERALD-the-glyph-without-the-title",
     "file": "server-account/src/titles.js",
-    "old": "herald: 'herald', aegis: 'aegis', primarch: 'primarch', crystalfist: 'crystalfist' });",
-    "new": "herald: 'penitent', aegis: 'aegis', primarch: 'primarch', crystalfist: 'crystalfist' });",
+    "old": "herald: 'herald', aegis: 'aegis', primarch: 'primarch', crystalfist: 'crystalfist', wikimaid: 'wikimaid' });",
+    "new": "herald: 'penitent', aegis: 'aegis', primarch: 'primarch', crystalfist: 'crystalfist', wikimaid: 'wikimaid' });",
     "tests": [
       "test/net/herald.test.js"
     ],
-    "note": "A Herald drawn with Penitent's sword. AEGIS (re-aimed by content): the line gained Sureme's aegis. PRIMARCH (re-aimed by content): the line gained GA00250's primarch. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist."
+    "note": "A Herald drawn with Penitent's sword. AEGIS (re-aimed by content): the line gained Sureme's aegis. PRIMARCH (re-aimed by content): the line gained GA00250's primarch. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist. WIKIMAID (re-aimed by content)."
   },
   {
     "name": "HERALD-the-tier-unmapped",
     "file": "server-account/wrangler.toml",
-    "old": "PATREON_TIERS = \"29666211:disciple,29666234:herald\"\n",
-    "new": "PATREON_TIERS = \"29666211:disciple\"\n",
+    "old": "PATREON_TIERS = \"29666211:disciple,29666234:herald,29666221:hierophant\"\n",
+    "new": "PATREON_TIERS = \"29666211:disciple,29666221:hierophant\"\n",
     "tests": [
       "test/net/herald.test.js"
     ],
-    "note": "Mac's Herald patrons hold nothing by their pledge."
+    "note": "Mac's Herald patrons hold nothing by their pledge. HIEROPHANT-TIER (re-aimed by content): the line gained the Hierophant tier."
   },
   {
     "name": "HERALD-the-list-crossed-with-penitents",

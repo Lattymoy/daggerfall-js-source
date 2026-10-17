@@ -34,8 +34,9 @@ import { STATE_INDEX } from '../../src/combat/fpsWeapon.js';
 import { TARGET_TYPES } from '../../src/systems/spellcast.js';
 import { PeerBodies } from '../../src/net/peer/peerBodies.js';
 import { EQUIP_SLOTS } from '../../src/systems/equip.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
-const rd = (p) => readFileSync(new URL('../../' + p, import.meta.url), 'utf8');
+const rd = (p) => hostText(p);
 const ARM0 = { wd: 0, an: 0, as: 0, am: 0, sr: 0, cn: 0, cr: 0, ce: 4, ar: 0, fk: 0 };   // SPELLFX1: an unsaid element reads Magic   // PEER-FS1: and the footstep kind, 0 (outside) when unsaid
 
 test('MAC7: the wire - POSE_STRIKES is DFU\'s WeaponStates order (fpsWeapon\'s own index) and POSE_CAST_RANGES the TargetTypes\' count, one home at both ends; the pose carries the arm\'s seven clamped, a pose from before them reads sheathed, unswung, unarrowed and uncast; a draw, a swing, an arrow, a stance or a cast is a change; the eased pose carries them whole', () => {

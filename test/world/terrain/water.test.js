@@ -19,9 +19,10 @@ import { STREAM_TILES, RIVER_TILES } from '../../../src/world/road/roadPainter.j
 import { HEIGHTMAP_DIMENSION } from '../../../src/world/terrain/terrainSampler.js';
 import { convertTile, WATER_TILE_INDEX } from '../../../src/world/terrain/terrainSurface.js';
 import { WIND_ROW_CALM, WIND_ROW_SPAN } from '../../../src/systems/wind/wind.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
-const rd = (p) => readFileSync(join(ROOT, p), 'utf8');
+const rd = (p) => hostText(p);
 
 test('WATER1: the water-corner table inverts the marching squares - a shape\'s water corners come back from the byte it wrote', () => {
   const lookup = createLookupTable();
@@ -231,7 +232,7 @@ test('WATER1: the renderer - one program, the deck\'s shadow key, and a draw sta
 });
 
 test('WATER1: both exterior hosts - the gate, the has-water skip, and the slot after the opaque passes and before the first flat', () => {
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /const waterOn = waterSwitchOn\(\);/, 'world: the one composition (FT6, render/waterSurface.js)');
   // WATER-AUDIT (M4): the water's own index set, built with the pixel and rebuilt with its restride, destroyed before the buffers it rides
   assert.match(w, /const waterIndices = waterOn \? buildWaterIndices\(tilemapBytes, stride\) : null;\s*\n\s*const water = waterIndices \? renderer\.createWaterSheet\(waterIndices, waterSheetOf\(bed, terrain\)\) : null;/, 'decided at the build (PIN MOVED, WATER-NEXT 2: its own sheet over the bed)');

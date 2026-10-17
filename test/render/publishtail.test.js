@@ -18,9 +18,10 @@ import * as SB from '../../src/render/staticBatch.js';
 import * as B from '../../src/render/bounds.js';
 import { Renderer } from '../../src/render/renderer.js';
 import { trs } from '../../src/world/mat4.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const WORLD = readFileSync(join(root, 'src/scenes/world.js'), 'utf8');
+const WORLD = hostText('src/scenes/world.js');
 const bytes = (a) => Buffer.from(a.buffer, a.byteOffset, a.byteLength).toString('base64');
 
 function glCanvas() {

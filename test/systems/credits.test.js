@@ -9,6 +9,7 @@ import { FEATURES, WINDMILLS_KEY } from '../../src/systems/features.js';   // WM
 import { OVERHAUL_PANELS } from '../../src/systems/overhauls.js';
 import { UI_PACKS } from '../../src/systems/uiPack.js';
 import { ENVIRONMENT_PACK_MODS } from '../../src/systems/vanillaEnhanced/vanillaEnhancedPack.js';   // ALIKR1 / SNOWFALL1: the shipped environment packs
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 // CR1 - THE CREDITS (Mac, 2026-08-30: "as we integrate these I really
 // want to give credit to the mod developer who created it").
@@ -20,7 +21,7 @@ import { ENVIRONMENT_PACK_MODS } from '../../src/systems/vanillaEnhanced/vanilla
 // player.
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const read = (p) => readFileSync(join(root, p), 'utf8');
+const read = (p) => hostText(p);
 const rows = [...CREDITS.builtOn, ...CREDITS.mods];
 
 test('CR1: every vendored folder is credited, and every credited folder exists with a README naming the same author', () => {

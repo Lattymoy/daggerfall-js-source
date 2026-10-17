@@ -34,6 +34,7 @@ import { SPELLBOOK_DESCRIPTION_IDS, spellBookDescriptionId, SPELL_MAKER_EFFECTS,
 import { audio } from '../../src/systems/audio.js';
 import { SOUND } from '../../src/systems/soundClips.js';
 import { FNT_ASCII_START } from '../../src/formats/fntFile.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const PX = SPELLBOOK_LAYOUT.x, PY = SPELLBOOK_LAYOUT.y;
 
@@ -1178,7 +1179,7 @@ test('U42 / THE FOUR HOSTS: every host opens the book from ONE construction - th
   // builds into `ui/spellbookDoor.js` - the U52/U53 seam a fifth time -
   // so the host's one construction is now a call to the door, and the
   // laws the pin was guarding moved WITH it rather than being dropped.
-  const src = (f) => readFileSync(new URL(`../../src/${f}`, import.meta.url), 'utf8');
+  const src = (f) => hostText(`src/${f}`);
   for (const host of ['scenes/world.js', 'scenes/exterior.js', 'scenes/dungeonContext.js', 'scenes/worldModes.js']) {
     const s = src(host);
     assert.ok(s.includes("from '../ui/spellbookDoor.js'"), `${host} takes the door`);

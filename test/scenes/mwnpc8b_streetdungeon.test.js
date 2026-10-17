@@ -20,6 +20,7 @@ import { personLook, wardrobeOf } from '../../src/characters/peopleBodies.js';
 import { SOCIAL_GROUPS, GUILD_GROUPS, FACTION_TYPES } from '../../src/formats/factionFile.js';
 import { RACES } from '../../src/systems/races.js';
 import { GENDERS } from '../../src/characters/nameHelper.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const ordered = (s, needles, what) => {
@@ -48,7 +49,7 @@ test('MWNPC8b-a the dungeon: a person\'s flat out of the shared groups into a ba
 });
 
 test('MWNPC8b-b the street: one batch a person in standPixelNpcs (the away arm and the quest pass still first); the near rings\' people offered as the pixels are walked, at their scene feet; the bodies drawn before the flats; let go indoors, moved with the origin', () => {
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   const from = w.indexOf('async function standPixelNpcs(');
   const stand = w.slice(from, w.indexOf('function restrideTerrain(', from));
   ordered(stand, ['setupExteriorQuestStaticNpcs', 'for (const pn of entry.npcs) {', 'pn.standBatch = null;', 'if (!pn.active) continue;', 'const centers = [[pn.x, pn.y, pn.z]];',
@@ -65,7 +66,7 @@ test('MWNPC8b-b the street: one batch a person in standPixelNpcs (the away arm a
 
 test('MWNPC8b-c THE STANDING-PEOPLE HOSTS, enumerated: every scene that stands StaticNPC billboards is named - wired, or flagged with the slice that wires it', () => {
   const HOSTS = {
-    'src/scenes/world.js': 'wired',            // the street's people (8b)
+    'src/scenes/pixelBuild.js': 'wired',       // the street's people (8b) - stood by the world's pixel build (HOST-SPLIT 2), offered by world.js
     'src/scenes/interiorContext.js': 'wired',  // the buildings' (8a), through worldModes.js
     'src/scenes/dungeonContext.js': 'wired',   // the dungeons' (8b), through worldModes.js
     // PIN MOVED (MWNPC8c, section 13c): the standalone location's people stand alone and in their bodies now
@@ -75,7 +76,7 @@ test('MWNPC8b-c THE STANDING-PEOPLE HOSTS, enumerated: every scene that stands S
     .map((f) => `src/scenes/${f}`).filter((p) => /collectExteriorNpcs\(|collectInteriorPeople\(|context: NPC_CONTEXT\.Dungeon/.test(rd(p)));
   assert.deepEqual(found.sort(), Object.keys(HOSTS).sort(), 'a new standing-people host is named here');
   const wiredBy = {
-    'src/scenes/world.js': () => rd('src/scenes/world.js').includes('streetPeople.offer(personActor('),
+    'src/scenes/pixelBuild.js': () => hostText('src/scenes/world.js').includes('streetPeople.offer(personActor('),
     'src/scenes/interiorContext.js': () => rd('src/scenes/worldModes.js').includes('peopleBodies.offer(personActor('),
     'src/scenes/dungeonContext.js': () => rd('src/scenes/dungeonContext.js').includes('_peopleLane.offer(personActor('),
     'src/scenes/exterior.js': () => /\.offer\(personActor\(/.test(rd('src/scenes/exterior.js')),

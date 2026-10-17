@@ -14,8 +14,9 @@ import { PIXEL_UNITS, CLOSE_REPLACED, CLOSE_BUSY } from '../../src/net/wire.js';
 import { fakeRoom } from '../fakeRoom.mjs';
 import { fakeSocketClass } from '../fakeSocket.mjs';
 import { AURA_DRAW_MAX, AURA_FORGET_S, AURA_KINDLE_S } from '../../src/render/auraRing.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
-const rd = (p) => readFileSync(new URL('../../' + p, import.meta.url), 'utf8');
+const rd = (p) => hostText(p);
 const at = (px, pz) => ({ x: px * PIXEL_UNITS + 10, y: 0, z: pz * PIXEL_UNITS + 10, yaw: 0, pitch: 0, mv: 0 });
 const quiet = (fn) => { const info = console.info, warn = console.warn; console.info = () => {}; console.warn = () => {}; try { return fn(); } finally { console.info = info; console.warn = warn; } };
 const until = async (ready, label) => {

@@ -242,7 +242,7 @@
   },
   {
     "name": "AUDIT1003-W6-PIXEL-UNHANDED",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "const gpu = await getGpuMesh(placed.modelIdNum, () => breather.breathe());",
     "new": "const gpu = await getGpuMesh(placed.modelIdNum);",
     "tests": [
@@ -261,7 +261,7 @@
   },
   {
     "name": "AUDIT1003-W7-UNMARKED",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "normal: doorNormalOf(d, local), arena: b.blockName === ARENA_BLOCK });",
     "new": "normal: doorNormalOf(d, local) });",
     "tests": [

@@ -31,6 +31,7 @@ import { natureStandsAt } from '../../src/world/terrain/terrainNature.js';
 import { HEIGHTMAP_DIMENSION } from '../../src/world/terrain/terrainSampler.js';
 import { sharedClassicMinutes } from '../../src/net/wire.js';
 import { utcDay } from '../../src/net/marksLaw.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 /** The page as the lane reads it: `?online` on the URL (systems/online/onlineLane.js isOnlinePage) - empirebank.test.js's door. */
@@ -375,7 +376,7 @@ test('PROF1 FORAGE0 law 6\'s exception: online, the six tools shelve whatever Fo
 test('PROF1 keys and hosts: the act choice is KB1\'s, on ;, in a Professions group; the streaming world wires the patches, the press, Escape and the swing; the fixed city and the dungeons stand none (FLAGGED)', () => {
   assert.ok(DEFAULT_BINDINGS.some(([c, a]) => c === 'ArrowUp' && a === 'ActChoice'), 'on the up arrow - `=` is the decorator\'s, `;` Come Sail Away\'s lantern (THE MERGE)');
   assert.deepEqual(ACTION_GROUPS.find((g) => g.title === 'Professions')?.rows.map((r) => r.action), ['ActChoice', 'Professions'], 'CLASSIC-PAGES: the Professions key beside it');
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   // PROF2: the herb host became the one gathering host (src/scenes/gatherHost.js) - Herbalism a kind in it
   assert.match(w, /gatherHost\?\.onBuilt\(built\.get\(key\)\);/);
   assert.match(w, /gatherHost\?\.onDestroyed\(p\);[^\n]*\n\s*for \(const b of p\.batches\) renderer\.destroyBatch\(b\);/, 'forgotten before the pixel frees its batches');

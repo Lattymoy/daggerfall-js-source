@@ -49,8 +49,8 @@
   {
     "name": "WB13a-the-last-moment-flooding-the-shape",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "  float inner = (fin * 0.10 + filled * (0.20 + 0.55 * T2) + lip * 0.35 + fin * (0.05 + 0.07 * uT) * g) * inFade;",
-    "new": "  float inner = (fin * 0.10 + filled * (0.20 + 0.55 * T2) + lip * 0.35 + fin * (0.05 + 0.07 * uT) * g) * inFade + 0.8 * fin * now;",
+    "old": "  float inner = (fin * 0.10 + filled * (0.20 + 0.55 * T2) + lip * 0.35 + fin * (0.05 + 0.07 * uT) * g) * inFade;\n  // THE THROB, on the line alone",
+    "new": "  float inner = (fin * 0.10 + filled * (0.20 + 0.55 * T2) + lip * 0.35 + fin * (0.05 + 0.07 * uT) * g) * inFade + 0.8 * fin * now;\n  // THE THROB, on the line alone",
     "tests": [
       "test/scenes/wb13a_telegraphs.test.js"
     ]
@@ -130,8 +130,8 @@
   {
     "name": "WB13a-a-quad-short-of-its-shape",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "case TELEGRAPH_KIND.cone: case TELEGRAPH_KIND.disc: return box(sh.origin[0], sh.origin[1], sh.origin[0], sh.origin[1], sh.r + M);",
-    "new": "case TELEGRAPH_KIND.cone: case TELEGRAPH_KIND.disc: return box(sh.origin[0], sh.origin[1], sh.origin[0], sh.origin[1], sh.r);",
+    "old": "case TELEGRAPH_KIND.cone: case TELEGRAPH_KIND.disc: return boxInto(b, sh.origin[0], sh.origin[1], sh.origin[0], sh.origin[1], sh.r + (sh.kind === TELEGRAPH_KIND.disc && sh.pool === TELEGRAPH_POOL_SPIRE.ring ? TELEGRAPH_RING_REACH : M));",
+    "new": "case TELEGRAPH_KIND.cone: case TELEGRAPH_KIND.disc: return boxInto(b, sh.origin[0], sh.origin[1], sh.origin[0], sh.origin[1], sh.r);",
     "tests": [
       "test/scenes/wb13a_telegraphs.test.js"
     ]

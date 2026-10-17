@@ -17,11 +17,12 @@ import { BANK_TYPES } from '../../src/characters/nameHelper.js';
 import { NORMALIZE_INTERVAL_MINUTES } from '../../src/systems/court.js';
 import { SKILLS } from '../../src/systems/skills.js';
 import { maxFatigue, FATIGUE_LOSS, FATIGUE_DRAIN_SCALE } from '../../src/systems/statMods.js';   // AUDIT 64 F7: the two running bands
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const src = (f) => readFileSync(join(root, f), 'utf8');
+const src = (f) => hostText(f);
 const EXTERIOR = src('src/scenes/exterior.js');
-const WORLD = src('src/scenes/world.js');
+const WORLD = hostText('src/scenes/world.js');
 const WM = src('src/scenes/worldModes.js');
 const DUNGEON = src('src/scenes/dungeon.js');
 

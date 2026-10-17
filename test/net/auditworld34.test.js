@@ -31,8 +31,9 @@ import { MAIN_STORY_DUNGEON_IDS, isMainStoryDungeon } from '../../src/world/dung
 import { useSmallerDungeon, dungeonSizeFor, onlineDungeonSize, SMALLER_DUNGEONS_STATE } from '../../src/world/smallerDungeons.js';
 import { fakeRoom } from '../fakeRoom.mjs';
 import { fakeSocketClass } from '../fakeSocket.mjs';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
-const rd = (p) => readFileSync(new URL('../../' + p, import.meta.url), 'utf8');
+const rd = (p) => hostText(p);
 const at = (px, pz) => ({ x: px * PIXEL_UNITS + 10, y: 0, z: pz * PIXEL_UNITS + 10, yaw: 0, pitch: 0, mv: 0 });
 const ofType = (ws, t) => ws.sent.filter((m) => m.t === t);
 const PRIVATEERS_HOLD = 187853213;
@@ -235,7 +236,7 @@ test('AUDIT WORLD34 B1/B3 by source: a dead foe is retyped too (a joiner whose s
 test('AUDIT WORLD34 C2 by source: the memory\'s action records are the SHARED half out (no picker\'s latch) and PROJECTED in (validActionRecord, as an act\'s are) - the relay serves the stored bytes back unparsed for thirty days', () => {
   const d = rd('src/scenes/dungeonContext.js');
   assert.match(d, /import \{[^\n]*sharedRecord, validActionRecord \} from '\.\.\/world\/actionSystem\.js';/);
-  assert.match(d, /w\.loot = lootRecords\(\[\.\.\._lootSeen\]\);\s*(?:for \(const f of w\.foes\) delete f\.noBody;[^\n]*\n\s*)?(?:for \(const f of w\.foes\) delete f\.eliteFoe;[^\n]*\n\s*)?(?:\/\/[^\n]*\n\s*)*w\.actions = \(w\.actions \?\? \[\]\)\.map\(sharedRecord\);\s*(?:w\.camps = campMemory\(\);[^\n]*\n\s*)?return \{ locationKey: _locationKey, stamp: _sharedStamp, world: w \};/, 'out');   // SURV3: the camps ride the memory too   // PIN MOVED (the revenant audit): a foe's `noBody` stripped after the loot   // PIN MOVED (AUDIT BAL): and its `eliteFoe` (bible/05-Combat/Balance-Arc.md section 10)
+  assert.match(d, /w\.loot = \[\.\.\.lootRecords\(\[\.\.\._lootSeen\]\), \.\.\.searchRoom\.records\(\)\];\s*(?:for \(const f of w\.foes\) delete f\.noBody;[^\n]*\n\s*)?(?:for \(const f of w\.foes\) delete f\.eliteFoe;[^\n]*\n\s*)?(?:\/\/[^\n]*\n\s*)*w\.actions = \(w\.actions \?\? \[\]\)\.map\(sharedRecord\);\s*(?:w\.camps = campMemory\(\);[^\n]*\n\s*)?return \{ locationKey: _locationKey, stamp: _sharedStamp, world: w \};/, 'out');   // SURV3: the camps ride the memory too   // PIN MOVED (the revenant audit): a foe's `noBody` stripped after the loot   // PIN MOVED (AUDIT BAL): and its `eliteFoe` (bible/05-Combat/Balance-Arc.md section 10)   // PIN MOVED (FIELD BUGS 2026-10-16b GRAVE-PARTY): the memory carries the strangers' searches beside the opened containers (scenes/searchRoom.js records)
   assert.match(d, /const acts = Array\.isArray\(shared\.world\.actions\) \? shared\.world\.actions\.map\(validActionRecord\)\.filter\(Boolean\) : \[\];[\s\S]*?const sfoes = Array\.isArray\(shared\.world\.foes\) \? shared\.world\.foes\.slice\(0, _layoutFoes\)\.map\(validSharedFoe\) : \[\];[\s\S]*?applyWorld\(\{ \.\.\.shared\.world, piles: undefined, actions: acts, foes: sfoes \}/, 'in');
 });
 

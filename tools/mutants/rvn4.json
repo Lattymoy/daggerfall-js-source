@@ -301,20 +301,22 @@
   {
     "name": "RVN4-the-street-stand-unasked",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "      if (!_whole && f.entity?.revenant?.id && revenantLastStandDue(f)) { lastStand(f); return; }\n",
+    "old": "      if (f.entity?.revenant?.id && !ownersWholeKill(_whole, { fromPlayer, peer }) && revenantLastStandDue(f)) { lastStand(f); return; }\n",
     "new": "",
     "tests": [
       "test/systems/revenant/rvn4_stand.test.js"
-    ]
+    ],
+    "note": "FIELD BUGS 2026-10-16b RVN-OWNERS-CHOICE (PIN MOVED): re-aimed by content - a whole blow passes the gate only as the owner's own (ownersWholeKill)."
   },
   {
     "name": "RVN4-the-street-whole-stood",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "      if (!_whole && f.entity?.revenant?.id && revenantLastStandDue(f)) { lastStand(f); return; }",
+    "old": "      if (f.entity?.revenant?.id && !ownersWholeKill(_whole, { fromPlayer, peer }) && revenantLastStandDue(f)) { lastStand(f); return; }",
     "new": "      if (f.entity?.revenant?.id && revenantLastStandDue(f)) { lastStand(f); return; }",
     "tests": [
       "test/systems/revenant/rvn4_stand.test.js"
-    ]
+    ],
+    "note": "FIELD BUGS 2026-10-16b RVN-OWNERS-CHOICE (PIN MOVED): re-aimed by content - a whole blow passes the gate only as the owner's own (ownersWholeKill)."
   },
   {
     "name": "RVN4-the-street-roar-touchable",
@@ -364,20 +366,22 @@
   {
     "name": "RVN4-the-dungeon-stand-unasked",
     "file": "src/scenes/dungeonContext.js",
-    "old": "      if (!_whole && foe.entity?.revenant?.id && (!onlineRoom() || !isRoomFoe(foe)) && revenantLastStandDue(foe)) { lastStandDungeonFoe(foe); return; }\n",
+    "old": "      if (foe.entity?.revenant?.id && !ownersWholeKill(_whole, { fromPlayer, peer }) && (!onlineRoom() || !isRoomFoe(foe)) && revenantLastStandDue(foe)) { lastStandDungeonFoe(foe); return; }\n",
     "new": "",
     "tests": [
       "test/systems/revenant/rvn4_stand.test.js"
-    ]
+    ],
+    "note": "FIELD BUGS 2026-10-16b RVN-OWNERS-CHOICE (PIN MOVED): re-aimed by content - a whole blow passes the gate only as the owner's own (ownersWholeKill)."
   },
   {
     "name": "RVN4-the-dungeon-room-stood",
     "file": "src/scenes/dungeonContext.js",
-    "old": "      if (!_whole && foe.entity?.revenant?.id && (!onlineRoom() || !isRoomFoe(foe)) && revenantLastStandDue(foe))",
-    "new": "      if (!_whole && foe.entity?.revenant?.id && revenantLastStandDue(foe))",
+    "old": "      if (foe.entity?.revenant?.id && !ownersWholeKill(_whole, { fromPlayer, peer }) && (!onlineRoom() || !isRoomFoe(foe)) && revenantLastStandDue(foe))",
+    "new": "      if (foe.entity?.revenant?.id && !ownersWholeKill(_whole, { fromPlayer, peer }) && revenantLastStandDue(foe))",
     "tests": [
       "test/systems/revenant/rvn4_stand.test.js"
-    ]
+    ],
+    "note": "FIELD BUGS 2026-10-16b RVN-OWNERS-CHOICE (PIN MOVED): re-aimed by content - a whole blow passes the gate only as the owner's own (ownersWholeKill)."
   },
   {
     "name": "RVN4-the-dungeon-roar-touchable",

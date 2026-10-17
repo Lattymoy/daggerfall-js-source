@@ -16,9 +16,10 @@ import { fileURLToPath } from 'node:url';
 import { StaticBatchBuilder } from '../../src/render/staticBatch.js';
 import { createDroppedLoot } from '../../src/scenes/droppedLoot.js';
 import { objectMatrix, objectNormalMatrix } from '../../src/world/worldOfDaggerfall/wodLocationObjects.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const rd = (p) => readFileSync(join(ROOT, p), 'utf8');
+const rd = (p) => hostText(p);
 
 /** One triangle facing +z, and the key the batch groups it under. */
 const tri = () => ({
@@ -61,14 +62,14 @@ test('WOD5: a mirrored model keeps its faces - a negative determinant reverses t
 });
 
 test('WOD5: the loader hears a region on the crossing itself, after Awake - a visit shorter than a build is still announced', () => {
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   const crossing = w.slice(w.indexOf('    if (r.pixelChanged) {'), w.indexOf('      for (const u of r.unload) {'));
   assert.match(crossing, /if \(wod\) \{ const region = maps\.getRegionIndexAt\(r\.current\.x, r\.current\.y\); wodOpened\.then\(\(ok\) => \{ if \(ok\) wod\.noteRegion\(region\); \}\); \}/);
   assert.match(w, /wod\.noteRegion\(maps\.getRegionIndexAt\(here\.x, here\.y\)\);\s*await wod\.settle\(\);/, 'and still before every build, where the list is read');
 });
 
 test('WOD5: a captive stood by a marker rides the carry and stands again on the rebuilt pixel', () => {
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /w\.flat = \{ kind: 'billboard', archive: act\.archive, record: act\.record \};\n\s*getTexture\(act\.archive\)\.then/, 'the stood flat is remembered before its art loads');
   assert.match(w, /spawners\.get\(k\)\.push\(\{ spawner: w\.spawner, flat: w\.flat \?\? null \}\);/, 'the carry takes it');
   assert.match(w, /if \(w\.restand\) \{ w\.restand = false; standWodAction\(p, w, w\.flat\); \}[^\n]*\n\s*if \(!w\.spawner\.active\) continue;/, 'before the spent marker is skipped');

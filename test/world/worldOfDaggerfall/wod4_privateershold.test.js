@@ -21,9 +21,10 @@ import {
 } from '../../../src/world/worldOfDaggerfall/wodPrivateersHold.js';
 import { FOE_MALE_CHANCE } from '../../../src/world/worldOfDaggerfall/wodSpawner.js';
 import { MOBILE_TYPES } from '../../../src/characters/mobile/mobileTypes.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
-const rd = (p) => readFileSync(join(ROOT, p), 'utf8');
+const rd = (p) => hostText(p);
 
 /** The C#'s own numbers: `-89.99001f`, `3.099442e-06f`, `-210`. */
 const num = (t) => Math.fround(parseFloat(t.trim().replace(/f$/, '')));
@@ -118,7 +119,7 @@ test('WOD4: a model\'s matrix is T * Euler(0, deg, 0) in Unity\'s frame - a quar
 });
 
 test('WOD4: the streaming host stands the camp on the block, climate and colliders and all, and rolls on the first exterior frame', () => {
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /if \(wod && b\.blockName === PRIVATEERS_HOLD_BLOCK\) holdBlocks\.push\(originMatrix\);   \/\/ WOD4/);
   const block = w.slice(w.indexOf('    let privateersHold = null;'), w.indexOf('    // SIB1: DaggerfallTerrain.OnInstantiateTerrain'));
   assert.match(block, /await remapSubMeshes\(gpu\.subMeshes, texRemap, townClimateArchive, pipeline\);/, 'the location re-skins every mesh under its blocks (in its own climate - AUDIT WD3 G5)');
@@ -136,7 +137,7 @@ test('WOD4: the streaming host stands the camp on the block, climate and collide
 });
 
 test('WOD4: an unload takes the camp\'s foes; a rebuild the reference never makes carries the markers and the camp; a sweep drops the carry', () => {
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /if \(collectLoose && p\.privateersHold\) \{ p\.privateersHold\.state\.gone = true; for \(const f of p\.privateersHold\.state\.foes\) exteriorFoes\.removeFoe\(f\); \}/, 'an unload takes the camp\'s foes');
   assert.match(w, /\} else \{\n\s*if \(p\.wodSpawners \|\| p\.privateersHold\) carryWodSite\(p, key, \{ hold: p\.privateersHold\?\.state \?\? null \}\);/, 'a rebuild carries the markers and the camp');
   assert.match(w, /wodCarry\.set\(key, \{ spawners, hold, piles, life: p\.wodLife \}\);/);

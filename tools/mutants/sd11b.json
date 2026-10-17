@@ -289,9 +289,9 @@
   },
   {
     "name": "SD11b-L7H2-the-rights-unasked",
-    "file": "server/src/index.js",
-    "old": "    if (!orreryMayTurn(R, who, now)) {",
-    "new": "    if (false) {",
+    "file": "src/net/superDungeon/sdBrain.js",
+    "old": "  if (R && !orreryMayTurn(R, who, now)) return { wait: true };",
+    "new": "  if (false) return { wait: true };",
     "tests": [
       "test/net/superDungeon/sd11b_relay.test.js"
     ]
@@ -474,8 +474,8 @@
   {
     "name": "SD11b-L8G11-the-refusals-unsaid",
     "file": "server/src/index.js",
-    "old": "if (!joinRemnant(f, a.sub, a.name ?? '', lv, now, present)) { no(f.ended ? SD_NO_WORDS[1] : SD_NO_WORDS[2]); return; }",
-    "new": "if (!joinRemnant(f, a.sub, a.name ?? '', lv, now, present)) return;",
+    "old": "if (!SD_SEAM.join(f, a.sub, a.name ?? '', lv, now, present)) { no(f.ended ? SD_NO_WORDS[1] : SD_NO_WORDS[2]); return; }",
+    "new": "if (!SD_SEAM.join(f, a.sub, a.name ?? '', lv, now, present)) return;",
     "tests": [
       "test/net/superDungeon/sd11b_relay.test.js"
     ]

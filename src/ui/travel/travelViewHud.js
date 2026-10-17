@@ -31,7 +31,7 @@
 // place line.
 // ═══════════════════════════════════════════════════════════════════
 import { injectEnhancedStyle, injectEnhancedFonts } from '../enhanced/enhancedStyle.js';
-import { titleBadge, glyphBadges, cssRgba, GLYPH_STROKE, GLYPH_EDGE_W } from '../playerBadge.js';   // OVERWORLD NAMES: a player's name as it reads over their head in play
+import { titleBadge, glyphBadges, glyphDetails, cssRgba, GLYPH_STROKE, GLYPH_EDGE_W } from '../playerBadge.js';   // OVERWORLD NAMES: a player's name as it reads over their head in play
 import { PIXEL_STACK } from '../pixelifyFive.js';   // AUDIT NAMES N1-4: the in-play name face
 import { renownText } from '../../net/renown.js';
 import { guildTagText } from '../../net/guild/guildLaw.js';
@@ -1263,8 +1263,9 @@ function badgeSprite(doc, m, size, party, dpr, bk = badgeKey(m.badge)) {
         x.fillStyle = gr; x.fill(path); x.strokeStyle = col; x.lineWidth = GLYPH_EDGE_W; x.lineJoin = 'round'; x.stroke(path);
       } else if (GLYPH_STROKE[g.key]) { x.strokeStyle = col; x.lineWidth = GLYPH_NAME_W; x.lineCap = 'round'; x.lineJoin = 'round'; x.stroke(path); }
       else { x.fillStyle = col; x.fill(path); }
-      // N1-3: a glyph's DETAIL (the wolf's red eye) over it in its own colour, as the in-play drawing has it
-      if (g.detail?.path) { x.fillStyle = cssRgba(g.detail.rgba) ?? col; x.fill(new globalThis.Path2D(g.detail.path)); }
+      // N1-3: a glyph's DETAIL (the wolf's red eye) over it in its own colour, as the in-play drawing has it - WIKIMAID: each
+      // of them, in order (the WikiMaid's ears, lace and face)
+      for (const d of glyphDetails(g.detail)) { x.fillStyle = cssRgba(d.rgba) ?? col; x.fill(new globalThis.Path2D(d.path)); }
       x.restore();
       cx += gs + 2;
     }

@@ -20,9 +20,10 @@ import { CharSheet, CHARSHEET_RECTS, NAV_BUTTONS } from '../../src/ui/charsheet.
 import { charSheetHooks } from '../../src/ui/charSheetNav.js';
 import { QuestJournalWindow, JOURNAL_RECTS, JOURNAL_MODES } from '../../src/ui/quest/questJournal.js';
 import { PlayerHistoryWindow, HISTORY_RECTS } from '../../src/ui/playerHistory.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const src = (f) => readFileSync(join(root, 'src', f), 'utf8');
+const src = (f) => hostText(`src/${f}`);
 const mid = ([x, y, w, h]) => [x + w / 2, y + h / 2];
 const entity = () => ({ name: 'Rhodri', backStory: [], items: [], spells: [] });
 

@@ -12,6 +12,7 @@ import '../modsOff.js';
 import { test, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 // the app's storage: a plain map in node
 const _store = new Map();
@@ -32,7 +33,7 @@ const { LOYALTY } = await import('../../src/systems/revenant/revenantFeud.js');
 const { MOBILE_TYPES: M } = await import('../../src/characters/mobile/mobileTypes.js');
 const { createExteriorFoes } = await import('../../src/scenes/exteriorFoes.js');
 
-const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
+const read = (p) => hostText(p);
 const DAY = 1440;
 const me = (id = 'char-renowngate') => ({ isPlayer: true, name: 'Ayla Stormwind', characterId: id, level: 10, stats: {}, skills: [], career: {}, activeEffects: [], items: [], health: 100, maxHealth: 100 });
 const orc = (over = {}) => ({ mobileType: M.Orc, level: 6, health: 5, maxHealth: 50, team: 'Monster', champion: 'mighty', ...over });
@@ -306,8 +307,8 @@ test('RENOWN-GATE THE HOSTS: the gate lives in the laws - the open world\'s call
   const pool = read('src/scenes/exteriorFoes.js');
   assert.match(pool, /\(revenant \? revenant\.elite : rollOverworldElite\(Math\.random\)\)\) promoteEliteFoe\(entity\);/, 'the open world: the roll the gate lives in; a revenant as what it was');
   assert.match(pool, /if \(eliteFoe === true && !allied\) promoteEliteFoe\(entity\);/, 'a save\'s word: never re-rolled');
-  const world = read('src/scenes/world.js'), dc = read('src/scenes/dungeonContext.js');
-  for (const [name, src] of [['world.js', world], ['dungeonContext.js', dc]]) assert.match(src, /const elite = rollSearchElite\(\);/, `${name}: a search's one roll`);
+  const world = hostText('src/scenes/world.js'), dc = read('src/scenes/dungeonContext.js'), grave = read('src/scenes/searchPartyHost.js');   // PIN MOVED (FIELD BUGS 2026-10-16b GRAVE-PARTY): the headstone's search left world.js's bootWorld for scenes/searchPartyHost.js
+  for (const [name, src] of [['searchPartyHost.js', grave], ['dungeonContext.js', dc]]) assert.match(src, /const elite = rollSearchElite\(\);/, `${name}: a search's one roll`);
   const pick = dc.split('\n').find((l) => l.includes('pickDungeonElites(enemies'));
   assert.ok(pick && /elitesAllowed\(\{ onlinePage: isOnlinePage\(\), inRoom: opts\.selfId\?\.\(\) != null \}\)\) pickDungeonElites\(/.test(pick), 'the dungeon\'s pick, the room\'s');
   assert.match(world, /setSigilOnline\(params\.has\('online'\)\);/, 'the door: online from the page\'s word');

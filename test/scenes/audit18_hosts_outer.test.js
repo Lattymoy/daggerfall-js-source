@@ -42,9 +42,10 @@ import { dfMeshToModel } from '../../src/world/meshReader.js';
 import { layoutInterior } from '../../src/world/interior/interiorLayout.js';
 import { ImgFile } from '../../src/formats/imgFile.js';
 import { DFPalette } from '../../src/formats/dfPalette.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const src = (f) => readFileSync(join(ROOT, f), 'utf8');
+const src = (f) => hostText(f);
 
 const ARENA2 = process.env.ARENA2_PATH;
 const skipReal = !ARENA2 || !existsSync(ARENA2)
@@ -261,7 +262,7 @@ test('audit18 hosts: offsetArrows actually moves in-flight arrows (the ?. hid a 
 });
 
 test('audit18 hosts: the streaming recenter carries fallStart AND the arrows', () => {
-  const s = src('src/scenes/world.js');
+  const s = hostText('src/scenes/world.js');
   const block = s.slice(s.indexOf('if (r.offset) {'), s.indexOf('if (r.pixelChanged)'));
   assert.match(block, /adjustFallStart\(player, r\.offset\[1\]\)/,
     'the recenter shifts the player but not fallStart');
@@ -298,7 +299,7 @@ test('audit18 hosts: BOTH exterior hosts gate the population on the location typ
   assert.match(decl, /populated \? null : new TownPopulation|!populated \? null : new TownPopulation/,
     'the TownPopulation construction itself must be gated');
   // The streaming host keeps its own guard and shares the one table.
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /populatesWanderingNpcs\(dfLocation\.mapTableData\.locationType\)/);
   assert.doesNotMatch(w, /const POPULATED_LOCATION_TYPES = new Set/,
     'the table must live in one place or the two hosts drift again');

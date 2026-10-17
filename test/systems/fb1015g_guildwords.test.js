@@ -311,7 +311,7 @@ test('STANDING-WORDS: the hall\'s reputation row and the Standing page\'s book c
   const g = GUILDS.FightersGuild;
   const entity = memberAt(g, 1, {}, { factionRep: storeOf({ [FIGHTERS]: { name: 'The Fighters Guild', rep: 14 } }), skills: skilled(g, 40).skills });
   setStandingOwed({ [FIGHTERS]: 6 });
-  assert.deepEqual(rankNeedsLines(skilled(g, 40), g, bookOf(entity), entity.factionRep), ['Next rank: Swordsman', 'Reputation 14 of 20 (6 more to come)']);
+  assert.deepEqual(rankNeedsLines(skilled(g, 40), g, bookOf(entity), entity.factionRep), ['Next rank: Swordsman', 'Reputation 14 of 20 (6 more already earned - it arrives at most 15 a real day)']);
   const book = affiliations(entity);
   assert.deepEqual([book[0].owed, book[0].warnings], [6, []]);
 });
@@ -324,7 +324,7 @@ test('SEAT-WORDS: the seat line\'s arms - the owed beside the chairs\' 80, a pro
   const merit = 'Each Sunday\'s Turning gives the chairs to the most Merit of the last 4 weeks, among members 14 real days in the guild, on accounts 7 real days old';
   setStandingOwed({ [MAGES]: 10 });
   assert.deepEqual(rankNeedsLines(skilled(g, 90), g, bookOf(memberAt(g, 7)), storeOf({ [MAGES]: { rep: 72 } }), ROLL),
-    ['Next rank: Master Wizard', seats, 'Reputation 72 of 80 (10 more to come)', merit]);
+    ['Next rank: Master Wizard', seats, 'Reputation 72 of 80 (10 more already earned - it arrives at most 15 a real day)', merit]);
   setStandingOwed(null);
   assert.deepEqual(rankNeedsLines(skilled(g, 90), g, bookOf(memberAt(g, 7)), storeOf({ [MAGES]: { rep: 80 } }), ROLL), ['Next rank: Master Wizard', seats, merit]);
   const onProbation = bookOf(memberAt(g, 7, { probation: true, lastRankChange: daySinceZero(day(10)) }));

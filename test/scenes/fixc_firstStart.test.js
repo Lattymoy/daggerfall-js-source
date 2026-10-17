@@ -15,9 +15,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
-const world = read('src/scenes/world.js');
+const world = hostText('src/scenes/world.js');
 
 test('FIX-C: the roads sweep RE-QUEUES what it tears down, nearest-first, and holds the motor on the player\u2019s own pixel', () => {
   const body = world.slice(world.indexOf('function sweepRoadless() {'), world.indexOf('function sweepRoadless() {') + 1400);

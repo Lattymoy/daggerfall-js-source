@@ -19,8 +19,9 @@ import { setRacialQuestHost } from '../../src/systems/racialQuests.js';
 import { weaponTypeForItem, WEAPON_TYPES } from '../../src/combat/fpsWeapon.js';
 import { swingSoundFor, SOUND } from '../../src/systems/soundClips.js';
 import { equipSoundFor } from '../../src/characters/weapons.js';   // F023
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
-const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
+const read = (p) => hostText(p);
 const P = () => ({
   isPlayer: true, level: 5, activeEffects: [],
   stats: { strength: 50, agility: 50, endurance: 50, speed: 50, willpower: 50, intelligence: 50, personality: 50, luck: 50 },

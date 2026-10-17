@@ -17,8 +17,9 @@ import { pcaaoApplyConditionDamageThroughWeaponDamage, pcaaoApplyConditionDamage
 import { BODY_PARTS } from '../../src/systems/armorMaterials.js';
 import { mintCondition } from '../../src/systems/item/itemTemplates.js';
 import { strokeFatigueCost } from '../../src/world/deepWater/deepWaterSwim.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
-const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
+const rd = (p) => hostText(p);
 
 test('BALANCE1: the two scales, and DFU\'s own numbers untouched beneath them', () => {
   assert.equal(FATIGUE_DRAIN_SCALE, 0.75, 'exertion costs a quarter less');
@@ -139,8 +140,8 @@ test('BALANCE1: every blow\'s wear path takes the scale - DFU\'s DamageEquipment
     assert.match(rd('src/systems/roleplayRealism/rrInstall.js'), /\(it, amount\) => lowerCondition\(it, blowWear\(amount, rolls\), owner, say\)/, 'Roleplay Realism\'s armour x5');
     // PIN MOVED (INT8/INT9, 2026-10-09 - bible/06-Systems/Integrity-Arc.md lane 2): the referee's word that a blow landed
     // wears the weapon of the strike that left - a duel's, and the open zone's the same
-    assert.match(rd('src/scenes/world.js'), /if \(amount > 0\) lowerCondition\(_duelLastWeapon, dfuBlowWear\(amount\), playerEntity,/, 'a duel\'s blade (DFU\'s amount at the port\'s multiple - WEAR-ONE\'s 1 - then the scale)');
-    assert.match(rd('src/scenes/world.js'), /if \(wear > 0\) lowerCondition\(_wildLastWeapon, dfuBlowWear\(wear\), playerEntity,/, 'and the open zone\'s');
+    assert.match(hostText('src/scenes/world.js'), /if \(amount > 0\) lowerCondition\(_duelLastWeapon, dfuBlowWear\(amount\), playerEntity,/, 'a duel\'s blade (DFU\'s amount at the port\'s multiple - WEAR-ONE\'s 1 - then the scale)');
+    assert.match(hostText('src/scenes/world.js'), /if \(wear > 0\) lowerCondition\(_wildLastWeapon, dfuBlowWear\(wear\), playerEntity,/, 'and the open zone\'s');
     assert.match(rd('src/combat/formulas.js'), /lowerCondition\(item, dfuBlowWear\(amount, rolls\), owner, say\);/, 'DFU\'s');
     assert.match(rd('src/systems/equip.js'), /export const dfuBlowWear = \(amount, rolls = Math\.random\) => \(amount > 0 \? blowWear\(amount \* _dfuMultiple, rolls\) : amount\);/, 'and the multiple rides the scale\'s one sink');
     // NOT a blow: an enchantment's use charges its item's condition by its own cost

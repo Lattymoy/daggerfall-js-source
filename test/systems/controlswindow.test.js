@@ -15,6 +15,7 @@ import {
   createBindings, resetDefaults, setBinding, getBinding, actionForCode, actionsForCode, ACTIONS, DEFAULT_SHARES,
 } from '../../src/systems/inputActions.js';
 import { KEY_GROUPS, KEY_BTN, TAB_RECTS, MLOOK_ALT_RECT, gridButtons } from '../../src/ui/controlsWindow.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const freshStore = () => { const b = createBindings(); resetDefaults(b); return b; };
@@ -239,7 +240,7 @@ test('I4: GetButtonText\'s classic table and FormatButtonText (:322-410, :561-56
 });
 
 test('I4: the window wiring - one flow factory, the right-click seam, both panels warm', () => {
-  const code = (rel) => readFileSync(join(root, 'src', rel), 'utf8');
+  const code = (rel) => hostText(`src/${rel}`);
   // ONE construction seam for the pause -> controls -> pause trip.
   // U51 re-aimed this pair: the seam is unchanged and so is the round
   // trip, but the CLASSIC flow is now `openClassicPauseFlow` - the

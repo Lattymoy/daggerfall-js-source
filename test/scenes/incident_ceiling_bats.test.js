@@ -104,7 +104,7 @@ test('bats 1: both spawn hosts build the capsule from the idle sprite and drop a
   // REVIEW 2026-09-05: a DELTA on the live pending array (offsetAll may
   // have recentred it during the awaits), gated off for a restore whose
   // position already IS feet.
-  assert.match(x, /const idleH = idleSpriteHeight\(tex\);\n(?:\s+\/\/[^\n]*\n)*\s+if \(transformY\) \{\n[\s\S]{0,500}?\n\s+\} else if \(groundAlign\) \{\n[\s\S]{0,700}?\n\s+\} else if \(behaviour === 'Flying' && !feetGiven\) pending\.feet\[1\] -= idleH \/ 2 \+ 0\.1;\n(?:\s+\/\/ FIELD BUGS 2026-10-04d CRATE-FREE:[^\n]*\n\s+if \(!puppet\) freeLodgedFeet\(collider, pending\.feet, [^\n]*\n)?\s+const ai = new EnemyAI\(/,   // WOD3: CreateFoeGameObjects' own drop is the other arm; DW-E4: a transform set straight is the first; FIELD BUGS 2026-10-04d CRATE-FREE: the stand freed from a model after the drop
+  assert.match(x, /const idleH = idleSpriteHeight\(tex\);\n(?:\s+\/\/[^\n]*\n)*\s+if \(transformY\) \{\n[\s\S]{0,500}?\n\s+\} else if \(groundAlign\) \{\n[\s\S]{0,700}?\n\s+\} else if \(behaviour === 'Flying' && !feetGiven\) pending\.feet\[1\] -= idleH \/ 2 \+ 0\.1;\n(?:\s+\/\/ FIELD BUGS 2026-10-04d CRATE-FREE:[^\n]*\n\s+if \(!puppet\) freeLodgedFeet\(collider, pending\.feet, [^\n]*\n)?\s+const facing = yaw \?\? rolls\(\) \* Math\.PI \* 2;\n\s+const ai = new \(nav && getPref\('enhancedAI'\) \? EnhancedEnemyAI : EnemyAI\)\(/,   // PIN MOVED (FIELD BUGS 2026-10-16b INDOOR-WATCH): the facing named for the routes' seed, the motor the switch's where the room hands a mesh   // WOD3: CreateFoeGameObjects' own drop is the other arm; DW-E4: a transform set straight is the first; FIELD BUGS 2026-10-04d CRATE-FREE: the stand freed from a model after the drop
     'the exterior pool reads the sprite BEFORE the AI stands, and drops a flyer from FinalizeFoe\'s lifted centre as a delta');
   // AUDIT 63 F24 widened the option bag with the revived quest link;
   // `feetGiven: true` is the clause this pin is about and still stands.
@@ -115,7 +115,8 @@ test('bats 1: both spawn hosts build the capsule from the idle sprite and drop a
   assert.match(x, /org\[1\] = spriteOriginY\(f\.ai\.feet\[1\], f\.idleH, sz\.h, _bh\);/, 'the exterior draw pins a flyer\'s centre');
   // the epoch guard still stands between the texture await and the AI
   const guard = x.indexOf('if (gen !== epoch) return null;');
-  assert.ok(guard > x.indexOf('const tex = await getTexture(archive);') && guard < x.indexOf('const ai = new EnemyAI('),
+  const foeAi = x.indexOf("const ai = new (nav && getPref('enhancedAI') ? EnhancedEnemyAI : EnemyAI)(");   // PIN MOVED (FIELD BUGS 2026-10-16b INDOOR-WATCH): the motor the switch's where the room hands a mesh
+  assert.ok(guard > x.indexOf('const tex = await getTexture(archive);') && foeAi > 0 && guard < foeAi,
     'AUDIT-39r: a sweep across the texture await still cancels the spawn before anything stands');
 });
 
@@ -190,7 +191,9 @@ test('bats review: every host passes centreOffset; the watch sizes its capsule t
   assert.match(g, /centreOffset: idleH \/ 2,/);
   assert.match(g, /mobileType: GUARD_MOBILE_TYPE, idleH, dead: false,/, 'and carries idleH for the re-stand');
   const guardTex = g.indexOf('const tex = await getTexture(archive);');
-  assert.ok(guardTex > 0 && guardTex < g.indexOf('const ai = new EnemyAI(') && g.indexOf('if (gen !== epoch) return null;') < g.indexOf('const ai = new EnemyAI('),
+  const guardAi = g.indexOf("const ai = new (nav && getPref('enhancedAI') ? EnhancedEnemyAI : EnemyAI)(");   // PIN MOVED (FIELD BUGS 2026-10-16b INDOOR-WATCH): the motor the switch's where the room hands a mesh
+  const guardEpoch = g.indexOf('if (gen !== epoch) return null;');   // (and found at all: a guard gone read -1, ahead of everything)
+  assert.ok(guardTex > 0 && guardAi > 0 && guardTex < guardAi && guardEpoch > guardTex && guardEpoch < guardAi,
     'the guard texture is read before the AI stands, the epoch guard still ahead of any allocation');
   // WabbajackEffect.cs:90 hands the struck foe's transform.localPosition
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {

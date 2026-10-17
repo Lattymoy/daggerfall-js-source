@@ -8,6 +8,7 @@ import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { pieceIndex, pieceKey } from '../../src/render/labGrass.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const read = (p) => readFileSync(join(root, p), 'utf8');
@@ -88,7 +89,7 @@ test('GRASS4 pieceKey: a map pixel is one NUMBER, distinct for every pixel the m
 });
 
 test('PERF8 pins: keep and ground take the piece from the index and no longer loop the pieces (mutant: the scan back)', () => {
-  const w = read('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   // PERF10 widened this from the old one-line spelling: the index is
   // built lazily now (a frame that fills no cell builds none at all), so
   // the law is that `pieceAt` IS pieceIndex over TERRAIN_SIZE, not which

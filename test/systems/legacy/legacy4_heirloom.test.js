@@ -8,7 +8,8 @@ import {
   blessingOf, legacyFold, heirloomWeaponDamage, heirloomLine, HEIRLOOM_GEN_MAX, HEIRLOOM_DAMAGE_PER_GEN,
   HEIRLOOM_ARMOR_PER_GEN, BLESSING_POINTS, BLESSING_SKILL_MAX, REMAINS_TEMPLATE, REMAINS_GOLD_SHARE, REMAINS_GOLD_MAX, remainsGoldOf,
 } from '../../../src/systems/legacy/heirloom.js';
-import { itemLongName } from '../../../src/systems/item/itemInfo.js';
+import { itemLongName, itemNameParts, materialName } from '../../../src/systems/item/itemInfo.js';
+import { applyRarity } from '../../../src/systems/loot/lootRarity.js';   // MAT-SHOW: a Legendary handed down
 import { familyRng, MODELS } from '../../../src/systems/legacy/family.js';
 import { createLegacyHost, LEGACY_QUEST_PREFIX } from '../../../src/scenes/legacyHost.js';
 import { _resetModSaveData } from '../../../src/systems/modSaveData.js';
@@ -17,6 +18,8 @@ import { KEEPSAKE_TEMPLATE } from '../../../src/systems/livingWorld/keepsake.js'
 import { setItemFields, mintCondition } from '../../../src/systems/item/itemTemplates.js';
 import { computeEntityMods, entityModsOf, weaponDamageMods } from '../../../src/systems/entityMods.js';
 
+/** A seeded roll, for a piece the ladder grades. */
+const lcg = (seed) => { let s = seed >>> 0; return () => { s = (Math.imul(s, 1664525) + 1013904223) >>> 0; return s / 4294967296; }; };
 /** A piece as the game mints one (itemTemplates' own fields), worn in `slot`. */
 const piece = (group, templateIndex, material, slot, over = {}) => ({ ...mintCondition(setItemFields({ group, templateIndex, material, flags: 0, variant: 0, message: 0, stackCount: 1 })), equipSlot: slot, ...over });
 
@@ -58,6 +61,20 @@ test('LEGACY4: marked for the house - a copy carrying it, its generation kept, g
   assert.equal(itemLongName(again), itemLongName(h), 'named once - never "Hlaalu\'s Hlaalu\'s"');
   assert.match(heirloomLine(again), /Heirloom of the house of Hlaalu, first borne by Riadell Hlaalu - carried home 5 times\./);
   assert.equal(heirloomLine(sword), null);
+});
+
+test('MAT-SHOW + LEGACY4: a Legendary handed down keeps its own name under the house - "Hlaalu\'s Wyrmbane", never "Hlaalu\'s Dwarven Wyrmbane" - and says its metal on the sub-line, as it did before it was handed down; a plain piece\'s metal stays inside the house\'s name (mutants: the house\'s name reads the sub-line\'s metal)', () => {
+  const leg = applyRarity(piece('Weapons', 120, 4, 1), 'legendary', lcg(2));
+  assert.ok(leg.legendary && heirloomEligible(leg), 'a worn Legendary may be handed down');
+  leg.isIdentified = true;   // the Identify spell's mark: a Legendary drops unidentified, and an unidentified house is unknown
+  const own = itemNameParts(leg).name;
+  const h = markHeirloom(leg, { line: 'fam-1', house: 'Hlaalu', of: 3, from: 'Ysolde Hlaalu' });
+  assert.equal(itemLongName(h), `Hlaalu's ${own}`);
+  assert.equal(itemNameParts(h).material, materialName(leg), 'the metal on the sub-line, where the Legendary\'s own card has it');
+  assert.equal(itemLongName({ ...h, heirloom: { ...h.heirloom, house: 'of Daggerfall' } }), `${own} of the house of Daggerfall`);
+  const plain = markHeirloom(piece('Weapons', 120, 4, 1), { line: 'fam-1', house: 'Hlaalu', of: 3, from: 'Ysolde Hlaalu' });
+  assert.equal(itemLongName(plain), `Hlaalu's ${materialName(plain)} ${itemNameParts(piece('Weapons', 120, 4, 1)).name}`, 'a plain piece: the metal in the house\'s name');
+  assert.equal(itemNameParts(plain).material, '', 'and not said twice on the sub-line');
 });
 
 test('AUDIT LEGACY H5: an artifact (minted `artifact: true`, no rarity) and a summoned piece are never an heirloom', () => {

@@ -36,6 +36,7 @@ import { FadeBehaviour } from '../../src/ui/fadeLayer.js';
 import { MerchantServiceWindow, MERCHANT_PANEL_X, MERCHANT_PANEL_Y, MERCHANT_PANEL_H, portalRowRect, PORTAL_ROW_KEY } from '../../src/ui/merchant/merchantServiceWindow.js';
 import { MerchantRepairWindow, REPAIR_PANEL_X, REPAIR_PANEL_Y, REPAIR_PANEL_H } from '../../src/ui/merchant/merchantRepairWindow.js';
 import { REFORGE_ROW_BG } from '../../src/ui/guildServiceWindow.js';
+import { madeLevelRule } from '../../src/systems/madeLevel.js';   // EG-H2: the made level's law
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const shardsIn = (items) => items.filter(isWelkyndShard).reduce((n, it) => n + (it.stackCount ?? 1), 0);
@@ -383,6 +384,7 @@ test('PORTAL1 the door, the pick and the arrival, as world.js runs them: every r
     teleportTo: async (dest) => { arrivals.push(dest.name); scope.hcc.push('teleport'); if (dest.fail) throw new Error('no'); },
   };
   Object.assign(scope, {
+    madeRuleHere: (rule) => (scope.made ? madeLevelRule(scope.made, rule) : null),   // PIN MOVED (EG-H2, Elite-Gates.md section 24): the made level's law - none here unless a pin stands one
     _mode: () => scope._modeNow, worldMoveBusy: () => scope.busy, duelEnemyNear: () => scope.duel, inSiegeRoom: () => scope.siege,
     areEnemiesNearby: () => scope.enemies, navalHostileNear: () => false, csaBoatUnderMe: () => scope.boat,
     hccRuntimeOn: () => ({ handlePreFastTravel: () => scope.hcc.push('pre'), handlePostFastTravel: () => scope.hcc.push('post') }),
@@ -408,6 +410,7 @@ test('PORTAL1 the door, the pick and the arrival, as world.js runs them: every r
     Object.assign(scope, keep);
   };
   door({ _modeNow: 'interior', busy: true }, PS.PORTAL_TEXT.notHere);
+  door({ made: 'spire', busy: true }, PS.PORTAL_TEXT.notHere);   // EG-H2: never in a made level, whatever the mode says
   door({ busy: true, duel: true }, PS.PORTAL_HOLD_TEXT.busy);
   door({ _teleporting: true }, PS.PORTAL_HOLD_TEXT.busy);
   door({ duel: true, siege: true }, PS.PORTAL_HOLD_TEXT.duel);

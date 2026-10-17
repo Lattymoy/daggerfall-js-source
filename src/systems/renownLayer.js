@@ -22,14 +22,37 @@
 // half comes online at half. Scaling both ways is its own inverse, so going online, leveling, saving and coming back
 // never makes or loses health beyond a rounding unit - and a character with 0 health stays at 0.
 //
+// EG15 (2026-10-12, the Elite Gates arc; bible/11-Multiplayer/Elite-Gates.md section 19): A SECOND ONLINE TERM, the folds'
+// magicka (systems/entityMods.js's `magicka` channel - the Battlemage's Bearing, a Sigil Set's, so awake online alone).
+// It rides the same accessor beside Renown's (foldMpOf), and every reader that takes the online layer off takes it too
+// (onlineMpOf): a save keeps the vitals as they would stand without either (offlineVitals, and save.js's test for
+// whether to ask), and the magery's third is of Daggerfall's own maximum, never of either (passiveSpecials.js). The fold
+// re-adds it on the next equip change or magic round, so nothing of it is ever stored.
+//
+// EG-ZR (2026-10-12, the Elite Gates arc; bible/11-Multiplayer/Elite-Gates.md section 15): A THIRD ONLINE TERM, THE SPIRE'S
+// STONESKIN - `spireHp`, whole points of health a Stoneskin holder carries while it stands in an Elite Breach
+// (systems/eliteGates/spireVestiges.js puts it on and takes it off at every exit - setSpireHp, the fraction kept), read by the same
+// accessor beside Renown's. No save meets it: the Spire refuses every save (Elite-Gates.md section 24's made level), and the
+// term goes at the first frame out of it. The room's shares of a body are of the body without it (spireBodyMax): the points are
+// a cushion over it, never a larger body for a blow's share to take more of.
+//
 // Not a DFU member: Daggerfall Unity has no other players. Ledger A (RENOWN1).
 
 import { renownBonus } from '../net/renown.js';
 
 /** The layer's health on an entity: whole, never negative. */
 export const renownHpOf = (e) => (Number.isFinite(e?.renownHp) && e.renownHp > 0 ? Math.trunc(e.renownHp) : 0);
+/** EG-ZR: the Spire's Stoneskin on an entity (`spireHp`): whole, never negative. */
+export const spireHpOf = (e) => (Number.isFinite(e?.spireHp) && e.spireHp > 0 ? Math.trunc(e.spireHp) : 0);
+/** EG-ZR: the body the Spire's shares are of - the maximum health without Stoneskin's points (the census's whole). */
+export const spireBodyMax = (e) => Math.max(0, (e?.maxHealth ?? 0) - spireHpOf(e));
 /** The layer's magicka on an entity: whole, never negative. */
 export const renownMpOf = (e) => (Number.isFinite(e?.renownMp) && e.renownMp > 0 ? Math.trunc(e.renownMp) : 0);
+/** EG15: the folds' magicka on an entity (entityMods.js's `magicka` channel, read off the one cached field as statMods.js
+ *  reads `_mods` - this leaf imports no fold): whole, never negative. */
+export const foldMpOf = (e) => { const v = e?._mods?.magicka; return Number.isFinite(v) && v > 0 ? Math.trunc(v) : 0; };
+/** EG15: every online term on the maximum magicka - Renown's and the folds' - what a save and the magery take off. */
+export const onlineMpOf = (e) => renownMpOf(e) + foldMpOf(e);
 
 /** `v` moved from a maximum of `from` to one of `to`, keeping its fraction - whole, never above `to`, and never down to
  *  0 from anything above it (a scale must not kill) unless the maximum itself is 0; 0 and below stay where they are.
@@ -83,12 +106,28 @@ export function setOnlineLayerExtra(entity, extra) {
 }
 
 /**
+ * EG-ZR: put the Spire's Stoneskin of `hp` whole points on the entity (0 takes it off), keeping current health at the same
+ * fraction of its maximum as the layer does. Only an entity whose maximum is the live accessor (systems/chargen.js
+ * defineLiveMaxHealth - every player's, chargen's and the load arm's) carries it. Answers the points put on.
+ * @param {any} entity @param {number} hp
+ */
+export function setSpireHp(entity, hp) {
+  const pts = Number.isFinite(hp) && hp > 0 ? Math.trunc(hp) : 0;
+  if (!entity || !Object.getOwnPropertyDescriptor(entity, 'maxHealth')?.get) return 0;
+  if (spireHpOf(entity) === pts) return pts;
+  const from = entity.maxHealth;
+  entity.spireHp = pts;
+  if (Number.isFinite(entity.health)) entity.health = keepFraction(entity.health, from, entity.maxHealth);
+  return pts;
+}
+
+/**
  * The vitals as they would stand WITHOUT the layer - what a save keeps: `{ health, magicka, maxMagicka }` (the save's
  * maximum health is already `rawMaxHealth`, which the layer never enters). With no layer on, the entity's own values.
  * @param {any} entity
  */
 export function offlineVitals(entity) {
-  const hp = renownHpOf(entity), mp = renownMpOf(entity);
+  const hp = renownHpOf(entity), mp = onlineMpOf(entity);   // EG15: and the folds' magicka (the Battlemage's Bearing)
   const out = { health: entity?.health, magicka: entity?.magicka, maxMagicka: entity?.maxMagicka };
   if (hp) {
     // the offline maximum is the stored one under the limiter, exactly as the accessor reads it with no layer

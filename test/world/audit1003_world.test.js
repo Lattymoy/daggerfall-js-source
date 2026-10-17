@@ -32,6 +32,7 @@ import { remapSubMeshes } from '../../src/world/texRemap.js';
 import { keyResolver } from '../../src/render/staticBatch.js';
 import { castleEntranceOf } from '../../src/systems/siegeField.js';
 import IDX from '../../vendor/daggerfall-arena/Models/864102.json' with { type: 'json' };
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const BIN = new Uint8Array(readFileSync(new URL('../../vendor/daggerfall-arena/Models/864102.bin', import.meta.url)));
@@ -239,7 +240,7 @@ test('AUDIT PRE-MERGE 1003 W6: the colosseum\'s seal gives the frame back - the 
   assert.ok(n < 1000, 'built once');
   _resetCustomModels(); _resetArena();
   // the pixel's build hands its breather to the pipeline, the pipeline to the registry's door
-  assert.match(read('src/scenes/world.js'), /const gpu = await getGpuMesh\(placed\.modelIdNum, \(\) => breather\.breathe\(\)\);/);
+  assert.match(hostText('src/scenes/world.js'), /const gpu = await getGpuMesh\(placed\.modelIdNum, \(\) => breather\.breathe\(\)\);/);
   const pipe = read('src/scenes/dataPipeline.js');
   assert.match(pipe, /const getGpuMesh = \(modelIdNum, breathe = null\) => cachedMesh\(modelIdNum, \(\) => buildGpuMesh\(modelIdNum, breathe\)\);/);
   assert.match(pipe, /const custom = await customModelBuilt\(modelIdNum, \{ classicModel: classicModelOf \}, breathe\);/);
@@ -255,13 +256,13 @@ test('AUDIT PRE-MERGE 1003 W7: a crown city\'s castle entrance is never the aren
   assert.deepEqual(castleEntranceOf([{ ...stair, arena: false }, castle]).door, stair.door, 'any other lower door is still the lowest');
   // the city's host marks the arena block's dungeon entrances in the castle's list alone; the doors the player takes are
   // gathered beside it as before (the undercroft's own door: isUndercroftDoor over the host's door list)
-  const w = read('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /pixelDungeonDoors\.push\(\{ door: doorCornersOf\(d, local\), box, normal: doorNormalOf\(d, local\), arena: b\.blockName === ARENA_BLOCK \}\);/);
   assert.match(w, /const staticDoors = getStaticDoors\(cpu, b\.dfBlock\.index, placed\.recordIndex, local\);/);
 });
 
 test('AUDIT PRE-MERGE 1003 W8: the city\'s schedule says what it does - one start an hour, never again that hour after a walk away or a door (mutant: AUDIT1003-W8-DOC)', () => {
-  const w = read('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.ok(!w.includes('a walk back restarts it'), 'no walk back restarts the hour\'s exhibition');
   assert.ok(!/comes back from its\s+\*\s+call if I return inside its window/.test(w), 'nor brings it back from its call');
   assert.match(w, /`_arenaHourRun` starts each hour's bout once, and nothing clears it/);

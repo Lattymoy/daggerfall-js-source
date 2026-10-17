@@ -33,6 +33,7 @@ import { PERSON_MOVE_SPEED } from '../../src/characters/mobile/mobilePerson.js';
 import { CLASSIC_MINUTES_PER_SECOND } from '../../src/systems/worldTick.js';
 import { standService, T0, confirmChapters } from '../accountDb.mjs';
 import { seatRealm } from '../realmSeat.mjs';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const DAY = 86_400, ANTICLERE = 21, DAGGERFALL = 17, FIGHTERS = 41, MAGES = 40, THIEVES = 42;
@@ -275,7 +276,7 @@ test('AUDIT CHAP4 C1: with nothing to claim the tab asks again once ROLL_SEATS_M
 });
 
 test('AUDIT CHAP4 C2, C3: the living town reads its chapters at its own pixel; the rank\'s ceiling holds from the page\'s first frame (mutants: the player\'s pixel, the held gate)', () => {
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /chapterOf: chapterSheet \? \(faction\) => livingChapterOf\(faction, px, py\) : undefined,/);
   assert.match(w, /const livingChapterOf = \(\/\*\* @type \{number\} \*\/ faction, \/\*\* @type \{number\} \*\/ x, \/\*\* @type \{number\} \*\/ y\) => \{\n\s+const f = chapterFactionOf\(faction, townTalk\?\.factionDict \?\? null\) \?\? faction;\n\s+const region = \(\(\) => \{ try \{ return maps\.getRegionIndexAt\(x, y\); \} catch \{ return null; \} \}\)\(\);/);
   // PIN MOVED (ROLL-PACE, FIELD BUGS 2026-10-15f): the ceiling is the Roll's pace's, read from the page's first frame -
@@ -306,7 +307,7 @@ test('AUDIT CHAP4 C4: the chapter is the line\'s subject - an order\'s plural na
 });
 
 test('AUDIT CHAP4 C5, C6: both doors of a seat\'s Hall of Records read it one way - the seat\'s Chronicle and its region\'s chapters\', together (mutants: the board\'s door, the serial read)', () => {
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /const w = st && seatBook \? await hallOfRecordsRead\(st\) : null;/);
   assert.match(w, /if \(!seat \|\| !seatBook\) return null;\n\s+return hallOfRecordsRead\(seat\);/);
   assert.match(w, /const \[r, ch\] = await Promise\.all\(\[/);

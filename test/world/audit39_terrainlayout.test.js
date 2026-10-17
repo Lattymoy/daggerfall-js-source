@@ -23,9 +23,10 @@ import { StreamingWorldState, TERRAIN_DISTANCE } from '../../src/world/streaming
 import { layoutRmbBlock } from '../../src/world/rmbLayout.js';
 import { blockBuildingCount } from '../../src/systems/talk/talkTopics.js';
 import { collectDungeonEnemies } from '../../src/characters/dungeonEnemies.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const read = (p) => readFileSync(join(root, p), 'utf8');
+const read = (p) => hostText(p);
 const HOSTS = ['src/scenes/exterior.js', 'src/scenes/world.js'];
 
 test('AUDIT 39 #13: the daytime ambient takes the weather scale TWICE', () => {

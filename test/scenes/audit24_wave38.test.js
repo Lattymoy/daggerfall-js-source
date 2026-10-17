@@ -18,8 +18,9 @@ import { goldAmount } from '../../src/systems/court.js';
 import { SOUND } from '../../src/systems/soundClips.js';
 import { KB_UNIT, enemyWeightClassicUnits, weaponKnockbackSpeed, weaponKnockbackApplies } from '../../src/combat/formulas.js';
 import { ENEMY_BASICS, ENEMY_NAMES, enemyDisplayName } from '../../src/characters/enemy/enemyBasics.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
-const rd = (f) => readFileSync(new URL(`../../${f}`, import.meta.url), 'utf8');
+const rd = (f) => hostText(f);
 const GHOST = 18, WRAITH = 23;
 
 /** A renderer/texture rig thin enough to see exactly what was minted. */

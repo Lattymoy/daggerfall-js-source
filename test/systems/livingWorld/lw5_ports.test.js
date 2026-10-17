@@ -15,6 +15,7 @@ import { ResidentWalker } from '../../../src/characters/residentWalker.js';
 import { DAY_MIN } from '../../../src/systems/livingWorld/dayPlan.js';
 import { CALENDAR_MPM } from '../../../src/systems/livingWorld/trips.js';
 import { NAV_CELL } from '../../../src/world/city/cityNavigation.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const rd = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const port = (id) => ({ id, name: `P${id}`, px: id, py: 0, region: 1 });
@@ -164,7 +165,7 @@ test('LW5 the town reads the ships: a sailor at sea or ashore abroad is in no st
   town._crewsNow();
   assert.notEqual(town.planOf(far, 50), plan, 'her arrival moved: planned again');
   // the host
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /const livingSailing = \(\) => !!naval\?\.enabled && !!mapDict;/);
   // PIN MOVED (BOOT-TDZ II): the lanes asked only once they stand, ahead of the rest
   assert.match(w, /if \(\(typeof _lanesReady !== 'undefined' && !_lanesReady\) \|\| res\.job !== 'sailor' \|\| res\.town !== town\?\.mapId \|\| !town\?\.port \|\| !livingSailing\(\)\) return null;/, 'its own sailors alone: a visiting crew is the crews\' own');
@@ -172,7 +173,7 @@ test('LW5 the town reads the ships: a sailor at sea or ashore abroad is in no st
   assert.match(w, /const livingPacketAt = \(b\) => \{ const way = livingLaneWay\(b\.lane\); return way \? packetAt\(b\.lane, way, raidNowMs\(\), b\.k, b\.count\) : null; \};/);
   assert.match(w, /return res \? \[\{ res: res\.id === c\.res\.id \? c\.res : res, berth: c\.berth, inT: t - Math\.max\(0, nowS - \(c\.until - LANE_DWELL_S\)\) \* rate, outT: t \+ Math\.max\(0, c\.until - nowS\) \* rate \}\] : \[\];/);
   assert.match(w, /ashore: \(res\) => livingAshore\(livingTown, res\), crews: \(\) => livingCrews\(livingTown\),/);
-  assert.match(w, /const b = harbourBook\.get\(`port:\$\{maskMapId\(livingTown\.mapId\)\}`\)\?\.harbour\?\.berths\?\.\[0\];/);
+  assert.match(w, /const b = host\.harbourBook\.get\(`port:\$\{maskMapId\(livingTown\.mapId\)\}`\)\?\.harbour\?\.berths\?\.\[0\];/);
   assert.match(w, /return \{ x: b\.pos\[0\] - locOrigin\[0\] - tr\[0\], z: b\.pos\[1\] - locOrigin\[2\] - tr\[2\] \};/);
   assert.match(w, /_livingTownByPort\.set\(maskMapId\(t\.mapId\), t\)/);
   assert.equal(LANE_DWELL_S, 600);

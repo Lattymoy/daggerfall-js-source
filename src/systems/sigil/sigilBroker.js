@@ -52,6 +52,7 @@ import { registerModSaveData } from '../modSaveData.js';
 import { isLocked } from '../item/itemLock.js';
 import { addItem } from '../inventory.js';
 import { isEquipped } from '../equip.js';   // SS5: a worn ware is taken off before it is dismantled
+import { EG_SINK_EMBERS, EG_PANOPLY_IDS } from '../../net/eliteGates/egPay.js';   // EG-E1: the Panoply sink's price and its pieces
 
 /** A day of the shared clock, in milliseconds - the stock's life. */
 export const BROKER_DAY_MS = 86_400_000;
@@ -255,6 +256,43 @@ export async function insigniaSale(offer, { items, buy, held, save }) {
   }
   save();
   return { ok: true, data: r.data };
+}
+
+/**
+ * EG-E1 (2026-10-12, Mac: "I said I want everything"; bible/11-Multiplayer/Elite-Gates.md section 19, THE SINK): THE
+ * BROKER'S PANOPLY PIECE, BOTH HALVES - one piece of the buyer's choosing (`piece`, one of EG_PANOPLY_IDS), once an account
+ * an arena week, for EG_SINK_EMBERS - the insignia's sale's own order (insigniaSale): the piece minted first (`mint` - the
+ * host's, off the Panoply's records: a piece it cannot make is never paid for), the embers taken from the pack, then the
+ * account service's sale (`buy` - server-account/src/egEconomy.js egSink); one it refused gives the embers back; one whose
+ * answer was lost (insigniaUnheard) is asked after (`held`: truthy where the service holds this week's sale of this
+ * piece - `/v1/eg/keys`' `sink`); a sale held adds the piece and is `save`d at once. The piece carries no `stonesPaid`:
+ * it is not the day's stock, and no dismantle pays its embers back (itemLaw.js's Broker price check). Answers `{ ok:
+ * true, data, item }` or `{ ok: false, error }` ('piece': not a piece the host can mint; 'stones': the pack short).
+ * @param {string} piece
+ * @param {{ items: any[], buy: (piece: string) => Promise<any>, held: (piece: string) => Promise<any>, mint: (piece: string) => any, save: () => void }} io
+ */
+export async function panoplySale(piece, { items, buy, held, mint, save }) {
+  if (!EG_PANOPLY_IDS.includes(piece)) return { ok: false, error: 'piece' };
+  let item = null;
+  try { item = mint(piece); } catch { item = null; }
+  if (!item) return { ok: false, error: 'piece' };
+  if (!spendStones(items, EG_SINK_EMBERS)) return { ok: false, error: 'stones' };
+  let r;
+  try { r = await buy(piece); } catch { r = { ok: false, error: 'offline' }; }
+  const lost = insigniaUnheard(r);
+  if (lost) {
+    let h = null;
+    try { h = await held(piece); } catch { h = null; }
+    if (h) r = { ok: true, data: h };
+  }
+  if (!r?.ok) {
+    addItem(items, Object.assign(sigilStone(), { stackCount: EG_SINK_EMBERS }));   // the embers back: the service holds no sale
+    return { ok: false, error: typeof r?.error === 'string' ? r.error : 'offline' };
+  }
+  delete item.stonesPaid;
+  addItem(items, item);
+  save();
+  return { ok: true, data: r.data, item };
 }
 
 /** The stones out of the pack (`items`, the list itself), as `take` names them (`{ item, count }` each): a stack the

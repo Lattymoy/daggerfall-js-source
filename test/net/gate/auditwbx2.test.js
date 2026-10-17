@@ -22,11 +22,12 @@ import { foldGate, GATE_STATE_EMPTY } from '../../../src/net/gate/gateLink.js';
 import { bossPlace } from '../../../src/world/gate/gateBoss.js';
 import { createSpoilsPool, spoilsStore, SPOILS_DAY_KEY, spentKey } from '../../../src/scenes/spoilsPool.js';
 import { fakeRooms } from '../../fakeRoom.mjs';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const read = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 
 test('AUDIT WBX2 M1 the crash\'s records have their keeper online or not: the spoils pool is made whatever the session, every save that lands is told to it, and the crash\'s door hands each record to it - offline no save could ever clear a record, and its spoils came back at every boot (mutants: the save\'s word online alone)', () => {
-  const w = read('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /const spoilsPool = createSpoilsPool\(\{/, 'made online or not');
   assert.doesNotMatch(w, /const spoilsPool = gateLink \?/);
   assert.match(w, /\n {2}onSlotSaved\(\(characterId\) => \{ try \{ spoilsPool\.saved\(characterId\);/, 'every save that lands, told');
@@ -205,9 +206,14 @@ test('AUDIT WBX2 M7 the stone asks for a player sealed in it at every stand - it
   assert.match(read('src/scenes/gate/gatePool.js'), /const f = feet\(\);\n {4}if \(f && g && inGateRoot\(place, f\)\) landBefore\(g\);/);
 });
 
-test('AUDIT WBX2 M9 the sweep reads its cursors in one storage read (AUDIT RAID R2: four now - the raid receipts\' too; AUDIT SERPENT S5: five - the serpent receipts\'; SD9a: six - the Hour\'s)', () => {
+test('AUDIT WBX2 M9 the sweep reads its cursors in one storage read (AUDIT RAID R2: four now - the raid receipts\' too; AUDIT SERPENT S5: five - the serpent receipts\'; SD9a: six - the Hour\'s; EG-ZA: seven - the Elite Breach\'s held receipts; AUDIT EG IV: eight - the breach calls\')', () => {
   const idx = read('server/src/index.js');
-  assert.match(idx, /const cur = \(await this\.state\.storage\.get\(\['sweep:acct', 'sweep:party', 'sweep:gaterc', 'sweep:raidrc', 'sweep:serpentrc', 'sweep:sdrc'\]\)\);/);
+  // PIN MOVED (EG-ZA, bible/11-Multiplayer/Elite-Gates.md section 23 step 5): the hub holds a breach's receipts under
+  // `egrc:<sub>` and its sweep is the gate's, widened by one prefix - its cursor joins the one read. PIN MOVED (AUDIT EG
+  // IV, the net group; Elite-Gates.md section 23): a breach's lapsed calls (`egcall:<sub>`) are swept too - their cursor joins it
+  assert.match(idx, /const cur = \(await this\.state\.storage\.get\(\['sweep:acct', 'sweep:party', 'sweep:gaterc', 'sweep:raidrc', 'sweep:serpentrc', 'sweep:sdrc', 'sweep:egrc', 'sweep:egcall'\]\)\);/);
+  assert.doesNotMatch(idx, /storage\.get\('sweep:egrc'\)/);
+  assert.doesNotMatch(idx, /storage\.get\('sweep:egcall'\)/);
   assert.doesNotMatch(idx, /storage\.get\('sweep:gaterc'\)/);
   assert.doesNotMatch(idx, /storage\.get\('sweep:raidrc'\)/);
   assert.doesNotMatch(idx, /storage\.get\('sweep:serpentrc'\)/);

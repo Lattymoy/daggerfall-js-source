@@ -1,0 +1,954 @@
+[
+  {
+    "name": "EGZN-wall-run-unmarked",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "  const piece = (build) => occ(() => egKitInto(f, build));\n  egPassage(",
+    "new": "  const piece = (build) => egKitInto(f, build);\n  egPassage(",
+    "tests": [
+      "test/world/eliteGates/egz_camera.test.js",
+      "test/world/eliteGates/eglook_halls.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-vault-left-out",
+    "file": "src/world/eliteGates/egGround.js",
+    "old": "  if (vault) passageVault(spec, q, grid, style, egVaultOpen(spec, q, grid.length - 1), piece);",
+    "new": "  if (vault && false) passageVault(spec, q, grid, style, egVaultOpen(spec, q, grid.length - 1), piece);",
+    "tests": [
+      "test/world/eliteGates/egz_camera.test.js",
+      "test/world/eliteGates/eglook_halls.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-stacks-bookcases-left-out",
+    "file": "src/world/eliteGates/egGround.js",
+    "old": "return (kit, ta, tb, yb) => { bookcase(kit, W, ta, tb, yb, spec); return {",
+    "new": "return (kit, ta, tb, yb) => { return {",
+    "tests": [
+      "test/world/eliteGates/egz_camera.test.js",
+      "test/world/eliteGates/eglook_halls.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-colonnade-left-out",
+    "file": "src/world/eliteGates/egGround.js",
+    "old": "if (q.open) { colonnade(spec, q, grid, band, piece); return; }",
+    "new": "if (q.open) return;",
+    "tests": [
+      "test/world/eliteGates/egz_camera.test.js",
+      "test/world/eliteGates/eglook_halls.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-vault-ribs-left-out",
+    "file": "src/world/eliteGates/egGround.js",
+    "old": "      rib(kit, k);\n      if (k + 2 === grid.length) rib(kit, k + 1);",
+    "new": "      if (k + 2 === grid.length) rib(kit, k + 1);",
+    "tests": [
+      "test/world/eliteGates/egz_camera.test.js",
+      "test/world/eliteGates/eglook_halls.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-ossuary-loculi-left-out",
+    "file": "src/world/eliteGates/egGround.js",
+    "old": "(odd(ta) ? loculi(kit, W, ta, tb, yb, yTop, style, spec) : null)",
+    "new": "null",
+    "tests": [
+      "test/world/eliteGates/egz_camera.test.js",
+      "test/world/eliteGates/eglook_halls.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-gloam-trunks-left-out",
+    "file": "src/world/eliteGates/egGround.js",
+    "old": "  if (kit === 'gloam') thicket(spec, q, yFoot, yTop, piece);\n",
+    "new": "",
+    "tests": [
+      "test/world/eliteGates/egz_camera.test.js",
+      "test/world/eliteGates/eglook_halls.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-forge-hearths-left-out",
+    "file": "src/world/eliteGates/egGround.js",
+    "old": "(odd(ta) ? forgeBay(kit, W, ta, tb, yb, yTop, spec) : null)",
+    "new": "null",
+    "tests": [
+      "test/world/eliteGates/egz_camera.test.js",
+      "test/world/eliteGates/eglook_halls.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-tiers-unmarked",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "else if (d.t === 'tiers') egTierBenches(spec, d, piece);",
+    "new": "else if (d.t === 'tiers') egTierBenches(spec, d, (build) => egKitInto(f, build));",
+    "tests": [
+      "test/world/eliteGates/egz_camera.test.js",
+      "test/world/eliteGates/eglook_halls.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-niche-floor-an-occluder",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "    quadTo(f, SD_REALM_FLOOR_RECORD, [x0, y0, z0], [x1, y0, z0], [x1, y0, z1], [x0, y0, z1], [0, 1, 0]);\n    occ(() => {\n",
+    "new": "    occ(() => {\n    quadTo(f, SD_REALM_FLOOR_RECORD, [x0, y0, z0], [x1, y0, z0], [x1, y0, z1], [x0, y0, z1], [0, 1, 0]);\n",
+    "tests": [
+      "test/world/eliteGates/egz_camera.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-niche-unmarked",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "    occ(() => {\n      quadTo(f, SD_REALM_ROOT_RECORD, [x0, y1, z0]",
+    "new": "    whole(() => {\n      quadTo(f, SD_REALM_ROOT_RECORD, [x0, y1, z0]",
+    "tests": [
+      "test/world/eliteGates/egz_camera.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-door-post-unmarked",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "if (d.role === 'end') egDoorway(spec, d, EG_DOOR, band, (build) => occ(() => egKitInto(f, build)));",
+    "new": "if (d.role === 'end') egDoorway(spec, d, EG_DOOR, band, (build) => egKitInto(f, build));",
+    "tests": [
+      "test/world/eliteGates/egz_camera.test.js",
+      "test/world/eliteGates/eglook_halls.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-door-arch-left-out",
+    "file": "src/world/eliteGates/egGround.js",
+    "old": "  piece((kit) => {\n    for (const f of [-1, 1]) {\n      const W = egWallFrame(spec, d.x - ro,",
+    "new": "  ((build) => build(createMeshKit()))((kit) => {\n    for (const f of [-1, 1]) {\n      const W = egWallFrame(spec, d.x - ro,",
+    "tests": [
+      "test/world/eliteGates/egz_camera.test.js",
+      "test/world/eliteGates/eglook_halls.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-ring-wall-unmarked",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "if (d.t === 'wall') egRingArcade(spec, d, band, piece);",
+    "new": "if (d.t === 'wall') egRingArcade(spec, d, band, (build) => egKitInto(f, build));",
+    "tests": [
+      "test/world/eliteGates/egz_camera.test.js",
+      "test/world/eliteGates/eglook_halls.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-long-wall-unmarked",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "} else if (d.t === 'hall') egLongWalls(spec, d, band, piece);",
+    "new": "} else if (d.t === 'hall') egLongWalls(spec, d, band, (build) => egKitInto(f, build));",
+    "tests": [
+      "test/world/eliteGates/egz_camera.test.js",
+      "test/world/eliteGates/eglook_halls.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-vignette-unmarked",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "for (const v of spec.vignettes ?? []) occ(() => vignetteModel(f, spec, v));",
+    "new": "for (const v of spec.vignettes ?? []) vignetteModel(f, spec, v);",
+    "tests": [
+      "test/world/eliteGates/egz_camera.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-arch-unmarked",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "egChokeArch(spec, d, band, archParts(spec, d), (build) => occ(() => egKitInto(f, build)));",
+    "new": "egChokeArch(spec, d, band, archParts(spec, d), (build) => egKitInto(f, build));",
+    "tests": [
+      "test/world/eliteGates/egz_camera.test.js",
+      "test/world/eliteGates/eglook_halls.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-spout-unmarked",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "of egSlagSpouts(spec)) occ(() => {",
+    "new": "of egSlagSpouts(spec)) whole(() => {",
+    "tests": [
+      "test/world/eliteGates/egz_camera.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-marker-floats-not-triangles",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "for (const [rec, g] of f.byRec) at.set(rec, g.p.length / 9);",
+    "new": "for (const [rec, g] of f.byRec) at.set(rec, g.p.length / 3);",
+    "tests": [
+      "test/world/eliteGates/egz_camera.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-marker-empty-piece",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "    if (runs.length) pieces.push(runs);",
+    "new": "    pieces.push(runs);",
+    "tests": [
+      "test/world/eliteGates/egz_camera.test.js"
+    ],
+    "equivalent": true,
+    "why": "Every builder the marker wraps lays faces (a box, a quad, a niche's four, a vignette's boxes, a spout and its lip), so no piece is ever empty: the guard only keeps a future builder that lays nothing from minting an empty piece."
+  },
+  {
+    "name": "EGZN-run-at-the-wrong-index",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "const i = sub.get(rec), s = model.subMeshes[i].startIndex + a * 3;",
+    "new": "const i = sub.get(rec), s = model.subMeshes[i].startIndex + a;",
+    "tests": [
+      "test/world/eliteGates/egz_camera.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-box-min-unkept",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "if (x < b[k]) b[k] = x; if (x > b[k + 3]) b[k + 3] = x;",
+    "new": "if (x > b[k]) b[k] = x; if (x > b[k + 3]) b[k + 3] = x;",
+    "tests": [
+      "test/world/eliteGates/egz_camera.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-occluders-never-laid",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "  model.occluders = egOccluderRuns(model, pieces);",
+    "new": "  model.occluders = [];",
+    "tests": [
+      "test/world/eliteGates/egz_camera.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-ledge-shaft-unread",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "return q?.shaft && z < q.zB && y >= q.yB + EG_SHAFT_LEDGE_M ? EG_SHAFT_WAY : null;",
+    "new": "return q && z < q.zB && y >= q.yB + EG_SHAFT_LEDGE_M ? EG_SHAFT_WAY : null;",
+    "tests": [
+      "test/net/eliteGates/egz_camera_shaft.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-ledge-foot-z-unread",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "return q?.shaft && z < q.zB && y >= q.yB + EG_SHAFT_LEDGE_M ? EG_SHAFT_WAY : null;",
+    "new": "return q?.shaft && y >= q.yB + EG_SHAFT_LEDGE_M ? EG_SHAFT_WAY : null;",
+    "tests": [
+      "test/net/eliteGates/egz_camera_shaft.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-ledge-foot-height-unread",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "return q?.shaft && z < q.zB && y >= q.yB + EG_SHAFT_LEDGE_M ? EG_SHAFT_WAY : null;",
+    "new": "return q?.shaft && z < q.zB ? EG_SHAFT_WAY : null;",
+    "tests": [
+      "test/net/eliteGates/egz_camera_shaft.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-ledge-line-moved",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "export const EG_SHAFT_LEDGE_M = 0.5;",
+    "new": "export const EG_SHAFT_LEDGE_M = 0.4;",
+    "tests": [
+      "test/net/eliteGates/egz_camera_shaft.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-zone-shaft-unmarked",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "open: q.open ? 1 : 0, shaft: q.shaft ? 1 : 0, zB: q.zB ?? q.z1, yB: q.yB ?? q.y });",
+    "new": "open: q.open ? 1 : 0, shaft: 0, zB: q.zB ?? q.z1, yB: q.yB ?? q.y });",
+    "tests": [
+      "test/net/eliteGates/egz_camera_shaft.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-tri-one-face",
+    "file": "src/scenes/eliteGates/egOcclude.js",
+    "old": "  if (Math.abs(det) < 1e-12) return false;",
+    "new": "  if (det < 1e-12) return false;",
+    "tests": [
+      "test/world/eliteGates/egz_camera.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-tri-u-unbounded",
+    "file": "src/scenes/eliteGates/egOcclude.js",
+    "old": "  if (u < 0 || u > 1) return false;",
+    "new": "  if (u < 0) return false;",
+    "tests": [
+      "test/world/eliteGates/egz_camera.test.js"
+    ],
+    "equivalent": true,
+    "why": "With v at least nought, u over one already puts u + v over one, which the next line refuses: the u > 1 test is Moller-Trumbore's early out, never the only refusal."
+  },
+  {
+    "name": "EGZN-tri-v-unbounded",
+    "file": "src/scenes/eliteGates/egOcclude.js",
+    "old": "  if (v < 0 || u + v > 1) return false;",
+    "new": "  if (v < 0) return false;",
+    "tests": [
+      "test/world/eliteGates/egz_camera.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-tri-length-unread",
+    "file": "src/scenes/eliteGates/egOcclude.js",
+    "old": "  return t > 0 && t < len;",
+    "new": "  return t > 0;",
+    "tests": [
+      "test/world/eliteGates/egz_camera.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-tri-behind-the-eye",
+    "file": "src/scenes/eliteGates/egOcclude.js",
+    "old": "  return t > 0 && t < len;",
+    "new": "  return t < len;",
+    "tests": [
+      "test/world/eliteGates/egz_camera.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-box-slab-miss-unread",
+    "file": "src/scenes/eliteGates/egOcclude.js",
+    "old": "    if (t0 > t1) return false;",
+    "new": "    if (t0 > t1 + 1e9) return false;",
+    "tests": [
+      "test/world/eliteGates/egz_camera.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-box-parallel-unread",
+    "file": "src/scenes/eliteGates/egOcclude.js",
+    "old": "    if (Math.abs(d[a]) < 1e-12) { if (o[a] < b[a] || o[a] > b[a + 3]) return false; continue; }",
+    "new": "    if (Math.abs(d[a]) < 1e-12) continue;",
+    "tests": [
+      "test/world/eliteGates/egz_camera.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-ray-not-stopped-short",
+    "file": "src/scenes/eliteGates/egOcclude.js",
+    "old": "full = Math.hypot(dx, dy, dz), len = full - EG_OCCLUDE_BODY_M;",
+    "new": "full = Math.hypot(dx, dy, dz), len = full;",
+    "tests": [
+      "test/world/eliteGates/egz_camera.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-ray-null-point",
+    "file": "src/scenes/eliteGates/egOcclude.js",
+    "old": "    if (!p) continue;\n",
+    "new": "\n",
+    "tests": [
+      "test/world/eliteGates/egz_camera.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-ray-box-prefilter",
+    "file": "src/scenes/eliteGates/egOcclude.js",
+    "old": "      if (!egSegBox(eye, d, len, q.b)) continue;\n",
+    "new": "\n",
+    "tests": [
+      "test/world/eliteGates/egz_camera.test.js"
+    ],
+    "equivalent": true,
+    "why": "The box test is a prefilter: every triangle a segment crosses lies in its piece's box, so skipping the test answers the same pieces, only slower."
+  },
+  {
+    "name": "EGZN-ray-seen-prefilter",
+    "file": "src/scenes/eliteGates/egOcclude.js",
+    "old": "      if (seen[i]) continue;\n",
+    "new": "\n",
+    "tests": [
+      "test/world/eliteGates/egz_camera.test.js"
+    ],
+    "equivalent": true,
+    "why": "A piece already crossed by an earlier point is only crossed again: the answer is read off the seen flags, each once, so skipping the check answers the same pieces."
+  },
+  {
+    "name": "EGZN-keep-moved",
+    "file": "src/scenes/eliteGates/egOcclude.js",
+    "old": "export const EG_OCCLUDE_KEEP = 0.25;",
+    "new": "export const EG_OCCLUDE_KEEP = 0.3;",
+    "tests": [
+      "test/world/eliteGates/egz_camera.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-fade-moved",
+    "file": "src/scenes/eliteGates/egOcclude.js",
+    "old": "export const EG_OCCLUDE_FADE_S = 0.2;",
+    "new": "export const EG_OCCLUDE_FADE_S = 0.25;",
+    "tests": [
+      "test/world/eliteGates/egz_camera.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-stop-moved",
+    "file": "src/scenes/eliteGates/egOcclude.js",
+    "old": "export const EG_OCCLUDE_BODY_M = 0.3;",
+    "new": "export const EG_OCCLUDE_BODY_M = 0.2;",
+    "tests": [
+      "test/world/eliteGates/egz_camera.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-chest-moved",
+    "file": "src/scenes/eliteGates/egOcclude.js",
+    "old": "export const EG_OCCLUDE_CHEST_M = 0.9;",
+    "new": "export const EG_OCCLUDE_CHEST_M = 1.0;",
+    "tests": [
+      "test/world/eliteGates/egz_camera.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-views-cap-moved",
+    "file": "src/scenes/eliteGates/egOcclude.js",
+    "old": "export const EG_OCCLUDE_VIEWS_MAX = 64;",
+    "new": "export const EG_OCCLUDE_VIEWS_MAX = 640;",
+    "tests": [
+      "test/world/eliteGates/egz_camera.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-ease-past-keep",
+    "file": "src/scenes/eliteGates/egOcclude.js",
+    "old": "  return hit ? Math.max(EG_OCCLUDE_KEEP, k - step) : Math.min(1, k + step);",
+    "new": "  return hit ? k - step : Math.min(1, k + step);",
+    "tests": [
+      "test/world/eliteGates/egz_camera.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-ease-past-whole",
+    "file": "src/scenes/eliteGates/egOcclude.js",
+    "old": "  return hit ? Math.max(EG_OCCLUDE_KEEP, k - step) : Math.min(1, k + step);",
+    "new": "  return hit ? Math.max(EG_OCCLUDE_KEEP, k - step) : k + step;",
+    "tests": [
+      "test/world/eliteGates/egz_camera.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-ease-reversed",
+    "file": "src/scenes/eliteGates/egOcclude.js",
+    "old": "  return hit ? Math.max(EG_OCCLUDE_KEEP, k - step) : Math.min(1, k + step);",
+    "new": "  return !hit ? Math.max(EG_OCCLUDE_KEEP, k - step) : Math.min(1, k + step);",
+    "tests": [
+      "test/world/eliteGates/egz_camera.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-ease-pace",
+    "file": "src/scenes/eliteGates/egOcclude.js",
+    "old": "  const step = ((1 - EG_OCCLUDE_KEEP) * Math.max(0, Number(dt) || 0)) / EG_OCCLUDE_FADE_S;",
+    "new": "  const step = (Math.max(0, Number(dt) || 0)) / EG_OCCLUDE_FADE_S;",
+    "tests": [
+      "test/world/eliteGates/egz_camera.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-ranges-never-merged",
+    "file": "src/scenes/eliteGates/egOcclude.js",
+    "old": "const m = merged[merged.length - 1]; if (m && m[0] + m[1] === at) m[1] += len; else merged.push([at, len]);",
+    "new": "merged.push([at, len]);",
+    "tests": [
+      "test/world/eliteGates/egz_camera.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-rest-tail-dropped",
+    "file": "src/scenes/eliteGates/egOcclude.js",
+    "old": "    put(s, from, end - from);\n",
+    "new": "\n",
+    "tests": [
+      "test/world/eliteGates/egz_camera.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-rest-drawn-whole",
+    "file": "src/scenes/eliteGates/egOcclude.js",
+    "old": "      const rest = viewOf(`r:${ids.join(',')}`, ids, true);",
+    "new": "      const rest = viewOf('whole', [], true);",
+    "tests": [
+      "test/world/eliteGates/egz_camera.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-shadow-unrecorded",
+    "file": "src/scenes/eliteGates/egOcclude.js",
+    "old": "      if (shadow) renderer.recordShadowMesh?.(mesh, M, remap);\n",
+    "new": "\n",
+    "tests": [
+      "test/world/eliteGates/egz_camera.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-circle-not-taken",
+    "file": "src/scenes/eliteGates/egOcclude.js",
+    "old": "      draw.hidden = true; hid = true;",
+    "new": "      hid = true;",
+    "tests": [
+      "test/world/eliteGates/egz_camera.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-dissolve-never-set",
+    "file": "src/scenes/eliteGates/egOcclude.js",
+    "old": "        renderer.setDissolve(k);\n",
+    "new": "\n",
+    "tests": [
+      "test/world/eliteGates/egz_camera.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-dissolve-never-back",
+    "file": "src/scenes/eliteGates/egOcclude.js",
+    "old": "      renderer.setDissolve(1);\n      return lastDraws;",
+    "new": "      return lastDraws;",
+    "tests": [
+      "test/world/eliteGates/egz_camera.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-circle-never-handed-back",
+    "file": "src/scenes/eliteGates/egOcclude.js",
+    "old": "  const unhide = () => { if (draw && hid) draw.hidden = false; hid = false; };",
+    "new": "  const unhide = () => { hid = false; };",
+    "tests": [
+      "test/world/eliteGates/egz_camera.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-dead-mesh-drawn",
+    "file": "src/scenes/eliteGates/egOcclude.js",
+    "old": "      if (!act.length || !draw || !mesh || mesh._dead || !renderer?.meshView || !renderer.setDissolve) { unhide(); return 0; }",
+    "new": "      if (!act.length || !draw || !mesh || !renderer?.meshView || !renderer.setDissolve) { unhide(); return 0; }",
+    "tests": [
+      "test/world/eliteGates/egz_camera.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-views-never-kept",
+    "file": "src/scenes/eliteGates/egOcclude.js",
+    "old": "      views.set(key, v);\n",
+    "new": "\n",
+    "tests": [
+      "test/world/eliteGates/egz_camera.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-views-never-let-go",
+    "file": "src/scenes/eliteGates/egOcclude.js",
+    "old": "      if (views.size >= EG_OCCLUDE_VIEWS_MAX) views.clear();\n",
+    "new": "\n",
+    "tests": [
+      "test/world/eliteGates/egz_camera.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-a-view-a-piece",
+    "file": "src/scenes/eliteGates/egOcclude.js",
+    "old": "      for (const [i, k] of act) { const g = byShare.get(k); if (g) g.push(i); else byShare.set(k, [i]); }",
+    "new": "      for (const [i, k] of act) byShare.set(`${k}:${i}`, [i]);",
+    "tests": [
+      "test/world/eliteGates/egz_camera.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-shares-unforgotten",
+    "file": "src/scenes/eliteGates/egOcclude.js",
+    "old": "      for (const [i, k] of share) if (!hit.has(i)) { const v = egOccludeEase(k, false, dt); if (v >= 1) share.delete(i); else share.set(i, v); }",
+    "new": "      for (const [i, k] of share) if (!hit.has(i)) { const v = egOccludeEase(k, false, dt); share.set(i, v); }",
+    "tests": [
+      "test/world/eliteGates/egz_camera.test.js"
+    ],
+    "equivalent": true,
+    "why": "A share eased back to whole is no longer drawn (every reader filters for a share under 1) and is set from whole again when a ray next crosses it: forgetting it only keeps the map at most the circle's pieces long."
+  },
+  {
+    "name": "EGZN-stand-keeps-shares",
+    "file": "src/scenes/eliteGates/egOcclude.js",
+    "old": "    stand(d) { unhide(); draw = d ?? null; share.clear(); },",
+    "new": "    stand(d) { unhide(); draw = d ?? null; },",
+    "tests": [
+      "test/world/eliteGates/egz_camera.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-clear-keeps-the-circle",
+    "file": "src/scenes/eliteGates/egOcclude.js",
+    "old": "    clear() { unhide(); mesh = null; subs = []; pieces = []; T = new Float32Array(0); draw = null; lastDraws = 0; share.clear(); views.clear(); },",
+    "new": "    clear() { unhide(); draw = null; lastDraws = 0; share.clear(); views.clear(); },",
+    "tests": [
+      "test/world/eliteGates/egz_camera.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-view-of-a-dead-mesh",
+    "file": "src/render/renderer.js",
+    "old": "    if (!mesh?.vao || mesh._dead || mesh.viewOf) return null;",
+    "new": "    if (!mesh?.vao || mesh.viewOf) return null;",
+    "tests": [
+      "test/world/eliteGates/egz_camera_host.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-view-of-a-view",
+    "file": "src/render/renderer.js",
+    "old": "    if (!mesh?.vao || mesh._dead || mesh.viewOf) return null;",
+    "new": "    if (!mesh?.vao || mesh._dead) return null;",
+    "tests": [
+      "test/world/eliteGates/egz_camera_host.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-view-shares-the-callers",
+    "file": "src/render/renderer.js",
+    "old": "    return { vao: mesh.vao, subMeshes: subMeshes.map((sm) => ({ ...sm })), buffers: [],",
+    "new": "    return { vao: mesh.vao, subMeshes, buffers: [],",
+    "tests": [
+      "test/world/eliteGates/egz_camera_host.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-stand-unhanded",
+    "file": "src/scenes/eliteGates/egCircleHost.js",
+    "old": "renderer.createMesh(model) : null; if (_egMesh) egOcc.set(_egMesh, model); }",
+    "new": "renderer.createMesh(model) : null; }",
+    "tests": [
+      "test/world/eliteGates/egz_camera_host.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-swap-unhanded",
+    "file": "src/scenes/eliteGates/egCircleHost.js",
+    "old": "renderer.createMesh(parts.model) : null; if (_egMesh) egOcc.set(_egMesh, parts.model); }",
+    "new": "renderer.createMesh(parts.model) : null; }",
+    "tests": [
+      "test/world/eliteGates/egz_camera_host.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-stand-keeps-the-old",
+    "file": "src/scenes/eliteGates/egCircleHost.js",
+    "old": "      egOcc.clear();   // EG-ZN: the dither pass lets the old circle go before it is freed\n",
+    "new": "\n",
+    "tests": [
+      "test/world/eliteGates/egz_camera_host.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-swap-keeps-the-old",
+    "file": "src/scenes/eliteGates/egCircleHost.js",
+    "old": "    egOcc.clear(); _egDraw = null;",
+    "new": "    _egDraw = null;",
+    "tests": [
+      "test/world/eliteGates/egz_camera_host.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-circle-draw-untold",
+    "file": "src/scenes/eliteGates/egCircleHost.js",
+    "old": "    egOcc.stand(_egDraw);\n",
+    "new": "\n",
+    "tests": [
+      "test/world/eliteGates/egz_camera_host.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-witness-dithers",
+    "file": "src/scenes/worldModes.js",
+    "old": "mwv?.thirdPerson && mwv.focal && !host.egWitness?.() && !decorTool.flying() ?",
+    "new": "mwv?.thirdPerson && mwv.focal && !decorTool.flying() ?",
+    "tests": [
+      "test/world/eliteGates/egz_camera_host.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-first-person-dithers",
+    "file": "src/scenes/worldModes.js",
+    "old": "mwv?.thirdPerson && mwv.focal && !host.egWitness?.() && !decorTool.flying() ?",
+    "new": "mwv.focal && !host.egWitness?.() && !decorTool.flying() ?",
+    "tests": [
+      "test/world/eliteGates/egz_camera_host.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-free-camera-dithers",
+    "file": "src/scenes/worldModes.js",
+    "old": "mwv?.thirdPerson && mwv.focal && !host.egWitness?.() && !decorTool.flying() ?",
+    "new": "mwv?.thirdPerson && mwv.focal && !host.egWitness?.() ?",
+    "tests": [
+      "test/world/eliteGates/egz_camera_host.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-chest-unread",
+    "file": "src/scenes/worldModes.js",
+    "old": "const c = ray.points[1]; c[0] = feet[0]; c[1] = feet[1] + EG_OCCLUDE_CHEST_M; c[2] = feet[2];",
+    "new": "const c = ray.points[1]; c[0] = mwv.focal[0]; c[1] = mwv.focal[1]; c[2] = mwv.focal[2];",
+    "tests": [
+      "test/world/eliteGates/egz_camera_host.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-pass-unwired",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (isEgHall(dungeonLoc)) egOccludeFrame(mwv, dt);",
+    "new": "      if (isEgHall(dungeonLoc)) void egOccludeFrame;",
+    "tests": [
+      "test/world/eliteGates/egz_camera_host.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-view-unbiased",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (mwv.look && !decorTool.flying() && !cardSeat) view.set(",
+    "new": "    if (false && mwv.look && !decorTool.flying() && !cardSeat) view.set(",
+    "tests": [
+      "test/net/eliteGates/egz_camera_shaft.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-bands-emission-kept",
+    "file": "src/scenes/eliteGates/egCircleHost.js",
+    "old": " if (renderer?.evictEmissionTexture?.(`${arch}_${rec}`)) n++; }",
+    "new": " }",
+    "tests": [
+      "test/world/eliteGates/egz_camera_host.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-bands-albedo-kept",
+    "file": "src/scenes/eliteGates/egCircleHost.js",
+    "old": "      for (const rec of EG_BAND_RECORDS) { if (renderer?.releaseTexture?.(arch, rec)) n++;",
+    "new": "      for (const rec of EG_BAND_RECORDS) { if (false) n++;",
+    "tests": [
+      "test/world/eliteGates/egz_camera_host.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-bands-never-forgotten",
+    "file": "src/scenes/eliteGates/egCircleHost.js",
+    "old": "    _egBands.clear(); _egBandRecs.clear();\n    return n;",
+    "new": "    return n;",
+    "tests": [
+      "test/world/eliteGates/egz_camera_host.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-bands-freed-standing",
+    "file": "src/scenes/eliteGates/egCircleHost.js",
+    "old": "    if (wm.mode === 'dungeon' && isEgHall(wm.dungeonLoc)) return 0;\n    let n = egBeatTellDown",
+    "new": "    let n = egBeatTellDown",
+    "tests": [
+      "test/world/eliteGates/egz_camera_host.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-shaft-degrees",
+    "file": "src/player/mwView.js",
+    "old": "export const SPIRE_SHAFT_PITCH = (20 * Math.PI) / 180;",
+    "new": "export const SPIRE_SHAFT_PITCH = (21 * Math.PI) / 180;",
+    "tests": [
+      "test/net/eliteGates/egz_camera_shaft.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-shaft-rise-moved",
+    "file": "src/player/mwView.js",
+    "old": "export const SPIRE_SHAFT_RISE_M = 1.0;",
+    "new": "export const SPIRE_SHAFT_RISE_M = 1.1;",
+    "tests": [
+      "test/net/eliteGates/egz_camera_shaft.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-shaft-ease-moved",
+    "file": "src/player/mwView.js",
+    "old": "export const SPIRE_SHAFT_EASE_S = 0.5;",
+    "new": "export const SPIRE_SHAFT_EASE_S = 0.4;",
+    "tests": [
+      "test/net/eliteGates/egz_camera_shaft.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-shaft-face-in-moved",
+    "file": "src/player/mwView.js",
+    "old": "export const SPIRE_SHAFT_FACE_IN = Math.cos((60 * Math.PI) / 180);",
+    "new": "export const SPIRE_SHAFT_FACE_IN = Math.cos((62 * Math.PI) / 180);",
+    "tests": [
+      "test/net/eliteGates/egz_camera_shaft.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-shaft-no-hysteresis",
+    "file": "src/player/mwView.js",
+    "old": "  return c >= (was ? SPIRE_SHAFT_FACE_OUT : SPIRE_SHAFT_FACE_IN);",
+    "new": "  return c >= SPIRE_SHAFT_FACE_IN;",
+    "tests": [
+      "test/net/eliteGates/egz_camera_shaft.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-shaft-still-eased",
+    "file": "src/player/mwView.js",
+    "old": "  if (still) return 0;\n",
+    "new": "\n",
+    "tests": [
+      "test/net/eliteGates/egz_camera_shaft.test.js"
+    ],
+    "note": "AUDIT EG III: re-aimed by content - reduced motion lays no bias (it laid it whole at once)"
+  },
+  {
+    "name": "EGZN-shaft-ease-pace",
+    "file": "src/player/mwView.js",
+    "old": "  const step = (SPIRE_SHAFT_PITCH * Math.max(0, Number(dt) || 0)) / SPIRE_SHAFT_EASE_S;",
+    "new": "  const step = (SPIRE_SHAFT_PITCH * Math.max(0, Number(dt) || 0)) / (SPIRE_SHAFT_EASE_S * 2);",
+    "tests": [
+      "test/net/eliteGates/egz_camera_shaft.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-shaft-ease-out-cut",
+    "file": "src/player/mwView.js",
+    "old": "  return prev < want ? Math.min(want, prev + step) : Math.max(want, prev - step);",
+    "new": "  return prev < want ? Math.min(want, prev + step) : want;",
+    "tests": [
+      "test/net/eliteGates/egz_camera_shaft.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-shaft-first-person-biased",
+    "file": "src/player/mwView.js",
+    "old": "  if (!word || !third) { _shaftBias = 0; _shaftFacing = false; return pitch; }",
+    "new": "  if (!word) { _shaftBias = 0; _shaftFacing = false; return pitch; }",
+    "tests": [
+      "test/net/eliteGates/egz_camera_shaft.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-shaft-off-ledge-kept",
+    "file": "src/player/mwView.js",
+    "old": "  _shaftFacing = !!word.way && spireShaftFacing(word.way, yaw, _shaftFacing);",
+    "new": "  _shaftFacing = !word.way || spireShaftFacing(word.way, yaw, _shaftFacing);",
+    "tests": [
+      "test/net/eliteGates/egz_camera_shaft.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-shaft-past-the-limit",
+    "file": "src/player/mwView.js",
+    "old": "  return _shaftBias > 0 ? Math.max(-PITCH_LIMIT, pitch - _shaftBias) : pitch;",
+    "new": "  return _shaftBias > 0 ? pitch - _shaftBias : pitch;",
+    "tests": [
+      "test/net/eliteGates/egz_camera_shaft.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-shaft-rise-unshared",
+    "file": "src/player/mwView.js",
+    "old": "  return Math.max(floor ?? -Infinity, pivotY + (SPIRE_SHAFT_RISE_M * _shaftBias) / SPIRE_SHAFT_PITCH);",
+    "new": "  return Math.max(floor ?? -Infinity, pivotY + SPIRE_SHAFT_RISE_M);",
+    "tests": [
+      "test/net/eliteGates/egz_camera_shaft.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-shaft-rise-under-floor",
+    "file": "src/player/mwView.js",
+    "old": "  return Math.max(floor ?? -Infinity, pivotY + (SPIRE_SHAFT_RISE_M * _shaftBias) / SPIRE_SHAFT_PITCH);",
+    "new": "  return pivotY + (SPIRE_SHAFT_RISE_M * _shaftBias) / SPIRE_SHAFT_PITCH;",
+    "tests": [
+      "test/net/eliteGates/egz_camera_shaft.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-shaft-rise-without-bias",
+    "file": "src/player/mwView.js",
+    "old": "  if (!(_shaftBias > 0)) return floor;\n",
+    "new": "\n",
+    "tests": [
+      "test/net/eliteGates/egz_camera_shaft.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-shaft-look-always",
+    "file": "src/player/mwView.js",
+    "old": "  if (_shaftBias > 0 && out?.thirdPerson && out.focal) {",
+    "new": "  if (out?.thirdPerson && out.focal) {",
+    "tests": [
+      "test/net/eliteGates/egz_camera_shaft.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-shaft-look-first-person",
+    "file": "src/player/mwView.js",
+    "old": "  if (_shaftBias > 0 && out?.thirdPerson && out.focal) {",
+    "new": "  if (_shaftBias > 0 && out) {",
+    "tests": [
+      "test/net/eliteGates/egz_camera_shaft.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-shaft-sprite-lane-unbiased",
+    "file": "src/player/mwView.js",
+    "old": "    pitch = spireShaftPitch(pitch, yaw, frame.dt ?? 0, eotbCamera.thirdPerson());",
+    "new": "    void spireShaftPitch;",
+    "tests": [
+      "test/net/eliteGates/egz_camera_shaft.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-shaft-mw-lane-unrisen",
+    "file": "src/player/mwView.js",
+    "old": "  pivotFloor = spireShaftPivot(pivotFloor, feet[1] + (FOCAL_HEIGHT * heightScale) / MW_UNITS_PER_METER);",
+    "new": "  void spireShaftPivot;",
+    "tests": [
+      "test/net/eliteGates/egz_camera_shaft.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-word-witness-told",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "setSpireShaft(() => (inSpire() && !witness ? { way: shaftWay(link.state()), still: stillNow() } : null));",
+    "new": "setSpireShaft(() => (inSpire() ? { way: shaftWay(link.state()), still: stillNow() } : null));",
+    "tests": [
+      "test/net/eliteGates/egz_camera_shaft.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-word-stillness-unread",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "setSpireShaft(() => (inSpire() && !witness ? { way: shaftWay(link.state()), still: stillNow() } : null));",
+    "new": "setSpireShaft(() => (inSpire() && !witness ? { way: shaftWay(link.state()), still: false } : null));",
+    "tests": [
+      "test/net/eliteGates/egz_camera_shaft.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-word-way-untold",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    return H && player?.pos ? egShaftLedgeAt(H.spec, player.pos) : null;",
+    "new": "    return null;",
+    "tests": [
+      "test/net/eliteGates/egz_camera_shaft.test.js"
+    ]
+  },
+  {
+    "name": "EGZN-bands-never-told",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "        if (!swapping && !answering) modes()?.egBandsDown?.();",
+    "new": "        if (false) modes()?.egBandsDown?.();",
+    "tests": [
+      "test/net/eliteGates/egz_camera_shaft.test.js"
+    ]
+  }
+]

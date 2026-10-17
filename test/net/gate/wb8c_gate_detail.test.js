@@ -270,7 +270,7 @@ test('WB8c the fold: a state says his marks; a feeding moves his health and name
 
 test('WB8c the seams, by source: the relay births each fight on the day\'s marks; the world host asks the court\'s throw for any element; the dungeon context lands his frost, lightning and venom unflashed in each element\'s cast; the court judges, burns, cues, draws and bars under the fight\'s profile (mutants: each seam removed)', () => {
   const relay = read('server/src/index.js');
-  assert.match(relay, /newFight\(day, now, gateTimes\(day\)\.wrathAt, gateBossOf\(day\)\.id, gateModsOf\(day\)\)/);
+  assert.match(relay, /GATE_SEAM\.new\(\{ day, now, wrathAt: gateTimes\(day\)\.wrathAt, boss: gateBossOf\(day\)\.id, md: gateModsOf\(day\) \}\)/);   // PIN MOVED (EG-H3, EG3): through THE BOSS SEAM (net/bossSeam.js - the brain's own law, its frames byte for byte: test/net/eliteGates/egseam_law.test.js)
   const w = read('src/scenes/world.js');
   assert.match(w, /save: \(e, el = 'fire'\) => \{ const w = GATE_SAVES\[el\] \?\? GATE_SAVES\.fire; return savingThrow\(w\[0\], w\[1\], e\); \},/);
   const dc = read('src/scenes/dungeonContext.js');

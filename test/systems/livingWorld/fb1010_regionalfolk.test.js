@@ -19,6 +19,7 @@ import { BUILDING_TYPES } from '../../../src/world/buildingNames.js';
 import { createLegacyHost } from '../../../src/scenes/legacyHost.js';
 import { MODELS, personOf } from '../../../src/systems/legacy/family.js';
 import { spouseOf, AFFECTION_MAX } from '../../../src/systems/legacy/marriage.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const read = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const region = (name) => { const i = REGION_NAMES.indexOf(name); assert.ok(i >= 0, name); return i; };
@@ -65,7 +66,7 @@ test('REGIONAL-FOLK: Roleplay & Realism\'s house residents follow the street - a
 });
 
 test('REGIONAL-FOLK: every population asks the one rule - both street hosts, the census, the interior host\'s R&R swap; the table is written once', () => {
-  assert.match(read('src/scenes/world.js'), /race: walkerRace\(climate\?\.people, dfLocation\.regionIndex\),/);
+  assert.match(hostText('src/scenes/world.js'), /race: walkerRace\(climate\?\.people, dfLocation\.regionIndex\),/);
   assert.match(read('src/scenes/exterior.js'), /const populationRace = walkerRace\(dfLocation\.climate\?\.people, dfLocation\.regionIndex\);/);
   assert.match(read('src/systems/livingWorld/census.js'), /const race = walkerRace\(town\.people, town\.region\);/);
   assert.match(read('src/scenes/worldModes.js'), /region: hit\.dfLocation\?\.regionIndex \?\? null,/);
@@ -118,5 +119,5 @@ test('REGIONAL-FOLK (AUDIT FB1010 C1): a courtship an older version saved weds t
     const s = spouseOf(w.host.family, me);
     assert.deepEqual({ race: s.race, face: s.residentFace }, want, census(now.id) ? 'the census\'s own' : 'no census to ask: the copy');
   }
-  assert.match(read('src/scenes/world.js'), /residentNow: \(id\) => residentOfId\(id, livingTownOfId\),/, 'the world host hands the census in');
+  assert.match(hostText('src/scenes/world.js'), /residentNow: \(id\) => residentOfId\(id, livingTownOfId\),/, 'the world host hands the census in');
 });

@@ -29,6 +29,7 @@ import { perspective, mirrorProjectionX } from '../../../src/world/mat4.js';
 import { dryPuddles, groundTileWet } from '../../../src/world/puddleDry.js';
 import { Renderer } from '../../../src/render/renderer.js';
 import { glslFunctions } from '../../glsl.mjs';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const rd = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const DRY = 1 << 2;   // a converted grass-less dirt byte: record 1, no water corner
@@ -96,7 +97,7 @@ test('AUDIT WATER-NEXT P1: the bed is the kernel\'s - carved with the grid by re
   const wk = rd('src/world/terrain/terrainGenWorker.js');
   assert.equal((wk.match(/bed\.depths\.buffer, (?:out\.)?bed\.sheetDepths\.buffer, (?:out\.)?bed\.positions\.buffer, (?:out\.)?bed\.normals\.buffer/g) || []).length, 2, 'both replies transfer the bed - none copied across the wire');
   assert.match(rd('src/world/terrain/terrainGenClient.js'), /g\.resolve\(\{ positions: m\.positions, normals: m\.normals, bed: m\.bed \?\? null \}\);/, 'the promotion\'s answer keeps it');
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.doesNotMatch(w, /waterBedOf\(/, 'the streaming host carves nothing on its own thread');
   assert.match(w, /bed: waterOn,   \/\/ AUDIT WATER-NEXT P1/, 'the build asks the kernel');
   assert.match(w, /terrainGen\.grid\(\{ px: p\.px, py: p\.py, stride: 1, samples: p\.samples, landform, bed: bedBytes \}\)/, 'the promotion asks the worker');
@@ -118,7 +119,7 @@ test('AUDIT WATER-NEXT H1: Deep Waters\' cap carves the bed - a tile it repaints
   for (let z = 0; z < T; z++) clipped[z * T + 10] = CLIP_SENTINEL;
   const c = waterBedDepths(clipped, { tileDim: T });
   for (let z = 0; z <= T; z++) assert.equal(c[z * 17 + 10], 0, 'the bed comes up to its bank at the clip\'s edge, where the mod\'s floor meets the shore');
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /entry\._dwBytes = bytes === entry\.tilemapBytes \? null : bytes;\n\s*dwRecarve\(entry\);[^\n]*\n\s*dwClipTerrain\(entry\);\n\s*dwWaterSurface\(entry\);/, 'the cap carves, then clips, then re-indexes');
   assert.match(w, /function bedBytesOf\(p\) \{ return p\._dwBytes \?\? p\.tilemapBytes; \}/);
   const recarve = w.slice(w.indexOf('  function dwRecarve(p) {'), w.indexOf('  function hostBed(grid, bed)'));
@@ -209,7 +210,7 @@ test('AUDIT WATER-NEXT H2: the sheet\'s own depths - a vertex the carve reaches 
   assert.match(WATER_SURFACE_VS, /float grow = uOpen == 1 \? 1\.0 : \(aDepth < 0\.0 \? 0\.0 : smoothstep\(1\.668, 4\.168, aDepth\)\);/);   // PIN MOVED (BANK-FLUSH): the swell grows past the shelf the carve leaves
   assert.match(WATER_SURFACE_VS, /vDepth = max\(abs\(aDepth\) \+ lift, 0\.0\);/);
   assert.match(rd('src/render/renderer.js'), /gl\.vertexAttrib1f\(1, -NO_BED_DEPTH\);/, 'a sheet with no bed at all: the same constant');
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /function waterSheetOf\(bed, terrain\) \{ return bed\?\.depths \? \{ positions: bed\.sheet, depths: bed\.sheetDepths \} : \{ terrain \}; \}/);
   assert.match(rd('src/scenes/exterior.js'), /\{ positions: townBed\.sheet, depths: townBed\.sheetDepths \}/);
 });
@@ -393,7 +394,7 @@ test('AUDIT WATER-NEXT m8: PUDDLE-DRY\'s tie goes to the first ground in the wal
   assert.equal(dryPuddles(grid), 1);
   assert.equal(grid[5][5].tileBitfield, A, 'a tie: the first ground the walk met');
   for (const p of ['src/scenes/world.js', 'src/ui/ink/inkTown.js']) {
-    const s = rd(p);
+    const s = hostText(p);   // AUDIT HOST-SPLIT 2, the second read: the world host whole - its pixel build lays the ground
     assert.doesNotMatch(s, /dryPuddles|from '(?:\.\.?\/)+(?:[\w-]+\/)*puddleDry\.js'/, `${p} reads the ground served, with no drying of its own`);
   }
 });

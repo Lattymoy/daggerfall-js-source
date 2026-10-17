@@ -19,8 +19,9 @@ import { fileURLToPath } from 'node:url';
 import { Clock, PLAYED_STEP_MAX_SECONDS } from '../../../src/systems/quest/clock.js';
 import { QuestMachine } from '../../../src/systems/quest/machine.js';
 import { loadQuestTables } from '../../../src/systems/quest/tables.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
-const rd = (p) => readFileSync(new URL('../../../' + p, import.meta.url), 'utf8');
+const rd = (p) => hostText(p);
 
 test('WORLD7: the Clock - online a frame charges its world time up to one played step and a gap past it is forgiven; a limit finishes while playing and starts its task; a resume charges at most one step; offline a gap charges whole', () => {
   assert.equal(PLAYED_STEP_MAX_SECONDS, 30 * 60, 'thirty world minutes: two and a half real minutes online, past any frame');

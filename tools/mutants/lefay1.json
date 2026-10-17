@@ -289,7 +289,7 @@
   },
   {
     "name": "LEFAY-WORLD-UNCARVED",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "        if (lefaySpot) carveLefay(nav, lefaySpot);",
     "new": "        if (lefaySpot) void nav;",
     "tests": [

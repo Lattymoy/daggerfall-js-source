@@ -14,6 +14,7 @@ import { CLIMATES } from '../../../src/formats/mapsTables.js';
 import { generatePixelTerrain, restrideGrid } from '../../../src/world/terrain/terrainGen.js';
 import { locationFootprintRect, getLocationTerrainTileOrigin } from '../../../src/world/terrain/terrainTiles.js';
 import { syntheticWoodsBytes, network } from '../../landformWorld.mjs';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const H = HEIGHTMAP_DIMENSION;
 const UNIT = MAX_TERRAIN_HEIGHT;
@@ -226,9 +227,12 @@ test('LANDFORM4: the sites ride every kernel - the worker keeps the ones the cli
   const client = src('src/world/terrain/terrainGenClient.js');
   assert.equal((client.match(/roads: this\._roads \?\? null, sites: this\._sites, climates: this\._climates, /g) ?? []).length, 6, 'every same-thread kernel the client runs takes them');
   assert.match(client, /this\._worker\.postMessage\(\{ t: 'landform-tables', sites: s, climates: c \}, \[s, c\]\.filter\(Boolean\)\.map\(\(a\) => a\.buffer\)\);/, 'the worker gets copies');
-  const world = src('src/scenes/world.js');
+  const world = hostText('src/scenes/world.js');
   // PIN MOVED (AUDIT SD IV S2): the rows read through classicRow once, above, for the landforms and the Hollow's lists alike
   assert.match(world, /\n  const classicRow = \(row\) => \(maps\.locationReplaced\(row\.regionIndex, row\.locationIndex\) \? maps\.readClassicLocation\(row\.regionIndex, row\.locationIndex\) : row\);\n  let _classicRows = landform \|\| params\.has\('online'\) \? _hubRows\.map\(classicRow\)\.filter\(Boolean\) : null;\n  if \(landform\) \{\n    _landformSites = landformSites\(_classicRows\.map\(\(loc\) => \{ const p = longitudeLatitudeToMapPixel\(loc\.mapTableData\.longitude, loc\.mapTableData\.latitude\); return \{ px: p\.x, py: p\.y, loc \}; \}\)\);\n    _landformClimates = landformClimates\(\(x, y\) => maps\.getClimateIndex\(x, y\)\);[^\n]*\n    terrainGen\.setLandformTables\(\{ sites: _landformSites, climates: _landformClimates \}\);\n  \}/, 'made once of the game\'s own rows (HUB1\'s - the same sites on every client), handed to both kernels with the climates');
   assert.ok(world.indexOf('_landformSites = landformSites(_classicRows') > world.indexOf('if (l < baseCount) { _hubRows.push(loc);'), 'after the rows are gathered');   // AUDIT LANDFORMS III B1: each as MAPS.BSA holds it (test/world/terrain/auditlandforms3.test.js)
-  assert.ok(world.indexOf('terrainGen.setLandformTables(') < world.indexOf('await terrainGen.generate({'), 'before the first pixel is asked of either');
+  // HOST-SPLIT 2 (AUDIT, the second read): the build's `generate` now stands in src/scenes/pixelBuild.js, joined after
+  // all of world.js, so ordering against it held nothing - the tables stand above the build's construction instead
+  const built = world.indexOf('const { buildPixelNow } = createPixelBuild(');
+  assert.ok(built > 0 && world.indexOf('terrainGen.setLandformTables(') < built, 'before the first pixel is asked of either');
 });

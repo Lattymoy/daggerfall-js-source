@@ -214,7 +214,7 @@ test('SEARCH1-PARTY: two foes a player, a search is the room\'s container, and a
   assert.match(dc, /LOOT_KEY_RE = \/\^\(loot\|corpse\|enc\|srch\):/);   // the room's word carries it (WORLD4)
   assert.match(dc, /publishLoot\(`srch:\$\{i\}`\)/);                    // said on every search, whatever it rolled
   assert.match(dc, /canon\.startsWith\('srch:'\)\) searchHeard/);         // and heard as the five hours
-  for (const f of ['src/scenes/dungeonContext.js', 'src/scenes/world.js']) assert.match(readFileSync(f, 'utf8'), /SEARCH_FOES_PER_PLAYER \* \(1 \+/, f);
+  for (const f of ['src/scenes/dungeonContext.js', 'src/scenes/searchPartyHost.js']) assert.match(readFileSync(f, 'utf8'), /SEARCH_FOES_PER_PLAYER \* \(1 \+/, f);   // PIN MOVED (FIELD BUGS 2026-10-16b GRAVE-PARTY): the headstone's search left world.js for scenes/searchPartyHost.js
   assert.equal(searchMessage('crate', 'foe', { foeName: 'Orc', count: 4, rolls: () => 0 }).at(-1), 'And it has brought company.');
   assert.notEqual(searchMessage('crate', 'foe', { foeName: 'Orc', count: 1, rolls: () => 0 }).at(-1), 'And it has brought company.');
 });

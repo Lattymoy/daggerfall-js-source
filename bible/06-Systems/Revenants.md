@@ -242,9 +242,10 @@ Mac: "They should have their own unique personalities that affect their speach. 
 Mac: "Players should have the option to kill or spare"; "the choice popup should reuse the loot menu".
 
 - **The yield**: the blow that would kill one of the player's revenants (any blow - the revenant is the player's own;
-  never a Disintegrate's kill) leaves it at 1 health on its knees (`systems/revenant/revenantFate.js beginYield`): its fight and
-  its run over, its hurt's last frame held with a breath now and then (`MobileUnit.heldPose`), no blow reaches it, no foe
-  hunts it (`enemyTargets.js`), never in the save. Its plea is said in its voice; its record notes the deed. Its
+  never the player's own Disintegrate - since RVN-OWNERS-CHOICE, section 15, no one else's whole blow is a kill)
+  leaves it at 1 health on its knees (`systems/revenant/revenantFate.js beginYield`): its fight and its run over, its hurt's
+  last frame held with a breath now and then (`MobileUnit.heldPose`), no blow reaches it, no foe hunts it
+  (`enemyTargets.js`), never in the save. Its plea is said in its voice; its record notes the deed. Its
   TROPHY is rolled now, so the choice shows it.
 - **The choice** is the loot window's: activating it (at the treasure's reach, as a body - `mobileEnemyActivate.js`)
   opens the window with its FATE side (`ui/enhanced/enhancedInventory.js` + `ui/revenant/revenantFateView.js`): the loot frame's own head
@@ -333,6 +334,23 @@ underground, a joiner's own frame) name an heir for every other live foe and non
 never told. It goes with its owner, as a watchman goes with his own. A party member's killing blow lands at the owner,
 where the record is, and brings its last stand and then its fate there (`test/systems/revenant/revenant_fate.test.js`).
 
+**RVN-OWNERS-CHOICE** (FIELD BUGS 2026-10-16b; Discord, "I erased a Revenant fro[m]...": "I believe it bypasses the
+kill/spare on revenants. And it seems it does this to other players' revenants, too ... It probably shouldn't be doable
+to other peoples revs"): **another player's revenant can never be closed by anyone but its owner.** A whole blow - a
+Disintegrate, Mehrunes' Razor's whole-health strike, a stat drained to zero (the doors' `_whole`) - passes over a
+revenant's last stand, its will and its kneel only when it is the OWNER's own: the player's blow at the door that holds
+the record (`systems/revenant/revenantFate.js ownersWholeKill`; both damage doors, `exteriorFoes.js damageFoe` and
+`dungeonContext.js damageFoe`). A party member's Disintegrate on my revenant reaches me as a kill (`z`, AUDIT PSCALE1
+DOORS-1) and lands at my door as a PEER's blow: it is a killing blow like any - rank 3 and up its last stand, its will
+unbroken it tears away, else it kneels - and the kill-or-spare is mine; no `slain` goes back, its record stays open. So
+is a foe's whole blow, a companion's, and a stat drained to zero, whose tick names nobody (AUDIT 68's provenance): the
+choice is offered, not taken. (The drain's tick returns every 0.2 s while the stat stays at zero, so at rank 3 and up the
+first tick makes the last stand and the next tears it away unless its will is broken - it escapes, to come again; the
+owner's own Disintegrate or a broken will still closes that fight. The audit of the branch, 2026-10-16.) My own
+Disintegrate and my own Razor still kill outright, as sections 19 and 20 say.
+DEPARTURE from sections 11, 19 and 20 as written ("a Disintegrate kills it outright" - whosever it was): the rule they
+recorded is the owner's alone now. Pinned by `test/systems/revenant/fb1016b_rvnownerschoice.test.js`.
+
 ## 16. The audit (2026-10-02, Mac: "Audit everything and ensure perfection")
 
 Five audits - the records and their words, the kill-or-spare flow, the sworn, the UI, the burn and the portals - and
@@ -406,7 +424,8 @@ sky reads day), weighs twice on a wind-up, and no adaptation takes from it. The 
 "Weakness" word, a hiss, its card - and under half its health, unknown, it flinches from it (a hint). From rank 3 its
 will must be broken in the fight: strike its weakness, or stagger it twice (since FEUD BALANCE, section 34: stagger it
 once, or dodge one of its blows perfectly). Unbroken at the killing blow it does not
-kneel - it tears away into the smoke, an escape that ranks it up. A Disintegrate kills it outright. The page says its
+kneel - it tears away into the smoke, an escape that ranks it up. A Disintegrate kills it outright - its owner's own
+(RVN-OWNERS-CHOICE, section 15: anyone else's is a killing blow like any). The page says its
 weakness as known and the will's rule. The law: `bible/12-Enhanced-AI/Feud-Arc.md` section 14 and its RVN3 record.
 
 ## 20. The last stand (FEUD RVN4, 2026-10-04)
@@ -415,8 +434,8 @@ From rank 3, once a fight, the blow that would kneel or kill a revenant brings i
 its health by rank (since FEUD BALANCE, section 34: 30%, 35% or 40%) - roaring: for 1.2 seconds no blow reaches it, and (Enhanced AI on) an iron ring about its feet lands
 as the roar ends; with the switch off it stands and roars. Then phase two for the rest of the fight: heavier and quicker
 blows, more Speed, shorter wind-ups and cooldowns, chains of three, iron one in two, an ember rim and a tenth more size.
-A Disintegrate still kills. The page names it from rank 3. The law: `bible/12-Enhanced-AI/Feud-Arc.md` section 15 and its
-RVN4 record.
+A Disintegrate still kills - its owner's own (RVN-OWNERS-CHOICE, section 15). The page names it from rank 3. The law:
+`bible/12-Enhanced-AI/Feud-Arc.md` section 15 and its RVN4 record.
 
 ## 21. Signature blows (FEUD RVN5, 2026-10-04)
 

@@ -20,8 +20,8 @@
   {
     "name": "PROMO-NOW-the-flag-never-threaded",
     "file": "src/systems/guild/guildServiceFlow.js",
-    "old": "updateRank(memberships, guild, entity, store, now, { revealLocation, ownsHouse, rankCeiling, promoteWhenEarned });",
-    "new": "updateRank(memberships, guild, entity, store, now, { revealLocation, ownsHouse, rankCeiling });",
+    "old": "updateRank(memberships, guild, entity, store, now, { revealLocation, ownsHouse, rankCeiling, promoteWhenEarned, owed: standingOwedOf(guild.factionId) });",
+    "new": "updateRank(memberships, guild, entity, store, now, { revealLocation, ownsHouse, rankCeiling, owed: standingOwedOf(guild.factionId) });",
     "tests": [
       "test/systems/guild/fb1015_promonow.test.js"
     ]

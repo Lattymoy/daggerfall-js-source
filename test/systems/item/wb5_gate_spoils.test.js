@@ -31,6 +31,7 @@ import { GATE_STATE_EMPTY } from '../../../src/net/gate/gateLink.js';
 import { mintReceipt } from '../../../src/net/gate/gateReceipt.js';
 import { courtToDungeon, COURT_TEXT } from '../../../src/world/gate/gateArena.js';
 import { readFileSync } from 'node:fs';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 /** A floor at y 0, as the collider's ray answers it. */
 const floor = (from, dir, len) => { if (dir[1] >= 0) return null; const t = from[1] / -dir[1]; return t <= len ? { dist: t, normal: [0, 1, 0] } : null; };
@@ -350,7 +351,7 @@ test('WB5 the court\'s burst: into his fall his spoils leave his chest toward me
 });
 
 test('WB5 the seams, by source: the world host makes the floor on the link with the dungeon\'s own collider for its ray and the character\'s id for its record, takes a spoil through the one door (the purse, the pack), hands it to the court, and asks the crash\'s door once for each character that stands up - in the main frame, online or not, with the save slots\' word (mutants: each seam removed)', () => {
-  const w = readFileSync(new URL('../../../src/scenes/world.js', import.meta.url), 'utf8');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /const takeSpoil = \(p\) => \{ if \(p\.kind === 'gold'\) addGoldPieces\(playerEntity, p\.gold\); else if \(p\.item\) addItem\(playerEntity\.items, p\.item\); \};/);
   assert.match(w, /const spoilsPool = createSpoilsPool\(\{/, 'AUDIT WBX2 M1: online or not - the keeper of the crash\'s records');
   assert.match(w, /ray: \(from, dir, len\) => \{ const c = modes\?\.dungeonCtx\?\.collider;/);

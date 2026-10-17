@@ -41,7 +41,9 @@ import { createSceneCache, cacheScene, layoutSceneName, addPermanentScene, conta
 import { itemFindings } from '../../../src/systems/item/itemLaw.js';
 import { ITEM_FIELDS } from '../../../src/systems/item/itemFields.js';
 import { HOME_ENTRIES } from '../../../src/net/homeLaw.js';
-const src = (p) => readFileSync(new URL(`../../../src/${p}`, import.meta.url), 'utf8');
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
+
+const src = (p) => hostText(`src/${p}`);
 const bakeOf = (kind) => JSON.parse(readFileSync(new URL(`../../../src/assets/wagons/${kind}.json`, import.meta.url), 'utf8'));
 const tick = () => new Promise((r) => setTimeout(r, 0));
 const flush = async (n = 8) => { for (let i = 0; i < n; i++) await tick(); };

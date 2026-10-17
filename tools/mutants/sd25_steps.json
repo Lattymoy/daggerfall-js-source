@@ -317,8 +317,8 @@
   {
     "name": "SD25-S9-every-ghost-a-beat-plate",
     "file": "src/render/superDungeon/sdStepsPass.js",
-    "old": "for (const [a, b] of stepEdges(s.kind)) put(a, b, slot, 0);",
-    "new": "for (const [a, b] of stepEdges('beat')) put(a, b, slot, 0);",
+    "old": "const edges = stepEdges(s.kind);",
+    "new": "const edges = stepEdges('beat');",
     "tests": [
       "test/world/superDungeon/sd25_steps.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "SD25-S9-the-slow-frame-taken",
     "file": "src/scenes/superDungeon/sdFx.js",
-    "old": "t - wasAt < SD_REWIND_SEEN.gap ? sdCastBackSeen(wasY, rx, ry, rz) : -1",
-    "new": "sdCastBackSeen(wasY, rx, ry, rz)",
+    "old": "t - wasAt < SD_REWIND_SEEN.gap ? sdCastBackSeen(wasY, rx, ry, rz, course) : -1",
+    "new": "sdCastBackSeen(wasY, rx, ry, rz, course)",
     "tests": [
       "test/world/superDungeon/sd25_steps.test.js"
     ]

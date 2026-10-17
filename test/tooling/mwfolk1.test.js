@@ -34,7 +34,7 @@ import { bodyRec, retailBodyDeps, shippedArchive } from '../fixtures/mw/bodyRig.
 import { readPng } from '../../tools/pngIO.mjs';
 import { readFbx } from '../../tools/fbxRead.mjs';
 import { stripFbx, meshModelNames } from '../../tools/fbxStrip.mjs';
-import { S, I, dArr, iArr, writeFbx } from '../fixtures/fbxWrite.mjs';   // AUDIT MW-FOLK1: the cut's refusals, on files written here
+import { S, I, dArr, iArr, writeFbx } from '../../tools/fbxWrite.mjs';   // AUDIT MW-FOLK1: the cut's refusals, on files written here
 import { bakeMesh, objectMaterials } from '../../tools/fbxMesh.mjs';
 import { objectTree, plateBind, RETAIL_SKELETON, HELM_LIFT, SCENE_BODY } from '../../tools/bakeSteelPlate.mjs';
 import { SOURCE, PAINTINGS, OBJECTS, OUTFITS, RECOLOURS, CUT, PACK_ARM_FALL, HANG_TOP, HANG_SHARE, HANG_CENTRE, KNEE_BLEND, HIP_JOINTS, ARM_REACH, ARM_FADE, RIGS,

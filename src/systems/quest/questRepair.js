@@ -30,6 +30,7 @@ import { MARKER_PREFERENCE, SITE_TYPES } from './place.js';
 import { SMALLER_DUNGEONS_STATE, portSize } from '../../world/smallerDungeons.js';   // AUDIT DELVE E1 / INSTANCES: the size a quest's markers know online (the whole dungeon's); MEDIUM-DISTINCT: the two stamps whose builds are medium
 import { isOnlinePage } from '../online/onlineLane.js';   // MEDIUM-DISTINCT's audit: offline a dungeon no link holds is built by the settings
 import { isShelved } from './quest.js';   // QUEST-SHELF's audit: the repair mends no quest set aside
+import { t } from '../textManager.js';   // QUEST-ELSEWHERE: its line in the player's language
 
 const PLACEMENTS = Object.freeze({ PlaceNpc: 'npcSymbol', PlaceItem: 'itemSymbol', PlaceFoe: 'foeSymbol' });
 
@@ -269,7 +270,7 @@ export function relayQuestMovedLayout(quest, machine, env = {}, online = isOnlin
  * Answers the counts and the line the player reads.
  */
 export function repairActiveQuests(machine, env = {}) {
-  const report = { quests: 0, people: 0, items: 0, foes: 0, relinked: 0, revealed: 0, topics: 0, failed: 0 };
+  const report = { quests: 0, people: 0, items: 0, foes: 0, relinked: 0, revealed: 0, topics: 0, failed: 0, elsewhere: false };
   // QUEST-SHELF's audit: nor one set aside - its links stood again, its things went back, while it was away. Its markers
   // still follow a moved layout (the relays above), so a reclaim finds them true.
   const quests = [...(machine?.quests?.values?.() ?? [])].filter((q) => questRunning(q) && !isShelved(q));
@@ -301,8 +302,9 @@ export function repairActiveQuests(machine, env = {}) {
         if (env.hasQuestTopics && env.addQuestTopics && !env.hasQuestTopics(quest)) { env.addQuestTopics(quest); report.topics++; }
       } catch { report.failed++; }
     }
-    // 4. where the player stands, now
-    try { env.mountCurrentSite?.(); } catch { report.failed++; }
+    // 4. where the player stands, now - QUEST-ELSEWHERE (FIELD BUGS 2026-10-16c): a re-laid public room mounts none of a
+    // quest's things (worldModes.js mountQuestResources answers 'elsewhere'), and the repair says where they are
+    try { if (env.mountCurrentSite?.() === 'elsewhere') report.elsewhere = true; } catch { report.failed++; }
   } finally {
     if (machine) machine.mountByName = was;
   }
@@ -312,7 +314,15 @@ export function repairActiveQuests(machine, env = {}) {
 
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
 
-/** The line the player reads after a repair. */
+/** QUEST-ELSEWHERE (FIELD BUGS 2026-10-16c; MD-Geist, "Quest Objective only spawned in 'Instance' Dungeon, not
+ *  'Public'": "the Objective just did not want to spawn (I tried the dungeon in 'Public' mode) even after 'Quest
+ *  Repair'"): online, a dungeon's public room is laid smaller for most dungeons, and a quest's things stand in the dungeon
+ *  laid whole - the player's instance (systems/instancePlaces.js questMountsHere). The repair found nothing missing, and
+ *  said only that. */
+export const questElsewhereLine = () => t('quest.repair.elsewhere', "Your quest's business in this dungeon is in your instance - the shared dungeon is laid smaller and holds none of it. Leave and enter again, choosing Your instance.");
+
+/** The line the player reads after a repair - QUEST-ELSEWHERE: where its things are, never "nothing was missing", when
+ *  the room the player stands in holds none of them. */
 export function questRepairText(r) {
   if (!r || !r.quests) return 'You have no active quests to repair.';
   const put = [r.people ? plural(r.people, 'person', 'people') : null, r.items ? plural(r.items, 'item', 'items') : null, r.foes ? plural(r.foes, 'foe', 'foes') : null].filter(Boolean);
@@ -321,6 +331,8 @@ export function questRepairText(r) {
   if (r.relinked) parts.push(`reconnected ${plural(r.relinked, 'place', 'places')}`);
   if (r.revealed) parts.push(`marked ${plural(r.revealed, 'location', 'locations')} on your map`);
   if (r.topics) parts.push(`restored what people know about ${plural(r.topics, 'quest', 'quests')}`);
-  const head = parts.length ? `Quests repaired: ${parts.join('; ')}.` : `Nothing was missing from ${r.quests === 1 ? 'your active quest' : `your ${r.quests} active quests`}.`;
-  return r.failed ? `${head} ${plural(r.failed, 'part', 'parts')} could not be checked.` : head;
+  const head = parts.length ? `Quests repaired: ${parts.join('; ')}.`
+    : r.elsewhere ? questElsewhereLine() : `Nothing was missing from ${r.quests === 1 ? 'your active quest' : `your ${r.quests} active quests`}.`;
+  const said = parts.length && r.elsewhere ? `${head} ${questElsewhereLine()}` : head;
+  return r.failed ? `${said} ${plural(r.failed, 'part', 'parts')} could not be checked.` : said;
 }

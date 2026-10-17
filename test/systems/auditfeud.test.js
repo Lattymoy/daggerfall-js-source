@@ -6,6 +6,7 @@ import '../modsOff.js';
 import { test, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const _store = new Map();
 globalThis.localStorage = {
@@ -35,7 +36,7 @@ const { itemLongName } = await import('../../src/systems/item/itemInfo.js');
 const { setLocked } = await import('../../src/systems/item/itemLock.js');
 const H = await import('../../src/systems/harmMark.js');
 
-const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
+const read = (p) => hostText(p);
 const DAY = 1440;
 let me;
 beforeEach(() => {
@@ -235,7 +236,7 @@ test('AUDIT FEUD R6: A KILLER FORGOTTEN - a load, a new game and a Resurrect lea
   N.forgetLastSlew();
   assert.equal(N.revenantTakes(me, { online: true }), null, 'a Resurrect');
   assert.ok(me.items.includes(sword));
-  const w = read('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /reviveForPlay\(playerEntity, \{ force: true \}\);\n\s*forgetLastSlew\(\);/, 'the Resurrect forgets it');
   assert.match(read('src/systems/revenant/revenant.js'), /newGame: \(\) => \{ _state\.list = \[\]; _state\.lastDay = null; _state\.mirrorId = null; _lastSlew = null;/);
 });
@@ -280,7 +281,7 @@ test('AUDIT FEUD D3: A FIGHT WON IS A FOE KILLED - one that escaped, was culled 
 // ── the hosts ───────────────────────────────────────────────────────
 
 test('AUDIT FEUD H1: THE WORLD HOST - a knocked-out sworn one stands for nothing (no turning, warning or witness); a turning waits for no load and stands nowhere a sweep took (mutants: each seam unwired)', () => {
-  const w = read('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /setRetinueBodies\(\(id\) => revenantAshore\.bodies\(\)\.find\(\(b\) => b\.revenantCompanion === id && !b\.dead && !b\._knockedOut\)\?\.entity \?\? null\);/);
   assert.match(w, /const rec = revenantAshore\.bodies\(\)\.find\(\(b\) => b\.revenantCompanion === r\.id && !b\.dead && !b\._knockedOut && b\.ai\?\.feet\);/);
   assert.match(w, /if \(!rec \|\| !place\?\.turn \|\| place\.has\?\.\(rec\) === false\) return;/);

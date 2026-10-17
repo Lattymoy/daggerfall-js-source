@@ -73,11 +73,18 @@ export function createRoomLoot(host) {
   const isRoomBaseContainer = (canon) => roomLootOn() && !!roomBaseHolder(canon);
   /** Whether a room container stands here to be looted at all: a pile always, a body once it has fallen. */
   const roomBorn = (h) => !!h && (h.pile ? true : lootableBody(h.foe));
-  /** UNBORN: a room's container standing here with no terms yet - nothing to show, nothing to take. */
+  /** UNBORN: a room's container standing here with no terms yet - nothing to show, nothing to take. GRAVE-PARTY (FIELD
+   *  BUGS 2026-10-16, "objects in tombs are un lootable"): never one whose room word this build CANNOT READ (another
+   *  build's - AUDIT SETS M2's `_lootUnreadable`): that one was unborn for good, its pile standing on the floor with no
+   *  plaque and no press, because the mint waits on a word that will never be read. It is a TARGET again, and its press
+   *  says M2's own line (dungeonContext.js takeLoot, LOOT_NEWER_TEXT: "Reload to open it") - never opened here. AUDIT
+   *  GRAVE-PARTY G2: GRAVE-PARTY opened it as the player's own instead, and that was a dead end or a copy - a pile never
+   *  composed here holds nothing online (the pile loop's `onlineRoom() ? [] :`), so it opened EMPTY and its flat went at
+   *  the close; one composed here and turned unreadable handed its base pieces out unclaimed beside every other build's. */
   function roomUnborn(key) {
     const canon = roomLootKey(key) ?? lootKeyOf(key);
     if (!canon || !isRoomBaseContainer(canon)) return false;
-    return !_roomState.has(canon) || host._lootUnreadable.has(canon);
+    return !_roomState.has(canon) && !host._lootUnreadable.has(canon);
   }
   /** What a foe's build left in its list - the pieces and their counts - so its body can tell what reached it alive. */
   function lootBuiltOf(entity) {
@@ -150,7 +157,7 @@ export function createRoomLoot(host) {
       if (f.src?.eliteFoe) grantEliteLoot(e, terms.lv, rolls);
       rollCorpseKit(e, o);
       stampWonWeapons(e.items, terms.n ?? 1, { rolls });
-      raiseEnemyDeath(e, { ...o, level: terms.lv });
+      raiseEnemyDeath(e, { ...o, level: terms.lv, room: true });   // `room`: the room's base, every client's - no kill (systems/eliteGates/egFind.js asks at the kill)
       return { items: e.items, lootCap: Number.isInteger(e.lootCap) ? e.lootCap : null };
     } finally {
       e.items = saved.items; e.weapon = saved.weapon; e.armorValues = saved.armorValues; e.equip = saved.equip; e.level = saved.level;

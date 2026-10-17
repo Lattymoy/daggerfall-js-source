@@ -256,7 +256,7 @@ test('SILVER-FINDS every host\'s loot door asks (THE FOUR HOSTS): the dungeon\'s
   assert.match(src('src/scenes/corpseMarker.js'), /if \(openWindow\(corpseLootHooks\(entry\)\) === true\) silverFindAt\('corpse', entry\);\n  return items\.length;/);
   assert.match(src('src/scenes/exteriorFoes.js'), /if \(n > 0 && !arrows\) silverFindAt\('corpse', f\);/);
   const w = src('src/scenes/world.js');
-  assert.match(w, /if \(!pile\) return;\n\s+silverFindAt\('search', items\);/);
+  assert.match(src('src/scenes/searchPartyHost.js'), /if \(!pile\) return;\n\s+silverFindAt\('search', items\);/);   // PIN MOVED (FIELD BUGS 2026-10-16b GRAVE-PARTY): the headstone's search left world.js for scenes/searchPartyHost.js
   assert.match(w, /if \(marksBook\) \{\n\s+setSilverFinder\(\(kind\) => \{\n\s+marksBook\.find\(kind\)\.then\(\(finds\) => \{/);
   assert.match(w, /if \(!\(stands && showHaul\(\[findHaul\(f\.found, f\.kind\)\]\)\)\) chatNotice\(f\.line\);/);
   assert.match(w, /const stands = walkMode && !gamePaused\(\) && pointerSurfaces\.size === 0 && !travelView\?\.active;/);

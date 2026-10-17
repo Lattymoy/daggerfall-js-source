@@ -43,9 +43,9 @@
  },
  {
   "name": "STREAM1-a-demotion-is-queued-too-so-a-far-pixel-stays-full-res-and-costs-every-frame",
-  "file": "src/scenes/world.js",
-  "old": "      if (wantStride === 1) restridePending.set(key, entry);\n      else restrideTerrain(entry, wantStride);",
-  "new": "      restridePending.set(key, entry);",
+  "file": "src/scenes/pixelBuild.js",
+  "old": "      if (wantStride === 1) host.restridePending.set(key, entry);\n      else restrideTerrain(entry, wantStride);",
+  "new": "      host.restridePending.set(key, entry);",
   "tests": ["test/world/terrain/stream1_restride.test.js"]
  }
 ]

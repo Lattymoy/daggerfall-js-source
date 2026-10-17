@@ -22,6 +22,7 @@ import { buildInkMarks, markReach, paintSeatRing, SEAT_RING_PAD, SEAT_SECOND_PAD
 import { plainBannerOf } from '../../src/ui/heraldryArt.js';
 import { seatBannerAnchors, gateBannerAnchor, boardPennantAnchor, palaceKeysOf, townCentreOf, createSeatBanners, GATE_BANNER_DROP_M, BOARD_PENNANT_RISE_M } from '../../src/scenes/seatBanners.js';
 import { countSeats } from '../../tools/seatCount.mjs';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 
@@ -254,7 +255,7 @@ test('SEAT1a the banners: the palace door\'s two, a gate\'s on its town side bes
 });
 
 test('SEAT1a the hosts by source: the boot pass derives the seats over the hubs\' own rows; the book online; the arrival line a seat\'s, and the seat reported; the map\'s seatAt; the banners measured at the build and hung with the halls\'; /seat strike; the four hosts (mutants: the rows; the arrival; the witness; the anchors; the merge)', () => {
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   // PIN MOVED (AUDIT LEGACY III W1): the rows are let go once the Living World's two indices over them stand (releaseHubRows)
   // - emptied here at the boot, every index read nothing
   assert.match(w, /const townSeats = deriveTownSeats\(_hubRows, \{ regionNameOf: \(r\) => maps\.getRegionName\(r\), isHub: \(k\) => regionHubs\.byMapId\.has\(k\) \}\);/, 'the game\'s own rows');

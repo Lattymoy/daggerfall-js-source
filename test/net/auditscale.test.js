@@ -212,7 +212,7 @@ test('AUDIT SCALE D2: the clock\'s moment in seconds - scheduled() hands runCron
   assert.equal(svc.env.DB._raw.prepare('SELECT COUNT(*) AS n FROM sessions WHERE player_id = ?').get(g.id).n, 1);
 });
 
-test('AUDIT SCALE D7: on a quiet world the clock is nine statements a minute and twenty-three an hour (AUDIT LW-II-2 S3) - each job asks once and, its page short, never again; the Motherlodes are not picked behind `dev`; a metrics write that throws costs no job', async () => {
+test('AUDIT SCALE D7: on a quiet world the clock is ten statements a minute and twenty-four an hour (AUDIT LW-II-2 S3; EG-ZM; REZ-BLOODLINE AUDIT R1) - each job asks once and, its page short, never again; the Motherlodes are not picked behind `dev`; a metrics write that throws costs no job', async () => {
   clock(T0);
   const svc = await standService({ SEATS_OPEN: 'on', PROFESSIONS_OPEN: 'on' });
   _resetCronForTests();
@@ -220,7 +220,7 @@ test('AUDIT SCALE D7: on a quiet world the clock is nine statements a minute and
   const minute = await runCron(svc.env, { cron: CRON_MINUTE, nowS: T0 + 60, rand });
   // PIN MOVED (SEAT-FACTS, 2026-10-13): and the seats' facts kept once for the service - the rows read and the one row
   // kept (townSeats.js keepSeatFacts), where every isolate read the rows each minute
-  assert.deepEqual(minute.map((j) => j.statements), [1, 1, 1, 1, 2, 1, 1, 1, 0], JSON.stringify(minute.map((j) => [j.name, j.statements])));   // PIN MOVED (CARDS10): Iliac Hand's season #1 asks once too; PIN MOVED (KG6): and The King's Gambit's (gambit.js gambitChampionClock)
+  assert.deepEqual(minute.map((j) => j.statements), [1, 1, 1, 1, 2, 1, 1, 1, 1, 0], JSON.stringify(minute.map((j) => [j.name, j.statements])));   // PIN MOVED (REZ-BLOODLINE AUDIT R1): the falls held for a Resurrect whose window closed, asked once (legacy.js settleHolds); PIN MOVED (CARDS10): Iliac Hand's season #1 asks once too; PIN MOVED (KG6): and The King's Gambit's (gambit.js gambitChampionClock)
   const hour = await runCron(svc.env, { cron: CRON_HOUR, nowS: T0 + 120, rand });
   // PIN MOVED (INT2/INT5, 2026-10-09): the hour sweeps the judge's findings and the wealth-hours past their keep - one
   // statement each, its page short; seventeen became nineteen. PIN MOVED (INT9): and a death in the zone's drop past its
@@ -230,9 +230,11 @@ test('AUDIT SCALE D7: on a quiet world the clock is nine statements a minute and
   // board switches are off) - twenty-one still
   // PIN MOVED (AUDIT LW-II-2 S3): while the market is not open to everyone the patrons' job marks every trader's hours
   // as they pass (market.js markPatronsShut - one statement), so opening it pays none of them - twenty-two
-  // PIN MOVED (PVP-ESCROW, 2026-10-14 - Mac's two-phase handoff): an ended escrow swept as a fall is - twenty-three
-  assert.deepEqual(hour.map((j) => [j.name, j.statements]), [['board', 2], ['guild-board', 1], ['harvests', 2], ['market-history', 10], ['rate-limits', 1], ['sessions', 1], ['guild-invites', 1], ['realm-findings', 1], ['realm-wealth-hours', 1], ['wild-falls', 1], ['wild-escrow', 1], ['patrons', 1]]);
-  assert.equal(minute.reduce((n, j) => n + j.statements, 0) + hour.reduce((n, j) => n + j.statements, 0), 9 + 23);   // PIN MOVED (AUDIT LW-II-2 S3; SEAT-FACTS; KG6; PVP-ESCROW)
+  // PIN MOVED (EG-ZM, Elite-Gates.md section 23): the Weir Key's stake clock asks the held stakes due once - none on a
+  // quiet world, so nothing spent and no letter written (eg.js spendLapsedStakes); PIN MOVED (PVP-ESCROW, 2026-10-14 -
+  // Mac's two-phase handoff): an ended escrow swept as a fall is - twenty-four
+  assert.deepEqual(hour.map((j) => [j.name, j.statements]), [['board', 2], ['guild-board', 1], ['harvests', 2], ['market-history', 10], ['rate-limits', 1], ['sessions', 1], ['guild-invites', 1], ['realm-findings', 1], ['realm-wealth-hours', 1], ['wild-falls', 1], ['wild-escrow', 1], ['patrons', 1], ['eg-stakes', 1]]);
+  assert.equal(minute.reduce((n, j) => n + j.statements, 0) + hour.reduce((n, j) => n + j.statements, 0), 10 + 24);   // PIN MOVED (AUDIT LW-II-2 S3; SEAT-FACTS; EG-ZM; KG6; PVP-ESCROW; REZ-BLOODLINE AUDIT R1)
   // behind `dev` the Motherlodes are a developer's: never picked by the clock
   const dev = await standService({ PROFESSIONS_OPEN: 'dev' });
   _resetCronForTests();

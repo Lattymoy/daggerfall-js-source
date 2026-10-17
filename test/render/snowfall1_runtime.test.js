@@ -17,6 +17,7 @@ import { classicShadowLane } from '../../src/render/classicShadowLane.js';
 import { setModSetting, modSetting } from '../../src/systems/modSettings.js';
 import { buildTerrainGrid, surfaceNormalAt, surfaceNormalFromSamples, gridValueAt } from '../../src/world/terrain/terrainSurface.js';
 import { HEIGHTMAP_DIMENSION } from '../../src/world/terrain/terrainSampler.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const MASKS = [103, 303, 403].map((a) => new Uint8Array(readFileSync(new URL(`../../public/art/snowfall/snow_surface_masks_${a}.bytes`, import.meta.url))));
 const SIZE = 819.2;
@@ -324,7 +325,7 @@ test('SNOWFALL1 the hosts: world.js and exterior.js build the one runtime on the
     assert.match(s, /for \(const seat of _livePersons\) out\.push\(\{ id: seat\.person, [^\n]*citizen: true \}\);/, `${host}: the townsfolk`);
     assert.match(s, /const snowBodies = \(\) => exteriorFoes\.physicalCorpses\(\)\.concat\(cityGuards\.physicalCorpses\(\)\);/, `${host}: the bodies`);
   }
-  const w = read('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /snowfall\.offsetOrigin\(r\.offset\);/);
   assert.match(w, /^ {4}snowfall\.promoted\(built\.get\(key\)\);/m, 'OnPromoteTerrainData');
   assert.match(w, /if \(!tvf\) snowfall\.draw\(cullOn \? snowOutside : null\);/, 'never under the travel view, its blanket culled to the frustum');

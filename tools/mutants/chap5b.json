@@ -312,7 +312,7 @@
   },
   {
     "name": "CHAP5B-HOST-OFFLINE",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "chapterOf: chapterSheet ? (faction) => livingChapterOf(faction, px, py) : undefined,",
     "new": "chapterOf: (faction) => livingChapterOf(faction, px, py),",
     "tests": [

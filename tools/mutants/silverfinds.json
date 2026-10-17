@@ -819,7 +819,7 @@
   },
   {
     "name": "SILVER-FINDS-grave-unasked",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/searchPartyHost.js",
     "old": "        silverFindAt('search', items);",
     "new": "",
     "why": "a headstone's find never holds silver",
@@ -880,9 +880,10 @@
   {
     "name": "SILVER-FINDS-bank-serpents",
     "file": "src/ui/enhanced/enhancedPorts.js",
-    "old": "['From gates, raids and serpents today',",
+    "old": "['From gates, raids, serpents and the Spire today',",
     "new": "['From gates and raids today',",
     "why": "the serpents unnamed under the cap they share",
+    "note": "EG-E1 (PIN MOVED): the Bank's card names the Spire's Redoubts beside them - re-aimed by content.",
     "tests": [
       "test/net/silverways_client.test.js"
     ]

@@ -517,7 +517,7 @@
   },
   {
     "name": "LW15-host-own",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "patronsOf: () => _livingPatrons.get(livingTown.mapId >>> 0) ?? null,",
     "new": "patronsOf: () => null,",
     "tests": [

@@ -28,6 +28,7 @@ import { createMusicDirector } from '../../src/scenes/shared.js';
 import { LOCATION_TYPES, TAVERN_SONGS, MUSIC_ENV } from '../../src/systems/song/songManager.js';
 import { BUILDING_TYPES } from '../../src/world/buildingNames.js';
 import { createTownSeatBook, SEAT_LIST_CACHE_MS, SEAT_RED_READ_MS, SEAT_TURN_READ_SPREAD_MS } from '../../src/net/townSeatBook.js';   // AUDIT FESTIVAL S1   // D1-LOAD: the Turning's read spread
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const tick = (n = 4) => new Promise((r) => { let i = 0; const go = () => (++i >= n ? r() : setTimeout(go, 0)); setTimeout(go, 0); });
@@ -194,7 +195,7 @@ test('FESTIVAL-STAGE the music: a Festival town\'s streets hear the tavern\'s pl
 });
 
 test('FESTIVAL-STAGE wired in the streets\' host: the build measures the Festival\'s anchors at the taverns and the bounty boards and a lantern before every banner, kept on the pixel; the stage reads the dressed seat; the lantern pool takes its lanterns; the music its Festival (mutants: the temples for the taverns; the pool without them; the music without it)', () => {
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /const festivalAnchors = pixelBoardSplit \? festivalBannerAnchors\(\{ frames: pixelHomeFrames, tavernKeys: buildingKeysOfType\(locBlocks, makeBuildingKey, TALK_BUILDING_TYPES\.Tavern\), boards: pixelBoards, bounty: pixelBoardSplit \}\) : null;/);
   assert.match(w, /const festivalLanterns = festivalAnchors \? festivalLanternsOf\(\[\.\.\.\(seatAnchors \?\? \[\]\), \.\.\.festivalAnchors\]\) : null;/);
   assert.match(w, /seatAnchors, _boardSplit: pixelBoardSplit, festivalAnchors, festivalLanterns,/);
@@ -295,7 +296,7 @@ test('AUDIT FESTIVAL S1 the book\'s frame tick reads the list again ONCE when th
   book3.redTick();
   await tick();
   assert.equal(shut.calls, 1, 'shut: never asked at the Turning');
-  assert.match(src('src/scenes/world.js'), /\n    seatBook\?\.redTick\(\);   \/\/ CROWN2/, 'the host ticks the book each online frame');
+  assert.match(hostText('src/scenes/world.js'), /\n    seatBook\?\.redTick\(\);   \/\/ CROWN2/, 'the host ticks the book each online frame');
   assert.equal(SEAT_TURN_READ_SPREAD_MS, 120_000, 'two minutes');
   // the shares drawn: a book's own, from its rand - the last of the window still reads inside it
   const late = turningDoor(() => edicts[1]);

@@ -16,6 +16,7 @@ import { setValue, resetToDefaults } from '../../src/systems/settings/settings.j
 import { composeWornModest, MODESTY_SHIRT } from '../../src/formats/morrowind/mwItemMap.js';
 import { ARMOR_ENUM } from '../../src/combat/enemyEquipment.js';
 import { ARMOR_MATERIAL } from '../../src/systems/armorMaterials.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const ARENA2 = process.env.ARENA2_PATH;
@@ -120,7 +121,7 @@ test('NUDE-FLATS by source: every host that draws a person asks drawnFlat, and t
     'an interior person: on whatever picture the RR variant answered');
   assert.match(ic, /const redrawn = v \|\| da !== pn\.textureArchive \|\| dr !== pn\.textureRecord;\s*return \{ \.\.\.pn, x, y, z, active: visible, questBehaviour: null, \.\.\.\(redrawn \? \{ drawArchive: da, drawRecord: dr \} : \{\}\) \};/,
     'drawn through RR2\'s own door, textureArchive/textureRecord untouched');
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /const addFlat = \(archive, record, x, y, z\) => \{\s*\[archive, record\] = drawnFlat\(archive, record\);/, 'every flat the streaming host batches');
   assert.match(w, /const \[drawArchive, drawRecord\] = drawnFlat\(flat\.archive, flat\.record\);\s*const t = await getTexture\(drawArchive\);\s*if \(!t \|\| drawRecord >= t\.recordCount\) continue;\s*const size = billboardSize\(t, drawRecord\);/,
     'a street NPC\'s box is its picture\'s');

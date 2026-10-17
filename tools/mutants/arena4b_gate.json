@@ -83,7 +83,7 @@
   {
     "name": "ARENA4B-WINDOW-FIGHT-UNKNOWN",
     "file": "src/scenes/arena/arenaGate.js",
-    "old": "if (kind === 'fight' && on && !onLadder) return { ok: false, text: ARENA_TEXT.online.climbWait };",
+    "old": "if (kind === 'fight' && on && !onLadder) return { ok: false, text: on.shutText?.(ARENA_TEXT.online.climbWait) ?? ARENA_TEXT.online.climbWait };",
     "new": "void 0;",
     "tests": [
       "test/systems/arena/arena4b_gate.test.js"

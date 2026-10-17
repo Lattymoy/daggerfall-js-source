@@ -14,6 +14,7 @@ import { CLASSIC_MINUTES_PER_SECOND } from '../../src/systems/worldTick.js';
 import { areEnemiesNearby, RESTING_DISTANCE, MIN_WILDERNESS_SPAWN_DISTANCE } from '../../src/systems/encounters.js';   // CAMP1-REST: the interrupt, its reach, and the band the classic roll mints inside it
 import { CLIMATES } from '../../src/formats/mapsFile.js';
 import { FEATURES } from '../../src/systems/features.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 // ═══ CAMP1: WILDERNESS CAMPS AND PACKS ═════════════════════════════
 //
@@ -110,7 +111,7 @@ test('CAMP1: group ownership online - the one lowest id among the players within
 });
 
 test('CAMP1 by source: both exterior hosts roll it after the single roll comes back empty, stand an anchor then the members around it, the world host under the group-ownership guard and on every pixel entered; a member that notices the player wakes its campmates; the feature row', () => {
-  const w = read('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   const e = read('src/scenes/exterior.js');
   // CAMP-NOTIMER (2026-09-19, Lost's package): THE TIMER ARM IS GONE
   // FROM world.js. It fired a GUARANTEED group every 15 real minutes of
@@ -276,7 +277,7 @@ test('CAMP1-REST: the rest interrupt is SIGHT first - a seen foe reports at any 
 // without touching the encounter cursor, so the next
 // frame's catch-up rolled them with isResting=false and the timer's 180-minute boundary fired a guaranteed group.
 test('CAMP-REST by source: every time skip is spent through the tick as a rest, and a campmate does not notice a sleeping player', () => {
-  const w = read('src/scenes/world.js'), e = read('src/scenes/exterior.js'), ef = read('src/scenes/exteriorFoes.js');
+  const w = hostText('src/scenes/world.js'), e = read('src/scenes/exterior.js'), ef = read('src/scenes/exteriorFoes.js');
   assert.match(w, /playerTicker\.advance\(60\);\s*\n[^\n]*\n[^\n]*\n\s*runEncounterTick\(walkMode && playerSpawned \? player\.pos : cam\.pos, true\);/, 'world.js: the collapse hour is spent as a rest');
   assert.equal((w.match(/advanceMinutes: \(n\) => \{ playerTicker\.advance\(n\); runEncounterTick\(walkMode && playerSpawned \? player\.pos : cam\.pos, true\); \}/g) ?? []).length, 2, 'world.js: the camp meal and the rest (LIVED1: one shape now, the rest\'s minutes the character\'s own)');
   assert.match(e, /playerTicker\.advance\(60\);[^\n]*\n\s*runEncounterTick\(walkMode \? player\.pos : cam\.pos, true\);/, 'exterior.js: the collapse hour');

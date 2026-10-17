@@ -13,6 +13,7 @@ import {
 import { MOD_SETTINGS } from '../../src/systems/modSettings.js';
 import { LOCATION_TYPES, DUNGEON_TYPES } from '../../src/formats/mapsFile.js';
 import { WEATHER_TYPES, weatherFlags } from '../../src/world/weather.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 // ═══ AMBIENT TEXT 1.8 - Regnier (AT1/AT2) ═════════════════════════
 //
@@ -23,7 +24,7 @@ import { WEATHER_TYPES, weatherFlags } from '../../src/world/weather.js';
 // in a diff.
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const read = (p) => readFileSync(join(root, p), 'utf8');
+const read = (p) => hostText(p);
 const vendor = (p) => JSON.parse(read(`vendor/ambient-text/${p}`));
 
 /** A rolls() that hands back a queued list of [0, 1) values and then

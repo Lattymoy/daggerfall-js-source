@@ -344,7 +344,8 @@ test('AUDIT LEGACY II F11 (A9 of AUDIT LEGACY, unpinned until now): a load reset
   load(w, fallen, person('c-ysolde'));
   assert.ok(w.host.past, 'the fallen\'s save is the past');
   assert.equal(w.host.willRise(), false, 'no outcome of the last visit rides into this one');
-  assert.match(rd('src/scenes/legacyHost.js'), /function adopt\(rec\) \{\n\s*past = null; outcome = null; deathSeen = false; elderSaid = false;/);
+  // PIN MOVED (FIELD BUGS 2026-10-16b REZ-BLOODLINE): a death held for a Resurrect is decided first, then the visit resets
+  assert.match(rd('src/scenes/legacyHost.js'), /function adopt\(rec\) \{\n(?:\s*\/\/[^\n]*\n)*\s*if \(held\) decideDeath\(\);\n\s*past = null; outcome = null; deathSeen = false; elderSaid = false;/);
 });
 
 test('AUDIT LEGACY II A10: a remains row\'s list as laid is held to its shape - a damaged one never becomes the list', () => {

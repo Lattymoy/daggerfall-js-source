@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 // ═══ WINFOE1: THE ENEMY POOLS KEEP THEIR CLOCK UNDER A WINDOW ═══════
 //
@@ -19,7 +20,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const read = (p) => readFileSync(join(root, p), 'utf8');
 
 test('WINFOE1: the four enemy pools drive on the frame\'s own dt under a window; the two populations still freeze under the talk overlay; the encounter roll and the interior door-opening keep their gates', () => {
-  const w = read('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   // QUEST-POPUP-PAUSE (2026-09-26): the one exception - offline, a quest box on top holds them (quest_popup_pause.test.js)
   assert.match(w, /const foeDt = _questBoxHoldsFoes\(\) \? 0 : dt;\n\s*livePersonBatches\.push\(\.\.\.cityGuards\.update\(foeDt,\s*\n\s*walkMode && playerSpawned \? player\.pos : cam\.pos, cam\.pos, _foeSenses\(\)\)\);/, 'world.js: the watch');
   assert.match(w, /exteriorFoes\.update\(foeDt, _pf, cam\.pos, _foeSenses\(\)\);/, 'world.js: the encounter pool');

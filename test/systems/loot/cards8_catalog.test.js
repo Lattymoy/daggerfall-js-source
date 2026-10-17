@@ -123,9 +123,9 @@ test('CARDS8 the holdings: the Iliac Bay\'s places, each with its own rule', () 
 
 test('CARDS8 the first set, counted by kind and tier - a card added is a card meant', () => {
   const by = (key) => ILIAC_CARDS.reduce((m, c) => ({ ...m, [c[key]]: (m[c[key]] ?? 0) + 1 }), {});
-  assert.deepEqual(by('kind'), { unit: 69, spell: 14, prince: 11 });   // PIN MOVED (CARDS9): the three bosses' own, units; (KG-SET): the nine, units
-  assert.deepEqual(by('tier'), { common: 31, magic: 25, rare: 15, legendary: 12, aetheric: 5, artifact: 6 });   // PIN MOVED (KG-SET): five commons, two magics, two rares
-  assert.equal(ILIAC_CARDS.length, 94);
+  assert.deepEqual(by('kind'), { unit: 82, spell: 14, prince: 11 });   // PIN MOVED (CARDS9): the three bosses' own, units; (KG-SET): the nine, units; PIN MOVED (EG-E): the Battlespire's thirteen lords', units
+  assert.deepEqual(by('tier'), { common: 31, magic: 25, rare: 15, legendary: 12, aetheric: 18, artifact: 6 });   // PIN MOVED (KG-SET): five commons, two magics, two rares; PIN MOVED (EG-E): the lords' thirteen, aetheric
+  assert.equal(ILIAC_CARDS.length, 107);   // PIN MOVED (EG-E): the lords' thirteen
 });
 
 test('CARDS8 power and cost follow what the thing is in the game', () => {
@@ -140,7 +140,8 @@ test('CARDS8 power and cost follow what the thing is in the game', () => {
   assert.deepEqual(ILIAC_CARDS.filter((x) => x.cost === 1 && x.kind !== 'spell').map((x) => x.id).sort(),
     ['giant-bat', 'imp', 'mages-guild-apprentice', 'rat', 'slaughterfish', 'thieves-guild-filcher']);   // PIN MOVED (KG-SET): the Slaughterfish, a 1/3 that tires
   // The legendary-or-higher cards: the Princes, the artifacts, and the Bay's few legends.
-  assert.deepEqual(ILIAC_CARDS.filter((x) => rank(x.tier) >= rank('legendary') && x.kind === 'unit').map((x) => x.id), ['ancient-vampire', 'ancient-lich', 'king-gothryd', 'valkynaz-ruhn', 'sethrakul', 'brass-remnant']);   // PIN MOVED (CARDS9): the bosses' own, aetheric
+  assert.deepEqual(ILIAC_CARDS.filter((x) => rank(x.tier) >= rank('legendary') && x.kind === 'unit').map((x) => x.id), ['ancient-vampire', 'ancient-lich', 'king-gothryd', 'valkynaz-ruhn', 'sethrakul', 'brass-remnant',
+    'eg-grath', 'eg-spellmaster', 'eg-armsmaster', 'eg-ilthys', 'eg-cairnkeeper', 'eg-twins', 'eg-morvayn', 'eg-dusk', 'eg-stalker', 'eg-seyth', 'eg-colossus', 'eg-wyrm', 'eg-garoth']);   // PIN MOVED (CARDS9): the bosses' own, aetheric; PIN MOVED (EG-E): the Battlespire's lords', aetheric
 });
 
 test('CARDS8 the starter deck: thirty, clean by the deck\'s law, common and magic alone', () => {
@@ -158,6 +159,6 @@ test('AUDIT CARDS-5: the catalog\'s rules are the ones looked at - every card\'s
   const { createHash } = await import('node:crypto');
   const rec = (c) => [c.id, c.name, c.kind, c.cost, c.power, c.tier, c.tags, c.fx];
   const body = JSON.stringify({ cards: ILIAC_CARDS.map(rec), locations: ILIAC_LOCATIONS.map(rec), starter: STARTER_DECK });
-  assert.deepEqual([ILIAC_CARDS.length, ILIAC_LOCATIONS.length, STARTER_DECK.length], [94, 11, 30]);   // PIN MOVED (CARDS9): the bosses' three; (KG-SET): the nine
-  assert.equal(createHash('sha256').update(body).digest('hex'), 'db3a94fbde4600b2405cc108e54c4529b5f92fd94ac26f46e35f4e22f81c3e75');   // PIN MOVED (CARDS9): the bosses' three cards; (KG-SET, 2026-10-13): the nine The King's Gambit brought in (Kings-Gambit.md section 10.3)
+  assert.deepEqual([ILIAC_CARDS.length, ILIAC_LOCATIONS.length, STARTER_DECK.length], [107, 11, 30]);   // PIN MOVED (CARDS9): the bosses' three; (KG-SET): the nine; PIN MOVED (EG-E): the lords' thirteen
+  assert.equal(createHash('sha256').update(body).digest('hex'), '894bf5ab19cf0745b72984674c02794286aedb09d33920618a8f5adb41907379');   // PIN MOVED (CARDS9): the bosses' three cards; (KG-SET, 2026-10-13): the nine The King's Gambit brought in (Kings-Gambit.md section 10.3); PIN MOVED (EG-E): the Battlespire's thirteen lords' cards (their words in systems/iliac/iliacCardWords.js since the merge of main past KG-SET)
 });

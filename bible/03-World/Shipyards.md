@@ -469,3 +469,7 @@ player's ship and two players may sign one named sailor - the wire carries no ha
 record. Quays and the port's places (U1): a harbour's quay might be laid across a shipyard's ground - unseen without
 ARENA2; a fix closes the berths' plans on the port's sites. Adjacent ports' harbours (U3): the harbour book sounds the
 port near the player's pixel and its neighbours' (`navalHarbourNear`) - as it was, noted only.
+
+FIELD BUGS 2026-10-16b YARD-ROWS: the fleet page's rows stood a ship's words a word a line - the presses' track was `auto`;
+it is `fit-content(40%)` now, and a fleet row carries her presses on a line of their own under her words, as the
+Holdings card does. The record: `01-Overview/bugs/Field-Bugs-2026-10-16b.md`.

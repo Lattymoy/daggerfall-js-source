@@ -83,7 +83,7 @@
   },
   {
     "name": "FORAGE1-10-a-patch-that-misses-is-silent",
-    "file": "src/systems/foraging/foragingLaw.js",
+    "file": "src/systems/quest/questPatches.js",
     "old": "    if (found !== p.count) throw new Error(",
     "new": "    if (false) throw new Error(",
     "tests": [
@@ -192,7 +192,7 @@
   },
   {
     "name": "FORAGE1-22-a-crlf-checkout-throws",
-    "file": "src/systems/foraging/foragingLaw.js",
+    "file": "src/systems/quest/questPatches.js",
     "old": "  let out = text.replace(/\\r\\n?/g, '\\n');",
     "new": "  let out = text;",
     "tests": [

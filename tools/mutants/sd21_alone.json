@@ -1,36 +1,38 @@
 [
   {
     "name": "SD21-the-Hour-admitted",
-    "file": "src/scenes/world.js",
-    "old": "    if (modes?.sdRealmSlot?.() != null) return null;   // SD-ALONE: nor through the Rift",
-    "new": "    if (false) return null;   // SD-ALONE: nor through the Rift",
+    "file": "src/systems/madeLevel.js",
+    "old": "portalStone: 'refused', companions: 'out', regen: 'off', levitate: 'banned',",
+    "new": "portalStone: 'refused', companions: null, regen: 'off', levitate: 'banned',",
     "tests": [
       "test/scenes/sd21_alone.test.js"
     ]
   },
   {
     "name": "SD21-the-slot-by-its-truth",
-    "file": "src/scenes/world.js",
-    "old": "    if (modes?.sdRealmSlot?.() != null) return null;   // SD-ALONE: nor through the Rift",
-    "new": "    if (modes?.sdRealmSlot?.()) return null;   // SD-ALONE: nor through the Rift",
+    "file": "src/systems/madeLevel.js",
+    "old": ": isSdRealm(loc) ? 'hour'",
+    "new": ": isSdRealm(loc) && loc.sdRealm ? 'hour'",
     "tests": [
-      "test/scenes/sd21_alone.test.js"
+      "test/scenes/sd21_alone.test.js",
+      "test/systems/eliteGates/egmade_law.test.js"
     ]
   },
   {
     "name": "SD21-every-dungeon-refused",
-    "file": "src/scenes/world.js",
-    "old": "    if (modes?.sdRealmSlot?.() != null) return null;   // SD-ALONE: nor through the Rift",
-    "new": "    if (modes?.sdRealmSlot?.() !== undefined) return null;   // SD-ALONE: nor through the Rift",
+    "file": "src/systems/madeLevel.js",
+    "old": ": isSdRealm(loc) ? 'hour'",
+    "new": ": isSdRealm(loc) || loc?.dungeon ? 'hour'",
     "tests": [
-      "test/scenes/sd21_alone.test.js"
+      "test/scenes/sd21_alone.test.js",
+      "test/systems/eliteGates/egmade_law.test.js"
     ]
   },
   {
     "name": "SD21-the-Hours-cards-drawn",
-    "file": "src/scenes/world.js",
-    "old": "    if (modes?.sdRealmSlot?.() != null) return [];   // SD-ALONE: and none in the Shattered Hour",
-    "new": "    if (false) return [];   // SD-ALONE: and none in the Shattered Hour",
+    "file": "src/systems/madeLevel.js",
+    "old": "companions: 'out', regen: 'off', levitate: 'banned',",
+    "new": "companions: 'in', regen: 'off', levitate: 'banned',",
     "tests": [
       "test/scenes/sd21_alone.test.js"
     ]

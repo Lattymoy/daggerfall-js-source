@@ -30,6 +30,7 @@ import { survivalInfoTokens } from '../../../src/systems/item/itemInfo.js';
 import { snapshotPlayer, restorePlayer } from '../../../src/systems/save/save.js';
 import { MOBILE_TYPES } from '../../../src/characters/mobile/mobileTypes.js';
 import { assignStartingGear } from '../../../src/systems/startingGear.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 // ═══ AUDIT SURV (2026-09-18): five lenses over SURV1-SURV7 ════════
 //
@@ -252,7 +253,7 @@ test('AUDIT SURV C: what the player is told - a vampire\'s strip has no hunger o
 });
 
 test('AUDIT SURV B: the camps - the sweep spares them and the scene cache carries none, an empty word reaches the cell, a restore merges by id, Off keeps them, sees only another player\'s and uses none; the dungeon rest pays its night asleep; the clock correction re-aligns', async () => {
-  const world = read('src/scenes/world.js'), dc = read('src/scenes/dungeonContext.js'), campsSrc = read('src/scenes/camps.js');
+  const world = hostText('src/scenes/world.js'), dc = read('src/scenes/dungeonContext.js'), campsSrc = read('src/scenes/camps.js');
   assert.doesNotMatch(world, /camps\.collectPixel\(key\)/, 'a placed camp is not a dropped pile: the streaming sweep leaves it');
   assert.doesNotMatch(world, /camps: camps\.snapshot\(\(pos\) => \{ const wc = state\.worldCoords\(pos\); return \[wc\.x, pos\[1\] - state\.compensation\[1\], wc\.z\]; \}\),   \/\/ SURV3: my camps, in natives\n\s+\}\);\n\s+\}\n\s+function restoreExteriorScene|camps\.restore\(arrived\.camps/, 'the scene cache carries no camps - the pool is the truth');
   assert.match(world, /if \(cell && full\) frame\.c = camps\.wireRecords\(campToWire\);/, 'an empty list says "none stand"');

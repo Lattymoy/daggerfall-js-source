@@ -39,6 +39,7 @@ import { FT } from '../../src/systems/foraging/foragingLaw.js';
 import { TERRAIN_SIZE } from '../../src/world/terrain/terrainSampler.js';
 import { sharedClassicMinutes } from '../../src/net/wire.js';
 import { utcDay } from '../../src/net/marksLaw.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const noWait = () => Promise.resolve();
@@ -467,7 +468,7 @@ test('PROF4 pages: the Workbench at a Furniture Store - the saws for the logs he
 // ─── THE WIRING ──────────────────────────────────────────────────────
 
 test('PROF4 wiring: a built pixel keeps its forest (the tree flats by World of Daggerfall\'s table, their groups\' batches); the host mints furniture among the home\'s things, asks the station by the recipe, the plane\'s band off AGI and WIL; the workbench a Furniture Store\'s or a home\'s station; the billboard shader tips a felled tree; DECOR marks a set-down piece from the service\'s own row', () => {
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   // PIN MOVED (ECOTONE1, 2026-10-07): a flat's climate is its own - the pixel's, or the neighbour's a border stood it by
   // (`base` its summer archive, the Tree table's key; `archive` the season's set it is drawn in)
   assert.match(w, /if \(isTreeRecord\(base, f\.record\)\) pixelTrees\.push\(\{ id: pixelTrees\.length, group: `\$\{archive\}_\$\{f\.record\}`, i, x: f\.x, y: f\.y, z: f\.z, wood: f\.wood \?\? 0, base, archive \}\);/);   // FOREST1 (AUDIT F3): and how wooded its tile is

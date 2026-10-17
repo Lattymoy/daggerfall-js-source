@@ -26,6 +26,7 @@ import { equipItem } from '../../src/systems/equip.js';
 import { nextVariant, toggleHood } from '../../src/systems/useItem.js';
 import { arrivalClampMinutes } from '../../src/systems/travel/travel.js';
 import { MINUTES_PER_DAY } from '../../src/systems/gameDate.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const read = (p) => readFileSync(join(ROOT, p), 'utf8');
@@ -120,7 +121,7 @@ test('HOOD-CAREER: ONE hood law, and every career rung asks it - passiveSpecials
   assert.match(ps, /^import \{ cloakState \} from '\.\/survival\/temperature\.js';/m, 'the felt temperature\'s hood, imported');
   assert.match(ps, /export function careerSunAverse\(entity\) \{\n\s*if \(!careerSunDamage\(entity\?\.career\)\) return false;\n\s*return !cloakState\(entity\.equip\?\.slots \?\? null\)\.hood;\n\}/);
   assert.match(ps, /&& careerSunAverse\(entity\)\n\s*&& playerInSunlight\(clockMinutes\)\) \{\n\s*sinks\?\.hurt\?\.\(SUN_DAMAGE_AMOUNT\);/, 'the burn asks the hood');
-  const world = read('src/scenes/world.js');
+  const world = hostText('src/scenes/world.js');
   assert.doesNotMatch(world, /careerSunDamage/, 'no rung reads the bare bit');
   assert.equal((world.match(/careerFastTravelBlock\(playerEntity, nowMin\)/g) ?? []).length, 3,
     'the map door, the party\'s refusal and the driver\'s map online');

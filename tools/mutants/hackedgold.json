@@ -110,8 +110,9 @@
   {
     "name": "HACKED-GOLD-a-buildings-record-said-with-a-letter",
     "file": "src/world/interior/interiorShared.js",
-    "old": "r: peerHanded(t.items).map((it) => ({ ...it })),",
-    "new": "r: t.items.map((it) => ({ ...it })),",
+    "old": "r: peerHanded(t.items).map((it) => clearStolen({ ...it })),",
+    "new": "r: t.items.map((it) => clearStolen({ ...it })),",
+    "note": "STOLEN-GOODS AUDIT S3 (re-aimed by content): the outgoing copy strips the theft's mark too - the mutant still drops peerHanded alone",
     "tests": [
       "test/systems/hackedgold.test.js"
     ]
@@ -194,7 +195,7 @@
   {
     "name": "HACKED-GOLD-the-law-version-unmoved",
     "file": "src/systems/item/itemLaw.js",
-    "old": "export const ITEM_LAW_VERSION = 5;",
+    "old": "export const ITEM_LAW_VERSION = 7;",
     "new": "export const ITEM_LAW_VERSION = 3;",
     "tests": [
       "test/systems/item/int1_itemlaw.test.js",
@@ -204,7 +205,7 @@
   {
     "name": "HACKED-GOLD-account-version-unmoved",
     "file": "server-account/src/service.js",
-    "old": "export const ACCOUNT_VERSION = 'acct145';",
+    "old": "export const ACCOUNT_VERSION = 'acct151';",
     "new": "export const ACCOUNT_VERSION = 'acct123';",
     "tests": [
       "test/systems/tech1_roster.test.js",

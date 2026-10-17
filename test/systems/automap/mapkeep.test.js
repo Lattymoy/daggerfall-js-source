@@ -56,7 +56,7 @@ test('MAP-KEEP / THE HOSTS: the world host\'s load enters the saved dungeon on t
   assert.match(m, /return gatedTransition\(async \(live\) => \{[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*if \(host\.wildDungeonGate && !\(await host\.wildDungeonGate\(hit, fromLoad\)\)\) return false;\n\s*if \(!live\(\)\) return false;[^\n]*\n\s*return dungeonTransition\(hit, entries, preferEnterMarker, live, fromLoad, place\);/);   // PIN MOVED (INSTANCES' audit): the entry decided rides to the build
   assert.match(m, /automapFromLoad: fromLoad,/);
   // AUDIT 27h M1: the court's record stands outside the store; every other dungeon enters on the arm it was handed
-  assert.match(rd('src/scenes/dungeonContext.js'), /let automapRec = isGateArena\(dfLocation\)(?: \|\| isArenaFloor\(dfLocation\))?(?: \|\| _sdRealm)? \? detachedAutomapRecord\(\)[^\n]*\n\s*: enterDungeonAutomap\(automapKey, classicMinutesRef\.value, \{ fromLoad: !!opts\.automapFromLoad \}\);/);   // SD5a (PIN MOVED): the Shattered Hour keeps no map either
+  assert.match(rd('src/scenes/dungeonContext.js'), /let automapRec = madeLevelRule\(_made, 'automap'\) === 'off' \|\| isArenaFloor\(dfLocation\) \? detachedAutomapRecord\(\)[^\n]*\n\s*: enterDungeonAutomap\(automapKey, classicMinutesRef\.value, \{ fromLoad: !!opts\.automapFromLoad \}\);/);   // PIN MOVED (EG-H2, Elite-Gates.md section 24): the made level's law (systems/madeLevel.js): the court's, the Hour's and the Spire's maps off as one rule   // SD5a (PIN MOVED): the Shattered Hour keeps no map either; EG-PLAY (PIN MOVED): nor an Elite Breach's circle
   // the other entries stay fresh ones: only the load passes it
   assert.equal((m.match(/fromLoad: true/g) ?? []).length, 0, 'worldModes never claims a load on its own');
 });

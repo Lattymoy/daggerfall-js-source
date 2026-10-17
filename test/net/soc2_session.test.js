@@ -12,8 +12,9 @@ import { OnlineSession } from '../../src/net/online.js';
 import { SocialState, accountId, accountSecret, lastOnlineText, noteText, PARTY_GREEN, PARTY_GREEN_CSS, FRIEND_CSS } from '../../src/net/social.js';
 import { SOCIAL_ROOM, SOCIAL_HZ_MAX, PARTY_HZ_MAX, PARTY_SEND_MS, INVITE_TTL_MS, PARTY_MAX, NOTE_CODES, validPartyPose, RELAY_VERSION } from '../../src/net/wire.js';
 import { fakeSocketClass } from '../fakeSocket.mjs';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
-const rd = (p) => readFileSync(new URL('../../' + p, import.meta.url), 'utf8');
+const rd = (p) => hostText(p);
 const P = Object.freeze({ px: 100, py: 200, loc: 'Daggerfall', in: 0, h: 50, hm: 60, f: 1000, fm: 2000, m: 10, mm: 20, race: 'Nord', gender: 'male', face: 2 });
 const quiet = (fn) => { const info = console.info, warn = console.warn; console.info = () => {}; console.warn = () => {}; try { return fn(); } finally { console.info = info; console.warn = warn; } };
 /** A hub link over a fake socket, opened and welcomed; `clock` is the session's own. */

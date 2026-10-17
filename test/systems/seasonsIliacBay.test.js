@@ -40,7 +40,7 @@ import { Renderer } from '../../src/render/renderer.js';
 import { TextureFile } from '../../src/formats/textureFile.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const read = (p) => readFileSync(join(root, p), 'utf8');
+const read = (p) => hostText(p);
 
 // ═══ the script's tables ════════════════════════════════════════════════
 
@@ -364,6 +364,7 @@ test('SIB1: DXT1 and DXT5 blocks decode to the documented palettes', () => {
 });
 
 import { unityFs, serializedFile, texture2dBody, textAssetBody, lz4Literals, testBundle, RGBA_2x2, DXT5_4x4, TEXTURE2D_TREE, W } from '../unityFixture.mjs';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 test('SIB1: the UnityFS reader - header, stored and LZ4 blocks, the type tree with common strings, Texture2D and TextAsset', () => {
   for (const lz4 of [false, true]) {
@@ -579,7 +580,7 @@ test('SIB1 (AUDIT 62 F26): a seasonal flat reaches texImage2D in getColor32 orde
 // ═══ the hosts, the pick, the settings, the credits, the vendor tree ═════
 
 test('SIB1: both climate hosts take the cache\'s answer for a flat, and the streaming host hears every event the script subscribes', () => {
-  const world = read('src/scenes/world.js');
+  const world = hostText('src/scenes/world.js');
   const exterior = read('src/scenes/exterior.js');
   for (const [name, src] of [['world.js', world], ['exterior.js', exterior]]) {
     assert.match(src, /new SeasonHelper\(\{/, `${name} builds the helper`);
@@ -659,7 +660,7 @@ test('SIB2: the bundle is the mod by its MANIFEST, not by one guessed file name;
   assert.equal(SEASONS_MOD.version, JSON.parse(read('vendor/seasons-iliac-bay/seasons-of-the-iliac-bay.dfmod.json')).ModVersion, 'the port\'s script is the vendored manifest\'s version');
   // the events per caller: the travel popup's arm raises OnPostFastTravel (+ OnUpdateTerrainsEnd), a quickload and the
   // classic import raise OnLoad, every other teleport raises neither (their terrains' OnInstantiateTerrain is the mod\'s word)
-  const world = read('src/scenes/world.js');
+  const world = hostText('src/scenes/world.js');
   assert.match(world, /async function _teleportToPixel\(px, py, localPos = null, \{ grounded = false, arriveMinutes = null, reposition = REPOSITION\.None, travelStart = null, modEvent = null, resolveArrival = null \} = \{\}\)/);
   assert.match(world, /if \(seasonsActive && modEvent === 'travel'\) await seasons\.onPostFastTravel\(\)/);
   assert.match(world, /if \(seasonsActive && modEvent === 'load'\) await seasons\.onLoad\(\)/);

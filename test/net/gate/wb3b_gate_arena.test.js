@@ -28,6 +28,7 @@ import { gateYaw, gateRoomKey } from '../../../src/net/gate/gateLaw.js';
 import { createGateLink, foldGate, bossAt, GATE_STATE_EMPTY, GATE_NO_TEXT } from '../../../src/net/gate/gateLink.js';
 import { mintReceipt } from '../../../src/net/gate/gateReceipt.js';
 import { fellLine } from '../../../src/systems/gate/gateOmen.js';
+import { madeLevelRule, madeLevelSays } from '../../../src/systems/madeLevel.js';   // EG-H2: the made level's law the hosts' doors ask
 
 const read = (p) => readFileSync(p, 'utf8');
 const noModel = () => { throw new Error('the court asks for no model'); };
@@ -239,10 +240,13 @@ test('WB3b the seams, by source: the dungeon host enters the court through its o
   assert.match(wm, /ctx\.collider\.addMesh\(COURT_BUCKET, tris, idx, identity\(\)\);/);
   assert.match(wm, /if \(hit\.gateArena\) cam\.yaw = Math\.PI;/, 'arriving by the bridge, facing him');
   const dc = read('src/scenes/dungeonContext.js');
-  for (const [what, re] of [['the map', /toggleAutomap\(\) \{\n\s+if \(activeOverlay\) return;\n\s+if \(isGateArena\(dfLocation\)\) \{ hudText\.add\(COURT_TEXT\.noMap\); return; \}/],
-    ['the rest', /toggleRest\(\) \{\n\s+if \(activeOverlay\) return;\n\s+if \(isGateArena\(dfLocation\)\) \{ hudText\.add\(COURT_TEXT\.noRest\); return; \}/],
-    ['the save', /if \(isGateArena\(dfLocation\)\) \{ if \(!quiet\) hudText\.add\(COURT_TEXT\.noSave\); return false; \}\n(?:[^\n]*isArenaFloor\(dfLocation\)[^\n]*\n)?\s+const snap = snapshotPlayer\(/],   // ARENA2: the arena floor's own refusal may follow   // REALM P0.5: a quiet checkpoint is refused in silence
-    ['the pause\'s save', /savingPrevented: \(\) => isGateArena\(dfLocation\)(?: \|\| isArenaFloor\(dfLocation\))?(?: \|\| _sdRealm)?,/]]) assert.match(dc, re, what);   // SD5a (PIN MOVED): the Shattered Hour's refusal beside the court's
+  // PIN MOVED (EG-H2, Elite-Gates.md section 24): the made level's law (systems/madeLevel.js): the court's refusals are its row's, in COURT_TEXT's own words
+  for (const [what, re] of [['the map', /toggleAutomap\(\) \{\n\s+if \(activeOverlay\) return;\n\s+if \(madeLevelRule\(_made, 'automap'\) === 'off'\) \{ hudText\.add\(madeLevelSays\(_made, 'automap'\)\); return; \}/],
+    ['the rest', /toggleRest\(\) \{\n\s+if \(activeOverlay\) return;\n\s+if \(madeLevelRule\(_made, 'rest'\) === 'refused'\) \{ hudText\.add\(madeLevelSays\(_made, 'rest'\)\); return; \}/],
+    ['the save', /if \(madeLevelRule\(_made, 'save'\) === 'refused'\) \{ if \(!quiet\) hudText\.add\(madeLevelSays\(_made, 'save'\)\); return false; \}[^\n]*\n(?:[^\n]*isArenaFloor\(dfLocation\)[^\n]*\n)?\s+const snap = snapshotPlayer\(/],   // ARENA2: the arena floor's own refusal may follow   // REALM P0.5: a quiet checkpoint is refused in silence
+    ['the pause\'s save', /savingPrevented: \(\) => madeLevelRule\(_made, 'save'\) === 'refused' \|\| isArenaFloor\(dfLocation\),/]]) assert.match(dc, re, what);   // SD5a (PIN MOVED): the Shattered Hour's refusal beside the court's
+  assert.deepEqual(['automap', 'rest', 'save', 'mark'].map((r) => madeLevelSays('court', r)), [COURT_TEXT.noMap, COURT_TEXT.noRest, COURT_TEXT.noSave, COURT_TEXT.noMark], 'in the court\'s own words');
+  assert.deepEqual(['automap', 'rest', 'save'].map((r) => madeLevelRule('court', r)), ['off', 'refused', 'refused'], 'the court keeps no map, no rest, no save');
   const w = read('src/scenes/world.js');
   assert.match(w, /ready: \(\) => !!online\?\.gateOk,/);
   assert.match(w, /enter: \(g\) => \{ modes\?\.enterGateArena\?\.\(g\); \},/);
@@ -256,7 +260,8 @@ test('WB3b the seams, by source: the dungeon host enters the court through its o
   // AUDIT WBX F10: the court's own frame once first - a screen asleep through midnight lands the Wrath, then is carried out
   assert.match(w, /if \(courtDay != null && Date\.now\(\) \+ _sharedOffsetMs >= gateTimes\(courtDay\)\.wrathAt \+ GATE_COLLAPSE_MS\) \{[\s\S]{0,400}?try \{ gateCourt\?\.frame\(\); \} catch[^\n]*\n\s*ejectFromCourt\(COURT_TEXT\.collapse\);/);
   assert.match(w, /const courtGate = modes\?\.gateArenaGate\?\.\(\) \?\? null;[\s\S]{0,200}if \(courtGate\) \{\n\s+modes\?\.forceExitToExterior\(\);\n\s+if \(landBeforeGate\(courtGate\)\) \{ gateVeil\?\.flash\(\); townTalk\.showOverlay\(new ActionTextBox\(\[COURT_TEXT\.castOut\]\)\); return; \}/, 'a death in the court is cast out before its gate');
-  assert.match(w, /function setRecallAnchor\(\) \{\n\s+if \(modes\?\.gateArenaDay\?\.\(\) != null\) \{ setMidScreenText\(COURT_TEXT\.noMark\); return; \}/);
+  assert.match(w, /function setRecallAnchor\(\) \{\n\s+if \(madeRuleHere\('mark'\) === 'refused'\) \{ madeSay\('mark'\); return; \}/);   // PIN MOVED (EG-H2, Elite-Gates.md section 24): the made level's law (systems/madeLevel.js)
+  assert.deepEqual([madeLevelRule('court', 'mark'), madeLevelRule('court', 'says'), madeLevelRule('court', 'recall')], ['refused', 'mid', null], 'the court refuses the Mark alone, on the mid-screen line');
   assert.match(w, /fellAt: \(day\) => gateLink\?\.fellAt\(day\) \?\? null, {3}\/\/ WB3b: the relay's word of the kill/, 'the omen hears the kill');   // AUDIT GATE-FBX P12: the omen's own line - the rite's (AUDIT WB12d R7) is its twin
   assert.equal(gateRoomKey(200), 'gate:200');
   assert.ok(Object.values(COURT_TEXT).every((t) => typeof t === 'string' && t.length > 8));

@@ -7,6 +7,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
+import { hostText, hostOf } from '../hostText.mjs';   // HOST-SPLIT 2: a moved module's host whole
 
 const ROOT = new URL('../../', import.meta.url).pathname;
 const walk = (dir) => readdirSync(join(ROOT, dir)).flatMap((n) => {
@@ -28,6 +29,7 @@ const WIRED = Object.freeze([
   'src/scenes/gate/gateHost.js',        // MWNPC10a: his host
   'src/scenes/merchantYardsHost.js', // AUDIT MW-NPC II P1: the yards' keepers (main's MERCHANT-YARDS)
   'src/scenes/naval/navalCrew.js',       // MWNPC10b: the crews
+  'src/scenes/pixelBuild.js',      // HOST-SPLIT 2: the world's pixel build, moved out of world.js - a pixel's street people
   'src/scenes/portHost.js',        // SHIPYARDS: the shipyards' and lighthouses' people, as the yards' keepers
   'src/scenes/siegeNpcs.js',       // MWNPC10b: the siege
   'src/scenes/world.js',           // MWNPC7: the street's walkers (and the peers' PeerBodies)
@@ -41,6 +43,7 @@ const DECLARED = Object.freeze({
   'src/characters/enemy/enemyAnchor.js': 'a size for a foe\'s anchor - it draws nothing',
   'src/world/rmbFlats.js': 'mobileBillboardSize\'s own home - it draws nothing',
   'src/characters/residentWalker.js': 'the walker itself - its hosts draw it (world.js, travellerSprites.js)',
+  'src/scenes/eliteGates/egFight.js': 'EG-PLAY\'s champion and Court lord - the Warden\'s sprite at 2.5, as the gate\'s court drew him before MWNPC10a; its legion stands in bodies through scenes/gate/gateHost.js, and the Spire\'s own lords are EG13\'s (bible/11-Multiplayer/Elite-Gates.md section 31, EG-PLAY)',
   'src/scenes/wagon/wagonWardenShow.js': 'WARDEN1\'s thrower - a guard of the watch in the city guards\' picture with a wagon riding over its head (Mac: "lift the wagon/horse on top of their sprite"); a body has no lift to stand it in, and the watch\'s own guards stand in bodies (cityGuards.js)',
 });
 
@@ -51,7 +54,8 @@ test('MWNPC-CENSUS every source that draws a living actor\'s sprite stands it in
   assert.deepEqual(unknown, [], 'a new host draws living actors: wire it to a body lane, or declare why it keeps its sprite');
   for (const p of WIRED) {
     assert.ok(drawing.includes(p), `${p} no longer draws a living actor - take it off the census`);
-    assert.match(readFileSync(join(ROOT, p), 'utf8'), BODIES, `${p} is wired: it names one of the arc's adapters`);
+    // HOST-SPLIT 2: a module moved out of a host is wired through it - its people stand in the host's bodies
+    assert.match(hostOf(p) ? hostText(hostOf(p)) : readFileSync(join(ROOT, p), 'utf8'), BODIES, `${p} is wired: it names one of the arc's adapters`);
   }
   for (const [p, why] of Object.entries(DECLARED)) {
     assert.ok(drawing.includes(p), `${p} no longer draws a living actor - take it off the census`);

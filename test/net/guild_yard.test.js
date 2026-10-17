@@ -19,6 +19,7 @@ import { createHomeYards, YARD_IN_HALL, YARD_HALL_FULL, YARD_IN_HOUSE, YARD_FULL
 import { decorWhyNot } from '../../src/ui/decorPanel.js';
 import { fakeDoc, fakeWin, fakeBlocks, rmb, TOWN, settle } from '../decorFakes.mjs';
 import { GuildBook } from '../../src/net/guild/guildBook.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const HALL = { mapId: 7, buildingKey: 300, region: 17, price: 20_000, layout: null };   // AUDIT PRE-MERGE 1003 WD1: a hall says its town's layout (none: an old build's, 426)
@@ -260,7 +261,7 @@ test('GUILD-YARD the keeper\'s yard decorator: a yard piece taken out says its h
 });
 
 test('GUILD-YARD the world host by source: a hall its playing character keeps leaves the pixel\'s merge as an owner\'s home does, so its keeper\'s painter tries a look on it, and a hall kept in a merged pixel rebuilds it once (mutants: the keeper unasked at the build; at the refresh)', () => {
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /if \(homeRow && \(homeLook \|\| homeRow\.mine \|\| homeRow\.keeper\)\) \{/);
   assert.match(w, /\(\(row\?\.look && homeDecorShown\(row\)\) \|\| row\?\.mine \|\| row\?\.keeper\)\) merged = true;/);   // PIN MOVED: HOME-VOTE - a look counts only where it is shown
   const y = src('src/scenes/homeYards.js');
@@ -356,7 +357,7 @@ test('AUDIT GUILD-YARD C3 a keeper made or unmade: the guild book\'s refresh tha
   const warn = console.warn; console.warn = () => {};
   try { assert.deepEqual(await loud.refresh(), { ok: true }, 'a host that throws costs the town its read, never the tab its look'); } finally { console.warn = warn; }
   // the host: the hook reads the town again, forced - outside the online frame; the plaque's info only looks
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   const made = w.indexOf('    guildBook = new GuildBook({');
   assert.ok(made > 0);
   const opts = w.slice(made, w.indexOf('\n    });\n', made));

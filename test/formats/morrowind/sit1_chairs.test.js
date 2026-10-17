@@ -17,8 +17,9 @@ import { applyClimbRig, climbBones } from '../../../src/combat/climbRig.js';
 import { MW_UNITS_PER_METER } from '../../../src/formats/morrowind/mwFirstPerson.js';
 import { Collider } from '../../../src/player/collider.js';
 import { worldAabb } from '../../../src/player/activate.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
-const read = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
+const read = (p) => hostText(p);
 const r3 = (v) => Math.round(v * 1000) / 1000;
 const pt = (p) => p.map(r3);
 const I = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];

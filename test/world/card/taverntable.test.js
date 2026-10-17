@@ -23,8 +23,9 @@ import { SEAT_OUT, SEATED_EYE_HEIGHT, SEAT_TOP_DEFAULT, seatTopByte, seatTopOf }
 import { STACK_IN } from '../../../src/world/card/cardScene.js';
 import { CHIP_R } from '../../../src/world/card/cardMotion.js';
 import { buildInteriorContext } from '../../../src/scenes/interiorContext.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
-const rd = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
+const rd = (p) => hostText(p);
 
 // A room for the walk: `floorAt(x, z)` its floor's height (null for none), `boxes` its solids ({min, max}); a box's top
 // under a point is a floor to the probe, and a box within r of a point is in the way.

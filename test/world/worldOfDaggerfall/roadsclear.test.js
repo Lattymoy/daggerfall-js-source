@@ -15,9 +15,10 @@ import { MAP_W, MAP_H } from '../../../src/world/road/roadNetwork.js';
 import { LocationSession, pickLocations } from '../../../src/world/worldOfDaggerfall/wodLocationLoader.js';
 import { decodeRegionPack } from '../../../src/world/worldOfDaggerfall/wodLocationPack.js';
 import { loadLocationPrefab } from '../../../src/world/worldOfDaggerfall/wodLocationData.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
-const rd = (p) => readFileSync(join(ROOT, p), 'utf8');
+const rd = (p) => hostText(p);
 const netWith = (cells) => {
   const roads = new Uint8Array(MAP_W * MAP_H), tracks = new Uint8Array(MAP_W * MAP_H);
   for (const [x, y, bits, kind = 'roads'] of cells) (kind === 'tracks' ? tracks : roads)[x + y * MAP_W] = bits;
@@ -120,7 +121,7 @@ test('ROADS-CLEAR over the shipped lists and Basic Roads: WoD pieces DO land on 
 });
 
 test('ROADS-CLEAR by source: the world host asks the site at its pick, each piece and flat by its own box before it stands, and each camp anchor and member', () => {
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /\}, wodPathsPoint, \(name, prefab, rect\) => wodSiteClear\(terrainGen\.roads\(\), px, py, name, prefab, rect\)(?:\)| && gateSite\(name, prefab, rect\)\));/, 'the road asked first (GATE-CLEAR asks the gate after it)');
   assert.match(w, /const box = transformedAabb\(archAabb\(m\.modelId, cpu\.positions\), m\.matrix\);\n(?:\s*\/\/[^\n]*\n|\s*if \(isWodShrub\(m\.modelId, wodPicks\[m\.pick\]\?\.name\)\) \{[^\n]*\n(?:[^\n]*\n){2}\s*\}\n|\s*if \(rockPick\(m\.pick\) && [^\n]*rockSeatDrop[^\n]*\n)*\s*if \(boxNearPath\(_roadsNow, px, py, box\[0\] \* UNITS_PER_METRE, box\[2\] \* UNITS_PER_METRE, box\[3\] \* UNITS_PER_METRE, box\[5\] \* UNITS_PER_METRE, WOD_PIECE_ROAD_CLEAR\)\) \{ _wodOffRoad\+\+; continue; \}\n(?:\s*(?:\/\/[^\n]*|if \([^\n]*\) \{ [^\n]*continue; \}|gateLedger\.reach\.push\([^\n]*\);)\n)*\s*unionBox\(box\);/,
     'the piece is refused before it joins the bounds, the batch or the collider (WOD-BUSH: its shrub grounded between, which moves no x or z the road reads; ROCK-SEAT: nor a rock seated into the ground)');

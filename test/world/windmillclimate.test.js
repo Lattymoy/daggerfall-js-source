@@ -32,9 +32,10 @@ import { dirname, join } from 'node:path';
 import { applyClimate, SEASON } from '../../src/world/climateSwaps.js';
 import { BODY, ROTOR, CLIMATE_SKINS } from '../../src/world/windmillMesh.js';
 import { remapSubMeshes } from '../../src/world/texRemap.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const src = (f) => readFileSync(join(root, f), 'utf8');
+const src = (f) => hostText(f);
 
 const BASE = { Desert: 0, Mountain: 100, Temperate: 300, Swamp: 400 };
 // THE FOUR HOSTS (17e). No mill is wired here - WM2e owns the mill's

@@ -17,6 +17,7 @@ import {
 import { createGatePool } from '../../src/scenes/gate/gatePool.js';
 import { gateArchProfile } from '../../src/world/gate/gateModel.js';
 import { CLIMATES, LOCATION_TYPES } from '../../src/formats/mapsFile.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const SITE = { place: 'Copperham, Wrothgarian Mountains', near: 'Copperham', px: 400, py: 200, spot: [409.6, 409.6], ring: { cx: 400.3, cy: 200.6, r: 2 } };
@@ -103,7 +104,7 @@ test('AUDIT WB C4 a clock that steps BACK never says a line twice; a new day say
 });
 
 test('AUDIT WB C4 the seam: the world\'s omen is ready when the relay\'s clock is read and the hub has welcomed (or eight seconds on the relay\'s alone), and settles', () => {
-  const world = read('src/scenes/world.js');
+  const world = hostText('src/scenes/world.js');
   const at = world.indexOf('const gateOmen = params.has(\'online\') ? createGateOmen(');
   const deps = world.slice(at, world.indexOf('}) : null;', at));
   assert.match(deps, /ready: \(\) => \{ if \(!online\?\.clockRead\) \{ _omenClockAt = null; return false; \}/);
@@ -112,7 +113,7 @@ test('AUDIT WB C4 the seam: the world\'s omen is ready when the relay\'s clock i
 });
 
 test('AUDIT WB C5 the countdown is never over the step\'s fire, nor frozen over a held frame', () => {
-  const world = read('src/scenes/world.js');
+  const world = hostText('src/scenes/world.js');
   // SD19 (PIN MOVED): the pool's banner a wish the presence frame draws, hidden by the same three
   assert.match(world, /banner: \(text\) => \{ _gateBannerWish = text; \},/);
   assert.match(world, /hidden = gamePaused\(\) \|\| !!townTalk\.hudHidden \|\| !!gateVeil\?\.busy;\n\s*drawGateBanner\(_gateBannerWish \?\? sb\?\.text \?\? null, \{ hidden, look: _gateBannerWish == null && sb \? 'brass' : 'gate' \}\);/);   // AUDIT SD III (T3, PIN MOVED): a Hollow's door in its own brass
@@ -226,7 +227,7 @@ test('AUDIT WB C7 the site\'s scan in slices IS the scan made at once, a row at 
 });
 
 test('AUDIT WB C7 the seams: the scan warmed in idle slices once the relay\'s clock is read; a site asked early finishes it; a scan that throws begins again', () => {
-  const world = read('src/scenes/world.js');
+  const world = hostText('src/scenes/world.js');
   assert.match(world, /if \(_omenClockAt == null\) \{ _omenClockAt = performance\.now\(\); warmGateScan\(\); \}/);
   assert.match(world, /globalThis\.requestIdleCallback\(function slice\(deadline\) \{/);
   assert.match(world, /const until = performance\.now\(\) \+ \(deadline\.didTimeout \? 4 : 0\);/, 'a page never idle still gets there');
@@ -253,7 +254,7 @@ test('AUDIT WB C7 what a frame pays for: the stone\'s matrix only when it moves,
   clock.now = t.openAt;
   pool.frame(0.016);
   assert.equal(pool.stands(), false, 'no GL, no pass: nothing for the host to build arguments for');
-  const world = read('src/scenes/world.js');
+  const world = hostText('src/scenes/world.js');
   assert.match(world, /if \(gatePool\?\.stands\(\) && gatePool\.drawPass\(proj, view, new Float32Array\(mwv\.eye\), now \/ 1000,/);
   const src = read('src/scenes/gate/gatePool.js');
   assert.match(src, /if \(k !== _matKey\) \{ _matKey = k; _mat = trs\(/);

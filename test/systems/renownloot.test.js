@@ -22,10 +22,11 @@ import { enemyLootSpawned } from '../../src/characters/enemy/enemyEntity.js';
 import { createWeapon } from '../../src/combat/enemyEquipment.js';
 import { rarityOf } from '../../src/systems/loot/lootRarity.js';
 import { setPref, _resetForTests as _resetPrefsForTests } from '../../src/systems/uiPrefs.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 installHealingSupply();   // the hosts' order (scenes/shared.js)
 installRestItemLoot();
-const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
+const rd = (p) => hostText(p);
 /** The page's word, as scenes/world.js gives it: online or not, and the Renown it knows (null: not yet). */
 const page = (online, renown = null) => { setSigilOnline(online); setSigilRenown(renown); };
 const offline = () => page(false);
@@ -172,7 +173,7 @@ test('RENOWN-LOOT the four hosts: no host holds a LOOT-EASE knob of its own - ev
   for (const f of ['src/scenes/exterior.js', 'src/scenes/world.js', 'src/scenes/worldModes.js', 'src/scenes/dungeonContext.js']) {
     assert.doesNotMatch(rd(f), /PLAIN_FOE_RARITY_WEIGHTS|HEALING_ENEMY_CHANCE|HEALING_PILE_CHANCE|MAGICKA_(ENEMY|PILE)_CHANCE|REST_(FOE|PILE)_CHANCES|plainFoeLootKeep|renownLootQuarters/, `${f}: no knob of its own`);
   }
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /setSigilOnline\(params\.has\('online'\)\);/, 'online from the page\'s own word, before any list is minted');
   assert.match(w, /setSigilRenown\(level\);/, 'and the Renown as it is adopted');
   assert.doesNotMatch(rd('src/scenes/exterior.js'), /setSigilOnline/, 'the offline town page: LOOT-EASE\'s whole');

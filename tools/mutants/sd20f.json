@@ -128,8 +128,8 @@
   {
     "name": "SD20F-H10-the-dungeons-door",
     "file": "src/scenes/world.js",
-    "old": "if (modes?.sdRealmSlot?.() != null) { if (sdWayHome()) say(",
-    "new": "if (modes?.sdRealmSlot?.() != null) { if (modes?.unstuck?.()) say(",
+    "old": "if (madeUnstuck === 'wayHome') { if (sdWayHome()) say(",
+    "new": "if (madeUnstuck === 'wayHome') { if (modes?.unstuck?.()) say(",
     "tests": [
       "test/scenes/superDungeon/sd20f_hosts.test.js"
     ]

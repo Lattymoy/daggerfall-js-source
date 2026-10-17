@@ -738,7 +738,7 @@ test('BLOOD1a by source: FOUR HOSTS, one spelling - the switch bag, the draw und
   const fx = read('src/scenes/hitEffects.js');
   const off = fx.slice(fx.indexOf('    offsetAll(offset) {'), fx.indexOf('\n    },', fx.indexOf('    offsetAll(offset) {')));
   assert.match(off, /marks\?\.shiftOrigin\?\.\(offset\);/, 'the marks ride the splash’s own shift');
-  assert.match(read('src/scenes/world.js'), /hitEffects\.offsetAll\(r\.offset\);/, 'and the host calls it exactly as it did');
+  assert.match(hostText('src/scenes/world.js'), /hitEffects\.offsetAll\(r\.offset\);/, 'and the host calls it exactly as it did');
 
   // a room thrown away takes its blood, and its GL, with it
   assert.match(fx, /marks\?\.clear\?\.\(\);   \/\/ BLOOD1a: a room thrown away takes its blood with it/);
@@ -1859,7 +1859,7 @@ test('BLOOD1 AUDIT 2: the blood goes with the world - a teleport clears the ring
   // jump kept its old local coordinates in the new frame: a fight's
   // blood at the same spot in the next town, floating or buried
   // wherever the ground differed.
-  const world = readFileSync(new URL('../../src/scenes/world.js', import.meta.url), 'utf8');
+  const world = hostText('src/scenes/world.js');
   const start = world.indexOf('  async function _teleportToPixel(');
   assert.ok(start > 0, 'the world host has the one teleport door');
   const body = world.slice(start, world.indexOf('\n  }\n', start));
@@ -2360,12 +2360,13 @@ test('BLOOD1 AUDIT 3: a mark on streamed terrain lies on the DRAWN ground, and t
   assert.ok(n[0] < 0 && Math.abs(n[0] / n[1] + 0.5) < 1e-9, 'the slope is the DRAWN surface’s');
   assert.equal(new Collider(() => 5).surfaceHit([0, 10, 0], [0, -1, 0], 20).dist, 5, 'no second sampler: the floor as before');
   const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
-  const world = read('src/scenes/world.js');
+  const world = hostText('src/scenes/world.js');
   assert.match(world, /const collider = new Collider\(heightAt, surfaceAt\);/, 'the world host hands both');
   assert.match(world, /return surfaceHeightAt\(p\.samples, lx, lz, p\._stride \?\? 1\) \+ t\[1\];/, 'the drawn ground is the grass placer’s own sampler, on the pixel the point is in');
   // the ray walk: one translation array a bucket, and no boxed origin
-  assert.equal((world.match(/\(\(o\) => \(\) => state\.pixelTranslation\(px, py, o\)\)\(\[0, 0, 0\]\)/g) ?? []).length, 8, 'every bucket translation reuses its own array');   // FIELD BUGS 2026-10-13e HILL-SEAT (PIN MOVED): the eighth is a block's hill pads, solid in the pixel's bucket   // GOTHWAY-BOARDS: the seventh is a Gothway Garden board's mesh (one a board), the patch's own   // TACT1: the sixth is the pixel's cover, in the pixel's own frame   // WOD2: the fourth is World of Daggerfall's models, whose sites open the pixel's bucket (a location's pixel never has one); WOD4: the fifth is the camp at Privateer's Hold's
-  assert.doesNotMatch(world, /\(\) => state\.pixelTranslation\(px, py\)[,)]/, 'no bucket allocates a translation per call');
+  // (HOST-SPLIT 2: the buckets are laid by the pixel build, src/scenes/pixelBuild.js, which reads the state live - host.state)
+  assert.equal((world.match(/\(\(o\) => \(\) => host\.state\.pixelTranslation\(px, py, o\)\)\(\[0, 0, 0\]\)/g) ?? []).length, 8, 'every bucket translation reuses its own array');   // FIELD BUGS 2026-10-13e HILL-SEAT (PIN MOVED): the eighth is a block's hill pads, solid in the pixel's bucket   // GOTHWAY-BOARDS: the seventh is a Gothway Garden board's mesh (one a board), the patch's own   // TACT1: the sixth is the pixel's cover, in the pixel's own frame   // WOD2: the fourth is World of Daggerfall's models, whose sites open the pixel's bucket (a location's pixel never has one); WOD4: the fifth is the camp at Privateer's Hold's
+  assert.doesNotMatch(world, /\(\) => (?:host\.)?state\.pixelTranslation\(px, py\)[,)]/, 'no bucket allocates a translation per call');   // AUDIT HOST-SPLIT 2, the second read: the build's spelling too
   const col = read('src/player/collider.js');
   const box = col.slice(col.indexOf('export function segmentHitsBox('), col.indexOf('\n}', col.indexOf('export function segmentHitsBox(')));
   assert.doesNotMatch(box, /\[ox, oy, oz\]/, 'the box test reads its origin in place - no array of it in any spelling');
@@ -3702,6 +3703,7 @@ test('BLOOD2g: the gore dial - one tier sets the amount and the count, the row n
 import { createDamageFlash as a5Flash } from '../../src/ui/damageFlash.js';
 import { updateHudVitals as a5Vitals, resetVitalsDetector as a5Reset, lastHealthLostPercent as a5Lost, _resetHudVitals as a5Fresh } from '../../src/ui/hud/hudVitals.js';
 import { STEP_ABOVE } from '../../src/combat/blood/bloodMarks.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 test('BLOOD AUDIT 5: the lens needs a BLOW - the RemoveHealth latch answers once; a load resets the detector, so the loaded health is no loss', () => {
   const f = a5Flash();

@@ -40,9 +40,10 @@ import { FootstepMachine, FOOTSTEP, WALK_STEP_INTERVAL, FOOTSTEP_VOLUME } from '
 import { TEMPLATES } from '../../src/systems/useItem.js';
 import { playVideo } from '../../src/ui/videoPlayer.js';
 import { VID_BLOCK_TYPES as T } from '../../src/formats/vidFile.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const rd = (p) => readFileSync(join(root, p), 'utf8');
+const rd = (p) => hostText(p);
 const dfu = (rel) => readFileSync(dfuFile(`Assets/Scripts/${rel}`), 'utf8').split('\n');
 
 /** One clip recorder over the shared UI sink, restored on the way out. */

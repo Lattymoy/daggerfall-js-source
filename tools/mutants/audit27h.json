@@ -249,7 +249,7 @@
   {
     "name": "M1-court-takes-a-slot",
     "file": "src/scenes/dungeonContext.js",
-    "old": "let automapRec = isGateArena(dfLocation) || isArenaFloor(dfLocation) || _sdRealm ? detachedAutomapRecord()",
+    "old": "let automapRec = madeLevelRule(_made, 'automap') === 'off' || isArenaFloor(dfLocation) ? detachedAutomapRecord()",
     "new": "let automapRec = false ? detachedAutomapRecord()",
     "tests": [
       "test/systems/automap/mapkeep.test.js"

@@ -399,8 +399,8 @@
   {
     "name": "WB3-the-state-to-everyone",
     "file": "server/src/index.js",
-    "old": "      this._send(ws, JSON.stringify({ t: 'gate', ...stateOf(f) }));",
-    "new": "      this._gateFan([stateOf(f)]);",
+    "old": "      this._send(ws, JSON.stringify({ t: 'gate', ...GATE_SEAM.stateOf(f) }));",
+    "new": "      this._gateFan([GATE_SEAM.stateOf(f)]);",
     "tests": [
       "test/net/gate/wb3_gate_room.test.js"
     ]
@@ -408,8 +408,8 @@
   {
     "name": "WB3-the-peer-id-credited",
     "file": "server/src/index.js",
-    "old": "      if (!joinFight(f, a.sub, a.name ?? '', m.lv, now, gateAdmits(day, now), present)) {",
-    "new": "      if (!joinFight(f, a.id, a.name ?? '', m.lv, now, gateAdmits(day, now), present)) {",
+    "old": "      if (!GATE_SEAM.join(f, a.sub, a.name ?? '', m.lv, now, present, { admits: gateAdmits(day, now) })) {",
+    "new": "      if (!GATE_SEAM.join(f, a.id, a.name ?? '', m.lv, now, present, { admits: gateAdmits(day, now) })) {",
     "tests": [
       "test/net/gate/wb3_gate_room.test.js"
     ]
@@ -445,8 +445,8 @@
   {
     "name": "WB3-a-receipt-unearned",
     "file": "server/src/index.js",
-    "old": "      if (!earned(f, sub)) continue;",
-    "new": "      if (!earned(f, sub) && false) continue;",
+    "old": "      if (!GATE_SEAM.earned(f, sub)) continue;",
+    "new": "      if (!GATE_SEAM.earned(f, sub) && false) continue;",
     "tests": [
       "test/net/gate/wb3_gate_room.test.js"
     ]

@@ -99,6 +99,7 @@ import {
   openDropIcon, canChangeDropIcon, cycleDropIcon, dropIconRecord,
   groundRefusalOf,   // HOUSE-DROP: the host's word against the ground
   storeCapacityOf,   // COMPANION-WEIGHT: a storage's own weight limit
+  theftTarget,   // STOLEN-GOODS: a take from someone else's keeping is a theft
 } from '../../systems/inventorySession.js';
 import { isEquipped, equipItem, unequipSlot, isForbiddenEquip, isBrokenItem, EQUIP_SLOTS, FORBIDDEN_EQUIPMENT_TEXT_ID, ITEM_BROKEN_TEXT_ID, equipDelaySnapshot, billEquipDelayOnClose } from '../../systems/equip.js';   // S23; FX1 (F128): the per-visit swap-pause clock
 import { drawPaperDoll, refreshPaperDoll, slotAtPaperDoll, ARMOR_LABEL_POS } from '../paperDoll.js';
@@ -1023,7 +1024,8 @@ export class NativeInventoryWindow {
       // the same transfer with the typed count.
       const perform = (amount) => {
         audio.playOneShot(SOUND.ButtonClick, 1);   // DoTransferItem (:1583)
-        applyTransfer(it, { ...plan, amount }, this.hooks.items(), to, { entity: this.hooks.entity, fromLocal: true });   // F157: a lit torch leaving the pack goes out
+        applyTransfer(it, { ...plan, amount }, this.hooks.items(), to, { entity: this.hooks.entity, fromLocal: true,   // F157: a lit torch leaving the pack goes out
+          returnTo: theftTarget(this.hooks, { usingWagon: this.usingWagon, chooseOne: this.chooseOne }) });   // STOLEN-GOODS: the owner's piece put back is theirs again
       };
       if (!whole && this._splitRequired(it, plan)) { this._openSplit(it, plan.amount, perform); return; }
       perform(plan.amount);
@@ -1138,7 +1140,8 @@ export class NativeInventoryWindow {
         // (:1562-1571) exists for, so a pile taken here is spent into
         // GoldPieces and the member RETURNS. The null IS that return: no
         // equip (:1580), no choose-one close (:1585-1591).
-        const taken = applyTransfer(it, { ...plan, amount }, remote, bag, { entity: this.hooks.entity, toPlayer: true });
+        const taken = applyTransfer(it, { ...plan, amount }, remote, bag, { entity: this.hooks.entity, toPlayer: true,
+          stolenFrom: theftTarget(this.hooks, { usingWagon: this.usingWagon, chooseOne: this.chooseOne }) });   // STOLEN-GOODS: the owner's piece off a shut shop's shelf, a stranger's cupboard, a robbed caravan - marked as it lands
         if (taken === null) return;
         if (plan.equip && this.hooks.entity) {
           // S23: the taken item still has to pass the career gate

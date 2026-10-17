@@ -88,7 +88,7 @@ test('HOUSE-DROP by source: the building\'s refusal is a VISITOR\'s in someone e
   const nat = rd('src/ui/native/nativeInventory.js'), enh = rd('src/ui/enhanced/enhancedInventory.js');
   assert.equal((nat.match(/groundRefusal: groundRefusalOf\(this\.hooks, \{ usingWagon: this\.usingWagon, chooseOne: this\.chooseOne \}\)/g) ?? []).length, 2, 'the classic window: the item and the gold');
   assert.match(nat, /if \(!plan\.ok\) \{ if \(plan\.refusal\?\.reason === 'ground'\) this\._refuse\(plan\.refusal\); return; \}/, 'and the gold\'s refusal is said');
-  assert.equal((enh.match(/groundRefusal: groundRefusalOf\(deps, session\)/g) ?? []).length, 5, 'the enhanced skin: every store plan, its dry runs and the gold');
+  assert.equal((enh.match(/groundRefusal: groundRefusalOf\(deps, session\)/g) ?? []).length, 6, 'the enhanced skin: every store plan, its dry runs, the gold and Stash all (LOOT-BULK)');
   assert.match(enh, /else if \(!plan\.ok && plan\.refusal\?\.reason === 'ground'\) notice = plan\.refusal\.text;/);
 });
 

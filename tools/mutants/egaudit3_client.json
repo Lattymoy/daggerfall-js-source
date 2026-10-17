@@ -1,0 +1,781 @@
+[
+  {
+    "name": "EGA3C-witness-cast-back",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "if (witness || !inSpire()) return;   // AUDIT EG III (lane4 #1)",
+    "new": "if (!inSpire()) return;   // AUDIT EG III (lane4 #1)",
+    "tests": [
+      "test/scenes/eliteGates/egaudit3_client.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-world-witness-hook-unminted",
+    "file": "src/scenes/world.js",
+    "old": "    egWitness: () => !!egClient?.witnessing(),",
+    "new": "    egWitnesss: () => !!egClient?.witnessing(),",
+    "tests": [
+      "test/scenes/eliteGates/egaudit3_client.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-world-eye-hook-unminted",
+    "file": "src/scenes/world.js",
+    "old": "    egWitnessEye: (v, dt, cast) => egWitnessEye(v, dt, cast),",
+    "new": "    egWitnessEyes: (v, dt, cast) => egWitnessEye(v, dt, cast),",
+    "tests": [
+      "test/scenes/eliteGates/egaudit3_client.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-world-eye-undamped",
+    "file": "src/scenes/world.js",
+    "old": "if (egClient.witnessEye(c, cam.yaw, { dt, cast })) v.eye = c.pos;",
+    "new": "if (egClient.witnessEye(c, cam.yaw)) v.eye = c.pos;",
+    "tests": [
+      "test/scenes/eliteGates/egaudit3_client.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-dungeon-arm-no-eye",
+    "file": "src/scenes/worldModes.js",
+    "old": "if (mode === 'dungeon' && isEgHall(dungeonLoc)) host.egWitnessEye?.(mwv, dt,",
+    "new": "if (false) host.egWitnessEye?.(mwv, dt,",
+    "tests": [
+      "test/scenes/eliteGates/egaudit3_client.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-damp-time",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "export const EG_WITNESS_DAMP_S = 0.35;",
+    "new": "export const EG_WITNESS_DAMP_S = 0.34;",
+    "tests": [
+      "test/scenes/eliteGates/egaudit3_client.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-damp-overshoots",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    e.v[a] = (e.v[a] - w * tmp) * f;",
+    "new": "    e.v[a] = (e.v[a] + w * tmp) * f;",
+    "tests": [
+      "test/scenes/eliteGates/egaudit3_client.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-damp-no-snap",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "Math.hypot(want[0] - e.p[0], want[1] - e.p[1], want[2] - e.p[2]) > EG_WITNESS_SNAP_M)",
+    "new": "Math.hypot(want[0] - e.p[0], want[1] - e.p[1], want[2] - e.p[2]) > EG_WITNESS_SNAP_M * 100)",
+    "tests": [
+      "test/scenes/eliteGates/egaudit3_client.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-clear-cast-ignored",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "  if (typeof cast !== 'function' || !(len > 1e-6)) return [e[0], e[1], e[2]];",
+    "new": "  return [e[0], e[1], e[2]];",
+    "tests": [
+      "test/scenes/eliteGates/egaudit3_client.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-clear-no-clearance",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "cast([p[0], p[1], p[2]], CAMERA_OBSTACLE_LIMIT / MW_UNITS_PER_METER, [dx / len",
+    "new": "cast([p[0], p[1], p[2]], 0, [dx / len",
+    "tests": [
+      "test/scenes/eliteGates/egaudit3_client.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-eye-never-cleared",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "      c.pos = egWitnessClear(p.pos, witness.eye.p, cast);",
+    "new": "      c.pos = [witness.eye.p[0], witness.eye.p[1], witness.eye.p[2]];",
+    "tests": [
+      "test/scenes/eliteGates/egaudit3_client.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-eye-never-damped",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "egWitnessOrbit(p.pos, yaw), dt, witness.watched);",
+    "new": "egWitnessOrbit(p.pos, yaw), 0, witness.watched);",
+    "tests": [
+      "test/scenes/eliteGates/egaudit3_client.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-card-hidden-not-its-own",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "      if (cardUp) { drawGateTitleCard(null); cardUp = false; }",
+    "new": "      drawGateTitleCard(null); cardUp = false;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_client_fight.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-card-drawn-over-another",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "    if (m || cardUp) { drawGateTitleCard(m, { hidden: hudHidden() }); cardUp = !!m; }",
+    "new": "    drawGateTitleCard(m, { hidden: hudHidden() }); cardUp = !!m;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_client_fight.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-card-own-never-noted",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "{ drawGateTitleCard(m, { hidden: hudHidden() }); cardUp = !!m; }",
+    "new": "{ drawGateTitleCard(m, { hidden: hudHidden() }); cardUp = false; }",
+    "tests": [
+      "test/net/eliteGates/egaudit3_client_fight.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-law-worker-before-given",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    return given === null ? null : modes()?.egPrebuild?.(",
+    "new": "    return modes()?.egPrebuild?.(",
+    "tests": [
+      "test/scenes/eliteGates/egaudit3_client.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-law-next-not-asked-at-rest",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "last = (E.sg === 'rest' ? c + 1 : c) * 5; h <= last; h++) {",
+    "new": "last = c * 5; h <= last; h++) {",
+    "tests": [
+      "test/scenes/eliteGates/egaudit3_client.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-law-halls-not-handed",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "seed: E.seed, c, geo: E.geo ?? 0, given }) ?? null;",
+    "new": "seed: E.seed, c, geo: E.geo ?? 0 }) ?? null;",
+    "tests": [
+      "test/scenes/eliteGates/egaudit3_client.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-law-stood-from-given-built-again",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    if (went && lawForeign(E) && lawGiven(E, c)) lawBuilt = `${E.b}:${c}`;",
+    "new": "    if (false) lawBuilt = `${E.b}:${c}`;",
+    "tests": [
+      "test/scenes/eliteGates/egaudit3_client.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-law-given-of-any-ground",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    lawGot.add(`${E.b}:${w.h}:${(w.sp.geo ?? 0) | 0}`);",
+    "new": "    lawGot.add(`${E.b}:${w.h}:${(E.geo ?? 0) | 0}`);",
+    "tests": [
+      "test/scenes/eliteGates/egaudit3_client.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-law-given-under-another-ground",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    for (let h = (c - 1) * 5 + 1; h <= c * 5; h++) if (!lawGot.has(`${E.b}:${h}:${geo}`)) return null;",
+    "new": "    for (let h = (c - 1) * 5 + 1; h <= c * 5; h++) if (!lawGot.has(`${E.b}:${h}:0`)) return null;",
+    "tests": [
+      "test/scenes/eliteGates/egaudit3_client.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-law-built-before-step",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    if (await swapTo(E, c)) lawBuilt = key;",
+    "new": "    lawBuilt = key; await swapTo(E, c);",
+    "tests": [
+      "test/scenes/eliteGates/egaudit3_client.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-law-never-asked-again",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    lawRebuild(E);   // AUDIT EG III (lane4 #3): asked again every frame until the step has run",
+    "new": "    void 0;   // AUDIT EG III (lane4 #3): asked again every frame until the step has run",
+    "tests": [
+      "test/scenes/eliteGates/egaudit3_client.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-swap-says-it-went",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    return went;   // AUDIT EG III (lane4 #3)",
+    "new": "    return true;   // AUDIT EG III (lane4 #3)",
+    "tests": [
+      "test/scenes/eliteGates/egaudit3_client.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-law-foreign-own-law",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "  function lawForeign(E) { return (E.egv > 0 && E.egv !== EG_SPEC) || lawOff.has(E.b); }",
+    "new": "  function lawForeign(E) { return E.egv > 0 || lawOff.has(E.b); }",
+    "tests": [
+      "test/scenes/eliteGates/egaudit3_client.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-tells-return-kept",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "[...EG_BEAT_TELL_RECORDS.warn.flat(), ...EG_BEAT_TELL_RECORDS.back]",
+    "new": "[...EG_BEAT_TELL_RECORDS.warn.flat()]",
+    "tests": [
+      "test/scenes/eliteGates/egaudit3_client.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-tells-emission-kept",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "{ if (renderer.releaseTexture?.(arch, rec)) n++; if (renderer.evictEmissionTexture?.(`${arch}_${rec}`)) n++; }",
+    "new": "{ if (renderer.releaseTexture?.(arch, rec)) n++; }",
+    "tests": [
+      "test/scenes/eliteGates/egaudit3_client.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-tells-record-kept",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "  _tellUp.delete(renderer);",
+    "new": "  void 0;",
+    "tests": [
+      "test/scenes/eliteGates/egaudit3_client.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-tells-never-freed-by-owner",
+    "file": "src/scenes/eliteGates/egCircleHost.js",
+    "old": "    let n = egBeatTellDown(renderer);",
+    "new": "    let n = 0;",
+    "tests": [
+      "test/scenes/eliteGates/egaudit3_client.test.js",
+      "test/world/eliteGates/egz_camera_host.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-edge-palette-ignored",
+    "file": "src/world/eliteGates/egLook.js",
+    "old": "const g = pal && pal.key !== 'standard' && Array.isArray(pal.safety) ? pal.safety : EG_EDGE_LINE.color,",
+    "new": "const g = EG_EDGE_LINE.color,",
+    "tests": [
+      "test/scenes/eliteGates/egaudit3_client.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-line-pass-gold-fixed",
+    "file": "src/render/eliteGates/egLinePass.js",
+    "old": "    this._gold = egEdgeLineColor(pal);",
+    "new": "    this._gold = egEdgeLineColor();",
+    "tests": [
+      "test/scenes/eliteGates/egaudit3_client.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-line-pass-hazard-ignored",
+    "file": "src/render/eliteGates/egLinePass.js",
+    "old": "    this._white = Array.isArray(pal?.hazard) ? pal.hazard : EG_LINE_WHITE;",
+    "new": "    this._white = EG_LINE_WHITE;",
+    "tests": [
+      "test/scenes/eliteGates/egaudit3_client.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-line-pass-white-fixed",
+    "file": "src/render/eliteGates/egLinePass.js",
+    "old": "    gl.uniform3f(U.uWhite, this._white[0], this._white[1], this._white[2]);",
+    "new": "    gl.uniform3f(U.uWhite, 0.95, 0.95, 1.0);",
+    "tests": [
+      "test/scenes/eliteGates/egaudit3_client.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-line-pass-palette-stuck",
+    "file": "src/render/eliteGates/egLinePass.js",
+    "old": "    const key = pal?.key ?? 'standard';",
+    "new": "    const key = pal?.key ?? this._pal;",
+    "tests": [
+      "test/scenes/eliteGates/egaudit3_client.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-ghost-palette-ignored",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "export const egGhostRgb = (pal) => (pal && pal.key !== 'standard' && Array.isArray(pal.safety) ? pal.safety : SD_GHOST.color);",
+    "new": "export const egGhostRgb = (pal) => SD_GHOST.color;",
+    "tests": [
+      "test/scenes/eliteGates/egaudit3_client.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-ghost-pass-colour-fixed",
+    "file": "src/render/superDungeon/sdStepsPass.js",
+    "old": "    gl.uniform3f(U.uColor, color[0], color[1], color[2]);",
+    "new": "    gl.uniform3f(U.uColor, SD_GHOST.color[0], SD_GHOST.color[1], SD_GHOST.color[2]);",
+    "tests": [
+      "test/scenes/eliteGates/egaudit3_client.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-look-palette-unpassed",
+    "file": "src/scenes/eliteGates/egLookDraw.js",
+    "old": "      lines.palette(pal);",
+    "new": "      void pal;",
+    "tests": [
+      "test/scenes/eliteGates/egaudit3_client.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-look-company-circle",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "L.setCircle(circleSeed ?? E.seed, c, E.geo ?? 0)",
+    "new": "L.setCircle(circleSeed ?? E.seed, egCircleOfHall(E.h), E.geo ?? 0)",
+    "tests": [
+      "test/scenes/eliteGates/egaudit3_client.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-swap-drop-walkout-only",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "if (!swapping && !answering) { swapWaitAt = 0; modes()?.egSwapDrop?.(); lawForget(); }",
+    "new": "if (false) { swapWaitAt = 0; modes()?.egSwapDrop?.(); lawForget(); }",
+    "tests": [
+      "test/scenes/eliteGates/egaudit3_client.test.js"
+    ],
+    "note": "AUDIT EG V (h): re-aimed by content - the halls given are forgotten beside the swap's drop"
+  },
+  {
+    "name": "EGA3C-refusal-retry-said",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "opening.sentAt = Date.now() - EG_OPEN_RETRY_MS + 1000; return true; }",
+    "new": "opening.sentAt = Date.now() - EG_OPEN_RETRY_MS + 1000; return; }",
+    "tests": [
+      "test/scenes/eliteGates/egaudit3_client.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-refusal-drain-unsaid",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "{ opening = null; return false; }   // EG-H2",
+    "new": "{ opening = null; return true; }   // EG-H2",
+    "tests": [
+      "test/scenes/eliteGates/egaudit3_client.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-flush-again-dropped",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    if (again) await flush();",
+    "new": "    void 0;",
+    "tests": [
+      "test/scenes/eliteGates/egaudit3_client.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-flush-again-unnoted",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    if (flushing) { again = true; return; }",
+    "new": "    if (flushing) return;",
+    "tests": [
+      "test/scenes/eliteGates/egaudit3_client.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-occlude-set-a-frame",
+    "file": "src/scenes/eliteGates/egOcclude.js",
+    "old": "      const hit = _hitSet;",
+    "new": "      const hit = new Set();",
+    "tests": [
+      "test/scenes/eliteGates/egaudit3_client.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-occlude-scratch-unfilled",
+    "file": "src/scenes/eliteGates/egOcclude.js",
+    "old": "  out.length = 0;\n  if (!eye || !points?.length) return out;",
+    "new": "  out = [];\n  if (!eye || !points?.length) return out;",
+    "tests": [
+      "test/scenes/eliteGates/egaudit3_client.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-batches-a-list-a-frame",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "      for (const b of fight?.batches() ?? NO_CLEARS) _batchList.push(b);\n      for (const b of portalSet?.batches() ?? NO_CLEARS) _batchList.push(b);\n      return _batchList;",
+    "new": "      return [...(fight?.batches() ?? []), ...(portalSet?.batches() ?? [])];",
+    "tests": [
+      "test/scenes/eliteGates/egaudit3_client.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-objs-never-kept",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "      if (objsMemo.E === E && objsMemo.here === here) return objsMemo.v;",
+    "new": "      void 0;",
+    "tests": [
+      "test/scenes/eliteGates/egaudit3_client.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-holder-made-a-frame",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    if (holderMade.E === E && holderMade.ls === lsSeq) return holderMade.h;",
+    "new": "    void 0;",
+    "tests": [
+      "test/scenes/eliteGates/egaudit3_client.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-held-made-a-frame",
+    "file": "src/systems/eliteGates/spireVestiges.js",
+    "old": "  if (holder !== _from || entity !== _fromEntity) {",
+    "new": "  if (true) {",
+    "tests": [
+      "test/scenes/eliteGates/egaudit3_client.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-world-lights-spread",
+    "file": "src/scenes/world.js",
+    "old": "    egLights: () => { _egLightList.length = 0;",
+    "new": "    egLights: () => { void 0;",
+    "tests": [
+      "test/scenes/eliteGates/egaudit3_client.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-ask-gone-silent",
+    "file": "src/ui/eliteGates/egStartWindow.js",
+    "old": "if (!box.done) { box.done = true; onGone(); }",
+    "new": "if (!box.done) { box.done = true; }",
+    "tests": [
+      "test/scenes/eliteGates/egaudit3_client.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-ask-gone-twice",
+    "file": "src/ui/eliteGates/egStartWindow.js",
+    "old": "if (!box.done) { box.done = true; onGone(); }",
+    "new": "if (!box.done) { onGone(); }",
+    "tests": [
+      "test/scenes/eliteGates/egaudit3_client.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-ask-gone-unwired",
+    "file": "src/ui/eliteGates/egStartWindow.js",
+    "old": "() => { if (!done) showMain(); }, cancel);",
+    "new": "() => { if (!done) showMain(); });",
+    "tests": [
+      "test/scenes/eliteGates/egaudit3_client.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-key-silent-while-asking",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    if (startWindow && startWin) return EG_START_ASKING_TEXT;",
+    "new": "    void 0;",
+    "tests": [
+      "test/scenes/eliteGates/egaudit3_client.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-world-ask-door",
+    "file": "src/scenes/world.js",
+    "old": "    ask: egStartAsk((w) => townTalk.showOverlay(w), (o) => new YesNoBoxWindow(o)),",
+    "new": "    ask: (lines, onYes, onNo) => townTalk.showOverlay(new YesNoBoxWindow({ rows: lines, onYes, onNo })),",
+    "tests": [
+      "test/net/eliteGates/egarch_client.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-veil-opening-look-kept",
+    "file": "src/ui/gate/gateVeil.js",
+    "old": "      if (phase === 'idle' || phase === 'opening') takeLook(look, opts);",
+    "new": "      if (phase === 'idle') takeLook(look, opts);",
+    "tests": [
+      "test/scenes/eliteGates/egaudit3_client.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-tonic-wire-refused",
+    "file": "src/net/wire.js",
+    "old": "    case 'tonic': return { k: 'tonic' };",
+    "new": "    case 'tonic': return null;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_client_tonic.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-tonic-kind-unknown",
+    "file": "src/net/wire.js",
+    "old": "'claimed', 'heal', 'tonic', 'mast', 'wkpaid']);",
+    "new": "'claimed', 'heal', 'mast', 'wkpaid']);",
+    "tests": [
+      "test/net/eliteGates/egaudit3_client_tonic.test.js",
+      "test/net/eliteGates/egplay_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-tonic-none-spent",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "{ mm.tonics--; out.push({ k: 'eheal', p: 0.25, why: 'tonic', to: sub }",
+    "new": "{ out.push({ k: 'eheal', p: 0.25, why: 'tonic', to: sub }",
+    "tests": [
+      "test/net/eliteGates/egaudit3_client_tonic.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-tonic-heals-company",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "out.push({ k: 'eheal', p: 0.25, why: 'tonic', to: sub },",
+    "new": "out.push({ k: 'eheal', p: 0.25, why: 'tonic' },",
+    "tests": [
+      "test/net/eliteGates/egaudit3_client_tonic.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-tonic-from-nothing",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "case 'tonic': if (mm.alive && (mm.tonics ?? 0) > 0)",
+    "new": "case 'tonic': if (mm.alive)",
+    "tests": [
+      "test/net/eliteGates/egaudit3_client_tonic.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-tonic-witness-drinks",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "case 'tonic': if (mm.alive && (mm.tonics ?? 0) > 0)",
+    "new": "case 'tonic': if ((mm.tonics ?? 0) > 0)",
+    "tests": [
+      "test/net/eliteGates/egaudit3_client_tonic.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-tonic-share",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "{ k: 'eheal', p: 0.25, why: 'tonic', to: sub }",
+    "new": "{ k: 'eheal', p: 0.2, why: 'tonic', to: sub }",
+    "tests": [
+      "test/net/eliteGates/egaudit3_client_tonic.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-tonic-no-magicka",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    if (why === 'tonic' && p > 0 && entity.maxMagicka > 0) entity.magicka",
+    "new": "    if (false && p > 0 && entity.maxMagicka > 0) entity.magicka",
+    "tests": [
+      "test/net/eliteGates/egaudit3_client_tonic.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-tonic-magicka-uncapped",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "if (why === 'tonic' && p > 0 && entity.maxMagicka > 0) entity.magicka = Math.min(entity.maxMagicka, (entity.magicka ?? 0) + Math.round(p * entity.maxMagicka));",
+    "new": "if (why === 'tonic' && p > 0 && entity.maxMagicka > 0) entity.magicka = (entity.magicka ?? 0) + Math.round(p * entity.maxMagicka);",
+    "tests": [
+      "test/net/eliteGates/egaudit3_client_tonic.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-tonic-word-with-none",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "if (!(egRunOfMember(E, me()).tonics > 0)) say(EG_TONIC_TEXT.none); else if (witness)",
+    "new": "if (false) say(EG_TONIC_TEXT.none); else if (witness)",
+    "tests": [
+      "test/net/eliteGates/egaudit3_client_tonic.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-longstep-unapplied",
+    "file": "src/systems/eliteGates/spireVestiges.js",
+    "old": "export const spireCrumbleWait = () => heldV('featherstep') + (_held?.ls ? EG_LONG_STEP_S : 0);",
+    "new": "export const spireCrumbleWait = () => heldV('featherstep');",
+    "tests": [
+      "test/net/eliteGates/egaudit3_client_tonic.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-longstep-replaces-featherstep",
+    "file": "src/systems/eliteGates/spireVestiges.js",
+    "old": "export const spireCrumbleWait = () => heldV('featherstep') + (_held?.ls ? EG_LONG_STEP_S : 0);",
+    "new": "export const spireCrumbleWait = () => (_held?.ls ? EG_LONG_STEP_S : heldV('featherstep'));",
+    "tests": [
+      "test/net/eliteGates/egaudit3_client_tonic.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-longstep-held-dropped",
+    "file": "src/systems/eliteGates/spireVestiges.js",
+    "old": "...(holder.ls === true ? { ls: true } : {})",
+    "new": "...{}",
+    "tests": [
+      "test/net/eliteGates/egaudit3_client_tonic.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-longstep-half-second",
+    "file": "src/systems/eliteGates/spireVestiges.js",
+    "old": "export const EG_LONG_STEP_S = 0.5;",
+    "new": "export const EG_LONG_STEP_S = 0.4;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_client_tonic.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-longstep-holder-silent",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "ls: longStepOn(E) });",
+    "new": "ls: false });",
+    "tests": [
+      "test/net/eliteGates/egaudit3_client_tonic.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-longstep-never-lapses",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "&& longStep.b === E.b && E.h <= longStep.h;",
+    "new": "&& longStep.b === E.b;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_client_tonic.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-longstep-span-unsought",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "|| s.kind === 'sink')) { h = k; break; }",
+    "new": "|| s.kind === 'sink')) { break; }",
+    "tests": [
+      "test/net/eliteGates/egaudit3_client_tonic.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-longstep-word-unheard",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "      if (w.k === 'egot' && w.w === 'longstep') longStepHeard(link.state());",
+    "new": "      void 0;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_client_tonic.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-touched-unweighed",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "m[2] > t) ? EG_TOUCH_X : 1;",
+    "new": "m[2] > t) ? 1 : 1;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_client_fight.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-touched-lapsed-weighed",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "(m) => m[0] === me && m[1] === mark && m[2] > t)",
+    "new": "(m) => m[0] === me && m[1] === mark && m[2] > 0)",
+    "tests": [
+      "test/net/eliteGates/egaudit3_client_fight.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-touched-anothers-mark",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "(m) => m[0] === me && m[1] === mark && m[2] > t)",
+    "new": "(m) => m[1] === mark && m[2] > t)",
+    "tests": [
+      "test/net/eliteGates/egaudit3_client_fight.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-touched-twins-crossed",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "  const mark = L.pt === 1 ? EG_MARK_FROST : EG_MARK_FIRE;",
+    "new": "  const mark = L.pt === 1 ? EG_MARK_FIRE : EG_MARK_FROST;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_client_fight.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-touched-not-on-screen",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "spared(E, F, bl), part * egTouchedX(F, bl, me(), t), true);",
+    "new": "spared(E, F, bl), part, true);",
+    "tests": [
+      "test/net/eliteGates/egaudit3_client_fight.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-touched-weight",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "export const EG_TOUCH_X = 1.25;",
+    "new": "export const EG_TOUCH_X = 1.2;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_client_fight.test.js",
+      "test/net/eliteGates/egaudit3_lords.test.js"
+    ],
+    "why": "re-aimed at the merge: the screen's weight is the lords' EG_TOUCH_X (one home)"
+  },
+  {
+    "name": "EGA3C-touched-any-body",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "  if (!L || L.role !== EG_ROLE.lord || EG_BOSS_KEYS[L.k] !== 'twins') return 1;",
+    "new": "  if (!L) return 1;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_client_fight.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-chain-unsplit",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "part = 1 / (mates.length + 1);",
+    "new": "part = 1;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_client_fight.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-chain-mate-unjudged",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "        if (mates.length && !bl.cut && standing) for (const sub of mates) {",
+    "new": "        if (false) for (const sub of mates) {",
+    "tests": [
+      "test/net/eliteGates/egaudit3_client_fight.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-chain-wraith-a-mate",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "      if (t?.[2] !== 2 || typeof t[0] !== 'string' || typeof t[1] !== 'string') continue;",
+    "new": "      if (t?.[2] !== 2) continue;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_client_fight.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-chain-any-tether",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "      if (t?.[2] !== 2 || typeof t[0] !== 'string' || typeof t[1] !== 'string') continue;",
+    "new": "      if (typeof t[0] !== 'string' || typeof t[1] !== 'string') continue;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_client_fight.test.js"
+    ]
+  },
+  {
+    "name": "EGA3C-chain-one-link",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "      if (a !== b) { const n = a ? t[1] : t[0]; seen.add(n); out.push(n); grew = true; }",
+    "new": "      if (a && !b) { seen.add(t[1]); out.push(t[1]); }",
+    "tests": [
+      "test/net/eliteGates/egaudit3_client_fight.test.js"
+    ]
+  }
+]

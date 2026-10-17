@@ -22,9 +22,17 @@
 // walls are run UP, not along (the engine has no run along a wall); the gust moves the body itself (the motor's own push
 // stops at every edge); and the course needs 145 m, so the arena moves out to z 246.
 //
+// EG-H3 (2026-10-12, the Elite Gates arc; bible/11-Multiplayer/Elite-Gates.md sections 10.1 and 29, EG4): THE COURSE AS
+// DATA - the course is no longer frozen by a function of this module's: it is SD_COURSE_SPEC, laid by the one course law
+// (net/eliteGates/egSpanLaw.js courseOf), byte for byte the course it was (test/net/eliteGates/egseam_law.test.js), and every reader takes a course
+// (the Hour's own by default). THE PLATFORM CLOCK lives in net/eliteGates/egSpanLaw.js, the Spire's pieces' own, and is said here
+// as it always was (stepAt, beatStands, beatBlinks, beatWarned, the Beat's and the Crumble's numbers).
+//
 // Not a DFU member. Ledger A (SUPER-DUNGEONS).
 import { SD_ARENA } from '../../net/superDungeon/sdBrain.js';
 import { SD_FIRST_STEP } from './sdHall.js';
+import { courseOf, EG_BEAT_CYCLE_S, EG_BEAT_SOLID_S, EG_BEAT_BLINK_S, EG_CRUMBLE_DELAY_S } from '../../net/eliteGates/egSpanLaw.js';
+export { stepAt, beatStands, beatBlinks, beatWarned } from '../../net/eliteGates/egSpanLaw.js';
 
 /** Below this (the realm's y) the Hour casts a body back; and how much of its health it costs. */
 export const SD_VOID_Y = -30;
@@ -38,12 +46,12 @@ export const SD_CRUMBLE_SIZE = Object.freeze({ w: 2.6, d: 2.6 });
 export const SD_RISER_H = 2.3;
 /** The Beat: a step's cycle, its solid share, and the half beat between alternate steps (s); it blinks this long before
  *  it goes. */
-export const SD_BEAT_CYCLE = 3.6;
-export const SD_BEAT_SOLID = 2.4;
+export const SD_BEAT_CYCLE = EG_BEAT_CYCLE_S;
+export const SD_BEAT_SOLID = EG_BEAT_SOLID_S;
 export const SD_BEAT_HALF = SD_BEAT_CYCLE / 2;
-export const SD_BEAT_BLINK = 0.4;
+export const SD_BEAT_BLINK = EG_BEAT_BLINK_S;
 /** The Crumble: a touched step falls this long after (s), and is whole again this long after it fell. */
-export const SD_CRUMBLE_DELAY = 0.7;
+export const SD_CRUMBLE_DELAY = EG_CRUMBLE_DELAY_S;
 export const SD_CRUMBLE_BACK = 5;
 export const SD_CRUMBLE_FALL_G = 9.8;
 /** The Warp's breath: a gust every SD_GUST_EVERY s, SD_GUST_FOR s long, SD_GUST_SPEED m/s across (+x, then -x, by
@@ -66,40 +74,39 @@ const CRUMBLE_TO_ARENA = 2.4;
 const CHECK_R = 3;
 
 /**
- * THE COURSE, laid along +z from the first step's far edge: `steps` (each `{ i, kind, x, y, z, w, d, amp?, period?,
- * phase?, beat? }` - x, z its top's centre at rest, y its top) and `checkpoints` (A, B, C: `{ x, y, z, r }`), and the
- * span each step belongs to (0 the Drift, 1 the Beat, 2 the Crumble).
+ * EG-H3 (EG4): THE HOUR'S COURSE AS DATA - its spec, laid along +z from the first step's far edge (net/eliteGates/egSpanLaw.js
+ * courseOf): the Drift's eight (span 0) and B; the Beat's seven and its two risers (span 1), alternate Beats half a beat
+ * apart and the course a riser higher after each, and C; the Crumble's eight (span 2), each a step down to the arena's
+ * floor; the arena. AUDIT SD II (L2 F9): every step ONE shape, its unused fields nought - the page's frame reads them for
+ * every step, and four shapes made those reads megamorphic, a number made at each (courseOf keeps it).
  */
-function layCourse() {
-  const steps = [], checkpoints = [{ x: SD_FIRST_STEP.x, y: 0, z: SD_FIRST_STEP.z, r: SD_FIRST_STEP.r }];
-  let edge = SD_FIRST_STEP.z + SD_FIRST_STEP.r, y = 0;
-  // AUDIT SD II (L2 F9): every step ONE shape, its unused fields nought - the page's frame reads them for every step, and
-  // four shapes made those reads megamorphic, a number made at each
-  const put = (kind, span, size, gap, { amp = 0, period = 0, phase = 0, beat = 0 } = {}) => {
-    const z = edge + gap + size.d / 2;
-    steps.push({ i: steps.length, kind, span, x: 0, y, z, w: size.w, d: size.d, amp, period, phase, beat });
-    edge = z + size.d / 2;
-  };
-  const check = (gap) => { const z = edge + gap + CHECK_R; checkpoints.push({ x: 0, y, z, r: CHECK_R }); edge = z + CHECK_R; };
-  for (let k = 0; k < 8; k++) put('drift', 0, SD_DRIFT_SIZE, DRIFT_GAPS[k], { amp: DRIFT_AMPS[k], period: DRIFT_PERIODS[k], phase: k * 0.9 });
-  check(DRIFT_GAPS[8]);
+export const SD_COURSE_SPEC = (() => {
+  const size = (q) => Object.freeze({ w: q.w, d: q.d });
+  const drift = [];
+  for (let k = 0; k < 8; k++) drift.push(Object.freeze({ kind: 'drift', gap: DRIFT_GAPS[k], size: size(SD_DRIFT_SIZE), ...{ amp: DRIFT_AMPS[k], period: DRIFT_PERIODS[k], phase: k * 0.9 } }));
   let beat = 0;
-  for (const [kind, gap] of BEAT_PLAN) {
-    if (kind === 'riser') { y += SD_RISER_H; put('riser', 1, SD_BEAT_SIZE, gap); continue; }
-    put('beat', 1, SD_BEAT_SIZE, gap, { beat: (beat++ % 2) * SD_BEAT_HALF });
-  }
-  check(BEAT_TO_C);
-  const drop = y / CRUMBLE_GAPS.length;
-  for (let k = 0; k < CRUMBLE_GAPS.length; k++) { y = Math.max(0, y - drop); put('crumble', 2, SD_CRUMBLE_SIZE, CRUMBLE_GAPS[k]); }
-  return { steps, checkpoints, end: edge + CRUMBLE_TO_ARENA };
-}
-const COURSE = layCourse();
+  const beats = BEAT_PLAN.map(([kind, gap]) => Object.freeze(kind === 'riser' ? { kind, gap, size: size(SD_BEAT_SIZE), rise: SD_RISER_H }
+    : { kind, gap, size: size(SD_BEAT_SIZE), beat: (beat++ % 2) * SD_BEAT_HALF }));
+  const crumble = CRUMBLE_GAPS.map((gap) => Object.freeze({ kind: 'crumble', gap, size: size(SD_CRUMBLE_SIZE) }));
+  return Object.freeze({
+    start: Object.freeze({ x: SD_FIRST_STEP.x, y: 0, z: SD_FIRST_STEP.z, r: SD_FIRST_STEP.r }), checkR: CHECK_R, toEnd: CRUMBLE_TO_ARENA,
+    sections: Object.freeze([
+      Object.freeze({ pieces: Object.freeze(drift), check: DRIFT_GAPS[8] }),
+      Object.freeze({ pieces: Object.freeze(beats), check: BEAT_TO_C }),
+      Object.freeze({ pieces: Object.freeze(crumble), check: null, descend: true }),
+    ]),
+  });
+})();
+/** A course record frozen whole: every step and checkpoint its own frozen record. */
+const frozenCourse = (c) => Object.freeze({ steps: Object.freeze(c.steps.map((s) => Object.freeze(s))), checkpoints: Object.freeze(c.checkpoints.map((q) => Object.freeze(q))), end: c.end });
+/** THE HOUR'S COURSE - the record every reader takes by default. */
+export const SD_COURSE = frozenCourse(courseOf(SD_COURSE_SPEC));
 /** Every step, in the order they are crossed. */
-export const SD_STEPS_COURSE = Object.freeze(COURSE.steps.map((s) => Object.freeze(s)));
+export const SD_STEPS_COURSE = SD_COURSE.steps;
 /** The checkpoints - A (the first step), B (before the Beat), C (before the Crumble). */
-export const SD_CHECKPOINTS = Object.freeze(COURSE.checkpoints.map((c) => Object.freeze(c)));
+export const SD_CHECKPOINTS = SD_COURSE.checkpoints;
 /** Where the course ends - the arena's near edge (net/superDungeon/sdBrain.js SD_ARENA is laid there). */
-export const SD_COURSE_END = COURSE.end;
+export const SD_COURSE_END = SD_COURSE.end;
 /** The band the edge lets go of (world/superDungeon/sdRealm.js realmClamp): from just inside the first step's far edge to just inside
  *  the arena's near edge - the void below is the Hour's own, and the cast-back its edge. */
 export const SD_STEPS_FREE = Object.freeze({ z0: SD_FIRST_STEP.z + SD_FIRST_STEP.r - 0.4, z1: SD_ARENA.z - SD_ARENA.r + 0.4 });
@@ -110,40 +117,15 @@ export const SD_STEPS_FLOORS = Object.freeze([
   Object.freeze({ kind: 'band', x: 0, z0: SD_STEPS_FREE.z0, z1: SD_STEPS_FREE.z1, halfW: SD_STEPS_FREE_HALF_W }),
   Object.freeze({ kind: 'disc', ...SD_ARENA }),
 ]);
-/** The span a z falls in (0 the Drift, 1 the Beat, 2 the Crumble), by the checkpoints' near edges; -1 before A's. */
-export function spanAt(z) {
-  for (let k = SD_CHECKPOINTS.length - 1; k >= 0; k--) if (z >= SD_CHECKPOINTS[k].z - SD_CHECKPOINTS[k].r) return k;
+/** The span a z falls in (0 the Drift, 1 the Beat, 2 the Crumble), by the checkpoints' near edges; -1 before A's. EG-H3:
+ *  of `course` (the Hour's by default). */
+export function spanAt(z, course = SD_COURSE) {
+  const C = course.checkpoints;
+  for (let k = C.length - 1; k >= 0; k--) if (z >= C[k].z - C[k].r) return k;
   return -1;
 }
 
-/** A step's top-centre at `t` (the realm's anchored seconds), the realm's frame: the Drift's swing across x. AUDIT SD: into
- *  `out` when one is given - the page's frame makes nothing. */
-export function stepAt(s, t, out = [0, 0, 0]) {
-  // AUDIT SD II (L2 F9): two stores - a choice between a made number and a whole one was a number made a step a frame
-  if (s.kind === 'drift') out[0] = s.x + s.amp * Math.sin((2 * Math.PI * t) / s.period + s.phase);
-  else out[0] = s.x;
-  out[1] = s.y;
-  out[2] = s.z;
-  return out;
-}
-/** Whether a Beat step stands at `t` (the others always do): solid SD_BEAT_SOLID of every SD_BEAT_CYCLE, from its own
- *  half beat. */
-export function beatStands(s, t) {
-  if (s.kind !== 'beat') return true;
-  const u = (((t - s.beat) % SD_BEAT_CYCLE) + SD_BEAT_CYCLE) % SD_BEAT_CYCLE;
-  return u < SD_BEAT_SOLID;
-}
-/** Whether a Beat step is blinking at `t` - the last SD_BEAT_BLINK of its stand, its warning. */
-export function beatBlinks(s, t) {
-  if (s.kind !== 'beat') return false;
-  const u = (((t - s.beat) % SD_BEAT_CYCLE) + SD_BEAT_CYCLE) % SD_BEAT_CYCLE;
-  return u >= SD_BEAT_SOLID - SD_BEAT_BLINK && u < SD_BEAT_SOLID;
-}
-/** SD-FLASH: how long a Beat step has been warning at `t` (s; meaningful while `beatBlinks`) - its falter's own clock. */
-export function beatWarned(s, t) {
-  const u = (((t - s.beat) % SD_BEAT_CYCLE) + SD_BEAT_CYCLE) % SD_BEAT_CYCLE;
-  return u - (SD_BEAT_SOLID - SD_BEAT_BLINK);
-}
+// THE PLATFORM CLOCK - stepAt, beatStands, beatBlinks and beatWarned - is net/eliteGates/egSpanLaw.js's since EG-H3, said above.
 /**
  * A Crumble step `since` seconds after a foot first touched it (null: untouched): `{ drop, whole, shaking }` - how far it
  * has fallen, whether it stands whole (untouched, still shaking, or back), and whether it shakes (its warning). AUDIT SD
@@ -174,9 +156,11 @@ export function breathSeen(t, out = { dir: 0, k: 0 }) {
   if (u < span) { out.dir = gustSign(n); out.k = u / span; } else { out.dir = 0; out.k = 0; }
   return out;
 }
-/** Whether a body at realm z feels the Warp's breath - over the Crumble alone, from C's far edge to the arena. */
-export const inBreath = (z) => z > SD_CHECKPOINTS[2].z + SD_CHECKPOINTS[2].r && z < SD_COURSE_END;
+/** Whether a body at realm z feels the Warp's breath - over the Crumble alone, from C's far edge to the arena (EG-H3: of
+ *  `course`, the Hour's by default). */
+export const inBreath = (z, course = SD_COURSE) => z > course.checkpoints[2].z + course.checkpoints[2].r && z < course.end;
 /** Whether a body (the realm's y) has fallen past the course into the void. */
 export const inVoid = (y) => y < SD_VOID_Y;
-/** Where a body cast back stands: its span's checkpoint's centre (the realm's frame, feet on its stone). */
-export const castBackTo = (span) => { const c = SD_CHECKPOINTS[Math.max(0, Math.min(SD_CHECKPOINTS.length - 1, span))]; return [c.x, c.y, c.z]; };
+/** Where a body cast back stands: its span's checkpoint's centre (the realm's frame, feet on its stone - EG-H3: of
+ *  `course`, the Hour's by default). */
+export const castBackTo = (span, course = SD_COURSE) => { const C = course.checkpoints, c = C[Math.max(0, Math.min(C.length - 1, span))]; return [c.x, c.y, c.z]; };

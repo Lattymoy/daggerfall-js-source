@@ -17,6 +17,7 @@ import { DAY_MIN, isOutdoor } from '../../../src/systems/livingWorld/dayPlan.js'
 import { CLASSIC_MINUTES_PER_SECOND } from '../../../src/systems/worldTick.js';
 import { livingWorldOn, LIVING_WORLD_KEY, LIVING_WORLD_TUNING } from '../../../src/systems/livingWorld/livingSwitch.js';
 import { FEATURES } from '../../../src/systems/features.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const rd = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const RATE = CLASSIC_MINUTES_PER_SECOND;
@@ -259,7 +260,7 @@ test('LW2 the switch: the Features row `living-world` (on, the player\'s own onl
 });
 
 test('LW2 the streaming host: where the row is on, the population block stands a LivingTown on the same navgrid, bodies (ResidentWalker on the same collider, ground and batches) and racial override; DFU\'s pool otherwise, as it was; every door names its building (the block\'s grid cell); the regards ride the save as `LivingWorld`; the residents speak through the crew\'s one layer; the talk ray asks the body\'s town for a refusal and notes the word (mutants: each seam removed)', () => {
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /population = livingWorldOn\(\) \? new LivingTown\(nav, \{/);
   assert.match(w, /\}\) : new TownPopulation\(nav, \{/);
   assert.match(w, /const person = new ResidentWalker\(nav, \{ archive, guard, frameCount: \(rec, a\) => personTex\.get\(a\)\.getFrameCount\(rec\), collider: personCollider, groundY: personGroundY \}\);\n\s+personBatches\.set\(person, renderer\.createBillboardBatch\(archive, 0, \{ w: 1, h: 1 \}, \[\[0, 0, 0\]\]\)\);/);

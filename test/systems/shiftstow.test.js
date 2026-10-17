@@ -15,6 +15,7 @@ import { mountEnhancedInventory, SHIFT_STOW_HINT } from '../../src/ui/enhanced/e
 import { NativeInventoryWindow, WAGON_KG_LIMIT, noteFocusLost } from '../../src/ui/native/nativeInventory.js';
 import { CELL_X } from '../../src/ui/item/itemScroller.js';
 import { STORE_FILTERS, STORE_FILTER_KINDS, filterStore, storeFilterOptions, storeFilterAccepts, storeQuery } from '../../src/ui/storeFilter.js';
+import { lootRarityOn } from '../../src/systems/loot/lootRarity.js';
 import { SMALL_CART_TEMPLATE } from '../../src/systems/inventorySession.js';
 import { mintMaterialItem } from '../../src/systems/professions/profItems.js';
 import { ITEM_TEMPLATES } from '../../src/characters/paperdoll/paperdoll.js';
@@ -38,7 +39,7 @@ let clock = 0;
 const epoch = () => (clock += 100_000);
 
 /** The pack mounted with the wagon open (the cart's door pressed), or over `loot` when one is handed. */
-function withWagon(items, wagon, fn, { loot = null, open = true } = {}) {
+function withWagon(items, wagon, fn, { loot = null, open = true, chooseOne = null } = {}) {
   _resetForTests();
   globalThis.location = { search: '?skin=enhanced' };
   return withDom((dom) => {
@@ -46,7 +47,7 @@ function withWagon(items, wagon, fn, { loot = null, open = true } = {}) {
     dom.body.append(host);
     const e = hero(items);
     e.wagonItems = wagon;
-    const view = mountEnhancedInventory(host, { entity: e, items: () => e.items, wagonItems: () => e.wagonItems, onExit: () => {}, ...(loot ? { loot } : {}) });
+    const view = mountEnhancedInventory(host, { entity: e, items: () => e.items, wagonItems: () => e.wagonItems, onExit: () => {}, ...(loot ? { loot } : {}), ...(chooseOne ? { chooseOne } : {}) });
     const rows = () => host.querySelectorAll('.itemrow');
     const rowOf = (name) => rows().find((r) => !r.closest('.loot-win') && textOf(r).includes(name)) ?? null;
     const lootRows = () => rows().filter((r) => !!r.closest('.loot-win')).map((r) => textOf(r));
@@ -60,7 +61,7 @@ function withWagon(items, wagon, fn, { loot = null, open = true } = {}) {
     const click = (node, at, extra = {}) => node.onclick({ timeStamp: at, detail: 1, ...extra });
     const tabTo = (label) => host.querySelectorAll('.packtab').find((b) => b.textContent.startsWith(label)).onclick();
     try {
-      if (open && !loot) { door().onclick(); assert.equal(pack().remoteKind, 'wagon'); }
+      if (open && !loot && !chooseOne) { door().onclick(); assert.equal(pack().remoteKind, 'wagon'); }
       return fn({ dom, host, e, view, rowOf, lootRows, lootRowOf, pack, menu, options, choose, search, click, tabTo, door });
     } finally { view.unmount(); }
   });
@@ -68,7 +69,7 @@ function withWagon(items, wagon, fn, { loot = null, open = true } = {}) {
 
 test('WAGON-FILTER storeFilter: All, Materials and the pack\'s nine pages; Materials is the bag\'s own test and crosses the pages; the search is the row\'s name, trimmed and lower-cased; the menu names what the store holds and keeps the chosen one (mutants: Materials read as a page, the query unlowered)', () => {
   assert.deepEqual(STORE_FILTERS.map(([id]) => id), ['all', 'materials', ...PACK_PAGES.map(([id]) => id)]);
-  assert.deepEqual([...STORE_FILTER_KINDS].sort(), ['bag', 'storage', 'wagon']);
+  assert.deepEqual([...STORE_FILTER_KINDS].sort(), ['bag', 'container', 'storage', 'wagon']);
   const a = arrows(3), i = ingots(4), herb = mintMaterialItem('p1:8');   // AUDIT D: an herb's key is p1:/p2: and its template (the bag's law)
   assert.ok(herb, 'the herb is minted');
   assert.equal(storeFilterAccepts(i, 'materials'), true, 'an ingot is a material');
@@ -93,7 +94,10 @@ test('WAGON-FILTER on the enhanced pack: the wagon carries the search and the me
     assert.ok(search(), 'the wagon has its search');
     assert.equal(host.querySelectorAll('.storefilter').length, 1);
     const bar = host.querySelectorAll('.storefilter')[0];
-    assert.deepEqual(bar.children.map((c) => c.className), ['storesearch', 'storecat'], 'one row: the search beside the menu, nothing under them');
+    const kids = ['storesearch', 'storecat'];
+    if (lootRarityOn()) kids.push('storerarity');
+    kids.push('storemat');   // MAT-FILTER: the metal menu stands beside the tiers
+    assert.deepEqual(bar.children.map((c) => c.className), kids, 'one row: the search beside the menus, nothing under them');
     assert.deepEqual(options(), ['All (3)', 'Materials (1)', 'Weapons (2)', 'Misc (1)']);
     click(rowOf('Dagger'), epoch());
     assert.equal(pack().picked, 'Dagger', 'a pack card open');
@@ -123,13 +127,17 @@ test('WAGON-FILTER on the enhanced pack: the wagon carries the search and the me
     assert.ok(stopped, 'the pack never sees that Back');
     assert.equal(lootRows().length, 2);
   });
-  // a corpse carries no bar: a glance is not a store
+  // LOOT-BULK: a corpse carries the bar. A reward tray does not - the mutant that forces the bar onto every remote dies there.
   const body = [arrows(2), mk('Mace')];
   withWagon([], [], ({ host, search, lootRows }) => {
     assert.equal(lootRows().length, 2, 'the body\'s rows are drawn');
-    assert.equal(search(), null);
-    assert.equal(host.querySelectorAll('.storefilter').length, 0);
+    assert.ok(search(), 'a container has the search');
+    assert.equal(host.querySelectorAll('.storefilter').length, 1);
   }, { loot: { items: () => body } });
+  withWagon([mk('Dagger')], [], ({ host, search }) => {
+    assert.equal(search(), null, 'a reward tray has no search');
+    assert.equal(host.querySelectorAll('.storefilter').length, 0);
+  }, { open: false, chooseOne: { items: [mk('Mace')], title: 'A gift' } });
 });
 
 test('WAGON-FILTER is fresh for every store shown: the wagon shut and opened again, a store emptied, a new open - never a filter carried in (AUDIT C2; mutants: the toggle keeps it, the emptied store keeps it, the mount keeps it)', () => {

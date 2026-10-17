@@ -9,13 +9,14 @@
 // lines and the workflows as written.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, writeFileSync, mkdirSync, mkdtempSync, rmSync, copyFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, mkdtempSync, rmSync, copyFileSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { updateNumber, UPDATE_LINE_FILE, UPDATE_LINE_RE, UPDATE_RE, UPDATE_ENV } from '../../scripts/updateNumber.mjs';
 import { UPDATE_LINE } from '../../scripts/updateLine.mjs';
+import { tagSource } from '../../scripts/buildTag.mjs';
 
 const ROOT = new URL('../..', import.meta.url).pathname;
 const rd = (p) => readFileSync(join(ROOT, p), 'utf8');
@@ -100,6 +101,21 @@ test('REL8: the build stamps it beside the commit - src/buildTag.js UPDATE, the 
   assert.equal(stamp({ [UPDATE_ENV]: '0.0.7' }), `export const BUILD_TAG = '${sha()}';\nexport const UPDATE = '0.0.7';\n`, 'told');
   // the committed stamp (what a checkout carries before its first build) knows no number
   assert.match(rd('src/buildTag.js'), /^export const BUILD_TAG = '[0-9a-f]{12}';\nexport const UPDATE = null;\n$/);
+});
+
+test('REL8 (BUILD-LEFTOVERS, 2026-10-15) ONE STAMP: every name the game imports from src/buildTag.js is exported by scripts/buildTag.mjs tagSource - found by walking src/ - and no tool or script writes the file\'s text but through it (tools/staleChunkProbe.mjs wrote BUILD_TAG alone after REL8 added UPDATE, and every build it made failed to bundle) (mutants: the probe\'s own stamp again; UPDATE dropped from the stamp)', () => {
+  const stamped = new Set([...tagSource('abcdef012345', null).matchAll(/^export const (\w+) = /gm)].map((m) => m[1]));
+  const walk = (dir) => readdirSync(join(ROOT, dir), { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(join(dir, e.name)) : /\.m?js$/.test(e.name) ? [join(dir, e.name)] : []));
+  const imported = new Set();
+  for (const f of walk('src')) for (const m of rd(f).matchAll(/^import \{([^}]*)\} from '[./]*buildTag\.js';/gm)) for (const n of m[1].split(',')) imported.add(n.trim());
+  assert.ok(imported.has('BUILD_TAG') && imported.has('UPDATE'), `the walk found the game\'s imports: ${[...imported]}`);
+  assert.deepEqual([...imported].filter((n) => !stamped.has(n)), [], 'imported from src/buildTag.js and not stamped');
+  // (AUDIT BUILD-LEFTOVERS, the second read: any spelling of the assignment, in every script a build or a release runs -
+  // the shell steps, the desktop app's and the workflows' too; one spelling in two folders let a stamp of its own by)
+  const scriptsOf = (dir) => readdirSync(join(ROOT, dir), { recursive: true }).map(String).filter((f) => /\.(m?js|cjs|sh|ya?ml)$/.test(f) && !/(^|[\\/])node_modules[\\/]/.test(f)).map((f) => join(dir, f));
+  const strays = [...scriptsOf('tools'), ...scriptsOf('scripts'), ...scriptsOf('app'), ...scriptsOf('.github/workflows'), 'package.json']
+    .filter((f) => f !== join('scripts', 'buildTag.mjs') && /\bBUILD_TAG\s*=(?!=)/.test(rd(f)));
+  assert.deepEqual(strays, [], 'a stamp of its own - write src/buildTag.js through tagSource');
 });
 
 test('REL8: the line is one declaration, found by its diff - this checkout\'s line is 0.0, and the search and the reader both see it', () => {

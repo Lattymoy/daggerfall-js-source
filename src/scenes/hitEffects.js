@@ -119,7 +119,7 @@ export function createHitEffects({
   // list per frame and use batches() instead. One pool either way.
   const live = [];   // { batch, anim }
 
-  function spawn(record, pos, facing = null, { archive = BLOOD_ARCHIVE, fps = BLOOD_FPS, scale = 1, tracked = false, onTexture = null } = {}) {
+  function spawn(record, pos, facing = null, { archive = BLOOD_ARCHIVE, fps = BLOOD_FPS, scale = 1, tracked = false, onTexture = null, conceal = null } = {}) {
     if (!(record >= 0) || !pos) return null;
     const at = [pos[0], pos[1], pos[2]];
     if (facing) {
@@ -140,7 +140,7 @@ export function createHitEffects({
     // its centres into a STATIC_DRAW buffer and flight rides the
     // batch's origin uniform instead (the dungeon missile's own trick -
     // zero GL churn).
-    const entry = { batch: null, anim: null, dead: false, record, pos: at, at: [...at], size: null, archive, fps, scale, tracked };
+    const entry = { batch: null, anim: null, dead: false, record, pos: at, at: [...at], size: null, archive, fps, scale, tracked, conceal };   // EG-ZG: `conceal` - an ally's flash at THE QUIET COMPANY's share (the billboards' blended phase)
     live.push(entry);
     getTexture(archive).then((t) => {
       // the pool can be cleared while the archive warms (a scene torn
@@ -189,6 +189,7 @@ export function createHitEffects({
       // home). The origin deltas below are centre-to-centre and do not
       // move: the batch's base and its live position shift together.
       entry.batch = renderer.createBillboardBatch(archive, record, entry.size, [centredBase(entry.pos, entry.size)]);
+      if (entry.conceal) entry.batch.conceal = entry.conceal;   // EG-ZG (Elite-Gates.md section 25.4): drawn translucent, as a concealed foe's flat is
       entry.batch.frame = 0;
       onSpawn?.(entry.batch);
       // A single-frame record has no wrap to end on, so it would hang
@@ -295,7 +296,7 @@ export function createHitEffects({
      *  The flash ENDS on FlatAnim.done, which is DFU's OneShot
      *  self-destruct - not the missile's 0.6s lifetime, which governs
      *  the parent rather than the billboard. */
-    showImpactFlash: (archive, pos, scale = 1) => spawn(IMPACT_RECORD, pos, null, { archive, fps: IMPACT_FPS, scale }),   // SUNBABY2: a sky fireball's flash is drawn larger (`scale`)
+    showImpactFlash: (archive, pos, scale = 1, conceal = null) => spawn(IMPACT_RECORD, pos, null, { archive, fps: IMPACT_FPS, scale, conceal }),   // SUNBABY2: a sky fireball's flash is drawn larger (`scale`); EG-ZG: `conceal` an ally's, at THE QUIET COMPANY's share
     /** WW1: Weapon Widget's DoClang / DoThud (FPSWeaponClone IL 0xe0c,
      *  0xf58): TEXTURE.380 record 2, one-shot at 20 fps, twice its size,
      *  at the point the widget worked out. The CLANG's emissive material
@@ -372,6 +373,7 @@ export function createHitEffects({
         onRetire?.(e.batch);
         renderer.destroyBillboardBatch(e.batch);
         e.batch = renderer.createBillboardBatch(e.archive, e.record, e.size, [centredBase(e.pos, e.size)]);   // FIELD-GUN20: rebuilt where it was built - centred
+        if (e.conceal) e.batch.conceal = e.conceal;   // EG-ZG: and as translucent as it was
         e.batch.frame = e.anim?.frame ?? 0;
         if (e.tracked) e.batch.origin = [e.at[0] - e.pos[0], e.at[1] - e.pos[1], e.at[2] - e.pos[2]];   // FIELD-GUN14: a rebuilt batch starts at its centres again - the flight's delta has to be put back
         onSpawn?.(e.batch);

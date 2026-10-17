@@ -124,14 +124,16 @@ test('LEGACY7 the host online: founded as asked; a fall is the realm\'s tombston
   assert.ok(w.stored > 0, 'each write of the device\'s is the realm\'s to follow');
   const out = w.host.deathOutcome();
   assert.equal(out.kind, 'fall');
-  assert.equal(w.tombs, 1, 'the tombstone asked at the door');
+  // PIN MOVED (FIELD BUGS 2026-10-16b REZ-BLOODLINE AUDIT R1): asked at the door with its hold (the realm holds the fall for
+  // a party's Resurrect), and again as the player goes on - the window closed
+  assert.equal(w.tombs, 2, 'the tombstone asked at the door, and its window closed');
   assert.equal(w.host.succeed({ newborn: true }), true);
   assert.deepEqual(w.booted, [], 'the boot waits on the realm\'s word');
   await tick();
   assert.equal(w.booted.length, 1);
   assert.match(w.booted[0], /realmnew=1/, 'born into the realm');
   assert.match(w.booted[0], /legacyborn=/);
-  assert.equal(w.tombs, 1, 'once');
+  assert.equal(w.tombs, 2, 'no more');
 });
 
 test('LEGACY7 the host online: a tombstone refused is said, and asked again before anyone carries on - never a birth past an unheard death', async () => {
@@ -141,7 +143,7 @@ test('LEGACY7 the host online: a tombstone refused is said, and asked again befo
   assert.ok(w.said.includes(LEGACY_TEXT.unTombed));
   assert.equal(w.host.succeed({ newborn: true }), true);
   await tick();
-  assert.equal(w.tombs, 2, 'asked again');
+  assert.equal(w.tombs, 3, 'asked again');   // PIN MOVED (REZ-BLOODLINE AUDIT R1): the door's, the window's close, and the Succession's
   assert.deepEqual(w.booted, [], 'no birth while the realm has not heard');
   assert.ok(w.host.family.pending, 'the fall waits on the record - the Succession is raised again');
   w.tombAnswer = true;
@@ -232,7 +234,8 @@ test('LEGACY7 wiring: the boot reads the lines before any save; the realm\'s cop
   assert.match(w, /const legacyRealmRead = legacyRealmLine \? Promise\.all\(\[\n\s+legacyRealmLine\.pull\(\)/, 'the lines asked at the join');
   const read = w.indexOf('    await legacyRealmRead;\n  }\n  legacyHost = createLegacyHost({');
   assert.ok(read > w.indexOf('const legacyRealmRead = ') && read < w.indexOf('await worldQuickLoad({ ...bootLoadPick, snap });') && read < w.indexOf('await classicLoadBoot();'), 'read before any save is restored');
-  assert.match(w, /stored: \(f\) => \{ legacyRealmLine\?\.push\(f\); \},\n\s+tombstone: \(why\) => \(realmSession \? realmSession\.die\(why\) : false\),/);
+  // PIN MOVED (FIELD BUGS 2026-10-16b REZ-BLOODLINE): the tombstone carries its options - `keepalive` as the page goes
+  assert.match(w, /stored: \(f\) => \{ legacyRealmLine\?\.push\(f\); \},\n\s+tombstone: \(why, o\) => \(realmSession \? realmSession\.die\(why, o\) : false\),/);
   assert.match(w, /if \(realmNew\) \{ legacyRealmBirth\(host\)\.catch\(/);
   assert.match(w, /saveNow: \(\) => \(legacyFirstSave \? legacyFirstSave\(\) : /);
   assert.match(w, /if \(legacyRealmLine\) \{\n\s+if \(legacyRealmRoster && !legacyRealmRoster\.has\(String\(cid\)\)\) return false;\n\s+legacyBoot\(realmBootSearch\(location\.search, String\(cid\), BOOT_DOOR_KEYS\)\);/);

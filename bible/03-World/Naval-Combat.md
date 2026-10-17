@@ -270,7 +270,12 @@ spices and books; a navy's armoury), rolled at the player's level and given its 
 - a merchantman's a mine's, a pirate's a stronghold's, a navy's a giant's hold's; a flagship's strongbox
 STRONGBOX_RARITY_TIER, a barbarian chief's). Drawn once from her seed: whoever opens her again finds what is left.
 TAKE ALL goes into the captor boat's own hold (Come Sail Away's cargo, whose weight slows her as the mod weighs it),
-or into the pack as far as it carries; OPEN HER HOLD lays it in the pack's own loot window.
+or into the pack as far as it carries; OPEN HER HOLD lays it in the pack's own loot window. A LAWFUL ship's hold is
+stolen goods (STOLEN-GOODS AUDIT S4, 2026-10-16, `01-Overview/bugs/Field-Bugs-2026-10-16b.md`): her boarding is Piracy, so
+every piece of it carries the theft's mark as it is drawn and out by every door (a merchant pays for it only to be rid of
+it; a guilty verdict takes what the pack carries of it - `06-Systems/Standing-Arc.md` STOLEN-GOODS), and so are the
+casks of a lawful ship I sank, however they come aboard; a pirate's hold, a hold past the Veil, the casks of a ship
+another sank and a wreck's stores are not.
 
 **The captor's one choice** (Black Flag's, in Daggerfall's words): **Timber and cordage** (REPAIR_SHARE of the hull
 and canvas made good), **Powder and shot** (every battery loaded, the fire barrels to BARREL.stock) or **Press her

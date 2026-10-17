@@ -18,9 +18,10 @@ import { enemyControllerHeight } from '../../../src/characters/enemy/enemyAnchor
 import { WOD_SPAWN_TYPE, WOD_ENEMY_ID } from '../../../src/world/worldOfDaggerfall/wodLocationObjects.js';
 import { MOBILE_TYPES } from '../../../src/characters/mobile/mobileTypes.js';
 import { DUNGEON_LOOT_KEYS } from '../../../src/systems/loot/loot.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
-const rd = (p) => readFileSync(join(ROOT, p), 'utf8');
+const rd = (p) => hostText(p);
 
 /** A roll stream that answers `vals` in order. */
 const script = (...vals) => { let i = 0; return () => { if (i >= vals.length) throw new Error('rolled more than scripted'); return vals[i++]; }; };
@@ -113,7 +114,7 @@ test('WOD3: the ground aligns move the CENTRE - a pile to hit + 0.52 whatever it
 });
 
 test('WOD3: the host stands what a marker answers - placed foes out of the cap, passive ones not hostile, piles dying with their pixel', () => {
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /tickWodSpawners\(\);   \/\/ WOD3: LocationEnemySpawner\.Update, every exterior frame\n(?:\s*meterFor\(renderer\.gl\)\?\.markCpu\('gates'\);[^\n]*\n)?\s*tickCityGates\(minute\);/);   // PIN MOVED (PERF-SIM2): the CPU meter's 'gates' span may open between them - a mark, nothing ticked
   assert.match(w, /const centre = \[s\.base\[0\], s\.base\[1\] \+ \(h \* s\.scaleY\) \/ 2, s\.base\[2\]\];\n(?:[^\n]*oidSeen[^\n]*\n)?\s*wodSpawners\.push\(\{ spawner: new WodSpawner\(s\), centre, flat: null, restand: false, oid: s\.objectID, oidN: n \}\);/, 'the marker\'s centre, as AlignToBase leaves it');
   assert.match(w, /const kept = carried\.spawners\.get\(w\.centre\.join\(','\)\)\?\.shift\(\);[^\n]*\n\s*if \(!kept\) continue;\n\s*w\.spawner = kept\.spawner;\n\s*w\.flat = kept\.flat;\n\s*w\.restand = !!kept\.flat;/, 'and its state across a rebuild the reference never makes (WOD4\'s carry, WOD5\'s captive), adopted at publish (AUDIT BRANCH (WoD) m4)');

@@ -15,12 +15,13 @@ import { PeerClimbSounds, peerClimbCues, peerBodyYaw, peerMoving, peerClimbing, 
 import { CLIMB_SFX, CLIMB_SOUND } from '../../src/player/climb/climbSounds.js';
 import { FEEL } from '../../src/player/climb/climbFeel.js';
 import { PEER_SOUND_PROFILE } from '../../src/net/remotePlayers.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const I = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
 const BOX_IDX = [0, 2, 1, 0, 3, 2, 4, 5, 6, 4, 6, 7, 0, 1, 5, 0, 5, 4, 3, 7, 6, 3, 6, 2, 0, 4, 7, 0, 7, 3, 1, 2, 6, 1, 6, 5];
 const blank = { forward: 0, strafe: 0, run: false, jump: false, crouch: false };
 const wrap = (a) => Math.atan2(Math.sin(a), Math.cos(a));
-const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
+const rd = (p) => hostText(p);
 function world() {
   const col = new Collider(() => 0);
   let n = 0;
@@ -244,7 +245,7 @@ test('CLIMB5 C5: the others HEAR the climb, at the climber - a catch, the hands 
 });
 
 test('CLIMB5 C6: every host says the climb and draws its own body at the climb\'s yaw, and the peers\' sounds ride the peers\' own switch (mutants: the pose unsent, a host drawing the body at the camera\'s yaw, the sound unwired)', () => {
-  assert.match(rd('src/scenes/world.js'), /\.\.\.climbPoseOf\(player\),[^\n]*\n\s*\};/, 'the pose carries the climb');
+  assert.match(hostText('src/scenes/world.js'), /\.\.\.climbPoseOf\(player\),[^\n]*\n\s*\};/, 'the pose carries the climb');
   let n = 0;
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/dungeon.js', 'src/scenes/worldModes.js']) {
     const s = rd(f);

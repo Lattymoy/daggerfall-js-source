@@ -40,10 +40,11 @@ export const LAMP_KEEPER_ARCHIVE = 182;
 export const LAMP_KEEPER_RECORDS = Object.freeze([0, 1, 2]);
 /** The lamp: Kludge Town's street lamp, the classic TEXTURE.197 record 6 the bug drew. */
 export const LAMP_CLASSIC = Object.freeze({ archive: 197, record: 6 });
-/** The port's own key its classic picture is uploaded under (after systems/portArt.js PORT_ARCHIVE's 38231; AUDIT
- *  FIVE-ASKS D7 - no other port key is 38241), so a
+/** The port's own key its classic picture is uploaded under (after world/portArt.js PORT_ARCHIVE's 38231, registered in
+ *  world/eliteGates/pseudoArchives.js; AUDIT FIVE-ASKS D7 took 38241, which the Elite Breach's Broken Galleries hold - EG-G2's
+ *  registry refused the pair at the merge of main into the Spire, and the lamp, a runtime key nothing stores, moved), so a
  *  pack's 197_6 - Roleplay & Realism's keeper - and the lamp never share one. */
-export const LAMP_ARCHIVE = 38241;
+export const LAMP_ARCHIVE = 38232;
 /** The title, in the vocabulary's spelling (net/identityToken.js TITLES; server-account/src/lamp.js LAMP_TITLE). */
 export const LAMP_TITLE = 'ilovelamp';
 /** The pick's own stream, salted ('LAMP'). */

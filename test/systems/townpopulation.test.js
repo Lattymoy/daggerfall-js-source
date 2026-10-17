@@ -7,6 +7,7 @@ import { CityNavigation, NAV_CELL, NAV_CELLS_PER_BLOCK, tileWeight } from '../..
 import { MobilePerson, PERSON_TEXTURES, GUARD_TEXTURE, PERSON_MOVE_SPEED, PERSON_IDLE_DISTANCE, PERSON_IDLE_RECORD, personWantsToStop } from '../../src/characters/mobile/mobilePerson.js';
 import { areEnemiesNearby } from '../../src/systems/encounters.js';   // the ONE home for GameManager.AreEnemiesNearby
 import { TownPopulation, maxPopulationFor, POP_RECYCLE_DISTANCE, POP_SPAWN_RANGE_OUTSIDE_RECT } from '../../src/systems/town/townPopulation.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const seq = (...v) => { let i = 0; return () => v[Math.min(i++, v.length - 1)]; };
 
@@ -296,7 +297,7 @@ test('politeness gate: the motor obeys it, and both exterior hosts feed it their
   // The wiring, which lives in two hosts a test cannot boot: each
   // must call the law and hand it its OWN live pool, and neither may
   // keep a hand-rolled four-term gate.
-  const src = (f) => readFileSync(new URL(`../../${f}`, import.meta.url), 'utf8');
+  const src = (f) => hostText(f);
   // PERF-TOWN1 re-aimed these three. The argument object is HOISTED at
   // both hosts now - it was minted per person per frame for a predicate
   // that reads it once - so the call site reads `personWantsToStop(
@@ -317,7 +318,7 @@ test('politeness gate: the motor obeys it, and both exterior hosts feed it their
   // encounter pool) - a townsperson must not stand chatting beside a
   // quest foe stood in the street by CreateFoe's exterior arm.
   assert.match(src('src/scenes/exterior.js'), /createTownScratch\(\{ areEnemiesNearby, foes: \(\) => exteriorFoePool\(\) \}\)/);
-  assert.match(src('src/scenes/world.js'), /createTownScratch\(\{ areEnemiesNearby, foes: \(\) => enchantFoes\(\) \}\)/);
+  assert.match(hostText('src/scenes/world.js'), /createTownScratch\(\{ areEnemiesNearby, foes: \(\) => enchantFoes\(\) \}\)/);
   // ...and the scratch really does ask that pool, rather than taking a
   // snapshot when it was made
   assert.match(src('src/scenes/townScratch.js'), /enemiesNearby: \(\) => areEnemiesNearby\(foes\(\)\)/);

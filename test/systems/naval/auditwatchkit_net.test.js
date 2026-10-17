@@ -13,6 +13,7 @@ import { createSeaShip, stepCaptain, WIND_RATED, DISENGAGE, FLEE_RANGE } from '.
 import { findHarbour, createWaterGrid, errandFor, stepErrand, LURK_R, LURK_SAILS, NIGHT_LURK_K } from '../../../src/systems/naval/shipLife.js';
 import { HULL } from '../../../src/systems/naval/navalShips.js';
 import { sea } from '../../navalSea.mjs';
+import { madeLevelRule } from '../../../src/systems/madeLevel.js';   // EG-H2: the made level's law the world host's doors ask
 
 const WORLD = readFileSync(new URL('../../../src/scenes/world.js', import.meta.url), 'utf8');
 const open = () => true;
@@ -130,7 +131,9 @@ test('AUDIT WK-SN the world: the cards drawn every frame of the layer; a card\'s
   // the card, lifted
   const at = WORLD.indexOf('function partyCompanions() {');
   const body = WORLD.slice(WORLD.indexOf('{', at) + 1, WORLD.indexOf('\n  }\n', at));
-  const cards = new Function('navalOn', 'csaRuntime', 'naval', 'crewAshore', 'composePartyFx', 'swornCards', 'modes', body);   // REVENANT-COMPANION: the sworn's cards (none here); GATE-ALONE: the mode machine, for a gate's court
+  const cardsOf = new Function('navalOn', 'csaRuntime', 'naval', 'crewAshore', 'composePartyFx', 'swornCards', 'modes', 'madeRuleHere', body);   // REVENANT-COMPANION: the sworn's cards (none here); GATE-ALONE: the mode machine, for a gate's court
+  // PIN MOVED (EG-H2, Elite-Gates.md section 24): the door asks the made level's law - the world host's word, off the stub's court
+  const cards = (...a) => cardsOf(...a.slice(0, 7), ...Array(Math.max(0, 7 - a.length)).fill(undefined), (rule) => madeLevelRule(a[6]?.gateArenaDay?.() != null ? 'court' : null, rule));
   const party = [{ boat: 42, name: 'Hilda', role: 'Bosun', health: 20, maxHealth: 60 }];
   const naval = { companions: { party } };
   const standing = { bodies: () => [{ companion: '42:Hilda', dead: false, entity: { health: 45, maxHealth: 60 } }] };

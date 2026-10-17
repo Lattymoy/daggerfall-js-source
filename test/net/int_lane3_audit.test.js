@@ -446,7 +446,7 @@ test('AUDIT INT11 THE THREE FIGHTS ALIKE: the court\'s, the Hour\'s and the serp
   assert.equal(n(/this\._trailSeed\(ws, a, now\);   \/\/ AUDIT INT11/g), 3, 'seeded at each `in`');
   assert.equal(n(/this\._bodyTell\('(gate|sd|serpent)', f, now/g), 3, 'told again at each beat');
   assert.match(relay, /bodies = this\._sdFightBodies\(f, now\), census = \(\) => bodyCensus\(f, bodies, /, 'the Hour\'s read once');
-  assert.equal(n(/m\.k === 'vt' \? !this\._spend\(ws, now, bodyWordRelayGate, 'bodyBucket', 'bodyDrops', 'too many body words'\)/g), 3, 'a body\'s word on its own bucket in each room');
+  assert.equal(n(/m\.k === 'vt' \? !this\._spend\(ws, now, bodyWordRelayGate, 'bodyBucket', 'bodyDrops', 'too many body words'\)/g), 4, 'a body\'s word on its own bucket in each room');   // PIN MOVED (EG-H1): the breach's `eg:` room the fourth - its count is on (test/net/eliteGates/egint_relay.test.js)
 });
 
 test('AUDIT INT14 THE RANKS ONE LAW (review.js ranked): the boss fights\' measure and the wealth\'s read a quantile by its rank alike - the nearest rank at or below it (two receipts\' median the lower) (mutants: the rank rounded the other way)', async () => {

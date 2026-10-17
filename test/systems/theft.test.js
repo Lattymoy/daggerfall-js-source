@@ -102,19 +102,29 @@ test('PT1: the tally does not wait for the roll', () => {
   assert.equal(clean.tally, true, 'the member tallies on its FIRST line, before it rolls anything');
 });
 
-test('PT1: the shop shelf is a COUNT comparison and nothing else', () => {
-  assert.equal(shopShelfTheft(5, 4), true);
-  assert.equal(shopShelfTheft(5, 5), false);
-  assert.equal(shopShelfTheft(5, 6), false, 'adding to the shelf is not stealing from it');
-  // and the masking quirk is DFU's: put one of yours down, take two
-  assert.equal(shopShelfTheft(5, 5), false);
+// PIN MOVED (STOLEN-GOODS AUDIT S1, 2026-10-16): DFU's shelf is a COUNT comparison, and the port's was - so a piece of
+// the player's own put down hid one of the shop's taken, which the theft's mark (systems/stolenGoods.js) marked all the
+// same. The shelf reads the shop's keeping now (the Set the host takes as the window opens), as the private-property arm
+// reads the owner's: a departure, named in theft.js shopShelfTheft.
+test('PT1: the shop shelf tallies when any piece of the shop\'s keeping is gone - and a piece of the player\'s put down masks nothing', () => {
+  const [a, b, c, d, e] = ['a', 'b', 'c', 'd', 'e'].map(item);
+  const keeping = new Set([a, b, c, d, e]);
+  assert.equal(shopShelfTheft(keeping, [a, b, c, d]), true);
+  assert.equal(shopShelfTheft(keeping, [a, b, c, d, e]), false);
+  assert.equal(shopShelfTheft(keeping, [a, b, c, d, e, item('mine')]), false, 'adding to the shelf is not stealing from it');
+  // DFU's masking quirk is gone: put one of yours down, take one of the shop's - five on the shelf, a theft all the same
+  assert.equal(shopShelfTheft(keeping, [a, b, c, d, item('mine')]), true);
+  assert.equal(shopShelfTheft(keeping, []), true);
+  assert.equal(shopShelfTheft(new Set(), [item('mine')]), false, 'a bare shelf');
 });
 
 test('PT1: the shelf arm tallies and does NOT roll, spawn or record a crime', () => {
   const wm = read('src/scenes/worldModes.js');
   const shelf = wm.slice(wm.indexOf('function openShelf'), wm.indexOf('function openMerchantSell'));
-  assert.match(shelf, /const shelfBefore = shelf\.items\.length;/);
-  assert.match(shelf, /if \(shopShelfTheft\(shelfBefore, shelf\.items\.length\)\) tallyCrimeGuildRequirements\(playerEntity, true, 1\);/);
+  // PIN MOVED (STOLEN-GOODS AUDIT S1): the shop's keeping, not its count - one Set the mark and the tally both read
+  assert.match(shelf, /const shelfBefore = new Set\(shelf\.items\);/);
+  assert.match(shelf, /loot: \{ items: \(\) => shelf\.items, stolenFrom: shelfBefore \},/);
+  assert.match(shelf, /if \(shopShelfTheft\(shelfBefore, shelf\.items\)\) tallyCrimeGuildRequirements\(playerEntity, true, 1\);/);
   assert.doesNotMatch(shelf, /privatePropertyTheft|setCrimeCommitted|spawnCityGuards/,
     'DFU rolls no dice and calls no guards for a shelf');
 });
@@ -123,8 +133,12 @@ test('PT1: the private-property arm runs the member in DFU\'s order', () => {
   const wm = read('src/scenes/worldModes.js');
   const arm = wm.slice(wm.indexOf('const openLoot = (privateProperty = false) => {'));
   const body = arm.slice(0, arm.indexOf('if (win) interiorOverlay = win;'));
-  assert.match(body, /const before = privateProperty \? \[\.\.\.\(c\.items \?\? \[\]\)\] : null;/,
+  // PIN MOVED (STOLEN-GOODS AUDIT S1): the owner's keeping, a Set the window grows by a split taken off theirs - the
+  // window's mark and this basket read the one Set
+  assert.match(body, /const before = privateProperty \? new Set\(c\.items \?\? \[\]\) : null;/,
     'the basket is the container as it stood when the window opened');
+  assert.match(body, /loot: \{ items: \(\) => c\.items, storage: !privateProperty, stolenFrom: before \},/, 'and the window reads the same Set');
+  assert.match(body, /basket: theftBasket\(before, c\.items \?\? \[\]\),/);
   assert.match(body, /if \(!privateProperty\) return;/, 'your own furniture is never a theft');
   const tally = body.indexOf('tallyCrimeGuildRequirements(playerEntity, true, 1);');
   const detect = body.indexOf('if (out.detected) {');

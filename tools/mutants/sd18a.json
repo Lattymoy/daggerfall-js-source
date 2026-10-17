@@ -364,8 +364,8 @@
   {
     "name": "SD18A-the-fray-forty-eight",
     "file": "src/net/superDungeon/sdBrain.js",
-    "old": "fray: sdMarksLaw(sdMarksOf(s)).fray ?? SD_FRAY_MAX });",
-    "new": "fray: SD_FRAY_MAX });",
+    "old": "fray: opts?.fray ?? (opts ? SD_FRAY_MAX : sdMarksLaw(sdMarksOf(s)).fray ?? SD_FRAY_MAX) }",
+    "new": "fray: opts?.fray ?? SD_FRAY_MAX }",
     "tests": [
       "test/net/superDungeon/sd18a_marks.test.js"
     ]
@@ -373,8 +373,8 @@
   {
     "name": "SD18A-a-fight-unmarked",
     "file": "server/src/index.js",
-    "old": "newRemnantFight(s, (f?.fi ?? 0) + 1, now, sdMarksOf(s));",
-    "new": "newRemnantFight(s, (f?.fi ?? 0) + 1, now);",
+    "old": "SD_SEAM.new({ s, fi: (f?.fi ?? 0) + 1, now, mk: sdMarksOf(s) });",
+    "new": "SD_SEAM.new({ s, fi: (f?.fi ?? 0) + 1, now });",
     "tests": [
       "test/net/superDungeon/sd18a_marks.test.js"
     ]

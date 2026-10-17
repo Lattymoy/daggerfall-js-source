@@ -38,9 +38,10 @@ import { getTerrainGroundArchive, getGroundArchive, SEASON } from '../../src/wor
 import { getWorldClimateSettings, CLIMATES } from '../../src/formats/mapsFile.js';
 import { PALETTIZED_FILENAMES } from '../../src/formats/imgFile.js';
 import { DFPalette } from '../../src/formats/dfPalette.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const src = (f) => readFileSync(join(root, f), 'utf8');
+const src = (f) => hostText(f);
 
 test('incident: the terrain ground archive is DFU\'s own truth table, all ten climates, both seasons', () => {
   // TerrainMaterialProvider.GetClimateInfo executed against every world
@@ -63,7 +64,7 @@ test('incident: the terrain ground archive is DFU\'s own truth table, all ten cl
 });
 
 test('incident: both terrain hosts key the tileset on the TERRAIN member, not the ground plane\'s', () => {
-  assert.match(src('src/scenes/world.js'), /const groundArchive = getTerrainGroundArchive\(climate, season\);/);
+  assert.match(hostText('src/scenes/world.js'), /const groundArchive = getTerrainGroundArchive\(climate, host\.season\);/);
   assert.match(src('src/scenes/exterior.js'), /const groundArchive = getTerrainGroundArchive\(dfLocation\.climate, season\);/);
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     assert.ok(!/const groundArchive = getGroundArchive\(/.test(src(f)),

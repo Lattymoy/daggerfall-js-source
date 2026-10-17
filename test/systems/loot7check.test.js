@@ -218,7 +218,7 @@ function killDoor() {
     ...ROOM_LOOT_OFF,   // PIN MOVED (PARTY-LOOT): the dungeon's room-loot seams, answering as an offline dungeon's (test/roomLootOff.mjs)
     foes: [], _authority: true, ARENA_PUPPET_OWNER, feudWeakBlow: () => false, blowClassOf: () => null, opts: {},   // AUDIT FEUD: the hit door asks a blow's weakness (none here)
     lastPlayerFeet: [0, 0, 0], _ecvT: 0, foeDeps: null, playerEntity: { isPlayer: true, items: [] }, audio: {},
-    renownFoeStruck: () => {}, renownFoeDied: () => {}, reportPlayerKill: () => {}, takeWholeBlow: () => false, markFoeStruck: () => {}, markConcealedHit: () => {},
+    renownFoeStruck: () => {}, renownFoeDied: () => {}, reportPlayerKill: () => {}, egFindStruck: async () => false, takeWholeBlow: () => false,   /* PIN MOVED (EG-E3): the joiner's find door */ markFoeStruck: () => {}, markConcealedHit: () => {},
     handleAttackFromPlayer: () => {}, damageShieldPool: (e, n) => n, noteFighter: () => {}, PARTY_ME: 'me', _sharedFoe: () => false, partyFoeLoses: (f, n) => n, fightN: () => 1,
     peerSoulTrapOf: () => null, attemptSoulTrap: () => ({ allowDeath: true }), isAzurasStarEquipped: () => false, fillEmptyTrap: () => false,
     hudText: { add: (l) => hud.push(l) }, SOUL_TRAP_TEXT: {}, setEnemyAlert: () => {}, sayEnemyDied,
@@ -233,7 +233,7 @@ function joiner(self) {
   const state = {
     ...ROOM_LOOT_OFF,   // PIN MOVED (PARTY-LOOT): the dungeon's room-loot seams, answering as an offline dungeon's (test/roomLootOff.mjs)
     foes, _layoutFoes: 2, _retyping: new Set(), _authority: false, validFoeRecord, opts: { selfId: () => self },
-    renownFoeDied: () => {}, reportPlayerKill: () => {}, rollCorpseKit: () => [], addCorpseFood: () => {}, stampWonWeapons: () => {}, capFoeLoot: () => [], liveStat: () => 50,
+    renownFoeDied: () => {}, reportPlayerKill: () => {}, egFindStruck: async () => false, rollCorpseKit: () => [], addCorpseFood: () => {}, stampWonWeapons: () => {}, capFoeLoot: () => [], liveStat: () => 50,
     dropFoeCard: () => null,   // PIN MOVED (AUDIT CARDS-6 A3): the copy's own card, drawn at the copy door - not this seam
     playerEntity: { isPlayer: true, items: [] }, setFoeDead: (f, d) => { f.dead = d; }, retypeFoe: async () => false,
     sayEnemyDied, hudText: { add: (l) => hud.push(l) },

@@ -172,8 +172,8 @@
   },
   {
     "name": "TACT1-pixel-unstood",
-    "file": "src/scenes/world.js",
-    "old": "    if (coverItems.length) collider.cover.add(key, coverItems, ((o) => () => state.pixelTranslation(px, py, o))([0, 0, 0]));",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "    if (coverItems.length) collider.cover.add(key, coverItems, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0]));",
     "new": "    if (coverItems.length) collider.cover.add(key, coverItems);",
     "tests": [
       "test/scenes/tact1.test.js"

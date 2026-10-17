@@ -14,6 +14,7 @@ import { blendLocationTerrain } from '../../../src/world/terrain/terrainTiles.js
 import { HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, STREAMING_TERRAIN_SCALE } from '../../../src/world/terrain/terrainSampler.js';
 import { tileWeight } from '../../../src/world/city/cityNavigation.js';
 import { AIR_GLARE_SLACK, AIR_GLARE_TAPS } from '../../../src/render/airPass.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const rd = (p) => readFileSync(new URL('../../../' + p, import.meta.url), 'utf8');
 
@@ -123,9 +124,9 @@ test('JAN1 (sky): the streaming host grounds a walker on the TERRAIN, not the lo
   const drop = (avg - s[0 * hDim + 64]) * worldHeight;
   assert.ok(drop > 8, `tile 0 - inside the navgrid, outside the rect - lies ${drop.toFixed(1)} units below the average a walker was stood at`);
   assert.equal(tileWeight(56), 7); assert.equal(tileWeight(63), 7, 'an unstamped marker tile is walkable, which is how a walker reaches the band');
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.equal(/groundY: \(\) => locOrigin\[1\],/.test(w), false, 'no constant groundY for the wandering pool');
-  assert.match(w, /const personGroundY = \(x, z\) => \{\s*\n\s*const t = state\.pixelTranslation\(px, py\);\s*\n\s*const h = heightAt\(x \+ locOrigin\[0\] \+ t\[0\], z \+ locOrigin\[2\] \+ t\[2\]\);\s*\n\s*return Number\.isFinite\(h\) \? h - t\[1\] \+ 2\.0 \* 0\.025 : locOrigin\[1\];/, 'the terrain floor, out of the pixel\'s vertical frame, with locOrigin\'s own lift; a pixel not built answers the old constant');
+  assert.match(w, /const personGroundY = \(x, z\) => \{\s*\n\s*const t = host\.state\.pixelTranslation\(px, py\);\s*\n\s*const h = heightAt\(x \+ locOrigin\[0\] \+ t\[0\], z \+ locOrigin\[2\] \+ t\[2\]\);\s*\n\s*return Number\.isFinite\(h\) \? h - t\[1\] \+ 2\.0 \* 0\.025 : locOrigin\[1\];/, 'the terrain floor, out of the pixel\'s vertical frame, with locOrigin\'s own lift; a pixel not built answers the old constant');
   // LW2 (2026-10-04): the closure is ONE for both of the host's pools - DFU's walkers and the living world's residents
   assert.equal((w.match(/groundY: personGroundY/g) ?? []).length, 2, 'both pools stand their bodies on it');
   assert.match(rd('src/scenes/exterior.js'), /groundY: \(x, z\) => collider\.heightAt\(x, z\)/, 'both hosts on one law: the collider\'s floor');

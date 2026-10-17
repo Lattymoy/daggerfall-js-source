@@ -199,7 +199,7 @@
   },
   {
     "name": "ED-world-near-held",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "    const dwNear = deepWaters ? deepWaters.promoteNear({ px, py, samples, tilemap, tilemapBytes }) : null;",
     "new": "    const dwNear = deepWaters && onTheBay(px, py) ? deepWaters.promoteNear({ px, py, samples, tilemap, tilemapBytes }) : null;",
     "tests": [

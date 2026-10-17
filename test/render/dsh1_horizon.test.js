@@ -27,8 +27,9 @@ import { readFileSync } from 'node:fs';
 import { cloudsStateUnderMod, modHorizon } from '../../src/render/dynamicSkiesBridge.js';
 import { COMPOSITE_FS, MARCH_FS, HORIZON_SKIRT } from '../../src/render/volumetricClouds.js';
 import { WEATHER_SKY, skyState } from '../../src/render/enhancedSky.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
-const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
+const read = (p) => hostText(p);
 const MOD_DUSK = [0.55, 0.12, 0.14];   // the shape of the colour this arc is about: red, and nothing like a lid
 const SHADE = [0.37, 0.41, 0.45];
 

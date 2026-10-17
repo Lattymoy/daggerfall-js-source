@@ -1,0 +1,893 @@
+[
+  {
+    "name": "EGZ-a-court-lays-no-chart",
+    "file": "src/net/eliteGates/egTally.js",
+    "old": "if (F && kind === 'court') F.tl = {};",
+    "new": "if (F && kind !== 'court') F.tl = {};",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-a-blow-off-the-breach",
+    "file": "src/net/eliteGates/egTally.js",
+    "old": "m.dt = (m.dt ?? 0) + got;",
+    "new": "m.dt = (m.dt ?? 0);",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-a-court-blow-uncounted",
+    "file": "src/net/eliteGates/egTally.js",
+    "old": "  r[T_D] += got;\n",
+    "new": "  r[T_D] += 0;\n",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-lords-part-every-blow",
+    "file": "src/net/eliteGates/egTally.js",
+    "old": "if (lord) r[T_L] += got;",
+    "new": "r[T_L] += got;",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-blows-uncounted",
+    "file": "src/net/eliteGates/egTally.js",
+    "old": "r[T_H] += 1;",
+    "new": "r[T_H] += 0;",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-heaviest-the-last",
+    "file": "src/net/eliteGates/egTally.js",
+    "old": "r[T_B] = Math.max(r[T_B], got);",
+    "new": "r[T_B] = got;",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-a-fall-uncounted",
+    "file": "src/net/eliteGates/egTally.js",
+    "old": "if (F?.tl) rowOf(F, sub)[T_F] += 1;",
+    "new": "if (F?.tl) rowOf(F, sub)[T_F] += 0;",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-a-forsaken-heard",
+    "file": "src/net/eliteGates/egTally.js",
+    "old": "if (!m || !m.in || m.forsaken || B.end || !Array.isArray(pairs)) return 0;",
+    "new": "if (!m || !m.in || B.end || !Array.isArray(pairs)) return 0;",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-bucket-deeper",
+    "file": "src/net/eliteGates/egTally.js",
+    "old": "depth = HEAL_DEPTH_X * ref;",
+    "new": "depth = (HEAL_DEPTH_X + 1) * ref;",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-refill-a-second",
+    "file": "src/net/eliteGates/egTally.js",
+    "old": "* (ref / HEAL_REFILL_S));",
+    "new": "* (ref / 1));",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-a-self-heal-credited",
+    "file": "src/net/eliteGates/egTally.js",
+    "old": "if (!q || !q.in || by === sub ||",
+    "new": "if (!q || !q.in ||",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-bucket-unspent",
+    "file": "src/net/eliteGates/egTally.js",
+    "old": "    m.hb -= got;\n",
+    "new": "    m.hb -= 0;\n",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-bucket-unbounded",
+    "file": "src/net/eliteGates/egTally.js",
+    "old": "const got = Math.max(0, Math.min(n, m.hb));",
+    "new": "const got = Math.max(0, n);",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-a-heal-uncredited",
+    "file": "src/net/eliteGates/egTally.js",
+    "old": "q.ht = (q.ht ?? 0) + got;",
+    "new": "q.ht = (q.ht ?? 0);",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-a-heal-off-the-chart",
+    "file": "src/net/eliteGates/egTally.js",
+    "old": "if (B.F?.tl) rowOf(B.F, by)[T_HL] += got;",
+    "new": "if (B.F?.tl) rowOf(B.F, by)[T_HL] += 0;",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-a-stander-off-the-chart",
+    "file": "src/net/eliteGates/egTally.js",
+    "old": "(F.tl[s] || (B.mem[s].in && B.mem[s].alive && !B.mem[s].home))",
+    "new": "F.tl[s]",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-chart-unsorted",
+    "file": "src/net/eliteGates/egTally.js",
+    "old": ".sort((a, b) => b[2] - a[2] || order.indexOf(a[0]) - order.indexOf(b[0]))",
+    "new": ".sort((a, b) => order.indexOf(a[0]) - order.indexOf(b[0]))",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-chart-healed-dropped",
+    "file": "src/net/eliteGates/egTally.js",
+    "old": "r[T_F] | 0, whole(r[T_HL])];",
+    "new": "r[T_F] | 0, 0];",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-tallies-healed-dropped",
+    "file": "src/net/eliteGates/egTally.js",
+    "old": "whole(B.mem[c.sub].dt), whole(B.mem[c.sub].ht)]",
+    "new": "whole(B.mem[c.sub].dt), 0]",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-tallies-dealt-dropped",
+    "file": "src/net/eliteGates/egTally.js",
+    "old": "[c.sub, whole(B.mem[c.sub].dt),",
+    "new": "[c.sub, 0,",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-brain-the-chart-never-laid",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  egTallyWake(B.F, spec.kind);   // EG-ZF: a Court lays its damage chart\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-brain-blows-untallied",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  egTallyBlow(mm, F, sub, got, r.b.role === EG_ROLE.lord);   // EG-ZF: the recap's damage, and a Court's chart\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-brain-the-lord-unknown",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "egTallyBlow(mm, F, sub, got, r.b.role === EG_ROLE.lord);",
+    "new": "egTallyBlow(mm, F, sub, got, r.b.role === EG_ROLE.add);",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-brain-falls-untallied",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  egTallyFall(B.F, sub);   // EG-ZF: on a Court's chart\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-brain-the-redoubt-says-no-chart",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "v: valk ? 1 : 0, cov: B.covenant ? 1 : 0, ...(dm.length ? { dm } : {}) }",
+    "new": "v: valk ? 1 : 0, cov: B.covenant ? 1 : 0 }",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-brain-the-end-says-no-chart",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "ds: egTalliesOf(B), ...(dm.length ? { dm } : {}) }, egStageWord(B, now));",
+    "new": "ds: egTalliesOf(B) }, egStageWord(B, now));",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-brain-every-end-a-chart",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "const dm = B.F && egLordsFell(B.F) ? egChartOf(B) : [];",
+    "new": "const dm = B.F ? egChartOf(B) : [];",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-brain-the-end-says-no-tallies",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "out.push({ k: 'end', why, at: now, ds: egTalliesOf(B),",
+    "new": "out.push({ k: 'end', why, at: now, ds: [],",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-brain-the-state-says-no-tallies",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "    ds: egTalliesOf(B),   // EG-ZF (section 27.6)",
+    "new": "    ds: [],   // EG-ZF (section 27.6)",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-brain-the-count-unmended",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (backed > 0) bodyHealed(B.mem[sub], backed / healRef(B.mem[sub].lv) / egCountWhole(B.mem[sub].vs), now, line, { enforce });",
+    "new": "void healRef;",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-wire-heal-unheard",
+    "file": "src/net/wire.js",
+    "old": "case 'heal': { const g = validGateIn({ k: 'heal', h: m.h }); return g ? { k: 'heal', h: g.h } : null; }",
+    "new": "case 'heal': return null;",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-wire-the-lords-part-past-the-whole",
+    "file": "src/net/wire.js",
+    "old": "egTallyN(t[3]) && t[3] <= t[2]",
+    "new": "egTallyN(t[3])",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-wire-the-heaviest-past-the-whole",
+    "file": "src/net/wire.js",
+    "old": "egTallyN(t[5]) && t[5] <= t[2]",
+    "new": "egTallyN(t[5])",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-wire-a-chart-unsorted-kept",
+    "file": "src/net/wire.js",
+    "old": "rows.every((r, i) => i === 0 || r[2] <= rows[i - 1][2]) && ",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-wire-a-member-twice-on-the-chart",
+    "file": "src/net/wire.js",
+    "old": "rows.every((r, i) => i === 0 || r[2] <= rows[i - 1][2]) && new Set(rows.map((r) => r[0])).size === rows.length ? rows : null;",
+    "new": "rows.every((r, i) => i === 0 || r[2] <= rows[i - 1][2]) ? rows : null;",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-wire-a-member-twice-in-the-tallies",
+    "file": "src/net/wire.js",
+    "old": "  return rows && new Set(rows.map((r) => r[0])).size === rows.length ? rows : null;\n};\n",
+    "new": "  return rows;\n};\n",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-wire-a-tally-below-nothing",
+    "file": "src/net/wire.js",
+    "old": "const egTallyN = (v) => intIn(v, 0, EG_TALLY_WIRE_MAX);",
+    "new": "const egTallyN = (v) => intIn(v, -1, EG_TALLY_WIRE_MAX);",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-wire-the-redoubt-refused-for-its-chart",
+    "file": "src/net/wire.js",
+    "old": "intIn(m.g ?? 0, -EG_COUNT_WIRE_MAX, EG_COUNT_WIRE_MAX)\n        ? { k: 'rd'",
+    "new": "intIn(m.g ?? 0, -EG_COUNT_WIRE_MAX, EG_COUNT_WIRE_MAX) && (m.dm === undefined || dm)\n        ? { k: 'rd'",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-wire-the-redoubt-drops-its-chart",
+    "file": "src/net/wire.js",
+    "old": "cov: m.cov === 1 ? 1 : 0, ...(dm?.length ? { dm } : {}) } : null;",
+    "new": "cov: m.cov === 1 ? 1 : 0 } : null;",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-wire-the-state-drops-its-tallies",
+    "file": "src/net/wire.js",
+    "old": "sp: m.sp ?? 0, as, ds,",
+    "new": "sp: m.sp ?? 0, as, ds: [],",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-wire-the-end-drops-its-chart",
+    "file": "src/net/wire.js",
+    "old": "at: m.at, ds, ...(dm?.length ? { dm } : {}) } : null;",
+    "new": "at: m.at, ds } : null;",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-wire-the-end-drops-its-tallies",
+    "file": "src/net/wire.js",
+    "old": "? { k: 'end', why: m.why, at: m.at, ds,",
+    "new": "? { k: 'end', why: m.why, at: m.at, ds: [],",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-relay-the-peer-id-unread",
+    "file": "server/src/index.js",
+    "old": "m.h.map(([id, n]) => [this._idFirst(id)?.[1]?.sub ?? '', n])",
+    "new": "m.h.map(([id, n]) => [id, n])",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-relay-the-heal-word-unheard",
+    "file": "server/src/index.js",
+    "old": "if (m.k === 'heal') { egHeal(B, a.sub,",
+    "new": "if (m.k === 'heal') { return; egHeal(B, a.sub,",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-link-the-state-drops-its-tallies",
+    "file": "src/net/eliteGates/egLink.js",
+    "old": "        ds: w.ds ?? [],   // EG-ZF",
+    "new": "        ds: [],   // EG-ZF",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-link-the-redoubt-drops-its-chart",
+    "file": "src/net/eliteGates/egLink.js",
+    "old": "chart: w.dm ? { at: w.at, h: w.h, dm: w.dm } : s.chart,",
+    "new": "chart: s.chart,",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-link-the-end-drops-its-chart",
+    "file": "src/net/eliteGates/egLink.js",
+    "old": "chart: w.dm ? { at: w.at, h: s.h, dm: w.dm } : s.chart,",
+    "new": "chart: s.chart,",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-link-the-end-drops-its-tallies",
+    "file": "src/net/eliteGates/egLink.js",
+    "old": "ds: w.ds?.length ? w.ds : s.ds,",
+    "new": "ds: s.ds,",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-recap-the-share-of-ones-own",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "share: ds.size ? chartShare(t?.[1] ?? 0, dealt) : null",
+    "new": "share: ds.size ? chartShare(t?.[1] ?? 0, t?.[1] ?? 0) : null",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-recap-the-healing-unsaid",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "healed: ds.size ? t?.[2] ?? 0 : null };",
+    "new": "healed: ds.size ? 0 : null };",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-recap-the-share-unsaid-in-the-line",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "+ (m.share != null && words.share ?",
+    "new": "+ (m.share == null && words.share ?",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-recap-healing-said-always",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "${m.healed > 0 && words.healed ?",
+    "new": "${words.healed ?",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-rank-eleven-an-st",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "t >= 11 && t <= 13 ? 'th'",
+    "new": "t >= 12 && t <= 13 ? 'th'",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-rank-the-suffixes-off-by-one",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "['th', 'st', 'nd', 'rd'][k % 10]",
+    "new": "['st', 'nd', 'rd', 'th'][k % 10]",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-board-a-bracket-unknown-said",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "if (board.k === 'descent' && EG_PRES_TEXT.boardBrackets[board.br]) return",
+    "new": "if (board.k === 'descent') return",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-board-the-depths-unsaid",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "if (board.k === 'depths') return EG_PRES_TEXT.boardDepths(egRankText(board.rank));",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-board-rank-nothing-said",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "if (!board || !Number.isSafeInteger(board.rank) || board.rank < 1) return '';",
+    "new": "if (!board || !Number.isSafeInteger(board.rank)) return '';",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-board-kept-on-every-run",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "  while (i >= 0 && list[i]?.b !== b) i--;\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-board-never-kept",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "  list[i] = { ...list[i], board: line };\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-chart-healed-column-always",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "...(healed ? { hl } : {})",
+    "new": "hl",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-chart-names-unread",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "({ n: nameOf(sub), l, d,",
+    "new": "({ n: sub, l, d,",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-recap-a-board-line-never-redraws",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "if (recap && (k.title !== recap.title || k.why !== recap.why || k.board !== (recap.board ?? ''))) return false;",
+    "new": "if (recap && (k.title !== recap.title || k.why !== recap.why)) return false;",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-first-the-device-over-the-account",
+    "file": "src/ui/eliteGates/egBeats.js",
+    "old": "(Number.isSafeInteger(account) && account >= 0 ? account : 0) | (device | 0) | (shown | 0));",
+    "new": "(device | 0) | (shown | 0));",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-first-the-shown-forgotten",
+    "file": "src/ui/eliteGates/egBeats.js",
+    "old": "account : 0) | (device | 0) | (shown | 0));",
+    "new": "account : 0) | (device | 0) | 0);",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-chart-the-twins-singular",
+    "file": "src/ui/eliteGates/egBeats.js",
+    "old": "${plural ? 'have' : 'has'}",
+    "new": "${'has'}",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-client-the-chart-never-drawn",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "      chartFrame(link.state());   // EG-ZF (section 27.6): the lord's fall's chart\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-client-the-chart-the-crystals",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "crystals: EG_PRES_TEXT.chartLord });",
+    "new": "});",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-client-the-chart-never-put-away",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "if (!model && Date.now() - chart.at >= DAMAGE_CHART_DELAY_MS + DAMAGE_CHART_MS) { chart = null; drawGateDamageChart(null); }",
+    "new": "void DAMAGE_CHART_MS;",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-client-the-chart-outlives-online",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "  function chartAway() { if (chart) { chart = null; drawGateDamageChart(null); } }",
+    "new": "  function chartAway() {}",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-client-a-new-fall-never-charted",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    if (C && C !== chartFor) {",
+    "new": "    if (C && !chartFor) {",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-client-the-heal-word-never-sent",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "        if (healOwed.size && Date.now() - healSentAt >= EG_HEAL_SEND_MS) healSend(Date.now());",
+    "new": "        void healSend;",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-client-the-heal-word-every-frame",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "if (healOwed.size && Date.now() - healSentAt >= EG_HEAL_SEND_MS) healSend",
+    "new": "if (healOwed.size) healSend",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-client-heal-fractions-sent",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "h.push([by, Math.min(Math.floor(n), GATE_HEAL_WIRE_MAX)]);",
+    "new": "h.push([by, Math.min(Math.ceil(n), GATE_HEAL_WIRE_MAX)]);",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-client-heal-the-rest-dropped",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "if (left > 0) healOwed.set(by, left); else healOwed.delete(by);",
+    "new": "healOwed.delete(by);",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-client-heals-owed-outside",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "if (!inSpire() || witness || !(n > 0) || typeof id !== 'string' || !id) return false;",
+    "new": "if (witness || !(n > 0) || typeof id !== 'string' || !id) return false;",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-client-the-board-line-unheard",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "        if (a?.ok && c.q === 'x' && a.data?.board) boardHeard(c.b, a.data.board);",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-client-the-board-line-off-the-recap",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    if (recap?.b === b && recap.board !== line) recap = { ...recap, board: line };\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-client-the-board-line-off-the-kept",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    egRecapBoardKeep(store, b, line);\n  }",
+    "new": "  }",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-client-the-account-unread",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "if (a?.ok && Number.isSafeInteger(a.data?.first) && a.data.first >= 0) { pres.acct = a.data.first;",
+    "new": "if (a?.ok && Number.isSafeInteger(a.data?.first) && a.data.first >= 0) { void pres.acct;",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-client-the-account-never-told",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    tellFirst();\n  }\n  async function tellFirst() {",
+    "new": "  }\n  async function tellFirst() {",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-client-the-device-unkept",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "egFirstWrite(store, firstDevice() | fresh, egFirstKey(me()));",
+    "new": "egFirstWrite(store, firstDevice(), egFirstKey(me()));",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-client-the-account-told-old-bits",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "const a = await account.first(firstBits());",
+    "new": "const a = await account.first(pres.acct ?? 0);",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-client-first-bits-the-devices",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "const firstBits = () => egFirstOver(firstDevice(), pres.acct, pres.shown);",
+    "new": "const firstBits = () => egFirstOver(firstDevice(), null, pres.shown);",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-svc-first-replaced",
+    "file": "server-account/src/eg.js",
+    "old": "UPDATE players SET eg_first = eg_first | ?2 WHERE id = ?1 RETURNING eg_first",
+    "new": "UPDATE players SET eg_first = ?2 WHERE id = ?1 RETURNING eg_first",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-svc-first-a-guests",
+    "file": "server-account/src/eg.js",
+    "old": "  if (!player.handle) return { error: 'guest' };\n  const bits = body?.bits;",
+    "new": "  const bits = body?.bits;",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-svc-first-unbounded",
+    "file": "server-account/src/eg.js",
+    "old": "if (!Number.isSafeInteger(bits) || bits < 0 || bits > EG_FIRST_BITS_MAX) return { error: 'bits' };",
+    "new": "if (!Number.isSafeInteger(bits) || bits < 0) return { error: 'bits' };",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-svc-first-unanswered",
+    "file": "server-account/src/eg.js",
+    "old": "...(await egRecordOf(db, player.id)), first: int(row?.eg_first) };",
+    "new": "...(await egRecordOf(db, player.id)), first: 0 };",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-svc-no-letter-at-the-keys",
+    "file": "server-account/src/eg.js",
+    "old": "  await egFirstPost(db, player, env, nowS);\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-svc-no-standing-on-the-claim",
+    "file": "server-account/src/eg.js",
+    "old": "...(await egReliquariesOf({ db, nowS }, player, c)), ...(await egStandingOf(db, player, c)), ...(await egEndSeedOf(db, player, c)) };",
+    "new": "...(await egReliquariesOf({ db, nowS }, player, c)), ...(await egEndSeedOf(db, player, c)) };",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-svc-a-rehearsal-standing",
+    "file": "server-account/src/egHonours.js",
+    "old": "if (c?.q !== 'x' || c.rh === 1 || !(int(c.h) >= 1)) return {};",
+    "new": "if (c?.q !== 'x' || !(int(c.h) >= 1)) return {};",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-svc-no-hall-standing",
+    "file": "server-account/src/egHonours.js",
+    "old": "if (c?.q !== 'x' || c.rh === 1 || !(int(c.h) >= 1)) return {};",
+    "new": "if (c?.q !== 'x' || c.rh === 1) return {};",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-svc-the-company-mis-keyed",
+    "file": "server-account/src/egHonours.js",
+    "old": "const mine = breachesOf(rows).get(c.b), key = mine ? companyKeyOf(mine) : '';",
+    "new": "const mine = breachesOf(rows).get(c.b), key = mine ? [...mine.players].join(',') : '';",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-svc-the-heaviest-unrounded",
+    "file": "src/net/eliteGates/egTally.js",
+    "old": "r[T_H] | 0, whole(r[T_B]), r[T_F] | 0",
+    "new": "r[T_H] | 0, r[T_B], r[T_F] | 0",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-svc-the-descent-rank-off-by-one",
+    "file": "server-account/src/egHonours.js",
+    "old": "if (i >= 0) return { board: { k: 'descent', br, rank: i + 1 } };",
+    "new": "if (i >= 0) return { board: { k: 'descent', br, rank: i } };",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-svc-the-bracket-wrong",
+    "file": "server-account/src/egHonours.js",
+    "old": "if (i >= 0) return { board: { k: 'descent', br, rank: i + 1 } };",
+    "new": "if (i >= 0) return { board: { k: 'descent', br: 'few', rank: i + 1 } };",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-svc-the-depths-rank-off-by-one",
+    "file": "server-account/src/egHonours.js",
+    "old": "return i >= 0 ? { board: { k: 'depths', rank: i + 1 } } : {};",
+    "new": "return i >= 0 ? { board: { k: 'depths', rank: i + 2 } } : {};",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-svc-the-letter-to-everyone",
+    "file": "server-account/src/egHonours.js",
+    "old": "  if (!isSpireFirst(player, env)) return false;\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-svc-the-letter-twice",
+    "file": "server-account/src/egHonours.js",
+    "old": "INSERT OR IGNORE INTO server_post (id, to_id, batch, sender, subject, body, item, sent_at)\n    VALUES (lower(hex(randomblob(12))), ?1, ?2,",
+    "new": "INSERT OR IGNORE INTO server_post (id, to_id, batch, sender, subject, body, item, sent_at)\n    VALUES (lower(hex(randomblob(12))), ?1, ?2 || lower(hex(randomblob(2))),",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-svc-the-letter-at-the-dbs-clock",
+    "file": "server-account/src/egHonours.js",
+    "old": "?5, NULL, ?6)`)",
+    "new": "?5, NULL, 0)`)",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ]
+  }
+]

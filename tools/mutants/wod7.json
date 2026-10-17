@@ -321,7 +321,7 @@
   },
   {
     "name": "WOD7-oid-index-unminted",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "const n = oidSeen.get(s.objectID) ?? 0; oidSeen.set(s.objectID, n + 1);",
     "new": "const n = 0;",
     "tests": [
@@ -330,7 +330,7 @@
   },
   {
     "name": "WOD7-fresh-promote-remembers",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "    if (!wodKept.life) wodForgetPeerSites(key);   // AUDIT WOD7: a fresh promote's markers are its own again\n",
     "new": "",
     "tests": [

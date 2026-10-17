@@ -25,11 +25,12 @@ import { onlineModSetting } from '../../src/systems/modSettings.js';
 import { snapshotPlayer, restorePlayer } from '../../src/systems/save/save.js';
 import { makeAnchor } from '../../src/systems/teleportAnchor.js';
 import { createSceneCache, cacheScene, restoreCachedScene, snapshotSceneCache, restoreSceneCache } from '../../src/systems/sceneCache.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const H = HEIGHTMAP_DIMENSION;
 const UNIT = MAX_TERRAIN_HEIGHT;   // a normalized sample in kernel units
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
-const WORLD = src('src/scenes/world.js');
+const WORLD = hostText('src/scenes/world.js');
 
 const WOODS_BYTES = syntheticWoodsBytes();
 const woods = new WoodsFile();

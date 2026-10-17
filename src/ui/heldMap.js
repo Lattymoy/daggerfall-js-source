@@ -105,6 +105,7 @@ import { checkLocationDiscovered, flipTravelMapFilter, travelMapDotColors } from
 import { readGateMark, gateMarkKey, GATE_RING_CSS, GATE_LEGEND_TEXT } from './gate/gateMapMark.js';   // WB1: the Oblivion Gate's ring, read as the party is (SERPENT1: and the serpent's, by the same reader)
 import { SERPENT_RING_MAP_CSS, SERPENT_LEGEND_TEXT } from './serpentMapMark.js';   // SERPENT1: the sea serpent's ring, in the sea's colours
 import { SD_RING_MAP_CSS, SD_LEGEND_TEXT } from './superDungeon/sdMapMark.js';   // SD2c: the Super dungeon's ring once it is found, in its omen's brass
+import { EG_ARCH_RING_CSS, EG_ARCH_LEGEND_TEXT } from './eliteGates/egArchMapMark.js';   // EG-F: my company's Elite arch, in its gold
 import { LODE_RING_CSS, LODE_LEGEND_TEXT, lodeLegendText } from './lodeMapMark.js';   // MINE-PERKS: a Motherlode Sense's day's Motherlodes, read by the bounty's reader
 import { POI_RING_CSS, POI_MARKS_MAX, poiLegendText } from './poi/poiMapMark.js';   // POI-2: the approved POIs' marks, read by the bounty's reader
 import { readBountyMarks, bountyMarksKey, BOUNTY_RING_CSS, BOUNTY_LEGEND_TEXT, BOUNTY_LEGEND_RIM_CSS, REVENANT_RING_CSS, REVENANT_LEGEND_TEXT } from './bounty/bountyMapMark.js';   // BOUNTY1: held bounties' black circles, read as the gate's ring is
@@ -678,6 +679,9 @@ export class HeldMapWindow {
     // SD2c: the Super dungeon's ring - the host's `sd`, read as the gate's is, once it is found (a find before that)
     this._sd = null;
     this._sdKey = '';
+    // EG-F: my company's Elite arch's ring - the host's `arch`, read as the gate's is, while the arch stands
+    this._arch = null;
+    this._archKey = '';
     // BOUNTY1: the held bounties' black circles - the host's `bounties`, read on the same poll
     this._bounties = [];
     this._bountiesKey = '';
@@ -1320,6 +1324,7 @@ export class HeldMapWindow {
           gate: this._gate,   // WB1
           serpent: this._serpent,   // SERPENT1
           sd: this._sd,   // SD2c
+          arch: this._arch,   // EG-F
           bounties: this._bounties,   // BOUNTY1
           revenants: this._revenants,   // RVN7c
           lodes: this._lodes,   // MINE-PERKS
@@ -2006,6 +2011,10 @@ export class HeldMapWindow {
     const sd = readGateMark(this.deps.sd, this._size);
     const sdKey = gateMarkKey(sd);
     if (sdKey !== this._sdKey) { this._sdKey = sdKey; this._sd = sd; gateMoved = true; this._dirty = true; }
+    // EG-F: and my company's Elite arch, on its own key
+    const arch = readGateMark(this.deps.arch, this._size);
+    const archKey = gateMarkKey(arch);
+    if (archKey !== this._archKey) { this._archKey = archKey; this._arch = arch; gateMoved = true; this._dirty = true; }
     // BOUNTY1: the circles ride the gate's poll and its repaint - a bounty taken or paid with the map open
     const bounties = readBountyMarks(this.deps.bounties, this._size);
     const bKey = bountyMarksKey(bounties);
@@ -2071,7 +2080,7 @@ export class HeldMapWindow {
     if (!leg) return;
     leg.innerHTML = '';
     const trav = this._trav.filter((t) => playerShown(t));   // OW-WHO: the legend speaks for the players the sheet draws
-    if (!this._party.length && !this._gate && !this._serpent && !this._sd && !this._bounties.length && !this._revenants.length && !this._raids.length && !trav.length && !this._quests.length && !this._pois.length && !this._vendor && !this._lodes.length) { leg.classList.toggle('open', false); leg.style.display = 'none'; return; }
+    if (!this._party.length && !this._gate && !this._serpent && !this._sd && !this._arch && !this._bounties.length && !this._revenants.length && !this._raids.length && !trav.length && !this._quests.length && !this._pois.length && !this._vendor && !this._lodes.length) { leg.classList.toggle('open', false); leg.style.display = 'none'; return; }
     if (this._party.length) {
       const dot = el('span', 'hmlegdot');
       dot.style.background = this._party.some((m) => m.online) ? PARTY_MARK_CSS : PARTY_OFFLINE_CSS;
@@ -2102,6 +2111,11 @@ export class HeldMapWindow {
       const dot = el('span', 'hmlegdot');
       dot.style.background = SD_RING_MAP_CSS;
       leg.append(dot, el('span', 'hmlegtext', SD_LEGEND_TEXT));
+    }
+    if (this._arch) {   // EG-F: and my company's Elite arch
+      const dot = el('span', 'hmlegdot');
+      dot.style.background = EG_ARCH_RING_CSS;
+      leg.append(dot, el('span', 'hmlegtext', EG_ARCH_LEGEND_TEXT));
     }
     if (this._bounties.length) {   // BOUNTY1: the black circle explains itself
       const dot = el('span', 'hmlegdot');
@@ -2444,7 +2458,7 @@ export class HeldMapWindow {
     const [mx, my] = toMap(this._view, sx, sy);
     // AUDIT SD III (T7): a ring answers all it is drawn over - at a far zoom the paper draws it larger than its reach
     const least = GATE_RING_MIN_PX / this._view.scale;
-    for (const g of [this._gate, this._serpent, this._sd]) if (g && Math.hypot(mx - g.cx, my - g.cy) <= Math.max(g.r, least)) return g;   // SERPENT1: the sea serpent's ring answers as the gate's does (SD2c: and the Super dungeon's)
+    for (const g of [this._gate, this._serpent, this._sd, this._arch]) if (g && Math.hypot(mx - g.cx, my - g.cy) <= Math.max(g.r, least)) return g;   // EG-F: and my company's arch   // SERPENT1: the sea serpent's ring answers as the gate's does (SD2c: and the Super dungeon's)
     return null;
   }
 
@@ -2455,7 +2469,7 @@ export class HeldMapWindow {
     let best = null, bestD = Infinity;
     if (m) { const [x, y] = toPaper(this._view, m.x, m.y); bestD = (x - sx) * (x - sx) + (y - sy) * (y - sy); }
     const scale = this._view.scale;
-    for (const g of [this._gate, this._serpent, this._sd]) {
+    for (const g of [this._gate, this._serpent, this._sd, this._arch]) {   // EG-F: and my company's arch
       if (!g) continue;
       const [x, y] = toPaper(this._view, g.cx, g.cy), d = (x - sx) * (x - sx) + (y - sy) * (y - sy);
       const r = Math.max(GATE_RING_MIN_PX, g.r * scale);

@@ -32,8 +32,9 @@ import { mobileBillboardSize } from '../../src/world/rmbFlats.js';
 import { MobilePerson } from '../../src/characters/mobile/mobilePerson.js';
 import { CityNavigation } from '../../src/world/city/cityNavigation.js';
 import { createTownScratch, createPersonTextureKeys } from '../../src/scenes/townScratch.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
-const src = (f) => readFileSync(new URL(`../../${f}`, import.meta.url), 'utf8');
+const src = (f) => hostText(f);
 const HOSTS = ['src/scenes/world.js', 'src/scenes/exterior.js'];
 
 test('PERF-TOWN1: a sprite does not change size while you watch it - the size is cached per texture', () => {

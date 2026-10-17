@@ -19,9 +19,10 @@ import { waterSwitchOn } from '../../src/render/waterSurface.js';
 import { FEATURES, checkFeature, featureForControl } from '../../src/systems/features.js';
 import { setPref, PREF_DEFAULTS } from '../../src/systems/uiPrefs.js';
 import { setUiSkin, uiSkin } from '../../src/systems/uiSkin.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const read = (p) => readFileSync(join(root, p), 'utf8');
+const read = (p) => hostText(p);
 
 test('FT6: the switch - the enhanced skin, the pref, and ?water=off as the kill door', () => {
   const skin = uiSkin(); const pref = PREF_DEFAULTS.enhancedWater;

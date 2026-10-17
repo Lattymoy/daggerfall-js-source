@@ -42,7 +42,7 @@ import { snapshotPlayer, restorePlayer } from '../../src/systems/save/save.js';
 import { registerPresenter, _resetNotifyForTests } from '../../src/systems/notify.js';
 import { MINUTES_PER_DAY, isFullMoonFromMinutes } from '../../src/systems/gameDate.js';
 
-const rd = (p) => readFileSync(new URL('../../' + p, import.meta.url), 'utf8');
+const rd = (p) => hostText(p);
 const NOW = 523530 + 40 * MINUTES_PER_DAY;   // the classic start plus forty days - a month past any curse minted at the start
 
 // ---- the rig: test/characters/enemy/watch1.test.js's crafted watch and encounter data --------------------------------------------
@@ -414,6 +414,7 @@ test('DISC10-D H1: every player strike site calls the one dispatcher AFTER its d
 
 import { zeroDamageHitSound } from '../../src/scenes/hostCombat.js';
 import { hitSoundFor, SOUND } from '../../src/systems/soundClips.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 test('DISC10-E: the beast\'s blow SOUNDS as the empty hand\'s - PlayHitSound(currentRightHandWeapon) and :611\'s strikingWeapon, never the claws marker; the interior pool\'s hit sound reads the hand, at the foe', () => {
   setWorldMinutes(NOW + 30);
@@ -426,7 +427,7 @@ test('DISC10-E: the beast\'s blow SOUNDS as the empty hand\'s - PlayHitSound(cur
   const z = zeroDamageHitSound({ weapon: beast.strikingWeapon, arrowHit: false, parrySounds: true, roll: 0.5 });
   assert.deepEqual(z, zeroDamageHitSound({ weapon: null, arrowHit: false, parrySounds: true, roll: 0.5 }), 'the zero-damage arm: the swing, as a bare hand has (strikingWeapon == null)');
   // every player-strike site reads the hand (source: the hosts cannot run in node)
-  const src = (f) => readFileSync(new URL(`../../${f}`, import.meta.url), 'utf8');
+  const src = (f) => hostText(f);
   for (const f of ['src/scenes/cityGuards.js', 'src/scenes/exteriorFoes.js', 'src/scenes/dungeonContext.js']) {
     assert.match(src(f), /weapon: playerWeapon\.strikingWeapon, arrowHit: false,/, `${f}: the zero-damage arm reads the hand`);
     assert.doesNotMatch(src(f), /weapon: playerWeapon\.weapon, arrowHit: false,/, `${f}: and not the screen`);

@@ -224,6 +224,15 @@ function bondMeter(el, meter, h) {
 /** STEED-UI: hours of food as a card says them. */
 const foodHours = (hours) => (hours >= 2 ? `${Math.floor(hours)} hours` : hours * 60 >= 2 ? `${Math.round(hours * 60)} minutes` : 'a minute');
 export const hungerLine = (h, care = null) => (h.hungerKey === 'fed' && h.fedHours > 0 ? `Fed - food in it for ${foodHours(h.fedHours)}.` : (care?.hungerCosts === false ? HUNGER_LINE_BOONS : HUNGER_LINE)[h.hungerKey] ?? '');
+/** STEED1: the choice to ride horse `h` (`chooseRiddenHorse` - made the pack's first). FIELD BUGS 2026-10-16b
+ *  HORSE-CARE-OFF: on every other horse's card in every tier - with its care, or (Off, any skin but the enhanced one)
+ *  in a row of its own. */
+function rideButton(el, h, act) {
+  const ride = el('button', 'act', 'Ride this one');
+  ride.title = 'The horse you ride, and the first in your wagon’s team';
+  ride.onclick = () => act('ride', h.i);
+  return ride;
+}
 /**
  * STEED1: a horse's care on its card - its bond and hunger in words, its breath (the one ridden), its four stats, and
  * the acts: oats and an apple from the pack, and the one ridden chosen. `h` a horse of the upkeep's model.
@@ -247,12 +256,7 @@ function steedLines(el, meter, h, care, act) {
   if (!care.apples || h.full || !care.near) treat.setAttribute('aria-disabled', 'true');
   treat.onclick = () => act('treat', h.i);
   row.append(feed, treat);
-  if (!h.ridden) {
-    const ride = el('button', 'act', 'Ride this one');
-    ride.title = 'The horse you ride, and the first in your wagon’s team';
-    ride.onclick = () => act('ride', h.i);
-    row.append(ride);
-  }
+  if (!h.ridden) row.append(rideButton(el, h, act));
   out.push(row);
   // UI-CALM: the care first - its words, its bond and breath and the presses that answer them - then the four stats, a
   // block of their own under a small head (they are read, never pressed)
@@ -475,9 +479,13 @@ export function drawStablePage(detail, rerender, { el, divider, meter = null } =
       if (_lookOpen === 'horse') for (const row of m.look.rows) extra.push(choiceRow(el, row.name, row, (i) => act(/** @type {any} */ (row.part), i)));
     }
     list.append(card(el, { art: HORSE_ART, glyph: '♞', name, words: words.horse, sub: v?.horseName ? 'Your horse' : null, extra, rerender }).item);
-    // STEED1: every other horse owned - its look, its care, and the choice to ride it
-    for (const h of care?.horseCare ? care.horses.filter((x) => !x.ridden) : []) {
-      list.append(card(el, { art: HORSE_ART, glyph: '♞', name: `${h.look[0].toUpperCase()}${h.look.slice(1)}`, words: { state: h.hunger, tone: hungerTone(h, care), line: null }, sub: 'Another horse of yours', extra: steedLines(el, meter, h, care, act), rerender }).item);
+    // STEED1: every other horse owned - its look, its care, and the choice to ride it. FIELD BUGS 2026-10-16b
+    // HORSE-CARE-OFF: on every tier - Off (and any skin but the enhanced one) its look and the choice, no care to show
+    for (const h of care ? care.horses.filter((x) => !x.ridden) : []) {
+      const cared = !!care.horseCare;
+      const extra = cared ? steedLines(el, meter, h, care, act) : [el('div', 'hld-acts')];
+      if (!cared) extra[0].append(rideButton(el, h, act));
+      list.append(card(el, { art: HORSE_ART, glyph: '♞', name: `${h.look[0].toUpperCase()}${h.look.slice(1)}`, words: cared ? { state: h.hunger, tone: hungerTone(h, care), line: null } : null, sub: 'Another horse of yours', extra, rerender }).item);
     }
   }
   if (words.wagon) {

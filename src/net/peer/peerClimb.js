@@ -22,6 +22,7 @@ import { CLIMB_MOVE_KINDS } from '../wire.js';
 import { PARKOUR_UP_GAP } from '../../player/parkour.js';
 import { FEEL } from '../../player/climb/climbFeel.js';
 import { enhancedSoundsOn } from '../../systems/enhancedSounds.js';
+import { peerHeard } from './peerFx.js';   // EG-ZH: a peer's climb through the place's scope (Elite-Gates.md section 26)
 
 /** The wire's climb states (`cl`). */
 export const PEER_CLIMB = Object.freeze({ HANG: 1, FACE: 2, MOVE: 3 });
@@ -126,7 +127,7 @@ export class PeerClimbSounds {
     const c = climbClip(sound, this.last.get(sound), this.rand, pitch);
     if (!c) return;
     this.last.set(sound, c.key);
-    this.audio.play3d(c.key, at, Math.min(1, vol), { ...(this.profile ?? {}), pitch: c.pitch });
+    peerHeard(() => this.audio.play3d(c.key, at, Math.min(1, vol), { ...(this.profile ?? {}), pitch: c.pitch }));   // EG-ZH: as the place hears it
   }
 }
 

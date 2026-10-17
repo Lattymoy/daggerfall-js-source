@@ -18,7 +18,8 @@ import { bodyKey, parseNodeKey, utcDayOfMs } from '../../src/net/nodeLaw.js';
 import { xpForRank, SKINNING_KNIFE, TRACE_ACT, KNIFE_REFUSALS, TRACKER_M } from '../../src/net/professionLaw.js';
 import { TOOL_LIFE, recipeById } from '../../src/net/recipeLaw.js';
 import { createBodyStamps, bodiesOf, trackerMarks, huntPlan, huntKind, KNIFE_HAND, BODY_REACH, bodyId } from '../../src/scenes/huntHost.js';
-import { createGatherHost, aimAt, storesWhereLine } from '../../src/scenes/gatherHost.js';
+import { createGatherHost, aimAt, storesWhereLine, ACT_OWNS_LOOK } from '../../src/scenes/gatherHost.js';
+import { resolveHover } from '../../src/systems/worldHover.js';   // SKIN-PLAQUE: the plaque's own resolve
 import { registerPlayerKillListener, reportPlayerKill } from '../../src/systems/playerKills.js';
 import { setForagingHost } from '../../src/systems/foraging/foragingInstall.js';
 import { mintPiece, mintPieces, garmentItem, isCraftedFurniture, LOOM_KEPT_TEXT } from '../../src/systems/smithItems.js';
@@ -33,6 +34,7 @@ import { TEMPLATE as CC } from '../../src/systems/survival/food.js';
 import { MOBILE_TYPES } from '../../src/characters/mobile/mobileTypes.js';
 import { sharedClassicMinutes } from '../../src/net/wire.js';
 import { utcDay } from '../../src/net/marksLaw.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const noWait = () => Promise.resolve();
@@ -287,6 +289,12 @@ test('PROF7 host: a body is a node only while the pack holds a knife; targeted w
     bear.corpseMarker.pos = [0, 0, 2.3];
     h.host.tick(0.016);
     assert.equal(h.host.acting(), true);
+    // SKIN-PLAQUE (FIELD BUGS 2026-10-16c, "Quick loot is not suppressed when skinning"): the act owns the look - the
+    // hosts' pick (`hoverHit(ray) ?? ray`) keeps a hit that names nothing, so the body under the knife and its loot rows
+    // (the race's winner) are no plaque's while it plays
+    const behind = { key: `corpse:${h.stamps.of(bear.entity).key}`, distance: 1, reach: 3 };
+    assert.equal(h.host.hoverHit(behind) ?? behind, ACT_OWNS_LOOK);
+    assert.equal(resolveHover(h.host.hoverHit(behind) ?? behind, { name: () => ({ title: 'Grizzly Bear (dead)' }), contents: () => [{ name: 'Raw Meat' }] }), null, 'mid-skin: no plaque, no rows, no tooltip');
     h.trace(bear);
     await answered(book);
     assert.equal(asked.length, 1);
@@ -303,6 +311,7 @@ test('PROF7 host: a body is a node only while the pack holds a knife; targeted w
     h.foes.splice(h.foes.indexOf(rat), 1);
     h.host.tick(0.016);
     assert.deepEqual([h.host.acting(), asked.length], [false, 1]);
+    assert.notEqual(h.host.hoverHit(behind), ACT_OWNS_LOOK, 'SKIN-PLAQUE: the act over, the look is the plaque\'s again');
   } finally { h.done(); setForagingHost(null); }
 });
 
@@ -512,7 +521,7 @@ const GARMENT_WORDS = (buttons) => {
 // ─── THE WIRING ──────────────────────────────────────────────────────
 
 test('PROF7 wiring: the street and the dungeon stamp and list their bodies for Hunting\'s kind, the knife drawn while E is held; the loom a Clothing Store\'s or a home\'s station, its crafts and works at it, the Weavers\' counter by name, the stitch\'s band off AGI and SPD, the player\'s own clothing first; a Butcher\'s meat withdrawn slow to rot; a Tracker\'s animals on the compass; the service\'s routes, statuses, refusals and deploy', () => {
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /registerPlayerKillListener\('hunting', \(entity\) => \{ bodyStamps\.stamp\(entity\); \}\);/);
   // PIN MOVED (FIELD BUGS 2026-10-07 INDOOR-SKIN): the pool by the mode, a building's too - huntHost.js bodiesHere
   // (test/systems/quest/fb1007_indoorskin.test.js drives it over the real pools)

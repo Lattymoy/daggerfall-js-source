@@ -198,7 +198,7 @@ test('SD20a A FROZEN PAGE IS ABSENT (F3): a fighter\'s pose in the Hour is stamp
   });
   // PIN MOVED (INT12): the census as the relay's count has it (net/bossBody.js bodyCensus) - read at the beat's own instant still
   assert.match(RELAY, /bodies = this\._sdFightBodies\(f, now\), census = \(\) => bodyCensus\(f, bodies, now, line\.body, line\.enforce, \{ lives: false \}\);/);   // PIN MOVED (AUDIT INT11): the bodies read once a beat, at its own instant still
-  assert.match(RELAY, /this\._sdFightFan\(stepRemnant\(f, now, this\._bodiesBare\(census\(\)\), rand01\)\);/);
+  assert.match(RELAY, /this\._sdFightFan\(SD_SEAM\.step\(f, now, this\._bodiesBare\(census\(\)\), rand01\)\);/);   // PIN MOVED (EG-H3, EG3): through THE BOSS SEAM (net/bossSeam.js - the brain's own law, its frames byte for byte: test/net/eliteGates/egseam_law.test.js)
 });
 
 // ── F4: a blow strikes a fighter ───────────────────────────────────────

@@ -26,6 +26,7 @@ import { MOBILE_TYPES as M } from '../../../src/characters/mobile/mobileTypes.js
 import { BUILDING_TYPES as B } from '../../../src/world/buildingNames.js';
 import { PERSON_MOVE_SPEED, PERSON_TEXTURES } from '../../../src/characters/mobile/mobilePerson.js';
 import { CLASSIC_MINUTES_PER_SECOND } from '../../../src/systems/worldTick.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const rd = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const ARENA2 = process.env.ARENA2_PATH;
@@ -358,7 +359,7 @@ test('LW-LOOKS indoors: one whose calling is a class\'s in it; the palace\'s cou
 });
 
 test('LW-LOOKS the host: a still picture\'s art loaded into the people\'s own table as a class\'s is, and its record\'s frames; the town handed it (mutants: the flats unhanded)', () => {
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /const livingFlatOf = \(flat\) => \{/);
   assert.match(w, /return \{ archive: flat\.archive, record: flat\.record, frameCount: Math\.max\(1, tex\.getFrameCount\(flat\.record\)\) \};/);
   assert.match(w, /armOf: livingArmOf, flatOf: livingFlatOf,/);

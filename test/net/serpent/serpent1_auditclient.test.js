@@ -26,6 +26,7 @@ import { SPOILS_SPENT_MAX } from '../../../src/scenes/spoilsPool.js';
 import { SERPENT_SPOILS_TEXT } from '../../../src/systems/serpent/serpentSpoils.js';
 import { profileSerpentLine, profileView } from '../../../src/ui/profileWindow.js';
 import { serpentBarModel } from '../../../src/ui/serpentBar.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const src = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const DAY = 363, DAY2 = 365;
@@ -282,7 +283,7 @@ test('AUDIT SERPENT D4/B8/B10/B11 and the words: the inspect card and the accoun
 });
 
 test('AUDIT SERPENT M4/S1/L4/D2/D6/D5 and L2/B6/T4: the world\'s wiring and the naval host\'s, by source - no `in` with the sea fight off; no refusal to the host (AUDIT SERPENT 2 F3); the kill said for my own site alone; the omen reset offline; the hoard at the fight\'s level, its grant\'s promise the carrier\'s; a ball in its hide a hit in the tally; the brace halving its blows; the guns leading it (mutants: each line reverted)', () => {
-  const w = src('src/scenes/world.js'), n = src('src/scenes/naval/navalHost.js');
+  const w = hostText('src/scenes/world.js'), n = src('src/scenes/naval/navalHost.js');
   assert.match(w, /ready: \(cell\) => navalOn\(\) && !!online\?\.serpentReady\?\.\(cell\)/);
   assert.doesNotMatch(w, /serpentHost\?\.refused/);
   assert.match(w, /onFell: \(day, f, at\) => \{ const site = serpentOmen\?\.current\?\.\(\)\?\.site; if \(!site \|\| site\.day !== day \|\| !sameSerpentSite\(site, at\)\) return;/);

@@ -10,6 +10,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createOnlineHomes } from '../../../src/systems/online/onlineHomes.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const src = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 
@@ -52,7 +53,7 @@ test('BOOT-OVERLAP a town the boot asked early is the build\'s - a build that wa
 });
 
 test('BOOT-OVERLAP the boot, by source: the realm\'s lines and roster asked at once at the join and waited for where Project Legacy\'s host is made; the homes\' door and its layouts ask above the data\'s read, once `online` is settled; the towns the boot builds asked at once as the realm save\'s character, after the start is known (mutants: the lines unawaited, the roster awaited at the join, the layouts asked at the first build, the towns unasked, the save\'s town unread, the character unnamed)', () => {
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /const legacyRealmRead = legacyRealmLine \? Promise\.all\(\[\n\s+legacyRealmLine\.pull\(\)\.catch\([^\n]*\n\s+realmList\(realmIoNow\(\)\)\.catch\(\(\) => null\)\.then\(\(listed\) => \{ if \(listed\?\.ok\) legacyRealmRoster = /);
   assert.doesNotMatch(w, /await legacyRealmLine\.pull\(\)|await realmList\(realmIoNow\(\)\)/, 'nothing of it waited at the join');
   assert.match(w, /if \(legacyRealmRead\) \{\n\s+if \(!legacyRealmHeard\) status\('Reading the family'\);\n\s+await legacyRealmRead;\n\s+\}\n\s+legacyHost = createLegacyHost\(\{/);

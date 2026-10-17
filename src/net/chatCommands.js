@@ -32,7 +32,7 @@ import { parseRollSpec, ROLL_DICE_MAX, ROLL_SIDES_MAX } from './dice.js';   // D
 import { LIVE_EVENTS, CHAT_LANGS } from './wire.js';   // EVENT1: the live events a dev may stage; CHAT-LANG: the language channels
 import { HUB_FIND_MAX } from './hubShards.js';   // SCALE5c: a search's bound
 import { rpText } from './chat.js';   // CHAT-RP: the roleplay mark
-import { t } from '../systems/textManager.js';   // CHAT-TRADE: the new rows' words in the player's language, each read when /help is asked
+import { t } from '../systems/textManager.js';   // CHAT-TRADE: the new rows' words in the player's language, each read when /help is asked; AUDIT EG V (c, L7-21): and /help's line for /breach
 
 /** The channel commands: each names the tab its text is said on. `wrap` is what the text becomes first. */
 export const CHANNEL_COMMANDS = Object.freeze([
@@ -162,7 +162,7 @@ export const SHORTCODES = Object.freeze(Object.fromEntries(SHORTCODE_LIST));
 /** EMOTE1: every `:code:` the table knows, its emoji - the rest as typed. */
 export const expandShortcodes = (text) => String(text ?? '').replace(/:([a-z0-9_+-]{1,20}):/gi, (all, code) => SHORTCODES[code.toLowerCase()] ?? all);
 /** The commands the host handles itself, before this parser is asked (their own slices pin their grammar). */
-export const HOST_COMMANDS = Object.freeze(['unstuck', 'red', 'dm', 'mute', 'unmute', 'ready', 'leader', 'travel', 'event', 'note', 'mentor', 'mail', 'mailbox']);   // SERVER-POST: /mail (and /mailbox), the mailbox   // SOFTCAP1: /mentor   // TITLE-N: /dm, the Dungeon Master's line   // PARTY-TRAVEL: /leader and /travel   // EVENT1: /event, a dev's live event
+export const HOST_COMMANDS = Object.freeze(['unstuck', 'red', 'dm', 'mute', 'unmute', 'ready', 'leader', 'travel', 'event', 'note', 'mentor', 'mail', 'mailbox', 'breach']);   // AUDIT EG V (c, L7-1): /breach, the Elite Breach's (breachCommandOf)   // SERVER-POST: /mail (and /mailbox), the mailbox   // SOFTCAP1: /mentor   // TITLE-N: /dm, the Dungeon Master's line   // PARTY-TRAVEL: /leader and /travel   // EVENT1: /event, a dev's live event
 /**
  * EVENT1: `/event <name> [on|off]` and `/event off` - a dev staging a live event for everyone online, or ending it.
  * `{kind}` (one of LIVE_EVENTS; '' ends the one staged), `{error}` in words for a line that names none, or null when
@@ -211,6 +211,22 @@ export const HELP_LINES = lazyLines([
   '/search <name> - every tab\'s lines from or about a player, and who here is online by that name (/search alone clears)',   // CHAT-FIND
   '//text - a line that starts with a slash',
 ]);
+
+/** AUDIT EG V (c, L7-21): /help's own line for the Elite Breach's words (the host answers `/breach` before this parser is
+ *  asked - breachCommandOf), in the player's language; and /help's lines whole. */
+export const breachHelpLine = () => t('chat.help.breach', '/breach - the Elite Breach: answer your company\'s call or open the start window; /breach help lists its words');
+export const helpLines = () => [...HELP_LINES.slice(0, -1), breachHelpLine(), HELP_LINES[HELP_LINES.length - 1]];
+/**
+ * AUDIT EG V (c, L7-1): THE ELITE BREACH'S DOOR IN THE CHAT - what `/breach` was given: its words after it, whole (`pick 2`,
+ * `vote yes`, `buy tonic`, `ping danger`, `annals 3`, `surplus reroll`, `bequest 1`), '' for `/breach` alone, null for any
+ * other line. The host (scenes/world.js onSend) hands them to the breach client (scenes/eliteGates/egClient.js command) and sends
+ * nothing; a one-word door read every two-word command as no command at all. Pure.
+ * @param {string} text
+ */
+export function breachCommandOf(text) {
+  const m = /^\/breach(?:\s+([\s\S]*))?$/i.exec(String(text ?? '').trim());
+  return m ? (m[1] ?? '').trim() : null;
+}
 
 /**
  * What a typed line IS:

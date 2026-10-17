@@ -301,7 +301,7 @@
   },
   {
     "name": "PLACE-LRU-world-publish-never-settles",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "    const entry = built.get(key); pipeline.settle();",
     "new": "    const entry = built.get(key);",
     "tests": [
@@ -311,7 +311,7 @@
   },
   {
     "name": "PLACE-LRU-world-the-entry-carries-no-hold",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "      placeHold: pipeline,\n      location: dfLocation",
     "new": "      location: dfLocation",
     "tests": [
@@ -331,7 +331,7 @@
   },
   {
     "name": "PLACE-LRU-world-the-build-asks-through-the-host",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "const key = `${px},${py}`, pipeline = holdPixel(key), { getGpuMesh, uploadRecord, uploadRecordFrame } = pipeline;",
     "new": "const key = `${px},${py}`;",
     "tests": [

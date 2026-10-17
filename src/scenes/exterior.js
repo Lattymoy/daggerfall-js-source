@@ -1223,7 +1223,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   //     re-running the pass idempotently when its bridge lands - and it
   //     can only do that because it keeps the NPC flats OUT of the
   //     pixel's billboard batches on purpose (`if (npcFlatSet.has(flat))
-  //     continue;`, world.js:"exactly the same reason") and stands them in batches of their
+  //     continue;`, pixelBuild.js:"exactly the same reason") and stands them in batches of their
   //     own over the ACTIVE set. The away arm's entire observable half
   //     is `SetActive(false)` - the home copy of an individual a live
   //     quest has placed elsewhere leaving the draw AND the activation
@@ -3209,7 +3209,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     bodyImg.load(await fetchBytes('BODY00I0.IMG'), 'BODY00I0.IMG', palette);
     rig = createEngineRig(renderer, deriveClassicRamps(palette, bodyImg.getDFBitmap()));
     rig.setGait(1);
-    window.__rig = rig;
+    if (shotMode) window.__rig = rig;   // AUDIT ANTICHEAT A2: a probe's handle, behind the shot gate
   };
   if (params.has('rig') || tpMode) await buildRig();
   player.spawn(loc.width * RMB_SIDE * 0.46, GROUND_OFFSET * 0.025 + 2, loc.height * RMB_SIDE * 0.5);

@@ -168,7 +168,7 @@ Appendix A names their homes.
 | The save | `systems/save/save.js`: `snap.factionRep`, `snap.guildMemberships` | The only home of both today - nothing in `src/net/`, `server/src/` or `server-account/src/` reads either (at `9ed5a681`; AUDIT CHAP2 R14: since CHAP1 the Roll is a second home online - `net/npcRollTracker.js` reads both) |
 | The realm | `server-account/src/realm.js` | Holds an online character's save, opaque: it checks the first save's level and wealth (`REALM_BIRTH_WEALTH_MAX`) and nothing after. Realm-Arc phase 3 (validation) is unbuilt |
 | Renown | `net/renown.js`, `server-account/src/renownTracks.js`, `systems/renownLayer.js` | The service-held track and the online layer - the pattern for the Roll |
-| Marks | `net/marksLaw.js`: `MARKS_FAUCETS`, `MARKS_KINDS`, `MARKS_COMBAT` (150 a UTC day across gate, raid and serpent), the guild `deed` | The pay of a hall writ; witnessed faucets, capped |
+| Marks | `net/marksLaw.js`: `MARKS_FAUCETS`, `MARKS_KINDS`, `MARKS_COMBAT` (150 a UTC day across gate, raid, serpent and - EG-E1 - the Elite Breach's Redoubts), the guild `deed` | The pay of a hall writ; witnessed faucets, capped |
 | Court writs | `net/professionLaw.js` `courtWritCount`, `COURT_WRITS_PER_DAY` (3); PROF0 section 11 | An NPC poster, a service-witnessed delivery, a daily cap - the shape of a hall writ |
 | The Notice Board | `net/boardLaw.js` | One board a town; where hall writs are posted |
 | The Turning and the Season | `server-account/src/seatTurning.js` `settleWeek`; `net/townSeatLaw.js` `seasonOf`; `net/tideLaw.js` | The week a chapter settles in, the Season its story runs on, and the pure-roll pattern for its events |
@@ -229,6 +229,10 @@ the day's room does not take is OWED (`npc_roll.owed`) and paid at the same pace
 claim, never past 100 - and a loss is taken from what is owed first. The day counts its NET rise, so a loss gives its
 room back (a crime and its penance on one day). A lie is paid no faster than an honest claim, and an honest reward
 arrives whole. The ceiling's line says so: "... rises no further today. The rest will follow in the days to come."
+OWED-PACE (2026-10-16, `01-Overview/bugs/Field-Bugs-2026-10-16c.md`): the hall's row read "Reputation -35 of 10 (21 more
+to come)", and a player read the owed as what they still NEEDED - and saw it grow as the same day's quests went to it. It
+says now that the owed is earned and its pace: "(21 more already earned - it arrives at most 15 a real day)". And REP6's
+review never expels over what is owed (`06-Systems/Standing-Arc.md` REP6).
 RECORDED (D5): the pace falls on the twenty-two alone, so a temple's templar order (a child faction, the save's) can
 stand above its divine on the Roll until the owed is paid; no DFU law reads the two together for a decision.
 

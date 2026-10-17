@@ -153,7 +153,7 @@ test('EV5: the wiring - three lit shaders, the latched flat tint, the studio, th
   // next frame of any arm starts dark again (WB6b: a strike in the Deadlands' sky swings it for a moment - the same call)
   // SD5a: and the Shattered Hour's key (its clock-face's light) the same way - in the Hour alone, straight after the court's
   // line, so the next frame of any arm starts dark again (PIN MOVED)
-  assert.equal((wm.match(/renderer\.setMoonlight\(/g) || []).length, 4, 'both modal arms clear the moon, and the court and the Hour set their keys');
+  assert.equal((wm.match(/renderer\.setMoonlight\(/g) || []).length, 5, 'both modal arms clear the moon, and the court, the Hour and an Elite Breach\'s circle set their keys');   // EG-PLAY (PIN MOVED): the Spire's key
   assert.equal((wm.match(/renderer\.setMoonlight\(null\);/g) || []).length, 2, 'the clears to null');
   assert.match(wm, /      renderer\.setMoonlight\(null\);\n      renderer\.setIndirectLight\(NO_INDIRECT_POS, 0, NO_INDIRECT_COLOR\);\n      if \(isGateArena\(dungeonLoc\)\) \{ const _cl = courtLighting\(deadlandsFlash\(_deadS\)\);[^\n]*renderer\.setMoonlight\(_cl\.key\); \}/,
     'the court\'s key, in the court alone, straight after the dungeon arm\'s own clear');

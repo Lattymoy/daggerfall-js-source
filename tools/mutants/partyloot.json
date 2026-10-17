@@ -65,11 +65,12 @@
   {
     "name": "PARTY-LOOT-joiner-shows-its-own-roll-unborn",
     "file": "src/scenes/dungeonContext.js",
-    "old": "      if ((kind === 'loot' || kind === 'corpse') && roomUnborn(key)) return null;   // PARTY-LOOT: a room container with no terms yet names nothing - its list is the room's, not this copy's\n",
+    "old": "      if ((kind === 'loot' || kind === 'corpse') && (roomUnborn(key) || _lootUnreadable.has(roomLootKey(key)))) return null;   // PARTY-LOOT: a room container with no terms yet names nothing - its list is the room's, not this copy's; AUDIT GRAVE-PARTY G2: nor one whose word this build cannot read\n",
     "new": "",
     "tests": [
       "test/systems/partyloot.test.js"
-    ]
+    ],
+    "note": "AUDIT GRAVE-PARTY G2: the line also refuses a container whose word this build cannot read - re-aimed by content; deleting it still names an unborn container's list."
   },
   {
     "name": "PARTY-LOOT-joiner-keeps-its-own-roll-on-the-body",

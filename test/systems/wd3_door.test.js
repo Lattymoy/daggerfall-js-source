@@ -29,6 +29,7 @@ import { WORLD_DATA_PRIORITY } from '../../src/scenes/modWorldData.js';
 import { layoutRmbBlock, WINDMILL_MODEL_ID } from '../../src/world/rmbLayout.js';
 import { rrMasterArmBuildingKey, rrMasterArmBuildingKeyIn, RR_ARMORER_BLOCK, RR_ARMORER_RECORD } from '../../src/systems/roleplayRealism/rrQuestLine.js';
 import { tinyRmb, fakeBlocks } from '../wd3Fakes.mjs';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const BV = 'beautiful-villages', BC = 'beautiful-cities';
@@ -316,7 +317,7 @@ test('WD3 a guild hall entry naming a guild this game carries none of (AUDIT WD3
 });
 
 test('WD3 a town\'s buildings wear its LOCATION\'s climate, the terrain its pixel\'s (AUDIT WD3 G5) - DaggerfallLocation\'s ClimateUse.UseLocation; one and the same for every classic town, a world-data file\'s own for the towns it names another for', () => {
-  const W = src('src/scenes/world.js');
+  const W = hostText('src/scenes/world.js');
   assert.match(W, /const townClimateBase = dfLocation\?\.climate\?\.climateType \?\? climateBase;/);
   // PIN MOVED (GOTHWAY-BOARDS): the fourth is Gothway Garden's own bounty boards at its north entrance (`gpuB`), the
   // blocks' board model stood by the town and dressed in the town's climate as the block's own boards are

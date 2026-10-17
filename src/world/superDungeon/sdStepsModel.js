@@ -32,7 +32,7 @@ import { realmIsland, packRealmFaces, SD_REALM_FLOOR_RECORD, SD_ISLAND_SIDES } f
 import { SD_HALL_GLOW_RECORD, SD_HALL_ATLAS_RECORD, SD_HALL_ATLAS, atlasUv } from './sdHallArt.js';
 import { SD_STEPS_RECORD, SD_STEPS_ATLAS, SD_RISER_ATLAS, SD_PARTS_ATLAS, SD_STEP_BEVEL, SD_STEP_LINE, SD_CRUMBLE_CRACKS } from './sdStepsArt.js';
 import { BAYER4 } from './sdPixelKit.js';
-import { SD_STEP_THICK, SD_DRIFT_SIZE, SD_BEAT_SIZE, SD_CRUMBLE_SIZE, SD_RISER_H, SD_CHECKPOINTS, SD_COURSE_END, SD_GUST_EVERY, SD_GUST_WARN, SD_GUST_FOR, gustAt } from './sdSteps.js';
+import { SD_STEP_THICK, SD_DRIFT_SIZE, SD_BEAT_SIZE, SD_CRUMBLE_SIZE, SD_RISER_H, SD_COURSE, SD_GUST_EVERY, SD_GUST_WARN, SD_GUST_FOR, gustAt } from './sdSteps.js';
 import { SD_ENDINGS } from '../../net/superDungeon/sdMarks.js';
 
 /** The kinds of step, in the order their meshes are made. */
@@ -271,8 +271,10 @@ export function buildGritModel(seed = 0x5d95) {
   return packRealmFaces(f);
 }
 
-/** THE WAYSTONES: one on each checkpoint (A the first step, B, C), beside the landing - the realm's frame, its foot. */
-export const SD_WAYSTONES = Object.freeze(SD_CHECKPOINTS.map((c) => Object.freeze([c.x - 1.9, c.y, c.z + 0.4])));
+/** THE WAYSTONES: one on each checkpoint of `course` (the Hour's: A the first step, B, C), beside the landing - the realm's
+ *  frame, its foot. EG-H3 (EG4): a course's own. */
+export const sdWaystonesOf = (course) => Object.freeze(course.checkpoints.map((c) => Object.freeze([c.x - 1.9, c.y, c.z + 0.4])));
+export const SD_WAYSTONES = sdWaystonesOf(SD_COURSE);
 /** A WAYSTONE, its own frame (its foot the origin): an Ending-stone in miniature - a plinth, a tapering shaft with the
  *  Hour's rune on every face (lit gold, or dark: the draw's remap), a brass cap. */
 export const SD_WAYSTONE = Object.freeze({ base: 0.5, baseH: 0.12, shaft: 0.3, top: 0.24, h: 0.85, cap: 0.18 });
@@ -291,8 +293,9 @@ export function buildWaystoneModel() {
 }
 
 /** THE VANE on C (the realm's frame, its post's foot), its height, how long it takes to swing to the push's way and to
- *  swing back, and its arrow (m). */
-export const SD_VANE = Object.freeze({ at: Object.freeze([SD_CHECKPOINTS[2].x + 1.6, SD_CHECKPOINTS[2].y, SD_CHECKPOINTS[2].z + 1.4]), h: 2.4, swing: 0.25, back: 0.8, arm: 1.0, fin: 0.7, head: 0.55, post: 0.09 });
+ *  swing back, and its arrow (m). EG-H3 (EG4): its foot on a course's third checkpoint (`sdVaneAt`). */
+export const sdVaneAt = (course) => { const C = course.checkpoints[2]; return Object.freeze([C.x + 1.6, C.y, C.z + 1.4]); };
+export const SD_VANE = Object.freeze({ at: sdVaneAt(SD_COURSE), h: 2.4, swing: 0.25, back: 0.8, arm: 1.0, fin: 0.7, head: 0.55, post: 0.09 });
 const _vaneGust = { push: 0, warn: false };
 /**
  * THE VANE'S YAW at the realm's second `io[0]`, written to `io[1]` (0 down the course, +z; a quarter turn +x -
@@ -328,16 +331,17 @@ export function buildVaneModel(ending = null) {
   return packRealmFaces(f);
 }
 
-/** THE CHECKPOINTS B and C, one mesh in the dungeon's frame: islands at their heights. */
-export function buildChecksModel() {
+/** THE CHECKPOINTS B and C, one mesh in the dungeon's frame: islands at their heights (EG-H3: of `course`, the Hour's by
+ *  default - every checkpoint past its first). */
+export function buildChecksModel(course = SD_COURSE) {
   const f = faces();
-  for (const [k, c] of SD_CHECKPOINTS.entries()) if (k > 0) realmIsland(f, c.x, c.z, c.r, SD_REALM_FLOOR_RECORD, { y: c.y });
+  for (const [k, c] of course.checkpoints.entries()) if (k > 0) realmIsland(f, c.x, c.z, c.r, SD_REALM_FLOOR_RECORD, { y: c.y });
   return packRealmFaces(f);
 }
-/** Their floors, for the collider (the dungeon's frame): a disc each, at its height. */
-export function checkFloorTris() {
+/** Their floors, for the collider (the dungeon's frame): a disc each, at its height (EG-H3: of `course`). */
+export function checkFloorTris(course = SD_COURSE) {
   const out = [];
-  for (const [k, { x: cx, y, z: cz, r }] of SD_CHECKPOINTS.entries()) {
+  for (const [k, { x: cx, y, z: cz, r }] of course.checkpoints.entries()) {
     if (k === 0) continue;   // A is the first step, the hall's (world/superDungeon/sdHall.js hallFloorTris)
     for (let j = 0; j < SD_ISLAND_SIDES; j++) {
       const a0 = (j / SD_ISLAND_SIDES) * Math.PI * 2, a1 = ((j + 1) / SD_ISLAND_SIDES) * Math.PI * 2;
@@ -357,8 +361,8 @@ export const SD_BREATH = Object.freeze({ n: 64, halfX: 10, sweep: 10, len: 1.4, 
  * by x's sign the way the breath blows). Each a streak tapering from its head (toward +x) to its tail, upright and lying flat, every face both ways - a
  * player sees it from the side, from above, and as the mirror turns it. The same streaks every boot.
  */
-export function buildBreathModel() {
-  const f = faces(), C = SD_CHECKPOINTS[2], z0 = C.z + C.r, z1 = SD_COURSE_END;
+export function buildBreathModel(course = SD_COURSE) {   // EG-H3 (EG4): over a course's last span (the Hour's by default)
+  const f = faces(), C = course.checkpoints[2], z0 = C.z + C.r, z1 = course.end;
   let seed = 0x5db7;
   const rnd = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
   const rec = SD_HALL_GLOW_RECORD.brass, UV = [[0, 0], [0, 1], [1, 1], [1, 0]];

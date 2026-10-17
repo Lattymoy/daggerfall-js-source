@@ -13,6 +13,7 @@
 // Not a DFU member. Ledger A (WB).
 import { GATE_RING_CSS } from './gateMapMark.js';
 import { injectEnhancedFonts } from '../enhanced/enhancedStyle.js';   // the classic face, loaded by the gate's own screens
+import { egReducedMotion } from '../eliteGates/egAccess.js';   // AUDIT EG V (c, L7-17): reduced motion - the port's row or the system's
 
 /** A card comes in over TITLE_IN_MS and goes over TITLE_OUT_MS; it stands at least TITLE_HOLD_MS. */
 export const TITLE_IN_MS = 300;
@@ -33,6 +34,9 @@ export const TITLE_CARD_CSS = `
 .wb-title-sub { font-size: 18px; letter-spacing: 0.06em; min-height: 22px; }
 .wb-title-card.in .wb-title-main { animation: wb-title-in 420ms cubic-bezier(.2,.7,.3,1); }
 @keyframes wb-title-in { from { opacity: 0; letter-spacing: 0.32em; } }
+.wb-title-card.still .wb-title-rule { transition: none; }
+.wb-title-card.still .wb-title-main { animation: none; }
+@media (prefers-reduced-motion: reduce) { .wb-title-rule { transition: none; } .wb-title-card.in .wb-title-main { animation: none; } }
 @media (max-width: 640px) { .wb-title-card { top: 30%; } .wb-title-main { font-size: 28px; } .wb-title-sub { font-size: 15px; } .wb-title-kicker { font-size: 12px; letter-spacing: 0.22em; } }
 @media (max-height: 480px) { .wb-title-card { top: 48%; } .wb-title-main { font-size: 26px; } .wb-title-kicker { font-size: 12px; } }
 `;
@@ -70,8 +74,11 @@ function build(doc) {
   parts = { kicker, main, rule, sub };
 }
 
-/** Draw the card for a model (null hides it); `hidden` is the HUD's own hide and the step's fire. */
-export function drawGateTitleCard(model, { hidden = false, doc = globalThis.document } = {}) {
+/** Draw the card for a model (null hides it); `hidden` is the HUD's own hide and the step's fire. AUDIT EG V (c, L7-17;
+ *  Elite-Gates.md section 25.7): `still` reduced motion - the port's row or the system's (ui/eliteGates/egAccess.js egReducedMotion,
+ *  read here unless the caller says) - the name never flies in and the rule never sweeps: the wake's and the fall's card
+ *  in the Spire stood still where its arrival card and THE FALL's did. */
+export function drawGateTitleCard(model, { hidden = false, doc = globalThis.document, still = egReducedMotion() } = {}) {
   const want = !hidden && !!model;
   if (!root) {
     if (!want || !doc?.createElement) return;
@@ -87,7 +94,7 @@ export function drawGateTitleCard(model, { hidden = false, doc = globalThis.docu
     parts.main.style.color = model.color ?? '';
   }
   if (model.sub !== shown.sub) { shown.sub = model.sub; parts.sub.textContent = model.sub; }
-  const cls = `wb-title-card on${model.fresh ? ' in' : ''}`;
+  const cls = `wb-title-card on${model.fresh && !still ? ' in' : ''}${still ? ' still' : ''}`;
   if (cls !== shown.cls) { shown.cls = cls; root.className = cls; }
   if (model.alpha !== shown.alpha) { shown.alpha = model.alpha; root.style.opacity = String(model.alpha); }
 }

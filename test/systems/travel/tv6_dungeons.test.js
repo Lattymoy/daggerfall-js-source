@@ -12,6 +12,7 @@ import { TV_FAR_RANGE } from '../../../src/systems/travel/travelFarPlaces.js';
 import { ARRIVAL_BUFFER } from '../../../src/systems/travel/travelAutopilot.js';
 import { spawnedMapId, spawnsDungeon, createSpawnLedger, GENERAL_TTL_MINUTES, REBIRTH_TTL_MINUTES } from '../../../src/world/spawnedDungeons.js';
 import { planRoute, routeLegs, routeDrawPoints, routeGround, TV_MOUNTAIN_CLIMATE, TV_STEEP_RISE } from '../../../src/systems/travel/travelRoute.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 // PIN MOVED (AUDIT OW5 G2): the Overworld's own lines are said through tvSay - held at the scale they are said at
 const rd = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
@@ -162,7 +163,7 @@ test('TV6 readout: an undiscovered dungeon is an unnamed mark - its own look, a 
 });
 
 test('TV6 host: the dungeons gathered once, listed on a pixel or a find, marked found (a far plate, a journey) or not (the lair); the find on the enhanced interface outdoors, through the port\'s own store, said on the screen', () => {
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   // PIN MOVED (AUDIT OW5 J4): and the pixel's own box the approach keeps within
   // PIN MOVED (HOST-SPLIT 1, 2026-10-15): TV_DUNGEON_TYPES's one reader in the host, the Overworld's marks, left for
   // scenes/travelViewMarks.js, and the import went with it
@@ -185,7 +186,7 @@ test('TV6 host: the dungeons gathered once, listed on a pixel or a find, marked 
 
 test('AUDIT OW3 D1 host: the spawns off the live index, told as the spawned feature tells them (its line this session, or the pixel entry\'s filing - the name), the list kept only while the index holds (lifted and run)', async () => {
   const { discoverLocation, hasDiscoveredLocationId } = await import('../../../src/systems/discovery.js');
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /const grid = Math\.max\(1, state\.terrainDistance \?\? 3\), n = _locIndexGen;/, 'the grid\'s reach, and the index\'s churn (AUDIT OW4 D5: its generation, not its size)');
   // PIN MOVED (ETHER-OW, test/systems/travel/ether_ow.test.js): the rows and what stands on them are the lists' one pair (tvDungeonRowsAt,
   // tvDungeonAt) - the map's rows gathered once and the live index, as before, and past the Veil the ruin isles beside them
@@ -213,7 +214,7 @@ test('AUDIT OW3 D1 host: the spawns off the live index, told as the spawned feat
 });
 
 test('AUDIT OW3 D1 host: a spawn\'s plate is a walk to its door - TV2\'s spot journey to its exterior\'s edge, asked of the live list (an unnamed or a vanished spawn walks nowhere); the click reaches it before the place plates; AUDIT OW4 D1/D6: walked as a place\'s door (its rect handed on - the edge is aimed once the route is known); D2: asked its clocks at the click (lifted and run)', () => {
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /if \(key === 'dest'\) \{[^\n]*\n\s*if \(key\.startsWith\('spawn:'\)\) \{ travelViewSpawnWalk\(key\); return; \}[^\n]*\n\s*const plate = /, 'the click');
   const m = /\n {2}(function travelViewSpawnWalk\(key\) \{\n[\s\S]*?\n {2}\})\n/.exec(w);
   assert.ok(m, 'the walk');
@@ -238,7 +239,7 @@ test('AUDIT OW3 D1 host: a spawn\'s plate is a walk to its door - TV2\'s spot jo
 });
 
 test('AUDIT OW3 D2: THE ARRIVAL GUARD - no dungeon is found while the world is being moved (a fast travel, a Recall, a respawn, a load: the feet read mid-arrival lie up to a kilometre from where they land); the bands\' frame stands down the same (the find lifted and run)', () => {
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   const m = /\n {2}let _tvFindAt = 0;\n {2}(function dungeonFindFrame\(now\) \{\n[\s\S]*?\n {2}\})\n/.exec(w);
   assert.ok(m, 'the find');
   let busy = true;
@@ -341,7 +342,7 @@ const oldPeaksLaw = (climateAt, heightAt, ax, ay, bx, by, leaving = false) => {
 };
 
 test('AUDIT OW4 D1/D6 host, then MOUNTAINS WALKABLE (the owner, the Wrothgarian zone\'s merge): over the host\'s own ground a spot among the peaks is walked, straight over the ridge; over a ground that refuses (the old law, a stand-in) a walk to a spawn\'s DOOR is a place\'s - never refused for the peaks, its own pixel\'s step exempt, every other step under the law - while a spot there is refused; its edge faces the route\'s LAST LEG (lifted and run over the real planner)', () => {
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   const m = /\n {2}(function travelViewWalkTo\(point, pix, \{ door = null, water = false, roads = false \} = \{\}\) \{\n[\s\S]*?\n {2}\})\n/.exec(w);
   assert.ok(m, 'the walk, with its one option');
   const P = 32768, mid = (p) => [p.x * P + P / 2, p.y * P + P / 2];   // this test's own native frame
@@ -413,7 +414,7 @@ test('AUDIT OW4 D1/D6 host, then MOUNTAINS WALKABLE (the owner, the Wrothgarian 
 });
 
 test('AUDIT OW4 D2/D5/D4 host: THE KEPT LIST - rebuilt on ANY change to the index (its generation: a spawn gone and another come in one window), a kept spawn whose time ran out dropped at the next ask, and the found spawns past the stream listed with the rest (lifted and run)', () => {
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   const m = /\n {2}(function travelViewDungeons\(\) \{\n[\s\S]*?\n {2}\})\n/.exec(w);
   assert.ok(m, 'the list');
   const index = new Map([['105,100', spawnLoc(105, 100)]]);
@@ -451,7 +452,7 @@ test('AUDIT OW4 D2/D5/D4 host: THE KEPT LIST - rebuilt on ANY change to the inde
 
 test('AUDIT OW4 D2/D4 host: a spawn is GONE by the feature\'s own test (the ledger\'s clocks, never while the player is in it); what WOULD stand on an unbuilt pixel is the feature\'s own gates and clone, with none of its writes; the found ones past the stream are the filed spawn ids, online (lifted and run)', async () => {
   const { discoverLocation, hasDiscoveredLocationId } = await import('../../../src/systems/discovery.js');
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   // the clocks
   const g = /\n {2}(const tvSpawnGone = [^\n]*;)\n/.exec(w);
   assert.ok(g, 'the test');
@@ -519,7 +520,7 @@ test('AUDIT OW4 D2/D4 host: a spawn is GONE by the feature\'s own test (the ledg
 });
 
 test('AUDIT OW4 D5/D3 host: every write to the index after the boot\'s fill bumps its generation (a spawn stood, one expired, the roads sweep\'s take-back); a load forgets the spawns the abandoned run was told of (lifted and run)', () => {
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   const s = /\n {2}(const spawnedDungeonAt = \(px, py\) => \{\n[\s\S]*?\n {2}\};)\n/.exec(w);
   assert.ok(s, 'the choke point');
   const seen = /\n {2}(function _spawnSeen\(key\) \{\n[\s\S]*?\n {2}\})\n/.exec(w);
@@ -562,7 +563,7 @@ test('AUDIT OW4 D5/D3 host: every write to the index after the boot\'s fill bump
 // no dungeon was found by approach. travelViewDungeons, the find's own list (travelViewFindList - AUDIT OW5 D1's, which
 // the merge kept for this audit's own) and dungeonFindFrame lifted out of world.js together and RUN.
 test('AUDIT OW5b D1 host run: TWELVE FOUND ABOUT, AND THE KEEP NEXT DOOR IS STILL SEEN AND STILL FOUND - its "?" on the ground the view shows spends none of the twelve, and the find reads its own list, uncapped (a keep two pixels off, past a one-pixel grid, is found at 942 m though no "?" stands for it)', () => {
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   const list = /\n {2}(function travelViewDungeons\(\) \{\n[\s\S]*?\n {2}\})\n/.exec(w);
   const find = /\n {2}let _tvFindAt = 0;\n {2}(function dungeonFindFrame\(now\) \{\n[\s\S]*?\n {2}\})\n/.exec(w);
   const own = /\n {2}(function travelViewFindList\(\) \{\n[\s\S]*?\n {2}\})\n/.exec(w);

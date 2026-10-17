@@ -197,8 +197,8 @@
   {
     "name": "AINT11-SERPENT-IN-NOT-SEEDED",
     "file": "server/src/index.js",
-    "old": "serpentBrain.serpentStateOf(f) }));\n    this._trailSeed(ws, a, now);   // AUDIT INT11\n",
-    "new": "serpentBrain.serpentStateOf(f) }));\n",
+    "old": "SERPENT_SEAM.stateOf(f) }));\n    this._trailSeed(ws, a, now);   // AUDIT INT11\n",
+    "new": "SERPENT_SEAM.stateOf(f) }));\n",
     "tests": [
       "test/net/int_lane3_audit.test.js"
     ]
@@ -405,8 +405,8 @@
   {
     "name": "AINT11-SERPENT-BODIES-TWICE",
     "file": "server/src/index.js",
-    "old": "serpentBrain.stepSerpentBrain(f, now, this._bodiesBare(bodies), rand01);",
-    "new": "serpentBrain.stepSerpentBrain(f, now, this._serpentBodies(f), rand01);",
+    "old": "SERPENT_SEAM.step(f, now, this._bodiesBare(bodies), rand01);",
+    "new": "SERPENT_SEAM.step(f, now, this._serpentBodies(f), rand01);",
     "tests": [
       "test/net/int_lane3_audit.test.js"
     ]

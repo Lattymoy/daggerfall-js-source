@@ -11,6 +11,7 @@ import { lowestGroundUnder, surfaceHeightAt, GROUND_UNDER_INSET } from '../../..
 import { flattenForLocation, WOD_TERRAIN_HEIGHT_MAX } from '../../../src/world/worldOfDaggerfall/wodLocationLoader.js';
 import { WOD_BUSH_MODEL } from '../../../src/world/worldOfDaggerfall/wodLocationObjects.js';
 import { HEIGHTMAP_DIMENSION, TERRAIN_SIZE } from '../../../src/world/terrain/terrainSampler.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const src = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const H = HEIGHTMAP_DIMENSION;
@@ -76,7 +77,7 @@ test('WOD-BUSH: the footprint is held to the pixel - the ground past its edge is
 });
 
 test('WOD-BUSH by source: the pixel build stands the shrub alone on the ground - mesh, box and collider', () => {
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   // ROCK-SUNK (test/world/worldOfDaggerfall/fb1002_rocksunk.test.js): the shrub of a site that is not a rock field - isWodShrub asks the pick
   assert.match(w, /if \(isWodShrub\(m\.modelId, wodPicks\[m\.pick\]\?\.name\)\) \{[^\n]*\n\s+const dy = lowestGroundUnder\(samples, box\) - box\[1\];\n\s+m\.matrix\[13\] \+= dy; box\[1\] \+= dy; box\[4\] \+= dy;\n\s+\}/);
   const at = w.indexOf('if (isWodShrub(m.modelId, wodPicks[m.pick]?.name))');

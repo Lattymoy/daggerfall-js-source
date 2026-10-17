@@ -11,9 +11,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const rd = (p) => readFileSync(new URL('../../' + p, import.meta.url), 'utf8');
-const W = rd('src/scenes/world.js'), M = rd('src/scenes/worldModes.js'), D = rd('src/scenes/dungeonContext.js'), X = rd('src/scenes/exterior.js');
+const W = hostText('src/scenes/world.js'), M = rd('src/scenes/worldModes.js'), D = rd('src/scenes/dungeonContext.js'), X = rd('src/scenes/exterior.js');
 
 test('ARENA2 hosts - world.js: one driver, ticked before the modal return, its stages the city\'s and the instance\'s', () => {
   assert.match(W, /const arenaBouts = createArenaBouts\(\{/);
@@ -65,7 +66,7 @@ test('ARENA2 hosts - dungeonContext.js wired (what the sand will not allow); ARE
   assert.match(D, /if \(isArenaFloor\(dfLocation\)\) \{ hudText\.add\(ARENA_TEXT\.refuse\.rest\); return; \}/);
   assert.match(D, /if \(isArenaFloor\(dfLocation\)\) \{ if \(!quiet\) hudText\.add\(ARENA_TEXT\.refuse\.save\); return false; \}/);
   assert.match(D, /if \(isArenaFloor\(dfLocation\)\) \{ hudText\.add\(ARENA_TEXT\.refuse\.map\); return; \}/);
-  assert.match(D, /savingPrevented: \(\) => isGateArena\(dfLocation\) \|\| isArenaFloor\(dfLocation\)(?: \|\| _sdRealm)?,/);   // SD5a (PIN MOVED): and the Shattered Hour beside them
+  assert.match(D, /savingPrevented: \(\) => madeLevelRule\(_made, 'save'\) === 'refused' \|\| isArenaFloor\(dfLocation\),/);   // SD5a (PIN MOVED): and the Shattered Hour beside them; PIN MOVED (EG-H2): the made levels' saves are their law's (systems/madeLevel.js), the sand's beside them
   assert.match(D, /if \(!isGateArena\(dfLocation\) && !isArenaFloor\(dfLocation\)(?: && !_sdRealm)?\) sceneAmbience\.update\(dt, \{/, 'no dungeon drip on the open sand');   // SD5a (PIN MOVED): nor in the Shattered Hour
   assert.match(X, /\/\/ ARENA-FIX 12 \(2026-10-02\): WIRED - THE FOUR HOSTS\./);
   assert.match(X, /const arenaBouts = createArenaBouts\(\{/, 'one driver');

@@ -111,8 +111,8 @@
   {
     "name": "SD6B-a-number-taken-twice",
     "file": "server/src/index.js",
-    "old": "    if (m.q <= (meter.pzq ?? -1) || hall.ok || ",
-    "new": "    if (hall.ok || ",
+    "old": "    if (m.q <= (meter.pzq ?? -1)) return;",
+    "new": "    if (false) return;",
     "tests": [
       "test/net/sd6b_hall.test.js"
     ]
@@ -137,9 +137,9 @@
   },
   {
     "name": "SD6B-the-settling-skipped",
-    "file": "server/src/index.js",
-    "old": " || now - hall.last[m.i] < SD_STONE_SETTLE_MS) return;",
-    "new": ") return;",
+    "file": "src/net/superDungeon/sdBrain.js",
+    "old": "  if (lock.ok || now - (last[i] ?? 0) < SD_STONE_SETTLE_MS) return null;",
+    "new": "  if (lock.ok) return null;",
     "tests": [
       "test/net/sd6b_hall.test.js"
     ]

@@ -47,8 +47,8 @@
   {
     "name": "LEGACY7-tomb-any-lease",
     "file": "server-account/src/legacy.js",
-    "old": "${lease == null ? '' : ' AND lease = ?'}",
-    "new": "${lease == null ? '' : ' AND (lease = ? OR 1)'}",
+    "old": "dead_at IS NULL${lease == null ? '' : ' AND lease = ?'}",
+    "new": "dead_at IS NULL${lease == null ? '' : ' AND (lease = ? OR 1)'}",
     "tests": [
       "test/server/legacy7_service.test.js"
     ]
@@ -131,8 +131,8 @@
   {
     "name": "LEGACY7-die-loses",
     "file": "src/systems/realmSaves.js",
-    "old": "      lost = 'dead';\n      pending = null;",
-    "new": "      lose('dead');\n      pending = null;",
+    "old": "      lost = 'dead';\n      rezHeld = hold && !closing && why === 'fell';\n      pending = null;",
+    "new": "      lose('dead');\n      rezHeld = hold && !closing && why === 'fell';\n      pending = null;",
     "tests": [
       "test/systems/legacy/legacy7_online.test.js"
     ]
@@ -149,8 +149,9 @@
   {
     "name": "LEGACY7-fall-untombed",
     "file": "src/scenes/legacyHost.js",
-    "old": "    store();\n    entomb();\n    outcome = fallOutcome();",
+    "old": "    store();\n    entomb({ hold });\n    outcome = fallOutcome();",
     "new": "    store();\n    outcome = fallOutcome();",
+    "note": "PIN MOVED (FIELD BUGS 2026-10-16b REZ-BLOODLINE AUDIT R1): re-aimed by content - the death door writes the fall online too, its tombstone asked with its hold (legacyHost.js writeDeath)",
     "tests": [
       "test/systems/legacy/legacy7_online.test.js"
     ]

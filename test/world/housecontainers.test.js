@@ -150,7 +150,10 @@ test('HC1: owner access - house OR ship - opens loot-target storage, never stock
   // fixed +200 character reach was always a bet on that. The claim is
   // the same: BOTH arms open through the one openLoot, whose remote
   // side IS the container collection.
-  assert.ok(arm.slice(0, ownedLatch).includes('loot: { items: () => c.items, storage: !privateProperty },'),
+  // PIN MOVED (FIELD BUGS 2026-10-16b STOLEN-GOODS): and a stranger's is someone else's goods (`stolen: privateProperty`).
+  // PIN MOVED (STOLEN-GOODS AUDIT S1): the owner's keeping, taken as the window opens (`stolenFrom: before` - null in an
+  // owned house or ship, a Set of the stranger's own records in theirs)
+  assert.ok(arm.slice(0, ownedLatch).includes('loot: { items: () => c.items, storage: !privateProperty, stolenFrom: before },'),
     'the remote side IS the container collection - two-way, live (SHIP-STORE: and the owner\'s is STORAGE, the pack beside it)');
   assert.ok(arm.slice(0, ownedLatch).includes('const openLoot = (privateProperty = false) => {'),
     'one openLoot, whose only difference between the arms is the theft flag');

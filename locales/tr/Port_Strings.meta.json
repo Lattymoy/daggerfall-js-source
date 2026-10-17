@@ -459,6 +459,11 @@
   "tr": "c4adaf6efcaf",
   "by": "claude-in-session"
  },
+ "account.glyph.wikimaid": {
+  "en": "28aa6cf63e1f",
+  "tr": "28aa6cf63e1f",
+  "by": "claude-in-session"
+ },
  "account.local.codeEmpty": {
   "en": "e98c67419698",
   "tr": "522185cfb23a",
@@ -1402,6 +1407,16 @@
  "stats.weapon": {
   "en": "ead533685e26",
   "tr": "bc7d4f3df0ec",
+  "by": "claude-in-session"
+ },
+ "stolen.card": {
+  "en": "f7ee1f5cc455",
+  "tr": "6deefff7a6d5",
+  "by": "claude-in-session"
+ },
+ "stolen.taken": {
+  "en": "47f05fb5e818",
+  "tr": "06eee0cde8b4",
   "by": "claude-in-session"
  },
  "summon.noQuest": {

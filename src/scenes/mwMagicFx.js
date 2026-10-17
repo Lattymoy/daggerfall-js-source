@@ -110,7 +110,7 @@ export function createMwMagicFx({
   }
 
   /** One visual, spawned: a handle whose `state()` is pending until its assets land, then live, ended or failed. */
-  function spawn(visual, place, { loop = false } = {}) {
+  function spawn(visual, place, { loop = false, alpha = 1 } = {}) {
     const cat = catalogNow();
     let state = cat && visual ? 'pending' : 'failed';
     const handle = { state: () => state, end() { if (state === 'pending' || state === 'live') state = 'ended'; } };
@@ -119,13 +119,13 @@ export function createMwMagicFx({
       if (state !== 'pending') return;
       if (!a || dead) { state = 'failed'; return; }
       state = 'live';
-      live.push({ visual, fx: createVfx(a.desc, { textureOverride: visual.texture, loop }), place, gpu: createVfxGpu(renderer, a.textures, vfxCapacity(a.desc)), handle });
+      live.push({ visual, fx: createVfx(a.desc, { textureOverride: visual.texture, loop }), place, gpu: createVfxGpu(renderer, a.textures, vfxCapacity(a.desc)), handle, alpha });   // EG-ZG: its share of itself
     });
     return handle;
   }
   /** An actor's effect at its feet (a pass point), a creature's sized off its body (`body`: { height, radius } in
    *  metres; omitted for a person). */
-  function atActor(visual, feet, body = null) {
+  function atActor(visual, feet, body = null, alpha = 1) {
     if (!visual || !Array.isArray(feet)) return null;
     const p = passToMw(feet);
     let place = translate(p);
@@ -133,7 +133,7 @@ export function createMwMagicFx({
       const { scale, offset } = actorFxTransform(body.height, body.radius, MW_UNITS_PER_METER);
       place = translate([p[0], p[1], p[2] + offset], scale);
     }
-    return spawn(visual, () => place);
+    return spawn(visual, () => place, { alpha });
   }
 
   return {
@@ -144,18 +144,20 @@ export function createMwMagicFx({
       if (!plan) return;
       for (const v of [...plan.cast, plan.bolt, ...plan.hit, ...plan.area]) if (v) load(cat, v);
     },
-    /** The cast's start: its casting visuals at the caster's feet, one per model; the player's hands glow too. */
-    cast(sp, feet, { player = false, body = null } = {}) {
+    /** The cast's start: its casting visuals at the caster's feet, one per model; the player's hands glow too. EG-ZG:
+     *  `alpha` its share of itself (another player's during a Spire trial - THE QUIET COMPANY, ui/eliteGates/egAccess.js egAllyLook). */
+    cast(sp, feet, { player = false, body = null, alpha = 1 } = {}) {
       const cat = catalogNow();
       const plan = cat ? planOf(cat, sp) : null;
       if (!plan) return 0;
-      for (const v of plan.cast) atActor(v, feet, body);
+      for (const v of plan.cast) atActor(v, feet, body, alpha);
       if (player) hands(sp);
       return plan.cast.length;
     },
     /** A missile's bolt: `at(pos, dir)` each frame (pass space), `end()` when it is gone, `state()` for whether the
-     *  classic flat should stand in (only `failed` - nothing to draw it with - hands the missile back to it). */
-    bolt(sp) {
+     *  classic flat should stand in (only `failed` - nothing to draw it with - hands the missile back to it). EG-ZG: `alpha`
+     *  its share of itself. */
+    bolt(sp, { alpha = 1 } = {}) {
       const cat = catalogNow();
       const plan = cat ? planOf(cat, sp) : null;
       const where = { pos: null, dir: [0, 0, -1] };
@@ -164,7 +166,7 @@ export function createMwMagicFx({
         if (!where.pos) return null;
         const r = mul3(boltAttitude(passDirToMw(where.dir)), boltSpin(clock));
         return compose(r, passToMw(where.pos));
-      }, { loop: true });
+      }, { loop: true, alpha });
       return {
         state: h.state,
         at(pos, dir) { where.pos = [pos[0], pos[1], pos[2]]; if (dir) where.dir = [dir[0], dir[1], dir[2]]; },
@@ -201,7 +203,7 @@ export function createMwMagicFx({
         const place = e.handle.state() === 'live' ? e.place() : null;
         const r = place ? e.fx.update(dt, { place, view: MW_TO_PASS, eye }) : { done: true };
         if (r.done) { e.handle.end(); e.gpu.release(); live.splice(i, 1); continue; }
-        e.gpu.sync(r.streams);
+        e.gpu.sync(r.streams, e.alpha);
       }
     },
     /** The world pass's draw - after the hosts' billboards, with the impact pass. Answers whether it drew. */

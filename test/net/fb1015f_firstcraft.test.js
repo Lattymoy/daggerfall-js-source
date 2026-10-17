@@ -21,8 +21,9 @@ import { craftXpLine, craftXpText } from '../../src/ui/craftXpWords.js';
 import { setProfessionsPages, drawStoresPage, resetProfPages } from '../../src/ui/professions/profPages.js';
 import { setPref } from '../../src/systems/uiPrefs.js';
 import { utcDay } from '../../src/net/marksLaw.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
-const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
+const src = (p) => hostText(p);
 const noWait = () => Promise.resolve();
 const memStorage = () => { const m = new Map(); return { getItem: (k) => m.get(k) ?? null, setItem: (k, v) => m.set(k, String(v)) }; };
 const NOON = utcDay(T0) * 86_400 + 12 * 3600;
@@ -94,7 +95,7 @@ test('CRAFT-FIRST-SHOWN the craft\'s word, from the real Worker\'s answer throug
     tm.setLocale('en');
   }
   // THE HOSTS DO NOT GROW: world.js's craft says its XP through the module, one call
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /^import \{ craftXpText \} from '\.\.\/ui\/craftXpWords\.js';/m);
   assert.match(w, /const rec = recipeById\(recipe\);\n.*\n\s+return \{ ok: true, text: `\$\{chain \? `\$\{chain\} ` : ''\}\$\{made\} \$\{craftXpText\(rec, r\.data, st\.xp\)\}\$\{paid \?/);
   assert.doesNotMatch(w, /\(\+\$\{r\.data\.xp\} \$\{st\.xp\} XP\)/, 'the old word, which left `first` unread, is gone');

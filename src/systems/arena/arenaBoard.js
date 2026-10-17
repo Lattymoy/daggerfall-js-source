@@ -575,6 +575,33 @@ export function recordsPageOnline(board, { league = null, gameMinutes = 0 } = {}
   };
 }
 
+/** FIELD BUGS 2026-10-16b ARENA-WAIT: the realm's board before the service's is in - its season and day by the wall clock
+ *  (`nowS`, unix seconds), nobody on it. Only ever drawn as "on its way" (arenaBoard's no-board arm). */
+function pendingBoard(nowS) {
+  const t = Number.isFinite(nowS) ? Number(nowS) : Date.now() / 1000;
+  const none = { rows: [], pinned: null, total: 0 };
+  return { season: arenaSeasonOf(t), day: arenaSeasonDay(t), me: {}, team: { standings: { red: 0, blue: 0 }, rosters: {}, members: {}, laurel: null, last: null }, pve: none, pvp: none, fast: none, hall: [] };
+}
+
+/** FIELD BUGS 2026-10-16b ARENA-WAIT (AUDIT A1): THE LADDER PAGE BEFORE THE ACCOUNT'S CLIMB IS IN (arenaBoard's no-board
+ *  arm) - the ten tiers as the law has them (their bouts, champions, purses and the titles they give), and nobody's climb
+ *  on them: no tier cleared or current (`waiting`), no pip, no champion beaten, no next bout, no title earned and no tier
+ *  the climb stands on (`current` null) - `line` saying why (the climb on its way, the seat elsewhere, the server gone). The
+ *  arm drew the SAVE's ladder here ("Tier 2, Bloodied", "Pit Fighter") over a realm Grand Champion. */
+export function ladderPageWaiting(line) {
+  // the law's page over no climb at all (no pip, no champion beaten), its tiers nobody's and its first bout nobody's next
+  const law = ladderPage({ ladder: null });
+  return {
+    tiers: law.tiers.map((t) => ({ ...t, state: 'waiting', bouts: t.bouts.map((b) => ({ ...b, next: false })) })),
+    current: null, grand: false, titles: [], next: null, online: line, waiting: true,
+  };
+}
+/** ARENA-WAIT (AUDIT A1): THE BOUTS PAGE'S LADDER CARD before the account's climb is in - no bout named, no opponents, no
+ *  purse (the save's next bout and its purse stood here), its Fight shut with `line`. */
+export const ladderCardWaiting = (line) => ({
+  key: 'ladder', kind: 'ladder', title: W().ladderBout, state: W().tierState.waiting, fighters: [], acts: [{ act: 'fight', label: W().fight, why: line }], lines: [],
+});
+
 /** EVERY PAGE at once - the window's whole model. ARENA4: online (`o.online` - the service's `board`, the hall's state),
  *  the ladder is the account's (every bout refereed), the Team and Leaderboards pages the realm's, and the Bouts page
  *  carries the bouts to watch and the challenge; offline, the save's as ARENA3 drew them. */
@@ -589,9 +616,28 @@ export function arenaBoard(o) {
     // ARENA4b: online before the realm's board is in, the climb is not the save's - the ladder's Fight waits for it - and
     // neither is the record: the Records page says the realm's is on its way (the save's wagers kept), no purses chip
     if (o.online) {
-      for (const c of m.bouts.cards) if (c.kind === 'ladder') c.acts = c.acts.map((a) => (a.act === 'fight' ? { ...a, why: O().climbWait } : a));
-      m.records = { ...recordsPageOnline(null, o), stats: [] };
-      m.header.purses = null;
+      // ARENA-WAIT (AUDIT A1/A4): `away` - the seat elsewhere or the server gone (scenes/arena/arenaOnline.js model) - is said on
+      // every page in place of "on its way"; `shutWhy` is what a press says while the doors are shut (the lane waiting)
+      const away = o.online.away ?? null, shutWhy = o.online.shutWhy ?? null;
+      // AUDIT A1: the ladder page and the Bouts page's ladder card are nobody's - the save's tiers, pips, titles, next bout
+      // and purse stood here while every other page waited
+      /** @type {any} */ (m).ladder = ladderPageWaiting(away ?? O().climbWait);
+      m.bouts.cards = m.bouts.cards.map((c) => (c.kind === 'ladder' ? ladderCardWaiting(away ?? O().climbWait) : c));
+      // a shut door's Watch says why on its card - the hour's bout is the relay's (the press closed the window to say it)
+      if (shutWhy) for (const c of m.bouts.cards) if (c.kind === 'exhibition') c.acts = c.acts.map((a) => (a.act === 'watch' ? { ...a, why: a.why ?? shutWhy } : a));
+      m.records = { ...recordsPageOnline(null, o), stats: [], ...(away ? { empty: away } : {}) };
+      // FIELD BUGS 2026-10-16b ARENA-WAIT: nor the header, the banners or the boards - the save's offline season ("Season
+      // of 3E 406"), its title and record and its seeded roster stood over a realm Grand Champion while the board was
+      // asked. The realm's season by the clock (net/arena/arenaLaw.js arenaSeasonOf), no title, record or banner of the save's,
+      // and every board says the names are on their way.
+      const wait = pendingBoard(o.online.nowS);
+      m.header = { ...arenaHeaderOnline({ board: wait, name: o.name }), title: null, record: '' };
+      m.team = { ...teamPageOnline(wait), lines: [away ?? O().rollWait] };
+      /** @type {any} */
+      const boards = boardsPageOnline(wait, o.name ?? '');
+      for (const k of ['pve', 'fast', 'pvp', 'team']) boards[k] = { ...boards[k], rows: [], pinned: null, total: 0, empty: away ?? O().rollWait };
+      delete boards.pvp.champion;
+      /** @type {any} */ (m).boards = boards;
     }
     return m;
   }

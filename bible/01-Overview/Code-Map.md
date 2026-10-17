@@ -94,6 +94,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | Duels | `net/duel/` |
 | Dungeons | `systems/dungeon/`, `world/dungeon/` |
 | Dynamic Skies | `systems/dynamicSkies/` |
+| Elite Gates (the Elite Breach) | `systems/eliteGates/`, `net/eliteGates/`, `world/eliteGates/`, `render/eliteGates/`, `scenes/eliteGates/`, `ui/eliteGates/` |
 | Enemies | `characters/enemy/` |
 | Enhanced Plus | `ui/plus/` |
 | Enhanced skin | `ui/enhanced/` |
@@ -221,6 +222,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/net/arena/` | The Arena: bouts, the ladder, the league (`11-Multiplayer/Arena.md`) - online - the law both ends run. |
 | `src/net/card/` | The tavern's card table: Hold'em and the regulars (`11-Multiplayer/Tavern-Cards.md`) - online - the law both ends run. |
 | `src/net/duel/` | Duels between players - online - the law both ends run. |
+| `src/net/eliteGates/` | The Elite Breach, the Battlespire's torn halls (`11-Multiplayer/Elite-Gates.md`, `Elite-Gates-Look.md`, `Elite-Gates-Ascent.md`) - online - the law both ends run: the director and the halls' law, the spans and the fragments, the legion, the lords and the run, the route and its proofs, the pay and the receipts. |
 | `src/net/firmament/` | The Firmament (`06-Systems/Firmament.md`) - online - the law both ends run. |
 | `src/net/gambit/` | The King's Gambit (`11-Multiplayer/Kings-Gambit.md`) - online - the law both ends run. |
 | `src/net/gate/` | The Oblivion Gate, the world boss on the shared clock (`11-Multiplayer/World-Bosses.md`) - online - the law both ends run. |
@@ -251,6 +253,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 
 | Folder | What lives there |
 |---|---|
+| `src/render/eliteGates/` | The Elite Breach (`11-Multiplayer/Elite-Gates.md`, `Elite-Gates-Look.md`, `Elite-Gates-Ascent.md`) - its passes: the sky, the mist, the motes, the lines, the lamps and the stairs. |
 | `src/render/gate/` | The Oblivion Gate, the world boss on the shared clock (`11-Multiplayer/World-Bosses.md`) - its passes. |
 | `src/render/superDungeon/` | The Abyss Dungeon, the super dungeons (`11-Multiplayer/Super-Dungeons-Look.md`) - its passes. |
 
@@ -262,6 +265,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/scenes/comeSailAway/` | Come Sail Away's boats (`03-World/Come-Sail-Away.md`) - the hosts' wiring. |
 | `src/scenes/decor/` | Decorating a home in the hosts: the base, the room, the tool. |
 | `src/scenes/deepWater/` | Deep Waters in the hosts: the host, swimming, the player, the fish, encounters, decor and loot. |
+| `src/scenes/eliteGates/` | The Elite Breach (`11-Multiplayer/Elite-Gates.md`, `Elite-Gates-Look.md`, `Elite-Gates-Ascent.md`) - the hosts' wiring: the client, the call and the arch, the fight, the spans, the circle's host and its swap, the look drawn. |
 | `src/scenes/gate/` | The Oblivion Gate, the world boss on the shared clock (`11-Multiplayer/World-Bosses.md`) - the hosts' wiring. |
 | `src/scenes/livingWorld/` | The living world in the hosts (`06-Systems/Living-World-II.md`): indoors, the roads, the watch, the deep's remains. |
 | `src/scenes/naval/` | Ships and the sea in the hosts: the naval host, the crew, the flames. |
@@ -282,6 +286,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/systems/deepWater/` | Deep Waters' law: the swimmer, the fish as items and as rows. |
 | `src/systems/dungeon/` | A dungeon's state: its respawn, tier, echo and sense. |
 | `src/systems/dynamicSkies/` | The Dynamic Skies mod - the law. |
+| `src/systems/eliteGates/` | The Elite Breach's law on this screen (`11-Multiplayer/Elite-Gates.md`, `Elite-Gates-Look.md`, `Elite-Gates-Ascent.md`): the Weir Key and its find, the Spire's kit and Vestiges, the lords' arms, the spoils, the score and its mix and echo. |
 | `src/systems/faction/` | The factions' relations, reputation and standing - the law. |
 | `src/systems/foraging/` | The Foraging mod - the law. |
 | `src/systems/gambit/` | The King's Gambit (`11-Multiplayer/Kings-Gambit.md`) - the law. |
@@ -338,6 +343,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/ui/automap/` | The automap's window: the sheet, its camera, chrome, markers and words, and its door. |
 | `src/ui/bounty/` | The bounty board's window, its door and its mark on the map. |
 | `src/ui/card/` | The card table's HUD, its panel kit and the binder's page. |
+| `src/ui/eliteGates/` | The Elite Breach on screen (`11-Multiplayer/Elite-Gates.md`, `Elite-Gates-Look.md`, `Elite-Gates-Ascent.md`): the start window, the boards, the HUD and the party, the beats, the arch's map mark, the access settings. |
 | `src/ui/enhanced/` | The Enhanced skin's windows and HUD - its windows. |
 | `src/ui/gate/` | The Oblivion Gate on screen: the banner, the boss bar, the damage chart, the ground view, the marks and the title card. |
 | `src/ui/hud/` | The classic HUD: vitals, compass, crosshair, active spells - its windows. |
@@ -374,6 +380,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/world/city/` | A city's gates, lights and navigation - its models and assembly. |
 | `src/world/deepWater/` | Deep Waters in the world: the sea floor and its bathymetry, the surface, swimming, the look and the bake. |
 | `src/world/dungeon/` | A dungeon's build: its layout, lights, textures, fires, label and end. |
+| `src/world/eliteGates/` | The Elite Breach in the world (`11-Multiplayer/Elite-Gates.md`, `Elite-Gates-Look.md`, `Elite-Gates-Ascent.md`): the halls, the ground, the ruin, the vista and the underside, the platforms, the rooms, the kit and its art, the air and the lamps - its models and assembly. |
 | `src/world/gate/` | The Oblivion Gate in the world: the arena, the art, the boss, the model, the clearance and the spew. |
 | `src/world/interior/` | Interiors: layout, lights, glass - its models and assembly. |
 | `src/world/merchantYards/` | A town's Stable and Wagon Yard (`03-World/Merchant-Yards.md`) - its models and assembly. |

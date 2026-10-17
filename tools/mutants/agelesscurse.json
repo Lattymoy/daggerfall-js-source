@@ -29,8 +29,9 @@
   {
     "name": "AGELESS-CURSE-the-host-asks-no-curse",
     "file": "src/scenes/legacyHost.js",
-    "old": "p.lived, { ageless: cursed });",
-    "new": "p.lived, { ageless: false });",
+    "old": "lived: p.lived, ageless: cursed };",
+    "new": "lived: p.lived, ageless: false };",
+    "note": "PIN MOVED (FIELD BUGS 2026-10-16b REZ-BLOODLINE): re-aimed by content - an online death is read at the door and written when it is decided (legacyHost.js decideDeath)",
     "tests": [
       "test/systems/legacy1_family.test.js"
     ]

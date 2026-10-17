@@ -41,7 +41,7 @@
   },
   {
     "name": "OW5b-D2-build-skips-the-ask",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "    const dfLocation = _locationToBuild(px, py) || null;",
     "new": "    const dfLocation = locationIndex.get(key) || spawnedDungeonAt(px, py) || null;",
     "tests": [

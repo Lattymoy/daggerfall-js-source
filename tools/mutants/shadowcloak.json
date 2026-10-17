@@ -11,12 +11,12 @@
   {
     "name": "SHADOWCLOAK-the-paint",
     "file": "src/ui/playerBadge.js",
-    "old": "radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker' });",
-    "new": "radiance: 'primarch', shadowcloak: 'aegis', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker' });",
+    "old": "radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid' });",
+    "new": "radiance: 'primarch', shadowcloak: 'aegis', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid' });",
     "tests": [
       "test/net/shadowcloak.test.js"
     ],
-    "note": "SERAPH-WINGS (re-aimed by content): the wings joined the list. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist."
+    "note": "SERAPH-WINGS (re-aimed by content): the wings joined the list. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist. WIKIMAID (re-aimed by content)."
   },
   {
     "name": "SHADOWCLOAK-the-kind",
@@ -48,32 +48,32 @@
   {
     "name": "SHADOWCLOAK-the-aura-not-granted",
     "file": "server-account/src/titles.js",
-    "old": "primarch: 'radiance', shadowfang: 'shadowcloak', crystalfist: 'resonance' });",
-    "new": "primarch: 'radiance', crystalfist: 'resonance' });",
+    "old": "primarch: 'radiance', shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren' });",
+    "new": "primarch: 'radiance', crystalfist: 'resonance', wikimaid: 'lilacwarren' });",
     "tests": [
       "test/net/shadowcloak.test.js"
     ],
-    "note": "CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist."
+    "note": "CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist. WIKIMAID (re-aimed by content)."
   },
   {
     "name": "SHADOWCLOAK-granted-to-another-list",
     "file": "server-account/src/titles.js",
-    "old": "primarch: 'radiance', shadowfang: 'shadowcloak', crystalfist: 'resonance' });",
-    "new": "primarch: 'radiance', penitent: 'shadowcloak', crystalfist: 'resonance' });",
+    "old": "primarch: 'radiance', shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren' });",
+    "new": "primarch: 'radiance', penitent: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren' });",
     "tests": [
       "test/net/shadowcloak.test.js"
     ],
-    "note": "CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist."
+    "note": "CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist. WIKIMAID (re-aimed by content)."
   },
   {
     "name": "SHADOWCLOAK-the-vocabularys-aura",
     "file": "src/net/identityToken.js",
-    "old": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'radiance', 'shadowcloak', 'seraphwings', 'resonance', 'turninghour', 'firsthour', 'maelstrom']);",
-    "new": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'radiance', 'seraphwings', 'resonance', 'turninghour', 'firsthour', 'maelstrom']);",
+    "old": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'radiance', 'shadowcloak', 'seraphwings', 'resonance', 'turninghour', 'firsthour', 'maelstrom', 'beaconlight', 'burningstair', 'firstlight', 'lilacwarren']);   // WIKIMAID (2026-10-17, for SylviaBun: \"a purple aura with bunnies\"): THE LILAC WARREN last - rabbits hopping round the feet on a ring of lilac light, their prints fading behind them; the WikiMaid's own, granted with its title by name, never sold;",
+    "new": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'radiance', 'seraphwings', 'resonance', 'turninghour', 'firsthour', 'maelstrom', 'beaconlight', 'burningstair', 'firstlight', 'lilacwarren']);   // WIKIMAID (2026-10-17, for SylviaBun: \"a purple aura with bunnies\"): THE LILAC WARREN last - rabbits hopping round the feet on a ring of lilac light, their prints fading behind them; the WikiMaid's own, granted with its title by name, never sold;",
     "tests": [
       "test/net/shadowcloak.test.js"
     ],
-    "note": "SERAPH-WINGS (re-aimed by content): the wings joined the list. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's Crystal Resonance."
+    "note": "SERAPH-WINGS (re-aimed by content): the wings joined the list. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's Crystal Resonance. WIKIMAID (re-aimed by content)."
   },
   {
     "name": "SHADOWCLOAK-the-hood-too-tall",

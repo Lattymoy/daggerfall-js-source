@@ -20,6 +20,7 @@ import { FEATURES, checkFeature } from '../../src/systems/features.js';
 import { setPref, PREF_DEFAULTS } from '../../src/systems/uiPrefs.js';
 import { setUiSkin, uiSkin } from '../../src/systems/uiSkin.js';
 import { onlineForcedPref } from '../../src/systems/online/onlineLane.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const src = (p) => readFileSync(new URL(`../../src/${p}`, import.meta.url), 'utf8');
 const TILE = TERRAIN_SIZE / 128;
@@ -337,7 +338,7 @@ test('FOREST1: the switch - the row, the enhanced skin, ?forests=off; online the
 });
 
 test('FOREST1: the world host reads the switch once at its mount and hands the kernel the climate\'s summer archive', () => {
-  const w = src('scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /picks: wodPicks\.map\(\(p\) => \(\{ flatten: p\.flatten, rect: p\.rect, hide: !wodPiecewise\(p\.prefabName\), bounds: forests \? wodSiteFootprint\(p\.prefab, p\.rect\) : null \}\)\)/, 'AUDIT F1/F7: the sites and their footprints');
   assert.match(w, /if \(pointNearGate\(gateClear, px, py, f\.x, f\.z, WOD_FLAT_GATE_CLEAR_M\)\) continue;\n\s+if \(forests && insideRocks\(pixelRocks, f\.x, f\.z\)\) continue;/, 'AUDIT F5/F1: the gate\'s clearing and the rock pieces');
   // PIN MOVED (ECOTONE1, 2026-10-07): and its climate - a border's tree is a neighbour climate's, its stump that one's

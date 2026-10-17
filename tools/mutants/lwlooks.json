@@ -307,7 +307,7 @@
   },
   {
     "name": "LW-LOOKS-host-flats",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "armOf: livingArmOf, flatOf: livingFlatOf,",
     "new": "armOf: livingArmOf,",
     "tests": [

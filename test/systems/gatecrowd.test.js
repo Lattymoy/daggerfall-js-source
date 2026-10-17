@@ -16,6 +16,7 @@ import { COURT_TEXT } from '../../src/world/gate/gateArena.js';
 import { courtSaySeconds } from '../../src/scenes/gate/gateCourt.js';
 import { createCrewAshore } from '../../src/scenes/crewAshore.js';
 import { createCompanions } from '../../src/systems/naval/crewCompanions.js';
+import { madeLevelRule } from '../../src/systems/madeLevel.js';   // EG-H2: the made level's law the world host's doors ask
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const WORLD = read('src/scenes/world.js');
@@ -184,7 +185,7 @@ test('GATE-CROWD the Other players card: the crowd\'s choice beside the sprite a
 
 /** world.js companionPlace, lifted and run over a host of stubs. */
 const PLACE = lift(/\n {2}(function companionPlace\(\{ crew = true \} = \{\}\) \{[\s\S]*?\n {2}\})\n/, 'companionPlace')[1];
-const placeHost = new Function('d', `const { navalOn, walkMode, playerSpawned, _loading, modes, travelView, csaRuntime, _mode, exteriorFoes, collider, revenantSpawnOptions, effectiveLevel, playerEntity, _dungeonPool } = d;\n${PLACE}\nreturn companionPlace;`);
+const placeHost = new Function('d', `const { navalOn, walkMode, playerSpawned, _loading, modes, travelView, csaRuntime, _mode, exteriorFoes, collider, revenantSpawnOptions, effectiveLevel, playerEntity, _dungeonPool, madeRuleHere } = d;\n${PLACE}\nreturn companionPlace;`);
 function placeOf(day, mode = 'dungeon') {
   const pool = { spawnLooseFoe: () => null, removeLooseFoe: () => {}, foes: [], collider: null, companionFx: null };
   const street = { spawnFoe: () => null, removeFoe: () => {}, foes: [], companionFx: null };
@@ -192,6 +193,7 @@ function placeOf(day, mode = 'dungeon') {
     navalOn: () => true, walkMode: true, playerSpawned: true, _loading: false, travelView: null, csaRuntime: null,
     modes: { transitioning: false, gateArenaDay: () => day, interiorPool: () => street, interiorCollider: null }, _mode: () => mode,
     exteriorFoes: street, collider: null, revenantSpawnOptions: () => ({}), effectiveLevel: () => 1, playerEntity: {}, _dungeonPool: () => pool,
+    madeRuleHere: (rule) => madeLevelRule(day != null ? 'court' : null, rule),   // PIN MOVED (EG-H2): the world host's word on the made level - a court of day `day` is the court (systems/madeLevel.js)
   });
 }
 
@@ -204,7 +206,8 @@ test('GATE-ALONE the place: a gate\'s court is no place for a companion - the cr
   assert.ok(placeOf(null, 'interior')(), 'a building');
   assert.ok(placeOf(null, 'exterior')({ crew: false }), 'the street');
   assert.ok(placeOf(0)() === null, 'the court of day zero is a court');
-  assert.match(PLACE, /if \(\(crew && !navalOn\(\)\) \|\|[^\n]*\) return null;\n\s*if \(modes\?\.gateArenaDay\?\.\(\) != null\) return null;   \/\/ GATE-ALONE/, 'asked before any place is made');
+  assert.match(PLACE, /if \(\(crew && !navalOn\(\)\) \|\|[^\n]*\) return null;\n\s*if \(madeRuleHere\('companions'\) === 'out'\) return null;   \/\/ GATE-ALONE/, 'asked before any place is made');   // PIN MOVED (EG-H2): the made level's law (the court's row keeps companions out)
+  assert.equal(madeLevelRule('court', 'companions'), 'out', 'the law: the court keeps companions out');
 });
 
 test('GATE-ALONE through the court: the party lifted as the player steps in, their health and spells carried, none stood inside however long, and stood behind the player again outside (mutant: the court admitted)', async () => {

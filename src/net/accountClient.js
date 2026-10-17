@@ -162,6 +162,22 @@ const REFUSAL_WORDS = {
   rate: () => t('account.refusal.rate', 'Too many attempts. Wait a few minutes and try again.'),
   auth: () => t('account.refusal.auth', 'You have been signed out. Sign in again.'),
   'no-signing-key': () => t('account.refusal.noSigningKey', 'The account service cannot vouch for accounts right now.'),
+  // EG-PLAY: an Elite Breach's refusals (server-account/src/eg.js)
+  rq: () => t('account.refusal.rq', 'The Spire could not read that request. Try again.'),
+  unproven: () => t('account.refusal.unproven', 'Close a Dagon\'s Breach first - the Spire opens to those who have.'),
+  live: () => t('account.refusal.live', 'You hold a breach already.'),
+  rehearsed: () => t('account.refusal.rehearsed', 'You have rehearsed the Spire today. A Weir Key opens it again.'),
+  spent: () => t('account.refusal.spent', 'That breach is spent.'),
+  breach: () => t('account.refusal.breach', 'That breach is not one the Spire knows.'),
+  none: () => t('account.refusal.none', 'The Spire took no key for that.'),   // AUDIT EG IV (lane3 #1): an open asked again (`again`) whose ask never reached it
+  // EG-E3: a dungeon elite's find (server-account/src/eg.js findEg)
+  tier: () => t('account.refusal.tier', 'That is no dungeon the Spire knows.'),
+  capped: () => t('account.refusal.capped', 'The dungeons have given all they will today.'),
+  bits: () => t('account.refusal.bits', 'The Spire could not read those lines.'),   // EG-ZF: the first-time lines' bits (server-account/src/eg.js egFirstSay)
+  // EG-F: the start window's refusals (server-account/src/eg.js, egStarts.js)
+  start: () => t('account.refusal.start', 'You may not start a breach that deep this season.'),
+  wager: () => t('account.refusal.wager', 'The Spire could not read that Wager.'),
+  subs: () => t('account.refusal.subs', 'The Spire could not read that company.'),
   body: () => t('account.refusal.body', 'The account service could not read that request.'),
   method: () => t('account.refusal.method', 'The account service refused that request.'),
   // The two the ROUTER refuses with, before any account is looked at.
@@ -196,6 +212,8 @@ const REFUSAL_WORDS = {
   'no-name-as': () => t('account.refusal.noNameAs', 'The account service does not know that choice of name. The game may need updating.'),   // NAME-AS
   'no-insignia': () => t('account.refusal.noInsignia', 'The Broker does not sell that any more. The game may need updating.'),
   owned: () => t('account.refusal.owned', 'Your account already owns that.'),
+  bought: () => t('account.refusal.bought', 'You have bought from the Panoply this week. Come back next week.'),   // EG-E1: the Broker's Panoply sink, once a week (server-account/src/egEconomy.js egSink)
+  piece: () => t('account.refusal.piece', 'The Broker does not sell that piece. The game may need updating.'),
   short: () => t('account.refusal.short', 'Your account has too few embers for that.'),   // WB12a; WB13b: the card says the rule; AUDIT WB12d (A4): a rite's ember counts, and is no breach closed
   guest: () => t('account.refusal.guest', 'Insignia need a registered account. Add a username and password first.'),
   // ARENA4, the banners (server-account/src/arena.js arenaTeam)
@@ -671,6 +689,10 @@ const REFUSAL_WORDS = {
   'wed-partner': () => t('account.refusal.wedPartner', 'They cannot be wed now - they are wed already, of no house, or no longer the one who stood with you.'),   // AUDIT LEGACY III O1
   'lineage-too-large': () => t('account.refusal.lineageTooLarge', 'Your family\'s record has grown past what the realm keeps for one family.'),   // AUDIT LEGACY III O2/P1
   'wed-spent': () => t('account.refusal.wedSpent', 'That wedding was not yours to answer.'),
+  // REZ-BLOODLINE AUDIT R1 (server-account/src/legacy.js realmRaise): a party's Resurrect the realm will not take back
+  'not-dead': () => t('account.refusal.notDead', 'The realm holds no death of that character to take back.'),
+  'raise-late': () => t('account.refusal.raiseLate', 'Too late - that death stands for good now.'),
+  'raise-no-line': () => t('account.refusal.raiseNoLine', 'Only a character of a house (Project Legacy) is held for a Resurrect.'),
   // AUDIT REALM2 S2: the online acts that cost gold are a realm character's
   'realm-only': () => t('account.refusal.realmOnly', 'Only an online character of the realm can do that.'),
   // REALM P2.1: a trade's sid another pair settled (server-account/src/realmTrade.js)
@@ -1291,7 +1313,18 @@ export const lineHoldMs = (/** @type {unknown} */ wait, rand = Math.random) => {
  * handed the token again within TOKEN_REUSE_MS - the retry mints nothing. A relay deploy's reconnect wave was a mint a
  * player and another a busy refusal; it is a mint a player.
  *
- * @returns {((room?: string|null) => Promise<string|null>) & { lastWhy: string|null, coolMs: () => number, opened: (room: string|null, token: string) => void, unopened: (room: string|null, token: string) => void }}
+ * DOOR-TOKEN (FIELD BUGS 2026-10-16b, the Discord: "Partied players popping in and out randomly after leaving tombs at
+ * graveyard ... also partied players inside tombs are invisible for a time"): A TOKEN MINTED AHEAD OF THE DOOR. A place
+ * change opens a new room, and its socket asked for its token only as it opened - a mint on the wire (seconds, for a
+ * player: TOKEN-WAIT) between the door and the hello, the player invisible to the party on both sides of it. The host
+ * says a place change is coming and when the next room's socket will ask (`minter.ahead(room, withinMs)` -
+ * scenes/doorTokenHost.js, each door its own margin), and a mint goes then only when the token held could not open that
+ * room by then: none held, spent there, or its reuse minute out within `withinMs`. AUDIT (2026-10-16, A2): the margin was
+ * one 20 s (TOKEN_AHEAD_MS) at every door, though the next socket asks within a frame or a build: a door with the held
+ * token 40-60 s old minted though that token would still have opened the room - twice the mints at a 40-55 s door gap.
+ * `minter.holds(room)` says whether a room would be handed one now, nothing on the wire.
+ *
+ * @returns {((room?: string|null) => Promise<string|null>) & { lastWhy: string|null, coolMs: () => number, opened: (room: string|null, token: string) => void, unopened: (room: string|null, token: string) => void, ahead: (room?: string|null, withinMs?: number) => boolean, holds: (room: string|null) => boolean }}
  */
 export function accountTokenMinter({ fetch, storage, onIssued = null, character = null, now = () => Date.now(), rand = Math.random }) {
   /** @type {{ token: string, secret: string, character: string|null, at: number, rooms: Set<string> } | null} */
@@ -1306,22 +1339,15 @@ export function accountTokenMinter({ fetch, storage, onIssued = null, character 
     if (!(now() - held.at < TOKEN_REUSE_MS)) return null;
     return held.token;
   };
-  const minter = Object.assign(async (/** @type {string|null} */ room = null) => {
-    const session = storedSession(storage);
-    if (!session) { minter.lastWhy = 'no-session'; console.warn('[account] no identity token: no sign-in stored on this device'); return null; }   // TOKEN-WAIT
+  /** The character the next mint names (RENOWN1) - read at each ask; a seam that throws costs the level, never the hello. */
+  const namedNow = () => {
     let named = null;
-    try { named = character?.() ?? null; } catch { named = null; }   // a seam that throws costs the level, never the hello
-    named = typeof named === 'string' && named ? named : null;
-    const again = reuse(room, session.secret, named);
-    if (again) { minter.lastWhy = null; return again; }
-    // a mint already on the wire (the sockets of one connect open together): its token, if this room has not had it
-    if (minting) {
-      await minting.catch(() => null);
-      const shared = reuse(room, session.secret, named);
-      if (shared) { minter.lastWhy = null; return shared; }
-    }
-    // STORM-SHED: a failure's hold, while it runs, answers every room at once with its word - nothing on the wire
-    if (cool.secret === session.secret && now() < cool.until) { minter.lastWhy = cool.why; return null; }
+    try { named = character?.() ?? null; } catch { named = null; }
+    return typeof named === 'string' && named ? named : null;
+  };
+  /** One mint on the wire for this sign-in, shared by every room asking while it flies (`minting`), its answer held or
+   *  its failure's hold set (STORM-SHED) - the one door the minter and DOOR-TOKEN's `ahead` both mint through. */
+  const start = (/** @type {any} */ session, /** @type {string|null} */ named) => {
     const p = mintFresh(session, named).then((token) => {
       if (token) {
         held = { token, secret: session.secret, character: named, at: now(), rooms: new Set() };   // STORM-SHED: opened by a hello (`opened`), never by the mint
@@ -1336,7 +1362,25 @@ export function accountTokenMinter({ fetch, storage, onIssued = null, character 
       return token;
     });
     minting = p;
-    try { return await p; } finally { if (minting === p) minting = null; }
+    const done = () => { if (minting === p) minting = null; };
+    p.then(done, done);
+    return p;
+  };
+  const minter = Object.assign(async (/** @type {string|null} */ room = null) => {
+    const session = storedSession(storage);
+    if (!session) { minter.lastWhy = 'no-session'; console.warn('[account] no identity token: no sign-in stored on this device'); return null; }   // TOKEN-WAIT
+    const named = namedNow();
+    const again = reuse(room, session.secret, named);
+    if (again) { minter.lastWhy = null; return again; }
+    // a mint already on the wire (the sockets of one connect open together): its token, if this room has not had it
+    if (minting) {
+      await minting.catch(() => null);
+      const shared = reuse(room, session.secret, named);
+      if (shared) { minter.lastWhy = null; return shared; }
+    }
+    // STORM-SHED: a failure's hold, while it runs, answers every room at once with its word - nothing on the wire
+    if (cool.secret === session.secret && now() < cool.until) { minter.lastWhy = cool.why; return null; }
+    return start(session, named);
   }, {
     lastWhy: /** @type {string|null} */ (null),
     /** STORM-SHED: a hello carried `token` into `room` (net/online.js) - the relay spends it there, so that room is minted
@@ -1355,6 +1399,27 @@ export function accountTokenMinter({ fetch, storage, onIssued = null, character 
     coolMs: () => {
       const session = storedSession(storage);
       return session && cool.secret === session.secret ? Math.max(0, cool.until - now()) : 0;
+    },
+    /** DOOR-TOKEN: a place change is coming, into `room` when the host knows it (null: a room no token has opened yet),
+     *  its socket asking within `withinMs` - a mint goes NOW when the token held could not open it by then, so the socket
+     *  finds one held. Never a second mint while one flies, never through a failure's hold (STORM-SHED), never without a
+     *  sign-in. True when a mint went. */
+    ahead: (/** @type {string|null} */ room = null, withinMs = 0) => {
+      const session = storedSession(storage);
+      if (!session || minting) return false;
+      if (cool.secret === session.secret && now() < cool.until) return false;
+      const named = namedNow();
+      const by = now() + Math.max(0, Number(withinMs) || 0);   // AUDIT A2: when its socket asks - the door's own margin
+      const opens = !!held && held.secret === session.secret && held.character === named && by - held.at < TOKEN_REUSE_MS && !(room != null && held.rooms.has(room));
+      if (opens) return false;
+      start(session, named);
+      return true;
+    },
+    /** DOOR-TOKEN: does this minter hold a token `room` would be handed now, nothing on the wire (the reuse law) - a
+     *  session whose hello went without one asks again the moment it does (net/online.js). */
+    holds: (/** @type {string|null} */ room) => {
+      const session = storedSession(storage);
+      return !!session && reuse(room, session.secret, namedNow()) != null;
     },
   });
 
@@ -1559,6 +1624,36 @@ export function accountLamp({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
     // AUDIT FIVE-ASKS D3: a secret the service stopped honouring is not a session (forgetSession's law)
     claim: async () => { const r = await post('/v1/lamp/claim', {}); if (r?.error === 'auth') forgetSession(storage); return r; },
     account: () => storedSession(storage)?.id ?? null,   // AUDIT FIVE-ASKS D2: whose the lamp's answer is
+  };
+}
+
+/**
+ * EG-PLAY: THE ELITE BREACH (server-account/src/eg.js) through the one door - the Weir Keys the account holds and its live
+ * breach (`keys`), the open that stakes one (`open` - idempotent on its request id `rq`; `rh` the day's Rehearsal, no
+ * key), a member's admission (`admit`) and a receipt the relay signed (`claim` - EG-E1: with the claiming character, its
+ * guild's deed). EG-E1: the Broker's Panoply piece (`sink` - one of EG_PANOPLY_IDS, once an account an arena week; the
+ * week's sale rides `keys`' `sink`); EG-E2: the three boards (`board` - the Descent's brackets, the Depths, the Deepest
+ * Redoubts: ui/eliteGates/egBoardWindow.js reads it). Every answer is `call`'s shape, waited for ACCOUNT_ACT_WAIT_MS at most; no session
+ * is `no-session`, never a throw. `me()` the signed-in account's id - the receipts this device may offer are its alone
+ * (AUDIT WB A9's law); `guest()` whether it is a guest's.
+ */
+export function accountEg({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
+  const post = waitedPost({ fetch, storage }, waitMs);
+  return {
+    keys: () => post('/v1/eg/keys', {}),
+    // EG-F: the open carries the start window's choice - its start Redoubt `ew` and its Wager `wg` (none: Hall 1, no Wager)
+    // AUDIT EG IV (lane3 #1): `again` - an open whose answer was lost, asked by its own request id for the stake it took alone
+    open: (rq, rh = false, { ew = 0, wg = [], again = false } = {}) => post('/v1/eg/open', { rq, ...(rh ? { rh: 1 } : {}), ...(ew > 0 ? { ew } : {}), ...(wg?.length ? { wg: [...wg] } : {}), ...(again ? { again: 1 } : {}) }),
+    /** EG-F: the start window's preflight - which starts each member of my party (`subs`) may make. */
+    starts: (subs) => post('/v1/eg/starts', { subs: [...subs] }),
+    admit: (b) => post('/v1/eg/admit', { b }),
+    board: () => post('/v1/eg/board', {}),   // EG-E2: the three boards (server-account/src/egHonours.js egBoardOf)
+    claim: (receipt, character = null) => post('/v1/eg/claim', { receipt, ...(typeof character === 'string' && character ? { character } : {}) }),   // EG-E1: the claiming character - its guild's deed
+    sink: (piece) => post('/v1/eg/sink', { piece }),   // EG-E1: the Broker's Panoply piece, once a week
+    find: (tier) => post('/v1/eg/find', { tier }),   // EG-E3: a dungeon elite's find (section 5) - `{ found, keys, asks }`
+    first: (bits) => post('/v1/eg/first', { bits }),   // EG-ZF: the first-time lines shown, kept once an account (section 27.7) - `{ first }`
+    me: () => storedSession(storage)?.id ?? null,
+    guest: () => (storedSession(storage)?.kind ?? null) === 'guest',
   };
 }
 

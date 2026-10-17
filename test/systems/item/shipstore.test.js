@@ -59,7 +59,10 @@ test('SHIP-STORE: the ship\'s chest opens BESIDE the pack, and an item goes in; 
 
 test('SHIP-STORE: the host says storage for the player\'s own, and never for a stranger\'s or a shop\'s', () => {
   const m = rd('src/scenes/worldModes.js');
-  assert.match(m, /loot: \{ items: \(\) => c\.items, storage: !privateProperty \},/, 'an owned house\'s or ship\'s cupboard (openLoot without privateProperty)');
+  // PIN MOVED (FIELD BUGS 2026-10-16b STOLEN-GOODS): the two loot targets also say whose goods they are (`stolen`).
+  // PIN MOVED (STOLEN-GOODS AUDIT S1): as the owner's keeping, taken as the window opens (`stolenFrom` - none for one's own)
+  assert.match(m, /loot: \{ items: \(\) => c\.items, storage: !privateProperty, stolenFrom: before \},/, 'an owned house\'s or ship\'s cupboard (openLoot without privateProperty)');
+  assert.match(m, /const before = privateProperty \? new Set\(c\.items \?\? \[\]\) : null;/, 'an owned cupboard keeps no one else\'s goods');
   assert.match(m, /interiorInventory\(\{ loot: \{ items: \(\) => interiorDecor\.itemsOf\(id\), storage: true \} \}\)/, 'a placed storage piece, opened for its owner alone');
-  assert.match(m, /loot: \{ items: \(\) => shelf\.items \},/, 'a closed shop\'s shelf is stealing, never storage');
+  assert.match(m, /loot: \{ items: \(\) => shelf\.items, stolenFrom: shelfBefore \},/, 'a closed shop\'s shelf is stealing, never storage');
 });

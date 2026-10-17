@@ -5482,6 +5482,17 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     return bundle;
   }
 
+  /** EG-ZN (2026-10-12, bible/11-Multiplayer/Elite-Gates.md section 11.8): A VIEW OF A MESH - `mesh`'s own VAO drawing
+   *  only `subMeshes` (runs of its own indices, `{ textureArchive, textureRecord, startIndex, primitiveCount }` each), so
+   *  a part of one upload draws apart from the rest (the Spire's occluders dithered out - scenes/eliteGates/egOcclude.js). It owns no
+   *  buffer and no VAO: drawn `noShadow` alone (the shadow record is its mesh's), never handed to destroyMesh (its mesh's
+   *  free is the free), never drawn once its mesh is dead - null for a dead or bufferless mesh. The sub-meshes are its
+   *  own copies, so drawMesh's stamps never land on the caller's. */
+  meshView(mesh, subMeshes) {
+    if (!mesh?.vao || mesh._dead || mesh.viewOf) return null;
+    return { vao: mesh.vao, subMeshes: subMeshes.map((sm) => ({ ...sm })), buffers: [], triIndices: mesh.triIndices, bounds: mesh.bounds, viewOf: mesh };
+  }
+
   /** CSA-B: A MESH WHOSE VERTICES MOVE - Come Sail Away's baked sails, which FixDeformations re-bakes every tenth
    *  of a second (world/skinnedBake.js). The positions and normals are written over the two buffers createMesh
    *  made - a bake never changes the vertex count, so the sizes match - and the bounds the shadow replays cull by

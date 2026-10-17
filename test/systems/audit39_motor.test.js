@@ -31,8 +31,9 @@ import { Collider } from '../../src/player/collider.js';
 import { TRANSPORT_MODES, DF_RIDE_BASE } from '../../src/systems/transport.js';
 import { held, mouseCode, MOUSE_CODES, setBindings } from '../../src/ui/input.js';   // 39r: the AutoRun key's own reachability
 import { createBindings, resetDefaults } from '../../src/systems/inputActions.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
-const src = (p) => readFileSync(new URL(`../../src/${p}`, import.meta.url), 'utf8');
+const src = (p) => hostText(`src/${p}`);
 const I = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
 const DT = 1 / 60;
 

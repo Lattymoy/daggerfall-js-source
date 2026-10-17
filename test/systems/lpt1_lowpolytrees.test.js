@@ -30,9 +30,10 @@ import { SeasonHelper } from '../../src/systems/seasonsIliacBay.js';
 import { SEASONS } from '../../src/systems/gameDate.js';
 import { perspective, lookAt, mirrorProjectionX } from '../../src/world/mat4.js';
 import { glslFunctions, GlslDiscard } from '../glsl.mjs';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const read = (p) => readFileSync(join(ROOT, p), 'utf8');
+const read = (p) => hostText(p);
 const bytes = (p) => new Uint8Array(readFileSync(join(ROOT, p)));
 const V = 'vendor/low-poly-trees/Trees';
 const JSON_ = JSON.parse(read(`${V}/trees.json`));
@@ -935,7 +936,7 @@ test('LPT1 the felled trees: a sink or a stand moves FOREST_STAMP (the near set 
 });
 
 test('LPT1 the hosts: world.js and exterior.js stand the trees behind the mod\'s switch and ?trees=off, through the one door; a far-picture batch a handle, HELD while it stands (AUDIT LPT B5), MAC1\'s far rings reading the flat\'s own height (AUDIT LPT A8/B1); the near set handed on between the gibs\' call and the wind (WIND3 keeps the wind and the flats\' draw adjacent), culled to the view; the terrain\'s own flats alone take DFU\'s variety', () => {
-  const w = read('src/scenes/world.js'), x = read('src/scenes/exterior.js');
+  const w = hostText('src/scenes/world.js'), x = read('src/scenes/exterior.js');
   for (const [name, src] of [['world.js', w], ['exterior.js', x]]) {
     assert.match(src, /modSetting\('low-poly-trees', 'Enabled'\) && params\.get\('trees'\) !== 'off' \? createLowPolyTrees\(/, name);
     assert.match(src, /renderer\.createBillboardBatch\(archive, far\.record, far\.size, centers, \{ scales/, name);

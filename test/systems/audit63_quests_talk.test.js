@@ -26,8 +26,9 @@ import { expandMessageBoxTokens } from '../../src/systems/talk/talkMacros.js';
 import { TextRsc, RSC, TOKEN_TEXT } from '../../src/formats/textRsc.js';
 import { tokenRows } from '../../src/ui/messageBox.js';
 import { NativeTalkWindow, TALK_RECTS, COPIED_SHADOW_COLOR } from '../../src/ui/native/nativeTalk.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
-const src = (p) => readFileSync(new URL(`../../src/${p}`, import.meta.url), 'utf8');
+const src = (p) => hostText(`src/${p}`);
 
 // ── F46: MobilePersonMotor's fifth term reaches both hosts ───────────
 // MUTANT: delete either `inBeastForm:` line from the two argument

@@ -43,6 +43,7 @@ import { mountEnhancedMerchantPanel, MERCHANT_ICONS } from '../../src/ui/enhance
 import { REFORGE_CSS, PLUS_CSS } from '../../src/ui/enhanced/enhancedPlusStyle.js';
 import { BROKER_CSS } from '../../src/ui/enhanced/enhancedPlusStyle.js';
 import { refusePress, brokerSkinCss } from '../../src/ui/brokerWindow.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const lit = (rows) => rows.join('').split('').filter((c) => c === '#').length;
 
@@ -301,7 +302,7 @@ test('MENU-ORDER the rest: the Vendor page\'s pieces and the Market\'s crafted p
   assert.deepEqual(shop.querySelectorAll('.tavern-act').map((b) => b.attrs['data-dficon'] ?? null), ['anvil', 'talk', 'treasure', 'back', null], 'each known press its glyph, an unknown one its word alone');
   for (const icon of Object.values(MERCHANT_ICONS)) assert.ok(DFICON_ROWS[icon]);
   // THE HOST HANDS THE PICTURES OVER (scenes/world.js): the Stores page's, the board's market and traders, a stall's, the Vendor page's
-  const W = readFileSync(new URL('../../src/scenes/world.js', import.meta.url), 'utf8');
+  const W = hostText('src/scenes/world.js');
   assert.match(W, /book: profBook, name: \(k\) => materialLabel\(k\), withdraw: [^\n]*\n\s*picture: \(k, wake\) => materialPicture\(k, \{ onReady: wake \}\),/, 'the Stores page');
   assert.match(W, /hubs: marketHubs, name: \(k\) => materialLabel\(k\), countName: materialCountLabel,\n\s*picture: \(k, wake\) => materialPicture\(k, \{ onReady: wake \}\), itemPicture: \(it, wake\) => itemPicture\(it, \{ onReady: wake \}\), piecePicture: marketPiecePicture,/, 'the market');
   assert.equal((W.match(/picture: \(it, wake\) => itemPicture\(it, \{ onReady: wake \}\),/g) ?? []).length, 3, 'the board\'s traders, a stall and the Vendor page');
@@ -556,7 +557,7 @@ test('MENU-ORDER a ship\'s own picture on the shipmaster\'s card: her portrait b
   assert.notEqual(sp.picture(4, () => box), p4, 'asked again');
   assert.equal(sp.pending(), 1);
   // the world's hand-over: the pool's portrait, the window's ask, the frame's turn after the decorator's preview
-  const w = readFileSync('src/scenes/world.js', 'utf8');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /const shipPortraits = createShipPortraits\(\{ renderer, canvas, doc: [^\n]*portrait: \(hull\) => \(csaOn\(\) \? csa\.portrait\(hull\) : null\) \}\);/);
   assert.match(w, /picture: \(hull, where\) => shipPortraits\.picture\(hull, where\),/);
   assert.match(w, /yards\?\.drawPreview\(\);[^\n]*\n    shipPortraits\.draw\(\);/);
@@ -596,7 +597,7 @@ test('AUDIT MENU-ORDER the passes: a panel\'s ground is its whole rect (R1); the
   assert.deepEqual(log.filter((c) => c[0] === 'viewport').at(-1).slice(1), [10, 400 - 180, 300, 160], 'the panel\'s viewport after it');
   r.endPanelFrame();
   // R2: the world's frame shows itself, takes its shots, then draws the panels
-  const w = readFileSync('src/scenes/world.js', 'utf8');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /deliverOwedShots\(\);[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*yards\?\.drawPreview\(\);[^\n]*\n\s*shipPortraits\.draw\(\);/, 'after the frame and its shots');
   assert.equal(w.split('yards?.drawPreview();').length, 2, 'and nowhere amid the world pass');
   assert.equal(w.split('shipPortraits.draw();').length, 2);
@@ -669,7 +670,7 @@ test('AUDIT MENU-ORDER the passes: a panel\'s ground is its whole rect (R1); the
   room.tool.drawPreview(b);
   assert.equal(room.draws.filter((d) => d.panel && d.panel.rect.w === DECOR_THUMB_PX).length, 0, 'none drawn again');
   assert.match(readFileSync('src/scenes/interiorContext.js', 'utf8'), /\n  markRemapLaw\(texRemap, `climate:\$\{climateBase\}\.\$\{season\}`\);/, 'a building\'s table named by its climate and season');
-  assert.match(w, /const texRemap = markRemapLaw\(new Map\(\), `climate:\$\{townClimateBase\}\.\$\{season\}`\);/, 'a town\'s (a yard\'s) the same');
+  assert.match(w, /const texRemap = markRemapLaw\(new Map\(\), `climate:\$\{townClimateBase\}\.\$\{host\.season\}`\);/, 'a town\'s (a yard\'s) the same');
   assert.match(readFileSync('src/scenes/worldModes.js', 'utf8'), /thumbHold: \(\) => placeHoldOf\('decor-thumbs', 'interior'\),/, 'the room\'s decorator asks through a hold of its own');
   assert.match(readFileSync('src/scenes/homeYards.js', 'utf8'), /\.\.\.\(deps\.meshes\.hold \? \{ thumbHold: \(\) => deps\.meshes\.hold\('decor-thumbs', 'yard'\) \} : \{\}\),/, 'and a yard\'s');
 });

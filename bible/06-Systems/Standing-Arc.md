@@ -48,8 +48,11 @@ gold, or come with me."* (or *"You are banished from ..."*).
 
 - **P - pay**: the court's own Criminal Conspiracy penalty at that standing, every unit in coin and no days (520 at -11,
   720 at -50, 1,000 at -100; double for a banished face). The fine mends the name a penance's five points, never past
-  the -10 line (FINE-MENDS, `01-Overview/bugs/Field-Bugs-2026-10-14.md`), and a day's grace follows. Offered only to a purse
-  that can pay.
+  the -10 line (FINE-MENDS, `01-Overview/bugs/Field-Bugs-2026-10-14.md`) - and the region's People half of them, never past 0
+  (FINE-PEOPLE, `01-Overview/bugs/Field-Bugs-2026-10-16b.md`: the charge's People half, which the kingdom and the commoners
+  read, was left whole by a fine; its AUDIT S5: each step is the People's half of what the law was owed before it less
+  its half of what is owed after, so the steps add up to the charge's half and a run of answers leaves the People whole -
+  `trunc(5 / 2)` a step had left one Theft's People -1 for good) - and a day's grace follows. Offered only to a purse that can pay.
 - **S - come quietly**: a Criminal Conspiracy, charged once, and the court - whose sentence gives the charge back.
 - **R - refuse**: the Conspiracy held and the watch called as a seen crime calls it; the chase is DFU's from there.
 
@@ -105,7 +108,8 @@ started (DFU: -16).
   nothing to a good name). A positive standing wears down on DFU's 112 days only; the 112th day pays a bad name one
   point, not two. At the 12x clock a week is about fourteen real hours: -20 is home in about twelve real days untouched.
 - **A penance** at the region's temple (the donation's priest, before DFU's donation field): five points of the region's
-  law back toward zero, never past it - 200 gold, then 400, 600, one step more each time in that region.
+  law back toward zero, never past it - 200 gold, then 400, 600, one step more each time in that region - and half of
+  them to the region's People, never past 0 (FINE-PEOPLE, as the fine's - the same telescoping half).
 - **A bounty contract** finished for a region's board: two points of its law (`bountyHost.js pay` -> `rewardContract`).
 - **Raid defence** already paid +5 (RAID1), and says so since AUDIT REP F5; quests and their `legal repute` actions pay
   as they did.
@@ -138,12 +142,61 @@ guild skills fall short of rank 0's bars is told the probation ends only once th
 (AUDIT GUILD-WORDS II A-6); online, where a promotion does not wait (PROMO-NOW), the days say "- sooner if you earn the
 next rank" (II C-7); a probation the next review would begin is warned, below 0 or short of the skills (II A-7); and a
 review that will demote says so before it lands - each with when (II A-8).
+OWED-PACE (2026-10-16, `01-Overview/bugs/Field-Bugs-2026-10-16c.md`; slater.mp3: "Can't gain reputation with the
+guild"): online the review counts what the Roll still owes the guild (`ctx.owed`, onPushEffects's standingOwedOf -
+`11-Multiplayer/Chapters-Arc.md` 3.3) against the EXPULSION alone: a member it would expel whose standing with the owed is
+-10 or more is put on probation again. The review runs on the character's days and the Roll pays on real ones, so a
+member whose quests had earned their way back was expelled before the reward arrived. The owed never ends a probation
+and never buys a rank.
 
 ## QFAIL-FREE - a missed quest costs nothing online
 
 `quest/quest.js endQuest` (2026-10-02, Mac: "Soften failure cost"): online a quest that ends unfinished no longer charges
 DFU's -2 through the faction tree. TIME3's countdowns run on your own clock, so travel and rests time quests out, and
 that -2 was what players read as standing decaying. A success still pays +5; offline DFU's -2 stands.
+
+## STOLEN-GOODS - a stolen piece is marked, a fence's last stop, and the court takes it
+
+FIELD BUGS 2026-10-16b (`01-Overview/bugs/Field-Bugs-2026-10-16b.md`, STOLEN-GOODS; the Discord: "you steal something from the
+shelf and can sell it back to an NPC, and he'll put the item back on the shelf again, and it just goes in a circle ...
+Also, when you're sent to prison, all the stolen items stay with you"). Three rules, the port's own - DFU's items carry
+no theft, its Sell discards every sold piece (ConfirmTrade's `remoteItems.Clear()`, DaggerfallTradeWindow.cs:1051) and
+its court (DaggerfallCourtWindow) takes nothing:
+
+- **The mark.** A piece taken from someone else's keeping carries `stolen: true` (`systems/stolenGoods.js`; declared in
+  `itemFields.js`, so the save, the wire and a realm trade carry it - a hand-off launders nothing, it is never a
+  receiver's mark). Written at every theft arm, as the piece moves: the open shop's Steal on both skins (`nativeTrade.js`
+  _doSteal, `enhancedTrade.js` runSteal - the success arm); every take of the OWNER'S piece through the inventory window
+  over a loot target whose host hands over the owner's keeping - the Set of the target's records as the window opens
+  (`loot.stolenFrom`): a shut shop's shelf and a stranger's cupboard (`worldModes.js` openShelf and the `container:` arm),
+  a robbed caravan's goods (`world.js` caravanHost's openLoot); `inventorySession.js` theftTarget, `itemTransfer.js`
+  applyTransfer, `stolenGoods.js` takenFromKeeping; and a lawful ship's hold, taken by Piracy (`navalHost.js` winBoarding,
+  as her hold is drawn), and the casks of a lawful ship I sank (`navalHost.js` stolenCasks - hauled or stowed); a
+  pirate's hold, one past the Veil, the casks of a ship another sank and a wreck's stores are not. Marked BEFORE the
+  piece lands, because a landing is where a stack merges; a stolen piece stacks only with stolen kin and a split keeps the
+  mark (`inventory.js` stacksWith, splitStack). The owner's piece put back is theirs again; the player's own piece through
+  a target stays theirs, and a piece stolen elsewhere is not laundered by one (STOLEN-GOODS AUDIT S1). The theft's own law
+  reads the same keeping - a stranger's cupboard's basket (a handful off a stack and a handful of coin counted) and the
+  shut shelf's tally (`theft.js`, a departure from DFU's count) - so the mark and the crime agree. A pickpocket pinches
+  coin, and coin carries no mark.
+- **The fence.** A merchant pays for a stolen piece and is rid of it: it never reaches a shelf (`stolenGoods.js`
+  landSold, both of `worldModes.js`'s sale arms - the counter's commitTrade and the keyed doSell), so it cannot be
+  bought back and stolen again. An honest sale still lands on the open shelf (Port-Ledger T2, narrowed). No shelf piece
+  is stolen: a peer's word for a shelf or a cupboard lands clean (and this build's own goes out clean), and a piece
+  bought at a counter is the buyer's, honestly (`interiorShared.js` applyInteriorLoot and interiorLootRecords,
+  `tradeModes.js` markCounterBought - AUDIT S3). A town's patron buys no stolen piece off a hired trader (`patronLaw.js`
+  patronTakes, AUDIT S6; acct146) - a player may, the mark riding.
+- **The court.** Every guilty exit - a sentence served, a fine paid, banishment, the failed defence's verdict, and so
+  the watch's "come quietly" - takes every stolen piece the prisoner carries: the pack's, worn or held (taken off its
+  slot first; a lit torch goes out), and the Materials Bag's - a stolen bag's honest goods put in the pack, never left in
+  a list nobody owns (AUDIT S2) - (`court.js` confiscateStolen, called by `arrestFlow.js` finish at the verdict). The
+  release says it once: "The guards take the stolen goods you carried (N items)." An acquittal and a guild's rescue
+  take nothing - no crime found, and the guild got you out. The wagon and a home's storage are not searched, and the
+  watch's fine on the spot is a fine, not a search.
+
+Pinned by `test/systems/fb1016b_stolengoods.test.js` (13) over the real shelves, both skins' Steal and inventory, the Sell window,
+the arrest flow, the room's landing, the naval host's boarding and the listing's record; `tools/mutants/
+fb1016b_stolengoods.json` (53, all dead). The AUDIT (2026-10-16): `01-Overview/bugs/Field-Bugs-2026-10-16b.md` STOLEN-GOODS.
 
 ## REPUTE-GATE - online, two Mages Guild quests wait for the standing their headers name
 

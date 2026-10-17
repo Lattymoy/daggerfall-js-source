@@ -21,6 +21,7 @@ import { SKILLS } from '../../src/systems/skills.js';
 import { WEAPON_REACH, SWING_MODS } from '../../src/combat/playerWeapon.js';
 import { validDuelData, DUEL_LEVEL_MAX, DUEL_STAT_MAX, DUEL_SWINGS } from '../../src/net/wire.js';
 import { DUEL_RADIUS_M, NATIVES_PER_M } from '../../src/net/duel/duelSession.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const lcg = (seed) => { let s = seed >>> 0; return () => { s = (Math.imul(s, 1664525) + 1013904223) >>> 0; return s / 4294967296; }; };
@@ -166,7 +167,7 @@ test('DUEL1 WHERE A BLOW MAY COME FROM: the striker\'s claimed feet near where t
 });
 
 test('DUEL1 hosts by source: the swing reaches my opponent before any pool and is theirs when it left; my shaft on them is a strike and a foe\'s stops on them; my harmful spells meet them as a mark (touch, missile, blast, area) through the duel\'s door; INT8: my blow out a number rolled on my own sheet for the referee, the defender\'s half gone; the travel map, a journey, rest and every door refuse a duellist (mutants: the melee arm after the pools; the shaft\'s damage dealt at home; a defender\'s half left; a door out of the ring)', () => {
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /if \(duelMeleeHit\(cam\.pos, makeInView\(proj, view, multiply\)\)\) \{\s*\n\s*tallySwingSkills\(playerEntity, weaponRig\.playerWeapon\.weapon, weaponRig\.playerWeapon\.blowWeight\);\s*\n\s*surfacePlayer\(\);\s*\n\s*\} else if \(!cityGuards\.resolvePlayerHit/, 'the duel arm first, the ladder after');
   assert.match(w, /\.filter\(\(t\) => !t\.dead && t\.ai\)\.map\(\(t\) => \(\{ feet: t\.ai\.feet, ref: t \}\)\), \.\.\.duelArrowTargets\(\)\]/);
   assert.match(w, /onFoeHit: \(m, t\) => \(t\?\.duel \? undefined : exteriorFoes\.arrowHitFoe\(m, t\)\)/);

@@ -25,6 +25,13 @@
 // A gate that is not open says why; a relay that cannot hold a gate's arena says "not yet" (`ready()` false - the
 // wire's relaySupportsGate, WB3), and nothing else happens.
 //
+// EG-F (2026-10-12, the Elite Gates arc; bible/11-Multiplayer/Elite-Gates.md section 6.3): AND THE ELITE BREACHES'
+// ARCHES, which are this stone at 0.62 (scenes/eliteGates/egArch.js, the pool that owns them, handed in as `arches`): stood in this
+// pool's frame, their stones drawn in its world pass, their fires and gold beacons in its pass beside the gate's (each
+// with its own per-draw values - render/gate/gatePass.js gatePassValues; the gate's record names none and draws as it drew),
+// their lights, eye boxes, plaques and presses answered beside the gate's. The host's frame already runs this pool's
+// every door, so the arches need no statement of their own there (PERF-V8).
+//
 // Not a DFU member. Ledger A (WB).
 import { buildGateModel, gateArchProfile, insideGateStone, GATE_ARCHIVE, GATE_HEIGHT, GATE_HALF_W, PORTAL_CENTRE_Y, ARCH_Y0, ARCH_Y1, ARCH_PROFILE_N } from '../../world/gate/gateModel.js';
 import { gateArt } from '../../world/gate/gateArt.js';
@@ -151,7 +158,7 @@ export function gateLocal(place, p) {
  *   now: () => number, feet?: () => (number[]|null), say?: (text: string) => void, banner?: (text: string|null) => void,
  *   ready?: () => boolean, enter?: (gate: any) => void, landBefore?: (gate: any) => boolean,
  *   groundAt?: ((px:number, py:number, x:number, z:number) => number)|null,
- *   marks?: (card: any) => void,
+ *   marks?: (card: any) => void, arches?: any,
  * }} deps
  *   WB9a: `marks` is handed the marks' card while the banner stands (ui/gate/gateMarksView.js marksCardModel - the day's
  *   marks, the ones the relay's fight is born under), null otherwise.
@@ -159,7 +166,7 @@ export function gateLocal(place, p) {
 export function createGatePool({
   renderer = null, gl = null, collider = () => null, standing, pixelTranslation, heightAt, now,
   feet = () => null, say = () => {}, banner = () => {}, ready = () => false, enter = () => {}, groundAt = null,
-  landBefore = () => false, marks = () => {},
+  landBefore = () => false, marks = () => {}, arches = null,
 }) {
   const model = buildGateModel();
   /** AUDIT WBX W6: the fire's box, made when the gate's place moves - the hover asked for a new one every frame */
@@ -237,6 +244,8 @@ export function createGatePool({
   return {
     /** One frame: where the gate stands now, its fire's ease, its collider, the step through it, the countdown. */
     frame(dt = 0) {
+      try { arches?.frame?.(dt); } catch (e) { console.warn('[eg] arches', e?.message ?? e); }   // EG-F: the Elite Breaches' arches, stood beside the gate
+      if (arches?.stands?.()) ensurePass();
       g = standing?.() ?? null;
       place = g ? gatePlacement(g, { pixelTranslation, heightAt, now: now(), groundAt }) : null;
       const target = place?.phase === 'open' ? 1 : 0;
@@ -265,45 +274,54 @@ export function createGatePool({
     },
     /** The stone, in the host's world pass. */
     draw(r = renderer, texRemap = null) {
-      if (!place || place.coarse || !mesh || !r?.drawMesh) return 0;
+      const n = arches?.draw?.(r, texRemap) ?? 0;   // EG-F: the arches' stones
+      if (!place || place.coarse || !mesh || !r?.drawMesh) return n;
       r.drawMesh(mesh, matrixOf(place), texRemap);
-      return 1;
+      return 1 + n;
     },
-    /** AUDIT WB C7: whether a gate stands to be drawn - the host builds the pass's arguments only then. */
-    stands: () => !!place && !!pass,
-    /** The fire and the beacon: one foreign pass, after the world's (the duel wall's seat). */
+    /** AUDIT WB C7: whether a gate stands to be drawn - the host builds the pass's arguments only then. EG-F: or an arch. */
+    stands: () => !!pass && (!!place || !!arches?.stands?.()),
+    /** The fire and the beacon: one foreign pass, after the world's (the duel wall's seat). EG-F: the gate's record first,
+     *  as it always was, then each arch's. */
     drawPass(proj, view, eye, seconds, fog = null) {
-      if (!place || !pass) return 0;
-      pass.draw([{ origin: place.origin, yaw: place.yaw, open, fade: place.fade, spin, beaconOnly: !!place.coarse }], proj, view, eye, seconds, fog);
+      if (!pass) return 0;
+      const list = place ? [{ origin: place.origin, yaw: place.yaw, open, fade: place.fade, spin, beaconOnly: !!place.coarse }] : [];
+      for (const d of arches?.passDraws?.() ?? NO_GATE) list.push(d);
+      if (!list.length) return 0;
+      pass.draw(list, proj, view, eye, seconds, fog);
       return pass.drawn;
     },
-    /** The fire's light over the threshold, for the host's list. */
+    /** The fire's light over the threshold, for the host's list. EG-F: and each arch's. */
     lights() {
-      if (!place || place.coarse || place.fade <= 0) return NO_GATE;
-      return [adoptLight({ x: place.origin[0], y: place.origin[1] + GATE_LIGHT_UP, z: place.origin[2], range: GATE_LIGHT_RANGE * place.fade * (0.5 + 0.5 * open) }, place)];   // LIGHT-ID: the gate's fire, frame to frame
+      const al = arches?.lights?.() ?? NO_GATE;
+      if (!place || place.coarse || place.fade <= 0) return al.length ? al : NO_GATE;
+      const gl1 = adoptLight({ x: place.origin[0], y: place.origin[1] + GATE_LIGHT_UP, z: place.origin[2], range: GATE_LIGHT_RANGE * place.fade * (0.5 + 0.5 * open) }, place);   // LIGHT-ID: the gate's fire, frame to frame
+      return al.length ? [gl1, ...al] : [gl1];
     },
     /** The eye's box: the FIRE, not the stone - a player standing in the threshold is inside the gate's own bounds, and a
      *  box they stand in would win every press they made there. The opening's slab, turned with the gate. */
     targets() {
-      if (!place || !place.risen || place.coarse) return NO_GATE;
+      const at = arches?.targets?.() ?? NO_GATE;   // EG-F: each arch's fire
+      if (!place || !place.risen || place.coarse) return at.length ? at : NO_GATE;
       const o = place.origin;
       if (!box || !boxAt || boxAt[0] !== o[0] || boxAt[1] !== o[1] || boxAt[2] !== o[2] || boxAt[3] !== place.yaw || boxAt[4] !== place.day) {
         boxAt = [o[0], o[1], o[2], place.yaw, place.day];
         box = [{ key: `gate:${place.day}`, aabb: fireBox(place, profile, fireHalfW), distance: RAY_DISTANCE, reach: GATE_REACH, noSurface: true }];
       }
-      return box;
+      return at.length ? [...box, ...at] : box;
     },
     /** WORLD-HOVER: the gate's name, and its countdown under it. SET7: a RECORD, `{ title, subs }` - the ladder's shape
      *  (systems/worldHover.js composeNamer takes the first answer with a `title`): the string this answered was no answer
      *  at all, and the plaque never named the gate. */
     hoverName(key) {
+      if (typeof key === 'string' && key.startsWith('egarch:')) return arches?.hoverName?.(key) ?? null;   // EG-F: an arch's plaque
       if (typeof key !== 'string' || !key.startsWith('gate:') || !place || !g) return null;
       const cd = gateCountdown(g.t, now(), place.phase);
       const words = countdownWords(cd);
       return { title: GATE_TEXT.name, subs: words ? [...(cd.to === 'collapse' ? ['Sealed'] : []), words[0].toUpperCase() + words.slice(1)] : [] };   // GATE-COLLAPSE: sealed, and when it goes
     },
     /** A press on the gate. */
-    activate(key) { return typeof key === 'string' && key.startsWith('gate:') ? tryEnter() : false; },
+    activate(key) { if (typeof key === 'string' && key.startsWith('egarch:')) return !!arches?.activate?.(key); return typeof key === 'string' && key.startsWith('gate:') ? tryEnter() : false; },   // EG-F: an arch's door is its pool's
     /** The pool's state, for the tests and the probes. */
     state: () => ({ place, open, collider: !!colliderAt, mesh: !!mesh, pass: !!pass }),
     /** SET7 / AUDIT SET W5: where the gate stands this frame (gatePlacement's record), for the Broker who stands by it -
@@ -312,6 +330,7 @@ export function createGatePool({
     /** A transition takes the stone's collider down (the next frame stands it again where it belongs). */
     destroyAll() {
       collider()?.removeBucket?.(GATE_BUCKET);
+      arches?.downColliders?.();   // EG-F: and the arches' stones (stood again where they belong, next frame)
       colliderAt = null; place = null; lastLz = null;
       banner(null);
     },

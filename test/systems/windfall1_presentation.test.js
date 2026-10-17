@@ -16,8 +16,9 @@ import { registeredModSaveVendors } from '../../src/systems/modSaveData.js';
 import { executeConsoleCommand, hasConsoleCommand } from '../../src/systems/consoleCommands.js';
 import { setModSetting } from '../../src/systems/modSettings.js';
 import { glslFunctions } from '../glsl.mjs';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
-const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
+const read = (p) => hostText(p);   // HOST-SPLIT 2: a host whole
 const near = (a, b, eps, msg) => assert.ok(Math.abs(a - b) <= eps, `${msg ?? ''} ${a} vs ${b}`);
 /** a seeded 0..1 (UnityEngine.Random's stand-in) */
 const seeded = (s = 7) => () => { s = (Math.imul(s, 1103515245) + 12345) >>> 0; return (s >>> 8) / 16777216; };
@@ -313,8 +314,8 @@ test('WINDFALL1 the hosts: world.js and exterior.js build the one runtime on the
     assert.equal((s.match(/batch\.windfall = windfallResponse\(archive, record/g) || []).length, 3, `${host}: the far picture, the season's and the classic batch`);
     assert.match(s, /windfallOf: \(proto\) => _?lptWindfall\.get\(proto\) \?\? 0/, `${host}: the 3D trees by their far pictures' mask`);
   }
-  assert.match(read('src/scenes/world.js'), /windfall\.offsetOrigin\(r\.offset\);/);
-  assert.match(read('src/scenes/world.js'), /csaReanchor\(state\.initOffset\);[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*snowfall\.offsetOrigin\(state\.initOffset\);\n\s*windfall\.offsetOrigin\(state\.initOffset\);/, 'AUDIT ENVIRONS: a teleport\'s new frame carries the anchor and the leaves in the air, as a recentre does');
+  assert.match(hostText('src/scenes/world.js'), /windfall\.offsetOrigin\(r\.offset\);/);
+  assert.match(hostText('src/scenes/world.js'), /csaReanchor\(state\.initOffset\);[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*snowfall\.offsetOrigin\(state\.initOffset\);\n\s*windfall\.offsetOrigin\(state\.initOffset\);/, 'AUDIT ENVIRONS: a teleport\'s new frame carries the anchor and the leaves in the air, as a recentre does');
   assert.match(read('src/scenes/yardNature.js'), /batch\.windfall = pic\.windfall;/);
   for (const host of ['src/scenes/worldModes.js', 'src/scenes/dungeonContext.js']) assert.doesNotMatch(read(host), /createWindfallHost/, `${host}: none`);
   // the passes: the shadow and the air replay by the law the flats were drawn with

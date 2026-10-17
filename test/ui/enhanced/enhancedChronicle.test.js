@@ -5,6 +5,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { chronicleModel, chronicleLines, chronicleEntry, CHRONICLE_SECTIONS } from '../../../src/ui/enhanced/enhancedChronicle.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const read = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const T = (text) => ({ formatting: 'text', text });
@@ -239,7 +240,7 @@ test('PX24d: the journal goes through the door, on every host that has one', () 
   // reaches the chronicle through it; the dungeon has its own; the
   // exterior has NO journal at all and honestly builds none, which is
   // why PX25 gave it no Chronicle button.
-  const world = read('src/scenes/world.js');
+  const world = hostText('src/scenes/world.js');
   assert.match(world, /const makeJournalWindow = \(mode\) => \{[\s\S]{0,900}return createChronicleWindow\(\{/);
   assert.doesNotMatch(world, /return new QuestJournalWindow\(\{/, 'the host no longer builds the classic window itself');
   assert.match(world, /makeJournal: \(mode\) => makeJournalWindow\(mode\)/, 'and the host bag carries it for worldModes');

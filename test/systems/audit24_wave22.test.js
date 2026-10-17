@@ -8,6 +8,7 @@ import { HudText } from '../../src/ui/hud/hudText.js';
 import { PlayerNotebook } from '../../src/systems/notebook.js';
 import { STATIC_NPC_ACTIVATION_DISTANCE, DEFAULT_ACTIVATION_DISTANCE } from '../../src/systems/talk/talk.js';
 import { midDateTimeString } from '../../src/systems/gameDate.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const rd = (f) => readFileSync(new URL(`../../${f}`, import.meta.url), 'utf8');
 
@@ -80,7 +81,7 @@ test('audit24 wave22: the TG/DB map reveal files its notebook note', () => {
   // The port's revealLocation discovered the dungeon and then only
   // console.warn'd "the notebook note pends its surface" - a seam that
   // had in fact been wired 340 lines above it since wave 4.
-  const s = rd('src/scenes/world.js');
+  const s = hostText('src/scenes/world.js');
   assert.match(s, /readMapTG: 'The Thieves Guild have revealed the closely-guarded whereabouts of a treasure trove called %map\.'/);
   assert.match(s, /readMapDB: 'The Dark Brotherhood revealed the secret of some treasure-laden crypts located somewhere called %map\.'/);
   assert.match(s, /questBridge\?\.notebook\?\.addNote\(REVEAL_NOTE_TEXT\[noteKey\]\?\.replace\('%map', noteKey === 'readMap' \? shown : picked\.name\) \?\? ''\);/);

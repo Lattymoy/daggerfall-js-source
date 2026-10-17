@@ -25,9 +25,10 @@ import {
 import { interiorGlassMask, interiorWindowOf, isInteriorGlassArchive, GLASS_INDEX, GLASS_RAMP, INTERIOR_WINDOW, glassMaskFromAlpha, glassTexelCount } from '../../src/world/interior/interiorGlass.js';
 import { perspective, lookAt, mirrorProjectionX, identity, multiply } from '../../src/world/mat4.js';
 import { TextureFile } from '../../src/formats/textureFile.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const rd = (p) => readFileSync(join(ROOT, p), 'utf8');
+const rd = (p) => hostText(p);
 const I = identity();
 const px = { width: 1, height: 1, colors: new Uint8ClampedArray([255, 255, 255, 255]) };
 
@@ -455,7 +456,7 @@ test('RW1 view V10: THE FOUR HOSTS, the interior arm - the view out is asked onc
     assert.doesNotMatch(s, /outsideViewClip|VIEW_CLIP_PAD/, `${host}: the building's box is gone`);
     assert.match(s, /return sunDirection\(clockMinute\);/, `${host}: the clock's sun`);
   }
-  assert.match(rd('src/scenes/world.js'), /if \(ring > VIEW_RINGS\) continue;/, 'the streamed world walks VIEW_RINGS out');
+  assert.match(hostText('src/scenes/world.js'), /if \(ring > VIEW_RINGS\) continue;/, 'the streamed world walks VIEW_RINGS out');
   // the background's ray and sky are the camera's own
   const proj = mirrorProjectionX(perspective(1, 1.6, 0.05, 500)), view = lookAt([0, 1, 0], [0, 1, -5], [0, 1, 0]);
   const rays = viewRays(proj, view);
@@ -528,7 +529,7 @@ test('RW1 (AUDIT) THE STREET AS IT STANDS NOW: its air re-lit by the clock (a ni
   AirPass.prototype._replayEmission.call(fake, { blackTex: 'black', windowEmission: [0.8, 0.57, 0.18], bindVao: (v) => binds.push(v) }, { count: 1, records: [{ kind: 0, mesh, matrix: I, bounded: false }] }, I, null);
   assert.deepEqual(binds, [null, mesh.vao], 'the shadow forgotten first, then the mesh bound');
   // the hosts
-  const w = rd('src/scenes/world.js'), ex = rd('src/scenes/exterior.js'), wm = rd('src/scenes/worldModes.js'), rr = rd('src/render/renderer.js');
+  const w = hostText('src/scenes/world.js'), ex = rd('src/scenes/exterior.js'), wm = rd('src/scenes/worldModes.js'), rr = rd('src/render/renderer.js');
   for (const host of [w, ex]) assert.match(host, /r\.setFogColor\(clockFogColor\(keptFog, keptSun, r\._sunScale\)\);/);
   assert.match(w, /r\.setPointLights\(lightsOnAt\(clockMinute\) \? outsideLanterns\(r\) : new Float32Array\(0\), CITY_LIGHT_COLOR_F32\);/);
   assert.match(ex, /r\.setPointLights\(lightsOnAt\(clockMinute\) \? nearestLights\(cityLights, cam\.pos, r\.maxPointLights, lightAnimator\.ranges\) : new Float32Array\(0\), CITY_LIGHT_COLOR_F32\);/);

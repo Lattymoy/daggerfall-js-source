@@ -10,8 +10,8 @@
 // THE FIXTURE IS WRITTEN HERE, not recorded. A committed .fbx would be
 // a blob nobody can read in a diff, and - worse - a pin whose input
 // nobody can change to ask a new question. `writeFbx`
-// (test/fixtures/fbxWrite.mjs, this file's own writer until the MW-FOLK1
-// audit's cut pins needed it too) is forty lines of the same container
+// (tools/fbxWrite.mjs, this file's own writer until EG6c's reference
+// hero fragment and the MW-FOLK1 audit's cut pins needed it too) is forty lines of the same container
 // tools/fbxRead.mjs reads, so the pin drives the reader against bytes
 // the writer wrote: if the two ever disagree about the format, one of
 // them is wrong and the suite says so.
@@ -19,7 +19,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFbx, nodeAt, childNamed, objectName, property70 } from '../../tools/fbxRead.mjs';
 import { bakeMesh, objectMaterials, polygonsOf, eulerXYZ, basisMap, axisVector, earClip, isConvexPolygon } from '../../tools/fbxMesh.mjs';
-import { S, D, I, dArr, iArr, writeFbx } from '../fixtures/fbxWrite.mjs';   // the writer, one home
+import { S, D, I, dArr, iArr, writeFbx } from '../../tools/fbxWrite.mjs';   // the writer, one home
 
 // ── the fixture mesh ─────────────────────────────────────────────────
 //

@@ -63,6 +63,7 @@ import { billboardSize } from '../world/rmbFlats.js';   // PCORPSE1: a corpse st
 import { raceGenderPain3Sound, CLASSIC_PLAYER_DEATH_SOUND } from '../systems/playerDeath.js';   // PCORPSE1: the fallen player's own cry
 import { SEAT_HIP_DROP } from '../player/seatPose.js';   // CARDS2c: a seated sprite sinks by the seat's own drop
 import { RACES } from '../systems/races.js'; import { PeerClimbSounds, peerBodyYaw, peerMoving } from './peer/peerClimb.js';   // CLIMB5: a peer on the wall faces it, takes no stride, and is heard climbing
+import { peerHeard } from './peer/peerFx.js';   // EG-ZH: every peer sound through the place's scope (Elite-Gates.md section 26)
 import { PeerGatherSounds, peerGatherSwing, peerKneeling } from './peer/peerGather.js';   // PEER-ACTS: a peer gathering is seen at it and heard
 
 // ── PCORPSE1: THE FALLEN ──────────────────────────────────────────
@@ -84,6 +85,9 @@ import { PeerGatherSounds, peerGatherSwing, peerKneeling } from './peer/peerGath
 export const CORPSE_MS = 60_000;
 /** Bodies kept at once - a massacre is bounded like every other peer cache. */
 export const CORPSES_MAX = 32;
+/** RESURRECT1: how near a body (scene metres, on the ground) a player stands to be the one lying there - the rise rule's
+ *  reach, and an introduction's test for a body already laid (AUDIT ONLINE 3, the second read: `peerDeath`). */
+export const CORPSE_SAME_M = 2.5;
 /** The corpse row for a look: the class's own, else the Thief's (the class sprite's default). */
 export function corpseTextureFor(look) {
   const t = classMobileType(look?.class) ?? THIEF_MOBILE_TYPE;
@@ -490,8 +494,10 @@ export const PEER_SOUND_PROFILE = Object.freeze({ refDistance: 6, maxDistance: 3
 /** Past the far edge nothing is made at all (a panner and a source per step for a peer nobody can hear). */
 export const peerInEarshot = (f, eye) => !(eye && eye.length === 3) || Math.hypot(f[0] - eye[0], f[1] - eye[1], f[2] - eye[2]) < PEER_SOUND_PROFILE.maxDistance;
 function peerSound(audio, clip, at, volume) {
-  if (audio.play3d) audio.play3d(clip, at, volume, PEER_SOUND_PROFILE);
-  else audio.playOneShot?.(clip, volume);
+  peerHeard(() => {   // EG-ZH: a peer's sound, as the place hears it (net/peer/peerFx.js - 4 dB down in the Spire)
+    if (audio.play3d) audio.play3d(clip, at, volume, PEER_SOUND_PROFILE);
+    else audio.playOneShot?.(clip, volume);
+  });
 }
 export const ridingLoopName = (id) => `peerRide:${id}`;
 /** AUDIT DISC7 B3: a mounted peer whose newest pose is older than this is standing still for the riding loop - a
@@ -565,8 +571,30 @@ export class RemotePlayers {
         const d = Math.hypot(f[0] - eye[0], f[1] - eye[1], f[2] - eye[2]);
         falloff = d <= 8 ? 1 : d >= 45 ? 0 : 1 - (d - 8) / 37;
       }
-      if (falloff > 0) audio.playOneShot(peerDeathSound(peer?.look), falloff);
+      if (falloff > 0) peerHeard(() => audio.playOneShot(peerDeathSound(peer?.look), falloff));   // EG-ZH: as the place hears it
     }
+  }
+
+  /** PCORPSE1 + AUDIT ONLINE 3 F5: ANOTHER PLAYER'S DEATH AS THE SESSION DELIVERS IT (net/online.js onPeerDeath; `how`
+   *  { intro: true } when an introduction said it - a body already lying when I came, laid without its cry).
+   *  AUDIT ONLINE 3 (the second read) A1/A2: AN INTRODUCTION'S DEATH IS OFTEN ONE ALREADY LAID. A leave forgets the
+   *  session's deaths, so a building walked into and out of while a Wild ghost lay - or a crossing before the halo was
+   *  open - had the next roster lay its body again over the one lying: a second body, a fresh minute, the party pick's
+   *  marks doubled; and a party mate's body PCORPSE3 laid from the party pose was laid again by its cell's roster. An
+   *  introduction lays a body only where none of this person's lies; a death heard as it happens is laid, and cried. */
+  peerDeath(peer, pose, room = null, how = undefined) {
+    if (!pose) return;
+    if (how?.intro && this._corpseNear(peer, pose)) return;
+    this.addCorpse(peer, pose, room, { quiet: !!how?.intro });
+  }
+  _corpseNear(peer, pose) {
+    const toScene = this._lastToScene ?? ((p) => [p.x, p.y, p.z]);
+    const b = toScene(pose);
+    return this._corpses.some((c) => {
+      if (c.dead || !((peer?.acct && c.acct === peer.acct) || (peer?.id && c.id === peer.id))) return false;
+      const a = toScene(c.pose);
+      return Math.hypot(a[0] - b[0], a[2] - b[2]) < CORPSE_SAME_M;
+    });
   }
 
   /** PCORPSE1: bodies whose room the player has left for another kind of space are not this scene's to draw - a
@@ -879,7 +907,7 @@ export class RemotePlayers {
       const veil = conceal(peer.id) ?? null;
       // MWBODY1: a peer standing in a Morrowind body (net/peer/peerBodies.js) draws no doll/mobile; its name still rides this pass, at the body's own head
       const bodyH = bodyHeight(peer.id);
-      if (bodyH > 0) { if (!veil) this._shown.push({ peer, height: bodyH }); continue; }
+      if (bodyH > 0) { if (!veil || /** @type {any} */ (veil).named) this._shown.push({ peer, height: bodyH }); continue; }   // AUDIT EG V (h): a veil that keeps the name (an ally drawn at 60% on the Spire's traversal ground - scenes/eliteGates/egClient.js allyVeil)
       live.add(peer.id);
       // 2026-09-17: a peer whose class maps onto a class-enemy sprite (classMobileType) is drawn as that sprite,
       // animated off their synced pose (_syncMobilePeer) - the same billboard a hostile Warrior/Mage/etc. already
@@ -932,7 +960,7 @@ export class RemotePlayers {
         if (!s) continue;
         if (this._now() - (c.until - CORPSE_MS) < 2000) continue;   // PCORPSE2: a body's first two seconds - the fallen figure's last frames are not a rise
         const a = toScene(s), b = toScene(c.pose);
-        if (Math.hypot(a[0] - b[0], a[2] - b[2]) < 2.5) this._dropCorpse(c);
+        if (Math.hypot(a[0] - b[0], a[2] - b[2]) < CORPSE_SAME_M) this._dropCorpse(c);
       }
     }
     for (const id of this._footsteps.keys()) if (!seen.has(id)) this._footsteps.delete(id);
@@ -1138,7 +1166,7 @@ export class RemotePlayers {
     entry.peer = peer;
     const g = this._growAt(f);
     if (entry.g !== g) { entry.g = g; this._sizeBatch(entry.batch, { w: entry.doll.w * g, h: entry.doll.h * g }, g); }   // OW-PEERS
-    if (!veil) this._shown.push({ peer, height: entry.doll.h * g - sink });
+    if (!veil || veil.named) this._shown.push({ peer, height: entry.doll.h * g - sink });
   }
 
   /** The class-enemy billboard path: `bundle.mobileUnit.update` is fed simple flags off the peer's OWN synced pose
@@ -1208,7 +1236,7 @@ export class RemotePlayers {
     const sink = seatedSink(shown);   // CARDS2c: seated, sunk by the seat's drop
     entry.batch.origin[0] = f[0]; entry.batch.origin[1] = f[1] - sink; entry.batch.origin[2] = f[2];
     entry.batch.conceal = veil;   // INVIS-LOOK
-    if (!veil) this._shown.push({ peer, height: entry.height - sink });
+    if (!veil || veil.named) this._shown.push({ peer, height: entry.height - sink });
   }
 
   /** OW-PEERS: the Overworld's grow at a peer's feet (1 off the view). */

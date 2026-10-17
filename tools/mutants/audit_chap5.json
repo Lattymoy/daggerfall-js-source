@@ -377,7 +377,7 @@
   },
   {
     "name": "AUDIT-CHAP5-C5-GATE",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "const pixelChapterHalls = new Map(chapterSheet && dfLocation && locBlocks ? buildingSummaries(",
     "new": "const pixelChapterHalls = new Map(dfLocation && locBlocks ? buildingSummaries(",
     "tests": [

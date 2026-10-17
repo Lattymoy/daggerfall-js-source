@@ -56,11 +56,12 @@ import { EQUIP_SLOTS } from '../../src/systems/equip.js';
 import { setWorldMinutes, worldMinutes } from '../../src/systems/worldTick.js';
 import { GLOBAL_SCALE } from '../../src/player/activate.js';
 import { playerTorchOffsetOverride, setPlayerTorchOffsetOverride } from '../../src/systems/playerTorch.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 /** KB1: action -> its default code, so the fixture's key taps (KeyO/KeyG/KeyX) reach the registry's torch actions. */
 const DEFAULT_CODE = Object.fromEntries(DEFAULT_BINDINGS.map(([code, action]) => [action, code]));
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const rd = (p) => readFileSync(join(root, p), 'utf8');
+const rd = (p) => hostText(p);
 /** AUDIT 68 S18-torch-batch-churn: where a batch's quads draw - its centres plus the per-frame origin the moving ones ride. */
 const drawnAt = (b) => { const o = b.origin ?? [0, 0, 0]; return b.centers.map((c) => [c[0] + o[0], c[1] + o[1], c[2] + o[2]]); };
 const near = (a, b, eps = 1e-9, msg) => assert.ok(Math.abs(a - b) <= eps, msg ?? `${a} ~ ${b}`);

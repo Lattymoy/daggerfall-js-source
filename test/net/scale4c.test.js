@@ -19,6 +19,7 @@ import { MailBox, MAIL_POLL_MS } from '../../src/net/mail.js';
 import { createNoticeBook, NOTICE_TRIES } from '../../src/net/noticeBook.js';
 import { BOARD_CACHE_MS } from '../../src/net/boardLaw.js';
 import { PLAY_BEAT_S, PLAY_GRACE_S } from '../../src/net/playClock.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 let _now = T0;
@@ -385,7 +386,7 @@ test('SCALE4c C: the town\'s board as a part - due when the town the host stands
 // ═══ D. THE WORLD HOST ═══════════════════════════════════════════════════════════════════════════════════════════════
 
 test('SCALE4c D: the world host makes ONE heartbeat on the device\'s session, the play clock knocks through it, the town\'s board and the letterbox join it - each where and while its frame asked it before - and neither the street frame nor the online lane asks the service itself any more; no other host keeps any of the three (mutants: the board read in the frame again, the box polled in the lane again, the knock past the heartbeat)', () => {
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.equal((w.match(/createHeartbeat\(/g) ?? []).length, 1, 'one heartbeat a page');
   // AUDIT SCALE (lane D D10, B8): the heartbeat's own sight of the page, and the hide seen at once (B1)
   assert.match(w, /createHeartbeat\(\{\s*fetch: \(u, i\) => globalThis\.fetch\(u, i\), storage: appStorage\(\),\s*visible: \(\) => globalThis\.document\?\.visibilityState !== 'hidden',\s*\}\);/);

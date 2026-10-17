@@ -15,10 +15,11 @@ import { wodSiteId, validSites, validSiteTags, yieldsTo, WOD_SITES_MAX, WOD_CAMP
 import { createExteriorFoes, MAX_ACTIVE_ENCOUNTER_FOES, ENCOUNTER_PUPPETS_MAX } from '../../src/scenes/exteriorFoes.js';
 import { CELL_PUPPETS_MAX } from '../../src/net/wire.js';
 import { isPeerTarget } from '../../src/characters/enemy/enemyTargets.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const rd = (p) => readFileSync(join(ROOT, p), 'utf8');
-const WORLD = rd('src/scenes/world.js');
+const rd = (p) => hostText(p);
+const WORLD = hostText('src/scenes/world.js');
 const tick = () => new Promise((r) => setTimeout(r, 0));
 const flush = async () => { for (let i = 0; i < 6; i++) await tick(); };
 

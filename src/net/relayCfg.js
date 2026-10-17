@@ -16,6 +16,7 @@ export const RELAY_CFG_VARS = Object.freeze({
   gateRole: 'GATE_DISCORD_ROLE',
   serpentRole: 'SERPENT_DISCORD_ROLE',
   sdRole: 'SD_DISCORD_ROLE',
+  egDrain: 'EG_DRAIN',   // EG-H2 (bible/11-Multiplayer/Elite-Gates.md section 22): THE DRAIN - 'on' shuts the Spire's road (no new breach) while a deploy drains it
 });
 /** The settings a developer may set. */
 export const RELAY_CFG_KEYS = Object.freeze(Object.keys(RELAY_CFG_VARS));

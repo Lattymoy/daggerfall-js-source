@@ -17,6 +17,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const ROOT = fileURLToPath(new URL('../..', import.meta.url));
 const CENSUS = JSON.parse(readFileSync(join(ROOT, 'test/fixtures/time1_census.json'), 'utf8'));

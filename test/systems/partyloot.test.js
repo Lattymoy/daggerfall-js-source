@@ -577,7 +577,7 @@ test('PARTY-LOOT by source: no Math.random in the room\'s law (systems/roomLoot.
   assert.doesNotMatch(strip(BLOCK), /Math\.random/, 'and the block takes no draw of its own');
   assert.match(modFn('rollRoomBase'), /asTheRoom\(\(\) => \{\s*if \(h\.pile\) items = roomPileBase\(h, terms, rolls, gender\);\s*else \(\{ items, lootCap \} = roomBodyBase\(h\.foe, terms, rolls, gender, rejects\)\);\s*\}\);/);
   assert.match(modFn('roomBodyBase'), /spawnEnemyLoot\(e, f\.mobileType, ENEMY_BASICS\[f\.mobileType\], roller, \{ \.\.\.eliteLootOpts\(f\.src\), where: 'dungeon', \.\.\.o, rejects \}\);/);
-  assert.match(memberSrc('lootContents'), /if \(\(kind === 'loot' \|\| kind === 'corpse'\) && roomUnborn\(key\)\) return null;/);
+  assert.match(memberSrc('lootContents'), /if \(\(kind === 'loot' \|\| kind === 'corpse'\) && \(roomUnborn\(key\) \|\| _lootUnreadable\.has\(roomLootKey\(key\)\)\)\) return null;/);   // PIN MOVED (AUDIT GRAVE-PARTY G2): nor a container whose word this build cannot read - a target again, its plaque naming no list (test/systems/fb1016b_graveparty.test.js)
   assert.match(memberSrc('takeLoot'), /if \(\(kind === 'loot' \|\| kind === 'corpse'\) && roomUnborn\(key\)\) return 0;/);
   assert.match(fnSrc('lootTargets'), /if \(!p\.batch \|\| roomUnborn\(`loot:\$\{i\}`\)\) return;/);
   assert.match(SRC, /const _roomBody = roomLootOn\(\) && roomCanonOfFoe\(foe\) != null;\s*if \(!_roomBody\) rollCorpseKit/);

@@ -14,7 +14,10 @@
 // interiorLayout.js lifts the room's props the same way), so the box
 // the model is measured by, turned and scaled as it will stand, decides
 // how far above the surface its origin goes, and the RECORD says where
-// the origin is - nothing is re-derived at a restore. A FLAT stands on
+// the origin is - nothing is re-derived at a restore. So a stand-in
+// rebuilt about another origin moves every piece placed by it, and its
+// saved pieces are re-seated with it (FIELD BUGS 2026-10-16b STALL-SHAPE:
+// TEMPLE-STEPS' stalls and boulders, tools/yardReseat.mjs). A FLAT stands on
 // its base, as every billboard does. The owner's own lift is added to
 // either, and the grid (a quarter metre) snaps where it stands across
 // the floor, never its height - a piece on a table stays on the table.

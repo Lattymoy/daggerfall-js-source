@@ -10,8 +10,10 @@
 //   - GetSpectralEmissionColors32 + SetSpectral ported (Rendering's
 //     spectral row, classic-visuals direction): the gray remap, the
 //     eye patch, and the V^1.9 emission lerp are verbatim below.
-//     GetFireWallColors32 stays unported (no firewall consumer yet;
-//     it is a two-line Color32.Lerp when one lands).
+//     GetFireWallColors32 ported by EG-ZH (2026-10-12, the Elite Gates
+//     arc's fire falls its first consumer - Elite-Gates.md section 11.6):
+//     Unity's Color32.Lerp and its Color -> Color32 conversion, verbatim,
+//     in single precision (unityColor32, unityColor32Lerp).
 //   - File-path plumbing dropped; loaders take byte buffers.
 
 import { DFPalette } from './dfPalette.js';
@@ -22,6 +24,33 @@ export const COMPRESSION_FORMATS = Object.freeze({
   ImageRle: 0x0108,
   RecordRle: 0x1108,
 });
+
+/**
+ * EG-ZH: UNITY'S Color -> Color32 (UnityCsReference 2019.4, Runtime/Export/Math/Color32.cs - the implicit operator DFU's
+ * Unity 2019.4.41 compiles): each channel `(byte)Mathf.Round(Mathf.Clamp01(c) * 255f)`. Mathf.Round is .NET's
+ * Math.Round, half to even; the product is a float (single precision). `c` is `[r, g, b]` or `[r, g, b, a]` (a Color
+ * built of three takes a = 1). Pure.
+ * @param {ArrayLike<number>} c
+ * @returns {number[]} `[r, g, b, a]`, bytes
+ */
+export function unityColor32(c) {
+  const ch = (v) => {
+    const x = Math.fround(Math.fround(Math.min(1, Math.max(0, Math.fround(v)))) * Math.fround(255));
+    const f = Math.floor(x), d = x - f;
+    return (d > 0.5 || (d === 0.5 && f % 2 === 1) ? f + 1 : f) & 0xff;   // half to even
+  };
+  return [ch(c[0]), ch(c[1]), ch(c[2]), ch(c.length > 3 ? c[3] : 1)];
+}
+/**
+ * EG-ZH: UNITY'S Color32.Lerp (the same file): `t` clamped to [0, 1], then each channel
+ * `(byte)(a + (b - a) * t)` - an int times a float is a float, an int plus a float a float, and the byte cast truncates.
+ * In single precision, as the CLR computes it (0.3f is 0.30000001192...). Pure.
+ * @param {number} a a byte @param {number} b a byte @param {number} t
+ */
+export function unityColor32Lerp(a, b, t) {
+  const tt = Math.fround(Math.min(1, Math.max(0, Math.fround(t))));
+  return Math.trunc(Math.fround(a + Math.fround((b - a) * tt))) & 0xff;
+}
 
 /** Empty bitmap, matching DFU's `new DFBitmap()` returned on invalid access. */
 /**
@@ -212,6 +241,27 @@ export class BaseImageFile {
       }
     }
     return { colors: out, width: dstWidth, height: dstHeight };
+  }
+
+  /**
+   * EG-ZH: verbatim GetFireWallColors32 (BaseImageFile.cs) - the emission map of TextureReader's Mantellan Crux fire
+   * walls (TEXTURE.356, TextureReader.cs:309-320: "lessen stroboscopic effect"): every texel of the albedo
+   * `Color32.Lerp(neutralColor, srcTexture[i], scale)` over `width * height` texels - the fire drawn a share of the way
+   * from one steady colour toward its own, so its frames flicker less in the light they give. `srcColors` the albedo's
+   * flat RGBA (getColor32's `colors`, rows as it lays them); `neutralColor` a Unity Color ([r, g, b] floats - alpha 1),
+   * converted to Color32 at the call as C# converts it.
+   * @param {ArrayLike<number>} srcColors @param {number} width @param {number} height
+   * @param {ArrayLike<number>} neutralColor @param {number} scale
+   * @returns {{colors:Uint8ClampedArray,width:number,height:number}}
+   */
+  getFireWallColors32(srcColors, width, height, neutralColor, scale) {
+    const n = unityColor32(neutralColor);
+    const out = new Uint8ClampedArray(width * height * 4);
+    for (let i = 0; i < width * height; i++) {
+      const o = i * 4;
+      for (let c = 0; c < 4; c++) out[o + c] = unityColor32Lerp(n[c], srcColors[o + c] ?? 0, scale);
+    }
+    return { colors: out, width, height };
   }
 
   /**

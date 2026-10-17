@@ -358,13 +358,16 @@ export function mountArenaWindow(host, deps) {
     const wrap = el('div', 'aw-ladder');
     const list = el('ol', 'aw-tiers');
     if (tierPicked == null || !m.tiers[tierPicked]) tierPicked = m.current;
+    // ARENA-WAIT (AUDIT A1): online before the account's climb is in, no tier is the climb's (`current` null) - the first
+    // shown, nobody's, and the climb's own taken up once it comes (a pick stays a pick)
+    const shown = tierPicked ?? 0;
     for (const [i, t] of m.tiers.entries()) {
       // AUDIT PRE-MERGE 1003 U14: a list of tiers, each a list item holding its press - not items that were buttons
       const item = el('li', 'aw-tierli');
-      const row = el('button', `aw-tier${i === tierPicked ? ' on' : ''}`);
+      const row = el('button', `aw-tier${i === shown ? ' on' : ''}`);
       row.setAttribute('type', 'button');
       row.dataset.state = t.state;
-      row.setAttribute('aria-pressed', i === tierPicked ? 'true' : 'false');
+      row.setAttribute('aria-pressed', i === shown ? 'true' : 'false');
       row.onclick = (e) => { e?.stopPropagation?.(); tierPicked = i; render(); };
       const pips = el('span', 'aw-pips');
       for (let k = 0; k < 3; k++) { const d = el('i'); if (k < t.won) d.className = 'on'; pips.append(d); }
@@ -374,7 +377,7 @@ export function mountArenaWindow(host, deps) {
       item.append(row);
       list.append(item);
     }
-    const t = m.tiers[tierPicked];
+    const t = m.tiers[shown];
     const card = el('section', 'aw-card aw-tiercard');
     card.dataset.state = t.state;
     const top = el('div', 'aw-cardhead');
@@ -392,10 +395,13 @@ export function mountArenaWindow(host, deps) {
     card.append(ul, el('p', 'aw-line', W().tierPurse(t.purse, t.champPurse)), el('p', 'aw-line aw-gives', W().titleGiven(t.title)));
     if (t.beasts) card.append(el('p', 'aw-line aw-warn', W().beastTier));
     if (t.free) card.append(el('p', 'aw-line aw-warn', W().meleeTier));
-    const titles = el('div', 'aw-titles');
-    titles.append(el('h4', null, W().yourTitles));
-    if (m.titles.length) { const row = el('div', 'aw-chips'); for (const x of m.titles) row.append(chip(x, 'aw-titlechip')); titles.append(row); } else titles.append(el('p', 'aw-line', W().noTitles));
-    card.append(titles);
+    // ARENA-WAIT (AUDIT A1): no climb known, no titles block - "No titles yet." is a claim about a climb not in
+    if (!m.waiting) {
+      const titles = el('div', 'aw-titles');
+      titles.append(el('h4', null, W().yourTitles));
+      if (m.titles.length) { const row = el('div', 'aw-chips'); for (const x of m.titles) row.append(chip(x, 'aw-titlechip')); titles.append(row); } else titles.append(el('p', 'aw-line', W().noTitles));
+      card.append(titles);
+    }
     if (m.online) card.append(el('p', 'aw-line aw-online', m.online));   // ARENA4: online, the climb is the realm's
     wrap.append(list, card);
     body.append(wrap);

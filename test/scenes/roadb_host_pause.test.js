@@ -35,8 +35,9 @@ import { readFileSync, readdirSync, statSync } from 'node:fs';
 
 import { makeWindowStack, pauseWhileOpen } from '../../src/ui/windowStack.js';
 import { createTownTalk } from '../../src/scenes/townTalk.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
-const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
+const src = (p) => hostText(p);
 
 /** The four hosts that own a stack, and the ONE reader each answers
  *  its pause with. `slot` is the host's own overlay variable - the

@@ -236,7 +236,7 @@
   {
     "name": "OW6L-relay-the-welcome-unsaid",
     "file": "server/src/index.js",
-    "old": "      return w.sp.length || w.dg.length ? `,\"ow\":${JSON.stringify(w)}` : '';",
+    "old": "      return w.sp.length || w.dg.length || w.gr?.length ? `,\"ow\":${JSON.stringify(w)}` : '';   // GRAVE-PARTY: a cell whose ledger holds graves alone says them too",
     "new": "      return '';",
     "tests": [
       "test/net/ow6_ledger.test.js"

@@ -32,6 +32,7 @@ import { CAPSULE_RADIUS } from '../../src/player/motor.js';
 import { GATE_STATE_EMPTY } from '../../src/net/gate/gateLink.js';
 import { gateTimes, GATE_COLLAPSE_MS } from '../../src/net/gate/gateLaw.js';
 import { COURT_R } from '../../src/net/gate/gateBrain.js';
+import { madeLevelRule, madeLevelSays } from '../../src/systems/madeLevel.js';   // EG-H2: the made level's law
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const bytes = readFileSync(new URL(`../../${SOURCE_FBX}`, import.meta.url));
@@ -238,8 +239,11 @@ test('AUDIT GATE-FBX C3 another stepping in: the way in opens for a player seen 
 
 test('AUDIT GATE-FBX C2/C3 the host: /unstuck in a gate\'s court is refused in its own words, before any other way of it (it walked out mid-fight with no veil, no toll, no cooldown spent on a death); and every player in the court\'s room - the crowd\'s cut or not - is handed to the way in each online frame, in the court alone (mutants: /unstuck walking out of the court; the crowd\'s cut handed)', () => {
   const ws = read('src/scenes/world.js');
-  const un = ws.indexOf('if (modes?.gateArenaDay?.() != null) { say(COURT_TEXT.noUnstuck); return true; }');
+  // PIN MOVED (EG-H2, Elite-Gates.md section 24): the made level's law (systems/madeLevel.js) - the court's row refuses /unstuck, in the court's own words
+  const un = ws.indexOf("if (madeUnstuck === 'refused') { say(madeSaysHere('unstuck')); return true; }");
   assert.ok(un > 0, 'refused in the court');
+  assert.equal(madeLevelRule('court', 'unstuck'), 'refused');
+  assert.equal(madeLevelSays('court', 'unstuck'), COURT_TEXT.noUnstuck, 'in its own words');
   assert.ok(un > ws.indexOf('if (/^\\/unstuck(\\s+cancel)?$/i.test(text.trim())) {') && un < ws.indexOf('const inZone = wildHere() && !(TEST_GODMODE && staffPowers().god);'), 'before the zone\'s and the town\'s ways');
   assert.match(COURT_TEXT.noUnstuck, /Deadlands/);
   assert.match(ws, /\n {4}if \(modes\?\.gateArenaDay\?\.\(\) != null\) gateCourt\?\.stepsIn\(drawable, \(d\) => \(d\?\.shown \? onlineToScene\(d\.shown\) : null\)\);/, 'the room\'s every player, in the court');

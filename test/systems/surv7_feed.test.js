@@ -13,6 +13,7 @@ import { createPlayerTicker } from '../../src/scenes/shared.js';
 import { setWorldMinutes } from '../../src/systems/worldTick.js';
 import { setPref, _resetForTests } from '../../src/systems/uiPrefs.js';
 import { SKILLS } from '../../src/systems/skills.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 // ═══ SURV7 (2026-09-18): THE FEED, THE GATE, THE ALIGNMENT ═════════
 //
@@ -122,7 +123,7 @@ test('SURV7: composed - the ticker feeds the minute law from the host\'s env (th
 });
 
 test('SURV7: by source - the four hosts feed their env (the roof, the floor, the fire each owns), the two dev scenes through the mode machine; the gate per ticker; the load arm and the arrival align; the leaf is pure', () => {
-  const shared = read('src/scenes/shared.js'), world = read('src/scenes/world.js'), ext = read('src/scenes/exterior.js');
+  const shared = read('src/scenes/shared.js'), world = hostText('src/scenes/world.js'), ext = read('src/scenes/exterior.js');
   const modes = read('src/scenes/worldModes.js'), dc = read('src/scenes/dungeonContext.js'), save = read('src/systems/save/save.js');
   assert.match(shared, /survival: survivalFeed\(entity, survivalEnv\?\.\(\) \?\? null, \{ say \}\),/, 'the ticker\'s feed');
   assert.match(shared, /if \(survivalEnv\) installSurvivalGate\(registerPreventRestCondition, \(\) => entity, survivalEnv\);/, 'the gate per ticker');

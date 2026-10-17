@@ -139,7 +139,7 @@
   {
     "name": "SERPENT1-relay-receipt-unearned",
     "file": "server/src/index.js",
-    "old": "if (!serpentBrain.serpentEarned(f, sub)) continue;",
+    "old": "if (!SERPENT_SEAM.earned(f, sub)) continue;",
     "new": "",
     "tests": [
       "test/net/serpent/serpent1_relay.test.js"

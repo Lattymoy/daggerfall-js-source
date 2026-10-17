@@ -95,6 +95,7 @@ const CSA = await load('../src/systems/comeSailAway/comeSailAwayItems.js');
 const NAVAL = await load('../src/systems/naval/navalStores.js');
 const GOODS = await load('../src/systems/naval/tradeGoods.js');   // AUDIT CAPTAIN'S SEA B12: the exchange's goods
 const CHARTS = await load('../src/systems/naval/treasureCharts.js');   // AUDIT CAPTAIN'S SEA B12: the treasure chart
+const WEIR = await load('../src/systems/eliteGates/weirKey.js');   // KEY-LAW (FIELD BUGS 2026-10-17): the Weir Key
 const FISH = await load('../src/systems/deepWater/deepWatersFishItems.js');
 const FISH_ROWS = await load('../src/systems/deepWater/deepWatersFishRows.js');
 const BOOKS = await load('../src/systems/books.js');
@@ -466,7 +467,9 @@ function sweep({ seeds, run, skip }) {
       for (const s of seedsOf()) {
         const rolls = seeded(s);
         for (const it of [AETH.rollRegalia(rolls), AETH.rollRaidSetPiece(s % 3, rolls), AETH.rollSerpentSetPiece(rolls), AETH.rollNumidiumPiece(rolls)]) one(it);
+        one(AETH.mintPanoplyPiece(rolls));   // EG15: the Battlemage's Panoply's pick (a Redoubt's spoils decide whether)
       }
+      for (const id of AETH.PANOPLY_SET_PIECES.map((r) => r.id)) one(AETH.panoplyPieceById(id));   // EG15: and the Broker's weekly sink, by id
     });
     run('gilded.mintGilded / mintHourlock', (one) => {
       for (const r of GILD.GILDED_RECORDS) one(GILD.mintGilded(r));
@@ -1063,7 +1066,7 @@ function runHomes(run, seedsOf, S, minted) {
       for (let g = 0; g < 3; g++) { HEIRLOOM.attuneHeirloom(h); one(h); }
       one(HEIRLOOM.mintRemainsItem({ line: `line${s % 9}`, of: s % 50, name: 'Ysolde Hlaalu' }));
     }
-    // the remains' piece as legacyHost.js layDeathRemains takes it: pickHeirloom over what the fallen wore - found pieces
+    // the remains' piece as legacyHost.js remainsOf takes it: pickHeirloom over what the fallen wore - found pieces
     const wearable = spread(minted.filter((it) => (it.group === 'Weapons' || it.group === 'Armor') && EQUIP.wearableItem(it) && !TPL.isAmmunition(it)), 300);
     for (let i = 0; i < wearable.length; i += 6) {
       const e = newPlayer();
@@ -1086,6 +1089,11 @@ function runHomes(run, seedsOf, S, minted) {
   // AUDIT CAPTAIN'S SEA B12: the exchange's every good at a cask, a day's stock and a hold's worth, and a chart at its seeds' ends
   run('naval/tradeGoods.mintGood (every good)', (one) => { for (const g of GOODS.GOODS) for (const n of [1, 30, 500]) one(GOODS.mintGood(g.id, n)); });
   run('naval/treasureCharts.mintChart', (one) => { for (const seed of [0, 2 ** 31 + 1, 2 ** 32 - 1]) one(CHARTS.mintChart(seed)); });
+  // KEY-LAW (FIELD BUGS 2026-10-17): the Weir Key, as a find throws it and as the balance restacks the pack
+  run('eliteGates/weirKey.weirKeys / restackWeirKeys', (one) => {
+    for (const n of [1, 2, 40]) one(WEIR.weirKeys(n));
+    const pack = []; WEIR.restackWeirKeys(pack, 7); for (const it of pack) one(it);
+  });
   run('deepWatersFishItems.createFishItem (every species)', (one) => {
     for (const t of FISH_ROWS.DEEP_WATERS_FISH_TEMPLATES) one(FISH.createFishItem({ templateIndex: t.index }));
   });

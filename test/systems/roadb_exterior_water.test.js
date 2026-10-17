@@ -51,6 +51,7 @@ import { pickFootstepSet, FootstepMachine, FOOTSTEP, WALK_STEP_INTERVAL } from '
 import { isOnFoot, TRANSPORT_MODES } from '../../src/systems/transport.js';   // ROAD-U: IsOnFoot is Foot alone
 import { GLOBAL_SCALE } from '../../src/world/meshReader.js';
 import { dfuFile, missingDfu } from '../dfuRoot.mjs';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const HERE = dirname(dirname(fileURLToPath(import.meta.url)));
 const SRC = join(HERE, '..', 'src');
@@ -307,7 +308,7 @@ test('ROAD-B b3: no exterior host drives breathStep - drowning above ground is n
 
 test('ROAD-B b3: both exterior hosts raise onExteriorWater and feed all four footstep arms', () => {
   for (const host of ['scenes/world.js', 'scenes/exterior.js']) {
-    const src = readFileSync(join(SRC, host), 'utf8');
+    const src = hostText(`src/${host}`);
     assert.match(src, /exteriorSurfaces\s*\(/, `${host} runs the three methods`);
     assert.match(src, /downProbe\s*\(/, `${host} casts the ray - without it a ship swims`);
     assert.match(src, /rayDistanceFor\(isOnFoot\(/, `${host} takes the mounted reach (:507, :533)`);
@@ -330,7 +331,7 @@ test('ROAD-B b3: the splash covers BOTH water methods, not just Swimming', () =>
   // with two different reads of the same method, and this pin is why
   // they cannot be collapsed into one.
   for (const host of ['scenes/world.js', 'scenes/exterior.js']) {
-    const src = readFileSync(join(SRC, host), 'utf8');
+    const src = hostText(`src/${host}`);
     // DW-D: the world host reads the carved sea's forged method first - what PlayerFootsteps' FixedUpdate sees
     // after OutdoorSwimDriverAfter - and the surface model's on a frame the driver wrote none
     assert.match(src, /_onWater = (?:\(dwPlayer\?\.waterMethod \?\? _surf\.water\)|_surf\.water) !== ON_EXTERIOR_WATER\.None/,

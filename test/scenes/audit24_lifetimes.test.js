@@ -18,6 +18,7 @@ import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { CLASSIC_MINUTES_PER_SECOND } from '../../src/systems/worldTick.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const read = (p) => readFileSync(join(ROOT, p), 'utf8');
@@ -221,7 +222,7 @@ test('audit24: the three quest settings are LIVE reads, not hardcoded falses', a
   assert.match(bridge, /get playerNudity\(\) \{ return getBool\('ChildGuard', 'PlayerNudity'\); \}/,
     'a GETTER, because C# reads the setting at the point of use');
   assert.match(bridge, /get guildQuestListBox\(\) \{ return getBool\('Enhancements', 'GuildQuestListBox'\); \}/);
-  assert.match(read('src/scenes/world.js'),
+  assert.match(hostText('src/scenes/world.js'),
     /showClocksAsCountdown: \(\) => getBool\('GUI', 'ShowQuestJournalClocksAsCountdown'\)/);
 
   // and the getters really follow the store
@@ -236,7 +237,7 @@ test('audit24: the three quest settings are LIVE reads, not hardcoded falses', a
 test('audit24: two async races - an abandoned pixel build and an in-flight loot mount', () => {
   // Both are the same shape: an await, a removal during it, and a
   // continuation that publishes onto something nobody holds.
-  const world = read('src/scenes/world.js');
+  const world = hostText('src/scenes/world.js');
   assert.match(world, /await buildPixel\(next\.px, next\.py\);[\s\S]{0,900}if \(!state\.loaded\.has\(`\$\{next\.px\},\$\{next\.py\}`\)\) destroyPixel\(next\.px, next\.py\);/,
     'pump re-checks after the await - destroyPixel ran against an empty `built` back when the unload happened');
   const loot = read('src/scenes/droppedLoot.js');
@@ -287,7 +288,7 @@ test('audit24: LOAD GAME is read by the host that now boots', () => {
   // `?loadkey`, a bare ?load keeps the most-recent shape.
   // MW-EARLY: the pick is decided ONCE at the boot's top (the arms'
   // early build reads it there) and the door restores that same pick.
-  const world = read('src/scenes/world.js');
+  const world = hostText('src/scenes/world.js');
   assert.match(world, /const bootLoadPick = !params\.has\('load'\) \|\| \(params\.has\('classicload'\) && peekPendingClassicSave\(\)\) \? null\n\s*: realmBoot \? \{ realm: true \}[^\n]*\n\s*: params\.has\('loadkey'\)\n\s*\? \{ key: Number\(params\.get\('loadkey'\)\) \}\n\s*: \{ mostRecent: true \};/,   // REALM P1.3: a realm character's save first, the service's
     'the world host reads `load` - a picked slot by its key, a bare ?load the most recent');
   assert.match(world, /if \(params\.has\('load'\)\) \{[\s\S]{0,600}await worldQuickLoad\(\{ \.\.\.bootLoadPick, snap \}\);\s*\n\s*\} else if \(params\.has\('classic'\)/,
@@ -316,7 +317,7 @@ test('audit24: exactly ONE chargen wizard - the outer host owns it', () => {
 });
 
 test('audit24: the floating-origin recenter reaches EVERY world-position pool', () => {
-  const world = read('src/scenes/world.js');
+  const world = hostText('src/scenes/world.js');
   const i = world.indexOf('if (r.offset) {');
   assert.ok(i > 0);
   const block = world.slice(i, world.indexOf('\n    }\n', i));   // the recenter block whole (a fixed window stopped short once the block grew)
@@ -341,7 +342,7 @@ test('audit24: a quest item is found by QUEST IDENTITY, not object identity', ()
   // SEPARATELY, so afterwards they are two objects with equal content
   // and nothing relinks them. The tombstone sweep and `give item to`
   // silently no-opped on every quest item already carried.
-  const world = read('src/scenes/world.js');
+  const world = hostText('src/scenes/world.js');
   assert.match(world, /const _heldItemIndex = \(dfItem\) => \{[\s\S]{0,600}it\.questUID === dfItem\.questUID[\s\S]{0,120}it\.questSymbol\?\.name === dfItem\.questSymbol\?\.name/,
     'the fallback is the quest identity the sibling hooks already match on');
   assert.match(world, /removeItemFromPlayer: \(dfItem\) => \{[\s\S]{0,160}_heldItemIndex\(dfItem\)/);

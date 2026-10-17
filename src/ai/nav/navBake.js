@@ -43,25 +43,37 @@ export const ANCHOR_Y_TOLERANCE = 0.6;
  *  bucket's translation (the streamed world's floating origin) is
  *  applied so the soup is in the frame the queries use. `exclude` names
  *  buckets left out - the dungeon's openable doors, which are the motor's
- *  to open, not the navmesh's walls. */
+ *  to open, not the navmesh's walls.
+ *  FIELD BUGS 2026-10-16b INDOOR-WATCH, AUDIT W2: it runs on the main
+ *  thread, at the frame a room is asked for (the crime's), so it is
+ *  counted first and written straight into the soup's own arrays - the
+ *  same soup to the bit (each corner rounded to float32 as it is stored,
+ *  minY/maxY read before the rounding), without a JS array a corner and
+ *  two more copies. */
 export function navInputFromCollider(collider, { buckets = null, exclude = null } = {}) {
-  const pos = []; const idx = [];
-  let minY = Infinity, maxY = -Infinity, tris = 0;
+  const use = [];
+  let tris = 0;
   for (const [key, bucket] of collider._buckets) {
     if (buckets && !buckets.includes(key)) continue;
     if (exclude && exclude.has(key)) continue;
+    use.push(bucket); tris += bucket.tris.length;
+  }
+  const positions = new Float32Array(tris * 9), indices = new Uint32Array(tris * 3);
+  let minY = Infinity, maxY = -Infinity, p = 0;
+  for (const bucket of use) {
     const t = bucket.t ? bucket.t() : [0, 0, 0];
     const R = bucket.r ? bucket.r() : null;   // AUDIT NAV1 (#12): a mover's bucket, its triangles turned as they stand
     for (const tri of bucket.tris) {
-      const [a, b, c] = R ? tri.map((v) => [R[0] * v[0] + R[3] * v[1] + R[6] * v[2], R[1] * v[0] + R[4] * v[1] + R[7] * v[2], R[2] * v[0] + R[5] * v[1] + R[8] * v[2]]) : tri;
-      const base = pos.length / 3;
-      pos.push(a[0] + t[0], a[1] + t[1], a[2] + t[2], b[0] + t[0], b[1] + t[1], b[2] + t[2], c[0] + t[0], c[1] + t[1], c[2] + t[2]);
-      idx.push(base, base + 1, base + 2);
-      for (const v of [a, b, c]) { const y = v[1] + t[1]; if (y < minY) minY = y; if (y > maxY) maxY = y; }
-      tris++;
+      for (let k = 0; k < 3; k++) {
+        const v = tri[k];
+        const x = R ? R[0] * v[0] + R[3] * v[1] + R[6] * v[2] : v[0], y = (R ? R[1] * v[0] + R[4] * v[1] + R[7] * v[2] : v[1]) + t[1], z = R ? R[2] * v[0] + R[5] * v[1] + R[8] * v[2] : v[2];
+        indices[p / 3] = p / 3;
+        positions[p++] = x + t[0]; positions[p++] = y; positions[p++] = z + t[2];
+        if (y < minY) minY = y; if (y > maxY) maxY = y;
+      }
     }
   }
-  return { positions: Float32Array.from(pos), indices: Uint32Array.from(idx), minY, maxY, tris };
+  return { positions, indices, minY, maxY, tris };
 }
 
 /**

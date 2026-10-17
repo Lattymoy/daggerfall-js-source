@@ -65,8 +65,8 @@
   {
     "name": "JUMPSLOW-the-cancel-back",
     "file": "src/player/motor.js",
-    "old": "    if (this.grounded && input.jump && !this._pkJumpLatch   // AUDIT CLIMB1 F7: not the Jump a move spent",
-    "new": "    if (this.grounded && input.jump && !this.slowFalling && !this._pkJumpLatch   // AUDIT CLIMB1 F7: not the Jump a move spent",
+    "old": "        && !this._pkJumpLatch   // AUDIT CLIMB1 F7: not the Jump a move spent\n",
+    "new": "        && !this.slowFalling && !this._pkJumpLatch   // AUDIT CLIMB1 F7: not the Jump a move spent\n",
     "tests": [
       "test/player/fb1011b_jumpslow.test.js"
     ]

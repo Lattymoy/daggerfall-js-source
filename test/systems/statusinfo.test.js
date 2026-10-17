@@ -14,9 +14,10 @@ import { fileURLToPath } from 'node:url';
 import { statusInfoRows, STATUS_INFO_ID, healthStatusRows } from '../../src/systems/healthStatus.js';
 import { ActionTextBox } from '../../src/ui/actionText.js';
 import { QuestMachine } from '../../src/systems/quest/machine.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const src = (p) => readFileSync(join(ROOT, 'src', p), 'utf8');
+const src = (p) => hostText(`src/${p}`);
 
 // the record's four lines, as townTalk.lines(22) hands them over
 const RECORD_22 = [

@@ -264,7 +264,7 @@
   },
   {
     "name": "the-marker-centre-ignores-its-scale",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "s.base[1] + (h * s.scaleY) / 2",
     "new": "s.base[1] + h / 2",
     "tests": [

@@ -278,6 +278,8 @@ export function snapshotAutomap(nowMinutes = null) {
         entrance: { pos: [...c.entrance.pos], yawDeg: c.entrance.yawDeg },
         exit: { pos: [...c.exit.pos], yawDeg: c.exit.yawDeg },
       }]),
+      // LAYOUT-KEEP: the dungeon's other layouts' discovery, where there is one (an older reader ignores it)
+      ...(rec.layouts?.size ? { layouts: [...rec.layouts.values()].map(savedLayout) } : {}),
     };
   }
   return out;
@@ -328,6 +330,8 @@ export function restoreAutomap(snap) {
       // that build - the reveal scan runs before the trail tick, so the first trail always found a map already
       // there - and it made the sheet draw every model the scan had touched. A trail with points is the truth.
       ...(rec.trailAll ? { trailAll: true } : {}),
+      // LAYOUT-KEEP: the other layouts' discovery, each under its own blocks
+      ...(Array.isArray(rec.layouts) ? { layouts: new Map(rec.layouts.filter((l) => Array.isArray(l?.blockNames)).map((l) => [layoutSig(l.blockNames), restoredLayout(l)])) } : {}),
     });
   }
 }
@@ -478,6 +482,46 @@ export const getInteriorAutomap = () => _interior;
  *  no host changes shape to get the repair. */
 export const buildRevealIndex = (entries) => buildAutomapModel(entries);
 
+/** LAYOUT-KEEP (FIELD BUGS 2026-10-16c; MD-Geist: "the automap needed to be revealed again in 'Instance' even though
+ *  it had been fully explored and revealed in 'Public'"): online one dungeon stands in TWO layouts - its public room the
+ *  size the world gives it (world/smallerDungeons.js onlineDungeonSize), its instance Daggerfall's whole - under one
+ *  record (automapDungeonKey is the place's), and the restore guard below wiped the map, the notes and the portals of
+ *  one each time the player took the other. A record now keeps the discovery of the layouts it was left in, this many,
+ *  the oldest let go first (offline the sizes are three: whole, medium and small). DFU lays one layout a dungeon, and
+ *  its guard (:2385-2386) is kept for a layout no record knows. */
+export const AUTOMAP_LAYOUTS_KEPT = 2;
+/** A layout's identity: its blocks' names, in order (a hole and a null the same absence, as restoreMatchesLayout reads them). */
+const layoutSig = (names) => (names ?? []).map((n) => n ?? '').join('|');
+/** The record's discovery set aside under its own blocks - only where there is any. */
+function keepLayout(rec) {
+  if (!Array.isArray(rec.blockNames)) return;
+  if (!(rec.revealed?.size || rec.notes?.size || rec.teleporters?.size || rec.trail?.size || rec.entranceDiscovered)) return;
+  const kept = rec.layouts ?? (rec.layouts = new Map());
+  const sig = layoutSig(rec.blockNames);
+  kept.delete(sig);
+  kept.set(sig, {
+    blockNames: [...rec.blockNames], revealed: rec.revealed, entranceDiscovered: !!rec.entranceDiscovered,
+    notes: rec.notes ?? new Map(), teleporters: rec.teleporters ?? new Map(),
+    ...(rec.trail ? { trail: rec.trail } : {}), ...(rec.trailAll ? { trailAll: true } : {}), ...(rec.drops ? { drops: rec.drops } : {}),
+  });
+  while (kept.size > AUTOMAP_LAYOUTS_KEPT) kept.delete(kept.keys().next().value);
+}
+/** A kept layout as the save writes it - the record's own fields' shapes (snapshotAutomap). */
+const savedLayout = (l) => ({
+  blockNames: [...l.blockNames], revealed: [...l.revealed], entranceDiscovered: l.entranceDiscovered,
+  notes: [...l.notes].map(([id, n]) => [id, { position: [...n.position], note: n.note ?? '' }]),
+  teleporters: [...l.teleporters].map(([k, c]) => [k, { entrance: { pos: [...c.entrance.pos], yawDeg: c.entrance.yawDeg }, exit: { pos: [...c.exit.pos], yawDeg: c.exit.yawDeg } }]),
+  ...(l.trail?.size ? { trail: [...l.trail] } : {}), ...(l.trailAll ? { trailAll: true } : {}),
+  ...(l.drops?.size ? { drops: [...l.drops.values()].map((d) => [...d]) } : {}),
+});
+/** A kept layout read back (restoreAutomap's arms). */
+const restoredLayout = (l) => ({
+  blockNames: [...l.blockNames], revealed: new Set(Array.isArray(l.revealed) ? l.revealed : []), entranceDiscovered: l.entranceDiscovered === true,
+  notes: sortedNoteMap(l.notes), teleporters: new Map(Array.isArray(l.teleporters) ? l.teleporters : []),
+  ...(Array.isArray(l.trail) ? { trail: new Set(l.trail) } : {}), ...(l.trailAll ? { trailAll: true } : {}),
+  ...(Array.isArray(l.drops) ? { drops: dropsOf(l.drops) } : {}),
+});
+
 /**
  * Bind a freshly built model to a record. Two jobs, both DFU's:
  *  - stamp the layout the discovery is recorded against (:78's
@@ -497,6 +541,16 @@ export function bindAutomapLayout(rec, model) {
   // bind, and dropped by both exits below.
   _live = { rec, model };
   if (!restoreMatchesLayout(model, rec.blockNames)) {
+    // LAYOUT-KEEP: the discovery of the layout being left is kept under its own blocks, and this layout's, kept when it
+    // was left, is taken back - whole, with its notes and portals - instead of the wipe below
+    const back = rec.layouts?.get(layoutSig(model.blockNames)) ?? null;
+    if (back) rec.layouts.delete(layoutSig(model.blockNames));
+    keepLayout(rec);
+    if (back) {
+      Object.assign(rec, back, { visitedThisRun: new Set() });
+      for (const k of ['trail', 'trailAll', 'drops']) if (!(k in back)) delete rec[k];
+      return true;
+    }
     rec.revealed = new Set();
     rec.visitedThisRun = new Set();
     rec.entranceDiscovered = false;

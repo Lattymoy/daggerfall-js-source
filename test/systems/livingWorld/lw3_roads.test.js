@@ -27,6 +27,7 @@ import { PERSON_MOVE_SPEED } from '../../../src/characters/mobile/mobilePerson.j
 import { CLASSIC_MINUTES_PER_SECOND } from '../../../src/systems/worldTick.js';
 import { markGroup } from '../../../src/systems/travel/travelViewFilters.js';
 import { TRAVEL_VIEW_MARK_COLORS } from '../../../src/ui/travel/travelViewHud.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const rd = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const O = () => ({ mpm: CALENDAR_MPM, memo: new Map() });
@@ -440,7 +441,7 @@ test('LW3 the ways: the living world\'s own book - a pair of towns asked once, t
 });
 
 test('LW3 the streaming host: the trips\' world is the game\'s own populated rows (blocks, people, region, port) and Hazelnut\'s roads asked one way a pair, a few a frame; a town\'s LivingTown takes its trips and the armed walk\'s sprite; the roads\' layer runs in the open world after the town\'s people and is freed indoors; the road\'s people beside the town\'s for the talk ray and the hover alone; their words through the one layer; the Overworld\'s marks; a caught hand on the road calls no watch (mutants: each seam)', () => {
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /for \(const loc of _hubRows\) \{\n\s*const md = loc\.mapTableData;\n\s*if \(!md \|\| !populatesWanderingNpcs\(md\.locationType\)\) continue;/);
   assert.match(w, /const livingWays = createWayBook\(\{\n\s*roads: \(\) => terrainGen\.roads\(\),\n\s*ground: \(\) => \(_livingGround \?\?= routeGround\(\(px, py\) => maps\.getClimateIndex\(px, py\), \(px, py\) => woods\.getHeightMapValue\(px, py\), WATER_BYTE\)\),\n\s*\}\);/, 'the ways: the living world\'s own book, on the drawn roads and the game\'s own ground (no player\'s massifs)');
   assert.match(w, /const livingRouteOf = \(a, b\) => livingWays\.wayOf\(a, b\);/);

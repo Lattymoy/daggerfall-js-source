@@ -10,9 +10,10 @@ import { waterBedDepths, carveBed, waterBedOf, flatGrid, bedProfile, BED_DEPTH, 
 import { buildTerrainGrid } from '../../../src/world/terrain/terrainSurface.js';
 import { HEIGHTMAP_DIMENSION } from '../../../src/world/terrain/terrainSampler.js';
 import { buildWaterIndices } from '../../../src/render/waterSurface.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
-const read = (p) => readFileSync(join(ROOT, p), 'utf8');
+const read = (p) => hostText(p);
 const DRY = 1 << 2;   // record 1 (dirt), unturned - no water corner
 const WET = 0;        // record 0, the water tile: all four corners
 /** A converted tilemap `dim` square, `wet(x, z)` choosing each tile. */
@@ -102,7 +103,7 @@ test('WATER-NEXT 2 the town\'s grid: DFU\'s flat ground as its tiles, the terrai
 });
 
 test('WATER-NEXT 2 the hosts: the world carves at the build and at a restride and keeps the bed for the cap\'s re-index; the fixed town lays its grid; the lab as the hosts (mutants: a host uploading the uncarved grid; the sheet off the terrain\'s buffers)', () => {
-  const w = read('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   // PIN MOVED (AUDIT WATER-NEXT P1): the kernel carves (terrainGen.js restrideGrid, on the worker) and the host uploads
   assert.match(w, /bed: waterOn,   \/\/ AUDIT WATER-NEXT P1/, 'the build asks the kernel for the bed');
   assert.match(w, /const bed = hostBed\(\{ positions, normals \}, carved\);/);

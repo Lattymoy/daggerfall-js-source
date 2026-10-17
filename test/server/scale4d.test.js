@@ -66,7 +66,9 @@ test('SCALE4d the mint runs on ONE D1 session opened first-primary - its first s
   // again and stored) - on the binding, and nothing else of the mint
   // (the board a #1 is counted over reads arena_pvp, as the token's own rating read does - that one is a claim read, and
   // rides the session; the honours' own tables are the Grand Champion's, the kept #1s and Iliac Hand's)
-  const honours = /arena_pve|arena_champions|iliac_|gambit_/, onBinding = /arena_pve|arena_champions|arena_pvp|iliac_|gambit_/;   // PIN MOVED (KG6): and The King's Gambit's (gambit.js), Iliac Hand's twin
+  // PIN MOVED (EG-E2): and the Spire Champions' - the kept last season's (eg_champions), kept first off that season's
+  // Descent (eg_runs) the first time a read of the new season finds it unkept: the same read-then-write, on the binding
+  const honours = /arena_pve|arena_champions|iliac_|eg_champions|gambit_/, onBinding = /arena_pve|arena_champions|arena_pvp|iliac_|eg_champions|eg_runs|gambit_/;   // PIN MOVED (KG6): and The King's Gambit's (gambit.js), Iliac Hand's twin
   assert.ok(asked.some((q) => honours.test(q)), 'the honours read on the binding');
   assert.deepEqual(asked.filter((q) => !onBinding.test(q)), [], 'nothing but the honours on the binding');
   assert.deepEqual(s.statements.filter((q) => honours.test(q)), [], 'and none of them on the session');

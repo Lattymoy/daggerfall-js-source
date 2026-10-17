@@ -403,6 +403,14 @@ export function createPartyPanel({ social, doc = document, art = null, faceLoade
   const comps = () => { try { const l = companions?.() ?? []; return Array.isArray(l) ? l : []; } catch { return []; } };
   let alive = true;
   let warned = false;
+  // EG-G1 (bible/11-Multiplayer/Elite-Gates.md section 27.4): THE SPIRE'S ROWS - the host's word, by account, of each
+  // member's state in a breach (ui/eliteGates/egParty.js egPartyDeco: the numeral, the classes, the mark, the title, the absent
+  // ring, the place line), painted over the card only where it moved; null outside a breach.
+  let spire = null;
+  let spireWas = null;
+  /** AUDIT EG V (c, L7-7; Elite-Gates.md section 16.5 - "a tap on a party row"): the host's word on a row tapped in a breach
+   *  (a witness watching that member) - the one press the quiet panel takes, on a row the Spire's deco marks `eg-tap`. */
+  let spireTap = null;
 
   const applyVisible = () => {
     const want = (!covered && showing) ? '' : 'none';
@@ -614,6 +622,40 @@ export function createPartyPanel({ social, doc = document, art = null, faceLoade
       if (!card.away) continue;
       setText(card.where, lastOnlineText(false, card.away.seen, social.now()));
     }
+    paintSpire();   // EG-G1
+  };
+
+  /** EG-G1: THE SPIRE'S ROWS onto the cards - written only when the host's word moved (its key), or after a paint that
+   *  rewrote the cards' own parts. A card's Spire nodes are made the first time it needs one. A place line the Spire
+   *  took is given back by a repaint. */
+  const paintSpire = () => {
+    let deco = null;
+    try { deco = spire?.() ?? null; } catch { deco = null; }
+    const key = deco ? [...deco].map(([s, d]) => `${s}|${d.num}|${d.cls}|${d.mark}|${d.ring == null ? '' : Math.round(d.ring * 100)}|${d.where ?? ''}|${d.title}`).join('#') : '';
+    if (key === spireWas) return;
+    spireWas = key;
+    for (const [acct, card] of cards) {
+      if (acct.startsWith('companion:')) continue;
+      const d = deco?.get(acct) ?? null;
+      if (d && !card.egNum) {
+        const head = card.name.parentNode ?? card.name.parent;
+        card.egNum = el('span', 'dfparty-egn'); card.egMark = el('span', 'dfparty-egm'); card.egRing = el('div', 'dfparty-egring');
+        card.egMark.setAttribute('aria-hidden', 'true');
+        head?.insertBefore?.(card.egNum, card.name); head?.insertBefore?.(card.egMark, card.lead);
+        card.facebox.append(card.egRing);
+        card.node.addEventListener?.('click', () => { if (String(card.node.className).split(/\s+/).includes('eg-tap')) spireTap?.(acct); });   // AUDIT EG V (c, L7-7)
+      }
+      if (!card.egNum) continue;
+      setText(card.egNum, d ? d.num : '');
+      setText(card.egMark, d ? d.mark : '');
+      const base = String(card.node.className).split(/\s+/).filter((c) => c && !c.startsWith('eg-')).join(' ');
+      setCls(card.node, d?.cls ? `${base} ${d.cls}` : base);
+      card.node.setAttribute('title', d?.title ?? '');
+      const ring = d?.ring == null ? '' : String(Math.round(d.ring * 1000) / 1000);
+      if (card.egRing.style.getPropertyValue?.('--eg-ring') !== ring) card.egRing.style.setProperty?.('--eg-ring', ring);
+      if (d?.where) { setText(card.where, d.where); setCls(card.where, 'dfparty-where'); card.egWhere = true; }
+      else if (card.egWhere) { card.egWhere = false; painted = -1; }
+    }
   };
 
   /** COMPANION-KIT: one companion onto one card - the member's own parts, his role where a place goes. */
@@ -679,6 +721,7 @@ export function createPartyPanel({ social, doc = document, art = null, faceLoade
     if (!same(list, order)) list.replaceChildren(...order);
     if (!same(mateList, mateOrder)) mateList.replaceChildren(...mateOrder);
     applyVisible();
+    spireWas = null; paintSpire();   // EG-G1: the cards' own parts rewritten, the Spire's laid over them again
   };
 
   return {
@@ -709,6 +752,8 @@ export function createPartyPanel({ social, doc = document, art = null, faceLoade
     },
     /** COMPANION-KIT: the host's companions seam, handed in after the build (the party's panel is made over `social`). */
     setCompanions(fn) { companions = typeof fn === 'function' ? fn : null; compPainted = null; },
+    /** EG-G1: the host's Spire rows seam (ui/eliteGates/egParty.js egPartyDeco by account, or null outside a breach). */
+    setSpire(fn, onTap = null) { spire = typeof fn === 'function' ? fn : null; spireTap = typeof onTap === 'function' ? onTap : null; spireWas = null; },   // AUDIT EG V (c, L7-7): and a row's tap
     /** What the panel currently draws, for a host or a pin that wants it without walking the DOM. */
     cardCount: () => cards.size,
     cardFor: (acct) => cards.get(acct) ?? null,

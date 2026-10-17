@@ -19,6 +19,7 @@ import { setSharedClock, setWorldMinutes, resetMagicRoundMarker } from '../../sr
 import { hurtPlayer } from '../../src/characters/playerEntity.js';
 import { maxFatigue } from '../../src/systems/statMods.js';
 import { SKILLS } from '../../src/systems/skills.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const NOON = 100000 * 1440 + 12 * 60;
@@ -109,7 +110,7 @@ test('SWIM-SPENT: a swimmer run out of fatigue on the real ticker lives through 
 });
 
 test('SWIM-SPENT: the three hosts a swimmer can collapse in take the drown arm first - a line, the share, no box, no death heard by Come Sail Away - and the watery-grave box is gone from them', () => {
-  const W = rd('src/scenes/world.js'), X = rd('src/scenes/exterior.js'), D = rd('src/scenes/dungeonContext.js');
+  const W = hostText('src/scenes/world.js'), X = rd('src/scenes/exterior.js'), D = rd('src/scenes/dungeonContext.js');
   const arm = /if \(out\.kind === 'drown'\) \{ townTalk\.say\(out\.line\); hurtPlayer\(playerEntity, out\.damage, \{ bypassShield: true \}\); return; \}/;
   for (const [name, src] of [['world.js', W], ['exterior.js', X]]) {
     const fn = src.slice(src.indexOf('function onExhaustedExterior()'), src.indexOf('function onExhaustedExterior()') + 4000);

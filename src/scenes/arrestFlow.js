@@ -37,8 +37,9 @@ import {
   TEXT_FREE_TO_GO, TEXT_BANISHED, TEXT_HOW_CONVINCE,
   lowerRepForCrime, surrenderToCityGuards, startCourt, pleaGuilty,
   pleaNotGuilty, resolveGuiltyVerdict, raiseRepForSentence, TEXT_EXECUTED,
-  guildRescue, setCrimeCommitted,
+  guildRescue, setCrimeCommitted, confiscateStolen,
 } from '../systems/court.js';
+import { confiscatedText, piecesOf } from '../systems/stolenGoods.js';   // STOLEN-GOODS: the court's word for what it took
 import { isTransformedLycanthrope, frightenChance, frightenRoar } from '../systems/lycanthropy.js';   // WERE-FRIGHT: the beast cannot surrender
 import { guildOfFaction, membershipOf, activeMemberships } from '../systems/guild/guilds.js';   // CR1: the rescue arms' member reads
 import { resolveVariantGuild } from '../systems/guild/guildVariants.js';
@@ -517,6 +518,12 @@ export function createArrestFlow({
   }
 
   function finish(result, court) {
+    // STOLEN-GOODS (FIELD BUGS 2026-10-16b): EVERY GUILTY EXIT ENDS HERE - the plea's (a fine paid, a sentence, banishment),
+    // the failed defence's (state 2's verdict and its banishment) - and the court takes the stolen goods the prisoner
+    // carries (court.js confiscateStolen), at the verdict. An acquittal (verdict's `free` arm) and a guild's rescue
+    // (startCourtFlow) release without coming here: nothing is taken, the guild got you out. The line is said at the
+    // release (release, below), so a sentence's days do not run it off the screen before the prisoner walks out.
+    if (trial) trial.taken = confiscateStolen(playerEntity);
     if (result.outcome === 'banished') {
       // AUDIT 17e F22: state 4 (Banished) does NOT call
       // RaiseReputationForDoingSentence (DaggerfallCourtWindow.cs:263-278)
@@ -741,6 +748,7 @@ export function createArrestFlow({
     if (reposition) positionPlayerAtLocationEntrance();
     clearEnemies();
     playerEntity.health = Math.max(1, playerEntity.health);   // the port's own floor, not DFU's
+    if (trial?.taken?.length) say(confiscatedText(piecesOf(trial.taken)));   // STOLEN-GOODS: what the verdict took (finish)
   }
 
   /** ARREST-SHIELD: a host that tears this flow down takes its veto

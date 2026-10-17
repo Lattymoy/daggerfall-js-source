@@ -168,8 +168,8 @@
   {
     "name": "SD7B-the-breath-over-the-Beat",
     "file": "src/scenes/superDungeon/sdSteps.js",
-    "old": "if (g.push && inBreath(rz) && dt > 0)",
-    "new": "if (g.push && spanAt(rz) >= 1 && dt > 0)",
+    "old": "if (g.push && inBreath(rz, course) && dt > 0)",
+    "new": "if (g.push && spanAt(rz, course) >= 1 && dt > 0)",
     "tests": [
       "test/world/superDungeon/sd7b_steps.test.js"
     ]
@@ -222,8 +222,8 @@
   {
     "name": "SD7B-every-fall-to-A",
     "file": "src/scenes/superDungeon/sdSteps.js",
-    "old": "return realmToDungeon(...castBackTo(lastSpan));",
-    "new": "return realmToDungeon(...castBackTo(0));",
+    "old": "return realmToDungeon(...castBackTo(lastSpan, course));",
+    "new": "return realmToDungeon(...castBackTo(0, course));",
     "tests": [
       "test/world/superDungeon/sd7b_steps.test.js"
     ]
@@ -276,7 +276,7 @@
   {
     "name": "SD7B-world-no-ward",
     "file": "src/scenes/world.js",
-    "old": "registerLevitateWard(() => inSiegeRoom() || modes?.sdRealmSlot?.() != null);",
+    "old": "registerLevitateWard(() => inSiegeRoom() || madeRuleHere('levitate') === 'banned');",
     "new": "registerLevitateWard(() => inSiegeRoom());",
     "tests": [
       "test/world/superDungeon/sd7b_steps.test.js"

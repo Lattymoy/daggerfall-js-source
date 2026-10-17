@@ -10,6 +10,9 @@
 // place, and the list is rebuilt only when a row starts, ends or arrives (a live window, the world running under it).
 import { eventTimerRows, timerText, localWhenText } from '../../systems/eventTimers.js';
 
+/** EG-ZM: a row's door (systems/eventTimers.js `door`) -> its button's words. */
+export const TIMER_DOOR_TEXT = Object.freeze({ board: 'Boards' });
+
 /** A row's kind -> its marker class (colour in the sheet). */
 export const TIMER_KINDS = Object.freeze(['gate', 'serpent', 'super', 'raid', 'battle', 'seat', 'reset']);   // SERPENT-TIMERS: the sea serpent's; SD2c: the Super dungeon's, once found
 
@@ -61,11 +64,13 @@ export function anchorBeside(mark, profile, host, gap = 10) {
 /**
  * The window. `read()` answers the host's live source for eventTimerRows - { now, gate, seats, zero, raids } with
  * `now` the relay's clock - or null when there is none (offline). Returns { root, stop }: the caller stops the tick
- * when the window goes (a render, an unmount).
+ * when the window goes (a render, an unmount). EG-ZM: a row with a door (`door` - the boards' on an Elite row) carries
+ * its button, which hands the source's own door (`doors[door]`, read at the press) to `door(fn)` - the caller's way of
+ * opening it (the pause face hands its place on first).
  * @param {Document} doc
- * @param {{ read: () => any, onClose: () => void, every?: number }} o
+ * @param {{ read: () => any, onClose: () => void, every?: number, door?: (fn: () => any) => any }} o
  */
-export function timersWindow(doc, { read, onClose, every = 1000 }) {
+export function timersWindow(doc, { read, onClose, every = 1000, door = (fn) => fn() }) {
   const el = (tag, cls, text) => {
     const n = doc.createElement(tag);
     if (cls) n.className = cls;
@@ -102,7 +107,7 @@ export function timersWindow(doc, { read, onClose, every = 1000 }) {
     const now = Number(src?.now) || Date.now();
     const offset = now - Date.now();   // the relay's clock against this machine's - the local time is the machine's
     // A cleared raid can change only the detail count while the displayed raid stays the same.
-    const nextShape = JSON.stringify(rows.map((r) => [r.id, r.live, r.title, r.where, r.detail]));
+    const nextShape = JSON.stringify(rows.map((r) => [r.id, r.live, r.title, r.where, r.detail, r.door ?? null]));
     if (nextShape !== shape) {
       shape = nextShape;
       cells = new Map();
@@ -126,6 +131,15 @@ export function timersWindow(doc, { read, onClose, every = 1000 }) {
         const when = el('span', 'tm-when');
         clock.append(count, when);
         row.append(text, clock);
+        // EG-ZM (Elite-Gates.md section 20): the row's door - a button as the window's Close is, so a press, a tap and the
+        // pad's walk reach it alike; the source's door is read at the press, never kept from the draw
+        if (TIMER_DOOR_TEXT[r.door]) {
+          const go = el('button', 'act tm-door', TIMER_DOOR_TEXT[r.door]);
+          /** @type {any} */ (go).type = 'button';
+          const which = r.door;
+          go.addEventListener('click', () => { const fn = read()?.doors?.[which]; if (typeof fn === 'function') door(fn); });
+          row.append(go);
+        }
         list.append(row);
         cells.set(r.id, { count, when });
       }

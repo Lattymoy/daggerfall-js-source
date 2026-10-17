@@ -242,6 +242,7 @@ test('worldModes exit caches the cabin, tears down the room, and lands at deck h
     peopleBodies: { destroy: noop },   // PIN MOVED (MWNPC8a): the room's people's Morrowind bodies leave with it
     isCaravanRoom: (room) => room?.kind === 'caravan', CARAVAN_TEXT: { notHere: 'Your caravan is not here.' },   // WAGONS1: the caravan's room shares the slot
     dropViewOut: () => actions.push('view out dropped'),   // RW1 (AUDIT): the view out goes with the building
+    interiorNav: { release: noop },   // PIN MOVED (FIELD BUGS 2026-10-16b INDOOR-WATCH): the room's navmesh leaves with it
   };
   const exit = new Function(...Object.keys(scope), `return (${functionSource('exitInteriorNow')});`)(...Object.values(scope));
   assert.equal(exit(), true);

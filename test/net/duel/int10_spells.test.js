@@ -17,6 +17,7 @@ import { newWildRef, wildZone, wildBlow, WILD_REF } from '../../../src/net/wild/
 import { ARENA_SPELLS_IN, ARENA_SPELL_WINDOW_MS, ARENA_SPELL_MAX } from '../../../src/net/arena/arenaLaw.js';
 import { mintSiegeOrder } from '../../../src/net/identityToken.js';
 import { fakeRoom } from '../../fakeRoom.mjs';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const { subtle } = globalThis.crypto;
 const rd = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
@@ -53,7 +54,7 @@ test('INT10 ONE CAP: a cast between players is clipped to one cast\'s most and b
 });
 
 test('INT10 EVERY PATH A REFEREE\'S: the caster sends a number counted on its own machine - a duel\'s, the open zone\'s (a dungeon of it too), a siege\'s - and no target\'s machine applies a peer\'s harm: a peer\'s cast at me is a gift\'s families alone (mutants: a spell sent whole for its target to apply; the receiver\'s gift filter gone)', () => {
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.ok(w.includes("const n = duelMgr.blow('spell', { p: campToWire(player.feetAt()), d: siegeCastClamp(harm, false) });"), 'the duel\'s');
   assert.ok(w.includes("const n = wildFight.blow(peerId, 'spell', { p: campToWire(player.feetAt()), d: siegeCastClamp(harm, false) });"), 'the zone\'s');
   assert.ok(w.includes('return harm > 0 && siegeSession.cast(peerId, siegeCastClamp(harm, false));'), 'a siege\'s');

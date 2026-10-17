@@ -8,8 +8,9 @@ import { EnemyAI, GIVE_UP_TICKS } from '../../src/characters/enemy/enemyMotor.js
 import { SKILLS, skillValue } from '../../src/systems/skills.js';
 import { setEnemyAlert, ALERT_DECAY_MINUTES } from '../../src/systems/encounters.js';
 import { setWorldMinutes, resetMagicRoundMarker, CLASSIC_MINUTES_PER_SECOND } from '../../src/systems/worldTick.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
-const rd = (f) => readFileSync(new URL(`../../${f}`, import.meta.url), 'utf8');
+const rd = (f) => hostText(f);
 const player = (over = {}) => ({
   skills: [], stats: {}, level: 1, health: 50, maxHealth: 50, activeEffects: [], ...over,
 });
@@ -99,7 +100,7 @@ test('audit24 wave36: every exterior pool is handed the full context', () => {
       `${f}: including the half-speed flag the odd-minute skip reads`);
   }
   // three call sites, all of them
-  assert.equal((rd('src/scenes/world.js').match(/_foeSenses\(\)/g) ?? []).length, 2, 'world: the watch and the encounter pool');
+  assert.equal((hostText('src/scenes/world.js').match(/_foeSenses\(\)/g) ?? []).length, 2, 'world: the watch and the encounter pool');
   assert.equal((rd('src/scenes/exterior.js').match(/_foeSenses\(\)/g) ?? []).length, 1, 'exterior: the watch');
   // and the dungeon uses the same builder rather than its own literal
   // MT-iv spreads the activity bag to add the candidate getter (the

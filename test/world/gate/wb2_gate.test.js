@@ -313,7 +313,9 @@ test('WB2 the pass: beacons added, fires premultiplied, faded gates skipped and 
   pass.draw([], I, I, [0, 0, 0], 1);
   assert.equal(calls.length, 0, 'nothing to draw, nothing touched');
   const g = (fade, x = 0) => ({ origin: [x, 0, 0], yaw: 0.3, open: 1, fade });
-  pass.draw([g(0, 5), g(1), g(0.5, 30), g(1, 60)], I, I, [0, 0, 0], 12.5);
+  // PIN MOVED (EG-F, 2026-10-12): GATE_PASS_MAX rose from 2 to 4 (the day's gate and the Elite Breaches' arches in one view,
+  // bible/11-Multiplayer/Elite-Gates.md section 6.3) - so six gates stand here, one faded, and the cap still bites
+  pass.draw([g(0, 5), g(1), g(0.5, 30), g(1, 60), g(1, 90), g(1, 120)], I, I, [0, 0, 0], 12.5);
   assert.ok(!calls.some((c) => c[0] === 'uniform3f' && c[2] === 5), 'the faded gate is not the one drawn - it is skipped before the cap');
   const draws = calls.filter((c) => c[0] === 'drawArrays');
   assert.equal(draws.length, GATE_PASS_MAX * 2, 'a beacon and a fire each, the faded skipped, the rest capped');

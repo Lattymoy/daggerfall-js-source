@@ -218,7 +218,7 @@
   {
     "name": "LOOT5-grace-never-recovers",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "  if (now < _s.graceReady) return false;\n  _s.graceReady = now + p.recover;",
+    "old": "  if (now < _s.graceReady || lootSpireHeld('grace')) return false;   // EG-ZH: and in the Spire, not before its next Redoubt\n  _s.graceReady = now + p.recover;",
     "new": "  _s.graceReady = now + p.recover;",
     "tests": [
       "test/systems/loot5_powers.test.js"
@@ -236,7 +236,7 @@
   {
     "name": "LOOT5-the-vigil-every-hurt",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "  if (now < _s.vigilReady) return;\n  _s.vigilReady = now + v.recover;",
+    "old": "  if (now < _s.vigilReady || lootSpireHeld('vigil')) return;   // EG-ZH: and in the Spire, not before its next Redoubt\n  _s.vigilReady = now + v.recover;",
     "new": "  _s.vigilReady = now + v.recover;",
     "tests": [
       "test/systems/loot5_powers.test.js"

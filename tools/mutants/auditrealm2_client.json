@@ -29,8 +29,9 @@
   {
     "name": "AUDIT-REALM2-C2-host-never-leaves-or-rejoins",
     "file": "src/scenes/world.js",
-    "old": "    whenPageGoes(globalThis, () => { realmSession.leave({ keepalive: true }); }, () => { realmSession.rejoin(); });\n",
+    "old": "    whenPageGoes(globalThis, () => { legacyHost?.pageGone(); realmSession.leave({ keepalive: true }); }, () => { realmSession.rejoin(); });",
     "new": "",
+    "note": "PIN MOVED (FIELD BUGS 2026-10-16b REZ-BLOODLINE): re-aimed by content - an online death is read at the door and written when it is decided (legacyHost.js decideDeath)",
     "tests": [
       "test/systems/auditrealm2_client.test.js"
     ]

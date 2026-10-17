@@ -49,6 +49,18 @@ export function revenantMayYield(f) {
   return !!r && !r.defeated && !r.sworn;
 }
 
+/** RVN-OWNERS-CHOICE (FIELD BUGS 2026-10-16b; Discord: "I believe it bypasses the kill/spare on revenants. And it seems
+ *  it does this to other players' revenants, too"): DOES THIS WHOLE BLOW CLOSE ONE OF MY REVENANTS OUTRIGHT - past its
+ *  last stand, its will and its kneel? A whole blow (the doors' `_whole`: a Disintegrate, the Razor's whole-health
+ *  strike, a stat drained to zero) does so only when it is the OWNER's own: the player's blow (`fromPlayer`), never a
+ *  peer's, at the door that holds the record - a revenant is never handed over (REVENANT-HEIR), so that door is its
+ *  owner's. Anyone else's - a party member's kill forwarded as `z`, their strike spell landed here, a foe's spell, a
+ *  companion's, a round that names nobody - is a killing blow like any other: it stands, tears away or kneels, and
+ *  the choice is the owner's (bible/06-Systems/Revenants.md section 15). */
+export function ownersWholeKill(whole, { fromPlayer = false, peer = false } = {}) {
+  return !!whole && !!fromPlayer && !peer;
+}
+
 /** RVN4 (bible/12-Enhanced-AI/Feud-Arc.md 15.1): IS ITS LAST STAND DUE - one of my own revenants (never a puppet, a
  *  companion, one held by its fate) of rank LAST_STAND_RANK and up, not stood in this stand yet? */
 export function revenantLastStandDue(f) {

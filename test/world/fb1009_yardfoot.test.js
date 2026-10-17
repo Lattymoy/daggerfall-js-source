@@ -30,6 +30,7 @@ import { realmAt } from '../realmSeat.mjs';
 import { fakeDoc, fakeWin, fakeBlocks, rmb, TOWN, settle, ACTIONS } from '../decorFakes.mjs';
 import { townPixel, houseAt, lHouse, L_DOOR, CHAIR_MODEL, BENCH_MODEL } from '../fb1001Town.mjs';
 import { skipReal, game } from '../lwRealTown.mjs';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 // read off the namespace, so the code before the fix fails each pin on its own assertion rather than at the import
 const { createHomeYards, yardLot, yardWhyNot, YARD_IN_HOUSE, YARD_ON_OTHER, YARD_MARGIN } = homeYards;
@@ -188,8 +189,9 @@ test('FB1009 HOME-FOOT the report on the real decorator: the owner of an L-shape
 });
 
 test('FB1009 HOME-FOOT the world host by source: every building\'s ground measured once per model and recorded beside its box at the build, a second model\'s ground joining the first\'s; the yard\'s lot and its neighbours read it (mutants: the host records no ground; a second model\'s ground dropped; the host measures the box)', () => {
-  const w = src('src/scenes/world.js');
-  assert.match(w, /import \{ modelFootRects, footRectsAt \} from '\.\/homeYards\.js';/);
+  const w = hostText('src/scenes/world.js');
+  // HOST-SPLIT 2: the host keeps modelFootRects and its pixel build imports footRectsAt - each from the yards' home
+  for (const name of ['modelFootRects', 'footRectsAt']) assert.match(w, new RegExp(`import \\{[^}]*\\b${name}\\b[^}]*\\} from '\\./homeYards\\.js';`), name);
   assert.match(w, /const modelFeetOf = \(id, cpu\) => \{\n\s*let rs = modelFeet\.get\(id\);\n\s*if \(!rs\) modelFeet\.set\(id, rs = modelFootRects\(cpu\.positions, cpu\.indices\)\);\n\s*return rs;\n\s*\};/);
   assert.match(w, /const rects = footRectsAt\(modelFeetOf\(placed\.modelIdNum, cpu\), local\);[^\n]*\n\s*const f = pixelHomeFrames\.get\(homeKey\);\n\s*if \(!f && at\) pixelHomeFrames\.set\(homeKey, \{ at, box: \[\.\.\.box\], rects, type: bd\?\.buildingType \?\? null, faction: bd\?\.factionId \?\? 0 \}\);\n\s*else if \(f\) \{ for \(let i = 0; i < 3; i\+\+\) \{ f\.box\[i\] = Math\.min\(f\.box\[i\], box\[i\]\); f\.box\[i \+ 3\] = Math\.max\(f\.box\[i \+ 3\], box\[i \+ 3\]\); \} f\.rects\.push\(\.\.\.rects\); \}/,
     'the ground beside the box, a second model\'s joined to the first\'s (PIN MOVED, YARD-LINE: and its record\'s type and faction)');

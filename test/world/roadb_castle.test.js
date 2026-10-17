@@ -22,13 +22,14 @@ import {
 import { TRIGGER_FLAGS, ACTION_FLAGS } from '../../src/world/rdbLayout.js';
 import { BUILDING_TYPES, isTavern, isResidence } from '../../src/world/buildingNames.js';
 import { createCityGuards } from '../../src/scenes/cityGuards.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const ARENA2 = process.env.ARENA2_PATH;
 const skipReal = !ARENA2 || !existsSync(ARENA2)
   ? 'ARENA2_PATH not set or missing - real-data validation skipped'
   : false;
 
-const SRC = (p) => readFileSync(new URL(`../../src/${p}`, import.meta.url), 'utf8');
+const SRC = (p) => hostText(`src/${p}`);
 
 const I = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
 const CUBE = {

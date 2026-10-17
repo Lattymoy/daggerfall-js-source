@@ -557,13 +557,17 @@ export const GATE_LANDING_M = 10;
  * to (sin yaw, cos yaw)), turned away from it - `{ pos, normal }`, a door landing's own shape (player/enterExit.js
  * dungeonEntranceLanding), in the scene's frame NOW: the gate's pixel's translation plus its spot (systems/gate/gateOmen.js
  * gateSceneXZ's own sum), so a recentre since the player went in moves it with the world. Null off the built ground.
- * @param {{day: number, px: number, py: number, spot: number[]}} g the gate walked into (scenes/gate/gatePool.js enter)
+ * EG-F (2026-10-12; bible/11-Multiplayer/Elite-Gates.md section 6.4): OR AN ARCH RECORD - an Elite Breach's arch, `{ px,
+ * py, spot, yaw }` (scenes/eliteGates/egArch.js egArchLandingFor: its site and its turn, with no day), the opener's landing before it.
+ * @param {{day?: number, yaw?: number, px: number, py: number, spot: number[]}} g the gate walked into (scenes/gate/gatePool.js enter), or an arch
  * @param {{pixelTranslation: (px: number, py: number) => number[], heightAt: (x: number, z: number) => number}} at
  */
 export function gateLandingFor(g, { pixelTranslation, heightAt }, out = GATE_LANDING_M) {
-  if (!g || !Array.isArray(g.spot) || !Number.isSafeInteger(g.day)) return null;
+  if (!g || !Array.isArray(g.spot)) return null;
+  const yaw = Number.isSafeInteger(g.day) ? gateYaw(g.day) : Number.isFinite(g.yaw) ? g.yaw : null;   // EG-F: a gate's day turns it; an arch says its own
+  if (yaw == null) return null;
   const t = pixelTranslation(g.px, g.py);
-  const yaw = gateYaw(g.day), dx = Math.sin(yaw), dz = Math.cos(yaw);
+  const dx = Math.sin(yaw), dz = Math.cos(yaw);
   const x = t[0] + g.spot[0] + dx * out, z = t[2] + g.spot[1] + dz * out;
   const y = heightAt(x, z);
   return Number.isFinite(y) ? { pos: [x, y, z], normal: [dx, 0, dz] } : null;

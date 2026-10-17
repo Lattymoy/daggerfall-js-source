@@ -23,20 +23,21 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import {
-  resolveHover, frameSignature, hoverLines, keyItemises, ITEMISED_KEYS, HOVER_MAX,
+  resolveHover, frameSignature, hoverLines, keyItemises, keyPreviews, ITEMISED_KEYS, PREVIEW_KEYS, HOVER_MAX,
   composeActivationTargets, plaqueWindow,
 } from '../../src/systems/worldHover.js';
 import {
   showWorldPlaque, destroyWorldPlaque, hideWorldPlaque, plaqueAnchor, worldPlaqueOn, worldHoverFrame,
   worldHoverFaults, PLAQUE_GAP, PLAQUE_WATCHDOG_MS, _plaqueSignatureForTests, _setPlaqueClockForTests,
 } from '../../src/ui/worldPlaque.js';
-import { foldQuickLoot, quickLootWheel, resetQuickLoot, quickLootRow, quickLootStats, quickLootTake } from '../../src/systems/quickLoot.js';   // QUICK-LOOT B3: the two draw pins at the foot of this file drive the highlight through its own module
+import { foldQuickLoot, quickLootWheel, resetQuickLoot, quickLootRow, quickLootStats, quickLootTake, quickLootSelection } from '../../src/systems/quickLoot.js';   // QUICK-LOOT B3: the two draw pins at the foot of this file drive the highlight through its own module
 import { PREF_DEFAULTS, setPref } from '../../src/systems/uiPrefs.js';
 import { CROSSHAIR_ARM, crosshairCentreY } from '../../src/ui/hud/hudCrosshair.js';
 import { hudScale } from '../../src/ui/hud/hud.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 import { _frameForTests, DRAW_FRAMES_UNDRAWN } from '../../src/ui/drawWatchdog.js';   // DISC29-D: frames that pass undrawn
 
-const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
+const read = (p) => hostText(p);
 
 /** The word a HOST's own namer answers for a pile. AUDIT-WH M5: the
  *  model has no fallback of its own any more - an itemised key with no
@@ -168,6 +169,39 @@ test('WORLD-HOVER: only the loot keys itemise - everything else is a name', () =
   assert.equal(read, 0, 'a door is not a container - it is never asked for one');
   resolveHover(hit('loot:2'), { contents, name: PILE });
   assert.equal(read, 1);
+});
+
+test('CONTAINER-PEEK: a cupboard lists what it already holds, and stays a name until it has a list', () => {
+  assert.deepEqual([...PREVIEW_KEYS], ['container:', 'decor:']);
+  assert.equal(keyPreviews('container:4'), true);
+  assert.equal(keyPreviews('decor:chest'), true);
+  assert.equal(keyItemises('container:4'), false, 'a cupboard is not a pile - the take stays the press\'s');
+  const ruby = { name: 'Ruby' };
+  const listed = resolveHover(hit('container:4'), {
+    name: () => ({ title: 'Chest', subs: ['Private property'], tone: 'private' }),
+    contents: () => [ruby],
+  });
+  assert.equal(listed.kind, 'items');
+  assert.equal(listed.preview, true, 'a glance, not a take list');
+  assert.equal(listed.title, 'Chest');
+  assert.deepEqual(listed.subs, ['Private property']);
+  assert.equal(listed.tone, 'private');
+  assert.equal(listed.rows[0].name, 'Ruby');
+  assert.equal(listed.empty, false);
+  let read = 0;
+  const named = resolveHover(hit('container:4'), {
+    name: () => ({ title: 'Chest', subs: ['Private property'], tone: 'private' }),
+    contents: () => { read += 1; return null; },
+  });
+  assert.equal(read, 1, 'an unstocked cupboard is asked, and has nothing to list');
+  assert.equal(named.kind, 'name', 'so the plaque stays the name, and never says Empty');
+  assert.equal(named.tone, 'private');
+  assert.equal(named.rows.length, 0);
+  let far = 0;
+  assert.equal(resolveHover(hit('container:4', 9, 3.2), {
+    name: () => { far += 1; return { title: 'Chest' }; }, contents: () => { far += 1; return [ruby]; },
+  }), null, 'out of reach, a cupboard is not named and not read');
+  assert.equal(far, 0);
 });
 
 test('WORLD-HOVER: an itemised frame carries the rows, the tail and the empty flag', () => {
@@ -610,6 +644,23 @@ test('WORLD-HOVER: an open window takes the plaque down - by law, not by schedul
   });
 });
 
+test('SKIN-PLAQUE (FIELD BUGS 2026-10-16c): a gathering act\'s pick (gatherHost ACT_OWNS_LOOK) takes the plaque and its loot rows down - the body under the knife behind it is not named, and nothing stays lit for the wheel or a take', async () => {
+  const { ACT_OWNS_LOOK } = await import('../../src/scenes/gatherHost.js');
+  withPlaque((root) => {
+    resetQuickLoot();
+    const collider = { raycast: () => Infinity };
+    const body = { key: 'loot:1', distance: 1, reach: 3.2 };
+    const deps = { eye: [0, 0, 0], dir: [0, 0, 1], collider, contents: () => [{ name: 'Raw Meat' }, { name: 'Smelly Raw Meat' }], name: PILE };
+    assert.equal(worldHoverFrame({ ...deps, pick: () => body })?.key, 'loot:1', 'no act: the body\'s loot is the plaque\'s');
+    assert.equal(root().classList.contains('on'), true);
+    assert.notEqual(quickLootSelection(), null);
+    // the hosts' own shape: `gatherHost.hoverHit(ray) ?? ray` - the act's pick is kept over the body behind it
+    assert.equal(worldHoverFrame({ ...deps, pick: () => ACT_OWNS_LOOK ?? body }), null);
+    assert.equal(root().classList.contains('on'), false, 'the plaque is down mid-act');
+    assert.equal(quickLootSelection(), null, 'and nothing is lit for the wheel or a take');
+  });
+});
+
 test('WORLD-HOVER: the seam resolves through the SAME pick the take runs', () => {
   // The whole law, end to end: a target in reach is named, the same
   // target out of reach is not, and the difference is the pick's own
@@ -916,7 +967,7 @@ test('AUDIT-WH H5: the location\'s name is read in the PORT\'s spelling, from ON
   const ex = read('src/scenes/exterior.js');
   assert.match(ex, /currentLocation: \(\) => dfLocation,/, 'the fixed city hands dfLocation');
   assert.match(ex, /currentLocationName: \(\) => dfLocation\.name \?\? locationName,/, '...whose name field is `name`');
-  const w = read('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /currentLocation: \(\) => _questLoc\(\),/, 'the streaming world hands _questLoc()');
   assert.match(w, /currentLocationName: \(\) => _questLoc\(\)\?\.name \?\? '',/, '...whose name field is `name`');
 });
@@ -1289,8 +1340,11 @@ test('INTERIOR-BODIES: a body killed inside a building is stood, named, listed a
   // THAT host stands - it was one prefix while the interior stood no
   // bodies, and a body reading "Empty" over a full pack is the defect
   // AUDIT-WH H3 extracted this ladder for outdoors.
-  assert.match(wm, /contents: composeContents\(\[\n\s*\(key\) => \(typeof key === 'string' && key\.startsWith\('droppedLoot:'\)[^\n]*\n\s*\(key\) => interiorFoes\?\.hoverContents\?\.\(key\) \?\? null,\n\s*\(key\) => interiorGuards\?\.hoverContents\?\.\(key\) \?\? null,\n\s*\]\),/,
-    'the interior reads contents as a LADDER, over every itemised key it stands');
+  assert.match(wm, /contents: composeContents\(\[\n\s*\(key\) => \(typeof key === 'string' && key\.startsWith\('droppedLoot:'\)[^\n]*\n\s*\(key\) => interiorFoes\?\.hoverContents\?\.\(key\) \?\? null,\n\s*\(key\) => interiorGuards\?\.hoverContents\?\.\(key\) \?\? null,\n\s*\/\/ CONTAINER-PEEK:[^\n]*\n\s*interiorPeek,\n\s*\]\),/,
+    'the interior reads contents as a LADDER, over every itemised key it stands, then a cupboard\'s glance');
+  // HOST-SPLIT: the glance is built once at the host's scope, its getters the room's own word - not a bag built per frame
+  assert.match(wm, /\n  const interiorPeek = createInteriorPeek\(\{\n\s*containers: \(\) => interiorCtx\?\.containers, decor: \(\) => interiorDecor, owned: \(\) => ownsThisInterior\(\),\n\s*shut: \(\) => !!\(interiorHome && !interiorHome\.own\) \|\| !!privateVisitRoom \|\| caravanGuestHere\(\), hall: \(\) => hallMemberHere\(\), today: \(\) => stockedToday\(\),\n  \}\);/,
+    'the interior builds its cupboard glance once, from its own word');
   assert.match(wm, /import \{ composeNamer, composeContents \} from '\.\.\/systems\/worldHover\.js';/);
 
   // OPENED - the same door the street and the dungeon open: the pool's
@@ -1680,7 +1734,7 @@ test('AUDIT-WH H4/L2/L3/L4/L6: every host branch that returns above the hover sa
   // THE FOUR HOSTS RULE, on the lifecycle rather than the wiring.
   const wm = read('src/scenes/worldModes.js');
   const dj = read('src/scenes/dungeon.js');
-  const wo = read('src/scenes/world.js');
+  const wo = hostText('src/scenes/world.js');
   const ex = read('src/scenes/exterior.js');
 
   // H4: both dungeon hosts return above `drawFoes`, where the hover
@@ -2145,7 +2199,7 @@ test('AUDIT-WH R7/R8/P7/P9: the list has a cap, a readout is the player\'s onlin
   // press's call happened earlier in the same frame than the plaque's
   // pick and the plaque's namer. Nothing stated that and nothing could
   // have caught it: the list is identical between calls in one frame.
-  const wo = read('src/scenes/world.js');
+  const wo = hostText('src/scenes/world.js');
   assert.match(wo, /const springList = \(\) => \{/);
   assert.match(wo, /const springTargets = \(\) => springList\(\)\.map\(/);
   assert.match(wo, /const springAt = \(key\) => springList\(\)\[Number\(key\.split\(':'\)\[1\]\)\] \?\? null;/);

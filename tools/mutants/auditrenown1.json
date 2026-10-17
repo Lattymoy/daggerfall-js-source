@@ -421,9 +421,10 @@
   },
   {
     "name": "AUDIT-RENOWN1-limiter-caps-the-layer",
+    "note": "EG-ZR (PIN MOVED): re-aimed by content - the live maximum reads the Spire's Stoneskin beside Renown's (systems/renownLayer.js spireHpOf)",
     "file": "src/systems/chargen.js",
-    "old": "      return own + renownHpOf(this);",
-    "new": "      return Math.min(stored + renownHpOf(this), limiter >= 1 ? limiter : Infinity);",
+    "old": "      return own + renownHpOf(this) + spireHpOf(this);",
+    "new": "      return Math.min(stored + renownHpOf(this), limiter >= 1 ? limiter : Infinity) + spireHpOf(this);",
     "tests": [
       "test/net/auditrenown1.test.js",
       "test/net/renown1.test.js"
@@ -459,11 +460,12 @@
   {
     "name": "AUDIT-RENOWN1-magery-of-the-layer",
     "file": "src/systems/passiveSpecials.js",
-    "old": "  const raw = Math.max(0, (entity.maxMagicka ?? 0) - renownMpOf(entity));",
+    "old": "  const raw = Math.max(0, (entity.maxMagicka ?? 0) - onlineMpOf(entity));",
     "new": "  const raw = entity.maxMagicka ?? 0;",
     "tests": [
       "test/net/auditrenown1.test.js"
-    ]
+    ],
+    "note": "EG15 (PIN MOVED): the magery's raw takes off every online term - Renown's and the folds' magicka (renownLayer.js onlineMpOf) - re-aimed by content."
   },
   {
     "name": "AUDIT-RENOWN1-zero-maximum-holds-one",

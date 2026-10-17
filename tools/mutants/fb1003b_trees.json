@@ -1,7 +1,7 @@
 [
   {
     "name": "TREES-world-no-seat",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "locLocal[1] + (hillSeat && isNatureArchive(flat.archive) ?",
     "new": "locLocal[1] + (false && isNatureArchive(flat.archive) ?",
     "tests": [
@@ -10,7 +10,7 @@
   },
   {
     "name": "TREES-world-gate-narrowed",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "hillSeat && isNatureArchive(flat.archive) ? seatNatureFlat(hillSeat, flat.x, flat.z, NATURE_FLATS_Y + groundOffPlane",
     "new": "hillSeat && flat.archive === natureArchive ? seatNatureFlat(hillSeat, flat.x, flat.z, NATURE_FLATS_Y + groundOffPlane",
     "tests": [
@@ -19,7 +19,7 @@
   },
   {
     "name": "TREES-world-ground-dropped",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "seatNatureFlat(hillSeat, flat.x, flat.z, NATURE_FLATS_Y + groundOffPlane(samples, avg, fx, fz))",
     "new": "seatNatureFlat(hillSeat, flat.x, flat.z, NATURE_FLATS_Y)",
     "tests": [
@@ -28,7 +28,7 @@
   },
   {
     "name": "TREES-world-seat-not-built",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "const hillSeat = blockHillSeat(b.layout.models);",
     "new": "const hillSeat = null;",
     "tests": [

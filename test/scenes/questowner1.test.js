@@ -8,6 +8,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { partyOnlyQuestShare, questPrivateTag } from '../../src/scenes/quest/questFoeHost.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const PARTY = new Set(['amy-0002']);
 /** The world host's seam as DESYNC-ZERO left it (world.js questShareSeam): every quest foe for everyone. */
@@ -47,7 +48,7 @@ test('QUEST-OWNER the narrowing keeps the rest of the seam, live; the same objec
 });
 
 test('QUEST-OWNER wired: every pool reads the quest law through the narrowing - the open air\'s and the buildings\' as the host hands them, the dungeon\'s again where it reads it (its own lane, the puppets it stands, the blows it takes and the players its foes hunt)', () => {
-  const w = readFileSync(new URL('../../src/scenes/world.js', import.meta.url), 'utf8');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /exteriorFoes\.setQuestShare\(partyOnlyQuestShare\(questShareSeam\)\);/, 'the open air');
   assert.match(w, /foesQuestShare: \(\) => partyOnlyQuestShare\(questShareSeam\),/, 'a building and a dungeon');
   assert.doesNotMatch(w, /setQuestShare\(questShareSeam\)|foesQuestShare: \(\) => questShareSeam\b/, 'no pool handed the open seam');

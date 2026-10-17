@@ -181,7 +181,7 @@
  },
  {
   "name": "FESTIVAL-STAGE-host-temples",
-  "file": "src/scenes/world.js",
+  "file": "src/scenes/pixelBuild.js",
   "old": "tavernKeys: buildingKeysOfType(locBlocks, makeBuildingKey, TALK_BUILDING_TYPES.Tavern)",
   "new": "tavernKeys: buildingKeysOfType(locBlocks, makeBuildingKey, TALK_BUILDING_TYPES.Temple)",
   "tests": [

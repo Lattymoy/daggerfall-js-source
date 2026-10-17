@@ -26,8 +26,9 @@ import { applySpell } from '../../src/systems/effects.js';
 import { newSurvival } from '../../src/systems/survival/needs.js';
 import { setPref, _resetForTests } from '../../src/systems/uiPrefs.js';
 import { RACES } from '../../src/systems/races.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
-const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
+const src = (p) => hostText(p);
 
 /** Regenerate (18,255) cast on self - the report's own "regenerate health" - for 600 rounds. */
 const REGENERATE = { element: 4, rangeType: 0, effects: [{ type: 18, subType: 255, magnitudeBaseLow: 1, magnitudeBaseHigh: 1, magnitudeLevelBase: 0, magnitudeLevelHigh: 0, magnitudePerLevel: 0, durationBase: 600, durationMod: 0, durationPerLevel: 0 }] };

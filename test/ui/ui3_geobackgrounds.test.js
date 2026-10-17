@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 import { paperDollBackground, REGION_BACKGROUND_CHARS } from '../../src/ui/paperDoll.js';
 import { setValue, resetToDefaults, LIVE } from '../../src/systems/settings/settings.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 // UI3 - GEOGRAPHIC BACKGROUNDS (PaperDoll.GetPaperDollBackground
 // :203-230). `EnableGeographicBackgrounds` ships FALSE, so DFU's
@@ -62,7 +63,7 @@ test('UI3: the setting is read live, is LIVE, and the loader asks it rather than
 });
 
 test('UI3: the world host supplies the region, through HOISTED helpers (the boot-order trap)', () => {
-  const world = read('src/scenes/world.js');
+  const world = hostText('src/scenes/world.js');
   assert.match(world, /return \{ region: maps\.getPoliticIndex\(px\.x, px\.y\) - 128, regionCount: maps\.regionCount \};/,
     'GetPoliticIndex - 128, as DFU computes it (:214)');
   assert.match(world, /preloadPaperDollArt\(\{ renderer, fetchBytes, palette, getTexture \}, \{ where: paperDollWhere\(\) \}\)/);

@@ -24,9 +24,10 @@ import {
 } from '../../src/ui/quadMap.js';
 import { createFpArm, fpSkeletonPath, FP_CLIP_PATH, packFpArm, FP_FLOATS } from '../../src/combat/fpArm.js';
 import { perspective, lookAt, identity } from '../../src/world/mat4.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const f = (n) => new Uint8Array(readFileSync(new URL(`../fixtures/mw/${n}`, import.meta.url)));
-const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
+const rd = (p) => hostText(p);
 const near = (a, b, eps = 1e-6) => Math.abs(a - b) < eps;
 const nearVec = (a, b, eps = 1e-6, msg = '') => { assert.equal(a.length, b.length, msg); a.forEach((v, i) => assert.ok(near(v, b[i], eps), `${msg} [${i}] ${v} vs ${b[i]}`)); };
 /** rotate a vector by a [w,x,y,z] quaternion */
@@ -552,7 +553,7 @@ test('MAP3 weaponRig: armsDrawn() is the draw seam\'s own record - reset at the 
 });
 
 test('MAP3 world.js: the holder rides the ONE dep bag, asked per open through the rig (never a snapshot), and the tuning door reads or re-places the pose (mutants: holder-snapshot, door-missing)', () => {
-  const src = rd('src/scenes/world.js');
+  const src = hostText('src/scenes/world.js');
   const at = src.indexOf('createTravelMapWindow({');
   const bag = src.slice(at, src.indexOf('...extra,', at));
   // MW-MAP1: the holder is combat/weapon/weaponRig.js's sheetHolderOf, handed the rig as a FUNCTION (never a snapshot) -
@@ -645,7 +646,7 @@ test('MAP-WEAPON / EM-BUG1: EVERY host asks its own live slot, and the tag it as
     assert.match(read(`../../${file}`), re, `${file}: this host's rig asks ITS OWN slot whether a map holds the screen`);
   }
   for (const [file] of HOSTS) {
-    assert.doesNotMatch(read(`../../${file}`), /sheetWindowUp: \(\) => [^\n]*isTravelMap/, `${file}: never back onto the travel tag`);
+    assert.doesNotMatch(hostText(file), /sheetWindowUp: \(\) => [^\n]*isTravelMap/, `${file}: never back onto the travel tag`);   // the host whole (AUDIT HOST-SPLIT 2)
   }
   const held = read('../../src/ui/heldMap.js');
   // the screen tag is CONSTANT - hands holding a map are not also

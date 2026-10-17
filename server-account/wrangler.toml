@@ -108,7 +108,7 @@ crons = ["* * * * *", "41 * * * *"]
 [vars]
 # Answered by /health so a deploy that did not happen cannot look like
 # one that did. Kept in step with ACCOUNT_VERSION in src/service.js.
-ACCOUNT_VERSION = "acct145"
+ACCOUNT_VERSION = "acct151"
 # WB5b: THE RELAY'S PUBLIC HALF, GATE_PUBLIC_KEY - the key an Oblivion
 # Gate's kill receipts verify with (src/net/gate/gateReceipt.js) - is NOT a
 # var here. GATE-KEYS (2026-09-26): the account deploy mints the pair
@@ -193,6 +193,13 @@ FOUNDER_HANDLES = ""
 # First Hour (titles.js isHoursFirst). Comma-separated handles,
 # case-insensitive, the same as the lines above; held while listed.
 HOURS_FIRST_HANDLES = "aether,ArtemisGodfrey,CycleD0se,Duck,Kobakk,MackyWackyDeeJew,mayaamano,Nirnroot,ofrizz,rosalina,ShikiX3,Temegast,Terra"
+# EG-E2 (2026-10-12, bible/11-Multiplayer/Elite-Gates.md section 19, THE
+# HONOURS): FIRST OF THE SPIRE - the first company ever to take Redoubt 10
+# of the Elite Breach, by name, granted as Hour's First is. The title First
+# of the Spire and its aura, Firstlight (titles.js isSpireFirst). EMPTY until
+# that company comes: its Redoubt 10 receipts' accounts go here (and the
+# mailbox, as Hour's First's did). Comma-separated handles, case-insensitive.
+EG_FIRST_HANDLES = ""
 # TITLE-N (2026-09-24, Mac): the Dungeon Master - the orange title, the
 # die beside the name, and /dm's orange line (the relay reads the right
 # off the `dm` glyph in the signed token, as /red reads `dev`). "This
@@ -313,6 +320,15 @@ PRIMARCH_HANDLES = "GA00250"
 # next token. Flylighter stays a Disciple (DISCIPLE_HANDLES) - a second title
 # held, one worn.
 CRYSTAL_FIST_HANDLES = "Flylighter"
+# WIKIMAID (2026-10-17, for SylviaBun: "Honestly as dumb as this is gonna
+# sound the WikiMaid title and a purple aura with bunnies would be dope as
+# hell" - "Lets go all out for this"): WikiMaid - the title in an amethyst
+# into lilac into a bunny's blush, the wikimaid glyph (a rabbit's head, its
+# ears up, in a maid's frilled headband) and the Lilac Warren, rabbits
+# hopping round the feet on a ring of lilac light, their prints fading
+# behind them. A list that grants an aura (titles.js TIER_AURA); taking the
+# handle off takes all three on the next token.
+WIKIMAID_HANDLES = "SylviaBun"
 # PATREON-LINK (2026-10-01, Mac: "With patron and having to manually hand
 # out titles. Im running into a workflow where its really hard to keep up
 # with it"; asked, "Patreon auto-link"): A PATRON'S TITLE FOLLOWS THEIR
@@ -336,8 +352,12 @@ PATREON_CLIENT_ID = "xyF8_xJg78YwVgT0xRhs6uhPVeAdOzJu7_dcpaGqvqH-5DNdbLp-gugahtf
 # Heriophant is custom and Herald doesnt exist ingame yet. Supporter doesnt
 # recieve a title/glyph"): Disciple (29666211) is mapped, and Herald
 # (29666234) since HERALD gave it its title in the game. Supporter
-# (29701293) holds none; Hierophant (29666221) is custom, granted by name.
-PATREON_TIERS = "29666211:disciple,29666234:herald"
+# (29701293) holds none.
+# HIEROPHANT-TIER (2026-10-17, Mac: "The $50 patreon tier doesnt have a
+# title/glyph ingame. The Heirophant"): Hierophant (29666221) is mapped
+# too - its pledge holds TITLE-N's Hierophant, the rose title and the
+# crown. A title made for one patron is still granted by name, beside it.
+PATREON_TIERS = "29666211:disciple,29666234:herald,29666221:hierophant"
 
 [[d1_databases]]
 binding = "DB"

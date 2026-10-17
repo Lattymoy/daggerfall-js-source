@@ -161,12 +161,42 @@ export default defineConfig({
     // that returned `true` would force-inline REGARDLESS of size, the
     // opposite mistake and just as quiet.
     assetsInlineLimit: (filePath) => (/[\\/]vendor[\\/]/.test(filePath) ? false : undefined),
+    // BUILD-LEFTOVERS (2026-10-15): THE CHUNK-SIZE WARNING IS A LINE AGAIN.
+    // At Vite's 500 kB it fired on every build - the world chunk, world.js
+    // and all it imports statically, is 2,662 kB - so it said nothing. Set
+    // just over today's largest chunk, it speaks when a chunk grows past the
+    // world. (AUDIT BUILD-LEFTOVERS, the second read: 2,500 sat over the
+    // world's 2,446 when written, and main's POI editor took it to 2,662 by
+    // the merge. And HOST-SPLIT does not shrink it: a module the host imports
+    // statically joins the host's chunk - pixelBuild.js is in it. Only a
+    // dynamic import takes code out; lower this when one does.)
+    chunkSizeWarningLimit: 2_750,
     // EVERY ROOT PAGE: the game, the voxel editor (viewer.html), the labs
     // and the prototypes. None carries game data - a page that draws the
     // game's art asks for the user's own ARENA2. AUDIT 68: a root page
     // missing here works under `npm run dev` and silently never ships;
     // test/tooling/audit68_repo.test.js holds every tracked root *.html to a key.
     rollupOptions: {
+      // BUILD-LEFTOVERS: one warning is the design, not a fault. hudLayout.js
+      // loads revenantCard.js dynamically (the HUD preview's ghost) because
+      // revenantCard.js imports hudLayout.js statically - the dynamic edge
+      // keeps the two out of a cycle, it was never meant to split a chunk
+      // (hud.js imports revenantCard.js anyway). Only that pair is quiet;
+      // any other ineffective dynamic import still warns. The module is the
+      // log's `id` (its absolute path); the importer is read off the message,
+      // whose paths are the working directory's and come after a colour code
+      // (AUDIT BUILD-LEFTOVERS: a filter anchored to the message's start never
+      // matched a real build). Either separator, for a Windows build.
+      // AUDIT BUILD-LEFTOVERS, the second read: THIS tree's revenantCard.js
+      // (the build runs from the repository), hudLayout.js its only dynamic
+      // importer - and never a static one too, the mistake mwFirstPerson's was
+      // (the filter read any prefix and any static list, and quieted both)
+      onLog(level, log, handler) {
+        if (log.code === 'INEFFECTIVE_DYNAMIC_IMPORT' && (log.id ?? '').replace(/\\/g, '/') === `${process.cwd().replace(/\\/g, '/')}/src/ui/revenant/revenantCard.js`
+          && /\bdynamically imported by (?:\.[\\/])?src[\\/]ui[\\/]hud[\\/]hudLayout\.js but\b/.test(log.message)
+          && !/statically imported by [^\n]*\bsrc[\\/]ui[\\/]hud[\\/]hudLayout\.js/.test(log.message)) return;
+        handler(level, log);
+      },
       input: {
         // THE SITE, THEN THE GAME (U60). The root document is the landing
         // page - what this is, how to play, credits, Play - and the game
@@ -184,6 +214,7 @@ export default defineConfig({
         sky: 'sky.html',   // ES1: the enhanced sky lab
         water: 'water.html', // WATER1: the enhanced water lab (src/tools/waterLab.js)
         abyss: 'abyss.html', // SD-LAB: the Shattered Hour and the Rift, made in code, drawn by the game's renderer (src/tools/abyssLab.js)
+        spire: 'spire.html', // EG-G2: an Elite Breach's circle in its band's dress, made in code (src/tools/spireLab.js) - tools/spireLabProbe.mjs
         cards: 'cards.html', // CARDS3: the card table lab (src/tools/cardsLab.js) - tools/cardsProbe.mjs
         // MW-D: the Morrowind data inspector. Reads a player's own
         // archives and reports what is IN them; it draws nothing, stores

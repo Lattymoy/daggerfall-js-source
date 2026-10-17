@@ -30,8 +30,9 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { tileWeight, WATER_RECORDS_CLASSIC, WATER_RECORDS_ENHANCED, CityNavigation } from '../../src/world/city/cityNavigation.js';
 import { WATER_MASK_TABLE } from '../../src/world/water/waterCorners.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
-const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
+const read = (p) => hostText(p);
 
 test('WATER-NPC: the classic lane is still DFU\'s seven, exactly', () => {
   // The departure must not cost the port its 1:1 default. Every record

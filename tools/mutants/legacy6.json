@@ -135,8 +135,9 @@
   {
     "name": "LEGACY6-death-untold",
     "file": "src/scenes/legacyHost.js",
-    "old": "    tellNews('died', fullNameOf(p.given, p.surname), d.place?.mapId);\n",
+    "old": "    tellNews('died', fullNameOf(p.given, p.surname), h.d.place?.mapId, h.sky);\n",
     "new": "",
+    "note": "PIN MOVED (FIELD BUGS 2026-10-16b REZ-BLOODLINE): re-aimed by content - an online death is read at the door and written when it is decided (legacyHost.js decideDeath)",
     "tests": ["test/systems/livingWorld/legacy6_influence.test.js"]
   },
   {

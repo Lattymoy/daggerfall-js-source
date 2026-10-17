@@ -16,6 +16,7 @@ import { Renderer, CLOUD_SHADOW_UNIT, SKY_CLEAR } from '../../src/render/rendere
 import { PrecipitationRenderer } from '../../src/render/precipitation.js';
 import { warmPrograms } from '../../src/render/warmPrograms.js';
 import { TEXTURE_SLOTS } from '../../src/systems/dynamicSkies/dynamicSkies.js';   // AUDIT 65 RS-3: the nine slots the reserved unit has to clear
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 function countingRenderer(counts) {
   const stub = new Proxy({}, {
@@ -153,7 +154,7 @@ test('EV6: the skies neither query CURRENT_PROGRAM nor restore - the hosts mark 
     // WINDFALL1: and Windfall's leaves and snow flurries, one more in both hosts (before the haze, which bends them)
     // SD2c: and a Super dungeon's omen, one more in the world host (after the rite's smoke - PIN MOVED)
     // POI-3: and the POI editor's lines, one more in the world host (its boxes and handles, after the translucent pass - PIN MOVED)
-    const want = host === 'src/scenes/world.js' ? 28 : 7;   // SD-LOOK: the Rift's window, its floor light and its halos, one seam (PIN MOVED)   // SD8d: the Brass Remnant's blows on the arena's floor (PIN MOVED)   // SD5b: the Shattered Hour's sky (PIN MOVED)   // HOTFIX 1003l: the sky over the arena's floor, through the world host's drawSky hook   // CROWN-HALL: the banners' cloth in a castle's throne room (PIN MOVED)   // LOOT11: the loot lines' two seams, the street's pass and the modes' hook
+    const want = host === 'src/scenes/world.js' ? 30 : 7;   // EG-G2: an Elite Breach's own sky, one seam (render/eliteGates/egSkyPass.js - PIN MOVED)   // EG-PLAY: an Elite Breach hall's telegraphs, vents and rifts, one seam (PIN MOVED)   // SD-LOOK: the Rift's window, its floor light and its halos, one seam (PIN MOVED)   // SD8d: the Brass Remnant's blows on the arena's floor (PIN MOVED)   // SD5b: the Shattered Hour's sky (PIN MOVED)   // HOTFIX 1003l: the sky over the arena's floor, through the world host's drawSky hook   // CROWN-HALL: the banners' cloth in a castle's throne room (PIN MOVED)   // LOOT11: the loot lines' two seams, the street's pass and the modes' hook
     assert.equal((s.match(/renderer\.markForeignPass\(\);/g) || []).length, want,
       `${host} marks its foreign seams (the sky, the rain, the sand, the wisps, the bolts${want === 6 ? ', and the grass' : ''})`);
   }
@@ -161,7 +162,7 @@ test('EV6: the skies neither query CURRENT_PROGRAM nor restore - the hosts mark 
 
 test('EV6: both exterior hosts sort their draw lists by mesh at build', () => {
   assert.ok(readFileSync('src/scenes/exterior.js', 'utf8').includes('drawList.sort((a, b) => a.order - b.order)'));
-  assert.ok(readFileSync('src/scenes/world.js', 'utf8').includes('models.sort((a, b) => a._order - b._order)'));
+  assert.ok(hostText('src/scenes/world.js').includes('models.sort((a, b) => a._order - b._order)'));
 });
 
 // ═══ AUDIT 65: the same stub, grown a LOG and REAL enum NUMBERS ═════

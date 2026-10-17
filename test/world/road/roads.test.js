@@ -6,6 +6,7 @@ import assert from 'node:assert/strict';
 import { buildRoadNetwork, route, stamp, DIR, DIR_DELTA, MAP_W, MAP_H } from '../../../src/world/road/roadNetwork.js';
 import { paintRoads, classify, TILE } from '../../../src/world/road/roadPainter.js';
 import { LOCATION_TYPES as LT } from '../../../src/formats/mapsFile.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 // A flat continent with a sea to the west and a ridge across the middle.
 const flat = () => 20;
@@ -219,7 +220,7 @@ test('ROADS 3: the network rides both terrain kernels and the world host builds 
   assert.equal((client.match(/this\._roadsFallback\(\);/g) || []).length, 4,
     'setRoads-with-no-worker plus all three same-thread paths rebuild lazily');
   assert.match(worker, /buildRoadsFromSettlements\(m\.settlements, woods\)/, 'the worker builds with its own woods');
-  const host = fs.readFileSync('src/scenes/world.js', 'utf8');
+  const host = hostText('src/scenes/world.js');
   assert.match(host, /terrainGen\.setRoads\(settlementsOf\(maps\)/, 'the host enumerates and hands the LIST over - the build never touches the frame');
 });
 
@@ -427,7 +428,7 @@ test('ROADS 8: settlements carry their names, and an unrouted pair carries both'
   const { stats } = buildRoadNetwork({ locations: rows, heightAt: flat, isWater: island, dials: { roadReach: 600 } });
   assert.equal(stats.unrouted, 1);
   assert.deepEqual(stats.unroutedPairs[0].map((l) => l.name).sort(), ['Daggerfall', 'Ilessan Hills'], 'the pair is named at both ends');
-  const host = (await import('node:fs')).readFileSync('src/scenes/world.js', 'utf8');
+  const host = hostText('src/scenes/world.js');
   assert.match(host, /\$\{l\.name \?\? '\?'\}/, 'and the log prints the name');
 });
 
@@ -550,10 +551,14 @@ test('ROADS 12: the two chips ride the store, default shown, and the relief is k
 // source, because a setRoads moved below the first frame would ship
 // roadless chunks around the start position with every suite green.
 test('AUDIT 46 A10: the network is posted before any terrain job can be', async () => {
-  const host = (await import('node:fs')).readFileSync('src/scenes/world.js', 'utf8');
+  const host = hostText('src/scenes/world.js');
   const made = host.indexOf('new TerrainGenClient({ woods, woodsBytes })');
   const roads = host.indexOf('terrainGen.setRoads(settlementsOf(maps)');
-  const firstGen = host.indexOf('terrainGen.generate(');
+  // AUDIT HOST-SPLIT 2, the second read: the first generate call is the build's, in the module the join appends after
+  // all of world.js - so it stands, for the order, where the host constructs the build
+  const built = host.indexOf('const { buildPixelNow } = createPixelBuild(');
+  const gen = host.indexOf('terrainGen.generate(');
+  const firstGen = gen < 0 ? -1 : built > 0 && built < gen ? built : gen;
   assert.ok(made > 0 && roads > made, 'setRoads follows the client\'s construction');
   assert.ok(firstGen < 0 || roads < firstGen, 'and precedes the first generate call in the file');
   const gap = host.slice(made, roads);
@@ -782,7 +787,7 @@ test('ROADS 22: Basic Roads loads byte-exact, refuses the wrong size, and falls 
   // Mods pane's SmoothRoads was inert on the path the game takes.
   // The behavioural half lives in test/world/terrain/modsettings.test.js.
   assert.match(worker, /if \(m\.net\) \{ roads = \{ roads: m\.net\.roads, tracks: m\.net\.tracks, rivers: m\.net\.rivers \?\? null, streams: m\.net\.streams \?\? null, water: !!m\.net\.water, smooth: m\.net\.smooth !== false \};/, 'the worker takes his arrays ready-made, water and smoothing included');
-  const host = fs.readFileSync('src/scenes/world.js', 'utf8');
+  const host = hostText('src/scenes/world.js');
   // BR3: the fetch is gated on the mod's own Enabled now. OFF asks his
   // data for nothing and falls to ours - never to a roadless world.
   assert.match(host, /const basicRoadsOn = modSetting\('roads-hazelnut', 'Enabled'\);/, 'the mod has its own switch');
@@ -847,7 +852,7 @@ test('ROADS 25: a pixel says whether a network was present, and the host rebuild
   const gen = read('src/world/terrain/terrainGen.js');
   assert.match(gen, /withRoads: !!roads,/);
   assert.equal(typeof generatePixelTerrain, 'function');
-  const world = read('src/scenes/world.js');
+  const world = hostText('src/scenes/world.js');
   // The host keeps it on the pixel entry...
   assert.match(world, /const \{ samples, tilemap, positions, normals, bed: carved, tilemapBytes, avg, nature, withRoads[^}]*\} = await terrainGen\.generate\(/);
   assert.match(world, /^\s+withRoads,\s+\/\/ ROADS 25/m);

@@ -181,7 +181,7 @@
   },
   {
     "name": "LW6c-carried",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "          keepsakes: () => playerEntity.items ?? [],",
     "new": "          keepsakes: () => [],",
     "tests": [
@@ -190,7 +190,7 @@
   },
   {
     "name": "LW6c-handed-host",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "if (i >= 0) playerEntity.items.splice(i, 1); },",
     "new": "void i; },",
     "tests": [

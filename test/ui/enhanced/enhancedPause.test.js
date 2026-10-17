@@ -26,9 +26,10 @@ import { readFileSync } from 'node:fs';
 
 import { openPauseFlow, pauseDoorReady, pauseArtLoaded } from '../../../src/ui/pauseDoor.js';
 import { _resetForTests } from '../../../src/systems/uiPrefs.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const root = new URL('../../../', import.meta.url).pathname.replace(/\/$/, '');
-const read = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
+const read = (p) => hostText(p);
 
 // uiSkin reads globalThis.location.search when it is given no string,
 // and node has no location. Set one, and reset the stored pref so one
@@ -592,7 +593,7 @@ test('PX26 / THE FOUR HOSTS: north opens a REAL arm on every host', () => {
   // pause call is unchanged and still each host's own; this pin used to
   // spell the whole line, which made it a pin on the IMPLEMENTATION
   // rather than on the law it is named for.
-  assert.match(read('src/scenes/world.js'), /openSheetPage: \(\) => \(levelOwed\(playerEntity\) \? hudCtx\.toggleCharSheet\(\) : hudCtx\.togglePause\(\{ at: 'stats' \}\)\),/);
+  assert.match(hostText('src/scenes/world.js'), /openSheetPage: \(\) => \(levelOwed\(playerEntity\) \? hudCtx\.toggleCharSheet\(\) : hudCtx\.togglePause\(\{ at: 'stats' \}\)\),/);
   // MAC-L1: ...and this host spells it the same way as the other three
   // now. It used to pass `null` positionally, which is the signature
   // that made `routeAction` hand the other three a hard null.
@@ -751,7 +752,7 @@ test('AUDIT UI 2: every enhanced window is REACHABLE from a host', () => {
   // this sweep report every window as unreachable.
   const files = execFileSync('git', ['ls-files', 'src'], { cwd: root, encoding: 'utf8' })
     .split('\n').filter((f) => f.endsWith('.js'));
-  const text = Object.fromEntries(files.map((f) => [f, readFileSync(join(root, f), 'utf8')]));
+  const text = Object.fromEntries(files.map((f) => [f, hostText(f)]));
   const edges = {};
   for (const f of files) {
     edges[f] = [...new Set([...text[f].matchAll(/(?:from|import\()\s*['"](\.[^'"]+)['"]/g)]

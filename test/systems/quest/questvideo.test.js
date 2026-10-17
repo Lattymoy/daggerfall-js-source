@@ -16,6 +16,7 @@ import { fileURLToPath } from 'node:url';
 import { loadQuestTables } from '../../../src/systems/quest/tables.js';
 import { QuestMachine } from '../../../src/systems/quest/machine.js';
 import { PlayVideo } from '../../../src/systems/quest/actions.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const VENDOR = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', 'vendor', 'dfu-quests');
 const read = (p) => readFileSync(p, 'utf8').replace(/^﻿/, '');
@@ -70,7 +71,7 @@ test('QV1: the machine hands the name to the playVideo hook and the action compl
 });
 
 test('QV1: the world door is the infection lane\'s player, DFU\'s flag, never-traps', () => {
-  const world = readFileSync('src/scenes/world.js', 'utf8');
+  const world = hostText('src/scenes/world.js');
   assert.ok(!/video playback pends/.test(world), 'the pends warn is GONE - retiring a seam deletes the sentence');
   // CRUX1: the door hands the name to the queue (systems/quest/videoQueue.js) and the PLAYER is the queue's one
   // play function, declared beside the hooks - the same body, in turn

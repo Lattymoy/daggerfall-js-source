@@ -20,6 +20,7 @@ import { FEATURES, checkFeature } from '../../src/systems/features.js';
 import { setPref, PREF_DEFAULTS } from '../../src/systems/uiPrefs.js';
 import { setUiSkin, uiSkin } from '../../src/systems/uiSkin.js';
 import { onlineForcedPref } from '../../src/systems/online/onlineLane.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const PX = 240, PY = 180, PIXEL = 819.2;
@@ -321,7 +322,7 @@ test('ECOTONE1: the switch - the row, the enhanced skin, ?ecotone=off; online th
 });
 
 test('ECOTONE1: the world host - the 3x3 read once a build; the kernel handed the border\'s natures; the neighbours\' sets loaded through the one tile-set home and held by the pixel; the slots in the shader\'s order; the draw, the grass and the flats by the border (mutants: the slots W/E swapped; a neighbour\'s set unheld; the grass the pixel\'s own set)', () => {
-  const w = read('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /const ecotones = climateBlendOn\(\);/);
   assert.equal((w.match(/climateBlendOn\(/g) ?? []).length, 1);
   assert.match(w, /const near = ecotones \? climates3x3\(px, py, climate\) : null;/);

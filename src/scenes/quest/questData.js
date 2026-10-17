@@ -13,6 +13,7 @@
 
 import { loadQuestTables } from '../../systems/quest/tables.js';
 import { applyForageFix } from '../../systems/foraging/foragingLaw.js';   // FORAGE-FIX: Foraging's quest and list patches, applied as they are read
+import { applyQuestPatches, QUEST_PATCHES } from '../../systems/quest/questPatches.js';   // SHAM-TRAIL: the port's patches over DFU's own quests, applied as they are read
 
 const tableFiles = import.meta.glob('../../../vendor/dfu-quests/Tables/*.txt', { query: '?raw', import: 'default' });
 const questFiles = import.meta.glob('../../../vendor/dfu-quests/Quests/*.txt', { query: '?raw', import: 'default' });
@@ -34,6 +35,17 @@ const baseName = (path) => path.split('/').pop().replace(/\.txt$/, '');
 
 let _pack = null;
 
+/** SHAM-TRAIL (systems/quest/questPatches.js): a DFU quest the port patches, patched each time it is read - its entry in
+ *  the player's language of that moment. A patch that no longer finds its text warns (once) and DFU's text loads as
+ *  shipped (null: the caller reads the unpatched lines), so one patch can never take the quest down with it. */
+const _patchWarned = new Set();
+function patchedLines(name, text) {
+  try { return applyQuestPatches(name, text).split(/\r?\n/); } catch (e) {
+    if (!_patchWarned.has(name)) { _patchWarned.add(name); console.warn(`[questData] ${e.message} - loaded as shipped`); }
+    return null;
+  }
+}
+
 /** Load every table + quest source once; answers the bridge's data
  *  seams. Safe to call repeatedly - one shared load. */
 export async function loadQuestPack() {
@@ -44,8 +56,12 @@ export async function loadQuestPack() {
       tables.set(baseName(path), stripBom(await load()));
     }));
     const quests = new Map();
+    const patchable = new Map();   // SHAM-TRAIL: a DFU quest the port patches, kept as shipped and patched as it is read
     await Promise.all(Object.entries(questFiles).map(async ([path, load]) => {
-      quests.set(baseName(path), stripBom(await load()).split(/\r?\n/));
+      const name = baseName(path);
+      const text = stripBom(await load());
+      if (QUEST_PATCHES[name]) patchable.set(name, text);
+      quests.set(name, text.split(/\r?\n/));
     }));
     await Promise.all(Object.entries(modQuestFiles).map(async ([path, load]) => {
       const name = baseName(path);
@@ -58,14 +74,14 @@ export async function loadQuestPack() {
         try { patched = applyForageFix(name, text); } catch (e) { console.warn(`[questData] ${e.message} - loaded as shipped`); }
       }
       if (name.startsWith('QuestList-')) tables.set(name, patched);
-      else quests.set(name, patched.split(/\r?\n/));
+      else { quests.set(name, patched.split(/\r?\n/)); patchable.delete(name); }   // a mod's quest of the name is the mod's, unpatched
     }));
     loadQuestTables(Object.fromEntries(tables));
     return {
       /** QuestList-<name>.txt (the QuestListsManager's dep). */
       readListTable: (name) => tables.get(`QuestList-${name}`) ?? null,
       /** Quest source lines by name (the machine + lists dep). */
-      getQuestSourceLines: (name) => quests.get(name) ?? null,
+      getQuestSourceLines: (name) => (patchable.has(name) ? patchedLines(name, patchable.get(name)) : null) ?? quests.get(name) ?? null,
       questCount: quests.size,
     };
   })();

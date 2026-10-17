@@ -74,8 +74,8 @@
   {
     "name": "SD6A-a-start-a-few-turns-off",
     "file": "src/net/superDungeon/sdBrain.js",
-    "old": "  while (sdWayTurns(way) < SD_TRUTH_TURNS_MIN || sdWayTurns(way) > SD_TRUTH_TURNS_MAX);",
-    "new": "  while (sdWayTurns(way) > SD_TRUTH_TURNS_MAX);",
+    "old": "  while (sdWayTurns(way) < tMin || sdWayTurns(way) > tMax);",
+    "new": "  while (sdWayTurns(way) > tMax);",
     "tests": [
       "test/net/superDungeon/sd6a_orrery.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "SD6A-a-start-past-the-fray",
     "file": "src/net/superDungeon/sdBrain.js",
-    "old": "  while (sdWayTurns(way) < SD_TRUTH_TURNS_MIN || sdWayTurns(way) > SD_TRUTH_TURNS_MAX);",
-    "new": "  while (sdWayTurns(way) < SD_TRUTH_TURNS_MIN);",
+    "old": "  while (sdWayTurns(way) < tMin || sdWayTurns(way) > tMax);",
+    "new": "  while (sdWayTurns(way) < tMin);",
     "tests": [
       "test/net/superDungeon/sd6a_orrery.test.js"
     ]

@@ -18,6 +18,7 @@ import { concealBits, concealFlagsOfBits, concealmentFlags } from '../../src/sys
 import { fakeRoom } from '../fakeRoom.mjs';
 import { fakeSocketClass } from '../fakeSocket.mjs';
 import { RemotePlayers } from '../../src/net/remotePlayers.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 import { openPeers, pickPeerInFront, SOCIAL_REACH } from '../../src/player/socialPick.js';   // CONCEAL-MATE
 
 const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
@@ -130,7 +131,7 @@ test('INVIS-NET foes: a peer candidate carries its concealment off its pose, so 
 });
 
 test('INVIS-NET by source: the host packs my concealment onto every pose; on the classic lane draws no rider, body, walker, sprite or name for a concealed peer (its cast still seen; INVIS-LOOK draws it translucent on the enhanced one); hands the foes the peer\'s bits; and a concealed peer is not there to press', () => {
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   const arm = w.slice(w.indexOf('    const arm = {\n      mv,'), w.indexOf('};   // the wire\'s move bit'));
   assert.match(arm, /\n\s*cv: concealBits\(playerEntity\) \|\| undefined,/, 'the arm spread into every pose');
   // Boat map markers cache the adjusted poses before the existing concealment and render ordering.
@@ -163,7 +164,7 @@ test('AUDIT pre-merge I-G executed: a peer the classic lane stands nowhere is st
 });
 
 test('AUDIT pre-merge I-A + I-E + I-F by source: a building\'s sheet opens the building\'s pack; the maps mark the party drawn here; the Nearby list and the page\'s readers skip a concealed player (the F key\'s law)', () => {
-  const w = rd('src/scenes/world.js'), m = rd('src/scenes/worldModes.js');
+  const w = hostText('src/scenes/world.js'), m = rd('src/scenes/worldModes.js');
   assert.match(w, /const makeCharSheetWindow = \(\{ inventory = null, pause = null \} = \{\}\) => createCharSheetWindow\(\{[\s\S]*?inventory: inventory \?\? \(\(\) => \(inventoryDoorReady\(\) \? makeInventoryWindow\(\) : null\)\),/);   // ESC-BOOK: and the building's own pause bag
   assert.match(w, /makeCharSheet: \(doors\) => \(charSheetDoorReady\(\) \? makeCharSheetWindow\(doors\) : null\),/);
   assert.match(m, /const interiorSheetDoors = \(\) => \(\{ inventory: \(\) => interiorInventory\(\), pause: \(\) => interiorPauseHooks\(\) \}\);/);   // ESC-BOOK: the F5 page's Pack is the bag's, and the bag is the building's
@@ -206,7 +207,7 @@ test('CONCEAL-MATE executed: openPeers keeps every open player and a concealed p
 });
 
 test('CONCEAL-MATE by source: every social door reads ONE law (openPeers over the host\'s party test) - the F key and its plaque, the Nearby list, a page\'s readers and a gift - and the party test is the session\'s own', () => {
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /function isPartyMate\(id\) \{ return !!social\?\.party && social\.isPartyPeer\(id\); \}/, 'a mate is a member of my party, and nobody without one');
   assert.match(w, /pickPeerInFront\(eye, dir, openPeers\(peersNear\(\), isPartyMate\)\.filter\(crowdDrawnHere\), SOCIAL_REACH, rayPersonDistance\);/, 'the F key and the plaque');
   assert.match(w, /localRosterSource\(s, openPeers\(peersNear\(\), isPartyMate\), player\.feetAt\(\)\)/, 'the Nearby list');

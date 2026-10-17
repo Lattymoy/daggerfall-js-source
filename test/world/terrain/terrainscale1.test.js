@@ -26,10 +26,11 @@ import { WOD_TERRAIN_HEIGHT_MAX } from '../../../src/world/worldOfDaggerfall/wod
 import { snapshotPlayer, restorePlayer } from '../../../src/systems/save/save.js';
 import { createSceneCache, cacheScene, restoreCachedScene, snapshotSceneCache, restoreSceneCache } from '../../../src/systems/sceneCache.js';
 import { makeAnchor } from '../../../src/systems/teleportAnchor.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
-const rd = (p) => readFileSync(join(ROOT, p), 'utf8');
-const WORLD = rd('src/scenes/world.js');
+const rd = (p) => hostText(p);
+const WORLD = hostText('src/scenes/world.js');
 const MODES = rd('src/scenes/worldModes.js');
 const near = (a, b, eps = 1e-3) => assert.ok(Math.abs(a - b) <= eps, `${a} !~ ${b}`);
 

@@ -19,7 +19,7 @@
   },
   {
     "name": "ROCK-FOOT-the-whole-box-carried",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "{ const foot = rockFootprint(cpu.positions, cpu.indices, m.matrix, samples); if (foot) pixelRocks.push(foot); }",
     "new": "pixelRocks.push(box);",
     "tests": [

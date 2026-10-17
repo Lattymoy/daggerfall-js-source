@@ -62,7 +62,7 @@ import { isOnlinePage } from '../online/onlineLane.js';   // ONLINE-DEATH-FIX: t
 import { STREAMING_TERRAIN_SCALE } from '../../world/terrain/terrainSampler.js';   // TERRAIN-SCALE1: the scale every saved exterior height stands on
 import { reviveForPlay } from '../deathRespawn.js';   // ONLINE-DEATH-FIX: the SAME half-health an online respawn leaves
 import { setLightSource } from '../lightSource.js';   // DISC7: the light in hand's one door
-import { renownHpOf, renownMpOf, offlineVitals } from '../renownLayer.js';   // RENOWN1: the online layer never reaches a save
+import { renownHpOf, onlineMpOf, offlineVitals } from '../renownLayer.js';   // RENOWN1: the online layer never reaches a save (EG15: nor the folds' magicka)
 import { stashedItemLists } from '../../net/realm/realmGoldLaw.js';   // AUDIT PRE-MERGE 0929 D3: every list of the character's own things a save carries
 import { DEPOSIT_MAX, depositOrderOk } from '../../net/bagLaw.js';   // AUDIT2 BAG1: a deposit's stamp, kept to a deposit's bounds
 import { resetBlowEffects } from '../blowEffects.js';   // AUDIT TELL L2: a load forgets the last game's landings
@@ -327,7 +327,7 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
   // RENOWN1: AND NOTHING OF THE ONLINE LAYER. Renown's health and magicka sit on top of the live maximums
   // while online (systems/renownLayer.js); a save keeps the vitals as they would stand without it, each at the same
   // fraction of its maximum, so a save written online is the one the character would have written offline.
-  if (renownHpOf(entity) || renownMpOf(entity)) Object.assign(snap, offlineVitals(entity));
+  if (renownHpOf(entity) || onlineMpOf(entity)) Object.assign(snap, offlineVitals(entity));   // EG15: and the Battlemage's Bearing, a set's magicka (at Renown 1, with no layer)
   snap.stats = { ...entity.stats };
   // SURV1: the needs record (survival/needs.js) - its markers are classic
   // minutes and its counters plain numbers; the note throttles are not

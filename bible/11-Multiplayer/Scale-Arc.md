@@ -132,7 +132,7 @@ The relay was split out of SCALE2 on reading: every piece of the reconnect storm
 
 **A missing-token refusal is asked again** (`net/online.js` `tokenRetryable`)
 - The minter now says why it answered null (`lastWhy`), and a session remembers why each hello went without a token.
-- The relay refuses such a hello (`CLOSE_POLICY`). If the device is signed in (the service was slow, rate-limited or down), the primary retries backed off hard, as for a busy room, and a halo is retried rather than remembered terminal.
+- The relay refuses such a hello (`CLOSE_POLICY`). If the device is signed in (the service was slow, rate-limited or down), the primary retries backed off hard, as for a busy room, and a halo is retried rather than remembered terminal. (DOOR-TOKEN, below, departs from this: either asks again the moment the minter holds a token for its room.)
 - Only no sign-in (`no-session`) or a sign-in the service refused (`auth`) stays final. Signing in is the way back from those.
 
 **The channels' rejoin is jittered** (`OnlineSession.rejoin`)
@@ -143,6 +143,55 @@ The relay was split out of SCALE2 on reading: every piece of the reconnect storm
 - ACC1d-8 / 9 / 10 / 12
 - the three TOKEN-WAIT mutants
 - RENOWN1's character mutant
+
+## DOOR-TOKEN: shipped (client only, no relay deploy)
+
+FIELD BUGS 2026-10-16b, the Discord: "Friend invivible and randomly popping up"; "Partied players popping in and out
+randomly after leaving tombs at graveyard ... also partied players inside tombs are invisible for a time". The record is
+`01-Overview/bugs/Field-Bugs-2026-10-16b.md` DOOR-TOKEN.
+
+SCALE2's minter answers a room's socket as it opens, and every place change is a new room, so the hello waited on a
+mint whenever the token held could not open the room: past its minute, or already spent there (the cell a crypt's door
+leads back out to was opened by the token held when the player went in). A mint is seconds for a player (TOKEN-WAIT),
+and for those seconds neither side of the door could see the other.
+
+- **The next room's token is minted at the door** (`scenes/doorTokenHost.js`, the minter's
+  `accountClient.js:"    ahead: (/** @type {string|null} */ room = null, withinMs = 0) => {"`). The host says a place
+  change is coming, and when the next room's socket will ask, and the minter's `ahead` mints then:
+  - a door in (worldModes' `onPreTransition`), while the place builds;
+  - a door out (`onDungeonLeave`, `onInteriorLeave`);
+  - any jump (world.js `_teleportToPixel`: a fast travel, a teleport, a recall, a respawn), while the destination streams;
+  - the walk back to an exit door: within `EXIT_NEAR_M` (16 m) after standing `EXIT_ARM_M` (32 m) from every one, once
+    a visit. An exit is a click with nothing to build behind it, so the walk is the mint's only time.
+- **It mints only when the held token could not open the next room by the time its socket asks**: none held, spent
+  there, or its minute out within the door's own margin. A door's margin is
+  `doorTokenHost.js:"export const DOOR_SOON_MS = 2_000;"` (a frame, the join's 500 ms hold, a socket's open), asked again
+  every frame of the place change until its room is joined (at most `DOOR_PENDING_MS`, 30 s), so a long build or stream
+  needs no guessed bound; the walk's is `doorTokenHost.js:"export const EXIT_WALK_MS = 8_000;"` (16 m at the slowest
+  walk, the door's click, `DOOR_SOON_MS`). Never through a failure's hold (STORM-SHED), never while a mint is on the
+  wire, never offline.
+- **AUDIT (2026-10-16, A2): the margin was one 20 s (`TOKEN_AHEAD_MS`) at every door**, and the record said "the next
+  room's own mint simply goes early". It did not: the next socket asks within a frame or a build, so every door met with
+  the held token 40-60 s old minted though that token would still have opened the room - twice the mints at a 40-55 s
+  door gap, half again at 30-60 s (the auditor's walk over the real minter) - and the walk out re-armed on every
+  approach, so a fight pacing 10-35 m from a dungeon's exit minted 13 times in ten minutes (none before). Re-measured over
+  the real host and minter, a 3 s mint: building hops (a 1.5 s build, walking back to the door) mint x1.00-1.06 of
+  before at every gap from 10-30 s to 45-58 s, while the time sockets waited on a mint falls to a third; the pacing fight
+  mints once. What is left is the price of the latency win itself: a token minted at a door is older, by the build, at
+  the next one - a 6 s dungeon build with every gap at 45-58 s mints x1.22 (x1.03 over a 10-120 s spread), a 12 s one
+  x1.58, against sockets that never wait.
+- **A missing-token refusal is asked again the moment a token is held**
+  (`online.js:"if (this._tokenRetry && this._retryAt != null && now < this._retryAt"`). This departs from SCALE2's "the
+  primary retries backed off hard": a token that came past TOKEN_WAIT_MS had arrived and the session still waited out a
+  1-4 s backoff and the mint's hold. The primary and each halo now ask again the frame the minter `holds` one for their
+  room. The hard backoff stands for every other wait.
+
+Measured over two real sessions and the real Room, with a mint taking 3 s: a party member walking into a crypt past the
+reuse minute was seen 3.1 s after the room changed, now 0.5 s (the build covers the rest; 0.7 s before the audit's
+re-ask through the build); walking back out, 3.1 s, now 0.1 s. The pages minted five tokens on the same walk either way.
+
+**Pins.** `test/net/fb1016b_doortoken.test.js` (6 - THE RATE, the audit's: the door hops and the pacing fight over the real
+host and minter). `tools/mutants/fb1016b_doortoken.json`: 36 mutants, 36 dead.
 
 ## NET-SMOOTH: shipped (client only, no relay deploy)
 

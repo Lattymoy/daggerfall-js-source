@@ -21,10 +21,11 @@ test('ENHANCED AI 1: the navmesh body is project-final\u2019s, byte for byte fro
   // file from '// Agent params' on, re-recorded DELIBERATELY with the project-final commit the
   // change was made in (decision #3: a change is made in both repos and said in both).
   // Provenance: project-final navmesh.js (ENHANCED AI 1/2, 9f5e323 mergeHoles) + AUDIT 62 F1's
-  // stacked-floor changes + AUDIT 68's collider index under surfH/surfHNear (S02-surfh-linear-scan),
-  // made HERE FIRST and owed to project-final.
+  // stacked-floor changes + AUDIT 68's collider index under surfH/surfHNear (S02-surfh-linear-scan)
+  // + FIELD BUGS 2026-10-16b INDOOR-WATCH AUDIT W2's packed index under it (a landed bake's boxes are
+  // indexed packed, never unpacked on the main thread), made HERE FIRST and owed to project-final.
   const sum = createHash('sha256').update(ours.slice(bodyStart)).digest('hex');
-  assert.equal(sum, 'c9f9cf0f107f22c6f6aec4f2790dd565f76cfe4509aac2eb9c318fdba8710c94',
+  assert.equal(sum, '018c7c043e090957d1b51bc8a7a4d81d3cee998802058c4586327317d8f9b3b4',
     'THE BODY CHANGED: make the change in project-final too, say it in both repos, then re-pin this digest with the commit');
 });
 

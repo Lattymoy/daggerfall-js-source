@@ -26,6 +26,7 @@ import { courtToDungeon, courtBraziers, LAVA_Y, ARRIVE_Z, RIM_OUT, SPIRES, GATE_
 import { GATE_ARCHIVE } from '../../../src/world/gate/gateModel.js';
 import { COURT_ARCHIVE } from '../../../src/world/gate/gateArena.js';
 import { COURT_R, COURTS, nearestCourt } from '../../../src/net/gate/gateBrain.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const src = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const C = courtToDungeon(0, 0, 0);
@@ -327,8 +328,8 @@ test('WB6b the air\'s driver: the beds set every frame (the wind breathing on th
 });
 
 test('WB6b the seams, by source: the world host keeps the Deadlands\' clock on the relay\'s and hands it to the sky, the life, the court\'s flash and the shards; the air sounds while the court stands and stops the frame it does not - on the main frame, online or not; the life drawn after the telegraph, one seam marked; the court stands the land beside it and moves its shards before the frame\'s draws; the dungeon\'s own ambience is silent in the court (mutants: each seam removed)', () => {
-  const w = src('src/scenes/world.js');
-  assert.match(w, /const deadlandsSeconds = anchoredClock\(\{ perf: \(\) => performance\.now\(\), wall: \(\) => Date\.now\(\) \+ _sharedOffsetMs \}\);/, 'the relay\'s clock, never stepping back between anchors (AUDIT WB D7: anchored on the wall clock, again when they part)');
+  const w = hostText('src/scenes/world.js');
+  assert.match(w, /const deadlandsShared = anchoredClock\(\{ perf: \(\) => performance\.now\(\), wall: \(\) => Date\.now\(\) \+ _sharedOffsetMs \}\);\n\s+const deadlandsSeconds = \(\) => egClient\?\.spanSeconds\(\) \?\? deadlandsShared\(\);/, 'the relay\'s clock, never stepping back between anchors (AUDIT WB D7: anchored on the wall clock, again when they part) - PIN MOVED (EG-ZD, Elite-Gates.md section 10.8): in an Elite Breach alone the breach\'s corrected clock first');
   assert.match(w, /const deadlandsAirFrame = \(\) => \{ if \(modes\?\.gateArenaDay\?\.\(\) != null\) deadlandsAir\.frame\(deadlandsSeconds\(\), cam\.pos, courtFireBeds\); else deadlandsAir\.stop\(\); \};/);
   // ticked on the main frame after the online block, online or not (going offline is one of the court's ways out, and
   // the online frame does not run then), and stopped where the loop itself dies

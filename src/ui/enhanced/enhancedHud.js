@@ -275,6 +275,26 @@ function drawGateMark(gate, playerXZ, heading01) {
   if (node.style.left !== l) node.style.left = l;
 }
 
+// EG-F (bible/11-Multiplayer/Elite-Gates.md section 6.4): AN ELITE BREACH'S ARCH - the gate's diamond in the arch's gold
+// (scenes/eliteGates/egArch.js EG_ARCH_GOLD - the Spire's "it holds"), where my company's arch stands while the call stands (scenes/
+// world.js through egClient.archCompass); the gate's bearing law, hidden never removed.
+const archMarkCss = () => 'position:absolute;top:50%;width:7px;height:7px;margin:-4px 0 0 -4px;transform:rotate(45deg);'
+  + 'background:#ffc752;box-shadow:0 0 6px 2px rgba(255,199,82,0.75);pointer-events:none';
+function drawArchMark(arch, playerXZ, heading01) {
+  if (!parts.archMark) {
+    const node = el('i', 'hud-egarch');
+    node.style.cssText = archMarkCss();
+    parts.compass.append(node);
+    parts.archMark = node;
+  }
+  const node = parts.archMark;
+  if (!arch || !playerXZ) { if (node.style.display !== 'none') node.style.display = 'none'; return; }
+  if (node.style.display === 'none') node.style.display = '';
+  const at = Math.min(1, Math.max(0, compassMarkerLerp(arch, playerXZ, heading01)));
+  const l = `${(at * 100).toFixed(1)}%`;
+  if (node.style.left !== l) node.style.left = l;
+}
+
 // SERPENT1: THE SEA SERPENT'S MARK - the gate's diamond in the sea's green (ui/serpentMapMark.js), where it hunts while
 // the player sails inside its ring (scenes/world.js serpentCompassMark); the gate's bearing law, hidden never removed.
 const serpentMarkCss = () => 'position:absolute;top:50%;width:8px;height:8px;margin:-4px 0 0 -4px;transform:rotate(45deg);'
@@ -912,7 +932,7 @@ function build(doc) {
   cells.main.cell.addEventListener('pointerdown', tap(() => { liveOpts.quickSwitchHand?.(); }));
 
   doc.body.append(root);
-  return { root, bottom, bars, compass, marks, detectMarks: [], partyMarks: [], shipMarks: [], nodeMarks: [], boatMarks: [], gateMark: null, serpentMark: null, sdMark: null, questMark: null, wayOutMark: null, foe, foeName, foeFill, foeGhost, foeChunks, foeBladeFull, foePoise, foePoiseFill, foePoiseWord, magicka, health, fatigue,
+  return { root, bottom, bars, compass, marks, detectMarks: [], partyMarks: [], shipMarks: [], nodeMarks: [], boatMarks: [], gateMark: null, archMark: null, serpentMark: null, sdMark: null, questMark: null, wayOutMark: null, foe, foeName, foeFill, foeGhost, foeChunks, foeBladeFull, foePoise, foePoiseFill, foePoiseWord, magicka, health, fatigue,
     temp: { el: temp, glyph: tempGlyph, num: tempNum, word: tempWord, mark: tempMark },   // TEMP-UI: the temperature plate
     stat, quickCap: cap, quickDiamond: diamond, top,   // UI3: the status widget, the caption it stands on, the diamond it may stand beside and the top block over it (its band is measured from them)
     renown, renownBox, renownFill, renownGhost, renownNum,
@@ -1061,6 +1081,7 @@ export function drawEnhancedHud(vitals, heading01, dt = 0, opts = {}) {
   // ...and the Detect markers over the same strip.
   drawDetectMarkers(opts.detected ?? null, opts.playerXZ ?? null, heading01);
   drawGateMark(opts.gate ?? null, opts.playerXZ ?? null, heading01);   // WB1
+  drawArchMark(opts.arch ?? null, opts.playerXZ ?? null, heading01);   // EG-F
   drawSerpentMark(opts.serpent ?? null, opts.playerXZ ?? null, heading01);   // SERPENT1
   drawSdMark(opts.sd ?? null, opts.playerXZ ?? null, heading01);   // SD2c
   drawQuestMark(opts.quest ?? null, opts.playerXZ ?? null, heading01);   // GUIDE5

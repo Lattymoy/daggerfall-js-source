@@ -29,8 +29,9 @@ import { PREF_DEFAULTS, setPref } from '../../src/systems/uiPrefs.js';
 import { setUiSkin, uiSkin } from '../../src/systems/uiSkin.js';
 import { ONLINE_PLAYERS_OWN_PREFS } from '../../src/systems/online/onlineLane.js';
 import { Renderer } from '../../src/render/renderer.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
-const rd = (p) => readFileSync(new URL('../../' + p, import.meta.url), 'utf8');
+const rd = (p) => hostText(p);   // HOST-SPLIT 2: a host whole
 const near = (a, b, eps = 1e-9) => Math.abs(a - b) < eps;
 const SUNNY = [0.010, 0.004];   // enhancedSky.js's sunny row - the lab's 70
 
@@ -331,7 +332,7 @@ test('WIND3 the hosts: both exterior hosts read the one wind once a frame, feed 
     assert.equal((s.match(new RegExp(`batch\\.sway = floraSwayOf\\(archive, ${flora}, (sib\\.)?size\\.h\\);`, 'g')) || []).length, 2, `${host}: the season's batch and the classic one tagged`);
     for (const imp of ["from '../systems/wind/windDrive.js'", "from '../render/windWisps.js'", "from '../systems/wind/windAudio.js'"]) assert.ok(s.includes(imp), `${host}: imports ${imp}`);
   }
-  assert.match(rd('src/scenes/world.js'), /\{ dir: wd\.dir, speed: wd\.slider \* wd\.gust, windV: wd\.windV, sway: floraSwayOn\(\) && wd\.on \}/, 'the grass takes the same answer');   // PIN MOVED (AUDIT MEADOW1): and the flats' own switch
+  assert.match(hostText('src/scenes/world.js'), /\{ dir: wd\.dir, speed: wd\.slider \* wd\.gust, windV: wd\.windV, sway: floraSwayOn\(\) && wd\.on \}/, 'the grass takes the same answer');   // PIN MOVED (AUDIT MEADOW1): and the flats' own switch
 });
 
 test('WIND3 records: the rendering page, the features arc, the ledger\'s wind row and the testing row', () => {

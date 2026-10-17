@@ -11,6 +11,7 @@ import { CAMP_KINDS, campKindCode, campKindOf, CAMP_TAGS_MAX, campTagsOf, validC
 import { createExteriorFoes } from '../../src/scenes/exteriorFoes.js';
 import { CAMP_SIGHT_RADIUS, CAMP_ALERT_RADIUS, PACK_ALERT_RADIUS } from '../../src/systems/campEncounters.js';
 import { TRAVEL_VIEW_MARK_COLORS } from '../../src/ui/travel/travelViewHud.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 
@@ -82,7 +83,7 @@ const settle = () => new Promise((r) => setTimeout(r, 20));
 
 /** The host's grouping (scenes/world.js travelViewCamps), lifted and run over a pool. */
 const liftCamps = (pool) => {
-  const W = read('src/scenes/world.js');
+  const W = hostText('src/scenes/world.js');
   const m = /\n {2}function travelViewCamps\(\) \{\n[\s\S]*?\n {2}\}\n/.exec(W);
   assert.ok(m, 'travelViewCamps lifted');
   return new Function('exteriorFoes', 'groupCamps', 'enemyDisplayName', 'riteHost', 'RITE_TEXT', `${m[0]} return travelViewCamps;`)(pool, groupCamps, () => 'Rat', null, null);   // AUDIT WB12d (C15): no breach's faithful here
@@ -162,7 +163,7 @@ test('OW6 camps: A CAMP TAKEN OVER STAYS ONE CAMP - its owner leaves (the handov
 });
 
 test('OW6 camps wiring: the host stands each group under the pool\'s one counter with its kind, a band that stands is a band, the Overworld marks every camp; the HUD draws a camp as a tent in the ember', () => {
-  const W = read('src/scenes/world.js');
+  const W = hostText('src/scenes/world.js');
   // MERGE 2: EVERY camp id is the counter's - the camp's stand and the bounty's dungeon pack (a copy of either on its own
   // number would share one with an heir's camp)
   assert.deepEqual([...W.matchAll(/const campId = ([^;]+);/g)].map((m) => m[1]), ['exteriorFoes.newCampId()', 'exteriorFoes.newCampId()']);
@@ -181,7 +182,7 @@ test('OW6 camps wiring: the host stands each group under the pool\'s one counter
 
 /** The host's walk-away handover (scenes/world.js handOverWalkedAway), lifted and run against a real owner pool. */
 const liftWalkAway = (scope) => {
-  const W = read('src/scenes/world.js');
+  const W = hostText('src/scenes/world.js');
   const a = W.indexOf('  const FOE_WALK_AWAY_MS = 500;'), b = W.indexOf('\n  }\n', W.indexOf('  function handOverWalkedAway(now) {'));
   assert.ok(a > 0 && b > a, 'the walk-away handover lifted');
   const names = Object.keys(scope);

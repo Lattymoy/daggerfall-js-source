@@ -11,7 +11,7 @@ import { parse } from 'acorn';
 import { QuestMachine } from '../../../src/systems/quest/machine.js';
 import { Place, SITE_TYPES } from '../../../src/systems/quest/place.js';
 import { loadQuestTables } from '../../../src/systems/quest/tables.js';
-import { relayQuestOnline } from '../../../src/systems/quest/questRepair.js';
+import { relayQuestOnline, repairActiveQuests, questElsewhereLine } from '../../../src/systems/quest/questRepair.js';
 import { questsAtSite, openerQuestOf, questMountsHere, questDungeonWhole, partnerInstances, instanceOffer, questInstanceEpoch } from '../../../src/systems/instancePlaces.js';
 import { createInstanceDoor, INSTANCE_TEXT, dungeonSite, buildingSite, siteBase } from '../../../src/scenes/instanceDoor.js';
 import { instanceRoomOf, instanceWord, INSTANCE_DOOR_WORD } from '../../../src/net/instanceRoom.js';
@@ -276,6 +276,39 @@ test('INSTANCES every other way in (entryFor): NEVER a popup - a quest\'s place 
   assert.deepEqual(await d.entryFor(hall, { ins: word, staff: true }), { instance: null, whole: true }, 'a zone hall keeps none (the relay refuses one)');
 });
 
+test('QUEST-ELSEWHERE (FIELD BUGS 2026-10-16c, MD-Geist: "the Objective just did not want to spawn (I tried the dungeon in \'Public\' mode) even after \'Quest Repair\'"): a quest\'s dungeon the world lays smaller in public says so in the popup, before Public is chosen; a repair in that room says where its things are, never "nothing was missing" (mutants: relaid never read; the line never laid; the repair\'s word dropped)', async () => {
+  // the site: `relaid` exactly where the world lays the public room smaller (onlineDungeonSize), never the Hold's or a hollow's
+  const sizes = { full: null, medium: null, small: null };
+  for (let id = CRYPT.mapId; Object.values(sizes).some((v) => v == null); id++) if (id !== PRIVATEERS_HOLD_MAP_ID) sizes[onlineDungeonSize({ mapTableData: { mapId: id } })] ??= id;
+  const at = (mapId) => ({ name: 'Ruins of The Hold of Coppering', hasDungeon: true, mapTableData: { mapId } });
+  assert.deepEqual(Object.values(sizes).map((id) => dungeonSite(at(id)).relaid), [false, true, true]);
+  assert.equal(dungeonSite(COPPERING).relaid, false, 'no dungeon named: laid as it is');
+  assert.equal(dungeonSite({ ...at(sizes.medium), mapTableData: { mapId: PRIVATEERS_HOLD_MAP_ID } }).relaid, false, 'the main story\'s keeps are laid whole');
+  // the popup: the quest's line under the choice where the public room is re-laid, and only there
+  const relaid = door();
+  relaid.q.resources.get('crypt').siteDetails.mapId = sizes.medium;
+  const pending = relaid.d.choose(relaid.d.dungeonSite(at(sizes.medium)));
+  await until(() => relaid.shown.length === 1);
+  assert.deepEqual(relaid.shown[0].win.lines, ['Ruins of The Hold of Coppering', INSTANCE_TEXT.line(), INSTANCE_TEXT.questPublic()]);
+  relaid.shown[0].win.input('Escape');
+  await pending;
+  const whole = door();
+  whole.q.resources.get('crypt').siteDetails.mapId = sizes.full;
+  const fullPending = whole.d.choose(whole.d.dungeonSite(at(sizes.full)));
+  await until(() => whole.shown.length === 1);
+  assert.deepEqual(whole.shown[0].win.lines, ['Ruins of The Hold of Coppering', INSTANCE_TEXT.line()], 'laid whole in public: its things stand there too');
+  whole.shown[0].win.input('Escape');
+  await fullPending;
+  // the repair, in the re-laid room: the mount answers 'elsewhere' (worldModes.js mountQuestResources), and the line says so
+  const m = new QuestMachine();
+  questAt(m, CRYPT);
+  const there = repairActiveQuests(m, { mountCurrentSite: () => 'elsewhere' });
+  assert.deepEqual([there.elsewhere, there.text], [true, questElsewhereLine()]);
+  assert.match(questElsewhereLine(), /in your instance/);
+  const home = repairActiveQuests(m, { mountCurrentSite: () => undefined });
+  assert.deepEqual([home.elsewhere, home.text], [false, 'Nothing was missing from your active quest.'], 'anywhere else: as before');
+});
+
 test('INSTANCES the door\'s other words: atDoor - Leave spends the press, a row enters; refused - an instance\'s door shut on this page, said once a room; poseWord - inside, the room the relay joined; questElsewhere - once a build', async () => {
   const { d, shown, said } = door();
   const site = d.dungeonSite(COPPERING);
@@ -388,7 +421,7 @@ test('INSTANCES the hosts, by source: the place\'s instance is the MODE\'s - set
   assert.match(WM, /dungeon: \{ \.\.\.\(placeInstance \? \{ ins: instanceWord\(placeInstance\) \} : \{\}\), whole: builtDungeonSize\(dungeonLoc\) === 'full' \} \};/, 'the anchor: room and layout');
   assert.doesNotMatch(fns.get('enterInteriorCore'), /choose|atDoor/, 'a building\'s entry never asks either');
   assert.match(fns.get('enterInteriorCore'), /place = entry \?\? \(restore\?\.ins != null && door \? await door\.entryFor\(/);
-  assert.match(fns.get('mountQuestResources'), /host\.instanceDoor\?\.questElsewhere\?\.\(dungeonLoc\); return; \}/);
+  assert.match(fns.get('mountQuestResources'), /host\.instanceDoor\?\.questElsewhere\?\.\(dungeonLoc\); return 'elsewhere'; \}/);   // PIN MOVED (QUEST-ELSEWHERE, FIELD BUGS 2026-10-16c): the gate answers 'elsewhere', and a repair says so
   assert.match(read('src/scenes/dungeonContext.js'), /mapId: mt\.mapId \?\? null, \.\.\.\(opts\.placeRecord\?\.\(\) \?\? \{\}\) \};/);
   const W = read('src/scenes/world.js');
   assert.match(W, /instance: ident\?\.instance \?\? null,/);

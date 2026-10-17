@@ -30,9 +30,10 @@ import { attachTouch } from '../../src/ui/touch/touch.js';
 import { TOUCH_REF_HEIGHT } from '../../src/ui/touch/touchLook.js';   // TI2
 import { setBindings, held } from '../../src/ui/input.js';
 import { createBindings, setBinding, clearBinding } from '../../src/systems/inputActions.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const read = (p) => readFileSync(join(root, p), 'utf8');
+const read = (p) => hostText(p);
 const HOSTS = ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/dungeon.js'];
 
 // ---------------------------------------------------------------
@@ -538,7 +539,7 @@ test('AUDIT 62 F16/F28: EVERY mode change releases the lock (mutant: drop the un
       `the mode flip at worldModes.js:${i + 1} must let the lock go - the foe pool and the coordinate frame both change here`);
   }
   // ...and the sweeps that empty the pool without a death flag
-  assert.match(read('src/scenes/world.js'), /cityGuards\.clearLive\(\);\s*\n\s*lockOn\.unlock\(\);/, 'the load/teleport sweep');
+  assert.match(hostText('src/scenes/world.js'), /cityGuards\.clearLive\(\);\s*\n\s*lockOn\.unlock\(\);/, 'the load/teleport sweep');
   for (const h of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     assert.match(read(h), /exteriorFoes\.removeFoe\(f\); \}[\s\S]{0,40}lockOn\.unlock\(\);/, `${h}: ClearEnemies lets the lock go too`);
   }

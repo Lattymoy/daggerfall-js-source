@@ -19,9 +19,10 @@ import { buildingLockValue } from '../../src/systems/buildingLocks.js';
 import { CRIMES } from '../../src/systems/court.js';
 import { WEAPON_REACH } from '../../src/combat/playerWeapon.js';
 import { DEFAULT_ACTIVATION_DISTANCE } from '../../src/player/activate.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const read = (rel) => readFileSync(join(root, rel), 'utf8');
+const read = (rel) => hostText(rel);
 const WM = read('src/scenes/worldModes.js');
 /** ActivateStaticDoor's building block, matched not counted. */
 const ARM = WM.slice(WM.indexOf('let isBrokenIn = isBash;'), WM.indexOf('return enterBuildingDoor(hit, entries);'));   // PIN MOVED (INSTANCES' audit): the arm ends at the door's own entry, which asks then enters

@@ -174,10 +174,12 @@ export const beatHandAngle = (k) => ((12 - k) / 12) * Math.PI * 2;
 /** Whether frame `k` lights hour `h` (1..11): the ticks still ahead of the hand on its way back to XII. */
 export const beatTickLit = (k, h) => h >= 1 && h < 12 - k;
 
-/** A BEAT frame `k` (0..11), or the last with its light faltered: the clock-plate. */
-export function beatArt(k = 0, faltered = false, seed = 0x5d92) {
+/** A BEAT frame `k` (0..11), or the last with its light faltered: the clock-plate. EG-ZL (Elite-Gates.md sections 10.3 and
+ *  25.7): `warn` the light its last 0.4 s burns (sRGB 0-255 - the Hour's ember; the Spire's the place's own white, its
+ *  danger palette's hazard), and `dash` its rim line dashed then (the High contrast palette's "dashed cyan"). */
+export function beatArt(k = 0, faltered = false, seed = 0x5d92, { warn = EMBER, dash = false } = {}) {
   const A = SD_STEPS_ATLAS, albedo = image(A.w, A.h), emission = image(A.w, A.h), g = noiseField(seed, 8, A.w, A.h), D = SD_BEAT_DIAL;
-  const ember = k >= SD_BEAT_EMBER_FRAME, col = ember ? EMBER : GOLD, f = faltered ? SD_STEPS_GLOW.falter / SD_STEPS_GLOW.tick : 1;
+  const ember = k >= SD_BEAT_EMBER_FRAME, col = ember ? warn : GOLD, f = faltered ? SD_STEPS_GLOW.falter / SD_STEPS_GLOW.tick : 1;
   const ha = beatHandAngle(k), hx = Math.sin(ha), hz = Math.cos(ha), sector = (SD_BEAT_EMBER_HOURS / 12) * Math.PI * 2;
   fill(albedo, A.top, (s, t, x, y) => {
     const [mx, mz] = topMetres('beat', s, t), r = Math.hypot(mx, mz), a = hourAngle(mx, mz);
@@ -200,11 +202,12 @@ export function beatArt(k = 0, faltered = false, seed = 0x5d92) {
     if (hal > 0 && hal < D.hand && hac < D.handW / 2 + (hal > D.hand * 0.55 && hal < D.hand * 0.8 ? 0.05 : 0)) return scale(col, SD_STEPS_GLOW.hand * f);
     const h = Math.round((a / (Math.PI * 2)) * 12) % 12, ta = (h / 12) * Math.PI * 2, along = mx * Math.sin(ta) + mz * Math.cos(ta), across = mx * Math.cos(ta) - mz * Math.sin(ta);
     if (along > D.tick0 && along < D.tick1 && Math.abs(across) < D.tickW / 2 * (h === 0 ? 1.8 : 1)) return h === 0 ? scale(GOLD, 0.3 * f) : beatTickLit(k, h) ? scale(col, SD_STEPS_GLOW.tick * f) : BLACK;
-    if (r < D.bezel0 && r > D.tick0 - 0.08 && a < sector) return scale(EMBER, SD_STEPS_GLOW.sector * (ember ? 2.5 * f : 1));
+    if (r < D.bezel0 && r > D.tick0 - 0.08 && a < sector) return scale(ember ? warn : EMBER, SD_STEPS_GLOW.sector * (ember ? 2.5 * f : 1));
     return BLACK;
   });
   paintBrassSide(albedo, A, seed + 1);
   paintRim(albedo, emission, A, col, SD_STEPS_GLOW.line * f);
+  if (dash && ember) fill(emission, A.line, (s, t, x) => (((x >> 2) & 1) === 1 ? BLACK : null));   // EG-ZL: its warning's line dashed, four texels on and four off
   fill(albedo, A.under, (s, t, x, y) => ramp(Br, 0.1 + 0.12 * g(x, y), x, y));
   return { albedo: quantize(albedo, PALETTE), emission };
 }

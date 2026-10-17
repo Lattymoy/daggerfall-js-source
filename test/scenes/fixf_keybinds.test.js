@@ -15,8 +15,9 @@ import { readFileSync } from 'node:fs';
 import { bindings, keyboardLook, isSwingButton, swingButton, swingHeld, mouseCode } from '../../src/ui/input.js';
 import { setBinding, clearBindingByCode, resetDefaults } from '../../src/systems/inputActions.js';
 import { keyboardLookRate, KEYBOARD_LOOK_UNITS_PER_SECOND } from '../../src/ui/lookSettings.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
-const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
+const read = (p) => hostText(p);
 
 test('FIX-F: the keyboard look reads the four turn/look actions off the registry (InputManager.cs:1854-1865)', () => {
   const b = bindings(); resetDefaults(b, true);
@@ -93,7 +94,7 @@ test('FIX-F: RecastSpell and AbortSpell reach the cast engine in all four hosts,
   assert.match(read('src/scenes/worldModes.js'), /recastSpell\(\) \{ magic\?\.recastSpell\(\); \},[^\n]*\n\s*abortSpell\(\) \{ magic\?\.abortReadySpell\(\); \},/, 'the interior ctx');
   assert.match(read('src/scenes/dungeonContext.js'), /recastSpell\(\) \{ magic\.recastSpell\(\); \},\s*\n\s*abortSpell\(\) \{ magic\.abortReadySpell\(\); \},/, 'the dungeon ctx');
   const hm = read('src/scenes/hostMagic.js');
-  assert.match(hm, /lastSpell = sp; onCastReadySpell\?\.\(sp\); readiedSpell = null;/, 'lastSpell is set where CastReadySpell sets it (:2136), before the raise and the clear');
+  assert.match(hm, /lastSpell = sp; onCastReadySpell\?\.\(sp\); if \(v\) tellPlayerCast\(playerEntity, sp, cost\); readiedSpell = null;/, 'lastSpell is set where CastReadySpell sets it (:2136), before the raise and the clear');   // PIN MOVED (EG15): the cast told to systems/playerCasts.js after the raise, still before the clear
   assert.match(hm, /if \(!lastSpell \|\| castInProgress \|\| castBusy\(\)\) return false;\s*\n\s*if \(!hasSpellbook\(playerEntity\)\) \{ say\(localizedText\('noSpellbook', NO_SPELLBOOK_TEXT\)\); return false; \}\s*\n\s*readySpell\(lastSpell\);/, 'RecastSpell: the last spell, no animation playing, the book in the pack (:257-266)');
   assert.match(hm, /abortReadySpell\(\) \{\s*\n\s*if \(!readiedSpell\) return false;\s*\n\s*readiedSpell = null; readiedFree = false; readiedCost = 0;/, 'AbortReadySpell (:361-365) only with a spell readied (:268)');
   assert.match(read('src/scenes/interior.js'), /if \(actionsOf\(e, keys\)\.includes\('AutoMap'\)\) \{ toggleAutomap\(\); e\.preventDefault\(\); return; \}/);   // UXB1-S: its key, shared or not

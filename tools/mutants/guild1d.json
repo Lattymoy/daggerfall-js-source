@@ -328,7 +328,7 @@
   },
   {
     "name": "GUILD1d-door-unmeasured",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "            if (hf && !hf.door) hf.door = doorCornersOf(cpu.doors[0], local);\n",
     "new": "",
     "tests": [

@@ -39,10 +39,11 @@ import {
 import { pauseWhileOpen, makeWindowStack } from '../../src/ui/windowStack.js';
 import { ENHANCED_CSS } from '../../src/ui/enhanced/enhancedStyle.js';
 import { loadOrCreateBindings, setBinding } from '../../src/systems/inputActions.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 import { bindings, setBindings } from '../../src/ui/input.js';   // the LIVE store's two doors - the only ones that can push it down
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const src = (p) => readFileSync(join(ROOT, p), 'utf8');
+const src = (p) => hostText(p);
 
 const ENTITY = { diseases: [], poisons: [] };
 const LINES = (id) => (id === 22

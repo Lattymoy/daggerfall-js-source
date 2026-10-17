@@ -13,8 +13,9 @@ import { buildTerrainGrid } from '../../../src/world/terrain/terrainSurface.js';
 import * as TG from '../../../src/world/terrain/terrainGen.js';
 import { TerrainGenClient } from '../../../src/world/terrain/terrainGenClient.js';
 import { WoodsFile, MAP_WIDTH, MAP_HEIGHT } from '../../../src/formats/woodsFile.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
-const WORLD = readFileSync(new URL('../../../src/scenes/world.js', import.meta.url), 'utf8');
+const WORLD = hostText('src/scenes/world.js');
 const bytes = (a) => Buffer.from(a.buffer, a.byteOffset, a.byteLength).toString('base64');
 
 /** a WOODS.WLD the real reader loads: every cell at one offset, a sloping heightmap (AUDIT 58 F4's shape) */

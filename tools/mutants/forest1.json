@@ -208,7 +208,7 @@
   },
   {
     "name": "FOREST1-host-gate-clear",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "      if (pointNearGate(gateClear, px, py, f.x, f.z, WOD_FLAT_GATE_CLEAR_M)) continue;\n",
     "new": "",
     "tests": [
@@ -217,7 +217,7 @@
   },
   {
     "name": "FOREST1-host-rocks",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "      if (forests && insideRocks(pixelRocks, f.x, f.z)) continue;\n",
     "new": "",
     "tests": [

@@ -875,15 +875,53 @@ function polyRefY(mesh, pi) {
 // the footprints, built once per collider array (the set is fixed once the nav holds it; a changed length
 // rebuilds): each bucket lists, ASCENDING, every box whose closed footprint touches it, so every box that can
 // cover (wx,wz) is in that point's bucket and the scan order - hence every tie-break - is the linear scan's.
+// FIELD BUGS 2026-10-16 INDOOR-WATCH, AUDIT W2 (made HERE FIRST and owed to project-final): the set may also be the
+// worker's PACKED boxes as they land (triRaster.js packColliders, { box, noNavTop }) - indexed as they are, never
+// unpacked: a 40 x 30 m room's 109,251 boxes minted as objects (unpackColliders) and pushed into this index were ~190 ms
+// of the main thread's ~250 when its bake landed. The packed index is the same grid over the same footprints (so the
+// same buckets, ascending, and every tie-break the linear scan's), its lists typed; a bucket's boxes are minted on the
+// first query that touches it.
 const _colIdx = new WeakMap();
 const NO_COLS = [];
+const colCount = (colliders) => (colliders.box ? colliders.noNavTop.length : colliders.length);
 function collidersAt(colliders, wx, wz) {
   let idx = _colIdx.get(colliders);
-  if (!idx || idx.n !== colliders.length) { idx = buildColliderIndex(colliders); _colIdx.set(colliders, idx); }
+  if (!idx || idx.n !== colCount(colliders)) { idx = colliders.box ? buildPackedIndex(colliders) : buildColliderIndex(colliders); _colIdx.set(colliders, idx); }
   if (!idx.buckets) return NO_COLS;
   const i = Math.floor((wx - idx.x0) / idx.b), k = Math.floor((wz - idx.z0) / idx.b);
   if (!(i >= 0 && i < idx.bx && k >= 0 && k < idx.bz)) return NO_COLS; // off the grid (or NaN): no footprint holds it
-  return idx.buckets[k * idx.bx + i] ?? NO_COLS;
+  const at = k * idx.bx + i;
+  return idx.buckets[at] ?? (idx.list ? (idx.buckets[at] = mintBucket(idx, colliders, at)) : NO_COLS);
+}
+// the packed index: buildColliderIndex's grid, counted then filled into one Int32Array (ascending box ids per bucket)
+function buildPackedIndex(set) {
+  const { box } = set, n = set.noNavTop.length;
+  let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
+  for (let o = 0; o < n * 6; o += 6) { if (box[o] < x0) x0 = box[o]; if (box[o + 1] > x1) x1 = box[o + 1]; if (box[o + 2] < z0) z0 = box[o + 2]; if (box[o + 3] > z1) z1 = box[o + 3]; }
+  if (x0 > x1 || z0 > z1) return { n, buckets: null };
+  const b = Math.max(1, (x1 - x0) / 256, (z1 - z0) / 256);
+  const bx = Math.floor((x1 - x0) / b) + 1, bz = Math.floor((z1 - z0) / b) + 1;
+  // each box's bucket span, once (four per box), then counted, prefix-summed and filled
+  const span = new Int32Array(n * 4), start = new Int32Array(bx * bz + 1);
+  for (let ci = 0, o = 0, s = 0; ci < n; ci++, o += 6, s += 4) {
+    const i0 = span[s] = Math.floor((box[o] - x0) / b), i1 = span[s + 1] = Math.floor((box[o + 1] - x0) / b);
+    const k0 = span[s + 2] = Math.floor((box[o + 2] - z0) / b), k1 = span[s + 3] = Math.floor((box[o + 3] - z0) / b);
+    for (let k = k0; k <= k1; k++) for (let i = i0; i <= i1; i++) start[k * bx + i + 1]++;
+  }
+  for (let j = 0; j < bx * bz; j++) start[j + 1] += start[j];
+  const list = new Int32Array(start[bx * bz]), fill = start.slice(0, bx * bz);
+  for (let ci = 0, s = 0; ci < n; ci++, s += 4) {
+    for (let k = span[s + 2]; k <= span[s + 3]; k++) for (let i = span[s]; i <= span[s + 1]; i++) list[fill[k * bx + i]++] = ci;
+  }
+  return { n, x0, z0, b, bx, bz, buckets: new Array(bx * bz), start, list };
+}
+// a packed bucket's boxes, as trianglesToColliders minted them (triRaster.js unpackColliders' shape); none: NO_COLS
+function mintBucket(idx, { box, noNavTop }, at) {
+  const a = idx.start[at], z = idx.start[at + 1];
+  if (a === z) return NO_COLS;
+  const out = new Array(z - a);
+  for (let j = a; j < z; j++) { const ci = idx.list[j], o = ci * 6; out[j - a] = { x0: box[o], x1: box[o + 1], z0: box[o + 2], z1: box[o + 3], top: box[o + 4], bottom: box[o + 5], noNavTop: noNavTop[ci] === 1 }; }
+  return out;
 }
 function buildColliderIndex(colliders) {
   let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;

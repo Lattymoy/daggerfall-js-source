@@ -25,9 +25,10 @@ import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { liveEnchantFoes, liveEnchantFoeSinks, enchantFoeHost } from '../../src/scenes/shared.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const HERE = dirname(dirname(fileURLToPath(import.meta.url)));
-const read = (rel) => readFileSync(join(HERE, '..', rel), 'utf8');
+const read = (rel) => hostText(rel);
 
 /** A dungeon context's two enchant-facing members, and a ledger of
  *  which host's damage door each hurt actually went through. */

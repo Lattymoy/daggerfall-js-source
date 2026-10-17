@@ -298,7 +298,7 @@
   },
   {
     "name": "LPT1-B1-no-flat-height",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "        batch.farH = plain.h;",
     "new": "        batch.farH = undefined;",
     "tests": [
@@ -451,7 +451,7 @@
   },
   {
     "name": "LPT1-B5-handles-never-held",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "        lowPolyTrees.acquire(far); lptHandles.push(far);",
     "new": "        lptHandles.push(far);",
     "tests": [
@@ -921,7 +921,7 @@
   },
   {
     "name": "LPT1-every-flat-wild",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "wild[i] = wildFlats.has(`${k}#${i}`) ? 1 : 0;",
     "new": "wild[i] = 0;",
     "tests": [
@@ -930,7 +930,7 @@
   },
   {
     "name": "LPT1-flats-unscaled",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "          const v = lptVariety(px, py, c[0], c[2], !wild[i]).scale;",
     "new": "          const v = LPT_SCALE_MAX;",
     "tests": [
@@ -976,7 +976,7 @@
   },
   {
     "name": "LPT1-cover-at-the-tree",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "if (isCoverFlat(archive, record, plain)) for (const c of centers) coverItems.push(...coverProxies(c, plain,",
     "new": "if (isCoverFlat(archive, record, plain)) for (const c of centers) coverItems.push(...coverProxies(c, far.size,",
     "tests": [
@@ -986,7 +986,7 @@
   },
   {
     "name": "LPT1-sway-of-the-tree",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "        batch.sway = floraSwayOf(archive, natureSet, plain.h);\n        _lptSway",
     "new": "        batch.sway = floraSwayOf(archive, natureSet, far.size.h);\n        _lptSway",
     "tests": [

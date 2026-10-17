@@ -38,6 +38,13 @@ export const RITE_SIGIL_RECORD = 2;
 /** GATE-FBX: the spines' horn and the stone seared round the opening (world/gate/gateArt.js gateSpineArt, gateRimArt). */
 export const GATE_SPINE_RECORD = 3;
 export const GATE_RIM_RECORD = 4;
+/** EG-F (bible/11-Multiplayer/Elite-Gates.md section 6.3): AN ELITE BREACH'S ARCH is this gate at 0.62, in Imperial white
+ *  marble inlaid with gold and cracked through with the Warden's basalt (world/gate/gateArt.js archArt) - its stone, its rim
+ *  and its spines, each the gate's own record's twin (`EG_ARCH_RECORD_OF`). */
+export const EG_ARCH_STONE_RECORD = 5;
+export const EG_ARCH_SPINE_RECORD = 6;
+export const EG_ARCH_RIM_RECORD = 7;
+export const EG_ARCH_RECORD_OF = Object.freeze({ [GATE_STONE_RECORD]: EG_ARCH_STONE_RECORD, [GATE_SPINE_RECORD]: EG_ARCH_SPINE_RECORD, [GATE_RIM_RECORD]: EG_ARCH_RIM_RECORD });
 
 /** The bake's one part: the gate, in its own frame (tools/bakeGate.mjs FRAME - Mac's metres x 0.53). */
 const PART = GATE_BAKE.parts[0];

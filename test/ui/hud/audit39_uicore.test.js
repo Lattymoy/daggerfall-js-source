@@ -25,9 +25,10 @@ import {
 import { drawHud } from '../../../src/ui/hud/hud.js';
 import { setValue, _resetForTests } from '../../../src/systems/settings/settings.js';
 import { setInteractionMode } from '../../../src/player/interactionMode.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
-const read = (p) => readFileSync(join(root, p), 'utf8');
+const read = (p) => hostText(p);
 const recorder = () => {
   const quads = [];
   return { quads, drawScreenQuad: (tex, rect, uv, color) => quads.push({ tex, ...rect, uv, color }) };

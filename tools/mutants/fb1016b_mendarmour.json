@@ -1,0 +1,68 @@
+[
+  {
+    "name": "MEND-ARMOUR-armour-keeps-the-point",
+    "file": "src/systems/enchantments.js",
+    "old": "export const repairsObjectsMend = (it) => (it.magic || it.artifact ? CONDITION_AMOUNT : Math.max(CONDITION_AMOUNT, Math.round(it.maxCondition / MEND_SHARE_OF)));",
+    "new": "export const repairsObjectsMend = (it) => (it.magic || it.artifact ? CONDITION_AMOUNT : (it.group === 'Weapons' ? Math.max(CONDITION_AMOUNT, Math.round(it.maxCondition / MEND_SHARE_OF)) : CONDITION_AMOUNT));",
+    "tests": [
+      "test/systems/fb1016b_mendarmour.test.js"
+    ],
+    "note": "The report's law: a weapon its share, every other piece DFU's point."
+  },
+  {
+    "name": "MEND-ARMOUR-the-pool-for-every-piece",
+    "file": "src/systems/enchantments.js",
+    "old": "export const repairsObjectsMend = (it) => (it.magic || it.artifact ? CONDITION_AMOUNT : Math.max(CONDITION_AMOUNT, Math.round(it.maxCondition / MEND_SHARE_OF)));",
+    "new": "export const repairsObjectsMend = (it) => (it.magic || it.artifact ? CONDITION_AMOUNT : Math.max(CONDITION_AMOUNT, Math.round(1600 / MEND_SHARE_OF)));",
+    "tests": [
+      "test/systems/fb1016b_mendarmour.test.js"
+    ],
+    "note": "MEND-WORN's 32 handed to every piece: a share of the pool, not of the piece's own condition."
+  },
+  {
+    "name": "MEND-ARMOUR-the-template-not-the-piece",
+    "file": "src/systems/enchantments.js",
+    "old": "export const repairsObjectsMend = (it) => (it.magic || it.artifact ? CONDITION_AMOUNT : Math.max(CONDITION_AMOUNT, Math.round(it.maxCondition / MEND_SHARE_OF)));",
+    "new": "export const repairsObjectsMend = (it) => (it.magic || it.artifact ? CONDITION_AMOUNT : Math.max(CONDITION_AMOUNT, Math.round((templateByIndex(it.templateIndex)?.hitPoints ?? it.maxCondition) / MEND_SHARE_OF)));",
+    "tests": [
+      "test/systems/fb1016b_mendarmour.test.js"
+    ],
+    "note": "The row's size before its material: steel and Daedric plate climbing slower than iron."
+  },
+  {
+    "name": "MEND-ARMOUR-no-floor",
+    "file": "src/systems/enchantments.js",
+    "old": "export const repairsObjectsMend = (it) => (it.magic || it.artifact ? CONDITION_AMOUNT : Math.max(CONDITION_AMOUNT, Math.round(it.maxCondition / MEND_SHARE_OF)));",
+    "new": "export const repairsObjectsMend = (it) => (it.magic || it.artifact ? CONDITION_AMOUNT : Math.round(it.maxCondition / MEND_SHARE_OF));",
+    "tests": [
+      "test/systems/fb1016b_mendarmour.test.js"
+    ]
+  },
+  {
+    "name": "MEND-ARMOUR-rounded-down",
+    "file": "src/systems/enchantments.js",
+    "old": "export const repairsObjectsMend = (it) => (it.magic || it.artifact ? CONDITION_AMOUNT : Math.max(CONDITION_AMOUNT, Math.round(it.maxCondition / MEND_SHARE_OF)));",
+    "new": "export const repairsObjectsMend = (it) => (it.magic || it.artifact ? CONDITION_AMOUNT : Math.max(CONDITION_AMOUNT, Math.floor(it.maxCondition / MEND_SHARE_OF)));",
+    "tests": [
+      "test/systems/fb1016b_mendarmour.test.js"
+    ]
+  },
+  {
+    "name": "MEND-ARMOUR-another-share",
+    "file": "src/systems/enchantments.js",
+    "old": "export const MEND_SHARE_OF = ITEM_TEMPLATES[WEAPONS.Dagger].hitPoints;",
+    "new": "export const MEND_SHARE_OF = ITEM_TEMPLATES[WEAPONS.Dagger].hitPoints * 2;",
+    "tests": [
+      "test/systems/fb1016b_mendarmour.test.js"
+    ]
+  },
+  {
+    "name": "MEND-ARMOUR-AUDIT-uses-on-the-share",
+    "file": "src/systems/enchantments.js",
+    "old": "export const repairsObjectsMend = (it) => (it.magic || it.artifact ? CONDITION_AMOUNT : Math.max(CONDITION_AMOUNT, Math.round(it.maxCondition / MEND_SHARE_OF)));",
+    "new": "export const repairsObjectsMend = (it) => Math.max(CONDITION_AMOUNT, Math.round(it.maxCondition / MEND_SHARE_OF));",
+    "tests": [
+      "test/systems/fb1016b_mendarmour.test.js"
+    ]
+  }
+]

@@ -262,7 +262,8 @@ test('SD9e THE HOST: world.js keeps the Hour\'s pool under its own keys - the du
   assert.match(w, /const sdSpoilsBurst = sdFightLink \? createSdSpoils\(\{/);
   assert.match(w, /if \(!inRealm && _sdFightHeld\) \{ sdSpoilsBurst\?\.leave\(\); saveSoon\.changed\(\); \}[^\n]*\n\s*if \(!inRealm && _sdFightHeld\) \{ sdFightLink\.leave\(\);/, 'gathered before the fight is forgotten');   // AUDIT SD II (L5 F5, PIN MOVED): and a checkpoint asked
   assert.match(w, /if \(inRealm\) \{ try \{ sdSpoilsBurst\?\.frame\(\); \}/);
-  assert.match(w, /const floorPool = \(\) => \(modes\?\.sdRealmSlot\?\.\(\) != null \? sdSpoilsPool : spoilsPool\);/);
+  // PIN MOVED (EG-E, Elite-Gates.md section 19): the Spire's Redoubts throw into the Hour's pool too - the two are never stood in at once
+  assert.match(w, /const floorPool = \(\) => \(modes\?\.sdRealmSlot\?\.\(\) != null \|\| modes\?\.egHallBreach\?\.\(\) != null \? sdSpoilsPool : spoilsPool\);/);
   assert.match(w, /spoilTargets: \(\) => floorPool\(\)\?\.targets\(\) \?\? null,/);
   assert.match(w, /takeSpoil: \(key\) => !!floorPool\(\)\?\.pick\(key\),/);
   const m = strip(read('src/scenes/worldModes.js'));

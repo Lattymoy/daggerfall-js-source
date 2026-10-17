@@ -103,7 +103,8 @@ S1. So in the port:
   the family outlives any one save - and as a copy in every member's save (`modData.ProjectLegacy`). THE STORE answers
   the world's facts: who lived, who died, Arkay's toll, who is played, which remains exist - a death is decided at the
   death door (`characters/playerEntity.js setDeathListener`) and no reload undoes it; a fall's Succession waits on the
-  record (`pending`). A SAVE answers what its character was given: the estate and the bequest paid, the remains opened,
+  record (`pending`). REZ-BLOODLINE (below): online the realm HOLDS the fall the door wrote while a party's Resurrect can
+  still raise the fallen, and its yes takes the death back on every copy (the REVIVE stamp). A SAVE answers what its character was given: the estate and the bequest paid, the remains opened,
   taken or laid to rest (`legacyHost.js mergeFamily`) - a reload rewinds those with the bag they went into. A save of a
   dead or retired member is THE PAST: refused for as long as it stands, the line's waiting Succession offered, else the
   one who carries the line now (AUDIT LEGACY III F12 corrected this line: never "its living").
@@ -383,7 +384,8 @@ migration `0084_legacy.sql`, acct87; `systems/legacy/realmLine.js`; `test/server
   token's mint alone is no act, and mints it no realm character (`rc` 0). The tombstone frees the roster slot
   (`REALM_CHARACTERS_MAX` counts the living) and leaves the roster; the family's record keeps them (the Hall). The page stays for the Succession; the
   heir's boot waits on the realm's word (a tombstone refused is said - "The realm did not hear of this death yet" -
-  and asked again before anyone carries on).
+  and asked again before anyone carries on). REZ-BLOODLINE (below): the door's tombstone carries a HOLD - dead at once,
+  the lease that fell kept aside - so a party's Resurrect inside its window can take the death back (`/v1/realm/raise`).
 - **A member's birth** is `realmCreate` with `{ lineage, person }`: the service checks the person is a living member of
   the caller's own line (never dead, retired, wed in or a minor) that no realm character has played (`lineage-played`;
   a unique index behind it), and names them on the row for good. A birth whose first save never landed is taken up
@@ -696,6 +698,7 @@ world, locked to its own family.
 | FB1013d | REMAINS-STAND (the remains seen where they lie: a body over the record's own list), LIVE-FIGHT (the remains' fight is the place the heir stands in); ESTATE-WIDER planned - the wagon and the bank's balance, the owner's call (section 7; `01-Overview/bugs/Field-Bugs-2026-10-13d.md`) | built |
 | AUDIT FB1013d | the three-lane audit of REMAINS-STAND and LIVE-FIGHT (`01-Overview/audits/Audit-FB1013d.md`) - the fallen's dungeon by its row, its pixel, its own key and the size it was built at; the height the death's to ask; a duel and a hostile ship a fight; a claim lapsed at the stand lays its bones at once; a load lets the bodies go and the tick waits out a world moved; the bones put back lie again | built |
 | REVIVE | a death taken back by the operator, and it holds: the `revived` stamp every copy and the realm's write honour; the "Realm revive" run (Time Travel read, guarded writes) - for TheHalfinStream, Mac: "Full revive" (section REVIVE) | built |
+| REZ-BLOODLINE | a friend's Resurrect saves a Bloodline character: online the door writes the death and the realm holds it (its tombstone's hold) while a Resurrect can raise it - the realm's yes takes it back on every copy; the window closes at the reset, its end, a load or the page going (a killed tab: the realm's minute); closed, the body stays down and the caster is told; AUDIT R1-R3 (section REZ-BLOODLINE; `01-Overview/bugs/Field-Bugs-2026-10-16b.md`) | built |
 
 ## WED-GATE - a character who may wed, weds (FIELD BUGS 2026-10-08)
 
@@ -786,3 +789,92 @@ the tombstone, so a write cut between them leaves her dead under a stamped line 
 whose next write entombs her. And a plan with any statement past STATEMENT_MAX_BYTES writes NOTHING. Checked with it:
 nothing deletes a fallen character's saves (no cron touches realm_characters or the bucket; a tombstone only refuses
 writes) and the game never checkpoints a dead character, so the save the revival hands back is her last before the death.
+
+## REZ-BLOODLINE - a friend's Resurrect saves a Bloodline character (FIELD BUGS 2026-10-16b)
+
+THE REPORT ("Bloodline Resurrection."): *"I was testing with a friend, he dies and I cast resurrection. It works for a
+moment then he disappears and remains dead."* The screenshot: "...of Gothway Garden has Fallen - You died without a
+descendant. There is no one left of the house of Gothway Garden. The line ends here, and its tree is kept in the Hall of
+Ancestors."
+
+FOUND. AUDIT LEGACY A1/B3 (`01-Overview/audits/Audit-Legacy.md`) decided a death AT THE DOOR so an F11 or a closed tab could not
+undo it - and online, since LEGACY7, the door wrote everything a Bloodline fall writes: the death on the record, the
+remains, the Succession waiting (`family.pending`), and the realm's tombstone (`POST /v1/realm/die`: `dead_at` stamped,
+the lease dropped). RESURRECT1's rise (`world.js` resurrectInPlace: the heal, the death screen closed in place) touched
+none of it - "it works for a moment". Within a second the slow step (`legacyHost.js` tick) let its latch go and answered
+the Succession still waiting on the record; the world host opened it over the living body - no member, no heir: the
+line ended. Only the operator's REVIVE (above) could take it back.
+
+THE DECISION (2026-10-16): a resurrection from an ally SAVES a Bloodline character. THE LAW (`scenes/legacyHost.js`
+onDeath, `writeDeath`, `decideDeath`, `raise`, `takeBack`, `raisable`, `pageGone`; `server-account/src/legacy.js`
+realmDie's `hold`, `realmRaise`, `settleHolds`) - as the slice's audit left it (AUDIT, below):
+
+- **The door WRITES the death, online as offline** (`legacyHost.js:"writeDeath(h, { hold: online });"`): the death on the
+  record, the remains, the Succession waiting, the device's store and the realm's copy of the line behind it, and the
+  realm's tombstone asked with its HOLD (`legacyHost.js:"entomb({ hold });"`). THE REALM HOLDS THE DEATH, never the page:
+  `realmDie` with `hold` stamps `dead_at` at once - from there no door joins, checkpoints or trades the character - and
+  keeps the lease that fell aside (`realm_characters.rez_lease`, migration 0122) for a Resurrect, what a tombstone takes
+  with it (the union ended, the guild seat handed on, the pieces let go - afterTomb) waiting on the window's close. A
+  line's write that first carries the fall of a character in play holds it the same way (entombLineDead: the line can
+  land before the tombstone). A page killed under its death screen, or a join from another device, escapes nothing.
+- **The window** is `REZ_HOLD_S` (`systems/legacy/revived.js`, 150 s: the longest an online death screen stands - the
+  body's minute, the open zone's two - and half a minute; one number at both doors, `REZ_HOLD_MS` on the page). It
+  CLOSES at the first of: the player going on (the death screen's reset - Enter or its count - `deathOutcome`); its end
+  (the slow step); the page going (pagehide - `pageGone`, by keepalive, AHEAD of the realm's leave; the session is the
+  dead's so the leave sends nothing); a load or a new game over it (`adopt`, `newGame`: F11, the pause's Load, a
+  same-dungeon load); a body up that no Resurrect raised. Closing tells the realm (`realmDie` without `hold` - what a
+  tombstone takes goes now) and the house's towns (the death's news, told once it stands). A window no page closes - a
+  killed tab - the realm's minute closes (`cron.js` `rez-holds`, `legacy.js:"export async function settleHolds({ db, nowS, budget = () => true }) {"`).
+- **A party's Resurrect inside the window asks the realm** (`legacyHost.js:"function raise(rez = null) {"`, asked by the
+  fallen's own frame before it rises - `world.js:"if (rez && legacyHost?.raise(rez) !== false)"`), and the body stays
+  down until it answers: `POST /v1/realm/raise` (`legacy.js:"export async function realmRaise({ db, nowS }, playerId, { id, lease, diedAt }) {"`)
+  takes the death back only of a character of the account's own line, under the lease that fell, inside the window,
+  with no other of the account's characters in play since (ONE-SEAT), once. Its yes clears the tombstone, hands the lease
+  back (the session plays on at its own sequence: nothing was checkpointed over the dead) and stamps the line's copy
+  with the death taken back - the REVIVE law (`revived.js`, section REVIVE): the person stamped `revived: [diedAt]`, and
+  every copy that meets the stamp drops the death with its remains and its Succession. The page takes it back the same
+  way (`legacyHost.js:"function takeBack(h) {"`), gives back what recordDeath took off them (their look, the news they
+  heard), and rises on the next frame - on the call the realm let go (`raised`) though the caster's pose has stopped
+  carrying it. A call the realm never heard (offline) is said ("The realm did not hear the call that would raise you")
+  and the next call asks again; a refusal is said ("The realm will not let you rise. Your death stands.") and closes the
+  window. The player going on while the realm answers rises by the host's own respawn, and the answer is the death's: a
+  yes leaves the line as it was, a no offers the Succession. A death after one taken back is a death of its own, its
+  minute past the stamped one (the stamp knows a death by its minute). An Enduring member's toll is taken at the door
+  too, and a Resurrect gives the door's years back at once - the page's own (no tombstone stands for a rise); a copy that
+  took another's toll in since keeps it (mergeFacts holds the greater).
+- **Closed, the body stays down.** The fallen's frame refuses the call (no living body, then the line's end), and their
+  party pose says so (`fg`, net/wire.js validPartyPose - relay world212), so the caster is refused BEFORE a point is
+  spent, in the fallen's name: "Ysolde has fallen for good. No spell will raise them now."
+  (`hostMagic.js:"if (fallen?.gone) { say(RESURRECT_TEXT.forGood(fallen.name)); return false; }"`; the release and a
+  caster-only Resurrect's readying say it too). A relay before world212 drops the field (world208, world209, world210 and world212
+  are other branches' relays): the caster spends, and the fallen's client refuses the call as ever.
+- **Offline nothing changes**: no party can raise them - the door decides, A1/B3 as recorded. **The Hour** keeps its
+  one life (SD-ONELIFE: no Resurrect there), so a death in it is closed at its screen's reset.
+
+DEPARTURE (named in `01-Overview/audits/Audit-Legacy.md` at A1/B3's law): online a fall is the realm's at the door and stays
+raisable for its window; offline the door decides, as recorded.
+
+AUDIT (2026-10-16, the slice's own audit - `01-Overview/bugs/Field-Bugs-2026-10-16b.md` REZ-BLOODLINE AUDIT):
+- R1 (BLOCKER) - the slice HELD the online death in the dying page's memory, unwritten, until the window closed: a tab
+  killed with no pagehide (a crash, the task manager, a phone discarding a background tab - and a hidden tab runs no
+  frames, so the slow step never closed it) or a join from another device during the hold (the join took the lease, and
+  the dying tab's keepalive tombstone was refused under it) escaped a Bloodline permadeath and an Enduring toll -
+  reopening AUDIT LEGACY A1/B3. FIXED as above: the door writes it and the realm holds it; the Resurrect is the realm's
+  to take back.
+- R2 - below ten frames a second the open zone's death screen counted the frames' clamped time while the hold ran on the
+  wall clock: the window closed (a Resurrect refused "fallen for good") with the screen still saying "RISING IN 15".
+  FIXED: an online death screen counts the wall clock (`deathScreen.js:"if (this.online) this.clock = Math.max(this.clock, (Number(this._wall()) - this._fellAt) / 1000 || 0);"`),
+  never behind the frames' own count.
+- R3 - this section said "relay world208": the relay that carries `fg` is world212 (world208, world209 and world210
+  went to other branches) - corrected above.
+
+THE FOUR HOSTS: `scenes/world.js` WIRED, on lines it had (bootWorld stands at its ceiling): the death screen's frame asks
+the rise (and rises on the call the realm let go), the party pose carries `fg`, the caster's pick reads it, the tombstone
+carries `keepalive` and `hold` and the raise rides beside it, the page's going asks Project Legacy first.
+`scenes/worldModes.js` and `scenes/dungeonContext.js` hold their death screens in the mode's slot - the same world.js
+frame hears the Resurrect under them (`modes?.deathUp?.()`), their resets ask `legacyDeathReset` through
+`onlineRespawn`, and their screens are the same `DeathScreen` (the wall clock's): wired through world.js.
+`scenes/exterior.js`, the fixed city, has no Project Legacy (section 3's FLAG) - unchanged. Pinned by
+`test/systems/legacy/fb1016b_rezbloodline.test.js` (5, over the real death door, host, realm session and the line's realm copy on the
+real account Worker and its minute's clock, party wire, caster's cast, death screen and world.js's own statements);
+`tools/mutants/fb1016b_rezbloodline.json` (all dead - the record's count in the Field Bugs section).

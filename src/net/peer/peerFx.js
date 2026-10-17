@@ -36,6 +36,21 @@ const FX_DELAY_S = 0.18;
  *  of hits lands faster, and a modified client's pose may say a new one on every frame. */
 export const FX_MIN_GAP_S = 0.25;
 
+// ── EG-ZH: THE PEERS' SOUNDS, AS A PLACE HEARS THEM ─────────────────
+// Elite-Gates.md section 26 (THE SPIRE MIX): in the Spire the peers' sounds play 4 dB down, so eight players' blows,
+// steps and swings never mask the cues that matter. Every peer sound plays inside `peerHeard` - this file's blows and
+// hurts, the walkers' steps, swings and cries (net/remotePlayers.js), their climbing (net/peer/peerClimb.js) - and a place
+// that turns them down hands its scope in (systems/eliteGates/egMix.js createSpireMix's `peers`); with none, a sound is as it was.
+/** @type {((run: () => any) => any) | null} */
+let _peerScope = null;
+/** The place's scope over every peer sound (`(run) => run()` with a gain about it), or null to let them be. */
+export function setPeerSoundScope(fn) { _peerScope = typeof fn === 'function' ? fn : null; }
+/** A peer's sound (`run` plays it), through the place's scope where one is set. Answers what `run` answers. */
+export function peerHeard(run) {
+  if (!_peerScope) return run();
+  try { return _peerScope(run); } catch { return undefined; }
+}
+
 // ── the sender ──────────────────────────────────────────────────────
 const mine = { hk: 0, hp: null, hb: 0, hq: 0, hu: 0, uq: 0 };
 
@@ -130,7 +145,7 @@ export function createPeerFxPlayer({ play, toScene, now = () => performance.now(
         if (q.due > t) continue;
         queue.splice(i, 1);
         const dup = recent.some((r) => t - r.t <= DEDUPE_S + FX_DELAY_S && Math.hypot(r.pos[0] - q.at[0], r.pos[1] - q.at[1], r.pos[2] - q.at[2]) <= DEDUPE_M);
-        if (!dup) (q.hurt ? play?.hurt : play?.blow)?.({ at: q.at, bloodIndex: q.bloodIndex, share: q.share });   // the owner drew and rang it already
+        if (!dup) peerHeard(() => (q.hurt ? play?.hurt : play?.blow)?.({ at: q.at, bloodIndex: q.bloodIndex, share: q.share }));   // the owner drew and rang it already; EG-ZH: a peer's ring, as the place hears it
       }
     },
   };

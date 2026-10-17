@@ -186,10 +186,11 @@
   {
     "name": "ROBES-dungeon-search-box-raced",
     "file": "src/scenes/dungeonContext.js",
-    "old": "reach: SEARCH_REACH, surface: true }); });",
-    "new": "reach: SEARCH_REACH }); });",
+    "old": "lastPlayerFeet[1] + lastPlayerHeight : NaN), surface: true }); });",
+    "new": "lastPlayerFeet[1] + lastPlayerHeight : NaN) }); });",
     "tests": [
       "test/systems/fb1004c_robes.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (FIELD BUGS 2026-10-16b GRAVE-PARTY): the reach is the body's now (searchReachFor) - re-aimed by content at the same `surface: true`."
   }
 ]

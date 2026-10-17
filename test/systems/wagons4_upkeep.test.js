@@ -25,8 +25,9 @@ import { makeWorld } from '../hccWorld.mjs';
 import { FEATURES } from '../../src/systems/features.js';
 import { itemStatRows } from '../../src/systems/item/itemInfo.js';
 import { repairsObjectsTarget } from '../../src/systems/enchantments.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
-const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
+const rd = (p) => hostText(p);
 const wagon = (kind = 'cart', condition = null) => { const w = mintCondition(setItemFields(newWagonItem(kind))); if (condition != null) w.currentCondition = condition; return w; };
 
 test('WAGONS4 SOUNDNESS: the condition every wagon carried all along (template 93\'s 1400) - none carried is whole; Sound from 60%, Worn from 30, Rickety from 10 (its team 0.85 the pace), Failing (0.7) under it - WAGON-MEND: and no lower, a wagon a save holds at nought Failing too (mutants: WAGON-MEND-a-state-under-failing)', () => {
@@ -187,7 +188,7 @@ test('WAGONS4 THE WAGON YARD MENDS: its keeper\'s third row, the Stable\'s two; 
   const host = rd('src/scenes/merchantYardsHost.js');
   assert.match(host, /actions: yardRowsFor\(p\.y\.site\.kind\)\.map\(\(r\) => \(\{ id: r\.id, label: r\.label \}\)\) \};/);
   assert.match(host, /if \(verb === 'mend' && p\.y\.site\.kind === 'transport' && \(p\.what === 'keeper' \|\| p\.what === 'sign'\)\) return mend\(p\.y\.site\) !== false;/);
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /mend: \(\) => mendAtYard\(\),/);
   assert.match(w, /const away = !!rt\?\.physicalPersistenceEnabled && !rt\.canAccessWagonInventory\?\.\(\)\?\.allowed;\n\s*const price = upkeep\.mendPrice\(away\);/, 'a wright sent out to a wagon out of the counter\'s reach');
   assert.match(w, /if \(totalGoldAmount\(playerEntity\) < price\) \{ townTalk\.say\(WAGON_UPKEEP_TEXT\.poor\(price\)\); return; \}\n\s*deductGold\(playerEntity, price\);\n\s*mendWagon\(w\);/, 'asked, then paid, then mended');
@@ -210,7 +211,7 @@ test('WAGONS4 THE ROW AND THE HOSTS: a Features row beside horse care (its tiers
     assert.match(s, /teamShort: \(\) => wagonTeamShort\(playerEntity\.items \?\? \[\]\),/, host);
     assert.match(s, /wagonGoes: mode === TRANSPORT_MODES\.Cart \|\| !!hccRuntimeOn\(\)\?\.view\?\.\(\)\?\.teamFollowing,/, `${host}: worn while it rolls with me`);
   }
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /const upkeepWagonWent = hccOn\(\) \? !!hccRuntimeOn\(\)\?\.wagonGoesOnJourney\?\.\(\) : hasTransport\(TRANSPORT_SMALL_CART\);/);
   assert.match(w, /playerTicker\.advance\(computed\.minutes\);\n\s*if \(upkeepWagonWent\) upkeep\.journey\(travelDays\(computed\.minutes\)\);/, 'the journey\'s days on the wagon that went');
   assert.match(w, /thrown: \(\) => upkeep\.thrown\(\),/);

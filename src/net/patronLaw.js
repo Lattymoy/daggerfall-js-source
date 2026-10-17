@@ -18,7 +18,7 @@
 //    it, the hour's chance by how far under (`patronOdds`).
 //  - THE TOWN'S DEMAND IS SHARED: its traders together sell at most PATRON_TOWN_HOUR an hour, the hour's lowest draws.
 //  - THE CEILINGS: a seller PATRON_SELLER_HOUR pieces an hour, PATRON_SELLER_DAY_GOLD gold a real day; never a quest's
-//    piece, a keepsake, or a piece bought at a counter online (`patronTakes`).
+//    piece, a keepsake, a piece bought at a counter online, or a stolen one (`patronTakes`).
 //  - THE RECKONING covers the hours since the listing's last, at most PATRON_RECKON_HOURS of them.
 //
 // Pure: no clock, no network, no DOM.
@@ -77,9 +77,13 @@ export const PATRON_COUNTER_MARK = 'counterBought';
 /** Whether a patron would take the piece at all: never a quest's, never a keepsake - and AUDIT LW-II-2 S1, never a piece
  *  an NPC counter sold online (PATRON_COUNTER_MARK): a patron paid more than an online counter asks for the same piece
  *  (a book three times its file price; a quality-1 counter's weapon a fifth over its ask), so a player bought at the
- *  counter, stocked a trader and printed the difference. @param {any} item */
+ *  counter, stocked a trader and printed the difference. STOLEN-GOODS AUDIT (2026-10-16, S6): and never a STOLEN piece
+ *  (`stolen`, systems/stolenGoods.js STOLEN_MARK): a town's patron is its townsfolk, and the town's counters buy a stolen
+ *  piece only to be rid of it (landSold) - a hired trader was the fence they are not, paying three fifths of the piece's
+ *  worth in the service's gold for a shut shop's shelf emptied by night. A player may still buy it from the trader; the
+ *  mark rides to them. @param {any} item */
 export const patronTakes = (item) => !!item && typeof item === 'object' && !item.questItem && !item.livingKeepsake && item.templateIndex !== PATRON_KEEPSAKE_TEMPLATE
-  && item[PATRON_COUNTER_MARK] !== true;
+  && item[PATRON_COUNTER_MARK] !== true && item.stolen !== true;
 
 /** AUDIT LW-II-2 S1: a record's own price - its `value` times its stack (tradeModes.js buyItemPrice's), 0 for no honest
  *  number. @param {any} item */

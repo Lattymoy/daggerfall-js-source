@@ -38,6 +38,7 @@ import {
 } from '../../src/systems/oblivionLeveling.js';
 import { MOD_SETTINGS } from '../../src/systems/modSettings.js';
 import { ORL_VENDOR } from '../../src/systems/oblivionLeveling.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 import {
   LANE_CLASSIC, LANE_OGHMA, LANE_VIRTUE, levelUpLane, rolloutRows, rolloutPool, poolLabel,
   canAscend, refusalText, corneredHint, pressAt, raiseAt, lowerAt, focusAt, focusedKey, ascend,
@@ -49,7 +50,7 @@ import {
 } from '../../src/ui/levelUp/levelUpView.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const src = (f) => readFileSync(join(root, f), 'utf8');
+const src = (f) => hostText(f);
 const seq = (...v) => { let i = 0; return () => v[Math.min(i++, v.length - 1)]; };
 
 const career = {

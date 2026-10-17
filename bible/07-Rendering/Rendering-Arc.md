@@ -512,8 +512,8 @@ presentation that can match it.
 Owned by `Rendering.md`, which says EMPTY - and that is the answer.
 ~~Next up: spectral/firewall emission colors (lands with spectral enemies -
 Characters arc dependency).~~ The spectral half SHIPPED 2026-07-06 (see
-Characters-Arc E4); only GetFireWallColors32 is unported, and it waits on a
-firewall consumer rather than sitting on a queue. AUDIT 18 struck this line:
+Characters-Arc E4); GetFireWallColors32 shipped with its first consumer
+(EG-ZH, 2026-10-12 - the Elite Breach's fire falls, `11-Multiplayer/Elite-Gates.md`). AUDIT 18 struck this line:
 two pages gave opposite answers to whether the Rendering queue was empty.
 
 ## Milestone R12 - the exterior indirect player light (SHIPPED 2026-08-16)

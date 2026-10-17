@@ -30,6 +30,7 @@ import * as BK from '../../../src/systems/arena/arenaBook.js';
 import { moveArenaHomes } from '../../../src/systems/online/onlineHomes.js';
 import { HOME_ARENA_MAP_ID } from '../../../src/net/homeLaw.js';
 import * as acorn from 'acorn';
+import { SEAT_NOTICE } from '../../../src/net/oneSeat.js';   // ARENA-WAIT AUDIT A4: a seat given up shuts the lane's doors in its words
 
 const { subtle } = globalThis.crypto;
 const rd = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
@@ -339,12 +340,15 @@ test('AUDIT PRE-MERGE 1003 O4 online is a fact of the session, not of its socket
   assert.deepEqual(asked, [], 'no local exhibition stood online');
   assert.notEqual(D.kind(), 'exhibition');
   assert.equal(links2.length, 1, 'the hour\'s room watched from a socket of its own');
-  assert.match(rd('src/scenes/world.js'), /if \(arenaOnline\?\.exhibitions\?\.\(\)\) arenaOnline\.watchCity\(ex\);\n\s+else if \(ex\?\.open && ex\.hour !== _arenaHourRun\)/, 'world.js arenaFrame is that branch');
+  // PIN MOVED (FIELD BUGS 2026-10-16b ARENA-WAIT, test/systems/arena/fb1016b_arenawait.test.js): the branch takes the online lane's wait too
+  assert.match(rd('src/scenes/world.js'), /if \(arenaOnline\?\.exhibitions\?\.\(\) \|\| arenaOnline\?\.waiting\?\.\(\)\) arenaOnline\.watchCity\(ex\);[^\n]*\n\s+else if \(ex\?\.open && ex\.hour !== _arenaHourRun\)/, 'world.js arenaFrame is that branch');
   // offline: a seat lost (net/online.js supersede - its status 'error', its relay's word kept), a relay without the arena
+  // PIN MOVED (FIELD BUGS 2026-10-16b ARENA-WAIT AUDIT A4): `live()` false still - but on the online lane a seat lost is SHUT
+  // (`waiting()`, the seat's words - the O9 test and test/systems/arena/fb1016b_arenawait.test.js), never ARENA3's offline arena
   S2.status = 'open';
   assert.equal(B.live(), true);
   Object.assign(S2, { superseded: true, status: 'error' });
-  assert.equal(B.live(), false, 'a seat lost is offline');
+  assert.equal(B.live(), false, 'a seat lost is not the arena online');
   Object.assign(S2, { superseded: false, status: 'open', arenaOk: false });
   assert.equal(B.live(), false, 'a relay that opens no arena room is offline');
 });
@@ -538,6 +542,17 @@ test('AUDIT PRE-MERGE 1003 O9 ONE-SEAT: a tab that gave its seat up leaves the a
   await settled();
   assert.deepEqual([entered, closed, B.bout()], [[], [], null], 'the call not followed - the window kept, the floor not entered');
   assert.match(rd('src/scenes/world.js'), /const leaveSeat = \(now\) => \{[\s\S]*?online\?\.supersede\(\);[\s\S]*?arenaOnline\?\.leaveAll\(\)[\s\S]*?seatLock\?\.release\(\);/, 'world.js leaveSeat leaves the arena\'s rooms');
+  // PIN MOVED (FIELD BUGS 2026-10-16b ARENA-WAIT AUDIT A4, test/systems/arena/fb1016b_arenawait.test.js): the seat given up was OFFLINE
+  // here - `live()` false, so every door ran ARENA3's arena: the save's ladder fought, its purses paid into the realm's save
+  // (47,950 gold over 40 bouts), the book settling an online wager by the house's record. On the online lane (a realm
+  // character) the offline arena runs for a relay's no alone: a seat given up shuts the doors, said in ONE-SEAT's words
+  const away = { status: 'error', arenaOk: true, arenaHeard: true, superseded: true, terminal: true, room: null, sendArena: () => false };
+  const L = createArenaOnline({ now: () => 0, session: () => away, lane: () => true, makeHall: () => link, bouts: { ask() {}, dismiss() {}, relay: () => null, setRealm() {}, holds: () => false }, account: noAccount('acct-alva'), enterFloor: (k, o) => { entered.push([k, o]); return true; }, level: () => 10 });
+  assert.deepEqual([L.live(), L.waiting(), L.fightLadder(), L.act('queue')], [false, true, { ok: false, text: SEAT_NOTICE }, { ok: false, text: SEAT_NOTICE }], 'shut, never offline - the seat\'s words');
+  const gateL = createArenaGate({ playerEntity: { goldPieces: 0, items: [], arenaLeague: null, arenaLadder: null, health: 100, maxHealth: 100, name: 'Alva' }, gameMinutes: () => NOON + 2, showOverlay() {}, liveHour: () => null, begun: () => false, online: () => L, openWindow: null, atGate: () => true, heraldAct() {} });
+  const ch = gateL.heraldChoice({ cityBout: null, healthShare: 1, league: null });
+  assert.ok(!ch.options.some((o) => o.act === 'fight') && ch.lines.includes(SEAT_NOTICE), 'the Herald offers the save\'s Fight no more - he says the seat is elsewhere');
+  assert.deepEqual(entered, [], 'no floor entered');
 });
 
 // ═══ O10 ══════════════════════════════════════════════════════════════════════════════════════════════════════════════

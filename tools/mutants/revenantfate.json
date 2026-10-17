@@ -2,11 +2,12 @@
   {
     "name": "REVENANT-FATE-dies-as-before",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "      if (fates && !_whole && revenantMayYield(f)) { if (revenantWillHolds(f)) tearAway(f); else yieldFoe(f); return; }\n",
+    "old": "      if (fates && !ownersWholeKill(_whole, { fromPlayer, peer }) && revenantMayYield(f)) { if (revenantWillHolds(f)) tearAway(f); else yieldFoe(f); return; }\n",
     "new": "",
     "tests": [
       "test/systems/revenant/revenant_fate.test.js"
-    ]
+    ],
+    "note": "FIELD BUGS 2026-10-16b RVN-OWNERS-CHOICE (PIN MOVED): re-aimed by content - a whole blow passes the gate only as the owner's own (ownersWholeKill)."
   },
   {
     "name": "REVENANT-FATE-a-blow-kills-it-kneeling",

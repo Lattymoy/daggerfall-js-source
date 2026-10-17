@@ -723,6 +723,15 @@ the same door and the same law's shape: made notes registered by name, seamless,
 decibel under the clip), held by the world host's `hourScoreFrame` ahead of the court's and the arena's. See
 `11-Multiplayer/Super-Dungeons.md` section 7 and its SD13 record; `tools/sdScoreProbe.mjs`; `test/systems/superDungeon/sd13_score.test.js`.
 
+EG-G2 (2026-10-12): THE SCORE OF THE SPIRE (`systems/eliteGates/egScore.js`) - an Elite Breach's songs by the same door: the band's
+halls (96 bars, three variants in the seed's order), a trial's fight, a set piece's cue, a lord's wake, the three Courts
+(each lord's own four bars in the bed), a Valkynaz, the Redoubt's hymn, THE COUNT's last two minutes and the end, in E
+Phrygian, made for their context (the band, the lord) and registered under their names when it changes; held by the
+world host's `hourScoreFrame` first (`createSpireScoreHost`). THE SPIRE MIX (`systems/eliteGates/egMix.js`): a personal sting for a
+blow on my feet, a critical bus that ducks the score 6 dB for 300 ms through `SongPlayer.duck` (the song's own level -
+the fader and the volume untouched), the legion's barks four a kind, nearest first. See `11-Multiplayer/Elite-Gates.md`
+section 26 and its EG-G2 record; `tools/egScoreProbe.mjs`; `test/systems/eliteGates/eglook_score.test.js`.
+
 ## FIELD-WIND1 (2026-09-29): the wind was a moan - a bed the port makes
 
 The Discord through Mac: "A repetitive moaning sound in the open world." The port's wind (WIND3, `systems/wind/windAudio.js`;

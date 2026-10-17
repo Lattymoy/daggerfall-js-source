@@ -8,6 +8,7 @@ import { readFileSync } from 'node:fs';
 import { pieceTransform, arenaPieceModel, composeArenaModel, buildArenaModel, decodeArenaModel, ARENA_MODEL_ID, PIECE_TURNS } from '../../../src/world/arena/arenaModel.js';
 import { registerCustomModel, customModelFor, isClimateFreeModel, customModelNeeds, _resetCustomModels, NO_CLIMATE_REMAP } from '../../../src/world/customModels.js';
 import { HAS_ARENA2, classicModels, vendorBytes } from '../../arena1Data.mjs';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const idx = JSON.parse(readFileSync(new URL('../../../vendor/daggerfall-arena/Models/864102.json', import.meta.url), 'utf8'));
 const read = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
@@ -73,7 +74,7 @@ test('ARENA1 model: 864102 registers climate-free, naming the pieces it reads; t
 });
 
 test('ARENA1 model: the hosts draw a climate-free model by its own table and give it the collider every placed model gets', () => {
-  const w = read('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /const climateFree = isClimateFreeModel\(placed\.modelIdNum\);[^\n]*\n\s*if \(!climateFree\) await remapSubMeshes\(gpu\.subMeshes, texRemap, townClimateArchive, pipeline\);/);
   assert.match(w, /if \(climateFree\) entry\.texRemap = NO_CLIMATE_REMAP;/);
   assert.match(w, /staticBuilder\.add\(cpu, local, climateFree \? ownTexKey : resolveTexKey\)/);

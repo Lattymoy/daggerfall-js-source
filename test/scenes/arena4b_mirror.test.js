@@ -262,8 +262,9 @@ test('ARENA4b the bookmaker online: a wager settled by the relay\'s verdict, nev
 
 test('ARENA4b the hosts\' wiring: online the city\'s schedule is the relay\'s room (offline the seeded bout, once an hour), the Herald\'s Watch the relay\'s room, the floor\'s instance in the exhibition\'s room, the book shut by the hour standing, the mirror\'s bodies `placed`, an asked verdict settling the book (by source) (mutants: the city\'s bout this screen\'s own online; the Watch this screen\'s own online; the bodies streamed; the asked verdict unwired)', () => {
   const W = readFileSync(new URL('../../src/scenes/world.js', import.meta.url), 'utf8');
-  assert.match(W, /if \(arenaOnline\?\.exhibitions\?\.\(\)\) arenaOnline\.watchCity\(ex\);\n\s+else if \(ex\?\.open && ex\.hour !== _arenaHourRun\) \{ _arenaHourRun = ex\.hour; arenaBouts\.ask\(\{ where: 'city', kind: 'exhibition', ex \}\); \}/);
-  assert.match(W, /if \(arenaOnline\?\.exhibitions\?\.\(\)\) \{ arenaBouts\.dismiss\(\); arenaOnline\.watchExhibition\(ex\); return; \}/);
+  // PIN MOVED (FIELD BUGS 2026-10-16b ARENA-WAIT): the online arm takes the online lane's wait too
+  assert.match(W, /if \(arenaOnline\?\.exhibitions\?\.\(\) \|\| arenaOnline\?\.waiting\?\.\(\)\) arenaOnline\.watchCity\(ex\);[^\n]*\n\s+else if \(ex\?\.open && ex\.hour !== _arenaHourRun\) \{ _arenaHourRun = ex\.hour; arenaBouts\.ask\(\{ where: 'city', kind: 'exhibition', ex \}\); \}/);
+  assert.match(W, /if \(arenaOnline\?\.exhibitions\?\.\(\) \|\| arenaOnline\?\.waiting\?\.\(\)\) \{ arenaBouts\.dismiss\(\); arenaOnline\.watchExhibition\(ex\); return; \}/);
   assert.match(W, /key = arenaFloorRoomOf\(modes\?\.roomIdentity\?\.\(\)\?\.o\);/);
   assert.match(W, /return arenaBouts\.hour\(\) != null && !!b && !\['call', 'walk', 'count'\]\.includes\(b\.phase\);/);
   assert.match(W, /champion: null, \.\.\.\(o\.mirror \? \{ placed: true \} : \{\}\) \}\)/);

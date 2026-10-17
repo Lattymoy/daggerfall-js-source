@@ -1,0 +1,862 @@
+[
+  {
+    "name": "EGA3-count-press-ignored",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "export const egRedoubtHold = (press = 0) => (press >= 2 ? EG_REDOUBT_HOLD_MS / 3 : press ? (EG_REDOUBT_HOLD_MS * 2) / 3 : EG_REDOUBT_HOLD_MS);",
+    "new": "export const egRedoubtHold = (press = 0) => (press >= 2 ? EG_REDOUBT_HOLD_MS / 3 : EG_REDOUBT_HOLD_MS);",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-press-rank-ii",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "(press >= 2 ? EG_REDOUBT_HOLD_MS / 3 :",
+    "new": "(press >= 2 ? EG_REDOUBT_HOLD_MS / 2 :",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-director-press-unread",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "const hold = egRedoubtHold(egDecreeRanks(B).press ?? 0), before = egCountLeft(B.cnt, now);",
+    "new": "const hold = egRedoubtHold(0), before = egCountLeft(B.cnt, now);",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-redoubt-cap-gone",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "const left = Math.max(0, Math.min(egCountLeft(c, now) + hold, EG_COUNT_CAP_MS, lastWordLeft));",
+    "new": "const left = Math.max(0, Math.min(egCountLeft(c, now) + hold, lastWordLeft));",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-redoubt-lastword-gone",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "const left = Math.max(0, Math.min(egCountLeft(c, now) + hold, EG_COUNT_CAP_MS, lastWordLeft));",
+    "new": "const left = Math.max(0, Math.min(egCountLeft(c, now) + hold, EG_COUNT_CAP_MS));",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-law-hold-unread",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "Math.min(egCountLeft(c, now) + hold, EG_COUNT_CAP_MS, lastWordLeft)",
+    "new": "Math.min(egCountLeft(c, now) + EG_REDOUBT_HOLD_MS, EG_COUNT_CAP_MS, lastWordLeft)",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-director-hold-dropped",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "B.cnt = egCountRedoubt(egCountHold(B.cnt, now), now, Math.max(0, B.op + EG_LAST_WORD_MS - now), hold);",
+    "new": "B.cnt = egCountRedoubt(egCountHold(B.cnt, now), now, Math.max(0, B.op + EG_LAST_WORD_MS - now));",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-count-runs-through-rest",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "B.cnt = egCountRedoubt(egCountHold(B.cnt, now), now,",
+    "new": "B.cnt = egCountRedoubt(B.cnt, now,",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-director-lastword-dropped",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "now, Math.max(0, B.op + EG_LAST_WORD_MS - now), hold);",
+    "new": "now, EG_LAST_WORD_MS, hold);",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-redoubt-surplus-never",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  surplusBank(B, egCountOver(B.cnt, now, hold));\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-surplus-ms",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "export const EG_SURPLUS_MS = 300_000;",
+    "new": "export const EG_SURPLUS_MS = 200_000;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-surplus-max",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "export const EG_SURPLUS_MAX = 3;",
+    "new": "export const EG_SURPLUS_MAX = 4;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-surplus-over-unread",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "export const egCountOver = (c, now, add) => Math.max(0, egCountLeft(c, now) + add - EG_COUNT_CAP_MS);",
+    "new": "export const egCountOver = (c, now, add) => Math.max(0, egCountLeft(c, now) - EG_COUNT_CAP_MS);",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-surplus-kept-lost",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  while (B.surAcc >= EG_SURPLUS_MS && B.sur < EG_SURPLUS_MAX) { B.surAcc -= EG_SURPLUS_MS; B.sur++; }",
+    "new": "  while (B.surAcc >= EG_SURPLUS_MS && B.sur < EG_SURPLUS_MAX) { B.surAcc = 0; B.sur++; }",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-goldrun-ms",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "export const EG_GOLD_RUN_MS = 60_000;",
+    "new": "export const EG_GOLD_RUN_MS = 30_000;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-goldrun-no-gain",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "const want = egCountLeft(B.cnt, now) + EG_GOLD_RUN_MS;",
+    "new": "const want = egCountLeft(B.cnt, now);",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-goldrun-any-time",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (L.length < 2 || now > B.dn + EG_CLOSING_COUNT_MS) return;",
+    "new": "if (L.length < 2) return;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-goldrun-solo",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (L.length < 2 || now > B.dn + EG_CLOSING_COUNT_MS) return;",
+    "new": "if (now > B.dn + EG_CLOSING_COUNT_MS) return;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-goldrun-surplus-never",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  surplusBank(B, egCountOver(B.cnt, now, EG_GOLD_RUN_MS));\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-covenant-pays-time",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "const gain = B.covenant ? 0 : redoubtGain(B, now);",
+    "new": "const gain = redoubtGain(B, now);",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-respite-step",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "export const EG_RESPITE_STEP_MS = 120_000;",
+    "new": "export const EG_RESPITE_STEP_MS = 60_000;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-respite-valk",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "export const EG_RESPITE_VALK_MS = 600_000;",
+    "new": "export const EG_RESPITE_VALK_MS = 300_000;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-respite-budget",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "export const EG_RESPITE_BUDGET_MS = 900_000;",
+    "new": "export const EG_RESPITE_BUDGET_MS = 600_000;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-respite-floor",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "egAsk(B, 'ready', [1], now, out);\n      if (B.resp >= EG_RESPITE_MIN_MS) egAsk(B, 'respite', [1], now, out);",
+    "new": "egAsk(B, 'ready', [1], now, out);\n      if (B.resp >= 0) egAsk(B, 'respite', [1], now, out);",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-respite-what-is-left",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "const add = Math.min(EG_RESPITE_STEP_MS, B.resp);",
+    "new": "const add = EG_RESPITE_STEP_MS;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-closing-count-never-holds",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "    if (B.cnt.at > 0 && now >= B.dn + EG_CLOSING_COUNT_MS) { B.cnt = egCountHold(B.cnt, now); out.push(egStageWord(B, now)); }\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-closing-sixteen",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "export const EG_CLOSING_COUNT_S = 15;",
+    "new": "export const EG_CLOSING_COUNT_S = 16;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-pull-runs-count",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  B.su = now + arriveWait(B);\n  B.cnt = egCountHold(B.cnt, now);",
+    "new": "  B.su = now + arriveWait(B);",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-gather-cut",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (B.wk && !B.gatherAt && now >= B.pulledAt + wait) { wake(B, now, rng, out); return out; }",
+    "new": "if (B.wk && now >= B.pulledAt + wait) { wake(B, now, rng, out); return out; }",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-wait-never",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (B.wk && !B.gatherAt && now >= B.pulledAt + wait) { wake(B, now, rng, out); return out; }",
+    "new": "if (false) { wake(B, now, rng, out); return out; }",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-active-eighth",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "export const EG_ACTIVE_SHARE = 1 / 8;",
+    "new": "export const EG_ACTIVE_SHARE = 1 / 7;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-blow-of-none",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "return (m.dh > 0 && m.dh >= even * dealt)",
+    "new": "return (m.dh >= even * dealt)",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-heal-nothing-taken",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "(m.hh > 0 && took > 0 && m.hh >= even * took)",
+    "new": "(m.hh > 0 && m.hh >= even * took)",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-errand-unread",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "|| m.erH === h || crossed;",
+    "new": "|| crossed;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-crossing-unread",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "|| m.erH === h || crossed;",
+    "new": "|| m.erH === h;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-door-counted",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "const crossed = crossHall && (m.downH === B.h || !!fairOfMember(B, sub)?.atEnd);",
+    "new": "const crossed = m.downH === B.h || (crossHall && !!fairOfMember(B, sub)?.atEnd);",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-measures-kept",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "for (const m of Object.values(B.mem)) { m.dh = 0; m.hh = 0; m.erAt = 0; }",
+    "new": "for (const m of Object.values(B.mem)) { m.hh = 0; m.erAt = 0; }",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-even-of-whom",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (egActiveIn(m, { h: B.h, n: L.length, dealt, took, crossed })) m.act++;",
+    "new": "if (egActiveIn(m, { h: B.h, n: 1, dealt, took, crossed })) m.act++;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-errand-ms",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "export const EG_ERRAND_STAND_MS = 1500;",
+    "new": "export const EG_ERRAND_STAND_MS = 1250;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-errand-step-off-unread",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (!marks.some(([x, z, r]) => dist(b.x, b.z, x, z) <= r)) { m.erAt = 0; continue; }",
+    "new": "if (!marks.some(([x, z, r]) => dist(b.x, b.z, x, z) <= r)) continue;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-errand-plate-reach",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "for (const q of spec.spots.winch ?? []) marks.push([q.x, q.z, EG_TOUCH_M]);",
+    "new": "for (const q of spec.spots.winch ?? []) marks.push([q.x, q.z, EG_TOUCH_M - 0.1]);",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-errand-never-stood",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  errandStep(B, F, spec, now, inHall);   // AUDIT EG III (lane2 #3): an errand's mark stood in - a hall's part (section 16.1)\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-heal-unkept",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  if (got > 0) list.forEach(([by], i) => { const q = B.mem[by], d = (q?.ht ?? 0) - had[i]; if (d > 0 && cast(by)) q.hh = (q.hh ?? 0) + d / healRef(B.mem[sub].lv); });   // AUDIT EG IV (lane3 #3): a healer the room saw cast on this member alone\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-heal-in-points",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (d > 0 && cast(by)) q.hh = (q.hh ?? 0) + d / healRef(B.mem[sub].lv); });",
+    "new": "if (d > 0 && cast(by)) q.hh = (q.hh ?? 0) + d; });",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-census-took-unkept",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "    if (h.share > 0) B.ctk = (B.ctk ?? 0) + h.share;   // AUDIT EG III (lane2 #3): what the company took in the hall - a healer's part is measured by it\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-lifeline-iii-past-cap",
+    "file": "src/net/eliteGates/egVestige.js",
+    "old": "v: [0.20, 0.25, 0.30], by: 'word'",
+    "new": "v: [0.20, 0.25, 0.40], by: 'word'",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-lifeline-ii-at-cap",
+    "file": "src/net/eliteGates/egVestige.js",
+    "old": "v: [0.20, 0.25, 0.30], by: 'word'",
+    "new": "v: [0.20, 0.30, 0.30], by: 'word'",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-mark-distance-unread",
+    "file": "src/net/eliteGates/egRun.js",
+    "old": "if (r !== HIT_KINDS.Shaft || !(d > EG_FAR_M)) return false;",
+    "new": "if (r !== HIT_KINDS.Shaft) return false;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-mark-kind-unread",
+    "file": "src/net/eliteGates/egRun.js",
+    "old": "if (r !== HIT_KINDS.Shaft || !(d > EG_FAR_M)) return false;",
+    "new": "if (!(d > EG_FAR_M)) return false;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-mark-twelve-beyond",
+    "file": "src/net/eliteGates/egRun.js",
+    "old": "if (r !== HIT_KINDS.Shaft || !(d > EG_FAR_M)) return false;",
+    "new": "if (r !== HIT_KINDS.Shaft || !(d >= EG_FAR_M)) return false;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-mark-far-unpassed",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (egMarkFoe(mm, body, m.r, now, sub, far)) egSpotted(",
+    "new": "if (egMarkFoe(mm, body, m.r, now, sub)) egSpotted(",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-door-relay-pad",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (!p || !egAtDoor(spec, p.x, p.z, p.y) || !fairOf(B, sub)) return false;",
+    "new": "if (!p || !egAtDoor(spec, p.x, p.z, p.y, 2) || !fairOf(B, sub)) return false;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-door-screen-pad",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "egAtDoor(spec, egLocalX(spec, at.sx), at.z, at.y) && t - downAt >= EG_DOWN_EVERY_MS",
+    "new": "egAtDoor(spec, egLocalX(spec, at.sx), at.z, at.y, 1) && t - downAt >= EG_DOWN_EVERY_MS",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-rel-lumen",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "export const EG_REL_LUMEN = 20;",
+    "new": "export const EG_REL_LUMEN = 10;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-rel-circle-unread",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "      mm.rel = mm.rel.filter((w) => w !== m.w);\n",
+    "new": "      mm.rel = [];\n",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-rel-never-taken-believed",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (!k || !(m.w <= B.rd)) break;",
+    "new": "if (!k) break;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-rel-run-unsaid",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "      mm.lumen = (mm.lumen ?? 0) + EG_REL_LUMEN * k;\n      out.push({ k: 'run', r: egRunOf(sub, mm) });",
+    "new": "      mm.lumen = (mm.lumen ?? 0) + EG_REL_LUMEN * k;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-rel-wire-refused",
+    "file": "src/net/wire.js",
+    "old": "case 'wkpaid': return intIn(m.w, 1, 19_999) ? { k: 'wkpaid', w: m.w } : null;",
+    "new": "case 'wkpaid': return null;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js",
+      "test/net/eliteGates/egaudit3_count_spoils.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-rel-wire-any",
+    "file": "src/net/wire.js",
+    "old": "case 'wkpaid': return intIn(m.w, 1, 19_999) ? { k: 'wkpaid', w: m.w } : null;",
+    "new": "case 'wkpaid': return { k: 'wkpaid', w: m.w };",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-run-circles-unsaid",
+    "file": "src/net/eliteGates/egRun.js",
+    "old": "m.mast ?? -1, (m.rel ?? []).slice(-EG_RUN_REL_MAX)];",
+    "new": "m.mast ?? -1];",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js",
+      "test/net/eliteGates/egaudit3_count_spoils.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-run-circles-oldest",
+    "file": "src/net/eliteGates/egRun.js",
+    "old": "(m.rel ?? []).slice(-EG_RUN_REL_MAX)];",
+    "new": "(m.rel ?? []).slice(0, EG_RUN_REL_MAX)];",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-wire-circles-dropped",
+    "file": "src/net/wire.js",
+    "old": "t[7], ...(t.length === 9 ? [[...t[8]]] : [])];",
+    "new": "t[7]];",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js",
+      "test/net/eliteGates/egaudit3_count_spoils.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-wire-circles-unbounded",
+    "file": "src/net/wire.js",
+    "old": "t[8].length > EG_RUN_REL_MAX ||",
+    "new": "t[8].length > 9999 ||",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-wire-circle-nought",
+    "file": "src/net/wire.js",
+    "old": "!t[8].every((w) => intIn(w, 1, 19_999))",
+    "new": "!t[8].every((w) => intIn(w, 0, 19_999))",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-void-left-out",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "export const EG_OPEN_ENDS = Object.freeze(['home', 'seal', 'last', 'void']);",
+    "new": "export const EG_OPEN_ENDS = Object.freeze(['home', 'seal', 'last']);",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js",
+      "test/net/eliteGates/egaudit3_count_spoils.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-seal-left-out",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "export const EG_OPEN_ENDS = Object.freeze(['home', 'seal', 'last', 'void']);",
+    "new": "export const EG_OPEN_ENDS = Object.freeze(['home', 'last', 'void']);",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count.test.js",
+      "test/net/eliteGates/egaudit3_count_spoils.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-roll-chance-once",
+    "file": "src/systems/eliteGates/egSpoils.js",
+    "old": "export const EG_RELIQUARY_PANOPLY_X = 2;",
+    "new": "export const EG_RELIQUARY_PANOPLY_X = 1;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count_spoils.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-roll-one-seed",
+    "file": "src/systems/eliteGates/egSpoils.js",
+    "old": "ws.map((w, i) => rollPass(egReliquarySeed(seed, i), lv, w,",
+    "new": "ws.map((w, i) => rollPass(egReliquarySeed(seed, 0), lv, w,",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count_spoils.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-roll-depth-unread",
+    "file": "src/systems/eliteGates/egSpoils.js",
+    "old": "rollPass(egReliquarySeed(seed, i), lv, w, { panoply",
+    "new": "rollPass(egReliquarySeed(seed, i), lv, 1, { panoply",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count_spoils.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-roll-stream-crossed",
+    "file": "src/systems/eliteGates/egSpoils.js",
+    "old": "egPanoplyDraw(seed >>> 0, 16 + i) * egPanoplyIn(w)",
+    "new": "egPanoplyDraw(seed >>> 0, i) * egPanoplyIn(w)",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count_spoils.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-roll-panoply-unread",
+    "file": "src/systems/eliteGates/egSpoils.js",
+    "old": "{ panoply: egReliquaryPanoply(seed, w, i) }",
+    "new": "{ panoply: false }",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count_spoils.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-roll-redoubt-seed",
+    "file": "src/systems/eliteGates/egSpoils.js",
+    "old": "export const egReliquarySeed = (seed, i) => egPassSeed(seed >>> 0, 16 + i);",
+    "new": "export const egReliquarySeed = (seed, i) => egPassSeed(seed >>> 0, i);",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count_spoils.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-roll-max",
+    "file": "src/systems/eliteGates/egSpoils.js",
+    "old": "export const EG_RELIQUARIES_MAX = 64;",
+    "new": "export const EG_RELIQUARIES_MAX = 65;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count_spoils.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-grant-answer-unread",
+    "file": "src/systems/eliteGates/egSpoils.js",
+    "old": "const rl = (Array.isArray(d?.rl) ? d.rl : [])",
+    "new": "const rl = (Array.isArray(c?.rl) ? c.rl : [])",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count_spoils.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-grant-seed-unread",
+    "file": "src/systems/eliteGates/egSpoils.js",
+    "old": "roll: () => egReliquaryList(seed, level, rl)",
+    "new": "roll: () => egReliquaryList(0, level, rl)",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count_spoils.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-grant-day-shared",
+    "file": "src/systems/eliteGates/egSpoils.js",
+    "old": "export const egReliquaryDay = (b) => `eg:${b}:rl`;",
+    "new": "export const egReliquaryDay = (b) => `eg:${b}:1`;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count_spoils.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-grant-any-kind",
+    "file": "src/systems/eliteGates/egSpoils.js",
+    "old": "if (c?.q !== 'x' || !Number.isSafeInteger(c.c) || typeof c.b !== 'string') return null;",
+    "new": "if (!Number.isSafeInteger(c?.c) || typeof c.b !== 'string') return null;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count_spoils.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-grant-text",
+    "file": "src/systems/eliteGates/egSpoils.js",
+    "old": "text: EG_SPOILS_TEXT.opened(rl.length), n: rl.length",
+    "new": "text: EG_SPOILS_TEXT.opened(1), n: rl.length",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count_spoils.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-host-grant-dropped",
+    "file": "src/scenes/world.js",
+    "old": "      if (g) spoilsLock(() => sdSpoilsPool.grant({ day: g.day, acct: c.s, roll: g.roll, text: g.text })).catch((e) => console.warn('[eg] reliquaries', e?.message ?? e));\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count_spoils.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-host-level-unread",
+    "file": "src/scenes/world.js",
+    "old": "const g = egReliquaryGrant(c, d, spoilsLevel(playerEntity.level ?? 1, c.l));",
+    "new": "const g = egReliquaryGrant(c, d, playerEntity.level ?? 1);",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count_spoils.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-client-end-unhanded",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "openedHeard(c.b, a.data.rl.length); if (a.data.rl.length) paid?.(c, a.data); }",
+    "new": "openedHeard(c.b, a.data.rl.length); }",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count_spoils.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-client-recap-rooms",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "{ openedHeard(c.b, a.data.rl.length); if (a.data.rl.length)",
+    "new": "{ if (a.data.rl.length)",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count_spoils.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-client-opened-unheld",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    recap = { ...recap, opened: n, reliquaries: n };\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count_spoils.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-client-wkpaid-never",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "        if (a?.ok && c.q === 'w' && a.data?.paid === false && (a.data.recorded || a.data.again) && link.state().b === c.b && !link.state().end) online()?.sendEg?.('wkpaid', { w: c.w });\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count_spoils.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-client-wkpaid-paid",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "a.data?.paid === false && (a.data.recorded",
+    "new": "a.data?.paid !== undefined && (a.data.recorded",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count_spoils.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-client-wkpaid-again-unread",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "(a.data.recorded || a.data.again) && link.state().b === c.b",
+    "new": "a.data.recorded && link.state().b === c.b",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count_spoils.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-client-wkpaid-other-breach",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "&& link.state().b === c.b && !link.state().end) online()",
+    "new": "&& !link.state().end) online()",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count_spoils.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-client-wkpaid-ended",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "link.state().b === c.b && !link.state().end) online()",
+    "new": "link.state().b === c.b) online()",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count_spoils.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-stake-odds-once",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "1 - EG_RELIQUARY_PANOPLY_X / egPanoplyIn(w)",
+    "new": "1 - 1 / egPanoplyIn(w)",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count_spoils.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-stake-valk-uncounted",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "valk ? `${valk} Valkynaz` : ''",
+    "new": "''",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count_spoils.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-stake-likely-never",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "k >= 2 ? `a Panoply piece about 1 in ${k}` : 'a Panoply piece likely'",
+    "new": "`a Panoply piece about 1 in ${k}`",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count_spoils.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-stake-unshown",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "E.sg === 'rest' && run?.rw?.length ? `${egStakeText(run.rw)}. ${sub}` : sub",
+    "new": "sub",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count_spoils.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-stake-any-stage",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "E.sg === 'rest' && run?.rw?.length ?",
+    "new": "run?.rw?.length ?",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count_spoils.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-recap-old-ends",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "opened: EG_OPEN_ENDS.includes(why) ? run?.rel ?? 0 : 0",
+    "new": "opened: why === 'home' || why === 'last' ? run?.rel ?? 0 : 0",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count_spoils.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-count-link-circles-dropped",
+    "file": "src/net/eliteGates/egLink.js",
+    "old": "rw: Array.isArray(r[8]) ? r[8] : [] }",
+    "new": "rw: [] }",
+    "tests": [
+      "test/net/eliteGates/egaudit3_count_spoils.test.js"
+    ]
+  }
+]

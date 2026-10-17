@@ -188,7 +188,8 @@ artifact are out because they carry enchantments, a crafted piece of jewellery k
 `test/systems/fb1003b_aethericmaker.test.js`, every fixture from its producer (the gate boss's spoils, the Sigil Broker's
 Regalia ware, a raid's thanks).
 
-**Said, not fixed.** A piece enchanted before keeps its rows - stripping a player's item on load is Mac's call
+**Said, not fixed.** A piece enchanted before keeps its rows (MAKER-KEPT, `Field-Bugs-2026-10-16c.md`: INT1's item law
+held them to none and the realm held their owners' trade; law 6 keeps them) - stripping a player's item on load is Mac's call
 (`lootRarity.js` repairRarityNames is the precedent if it is wanted) - and AUDIT SET D3's fading rule
 (`rarityTier.js` stampedTier) still answers for it. The wire's `validSetMarks` does not refuse an enchanted Aetheric
 piece, for the same reason: it would make those pieces unreadable to the room.

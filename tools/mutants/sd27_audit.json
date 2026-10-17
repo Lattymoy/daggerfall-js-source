@@ -11,7 +11,7 @@
   {
     "name": "SD27-L1-the-hour-out-of-the-ward",
     "file": "src/scenes/world.js",
-    "old": "registerLevitateWard(() => inSiegeRoom() || modes?.sdRealmSlot?.() != null);",
+    "old": "registerLevitateWard(() => inSiegeRoom() || madeRuleHere('levitate') === 'banned');",
     "new": "registerLevitateWard(() => inSiegeRoom());",
     "tests": [
       "test/scenes/sd27_audit.test.js"

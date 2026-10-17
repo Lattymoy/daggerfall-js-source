@@ -133,7 +133,7 @@ const bank = {
           { type: 'stats', items: [
             ['Silver held', marksText(w.hooks.marks.balance() ?? 0)],
             ['Sold today', `${(w.hooks.marks.today()?.exchanged ?? 0)} of ${MARKS_BANK.perDay}`],
-            ['From gates, raids and serpents today', `${(w.hooks.marks.today()?.combat ?? 0)} of ${w.hooks.marks.today()?.combatMax ?? MARKS_COMBAT.perDay}`],   // SILVER-WAYS; SERPENT-SET: the serpents' under the same cap
+            ['From gates, raids, serpents and the Spire today', `${(w.hooks.marks.today()?.combat ?? 0)} of ${w.hooks.marks.today()?.combatMax ?? MARKS_COMBAT.perDay}`],   // SILVER-WAYS; SERPENT-SET: the serpents' under the same cap; EG-E1: and the Spire's Redoubts'
             ['Found in loot today', `${(w.hooks.marks.today()?.found ?? 0)} of ${w.hooks.marks.today()?.findMax ?? MARKS_FAUCETS.find.perDay}`],   // SILVER-FINDS
             ['Found gathering today', `${(w.hooks.marks.today()?.gathered ?? 0)} of ${w.hooks.marks.today()?.gatherMax ?? MARKS_FAUCETS.gather.perDay}`],
             ['The Bank pays', `${MARKS_BANK.goldPerMark} gold for each silver`],

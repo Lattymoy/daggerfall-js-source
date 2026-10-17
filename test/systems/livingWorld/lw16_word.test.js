@@ -27,6 +27,7 @@ import {
   newsScript, NEWS_SHARE, CARRIED_OPENERS, HEARD_GREETINGS, HELD_NEWS, ROAD_NEWS, LIVING_GREETINGS, fillLine, firstNameOf, TOKEN_FALLBACK,
 } from '../../../src/systems/livingWorld/lines.js';
 import { seededRng } from '../../../src/systems/wind/wind.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const A = Object.freeze({ mapId: 1, region: 17, name: 'Wayrest' }), C = Object.freeze({ mapId: 3, region: 18, name: 'Farhold' });
 const D = 50 * DAY_MIN;
@@ -196,7 +197,7 @@ test('LW16 the living town: any town\'s deeds (the word a visitor carries from t
 });
 
 test('LW16 the host\'s seams: a town\'s carried word worked a slice a frame (a generator over the visits of these NEWS_DAYS days, each its town\'s news when it set out, a courier\'s the visits its town had had - one hop), the town told it once done; the kept word made again with the roads; a town\'s news at any minute; the talk\'s regard of a stranger by the repute; the talk\'s {from} (mutants: each seam)', () => {
-  const w = readFileSync(new URL('../../../src/scenes/world.js', import.meta.url), 'utf8');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /carriedOf: \(day\) => livingCarriedOf\(livingTown, day\),/);
   assert.match(w, /for \(const near of livingTripWorld\.townsNear\(town\.px \?\? 0, town\.py \?\? 0, TRIP_REACH_PX\)\) \{ if \(townTrips\(near, noon, livingTripWorld, o\) === undefined\) out\.partial = true; yield; \}\n\s+const vs = livingVisitorsCached\(town, day - d, o\);\n.*\n\s+yield;/);   // PIN MOVED (AUDIT LW-II B4): a town about still asked: partial;
   assert.match(w, /for \(let b = 0; b <= NEWS_DAYS; b\+\+\) \{ townTrips\(tr\.from, fromNoon - b \* 1440, livingTripWorld, o\); yield; \}/);

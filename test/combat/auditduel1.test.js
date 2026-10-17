@@ -26,6 +26,7 @@ import { createWeapon } from '../../src/combat/enemyEquipment.js';
 import { applySpell } from '../../src/systems/effects.js';
 import { liveStat } from '../../src/systems/statMods.js';
 import { WEAPON_REACH } from '../../src/combat/playerWeapon.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 
@@ -140,7 +141,7 @@ test('AUDIT DUEL1 A4 + B1 + B3 a duel\'s drain leaves the LIVE stat at 1 over an
   assert.match(rd('src/systems/effects.js'), /if \(n > 0 && sinks\.drainFatigue\) sinks\.drainFatigue\(n \* FATIGUE_MULTIPLIER, a\);/, 'each round hands its entry, as its health rounds do');
   assert.match(rd('src/scenes/shared.js'), /drainFatigue: \(n, a = null\) => \{\n\s+if \(a\?\.bundleDuel\) n = Math\.min\(n, Math\.max\(0, \(entity\.fatigue \?\? 0\) - 1\)\);/, 'the shared ticker leaves 1');
   // PIN MOVED (INT8): the world host's sink floored under `_duelScope` too - a duel's spell lands on no save now
-  assert.match(rd('src/scenes/world.js'), /drainFatigue: \(n, a = null\) => drainExteriorFatigue\(a\?\.bundleDuel \? Math\.min\(n, Math\.max\(0, \(playerEntity\.fatigue \?\? 0\) - 1\)\) : n\),/, 'and so does the world host\'s own spell sink');
+  assert.match(hostText('src/scenes/world.js'), /drainFatigue: \(n, a = null\) => drainExteriorFatigue\(a\?\.bundleDuel \? Math\.min\(n, Math\.max\(0, \(playerEntity\.fatigue \?\? 0\) - 1\)\) : n\),/, 'and so does the world host\'s own spell sink');
 });
 
 test('AUDIT DUEL1 A2 + B6 + D4 the blow: a result wears my weapon by at most what the weapon could honestly deal; a swing reached me if it reached where I stood in the last DUEL_TRAIL_MS; a swing\'s claim may stand DUEL_MELEE_POS_SLACK_M from where it is seen, a spell\'s the wider slack; the motor clamps with the one tested clamp (mutants: the wear uncapped; the cap below an honest blow; the trail unread; the melee slack the spell\'s; the motor\'s own copy)', () => {
@@ -165,7 +166,7 @@ test('AUDIT DUEL1 A2 + B6 + D4 the blow: a result wears my weapon by at most wha
   const bolt = { k: 'spell', p };
   assert.equal(duelBlowPlausible(bolt, at(10), at(DUEL_MELEE_POS_SLACK_M + 0.5), 12), true, 'a spell keeps the wider slack');
   assert.ok(DUEL_TRAIL_MS >= 300 && DUEL_TRAIL_MS <= 1000);
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   // PIN MOVED (INT8/INT9, 2026-10-09 - bible/06-Systems/Integrity-Arc.md lane 2): no defender resolves a blow any more - a
   // duel's and the open zone's are the relay's to referee, its reach from the places it believes (net/siege/siegeRef.js
   // refereeStep) - so the host keeps no trail to place a blow against
@@ -181,7 +182,7 @@ test('AUDIT DUEL1 B2 + B4 + C1 + D2 + D5 the hosts by source: a swing bashes no 
   const sv = rd('src/systems/save/save.js');
   assert.match(sv, /snap\.activeEffects = \(entity\.activeEffects \?\? \[\]\)\.filter\(\(a\) => !a\.heldItem && !a\.bundleDuel\)/, 'B4: not saved');
   assert.match(sv, /entity\.activeEffects = \(snap\.activeEffects \?\? \[\]\)\.filter\(\(a\) => !a\.heldItem && !a\.bundleDuel\)/, 'B4: not restored from an older save');
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /if \(online && isCellRoom\(online\.room\) && \(duelMgr\.live\?\.s \?\? null\) !== _duelRingSaid\) _foesFullAt = -Infinity;/, 'C1');
   // D2: PIN MOVED (INT8): THE FULL HEAL - Mac's "both are fully healed on duel end" - stood because a duel's blows
   // landed on the save's health; the referee's vitality is a duel's now (net/duel/duelRef.js), the save's health is never

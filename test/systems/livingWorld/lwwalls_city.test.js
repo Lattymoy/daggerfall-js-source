@@ -23,6 +23,7 @@ import { CLASSIC_MINUTES_PER_SECOND } from '../../../src/systems/worldTick.js';
 import { maxPopulationFor } from '../../../src/systems/town/townPopulation.js';
 import { CityNavigation, NAV_CELL } from '../../../src/world/city/cityNavigation.js';
 import { BUILDING_TYPES } from '../../../src/world/buildingNames.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const rd = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const RATE = CLASSIC_MINUTES_PER_SECOND;
@@ -139,7 +140,7 @@ test('LW-WALLS the watch lives where a door opens onto the street: a palace wall
 });
 
 test('LW-WALLS the game\'s own walled cities are read here as the streaming host reads them - its location laid out, its navgrid, its doors\' law into the location frame and its buildings (test/lwRealTown.mjs\'s replay, scenes/world.js\'s population block, word for word)', () => {
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /const loc = layoutLocation\(dfLocation, maps, blocks, \{ enhanced: isEnhanced\(\), windmills: windmillsOn\(\) \}\);/);
   assert.match(w, /const originMatrix = trs\(\n\s+locLocal\[0\] \+ b\.originX, locLocal\[1\], locLocal\[2\] \+ b\.originZ, 0, 0, 0\);/);
   assert.match(w, /const local = multiply\(originMatrix, placed\.matrix\);/);

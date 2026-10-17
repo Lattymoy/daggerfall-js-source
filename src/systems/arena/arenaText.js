@@ -410,7 +410,7 @@ export const ARENA_TEXT = F({
     whyNotYet: (hh) => `Not until ${hh}`,
     // Ladder
     ladderHead: 'The ten tiers',
-    tierState: F({ cleared: 'Cleared', current: 'You are here', locked: 'Locked' }),
+    tierState: F({ cleared: 'Cleared', current: 'You are here', locked: 'Locked', waiting: 'Not loaded' }),   // ARENA-WAIT (AUDIT A1): online, before the account's climb is in - nobody's tier
     beaten: 'Beaten',
     nextFight: 'Next',
     tierPurse: (bout, champ) => `Purse: ${bout} gold a bout, ${champ} for the champion`,
@@ -639,6 +639,9 @@ export const ARENA_TEXT = F({
     // ARENA4b: the account's climb, roll and record, before and after the realm's records are in
     climbWait: 'Still loading. Try again in a moment.',
     rollWait: 'The names are not in yet. Ask me again soon.',
+    /** ARENA-WAIT (AUDIT A3): on the online lane, a session no welcome can answer (a refused hello, no relay address) -
+     *  the arena's doors shut, said as what it is, never "Still loading" for ever. */
+    noServer: 'The server cannot be reached. The arena opens again once you are back online.',
     guestBanner: 'Only registered accounts can join a banner.',
     recordsOnline: 'Your record is saved to your account.',
     noBouts: 'No bouts on record yet.',

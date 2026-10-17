@@ -101,10 +101,10 @@
   {
     "name": "PERMADEATH-HOUSES-death-saved-deeds-only",
     "file": "src/scenes/legacyHost.js",
-    "old": "    syncHousesNow(p);\n    recordDeath(family, p.id, { at: d.at, cause: d.cause, place: d.place, by: d.by });",
-    "new": "    recordDeath(family, p.id, { at: d.at, cause: d.cause, place: d.place, by: d.by });",
+    "old": "      syncHousesNow(p);\n      h.remains = remainsOf(p, d);",
+    "new": "      h.remains = remainsOf(p, d);",
     "tests": ["test/systems/legacy/permadeath_houses.test.js"],
-    "note": "A house bought since the last save dies with its holder, and its gold left the estate."
+    "note": "A house bought since the last save dies with its holder, and its gold left the estate. PIN MOVED (FIELD BUGS 2026-10-16b REZ-BLOODLINE): re-aimed by content - an online death is read at the door and written when it is decided (legacyHost.js decideDeath)"
   },
   {
     "name": "PERMADEATH-HOUSES-never-taken",

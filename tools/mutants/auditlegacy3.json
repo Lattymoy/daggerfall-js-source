@@ -850,8 +850,9 @@
   {
     "name": "LP-host-news-world-clock",
     "file": "src/scenes/legacyHost.js",
-    "old": "deps.sky?.() ?? deps.now(), mapId ?? null)",
-    "new": "deps.now(), mapId ?? null)",
+    "old": "mapId, at = deps.sky?.() ?? deps.now()) {",
+    "new": "mapId, at = deps.now()) {",
+    "note": "PIN MOVED (FIELD BUGS 2026-10-16b REZ-BLOODLINE): re-aimed by content - an online death is read at the door and written when it is decided (legacyHost.js decideDeath)",
     "tests": [
       "test/systems/legacy/auditlegacy3.test.js"
     ]
@@ -1746,11 +1747,12 @@
   {
     "name": "AUDIT-LEGACY-III-O11-the-old-wire-bound",
     "file": "src/net/identityToken.js",
-    "old": "export const TOKEN_BODY_MAX = 800;",
+    "old": "export const TOKEN_BODY_MAX = 864;",
     "new": "export const TOKEN_BODY_MAX = 640;",
     "tests": [
       "test/systems/legacy/auditlegacy3.test.js"
-    ]
+    ],
+    "note": "WIKIMAID (re-aimed by content): the bound is 864."
   },
   {
     "name": "LP-svc-people-unbounded",

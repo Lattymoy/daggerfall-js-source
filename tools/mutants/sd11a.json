@@ -660,7 +660,7 @@
   {
     "name": "SD11A-L2F18-never-seen",
     "file": "src/scenes/superDungeon/sdSteps.js",
-    "old": "      breathMesh = make(buildBreathModel());",
+    "old": "      breathMesh = make(buildBreathModel(course));",
     "new": "      breathMesh = null;",
     "tests": [
       "test/scenes/superDungeon/sd11a_scenes.test.js",

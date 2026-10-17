@@ -9,6 +9,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { yardLot, yardWhyNot, yardLineHolder, YARD_ON_OTHER } from '../../src/scenes/homeYards.js';
 import { BUILDING_TYPES } from '../../src/world/buildingNames.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const lot = yardLot([0, 0, 0], [-4, 0, -3, 4, 5, 3]);
@@ -34,7 +35,7 @@ test('YARD-LINE a lot\'s holder is a building that could be a home - Daggerfall\
 });
 
 test('YARD-LINE the producer stamps the building\'s record on its frame, and the yard asks the line of its holders alone (mutants: the record unstamped; the lines unpassed)', () => {
-  const world = src('src/scenes/world.js');
+  const world = hostText('src/scenes/world.js');
   assert.match(world, /pixelHomeFrames\.set\(homeKey, \{ at, box: \[\.\.\.box\], rects, type: bd\?\.buildingType \?\? null, faction: bd\?\.factionId \?\? 0 \}\)/);
   assert.match(world, /const bd = b\.dfBlock\?\.rmbBlock\?\.fldHeader\?\.buildingDataList\?\.\[placed\.recordIndex\] \?\? null;/);
   const yards = src('src/scenes/homeYards.js');

@@ -307,7 +307,7 @@
   },
   {
     "name": "WATCH-FIX-host-killed-unwired",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "slay: livingSlay, killed: livingKilled,",
     "new": "slay: livingSlay,",
     "tests": [

@@ -255,7 +255,7 @@
   },
   {
     "name": "CHAP7B-WORLD-TYPES",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "(b.buildingType === TALK_BUILDING_TYPES.GuildHall || b.buildingType === TALK_BUILDING_TYPES.Temple) && b.factionId > 0)",
     "new": "(b.buildingType === TALK_BUILDING_TYPES.GuildHall) && b.factionId > 0)",
     "tests": [
@@ -264,7 +264,7 @@
   },
   {
     "name": "CHAP7B-WORLD-FACTION",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "(b.buildingType === TALK_BUILDING_TYPES.GuildHall || b.buildingType === TALK_BUILDING_TYPES.Temple) && b.factionId > 0)",
     "new": "(b.buildingType === TALK_BUILDING_TYPES.GuildHall || b.buildingType === TALK_BUILDING_TYPES.Temple))",
     "tests": [
@@ -273,7 +273,7 @@
   },
   {
     "name": "CHAP7B-WORLD-BUILT",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "      chapterHalls: pixelChapterHalls,   // CHAP7b (above)\n",
     "new": "",
     "tests": [

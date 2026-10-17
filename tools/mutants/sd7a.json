@@ -46,8 +46,8 @@
   },
   {
     "name": "SD7A-a-step-standing-still",
-    "file": "src/world/superDungeon/sdSteps.js",
-    "old": "  if (s.kind === 'drift') out[0] = s.x + s.amp * Math.sin((2 * Math.PI * t) / s.period + s.phase);",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "  if (s.kind === 'drift') out[0] = s.x + egDriftDx(s, t);",
     "new": "  if (s.kind === 'drift') out[0] = s.x;",
     "tests": [
       "test/world/superDungeon/sd7a_steps.test.js"
@@ -64,9 +64,9 @@
   },
   {
     "name": "SD7A-a-beat-that-never-goes",
-    "file": "src/world/superDungeon/sdSteps.js",
-    "old": "export const SD_BEAT_SOLID = 2.4;",
-    "new": "export const SD_BEAT_SOLID = 3.6;",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "export const EG_BEAT_SOLID_S = 2.4;",
+    "new": "export const EG_BEAT_SOLID_S = 3.6;",
     "tests": [
       "test/world/superDungeon/sd7a_steps.test.js"
     ]
@@ -74,16 +74,16 @@
   {
     "name": "SD7A-all-on-one-beat",
     "file": "src/world/superDungeon/sdSteps.js",
-    "old": "    put('beat', 1, SD_BEAT_SIZE, gap, { beat: (beat++ % 2) * SD_BEAT_HALF });",
-    "new": "    put('beat', 1, SD_BEAT_SIZE, gap, { beat: (beat++, 0) });",
+    "old": ": { kind, gap, size: size(SD_BEAT_SIZE), beat: (beat++ % 2) * SD_BEAT_HALF }));",
+    "new": ": { kind, gap, size: size(SD_BEAT_SIZE), beat: (beat++, 0) }));",
     "tests": [
       "test/world/superDungeon/sd7a_steps.test.js"
     ]
   },
   {
     "name": "SD7A-no-warning-before-the-beat",
-    "file": "src/world/superDungeon/sdSteps.js",
-    "old": "  return u >= SD_BEAT_SOLID - SD_BEAT_BLINK && u < SD_BEAT_SOLID;",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "  return u >= EG_BEAT_SOLID_S - EG_BEAT_BLINK_S && u < EG_BEAT_SOLID_S;",
     "new": "  return false;",
     "tests": [
       "test/world/superDungeon/sd7a_steps.test.js"
@@ -91,7 +91,7 @@
   },
   {
     "name": "SD7A-a-riser-on-the-beat",
-    "file": "src/world/superDungeon/sdSteps.js",
+    "file": "src/net/eliteGates/egSpanLaw.js",
     "old": "  if (s.kind !== 'beat') return true;",
     "new": "  if (s.kind !== 'beat' && s.kind !== 'riser') return true;",
     "tests": [
@@ -137,8 +137,8 @@
   {
     "name": "SD7A-the-breath-over-the-Beat",
     "file": "src/world/superDungeon/sdSteps.js",
-    "old": "export const inBreath = (z) => z > SD_CHECKPOINTS[2].z + SD_CHECKPOINTS[2].r && z < SD_COURSE_END;",
-    "new": "export const inBreath = (z) => z > SD_CHECKPOINTS[1].z + SD_CHECKPOINTS[1].r && z < SD_COURSE_END;",
+    "old": "export const inBreath = (z, course = SD_COURSE) => z > course.checkpoints[2].z + course.checkpoints[2].r && z < course.end;",
+    "new": "export const inBreath = (z, course = SD_COURSE) => z > course.checkpoints[1].z + course.checkpoints[1].r && z < course.end;",
     "tests": [
       "test/world/superDungeon/sd7a_steps.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "SD7A-cast-back-to-A",
     "file": "src/world/superDungeon/sdSteps.js",
-    "old": "const c = SD_CHECKPOINTS[Math.max(0, Math.min(SD_CHECKPOINTS.length - 1, span))];",
-    "new": "const c = SD_CHECKPOINTS[0];",
+    "old": "const C = course.checkpoints, c = C[Math.max(0, Math.min(C.length - 1, span))];",
+    "new": "const C = course.checkpoints, c = C[0];",
     "tests": [
       "test/world/superDungeon/sd7a_steps.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "SD7A-the-span-read-forwards",
     "file": "src/world/superDungeon/sdSteps.js",
-    "old": "  for (let k = SD_CHECKPOINTS.length - 1; k >= 0; k--) if (z >= SD_CHECKPOINTS[k].z - SD_CHECKPOINTS[k].r) return k;",
-    "new": "  for (let k = 0; k < SD_CHECKPOINTS.length; k++) if (z >= SD_CHECKPOINTS[k].z - SD_CHECKPOINTS[k].r) return k;",
+    "old": "  for (let k = C.length - 1; k >= 0; k--) if (z >= C[k].z - C[k].r) return k;",
+    "new": "  for (let k = 0; k < C.length; k++) if (z >= C[k].z - C[k].r) return k;",
     "tests": [
       "test/world/superDungeon/sd7a_steps.test.js"
     ]
@@ -181,9 +181,9 @@
   },
   {
     "name": "SD7A-a-step-up-in-the-Crumble",
-    "file": "src/world/superDungeon/sdSteps.js",
-    "old": "  for (let k = 0; k < CRUMBLE_GAPS.length; k++) { y = Math.max(0, y - drop); put(",
-    "new": "  for (let k = 0; k < CRUMBLE_GAPS.length; k++) { y = k % 2 ? y - 2 * drop : y + drop * 0.5; put(",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "      if (sec.descend) y = Math.max(0, y - drop);",
+    "new": "      if (sec.descend) y = sec.pieces.indexOf(p) % 2 ? y - 2 * drop : y + drop * 0.5;",
     "tests": [
       "test/world/superDungeon/sd7a_steps.test.js"
     ]

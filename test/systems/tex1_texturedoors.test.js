@@ -42,9 +42,10 @@ import { Renderer } from '../../src/render/renderer.js';
 import { toColor32, toColor32Order } from '../../src/formats/color32Order.js';
 import { createHandheldTorches, readTorchSettings, HANDHELD_TORCHES_VENDOR } from '../../src/systems/handheldTorches.js';
 import { MOD_SETTINGS } from '../../src/systems/modSettings.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const rd = (p) => readFileSync(join(root, p), 'utf8');
+const rd = (p) => hostText(p);
 
 /** The audit39 Proxy gl, with texImage2D's pixels recorded. */
 function stubRenderer() {

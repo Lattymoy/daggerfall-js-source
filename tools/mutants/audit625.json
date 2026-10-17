@@ -522,12 +522,13 @@
   {
     "name": "AUDIT625-P1-shed-deaf",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  if (!v || !(max > 0) || !(after > 0) || saved) return;",
-    "new": "  if (!v || !(max > 0) || !(after > 0)) return;",
+    "old": "  const v = tierOf(entity, 'coilscale', 2);\n  const max = entity?.maxHealth;\n  if (!v || !(max > 0) || !(after > 0) || saved) return;",
+    "new": "  const v = tierOf(entity, 'coilscale', 2);\n  const max = entity?.maxHealth;\n  if (!v || !(max > 0) || !(after > 0)) return;",
     "why": "Shed Skin heals on top of a death save",
     "tests": [
       "test/systems/audit625_serpent.test.js"
-    ]
+    ],
+    "note": "EG15 (PIN MOVED): the Battlemage's Reprieve carries the same guard - anchored on Shed Skin's own tier, re-aimed by content."
   },
   {
     "name": "AUDIT625-P2-the-bout-unread",
@@ -682,9 +683,10 @@
   {
     "name": "AUDIT625-D2-the-source-a-breach",
     "file": "src/ui/haulCards.js",
-    "old": "serpent: 'Serpent slain' });",
-    "new": "serpent: 'Breach closed' });",
+    "old": "serpent: 'Serpent slain', eg:",
+    "new": "serpent: 'Breach closed', eg:",
     "why": "a serpent's silver carded as a breach's",
+    "note": "EG-E1 (PIN MOVED): a Redoubt's source beside the serpent's - re-aimed by content.",
     "tests": [
       "test/systems/audit625_serpent.test.js"
     ]

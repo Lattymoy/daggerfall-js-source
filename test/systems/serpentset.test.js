@@ -99,7 +99,7 @@ const swing = (e, weapon, target, n = 100) => { const d = setBlow(weapon, n, e, 
 // ─── THE LAW ──────────────────────────────────────────────────────────────────────────────────────────────────────────
 
 test('SERPENT-SET the law: Sethrakul\'s Coilscale after the raids\' three - Aetheric, Satakal its patron, no raiding party\'s, never a world set; Sea-Scale, Constrict and Shed Skin at 2, 4 and 6 pieces, each a whole pair from Faint to Ascendant, every brief inside BRIEF_MAX at every stage (mutants: the set out of the record; a world set; a raid\'s; a tier\'s number)', () => {
-  assert.deepEqual(SIGIL_SET_IDS.slice(-2), ['coilscale', 'numidium'], 'the serpent\'s own, after the raids\' - SD9d\'s Brass of Numidium after it (PIN MOVED)');
+  assert.deepEqual(SIGIL_SET_IDS.slice(-3), ['coilscale', 'numidium', 'panoply'], 'the serpent\'s own, after the raids\' - SD9d\'s Brass of Numidium after it (PIN MOVED), EG15\'s Battlemage\'s Panoply after that (PIN MOVED)');
   const s = setById('coilscale');
   assert.deepEqual([s.id, s.name, s.prince, s.colour, s.aetheric, 'raid' in s, s.role],
     ['coilscale', "Sethrakul's Coilscale", 'Satakal', '#3a9ad9', true, false, 'The Old Coil, shed and worn']);
@@ -347,7 +347,7 @@ test('SERPENT-SET the heal: one door for every power - the loot\'s leech and its
   assert.equal(f.health, 11);
   assert.doesNotMatch(strip(read('src/systems/loot/lootPowers.js')), /export function healMine/, 'one heal, never two');
   assert.match(strip(read('src/systems/loot/lootPowers.js')), /import \{ healMine, manaMine, _resetPlayerHealForTests \} from '\.\.\/playerHeal\.js';/);   // PIN MOVED (SCHOOLS3): and the one magicka gift beside the one heal
-  assert.match(strip(read('src/systems/sigil/sigilSetPowers.js')), /import \{ healMine \} from '\.\.\/playerHeal\.js';/);
+  assert.match(strip(read('src/systems/sigil/sigilSetPowers.js')), /import \{ healMine, manaMine \} from '\.\.\/playerHeal\.js';/);   // PIN MOVED (EG15): the Battlemage's Discipline returns magicka through the same leaf (manaMine since the merge of SCHOOLS3, which moved the one magicka gift there first)
   assert.doesNotMatch(strip(read('src/systems/sigil/sigilSetPowers.js')), /from '(?:\.\.?\/)+(?:[\w-]+\/)*lootPowers\.js'/, 'the set powers never import the loot\'s (it imports them)');
 });
 

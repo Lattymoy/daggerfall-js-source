@@ -128,7 +128,7 @@
   },
   {
     "name": "ARENA1-CLIMATE-SWAPPED",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "          if (!climateFree) await remapSubMeshes(gpu.subMeshes, texRemap, townClimateArchive, pipeline);",
     "new": "          await remapSubMeshes(gpu.subMeshes, texRemap, townClimateArchive, pipeline);",
     "tests": [

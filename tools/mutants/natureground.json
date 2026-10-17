@@ -1,21 +1,21 @@
 [
   {
     "name": "NATUREGROUND-no-lift",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "const lift = flat.archive === natureArchive ? groundOffPlane(samples, avg, fx, fz) : 0;",
     "new": "const lift = 0;",
     "tests": ["test/world/terrain/natureground.test.js"]
   },
   {
     "name": "NATUREGROUND-every-flat-lifted",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "const lift = flat.archive === natureArchive ? groundOffPlane(samples, avg, fx, fz) : 0;",
     "new": "const lift = groundOffPlane(samples, avg, fx, fz);",
     "tests": ["test/world/terrain/natureground.test.js"]
   },
   {
     "name": "NATUREGROUND-lift-dropped",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": " : flat.y + lift), fz);",
     "new": " : flat.y), fz);",
     "tests": ["test/world/terrain/natureground.test.js"]

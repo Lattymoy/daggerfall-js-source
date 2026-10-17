@@ -193,6 +193,11 @@ export function effectCost(e, casterSkillOf, { online = isOnlinePage() } = {}) {
 // never takes a cost under 1.
 const _costMods = new Map();
 export function registerSpellCostMod(name, fn) { if (typeof fn === 'function') _costMods.set(name, fn); else _costMods.delete(name); }
+// EG-ZS (bible/11-Multiplayer/Elite-Gates.md section 15, Spellweave: "every fourth damage spell costs nothing"): A FREE CAST -
+// named doors, `fn(entity, spell) -> boolean`, asked after the modifiers above under the same law (a player's own cast,
+// never a foe's): one that answers true prices the cast at nothing, the one cost under the modifiers' floor of 1.
+const _freeCasts = new Map();
+export function registerSpellFreeCast(name, fn) { if (typeof fn === 'function') _freeCasts.set(name, fn); else _freeCasts.delete(name); }
 
 /** The full casting cost of a classic spell record for a caster:
  *  per-effect sums, target multiplier, the floor. SET2: and the port's cost modifiers, for a player's own cast. */
@@ -222,6 +227,7 @@ export function calculateCastCost(spell, casterEntity, { portMods = true, online
       try { const n = fn(casterEntity, sp, spell); if (Number.isFinite(n)) sp = Math.max(1, Math.round(n)); } catch { /* a set is not the cast's problem */ }   // LOOT15: and the spell, for a power that reads its school
     }
   }
+  if (portMods && casterEntity?.isPlayer) for (const fn of _freeCasts.values()) { try { if (fn(casterEntity, spell) === true) { sp = 0; break; } } catch { /* a door is not the cast's problem */ } }   // EG-ZS
   return { gold, sp };
 }
 

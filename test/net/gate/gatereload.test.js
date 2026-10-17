@@ -15,6 +15,7 @@ import { GATE_NO_WORDS, GATE_BRAIN_V, validGateOut } from '../../../src/net/wire
 import { gateTimes, gateRoomKey } from '../../../src/net/gate/gateLaw.js';
 import { COURT_CENTRE } from '../../../src/net/gate/gateBrain.js';
 import { fakeRooms } from '../../fakeRoom.mjs';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const read = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 
@@ -63,7 +64,7 @@ test('GATE-RELOAD the relay: its `no` says the gate is closed for ONE reason - t
 });
 
 test('GATE-RELOAD the host: a refused `in` takes the player out of the court in the words the link said (the terminal arm keeps the hello\'s own) (mutants: the eject in the old words)', () => {
-  const world = read('src/scenes/world.js');
+  const world = hostText('src/scenes/world.js');
   assert.match(world, /import \{ createGateLink, GATE_NO_TEXT, gateRefusalText \} from '\.\.\/net\/gate\/gateLink\.js';/);
   assert.match(world, /onRefused: \(why\) => \{ if \(modes\?\.gateArenaDay\?\.\(\) != null\) ejectFromCourt\(gateRefusalText\(why\)\); \},/);
   assert.doesNotMatch(world, /ejectFromCourt\(GATE_NO_TEXT\[why\]/, 'no refusal of an `in` said in the old words');

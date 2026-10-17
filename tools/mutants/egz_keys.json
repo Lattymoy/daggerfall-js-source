@@ -1,0 +1,579 @@
+[
+  {
+    "name": "EGZA-rcfold-spent-overwritten",
+    "file": "src/net/eliteGates/egDurable.js",
+    "old": "    if (by.get(x.id)?.spent) continue;",
+    "new": "    if (false) continue;",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-rcfold-expired-kept",
+    "file": "src/net/eliteGates/egDurable.js",
+    "old": "!(Number.isSafeInteger(x.e) && x.e > nowS) || (!x.spent",
+    "new": "!(Number.isSafeInteger(x.e)) || (!x.spent",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-rcfold-unbounded",
+    "file": "src/net/eliteGates/egDurable.js",
+    "old": "  const all = [...by.values()], held = all.filter((x) => !x.spent).slice(-EG_RC_KEEP), spent = all.filter((x) => x.spent).slice(-EG_RC_KEEP);",
+    "new": "  const all = [...by.values()], held = all.filter((x) => !x.spent), spent = all.filter((x) => x.spent);",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-rclive-spent-handed",
+    "file": "src/net/eliteGates/egDurable.js",
+    "old": "filter((x) => x && !x.spent && typeof x.r === 'string' && x.e > nowS)",
+    "new": "filter((x) => x && typeof x.r === 'string' && x.e > nowS)",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-voidable-called",
+    "file": "src/net/eliteGates/egDurable.js",
+    "old": "!!B && !B.end && !B.called && !(B.wk > 0)",
+    "new": "!!B && !B.end && !(B.wk > 0)",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-voidable-woken",
+    "file": "src/net/eliteGates/egDurable.js",
+    "old": "!B.called && !(B.wk > 0) && !Object",
+    "new": "!B.called && !Object",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-voidable-entered",
+    "file": "src/net/eliteGates/egDurable.js",
+    "old": "!Object.values(B.mem ?? {}).some((m) => m?.in);",
+    "new": "true;",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-force-unread",
+    "file": "src/net/eliteGates/egDurable.js",
+    "old": "if (!egLawKnown(B.egv) || egForceVoided(B, voidBefore)) return 'void';",
+    "new": "if (!egLawKnown(B.egv)) return 'void';",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-force-every-breach",
+    "file": "src/net/eliteGates/egDurable.js",
+    "old": "before > 0 && !!B && !B.end && B.op < before;",
+    "new": "before > 0 && !!B && !B.end;",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-tick-always-fast",
+    "file": "src/net/eliteGates/egDurable.js",
+    "old": "  if (here && egTrialRuns(B)) return now + EG_BEAT_TRIAL_MS;",
+    "new": "  if (here) return now + EG_BEAT_TRIAL_MS;",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-tick-past-stage-end",
+    "file": "src/net/eliteGates/egDurable.js",
+    "old": "  return B.su > now ? Math.min(now + EG_BEAT_SLOW_MS, Math.max(now + EG_BEAT_TRIAL_MS, B.su)) : now + EG_BEAT_SLOW_MS;",
+    "new": "  return now + EG_BEAT_SLOW_MS;",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-tick-beats-while-rising",
+    "file": "src/net/eliteGates/egDurable.js",
+    "old": "  if (B.sg === 'wait') return Math.max(now + EG_BEAT_TRIAL_MS, B.su);",
+    "new": "  if (B.sg === 'wait') return now + EG_BEAT_SLOW_MS;",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-tick-closing-foe-unseen",
+    "file": "src/net/eliteGates/egDurable.js",
+    "old": "(B.sg === 'closing' && (B.F?.bodies",
+    "new": "(B.sg === 'nope' && (B.F?.bodies",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-co-unvalidated",
+    "file": "src/net/eliteGates/egReceipt.js",
+    "old": "  if (c.co !== undefined && !egCompanyValid(c.co)) return false;",
+    "new": "  if (false) return false;",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-td-on-redoubt",
+    "file": "src/net/eliteGates/egReceipt.js",
+    "old": "(c.q !== 'x' || !int(c.td, 0, 7 * 24 * 3600))",
+    "new": "(!int(c.td, 0, 7 * 24 * 3600))",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-share-unbounded",
+    "file": "src/net/eliteGates/egReceipt.js",
+    "old": "!int(c.sh, 0, EG_SHARE_WHOLE)",
+    "new": "!int(c.sh, -1e9, 1e9)",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-measures-unvalidated",
+    "file": "src/net/eliteGates/egReceipt.js",
+    "old": "(c.q !== 'w' || !egMeasuresValid(c.m))",
+    "new": "(c.q !== 'w')",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-co-tag-unsorted",
+    "file": "src/net/eliteGates/egReceipt.js",
+    "old": "[...subs].map(String).sort().join(',')",
+    "new": "[...subs].map(String).join(',')",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-co-tag-prime",
+    "file": "src/net/eliteGates/egReceipt.js",
+    "old": "FNV64_PRIME = 0x100000001b3n",
+    "new": "FNV64_PRIME = 0x100000001b5n",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-no-td",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "...(B.cleared > 0 ? { td: B.td ?? 0 } : {}), co: companyOf(B),",
+    "new": "co: companyOf(B),",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-td-uncleared",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "...(B.cleared > 0 ? { td: B.td ?? 0 } : {}), co",
+    "new": "...({ td: B.td ?? 0 }), co",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-no-co-end",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "{ td: B.td ?? 0 } : {}), co: companyOf(B), ...(",
+    "new": "{ td: B.td ?? 0 } : {}), ...(",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-no-share",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "sh: total > 0 ? Math.max(0, Math.min(EG_SHARE_WHOLE, Math.round((EG_SHARE_WHOLE * m.dc) / total))) : 0,",
+    "new": "sh: 0,",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-no-co-redoubt",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": ", m: measuresOut(m), co });",
+    "new": ", m: measuresOut(m) });",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-court-trail-unfolded",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "    measureFold(m, fairOfMember(B, sub));\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-closed-trail-unfolded",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (m.fair?.k !== k) { measureFold(m, m.fair); m.fair =",
+    "new": "if (m.fair?.k !== k) { m.fair =",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-trail-folded-twice",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  if (!m || !A || A.mzd || !(A.span > 0)) return;",
+    "new": "  if (!m || !A || !(A.span > 0)) return;",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-void-rule-gone",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  if (!(B.wk > 0) && !(why === 'empty' && B.called)) why = 'void';\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-void-rule-call-ignored",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "!(why === 'empty' && B.called)) why = 'void';",
+    "new": "!(why === 'empty')) why = 'void';",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-void-opener-owed-nothing",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  if (why === 'void' && !B.mem[B.s]?.in) owe(B, B.s, { q: 'v' });",
+    "new": "  if (false) owe(B, B.s, { q: 'v' });",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js",
+      "test/net/eliteGates/egdur_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-open-one-try",
+    "file": "server/src/index.js",
+    "old": "for (let k = 0; k < EG_OPEN_HUB_TRIES && !ans; k++) ans = await this._egAsk(egRoomKey(c.eb), EG_INTERNAL_OPEN, tell);",
+    "new": "for (let k = 0; k < 1 && !ans; k++) ans = await this._egAsk(egRoomKey(c.eb), EG_INTERNAL_OPEN, tell);",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-no-void-at-refused-open",
+    "file": "server/src/index.js",
+    "old": "      await this._egVoidAsk(ws, a.sub, c, now);\n      no(); return;",
+    "new": "      no(); return;",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-call-never-told",
+    "file": "server/src/index.js",
+    "old": "    for (let k = 0; k < EG_OPEN_HUB_TRIES; k++) if (await this._egPost(egRoomKey(c.eb), EG_INTERNAL_CALLED, { ez: c.ez })) break;\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-tombstone-unread-at-open",
+    "file": "server/src/index.js",
+    "old": "    if (egDoneOf(await this._egDoneOf(), t.ez)) return json({ ok: false, error: 'void' }, 409);",
+    "new": "    if (false) return json({ ok: false, error: 'void' }, 409);",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-void-minted-twice",
+    "file": "server/src/index.js",
+    "old": "    if (kept && kept[1] === 'void' && kept[2]) return json({ ok: true, r: kept[2] });",
+    "new": "    if (false) return json({ ok: true, r: kept[2] });",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-spent-after-mint",
+    "file": "server/src/index.js",
+    "old": "    if (!kept) await this._egDoneWrite(c.ez, 'void', null, now);",
+    "new": "    if (false) await this._egDoneWrite(c.ez, 'void', null, now);",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-void-past-breach",
+    "file": "server/src/index.js",
+    "old": "      if (!egVoidable(B)) return json({ ok: false, no: 'held' });",
+    "new": "      if (false) return json({ ok: false, no: 'held' });",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-room-age-unread",
+    "file": "server/src/index.js",
+    "old": "    if (nowS - c.i > EG_VOID_MAX_S) return json({ ok: false, no: 'old' });",
+    "new": "    if (false) return json({ ok: false, no: 'old' });",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-hub-age-unread",
+    "file": "server/src/index.js",
+    "old": "    if (Math.floor(now / 1000) - v.claims.i > EG_VOID_MAX_S) { no('the void is too old'); return; }",
+    "new": "    if (false) { no('the void is too old'); return; }",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-void-account-unread",
+    "file": "server/src/index.js",
+    "old": "    if (!v.ok || v.claims.s !== a.sub) { no('the order is not yours'); return; }",
+    "new": "    if (!v.ok) { no('the order is not yours'); return; }",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-rc-retell-gone",
+    "file": "server/src/index.js",
+    "old": "      await this._egRcTell(B, now);   // EG-ZA: receipts the hub has not taken, told again\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-ended-beats-not-for-receipts",
+    "file": "server/src/index.js",
+    "old": "if (!B || (B.end && !B.owe?.length && !B.hq?.length && !B.rq?.length)) return this._egDoneTick(B);",
+    "new": "if (!B || (B.end && !B.owe?.length && !B.hq?.length)) return this._egDoneTick(B);",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-hub-hands-member-in-room",
+    "file": "server/src/index.js",
+    "old": "      const s = here.has(sub) ? null : socks.get(sub);",
+    "new": "      const s = socks.get(sub);",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-hub-tell-unchecked",
+    "file": "server/src/index.js",
+    "old": "      if (!c || c.s !== e[0] || c.b !== b) continue;",
+    "new": "      if (!c) continue;",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-hello-unhanded",
+    "file": "server/src/index.js",
+    "old": "    if (sub) { try { await this._egReceiptTo(ws, sub, now); } catch (e) { console.warn('[hub] eg receipts failed', e?.message ?? e); } }\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-claimed-unread",
+    "file": "server/src/index.js",
+    "old": "    await this.state.storage.put(k, egRcSpent(kept, id, nowS, e));",
+    "new": "    void egRcSpent;",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-sweep-unwidened",
+    "file": "server/src/index.js",
+    "old": "    for (const [k, v] of erc) { elast = k; if (!egRcFold(v, [], Math.floor(now / 1000)).length) dead.push(k); }",
+    "new": "    for (const [k] of erc) { elast = k; }",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-drain-void-hub-own",
+    "file": "server/src/index.js",
+    "old": "  async _egShut(ws, a, c, now) {\n    await this._egVoidAsk(ws, a.sub, c, now);",
+    "new": "  async _egShut(ws, a, c, now) {",
+    "tests": [
+      "test/net/eliteGates/egdur_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-open-arms-a-beat",
+    "file": "server/src/index.js",
+    "old": "    await this._egArm(egTickAt(B, Date.now(), false));",
+    "new": "    await this._egArm(Date.now() + 1000);",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-nobody-here-fast",
+    "file": "server/src/index.js",
+    "old": "    await this.state.storage.setAlarm(egTickAt(B, now, here));",
+    "new": "    await this.state.storage.setAlarm(egTickAt(B, now, true));",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-tomb-alarm-never",
+    "file": "server/src/index.js",
+    "old": "    await this.state.storage.setAlarm(done.until * 1000);\n    return true;",
+    "new": "    return false;",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-online-rcpt-dropped",
+    "file": "src/net/online.js",
+    "old": "r.k === 'call' || r.k === 'no' || r.k === 'rcpt' :",
+    "new": "r.k === 'call' || r.k === 'no' :",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-online-void-to-room",
+    "file": "src/net/online.js",
+    "old": "if (k === 'open' || k === 'void' || k === 'claimed' ? !isSocialRoom(this.room)",
+    "new": "if (k === 'open' ? !isSocialRoom(this.room)",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-client-stake-unkept",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    if (opening.z && opening.b) stakeKeep(",
+    "new": "    if (false) stakeKeep(",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-client-void-never-asked",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    if (hub()?.sendEg?.('void', { z: st.z })) voidFor = st.z;",
+    "new": "    voidFor = st.z;",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-client-void-no-wait",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "t - s.at * 1000 >= EG_VOID_WAIT_MS && ",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-client-call-ignored",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "        if (w.os === me()) stakeDrop((s) => s.b === w.b);",
+    "new": "        void stakeDrop;",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-client-claimed-never-said",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "{ drop(); countedAdd(c); hub()?.sendEg?.('claimed', { b: c.b, q: c.q, w: c.q === 'w' ? c.w : 0 }); }",
+    "new": "{ drop(); countedAdd(c); }",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-client-refusal-kept",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "{ if (voidFor) stakeDrop((s) => s.z === voidFor); voidFor = ''; return true; }",
+    "new": "{ voidFor = ''; return true; }",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-client-receipt-keeps-stake",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "      if (stakeDrop((s) => s.b === c.b) && c.q === 'v') say(EG_VOID_TEXT);",
+    "new": "      if (c.q === 'v') say(EG_VOID_TEXT);",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-svc-share-unkept",
+    "file": "server-account/src/eg.js",
+    "old": "  if (c.q === 'w' && (c.sh !== undefined || c.m !== undefined)) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-svc-company-unkept",
+    "file": "server-account/src/eg.js",
+    "old": "  if (c.q === 'x' && Array.isArray(c.co)) return [",
+    "new": "  if (false) return [",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-descent-by-claimers",
+    "file": "server-account/src/egHonours.js",
+    "old": "const companyKeyOf = (c) => (c.co ? `co:${c.co}` : [...c.players].sort().join(','));",
+    "new": "const companyKeyOf = (c) => ([...c.players].sort().join(','));",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EGZA-descent-size-unread",
+    "file": "server-account/src/egHonours.js",
+    "old": "    c.n = Math.max(c.n, int(r.n), int(r.co_n));",
+    "new": "    c.n = Math.max(c.n, int(r.n));",
+    "tests": [
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  }
+]

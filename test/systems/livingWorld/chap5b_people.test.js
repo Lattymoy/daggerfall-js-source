@@ -18,6 +18,7 @@ import { CHAPTER_BANDS } from '../../../src/net/npcChapterLaw.js';
 import { BUILDING_TYPES as B } from '../../../src/world/buildingNames.js';
 import { PERSON_MOVE_SPEED } from '../../../src/characters/mobile/mobilePerson.js';
 import { CLASSIC_MINUTES_PER_SECOND } from '../../../src/systems/worldTick.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const src = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const MPM = PERSON_MOVE_SPEED / CLASSIC_MINUTES_PER_SECOND;
@@ -182,7 +183,7 @@ test('CHAP5b the words: a chapter\'s news by its band - none for Steady - its gu
 // ── THE WIRING ──────────────────────────────────────────────────────
 
 test('CHAP5b the wiring: the host hands the living town its chapters off the sheet - none offline - in the politic region, banded and named (mutants: each seam)', () => {
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /chapterOf: chapterSheet \? \(faction\) => livingChapterOf\(faction, px, py\) : undefined,/);   // PIN MOVED (AUDIT CHAP4 C2): the town's own pixel
   assert.match(w, /const livingChapterOf = \(\/\*\* @type \{number\} \*\/ faction, \/\*\* @type \{number\} \*\/ x, \/\*\* @type \{number\} \*\/ y\) => \{\n\s+const f = chapterFactionOf\(faction, townTalk\?\.factionDict \?\? null\) \?\? faction;\n\s+const region = \(\(\) => \{ try \{ return maps\.getRegionIndexAt\(x, y\); \} catch \{ return null; \} \}\)\(\);\n\s+const c = Number\.isInteger\(region\) \? chapterSheet\?\.chapterOf\(f, region\) \?\? null : null;\n[^\n]*\n\s+return c == null \? null : \{ band: chapterBandOf\(c\.strength\)\.band, name: `the \$\{hallPosterName\(f\)\}`, event: c\.event \?\? null, shut: c\.shut === true \};/);   // PIN MOVED (AUDIT CHAP4 C2): the town's own region, the hall's faction read as its chapter's; PIN MOVED (CHAP6c): the whole chapter read, its Season's event and shut halls beside its band
 });

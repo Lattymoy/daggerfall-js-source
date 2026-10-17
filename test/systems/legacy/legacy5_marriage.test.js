@@ -13,6 +13,7 @@ import { FRIEND_AT } from '../../../src/systems/livingWorld/relations.js';
 import { foundFamily, familyRng, personOf, successors, MODELS } from '../../../src/systems/legacy/family.js';
 import { createLegacyHost, LEGACY_TEXT } from '../../../src/scenes/legacyHost.js';
 import { layoutTree } from '../../../src/systems/legacy/tree.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const read = (f) => readFileSync(new URL(`../../../${f}`, import.meta.url), 'utf8');
 
@@ -228,9 +229,9 @@ test('LEGACY5 the wiring: the talk puts the host\'s rows first on Tell me about 
   assert.match(tt, /const own = _toneTarget \? \(legacyTopics\?\.\(_toneTarget\) \?\? \[\]\) : \[\];/);
   assert.match(tt, /if \(row\.legacy\) return row\.legacy\.answer\(tone, _toneTaste\(\)\);   \/\/ LEGACY5/);   // PIN MOVED: TONE-TASTE - and how the tone was taken
   assert.match(tt, /question: \(row\) => \(row\.legacy \? row\.legacy\.question\(tone\) :/);
-  const w = read('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /legacyTopics: \(person\) => legacyTopicRows\(person\),/);
-  assert.match(w, /holderOf: \(res, day\) => \(legacyHost\?\.holdsResident\(res\.id\) \? null :/);
+  assert.match(w, /holderOf: \(res, day\) => \(host\.legacyHost\?\.holdsResident\(res\.id\) \? null :/);
   assert.match(w, /\(id\) => town\.residents\.find\(\(r\) => r\.id === id\) \?\? null\) \?\? null,/);
   assert.match(w, /templeOf: \(\) => \{ const b = [^\n]*TALK_BUILDING_TYPES\.Temple/);
   assert.match(w, /legacyHost\?\.residentDied\(res\.id\);   \/\/ LEGACY5/);

@@ -1669,6 +1669,11 @@ export const PROF_CSS = `/* ── PROF1: THE PROFESSIONS ── */
 .prof-smelt b { grid-column: 1; grid-row: 1; } .prof-smelt .prof-qty { grid-column: 2; grid-row: 1; }
 .prof-smelt .act { grid-column: 3; grid-row: 1; } .prof-smelt .prof-split { grid-column: 1 / -1; grid-row: 2; }
 @media (max-width: 560px) { .prof-smelt .act { min-width: 0; } }
+/* FB1017 REFORGE-STACK (measured in Chromium at 260 and 428): a row's short word spans the row under its line - flowed, it
+   took the count's 64px track - and the Reforge with Essence's presses, one a line, stand in a block of their own under
+   the piece: in the button track's one cell every press drew on the first and the name was squeezed to nothing */
+.prof-smelt > .prof-short { grid-column: 1 / -1; }
+.prof-smelt > .prof-lines { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 4px; }
 /* PROF3: the anvil - its recipes, a recipe's inputs, and the heat (a bar the glow's marker runs along, the band on it) */
 .prof-metals { margin-top: 4px; }
 .prof-recipe { display: grid; grid-template-columns: 1fr auto; width: 100%; gap: 2px 8px; padding: 4px 8px; margin: 2px 0; text-align: left; font: inherit;

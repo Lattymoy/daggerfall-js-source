@@ -19,6 +19,7 @@ import { circleLine, circleSlots, slotSpoken, exchangeScript } from '../../../sr
 import { createLivingRoads } from '../../../src/scenes/livingWorld/livingRoads.js';
 import { DAY_MIN } from '../../../src/systems/livingWorld/dayPlan.js';
 import { CLASSIC_MINUTES_PER_SECOND } from '../../../src/systems/worldTick.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const rd = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const RATE = CLASSIC_MINUTES_PER_SECOND;
@@ -359,7 +360,7 @@ test('LW7 the road\'s deeds: a traveller struck down (`slain`) - the hand\'s tur
 });
 
 test('LW7 the streaming host: every resident\'s place by the lives (`livingCycleOf` - a traveller\'s placeCycle, a townsperson\'s own cycleOf; the newcomer the census\'s own mint with their home), a hand\'s death and the player\'s (`livingDeadAt`, `livingSlay`), the trouble never taking a hand\'s dead, a trip\'s hand deaths, the news of fights the player turned, a crew\'s holders; the town\'s options; the swing\'s civilian pool through the deeds (`livingStruckPool` - the watch struck, anyone else struck down; the guard it stands watched), the trample\'s too, a swing at the road\'s travellers (`livingStrikeRoad` - reach, a wall, the blood, the Brotherhood\'s five, the racial hit); a question\'s tone through `livingTone` (mutants: each seam)', () => {
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /if \(res\.roll !== 't'\) return cycleOf\(res, day, livingScale\(\)\)\.k;/, 'a townsperson\'s own cycle');
   assert.match(w, /return placeCycle\(roster\.find\(\(r\) => r\.slot === res\.slot\) \?\? res, roster, day, livingScale\(\)\);/, 'a traveller\'s place cycle');
   assert.match(w, /if \(!turns\.slain\.size && !turns\.died\.size && !turns\.killed\.size\) return false;[^\n]*\n\s*const h = livingPlaceOf\(res, livingCycleOf\(res, Math\.floor\(\(t - 240\) \/ 1440\)\)\)\.hand;\n\s*return h != null && h <= t;/);
@@ -371,7 +372,7 @@ test('LW7 the streaming host: every resident\'s place by the lives (`livingCycle
   assert.match(w, /helped: won\.has\(n\.enc\) \}\)\) \};/);   // PIN MOVED (LW16): the town's news at any minute (livingRoadNewsAt), the word carried's too
   assert.match(w, /const res = livingPlaceOf\(c\.res, livingCycleOf\(c\.res, day\)\)\.holder;/);
   // PIN MOVED (LEGACY5): a townsperson wed into Project Legacy's line holds no census place (the line's resident now)
-  assert.match(w, /holderOf: \(res, day\) => \(legacyHost\?\.holdsResident\(res\.id\) \? null : livingPlaceOf\(res, livingCycleOf\(res, day\)\)\.holder\), deadAt: livingDeadAt, slay: livingSlay, killed: livingKilled,/);   // WATCH-FIX: PIN MOVED - and one of the watch another hand killed
+  assert.match(w, /holderOf: \(res, day\) => \(host\.legacyHost\?\.holdsResident\(res\.id\) \? null : livingPlaceOf\(res, livingCycleOf\(res, day\)\)\.holder\), deadAt: livingDeadAt, slay: livingSlay, killed: livingKilled,/);   // WATCH-FIX: PIN MOVED - and one of the watch another hand killed
   assert.match(w, /const hit = collider\.raycast\(\[a\[0\] \+ locOrigin\[0\] \+ tr\[0\], a\[1\] \+ tr\[1\], a\[2\] \+ locOrigin\[2\] \+ tr\[2\]\], \[d\[0\] \/ len, d\[1\] \/ len, d\[2\] \/ len\], len\);\n\s*return !\(Number\.isFinite\(hit\) && hit < len - 0\.25\);/, 'the town\'s line of sight, the collider\'s');
   // the street's seams
   assert.match(w, /pos, fwdYaw: person\.facingYaw, guard: person\.guard, person,/);

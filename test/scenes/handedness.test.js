@@ -22,9 +22,10 @@ import { perspective, mirrorProjectionX, lookAt, multiply } from '../../src/worl
 import { Collider } from '../../src/player/collider.js';
 import { EnemyAI } from '../../src/characters/enemy/enemyMotor.js';
 import { placeFoeEnv } from '../../src/scenes/quest/questFoeHost.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const read = (p) => readFileSync(join(ROOT, p), 'utf8');
+const read = (p) => hostText(p);
 
 const ndc = (pv, [x, y, z]) => {
   const w = pv[3] * x + pv[7] * y + pv[11] * z + pv[15];

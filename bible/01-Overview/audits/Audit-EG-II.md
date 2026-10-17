@@ -50,7 +50,7 @@ with Vestiges; and a season's ceiling, starting each breach at the last one's de
 | L1-2 | MED | `retireShare` is the absence law; the Remnant keeps a fallen body's share | CONFIRMED (`gateBrain.js`, `sdRemnant.js`) | 13.2: retiring at a fall is new; the seen-and-restore step skips the fallen |
 | L1-3 | MED | `fbxMesh.mjs` feeds only the Morrowind lane's NIFs; the gate and ships bake through `shipBake.mjs` | CONFIRMED | 11.6: `fragBake.mjs`, EG6c |
 | L1-4 | MED | the Jump spell restores air control; technique leaps fly their own arc | CONFIRMED (`motor.js` `enhancedJumping`, AUDIT 64 F2; `techniqueLaunch`) | 10.2 THE FAST BUILD; 10.4 the Drop's walls; 10.7 |
-| L1-5 | MED | `perilAt`/`wayOut` are client code outside `RELAY_GRAPH` | CONFIRMED | 9: `net/egFloor.js`; 13.2 |
+| L1-5 | MED | `perilAt`/`wayOut` are client code outside `RELAY_GRAPH` | CONFIRMED | 9: `net/eliteGates/egFloor.js`; 13.2 |
 | L1-6 | MED | the court already draws several shapes a frame (host cap 8); a tether is a lane in the path pool | CONFIRMED (`gateHost.js` `HOST_SHAPES_MAX`, `HOST_PATH_HALF_W`) | 25.4 |
 | L1-7 | MED | Stendarr's AvoidDeath is not refused and would cancel a fall | CONFIRMED (`guildServices.js` `avoidDeath`, `setAvoidDeathHook`) | 15 (death saves); 24; 28 |
 | L1-8 | MED | a 3 m lane is counted only on its centre line | CONFIRMED (`deepIn`, `inAttack`'s `<= width/2`) | 11.7 THE WIDTH RULE at 4 m (with L2-2) |

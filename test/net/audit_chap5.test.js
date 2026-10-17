@@ -33,6 +33,7 @@ import { settleChaptersDue, settleChapterWeek, chapterChronicle, CHAPTER_TURNING
 import { readRoll } from '../../server-account/src/npcRoll.js';
 import { standService, sessionStorageOf, T0, confirmChapters } from '../accountDb.mjs';
 import { seatRealm } from '../realmSeat.mjs';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const DAY = 86_400, WOODS = 231, ANTICLERE = 21, DAGGERFALL = 17, FIGHTERS = 41, MAGES = 40, THIEVES = 42, BROTHERHOOD = 108;
@@ -379,7 +380,7 @@ test('AUDIT CHAP5 D6: the spellbook\'s haggle line weighs the price against the 
 });
 
 test('AUDIT CHAP5 C1/C2/C5/D2: the host\'s seams - the guild book asked again when old and at a patron\'s hall; the banners\' guild a temple\'s divine; the halls kept online alone; a shut hall\'s services refused, its popup standing (mutants: each seam)', () => {
-  const world = src('src/scenes/world.js');
+  const world = hostText('src/scenes/world.js');
   assert.match(world, /until it was opened\n\s+guildId: \(\) => \{ const g = guildBook; if \(g\?\.stale\?\.\(\)\) g\.refresh\(\)\.catch\(\(\) => \{\}\); return g\?\.guild\?\.id \?\? null; \},/);
   assert.match(world, /if \(c\?\.patron && guildBook\?\.stale\?\.\(\)\) guildBook\.refresh\(\)\.catch\(\(\) => \{\}\);/);
   assert.match(world, /chapterOf: \(faction, region\) => chapterSheet\.chapterOf\(chapterFactionOf\(faction, townTalk\?\.factionDict \?\? null\) \?\? faction, region\),/);

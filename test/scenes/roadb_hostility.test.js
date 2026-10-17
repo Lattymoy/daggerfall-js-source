@@ -21,6 +21,7 @@ import { makeEnemiesHostile } from '../../src/scenes/hostCombat.js';
 import { ActionSystem } from '../../src/world/actionSystem.js';
 import { ACTION_FLAGS, TRIGGER_FLAGS } from '../../src/world/rdbLayout.js';
 import { sensesContext } from '../../src/scenes/shared.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const src = (rel) => readFileSync(join(root, rel), 'utf8');
@@ -234,7 +235,7 @@ test('ROAD-B: both exterior/interior foe pools take the area walk on a struck pa
 });
 
 test('ROAD-B: the world host walks the WHOLE active enemy database, inside pool included', () => {
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.ok(w.includes("...exteriorFoes.foes, ...cityGuards.guards, ...(modes?.insideFoes?.() ?? []),"),
     'the two street pools joined with whatever interior the player is standing in');
   assert.ok(w.includes('const _makeEnemiesHostile = () => makeEnemiesHostile(_liveEnemyDatabase());'));

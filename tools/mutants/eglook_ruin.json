@@ -1,0 +1,142 @@
+[
+  {
+    "name": "EGRUIN-law-judge-asleep",
+    "file": "src/world/eliteGates/egRuin.js",
+    "old": "      if (law && breaks(law, m)) { for (const [key, v] of m) B.get(key).v = v; return false; }",
+    "new": "      if (false && law && breaks(law, m)) { for (const [key, v] of m) B.get(key).v = v; return false; }",
+    "tests": ["test/world/eliteGates/eglook_ruin.test.js"]
+  },
+  {
+    "name": "EGRUIN-cornice-uncut-where-floors-meet",
+    "file": "src/world/eliteGates/egRuin.js",
+    "old": "  for (const F of law.floors) if (F !== self && onFloor(F, x, z)) return true;",
+    "new": "  for (const F of law.floors) if (false && F !== self && onFloor(F, x, z)) return true;",
+    "tests": ["test/world/eliteGates/eglook_ruin.test.js"]
+  },
+  {
+    "name": "EGRUIN-foundation-over-its-lip",
+    "file": "src/world/eliteGates/egRuin.js",
+    "old": "y0 = (d.y ?? 0) - SD_LIP, N = rimSides(d.r), rec = K.found;",
+    "new": "y0 = (d.y ?? 0) + SD_LIP, N = rimSides(d.r), rec = K.found;",
+    "tests": ["test/world/eliteGates/eglook_ruin.test.js"]
+  },
+  {
+    "name": "EGRUIN-ways-pad-let-go",
+    "file": "src/world/eliteGates/egRuin.js",
+    "old": "  for (const [wx, wz, hw] of L.ways) if (Math.hypot(x - wx, z - wz) - hw < EG_RUIN.wayPad + rad) return false;",
+    "new": "  for (const [wx, wz, hw] of L.ways) if (Math.hypot(x - wx, z - wz) - hw < rad) return false;",
+    "tests": ["test/world/eliteGates/eglook_ruin.test.js"]
+  },
+  {
+    "name": "EGRUIN-cornice-over-the-floor",
+    "file": "src/world/eliteGates/egRuin.js",
+    "old": "p.y - U + prof[j][1], p.z + p.nz * o]; };",
+    "new": "p.y + U + prof[j][1], p.z + p.nz * o]; };",
+    "tests": ["test/world/eliteGates/eglook_ruin.test.js"]
+  },
+  {
+    "name": "EGRUIN-budget-let-go",
+    "file": "src/world/eliteGates/egRuin.js",
+    "old": "    const over = optional && W.triangles - was0 > cap;",
+    "new": "    const over = false && optional && W.triangles - was0 > cap;",
+    "tests": ["test/world/eliteGates/eglook_ruin.test.js"]
+  },
+  {
+    "name": "EGRUIN-brink-first-third-new-band",
+    "file": "src/world/eliteGates/egRuin.js",
+    "old": "  if (t < 1 / 3) return band - 1;",
+    "new": "  if (t < 1 / 3) return band;",
+    "tests": ["test/world/eliteGates/eglook_ruin.test.js"]
+  },
+  {
+    "name": "EGRUIN-tall-pieces-unmarked",
+    "file": "src/world/eliteGates/egRuin.js",
+    "old": "      if (occ) {",
+    "new": "      if (false && occ) {",
+    "tests": ["test/world/eliteGates/eglook_ruin.test.js"]
+  },
+  {
+    "name": "EGRUIN-lite-at-desktop-pitch",
+    "file": "src/world/eliteGates/egRuin.js",
+    "old": "    const pitch = lite ? EG_RUIN.pitchLite : lerp(EG_RUIN.pitch[0], EG_RUIN.pitch[1], h01(ds, 9));",
+    "new": "    const pitch = lerp(EG_RUIN.pitch[0], EG_RUIN.pitch[1], h01(ds, 9));",
+    "tests": ["test/world/eliteGates/eglook_ruin.test.js"]
+  },
+  {
+    "name": "EGRUIN-statues-on-phones",
+    "file": "src/world/eliteGates/egRuin.js",
+    "old": "    if (!lite && d.role === 'court') {",
+    "new": "    if (d.role === 'court') {",
+    "tests": ["test/world/eliteGates/eglook_ruin.test.js"]
+  },
+  {
+    "name": "EGRUIN-lamp-left-at-the-rim",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "lamp(on ? egToDungeon(spec, on.at[0], on.at[1], on.at[2]) : egToDungeon(",
+    "new": "lamp(false ? egToDungeon(spec, on.at[0], on.at[1], on.at[2]) : egToDungeon(",
+    "tests": ["test/world/eliteGates/eglook_ruin.test.js", "test/net/eliteGates/egaudit5_e_look.test.js"]
+  },
+  {
+    "name": "EGRUIN-lamp-the-old-gold",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "on ? egRuinLampTint(on.band) : tint",
+    "new": "EG_LAMP.color",
+    "tests": ["test/world/eliteGates/eglook_ruin.test.js"]
+  },
+  {
+    "name": "EGRUIN-ruin-pass-never-tried",
+    "file": "src/scenes/eliteGates/egGroundLook.js",
+    "old": "        frame(f) { let n = circle.frame(f); for (const r of eyes()) n += r.occ.frame(f); return n; },",
+    "new": "        frame(f) { const n = circle.frame(f); return n; },",
+    "tests": ["test/world/eliteGates/eglook_ruin.test.js"]
+  },
+  {
+    "name": "EGRUIN-ruin-shadow-recorded",
+    "file": "src/scenes/eliteGates/egGroundLook.js",
+    "old": "occ = createEgOccluders({ renderer, shadow: false });",
+    "new": "occ = createEgOccluders({ renderer, shadow: true });",
+    "tests": ["test/world/eliteGates/eglook_ruin.test.js"]
+  },
+  {
+    "name": "EGRUIN-brink-dress-forgotten",
+    "file": "src/scenes/eliteGates/egCircleHost.js",
+    "old": "    if (eh.c > 1) egBandUp(eh.c - 1);",
+    "new": "    if (eh.c > 999) egBandUp(eh.c - 1);",
+    "tests": ["test/world/eliteGates/eglook_ruin.test.js"]
+  },
+  {
+    "name": "EGRUIN-shaft-upside-down",
+    "file": "src/world/eliteGates/egRuin.js",
+    "old": "vOf = (yy) => (yy - c.floor) / 2, a0 = c.band === 3 ? Math.PI / 6 : 0;",
+    "new": "vOf = (yy) => -(yy - c.floor) / 2, a0 = c.band === 3 ? Math.PI / 6 : 0;",
+    "tests": ["test/world/eliteGates/eglook_ruin.test.js"]
+  },
+  {
+    "name": "EGRUIN-isle-that-falls-ringed",
+    "file": "src/world/eliteGates/egRuin.js",
+    "old": "    if (egIsleDisc(spec, d)) return;   // Grath's islands fall",
+    "new": "    if (false && egIsleDisc(spec, d)) return;   // Grath's islands fall",
+    "tests": ["test/world/eliteGates/eglook_ruin.test.js"]
+  },
+  {
+    "name": "EGRUIN-ruin-under-a-falling-band",
+    "file": "src/world/eliteGates/egRuin.js",
+    "old": "  for (const bd of spec.bands) if (egWallBand(spec, bd) || egTubeBand(bd)) boxes.push(",
+    "new": "  for (const bd of spec.bands) if (false && (egWallBand(spec, bd) || egTubeBand(bd))) boxes.push(",
+    "tests": ["test/world/eliteGates/eglook_ruin.test.js"]
+  },
+  {
+    "name": "EGRUIN-ruin-under-a-falling-isle",
+    "file": "src/world/eliteGates/egRuin.js",
+    "old": "  for (const d of spec.discs) if (egIsleDisc(spec, d)) rings.push(",
+    "new": "  for (const d of spec.discs) if (false && egIsleDisc(spec, d)) rings.push(",
+    "tests": ["test/world/eliteGates/eglook_ruin.test.js"]
+  },
+  {
+    "name": "EGRUIN-bridge-through-a-box",
+    "file": "src/world/eliteGates/egRuin.js",
+    "old": "  if (law) { for (const r of bridgeRuns(law, run)) bridge(W, piece, band, seed, r, lite); return; }",
+    "new": "  if (false && law) { for (const r of bridgeRuns(law, run)) bridge(W, piece, band, seed, r, lite); return; }",
+    "tests": ["test/world/eliteGates/eglook_ruin.test.js"]
+  }
+]

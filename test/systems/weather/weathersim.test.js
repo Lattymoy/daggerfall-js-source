@@ -21,6 +21,7 @@ const src = (p2) => readFileSync(join(ROOT, p2), 'utf8');
 import { CLIMATES } from '../../../src/formats/mapsFile.js';
 import { SEASONS, MINUTES_PER_DAY } from '../../../src/systems/gameDate.js';
 import { snapshotPlayer, restorePlayer } from '../../../src/systems/save/save.js';
+import { hostText, movedOutOf } from '../../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 test('W1 table: every climate/season row sums to 100 - the Chronicles page needs no normalization', () => {
   for (const [climate, seasons] of Object.entries(WEATHER_TABLE)) {
@@ -212,9 +213,11 @@ test('W1 review: the precip draw gates on the MODE in both hosts - the renderer 
   // WX2: the gate is the mode SHOWN - the sim's under the classic sky,
   // the front's under the enhanced one, where the outgoing rain tapers
   // after the sim has cleared - and still never the object.
-  assert.match(src('src/scenes/world.js'), /const precipShown = enhancedFront \? fx\.shown : precipMode;\s*\n\s*if \(precipShown === 'sand'\) \{[\s\S]{0,600}?\} else if \(precipShown && precip\) \{/);
+  assert.match(hostText('src/scenes/world.js'), /const precipShown = enhancedFront \? fx\.shown : precipMode;\s*\n\s*if \(precipShown === 'sand'\) \{[\s\S]{0,600}?\} else if \(precipShown && precip\) \{/);
   assert.match(src('src/scenes/exterior.js'), /const precipShown = enhancedFront \? fx\.shown : precipMode;\s*\n\s*if \(precipShown === 'sand'\) \{[\s\S]{0,600}?\} else if \(precipShown && precip\) \{/);
   // and the respawner roll lives on the RESPAWNER path alone
-  assert.match(src('src/scenes/world.js'), /_respawnAtSite[\s\S]{0,900}weatherRespawn\(/);
-  assert.doesNotMatch(src('src/scenes/world.js').slice(0, src('src/scenes/world.js').indexOf('async function _respawnAtSite')), /weatherRespawn\(/, 'no earlier caller - not the teleport, not fast travel');
+  assert.match(hostText('src/scenes/world.js'), /_respawnAtSite[\s\S]{0,900}weatherRespawn\(/);
+  assert.doesNotMatch(hostText('src/scenes/world.js').slice(0, hostText('src/scenes/world.js').indexOf('async function _respawnAtSite')), /weatherRespawn\(/, 'no earlier caller - not the teleport, not fast travel');
+  // AUDIT HOST-SPLIT 2, the second read: and none in what left the host above it - the pixel build stood in that stretch
+  for (const m of movedOutOf('src/scenes/world.js')) assert.doesNotMatch(readFileSync(m, 'utf8'), /weatherRespawn\(/, `no caller in ${m}, moved out of world.js`);
 });

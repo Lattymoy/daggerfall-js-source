@@ -16,6 +16,7 @@ import { isStandFlat, standFlatId, standFlatRecord } from '../../src/world/stand
 import { strangerHorseLook } from '../../src/systems/horse/horseCoats.js';
 import { figureLook } from '../../src/characters/peopleBodies.js';
 import { createMerchantYards } from '../../src/scenes/merchantYardsHost.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const ordered = (s, needles, what) => {
@@ -195,7 +196,7 @@ test('STAND-HORSE the Stable\'s horses: offered where they stand and the way the
 });
 
 test('STAND-FLAT the streamed world by source: a town horse and a person no StaticNPC holds leave the shared groups (the block\'s and a site\'s) for a batch of their own - a person\'s picture the clothed stand-in - in the pixel\'s list; the near rings\' offered (the horses to the standing horses, the people on the street\'s lane read as a figure); the horses ended and drawn after the people, before the flats; let go indoors; the Stables\' horses and the boats\' crews offered (mutants: STAND-FLAT-block-grouped, STAND-FLAT-site-grouped, STAND-FLAT-nude, STAND-HORSE-walk-unoffered, STAND-FLAT-crew-unoffered)', () => {
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   ordered(w, ['if (npcFlatSet.has(flat)) continue;', 'if (flat.editor) continue;', 'if (isStandFlat(flat.archive, flat.record)) { pixelStandFlats.push(', 'addFlat(flat.archive, flat.record, fx,'], 'the block\'s flats');
   ordered(w, ['if (f.scale.x === 1 && f.scale.y === 1 && isStandFlat(f.archive, f.record)) pixelStandFlats.push({ archive: f.archive, record: f.record, x: f.base[0], y: f.base[1], z: f.base[2] });',
     'else if (f.scale.x === 1 && f.scale.y === 1) addFlat(f.archive, f.record, f.base[0], f.base[1], f.base[2]);'], 'a site\'s');

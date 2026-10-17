@@ -28,6 +28,7 @@
 import { CRIMES } from './crimes.js';
 import {
   legalRepOf, changeLegalRep, LEGAL_REP_MAX, BASE_PENALTY, PENALTY_PER_LEGAL_REP_POINT, MIN_PENALTY, MAX_PENALTY,
+  raisePeopleForAnswer,   // FIELD BUGS 2026-10-16b FINE-PEOPLE: a fine and a penance give back the People's half too
 } from './court.js';
 import { SEVERE_PUNISHMENT_BANISHED } from './encounters.js';
 import { skyMinuteOfEvent, eventMinuteOfSky } from './skyCalendar.js';   // BANISH-SKY: the calendar the player sees, against the event clock's stamps
@@ -172,7 +173,7 @@ export function grantGrace(player, regionIndex, ownNow) { standingOf(player).gra
 export function settleChallenge(player, regionIndex) {
   const rep = legalRepOf(player, regionIndex);
   const pts = rep < KNOWN_CRIMINAL_BELOW ? Math.min(PENANCE_POINTS, KNOWN_CRIMINAL_BELOW - rep) : 0;
-  if (pts) changeLegalRep(player, regionIndex, pts, { kind: 'fine' });
+  if (pts) { changeLegalRep(player, regionIndex, pts, { kind: 'fine' }); raisePeopleForAnswer(player, regionIndex, pts); }   // FINE-PEOPLE
   return pts;
 }
 /** The fine the watch asks on the spot: the court's own Criminal Conspiracy penalty at this standing, every unit in coin
@@ -212,7 +213,7 @@ export const penanceHelps = (player, regionIndex) => legalRepOf(player, regionIn
 export function doPenance(player, regionIndex) {
   const rep = legalRepOf(player, regionIndex);
   const points = rep < 0 ? Math.min(PENANCE_POINTS, -rep) : 0;
-  if (points) changeLegalRep(player, regionIndex, points, { kind: 'penance' });
+  if (points) { changeLegalRep(player, regionIndex, points, { kind: 'penance' }); raisePeopleForAnswer(player, regionIndex, points); }   // FINE-PEOPLE
   const s = standingOf(player);
   s.penance[regionIndex] = (s.penance[regionIndex] ?? 0) + 1;
   return points;

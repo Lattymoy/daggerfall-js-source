@@ -2,13 +2,13 @@
   {
     "name": "SERPENT-SET-set-out-of-the-record",
     "file": "src/systems/sigil/sigil.js",
-    "old": "'thieftaker', 'orcsbane', 'coilscale', 'numidium']);",
-    "new": "'thieftaker', 'orcsbane', 'numidium']);",
+    "old": "'thieftaker', 'orcsbane', 'coilscale', 'numidium', 'panoply']);",
+    "new": "'thieftaker', 'orcsbane', 'numidium', 'panoply']);",
     "why": "the set no sigil may name: every Coilscale piece refused off the wire",
     "tests": [
       "test/systems/serpentset.test.js"
     ],
-    "note": "SD9d (PIN MOVED): the Brass of Numidium after the serpent's - re-aimed by content."
+    "note": "SD9d (PIN MOVED): the Brass of Numidium after the serpent's - re-aimed by content. SD9d (PIN MOVED): the Brass of Numidium after the serpent's - re-aimed by content. EG15 (PIN MOVED): and the Battlemage's Panoply after it."
   },
   {
     "name": "SERPENT-SET-a-world-set",
@@ -113,13 +113,13 @@
   {
     "name": "SERPENT-SET-not-a-record",
     "file": "src/systems/aetheric.js",
-    "old": "export const AETHERIC_RECORDS = Object.freeze([...REGALIA, ...RAID_SET_PIECES, ...SERPENT_SET_PIECES, ...NUMIDIUM_SET_PIECES]);",
-    "new": "export const AETHERIC_RECORDS = Object.freeze([...REGALIA, ...RAID_SET_PIECES, ...NUMIDIUM_SET_PIECES]);",
+    "old": "export const AETHERIC_RECORDS = Object.freeze([...REGALIA, ...RAID_SET_PIECES, ...SERPENT_SET_PIECES, ...NUMIDIUM_SET_PIECES, ...PANOPLY_SET_PIECES]);",
+    "new": "export const AETHERIC_RECORDS = Object.freeze([...REGALIA, ...RAID_SET_PIECES, ...NUMIDIUM_SET_PIECES, ...PANOPLY_SET_PIECES]);",
     "why": "a Coilscale piece no reader knows - forged to the wire",
     "tests": [
       "test/systems/serpentset.test.js"
     ],
-    "note": "SD9d (PIN MOVED): the Brass of Numidium's records after the serpent's - re-aimed by content."
+    "note": "SD9d (PIN MOVED): the Brass of Numidium's records after the serpent's - re-aimed by content. SD9d (PIN MOVED): the Brass of Numidium's records after the serpent's - re-aimed by content. EG15 (PIN MOVED): and the Panoply's after them."
   },
   {
     "name": "SERPENT-SET-the-chance",
@@ -235,12 +235,13 @@
   {
     "name": "SERPENT-SET-the-bow-refused",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  if (!(damage > 0) || !weapon) return;\n  if (info?.blow !== false) coiled(attacker, target);   // TWO-HANDS (AUDIT 2): a stack a blow, from a blow that counts whole (formulas.js `blow`)\n  if (ranged(weapon)) return;",
-    "new": "  if (!(damage > 0) || !weapon) return;\n  if (ranged(weapon)) return;\n  if (info?.blow !== false) coiled(attacker, target);   // TWO-HANDS (AUDIT 2): a stack a blow, from a blow that counts whole (formulas.js `blow`)",
+    "old": "  if (!(damage > 0) || !weapon) return;\n  if (info?.blow !== false) coiled(attacker, target);   // TWO-HANDS (AUDIT 2): a stack a blow, from a blow that counts whole (formulas.js `blow`)\n  if (info?.blow !== false) returned(attacker);   // EG15: the Discipline's return - a bow's blow too (a weapon blow); TWO-HANDS (AUDIT 2): a per-blow charge, so a blow that counts whole alone\n  if (ranged(weapon)) return;",
+    "new": "  if (!(damage > 0) || !weapon) return;\n  if (ranged(weapon)) return;\n  if (info?.blow !== false) coiled(attacker, target);   // TWO-HANDS (AUDIT 2): a stack a blow, from a blow that counts whole (formulas.js `blow`)\n  if (info?.blow !== false) returned(attacker);   // EG15: the Discipline's return - a bow's blow too (a weapon blow); TWO-HANDS (AUDIT 2): a per-blow charge, so a blow that counts whole alone",
     "why": "a bow's blow never tightens it",
     "tests": [
       "test/systems/serpentset.test.js"
-    ]
+    ],
+    "note": "EG15 (PIN MOVED): the Discipline's return sits between the coil and the bow's turn-back - re-aimed by content."
   },
   {
     "name": "SERPENT-SET-the-death-ignored",
@@ -315,12 +316,13 @@
   {
     "name": "SERPENT-SET-shed-no-chip",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  if (t.get('coilscale')?.[2] && st.shedRecoverLeft) out.push({ key: 'shed', set: 'coilscale', name: 'Shed Skin', text: time(st.shedRecoverLeft), state: 'recovering' });\n",
+    "old": "  if (t.get('coilscale')?.[2] && (st.shedRecoverLeft || held.has('shed'))) out.push({ key: 'shed', set: 'coilscale', name: 'Shed Skin', text: wait('shed', st.shedRecoverLeft), state: 'recovering' });\n",
     "new": "",
     "why": "the recovery never shown",
     "tests": [
       "test/systems/serpentset.test.js"
-    ]
+    ],
+    "note": "EG15 (PIN MOVED): the chip reads \"Redoubt\" while the Spire holds the save - re-aimed by content."
   },
   {
     "name": "SERPENT-SET-shed-never-said-ready",
@@ -407,9 +409,10 @@
   {
     "name": "SERPENT-SET-purse-gates-alone",
     "file": "server-account/src/accounts.js",
-    "old": "const EMBERS_EARNED_SQL = '((SELECT COALESCE(SUM(stones), 0) FROM gate_kills WHERE account = ?1) + (SELECT COALESCE(SUM(stones), 0) FROM serpent_kills WHERE account = ?1))';",
-    "new": "const EMBERS_EARNED_SQL = '((SELECT COALESCE(SUM(stones), 0) FROM gate_kills WHERE account = ?1))';",
+    "old": "const EMBERS_EARNED_SQL = '((SELECT COALESCE(SUM(stones), 0) FROM gate_kills WHERE account = ?1) + (SELECT COALESCE(SUM(stones), 0) FROM serpent_kills WHERE account = ?1) + (SELECT COALESCE(SUM(stones), 0) FROM eg_redoubts WHERE account = ?1))';",
+    "new": "const EMBERS_EARNED_SQL = '((SELECT COALESCE(SUM(stones), 0) FROM gate_kills WHERE account = ?1) + (SELECT COALESCE(SUM(stones), 0) FROM eg_redoubts WHERE account = ?1))';",
     "why": "the sea's embers refused at the counter",
+    "note": "EG-E1 (PIN MOVED): the Spire's embers join the one sum - re-aimed by content; the sea's term alone dropped.",
     "tests": [
       "test/net/serpent/serpentset_service.test.js"
     ]
@@ -457,9 +460,10 @@
   {
     "name": "SERPENT-SET-cap-apart",
     "file": "src/net/marksLaw.js",
-    "old": "kinds: Object.freeze(['gate', 'raid', 'serpent']), perDay: 150 }",
-    "new": "kinds: Object.freeze(['gate', 'raid']), perDay: 150 }",
+    "old": "kinds: Object.freeze(['gate', 'raid', 'serpent', 'eg']), perDay: 150 }",
+    "new": "kinds: Object.freeze(['gate', 'raid', 'eg']), perDay: 150 }",
     "why": "the serpents outside the day's cap - and every serpent strike counted for nothing toward it",
+    "note": "EG-E1 (PIN MOVED): the Spire's Redoubts under the same cap - re-aimed by content; the serpents alone dropped.",
     "tests": [
       "test/net/serpent/serpentset_service.test.js"
     ]

@@ -109,6 +109,10 @@ export const PREF_DEFAULTS = Object.freeze({
   // springs, its shake and the hands' dip (combat/technique/techniqueFx.js techniqueMotion); 0 moves nothing on the screen (its
   // burst and its sound stay). GATHER-FEEL II: and a gathering tool's landed blow (systems/gatherBlow.js gatherBlowFeel)
   techniqueMotion: 1,
+  // EG-G1 (bible/11-Multiplayer/Elite-Gates.md section 25.7): THE SPIRE'S ACCESSIBILITY (ui/eliteGates/egAccess.js) - the danger
+  // palette ('standard' | 'contrast' | 'deutan' | 'tritan'), a danger fill's light (0.5-1), and reduced motion (the
+  // system's setting does the same)
+  dangerPalette: 'standard', telegraphFill: 1, reducedMotion: false,
   // PEERMENU1: the player menu's two binds, keyboard and controller, each { code, hold } (null = the defaults: hold E,
   // hold A - systems/peerMenuBind.js). Online only.
   peerMenuKey: null, peerMenuPad: null,

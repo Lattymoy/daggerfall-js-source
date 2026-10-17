@@ -83,7 +83,7 @@
   {
     "name": "SD12-ONELIFE-a-resurrect-in-the-hour",
     "file": "src/scenes/world.js",
-    "old": "const rez = social?.acct && modes?.sdRealmSlot?.() == null ? rezFor(",
+    "old": "const rez = social?.acct && madeRuleHere('resurrect') !== 'refused' ? rezFor(",
     "new": "const rez = social?.acct ? rezFor(",
     "tests": [
       "test/net/superDungeon/sd12_onelife.test.js"

@@ -133,7 +133,9 @@ test('TEMPLE-STEPS: a stall is the pack\'s mesh as Unity imports it (x mirrored:
   assert.equal(RMBRP_STALL_SCALE, 0.75);
   for (const id of Object.keys(RMBRP_STALLS)) {
     const { lo, hi } = boxOf(RMBRP_PIECES[id]());
-    assert.deepEqual([r3(lo), r3(hi)], [[-2.063, 0, -1.86], [0.3, 3.3, 1.8]], id);
+    // PIN MOVED (FIELD BUGS 2026-10-16b STALL-SHAPE): the pack's second mesh (53113 on, ext_city_stall014-025) its own -
+    // the frame 0.2 m back, 0.206 up and 0.066 across, no counter (test/world/fb1016b_stallshape.test.js holds its shape)
+    assert.deepEqual([r3(lo), r3(hi)], Number(id) >= 53113 ? [[-2.213, 0, -1.811], [-0.062, 3.454, 1.85]] : [[-2.063, 0, -1.86], [0.3, 3.3, 1.8]], id);
   }
 });
 

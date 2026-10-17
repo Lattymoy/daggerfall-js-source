@@ -31,8 +31,9 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import { createTownTalk } from '../../src/scenes/townTalk.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
-const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
+const src = (p) => hostText(p);
 
 const talkHost = () => createTownTalk({
   renderer: { uploadTexture: () => ({}) }, canvas: { width: 640, height: 400 },
@@ -70,7 +71,7 @@ test('B5: the EXHAUSTION box pushes in all three hosts that can collapse', () =>
   // AUDIT LIVED1b K1: the box is kept (`_exhaustedBox`) for DFU's popup guard, and still pushed
   assert.match(src('src/scenes/worldModes.js'),
     /_exhaustedBox = new ActionTextBox\(out\.inWater \? \[exhaustedInWaterText\(\)\] : \['You collapse from exhaustion\.'\]\);\s*mountInterior\(_exhaustedBox\);/);
-  assert.match(src('src/scenes/world.js'), /_exhaustedBox = new ActionTextBox\(lines\);\s*townTalk\.pushOverlay\(_exhaustedBox\);/, 'src/scenes/world.js: the outdoor collapse');
+  assert.match(hostText('src/scenes/world.js'), /_exhaustedBox = new ActionTextBox\(lines\);\s*townTalk\.pushOverlay\(_exhaustedBox\);/, 'src/scenes/world.js: the outdoor collapse');
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     if (f === 'src/scenes/exterior.js') assert.match(src(f), /_exhaustedBox = new ActionTextBox\(lines\);\s*townTalk\.pushOverlay\(_exhaustedBox\);/, `${f}: the outdoor collapse (kept for DFU's popup guard - AUDIT C&C N2/H1)`);
     assert.equal(/if \(!townTalk\.overlay\) townTalk\.showOverlay\(new ActionTextBox\(lines\)\);/.test(src(f)), false,

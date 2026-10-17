@@ -18,13 +18,14 @@ import { createMarketTab } from '../../src/ui/marketTab.js';
 import { MARKET_LISTINGS_MAX, sellerGets, saleTax } from '../../src/net/marketLaw.js';
 import { WEAVERS_STOCK } from '../../src/net/professionLaw.js';
 import { mountNoticeBoard } from '../../src/ui/noticeWindow.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const tick = (n = 4) => new Promise((r) => { let i = 0; const go = () => (++i >= n ? r() : setTimeout(go, 0)); setTimeout(go, 0); });
 const memStorage = () => { const m = new Map(); return { getItem: (k) => m.get(k) ?? null, setItem: (k, v) => m.set(k, String(v)) }; };
 
 test('AUDIT SEATS-3 C1 by source: the siege\'s and the Royal Tourney\'s claims are signed by the seats\' own account (the receipt\'s `s`), never the hub\'s device id (mutants: either door back on accountId)', () => {
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /siegeClaims = createSiegeClaims\(\{ claim: \(r\) => seatBook\.claimSiege\(r\), me: \(\) => _seatDoor\?\.me\(\) \?\? null, storage: appStorage\(\),/);
   assert.match(w, /royalClaims = createRoyalClaims\(\{ claim: \(r\) => seatBook\.claimRoyal\(r\), me: \(\) => _seatDoor\?\.me\(\) \?\? null, storage: appStorage\(\),/);
   assert.doesNotMatch(w, /create(?:Siege|Royal)Claims\(\{[^\n]*me: \(\) => accountId\(\)/);
@@ -81,7 +82,7 @@ test('AUDIT SEATS-3 C2: a palace\'s hall lost mid-visit (the seat lapsed, the li
 });
 
 test('AUDIT SEATS-3 C3: a battle\'s foes\' bodies read the room once a sweep - one peersNear() for twenty foes, the same bodies as one read per foe (mutants: duelBody per foe; the relay-run fighters dropped)', () => {
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   const grab = (start, end) => w.slice(w.indexOf(start), w.indexOf(end, w.indexOf(start)));
   const duelBodySrc = w.match(/\n  (const duelBody = [^\n]*)/)[1];
   const duelBodyInSrc = w.match(/\n  (const duelBodyIn = [^\n]*)/)[1];
@@ -137,7 +138,7 @@ test('AUDIT SEATS-3 C4: the Watchtowers\' seats filtered once a list read and gu
   assert.equal(a[0], b[0], 'one kept banner');
   assert.equal(b[0].top[0], top0[0] + 100, 'its top where the scene has it now');
 
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   const hungSrc = w.slice(w.indexOf('  const _hung = [];'), w.indexOf('  const yards = homeDecor'));   // PIN MOVED (CHAP7b): a patron's banners on the same pass - none here (chapterBanners null)
   const mk = (n, x) => Array.from({ length: n }, (_, i) => ({ id: `${x}${i}`, top: [i * (x === 'h' ? 1 : 2), 0, 0] }));
   let halls = mk(2, 'h'), seatsB = mk(1, 's');
@@ -266,7 +267,7 @@ test('AUDIT SEATS-3 D3: a board\'s Tithe as the seats\' list says it (its bailiw
     await tick();
     assert.match(t.root.textContent, new RegExp(`If it all sells ${want}`), String(pct));
   }
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /tithe: \(\) => \(seatBook\?\.open === true \? boardTithePct\(seatBook\.data\?\.seats \?\? \[\], region, \[town\.px, town\.py\]\) : null\),/);
   assert.match(src('src/ui/marketTab.js'), /You get the top bid, less \$\{less\}\$\{pct == null \? ' and any Tithe' : ''\}\./);   // AUDIT 657 D7: BOARD-UI (PIN MOVED): the terms one line
 });

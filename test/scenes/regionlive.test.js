@@ -25,9 +25,10 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const HERE = dirname(dirname(fileURLToPath(import.meta.url)));
-const read = (rel) => readFileSync(join(HERE, '..', rel), 'utf8');
+const read = (rel) => hostText(rel);
 
 test('RP1: the module normalises a NUMBER or a GETTER into one live read', () => {
   const tt = read('src/scenes/townTalk.js');

@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import { pcm8ToFloat32, QuestAudioSource, AudioEngine } from '../../src/systems/audio.js';
 import { readFileSync } from 'node:fs';
 import { SOUND, swingSoundFor, hitSoundFor } from '../../src/systems/soundClips.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const seq = (...v) => { let i = 0; return () => v[Math.min(i++, v.length - 1)]; };
 
@@ -78,7 +79,7 @@ test('AUDIT 39: a registered clip is decoded from the VIEW\'s range, not the who
   assert.equal(decodableCopy(raw), raw);
 
   // Both decode doors take the same slice.
-  const read = (p) => readFileSync(new URL('../../' + p, import.meta.url), 'utf8');
+  const read = (p) => hostText(p);
   for (const f of ['src/systems/audio.js', 'src/systems/music.js']) {
     assert.ok(read(f).includes('decodeAudioData(decodableCopy(bytes))'), `${f} slices the view`);
     assert.ok(!read(f).includes('decodeAudioData(bytes.buffer'), `${f} must not slice from offset zero`);
@@ -172,7 +173,7 @@ test('E6: the world host reads that busy state as PlaySound.cs:110-116 does', ()
   // over the ONE source the QuestMachine carries (PlaySound.cs:112).
   // AUDIT 58: and the value it plays goes through the ID door, because
   // the Quests-Sounds `id` column is a DAGGER.SND record ID.
-  const w = readFileSync('src/scenes/world.js', 'utf8');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /const questAudioSource = new QuestAudioSource\(audio\);/,
     'one source, minted beside the quest bridge');
   // QUIET-VENGEANCE: the body is the source's one method now (QuestAudioSource.playQuestSound, pinned below).
@@ -272,7 +273,7 @@ test('AUDIT 58: the quest source stamps busy off the ID door, not the index one'
 });
 
 test('AUDIT 58: every DFU ...SoundID site takes the ID door, and no other site does', () => {
-  const read = (p) => readFileSync(new URL('../../' + p, import.meta.url), 'utf8');
+  const read = (p) => hostText(p);
   // EntityEffectManager's five cast constants (:44-48) are IDs, spent
   // through PlayCastSound's `(uint)castSoundID` (:1958).
   assert.match(read('src/scenes/hostMagic.js'),

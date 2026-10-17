@@ -44,6 +44,7 @@ import { FOOTSTEP } from '../../src/systems/footsteps.js';
 import { equipTableOf } from '../../src/systems/equip.js';
 import { lookAt, multiply, trs } from '../../src/world/mat4.js';
 import { flashPlayerDamage, setRemoveHealthListener } from '../../src/ui/damageFlash.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const rd = (p) => readFileSync(join(root, p), 'utf8');
@@ -491,11 +492,11 @@ test('BA1 + IF1: ModCompatibilityChecking reads Better Ambience\'s switch throug
 // ═══ the hosts ══════════════════════════════════════════════════════════════════
 
 test('BA1: the four hosts gate the classic stride through the one gate, drive the component each frame, fold the shake into the view, the two dungeon hosts hand FoggyDungeons\' fog as the base the water murk overrides and its trilight to setLighting, the modal host and the standalone dungeon raise the transitions, the outer host raises OnStartGame and OnLoad with the compatibility box, every RemoveHealth sender hands its amount, and the engine seams exist; the records', () => {
-  const world = rd('src/scenes/world.js'), ext = rd('src/scenes/exterior.js'), wm = rd('src/scenes/worldModes.js'), dj = rd('src/scenes/dungeon.js');
+  const world = hostText('src/scenes/world.js'), ext = rd('src/scenes/exterior.js'), wm = rd('src/scenes/worldModes.js'), dj = rd('src/scenes/dungeon.js');
   for (const [name, src] of [['world', world], ['exterior', ext], ['worldModes', wm], ['dungeon', dj]]) {
     assert.match(src, /if \(_step && classicFootstepAllowed\(_step\.clip\)\) audio\.playOneShot\(_step\.clip, _step\.volume\);/, `${name}: the one gate`);
     assert.equal((src.match(/betterAmbience\.frame\(dt, \{/g) ?? []).length, 1, `${name}: one frame`);
-    assert.equal((src.match(/betterAmbience\.view\(lookAt\(/g) ?? []).length, 1, `${name}: the view fold`);
+    assert.equal((src.match(/betterAmbience\.view\(lookAt\(/g) ?? []).length, name === 'worldModes' ? 2 : 1, `${name}: the view fold`);   // PIN MOVED (EG-ZN, Elite-Gates.md section 11.8): the mode machine folds the shake into a second view too - over a shaft's ledge the camera's own leaned view replaces the drawn one AFTER the aim view is taken, so each of the two views is shaken once
     assert.match(src, /import \{ betterAmbience, classicFootstepAllowed \} from '\.\.\/systems\/betterAmbience\.js'/, name);
     assert.match(src, /swimming: !!player\.isPlayerSwimming, motorSwimming: !!player\.swimming,/, `${name}: PlayerEnterExit.IsPlayerSwimming AND playerMotor.IsSwimming, the two the source reads`);
   }

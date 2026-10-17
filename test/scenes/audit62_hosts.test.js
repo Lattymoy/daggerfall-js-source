@@ -24,9 +24,10 @@ import {
   CLASSIC_SPAWN_DESPAWN_EXTERIOR,
 } from '../../src/characters/enemy/enemyMotor.js';
 import { LightningFlash } from '../../src/systems/dynamicSkies/dynamicSkies.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const src = (rel) => readFileSync(join(root, rel), 'utf8');
+const src = (rel) => hostText(rel);
 
 /** A deterministic uniform stream, so the trial counts below are the
  *  same on every machine. */
@@ -277,7 +278,7 @@ test('AUDIT 62 F15: both of world.js\'s placement arms test the watch too', () =
   // overlapSphereRadius); if (colliders.Length > 0) return;`. A
   // watchman's capsule is a collider, so the quest arm may not ask the
   // encounter pool alone.
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   // AUDIT PSCALE1 COUNT-3: the encounter arm asks the placing pool - the whole street AND the spots a stand in flight
   // holds - and so do a camp's members, around their anchor
   assert.match(w, /const _placingPool = \(\) => \[\.\.\.exteriorFoePool\(\), \.\.\.exteriorFoes\.pendingFeet\(\)/);

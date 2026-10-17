@@ -529,3 +529,15 @@ test('SND1: a quick-loot take CLICKS, gold plays the gold sound, a take-all make
     assert.deepEqual(heard, [], 'nothing moved, nothing sounds');
   } finally { audio.playOneShot = real; }
 }));
+
+test('CONTAINER-PEEK: a cupboard\'s rows do not light, and P does not arm a take for the next pile', () => withQuickLoot(() => {
+  const glance = frameOf('container:1', [item('Ruby'), item('Longsword')]);
+  glance.preview = true;
+  foldQuickLoot(glance);
+  assert.equal(quickLootRow(glance), -1, 'nothing is lit');
+  assert.equal(quickLootWheel(120), false, 'the wheel stays the camera\'s');
+  assert.equal(quickLootArm('QuickLootAll'), false, 'P does not arm');
+  const pile = frameOf('loot:1', [item('Ruby')]);
+  foldQuickLoot(pile);
+  assert.equal(quickLootRow(pile), 0, 'the next pile still starts at the top');
+}));

@@ -20,6 +20,7 @@ import { herbKind } from '../../src/scenes/herbHost.js';
 import { setForagingHost } from '../../src/systems/foraging/foragingInstall.js';
 import { FT } from '../../src/systems/foraging/foragingLaw.js';
 import { HEIGHTMAP_DIMENSION, TERRAIN_SIZE } from '../../src/world/terrain/terrainSampler.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const noWait = () => Promise.resolve();
@@ -270,7 +271,7 @@ test('AUDIT 29 C10: the compass asks the near pixels alone', async () => {
 });
 
 test('AUDIT 29: the hosts by source - the seams the audit moved', () => {
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   const m = src('src/scenes/worldModes.js');
   const d = src('src/scenes/dungeonContext.js');
   const rigSrc = src('src/combat/weapon/weaponRig.js');

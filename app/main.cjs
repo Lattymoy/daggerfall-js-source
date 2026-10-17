@@ -1234,6 +1234,12 @@ function buildMenu() {
         process.platform === 'darwin'
           ? { role: 'togglefullscreen' }
           : { role: 'togglefullscreen', accelerator: 'Alt+Enter' },
+        // AUDIT ANTICHEAT (Mac's call, 2026-10-17: kept): the installed game keeps
+        // DevTools. Its console is how a player hands over a field report's lines
+        // (bible/01-Overview/bugs/Field-Bugs-2026-10-13b.md), and taking it away
+        // shuts no door a cheater needs - the browser build plays online with F12,
+        // and this shell honours --remote-debugging-port - so what other players
+        // meet is the servers' to judge (bible/06-Systems/Integrity-Arc.md).
         { role: 'toggleDevTools' },
       ],
     },

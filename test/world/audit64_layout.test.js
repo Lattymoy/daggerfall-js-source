@@ -24,9 +24,10 @@ import { collectBlockFlats, EDITOR_FLATS_ARCHIVE } from '../../src/world/rmbFlat
 import { isNpcFlat, NPC_FLAT_ARCHIVES } from '../../src/world/rdbLayout.js';
 import { layoutInterior, INTERIOR_MARKER, PROP_MODEL_TYPE } from '../../src/world/interior/interiorLayout.js';
 import { trs } from '../../src/world/mat4.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const src = (p) => readFileSync(join(root, p), 'utf8');
+const src = (p) => hostText(p);
 
 // ---------------------------------------------------------------------------
 // F11 - the StaticBuilding array and its hit test.
@@ -436,7 +437,7 @@ test('AUDIT 64 F14: both hosts swap the DRAW mesh AND the collider, in a bucket 
   // Both variants resident before the first swap - the streaming loader
   // is async and a mid-frame fetch cannot swap in place.
   assert.ok(src('src/scenes/exterior.js').includes('modelIds.add(CITY_GATE_CLOSED_MODEL_ID);'));
-  assert.ok(src('src/scenes/world.js').includes('const otherGpu = await getGpuMesh(otherId);'));
+  assert.ok(hostText('src/scenes/world.js').includes('const otherGpu = await getGpuMesh(otherId);'));
 });
 
 // ---------------------------------------------------------------------------

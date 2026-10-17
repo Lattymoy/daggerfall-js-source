@@ -67,12 +67,18 @@ export const SHIPYARD_CSS = `
 .dfyard-card .dfyard-figs { font-size: 12px; color: #b3a684; }   /* MENU-ORDER: a step larger */
 .dfyard-card .dfyard-why { font-size: 12px; color: #e59a8e; }
 .dfyard-card .dfnaval-btn { min-width: 0; margin-top: 4px; font-size: 13px; padding: 5px 10px; }
-.dfyard-row { display: grid; grid-template-columns: minmax(110px, 1fr) minmax(0, 1.6fr) auto; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid rgba(5,6,8,0.6); white-space: normal; }
+.dfyard-row { display: grid; grid-template-columns: minmax(110px, 1fr) minmax(0, 1.6fr) fit-content(40%); align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid rgba(5,6,8,0.6); white-space: normal; }
 .dfyard-row:last-child { border-bottom-color: transparent; }
 .dfyard-row b { font-weight: normal; letter-spacing: 0.06em; text-transform: uppercase; color: #efe8d6; font-size: 13px; }
 .dfyard-row span { font-size: 12px; color: #b9ab93; }
 .dfyard-row .dfyard-acts { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
 .dfyard-row .dfnaval-btn { min-width: 0; font-size: 12px; padding: 4px 9px; }
+/* FIELD BUGS 2026-10-16b YARD-ROWS ("Shipyard formatting is cooked"): an \`auto\` acts track took its every press on one
+   line before the fr tracks had a pixel, so a ship's words stood a word a line; the acts' track is held to fit-content,
+   and a ship of the fleet carries hers on a line of their own under her words, as the Holdings card does
+   (ui/fleetPage.js shipCard's hld-acts) */
+.dfyard-fleetrow { grid-template-columns: minmax(110px, 1fr) minmax(0, 1.6fr); }
+.dfyard-fleetrow .dfyard-acts { grid-column: 1 / -1; }
 .dfyard-choose { display: flex; flex-wrap: wrap; gap: 6px; }
 .dfyard-choose .dfnaval-btn { min-width: 0; font-size: 12px; padding: 4px 10px; }
 .dfyard-choose .dfnaval-btn[aria-pressed="true"] { color: #f3d58a; }
@@ -80,6 +86,7 @@ export const SHIPYARD_CSS = `
 .dfyard-name input { flex: 1 1 auto; min-width: 0; font: inherit; font-size: 13px; padding: 4px 6px; color: #efe8d6; background: rgba(4,5,7,0.6); border: 2px solid; }
 .dfyard-quote { font-style: italic; }
 .dfyard-post { font: inherit; font-size: 12px; color: #efe8d6; background: rgba(4,5,7,0.6); border: 2px solid; }
+.dfyard-acts .dfyard-post { min-width: 0; max-width: 12em; text-overflow: ellipsis; }   /* YARD-ROWS' audit: a long hand's name in the swap picker never holds the presses' track past its fit-content cap */
 @media (max-width: 560px) {
   .dfyard-cards { grid-template-columns: 1fr; }
   .dfyard-row { grid-template-columns: 1fr; gap: 4px; }
@@ -281,7 +288,7 @@ export function mountShipyardWindow(host, deps) {
     if (!m.fleet.length) sec.append(el('p', 'dfnaval-lede', 'You hold no ship. The shipmaster has a few on his slips.'));
     for (const r of m.fleet) {
       const t = fleetRowText(r);
-      const row = el('div', 'dfyard-row');
+      const row = el('div', 'dfyard-row dfyard-fleetrow');   // YARD-ROWS: her acts under her words
       row.setAttribute('data-uid', String(r.uid));
       const left = el('div');
       left.append(el('b', null, t.name), el('br'), el('span', null, t.sub));

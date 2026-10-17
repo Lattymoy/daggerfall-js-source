@@ -85,21 +85,21 @@
   },
   {
     "name": "LPTFIT-the-host-fits-the-wild-alone",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "          if (fit) fit[i] = lptFitCap(lptPathMask, vergeNet, px, py, c[0], c[2], crown, v);",
     "new": "          if (fit) fit[i] = wild[i] ? lptFitCap(lptPathMask, vergeNet, px, py, c[0], c[2], crown, v) : Infinity;",
     "tests": ["test/world/road/lptfit.test.js"]
   },
   {
     "name": "LPTFIT-the-box-crown",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "        const crown = verges ? (LPT_CROWNS[lpt.key] ?? 0) : 0;",
     "new": "        const crown = verges ? lpt.size.w / 2 : 0;",
     "tests": ["test/world/road/lptfit.test.js"]
   },
   {
     "name": "LPTFIT-the-far-picture-unfitted",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "          scales[i] = (fit ? Math.min(v, fit[i]) : v) / LPT_SCALE_MAX;",
     "new": "          scales[i] = v / LPT_SCALE_MAX;",
     "tests": ["test/world/road/lptfit.test.js"]

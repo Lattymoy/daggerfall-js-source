@@ -13,6 +13,7 @@ import { readFileSync } from 'node:fs';
 import { HEARTH_ARCHIVE, HEARTH_RECORDS, HEARTH_NEAR, isHearthFlat, collectHearths, nearestHearth, hearthNear, hearthAabb } from '../../../src/systems/survival/hearth.js';
 import { BY_FIRE_REACH, FIRE_FLAT, CAMP_REACH, CAMP_TEXT } from '../../../src/systems/survival/camp.js';
 import { interiorLightProperties } from '../../../src/world/interior/interiorLights.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const read = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 
@@ -80,7 +81,7 @@ test('HEARTH1: the streaming cut-off clears every question the pool is asked', (
   // a question before the law did.
   assert.ok(HEARTH_NEAR > BY_FIRE_REACH, `${HEARTH_NEAR} must clear the warmth reach ${BY_FIRE_REACH}`);
   assert.ok(HEARTH_NEAR > CAMP_REACH, `${HEARTH_NEAR} must clear the ray's reach ${CAMP_REACH}`);
-  assert.match(read('src/scenes/world.js'), /Math\.abs\(x - eye\[0\]\) > HEARTH_NEAR \|\| Math\.abs\(z - eye\[2\]\) > HEARTH_NEAR/, 'the streaming host cuts its walk by it');
+  assert.match(hostText('src/scenes/world.js'), /Math\.abs\(x - eye\[0\]\) > HEARTH_NEAR \|\| Math\.abs\(z - eye\[2\]\) > HEARTH_NEAR/, 'the streaming host cuts its walk by it');
 });
 
 test('HEARTH1: the two light collectors carry the record, which is the only thing that tells a brazier from a lantern', () => {
@@ -96,7 +97,7 @@ test('HEARTH1: all four hosts answer with their own fires - THE FOUR HOSTS RULE'
   // walk they already do; the dungeon has no lantern list to split (its
   // lights are RDB Light RESOURCES with no texture) so it reads its own
   // flats; the interior takes the light list its context built.
-  const world = read('src/scenes/world.js'), ex = read('src/scenes/exterior.js');
+  const world = hostText('src/scenes/world.js'), ex = read('src/scenes/exterior.js');
   const dung = read('src/scenes/dungeonContext.js'), wm = read('src/scenes/worldModes.js');
   assert.match(world, /if \(isHearthFlat\(LIGHTS_ARCHIVE, light\.record\)\) pixelHearths\.push\(\[lp\[0\], lp\[1\], lp\[2\], locLocal\[1\] \+ light\.foot, light\.w, light\.h\]\);/);
   assert.match(world, /hearths: hearthsNear,/, 'the streaming host hands its door to the pool');
@@ -263,7 +264,7 @@ test('AUDIT HEARTH1 F2: byFire takes the FIRST fire in reach, because it runs ev
   assert.equal(nearestHearth(pooled, [0, 0, 0], BY_FIRE_REACH, 0), null);
   assert.match(read('src/scenes/camps.js'), /\|\| hearthNear\(worldFires\(\), pos, BY_FIRE_REACH\)/, 'byFire asks the cheap question');
   // and the streaming host's walk is a POOL, not a fresh list a frame
-  const w = read('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /const _hearthStore = \[\];/, 'the objects are kept');
   assert.match(w, /_hearthStore\[n\] \?\? \(_hearthStore\[n\] = \{ x: 0, y: 0, z: 0, foot: 0, w: 0, h: 0 \}\)/, '...and refilled in place');
   assert.doesNotMatch(w, /const out = \[\];\n\s*const eye = walkMode/, 'the per-frame array is gone');

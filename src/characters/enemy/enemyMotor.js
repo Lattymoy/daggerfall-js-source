@@ -2265,10 +2265,19 @@ export class EnemyAI {
    *  the player actually stands), the path and the detour, the stuck clocks, the fixed-step accumulator a puppet frame
    *  never drained, the knockback. isHostile and hasEncounteredPlayer stand: they are the foe's, not the frame's. */
   resumeLive() {
-    this.lastGroundedY = this.feet[1]; this._airborne = false; this.velY = 0; this.landedFall = 0;
     this.target = null; this.secondaryTarget = null; this.targetSenses = null;
     this.lastKnownTargetPos = null; this.oldLastKnownTargetPos = null; this.predictedTargetPos = null; this._predictedTargetPosWithoutLead = null;
     this.lastHadLOSTimer = 0; this.giveUpTimer = 0; this.classicTargetUpdateTimer = 0;
+    this._standAfresh();
+  }
+
+  /** What the motor held of where it stood, forgotten - the feet stand: the grounding, the destination and the detour
+   *  with its flags and its stuck stamp, the fixed-step accumulator, the knockback, the trail's crumb, the door crouch.
+   *  resumeLive's half that is not the pursuit, and the half of FIELD BUGS 2026-10-16b INDOOR-WATCH's stand (a watchman
+   *  the host puts past the wall that stopped him) that is not the route - AUDIT W4: the stand had kept its own shorter
+   *  list, and a watchman crouched at that wall was stood crouched. One list, so the two never drift. */
+  _standAfresh() {
+    this.lastGroundedY = this.feet[1]; this._airborne = false; this.velY = 0; this.landedFall = 0;
     this.destination = [this.feet[0], this.feet[1], this.feet[2]]; this.detourDestination = [this.feet[0], this.feet[1], this.feet[2]];
     this.obstacleDetected = false; this.fallDetected = false; this.foundUpwardSlope = false; this.foundDoor = false;
     this.avoidObstaclesTimer = 0; this.checkingClockwiseTimer = 0; this.didClockwiseCheck = false; this.lastTimeWasStuck = -Infinity;

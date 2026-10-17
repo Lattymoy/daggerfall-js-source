@@ -27,6 +27,7 @@ import { CLASSIC_MINUTES_PER_SECOND } from '../../src/systems/worldTick.js';
 import { PERSON_MOVE_SPEED } from '../../src/characters/mobile/mobilePerson.js';
 import { livesLine } from '../../src/ui/familyPages.js';
 import { synthTown } from '../lwTown.mjs';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const rd = (f) => readFileSync(new URL(`../../${f}`, import.meta.url), 'utf8');
 const entity = (over = {}) => ({
@@ -407,9 +408,9 @@ test('LEGACY-HOME: the town reads the line beside its census - the same day\'s p
 // ---- the wiring -----------------------------------------------------------------------------------------------------
 
 test('LEGACY-HOME wiring: the town\'s extra people are the host\'s; a family house holds the line only; a kin slain is the record\'s; the talk door meets them first; their own head in the window', () => {
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   // PIN MOVED (LEGACY5): and the census's own record of a spouse who wed in
-  assert.match(w, /extraPeople: \(day, town\) => legacyHost\?\.residentsOf\(livingTown\.mapId, \(seed\) => town\.homeFor\(seed\), \(id\) => town\.residents\.find\(\(r\) => r\.id === id\) \?\? null\) \?\? null,/);
+  assert.match(w, /extraPeople: \(day, town\) => host\.legacyHost\?\.residentsOf\(livingTown\.mapId, \(seed\) => town\.homeFor\(seed\), \(id\) => town\.residents\.find\(\(r\) => r\.id === id\) \?\? null\) \?\? null,/);
   assert.match(w, /if \(legacyHost\?\.isFamilyHouse\(\{ mapId: b\.townMapId \?\? 0, buildingKey: b\.buildingKey \}\)\) return \{ key: b\.buildingKey, town, only: isFamilyRes \};/);
   assert.match(w, /return modes\?\.interiorCtx\?\.ownedRoom \? null : \{ key: b\.buildingKey, town \};/, 'AUDIT-E1 stands for every other room of the player\'s');
   assert.match(w, /if \(isFamilyRes\(res\)\) return false;   \/\/ LEGACY-HOME/);

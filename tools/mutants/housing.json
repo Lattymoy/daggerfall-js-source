@@ -303,7 +303,7 @@
   },
   {
     "name": "HOME-LOOK-the-home-merged",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "          if (!entry._home && !isCityGate(placed.modelIdNum) && cpu.normals && cpu.uvs) {",
     "new": "          if (!isCityGate(placed.modelIdNum) && cpu.normals && cpu.uvs) {",
     "tests": [
@@ -660,7 +660,7 @@
   },
   {
     "name": "HOME-LOOK-the-unpainted-unmerged",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "          if (homeRow && (homeLook || homeRow.mine || homeRow.keeper)) {",
     "new": "          if (homeRow) {",
     "tests": [
@@ -669,8 +669,8 @@
   },
   {
     "name": "HOME-LOOK-the-builds-version-spent",
-    "file": "src/scenes/world.js",
-    "old": "    if (homeTown) _homeLookV = -1;",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "    if (homeTown) host._homeLookV = -1;",
     "new": "    if (homeTown) void 0;",
     "tests": [
       "test/net/homelook.test.js"

@@ -1429,8 +1429,8 @@ export function spendBlow(p, now, seq = null, who = '') {
 }
 /** WB11b: a blow's purse - `d` capped a blow (HIT_CAP_X), by the bucket and by what is `left` of the body it meets; the
  *  clipping counted, what lands dealt. Answers what landed. SD8a: exported - and the same purse. */
-export function spendPurse(p, d, left, now) {
-  const ref = dpsRef(p.lv);
+export function spendPurse(p, d, left, now, bx = 1) {
+  const ref = dpsRef(p.lv) * bx;   // EG-FULL (Elite-Gates.md section 15, THE TRUST LAW): a Spire member's bucket grows by their Vestiges' declared factor (at most 1.25); every other caller's is the gate's own (1)
   p.bucket = Math.min(BUCKET_DEPTH_X * ref, p.bucket + (Math.max(0, now - p.bucketAt) / 1000) * BUCKET_RATE_X * ref);
   p.bucketAt = now;
   const got = Math.max(0, Math.min(d, HIT_CAP_X * ref, p.bucket, left));

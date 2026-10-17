@@ -103,17 +103,24 @@ test('audit39 F49: the emissive table is TextureReader.emissiveTextures, verbati
   assert.equal(total, 182, 'every active TextureReader.cs:809-1023 entry, and only those');
 });
 
-test('audit39 F49: the upload arm reuses the ALBEDO, after the window arm, and skips the fire walls', () => {
+// PIN MOVED (EG-ZH, 2026-10-12 - bible/11-Multiplayer/Elite-Gates.md section 11.6, AUDIT EG II L1-1): the fire walls are
+// no longer SKIPPED - GetFireWallColors32 is ported (formats/baseImageFile.js) and the arm takes it, TextureReader.cs:303's
+// `if (settings.archive != FireWallsArchive)` and :309's `else if (hasReferenceTexture)`: every other emissive record
+// still reuses its albedo, and 356 lerps from FIRE_WALL_COLOR at FIRE_WALL_SCALE over the classic albedo, never on a
+// stand-in (test/systems/eliteGates/egz_art.test.js drives it on synthetic bytes).
+test('audit39 F49: the upload arm reuses the ALBEDO, after the window arm, and the fire walls take GetFireWallColors32', () => {
   const s = src('src/scenes/dataPipeline.js');
   // TextureReader.cs:301-308 "Just reuse albedo map for basic colour
   // emission" - the same colour32 that went up as the albedo.
-  assert.match(s, /} else if \(isEmissive\(archive, record\) && archive !== FIRE_WALLS_ARCHIVE\) \{/,
+  assert.match(s, /} else if \(isEmissive\(archive, record\)\) \{/,
     'the `else` is the C#\'s own `&& !isWindow`');
-  assert.match(s, /renderer\.uploadEmissionTexture\(archive, record, color32, \{ white: true, replacement \}\);/);   // AUDIT RETRO1 A4: a replacement's albedo reused, flagged as the albedo is
+  assert.match(s, /\n\s*else renderer\.uploadEmissionTexture\(archive, record, color32, \{ white: true, replacement \}\);/);   // AUDIT RETRO1 A4: a replacement's albedo reused, flagged as the albedo is
+  assert.match(s, /if \(archive === FIRE_WALLS_ARCHIVE\) \{ if \(!t\.vendor\) \{ const classic = swap \? t\.getColor32\(bitmap, opaque \? -1 : 0\) : color32; renderer\.uploadEmissionTexture\(archive, record, t\.getFireWallColors32\(classic\.colors, classic\.width, classic\.height, FIRE_WALL_COLOR, FIRE_WALL_SCALE\), \{ white: true, replacement \}\); \}/, 'EG-ZH: the fire walls\' own arm, over the classic albedo, never a stand-in\'s');
   // An animated flat is uploaded frame by frame and the billboard path
   // looks the mask up under that same composite key, so a torch's every
   // frame needs one.
   assert.match(s, /renderer\.uploadEmissionTexture\(archive, key, color32, \{ white: true, replacement \}\);/);   // AUDIT RETRO1 F2
+  assert.match(s, /} else if \(isEmissive\(archive, record\) && !t\.vendor\) \{[\s\S]{0,200}const classic = swapFrame \? t\.getColor32\(bitmap, 0\) : color32;\s*renderer\.uploadEmissionTexture\(archive, key, t\.getFireWallColors32\(/, 'EG-ZH: and a fire wall\'s frame takes its own');
 });
 
 test('audit39 F49: an auto-emissive mask wears Color.white, a window mask wears the window style', () => {

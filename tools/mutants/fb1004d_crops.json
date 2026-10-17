@@ -113,7 +113,7 @@
   },
   {
     "name": "CROPS-15-world-host-no-solids",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "const blockFlats = collectBlockFlats(b.dfBlock, natureArchive, { climateIndex: maps.getClimateIndex(px, py), solid: blockSolids(b.layout.models, (m) => (m.enhancedOnly && !isEnhanced() ? null : cpuModels.get(m.modelIdNum))) });",
     "new": "const blockFlats = collectBlockFlats(b.dfBlock, natureArchive, { climateIndex: maps.getClimateIndex(px, py), solid: null });",
     "tests": ["test/world/fb1004d_crops.test.js"],

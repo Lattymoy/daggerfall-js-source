@@ -23,15 +23,15 @@
   {
     "name": "SHIPSTORE-owned-cupboard-not-storage",
     "file": "src/scenes/worldModes.js",
-    "old": "loot: { items: () => c.items, storage: !privateProperty },",
-    "new": "loot: { items: () => c.items },",
+    "old": "loot: { items: () => c.items, storage: !privateProperty, stolenFrom: before },",
+    "new": "loot: { items: () => c.items, stolenFrom: before },",
     "tests": ["test/systems/item/shipstore.test.js"]
   },
   {
     "name": "SHIPSTORE-stranger-cupboard-is-storage",
     "file": "src/scenes/worldModes.js",
-    "old": "loot: { items: () => c.items, storage: !privateProperty },",
-    "new": "loot: { items: () => c.items, storage: true },",
+    "old": "loot: { items: () => c.items, storage: !privateProperty, stolenFrom: before },",
+    "new": "loot: { items: () => c.items, storage: true, stolenFrom: before },",
     "tests": ["test/systems/item/shipstore.test.js"]
   },
   {

@@ -10,6 +10,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { naturePicture, seasonPictureKey } from '../../src/world/naturePicture.js';
 import { billboardSize } from '../../src/world/rmbFlats.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const root = new URL('../..', import.meta.url).pathname;
 const T = { recordCount: 32, getSize: () => ({ width: 40, height: 120 }), getScale: () => ({ width: 0, height: 0 }) };
@@ -54,8 +55,8 @@ test('naturePicture: else the season\'s picture - uploaded whole under the insta
 const walk = (dir) => readdirSync(join(root, dir), { withFileTypes: true }).flatMap((d) => (d.isDirectory() ? walk(join(dir, d.name)) : d.name.endsWith('.js') ? [join(dir, d.name)] : []));
 
 test('THE ONE CONSTRUCTION SEAM: every host that stands a nature flat asks the one choice - the town\'s pixels, a location\'s flats, a yard\'s tree - and no file in src/ makes it for itself: none writes the season\'s key, asks which archives Low Poly Trees stands, or asks the door for a far picture (mutants: NATUREPIC-world-unwired, NATUREPIC-exterior-unwired)', () => {
-  const read = (p) => readFileSync(join(root, p), 'utf8');
-  assert.match(read('src/scenes/world.js'), /await naturePicture\(\{ door: lowPolyTrees, seasons: seasonsActive \? seasons : null, renderer, uploadRecord \}, t, archive, record\)/, 'the town\'s pixels: the season while the mod stands one');
+  const read = (p) => hostText(p);
+  assert.match(hostText('src/scenes/world.js'), /await naturePicture\(\{ door: lowPolyTrees, seasons: host\.seasonsActive \? seasons : null, renderer, uploadRecord \}, t, archive, record\)/, 'the town\'s pixels: the season while the mod stands one');
   assert.match(read('src/scenes/exterior.js'), /await naturePicture\(\{ door: lowPolyTrees, seasons, renderer, uploadRecord \}, t, archive, record\)/, 'a location\'s flats');
   // WINDFALL1 (PIN MOVED): the yard reads its season once - for the picture, and for Windfall's table of that picture's atlas
   assert.match(read('src/scenes/yardNature.js'), /const seasons = seasonal\?\.\(\) \?\? null;\n\s*const pic = await naturePicture\(\{ door, seasons, renderer, uploadRecord \}, t, archive, record\)/, 'a yard\'s tree');

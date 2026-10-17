@@ -217,7 +217,7 @@
   },
   {
     "name": "LW5-host-harbour-frame",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "            return { x: b.pos[0] - locOrigin[0] - tr[0], z: b.pos[1] - locOrigin[2] - tr[2] };",
     "new": "            return { x: b.pos[0] - locOrigin[0], z: b.pos[1] - locOrigin[2] };",
     "tests": [

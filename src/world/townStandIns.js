@@ -711,9 +711,8 @@ export function blockHillPatch(seat, models, meshOf, drawn = drawnHillStandIn) {
   seat.lay(patch);
   return patch;
 }
-/** The pack's market stalls: the awning each wears (its fourth material, a cloth of TEXTURE.049 or 449) on a stall the
- *  pack's size - its mesh (ext_city_stall001) 3.2 m across the counter, 4.9 m along it, 4.4 m to the awning's high edge,
- *  at RMBRP_STALL_SCALE. */
+/** The pack's market stalls: the awning each wears (its fourth material, a cloth of TEXTURE.049 or 449) on the pack's
+ *  stall (RMBRP_STALL_FRAME) at RMBRP_STALL_SCALE - 2.4 m across, 3.7 m along, 3.3 m to the back posts' tops. */
 export const RMBRP_STALLS = Object.freeze({
   53100: [49, 5], 53101: [449, 1], 53102: [449, 2], 53103: [449, 3], 53104: [49, 0], 53106: [49, 2], 53107: [49, 3], 53108: [49, 4],
   53109: [49, 5], 53113: [49, 5], 53115: [449, 2], 53117: [49, 0], 53118: [49, 1], 53121: [49, 4], 53122: [49, 5], 53123: [49, 6], 53124: [49, 8],
@@ -723,14 +722,51 @@ export const RMBRP_STALLS = Object.freeze({
  *  from -0.4 to 2.75 m, where the mesh as Unity imports it (x mirrored, as the docks') runs from -2.76 to 0.43 - its high
  *  back on -x, its counter at the origin. */
 export const RMBRP_STALL_SCALE = 0.75;
-const STALL_WOOD = [67, 1];
-function stall(cloth) {
-  const m = new MeshBuilder(), x0 = -2.75, x1 = 0.4, z0 = -2.48, z1 = 2.4;   // the back (the awning's high edge) and the counter's front, the mesh's metres
-  for (const [x, top] of [[x0 + 0.08, 4.3], [x1 - 0.08, 2.5]]) for (const z of [z0 + 0.08, z1 - 0.08]) m.box(STALL_WOOD, [x, top / 2, z], [0.12, top, 0.12], 0.6);
-  m.box(STALL_WOOD, [x1 - 0.35, 0.5, (z0 + z1) / 2], [0.6, 1.0, z1 - z0 - 0.3], 0.6);   // the counter
-  m.box(STALL_WOOD, [x0 + 0.5, 0.35, (z0 + z1) / 2], [0.8, 0.7, z1 - z0 - 0.4], 0.6);   // the bench of goods at the back
-  const hi = 4.4, lo = 2.45, n = [lo - hi, -(x1 - x0), 0], l = Math.hypot(...n);
-  m.sheet(cloth, [x0, hi, z0], [x0, hi, z1], [x1, lo, z1], [x1, lo, z0], [-n[0] / l, -n[1] / l, 0], [[0, 0], [2.5, 0], [2.5, -1.6], [0, -1.6]]);
+/** FIELD BUGS 2026-10-16b STALL-SHAPE: THE PACK'S STALL, MEASURED - ext_city_stall001-013 (the mesh of 53099-53112) off
+ *  the pack's published FBX (Assets/Meshes/Market), in its metres as Unity imports it (x mirrored), before
+ *  RMBRP_STALL_SCALE. Four posts 0.375 m square - `back` and `front` their x, `sides` their z, `tops` the back pair's and
+ *  the front pair's; a beam across the back pair and a lintel across the front pair, each [its underside, its top]; the
+ *  awning laid from the beam's top down to the lintel's, cloth `valance` deep under each of its sides and over the
+ *  beam's face and the lintel's (the lintel's fringe the front's headroom, 2.17 m at the prefab's scale); and a counter
+ *  at the front, its top 1.04 m over the origin - where its author lays the goods. The posts stand on the origin (the
+ *  pack's run 0.112 under it: its author's stalls stand 0.025 under the street). The outer faces stand where TEMPLE-STEPS
+ *  measured the box - the back at -2.75 (the pack's -2.757), the counter's front at 0.4 (0.43), the back posts' tops at
+ *  4.4 (4.388), the far side at 2.4 (2.395), never 3 cm off: the box a yard's saved stall is placed by. The stand-in had
+ *  been posts 0.12 m thick, a counter 0.75 m high and 0.45 m deep at the front's foot (the author's goods 0.3 m over it,
+ *  or off its back over nothing), the awning's low edge at 1.84 m (the pack's lintel 2.26 m) and a bench 0.53 m high
+ *  where the stall-keeper stands - 20 of the 30 the author laid stood inside it. */
+export const RMBRP_STALL_FRAME = Object.freeze({
+  back: Object.freeze([-2.75, -2.382]), front: Object.freeze([-0.257, 0.118]),
+  sides: Object.freeze([Object.freeze([-2.48, -2.105]), Object.freeze([2.02, 2.4])]), tops: Object.freeze([4.4, 3.638]),
+  beam: Object.freeze([3.76, 4.138]), lintel: Object.freeze([3.01, 3.388]), valance: 0.5,
+  counter: Object.freeze({ x: Object.freeze([-1.07, 0.4]), z: Object.freeze([-1.792, 1.708]), top: 1.388 }),
+});
+/** STALL-SHAPE: the pack's other stall - ext_city_stall014-025, the mesh of every prefab from 53113 on: the same frame
+ *  0.2 m further back, 0.206 up and 0.066 across (its posts still on the origin), and no counter - its author lays the
+ *  goods on the ground under it, where the stand-in's counter had buried them. */
+export const RMBRP_STALL_OPEN_FIRST = 53113;
+export const RMBRP_STALL_OPEN_SHIFT = Object.freeze([-0.2, 0.206, 0.066]);
+const STALL_WOOD = [67, 1], STALL_FRINGE = [49, 9];   // STALL-SHAPE: the valance the prefab's own (its material 1)
+function stall(cloth, open = false) {
+  const F = RMBRP_STALL_FRAME, [dx, dy, dz] = open ? RMBRP_STALL_OPEN_SHIFT : [0, 0, 0], m = new MeshBuilder();
+  const X = (v) => v + dx, Y = (v) => v + dy, Z = (v) => v + dz;
+  const block = (tex, [x0, x1], [y0, y1], [z0, z1]) => m.box(tex, [(x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2], [x1 - x0, y1 - y0, z1 - z0], 0.5);
+  for (const side of F.sides) {
+    block(STALL_WOOD, F.back.map(X), [0, Y(F.tops[0])], side.map(Z));
+    block(STALL_WOOD, F.front.map(X), [0, Y(F.tops[1])], side.map(Z));
+  }
+  const near = Z(F.sides[0][0]), far = Z(F.sides[1][1]), inner = [Z(F.sides[0][1]), Z(F.sides[1][0])], v = F.valance;
+  const [bx, fx, by, fy] = [X(F.back[1]), X(F.front[0]), Y(F.beam[1]), Y(F.lintel[1])], run = Math.hypot(fx - bx, fy - by);
+  block(STALL_WOOD, [X(F.back[0]) + 0.01, bx], F.beam.map(Y), inner);    // the beam and the lintel, each a hair inside its fringe
+  block(STALL_WOOD, [fx, X(F.front[1]) - 0.005], F.lintel.map(Y), inner);
+  const across = inner[1] - inner[0], hem = [[0, 0], [0, -across], [1, -across], [1, 0]];
+  for (const [x, top, nx] of [[X(F.back[0]), by, -1], [X(F.front[1]), fy, 1]]) {
+    m.sheet(STALL_FRINGE, [x, top - v, inner[0]], [x, top - v, inner[1]], [x, top, inner[1]], [x, top, inner[0]], [nx, 0, 0], hem);
+  }
+  // the awning, its normal up its slope, and a valance under each side
+  m.sheet(cloth, [bx, by, near], [bx, by, far], [fx, fy, far], [fx, fy, near], [(by - fy) / run, (fx - bx) / run, 0], [[0, 0], [(far - near) / 2, 0], [(far - near) / 2, -run / 2], [0, -run / 2]]);
+  for (const [z, nz] of [[near, -1], [far, 1]]) m.sheet(STALL_FRINGE, [bx, by - v, z], [fx, fy - v, z], [fx, fy, z], [bx, by, z], [0, 0, nz], [[0, 0], [0, -run], [1, -run], [1, 0]]);
+  if (!open) block(STALL_WOOD, F.counter.x, [0, F.counter.top], F.counter.z);
   const built = m.build();
   for (let i = 0; i < built.positions.length; i++) built.positions[i] *= RMBRP_STALL_SCALE;   // a uniform scale: the normals and the winding hold
   return built;
@@ -845,7 +881,7 @@ function dockSteps() {
 export const RMBRP_PIECES = Object.freeze({
   ...Object.fromEntries(Object.keys(RMBRP_ROCKS).map((id) => [id, () => rockMesh(id)])),   // TEMPLE-STEPS: each over its mesh's box, at its prefab's scale
   ...Object.fromEntries(Object.entries(RMBRP_HILLS).map(([id, surface]) => [id, () => hillMesh(RMBRP_HILL_SHAPES[id], surface)])),   // HILL-SHAPES
-  ...Object.fromEntries(Object.entries(RMBRP_STALLS).map(([id, cloth]) => [id, () => stall(cloth)])),
+  ...Object.fromEntries(Object.entries(RMBRP_STALLS).map(([id, cloth]) => [id, () => stall(cloth, Number(id) >= RMBRP_STALL_OPEN_FIRST)])),   // STALL-SHAPE: the pack's two meshes
   53160: platform,
   53170: foundation,
   // FIELD BUGS 2026-10-04d DOMES: 53182's pictures its RuntimeMaterials' three; 53187's names only its dome (38_1), its

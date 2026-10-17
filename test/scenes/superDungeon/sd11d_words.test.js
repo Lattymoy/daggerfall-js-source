@@ -452,7 +452,7 @@ test('SD11d THE HOUR\'S OWN VEIL (L6 F8; Mac, of the Hour: "not oblivion, someth
   assert.match(WM, /async function stepThroughFire\(go, look = 'fire', opts = undefined\) \{[\s\S]{0,200}if \(veil\) await veil\.cover\(look, opts\);/);
   assert.equal((W.match(/\}, 'hourIn'\);/g) ?? []).length, 1, 'the Rift\'s step in');
   assert.equal((W.match(/\}, 'hourBack'\);/g) ?? []).length, 1, 'the way back');
-  assert.equal((W.match(/gateVeil\?\.flash\('hourCast'\)/g) ?? []).length, 3, 'a death, the cast-out, the Hour\'s eject');
+  assert.equal((W.match(/gateVeil\?\.flash\('hourCast'\)/g) ?? []).length, 4, 'a death, the cast-out, the Hour\'s eject, a death in an Elite Breach (EG-PLAY, PIN MOVED)');
   assert.equal((W.match(/gateVeil\?\.flash\('hourHome'\)/g) ?? []).length, 1, 'the way home');
   assert.match(W, /if \(hour\) gateVeil\?\.flash\('hourCast'\);[^\n]*\n\s*sdSay\(SD_CAST_OUT_LINE\);/, 'the cast-out from the Hour, never from the Hollow');
 });

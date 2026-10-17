@@ -92,11 +92,12 @@
   {
     "name": "SERPENT5-the-paint",
     "file": "src/ui/playerBadge.js",
-    "old": "maelstrom: 'coilbreaker' });",
-    "new": "maelstrom: 'hourbreaker' });",
+    "old": "maelstrom: 'coilbreaker', beaconlight:",
+    "new": "maelstrom: 'hourbreaker', beaconlight:",
     "tests": [
       "test/net/serpent/serpent5_honours.test.js"
-    ]
+    ],
+    "note": "The fifth merge of main (re-aimed by content): the Spire's three after the Maelstrom in AURA_PAINT."
   },
   {
     "name": "SERPENT5-popped-when-held",

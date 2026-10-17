@@ -11,7 +11,7 @@ import { TextureFile } from '../formats/textureFile.js'; import { changeMask } f
 import { FlatsFile } from '../formats/flatsFile.js';   // NPC1: captions + portrait indices
 import { isExteriorWindow } from '../world/climateSwaps.js';
 import { isInteriorGlassArchive, interiorGlassMask } from '../world/interior/interiorGlass.js';   // RW1: an interior's own glass
-import { isEmissive, FIRE_WALLS_ARCHIVE } from '../world/emissiveTextures.js';   // TextureReader's auto-emissive table (lit lanterns, fireplaces, fire daedra)
+import { isEmissive, FIRE_WALLS_ARCHIVE, FIRE_WALL_COLOR, FIRE_WALL_SCALE } from '../world/emissiveTextures.js';   // TextureReader's auto-emissive table (lit lanterns, fireplaces, fire daedra)
 import { dfMeshToModel } from '../world/meshReader.js'; import { patchSeams } from '../world/arch3dSeams.js';   // DUNGEON-SEAMS (one line: the cites below stand)
 import { fetchBytes, texName } from './shared.js';
 import { decodedTexture, preloadTextureArchive, isVendorArchive, vendorTextureStandIn, setTextureDeriveContext, textureTierEpoch } from '../systems/textureReplacement.js';   // M-TEX: user-supplied textures override the classic ones; AUDIT VE R1: the tiers' epoch
@@ -245,14 +245,18 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
     // window emission in DFU (GetStaticBillboardMaterial), so it gets none.
     if (isExteriorWindow(archive, record) && !t.vendor) {
       renderer.uploadEmissionTexture(archive, record, t.getWindowColors32(bitmap), { replacement, window: true });   // RW1: DFU's window mask - the rooms' glass from the street, the street's from inside (render/realWindows.js)
-    } else if (isEmissive(archive, record) && archive !== FIRE_WALLS_ARCHIVE) {
+    } else if (isEmissive(archive, record)) {
       // AUDIT 39 F49: THE AUTO-EMISSIVE ARM (MaterialReader.cs:419-423
       // -> TextureReader.cs:301-308 "Just reuse albedo map for basic
       // colour emission" -> :448-453 EmissionColor = Color.white). The
       // `!isWindow` is the C#'s own; the white flag keeps the window
       // style off it, so a lit lantern draws its own texels instead of
       // sitting at scene ambient beside the light it casts.
-      renderer.uploadEmissionTexture(archive, record, color32, { white: true, replacement });
+      // EG-ZH: the fire walls (TextureReader.cs:303 `if (settings.archive != FireWallsArchive)` ... :309 `else if
+      // (hasReferenceTexture)`) take GetFireWallColors32 over the CLASSIC albedo (albedoColors is the reference
+      // texture's whether or not a pack's picture was imported over it) - and nothing on a stand-in, which has none.
+      if (archive === FIRE_WALLS_ARCHIVE) { if (!t.vendor) { const classic = swap ? t.getColor32(bitmap, opaque ? -1 : 0) : color32; renderer.uploadEmissionTexture(archive, record, t.getFireWallColors32(classic.colors, classic.width, classic.height, FIRE_WALL_COLOR, FIRE_WALL_SCALE), { white: true, replacement }); } }
+      else renderer.uploadEmissionTexture(archive, record, color32, { white: true, replacement });
     } else if (!t.vendor && isInteriorGlassArchive(archive) && renderer.uploadGlassMask) {
       // RW1: A BUILDING INTERIOR'S OWN GLASS (world/interior/interiorGlass.js interiorGlassMask - the rule's one home): a building
       // set's window wall, its panes read off the classic bitmap against its twin wall. GLASS-ALL: a pack's picture of it
@@ -295,6 +299,10 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
     // billboard path looks the mask up under this same composite key.
     if (isEmissive(archive, record) && archive !== FIRE_WALLS_ARCHIVE) {
       renderer.uploadEmissionTexture(archive, key, color32, { white: true, replacement });
+    } else if (isEmissive(archive, record) && !t.vendor) {
+      // EG-ZH: the fire walls' frame - GetFireWallColors32 over the classic frame's albedo (TextureReader.cs:309-320)
+      const classic = swapFrame ? t.getColor32(bitmap, 0) : color32;
+      renderer.uploadEmissionTexture(archive, key, t.getFireWallColors32(classic.colors, classic.width, classic.height, FIRE_WALL_COLOR, FIRE_WALL_SCALE), { white: true, replacement });
     }
   };
   const gpuMeshes = new Map(); // shared across pixels and places; freed when no place holds one (PLACE-LRU, below)

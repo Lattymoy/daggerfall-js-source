@@ -52,9 +52,10 @@ import { PlayerMotor } from '../../src/player/motor.js';
 import { Collider } from '../../src/player/collider.js';
 import { applyMotorEffectFlags } from '../../src/scenes/shared.js';
 import { exteriorSwimming } from '../../src/player/exteriorSurface.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const src = (rel) => readFileSync(join(root, rel), 'utf8');
+const src = (rel) => hostText(rel);
 
 // PlayerSpeedChanger's own arithmetic, from the C# constants - NOT the
 // port's helpers, so the pin measures the port against the reference

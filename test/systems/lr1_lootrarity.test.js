@@ -480,7 +480,7 @@ test('LR1: the skins - the native cell tints and the tooltip lists, the enhanced
   assert.match(inv, /export function itemPowerLines\(item, d = deps, \{ set = true, lore = true, technique = true \} = \{\}\) \{\n  const lines = rarityLines\(item, \{ sigil: false, set, lore, technique \}\);/, 'the tier\'s lines first');   // PIN MOVED (TECH-CARD): a technique's line kept unless a card draws its block
   assert.match(read('src/ui/worldPlaque.js'), /if \(r\.rarity\) row\.dataset\.rarity = r\.rarity;/);
   assert.match(read('src/ui/native/nativeInventory.js'), /armorLabelValue\(av\[i\] \?\? 100, entityArmorDisplayMod\(this\.hooks\.entity, i\)\)/, 'the doll\'s numbers, per part (RF1)');
-  assert.match(read('src/ui/enhanced/enhancedInventory.js'), /material: parts\.material \|\| null,/, 'LR4: the enhanced row names no material until identified - RF6: the long name\'s own prefix, which an unidentified item has none of');
+  assert.match(read('src/ui/enhanced/enhancedInventory.js'), /material: parts\.material \|\| null,/, 'LR4: the enhanced row reads the long name\'s material part - empty below Rare while unidentified, and the metal for Rare and better armour and weapons (MAT-SHOW)');
 });
 
 test('LR3: the drop chime rings at the body for a Rare or better, never for Magic, never off; the three corpse sites ring it', () => {

@@ -16,6 +16,7 @@ import { loadLocationPrefab } from '../../../src/world/worldOfDaggerfall/wodLoca
 import { decodeRegionPack } from '../../../src/world/worldOfDaggerfall/wodLocationPack.js';
 import { LocationSession } from '../../../src/world/worldOfDaggerfall/wodLocationLoader.js';
 import { transformedAabb } from '../../../src/render/frustum.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const V = new URL('../../../vendor/world-of-daggerfall/', import.meta.url).pathname;
 const src = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
@@ -81,7 +82,7 @@ test('ROCK-SUNK on the real producer: round Hadus a rock field\'s 60610s keep th
 });
 
 test('ROCK-SUNK by source: the WoD loop asks isWodShrub with the pick\'s own site name, and the rock sites are one list', () => {
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /if \(isWodShrub\(m\.modelId, wodPicks\[m\.pick\]\?\.name\)\) \{[^\n]*\n\s+const dy = lowestGroundUnder\(samples, box\) - box\[1\];/);
   assert.match(w, /const rockPick = \(i\) => WOD_ROCK_SITES\.includes\(wodPicks\[i\]\?\.name\);/);
   assert.doesNotMatch(w, /=== 'Rocks'|=== 'Mountains'|WOD_BUSH_MODEL/, 'no second spelling of either');

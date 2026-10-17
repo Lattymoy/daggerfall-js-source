@@ -93,6 +93,7 @@ import { insigniaHeld, insigniaKeys } from '../../src/net/insignia.js';   // WB9
 import { patreonTitlesOf } from './patreon.js';   // PATREON-LINK: a Patreon tier's title, held by the pledge
 import { SD_HONOUR_TITLE, SD_HONOUR_AURA } from './sds.js';   // SD9b: the Hour's grants on the row
 import { SERPENT_HONOUR_TITLE, SERPENT_HONOUR_AURA } from './serpents.js';   // SERPENT5: the Old Coil's grants on the row
+import { EG_HONOUR, EG_HONOUR_TITLES, EG_HONOUR_AURA, EG_CHAMPION_TITLE, EG_FIRST_TITLE, EG_FIRST_AURA } from './egHonours.js';   // EG-E2: the Spire's honours on the row
 import { LAMP_TITLE } from './lamp.js';   // LAMP-KEEPER II: I Love Lamp on the row
 
 /** THE FOUNDER CUTOFF, and it is a date rather than a count because
@@ -165,6 +166,15 @@ export const isHoursFirst = (player, env) =>
   && hoursFirstHandles(env).has(player.handle.toLowerCase());
 /** HOURS-FIRST: the aura Hour's First carries - The Turning Hour in the first dawn's light (render/auraRing.js). */
 export const HOURS_FIRST_AURA = 'firsthour';
+/** EG-E2 (2026-10-12, bible/11-Multiplayer/Elite-Gates.md section 19, THE HONOURS): FIRST OF THE SPIRE - the first company
+ *  ever to take Redoubt 10, by name, granted as Hour's First is: a list in config (wrangler.toml EG_FIRST_HANDLES, empty
+ *  until that company comes), held while listed, never a guest's. The title and its aura, Firstlight. */
+export function egFirstHandles(env) {
+  return handleList(env?.EG_FIRST_HANDLES);
+}
+export const isSpireFirst = (player, env) =>
+  typeof player?.handle === 'string' && !!player.handle
+  && egFirstHandles(env).has(player.handle.toLowerCase());
 
 /** How long the sprout stays on a new account: two weeks, in seconds,
  *  spelled as the arithmetic rather than as 1209600 so a reader can
@@ -239,13 +249,16 @@ export const TIER_LISTS = Object.freeze({
   // aura "also purple, would be a circle of tiny purple squares going up and down out of the ground"): a fifth title made
   // for one player, and a list that grants an aura with it (TIER_AURA, below).
   crystalfist: 'CRYSTAL_FIST_HANDLES',
+  // WIKIMAID (2026-10-17, for SylviaBun: "the WikiMaid title and a purple aura with bunnies would be dope as hell" - "Lets
+  // go all out for this"): a sixth title made for one player, and a list that grants an aura with it (TIER_AURA, below).
+  wikimaid: 'WIKIMAID_HANDLES',
 });
 /** The glyph each of those titles carries, in the vocabulary's words. */
-export const TIER_GLYPH = Object.freeze({ dungeonmaster: 'dm', disciple: 'disciple', apostle: 'apostle', hierophant: 'hierophant', shadowfang: 'shadowfang', penitent: 'penitent', herald: 'herald', aegis: 'aegis', primarch: 'primarch', crystalfist: 'crystalfist' });
+export const TIER_GLYPH = Object.freeze({ dungeonmaster: 'dm', disciple: 'disciple', apostle: 'apostle', hierophant: 'hierophant', shadowfang: 'shadowfang', penitent: 'penitent', herald: 'herald', aegis: 'aegis', primarch: 'primarch', crystalfist: 'crystalfist', wikimaid: 'wikimaid' });
 /** AEGIS: THE AURA A LIST'S TITLE CARRIES, where it carries one - held while the handle is listed, exactly as its glyph
  *  is, and gone on the next token once it is not. A grant like the glyph and unlike the Broker's: derived from the
  *  config at every ask, never a sale recorded on the row. */
-export const TIER_AURA = Object.freeze({ aegis: 'oblivionward', primarch: 'radiance', shadowfang: 'shadowcloak', crystalfist: 'resonance' });   // CRYSTAL-FIST: the Crystal Resonance; PRIMARCH: the Golden Radiance; SHADOW-CLOAK (2026-10-04, the owner, for SirMcMobdon: "I want to build a new unique AURA specifically for his account. A holo shadow cloak with red accents. Extremely detailed"): the Holo Shadow Cloak
+export const TIER_AURA = Object.freeze({ aegis: 'oblivionward', primarch: 'radiance', shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren' });   // WIKIMAID: the Lilac Warren; CRYSTAL-FIST: the Crystal Resonance; PRIMARCH: the Golden Radiance; SHADOW-CLOAK (2026-10-04, the owner, for SirMcMobdon: "I want to build a new unique AURA specifically for his account. A holo shadow cloak with red accents. Extremely detailed"): the Holo Shadow Cloak
 
 /** Does this player hold that list's title? A guest holds none, for the developer's reason. PATREON-LINK (2026-10-01,
  *  Mac: "having to manually hand out titles ... its really hard to keep up with it"): AND a Patreon tier's title is held
@@ -339,6 +352,12 @@ export function titlesHeld(player, env) {
   // SERPENT5: COILBREAKER - rolled on a dealing ship's serpent kill's first write and laid on the row (serpents.js
   // claimSerpent, `serpent_honours`), held for good; a guest's kill is never written, so a guest row holds none
   if (typeof player?.handle === 'string' && player.handle && (Number(player?.serpent_honours) & SERPENT_HONOUR_TITLE)) held.push('coilbreaker');
+  // EG-E2: THE SPIRE'S - the honours a recorded Redoubt wrote on the row (egHonours.js, `eg_honours`), held for good; a
+  // guest's claim is never written. Spire Champion while the row says a Descent bracket's top ten held it last season
+  // (`eg`, egHonours.js withEgHonours); First of the Spire by name
+  if (typeof player?.handle === 'string' && player.handle) for (const t of EG_HONOUR_TITLES) if (Number(player?.eg_honours) & EG_HONOUR[t]) held.push(t);
+  if (player?.eg?.champion === true) held.push(EG_CHAMPION_TITLE);
+  if (isSpireFirst(player, env)) held.push(EG_FIRST_TITLE);
   return held;
 }
 
@@ -358,6 +377,10 @@ export function aurasHeld(player, env) {
   // claimSd, `sd_honours`), held for good; a registered account's alone, as Hourbreaker is
   if (typeof player?.handle === 'string' && player.handle && (Number(player?.sd_honours) & SD_HONOUR_AURA)) held.push('turninghour');
   if (isHoursFirst(player, env) && !held.includes(HOURS_FIRST_AURA)) held.push(HOURS_FIRST_AURA);   // HOURS-FIRST: with the title, by name
+  // EG-E2: the Spire's two auras with their titles' bits (Kynbane's Beaconlight, Wellhead-Walker's The Burning Stair), a
+  // registered account's alone; Firstlight with First of the Spire, by name
+  if (typeof player?.handle === 'string' && player.handle) for (const [t, a] of Object.entries(EG_HONOUR_AURA)) if ((Number(player?.eg_honours) & EG_HONOUR[t]) && !held.includes(a)) held.push(a);
+  if (isSpireFirst(player, env) && !held.includes(EG_FIRST_AURA)) held.push(EG_FIRST_AURA);
   for (const a of insigniaKeys(player?.insignia, 'aura')) if (!held.includes(a)) held.push(a);
   // SERPENT5: THE MAELSTROM - the Old Coil's second grant, laid on the row as Coilbreaker is, held for good
   if (typeof player?.handle === 'string' && player.handle && (Number(player?.serpent_honours) & SERPENT_HONOUR_AURA)) held.push('maelstrom');

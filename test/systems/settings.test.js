@@ -22,10 +22,11 @@ import { loiterLimitHours, cannotLoiterLines } from '../../src/systems/rest/rest
 import { assignStartingGear } from '../../src/systems/startingGear.js';
 import { isWalletItem } from '../../src/systems/walletItem.js';   // WALLET1: the port's own tail's wallet, set aside from DFU's bag
 import { lookScale, lookInvert, LOOK_BASE } from '../../src/ui/lookSettings.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const vendored = () => readFileSync(join(root, 'vendor/dfu-settings/defaults.ini.txt'), 'utf8');
-const src = (f) => readFileSync(join(root, 'src', f), 'utf8');
+const src = (f) => hostText(`src/${f}`);
 
 test('settings: the BAKE is the vendored file - a stale bake fails here', () => {
   // scripts/bakeSettings.mjs generates settingsDefaults.js from the

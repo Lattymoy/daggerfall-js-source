@@ -183,7 +183,7 @@
   },
   {
     "name": "VERGE1-before-it-painted",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "const vergeNet = verges && withRoads ? terrainGen.roads() : null;",
     "new": "const vergeNet = verges ? terrainGen.roads() : null;",
     "tests": [
@@ -201,7 +201,7 @@
   },
   {
     "name": "VERGE1-site-flat-its-root",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "WOD_PIECE_ROAD_CLEAR / UNITS_PER_METRE + ((await halfWidthsOf(f.archive))[f.record] ?? 0) * f.scale.x)",
     "new": "WOD_PIECE_ROAD_CLEAR / UNITS_PER_METRE)",
     "tests": [

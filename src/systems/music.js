@@ -86,6 +86,10 @@ export class MusicService {
   /** MIDI-OUT1: is the music on a device? */
   get midiOut() { return this._midiOut; }
 
+  /** EG-G2 (bible/11-Multiplayer/Elite-Gates.md section 26, THE SPIRE MIX): duck what sounds `db` decibels for `seconds`
+   *  (systems/song/songPlayer.js SongPlayer.duck - a MIDI device or a replacement track is not ducked). */
+  duck(db, seconds) { this.player?.duck?.(db, seconds); }
+
   /** Re-level whatever is sounding to the MusicVolume setting. */
   resyncGain() {
     this.player?.resyncGain?.();

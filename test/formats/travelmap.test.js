@@ -12,6 +12,7 @@ import { fileURLToPath } from 'node:url';
 import { TravelPopUpWindow, POPUP_RECTS, TOGGLE_POS, TOGGLE_SIZE, TRAVEL_TOGGLE_COLOR, LABEL_POS, COUNTDOWN_TICK } from '../../src/ui/travel/travelPopUp.js';
 import { CLIMATES } from '../../src/formats/mapsFile.js';
 import { FNT_ASCII_START } from '../../src/formats/fntFile.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -223,7 +224,7 @@ test('U41 popup: EXIT closes without travelling, and Escape is the same door', (
 });
 
 test('U41: the world host mounts the art window and keeps performFastTravel\'s order', () => {
-  const src = readFileSync(join(root, 'src/scenes/world.js'), 'utf8');
+  const src = hostText('src/scenes/world.js');
   // U43 lifted the overlay/mode gate to cover the whole ladder at once
   // - the same ladder the large HUD's map panel reaches through
   // hudCtx, whose RIGHT click is the travel map - so the pin follows

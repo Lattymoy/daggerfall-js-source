@@ -142,6 +142,7 @@ import { applySpell } from '../../src/systems/effects.js';
 import { buildCustomSpell, blankEffectSettings } from '../../src/systems/spell/spellMaker.js';
 import { effectByKey } from '../../src/systems/spell/spellEffects.js';
 import { detectedMarkers, hasLiveDetector, DETECT_KIND_FLAG } from '../../src/systems/nearbyObjects.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const player = () => ({
   stats: { luck: 50, willpower: 50 }, skills: [], activeEffects: [],
@@ -269,7 +270,7 @@ test('FX1 (F207): the OUTDOOR feeds carry loot pools - piles and corpses mark ab
     // see is a container Detect Treasure says is not there.
     ['src/scenes/exterior.js', 'exteriorFoePool()'],
   ]) {
-    const s = readFileSync(join(ROOT2, p), 'utf8');
+    const s = hostText(p);
     assert.ok(s.includes(`nearbyLootRecords({ piles: droppedLoot._piles, foes: ${foes} })`),
       `${p} feeds the world piles AND its corpse containers`);
     assert.ok(!s.includes('There are no loot PILES above ground'), `${p}: the false premise is gone`);

@@ -17,6 +17,7 @@ import { raceWinner } from '../../src/player/activationRace.js';
 import { collectCityLights } from '../../src/world/city/cityLights.js';
 import { collectInteriorLights } from '../../src/world/interior/interiorLights.js';
 import { createCamps } from '../../src/scenes/camps.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const open = { raycast: () => Infinity };
@@ -87,8 +88,8 @@ test('FIX-D: every collector hands the sprite it placed, in its own frame', () =
   assert.deepEqual(collectHearths([il]), [{ x: 1, y: il.y, z: 3, foot: 2, w: size.w, h: size.h }]);
   // the hosts: each passes it on, in its own frame
   assert.match(read('src/scenes/exterior.js'), /cityHearths\.push\(\{ \.\.\.l, foot: light\.foot, w: light\.w, h: light\.h \}\)/);
-  assert.match(read('src/scenes/world.js'), /pixelHearths\.push\(\[lp\[0\], lp\[1\], lp\[2\], locLocal\[1\] \+ light\.foot, light\.w, light\.h\]\)/, 'pixel-local, like the flame');
-  assert.match(read('src/scenes/world.js'), /e\.foot = h\[3\] \+ t\[1\]; e\.w = h\[4\]; e\.h = h\[5\];/, 'and through the floating origin with it');
+  assert.match(hostText('src/scenes/world.js'), /pixelHearths\.push\(\[lp\[0\], lp\[1\], lp\[2\], locLocal\[1\] \+ light\.foot, light\.w, light\.h\]\)/, 'pixel-local, like the flame');
+  assert.match(hostText('src/scenes/world.js'), /e\.foot = h\[3\] \+ t\[1\]; e\.w = h\[4\]; e\.h = h\[5\];/, 'and through the floating origin with it');
   assert.match(read('src/scenes/interiorContext.js'), /foot: parentPt\(l\.x, l\.foot, l\.z\)\[1\]/, 'the interior’s foot goes into the parent frame too');
   assert.match(read('src/scenes/dungeonContext.js'), /foot: size \? f\.y - size\.h \/ 2 : undefined, w: size\?\.w, h: size\?\.h/, 'a dungeon flat’s y is its centre');
 });

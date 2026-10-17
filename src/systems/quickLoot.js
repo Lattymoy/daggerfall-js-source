@@ -240,7 +240,10 @@ export function quickLootWheel(deltaY) {
  *  spent looking at a door does not arrive later at a chest. */
 export function foldQuickLoot(frame) {
   const verbs = frame?.kind === 'actions';
-  _sel = (verbs || quickLootOn()) ? nextSelection(_sel, frame, _nudge) : null;
+  // CONTAINER-PEEK: a cupboard's rows are a glance. Lighting one would arm P and J for a take the press does not
+  // make (the private-property question, the storage window), and the armed take would land on the next pile.
+  const take = frame?.kind === 'items' && !frame.preview;
+  _sel = (verbs || (take && quickLootOn())) ? nextSelection(_sel, frame, _nudge) : null;
   _actionIds = verbs && _sel ? frame.rows.map((r) => r.id) : null;
   _lastKey = _sel ? frame.key : null;
   _nudge = 0;

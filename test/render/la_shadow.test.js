@@ -28,6 +28,7 @@ import {
 import { CityLightAnimator, sunDirection } from '../../src/world/worldClock.js';
 import { lanternSlot, nearestLights, capFadeColors, LIGHT_CAP_FADE, fillLanternPool } from '../../src/world/city/cityLights.js';
 import { transformPoint } from '../../src/world/mat4.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const I = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
@@ -305,7 +306,7 @@ test('LA-LIGHTS1: EACH LANTERN FLICKERS ON ITS PIXEL\'S SLOTS - a pixel streamed
   assert.notEqual(lanternSlot(110, 220), lanternSlot(111, 220)); assert.notEqual(lanternSlot(110, 220), lanternSlot(110, 221));
   assert.equal(lanternSlot(110, 220), lanternSlot(110, 220), 'named by the pixel alone');
   // the host: the street fills its pool by fillLanternPool from the animator's ranges, and the selection reads the pool's own ranges
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /const _pool = fillLanternPool\(built\.values\(\), \(p\) => state\.pixelTranslation\(p\.px, p\.py, _lightT\), _sceneLights, _litRanges, worldLightAnimator\.ranges, festivalStage \? festivalStage\.lanterns : null\);/);   // FESTIVAL-STAGE: and a Festival town's lanterns
   assert.match(w, /_litRanges = _pool\.ranges;/);
   assert.match(w, /nearestLights\(_sceneLights, cam\.pos, renderer\.maxPointLights \+ \(renderer\.lightingLane \? 1 : 0\), _litRanges, null, 0, n\)/);
@@ -378,7 +379,7 @@ test('LA-LIGHTS2: A WALK THROUGH A NIGHT TOWN - with the cap cutting every frame
 });
 
 test('LA-LIGHTS2: the host - on the lane the street picks one lantern past the cap and hands the renderer the faded colours; classic picks the cap and fades nothing; the hand lights ride the call they always did', () => {
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /const _lanterns = wodSel \? null : nearestLights\(_sceneLights, cam\.pos, renderer\.maxPointLights \+ \(renderer\.lightingLane \? 1 : 0\), _litRanges, null, 0, n\);/);
   assert.match(w, /const lit = withPlayerLights\(wodSel \? wodSel\.data : _lanterns,/);
   assert.match(w, /else renderer\.setPointLights\(lit, CITY_LIGHT_COLOR_F32, renderer\.lightingLane \? capFadeColors\(lit, lit\.length \/ 4 - _lanterns\.length \/ 4, cam\.pos, renderer\.maxPointLights, CITY_LIGHT_COLOR_F32\) : null\);/);

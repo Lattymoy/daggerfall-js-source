@@ -45,9 +45,19 @@ const EMISSIVE = new Map([
 
 /** TextureReader.cs:38/:303 - the Mantellan Crux fire walls take the
  *  GetFireWallColors32 arm instead of "reuse the albedo", and only when
- *  a reference texture is present; the port has neither, so the table
- *  stays verbatim and the upload arm skips this archive. */
+ *  a reference texture is present (the player's own TEXTURE.356 - never a
+ *  mod's stand-in). EG-ZH (2026-10-12, Elite-Gates.md section 11.6): the
+ *  arm is ported (formats/baseImageFile.js getFireWallColors32) and both
+ *  upload arms take it (scenes/dataPipeline.js), the Spire's fire falls
+ *  its first consumer. */
 export const FIRE_WALLS_ARCHIVE = 356;
+/** TextureReader.cs:312 - the fire walls' neutral colour, a Unity Color:
+ *  "Average of dim frame (0)" (the two commented-out averages beside it,
+ *  of frames 1 and 3 and of frame 2, stay out, as in the C#). */
+export const FIRE_WALL_COLOR = Object.freeze([0.706, 0.271, 0.086]);
+/** TextureReader.cs:315 - GetFireWallColors32's scale: 0.3f of the way
+ *  from the neutral colour toward each texel's own. */
+export const FIRE_WALL_SCALE = 0.3;
 
 /** Verbatim TextureReader.IsEmissiveArchive. */
 export function isEmissiveArchive(archive) {

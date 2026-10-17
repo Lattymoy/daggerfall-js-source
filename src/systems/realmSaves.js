@@ -134,9 +134,15 @@ export const realmLineages = async (/** @type {any} */ io) => {
 export const realmLineagePut = (/** @type {any} */ io, /** @type {string} */ id, /** @type {any} */ record, /** @type {number|null} */ base = null) =>
   realmAsk(io, '/v1/realm/lineage', { method: 'POST', json: base == null ? { id, record } : { id, record, base } });
 /** LEGACY7: THE TOMBSTONE - the playing tab's character fallen for good, under its lease. Part three: `why` 'retired' -
- *  an elder's mantle passed, which keeps a union with another player's character (a death ends it). */
-export const realmDie = (/** @type {any} */ io, /** @type {string} */ id, /** @type {string} */ lease, /** @type {'fell'|'retired'} */ why = 'fell') =>
-  realmAsk(io, '/v1/realm/die', { method: 'POST', json: why === 'retired' ? { id, lease, why } : { id, lease } });
+ *  an elder's mantle passed, which keeps a union with another player's character (a death ends it). REZ-BLOODLINE AUDIT
+ *  R1: `hold` - the death door's fall, held for a party's Resurrect (server-account/src/legacy.js realmDie). */
+export const realmDie = (/** @type {any} */ io, /** @type {string} */ id, /** @type {string} */ lease, /** @type {'fell'|'retired'} */ why = 'fell', { keepalive = false, hold = false } = {}) =>
+  realmAsk(io, '/v1/realm/die', { method: 'POST', json: why === 'retired' ? { id, lease, why } : hold ? { id, lease, hold: true } : { id, lease }, keepalive });   // REZ-BLOODLINE: `keepalive` for the page's going, as a leave
+/** REZ-BLOODLINE AUDIT R1: A PARTY'S RESURRECT, ASKED OF THE REALM - the death at `diedAt` (the line's `died.at`) of the
+ *  character under the lease that fell, taken back inside the hold (server-account/src/legacy.js realmRaise): `{ ok, data:
+ *  { held } }` or a refusal ('raise-late', 'lease', 'not-dead', 'raise-no-line'). */
+export const realmRaise = (/** @type {any} */ io, /** @type {string} */ id, /** @type {string} */ lease, /** @type {number} */ diedAt) =>
+  realmAsk(io, '/v1/realm/raise', { method: 'POST', json: { id, lease, diedAt } });
 /** LEGACY7 part three: MY HALF OF ONE WEDDING - my character under its lease, the handshake `sid`, the other's account
  *  and realm character as the relay stamped them (AUDIT LEGACY III O1): `{ ok, data: { wed: false } }` (mine waits for
  *  theirs), `{ ok, data: { wed: true, union } }`, or a refusal (server-account/src/legacy.js realmWed). AUDIT LEGACY III
@@ -479,6 +485,7 @@ export function createRealmSession({
   /** @type {string | null} */
   let lost = null;
   let holding = false;   // REALM P2: a transaction is in flight - no checkpoint goes until it is answered
+  let rezHeld = false;   // REZ-BLOODLINE AUDIT R1: the realm holds this tab's fall for a Resurrect (die's `hold` landed)
   // AUDIT REALM L1-F2 / L2-F1: a put of this session whose answer never came (offline, the service's own error) - it may
   // have landed. Only then is the service one ahead of us our own write: any other move of the record is one this tab
   // does not hold (a settle it read as refused, an act it read as undone), and a checkpoint over it would destroy it.
@@ -675,17 +682,38 @@ export function createRealmSession({
     /** LEGACY7: THE CHARACTER FELL FOR GOOD (Project Legacy) - its tombstone under this session's lease
      *  (server-account/src/legacy.js realmDie). The session ends with it, quietly - nothing of the dead is written
      *  again, and the page stays for the Succession. Answers whether the realm took it (a refusal - unheard, offline -
-     *  leaves the session as it was, to be asked again). Part three: `why` 'retired' for an elder's mantle passed. */
-    async die(/** @type {'fell'|'retired'} */ why = 'fell') {
+     *  leaves the session as it was, to be asked again). Part three: `why` 'retired' for an elder's mantle passed.
+     *  REZ-BLOODLINE (FIELD BUGS 2026-10-16b): `keepalive` - THE PAGE IS GOING over a death Project Legacy held for a
+     *  Resurrect (scenes/legacyHost.js pageGone): the tombstone alone, at once - no put waited for, the page will not
+     *  wait - by keepalive, so the browser finishes it after the page; the lease goes with it, so the session is the
+     *  dead's from here and the realm's leave behind it sends nothing.
+     *  REZ-BLOODLINE AUDIT R1: `hold` - THE DEATH DOOR'S FALL, stamped at once and held for a party's Resurrect (`raise`,
+     *  below); the session is the dead's all the same until one takes it back. Asked again WITHOUT `hold`, the hold's
+     *  window is closed - the player went on - and the realm is told so (what a tombstone takes with it goes now). */
+    async die(/** @type {'fell'|'retired'} */ why = 'fell', { keepalive = false, hold = false } = {}) {
       if (lost && lost !== 'dead') return false;
-      if (lost === 'dead') return true;
-      if (running) { try { await running; } catch { /* the last put's answer does not matter now */ } }
-      const r = await realmDie(io, id, lease, why);
+      if (lost === 'dead' && !(rezHeld && !hold)) return true;   // stamped already - or held, and asked to hold again
+      const closing = lost === 'dead';   // a held fall's window closed: its tombstone stamped already, no put to wait for
+      if (keepalive) { lost = 'dead'; rezHeld = false; pending = null; dropUnsent(storage, id); return realmDie(io, id, lease, why, { keepalive: true }).then((r) => !!r.ok, () => false); }
+      if (running && !closing) { try { await running; } catch { /* the last put's answer does not matter now */ } }
+      const r = await realmDie(io, id, lease, why, { hold: hold && !closing });
       if (!r.ok) return false;
       lost = 'dead';
+      rezHeld = hold && !closing && why === 'fell';
       pending = null;
       dropUnsent(storage, id);   // RESCUE-SAVE: no copy of the dead is offered again
       return true;
+    },
+    /** REZ-BLOODLINE AUDIT R1: A PARTY'S RESURRECT, TAKEN TO THE REALM (realmRaise) - the death at `diedAt` under this
+     *  session's lease, the one that fell. Yes: the session plays on from where it stood (its lease handed back, its
+     *  sequence the record's - nothing was checkpointed over the dead). Answers `{ ok }` or `{ ok: false, error }` - a
+     *  session that left or lost its lease raises nobody. */
+    async raise(/** @type {number} */ diedAt) {
+      if (lost && lost !== 'dead') return { ok: false, error: lost };
+      const r = await realmRaise(io, id, lease, diedAt);
+      if (!r.ok) return { ok: false, error: r.error };
+      if (lost === 'dead') { lost = null; rezHeld = false; }
+      return { ok: true, held: r.data?.held === true };
     },
     /** LEGACY7 part three: THIS CHARACTER'S HALF OF ONE WEDDING (realmWedHalf), under this session's lease - `{ ok, wed,
      *  union }` or `{ ok: false, error }`. A session that ended weds nobody (and its halves end with its lease's life). */

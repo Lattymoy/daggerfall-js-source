@@ -27,9 +27,10 @@ import { alignBillboardToGround } from '../../../src/world/groundAlign.js';
 import { CELL_PUPPETS_MAX } from '../../../src/net/wire.js';
 import { isPeerTarget } from '../../../src/characters/enemy/enemyTargets.js';
 import { readWorldOfDaggerfallBundle } from '../../../tools/worldOfDaggerfallAssets.mjs';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
-const rd = (p) => readFileSync(join(ROOT, p), 'utf8');
+const rd = (p) => hostText(p);
 const V = join(ROOT, 'vendor/world-of-daggerfall');
 const tick = () => new Promise((r) => setTimeout(r, 0));
 const flush = async () => { for (let i = 0; i < 6; i++) await tick(); };
@@ -312,9 +313,9 @@ test('AUDIT BRANCH (WoD) M2: a pack fetch is abandoned after a stall and tried t
 });
 
 test('AUDIT BRANCH (WoD) M2: the build\'s pick can cost a pixel its site, never the pixel; with the mod off no frame walks the pixels for its lights', () => {
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   // PIN MOVED (AUDIT CAPTAIN'S SEA G8): the pick asked on the Bay alone - its sites are the Bay's
-  assert.match(w, /if \(wod && onTheBay\(px, py\) && await wodOpened\) \{[^\n]*\n[^\n]*\n[^\n]*\n      try \{\n        const here = state\.current \?\? \{ x: px, y: py \};[\s\S]{0,900}\} catch \(e\) \{\n        console\.warn\(`\[wod\] pixel \$\{key\}: the loader failed here[^\n]*\n        wodPicks = null;\n      \}/);
+  assert.match(w, /if \(wod && onTheBay\(px, py\) && await wodOpened\) \{[^\n]*\n[^\n]*\n[^\n]*\n      try \{\n        const here = host\.state\.current \?\? \{ x: px, y: py \};[\s\S]{0,900}\} catch \(e\) \{\n        console\.warn\(`\[wod\] pixel \$\{key\}: the loader failed here[^\n]*\n        wodPicks = null;\n      \}/);
   assert.match(w, /const wodLit = wod \? _wodLitCount\(\) : 0;/);
   assert.match(rd('src/world/worldOfDaggerfall/worldOfDaggerfall.js'), /if \(!b\) return;\n[^\n]*\n[^\n]*\n      await new Promise\(\(r\) => setTimeout\(r, 0\)\);[\s\S]{0,400}decodeRegionPack\(b\)/, 'one decode a task');
 });
@@ -349,7 +350,7 @@ test('AUDIT BRANCH (WoD) L1-3: DFU pools a terrain that leaves range and reuses 
 
 // ── The world host's own WoD code, sliced and run ───────────────────────
 
-const WORLD = rd('src/scenes/world.js');
+const WORLD = hostText('src/scenes/world.js');
 function sliceWorld() {
   const cut = (a, b) => { const i = WORLD.indexOf(a); const j = WORLD.indexOf(b, i); assert.ok(i >= 0 && j > i, `slice ${a}`); return WORLD.slice(i, j); };
   const wodCode = cut('  const wodCarry = new Map();', '  const tickCityGates = ');
@@ -654,7 +655,7 @@ test('AUDIT BRANCH (WoD) m2: a rebuild of a pixel that had a site re-reads its g
   h.publish(100, 100, [[10, 5, 10]], { wodSite: { xMin: 1, xMax: 2, yMin: 1, yMax: 2 } });
   h.destroyPixel(100, 100, { collectLoose: false });   // a rebuild's teardown runs clean with nothing to remember
   assert.doesNotMatch(WORLD, /_wodSiteWas/, 'no teardown remembers the site');
-  assert.match(WORLD, /\n    if \(labGrassField\) \{   \/\/ WOD2[^\n]*m2[^\n]*\n      const t = state\.pixelTranslation\(px, py\);\n      labGrassField\.invalidate\(t\[0\], t\[2\], t\[0\] \+ TERRAIN_SIZE, t\[2\] \+ TERRAIN_SIZE\);/, 'and the publish re-reads the grass for it, whatever stood there');
+  assert.match(WORLD, /\n    if \(host\.labGrassField\) \{   \/\/ WOD2[^\n]*m2[^\n]*\n      const t = host\.state\.pixelTranslation\(px, py\);\n      host\.labGrassField\.invalidate\(t\[0\], t\[2\], t\[0\] \+ TERRAIN_SIZE, t\[2\] \+ TERRAIN_SIZE\);/, 'and the publish re-reads the grass for it, whatever stood there');
 });
 
 test('AUDIT BRANCH (WoD) L1-3: the host steps DFU\'s array on every crossing and at every world\'s start, and the Hold does not ride the pool', () => {

@@ -738,7 +738,7 @@ each is a line here, findable by its tag.
   its north entrance, one each side of the road in from Privateer's Hold, a few paces inside the border, facing
   north - the road read off the town's own walk grid (`gothwayNorthSpots`,
   `gothwayBoards.js:"export function gothwayNorthSpots"`; `src/systems/gothwayBoards.js`), stood in the town's build
-  each with its foot on the ground (`world.js:"if (isGothwayGarden(dfLocation.name))"`) and counted a bounty board
+  each with its foot on the ground (`pixelBuild.js:"if (isGothwayGarden(dfLocation.name))"`) and counted a bounty board
   always (`boardSplitOf`, `world.js:"const boardSplitOf"`).
 - PVPFIX (the owner: "Undeniable Access/lockpicking should actually work on locked crates"): an armed Open spell fires
   on the next lock touched, a crate's as a door's, and the pick is tried in Grab mode too

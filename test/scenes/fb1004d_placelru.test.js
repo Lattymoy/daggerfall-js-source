@@ -24,6 +24,7 @@ import { DFPalette } from '../../src/formats/dfPalette.js';
 import { remapSubMeshes } from '../../src/world/texRemap.js';
 import { identity } from '../../src/world/mat4.js';
 import { buildInteriorContext } from '../../src/scenes/interiorContext.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const settle = (ms = 1) => new Promise((r) => setTimeout(r, ms));
@@ -361,7 +362,7 @@ test('PLACE-LRU the interior context owns its hold: settled once built, released
 });
 
 test('PLACE-LRU THE FOUR HOSTS: the world host holds each pixel and lets it go; the interior and dungeon builds take a hold their contexts release; the fixed city is pinned and its doors are worldModes\'', () => {
-  const W = rd('src/scenes/world.js');
+  const W = hostText('src/scenes/world.js');
   // scenes/world.js - wired: every streamed pixel is a place
   assert.match(W, /const pipeline = createDataPipeline\(\{ renderer, arch, palette \}\); const holdPixel = \(key\) => \(\{ \.\.\.pipeline, \.\.\.pipeline\.holdPlace\('pixel', key\) \}\);/, 'the pixel\'s view of the pipeline');
   assert.match(W, /breather\.reset\(\);[^\n]*\n\s*const key = `\$\{px\},\$\{py\}`, pipeline = holdPixel\(key\), \{ getGpuMesh, uploadRecord, uploadRecordFrame \} = pipeline;/, 'the build\'s doors and `pipeline` are the pixel\'s, from its first line');

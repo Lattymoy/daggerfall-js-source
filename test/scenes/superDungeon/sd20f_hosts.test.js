@@ -17,6 +17,7 @@ import { sdFirst, sdRise, sdFind, sdFell, sdGone, SD_COLLAPSE_MS, SD_CAST_OUT_LI
 import { SD_ENTERED_KEY, SD_ENTERED_MAX, SD_FALLEN_KEY } from '../../../src/world/superDungeon/sdDungeon.js';
 import { createSdVoice, SD_VOICE_RANK } from '../../../src/scenes/superDungeon/sdVoice.js';
 import { createSdEnd, SD_RIFT_KEY } from '../../../src/scenes/superDungeon/sdEnd.js';
+import { madeLevelRule, madeLevelSays } from '../../../src/systems/madeLevel.js';   // EG-H2: the made level's law the hosts' doors ask
 
 const read = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const W = read('src/scenes/world.js');
@@ -236,6 +237,8 @@ test('SD20f THE VEIL AHEAD, AND /unstuck IN THE HOUR (H9, H10): a Hollow stood b
     const log = [];
     const env = {
       modes: { sdRealmSlot: () => (hour ? 4 : null), unstuck: () => { log.push('unstuck'); return unstuck; } },
+      // PIN MOVED (EG-H2, bible/11-Multiplayer/Elite-Gates.md section 24): the made level's law (systems/madeLevel.js): the made level's /unstuck - the Hour's row is its way home
+      madeRuleHere: (rule) => madeLevelRule(hour ? 'hour' : null, rule), madeSaysHere: (rule) => madeLevelSays(hour ? 'hour' : null, rule),
       sdWayHome: () => { log.push('wayHome'); return wayHome; }, chatLog: { push: (tab, m) => log.push(m.text) }, tabId: 'world', text: '/unstuck',
       // PVPUNSTUCK: the zone's own laws, quiet out of it - no wait standing, no zone, no cooldown, no stranger near
       _unstuckWait: null, unstuckCancel: () => {}, wildHere: () => false, TEST_GODMODE: false, staffPowers: () => ({}), UNSTUCK_COOLDOWN_ZONE_MS: 0, UNSTUCK_COOLDOWN_MS: 0,

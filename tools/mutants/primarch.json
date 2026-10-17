@@ -42,12 +42,12 @@
   {
     "name": "PRIMARCH-the-glyph-stroked",
     "file": "src/ui/playerBadge.js",
-    "old": "aegis: true, primarch: false, crystalfist: false });",
-    "new": "aegis: true, primarch: true, crystalfist: false });",
+    "old": "aegis: true, primarch: false, crystalfist: false, wikimaid: false });",
+    "new": "aegis: true, primarch: true, crystalfist: false, wikimaid: false });",
     "tests": [
       "test/net/primarch.test.js"
     ],
-    "note": "Stroked, the filled outline is a tangle of edges. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist."
+    "note": "Stroked, the filled outline is a tangle of edges. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist. WIKIMAID (re-aimed by content)."
   },
   {
     "name": "PRIMARCH-the-slant-turned",
@@ -102,12 +102,12 @@
   {
     "name": "PRIMARCH-the-radiances-button-in-violet",
     "file": "src/ui/playerBadge.js",
-    "old": "radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker' });",
-    "new": "radiance: 'aegis', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker' });",
+    "old": "radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid' });",
+    "new": "radiance: 'aegis', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid' });",
     "tests": [
       "test/net/primarch.test.js"
     ],
-    "note": "The Golden Radiance's button on the card painted in the Aegis of Oblivion's violets. SHADOW-CLOAK (PIN MOVED): re-aimed by content - the Holo Shadow Cloak joined the line. SERAPH-WINGS (re-aimed by content): the wings joined the list. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist."
+    "note": "The Golden Radiance's button on the card painted in the Aegis of Oblivion's violets. SHADOW-CLOAK (PIN MOVED): re-aimed by content - the Holo Shadow Cloak joined the line. SERAPH-WINGS (re-aimed by content): the wings joined the list. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist. WIKIMAID (re-aimed by content)."
   },
   {
     "name": "PRIMARCH-the-title-misspelt",
@@ -162,42 +162,42 @@
   {
     "name": "PRIMARCH-the-glyphs-word",
     "file": "server-account/src/titles.js",
-    "old": "aegis: 'aegis', primarch: 'primarch', crystalfist: 'crystalfist' });",
-    "new": "aegis: 'aegis', primarch: 'aegis', crystalfist: 'crystalfist' });",
+    "old": "aegis: 'aegis', primarch: 'primarch', crystalfist: 'crystalfist', wikimaid: 'wikimaid' });",
+    "new": "aegis: 'aegis', primarch: 'aegis', crystalfist: 'crystalfist', wikimaid: 'wikimaid' });",
     "tests": [
       "test/net/primarch.test.js"
     ],
-    "note": "The list grants the aegis glyph, not its own. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist."
+    "note": "The list grants the aegis glyph, not its own. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist. WIKIMAID (re-aimed by content)."
   },
   {
     "name": "PRIMARCH-the-aura-not-granted",
     "file": "server-account/src/titles.js",
-    "old": "export const TIER_AURA = Object.freeze({ aegis: 'oblivionward', primarch: 'radiance', shadowfang: 'shadowcloak', crystalfist: 'resonance' });",
-    "new": "export const TIER_AURA = Object.freeze({ aegis: 'oblivionward', shadowfang: 'shadowcloak', crystalfist: 'resonance' });",
+    "old": "export const TIER_AURA = Object.freeze({ aegis: 'oblivionward', primarch: 'radiance', shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren' });",
+    "new": "export const TIER_AURA = Object.freeze({ aegis: 'oblivionward', shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren' });",
     "tests": [
       "test/net/primarch.test.js"
     ],
-    "note": "The title and glyph without the aura GA00250 asked for. SHADOW-CLOAK (PIN MOVED): re-aimed by content - the Holo Shadow Cloak joined the line. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist."
+    "note": "The title and glyph without the aura GA00250 asked for. SHADOW-CLOAK (PIN MOVED): re-aimed by content - the Holo Shadow Cloak joined the line. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist. WIKIMAID (re-aimed by content)."
   },
   {
     "name": "PRIMARCH-the-ward-granted",
     "file": "server-account/src/titles.js",
-    "old": "export const TIER_AURA = Object.freeze({ aegis: 'oblivionward', primarch: 'radiance', shadowfang: 'shadowcloak', crystalfist: 'resonance' });",
-    "new": "export const TIER_AURA = Object.freeze({ aegis: 'oblivionward', primarch: 'oblivionward', shadowfang: 'shadowcloak', crystalfist: 'resonance' });",
+    "old": "export const TIER_AURA = Object.freeze({ aegis: 'oblivionward', primarch: 'radiance', shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren' });",
+    "new": "export const TIER_AURA = Object.freeze({ aegis: 'oblivionward', primarch: 'oblivionward', shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren' });",
     "tests": [
       "test/net/primarch.test.js"
     ],
-    "note": "GA00250 granted Sureme's ward instead of the radiance. SHADOW-CLOAK (PIN MOVED): re-aimed by content - the Holo Shadow Cloak joined the line. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist."
+    "note": "GA00250 granted Sureme's ward instead of the radiance. SHADOW-CLOAK (PIN MOVED): re-aimed by content - the Holo Shadow Cloak joined the line. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist. WIKIMAID (re-aimed by content)."
   },
   {
     "name": "PRIMARCH-the-vocabularys-aura",
     "file": "src/net/identityToken.js",
-    "old": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'radiance', 'shadowcloak', 'seraphwings', 'resonance', 'turninghour', 'firsthour', 'maelstrom']);",
-    "new": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'shadowcloak', 'seraphwings', 'resonance', 'turninghour', 'firsthour', 'maelstrom']);",
+    "old": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'radiance', 'shadowcloak', 'seraphwings', 'resonance', 'turninghour', 'firsthour', 'maelstrom', 'beaconlight', 'burningstair', 'firstlight', 'lilacwarren']);   // WIKIMAID (2026-10-17, for SylviaBun: \"a purple aura with bunnies\"): THE LILAC WARREN last - rabbits hopping round the feet on a ring of lilac light, their prints fading behind them; the WikiMaid's own, granted with its title by name, never sold;",
+    "new": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'shadowcloak', 'seraphwings', 'resonance', 'turninghour', 'firsthour', 'maelstrom', 'beaconlight', 'burningstair', 'firstlight', 'lilacwarren']);   // WIKIMAID (2026-10-17, for SylviaBun: \"a purple aura with bunnies\"): THE LILAC WARREN last - rabbits hopping round the feet on a ring of lilac light, their prints fading behind them; the WikiMaid's own, granted with its title by name, never sold;",
     "tests": [
       "test/net/primarch.test.js"
     ],
-    "note": "A token carrying the radiance refused: the aura never reaches a screen. SHADOW-CLOAK (PIN MOVED): re-aimed by content - the Holo Shadow Cloak joined the line. SERAPH-WINGS (re-aimed by content): the wings joined the list. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's Crystal Resonance."
+    "note": "A token carrying the radiance refused: the aura never reaches a screen. SHADOW-CLOAK (PIN MOVED): re-aimed by content - the Holo Shadow Cloak joined the line. SERAPH-WINGS (re-aimed by content): the wings joined the list. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's Crystal Resonance. WIKIMAID (re-aimed by content)."
   },
   {
     "name": "PRIMARCH-the-looks-kind",

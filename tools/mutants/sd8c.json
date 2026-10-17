@@ -407,8 +407,8 @@
   {
     "name": "SD8C-no-me",
     "file": "server/src/index.js",
-    "old": "      this._send(ws, JSON.stringify({ t: 'sd', ...remnantStateOf(f), me: 1 }));",
-    "new": "      this._send(ws, JSON.stringify({ t: 'sd', ...remnantStateOf(f) }));",
+    "old": "      this._send(ws, JSON.stringify({ t: 'sd', ...SD_SEAM.stateOf(f), me: 1 }));",
+    "new": "      this._send(ws, JSON.stringify({ t: 'sd', ...SD_SEAM.stateOf(f) }));",
     "tests": [
       "test/net/superDungeon/sd8c_remnant_page.test.js"
     ]
@@ -416,8 +416,8 @@
   {
     "name": "SD8C-me-at-every-hello",
     "file": "server/src/index.js",
-    "old": "    if (!this._send(ws, JSON.stringify({ t: 'sd', ...remnantStateOf(sf) }))) return false;",
-    "new": "    if (!this._send(ws, JSON.stringify({ t: 'sd', ...remnantStateOf(sf), me: 1 }))) return false;",
+    "old": "    if (!this._send(ws, JSON.stringify({ t: 'sd', ...SD_SEAM.stateOf(sf) }))) return false;",
+    "new": "    if (!this._send(ws, JSON.stringify({ t: 'sd', ...SD_SEAM.stateOf(sf), me: 1 }))) return false;",
     "tests": [
       "test/net/superDungeon/sd8c_remnant_page.test.js"
     ]

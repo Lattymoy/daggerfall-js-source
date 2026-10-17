@@ -220,7 +220,11 @@ stands in.
 - **Every dungeon.** Mac chose quests', the Hold's and buildings'. A door at any dungeon is one row of instanceOffer
   away.
 - **A re-laid public room's own quests.** A player who chooses Public at a quest's dungeon finds its things in the
-  instance only. The line says so; the choice is theirs.
+  instance only. The choice is theirs; QUEST-ELSEWHERE (2026-10-16, `01-Overview/bugs/Field-Bugs-2026-10-16c.md` - MD-Geist:
+  "the Objective just did not want to spawn (I tried the dungeon in 'Public' mode) even after 'Quest Repair'") says it
+  BEFORE the choice, in the popup, where the world lays the public room smaller (`dungeonSite`'s `relaid`), and Quest
+  Repair in that room says where the things are instead of "Nothing was missing". The automap keeps each layout's map
+  (LAYOUT-KEEP): exploring one room no longer wipes the other's.
 - **Reachability.** The public world's re-laid dungeons can still seal an area from their entrance - the Hold of
   Coppering's medium build does - for anyone exploring them. A reachability pass over every dungeon's small and medium
   builds (the audit's walker, `player/collider.js`) is the measure, and is not this arc.

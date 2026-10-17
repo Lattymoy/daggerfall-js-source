@@ -8,7 +8,7 @@
 // pack, where this fix had put it last of all - test/systems/fb1015_mendtiers.test.js; the one pin that said "then the pack" moved.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { ENCHANTMENT_TYPES as T, enchantmentMagicRound, repairsObjectsTarget } from '../../src/systems/enchantments.js';
+import { ENCHANTMENT_TYPES as T, enchantmentMagicRound, repairsObjectsTarget, repairsObjectsMend } from '../../src/systems/enchantments.js';
 import { equipItem } from '../../src/systems/equip.js';
 import { armorOfMaterial } from '../../src/combat/enemyEquipment.js';
 import { mintCondition, setItemFields } from '../../src/systems/item/itemTemplates.js';
@@ -19,7 +19,7 @@ const at = (item, pct) => { item.currentCondition = Math.round(item.maxCondition
 const repairsRing = () => Object.assign(mintCondition(setItemFields({ group: 'Jewellery', templateIndex: RING })), { enchantments: [{ type: T.RepairsObjects, param: -1 }] });
 const rounds = (p, from, to) => { for (let r = from; r <= to; r++) enchantmentMagicRound(p, r, { ctx: { allowMagicRepairs: true } }); };
 
-test('MEND-STARVE: a worn piece that wears itself as the tick mends is mended after the rest of what is worn - the worn cuirass mends past it, and once nothing else worn wants it the tick holds it (mutant: the self-wearing piece first again)', () => {
+test('MEND-STARVE: a worn piece that wears itself as the tick mends is mended after the rest of what is worn - the worn cuirass mends past it, and once nothing else worn wants it the tick mends it (mutant: the self-wearing piece first again)', () => {
   const p = player();
   const rot = at(armorOfMaterial(HELM, IRON_PLATE), 20);
   rot.enchantments = [{ type: T.ItemDeteriorates, param: 0 }];   // all the time
@@ -30,17 +30,24 @@ test('MEND-STARVE: a worn piece that wears itself as the tick mends is mended af
   for (const it of [rot, cuirass, ring]) equipItem(p, it);
   assert.equal(repairsObjectsTarget(p.items, { allowMagicRepairs: true }), cuirass, 'the cuirass first, though the helm is the most worn');
   const [r0, c0, b0] = [rot.currentCondition, cuirass.currentCondition, boots.currentCondition];
-  const cuirassWants = cuirass.maxCondition - c0;
-  rounds(p, 1, 4 * cuirassWants);
-  assert.equal(cuirass.currentCondition, cuirass.maxCondition, 'the worn cuirass mended whole, a point a tick');
+  // PIN MOVED (FIELD BUGS 2026-10-16b MEND-ARMOUR): a point a tick, the cuirass's 41 took 41 ticks; a tick mends a fiftieth
+  // of the piece's own condition now (repairsObjectsMend - 82 of the cuirass's 4,096), so one
+  const cuirassTicks = Math.ceil((cuirass.maxCondition - c0) / repairsObjectsMend(cuirass));
+  assert.equal(cuirassTicks, 1);
+  rounds(p, 1, 4 * cuirassTicks);
+  assert.equal(cuirass.currentCondition, cuirass.maxCondition, 'the worn cuirass mended whole, a fiftieth of it a tick');
   assert.equal(boots.currentCondition, b0, 'the worn first');
-  assert.equal(rot.currentCondition, r0 - cuirassWants, 'the helm wore its point a tick while the cuirass mended');
+  assert.equal(rot.currentCondition, r0 - cuirassTicks, 'the helm wore its point a tick while the cuirass mended');
   // PIN MOVED (MEND-TIERS, FIELD BUGS 2026-10-15d, Mac's call): MEND-STARVE mended the carried boots next, "then the
   // pack", and left the worn helm to wear a point a tick behind them. The worn helm is held ahead of the pack now, and
   // the boots wait (test/systems/fb1015_mendtiers.test.js).
-  const held = rot.currentCondition;
-  rounds(p, 4 * cuirassWants + 1, 4 * cuirassWants + 400);
-  assert.equal(rot.currentCondition, held, 'nothing else worn wants the tick: it holds the helm against its own wear');
+  // PIN MOVED (FIELD BUGS 2026-10-16b MEND-ARMOUR): the tick's point HELD the helm against its own; its fiftieth (51) mends
+  // it now, to whole less the point it wears on the tick's own round - still below its condition, so the boots still wait
+  const from = rot.currentCondition;
+  rounds(p, 4 * cuirassTicks + 1, 4 * cuirassTicks + 4);
+  assert.equal(rot.currentCondition, from + repairsObjectsMend(rot) - 1, 'nothing else worn wants the tick: it mends the helm against its own wear');
+  rounds(p, 4 * cuirassTicks + 5, 4 * cuirassTicks + 400);
+  assert.equal(rot.currentCondition, rot.maxCondition - 1, 'whole, less the point it wears on the tick\'s own round');
   assert.equal(boots.currentCondition, b0, 'and the pack waits behind it');
 });
 

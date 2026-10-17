@@ -120,7 +120,7 @@ but unverified.
 
 ## 7. Relay deploy order for the timber wire bump — UPDATED 2026-10-16
 
-`RELAY_VERSION` is now `world208` (207 lived and died on the branch, never
+`RELAY_VERSION` is now `world215` (207/208 lived and died on the branch, 212 lived and died at the first merge, never
 deployed). The bump carries three park-record fields, not two: `ww` (wood),
 `wr` (wheels), `og` (owner's guild tag, presence is the broadcast). Nothing
 deployed yet — still one deploy.

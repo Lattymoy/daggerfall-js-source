@@ -290,7 +290,9 @@ test('REVENANT-FATE the wire and the doors: a record says `yd` kneeling and `ex`
   // underground too, where the street's pool is not the floor
   assert.match(w, /const w = makeInventoryWindow\(\{ fate: model, loot: \{ items: \(\) => \[\], playerOwned: false \}, physicalDropOn: \(\) => false \}\);/, 'the loot window itself');
   // PIN MOVED (RVN3: an unbroken will tears away instead - the same gate)
-  assert.match(d, /if \(opts\.fates && !_whole && \(!onlineRoom\(\) \|\| !isRoomFoe\(foe\)\) && revenantMayYield\(foe\)\) \{ if \(revenantWillHolds\(foe\)\) tearAwayDungeonFoe\(foe\); else yieldDungeonFoe\(foe\); return; \}/, 'underground: the player\'s alone');
+  // PIN MOVED (FIELD BUGS 2026-10-16b RVN-OWNERS-CHOICE): a whole blow passes the gate only as the owner's own
+  // (revenantFate.js ownersWholeKill) - a party member's Disintegrate kneels it (test/systems/revenant/fb1016b_rvnownerschoice.test.js)
+  assert.match(d, /if \(opts\.fates && !ownersWholeKill\(_whole, \{ fromPlayer, peer \}\) && \(!onlineRoom\(\) \|\| !isRoomFoe\(foe\)\) && revenantMayYield\(foe\)\) \{ if \(revenantWillHolds\(foe\)\) tearAwayDungeonFoe\(foe\); else yieldDungeonFoe\(foe\); return; \}/, 'underground: the player\'s alone');
   // underground a held foe decides nothing and animates nothing of its own, but is still DRAWN - the kneel, the burn
   const arm = d.slice(d.indexOf('      if (f.mobile) {\n'), d.indexOf('_mobileBatches.push(f.batch);'));
   assert.match(arm, /^      if \(f\.mobile\) \{\n[\s\S]*?\n        if \(!_fateHeld\) \{[^\n]*\n\s*\/\/ A5 - DaedraSeducerMobileBehaviour/, 'the mobile arm draws a held foe; only its own update is skipped');

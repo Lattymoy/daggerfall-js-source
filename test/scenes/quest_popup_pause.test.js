@@ -9,8 +9,9 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { questBoxHoldsFoes } from '../../src/scenes/quest/questFoeHost.js';
 import { createExteriorFoes } from '../../src/scenes/exteriorFoes.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
-const rd = (p) => readFileSync(new URL('../../' + p, import.meta.url), 'utf8');
+const rd = (p) => hostText(p);
 
 test('QUEST-POPUP-PAUSE: the foes stand still offline while a quest box is open and on top - not online, not once it is closed, not under another window', () => {
   const box = { done: false };

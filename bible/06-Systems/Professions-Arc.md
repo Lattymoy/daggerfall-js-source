@@ -909,9 +909,10 @@ save's" - GUILD1), so anything paid in purse gold can be paid by a client that n
 | Oblivion Gate receipts | 50 a receipt (100 under a Daedric Incursion, SEAT0 9.3) | ~~**2 a UTC day** an account~~ SILVER-WAYS: the day's **combat cap**, 150 an account a UTC day with the raids' and (SERPENT-SET) the serpents' (below) - FACT, a gate rises every game day, twelve a real day, and `gate_kills` keys on the game day, so the gate's own law allows twelve |
 | Towns defended (SILVER-WAYS) | 30 a raid's receipt (RAID3's `w1`, counted once a raid and account - RAID4) | the day's **combat cap** with the gates' and the serpents': 150 an account a UTC day, the day's last strike what it has left |
 | Sea serpents slain (SERPENT-SET) | 40 a serpent's receipt (SERPENT1's `l1`, counted once a serpent day and account), a ship that stood 20 | the day's **combat cap** with the gates' and the raids' - the ceiling unmoved (`11-Multiplayer/Sea-Serpent.md` section 8) |
+| Elite Breach Redoubts (EG-E1) | 20 a Redoubt's receipt (the relay's `e1` `w`), paid once an account a Redoubt an arena week (`11-Multiplayer/Elite-Gates.md` section 19) | the day's **combat cap** with the gates', the raids' and the serpents' - the ceiling unmoved |
 | A gathering's find (SILVER-FINDS) | 2-5, the service's dice in one counted harvest of ten - any of the five acts | **30** an account a UTC day, the day's last find what is left - bounded, not witnessed |
 | A loot find (SILVER-FINDS) | 1-4, the service's dice; the device rolls each container once - a foe's body 5%, a treasure pile 12%, a search's find 15% | **20** an account a UTC day, the day's last find what is left - bounded, not witnessed |
-| Guild deeds (SILVER-WAYS) | 25 into the guild's treasury, never an account's | where 3 of a guild's accounts - each a character 7 days in it - claimed one raid or one gate; 4 a guild a UTC day |
+| Guild deeds (SILVER-WAYS) | 25 into the guild's treasury, never an account's | where 3 of a guild's accounts - each a character 7 days in it - claimed one raid, one gate or (EG-E1) one Redoubt of one breach; 4 a guild a UTC day |
 | Siege Honours (SEAT0 6.8) | 50 / 25 | one a siege |
 | Motherlodes (PROF2b - BUILT, section 38) | 10 a find | 1 an account a day (3 Motherlodes a day server-wide, 20 strikers each) |
 

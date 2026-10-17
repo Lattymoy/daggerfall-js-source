@@ -355,7 +355,7 @@
   {
     "name": "SD25-the-hold-dropped",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "const held = seconds(t) >= (VEIL_HOUR_HOLD_S[hourMode()] ?? 0);",
+    "old": "const held = seconds(t) >= (VEIL_HOUR_HOLD_S[hourMode()] ?? VEIL_EG_HOLD_S[egMode()] ?? 0);",
     "new": "const held = true;",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"

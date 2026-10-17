@@ -20,10 +20,11 @@ import { RMB_SIDE } from '../../src/world/locationLayout.js';
 import { BUILDING_TYPES, isNamedBuildingType } from '../../src/world/buildingNames.js';
 import { WEATHER_TYPES } from '../../src/world/weather.js';
 import { currentWeather, setWeather } from '../../src/systems/weather/weatherSim.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 import { setSeed } from '../../src/formats/dfRandom.js';   // R33: the surrender's classic draw, pinned
 
 const HERE = dirname(dirname(fileURLToPath(import.meta.url)));
-const read = (rel) => readFileSync(join(HERE, '..', rel), 'utf8');
+const read = (rel) => hostText(rel);
 
 /** The brace-matched body of an object literal opened by `head`. */
 function literalBody(src, head) {

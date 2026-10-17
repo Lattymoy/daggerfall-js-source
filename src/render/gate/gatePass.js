@@ -18,6 +18,16 @@
 // number of cycles over GATE_CLOCK_PERIOD and the clock handed wrapped, fogged by the frame's own fog. Built in
 // every skin - online is the enhanced lane, but a pass that will not build costs the gate its fire, never the game.
 //
+// EG-F (2026-10-12, the Elite Gates arc, Mac: "I said I want everything"; bible/11-Multiplayer/Elite-Gates.md section
+// 6.3): THE ELITE BREACH'S ARCH IS THE GATE'S MODEL AT 0.62, and this pass draws its fire and beacon too. What was compiled
+// in - the membrane's colour and size, the beacon's height, its foot under the ground, where its light starts and its
+// colour - is a PER-DRAW value now, set inside the loop (`gatePassValues`): an arch's membrane tinted toward gold and
+// scaled with its stone, its beacon gold, standing EG_ARCH_BEACON_UP_M over its foot (scenes/eliteGates/egArch.js), its light from
+// its own lintel. THE GATE'S OWN DRAW IS WHAT IT WAS: a record that names none of them takes the gate's - scale exactly 1,
+// tint exactly white, the beacon's 400 under, 1200 tall, its light at the same fraction, BEACON_COLOR - and every one of
+// those multiplies or stands in exactly where its literal stood (test/net/eliteGates/egarch_law.test.js pins the values and the calls).
+// GATE_PASS_MAX rises to 4: the day's gate and several arches can stand in one view.
+//
 // Not a DFU member. Ledger A (WB).
 import { FOG_FACTOR_GLSL } from '../labGrass.js';
 import { buildProgram } from '../glProgram.js';
@@ -56,8 +66,34 @@ export const BEACON_WIDEN = 0.006;
  *  never stands behind the fire; its ring stands out of the lintel's faces there, but its light rises from nothing over
  *  the twelve metres above (BEACON_FS) and is under a thirtieth of itself at the crown. */
 export const BEACON_START_M = 15;
-/** The most gates a frame draws (one a day stands; a collapsing yesterday's beside it). */
-export const GATE_PASS_MAX = 2;
+/** The most gates a frame draws (one a day stands; a collapsing yesterday's beside it) - EG-F: and the Elite Breaches'
+ *  arches beside them (scenes/eliteGates/egArch.js stands at most two strangers' a cell, and the company's own). */
+export const GATE_PASS_MAX = 4;
+/** EG-F: where the beacon's light starts along its column, as the fraction the gate's shader held as a literal (its four
+ *  places, so a uniform carries the same float the literal compiled to). */
+export const beaconFoot = (below, start, height) => Number(((below + start) / height).toFixed(4));
+/** EG-F: THE GATE'S OWN VALUES - what a draw record that names none of its own takes, every one the literal it replaced. */
+export const GATE_PASS_GATE = Object.freeze({
+  scale: 1, tint: Object.freeze([1, 1, 1]), below: BEACON_BELOW_M, height: BEACON_HEIGHT_M, foot: beaconFoot(BEACON_BELOW_M, BEACON_START_M, BEACON_HEIGHT_M), color: BEACON_COLOR,
+});
+/**
+ * EG-F: A DRAW RECORD'S PER-DRAW VALUES - `scale` (the stone's and its fire's), `tint` (the membrane's colour, multiplied),
+ * and the beacon's `below` (its foot under the ground), `height` (its column), `foot` (where its light starts, a fraction
+ * of the column) and `color`: each the record's own where it gives one (`g.scale`, `g.tint`, `g.beacon` - { below,
+ * height, start, color }, `start` metres over the foot), else the gate's. Pure.
+ * @param {any} g
+ */
+export function gatePassValues(g) {
+  const G = GATE_PASS_GATE, b = g?.beacon ?? null;
+  const fin = (v, d) => (Number.isFinite(v) && v > 0 ? v : d);
+  const rgb = (v, d) => (Array.isArray(v) && v.length === 3 && v.every(Number.isFinite) ? v : d);
+  if (!b && g?.scale == null && g?.tint == null) return G;
+  const below = fin(b?.below, G.below), height = fin(b?.height, G.height);
+  return {
+    scale: fin(g?.scale, G.scale), tint: rgb(g?.tint, G.tint), below, height,
+    foot: b && Number.isFinite(b.start) ? beaconFoot(below, b.start, height) : G.foot, color: rgb(b?.color, G.color),
+  };
+}
 
 const HEAD = `#version 300 es
 precision highp float;
@@ -69,20 +105,29 @@ uniform vec3 uCamPos;
 `;
 
 // ── the membrane ─────────────────────────────────────────────────────
-export const MEMBRANE_VS = HEAD + `layout(location = 0) in vec2 aXY;   // the quad: x across the arch (metres), y up it (metres, the gate's frame)
+/** EG-F: THE PER-DRAW SOURCES ARE THE GATE'S OWN, templated: each shader below is written once, with its per-draw value's
+ *  place a parameter - the gate's literal (`MEMBRANE_VS` ... `BEACON_FS`, exported as they always were: the Hollow's omen
+ *  builds the gate's column from them - render/superDungeon/sdOmenPass.js) or the uniform the pass sets per draw (`MEMBRANE_DRAW_VS`
+ *  ... `BEACON_DRAW_FS`, what GatePassRenderer compiles). A per-draw source with the gate's values written back in IS the
+ *  gate's source, byte for byte (test/net/eliteGates/egarch_law.test.js), so every pin on the gate's shaders holds for what is drawn. */
+const membraneVs = (decl, scale) => HEAD + `layout(location = 0) in vec2 aXY;   // the quad: x across the arch (metres), y up it (metres, the gate's frame)
 uniform mat4 uVP;
 uniform vec3 uOrigin;   // the gate's foot in the scene (its rise already in y)
 uniform float uYaw;     // the gate's turn about y
-out vec2 vLocal;
+${decl}out vec2 vLocal;
 out vec3 vWorld;
 void main() {
   float c = cos(uYaw), s = sin(uYaw);
-  vec3 p = uOrigin + vec3(aXY.x * c, aXY.y, -aXY.x * s);
+  vec3 p = uOrigin + vec3(aXY.x * c, aXY.y, -aXY.x * s)${scale};
   vLocal = aXY;
   vWorld = p;
   gl_Position = uVP * vec4(p, 1.0);
 }`;
-export const MEMBRANE_FS = HEAD + `in vec2 vLocal;
+export const MEMBRANE_VS = membraneVs('', '');
+/** EG-F: the stone's scale (the gate's exactly 1 - the arch's 0.62); the mask stays in the gate's own frame (vLocal). */
+export const MEMBRANE_SCALE_DECL = 'uniform float uScale;   // EG-F: the stone\'s scale, per draw\n';
+export const MEMBRANE_DRAW_VS = membraneVs(MEMBRANE_SCALE_DECL, ' * uScale');
+const membraneFs = (decl, tint) => HEAD + `in vec2 vLocal;
 in vec3 vWorld;
 uniform float uProfile[${ARCH_PROFILE_N}];
 uniform float uTime;    // gateClock's seconds
@@ -90,7 +135,7 @@ uniform float uOpen;    // 0 sealed .. 1 open
 uniform float uFade;    // 0 gone .. 1 standing (the rise and the collapse)
 uniform float uSpin;    // AUDIT WB C6: the vortex's turn, in turns - accumulated by the host at the open's own rate
 uniform vec3 uFogColor; // AUDIT WB C2: the frame's fog colour - a fogged membrane becomes the fog, not a hole in it
-${FOG_UNIFORMS}out vec4 o;
+${decl}${FOG_UNIFORMS}out vec4 o;
 ${FOG_FACTOR_GLSL}
 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 float vnoise(vec2 p) {
@@ -121,43 +166,52 @@ void main() {
   vec3 col = mix(dark, mid, smoothstep(0.25, 0.75, n));
   col = mix(col, hot, pow(clamp(n, 0.0, 1.0), 3.0) * (0.35 + 0.65 * uOpen));
   col += hot * rim * (0.35 + 0.5 * uOpen);
-  float glow = mix(0.45, 1.25, uOpen);
+${tint}  float glow = mix(0.45, 1.25, uOpen);
   float alpha = mix(${MEMBRANE_ALPHA_SEALED.toFixed(2)}, ${MEMBRANE_ALPHA_OPEN.toFixed(2)}, uOpen) * (0.75 + 0.25 * n) * smoothstep(0.0, 0.25, inside);
   float f = fogFactorAt(vWorld);
   // AUDIT WB C2: premultiplied, the fog takes the colour AND stands in for it - fading the colour alone left the alpha
   // hiding the fogged world behind it, a black hole in a fog bank
   o = vec4(mix(uFogColor * alpha, col * glow, f) * uFade, alpha * uFade);
 }`;
+export const MEMBRANE_FS = membraneFs('', '');
+/** EG-F: the fire's colour, multiplied per draw (the gate's exactly white). */
+export const MEMBRANE_TINT_DECL = 'uniform vec3 uTint;     // EG-F: the fire\'s colour, per draw\n';
+export const MEMBRANE_TINT_LINE = '  col *= uTint;   // EG-F\n';
+export const MEMBRANE_DRAW_FS = membraneFs(MEMBRANE_TINT_DECL, MEMBRANE_TINT_LINE);
 
 // ── the beacon ───────────────────────────────────────────────────────
-export const BEACON_VS = HEAD + `layout(location = 0) in vec2 aUV;   // x around 0..1, y up 0..1
+const beaconVs = (decl, below, height) => HEAD + `layout(location = 0) in vec2 aUV;   // x around 0..1, y up 0..1
 uniform mat4 uVP;
 uniform vec3 uOrigin;
 uniform vec3 uEye;
 uniform float uRadius;
-out vec2 vUV;
+${decl}out vec2 vUV;
 out vec3 vWorld;
 void main() {
   float a = aUV.x * 6.283185307179586;
   // never thinner than a few pixels: far off, the column widens with its distance, so a gate kilometres away is
   // still a line on the sky and not a hair the screen cannot hold
   float rad = max(uRadius, length(uEye.xz - uOrigin.xz) * ${BEACON_WIDEN.toFixed(4)});
-  vec3 p = uOrigin + vec3(cos(a) * rad, -${BEACON_BELOW_M.toFixed(1)} + aUV.y * ${BEACON_HEIGHT_M.toFixed(1)}, sin(a) * rad);
+  vec3 p = uOrigin + vec3(cos(a) * rad, -${below} + aUV.y * ${height}, sin(a) * rad);
   vUV = aUV;
   vWorld = p;
   gl_Position = uVP * vec4(p, 1.0);
 }`;
-export const BEACON_FS = HEAD + `in vec2 vUV;
+export const BEACON_VS = beaconVs('', BEACON_BELOW_M.toFixed(1), BEACON_HEIGHT_M.toFixed(1));
+/** EG-F: the column's foot under the ground and its height, per draw (the gate's BEACON_BELOW_M and BEACON_HEIGHT_M). */
+export const BEACON_COLUMN_DECL = 'uniform float uBelow;   // EG-F: per draw\nuniform float uHeight;  // EG-F: per draw\n';
+export const BEACON_DRAW_VS = beaconVs(BEACON_COLUMN_DECL, 'uBelow', 'uHeight');
+const beaconFs = (decl, foot) => HEAD + `in vec2 vUV;
 in vec3 vWorld;
 uniform vec3 uOrigin;
 uniform float uTime;
 uniform float uFade;
 uniform vec3 uColor;
-${FOG_UNIFORMS}out vec4 o;
+${decl}${FOG_UNIFORMS}out vec4 o;
 ${FOG_FACTOR_GLSL}
 void main() {
   float h = vUV.y;
-  float foot = ${((BEACON_BELOW_M + BEACON_START_M) / BEACON_HEIGHT_M).toFixed(4)};   // the column leaves the gate from its crown
+  float foot = ${foot};   // the column leaves the gate from its crown
   float above = clamp((h - foot) / (1.0 - foot), 0.0, 1.0);
   float bands = 0.6 + 0.4 * sin((above * 38.0 - uTime * ${BEACON_CLIMB_HZ.toFixed(2)}) * 6.283185307179586);
   float fall = pow(1.0 - above, 1.6);            // brightest over the gate, gone toward the top
@@ -169,6 +223,10 @@ void main() {
   float f = max(fogFactorAt(vWorld), ${BEACON_FOG_FLOOR.toFixed(2)});
   o = vec4(uColor * light * f * uFade, 1.0);
 }`;
+export const BEACON_FS = beaconFs('', ((BEACON_BELOW_M + BEACON_START_M) / BEACON_HEIGHT_M).toFixed(4));
+/** EG-F: where the light starts along the column, per draw (the gate's (BELOW + START) / HEIGHT, its four places). */
+export const BEACON_FOOT_DECL = 'uniform float uFoot;    // EG-F: per draw\n';
+export const BEACON_DRAW_FS = beaconFs(BEACON_FOOT_DECL, 'uFoot');
 
 function mat4Multiply(out, a, b) {
   for (let c = 0; c < 4; c++) {
@@ -210,9 +268,10 @@ export class GatePassRenderer {
   /** @param {WebGL2RenderingContext} gl @param {Float32Array} profile the arch's opening (gateArchProfile) */
   constructor(gl, profile) {
     this.gl = gl;
-    this.membrane = buildProgram(gl, MEMBRANE_VS, MEMBRANE_FS, 'gate membrane');
-    this.beacon = buildProgram(gl, BEACON_VS, BEACON_FS, 'gate beacon');
-    const names = ['uVP', 'uOrigin', 'uEye', 'uYaw', 'uRadius', 'uProfile', 'uTime', 'uOpen', 'uFade', 'uSpin', 'uFogColor', 'uColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uFocus'];
+    this.membrane = buildProgram(gl, MEMBRANE_DRAW_VS, MEMBRANE_DRAW_FS, 'gate membrane');   // EG-F: the gate's sources with their per-draw places
+    this.beacon = buildProgram(gl, BEACON_DRAW_VS, BEACON_DRAW_FS, 'gate beacon');
+    const names = ['uVP', 'uOrigin', 'uEye', 'uYaw', 'uRadius', 'uProfile', 'uTime', 'uOpen', 'uFade', 'uSpin', 'uFogColor', 'uColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uFocus',
+      'uScale', 'uTint', 'uBelow', 'uHeight', 'uFoot'];   // EG-F: the per-draw five
     this.mu = {}; this.bu = {};
     for (const n of names) { this.mu[n] = gl.getUniformLocation(this.membrane, n); this.bu[n] = gl.getUniformLocation(this.beacon, n); }
     const vao = (verts) => {
@@ -247,7 +306,8 @@ export class GatePassRenderer {
    * fade 0..1 }] (at most GATE_PASS_MAX, the faded skipped), `eye` the view's own eye, `seconds` any clock (wrapped
    * here), `fog` the frame's fog ({ mode, density, range, camPos }; none draws unfogged). Nothing to draw, nothing
    * touched. GATE-SEEN: a gate `beaconOnly` is its beacon alone; GATE-FBX: one `fireOnly` its fire alone (the court's
-   * way in - no column over the bridge each time a fighter steps through).
+   * way in - no column over the bridge each time a fighter steps through). EG-F: a record's `scale`, `tint` and `beacon`
+   * (gatePassValues) - an Elite Breach's arch; the gate's records name none, and draw as they always drew.
    */
   draw(gates, proj, view, eye, seconds, fog = null) {
     this.drawn = 0;
@@ -265,12 +325,16 @@ export class GatePassRenderer {
     gl.uniform1f(this.bu.uTime, t);
     gl.uniform1f(this.bu.uRadius, BEACON_RADIUS_M);
     gl.uniform3fv(this.bu.uEye, eye ?? fog?.camPos ?? WHITE);
-    gl.uniform3fv(this.bu.uColor, BEACON_COLOR);
     this._fog(this.bu, fog, eye);
     gl.blendFunc(gl.ONE, gl.ONE);
     gl.bindVertexArray(this.column.vao);
     for (const g of list) {
       if (g.fireOnly) continue;   // GATE-FBX: the court's way in - its fire alone
+      const v = gatePassValues(g);   // EG-F: the beacon's colour, height, foot and light, per draw - the gate's own unless named
+      gl.uniform3fv(this.bu.uColor, v.color);
+      gl.uniform1f(this.bu.uBelow, v.below);
+      gl.uniform1f(this.bu.uHeight, v.height);
+      gl.uniform1f(this.bu.uFoot, v.foot);
       gl.uniform3f(this.bu.uOrigin, g.origin[0], g.origin[1], g.origin[2]);
       gl.uniform1f(this.bu.uFade, Math.min(1, g.fade));
       gl.drawArrays(gl.TRIANGLES, 0, this.column.count);
@@ -287,6 +351,9 @@ export class GatePassRenderer {
     gl.bindVertexArray(this.quad.vao);
     for (const g of list) {
       if (g.beaconOnly) continue;   // GATE-SEEN: a gate on a pixel not built yet is its beacon alone - no fire floating over the far ground
+      const v = gatePassValues(g);   // EG-F: the membrane's scale and tint, per draw - the gate's own unless named
+      gl.uniform1f(this.mu.uScale, v.scale);
+      gl.uniform3fv(this.mu.uTint, v.tint);
       gl.uniform3f(this.mu.uOrigin, g.origin[0], g.origin[1], g.origin[2]);
       gl.uniform1f(this.mu.uYaw, g.yaw);
       gl.uniform1f(this.mu.uOpen, Math.max(0, Math.min(1, g.open ?? 0)));

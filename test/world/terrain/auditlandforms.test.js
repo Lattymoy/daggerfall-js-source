@@ -24,6 +24,7 @@ import { TRANSPORT_MODES } from '../../../src/systems/transport.js';
 import { createDroppedLoot } from '../../../src/scenes/droppedLoot.js';
 import { natureStandsAt, layoutNature, groundAt } from '../../../src/world/terrain/terrainNature.js';
 import { sampleHeight, blendLocationTerrain, calcAvgMaxHeight, generateTileData } from '../../../src/world/terrain/terrainTiles.js';
+import { hostText, movedOutOf } from '../../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const H = HEIGHTMAP_DIMENSION;
 const UNIT = MAX_TERRAIN_HEIGHT;
@@ -38,18 +39,22 @@ const RELIEF = createLandforms({ woods });
 const LF_BARE = createLandforms({ woods, roads: NET, hills: false }), RELIEF_BARE = createLandforms({ woods, hills: false });
 const dry = new Uint8Array(NET.roads.length);
 const src = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
-const WORLD = src('src/scenes/world.js');
+const WORLD = hostText('src/scenes/world.js');
 const between = (from, to) => { const i = WORLD.indexOf(from), j = WORLD.indexOf(to, i); assert.ok(i > 0 && j > i, from); return WORLD.slice(i, j); };
 // auditrest3's harness: a host's own function lifted off world.js by its AST and mounted over stubs
+// (HOST-SPLIT 2: the world host is world.js and the modules moved out of it - each parsed as the module it is)
 const fnOf = (name) => {
-  let hit = null;
-  (function walk(n) {
-    if (!n || typeof n.type !== 'string' || hit) return;
-    if (n.type === 'FunctionDeclaration' && n.id?.name === name) { hit = n; return; }
-    for (const k of Object.keys(n)) { const v = n[k]; if (Array.isArray(v)) v.forEach(walk); else if (v && typeof v.type === 'string') walk(v); }
-  })(acorn.parse(WORLD, { ecmaVersion: 'latest', sourceType: 'module' }));
-  assert.ok(hit, name);
-  return WORLD.slice(hit.start, hit.end);
+  for (const file of ['src/scenes/world.js', ...movedOutOf('src/scenes/world.js')]) {
+    const text = src(file);
+    let hit = null;
+    (function walk(n) {
+      if (!n || typeof n.type !== 'string' || hit) return;
+      if (n.type === 'FunctionDeclaration' && n.id?.name === name) { hit = n; return; }
+      for (const k of Object.keys(n)) { const v = n[k]; if (Array.isArray(v)) v.forEach(walk); else if (v && typeof v.type === 'string') walk(v); }
+    })(acorn.parse(text, { ecmaVersion: 'latest', sourceType: 'module' }));
+    if (hit) return text.slice(hit.start, hit.end);
+  }
+  return assert.fail(name);
 };
 const scoped = (state) => new Proxy(state, {
   has: (t, k) => k !== '__s',
@@ -679,9 +684,10 @@ test('AUDIT LANDFORMS D9: a landforms promotion waits for the network in flight,
 
 /** bootWorld's own statements, in the order the boot runs them. */
 const bootStatements = () => {
-  const ast = acorn.parse(WORLD, { ecmaVersion: 'latest', sourceType: 'module' });
+  const own = src('src/scenes/world.js');   // bootWorld itself - its file alone (HOST-SPLIT 2)
+  const ast = acorn.parse(own, { ecmaVersion: 'latest', sourceType: 'module' });
   const boot = ast.body.map((n) => (n.type === 'ExportNamedDeclaration' ? n.declaration : n)).find((d) => d?.id?.name === 'bootWorld');
-  return boot.body.body.map((st) => WORLD.slice(st.start, st.end));
+  return boot.body.body.map((st) => own.slice(st.start, st.end));
 };
 
 test('AUDIT LANDFORMS II F1: what a pixel not built yet will stand - a spawn included - is the whole answer before the boot\'s load (online the only load) stands a single record, and is never made again after it', () => {
@@ -734,6 +740,7 @@ test('AUDIT LANDFORMS II F4: an anchor set in a dungeon keeps its feet in the du
     let anchor = null;
     mount(`${fnOf('setRecallAnchor')}\nreturn setRecallAnchor;`, {
       modes: { gateArenaDay: () => null, anchorContext: () => ({ worldContext, local: [1, 2, 3], buildingKey: 0, interior: null }) },
+      madeRuleHere: () => null,   // PIN MOVED (EG-H2, Elite-Gates.md section 24): the made level's law - no made level stands here
       WORLD_CONTEXT: { Nothing: 'Nothing', Exterior: 'Exterior', Interior: 'Interior', Dungeon: 'Dungeon' },
       walkMode: true, playerSpawned: true, player: { pos: [123.5, 40, 77.25] }, cam: { pos: [0, 0, 0], yaw: 0.5, pitch: 0.1 },
       state: { current: { x: 5, y: 6 }, compensation: [0, 10, 0], worldCoords: (p) => ({ x: p[0] + 1000, z: p[2] + 2000 }) },
@@ -926,12 +933,14 @@ function rebuildHost(vars) {
   const sliceTo = (head, end) => { const i = WORLD.indexOf(head), j = WORLD.indexOf(end, i); assert.ok(i > 0 && j > i, head); return WORLD.slice(i, j + end.length); };
   const SWEEP = sliceTo('  function sweepRoadless() {', '\n  }\n');
   const DESTROY = sliceTo('  function destroyPixel(px, py, { collectLoose = true } = {}) {', '\n  }\n');
-  const i = WORLD.indexOf('    if (labGrassField) {   // WOD2'), j = WORLD.indexOf('    if (homeTown) _homeLookV = -1;', i);
+  // HOST-SPLIT 2: the publish moved with the pixel build - its live names read `host.<name>`, and `host` is the scope
+  const i = WORLD.indexOf('    if (host.labGrassField) {   // WOD2'), j = WORLD.indexOf('    if (homeTown) host._homeLookV = -1;', i);
   assert.ok(i > 0 && j > i, 'the publish\'s re-stand block');
   const noop = new Proxy(function () {}, { get: (t, k) => (k === Symbol.toPrimitive ? () => NaN : k === Symbol.iterator ? function* () {} : noop), apply: () => noop });
   const KEEP = new Set(['Math', 'Number', 'Object', 'Array', 'Map', 'Set', 'JSON', 'Infinity', 'NaN', 'undefined', 'String', 'Boolean', 'Symbol', 'console', 'Float32Array']);
   const scope = new Proxy(vars, { has: (t, k) => !KEEP.has(k), get: (t, k) => (k === Symbol.unscopables ? undefined : k in t ? t[k] : noop), set: (t, k, v) => { t[k] = v; return true; } });
   const fns = new Function('scope', `with (scope) { ${DESTROY}\n${SWEEP}\n return { destroyPixel, sweepRoadless }; }`)(scope);
+  vars.host = scope;   // and `host` is the stand-ins themselves (under `with` every name, `scope` too, is the scope's)
   const publish = new Function('scope', `with (scope) { ${WORLD.slice(i, j)} }`);
   // the rides, bound as the boot binds them once the pools and the player stand (BOOT-TDZ2, K1)
   new Function('scope', `with (scope) { ${sliceTo('  rideGround = (t, key, moved) => {', '\n  };\n')} }`)(scope);
@@ -1091,7 +1100,8 @@ test('AUDIT LANDFORMS II H1: THE ONE CONSTRUCTION SEAM for C1 - every height wor
     ['restandSceneHeight: (y, x, z, was) => restandHeight(y - state.compensation[1], x, z, was) + state.compensation[1],', 'the read side'],
     ['toWire: (feet) => [feet[0], feet[1] - state.compensation[1], feet[2]],', 'the wire'],
   ]);
-  const raw = WORLD.split('\n').map((l) => l.trim()).filter((l) => /-\s*state\.compensation\[1\]/.test(l) && !/groundFrame(Height|Native)\(/.test(l));
+  // AUDIT HOST-SPLIT 2, the second read: and as a moved module spells it, host.state - the pixel build is the host's too
+  const raw = WORLD.split('\n').map((l) => l.trim()).filter((l) => /-\s*(?:host\.)?state\.compensation\[1\]/.test(l) && !/groundFrame(Height|Native)\(/.test(l));
   assert.deepEqual(raw.filter((l) => !TRANSIENT.has(l)), [], 'an exterior height shed raw - into DFU\'s frame (groundFrameHeight / groundFrameNative), or named here with its why');
   for (const l of TRANSIENT.keys()) assert.ok(raw.includes(l), `a transient named here that the host no longer has: ${l}`);
 });

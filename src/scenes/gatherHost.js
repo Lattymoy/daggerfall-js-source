@@ -119,6 +119,11 @@ export const ACT_POINTER = Object.freeze({ basket: 'cursor', mine: 'look', trace
  *  needs nothing; the net's gentle throw still lands where the look sends it (its state carries no `gentle`, and is
  *  named here so it never will by accident). */
 export const actPointer = (st) => (st?.gentle === true && st.kind !== 'fish' ? null : ACT_POINTER[st?.kind] ?? null);
+/** SKIN-PLAQUE (FIELD BUGS 2026-10-16c, "Quick loot is not suppressed when skinning"): WHILE AN ACT PLAYS THE LOOK IS
+ *  THE ACT'S - hoverHit's pick names nothing (systems/worldHover.js resolveHover: `if (key == null) return null`), so
+ *  the hosts' `?? ray` keeps it and the race's winner behind it (the body under the knife, its loot and its tooltip) is
+ *  not the plaque's either: E is the act's (AUDIT 29 D3), and the plaque never names what the press ignores. */
+export const ACT_OWNS_LOOK = Object.freeze({ key: null, distance: 0, reach: 0 });
 /** NODE-MARKS: the stood pixels walked for the marks - those within this many metres, past every kind's reach but a
  *  wider one a kind names for the player (`markReach` - AUDIT MINE-PERKS: a Prospector's 500 m alone walks further; a
  *  512 m walk for everyone was nine stood pixels' nodes asked a frame from a pixel's middle, where 256 is one). */
@@ -1107,10 +1112,12 @@ export function createGatherHost(deps) {
      * PROF-MENU: THE NODE AS THE PLAQUE'S PICK - the target, while nothing plays, as a hit the plaque resolves to the
      * node's list (`hoverName`). A node with nothing to press yields to the ray's own winner in reach - the press goes
      * there (AUDIT 29 C1), and so does the plaque; with none, its refused rows are listed, their reasons said.
+     * While an act plays, ACT_OWNS_LOOK - a hit naming nothing, never null, so no winner behind it is named (SKIN-PLAQUE).
      * @param {any} [ray] the host's own race's winner this frame
      */
     hoverHit(ray = null) {
-      if (act || !target || book.state.open !== true || !live()) return null;
+      if (act) return ACT_OWNS_LOOK;   // SKIN-PLAQUE: the act's look, no plaque over it
+      if (!target || book.state.open !== true || !live()) return null;
       const rows = rowsFor(target);
       if (!rows.length) return null;
       if (!rows.some(pressable) && ray && ray.distance <= ray.reach) return null;

@@ -415,6 +415,6 @@ test('REALM P0.5 by source: the host checkpoints every slot the exit save writes
   assert.match(w, /quickSave: \(saveName, opts\) => worldQuickSave\(saveName, opts\),/);
   assert.match(src('src/scenes/worldModes.js'), /quickSaveNow: \(saveName, opts\) => \(mode === 'dungeon' \? dungeonCtx\?\.quickSave\(saveName, opts\) : host\.quickSave\?\.\(saveName, opts\)\),/);
   const d = src('src/scenes/dungeonContext.js');
-  assert.match(d, /if \(isGateArena\(dfLocation\)\) \{ if \(!quiet\) hudText\.add\(COURT_TEXT\.noSave\); return false; \}/);
+  assert.match(d, /if \(madeLevelRule\(_made, 'save'\) === 'refused'\) \{ if \(!quiet\) hudText\.add\(madeLevelSays\(_made, 'save'\)\); return false; \}/);   // PIN MOVED (EG-H2, bible/11-Multiplayer/Elite-Gates.md section 24): the made level's law (systems/madeLevel.js): the court's save refused with the Hour's and the Spire's, quietly when quiet
   assert.match(d, /if \(r\.ok && !quiet\) requestScreenshot\(r\.key\);\n\s*if \(r\.ok && !quiet\) hudText\.add\(localizedText\('gameSaved', 'Game saved\.'\)\);\n\s*else if \(!r\.ok\) hudText\.add\('Save failed/);
 });

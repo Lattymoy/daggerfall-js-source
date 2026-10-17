@@ -28,6 +28,7 @@ import { SNOWLINE_BYTE } from '../../src/ui/overworldModel.js';
 import { FEATURES } from '../../src/systems/features.js';
 import { tamrielLandOn } from '../../src/scenes/shared.js';
 import { setPref, _resetForTests } from '../../src/systems/uiPrefs.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 
@@ -254,7 +255,7 @@ test('TAMRIEL2 switch: the Features row `tamriel-land` is on by default in the w
 });
 
 test('TAMRIEL2 host: the reader is rebound to the composed one at the mount, after the boot repairs and before the client copies the bytes; the frame set or cleared; the climate read composed; World of Daggerfall and Deep Waters held to the Bay; the far ring handed the continent\'s bytes', () => {
-  const src = read('src/scenes/world.js');
+  const src = hostText('src/scenes/world.js');
   assert.match(src, /let woods = new WoodsFile\(\);/, 'rebound, so every reader of `woods` sees the one reader');
   const i = src.indexOf('woods.syncHeightMapBytes();'), j = src.indexOf('const terrainGen = new TerrainGenClient({ woods, woodsBytes });');
   assert.ok(i > 0 && j > i, 'the client is built after the repairs');

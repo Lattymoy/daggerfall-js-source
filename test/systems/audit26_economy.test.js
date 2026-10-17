@@ -100,7 +100,10 @@ test('audit26 F066: a closed shop opens the steal-shaped inventory, never the Bu
   // ONE door now (`interiorInventory`, which folds in the drop pool and
   // the emptied-container free). What this asserts is unchanged - the
   // shelf is the Remove-mode remote, SetShopShelfStealing's shape.
-  assert.ok(shelf.includes('loot: { items: () => shelf.items },'),
+  // PIN MOVED (FIELD BUGS 2026-10-16b STOLEN-GOODS): the loot target says it is someone else's (`stolen: true`), so a take
+  // off it is marked as it lands; the shelf is the remote as before. PIN MOVED (STOLEN-GOODS AUDIT S1): as the shop's
+  // keeping, taken as the window opens (`stolenFrom: shelfBefore`)
+  assert.ok(shelf.includes('loot: { items: () => shelf.items, stolenFrom: shelfBefore },'),
     'and opens the inventory with the shelf as the Remove-mode remote - SetShopShelfStealing\'s shape');
   assert.ok(shelf.includes('const win = interiorInventory({'), 'through the host\'s one inventory door (ID1)');
   assert.ok(shelf.indexOf('insideOpenShop === false') < shelf.indexOf('openTradeWindow(shelf, b, \'Buy\')'),

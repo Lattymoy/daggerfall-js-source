@@ -10,6 +10,9 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import { SD_REALM_TEXT } from '../../src/world/superDungeon/sdRealm.js';
+import { madeLevelRule } from '../../src/systems/madeLevel.js';   // EG-H2: the made level's law the world host's doors ask
+/** PIN MOVED (EG-H2): the made level as the mode machine answers it (worldModes `madeLevel`) off the stub's own accessors. */
+const madeOf = (m) => (m?.gateArenaDay?.() != null ? 'court' : m?.sdRealmSlot?.() != null ? 'hour' : m?.egHallBreach?.() != null ? 'spire' : null);
 import { createCrewAshore } from '../../src/scenes/crewAshore.js';
 import { createCompanions } from '../../src/systems/naval/crewCompanions.js';
 
@@ -21,7 +24,7 @@ const lift = (re, what) => { const m = re.exec(WORLD); assert.ok(m, `lifted from
 
 /** world.js companionPlace, lifted and run over a host of stubs (the gate's own rig, test/systems/gatecrowd.test.js). */
 const PLACE = lift(/\n {2}(function companionPlace\(\{ crew = true \} = \{\}\) \{[\s\S]*?\n {2}\})\n/, 'companionPlace')[1];
-const placeHost = new Function('d', `const { navalOn, walkMode, playerSpawned, _loading, modes, travelView, csaRuntime, _mode, exteriorFoes, collider, revenantSpawnOptions, effectiveLevel, playerEntity, _dungeonPool } = d;\n${PLACE}\nreturn companionPlace;`);
+const placeHost = new Function('d', `const { navalOn, walkMode, playerSpawned, _loading, modes, travelView, csaRuntime, _mode, exteriorFoes, collider, revenantSpawnOptions, effectiveLevel, playerEntity, _dungeonPool, madeRuleHere } = d;\n${PLACE}\nreturn companionPlace;`);
 /** The place as the world host answers it, in an Hour of slot `slot` (null: none) and a gate's court of day `day`. */
 function placeOf(slot, { day = null, mode = 'dungeon' } = {}) {
   const pool = { spawnLooseFoe: () => null, removeLooseFoe: () => {}, foes: [], collider: null, companionFx: null };
@@ -30,6 +33,7 @@ function placeOf(slot, { day = null, mode = 'dungeon' } = {}) {
     navalOn: () => true, walkMode: true, playerSpawned: true, _loading: false, travelView: null, csaRuntime: null,
     modes: { transitioning: false, gateArenaDay: () => day, sdRealmSlot: () => slot, interiorPool: () => street, interiorCollider: null }, _mode: () => mode,
     exteriorFoes: street, collider: null, revenantSpawnOptions: () => ({}), effectiveLevel: () => 1, playerEntity: {}, _dungeonPool: () => pool,
+    madeRuleHere: (rule) => madeLevelRule(madeOf({ gateArenaDay: () => day, sdRealmSlot: () => slot }), rule),   // PIN MOVED (EG-H2): the world host's word on the made level
   });
 }
 
@@ -43,7 +47,8 @@ test('SD-ALONE the place: the Shattered Hour is no place for a companion - the c
   assert.ok(placeOf(null, { mode: 'interior' })(), 'a building');
   assert.ok(placeOf(null, { mode: 'exterior' })({ crew: false }), 'the street');
   assert.equal(placeOf(null, { day: 3 })(), null, 'the gate\'s court still none (GATE-ALONE)');
-  assert.match(PLACE, /if \(modes\?\.gateArenaDay\?\.\(\) != null\) return null;   \/\/ GATE-ALONE[^\n]*\n\s*if \(modes\?\.sdRealmSlot\?\.\(\) != null\) return null;   \/\/ SD-ALONE/, 'asked with the court\'s, before any place is made');
+  assert.match(PLACE, /if \(madeRuleHere\('companions'\) === 'out'\) return null;   \/\/ GATE-ALONE[^\n]*SD-ALONE/, 'asked with the court\'s, before any place is made');   // PIN MOVED (EG-H2): one door, the made level's law
+  assert.equal(madeLevelRule('hour', 'companions'), 'out', 'the law: the Hour keeps companions out');
 });
 
 test('SD-ALONE through the Rift: at my side in the Abyss Dungeon, lifted as I step through into the Hour - health and spells carried - none stood there however long, and stood behind me again on the way back (mutant: the Hour admitted)', async () => {
@@ -91,7 +96,8 @@ test('SD-ALONE the party panel: no card for a companion in the Hour, the crew\'s
   const at = WORLD.indexOf('function partyCompanions() {');
   assert.ok(at > 0, 'partyCompanions');
   const body = WORLD.slice(WORLD.indexOf('{', at) + 1, WORLD.indexOf('\n  }\n', at));
-  const cards = new Function('navalOn', 'csaRuntime', 'naval', 'crewAshore', 'composePartyFx', 'swornCards', 'modes', body);
+  const cardsOf = new Function('navalOn', 'csaRuntime', 'naval', 'crewAshore', 'composePartyFx', 'swornCards', 'modes', 'madeRuleHere', body);
+  const cards = (...a) => cardsOf(...a, (rule) => madeLevelRule(madeOf(a[6]), rule));   // PIN MOVED (EG-H2): the made level's law, off the stub's mode machine
   const naval = { companions: { party: [{ boat: 42, name: 'Hilda', role: 'Bosun', health: 20, maxHealth: 60 }] } };
   const none = { bodies: () => [] };
   const sworn = () => [{ key: 'rv:9', name: 'Ysolde', role: 'Sworn', h: 30, hm: 30, fx: [] }];

@@ -23,8 +23,9 @@ import { stowSail } from '../../../src/systems/comeSailAway/comeSailAway.js';
 import { sampleDepthMeters } from '../../../src/world/deepWater/deepBathymetry.js';
 import { sea } from '../../navalSea.mjs';
 import { scene } from '../../csaScene.mjs';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
-const WORLD = readFileSync(new URL('../../../src/scenes/world.js', import.meta.url), 'utf8');
+const WORLD = hostText('src/scenes/world.js');
 const { findHarbour, createWaterGrid, footprintClear } = LIFE;
 /** Iliac Puddle No More's carved shelf (world/deepWater/deepBathymetry.js, the mod's default depth) off a straight coast - land at
  *  x <= 0 - at `k`'s place along its noise; and world.js navalIsWater's law over it: a floor her draft under the sea. */

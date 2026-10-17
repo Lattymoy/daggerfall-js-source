@@ -102,12 +102,12 @@
   {
     "name": "STORM-SHED-primary-unheld",
     "file": "src/net/online.js",
-    "old": " this._scheduleRetry(); this._retryAt = this._afterMintHold(this._retryAt); return; }",
-    "new": " this._scheduleRetry(); return; }",
+    "old": " this._scheduleRetry(); this._retryAt = this._afterMintHold(this._retryAt); this._tokenRetry = true; return; }",
+    "new": " this._scheduleRetry(); this._tokenRetry = true; return; }",
     "tests": [
       "test/net/stormshed.test.js"
     ],
-    "note": "the primary's tokenless hello said again inside the minter's hold"
+    "note": "the primary's tokenless hello said again inside the minter's hold - PIN MOVED (FIELD BUGS 2026-10-16b DOOR-TOKEN): re-aimed by content past the line's new `this._tokenRetry = true;`"
   },
   {
     "name": "STORM-SHED-halo-unheld",

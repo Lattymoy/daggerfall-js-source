@@ -3685,8 +3685,8 @@
   {
     "name": "AC5-C-M26",
     "file": "src/systems/inventory.js",
-    "old": "(a.card ?? null) === (b.card ?? null);",
-    "new": "(a.card ?? 0) === (b.card ?? null);",
+    "old": "(a.card ?? null) === (b.card ?? null) &&",
+    "new": "(a.card ?? 0) === (b.card ?? null) &&",
     "tests": [
       "test/systems/item/auditcards5_items.test.js",
       "test/systems/item/cards8_binder.test.js",
@@ -3704,8 +3704,8 @@
   {
     "name": "AC5-C-M29",
     "file": "src/systems/item/itemInfo.js",
-    "old": "if (isPortalStone(item) || isWalletItem(item) || isIliacCard(item) || isCardBinder(item) || isCardPack(item)) record = survivalInfoTokens(item);",
-    "new": "if (isPortalStone(item) || isWalletItem(item) || isCardPack(item)) record = survivalInfoTokens(item);",
+    "old": "if (isPortalStone(item) || isWalletItem(item) || isIliacCard(item) || isCardBinder(item) || isCardPack(item) || isWeirKey(item)) record = survivalInfoTokens(item);",
+    "new": "if (isPortalStone(item) || isWalletItem(item) || isCardPack(item) || isWeirKey(item)) record = survivalInfoTokens(item);",
     "tests": [
       "test/systems/item/auditcards5_items.test.js",
       "test/systems/item/cards8_binder.test.js",

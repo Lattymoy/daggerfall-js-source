@@ -13,8 +13,9 @@ import {
 } from '../../../src/world/card/cardTables.js';
 import { SEATED_EYE_HEIGHT, SEAT_OUT } from '../../../src/player/seatPose.js';
 import { trs } from '../../../src/world/mat4.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
-const read = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
+const read = (p) => hostText(p);
 const box = (x1, z1, y0 = 0, top = 0.8) => ({ min: [0, y0, 0], max: [x1, top, z1] });
 const round = (v) => Math.round(v * 1e6) / 1e6;
 const at = (s) => [round(s.lx), round(s.lz), s.side, s.nx, s.nz];

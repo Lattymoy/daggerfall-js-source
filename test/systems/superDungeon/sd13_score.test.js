@@ -22,6 +22,7 @@ import { SD_ARENA, SD_ORRERY, dungeonToRealm, realmToDungeon } from '../../../sr
 import { SD_FIRST_STEP } from '../../../src/world/superDungeon/sdHall.js';
 import { SD_BAR_NEAR_M } from '../../../src/ui/superDungeon/sdRemnantBar.js';
 import { sdPhase } from '../../../src/net/superDungeon/sdLaw.js';
+import { createSpireScoreHost } from '../../../src/systems/eliteGates/egScore.js';
 
 const W = readFileSync(new URL('../../../src/scenes/world.js', import.meta.url), 'utf8');
 const constOf = (name) => { const at = W.indexOf(`\n  const ${name} = `); assert.ok(at > 0, name); return W.slice(at + 1, W.indexOf('\n  };\n', at) + 5); };
@@ -192,6 +193,7 @@ function scoreHost() {
     player: { get pos() { return st.pos; } }, sdDungeonToRealm: dungeonToRealm, sdScorePlace, sdScoreSongs, createHourScore, SD_SCORE_SILENCE, music,
     sdFightLink: { state: () => st.fight, now: () => st.now }, sdHost: { record: () => st.rec }, sdPhase, _sharedOffsetMs: 0,
     playerEntity: { get health() { return st.hp; } },   // AUDIT SD III (A5, PIN MOVED): the living and the dead
+    _spireScore: createSpireScoreHost({ music }), egClient: null,   // EG-G2 (PIN MOVED): the Spire's score asked first - out of an Elite Breach it holds nothing
   };
   const body = `let _hourScoreHeld = false, _hourScoreMade = false, _hourPlace = null;\nconst _hourScore = createHourScore();\n${constOf('sdScoreWhere')}\n${constOf('hourScoreFrame')}\nreturn hourScoreFrame;`;   // AUDIT SD III (A10, PIN MOVED): where I stood last
   return { frame: new Function(...Object.keys(env), body)(...Object.values(env)), log, st };

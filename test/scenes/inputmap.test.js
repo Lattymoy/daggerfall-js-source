@@ -8,6 +8,7 @@ import {
   overlayAction, actionOf, held, moveHeld, anyMove, routeKey, setBindings,
 } from '../../src/ui/input.js';
 import { createBindings, resetDefaults, setBinding, DEFAULT_BINDINGS } from '../../src/systems/inputActions.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -104,7 +105,7 @@ test('I2: no host reads a bound key raw - the sweep', () => {
     .map((f) => `src/scenes/${f}`);
   const offenders = [];
   for (const rel of hosts) {
-    const lines = readFileSync(join(root, rel), 'utf8').split('\n');
+    const lines = hostText(rel).split('\n');
     lines.forEach((line, i) => {
       if (line.includes('fly-cam (dev)') || line.includes('I2 departure')) return;
       for (const m of line.matchAll(/keys\.has\('([^']+)'\)/g)) {
@@ -134,7 +135,7 @@ test('I2: the sweep\'s escapes are themselves bounded', () => {
   // departure is ONE line per gameplay host; fly-cam markers only on
   // fly-branch lines (a handful per exterior-style host).
   const count = (rel, needle) =>
-    (readFileSync(join(root, rel), 'utf8').match(new RegExp(needle, 'g')) ?? []).length;
+    (hostText(rel).match(new RegExp(needle, 'g')) ?? []).length;
   const FLY = { 'src/scenes/exterior.js': 5, 'src/scenes/world.js': 5,
     'src/scenes/dungeon.js': 5, 'src/scenes/worldModes.js': 0 };
   for (const [rel, fly] of Object.entries(FLY)) {
@@ -182,7 +183,7 @@ test('U43: ONE dispatch - the interior host routes the same table as the dungeon
   // chains, and the interior one answered two actions - so F5, F6, L
   // and N all died the moment the player stepped through a shop door,
   // with the windows themselves built and mounted elsewhere.
-  const src = (rel) => readFileSync(join(root, 'src', rel), 'utf8');
+  const src = (rel) => hostText(`src/${rel}`);
   const modes = src('scenes/worldModes.js');
   assert.match(modes, /if \(routeKey\(e, interiorKeyCtx, null, keys\)\) e\.preventDefault\(\);/,   // AUDIT 58 (f3/input): + the held-keys Set, so a rebound COMBO reaches this table too
     'the interior arm routes the shared table');
@@ -237,7 +238,7 @@ test('U43-ii: every modal mode can SPEAK - no HUD line goes to the console', () 
   // it. The quest popup was the same shape one layer up: the dungeon
   // arm of showQuestOverlay did not exist, and the classic start runs
   // _TUTOR__ and _BRISIEN inside Privateer's Hold.
-  const src = (rel) => readFileSync(join(root, 'src', rel), 'utf8');
+  const src = (rel) => hostText(`src/${rel}`);
   for (const rel of ['scenes/world.js', 'scenes/exterior.js']) {
     const text = src(rel);
     assert.equal(/if \(townTalk\.overlayActive\) townTalk\.frame\(dt\);/.test(text), false,

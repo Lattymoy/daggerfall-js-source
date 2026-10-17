@@ -6,11 +6,14 @@
 // Now: what is worn first, the most worn first, then the pack (the repair kit's order - one export); never what a
 // smith refuses (a quiver, a light's fuel, a supply's doses); a weapon on the pool mends a classic dagger's share, 32.
 // Every piece is minted by its real producer, and the rounds are the pump's.
+// PIN MOVED (FIELD BUGS 2026-10-16b MEND-ARMOUR): the share is every piece's now - a fiftieth of its own condition
+// (repairsObjectsMend), armour, clothing and uses alike - where MEND-WORN gave it to a pool weapon alone and left the
+// rest DFU's point. test/systems/fb1016b_mendarmour.test.js holds the report.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
-  ENCHANTMENT_TYPES as T, enchantmentMagicRound, repairsObjectsTarget, isEnchantedItem, POOL_WEAPON_MEND, CONDITION_AMOUNT,
+  ENCHANTMENT_TYPES as T, enchantmentMagicRound, repairsObjectsTarget, isEnchantedItem, repairsObjectsMend, MEND_SHARE_OF, CONDITION_AMOUNT,
 } from '../../src/systems/enchantments.js';
 import { runMagicRoundsFor } from '../../src/systems/worldTick.js';
 import { equipItem, lowerCondition } from '../../src/systems/equip.js';
@@ -32,8 +35,10 @@ import { tickPlayerTorch } from '../../src/systems/playerTorch.js';
 import { mintFieldRepairKit, repairKitTargets } from '../../src/systems/smithItems.js';
 import { getBool, setValue, _resetForTests } from '../../src/systems/settings/settings.js';
 
-const CUIRASS = 102, HELM = 107, BOOTS = 108, KITE_SHIELD = 111, RING = 135, BOOK = 277, SHIRT = 165, TORCH = 247;
-const IRON_PLATE = 0x0200;
+const CUIRASS = 102, HELM = 107, BOOTS = 108, KITE_SHIELD = 111, RING = 135, BOOK = 277, SHIRT = 165, TORCH = 247, ARMBANDS = 142;
+const IRON_PLATE = 0x0200, DAEDRIC_PLATE = 0x0209;
+/** MEND-WORN's tick on a weapon on the pool - a fiftieth of the 1,600 (the classic Dagger's point of its 50). */
+const POOL_WEAPON_MEND = WEAPON_CONDITION_POOL / ITEM_TEMPLATES[WEAPONS.Dagger].hitPoints;
 const seeded = (s) => () => { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; };
 const player = () => ({ isPlayer: true, level: 10, gender: 'male', activeEffects: [], health: 60, maxHealth: 60, items: [], spells: [], stats: {}, skills: {}, career: { primarySkills: [], majorSkills: [], luck: 50 } });
 const share = (it) => it.currentCondition / it.maxCondition;
@@ -85,44 +90,53 @@ test('MEND-WORN: the field - Roleplay & Realism\'s kit put on, beside its worn l
     tick(p, round, true);
     const moved = p.items.filter((it) => it.currentCondition !== before.get(it));
     assert.deepEqual(moved.map((it) => it.name), [want.name], `round ${round}: one piece, the worn one with the least share left`);
-    assert.equal(want.currentCondition - before.get(want), want === blade ? POOL_WEAPON_MEND : CONDITION_AMOUNT);
+    // PIN MOVED (FIELD BUGS 2026-10-16b MEND-ARMOUR): the blade by 32 and the rest by DFU's point, then; every piece its fiftieth now
+    assert.equal(want.currentCondition - before.get(want), Math.min(repairsObjectsMend(want), want.maxCondition - before.get(want)));
   }
   const mended = (it) => it.currentCondition - start.get(it);
   assert.ok(mended(blade) >= 5 * POOL_WEAPON_MEND, `the blade in hand, the most worn, took the first ticks (${mended(blade)})`);
   assert.deepEqual(p.items.filter((it) => it.equipSlot == null && mended(it) !== 0).map((it) => it.name), [], 'nothing carried was touched');
 });
 
-test('MEND-WORN: a weapon on the pool mends the share a classic Dagger did - 32 a tick, iron 2% and Daedric 0.25% - every other piece DFU\'s point, and nothing past its condition', () => {
-  assert.equal(POOL_WEAPON_MEND, WEAPON_CONDITION_POOL / ITEM_TEMPLATES[WEAPONS.Dagger].hitPoints, 'the Dagger row\'s 50, on the pool');
+// PIN MOVED (FIELD BUGS 2026-10-16b MEND-ARMOUR): "every other piece DFU's point" - a Daedric weapon 32 (0.25%), an iron
+// cuirass and a shirt 1 - is every piece's fiftieth now; the iron dagger's 32 is the same number.
+test('MEND-WORN: a weapon on the pool mends the share a classic Dagger did - 32 a tick, iron 2% - and since MEND-ARMOUR every piece the same share of its own condition, never under DFU\'s point, and nothing past its condition', () => {
+  assert.equal(MEND_SHARE_OF, ITEM_TEMPLATES[WEAPONS.Dagger].hitPoints, 'the Dagger row\'s 50');
+  assert.equal(MEND_SHARE_OF, 50);
   assert.equal(POOL_WEAPON_MEND, 32);
   assert.equal(CONDITION_AMOUNT, 1, 'RepairsObjects.cs:26 conditionAmount');
   const dagger = at(weaponOfMaterial(WEAPONS.Dagger, WEAPON_MATERIALS.Iron), 20);
   assert.equal(dagger.maxCondition, 1600);
-  assert.equal(gain(dagger), 32);
+  assert.equal(gain(dagger), POOL_WEAPON_MEND);
   assert.equal(POOL_WEAPON_MEND / dagger.maxCondition, 1 / ITEM_TEMPLATES[WEAPONS.Dagger].hitPoints, 'iron: what a classic iron dagger got, 2% a tick');
   const hammer = at(weaponOfMaterial(WEAPONS.Warhammer, WEAPON_MATERIALS.Daedric), 20);
   assert.equal(hammer.maxCondition, 12800);
-  assert.equal(gain(hammer), 32, 'Daedric 0.25% a tick - and the type does not matter, the pool is one');
-  assert.equal(gain(at(weaponOfMaterial(WEAPONS.Short_Bow, WEAPON_MATERIALS.Elven), 20)), 32);
-  assert.equal(gain(at(armorOfMaterial(CUIRASS, IRON_PLATE), 20)), 1, 'armour keeps DFU\'s point');
-  assert.equal(gain(at(mintCondition(setItemFields({ group: 'MensClothing', templateIndex: SHIRT })), 20)), 1, 'clothing too');
+  assert.equal(gain(hammer), 256, 'Daedric 2% a tick too - the material does not matter, nor the type');
+  assert.equal(gain(at(weaponOfMaterial(WEAPONS.Short_Bow, WEAPON_MATERIALS.Elven), 20)), 64);
+  assert.equal(gain(at(armorOfMaterial(CUIRASS, IRON_PLATE), 20)), 82, 'armour: a fiftieth of 4,096');
+  assert.equal(gain(at(armorOfMaterial(CUIRASS, DAEDRIC_PLATE), 20)), 655, 'a fiftieth of 32,768');
+  assert.equal(gain(at(mintCondition(setItemFields({ group: 'MensClothing', templateIndex: SHIRT })), 20)), 2, 'clothing: a fiftieth of 100');
+  assert.equal(gain(at(mintCondition(setItemFields({ group: 'MensClothing', templateIndex: ARMBANDS })), 20)), 1, 'never under DFU\'s point: a fiftieth of 15 is 0.3');
   const nearly = weaponOfMaterial(WEAPONS.Longsword, WEAPON_MATERIALS.Iron);
   nearly.currentCondition = nearly.maxCondition - 10;
   assert.equal(gain(nearly), 10, 'never past its condition');
   assert.equal(nearly.currentCondition, nearly.maxCondition);
 });
 
-test('MEND-WORN: a magic item\'s and an artifact\'s condition is their uses, not the pool - each keeps DFU\'s point, and the artifact its own maximum', () => {
+// PIN MOVED (FIELD BUGS 2026-10-16b MEND-ARMOUR, then its AUDIT): MEND-ARMOUR gave uses a fiftieth as it gave every piece;
+// the audit found the round runs through every rest too (one 8-hour rest refilled a spent Cast When Used piece: 100 casts),
+// so a charge keeps DFU's point - test/systems/fb1016b_mendarmour.test.js holds the rest.
+test('MEND-WORN: a magic item\'s and an artifact\'s condition is their uses, not the pool - each mends DFU\'s point (MEND-ARMOUR\'s audit: a charge is not wear), and the artifact keeps its own maximum', () => {
   // MAGIC.DEF's record, through the real producer: group 2 is always a weapon, its condition the record's uses
   const magicDef = [{ index: 0, name: 'Blade of the Test', type: 0, group: 2, groupIndex: 0, enchantments: [{ type: T.PotentVs, param: 0 }], uses: 1000, value: 0, material: 0 }];
   const blade = createRegularMagicItem(magicDef, 1, 'male', seeded(2));
   assert.deepEqual([blade.group, blade.magic, blade.maxCondition], ['Weapons', true, 1000]);
   blade.currentCondition = 500;
-  assert.equal(gain(blade, true), 1, 'a magic weapon: one use back a tick');
+  assert.equal(gain(blade, true), 1, 'a magic weapon: DFU\'s point of its 1,000 uses back a tick');
   // a classic save's artifact, through the importer: `artifact` and never `magic` (AUDIT WEAPON-POOL P4)
   const artifact = classicItemFromRecord({ parsedData: { group: 3, index: 0, name: 'Dagger', material: WEAPON_MATERIALS.Daedric, value: 1, flags: ITEM_ARTIFACT_MASK, currentCondition: 300, maxCondition: 400, typeDependentData: 0, enchantmentPoints: 0, message: 0, magic: [] } });
   assert.deepEqual([artifact.group, artifact.artifact, artifact.magic], ['Weapons', true, undefined]);
-  assert.equal(gain(artifact, true), 1);
+  assert.equal(gain(artifact, true), 1, 'the point of its 400');
   assert.equal(artifact.maxCondition, 400, 'its uses, not moved to the pool');
 });
 
@@ -162,10 +176,11 @@ test('MEND-WORN: an enchanted piece mends only under AllowMagicRepairs - the Wal
     assert.equal(getBool('Controls', 'AllowMagicRepairs'), true, 'the port\'s default');
     const [w0, h0] = [wall.currentCondition, helm.currentCondition];
     tick(p, 4, getBool('Controls', 'AllowMagicRepairs'));
-    assert.deepEqual([wall.currentCondition - w0, helm.currentCondition - h0], [1, 0], '"The gate fell; this did not." - the most worn, itself');
+    // PIN MOVED (FIELD BUGS 2026-10-16b MEND-ARMOUR): a point each, then; a fiftieth of each one's own now (2,048 and 2,560)
+    assert.deepEqual([wall.currentCondition - w0, helm.currentCondition - h0], [41, 0], '"The gate fell; this did not." - the most worn, itself');
     setValue('Controls', 'AllowMagicRepairs', 'False');
     tick(p, 8, getBool('Controls', 'AllowMagicRepairs'));
-    assert.deepEqual([wall.currentCondition - w0, helm.currentCondition - h0], [1, 1], 'Off: the enchanted wall passed by, the helm mended');
+    assert.deepEqual([wall.currentCondition - w0, helm.currentCondition - h0], [41, 51], 'Off: the enchanted wall passed by, the helm mended');
   } finally {
     _resetForTests();
   }
@@ -176,7 +191,8 @@ test('MEND-WORN: through the pump every host shares, a worn piece mends once eve
   const p = wearing([cuirass]);
   const from = cuirass.currentCondition;
   assert.equal(runMagicRoundsFor(p, 0, 40, { sinks: {} }), 40);
-  assert.equal(cuirass.currentCondition - from, 10, 'rounds 4, 8 ... 40');
+  // PIN MOVED (FIELD BUGS 2026-10-16b MEND-ARMOUR): +10, a point a tick, then - the cuirass's fiftieth, 82, a tick now
+  assert.equal(cuirass.currentCondition - from, 10 * 82, 'rounds 4, 8 ... 40');
   const foesCuirass = at(armorOfMaterial(CUIRASS, IRON_PLATE), 50);
   const foe = wearing([foesCuirass]);
   foe.isPlayer = false;
@@ -186,7 +202,7 @@ test('MEND-WORN: through the pump every host shares, a worn piece mends once eve
 
 test('MEND-WORN: a weapon still on its row\'s pool moves to the one pool before it mends, at its share - the door lowerCondition keeps before a wear (AUDIT WEAPON-POOL P2)', () => {
   const old = Object.assign(weaponOfMaterial(WEAPONS.Dagger, WEAPON_MATERIALS.Iron), { maxCondition: 50, currentCondition: 10 });   // the mint before WEAPON-POOL
-  assert.equal(gain(old), 320 + POOL_WEAPON_MEND - 10, '10 of 50 is 320 of 1,600, and the tick lands on the pool');
+  assert.equal(gain(old), 320 + POOL_WEAPON_MEND - 10, '10 of 50 is 320 of 1,600, and the tick lands on the pool - a fiftieth of the 1,600, not of the 50');
   assert.deepEqual([old.maxCondition, old.currentCondition], [1600, 352]);
 });
 

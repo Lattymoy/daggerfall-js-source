@@ -23,12 +23,13 @@ import { createExteriorFoes } from '../../src/scenes/exteriorFoes.js';
 import { createCityGuards, GUARD_MOBILE_TYPE } from '../../src/scenes/cityGuards.js';
 import { createSkyController } from '../../src/scenes/shared.js';
 import { ENEMY_BASICS } from '../../src/characters/enemy/enemyBasics.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const src = (f) => readFileSync(join(root, f), 'utf8');
 const DUNGEON_CTX = src('src/scenes/dungeonContext.js');
 const DUNGEON = src('src/scenes/dungeon.js');
-const WORLD = src('src/scenes/world.js');
+const WORLD = hostText('src/scenes/world.js');
 const SHARED = src('src/scenes/shared.js');
 const XF = src('src/scenes/exteriorFoes.js');   // AUDIT 65 SL-3: the re-minting pool, the law this host has to match by hand
 

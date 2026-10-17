@@ -22,7 +22,8 @@
 //
 // THE CLOCK. Every stamp the hub says is the RELAY'S clock (a wall millisecond; the welcome's `now` says how far this
 // machine is from it - net/online.js clockOffsetMs). "Last online" is therefore read against the relay's clock as
-// this machine sees it: `now()` here is the session's clock plus the offset the host hands in.
+// this machine sees it: `now()` here is this machine's wall clock (Date.now - clockOffsetMs is measured against it, never
+// against the session's steadyNow, AUDIT ONLINE 3 F2) plus the offset the host hands in.
 //
 // Not a DFU member: Daggerfall Unity has no friends, no parties and no online. Ledger A row (ONLINE).
 import { NOTE_CODES, INVITE_TTL_MS, PARTY_MAX, PENDING_MAX } from './wire.js';

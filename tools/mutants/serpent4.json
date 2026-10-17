@@ -265,8 +265,8 @@
   {
     "name": "SERPENT4-the-relay-deaf-to-r",
     "file": "server/src/index.js",
-    "old": "serpentBrain.applySerpentHit(f, a.sub, m.d, m.z, pose, now, m.r === 1)",
-    "new": "serpentBrain.applySerpentHit(f, a.sub, m.d, m.z, pose, now)",
+    "old": "SERPENT_SEAM.hit(f, a.sub, m.d, m.r, pose, now, null, { z: m.z })",
+    "new": "SERPENT_SEAM.hit(f, a.sub, m.d, undefined, pose, now, null, { z: m.z })",
     "tests": [
       "test/net/serpent/serpent4.test.js"
     ]

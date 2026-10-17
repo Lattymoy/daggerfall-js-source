@@ -58,8 +58,9 @@ import { playerTorchLight } from '../../src/systems/playerTorch.js';
 import { thunderlockMuzzleLight } from '../../src/systems/thunderlock.js';
 import { createPlayerMagic } from '../../src/scenes/hostMagic.js';
 import { candleBase, CANDLE } from '../../src/scenes/magicCandle.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
-const rd = (p) => readFileSync(new URL('../../' + p, import.meta.url), 'utf8');
+const rd = (p) => hostText(p);
 
 installRoleplayRealism();
 installRoleplayRealismModules();

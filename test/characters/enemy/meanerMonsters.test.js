@@ -17,8 +17,9 @@ import { makeEnemyEntity } from '../../../src/characters/enemy/enemyEntity.js';
 import { MEANER_MONSTERS as PCAAO_EDIT } from '../../../src/combat/pcaaoMeanerMonsters.js';
 import { MOD_SETTINGS, setModSetting, _resetModSettings, modSettingIfDeclared } from '../../../src/systems/modSettings.js';
 import { CREDITS } from '../../../src/ui/credits.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
-const rd = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
+const rd = (p) => hostText(p);
 const career = () => ({ strength: 50, intelligence: 50, willpower: 50, agility: 50, endurance: 50, personality: 50, speed: 50, luck: 50, attackModifierFlags: 0 });
 
 test('MM1: the table is the DLL\'s, row for row - twenty-four rows in its order, the four id-35 rows folded so the LAST lands on the Fire Atronach, the name never applied, the pco array dead (mutants: a row reordered, the fold keeping the first, pco true)', () => {
@@ -136,7 +137,7 @@ test('MM1: the seams - the archive on a parsed TEXTURE.###, every billboard size
   assert.match(rd('src/scenes/exteriorFoes.js'), /const sz0? = mobileBillboardSize\(f\.tex, o\.record\);/);   // ELITE FOES: `sz0`, then an elite's quarter more
   assert.match(rd('src/scenes/dungeonContext.js'), /const sz = mobileBillboardSize\(f\.mobileTex, out\.record\);/);
   assert.match(rd('src/scenes/cityGuards.js'), /const sz = mobileBillboardSize\(g\.tex, o\.record\);/);
-  assert.match(rd('src/scenes/world.js'), /const sz = mobileBillboardSize\(pt, out\.record\);/);
+  assert.match(hostText('src/scenes/world.js'), /const sz = mobileBillboardSize\(pt, out\.record\);/);
   assert.match(rd('src/scenes/exterior.js'), /const sz = mobileBillboardSize\(t, out\.record\);/);
   assert.match(rd('src/scenes/corpseMarker.js'), /const size0? = billboardSize\(t, record\) \?\? fallbackSize;/, 'a corpse is a static billboard');   // ELITE FOES: `size0`, then an elite's body a quarter larger
   assert.equal((rd('src/scenes/exteriorFoes.js').match(/mobileBillboardSize\(/g) || []).length, 1, 'the corpse fallback stays static');

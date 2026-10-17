@@ -64,14 +64,14 @@
   },
   {
     "name": "ROCKSEAT-never",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "{ const dy = rockSeatDrop(lowestGroundUnder(samples, box), box[1]); if (dy < 0) { m.matrix[13] += dy; box[1] += dy; box[4] += dy; } }",
     "new": "{ void rockSeatDrop; }",
     "tests": ["test/world/worldOfDaggerfall/ow_wod.test.js"]
   },
   {
     "name": "ROCKSEAT-stacked-too",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "        if (rockPick(m.pick) && box[1] < surfaceHeightAt(",
     "new": "        if (rockPick(m.pick) || box[1] < surfaceHeightAt(",
     "tests": ["test/world/worldOfDaggerfall/ow_wod.test.js"]

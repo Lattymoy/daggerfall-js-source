@@ -26,7 +26,7 @@
 // Not a DFU member. Ledger A (SUPER-DUNGEONS).
 import { faces } from '../gate/gateModel.js';
 import { packRealmFaces, SD_REALM_BRASS_RECORD, SD_REALM_ROOT_RECORD, SD_REALM_FLOOR_RECORD, SD_ISLAND_SIDES, SD_ROOT_DEPTH, SD_LIP } from './sdRealm.js';
-import { SD_CHECKPOINTS } from './sdSteps.js';
+import { SD_COURSE } from './sdSteps.js';
 import { layGear, SD_WORKS_TOOTH, SD_HANG_NOW } from './sdWorksModel.js';
 import { rng } from './sdPixelKit.js';
 import { SD_THRESHOLD, SD_ORRERY, SD_ARENA, SD_REALM_ORIGIN, realmToDungeon } from '../../net/superDungeon/sdBrain.js';
@@ -53,14 +53,15 @@ export const chainLink = (r) => 0.5 + 0.04 * r;
  * THE ISLANDS THAT HANG, the realm's frame: the Threshold, the Orrery's hall, the Steps' three checkpoints (A the first
  * step) and the Last Moment - each its stage (`threshold`, `orrery`, `steps`, `arena`: the stage cull's tag), its disc
  * (x, z, r) and its floor's height y, its seed, its spires, chains and gear rims (spec: 3-5, 1-2, 2-3; a small island's
- * fewer - its rock is too thin for more).
+ * fewer - its rock is too thin for more). EG-H3 (EG4): the steps' islands a course's checkpoints (`sdHangIslandsOf`).
  */
-export const SD_HANG_ISLANDS = Object.freeze([
+export const sdHangIslandsOf = (course) => Object.freeze([
   { stage: 'threshold', x: SD_THRESHOLD.x, z: SD_THRESHOLD.z, y: 0, r: SD_THRESHOLD.r, seed: 0x5d1101, spires: 5, chains: 2, gears: 2 },
   { stage: 'orrery', x: SD_ORRERY.x, z: SD_ORRERY.z, y: 0, r: SD_ORRERY.r, seed: 0x5d1102, spires: 5, chains: 2, gears: 3 },
-  ...SD_CHECKPOINTS.map((c, k) => ({ stage: 'steps', x: c.x, z: c.z, y: c.y, r: c.r, seed: 0x5d1103 + k, spires: 3, chains: 1, gears: 1 })),
+  ...course.checkpoints.map((c, k) => ({ stage: 'steps', x: c.x, z: c.z, y: c.y, r: c.r, seed: 0x5d1103 + k, spires: 3, chains: 1, gears: 1 })),
   { stage: 'arena', x: SD_ARENA.x, z: SD_ARENA.z, y: 0, r: SD_ARENA.r, seed: 0x5d1107, spires: 5, chains: 2, gears: 3 },
 ].map((i) => Object.freeze(i)));
+export const SD_HANG_ISLANDS = sdHangIslandsOf(SD_COURSE);
 /** The stages, in the course's order. */
 export const SD_HANG_STAGES = Object.freeze(['threshold', 'orrery', 'steps', 'arena']);
 
@@ -194,10 +195,11 @@ export function islandRoot(f, isl, plan) {
 /** A gear rim's shape (world/superDungeon/sdWorksModel.js SD_WORKS_TOOTH's, cut thin): a band of brass, a hub, its spokes. */
 const GEAR_RIM = Object.freeze({ ...SD_WORKS_TOOTH, h: 0.28, rim: 0.2, hubProud: 0.6 });
 
-/** A STAGE'S ROOTS, one mesh (the stage cull's unit): every island of `stage` laid by islandRoot. */
-export function buildHangModel(stage, { lite = false } = {}) {
+/** A STAGE'S ROOTS, one mesh (the stage cull's unit): every island of `stage` laid by islandRoot (EG-H3: of `islands`, a
+ *  course's - sdHangIslandsOf; the Hour's by default). */
+export function buildHangModel(stage, { lite = false, islands = SD_HANG_ISLANDS } = {}) {
   const f = faces();
-  for (const isl of SD_HANG_ISLANDS) if (isl.stage === stage) islandRoot(f, isl, hangPlan(isl, { lite }));
+  for (const isl of islands) if (isl.stage === stage) islandRoot(f, isl, hangPlan(isl, { lite }));
   return packRealmFaces(f);
 }
 

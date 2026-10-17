@@ -31,6 +31,7 @@ import { townPlaces } from '../../../src/systems/livingWorld/places.js';
 import { townCensus } from '../../../src/systems/livingWorld/census.js';
 import { CALENDAR_MPM } from '../../../src/systems/livingWorld/trips.js';
 import { synthTown } from '../../lwTown.mjs';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 test('LW15 the law: the cap PATRON_PAY_SHARE of worth, the hour\'s odds by how far under it, nothing over it; the draws, the seed and the minute the listing\'s and the hour\'s alone; never a quest\'s piece or a keepsake; a crafted piece no dearer than the piece it was made as (mutants: the share, the odds, the over, the draws, the takes, the crafted)', () => {
   assert.equal(PATRON_PAY_SHARE, 0.6);
@@ -360,7 +361,7 @@ test('LW15 drawn: the seed dealt to one of the town\'s households alike by every
 });
 
 test('LW15 the host\'s seams: the region\'s patrons read online alone, now and then; each town\'s LivingTown its own; its errands and browsers in a household\'s plan; the Vendor page\'s buyer named (mutants: each seam)', () => {
-  const w = readFileSync(new URL('../../../src/scenes/world.js', import.meta.url), 'utf8');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /if \(!params\.has\('online'\) \|\| !marketBook\) return;/);   // PIN MOVED (AUDIT LW-II-2 W3): online alone here - each region's read keeps its own clock (auditlwii2_town)
   assert.match(w, /if \(row\.home\?\.entry !== 'public'\) continue;/);
   assert.match(w, /const door = p\.buildingKey;\n\s+if \(!Number\.isSafeInteger\(door\)\) continue;/);

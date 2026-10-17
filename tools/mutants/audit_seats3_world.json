@@ -11,7 +11,7 @@
  },
  {
   "name": "F-seat1a-anchors-boards-dropped",
-  "file": "src/scenes/world.js",
+  "file": "src/scenes/pixelBuild.js",
   "old": "gates: pixelGates.map((g) => ({ local: g.local, box: g.entry?._box })), boards: pixelBoards, bounty: pixelBoardSplit,",
   "new": "gates: pixelGates.map((g) => ({ local: g.local, box: g.entry?._box })),",
   "tests": [

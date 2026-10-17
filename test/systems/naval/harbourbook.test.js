@@ -12,6 +12,7 @@ import { planQuay, JETTY_MAX, JETTY_BEACH, DRY_M } from '../../../src/systems/na
 import { SHORE_TERRAIN_FIT_METERS } from '../../../src/world/deepWater/deepWaterFloor.js';
 import { sampleDepthMeters } from '../../../src/world/deepWater/deepBathymetry.js';
 import { sea } from '../../navalSea.mjs';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const read = (f) => readFileSync(new URL(`../../../${f}`, import.meta.url), 'utf8');
 /** The coast: land north of z = 200, and a headland x 300-400 reaching south to z = -300 (shiplife.test.js's). */
@@ -131,7 +132,7 @@ test('HARBOUR-BOOK THE PIER ACROSS THE SHELF: on Deep Waters\' shore-fitted shel
 });
 
 test('HARBOUR-BOOK THE WORLD\'S WIRING: one book made off the port near the player and the sea\'s water law; the naval host handed it; sounded each exterior frame before the quays stand; moved with the floating origin before the sea and the quays; emptied with the sea at a transition, a jump and a load; the quays stand off it whatever runs on the water - THE FOUR HOSTS: the street alone (a building\'s and a dungeon\'s frames have no sea, the standalone street no harbour)', () => {
-  const w = read('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /const harbourBook = createHarbourBook\(\{\n    harbourNear: navalHarbourNear,\n    isWater: navalIsWater,\n  \}\);/);
   assert.equal((w.match(/createHarbourBook\(/g) ?? []).length, 1, 'one book');
   assert.match(w, /\n    harbourBook,   \/\/ SHIP-LIFE, HARBOUR-BOOK/);

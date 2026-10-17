@@ -149,6 +149,16 @@ unknown-key abort) affix-aware. Two lists, one wearer.
   of Dawn`, `Foxglove`, `King's Mark`, `Archmage's Loop`. A Legendary
   is named like an artifact: `itemLongName` returns it without the
   material prefix (one gated arm on ResolveItemLongName's early return).
+  MAT-SHOW: the metal is not gone. A Rare or better piece of armour or
+  a weapon still puts it on `itemNameParts().material`, the same dim
+  sub-line a plain sword uses (`itemInfo.js:"if (!material || withholdsMaterialPrefix(item)) return name;"`).
+  The long name stays `Wyrmbane`, not `Dwarven Wyrmbane`. An artifact
+  still says nothing of its metal. Handed down by Project Legacy it stays
+  its own name under the house, `Hlaalu's Wyrmbane`, the metal still on
+  the sub-line (`itemInfo.js:"const whole = parts.material && !bare ?"`).
+  The container's material menu finds a piece only by a metal its card
+  says (`itemInfo.js:"export const itemSaysMaterial ="`), so it never picks
+  out an unidentified Magic piece or an artifact by its metal.
 
 ## Identify is Daggerfall's own
 
@@ -157,12 +167,14 @@ flavour from `RARE_FLAVOURS` by group - a weapon strikes or drinks, a
 piece of armour or jewellery holds; a Legendary its record's), so DFU's
 own IsIdentified law (`tradeModes.itemIsIdentified`: an enchanted item
 is unidentified until identified) makes it drop UNIDENTIFIED with no
-new mechanism: it reads as its bare template with no material and no
-affix lines (`ResolveItemName`'s early return), the tooltip says the
+new mechanism: it reads as its bare template with no affix lines
+(`ResolveItemName`'s early return), the tooltip says the
 tier and "Unidentified", and the Identify spell or the Mages Guild's
-service reveals it. A Magic-tier item with only numeric affixes has no
-enchantment and reads at once. The affixes WORK while unidentified -
-DFU's enchantments do too.
+service reveals it. MAT-SHOW: a Rare or better piece of armour or a
+weapon still says its metal on that sub-line while it is unidentified.
+A piece below Rare, and an artifact, keep the withhold. A Magic-tier
+item with only numeric affixes has no enchantment and reads at once.
+The affixes WORK while unidentified - DFU's enchantments do too.
 
 The enhanced pack names through `resolveItemName` now (it showed
 `item.name` raw before, which named a magic item before the Identify

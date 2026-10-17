@@ -17,11 +17,12 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { buildTerrainGrid } from '../../../src/world/terrain/terrainSurface.js';
 import { HEIGHTMAP_DIMENSION } from '../../../src/world/terrain/terrainSampler.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const read = (p) => readFileSync(new URL('../../../' + p, import.meta.url), 'utf8');
 
 test('STREAM1: a crossing promotes FIVE pixels whatever the land view distance is - the ring boundary is not the radius', () => {
-  const world = read('src/scenes/world.js');
+  const world = hostText('src/scenes/world.js');
   const near = Number(world.match(/const LOD_NEAR = (\d+);/)[1]);
   const lodStride = Number(world.match(/const LOD_STRIDE = (\d+);/)[1]);
   assert.equal(near, 3); assert.equal(lodStride, 4);
@@ -108,7 +109,7 @@ test('STREAM1: the expensive direction is the one that is queued, and it is expe
 });
 
 test('STREAM1: the queue is spent a pixel a frame, nearest first, and never on a pixel that no longer wants it', () => {
-  const world = read('src/scenes/world.js');
+  const world = hostText('src/scenes/world.js');
   assert.match(world, /const restridePending = new Map\(\);/, 'the queue is keyed by pixel, so a pixel queued twice is queued once');
   assert.match(world, /const RESTRIDE_PER_FRAME = 1;/, 'one stride-1 grid a frame - two would be most of a 60 Hz budget');
   assert.match(world, /spendRestrides\(\);\s+\/\/ STREAM1/, 'and the frame loop spends it');
@@ -134,7 +135,7 @@ test('STREAM1: the queue is spent a pixel a frame, nearest first, and never on a
   assert.deepEqual([far, near].sort(sorter), [near, far]);
   // BOTH call sites queue the promotion and take the demotion now
   assert.match(world, /if \(want === 1\) restridePending\.set\(`\$\{p\.px\},\$\{p\.py\}`, p\);/, 'the crossing sweep');
-  assert.match(world, /if \(wantStride === 1\) restridePending\.set\(key, entry\);/, 'and the publish re-check');
+  assert.match(world, /if \(wantStride === 1\) host\.restridePending\.set\(key, entry\);/, 'and the publish re-check');
   assert.ok(!/for \(const p of built\.values\(\)\) \{\s*const want = strideFor\(p\.px, p\.py\);\s*if \(want !== p\._stride\) restrideTerrain\(p, want\);/.test(world),
     'the inline sweep that paid all five is gone');
 });

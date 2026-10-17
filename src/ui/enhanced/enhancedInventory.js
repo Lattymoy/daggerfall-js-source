@@ -122,11 +122,13 @@ import {
   groundRefusalOf,   // HOUSE-DROP: the host's word against the ground
   storeCapacityOf,   // COMPANION-WEIGHT: a storage's own weight limit
   planBagToggle, hasMaterialsBag,   // BAG1: the Materials Bag, a list beside the wagon's
+  theftTarget,   // STOLEN-GOODS: a take from someone else's keeping is a theft
 } from '../../systems/inventorySession.js';
 import { bagStoreRefusal, bagMayLeave } from '../../systems/materialsBag.js';   // BAG1: only materials go in the bag; AUDIT2 H11: and a loaded one stays
 import { shiftDrop } from '../../systems/physicalItems.js';   // PI1: Physical Items' shift-drop, one law for both packs
 import { BAG_KG_LIMIT } from '../../net/bagLaw.js';
-import { STORE_FILTER_KINDS, filterStore, storeFilterOptions, freshStoreFilter } from '../storeFilter.js';   // WAGON-FILTER: the wagon, the storage and the bag, filtered
+import { STORE_FILTER_KINDS, filterStore, storeFilterOptions, storeRarityOptions, storeMaterialOptions, freshStoreFilter } from '../storeFilter.js';   // WAGON-FILTER: the wagon, the storage and the bag, filtered; LOOT-BULK: a container too, and its rarity and metal
+import { bulkVerdict, runBulk, listAtCap, CONTAINER_LIST_CAP, containerFull } from '../storeBulk.js';   // LOOT-BULK: Take all / Stash all
 import { entityMaxEncumbrance } from '../../combat/formulas.js';   // AUDIT 26: PlayerEntity.MaxEncumbrance, enchantment allowance and all
 import { liveStat } from '../../systems/statMods.js';
 import { conditionWord, conditionPercentage, itemNameParts, itemLongName, itemDamageLine, itemArmourLine, itemHandsLine } from '../../systems/item/itemInfo.js';   // RF6: the long name's two parts, ResolveItemLongName's arms once
@@ -147,6 +149,7 @@ import { setIdOf, setById, setLines, setSigilLines } from '../../systems/sigil/s
 import { isLocked, toggleLocked, lockRefuses, lockedText, LOCKED_LINE } from '../../systems/item/itemLock.js';   // LOCK1
 import { isJunk, junkable, toggleJunk, lockLiftsJunk, JUNK_LINE } from '../../systems/item/itemJunk.js';   // LOOT18
 import { isBound, boundLine, boundRefusesPut, boundText, isPackOnly, packOnlyText } from '../../systems/item/itemBound.js';   // SS1: a bound piece says so on its card   // SS3: and goes nowhere but the wagon and the player's own storage
+import { isStolen, stolenLine } from '../../systems/stolenGoods.js';   // STOLEN-GOODS: a stolen piece says so on its card
 import { letterRefusesPut, letterPutText } from '../../systems/peerWord.js';   // HACKED-GOLD: online a letter of credit goes nowhere a peer's word could hand it on
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { closeOnOutsideTap } from './enhancedOverlays.js';   // OT1
@@ -165,7 +168,7 @@ import { createReforgeOverlay, reforgeDoorOpen, closeReforgeDoor } from '../refo
 import { SOUND } from '../../systems/soundClips.js';
 
 import { expandRowValues } from '../../systems/quest/questMacros.js';   // MACROS1: a used item's record through its own context (%map)
-import { localizedText } from '../../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
+import { localizedText, t } from '../../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language; L10N4: LOOT-BULK's words
 import { noteFirstUse } from '../../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
 /** Slot id -> where it sits on the body, and what to call it.
  *
@@ -416,8 +419,9 @@ export function itemLine(item, identity = undefined) {
   // name on the line, the material prefix on the sub-line - so the
   // skin derives none of the arms itself. LR1's law rides it: an
   // UNIDENTIFIED enchanted item reads as its bare template
-  // (ItemHelper.cs:265-292's early return) and shows no material
-  // (LR4, as %mat is). The template stays the fallback.
+  // (ItemHelper.cs:265-292's early return). Below Rare that also hides
+  // the metal (LR4, as %mat is). MAT-SHOW: Rare and better armour and
+  // weapons still say it on the sub-line. The template stays the fallback.
   const parts = itemNameParts(item, { getQuest: deps.getQuest ?? null });
   return {
     item,   // MW-D38: the icon door resolves the item itself
@@ -1685,7 +1689,7 @@ function stow(item) {
   // applyTransfer - is a no-op, so a LIT TORCH dropped on the ground
   // went on lighting the player from where it lay. INV2 made that a
   // gesture; it was already the button's.
-  applyTransfer(item, { ...plan, amount }, deps.items?.() ?? [], to, { entity: deps.entity, fromLocal: true });
+  applyTransfer(item, { ...plan, amount }, deps.items?.() ?? [], to, { entity: deps.entity, fromLocal: true, returnTo: theftTarget(deps, sessionState()) });   // STOLEN-GOODS: the owner's piece put back is theirs again
   if (qty.item === item) qty = { item: null, text: '' };
   // AUDIT INV2 B-F9: `stow` was written for the BUTTON, whose argument
   // is always `picked`; a drag hands it any row. Closing a tooltip the
@@ -1742,7 +1746,7 @@ function take(item) {
   // interception (:1562-1571) fires and answers null - its `return`
   // skips the choose-one close below, and there is no arriving record
   // for the tab to follow.
-  const taken = applyTransfer(item, { ...plan, amount }, from, bag, { entity: deps.entity, toPlayer: true });
+  const taken = applyTransfer(item, { ...plan, amount }, from, bag, { entity: deps.entity, toPlayer: true, stolenFrom: theftTarget(deps, sessionState()) });   // STOLEN-GOODS: the owner's piece off a shut shop's shelf, a stranger's cupboard, a robbed caravan - marked as it lands
   if (qty.item === item) qty = { item: null, text: '' };
   if (taken === null) { picked = null; refresh(); render(); return; }
   // G6 (:1585-1591): ONE is the whole gift. The window closes and the
@@ -1770,6 +1774,64 @@ function take(item) {
     // sword on the Ingredients page and watches nothing happen.
     tab = pageOf(taken);   // PX31: the page an item lives on is total
   }
+  refresh();
+  render();
+}
+
+/** The filter the rows are using. With the rarity ladder off there is no menu, and a leftover tier must not hide rows. */
+function shownFilter() {
+  return lootRarityOn() ? storeFilter : { ...storeFilter, rarity: 'all' };
+}
+
+/**
+ * LOOT-BULK: Take all walks the remote rows on screen, top to bottom. Stash all walks the pack page on screen the
+ * same way, into the remote. Each row is the single click's plan. A row with no room left stops the walk. A row the
+ * law refuses for another reason is left, and the walk goes on. One sound, one repaint. The room hears the container
+ * when the window closes.
+ */
+function bulkMove(dir) {
+  notice = null;
+  const taking = dir === 'take';
+  const shown = taking
+    ? filterStore(remote.items, shownFilter(), storeNameOf)
+    : (model.tabs.find((x) => x.tab === tab)?.items ?? []);
+  const from = taking ? remoteTarget(deps, sessionState()) : (deps.items?.() ?? []);
+  const to = taking ? (deps.items?.() ?? []) : remoteTarget(deps, sessionState());
+  const cap = !taking && remote?.kind === 'container' ? CONTAINER_LIST_CAP : null;
+  const keeping = theftTarget(deps, sessionState());   // STOLEN-GOODS: the owner's keeping, as the single click's take and put read it
+  let sound = null;
+  const { moved, notice: why } = runBulk([...shown], (item) => {
+    if (!from.includes(item)) return { verdict: 'skip' };
+    if (!taking) {
+      if (isPackOnly(item)) return { verdict: 'skip', refusal: { text: packOnlyText(itemLongName(item, { getQuest: deps.getQuest ?? null })) } };
+      if (boundRefusesPut(item, remote.kind)) return { verdict: 'skip', refusal: { text: boundText(itemLongName(item, { getQuest: deps.getQuest ?? null }), item) } };   // AUDIT AUTO-HOLD: a piece the realm locked says so
+      if (letterRefuses(item)) return { verdict: 'skip', refusal: { text: letterPutText(itemLongName(item, { getQuest: deps.getQuest ?? null })) } };
+      const no = bagRefuses(item);
+      if (no) return { verdict: 'skip', refusal: no };
+      if (remote.kind === 'ground' && lockRefuses(item, 'drop')) return { verdict: 'skip', refusal: { text: lockedText(itemLongName(item, { getQuest: deps.getQuest ?? null })) } };
+      if (listAtCap(to, item, cap)) return { verdict: 'stop', refusal: { text: containerFull() } };
+    }
+    const plan = taking
+      ? planTake(item, {
+        bag: to, entity: deps.entity, mode: 'remove',
+        chooseOne: session.chooseOne, usingWagon: session.usingWagon,
+        getQuest: deps.getQuest ?? null,
+      })
+      : planStore(item, {
+        remote: to, usingWagon: session.usingWagon, chooseOne: session.chooseOne,
+        getQuest: deps.getQuest ?? null,
+        groundRefusal: groundRefusalOf(deps, session),
+        capacity: storeCapacityOf(deps, session), bagLoaded: !bagMayLeave(deps.entity), wagonKg: wagonKgFor(deps.entity),
+      });
+    return { verdict: bulkVerdict(item, plan), refusal: plan.refusal, plan };
+  }, (item, d) => {
+    const plan = d.plan;
+    applyTransfer(item, { ...plan, amount: plan.amount }, from, to, { entity: deps.entity, fromLocal: !taking, toPlayer: taking, stolenFrom: taking ? keeping : null, returnTo: taking ? null : keeping });   // STOLEN-GOODS: a take off a stranger's keeping is marked, a put-back is theirs again
+    sound = plan.sound === 'gold' && sound !== 'click' ? 'gold' : 'click';
+  });
+  if (moved) audio.playOneShot(sound === 'gold' ? SOUND.GoldPieces : SOUND.ButtonClick, 1);
+  if (why) notice = why;
+  picked = null;
   refresh();
   render();
 }
@@ -2839,6 +2901,12 @@ function remoteCol() {
     b.onclick = toggleBag;
     acts.append(b);
   }
+  // LOOT-BULK: Take all stays on the list it empties. Stash all sits on the pack's own list (below).
+  if (STORE_FILTER_KINDS.has(remote.kind)) {
+    const takeAll = el('button', 'act', t('inventory.store.takeAll', 'Take all'));
+    takeAll.onclick = () => bulkMove('take');
+    acts.append(takeAll);
+  }
   // MAC-M2 B (2026-09-16, Mac: "Remove the gold and pack buttons from
   // the looting menu"): THE LOOT WINDOW IS FOR TAKING, and its bar
   // carries the wagon and nothing else.
@@ -2909,7 +2977,7 @@ function fillRemoteList(list, filtering = STORE_FILTER_KINDS.has(remote.kind) &&
   dropLists(list);   // VIRT: a refill (the filter's) lets go of the window it replaces
   const kept = list.scrollTop;   // AUDIT VIRT: and keeps its scroll, as the whole list kept it
   list.innerHTML = '';
-  const shown = filtering ? filterStore(remote.items, storeFilter, storeNameOf) : remote.items;
+  const shown = filtering ? filterStore(remote.items, shownFilter(), storeNameOf) : remote.items;
   if (!remote.items.length) {
     list.append(el('p', 'packempty', remote.kind === 'ground'
       ? 'Nothing dropped here yet.'
@@ -2958,6 +3026,32 @@ function storeFilterBar(list) {
   menu.value = storeFilter.cat;
   menu.onchange = () => { storeFilter.cat = menu.value; fillRemoteList(list, true); };
   bar.append(menu);
+  // LOOT-BULK: the tiers this container holds, and how many. Absent while the ladder is off - there is nothing to pick.
+  if (lootRarityOn()) {
+    const rarity = el('select', 'storerarity');
+    rarity.setAttribute('aria-label', t('inventory.store.rarityIn', 'Rarity in the {list}', { list: String(remote.title).toLowerCase() }));
+    for (const c of storeRarityOptions(remote.items, storeFilter.rarity)) {
+      const o = el('option', null, `${c.label} (${c.count})`);
+      o.value = c.id;
+      if (c.id === storeFilter.rarity) o.selected = true;
+      rarity.append(o);
+    }
+    rarity.value = storeFilter.rarity;
+    rarity.onchange = () => { storeFilter.rarity = rarity.value; fillRemoteList(list, true); };
+    bar.append(rarity);
+  }
+  // MAT-FILTER: the metals this list's armour and weapons are made of, beside the tiers, in the same shape.
+  const material = el('select', 'storemat');
+  material.setAttribute('aria-label', t('inventory.store.materialIn', 'Material in the {list}', { list: String(remote.title).toLowerCase() }));
+  for (const c of storeMaterialOptions(remote.items, storeFilter.material)) {
+    const o = el('option', null, `${c.label} (${c.count})`);
+    o.value = c.id;
+    if (c.id === storeFilter.material) o.selected = true;
+    material.append(o);
+  }
+  material.value = storeFilter.material;
+  material.onchange = () => { storeFilter.material = material.value; fillRemoteList(list, true); };
+  bar.append(material);
   return bar;
 }
 
@@ -3232,6 +3326,7 @@ function infoCard(picked, side, ready = render, { body = false } = {}) {
   if (isJunk(picked)) into.append(el('p', 'boundline junkline', JUNK_LINE));   // LOOT18: the lock's line style, without its padlock
   const bline = boundLine(picked);   // AUDIT AUTO-HOLD: a piece the realm locked says so in its own words
   if (bline) into.append(el('p', 'boundline', bline));   // SS1: the lock's line style, without its padlock
+  if (isStolen(picked)) into.append(el('p', 'boundline', stolenLine()));   // STOLEN-GOODS: what a counter and a court do with it
   const dl = el('dl', 'stats');
   // CARD-FIT: each pair in its own group, so a narrow card flows them two a line and never breaks a pair across two
   const pair = (k, v) => { if (v != null) { const g = el('div', 'pair'); g.append(el('dt', null, k), el('dd', null, String(v))); dl.append(g); } };
@@ -3947,6 +4042,14 @@ function render() {
     const lists = el('div', 'packlists');
     lists.append(listCol());
     dock.append(catsCol(), lists);
+    // LOOT-BULK: Stash all belongs to the list it walks - the pack page - centred on the bottom edge of that list.
+    if (STORE_FILTER_KINDS.has(remote.kind)) {
+      const foot = el('div', 'stashfoot');
+      const stashAll = el('button', 'act', t('inventory.store.stashAll', 'Stash all'));
+      stashAll.onclick = () => bulkMove('stash');
+      foot.append(stashAll);
+      dock.append(foot);
+    }
     grid.append(main, dock);
     win.append(grid);
     // PX16b: the reference's BOTTOM BAR - carry weight as a meter

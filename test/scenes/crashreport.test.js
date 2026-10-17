@@ -152,7 +152,7 @@ test('interior placements skip a model this ARCH3D does not carry', () => {
   // if one of THEM loses it
   for (const [file, re] of [
     ['../../src/scenes/dungeonContext.js', /if \(!gpu\) continue;/],
-    ['../../src/scenes/world.js', /if \(!gpu\) continue;/],
+    ['../../src/scenes/pixelBuild.js', /if \(!gpu\) continue;/],   // HOST-SPLIT 2: the world's pixel build, moved
   ]) {
     assert.match(readFileSync(new URL(file, import.meta.url), 'utf8'), re, `${file} lost its guard`);
   }

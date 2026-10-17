@@ -1104,7 +1104,7 @@
   },
   {
     "name": "ACS-G8-wod-pick",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "if (wod && onTheBay(px, py) && await wodOpened) {",
     "new": "if (wod && await wodOpened) {",
     "tests": [

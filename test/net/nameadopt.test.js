@@ -32,8 +32,9 @@ import {
 import { AccountFlow } from '../../src/ui/accountFlow.js';
 import { OnlineSession } from '../../src/net/online.js';
 import { rosterRows } from '../../src/net/roster.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
-const rd = (p) => readFileSync(new URL('../../' + p, import.meta.url), 'utf8');
+const rd = (p) => hostText(p);
 
 function fakeStorage(seed = null) {
   const m = new Map();
@@ -230,5 +231,5 @@ test('NAME-ADOPT: the host starts from the ISSUED name and every mint corrects e
   const adopt = w.slice(w.indexOf('const adoptIssued = (who) => {'), w.indexOf('const identityMinter ='));
   assert.match(adopt, /online\?\.adoptIdentity\?\.\(who\);/, 'the presence session');
   assert.match(adopt, /for \(const link of chatLinks\?\.values\?\.\(\) \?\? \[\]\) link\.adoptIdentity\?\.\(who\);/, 'and every chat link - the roster draws my row from whichever link its tab holds');
-  assert.match(w, /accountTokenMinter\(\{ fetch: \(u, i\) => globalThis\.fetch\(u, i\), storage: appStorage\(\), onIssued: adoptIssued,\s+character: /);   // RENOWN1: and the character coming online
+  assert.match(w, /accountTokenMinter\(\{ fetch: \(u, i\) => globalThis\.fetch\(u, i\), storage: appStorage\(\), onIssued: adoptIssued, now: steadyNow,\s+character: /);   // RENOWN1: and the character coming online
 });

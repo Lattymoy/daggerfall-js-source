@@ -20,6 +20,7 @@ import { SKILLS } from '../../src/systems/skills.js';
 import { FEATURES } from '../../src/systems/features.js';
 import { tileStates, barReading, classicSegment } from '../../src/ui/enhanced/enhancedMenu.js';
 import { _resetForTests as resetSettings } from '../../src/systems/settings/settings.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 beforeEach(() => { tm._resetTextManagerForTests(); resetSettings(); });
 const fr = (rows, table = 'Internal_Strings') => { tm.patchLocaleTable('fr', table, rows); tm.setLocale('fr'); };
@@ -89,7 +90,7 @@ test('L10N3d crossings: the menu clock reads the time off the date - never by sp
 });
 
 test('L10N3d crossings, by source: the hosts say each crossing line through its reader - never the bare English or its constant, which would stay English in every language', () => {
-  const rd = (p) => readFileSync(new URL(`../../src/${p}`, import.meta.url), 'utf8');
+  const rd = (p) => hostText(`src/${p}`);
   const hosts = Object.fromEntries(['world', 'worldModes', 'exterior', 'dungeonContext', 'dungeon', 'townTalk'].map((h) => [h, rd(`scenes/${h}.js`)]));
   const BARE = [
     /\bTOO_FAR_AWAY_TEXT\b/, /'You are too far away\.\.\.'/, /\bEXHAUSTED_IN_WATER\b/, /watery grave/, /\bSUNLIGHT_TRAVEL_TEXT\b/,
@@ -198,7 +199,7 @@ test('L10N3d crossings: the magic-item, transport, enchanting, level-up, trade a
   assert.equal(noItemToActivateText(), 'Aucun objet magique utilisable');
   assert.equal(cannotChangeIndoorsText(), 'Pas de monture à l\'intérieur.');
   assert.equal(enchantDecision({ templateIndex: 102 }, [], []).text, 'Aucun enchantement préparé.');
-  const rd = (p) => readFileSync(new URL(`../../src/${p}`, import.meta.url), 'utf8');
+  const rd = (p) => hostText(`src/${p}`);
   for (const [p, re] of [
     ['scenes/world.js', /if \(!taverns\.length\) return localizedText\('tavern', 'tavern'\);/],
     ['scenes/world.js', /\{ \.\.\.sale, text: cannotCarryText\(\) \}/],

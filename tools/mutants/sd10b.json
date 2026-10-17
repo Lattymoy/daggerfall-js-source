@@ -208,7 +208,7 @@
   },
   {
     "name": "AUDIT-SD-C6-the-scratch-unused",
-    "file": "src/world/superDungeon/sdSteps.js",
+    "file": "src/net/eliteGates/egSpanLaw.js",
     "old": "export function stepAt(s, t, out = [0, 0, 0]) {",
     "new": "export function stepAt(s, t, out) {\n  out = [0, 0, 0];",
     "tests": [

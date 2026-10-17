@@ -111,7 +111,7 @@ the revised page that carries it.
 | A11 | MED | the find is asked by the owner, not the killer; tier is the client's word; alts | CONFIRMED (`_killedBy`) | 5: the killer asks; handle and record required; weekly cap |
 | A12 | MED | the board measures ratcheting, not delving | CONFIRMED | 18: the Descent from the first hall; the Depths for the ratchet |
 | A13 | MED | the four-host list is incomplete (saves, rest, companions, the Portal Stone, regeneration...) | PARTIAL (the sites are 19 and 38 in `world.js`, not 17 and 28; the gap is real) | 22: `madeLevelOf` and `MADE_LEVEL_RULES`, with a sweep test |
-| A14 | MED | the span law would pull client code into the relay bundle; `orreryOf` and `_sdTurn` need widening | CONFIRMED | 9: the leaf `net/egSpanLaw.js`; 8.4: `orreryOf` widened and `orreryJudge` extracted |
+| A14 | MED | the span law would pull client code into the relay bundle; `orreryOf` and `_sdTurn` need widening | CONFIRMED | 9: the leaf `net/eliteGates/egSpanLaw.js`; 8.4: `orreryOf` widened and `orreryJudge` extracted |
 | A15 | MED | the page did not say how it keeps each Process rule | CONFIRMED | 27 |
 | A16 | LOW | Watchfire's lead must be uniform; the body count must apply the defensive Vestiges | CONFIRMED | 14: `EG_TELL_LEAD_MS` for every blow; 19: the body count |
 | A17 | LOW | unknown rooms write nothing; `lv` frozen; `home` refuses re-entry; the room holds the arch's site | CONFIRMED | 6, 20, 21 |

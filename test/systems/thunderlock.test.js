@@ -329,7 +329,7 @@ test('F3/F5: ALL FOUR HOSTS fire it, and it says when it is empty', () => {
   // exterior host kept `=== WEAPON_TYPES.Bow` and spendArrow, so the
   // gun fell to the melee arc in the open world alone.
   for (const host of ['src/scenes/world.js', 'src/scenes/worldModes.js', 'src/scenes/dungeonContext.js', 'src/scenes/exterior.js']) {
-    const s = readFileSync(host, 'utf8');
+    const s = hostText(host);
     assert.ok(!s.includes('spendArrow('), `${host} does not spend an Arrow by name`);
     assert.match(s, /spendAmmoFor\(/, `${host} asks the weapon what it spends`);
   }
@@ -395,7 +395,7 @@ test('F7: the art is fetched off the SITE root, not the document - the held map�
   assert.equal(appRootFrom('https://mac.dev/src/combat/thunderlockArt.js'), 'https://mac.dev/');
   assert.equal(appRootFrom('blob:nope'), null, 'and an unbaseable URL answers null rather than throwing');
   for (const f of ['src/combat/thunderlockArt.js', 'src/systems/thunderlock.js']) {
-    const s = readFileSync(f, 'utf8');
+    const s = hostText(f);
     assert.match(s, /APP_ROOT/, `${f} resolves against the site root`);
     assert.ok(!/new URL\([^)]*globalThis\.document\?\.baseURI\s*\)/.test(s), `${f} does not resolve against the document alone`);
   }
@@ -1040,7 +1040,7 @@ test('FIELD-GUN13 #1 - the muzzle curve is one home, and it throws light', () =>
   let sites = 0;
   for (const [file, n] of [['src/scenes/world.js', 2], ['src/scenes/worldModes.js', 2],
     ['src/scenes/dungeon.js', 1], ['src/scenes/exterior.js', 1]]) {
-    const src = readFileSync(file, 'utf8');
+    const src = hostText(file);
     const hits = src.split('thunderlockMuzzleLight(playerEntity, player.feetAt(), cam.yaw)').length - 1;   // DISC13-A: off the render feet
     assert.equal(hits, n, `${file} composes the muzzle light into all ${n} of its light arrays`);
     // beside the torch, every time - the same frame's carried lights
@@ -1225,7 +1225,7 @@ test('FIELD-GUN17a: the shot leaves the BARREL, and the barrel is measured off t
   assert.match(spell, /export function playerShotOrigin\(eye, lookDir, muzzle\) \{[\s\S]*?return muzzle \? playerMuzzleOrigin\(eye, lookDir, muzzle\) : playerArrowOrigin\(eye, lookDir\);/,
     'a muzzle wins, nothing supplied keeps the verbatim arm - at the fork\'s one home');
   for (const f of ['src/combat/arrowFlight.js', 'src/scenes/dungeonContext.js']) {
-    const src = readFileSync(f, 'utf8');
+    const src = hostText(f);
     assert.match(src, /playerShotOrigin\(from, dir, (?:meta\.)?muzzle\)/, `${f} spawns through the one fork`);
   }
 
@@ -1238,7 +1238,7 @@ test('FIELD-GUN17a: the shot leaves the BARREL, and the barrel is measured off t
     ['src/scenes/worldModes.js', /interiorArrows\.fire\(player\.eye, eyeDir\(\), \{ fromPlayer: true, weapon: interiorWeapon\.playerWeapon\.weapon, muzzle: interiorWeapon\.thunderlockMuzzle\(fieldOfView\(\)\), summoned: shot\.summoned \}\)/],
     ['src/scenes/dungeonContext.js', /fireArrow\(eye, lookDir, playerWeapon\.weapon, true, null, null, weaponRig\.thunderlockMuzzle\(fieldOfView\(\)\), shot\.summoned \? \{ summoned: true \} : null\)/],
   ];
-  for (const [f, re] of HOSTS) assert.match(readFileSync(f, 'utf8'), re, `${f} passes the muzzle`);
+  for (const [f, re] of HOSTS) assert.match(hostText(f), re, `${f} passes the muzzle`);
 
   // AND THE OFFSET IS A RAY, not a point: the muzzle's pixel is a
   // DIRECTION, so the orb sits on the barrel at whatever distance the
@@ -1358,7 +1358,7 @@ test('FIELD-GUN17b: the flash and its light are the ORB’s colour, sampled off 
   // AND THE SAMPLE IS TAKEN AT BOTH MISSILE LANES, because the orb is
   // uploaded in two places and only one of them is the dungeon's.
   for (const f of ['src/combat/arrowFlight.js', 'src/scenes/dungeonContext.js']) {
-    assert.match(readFileSync(f, 'utf8'), /noteOrbColour\(/, `${f} samples the orb it just uploaded`);
+    assert.match(hostText(f), /noteOrbColour\(/, `${f} samples the orb it just uploaded`);
   }
   // the effects pool grew the door rather than the pool learning about
   // guns: `onTexture` is a callback about a TEXTURE, and a throw in it
@@ -1400,7 +1400,7 @@ test('FIELD-GUN18: the orb is scaled off the archive’s own size, at BOTH lanes
 
   // and both read the one leaf rather than a number each
   for (const f of ['src/combat/arrowFlight.js', 'src/scenes/dungeonContext.js']) {
-    assert.match(readFileSync(f, 'utf8'), /ORB_SCALE \} from '\.\.\/characters\/thunderlockIds\.js'/, `${f} imports it`);
+    assert.match(hostText(f), /ORB_SCALE \} from '\.\.\/characters\/thunderlockIds\.js'/, `${f} imports it`);
   }
 });
 
@@ -1442,7 +1442,7 @@ test('FIELD-GUN18: the pool’s scale really scales - it was multiplying an OBJE
   assert.match(he, /showMissEffect: \(kind, pos, \{ archive = BLOOD_ARCHIVE, record = 2, fps = 20, scale = 2 \} = \{\}\) =>/);
   // ...and all four hosts wire it, which is how many were affected
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/worldModes.js', 'src/scenes/dungeonContext.js']) {
-    assert.match(readFileSync(f, 'utf8'), /missEffect: \(k, p, o\) => \w+\.showMissEffect\(k, p, o\)/, `${f} wires it`);
+    assert.match(hostText(f), /missEffect: \(k, p, o\) => \w+\.showMissEffect\(k, p, o\)/, `${f} wires it`);
   }
 });
 
@@ -1619,6 +1619,7 @@ test('FIELD-GUN19: a blown-out core has no opinion about hue', () => {
 // and a blood splash the same, unreported. `rmbFlats.centredBase` is the
 // one law: the position with half the billboard's height taken off.
 import { centredBase } from '../../src/world/rmbFlats.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 test('FIELD-GUN20: a missile or effect sprite is CENTRED on its position - the base handed to the renderer is half a height under it', () => {
   assert.deepEqual(centredBase([1, 2, 3], { w: 0.8, h: 1.2 }), [1, 2 - 0.6, 3], 'half the HEIGHT, not the width');
@@ -1631,7 +1632,7 @@ test('FIELD-GUN20: a missile or effect sprite is CENTRED on its position - the b
     ['src/scenes/dungeonContext.js', 1],   // the fourth host's own missiles - the orb and every spell
   ];
   for (const [f, n] of seams) {
-    const s = readFileSync(f, 'utf8');
+    const s = hostText(f);
     const builds = [...s.matchAll(/renderer\.createBillboardBatch\([^;]*\bcentredBase\(/g)].length;
     assert.equal(builds, n, `${f}: ${n} batch build(s) at the centred base`);
   }
@@ -1647,7 +1648,7 @@ test('FIELD-GUN20: a missile or effect sprite is CENTRED on its position - the b
     // WOD3/WOD4: World of Daggerfall's own flats - the captive a kidnap marker stands and the camp at
     // Privateer's Hold - are CreateDaggerfallBillboardGameObject with NO AlignToBase, so they are centred;
     // those lines, and nothing else a world host stands
-    const centred = readFileSync(f, 'utf8').split('\n').filter((l) => /centredBase\(/.test(l));
+    const centred = hostText(f).split('\n').filter((l) => /centredBase\(/.test(l));
     const wod = { 'src/scenes/world.js': [/const base = centredBase\(w\.centre, size\);/, /\.\.\.centredBase\(\[origin\[12\] \+ hf\.pos\[0\]/], 'src/scenes/exterior.js': [/centredBase\(\[origin\[12\] \+ hf\.pos\[0\]/] }[f] ?? [];
     assert.equal(centred.length, wod.length, `${f}: a flat that DFU AlignToBase-s is not centred`);
     wod.forEach((re, i) => assert.match(centred[i], re, `${f}: only World of Daggerfall's own flats are centred`));

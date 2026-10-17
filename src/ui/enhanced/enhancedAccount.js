@@ -74,6 +74,7 @@ export const GLYPH_LABEL = localizedTable({   // L10N4: each word a getter, read
   aegis: () => t('account.glyph.aegis', 'Aegis of Oblivion'),   // AEGIS: the pillars through the ring over the void, beside Sureme's name
   primarch: () => t('account.glyph.primarch', 'Primarch'),   // PRIMARCH: the three-barred cross, beside GA00250's name
   crystalfist: () => t('account.glyph.crystalfist', 'Crystal Fist'),   // CRYSTAL-FIST: the three slashes, beside Flylighter's name
+  wikimaid: () => t('account.glyph.wikimaid', 'WikiMaid'),   // WIKIMAID: the rabbit in its maid's headdress, beside SylviaBun's name
 });
 
 /** ACC4: THE TWO FACTS MAC ASKED FOR, as words. Pure, so node pins

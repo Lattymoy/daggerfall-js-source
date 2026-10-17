@@ -39,6 +39,7 @@ import { MidiBsaFile } from '../../src/formats/hmiFile.js';
 import { srand, rand } from '../../src/formats/dfRandom.js';
 import * as songManager from '../../src/systems/song/songManager.js';
 import { SONG_FILES, isSongFileDefined, songFileToRecordName } from '../../src/systems/song/songFiles.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const ARENA2 = process.env.ARENA2_PATH;
 const skipReal = !ARENA2 || !existsSync(ARENA2)
@@ -468,7 +469,7 @@ test('AUDIT 19 1:1: every host feeds the ONE music director', () => {
     'the mode host must NOT start songs itself - the director decides');
 
   for (const host of ['src/scenes/exterior.js', 'src/scenes/world.js']) {
-    const text = readFileSync(host, 'utf8');
+    const text = hostText(host);
     assert.match(text, /createMusicDirector\(\)/, `${host} has no music director`);
     assert.match(text, /musicDirector\.update\(/, `${host} never feeds it`);
     assert.match(text, /modes\?\.musicContext\?\.\(\)/,
@@ -489,7 +490,7 @@ test('AUDIT 19 1:1: every host feeds the ONE music director', () => {
   // by the very pass that was closing it. Sweeping three hosts is what let
   // that through, so the list is the whole set.
   for (const host of ['src/scenes/exterior.js', 'src/scenes/world.js', 'src/scenes/dungeon.js']) {
-    const text = readFileSync(host, 'utf8');
+    const text = hostText(host);
     assert.match(text, /createMusicDirector\(\)/, `${host} has no music director`);
     assert.match(text, /musicDirector\.update\(/, `${host} never feeds it`);
   }
@@ -1643,7 +1644,7 @@ test('AUDIT 21 F1: the music context is fed BEFORE the modal return', () => {
   // and with the ordering reverted, inside stays city and the song never
   // changes. Run it when touching either host's frame loop.
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
-    const text = readFileSync(host, 'utf8');
+    const text = hostText(host);
     const feed = text.indexOf('musicDirector.update(');
     const modal = text.indexOf('if (modes.frame(dt, now)) {');
     assert.ok(feed > 0 && modal > 0, `${host}: both seams must exist`);

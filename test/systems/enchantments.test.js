@@ -121,7 +121,8 @@ test('E1 pump: CastWhenHeld wear (4 normal / 60 resting), HealthLeech\'s daily l
   const enchDamaged = item(T.PotentVs, 0, { currentCondition: 10, equipSlot: null });
   const rep = wearer([enchDamaged, damaged, item(T.RepairsObjects, -1)], { isPlayer: true });
   enchantmentMagicRound(rep, 4, {});
-  assert.equal(damaged.currentCondition, 51, 'the first repairable (mundane) item gains 1');
+  // PIN MOVED (FIELD BUGS 2026-10-16b MEND-ARMOUR): it gained DFU's point; a fiftieth of its own 100 now (repairsObjectsMend)
+  assert.equal(damaged.currentCondition, 52, 'the first repairable (mundane) item gains a fiftieth of its condition');
   assert.equal(enchDamaged.currentCondition, 10, 'enchanted skipped while AllowMagicRepairs is off');
 });
 

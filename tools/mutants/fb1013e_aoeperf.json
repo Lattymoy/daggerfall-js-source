@@ -2,8 +2,8 @@
   {
     "name": "AOE-PERF-a-the-marks-quad-the-glows-again",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "    case TELEGRAPH_KIND.mark: return box(sh.origin[0], sh.origin[1], sh.origin[0], sh.origin[1], telegraphMarkReach(sh));",
-    "new": "    case TELEGRAPH_KIND.mark: return box(sh.origin[0], sh.origin[1], sh.origin[0], sh.origin[1], sh.r + sh.r1 + M);",
+    "old": "    case TELEGRAPH_KIND.mark: return boxInto(b, sh.origin[0], sh.origin[1], sh.origin[0], sh.origin[1], telegraphMarkReach(sh));",
+    "new": "    case TELEGRAPH_KIND.mark: return boxInto(b, sh.origin[0], sh.origin[1], sh.origin[0], sh.origin[1], sh.r + sh.r1 + M);",
     "tests": [
       "test/net/gate/fb1013e_aoeperf.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "AOE-PERF-b-no-strip",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "  if (!sh || sh.kind !== TELEGRAPH_KIND.lane || sh.pool !== TELEGRAPH_POOL.path) return null;",
-    "new": "  if (sh) return null;",
+    "old": "  const w = stripW(sh);\n  if (!(w > 0)) return null;",
+    "new": "  const w = stripW(sh);\n  if (sh) return null;",
     "tests": [
       "test/net/gate/fb1013e_aoeperf.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "AOE-PERF-b-the-strip-too-narrow",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "w = sh.halfW + TELEGRAPH_TIGHT_PAD;",
-    "new": "w = sh.halfW * 0.5;",
+    "old": "  return across + TELEGRAPH_TIGHT_PAD;",
+    "new": "  return across * 0.5;",
     "tests": [
       "test/net/gate/fb1013e_aoeperf.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "AOE-PERF-b-the-strips-first-cap-dropped",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "  return { a: [sh.origin[0] - ux * w, sh.origin[1] - uz * w], u: [ux, uz], len: l + 2 * w, w };",
-    "new": "  return { a: [sh.origin[0], sh.origin[1]], u: [ux, uz], len: l + w, w };",
+    "old": "if (!out) return { a: [sh.origin[0] - ux * w, sh.origin[1] - uz * w], u: [ux, uz], len: l + 2 * w, w };",
+    "new": "if (!out) return { a: [sh.origin[0], sh.origin[1]], u: [ux, uz], len: l + w, w };",
     "tests": [
       "test/net/gate/fb1013e_aoeperf.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "AOE-PERF-b-the-strips-last-cap-dropped",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "  return { a: [sh.origin[0] - ux * w, sh.origin[1] - uz * w], u: [ux, uz], len: l + 2 * w, w };",
-    "new": "  return { a: [sh.origin[0] - ux * w, sh.origin[1] - uz * w], u: [ux, uz], len: l + w, w };",
+    "old": "if (!out) return { a: [sh.origin[0] - ux * w, sh.origin[1] - uz * w], u: [ux, uz], len: l + 2 * w, w };",
+    "new": "if (!out) return { a: [sh.origin[0] - ux * w, sh.origin[1] - uz * w], u: [ux, uz], len: l + w, w };",
     "tests": [
       "test/net/gate/fb1013e_aoeperf.test.js"
     ]

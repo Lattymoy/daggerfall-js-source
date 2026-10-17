@@ -515,6 +515,10 @@ export function createBetterAmbience({ audio = defaultAudio, settings = readBett
 
   // ReverbMod.Update: on the inside-dungeon edge, UpdateReverbZone
   function updateReverb(inDungeon) {
+    // EG-ZH (bible/11-Multiplayer/Elite-Gates.md section 11.9): A HELD ZONE IS ITS HOLDER'S - the Spire's halls hold the
+    // reverb (audio.holdReverb) and this component yields, its cache forgotten: the zone it last set is gone, so the first
+    // frame after the release asserts its wish again
+    if (audio.reverbHeld?.() != null) { reverbOn = null; return; }
     const want = s.Enabled && inDungeon ? reverbPresetFor(s.reverbLevel) : null;
     if (want === reverbOn) return;
     reverbOn = want;

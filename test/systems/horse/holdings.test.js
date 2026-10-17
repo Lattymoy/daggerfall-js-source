@@ -16,8 +16,9 @@ import {
   STABLE_PAGE_SECTIONS, HORSE_ART, WAGON_ART,
 } from '../../../src/ui/holdingsPages.js';
 import { CSA_ITEM_TEMPLATES } from '../../../src/systems/comeSailAway/comeSailAwayItems.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
-const read = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
+const read = (p) => hostText(p);
 const MENU = read('src/ui/enhanced/enhancedMenu.js');
 
 // ── a fake DOM, the Companions page's (test/systems/revenant/revenant_companions.test.js) ─────────────────────────────────────────────

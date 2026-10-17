@@ -121,8 +121,9 @@ const tally = (v) => { counts[v.kind]++; console.log(v.text); };
 
 /** Linked into a workspace, never copied (and never mutated there): the dependencies and the data. */
 const LINKED = new Set(['node_modules', 'public', 'vendor', 'bible']);
-/** Left out of a workspace: the repository's own history and build output. */
-const LEFT_OUT = (name) => name === '.git' || name === 'dist' || name.startsWith('dist-') || name === '.wrangler';
+/** Left out of a workspace: the repository's own history and build output, and the agents' worktrees under `.claude` (each
+ *  a whole tree - copied once a job they filled a disk). */
+const LEFT_OUT = (name) => name === '.git' || name === 'dist' || name.startsWith('dist-') || name === '.wrangler' || name === '.claude';
 
 /** A copy of this tree's code in a new temporary directory, its data linked; its own TMPDIR inside it. */
 function workspace() {

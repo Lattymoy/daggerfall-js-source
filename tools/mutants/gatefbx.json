@@ -498,7 +498,7 @@
   {
     "name": "AUDIT-GATE-FBX-C2-unstuck-walks-out-of-the-court",
     "file": "src/scenes/world.js",
-    "old": "          if (modes?.gateArenaDay?.() != null) { say(COURT_TEXT.noUnstuck); return true; }\n",
+    "old": "          if (madeUnstuck === 'refused') { say(madeSaysHere('unstuck')); return true; }\n",
     "new": "",
     "tests": [
       "test/tooling/gatefbx.test.js"

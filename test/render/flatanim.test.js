@@ -13,6 +13,7 @@ import {
   GENERAL_FPS, ANIMAL_FPS, LIGHT_FPS, MISSILE_FPS, IMPACT_FPS,
   ANIMALS_TEXTURE_ARCHIVE, LIGHTS_TEXTURE_ARCHIVE,
 } from '../../src/render/flatAnimation.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 test('FA1: the three speeds and the two archives that claim them', () => {
   // DaggerfallBillboard.cs:38-39,:45 and the pick at :119-121.
@@ -155,7 +156,7 @@ test('FA1: all FOUR static-flat sites arm, and every host that DRAWS them ticks'
   // five (worldModes draws both contexts). A site that builds without
   // arming is a room of frozen fires; a host that draws without ticking
   // is the same thing one layer down.
-  const read = (f) => readFileSync(new URL(`../../src/${f}`, import.meta.url), 'utf8');
+  const read = (f) => hostText(`src/${f}`);
   for (const host of ['scenes/exterior.js', 'scenes/world.js', 'scenes/interiorContext.js', 'scenes/dungeonContext.js']) {
     assert.match(read(host), /armFlatAnim\(batch, t, archive, record, flatAnims, uploadRecordFrame\)/,
       `${host} builds a static-flat batch without arming it`);
@@ -203,7 +204,7 @@ test('FA1: every host that MOUNTS a missile arms it and drops its clock on retir
   // Missile flats froze on frame 0 - a fireball was a photograph of a
   // fireball. Both mount sites are the same six lines in two files,
   // which is exactly how one of them gets fixed and the other does not.
-  const read = (f) => readFileSync(new URL(`../../src/${f}`, import.meta.url), 'utf8');
+  const read = (f) => hostText(`src/${f}`);
   for (const host of ['scenes/dungeonContext.js', 'scenes/hostMagic.js']) {
     const src = read(host);
     // FIELD-GUN14: dungeonContext's record is a variable now, because
@@ -238,7 +239,7 @@ test('FA1 slice 3: no site hand-writes a frame into a record any more', () => {
   // exactly one way - and a REBUILT batch (the floating-origin
   // recenter destroys and recreates them) needs the frame carried too,
   // which is the half a refactor like this forgets.
-  const read = (f) => readFileSync(new URL(`../../src/${f}`, import.meta.url), 'utf8');
+  const read = (f) => hostText(`src/${f}`);
   for (const host of ['scenes/droppedLoot.js', 'scenes/cityGuards.js', 'scenes/exteriorFoes.js']) {
     const src = read(host);
     assert.ok(!/createBillboardBatch\([^,]+, `\$\{[^}]+\}#0`/.test(src),

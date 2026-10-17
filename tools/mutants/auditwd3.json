@@ -311,7 +311,7 @@
   },
   {
     "name": "AWD3-TOWN-PIXEL-CLIMATE",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "    const townClimateBase = dfLocation?.climate?.climateType ?? climateBase;",
     "new": "    const townClimateBase = climateBase;",
     "tests": [

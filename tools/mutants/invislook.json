@@ -65,21 +65,22 @@
   {
     "name": "INVISLOOK-doll-named",
     "file": "src/net/remotePlayers.js",
-    "old": "    if (!veil) this._shown.push({ peer, height: entry.doll.h * g - sink });",
-    "new": "    this._shown.push({ peer, height: entry.doll.h * g - sink });",
+    "old": "if (!veil || veil.named) this._shown.push({ peer, height: entry.doll.h * g - sink });",
+    "new": "this._shown.push({ peer, height: entry.doll.h * g - sink });",
     "tests": [
       "test/net/invislook.test.js"
     ],
-    "note": "CARDS2c (PIN MOVED): the seated sprite's sink in the height."
+    "note": "CARDS2c (PIN MOVED): the seated sprite's sink in the height. AUDIT EG V (h): re-aimed by content - a veil that keeps the name shows it"
   },
   {
     "name": "INVISLOOK-body-named",
     "file": "src/net/remotePlayers.js",
-    "old": "      if (bodyH > 0) { if (!veil) this._shown.push({ peer, height: bodyH }); continue; }",
-    "new": "      if (bodyH > 0) { this._shown.push({ peer, height: bodyH }); continue; }",
+    "old": "if (bodyH > 0) { if (!veil || /** @type {any} */ (veil).named) this._shown.push({ peer, height: bodyH }); continue; }",
+    "new": "if (bodyH > 0) { this._shown.push({ peer, height: bodyH }); continue; }",
     "tests": [
       "test/net/invislook.test.js"
-    ]
+    ],
+    "note": "AUDIT EG V (h): re-aimed by content - a veil that keeps the name (an ally at 60% in the Spire) shows it"
   },
   {
     "name": "INVISLOOK-rider-plain",
@@ -246,11 +247,12 @@
   {
     "name": "INVISLOOK-host-never-veils",
     "file": "src/scenes/world.js",
-    "old": "      if (look.kind === 'conceal') _veils.set(d.id, look.visual);",
-    "new": "      // INVIS-LOOK: no look",
+    "old": "const veil = look.kind === 'conceal' ? look.visual : egClient",
+    "new": "const veil = look.kind === 'conceal' ? null : egClient",
     "tests": [
       "test/net/invislook.test.js"
-    ]
+    ],
+    "note": "AUDIT EG V (h): re-aimed by content - the host's veil also an ally's at 60% in the Spire (egClient allyVeil)"
   },
   {
     "name": "INVISLOOK-exterior-no-late-pass",

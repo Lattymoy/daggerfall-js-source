@@ -89,6 +89,8 @@ export const trackGain = () => (musicMuted ? 0 : getFloat('Controls', 'MusicVolu
  *  tracks it stands in for). One gain between the channels and the fader, set as the song starts; every song MIDI.BSA
  *  holds carries none and plays at exactly 1, as it always has. Clamped to (0, SONG_LEVEL_MAX]. Pure. */
 export const SONG_LEVEL_MAX = 4;
+/** EG-G2: how long a duck takes to come back up (s - SongPlayer.duck). */
+export const EG_DUCK_BACK_S = 0.12;
 export const songLevel = (song) => (Number.isFinite(song?.level) && song.level > 0 ? Math.min(SONG_LEVEL_MAX, song.level) : 1);
 
 /** WB10a (2026-09-30, Mac: "make it more loud, just feel like its too quite"): A SONG'S OWN PRESS - a song may carry
@@ -328,6 +330,20 @@ export class SongPlayer {
     try { this._level.disconnect(); } catch { /* nothing connected */ }
     this._level.connect(to);
     this._levelTo = to;
+  }
+
+  /** EG-G2 (bible/11-Multiplayer/Elite-Gates.md section 26, THE SPIRE MIX): THE DUCK - the song's own level (WBX9's
+   *  node) dipped `db` decibels in 20 ms, held to `seconds`, and back over EG_DUCK_BACK_S; the fader (DISC20-B's fades)
+   *  and the volume are never touched, so a duck and a fade never fight. */
+  duck(db, seconds) {
+    const g = this._level?.gain;
+    if (!g || !this.ctx || !(db > 0)) return;
+    const now = this.ctx.currentTime, base = songLevel(this.song), low = base * 10 ** (-db / 20), hold = Math.max(0.02, seconds);
+    g.cancelScheduledValues(now);
+    g.setValueAtTime(g.value, now);
+    g.linearRampToValueAtTime(low, now + 0.02);
+    g.setValueAtTime(low, now + hold);
+    g.linearRampToValueAtTime(base, now + hold + EG_DUCK_BACK_S);
   }
 
   /** DISC20-B: ramp the fader to `level` over `seconds` (see rampFader). */

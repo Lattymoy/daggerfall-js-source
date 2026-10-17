@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { createActivateGate, activateFrame } from '../../src/systems/activateGate.js';
 import { held, setBindings, mouseCode } from '../../src/ui/input.js';
 import { createBindings, resetDefaults, actionForCode } from '../../src/systems/inputActions.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -116,7 +117,7 @@ test('A8: every host reads the one gate, and its FLAG is retired', () => {
     'src/scenes/worldModes.js', 'src/scenes/dungeon.js',
   ];
   for (const h of hosts) {
-    const s = readFileSync(join(root, h), 'utf8');
+    const s = hostText(h);
     assert.match(s, /from '\.\.\/systems\/activateGate\.js'/, `${h} imports the gate`);
     assert.match(s, /activateFrame\(/, `${h} runs a frame of it`);
     // PIN MOVED (AUDIT 2026-10-01 part four, CLICK-LIFT): the street's and the modal frame's press is named before the gate
@@ -170,7 +171,7 @@ test('ROAD-Ar R10: the swing departure on record is the ROUTING, not the button'
   // consumer" half has to be asked of the CODE only
   const codeOnly = (s) => s.split('\n').filter((l) => !/^\s*\/\//.test(l)).join('\n');
   for (const h of swingers) {
-    const s = readFileSync(join(root, h), 'utf8');
+    const s = hostText(h);
     assert.match(s, /isSwingButton\(e\.button\)/, `${h} swings on the registry's button (FIX-F: it was the raw right button)`);
     assert.ok(!/held\(keys, 'SwingWeapon'\)/.test(codeOnly(s)),
       `${h} does not route the swing through the binding - if it now does, retire this pin`);
@@ -181,7 +182,7 @@ test('ROAD-Ar R10: the swing departure on record is the ROUTING, not the button'
   // and the two law modules whose headers regenerate into the
   // departures list
   for (const f of ['src/ui/input.js', 'src/systems/activateGate.js']) {
-    const s = readFileSync(join(root, f), 'utf8');
+    const s = hostText(f);
     assert.ok(!/Mouse2 st(ill|ays)/.test(s), `${f}'s phantom departure is gone`);
     assert.match(s, /SwingWeapon/, `${f} names the action the swing does not read`);
     assert.match(s, /inert/i, `${f} says what the departure costs`);

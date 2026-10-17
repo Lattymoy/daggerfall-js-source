@@ -214,6 +214,17 @@ export function remoteTargetType(deps = {}, state = {}) {
   return deps.loot ? REMOTE_TARGET_TYPES.Loot : REMOTE_TARGET_TYPES.Dropped;
 }
 
+/** STOLEN-GOODS (FIELD BUGS 2026-10-16b): THE OWNER'S KEEPING while the remote list showing is someone else's goods - the
+ *  host's `loot.stolenFrom`, the Set of the records the target held as its window opened (a shut shop's shelf, a
+ *  stranger's cupboard: scenes/worldModes.js; a robbed caravan's goods: scenes/world.js) - asked only while that list IS
+ *  the loot target, never the wagon, the bag or a reward tray; else null. A take of the owner's piece from it is a theft
+ *  (itemTransfer.js applyTransfer's `stolenFrom`), the owner's piece put back is theirs again (`returnTo`) - AUDIT S1: the
+ *  player's own piece through it is neither (systems/stolenGoods.js takenFromKeeping). */
+export function theftTarget(deps = {}, state = {}) {
+  const keeping = deps.loot?.stolenFrom;
+  return remoteTargetType(deps, state) === REMOTE_TARGET_TYPES.Loot && keeping instanceof Set ? keeping : null;
+}
+
 /** dropIconIdxs[archive][texture] - the RECORD a cycling index names.
  *  Null for an archive with no list and for the -1 "no chosen icon"
  *  index, which is what OnPush leaves when nothing was picked. */

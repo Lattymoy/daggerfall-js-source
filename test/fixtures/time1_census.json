@@ -428,7 +428,7 @@
    "why": "a banishment's term"
   },
   {
-   "file": "src/scenes/world.js",
+   "file": "src/scenes/pixelBuild.js",
    "has": "known: knownCriminal(playerEntity, region, { ownNow: ownMinutes(), worldNow: trustedWorldMinutes() })",
    "clock": "event",
    "why": "a banishment's term - the living watch's word (WATCH-KNOWS)"
@@ -963,9 +963,16 @@
   },
   {
    "file": "src/scenes/dungeonContext.js",
-   "has": "markSearched(searchKey(searchLocationKey(), sb.key), Math.min(at, worldMinutes()));",
+   "has": "markSearched(searchKey(searchLocationKey(), sb.key), Math.min(at, worldMinutes()), w?.who ?? null);",
    "clock": "event",
-   "why": "a searchable's five hours, never from ahead of now (SEARCH1-PARTY)"
+   "why": "a searchable's five hours, never from ahead of now (SEARCH1-PARTY) - GRAVE-PARTY: and its searcher's name"
+  },
+  {
+   "file": "src/scenes/searchPartyHost.js",
+   "has": "const now = worldMinutes();",
+   "count": 3,
+   "clock": "event",
+   "why": "a headstone's five hours - at the search, a partymate's stamp landed, the stone read again (GRAVE-PARTY; activateGrave's own, moved out of world.js)"
   },
   {
    "file": "src/scenes/dungeonContext.js",
@@ -978,12 +985,6 @@
    "has": "setSearchClock(() => worldMinutes());",
    "clock": "event",
    "why": "a headstone's five hours (SEARCH1)"
-  },
-  {
-   "file": "src/scenes/world.js",
-   "has": "const now = worldMinutes();",
-   "clock": "event",
-   "why": "a headstone's five hours, at the search (SEARCH1)"
   },
   {
    "file": "src/scenes/worldModes.js",

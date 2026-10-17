@@ -1584,8 +1584,8 @@
   {
     "name": "ARENA4-SVC-YOU",
     "file": "server-account/src/arena.js",
-    "old": "r.rank = i + 1; r.you = r.player === me;",
-    "new": "r.rank = i + 1; r.you = false;",
+    "old": "r.rank = i + 1; r.you = typeof me === 'function' ? !!me(r) : r.player === me;",
+    "new": "r.rank = i + 1; r.you = typeof me === 'function' ? !!me(r) : false;",
     "tests": [
       "test/net/arena/arena4_service.test.js"
     ]

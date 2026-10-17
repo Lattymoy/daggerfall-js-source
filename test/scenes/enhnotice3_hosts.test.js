@@ -14,8 +14,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
-const rd = (p) => readFileSync(new URL('../../' + p, import.meta.url), 'utf8');
+const rd = (p) => hostText(p);
 
 test('ENH-NOTICE3: three presenters, asked dungeon (20) before the modal modes (10) before the outdoor slot (0) - the showQuestBox ladder, written once', () => {
   const town = rd('src/scenes/townTalk.js');

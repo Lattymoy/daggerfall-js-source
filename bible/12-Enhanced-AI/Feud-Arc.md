@@ -121,9 +121,10 @@ wait for the Enhanced AI switch; the rest work without it (section 2.1).
 
 1. **A rank is a stat stick.** FACT: `revenant.js applyRevenant` multiplies health by 1 + 0.25 a rank and blows by
    1 + 0.1 a rank. It fights the same way at rank 5 as at rank 1.
-2. **Every one ends kneeling.** FACT: `revenantFate.js revenantMayYield` - any killing blow (but Disintegrate's) on a
-   living, unsworn revenant of mine yields it. Every revenant ends at the kill-or-spare choice, and the trophy
-   (Legendary 12% + 5% a rank above the first) is rolled at the yield.
+2. **Every one ends kneeling.** FACT: `revenantFate.js revenantMayYield` - any killing blow (but Disintegrate's - since
+   RVN-OWNERS-CHOICE, 2026-10-16, but the owner's own whole blow) on a living, unsworn revenant of mine yields it.
+   Every revenant ends at the kill-or-spare choice, and the trophy (Legendary 12% + 5% a rank above the first) is
+   rolled at the yield.
 3. **It never learns.** Nothing records how the player fought it; nothing it does depends on it.
 4. **It finds you, never the reverse.** FACT: it returns only on an open-world encounter roll (`world.js
    runEncounterTick`, `revenantToReturn`, 50% of the hits), never in a dungeon (`dungeonContext.js buildFoeAt` has no
@@ -633,7 +634,10 @@ holds passes the lesson to the next of the fight's scars - `revenantFeud.lessonO
   tears away - ash and smoke on the dissolve's ember lane (`systems/dissolve.js`) - through `escapeFoe` with the `fled`
   deed: it ranks up and learns from this fight. The card: "Grushnak staggers into the smoke, unbroken."
 - Broken, it kneels as today: the choice, the trophy.
-- Disintegrate's whole kill still kills (`_whole`).
+- Disintegrate's whole kill still kills (`_whole`) - the owner's own alone since RVN-OWNERS-CHOICE (FIELD BUGS
+  2026-10-16, `06-Systems/Revenants.md` section 15): a party member's, a foe's or a drained stat's whole blow is a
+  killing blow like any, and the will asks of it (`revenantFate.js ownersWholeKill`). A departure from this line as
+  written.
 - With the Enhanced AI switch off there is no stagger, so its weakness alone breaks it (2.1).
 - The page tells the player the rule (24.1). OPEN 11.
 
@@ -643,7 +647,10 @@ holds passes the lesson to the next of the fight's scars - `revenantFeud.lessonO
 
 **Rank 3 and up, once a stand**: the first blow that would kneel or kill it brings it back instead. The seam is the line
 before the yield in both damage doors (`exteriorFoes.js damageFoe`, `dungeonContext.js damageFoe`): a new
-`revenantLastStand(f)`, ahead of the soul trap, so no soul is taken by that blow.
+`revenantLastStand(f)`, ahead of the soul trap, so no soul is taken by that blow. RVN-OWNERS-CHOICE (FIELD BUGS
+2026-10-16, `06-Systems/Revenants.md` section 15): a whole blow passes over it only as the owner's own
+(`revenantFate.js ownersWholeKill`) - a party member's Disintegrate brings it, as any killing blow does; the RVN4
+record's "never against a Disintegrate's whole" is the owner's Disintegrate alone.
 
 ### 15.2 What
 

@@ -12,8 +12,9 @@ import { FOOTSTEP_VOLUME } from '../../src/systems/footsteps.js';
 import { applyFallLanding } from '../../src/scenes/shared.js';
 import { AmbientEffects, EXTERIOR_AMBIENT_WAITS } from '../../src/systems/ambientEffects.js';
 import { LOCATION_TYPES } from '../../src/formats/mapsFile.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
-const rd = (f) => readFileSync(new URL(`../../${f}`, import.meta.url), 'utf8');
+const rd = (f) => hostText(f);
 
 /** A WebAudio graph that records what the engine set on it. The engine
  *  is otherwise untouched - `enabled` and a running context are all
@@ -131,7 +132,7 @@ test('AUDIT 58: the graveyard ambient layer is armed in BOTH exterior hosts', ()
   a.setCemeteryNearby(false);
   assert.equal(a.cemeteryNearby, false, 'and OnExitLocationRect disarms it');
 
-  const w = rd('src/scenes/world.js'), x = rd('src/scenes/exterior.js');
+  const w = hostText('src/scenes/world.js'), x = rd('src/scenes/exterior.js');
   assert.match(w, /ambience\.setCemeteryNearby\(_musicLocationType\(\) === LOCATION_TYPES\.Graveyard\)/,
     'the streaming host arms it on the rect edge');
   assert.match(x, /ambience\.setCemeteryNearby\(_musicLocationType\(\) === LOCATION_TYPES\.Graveyard\)/,

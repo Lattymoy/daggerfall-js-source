@@ -424,7 +424,8 @@ test('DECOR2b the host (worldModes.js) by source: the tool reads the deliveries;
   // PIN MOVED (AUDIT HOLDINGS F8): the rest of the keyed list's buy into the pack, but a ship's deed to the Fleet's book
   assert.match(m, /if \(isFurnishing\(it\)\) decorDeliver\(\[it\]\);[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*else if \(!\(it\?\.templateIndex === FLEET_DEED_TEMPLATE && titleDeed\(it, [^\n]*\)\)\) addItem\(playerEntity\.items, it\);/, 'the keyed list');
   assert.match(m, /packItems: \(\) => \(playerEntity\.items \?\?= \[\]\),\n\s*deliver: \(items\) => decorDeliver\(items\),/, 'the steal');
-  assert.match(m, /if \(shopShelfTheft\(shelfBefore, shelf\.items\.length\)\) tallyCrimeGuildRequirements\(playerEntity, true, 1\);\n\s*decorDeliverCarried\(\);/, 'the closed shop');
+  // PIN MOVED (STOLEN-GOODS AUDIT S1): the shelf's tally reads the shop's keeping, not its count
+  assert.match(m, /if \(shopShelfTheft\(shelfBefore, shelf\.items\)\) tallyCrimeGuildRequirements\(playerEntity, true, 1\);\n\s*decorDeliverCarried\(\);/, 'the closed shop');
   assert.match(m, /function decorDeliverCarried\(\) \{\n\s*const pack = playerEntity\.items \?\? \[\];\n\s*const carried = pack\.filter\(isFurnishing\);\n\s*for \(const it of carried\) pack\.splice\(pack\.indexOf\(it\), 1\);\n\s*decorDeliver\(carried\);/);
   assert.match(m, /if \(own\.length\) say\(ownBackLines\(own, decorOwnBackLine\)\);/, 'a sold house or ship');
   assert.match(m, /homeSoldLine\(r\.refund, r\.decorBack, r\.rent \?\? 0\) \+ \(own\.length \? ` \$\{ownBackLines\(own, decorOwnBackLine\)\}` : ''\)/, 'a sold online home');

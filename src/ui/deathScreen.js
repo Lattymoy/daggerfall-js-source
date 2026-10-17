@@ -106,7 +106,7 @@ export const riseHint = (hint) => String(hint ?? '').replace(/ENTER end/, 'ENTER
  *  and the reason the hint is drawn. `drop` is read by each host's
  *  frame to sink its camera - one player, one death, one law. */
 export class DeathScreen {
-  constructor({ eyeHeight, capsuleHeight, onReset = null, entity = playerEntity, hint = 'ENTER end   F11 load', online = undefined, rises = null } = {}) {
+  constructor({ eyeHeight, capsuleHeight, onReset = null, entity = playerEntity, hint = 'ENTER end   F11 load', online = undefined, rises = null, penalty = true, wall = () => Date.now() } = {}) {
     noteFirstUse('death');   // TUT1: the page waits beneath this screen (it keeps the top) and is read after it
     this.done = false;
     // RISE-STUCK: the screen keeps the top of its host's stack until it
@@ -139,10 +139,15 @@ export class DeathScreen {
     // at the purse, whatever the purse did while the player lay dead (AUDIT 28 B5: a mate's bounty clear pays the
     // dead too, and the respawn took its share of the bigger purse). A death with no respawn (the run ends) takes none.
     const respawns = this.online || this.rises;
-    this.goldLoss = respawns ? deathGoldLoss(goldPiecesOf(entity)) : 0;
+    // EG-H2 (bible/11-Multiplayer/Elite-Gates.md section 24): a made level whose law exempts DEATH-PENALTY (the Spire's -
+    // systems/madeLevel.js) hands `penalty: false`: the respawn takes nothing, so the screen states nothing
+    this.goldLoss = respawns && penalty !== false ? deathGoldLoss(goldPiecesOf(entity)) : 0;
     if (respawns) stateDeathLoss(this.goldLoss);
     this.goldLossLine = deathPenaltyLine(this.goldLoss);   // drawn ONCE: the enhanced face redraws every frame and the words must not change under the player
     this.clock = 0;   // DEATH4: the enhanced screen's own clock (the sequence's stops short of its reset)
+    // REZ-BLOODLINE AUDIT R2: and online, the wall clock it never runs behind (tick) - from the death
+    this._wall = wall;
+    this._fellAt = wall();
     this.eyeHeight = Number.isFinite(eyeHeight) ? eyeHeight : EYE_HEIGHT;
     this._view = null;   // { cam, pitch } - the pitch to hand back if the run goes on (an online respawn)
     this.sequence = new PlayerDeathSequence({
@@ -180,6 +185,12 @@ export class DeathScreen {
     // HELD a hair short of its own reset - the reset is this screen's to
     // call: the online countdown, or the player's Enter (input below).
     this.clock += Math.max(0, Number(dt) || 0);
+    // REZ-BLOODLINE AUDIT R2 (FIELD BUGS 2026-10-16b): ONLINE THE WAIT IS THE WALL CLOCK'S. The hosts hand a clamped dt (a
+    // frame counts a tenth of a second however long it took), and the hold a party's Resurrect raises through is the wall
+    // clock's on the page and at the realm (scenes/legacyHost.js REZ_HOLD_MS, server-account/src/legacy.js realmRaise):
+    // below ten frames a second the open zone's two minutes outlasted it, the screen saying "RISING IN 15" while a
+    // Resurrect was refused "fallen for good". Never behind the frames' own count either (a dt longer than the wall's).
+    if (this.online) this.clock = Math.max(this.clock, (Number(this._wall()) - this._fellAt) / 1000 || 0);
     if (this.online && this.clock >= this.holdSeconds) { this.sequence.tick(DEATH_TIME_BEFORE_RESET + 1); return; }
     const room = DEATH_TIME_BEFORE_RESET - 1e-3 - this.sequence.elapsed;
     this.sequence.tick(Math.max(0, Math.min(Number(dt) || 0, room)));

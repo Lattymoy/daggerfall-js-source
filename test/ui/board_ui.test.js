@@ -20,6 +20,7 @@ import { createMarketBook } from '../../src/net/marketBook.js';
 import { MARKET_VIEWS } from '../../src/net/marketLaw.js';
 import { CLAIM_THRESHOLD, CLAIM_FEE, ACCOUNT_SEAT_WEEK_CAP, SEAT_PLEDGE_REGIONS_MAX } from '../../src/net/townSeatLaw.js';
 import { NOTICE_CSS, PROF_CSS } from '../../src/ui/enhanced/enhancedPlusStyle.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const T = 1_800_000_000;
@@ -57,7 +58,7 @@ test('ONE-BOARD the rumour board nearest the town\'s middle (the siege field\'s 
 });
 
 test('ONE-BOARD REVERTED the hosts (2026-10-07, Mac: revert "just that change"): the press, the count over the board, the town the player stands in, the town map and a seat\'s pennant are every board BOUNTY1 did not take again, each named on hover while the board is open (mutants: the bounty boards taken too; the count over one; the town underfoot with every board a bounty board; the pennant over the bounty boards)', () => {
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.doesNotMatch(w, /noticeBoardOf|noticeBoardIndex/, 'no one-board law in the host');
   assert.match(w, /\.\.\.\(!bountyAt\.has\(i\) && noticeTown \? \{ notice: noticeTown, named: noticeBook\.open === true \} : \{\}\),/);
   const count = w.slice(w.indexOf('const noticeCountPoints = ('), w.indexOf('const partyMarkers = ('));

@@ -325,8 +325,8 @@
   {
     "name": "WB8b-the-relay-fights-unmarked",
     "file": "server/src/index.js",
-    "old": ", gateBossOf(day).id, gateModsOf(day));   // WB8b",
-    "new": ", gateBossOf(day).id);   // WB8b",
+    "old": "boss: gateBossOf(day).id, md: gateModsOf(day) });   // WB8b",
+    "new": "boss: gateBossOf(day).id });   // WB8b",
     "tests": [
       "test/net/gate/wb8b_gate_marks.test.js",
       "test/net/gate/wb8c_gate_detail.test.js"

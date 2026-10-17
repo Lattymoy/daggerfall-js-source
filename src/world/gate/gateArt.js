@@ -20,7 +20,7 @@
 // Deterministic (its own mulberry32 on fixed seeds): every client's gate is the same stone.
 //
 // Not a DFU member. Ledger A (WB).
-import { GATE_ARCHIVE, GATE_STONE_RECORD, GATE_PLINTH_RECORD, RITE_SIGIL_RECORD, GATE_SPINE_RECORD, GATE_RIM_RECORD } from './gateModel.js';
+import { GATE_ARCHIVE, GATE_STONE_RECORD, GATE_PLINTH_RECORD, RITE_SIGIL_RECORD, GATE_SPINE_RECORD, GATE_RIM_RECORD, EG_ARCH_STONE_RECORD, EG_ARCH_SPINE_RECORD, EG_ARCH_RIM_RECORD } from './gateModel.js';
 import { COURT_ARCHIVE, COURT_FLOOR_RECORD, COURT_RUNE_RECORD, COURT_LAVA_RECORD } from './gateArena.js';   // WB3b: the court's own
 
 export { GATE_ARCHIVE, GATE_STONE_RECORD, GATE_PLINTH_RECORD, RITE_SIGIL_RECORD, GATE_SPINE_RECORD, GATE_RIM_RECORD, COURT_ARCHIVE };
@@ -212,6 +212,63 @@ export function gateSpineArt(seed = 0x0b3a) {
  *  beside its stone's, and the plinth's flags the Broker's cage wears.
  *  @returns {Array<[number, ReturnType<typeof gateStoneArt>]>} */
 export const gateArt = () => [[GATE_STONE_RECORD, gateStoneArt()], [GATE_PLINTH_RECORD, gatePlinthArt()], [GATE_SPINE_RECORD, gateSpineArt()], [GATE_RIM_RECORD, gateRimArt()]];
+
+// ═══ EG-F: THE ARCH'S SKIN ═══════════════════════════════════════════════════════════════════════════════════════
+// EG-F (2026-10-12, the Elite Gates arc, Mac: "I said I want everything"; bible/11-Multiplayer/Elite-Gates.md section
+// 6.3): an Elite Breach's arch is the gate's model at 0.62 (scenes/eliteGates/egArch.js), and its skin is the Spire's - "Imperial
+// white marble inlaid with gold, cracked through with the Warden's basalt". Painted here as the gate's own is, on the
+// gate's own noise and its own veins' walk: a mottled white-grey marble, a lattice of gold inlay set in it (the inlay's
+// gleam its own emission, faint, so the arch reads by night), and the gate's basalt veins running through it as cracks
+// - dark stone, their fire banked to an ember. The rim is the same marble with more gold where it faces the opening; the
+// spines are gold, darkening to basalt at their points.
+/** The marble's two tones, the inlay's gold and its gleam, the cracks' basalt and the ember banked in them. */
+export const ARCH_MARBLE = Object.freeze([Object.freeze([176, 172, 164]), Object.freeze([236, 233, 226])]);
+export const ARCH_GOLD = Object.freeze([214, 168, 64]);
+export const ARCH_GOLD_GLEAM = Object.freeze([70, 52, 16]);
+export const ARCH_CRACK = Object.freeze([34, 24, 20]);
+export const ARCH_CRACK_EMBER = Object.freeze([48, 12, 4]);
+/** The inlay's pitch, texels (a square lattice, so the tile wraps). */
+export const ARCH_INLAY_TEXELS = 16;
+/**
+ * THE ARCH'S MARBLE: `{ albedo, emission }`, the gate's art shape - the marble, its gold lattice (a line every `inlay`
+ * texels), and the Warden's cracks (the gate's basalt veins - gateStoneArt's walk - laid dark through it).
+ */
+export function archStoneArt(seed = 0x0eb1, inlay = ARCH_INLAY_TEXELS) {
+  const S = GATE_ART_SIZE;
+  const albedo = image(), emission = image();
+  const coarse = noiseField(seed, 8), fine = noiseField(seed + 1, 32);
+  const basalt = gateStoneArt(seed + 2, GATE_VEINS);   // the Warden's own cracks: where the gate's veins run, the marble is split
+  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+    const v = 0.55 * coarse(x, y) + 0.45 * fine(x, y);
+    let c = mix(ARCH_MARBLE[0], ARCH_MARBLE[1], Math.min(1, Math.max(0, (v - 0.15) / 0.75)));
+    let glow = [0, 0, 0];
+    if (x % inlay === 0 || y % inlay === 0) { c = [...ARCH_GOLD]; glow = [...ARCH_GOLD_GLEAM]; }
+    const i = (y * S + x) * 4;
+    if (basalt.emission.colors[i] > 0 || basalt.emission.colors[i + 1] > 0) { c = [...ARCH_CRACK]; glow = [...ARCH_CRACK_EMBER]; }
+    put(albedo, x, y, c);
+    put(emission, x, y, glow);
+  }
+  return { albedo, emission };
+}
+/** THE ARCH'S RIM: its marble where it faces the opening - the inlay twice as close, the gold the frame the fire burns in. */
+export const archRimArt = (seed = 0x0eb2) => archStoneArt(seed, ARCH_INLAY_TEXELS / 2);
+/** THE ARCH'S SPINES: gold from the root (v 0), darkening through to the Warden's basalt at the point (v 1) - each spine
+ *  laid root to point as the gate's are (world/gate/gateModel.js buildGateModel). */
+export function archSpineArt(seed = 0x0eb3) {
+  const S = GATE_ART_SIZE;
+  const albedo = image(), emission = image();
+  const grain = noiseField(seed, 16);
+  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+    const v = y / (S - 1), g = 0.8 + 0.2 * grain(x, y * 0.25);
+    const c = mix(mix(ARCH_CRACK, ARCH_GOLD, g), ARCH_CRACK, Math.max(0, (v - 0.55) / 0.45));
+    put(albedo, x, y, c);
+    put(emission, x, y, v < 0.55 ? ARCH_GOLD_GLEAM : [0, 0, 0]);
+  }
+  return { albedo, emission };
+}
+/** Every texture the arch wears, by record (world/gate/gateModel.js EG_ARCH_RECORD_OF - the gate's own records' twins).
+ *  @returns {Array<[number, ReturnType<typeof gateStoneArt>]>} */
+export const archArt = () => [[EG_ARCH_STONE_RECORD, archStoneArt()], [EG_ARCH_SPINE_RECORD, archSpineArt()], [EG_ARCH_RIM_RECORD, archRimArt()]];
 
 // ═══ WB12d: THE FAITHFUL'S SIGIL ═════════════════════════════════════════════════════════════════════════════════
 /** AUDIT WB12d (G11): the sigil's art, one disc across its whole tile (never a tile repeated - the plinth's flags read

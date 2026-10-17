@@ -51,6 +51,7 @@ import { MAP_SHEETS } from '../../src/systems/map/mapTabs.js';
 import { getPixelColorIndex } from '../../src/ui/travel/travelMapWindow.js';
 import { CLIMATES, LOCATION_TYPES, mapPixelToLongitudeLatitude } from '../../src/formats/mapsFile.js';
 import { SCALED_OCEAN_ELEVATION } from '../../src/world/terrain/terrainSampler.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 import {
   travelMapFilters, travelMapPopUpState, setTravelMapPopUpState,
   travelMapSaveData, resetTravelMapState,
@@ -63,7 +64,7 @@ import {
   enhancedNoticeKeys, destroyEnhancedNotice, ENHANCED_NOTICE_ID,
 } from '../../src/ui/enhanced/enhancedNotice.js';
 
-const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
+const read = (p) => hostText(p);
 const skin = (v) => { _resetForTests(); globalThis.location = { search: `?skin=${v}` }; };
 
 beforeEach(() => resetTravelMapState());
@@ -392,7 +393,7 @@ test('MAP1: the enhanced skin gets the HELD MAP, holding the classic contract', 
 // ── THE SEAM ─────────────────────────────────────────────────────
 
 test('U61: the world host builds through the door, once, and gates on it', () => {
-  const src = read('src/scenes/world.js');
+  const src = hostText('src/scenes/world.js');
   assert.equal([...src.matchAll(/createTravelMapWindow\(\{/g)].length, 1,
     'ONE construction seam, as G5 demanded');
   assert.doesNotMatch(src, /new TravelMapWindow\(/, 'no host constructs past the door');
@@ -1881,7 +1882,7 @@ test('TV1: the sheet\'s Overworld door - shown only where the host can lift the 
     tp.dispose();
   });
   // the world host hands both reads, and the commit is the one home every hook fires from
-  const w = read('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /onTravelView: \(\) => \{ travelView\?\.enter\(\); \},/);
   assert.match(w, /travelViewAllowed: \(\) => !extra\.immersive && !!travelView && travelViewAllowed\(\)\.ok,/);   // IT1 (PIN MOVED): a driver's map has no Overworld door
   assert.match(read('src/ui/heldMap.js'), /else if \(c\?\.kind === 'travelView'\) this\.deps\.onTravelView\?\.\(\);/);
@@ -2002,7 +2003,7 @@ test('MAP2 resume: a pending destination asks once on the first tick - Yes resum
     out._chrome.box.children.at(-1).children[2].onclick();
     assert.deepEqual([forgot, resumed, out._top, out._phase], [1, 1, null, 'opening'], 'the journey forgotten, nothing resumed, the map stays');
     out.dispose();
-    const w = readFileSync(new URL('../../src/scenes/world.js', import.meta.url), 'utf8');
+    const w = hostText('src/scenes/world.js');
     assert.match(w, /onForgetTravel: \(\) => \{ travelOptions\?\.clearTravelDestination\(\); \},/, 'the host ends it through the mod\'s own ClearTravelDestination');
     const still = mkWin(modDeps({}, {}, { destinationName: null, isTravelActive: false }));
     still.tick(0.05);
@@ -2250,7 +2251,7 @@ test('AUDIT-MAP U5/Q2: the walked card still shows the purse, and the junction d
     assert.ok(texts.includes('777 gold'), 'the purse row on a walked trip (C# UpdateLabels :122 still shows GoldPieces)');
     win.dispose();
   });
-  const w = read('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /markedMapId: \(\) => travelMapMarkedMapId\(\),/, 'the store - a mark set on the guild\'s teleport window was invisible to the disc');
   assert.match(w, /import \{ travelMapFilters, travelMapMarkedMapId \} from '\.\.\/systems\/travel\/travelMapState\.js';/);
 });

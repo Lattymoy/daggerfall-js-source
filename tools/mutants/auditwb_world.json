@@ -177,8 +177,8 @@
   {
     "name": "AUDWB-C7-a-new-empty-list-a-frame",
     "file": "src/scenes/gate/gatePool.js",
-    "old": "      if (!place || place.coarse || place.fade <= 0) return NO_GATE;",
-    "new": "      if (!place || place.coarse || place.fade <= 0) return [];",
+    "old": "      if (!place || place.coarse || place.fade <= 0) return al.length ? al : NO_GATE;",
+    "new": "      if (!place || place.coarse || place.fade <= 0) return al.length ? al : [];",
     "tests": [
       "test/scenes/auditwb_world.test.js"
     ]
@@ -186,8 +186,8 @@
   {
     "name": "AUDWB-C7-stands-without-a-pass",
     "file": "src/scenes/gate/gatePool.js",
-    "old": "    stands: () => !!place && !!pass,",
-    "new": "    stands: () => !!place,",
+    "old": "    stands: () => !!pass && (!!place || !!arches?.stands?.()),",
+    "new": "    stands: () => (!!place || !!arches?.stands?.()),",
     "tests": [
       "test/scenes/auditwb_world.test.js"
     ]

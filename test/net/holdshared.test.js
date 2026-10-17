@@ -21,6 +21,7 @@ import { withMe } from '../../src/ui/partyPanel.js';
 import { privateInteriorOf } from '../../src/net/privateInterior.js';
 import { worldCoordToMapPixel } from '../../src/world/streamingWorld.js';
 import { validStaffDestination } from '../../src/net/staffTeleport.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const read = (f) => readFileSync(new URL(`../../${f}`, import.meta.url), 'utf8');
 const HOLD_MAP_ID = 187853213;   // DaggerfallDungeon.cs:151 `case 187853213: // Daggerfall/Privateer's Hold`
@@ -55,11 +56,11 @@ const props = new Map();
   if (n.type === 'Property' && n.key?.name) props.set(n.key.name, WM.slice(n.start, n.end));
   for (const v of Object.values(n)) if (Array.isArray(v)) v.forEach(walk); else if (v && typeof v === 'object') walk(v);
 })(parse(WM, { ecmaVersion: 'latest', sourceType: 'module' }));
-const roomIdentityIn = (dungeonLoc) => Function('mode', 'dungeonLoc', 'isGateArena', 'isSdRealm', 'isArenaFloor', 'isStartDungeon', 'builtDungeonSize', 'host', 'placeInstance',
-  `return ({${props.get('roomIdentity')}}).roomIdentity();`)('dungeon', dungeonLoc, () => false, () => false, () => false, isStartDungeon, builtDungeonSize, {}, null);   // PIN MOVED (INSTANCES' audit): `placeInstance`, the mode's own - null, the public room   // INSTANCES: `host` - no door, so no instance (the public room this pins)
+const roomIdentityIn = (dungeonLoc) => Function('mode', 'dungeonLoc', 'isGateArena', 'isSdRealm', 'isEgHall', 'isArenaFloor', 'isStartDungeon', 'builtDungeonSize', 'host', 'placeInstance',
+  `return ({${props.get('roomIdentity')}}).roomIdentity();`)('dungeon', dungeonLoc, () => false, () => false, () => false, () => false, isStartDungeon, builtDungeonSize, {}, null);   // PIN MOVED (INSTANCES' audit): `placeInstance`, the mode's own - null, the public room   // INSTANCES: `host` - no door, so no instance (the public room this pins)
 
 // world.js's key block, executed from its source - the one the frame names its room by
-const W = read('src/scenes/world.js');
+const W = hostText('src/scenes/world.js');
 const KEY_FROM = W.indexOf("    const mode = modes?.mode ?? 'exterior';   // audit24_wave37");
 const KEY_TO = W.indexOf('    // ONLINE-MVFLICKER1', KEY_FROM);
 function keyIn(ident) {

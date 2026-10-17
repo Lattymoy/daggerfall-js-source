@@ -9,11 +9,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const read = (p) => readFileSync(p, 'utf8');
 
 test('RW1 world: the pends flag is GONE and the reward is a container, not a silent add', () => {
-  const world = read('src/scenes/world.js');
+  const world = hostText('src/scenes/world.js');
   assert.ok(!/loot window pends/.test(world), 'retiring a flag deletes the sentence');
   assert.ok(!/You have been given/.test(world), 'the stand-in HUD line goes with it');
   assert.ok(world.indexOf('offerReward: (q, dfItem) => {') > 0, 'the door exists');
@@ -36,7 +37,7 @@ test('RW1 world: the pends flag is GONE and the reward is a container, not a sil
 });
 
 test('RW1 world: the quest box fires the OnClose latch ONCE and clears it', () => {
-  const world = read('src/scenes/world.js');
+  const world = hostText('src/scenes/world.js');
   assert.match(world,
     /const fire = _onQuestBoxClosed; _onQuestBoxClosed = null; fire\?\.\(\);/,
     'GivePc.cs:173 - messageBox.OnClose += QuestCompleteMessage_OnClose, one-shot');

@@ -19,6 +19,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 import { flagLines } from '../../tools/flagSites.mjs';   // IN1: the ONE definition of an open-flag site
 import { citedLines } from '../../tools/citeAnchor.mjs';   // CITE-ANCHOR: a cite names its line by a quote
 
@@ -102,7 +103,7 @@ test('FS1: the extractor really reads the form, on a fixture', () => {
 });
 
 test('FS1: the record-22 delegation is retired, and ST1 really did ship it', () => {
-  assert.equal(/FLAGGED in systems\/healthStatus\.js/.test(read('src/scenes/world.js')), false);
+  assert.equal(/FLAGGED in systems\/healthStatus\.js/.test(hostText('src/scenes/world.js')), false);
   // the claim was that the record-22 text pends macro producers. It
   // does not: statusInfoRows lives in that file and world.js calls it
   // with the macro context the bridge hands down.
@@ -112,7 +113,7 @@ test('FS1: the record-22 delegation is retired, and ST1 really did ship it', () 
   // and ui/statusBox.js calls statusInfoRows. The delegation this pin
   // guards against is a FLAG pointing at a file that does no work; the
   // work is still done, one layer along.
-  assert.match(read('src/scenes/world.js'), /macroContext: questBridge\?\.machine\?\.macroContext\?\.\(\) \?\? null,/);
+  assert.match(hostText('src/scenes/world.js'), /macroContext: questBridge\?\.machine\?\.macroContext\?\.\(\) \?\? null,/);
   assert.match(read('src/ui/statusBox.js'), /\.\.\.statusInfoRows\(lines, macroContext\),/);
 });
 
@@ -142,7 +143,7 @@ test('ROAD-F GS2: the acrobatics retirement record no longer answers the flag gr
 });
 
 test('FS1: the F5/F6 arc is retired, and U43 really did route the table indoors', () => {
-  const world = read('src/scenes/world.js');
+  const world = hostText('src/scenes/world.js');
   assert.equal(/Routing F5\/F6 into interiors is its own arc/.test(world), false);
   // U43's interior arm: the SAME ui/input.js table, over an interior
   // ctx that carries the doors those keys open.
@@ -156,7 +157,7 @@ test('FS1: the F5/F6 arc is retired, and U43 really did route the table indoors'
 });
 
 test('FS1: the melee/arrow clauses are retired, and the tree contradicts them', () => {
-  const world = read('src/scenes/world.js');
+  const world = hostText('src/scenes/world.js');
   assert.equal(/melee strike frames resolve to nothing/.test(world), false);
   assert.equal(/targets pend the RMB animal\/exterior-foe arc/.test(world), false);
   // A swing resolves against three pools, in this order - on EVERY host
@@ -224,7 +225,7 @@ test('FS1: the enchant ctx is MOUNTED by every host that owes it', () => {
       `${f} mounts the shared body rather than a second copy of it`);
   }
   // and world.js no longer claims the flag lives somewhere it did not
-  const world = read('src/scenes/world.js');
+  const world = hostText('src/scenes/world.js');
   assert.equal(/FLAGGED\n\s*\/\/ there with the rest of its enchant wiring/.test(world), false);
   // ...nor states the RETIRED half in the present tense. world.js's E2
   // mount header is the first file a reader of this mount opens, and

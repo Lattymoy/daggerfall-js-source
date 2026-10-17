@@ -21,6 +21,7 @@ import { KIN_NEWS, fillLine, firstNameOf } from '../../../src/systems/livingWorl
 import { sheetHouse, houseTitle } from '../../../src/ui/familyPages.js';
 import { _resetModSaveData } from '../../../src/systems/modSaveData.js';
 import { setModSetting, _resetModSettings } from '../../../src/systems/modSettings.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const rd = (f) => readFileSync(new URL(`../../../${f}`, import.meta.url), 'utf8');
 const mem = () => { const m = new Map(); return { map: m, get length() { return m.size; }, key: (i) => [...m.keys()][i] ?? null, getItem: (k) => (m.has(k) ? m.get(k) : null), setItem: (k, v) => { m.set(k, String(v)); }, removeItem: (k) => { m.delete(k); } }; };
@@ -133,7 +134,7 @@ test('LEGACY-NAME the words: a seat\'s house says itself once - the pages, the s
   assert.doesNotMatch(pages, /house of \$\{family\.surname\}/);
   assert.doesNotMatch(rd('src/scenes/legacyHost.js'), /house of \$\{family\.surname\}/);
   // ...and the Succession's own words in the world host (scenes/world.js openLegacySuccession, openLegacyDeadLoad)
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /const legacyHouse = \(fam, the = 'the'\) => `\$\{the\} house\$\{houseWord\(fam\?\.surname\) \? ` of \$\{houseWord\(fam\.surname\)\}` : ''\}`;/);
   assert.equal((w.match(/legacyHouse\(fam/g) ?? []).length, 5, 'the heir\'s line, the house going on or ended, the past loaded');
   assert.doesNotMatch(w, /house of \$\{fam/, 'never the raw surname after "house of"');

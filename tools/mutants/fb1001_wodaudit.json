@@ -28,7 +28,7 @@
   },
   {
     "name": "WR2-the-host-hands-no-id",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "const cpu = wodRockUvs(cpuModels.get(m.modelId), m.matrix, m.modelId);",
     "new": "const cpu = wodRockUvs(cpuModels.get(m.modelId), m.matrix);",
     "tests": [

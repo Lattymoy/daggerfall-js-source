@@ -30,6 +30,7 @@ import { RDB_SIDE } from '../../src/world/rdbLayout.js';
 import { getStaticDoors } from '../../src/world/staticDoors.js';
 import { DOOR_TYPE } from '../../src/world/meshReader.js';
 import { dungeonEntranceLanding, repositionFeetY } from '../../src/player/enterExit.js';
+import { madeLevelRule, madeLevelSays } from '../../src/systems/madeLevel.js';   // EG-H2: the made level's law the hosts' doors ask
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const W = read('src/scenes/world.js');
@@ -51,6 +52,10 @@ test('SD26 NO MARK IN A HOLLOW (AUDIT SD IV F2): a Mark set in an Abyss Dungeon 
       mapPixelToWorldCoords: () => ({ x: 0, z: 0 }), groundFrameHeight: (y) => y, STREAMING_TERRAIN_SCALE: 1,
       playerEntity: {}, makeAnchor: (a) => { set += 1; return a; },
     };
+    // PIN MOVED (EG-H2, Elite-Gates.md section 24): the made level's law (systems/madeLevel.js): the door asks the law where the world host says the player stands, and its own madeSay says it
+    env.madeRuleHere = (rule) => madeLevelRule(court != null ? 'court' : realm != null ? 'hour' : null, rule);
+    env.madeSaysHere = (rule) => madeLevelSays(court != null ? 'court' : realm != null ? 'hour' : null, rule);
+    env.madeSay = evalIn(/\n {2}(function madeSay\(rule\) \{[^\n]*\})\n/.exec(W)[1], env);
     evalIn(fnIn(W, 'setRecallAnchor'), env)();
     return env.playerEntity.anchorPosition ?? null;
   };

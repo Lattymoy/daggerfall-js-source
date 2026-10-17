@@ -5,8 +5,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { JOURNEY_FOE_PACE, foePaced } from '../../../src/systems/travel/travelThreat.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
-const world = readFileSync(new URL('../../../src/scenes/world.js', import.meta.url), 'utf8');
+const world = hostText('src/scenes/world.js');
 const panel = readFileSync(new URL('../../../src/ui/enhanced/enhancedTravelControl.js', import.meta.url), 'utf8');
 const css = readFileSync(new URL('../../../src/ui/enhanced/enhancedStyle.js', import.meta.url), 'utf8');
 

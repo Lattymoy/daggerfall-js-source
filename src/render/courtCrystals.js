@@ -269,6 +269,7 @@ export class CourtCrystalRenderer {
    */
   draw(list, proj, view, eye, seconds, fog = null) {
     this.drawn = 0; this.glowed = 0;
+    if (!this.gl) return;   // AUDIT EG V (L6-5): a destroyed pass draws nothing
     // AUDIT WB D10's law: the frame's crystals picked into a list kept, never a new one each frame
     const items = this._items;
     items.length = 0;
@@ -327,5 +328,18 @@ export class CourtCrystalRenderer {
     }
     gl.bindVertexArray(null);
     gl.depthMask(true); gl.disable(gl.BLEND); gl.enable(gl.CULL_FACE);
+  }
+
+  /** AUDIT EG V (L6-5; Elite-Gates.md section 29, EVERY ALLOCATION HAS AN OWNER): its two programs, two vertex arrays and four
+   *  buffers let go - once; a destroyed pass draws nothing. The breach's fight frees its own at every way out of the Spire
+   *  (scenes/eliteGates/egFight.js leave); the Burning Court's is a screen's, kept. */
+  destroy() {
+    const gl = this.gl;
+    if (!gl) return;
+    this.gl = null;
+    for (const v of [this.vao, this.glowVao]) if (v) gl.deleteVertexArray(v);
+    for (const b of [...(this.bufs ?? []), this.glowBuf]) if (b) gl.deleteBuffer(b);
+    for (const p of [this.program, this.glowProgram]) if (p) gl.deleteProgram(p);
+    this.vao = null; this.glowVao = null; this.bufs = []; this.glowBuf = null; this.program = null; this.glowProgram = null;
   }
 }

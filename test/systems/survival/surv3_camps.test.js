@@ -18,6 +18,7 @@ import { useResultAction } from '../../../src/ui/enhanced/enhancedInventory.js';
 import { USE_PENDING } from '../../../src/systems/useItem.js';
 import { createSceneCache, cacheScene, restoreCachedScene } from '../../../src/systems/sceneCache.js';
 import { POSE_BOUND } from '../../../src/net/wire.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 // ═══ SURV3 (2026-09-18): THE CAMPS ══════════════════════════════════
 //
@@ -29,7 +30,7 @@ import { POSE_BOUND } from '../../../src/net/wire.js';
 // the three host mounts, the scene cache, the wire.
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
-const read = (p) => readFileSync(join(root, p), 'utf8');
+const read = (p) => hostText(p);
 const flat = (x, z) => (o, d, m) => (d[1] < 0 && m >= o[1] ? o[1] : null);   // a floor at y = 0 under every probe
 
 test('SURV3: where a camp may go - not indoors, not in town, not with foes near, no tent below, not in water, only on ground', () => {
@@ -330,7 +331,7 @@ test('SURV3: the pack\'s hand-off - both skins close and hand the placeable to t
 });
 
 test('SURV3: by source - the three hosts stand the pool, feed the race, draw the tents, hand the pack the ground, cache and save the camps, and share them online', () => {
-  const world = read('src/scenes/world.js'), ext = read('src/scenes/exterior.js'), dc = read('src/scenes/dungeonContext.js'), modes = read('src/scenes/worldModes.js');
+  const world = hostText('src/scenes/world.js'), ext = read('src/scenes/exterior.js'), dc = read('src/scenes/dungeonContext.js'), modes = read('src/scenes/worldModes.js');
   for (const [name, src] of [['world', world], ['exterior', ext], ['dungeon', dc]]) {
     assert.match(src, /const camps = createCamps\(\{/, `${name}: stands the pool`);
     assert.match(src, /placeCamp: \(item, list\) => camps\.placeItem\(item, list \?\? playerEntity\.items \?\? \[\]\)/, `${name}: the pack's hand-off - off the list the item was used from (AUDIT SURV-TIERS)`);

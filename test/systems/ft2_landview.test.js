@@ -22,6 +22,7 @@ import {
 import { FEATURES, KIND_ORDER, checkFeature, resolveControl, featureForControl, featureCounts, filterFeatures } from '../../src/systems/features.js';
 import { getPref, setPref, PREF_DEFAULTS } from '../../src/systems/uiPrefs.js';
 import { getInt, setValue, resetToDefaults } from '../../src/systems/settings/settings.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const read = (p) => readFileSync(join(root, p), 'utf8');
@@ -130,7 +131,7 @@ test('FT2: every builder asks the registry (one home per idea, every store), the
   assert.ok(!/choiceRow\('landViewDistance'/.test(menu), 'the Enhanced category\'s row left with its copy');
   assert.ok(!/LAND_VIEW_TIERS/.test(menu), 'the menu no longer knows the tiers; the registry hands them over');
   // the world host reads through the same function the row shows
-  const world = read('src/scenes/world.js');
+  const world = hostText('src/scenes/world.js');
   assert.match(world, /import \{ landViewRead \} from '\.\.\/world\/landView\.js';/);
   assert.match(world, /const fogDistance = landViewRead\(\);/);
   assert.ok(!/landViewDistance\(\{/.test(world), 'no second composition of the read');

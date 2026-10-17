@@ -125,12 +125,12 @@
   {
     "name": "AUDIT-LEGACY-B4-online-bloodline-falls",
     "file": "src/scenes/legacyHost.js",
-    "old": "      d.cause = 'years';\n    }\n    // PERMADEATH-HOUSES",
-    "new": "      d.cause = 'years';\n    } else if (deps.online()) {\n      outcome = { kind: 'none' };\n      return outcome;\n    }\n    // PERMADEATH-HOUSES",
+    "old": "      else d.cause = 'years';\n    }\n    if (!h.rise) {",
+    "new": "      else d.cause = 'years';\n    } else if (deps.online()) {\n      outcome = { kind: 'none' };\n      return outcome;\n    }\n    if (!h.rise) {",
     "tests": [
       "test/systems/legacy/auditlegacy.test.js"
     ],
-    "note": "LEGACY7 (PIN MOVED): re-aimed by content - the law inverted: online a Bloodline death falls (the realm's tombstone) - the mutant puts the room's death back. PERMADEATH-HOUSES (PIN MOVED): re-aimed by content - the law it guards now stands at this line."
+    "note": "LEGACY7 (PIN MOVED): re-aimed by content - the law inverted: online a Bloodline death falls (the realm's tombstone) - the mutant puts the room's death back. PERMADEATH-HOUSES (PIN MOVED): re-aimed by content - the law it guards now stands at this line. PIN MOVED (FIELD BUGS 2026-10-16b REZ-BLOODLINE): re-aimed by content - an online death is read at the door and written when it is decided (legacyHost.js decideDeath)"
   },
   {
     "name": "AUDIT-LEGACY-B4-online-succession",

@@ -27,6 +27,7 @@ import { setBindings } from '../../../src/ui/input.js';
 import { setPref, _resetForTests as resetPrefs } from '../../../src/systems/uiPrefs.js';
 import { _resetForTests as resetSettings } from '../../../src/systems/settings/settings.js';
 import { sea, knowAll } from '../../navalSea.mjs';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const rd = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const spawn = (s, cls, range, bearing = Math.PI / 2, o = {}) => s.host._sea.get(s.host.spawnShip(cls, { range, bearing, ...o }));
@@ -48,7 +49,7 @@ async function deceiver(cls = 'pirateSloop') {
 // ── S: the spyglass ─────────────────────────────────────────────────────────────────────────────────────────────────
 
 test('AUDIT CAPTAIN\'S SEA S1/S15: the glass comes down at every door, load and move of the world and under a video - never carried into a cabin (its window, its lens slowing the look, the wheel and the head held indoors) (mutants: the gate\'s door, the gate\'s move, the clear\'s lowering, the lowering\'s parts, the video\'s)', () => {
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /&& !townTalk\.overlayActive && !travelView\?\.active && !naval\?\.aiming && !\(townTalk\.overlay instanceof DeathScreen\)\n\s+&& !modes\?\.transitioning && !worldMoveBusy\(\);/, 'never while a door builds or the world is moved');
   assert.match(w, /const navalClear = \(\) => \{ [^\n]*drawCrewLines\(\[\]\); lowerGlass\(\); \};/, 'every door\'s and load\'s clear lowers it');
   assert.match(w, /function lowerGlass\(\) \{\n\s+spyglass\.up = false;\n\s+spyglass\.lens = 1;\n\s+spyglass\.near = GLASS_NEAR_MIN;[^\n]*\n\s+glassDoorPress = false;\n\s+mwViewHoldFirst\(false\);\n\s+naval\?\.glass\?\.\(0, \{ up: false, zoom: spyglass\.zoom \}\);\n\s+drawSpyglass\(null\);\n\s+spyglassTaps\(\);\n\s+\}/);
@@ -105,7 +106,7 @@ test('AUDIT CAPTAIN\'S SEA S2: the touch corner\'s Glass and a d-pad\'s Spyglass
     assert.deepEqual(door, ['Spyglass'], 'the host\'s door');
     assert.ok(!events.includes('keydown:KeyK'), `and no K: ${events}`);
   } finally { gp.dispose(); registerCrossbar(wasXb); globalThis.window = prevW; resetPrefs(); }
-  assert.match(rd('src/scenes/world.js'), /if \(act === 'Spyglass'\) \{ glassDoorPress = true; return true; \}/, 'the world reads it as the glass\'s press');
+  assert.match(hostText('src/scenes/world.js'), /if \(act === 'Spyglass'\) \{ glassDoorPress = true; return true; \}/, 'the world reads it as the glass\'s press');
 });
 
 test('AUDIT CAPTAIN\'S SEA S3: at a helm the d-pad press the player gave the glass is the glass\'s (the helm\'s own gesture on it yields, its prompts say so); the look stick\'s click turns the glass\'s magnification under a pad, a finger has Magnify and Lower; the foot names the pad\'s presses (mutants: the helm\'s pass, the click\'s zoom, the click kept from its action, the round, the prompts)', () => {
@@ -156,7 +157,7 @@ test('AUDIT CAPTAIN\'S SEA S3: at a helm the d-pad press the player gave the gla
   // the foot
   assert.equal(glassFootWords({ zoom: 4, pad: true, keys: { glass: 'D-pad left', zoom: 'Right stick click' } }), 'x4 - Right stick click: magnify - D-pad left: lower the glass');
   assert.equal(glassFootWords({ zoom: 2, touch: true, keys: { glass: 'K' } }), 'x2', 'a finger\'s presses are the foot\'s buttons');
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   // PIN MOVED: GILDED2's merge of main (HOST-SPLIT) - glassPadWords left bootWorld whole for src/scenes/glassPad.js
   assert.match(rd('src/scenes/glassPad.js'), /if \(m\.tap === 'Spyglass'\) return hdGlyphName\(padHand, DPAD_CODES\[dir\]\);\n\s+if \(m\.hold === 'Spyglass'\) return `Hold \$\{hdGlyphName\(padHand, DPAD_CODES\[dir\]\)\}`;/, 'a d-pad press named');
   assert.match(w, /if \(taps\.zoom && spyglass\.up\) spyglass\.zoom = nextGlassZoom\(spyglass\.zoom\);/);
@@ -232,7 +233,7 @@ test('AUDIT CAPTAIN\'S SEA S6: the glass holds only a ship an eye could find - b
   b.retiring = true; b.fade = 0.4;
   assert.equal(hold(d, b, 0.1), null, 'the sea has let her go');
   // the world's: its own sight cache, from the eye along the land's collider
-  assert.match(rd('src/scenes/world.js'), /sightBlocked: \(id, point\) => glassSight\.blocked\(player\.collider, \[cam\.pos\[0\] \+ _dwEyeOffset\[0\], cam\.pos\[1\] \+ _dwEyeOffset\[1\], cam\.pos\[2\] \+ _dwEyeOffset\[2\]\], id, point\),/);
+  assert.match(hostText('src/scenes/world.js'), /sightBlocked: \(id, point\) => glassSight\.blocked\(player\.collider, \[cam\.pos\[0\] \+ _dwEyeOffset\[0\], cam\.pos\[1\] \+ _dwEyeOffset\[1\], cam\.pos\[2\] \+ _dwEyeOffset\[2\]\], id, point\),/);
 });
 
 test('AUDIT CAPTAIN\'S SEA S7: her guns out ON ME tell her colours - never a fight with another ship far off (a pirate at a merchantman 1.2 km away was made out by it) (mutants: the target gate)', async () => {
@@ -303,7 +304,7 @@ test('AUDIT CAPTAIN\'S SEA S10/S17: the glass\'s window is the world\'s strip - 
   assert.match(rd('src/ui/naval/navalHud.js'), /\.dfnaval-tags \{ position: fixed; inset: 0; pointer-events: none; z-index: 3;/);
   assert.match(rd('src/ui/wild/wildMarks.js'), /\.dfwild-marks \{ position: fixed; inset: 0; pointer-events: none; z-index: 3;/);
   assert.match(rd('src/ui/nameLayer.js'), /\.dfnames \{ position: fixed; inset: 0; z-index: 3;/);
-  assert.match(rd('src/scenes/world.js'), /rect: w > 0 && h > 0 \? worldRectPx\(worldViewportRect\(w, h\), w, h\) : null,/);
+  assert.match(hostText('src/scenes/world.js'), /rect: w > 0 && h > 0 \? worldRectPx\(worldViewportRect\(w, h\), w, h\) : null,/);
 });
 
 test('AUDIT CAPTAIN\'S SEA S11/S18/S22/S20: an unknown hull\'s glass title never red; never "about 1 hands"; the small ship\'s hull a two-master; her hold as it rides - her waters\' tiers, an emptied prize\'s none (mutants: the tone, each word, the hold\'s tiers, the emptied)', async () => {
@@ -327,7 +328,7 @@ test('AUDIT CAPTAIN\'S SEA S11/S18/S22/S20: an unknown hull\'s glass title never
 test('AUDIT CAPTAIN\'S SEA S12: see B5 (the Admiralty survey counts a ship once)', () => {});
 
 test('AUDIT CAPTAIN\'S SEA S13: the keyboard\'s look slowed by the glass as the mouse\'s is (mutants: either axis)', () => {
-  assert.match(rd('src/scenes/world.js'), /if \(kb\.x \|\| kb\.y\) lookFilter\.add\(kb\.x \* keyboardLookRate\(\) \* dt \* glassLookScale\(spyglass\.lens\), kb\.y \* keyboardLookRate\(\) \* dt \* lookInvert\(\) \* glassLookScale\(spyglass\.lens\)\);/);
+  assert.match(hostText('src/scenes/world.js'), /if \(kb\.x \|\| kb\.y\) lookFilter\.add\(kb\.x \* keyboardLookRate\(\) \* dt \* glassLookScale\(spyglass\.lens\), kb\.y \* keyboardLookRate\(\) \* dt \* lookInvert\(\) \* glassLookScale\(spyglass\.lens\)\);/);
 });
 
 test('AUDIT CAPTAIN\'S SEA S14: a key file whose road follow left K (Travel Options\' O) loads with the glass seated on the free K - never on no key; a player\'s own unbinding stands (mutants: the free key\'s seat, the removed gate)', () => {
@@ -374,7 +375,7 @@ test('AUDIT CAPTAIN\'S SEA S16: a finger\'s glass has its own Magnify and Lower 
   drawSpyglass({ card: null, zoom: 4 }, { touch: false });
   assert.equal(root.className, 'dfglass', 'no finger: no buttons');
   drawSpyglass(null);
-  assert.match(rd('src/scenes/world.js'), /const pressedNow = hccActionPressed\('Spyglass'\) \|\| navalTouchGlass\(\) \|\| glassDoorPress \|\| \(taps\.lower && spyglass\.up\);/);
+  assert.match(hostText('src/scenes/world.js'), /const pressedNow = hccActionPressed\('Spyglass'\) \|\| navalTouchGlass\(\) \|\| glassDoorPress \|\| \(taps\.lower && spyglass\.up\);/);
 });
 
 test('AUDIT CAPTAIN\'S SEA S19: the glass holds her by her extent as she lies to the look - her beam bow-on, her length abeam - and never outside its own circle (a ship close aboard was held 20 degrees off the glass) (mutants: the aspect, the field\'s clamp)', async () => {
@@ -457,7 +458,7 @@ test('AUDIT CAPTAIN\'S SEA G2/P7: THE SWITCH SPLIT - the sea stands in every gam
   assert.equal(etherCrossOutOn('?skin=classic'), false, '...and its captain is never asked out');
   assert.equal(etherSeaOn('?ether=off'), false); assert.equal(etherCrossOutOn('?ether=off&online=1'), false);
   _resetForTests();
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /const etherOut = etherCrossOutOn\(\);/);
   assert.match(w, /if \(StreamingWorldState\.streams\(px, py\)\) return null;\n\s+const home = inEther\(px, py\) \? crossingTarget\('home', captainLedger\.crossedFrom\(\)\) : \{ px: Math\.max\(0, Math\.min\(999, Math\.floor\(px\) \|\| 0\)\), py: Math\.max\(0, Math\.min\(499, Math\.floor\(py\) \|\| 0\)\) \};/);
   assert.match(w, /_unstreamedLanding = inEther\(px, py\) \? 'ether' : 'edge';\n\s+return home;/);
@@ -500,7 +501,7 @@ test('AUDIT CAPTAIN\'S SEA G3: the landforms\' lands past the Bay\'s table answe
 });
 
 test('AUDIT CAPTAIN\'S SEA G4/G5/G6/G7/G8/G9/G14: the ring\'s climate past the map the continent\'s wherever it stands, the sea\'s in its law, the Bay edge\'s clamp else; the Overworld\'s water and its plates read the isles past the map; the ring\'s cliffs faded at their own pixel where the ground answers; Raiding Parties never at sea past the Veil; the mod\'s pick the Bay\'s alone; Masser\'s key leaned past the Veil (mutants: each seam)', async () => {
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /climatePast: tamrielLand \? \(x, y\) => maps\.getClimateIndex\(x, y\)\n\s+: etherSea \? \(x, y\) => maps\.getClimateIndex\(\.\.\.\(inEtherLaw\(x, y\) \? \[x, y\] :/);
   assert.match(w, /pastOwn: tamrielLand \? null : inEtherLaw,/);
   const { etherWoods, inEtherLaw: lawOf } = await import('../../../src/world/ethericSea.js');
@@ -575,7 +576,7 @@ test('AUDIT CAPTAIN\'S SEA H1/P2: every port isle has a harbour - its town whole
     }
   }
   assert.equal(findHarbour({ rect: rectOf(E.veilhaven(), 4, 3), isWater }), null, 'the Bay\'s reach falls short of it - the isle\'s own is asked');
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /town = \{ id: `ether:\$\{isle\.key\}`, loc, x: isle\.px, y: isle\.py, name: isle\.name, reach: ETHER_HARBOUR_REACH \};/);
   assert.match(rd('src/systems/naval/harbourBook.js'), /findHarbour\(\{ rect: near\.rect, isWater: \(x, z, h\) => deps\.isWater\(x, z, h\), \.\.\.\(near\.reach \? \{ reach: near\.reach \} : \{\}\) \}\)/);
   assert.match(w, /const reach = t\.reach \?\? HARBOUR_REACH;/, 'the lanes\' harbour feed sounds it as far');
@@ -614,7 +615,7 @@ test('AUDIT CAPTAIN\'S SEA P3/P12: an isle\'s place is never a spawn\'s template
 });
 
 test('AUDIT CAPTAIN\'S SEA P4/P6/P8/P9/P10: a death past the Veil rises at the nearest port isle (never a Bay temple a crossing away) and no Bay cemetery takes a vampire there; no teleport crosses the Veil; an isle\'s quest site resolves by its region\'s own name; an isle town\'s house is no deed\'s and none is sold there; an isle\'s port is a port for ship boarding whatever Travel Options says (mutants: each seam)', async () => {
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /else if \(etherSea && inEther\(px\.x, px\.y\)\) \{\n(?:\s*\/\/[^\n]*\n)*\s+const port = etherRisePort\(px\.x, px\.y\);\n\s+land = \{ x: port\.px, y: port\.py \}; kind = 'city';/);
   assert.match(w, /const etherRisePort = \(x, y\) => islesNear\(x, y, ETHER_RISE_PX\)\.find\(\(i\) => i\.kind === 'port'\) \?\? veilhaven\(\);/);
   const { islesNear, veilhaven, inEther } = await import('../../../src/world/ethericSea.js');
@@ -659,7 +660,7 @@ test('AUDIT CAPTAIN\'S SEA P5: the Fleet never carries a ship across the Veil - 
   const saved = F.fleetSaveData();
   F._resetFleetForTests(); F.restoreFleetSaveData(saved);
   assert.deepEqual(F.fleetShip(901).port, { name: 'Veilhaven', ether: true }, 'and through the save');
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /veilApart: \(rec, boat\) => \{ const p = playerTravelPixel\(\); const hers = boat\?\.MapPixel \? inEther\(boat\.MapPixel\.X, boat\.MapPixel\.Y\) : !!rec\?\.port\?\.ether; return etherSea && inEther\(p\.x, p\.y\) !== hers; \},/);
   assert.match(w, /if \(etherSea && inEther\(here\.x, here\.y\)\) \{\n\s+const isle = etherRisePort\(here\.x, here\.y\);/);
   assert.match(w, /return \{ name: isle\.name, way: COMPASS_WAYS\[\(\(Math\.round\(turn\) % 8\) \+ 8\) % 8\], ether: true \};/, 'the sea\'s port says its side');
@@ -675,7 +676,7 @@ async function crossingWorld(over = {}) {
   const ES = await import('../../../src/world/ethericSea.js');
   const EC = await import('../../../src/systems/naval/etherCrossing.js');
   const { createCaptainLedger } = await import('../../../src/systems/naval/captainLedger.js');
-  const src = rd('src/scenes/world.js');
+  const src = hostText('src/scenes/world.js');
   const text = src.slice(src.indexOf('  const crossGate = createCrossingGate();'), src.indexOf('  let _navalWasOn = null;'));
   const log = [];
   const w = { etherSea: true, etherOut: true, sailing: true, paused: false, loading: false, overlay: null, transitioning: false, mode: 'exterior', busy: false, arriving: false, px: 150, py: 300, hostile: false, passengers: 0, teleport: null, ...over };
@@ -763,7 +764,7 @@ test('AUDIT CAPTAIN\'S SEA X2/X9: Yes is the question as it stands NOW (a load, 
   }
   c.step(); c.fns.withdrawCrossing();
   assert.equal(c.log.at(-1), 'withdrawn', 'taken back at a load or a jump');
-  assert.match(rd('src/scenes/world.js'), /const navalTransition = \(\) => \{ harbourBook\.clear\(\); navalClear\(\); withdrawCrossing\(\); \};/);
+  assert.match(hostText('src/scenes/world.js'), /const navalTransition = \(\) => \{ harbourBook\.clear\(\); navalClear\(\); withdrawCrossing\(\); \};/);
   // the way back
   const f = await crossingWorld({ teleport: async (px, py, opts) => { if (px !== 150) throw new Error('the landfall failed'); opts.resolveArrival?.([0, 0, 0]); f.w.px = px; f.w.py = py; } });
   f.ledger.setCrossedFrom({ px: 100, py: 290 });
@@ -882,7 +883,7 @@ test('AUDIT CAPTAIN\'S SEA X6/X7/X8/X12/X13/X14/X18: the chart under a finger an
 });
 
 test('AUDIT CAPTAIN\'S SEA X15/X16: the chart goes with the world it charts - shut at every load, jump and move (it stood over the Bay after a load); its arrow the ship\'s heading at her helm, never where the captain looks (mutants: the close, the boat\'s heading)', () => {
-  const src = rd('src/scenes/world.js');
+  const src = hostText('src/scenes/world.js');
   assert.match(src, /const navalClear = \(\) => \{[^\n]*closeNavalYard\(\); closeEtherChart\(\);/);
   const open = src.slice(src.indexOf('  function openEtherChart() {'), src.indexOf('  /** AUDIT NAV1 (the helm): the shipwright\'s window over the world'));
   const fwd = src.match(/ {2}const boatForward = \(boat\) => \{[\s\S]*?\n {2}\};\n/)[0];
@@ -972,7 +973,7 @@ test('AUDIT CAPTAIN\'S SEA C3/C4: hands come Seasoned where they sign on in a Co
   s.deps.captain = { seasonedHires: () => true };
   const hands = s.host.crewHands(s.boat);
   assert.ok(hands.length > 1 && hands.every((h) => h.prior === SEASONED_HIRE && h.fights === 0), 'the page\'s muster asks where they sign on');
-  assert.match(rd('src/scenes/world.js'), /seasonedHires: \(\) => \{ const port = navalPortHere\(\); return !!port && harbourOffice\.perksAt\(port\.crown\)\.seasoned; \},/, 'a harbour of a crown that favours me');
+  assert.match(hostText('src/scenes/world.js'), /seasonedHires: \(\) => \{ const port = navalPortHere\(\); return !!port && harbourOffice\.perksAt\(port\.crown\)\.seasoned; \},/, 'a harbour of a crown that favours me');
   const { createHarbourOffice } = await import('../../../src/scenes/harbourOffice.js');
   const { createCaptainLedger } = await import('../../../src/systems/naval/captainLedger.js');
   assert.equal(createHarbourOffice({ ledger: createCaptainLedger() }).perksAt(null).seasoned, false, 'no crown (an isle\'s freeport): none');
@@ -1418,7 +1419,7 @@ test('AUDIT CAPTAIN\'S SEA L6/B5/B7: the survey counts a ship once by her seed (
 });
 
 test('AUDIT CAPTAIN\'S SEA L9: a rank won or lost is kept back till the centred label is at rest - never wiped by the lines said in its breath - and the crowns that named the same rank the same way say it in one line (mutants: the wait, the grouping)', () => {
-  const src = rd('src/scenes/world.js');
+  const src = hostText('src/scenes/world.js');
   const text = src.slice(src.indexOf('  const _rankLines = [];'), src.indexOf('  // CAPT-BOARD (bible/03-World/Captains-Sea.md): THE HARBOUR OFFICE'));
   const said = [];
   const label = { timer: 0 };
@@ -1482,7 +1483,7 @@ test('AUDIT CAPTAIN\'S SEA B2/B16: no shop buys the exchange\'s goods (a General
   assert.ok(ids(office(false), [mintGood('starglass', 3)]).includes('starglass'), 'unless she carries some');
   const rich = createHarbourOffice({ ledger: createCaptainLedger(), port: () => port, day: () => 3, gold: () => 1e6, etherGoods: () => true });
   assert.deepEqual(rich.exchange({ cargo: [] }).buy('starglass', 1), { ok: false, text: 'Starglass is not sold here.' }, 'the other sea\'s good: never "no more today"');
-  assert.match(rd('src/scenes/world.js'), /etherGoods: \(\) => etherOut,/, 'listed where the crossing out is this game\'s');
+  assert.match(hostText('src/scenes/world.js'), /etherGoods: \(\) => etherOut,/, 'listed where the crossing out is this game\'s');
 });
 
 test('AUDIT CAPTAIN\'S SEA B3: the harbourmaster\'s and the exchange\'s tabs hang on a ship lying to the quay at her helm alone - the Fleet page\'s yard is the shipwright\'s (a ship laid up a port away took goods in and sold them out where she never sailed) (mutants: the quay\'s flag, the world\'s gate)', async () => {
@@ -1492,7 +1493,7 @@ test('AUDIT CAPTAIN\'S SEA B3: the harbourmaster\'s and the exchange\'s tabs han
   s.deps.openYard = (m) => { models.push(m); return true; };
   assert.equal(s.host.openYard(s.boat), true);
   assert.equal(models[0].atQuay, false, 'the Fleet page\'s door');
-  const host = rd('src/scenes/naval/navalHost.js'), w = rd('src/scenes/world.js');
+  const host = rd('src/scenes/naval/navalHost.js'), w = hostText('src/scenes/world.js');
   assert.match(host, /return yardHere\(boat\) && openYard\(boat, \{ quay: true \}\);/);
   assert.match(w, /if \(model\.atQuay\) model\.office = \(\) => \{/);
   assert.match(w, /if \(model\.atQuay\) model\.exchange = \(\) => harbourOffice\.exchange\(/);
@@ -1593,7 +1594,7 @@ test('AUDIT CAPTAIN\'S SEA B9/B11/B13: a cache\'s and a chart\'s things kept in 
   s.runtime.cargoRoom = (b) => (b === s.boat ? { load: 5, slows: 10, stops: 20 } : null);
   s.host.openYard(s.boat);
   assert.deepEqual(models[0].room(), { load: 5, slows: 10, stops: 20 }, 'the yard\'s model reads Come Sail Away\'s room');
-  assert.match(rd('src/scenes/world.js'), /if \(model\.atQuay\) model\.exchange = \(\) => harbourOffice\.exchange\(\{ uid: model\.uid \?\? null, cargo: model\.cargo\?\.\(\) \?\? null, room: \(\) => model\.room\?\.\(\) \?\? null \}\);/, 'and the exchange\'s tab hers');
+  assert.match(hostText('src/scenes/world.js'), /if \(model\.atQuay\) model\.exchange = \(\) => harbourOffice\.exchange\(\{ uid: model\.uid \?\? null, cargo: model\.cargo\?\.\(\) \?\? null, room: \(\) => model\.room\?\.\(\) \?\? null \}\);/, 'and the exchange\'s tab hers');
 });
 
 test('AUDIT CAPTAIN\'S SEA C11: the posts\' worth executed at sea, not read off the text - her Gunner\'s quicker reload, her Carpenter\'s quicker mending, her Cook\'s slower wear on the spirits, each against the same crew with the post struck off (mutants: each seam)', async () => {
@@ -1662,7 +1663,7 @@ test('AUDIT CAPTAIN\'S SEA H9: the seams the docs promise, each held - the riche
   assert.equal(prizes[0][0], e.ship.names.name);
   assert.ok(prizes[0][1] > 0, 'her hold\'s worth');
   // the world's wiring
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   const office = w.slice(w.indexOf('  const harbourOffice = createHarbourOffice({'), w.indexOf('  const harbourOffice = createHarbourOffice({') + 400);
   assert.match(office, /now: \(\) => Math\.floor\(playerTicker\.ownMinutes\),/, 'the terms on the captain\'s own clock');
   assert.match(w, /yardDiscount: \(\) => harbourOffice\.perksHere\(\)\.yard,/);

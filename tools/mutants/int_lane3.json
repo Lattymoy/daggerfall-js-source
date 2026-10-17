@@ -507,7 +507,7 @@
   {
     "name": "INT11-RELAY-NO-JUDGE",
     "file": "server/src/index.js",
-    "old": "      await this._bodyCount('gate', f, judgeGate(f, census(), now), now, line.body);\n",
+    "old": "      await this._bodyCount('gate', f, GATE_SEAM.judge(f, census(), now), now, line.body);\n",
     "new": "",
     "tests": [
       "test/net/int12_body_relay.test.js"
@@ -554,8 +554,8 @@
   {
     "name": "INT11-RELAY-CENSUS-RAW",
     "file": "server/src/index.js",
-    "old": "      this._gateFan(stepBrain(f, now, this._bodiesBare(census()), rand01));",
-    "new": "      this._gateFan(stepBrain(f, now, this._bodiesBare(this._gateBodies(f)), rand01));",
+    "old": "      this._gateFan(GATE_SEAM.step(f, now, this._bodiesBare(census()), rand01));",
+    "new": "      this._gateFan(GATE_SEAM.step(f, now, this._bodiesBare(this._gateBodies(f)), rand01));",
     "tests": [
       "test/net/int12_body_relay.test.js"
     ]
@@ -572,7 +572,7 @@
   {
     "name": "INT14-RELAY-GATE-NO-MEASURE",
     "file": "server/src/index.js",
-    "old": "...(helped.has(sub) ? { r: 1 } : {}), ...this._bodyMeasureOf(f, sub, earned) }",
+    "old": "...(helped.has(sub) ? { r: 1 } : {}), ...this._bodyMeasureOf(f, sub, GATE_SEAM.earned) }",
     "new": "...(helped.has(sub) ? { r: 1 } : {}) }",
     "tests": [
       "test/net/int12_body_relay.test.js"
@@ -590,7 +590,7 @@
   {
     "name": "INT12-RELAY-NO-JUDGE",
     "file": "server/src/index.js",
-    "old": "      await this._bodyCount('sd', f, judgeRemnant(f, census(), now), now, line.body, (sub) => this._sdMarkFallenAt(f.s, sub));\n",
+    "old": "      await this._bodyCount('sd', f, SD_SEAM.judge(f, census(), now), now, line.body, (sub) => this._sdMarkFallenAt(f.s, sub));\n",
     "new": "",
     "tests": [
       "test/net/int12_body_relay.test.js"
@@ -626,7 +626,7 @@
   {
     "name": "INT13-RELAY-HULL-NOT-JUDGED",
     "file": "server/src/index.js",
-    "old": "          await this._bodyCount('serpent', f, judgeSerpent(f, bodies, now), now, line.hull, (sub) => this._serpentCountWreck(fights, id, f, sub, now), { sx: f.sx, sz: f.sz });\n",
+    "old": "          await this._bodyCount('serpent', f, SERPENT_SEAM.judge(f, bodies, now), now, line.hull, (sub) => this._serpentCountWreck(fights, id, f, sub, now), { sx: f.sx, sz: f.sz });\n",
     "new": "",
     "tests": [
       "test/net/int12_body_relay.test.js"

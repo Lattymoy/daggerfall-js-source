@@ -21,6 +21,7 @@ import { displayName } from './accounts.js';
 import { titleWorn, glyphsOf } from './titles.js';
 import { withArenaHonoursAll } from './arena.js';
 import { withIliacHonoursAll } from './iliac.js';
+import { withEgHonoursAll } from './egHonours.js';   // EG-E2: and the Spire Champions
 import { withGambitHonoursAll } from './gambit.js';   // KG6: and The King's Gambit's GRANDMASTER
 
 /**
@@ -38,6 +39,7 @@ export async function boardNamesOf(ctx, ids, env, nowS, own) {
     let rows = (await ctx.db.prepare(`SELECT * FROM players WHERE id IN (${part.map((_, k) => `?${k + 1}`).join(', ')})`).bind(...part).all()).results ?? [];
     if (!own.arena) rows = await withArenaHonoursAll(ctx, rows, nowS);
     if (!own.iliac) rows = await withIliacHonoursAll(ctx, rows, nowS);
+    rows = await withEgHonoursAll(ctx, rows, nowS);   // EG-E2: and the last season's Spire Champions, the Worker's kept word on every board
     if (!own.gambit) rows = await withGambitHonoursAll(ctx, rows, nowS);
     for (const row of rows) {
       const withH = { ...row, ...(own.arena ? { arena: own.arena(row) } : {}), ...(own.iliac ? { iliac: own.iliac(row) } : {}), ...(own.gambit ? { gambit: own.gambit(row) } : {}) };

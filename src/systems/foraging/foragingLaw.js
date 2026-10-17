@@ -28,6 +28,7 @@ import { dice100 } from '../../combat/formulas.js';   // Dice100.SuccessRoll, on
 import { isPlayerInTown } from '../nearbyObjects.js';
 import { ON_EXTERIOR_WATER } from '../../player/exteriorSurface.js';
 import { SEA_REGION } from '../../net/nodeLaw.js';   // PROF8: the sea coast's region, one home
+import { applyTextPatches } from '../quest/questPatches.js';   // SHAM-TRAIL: FORAGE-FIX's exact-count law, one home
 import { TEMPLATE as CC_TEMPLATE } from '../survival/food.js';   // Climates & Calories' own ids, imported (ONE DFU MEMBER, ONE EXPORT)
 // PROF1: the draws, the bands, the day and the Basket's blocks live in foragingCore.js - pure, so the account service rolls
 // the Basket's food with the IL's own tables (bible/06-Systems/Professions-Arc.md 22) - and are this module's still.
@@ -452,15 +453,9 @@ export const FORAGE_FIX_PATCHES = Object.freeze({
 });
 
 /** A quest's (or the list's) text with its FORAGE-FIX patches applied (unchanged when it has none). Line endings are
- *  read as LF first - a checkout that turned the files to CRLF patches the same. Throws on a mismatch. */
+ *  read as LF first - a checkout that turned the files to CRLF patches the same. Throws on a mismatch. SHAM-TRAIL: the
+ *  law is quest/questPatches.js applyTextPatches, which DFU's own quests' patches share. */
 export function applyForageFix(questName, text) {
   const patches = FORAGE_FIX_PATCHES[questName];
-  if (!patches) return text;
-  let out = text.replace(/\r\n?/g, '\n');
-  for (const p of patches) {
-    const found = out.split(p.old).length - 1;
-    if (found !== p.count) throw new Error(`FORAGE-FIX: ${questName} holds "${p.old.trim()}" ${found} times, not ${p.count}`);
-    out = out.split(p.old).join(p.new);
-  }
-  return out;
+  return patches ? applyTextPatches('FORAGE-FIX', questName, patches, text) : text;
 }

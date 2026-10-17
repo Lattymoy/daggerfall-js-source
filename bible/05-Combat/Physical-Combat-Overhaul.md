@@ -541,7 +541,7 @@ equip order enumeration". The port ran the 2022 law verbatim, and three things i
 - **The pool.** WEAPON-POOL's pools (1,600 to 12,800) left a weapon one point a tick, a 32nd of a dagger's old share: an
   iron blade 1% about every five real minutes, a Daedric one every 43.
 
-The law now (`systems/enchantments.js` `repairsObjectsTarget`, `POOL_WEAPON_MEND`; `systems/item/itemTemplates.js`
+The law now (`systems/enchantments.js` `repairsObjectsTarget`, `repairsObjectsMend`; `systems/item/itemTemplates.js`
 `mendOrder`):
 
 - **Which piece.** What is worn first, the most worn first (the lowest share of its condition left), then the pack's most
@@ -557,22 +557,30 @@ The law now (`systems/enchantments.js` `repairsObjectsTarget`, `POOL_WEAPON_MEND
 - **Never what a smith refuses** as not repairable (the template's `isNotRepairable`, `repairService.js`
   repairRefusal's). An enchanted piece mends only under AllowMagicRepairs, which is DFU's gate (on by default and online,
   DISC22-A).
-- **How much.** A weapon on the pool mends 32 a tick (Mac, asked: "Weapons as a classic dagger"). That is the classic
-  Dagger's point of its 50, on the pool: iron 2% a tick, Daedric 0.25%. DFU's own yardstick, a Dwarven dagger battered
-  to new in eight or nine hours, now holds for every weapon type: 123 ticks, about 8.2 game hours. A magic item's or an
-  artifact's condition is its uses, not the pool (`loot.js`), so it keeps DFU's point, and so do armour and everything
-  else.
+- **How much.** A tick mends a fiftieth of the piece's own condition, never less than DFU's point (`repairsObjectsMend`):
+  the classic Dagger's point of its 50 (Mac, asked: "Weapons as a classic dagger"), every piece's alike since
+  MEND-ARMOUR (FIELD BUGS 2026-10-16b) - a weapon, armour of any material, clothing. A magic item's or an artifact's
+  USES keep DFU's point (MEND-ARMOUR's audit: the round runs through every rest and fast travel too, and a fiftieth gave a
+  spent Cast When Used piece all 1,000 uses back in one 8-hour rest - 100 casts, where the point gives 12; a charge is
+  not wear). Every other piece's share climbs 2% a tick, whatever its kind, its material or its size; an iron weapon's tick is 32,
+  MEND-WORN's own, and any piece's whole condition is 50 ticks' mending (about 3.3 game hours), as a classic iron
+  dagger's was. MEND-WORN gave the share to a weapon on the pool alone, on the pool (32: Daedric 0.25% a tick), and
+  left everything else DFU's point (`RepairsObjects.cs:26`, conditionAmount): beside a blade that climbed, a steel
+  cuirass (6,144) went 1% every 61 ticks and a Daedric one (32,768) every 328, and a player read it as "no other worn
+  items are repairing" (`01-Overview/bugs/Field-Bugs-2026-10-16b.md` MEND-ARMOUR). The owner, 2026-10-16: "Stop trying to
+  match DFU." A blade in steel plate battered to 50%, the plate to 70%, is whole in 164 ticks, about 55 real minutes -
+  it was 8,408 ticks at the point, 47 real hours. The departure from DFU's point is Port-Ledger A's MEND-WORN row.
 - **Unchanged from DFU:** the cadence (every fourth round), the player alone, one piece a tick, and no synthetic-time
   gate. A weapon still on its row's pool moves to the one pool first (`repoolWeapon`), as `lowerCondition` does before a
   wear (AUDIT WEAPON-POOL P2).
 
 Recorded, not changed:
-- **A pool weapon now mends about as fast as a fight wears it.** It gets 32 a tick, every twenty real seconds, against a
-  point or two a landed blow (WEAR-ONE). A classic dagger had the same share per tick and wore 32 times as fast.
-- **Armour keeps the point:** an iron cuirass (4,096) mends 1% every 41 ticks, about 14 real minutes. The most worn
-  piece takes every tick, so a blade waits behind a cuirass worn further than it: Roleplay & Realism's kit at 53% holds
-  a blade at 69% back upwards of 630 ticks, 42 game hours. In play the blade is usually the most worn: it wears on every
-  blow the player lands, a piece of armour only on the blows that strike it, and its pool is the smaller.
+- **A worn piece now mends faster than a fight wears it.** An iron weapon gets 32 a tick, every twenty real seconds,
+  against a point or two a landed blow (WEAR-ONE), and since MEND-ARMOUR a Daedric one 256 and a piece of armour its
+  fiftieth (an iron cuirass 82). A classic dagger had the same share per tick and wore 32 times as fast.
+- **The most worn piece takes every tick**, so a blade waits behind a cuirass worn further than it - since MEND-ARMOUR
+  a short wait, every share climbing 2% a tick: a cuirass at 53% passes a blade at 69% in eight or nine ticks (at the
+  point it was upwards of 630).
 - **Camping Equipment** keeps its uses in its condition and a smith mends it, so it is mended once nothing worn wants
   it, as a smith would.
 - **Item Deteriorates** still wears a point every four rounds (AUDIT WEAPON-POOL's recorded line, above).
@@ -583,3 +591,8 @@ enchantmentMagicRound) that every host's ticker feeds: exterior.js, world.js and
 service's bundle reaches these files. `test/systems/mend_worn.test.js` (8); `tools/mutants/mend_worn.json` (15 of 15 dead, the
 old walk restored among them). Re-aimed by content, because the kit's comparator moved into `mendOrder`:
 `tools/mutants/mend_aim.json` MEND-AIM-loot-before-worn and `tools/mutants/prof3.json` PROF3-kit-least-worn (both dead).
+MEND-ARMOUR (FIELD BUGS 2026-10-16b): `test/systems/fb1016b_mendarmour.test.js` (3); `tools/mutants/fb1016b_mendarmour.json` (7, all
+dead). Its pins moved where they said a point: `test/systems/mend_worn.test.js` (the rate, uses, the setting, the pump),
+`test/systems/fb1014_mendstarve.test.js` and `test/systems/fb1015_mendtiers.test.js` (a self-wearing piece is mended past its wear now,
+not held), `test/systems/enchantments.test.js` (E1's one item); `tools/mutants/mend_worn.json`'s six records on the old law
+re-aimed by content (uses and an artifact now on the point), all dead.

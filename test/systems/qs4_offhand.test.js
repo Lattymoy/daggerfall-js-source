@@ -19,8 +19,9 @@ import { MOD_SETTINGS } from '../../src/systems/modSettings.js';
 import { TEMPLATES } from '../../src/systems/useItem.js';
 import { EQUIP_SLOTS } from '../../src/characters/paperdoll/paperdoll.js';
 import { offHandQuickslot, QUICKSLOT_TEXT } from '../../src/systems/quickslots.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
-const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
+const read = (p) => hostText(p);
 const V = HANDHELD_TORCHES_VENDOR;
 const defaults = () => Object.fromEntries(Object.entries(MOD_SETTINGS[V].keys).map(([k, d]) => [k, d.default]));
 const torch = () => ({ group: 'UselessItems2', templateIndex: TEMPLATES.Torch, currentCondition: 50, maxCondition: 50 });

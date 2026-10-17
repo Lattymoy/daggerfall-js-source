@@ -30,7 +30,7 @@ import { LUNAR_PHASES, lunarPhasesFromMinutes, MINUTES_PER_DAY as CLASSIC_DAY } 
 import { dayFraction, isNight, sunDirection, DAWN_HOUR, DUSK_HOUR } from '../../src/world/worldClock.js';
 import { WEATHER_TYPES } from '../../src/world/weather.js';
 
-const read = (p) => readFileSync(new URL('../../' + p, import.meta.url), 'utf8');
+const read = (p) => hostText(p);
 const at = (h, m = 0) => h * 60 + m;
 const elevOf = (dir) => Math.asin(Math.max(-1, Math.min(1, dir[1]))) * 180 / Math.PI;
 const near = (a, b, eps = 1e-9) => Math.abs(a - b) < eps;
@@ -327,6 +327,7 @@ test('ES1c clouds and dither: two decks lit by the sun, and a triangular dither 
 
 // ── ES1d: THE CLOUD IN FRONT OF THE SUN ───────────────────────────
 import { sunOcclusion, CLOUD_SHADOW, fbm, hash21 } from '../../src/render/enhancedSky.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 test('ES1d shadow: the sun dims under the cloud the SHADER draws, and the two cannot disagree', () => {
   // Nothing at night: there is no sun to occlude.

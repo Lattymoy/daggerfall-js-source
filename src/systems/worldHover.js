@@ -56,6 +56,22 @@ export const ITEMISED_KEYS = Object.freeze(['loot:', 'corpse:', 'droppedLoot:', 
 export const keyItemises = (key) => typeof key === 'string' && ITEMISED_KEYS.some((p) => key.startsWith(p));
 
 /**
+ * THE KEYS THAT PREVIEW. A house container and a placed chest are not
+ * piles: World Tooltips names them, and the take still goes through the
+ * press (the private-property question, the player's own storage window).
+ * CONTAINER-PEEK lists what they already hold, as a glance. The contents
+ * reader returns an array only when that list exists; anything else stays
+ * a name, so an unstocked cupboard is never painted "Empty".
+ *
+ * `container:` is the building's furniture. `decor:` is a placed piece;
+ * only a storage piece's reader returns an array, so a chair stays a name.
+ */
+export const PREVIEW_KEYS = Object.freeze(['container:', 'decor:']);
+
+/** Does this key list its contents when the reader has them? */
+export const keyPreviews = (key) => typeof key === 'string' && PREVIEW_KEYS.some((p) => key.startsWith(p));
+
+/**
  * THE ITEMS A PILE'S ROWS ARE, in the order the rows are drawn.
  *
  * QUICK-LOOT B1: extracted so the walk has ONE spelling. What the
@@ -208,6 +224,23 @@ export function composeContents(readers) {
 const frame = (key, kind, title, subs, rows = [], rest = 0, empty = false) =>
   ({ key, kind, title, subs, rows, rest, empty });
 
+/** A house container's glance: the list when the reader has one, the name otherwise.
+ *  `preview` is why quick loot does not light a row or arm a take (quickLoot.js:"const take = frame?.kind === 'items' && !frame.preview;"). */
+function resolvePreview(key, hit, name, contents) {
+  const named = name?.(key, hit) ?? null;
+  if (!named?.title) return null;
+  const held = contents?.(key);
+  const tone = (f) => {
+    if (typeof named.tone === 'string' && named.tone) f.tone = named.tone;
+    return f;
+  };
+  if (!Array.isArray(held)) return tone(frame(key, 'name', named.title, named.subs ?? []));
+  const { shown, rest, empty } = hoverLines(held, Infinity);
+  const f = frame(key, 'items', named.title, named.subs ?? [], shown, rest, empty);
+  f.preview = true;
+  return tone(f);
+}
+
 /**
  * PICK + NAMER -> FRAME, or null for "the crosshair is on nothing".
  *
@@ -229,6 +262,8 @@ export function resolveHover(hit, { name = null, contents = null } = {}) {
   if (!(hit.distance <= hit.reach)) return null;
   const key = hit.key;
   if (key == null) return null;
+  // CONTAINER-PEEK: before the pile's arm, so a cupboard is never asked to be a take list
+  if (keyPreviews(key) && !keyItemises(key)) return resolvePreview(key, hit, name, contents);
   if (keyItemises(key)) {
     const named = name?.(key, hit) ?? null;
     // AUDIT-WH M5: AN ITEMISED KEY WITH NO WORD DRAWS NOTHING EITHER.

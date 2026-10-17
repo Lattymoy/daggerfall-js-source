@@ -19,6 +19,7 @@ import { setValue, resetToDefaults } from '../../src/systems/settings/settings.j
 import { ridingRect } from '../../src/systems/riding.js';
 import { MODES, nextInteractionMode } from '../../src/player/interactionMode.js';
 import { routeAction } from '../../src/ui/input.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 import { resolveAnchor, maskAnchors } from '../../tools/citeAnchor.mjs';   // CITE-ANCHOR: a cite names its line by a quote
 import { drawHud } from '../../src/ui/hud/hud.js';                  // AUDIT 65 UI-4: largeHudBar() is the LAST DRAWN bar
 import { audio } from '../../src/systems/audio.js';             // AUDIT 65 UI-4
@@ -778,8 +779,8 @@ test('E5: every host that draws the bar shrinks its world pass AND its lens', ()
   // the far ring takes the same narrowed lens
   assert.match(src('scenes/world.js'), /fovY: glassFov\(fieldOfView\(\) \+ climbFeel\.fovRad\(\), spyglass\.lens\), aspect: worldAspect,/,
     'the far ring shares it too - and the climb\'s kick (CLIMB4) - or the horizon steps against the terrain');
-  // no plain-ratio lens survives anywhere in the world host
-  const w = src('scenes/world.js');
+  // no plain-ratio lens survives anywhere in the world host - its moved modules too (AUDIT HOST-SPLIT 2, the second read)
+  const w = hostText('src/scenes/world.js');
   assert.equal(/aspect: canvas\.clientWidth \/ canvas\.clientHeight/.test(w), false);
   // scenes/interior.js draws no HUD at all - no bar, no crosshair - so
   // it has no surface to carry, and a call there would be dead forever.

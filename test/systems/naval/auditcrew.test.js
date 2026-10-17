@@ -130,7 +130,7 @@ test('AUDIT CC-A5 (major): a hand home again stands on her deck - the last of th
   step(new Set(), 5);   // the last home: the host's empty set
   assert.ok(!member(2).gone && sprite(2), 'the last home too');
   assert.equal(crew.ships()[0].life.standing(), 6);
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /away: naval\?\.awayOf\?\.\(boat\) \?\? NO_HANDS_AWAY/, 'my boats always say who is away');
   // PIN MOVED (AUDIT CAPTAIN'S SEA C1): the rule moved into the host's one ashore set (`ashoreNames`), which the deck, her
   // posts' worth, her answering hand and her card all read - the deck still answers the empty set, never null
@@ -148,7 +148,7 @@ test('AUDIT CC-A7: companions take none of the street\'s (or a building\'s) enco
 });
 
 test('AUDIT CC-A8: a quickload lifts the party first (a dungeon\'s save patches foes by number - a companion in the list took another\'s record)', () => {
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   const at = w.indexOf('async function worldQuickLoad(');
   const body = w.slice(at, at + 4000);
   assert.match(body, /crewAshore\.clear\(\);   \/\/ AUDIT CC-A8/);
@@ -158,11 +158,11 @@ test('AUDIT CC-A9: a boat with no deed number lists no Companions row (its press
   const ids = (s) => boatMenuRows({ boxes: new Set(['drive']), packable: true, naval: true, crewed: true, ...s }).map((r) => r.id);
   assert.ok(ids({ companions: true }).includes(BOAT_VERB.companions));
   assert.ok(!ids({ companions: false }).includes(BOAT_VERB.companions));
-  assert.match(rd('src/scenes/world.js'), /naval: navalOn\(\), crewed: !!boat\.crewed, companions: !!boat\.uid,/);
+  assert.match(hostText('src/scenes/world.js'), /naval: navalOn\(\), crewed: !!boat\.crewed, companions: !!boat\.uid,/);
 });
 
 test('AUDIT CC-A10: a pause holds the layer (no knock, no stand, no catch-up under a window); the bars show the peers\' companions indoors and underground too', () => {
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   // PIN MOVED (COMPANION-KIT): the party panel's companions are drawn first - its own covering word holds it under a window
   assert.match(w, /function crewAshoreTick\(\) \{\n(?:\s*try \{ companionPanelFrame\(\); \}[^\n]*\n)?\s*if \(!navalOn\(\)\) \{ crewAshore\.clear\(\); return; \}\n\s*if \(gamePaused\(\)\) return;/);
   assert.match(w, /for \(const f of _mode\(\) === 'exterior' \? exteriorFoes\.foes : _insidePool\(\)\) \{/);
@@ -381,8 +381,8 @@ test('AUDIT CC-D5: one round of grog a port day, and a prize\'s hold lifts spiri
 });
 
 test('AUDIT CC-D6: the hands stand on her deck as they were named - their class and sex off her saved crew, not a seed that moves with the session', () => {
-  assert.match(rd('src/scenes/world.js'), /rosterOf: \(\) => navalMyRoster\(boat, seed, crew\)/);
-  assert.match(rd('src/scenes/world.js'), /return crewRoster\(\{ hull: boat\.hull, seed, crew \}\)\.map\(\(r, i\) => \(hands\[i\] \? \{ mobile: hands\[i\]\.mobile, gender: hands\[i\]\.gender === 'female' \? 'female' : 'male' \} : r\)\);/, 'each place the hand named there');
+  assert.match(hostText('src/scenes/world.js'), /rosterOf: \(\) => navalMyRoster\(boat, seed, crew\)/);
+  assert.match(hostText('src/scenes/world.js'), /return crewRoster\(\{ hull: boat\.hull, seed, crew \}\)\.map\(\(r, i\) => \(hands\[i\] \? \{ mobile: hands\[i\]\.mobile, gender: hands\[i\]\.gender === 'female' \? 'female' : 'male' \} : r\)\);/, 'each place the hand named there');
 });
 
 test('AUDIT CC-D7: a knock after a load still costs her crew - the event lands on the saved record of a boat not yet stood', async () => {
@@ -477,7 +477,7 @@ test('AUDIT CC-E1 (major, Mac: "Full co-op combat now"): on the street my compan
 
 test('AUDIT CC-E2 (major): underground my companion rides the room\'s own lane (`cp`), stood as my ally by everyone; his blows on the room\'s foes and theirs on him reach the body\'s owner', () => {
   const d = rd('src/scenes/dungeonContext.js');
-  assert.doesNotMatch(rd('src/scenes/world.js'), /if \(f\) f\._loose = false; return f;/, 'no longer kept off the lane');
+  assert.doesNotMatch(hostText('src/scenes/world.js'), /if \(f\) f\._loose = false; return f;/, 'no longer kept off the lane');
   // PIN MOVED (AUDIT WK-U3, 2026-10-01): his name rides beside his place (`cn`), the law unchanged
   assert.match(d, /if \(!qt && f\.companion != null && !f\.dead\) \{ cp\.push\(i\); cn\.push\(/);
   assert.match(d, /comp = validLooseSeqs\(data\.cp\);/);
@@ -508,6 +508,7 @@ import { companionRows } from '../../../src/systems/naval/crewCompanions.js';
 import { grogPrice, GROG_MIN, wantsRepair } from '../../../src/systems/naval/navalYard.js';
 import { storesIn as storesCount, mintStores as mint } from '../../../src/systems/naval/navalStores.js';
 import { createCrewLife } from '../../../src/systems/naval/crewLife.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 test('AUDIT CC-F1: the host\'s companion API on the real host - a press takes a hand ashore and sends him back, an uncrewed boat sends none, the rows read her crew, the prune keeps the living and drops the fallen, the away set names his place, the knock is said', async () => {
   const h = await atSea({});
@@ -660,7 +661,7 @@ test('AUDIT CC-F7: the deck\'s away - a hand going ashore ends his talk and drop
 });
 
 test('AUDIT CC-F8: the world\'s wiring - the arc off lifts every body, the prune runs, none stand at the helm, the spot is the collider\'s sweep, the picker says why a row is refused; a peaceful foe fights no companion', () => {
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /if \(!navalOn\(\)\) \{ crewAshore\.clear\(\); return; \}/);
   assert.match(w, /if \(\+\+_companionPruneN >= 60\) \{ _companionPruneN = 0; naval\?\.pruneCompanions\?\.\(\); \}/);
   assert.match(w, /\|\| csaRuntime\?\.isSailing\?\.\(\)\) return null;/);

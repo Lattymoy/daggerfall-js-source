@@ -139,8 +139,8 @@
   {
     "name": "AUDITVC6-the-dungeons-death-invents-a-luck-of-50",
     "file": "src/scenes/dungeonContext.js",
-    "old": "      if (!_roomBody) raiseEnemyDeath(foe.entity, { luck: liveStat(playerEntity, 'luck') });",
-    "new": "      if (!_roomBody) raiseEnemyDeath(foe.entity);",
+    "old": "      if (!_roomBody) raiseEnemyDeath(foe.entity, { luck: liveStat(playerEntity, 'luck'), by: foe._killedBy ?? null });",
+    "new": "      if (!_roomBody) raiseEnemyDeath(foe.entity, { by: foe._killedBy ?? null });",
     "tests": [
       "test/systems/surv2_items.test.js"
     ]

@@ -14,6 +14,7 @@ import { createDungeonDivers, DIVER_STAND_M, DIVER_HEEL_M, DIVER_HEEL_STEP_M } f
 import { createRelations } from '../../../src/systems/livingWorld/relations.js';
 import { lwRng } from '../../../src/systems/livingWorld/seed.js';
 import { DAY_MIN } from '../../../src/systems/livingWorld/dayPlan.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const rd = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const O = () => ({ mpm: CALENDAR_MPM, memo: new Map() });
@@ -210,7 +211,7 @@ test('LW6 the companies met: a company diving the player\'s dungeon, this player
 });
 
 test('LW6 the streaming host: the dungeons dived (the game\'s own rows of a labyrinth, a keep, a ruin, a graveyard, with their dungeon\'s type), the trip world\'s dungeons, the deep\'s own foes for its trouble, the dungeon the player is in off its context, the divers met in the modal frame through the dungeon\'s own loose stand (mutants: each seam)', () => {
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /const LIVING_DIVE_TYPES = new Set\(\[LOCATION_TYPES\.DungeonLabyrinth, LOCATION_TYPES\.DungeonKeep, LOCATION_TYPES\.DungeonRuin, LOCATION_TYPES\.Graveyard\]\);/);
   assert.match(w, /blocks: 1, dungeon: true, dungeonType: md\.dungeonType \?\? 0 \};/);
   assert.match(w, /dungeonsNear: livingDungeonsNear,/);

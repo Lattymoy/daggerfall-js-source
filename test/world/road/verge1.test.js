@@ -26,6 +26,7 @@ import { FEATURES, checkFeature } from '../../../src/systems/features.js';
 import { setPref, PREF_DEFAULTS } from '../../../src/systems/uiPrefs.js';
 import { setUiSkin, uiSkin } from '../../../src/systems/uiSkin.js';
 import { onlineForcedPref } from '../../../src/systems/online/onlineLane.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const read = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const netWith = (cells) => {
@@ -203,7 +204,7 @@ test('VERGE1: the switch - the row, the enhanced skin, ?verges=off; online the r
 });
 
 test('VERGE1: the world host - the switch read once at its mount; each wild flat\'s reach asked of the roads the kernel painted, after the gate and the rocks; a site\'s flat its picture; the gathering nodes handed the pixel\'s verge (mutants: the verge on the network before it painted; the half widths a replacement\'s; the site\'s flat its root alone)', () => {
-  const w = read('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /const verges = roadVergesOn\(\);/);
   assert.equal((w.match(/roadVergesOn\(/g) ?? []).length, 1, 'once, not a pixel at a time');
   assert.match(w, /hw = Float64Array\.from\(\{ length: t\.recordCount \}, \(_, r\) => classicBillboardSize\(t, r\)\.w \/ 2\);/, 'DFU\'s own record size, never a replacement\'s');

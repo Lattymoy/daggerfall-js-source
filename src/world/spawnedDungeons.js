@@ -242,9 +242,15 @@ export function spawnedLocationCentreLocal(loc) {
 
 /** The line, with the distance to the nearest ten metres and the compass word the host resolved. */
 export function dungeonSightLine(metres, direction, tier = 'regular') {
-  const m = Math.max(10, Math.round(metres / 10) * 10);
   // TIER1 (Super-Dungeons.md section 12): the tier's words - an Elite's and (SD2) a Super's; a regular spawn is "a Dungeon"
   const what = tier === 'super' ? 'an Abyss Dungeon' : tier === 'elite' ? 'an Elite Dungeon' : 'a Dungeon';
+  return sightLineOf(what, metres, direction);
+}
+/** EG-F (bible/11-Multiplayer/Elite-Gates.md section 2, the sight line): the line's law for any thing seen - `what` (its
+ *  article with it), the distance to the nearest ten metres (never under ten), the host's compass word. An Elite Breach's
+ *  arch says it (scenes/eliteGates/egArch.js): "You see an Elite Breach 140 metres to the North!" */
+export function sightLineOf(what, metres, direction) {
+  const m = Math.max(10, Math.round(metres / 10) * 10);
   return `You see ${what} ${m} metres to the ${direction}!`;
 }
 

@@ -69,6 +69,7 @@ import { getBool } from '../../systems/settings/settings.js';   // UXB1-K: Insta
 import { dateFromClassicMinutes, dateString } from '../../systems/gameDate.js';
 import { ownTimeLeftText, ownTimeLeftShort } from '../../systems/worldTick.js';   // UXB1-K: online, the ready time in the player's own terms (LIVED1: their own clock)
 import { shopliftAttempt } from '../../systems/theft.js';
+import { markStolen } from '../../systems/stolenGoods.js';   // STOLEN-GOODS: what the Steal carries off is marked
 import { entityMaxEncumbrance } from '../../combat/formulas.js';
 import { cannotRemoveItemText } from '../../systems/createItem.js';
 import { questTransferRefused, TABS, tabAccepts } from '../native/nativeInventory.js';
@@ -574,6 +575,7 @@ function runSteal() {
   deps.tallyPickpocket?.(1);
   if (!out.caught) {
     deps.say?.(stealSuccessText(), 2);
+    markStolen(items);   // STOLEN-GOODS: the basket, or the one piece picked - marked before it merges into the pack's stacks
     if (basket.length) { deliverFurniture(basket); transferAll(basket, deps.packItems()); }
     else if (!deliverFurniture(deps.shelfItems(), items[0])) move(items[0], deps.shelfItems(), deps.packItems());
     selected = null;

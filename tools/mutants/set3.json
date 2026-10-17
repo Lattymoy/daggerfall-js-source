@@ -254,12 +254,12 @@
   {
     "name": "SET3-a-bow-cleaving",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  if (info?.blow !== false) coiled(attacker, target);   // TWO-HANDS (AUDIT 2): a stack a blow, from a blow that counts whole (formulas.js `blow`)\n  if (ranged(weapon)) return;\n  const v = tierOf(attacker, 'ruhn', 1);",
-    "new": "  if (info?.blow !== false) coiled(attacker, target);   // TWO-HANDS (AUDIT 2): a stack a blow, from a blow that counts whole (formulas.js `blow`)\n  const v = tierOf(attacker, 'ruhn', 1);",
+    "old": "  if (info?.blow !== false) returned(attacker);   // EG15: the Discipline's return - a bow's blow too (a weapon blow); TWO-HANDS (AUDIT 2): a per-blow charge, so a blow that counts whole alone\n  if (ranged(weapon)) return;\n  const v = tierOf(attacker, 'ruhn', 1);",
+    "new": "  if (info?.blow !== false) returned(attacker);   // EG15: the Discipline's return - a bow's blow too (a weapon blow); TWO-HANDS (AUDIT 2): a per-blow charge, so a blow that counts whole alone\n  const v = tierOf(attacker, 'ruhn', 1);",
     "tests": [
       "test/systems/set3_powers.test.js"
     ],
-    "note": "SERPENT-SET / SILVER-FINDS (PIN MOVED): Constrict's coil tightens before the bow's turn-back, which is Cleave's alone - re-aimed by content."
+    "note": "SERPENT-SET / SILVER-FINDS (PIN MOVED): Constrict's coil tightens before the bow's turn-back, which is Cleave's alone - re-aimed by content. EG15 (PIN MOVED): the Discipline's return before the bow's turn-back - re-aimed by content."
   },
   {
     "name": "SET3-the-whole-blow-cleaved",
@@ -300,11 +300,12 @@
   {
     "name": "SET3-unbroken-no-recovery",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  if (now < _s.unbrokenReady) return false;\n",
+    "old": "  if (!recovered('unbroken', now)) return false;   // EG15: and in the Spire, not before its next Redoubt\n",
     "new": "",
     "tests": [
       "test/systems/set3_powers.test.js"
-    ]
+    ],
+    "note": "EG15 (PIN MOVED): Unbroken's readiness is `recovered` - its timer, and in the Spire its Redoubt - re-aimed by content."
   },
   {
     "name": "SET3-the-halving-never-ends",
@@ -419,11 +420,12 @@
   {
     "name": "SET3-said-before-its-time",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "    if (now < r.at()) continue;\n",
-    "new": "",
+    "old": "    if (now < r.at() || spireHeld(k)) continue;",
+    "new": "    if (spireHeld(k)) continue;",
     "tests": [
       "test/systems/set3_powers.test.js"
-    ]
+    ],
+    "note": "EG15 (PIN MOVED): the round skips a save the Spire holds as well - the time check removed alone, re-aimed by content."
   },
   {
     "name": "SET3-said-every-round",

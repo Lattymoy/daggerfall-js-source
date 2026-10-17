@@ -10,8 +10,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { motionBagOf, PlayerMotor } from '../../src/player/motor.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
-const rd = (p) => readFileSync(new URL('../../' + p, import.meta.url), 'utf8');
+const rd = (p) => hostText(p);
 
 test('WW2: the one motion bag - every field the rig reads, from a player at rest and one walking; the real motor at rest says standing with a speed setting that is never zero', () => {
   const rest = motionBagOf({ moveForward: 0, moveStrafe: 0, isRunning: false, moveSpeed: 0, grounded: true, jumping: false, swimming: false, levitating: false, crouching: false, riding: false, standing: true, speed: 4.43 });

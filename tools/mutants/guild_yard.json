@@ -137,7 +137,7 @@
   },
   {
     "name": "GUILD-YARD-the-build-asks-no-keeper",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "(homeLook || homeRow.mine || homeRow.keeper)) {",
     "new": "(homeLook || homeRow.mine)) {",
     "tests": [

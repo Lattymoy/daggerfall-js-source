@@ -565,7 +565,7 @@ test('LEGACY7 part three the law beneath: wedPlayer and its end held to their ow
   const v = house();
   v.host.deathOutcome();
   await settle(2);
-  assert.deepEqual(v.tombs, ['fell']);
+  assert.deepEqual(v.tombs, ['fell', 'fell'], 'a fall, held at the door and its window closed at the reset');   // PIN MOVED (FIELD BUGS 2026-10-16b REZ-BLOODLINE AUDIT R1)
   // and the session carries it
   const asked = [];
   const fetch = async (url, init) => { asked.push(JSON.parse(init.body)); return { ok: true, status: 200, headers: { get: () => 'application/json' }, json: async () => ({ ok: true, deadAt: 5 }) }; };
@@ -590,7 +590,8 @@ test('LEGACY7 part three the inspect card: the Propose button beside the Challen
   assert.match(w, /onWed: \(union\) => \{ legacyHost\?\.wedPlayer\(union\); \},/);
   assert.match(w, /peerCan: \(id\) => !!online\?\.peers\.get\(id\)\?\.house,/);
   assert.match(w, /wedFrame\(\);/);
-  assert.match(w, /tombstone: \(why\) => \(realmSession \? realmSession\.die\(why\) : false\),/);
+  // PIN MOVED (FIELD BUGS 2026-10-16b REZ-BLOODLINE): the tombstone carries its options - `keepalive` as the page goes
+  assert.match(w, /tombstone: \(why, o\) => \(realmSession \? realmSession\.die\(why, o\) : false\),/);
   assert.match(w, /realmId: \(\) => realmSession\?\.id \?\? null,/);
   assert.match(w, /realmUnions\(realmIoNow\(\)\)\.then\(\(r\) => \{ if \(r\.ok\) legacyHost\?\.unionsHeard\(r\.unions\); \}\)/);
   assert.match(rd('server/src/index.js'), /this\._send\(tws, JSON\.stringify\(\{ t: 'wed', id: a\.id, \.\.\.\(typeof a\.sub === 'string' && a\.sub \? \{ sub: a\.sub \} : \{\}\), \.\.\.\(typeof a\.ci === 'string' && a\.ci \? \{ sc: a\.ci \} : \{\}\), data: m\.data \}\)\);/);

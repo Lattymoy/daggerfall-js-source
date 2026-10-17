@@ -203,9 +203,12 @@ test('CARDS9 the guilds: a guild quest done pays one of its guild\'s cards one t
 });
 
 test('CARDS9 THE BOSSES\' OWN: the Warden\'s, Sethrakul\'s and the Brass Remnant\'s aetheric cards - one draw, always, LAST in each hoard, so every roll before it is what it was; kept beside the pieces and thrown after them; a Serpent stander finds none (mutants: the chance; the draw\'s place; a stander\'s card)', () => {
-  assert.deepEqual({ ...BOSS_CARDS }, { gate: 'valkynaz-ruhn', serpent: 'sethrakul', abyss: 'brass-remnant' });
+  // PIN MOVED (EG-E, Elite-Gates.md section 19): each Battlespire lord its own card, by its key, at the gate's rate -
+  // test/systems/eliteGates/egeco_spoils.test.js holds the Redoubt's draw of it
+  const LORDS = { hound: 'eg-grath', spellmaster: 'eg-spellmaster', armsmaster: 'eg-armsmaster', ilthys: 'eg-ilthys', cairnkeeper: 'eg-cairnkeeper', twins: 'eg-twins', morvayn: 'eg-morvayn', dusk: 'eg-dusk', stalker: 'eg-stalker', seyth: 'eg-seyth', colossus: 'eg-colossus', wyrm: 'eg-wyrm', garoth: 'eg-garoth' };
+  assert.deepEqual({ ...BOSS_CARDS }, { gate: 'valkynaz-ruhn', serpent: 'sethrakul', abyss: 'brass-remnant', ...LORDS });
   for (const id of BOSS_CARD_IDS) assert.equal(cardById(id).tier, 'aetheric');
-  assert.deepEqual({ ...BOSS_CARD_PER_MILLE }, { gate: 200, serpent: 250, abyss: 250 });
+  assert.deepEqual({ ...BOSS_CARD_PER_MILLE }, { gate: 200, serpent: 250, abyss: 250, ...Object.fromEntries(Object.keys(LORDS).map((k) => [k, 200])) });
   const yes = script([0.1999]), no = script([0.2]);
   assert.equal(bossCardRoll('gate', yes).card, 'valkynaz-ruhn');
   assert.equal(bossCardRoll('gate', no), null);

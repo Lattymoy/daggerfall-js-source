@@ -91,7 +91,7 @@
   },
   {
     "name": "FB1009-the-host-records-no-ground",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "            if (!f && at) pixelHomeFrames.set(homeKey, { at, box: [...box], rects, type: bd?.buildingType ?? null, faction: bd?.factionId ?? 0 });",
     "new": "            if (!f && at) pixelHomeFrames.set(homeKey, { at, box: [...box], type: bd?.buildingType ?? null, faction: bd?.factionId ?? 0 });",
     "tests": [
@@ -100,7 +100,7 @@
   },
   {
     "name": "FB1009-a-second-models-ground-dropped",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": " f.rects.push(...rects); }",
     "new": " }",
     "tests": [
@@ -109,7 +109,7 @@
   },
   {
     "name": "FB1009-the-host-measures-the-box",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "const rects = footRectsAt(modelFeetOf(placed.modelIdNum, cpu), local);",
     "new": "const rects = [[box[0], box[2], box[3], box[5]]];",
     "tests": [

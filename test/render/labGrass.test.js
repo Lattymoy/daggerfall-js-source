@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { LAB_GRASS_HEAD, LAB_GRASS_VS, LAB_GRASS_FS, LAB_GRASS, LAB_DIM, placeLabGrass, grassRecordsOf, labBladeCorners, GRASS2_VS_EDITS, GAME_GRASS_VS, GAME_GRASS_FIELD, placeLabGrassCell, grassCellSeed, grassHash, grassVnoise, grassClump, bakedTint, LabGrassRenderer, GRASS_FAR_SEGMENTS, GRASS_PACK_BYTES, GRASS_CELL, grassPerCell, heightFloor, heightSpan, WIDTH_SPAN, LEAN_SPAN } from '../../src/render/labGrass.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const lab = () => readFileSync('grass-proto.html', 'utf8');
 
@@ -82,7 +83,7 @@ test('GR1: grass records come from the archive\u2019s own texels - none for road
   for (let r = 4; r < 56; r++) winter.push(flat(208, 209, 216));
   assert.equal(grassRecordsOf(winter).size, 0, 'a winter archive has no green base, so nothing is grass');
   // the host: the near ring, the season, the sea plane, the record
-  const w = readFileSync('src/scenes/world.js', 'utf8');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /p\._stride === 1 && p\.tilemapBytes && p\.season !== SEASON\.Winter/, 'near ring only, never in winter');
   // PIN MOVED (ECOTONE1, 2026-10-07): the records of the ground the root stands in - its pixel's (`grass`), or at a climate
   // border the neighbour's set the ground's border gives it there
@@ -98,7 +99,7 @@ test('GR1: grass records come from the archive\u2019s own texels - none for road
 
 test('AUDIT 49: the grass is double-sided, follows the origin, learns its records whenever missing, and carries the gust', () => {
   const g = readFileSync('src/render/labGrass.js', 'utf8');
-  const w = readFileSync('src/scenes/world.js', 'utf8');
+  const w = hostText('src/scenes/world.js');
   // F1: the lab never enables CULL_FACE; the world renderer does at every
   // frame; drawn culled, every blade whose winding faced away vanished
   assert.match(g, /const culled = gl\.isEnabled\(gl\.CULL_FACE\);\s*\n\s*if \(culled\) gl\.disable\(gl\.CULL_FACE\);/);
@@ -137,7 +138,7 @@ test('GR2: darker green and a billboard about Y in the lab and the game alike; o
   // WIND3: the one mapping moved INTO systems/wind/windDrive.js, and the
   // hosts read its answer (`wd`) for the grass and the rain alike - no
   // host calls the slider itself any more
-  const w = readFileSync('src/scenes/world.js', 'utf8');
+  const w = hostText('src/scenes/world.js');
   assert.equal((readFileSync('src/systems/wind/windDrive.js', 'utf8').match(/const slider = labWindSlider\(w\);/g) || []).length, 1, 'the grass and the rain share the one mapping, in its one home');
   assert.ok(!/labWindSlider/.test(w) && !/mag \* 260/.test(w), 'the guessed scale is gone, and the host holds no copy of the mapping');
   assert.ok(!/labWindSlider/.test(readFileSync('src/scenes/exterior.js', 'utf8')), 'the exterior host too');
@@ -206,13 +207,17 @@ test('GR4: the root takes the colour of the tile it stands on, and the base fade
 });
 
 test('GR4: the game feeds each tile\'s MEAN colour, averaged once where the texels already are', () => {
-  const world = readFileSync(new URL('../../src/scenes/world.js', import.meta.url), 'utf8');
+  const world = hostText('src/scenes/world.js');
   // Averaged where the layers are decoded - the texels are on the CPU
   // there already, once per archive - rather than sampled per blade.
   // AUDIT 68 S17: through the one law (tileMeanColour, pinned on a real
   // color32 in audit68_worldjs), learned beside grassRecords whenever the
   // SCENE's map lacks the archive, not on the renderer's cache miss.
-  const learn = world.slice(world.indexOf('if (!grassRecords.has(groundArchive)) {'), world.indexOf('const terrain = renderer.createTerrainSurface('));
+  const learnAt = world.indexOf('if (!grassRecords.has(groundArchive)) {');
+  // (AUDIT HOST-SPLIT 2, the second read: it ended at the build's createTerrainSurface, which left world.js - on the
+  // raw file that indexOf was -1, so the slice ran to the end and held nothing. It ends at the next door, in world.js)
+  const learn = world.slice(learnAt, world.indexOf('  async function buildPixel(', learnAt));
+  assert.ok(learnAt > 0 && learn.length > 0 && learn.length < 4000, `loadGroundSet's learning, read alone: ${learn.length} chars`);
   // GRASS-LIT2: off the tile set that is DRAWN - a texture mod's, where one dresses the archive (test/render/grasslit2.test.js)
   assert.match(learn, /groundMeanColour\.set\(groundArchive, drawnMeans \?\? layers\.map\(tileMeanColour\)\);/);   // AUDIT GRASS-LIT2 B2: the uploaded layers' means
   // ground(x, z) is keep's OWN lookup - same pieces, same tile maths -
@@ -289,7 +294,7 @@ test('GR5: a cell grows the same blades whoever is looking, and walking touches 
 });
 
 test('GR5: the host runs the field, not the walk', () => {
-  const world = readFileSync(new URL('../../src/scenes/world.js', import.meta.url), 'utf8');
+  const world = hostText('src/scenes/world.js');
   assert.match(world, /labGrassField = createGrassField\(labGrass, \{ keep, ground, slope, density: grassDensity \}\);/);   // PERF1: at the pane's fraction of the lab's field
   assert.match(world, /labGrassField\.update\(ex, ez, keep, ground, slope\);/, 'this frame\'s keep/ground, since the near pieces move with the eye');
   assert.doesNotMatch(world, /placeLabGrassSteps|labGrassWalk\b|labGrass\.set\(/, 'the whole-field walk and its 60MB swap are gone');

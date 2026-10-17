@@ -22,6 +22,7 @@ const ICONS = { getTexture: async () => ({ recordCount: 0 }), uploadRecord: () =
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 /** DW3: the image carries the item's dye now; these pins are about the archive and record. */
 const archiveRecord = ({ archive, record }) => ({ archive, record });
@@ -251,7 +252,7 @@ test('audit17e W1: F17 the worn-weapon bind lives in the RIG, so all four hosts 
   assert.ok(/EQUIP_SLOTS\.RightHand/.test(rigSrc), 'the rig reads the equip table');
   assert.ok(/syncWorn\(\);/.test(rigSrc), 'and syncs per frame');
   for (const host of ['src/scenes/exterior.js', 'src/scenes/world.js']) {
-    const s = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', '..', host), 'utf8');
+    const s = hostText(host);
     assert.ok(!/weaponRig\.playerWeapon\.weapon =/.test(s), `${host} no longer hand-binds`);
   }
 });

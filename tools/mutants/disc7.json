@@ -11,8 +11,8 @@
   {
     "name": "ACT-MENU-loot-switch-gates-the-verbs",
     "file": "src/systems/quickLoot.js",
-    "old": "  _sel = (verbs || quickLootOn()) ? nextSelection(_sel, frame, _nudge) : null;",
-    "new": "  _sel = quickLootOn() ? nextSelection(_sel, frame, _nudge) : null;",
+    "old": "  _sel = (verbs || (take && quickLootOn())) ? nextSelection(_sel, frame, _nudge) : null;",
+    "new": "  _sel = (take && quickLootOn()) ? nextSelection(_sel, frame, _nudge) : null;",
     "tests": [
       "test/systems/disc7.test.js"
     ]

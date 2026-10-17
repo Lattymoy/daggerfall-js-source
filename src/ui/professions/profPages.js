@@ -643,11 +643,14 @@ export function drawProfessionsPage(detail, rerender, kit) {
       card.append(el('b', null, s.name), el('span', null, s.text));
       if (two) card.append(el('i', 'prof-of', disciplineName(specDiscipline(s.id))));   // CRAFT3: whose choice it is
       const locked = tr.rank < r || !practised || !!s.later;   // AUDIT 29 A17: a choice whose slice is to come is named, never chosen
-      card.disabled = locked || chosen === s.id || !!tr.respec;
+      const free = tr.free?.includes(r) === true;   // CRAFT3: the merge's free change
+      // FIRST-PICK (FIELD BUGS 2026-10-16b): a change on its way gates a paid CHANGE, as the service's chooseSpec refuses
+      // one (prof-respec-pending) - never a rank's first choice, nor the merge's free change, which it answers first
+      const waits = !!chosen && !!tr.respec && !free;
+      card.disabled = locked || chosen === s.id || waits;
       if (s.later) card.append(el('i', 'prof-cost', LATER_WORDS[s.later] ?? t('prof.page.later.any', 'Comes with a later work')));
       const armedHere = _armed === `${r}|${s.id}`;
-      const free = tr.free?.includes(r) === true;   // CRAFT3: the merge's free change
-      if (!locked && chosen && chosen !== s.id && !tr.respec) {
+      if (!locked && chosen && chosen !== s.id && !waits) {
         card.append(el('i', 'prof-cost', free ? (armedHere ? t('prof.page.specs.respecFreeArmed', 'Press again: free, in effect at once') : t('prof.page.specs.respecFree', 'Change: free, once'))
           : armedHere ? t('prof.page.specs.respecArmed', 'Press again: {cost, number} silver, in effect in {days, plural, one {# day} other {# days}}', { cost: RESPEC.marks, days: RESPEC.days })
             : t('prof.page.specs.respec', 'Change: {cost, number} silver', { cost: RESPEC.marks })));
@@ -2878,6 +2881,9 @@ function drawEssenceReforge(detail, rerender, { el, divider }, rank, short) {
     const row = el('div', 'prof-smelt');
     row.append(el('b', null, pc.name), el('span', 'prof-split', `${n} Arcane Essence a line`));
     if (have < n) row.append(el('span', 'prof-short', `Needs ${n} Arcane Essence; your Stores hold ${have}.`));
+    // FB1017 REFORGE-STACK: a press a line, in a block of their own under the piece - in the row's button track (one cell,
+    // `.prof-smelt .act`) every press drew on the first and the name was squeezed to nothing
+    const presses = el('div', 'prof-lines');
     for (const line of pc.lines) {
       const b = el('button', 'act', _essReforge.busy === pc.item ? 'Reforging...' : `Reforge: ${line.text}`);
       b.type = 'button';
@@ -2888,8 +2894,9 @@ function drawEssenceReforge(detail, rerender, { el, divider }, rank, short) {
         const res = await /** @type {any} */ (p.essenceReforge)(pc, line.index);
         _essReforge.busy = null; _essReforge.word = res?.text ?? null; rerender();
       };
-      row.append(b);
+      presses.append(b);
     }
+    row.append(presses);
     detail.append(row);
   }
   if (_essReforge.word) detail.append(el('p', 'prof-word', _essReforge.word));

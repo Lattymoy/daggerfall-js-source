@@ -45,6 +45,7 @@ import { SEASON } from '../../src/world/climateSwaps.js';
 import { TRANSPORT_MODES } from '../../src/systems/transport.js';
 import { SOUND } from '../../src/systems/soundClips.js';
 import { equipTableOf } from '../../src/systems/equip.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const rd = (p) => readFileSync(join(root, p), 'utf8');
@@ -620,7 +621,7 @@ test('AUDIT-IF F3: LoadAudio puts every clip in flight at once, and one missing 
 // ═══ the hosts ═══════════════════════════════════════════════════════════════
 
 test('IF1: the four stride hosts ask ownsStride before the classic play and drive the component each frame; the modal host raises the three transitions and the standalone dungeon its own; the three landing sinks and the dungeon context\'s three gates; the interior context lists the combined mesh\'s materials; the inventory close refreshes; the records', () => {
-  const world = rd('src/scenes/world.js'), ext = rd('src/scenes/exterior.js'), wm = rd('src/scenes/worldModes.js'), dj = rd('src/scenes/dungeon.js'), dc = rd('src/scenes/dungeonContext.js');
+  const world = hostText('src/scenes/world.js'), ext = rd('src/scenes/exterior.js'), wm = rd('src/scenes/worldModes.js'), dj = rd('src/scenes/dungeon.js'), dc = rd('src/scenes/dungeonContext.js');
   for (const [name, src] of [['world', world], ['exterior', ext], ['worldModes', wm], ['dungeon', dj]]) {
     assert.match(src, /if \(_step && classicFootstepAllowed\(_step\.clip\)\) audio\.playOneShot\(_step\.clip, _step\.volume\);/, `${name}: DisableVanillaFootsteps (BA1: through the one gate both mods' DisableBuiltInFootsteps answer)`);
     assert.ok(!/if \(_step\) audio\.playOneShot\(_step\.clip, _step\.volume\);/.test(src), `${name}: no ungated classic play`);

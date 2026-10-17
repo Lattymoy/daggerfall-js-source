@@ -191,7 +191,7 @@
   },
   {
     "name": "the-host-reads-a-location-region-for-every-pixel",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "        mapRegionIndex: dfLocation ? dfLocation.regionIndex : -1,",
     "new": "        mapRegionIndex: maps.getRegionIndexAt(px, py),",
     "tests": [

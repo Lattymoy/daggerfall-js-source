@@ -32,9 +32,10 @@ import { startRestGroundedCheck, CAPSULE_HEIGHT } from '../../src/player/motor.j
 import { areEnemiesNearby } from '../../src/systems/encounters.js';
 import { createPlayerTicker } from '../../src/scenes/shared.js';
 import { setWorldMinutes } from '../../src/systems/worldTick.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 import { makeWindowStack } from '../../src/ui/windowStack.js';   // ROAD-B B1: the stack the interior door now pushes onto
 
-const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
+const src = (p) => hostText(p);
 
 // ---- the LAW ---------------------------------------------------------
 
@@ -915,7 +916,7 @@ test('S40 areEnemiesNearby: the RESTING variant, and it is the one the hosts ask
     // cross a nested paren was matching the shape rather than the law.
     assert.match(src(f), /areEnemiesNearby\([^;]{0,80}?\{ resting: true \}\)/, f);
   }
-  assert.match(src('src/scenes/world.js'), /\[\.\.\.cityGuards\.guards, \.\.\.exteriorFoes\.foes\], \{ resting: true \}/);
+  assert.match(hostText('src/scenes/world.js'), /\[\.\.\.cityGuards\.guards, \.\.\.exteriorFoes\.foes\], \{ resting: true \}/);
   // exterior.js's POOL, not just its call: `[^)]*` happily matches an
   // empty array, and in that host the city watch is the ONLY pool - so
   // an empty one means you sleep through a watch that is beating you.
@@ -996,7 +997,7 @@ test('S40: the OnEncounter abort reaches the rest window in EVERY slot', () => {
   assert.match(arm, /host\.abortRestForEnemySpawn\?\.\(\)/, 'and the OUTER host slot');
   // AUDIT REST II (PIN MOVED): world.js's route tells the act's night first (restAct.js ambushNight - a carried night has
   // no window, a quest box over the window holds the slot), then the window as before; test/systems/auditrest2_party.test.js P3
-  assert.match(src('src/scenes/world.js'), /abortRestForEnemySpawn: \(\) => \{\n\s+ambushNight\(\);[^\n]*\n\s+if \(townTalk\.overlay\?\.isRestWindow\)/, 'src/scenes/world.js');
+  assert.match(hostText('src/scenes/world.js'), /abortRestForEnemySpawn: \(\) => \{\n\s+ambushNight\(\);[^\n]*\n\s+if \(townTalk\.overlay\?\.isRestWindow\)/, 'src/scenes/world.js');
   assert.match(src('src/scenes/exterior.js'), /abortRestForEnemySpawn: \(\) => \{\n\s+if \(townTalk\.overlay\?\.isRestWindow\)/, 'src/scenes/exterior.js');
   // The latch itself: it is a LATCH, answered on the next tick.
   const s2 = new RestSession('timed', 5, {
@@ -1281,7 +1282,7 @@ test('S40 IsResting: raised on OPEN, cleared on EVERY exit, and the enchant rate
   // burns a held enchantment at CastWhenHeld's resting rate too.
   const wj = src('src/scenes/hostEnchant.js');
   assert.match(wj, /isResting = \(\) => !!playerEntity\?\.isResting,/);
-  assert.doesNotMatch(src('src/scenes/world.js'), /isResting stays absent/);
+  assert.doesNotMatch(hostText('src/scenes/world.js'), /isResting stays absent/);
   // ...and the flags are written by the ONE composition, not by four
   // hosts that each have to remember.
   assert.match(src('src/scenes/shared.js'), /setResting: \(b\) => \{\s*entity\.isResting = !!b;/);
@@ -1828,7 +1829,7 @@ test('S40: the quest machine ticks THROUGH a rest, which is what the sub-tick is
     'the fixed-city host no longer refuses the sub-tick');
   // ...and the ordinary tick really is gated on the overlay, which is
   // what made this reachable.
-  assert.match(src('src/scenes/world.js'), /if \(!townTalk\.overlayActive && !worldMoveBusy\(\) && !hudFade\.fadeInProgress\) questBridge\.tick\(dt\);/);   // WA1: the fade and world-move gate beside the overlay's
+  assert.match(hostText('src/scenes/world.js'), /if \(!townTalk\.overlayActive && !worldMoveBusy\(\) && !hudFade\.fadeInProgress\) questBridge\.tick\(dt\);/);   // WA1: the fade and world-move gate beside the overlay's
   assert.match(src('src/scenes/worldModes.js'), /if \(!overlayHeld\) questBridge\?\.tick\(dt\);/);
   assert.match(src('src/scenes/exterior.js'), /if \(!_overlayHeld\) questBridge\?\.tick\(dt\);/);
 });

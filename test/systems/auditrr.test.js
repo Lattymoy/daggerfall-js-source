@@ -31,9 +31,10 @@ import { setLastLocationKeyTo, getBlockVariantHere, setBlockVariant, clearWorldD
 import { rriNativeMaterialValue, rriEquipSound, rriCustomItemsForGroup, RRI_VENDOR, RRI_CLASSES } from '../../src/systems/roleplayRealismItems/rriItems.js';
 import { ARMOR_MATERIAL } from '../../src/systems/armorMaterials.js';
 import { unitWeightInKg } from '../../src/systems/inventory.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const rd = (p) => readFileSync(join(ROOT, p), 'utf8');
+const rd = (p) => hostText(p);
 const V = 'roleplay-realism';
 
 installRoleplayRealism();
@@ -80,7 +81,7 @@ test('AUDIT-RR F2: a guild joined through its initiation quest\'s end runs the c
   guildInitiationQuestEnded(noStore, tg.initiationQuest ?? 'O0A0AL00', true, 0);
   assert.match(rd('src/systems/guild/guilds.js'), /export function guildInitiationQuestEnded\(memberships, questName, questSuccess, now, store = null\)/);
   assert.match(rd('src/systems/guild/guilds.js'), /joinGuild\(memberships, guild, now, store\);\s+\/\/ AUDIT-RR F2/);
-  assert.match(rd('src/scenes/world.js'), /guildInitiationQuestEnded\(activeMemberships\(playerEntity\), q\?\.questName \?\? '',[\s\S]{0,200}_questStore\(\)/, 'the host hands the store');
+  assert.match(hostText('src/scenes/world.js'), /guildInitiationQuestEnded\(activeMemberships\(playerEntity\), q\?\.questName \?\? '',[\s\S]{0,200}_questStore\(\)/, 'the host hands the store');
   _resetModSettings();
 });
 
@@ -193,7 +194,7 @@ test('AUDIT-RR F15/F16/F17/F18: the riding component\'s contacts - a civilian un
     assert.match(s, /createRrRidingContacts\(\{/, `${h}: the component`);
     assert.match(s, /voice: \(f\) => enemyHeavyPainVoice\(f\)/, `${h}: the voice`);
   }
-  assert.match(rd('src/scenes/world.js'), /ridingVolumeScale: \(\) => \(_travelSoundsOff \? 0 : RIDING_VOLUME_SCALE\)/);
+  assert.match(hostText('src/scenes/world.js'), /ridingVolumeScale: \(\) => \(_travelSoundsOff \? 0 : RIDING_VOLUME_SCALE\)/);
   assert.match(rd('src/scenes/exterior.js'), /if \(rrRidingOn\(\) && player\.riding && player\.isRunning\) rrRiding\.contacts\(\);/);
   _resetModSettings();
 });
@@ -222,9 +223,9 @@ test('AUDIT-RR F32/F35: WorldDataVariants\' last key is THIS location\'s before 
   assert.ok(lastLocationKeyOf() < 0);
   assert.equal(getBlockVariantHere('TVRNAS02.RMB'), NO_VARIANT, '`if (lastLocationKey >= 0)` (WorldDataVariants.cs:192)');
   clearWorldDataVariants();
-  assert.match(rd('src/scenes/world.js'), /setLastLocationKeyTo\(dfLocation\.regionIndex, dfLocation\.locationIndex \?\? 0\);\s+\/\/ AUDIT-RR F32/);
+  assert.match(hostText('src/scenes/world.js'), /setLastLocationKeyTo\(dfLocation\.regionIndex, dfLocation\.locationIndex \?\? 0\);\s+\/\/ AUDIT-RR F32/);
   assert.match(rd('src/scenes/exterior.js'), /setLastLocationKeyTo\(dfLocation\.regionIndex, dfLocation\.locationIndex \?\? 0\);\s+\/\/ AUDIT-RR F32/);
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   const key = w.indexOf('setLastLocationKeyTo(dfLocation.regionIndex, dfLocation.locationIndex ?? 0);   // AUDIT-RR F32');
   const layout = w.indexOf('layoutLocation(', key);
   assert.ok(key > 0 && layout > key && layout - key < 4000, 'the key is set before the layout that reads it');
@@ -235,7 +236,7 @@ test('AUDIT-RR F33/F34/F36/F37/F38/F39: the locationnew resolver is wired at ins
   assert.match(rd('src/formats/worldData/worldDataReplacement.js'), /if \(dfRegion\.mapIdLookup\.has\(dfLocation\.mapTableData\.mapId\)\) throw new Error/);
   assert.match(rd('src/formats/worldData/worldDataReplacement.js'), /if \(dfRegion\.mapNameLookup\.has\(dfLocation\.name\)\) throw new Error/);
   assert.match(rd('src/systems/quest/place.js'), /mergeNamedBuildings\(location\.exterior\.buildings, blocks\.filter\(\(b\) => b\.dfBlock\), \{ locationIndex: location\.locationIndex \?\? 0 \}\)/);
-  assert.match(rd('src/scenes/world.js'), /const armRec = arm \? \(topicTree\.listBuildings \?\? \[\]\)\.find\(\(b\) => b\.buildingKey === arm\.buildingKey\) : null;\s+if \(arm && armRec\) discoverBuilding\(/);
+  assert.match(hostText('src/scenes/world.js'), /const armRec = arm \? \(topicTree\.listBuildings \?\? \[\]\)\.find\(\(b\) => b\.buildingKey === arm\.buildingKey\) : null;\s+if \(arm && armRec\) discoverBuilding\(/);
   assert.match(rd('src/formats/blocksFile.js'), /if \(this\._blocks\[block\] !== null && this\._blocks\[block\]\.bytes !== null\) return true;\s+\/\/ AUDIT-RR F38/);
   const cg = rd('src/systems/chargenSession.js');
   assert.equal((cg.match(/^\s+clearWorldDataVariants\(\);\s+\/\/ AUDIT-RR F39/gm) || []).length, 2, 'both new-game paths');

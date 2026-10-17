@@ -30,7 +30,7 @@ import { standingOwedOf } from '../standingOwed.js';   // STANDING-WORDS: what t
 import { SKILL_NAMES } from '../skills.js';   // PROMO-NOW: the hall's line names the guild's skills
 import { isDivine } from './guildVariants.js';
 import { localizedText, localizedTable, t } from '../textManager.js';   // L10N3d: the labels and the refusal; PROMO-NOW: the hall's line
-import { SEAT_RANK, SEAT_MERIT_WEEKS, SEAT_TENURE_S, SEAT_ACCOUNT_AGE_S } from '../../net/npcChapterLaw.js';   // SEAT-LINE: what a seat asks, the law's own numbers
+import { SEAT_RANK, SEAT_MERIT_WEEKS, SEAT_TENURE_S, SEAT_ACCOUNT_AGE_S, ROLL_GAIN_DAY_MAX } from '../../net/npcChapterLaw.js';   // SEAT-LINE: what a seat asks, the law's own numbers; OWED-PACE: the Roll's day
 
 /** The four ids the window quotes by name (:29-32), plus the two
  *  OnPush records and the spymaster greeting (:455). */
@@ -238,7 +238,8 @@ export function onPushEffects(entity, guild, memberships, store, now, {
   // read (current region), for the knightly rank-9 promotion text.
   // CHAP4b: rankCeiling, the host's - online, while the Roll holds, 7 (ranks 8 and 9 are seats, Chapters-Arc 3.5)
   // PROMO-NOW: promoteWhenEarned, the host's - online, a promotion does not wait the 28 days
-  const moved = updateRank(memberships, guild, entity, store, now, { revealLocation, ownsHouse, rankCeiling, promoteWhenEarned });
+  // OWED-PACE (FIELD BUGS 2026-10-16c): what the Roll still owes the guild, online (0 offline) - never expelled over it
+  const moved = updateRank(memberships, guild, entity, store, now, { revealLocation, ownsHouse, rankCeiling, promoteWhenEarned, owed: standingOwedOf(guild.factionId) });
   if (moved) {
     // RR1: a mod's TokensExpulsion rides as the box's own rows (centred, %pcn the player's name - MacroHelper's), ahead of the record's
     const rows = moved.lines ? moved.lines.map((t) => ({ text: t.replaceAll('%pcn', entity?.name ?? ''), center: true })) : undefined;
@@ -320,9 +321,13 @@ export function reviewWarnings(entity, guild, book, store, ctx = null) {
   return out;
 }
 
-/** STANDING-WORDS: the reputation row of the hall's line - what the Roll still owes the guild said beside it, online. */
+/** STANDING-WORDS: the reputation row of the hall's line - what the Roll still owes the guild said beside it, online.
+ *  OWED-PACE (FIELD BUGS 2026-10-16c; slater.mp3: "i get this: (21 more i need) and did few quests and its need 36
+ *  more!"): "(21 more to come)" read as 21 more NEEDED, and a quest done the same day grew it - the Roll credits at most
+ *  ROLL_GAIN_DAY_MAX a real day and owes the rest (npcChapterLaw.js rollCredit). So the row says the owed is EARNED and
+ *  the pace it arrives at. */
 const reputationLine = (n, owed) => (owed > 0
-  ? t('guild.rankNeeds.reputationOwed', 'Reputation {have} of {need} ({owed} more to come)', { have: n.reputation, need: n.reputationNeed, owed })
+  ? t('guild.rankNeeds.reputationOwed', 'Reputation {have} of {need} ({owed} more already earned - it arrives at most {max} a real day)', { have: n.reputation, need: n.reputationNeed, owed, max: ROLL_GAIN_DAY_MAX })
   : t('guild.rankNeeds.reputation', 'Reputation {have} of {need}', { have: n.reputation, need: n.reputationNeed }));
 
 /** PROMO-NOW (FIELD BUGS 2026-10-15, "passed 200 days still no promotion i meet the requirements"): the hall's line for

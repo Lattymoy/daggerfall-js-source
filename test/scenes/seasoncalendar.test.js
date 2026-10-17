@@ -35,9 +35,10 @@ import {
 } from '../../src/systems/gameDate.js';
 import { PlayerMotor, FALL_DAMAGE_THRESHOLD } from '../../src/player/motor.js';
 import { Collider } from '../../src/player/collider.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const read = (p) => readFileSync(join(root, p), 'utf8');
+const read = (p) => hostText(p);
 const HOSTS = ['src/scenes/exterior.js', 'src/scenes/world.js'];
 
 test('A1: the world clock answers ClimateSeason Winter or Summer, and only those two', () => {
@@ -174,7 +175,7 @@ test('A1: the streaming host re-skins what already stands, without unloading it'
   // unload: the reference's terrain never goes away for a season
   // change, so its loose piles and corpses do not either
   // (CollectLooseObjects is the unload's, StreamingWorld.cs:1040-1052).
-  const world = read('src/scenes/world.js');
+  const world = hostText('src/scenes/world.js');
   assert.match(world, /function destroyPixel\(px, py, \{ collectLoose = true \} = \{\}\) \{/,
     'destroyPixel lost the re-skin door');
   assert.match(world, /if \(collectLoose\) droppedLoot\.collectPixel\(key\);/);
@@ -298,7 +299,7 @@ test('ROAD-Ar R0: the streaming host arms the hold before the teardown and relea
   // file. The three halves that have to stay joined: the arm (before
   // the ground goes), the release (on the player's own pixel, with
   // the re-anchoring spawn), and the gate on the motor itself.
-  const world = read('src/scenes/world.js');
+  const world = hostText('src/scenes/world.js');
   const tick = world.slice(world.indexOf('function tickSeason()'));
   const arm = tick.indexOf('_seasonHoldKey = `${state.current.x},${state.current.y}`');
   const teardown = tick.indexOf('destroyPixel(bx, by, { collectLoose: false });');
@@ -345,7 +346,7 @@ test('ROAD-Ar R1: fast travel hands the teleport core the minute it is about to 
   // reading it there straightened nothing on exactly the trip the
   // straightening exists for. The reference-faithful half of the fix
   // is to pass the arrival minute rather than to move RaiseTime.
-  const world = read('src/scenes/world.js');
+  const world = hostText('src/scenes/world.js');
   assert.match(world, /async function _teleportToPixel\(px, py, localPos = null, \{ grounded = false, arriveMinutes = null, reposition = REPOSITION\.None, travelStart = null, modEvent = null, resolveArrival = null \} = \{\}\)/,
     'the core takes the arrival clock');
   assert.match(world, /refreshSeason\(arriveMinutes \?\? skyMinutes\(\)\);/,
@@ -388,9 +389,9 @@ test('R1 CLOSEOUT: the frame cannot poll the straightened season away while the 
     'the day moves, which is the only thing refreshSeason gates on - so a live re-read is not a no-op');
   // buildPixelNow reads `season` only AFTER its own await, so whatever
   // the last write left is what the destination is skinned with.
-  const world = read('src/scenes/world.js');
+  const world = hostText('src/scenes/world.js');
   const build = world.slice(world.indexOf('async function buildPixelNow'));
-  assert.ok(build.indexOf('await terrainGen.generate') < build.indexOf('getTerrainGroundArchive(climate, season)'),
+  assert.ok(build.indexOf('await terrainGen.generate') < build.indexOf('getTerrainGroundArchive(climate, host.season)'),
     'the ground archive is chosen after the worker yields - the window is real');
 
   // THE LATCH. The frame's poll is the first thing tickSeason answers

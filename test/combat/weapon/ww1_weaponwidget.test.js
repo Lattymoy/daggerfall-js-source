@@ -36,9 +36,10 @@ import { swingSoundFor, SOUND } from '../../../src/systems/soundClips.js';
 import { MOD_SETTINGS, isFloatKey, isIntKey, isChoiceKey, modSettingsOf, setModSetting, _resetModSettings } from '../../../src/systems/modSettings.js';
 import { FEATURES } from '../../../src/systems/features.js';
 import { CREDITS } from '../../../src/ui/credits.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
-const rd = (p) => readFileSync(join(root, p), 'utf8');
+const rd = (p) => hostText(p);
 const T = WEAPON_TYPES, S = STATE_INDEX;
 const near = (a, b, eps = 1e-6, msg) => assert.ok(Math.abs(a - b) <= eps, msg ?? `${a} ~ ${b}`);
 

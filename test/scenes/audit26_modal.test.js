@@ -290,7 +290,9 @@ test('AUDIT 26 F017: the popup Talk reads the same StaticNPC.Data the click deri
 test('AUDIT 26 F063: a native-mode sale takes the goods out of the pack, and the two sell paths agree', () => {
   const commit = bodyOf(WM, 'function commitTrade(shelf, mode, staged, price, proceeds, identifySpell = null) {');
   // the Sell arm removes what it just paid for
-  assert.match(commit, /const i = playerEntity\.items\.indexOf\(it\);\s*\n\s*if \(i >= 0\) playerEntity\.items\.splice\(i, 1\);\s*\n\s*shelf\.items\.push\(it\);/,
+  // PIN MOVED (FIELD BUGS 2026-10-16b STOLEN-GOODS): and lands it through landSold - the shelf for an honest piece, nowhere
+  // for a stolen one (systems/stolenGoods.js)
+  assert.match(commit, /const i = playerEntity\.items\.indexOf\(it\);\s*\n\s*if \(i >= 0\) playerEntity\.items\.splice\(i, 1\);\s*\n\s*landSold\(shelf\.items, it\);/,
     'Sell paid full price and left the item in the pack - unlimited gold, one item');
   // ...and the keyed path has always done exactly that, so the two agree
   const sell = bodyOf(WM, 'function doSell(shelf, it) {');

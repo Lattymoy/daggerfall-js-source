@@ -20,6 +20,7 @@ import { fakeSocketClass } from '../fakeSocket.mjs';
 import { OnlineSession } from '../../src/net/online.js';
 import { parseClient, LOOK_HZ_MAX, LOOK_MIN_MS, LOOK_RELAY_MIN, relaySupportsLook, HELLO_HZ_MAX, CLOSE_BUSY } from '../../src/net/wire.js';
 import { liveCharacter, characterLine } from '../../src/ui/profileBadge.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const quiet = (fn) => { const i = console.info; console.info = () => {}; try { return fn(); } finally { console.info = i; } };
@@ -201,7 +202,7 @@ test('PROFILE2 end to end: the frame a session sends, through the real relay, ch
 // ─── THE HOSTS ──────────────────────────────────────────────────────────────────────────────────────────────────────
 
 test('PROFILE2 hosts: the world host hands the session its look once a second and at every hello it opens; the body fetches a changed set whole', () => {
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /const ONLINE_LOOK_CHECK_MS = 1000;/);
   assert.match(w, /if \(now - _onlineLookAt >= ONLINE_LOOK_CHECK_MS\) \{ _onlineLookAt = now; online\.setLook\(composeLook\(playerEntity\)\); \}/);
   assert.doesNotMatch(w, /online\.look = composeLook/, 'no look written past the session - a promoted halo sends no hello, so only setLook tells it');

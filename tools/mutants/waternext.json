@@ -73,7 +73,7 @@
   },
   {
     "name": "BED-host-uncarved",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "    const terrain = renderer.createTerrainSurface(carved?.positions ?? positions, carved?.normals ?? normals,",
     "new": "    const terrain = renderer.createTerrainSurface(positions, normals,",
     "tests": [

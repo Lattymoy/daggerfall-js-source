@@ -109,6 +109,22 @@ export const TITLE_TEXT = Object.freeze({
   seasonmaster: 'Season Master',  // CHAP6e: a Season's Master's, kept for good
   ilovelamp: 'I Love Lamp',       // LAMP-KEEPER II (2026-10-14, Mac: "the 'I Love Lamp' title"): a lamp keeper spoken to
   coilbreaker: 'Coilbreaker',     // SERPENT5 (2026-10-15, Sea-Serpent.md section 17): one dealing ship's serpent kill in twenty grants it
+  // EG-E2 (2026-10-12, bible/11-Multiplayer/Elite-Gates.md section 19, THE HONOURS): the Spire's thirteen, in the table's
+  // order - earned in the Elite Breach (server-account/src/egHonours.js), never bought
+  spirewalker: 'Spirewalker',
+  beaconlighter: 'Beacon-Lighter',
+  kynbane: 'Kynbane',
+  unfallen: 'The Unfallen',
+  lonebeacon: 'The Lone Beacon',
+  battlemage: 'Battlemage of the Spire',
+  wellheadwalker: 'Wellhead-Walker',
+  mastergallery: 'Master of the Galleries',
+  mastercairn: 'Master of the Cairn',
+  mastershade: 'Master of the Shade',
+  masterwellhead: 'Master of the Wellhead',
+  spirechampion: 'Spire Champion',
+  spirefirst: 'First of the Spire',
+  wikimaid: 'WikiMaid',           // WIKIMAID (2026-10-17, for SylviaBun: "the WikiMaid title"): SylviaBun's own, spelled as she spelled it
 });
 
 /** WB9g (2026-09-30, Mac: "an animated burning ground aura that circles the ground where your character stands"): AN
@@ -123,6 +139,10 @@ export const AURA_TEXT = Object.freeze({
   turninghour: 'The Turning Hour',   // SD9c: the Brass Remnant's wheel of brass gears and gold light, one kill in eight
   firsthour: 'The First Hour',   // HOURS-FIRST: The Turning Hour in the first dawn's light, Hour's First's own, granted with the title
   maelstrom: 'The Maelstrom',   // SERPENT5: the Old Coil's whirlpool of tide and foam, one dealing ship's serpent kill in fifty
+  beaconlight: 'Beaconlight',   // EG-E2: Kynbane's gold-white motes, granted with the title
+  burningstair: 'The Burning Stair',   // EG-E2: Wellhead-Walker's falling embers, granted with the title
+  firstlight: 'Firstlight',   // EG-E2: First of the Spire's dawn-white ring, granted with the title by name
+  lilacwarren: 'Lilac Warren',   // WIKIMAID: the WikiMaid's rabbits hopping round the feet on a ring of lilac light, granted with the title
 });
 
 /** SHADOW-FANG (2026-09-26, Mac): "SirMcMobdon gets a brand new
@@ -207,6 +227,33 @@ export const HOUR_SUN = Object.freeze([1, 0.969, 0.918, 1]);         // #fff7ea
 export const COIL_SEA = Object.freeze([0.165, 0.561, 0.651, 1]);    // #2a8fa6
 export const COIL_TIDE = Object.freeze([0.122, 0.682, 0.549, 1]);   // #1fae8c
 export const COIL_FOAM = Object.freeze([0.847, 0.976, 0.937, 1]);   // #d8f9ef
+/** EG-E2 (2026-10-12, Mac: "I said I want everything"; bible/11-Multiplayer/Elite-Gates.md section 19, THE HONOURS): THE
+ *  SPIRE'S COLOURS, named once - the three titles whose auras are drawn in them read them here, as the auras do
+ *  (render/auraRing.js SPIRE_RGB): the beacon's flame and its white heart (Beacon-Lighter; Kynbane's Beaconlight, its
+ *  motes), the Kyn's blood (Kynbane), the Wellhead's ember and its coal (Wellhead-Walker; The Burning Stair), and the
+ *  dawn and its gold (First of the Spire; Firstlight, its ring). */
+export const SPIRE_BEACON = Object.freeze([1, 0.902, 0.62, 1]);        // #ffe69e - paler and whiter than the Crowned's gold
+export const SPIRE_BEACON_WHITE = Object.freeze([1, 0.976, 0.902, 1]); // #fff9e6
+export const SPIRE_KYN = Object.freeze([0.69, 0.157, 0.118, 1]);       // #b0281e - darker and bloodier than the Developer's red
+export const SPIRE_EMBER = Object.freeze([0.941, 0.416, 0.208, 1]);    // #f06a35 - redder than the Gatebreaker's fire
+export const SPIRE_COAL = Object.freeze([0.62, 0.122, 0.039, 1]);      // #9e1f0a
+export const SPIRE_DAWN = Object.freeze([0.992, 0.886, 0.816, 1]);     // #fde2d0 - a blush of dawn, paler than Hour's First's rose gold
+export const SPIRE_DAWN_GOLD = Object.freeze([1, 0.792, 0.522, 1]);    // #ffca85
+/** WIKIMAID (2026-10-17, for SylviaBun: "Honestly as dumb as this is gonna sound the WikiMaid title and a purple aura with
+ *  bunnies would be dope as hell" - "Lets go all out for this"). No colour was named for the title; the aura was asked
+ *  purple, and the title and its glyph are drawn in the same family so the three read as one grant: an AMETHYST, the
+ *  warren's own light (render/auraRing.js WARREN_RGB reads all four from here); a LILAC, the rabbits' coat and the title's
+ *  one colour - 45 apart from the nearest title's (the Apostle's periwinkle), paler and pinker than the Aegis's violet and
+ *  the Protector's royal purple; a BLUSH, a rabbit's ear's pink, the gradient's end; and the white of a maid's FRILL,
+ *  with a breath of the blush in it. "WikiMaid" is drawn amethyst into lilac into the blush, and edged in black, as every
+ *  gradient title with a light end is. */
+export const WARREN_AMETHYST = Object.freeze([0.616, 0.361, 1, 1]);   // #9d5cff
+export const WARREN_LILAC = Object.freeze([0.765, 0.565, 1, 1]);      // #c390ff
+export const WARREN_BLUSH = Object.freeze([1, 0.722, 0.871, 1]);      // #ffb8de
+export const WARREN_FRILL = Object.freeze([1, 0.961, 0.984, 1]);      // #fff5fb
+/** WIKIMAID: a maid's headdress is white lace on a dark band - the band, and the rabbit's eyes and nose, in a deep plum,
+ *  the darkest of the family, so they read on the lilac at a name's size. */
+export const WARREN_PLUM = Object.freeze([0.29, 0.122, 0.431, 1]);    // #4a1f6e
 
 /** A title's colour, RGBA 0..1 - the same shape SOC4's PARTY_GREEN is
  *  in, so `nameLayer.cssRgba` turns it into CSS and `drawText` takes it
@@ -277,6 +324,24 @@ export const TITLE_RGBA = Object.freeze({
   // Founder's gold and the Hour's, lighter than the Dungeon Master's orange
   ilovelamp: Object.freeze([1, 0.698, 0.376, 1]),           // #ffb260
   coilbreaker: COIL_TIDE,                                   // SERPENT5: the tide's green, #1fae8c
+  // EG-E2: THE SPIRE'S THIRTEEN, none another title's - the Spire's dusk for its first step, the beacon's flame, the Kyn's
+  // blood, an unbroken ivory, a lone cold star, the Imperial Battlemages' blue, the Wellhead's ember; each band's Master
+  // its own ground's (the Galleries' old gilt, the Cairn's soul-gems, the Shade's night, the Wellhead's forge); the
+  // Champion's jade, and the first dawn for the first company
+  spirewalker: Object.freeze([0.62, 0.659, 0.8, 1]),        // #9ea8cc
+  beaconlighter: SPIRE_BEACON,
+  kynbane: SPIRE_KYN,
+  unfallen: Object.freeze([0.902, 0.882, 0.812, 1]),        // #e6e1cf
+  lonebeacon: Object.freeze([0.788, 0.894, 1, 1]),          // #c9e4ff
+  battlemage: Object.freeze([0.31, 0.4, 0.769, 1]),         // #4f66c4
+  wellheadwalker: SPIRE_EMBER,
+  mastergallery: Object.freeze([0.788, 0.647, 0.353, 1]),   // #c9a55a
+  mastercairn: Object.freeze([0.541, 0.859, 0.89, 1]),      // #8adbe3
+  mastershade: Object.freeze([0.424, 0.373, 0.682, 1]),     // #6c5fae
+  masterwellhead: Object.freeze([0.831, 0.333, 0.165, 1]),  // #d4552a
+  spirechampion: Object.freeze([0.275, 0.839, 0.549, 1]),   // #46d68c
+  spirefirst: SPIRE_DAWN,
+  wikimaid: WARREN_LILAC,   // WIKIMAID: the rabbits' lilac - the colour a face that cannot draw a gradient uses, and the glyph's
 });
 
 /** SHADOW-FANG: A TITLE DRAWN AS A GRADIENT - its stops, RGBA 0..1, left
@@ -292,6 +357,7 @@ export const TITLE_GRADIENT = Object.freeze({
   hoursfirst: Object.freeze([HOUR_DAWN, HOUR_PEARL, HOUR_SUN]),   // HOURS-FIRST: rose gold into pearl into the dawn's white
   aegis: Object.freeze([OBLIVION_VOID, OBLIVION_VIOLET, OBLIVION_LILAC]),   // AEGIS: out of the void into the ward's light
   coilbreaker: Object.freeze([COIL_SEA, COIL_TIDE, COIL_FOAM]),   // SERPENT5: the open sea into the tide into the foam
+  wikimaid: Object.freeze([WARREN_AMETHYST, WARREN_LILAC, WARREN_BLUSH]),   // WIKIMAID: "Wiki" in the warren's amethyst, "Maid" into a rabbit's blush
 });
 
 /** PENITENT: THE EDGE A GRADIENT TITLE WEARS, where it is not the title's
@@ -307,6 +373,7 @@ export const TITLE_EDGE = Object.freeze({
   aegis: Object.freeze([0, 0, 0, 1]),   // AEGIS: its lilac end is bright - edged in black, as Penitent's and the Gatebreaker's
   hoursfirst: Object.freeze([0, 0, 0, 1]),   // HOURS-FIRST: its dawn end is near white - edged in black, as Penitent's
   coilbreaker: Object.freeze([0, 0, 0, 1]),   // SERPENT5: its foam end is near white - edged in black, as Penitent's
+  wikimaid: Object.freeze([0, 0, 0, 1]),   // WIKIMAID: its blush end is pale - edged in black, as Penitent's and the Aegis's
 });
 
 /** A glyph's colour. The sprout is green because Mac said green; the
@@ -336,6 +403,7 @@ export const GLYPH_RGBA = Object.freeze({
   aegis: TITLE_RGBA.aegis,             // AEGIS: the pillars and the ring in the title's violet - the tendrils are its detail, below
   primarch: TITLE_RGBA.primarch,       // PRIMARCH: the cross in the title's light gold - GA00250: "with the same color of the name"
   crystalfist: TITLE_RGBA.crystalfist, // CRYSTAL-FIST: the three slashes in the title's purple - the reference's own
+  wikimaid: TITLE_RGBA.wikimaid,       // WIKIMAID: the rabbit in the title's lilac - the maid's frill is its detail, below
 });
 
 /** SHADOW-FANG: A GLYPH FILLED WITH A GRADIENT - its title's two stops,
@@ -365,7 +433,20 @@ export const GLYPH_DETAIL = Object.freeze({
   // low, the inner two curling down, the middle one straight down, each tapering to a point. A skirt of straight spikes
   // read as an upside-down crown and a jellyfish; in the title's lilac it read as a crown again.
   aegis: Object.freeze({ path: 'M4.4 12.9Q2.2 13.2 0.3 14.6Q2.8 14.3 5 14.3Q4 15 3 15.8Q5.4 15.3 6.6 14.5L8 15.95L9.4 14.5Q10.6 15.3 13 15.8Q12 15 11 14.3Q13.2 14.3 15.7 14.6Q13.8 13.2 11.6 12.9Q8 14 4.4 12.9Z', rgba: OBLIVION_ABYSS }),
+  // WIKIMAID: THREE DETAILS, in order (a list - glyphDetails, below): the inside of each ear in a rabbit's blush; THE
+  // MAID'S HEADDRESS across the crown in front of the ears' roots, five scallops of white lace; and its band under the
+  // lace with the rabbit's two eyes and its nose, in the plum. The lace is what makes the rabbit a maid: drawn without it,
+  // the head read as a rabbit and nothing more, and spanning the head's whole width it read as the froth on a mug.
+  wikimaid: Object.freeze([
+    Object.freeze({ path: 'M5.4 1.9Q4.6 4 5.5 6Q6.6 4 6 1.9Q5.7 1.5 5.4 1.9ZM10.6 1.9Q11.4 4 10.5 6Q9.4 4 10 1.9Q10.3 1.5 10.6 1.9Z', rgba: WARREN_BLUSH }),
+    Object.freeze({ path: 'M4.3 8.6L4.6 7.4Q5 6.4 5.9 6.9Q6.5 6 7.3 6.5Q8 5.7 8.7 6.5Q9.5 6 10.1 6.9Q11 6.4 11.4 7.4L11.7 8.6Q8 7.4 4.3 8.6Z', rgba: WARREN_FRILL }),
+    Object.freeze({ path: 'M4.3 8.6Q8 7.4 11.7 8.6L11.8 9.4Q8 8.2 4.2 9.4ZM6.1 10.1Q6.75 10.1 6.75 10.8Q6.75 11.5 6.1 11.5Q5.45 11.5 5.45 10.8Q5.45 10.1 6.1 10.1ZM9.9 10.1Q10.55 10.1 10.55 10.8Q10.55 11.5 9.9 11.5Q9.25 11.5 9.25 10.8Q9.25 10.1 9.9 10.1ZM7.4 12.4L8.6 12.4L8 13.1Z', rgba: WARREN_PLUM }),
+  ]),
 });
+/** WIKIMAID: A GLYPH'S DETAILS AS A LIST - one shape (the wolf's eye, the penitent's sword, the aegis's tendrils) or
+ *  several in their order (the WikiMaid's ears, lace and face), so every face that draws a glyph walks one shape the same
+ *  way it walks three. Pure. */
+export const glyphDetails = (detail) => (Array.isArray(detail) ? detail : detail?.path ? [detail] : []);
 
 /** THE CLASSIC FACE'S STAND-IN: one character, and it must be one the
  *  Daggerfall font actually has a record for or it draws as nothing at
@@ -389,6 +470,7 @@ export const GLYPH_MARK = Object.freeze({
   aegis: 'O',         // AEGIS: the ring the pillars stand through - and Oblivion's initial
   primarch: 't',      // PRIMARCH: a cross with its foot turned, as the reference's footrest
   crystalfist: '\\',  // CRYSTAL-FIST: a slash the way the reference's three fall, down to the right
+  wikimaid: 'V',      // WIKIMAID: the rabbit's two ears, up
 });
 
 /** The printable range the classic font covers. ACC1d-MARK's own bound,
@@ -455,12 +537,19 @@ export const GLYPH_PATH = Object.freeze({
   // account card's and the profile's sizes); filled, one colour, every outline wound the same way round. Scaled whole
   // into the box by the uncut bands, the measures the reference's.
   crystalfist: 'M0.77 6.99L0.77 6.26L1.32 5.71L2.05 5.71L10.11 13.77L10.11 14.5L9.56 15.05L8.82 15.05ZM0.77 2.23L0.77 1.5L1.32 0.95L2.05 0.95L14.5 13.4L14.5 14.13L13.95 14.68L13.22 14.68ZM5.89 2.6L5.89 1.87L6.44 1.32L7.18 1.32L15.23 9.37L15.23 10.11L14.68 10.66L13.95 10.66Z',
+  // WIKIMAID (2026-10-17, for SylviaBun - "the WikiMaid title", her handle a bun's): A RABBIT'S HEAD, front on, in a maid's
+  // headdress - two long ears up, each broad at its middle and leaning a little outward, the right the left's mirror
+  // about the middle; between them the crown; the head round and fuller at the cheeks than at the brow. One outline,
+  // filled, wound one way round, in M, L, Q and Z alone (render/auraRing.js glyphEdges can cut it); its lace, its band
+  // and its face are GLYPH_DETAIL's. Seen in Chromium at 13 to 64 px over a night sky, a day sky, stone, grass and snow:
+  // the ears and the lace read from 13 px.
+  wikimaid: 'M3.6 8.6Q4.3 7 5 6.5Q3.6 3 4.6 0.7Q5.3 0.1 6 0.8Q7.3 3.4 7.1 6.2Q8 6 8.9 6.2Q8.7 3.4 10 0.8Q10.7 0.1 11.4 0.7Q12.4 3 11 6.5Q11.7 7 12.4 8.6Q13.4 10.6 12.6 12.8Q11 15.2 8 15.2Q5 15.2 3.4 12.8Q2.6 10.6 3.6 8.6Z',
 });
 
 /** Is this glyph DRAWN as an outline rather than filled? The sprout is
  *  a shape and the brackets are strokes; said here so the layer does
  *  not have to know which is which by name. */
-export const GLYPH_STROKE = Object.freeze({ sprout: true, dev: true, mod: true, dm: true, disciple: true, apostle: true, hierophant: true, shadowfang: false, penitent: true, herald: true, tower: false, crownDF: false, crownWR: false, crownSN: false, laurel: true, aegis: true, primarch: false, crystalfist: false });   // SEAT1c: the seats' four filled; ARENA4: the laurel's branches stroked; AEGIS: the pillars and the ring stroked; PRIMARCH: the cross filled; CRYSTAL-FIST: the slashes filled
+export const GLYPH_STROKE = Object.freeze({ sprout: true, dev: true, mod: true, dm: true, disciple: true, apostle: true, hierophant: true, shadowfang: false, penitent: true, herald: true, tower: false, crownDF: false, crownWR: false, crownSN: false, laurel: true, aegis: true, primarch: false, crystalfist: false, wikimaid: false });   // WIKIMAID: the rabbit filled; SEAT1c: the seats' four filled; ARENA4: the laurel's branches stroked; AEGIS: the pillars and the ring stroked; PRIMARCH: the cross filled; CRYSTAL-FIST: the slashes filled
 
 /**
  * The title a peer wears, ready to draw: `{ key, text, rgba }`, or
@@ -576,7 +665,7 @@ export const badgeClass = (kind, key) => `${kind}-${key}`;
  *  the Gatebreaker's, the Oblivion Ward the Aegis of Oblivion's, the Golden Radiance the Primarch's (PRIMARCH), the Holo
  *  Shadow Cloak the Shadow Fang's black and crimson (SHADOW-CLOAK), the Seraph Wings the Founder's gold - the wings' own, where
  *  the developer's paint is a red (SERAPH-WINGS), the Crystal Resonance the Crystal Fist's purple (CRYSTAL-FIST). A pin walks AURA_TEXT and requires an entry. */
-export const AURA_PAINT = Object.freeze({ dagonfire: 'gatebreaker', oblivionward: 'aegis', radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker' });   // HOURS-FIRST: The First Hour in Hour's First's rose gold; SERPENT5: The Maelstrom in the Coilbreaker's sea
+export const AURA_PAINT = Object.freeze({ dagonfire: 'gatebreaker', oblivionward: 'aegis', radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid' });   // WIKIMAID: the Lilac Warren in the WikiMaid's amethyst into blush; HOURS-FIRST: The First Hour in Hour's First's rose gold; SERPENT5: The Maelstrom in the Coilbreaker's sea; EG-E2: the Spire's three each in its title's paint
 /** SHADOW-FANG: `titlePaint`'s properties as CSS declarations, the colour
  *  left to the button (its border is drawn in it) - so a gradient title's
  *  word on the card is the SAME paint as over a head, not a second one. */
@@ -685,10 +774,10 @@ export function glyphArtNode(doc, g, cls, strokeWidth = 1.8) {
     } else path.setAttribute('fill', 'currentColor');
     svg.append(path);
   }
-  if (g.detail?.path) {
+  for (const det of glyphDetails(g.detail)) {   // WIKIMAID: each of a glyph's details, in order
     const d = doc.createElementNS(NS, 'path');
-    d.setAttribute('d', g.detail.path);
-    d.setAttribute('fill', cssRgba(g.detail.rgba) ?? 'currentColor');
+    d.setAttribute('d', det.path);
+    d.setAttribute('fill', cssRgba(det.rgba) ?? 'currentColor');
     svg.append(d);
   }
   return svg;

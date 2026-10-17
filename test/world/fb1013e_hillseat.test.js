@@ -31,6 +31,7 @@ import { RMBRP_HILLS, RMBRP_PIECES, blockHillSeat, blockHillPatch, seatNatureFla
 import { MeshBuilder } from '../../src/world/detStandIns.js';
 import { StaticBatchBuilder, keyResolver } from '../../src/render/staticBatch.js';
 import { trs, multiply } from '../../src/world/mat4.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const TOLERANCE = 0.15;   // the law's bar, the test's own number (HILL_SEAT_TOLERANCE is pinned to it below)
@@ -288,10 +289,10 @@ test('HILL-SEAT: the pads ride the pixel\'s own static merge - one GPU mesh with
 });
 
 test('HILL-SEAT by source: THE FOUR HOSTS - world.js lays the pads into its pixel\'s static merge and its collider bucket (both freed in destroyPixel and on a failed build) before its flats read the seat; exterior.js draws and collides them before its flats; worldModes.js and dungeonContext.js stand no hill', () => {
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   const seatAt = w.indexOf('const hillSeat = blockHillSeat(b.layout.models);');
   const wPatch = 'const hillPatch = blockHillPatch(hillSeat, b.layout.models, (m) => (m.enhancedOnly && !isEnhanced() ? null : cpuModels.get(m.modelIdNum)));';
-  const wWire = 'if (hillPatch) { staticBuilder.add(hillPatch, originMatrix, resolveTexKey); collider.addMesh(key, hillPatch.positions, hillPatch.indices, originMatrix, onFloatingFrame(state, ((o) => () => state.pixelTranslation(px, py, o))([0, 0, 0]))); unionBox(transformedAabb(localAabb(hillPatch.positions), originMatrix)); }';
+  const wWire = 'if (hillPatch) { staticBuilder.add(hillPatch, originMatrix, resolveTexKey); collider.addMesh(key, hillPatch.positions, hillPatch.indices, originMatrix, onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0]))); unionBox(transformedAabb(localAabb(hillPatch.positions), originMatrix)); }';
   assert.ok(seatAt > 0 && w.indexOf(wPatch) > seatAt, 'world.js: the pads, off the block\'s seat and the meshes it drew');
   assert.ok(w.indexOf(wWire) > w.indexOf(wPatch), 'world.js: merged with the pixel\'s statics, solid in the pixel\'s bucket, inside its culling box');
   assert.ok(w.indexOf(wWire) < w.indexOf('seatNatureFlat(hillSeat, flat.x, flat.z, NATURE_FLATS_Y + groundOffPlane(samples, avg, fx, fz))'), 'world.js: before the trees read the seat');

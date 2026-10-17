@@ -14,6 +14,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { wodRockUvs, WOD_ROCK_MODELS, WOD_ROCK_PEBBLE_MIN, WOD_ROCK_STRETCH_MIN, WOD_ROCK_MAX_REPEATS_PER_M } from '../../../src/world/worldOfDaggerfall/wodRockUv.js';
 import { objectMatrix } from '../../../src/world/worldOfDaggerfall/wodLocationObjects.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
 const ang = (a, b) => Math.acos(Math.min(1, Math.abs(a[0] * b[0] + a[1] * b[1] + a[2] * b[2]) / Math.hypot(...a) / Math.hypot(...b))) * 180 / Math.PI;
@@ -55,7 +56,7 @@ test('AUDIT WR2: a rock pebble under the 4x threshold is unfolded like its outcr
   assert.equal(wodRockUvs(rock, at(1.0), 60610), rock, 'a pebble at its own size is its own');
   const statue = quad();
   assert.equal(wodRockUvs(statue, at(2.65), 43301), statue, 'the shrine statue at 2.65 is its own');
-  assert.match(readFileSync(new URL('../../../src/scenes/world.js', import.meta.url), 'utf8'), /const cpu = wodRockUvs\(cpuModels\.get\(m\.modelId\), m\.matrix, m\.modelId\);/, 'the host hands the piece\'s model id');
+  assert.match(hostText('src/scenes/world.js'), /const cpu = wodRockUvs\(cpuModels\.get\(m\.modelId\), m\.matrix, m\.modelId\);/, 'the host hands the piece\'s model id');
 });
 
 test('ROCK-CAP (Mac: "Cap at ~8 m a repeat"): a rock pebble\'s face tiles no finer than a repeat per 8 m in its finest direction, its grain\'s proportions kept; a palisade keeps its own density; a pebble already coarser keeps its own (mutants: no cap; the cap on every model; the cap by the coarse direction)', () => {

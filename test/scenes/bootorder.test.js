@@ -32,9 +32,20 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { parse } from 'acorn';
+import { hostText, movedOutOf } from '../hostText.mjs';   // HOST-SPLIT 2: the modules moved out of the host
 
 const src = readFileSync(new URL('../../src/scenes/world.js', import.meta.url), 'utf8');
 const ast = parse(src, { ecmaVersion: 'latest', sourceType: 'module' });
+// HOST-SPLIT 2: a module moved out of bootWorld (tools/hostMove.mjs) runs where its code stood, and reads the host's
+// live names at their use as `host.<name>` - the same reads, at the same moment. So the walk follows a call into a
+// moved module's functions as into the host's own, and reads `host.<name>` there as `<name>`: the gate sees the build
+// whole, wherever its code now lives.
+const MOVED = movedOutOf('src/scenes/world.js').map((p) => {
+  const text = hostText(p);
+  const tree = parse(text, { ecmaVersion: 'latest', sourceType: 'module' });
+  const ctor = tree.body.find((n) => n.type === 'ExportNamedDeclaration' && n.declaration?.type === 'FunctionDeclaration')?.declaration;
+  return { file: p, ctor, handle: ctor?.params[0]?.name };
+});
 const lineOf = (p) => src.slice(0, p).split('\n').length;
 const kids = (n) => {
   const out = [];
@@ -54,12 +65,15 @@ const findFn = (n, name) => {
 };
 /** the identifiers a node names, and the functions it calls, OUTSIDE any
  *  nested function body - what running that node touches right now */
-function surface(node) {
+function surface(node, handle = null) {
   const ids = new Set(), calls = new Set();
+  const live = (x) => (handle && x.type === 'MemberExpression' && !x.computed && x.object.type === 'Identifier' && x.object.name === handle ? x.property.name : null);
   (function walk(x, depth) {
     if (isFn(x)) depth += 1;
+    if (live(x)) { if (depth === 0) ids.add(live(x)); return; }   // a moved module's `host.<name>`: the host's <name>, read here
     if (x.type === 'Identifier' && depth === 0) ids.add(x.name);
     if (x.type === 'CallExpression' && x.callee.type === 'Identifier' && depth === 0) calls.add(x.callee.name);
+    if (x.type === 'CallExpression' && live(x.callee) && depth === 0) calls.add(live(x.callee));
     for (const [k, c] of kids(x)) {
       if (x.type === 'MemberExpression' && k === 'property' && !x.computed) continue;
       if ((x.type === 'Property' || x.type === 'MethodDefinition' || x.type === 'PropertyDefinition') && k === 'key' && !x.computed) continue;
@@ -102,9 +116,9 @@ const ALLOWED = {
   exteriorFoes: ['destroyPixel, and only under collectLoose', 'collectLoose: false', ['destroyPixel']],
   // BOOT-TDZ2: the playerTravelPixel() reads, behind the mod's own guard -
   // with no mod there is nothing to initialise and the call never happens.
-  walkMode: ['playerTravelPixel, behind the travelOptions guard', 'if (travelOptions && dfLocation) {', ['playerTravelPixel']],
-  player: ['playerTravelPixel, behind the travelOptions guard', 'if (travelOptions && dfLocation) {', ['playerTravelPixel']],
-  cam: ['playerTravelPixel, behind the travelOptions guard', 'if (travelOptions && dfLocation) {', ['playerTravelPixel']],
+  walkMode: ['playerTravelPixel, behind the travelOptions guard', 'if (host.travelOptions && dfLocation) {', ['playerTravelPixel']],
+  player: ['playerTravelPixel, behind the travelOptions guard', 'if (host.travelOptions && dfLocation) {', ['playerTravelPixel']],
+  cam: ['playerTravelPixel, behind the travelOptions guard', 'if (host.travelOptions && dfLocation) {', ['playerTravelPixel']],
 };
 
 test('BOOT-TDZ2: nothing the boot walk runs reads a binding the boot walk has not declared - the gate the two dead-zone crashes deserved (mutants: hook-asks-the-pixel-first, travel-options-declared-late)', () => {
@@ -112,16 +126,34 @@ test('BOOT-TDZ2: nothing the boot walk runs reads a binding the boot walk has no
   assert.ok(boot, 'world.js no longer declares bootWorld');
   const body = boot.body.body;
 
+  // AUDIT HOST-SPLIT 2 (the second read): A DESTRUCTURED BINDING HAS A DEAD ZONE TOO. Every slice turns a hoisted
+  // function into `const { buildPixelNow } = createPixelBuild(...)`, and the walk skipped every declarator that was
+  // not a bare name - so a build reached above its construction read a binding the gate never knew was declared there
+  // (mutant: BOOT-TDZ2-the-build-taken-before-its-construction)
+  const bound = (p) => (p.type === 'Identifier' ? [p.name]
+    : p.type === 'ObjectPattern' ? p.properties.flatMap((q) => bound(q.type === 'RestElement' ? q.argument : q.value))
+    : p.type === 'ArrayPattern' ? p.elements.filter(Boolean).flatMap(bound)
+    : p.type === 'AssignmentPattern' ? bound(p.left)
+    : p.type === 'RestElement' ? bound(p.argument) : []);
   const decl = new Map(), fns = new Map(), arrows = new Map();
   body.forEach((n, i) => {
     if (n.type === 'VariableDeclaration' && n.kind !== 'var') {
       for (const d of n.declarations) {
-        if (d.id.type !== 'Identifier') continue;
-        if (!decl.has(d.id.name)) decl.set(d.id.name, i);
-        if (d.init && isFn(d.init)) arrows.set(d.id.name, d.init);
+        for (const nm of bound(d.id)) if (!decl.has(nm)) decl.set(nm, i);
+        if (d.id.type === 'Identifier' && d.init && isFn(d.init)) arrows.set(d.id.name, d.init);
       }
     } else if (n.type === 'FunctionDeclaration' && n.id) fns.set(n.id.name, n);
   });
+  // the moved modules' own functions, walked as the host's (HOST-SPLIT 2) - each read through its handle
+  const handleOf = new Map();
+  for (const m of MOVED) {
+    assert.ok(m.ctor && m.handle, `${m.file}: its constructor and its handle`);
+    for (const n of m.ctor.body.body) {
+      if (n.type === 'FunctionDeclaration' && n.id && !fns.has(n.id.name)) { fns.set(n.id.name, n); handleOf.set(n, m.handle); }
+      if (n.type === 'VariableDeclaration') for (const d of n.declarations) if (d.id.type === 'Identifier' && d.init && isFn(d.init) && !arrows.has(d.id.name)) { arrows.set(d.id.name, d.init); handleOf.set(d.init, m.handle); }
+    }
+  }
+  assert.ok(fns.has('buildPixelNow'), 'the walk reaches the pixel build, wherever it stands');
 
   const buildAt = body.findIndex((n) => /const playerPixel = await awaitedBuild\(first\.px, first\.py\);/.test(src.slice(n.start, n.end)));
   assert.notEqual(buildAt, -1, 'the boot no longer awaits its own first pixel build by that name');
@@ -134,7 +166,7 @@ test('BOOT-TDZ2: nothing the boot walk runs reads a binding the boot walk has no
     if (memo.has(name)) return memo.get(name);
     const f = fns.get(name) ?? arrows.get(name);
     if (!f) return new Set();
-    const { ids, calls } = surface(f.body);
+    const { ids, calls } = surface(f.body, handleOf.get(f));
     const out = new Set(ids);
     for (const c of calls) for (const x of reach(c, seen)) out.add(x);
     memo.set(name, out);
@@ -170,7 +202,7 @@ test('BOOT-TDZ2: nothing the boot walk runs reads a binding the boot walk has no
   // on the exact line that produced the second crash. Each entry names
   // the source the excuse rests on; delete the guard and the excuse goes
   // with it, whatever the walker still thinks it can reach.
-  const builder = src.slice(src.indexOf('async function buildPixelNow'), src.indexOf('async function standPixelNpcs'));
+  const builder = hostText('src/scenes/pixelBuild.js');   // HOST-SPLIT 2: the pixel builder, moved whole into its module
   for (const [nm, [why, guard]] of Object.entries(ALLOWED)) {
     assert.ok(builder.includes(guard),
       `${nm} is excused as "${why}", and the guard that excuse rests on (${guard}) is no longer in the pixel builder`);
@@ -187,7 +219,7 @@ test('BOOT-TDZ2: nothing the boot walk runs reads a binding the boot walk has no
     visited.add(name);
     const f = fns.get(name) ?? arrows.get(name);
     if (!f) return;
-    const { ids, calls } = surface(f.body);
+    const { ids, calls } = surface(f.body, handleOf.get(f));
     for (const nm of ids) note(nm, name);
     for (const c of calls) visit(c);
   };

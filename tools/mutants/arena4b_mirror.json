@@ -264,7 +264,7 @@
   {
     "name": "ARENA4b-MIR-GATE-HOUSE-ONLINE",
     "file": "src/scenes/arena/arenaGate.js",
-    "old": "    if (!on?.exhibitions?.()) { setBook(",
+    "old": "    if (!on) { setBook(",
     "new": "    if (true) { setBook(",
     "tests": [
       "test/scenes/arena4b_mirror.test.js"
@@ -300,8 +300,8 @@
   {
     "name": "ARENA4b-MIR-WORLD-CITY",
     "file": "src/scenes/world.js",
-    "old": "      if (arenaOnline?.exhibitions?.()) arenaOnline.watchCity(ex);\n      else if (ex?.open",
-    "new": "      if (ex?.open",
+    "old": "      if (arenaOnline?.exhibitions?.() || arenaOnline?.waiting?.()) arenaOnline.watchCity(ex);",
+    "new": "      if (false) arenaOnline.watchCity(ex);",
     "tests": [
       "test/scenes/arena4b_mirror.test.js"
     ]
@@ -309,7 +309,7 @@
   {
     "name": "ARENA4b-MIR-WORLD-WATCH",
     "file": "src/scenes/world.js",
-    "old": "      if (arenaOnline?.exhibitions?.()) { arenaBouts.dismiss(); arenaOnline.watchExhibition(ex); return; }",
+    "old": "      if (arenaOnline?.exhibitions?.() || arenaOnline?.waiting?.()) { arenaBouts.dismiss(); arenaOnline.watchExhibition(ex); return; }",
     "new": "      void 0;",
     "tests": [
       "test/scenes/arena4b_mirror.test.js"

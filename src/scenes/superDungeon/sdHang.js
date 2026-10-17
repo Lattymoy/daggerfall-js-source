@@ -16,12 +16,13 @@
 //     chains still (their draws stood at rest and never swung).
 //
 // Not a DFU member. Ledger A (SUPER-DUNGEONS).
-import { SD_HANG_ISLANDS, SD_HANG_STAGES, buildHangModel, buildChainModel, buildFarIslandsModel, chainSwing, chainMatrix, farIslandsMatrix } from '../../world/superDungeon/sdIslandModel.js';
+import { SD_HANG_ISLANDS, SD_HANG_STAGES, sdHangIslandsOf, buildHangModel, buildChainModel, buildFarIslandsModel, chainSwing, chainMatrix, farIslandsMatrix } from '../../world/superDungeon/sdIslandModel.js';
 import { SD_WORKS, SD_HANG_NOW, buildWorksGear, worksMatrix } from '../../world/superDungeon/sdWorksModel.js';
 import { sdTick } from '../../world/superDungeon/sdLook.js';
 import { sdSkyClock, SD_SKY_PERIOD } from '../../render/superDungeon/sdSky.js';
 import { isTouchDevice } from '../../ui/touch/touchDevice.js';
 import { identity } from '../../world/mat4.js';
+import { SD_COURSE } from '../../world/superDungeon/sdSteps.js';
 
 /** The far set's turns a sky period (a whole number, so the set never jumps as the clock wraps): once, backwards - time
  *  runs back inside the Hour. */
@@ -29,10 +30,12 @@ export const SD_FAR_TURNS = -1;
 
 /**
  * THE HANG'S SET: `renderer` makes and frees its meshes; `clock()` the realm's anchored seconds (the dungeon host's
- * sdEndClock - every screen's chains and gears tick together); `lite` the phones' tier.
- * @param {{ renderer?: any, clock?: () => number, lite?: boolean }} deps
+ * sdEndClock - every screen's chains and gears tick together); `lite` the phones' tier; EG-H3 (EG4): `course` the course
+ * whose checkpoints hang as the steps' islands (net/eliteGates/egSpanLaw.js courseOf's record - the Hour's by default).
+ * @param {{ renderer?: any, clock?: () => number, lite?: boolean, course?: any }} deps
  */
-export function createSdHang({ renderer = null, clock = () => performance.now() / 1000, lite = isTouchDevice() } = {}) {
+export function createSdHang({ renderer = null, clock = () => performance.now() / 1000, lite = isTouchDevice(), course = SD_COURSE } = {}) {
+  const islands = course === SD_COURSE ? SD_HANG_ISLANDS : sdHangIslandsOf(course);
   /** Every draw stood, in the order stood: `{ gpu, object: { matrix }, noShadow, stage, texRemap }` - and the moving ones. */
   const draws = [], chains = [], works = [];
   let far = null, stood = false;
@@ -48,10 +51,10 @@ export function createSdHang({ renderer = null, clock = () => performance.now() 
       if (stood) return;
       stood = true;
       for (const stage of SD_HANG_STAGES) {
-        const gpu = make(buildHangModel(stage, { lite }));
+        const gpu = make(buildHangModel(stage, { lite, islands }));
         if (gpu) draws.push(drawOf(gpu, stage));
       }
-      for (const isl of SD_HANG_ISLANDS) {
+      for (const isl of islands) {
         const { model, axle } = buildChainModel(isl, { lite });
         const gpu = make(model);
         if (!gpu) continue;

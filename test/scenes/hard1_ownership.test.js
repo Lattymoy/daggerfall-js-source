@@ -166,6 +166,7 @@ const CONTEXTS = [
       detectFeed: 'createDetectFeed returns { tick } over a plain marker list - no GPU batch, no loop',
       _restDeps: 'a bag of thunks handed to the rest window; it owns nothing',
       win: 'a window, owned by the window stack that pushed it, not by the context',
+      searchRoom: 'GRAVE-PARTY (FIELD BUGS 2026-10-16b): createSearchRoom holds a Map of strangers\' searched-object words (SEARCH_FOREIGN_MAX at most) - no batch, mesh, loop or listener; it goes with the context',
     },
   },
   {
@@ -208,6 +209,7 @@ const CONTEXTS = [
       interiorWeapon: 'the weapon rig is built once and lives with the HOST, not the building - it has no per-interior state to reset (its own component ends at the page, as every host-scope thing does)',
       interiorTicker: 'the host\'s clock subscription, built once and running for the page',
       interiorRestDeps: 'a bag of thunks handed to the rest window - the same shape as the dungeon context\'s, and it owns nothing',
+      interiorPeek: 'CONTAINER-PEEK: createInteriorPeek returns one closure over the host\'s own getters - no batch, mesh, loop or listener; it reads the room as it stands at each glance, so leaving a building has nothing of it to end',
     },
   },
 ];

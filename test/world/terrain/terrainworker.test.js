@@ -16,6 +16,7 @@ import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData }
 import { layoutNature } from '../../../src/world/terrain/terrainNature.js';
 import { generatePixelTerrain } from '../../../src/world/terrain/terrainGen.js';
 import { TerrainGenClient, terrainThreadDisabled } from '../../../src/world/terrain/terrainGenClient.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 // The distantland fake woods (the real reader's orientations - the
 // large heightmap's y DESCENDS), grown the third method layoutNature's
@@ -261,7 +262,7 @@ test('EV7: the worker shell imports only pure modules and spells the Worker URL 
 });
 
 test('EV7: the world host rides the client and the pinned build contracts stand', () => {
-  const world = readFileSync('src/scenes/world.js', 'utf8');
+  const world = hostText('src/scenes/world.js');
   assert.ok(world.includes('const terrainGen = new TerrainGenClient({ woods, woodsBytes })'),
     'one client, built beside the reader it falls back to');
   assert.ok(world.includes('await terrainGen.generate({'), 'buildPixel awaits the kernel');
@@ -269,7 +270,13 @@ test('EV7: the world host rides the client and the pinned build contracts stand'
     'the file-object half stays on this thread and rides the job as data');
   // the publish stays atomic and main-side: built.set is still the
   // last act of the build, after the GL uploads and the collider
-  const bp = world.slice(world.indexOf('async function buildPixel'), world.indexOf('function restrideTerrain'));
+  // HOST-SPLIT 2: buildPixel and its door stand in world.js, the build they call (buildPixelNow) in src/scenes/pixelBuild.js
+  // (AUDIT HOST-SPLIT 2, the second read: spliced in where the host constructs it, as it stood - appended at the end,
+  // both lastIndexOf landed in the module and nothing world.js lays after the build was compared)
+  const door = world.slice(world.indexOf('async function buildPixel'), world.indexOf('function restrideTerrain'));
+  const seam = door.indexOf('  const { buildPixelNow } = createPixelBuild(');
+  assert.ok(seam > 0, 'the build is constructed between its door and the restride');
+  const bp = door.slice(0, seam) + hostText('src/scenes/pixelBuild.js') + door.slice(seam);
   assert.ok(bp.lastIndexOf('built.set(key,') > bp.lastIndexOf('collider.addMesh'), 'publish follows the collider');
   assert.ok(bp.includes('renderer.createTerrainSurface(carved?.positions ?? positions, carved?.normals ?? normals'), 'GL consumes the reply on this thread');   // PIN MOVED (WATER-NEXT 2): the reply's grid, carved under the water for the eye - AUDIT WATER-NEXT P1: carved by the kernel, on the worker
   // AUDIT EV F-SIM1: one build per pixel, ever in flight - the cache
@@ -289,7 +296,7 @@ test('EV7: the world host rides the client and the pinned build contracts stand'
   // until its turn comes.
   assert.ok(bp.includes('if (wantStride !== entry._stride) {'),
     'a crossing during the round trip cannot leave a wrong-class chunk');
-  assert.ok(bp.includes('if (wantStride === 1) restridePending.set(key, entry);'), 'the dear direction queues');
+  assert.ok(bp.includes('if (wantStride === 1) host.restridePending.set(key, entry);'), 'the dear direction queues');
   assert.ok(bp.includes('else restrideTerrain(entry, wantStride);'), 'and the cheap one settles at once');
   // AUDIT EV F-SIM6: the probe's idle truth covers teleport builds too
   assert.ok(world.includes('queue.length === 0 && !building && inFlight.size === 0'),

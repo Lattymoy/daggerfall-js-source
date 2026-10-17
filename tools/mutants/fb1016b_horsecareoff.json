@@ -1,0 +1,67 @@
+[
+  {
+    "name": "HORSE-CARE-OFF-off-lists-no-horse",
+    "file": "src/systems/upkeep/upkeepRuntime.js",
+    "old": "      if (!care) { out.horses.push(own); return; }",
+    "new": "      if (!care) return;",
+    "tests": [
+      "test/systems/horse/fb1016b_horsecareoff.test.js"
+    ],
+    "note": "The report's model: Off (and the classic skin) built no list of horses."
+  },
+  {
+    "name": "HORSE-CARE-OFF-the-pages-loop-under-a-tier",
+    "file": "src/ui/holdingsPages.js",
+    "old": "    for (const h of care ? care.horses.filter((x) => !x.ridden) : []) {",
+    "new": "    for (const h of care?.horseCare ? care.horses.filter((x) => !x.ridden) : []) {",
+    "tests": [
+      "test/systems/horse/fb1016b_horsecareoff.test.js"
+    ],
+    "note": "The report's page: the other horses drawn only under a tier."
+  },
+  {
+    "name": "HORSE-CARE-OFF-the-off-card-without-its-choice",
+    "file": "src/ui/holdingsPages.js",
+    "old": "      if (!cared) extra[0].append(rideButton(el, h, act));",
+    "new": "",
+    "tests": [
+      "test/systems/horse/fb1016b_horsecareoff.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-CARE-OFF-the-care-drawn-off",
+    "file": "src/ui/holdingsPages.js",
+    "old": "      const cared = !!care.horseCare;",
+    "new": "      const cared = true;",
+    "tests": [
+      "test/systems/horse/fb1016b_horsecareoff.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-CARE-OFF-the-off-horses-own-look-dropped",
+    "file": "src/systems/upkeep/upkeepRuntime.js",
+    "old": "      const own = { i, ridden: i === 0, name: i === 0 && name ? name : null, look: describeHorseLook(horseLookOf(h)) };",
+    "new": "      const own = { i, ridden: i === 0, name: i === 0 && name ? name : null, look: describeHorseLook(horseLookOf(its[0])) };",
+    "tests": [
+      "test/systems/horse/fb1016b_horsecareoff.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-CARE-OFF-the-choice-of-another-horse",
+    "file": "src/ui/holdingsPages.js",
+    "old": "  ride.onclick = () => act('ride', h.i);",
+    "new": "  ride.onclick = () => act('ride', 1);",
+    "tests": [
+      "test/systems/horse/fb1016b_horsecareoff.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-CARE-OFF-the-ridden-one-counted-another",
+    "file": "src/systems/upkeep/upkeepRuntime.js",
+    "old": "      const own = { i, ridden: i === 0, name: i === 0 && name ? name : null, look: describeHorseLook(horseLookOf(h)) };",
+    "new": "      const own = { i, ridden: i === -1, name: i === 0 && name ? name : null, look: describeHorseLook(horseLookOf(h)) };",
+    "tests": [
+      "test/systems/horse/fb1016b_horsecareoff.test.js"
+    ]
+  }
+]

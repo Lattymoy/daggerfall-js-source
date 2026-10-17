@@ -21,6 +21,7 @@ import {
 } from '../../src/world/dungeon/dungeonLights.js';
 import { GLOBAL_SCALE } from '../../src/world/meshReader.js';
 import { StreamingWorldState, worldCoordToMapPixel } from '../../src/world/streamingWorld.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 import {
   createSceneCache, cacheScene, restoreCachedScene, worldSceneName, LOOT_CONTAINER_TYPES,
 } from '../../src/systems/sceneCache.js';
@@ -137,7 +138,7 @@ test('A10: the ship arm is a HAND-OFF between two world scenes (:382-388, :393-3
 });
 
 test('A10: the host half - cache before the teleport, restore after, in native coordinates', () => {
-  const w = read('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   const i = w.indexOf('async function boardOrDisembark()');
   assert.ok(i > 0);
   const arm = w.slice(i, w.indexOf('setTransportModeHere(t.mode);', i));
@@ -168,7 +169,7 @@ test('A10: the to/from-ship exception on the map-pixel clear still stands (Playe
   // The pair above is only safe because this exception keeps the two
   // scenes out of the world-move clear - DFU's own "ship is special
   // case, cache will not be cleared".
-  const w = read('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /if \(!toOrFromShip && playerEntity\.sceneCache\) \{/);
 });
 
@@ -297,7 +298,7 @@ test('ROAD-Ar (R2): the compensation restore is an ENCODING here, not a plan fie
   }
   // The host half: setRecallAnchor takes the compensation OUT and
   // anchorLanding puts the live one back, so the two are inverse.
-  const world = read('src/scenes/world.js');
+  const world = hostText('src/scenes/world.js');
   // AUDIT LANDFORMS C1 MOVED THIS PIN: compensation-free and in DFU's frame - groundFrameHeight takes the Landforms
   // row's lift off, and anchorLanding's restandHeight puts it back on
   assert.match(world, /y: groundFrameHeight\(pf\[1\] - state\.compensation\[1\], pf\[0\], pf\[2\]\),/,
@@ -330,7 +331,7 @@ test('A10: where the plan LANDS, and who owns the arrival restore (:622-655, :24
   // inside and repositioned outside restores the EXTERIOR scene.
   // Only the caller knows where the player ended up.
   for (const p of [ext, bld, dng]) assert.equal('restoreScene' in p, false);
-  const w = read('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /if \(!landed\) restoreExteriorScene\(a\.pixel\);/,
     'the host answers it from the LANDING, which is DFU\'s own condition');
 });
@@ -341,7 +342,7 @@ test('A10: no anchor is no plan - the caller raises 4001 (:268-275)', () => {
 });
 
 test('A10: the host half - the refusal is GONE and every arm is wired', () => {
-  const w = read('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.equal(/cross-host recall pends/.test(w), false,
     'the INTERIM refusal this slice closes must be gone from the site, not merely bypassed');
   // SetAnchor reads the mounted mode's half rather than assuming outdoors
@@ -367,7 +368,7 @@ test('A10: the anchor landing is native-coordinate for everything but a dungeon'
   // interior's is the exterior's (P8's unified frame) and the
   // floating origin shifts it, so it must land off natives - which is
   // why anchorContext hands back no local position for a building.
-  const w = read('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /if \(a\.insideDungeon && a\.local\) return \[\.\.\.a\.local\];/);
   assert.match(w, /state\.localFromWorld\(a\.nativeX, a\.nativeZ\)/);
   const wm = read('src/scenes/worldModes.js');
@@ -404,7 +405,7 @@ test('A10: the dungeon context routes Recall UP when the streaming host mounted 
   const wm = read('src/scenes/worldModes.js');
   assert.match(wm, /onTeleport: host\.onTeleport \? \(\) => host\.onTeleport\(\) : null,/,
     'worldModes hands the outer host\'s prompt down to the context it mounts');
-  const w = read('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /onTeleport: \(\) => teleportPrompt\(\),/, 'and the outer host supplies it - twice, engine and modes');
 });
 
@@ -455,7 +456,7 @@ test('A10 CLOSEOUT: PlayerGPS freezes its map pixel underground (StreamingWorld.
   // not just `recallToAnchor`, since the region/paperdoll read, the
   // footstep climate, the loose-pile keys and the quest location
   // lookup all go through it.
-  const w2 = read('src/scenes/world.js');
+  const w2 = hostText('src/scenes/world.js');
   const fn = w2.slice(w2.indexOf('function playerTravelPixel() {'));
   const body = fn.slice(0, fn.indexOf('\n  }'));
   assert.match(body, /if \(\(modes\?\.mode \?\? 'exterior'\) === 'dungeon'\) return \{ x: state\.current\.x, y: state\.current\.y \};/,

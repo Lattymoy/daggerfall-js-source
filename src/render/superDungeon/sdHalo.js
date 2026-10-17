@@ -83,7 +83,7 @@ export class SdHaloRenderer {
     const gl = this.gl, U = this.u, d = this.data;
     const n = Math.min(halos?.length ?? 0, SD_HALO_MAX);
     this.drawn = 0;
-    if (!n) return false;
+    if (!n || !this.prog) return false;   // EG-LOOK: a destroyed pass draws nothing
     let o = 0;
     for (let i = 0; i < n; i++) {
       const h = halos[i];
@@ -106,5 +106,13 @@ export class SdHaloRenderer {
     gl.depthMask(true); gl.disable(gl.BLEND); gl.enable(gl.CULL_FACE);
     this.drawn = n;
     return true;
+  }
+  /** EG-LOOK (Elite-Gates-Look.md section 29 - EVERY ALLOCATION HAS AN OWNER): every GL object it made, freed once (the
+   *  Spire's look releases its halos at the breach's end - scenes/eliteGates/egLookDraw.js). */
+  destroy() {
+    const gl = this.gl;
+    if (!this.prog) return;
+    gl.deleteBuffer(this.vbo); gl.deleteVertexArray(this.vao); gl.deleteProgram(this.prog);
+    this.prog = /** @type {any} */ (null);
   }
 }

@@ -2,11 +2,12 @@
   {
     "name": "SD9D-set-out-of-the-record",
     "file": "src/systems/sigil/sigil.js",
-    "old": "'orcsbane', 'coilscale', 'numidium']);",
-    "new": "'orcsbane', 'coilscale']);",
+    "old": "'orcsbane', 'coilscale', 'numidium', 'panoply']);",
+    "new": "'orcsbane', 'coilscale', 'panoply']);",
     "tests": [
       "test/systems/sd9d_numidium.test.js"
-    ]
+    ],
+    "note": "EG15 (PIN MOVED): the Battlemage's Panoply after the Brass - re-aimed by content."
   },
   {
     "name": "SD9D-a-world-set",
@@ -164,11 +165,12 @@
   {
     "name": "SD9D-not-a-record",
     "file": "src/systems/aetheric.js",
-    "old": "...SERPENT_SET_PIECES, ...NUMIDIUM_SET_PIECES]);",
-    "new": "...SERPENT_SET_PIECES]);",
+    "old": "...SERPENT_SET_PIECES, ...NUMIDIUM_SET_PIECES, ...PANOPLY_SET_PIECES]);",
+    "new": "...SERPENT_SET_PIECES, ...PANOPLY_SET_PIECES]);",
     "tests": [
       "test/systems/sd9d_numidium.test.js"
-    ]
+    ],
+    "note": "EG15 (PIN MOVED): the Battlemage's Panoply's records after the Brass's - re-aimed by content."
   },
   {
     "name": "SD9D-the-chance",
@@ -326,8 +328,8 @@
   {
     "name": "SD9D-a-blows-alone",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  if (saved && _s.hourHeal > 0) {\n    const share = _s.hourHeal;\n    _s.hourHeal = 0;\n    const max = entity?.maxHealth;\n    const healed = max > 0 ? healMine(entity, (max * share) / 100) : 0;\n    say(healed > 0 ? `The Hour Turns! ${healed} health returns.` : 'The Hour Turns!');\n  }\n  if (!blow) return;   // L3: a fall, a poison's tick, a spell's burn - no foe's blow, no Spite and no Wrath\n",
-    "new": "  if (!blow) return;   // L3: a fall, a poison's tick, a spell's burn - no foe's blow, no Spite and no Wrath\n  if (saved && _s.hourHeal > 0) {\n    const share = _s.hourHeal;\n    _s.hourHeal = 0;\n    const max = entity?.maxHealth;\n    const healed = max > 0 ? healMine(entity, (max * share) / 100) : 0;\n    say(healed > 0 ? `The Hour Turns! ${healed} health returns.` : 'The Hour Turns!');\n  }\n",
+    "old": "  if (saved && _s.hourHeal > 0) {\n    const share = _s.hourHeal;\n    _s.hourHeal = 0;\n    const max = entity?.maxHealth;\n    const healed = max > 0 ? healMine(entity, (max * share) / 100) : 0;\n    say(healed > 0 ? `The Hour Turns! ${healed} health returns.` : 'The Hour Turns!');\n  }\n  if (!blow && spire) { shed(entity, before, after, saved); reprieve(entity, before, after, saved); return; }   // AUDIT EG V (L8-1): a Spire foe's blow - its two saves\n  if (!blow) return;   // L3: a fall, a poison's tick, a spell's burn - no foe's blow, no Spite and no Wrath\n",
+    "new": "  if (!blow) return;   // L3: a fall, a poison's tick, a spell's burn - no foe's blow, no Spite and no Wrath\n  if (saved && _s.hourHeal > 0) {\n    const share = _s.hourHeal;\n    _s.hourHeal = 0;\n    const max = entity?.maxHealth;\n    const healed = max > 0 ? healMine(entity, (max * share) / 100) : 0;\n    say(healed > 0 ? `The Hour Turns! ${healed} health returns.` : 'The Hour Turns!');\n  }\n  if (!blow && spire) { shed(entity, before, after, saved); reprieve(entity, before, after, saved); return; }   // AUDIT EG V (L8-1): a Spire foe's blow - its two saves\n",
     "tests": [
       "test/systems/sd9d_numidium.test.js"
     ]
@@ -362,11 +364,12 @@
   {
     "name": "SD9D-no-chip",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  if (t.get('numidium')?.[2] && st.hourRecoverLeft) out.push({ key: 'hour', set: 'numidium', name: 'The Hour Turns', text: time(st.hourRecoverLeft), state: 'recovering' });\n",
+    "old": "  if (t.get('numidium')?.[2] && (st.hourRecoverLeft || held.has('hour'))) out.push({ key: 'hour', set: 'numidium', name: 'The Hour Turns', text: wait('hour', st.hourRecoverLeft), state: 'recovering' });\n",
     "new": "",
     "tests": [
       "test/systems/sd9d_numidium.test.js"
-    ]
+    ],
+    "note": "EG15 (PIN MOVED): the chip reads \"Redoubt\" while the Spire holds the save - re-aimed by content."
   },
   {
     "name": "SD9D-the-winding-unread",

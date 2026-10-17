@@ -25,9 +25,10 @@ import { FarRingRenderer } from '../../src/render/farRing.js';
 import { FEATURES, featureForControl } from '../../src/systems/features.js';
 import { setPref, PREF_DEFAULTS } from '../../src/systems/uiPrefs.js';
 import { setUiSkin, uiSkin } from '../../src/systems/uiSkin.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const read = (p) => readFileSync(join(root, p), 'utf8');
+const read = (p) => hostText(p);
 const near = (a, b, eps = 1e-6) => Math.abs(a - b) <= eps;
 
 /** A recording fake GL: every call logged, uniform locations are their
@@ -402,8 +403,8 @@ test('EL1: syncLightingLane is the host\'s one call, the flame colour rides the 
     assert.ok(!/nearestLights\([^)]*, 16,/.test(s), `${f}: no literal sixteen`);
     assert.match(s, /nearestLights\([^)]*renderer\.maxPointLights/, `${f}: the installed cap`);
   }
-  assert.match(read('src/scenes/world.js'), /new FarRingRenderer\(renderer\.gl, \{ lane: renderer\.lightingLane \}\)/, 'the ring takes the same lane');
-  assert.match(read('src/scenes/world.js'), /exposure: renderer\.exposure/, 'and the same exposure');
+  assert.match(hostText('src/scenes/world.js'), /new FarRingRenderer\(renderer\.gl, \{ lane: renderer\.lightingLane \}\)/, 'the ring takes the same lane');
+  assert.match(hostText('src/scenes/world.js'), /exposure: renderer\.exposure/, 'and the same exposure');
   assert.match(read('src/scenes/worldModes.js'), /lanternColor\(!!renderer\.lightingLane, new Float32Array\(DUNGEON_LIGHT_COLOR\)\)/);
   assert.ok(!/lanternColor/.test(read('src/scenes/interior.js')), 'the interior\'s lights carry their own colours (interiorLightProperties) - no flame over them');
 });

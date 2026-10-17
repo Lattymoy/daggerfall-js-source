@@ -25,7 +25,7 @@
 // (world/superDungeon/sdSteps.js castBackTo - nothing else moves a body so), so no host is asked.
 import { SD_ARENA, SD_THRESHOLD, SD_REALM_ORIGIN, realmToDungeon, dungeonToRealm } from '../../net/superDungeon/sdBrain.js';
 import { SD_WAY_BACK_Z } from '../../world/superDungeon/sdRealm.js';
-import { SD_CHECKPOINTS, SD_VOID_Y } from '../../world/superDungeon/sdSteps.js';
+import { SD_COURSE, SD_VOID_Y } from '../../world/superDungeon/sdSteps.js';
 import { SD_BLOW_BY_ID, SD_BLOWS, SD_BODY, SD_REM, SD_ECHO, SD_ARENA_SLACK, stompFrontAt, handAngleAt, inArena } from '../../net/superDungeon/sdRemnant.js';
 import { sdBodyAt } from '../../net/superDungeon/sdFightLink.js';
 import { GateFxRenderer, FX_BURST_MS, FX_BURSTS_MAX, FX_LIGHT_MS } from '../../render/gate/gateFx.js';
@@ -59,13 +59,15 @@ const EXHALE_FROM = Object.freeze(realmToDungeon(0, SD_EXHALE_AT.up, SD_WAY_BACK
 const EXHALE_FLOOR = realmToDungeon(SD_THRESHOLD.x, 0, SD_THRESHOLD.z)[1];
 const EXHALE_EDGE = Object.freeze([realmToDungeon(SD_THRESHOLD.x, 0, SD_THRESHOLD.z)[0], realmToDungeon(SD_THRESHOLD.x, 0, SD_THRESHOLD.z)[2], SD_THRESHOLD.r]);
 /** Each checkpoint's island as a burst's floor's edge ([x, z, radius], the dungeon's frame): where the rewind's sparks
- *  rest, and past which they rise from under its rim. */
-const SD_REWIND_EDGES = Object.freeze(SD_CHECKPOINTS.map((C) => { const at = realmToDungeon(C.x, C.y, C.z); return Object.freeze([at[0], at[2], C.r]); }));
+ *  rest, and past which they rise from under its rim. EG-H3 (EG4): a course's own (the Hour's below). */
+export const sdRewindEdgesOf = (course) => Object.freeze(course.checkpoints.map((C) => { const at = realmToDungeon(C.x, C.y, C.z); return Object.freeze([at[0], at[2], C.r]); }));
+const SD_REWIND_EDGES = sdRewindEdgesOf(SD_COURSE);
 /** SD-LOOK S9: whether my feet, realm y `wasY` the frame before and realm (x, y, z) now, were cast back - fallen to the void's
- *  floor and standing on a checkpoint's landing: its index, else -1. Pure. */
-export function sdCastBackSeen(wasY, x, y, z) {
+ *  floor and standing on a checkpoint's landing (EG-H3: of `course`, the Hour's by default): its index, else -1. Pure. */
+export function sdCastBackSeen(wasY, x, y, z, course = SD_COURSE) {
   if (!(wasY < SD_VOID_Y + SD_REWIND_SEEN.fell)) return -1;
-  for (let k = 0; k < SD_CHECKPOINTS.length; k++) { const c = SD_CHECKPOINTS[k]; if (Math.abs(x - c.x) < SD_REWIND_SEEN.landed && Math.abs(z - c.z) < SD_REWIND_SEEN.landed && Math.abs(y - c.y) < SD_REWIND_SEEN.landed) return k; }
+  const C = course.checkpoints;
+  for (let k = 0; k < C.length; k++) { const c = C[k]; if (Math.abs(x - c.x) < SD_REWIND_SEEN.landed && Math.abs(z - c.z) < SD_REWIND_SEEN.landed && Math.abs(y - c.y) < SD_REWIND_SEEN.landed) return k; }
   return -1;
 }
 /** Their colours (linear rgb): the brass, its gold and silver Echoes, the Mantella's green, the Reset's white-green, the
@@ -109,10 +111,12 @@ export const SD_HAND_FLASH_OUT = 1.2;
  * The Hour's blows seen on this screen. `link` the fight's (net/superDungeon/sdFightLink.js), `feet()` mine in the dungeon's frame
  * (null out of the Hour), `shake(k)` the camera's door, `arrived()` (SD-LOOK S6) told as my feet first stand on the
  * Threshold - the way back's ring turns once - and `ready()` whether the arrival can be seen yet (AUDIT SD V S5: the veil
- * opened - the exhale was spent under it).
- * @param {{ link: any, feet?: () => (number[] | null), shake?: (k: number) => void, arrived?: () => void, ready?: () => boolean }} deps
+ * opened - the exhale was spent under it). EG-H3 (EG4): `course` the course whose checkpoints the rewind reads (the Hour's
+ * by default - net/eliteGates/egSpanLaw.js courseOf's record).
+ * @param {{ link: any, feet?: () => (number[] | null), shake?: (k: number) => void, arrived?: () => void, ready?: () => boolean, course?: any }} deps
  */
-export function createSdFx({ link, feet = () => null, shake = () => {}, arrived = () => {}, ready = () => true }) {
+export function createSdFx({ link, feet = () => null, shake = () => {}, arrived = () => {}, ready = () => true, course = SD_COURSE }) {
+  const rewindEdges = course === SD_COURSE ? SD_REWIND_EDGES : sdRewindEdgesOf(course);
   /** @type {Array<{ at: number[], at0: number, t: number, kind: any, color: ReadonlyArray<number>, floor: number, edge: ReadonlyArray<number> }>} */
   const bursts = [];
   let k = null, pass = null, passTried = false, flashAt = -Infinity, wasY = NaN, wasAt = -Infinity, here = false;
@@ -139,7 +143,7 @@ export function createSdFx({ link, feet = () => null, shake = () => {}, arrived 
   };
   /** SD-LOOK S9: THE REWIND where my feet (the dungeon's frame) landed on checkpoint `c` at `t` - its sparks gathering over
    *  my feet, resting on its stone and falling past its rim. */
-  const rewound = (f, c, t) => { add([f[0], f[1] + SD_REWIND_SEEN.chest, f[2]], t, SD_FX_REWIND, SD_FX_COLOR.gold, f[1]).edge = SD_REWIND_EDGES[c]; };
+  const rewound = (f, c, t) => { add([f[0], f[1] + SD_REWIND_SEEN.chest, f[2]], t, SD_FX_REWIND, SD_FX_COLOR.gold, f[1]).edge = rewindEdges[c]; };
   /** SD-LOOK S6: THE EXHALE at `t` - brass sparks from the way back's face, resting on the Threshold and falling past it. */
   const exhaled = (t) => { add(EXHALE_FROM, t, SD_FX_EXHALE, SD_FX_COLOR.brass, EXHALE_FLOOR).edge = EXHALE_EDGE; };
   /** My feet in the arena's frame, or null. */
@@ -210,7 +214,7 @@ export function createSdFx({ link, feet = () => null, shake = () => {}, arrived 
       // net/superDungeon/sdBrain.js dungeonToRealm's own sum: a frame makes nothing)
       const f = feet();
       if (f) {
-        const rx = f[0] - SD_REALM_ORIGIN[0], ry = f[1] - SD_REALM_ORIGIN[1], rz = f[2] - SD_REALM_ORIGIN[2], c = t - wasAt < SD_REWIND_SEEN.gap ? sdCastBackSeen(wasY, rx, ry, rz) : -1;   // the frame before, and only just before
+        const rx = f[0] - SD_REALM_ORIGIN[0], ry = f[1] - SD_REALM_ORIGIN[1], rz = f[2] - SD_REALM_ORIGIN[2], c = t - wasAt < SD_REWIND_SEEN.gap ? sdCastBackSeen(wasY, rx, ry, rz, course) : -1;   // the frame before, and only just before
         if (c >= 0) rewound(f, c, t);
         // SD-LOOK S6: my first frame in the Hour, on the Threshold - the way back exhales (once an arrival, never a late
         // frame: `here` holds until I leave). AUDIT SD V (S5): once the arrival can be seen - the veil open - never under it
@@ -319,7 +323,7 @@ export function createSdFx({ link, feet = () => null, shake = () => {}, arrived 
     away() { here = false; wasY = NaN; },
     /** SD-LOOK S9 (the lab, src/tools/abyssLab.js): the rewind on checkpoint `c` at `t` (the fight's clock), my feet on its
      *  landing. */
-    rewind(c, t) { const C = SD_CHECKPOINTS[c]; if (C) rewound(realmToDungeon(C.x, C.y, C.z), c, t); },
+    rewind(c, t) { const C = course.checkpoints[c]; if (C) rewound(realmToDungeon(C.x, C.y, C.z), c, t); },
     /** SD-LOOK S6 (the lab): the way back's exhale at `t` (the fight's clock), as an arrival breathes it. */
     exhale(t) { exhaled(t); },
   };

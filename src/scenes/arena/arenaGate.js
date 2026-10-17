@@ -51,15 +51,16 @@ export const RECRUITER_BANNER = Object.freeze({ redRecruiter: 'red', blueRecruit
  * board's `me.banner`, `left`, `leftSeason`) and the realm's season and standing: join when the account may (free; the
  * other banner a season after quitting it, the one quit at once - server-account/src/arena.js arenaTeam's own law, said
  * here so the choice never offers what the service will refuse), quit (asked again - `quitAsk`), the window, leave; a
- * guest offered no banner, a line saying why; the realm's roll not yet in, a line and no join. Pure.
- * @param {{ banner: 'red'|'blue', board: any, guest?: boolean, window?: boolean }} o
+ * guest offered no banner, a line saying why; the realm's roll not yet in, a line and no join (`wait` - the line, when the
+ * online lane's doors are shut: the seat elsewhere, the server gone). Pure.
+ * @param {{ banner: 'red'|'blue', board: any, guest?: boolean, window?: boolean, wait?: string|null }} o
  */
-export function recruiterChoiceOnline({ banner, board, guest = false, window = true }) {
+export function recruiterChoiceOnline({ banner, board, guest = false, window = true, wait = null }) {
   const R = ARENA_TEXT.recruiter, T = ARENA_TEXT.teams, O = ARENA_TEXT.online;
   const other = banner === 'red' ? 'blue' : 'red';
   const lines = [...R.greet[banner], ''];
   let why = null;
-  if (!board) { lines.push(O.rollWait); why = 'wait'; }
+  if (!board) { lines.push(wait ?? O.rollWait); why = 'wait'; }   // ARENA-WAIT (AUDIT A4): `wait` a shut door's own words
   else {
     const me = board.me ?? {}, st = board.team?.standings ?? { red: 0, blue: 0 };
     lines.push(`${O.seasonLine(board.season, board.day)}.`);
@@ -106,8 +107,11 @@ export function createArenaGate(deps) {
   const league = () => (P.arenaLeague = rollLeague(P.arenaLeague, gm()));
   const choice = (ch, act) => deps.showOverlay(new ChoiceWindow({ lines: ch.lines, options: ch.options.map((o) => ({ code: o.code, label: o.label ?? undefined, action: () => act(o.act, o) })) }));
   const liveHour = () => deps.liveHour?.() ?? null;
-  /** ARENA4: the arena online while it is live, else null. */
-  const online = () => { const o = deps.online?.() ?? null; return o?.live?.() ? o : null; };
+  /** ARENA4: the arena online while it is live, else null. FIELD BUGS 2026-10-16b ARENA-WAIT: and while the online lane
+   *  waits for the relay's first word (scenes/arena/arenaOnline.js waiting) - its climb, board and verdicts not yet in, so every
+   *  door here takes its online arm and waits, never the save's ladder, league or house. AUDIT (A3/A4): and while its doors
+   *  are shut for a seat given up or a server gone - on the online lane the save's arena runs for a relay's no alone. */
+  const online = () => { const o = deps.online?.() ?? null; return o?.live?.() || o?.waiting?.() ? o : null; };
   /** Whether the hour's bout has had the word - the book on it shut. AUDIT PRE-MERGE 1003 O3: online, also once this
    *  screen has HEARD its fight begin or its verdict (scenes/arena/arenaOnline.js exhibitionBegun): the host's `begun` reads the
    *  mirror standing here, which goes home after the healers or as the player steps indoors - and the book, open 20 game
@@ -151,7 +155,7 @@ export function createArenaGate(deps) {
     const name = ARENA_TEXT.teams.the[banner];
     const board = on.board?.() ?? null;
     if (!board) on.climb?.();   // the roll asked now - the next word reads it
-    const ch = recruiterChoiceOnline({ banner, board, guest: !!on.guest?.(), window: typeof openWindow === 'function' });
+    const ch = recruiterChoiceOnline({ banner, board, guest: !!on.guest?.(), window: typeof openWindow === 'function', wait: on.shutText?.(ARENA_TEXT.online.rollWait) ?? null });
     choice(ch, (a) => {
       if (a === 'join') void Promise.resolve(on.team(banner)).then((r) => { if (r?.ok) { say(ARENA_TEXT.recruiter.joined(name)); openWindow?.('team'); } });
       else if (a === 'quit') {
@@ -179,7 +183,8 @@ export function createArenaGate(deps) {
     if (!climb) {
       const H = ARENA_TEXT.herald;
       const next = ch.next ? H.ladderNext(ch.next.tierName, ch.next.label) : null;
-      ch.lines = ch.lines.map((l) => (l === next ? ARENA_TEXT.online.climbWait : l)).filter((l) => l !== H.noFight);
+      const wait = on.shutText?.(ARENA_TEXT.online.climbWait) ?? ARENA_TEXT.online.climbWait;   // ARENA-WAIT (AUDIT A3/A4): the seat elsewhere, the server gone
+      ch.lines = ch.lines.map((l) => (l === next ? wait : l)).filter((l) => l !== H.noFight);
       ch.options = ch.options.filter((o) => o.act !== 'fight');
       ch.next = null;
     }
@@ -193,7 +198,7 @@ export function createArenaGate(deps) {
   function hall() {
     const on = online();
     if (!on) return false;
-    const show = (b) => deps.showOverlay(new ActionTextBox(b ? hallLinesOnline(b, P.name ?? '') : [ARENA_TEXT.undercroft.hallTitle, '', ARENA_TEXT.online.rollWait]));
+    const show = (b) => deps.showOverlay(new ActionTextBox(b ? hallLinesOnline(b, P.name ?? '') : [ARENA_TEXT.undercroft.hallTitle, '', on.shutText?.(ARENA_TEXT.online.rollWait) ?? ARENA_TEXT.online.rollWait]));
     const b = on.board?.() ?? null;
     if (b) show(b);
     else void Promise.resolve(on.fetchBoard?.() ?? null).then(show, () => show(null));
@@ -225,7 +230,8 @@ export function createArenaGate(deps) {
   /** Every wager that can be settled now, settled (systems/arena/arenaBook.js settleBook) - its winnings owed at the stall. */
   function settle() {
     const on = online();
-    if (!on?.exhibitions?.()) { setBook(settleBook(league().book, gm(), { liveHour: liveHour() }).book); return; }
+    if (!on) { setBook(settleBook(league().book, gm(), { liveHour: liveHour() }).book); return; }
+    if (!on.exhibitions?.()) return;   // ARENA-WAIT: the relay's verdicts not yet askable - nothing settled by the house's record
     // ARENA4b: ONLINE THE RELAY'S VERDICT SETTLES (Arena.md 2: the relay runs the exhibition, every client sees one bout).
     // A wager whose bout this screen saw to its verdict is settled by it (verdictSeen - the mirror's, the relay's); one
     // whose hour is out and whose verdict was not seen here is settled by the relay's, asked of its room
@@ -336,7 +342,7 @@ export function createArenaGate(deps) {
       if (seen) return { ok: false, text: seen };
       const on = online();
       const onLadder = on ? on.climb?.() ?? null : P.arenaLadder;   // ARENA4: online the climb is the account's
-      if (kind === 'fight' && on && !onLadder) return { ok: false, text: ARENA_TEXT.online.climbWait };   // ARENA4b: and waited for
+      if (kind === 'fight' && on && !onLadder) return { ok: false, text: on.shutText?.(ARENA_TEXT.online.climbWait) ?? ARENA_TEXT.online.climbWait };   // ARENA4b: and waited for (ARENA-WAIT AUDIT: a shut door says why)
       if (kind === 'fight' && !nextLadderBout(onLadder)) return { ok: false, text: ARENA_TEXT.herald.ladderDone };
       if (kind === 'fight' && (P.health ?? 0) / Math.max(1, P.maxHealth ?? 1) < FIGHT_HEALTH_MIN) return { ok: false, text: ARENA_TEXT.window.whyHurt };
       closeArenaDoor();

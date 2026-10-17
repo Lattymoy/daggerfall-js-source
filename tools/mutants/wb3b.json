@@ -190,27 +190,27 @@
   },
   {
     "name": "WB3b-the-map-in-the-court",
-    "file": "src/scenes/dungeonContext.js",
-    "old": "      if (isGateArena(dfLocation)) { hudText.add(COURT_TEXT.noMap); return; }",
-    "new": "      void COURT_TEXT;",
+    "file": "src/systems/madeLevel.js",
+    "old": "court: row({ save: 'refused', rest: 'refused', automap: 'off', mark",
+    "new": "court: row({ save: 'refused', rest: 'refused', automap: null, mark",
     "tests": [
       "test/net/gate/wb3b_gate_arena.test.js"
     ]
   },
   {
     "name": "WB3b-rest-in-the-court",
-    "file": "src/scenes/dungeonContext.js",
-    "old": "      if (isGateArena(dfLocation)) { hudText.add(COURT_TEXT.noRest); return; }",
-    "new": "      void 0;",
+    "file": "src/systems/madeLevel.js",
+    "old": "court: row({ save: 'refused', rest: 'refused',",
+    "new": "court: row({ save: 'refused', rest: null,",
     "tests": [
       "test/net/gate/wb3b_gate_arena.test.js"
     ]
   },
   {
     "name": "WB3b-a-save-in-the-court",
-    "file": "src/scenes/dungeonContext.js",
-    "old": "      if (isGateArena(dfLocation)) { if (!quiet) hudText.add(COURT_TEXT.noSave); return false; }",
-    "new": "      void 0;",
+    "file": "src/systems/madeLevel.js",
+    "old": "court: row({ save: 'refused',",
+    "new": "court: row({ save: null,",
     "tests": [
       "test/net/gate/wb3b_gate_arena.test.js"
     ]
@@ -253,9 +253,9 @@
   },
   {
     "name": "WB3b-a-mark-in-the-court",
-    "file": "src/scenes/world.js",
-    "old": "    if (modes?.gateArenaDay?.() != null) { setMidScreenText(COURT_TEXT.noMark); return; }",
-    "new": "    void COURT_TEXT;",
+    "file": "src/systems/madeLevel.js",
+    "old": "automap: 'off', mark: 'refused', portalStone",
+    "new": "automap: 'off', mark: null, portalStone",
     "tests": [
       "test/net/gate/wb3b_gate_arena.test.js"
     ]

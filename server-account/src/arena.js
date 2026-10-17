@@ -601,9 +601,11 @@ export async function arenaRecordsOf({ db }, me) {
 }
 
 // ── THE BOARD ────────────────────────────────────────────────────────────────────────────────
-/** The ranked rows cut to the top and the caller's own pinned under them when it is not among them. */
-function topWithMe(rows, me, top = ARENA_BOARD_TOP) {
-  rows.forEach((r, i) => { r.rank = i + 1; r.you = r.player === me; });
+/** The ranked rows cut to the top and the caller's own pinned under them when it is not among them. EG-E2: exported for
+ *  the Elite Breach's boards (egHonours.js egBoardOf), and `me` may be a test of a row - a Descent row is a company,
+ *  the caller's whichever names them - where every other board's is the caller's id. */
+export function topWithMe(rows, me, top = ARENA_BOARD_TOP) {
+  rows.forEach((r, i) => { r.rank = i + 1; r.you = typeof me === 'function' ? !!me(r) : r.player === me; });
   const shown = rows.slice(0, top);
   const mine = rows.find((r) => r.you) ?? null;
   return { rows: shown, pinned: mine && !shown.includes(mine) ? mine : null, total: rows.length };

@@ -33,6 +33,7 @@ import { HEIGHTMAP_DIMENSION, TERRAIN_SIZE } from '../../src/world/terrain/terra
 import { DECOR_STATIONS, DECOR_STATION_FEES, DECOR_STATION_NAMES } from '../../src/net/decorLaw.js';
 import { sharedClassicMinutes } from '../../src/net/wire.js';
 import { utcDay } from '../../src/net/marksLaw.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const noWait = () => Promise.resolve();
@@ -407,7 +408,7 @@ test('PROF2 DONE WHEN: veins placed on rock fields; signatures by kingdom - a co
 // ─── THE HOSTS ───────────────────────────────────────────────────────
 
 test('PROF2 hosts: the streaming world stands every kind through the one host, its rock pieces carried on the pixel; the dungeon\'s veins through its own doors; the forge at a smith\'s or a home; the Prospector\'s compass on both skins', () => {
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /gatherHost = createGatherHost\(\{\n\s*book: profBook, hud, kinds: \[herbKind\(\{ book: profBook \}\), mineKind\(\{ book: profBook, lodes: motherlodeBook, marks: marksBook \}\),[^\n]*\n\s*treeKind\(\{ book: profBook, renderer, flatBatchAabb, getTexture, billboardSize, uploadRecord \}\),[^\n]*\n\s*huntKind\(\{ book: profBook, bodies: \(\) => huntBodies\(\), openLoot: openHuntLoot \}\),/);   // PROF4: Logging's trees, the third; PROF7: Hunting's bodies, the fourth; PROF8's casts after them; PIN MOVED (PROF2b): Mining's with the Motherlodes
   assert.match(w, /if \(rockPick\(m\.pick\)\) \{ const foot = rockFootprint\(cpu\.positions, cpu\.indices, m\.matrix, samples\); if \(foot\) pixelRocks\.push\(foot\); \}/, 'a rock piece that stood - after the road\'s clearance; ROCK-FOOT: as it stands out of the ground');
   assert.match(w, /rocks: pixelRocks,/);

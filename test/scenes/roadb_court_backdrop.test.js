@@ -27,6 +27,7 @@ import {
 import { PALETTIZED_FILENAMES } from '../../src/formats/imgFile.js';
 import { DFPalette } from '../../src/formats/dfPalette.js';
 import { CRIMES } from '../../src/systems/court.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 
@@ -302,7 +303,7 @@ test('B5/close-P: CORT01I0 takes the HOST palette - it is not one of the paletti
     'the courtroom paints on the session ART_PAL - a minted DFPalette would leave it (255,0,0), a solid red panel');
 
   // ...and it warms at boot beside the prison screen, on that palette.
-  assert.match(src('src/scenes/world.js'), /preloadCourtScreenArt\(\{ renderer, fetchBytes, palette \}\)/);
+  assert.match(hostText('src/scenes/world.js'), /preloadCourtScreenArt\(\{ renderer, fetchBytes, palette \}\)/);
   // The mint-your-own law is still ON, one function down, where it belongs.
   assert.match(src('src/ui/prisonScreen.js'),
     /loadImg\(\{ \.\.\.deps, palette: new DFPalette\(\) \}, PRISON_IMG\)/);
@@ -354,7 +355,7 @@ test('B5: both outdoor hosts keep the RAW back-button latch the accelerator read
   }
   // It is NOT the rebindable `keys` set: GetBackButton reads
   // KeyCode.Escape raw (InputManager.cs:1075-1078).
-  assert.equal(/held\(keys, 'Escape'\)/.test(src('src/scenes/world.js')), false);
+  assert.equal(/held\(keys, 'Escape'\)/.test(hostText('src/scenes/world.js')), false);
 });
 
 test('B5: the accelerator reaches the window through the flow', () => {

@@ -19,9 +19,10 @@ import { loadQuestTables } from '../../src/systems/quest/tables.js';
 import { noteOfferPending, giveOffer, pendingOfferSender, clearPendingOffer } from '../../src/ui/pendingOffer.js';
 import { getRandomFullName, getNameBankOfRegion, fullName, GENDERS } from '../../src/characters/nameHelper.js';
 import { srand, randomRangeInclusive } from '../../src/formats/dfRandom.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const src = (p) => readFileSync(join(root, 'src', p), 'utf8');
+const src = (p) => hostText(`src/${p}`);
 
 // ── F1: the archer's arrow pile ───────────────────────────────────
 

@@ -19,9 +19,10 @@ import { fileURLToPath } from 'node:url';
 import * as G from '../../../src/render/labGrass.js';   // a namespace, so a seam that is missing fails ITS pin and not the file
 import { surfaceHeightAt, TERRAIN_TILE_DIM } from '../../../src/world/terrain/terrainSurface.js';
 import { TERRAIN_SIZE, HEIGHTMAP_DIMENSION } from '../../../src/world/terrain/terrainSampler.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
-const WORLD = readFileSync(join(root, 'src/scenes/world.js'), 'utf8');
+const WORLD = hostText('src/scenes/world.js');
 
 /** A WebGL2 that answers what the grass renderer's constructor asks and
  *  counts the rest; `rec` collects each drawn slot's decode frame. */
@@ -234,7 +235,7 @@ test('PERF-EXT21: the host moves the field at a shift, empties it at a teleport,
   const cut = tp.indexOf('\n    labGrassField = null;\n');
   assert.ok(cut > 0 && cut < tp.indexOf('queue.push(...state.init(px, py));') && !/\bawait\b/.test(tp.slice(cut, tp.indexOf('queue.push(...state.init(px, py));'))),
     'a new scene frame starts an empty field - said before state.init re-anchors the scene, with no frame between');
-  assert.match(WORLD, /\n    if \(labGrassField\) \{   \/\/ WOD2[^\n]*\n      const t = state\.pixelTranslation\(px, py\);\n      labGrassField\.invalidate\(t\[0\], t\[2\], t\[0\] \+ TERRAIN_SIZE, t\[2\] \+ TERRAIN_SIZE\);/,
+  assert.match(WORLD, /\n    if \(host\.labGrassField\) \{   \/\/ WOD2[^\n]*\n      const t = host\.state\.pixelTranslation\(px, py\);\n      host\.labGrassField\.invalidate\(t\[0\], t\[2\], t\[0\] \+ TERRAIN_SIZE, t\[2\] \+ TERRAIN_SIZE\);/,
     'every published pixel re-reads the cells over it, not a location\'s alone');
   // PERF-EXT21 (the review): and so nothing is kept to ask it - the set
   // AUDIT BRANCH (WoD) m2 filled at a teardown gated this very line, and

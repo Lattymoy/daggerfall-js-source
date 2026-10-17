@@ -128,8 +128,8 @@
   {
     "name": "LEGACY7W-why-unchecked",
     "file": "server-account/src/legacy.js",
-    "old": "  if (why !== 'fell' && why !== 'retired') return { error: 'body' };\n",
-    "new": "",
+    "old": "  if ((why !== 'fell' && why !== 'retired') || typeof hold !== 'boolean') return { error: 'body' };\n",
+    "new": "  if (typeof hold !== 'boolean') return { error: 'body' };\n",
     "tests": [
       "test/systems/legacy/legacy7_wed.test.js"
     ]
@@ -525,8 +525,8 @@
   {
     "name": "LEGACY7W-tomb-no-why",
     "file": "src/systems/realmSaves.js",
-    "old": "      const r = await realmDie(io, id, lease, why);",
-    "new": "      const r = await realmDie(io, id, lease);",
+    "old": "      const r = await realmDie(io, id, lease, why, { hold: hold && !closing });",
+    "new": "      const r = await realmDie(io, id, lease, undefined, { hold: hold && !closing });",
     "tests": [
       "test/systems/legacy/legacy7_wed.test.js"
     ]

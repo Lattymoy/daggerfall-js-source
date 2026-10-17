@@ -26,9 +26,10 @@ import { decodeRegionPack } from '../../../src/world/worldOfDaggerfall/wodLocati
 import { loadLocationPrefab } from '../../../src/world/worldOfDaggerfall/wodLocationData.js';
 import { pathsDataPoint } from '../../../src/systems/travel/travelPaths.js';
 import { wodSiteClear } from '../../../src/world/road/roadClearance.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
-const rd = (p) => readFileSync(join(ROOT, p), 'utf8');
+const rd = (p) => hostText(p);
 const site = (day, px, py, x, z) => ({ day, px, py, spot: [x, z] });
 
 test('GATE-CLEAR: the clearing holds the gate and its way home (BROKER-CAGE: the Broker\'s cage the circle\'s), and is a gate site\'s pixel and spot', () => {
@@ -246,9 +247,10 @@ test('GATE-CLEAR over the shipped lists: a gate\'s spot DOES land in the mod\'s 
 });
 
 test('GATE-CLEAR by source: the build reads the clearing once and asks it at the pick, of each piece and flat before it stands, and remembers what it cost; the sweep runs between builds; the clearing is the omen\'s own roll, online alone', () => {
-  const w = rd('src/scenes/world.js');
-  assert.equal(w.match(/_gateClearNow\(\)/g)?.length, 3, 'read by the build, by the sweep and by the hub\'s word of the site (DISCORD-GATES) - nowhere else');
-  assert.match(w, /const gateClear = _gateClearNow\(\);\n\s*const gateLedger = \{ refused: false, reach: \[\] \};[^\n]*\n\s*const gateSite = gateSiteTest\(gateClear, px, py, gateLedger\);\n\s*if \(wod && onTheBay\(px, py\) && await wodOpened\) \{/, 'read once, before the pick');   // PIN MOVED (AUDIT CAPTAIN'S SEA G8): the pick the Bay's alone
+  const w = hostText('src/scenes/world.js');
+  assert.equal(w.match(/(?<!get )_gateClearNow\(\)/g)?.length, 3,   // (HOST-SPLIT 2: the pixel build reads it live through its getter, `get _gateClearNow()`, which is no read)
+    'read by the build, by the sweep and by the hub\'s word of the site (DISCORD-GATES) - nowhere else');
+  assert.match(w, /const gateClear = host\._gateClearNow\(\);\n\s*const gateLedger = \{ refused: false, reach: \[\] \};[^\n]*\n\s*const gateSite = gateSiteTest\(gateClear, px, py, gateLedger\);\n\s*if \(wod && onTheBay\(px, py\) && await wodOpened\) \{/, 'read once, before the pick');   // PIN MOVED (AUDIT CAPTAIN'S SEA G8): the pick the Bay's alone
   assert.match(w, /\}, wodPathsPoint, \(name, prefab, rect\) => wodSiteClear\(terrainGen\.roads\(\), px, py, name, prefab, rect\) && gateSite\(name, prefab, rect\)\);/, 'the road asked first, then the gate');
   assert.match(w, /\{ _wodOffRoad\+\+; continue; \}\n(?:\s*\/\/[^\n]*\n)*\s*if \(boxNearGate\(gateClear, px, py, box\[0\], box\[2\], box\[3\], box\[5\]\)\) \{ gateLedger\.refused = true; _wodOffGate\+\+; continue; \}\n\s*gateLedger\.reach\.push\(box\[0\], box\[2\], box\[3\], box\[5\], 0\);\n\s*unionBox\(box\);/,
     'a piece whose mesh box reaches the clearing is refused before it joins the bounds, the batch or the collider - and what stands is kept');
@@ -264,5 +266,8 @@ test('GATE-CLEAR by source: the build reads the clearing once and asks it at the
   assert.match(w, /if \(gateOmen\) _gateClearNow = \(\) => \{\n\s*if \(!_gateScan\) return null;\n\s*const day = gateAt\(Date\.now\(\) \+ _sharedOffsetMs\)\.day;\n\s*if \(_gateClearOf\.day !== day\) \{\n\s*let site = null;\n\s*try \{ site = findGateSite\(day, _gateScan\); \}[^\n]*\n\s*_gateClearOf = \{ day, site, clear: gateClearFor\(site\) \};/,
     'the gate the relay\'s clock is about, on the omen\'s own scan and roll');
   assert.match(w, /site: \(day\) => \{\n\s*if \(!maps\) return null;\n\s*try \{ const scan = gateScanOf\(\); return scan \? findGateSite\(day, scan\) : null; \}/, 'the omen names the same site the clearing keeps');
-  assert.ok(w.indexOf('let _gateClearNow = () => null;') < w.indexOf('async function buildPixelNow('), 'declared before the build that reads it');
+  // AUDIT HOST-SPLIT 2, the second read: the build's text now stands in the module the join appends, so it is ordered
+  // against the build's construction, where the build stood
+  const built = w.indexOf('const { buildPixelNow } = createPixelBuild(');
+  assert.ok(built > 0 && w.indexOf('let _gateClearNow = () => null;') < built, 'declared before the build that reads it');
 });

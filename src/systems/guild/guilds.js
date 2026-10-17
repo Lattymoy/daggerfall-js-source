@@ -322,7 +322,12 @@ export function updateRank(memberships, guild, entity, store, now, ctx = null) {
   // behind it under Roleplay Realism. A member below zero is put ON PROBATION instead, told so, keeps their rank and
   // has another 28 days; they are expelled only at a review that finds them on probation AND below -10. A standing back
   // at zero or above ends the probation.
-  if (newRank < 0 && (!m.probation || getReputation(store, guild.factionId) >= GUILD_EXPEL_BELOW)) {
+  // OWED-PACE (FIELD BUGS 2026-10-16c): online the Roll pays a guild at most 15 a real day and owes the rest
+  // (`ctx.owed`, the host's standingOwedOf), while this review runs on the character's own days, which travel and rest
+  // spend fast - a member whose quests had earned their way back was expelled before the reward arrived. What is owed
+  // counts against the expulsion alone: it renews the probation, and never ends it or buys a rank (the Roll's pace stands).
+  const owed = Math.max(0, Number(ctx?.owed) || 0);
+  if (newRank < 0 && (!m.probation || getReputation(store, guild.factionId) + owed >= GUILD_EXPEL_BELOW)) {
     m.probation = true;
     m.lastRankChange = today;   // the next review is 28 days on
     return { outcome: 'probation', rank: m.rank, textId: null, lines: PROBATION_LINES };

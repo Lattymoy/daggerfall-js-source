@@ -1277,7 +1277,7 @@
   },
   {
     "name": "AUDIT-LANDFORMS-II-G1-never-carried",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "    const groundWas = _groundBefore.get(key);",
     "new": "    const groundWas = null;",
     "tests": [
@@ -1286,7 +1286,7 @@
   },
   {
     "name": "AUDIT-LANDFORMS-II-G1-carried-the-wrong-way",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "const moved = (x, z) => groundIn(now, x, z) - groundIn(groundWas, x, z);",
     "new": "const moved = (x, z) => groundIn(groundWas, x, z) - groundIn(now, x, z);",
     "tests": [
@@ -1331,8 +1331,8 @@
   },
   {
     "name": "AUDIT-LANDFORMS-II-K1-the-publish-reads-the-pools",
-    "file": "src/scenes/world.js",
-    "old": "      rideGround?.(t, key, moved);\n",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "      host.rideGround?.(t, key, moved);\n",
     "new": "      for (const ride of [droppedLoot.groundMoved, droppedTorches.groundMoved, camps.groundMoved, exteriorFoes.groundMoved, cityGuards.groundMoved]) ride?.(t[0], t[2], t[0] + TERRAIN_SIZE, t[2] + TERRAIN_SIZE, moved);\n",
     "tests": [
       "test/scenes/bootorder.test.js",

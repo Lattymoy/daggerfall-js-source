@@ -29,9 +29,10 @@ import { fileURLToPath } from 'node:url';
 import { LookFilter, swingSuppressesLook } from '../../src/player/lookFilter.js';
 import { setValue, loadSettings } from '../../src/systems/settings/settings.js';
 import { PlayerWeapon } from '../../src/combat/playerWeapon.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const read = (p) => readFileSync(join(ROOT, p), 'utf8');
+const read = (p) => hostText(p);
 
 test('MAC-O2: WeaponSwingMode is a TERM - the gesture mode freezes the look, click-to-attack does not (PlayerMouseLook.cs:247)', () => {
   loadSettings();

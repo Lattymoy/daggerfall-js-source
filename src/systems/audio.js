@@ -86,6 +86,13 @@ export class AudioEngine {
     this._booted = null;
     this._listener = { x: 0, y: 0, z: 0, fx: 0, fy: 0, fz: -1 };
     this._master = null;   // SETT: the SoundVolume bus (see _out)
+    // EG-ZH (Elite-Gates.md section 26, THE SPIRE MIX): the gain every one-shot made inside `scaled` is played at (1 out of it)
+    this._scale = 1;
+    // EG-ZH (section 11.9): THE HELD ZONE - who holds the reverb (null: nobody, and Better Ambience's setReverb rules), its
+    // two convolvers, and each preset's impulse made once for the hold
+    this._reverbOwner = null;
+    this._zone = null;
+    this._reverbBuffers = null;
   }
 
   /** SETT-slice: the master bus. DFU scales every clip by
@@ -136,6 +143,7 @@ export class AudioEngine {
    *  high-frequency ratio, the reflections and reverb levels and delays - not FMOD's algorithm; the shape is
    *  the preset's, the exact tail is not. `preset` null takes the zone off. */
   setReverb(preset) {
+    if (this._reverbOwner != null) return false;   // EG-ZH: the zone is held (holdReverb) - its holder's alone until it lets go
     this._ensureCtx();
     if (!this.ctx) return false;
     this._out();
@@ -154,6 +162,112 @@ export class AudioEngine {
     return true;
   }
   get reverbPreset() { return this._reverb?.preset ?? null; }
+
+  /** EG-ZH (2026-10-12, Mac: "I said I want everything"; bible/11-Multiplayer/Elite-Gates.md section 11.9): THE HALL'S
+   *  REVERB, HELD. setReverb builds a new ConvolverNode and synthesises its impulse on every call (Cave: 25-41 ms on a
+   *  desktop, AUDIT EG II L4-21), so a place that changes its reverb as the player walks HOLDS the zone instead: Better
+   *  Ambience (whose own wish re-asserts its preset against its `reverbOn` cache) yields while it is held, and its cache is
+   *  forgotten, so its next frame after the release asserts its preset again. Holding takes whatever zone stood off the
+   *  send; releasing frees the held zone's convolvers and every impulse made for the hold. Answers whether it holds. */
+  holdReverb(owner) {
+    if (owner == null) return false;
+    if (this._reverbOwner === owner) return true;
+    if (this._reverb) { try { this._reverbIn?.disconnect(); this._reverb.wet.disconnect(); } catch { /* gone */ } this._reverb = null; }
+    this._reverbOwner = owner;
+    return true;
+  }
+  /** EG-ZH: the hold let go by its holder (another's word lets nothing go) - the held zone off the send, its impulses freed.
+   *  Answers whether it let go. */
+  releaseReverb(owner) {
+    if (owner == null || this._reverbOwner !== owner) return false;
+    this._reverbOwner = null;
+    this._dropZone();
+    this._reverbBuffers = null;
+    return true;
+  }
+  /** EG-ZH: who holds the zone, or null. */
+  reverbHeld() { return this._reverbOwner; }
+  /** EG-ZH: a preset's impulse, made once for the hold (`name` one of systems/reverbPresets.js REVERB_PRESET's). */
+  _heldImpulse(name) {
+    const p = REVERB_PRESET[name];
+    if (!p) return null;
+    this._reverbBuffers ??= new Map();
+    if (!this._reverbBuffers.has(name)) this._reverbBuffers.set(name, reverbImpulse(this.ctx, p));
+    return this._reverbBuffers.get(name);
+  }
+  /** EG-ZH: one slot of the held zone - its convolver off the send and its wet gain into the listener, `gain` at once. */
+  _zoneSlot(name, gain) {
+    const buf = name ? this._heldImpulse(name) : null;
+    if (!buf) return { preset: null, conv: null, wet: null };
+    const conv = this.ctx.createConvolver();
+    conv.normalize = false;
+    conv.buffer = buf;
+    const wet = this.ctx.createGain();
+    wet.gain.value = gain;
+    this._reverbIn.connect(conv);
+    conv.connect(wet).connect(this._listenerIn);
+    return { preset: name, conv, wet };
+  }
+  _dropSlot(slot) {
+    if (!slot?.conv) return;
+    try { this._reverbIn?.disconnect(slot.conv); } catch { /* gone */ }
+    try { slot.conv.disconnect(); slot.wet.disconnect(); } catch { /* gone */ }
+  }
+  _dropZone() {
+    if (!this._zone) return;
+    for (const slot of this._zone.slots) this._dropSlot(slot);
+    this._zone = null;
+  }
+  /** EG-ZH: THE HELD ZONE MADE (at a hall's swap or pull, behind the veil): two convolvers off the send - `live` heard whole,
+   *  `idle` at nothing, ready for the crossfade - each preset's impulse made once for the hold, and a slot already holding
+   *  its preset kept as it is. Only while held. Answers whether the zone stands. */
+  reverbZone(live, idle = null) {
+    if (this._reverbOwner == null) return false;
+    this._ensureCtx();
+    if (!this.ctx || !this._out()) return false;
+    const was = this._zone?.slots ?? [];
+    const keep = (name, gain) => {
+      const i = was.findIndex((q) => q && q.preset === name && name != null);
+      if (i < 0) return this._zoneSlot(name, gain);
+      const slot = was[i];
+      was[i] = null;
+      try { slot.wet.gain.cancelScheduledValues?.(this.ctx.currentTime); } catch { /* none */ }
+      slot.wet.gain.value = gain;
+      return slot;
+    };
+    const a = keep(live, 1), b = idle != null && idle !== live ? keep(idle, 0) : { preset: null, conv: null, wet: null };
+    for (const slot of was) this._dropSlot(slot);
+    this._zone = { slots: [a, b], live: 0 };
+    return true;
+  }
+  /** EG-ZH: THE CROSSFADE (within a hall, at a fragment's mouth): the zone turned to `preset` over `seconds` - the idle
+   *  convolver rising as the live one falls. A preset neither slot holds takes the idle slot (a new convolver on the
+   *  hold's impulse - nothing synthesised). Answers whether it turned. */
+  reverbFade(preset, seconds = 0.4) {
+    const z = this._zone;
+    if (!z || !preset) return false;
+    if (z.slots[z.live].preset === preset) return false;
+    const to = 1 - z.live;
+    if (z.slots[to].preset !== preset) { this._dropSlot(z.slots[to]); z.slots[to] = this._zoneSlot(preset, 0); }
+    if (!z.slots[to].wet) return false;
+    const t = this.ctx.currentTime, s = Math.max(0, seconds);
+    const ramp = (g, v) => { try { g.cancelScheduledValues(t); g.setValueAtTime(g.value, t); g.linearRampToValueAtTime(v, t + s); } catch { g.value = v; } };
+    ramp(z.slots[to].wet.gain, 1);
+    if (z.slots[z.live].wet) ramp(z.slots[z.live].wet.gain, 0);
+    z.live = to;
+    return true;
+  }
+  /** EG-ZH: the held zone as it stands (tests, the lab): each slot's preset, and which is heard. */
+  reverbZoneState() { return this._zone ? { presets: this._zone.slots.map((q) => q.preset), live: this._zone.live } : null; }
+
+  /** EG-ZH (Elite-Gates.md section 26, THE SPIRE MIX): every one-shot `fn` makes (playOneShot, play3d) at `gain` times its
+   *  own volume - the peers' sounds 4 dB down in the Spire (net/peer/peerFx.js peerHeard). Synchronous, and nested scopes
+   *  multiply. Answers what `fn` answers. */
+  scaled(gain, fn) {
+    const was = this._scale;
+    this._scale = was * (Number.isFinite(gain) && gain >= 0 ? gain : 1);
+    try { return fn(); } finally { this._scale = was; }
+  }
   /** AUDIT-BA F4: the zone's send, for a bus that is not this master (the music's). Null with no context. */
   reverbSend() { return this._out() ? this._reverbIn : null; }
   /** DW-D: the listener's input, for a bus that is not this master (the music's). Null with no context. */
@@ -402,7 +516,7 @@ export class AudioEngine {
     src.buffer = buf;
     src.playbackRate.value = pitch;
     const gain = this.ctx.createGain();
-    gain.gain.value = volume;
+    gain.gain.value = volume * this._scale;   // EG-ZH: a scope's gain (scaled) - 1 outside one
     src.connect(gain).connect(this._out());
     src.start();
     return buf.duration;
@@ -639,7 +753,7 @@ export class AudioEngine {
     src.playbackRate.value = pitch;
     const pan = this._panner(pos, { refDistance, maxDistance, distanceModel });
     const gain = this.ctx.createGain();
-    gain.gain.value = volume;
+    gain.gain.value = volume * this._scale;   // EG-ZH: a scope's gain (scaled) - 1 outside one
     src.connect(gain).connect(pan).connect(this._out());
     src.start();
     if (far) {   // DISC17-B: its offset from the ear, held until the clip has run out

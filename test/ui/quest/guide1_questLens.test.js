@@ -29,11 +29,12 @@ import { getSeed, setSeed, srand } from '../../../src/formats/dfRandom.js';
 import { QuestLens, quietLines, entryTarget, lastPlaceMentionedInMessage } from '../../../src/ui/quest/questLens.js';
 import { questRail, writtenOrder, journalLines, QUEST_URGENT_SECONDS } from '../../../src/ui/quest/questRail.js';
 import { questTimerWords } from '../../../src/ui/enhanced/enhancedMenu.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const VENDOR = join(ROOT, 'vendor', 'dfu-quests');
 const read = (p) => readFileSync(p, 'utf8').replace(/^﻿/, '');
-const rd = (p) => readFileSync(join(ROOT, p), 'utf8');
+const rd = (p) => hostText(p);
 const quiet = (fn) => { const w = console.warn, i = console.info; console.warn = () => {}; console.info = () => {}; try { return fn(); } finally { console.warn = w; console.info = i; } };
 
 const LENS_SRC = [

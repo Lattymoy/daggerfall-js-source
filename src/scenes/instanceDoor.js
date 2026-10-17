@@ -28,6 +28,7 @@ import { roomKeyFor } from '../net/online.js';
 import { wdunHallOfRoom } from '../net/wire.js';
 import { openerQuestOf, partnerInstances, instanceOffer, questDungeonWhole, questsAtSite, questInstanceEpoch } from '../systems/instancePlaces.js';
 import { isPrivateersHold } from '../systems/startDungeon.js';   // HOLD-ONCE: online the Hold's public room is entered once - its instance any time
+import { dungeonSizeFor } from '../world/smallerDungeons.js';   // QUEST-ELSEWHERE: the size the world lays a dungeon's public room
 
 /** The words, one home - drafted in the thirteen whole languages (locales/), keys under `instance.door`. */
 export const INSTANCE_TEXT = Object.freeze({
@@ -38,6 +39,7 @@ export const INSTANCE_TEXT = Object.freeze({
   join: (name) => t('instance.door.join', "{name}'s instance", { name }),
   leave: () => t('instance.door.leave', 'Leave'),
   questHere: () => t('instance.door.questHere', "Your quest's business here waits in your instance."),
+  questPublic: () => t('instance.door.questPublic', "Your quest's business here is in your instance alone - the shared dungeon is laid smaller and holds none of it."),
   unavailable: () => t('instance.door.unavailable', 'Your instance could not be opened. Try again in a moment.'),
   refused: () => t('instance.door.refused', 'That instance is closed to you - only its owner and their party may stand in it.'),
 });
@@ -45,10 +47,12 @@ export const INSTANCE_TEXT = Object.freeze({
 /** An entry: the place's public room, as the world lays it. */
 const PUBLIC = Object.freeze({ instance: null, whole: false });
 
-/** A dungeon's site, from the location its door names. */
+/** A dungeon's site, from the location its door names. QUEST-ELSEWHERE (FIELD BUGS 2026-10-16c): `relaid` - online the
+ *  world lays its public room smaller (world/smallerDungeons.js dungeonSizeFor), where a quest's things never stand
+ *  (systems/instancePlaces.js questMountsHere). */
 export const dungeonSite = (dfLocation) => {
   const mapId = (Number(dfLocation?.mapTableData?.mapId) || 0) >>> 0;
-  return { siteType: SITE_TYPES.Dungeon, mapId, buildingKey: 0, layout: null, isHold: isPrivateersHold(dfLocation), home: false, name: dfLocation?.name ? getLocalizedLocationName(mapId, dfLocation.name) : '' };
+  return { siteType: SITE_TYPES.Dungeon, mapId, buildingKey: 0, layout: null, isHold: isPrivateersHold(dfLocation), home: false, name: dfLocation?.name ? getLocalizedLocationName(mapId, dfLocation.name) : '', relaid: dungeonSizeFor(dfLocation, { online: true }) !== 'full' };
 };
 /** A building's site in the town `mapId`, from its building record (buildingDataForDoor's): `layout` its town's (the
  *  room's - WD3), `home` a player's home or a house of the player's own - whose room is its owner's, never an instance. */
@@ -152,7 +156,10 @@ export function createInstanceDoor(deps) {
       // its codes alone (ui/talkWindow.js), so Leave is the Escape key's row
       const options = rows.map((r, i) => ({ code: `Digit${i + 1}`, label: `${i + 1} - ${r.kind === 'public' ? INSTANCE_TEXT.public() : r.kind === 'mine' ? INSTANCE_TEXT.mine() : INSTANCE_TEXT.join(r.name)}`, action: () => done(r) }));
       options.push({ code: 'Escape', label: `Esc - ${INSTANCE_TEXT.leave()}`, action: () => done(null) });
-      const win = new ChoiceWindow({ lines: [site.name ?? '', site.isHold ? INSTANCE_TEXT.holdLine() : INSTANCE_TEXT.line()].filter(Boolean), options });
+      // QUEST-ELSEWHERE (FIELD BUGS 2026-10-16c): a quest's place laid smaller in public says, before the choice, that its
+      // things stand in the instance alone - the line said once inside (questElsewhere) came after Public was chosen
+      const quest = !site.isHold && site.relaid === true && questHere(site);
+      const win = new ChoiceWindow({ lines: [site.name ?? '', site.isHold ? INSTANCE_TEXT.holdLine() : INSTANCE_TEXT.line(), quest ? INSTANCE_TEXT.questPublic() : ''].filter(Boolean), options });
       const dispose = typeof win.dispose === 'function' ? win.dispose.bind(win) : null;
       win.dispose = () => { done(null); dispose?.(); };
       if (deps.openOverlay?.(win, () => done(null)) !== true) done(null);

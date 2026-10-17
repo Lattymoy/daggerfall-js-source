@@ -570,10 +570,10 @@ test('SCALE5b the metrics point: a socket refused \'room full\' is counted - the
 
 // ═══ PART FOUR: THE RELAY'S SETTINGS, AT RUN TIME (net/relayCfg.js) ═════════════════════════════════════════════════
 
-test('SCALE5b relayCfg: a setting is one of four names and a string of at most RELAY_CFG_VALUE_MAX, or null (handed back to the var); the one in force is the hub\'s, else the var; a developer alone may set one; /relay\'s words (mutants: a name not a setting\'s; the bound unasked; null refused; the var over the hub\'s; a Dungeon Master let in)', async () => {
+test('SCALE5b relayCfg: a setting is one of five names and a string of at most RELAY_CFG_VALUE_MAX, or null (handed back to the var); the one in force is the hub\'s, else the var; a developer alone may set one; /relay\'s words (mutants: a name not a setting\'s; the bound unasked; null refused; the var over the hub\'s; a Dungeon Master let in)', async () => {
   const C = await import('../../src/net/relayCfg.js');
-  assert.deepEqual(C.RELAY_CFG_KEYS, ['bossBody', 'gateRole', 'serpentRole', 'sdRole']);
-  assert.deepEqual(Object.values(C.RELAY_CFG_VARS), ['BOSS_BODY', 'GATE_DISCORD_ROLE', 'SERPENT_DISCORD_ROLE', 'SD_DISCORD_ROLE']);
+  assert.deepEqual(C.RELAY_CFG_KEYS, ['bossBody', 'gateRole', 'serpentRole', 'sdRole', 'egDrain']);   // PIN MOVED (EG-H2, bible/11-Multiplayer/Elite-Gates.md section 22): THE DRAIN's switch - the Spire's road shut while a deploy drains it
+  assert.deepEqual(Object.values(C.RELAY_CFG_VARS), ['BOSS_BODY', 'GATE_DISCORD_ROLE', 'SERPENT_DISCORD_ROLE', 'SD_DISCORD_ROLE', 'EG_DRAIN']);
   assert.deepEqual(C.validRelayCfgIn({ k: 'gateRole', v: '1555589839825670258' }), { k: 'gateRole', v: '1555589839825670258' });
   assert.deepEqual(C.validRelayCfgIn({ k: 'bossBody', v: null }), { k: 'bossBody', v: null });
   assert.deepEqual(C.validRelayCfgIn({ k: 'bossBody', v: 'x'.repeat(C.RELAY_CFG_VALUE_MAX) })?.v.length, C.RELAY_CFG_VALUE_MAX);

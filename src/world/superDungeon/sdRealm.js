@@ -185,9 +185,12 @@ const UP = [0, 1, 0];
  * One island: its floor a disc of `rec` about (cx, cz) radius `r` (`uvOf` its texture's map, the tile by default), its
  * brass lip round the rim, and its torn edge - SD-LOOK S11: SD_LIP of dark stone down from the rim (it was a cone to a
  * point SD_ROOT_DEPTH down); what hangs under it is the hang's (world/superDungeon/sdIslandModel.js, a noShadow mesh a stage). Its
- * floor at the realm's y 0, or `y` (SD7b: the Steps' checkpoints stand high).
+ * floor at the realm's y 0, or `y` (SD7b: the Steps' checkpoints stand high). EG-LOOK (Elite-Gates-Look.md section 2): two
+ * options the Spire's discs take and the Hour never does - `teeth: false` lays no brass gear teeth round the rim (the
+ * Spire's cornice is its ruin's - world/eliteGates/egRuin.js), `floor: false` no floor (the Spire's floors are cut into their inlay's
+ * regions - world/eliteGates/egGround.js egDiscFloor); by default both are laid as they always were, byte for byte.
  */
-export function realmIsland(f, cx, cz, r, rec, { uvOf = tileUv, y: y0 = 0, bands = 0 } = {}) {
+export function realmIsland(f, cx, cz, r, rec, { uvOf = tileUv, y: y0 = 0, bands = 0, teeth = true, floor = true } = {}) {
   const C = (x, y, z) => realmToDungeon(cx + x, y0 + y, cz + z);
   const E = (rr, a, y) => C(Math.cos(a) * rr, y, Math.sin(a) * rr);
   for (let k = 0; k < SD_ISLAND_SIDES; k++) {
@@ -195,14 +198,14 @@ export function realmIsland(f, cx, cz, r, rec, { uvOf = tileUv, y: y0 = 0, bands
     const x0 = Math.cos(a0) * r, z0 = Math.sin(a0) * r, x1 = Math.cos(a1) * r, z1 = Math.sin(a1) * r;
     // the floor (wound up - its face toward +y), the rim's lip (its top, its outer side and - AUDIT SD II, L2 F6 - its
     // inner side, toward the floor: it was a lid with nothing under its inner edge), the root
-    if (bands > 0) {
+    if (floor && bands > 0) {
       // SD-LOOK: in rings, the plates' uv along each - u the arc at the ring's middle (a plate each SD_FLOOR_TILE_M), v
       // across it (one plate a ring): the floor lays as a clock's face, its seams radial and round
       for (let b = 0; b < bands; b++) {
         const r0 = (r * b) / bands, r1 = (r * (b + 1)) / bands, um = (r0 + r1) / 2 / SD_FLOOR_TILE_M, u0 = a0 * um, u1 = a1 * um;
         quadFacing(f, rec, E(r0, a0, 0), E(r0, a1, 0), E(r1, a1, 0), E(r1, a0, 0), [u0, 0], [u1, 0], [u1, 1], [u0, 1], UP);
       }
-    } else f.tri(rec, C(0, 0, 0), C(x1, 0, z1), C(x0, 0, z0), uvOf(cx, cz), uvOf(cx + x1, cz + z1), uvOf(cx + x0, cz + z0));
+    } else if (floor) f.tri(rec, C(0, 0, 0), C(x1, 0, z1), C(x0, 0, z0), uvOf(cx, cz), uvOf(cx + x1, cz + z1), uvOf(cx + x0, cz + z0));
     const ri = r - SD_RIM_W, xi0 = Math.cos(a0) * ri, zi0 = Math.sin(a0) * ri, xi1 = Math.cos(a1) * ri, zi1 = Math.sin(a1) * ri;
     f.quad(SD_REALM_BRASS_RECORD, C(xi0, SD_RIM_H, zi0), C(xi1, SD_RIM_H, zi1), C(x1, SD_RIM_H, z1), C(x0, SD_RIM_H, z0), [0, 0], [1, 0], [1, 0.2], [0, 0.2]);
     f.quad(SD_REALM_BRASS_RECORD, C(x0, 0, z0), C(x0, SD_RIM_H, z0), C(x1, SD_RIM_H, z1), C(x1, 0, z1), [0, 0], [0, 0.1], [1, 0.1], [1, 0]);
@@ -215,6 +218,7 @@ export function realmIsland(f, cx, cz, r, rec, { uvOf = tileUv, y: y0 = 0, bands
     quadFacing(f, SD_REALM_EDGE_RECORD, E(ro, a0, ye - SD_EDGE_LINE), E(ro, a1, ye - SD_EDGE_LINE), E(ro, a1, ye), E(ro, a0, ye), [0, 0], [1, 0], [1, 1], [0, 1], sub3(E(r + 1, am, 0), E(r, am, 0)));
   }
   // SD-LOOK: the teeth, round the rim's outer face
+  if (!teeth) return;
   const n = Math.round((2 * Math.PI * r) / SD_TOOTH_PITCH);
   for (let k = 0; k < n; k++) {
     const a = ((k + 0.5) / n) * Math.PI * 2, ca = Math.cos(a), sa = Math.sin(a);

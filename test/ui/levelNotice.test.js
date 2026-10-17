@@ -23,6 +23,7 @@ import { bonusPoolFor, applyLevelUp, LEVELUP_BONUS_POOL_MIN, LEVELUP_BONUS_POOL_
 import { audio } from '../../src/systems/audio.js';
 import { SOUND } from '../../src/systems/soundClips.js';
 import { loadOrCreateBindings, codeForAction, actionForCode } from '../../src/systems/inputActions.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 import {
   LevelNotices, levelNotices, announceLevelUp, announceSkillRaise, announceMastery, announceRenownRise, NOTICE_RENOWN,
   drawLevelNotices, destroyLevelNotices, levelOwed, sheetKeyText,
@@ -63,7 +64,7 @@ function fakeDoc() {
 /** Every string under a node, in order - the rows nest (gem, body(title,
  *  sub), key) and a one-level read missed the words it was checking. */
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const src = (f) => readFileSync(join(root, f), 'utf8');
+const src = (f) => hostText(f);
 /** The sound spy this suite's neighbours use (advancementui, audit63). */
 const withSounds = (fn) => {
   const played = [];
@@ -460,7 +461,7 @@ test('LV2: the strip is the ONE call all four hosts already make, and the fork i
   }
   // ...and every `open` thunk is still the HOST's own, because only a
   // host knows how to put a window in its slot.
-  assert.match(src('src/scenes/world.js'), /open: \(\) => townTalk\.showOverlay\(makeCharSheetWindow\(\)\)/);
+  assert.match(hostText('src/scenes/world.js'), /open: \(\) => townTalk\.showOverlay\(makeCharSheetWindow\(\)\)/);
   assert.match(src('src/scenes/dungeonContext.js'), /open: \(\) => api\.toggleCharSheet\(\)/);
   assert.match(src('src/scenes/worldModes.js'), /announceLevelUp\(playerEntity, \{ say, open: \(\) => \{/);
   // The HUD drives the paint on the one host-agnostic call.

@@ -22,6 +22,7 @@ import { clearDoorways, actionDoorSpots, DOORWAY_DEPTH } from '../../src/charact
 import { indoorWatchSpot, GUARD_INDOOR_INSET } from '../../src/scenes/cityGuards.js';
 import { yieldsToDoor, hostileToMe } from '../../src/player/mobileEnemyActivate.js';
 import { liveFoeTargets, doorDistanceOf, peacefulFoePass, pickActivatableHit } from '../../src/player/activate.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const rd = (p) => readFileSync(new URL('../../' + p, import.meta.url), 'utf8');
 const I = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
@@ -149,7 +150,7 @@ test('AUDIT TACT A3/D10: the brain\'s clock is the foes\' own time - a held fram
   assert.ok(Math.abs(tacticsNow() - t0 - 0.05) < 1e-12);
   setTacticsClock(() => T);
   // PIN MOVED (AUDIT TELL H1): and held under the dungeon's window that holds its foes, in all three hosts
-  assert.match(rd('src/scenes/world.js'), /tickTactics\(foeFrameDt\(_questBoxHoldsFoes\(\) \|\| \(_mode\(\) === 'dungeon' && !!modes\?\.dungeonCtx\?\.uiOverlayActive\) \? 0 : dt\)\);/);
+  assert.match(hostText('src/scenes/world.js'), /tickTactics\(foeFrameDt\(_questBoxHoldsFoes\(\) \|\| \(_mode\(\) === 'dungeon' && !!modes\?\.dungeonCtx\?\.uiOverlayActive\) \? 0 : dt\)\);/);
   assert.match(rd('src/scenes/exterior.js'), /tickTactics\(foeFrameDt\(_questBoxHoldsFoes\(\) \|\| \(_mode\(\) === 'dungeon' && !!modes\?\.dungeonCtx\?\.uiOverlayActive\) \? 0 : dt\)\);/);
   assert.match(rd('src/scenes/dungeon.js'), /tickTactics\(foeFrameDt\(ctx\.uiOverlayActive \? 0 : dt\)\);/);
   assert.doesNotMatch(rd('src/ai/tactics.js'), /performance\.now/, 'never the wall');
@@ -261,7 +262,7 @@ test('AUDIT TACT D3: a floating-origin recentre moves the noted player and every
   noteLocalPlayer([10, 0, 8], [0, 0, 1]);
   offsetTactics([-100, 0, 50]);
   assert.deepEqual(b.origin, [-90, 0, 60]);
-  assert.match(rd('src/scenes/world.js'), /exteriorFoes\.offsetAll\(r\.offset\);[^\n]*\n\s*labGrassField\?\.shiftOrigin\(r\.offset\);[^\n]*\n\s*offsetTactics\(r\.offset\);/);
+  assert.match(hostText('src/scenes/world.js'), /exteriorFoes\.offsetAll\(r\.offset\);[^\n]*\n\s*labGrassField\?\.shiftOrigin\(r\.offset\);[^\n]*\n\s*offsetTactics\(r\.offset\);/);
 });
 
 test('AUDIT TACT D4: a dead foe\'s wind-up goes with it - not drawn, and blocking no one', () => {
@@ -328,8 +329,8 @@ test('AUDIT TACT B2: no one-way hiding place - a tree is a trunk and a crown, an
   // ECOTONE1: PIN MOVED - any of the pixel's nature archives (a climate border stands its neighbour's too), its Trees
   // named by that archive's SUMMER set: the season's own number names none in winter, so a winter wood's trees were cover
   // as flats until then
-  assert.match(rd('src/scenes/world.js'), /coverProxies\(c, size, \{ tree: natureSet\.has\(archive\) && isTreeRecord\(natureBase\(archive\), record\) \}\)/);
-  assert.match(rd('src/scenes/world.js'), /const natureBase = \(a\) => \(a === natureArchive \? climate\.natureArchive : borderNature\.get\(a\)\);/);
+  assert.match(hostText('src/scenes/world.js'), /coverProxies\(c, size, \{ tree: natureSet\.has\(archive\) && isTreeRecord\(natureBase\(archive\), record\) \}\)/);
+  assert.match(hostText('src/scenes/world.js'), /const natureBase = \(a\) => \(a === natureArchive \? climate\.natureArchive : borderNature\.get\(a\)\);/);
 });
 
 test('AUDIT TACT B3: people are no cover - a person flat is skipped wherever it stands', () => {
@@ -399,7 +400,7 @@ test('AUDIT TACT C3: the indoor watch spreads from a REAL door - whose centre st
 });
 
 test('AUDIT TACT C4: the street\'s doorways are mapped once a door generation, and not at all with nobody to clear', () => {
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /if \(_tactDoorGen !== doorGeneration\) \{ _tactDoorGen = doorGeneration; _tactDoorWorld = doorSpotsNear\(buildingDoors, null, Infinity, shiftedDoor\); \}/);
   assert.match(w, /if \(cityGuards\.guards\.length \|\| exteriorFoes\.foes\.length\) clearDoorways\(/);
 });

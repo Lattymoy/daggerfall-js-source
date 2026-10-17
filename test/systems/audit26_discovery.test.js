@@ -24,6 +24,7 @@ import {
 } from '../../src/systems/discovery.js';
 import { clearCrimeOnLocationExit } from '../../src/systems/court.js';
 import { isInLocationRect } from '../../src/world/streamingWorld.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 import {
   stockHouseContainer,
   PRIVATE_PROPERTY_MODELS_0_TO_1, PRIVATE_PROPERTY_MODELS_2_TO_3,
@@ -31,7 +32,7 @@ import {
   PRIVATE_PROPERTY_MODELS_15_AND_UP,
 } from '../../src/systems/shopStock.js';
 
-const src = (p) => readFileSync(new URL(`../../src/${p}`, import.meta.url), 'utf8');
+const src = (p) => hostText(`src/${p}`);
 
 // ── F099 ──────────────────────────────────────────────────────────
 

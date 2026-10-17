@@ -36,6 +36,7 @@ import { duelStandIn } from '../../src/combat/duelCombat.js';
 import { createPlayerMagic } from '../../src/scenes/hostMagic.js';
 import { registerLevitateWard, levitateWarded, setStaffPowers, registerFreeFlight } from '../../src/characters/playerEntity.js';
 import { applyMotorEffectFlags } from '../../src/scenes/shared.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const { subtle } = webcrypto;
 const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
@@ -152,7 +153,7 @@ test('AUDIT-SEATS C1 THE HUD\'S WAY OUT: the bar\'s Leave and the result card\'s
 });
 
 test('AUDIT-SEATS C1 THE WORLD\'S WAYS OUT by source: the one door (whichever is entered), the HUD\'s and the chat\'s, the sessions told where the seat is, the dead and a frame with no online tick (mutants: each wire)', () => {
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /const leaveBattle = \(\) => !!\(siegeSession\?\.leave\(\) \|\| royalSession\?\.leave\(\)\);/);
   assert.match(w, /siegeHud = createSiegeHud\(document, \{ onClaim: \(\) => siegeClaims\.offer\(\{ force: true \}\), onLeave: \(\) => leaveBattle\(\) \}\);/);
   assert.match(w, /if \(isBattleLeaveCommand\(text\)\) \{\n\s*if \(!leaveBattle\(\)\) chatLog\.push\(tabId, \{ text: BATTLE_NONE_TEXT, system: true \}\);\n\s*return true;\n\s*\}/);
@@ -200,7 +201,7 @@ test('AUDIT-SEATS C2 ONE MINT SLOT: a leave clears net/online.js mintSiegePass o
   other.leave({ quiet: true });
   assert.equal(await online.mintSiegePass(), 'v1.royal.x', 'a siege that never joined clears nothing of the tourney\'s');
   rs.leave({ quiet: true });
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /if \(field\) royalSession\?\.leave\(\);   \/\/ AUDIT-SEATS C2[^\n]*\n\s*return siegeSession\.enter\(seat, fight, field\);/);
   assert.match(w, /if \(field\) siegeSession\?\.leave\(\);   \/\/ AUDIT-SEATS C2[^\n]*\n\s*return royalSession\.enter\(seat, royal, field, \{ watch \}\);/);
 });
@@ -230,7 +231,7 @@ test('AUDIT-SEATS C3 AN UNSETTLED FIELD BACKS OFF: said once, asked again after 
 });
 
 test('AUDIT-SEATS C4 THE FIRST SEAT TOWN: the arrival waits on the seats\' read and is said while the player still stands in that town; the seats read as the online session starts (mutants: the wait; the still-there; the start\'s read)', () => {
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /const arrive = \(\) => \{\n\s*if \(!stillAt\(mapId\)\) return;\n\s*const seat = seatHere\(mapId\);/);
   assert.match(w, /const stillAt = \(mapId\) => _wasInLocationRect && _musicLoc\?\.mapTableData\?\.mapId === mapId;/);
   assert.match(w, /if \(seatBook\) seatBook\.read\(\)\.then\(arrive, arrive\); else Promise\.resolve\(\)\.then\(arrive\);/);
@@ -265,7 +266,7 @@ test('AUDIT-SEATS C5 THE RECEIPTS OFFERED ON THEIR OWN CLOCK: `due` says, in syn
   const r = createRoyalClaims({ claim: async () => ({ ok: true }), me: () => 'acct-me01', nowMs: () => now, storage: null });
   r.keep(await mintRoyalReceipt({ s: 'acct-me01', l: 'acct-them', sk: 5023, sw: 20, n: 1 }, kp.privateKey, { subtle, nowS: Math.floor(now / 1000) }));
   assert.equal(r.due(), true, 'the bouts\' carrier too');
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   const frame = w.slice(w.indexOf('const gateFrame = () => {'), w.indexOf('const gateFrame = () => {') + 3000);
   assert.match(frame, /if \(siegeClaims\?\.due\(\)\) siegeClaims\.offer\(\);/);
   assert.match(frame, /if \(royalClaims\?\.due\(\)\) royalClaims\.offer\(\);/);
@@ -273,7 +274,7 @@ test('AUDIT-SEATS C5 THE RECEIPTS OFFERED ON THEIR OWN CLOCK: `due` says, in syn
 });
 
 test('AUDIT-SEATS C6 THE RELAY\'S CLOCK: both sessions and both carriers read the shared offset the rest of the scene reads (mutants: each nowMs)', () => {
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /const battleNowMs = \(\) => Date\.now\(\) \+ _sharedOffsetMs;/);
   assert.match(w, /siegeSession = createSiegeSession\(\{[^\n]*\n\s*nowMs: battleNowMs, here: \(seat\) => atSeat\(seat\) \}\);/);
   assert.match(w, /royalSession = createRoyalSession\(\{[^\n]*\n[^\n]*name: \(id\) => peerName\(id\) \?\? '', nowMs: battleNowMs, here: \(seat\) => atSeat\(seat\) \}\);/);
@@ -317,7 +318,7 @@ test('AUDIT-SEATS C7 EVERY SETTLING ANSWER REACHES THE CARD: claimed before, a v
   t.ses.claimed({ ok: true, honours: { marks: 50, xp: 2000 } }, mine);
   t.ses.tick();
   assert.match(t.hud.at(-1).card.honour, /50 silver/);   // PIN MOVED: GUILD3a (bible/11-Multiplayer/Guilds-Made-Plain.md) - silver, as every sentence says it
-  assert.match(rd('src/scenes/world.js'), /onClaimed: \(a, r\) => siegeSession\?\.claimed\(a, r\)/);
+  assert.match(hostText('src/scenes/world.js'), /onClaimed: \(a, r\) => siegeSession\?\.claimed\(a, r\)/);
 });
 
 /** The Seat tab over a scripted book and a window stand-in. */
@@ -439,7 +440,7 @@ test('AUDIT-SEATS C12 NOTHING MADE A FRAME FOR NOTHING: the Watch\'s due asked i
   assert.equal(b2.claimWatchDue(), false);
   now += 1000;
   assert.equal(b2.claimWatchDue(), true, 'the oldest ten minutes old');
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /if \(seatBook\?\.claimWatchDue\(\)\) seatBook\.claimWatch\(\);/);
   // the ribbon
   const a = ribbonTints([0, 2]);
@@ -561,7 +562,7 @@ test('AUDIT-SEATS G1 THE HERALD: each battle at a seat this client derives said 
   named = false; n6 = start - 3_600_000 + 5; h6.tick();
   assert.deepEqual(s6, [line], 'the day\'s mark, and no hour\'s');
   assert.equal(seatWeekOf(start), week);
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /siegeHerald = createSiegeHerald\(\{\n\s*seats: \(\) => \(seatBook\.open === true \? seatBook\.data\?\.seats \?\? null : null\),\n\s*fightOf: \(key\) => seatBook\.standings\(key\)\.then\(\(r\) => r\?\.data\?\.fight \?\? null\),\n\s*nameOf: \(key\) => seatAtMapId\(townSeats, key\)\?\.name \?\? null,\n\s*say: \(text, at\) => \(redChat \? redChat\(\{ text, at \}\) : false\),\n\s*nowMs: battleNowMs,/);
   assert.match(w, /siegeHerald\?\.tick\(\);/);
 });
@@ -669,7 +670,7 @@ test('AUDIT-SEATS G4 A SPECTATOR\'S FREE CAMERA: while the host says I watch a b
     applyMotorEffectFlags(player, { activeEffects: [] });
     assert.deepEqual(writes, [false], 'a flight that throws lifts nothing');
   } finally { registerFreeFlight(null); registerLevitateWard(null); }
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /const spectatingHere = \(\) => \{\n\s*const b = siegeSession\?\.active\(\) \? siegeSession : royalSession;\n\s*return !!b\?\.active\(\) && b\.side\(\) === 'watch' && !!online\?\.room && online\.room === b\.room\(\);/);
   assert.match(w, /registerFreeFlight\(\(\) => spectatingHere\(\)\);/);
   assert.match(w, /if \(watching\) \{ if \(!_watchedFrom\) _watchedFrom = campToWire\(player\.pos\); return; \}/);
@@ -679,7 +680,7 @@ test('AUDIT-SEATS G4 A SPECTATOR\'S FREE CAMERA: while the host says I watch a b
 });
 
 test('AUDIT-SEATS G5 THE WORLD\'S BATTLE ARMS by source: the swing and the shaft one door with their kinds; the arrows and the cast engine see a battle\'s foes outside a duel; a heal on a side-mate goes to the referee; the wards and the saddle in a siege\'s room; the side-mates (mutants: each wire)', async () => {
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /const duelStrikeOut = \(by, weapon, swing, drawMs = 0, to = null, \{ off = false \} = \{\}\) => \{[^\n]*\n\s*if \(!duelMgr\.fighting\) return siegeStrikeOut\(to, by, weapon, swing, drawMs, \{ off \}\);/);   // PIN MOVED (TWO-HANDS AUDIT): the off hand's blow rides along
   assert.match(w, /const duelSpellOut = \(peerId, sp\) => \{\n\s*if \(!duelMgr\.fighting\) return siegeSpellOut\(peerId, sp\);/);
   assert.match(w, /siegeStrikeOut\(best, 'melee', weaponRig\.playerWeapon\.strikingWeapon, weaponRig\.playerWeapon\.machine\?\.state, 0, \{ off: weaponRig\.playerWeapon\.offStrike \}\);/);   // PIN MOVED (TWO-HANDS AUDIT)
@@ -692,7 +693,7 @@ test('AUDIT-SEATS G5 THE WORLD\'S BATTLE ARMS by source: the swing and the shaft
   assert.match(w, /return heal > 0 && siegeSession\.cast\(id, siegeCastClamp\(heal, true\), true\);/);
   assert.match(w, /spellRefusal: \(sp\) => battleSpellRefusal\(sp\),/);
   assert.match(w, /const battleSpellRefusal = \(sp\) => \(inSiegeRoom\(\) && siegeSpellBarred\(sp\) \? SIEGE_SPELL_BARRED_TEXT : null\);/);
-  assert.match(w, /registerLevitateWard\(\(\) => inSiegeRoom\(\) \|\| modes\?\.sdRealmSlot\?\.\(\) != null\);/);   // SD7b (PIN MOVED): and the Shattered Hour's - its Steps walked, not flown
+  assert.match(w, /registerLevitateWard\(\(\) => inSiegeRoom\(\) \|\| madeRuleHere\('levitate'\) === 'banned'\);/);   // SD7b (PIN MOVED): and the Shattered Hour's - its Steps walked, not flown; PIN MOVED (EG-H2, Elite-Gates.md section 24): the made level's law (systems/madeLevel.js)
   assert.match(w, /if \(inSiegeRoom\(\) && isRiding\(player\.transportMode\)\) \{ setTransportModeHere\(TRANSPORT_MODES\.Foot\); townTalk\.say\(SIEGE_DISMOUNT_TEXT\); \}/);
   // the side-mates the heal reaches: standing, of my side, never me
   const t = siegeRig();

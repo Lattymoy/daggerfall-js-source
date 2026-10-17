@@ -69,6 +69,7 @@ import { activeWagonItem } from './wagon/wagonKinds.js';   // WAGONS2 (FINAL AUD
 import { wagonSoldWhole } from './wagon/wagonUpkeep.js';   // WAGON-TIERS: a wagon's wear prices its sale only on Hard
 import { wagonUpkeepRules } from './upkeep/upkeepSwitch.js';   // WAGON-TIERS: the tier, through wagon upkeep's one accessor
 import { PATRON_COUNTER_MARK } from '../net/patronLaw.js';   // AUDIT LW-II-2 S1: online, a counter's piece is no patron's
+import { clearStolen } from './stolenGoods.js';   // STOLEN-GOODS AUDIT S3: a piece bought at a counter is the buyer's, honestly
 import {
   cureOfferMessageOffset, TRADE_MESSAGE_BASE_ID, NOT_ENOUGH_GOLD_ID,
 } from './guild/guildServiceActions.js';
@@ -255,8 +256,14 @@ export function saleConditionPercentage(item, { online = isOnlinePage() } = {}) 
  *  counter, stocked a hired trader and printed the difference. The counter's Buy hands every piece through here
  *  (worldModes.js commitTrade's Buy arm and the keyed list's doBuy - every shop's shelf, a guild's, a caravan's on the
  *  road); the mark rides the save, the item law and the market's listing, and a stack keeps it through a merge (either
- *  part's) and a split (inventory.js addItem, splitStack). Offline nothing is written. Answers how many it marked. */
+ *  part's) and a split (inventory.js addItem, splitStack). Offline nothing is written. Answers how many it marked.
+ *  STOLEN-GOODS AUDIT (2026-10-16, S3): and on either lane A PIECE BOUGHT AT A COUNTER IS THE BUYER'S, HONESTLY - its theft
+ *  mark (systems/stolenGoods.js) cleared before a stack's merge takes it. No shelf piece is stolen by construction (a sold
+ *  one never reaches a shelf - landSold), yet a peer's word for a shelf could carry one (an older build's sale, a hostile
+ *  client - world/interior/interiorShared.js applyInteriorLoot strips it too), and a piece stolen elsewhere and left on a shut
+ *  shelf stays marked there: paid for, it is the buyer's. */
 export function markCounterBought(items, { online = isOnlinePage() } = {}) {
+  for (const it of items ?? []) clearStolen(it);
   if (!online) return 0;
   let n = 0;
   for (const it of items ?? []) if (it && typeof it === 'object') { it[PATRON_COUNTER_MARK] = true; n++; }

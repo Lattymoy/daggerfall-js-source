@@ -26,10 +26,11 @@ import { boxNearPath } from '../../../src/world/road/roadClearance.js';
 import { planRoute, routeLegs, routeGround } from '../../../src/systems/travel/travelRoute.js';
 import { ringPassPoints, ringSideOf, locationRectsOf, RING_ORDER } from '../../../src/systems/travel/travelOptions.js';
 import { DIR_DELTA } from '../../../src/world/road/roadNetwork.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const V = join(ROOT, 'vendor/world-of-daggerfall');
-const rd = (p) => readFileSync(join(ROOT, p), 'utf8');
+const rd = (p) => hostText(p);
 
 // ── OW-WOD-LAG ──────────────────────────────────────────────────────────
 
@@ -142,7 +143,7 @@ test('OW-WOD-LAG: the tree is raised by the host\'s build (settle), once, and a 
   assert.ok(b.wide.length > tree.n, 'a later wide mesh joins the list');
   c.sphereOverlaps([0, 540, 0], 1);
   assert.ok(b.wideTree !== tree && b.wideTree.n === b.wide.length, 'and the next query raises the tree again');
-  assert.match(rd('src/scenes/world.js'), /collider\.settle\(key\);\n\s*await breather\.breathe\(\);\n\n\s*\/\/ SIB1:/, 'the host settles the pixel once every mesh is in, inside its build');
+  assert.match(hostText('src/scenes/world.js'), /collider\.settle\(key\);\n\s*await breather\.breathe\(\);\n\n\s*\/\/ SIB1:/, 'the host settles the pixel once every mesh is in, inside its build');
 });
 
 test('OW-WOD-LAG: the road-clearance walk asks only the map\'s pixels - a box the giant\'s size (thousands of pixels, most off the map) answers at once, and the same', () => {
@@ -212,7 +213,7 @@ test('OW-WOD-PATH, then MOUNTAINS WALKABLE (the owner, the Wrothgarian zone\'s m
 });
 
 test('OW-WOD-PATH: the host hands its planner the massifs less every pixel a road or a track crosses, again when the list, the roads or the open zone change (MOUNTAINS WALKABLE: the planner walks them now - above); a spot the ground names a peak is refused', () => {
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   // PIN MOVED (WILD1): no World of Daggerfall, no list - and the open zone's mask kept beside the list and the roads
   assert.match(w, /const src = wod \? wod\.mountainPixels\(\) : null;/);
   assert.match(w, /if \(src === _tvRocksFrom && net === _tvRocksRoads && wm === _tvRocksMask && _tvRocks\) return _tvRocks;/, 'kept for the list, the roads and the zone it was read with');
@@ -277,7 +278,7 @@ test('OW-TOWN-RING: a route through a town\'s pixel walks its ring - no leg aime
 });
 
 test('OW-TOWN-RING: the host rings every location on the way (the build\'s own tile rect, from the blocks when the pixel is not built), and Travel Options walks the ring point to point - no ring point skipped on a resume, none taken for a road join', () => {
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /const legs = routeLegs\(plan\.pixels, plan\.kinds, \{ ringAt: tvRingAt \}\);/);
   assert.match(w, /const r = built\.get\(key\)\?\.locationRect \?\? setLocationTiles\(loc, maps, blocks, new Uint8Array\(128 \* 128\)\);/, 'the build\'s rect, or the same law over the location\'s blocks');
   assert.match(w, /rects = locationRectsOf\(o\.x, o\.z, \{ x: r\.xMin, y: r\.yMin, width: r\.xMax - r\.xMin, height: r\.yMax - r\.yMin \}, loc\.mapTableData\.locationType === LOCATION_TYPES\.TownCity, hasCustomLocationPosition\(loc\)\);/, 'Travel Options\' own rects');
@@ -320,7 +321,7 @@ test('ROCK-SEAT: a rock field\'s piece set into the ground but hanging over grou
   assert.equal(rockSeatDrop(20, 40), -20.5, 'the slope falls 20 under its foot: lowered 20.5');
   assert.ok(rockSeatDrop(20, 40) < 0 && rockSeatDrop(-5, 10) === -15.5, 'never raised, whatever the ground');
   assert.equal(rockSeatDrop(NaN, 10), 0, 'no ground read: untouched');
-  const W = readFileSync(new URL('../../../src/scenes/world.js', import.meta.url), 'utf8');
+  const W = hostText('src/scenes/world.js');
   assert.match(W, /if \(rockPick\(m\.pick\) && box\[1\] < surfaceHeightAt\(samples, [^\n]*\)\) \{ const dy = rockSeatDrop\(lowestGroundUnder\(samples, box\), box\[1\]\); if \(dy < 0\) \{ m\.matrix\[13\] \+= dy; box\[1\] \+= dy; box\[4\] \+= dy; \} \}/, 'the rock fields\' pieces set into the ground (foot under the ground at its middle) are seated, collider and all, before the roads and the gate ask of their box');
   const at = W.indexOf('rockSeatDrop(lowestGroundUnder');
   assert.ok(at > 0 && at < W.indexOf('if (boxNearPath(_roadsNow, px, py, box[0]', at), 'before the roads ask');

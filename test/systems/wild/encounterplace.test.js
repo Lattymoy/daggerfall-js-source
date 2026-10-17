@@ -25,13 +25,14 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 import {
   SPAWNER_ARMS, intermittentEnemySpawn,
   MIN_DUNGEON_SPAWN_DISTANCE, MIN_LOCATION_SPAWN_DISTANCE, MIN_WILDERNESS_SPAWN_DISTANCE,
 } from '../../../src/systems/encounters.js';
 
 const HERE = dirname(dirname(dirname(fileURLToPath(import.meta.url))));
-const read = (rel) => readFileSync(join(HERE, '..', rel), 'utf8');
+const read = (rel) => hostText(rel);
 
 test('RE1: the arm table is CreateFoeSpawner\'s arguments, per call site', () => {
   // PlayerEntity.cs:574 / :594 / :610 / :687, and the max is

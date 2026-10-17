@@ -28,6 +28,7 @@ import { isRriStackable } from './roleplayRealismItems/rriRealism.js';   // RRI2
 import { noteShot } from './shotTally.js';   // ARENA-ARROWS: the shots a bout loosed - a leaf, so no cycle
 import { cardWorth } from '../net/card/cardWorthLaw.js';   // AUDIT CARDS-6 A6: a card split off is worth its card (the law imports nothing of systems/)
 import { PATRON_COUNTER_MARK } from '../net/patronLaw.js';   // AUDIT LW-II-2 S1: a stack keeps the counter's mark (the law imports nothing)
+import { isStolen, markStolen } from './stolenGoods.js';   // STOLEN-GOODS: a stolen piece stacks with stolen kin alone, and a split keeps the mark (a leaf)
 
 /** DaggerfallUnityItem.IsEnchanted verbatim
  *  (DaggerfallUnityItem.cs:266-269): DERIVED from the enchantment
@@ -251,7 +252,11 @@ export function stacksWith(a, b) {
     // locked arrows stowed in a wagon holding five came out as thirty-five unlocked, and dropped.
     (a.locked === true) === (b.locked === true) &&
     // CARDS8 (the port's own field, Ledger A): a card stacks only with its own card - two Rats, never a Rat and a Lich
-    (a.card ?? null) === (b.card ?? null);
+    (a.card ?? null) === (b.card ?? null) &&
+    // STOLEN-GOODS (FIELD BUGS 2026-10-16b; the port's own field, Ledger A): a stolen piece stacks only with stolen kin -
+    // three arrows off a shut shop's shelf merged into the pack's twenty were twenty-three honest arrows (or twenty-three
+    // stolen ones), and the court took the wrong count
+    isStolen(a) === isStolen(b);
 }
 
 /** ItemCollection.AddItem (ItemCollection.cs:217-252): merge into an
@@ -389,6 +394,7 @@ export function splitStack(list, stack, numberToPick, { rolls = Math.random } = 
   }
   if (stack.bound === true) picked.bound = true;   // AUDIT SS: and its binding (systems/item/itemBound.js) - never the Broker's price, which a dismantle pays out of
   if (stack[PATRON_COUNTER_MARK] === true) picked[PATRON_COUNTER_MARK] = true;   // AUDIT LW-II-2 S1: and the counter's mark (net/patronLaw.js) - a split is no way out of it
+  if (isStolen(stack)) markStolen([picked]);   // STOLEN-GOODS: and the theft's (systems/stolenGoods.js) - nor is a split
   list.push(picked);                              // AddItem(noStack: true)
   stack.stackCount = count - numberToPick;
   return picked;

@@ -17,11 +17,10 @@
 // has already cued, judged and said.
 //
 // Not a DFU member. Ledger A (WB11).
-import { HOST, HOST_KINDS, HOST_BLOWS, COURT_CENTRE, ATTACKS, hostAt, hostBlowUnder, nearestCourt } from '../../net/gate/gateBrain.js';
+import { HOST, HOST_KINDS, HOST_BLOWS, COURT_CENTRE as GATE_COURT_CENTRE, ATTACKS, hostAt, hostBlowUnder, nearestCourt } from '../../net/gate/gateBrain.js';
 import { hostVerdict, hostTelegraphAt } from '../../net/gate/gateStrike.js';
 import { hostLookOf, hostAct, hostFallAct, hostStandIn, hostCue, bossFrame, bossPlace, HOST_BITE_COLOR, hostPulseColor, emberColor, WARD_COLOR, BOSS_CUES, gateHitFlash } from '../../world/gate/gateBoss.js';
 import { setBatchHitFlash } from '../../systems/hitFlash.js';   // WB13d: a body of his host struck flashes, as he does
-import { courtToDungeon } from '../../world/gate/gateArena.js';
 import { TELEGRAPH_KIND, TELEGRAPH_STYLE, TELEGRAPH_FLASH_MS, TELEGRAPH_EDGE, TELEGRAPH_POOL } from '../../render/gate/gateTelegraph.js';
 import { ENEMY_BASICS } from '../../characters/enemy/enemyBasics.js';
 import { mobileBillboardSize } from '../../world/rmbFlats.js';
@@ -114,13 +113,17 @@ export function hostShapes(s, now, P, out = []) {
  *   audio?: any, cam?: () => number[]|null, feet?: () => number[]|null, player?: () => any,
  *   land?: (blow: { pct: number, base: number, el: string|null, name: string }) => void,
  *   say?: (text: string) => void, send?: (hit: { i: number, q: number, d: number, r: number }) => boolean,
- *   blowQ?: (who: string) => number,
+ *   blowQ?: (who: string) => number, centre?: number[],
  * }} deps
  *   `land` the court's door a blow on me lands through (its share and base of my health, its element through my saving
  *   throw - scenes/gate/gateCourt.js landBlow); `send` a blow of mine on one of them, to the court's room (the wire's `ahit`);
  *   `blowQ` the court's one sequence of my blows (AUDIT WB11 W3 - `a<i>` the body met; alone, a sequence of its own).
  */
-export function createGateHost({ renderer = null, getTexture = null, uploadRecordFrame = null, audio = null, cam = () => null, feet = () => null, player = () => null, land = () => {}, say = () => {}, send = () => false, blowQ = null } = {}) {
+export function createGateHost({ renderer = null, getTexture = null, uploadRecordFrame = null, audio = null, cam = () => null, feet = () => null, player = () => null, land = () => {}, say = () => {}, send = () => false, blowQ = null, centre = null } = {}) {
+  // EG-PLAY: THE FLOOR'S CENTRE in the dungeon's frame - the court's (net/gate/gateBrain.js COURT_CENTRE), or an Elite Breach
+  // hall's own origin (world/eliteGates/egHall.js egHallCentre): every place this driver reads or draws is about it
+  const COURT_CENTRE = centre ?? GATE_COURT_CENTRE;
+  const courtToDungeon = (x, y, z) => [COURT_CENTRE[0] + x, COURT_CENTRE[1] + y, COURT_CENTRE[2] + z];
   /** the fight this driver is on (its day); each body standing by its number - its look, its batch, what it has cued,
    *  landed and judged, the health last seen and when a blow of mine last met it; the gone still falling, by their word */
   let day = null;

@@ -1,0 +1,288 @@
+[
+  {
+    "name": "EGA5H-master-first-disc",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "if (discs.length === 1 || spec.kind !== 'court' || L.key === spec.lord) return discs[0];",
+    "new": "return discs[0];",
+    "tests": [
+      "test/net/eliteGates/egaudit5_h.test.js",
+      "test/net/eliteGates/egaudit5_h_client.test.js"
+    ],
+    "note": "AUDIT EG V (h): B NEW-3: a master on another lord's ground lays its errands about the ground's first disc"
+  },
+  {
+    "name": "EGA5H-disc-widest",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "for (const f of discs) { const d = dist(L.x, L.z, f.x, f.z) - f.r; if (d < bd)",
+    "new": "for (const f of discs) { const d = -f.r; if (d < bd)",
+    "tests": [
+      "test/net/eliteGates/egaudit5_h.test.js",
+      "test/net/eliteGates/egaudit5_h_client.test.js"
+    ],
+    "note": "AUDIT EG V (h): B NEW-3: the widest disc, not the one the lord stands on"
+  },
+  {
+    "name": "EGA5H-exam-window-flat",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "egErrandMs(egRuneRouteM(spec, order.map((j) => spots[j]), n)));",
+    "new": "0);",
+    "tests": [
+      "test/net/eliteGates/egaudit5_h.test.js",
+      "test/net/eliteGates/egaudit5_h_client.test.js"
+    ],
+    "note": "AUDIT EG V (h): B NEW-3: the Examination's window never measured against its route"
+  },
+  {
+    "name": "EGA5H-route-as-crow",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "route += G.at(runes[j - 1][0], runes[j - 1][1]) + half;",
+    "new": "route += half;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_h.test.js",
+      "test/net/eliteGates/egaudit5_h_client.test.js"
+    ],
+    "note": "AUDIT EG V (h): B NEW-3: the route's legs unwalked"
+  },
+  {
+    "name": "EGA5H-lesson-court-forgot",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "const f = F.mem.lessonF ?? mainDisc(spec, L);",
+    "new": "const f = (spec.fl ?? []).find((q) => q.t === 'd') ?? mainDisc(spec, L);",
+    "tests": [
+      "test/net/eliteGates/egaudit5_h.test.js",
+      "test/net/eliteGates/egaudit5_h_client.test.js"
+    ],
+    "note": "AUDIT EG V (h): F NEW-3: the Lesson's rings about the ground's first disc"
+  },
+  {
+    "name": "EGA5H-lesson-last-not-whole",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "el: elOf(L, 'fire'), whole: end, y: f.y });",
+    "new": "el: elOf(L, 'fire'), y: f.y });",
+    "tests": [
+      "test/net/eliteGates/egaudit5_h.test.js",
+      "test/net/eliteGates/egaudit5_h_client.test.js"
+    ],
+    "note": "AUDIT EG V (h): F NEW-3: the Lesson's last ring not kept to the fight's end"
+  },
+  {
+    "name": "EGA5H-keep-none",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "if (o.whole) (F.keep ??= []).push(",
+    "new": "if (false) (F.keep ??= []).push(",
+    "tests": [
+      "test/net/eliteGates/egaudit5_h.test.js",
+      "test/net/eliteGates/egaudit5_h_client.test.js"
+    ],
+    "note": "AUDIT EG V (h): F NEW-3: no zone laid to the fight's end is kept"
+  },
+  {
+    "name": "EGA5H-engine-any-pose",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "const here = egPosedHere(B);   // AUDIT EG V (h, A1 NEW-1",
+    "new": "const here = living(B).map(([s2, m2]) => (m2.pose ? { sub: s2, x: m2.pose.x, z: m2.pose.z } : null)).filter(Boolean);   // AUDIT EG V (h, A1 NEW-1",
+    "tests": [
+      "test/net/eliteGates/egaudit5_h.test.js",
+      "test/net/eliteGates/egaudit5_h_client.test.js"
+    ],
+    "note": "AUDIT EG V (h): A1 NEW-1: an engine's blow on a pose of any hall"
+  },
+  {
+    "name": "EGA5H-mastery-absolute",
+    "file": "src/net/eliteGates/egRun.js",
+    "old": "m.offerO = { lean, w: nth, valk,",
+    "new": "m.offerO = { lean, w, valk,",
+    "tests": [
+      "test/net/eliteGates/egaudit5_h.test.js",
+      "test/net/eliteGates/egaudit5_h_client.test.js"
+    ],
+    "note": "AUDIT EG V (h): A1 NEW-2: the Mastery at absolute Redoubt 3 alone"
+  },
+  {
+    "name": "EGA5H-burns-ignored",
+    "file": "src/net/eliteGates/egFloor.js",
+    "old": "export const egBurnsIn = (zones, now, until, y = NaN) => (zones ?? []).filter((z) => z.kind === 'burn' && z.from <= until && z.until > now && onZoneFloor(z, y));",
+    "new": "export const egBurnsIn = () => [];",
+    "tests": [
+      "test/net/eliteGates/egaudit5_h.test.js",
+      "test/net/eliteGates/egaudit5_h_client.test.js"
+    ],
+    "note": "AUDIT EG V (h): L1-10's limit: a burn is ground to flee to"
+  },
+  {
+    "name": "EGA5H-burn-lit-unread",
+    "file": "src/net/eliteGates/egFloor.js",
+    "old": "|| lit.some((z) => egInShape(z.s, px + i * C, pz + j * C))) set[q] = 0;",
+    "new": ") set[q] = 0;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_h.test.js",
+      "test/net/eliteGates/egaudit5_h_client.test.js"
+    ],
+    "note": "AUDIT EG V (h): L1-10's limit: the burning ground left in the set"
+  },
+  {
+    "name": "EGA5H-yard-still-zero",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (spec.twist === 'squad') squadTwist(F, ringSpots(spec, spec.fight.x, spec.fight.z, EG_SQUAD_RING_M, 4, () => 0), now, still, out);",
+    "new": "if (spec.twist === 'squad') squadTwist(F, ringSpots(spec, spec.fight.x, spec.fight.z, EG_SQUAD_RING_M, 4, () => 0), now, 0, out);",
+    "tests": [
+      "test/net/eliteGates/egaudit5_h.test.js",
+      "test/net/eliteGates/egaudit5_h_client.test.js"
+    ],
+    "note": "AUDIT EG V (h): H-11: the Rift-Yard's squad buys no Stillness"
+  },
+  {
+    "name": "EGA5H-door-unnamed",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "{ k: 'esay', w: 'door', ...(by ? { s: [by] } : {}) }",
+    "new": "{ k: 'esay', w: 'door' }",
+    "tests": [
+      "test/net/eliteGates/egaudit5_h.test.js",
+      "test/net/eliteGates/egaudit5_h_client.test.js"
+    ],
+    "note": "AUDIT EG V (h): L3-10 (b): the door names no first across"
+  },
+  {
+    "name": "EGA5H-door-opener-unpassed",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (first) door(B, spec, now, out, inHall, first.sub);",
+    "new": "if (first) door(B, spec, now, out, inHall);",
+    "tests": [
+      "test/net/eliteGates/egaudit5_h.test.js",
+      "test/net/eliteGates/egaudit5_h_client.test.js"
+    ],
+    "note": "AUDIT EG V (h): L3-10 (b): the opener never named"
+  },
+  {
+    "name": "EGA5H-forget-nothing",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "function lawForget() { egSpecForget(); lawGot.clear();",
+    "new": "function lawForget() { lawGot.clear();",
+    "tests": [
+      "test/net/eliteGates/egaudit5_h.test.js",
+      "test/net/eliteGates/egaudit5_h_client.test.js"
+    ],
+    "note": "AUDIT EG V (h): E NEW-1: the halls given kept for the session"
+  },
+  {
+    "name": "EGA5H-away-remembers",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "look = null; } lawForget(); chartAway();",
+    "new": "look = null; } chartAway();",
+    "tests": [
+      "test/net/eliteGates/egaudit5_h.test.js",
+      "test/net/eliteGates/egaudit5_h_client.test.js"
+    ],
+    "note": "AUDIT EG V (h): E NEW-1: away keeps the halls given"
+  },
+  {
+    "name": "EGA5H-walkout-remembers",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "modes()?.egSwapDrop?.(); lawForget(); }",
+    "new": "modes()?.egSwapDrop?.(); }",
+    "tests": [
+      "test/net/eliteGates/egaudit5_h.test.js",
+      "test/net/eliteGates/egaudit5_h_client.test.js"
+    ],
+    "note": "AUDIT EG V (h): E NEW-1: the breach's end keeps the halls given"
+  },
+  {
+    "name": "EGA5H-frame-out-remembers",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    lawForget();   // AUDIT EG V (h): and the halls given",
+    "new": "    // lawForget dropped",
+    "tests": [
+      "test/net/eliteGates/egaudit5_h.test.js",
+      "test/net/eliteGates/egaudit5_h_client.test.js"
+    ],
+    "note": "AUDIT EG V (h): E NEW-1: the frame's way out keeps the halls given"
+  },
+  {
+    "name": "EGA5H-trail-first-ignored",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "if (trail.b === E.b && trail.h === E.h) trail.first = w.s[0]; }",
+    "new": "}",
+    "tests": [
+      "test/net/eliteGates/egaudit5_h.test.js",
+      "test/net/eliteGates/egaudit5_h_client.test.js"
+    ],
+    "note": "AUDIT EG V (h): L3-10 (b): the door's word never read"
+  },
+  {
+    "name": "EGA5H-trail-own-drawn",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "trail.first && trail.first !== me()",
+    "new": "trail.first",
+    "tests": [
+      "test/net/eliteGates/egaudit5_h.test.js",
+      "test/net/eliteGates/egaudit5_h_client.test.js"
+    ],
+    "note": "AUDIT EG V (h): L3-10 (b): the first across sees their own ribbon"
+  },
+  {
+    "name": "EGA5H-trail-ride-dropped",
+    "file": "src/world/eliteGates/egLook.js",
+    "old": "route.push(ride ? { pl: ride } : { at: [x, y, z] });",
+    "new": "route.push({ at: [x, y, z] });",
+    "tests": [
+      "test/net/eliteGates/egaudit5_h.test.js",
+      "test/net/eliteGates/egaudit5_h_client.test.js"
+    ],
+    "note": "AUDIT EG V (h): L3-10 (b): a point on a moving piece left in the air"
+  },
+  {
+    "name": "EGA5H-trail-every-frame",
+    "file": "src/world/eliteGates/egLook.js",
+    "old": "Math.hypot(x - _trailP[0], y - _trailP[1], z - _trailP[2]) < EG_TRAIL.step) return false;",
+    "new": "false) return false;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_h.test.js",
+      "test/net/eliteGates/egaudit5_h_client.test.js"
+    ],
+    "note": "AUDIT EG V (h): L3-10 (b): a point a frame, the route spent in seconds"
+  },
+  {
+    "name": "EGA5H-trail-undrawn",
+    "file": "src/render/eliteGates/egLinePass.js",
+    "old": "if (tn > 0 && trail) {",
+    "new": "if (false) {",
+    "tests": [
+      "test/net/eliteGates/egaudit5_h.test.js",
+      "test/net/eliteGates/egaudit5_h_client.test.js"
+    ],
+    "note": "AUDIT EG V (h): L3-10 (b): the trail's line never drawn"
+  },
+  {
+    "name": "EGA5H-ally-opaque",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "alpha: 0.6, t: 0, phase: 0, named: true",
+    "new": "alpha: 1, t: 0, phase: 0, named: true",
+    "tests": [
+      "test/net/eliteGates/egaudit5_h.test.js",
+      "test/net/eliteGates/egaudit5_h_client.test.js"
+    ],
+    "note": "AUDIT EG V (h): L3-10 (c): an ally on traversal ground drawn whole"
+  },
+  {
+    "name": "EGA5H-ally-on-floor",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "return egFightFloorAt(spec, egLocalX(spec, sx), pos[1] + R0[1], pos[2] + R0[2]) ? null : ALLY_VEIL;",
+    "new": "return ALLY_VEIL;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_h.test.js",
+      "test/net/eliteGates/egaudit5_h_client.test.js"
+    ],
+    "note": "AUDIT EG V (h): L3-10 (c): an ally veiled on the fight floor too"
+  },
+  {
+    "name": "EGA5H-ally-host-unwired",
+    "file": "src/scenes/world.js",
+    "old": "egClient?.allyVeil(social?.accountOfPeer?.(d.id), d.shown, onlineToScene) ?? null",
+    "new": "null",
+    "tests": [
+      "test/net/eliteGates/egaudit5_h.test.js",
+      "test/net/eliteGates/egaudit5_h_client.test.js"
+    ],
+    "note": "AUDIT EG V (h): L3-10 (c): the host never asks"
+  }
+]

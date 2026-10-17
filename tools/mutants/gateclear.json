@@ -1,7 +1,7 @@
 [
   {
     "name": "GATE-CLEAR-a-piece-in-the-clearing-still-stands",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "        if (boxNearGate(gateClear, px, py, box[0], box[2], box[3], box[5])) { gateLedger.refused = true; _wodOffGate++; continue; }\n",
     "new": "",
     "tests": [
@@ -10,7 +10,7 @@
   },
   {
     "name": "GATE-CLEAR-a-flat-in-the-clearing-still-stands",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "        if (pointNearGate(gateClear, px, py, f.base[0], f.base[2], WOD_FLAT_GATE_CLEAR_M)) { gateLedger.refused = true; _wodOffGate++; continue; }",
     "new": "        // gone",
     "tests": [
@@ -19,7 +19,7 @@
   },
   {
     "name": "GATE-CLEAR-the-pick-never-asks-the-gate",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "wodSiteClear(terrainGen.roads(), px, py, name, prefab, rect) && gateSite(name, prefab, rect));",
     "new": "wodSiteClear(terrainGen.roads(), px, py, name, prefab, rect));",
     "tests": [
@@ -38,7 +38,7 @@
   },
   {
     "name": "GATE-CLEAR-a-build-across-the-turn-never-asked",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "    gateClearSweep.published(key, gateClear?.key);",
     "new": "    // gone",
     "tests": [
@@ -47,7 +47,7 @@
   },
   {
     "name": "GATE-CLEAR-the-placement-reads-a-newer-clearing",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "        if (boxNearGate(gateClear, px, py, box[0], box[2], box[3], box[5]))",
     "new": "        if (boxNearGate(_gateClearNow(), px, py, box[0], box[2], box[3], box[5]))",
     "tests": [
@@ -65,7 +65,7 @@
   },
   {
     "name": "GATE-CLEAR-a-stood-piece-left-out-of-the-reach",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "        gateLedger.reach.push(box[0], box[2], box[3], box[5], 0);\n",
     "new": "",
     "tests": [
@@ -74,7 +74,7 @@
   },
   {
     "name": "GATE-CLEAR-the-cost-forgotten",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "      gateRefused: gateLedger.refused,",
     "new": "      gateRefused: false,",
     "tests": [
@@ -147,8 +147,8 @@
   {
     "name": "GATE-CLEAR-the-old-clearing's-cost-forgotten-at-the-turn",
     "file": "src/world/gate/gateClearance.js",
-    "old": "if (p.gateRefused || reachNearGate(p.wodReach, clear, p.px, p.py)) again.push(p);",
-    "new": "if (reachNearGate(p.wodReach, clear, p.px, p.py)) again.push(p);",
+    "old": "if ((gone && p.gateRefused) || come.some((c) => reachNearGate(p.wodReach, c, p.px, p.py))) again.push(p);",
+    "new": "if (come.some((c) => reachNearGate(p.wodReach, c, p.px, p.py))) again.push(p);",
     "tests": [
       "test/world/gate/gateclear.test.js"
     ]

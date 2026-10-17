@@ -22,6 +22,7 @@ import { isPortTown, isPortTownType, portTownByData } from '../../../src/systems
 import { PORT_LOCATION_IDS, hasPort } from '../../../src/systems/travel/travelPorts.js';
 import { MapsFile, LOCATION_TYPES, getPixelFromPixelID, mapPixelToLongitudeLatitude, longitudeLatitudeToMapPixel } from '../../../src/formats/mapsFile.js';
 import { WoodsFile } from '../../../src/formats/woodsFile.js';
+import { hostText } from '../../hostText.mjs';
 import { BlocksFile } from '../../../src/formats/blocksFile.js';
 import { buildMapDict } from '../../../src/systems/map/mapDirectory.js';
 import { isWaterPixel } from '../../../src/ui/overworldModel.js';
@@ -31,7 +32,7 @@ import { chartSite } from '../../../src/systems/naval/treasureCharts.js';
 import { layoutLocation } from '../../../src/world/locationLayout.js';
 import { NAV_CELLS_PER_BLOCK, tileWeight } from '../../../src/world/city/cityNavigation.js';
 
-const W = readFileSync(new URL('../../../src/scenes/world.js', import.meta.url), 'utf8');
+const W = hostText('src/scenes/world.js');   // the world host whole - its pixel build stands in src/scenes/pixelBuild.js (HOST-SPLIT 2)
 
 /** A raster's water as the one water law answers it: `rows` of '~' (water) and '.' (land), y down. */
 const raster = (rows) => (x, y) => rows[y]?.[x] === '~';

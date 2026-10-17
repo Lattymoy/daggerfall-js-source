@@ -9,6 +9,7 @@ import { TRANSPORT_MODES } from '../../src/systems/transport.js';
 import { MOUSE_CODES, mouseCode, routeAction } from '../../src/ui/input.js';
 import { ControlsWindow } from '../../src/ui/controlsWindow.js';
 import { currentDict } from '../../src/systems/controlsConfig.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 // ═══ MAC-K: THREE THINGS MAC FOUND IN PLAY ════════════════════════
 //
@@ -26,7 +27,7 @@ import { currentDict } from '../../src/systems/controlsConfig.js';
 // for the walk and test/ui/enhanced/enhancedChronicle.test.js for the window.
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const rd = (p) => readFileSync(join(root, p), 'utf8');
+const rd = (p) => hostText(p);
 const HOSTS = ['exterior', 'world', 'worldModes', 'dungeonContext'];
 
 // ── K1: the mouse ────────────────────────────────────────────────
@@ -677,7 +678,7 @@ test('MAC-L4: the host WAITS for the table it reads a save with', () => {
   // `loadMagicRegistries` is fired and not awaited at boot - correct,
   // because every other consumer is a later frame - so the load arm has
   // to await it or it reads a save with a null table.
-  const src = rd('src/scenes/world.js').replace(/^\s*\/\/.*$/gm, '');
+  const src = hostText('src/scenes/world.js').replace(/^\s*\/\/.*$/gm, '');
   assert.match(src, /const _magicRegistries = loadMagicRegistries\(fetchBytes\)/,
     'the boot keeps the PROMISE, not just its result');
   const load = src.slice(src.indexOf('async function worldQuickLoad('));
@@ -704,7 +705,7 @@ test('AUDIT-MACL F1: resolvePendingSpells has a CALLER, and it is the moment the
   // Derived: the caller must be inside the registries' `.then`, because
   // that IS "later". A call anywhere else would run before the table
   // exists and resolve nothing.
-  const src = rd('src/scenes/world.js');
+  const src = hostText('src/scenes/world.js');
   assert.match(src, /import \{[^}]*resolvePendingSpells[^}]*\} from '\.\.\/systems\/save\/save\.js';/);
   const then = src.slice(src.indexOf('const _magicRegistries = loadMagicRegistries('));
   const body = then.slice(0, then.indexOf('\n  });'));
@@ -727,7 +728,7 @@ test('AUDIT-MACL F2: the quickload latch goes up BEFORE the first await', async 
   // `_loading === false`, both suspend, and both run a whole load over
   // the same entity. A fix for a silent data loss must not open a
   // re-entry.
-  const src = rd('src/scenes/world.js').replace(/^\s*\/\/.*$/gm, '');
+  const src = hostText('src/scenes/world.js').replace(/^\s*\/\/.*$/gm, '');
   const fn = src.slice(src.indexOf('async function worldQuickLoad('));
   const body = fn.slice(0, fn.indexOf('\n  }\n'));
   const guard = body.indexOf('if (_loading) return;');

@@ -9,9 +9,10 @@ import { readFileSync } from 'node:fs';
 
 import { createPlayerMagic } from '../../src/scenes/hostMagic.js';
 import { liveEnchantFoeSinks } from '../../src/scenes/shared.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
-const WORLD = read('src/scenes/world.js');
+const WORLD = hostText('src/scenes/world.js');
 
 /** The text from `from` up to (and including) the first `to` after it. */
 function lift(src, from, to) {

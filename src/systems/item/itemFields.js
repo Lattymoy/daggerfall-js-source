@@ -178,6 +178,10 @@ export const ITEM_FIELDS = Object.freeze({
   // town's patron takes it (net/patronLaw.js patronTakes, PATRON_COUNTER_MARK). Never a receiver's mark: it rides the wire
   // and the market's listing with the piece
   counterBought: bool(),
+  // STOLEN-GOODS (FIELD BUGS 2026-10-16b): a piece taken from someone else's keeping (systems/stolenGoods.js) - true, or
+  // absent: a counter's sale is rid of it, never shelved, and a guilty verdict takes it (court.js confiscateStolen).
+  // Never a receiver's mark: it rides the wire and a realm trade with the piece, so a hand-off launders nothing
+  stolen: bool(),
   // SELL-AS-FOUND (AUDIT ECON O1): the condition the world handed a piece over at - Roleplay & Realism: Items' rolls on
   // a pile, a body and a shelf (systems/roleplayRealismItems/rriRealism.js) - which an online counter's sale reads at best (tradeModes.js
   // saleConditionPercentage); absent on a piece handed over whole

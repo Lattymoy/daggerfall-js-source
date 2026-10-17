@@ -259,6 +259,11 @@ test('AUDIT 68 X5-verify-deploy-tag-length-bypasses-dirty: the build tag is twel
   git('add', '-A');
   git('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-qm', 'one');
   mkdirSync(join(d, 'src'));
+  // BUILD-LEFTOVERS (AUDIT, the second read): IMPORTED, it stamps nothing - the probe and the rel8 pin import tagSource,
+  // and a run guard lost would rewrite a checkout's tracked stamp under node --test, beside the pins that read it
+  const imp = node(['--input-type=module', '-e', `await import(${JSON.stringify(pathToFileURL(join(ROOT, 'scripts/buildTag.mjs')).href)});`], { cwd: d });
+  assert.equal(imp.status, 0, imp.stderr);
+  assert.equal(existsSync(join(d, 'src/buildTag.js')), false, 'importing scripts/buildTag.mjs stamped src/buildTag.js');
   const r = node([join(ROOT, 'scripts/buildTag.mjs')], { cwd: d });
   assert.equal(r.status, 0, r.stderr);
   // PIN MOVED (REL8): the stamp's second line is the player's update number - none in a repository with no line

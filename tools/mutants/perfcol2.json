@@ -36,9 +36,9 @@
   },
   {
     "name": "PERF-COL2-f-a-pixel-bucket-unmarked",
-    "file": "src/scenes/world.js",
-    "old": "      const wodBucket = onFloatingFrame(state, ((o) => () => state.pixelTranslation(px, py, o))([0, 0, 0]));",
-    "new": "      const wodBucket = ((o) => () => state.pixelTranslation(px, py, o))([0, 0, 0]);",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "      const wodBucket = onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0]));",
+    "new": "      const wodBucket = ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0]);",
     "tests": ["test/scenes/perfcol2.test.js"]
   },
   {
@@ -130,6 +130,13 @@
     "file": "src/scenes/world.js",
     "old": "    collider, pixelTranslation: (px, py, o) => state.pixelTranslation(px, py, o), floatingFrame: () => state,",
     "new": "    collider, pixelTranslation: (px, py, o) => state.pixelTranslation(px, py, o),",
+    "tests": ["test/scenes/perfcol2.test.js"]
+  },
+  {
+    "name": "PERF-COL2-t-a-bucket-the-host-lays-unmarked",
+    "file": "src/scenes/world.js",
+    "old": "    collider.addMesh(h.bucket, pos, idx, _ohIdentity, onFloatingFrame(state, () => state.pixelTranslation(entry.px, entry.py, o)));   // PERF-COL2: riding the floating origin\n",
+    "new": "    collider.addMesh(h.bucket, pos, idx, _ohIdentity, onFloatingFrame(state, () => state.pixelTranslation(entry.px, entry.py, o)));   // PERF-COL2: riding the floating origin\n    { const px = entry.px, py = entry.py; collider.addMesh(h.bucket + ':rim', pos, idx, _ohIdentity, ((o) => () => state.pixelTranslation(px, py, o))([0, 0, 0])); }\n",
     "tests": ["test/scenes/perfcol2.test.js"]
   }
 ]

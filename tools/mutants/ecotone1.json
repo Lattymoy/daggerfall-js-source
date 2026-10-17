@@ -183,7 +183,7 @@
   },
   {
     "name": "ECOTONE1-world-slots-W-E",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "side: Int32Array.of(slot(3), slot(5), slot(1), slot(7)),",
     "new": "side: Int32Array.of(slot(5), slot(3), slot(1), slot(7)),",
     "tests": [
@@ -192,7 +192,7 @@
   },
   {
     "name": "ECOTONE1-world-neighbour-unheld",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "      for (const a of archives) await loadGroundSet(a, pipeline);\n",
     "new": "",
     "tests": [

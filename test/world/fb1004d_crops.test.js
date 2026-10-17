@@ -32,6 +32,7 @@ import { _resetFlatFields } from '../../src/world/flatFields.js';
 import { MeshBuilder } from '../../src/world/detStandIns.js';
 import { GLOBAL_SCALE } from '../../src/world/meshReader.js';
 import { trs } from '../../src/world/mat4.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const TEMPERATE = 504, DESERT = 503;   // the nature archives (ClimateTextureSet)
@@ -216,7 +217,7 @@ test('CROPS the plant: the second desert sows its own record (20) where the firs
 
 // ---- the hosts ----------------------------------------------------------------------------------------------------------
 test('CROPS by source: the streamed world and the one-location exterior hand a field\'s batch the climate and the block\'s solids - the models each drew and collided; the interior and dungeon hosts sow no field', () => {
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /const blockFlats = collectBlockFlats\(b\.dfBlock, natureArchive, \{ climateIndex: maps\.getClimateIndex\(px, py\), solid: blockSolids\(b\.layout\.models, \(m\) => \(m\.enhancedOnly && !isEnhanced\(\) \? null : cpuModels\.get\(m\.modelIdNum\)\)\) \}\);/);
   const e = src('src/scenes/exterior.js');
   assert.match(e, /const fieldSolids = blockSolids\(b\.layout\.models, \(m\) => \(m\.enhancedOnly && !isEnhanced\(\)\) \|\| !gpuMeshes\.get\(m\.modelIdNum\) \? null : cpuModels\.get\(m\.modelIdNum\)\);/);

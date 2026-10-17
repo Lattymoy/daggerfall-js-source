@@ -54,6 +54,7 @@ import { localizedText } from '../../systems/textManager.js';   // L10N3d: DoSte
 import { isFurnishing } from '../../systems/decor/decorFurnish.js';   // DECOR2b: furniture is delivered, never carried
 import { isSummoned, carriedWeight, totalWeight, transferAll, addItem } from '../../systems/inventory.js';   // TransferItem's summoned guard; AUDIT 63 F48: transferAll is ItemCollection.TransferAll (:452), DoSteal's move
 import { shopliftAttempt } from '../../systems/theft.js';   // AUDIT 63 F48: DoSteal's decision (:909-916)
+import { markStolen } from '../../systems/stolenGoods.js';   // STOLEN-GOODS: what the Steal carries off is marked
 import { entityMaxEncumbrance } from '../../combat/formulas.js';   // PlayerEntity.MaxEncumbrance
 // AUDIT 58: DaggerfallTradeWindow inherits the two target-icon panels
 // and overrides both halves (:630-647, :649-670).
@@ -747,6 +748,7 @@ export class NativeTradeWindow {
     this.hooks.tallyPickpocket?.(1);
     if (!out.caught) {
       this.hooks.say?.(stealSuccessText(), 2);
+      markStolen(this.basket);   // STOLEN-GOODS: the lot is stolen - marked before TransferAll merges it into the pack's stacks
       this._deliverFurniture(this.basket);   // DECOR2b
       transferAll(this.basket, this.hooks.packItems());
       this.hooks.tallyCrimeGuild?.(true, 1);

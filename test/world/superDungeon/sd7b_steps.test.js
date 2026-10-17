@@ -486,7 +486,7 @@ test('SD7b the hosts by source: the dungeon host makes the Steps in the Hour alo
   assert.ok(movers > 0 && ride > movers && motor > ride, 'after the movers\' ride, before the motor');
   assert.match(W, /sdClock: \(\) => host\.deadlandsSeconds\?\.\(\) \?\? performance\.now\(\) \/ 1000,/);
   const w = read('src/scenes/world.js');
-  assert.match(w, /registerLevitateWard\(\(\) => inSiegeRoom\(\) \|\| modes\?\.sdRealmSlot\?\.\(\) != null\);/);
+  assert.match(w, /registerLevitateWard\(\(\) => inSiegeRoom\(\) \|\| madeRuleHere\('levitate'\) === 'banned'\);/);   // PIN MOVED (EG-H2, Elite-Gates.md section 24): the made level's law (systems/madeLevel.js)
   assert.match(w, /const _realmArenaBridged = realmArena\(\[\.\.\.SD_REALM_FLOORS, \.\.\.SD_HALL_FLOORS, \.\.\.SD_STEPS_FLOORS\]\);/);
   assert.match(w, /sdCastBack: \(\) => sdCastBack\(\),/);
   assert.match(w, /deadlandsSeconds: \(\) => deadlandsSeconds\(\),/);

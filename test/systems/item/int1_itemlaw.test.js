@@ -22,6 +22,10 @@ import { itemBaseValue } from '../../../src/systems/item/itemTemplates.js';
 import { POISON_START_VALUE, POISONS } from '../../../src/systems/poisons.js';
 import { enchantmentSettings } from '../../../src/systems/enchantmentCatalogue.js';
 import { DFU_MAGIC_ITEMS } from '../../dfuMagicItems.mjs';
+import { execFileSync } from 'node:child_process';   // KEY-LAW: the law as the account service loads it
+import { WEIR_KEY_ROW } from '../../../src/systems/eliteGates/weirKey.js';
+import { WEIR_KEY_LAW_ROW } from '../../../src/systems/eliteGates/weirKeyRow.js';
+import { EG_TEXT } from '../../../src/net/eliteGates/egLaw.js';
 
 const SWEEP = honestItems({ seeds: 4 });
 /** A row as the item maker lays it (enchanting.js applyEnchantments): the catalogue's settings, its type the classic number. */
@@ -47,13 +51,13 @@ test('INT1: every item every honest producer mints carries no finding - in the s
   assert.deepEqual(honestItemsSkipped, [], 'every producer ran headless');
   const sources = new Set(SWEEP.map((s) => s.source));
   // PIN MOVED (its audit): the producers counted exactly - a producer dropped from the sweep is a hole, never a pass
-  assert.equal(sources.size, 86, `the sweep's producers: ${sources.size}`);   // PIN MOVED (TECH1): + lootRarity.addTechniqueLine and what may follow it; PIN MOVED (AUDIT CAPTAIN'S SEA B12): + the exchange's goods and the treasure chart
+  assert.equal(sources.size, 87, `the sweep's producers: ${sources.size}`);   // PIN MOVED (KEY-LAW): + the Weir Key; PIN MOVED (TECH1): + lootRarity.addTechniqueLine and what may follow it; PIN MOVED (AUDIT CAPTAIN'S SEA B12): + the exchange's goods and the treasure chart
   assert.ok(SWEEP.length >= 30_000, `the sweep's items: ${SWEEP.length}`);
   for (const wire of [false, true]) {
     const bad = (wire ? honestItems({ seeds: 4, wire: true }) : SWEEP).map(({ source, item }) => ({ source, f: itemFindings(item), item })).filter((x) => x.f.length);
     assert.deepEqual(bad.slice(0, 5).map((b) => `${b.source}: ${b.f.join(',')} ${JSON.stringify(b.item).slice(0, 200)}`), [], `${wire ? 'wire' : 'save'}: ${bad.length} honest items with findings`);
   }
-  assert.equal(ITEM_LAW_VERSION, 5);   // PIN MOVED (GILDED2): the Gilded rung's two new records are lawful from law 5 on; PIN MOVED (HACKED-GOLD): a letter of credit's worth and a coin pile's count past one DFU int are findings from law 4 on (law 3 on its branch, renumbered past BAL9c at the merge); PIN MOVED (BAL9c): the caster's potency and wellspring lines and the arcane three are lawful from law 3 on; PIN MOVED (TECH1): a weapon's technique line is lawful from law 2 on
+  assert.equal(ITEM_LAW_VERSION, 7);   // PIN MOVED (KEY-LAW): the Weir Key is known to the service's law from law 7 on; PIN MOVED (MAKER-KEPT): a maker-era Aetheric piece keeps its maker's rows from law 6 on; PIN MOVED (GILDED2): the Gilded rung's two new records are lawful from law 5 on; PIN MOVED (HACKED-GOLD): a letter of credit's worth and a coin pile's count past one DFU int are findings from law 4 on (law 3 on its branch, renumbered past BAL9c at the merge); PIN MOVED (BAL9c): the caster's potency and wellspring lines and the arcane three are lawful from law 3 on; PIN MOVED (TECH1): a weapon's technique line is lawful from law 2 on
 });
 
 test('INT1: the forgeries the old wire validator took, each from an honest piece moved by one field - each named', () => {
@@ -141,6 +145,22 @@ test('INT1: the templates the law knows - every custom index a producer mints in
     assert.ok(templateGroups(item.templateIndex).includes(item.group), `${item.templateIndex} in ${item.group}`);
     assert.ok(lawTemplate(item.templateIndex), `${item.templateIndex} known`);
   }
+  // KEY-LAW (FIELD BUGS 2026-10-17): KNOWN HEADLESS - as the account service's judge loads the law, in a process that
+  // imports no item home but the judge's own. This process imported every producer's home, so the registry answered for a
+  // row the service never registers: the Weir Key's (575) was known here and a 'template' finding there, and every realm
+  // character that held a key had its trading frozen, with a strike, the hour the Breach went live
+  const custom = [...new Set(SWEEP.map(({ item }) => item.templateIndex).filter((i) => i >= 288))].sort((a, b) => a - b);
+  assert.ok(custom.includes(WEIR_KEY_LAW_ROW.index), 'the sweep mints the Weir Key');
+  const judge = new URL('../../../server-account/src/judge.js', import.meta.url).href;
+  const law = new URL('../../../src/systems/item/itemLaw.js', import.meta.url).href;
+  const headless = `await import(${JSON.stringify(judge)}); const { lawTemplate } = await import(${JSON.stringify(law)});`
+    + ` process.stdout.write(JSON.stringify(${JSON.stringify(custom)}.filter((i) => !lawTemplate(i))));`;
+  assert.deepEqual(JSON.parse(execFileSync(process.execPath, ['--input-type=module', '-e', headless], { encoding: 'utf8' })), [], 'every custom template the sweep mints, known to the service\'s law');
+  // the leaf is the row the game registers, but its name and its picture
+  const { name, worldTextureArchive, worldTextureRecord, ...keyRow } = WEIR_KEY_ROW;
+  assert.deepEqual(keyRow, { ...WEIR_KEY_LAW_ROW });
+  assert.equal(name, EG_TEXT.keyName);
+  assert.ok(Number.isInteger(worldTextureArchive) && Number.isInteger(worldTextureRecord));
   assert.deepEqual(Object.keys(CUSTOM_TEMPLATE_GROUPS), ['Weapons', 'Armor', 'Gems', 'Jewellery', 'Furniture']);
   const dagger = honest((it) => it.group === 'Weapons' && it.templateIndex === 113 && !it.rarity && !it.magic, 'a dagger');
   assert.equal(itemWorth(dagger), dagger.value, 'an honest price counts whole');

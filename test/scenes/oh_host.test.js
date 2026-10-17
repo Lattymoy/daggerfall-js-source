@@ -16,6 +16,7 @@ import { createOceanHoles, oceanHolesSettings } from '../../src/scenes/oceanHole
 import { isPitPixel, placementFraction, getFloorPitDepth, MINIMUM_DEPTH } from '../../src/world/oceanHoles.js';
 import { sampleMeshLocalY } from '../../src/world/deepWater/deepWaterFloor.js';
 import { MOD_SETTINGS } from '../../src/systems/modSettings.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const f32 = Math.fround;
 const SIZE = 819.2;
@@ -325,9 +326,9 @@ test('OH-B Iliac Puddle No More\'s half of the API: OnSeafloorBuilt before OnFlo
   assert.match(src, /heightGridFromPositions\(s\.floor\.positions, s\.floor\.vertexLocalY\);\s*\n\s*standWalls\(entry, s\);\s*\n\s*if \(s\.gpu\) gpu\?\.updateFloor\?\.\(s\.gpu, s\.floor\);/);
   assert.match(src, /const d = urgent\.has\(k\) \? -1 : chebyshev/, 'an urgent refresh is taken before the nearest');
   assert.match(src, /if \(!force && this\.isSeafloorCurrent\(entry\)\) return;/);
-  const world = readFileSync(new URL('../../src/scenes/world.js', import.meta.url), 'utf8');
+  const world = hostText('src/scenes/world.js');
   assert.match(world, /onSeafloorBuilt: \(e\) => oceanHoles\?\.seafloorBuilt\(e\)/);
-  assert.match(world, /if \(oceanHoles\) oceanHoles\.promoted\(built\.get\(key\)\);/, 'OnTerrainPromoted after the sea\'s own promote');
+  assert.match(world, /if \(host\.oceanHoles\) host\.oceanHoles\.promoted\(built\.get\(key\)\);/, 'OnTerrainPromoted after the sea\'s own promote');
   assert.match(world, /if \(oceanHoles\) oceanHoles\.destroyed\(p\);/);
 });
 
@@ -419,7 +420,7 @@ test('AUDIT OH-F A3 indoors: a queued pixel waits as an inactive terrain for Max
 });
 
 test('AUDIT OH-F A1/A2/A3 the wiring: the settings above the modal gate, the queue in both modes (after the sea outside), the plume in its pixel\'s box', () => {
-  const w = readFileSync(new URL('../../src/scenes/world.js', import.meta.url), 'utf8');
+  const w = hostText('src/scenes/world.js');
   const gate = w.indexOf('if (modes.frame(dt, now)) {');
   const check = w.indexOf('oceanHoles.checkSettings();');
   assert.ok(check > 0 && check < gate, 'LoadSettings\' callback is asked above the modal gate');

@@ -28,7 +28,7 @@
   },
   {
     "name": "ROCKSUNK-host-asks-no-site",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "if (isWodShrub(m.modelId, wodPicks[m.pick]?.name)) {",
     "new": "if (isWodShrub(m.modelId, undefined)) {",
     "tests": [
@@ -37,7 +37,7 @@
   },
   {
     "name": "ROCKSUNK-rock-sites-spelled-twice",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "const rockPick = (i) => WOD_ROCK_SITES.includes(wodPicks[i]?.name);",
     "new": "const rockPick = (i) => wodPicks[i]?.name === 'Rocks' || wodPicks[i]?.name === 'Mountains';",
     "tests": [

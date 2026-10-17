@@ -1,7 +1,7 @@
 [
   {
     "name": "AUDIT-WATER-NEXT-P1-host-carves-again",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "      bed: waterOn,   // AUDIT WATER-NEXT P1",
     "new": "      bed: false,   // AUDIT WATER-NEXT P1",
     "tests": ["test/world/terrain/audit_waternext.test.js"]

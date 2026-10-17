@@ -31,6 +31,7 @@ import { createShipyardOverlay, createNavalYardOverlay, createNavalPlunderOverla
 import { yardGlyph, portGlyph, yardMarkKind } from '../../src/ui/travel/travelViewHud.js';
 import { exteriorFrame, streetColor, same } from '../yardLightRig.mjs';
 import { LAMP_RANGE } from '../../src/scenes/portHost.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 
@@ -168,7 +169,7 @@ test('SHIPYARDS-FOUND THE GLYPHS: a mark\'s yard kind its kind\'s second word; t
 });
 
 test('SHIPYARDS THE HOSTS: world.js places the port\'s places in each port town\'s build on what its yards left, stands them (the pool beside the yards\'), draws them in the street and in the view out of a window, their people on the flats\' axis and in bodies, their lamps in the lights and their beams in the added pass, takes them down at a re-anchor and a load, names them under the eye, hands the press, the shipmaster\'s window and the stair; hands their sites to the town map, the talk directory (the docks once sounded) and the Overworld; worldModes\' street ray reaches them; the bench stands none, the dungeon none (mutants: each hand dropped)', () => {
-  const w = read('src/scenes/world.js'), modes = read('src/scenes/worldModes.js');
+  const w = hostText('src/scenes/world.js'), modes = read('src/scenes/worldModes.js');
   // PIN MOVED (AUDIT SHIPYARDS L3-3, U2): the yards' and the port's places in one pass, and the town's own water read against
   // the map's bearing
   // PIN MOVED (FIELD BUGS 2026-10-14 INLAND-PORTS): a port town is a port by its data that the open sea bears on (portOnSea),

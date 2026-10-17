@@ -13,6 +13,7 @@ import { readFileSync } from 'node:fs';
 import { frustumPlanes, aabbOutside } from '../../src/render/frustum.js';
 import { perspective, lookAt, multiply } from '../../src/world/mat4.js';
 import { PerfMeter, perfOn, perfZones, perfCpu, perfZoneLine, PERF_EVERY } from '../../src/render/perfMeter.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 
@@ -51,7 +52,7 @@ test('PERF-ON2: a peer outside the frustum is skipped, and one inside is kept - 
 });
 
 test('PERF-ON2 / PERF-CROWD: the host culls the peers AND the live crowd, by the batch\u2019s own sphere, lifted for the bottom anchor', () => {
-  const w = read('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /if \(cullOn && billboardOutside\(b\)\) \{ if \(renderer\.shadowReachBatch\(b\)\) castBatches\.push\(b\); continue; \}[\s\S]{0,120}?allBatches\.push\(b\);/,
     'every peer batch is tested before it is submitted (AUDIT REACH: a rejected peer a shadow reaches goes to the casters\' list)');
   assert.doesNotMatch(w, /if \(remotePlayers\) for \(const b of remotePlayers\.batches\(\)\) allBatches\.push\(b\);/, 'the unconditional push is gone');
@@ -151,7 +152,7 @@ test('PERF-CPU: markCpu leaves the GPU arm exactly as it was', () => {
   assert.match(src, /markCpu\(name\) \{ if \(this\.cpu\) this\._cpuMark\(name\); \}/, 'it touches openZone and the query stack not at all');
   assert.match(src, /if \(this\.cpu\) return;\n\s+if \(!this\.ext \|\| this\.active \|\| this\.zones\) return;/, 'and the GPU clock does not run under ?perf=cpu');
   // the host marks the phases a script-bound frame is actually spending in
-  const w = read('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   for (const zone of ['online', 'sim', 'batches', 'flats', 'people']) {
     assert.match(w, new RegExp(`markCpu\\('${zone}'\\)`), `the frame marks '${zone}'`);
   }
@@ -214,7 +215,7 @@ test('PERF-LIGHTS: the night’s lanterns are a pool - the same selection, with 
   const again = fillLanternPool(px.slice(1), () => [20, 0, 20], pool, first.ranges, new Float32Array(64).fill(18));
   assert.equal(pool[0], objs[0], 'the objects are refilled, not re-minted');
   assert.deepEqual([again.n, pool[0].x, pool[0].z], [1, 27, 29], 'the one left, under its live translation');
-  const w = read('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /fillLanternPool\(built\.values\(\), \(p\) => state\.pixelTranslation\(p\.px, p\.py, _lightT\), _sceneLights, /, 'the host fills its one pool, the translation into the one triple');
   assert.doesNotMatch(w, /sceneLights\.push\(\{ x: l\[0\]/, 'the per-lantern object literal is gone');
 });

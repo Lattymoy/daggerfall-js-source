@@ -242,7 +242,7 @@
   },
   {
     "name": "GRASSLIT2-host-normals-dropped",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "groundNormals: labGrass && stride === 1 ? normals : null,",
     "new": "groundNormals: null,",
     "tests": [
@@ -402,7 +402,7 @@
   },
   {
     "name": "AUDIT-GRASSLIT2-B1-normals-ungated",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "groundNormals: labGrass && stride === 1 ? normals : null,",
     "new": "groundNormals: stride === 1 ? normals : null,",
     "tests": [

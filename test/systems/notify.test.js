@@ -34,6 +34,7 @@ import { mapPixelWorldOrigin } from '../../src/systems/travel/travelPaths.js';
 import { rectOf } from '../../src/systems/travel/travelAutopilot.js';
 import { TravelControlUI } from '../../src/ui/travel/travelControlUI.js';
 import { modSetting } from '../../src/systems/modSettings.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const root = new URL('../..', import.meta.url).pathname;
 const src = (p) => readFileSync(join(root, p), 'utf8');
@@ -265,7 +266,7 @@ test('ENH-NOTICE3: notify decides WHICH MODEL, the draw decides WHICH FACE - the
 });
 
 test('ENH-NOTICE3 A: the Travel Options mod\'s MessageBox lines no longer collapse onto the HUD line', () => {
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   // THE BUG. `say` is AddHUDText and `messageBox` is
   // DaggerfallUI.MessageBox; this host wired both to townTalk.say, so
   // every arrival text and every refusal the mod raises as a modal
@@ -327,7 +328,7 @@ test('ENH-NOTICE3 B: every migrated host seam names the KIND and mints no window
     /export function wireInfectionVideos\(renderer, \{ textAt = null, factionDict = null, transferToCemetery = null, cancelRest = null \} = \{\}\)/);
   // Immersive Footsteps' compatibility warning is the same box, at
   // both of DFU's own raises (OnStartGame and OnLoad).
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.equal((w.match(/reportModCompatibilityIssues\(\{ showText: \(lines\) => messageBox\(lines\) \}\)/g) ?? []).length, 2);
   // and DaggerfallAction's ShowText carries its null previousWindow
   // THROUGH the door rather than minting a box to hold it.

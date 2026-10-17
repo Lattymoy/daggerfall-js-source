@@ -20,9 +20,10 @@ import { buildingCompassDirection, DIRECTION_HINTS } from '../../src/systems/tal
 import { expandRandomTextRecord } from '../../src/systems/talk/talkMacros.js';
 import { AnswerPipeline, TALK_STRINGS } from '../../src/systems/answerPipeline.js';
 import { PlayerMotor, LEVITATE_MOVE_SPEED } from '../../src/player/motor.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const src = (p) => readFileSync(join(ROOT, p), 'utf8');
+const src = (p) => hostText(p);
 const approx = (a, b, eps = 1e-6) => assert.ok(Math.abs(a - b) < eps, `${a} !~ ${b}`);
 
 // The port's AI shape for AreEnemiesNearby.
@@ -73,7 +74,7 @@ test('audit26 F059: the exhaustion collapse rides AreEnemiesNearby over EVERY fo
 test('audit26 F059: every host feeds its foe POOLS into the collapse', () => {
   // world.js carries both exterior pools - the watch AND the encounter
   // foes, the same pair its rest deps ask.
-  assert.match(src('src/scenes/world.js'),
+  assert.match(hostText('src/scenes/world.js'),
     /enemiesNearby: areEnemiesNearby\(\[\.\.\.\(cityGuards\?\.guards \?\? \[\]\), \.\.\.\(exteriorFoes\?\.foes \?\? \[\]\)\]\)/);
   // ROAD-G G2: exterior.js carries BOTH pools too. It really did hold
   // one - the watch - until the fixed-city host mounted the encounter
@@ -101,7 +102,7 @@ test('audit26 F059: every host feeds its foe POOLS into the collapse', () => {
  *  against the real laws - so this pin dies the moment the seam goes
  *  back to a literal. */
 function hostHasShip(playerEntity) {
-  const s = src('src/scenes/world.js');
+  const s = hostText('src/scenes/world.js');
   const i = s.indexOf('hasShip: () => {');
   assert.ok(i > 0, 'buildTravelMapWindow computes hasShip');
   const end = s.indexOf('\n      },', i);
@@ -127,7 +128,7 @@ test('audit26 F192: the travel popup asks OwnsShip || FreeShipTravel', () => {
   assert.equal(hostHasShip({ guildMemberships: { [GUILD_GROUPS.FightersGuild]: { guild: 'FightersGuild', rank: 9 } } }), false,
     'no other guild grants free ship travel');
   // the fixed literal is gone
-  assert.doesNotMatch(src('src/scenes/world.js'), /hasShip: false/);
+  assert.doesNotMatch(hostText('src/scenes/world.js'), /hasShip: false/);
 });
 
 test('audit26 F192: and a ship is what stops the 25-gold-per-24-pixels ocean charge', () => {
@@ -158,7 +159,7 @@ test('audit26 F095: ExpandRandomTextRecord expands macros where a line join cann
 });
 
 test('audit26 F095: the NPC session gets the SAME expander the answer pipeline does', () => {
-  const s = src('src/scenes/world.js');
+  const s = hostText('src/scenes/world.js');
   const macroWired = [...s.matchAll(/expandRandomTextRecord: \(id\) => expandTalkRecord\(id, talkMcp\(\)\)/g)];
   assert.equal(macroWired.length, 2, 'the NPC session and the answer pipeline both hold the macro-aware expander');
   // the session's own construction carries it (not just the pipeline's)
@@ -220,7 +221,7 @@ test('audit26 F092: with the seam wired, %di answers a direction instead of the 
 });
 
 test('audit26 F092: the host mounts the compass on BOTH consumers, over one frame', () => {
-  const s = src('src/scenes/world.js');
+  const s = hostText('src/scenes/world.js');
   // one closure, the directory and the player in the same LOCATION frame
   assert.match(s, /const talkBuildingCompassDirection = \(buildingKey\) => buildingCompassDirection\(\{/);
   assert.match(s, /listBuildings: townTalk\.directory,/);

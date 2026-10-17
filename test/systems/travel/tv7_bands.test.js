@@ -10,6 +10,7 @@ import {
 } from '../../../src/systems/travel/travelBands.js';
 import { seededRng } from '../../../src/systems/wind/wind.js';
 import { NATIVE_PER_M } from '../../../src/systems/travel/travelDungeons.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const land = () => true;
 const PX = 32768;
@@ -171,7 +172,7 @@ test('AUDIT OW3 T7-9/T7-1: a peer\'s word is kept only for a band that can be ab
 test('TV7 host: the bands about the traveller kept a life and a pixel; made once of Daggerfall\'s themed groups from their own seed; seen from above with their kind and number, a chaser held at the edge; the chase under the view, the contact standing exactly that band; the enhanced interface outdoors', async () => {
   const { readFileSync } = await import('node:fs');
   const rd = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(rd('src/systems/campEncounters.js'), /^export function rollGroupComposition\(ctx, rolls\) \{/m, 'the themed group is the camps\' own');
   assert.match(w, /const bandNowMs = \(\) => Date\.now\(\) \+ \(online \? _sharedOffsetMs : 0\);/, 'the shared clock online');
   // PIN MOVED (ETHER-OW, test/systems/travel/ether_ow.test.js): on the Bay's map or the Eltheric Ocean's box, never an isle's place
@@ -248,7 +249,7 @@ test('TV7b THE CHASE, SHARED: the band word - my chases where they are, then the
 test('TV7b host: the band word rides my cell\'s foes frame (a chase asks for a frame; the relay reads none of it), a peer\'s word is heard past the room test - their chase shown where it is, their spent bands spent here, a band we both chase kept by the lower id', async () => {
   const { readFileSync } = await import('node:fs');
   const rd = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
-  const w = rd('src/scenes/world.js'), ef = rd('src/scenes/exteriorFoes.js');
+  const w = hostText('src/scenes/world.js'), ef = rd('src/scenes/exteriorFoes.js');
   assert.match(ef, /if \(data\.bd !== undefined\) _onBands\?\.\(from, data\.bd, _now\(\)\);/, 'read off the frame, past the room test');
   assert.match(ef, /function setOnBands\(fn\) \{ _onBands = typeof fn === 'function' \? fn : null; \}/);
   assert.match(w, /exteriorFoes\.setOnBands\(\(from, bd\) => bandHear\(from, bd\)\);/);
@@ -267,7 +268,7 @@ test('TV7b host: the band word rides my cell\'s foes frame (a chase asks for a f
 // stubs (the tv6 host tests' way), so the host's chase law is proven by what it DOES, not by how it reads.
 const liftBands = async () => {
   const { readFileSync } = await import('node:fs');
-  const w = readFileSync(new URL('../../../src/scenes/world.js', import.meta.url), 'utf8');
+  const w = hostText('src/scenes/world.js');
   const cut = (name) => {
     const m = new RegExp(`\\n  function ${name}\\([^)]*\\) \\{[^\\n]*\\}\\n`).exec(w) ?? new RegExp(`\\n  function ${name}\\([^)]*\\) \\{\\n[\\s\\S]*?\\n  \\}\\n`).exec(w);
     assert.ok(m, `${name} lifted`);

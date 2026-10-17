@@ -54,9 +54,10 @@ import { fileURLToPath } from 'node:url';
 import { createCityGuards, GUARD_MOBILE_TYPE } from '../../src/scenes/cityGuards.js';
 import { PLAYER_TARGET } from '../../src/characters/enemy/enemyTargets.js';
 import { playerArrowHitFoe } from '../../src/combat/arrowFlight.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const read = (rel) => readFileSync(join(root, rel), 'utf8');
+const read = (rel) => hostText(rel);
 
 /** The pool's seams, with the two observables this file needs: how
  *  many billboard batches were freed, and every makeAreaHostile call. */
@@ -235,7 +236,7 @@ test('ROAD-G G1(a): all three arrow hosts ROUTE the hostility seam by pool', () 
   assert.match(cg, /restoreWorld, removeGuard, handleAttackFromPlayer,/,
     'the watch exports its hostility pair on the returned surface');
   const router = (pool) => new RegExp(`onAttackFromPlayer: \\(f\\) => \\(${pool}`);
-  assert.match(read('src/scenes/world.js'), router('cityGuards\\.guards\\.includes\\(f\\)\\n\\s+\\? cityGuards\\.handleAttackFromPlayer\\(f, player\\.pos\\)\\n\\s+: exteriorFoes\\.attackFromPlayer\\(f, player\\.pos, \'arrow\'\\)\\),'),   // AUDIT WORLD6b-ii B4: the online host routes the encounter pool through its one door (a puppet's is its owner's)
+  assert.match(hostText('src/scenes/world.js'), router('cityGuards\\.guards\\.includes\\(f\\)\\n\\s+\\? cityGuards\\.handleAttackFromPlayer\\(f, player\\.pos\\)\\n\\s+: exteriorFoes\\.attackFromPlayer\\(f, player\\.pos, \'arrow\'\\)\\),'),   // AUDIT WORLD6b-ii B4: the online host routes the encounter pool through its one door (a puppet's is its owner's)
     'the street routes by pool membership, as its dealDamage does');
   assert.match(read('src/scenes/exterior.js'), router('cityGuards\\.guards\\.includes\\(f\\)\\n\\s+\\? cityGuards\\.handleAttackFromPlayer\\(f, player\\.pos\\)\\n\\s+: exteriorFoes\\.attackFromPlayer\\(f, player\\.pos, \'arrow\'\\)\\),'),
     'the exterior host too - it mounts both pools');
@@ -265,7 +266,7 @@ test('ROAD-G G1(a): every host that mints guards hands in its own area walk', ()
   assert.match(cg, /^  makeAreaHostile = null,$/m, 'the dep defaults absent (the pre-wiring shape)');
   assert.match(cg, /if \(!g\.ai\.isHostile\) makeAreaHostile\?\.\(\);/);
 
-  const w = read('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   const guardMount = w.slice(w.indexOf('const cityGuards = createCityGuards({'), w.indexOf('const exteriorFoes = createExteriorFoes({'));
   assert.match(guardMount, /makeAreaHostile: _makeEnemiesHostile,/,
     'the streaming world: both street pools joined with whatever inside the player stands in');
@@ -306,7 +307,7 @@ test('ROAD-G G1(b): both hosts route the transform by POOL MEMBERSHIP', () => {
   // WabbajackEffect's careerIDs are seventeen monsters and no
   // Knight_CityWatch (:24-44), so CreateEnemy always mints an
   // EnemyMonster.
-  const w = read('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /if \(cityGuards\.guards\.includes\(f\)\) cityGuards\.removeGuard\(f\);\n\s+else exteriorFoes\.removeFoe\(f\);/,
     'the street: the removal goes through the pool that owns the record, not the encounter pool\'s remover');
   const wm = read('src/scenes/worldModes.js');
