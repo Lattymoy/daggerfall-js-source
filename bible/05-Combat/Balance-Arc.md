@@ -1,4 +1,4 @@
-# The Balance arc - the place sets the threat, one rule for every striker (BAL1-BAL9)
+# The Balance arc - the place sets the threat, one rule for every striker (BAL1-BAL11)
 
 > Design page, written from the measurement before the code (2026-10-10). The slices ship in one pull request, in this
 > order, each verifiable without the next. Where this page and a shipped slice disagree, the slice's own record
@@ -287,6 +287,8 @@ thirteen. The simulation leaves out the formulas' tail (an elite, the mentor, a 
 | BAL7 | the loot that wins alone (section 13, 2026-10-12) | one flavour retired, one cap, two powers halved |
 | BAL8 | the PvP referee, one rule for every striker (section 14, 2026-10-12) | one ceiling at the referee, one door's facing |
 | BAL9 | Destruction's channels (section 15, 2026-10-12) | a spell's foe noted, the school's climb its potency, the ladder's arcana |
+| BAL10 | the weapons' own (section 16, 2026-10-17) | the fists' modifiers, the short blades' handling, the Firmament's notables |
+| BAL11 | the hero's threat (section 17, 2026-10-17) | one table, one reader, the one writer's two seams |
 
 ## 10. What shipped
 
@@ -957,3 +959,167 @@ arc's. PIN MOVED: `audit_uicalm_firm1`'s walk names the Templar's Mace where it 
 spellPower 4 the same).
 
 THE FOUR HOSTS. None is touched by name: both damage cores, the swing law and the Firmament's stars are every host's.
+
+## 17. BAL11 - the hero's threat (2026-10-17)
+
+### 17.1 What was asked
+
+A tester's field report, from the Discord (LostMyLeg, 2026-10-17), handed over by the owner to be calculated rather
+than guessed: *"it also looks like with all the systems we have in place the game gets too easy pretty early, i would
+say starting around character level 10/renown 15ish... mobs dont need much more hp they prob need like 4x-6x more
+damage and 2x-3x more hp. Ppl breeze through the content now. Those multipliers should also count to every type of
+mobs elite etc. Thats just super rough quick math i did, iam sure maybe claude can calculate it better to make the game
+a challenge again 😄 early game is fine i think (besides encountering strong revenants early)"*.
+
+Section 1 called a multiplier on every foe's health a band-aid, and BAL3's law was that the place sets the threat,
+never the player. BAL11 is a multiplier on every foe, keyed on the player - so it has to answer to the same standard:
+a cause the measurement finds, a key that is that cause, and a size the measurement sets. Section 17.2 is the cause;
+the key is the player's own growth (the level and the Renown that measure it); the size is section 17.3's table.
+
+### 17.2 What was measured
+
+`tools/heroMeasure.mjs` (seeded, 1,500 foes a cell; every figure below is `node tools/heroMeasure.mjs`). A stated
+player at each level - section 2's builds at 12 and 20, extended on their slopes to 1 and 30, a longsword and seven
+pieces of plate (chain under 8) of a metal stated for the level - against DFU's own encounter band at that level
+(`systems/encounters.js` chooseRandomEnemy's, as weights over each table's twenty slots: the nineteen dungeon kinds and
+the three temperate wilderness tables), through the real overhaul blow both ways (PCAAO and Meaner Monsters on, as they
+ship). Online, the layer Renown brings: 3 health a level, the Firmament's two stars a level (a melee build's blow
+channels to their 30% cap first - Riposte, Momentum and Cavalier, 13 stars - then the guard channels: blowTaken to -15%,
+evade to 10%, health to its 75 and 15%), a Rare sigil's middle carried by half. The kit is the ladder's bands' middles
+(a weapon line +8% from level 8 to +30% from 25; the guards 0.95 a blow from 15 to 0.8 from 25).
+
+THE MEASURE is a kill's cost: the share of the player's health a foe takes while the player kills it (the swings it
+takes times its attack's mean, over the player's health; the tempos equal), the band's mean, the geometric mean over
+the tables. It is not a death rate - a player rests, drinks, casts and kites - only a ratio that moves as the player
+grows.
+
+| level (offline, the kit) | 10 | 12 | 14 | 16 | 18 | 20 | 22 | 25 | 28 | 30 | 35 | 40 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| a kill's cost | 58.6% | 49.5% | 40.8% | 35.0% | 23.8% | 13.5% | 12.1% | 9.2% | 4.1% | 3.6% | 3.9% | 4.2% |
+| cheaper than at 10 | x1 | x1.18 | x1.44 | x1.67 | x2.46 | x4.33 | x4.84 | x6.35 | x14.2 | x16.2 | x15.1 | x14.0 |
+
+The steps at 18-20 and 28 are the stated metal's (ebony, daedric); the curve under them is near enough a constant rate
+- about 13% a level from 10 to 30 (x16.2 is 1.149 a level) - and flat past 30, where the encounter band (its top six
+from level 16), the bestiary (level 21) and the stated skills (100) have all stopped. DFU's own world stops growing
+there; the player does not, until 30.
+
+| Renown, at a fixed level: cheaper than at 15 | 1 | 5 | 10 | 15 | 20 | 25 | 30 | 35 | 40 | 45 | 50 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| level 12 | x0.43 | x0.59 | x0.79 | x1 | x1.22 | x1.45 | x1.71 | x1.99 | x2.14 | x2.24 | x2.34 |
+| level 20 | x0.50 | x0.65 | x0.83 | x1 | x1.18 | x1.36 | x1.57 | x1.80 | x1.91 | x1.98 | x2.06 |
+| level 30 | x0.54 | x0.69 | x0.85 | x1 | x1.16 | x1.31 | x1.49 | x1.67 | x1.77 | x1.82 | x1.87 |
+
+What the report felt: Renown 1 to 15 makes a kill x1.9-2.3 cheaper at the same level (the Firmament's blow cap is
+reached by about Renown 8), so a level-10 Renown-15 player pays 24% of a life a kill where an offline level-10 pays
+59% - the report's "starting around level 10/renown 15" is where the two curves above begin to compound. From there to
+level 20 and Renown 30 the cost falls x5.6 (24% to 4.3%), and to level 30 and Renown 45, x22 (to 1.1%). The report's
+own estimate (4x-6x the blows and 2x-3x the health, x8-x18 between them) is the measured x5.6-x22.
+
+### 17.3 The law
+
+`systems/heroThreat.js` HERO_THREAT, one table: each Daggerfall level past 10, to 30, a foe's blows land x1.07 and its
+health x1.04; each Renown past 15, to 50, x1.01 and x1.005 - compounding, because the growth it answers compounds.
+
+- **Three quarters.** The rates answer three quarters of the measured growth (its compounding: 0.75 of the level's
+  0.14 a level and of Renown's 0.021) and leave the hero the last quarter, so a level-30 player is still stronger than
+  a level-10 one against the same foe - never the flat world that makes a level worthless.
+- **Two thirds in the blow.** The answer is split as the report split it (the blows' share 0.63 of the threat): "mobs
+  dont need much more hp" - the danger is the blow, never a longer fight.
+- **The top is the report's.** Level 30 and Renown 50: x5.48 the blows and x2.61 the health, the report's 4x-6x and
+  2x-3x, reached at the top of the curve, not at its foot.
+
+| level, Renown | 10, 15 | 12, 18 | 15, 22 | 18, 27 | 20, 30 | 25, 38 | 30, 45 | 30, 50 | 20, offline | 30, offline |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| a foe's blows | x1 | x1.18 | x1.50 | x1.94 | x2.28 | x3.47 | x5.22 | x5.48 | x1.97 | x3.87 |
+| a foe's health | x1 | x1.10 | x1.26 | x1.45 | x1.60 | x2.02 | x2.54 | x2.61 | x1.48 | x2.19 |
+
+WHOSE LEVEL. The threat is read where a foe is built, off the builder's player (`heroThreatOf`: `mentorMode.js`
+effectiveLevel - a mentor's, the group's - and the page's Renown, `sigil.js` sigilRenown; no Renown while mentoring,
+when the Firmament sleeps; offline the level alone). Every client builds its own copy of every foe it sees, so a foe's
+blows at me are my threat's: my own foes whole, a dungeon's layout copy whole (its maximum then the host's `k`, as
+SOFTCAP2's standing always was), a peer's puppet its blows alone (`{ puppet: true }` - its health is its owner's
+word). The hero's health is stood on `healthMult` as well (`enemyEntity.js` applyProgressionScaling), the field
+`ai/tells.js` kindHealth divides out, so a high level's foe staggers as its kind does.
+
+WHERE IT STANDS. The seams BAL3's place runs through, into the one writer: `scenes/dungeonContext.js`
+applyProgressionScalingTo (every dungeon foe - a layout foe, a quest's, a rest's ambush, a retype, a puppet) and
+`scenes/exteriorFoes.js` spawnFoe's wilds arm (my foes of the wilds, off a location's ground) and its puppet arm. Every
+kind, over its kind's own scale and before none of it: an elite (x5, x3) and an Elite or Super dungeon's are promoted
+first, a champion, a revenant and the open zone's own after, all multiplying (BAL3's compounding). The foe's share
+(BAL3's "a rat stays a rat") stops the place, never the hero: the report's "every type of mobs". The ladder's gate, as
+the place's, the elites' and the champions' - the ladder off is DFU's own foes.
+
+Never: an ally (`ally`, the record's `allied` - a summoned ally is the player's own power), the watch (`cityGuards.js`
+runs no scaling), a town's or a building's ground (the wilds' arm's `inLocation`, and the pools of `worldModes.js`'s
+interiors and `exterior.js`'s city hand none - BAL3's town), a tuned stage (`_heroStage`: a made level - the court,
+the Hour, the Spire, `systems/madeLevel.js` - or the arena's floor; an arena bout's fighter carries its own level and
+never reaches the seam), or a body the relay keeps (the gate's lords and harriers, an Elite Breach's, the Remnant -
+their health already reads every fighter's level, `net/gate/gateBrain.js` dpsRef, and their blows are
+`strikeDamage`'s).
+
+THE FOUR HOSTS. `scenes/world.js` wired (the wilds, through `exteriorFoes.js`, its pool's `inLocation` the location
+rect); `scenes/dungeonContext.js` wired, and through it `scenes/worldModes.js`'s dungeon mode and the standalone
+dungeon; `scenes/worldModes.js` FLAGGED for its interiors - a building is a town's ground, nothing scales there by
+design; `scenes/exterior.js` FLAGGED - the fixed city is a town's ground (its pool hands no `inLocation`).
+
+### 17.4 What moves
+
+The same fights, the threat stood on every foe through the real writer and its blows through the formula's tail
+(`node tools/heroMeasure.mjs`'s third table):
+
+| level, Renown | 10, 15 | 12, 18 | 15, 22 | 18, 27 | 20, 30 | 25, 38 | 30, 45 | 30, 50 | 20, offline | 30, offline |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| a kill's cost, before | 24.1% | 18.9% | 11.2% | 7.9% | 4.3% | 2.7% | 1.1% | 1.1% | 13.5% | 3.6% |
+| after | 24.1% | 24.5% | 21.5% | 22.4% | 15.7% | 18.9% | 14.3% | 14.9% | 39.7% | 30.8% |
+| the hero's edge over level 10, before | x1 | x1.28 | x2.16 | x3.05 | x5.61 | x8.93 | x22.3 | x22.9 | x4.33 | x16.2 |
+| after | x1 | x0.99 | x1.12 | x1.08 | x1.54 | x1.28 | x1.68 | x1.61 | x1.47 | x1.90 |
+
+(Offline the edge is over an offline level 10, 58.6%.) A kill costs between a sixth and a quarter of a life from
+level 10 to 30 where it fell to a hundredth; the hero keeps a 1.1x-1.9x edge, rising with the level (the stated metal's
+steps make it uneven, not the law). Nothing moves at or under level 10 and Renown 15 - the report's "early game is
+fine".
+
+### 17.5 Recorded, not built
+
+- **The kit is the ladder's middles.** A player in a BAL7 kit (Legendaries, the guards, a set) still wins far more
+  than the stated one - the guards compose with no overall ceiling (BAL7, recorded). Reading the player's own kit would
+  punish finding it; if the field still breezes past BAL11, the guards are the next measurement.
+- **A caster in robes** takes the blows' share harder than the stated plate wearer; the Firmament's guards, Shield and
+  range are the answer the game already has. A watch item.
+- **Companions take a foe's blows at its scale**, as they take an elite's x3 and the place's: a sworn revenant yields
+  and a crew companion is knocked down sooner at a high level; their own health does not read the hero.
+- **A party's health is the builder's.** A dungeon's foes stand at the host's level (a guest's copy takes the host's
+  `k`), an outdoor foe at its owner's; the blows at each player are that player's own. PSCALE1's toughness and blows
+  compound on it.
+- **Renown and the kill.** A kill pays Renown by the foe's level (`net/renown.js`), unchanged - a level-30 kill takes
+  up to x2.6 the swings for the same XP. The grind's pace is RENOWN-ACCOUNT's call, not this one's.
+- **The open zone and a revenant's rank** compound with the hero as they compound with the place. The zone's x4 (its
+  rings x1.25-x2 over it) was the owner's word over DFU's own foes; at level 30 and Renown 50 its foes hit x27-x44 DFU's.
+- **FULL-GUARD** (section 4) fires more often at the top - a foe's one blow from full leaves a player at 1, and the
+  next kills, as it always has.
+- **A town's and a building's ground** stay unscaled (BAL3's law). A quest's foe in a building, a night street's
+  thief, the watch, and a raid on a town (World Events' raiding party stands in the town's rect): DFU's own, or their
+  own law's (a class foe still stands at the player's level). A raid's threat is the raid's own call.
+- **Master Skills' veteran** (online always) answers the skills' climb from 75 to 100, which the stated builds' growth
+  holds too, and stands beside the hero rather than inside it: where it outweighs the place (a high-share dungeon), at
+  most about x1.13 the health at level 30 in a Crypt (0.88 x 0.6 of the veteran row against the Crypt's 0.36), nothing
+  at level 20 there. The overcap - the climb past 100 - is outside the measurement and answers itself, as it did.
+- **The open world's puppets take no place** (section 8) - they take the hero's blows now, at my threat, the place
+  still not.
+
+Pinned: `test/systems/bal11_hero.test.js` (8) by execution - the law's table literal and the measured ladder's points
+(nothing at or under 10 and 15, x1.07 and x1.04 a level, x1.01 and x1.005 a Renown, compounding, the top held at 30 and
+50, whole levels, nothing for anything not a number, the blows' share 0.633); progressionScaling's `hero` (onto the
+place and the veteran, alone where neither stands, a rat's share stopping the place and never the hero, never under 1,
+no skill and no challenge level); the one writer (the poise the kind's, an elite compounding, `progression.hero`); the
+reader (the level offline, the Renown online, a mentor's group level and no Renown, a puppet's blows alone, the ladder
+off nothing); the wilds' pool on a crafted MONSTER.BSA (the place x the hero, Renown 50, an elite under it, nothing on a
+location's ground, for an ally or with the ladder off; a peer's puppet at my blows and its own health, nothing at level
+10 or on a location's ground); the dungeon's seam mounted (a cave the hero alone, a Den x2 under it, a puppet, an ally,
+the court, the Hour, the Spire and the arena's floor, the ladder off, level 10); the seams and the four hosts by
+source; both doors - a 10-point spell 20 at level 20 (`effects.js` casterDamageScaled) and 300 seeded blows through
+`calculateAttackDamage`'s tail at exactly the scale. `tools/mutants/bal11.json` (34, all dead). PIN MOVED:
+`bal_arc`'s wilds pool stands its player at level 10 (the place alone, where the hero pays nothing), its seam's source
+pins and its mounted seam carry the hero; `arena2_seams`'s call names the ally; three `bal.json` records re-aimed by
+content (BAL3-the-place-alone-scales-nothing, -the-dungeon-needs-a-share, -the-dungeon-drops-the-place). Ledger A
+(BAL11).

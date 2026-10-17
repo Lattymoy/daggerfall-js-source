@@ -404,22 +404,26 @@ export const wildernessThreat = (night) => (night ? PLACE_THREAT.wilderness.nigh
 
 /** The whole scaling for one foe (pure). `standing` is combatStanding's { veteran, edge }; `place` the place's veteran
  *  (placeVeteran, 0..1 - BAL3). The veteran layer is the place's, or the player's veteran in this kind of place
- *  (dShare), whichever is more; the overcap is the player's climb, in this kind of place. null = none. */
-export function progressionScaling(standing, dShare, fShare, place = 0) {
+ *  (dShare), whichever is more; the overcap is the player's climb, in this kind of place. `hero` (BAL11,
+ *  systems/heroThreat.js heroThreatOf - the host hands it in, as it hands the place) multiplies onto both: its own
+ *  `damage` and `health`, whatever the foe's share - every kind answers the hero. null = none. */
+export function progressionScaling(standing, dShare, fShare, place = 0, hero = null) {
   const share = clamp01(dShare) * clamp01(fShare);
   const v = clamp01(standing?.veteran ?? 0);
   const p = clamp01(place);
   const o = clamp01((standing?.edge ?? 0) / (EFFECTIVE_SKILL_MAX - SKILL_SOFT_CAP));
   const vet = Math.max(clamp01(fShare) * p, share * v);   // BAL3: the place's veteran, the foe's share of it - Master Skills' a floor beside it
   const over = share * o;
-  if (!(vet > 0 || over > 0)) return null;
+  const hd = hero?.damage > 1 ? hero.damage : 1, hh = hero?.health > 1 ? hero.health : 1;   // BAL11: never under 1
+  if (!(vet > 0 || over > 0 || hd > 1 || hh > 1)) return null;
   const { veteran: V, overcap: O } = ENEMY_SCALING;
   const skillGain = V.skill * vet + O.skill * over;
   return {
     share, veteran: v, place: p, edge: standing?.edge ?? 0,
     skillGain,
-    healthMult: 1 + V.health * vet + O.health * over,
-    damageMult: 1 + V.damage * vet + O.damage * over,
+    healthMult: (1 + V.health * vet + O.health * over) * hh,
+    damageMult: (1 + V.damage * vet + O.damage * over) * hd,
+    heroHealth: hh, heroDamage: hd,
     challengeLevels: Math.round(skillGain * CHALLENGE_LEVELS_PER_SKILL),
   };
 }

@@ -48,6 +48,7 @@ import { pickDungeonElites, ELITE_FOE_MIN_LEVEL } from '../../src/systems/eliteF
 import { rollSearchElite } from '../../src/systems/searchables.js';
 import { combatStanding, foeShare } from '../../src/systems/skillSoftcap.js';
 import { lootRarityOn } from '../../src/systems/loot/lootRarity.js';
+import { heroThreatOf } from '../../src/systems/heroThreat.js';   // BAL11: the dungeon seam's reader, mounted below
 import { isGateArena, GATE_ARENA_LOCATION_ID } from '../../src/world/gate/gateArena.js';
 import { isArenaFloor, ARENA_FLOOR_LOCATION_ID } from '../../src/world/arena/arenaFloor.js';
 import { withDom } from '../invdrag.mjs';
@@ -267,7 +268,7 @@ const wildsPool = (inLocation = () => false) => createExteriorFoes({
   fetchBytes: async (n) => { if (n === 'MONSTER.BSA') return BSA; throw new Error(`no ${n} in this pin`); },
   getTexture: async () => stubTex, uploadRecordFrame: () => {},
   currentMinute: () => 0, currentPixelKey: () => '3,12',
-  playerEntity: { level: 12, reflexes: 2, health: 50, maxHealth: 50, skills: new Array(40).fill(20), skillUses: new Array(40).fill(0), items: [], activeEffects: [], stats: stats() },
+  playerEntity: { level: 10, reflexes: 2, health: 50, maxHealth: 50, skills: new Array(40).fill(20), skillUses: new Array(40).fill(0), items: [], activeEffects: [], stats: stats() },   // PIN MOVED (BAL11): level 10, where the hero's threat pays nothing - the place alone (test/systems/bal11_hero.test.js runs this pool past it)
   audio: null, onPlayerHurt: () => {}, rolls: () => 0.01, rand: () => 0.01,
   inLocation,
 });
@@ -292,17 +293,17 @@ test('BAL3 the dungeon\'s seam by source: the dungeon\'s ladder tier read once a
   const dc = rd('src/scenes/dungeonContext.js');
   // PIN MOVED (AUDIT BAL): the tier skips the port's own stages, and the seam takes a puppet - executed in the AUDIT BAL pins below
   const build = dc.indexOf('const _placeVeteran = isGateArena(dfLocation) || isArenaFloor(dfLocation) || _sdRealm ? 0 : placeVeteran(dungeonRarityTier(dfLocation.mapTableData?.dungeonType));');
-  const fn = dc.indexOf('function applyProgressionScalingTo(entity, basics, { puppet = false } = {}) {');
+  const fn = dc.indexOf('function applyProgressionScalingTo(entity, basics, { puppet = false, ally = false } = {}) {');   // PIN MOVED (BAL11): an ally, and the hero's threat below
   assert.ok(build > 0 && fn > build, 'the tier at the build, before the seam');
   const body = dc.slice(fn, dc.indexOf('\n  }\n', fn));
   assert.match(body, /const place = lootRarityOn\(\) \? _placeVeteran : 0;/, 'the ladder\'s switch at each spawn');
-  assert.match(body, /const share = puppet \? 0 : _dungeonShare;\n\s*if \(!\(share > 0\) && !\(place > 0\)\) return;/, 'no share and no place: nothing');
-  assert.match(body, /progressionScaling\(puppet \? null : combatStanding\(foeDeps\.playerEntity\), share, foeShare\(basics\?\.level \?\? entity\.level, entity\.isClass\), place\);/);
+  assert.match(body, /const share = puppet \? 0 : _dungeonShare;\n\s*const hero = ally \|\| _heroStage \? null : heroThreatOf\(foeDeps\.playerEntity, \{ puppet \}\);\n\s*if \(!\(share > 0\) && !\(place > 0\) && !hero\) return;/, 'no share, no place and no hero\'s threat: nothing');
+  assert.match(body, /progressionScaling\(puppet \? null : combatStanding\(foeDeps\.playerEntity\), share, foeShare\(basics\?\.level \?\? entity\.level, entity\.isClass\), place, hero\);/);
   assert.match(dc, /import \{ combatStanding, dungeonShare, foeShare, progressionScaling, placeVeteran \} from '\.\.\/systems\/skillSoftcap\.js';/);
   assert.match(dc, /dungeonRarityTier, dungeonFamily, stampWonWeapons, lootRarityOn \} from '\.\.\/systems\/loot\/lootRarity\.js';/);
   // the wilds' seam (executed above) - one call, the ladder's gate in it
   const xf = rd('src/scenes/exteriorFoes.js');
-  assert.match(xf, /foeShare\(basics\?\.level \?\? entity\.level, isClass\), lootRarityOn\(\) \? placeVeteran\(wildernessThreat\(night\)\) : 0\)\);/);
+  assert.match(xf, /foeShare\(basics\?\.level \?\? entity\.level, isClass\), lootRarityOn\(\) \? placeVeteran\(wildernessThreat\(night\)\) : 0, heroThreatOf\(playerEntity\)\)\);/);   // PIN MOVED (BAL11): the hero's threat beside the place
   // THE FOUR HOSTS: world.js's wilds pass the location rect; exterior.js's fixed city and worldModes.js's interiors pass
   // none (the pool's default is "on a location's ground"), so neither scales - a town's tier
   assert.match(rd('src/scenes/world.js'), /inLocation: \(\) => _musicInLocationRect\(\),/);
@@ -423,9 +424,10 @@ test('AUDIT BAL the dungeon\'s seam by execution: a Dragon\'s Den scales a full-
     const st = {
       dfLocation: { mapTableData: { dungeonType }, ...location }, _sdRealm: sd, isGateArena, isArenaFloor, placeVeteran, dungeonRarityTier,
       _dungeonShare: share, lootRarityOn, progressionScaling, combatStanding, foeShare,
+      _made: null, heroThreatOf,   // PIN MOVED (BAL11): the hero's threat's stage and reader - a player of no level pays none (test/systems/bal11_hero.test.js)
       foeDeps: { playerEntity: { skills: new Array(35).fill(100) }, applyProgressionScaling: (e, sc) => { applied.push(sc); applyProgressionScaling(e, sc); } },
     };
-    const api = mount(`${DC.declSrc('_placeVeteran')}\n${DC.fnSrc('applyProgressionScalingTo')}\nreturn { applyProgressionScalingTo, place: _placeVeteran };`, st);
+    const api = mount(`${DC.declSrc('_placeVeteran')}\n${DC.declSrc('_heroStage')}\n${DC.fnSrc('applyProgressionScalingTo')}\nreturn { applyProgressionScalingTo, place: _placeVeteran };`, st);
     return { ...api, applied };
   };
   ladder(true);
@@ -457,7 +459,7 @@ test('AUDIT BAL the dungeon\'s seam by execution: a Dragon\'s Den scales a full-
     assert.equal(seam({ dungeonType: 0, location: loc }).place, 0, label);
   }
   assert.match(rd('src/scenes/dungeonContext.js'), /const _placeVeteran = isGateArena\(dfLocation\) \|\| isArenaFloor\(dfLocation\) \|\| _sdRealm \? 0 : placeVeteran\(/);
-  assert.equal((rd('src/scenes/dungeonContext.js').match(/else if \(puppet && e\.level == null\) applyProgressionScalingTo\(entity, basics, \{ puppet: true \}\);/g) ?? []).length, 2, 'both build arms hand a puppet its place');
+  assert.equal((rd('src/scenes/dungeonContext.js').match(/else if \(puppet && e\.level == null\) applyProgressionScalingTo\(entity, basics, \{ puppet: true, ally: !!e\.allied \}\);/g) ?? []).length, 2, 'both build arms hand a puppet its place');   // PIN MOVED (BAL11): and say whether it is an ally
 });
 
 test('AUDIT BAL the saved dungeon\'s elites: the save writes each foe\'s word, and a load whose pick disagrees rebuilds that foe as the record has it - a save from before offline elites is plain offline; online, and on the wire, the build\'s pick stands', async () => {
