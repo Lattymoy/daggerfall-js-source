@@ -28,6 +28,7 @@ import { dice100 } from '../../combat/formulas.js';   // Dice100.SuccessRoll, on
 import { isPlayerInTown } from '../nearbyObjects.js';
 import { ON_EXTERIOR_WATER } from '../../player/exteriorSurface.js';
 import { SEA_REGION } from '../../net/nodeLaw.js';   // PROF8: the sea coast's region, one home
+import { LOGS } from '../../net/professionLaw.js';   // FIREWOOD-LOGS: Logging's logs, one home
 import { applyTextPatches } from '../quest/questPatches.js';   // SHAM-TRAIL: FORAGE-FIX's exact-count law, one home
 import { TEMPLATE as CC_TEMPLATE } from '../survival/food.js';   // Climates & Calories' own ids, imported (ONE DFU MEMBER, ONE EXPORT)
 // PROF1: the draws, the bands, the day and the Basket's blocks live in foragingCore.js - pure, so the account service rolls
@@ -435,6 +436,15 @@ const fetchPatches = (n) => Object.freeze([
   { old: `\tplayer possesses ${n} items class 20 subclass 1604`, new: `\tplayer possesses ${n} items class 9 subclass 1604`, count: 1 },
   { old: `\tplayer handsover ${n} items class 20 subclass 1604`, new: `\tplayer handsover ${n} items class 9 subclass 1604`, count: 1 },
 ].map(Object.freeze));
+/** FIREWOOD-LOGS (#986, 2026-10-17): what a fetch quest's `player possesses` and `player handsover` take beside the
+ *  template the quest names, by that template - the same group, in the order they are taken. Online, with the
+ *  professions open, the Wood-Axe's Use is Logging's (TOOL-USE) and Logging yields logs only, so the four firewood
+ *  errands' Wood Bundles (1604) had no source but a lucky shelf. A log is firewood too: a bundle first, then the
+ *  plainest wood (the logs in the woods' order, Pine first). Logs are the professions' group, UselessItems2 - the
+ *  bundle's own (class 9) - and the fleet's timber already takes bundles and logs alike (fleet.js MATERIALS). */
+export const QUEST_STAND_INS = Object.freeze({
+  [FT.WoodBundle]: Object.freeze(LOGS.map((l) => l.templateIndex)),
+});
 export const FORAGE_FIX_PATCHES = Object.freeze({
   // Q13: the list files the four fetch quests under `Commoner` and `Noble`, which name no social group - DFU's
   // ParseQuestList files a row only under an exact FactionFile.SocialGroups name (QuestListsManager.cs:223-251), so the

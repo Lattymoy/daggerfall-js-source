@@ -11,7 +11,10 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { applyForageFix, FT } from '../../../src/systems/foraging/foragingLaw.js';
+import { applyForageFix, FT, FORAGING_GROUP, QUEST_STAND_INS } from '../../../src/systems/foraging/foragingLaw.js';
+import { LOGS } from '../../../src/net/professionLaw.js';
+import { PROF_ITEM_GROUP } from '../../../src/systems/professions/profTemplates.js';
+import { mintMaterialItem } from '../../../src/systems/professions/profItems.js';
 import { createForagingItem } from '../../../src/systems/foraging/foragingInstall.js';
 import { questActionsExtensionTemplates } from '../../../src/systems/quest/questActionsExtension.js';
 import { QuestMachine } from '../../../src/systems/quest/machine.js';
@@ -133,6 +136,51 @@ test('Q8 + Q11: a patched firewood errand takes its bundles from the pack and th
     assert.deepEqual(run(true, 0, 2), { complete: true, handed: true, pack: 0, wagon: 0 }, 'both from the wagon (Q11)');
     assert.deepEqual(run(true, 1, 0), { complete: false, handed: false, pack: 1, wagon: 0 }, 'one short: nothing taken');
     assert.deepEqual(run(false, 2, 0), { complete: false, handed: false, pack: 2, wagon: 0 }, 'the build: never');
+  });
+});
+
+test('FIREWOOD-LOGS (#986): a firewood errand takes logs beside bundles - the pack, the wagon, then the Materials Bag; a bundle first, then the plainest wood', () => {
+  assert.equal(PROF_ITEM_GROUP, FORAGING_GROUP, "a log is the bundle's own group (class 9), so the quest's class finds it");
+  assert.deepEqual(QUEST_STAND_INS[FT.WoodBundle], LOGS.map((l) => l.templateIndex), "every log, in the woods' order");
+  assert.equal(LOGS[0].templateIndex, 635, 'Pine first');
+  /** A log as a felled tree's withdrawal mints it (profItems.js), `n` to its stack. */
+  const log = (wood, n = 1) => Object.assign(mintMaterialItem(`log:${wood}`), { stackCount: n });
+  const summoned = (it) => Object.assign(it, { timeForItemToDisappear: 123456 });
+  quiet(() => {
+    const run = (setup) => {
+      const { m, entity } = machine({ setup: (e) => { e.bagItems = []; setup(e); } });
+      const q = m.parseQuestForLists(lines('FetchWood01', true), 0, { rolls: () => 0, headless: true });
+      m.startQuestImmediate(q);
+      const fired = spy(q);
+      m.tick(); m.tick();
+      [...q.tasks.values()].find((t) => t.symbol?.name === 'questgiverclicked').start();
+      for (let i = 0; i < 4; i++) m.tick();
+      const left = (list) => list.map((it) => `${it.templateIndex}x${it.stackCount ?? 1}`);
+      return { complete: q.questComplete, handed: fired.some((f) => f === 'success:PlayerHandsover'), pack: left(entity.items), wagon: left(entity.wagonItems), bag: left(entity.bagItems) };
+    };
+    // the reporter's case: two Pine Logs felled online land in the bag (BAG1 3)
+    assert.deepEqual(run((e) => { e.bagItems.push(log('pine'), log('pine')); }),
+      { complete: true, handed: true, pack: [], wagon: [], bag: [] }, 'two logs in the bag: the errand ends');
+    // a stack counts its size, and gives up only what is asked
+    assert.deepEqual(run((e) => { e.items.push(log('pine', 3)); }),
+      { complete: true, handed: true, pack: ['635x1'], wagon: [], bag: [] }, 'two of a stack of three taken, one left');
+    assert.deepEqual(run((e) => { e.bagItems.push(log('pine', 5)); }),
+      { complete: true, handed: true, pack: [], wagon: [], bag: ['635x3'] }, "two of the bag's stack of five taken");
+    // the bundle before any log, then Pine before Oak
+    assert.deepEqual(run((e) => { e.items.push(log('oak'), log('pine'), createForagingItem(FT.WoodBundle)); }),
+      { complete: true, handed: true, pack: ['636x1'], wagon: [], bag: [] }, 'the bundle and the Pine taken, the Oak kept');
+    // pack first, then the wagon, then the bag
+    assert.deepEqual(run((e) => { e.wagonItems.push(log('oak')); e.bagItems.push(log('pine')); e.items.push(log('teak')); }),
+      { complete: true, handed: true, pack: [], wagon: [], bag: ['635x1'] }, "the pack's and the wagon's taken, the bag's kept");
+    // one short across all three: nothing taken
+    assert.deepEqual(run((e) => { e.bagItems.push(log('pine')); }),
+      { complete: false, handed: false, pack: [], wagon: [], bag: ['635x1'] }, 'one log: nothing taken');
+    // a quest's own log, and another group's 635, are not firewood
+    assert.deepEqual(run((e) => { e.items.push(Object.assign(log('pine'), { questItem: true }), { group: 'Gems', templateIndex: 635, stackCount: 1 }); }),
+      { complete: false, handed: false, pack: ['635x1', '635x1'], wagon: [], bag: [] }, 'neither counted');
+    // a summoned bundle counts nothing, so it is never the one handed over in a real log's place
+    assert.deepEqual(run((e) => { e.items.push(summoned(createForagingItem(FT.WoodBundle)), log('pine'), log('pine')); }),
+      { complete: true, handed: true, pack: ['1604x1'], wagon: [], bag: [] }, 'the two real logs taken, the summoned bundle kept');
   });
 });
 

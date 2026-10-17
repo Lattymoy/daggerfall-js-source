@@ -482,7 +482,8 @@ instead. "Found nothing" fires on the tick after `end quest`, inside the grace.
 and `Noble` name no social group - DFU's are `Commoners` and `Nobility` - and `QuestListsManager.ParseQuestList`
 files a row only under a defined group name (QuestListsManager.cs:223-251), so the four rows are dropped (Q13). And
 were one offered, the turn-in asks `player possesses N items class 20 subclass 1604`, which **can never be true** (Q8).
-FORAGE-FIX mends both, and QAE's handsover with them (Q11).
+FORAGE-FIX mends both, and QAE's handsover with them (Q11). Online, with the professions open, a Wood-Axe fells a
+tree for logs and never makes a bundle (TOOL-USE, section 14), so the errands take logs as firewood too (Q14).
 
 ## 10. Loot and shops
 
@@ -567,6 +568,7 @@ quirks preserved", `01-Overview/Port-Ledger.md`) at the slice that ports it.
 | Q11 | QAE's `player handsover` counts pack items twice and never takes the wagon's (9.2) | unreachable while Q8 stands; live the moment Q8 is fixed - 1 bundle in the pack and 1 in the wagon would complete FetchWood01 and keep the wagon's |
 | Q12 | A building-interior pile passes its location's type as Foraging's dungeon index (10) | a city tavern's treasure pile rolls tools at a Crypt's rate, a farm's tavern at a Prison's; a Tavern-type location's never |
 | **Q13** | **The list files the fetch quests under `Commoner` and `Noble`**, which name no social group (9.8) - found by the FORAGE1 audit, 2026-09-28 | FetchWood01-04 **are never offered**, by anyone |
+| **Q14** | **Online, a Wood Bundle has no source**: with the professions open the Wood-Axe's Use is Logging's (TOOL-USE), Logging yields logs (635-641) only, and its harvest lands in the Materials Bag, which QAE never reads - found from play, #986 (2026-10-17) | FetchWood01-04 are offered and **can never be turned in** but from a lucky shelf; felled logs are refused |
 
 **Q7-Q11 and Q13 are bugs a player would call broken.** DECIDED (Mac: "Your lead"): they are fixed, as **one Ledger A
 departure, FORAGE-FIX**, and everything else stays 1:1. **The vendored files stay verbatim**: the four fixes to the
@@ -583,6 +585,7 @@ port (`questActionsExtension.js`), which were never the author's files. (AUDIT 2
 | Q10 | The Basket's C&C branch uses the non-C&C branch's cases, its fruit templates still C&C's |
 | Q11 | The port's `player handsover` searches the wagon for the wagon's share and removes from it |
 | Q13 | The list's `, Commoner, ` and `, Noble, ` read `, Commoners, ` and `, Nobility, ` (two rows each) - the list patched as it is read, as the quests are |
+| Q14 | FIREWOOD-LOGS: the port's `player possesses` and `player handsover` take a template's stand-ins beside it (`QUEST_STAND_INS` - a Wood Bundle's are the seven logs, the same group), the asked template first and then the plainest wood, and read the Materials Bag (`bagItems`) after the pack and the wagon; a summoned piece, which counts nothing, is never taken either (the order would otherwise hand a summoned bundle over in a real log's place). Both lanes: offline a log is firewood too, as the fleet's timber already reads one. Pinned in `test/systems/quest/foragefix.test.js` |
 
 A patch that no longer finds its line (a changed file) throws; the loader warns and loads the author's text as
 shipped, so one mod's patch never takes the quest pack down. Q1-Q6 and Q12 stay: they are harmless or DFU's own (Q12), and the doctrine keeps what it can.
