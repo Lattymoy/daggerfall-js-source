@@ -52,7 +52,7 @@
 
 import { isEnhanced } from '../systems/uiSkin.js';
 import { mountEnhancedChunk } from './enhanced/enhancedChunk.js';   // MENU1: the one lazy-chunk door
-import { firmamentOver } from './firmamentOver.js';   // FIRM1: the Firmament, swapped in over the Stats page
+import { firmamentOver, revenantStarsOver } from './firmamentOver.js';   // FIRM1: the Firmament, swapped in over the Stats page - RVN-STARS: a sworn one's stars, over Companions
 import { createCharSheetWindow } from './charSheetDoor.js';   // ASCEND-ANYTIME: a level OWED is answered by the sheet key's own door
 import { playerEntity } from '../characters/playerEntity.js';   // the shared entity the Stats page already reads (enhancedMenu's sheetModel)
 import { usesVirtueLeveling } from '../systems/oblivionLeveling.js';   // ORL1: which bar the Ascension reads
@@ -282,6 +282,8 @@ function enhancedPauseOverlay(show, base) {
     // FIRM1: THE FIRMAMENT'S BUTTON beside Ascend - online alone (firmamentOver.js: no book, no button); a getter, so the
     // page asks it each time it draws (the book is the host's, made once the world boots)
     get openFirmament() { return firm.hook; },
+    // RVN-STARS: the Companions page's Stars - a sworn one's sky over this window, the window back on Companions
+    get openRevenantStars() { return rvnStars.hook; },
   };
 
   // FIRM1: the sky over this window, as the Ascension is - the window's keyboard given up first, the window back on Stats
@@ -289,6 +291,11 @@ function enhancedPauseOverlay(show, base) {
     alive: () => !fired,
     below: () => { try { view?.unmount(); } catch { /* already gone */ } view = null; },
     back: () => { if (!fired && seams) view = seams.mountEnhancedMenu(host, { mode: 'pause', hooks, onAction: act, at: 'stats' }); },
+  });
+  const rvnStars = revenantStarsOver({
+    alive: () => !fired,
+    below: () => { try { view?.unmount(); } catch { /* already gone */ } view = null; },
+    back: () => { if (!fired && seams) view = seams.mountEnhancedMenu(host, { mode: 'pause', hooks, onAction: act, at: 'companions' }); },
   });
   const host = document.createElement('div');
   host.id = 'enhanced-pause';
@@ -334,7 +341,7 @@ function enhancedPauseOverlay(show, base) {
 
   const close = () => {
     if (fired) return;
-    dropAscend(); firm.drop();   // ASCEND-ANYTIME: whatever is on top of this window goes with it - FIRM1: the Firmament too
+    dropAscend(); firm.drop(); rvnStars.drop();   // ASCEND-ANYTIME: whatever is on top of this window goes with it - FIRM1: the Firmament too - RVN-STARS: and a sworn one's stars
     document.removeEventListener?.('keydown', tabIn, true);
     view?.unmount();
     view = null;

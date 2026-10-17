@@ -306,5 +306,19 @@
  "blow": "удар",
  "stack (a passive power’s)": "заряд",
  "dash (a technique’s)": "рывок",
- "fatigue (restored by a power)": "выносливость"
+ "fatigue (restored by a power)": "выносливость",
+ "the Oath (a sworn revenant's centre star)": "Клятва",
+ "the Blade (revenant stars aspect)": "Клинок",
+ "the Grave (revenant stars aspect)": "Могила",
+ "the Road (revenant stars aspect)": "Дорога",
+ "Awakened Art": "Пробуждённый дар",
+ "art (a revenant's)": "дар",
+ "mission (a revenant's errand)": "поход",
+ "abroad (a revenant on a mission)": "в походе",
+ "sworn revenant": "присягнувший ревенант",
+ "loyalty (a revenant's)": "верность",
+ "Companions (page)": "Спутники",
+ "star (a skill tree's)": "звезда",
+ "keystone": "краеугольная звезда",
+ "notable": "приметная звезда"
 }

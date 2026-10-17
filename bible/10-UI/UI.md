@@ -46,9 +46,10 @@ ESCORTING FACES - the quest escorts' portrait column, FE1 - and the CREDITS TABL
 - and VIRT's LONG LISTS (`virtualRows.js`: a list past 120 rows draws the rows on screen and two spacers for the rest, measured off its own layout - the pack's dock and its side window; `UI-Arc.md` VIRT)
 - and SHIP-COLOURS' FLAG ART (`flagArt.js`: a ship's flag drawn in the heraldry's hand, an SVG for the Fleet page's Colours and a canvas for the cloth at her masthead; `03-World/Naval-Refit.md` SHIP-COLOURS)
 - and CAPTAIN-TREE's STARS (`captainTreeWindow.js`: the captain's sky in the Firmament's own dress - its sheet, its two palettes, its stars' sizes - a way set by a press, a star taken back with those joined only through it, accepted into the captain's ledger; opened from the Captain page through the sea's window door; `03-World/Naval-Refit.md` CAPTAIN-TREE)
+- and RVN-STARS' SWORN REVENANT'S STARS (`revenantStarsWindow.js`: a sworn one's sky - the Blade, the Grave and the Road about the Oath - opened from the Companions page's Stars over the pause window, `firmamentOver.js revenantStarsOver`, and the page put back on Companions; `06-Systems/Revenants.md` section 44). Both skies are drawn by ONE window (`skyWindow.js` - the captain's window taken out whole when the second sky came: a sky is a descriptor of its stars, law, purse, words, tones and start's picture)
 - and DECK-PROPS' PLAN (`deckPlanWindow.js`: her open deck from above, bow up, her fittings on it - one chosen and set with a click where it is deck and room, taken up, dragged, turned a sixteenth at a time, taken away - and Fit her out through the Fleet's act; opened from the Fleet page's Deck through the sea's window door; `03-World/Naval-Refit.md` DECK-PROPS)
 - and LOOT-BULK's TAKE ALL AND STASH ALL (`storeBulk.js`: the one walk over the shown rows that moves them in a single batch, a container's or the pack's, as far as the side that takes them has room; `UI-Arc.md` LOOT-BULK)
-383 modules
+385 modules
 live under `src/ui/`. Items still routed here are
 collected in `01-Overview/Port-Ledger.md` section C; scope in
 `01-Overview/Port-Doctrine.md` phase plan.

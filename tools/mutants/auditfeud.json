@@ -318,8 +318,8 @@
   {
     "name": "AF-D3-dead-a-win",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "  return !(last.entity?.health > 0);",
-    "new": "  return !!(last.dead || !(last.entity?.health > 0));",
+    "old": "  const won = !(last.entity?.health > 0);",
+    "new": "  const won = !!(last.dead || !(last.entity?.health > 0));",
     "tests": [
       "test/systems/auditfeud.test.js"
     ]

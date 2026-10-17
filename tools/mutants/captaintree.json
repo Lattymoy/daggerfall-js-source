@@ -606,11 +606,12 @@
   },
   {
     "name": "CT-win-way-one",
-    "file": "src/ui/captainTreeWindow.js",
-    "old": "    pending = heldStars([...pending, ...w], captain().points);",
-    "new": "    pending = heldStars([...pending, id], captain().points);",
+    "file": "src/ui/skyWindow.js",
+    "old": "    pending = sky.held([...pending, ...w], sky.points());",
+    "new": "    pending = sky.held([...pending, id], sky.points());",
     "tests": [
-      "test/systems/naval/captaintree.test.js"
+      "test/systems/naval/captaintree.test.js",
+      "test/systems/revenant/rvnstars.test.js"
     ]
   },
   {
@@ -624,38 +625,42 @@
   },
   {
     "name": "CT-win-back-no-cascade",
-    "file": "src/ui/captainTreeWindow.js",
-    "old": "    const gone = new Set(takesBack(pending, id));",
-    "new": "    const gone = new Set(takesBack(pending, id).slice(0, 1));",
+    "file": "src/ui/skyWindow.js",
+    "old": "    const gone = new Set(sky.takesBack(pending, id));",
+    "new": "    const gone = new Set(sky.takesBack(pending, id).slice(0, 1));",
     "tests": [
-      "test/systems/naval/captaintree.test.js"
+      "test/systems/naval/captaintree.test.js",
+      "test/systems/revenant/rvnstars.test.js"
     ]
   },
   {
     "name": "CT-win-accept-unkept",
-    "file": "src/ui/captainTreeWindow.js",
-    "old": "    committed = heldStars(ledger.setTree(pending));",
-    "new": "    committed = heldStars(pending);",
+    "file": "src/ui/skyWindow.js",
+    "old": "    const got = sky.commit(pending);",
+    "new": "    const got = pending;",
     "tests": [
-      "test/systems/naval/captaintree.test.js"
+      "test/systems/naval/captaintree.test.js",
+      "test/systems/revenant/rvnstars.test.js"
     ]
   },
   {
     "name": "CT-win-close-unasked",
-    "file": "src/ui/captainTreeWindow.js",
+    "file": "src/ui/skyWindow.js",
     "old": "    if (unaccepted() && !armedClose) { armedClose = true;",
     "new": "    if (false) { armedClose = true;",
     "tests": [
-      "test/systems/naval/captaintree.test.js"
+      "test/systems/naval/captaintree.test.js",
+      "test/systems/revenant/rvnstars.test.js"
     ]
   },
   {
     "name": "CT-win-save-untold",
-    "file": "src/ui/captainTreeWindow.js",
+    "file": "src/ui/skyWindow.js",
     "old": "    try { changed(); } catch { /* the save's word is the host's */ }",
     "new": "",
     "tests": [
-      "test/systems/naval/captaintree.test.js"
+      "test/systems/naval/captaintree.test.js",
+      "test/systems/revenant/rvnstars.test.js"
     ]
   },
   {

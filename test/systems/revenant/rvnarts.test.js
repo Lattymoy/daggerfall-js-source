@@ -91,8 +91,8 @@ test('RVN-ARTS THE LAW: six arts, one in ARTS_CHANCE, from rank II; each family\
     MEND: { AT: 0.5, CHANNEL: 2, HEAL: 0.2 }, WARD: { AT: 0.75, CHANNEL: 1.5, TAKEN: 0.65, SECONDS: 10 }, CRY: { REACH: 20, CHANNEL: 1, BLOWS: 1.2, SECONDS: 12 },
     SIPHON: { REACH: 8.5, WINDUP: 1.3, MULT: 1 }, BARRAGE: { REACH: 12, WINDUP: 1.1, STEP: 0.45, COUNT: 3, MULT: 0.6 }, NOVA: { REACH: 3.8, WINDUP: 1.4, MULT: 1.2 },
     COOLDOWN: [14, 20], FIRST: [3, 6],
-    SWORN_MEND: { AT: 0.4, SHARE: 0.12, PER_RANK: 0.02, COOLDOWN: 120 }, SWORN_WARD: { BASE: 6, PER_RANK: 3, ROUNDS: 6, COOLDOWN: 90 }, SWORN_CRY: { BASE: 4, PER_RANK: 2, ROUNDS: 6, COOLDOWN: 90 },
-    SWORN_STRIKE: { COOLDOWN: [16, 22], SIPHON: 1, SIPHON_HEAL: 1 / 3, BARRAGE: 1.5, NOVA: 0.8, NOVA_REACH: 5, REACH: 12, RANK: [0.5, 0.1] },
+    SWORN_MEND: { AT: 0.4, SHARE: 0.12, PER_RANK: 0.02, COOLDOWN: 120, SIDE: 0.5 }, SWORN_TAUGHT: 0.75, SWORN_WARD: { BASE: 6, PER_RANK: 3, ROUNDS: 6, COOLDOWN: 90 }, SWORN_CRY: { BASE: 4, PER_RANK: 2, ROUNDS: 6, COOLDOWN: 90 },
+    SWORN_STRIKE: { COOLDOWN: [16, 22], SIPHON: 1, SIPHON_HEAL: 1 / 4, BARRAGE: 1.5, NOVA: 0.8, NOVA_REACH: 5, REACH: 12, RANK: [0.5, 0.1] },
   });
   for (const c of Object.values(A.ART_COLORS)) { assert.notDeepEqual([...c], [...B.BLOW_COLOR]); assert.notDeepEqual([...c], [...B.IRON_COLOR]); assert.notDeepEqual([...c], [...F.SIG.COLOR]); }
 });
@@ -376,7 +376,7 @@ test('RVN-ARTS SWORN WARD AND WAR CRY: as it goes into a fight (through swornFig
   assert.deepEqual([casts[2].effects[0].type, casts[2].effects[0].subType], [9, 0], 'Fortify Strength');
 });
 
-test('RVN-ARTS SWORN STRIKES: in a fight, its Siphon on its foe (the pyre\'s weight at my level, a third of it to me), its Barrage (x1.5), its Nova (every foe within 5 m, x0.8) - through the scene\'s door, a foe my harm may reach only, its cooldown between (mutants: a foe the door does not offer struck; my third unpaid; the cooldown gone)', () => {
+test('RVN-ARTS SWORN STRIKES: in a fight, its Siphon on its foe (the pyre\'s weight at my level, a quarter of it to me - AUDIT RVN-STARS S7), its Barrage (x1.5), its Nova (every foe within 5 m, x0.8) - through the scene\'s door, a foe my harm may reach only, its cooldown between (mutants: a foe the door does not offer struck; my third unpaid; the cooldown gone)', () => {
   const hurt = [];
   const tgt = { dead: false, entity: { health: 80 }, ai: { feet: [2, 0, 0] } };
   const far = { dead: false, entity: { health: 80 }, ai: { feet: [9, 0, 0] } };
@@ -390,7 +390,7 @@ test('RVN-ARTS SWORN STRIKES: in a fight, its Siphon on its foe (the pyre\'s wei
   now += 6; RC.swornFightStep(body);
   const n = Math.round(A.artMagnitude(10, 1) * (0.5 + 0.1 * 2));   // AUDIT RVN E8: rank II's weight
   assert.deepEqual(hurt, [[tgt, n]]);
-  assert.equal(me.health, 50 + Math.floor(n / 3), 'a third to me');
+  assert.equal(me.health, 50 + Math.floor(n / 4), 'a quarter to me');
   now += 15.9; RC.swornFightStep(body);
   assert.equal(hurt.length, 1, 'cooling');
   now += 6.2; RC.swornFightStep(body);
@@ -461,9 +461,9 @@ test('RVN-ARTS THE WORDS: the page says what its art does - to me while it hunts
   r.rank = 2;
   assert.equal(A.artWords(r), 'Art: Barrage - 3 blasts at your feet, one after another; keep moving (with Enhanced AI).');
   const sy = withArt('siphon', { rank: 2, sworn: true });
-  assert.equal(A.artWords(sy), 'Art: Siphon - now and then it draws its foe\'s life and gives you 33% of it.', 'AUDIT RVN D13: its share its constant\'s');
+  assert.equal(A.artWords(sy), 'Art: Siphon - now and then it draws its foe\'s life and gives you 25% of it.', 'AUDIT RVN D13: its share its constant\'s');
   const s = withArt('mending', { rank: 2, sworn: true });
-  assert.equal(A.artWords(s), 'Art: Mending - when you fall under 40% of your health it heals 16% of it (every 2 minutes).');
+  assert.equal(A.artWords(s), 'Art: Mending - when you fall under 40% of your health it heals 16% of it (every 120 seconds).', 'AUDIT RVN-STARS S9: in seconds');
   const w = withArt('warding', { rank: 4, sworn: true });
   assert.equal(A.artWords(w), 'Art: Ward - as it goes into a fight it shields you for 18 (every 90 seconds).');
   let none = null;

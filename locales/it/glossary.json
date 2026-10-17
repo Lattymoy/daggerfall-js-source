@@ -284,5 +284,17 @@
  "fatigue": "fatica",
  "Agility": "Agilità",
  "Speed (attribute)": "Velocità",
- "Running, Jumping (skills)": "Corsa, Salto"
+ "Running, Jumping (skills)": "Corsa, Salto",
+ "star (a sky tree's node)": "stella",
+ "take (a star)": "fissare",
+ "The Oath (a revenant's centre star)": "il Giuramento",
+ "The Blade (revenant stars aspect)": "la Lama",
+ "The Grave (revenant stars aspect)": "la Tomba",
+ "The Road (revenant stars aspect)": "la Strada",
+ "Awakened Art": "Arte risvegliata",
+ "art (a revenant's)": "arte",
+ "mission / errand (a revenant's)": "spedizione",
+ "sworn revenant": "redivivo fedele",
+ "loyalty": "lealtà",
+ "Companions page": "pagina Compagni"
 }

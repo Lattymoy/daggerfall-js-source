@@ -309,7 +309,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/systems/quest/` | The quest machine: the parser, its tables, actions and conditions. |
 | `src/systems/region/` | A region's conditions, hubs and power - the law. |
 | `src/systems/rest/` | Resting: the rest window, its supplies and its warning - the law. |
-| `src/systems/revenant/` | The Revenant: the feud, its companions (their kit, their errands abroad), its art, personality, voice, trophy and fate. |
+| `src/systems/revenant/` | The Revenant: the feud, its companions (their kit, their errands abroad, their stars), its art, personality, voice, trophy and fate. |
 | `src/systems/roleplayRealism/` | The Roleplay Realism mod - the law. |
 | `src/systems/roleplayRealismItems/` | The Roleplay Realism: Items mod - the law. |
 | `src/systems/save/` | Saving and loading - the law. |
