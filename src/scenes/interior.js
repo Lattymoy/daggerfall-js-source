@@ -313,8 +313,10 @@ export async function bootInterior(canvas, renderer, params, status) {
   // command, but the database is one static class in DFU - every
   // command registered anywhere is reachable from any scene - and the
   // building's own automap registers the three map verbs from
-  // interiorContext, so the door is not empty here.
-  installConsoleProbe();
+  // interiorContext, so the door is not empty here. OFFLINE ONLY, as
+  // world.js carries it (AUDIT REALM2 M4): the map verbs are powers, and
+  // a door that stands online is a delivery method no player should have.
+  if (!params.has('online')) installConsoleProbe();
   status(`${blockName}:${recordIndex} - ${ctx.drawList.length} draws`);
   console.log(
     `interior: ${ctx.drawList.length} models, ${ctx.dynamicDraws.length} action doors, ` +

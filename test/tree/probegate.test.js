@@ -61,9 +61,19 @@ function sweep(/** @type {string} */ path) {
   const gates = (/** @type {any} */ t) => (t.type === 'Identifier' && t.name === 'shotMode')
     || (t.type === 'CallExpression' && t.arguments[0]?.value === 'shot' && /^(pageHas|[\w.]+\.has)$/.test(text(t.callee)))
     || (t.type === 'LogicalExpression' && t.operator === '&&' && (gates(t.left) || gates(t.right)));
+  /** THE CONSOLE'S OWN GATE (CONSOLE-DOOR): `!params.has('online')` - the door stands offline alone, as world.js
+   *  carries it. Kept APART from `gates` on purpose: letting the online refusal satisfy the shot gate would excuse
+   *  `__playerEntity` - the live entity the shot law exists for - on any offline boot. */
+  const refusesOnline = (/** @type {any} */ t) => t?.type === 'UnaryExpression' && t.operator === '!' && t.argument?.type === 'CallExpression'
+    && t.argument.arguments[0]?.value === 'online' && /^(pageHas|[\w.]+\.has)$/.test(text(t.argument.callee));
   const surface = (/** @type {any} */ n) => n.type === 'MemberExpression' && n.object.type === 'Identifier'
     && /^(window|globalThis|self)$/.test(n.object.name) && /^__/.test(n.computed ? String(n.property.value) : n.property.name);
-  const out = { installs: /** @type {{at: string, gated: boolean}[]} */ ([]), calls: /** @type {{at: string, gated: boolean}[]} */ ([]), imports: /** @type {string[]} */ ([]) };
+  /** A surface the console's installer writes on its `target` parameter - `target.__console = door` names no host, so
+   *  the literal-object test above cannot see it. It counts when the assignment sits inside installConsoleProbe's own
+   *  body; its CALL SITES are where the law is enforced, and every one of them must carry the online refusal. */
+  const doorSurface = (/** @type {any} */ n) => n.type === 'MemberExpression' && n.object.type === 'Identifier' && n.object.name === 'target'
+    && /^__/.test(n.computed ? String(n.property.value) : n.property.name);
+  const out = { installs: /** @type {{at: string, gated: boolean}[]} */ ([]), calls: /** @type {{at: string, gated: boolean}[]} */ ([]), consoleCalls: /** @type {{at: string, gated: boolean}[]} */ ([]), imports: /** @type {string[]} */ ([]) };
   const walk = (/** @type {any} */ n, /** @type {any[]} */ up) => {
     if (!n || typeof n.type !== 'string') return;
     const gated = () => up.some((p, i) => {
@@ -72,11 +82,19 @@ function sweep(/** @type {string} */ path) {
       if (p.type === 'LogicalExpression' && p.operator === '&&') return c === p.right && gates(p.left);
       return p.type === 'FunctionDeclaration' && INSTALLERS.has(p.id?.name);
     });
-    if (n.type === 'AssignmentExpression' && ASSIGN.has(n.operator) && surface(n.left)) {
-      out.installs.push({ at: `${rel(path)} :: ${n.left.computed ? n.left.property.value : n.left.property.name}`, gated: gated() });
+    const offline = () => up.some((p, i) => {
+      const c = up[i + 1] ?? n;
+      if (p.type === 'IfStatement' || p.type === 'ConditionalExpression') return c === p.consequent && refusesOnline(p.test);
+      if (p.type === 'LogicalExpression' && p.operator === '&&') return c === p.right && refusesOnline(p.left);
+      return false;
+    });
+    const inDoor = () => up.some((p) => p.type === 'FunctionDeclaration' && p.id?.name === 'installConsoleProbe');
+    if (n.type === 'AssignmentExpression' && ASSIGN.has(n.operator) && (surface(n.left) || (inDoor() && doorSurface(n.left)))) {
+      out.installs.push({ at: `${rel(path)} :: ${n.left.computed ? n.left.property.value : n.left.property.name}`, gated: gated() || (inDoor() && doorSurface(n.left)) });
     }
     const callee = n.type === 'CallExpression' ? (n.callee.type === 'MemberExpression' ? n.callee.property.name : n.callee.name) : null;
     if (INSTALLERS.has(callee)) out.calls.push({ at: `${rel(path)}:${n.loc.start.line}`, gated: gated() });
+    if (callee === 'installConsoleProbe') out.consoleCalls.push({ at: `${rel(path)}:${n.loc.start.line}`, gated: offline() });
     if ((n.type === 'ImportDeclaration' || n.type === 'ImportExpression') && typeof n.source.value === 'string') out.imports.push(n.source.value);
     up.push(n);
     for (const k of Object.keys(n)) {
@@ -103,6 +121,16 @@ test('AUDIT ANTICHEAT A2: every surface a played page installs stands behind the
 test('AUDIT ANTICHEAT A2: the two installers are called behind the shot gate, every time', () => {
   const calls = played.flatMap((f) => f.calls);
   assert.ok(calls.length >= 3, 'world.js calls both, exterior.js the modes\' one');
+  assert.deepEqual(calls.filter((c) => !c.gated).map((c) => c.at), []);
+});
+
+// CONSOLE-DOOR: the console's installer writes `target.__console`, which names no host - the shot law above cannot see
+// it, and its door runs ANY registered verb (world.js's own comment records the mint: giveboat, placeboat, a deed).
+// Three hosts called it ungated; world.js alone carried `!params.has('online')`. Now the door's every call site is
+// offline-only, and the count is pinned so a fifth host cannot mount it silently.
+test('AUDIT ANTICHEAT A2: the console door is installed offline alone - every host, every time', () => {
+  const calls = played.flatMap((f) => f.consoleCalls);
+  assert.ok(calls.length >= 4, `world.js, exterior.js, interior.js and dungeon.js each mount the door (${calls.length} calls)`);
   assert.deepEqual(calls.filter((c) => !c.gated).map((c) => c.at), []);
 });
 

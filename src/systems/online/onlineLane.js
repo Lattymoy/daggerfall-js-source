@@ -100,10 +100,14 @@ export function publishBootParams(params, { history = globalThis.history, locati
  *  - `?fly` and `?nofoes` walk a shared world with no walls and no foes, and `?tp` teleports;
  *  - `?class`, `?spell` and `?weapon` hand a character what it never earned;
  *  - `?spawn`, `?region` and `?loc` choose where a fresh character stands;
- *  - `?tod`, `?timescale`, `?weather`, `?wseed` and `?season` stand against the shared clock and sky.
+ *  - `?tod`, `?timescale`, `?weather`, `?wseed` and `?season` stand against the shared clock and sky;
+ *  - `?server` picks the relay itself - a link that points a player at a proxy (MITM-RELAY, 2026-10-17): the page
+ *    would speak to a relay that reads and rewrites every frame, and no client-side gate downstream of it matters.
+ *    A player's own relay (the Online page's field, `onlineServer`) still stands: a choice made at the door, not a
+ *    flag a link can carry.
  *  An online boot drops every one of them before anything reads them (scenes/world.js, beside the Test Room's refusal),
  *  and publishes the drop so every later reader of the URL agrees. Offline, F304 stands (bible/06-Systems/Realm-Arc.md). */
-export const ONLINE_REFUSED_FLAGS = Object.freeze(['shot', 'fly', 'nofoes', 'tp', 'class', 'spell', 'weapon', 'spawn', 'region', 'loc', 'tod', 'timescale', 'weather', 'wseed', 'season', 'editor']);   // POI-3: the POI editor's free eye and its map jump are powers too - a builder edits offline
+export const ONLINE_REFUSED_FLAGS = Object.freeze(['shot', 'fly', 'nofoes', 'tp', 'class', 'spell', 'weapon', 'spawn', 'region', 'loc', 'tod', 'timescale', 'weather', 'wseed', 'season', 'editor', 'server']);   // POI-3: the POI editor's free eye and its map jump are powers too - a builder edits offline   // MITM-RELAY: a relay chosen by the URL is a proxy the link's author picked
 /** Drops the refused flags from an online boot's params, in place. Answers the flags it dropped (none offline). */
 export function refuseOnlinePowerFlags(params) {
   if (!params?.has?.('online')) return [];

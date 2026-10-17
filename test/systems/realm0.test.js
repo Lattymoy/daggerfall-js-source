@@ -50,7 +50,7 @@ function onPage(search, fn) {
 }
 
 test('REALM P0.1: an online boot drops every power flag before anything reads it - offline, F304 stands', () => {
-  for (const f of ['shot', 'fly', 'nofoes', 'tp', 'timescale', 'class', 'spell', 'weapon', 'spawn', 'region', 'loc', 'tod', 'weather', 'wseed', 'season', 'editor']) {   // PIN MOVED (POI-3): the editor's eye a power too
+  for (const f of ['shot', 'fly', 'nofoes', 'tp', 'timescale', 'class', 'spell', 'weapon', 'spawn', 'region', 'loc', 'tod', 'weather', 'wseed', 'season', 'editor', 'server']) {   // PIN MOVED (POI-3): the editor's eye a power too   // MITM-RELAY: and the relay's address a link must not carry
     assert.ok(ONLINE_REFUSED_FLAGS.includes(f), `?${f} is refused online`);
   }
   const all = ONLINE_REFUSED_FLAGS.map((f) => `${f}=1`).join('&');
