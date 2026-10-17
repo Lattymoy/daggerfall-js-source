@@ -41,7 +41,7 @@
 
 import { lookAt, multiply, ortho, perspective, transformPoint, trs, wrapAngle } from '../world/mat4.js';
 import { ClimbPose, POSE } from '../player/climb/climbPose.js';   // CLIMB6: the climb's limbs, in the world; TWO-HANDS: its limb law (LIMB_TAU) eases the mirror's compositions
-import { runWeightStep, runPhaseFollow, pumpTarget3D, RUN_3D, mirrorStrike, guardStep, GUARD } from './twoHands/handsLaw.js';   // TWO-HANDS: the run's pump, the sprite lane's stroke on the 3D body; a mirrored blow's way across the screen; the guard's weight
+import { runWeightStep, runPhaseFollow, pumpTarget3D, RUN_3D, mirrorStrike, guardStep, GUARD, pairSpreadAngle, PAIR_SPREAD, easeTo } from './twoHands/handsLaw.js';   // TWO-HANDS: the run's pump, the sprite lane's stroke on the 3D body; a mirrored blow's way across the screen; the guard's weight; TWO-HANDS SPREAD: the pair's arms turned out
 import { strikingSide, mirrorPlan, counterpartName } from './twoHands/mirrorRig.js';   // TWO-HANDS: which fist a hand-to-hand clip throws; the wrists, for the pins; a blade's own bone across
 import { climbRequestToRig, climbRequestToFirstPerson } from './climbRig.js';   // CLIMB6: ...and in each rig's space
 import { seatRequestFor, seatedCamera, saddleRequestFor } from '../player/seatPose.js';   // CARDS2b: the seat in the rig's space; WAGONS3: and the body still on it; COATS3D: and astride
@@ -1750,6 +1750,10 @@ export const OFF_WEAPON_BONE = weaponAttachBone(MW_WEAPON_TYPE.MarksmanBow);
  */
 const GUARD_SURFACE_H = 200;
 export const GUARD_LENS_DROP = Math.atan((GUARD.DOWN / GUARD_SURFACE_H) * 2 * Math.tan(FP_FIELD_OF_VIEW / 2));
+/** TWO-HANDS AUDIT 2: the bone a blade piece is read on for the arms' picture (bladePictureHeight, bladeInnerEdge) - the
+ *  left blade on the RIGHT hand's, its own bone's counterpart, unmirrored (a pair holds the left arm as the right's
+ *  mirror, which stands its blade as the right stands it); the right blade on its own. */
+const pictureBone = (sk, p) => (p.slot === 'offweapon' ? sk.byName.get(counterpartName(sk.nodes.get(p.attachRef)?.name)) : p.attachRef);
 /**
  * TWO-HANDS AUDIT 2: a blade's height ON the arms' picture, in the lens's tangent units (the whole picture is
  * 2 tan(FP_FIELD_OF_VIEW / 2) high, as the sprite's surface is its 200 design pixels): rigid piece `p`'s vertices placed
@@ -1762,7 +1766,7 @@ export function bladePictureHeight(arm, mats, cameraRef, p) {
   const eye = mats?.get(cameraRef)?.t;
   if (!eye || !p?.source || p.attachRef == null || !arm?.skeleton) return 0;
   const sk = arm.skeleton;
-  const bone = p.slot === 'offweapon' ? sk.byName.get(counterpartName(sk.nodes.get(p.attachRef)?.name)) : p.attachRef;
+  const bone = pictureBone(sk, p);
   const at = bone != null ? mats.get(bone) : null;
   if (!at) return 0;
   const v = placeAtBone(p.source, at, false, undefined, p.boneOffset);
@@ -1777,6 +1781,103 @@ export function bladePictureHeight(arm, mats, cameraRef, p) {
   const edge = Math.tan(FP_FIELD_OF_VIEW / 2);
   const shown = Math.min(hi, edge) - Math.max(lo, -edge);
   return shown > 0 ? shown : 0;
+}
+/**
+ * TWO-HANDS SPREAD: a blade's INNER EDGE on the arms' picture (handsLaw.js pairSpreadAngle) - the angle at the eye,
+ * across the picture, from its middle (the eye's x) to the blade's point nearest it, positive on the right hand's own
+ * side (the mirror plan's `outward`) - with the arm turned out by `spread` radians as mirrorRig.js turns it (at its top,
+ * about the upright line through that top's joint). The weapon's rigid `pieces` are placed as bladePictureHeight places
+ * one (the left blade on the RIGHT hand's bone, unmirrored: a pair holds the left arm as the right's mirror, so its edge
+ * stands as far off the middle on its own side), seen from the eye (`cameraRef`; the lens looks down the rig's +Y, +Z
+ * up), and only the part of it the picture shows top to bottom: each edge of each triangle is cut to the picture's
+ * height before its ends are read, so a long blade whose tip runs off the top is measured where it leaves the picture.
+ * Null where none of it is on the picture.
+ */
+export function bladeInnerEdge(arm, mats, cameraRef, pieces, spread = 0) {
+  const eye = mats?.get(cameraRef)?.t;
+  const sk = arm?.skeleton;
+  const plan = eye && sk && arm.fns ? mirrorPlan(sk, GRAPH_ROOT, arm.fns.skelMats) : null;
+  const pivot = plan && plan.arms.R.length ? mats.get(plan.arms.R[0])?.t : null;
+  if (!pivot) return null;
+  const out = plan.outward.R, edge = Math.tan(FP_FIELD_OF_VIEW / 2);
+  // the arm's turn out: about the graph's up (+Z) through its top's joint
+  const c = Math.cos(-out * spread), s = Math.sin(-out * spread);
+  const turned = (at) => {
+    const a = at.a, dx = at.t[0] - pivot[0], dy = at.t[1] - pivot[1];
+    return {
+      a: [c * a[0] - s * a[3], c * a[1] - s * a[4], c * a[2] - s * a[5], s * a[0] + c * a[3], s * a[1] + c * a[4], s * a[2] + c * a[5], a[6], a[7], a[8]],
+      t: [pivot[0] + c * dx - s * dy, pivot[1] + s * dx + c * dy, at.t[2]],
+    };
+  };
+  let inner = Infinity;
+  for (const p of pieces ?? []) {
+    if (!p?.source || p.attachRef == null) continue;
+    const bone = pictureBone(sk, p);
+    const at = bone != null ? mats.get(bone) : null;
+    if (!at) continue;
+    const v = placeAtBone(p.source, spread ? turned(at) : at, false, undefined, p.boneOffset);
+    // each vertex on the picture, in the lens's tangents: across (out positive) and up; behind the eye, none
+    const n = v.length / 3, across = new Float64Array(n), up = new Float64Array(n), ahead = new Uint8Array(n);
+    for (let i = 0; i < n; i++) {
+      const d = v[i * 3 + 1] - eye[1];
+      if (!(d > 1e-6)) continue;
+      ahead[i] = 1;
+      across[i] = (out * (v[i * 3] - eye[0])) / d;
+      up[i] = (v[i * 3 + 2] - eye[2]) / d;
+    }
+    // a line in the world is a line on the picture: an edge cut to the picture's height has its nearest point at an end
+    const edgeOf = (a, b) => {
+      if (!ahead[a] || !ahead[b]) return;
+      let lo = 0, hi = 1;
+      const dy = up[b] - up[a];
+      if (Math.abs(dy) > 1e-12) {
+        const t0 = (-edge - up[a]) / dy, t1 = (edge - up[a]) / dy;
+        lo = Math.max(0, Math.min(t0, t1));
+        hi = Math.min(1, Math.max(t0, t1));
+        if (lo > hi) return;
+      } else if (Math.abs(up[a]) > edge) return;
+      const dx = across[b] - across[a];
+      inner = Math.min(inner, across[a] + dx * lo, across[a] + dx * hi);
+    };
+    const idx = p.indices;
+    if (idx && idx.length >= 3) for (let t = 0; t + 2 < idx.length; t += 3) { edgeOf(idx[t], idx[t + 1]); edgeOf(idx[t + 1], idx[t + 2]); edgeOf(idx[t + 2], idx[t]); }
+    else for (let i = 0; i < n; i++) edgeOf(i, i);
+  }
+  return Number.isFinite(inner) ? Math.atan(inner) : null;
+}
+/**
+ * TWO-HANDS AUDIT 2 and SPREAD: A MEASURE OF THE PAIR'S BLADES, TAKEN ONCE PER BOUND BLADE - `measure(b, mats, right,
+ * left)` on rig `b`'s build rest pose (`restMats`, the drawn idle's first frame) with each hand's blade (its first
+ * piece: the right hand's 'weapon', the left's 'offweapon', null for a hand with none), kept in `memo` with the rig and
+ * the pieces it was read off, and taken again only when a blade is bound anew (the pieces are the key). The memo as it
+ * stands, a fresh one, or null with no rig.
+ */
+export function pairBladeMeasure(b, memo, measure) {
+  if (!b || !b.ok || !b.arm) return null;
+  const right = b.arm.pieces.find((p) => p.slot === 'weapon') ?? null, left = b.arm.pieces.find((p) => p.slot === 'offweapon') ?? null;
+  if (memo && memo.of === b && memo.right === right && memo.left === left) return memo;
+  return { of: b, right, left, ...measure(b, b.restMats ?? b.arm.mats, right, left) };
+}
+/** TWO-HANDS AUDIT 2: the guard's measure - each hand's drop on the picture at full guard (guardLensDrop: the blade it
+ *  holds, the fists' tuck for a hand with none) and each arm's turn down at its shoulder for it (pairGuardDip). */
+export function guardMeasure(b, mats, right, left) {
+  const drop = { R: guardLensDrop(b.arm, mats, b.cameraRef, right), L: guardLensDrop(b.arm, mats, b.cameraRef, left) };
+  return { drop, dip: pairGuardDip(b.arm, b.cameraRef, mats, drop) };
+}
+/** TWO-HANDS SPREAD: the spread's measure - the least turn out that stands the pair's blades PAIR_SPREAD.GAP apart on the
+ *  picture (handsLaw.js pairSpreadAngle), each blade's inner edge (bladeInnerEdge, every piece of its hand's slot) read
+ *  at each turn tried; and the two edges at that turn. */
+export function spreadMeasure(b, mats) {
+  const rights = b.arm.pieces.filter((p) => p.slot === 'weapon'), lefts = b.arm.pieces.filter((p) => p.slot === 'offweapon');
+  const innerAt = (a) => ({ R: bladeInnerEdge(b.arm, mats, b.cameraRef, rights, a), L: bladeInnerEdge(b.arm, mats, b.cameraRef, lefts, a) });
+  const angle = pairSpreadAngle(innerAt, FP_FIELD_OF_VIEW);
+  return { angle, inner: innerAt(angle) };
+}
+/** TWO-HANDS SPREAD: the angle a frame on - eased toward `want` (what the pair's blades ask while a pair is held, else
+ *  nothing) on PAIR_SPREAD.TAU, and nothing once it has eased all but away with nothing asked. */
+export function pairSpreadStep(angle, want, dt) {
+  const a = easeTo(angle, want, PAIR_SPREAD.TAU, dt);
+  return want === 0 && a < 1e-5 ? 0 : a;
 }
 /** TWO-HANDS AUDIT 2: the drop on the picture, in radians at the eye, of a hand holding piece `p` at full guard - LOWER of
  *  the blade's own height (bladePictureHeight), or the fists' GUARD_LENS_DROP for a hand that holds none. */
@@ -3624,6 +3725,7 @@ export function createFpArm() {
   const runPump = { wanted: false, speed: 0, w: 0, phase: 0, given: null, targets: null };
   const pairGuard = { L: 0, R: 0 };   // TWO-HANDS AUDIT: each hand's guard weight - the arm lowered while the other strikes
   let guardDipMemo = null;   // TWO-HANDS AUDIT 2: the guard's angles, per rig and bound blades (guardDipNow)
+  let pairSpread = 0, spreadMemo = null;   // TWO-HANDS SPREAD: the first-person pair's arms' turn out this frame, eased; and what its blades ask, per rig and bound blades (stepPairSpread)
   let heldMemo = null;           // { base, spec, inner, tracks, sampler }
   let lastFrame = null;          // { model, view, proj, rect } - what draw() last composed with
   /** MW-GUN-FEEL: the gun's kick and reload this frame - `{ pitch, back, down }` (combat/gun/gunFeel.js armGunPose), set by
@@ -4377,6 +4479,9 @@ export function createFpArm() {
     // the stone's and the spell's were turned down at the shoulder by the pair's guard
     if (handsTaken(r)) { req.carry.key = 'taken'; return req; }
     req.dip = pairDip();   // TWO-HANDS AUDIT: the guard, over every composition below
+    // TWO-HANDS SPREAD: the first-person pair's arms turned out (across the picture, so with its plane), over every
+    // composition below - and eased off after the pair, whatever composition follows it
+    if (req.plane && pairSpread > 0) req.spread = pairSpread;
     const idle = idleClip();
     if (pairHeld()) {   // TWO-HANDS AUDIT: the pair in the hands, not the left blade bound - a rig that cannot hang it still holds two
       if (attackingNow() && attackHand === 'L') {
@@ -4418,6 +4523,18 @@ export function createFpArm() {
       if (pairGuard[h] < 1e-3) pairGuard[h] = 0;
     }
   }
+  /**
+   * TWO-HANDS SPREAD (Mac: "For the morrowind first person, when duel wielding can we spread out the arms a bit more
+   * sense it can make the weapons overlap"): the angle the pair's arms are turned out (mirrorRig.js's `spread`), stepped
+   * once a frame in either view (pairSpreadStep), so a view switch finds it where it stands (A VIEW SWITCH CARRIES
+   * NOTHING) - its blades measured the first frame a pair is held and again only when one is bound anew (spreadMeasure,
+   * pairBladeMeasure: a body that never holds a pair never pays). The first person lays it; third person's body holds its
+   * arms at its own sides.
+   */
+  function stepPairSpread(dt) {
+    if (pairHeld()) spreadMemo = pairBladeMeasure(built, spreadMemo, spreadMeasure);
+    pairSpread = pairSpreadStep(pairSpread, pairHeld() ? spreadMemo?.angle ?? 0 : 0, dt);
+  }
   /** TWO-HANDS AUDIT: the angle each arm is lowered at its shoulder this frame (mirrorRig.js's `dip`), or null. */
   const pairDip = () => {
     if (!(pairGuard.L > 0 || pairGuard.R > 0)) return null;
@@ -4425,21 +4542,13 @@ export function createFpArm() {
     return { L: pairGuard.L * (d?.L ?? 0), R: pairGuard.R * (d?.R ?? 0) };
   };
   /**
-   * TWO-HANDS AUDIT 2: THE GUARD'S ANGLES, MEASURED ONCE PER BOUND BLADE - each arm's at full guard (pairGuardDip), its
-   * drop the blade it holds (guardLensDrop: the right hand's 'weapon' piece, the left's 'offweapon', the fists' tuck for a
-   * hand with none), on the build's rest pose. Asked the first time a pair guards and again only when a blade is bound
-   * anew (the pieces are the memo's key): every build used to measure it, an NPC's and a peer's too, which never hold a
-   * pair (the mirror's whole plan read for two numbers).
+   * TWO-HANDS AUDIT 2: THE GUARD'S ANGLES, MEASURED ONCE PER BOUND BLADE (guardMeasure, pairBladeMeasure). Asked the
+   * first time a pair guards and again only when a blade is bound anew (the pieces are the memo's key): every build used
+   * to measure it, an NPC's and a peer's too, which never hold a pair (the mirror's whole plan read for two numbers).
    */
   function guardDipNow() {
-    const b = built;
-    if (!b || !b.ok || !b.arm) return null;
-    const right = b.arm.pieces.find((p) => p.slot === 'weapon') ?? null, left = b.arm.pieces.find((p) => p.slot === 'offweapon') ?? null;
-    if (guardDipMemo && guardDipMemo.of === b && guardDipMemo.right === right && guardDipMemo.left === left) return guardDipMemo.dip;
-    const mats = b.restMats ?? b.arm.mats;
-    const drop = { R: guardLensDrop(b.arm, mats, b.cameraRef, right), L: guardLensDrop(b.arm, mats, b.cameraRef, left) };
-    guardDipMemo = { of: b, right, left, drop, dip: pairGuardDip(b.arm, b.cameraRef, mats, drop) };
-    return guardDipMemo.dip;
+    guardDipMemo = pairBladeMeasure(built, guardDipMemo, guardMeasure);
+    return guardDipMemo?.dip ?? null;
   }
   /** TWO-HANDS AUDIT: THE PORTRAIT'S PAIR (figure()) - a pair carried is a pair shown: the left arm the drawn stance's
    *  right in the mirror, as the world holds a pair at rest (mirrorFor's 'dual'); still - no carry, a portrait has no last
@@ -5751,6 +5860,7 @@ export function createFpArm() {
         composed: mirrorCarry[viewMode]?.key ?? null,   // TWO-HANDS AUDIT: the composition the view's rig was last posed with ('none', 'dual', 'dual:L', ...)
         guard: { ...pairGuard },   // TWO-HANDS AUDIT: each arm's guard weight (lowered while the other strikes)
         guardDrop: guardDipMemo && guardDipMemo.of === built ? { ...guardDipMemo.drop } : null,   // TWO-HANDS AUDIT 2: each hand's drop on the picture at full guard, once measured (guardDipNow)
+        spread: pairSpread, spreadInner: spreadMemo && spreadMemo.of === built ? { ...spreadMemo.inner } : null,   // TWO-HANDS SPREAD: the arms' turn out this frame; each blade's inner edge at rest turned out by what its blades ask, once measured
         offPieces: arm ? arm.pieces.filter((p) => p.slot === 'offweapon').length : 0,
         offHidden: mesh && mesh.ranges ? mesh.ranges.filter((r) => r.slot === 'offweapon').map((r) => !!r.hidden) : [],
         mirrored: arm ? arm.mirrored ?? null : null,
@@ -6179,6 +6289,7 @@ export function createFpArm() {
       climbHands = climbWorld.w >= 0.5 && !!(cam && cam.climb);
       stepRunPump(dt);   // TWO-HANDS: the running hands' weight and stride
       stepPairGuard(dt);   // TWO-HANDS AUDIT: the pair's guard
+      stepPairSpread(dt);   // TWO-HANDS SPREAD: the pair's arms turned out
       stepRifle(cam, dt);   // RIFLE-STANCE: the long gun's hold
       // refreshCurrentAnims' order, and it is not arbitrary: the weapon
       // state is stepped FIRST because the idle refresh below depends on

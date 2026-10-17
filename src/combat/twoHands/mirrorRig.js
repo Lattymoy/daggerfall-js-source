@@ -54,6 +54,11 @@
 //           It is laid INTO the composition (TWO-HANDS AUDIT 2), so the carry starts from the arm as it was drawn, dip and
 //           all: a request that stops asking for it under a new key (the hands taken by a sheet, the stone, a spell)
 //           carries it off the arm as it carries every bone, never dropping it in a frame;
+//   spread - radians both arms are turned OUTWARD (TWO-HANDS SPREAD, the first-person pair - Mac: "spread out the arms a
+//           bit more sense it can make the weapons overlap"): each arm at its top (its clavicle, else its upper arm)
+//           about the upright line through that top's own joint, each its own way out (the plan's `outward`), so a left
+//           arm that was the right's mirror stays its mirror and no joint leaves its parent. Laid into the composition
+//           after the dip; the caller eases the angle and says how far (fpArm.js);
 //   carry - the no-pop: `{ key, dt, tau, state }` - a change of `key` (the composition) carries every bone from where it
 //           was drawn last frame onto its new place over `tau` (ClimbPose's LIMB_TAU law); `state` is the caller's
 //           object the carry lives in between frames, one per rig. A state that has drawn nothing (new, or reset - the
@@ -200,6 +205,8 @@ function buildPlan(skeleton, root, skelMats) {
   // no Weapon Bone Left) is no bone of the middle: it has no counterpart, and rides its arm
   for (const s of ['L', 'R']) for (const ref of arms[s]) if (counterpart.get(ref) === ref) counterpart.set(ref, null);
   const S = { a: Float32Array.from([-1, 0, 0, 0, 1, 0, 0, 0, 1]), t: [2 * x0, 0, 0] };
+  // TWO-HANDS SPREAD: which way across is each arm's OUT - the side its upper arm stands on at rest, read, not assumed
+  const outR = Math.sign(rest.get(upR).t[0] - rest.get(upL).t[0]) || 1;
   // THE MIRROR IN EACH BONE'S FRAME (the header's law): L'(b) = A(b) . L(m) . B(b), two constants a bone -
   // B(b) = K^(b), the 3x3 of K(b) = Rest(m)^-1 . S . Rest(b), and A(b) = RestL(b) . K^(b)^-1 . RestL(m)^-1
   const restLocal = (ref) => { const r = skeleton.nodes.get(ref).rest; return { a: Float32Array.from(r.rotation, (v) => v * (r.scale ?? 1)), t: [r.translation[0], r.translation[1], r.translation[2]] }; };
@@ -219,6 +226,7 @@ function buildPlan(skeleton, root, skelMats) {
     armSkeletons: { L: armSkeleton('L'), R: armSkeleton('R') },
     hands: { L: find(HAND.L), R: find(HAND.R) },
     uppers: { L: upL, R: upR },
+    outward: { L: -outR, R: outR },   // TWO-HANDS SPREAD: each arm's way out across the graph's x
     targets: new Map(),   // the frame's scratch: the composition's locals before they are written
     pictureK: new WeakMap(),   // each bone's K(b) across the picture, per bind sources (pictureMirrorArm) - read the first time an arm is mirrored
   };
@@ -228,7 +236,8 @@ const _plans = new WeakMap();
 /**
  * The mirror's plan for a skeleton in the graph space `root` (memoised per skeleton and space): every bone's counterpart
  * ref, its rest transform and its inverse, the middle plane's x, the bones in parent-first order, each arm's bones (its
- * clavicle - else its upper arm - and everything under it), and each paired bone's mirror in its own frame (`link`).
+ * clavicle - else its upper arm - and everything under it), each arm's way out across (`outward`, TWO-HANDS SPREAD), and
+ * each paired bone's mirror in its own frame (`link`).
  * Null for a skeleton with no pair of arms.
  */
 export function mirrorPlan(skeleton, root, skelMats) {
@@ -289,14 +298,15 @@ export function applyMirrorRig(skeleton, pose, root, skelMats, req) {
   const st = c?.state ?? null;
   const composing = !!(req && (req.full || req.limbs?.L || req.limbs?.R));
   const dipping = !!(req?.dip && (req.dip.L > 0 || req.dip.R > 0));
+  const spreading = !!(req?.spread > 0);   // TWO-HANDS SPREAD
   // a carry that has drawn nothing yet takes its first composition as it stands: there is no drawn pose to carry from
   if (st && st.key === undefined) { st.key = c.key; st.from = null; st.k = 0; st.last = null; }
   // a change of key with nothing of the mirror's on the arms (the clip's own pose stood last frame, no carry under way)
   // and nothing asked now: the clip's pose stands, and there is nothing to carry - no plan read, no bone walked
-  if (st && st.key !== c.key && !st.last && !st.from && !composing && !dipping) { st.key = c.key; return null; }
+  if (st && st.key !== c.key && !st.last && !st.from && !composing && !dipping && !spreading) { st.key = c.key; return null; }
   const carrying = !!st && (!!st.from || st.key !== c.key);
-  // nothing composed, no composition changing and none still carrying, no arm lowered: the clip's pose stands as it is
-  if (!req || (!composing && !carrying && !dipping)) { if (st) st.last = null; return null; }
+  // nothing composed, no composition changing and none still carrying, no arm lowered or spread: the clip's pose stands
+  if (!req || (!composing && !carrying && !dipping && !spreading)) { if (st) st.last = null; return null; }
   const plan = mirrorPlan(skeleton, root, skelMats);
   if (!plan) { if (st) { st.key = c.key; st.from = null; st.last = null; } return null; }
   // the clip's own pose: nothing is written into `pose` before step 4, so every read below sees the clip
@@ -331,6 +341,17 @@ export function applyMirrorRig(skeleton, pose, root, skelMats, req) {
     const cur = (ref) => targets.get(ref) ?? clipL(ref);
     for (const side of /** @type {const} */ (['L', 'R'])) { const e = dipArm(skeleton, cur, plan, side, req.dip[side]); if (e) targets.set(plan.uppers[side], e); }
   }
+  // 2c. TWO-HANDS SPREAD: both arms turned out, each at its top about the upright line through its own joint, over the
+  // composition and its dip - so the carry starts from what was drawn, the spread with it
+  if (spreading) {
+    const cur = (ref) => targets.get(ref) ?? clipL(ref);
+    for (const side of /** @type {const} */ (['L', 'R'])) {
+      const top = plan.arms[side][0];
+      if (top == null) continue;
+      const e = cur(top);
+      targets.set(top, { rotation: mat33Mul(rotAxisAngle(uprightOver(skeleton, cur, top), -plan.outward[side] * req.spread), e.rotation), translation: e.translation, scale: e.scale });
+    }
+  }
   // 3. the carry, IN EACH BONE'S OWN FRAME: a new composition starts every bone from the local it was drawn with last
   // frame (the last composed frame's, or - nothing composed - the clip's own: this frame's, the frame before stood one
   // step back), its offset to its new local - the turn prev . now^-1, the joint's move, the scale's ratio - eased away.
@@ -356,7 +377,7 @@ export function applyMirrorRig(skeleton, pose, root, skelMats, req) {
   }
   // 4. written: the composition's locals, each carried by its offset while the carry stands
   const k = st?.from ? st.k : 0;
-  const keep = !!st && (composing || !!st.from || dipping);
+  const keep = !!st && (composing || !!st.from || dipping || spreading);
   const last = keep ? (st.drawn ??= new Map()) : null;
   if (last) last.clear();
   const wrote = [];
@@ -373,7 +394,7 @@ export function applyMirrorRig(skeleton, pose, root, skelMats, req) {
     wrote.push(ref);
   }
   targets.clear();
-  // what was drawn, for the next change to start from - kept only while a composition, its carry or a guard stands
+  // what was drawn, for the next change to start from - kept only while a composition, its carry, a guard or a spread stands
   if (st) st.last = last;
   return wrote.length ? wrote : null;
 }
@@ -523,6 +544,17 @@ const affineOf = (e) => { const s = e.scale ?? 1; return { a: Float32Array.from(
 
 const IDENT3 = Float32Array.from([1, 0, 0, 0, 1, 0, 0, 0, 1]);
 const IDENT_AFFINE = Object.freeze({ a: IDENT3, t: [0, 0, 0] });
+/** The graph's up (Morrowind's +Z) in the frame of bone `ref`'s parent, read off the chain's rotations as the locals
+ *  `loc` have them (a uniform scale turns no way): Rp^T . z. A local turned about it by an angle turns its bone about
+ *  the upright line through its own joint by that angle - the guard's way down is worked against it, the spread turns
+ *  about it. */
+function uprightOver(skeleton, loc, ref) {
+  const chain = [];
+  for (let r = skeleton.nodes.get(ref).parent; skeleton.nodes.has(r); r = skeleton.nodes.get(r).parent) chain.push(r);
+  let Rp = IDENT3;
+  for (let i = chain.length - 1; i >= 0; i--) Rp = mat33Mul(Rp, loc(chain[i]).rotation);
+  return [Rp[6], Rp[7], Rp[8]];
+}
 /**
  * THE GUARD: arm `side`'s upper arm turned DOWN by `angle` radians about its own joint - in the upright plane through the
  * shoulder and the wrist as the locals `loc` (a bone's local by ref) have them, so the hand drops and the arm stays on its
@@ -533,12 +565,7 @@ const IDENT_AFFINE = Object.freeze({ a: IDENT3, t: [0, 0, 0] });
 function dipArm(skeleton, loc, plan, side, angle) {
   const up = plan.uppers[side], hand = plan.hands[side];
   if (!(angle > 0) || up == null || hand == null) return null;
-  // the parent's rotation in the graph's space (a uniform scale turns no way)
-  const chain = [];
-  for (let r = skeleton.nodes.get(up).parent; skeleton.nodes.has(r); r = skeleton.nodes.get(r).parent) chain.push(r);
-  let Rp = IDENT3;
-  for (let i = chain.length - 1; i >= 0; i--) Rp = mat33Mul(Rp, loc(chain[i]).rotation);
-  const upward = [Rp[6], Rp[7], Rp[8]];   // the graph's +Z in the parent's frame (Rp^T . z)
+  const upward = uprightOver(skeleton, loc, up);
   // the wrist from the shoulder, in the parent's frame: the arm's locals from the upper arm down to the hand
   const down = [];
   for (let r = hand; r !== up; r = skeleton.nodes.get(r).parent) { if (!skeleton.nodes.has(r)) return null; down.push(r); }

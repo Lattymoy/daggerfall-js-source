@@ -367,6 +367,27 @@ second weapon. So the second hand is the sprite lane's idea on a skeleton: THE L
   per bound blade at the pair's first guard, never on a build (L3 M5: every NPC's and peer's build had paid for it). No
   guard is asked while something else has the hands, and the dip is laid into the pose ahead of the carry, so it eases
   off the arm rather than snapping (L3 M2).
+- **The spread** (TWO-HANDS SPREAD, 2026-10-17, Mac: "For the morrowind first person, when duel wielding can we spread
+  out the arms a bit more sense it can make the weapons overlap"). The left arm in the glass stands its blade where the
+  right's would stand in it, and Morrowind's one-handed stance leans its weapon in toward the picture's middle - so a
+  long pair's blades crossed there. In first person, while a pair is in the hands, both arms are turned OUT, each at its
+  top (the clavicle, else the upper arm) about the upright line through that top's own joint, each its own way
+  (`mirrorRig.js`'s `spread`; which way is out is read off the skeleton, the plan's `outward`): no joint leaves its
+  parent, and the left stays the right's mirror. How far is the law's (`handsLaw.js` `PAIR_SPREAD`, `pairSpreadAngle`): always
+  MIN (0.04 of the picture's height), further until the two blades stand GAP (0.04) apart, never past MAX (0.2) - each a
+  share of the picture's height taken as the angle it spans at the middle, as the guard's LOWER is a share of a blade's.
+  Each blade's inner edge is READ, never assumed (`fpArm.js` `bladeInnerEdge`): the angle from the picture's middle to
+  the blade's nearest point, every triangle edge cut to the picture's height first (a tip off the top is read where it
+  leaves the picture), the left blade read in the right hand as the guard reads it (`pictureBone`). A turn about a
+  shoulder moves an edge less than the turn (the arm swings about a joint off the eye), so the edges are measured at
+  every angle the halving tries (`spreadMeasure`) - on the build's rest pose, once per bound blade, the first frame a
+  pair is held, through the guard's own memo (`pairBladeMeasure`, now one for both: the guard's measure moved out of
+  `createFpArm` with it, `guardMeasure`, so the arm's closure gains the wiring alone - 1,997 -> 1,999 code lines, under
+  HOST-SPLIT's 2,000-line knot). The angle eases on `PAIR_SPREAD.TAU` (0.12 s) in either view (`pairSpreadStep`) and is
+  laid in first person alone (the body in third person holds a pair at its own sides), over every composition and its
+  guard, so the carry starts from what was drawn; sheathed or with the hands taken, it eases back. Measured on the
+  fixture: its blades stand clear at rest, so MIN (0.046 rad); a blade leaned 0.45 rad across the middle, 0.121 rad, the
+  two GAP apart.
 - **No pop** (the carry, AUDIT, L3 3 and 6): every change of composition carries every bone, IN ITS OWN FRAME, from the
   local it was drawn with last frame onto its new one over `POSE.LIMB_TAU` (ClimbPose's limb law) - its turn, its
   joint's move and its scale eased away, children riding their carried parents, so no joint leaves its bone (worst bone
@@ -472,7 +493,7 @@ one, never one hand's glow on both:
   exchange, the resting weapon, the off strike), the off hand's blow in the formula and between players, the rig on a
   synthetic CIF - the fists, the guard, the widget's two clones, the pair, the running hands (the stroke, the bob's
   clock, what takes a hand, the mods), the branch by source, a left-handed player.
-- `test/combat/twohands_mw.test.js` (34 - AUDIT 2's six for L3; MIRROR-BIND's two: the first-person pair the right in the glass on a rest that is not its own mirror, and the binds read only where they are a mirror; the field reports' three: the stride's other half, a pair
+- `test/combat/twohands_mw.test.js` (38 - SPREAD's four: the law's angle, a blade's inner edge cut to the picture, the turn on the skeleton, the arm in lockstep with one weapon; AUDIT 2's six for L3; MIRROR-BIND's two: the first-person pair the right in the glass on a rest that is not its own mirror, and the binds read only where they are a mirror; the field reports' three: the stride's other half, a pair
   walking in third person swinging its arms against each other on a female body's two sources, the first-person pair
   mirrored across an eye moved off the chest): the mirror rig on the retail biped (counterparts, the plan, the law in each bone's
   frame - every joint on its parent, a twisted chest, the carry per bone, the made Weapon Bone Left, which fist a clip
@@ -481,13 +502,21 @@ one, never one hand's glow on both:
   portrait, a retried swap, by source). `tools/mutants/twohands_mw.json`: 78 mutants, all dead (8 the field reports',
   `FIELD-*`: each fix reverted). `tools/mutants/twohandsmirrorbind.json`: 9 mutants, all dead (MIRROR-BIND: the rest's
   K, one skin only, the Left node's X and its bind's precedence, the mirror check both ways, each source unread, a
-  turned skin read).
+  turned skin read). `tools/mutants/twohandsspread.json`: 23 mutants, all dead (SPREAD: the law's floor, cap, gap,
+  halving and answer, one blade asking; the turn inward, in the bone's own frame, ignored, not alone, not kept, popping
+  under a new key, its way out assumed; the edge uncut, read at its corners, turned the wrong way; the angle in third
+  person, measured for one weapon, kept after the pair, uneased, never at rest, never stepped, measured once for good).
 - `tools/mutants/twohands.json`: 184 mutants, all dead (4 the field reports', `TWOHANDS-FIELD-*`: the run on the
   uppercut, on a high frame, the snap, the fist held at the top - AUDIT 2's `RUN_PUMP-shape` and the first audit's
   `run-pump-frame-by-stroke` retired with the code they reverted, `hands-in-step` and two `TWOHANDS-ARM-*` re-aimed
   onto the one frame; 65 of them AUDIT 2's, `TWOHANDS-AUDIT2-*` and `TWOHANDS-SPRITE2-*`; 39 the first audit's, `TWOHANDS-AUDIT-*`: each fix reverted, and
   each claim the record made that no pin could fail; 14 the running arm's and the lowered weapon's, `TWOHANDS-ARM-*`,
   `TWOHANDS-LOWER-*`; 12 the pair's glow, `TWOHANDS-GLOW-*`).
+- PIN MOVED (SPREAD), four `twohands_mw.json` records re-aimed, each the same mutation on the line it now stands on, all
+  dead: `TWOHANDSMW-AUDIT2-left-blade-on-its-own-bone` onto `pictureBone` (the line `bladePictureHeight` and
+  `bladeInnerEdge` share), `TWOHANDSMW-AUDIT2-guard-memo-blind` onto `pairBladeMeasure` (the memo the guard and the spread
+  share), `TWOHANDSMW-AUDIT2-dip-drawn-unkept` and `TWOHANDSMW-AUDIT2-idle-key-reads-the-plan` onto the mirror's `keep` and
+  its idle key's early answer, which read the spread beside the dip.
 - PIN MOVED, each with its note: `a12_lefthand` (H's lines with both hands up; the bow-switch arm on its own case, a
   bow in the left hand), `audit_seats_client` G5, `auditcc_pvp` H5 and `duel_combat` DUEL1 (the off hand's blow between
   players), `enhancedHud` AUDIT 39 (the plaque reads the resting weapon), `ww2_idlebob` WW2 (the motion bag's

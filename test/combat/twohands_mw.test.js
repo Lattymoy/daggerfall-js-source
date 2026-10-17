@@ -19,6 +19,10 @@
 // without jumping (M3, the sprite lane's law too), the guard sized by the blade's own height (M4), the made bone and the
 // guard paid for only where used (M5), a rebuild keeping the left blade (M6), the blades' effects and glows going with
 // the blades; and two of L5's - the lantern under the Morrowind arm, H between the fists.
+//
+// TWO-HANDS SPREAD (2026-10-17, Mac: "For the morrowind first person, when duel wielding can we spread out the arms a bit
+// more sense it can make the weapons overlap"): the first-person pair's arms turned out at their tops - the law's angle,
+// a blade's inner edge on the picture, the turn on the skeleton, and the arm laying it in first person alone.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -27,8 +31,8 @@ import { buildSkeleton, poseSkeleton, skeletonSpaceMatrices, injectSkeletonNodes
 import { mat33Mul } from '../../src/formats/morrowind/mwNifMesh.js';
 import { applyMirrorRig, mirrorPlan, counterpartName, strikingSide, limbSkeleton, offWeaponBoneAddon, WEAPON_BONE_LEFT_SOURCE, mirrorBindSources } from '../../src/combat/twoHands/mirrorRig.js';
 import { rotAxisAngle } from '../../src/combat/climbRig.js';
-import { createFpArm, fpSkeletonPath, tpSkeletonPath, strideOppositeTime, FP_CLIP_PATH, resolveOffWeaponParts, resolveWeaponParts, OFF_WEAPON_BONE, fpWeaponKey, GUARD_LENS_DROP, bladePictureHeight } from '../../src/combat/fpArm.js';
-import { GUARD, RUN_PUMP, RUN_STEP_M, runPhaseOfBob, runPhaseFollow, runPhaseStep } from '../../src/combat/twoHands/handsLaw.js';
+import { createFpArm, fpSkeletonPath, tpSkeletonPath, strideOppositeTime, FP_CLIP_PATH, resolveOffWeaponParts, resolveWeaponParts, OFF_WEAPON_BONE, fpWeaponKey, GUARD_LENS_DROP, bladePictureHeight, bladeInnerEdge, FP_FIELD_OF_VIEW } from '../../src/combat/fpArm.js';
+import { GUARD, RUN_PUMP, RUN_STEP_M, runPhaseOfBob, runPhaseFollow, runPhaseStep, PAIR_SPREAD, pairSpreadAngle } from '../../src/combat/twoHands/handsLaw.js';
 import { HeadBobber } from '../../src/player/headBobber.js';
 import { MW_WEAPON_TYPE, MW_UNITS_PER_METER, assembleFirstPersonArm, poseAssembly } from '../../src/formats/morrowind/mwFirstPerson.js';
 import { bodyRec } from '../fixtures/mw/bodyRec.mjs';
@@ -1294,4 +1298,204 @@ test('TWO-HANDS MIRROR-BIND the bind is read only where it is a mirror, and the 
   assert.ok(diff(askew.get(hand('L')), a.get(hand('L'))) < 1e-9, 'bound off the mirror: the rest\'s K');
   assert.ok(diffRot(mirrored.get(hand('L')), a.get(hand('L'))) > 0.1, 'bound on it: the bind\'s turn');
   assert.ok(dist(mirrored.get(hand('L')).t, a.get(hand('L')).t) < 1e-6, 'and the joint where the mirror stands it');
+});
+
+// ---- TWO-HANDS SPREAD (2026-10-17, Mac: "For the morrowind first person, when duel wielding can we spread out the arms
+// a bit more sense it can make the weapons overlap") ----------------------------------------------------------------
+
+test('TWO-HANDS SPREAD the law (handsLaw.js pairSpreadAngle): the least turn in [MIN, MAX] at which the blades stand GAP apart on the picture - each a share of its height, as the angle it spans at its middle; MIN where the blades stand clear already or no pair of them is on the picture, MAX where even it cannot clear them, and between, the turn the edges ask - read at every angle tried, so an arm turned about a shoulder (an edge moving less than the turn) still stands GAP apart (mutants: TWO-HANDS-SPREAD-no-min, TWO-HANDS-SPREAD-no-max, TWO-HANDS-SPREAD-no-gap, TWO-HANDS-SPREAD-halving-backwards, TWO-HANDS-SPREAD-answer-short, TWO-HANDS-SPREAD-one-blade-asks)', () => {
+  assert.deepEqual({ ...PAIR_SPREAD }, { MIN: 0.04, GAP: 0.04, MAX: 0.2, TAU: 0.12 });
+  const fov = Math.PI / 3, tan = Math.tan(fov / 2);
+  const MIN = Math.atan(PAIR_SPREAD.MIN * 2 * tan), MAX = Math.atan(PAIR_SPREAD.MAX * 2 * tan), GAP = 2 * Math.atan(PAIR_SPREAD.GAP * tan);
+  assert.equal(pairSpreadAngle(() => ({ L: 0.3, R: 0.3 }), fov), MIN, 'clear already: the arms a little wider all the same');
+  assert.equal(pairSpreadAngle(() => ({ L: null, R: -0.5 }), fov), MIN, 'one blade on the picture: nothing to clear');
+  assert.equal(pairSpreadAngle(() => null, fov), MIN);
+  // turned about the eye, an edge moves the whole turn: the answer is (GAP - L - R) / 2, unequal blades alike
+  const aboutEye = (l, r) => (a) => ({ L: l + a, R: r + a });
+  const want = (GAP + 0.1 + 0.02) / 2;
+  assert.ok(want > MIN + 0.01 && want < MAX - 0.01, 'the case stands between the two bounds');
+  assert.ok(Math.abs(pairSpreadAngle(aboutEye(-0.1, -0.02), fov) - want) < 1e-6, `two blades crossing the middle: ${pairSpreadAngle(aboutEye(-0.1, -0.02), fov)} / ${want}`);
+  // about a shoulder an edge moves 0.7 of the turn: read at each angle, the blades stand GAP apart at the answer
+  const shoulder = (a) => ({ L: -0.03 + 0.7 * a, R: -0.03 + 0.7 * a });
+  const got = pairSpreadAngle(shoulder, fov);
+  const at = shoulder(got);
+  assert.ok(at.L + at.R >= GAP && at.L + at.R - GAP < 1e-6, `GAP apart at the answer (${(at.L + at.R).toFixed(6)} / ${GAP.toFixed(6)})`);
+  assert.ok(got > (GAP + 0.06) / 2 + 0.01, 'further than the eye\'s answer would turn them');
+  assert.equal(pairSpreadAngle(aboutEye(-1, -1), fov), MAX, 'never more than MAX');
+});
+
+/** The least of `out` . x / ahead over the part of each triangle edge the picture shows (|z / ahead| within the 60-degree
+ *  lens), sampled densely - an oracle that cuts nothing analytically - as an angle; vertices `v` relative to the eye. */
+function sampledInnerEdge(v, idx, out) {
+  const edge = Math.tan(Math.PI / 6);
+  let best = Infinity;
+  for (let t = 0; t < idx.length; t += 3) {
+    for (const [i, j] of [[idx[t], idx[t + 1]], [idx[t + 1], idx[t + 2]], [idx[t + 2], idx[t]]]) {
+      for (let k = 0; k <= 20000; k++) {
+        const u = k / 20000, p = [0, 1, 2].map((c) => v[i * 3 + c] + (v[j * 3 + c] - v[i * 3 + c]) * u);
+        if (p[1] > 1e-6 && Math.abs(p[2] / p[1]) <= edge) best = Math.min(best, (out * p[0]) / p[1]);
+      }
+    }
+  }
+  return Number.isFinite(best) ? Math.atan(best) : null;
+}
+
+test('TWO-HANDS SPREAD a blade\'s INNER EDGE (fpArm.js bladeInnerEdge): the angle at the eye from the picture\'s middle to the blade\'s nearest point, on the right hand\'s side, of the part of it the PICTURE shows - each triangle edge cut to the picture\'s height, so a blade whose tip runs off the top is read where it leaves the picture (neither its vertices alone nor the whole of it); with the arm turned out by `spread` about the upright line through its top\'s joint; the left blade read in the RIGHT hand; null off the picture (mutants: TWO-HANDS-SPREAD-edge-uncut, TWO-HANDS-SPREAD-edge-vertices, TWO-HANDS-SPREAD-edge-turn-way, TWOHANDSMW-AUDIT2-left-blade-on-its-own-bone)', () => seeded(async () => {
+  const arm = await drawnArm();
+  const b = arm.built(), sk = b.arm.skeleton;
+  const plan = mirrorPlan(sk, GRAPH_ROOT, skeletonSpaceMatrices);
+  const out = plan.outward.R;
+  const mats = new Map(b.restMats);
+  const eye = mats.get(b.cameraRef).t;
+  const wb = sk.byName.get('weapon bone'), wbl = sk.byName.get('weapon bone left');
+  mats.set(wb, { a: [1, 0, 0, 0, 1, 0, 0, 0, 1], t: eye.slice() });   // the blade's vertices placed relative to the eye
+  mats.set(wbl, { a: [1, 0, 0, 0, 1, 0, 0, 0, 1], t: [eye[0], eye[1] - 5, eye[2]] });   // the left bone's own place: behind the eye
+  // one triangle: a corner below the middle on the right, one above the picture across the middle, one on the right
+  const v = [0.3 * out, 1, -0.2, -0.5 * out, 1, 1.0, 0.4 * out, 1, 0.0];
+  const idx = [0, 1, 2];
+  const piece = { slot: 'weapon', source: Float32Array.from(v), attachRef: wb, indices: Uint16Array.from(idx), boneOffset: null };
+  const got = bladeInnerEdge(b.arm, mats, b.cameraRef, [piece]);
+  const oracle = sampledInnerEdge(v, idx, out);
+  assert.ok(Math.abs(got - oracle) < 1e-3, `cut where it leaves the picture: ${got} / ${oracle}`);
+  assert.ok(Math.abs(got - Math.atan(-0.5)) > 0.1 && Math.abs(got - Math.atan(0.3)) > 0.1, 'neither the whole edge nor its corners alone');
+  // turned out about the upright line through the right arm's top joint
+  const pivot = mats.get(plan.arms.R[0]).t, s = 0.15, c = Math.cos(-out * s), n = Math.sin(-out * s);
+  const turned = [];
+  for (let i = 0; i < v.length; i += 3) {
+    const x = eye[0] + v[i] - pivot[0], y = eye[1] + v[i + 1] - pivot[1];
+    turned.push(pivot[0] + c * x - n * y - eye[0], pivot[1] + n * x + c * y - eye[1], v[i + 2]);
+  }
+  const gotTurned = bladeInnerEdge(b.arm, mats, b.cameraRef, [piece], s);
+  assert.ok(Math.abs(gotTurned - sampledInnerEdge(turned, idx, out)) < 1e-3, `turned out: ${gotTurned} / ${sampledInnerEdge(turned, idx, out)}`);
+  assert.ok(gotTurned > got + 0.05, 'further out');
+  // the left blade, in the right hand: its own bone stands behind the eye and is never read
+  assert.equal(bladeInnerEdge(b.arm, mats, b.cameraRef, [{ ...piece, slot: 'offweapon', attachRef: wbl }]), got);
+  assert.equal(bladeInnerEdge(b.arm, mats, b.cameraRef, [{ ...piece, source: Float32Array.from([0, 1, 2, 0.3, 1, 3, -0.3, 1, 2.5]) }]), null, 'wholly above the picture: null');
+  assert.equal(bladeInnerEdge(b.arm, mats, b.cameraRef, []), null);
+}));
+
+/** A skeleton's arms named the other way: its right arm stands where its left stood. */
+const namedAcross = (sk) => {
+  const nodes = new Map([...sk.nodes].map(([r, nd]) => [r, { ...nd, name: counterpartName(nd.name) }]));
+  const byName = new Map();
+  for (const [r, nd] of nodes) if (!byName.has(nd.name)) byName.set(nd.name, r);
+  return { nodes, byName };
+};
+
+test('TWO-HANDS SPREAD mirror: `spread` turns each arm OUT at its top about the upright line through that top\'s own joint - every joint of the arm where that turn takes it (its height kept, the top joint where its parent carries it, every bone its length), each arm its own way out, read off the skeleton (a body whose arms stand the other way round turns them the other way); a left arm that was the right\'s mirror across the picture stays its mirror; nothing else moves; alone it turns the clip\'s arms; and it eases in and out of a composition from what was drawn (mutants: TWO-HANDS-SPREAD-inward, TWO-HANDS-SPREAD-own-frame, TWO-HANDS-SPREAD-ignored, TWO-HANDS-SPREAD-not-alone, TWO-HANDS-SPREAD-not-kept, TWO-HANDS-SPREAD-new-key-pops, TWO-HANDS-SPREAD-outward-assumed)', () => {
+  const bytes = retailSkeleton({ extra: ['Camera'] });
+  for (const sk of [buildSkeleton(parseNif(bytes)), namedAcross(buildSkeleton(parseNif(bytes)))]) {
+    seed = 31;
+    const plan = mirrorPlan(sk, GRAPH_ROOT, skeletonSpaceMatrices);
+    const cam = sk.byName.get('camera');
+    const binds = mirrorBindSources({ nif: parseNif(bytes) });
+    const pose = bentRight(sk, plan);
+    const asked = (spread) => { const p = new Map(pose); applyMirrorRig(sk, p, GRAPH_ROOT, skeletonSpaceMatrices, { limbs: { L: { pose: null, side: 'R', mirror: true } }, plane: { ref: cam, dx: 0, binds }, spread }); return M(sk, p); };
+    const a = asked(0), b = asked(0.12);
+    const rest = M(sk, new Map());
+    for (const side of ['L', 'R']) {
+      const top = plan.arms[side][0], C = a.get(top).t, phi = -plan.outward[side] * 0.12;
+      for (const ref of plan.arms[side]) {
+        const p = a.get(ref).t, x = p[0] - C[0], y = p[1] - C[1];
+        const want = [C[0] + Math.cos(phi) * x - Math.sin(phi) * y, C[1] + Math.sin(phi) * x + Math.cos(phi) * y, p[2]];
+        assert.ok(dist(b.get(ref).t, want) < 1e-4, `${sk.nodes.get(ref).name} turned about the upright line through ${sk.nodes.get(top).name} (${dist(b.get(ref).t, want)})`);
+        const up = sk.nodes.get(ref).parent;
+        if (sk.nodes.has(up)) assert.ok(Math.abs(dist(b.get(up).t, b.get(ref).t) - dist(a.get(up).t, a.get(ref).t)) < 1e-4, 'its bone keeps its length');
+      }
+      const hand = plan.hands[side], mid = (rest.get(plan.uppers.L).t[0] + rest.get(plan.uppers.R).t[0]) / 2;
+      assert.ok(Math.abs(b.get(hand).t[0] - mid) > Math.abs(a.get(hand).t[0] - mid) + 0.1, `the ${side} hand further out from the body's middle (${a.get(hand).t[0].toFixed(2)} -> ${b.get(hand).t[0].toFixed(2)})`);
+    }
+    const P = (v) => [2 * b.get(cam).t[0] - v[0], v[1], v[2]];
+    for (const n of ['bip01 r hand', 'bip01 r forearm', 'bip01 r upperarm']) {
+      const r = sk.byName.get(n), l = sk.byName.get(counterpartName(n));
+      assert.ok(dist(P(b.get(r).t), b.get(l).t) < 1e-3, `the left still the right's mirror across the picture: ${n} (${dist(P(b.get(r).t), b.get(l).t).toFixed(5)})`);
+    }
+    const arms = new Set([...plan.arms.L, ...plan.arms.R]);
+    for (const [ref, m] of a) if (!arms.has(ref)) assert.ok(diff(b.get(ref), m) < 1e-9, 'nothing else moves');
+    // alone: the clip's own arms, each turned at its top
+    const q = new Map(pose);
+    assert.deepEqual(applyMirrorRig(sk, q, GRAPH_ROOT, skeletonSpaceMatrices, { spread: 0.1 })?.sort(), [plan.arms.L[0], plan.arms.R[0]].sort());
+  }
+  // the carry: a spread taken off under a new key eases off from where it was drawn; one asked under a new key with
+  // nothing drawn eases in from the clip
+  const sk = buildSkeleton(parseNif(bytes)), plan = mirrorPlan(sk, GRAPH_ROOT, skeletonSpaceMatrices), top = plan.arms.R[0];
+  const rr = sk.nodes.get(top).rest.rotation;
+  const turn = (e) => { const r = mat33Mul(e.rotation, Float32Array.from([rr[0], rr[3], rr[6], rr[1], rr[4], rr[7], rr[2], rr[5], rr[8]])); return Math.acos(Math.min(1, (r[0] + r[4] + r[8] - 1) / 2)); };
+  const st = {};
+  const frame = (key, spread) => { const p = new Map(); applyMirrorRig(sk, p, GRAPH_ROOT, skeletonSpaceMatrices, { carry: { key, dt: 1 / 60, tau: 0.06, state: st }, spread }); return turn(p.get(top) ?? sk.nodes.get(top).rest); };
+  frame('none', 0.2);
+  assert.ok(Math.abs(frame('none', 0.2) - 0.2) < 1e-4, 'the top turned 0.2');
+  const off = [];
+  for (let i = 0; i < 30; i++) off.push(frame('taken', 0));
+  assert.ok(off[0] > 0.19, `the first frame under the new key stands where it was drawn (${off[0].toFixed(4)})`);
+  for (let i = 1; i < 10; i++) assert.ok(off[i] < off[i - 1], 'and eases back');
+  assert.ok(off[29] < 1e-3);
+  const on = [frame('dual', 0.2), frame('dual', 0.2), frame('dual', 0.2)];
+  assert.ok(on[0] < 1e-3 && on[1] > 0 && on[1] < 0.15 && on[2] > on[1], `a spread asked under a new key with nothing drawn eases in from the clip (${on.map((x) => x.toFixed(4))})`);
+});
+
+test('TWO-HANDS SPREAD the arm (Mac: "For the morrowind first person, when duel wielding can we spread out the arms a bit more sense it can make the weapons overlap"): a pair in first person turns both arms out by the angle its blades ask on the build\'s rest (bladeInnerEdge, pairSpreadAngle) - measured once, never for one weapon - eased in on PAIR_SPREAD.TAU; the right arm is the clip\'s turned about its top (the same frames with one weapon, in lockstep), the left its mirror across the eye; third person\'s body is never turned; a blade leaning across the middle is turned until the two stand GAP apart; sheathed, the arms come back (mutants: TWO-HANDS-SPREAD-third-person, TWO-HANDS-SPREAD-single-hand, TWO-HANDS-SPREAD-kept-after-pair, TWO-HANDS-SPREAD-no-ease, TWO-HANDS-SPREAD-never-rests, TWO-HANDS-SPREAD-never-laid, TWO-HANDS-SPREAD-memo-stale)', async () => {
+  const dt = 0.05, tan = Math.tan(FP_FIELD_OF_VIEW / 2), GAP = 2 * Math.atan(PAIR_SPREAD.GAP * tan);
+  const answer = (b) => {
+    const rights = b.arm.pieces.filter((p) => p.slot === 'weapon'), lefts = b.arm.pieces.filter((p) => p.slot === 'offweapon');
+    return pairSpreadAngle((a) => ({ R: bladeInnerEdge(b.arm, b.restMats, b.cameraRef, rights, a), L: bladeInnerEdge(b.arm, b.restMats, b.cameraRef, lefts, a) }), FP_FIELD_OF_VIEW);
+  };
+  /** One run, frame by frame: the view's rig's right hand and arm top, the hands' state, the eye. */
+  const run = (pair, view) => seeded(async () => {
+    const arm = await drawnArm({ d: bodyDeps() });
+    if (view === 'third') assert.ok(arm.setViewMode('third'));
+    for (let i = 0; i < 10; i++) { arm.update(dt); assert.equal(arm.handsState().spread, 0, 'one weapon: no spread'); }
+    assert.equal(arm.handsState().spreadInner, null, 'and nothing measured - a body that never holds a pair never pays');
+    if (pair) { arm.setHands({ mode: 'dual', lead: 'R' }); await arm.setOffWeapon(LONGSWORD); }
+    const frames = [];
+    for (let i = 0; i < 30; i++) {
+      arm.update(dt);
+      const b = arm.built(), a = view === 'third' ? b.third.arm : b.arm, plan = mirrorPlan(a.skeleton, GRAPH_ROOT, a.fns.skelMats);
+      frames.push({ hand: a.mats.get(plan.hands.R).t.slice(), top: a.mats.get(plan.arms.R[0]).t.slice(), h: arm.handsState(), eye: b.arm.mats.get(b.cameraRef).t.slice() });
+    }
+    return { arm, frames };
+  });
+  const one = await run(false, 'first'), two = await run(true, 'first');
+  const target = answer(two.arm.built());
+  assert.ok(Math.abs(target - Math.atan(PAIR_SPREAD.MIN * 2 * tan)) < 1e-9, 'the fixture\'s blades stand clear: MIN');
+  for (let i = 0; i < 6; i++) assert.ok(Math.abs(two.frames[i].h.spread - target * (1 - Math.exp(-((i + 1) * dt) / PAIR_SPREAD.TAU))) < 1e-9, `eased in on PAIR_SPREAD.TAU (${i}: ${two.frames[i].h.spread})`);
+  const end = two.frames[29], same = one.frames[29], s = end.h.spread;
+  assert.ok(Math.abs(s - target) < 1e-4);
+  assert.equal(end.h.composed, 'dual');
+  assert.ok(dist(end.top, same.top) < 1e-6, 'the right arm\'s top joint where the clip has it');
+  const x = same.hand[0] - same.top[0], y = same.hand[1] - same.top[1], c = Math.cos(-s), n = Math.sin(-s);
+  const want = [same.top[0] + c * x - n * y, same.top[1] + n * x + c * y, same.hand[2]];
+  assert.ok(dist(end.hand, want) < 1e-4, `the right hand the clip's turned out about its top (${end.hand.map((v) => v.toFixed(4))} / ${want.map((v) => v.toFixed(4))})`);
+  assert.ok(end.hand[0] > same.hand[0] + 0.02, 'out, to the right');
+  assert.ok(Math.abs((end.h.wrists.L[0] - end.eye[0]) + (end.h.wrists.R[0] - end.eye[0])) < 0.02, `the left the right's mirror across the eye (${end.h.wrists.L} / ${end.h.wrists.R})`);
+  // third person: the body keeps its arms at its sides
+  const oneT = await run(false, 'third'), twoT = await run(true, 'third');
+  assert.ok(twoT.frames[29].h.spread > 0, 'the angle stands in either view');
+  assert.ok(dist(twoT.frames[29].hand, oneT.frames[29].hand) < 1e-6, 'and third person\'s right arm is the clip\'s, never turned');
+  // sheathed: back
+  two.arm.setSheathed(true);
+  for (let i = 0; i < 120; i++) two.arm.update(dt);
+  assert.equal(two.arm.handsState().spread, 0, 'sheathed: the arms come back');
+  // a blade leaning across the middle at rest: turned until the two stand GAP apart
+  await seeded(async () => {
+    const arm = await drawnArm();
+    const b = arm.built(), sk = b.arm.skeleton, wb = sk.nodes.get(sk.byName.get('weapon bone'));
+    wb.rest.rotation = mat33Mul(rotAxisAngle([0, 1, 0], -0.45), wb.rest.rotation);
+    arm.update(dt);
+    b.restMats = new Map(b.arm.mats);
+    const rest = bladeInnerEdge(b.arm, b.restMats, b.cameraRef, b.arm.pieces.filter((p) => p.slot === 'weapon'));
+    assert.ok(rest < -0.05, `the blade crosses the middle at rest (${rest})`);
+    // the pair taken up before its left blade is bound: one blade on the picture asks nothing past MIN...
+    arm.setHands({ mode: 'dual', lead: 'R' });
+    for (let i = 0; i < 3; i++) arm.update(dt);
+    assert.equal(arm.handsState().spreadInner.L, null, 'no left blade yet');
+    assert.ok(Math.abs(answer(b) - Math.atan(PAIR_SPREAD.MIN * 2 * tan)) < 1e-12);
+    // ...and the blade bound is measured anew
+    await arm.setOffWeapon(LONGSWORD);
+    for (let i = 0; i < 60; i++) arm.update(dt);
+    const h = arm.handsState(), want2 = answer(b);
+    assert.ok(want2 > Math.atan(PAIR_SPREAD.MIN * 2 * tan) + 0.05 && want2 < Math.atan(PAIR_SPREAD.MAX * 2 * tan) - 0.05, `further than MIN, short of MAX (${want2})`);
+    assert.ok(Math.abs(h.spread - want2) < 1e-6, `the angle its blades ask (${h.spread} / ${want2})`);
+    assert.ok(Math.abs(h.spreadInner.L + h.spreadInner.R - GAP) < 1e-6, `GAP apart at it (${(h.spreadInner.L + h.spreadInner.R).toFixed(6)} / ${GAP.toFixed(6)})`);
+  });
 });

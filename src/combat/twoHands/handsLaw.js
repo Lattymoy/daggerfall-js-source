@@ -276,6 +276,44 @@ export function guardOffset(g, side, { time = 0, bounce = 0, hand = 'R', height 
   return [weapon ? 0 : toMid * GUARD.IN * g, down * g + b];
 }
 
+// ---- THE SPREAD (a pair in the Morrowind arm's first person) --------------------------------------------------------
+
+/** TWO-HANDS SPREAD (2026-10-17, Mac: "For the morrowind first person, when duel wielding can we spread out the arms a
+ *  bit more sense it can make the weapons overlap"). The first-person pair holds its left arm as the right's mirror
+ *  across the picture's middle (mirrorRig.js pictureMirrorArm), and Morrowind's one-handed stance holds its weapon
+ *  leaning in toward that middle - so the glass alone crossed a long pair's blades there. Both arms are turned OUTWARD,
+ *  each about the upright line through its own top joint (mirrorRig.js's `spread`: the left still the right's mirror,
+ *  no joint off its parent): always by MIN, and further where the blades would stand closer than GAP to each other,
+ *  never more than MAX. Shares of the picture's HEIGHT (the arms' lens is FP_FIELD_OF_VIEW high), as GUARD.LOWER is of
+ *  a weapon's, each taken as the angle it spans at the picture's middle: no number about any skeleton or weapon - each
+ *  blade's inner edge is read off the rig and the blade it holds (fpArm.js bladeInnerEdge). The angle is eased (TAU, in
+ *  seconds), so a blade bound anew or a pair taken up or put away moves the arms, never pops them. The sprite lane draws
+ *  each weapon flush to its own side of the view (WeaponBasics' AlignRight, and its mirror) and needs none. */
+export const PAIR_SPREAD = Object.freeze({
+  MIN: 0.04,
+  GAP: 0.04,
+  MAX: 0.2,
+  TAU: 0.12,
+});
+
+/** The angle (radians) each arm of a pair is turned out: the least in [MIN, MAX] at which the blades stand GAP apart on
+ *  the picture, found by halving (to well under a thousandth of a degree). `innerAt(angle)` answers each blade's inner
+ *  edge with the arms turned out by `angle` - `{ L, R }`, the angle at the eye from the picture's middle to the blade's
+ *  nearest point, positive on its own hand's side - or a blade's null where it is not on the picture, which asks nothing.
+ *  A turn about a shoulder moves an edge a little less than the turn (the arm swings about a joint off the eye), so the
+ *  edges are measured at each angle tried, never assumed; `fov` is the lens's vertical field of view. */
+export function pairSpreadAngle(innerAt, fov) {
+  const tan = Math.tan(fov / 2);
+  const share = (k) => Math.atan(k * 2 * tan);   // a share of the picture's height, as the angle it spans at its middle
+  const gap = 2 * Math.atan(PAIR_SPREAD.GAP * tan);
+  const clear = (a) => { const e = innerAt(a); return !e || !Number.isFinite(e.L) || !Number.isFinite(e.R) || /** @type {number} */ (e.L) + /** @type {number} */ (e.R) >= gap; };
+  let lo = share(PAIR_SPREAD.MIN), hi = share(PAIR_SPREAD.MAX);
+  if (clear(lo)) return lo;
+  if (!clear(hi)) return hi;
+  for (let i = 0; i < 24; i++) { const m = (lo + hi) / 2; if (clear(m)) hi = m; else lo = m; }
+  return hi;
+}
+
 // ---- THE RUNNING HANDS ----------------------------------------------------------------------------------------------
 
 /** One footfall every this many metres - PlayerFootsteps.WalkStepInterval (systems/footsteps.js WALK_STEP_INTERVAL,
