@@ -12,6 +12,7 @@ import {
   WAGON_OUTSIDE_LOOKS, CARAVAN_INSIDE_LOOKS, CARAVAN_INSIDE_PARTS, LOOK_COUNT, LOOK_NAMES, LOOK_TEXT, readWagonLook, wagonLookOf,
   wagonLookCode, wagonLookOfCode, WAGON_LOOK_CODE_MAX, paintedWagon, paintDrivenWagon, caravanPaintRows, outsidePaintRow,
 } from '../../../src/systems/wagon/wagonLooks.js';
+import { readWagonLookAll } from '../../../src/systems/wagonTimber.js';   // WAGON-TIMBER PASS 2: the look on the word is NINE keys (PIN MOVED below)
 import { newWagonItem } from '../../../src/systems/wagon/wagonKinds.js';
 import {
   wagonArt, wagonLookArt, TEX, WAGON_ARCHIVE, LOOK_RECORDS, LOOK_RECORD_STRIDE, lookRecord, isGlassRecord, CARAVAN_SIDE_WINDOW,
@@ -91,11 +92,12 @@ test('WAGONS2 THE PAINTS\' PICTURES: each choice past the first painted to its o
       assert.deepEqual(pics.map(([rec]) => rec), LOOK_RECORDS[list].map((rec) => rec + LOOK_RECORD_STRIDE * i), `${list} ${names[i]}`);
       const again = wagonLookArt(list, i, names[i]);
       pics.forEach(([rec, pic], k) => {
-        assert.deepEqual([pic.width, pic.height], [64, 64]);
+        // WAGON-EMBLEM: the open side is four cells wide (256 x 64), so the face's u runs once over all four and one
+        // emblem stands on one cell; every other picture is one 64 x 64 tile.
+        assert.deepEqual([pic.width, pic.height], rec % LOOK_RECORD_STRIDE === TEX.openSide ? [256, 64] : [64, 64], `${list} ${names[i]} record ${rec}: its shape`);
         assert.deepEqual(pic.data, again[k][1].data, 'from numbers, the same every time');
         assert.notDeepEqual(pic.data, built.get(rec % LOOK_RECORD_STRIDE).data, `${list} ${names[i]} is its own picture`);
-      });
-    }
+      });    }
   }
   const all = [...built, ...Object.entries(WAGON_OUTSIDE_LOOKS).flatMap(([l, n]) => n.flatMap((k, i) => wagonLookArt(l, i, k))), ...Object.entries(CARAVAN_INSIDE_LOOKS).flatMap(([l, n]) => n.flatMap((k, i) => wagonLookArt(l, i, k)))];
   const { x0, x1, y0, y1 } = CARAVAN_SIDE_WINDOW;
@@ -292,10 +294,15 @@ test('WAGONS2 THE PAINT ON THE WAGON: the pool draws the driven wagon in its pai
   // the word
   const rec = hccWireRecord(pool.shown?.() ?? { wagon: { kind: HCC_WIRE_KIND.Deployed, position: [1, 1, 1], rotation: [0, 0, 0, 1], tier: 0, angle: 0, model: 'caravan', look } }, (p) => p);
   assert.equal(rec.wl, wagonLookCode(look));
-  assert.deepEqual(validHccRecord(rec).w.look, look);
-  assert.deepEqual(validHccRecord({ ...rec, wl: WAGON_LOOK_CODE_MAX + 1 }).w.look, readWagonLook(null), 'a code the law does not make: as built');
+  // PIN MOVED (WAGON-TIMBER PASS 2, 2026-10-16): the reader's answer is NINE keys, not the paint's four. `w.look`
+  // IS the item's one `wagonLook`, and it now holds the wood's four parts and the wheels beside the paint - that is
+  // what `ww` and `wr` unpack into (systems/wagonTimber.js wagonLookOfWire), and a four-key answer would throw away
+  // two numbers the word carried faithfully. The paint's own four are still pinned IN it, by the wire code on the
+  // lines above and below, and the whole nine are pinned round-trip in test/wagontimber2.test.js.
+  assert.deepEqual(validHccRecord(rec).w.look, readWagonLookAll(look));
+  assert.deepEqual(validHccRecord({ ...rec, wl: WAGON_LOOK_CODE_MAX + 1 }).w.look, readWagonLookAll(null), 'a code the law does not make: as built');
   pool.applyOwner('ann', { ...rec }, (p) => p, 0);
-  assert.deepEqual(pool.peers.get('ann').wagon.look, look);
+  assert.deepEqual(pool.peers.get('ann').wagon.look, readWagonLookAll(look));
   // the park record
   const word = pool.parkWord((p) => p);
   assert.equal(word.r.wl, wagonLookCode(look));

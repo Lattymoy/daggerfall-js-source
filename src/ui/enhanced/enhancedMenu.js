@@ -2876,6 +2876,21 @@ function portRowsInterface({ pause = false } = {}) {
   out.push(mapScaleRow());   // MAP-SCALE
   out.push(prefRow('standingAll', 'Every faction\'s standing',
     'Your reputation with every guild, temple, knightly order, kingdom, coven, vampire clan and Daedric Prince on the character sheet\'s Standing page - not only the ones you belong to.'));   // EVERY-STANDING
+  { // WAGON-ARMS: the same segmented control the Travel tiles use (Off/On side by side), driven straight off the pref
+    const key = 'broadcastHeraldry', on = !!getPref(key);
+    const row = el('div', 'row');
+    row.dataset.opt = key; row.dataset.pref = key;   // ORG2: the map places the row by its id; Changed reads its pref
+    const main = el('button', 'row-main');
+    main.append(el('div', 'row-name', t('wagon.arms.row', 'Guild\'s Heraldry on Wagon by xarop_pa_toss')));
+    main.append(el('div', 'row-note', t('wagon.arms.note', 'Worn on your open wagon and shown to everyone when on. Off: plain cloth.')));
+    main.onclick = () => { setPref(key, !on); render(); };
+    row.append(main);
+    const ctl = el('div', 'ctl');
+    ctl.append(segBar({ labels: ['Off', 'On'], shown: toggleWords(), at: on ? 1 : 0,
+      locked: onlineForcedPref(key) !== undefined, set: (i) => setPref(key, i === 1) }, t('wagon.arms.row', 'Guild\'s Heraldry on Wagon by xarop_pa_toss')));
+    row.append(ctl);
+    out.push(row);
+  }
   if (isEnhanced()) out.push(...hudLayoutRows());   // HUD-MOVE: the Enhanced Plus HUD's own - Classic draws none of it
   // FOEBAR1: the target bar's face is a two-way choice, not a switch - the
   // stick-position row's shape: a row whose button names the OTHER option.

@@ -149,7 +149,8 @@ export const ONLINE_PLAYERS_OWN_PREFS = [
   'shotDownload',     // LOAD1: whether THIS player's screenshot key also saves a file - their disk, nobody else's
   'skipStartVideo',   // UXB1-A: whether THIS player sits through the opening film - read at the front door, before any room
   'chatHidden',       // CHAT-R2: whether THIS player wants the chat on screen - the room does not get a say in what someone looks at
-  'peerClassSprites', // 2026-09-17: how OTHER players are drawn on THIS machine (animated class sprite vs paperdoll) -
+  'peerClassSprites', // 2026-09-17: how OTHER players are drawn on THIS machine
+  'broadcastHeraldry', // WAGON-ARMS: whether THIS player broadcasts their guild arms on their wagon - the owner's own choice, not the room's (animated class sprite vs paperdoll) -
                        // purely a local rendering choice, same shape as chatHidden above; it changes nothing the room agrees on
   'peerAttackSounds', 'peerFootsteps',   // PEER-FS1: and how OTHER players are HEARD on this machine - the same local-only shape
   'nightCrickets', 'distantHowl',        // SNDREP1: whether THIS player hears the night's crickets and the far howl - an ear, nothing the room agrees on

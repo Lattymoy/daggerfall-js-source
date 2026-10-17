@@ -187,6 +187,8 @@ const REFUSAL_WORDS = {
   'not-found': () => t('account.refusal.notFound', 'The account service does not know that request. The game may need updating.'),
   'no-database': () => t('account.refusal.noDatabase', 'The account service is starting up. Try again in a moment.'),
   queue: () => t('account.refusal.queue', 'Many players are signing in at once - you are in line. Try again in a few seconds.'),   // ADMIT-LINE (server-account/src/admit.js): the sign-in line
+  'arms-batch': () => 'That request carried too many guild tags. Wait and ask again.',
+  'arms-rate': () => 'Too many wagon arms requests. Try again later.',
   // ACC2, the cloud saves. Every one of these is a sentence a player
   // can act on, which is the whole rule of this table - "too-large" is
   // not a thing to read and "that save is too big to back up" is.
@@ -1782,6 +1784,13 @@ export function accountGuilds({ fetch, storage }) {
     invites: () => post('/v1/guilds/invites', {}),
     found: ({ character, name, tag, realm = null, region = null }) => post('/v1/guilds/found', { character, name, tag, ...(realm ? { realm, region } : {}) }),   // REALM P2.2: a realm character's record pays
     invite: (character, handle) => post('/v1/guilds/invite', { character, handle }),
+    // WAGON-ARMS (2026-10-16, Mac: "If a player with no guild has a wagon, nothing is overlayed. If they do, then their
+    // guilds heraldry is overlayed for others to see."): a guild's heraldry BY ITS TAG - the read that covers a guild
+    // holding no seat, no hall, no note and no writ, which the four incidental ones do not. A wagon's word carries the
+    // tag (`og`, src/systems/horse/horseCartWire.js); this turns it into a picture, or `null` heraldry for one that has not
+    // chosen any. Thin beside the rest, and it takes the tags AS ASKED - the service refuses a batch past its bound
+    // whole rather than answering a prefix, so there is no paging here to mirror.
+    arms: (tags) => post('/v1/guilds/arms', { tags }),
     answer: ({ character, guild, accept }) => post('/v1/guilds/answer', { character, guild, accept }),
     leave: (character) => post('/v1/guilds/leave', { character }),
     remove: (character, member) => post('/v1/guilds/remove', { character, member }),

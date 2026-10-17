@@ -27,8 +27,10 @@
 // Each face wears its picture by `wagonFaceSkin` (world/ships/largeBoatModel.js faceSkin's law): the sides' liveries banded on their
 // height, everything else tiled planar (world/ships/galleonMesh.js planarUv), the wheels' faces and the caravan's ends laid
 // whole on their pictures - the cart's on its LEVEL frame (`cartLevel`), the caravan's sides from their middle
-// (`caravanSideU`). Not a DFU member. Ledger A (WAGONS1).
-import { WAGON_ARCHIVE, TEX, WAGON_TILE, BANDS, wagonArt, CARAVAN_SIDE_WINDOW_U } from './wagonArt.js';
+// (`caravanSideU`). WAGON-EMBLEM: the open wagon's side reads its picture UN-FLIPPED (`sideBandU`, world/wagonArt.js) -
+// planarUv's own far-side flip mirrors a side's picture about the wagon's middle, which is free on cloth and put the
+// guild arms a tile and a half from one side to the other. Not a DFU member. Ledger A (WAGONS1).
+import { WAGON_ARCHIVE, TEX, WAGON_TILE, BANDS, wagonArt, CARAVAN_SIDE_WINDOW_U, sideBandU } from './wagonArt.js';
 import { dfLook, lookSeed } from './dfLook.js';   // DF-LOOK: the icon's wagon in the colours the world's wears
 import { toColor32 } from '../formats/color32Order.js';
 import { MeshBench, prism, box, planarUv, sub, add, dot } from './ships/galleonMesh.js';
@@ -38,7 +40,7 @@ import { quatAngleAxis, quatRotate, quatMultiply } from './quat.js';
 import { NORMAL_GROUND_OFFSET } from '../systems/horse/horseCartLaw.js';
 import { CARGO_DEFINITIONS } from '../systems/wagon/wagon41214.js';
 import { WAGON_KINDS, activeWagonKind, activeWagonItem } from '../systems/wagon/wagonKinds.js';
-import { wagonLookOf } from '../systems/wagon/wagonLooks.js';   // WAGONS2: the driven wagon's paint
+import { readWagonLookAll } from '../systems/wagonTimber.js';   // WAGON-TIMBER PASS 3: the dep delivers the WHOLE look - the pool reads all nine keys, and the paint's own four-key reader would strip the timber's five before either saw them
 import { riddenHorseLook } from '../systems/horse/horseCoats.js';   // COATS1: the ridden horse's look
 import { mwViewHorseRig } from '../player/mwView.js';   // COATS3D: the 3D horse rig, on the Morrowind lane
 import { SEATED_HIP_HEIGHT } from '../player/seatPose.js';   // WAGONS3: the seated hips' height over the feet, the measured biped's
@@ -128,7 +130,7 @@ export function wagonFaceSkin(kind, role, n, c, pivot = null, R = 1) {
 /** wagonFaceSkin's law, on the frame the face is handed in. */
 function layFace(kind, role, n, c, pivot = null, R = 1) {
   const tiled = (rec, key = keyOf(rec)) => ({ rec, uv: (p) => planarUv(p, n, WAGON_TILE[key]) });
-  const banded = (name) => ({ band: BANDS[name], u: name === 'caravanSide' ? (p) => caravanSideU(p, n) : (p) => planarUv(p, n, [WAGON_TILE[name][0], 1])[0] });
+  const banded = (name) => ({ band: BANDS[name], u: name === 'caravanSide' ? (p) => caravanSideU(p, n) : (p) => sideBandU(p, WAGON_TILE[name][0]) });
   const up = n[1] > 0.7, down = n[1] < -0.7, side = Math.abs(n[0]) > 0.7, end = Math.abs(n[2]) > 0.7;
   if (role.startsWith('wheel')) return side ? { rec: TEX.wheel, uv: wheelUv(pivot ?? c, R) } : tiled(TEX.tyre);
   if (role.startsWith('axle') || role.startsWith('shaft')) return tiled(TEX.beam);
@@ -471,7 +473,7 @@ export function wagonPoolDeps(items, fetchFn = (u) => globalThis.fetch(u)) {
   const loads = new Map();
   return {
     wagonKind: () => activeWagonKind(items()) ?? 'cart',
-    wagonLook: () => wagonLookOf(activeWagonItem(items())),   // WAGONS2: the driven wagon's paint
+    wagonLook: () => readWagonLookAll(activeWagonItem(items())?.wagonLook),   // WAGON-TIMBER PASS 3 (2026-10-16, operator: Stable timber rows change nothing live): the driven wagon's WHOLE look, all nine keys - the pool's myLook reads it through readWagonLookAll too, so a four-key read here stripped the timber's five and the pool's remap never saw a dye. wagonLooks.js's own wagonLookOf is untouched for its paint-only consumers.
     horseLook: () => riddenHorseLook(items()),   // COATS1: and the horse's look
     horses3d: () => mwViewHorseRig(),   // COATS3D: on the Morrowind lane, every horse the pool stands is the 3D horse
     bakedWagon: (kind) => {

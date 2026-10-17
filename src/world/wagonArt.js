@@ -19,7 +19,36 @@
 // Each picture is `{ width, height, data }`, RGBA top-down. Not a DFU member. Ledger A (WAGONS1).
 import { C, picture, put, get, mix, shade, paintNoise as noise, paintBand as band, planks, GALLEON_TEX_SIZE, ironArt } from './ships/galleonArt.js';
 import { mulberry32 } from '../combat/blood/bloodArt.js';
-
+import { dyeEveryTexel } from '../systems/horse/horseCoats.js';   // WAGON-TIMBER: the timber's dyes through the horse coat's own arithmetic
+import { paintWagonEmblem, EMBLEM_CELL, EMBLEM_M } from './wagonEmblem.js';   // WAGON-EMBLEM: the guild arms over one cell of the open side
+//
+// WAGON-TIMBER (2026-10-16, Mac, of the wagon's wood and of its wheels: "Ok so there is a separation of all the wooden
+// parts which is cool. Lets make a selector for each of them and send them over the wire using the same system that
+// already exists"; "I want the wheel options to be separate from the wood options"; "Add a few more options for the
+// wheels as well which I know are editable via hex color codes so come up with a few discrete options: couple different
+// browns, a reddish one and a grey one if possible"): THE FOUR FIXED WOODEN RECORDS GET A DYE, AND THE WHEELS GET A
+// FINISH. TEX.floor, TEX.inner, TEX.beam and TEX.bench wear painted woods and nothing else, so a choice over them goes
+// through the horse coat's own arithmetic (systems/horse/horseCoats.js dyeEveryTexel over every texel - a hue/saturation/
+// value SHIFT, so the painted grain and shading ride through it where a fill would flatten them). WOOD_DYES is that
+// table, in the horse coat dye's own shape. The wheels are a separate table of finishes (WHEEL_FINISHES) read by the
+// wheel painters below: a choice is a row of colours, never a new drawing. CART_DYES dyes the cart's own boards the
+// same way, so the cart's paint keeps the grain with the colour on it.
+//
+// THE RECORDS. Both families take the paint's own LOOK_RECORD_STRIDE ladder (a record `r` at choice `i` is
+// `r + LOOK_RECORD_STRIDE * i`), so a choice is remapped and uploaded by exactly the machinery a paint uses and
+// nothing here had to be invented for it. LOOK_RECORDS names the timber's five lists beside the paint's, and
+// TIMBER_LISTS maps each wooden part to its list. The wheels are their own list, never one of the wood's, which is
+// what "the wheel options separate from the wood options" means in a source table.
+//
+// WAGON-EMBLEM (2026-10-16, Mac: "a guild master's emblem painted on the sides of their open wagon"; then, of the
+// result, "Can we make it only show on the second iteration?"): THE OPEN WAGON'S OUTER SIDE WEARS GUILD ARMS. The side
+// is four tiles wide (SIDE_CELLS of SIDE_TILE_M, its u running once over all four - world/wagonModels.js lays it
+// un-flipped, so both walls read the same picture) and the arms are painted over ONE cell of it (the second -
+// world/wagonEmblem.js paintWagonEmblem, the shield, over the arms the caller hands in). A painted choice's side is
+// that composition; the built side is bare boards. Nothing of it rides the wire - no field, no PARK_WAGON_LOOK_MAX,
+// and LOOK_COUNT is six still.
+// Not a DFU member. Ledger A (WAGONS1, WAGON-TIMBER).
+//
 /** The wagons' pseudo-archive: past the large boat's 38171 (38151 collided once - largeBoatArt.js). */
 export const WAGON_ARCHIVE = 38181;
 /** The records, each a picture. */
@@ -30,15 +59,29 @@ export const TEX = Object.freeze({
   roomSide: 15, roomFront: 16, roomRear: 17, roomCeiling: 18, roomFloor: 19,   // WAGONS2: the caravan's room (world/caravanRoomModel.js)
   harness: 20,   // WAGONS3: the traces and the reins (systems/wagon/wagonRopes.js)
 });
+/** THE LIVERY'S OWN REPEAT - a metre and three tenths of u along the open wagon's side, at the scale the boards
+ *  have always worn. Nothing stretches it (WAGON-EMBLEM): the side's picture carries four of these tiles side by
+ *  side, so its u spans all four cells once and a face walks over the picture a single time. */
+export const SIDE_TILE_M = 1.3;
+/** How many of those tiles one side's picture holds (WAGON-EMBLEM): four cells wide, and the face's u runs once over
+ *  all four - so the cell boundaries stand at 1.3 m, 2.6 m and 3.9 m, and an emblem painted on ONE cell is the only
+ *  one on the wagon. */
+export const SIDE_CELLS = 4;
 /** How far each tiling picture repeats (metres a tile, u then v - world/ships/galleonMesh.js planarUv's); a livery's u alone
- *  (its v is its height, `BANDS`); 0 where the picture is laid whole on its face (a wheel's, an end's). */
-export const WAGON_TILE = Object.freeze({
+ *  (its v is its height, `BANDS`); 0 where the picture is laid whole on its face (a wheel's, an end's). The open
+ *  wagon's side is the odd one out: its u spans all four of its cells, so a face walks over the picture once. */export const WAGON_TILE = Object.freeze({
   floor: [1.6, 1.6], side: [1.6, 1.6], inner: [1.6, 1.6], beam: [1.2, 1.2], bench: [1.2, 1.2], tyre: [1.2, 1.2], wheel: [0, 0],
-  iron: [1, 1], openSide: [1.3, 0], tilt: [1.3, 1.3], tiltInner: [1.3, 1.3], caravanSide: [2.9, 0], caravanFront: [0, 0],
+  iron: [1, 1], openSide: [SIDE_CELLS * SIDE_TILE_M, 0], tilt: [1.3, 1.3], tiltInner: [1.3, 1.3], caravanSide: [2.9, 0], caravanFront: [0, 0],
   caravanRear: [0, 0], caravanRoof: [1.6, 1.6],
   roomSide: [2.9, 0], roomFront: [0, 0], roomRear: [0, 0], roomCeiling: [1.6, 1.6], roomFloor: [1.6, 1.6],
   harness: [0, 0.5],   // WAGONS3: round the strap once, half a metre of it a tile along it
 });
+/** A side band's u over the WHOLE of its picture, laid the SAME WAY ON BOTH SIDES (WAGON-EMBLEM): metres from the
+ *  body's rear over `tileM`. `planarUv` flips u on the far side - world/ships/galleonMesh.js's own line, "a side" - which
+ *  mirrors a side's picture about the wagon's middle. That is free on cloth, whose weave has no handedness, and it was
+ *  the law that put the arms a whole tile apart on the two sides of the same wagon: the near side read z 1.3 to 2.6 m
+ *  and the far side read the same texels at z 2.6 to 3.9 m. Un-flipped, the arms stand at the same place on both. */
+export const sideBandU = (/** @type {readonly number[]} */ p, tileM) => p[2] / tileM;
 /** The two sides' liveries: one slice each over the wagons' side walls' height (both bodies stand 0.94 to 3.06 m - the
  *  bake's, test/systems/item/wagons1.test.js pins it), `recs` top down. */
 export const SIDE_Y0 = 0.94, SIDE_Y1 = 3.06;
@@ -97,7 +140,9 @@ const glass = (img, x, y, rgb) => { put(img, x, y, rgb); img.data[(y * img.width
 /** How far a look's records stand from the built ones' (a record `r` painted with a list's `i`th choice is
  *  `r + LOOK_RECORD_STRIDE * i`; the built choice, 0, is `r` itself). */
 export const LOOK_RECORD_STRIDE = 100;
-/** Which built records each paint repaints: a kind's outside, and the caravan's inside parts. */
+/** Which built records each choice repaints: a kind's outside, the caravan's inside parts, and (WAGON-TIMBER) the four
+ *  fixed wooden records and the wheels. The list's NAME is what a caller passes to wagonLookArt - a kind, one of the
+ *  caravan's inside parts, or one of TIMBER_LISTS' five. */
 export const LOOK_RECORDS = Object.freeze({
   cart: Object.freeze([TEX.side]),
   openWagon: Object.freeze([TEX.openSide, TEX.tilt, TEX.tiltInner]),
@@ -105,6 +150,13 @@ export const LOOK_RECORDS = Object.freeze({
   walls: Object.freeze([TEX.roomSide, TEX.roomFront, TEX.roomRear]),
   floor: Object.freeze([TEX.roomFloor]),
   ceiling: Object.freeze([TEX.roomCeiling]),
+  timberFloor: Object.freeze([TEX.floor]), timberInner: Object.freeze([TEX.inner]), timberBeam: Object.freeze([TEX.beam]),
+  timberBench: Object.freeze([TEX.bench]), wheels: Object.freeze([TEX.tyre, TEX.wheel]),
+});
+/** WAGON-TIMBER: each wooden part's item field (systems/wagonTimber.js TIMBER_PARTS) against the LIST NAME that chooses
+ *  it here - `floor` the part against `floor` the caravan's paint is the collision this table steps around. */
+export const TIMBER_LISTS = Object.freeze({
+  floor: 'timberFloor', inner: 'timberInner', beam: 'timberBeam', bench: 'timberBench', wheels: 'wheels',
 });
 /** The record `rec` wears under choice `i`. */
 export const lookRecord = (rec, i) => rec + LOOK_RECORD_STRIDE * (Number.isInteger(i) && i > 0 ? i : 0);
@@ -115,7 +167,6 @@ function floorArt() {
   planks(img, { ph: 8, seed: 0xa02, base: (x, y) => mix(mix(C.pine, C.pineGrey, 0.4), K.weather, 0.3 * n(x, y)), tone: 0.1, grain: 0.14, trenail: K.nail });
   return img;
 }
-
 /** The sideboards outside: oak gone grey with weather, three boards a tile up its 1.6 m, nailed to a stake at each
  *  end of the tile, iron straps over the stakes. WAGONS2: `paint` a PAINTS colour laid over the boards, worn through
  *  to the oak where the weather has had it (null: the oak as built). */
@@ -169,32 +220,38 @@ function benchArt() {
   return img;
 }
 
-/** A wheel's iron tyre round its tread: the iron, a rivet every so often, the road's dust on it. */
-function tyreArt() {
+/** A wheel's iron tyre round its tread: the iron, a rivet every so often, the road's dust on it.
+ *  WAGON-TIMBER: `finish` a WHEEL_FINISHES row - the tread's dust the finish's own, its rust flecked over the iron
+ *  (null: the wheel as painted, byte for byte). */
+export function tyreArt(finish = null) {
+  const F = finish ?? WHEEL_FINISHES.oak;
   const img = ironArt();
   const n = noise(0xa51, S, S, 8, 8);
-  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) put(img, x, y, mix(get(img, x, y), [120, 108, 88], 0.25 * n(x, y)));
-  for (let x = 4; x < S; x += 16) for (const y of [8, 40]) { put(img, x, y, C.ironLit); put(img, x + 1, y, C.iron); }
+  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) put(img, x, y, mix(get(img, x, y), F.dust, 0.25 * n(x, y)));
+  for (let x = 4; x < S; x += 16) for (const y of [8, 40]) { put(img, x, y, F.ironLit); put(img, x + 1, y, F.iron); }
+  if (finish) for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) if (n(x, y) > 0.94) put(img, x, y, F.rust);   // the iron's age, in its own red
   return img;
 }
 
 /** A wheel's face, laid whole on it (world/wagonModels.js wheelUv: the picture's centre the hub's): its felloes round a
  *  rim, seven spokes (Mac's wheels have seven sides) from a turned hub with an iron hoop and its linchpin. */
-function wheelArt() {
+/** WAGON-TIMBER: `finish` a WHEEL_FINISHES row - the wheel turned and fitted in it (null: as painted). */
+export function wheelArt(finish = null) {
+  const F = finish ?? WHEEL_FINISHES.oak;
   const img = picture(S, S), n = noise(0xa61, S, S, 8, 8);
   const c = (S - 1) / 2;
   for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
     const dx = x - c, dy = y - c, r = Math.hypot(dx, dy) / c, a = Math.atan2(dy, dx);
     let col;
-    if (r > 0.86) col = mix(C.iron, C.ironLit, 0.4 * n(x, y));                       // the tyre's edge
-    else if (r > 0.66) col = mix(K.felloe, C.oakDark, ((Math.floor(((a + Math.PI) / (2 * Math.PI)) * 7) % 2) ? 0.25 : 0) + 0.2 * n(x, y));   // the felloes, each its own tone
+    if (r > 0.86) col = mix(F.iron, F.ironLit, 0.4 * n(x, y));                       // the tyre's edge
+    else if (r > 0.66) col = mix(F.felloe, F.oakDark, ((Math.floor(((a + Math.PI) / (2 * Math.PI)) * 7) % 2) ? 0.25 : 0) + 0.2 * n(x, y));   // the felloes, each its own tone
     else if (r > 0.3) {
       const k = (((a + Math.PI) / (2 * Math.PI)) * 7) % 1;                            // where between two spokes
       const w = 0.09 + 0.05 * (1 - r);                                               // the spoke, thicker at the hub
-      col = k < w || k > 1 - w ? mix(K.spoke, C.oakLit, 0.3 * n(x, y)) : shade(mix(C.oakDark, C.tar, 0.5), 0.7);   // between them, the shadow inside the wheel
-    } else if (r > 0.22) col = mix(C.iron, C.ironLit, 0.5);                           // the hub's iron hoop
-    else if (r > 0.08) col = mix(K.hub, C.oak, 0.5 * n(x, y));                         // the hub
-    else col = C.black;                                                                // the axle's end and its pin
+      col = k < w || k > 1 - w ? mix(F.spoke, F.oakLit, 0.3 * n(x, y)) : shade(mix(F.oakDark, F.tar, 0.5), 0.7);   // between them, the shadow inside the wheel
+    } else if (r > 0.22) col = mix(F.iron, F.ironLit, 0.5);                           // the hub's iron hoop
+    else if (r > 0.08) col = mix(F.hub, F.oak, 0.5 * n(x, y));                         // the hub
+    else col = F.black;                                                                // the axle's end and its pin
     put(img, x, y, col);
   }
   return img;
@@ -203,7 +260,7 @@ function wheelArt() {
 /** The open wagon's side, its height from its foot (row 63) to the tilt's eaves (row 0): its box of three boards to a
  *  rail at OPEN_RAIL_Y, and over it the tilt's canvas, weathered down from its eaves, a hoop's shadow at each tile's end
  *  (the hoops 1.3 m apart - WAGON_TILE.openSide) and the tilt's cord laced to the rail. */
-function openSideArt(dye = null) {
+function openSideTile(dye = null) {
   const img = picture(S, S), n = noise(0xa71, S, S, 8, 8);
   const rail = sideRow(OPEN_RAIL_Y);
   const [cloth, dirt] = dye ?? [C.canvas, C.canvasDirt];   // WAGONS2: the tilt dyed (DYES; null the cream it was built in)
@@ -217,6 +274,16 @@ function openSideArt(dye = null) {
   planks(img, { y0: rail + 2, y1: S, ph: 7, lenMin: 64, lenMax: 64, seed: 0xa72, base: (x, y) => mix(K.board, K.weather, 0.35 + 0.3 * n(x, y)), tone: 0.12, grain: 0.15 });
   line(img, rail, C.oakLit); line(img, rail + 1, C.oakDark);   // the rail
   for (const sx of [0, 1, 2]) column(img, sx, mix(K.boardDark, C.oakDark, 0.5), rail, S);   // the stake under each hoop
+  return img;
+}
+/** WAGON-EMBLEM: the open wagon's side whole - FOUR tiles of its canvas side by side (SIDE_CELLS of SIDE_TILE_M),
+ *  so the face's u runs once over all four and the arms stand on one cell of it. The tile repeats byte-identical
+ *  (the texture's own REPEAT stood the same seams every 1.3 m), so the wide picture reads as the same boards. */
+function openSideArt(dye = null) {
+  const tile = openSideTile(dye), W = S * SIDE_CELLS;
+  const img = picture(W, S);
+  for (let t = 0; t < SIDE_CELLS; t++)
+    for (let y = 0; y < S; y++) img.data.set(tile.data.subarray(y * S * 4, (y + 1) * S * 4), (y * W + t * S) * 4);
   return img;
 }
 
@@ -456,22 +523,144 @@ export function wagonArt() {
 }
 
 /**
+/**
+ * WAGON-TIMBER: the dyes a wooden part may wear, by name (systems/wagonTimber.js TIMBER_LOOKS), in the horse coat
+ * dye's own shape (`hue` degrees or null for the art's own; `sat` ['mul', k] or ['abs', s]; `val` [lift, scale]) -
+ * the same `dyeInto` does the work for both animals, which is why a wagon's boards shift hue rather than take a hex
+ * stamp. Tuned by eye against the four painted woods' own light: `oak` is the identity (choice 0, which the law never
+ * asks for - a built record wears its own), the rest spaced in hue and lightness so the four parts read as four
+ * timbers rather than four tints of one: pine pale, walnut dark, mahogany red, ebony near black, ash the grey-blond of
+ * weathered boards. A dye runs over EVERY texel of the record, so the saturation is absolute rather than relative
+ * wherever the wood is pale enough that its own is nearly nothing.
+ */
+export const WOOD_DYES = Object.freeze({
+  oak: Object.freeze({ hue: null, sat: Object.freeze(['mul', 1]), val: Object.freeze([0, 1]) }),
+  pine: Object.freeze({ hue: 40, sat: Object.freeze(['abs', 0.34]), val: Object.freeze([0.16, 1.0]) }),
+  walnut: Object.freeze({ hue: 20, sat: Object.freeze(['abs', 0.5]), val: Object.freeze([0, 0.68]) }),
+  mahogany: Object.freeze({ hue: 8, sat: Object.freeze(['abs', 0.55]), val: Object.freeze([0, 0.78]) }),
+  ebony: Object.freeze({ hue: 12, sat: Object.freeze(['abs', 0.3]), val: Object.freeze([0, 0.36]) }),
+  ash: Object.freeze({ hue: 34, sat: Object.freeze(['abs', 0.14]), val: Object.freeze([0.26, 0.95]) }),
+});
+/** WAGON-TIMBER PASS 3 (2026-10-16, operator: the cart's paint reads flat beside the timber's grain): THE CART'S
+ *  PAINTS AS DYES, in WOOD_DYES' own shape - the cart's boards keep the painted grain with the colour on it, where a
+ *  flat swatch would lay a coloured plane over them. Tuned by eye against what the swatches read as: each hue at its
+ *  family's (red near mahogany's, blue and green mid, black warm-dark like ebony, white a warm lift), every saturation
+ *  absolute so the pale grain stays paler than the flank, the value scaled under the raw boards for the paints and
+ *  lifted for the whitewash - the grain's own light still its own light.
+ *  `oak` is the identity (choice 0, which the law never asks for) and the unknown-name fallback. */
+export const CART_DYES = Object.freeze({
+  oak: Object.freeze({ hue: null, sat: Object.freeze(['mul', 1]), val: Object.freeze([0, 1]) }),
+  red: Object.freeze({ hue: 2, sat: Object.freeze(['abs', 0.55]), val: Object.freeze([0.03, 0.9]) }),
+  blue: Object.freeze({ hue: 214, sat: Object.freeze(['abs', 0.5]), val: Object.freeze([0.03, 0.88]) }),
+  green: Object.freeze({ hue: 132, sat: Object.freeze(['abs', 0.45]), val: Object.freeze([0.03, 0.85]) }),
+  black: Object.freeze({ hue: 20, sat: Object.freeze(['abs', 0.15]), val: Object.freeze([0, 0.32]) }),
+  white: Object.freeze({ hue: 45, sat: Object.freeze(['abs', 0.07]), val: Object.freeze([0.55, 0.9]) }),
+});
+/**
+ * WAGON-TIMBER: THE FINISHES, one a name in systems/wagonTimber.js WHEEL_LOOKS and the first the wheel as painted.
+ * Each row is a WHOLE row of RGB triples - the same keys the wheel painters read - and `oak` is the fleet's own
+ * colours (C, K), so the wheel that shipped is one table row and not a second copy of it that could drift. The hues
+ * say how: `oak`, `walnut` and `ebony` the couple of different browns (felloe at hue 29, 24 and 25 degrees), `ash` the
+ * weathered blond at 38, `mahogany` the reddish one at 14 with its saturation 0.70, `silvered` the grey - hue 43,
+ * saturation 0.06, the colour nearly gone out of the timber. `iron` and `ironLit` are the same in all six: a rim is
+ * iron. `black` is each row's own `tar` carried down - the built row's own relationship. `rust` is the iron's own,
+ * deeper and redder as the iron it sits in grows old; `dust` the road's on a wheel of that timber.
+ */
+export const WHEEL_FINISHES = Object.freeze({
+  oak: Object.freeze({
+    iron: C.iron, ironLit: C.ironLit, rust: C.rust,
+    oak: C.oak, oakDark: C.oakDark, oakLit: C.oakLit, tar: C.tar, black: C.black,
+    hub: K.hub, felloe: K.felloe, spoke: K.spoke,
+    dust: Object.freeze([120, 108, 88]),
+  }),
+  ash: Object.freeze({
+    iron: Object.freeze([44, 44, 48]), ironLit: Object.freeze([74, 74, 80]), rust: Object.freeze([110, 78, 58]),
+    oak: Object.freeze([178, 156, 116]), oakDark: Object.freeze([140, 120, 88]), oakLit: Object.freeze([206, 188, 152]),
+    tar: Object.freeze([86, 76, 58]), black: Object.freeze([60, 53, 41]),
+    hub: Object.freeze([128, 110, 80]), felloe: Object.freeze([168, 146, 108]), spoke: Object.freeze([192, 172, 134]),
+    dust: Object.freeze([150, 142, 124]),
+  }),
+  walnut: Object.freeze({
+    iron: Object.freeze([44, 44, 48]), ironLit: Object.freeze([74, 74, 80]), rust: Object.freeze([84, 52, 34]),
+    oak: Object.freeze([78, 52, 34]), oakDark: Object.freeze([52, 34, 22]), oakLit: Object.freeze([100, 70, 46]),
+    tar: Object.freeze([26, 19, 13]), black: Object.freeze([18, 13, 9]),
+    hub: Object.freeze([46, 30, 20]), felloe: Object.freeze([72, 48, 32]), spoke: Object.freeze([92, 64, 42]),
+    dust: Object.freeze([104, 92, 74]),
+  }),
+  mahogany: Object.freeze({
+    iron: Object.freeze([44, 44, 48]), ironLit: Object.freeze([74, 74, 80]), rust: Object.freeze([110, 48, 26]),
+    oak: Object.freeze([116, 54, 34]), oakDark: Object.freeze([78, 34, 21]), oakLit: Object.freeze([146, 72, 46]),
+    tar: Object.freeze([34, 17, 11]), black: Object.freeze([24, 12, 8]),
+    hub: Object.freeze([68, 30, 18]), felloe: Object.freeze([108, 50, 32]), spoke: Object.freeze([134, 66, 42]),
+    dust: Object.freeze([128, 92, 72]),
+  }),
+  silvered: Object.freeze({
+    iron: Object.freeze([44, 44, 48]), ironLit: Object.freeze([74, 74, 80]), rust: Object.freeze([96, 72, 54]),
+    oak: Object.freeze([126, 124, 118]), oakDark: Object.freeze([92, 90, 86]), oakLit: Object.freeze([156, 154, 148]),
+    tar: Object.freeze([56, 55, 53]), black: Object.freeze([39, 38, 37]),
+    hub: Object.freeze([92, 90, 87]), felloe: Object.freeze([118, 116, 111]), spoke: Object.freeze([138, 136, 131]),
+    dust: Object.freeze([138, 136, 130]),
+  }),
+  ebony: Object.freeze({
+    iron: Object.freeze([44, 44, 48]), ironLit: Object.freeze([74, 74, 80]), rust: Object.freeze([70, 48, 34]),
+    oak: Object.freeze([48, 40, 34]), oakDark: Object.freeze([32, 27, 23]), oakLit: Object.freeze([66, 56, 47]),
+    tar: Object.freeze([18, 15, 13]), black: Object.freeze([13, 11, 9]),
+    hub: Object.freeze([28, 24, 21]), felloe: Object.freeze([44, 37, 32]), spoke: Object.freeze([58, 50, 43]),
+    dust: Object.freeze([86, 80, 72]),
+  }),
+});
+/** A picture dyed whole - `dye` over every texel, the horse coat dye's own arithmetic (systems/horse/horseCoats.js
+ *  dyeEveryTexel), the old bytes untouched. WAGON-TIMBER: the timber's and the cart's door into a painted picture. */
+const dyedPic = (pic, dye) => ({ width: pic.width, height: pic.height, data: dyeEveryTexel(pic.data, pic.data.slice(), dye) });
+
+/**
  * WAGONS2: THE PICTURES A PAINT WEARS - `[record, picture]` for a list's `i`th choice (systems/wagon/wagonLooks.js): `list`
  * a kind (its outside) or one of the caravan's inside parts ('walls', 'floor', 'ceiling'), `name` the choice's name.
  * The built choice (0) wears the built records (wagonArt) and paints none here.
+ *
+ * WAGON-TIMBER: the five lists of TIMBER_LISTS answer here too, and by the same two rules - choice 0 names nothing
+ * (the built record is its own), and a choice gets its records a stride apart. `timberFloor`/`timberInner`/
+ * `timberBeam`/`timberBench` each dye their ONE base picture (WOOD_DYES over the painter's own); `wheels` takes its
+ * TWO (the tread and the face) from WHEEL_FINISHES' one finish. Neither family touches the other's records, which is
+ * what "the wheel options separate from the wood options" means in a picture table.
+ *
+ * WAGON-EMBLEM: `arms` a resolved heraldry (or null) - the open wagon's side wears it over one cell of its four
+ * (openSideArms); null leaves the boards bare. A paint is not a guild: the arms sit over whatever cloth the choice
+ * chose, and the tilt and its inner face stay bare records.
  */
-export function wagonLookArt(list, i, name) {
+export function wagonLookArt(list, i, name, arms = null) {
   if (!(Number.isInteger(i) && i > 0) || !LOOK_RECORDS[list]) return [];
   const r = (rec) => lookRecord(rec, i);
-  if (list === 'cart') return [[r(TEX.side), sideArt(PAINTS[name])]];
-  if (list === 'openWagon') { const d = DYES[name] ?? null; return [[r(TEX.openSide), openSideArt(d)], [r(TEX.tilt), tiltArt(false, d)], [r(TEX.tiltInner), tiltArt(true, d)]]; }
+  if (list === 'cart') { const pic = dyedPic(sideArt(null), CART_DYES[name] ?? CART_DYES.oak); return [[r(TEX.side), pic]]; }
+  if (list === 'openWagon') {
+    const d = DYES[name] ?? null;
+    const side = arms ? openSideArms(d, arms) : openSideArt(d);
+    return [[r(TEX.openSide), side], [r(TEX.tilt), tiltArt(false, d)], [r(TEX.tiltInner), tiltArt(true, d)]];
+  }
   if (list === 'caravan') {
     const p = PAINTS[name] ?? PAINTS.green;
     return [[r(TEX.caravanSide), caravanSideArt(p, name)], [r(TEX.caravanFront), caravanEndArt(false, p, name)], [r(TEX.caravanRear), caravanEndArt(true, p, name)], [r(TEX.caravanRoof), caravanRoofArt(p)]];
   }
   if (list === 'walls') return [[r(TEX.roomSide), roomSideArt(name)], [r(TEX.roomFront), roomEndArt(false, name)], [r(TEX.roomRear), roomEndArt(true, name)]];
   if (list === 'floor') return [[r(TEX.roomFloor), roomFloorArt(name)]];
-  return [[r(TEX.roomCeiling), roomCeilingArt(name)]];
+  if (list === 'ceiling') return [[r(TEX.roomCeiling), roomCeilingArt(name)]];
+  if (list === 'timberFloor') return [[r(TEX.floor), dyedPic(floorArt(), WOOD_DYES[name] ?? WOOD_DYES.oak)]];
+  if (list === 'timberInner') return [[r(TEX.inner), dyedPic(innerArt(), WOOD_DYES[name] ?? WOOD_DYES.oak)]];
+  if (list === 'timberBeam') return [[r(TEX.beam), dyedPic(beamArt(), WOOD_DYES[name] ?? WOOD_DYES.oak)]];
+  if (list === 'timberBench') return [[r(TEX.bench), dyedPic(benchArt(), WOOD_DYES[name] ?? WOOD_DYES.oak)]];
+  if (list === 'wheels') { const f = WHEEL_FINISHES[name] ?? WHEEL_FINISHES.oak; return [[r(TEX.tyre), tyreArt(f)], [r(TEX.wheel), wheelArt(f)]]; }
+  return [];
+}
+/**
+ * WAGON-EMBLEM: the open wagon's side with guild arms - the painted side, four cells wide, with `arms` stamped over
+ * its second cell (world/wagonEmblem.js paintWagonEmblem: the shield, a metre across one 1.3 m cell). `dye` the tilt's
+ * canvas (as openSideArt takes it); null the built boards. The arms are paint on cloth, never a hole: the picture
+ * uploads opaque like every other side.
+ */
+export function openSideArms(dye, arms) {
+  const pic = openSideArt(dye);
+  paintWagonEmblem(pic, SIDE_TILE_M, SIDE_Y1 - SIDE_Y0, EMBLEM_CELL, S, EMBLEM_M, arms);
+  return pic;
 }
 /** Which of the wagons' pictures have glass in them - uploaded as cut-outs, so the eye sees through their windows
  *  (a built record, or any choice's - LOOK_RECORD_STRIDE apart). */

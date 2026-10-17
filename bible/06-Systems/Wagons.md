@@ -961,14 +961,255 @@ mends it - the condition its item always carried (`06-Systems/Wagon-Upkeep.md`).
 as wear takes it, a wagon is Failing - slow, never broken, still driven. The team pulling a wagon pulls
 it at its horses' mean Strength under its load (`06-Systems/Horse-Care.md`, STEED1).
 
+## WAGON-EMBLEM (2026-10-16)
+
+Mac: "a guild master's emblem painted on the sides of their open wagon". The open wagon's two long outer walls wear the
+READER'S OWN GUILD'S ARMS - its field, its border and its device, the same drawing the Guild tab and the guild hall's
+door already use (`src/ui/heraldryArt.js`, `11-Multiplayer/Seats-Arc.md` 8.1). **A prototype**, stood to answer one
+question with human eyes: does an emblem read at riding distance at all? **Answered yes in play** - and then ruled on
+how many. What is here is the picture and the bridge; whose wagon it is on, whose arms it may be, and what a paint may
+choose are phase 2.
+
+### The side
+
+`src/world/wagonModels.js` `layFace` gives a face whose normal runs along x, looks OUT and stands under 2.6 m the open
+wagon's `TEX.openSide` - a **band**, not a plain face. Its v runs the whole of `BANDS.openSide` (0.94 m to 3.06 m, 2.12 m
+of wall) and its u is laid by `banded('openSide')` off `WAGON_TILE.openSide[0]`. Read off the bake rather than off
+these numbers (`test/wagonheraldry.test.js`), that wall runs **z -0.71 m to 5.12 m - 5.82 m of it**.
+
+### ONE EMBLEM, IN THE SECOND ITERATION
+
+Mac, of the result - the arms read perfectly, and there were four of them down a side, the last cut: "Can we make it
+only show on the second iteration?" **Ruled, and settled.**
+
+**WHERE THE SECOND ITERATION IS.** `planarUv` lays a side's u as its z over the tile (`src/world/ships/galleonMesh.js`, its
+"a side" line), so with the tile at `SIDE_TILE_M` = 1.3 m the tile boundaries stood at **z 1.3 m, 2.6 m and 3.9 m**,
+and the arms at **z 1.447 m to 2.448 m** - the second tile's span, which is where they stand now.
+
+**THE TECHNIQUE: the repeat is broken in the PICTURE, not in the cloth.** The side's picture is `SIDE_CELLS` (four)
+copies of its own 64-texel cell side by side (`src/world/wagonArt.js` `openSideArt`, four painted tiles in one picture), and `WAGON_TILE.openSide[0]` is now `SIDE_CELLS * SIDE_TILE_M` = 5.2 m - so the face's u runs **once over all
+four cells** instead of four times over one. A cell is a quarter of the picture, so the cell boundaries fall at the
+**same 1.3 m, 2.6 m and 3.9 m** as the tile boundaries did, and the arms, painted on `EMBLEM_CELL` = 1 alone, stand
+exactly where the operator's second emblem stood. `EMBLEM_CELL` is the whole of that choice, and changing it moves
+which tile carries them.
+
+**THE WHY: the cloth must not be restretched to gain one emblem.** Every tile of a repeating texture is byte-identical,
+so "the arms on the second tile only" is impossible while the texture repeats - something has to give, and the obvious
+thing to give is the stretch. Stretching the TILE alone (`tools/mutants/wagonheraldry.json` WAGONEMBLEM-6) smears one
+cell of sailcloth over 5.2 m of wall: the weave 3.94-fold across, at a fifth of its across-resolution. **That is the
+whole reason this is a `repeat` on the picture and not a longer tile.** Every cell is the same `resample` of Daggerfall's
+sailcloth at 256 square, NEAREST - the very cell the repeating picture wore - and each is still displayed over 1.3 m of
+u, so a texel is still **5.1 mm across and 8.3 mm down**. The cloth is byte-for-byte the cloth of the picture that
+repeats, and cells 0, 2 and 3 are pinned to be the bare sailcloth.
+
+**THE FAR SIDE - a defect the change exposed, and a fix a reader must not undo.** `planarUv` flips u on a far wall
+(`n[0] >= 0 ? p[2] : -p[2]`), mirroring a side's picture about the wagon's middle. That is free on cloth, whose weave
+has no handedness, and while the arms were on a TILE the repeat hid it: they sat at the same z on both walls to within
+a texel. With the arms on ONE cell it showed - the near wall's stood at z 1.45 m and the **far wall's at z 2.75 m**, a
+tile and a half apart on one wagon. A side band's u is therefore laid un-flipped (`src/world/wagonArt.js` `sideBandU`,
+used by `layFace`'s `banded`), and both walls now read the same picture at the same z. **Pinned** (WAGONEMBLEM-9), because
+`planarUv` is the law everywhere else and looks like the tidier answer. The caravan's side is untouched: it keeps
+`caravanSideU`, and its windows still meet the room's.
+
+### A shield, not the hall's banner
+
+A cell is 1.3 m of u by 2.12 m of v, and the hall's banner is one part in three of its own box, so a banner on this
+cell is 0.34 m wide against a shield's 1.0 m - and the DEVICE, the thing that actually reads, is twice the size on the
+same square metre of cloth. `src/ui/heraldryArt.js`'s own HERALDRY-SHOWN says the same of every box that is not a
+banner's. Swapping it is one line (`drawWagonEmblem` in `src/world/wagonEmblem.js`).
+
+### The size question
+
+`size` is `[COMPOSE, COMPOSE]` **per cell** - 256 by 256, the composed size every other band's layout is read in (a
+64-texel livery layout, four texels to one) - and `repeat` lays four of them side by side, so the picture is 1024 by
+256. The cell is the only size that keeps `TEX.openSide` in the same layout as its neighbours, and it is the size the
+face wants: a texel of a cell is 1.3 m / 256 = **5.1 mm across** and 2.12 m / 256 = **8.3 mm down**. The
+emblem's rectangle is therefore measured in METRES off those two numbers and NOT in texels - a box square in texels
+comes out as a tall shield on the wall. `EMBLEM_M` is 1.0: a metre across a 1.3 m cell, so cloth shows either side of
+it, and it is the width a rider's eye reads as one thing at twenty paces.
+
+### The bridge
+
+`openSideArms` is handed the **assembled** painted picture as a mutable RGBA buffer (`src/world/wagonArt.js` - the side's four tiles, composed). The arms are drawn into a Canvas2D context of the rectangle's own size, read back with `getImageData` and
+stamped over **one cell** of the cloth **alpha-blended** - the insets' binary threshold does not apply, and the
+destination's alpha is never touched, so an emblem is paint and never a hole (`test/systems/wagon/wagons2.test.js` holds every wagon
+texel whole or clear).
+
+A runtime with no canvas (a Worker without `OffscreenCanvas`, and the suite) builds every wagon picture exactly as
+before, with the cloth bare. **Nothing rides the wire**: no field, no `RELAY_VERSION`, no `PARK_WAGON_LOOK_MAX`, and
+`LOOK_COUNT` is six still. The tilt and its inner face are still the sailcloth laid whole - they read edge-on, and a
+device there would be the same arms twice on one wagon. A paint past the first keeps the arms over its own cloth
+(`wagonLookSources`): a livery is not a guild. The ends and the centre are unbadged, as asked.
+
+### Pins
+
+- `test/wagonheraldry.test.js` - the side off the bake and where the second iteration is; ONE emblem on the second cell
+  and the bare cloth of the other three; the repeat gone and the cloth unchanged; both walls reading the same picture;
+  the door; the no-canvas runtime; the stamp; and a livery against a guild. Mutants
+  `tools/mutants/wagonheraldry.json` (9, all dead).
+
+## The timber and the wheels (WAGON-TIMBER, 2026-10-16)
+
+Mac, of the wagon's wood and of its wheels: "Ok so there is a separation of all the wooden parts which is cool. Lets
+make a selector for each of them and send them over the wire using the same system that already exists"; then "I want
+the wheel options to be separate from the wood options"; then "Add a few more options for the wheels as well which I
+know are editable via hex color codes so come up with a few discrete options: couple different browns, a reddish one and
+a grey one if possible". **Wired and selectable** (pass 2, 2026-10-16): two numbers on the wire, five lists through the
+pool's own door, five swatch rows on the Stable card, `RELAY_VERSION` **world207**.
+
+### The wire: two numbers beside the paint's one
+
+The item's ONE `wagonLook` (nine keys) rides the hv word (`src/systems/horse/horseCartWire.js`) and a parked team's record
+(`src/net/wire.js` validParkData) as **three numbers in three ladders**:
+
+| word | what | packing | bound | absent |
+|---|---|---|---|---|
+| `wl` | the paint (WAGONS2) | `o + 6w + 36f + 216c` | `PARK_WAGON_LOOK_MAX` **1295** | the wagon as built |
+| `ww` | the four wooden parts | `floor + 6*inner + 36*beam + 216*bench` | `PARK_WAGON_TIMBER_MAX` **1295** | as built |
+| `wr` | the wheels, alone | one digit | `PARK_WAGON_WHEEL_MAX` **5** | as built |
+
+**`ww` IS THE SAME LADDER AS `wl`**, not a second one: base `LOOK_COUNT`, four digits, so `WAGON_TIMBER_CODE_MAX` is
+`LOOK_COUNT ** 4 - 1` = the paint's own bound, and **`PARK_WAGON_LOOK_MAX` IS UNMOVED** and `LOOK_COUNT` is six still.
+The operator dropped the canvas expansion, so no list grew. The wheels are a number of their own because Mac asked for
+them to be separate, and `silvered` - in `WHEEL_LOOKS`, in no wood table - is what makes that a real separation and not
+a naming convention.
+
+**TWO GATES, AND THE SECOND ONE IS THE DANGEROUS ONE.** `validParkData` refuses a word it does not recognise **whole**,
+so a field with no gate is not a wagon painted as built: it is the park record of every dyed wagon dropped - the horse,
+the name, the landing, the throw, all of it, over a picture. Each of the two has its own gate, its own bound, and a pin
+holding the bound equal to its law's (`test/wagontimber2.test.js`). The bounds are **written out in wire.js** beside
+`PARK_WAGON_LOOK_MAX`'s and not imported: the relay bundle is wire.js and the one `mat4` it reaches, and a relay that had
+to pull in a wagon's law to check a number would be carrying the wagon.
+
+**`hccRecordKey` CARRIES BOTH.** It is the change key, so a field missing from it publishes nothing when it moves: a
+player dyes their beams, the pool asks for no frame, the relay is told nothing, and their own wagon and every peer's
+keep the wood they had - with no error anywhere to notice it by. A number is on the wire only if the key can tell it
+moved.
+
+### Changing a look mid-session: the timber REBUILDS, and the emblem does not
+
+The remap map (`src/scenes/horseCartPool.js` lookRemap) is **cached**, and a cache keyed on the paint alone is exactly
+the stale-look bug the emblem already has. So the timber's five digits are **in the key**, beside the paint's. Pinned by
+`test/wagontimber2.test.js`'s staleness test, and that is the only test of the six that catches it.
+
+The emblem's own staleness is a **different shape and is not fixed here**: its arms are painted INTO the built record's
+picture, and that picture is uploaded once (`ensureWagonArt`), so a guild that changes mid-session keeps the arms it was
+built with until reload. A dyed board is not that shape - a choice's records are a function of the list and the choice
+alone, so nothing about them goes stale and only the key had to learn. `src/scenes/caravanRoom.js`'s live records (an
+evict and a re-upload per paint) were the other pattern considered; it does not fit, because the wagon body is drawn on
+its own record numbers and is not re-uploaded per look.
+
+### ONE READER, AND THE SEED THAT HAD TO LEARN IT
+
+The nine-key read lives in **`wagonTimber.js`**, not `wagonLooks.js`: that law already promised never to import the
+timber's module, and that promise is what keeps dyeing the beams from welding the paint to the wood - so the younger law,
+which already takes `LOOK_COUNT` from the older, is where the nine meet. `readWagonLookAll` (the save field as it
+stands) and `wagonLookOfWire` (three numbers back to nine keys) are the only two doors.
+
+**AND `src/net/caravanVisitLink.js` HAD A REAL BUG BECAUSE OF IT.** A visitor's repaint is change-detected by
+comparing a JSON key seeded from the **visit descriptor's own look** (the client's copy, the paint's four) against the
+**word's** look (`validHccRecord`, now nine keys). One key matched itself; the other did not - so every visitor
+repainted their caravan room with the paint they already had, on arrival. The seed now goes through the same reader. This
+is the shape of bug a change like this makes: not a wrong answer, an EXTRA one, once, that no screenshot shows and that
+only a count catches (`test/systems/wagons2_visit.test.js`: `'painted again'`, which said 2 where it said 1).
+
+### The five selectors
+
+Behind the **one** press the paint already has - they are one question, and six small presses on a card is the wall of
+presses UI-CALM was called to take down. The line names the paint first, then the parts that are dyed
+(`Timber: beams, wheels`) or `Timber: as built`. Each row is `choiceRow`, the horse's own row renderer.
+
+**Every one of the seven names carries a hex in `LOOK_SWATCHES`**, and that is not tidiness: `choiceRow` asks
+`colours.every(Boolean)`, so **ONE missing hex demotes the WHOLE row to a `‹ ›` stepper**. Seven hexes arrived together
+for that reason, and one mutant takes `silvered` back out to prove the row goes.
+
+### The words, routed
+
+The card's two sentences go through `t`, like every new sentence the port adds (L10N4's ratchet holds no file above its
+count). **`wagon.timber.dyedOne` and `wagon.timber.dyedMany` are TWO patterns, not one with an English verb in an
+argument**: `{verb}` = "is" | "are" is unfixable in a language whose verb agrees with the noun, and the part name IS
+the noun - so the frame is routed and the noun is `{part}`. The number is read off `TIMBER_PART_NAMES` (the two many are
+`Beams` and `Wheels`). The paint's own `LOOK_TEXT` sentences are still bare: they predate the ratchet and are not
+this law's to move.
+
+The five keys are drafted into the **thirteen whole languages** by this slice (as every prior slice that added a key
+has: a commit that added `serpent.honour.*` added them to `locales/fr` too). The twelve still-drafting languages hold
+what they held; L10N6 holds a part-draft out of the picker, which is the gate's own rule.
+
+### One field, nine keys, TWO laws
+
+The item keeps ONE `wagonLook` (`src/systems/wagon/wagonLooks.js` WAGONS2's four: `o`, `w`, `f`, `c`) and WAGON-TIMBER gives
+it five more - `floor`, `inner`, `beam`, `bench` and `wheels` (`src/systems/wagonTimber.js`, six choices each, the first
+the wagon as built). Two laws now write that field, so **the paint keeps what it does not own**: `paintedWagon` rebuilds
+the look from `carriedLook(item)` - every field the item's field carries - with its own four written over it, and drops
+the field only when NOTHING is chosen (`anyChosen`). Repainting a wagon whose beams are dyed does not un-dye them, and
+painting one back to as built does not throw its wheels away. **Nothing here imports `wagonTimber.js` to get at the
+timber**: the two laws are separate by the operator's own word, and a paint that had to ask the timber's module what a
+wagon is made of would have welded them back together.
+
+The save schema is taught the whole shape and not half of it - `WAGON_LOOK_KEYS` in `src/systems/item/itemFields.js`, a
+**hand list of nine** for the same reason: a declared field's shape is CLOSED, so one key the check does not know drops
+the whole field and a wagon comes back with nothing. It is written out beside the check rather than imported, because
+that schema is under the whole wagon (every item in the game reads it) and must not have to import the wagon to say
+what a wagon may carry.
+
+### TWO TABLES, AND THEY ARE NOT THE SAME KIND OF THING
+
+**The wood is DYED.** `TEX.floor`, `TEX.inner`, `TEX.beam` and `TEX.bench` are one Daggerfall wood each and nothing
+else - no inset, no composed body, no painted overlay - so every texel of one is that record's own texel to shift.
+`src/world/wagonArt.js` `WOOD_DYES` gives six dyes in the horse coat dye's own shape, and `src/systems/horse/horseCoats.js`
+`dyeEveryTexel` walks EVERY texel through `dyeInto`, the very function the horse's hide goes through. **The same
+arithmetic, not a second dye beside it**: a hue/saturation/value SHIFT is what leaves Daggerfall's grain, its knots and
+the order of its light standing where a hex stamp would have taken them. `oak` is the identity (choice 0), and alpha is
+never written because `rgbInto` writes three channels and cannot write a fourth.
+
+**The wheels are a FINISH, and a finish is DATA.** `src/world/wagonArt.js` `WHEEL_FINISHES` is six rows of the
+same twelve RGB triples, and `oak` **IS** the fleet's own colours - the wheel that shipped is one row of the table every other
+row is measured from, not a second copy of it that could drift (`tyreArt`/`wheelArt` read their row where they read a constant). Two
+things a finish does not carry: the **iron is the iron in all six** (a rim is iron whichever timber is turned into
+spokes) and the **dust is the road's on a wheel of that timber** - so a tread is a second picture of the finish, not
+the built tread over new spokes (pinned, because a count alone would not see it). They are the operator's own list read
+out of the table: `oak`, `walnut`, `ash` the browns, `mahogany` the reddish one, `silvered` the grey, `ebony` under it.
+
+### The records
+
+Both families take the paint's own `LOOK_RECORD_STRIDE` ladder, so a choice is remapped and uploaded by exactly the
+machinery a paint uses. All six bases - floor 0, inner 2, beam 3, bench 4, tyre 5, wheel 6 - are below the stride and
+**distinct modulo it**, so no two choices of any two parts can ever be the same record; the caravan's live inside records
+sit in their own bands above. No record is both a wheel's and a wood's, over EVERY choice of EVERY part.
+
+### Pins
+
+- `test/wagontimber.test.js` - the law and the save shape; the four bases wholly wood; every choice a picture of its own
+  at the built record's own shape; the dye a shift, every texel, alpha untouched; the wheels their own table; the wheels
+  separate from the wood; and the stride. Mutants `tools/mutants/wagontimber.json` (14, all dead).
+- `test/wagontimber2.test.js` - WAGON-TIMBER PASS 2: `ww` and `wr` round-tripped with all nine keys; both park gates
+  and the two bounds; `hccRecordKey` moving on the wood and on the wheels and standing still otherwise; the five lists
+  through the pool's door, each choice's picture the one ITS OWN list names; **the staleness case** (a wagon already
+  wearing a livery dyes its beams and the map is rebuilt, for mine and for a peer's word); the five rows as swatch rows
+  and not steppers; and world207 with its deploy order. Mutants `tools/mutants/wagontimber2.json` (13, all dead).
+
+**PIN MOVED in `test/systems/wagon/wagons2.test.js`** (one assertion, WAGONS2 PASS 2): the reader's answer was pinned as the paint's
+**four** keys and is now the **nine** - `validHccRecord(rec).w.look` against `readWagonLookAll(look)` and the peer's
+copy with it. The paint's own four are still pinned in that object, by the `wl` code either side of it, and the whole
+nine are pinned round-trip in `test/wagontimber2.test.js`. Nothing else in WAGONS2's row moved.
+
 ## The relay
 
 A parked team's record (HCC-PARK) now keeps the wagon's kind and whether a
 horse stands in it (`wk`, `wh`; `src/net/wire.js` validParkData) - and, since
-WAGONS2, its paint (`wl`). That is a relay change, so RELAY_VERSION is
-`world187` (world182, world183, world185, then world186, on the branch -
-renumbered past main's at each merge). Until the relay is deployed, a parked wagon the relay restores
+WAGONS2, its paint (`wl`), and since WAGON-TIMBER pass 2 its four wooden parts (`ww`) and
+its wheels (`wr`). That is a relay change, so RELAY_VERSION is
+**world207** (world206 on its branch). Until the relay is deployed, a parked wagon the relay restores
 comes back as the Small Cart, as built.
+
+**DEPLOY ORDER, world207: the RELAY first, then the account service, then the clients.** The relay must be live
+before the service mints or re-signs any token, or a token signing either word is refused whole - and CI already
+enforces this: `.github/workflows/account-deploy.yml` has a step, "Wait for the relay to serve this push version",
+that polls the relay's `/health` for the version `wire.js` names and **deploys nothing** if it never arrives. The clients last,
+because a client on this build asks for `ww`/`wr` and a relay on the old law drops them - the wagon is as built, which
+is the same degradation every earlier word has and nothing closes. **Nothing needs any treatment beyond the version
+bump**: no token claim moved, no vocabulary gained, no frame reshaped, and no file joined the relay bundle.
 
 ## THE FOUR HOSTS
 
@@ -976,6 +1217,10 @@ comes back as the Small Cart, as built.
   stable, the caravan's door, the riders and the companions' seats; since
   WAGONS2 the paint, the Overworld's seats, the visits (the plaque's rows and
   word, the visit's door, the room's key, the owner's pieces, the listener).
+  **The timber needed NO line here**: its selectors are built by the Stable card's own provider
+  (`src/ui/holdingsPages.js` `stableProviderFor`, which `world.js` already calls), and its republish rides that provider's
+  existing `onPainted`, which is `world.js`'s `_hccDirty`. HOST-SPLIT's ceiling was already at its last code line
+  (21,741) when this pass began, so a line here was never available and was never wanted.
 - `src/scenes/exterior.js` (the fixed city) - wired for the models, the kinds,
   the capacity, the stable and the paint, and (the final audit) its windows'
   view out of the street's wagons. FLAGGED: no caravan room, no riders
@@ -1004,6 +1249,13 @@ comes back as the Small Cart, as built.
   `windows1_view.test.js`).
 - `test/world/wagonuv1.test.js` - WAGON-UV: the cart laid level, the caravan's
   windows centred (its mutants `tools/mutants/wagonuv1.json`).
+- `test/wagonheraldry.test.js` - WAGON-EMBLEM: the guild arms on the open
+  wagon's side.
+- `test/wagontimber.test.js` - WAGON-TIMBER: the wood's four and the wheels'
+  own finish.
+- `test/wagontimber2.test.js` - WAGON-TIMBER PASS 2: `ww` and `wr` on the word and
+  on the park record, the pool's door for the five lists, the staleness case, the
+  five swatch rows, and world207.
 
 The mutants are in `tools/mutants/wagons1.json`, `wagons2.json`, `wagons2_wheels.json`, `wagons2_visit.json` and `wagons2_final.json`. Records re-aimed:
 `audit29.json`, `companionweight.json`, `disc8.json`, `disc24.json`,

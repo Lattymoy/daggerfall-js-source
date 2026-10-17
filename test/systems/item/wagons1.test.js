@@ -72,7 +72,12 @@ test('WAGONS1 THE PICTURES: twenty-one - the wagons\' fifteen, the caravan\'s ro
   const art = wagonArt();
   assert.deepEqual(art.map(([r]) => r), Object.values(TEX).sort((a, b) => a - b));
   assert.equal(art.length, 21, 'the title\'s count (FINAL AUDIT: it said fifteen; PIN MOVED, WAGONS3: and the harness)');
-  for (const [, p] of art) { assert.equal(p.width, 64); assert.equal(p.height, 64); assert.equal(p.data.length, 64 * 64 * 4); }
+  for (const [r, p] of art) {
+    // WAGON-EMBLEM: the open side is four cells wide (256 x 64), so the face's u runs once over all four and one
+    // emblem stands on one cell; every other picture is one 64 x 64 tile.
+    if (r === TEX.openSide) { assert.deepEqual([p.width, p.height], [256, 64]); assert.equal(p.data.length, 256 * 64 * 4); continue; }
+    assert.equal(p.width, 64); assert.equal(p.height, 64); assert.equal(p.data.length, 64 * 64 * 4);
+  }
   assert.equal(WAGON_ARCHIVE, 38181);
   assert.deepEqual([SIDE_Y0, SIDE_Y1], [0.94, 3.06]);
   assert.deepEqual(BANDS.caravanSide.recs, [TEX.caravanSide]);

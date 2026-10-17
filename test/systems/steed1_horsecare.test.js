@@ -432,7 +432,7 @@ test('STEED1 THE SWITCH: a Features row of the World tab\'s Travel; the enhanced
   const f = FEATURES.find((x) => x.id === 'horse-care');
   assert.deepEqual([f.group, f.kinds, f.control.store, f.control.key, f.control.initial, f.control.online], ['world', ['enhanced'], 'prefs', 'horseCare', 'boons', 'player']);
   assert.match(rd('src/systems/upkeep/upkeepSwitch.js'), /export const horseCareRules = \(\) => \(isEnhanced\(\) \? horseCareRulesForTier\(horseCareTierOfStored\(getPref\(HORSE_CARE_PREF\)\)\) : null\);/);
-  assert.match(rd('src/ui/settings/settingsMap.js'), /"feat:mod-horse-cart-and-cargo", "feat:horse-care", "feat:wagon-upkeep"\]/);
+  assert.match(rd('src/ui/settings/settingsMap.js'), /"feat:mod-horse-cart-and-cargo", "feat:horse-care", "feat:wagon-upkeep", "port:broadcastHeraldry"\]/);   // WAGON-ARMS: the broadcast toggle registered on the map beside the wagon rows
 });
 
 test('STEED1 THE STABLE PAGE: each horse its card - its bond and hunger in words, the ridden one\'s breath, four stats with the bond\'s share beside, Feed oats and Give an apple (dark with none, full or away), Ride this one on every other (mutants: a horse dropped, the acts unwired)', async () => {

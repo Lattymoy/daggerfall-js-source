@@ -106,6 +106,21 @@ judged on contact sheets: each painted picture beside its looked one, and real r
   on Daggerfall's own red-brown, and a deep purple or navy lands on the nearest muted one. That is the palette, kept.
 - **Not checked:** nothing was drawn in the game on a GPU. The models in the world are unseen.
 
+## The wagon's wood, wheels and arms (WAGON-TIMBER, WAGON-EMBLEM, WAGON-ARMS, 2026-10-16)
+
+- **A wagon's own wood** swaps on the SAME door and the same terms as a paint: each of the four wooden parts and the
+  wheels go through `ensureLook` and `lookRemap`, so a dyed beam reads its dyed picture out of the painted art and
+  uploads it the first time a wagon wears that choice (`test/wagontimber2.test.js`, every list and every choice, and
+  the choice's picture pinned to the one ITS OWN list names - the wheels never take a wood's dye). The dye is a
+  horse-coat shift over the painted grain (`dyeEveryTexel`), never a fill. **And it does not go stale**: the remap
+  cache key carries the timber, so a look changed mid-session is rebuilt rather than served from the map built for the
+  paint alone. `06-Systems/Wagons.md`.
+- **A wagon's wheels** wear a finish, not a dye: six rows of RGB triples (`WHEEL_FINISHES`), the built row the fleet's
+  own colours, each choice its tread and its face in one finish.
+- **The open wagon's side wears guild arms** over one cell of its four (`paintWagonEmblem`, the shield): the reader's
+  own for the icons, per-tag (`og`) on the wire for a wagon in the world. A tag that never resolves draws nothing; a
+  guild that changes mid-session rebuilds on the arms' epoch. `test/wagonheraldry.test.js`. `06-Systems/Wagons.md`.
+
 ## Pinned
 
 - `test/world/dflook.test.js` (8): with no palette, painted as painted; every opaque texel a palette colour, never index 0's;

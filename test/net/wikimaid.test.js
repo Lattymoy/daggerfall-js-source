@@ -231,7 +231,7 @@ test('WIKIMAID the service end to end: SylviaBun registers, holds the title, the
 });
 
 test('WIKIMAID token and relay: a token may carry the title, the glyph and the warren and verifies; every glyph at once still fits; a word the vocabulary lacks is refused; the relay - world214 and after, the ones that know the words - reads all three out of the signature onto the peer\'s row (mutants: the vocabulary\'s words)', async () => {
-  assert.equal(RELAY_VERSION, 'world214', 'WIKIMAID moved it on: the vocabulary rides the relay\'s bundle');
+  assert.equal(RELAY_VERSION, 'world215', 'PIN MOVED: world215, WAGON-TIMBER + WAGON-ARMS (a parked record keeps its wood, its wheels and its owner\'s guild tag); PIN MOVED: world214, WIKIMAID moved it on: the vocabulary rides the relay\'s bundle');
   const kp = await subtle.generateKey({ name: 'Ed25519' }, true, ['sign', 'verify']);
   const pub = await importPublicKeyB64(Buffer.from(new Uint8Array(await subtle.exportKey('raw', kp.publicKey))).toString('base64url'), { subtle });
   const nowS = 1_760_000_000;
