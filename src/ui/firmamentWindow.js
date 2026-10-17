@@ -75,8 +75,13 @@ export const NODE_R = Object.freeze({ small: 9, road: 9, notable: 16, keystone: 
 
 // ─── THE SHEET ──────────────────────────────────────────────────────
 
+/** What Escape says over unaccepted stars - the window's own Escape and the Growth tab's back() (GROWTH3) alike. */
+const UNACCEPTED_ESCAPE = 'Your changes are not accepted yet. Press Escape again to discard them.';
+
 export const FIRM_CSS = `
 .fmt-root { position: fixed; inset: 0; z-index: 14; overflow: hidden; user-select: none; -webkit-user-select: none; touch-action: none; }
+.fmt-root.fmt-embed { position: absolute; z-index: auto; }   /* GROWTH3: drawn in the pause window's Growth tab, the stage's size */
+.fmt-root.fmt-embed .fmt-bar h2 { display: none; }   /* GROWTH3: the rail names the page */
 .fmt-root canvas.fmt-sky { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; }
 .fmt-root canvas.fmt-sky.drag { cursor: grabbing; }
 .fmt-root canvas.fmt-sky.over { cursor: pointer; }
@@ -241,10 +246,13 @@ function seeded(seed) { let s = seed >>> 0; return () => { s = (s * 1664525 + 10
 /**
  * Mount the Firmament over `host`. `book` the page's (net/firmament/firmamentBook.js) - or `preview` for a sky with no service
  * (the lab page, an offline look): `{ tree, stars, craft, renown, commit? }`. `onExit` when it closes.
+ * GROWTH3 (bible/10-UI/Growth.md section 6): `embed` draws it IN the pause window's Growth tab (ui/growth/growthStage.js) -
+ * the stage's size, not the screen's; no Close (the tab is left as any page is), no overlay of its own and no Escape of its
+ * own: the window's back stack asks `back()` (a confirm shut, unaccepted stars asked about once) before it goes on.
  * @param {HTMLElement} host
- * @param {{ book?: any, preview?: any, onExit?: () => void, doc?: Document }} [o]
+ * @param {{ book?: any, preview?: any, onExit?: () => void, doc?: Document, embed?: boolean }} [o]
  */
-export function mountFirmamentWindow(host, { book = firmamentBook(), preview = null, onExit = () => {}, doc = document } = {}) {
+export function mountFirmamentWindow(host, { book = firmamentBook(), preview = null, onExit = () => {}, doc = document, embed = false } = {}) {
   injectEnhancedStyle(doc);
   injectEnhancedFonts(doc);
   ensureStyle(doc);
@@ -309,6 +317,7 @@ export function mountFirmamentWindow(host, { book = firmamentBook(), preview = n
   const confirmBox = el('div', 'fmt-confirmbox');
   confirmBox.setAttribute('data-grim', 'ink');
   root.append(canvas, bar, side, tip, hint, sayBox, confirmBox);
+  if (embed) { root.classList.add('fmt-embed'); root.setAttribute('aria-modal', 'false'); exitBtn.hidden = true; }   // GROWTH3
   host.append(root);
 
   // ── the view ──
@@ -795,13 +804,14 @@ export function mountFirmamentWindow(host, { book = firmamentBook(), preview = n
   // ── the keys: a modal overlay owns its input (U50's law) ──
   let armedClose = false;
   function onKey(e) {
-    if (dead) return;
+    if (dead || (embed && !root.isConnected)) return;   // GROWTH3: a stage between two draws of its page hears nothing
     if (e.target === find || e.target?.classList?.contains?.('fmt-code')) return;   // a field takes its own keys
     let used = true;
     switch (e.key) {
       case 'Escape':
+        if (embed) { used = false; break; }   // GROWTH3: the window's back stack asks back() - one Escape, one owner
         if (confirmBox.classList.contains('on')) { confirmBox.classList.remove('on'); break; }
-        if (unaccepted() && !armedClose) { armedClose = true; say('Your changes are not accepted yet. Press Escape again to discard them.', true); break; }
+        if (unaccepted() && !armedClose) { armedClose = true; say(UNACCEPTED_ESCAPE, true); break; }
         close();
         break;
       case 'Enter': if (e.target?.tagName === 'BUTTON') { used = false; break; } click(); if (confirmBox.classList.contains('on')) { if (confirming === 'respec') respec(); else if (confirming === 'accept') commit(); } else openConfirm(); break;
@@ -830,7 +840,15 @@ export function mountFirmamentWindow(host, { book = firmamentBook(), preview = n
     }
     close();
   };
-  let unregister = registerOverlay(overlayClose);
+  let unregister = embed ? () => {} : registerOverlay(overlayClose);   // GROWTH3: in the tab the pause window is the overlay
+  /** GROWTH3: the pause window's back stack, in the tab - a confirm open is shut, unaccepted stars are asked about once
+   *  (as Escape asks); answers whether it took the press. A second press goes on, and the stars are let go. */
+  function back() {
+    if (dead) return false;
+    if (confirmBox.classList.contains('on')) { confirmBox.classList.remove('on'); return true; }
+    if (unaccepted() && !armedClose) { armedClose = true; say(UNACCEPTED_ESCAPE, true); return true; }
+    return false;
+  }
 
   // ── the drawing ──
   const ctx = /** @type {CanvasRenderingContext2D} */ (canvas.getContext('2d'));
@@ -846,6 +864,9 @@ export function mountFirmamentWindow(host, { book = firmamentBook(), preview = n
   resize();
   const onResize = () => resize();
   globalThis.addEventListener?.('resize', onResize);
+  // GROWTH3: in the tab the stage moves under the sky (the rail, a phone turned, full screen and back) - it is watched
+  let watch = null;
+  if (embed) try { watch = new globalThis.ResizeObserver(() => { if (!dead) resize(); }); watch.observe(root); } catch { watch = null; }
 
   const sky = (x, y) => [x, y];
   function background(t) {
@@ -1109,7 +1130,7 @@ export function mountFirmamentWindow(host, { book = firmamentBook(), preview = n
   if (pending.start) focusSign(); else { fit(); hold(); dirty = true; }   // mounted: the bar's foot is known now
   if (!online) say('The Firmament opens only online. Your Renown pays for its stars.', true, true);
   else if (!pending.start) say('Choose your birthsign from the seven great stars.', false, true);
-  goBtn.focus?.({ preventScroll: true });
+  if (!embed) goBtn.focus?.({ preventScroll: true });   // GROWTH3: in the tab the window's own focus stands
 
   function close() {
     if (dead) return;
@@ -1118,6 +1139,7 @@ export function mountFirmamentWindow(host, { book = firmamentBook(), preview = n
     clearTimeout(sayTimer);
     globalThis.removeEventListener?.('keydown', onKey, true);
     globalThis.removeEventListener?.('resize', onResize);
+    watch?.disconnect?.();
     unregister();
     offBook?.();
     root.remove();
@@ -1127,6 +1149,9 @@ export function mountFirmamentWindow(host, { book = firmamentBook(), preview = n
   return {
     close,
     destroy: close,
+    /** GROWTH3: the tab's Escape (above), and the stage's word that it moved. */
+    back,
+    resize: (refit = false) => { if (dead) return; if (refit && embed && vw() < 980) side.classList.add('shut'); resize(); if (refit) { fit(); hold(); } },   // refit: its first true size (the stage laid out) - a narrow stage starts with the summary shut, as a narrow screen does
     /** Test and probe seam: what the window holds now. */
     model: () => ({ committed: cloneTree(committed), pending: cloneTree(pending), changes: changes(), view: { ...view }, hover, matches: [...matches] }),
     /** Probe seams: press a star, take one back, as a pointer would. */

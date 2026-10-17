@@ -113,7 +113,7 @@ const careers = (() => {
 })();
 const stubTex = { getSize: () => ({ width: 64, height: 100 }), getScale: () => ({ width: 0, height: 0 }), recordCount: 20, getFrameCount: () => 5 };
 let portalsOpened = 0;
-function rig(p) {
+function rig(p, { fates = true } = {}) {
   const renderer = {
     createBillboardBatch: (archive, record, size) => { if (archive === 'portal' || archive === 'PORTAL' || /portal/i.test(String(archive))) portalsOpened++; return { archive, record, size, conceal: undefined, dissolve: undefined, origin: null }; },
     destroyBillboardBatch: () => {}, destroyBatch: () => {}, textures: new Map(), uploadTexture: () => ({}), uploadEmissionTexture: () => ({}),
@@ -124,7 +124,7 @@ function rig(p) {
     getTexture: async () => stubTex, uploadRecordFrame: () => {},
     currentMinute: () => 1000, currentPixelKey: () => '3,12', inLocation: () => true,
     playerEntity: p, audio: null, onPlayerHurt: () => {}, rolls: () => 0.5, rand: () => 0.9, say: (l) => said.push(l),
-    fates: true, dropLoot: () => {}, shake: () => {},
+    fates, dropLoot: () => {}, shake: () => {},
   });
 }
 const frame = (pool, n = 1) => { for (let i = 0; i < n; i++) { T += 0.016; pool.update(0.016, [0, 0, 30], [0, 1.6, 30]); } };
@@ -216,9 +216,10 @@ test('RVN6 THE SCATTER: its master kneels - each follower runs from it (DFU\'s f
   assert.equal(g.dead, true, 'gone');
   assert.equal(g.escaped, true);
   assert.ok(!g.corpse, 'no body');
-  // a death (a Disintegrate's whole - no kneel) scatters its band too
+  // a death scatters its band too - PIN MOVED (RVN-OWN-KNEEL, FIELD BUGS 2026-10-17e: my own Disintegrate kneels it now,
+  // so the death here is a host's with no fates, exterior.js's)
   N._resetRevenantForTests(); said = [];
-  const d = await stood(p, 2);
+  const d = await stood(p, 2, { pool: rig(p, { fates: false }) });
   d.pool.damageFoe(d.f, 99999, [0, 0, 3], null, { fromPlayer: true, whole: true });
   assert.equal(d.f.dead, true);
   assert.equal(d.band[0].scattering, true);
@@ -272,7 +273,8 @@ test('RVN4 RANK 5, built with RVN6: at its last stand its band\'s survivors run 
   c.f.roaring.until -= 5000;
   frame(c.pool);   // its roar spent - blows reach it again
   c.pool.damageFoe(c.f, 99999, [0, 0, 3], null, { fromPlayer: true, whole: true });
-  assert.equal(c.f.dead, true);
+  // PIN MOVED (RVN-OWN-KNEEL, FIELD BUGS 2026-10-17e: my own kill - a Disintegrate's whole - passes the stand and the will and KNEELS it)
+  assert.ok(c.f.yielded, 'my kill kneels it - and a kneel scatters as a death does');
   assert.ok(c.pool.foes.filter((g) => g.retinueOf === c.r.id && !g.dead).every((g) => g.scattering));
   assert.equal(said.filter((l) => /scatters/.test(l)).length, 1);
 });

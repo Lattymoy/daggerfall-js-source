@@ -67,54 +67,43 @@ test('ASCEND-ANYTIME: a mod-law character\'s view reads the mod\'s bar, a classi
   assert.equal(levelProgress(e, viewOnlyScreen(e, true)).label, 'Toward the next');
 });
 
-test('ASCEND-ANYTIME by source: the Stats page carries the door, the sheet overlay swaps in place, and nothing else moved', () => {
+// PIN MOVED (GROWTH1, bible/10-UI/Growth.md section 4; the owner: "instead of having ascend in one place and the firmament
+// trees in another ... its own tab within the pause menu", asked: "Move them"): the Ascension is the Growth tab's Level page,
+// drawn IN the window - the Stats page's Ascend button, and the screen each door swapped in over the window, are gone.
+test('ASCEND-ANYTIME by source: the Growth tab\'s Level page draws the Ascension - a level owed through the door\'s rollout, else the view - through the lazy chunk; the Stats page carries the Growth door where Ascend stood', () => {
   const menu = read('src/ui/enhanced/enhancedMenu.js');
   const at = menu.indexOf('function pauseStats(body)');
   const fn = menu.slice(at, menu.indexOf('\nfunction ', at + 10));
-  assert.match(fn, /if \(typeof hooks\.openAscend === 'function'\) \{/, 'drawn only when a host handed the hook');
-  assert.match(fn, /b\.onclick = \(\) => hooks\.openAscend\(\);/, 'it does NOT resume first: the overlay it lives in swaps in place');
+  assert.doesNotMatch(fn, /openAscend|openFirmament/, 'no Ascend or Firmament button on the Stats page');
+  assert.match(fn, /t\('pause\.door\.growth', 'Growth'\)/, 'the Growth door where they stood');
+  const tab = read('src/ui/growth/growthTab.js');
+  assert.match(tab, /import\('\.\.\/enhanced\/enhancedLevelUp\.js'\)\.then\(\(\{ mountEnhancedLevelUp, viewOnlyScreen \}\) =>/, 'the lazy chunk');
+  assert.match(tab, /screen: \(owed && open\(\)\) \|\| viewOnlyScreen\(entity, usesVirtueLeveling\(entity\)\), entity, embed: true,/);
   const door = read('src/ui/charSheetDoor.js');
-  assert.match(door, /return enhancedSheetPageOverlay\(hooks, deps\.entity, deps\.pause \?\? null\);/);   // F5-QUESTS: and the host's pause bag
-  assert.match(door, /openAscend: entity \? openAscend : undefined,/);
-  assert.match(door, /load: \(\) => import\('\.\/enhanced\/enhancedLevelUp\.js'\),\s*\n\s*alive: \(\) => !fired && ascendHost === h,/, 'through the one lazy-chunk door, so a failed load says so');
-  assert.match(door, /ascendView\?\.destroy\?\.\(\); \} catch \{ \/\* already gone \*\/ \}   \/\/ ASCEND-ANYTIME: the sheet key closes whatever is on top/, 'close() takes the Ascension down with the sheet');
+  assert.match(door, /ascendScreen: entity \? \(\) => levelUpScreenFor\(entity\) : undefined,/);
   assert.doesNotMatch(door, /^import \{[^}]*viewOnlyScreen[^}]*\} from '(?:\.\.?\/)+(?:[\w-]+\/)*levelUpView\.js'/m, 'reached through the lazy chunk, not the boot bundle');
-  // A level OWED still opens the real window first - the feature adds a way in, it never replaces that one.
+  // A level OWED still opens the real window from F5 and the notice - the tab adds a way in, it never replaces that one.
   assert.match(door, /if \(deps\.entity\?\.readyToLevelUp\) \{/);
 });
 
-test('ASCEND-ANYTIME by source: the pause window (Tab\'s dial, Escape) hands the Stats page its Ascend door too', () => {
+test('ASCEND-ANYTIME by source: the pause window (Tab\'s dial, Escape) hands the Growth tab the rollout, and swaps nothing in over itself', () => {
   const door = read('src/ui/pauseDoor.js');
-  // The page draws the button only when a door hands the hook over - F5's door always did, this one never had.
-  assert.match(door, /openAscend: \(\) => openAscend\(\),/, 'the pause door hands the hook to the menu');
-  // Nothing owed: swap in place, through the ONE lazy-chunk door, and come back on the Stats page.
-  assert.match(door, /load: \(\) => import\('\.\/enhanced\/enhancedLevelUp\.js'\),\s*\n\s*alive: \(\) => !fired && ascendHost === h,/,
-    'lazy, and through the chunk door, so a failed load says so and the pause window stays up behind the notice');
-  assert.match(door, /seams\.mountEnhancedMenu\(host, \{ mode: 'pause', hooks, onAction: act, at: 'stats' \}\)/,
-    'closing the Ascension puts the pause window back on Stats');
+  assert.match(door, /ascendScreen: \(\) => \(playerEntity \? levelUpScreenFor\(playerEntity\) : null\),/, 'the pause door hands the rollout to the menu');
+  assert.doesNotMatch(door, /openAscend|enhanced-ascend-view|firmamentOver|dropAscend/, 'no screen over the window: the Ascension and the sky are drawn in it');
   assert.doesNotMatch(door, /^import .*(enhancedLevelUp|levelUpView)\.js/m, 'the window stays out of the boot bundle');
-  // A level OWED is still the real level-up: the pause window puts itself away first (the Pack button\'s order), then
-  // the sheet key\'s own door answers - the feature adds a way in and never replaces the rollout. AUDIT 27h A5: as a
-  // HANDOFF, the Pack button's own since ESC-BOOK - a resume relocked under the level-up it was about to show.
-  assert.match(door, /if \(playerEntity\.readyToLevelUp\) \{\s*\n\s*act\('handoff'\);[^\n]*\n\s*show\(createCharSheetWindow\(\{ entity: playerEntity \}\)\);/);
-  // Whatever is on top of the pause window goes with it.
-  const close = door.slice(door.indexOf('const close = ()'), door.indexOf('const overlay = {'));
-  assert.ok(close.indexOf('dropAscend();') > 0 && close.indexOf('dropAscend();') < close.indexOf('view?.unmount()'),
-    'close() takes the Ascension down before the window it sits on');
 });
 
-// ASCEND-ANYTIME via the pause window (Tab's dial / Escape): the same Stats page, now with the door handed over.
-test('ASCEND-ANYTIME pause door: it hands the Stats page the hook, and close() takes the Ascension down first', () => {
-  const src = read('src/ui/pauseDoor.js');
-  assert.match(src, /openAscend: \(\) => openAscend\(\),/);
-  const close = src.slice(src.indexOf('const close = ()'), src.indexOf('const overlay = {'));
-  assert.ok(close.indexOf('dropAscend();') > 0 && close.indexOf('dropAscend();') < close.indexOf('view?.unmount()'));
-});
-
-test('ASCEND-ANYTIME pause door: a level OWED goes to the real sheet door, nothing owed swaps in a view', () => {
-  const src = read('src/ui/pauseDoor.js');
-  assert.match(src, /if \(playerEntity\.readyToLevelUp\) \{\s*\n\s*act\('handoff'\);[^\n]*\n\s*show\(createCharSheetWindow\(\{ entity: playerEntity \}\)\);/);   // AUDIT 27h A5
-  assert.match(src, /load: \(\) => import\('\.\/enhanced\/enhancedLevelUp\.js'\),\s*\n\s*alive: \(\) => !fired && ascendHost === h,/);
+test('ASCEND-ANYTIME the door\'s rollout (levelUpScreenFor): none with nothing owed (the page draws the view); a level owed the rollout - and its bonus points the SAME on a second open, so a level-up left and come back to is no re-roll', async () => {
+  const { levelUpScreenFor } = await import('../../src/ui/charSheetDoor.js');
+  const { LevelUpScreen } = await import('../../src/ui/charsheet.js');
+  const stats = Object.fromEntries(STAT_KEYS_ORDER.map((k) => [k, 50]));
+  const e = { isPlayer: true, level: 4, pendingLevel: 5, readyToLevelUp: false, stats: { ...stats }, skills: new Array(35).fill(30), career: { primarySkills: [], majorSkills: [], minorSkills: [] }, maxHealth: 40, health: 40 };
+  assert.equal(levelUpScreenFor(e), null, 'nothing owed: no rollout');
+  e.readyToLevelUp = true;
+  const first = levelUpScreenFor(e, false);
+  assert.ok(first instanceof LevelUpScreen, 'DFU\'s own rollout');
+  const again = levelUpScreenFor(e, false);
+  assert.equal(again.pool, first.pool, 'the bonus pool remembered on the character (advancement.js bonusPoolFor): leaving the tab re-rolls nothing');
 });
 
 test('ASCEND-ANYTIME pause door: the level-up window stays a lazy chunk, not a boot import', () => {

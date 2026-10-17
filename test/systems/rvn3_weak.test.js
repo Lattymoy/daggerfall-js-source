@@ -374,20 +374,20 @@ test('RVN3 THE WILL: from rank 3 a revenant my fight has not broken does not kne
   frame(pool2);
   pool2.damageFoe(k, 99999, [0, 0, 3], null, { fromPlayer: true });
   assert.ok(k.yielded, 'rank 2 kneels');
-  // a Disintegrate's kill is a kill
+  // PIN MOVED (RVN-OWN-KNEEL, FIELD BUGS 2026-10-17e: my own kill - a Disintegrate's whole - passes the stand and the will and KNEELS it)
   const r5 = revenantOf(p, 3);
   const z = await pool2.spawnFoe(2, [3, 0, 0], { feetGiven: true, level: 6, revenant: r5 });
   frame(pool2);
   z._lastStood = true;
   pool2.damageFoe(z, 99999, [0, 0, 3], null, { fromPlayer: true, whole: true });
-  assert.equal(z.leaving, undefined);
-  assert.equal(z.yielded, undefined);
-  assert.equal(N.revenantById(r5.id).defeated, true, 'slain outright');
+  assert.equal(z.leaving, undefined, 'past its unbroken will');
+  assert.ok(z.yielded, 'to its knees');
+  assert.equal(N.revenantById(r5.id).defeated, false, 'the choice still mine');
 });
 
 test('RVN3 the dungeon\'s doors: the will at its yield seam, the tear-away its escape, the fate-held refusal (mutants: any unwired)', () => {
   const d = read('src/scenes/dungeonContext.js');
-  assert.match(d, /revenantMayYield\(foe\)\) \{ if \(revenantWillHolds\(foe\)\) tearAwayDungeonFoe\(foe\); else yieldDungeonFoe\(foe\); return; \}/);
+  assert.match(d, /revenantMayYield\(foe\)\) \{ if \(!ownersWholeKill\(_whole, \{ fromPlayer, peer \}\) && revenantWillHolds\(foe\)\) tearAwayDungeonFoe\(foe\); else yieldDungeonFoe\(foe\); return; \}/);   // PIN MOVED (RVN-OWN-KNEEL, FIELD BUGS 2026-10-17e: my own kill - a Disintegrate's whole - passes the stand and the will and KNEELS it)
   assert.match(d, /function tearAwayDungeonFoe\(f\) \{[\s\S]{0,300}beginTearAway\(f, \(\) => escapeDungeonFoe\(f, \{ unbroken: true \}\)\);/);
   assert.match(d, /if \(foe\.yielded \|\| foe\.executing \|\| foe\.sparing \|\| foe\.leaving \|\| foe\.roaring\) return;/);   // PIN MOVED (RVN4: nor one roaring)
   assert.match(d, /unbroken \? revenantUnbrokenEvent\(r, playerEntity\?\.name, \{ archive: f\.mobileArchive \}\)/);

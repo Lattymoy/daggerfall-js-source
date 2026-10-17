@@ -242,7 +242,8 @@ Mac: "They should have their own unique personalities that affect their speach. 
 Mac: "Players should have the option to kill or spare"; "the choice popup should reuse the loot menu".
 
 - **The yield**: the blow that would kill one of the player's revenants (any blow - the revenant is the player's own;
-  never the player's own Disintegrate - since RVN-OWNERS-CHOICE, section 15, no one else's whole blow is a kill)
+  since RVN-OWNERS-CHOICE, section 15, no one else's whole blow is a kill, and since RVN-OWN-KNEEL, section 15, nor is the
+  player's own Disintegrate - it passes the last stand and the will and kneels it here)
   leaves it at 1 health on its knees (`systems/revenant/revenantFate.js beginYield`): its fight and its run over, its hurt's
   last frame held with a breath now and then (`MobileUnit.heldPose`), no blow reaches it, no foe hunts it
   (`enemyTargets.js`), never in the save. Its plea is said in its voice; its record notes the deed. Its
@@ -347,9 +348,18 @@ is a foe's whole blow, a companion's, and a stat drained to zero, whose tick nam
 choice is offered, not taken. (The drain's tick returns every 0.2 s while the stat stays at zero, so at rank 3 and up the
 first tick makes the last stand and the next tears it away unless its will is broken - it escapes, to come again; the
 owner's own Disintegrate or a broken will still closes that fight. The audit of the branch, 2026-10-16.) My own
-Disintegrate and my own Razor still kill outright, as sections 19 and 20 say.
+Disintegrate and my own Razor still kill outright, as sections 19 and 20 say (until RVN-OWN-KNEEL, below).
 DEPARTURE from sections 11, 19 and 20 as written ("a Disintegrate kills it outright" - whosever it was): the rule they
 recorded is the owner's alone now. Pinned by `test/systems/revenant/fb1016b_rvnownerschoice.test.js`.
+
+**RVN-OWN-KNEEL** (FIELD BUGS 2026-10-17e; Discord #general, Dude7ox: "Disintegrate just outright kills your rev with no
+option to hire"; the owner: "Hmm thought I fixed this"): **no blow skips the kill-or-spare.** The owner's own whole blow
+- a Disintegrate, the Razor's whole-health strike - still passes over the last stand and the will, the Disintegrate's
+edge (sections 19, 20), and then kneels it like any killing blow: alive at 1, its record open, Kill or Spare offered
+(both doors' yield gate asks `revenantFate.js ownersWholeKill` of the will alone). A host that cannot open the choice
+(`exterior.js`, no `fates`) lets it die as before. DEPARTURE from RVN-OWNERS-CHOICE's "my own Disintegrate and my own
+Razor still kill outright" and from sections 19 and 20 as written. Pinned by
+`test/systems/revenant/fb1017e_rvnownkneel.test.js`; the record, `01-Overview/bugs/Field-Bugs-2026-10-17e.md`.
 
 ## 16. The audit (2026-10-02, Mac: "Audit everything and ensure perfection")
 
@@ -424,8 +434,9 @@ sky reads day), weighs twice on a wind-up, and no adaptation takes from it. The 
 "Weakness" word, a hiss, its card - and under half its health, unknown, it flinches from it (a hint). From rank 3 its
 will must be broken in the fight: strike its weakness, or stagger it twice (since FEUD BALANCE, section 34: stagger it
 once, or dodge one of its blows perfectly). Unbroken at the killing blow it does not
-kneel - it tears away into the smoke, an escape that ranks it up. A Disintegrate kills it outright - its owner's own
-(RVN-OWNERS-CHOICE, section 15: anyone else's is a killing blow like any). The page says its
+kneel - it tears away into the smoke, an escape that ranks it up. A Disintegrate - its owner's own - passes its will
+and kneels it (RVN-OWN-KNEEL, section 15; until 2026-10-17 it killed it outright; RVN-OWNERS-CHOICE: anyone else's is a
+killing blow like any). The page says its
 weakness as known and the will's rule. The law: `bible/12-Enhanced-AI/Feud-Arc.md` section 14 and its RVN3 record.
 
 ## 20. The last stand (FEUD RVN4, 2026-10-04)
@@ -434,7 +445,8 @@ From rank 3, once a fight, the blow that would kneel or kill a revenant brings i
 its health by rank (since FEUD BALANCE, section 34: 30%, 35% or 40%) - roaring: for 1.2 seconds no blow reaches it, and (Enhanced AI on) an iron ring about its feet lands
 as the roar ends; with the switch off it stands and roars. Then phase two for the rest of the fight: heavier and quicker
 blows, more Speed, shorter wind-ups and cooldowns, chains of three, iron one in two, an ember rim and a tenth more size.
-A Disintegrate still kills - its owner's own (RVN-OWNERS-CHOICE, section 15). The page names it from rank 3. The law:
+A Disintegrate - its owner's own - passes the last stand and kneels it (RVN-OWN-KNEEL, section 15; until 2026-10-17 it
+killed it). The page names it from rank 3. The law:
 `bible/12-Enhanced-AI/Feud-Arc.md` section 15 and its RVN4 record.
 
 ## 21. Signature blows (FEUD RVN5, 2026-10-04)

@@ -1141,8 +1141,9 @@ test('ORL1: the mod\'s window is the door\'s, in BOTH lanes, and the classic she
   // was earned, which on the enhanced skin is not this moment), and the
   // law this pin holds - WHICH screen the answer above chooses - is
   // unchanged.
-  assert.match(door, /const rollout = \(\) => \(virtue\n\s*\? new VirtueLevelUpScreen\(deps\.entity, \{ fanfare \}\)\n\s*: new LevelUpScreen\(deps\.entity, undefined, \{ fanfare \}\)\);/,
-    'and the screen either skin drives is chosen by that answer');
+  // PIN MOVED (GROWTH1): the rollout's one home, levelUpScreenFor, handed that same answer
+  assert.match(door, /const rollout = \(\) => levelUpScreenFor\(deps\.entity, virtue\);/, 'and the screen either skin drives is chosen by that answer');
+  assert.match(door, /return virtue \? new VirtueLevelUpScreen\(entity, \{ fanfare \}\) : new LevelUpScreen\(entity, undefined, \{ fanfare \}\);/);
   assert.match(door, /if \(virtue\) return new VirtueLevelUpScreen\(deps\.entity\);\n\s*if \(isEnhanced\(\)\) return new LevelUpScreen\(deps\.entity\);/,
     'the mod\'s window still comes ahead of the enhanced lane\'s canvas screen');
   const sheet = rd('src/ui/charsheet.js');

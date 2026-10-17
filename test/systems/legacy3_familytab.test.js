@@ -24,11 +24,11 @@ test('LEGACY3 the Family tab: between Holdings and System while the mod is on, a
   _resetModSettings();
   setModSetting(LEGACY_MOD, 'Enabled', true);
   const on = tabsOf('family');
-  assert.deepEqual(on.map((t) => t.label), ['Quests', 'Stats', 'Holdings', 'Family', 'Tutorials', 'System']);   // TUT1: the Tutorials tab before System
+  assert.deepEqual(on.map((t) => t.label), ['Quests', 'Stats', 'Growth', 'Holdings', 'Family', 'Tutorials', 'System']);   // TUT1: the Tutorials tab before System - PIN MOVED (GROWTH1, bible/10-UI/Growth.md: the Growth tab)
   assert.deepEqual(on.filter((t) => t.on).map((t) => t.label), ['Family'], 'the landing names the tab');
   setModSetting(LEGACY_MOD, 'Enabled', false);
   const off = tabsOf('family');
-  assert.deepEqual(off.map((t) => t.label), ['Quests', 'Stats', 'Holdings', 'Tutorials', 'System']);
+  assert.deepEqual(off.map((t) => t.label), ['Quests', 'Stats', 'Growth', 'Holdings', 'Tutorials', 'System']);   // PIN MOVED (GROWTH1, bible/10-UI/Growth.md: the Growth tab)
   assert.deepEqual(off.filter((t) => t.on).map((t) => t.label), ['System'], 'a landing on a tab not drawn lands on System');
   _resetModSettings();
 });

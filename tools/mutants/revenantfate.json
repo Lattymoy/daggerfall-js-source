@@ -2,12 +2,12 @@
   {
     "name": "REVENANT-FATE-dies-as-before",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "      if (fates && !ownersWholeKill(_whole, { fromPlayer, peer }) && revenantMayYield(f)) { if (revenantWillHolds(f)) tearAway(f); else yieldFoe(f); return; }\n",
+    "old": "      if (fates && revenantMayYield(f)) { if (!ownersWholeKill(_whole, { fromPlayer, peer }) && revenantWillHolds(f)) tearAway(f); else yieldFoe(f); return; }\n",
     "new": "",
     "tests": [
       "test/systems/revenant/revenant_fate.test.js"
     ],
-    "note": "FIELD BUGS 2026-10-16b RVN-OWNERS-CHOICE (PIN MOVED): re-aimed by content - a whole blow passes the gate only as the owner's own (ownersWholeKill)."
+    "note": "FIELD BUGS 2026-10-16b RVN-OWNERS-CHOICE (PIN MOVED): re-aimed by content - a whole blow passes the gate only as the owner's own (ownersWholeKill). FIELD BUGS 2026-10-17e RVN-OWN-KNEEL (PIN MOVED): re-aimed by content - the owner's own whole blow passes the stand and the will and kneels it; the yield gate asks ownersWholeKill of the will alone."
   },
   {
     "name": "REVENANT-FATE-a-blow-kills-it-kneeling",

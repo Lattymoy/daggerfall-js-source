@@ -162,21 +162,24 @@ test('RVN-OWNERS-CHOICE THE REPORT, on the real street pools: a party member\'s 
   assert.equal(N.revenantById(r.id).sworn, true, 'and what I chose stands');
 });
 
-test('RVN-OWNERS-CHOICE MY OWN Disintegrate (the same spell, my own door) still kills my revenant outright - its record closed; a stat drained to zero (a round\'s, nobody\'s) kneels it instead (mutants: my whole kill withheld; nobody\'s whole kills)', async () => {
+// PIN MOVED (RVN-OWN-KNEEL, FIELD BUGS 2026-10-17e - "Disintegrate just outright kills your rev with no option to hire"):
+// my own Disintegrate passes the stand and the will and KNEELS it; it no longer closes the record (fb1017e_rvnownkneel).
+test('RVN-OWNERS-CHOICE MY OWN Disintegrate (the same spell, my own door) kneels my revenant - its record open, past the last stand at rank 3; a stat drained to zero (a round\'s, nobody\'s) kneels it too (mutants: my whole kill withheld; nobody\'s whole kills)', async () => {
   const ann = client(player('char-ann', 'Ann'), 'ann-0001');
   const r = revenantOf(ann.me, 1);
   const rev = await ann.pool.spawnFoe(2, [0, 0, 0], { feetGiven: true, level: 6, revenant: r });
   step(ann.pool);
   assert.equal(disintegrate(ann, rev).disintegrated, 1);
-  assert.equal(rev.dead, true, 'my Disintegrate kills it outright (Revenants.md section 19 - the owner\'s own rule)');
-  assert.equal(rev.yielded, undefined, 'no kneel');
-  assert.equal(N.revenantById(r.id).defeated, true, 'its record closed');
+  assert.equal(rev.dead, false, 'my Disintegrate no longer deletes it');
+  assert.ok(rev.yielded, 'it kneels - the kill-or-spare mine');
+  assert.equal(N.revenantById(r.id).defeated, false, 'its record open');
   const r3 = revenantOf(ann.me, 3);
   const three = await ann.pool.spawnFoe(2, [4, 0, 0], { feetGiven: true, level: 6, revenant: r3 });
   step(ann.pool);
   disintegrate(ann, three);
   assert.equal(three.roaring, undefined, 'no last stand against it (Revenants.md section 20)');
-  assert.equal(N.revenantById(r3.id).defeated, true, 'rank 3: closed all the same');
+  assert.ok(three.yielded, 'rank 3: to its knees all the same');
+  assert.equal(N.revenantById(r3.id).defeated, false);
   // a stat drained to zero: the engine's own kill (statMods.js), through the pool's own foe sinks - a round names nobody
   const r2 = revenantOf(ann.me, 1);
   const g = await ann.pool.spawnFoe(2, [2, 0, 0], { feetGiven: true, level: 6, revenant: r2 });
@@ -226,7 +229,8 @@ function dungeonDeathArm(scope) {
   return new Function(...k, `return (foe, _whole, fromPlayer, peer, bout = null, striker = null) => {\n${arm}\n      return 'dies';\n    }\n    return 'alive';\n  };`)(...k.map((x) => scope[x]));
 }
 
-test('RVN-OWNERS-CHOICE UNDERGROUND (the dungeon\'s door, its lair\'s stand online - a loose foe of mine): my own whole blow kills; a party member\'s (applyOwnHit\'s `z`) kneels it, stands it at rank 3, and tears it away once stood; a foe\'s kneels it; a room\'s shared foe online dies as ever (mutants: the dungeon\'s stand or kneel passed over for a peer\'s whole blow; my whole kill withheld underground)', async () => {
+// PIN MOVED (RVN-OWN-KNEEL, FIELD BUGS 2026-10-17e): my own whole blow kneels it underground too.
+test('RVN-OWNERS-CHOICE UNDERGROUND (the dungeon\'s door, its lair\'s stand online - a loose foe of mine): my own whole blow kneels; a party member\'s (applyOwnHit\'s `z`) kneels it, stands it at rank 3, and tears it away once stood; a foe\'s kneels it; a room\'s shared foe online dies as ever (mutants: the dungeon\'s stand or kneel passed over for a peer\'s whole blow; my whole kill withheld underground)', async () => {
   const ann = client(player('char-ann', 'Ann'), 'ann-0001');
   const seen = [];
   const scope = {
@@ -238,14 +242,14 @@ test('RVN-OWNERS-CHOICE UNDERGROUND (the dungeon\'s door, its lair\'s stand onli
   // the revenant as a pool stands it (applyRevenant's stamp), at the floor
   const stand = async (rank, extra = {}) => { const f = await ann.pool.spawnFoe(2, [0, 0, 0], { feetGiven: true, level: 6, revenant: revenantOf(ann.me, rank) }); f.entity.health = 0; return Object.assign(f, extra); };
   const run = (f, whole, fromPlayer, peer) => { seen.length = 0; const out = arm(f, whole, fromPlayer, peer); return seen[0] ?? out; };
-  assert.equal(run(await stand(1), true, true, false), 'dies', 'my own Disintegrate kills');
+  assert.equal(run(await stand(1), true, true, false), 'kneel', 'my own Disintegrate kneels it');
   assert.equal(run(await stand(1), true, true, true), 'kneel', 'a party member\'s kneels it');
   assert.equal(run(await stand(1), true, false, false), 'kneel', 'a foe\'s, nobody\'s, kneels it');
   assert.equal(run(await stand(1), false, true, true), 'kneel', 'a party member\'s ordinary killing blow, as ever');
   const three = await stand(3);
   assert.equal(run(three, true, true, true), 'stand', 'rank 3: its last stand');
   assert.equal(run(three, true, true, true), 'tear', 'once stood, unbroken: it tears away');
-  assert.equal(run(await stand(3), true, true, false), 'dies', 'my own still kills at rank 3');
+  assert.equal(run(await stand(3), true, true, false), 'kneel', 'my own kneels it at rank 3, past its stand');
   assert.equal(run(await stand(1, { _room: true }), true, true, true), 'dies', 'a room\'s shared foe online: no fate (REVENANT-DUNGEON\'s gate, unchanged)');
   // the word that reaches it: a party member's blow on my loose stand lands through landPeerBlow as a PEER's, its `z` whole
   assert.match(D, /const landed = landPeerBlow\(f, id, data, dmg\);/);

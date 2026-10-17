@@ -41,5 +41,8 @@ export function createCaptainPageHost(deps) {
     if (w) deps.show(w);
     return !!w;
   }
-  return { model, openStars };
+  /** GROWTH3 (bible/10-UI/Growth.md section 6): what the captain's stars want drawn in the pause window's Growth tab -
+   *  the ledger they are set on and the word that a sky was accepted (ui/captainTreeWindow.js's own deps). */
+  const stars = () => ({ ledger: deps.ledger, changed: deps.changed });
+  return { model, openStars, stars };
 }

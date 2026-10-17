@@ -145,11 +145,12 @@
   {
     "name": "A5-ascend-resumes-under-the-level-up",
     "file": "src/ui/pauseDoor.js",
-    "old": "act('handoff');   // down first, then the level-up",
-    "new": "act('resume');   // down first, then the level-up",
+    "old": "ascendScreen: () => (playerEntity ? levelUpScreenFor(playerEntity) : null),",
+    "new": "ascendScreen: () => null,",
     "tests": [
       "test/ui/ascendanytime.test.js"
-    ]
+    ],
+    "note": "GROWTH (PIN MOVED, bible/10-UI/Growth.md): re-aimed by content - a level owed no longer swaps in over the window: the pause door hands the Growth tab's Level page the rollout, and a door that hands none draws the view for a level owed"
   },
   {
     "name": "S1-dungeon-breath-under-the-street-slot",

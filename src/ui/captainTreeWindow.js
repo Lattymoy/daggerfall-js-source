@@ -120,11 +120,13 @@ function seeded(seed) { let s = seed >>> 0; return () => { s = (s * 1664525 + 10
 /**
  * Mount the captain's stars over `host`. `ledger` the captain's (systems/naval/captainLedger.js: `captain()`, `tree()`,
  * `setTree(ids)`); `changed` once a sky is accepted (the save's word); `onExit` when it closes.
+ * GROWTH3 (bible/10-UI/Growth.md section 6): `embed` draws it in the pause window's Growth tab - the Firmament's own
+ * embedding (ui/firmamentWindow.js): the stage's size, no Close and no Escape of its own; the window asks `back()`.
  * @param {HTMLElement} host
  * @param {{ ledger: { captain: () => { xp: number, level: number, points: number, next: number|null }, tree: () => string[], setTree: (ids: string[]) => string[] },
- *   changed?: () => void, onExit?: (reason?: string) => void, doc?: Document }} deps
+ *   changed?: () => void, onExit?: (reason?: string) => void, doc?: Document, embed?: boolean }} deps
  */
-export function mountCaptainTreeWindow(host, { ledger, changed = () => {}, onExit = () => {}, doc = document }) {
+export function mountCaptainTreeWindow(host, { ledger, changed = () => {}, onExit = () => {}, doc = document, embed = false }) {
   injectEnhancedStyle(doc);
   injectEnhancedFonts(doc);
   if (doc.getElementById && !doc.getElementById(FIRM_STYLE_ID)) {
@@ -184,6 +186,7 @@ export function mountCaptainTreeWindow(host, { ledger, changed = () => {}, onExi
   sayBox.setAttribute('data-grim', 'ink');
   sayBox.setAttribute('role', 'status');
   root.append(canvas, bar, side, tip, hint, sayBox);
+  if (embed) { root.classList.add('fmt-embed'); root.setAttribute('aria-modal', 'false'); exitBtn.hidden = true; }   // GROWTH3
   host.append(root);
 
   // ── the view ──
@@ -427,10 +430,10 @@ export function mountCaptainTreeWindow(host, { ledger, changed = () => {}, onExi
 
   // ── the keys: a modal window owns its input ──
   function onKey(e) {
-    if (dead) return;
+    if (dead || (embed && !root.isConnected)) return;   // GROWTH3: a stage between two draws of its page hears nothing
     let used = true;
     switch (e.key) {
-      case 'Escape': tryClose(); break;
+      case 'Escape': if (embed) { used = false; break; } tryClose(); break;   // GROWTH3: the window's back stack asks back()
       case 'Enter': if (e.target?.tagName === 'BUTTON') { used = false; break; } click(); accept(); break;
       case 'h': case 'H': click(); fit(); break;
       case '+': case '=': zoomAt(vw() / 2, vh() / 2, 1.25); break;
@@ -446,6 +449,13 @@ export function mountCaptainTreeWindow(host, { ledger, changed = () => {}, onExi
     if (used) { e.preventDefault(); e.stopPropagation(); }
   }
   globalThis.addEventListener?.('keydown', onKey, true);
+  /** GROWTH3: the pause window's back stack, in the tab - unaccepted stars asked about once; whether it took the press. */
+  function back() {
+    if (dead || !unaccepted() || armedClose) return false;
+    armedClose = true;
+    say(t('captain.sky.unacceptedEsc', 'You have changes that aren\'t accepted. Press Escape again to discard them.'), true);
+    return true;
+  }
   /** Closing with a change not accepted asks first - once; the second close lets it go. */
   function tryClose() {
     if (unaccepted() && !armedClose) { armedClose = true; say(t('captain.sky.unaccepted', 'You have changes that aren\'t accepted. Close again to discard them.'), true); return false; }
@@ -466,6 +476,9 @@ export function mountCaptainTreeWindow(host, { ledger, changed = () => {}, onExi
   resize();
   const onResize = () => resize();
   globalThis.addEventListener?.('resize', onResize);
+  // GROWTH3: in the tab the stage moves under the sky - it is watched
+  let watch = null;
+  if (embed) try { watch = new globalThis.ResizeObserver(() => { if (!dead) resize(); }); watch.observe(root); } catch { watch = null; }
 
   function background(time) {
     const w = canvas.width, h = canvas.height;
@@ -677,7 +690,7 @@ export function mountCaptainTreeWindow(host, { ledger, changed = () => {}, onExi
   fit();
   hold();
   if (captain().points === 0) say(t('captain.sky.noPoints', 'You get one point per captain level. Earn XP at sea: sink or capture a ship, finish a contract, or just sail.'), false, true);
-  goBtn.focus?.({ preventScroll: true });
+  if (!embed) goBtn.focus?.({ preventScroll: true });   // GROWTH3: in the tab the window's own focus stands
 
   /** Down, and nothing said - the door's own dispose (it is the one closing). */
   function teardown() {
@@ -687,6 +700,7 @@ export function mountCaptainTreeWindow(host, { ledger, changed = () => {}, onExi
     clearTimeout(sayTimer);
     globalThis.removeEventListener?.('keydown', onKey, true);
     globalThis.removeEventListener?.('resize', onResize);
+    watch?.disconnect?.();
     root.remove();
     return true;
   }
@@ -703,6 +717,10 @@ export function mountCaptainTreeWindow(host, { ledger, changed = () => {}, onExi
     model: () => ({ committed: committed.slice(), pending: pending.slice(), changes: changes(), view: { ...view }, hover }),
     /** Probe seams: press a star, take one back, accept, close as the Escape key does - as a player would. */
     take, giveBack, accept, tryClose,
+    /** GROWTH3: the tab's Escape (above), and the stage's word that it moved (refit: its first true size). */
+    back,
+    resize: (refit = false) => { if (dead) return; if (refit && embed && vw() < 980) side.classList.add('shut'); resize(); if (refit) { fit(); hold(); } },   // a narrow stage starts with the summary shut
+    close,
     hoverAt: (id) => { const s = starOf(id); if (!s) return; const p = toScreen(s.pos[0], s.pos[1]); setHover(id, p.x, p.y); },
   };
 }

@@ -46,8 +46,8 @@ import { expandRowValues } from '../systems/quest/questMacros.js';   // MACRO-3:
 // nothing about the old skin is decided in a UI module.
 import { announceSkillRaise, announceMastery, announceSkillMilestone } from '../ui/levelUp/levelNotice.js';
 import { masterSkillsBoxDue, setMasterSkills, MASTER_SKILLS_OFFER_ROWS, MASTER_SKILLS_INFO_ROWS, MASTER_SKILLS_DECLINED_TEXT, MASTER_SKILLS_INTRO_ROWS, nextMasteryChoice, masteryChoiceRows, masterSkill } from '../systems/masterSkills.js';   // SOFTCAP3/4
-import { nextPathChoice, pathChoices, pathChoiceRows, pathsOpenRows, choosePath, pathDeclinedText } from '../systems/arcanePaths.js';   // SCHOOLS1: the specialisation's one ask
-import { nextMartialChoice, martialChoices, martialChoiceRows, martialOpenRows, chooseMartialPath, martialDeclinedText } from '../systems/martialPaths.js';   // MARTIAL1: the martial specialisation's one ask
+import { nextPathChoice, pathChoices, pathChoiceRows, pathsOpenRows, choosePath, pathDeclinedText, pathDeclinedGrowthText } from '../systems/arcanePaths.js';   // SCHOOLS1: the specialisation's one ask - GROWTH4: its words, the Growth tab's where it stands
+import { nextMartialChoice, martialChoices, martialChoiceRows, martialOpenRows, chooseMartialPath, martialDeclinedText, martialDeclinedGrowthText } from '../systems/martialPaths.js';   // MARTIAL1: the martial specialisation's one ask
 import { DOOR_SPELL_TEXT, castBySkeletonKey } from '../systems/mysticism.js';   // X1: the door-spell alert lines; D9: Open.CheckCastByItem
 import { raiseSkills } from '../systems/advancement.js';   // AUDIT 23 (entity-1): the rest-end raise
 import { tickPlayerMinutes, runMagicRoundsFor, worldMinutes, skyMinutes, setWorldMinutes, ownMinutes, advanceOwnMinutes, tickInFlight, MINUTES_PER_DAY, CLASSIC_MINUTES_PER_SECOND, sharedClockOn } from '../systems/worldTick.js';
@@ -1544,11 +1544,11 @@ export function raisePlayerSkills(entity, { say = () => {}, onLevelUp = null, ro
     if (path) {
       entity.pathPrompted = true;
       const open = pathChoices(entity);
-      if (open.length > 1) ask(pathsOpenRows(open), null, null, { okOnly: true });
+      if (open.length > 1) ask(pathsOpenRows(open, { growth: isEnhanced() }), null, null, { okOnly: true });   // GROWTH4: the enhanced skin's guide is the Growth tab's
       else {
         ask(pathChoiceRows(entity, path.id),
           () => { const r = choosePath(entity, path.id); say(r.text); if (r.ok) audio.playOneShot(SOUND.ArenaFanfareLevelUp, 1); },
-          () => say(pathDeclinedText()));
+          () => say(isEnhanced() ? pathDeclinedGrowthText() : pathDeclinedText()));
       }
     } else {
       // MARTIAL1 (bible/05-Combat/Martial-Specialisations.md section 3): THE MARTIAL SPECIALISATION - two weapon skills
@@ -1558,11 +1558,11 @@ export function raisePlayerSkills(entity, { say = () => {}, onLevelUp = null, ro
       if (martial) {
         entity.martialPrompted = true;
         const open = martialChoices(entity);
-        if (open.length > 1) ask(martialOpenRows(open), null, null, { okOnly: true });
+        if (open.length > 1) ask(martialOpenRows(open, { growth: isEnhanced() }), null, null, { okOnly: true });
         else {
           ask(martialChoiceRows(entity, martial.id),
             () => { const r = chooseMartialPath(entity, martial.id); say(r.text); if (r.ok) audio.playOneShot(SOUND.ArenaFanfareLevelUp, 1); },
-            () => say(martialDeclinedText()));
+            () => say(isEnhanced() ? martialDeclinedGrowthText() : martialDeclinedText()));
         }
       }
     }

@@ -57,8 +57,8 @@ import { affiliations } from '../systems/affiliations.js';   // CM4: ShowAffilia
 import { firstHotkey } from '../systems/dialogShortcuts.js';   // CM4: the four buttons' DaggerfallShortcut bindings
 import { YesNoBoxWindow } from './yesNoBox.js';   // SOFTCAP3: the Master Skills switch asks in DFU's own Yes/No box
 import { masterSkillsActive, masterSkillsSwitchable, masterSkillsBlockReason, masterSkillsStatusText, setMasterSkills, MASTER_SKILLS_OFFER_ROWS, MASTER_SKILLS_INFO_ROWS, MASTERY_GROUP_NAMES, masterySlots, masteryCandidates, masteryChoiceRows, masterSkill, isMasteredSkill, careerGroupOf } from '../systems/masterSkills.js';   // SOFTCAP3/4
-import { pathOf, pathChoices, pathChoiceRows, pathAboutRows, choosePath } from '../systems/arcanePaths.js';   // SCHOOLS1: the specialisation row
-import { martialPathOf, martialChoices, martialChoiceRows, martialAboutRows, chooseMartialPath } from '../systems/martialPaths.js';   // MARTIAL1: and the martial one
+import { pathOf, pathChoices, pathChoiceRows, pathAboutRows, choosePath, pathPossible } from '../systems/arcanePaths.js';   // SCHOOLS1: the specialisation row
+import { martialPathOf, martialChoices, martialChoiceRows, martialAboutRows, chooseMartialPath, martialPossible } from '../systems/martialPaths.js';   // MARTIAL1: and the martial one
 import { liveRaceTemplate, liveRaceName } from '../systems/vampirism.js';   // DISC10-D V5: the live race the sheet names
 /** AUDIT LIVED1 Q: the sheet's due column online - "in 359 days" / "due now"; null offline, where DFU's date stands. */
 const loanDueShort = (due) => { const s = ownTimeLeftShort(due); return s == null ? null : s === 'now' ? 'due now' : `in ${s}`; };
@@ -833,9 +833,16 @@ export class CharSheet {
     const showHth = ids.includes(SKILLS.HandToHand);
     const lines = (twoColumn ? Math.ceil(ids.length / 2) : ids.length) + (showHth ? 1 : 0);
     // SCHOOLS1: the Specialisation row under it, while Master Skills is in force and a path is chosen or open
-    const pathText = masterSkillsActive(e) ? (pathOf(e) ? t('schools.sheet.chosen', '{name}  (S)', { name: pathOf(e).name }) : pathChoices(e).length ? t('schools.sheet.choose', 'Specialise  (S)') : null) : null;
+    // GROWTH4 (bible/10-UI/Growth.md section 7): where the guide opens (the enhanced pause's Growth tab - a document), the
+    // row stands whenever this class can ever meet a path: S reads them all, opened or not
+    const guide = typeof this.hooks?.growth === 'function';
+    const pathText = pathOf(e) ? t('schools.sheet.chosen', '{name}  (S)', { name: pathOf(e).name })
+      : masterSkillsActive(e) && pathChoices(e).length ? t('schools.sheet.choose', 'Specialise  (S)')
+        : guide && pathPossible(e) ? t('schools.sheet.guide', 'Specialisations  (S)') : null;
     // MARTIAL1: and the Martial row under that, the same way - the weapons' specialisation (W)
-    const martialText = masterSkillsActive(e) ? (martialPathOf(e) ? t('martial.sheet.chosen', '{name}  (W)', { name: martialPathOf(e).name }) : martialChoices(e).length ? t('martial.sheet.choose', 'Martial specialisation  (W)') : null) : null;
+    const martialText = martialPathOf(e) ? t('martial.sheet.chosen', '{name}  (W)', { name: martialPathOf(e).name })
+      : masterSkillsActive(e) && martialChoices(e).length ? t('martial.sheet.choose', 'Martial specialisation  (W)')
+        : guide && martialPossible(e) ? t('martial.sheet.guide', 'Martial paths  (W)') : null;
     const h = (lines + 1 + (pathText ? 1 : 0) + (martialText ? 1 : 0)) * 9 + 14;   // SOFTCAP3: + the Master Skills row under the skills
     const w = twoColumn ? 246 : 130;
     const x = twoColumn ? Math.floor((320 - w) / 2) : 8;
@@ -884,10 +891,22 @@ export class CharSheet {
     }
   }
 
+  /** GROWTH4 (bible/10-UI/Growth.md section 7; the owner, asked: the classic skin reaches the Growth tab): THE GUIDE
+   *  FROM THE CLASSIC SHEET - the enhanced pause window on its Specialisations page (the family's), pushed as this
+   *  sheet's child: it draws over the sheet, and when it goes the sheet is back. A host with no document (node) has no
+   *  hook, and the rows ask in DFU's boxes as before. Answers whether it opened. */
+  _growth(at) {
+    const w = typeof this.hooks?.growth === 'function' ? this.hooks.growth(at) : null;
+    if (!w) return false;
+    this.child = w;
+    return true;
+  }
+
   /** MARTIAL1 (bible/05-Combat/Martial-Specialisations.md section 3): the Martial row, classic face - the Specialisation
    *  row's own law. A path chosen: DFU's OK box says what it does. None yet: each open path is asked about in DFU's Yes/No
    *  box - PERMANENT on Yes; No, then W, offers the next (the plate stays behind the box, AUDIT SCHOOLS L4 H1). */
   _martialPrompt() {
+    if (this._growth('specs:martial')) return;   // GROWTH4: the guide, where it opens
     const e = this.entity;
     const chosen = martialPathOf(e);
     if (chosen) { this.page = 0; this.child = new YesNoBoxWindow({ okOnly: true, rows: [...martialAboutRows(chosen), '', t('martial.sheet.key', 'Its signature technique answers your technique key with its weapons when the weapon has no technique of its own.')] }); return; }
@@ -905,6 +924,7 @@ export class CharSheet {
    *  DFU's OK box says what it does. None yet: each open path is asked about in DFU's Yes/No box - PERMANENT on Yes; No,
    *  then S, offers the next. */
   _pathPrompt() {
+    if (this._growth('specs:arcane')) return;   // GROWTH4: the guide, where it opens
     const e = this.entity;
     const chosen = pathOf(e);
     // AUDIT SCHOOLS L4 H1: the plate stays behind a choosing box, so "No, then S" reaches the next path

@@ -137,7 +137,7 @@ test('RVN4 THE STAND on the REAL street pool: the killing blow brings a rank-3 o
   assert.equal(N.revenantById(r.id).history.filter((d) => d.deed === 'laststand').length, 1);
 });
 
-test('RVN4 BY RANK: 35% at rank 4, 40% at rank 5 (FEUD BALANCE); at rank 2 it kneels; a Disintegrate kills (mutants: the rank\'s share moved; a rank-2 stand; the whole kill stood up)', async () => {
+test('RVN4 BY RANK: 35% at rank 4, 40% at rank 5 (FEUD BALANCE); at rank 2 it kneels; my Disintegrate passes the stand and kneels it (mutants: the rank\'s share moved; a rank-2 stand; the whole kill stood up)', async () => {
   const p = me();
   for (const [rank, share] of [[4, 0.35], [5, 0.4]]) {   // PIN MOVED (FEUD BALANCE, OPEN 23)
     const { pool, f } = await stood(p, rank);
@@ -150,8 +150,9 @@ test('RVN4 BY RANK: 35% at rank 4, 40% at rank 5 (FEUD BALANCE); at rank 2 it kn
   assert.equal(two.f.roaring, undefined);
   const z = await stood(p, 3);
   z.pool.damageFoe(z.f, 99999, [0, 0, 3], null, { fromPlayer: true, whole: true });
-  assert.equal(z.f.roaring, undefined);
-  assert.equal(N.revenantById(z.r.id).defeated, true, 'a kill is a kill');
+  assert.equal(z.f.roaring, undefined, 'my kill passes its stand');
+  // PIN MOVED (RVN-OWN-KNEEL, FIELD BUGS 2026-10-17e: my own kill - a Disintegrate's whole - passes the stand and the will and KNEELS it)
+  assert.ok(z.f.yielded, 'and kneels it'); assert.equal(N.revenantById(z.r.id).defeated, false);
 });
 
 test('RVN4 THE ROAR, switch off: its motor held for the roar on the brain\'s clock and its swing raised - let go (striking nothing) when the roar is spent (mutants: no hold; the swing kept raised)', async () => {
@@ -224,7 +225,7 @@ test('RVN4 THE POOLS AND DOORS: the ember rim where no wind-up glints and a tent
   assert.match(d, /if \(foe\.yielded \|\| foe\.executing \|\| foe\.sparing \|\| foe\.leaving \|\| foe\.roaring\) return;/);
   // PIN MOVED (FIELD BUGS 2026-10-16b RVN-OWNERS-CHOICE): a whole blow passes the stand only as the owner's own
   // (revenantFate.js ownersWholeKill) - a party member's Disintegrate brings it (test/systems/revenant/fb1016b_rvnownerschoice.test.js)
-  assert.match(d, /if \(foe\.entity\?\.revenant\?\.id && !ownersWholeKill\(_whole, \{ fromPlayer, peer \}\) && \(!onlineRoom\(\) \|\| !isRoomFoe\(foe\)\) && revenantLastStandDue\(foe\)\) \{ lastStandDungeonFoe\(foe\); return; \}\n[^\n]*\n\s*if \(opts\.fates && !ownersWholeKill\(_whole, \{ fromPlayer, peer \}\)/);
+  assert.match(d, /if \(foe\.entity\?\.revenant\?\.id && !ownersWholeKill\(_whole, \{ fromPlayer, peer \}\) && \(!onlineRoom\(\) \|\| !isRoomFoe\(foe\)\) && revenantLastStandDue\(foe\)\) \{ lastStandDungeonFoe\(foe\); return; \}\n[^\n]*\n\s*if \(opts\.fates && \(!onlineRoom\(\) \|\| !isRoomFoe\(foe\)\) && revenantMayYield\(foe\)\) \{ if \(!ownersWholeKill\(_whole, \{ fromPlayer, peer \}\)/);   // PIN MOVED (RVN-OWN-KNEEL, FIELD BUGS 2026-10-17e: my own kill - a Disintegrate's whole - passes the stand and the will and KNEELS it)
   assert.match(d, /function lastStandDungeonFoe\(f\) \{\n\s*const ev = beginLastStand\(playerEntity, f, \{ now: Date\.now\(\), clock: tacticsNow\(\), roar: \(s\) => beginRoar\(f\.ai, f\.entity, s\) \}\);/);
   assert.match(read('src/scenes/hostMagic.js'), /if \(foe\?\.yielded \|\| foe\?\.executing \|\| foe\?\.sparing \|\| foe\?\.leaving \|\| foe\?\.roaring\) return null;/);
   assert.match(read('src/combat/arrowFlight.js'), /if \(foe\.yielded \|\| foe\.executing \|\| foe\.sparing \|\| foe\.leaving \|\| foe\.roaring\) return 0;/);

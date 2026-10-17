@@ -598,11 +598,12 @@
   {
     "name": "CT-page-door-skipped",
     "file": "src/ui/captainPage.js",
-    "old": "      b.onclick = () => (door ? door(() => open()) : open());",
-    "new": "      b.onclick = () => open();",
+    "old": ": door ? door(() => open()) : open());",
+    "new": ": open());",
     "tests": [
       "test/systems/naval/captaintree.test.js"
-    ]
+    ],
+    "note": "GROWTH (PIN MOVED, bible/10-UI/Growth.md): re-aimed by content - with no Growth tab the stars still open through the sea's window door, the pause put down first"
   },
   {
     "name": "CT-win-way-one",

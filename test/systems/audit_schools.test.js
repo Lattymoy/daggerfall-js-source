@@ -43,7 +43,6 @@ import { createPlayerMagic } from '../../src/scenes/hostMagic.js';
 import { duelStandIn } from '../../src/combat/duelCombat.js';
 import { raisePlayerSkills } from '../../src/scenes/shared.js';
 import { CharSheet } from '../../src/ui/charsheet.js';
-import { sheetModel } from '../../src/ui/enhanced/enhancedCharSheet.js';
 
 const { Destruction: DES, Restoration: RES, Illusion: ILL, Alteration: ALT, Thaumaturgy: THA, Mysticism: MYS } = SKILLS;
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
@@ -709,7 +708,10 @@ test('AUDIT SCHOOLS L4 M1 / L5 H3: THE ONE ASK (scenes/shared.js raisePlayerSkil
   three.masterSkillsInfoSeen = true;
   raisePlayerSkills(three, { ask, rolls: () => 0.99 });
   assert.equal(asks.length, 2);
-  assert.deepEqual(asks[1].rows, ['Specialisation', '', '3 specialisations are open to you:', 'Riftwalker, Warden, Necromancer', '', 'Choose one in your skill screen. The choice cannot be undone.']);
+  // PIN MOVED (GROWTH4, bible/10-UI/Growth.md section 7): the enhanced skin's box sends the player to the Growth tab; the
+  // classic skin's to the skill screen, whose S row opens the same guide
+  assert.deepEqual(asks[1].rows, ['Specialisation', '', '3 specialisations are open to you:', 'Riftwalker, Warden, Necromancer', '', 'Read each and choose one on the Growth tab of the pause menu. The choice cannot be undone.']);
+  assert.equal(AP.pathsOpenRows([AP.PATH_BY_ID.warden]).at(-1), 'Choose one in your skill screen. The choice cannot be undone.', 'the classic skin\'s');
   assert.deepEqual([asks[1].okOnly, asks[1].onYes, three.arcanePath ?? null, three.pathPrompted], [true, null, null, true], 'named, none chosen');
   // one box a pass: a mastery waiting is asked first, the path on the next quiet pass
   const busy = mage([RES, MYS], 100);
@@ -753,14 +755,17 @@ test('AUDIT SCHOOLS L4 H1 / L5 H3: THE CLASSIC SHEET\'S S ROW - drawn on a skill
   assert.deepEqual([sheet.child.okOnly, sheet.child.rows[0], sheet.child.rows.at(-1)], [true, 'Riftwalker - Alteration and Mysticism', 'Its signature spell is sold to you at the Mages Guild.'], 'a chosen path: what it is, in an OK box');
 });
 
-test('AUDIT SCHOOLS L4 8 / L5 H3: THE ENHANCED MODEL - each path names its two schools; a chosen one its schools too; a class whose career holds fewer than two schools can never meet one (pathPossible), and its sheet says so by showing nothing (mutants: the schools unnamed; pathPossible always true)', () => {
-  const m = sheetModel(mage([ALT, RES, MYS], 100)).master;
-  assert.deepEqual(m.pathChoices.map((p) => [p.id, p.schools]), [['riftwalker', 'Alteration and Mysticism'], ['warden', 'Alteration and Restoration'], ['necromancer', 'Restoration and Mysticism']]);
-  assert.equal(m.pathPossible, true);
-  const r = m.choosePath('warden');
+test('AUDIT SCHOOLS L4 8 / L5 H3: THE ENHANCED MODEL - each path names its two schools; a chosen one its schools too; a class whose career holds fewer than two schools can never meet one (pathPossible), and its sheet says so by showing nothing (mutants: the schools unnamed; pathPossible always true)', async () => {
+  // PIN MOVED (GROWTH2, bible/10-UI/Growth.md section 5): the enhanced model is the Growth tab's guide (ui/growth/specGuide.js)
+  const { specGuideModel } = await import('../../src/ui/growth/specGuide.js');
+  const fam = (e) => specGuideModel(e).families.find((f) => f.id === 'arcane');
+  const m = fam(mage([ALT, RES, MYS], 100));
+  assert.deepEqual(m.paths.filter((p) => p.state === 'open').map((p) => [p.id, p.pairText]), [['riftwalker', 'Alteration and Mysticism'], ['warden', 'Alteration and Restoration'], ['necromancer', 'Restoration and Mysticism']]);
+  assert.equal(m.possible, true);
+  const r = m.paths.find((p) => p.id === 'warden').choose();
   assert.equal(r.ok, true);
-  const chosen = pathMage('warden', 100);
-  assert.deepEqual([sheetModel(chosen).master.path.id, sheetModel(chosen).master.path.schools], ['warden', 'Alteration and Restoration']);
+  const chosen = fam(pathMage('warden', 100));
+  assert.deepEqual([chosen.held.id, chosen.paths[0].state, chosen.paths[0].pairText], ['warden', 'chosen', 'Alteration and Restoration']);
   const warrior = structuredClone(playerEntity);
   createCharacter(warrior, buildCustomCareer({ name: 'Brute', hp: 12, stats: STATS,
     skills: [SKILLS.LongBlade, SKILLS.Axe, SKILLS.BluntWeapon, SKILLS.Archery, SKILLS.HandToHand, SKILLS.Running, SKILLS.Swimming, SKILLS.Climbing, SKILLS.Jumping, SKILLS.Dodging, SKILLS.CriticalStrike, DES] }), -1, { rolls: () => 0.5 });
@@ -779,15 +784,17 @@ test('AUDIT SCHOOLS L5 H3: THE ENHANCED PAUSE WINDOW, DRIVEN - its Master Skills
     const host = globalThis.document.createElement('div');
     const menu = mountEnhancedMenu(host, { mode: 'pause', hooks: {}, onAction: () => {}, at: 'stats' });
     try {
+      // PIN MOVED (GROWTH1/GROWTH2): the Stats page's Growth door counts the path waiting; the guide names it, asks, chooses
       const btn = (text) => host.querySelectorAll('button').find((b) => b.textContent.startsWith(text));
-      const door = btn('Master Skills');
-      assert.equal(door?.textContent, 'Master Skills (1)', 'the door counts the specialisation waiting');
+      const door = btn('Growth');
+      assert.equal(door?.textContent, 'Growth (1)', 'the door counts the specialisation waiting');
       door.onclick();
-      const card = host.querySelectorAll('section').find((s) => String(s.className).includes('px-spec'));
-      assert.ok(card, 'the Specialisation card');
-      assert.match(card.textContent, /Necromancer/);
-      assert.match(card.textContent, /Restoration and Mysticism/);
-      card.querySelectorAll('button').find((b) => b.textContent === 'Choose').onclick();
+      host.querySelectorAll('button').find((b) => String(b.className).includes('px-qrow') && b.textContent.includes('Specialisations')).onclick();
+      const bar = host.querySelectorAll('button').find((b) => String(b.className).includes('gr-pathbar') && b.textContent.startsWith('Necromancer'));
+      assert.ok(bar, 'the guide\'s Necromancer');
+      assert.match(bar.textContent, /Restoration and Mysticism/);
+      bar.onclick();
+      btn('Choose Necromancer').onclick();
       const ask = globalThis.document.body.querySelectorAll('div').find((d) => String(d.className).includes('px-master-ask'));
       assert.ok(ask, 'the Yes/No card');
       assert.match(ask.textContent, /Specialise as Necromancer\?/);
@@ -802,11 +809,14 @@ test('AUDIT SCHOOLS L5 H3: THE ENHANCED PAUSE WINDOW, DRIVEN - its Master Skills
     const host2 = globalThis.document.createElement('div');
     const menu2 = mountEnhancedMenu(host2, { mode: 'pause', hooks: {}, onAction: () => {}, at: 'stats' });
     try {
-      host2.querySelectorAll('button').find((b) => b.textContent.startsWith('Master Skills')).onclick();
-      // PIN MOVED (MARTIAL1): a Brute's five weapon skills open the Martial card beside it (the same card, px-spec) - the arcane card is the one titled Specialisation
-      const specs = host2.querySelectorAll('section').filter((s) => String(s.className).includes('px-spec'));
-      assert.equal(specs.some((s) => s.textContent.startsWith('Specialisation')), false, 'no card for a class with no two schools');
-      assert.equal(specs.some((s) => s.textContent.startsWith('Martial Specialisation')), true, 'the Brute\'s weapons meet the martial card');
+      // PIN MOVED (GROWTH2): the guide says it - no arcane path for a class with no two schools, the Brute's weapons meet the martial
+      host2.querySelectorAll('button').find((b) => b.textContent.startsWith('Growth')).onclick();
+      host2.querySelectorAll('button').find((b) => String(b.className).includes('px-qrow') && b.textContent.includes('Specialisations')).onclick();
+      const head = () => host2.querySelectorAll('div').find((d) => String(d.className).includes('gr-headline'))?.textContent ?? '';
+      host2.querySelectorAll('button').find((b) => String(b.className).includes('gr-fam') && b.textContent.startsWith('Arcane')).onclick();
+      assert.match(head(), /Your class cannot master two schools of magic/, 'no arcane path for a class with no two schools');
+      host2.querySelectorAll('button').find((b) => String(b.className).includes('gr-fam') && b.textContent.startsWith('Martial')).onclick();
+      assert.doesNotMatch(head(), /cannot/, 'the Brute\'s weapons meet the martial');
     } finally { menu2.unmount(); }
   } finally { restore(); }
 });

@@ -1836,7 +1836,7 @@ test('AUDIT LEGACY III U1/U2 (the pause window, by source - driven in Chromium):
   const src = rd('src/ui/pauseDoor.js');
   assert.match(src, /host\.addEventListener\?\.\('keydown', \(e\) => \{\n    if \(e\.repeat && \(e\.key === 'Enter' \|\| e\.key === ' '\)\) \{ e\.preventDefault\(\); e\.stopPropagation\(\); \}\n  \}, true\);/, 'U1');
   assert.match(src, /document\.addEventListener\?\.\('keydown', tabIn, true\);/, 'U2: the Tab from outside');
-  assert.match(src, /const close = \(\) => \{\n    if \(fired\) return;\n    dropAscend\(\);[^\n]*\n    document\.removeEventListener\?\.\('keydown', tabIn, true\);/, 'U2: gone with the window');
+  assert.match(src, /const close = \(\) => \{\n    if \(fired\) return;\n    document\.removeEventListener\?\.\('keydown', tabIn, true\);/, 'U2: gone with the window');   // PIN MOVED (GROWTH3): nothing stands over the window now - its Ascension and sky are drawn in it
   assert.match(src, /view = mountEnhancedMenu\(host, \{ mode: 'pause', hooks, onAction: act, at: hooks\.at \?\? null \}\);\n      focusIn\(\);   \/\/ AUDIT LEGACY III U2/, 'U2: the focus taken as it mounts');
   assert.match(src, /const to = host\.querySelector\?\.\('\.px-tabs button\.on'\) \?\? host\.querySelector\?\.\('button:not\(\[disabled\]\)'\);/);
 });

@@ -319,11 +319,12 @@
   {
     "name": "RVN3-the-street-kneels-unbroken",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "if (revenantWillHolds(f)) tearAway(f); else yieldFoe(f); return; }",
+    "old": "if (!ownersWholeKill(_whole, { fromPlayer, peer }) && revenantWillHolds(f)) tearAway(f); else yieldFoe(f); return; }",
     "new": "yieldFoe(f); return; }",
     "tests": [
       "test/systems/rvn3_weak.test.js"
-    ]
+    ],
+    "note": "FIELD BUGS 2026-10-17e RVN-OWN-KNEEL (PIN MOVED): re-aimed by content - the owner's own whole blow passes the stand and the will and kneels it; the yield gate asks ownersWholeKill of the will alone."
   },
   {
     "name": "RVN3-the-street-tear-touchable",
@@ -373,11 +374,12 @@
   {
     "name": "RVN3-the-dungeon-kneels-unbroken",
     "file": "src/scenes/dungeonContext.js",
-    "old": "if (revenantWillHolds(foe)) tearAwayDungeonFoe(foe); else yieldDungeonFoe(foe); return; }",
+    "old": "if (!ownersWholeKill(_whole, { fromPlayer, peer }) && revenantWillHolds(foe)) tearAwayDungeonFoe(foe); else yieldDungeonFoe(foe); return; }",
     "new": "yieldDungeonFoe(foe); return; }",
     "tests": [
       "test/systems/rvn3_weak.test.js"
-    ]
+    ],
+    "note": "FIELD BUGS 2026-10-17e RVN-OWN-KNEEL (PIN MOVED): re-aimed by content - the owner's own whole blow passes the stand and the will and kneels it; the yield gate asks ownersWholeKill of the will alone."
   },
   {
     "name": "RVN3-the-dungeon-tear-touchable",

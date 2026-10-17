@@ -240,14 +240,14 @@ test('CAPT-LOG the world\'s wiring: one ledger a world host, in its own save slo
   assert.match(w, /marque: \(\) => captainLedger\.marque\(Math\.floor\(playerTicker\.ownMinutes\)\),/);
   assert.match(w, /deed: \(act, cls, o\) => \{ const r = captainLedger\.deed\(act, cls, o\); captainSay\(\); return r; \},/);
   assert.match(w, /worth: \(items\) => navalLootWorth\(items\),/);
-  assert.match(w, /captain: fleetHost \? \{ model: \(\) => captainPage\.model\(\), openStars: \(\) => captainPage\.openStars\(\) \} : null,/);   // PIN MOVED (AUDIT CAPTAIN'S SEA L15): beside the Fleet's
+  assert.match(w, /captain: fleetHost \? \{ model: \(\) => captainPage\.model\(\), openStars: \(\) => captainPage\.openStars\(\), stars: \(\) => captainPage\.stars\(\) \} : null,/);   // PIN MOVED (AUDIT CAPTAIN'S SEA L15): beside the Fleet's - PIN MOVED (GROWTH3): and the stars' deps, drawn in the Growth tab
   const host = rd('src/scenes/naval/navalHost.js');
   assert.match(host, /if \(boat\) \{ const v = boatPose\(boat\)\.velocity; deps\.captain\?\.sailed\?\.\(Math\.hypot\(v\[0\], v\[2\]\) \* Math\.min\(Math\.max\(0, dt\), FRAME_STEP_S \* FRAME_STEPS_MAX\)\); \}/);
   // PIN MOVED (AUDIT CAPTAIN'S SEA L12): the hold's own items counted, each once (the captain's own things put in and taken
   // out again were counted every pass)
   assert.match(host, /tallyPlunder\(all\.filter\(\(it\) => !left\.includes\(it\)\)\);/);
   assert.match(host, /deps\.captain\?\.note\?\.\('claimed'\);/);
-  assert.match(rd('src/ui/enhanced/enhancedMenu.js'), /captain: \(d\) => drawCaptainPage\(d, render, \{ \.\.\.kit, door: \(fn\) => \{ onAction\('handoff'\); if \(fn\(\) === false\) onAction\('resume'\); \} \}\),/);
+  assert.match(rd('src/ui/enhanced/enhancedMenu.js'), /captain: \(d\) => drawCaptainPage\(d, render, \{ \.\.\.kit, door: \(fn\) => \{ onAction\('handoff'\); if \(fn\(\) === false\) onAction\('resume'\); \}, growth: \(\) => \{ setGrowthSection\('captain'\); pauseTab = 'growth'; render\(\); \} \}\),/);   // PIN MOVED (GROWTH3): the stars' button goes to the Growth tab
 });
 
 /** The player's boat wrecked where a pirate alongside boards her at once (navaudit_boarding.test.js's own). */

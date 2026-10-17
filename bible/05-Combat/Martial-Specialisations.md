@@ -77,7 +77,11 @@ nothing a player could see. That is where the identity goes.
   shortened with it). Any time after, on the skill screen:
   classic, the W row under the Specialisation row on each skill page (the sheet takes raw codes; S is the arcane row's);
   enhanced, the Master Skills page's Martial Specialisation card under the arcane one, the door's count beside Master
-  Skills.
+  Skills. GROWTH2 (2026-10-17, `10-UI/Growth.md` section 5) moved both cards to the pause window's Growth tab: a guide
+  to all fifteen paths, open or not - each one's state on this character, what opens it, its passive, its signature
+  technique by each of its weapons (cooldown, fatigue) with its rider, how the technique key wields it, and Choose
+  through this law; the classic sheet's W row stands whenever the class can meet a path and opens the same guide
+  (GROWTH4).
 - **Held and awake.** A path is HELD (`martialHeld`) by my own player entity (never a peer's stand-in) with Master Skills
   in force and both its skills mastered - what answers the technique key with its signature (a technique rides the
   formula, whose skills mentoring already lowers, as a loot line's does). It is AWAKE (`martialAwake`), and its passive

@@ -188,7 +188,8 @@ test('LV2: both rollout screens take the fanfare as an argument, defaulting to D
   assert.match(v, /if \(fanfare\) audio\.playOneShot\(SOUND\.LevelUp, 1\);/);
   // ...and the door is the one caller that ever passes false.
   const door = src('src/ui/charSheetDoor.js');
-  assert.match(door, /const fanfare = levelNotices\.fanfareOwed\(deps\.entity\?\.pendingLevel \?\? null\);/);
+  // PIN MOVED (GROWTH1): the rollout's one home, levelUpScreenFor - F5's own level-up and the Growth tab's Level page
+  assert.match(door, /const fanfare = levelNotices\.fanfareOwed\(entity\?\.pendingLevel \?\? null\);\n\s*return virtue \? new VirtueLevelUpScreen\(entity, \{ fanfare \}\) : new LevelUpScreen\(entity, undefined, \{ fanfare \}\);/);
 });
 
 // ── THE SEAMS, AND THE FORK THIS SLICE IS ABOUT ──────────────────
@@ -652,7 +653,8 @@ test('LV3 by source: an UNBOUND sheet action presses nothing and shows no button
   // is still what the STRIP presses, where there is no hooks bag to
   // hand a door through.
   const m = src('src/ui/enhanced/enhancedMenu.js');
-  assert.match(m, /if \(typeof hooks\.openAscend === 'function'\) \{/, 'the page\'s door is handed in, not gated on state');
+  // PIN MOVED (GROWTH1): the Stats page's door is the Growth tab's now - always there, its Level page the Ascension
+  assert.match(m, /const g = el\('button', n \? 'act primary' : 'act', n \? t\('pause\.door\.growthCount', 'Growth \(\{n\}\)', \{ n \}\) : t\('pause\.door\.growth', 'Growth'\)\);/, 'the page\'s door is always drawn, not gated on state');
   assert.doesNotMatch(m, /readyToLevelUp/, 'the Stats page never reads the flag: WHICH screen the door opens is the door\'s question');
   assert.doesNotMatch(m, /doors\.unshift\(\['Level up'/, 'and there is no second, conditional door for the same window');
   assert.match(m, /b\.onclick = \(\) => \{ onAction\('handoff'\); if \(fn\(\) === false\) onAction\('resume'\); \};/, 'the pause window goes down first for the doors that LEAVE this page - a handoff, ESC-BOOK: nothing relocks under the window they open');

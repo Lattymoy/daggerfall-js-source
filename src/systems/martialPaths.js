@@ -385,6 +385,9 @@ export function chooseMartialPath(entity, id) {
 }
 
 export const MARTIAL_DECLINED_TEXT = 'You can choose a martial specialisation later in your skill screen.';
+/** GROWTH4: the No's line where the enhanced pause window stands - its Growth tab (arcanePaths.js's own law). */
+export const MARTIAL_DECLINED_GROWTH_TEXT = 'You can choose a martial specialisation later on the Growth tab of the pause menu.';
+export const martialDeclinedGrowthText = () => t('martial.declinedGrowth', MARTIAL_DECLINED_GROWTH_TEXT);
 /** The No's line, in the player's language. */
 export const martialDeclinedText = () => t('martial.declined', MARTIAL_DECLINED_TEXT);
 
@@ -414,15 +417,17 @@ export function martialChoiceRows(entity, id, { others = true } = {}) {
   ];
 }
 
-/** The one ask when SEVERAL martial paths are open - their names, and where each is chosen (AUDIT SCHOOLS L4 M1's law). */
-export function martialOpenRows(open) {
+/** The one ask when SEVERAL martial paths are open - their names, and where each is chosen (AUDIT SCHOOLS L4 M1's law;
+ *  GROWTH4: `growth` - the enhanced pause window's Growth tab, else the skill screen). */
+export function martialOpenRows(open, { growth = false } = {}) {
   return [
     t('martial.open.title', 'Martial Specialisation'),
     '',
     t('martial.open.count', '{n, plural, one {# martial specialisation is open to you:} other {# martial specialisations are open to you:}}', { n: open.length }),
     open.map((p) => p.name).join(', '),
     '',
-    t('martial.open.where', 'Choose one in your skill screen. The choice cannot be undone.'),
+    growth ? t('martial.open.whereGrowth', 'Read each and choose one on the Growth tab of the pause menu. The choice cannot be undone.')
+      : t('martial.open.where', 'Choose one in your skill screen. The choice cannot be undone.'),
   ];
 }
 

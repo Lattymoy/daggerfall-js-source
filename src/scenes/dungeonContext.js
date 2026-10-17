@@ -6877,13 +6877,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // body down is nobody's felling) - the layer hands it on, a felling's striker
       if (foe.companion != null) { foe.entity.health = 1; if (!foe._knockedOut) foe._knockedBy = striker; foe._knockedOut = true; return; }
       // REVENANT-FATE: one of the player's revenants, the player's ALONE here (offline, or past the room's shared run -
-      // REVENANT-DUNGEON's own gate), yields instead of dying; a kill (a Disintegrate's whole) is a kill - MY kill alone
-      // (RVN-OWNERS-CHOICE, exteriorFoes' twin: a party member's on my lair's stand kneels it, the choice mine)
+      // REVENANT-DUNGEON's own gate), yields instead of dying; a kill (a Disintegrate's whole) passes its stand and its
+      // will as MY kill alone (RVN-OWNERS-CHOICE, exteriorFoes' twin: a party member's on my lair's stand kneels it, the
+      // choice mine), and kneels it all the same (RVN-OWN-KNEEL)
       // RVN4 (Feud-Arc.md 15.1): one of rank 3 and up, once a stand, comes back instead - its last stand (a room's shared
-      // foe online never: the yield's own gate); a kill is a kill
+      // foe online never: the yield's own gate); my kill passes it
       if (foe.entity?.revenant?.id && !ownersWholeKill(_whole, { fromPlayer, peer }) && (!onlineRoom() || !isRoomFoe(foe)) && revenantLastStandDue(foe)) { lastStandDungeonFoe(foe); return; }
       // RVN3 (Feud-Arc.md 14.2): one of rank 3 and up whose will this fight has not broken does not kneel - it tears away
-      if (opts.fates && !ownersWholeKill(_whole, { fromPlayer, peer }) && (!onlineRoom() || !isRoomFoe(foe)) && revenantMayYield(foe)) { if (revenantWillHolds(foe)) tearAwayDungeonFoe(foe); else yieldDungeonFoe(foe); return; }
+      if (opts.fates && (!onlineRoom() || !isRoomFoe(foe)) && revenantMayYield(foe)) { if (!ownersWholeKill(_whole, { fromPlayer, peer }) && revenantWillHolds(foe)) tearAwayDungeonFoe(foe); else yieldDungeonFoe(foe); return; }
       // X5: SOUL TRAP intercepts the kill, exactly where DFU's
       // EnemyEntity.SetHealth override does (:157-177) - before the
       // death, on every damage source alike. A successful roll with no

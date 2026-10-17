@@ -314,5 +314,7 @@ test('AUDIT LEGACY U4/U8/H9: the mantle\'s refusal on the card; an armed act nev
 });
 
 test('AUDIT LEGACY U5: five tabs on one row - the tab spacing a step tighter', () => {
-  assert.match(rd('src/ui/enhanced/enhancedStyle.js'), /\.px-tabs button \{ font: inherit; font-size: 20px; letter-spacing: 0\.12em; text-indent: 0\.12em;\n[^\n]*\n\s+min-height: 44px; padding: 6px 12px; display: flex; align-items: center; gap: 8px;/);
+  // PIN MOVED (GROWTH1, bible/10-UI/Growth.md: the Growth tab): seven tabs - a step tighter again (0.08em, 9 px), the diamonds the lit tab's alone
+  assert.match(rd('src/ui/enhanced/enhancedStyle.js'), /\.px-tabs button \{ font: inherit; font-size: 20px; letter-spacing: 0\.08em; text-indent: 0\.08em;\n[^\n]*\n\s+min-height: 44px; padding: 6px 9px; display: flex; align-items: center; gap: 8px;/);
+  assert.match(rd('src/ui/enhanced/enhancedStyle.js'), /\.px-tabs button:not\(\.on\) \.px-c \{ display: none; \}/);
 });

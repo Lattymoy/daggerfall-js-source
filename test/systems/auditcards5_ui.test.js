@@ -114,7 +114,7 @@ test('AUDIT CARDS-5 D12/D14: the Codex part - every Legendary row, found and not
   assert.match(menu, /resetHoldingsPages\(\); resetFleetPage\(\); resetCollectionsPage\(\);/);
   assert.match(menu, /else if \(at === 'collections' \|\| at === 'cards' \|\| at === 'codex'\) \{ pauseTab = 'holdings'; holdSec = 'collections'; if \(at !== 'collections'\) setCollectionsPart\(at\); \}/);
   assert.match(menu, /b\.onclick = \(\) => \{ holdSec = id; disarmCollectionsPage\(\); render\(\); \};/);
-  assert.match(menu, /disarmFamilyPages\(\); disarmCollectionsPage\(\); pauseTab = id; render\(\);/);
+  assert.match(menu, /disarmFamilyPages\(\); disarmCollectionsPage\(\); if \(id !== 'growth'\) releaseGrowthTab\(\); pauseTab = id; render\(\);/);   // PIN MOVED (GROWTH1, bible/10-UI/Growth.md: the Growth tab): and the Growth stage's face
   CX._resetCodexForTests();
 });
 

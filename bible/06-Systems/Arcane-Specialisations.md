@@ -73,7 +73,11 @@ could see or play. That is where the identity goes.
   Any time after, on the skill screen: classic, the S row under the Master Skills row on each skill page (S asks about
   an open path; No, then S, the next - the plate stays behind the box so the key it names reaches it, AUDIT SCHOOLS
   L4 H1; a chosen path's S says what it is); enhanced, the Master Skills page's Specialisation card (each path with its
-  two schools, the door's count beside Master Skills).
+  two schools, the door's count beside Master Skills). GROWTH2 (2026-10-17, `10-UI/Growth.md` section 5) moved the card
+  to the pause window's Growth tab: a guide to all fifteen paths, open or not - each one's state on this character,
+  what opens it, its passive, its signature spell read as the spellbook reads it, and Choose through this law; Master
+  Skills keeps one line and a door to it, and the classic sheet's S row stands whenever the class can meet a path and
+  opens the same guide (GROWTH4). The one ask's No names the Growth tab on the enhanced skin.
 - **Held and awake.** A path is HELD (`pathHeld`) by my own player entity (never a peer's stand-in) with Master Skills
   in force and both its schools mastered - what its signature spell is priced, taught and sold by (section 6). It is
   AWAKE (`pathAwake`), and its powers act, while it is held and I am not mentoring (SOFTCAP2 reads no climb either) -

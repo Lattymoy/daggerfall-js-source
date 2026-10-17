@@ -50,13 +50,15 @@ export function revenantMayYield(f) {
 }
 
 /** RVN-OWNERS-CHOICE (FIELD BUGS 2026-10-16b; Discord: "I believe it bypasses the kill/spare on revenants. And it seems
- *  it does this to other players' revenants, too"): DOES THIS WHOLE BLOW CLOSE ONE OF MY REVENANTS OUTRIGHT - past its
- *  last stand, its will and its kneel? A whole blow (the doors' `_whole`: a Disintegrate, the Razor's whole-health
+ *  it does this to other players' revenants, too"): IS THIS WHOLE BLOW THE OWNER'S OWN KILL - does it pass over one of
+ *  my revenants' last stand and its will? A whole blow (the doors' `_whole`: a Disintegrate, the Razor's whole-health
  *  strike, a stat drained to zero) does so only when it is the OWNER's own: the player's blow (`fromPlayer`), never a
  *  peer's, at the door that holds the record - a revenant is never handed over (REVENANT-HEIR), so that door is its
  *  owner's. Anyone else's - a party member's kill forwarded as `z`, their strike spell landed here, a foe's spell, a
  *  companion's, a round that names nobody - is a killing blow like any other: it stands, tears away or kneels, and
- *  the choice is the owner's (bible/06-Systems/Revenants.md section 15). */
+ *  the choice is the owner's (bible/06-Systems/Revenants.md section 15). RVN-OWN-KNEEL (FIELD BUGS 2026-10-17e;
+ *  Discord: "Disintegrate just outright kills your rev with no option to hire"): the owner's own kneels it too - past
+ *  the stand and the will, never past the kill-or-spare; a host with no fates (`exterior.js`) lets it die as before. */
 export function ownersWholeKill(whole, { fromPlayer = false, peer = false } = {}) {
   return !!whole && !!fromPlayer && !peer;
 }

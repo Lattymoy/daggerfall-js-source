@@ -123,7 +123,8 @@ test('SLOTS1: the doors act on the pick - main.js sets ?loadkey for load and onl
   assert.match(door, /\.\.\.pauseMenuHooks\(base, \(\) => seams\),/, 'the pause door routes through it');
   const sheet = rd('src/ui/charSheetDoor.js');
   assert.match(sheet, /\}, \(\) => seams\);/, "F5's page routes through it too, over the module ITS pane came from");
-  assert.equal((sheet.match(/mount: \(mod\) => \{ seams = mod; view = mod\.mountEnhancedMenu\(host, pageOpts\(\)\); \},/g) ?? []).length, 2, "both of the F5 page's mounts keep the seams");
+  // PIN MOVED (GROWTH3): the F5 page mounts once - the Ascension and the sky that once came back over it are drawn in it
+  assert.equal((sheet.match(/mount: \(mod\) => \{ seams = mod; view = mod\.mountEnhancedMenu\(host, pageOpts\(\)\); \},/g) ?? []).length, 1, "the F5 page's mount keeps the seams");
   assert.match(door, /if \(action === 'save'\) hooks\.quickSave\?\.\(\);\s*\n\s*else if \(action === 'load'\) hooks\.quickLoad\?\.\(\);/, 'the verbs the MAC1 pin reads, untouched');
   assert.match(door, /seams = mod;/, 'the seams come from the module the pane came from');
   const world = rd('src/scenes/world.js');

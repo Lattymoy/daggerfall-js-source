@@ -160,11 +160,13 @@ import { profPagesShown, PROF_PAGE_SECTIONS, drawProfessionsPage, drawStoresPage
 import { vendorPageShown, VENDOR_PAGE_SECTIONS, drawVendorPage } from '../vendor/vendorPage.js';   // HOME-VENDOR: the Vendor page
 import { REVENANT_PAGE_SECTIONS, revenantPageShown, drawRevenantsPage } from '../revenant/revenantPage.js';
 import { COMPANION_PAGE_SECTIONS, companionPageShown, drawCompanionsPage, resetCompanionRoster } from '../companionRoster.js';   // COMPANION-ROSTER: the sworn and the slots
-import { STABLE_PAGE_SECTIONS, stablePageShown, drawStablePage, resetHoldingsPages } from '../holdingsPages.js';   // HOLDINGS: the horse and the wagon
+import { STABLE_PAGE_SECTIONS, stablePageShown, drawStablePage, resetHoldingsPages, holdingsProvider } from '../holdingsPages.js';   // HOLDINGS: the horse and the wagon - GROWTH1: and the captain's sky's deps
 import { FAMILY_PAGE_SECTIONS, drawTreePage, drawHousePage, drawHallPage, drawGuidePage, resetFamilyPages, disarmFamilyPages, sheetHouse } from '../familyPages.js';   // LEGACY3: Project Legacy's Family tab; LEGACY-SHEET: the house on the Stats page
 import { legacyOn } from '../../systems/legacy/settings.js';   // LEGACY3: ...drawn while the mod is on
 import { FLEET_PAGE_SECTIONS, fleetPageShown, drawFleetPage, resetFleetPage } from '../fleetPage.js';   // HOLDINGS: the ships
 import { CAPTAIN_PAGE_SECTIONS, captainPageShown, drawCaptainPage } from '../captainPage.js';   // CAPT-LOG: the captain's standing and log
+import { drawGrowthTab, resetGrowthTab, releaseGrowthTab, growthBack, growthPageAt, setGrowthSection, growthDue } from '../growth/growthTab.js';   // GROWTH1: the Growth tab - the level, the specialisations, the skies
+import { stageLive } from '../growth/growthStage.js';   // GROWTH3: a face up in the tab - the window's Escape asks it first
 import { COLLECTION_PAGE_SECTIONS, collectionsPageShown, drawCollectionsPage, resetCollectionsPage, disarmCollectionsPage, setCollectionsPart } from '../collectionsPage.js';   // COLLECTIONS: the codex and the cards
 import { swornBodyOf } from '../../systems/revenant/revenantCompanions.js';   // COMPANION-ROSTER: a sworn one's live health
 import { enemyDisplayName } from '../../characters/enemy/enemyBasics.js';   // REVENANT-PAGE: a revenant's kind   // REVENANT-PAGE: the foes that have earned your name
@@ -4533,7 +4535,10 @@ let footObs = /** @type {ResizeObserver|null} */ (null);
 // and the Hall of Ancestors - on a tab of its own (pauseFamily, below; ui/familyPages.js).
 // TUT1 (2026-10-11, Mac: "a menu section where tutorials can be revisited"): every tutorial page, on a tab of its own
 // (pauseTutorials, below; ui/tutorialsPane.js) - the same pane the front door's Tutorials section draws.
-const PAUSE_TABS = Object.freeze([['quests', 'Quests'], ['stats', 'Stats'], ['holdings', 'Holdings'], ['family', 'Family'], ['tutorials', 'Tutorials'], ['system', 'System']]);
+// GROWTH1 (2026-10-17, the owner: "give the firmament, level up page, and specializations its own tab within the pause
+// menu"): how a character grows - the Ascension, the specialisations' guide, the Firmament and the captain's stars, the
+// skies drawn in the tab (pauseGrowth, below; ui/growth/growthTab.js), after the Stats it grew out of.
+const PAUSE_TABS = Object.freeze([['quests', 'Quests'], ['stats', 'Stats'], ['growth', 'Growth'], ['holdings', 'Holdings'], ['family', 'Family'], ['tutorials', 'Tutorials'], ['system', 'System']]);
 /** HOLDINGS: every tab a landing may name (mountEnhancedMenu's `at`). */
 export const PAUSE_TAB_IDS = Object.freeze(PAUSE_TABS.map(([id]) => id));
 /** LEGACY3: a tab drawn now - the Family tab while Project Legacy is on (a landing on it with the mod off lands on System). */
@@ -4543,6 +4548,7 @@ const pauseTabShown = (id) => id !== 'family' || legacyOn();
 const PAUSE_TEXT = Object.freeze({
   quests: () => t('pause.tab.quests', 'Quests'),
   stats: () => t('pause.tab.stats', 'Stats'),
+  growth: () => t('pause.tab.growth', 'Growth'),
   holdings: () => t('pause.tab.holdings', 'Holdings'),
   family: () => t('pause.tab.family', 'Family'),
   tutorials: () => t('pause.tab.tutorials', 'Tutorials'),
@@ -4567,15 +4573,27 @@ function pauseWindow() {
   for (const [id, label] of PAUSE_TABS.filter(([id]) => pauseTabShown(id))) {
     const b = el('button', id === pauseTab ? 'on' : null);
     b.append(el('span', 'px-c', '\u25c6'), document.createTextNode(pauseLabel(id, label)), el('span', 'px-c', '\u25c6'));
-    b.onclick = () => { if (id !== 'system') discardControlsStaging(); disarmFamilyPages(); disarmCollectionsPage(); pauseTab = id; render(); };   // AUDIT CARDS-5 D5: and the Collections page's
+    b.onclick = () => { if (id !== 'system') discardControlsStaging(); disarmFamilyPages(); disarmCollectionsPage(); if (id !== 'growth') releaseGrowthTab(); pauseTab = id; render(); };   // AUDIT CARDS-5 D5: and the Collections page's - GROWTH3: and a face on the Growth stage
     tabs.append(b);
   }
   win.append(tabs);
 
   const body = el('div', 'px-body');
-  ({ quests: pauseQuests, stats: pauseStats, holdings: pauseHoldings, family: pauseFamily, tutorials: drawTutorialsPane, system: pauseSystem })[pauseTab](body);   // TUT1
+  ({ quests: pauseQuests, stats: pauseStats, growth: pauseGrowth, holdings: pauseHoldings, family: pauseFamily, tutorials: drawTutorialsPane, system: pauseSystem })[pauseTab](body);   // TUT1 - GROWTH1
+  if (pauseTab === 'growth' && stageLive()) win.classList.add('px-win-wide');   // GROWTH3: a face on the stage - the window nearly the screen's
   win.append(body);
   return win;
+}
+
+// ── GROWTH1: THE GROWTH PAGE ────────────────────────────────────
+// The journal's bones once more (PX6's rail of pages, the chosen one on the right), for how the character grows
+// (ui/growth/growthTab.js): the Ascension, the specialisations' guide, the Firmament and the captain's stars - the
+// Ascension and the skies drawn in the pane (ui/growth/growthStage.js), Master Skills a press away on the Stats tab.
+function pauseGrowth(body) {
+  drawGrowthTab(body, {
+    el, divider: pxDivider, skillMeter, askCard, entity: playerEntity, render, hooks, captain: holdingsProvider()?.captain ?? null,
+    openMaster: () => { releaseGrowthTab(); pauseTab = 'stats'; statsSec = 'master'; _masterNote = null; render(); },
+  });
 }
 
 // ── HOLDINGS: THE HOLDINGS PAGE ──────────────────────────────────
@@ -4612,7 +4630,7 @@ function pauseHoldings(body) {
     // a door the page opens over the world (the shipwright's window, the water's placing click): the pause goes down
     // first, as the sheet's doors do (PX25/ESC-BOOK), and comes back if the door opened nothing (AUDIT 27h A4)
     fleet: (d) => drawFleetPage(d, render, { ...kit, door: (fn) => { onAction('handoff'); if (fn() === false) onAction('resume'); } }),
-    captain: (d) => drawCaptainPage(d, render, { ...kit, door: (fn) => { onAction('handoff'); if (fn() === false) onAction('resume'); } }),   // CAPT-LOG: the crowns' regard, the letter, the contracts, the log - CAPTAIN-TREE: the stars' door, the Fleet's shape
+    captain: (d) => drawCaptainPage(d, render, { ...kit, door: (fn) => { onAction('handoff'); if (fn() === false) onAction('resume'); }, growth: () => { setGrowthSection('captain'); pauseTab = 'growth'; render(); } }),   // CAPT-LOG: the crowns' regard, the letter, the contracts, the log - CAPTAIN-TREE: the stars' door, the Fleet's shape
     companions: (d) => drawCompanionsPage(d, render, { ...kit, kindName: enemyDisplayName, here: swornBodyOf }),   // COMPANION-ROSTER
     revenants: (d) => drawRevenantsPage(d, render, { ...kit, player: playerEntity, kindName: enemyDisplayName }),   // REVENANT-PAGE
     stores: (d) => drawStoresPage(d, render, kit),   // PROF1
@@ -4836,40 +4854,26 @@ function pauseStats(body) {
     }
     detail.append(row);
   }
-  // ASCEND-ANYTIME: ...AND THE ONE DOOR THAT OPENS THIS SAME CHARACTER.
-  // The other three lead somewhere else, so they resume the game first;
-  // this one swaps a screen in OVER the window it is pressed from and
-  // puts that window back when it closes, so it must NOT resume - a
-  // resume here would hand the keys back to a player who is about to be
-  // looking at a full-screen sky.
-  //
-  // Drawn only when a door handed the hook over, exactly as the three
-  // above are: ui/charSheetDoor.js's page always could (it owns the
-  // entity), and ui/pauseDoor.js's could not until it was taught to.
-  // SOFTCAP4: THE MASTER SKILLS DOOR, beside Ascend (Mac, in game: "add a button to it like ASCEND and there it should
-  // be described and chosen"). Unlike Ascend it opens a page of THIS window (statsSec 'master'), so it neither
-  // resumes nor hands off; the page's own button comes back to Skills. A count on the button when a choice is waiting.
+  // SOFTCAP4: THE MASTER SKILLS DOOR (Mac, in game: "add a button to it like ASCEND and there it should be described and
+  // chosen"). It opens a page of THIS window (statsSec 'master'), so it neither resumes nor hands off; the page's own
+  // button comes back to Skills. A count on the button when a mastery is waiting (GROWTH2: a specialisation waiting is
+  // the Growth door's count now - its guide moved there).
   const masterDoor = m.master ? (() => {
-    const n = (m.master.candidates?.length ?? 0) + (m.master.pathChoices?.length ? 1 : 0) + (m.master.martial?.choices?.length ? 1 : 0);   // SCHOOLS1: and a specialisation waiting; MARTIAL1: and a martial one
+    const n = m.master.candidates?.length ?? 0;
     const b = el('button', n ? 'act primary' : 'act', n ? t('pause.door.masterCount', 'Master Skills ({n})', { n }) : t('pause.master.title', 'Master Skills'));
     b.onclick = () => { statsSec = 'master'; _masterNote = null; render(); };
     return b;
   })() : null;
-  // FIRM1 (bible/06-Systems/Firmament.md): THE FIRMAMENT'S DOOR beside Ascend - the passive tree swapped in over this
-  // window as the Ascension is (ui/firmamentOver.js), online alone (the door hands no hook offline, so no button is drawn)
-  const firmDoor = typeof hooks.openFirmament === 'function' ? hooks.openFirmament : null;
-  if (statsSec !== 'master' && (typeof hooks.openAscend === 'function' || masterDoor || firmDoor)) {
+  // GROWTH1 (bible/10-UI/Growth.md section 3; the owner, asked: "Move them"): THE GROWTH DOOR where Ascend and the
+  // Firmament stood (ASCEND-ANYTIME's and FIRM1's) - both moved to the Growth tab with the specialisations and the
+  // captain's stars, drawn in its pane. A page of this window, so it neither resumes nor hands off; a count on it when
+  // something waits there (a level owed, a path open, the captain's points).
+  if (statsSec !== 'master') {
     const row = el('div', 'px-sheetdoors');
-    if (typeof hooks.openAscend === 'function') {
-      const b = el('button', 'act', t('pause.door.ascend', 'Ascend'));
-      b.onclick = () => hooks.openAscend();
-      row.append(b);
-    }
-    if (firmDoor) {
-      const b = el('button', 'act', t('pause.door.firmament', 'Firmament'));
-      b.onclick = () => firmDoor();
-      row.append(b);
-    }
+    const n = Object.values(growthDue({ entity: playerEntity, captain: holdingsProvider()?.captain ?? null })).reduce((a, b) => a + b, 0);
+    const g = el('button', n ? 'act primary' : 'act', n ? t('pause.door.growthCount', 'Growth ({n})', { n }) : t('pause.door.growth', 'Growth'));
+    g.onclick = () => { pauseTab = 'growth'; render(); };
+    row.append(g);
     if (masterDoor) row.append(masterDoor);
     detail.append(row);
   }
@@ -4991,7 +4995,15 @@ function statsMaster(detail, m) {
     : t('pause.master.on', 'Choose the skills that may climb past 100, up to 200. A choice is permanent.');
   detail.append(el('div', 'px-master-lead', lead));
   if (_masterNote) detail.append(el('div', 'px-master-note', _masterNote));
-  if (ms.on) statsSpecialisation(detail, ms);
+  // GROWTH2 (bible/10-UI/Growth.md section 5): the two specialisation cards (SCHOOLS1's, MARTIAL1's) moved to the Growth
+  // tab's guide - every path, what opens it and what it does; one line and its door stand here
+  if (ms.on) {
+    const card = el('section', 'px-mgroup px-spec');
+    card.append(el('div', 'px-master-about', t('pause.master.specMoved', 'Master two schools of magic or two weapon skills and a specialisation opens. Every path, and what opens it, is on the Growth tab.')));
+    const go = acts([{ label: t('pause.master.specGo', 'Specialisations'), onClick: () => { setGrowthSection('specs'); pauseTab = 'growth'; render(); } }]);
+    card.append(go);
+    detail.append(card);
+  }
   for (const g of ms.groups) {
     const card = el('section', 'px-mgroup');
     const head = el('div', 'px-mhead');
@@ -5030,55 +5042,6 @@ function statsMaster(detail, m) {
     foot.classList.add('px-master-foot');
     detail.append(foot);
   }
-}
-
-/** SCHOOLS1 (bible/06-Systems/Arcane-Specialisations.md section 3): THE SPECIALISATION CARD, above the career groups -
- *  the path chosen (gold, what it does); or each path two mastered schools open, what it does and a Choose button that
- *  asks first (permanent); or, with none open, how one opens. The page's own card, pips and tags. */
-function statsSpecialisation(detail, ms) {
-  specCard(detail, { title: t('pause.master.spec.title', 'Specialisation'), path: ms.path, choices: ms.pathChoices, possible: ms.pathPossible, choose: ms.choosePath,
-    note: t('schools.sheet.sold', 'Its signature spell is sold to you at the Mages Guild.'),
-    none: t('pause.master.spec.none', 'Master two schools of magic to choose a specialisation: the pair names it, and it gives a passive and a signature spell.') });
-  // MARTIAL1 (bible/05-Combat/Martial-Specialisations.md section 3): THE MARTIAL CARD beneath it - the same card, the weapons'
-  const mt = ms.martial;
-  if (mt) specCard(detail, { title: t('pause.master.martial.title', 'Martial Specialisation'), path: mt.path, choices: mt.choices, possible: mt.possible, choose: mt.choose,
-    note: t('martial.sheet.key', 'Its signature technique answers your technique key with its weapons when the weapon has no technique of its own.'),
-    none: t('pause.master.martial.none', 'Master two weapon skills to choose a martial specialisation: the pair names it, and it gives a passive and a signature technique.') });
-}
-/** SCHOOLS1's card, for either specialisation (MARTIAL1): `{ title, path, choices, possible, choose, note, none }`. */
-function specCard(detail, sp) {
-  // AUDIT SCHOOLS L4 8: a class that can never master two of its skills sees no card at all
-  if (!sp.path && !sp.choices?.length && !sp.possible) return;
-  const card = el('section', 'px-mgroup px-spec');   // AUDIT SCHOOLS L4 5: px-spec - its rows stack on a phone
-  const head = el('div', 'px-mhead');
-  head.append(el('span', 'px-mname', sp.title));
-  card.append(head);
-  const pathRow = (name, schools, rows, side, chosen) => {
-    const row = el('div', chosen ? 'px-mrow2 is-mastered' : 'px-mrow2 is-ready');
-    const body = el('div', 'px-mbody');
-    const top = el('div', 'px-mtop');
-    top.append(el('span', 'k', `${chosen ? '\u25c6 ' : ''}${name}`), el('span', 'v px-spec-schools', schools));
-    body.append(top);
-    for (const line of rows) if (line) body.append(el('div', 'px-master-about', line));
-    row.append(body, side);
-    return row;
-  };
-  if (sp.path) {
-    const side = el('div', 'px-mside');
-    side.append(el('span', 'px-mtag gold', t('pause.master.spec.chosen', 'Chosen')));
-    card.append(pathRow(sp.path.name, sp.path.schools, [...sp.path.rows, sp.note], side, true));
-  } else if (sp.choices?.length) {
-    for (const p of sp.choices) {
-      const side = el('div', 'px-mside');
-      const b = el('button', 'act primary px-mbtn', t('pause.master.spec.choose', 'Choose'));
-      b.onclick = () => askCard(p.ask, () => { _masterNote = sp.choose(p.id).text; render(); });
-      side.append(b);
-      card.append(pathRow(p.name, p.schools, p.rows, side, false));
-    }
-  } else {
-    card.append(el('div', 'px-master-about', sp.none));
-  }
-  detail.append(card);
 }
 
 /** SOFTCAP3: the enhanced face's own Yes/No card over the pause page (the same card class the skin's YesNo box wears). */
@@ -5918,6 +5881,7 @@ function onKey(e) {
     : sheetOpen ? () => { sheetOpen = false; render(); }
       : controlsPromptOpen() ? () => dismissControlsPrompt()   // AUDIT KB1: the Controls pane's own prompt answers No first - it never leaves the section with the staged binds
       : section !== 'home' ? () => { const from = section; go('home'); if (mode !== 'pause') focusDoor(from); }   // PX1/PX2: a section backs out to the face (AUDIT L3 L1: the keyboard on its door)
+        : mode === 'pause' && pauseTab === 'growth' && stageLive() ? () => { if (!growthBack()) onAction('resume'); }   // GROWTH3: a face in the tab answers first (a confirm, unaccepted stars, full screen)
         : mode === 'pause' ? () => onAction('resume')   // Escape on the pause face resumes
           : homeLevel !== 'top' && twoQuestionDoor() ? () => { const from = homeLevel; homeLevel = 'top'; render(); focusDoor(from); }   // UI-CALM: the offline doors back out to the two questions (AUDIT L3 L1: the keyboard back on Offline)
             : null;
@@ -6052,6 +6016,7 @@ export function mountEnhancedMenu(host, {
   famSec = 'tree';   // LEGACY3: the Family rail opens on the tree, centred on the one played
   resetFamilyPages();
   resetHoldingsPages(); resetFleetPage(); resetCollectionsPage();   // ...and an act's word, an open name field, an armed press never outlive the visit
+  resetGrowthTab(at);   // GROWTH1: the Growth rail on its landing's page (else the Level), the guide fresh, no face up
   statsAllSkills = false;
   sysSec = 'save';
   category = CATEGORIES[0].id;
@@ -6068,6 +6033,7 @@ export function mountEnhancedMenu(host, {
   if (PROF_STATS_SECTIONS.some(([id]) => id === at)) { pauseTab = 'stats'; statsSec = at; }
   else if (PROF_HOLD_SECTIONS.some(([id]) => id === at)) { pauseTab = 'holdings'; holdSec = at; }
   else if (FAMILY_PAGE_SECTIONS.some(([id]) => id === at)) { pauseTab = 'family'; famSec = at; }   // LEGACY3: a Family page by name
+  else if (growthPageAt(at)) pauseTab = 'growth';   // GROWTH1: a Growth page by name (its rail set by resetGrowthTab, above)
   else if (at === 'mailbox') postOpen = true;   // SERVER-POST: the mailbox's door (/mail, either skin) - the pause face with its window open
   else if (at === 'collections' || at === 'cards' || at === 'codex') { pauseTab = 'holdings'; holdSec = 'collections'; if (at !== 'collections') setCollectionsPart(at); }   // AUDIT CARDS-5 D14: the Collections page by name, or one of its parts
   _eff = null;
@@ -6109,6 +6075,7 @@ export function mountEnhancedMenu(host, {
       releaseShotsPane();   // LOAD1: the gallery's pictures and its listener
       stopPost();   // SERVER-POST: and the mailbox's ticks
       releaseTutorialsPane();   // TUT1: the next visit opens on the first page
+      releaseGrowthTab();   // GROWTH3: a face on the Growth stage goes with the window (full screen too)
       // FIX-F: and the rebind pane's own capture listener, which is on
       // the DOCUMENT and would outlive this screen exactly as the one
       // above would.

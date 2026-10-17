@@ -226,7 +226,7 @@ test('REVENANT-FATE HESITATION: kneeling past its wait (the world\'s own time - 
   assert.equal(g.escaped, true, 'walked off: it slips away');
 });
 
-test('REVENANT-FATE no door, no yield; a kill is a kill; a puppet and a companion never yield (mutants: a host without the window still kneels them; a Disintegrate held)', async () => {
+test('REVENANT-FATE no door, no yield; my own kill kneels it all the same; a puppet and a companion never yield (mutants: a host without the window still kneels them; my kill dies as before)', async () => {
   fresh();
   const me = player();
   const r = revenantOf(me);
@@ -237,7 +237,8 @@ test('REVENANT-FATE no door, no yield; a kill is a kill; a puppet and a companio
   const { pool: p2 } = rig(me);
   const g = await p2.spawnFoe(2, [0, 0, 0], { feetGiven: true, level: 6, revenant: revenantOf(me) });
   p2.damageFoe(g, 99999, [0, 0, 3], null, { fromPlayer: true, whole: true });
-  assert.equal(g.dead, true, 'a kill is a kill');
+  // PIN MOVED (RVN-OWN-KNEEL, FIELD BUGS 2026-10-17e: my own kill - a Disintegrate's whole - passes the stand and the will and KNEELS it)
+  assert.equal(g.dead, false); assert.ok(g.yielded, 'my kill kneels it');
   assert.equal(F.revenantMayYield({ entity: { revenant: { id: 'x' } }, puppet: 'peer' }), false);
   assert.equal(F.revenantMayYield({ entity: { revenant: { id: 'x' } }, companion: 'rv:x' }), false);
 });
@@ -292,7 +293,8 @@ test('REVENANT-FATE the wire and the doors: a record says `yd` kneeling and `ex`
   // PIN MOVED (RVN3: an unbroken will tears away instead - the same gate)
   // PIN MOVED (FIELD BUGS 2026-10-16b RVN-OWNERS-CHOICE): a whole blow passes the gate only as the owner's own
   // (revenantFate.js ownersWholeKill) - a party member's Disintegrate kneels it (test/systems/revenant/fb1016b_rvnownerschoice.test.js)
-  assert.match(d, /if \(opts\.fates && !ownersWholeKill\(_whole, \{ fromPlayer, peer \}\) && \(!onlineRoom\(\) \|\| !isRoomFoe\(foe\)\) && revenantMayYield\(foe\)\) \{ if \(revenantWillHolds\(foe\)\) tearAwayDungeonFoe\(foe\); else yieldDungeonFoe\(foe\); return; \}/, 'underground: the player\'s alone');
+  // PIN MOVED (RVN-OWN-KNEEL, FIELD BUGS 2026-10-17e: my own kill - a Disintegrate's whole - passes the stand and the will and KNEELS it)
+  assert.match(d, /if \(opts\.fates && \(!onlineRoom\(\) \|\| !isRoomFoe\(foe\)\) && revenantMayYield\(foe\)\) \{ if \(!ownersWholeKill\(_whole, \{ fromPlayer, peer \}\) && revenantWillHolds\(foe\)\) tearAwayDungeonFoe\(foe\); else yieldDungeonFoe\(foe\); return; \}/, 'underground: the player\'s alone');
   // underground a held foe decides nothing and animates nothing of its own, but is still DRAWN - the kneel, the burn
   const arm = d.slice(d.indexOf('      if (f.mobile) {\n'), d.indexOf('_mobileBatches.push(f.batch);'));
   assert.match(arm, /^      if \(f\.mobile\) \{\n[\s\S]*?\n        if \(!_fateHeld\) \{[^\n]*\n\s*\/\/ A5 - DaedraSeducerMobileBehaviour/, 'the mobile arm draws a held foe; only its own update is skipped');

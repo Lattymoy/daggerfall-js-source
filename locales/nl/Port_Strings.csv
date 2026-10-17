@@ -1525,7 +1525,6 @@ net.chat.tradeHelp,"/trade of /tr <tekst> - naar het handelskanaal: kopen, verko
 net.chat.tradeHint,"Iedereen in het handelskanaal - kopen, verkopen en ruilen"
 net.chat.tradeOld,"De kanalen Handel en LFG hebben de volgende serverupdate nodig."
 net.chat.wait,"Kanaal {name} gaat nog open - zeg het zo nog eens."
-pause.door.firmament,"Firmament"
 rest.exhausted.fighting,"Je bent te uitgeput om te vechten - breng jezelf in veiligheid en rust uit!"
 saddle.hello.key,"{key}: zadelpaneel"
 saddle.hello.none,"Zadelpaneel: geef het een toets bij Besturing"

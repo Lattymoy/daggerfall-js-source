@@ -48,10 +48,11 @@ export function levelMeter(stars) {
 }
 
 /**
- * THE PAGE: `detail` the rail's detail pane; `kit` the menu's makers ({ el, divider, meter, door }) - `door(fn)` the
- * menu's hand-off (CAPTAIN-TREE: the stars open over the world, the pause put down first).
+ * THE PAGE: `detail` the rail's detail pane; `kit` the menu's makers ({ el, divider, meter, door, growth }) - `door(fn)`
+ * the menu's hand-off (CAPTAIN-TREE: the stars open over the world, the pause put down first); `growth()` (GROWTH3) the
+ * window's own Growth tab on its Captain's Stars page, where the stars are drawn now.
  */
-export function drawCaptainPage(detail, rerender, { el, divider, meter = null, door = null } = /** @type {any} */ ({})) {
+export function drawCaptainPage(detail, rerender, { el, divider, meter = null, door = null, growth = null } = /** @type {any} */ ({})) {
   ensureHoldingsStyle();
   const m = holdingsProvider()?.captain?.model?.() ?? null;
   detail.append(divider('Captain'));
@@ -68,11 +69,13 @@ export function drawCaptainPage(detail, rerender, { el, divider, meter = null, d
     const left = Math.max(0, s.points - s.set);
     card.append(el('span', 'hld-sub', left ? t('captain.page.left', '{set} of {points} stars set - {left} to spend.', { set: s.set, points: s.points, left }) : t('captain.page.spent', '{set} of {points} stars set.', { set: s.set, points: s.points })));
     card.append(el('span', 'hld-sub', t('captain.page.what', 'Master stars improve your ships\' speed, steering, cargo, hull and trade prices. Commander stars improve guns, shot, boarding and ramming. Your captain level also unlocks metal refits, from Steel at level 3 up to Daedric.')));
+    // GROWTH3 (bible/10-UI/Growth.md section 6; the owner, asked: "Move them"): the stars are drawn in the Growth tab - the
+    // press goes there; a menu with no Growth tab opens them over the world, as CAPTAIN-TREE did
     const open = holdingsProvider()?.captain?.openStars;
-    if (typeof open === 'function') {
+    if (typeof growth === 'function' || typeof open === 'function') {
       const acts = el('div', 'hld-acts');
       const b = el('button', 'act primary', t('captain.page.open', 'Open the stars'));
-      b.onclick = () => (door ? door(() => open()) : open());
+      b.onclick = () => (typeof growth === 'function' ? growth() : door ? door(() => open()) : open());
       acts.append(b);
       card.append(acts);
     }

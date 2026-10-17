@@ -316,6 +316,10 @@ export function choosePath(entity, id) {
 export const PATH_DECLINED_TEXT = 'You can choose a specialisation later in your skill screen.';
 /** The No's line, in the player's language. */
 export const pathDeclinedText = () => t('schools.declined', PATH_DECLINED_TEXT);
+/** GROWTH4 (bible/10-UI/Growth.md section 7): the No's line where the enhanced pause window stands - its Growth tab is
+ *  where every path is read and chosen (the classic skin's stays the skill screen's: its S row opens the same guide). */
+export const PATH_DECLINED_GROWTH_TEXT = 'You can choose a specialisation later on the Growth tab of the pause menu.';
+export const pathDeclinedGrowthText = () => t('schools.declinedGrowth', PATH_DECLINED_GROWTH_TEXT);
 
 /** The first path the game still owes an ASK (asked once a character; the skill screen keeps the rest), or null. */
 export const nextPathChoice = (entity) => (entity?.pathPrompted ? null : pathChoices(entity)[0] ?? null);
@@ -343,15 +347,17 @@ export function pathChoiceRows(entity, id, { others = true } = {}) {
   ];
 }
 
-/** AUDIT SCHOOLS L4 M1: the one ask when SEVERAL paths are open - their names, and where each is chosen. */
-export function pathsOpenRows(open) {
+/** AUDIT SCHOOLS L4 M1: the one ask when SEVERAL paths are open - their names, and where each is chosen (GROWTH4:
+ *  `growth` - the enhanced pause window's Growth tab, else the skill screen). */
+export function pathsOpenRows(open, { growth = false } = {}) {
   return [
     t('schools.open.title', 'Specialisation'),
     '',
     t('schools.open.count', '{n, plural, one {# specialisation is open to you:} other {# specialisations are open to you:}}', { n: open.length }),
     open.map((p) => p.name).join(', '),
     '',
-    t('schools.open.where', 'Choose one in your skill screen. The choice cannot be undone.'),
+    growth ? t('schools.open.whereGrowth', 'Read each and choose one on the Growth tab of the pause menu. The choice cannot be undone.')
+      : t('schools.open.where', 'Choose one in your skill screen. The choice cannot be undone.'),
   ];
 }
 

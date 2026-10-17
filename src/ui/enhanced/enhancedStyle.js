@@ -1917,10 +1917,11 @@ ${badgeCss()}
 .px-tabs { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px;
   border-bottom: 2px solid rgba(125,116,96,0.55); padding: 6px 8px 2px; }
 /* AUDIT LEGACY U5: five tabs (Project Legacy's Family) - the spacing a step tighter, so the five stand on one row in the
-   window's 920 px; the narrower steps below are unchanged */
-.px-tabs button { font: inherit; font-size: 20px; letter-spacing: 0.12em; text-indent: 0.12em;
+   window's 920 px; the narrower steps below are unchanged. GROWTH1: seven (Growth) - a step tighter again, and the
+   pair of diamonds the lit tab's alone (a dark tab's took their room hidden), so the seven stand on one row */
+.px-tabs button { font: inherit; font-size: 20px; letter-spacing: 0.08em; text-indent: 0.08em;
   text-transform: uppercase; color: #d8cfae; background: none; border: 0; cursor: pointer;
-  min-height: 44px; padding: 6px 12px; display: flex; align-items: center; gap: 8px;
+  min-height: 44px; padding: 6px 9px; display: flex; align-items: center; gap: 8px;
   text-shadow: 2px 2px 0 rgba(0,0,0,0.8); transition: none; }
 .px-tabs button .px-c { font-size: 15px; color: rgb(243,239,44); visibility: hidden;
   text-shadow: 2px 2px 0 rgb(93,77,12); }
@@ -1928,6 +1929,7 @@ ${badgeCss()}
   color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
 .px-tabs button.on { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
 .px-tabs button.on .px-c, .px-tabs button:hover .px-c, .px-tabs button:focus-visible .px-c { visibility: visible; }
+.px-tabs button:not(.on) .px-c { display: none; }   /* GROWTH1: the lit tab's pair alone */
 .px-body { flex: 1; overflow-y: auto; padding: 18px 26px; }
 /* System: the same floating list, sized for a panel. */
 .px-menu.px-compact { gap: 0; }
@@ -6241,6 +6243,11 @@ body:has(.travelpanel-junction.show) .qtrack { visibility: hidden; }
    reading text. */
 .lv-sky > * { min-width: 0; }
 .lv-sky .px-ground, .lv-sky .px-vignette { position: absolute; }
+/* GROWTH3: drawn in the pause window's Growth tab (ui/growth/growthStage.js) - the stage's box, not the screen's: the
+   figure and the level cell measured against it rather than the viewport. */
+.lv-sky.lv-embed { position: absolute; z-index: auto; }
+.lv-sky.lv-embed .lv-figure { width: min(880px, 92%); }
+.lv-sky.lv-embed .lv-level { min-width: min(360px, 46%); }
 /* Every band of the column sits over the sky, not in it. */
 .lv-crown, .lv-plate, .lv-stage, .lv-choice, .lv-ribbonwrap, .lv-foot { position: relative; z-index: 1; }
 /* EVERY BAND OWNS ITS ROW. The grid above has six tracks for six bands,

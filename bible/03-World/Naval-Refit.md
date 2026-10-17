@@ -428,7 +428,10 @@ CHANGED (`systems/naval/captainTree.js`, the law; pure):
   (or held), it is taken back with those joined only through it; Accept gives the ledger the sky (`setTree`, through the
   law again) and tells the save. Every change is pending until then, and a close with one unaccepted asks once. Names are
   laid out where they cover no star and no other name. Opened from the Captain page's card through the sea's window door
-  (`createCaptainStarsOverlay`, the pause put down first as the Fleet's doors do).
+  (`createCaptainStarsOverlay`, the pause put down first as the Fleet's doors do) - since GROWTH3 (2026-10-17, the owner:
+  "instead of having ascend in one place and the firmament trees in another (including the new naval tree)"; `10-UI/Growth.md`
+  section 6) the card's press opens the pause window's Growth tab on its Captain's Stars page, the sky drawn in the pane
+  (its `embed` mode); a menu with no Growth tab still opens it over the world.
 - **The Captain page** (`ui/captainPage.js`): a card above the crowns - her level, a meter of her XP from this level's
   floor to the next's, the stars set of her points, what the two halves better, and the door.
 

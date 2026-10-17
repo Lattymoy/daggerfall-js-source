@@ -20,7 +20,7 @@ audited build.
 
 ## 1. The tab (HOLDINGS)
 
-The enhanced pause window's tabs are **Quests, Stats, Holdings, System** (`ui/enhanced/enhancedMenu.js` `PAUSE_TABS`; a landing
+The enhanced pause window's tabs are **Quests, Stats, Growth, Holdings, Family, Tutorials, System** (`ui/enhanced/enhancedMenu.js` `PAUSE_TABS`; GROWTH1's Growth tab, `10-UI/Growth.md`; a landing
 names any of them - `PAUSE_TAB_IDS`, the strip's own list). The Stats rail is the character sheet again - Character,
 Attributes, Skills, Advantages, Standing, Effects, and online the Professions page. The Holdings rail (`pauseHoldings`,
 PX6's rail-and-detail bones a fourth time) holds what the player owns and who follows them, each page while it has a

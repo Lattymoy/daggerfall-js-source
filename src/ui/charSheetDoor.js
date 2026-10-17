@@ -39,10 +39,9 @@
 import { isEnhanced } from '../systems/uiSkin.js';
 import { PIXEL_FAMILIES } from './pixelifyFive.js';   // FONT3: the wait card names the enhanced face first
 import { eventActions } from './input.js';   // MAC-C: the REGISTRY's answer for the two window keys
-import { firmamentOver } from './firmamentOver.js';   // FIRM1: the Firmament, swapped in over the Stats page
 import { mountEnhancedChunk, paintChunkNotice } from './enhanced/enhancedChunk.js';   // MENU1: the one lazy-chunk door, and the notice it paints when a chunk is gone
 import { registerOverlay } from './enhanced/enhancedOverlays.js';   // PX28: Tab puts it away
-import { pauseMenuHooks, pauseMenuAct } from './pauseDoor.js';   // F5-QUESTS: the pause window's own hooks and act - a cycle (pauseDoor imports this door), read only at call time
+import { pauseMenuHooks, pauseMenuAct, openPauseFlow } from './pauseDoor.js';   // F5-QUESTS: the pause window's own hooks and act - a cycle (pauseDoor imports this door), read only at call time
 import { CharSheet, LevelUpScreen, charSheetArtLoaded } from './charsheet.js';
 import { charSheetHooks } from './charSheetNav.js';
 import { VirtueLevelUpScreen } from './virtueLevelUp.js';   // ORL1
@@ -101,6 +100,25 @@ export function charSheetDoorReady() {
 }
 
 /**
+ * GROWTH1 (bible/10-UI/Growth.md section 4): THE LEVEL-UP'S ROLLOUT for `entity`, one home - the screen a level OWED wants
+ * (ORL1's Virtue screen for a mod-law character, DFU's own for any other; the fanfare only while the notice still owes
+ * it - LV2), or null with nothing owed (the view of the stars is the lazy chunk's - levelUp/levelUpView.js viewOnlyScreen,
+ * never this boot door's import). This door's own level-up and the pause window's Growth tab (its Level page draws the
+ * Ascension in its pane) both build it here. `virtue` the caller's own read of the law, when it made one.
+ */
+export function levelUpScreenFor(entity, virtue = !entity?.oghmaLevelUp && usesVirtueLeveling(entity)) {
+  if (!entity?.readyToLevelUp) return null;
+  // LV2: ...and whether the WINDOW still owes the fanfare. On the
+  // enhanced skin ui/levelUp/levelNotice.js played it at the moment the level
+  // was earned, which may be long before this window is asked for;
+  // playing it again here would announce one event twice. The notice
+  // answers for the level it announced and for no other, so a second
+  // level earned while the first was unspent still sounds.
+  const fanfare = levelNotices.fanfareOwed(entity?.pendingLevel ?? null);
+  return virtue ? new VirtueLevelUpScreen(entity, { fanfare }) : new LevelUpScreen(entity, undefined, { fanfare });
+}
+
+/**
  * Build the sheet this skin wears. `deps` is charSheetHooks' own bag -
  * { entity, inventory, spellbook, questMessages, notebook, artDeps } -
  * and a host that hands no hook gets the sheet's honest refusal on that
@@ -150,16 +168,7 @@ export function createCharSheetWindow(deps = {}) {
   // them.
   if (deps.entity?.readyToLevelUp) {
     const virtue = !deps.entity?.oghmaLevelUp && usesVirtueLeveling(deps.entity);
-    // LV2: ...and whether the WINDOW still owes the fanfare. On the
-    // enhanced skin ui/levelUp/levelNotice.js played it at the moment the level
-    // was earned, which may be long before this window is asked for;
-    // playing it again here would announce one event twice. The notice
-    // answers for the level it announced and for no other, so a second
-    // level earned while the first was unspent still sounds.
-    const fanfare = levelNotices.fanfareOwed(deps.entity?.pendingLevel ?? null);
-    const rollout = () => (virtue
-      ? new VirtueLevelUpScreen(deps.entity, { fanfare })
-      : new LevelUpScreen(deps.entity, undefined, { fanfare }));
+    const rollout = () => levelUpScreenFor(deps.entity, virtue);   // GROWTH1: the screen's one home (LV2's fanfare with it)
     // `document` for the reason this file's other fork gives: node
     // drives these hosts headless and keeps the canvas windows.
     if (isEnhanced() && typeof document !== 'undefined') return enhancedLevelUpOverlay(rollout(), deps.entity);
@@ -190,6 +199,10 @@ export function createCharSheetWindow(deps = {}) {
     // same hooks: PX25 built the Stats page to take them.
     return enhancedSheetPageOverlay(hooks, deps.entity, deps.pause ?? null);   // F5-QUESTS: and the host's pause bag
   }
+  // GROWTH4 (bible/10-UI/Growth.md section 7): the classic sheet's S and W rows open the Growth tab's guide - the enhanced
+  // pause window on either skin (pauseDoor.js growthPageAt), pushed as the sheet's own child with this host's pause bag;
+  // its Resume comes back to the sheet. No document (node), no hook: the rows keep DFU's boxes.
+  if (typeof document !== 'undefined') hooks.growth = (at) => openPauseFlow(() => {}, { ...(deps.pause?.() ?? {}), at, onResume: () => {} });
   return new CharSheet(deps.entity, hooks);
 }
 
@@ -222,26 +235,15 @@ function enhancedSheetPageOverlay(hooks, entity = null, pause = null) {
   let view = null;
   let seams = null;   // F5-QUESTS: the enhanced menu module, once it lands - the Save and Load panes' picks (SLOTS1)
   let unregister = () => {};   // PX28
-  let ascendView = null;   // ASCEND-ANYTIME: the Ascension, while it has this page's place
-  let ascendHost = null;
   const host = document.createElement('div');
   host.id = 'enhanced-sheetpage';
   // z-index 13, the pause door's depth: they are peers, never stacked.
   host.style.cssText = 'position:fixed;inset:0;z-index:13;background:transparent;overflow:hidden';
   document.body.append(host);
-  // FIRM1: the sky over this page, as the Ascension is (ui/firmamentOver.js) - declared before the page's options read it
-  const firm = firmamentOver({
-    alive: () => !fired,
-    below: () => { try { view?.unmount?.(); } catch { /* already gone */ } view = null; },
-    back: () => remountPage(),
-  });
+  // GROWTH3: the Firmament and the Ascension are drawn IN the window now (its Growth tab - ui/growth/growthStage.js), so
+  // nothing stands over this page: its unmount takes a face on the stage down with it
   const close = () => {
     if (fired) return;
-    firm.drop();   // FIRM1: the sheet key closes the Firmament too
-    try { ascendView?.destroy?.(); } catch { /* already gone */ }   // ASCEND-ANYTIME: the sheet key closes whatever is on top
-    ascendView = null;
-    ascendHost?.remove();
-    ascendHost = null;
     try { view?.unmount?.(); } catch { /* already gone */ }
     view = null;
     host.remove();
@@ -300,10 +302,9 @@ function enhancedSheetPageOverlay(hooks, entity = null, pause = null) {
     if (toPack) pack();                   // the door closes the page FIRST, then the host's arm fills the slot it freed
     else close();
   }
-  /** THE PAGE'S OWN OPTIONS, named once. ASCEND-ANYTIME mounts this
-   *  page a SECOND time - after a view of the stars closes over it -
-   *  and a second copy of this bag is two pages that drift apart the
-   *  day a door is added to one of them. */
+  /** THE PAGE'S OWN OPTIONS, named once (ASCEND-ANYTIME mounted this
+   *  page a second time after a view of the stars closed over it; since
+   *  GROWTH3 the stars are drawn in the page, and it mounts once). */
   function pageOpts() {
     // F5-QUESTS (2026-09-26, Mac: "Cant see quest on f5 menu but can on tab menu"): THE HOST'S PAUSE BAG, under the
     // sheet's own doors. This page IS the pause window opened on Stats, and it was handed those doors and nothing
@@ -319,12 +320,10 @@ function enhancedSheetPageOverlay(hooks, entity = null, pause = null) {
       // same honest refusal the classic sheet gives.
       // ESC-BOOK: through the HOST's arms (sheetPageDoors) - the sheet's factories built windows no slot held.
       ...sheetPageDoors(bag, close),
-      // ASCEND-ANYTIME: this page can always offer it, because this
-      // door owns the entity the button is about. A host that handed
-      // no entity gets no button, the same refusal the three above
-      // give for a door they were handed none of.
-      openAscend: entity ? openAscend : undefined,
-      openFirmament: firm.hook,   // FIRM1: online alone (firmamentOver.js)
+      // GROWTH1 (was ASCEND-ANYTIME's Ascend door): the Growth tab's Level page draws the Ascension in its pane, and
+      // this door owns the entity it is about. A host that handed no entity gets no Ascension, the same refusal the
+      // three above give for a door they were handed none of.
+      ascendScreen: entity ? () => levelUpScreenFor(entity) : undefined,
     }, () => seams);
     return {
       mode: 'pause',
@@ -332,69 +331,6 @@ function enhancedSheetPageOverlay(hooks, entity = null, pause = null) {
       onAction: pauseMenuAct(menuHooks, close),
       hooks: menuHooks,
     };
-  }
-
-  /** ASCEND-ANYTIME: take the Ascension down and leave this page as it
-   *  was. Safe to call with none up, which is what `close` relies on. */
-  function dropAscend() {
-    try { ascendView?.destroy?.(); } catch { /* already gone */ }
-    ascendView = null;
-    ascendHost?.remove();
-    ascendHost = null;
-  }
-
-  /**
-   * ASCEND-ANYTIME: the Stats page's Ascend button, on the sheet key's
-   * own overlay.
-   *
-   * A level OWED is not this window's business at all - the door above
-   * already answers that press with the rollout, and this page is only
-   * ever built when nothing is owed. So there is one answer here: a
-   * VIEW of the stars (levelUpView's `viewOnlyScreen`), swapped in over
-   * this page and handing it back when it closes.
-   *
-   * Through the ONE lazy-chunk door, so a chunk that will not load says
-   * so instead of doing nothing - and this page stays up behind the
-   * notice rather than leaving the player on a dead button.
-   */
-  function openAscend() {
-    if (fired || ascendHost || !entity) return;
-    const h = document.createElement('div');
-    h.id = 'enhanced-ascend-view';
-    // 14: above this page's 13, the level-up overlay's own depth.
-    h.style.cssText = 'position:fixed;inset:0;z-index:14;background:transparent;overflow:hidden';
-    document.body.append(h);
-    ascendHost = h;
-    const drop = () => { if (ascendHost === h) dropAscend(); else h.remove(); };
-    mountEnhancedChunk({
-      load: () => import('./enhanced/enhancedLevelUp.js'),
-      alive: () => !fired && ascendHost === h,
-      host: h, onDismiss: drop, label: 'ascend',
-      mount: ({ mountEnhancedLevelUp, viewOnlyScreen }) => {
-        // This page gives the keyboard up BEFORE the Ascension takes
-        // it: two capture handlers on one window would answer Escape
-        // twice.
-        try { view?.unmount?.(); } catch { /* already gone */ }
-        view = null;
-        ascendView = mountEnhancedLevelUp(h, {
-          screen: viewOnlyScreen(entity, usesVirtueLeveling(entity)),
-          entity,
-          onExit: () => {
-            dropAscend();
-            if (!fired) remountPage();
-          },
-        });
-      },
-    });
-  }
-
-  /** The Stats page again, after a view closed over it. */
-  function remountPage() {
-    mountEnhancedChunk({
-      load: () => import('./enhanced/enhancedMenu.js'),
-      alive: () => !fired, host, onDismiss: close, label: 'charsheet',
-      mount: (mod) => { seams = mod; view = mod.mountEnhancedMenu(host, pageOpts()); },
-    });
   }
 
   // `globalThis` and OPTIONAL, for the reason this file's own forks

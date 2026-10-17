@@ -75,8 +75,6 @@ import { STAT_KEYS_ORDER } from '../../systems/chargen.js';
 import { SKILLS, SKILL_NAMES, skillValue, displaySkillValue, realSkillValue, skillValueText, skillModOf } from '../../systems/skills.js';
 import { mentorStatusText } from '../../systems/mentorMode.js';   // SOFTCAP1
 import { masterSkillsActive, masterSkillsSwitchable, masterSkillsBlockReason, setMasterSkills, MASTER_SKILLS_ABOUT, MASTERY_GROUP_NAMES, masterySlots, masteryCandidates, masteryChoiceRows, masterSkill, isMasteredSkill } from '../../systems/masterSkills.js';   // SOFTCAP3/4
-import { pathOf, pathChoices, pathChoiceRows, pathPowerRows, pathSchoolsText, pathPossible, choosePath } from '../../systems/arcanePaths.js';   // SCHOOLS1: the specialisation
-import { martialPathOf, martialChoices, martialChoiceRows, martialPowerRows, martialSkillsText, martialPossible, chooseMartialPath } from '../../systems/martialPaths.js';   // MARTIAL1: and the martial one
 import { liveStat, maxFatigue, FATIGUE_MULTIPLIER } from '../../systems/statMods.js';
 import { entityMaxEncumbrance, handToHandMinDamage, handToHandMaxDamage } from '../../combat/formulas.js';   // AUDIT 26: PlayerEntity.MaxEncumbrance, enchantment allowance and all; AUDIT 63 F34: the H2H damage line
 import { carriedWeight } from '../charsheet.js';
@@ -191,22 +189,7 @@ export function sheetModel(entity) {
       candidates: masteryCandidates(e).map((id) => ({ id, name: SKILL_NAMES[id], rows: masteryChoiceRows(e, id, SKILL_NAMES) })),
       isMastered: (id) => isMasteredSkill(e, id),
       master: (id) => masterSkill(e, id, SKILL_NAMES),
-      // SCHOOLS1 (bible/06-Systems/Arcane-Specialisations.md section 3): THE SPECIALISATION - the path chosen (what it is
-      // and does), the paths two mastered schools open now (what each does, and its box's rows), and the one door that
-      // chooses (systems/arcanePaths.js choosePath - permanent)
-      // AUDIT SCHOOLS L4 8: each with its two schools named, and whether this class can ever meet one at all
-      path: pathOf(e) ? { id: pathOf(e).id, name: pathOf(e).name, schools: pathSchoolsText(pathOf(e)), rows: pathPowerRows(pathOf(e)) } : null,
-      pathChoices: pathChoices(e).map((p) => ({ id: p.id, name: p.name, schools: pathSchoolsText(p), rows: pathPowerRows(p), ask: pathChoiceRows(e, p.id) })),
-      pathPossible: pathPossible(e),
-      choosePath: (id) => choosePath(e, id),
-      // MARTIAL1 (bible/05-Combat/Martial-Specialisations.md section 3): THE MARTIAL SPECIALISATION, the same shape - its
-      // two weapon skills where a path's two schools stand
-      martial: {
-        path: martialPathOf(e) ? { id: martialPathOf(e).id, name: martialPathOf(e).name, schools: martialSkillsText(martialPathOf(e)), rows: martialPowerRows(martialPathOf(e)) } : null,
-        choices: martialChoices(e).map((p) => ({ id: p.id, name: p.name, schools: martialSkillsText(p), rows: martialPowerRows(p), ask: martialChoiceRows(e, p.id) })),
-        possible: martialPossible(e),
-        choose: (id) => chooseMartialPath(e, id),
-      },
+      // SCHOOLS1/MARTIAL1's specialisations moved to the Growth tab's guide (GROWTH2, ui/growth/specGuide.js specGuideModel)
       // SOFTCAP6: the Master Skills page - each career group with its slots and every one of its skills: the REAL
       // value, mastered or not, whether it can be mastered now (and the box's rows), and why not in a word
       groups: ['primary', 'major', 'minor'].map((g) => {

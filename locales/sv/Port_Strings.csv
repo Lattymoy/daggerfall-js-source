@@ -1570,7 +1570,6 @@ net.chat.tradeHelp,"/trade eller /tr <text> - till handelskanalen: köpa, sälja
 net.chat.tradeHint,"Alla i handelskanalen - köper, säljer och byter"
 net.chat.tradeOld,"Handels- och LFG-kanalerna behöver serverns nästa uppdatering."
 net.chat.wait,"Kanalen {name} öppnas fortfarande - säg det igen om ett ögonblick."
-pause.door.firmament,"Firmament"
 rest.exhausted.fighting,"Du är för utmattad för att slåss - ta dig undan och vila!"
 saddle.hello.key,"{key}: sadelpanel"
 saddle.hello.none,"Sadelpanel: ge den en tangent under Kontroller"

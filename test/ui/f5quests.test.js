@@ -73,7 +73,7 @@ test('F5-QUESTS: F5\'s page is handed the host\'s pause bag UNDER the sheet\'s o
   assert.ok(bagAt > 0 && opts.includes('const bag = pause?.() ?? {};'), 'the page spreads the bag');
   // ESC-BOOK: the three doors are the BAG's own arms, wrapped to close the page first (sheetPageDoors) - the sheet's
   // factories built windows no host slot held - and Ascend is the page's; both written after the bag
-  for (const own of ['...sheetPageDoors(bag, close),', 'openAscend:']) {
+  for (const own of ['...sheetPageDoors(bag, close),', 'ascendScreen:']) {   // PIN MOVED (GROWTH1): the Growth tab's rollout, where the Ascend door was
     assert.ok(opts.indexOf(own) > bagAt, `${own} is written after the bag`);
   }
   assert.match(opts, /const menuHooks = pauseMenuHooks\(\{/, 'the slot routing is the pause door\'s');

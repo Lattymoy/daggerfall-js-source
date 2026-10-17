@@ -121,8 +121,13 @@ function meterRow(label, now, max, fill) {
  * builds one, because which one it is is ui/charSheetDoor.js's
  * question and the answer carries a mod's law behind it.
  *
+ * GROWTH3 (bible/10-UI/Growth.md section 4): `embed` draws it IN the pause window's Growth tab (ui/growth/growthStage.js)
+ * - the stage's size, not the screen's, and no overlay or Escape of its own: the window's back stack is the way out, and
+ * a level owed and left stays owed (its bonus points remembered on the character - advancement.js bonusPoolFor), to be
+ * spent here or wherever a level-up opens next. The OK still commits, and `onExit` follows it.
+ *
  * @param {HTMLElement} hostEl
- * @param {{screen: any, entity?: any, onExit?: () => void}} d
+ * @param {{screen: any, entity?: any, onExit?: () => void, embed?: boolean}} d
  */
 export function mountEnhancedLevelUp(hostEl, d = {}) {
   injectEnhancedStyle();
@@ -140,9 +145,11 @@ export function mountEnhancedLevelUp(hostEl, d = {}) {
   let unregister = () => {};
   let dead = false;
 
+  const embed = d.embed === true;
   const root = el('div', 'px-home lv-sky');
+  if (embed) root.classList.add('lv-embed');   // GROWTH3
   root.setAttribute('role', 'dialog');
-  root.setAttribute('aria-modal', 'true');
+  root.setAttribute('aria-modal', embed ? 'false' : 'true');
   root.setAttribute('aria-label', 'Level up');
 
   // ── THE SKY ──────────────────────────────────────────────────
@@ -150,8 +157,8 @@ export function mountEnhancedLevelUp(hostEl, d = {}) {
   // animates at, and nothing at all under prefers-reduced-motion.
   const ground = document.createElement('canvas');
   ground.className = 'px-ground';
-  const vw = () => globalThis.innerWidth ?? 1280;
-  const vh = () => globalThis.innerHeight ?? 720;
+  const vw = () => (embed && root.clientWidth) || (globalThis.innerWidth ?? 1280);   // GROWTH3: the stage's, in the tab
+  const vh = () => (embed && root.clientHeight) || (globalThis.innerHeight ?? 720);
   drawPixelGround(ground, vw(), vh(), 0);
   const still = typeof globalThis.matchMedia === 'function'
     && globalThis.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -530,6 +537,7 @@ export function mountEnhancedLevelUp(hostEl, d = {}) {
 
   function onKey(e) {
     if (dead || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (embed && !root.isConnected) return;   // GROWTH3: a stage between two draws of its page hears nothing
     const t = e.target;
     if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
     const key = focusedKey(screen);
@@ -553,8 +561,9 @@ export function mountEnhancedLevelUp(hostEl, d = {}) {
     if (!used) {
       // Escape is the only other key this screen answers, and it
       // answers it the way the OK button does: a level-up has one
-      // exit, and it is spent.
-      if (overlayAction(e) !== 'back') return;
+      // exit, and it is spent. GROWTH3: in the tab the window's back
+      // stack owns it - the level stays owed, nothing is lost.
+      if (embed || overlayAction(e) !== 'back') return;
       confirm();
     }
     // A MODAL OVERLAY OWNS ITS INPUT (U50's law): on CAPTURE and
@@ -573,11 +582,14 @@ export function mountEnhancedLevelUp(hostEl, d = {}) {
   const onResize = () => { if (!dead) drawPixelGround(ground, vw(), vh(), 0); };
   if (still) globalThis.addEventListener?.('resize', onResize);
   globalThis.addEventListener?.('keydown', onKey, true);
-  unregister = registerOverlay(closeArm);
+  if (!embed) unregister = registerOverlay(closeArm);   // GROWTH3: in the tab the pause window is the overlay
+  // GROWTH3: in the tab the stage moves under it - the sky redrawn to its size
+  let watch = null;
+  if (embed) try { watch = new globalThis.ResizeObserver(onResize); watch.observe(root); } catch { watch = null; }
   paint();
   // The first focus goes to the figure, not the document: this screen
   // is reachable by keyboard alone from the moment it opens.
-  stars[0]?.node?.focus?.({ preventScroll: true });
+  if (!embed) stars[0]?.node?.focus?.({ preventScroll: true });
 
   return {
     paint,
@@ -589,8 +601,12 @@ export function mountEnhancedLevelUp(hostEl, d = {}) {
       groundTimer = null;
       globalThis.removeEventListener?.('keydown', onKey, true);
       if (still) globalThis.removeEventListener?.('resize', onResize);
+      watch?.disconnect?.();
       unregister();
       root.remove();
     },
+    /** GROWTH3: the stage's word that it moved, and the tab's Escape (the level-up keeps nothing of its own to shut). */
+    resize: () => onResize(),
+    back: () => false,
   };
 }

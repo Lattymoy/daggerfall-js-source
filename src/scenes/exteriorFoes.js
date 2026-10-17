@@ -985,13 +985,13 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // body down is nobody's felling) - the layer hands it on, a felling's striker
       if (f.companion != null) { f.entity.health = 1; if (!f._knockedOut) f._knockedBy = striker; f._knockedOut = true; return; }
       // REVENANT-FATE: one of the player's revenants beaten is never killed outright - it YIELDS (whoever struck: the
-      // revenant is the player's own), its fate the player's; a kill (a Disintegrate's whole) is a kill - MY kill alone
-      // (RVN-OWNERS-CHOICE: anyone else's whole blow is a killing blow like any - revenantFate.js ownersWholeKill)
+      // revenant is the player's own), its fate the player's; MY kill (a Disintegrate's whole) passes its stand and will
+      // and still kneels it (RVN-OWNERS-CHOICE, RVN-OWN-KNEEL: anyone else's is a killing blow like any - ownersWholeKill)
       // RVN4 (Feud-Arc.md 15.1): one of rank 3 and up, once a stand, comes back instead - its last stand (before the
-      // trap: no soul taken by that blow); a kill is a kill
+      // trap: no soul taken by that blow); my kill passes it
       if (f.entity?.revenant?.id && !ownersWholeKill(_whole, { fromPlayer, peer }) && revenantLastStandDue(f)) { lastStand(f); return; }
       // RVN3 (Feud-Arc.md 14.2): one of rank 3 and up whose will this fight has not broken does not kneel - it tears away
-      if (fates && !ownersWholeKill(_whole, { fromPlayer, peer }) && revenantMayYield(f)) { if (revenantWillHolds(f)) tearAway(f); else yieldFoe(f); return; }
+      if (fates && revenantMayYield(f)) { if (!ownersWholeKill(_whole, { fromPlayer, peer }) && revenantWillHolds(f)) tearAway(f); else yieldFoe(f); return; }
       // X5: the SOUL TRAP intercept, where EnemyEntity.SetHealth's
       // override sits (:157-177) - before the death, every source alike.
       // AUDIT WORLD6b B2 (AUDIT WORLD2 B9's law, the dungeon's): a PEER's killing blow reads no gem of mine and fills

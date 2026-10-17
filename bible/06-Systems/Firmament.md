@@ -3,7 +3,7 @@
 > Design page and record (2026-10-13). One pull request, five parts: the sky and the law (`src/net/firmament/firmamentTree.js`,
 > `src/net/firmament/firmamentLaw.js`), the account service (`server-account/src/firmament.js`, migration 0114), the client's book
 > and powers (`src/net/firmament/firmamentBook.js`, `src/systems/firmamentLive.js`, `src/systems/firmamentPowers.js`), the window
-> (`src/ui/firmamentWindow.js`, `src/ui/firmamentOver.js`) and the lab (`firmament.html`). Where this page and the code
+> (`src/ui/firmamentWindow.js`; its door `firmamentOver.js` DELETED by GROWTH3, `10-UI/Growth.md`) and the lab (`firmament.html`). Where this page and the code
 > disagree, the code's own headers and the pins are what runs.
 
 ## 1. What was asked
@@ -203,9 +203,11 @@ edge (`skillSoftcap.js combatEdge`), the loot's and the sets' caps.
 
 ## 7. The window (`ui/firmamentWindow.js`)
 
-The whole sky over the whole screen, swapped in over the pause window from the **Stats page's Firmament button** beside
-Ascend (both doors: Escape and Tab's dial, `pauseDoor.js`; the sheet key, `charSheetDoor.js`; one construction seam,
-`firmamentOver.js`). Online alone - offline there is no button.
+The whole sky, drawn in the pause window's **Growth tab** on its Firmament page (GROWTH3, 2026-10-17, the owner: "give
+the firmament, level up page, and specializations its own tab within the pause menu"; `10-UI/Growth.md` section 6) - the
+window widened to nearly the screen's, a press to full screen, and on a phone a door that opens it over everything. It
+was the Stats page's Firmament button beside Ascend, swapped in over the window (`firmamentOver.js`, DELETED). Online
+alone - offline the page says what the sky is and why it waits.
 
 - Choose a sign (the seven great stars breathe until one is chosen); hover a star to read it and see the way to it lit;
   press to allocate the way; right-press (or long-press on a phone) to take a star back with everything beyond it; drag
