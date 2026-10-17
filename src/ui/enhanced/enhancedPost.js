@@ -9,8 +9,12 @@
 // that lands it in the pack of the online character being played (net/serverPost.js PostBox.claim). The box is the
 // host's (scenes/world.js), looked at on the letterbox's clock; both the count and the window follow its `version` on a
 // tick of their own, since the pause face draws itself only when it is opened, closed or Escaped.
+// PRIVATE-REPORT (2026-10-17): and the door to a private report - every player's, under the post - and, for a reader of
+// the reports, their inbox (ui/enhanced/enhancedReport.js), in this same window.
 import { REFUSALS } from '../../net/accountClient.js';
 import { placeBeside } from './enhancedTimers.js';
+import { reportPane, reportPaneKey } from './enhancedReport.js';   // PRIVATE-REPORT
+import { t } from '../../systems/textManager.js';
 
 /** How often the mark's count and the open window look at the box's version, ms. */
 export const POST_TICK_MS = 500;
@@ -105,9 +109,11 @@ export function anchorPost(mark, glass, profile, host, gap = 10) {
  * THE WINDOW. `box()` the host's PostBox (net/serverPost.js), or null when there is none. `keep` is the caller's record of
  * what the window was showing (the piece open, the line said) - AUDIT SERVER-POST: the pause face is rebuilt by anything
  * that renders it (a quest's clock lapsing, the cloud's answer), and the window rebuilt with it reopens where it stood.
- * Answers { root, stop, draw }: the caller stops the tick when the window goes (a render, an unmount).
+ * Answers { root, stop, draw }: the caller stops the tick when the window goes (a render, an unmount). PRIVATE-REPORT:
+ * `keep.view` 'report', 'inbox' or 'reading' shows a report pane in place of the post (`keep.which` the inbox's list,
+ * `keep.reportId` the report open) - the pause face opened at 'report' (`/bug`) lands on the form.
  * @param {Document} doc
- * @param {{ box: () => any, onClose: () => void, every?: number, keep?: { openId?: string|null, said?: string, ok?: boolean } }} o
+ * @param {{ box: () => any, onClose: () => void, every?: number, keep?: { openId?: string|null, said?: string, ok?: boolean, view?: string|null, which?: string, reportId?: string } }} o
  */
 export function postWindow(doc, { box, onClose, every = POST_TICK_MS, keep = {} }) {
   const el = (/** @type {string} */ tag, /** @type {string|null} */ cls, /** @type {string|null} */ text = null) => {
@@ -143,7 +149,11 @@ export function postWindow(doc, { box, onClose, every = POST_TICK_MS, keep = {} 
   let openId = typeof keep.openId === 'string' ? keep.openId : null;
   /** @type {any} the open piece's whole, or `{ error }` where it would not open */
   let opened = null;
-  let seen = -1;
+  /** @type {string|null} the box's and its desk's versions last drawn */
+  let seen = null;
+  /** PRIVATE-REPORT: the report pane standing in the view, kept across draws - a draw that keeps its key asks it to
+   *  update, never rebuilds it (the form is never rebuilt under the hands typing in it). */
+  /** @type {any} */ let pane = null;
   /** AUDIT SERVER-POST: WHERE THE FOCUS GOES after the next draw - a draw empties the view, and a focus left on a button it
    *  took away fell to the page's body, where a Tab reached nothing. A key: 'back', 'claim', 'throw', 'retry', a row's id. */
   /** @type {string|null} */ let focusTo = null;
@@ -156,14 +166,49 @@ export function postWindow(doc, { box, onClose, every = POST_TICK_MS, keep = {} 
     const a = /** @type {any} */ (doc).activeElement;
     return a && view.contains?.(a) ? (a.getAttribute?.('data-key') ?? null) : null;
   };
-  const keyed = (/** @type {any} */ n, /** @type {string} */ key) => { n.setAttribute('data-key', key); return n; };
+  // PRIVATE-REPORT (AUDIT PRIVATE-REPORT UI-1): and `data-focus`, the key the pause face's repaint finds a control by
+  // (ui/domRepaint.js focusOf) - a face rebuilt gives the focus and the caret back to the same field
+  const keyed = (/** @type {any} */ n, /** @type {string} */ key) => { n.setAttribute('data-key', key); n.setAttribute('data-focus', `pm-${key}`); return n; };
   const focusKey = (/** @type {string|null} */ key) => {
     if (!key) return;
     const n = /** @type {HTMLElement|null} */ (view.querySelector?.(`[data-key="${key}"]`));
-    if (n) n.focus?.({ preventScroll: true }); else close.focus?.();
+    if (n) { n.focus?.({ preventScroll: true }); return; }
+    // AUDIT PRIVATE-REPORT UI-6: in a report pane, a control gone (a closed report's row, a state's button) gives the focus
+    // to the pane's first control - the window's Close was where a reflexive Enter shut the whole window
+    const first = keep.view ? /** @type {HTMLElement|null} */ (view.querySelector?.('[data-key]:not([disabled])')) : null;
+    (first ?? close).focus?.();
   };
 
   const empty = (/** @type {string} */ text) => view.append(el('p', 'pm-empty', text));
+
+  /** PRIVATE-REPORT: TO ANOTHER PANE - 'report', 'inbox', 'reading' - or back to the post (`null`). `extra.focus` the key the
+   *  focus lands on after the draw. */
+  const go = (/** @type {string|null} */ to, /** @type {any} */ extra = {}) => {
+    const { focus = null, ...rest } = extra;
+    keep.view = to;
+    Object.assign(keep, rest);
+    setOpen(null); opened = null; pane = null;
+    tell('');
+    focusTo = focus;
+    draw(true);
+  };
+  /** PRIVATE-REPORT: THE DOORS UNDER THE POST - the report form, every player's; the inbox, a reader's (the box carries
+   *  their count, and nobody else's box carries one). */
+  const reportDoors = (/** @type {any} */ b) => {
+    if (!b?.desk || b.state === 'unknown' || b.state === 'signed-out') return;
+    const doors = el('div', 'pm-foot pm-doors');
+    doors.append(keyed(button('pm-report', t('report.door', 'Report a bug or exploit'), () => go('report', { focus: 'kind-exploit' })), 'report'));
+    if (b.reports) doors.append(keyed(button('pm-inbox', b.reports.unread ? t('report.inboxDoorNew', 'Private reports ({n} new)', { n: b.reports.unread }) : t('report.inboxDoor', 'Private reports'), () => go('inbox', { which: 'open', focus: 'tab-open' })), 'inbox'));   // AUDIT PRIVATE-REPORT UI-6: into the pane, never to Close
+    view.append(doors);
+  };
+  /** The window's kit, for a report pane (ui/enhanced/enhancedReport.js reportPane). */
+  const kit = (/** @type {any} */ b) => ({
+    keep, box: b, el, button, keyed, tell, go, day: postDayText,
+    // AUDIT PRIVATE-REPORT CLI-7: a report's own sentence for no session - the post's ("...to receive post") was the wrong
+    // one, and untranslated
+    refusal: (/** @type {string|undefined} */ w) => (w === 'signed-out' ? t('report.signIn', 'Sign in to an account to send a private report.') : postRefusalText(w)),
+    held: focusKeyOf, focus: (/** @type {string|null} */ key) => { if (key) focusKey(key); },
+  });
 
   const drawList = (/** @type {any} */ b) => {
     if (!b || b.state === 'unknown') { empty('Looking in your mailbox...'); return; }
@@ -231,12 +276,23 @@ export function postWindow(doc, { box, onClose, every = POST_TICK_MS, keep = {} 
 
   const draw = (force = false) => {
     const b = box();
-    const v = b ? b.version : -2;
+    const v = b ? `${b.version}.${b.desk?.version ?? 0}` : '-';
     if (!force && v === seen) return;
     seen = v;
+    // PRIVATE-REPORT: a report pane - updated where it stands, rebuilt only when its key moves
+    const paned = !!(keep.view && b?.desk);
+    title.textContent = !paned ? 'Mailbox' : keep.view === 'report' ? t('report.title', 'Report privately') : t('report.inboxDoor', 'Private reports');
+    if (paned && pane && pane.key === reportPaneKey(keep, b)) {
+      pane.update();
+      if (focusTo) { const to = focusTo; focusTo = null; focusKey(to); }
+      return;
+    }
+    if (!paned) pane = null;
     const had = focusKeyOf();
     view.textContent = '';
-    if (openId) drawOne(b); else drawList(b);
+    if (paned) { pane = reportPane(kit(b)); view.append(pane.root); }
+    else if (openId) drawOne(b);
+    else { drawList(b); reportDoors(b); }
     if (say.textContent !== (keep.said ?? '')) say.textContent = keep.said ?? '';
     const to = focusTo ?? had;
     focusTo = null;
@@ -283,6 +339,16 @@ export function postWindow(doc, { box, onClose, every = POST_TICK_MS, keep = {} 
   let tick = null;
   const step = () => { if (win.isConnected === false && tick) { clearInterval(tick); tick = null; return; } draw(); };
   tick = setInterval(step, every);
-  if (!openId) globalThis.requestAnimationFrame?.(() => close.focus?.());
+  // PRIVATE-REPORT: opened on the form (`/bug`), the focus on its choice - the draft's kind, else the first (AUDIT
+  // PRIVATE-REPORT UI-14). AUDIT PRIVATE-REPORT UI-1: A FOCUS ALREADY IN THE WINDOW STAYS - a face rebuilt mid-typing (the
+  // cloud's answer, a quest's clock) gives the focus and the caret back (domRepaint.js), and this frame's landing had then
+  // taken them to the first choice, where the next Space changed the report's kind
+  if (!openId) {
+    globalThis.requestAnimationFrame?.(() => {
+      const a = /** @type {any} */ (doc).activeElement;
+      if (a && win.contains?.(a)) return;
+      if (keep.view === 'report') focusKey(`kind-${box()?.desk?.draft?.kind ?? 'exploit'}`); else close.focus?.();
+    });
+  }
   return { root: win, stop: () => { if (tick) clearInterval(tick); tick = null; }, draw, close, openOne };
 }

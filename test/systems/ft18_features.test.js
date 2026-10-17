@@ -344,7 +344,8 @@ test('FT18 by source: the pane\'s search filters in place and All off asks first
   assert.match(bar, /\.\.\.\(kept && typeof kept === 'object' \? \[\{ label: t\('menu\.features\.restore', 'Restore'\),/, 'Restore only while there is something to restore');
   assert.match(menu, /optQuery = '';   \/\/ FT18: a fresh visit searches nothing/);
   // the menu's own key handler stands down for a text field, so typing in the search never walks the menu
-  assert.match(menu, /if \(t && \(t\.tagName === 'INPUT' \|\| t\.tagName === 'TEXTAREA' \|\| t\.isContentEditable\)\) return;/);
+  // PIN MOVED (AUDIT PRIVATE-REPORT UI-2): save Escape in the mailbox's window (`.px-postwin`), which leaves it - the search's own
+  assert.match(menu, /if \(t && \(t\.tagName === 'INPUT' \|\| t\.tagName === 'TEXTAREA' \|\| t\.isContentEditable\) && !\(e\.key === 'Escape' && t\.closest\?\.\('\.px-postwin'\)\)\) return;/);
   // MWA4: the card draws no switch row at all now - Attach and Remove data alone - so none can be a moved key's null
   const at = menu.indexOf('export function morrowindCard(');
   assert.ok(at > 0, 'the Morrowind assets card');

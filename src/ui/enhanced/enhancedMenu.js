@@ -5876,7 +5876,10 @@ function onKey(e) {
   if (peerBindBusy()) return;   // PEERMENU1: the player-menu bind is waiting for a key (or swallowing a pad B's Back)
   if (plusBindsOpen()) return;   // PADPLUS10: the Controller bindings window is over the menu - its Escape is its own
   const t = e.target;
-  if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+  // PRIVATE-REPORT (AUDIT PRIVATE-REPORT UI-2): a field's keys are the field's - but Escape in the mailbox's window leaves it,
+  // as the notice and arena windows let it (noticeWindow.js): `/bug` lands the focus in the report form, and its Escape
+  // had done nothing at all
+  if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable) && !(e.key === 'Escape' && t.closest?.('.px-postwin'))) return;
   // DISC28-A (EvoAva, Discord: "If you change the default pause key binding from escape to anything else, it allows you
   // to open pause menu with that key binding, but not close it"): the table above maps the LITERAL Escape to back, and
   // the host opens this screen on the PAUSE ACTION - so a pause rebound to P opened it and P then meant `char:p` here,
@@ -6062,6 +6065,7 @@ export function mountEnhancedMenu(host, {
   else if (PROF_HOLD_SECTIONS.some(([id]) => id === at)) { pauseTab = 'holdings'; holdSec = at; }
   else if (FAMILY_PAGE_SECTIONS.some(([id]) => id === at)) { pauseTab = 'family'; famSec = at; }   // LEGACY3: a Family page by name
   else if (at === 'mailbox') postOpen = true;   // SERVER-POST: the mailbox's door (/mail, either skin) - the pause face with its window open
+  else if (at === 'report') { postOpen = true; postKeep = { view: 'report' }; }   // PRIVATE-REPORT: `/bug` - the mailbox's window on its report form
   else if (at === 'collections' || at === 'cards' || at === 'codex') { pauseTab = 'holdings'; holdSec = 'collections'; if (at !== 'collections') setCollectionsPart(at); }   // AUDIT CARDS-5 D14: the Collections page by name, or one of its parts
   _eff = null;
   render();

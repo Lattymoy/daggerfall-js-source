@@ -48,7 +48,8 @@ ESCORTING FACES - the quest escorts' portrait column, FE1 - and the CREDITS TABL
 - and CAPTAIN-TREE's STARS (`captainTreeWindow.js`: the captain's sky in the Firmament's own dress - its sheet, its two palettes, its stars' sizes - a way set by a press, a star taken back with those joined only through it, accepted into the captain's ledger; opened from the Captain page through the sea's window door; `03-World/Naval-Refit.md` CAPTAIN-TREE)
 - and DECK-PROPS' PLAN (`deckPlanWindow.js`: her open deck from above, bow up, her fittings on it - one chosen and set with a click where it is deck and room, taken up, dragged, turned a sixteenth at a time, taken away - and Fit her out through the Fleet's act; opened from the Fleet page's Deck through the sea's window door; `03-World/Naval-Refit.md` DECK-PROPS)
 - and LOOT-BULK's TAKE ALL AND STASH ALL (`storeBulk.js`: the one walk over the shown rows that moves them in a single batch, a container's or the pack's, as far as the side that takes them has room; `UI-Arc.md` LOOT-BULK)
-383 modules
+- and PRIVATE-REPORT's REPORT FORM AND INBOX (`enhanced/enhancedReport.js`: a player's private report of an exploit, a bug or a security hole, written in the mailbox's window, their own reports under it, and the readers' inbox; `06-Systems/Private-Reports.md`)
+384 modules
 live under `src/ui/`. Items still routed here are
 collected in `01-Overview/Port-Ledger.md` section C; scope in
 `01-Overview/Port-Doctrine.md` phase plan.

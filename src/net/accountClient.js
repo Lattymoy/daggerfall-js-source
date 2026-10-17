@@ -247,6 +247,17 @@ const REFUSAL_WORDS = {
   'post-no-item': () => t('account.refusal.postNoItem', 'That message holds no item to claim.'),
   'post-claimed': () => t('account.refusal.postClaimed', 'That item has already been claimed.'),
   'post-unclaimed': () => t('account.refusal.postUnclaimed', 'Claim the item in that message before you throw it away.'),
+  // PRIVATE-REPORT, a player's private report to the developers (server-account/src/reports.js, net/reportLaw.js)
+  'report-needs-account': () => t('account.refusal.reportNeedsAccount', 'Private reports need a username and a password, so the developers can follow up with you. Give this account one, then send it.'),
+  'report-kind': () => t('account.refusal.reportKind', 'Choose what kind of problem this is.'),
+  'report-subject': () => t('account.refusal.reportSubject', 'Give the report a short title, 3 to 80 characters.'),
+  'report-body': () => t('account.refusal.reportBody', 'Describe the problem in 10 to 3,000 characters: what happens, and the steps that make it happen.'),
+  'report-rid': () => t('account.refusal.reportRid', 'That report could not be sent. Try again.'),
+  'report-rate': () => t('account.refusal.reportRate', 'You have sent several reports in the last hour. Wait a while, then send this one.'),
+  'report-full': () => t('account.refusal.reportFull', 'You have 20 reports the developers have not closed yet. Wait for them to be looked at before you send more.'),
+  'no-report': () => t('account.refusal.noReport', 'That report is not there any more.'),
+  'not-report-reader': () => t('account.refusal.notReportReader', 'Only the developers who read private reports can open them.'),
+  'report-state': () => t('account.refusal.reportState', 'That is not a way to close a report.'),
   muted: () => t('account.refusal.muted', 'You are muted, so you cannot send letters or pin notes until the mute ends.'),
   'no-reader': () => t('account.refusal.noReader', 'No registered player has that username.'),
   // NAME-AS: a friend's letter goes to their ACCOUNT (server-account/src/letters.js `toAccount`), so a friend with no

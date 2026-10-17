@@ -187,6 +187,7 @@ on:
       - "src/net/eliteGates/egStartLaw.js"
       - "src/net/superDungeon/sdMarks.js"
       - "src/net/postLaw.js"
+      - "src/net/reportLaw.js"
       - "src/systems/wind/wind.js"
       - "src/ai/blowShapes.js"
       - "src/ai/cover.js"
